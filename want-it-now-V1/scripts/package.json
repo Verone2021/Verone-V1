@@ -1,0 +1,24 @@
+{
+  "name": "proprietaires-test-scripts",
+  "version": "1.0.0",
+  "description": "Test scripts for proprietaires functionality validation",
+  "scripts": {
+    "test:integration": "node test-proprietaires-integration.js",
+    "test:frontend": "node test-proprietaires-frontend.js",
+    "test:e2e": "node test-proprietaires-e2e.js",
+    "test:all": "npm run test:integration && npm run test:frontend && npm run test:e2e",
+    "test:integration:verbose": "node test-proprietaires-integration.js --verbose",
+    "test:frontend:verbose": "node test-proprietaires-frontend.js --verbose",
+    "test:e2e:verbose": "node test-proprietaires-e2e.js --verbose",
+    "test:cleanup": "node test-proprietaires-e2e.js --cleanup-only",
+    "test:dry-run": "node test-proprietaires-e2e.js --dry-run"
+  },
+  "dependencies": {
+    "@supabase/supabase-js": "^2.57.2"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  },
+  "author": "Want It Now Development Team",
+  "license": "MIT"
+}
