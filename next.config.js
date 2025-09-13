@@ -1,0 +1,24 @@
+/** @type {import('next').NextConfig} */
+const nextConfig = {
+  // Next.js 15 App Router configuration
+  reactStrictMode: true,
+  
+  // Monorepo transpilation - transpile workspace packages
+  transpilePackages: [
+    '@verone/database',
+    '@verone/shared-ui', 
+    '@verone/business-logic'
+  ],
+  
+  // Performance optimizations
+  images: {
+    formats: ['image/avif', 'image/webp'],
+  },
+  
+  // Environment variables for client-side
+  env: {
+    BUILD_TIME: new Date().toISOString(),
+  },
+};
+
+module.exports = nextConfig;

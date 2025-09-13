@@ -48,3 +48,28 @@ Thumbs.db
 # Temporary files
 *.tmp
 *.temp
+
+# TypeScript
+*.tsbuildinfo
+next-env.d.ts
+
+# Vercel
+.vercel
+
+# Playwright
+/test-results/
+/playwright-report/
+/blob-report/
+/playwright/.cache/
+
+# Jest coverage
+/coverage/
+
+# Supabase local development
+.supabase/
+
+# Claude Code specific
+.claude/scratch/
+
+# Husky
+.husky/_

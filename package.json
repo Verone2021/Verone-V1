@@ -1,39 +1,37 @@
 {
-  "name": "verone-back-office",
+  "name": "@verone/back-office",
   "version": "1.0.0",
-  "description": "Vérone Back office - Application de gestion back-office construite sur Next.js + React + shadcn/ui + Tailwind CSS + Supabase + Vercel.",
-  "main": "index.js",
   "private": true,
   "scripts": {
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
     "lint": "next lint",
-    "test": "echo \"No tests yet\""
+    "type-check": "tsc --noEmit"
   },
-  "keywords": [
-    "template",
-    "nextjs",
-    "tailwind",
-    "supabase",
-    "shadcn",
-    "vercel",
-    "mcp",
-    "claude"
-  ],
-  "author": "Your Name",
-  "license": "MIT",
   "dependencies": {
-    "@supabase/supabase-js": "^2.54.0",
-    "next": "^15.4.6",
-    "react": "^19.1.1",
-    "react-dom": "^19.1.1",
-    "shadcn-ui": "^0.9.5"
+    "@radix-ui/react-slot": "^1.0.2",
+    "@radix-ui/react-toast": "^1.1.5",
+    "@supabase/ssr": "^0.1.0",
+    "@supabase/supabase-js": "^2.39.0",
+    "@tanstack/react-query": "^5.20.1",
+    "class-variance-authority": "^0.7.0",
+    "clsx": "^2.1.0",
+    "lucide-react": "^0.309.0",
+    "next": "15.0.3",
+    "react": "18.3.1",
+    "react-dom": "18.3.1",
+    "react-hot-toast": "^2.4.1",
+    "tailwind-merge": "^2.2.1"
   },
   "devDependencies": {
-    "@tailwindcss/postcss": "^4.1.11",
-    "autoprefixer": "^10.4.21",
-    "postcss": "^8.5.6",
-    "tailwindcss": "^4.1.11"
+    "@types/node": "^20.11.17",
+    "@types/react": "^18.2.55",
+    "autoprefixer": "^10.4.17",
+    "eslint": "^8.56.0",
+    "eslint-config-next": "15.0.3",
+    "postcss": "^8.4.35",
+    "tailwindcss": "^3.4.1",
+    "typescript": "^5.3.3"
   }
 }

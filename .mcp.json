@@ -6,10 +6,10 @@
         "-y",
         "@supabase/mcp-server-supabase@latest",
         "--read-only",
-        "--project-ref="
+        "--project-ref=aorroydfjsrygmosnzrl"
       ],
       "env": {
-        "SUPABASE_ACCESS_TOKEN": ""
+        "SUPABASE_ACCESS_TOKEN": "${SUPABASE_ACCESS_TOKEN}"
       }
     },
     "context7": {
@@ -52,14 +52,28 @@
         "VERCEL_API_TOKEN": "${VERCEL_API_TOKEN}"
       }
     },
-    "notion": {
+    "sequential-thinking": {
       "command": "npx",
       "args": [
         "-y",
-        "@modelcontextprotocol/server-notion@latest"
+        "@modelcontextprotocol/server-sequential-thinking@latest"
+      ]
+    },
+    "playwright": {
+      "command": "npx",
+      "args": [
+        "-y",
+        "@playwright/mcp@latest"
+      ]
+    },
+    "ref": {
+      "command": "npx",
+      "args": [
+        "-y",
+        "@ref-tools/mcp@latest"
       ],
       "env": {
-        "NOTION_API_KEY": "${NOTION_API_KEY}"
+        "REF_API_KEY": "ref-adba3c10044809167187"
       }
     }
   }

@@ -1,0 +1,67 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Vérone Design Tokens - Import officiel */
+@import '../styles/verone-design-tokens.css';
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+
+  body {
+    @apply bg-background text-foreground;
+  }
+}
+
+/* Vérone Design System Variables */
+:root {
+  --background: 255 255 255; /* Pure white #FFFFFF */
+  --foreground: 0 0 0; /* Pure black #000000 */
+
+  --card: 255 255 255;
+  --card-foreground: 0 0 0;
+
+  --popover: 255 255 255;
+  --popover-foreground: 0 0 0;
+
+  --primary: 0 0 0; /* Black primary */
+  --primary-foreground: 255 255 255; /* White on black */
+
+  --secondary: 245 245 245; /* Very light gray */
+  --secondary-foreground: 0 0 0;
+
+  --muted: 245 245 245;
+  --muted-foreground: 115 115 115;
+
+  --accent: 245 245 245;
+  --accent-foreground: 0 0 0;
+
+  --destructive: 239 68 68; /* Error red */
+  --destructive-foreground: 255 255 255;
+
+  --border: 229 229 229;
+  --input: 229 229 229;
+  --ring: 0 0 0;
+
+  --radius: 0.5rem;
+}
+
+/* Custom scrollbar */
+::-webkit-scrollbar {
+  width: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: #f1f1f1;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #c1c1c1;
+  border-radius: 3px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #a1a1a1;
+}

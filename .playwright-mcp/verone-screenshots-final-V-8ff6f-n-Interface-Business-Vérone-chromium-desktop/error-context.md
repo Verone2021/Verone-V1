@@ -1,0 +1,57 @@
+# Page snapshot
+
+```yaml
+- generic [active] [ref=e1]:
+  - generic [ref=e3]:
+    - banner [ref=e4]:
+      - generic [ref=e5]:
+        - generic [ref=e6]:
+          - heading "VÉRONE" [level=1] [ref=e7]
+          - generic [ref=e8]: Back Office
+        - navigation [ref=e9]:
+          - link "Catalogue" [ref=e10] [cursor=pointer]:
+            - /url: "#"
+          - link "Stock" [ref=e11] [cursor=pointer]:
+            - /url: "#"
+          - link "Commandes" [ref=e12] [cursor=pointer]:
+            - /url: "#"
+    - main [ref=e13]:
+      - generic [ref=e14]:
+        - heading "Dashboard" [level=2] [ref=e15]
+        - paragraph [ref=e16]: Vue d'ensemble de votre activité
+      - generic [ref=e17]:
+        - generic [ref=e18]:
+          - heading "Produits Actifs" [level=3] [ref=e19]
+          - paragraph [ref=e20]: 1,247
+          - generic [ref=e21]: +12% ce mois
+        - generic [ref=e22]:
+          - heading "Commandes Aujourd'hui" [level=3] [ref=e23]
+          - paragraph [ref=e24]: "23"
+          - generic [ref=e25]: +5% vs hier
+        - generic [ref=e26]:
+          - heading "CA du Mois" [level=3] [ref=e27]
+          - paragraph [ref=e28]: 89,450€
+          - generic [ref=e29]: +18% vs mois dernier
+      - generic [ref=e30]:
+        - generic [ref=e31]:
+          - heading "Actions Rapides" [level=3] [ref=e32]
+          - generic [ref=e33]:
+            - button "+ Ajouter Produit" [ref=e34]
+            - button "+ Créer Collection" [ref=e35]
+            - button "📄 Exporter Catalogue" [ref=e36]
+        - generic [ref=e37]:
+          - heading "Activité Récente" [level=3] [ref=e38]
+          - generic [ref=e39]:
+            - generic [ref=e40]:
+              - generic [ref=e41]: Nouveau produit ajouté
+              - generic [ref=e42]: Il y a 2h
+            - generic [ref=e43]:
+              - generic [ref=e44]: Collection mise à jour
+              - generic [ref=e45]: Il y a 4h
+            - generic [ref=e46]:
+              - generic [ref=e47]: Catalogue exporté
+              - generic [ref=e48]: Hier
+  - button "Open Next.js Dev Tools" [ref=e54] [cursor=pointer]:
+    - img [ref=e55] [cursor=pointer]
+  - alert [ref=e58]
+```

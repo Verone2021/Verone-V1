@@ -1,0 +1,349 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Vérone Design System - Variables CSS officielles */
+:root {
+  /* === COULEURS OFFICIELLES VÉRONE === */
+  /* Couleurs principales */
+  --verone-noir: #000000;
+  --verone-blanc: #FFFFFF;
+
+  /* Usage recommandé */
+  --text-primary: #000000;
+  --background-primary: #FFFFFF;
+  --border-primary: #000000;
+
+  /* Couleurs système uniquement */
+  --system-success: #22c55e;
+  --system-warning: #f59e0b;
+  --system-error: #ef4444;
+  --system-info: #3b82f6;
+
+  /* === TYPOGRAPHIES OFFICIELLES === */
+  /* Fonts selon charte Vérone */
+  --font-logo: 'Balgin Light SM Expanded', serif;
+  --font-heading: 'Monarch Regular', serif;
+  --font-body: 'Fieldwork 10 Geo Regular', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  --font-mono: 'JetBrains Mono', 'Fira Code', monospace;
+
+  /* Scale harmonieuse */
+  --text-xs: 0.75rem;      /* 12px */
+  --text-sm: 0.875rem;     /* 14px */
+  --text-base: 1rem;       /* 16px */
+  --text-lg: 1.125rem;     /* 18px */
+  --text-xl: 1.25rem;      /* 20px */
+  --text-2xl: 1.5rem;      /* 24px */
+  --text-3xl: 1.875rem;    /* 30px */
+
+  /* === SPACING SYSTÈME 8PX === */
+  --space-xs: 4px;         /* 0.25rem */
+  --space-sm: 8px;         /* 0.5rem */
+  --space-md: 16px;        /* 1rem */
+  --space-lg: 24px;        /* 1.5rem */
+  --space-xl: 32px;        /* 2rem */
+  --space-2xl: 48px;       /* 3rem */
+  --space-3xl: 64px;       /* 4rem */
+
+  /* === ANIMATIONS STANDARDS === */
+  --duration-fast: 150ms;
+  --duration-normal: 300ms;
+  --duration-slow: 500ms;
+
+  --ease-standard: ease-out;
+  --ease-sharp: ease-in;
+  --ease-smooth: ease-in-out;
+
+  /* === BREAKPOINTS === */
+  --mobile: 320px;
+  --mobile-lg: 480px;
+  --tablet: 768px;
+  --desktop: 1024px;
+  --desktop-lg: 1280px;
+  --ultra-wide: 1536px;
+}
+
+/* === BASE STYLES === */
+html {
+  font-family: var(--font-body);
+  font-size: var(--text-base);
+  line-height: 1.6;
+  color: var(--text-primary);
+  background-color: var(--background-primary);
+}
+
+body {
+  margin: 0;
+  padding: 0;
+  min-height: 100vh;
+  font-feature-settings: "rlig" 1, "calt" 1;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* === TYPOGRAPHIE HIÉRARCHIQUE === */
+h1, .text-3xl {
+  font-family: var(--font-logo);
+  font-size: var(--text-3xl);
+  font-weight: 300;
+  line-height: 1.2;
+  letter-spacing: -0.02em;
+}
+
+h2, .text-2xl {
+  font-family: var(--font-heading);
+  font-size: var(--text-2xl);
+  font-weight: 400;
+  line-height: 1.3;
+}
+
+h3, .text-xl {
+  font-family: var(--font-heading);
+  font-size: var(--text-xl);
+  font-weight: 400;
+  line-height: 1.4;
+}
+
+h4, h5, h6 {
+  font-family: var(--font-body);
+  font-weight: 600;
+}
+
+/* === COMPOSANTS VÉRONE === */
+
+/* Boutons officiels */
+.btn-primary {
+  background: var(--verone-noir);
+  color: var(--verone-blanc);
+  border: 2px solid var(--verone-noir);
+  padding: var(--space-sm) var(--space-lg);
+  font-family: var(--font-body);
+  font-weight: 500;
+  font-size: var(--text-sm);
+  letter-spacing: 0.025em;
+  text-transform: uppercase;
+  cursor: pointer;
+  transition: all var(--duration-fast) var(--ease-standard);
+  outline: none;
+  border-radius: 0; /* Design carré selon charte */
+}
+
+.btn-primary:hover {
+  background: var(--verone-blanc);
+  color: var(--verone-noir);
+}
+
+.btn-primary:focus {
+  outline: 2px solid var(--verone-noir);
+  outline-offset: 2px;
+}
+
+.btn-secondary {
+  background: var(--verone-blanc);
+  color: var(--verone-noir);
+  border: 2px solid var(--verone-noir);
+  padding: var(--space-sm) var(--space-lg);
+  font-family: var(--font-body);
+  font-weight: 500;
+  font-size: var(--text-sm);
+  letter-spacing: 0.025em;
+  text-transform: uppercase;
+  cursor: pointer;
+  transition: all var(--duration-fast) var(--ease-standard);
+  outline: none;
+  border-radius: 0;
+}
+
+.btn-secondary:hover {
+  background: var(--verone-noir);
+  color: var(--verone-blanc);
+}
+
+.btn-secondary:focus {
+  outline: 2px solid var(--verone-noir);
+  outline-offset: 2px;
+}
+
+/* Cards Vérone */
+.card-verone {
+  background: var(--verone-blanc);
+  border: 1px solid var(--verone-noir);
+  padding: var(--space-lg);
+  box-shadow: none; /* Design épuré sans ombre */
+  border-radius: 0; /* Coins carrés */
+}
+
+.card-inverse {
+  background: var(--verone-noir);
+  color: var(--verone-blanc);
+  border: 1px solid var(--verone-noir);
+  padding: var(--space-lg);
+  box-shadow: none;
+  border-radius: 0;
+}
+
+/* Navigation Vérone */
+.nav-verone {
+  background: var(--verone-blanc);
+  border-bottom: 1px solid var(--verone-noir);
+}
+
+.nav-item {
+  color: var(--verone-noir);
+  font-family: var(--font-heading);
+  font-size: var(--text-sm);
+  font-weight: 400;
+  text-decoration: none;
+  padding: var(--space-sm) var(--space-md);
+  transition: opacity var(--duration-fast) var(--ease-standard);
+  display: inline-block;
+}
+
+.nav-item:hover {
+  opacity: 0.7;
+}
+
+.nav-item.active {
+  background: var(--verone-noir);
+  color: var(--verone-blanc);
+}
+
+/* Logo */
+.logo-black {
+  color: var(--verone-noir);
+}
+
+.logo-white {
+  color: var(--verone-blanc);
+}
+
+.logo-min-size {
+  min-width: 100px;
+}
+
+/* === UTILITAIRES SYSTÈME === */
+
+/* États système */
+.text-success { color: var(--system-success); }
+.text-warning { color: var(--system-warning); }
+.text-error { color: var(--system-error); }
+.text-info { color: var(--system-info); }
+
+.bg-success { background-color: var(--system-success); }
+.bg-warning { background-color: var(--system-warning); }
+.bg-error { background-color: var(--system-error); }
+.bg-info { background-color: var(--system-info); }
+
+/* Accessibilité */
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+/* Focus visible pour accessibilité */
+*:focus-visible {
+  outline: 2px solid var(--verone-noir);
+  outline-offset: 2px;
+}
+
+/* === RESPONSIVE UTILITIES === */
+
+/* Touch targets minimum 44px */
+.touch-target {
+  min-width: 44px;
+  min-height: 44px;
+}
+
+/* Container responsif */
+.container-verone {
+  width: 100%;
+  margin: 0 auto;
+  padding: 0 var(--space-md);
+}
+
+@media (min-width: 768px) {
+  .container-verone {
+    max-width: var(--tablet);
+    padding: 0 var(--space-lg);
+  }
+}
+
+@media (min-width: 1024px) {
+  .container-verone {
+    max-width: var(--desktop);
+    padding: 0 var(--space-xl);
+  }
+}
+
+@media (min-width: 1280px) {
+  .container-verone {
+    max-width: var(--desktop-lg);
+  }
+}
+
+/* === ANIMATIONS GLOBALES === */
+
+/* Transition par défaut pour tous les éléments interactifs */
+button, a, input, select, textarea {
+  transition: all var(--duration-fast) var(--ease-standard);
+}
+
+/* Transitions fluides pour les changements de layout */
+.transition-layout {
+  transition: all var(--duration-normal) var(--ease-smooth);
+}
+
+/* === OVERRIDES SPÉCIFIQUES === */
+
+/* Suppression des styles par défaut des navigateurs */
+button {
+  border: none;
+  background: none;
+  font: inherit;
+  cursor: pointer;
+}
+
+input, select, textarea {
+  font: inherit;
+  border: 1px solid var(--verone-noir);
+  background: var(--verone-blanc);
+  color: var(--verone-noir);
+  padding: var(--space-sm);
+  outline: none;
+  border-radius: 0;
+}
+
+input:focus, select:focus, textarea:focus {
+  border-color: var(--verone-noir);
+  box-shadow: 0 0 0 1px var(--verone-noir);
+}
+
+/* Sélection de texte */
+::selection {
+  background: var(--verone-noir);
+  color: var(--verone-blanc);
+}
+
+/* Scrollbar personnalisée */
+::-webkit-scrollbar {
+  width: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: var(--verone-blanc);
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--verone-noir);
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(0, 0, 0, 0.7);
+}

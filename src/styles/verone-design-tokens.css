@@ -1,0 +1,221 @@
+/**
+ * Vérone Design Tokens - Variables CSS officielles
+ * Charte graphique stricte noir/blanc uniquement
+ * Version: 1.0 selon manifests/design-specifications/charte-graphique-verone.md
+ */
+
+:root {
+  /* ========================================
+   * COULEURS PRINCIPALES VÉRONE (STRICTES)
+   * ======================================== */
+
+  /* Couleurs autorisées uniquement */
+  --verone-noir: #000000;           /* Couleur principale */
+  --verone-blanc: #FFFFFF;          /* Couleur secondaire */
+
+  /* Usage recommandé */
+  --text-primary: var(--verone-noir);
+  --background-primary: var(--verone-blanc);
+  --border-primary: var(--verone-noir);
+
+  /* ========================================
+   * COULEURS SYSTÈME (Usage exceptionnel)
+   * ======================================== */
+
+  --system-success: #22c55e;        /* Confirmations */
+  --system-warning: #f59e0b;        /* Alertes */
+  --system-error: #ef4444;          /* Erreurs */
+  --system-info: #3b82f6;           /* Informations */
+
+  /* ========================================
+   * TYPOGRAPHIES OFFICIELLES
+   * ======================================== */
+
+  /* Fonts selon charte Vérone */
+  --font-logo: 'Balgin Light SM Expanded', serif;      /* UNIQUEMENT pour logo */
+  --font-heading: 'Monarch Regular', serif;            /* Sous-titres, navigation */
+  --font-body: 'Fieldwork 10 Geo Regular', sans-serif; /* Interface, corps */
+  --font-mono: 'JetBrains Mono', monospace;            /* Code, références */
+
+  /* Scale harmonieuse */
+  --text-xs: 0.75rem;      /* 12px - Labels, métadonnées */
+  --text-sm: 0.875rem;     /* 14px - Descriptions, sous-textes */
+  --text-base: 1rem;       /* 16px - Corps principal */
+  --text-lg: 1.125rem;     /* 18px - Sous-titres */
+  --text-xl: 1.25rem;      /* 20px - Titres de sections */
+  --text-2xl: 1.5rem;      /* 24px - Titres principaux */
+  --text-3xl: 1.875rem;    /* 30px - Headers display */
+
+  /* ========================================
+   * ANIMATIONS & TRANSITIONS
+   * ======================================== */
+
+  /* Durées standards */
+  --duration-fast: 150ms;     /* Hovers, micro-interactions */
+  --duration-normal: 300ms;   /* Modals, navigation */
+  --duration-slow: 500ms;     /* Transitions de page */
+
+  /* Easings */
+  --ease-standard: ease-out;  /* Transition standard */
+  --ease-sharp: ease-in;      /* Fermetures */
+  --ease-smooth: ease-in-out; /* Transitions fluides */
+
+  /* ========================================
+   * GRILLE & SPACING (Système 8px)
+   * ======================================== */
+
+  --space-xs: 4px;      /* 0.25rem */
+  --space-sm: 8px;      /* 0.5rem */
+  --space-md: 16px;     /* 1rem */
+  --space-lg: 24px;     /* 1.5rem */
+  --space-xl: 32px;     /* 2rem */
+  --space-2xl: 48px;    /* 3rem */
+  --space-3xl: 64px;    /* 4rem */
+
+  /* Containers */
+  --container-xs: 480px;
+  --container-sm: 640px;
+  --container-md: 768px;
+  --container-lg: 1024px;
+  --container-xl: 1280px;
+
+  /* ========================================
+   * BREAKPOINTS RESPONSIVE
+   * ======================================== */
+
+  --mobile: 320px;          /* Mobile small */
+  --mobile-lg: 480px;       /* Mobile large */
+  --tablet: 768px;          /* Tablette */
+  --desktop: 1024px;        /* Desktop */
+  --desktop-lg: 1280px;     /* Desktop large */
+  --ultra-wide: 1536px;     /* Ultra-wide */
+}
+
+/* ========================================
+ * CLASSES UTILITAIRES VÉRONE
+ * ======================================== */
+
+/* Logo */
+.logo-black {
+  color: var(--verone-noir);
+}
+
+.logo-white {
+  color: var(--verone-blanc);
+}
+
+.logo-min-size {
+  min-width: 100px;
+}
+
+/* Boutons style Vérone */
+.btn-verone-primary {
+  background: var(--verone-noir);
+  color: var(--verone-blanc);
+  border: 2px solid var(--verone-noir);
+  transition: all var(--duration-fast) var(--ease-standard);
+}
+
+.btn-verone-primary:hover {
+  background: var(--verone-blanc);
+  color: var(--verone-noir);
+}
+
+.btn-verone-secondary {
+  background: var(--verone-blanc);
+  color: var(--verone-noir);
+  border: 2px solid var(--verone-noir);
+  transition: all var(--duration-fast) var(--ease-standard);
+}
+
+.btn-verone-secondary:hover {
+  background: var(--verone-noir);
+  color: var(--verone-blanc);
+}
+
+/* Cards */
+.card-verone {
+  background: var(--verone-blanc);
+  border: 1px solid var(--verone-noir);
+  box-shadow: none; /* Pas d'ombre - design épuré */
+}
+
+.card-verone-inverse {
+  background: var(--verone-noir);
+  color: var(--verone-blanc);
+  border: 1px solid var(--verone-noir);
+}
+
+/* Navigation */
+.nav-verone {
+  background: var(--verone-blanc);
+  border-bottom: 1px solid var(--verone-noir);
+}
+
+.nav-item-verone {
+  color: var(--verone-noir);
+  font-family: var(--font-heading);
+  transition: opacity var(--duration-fast) var(--ease-standard);
+}
+
+.nav-item-verone:hover {
+  opacity: 0.7; /* Effet subtil selon charte */
+}
+
+/* ========================================
+ * ÉTATS SYSTÈME (Usage contrôlé)
+ * ======================================== */
+
+.status-success {
+  color: var(--system-success);
+}
+
+.status-warning {
+  color: var(--system-warning);
+}
+
+.status-error {
+  color: var(--system-error);
+}
+
+.status-info {
+  color: var(--system-info);
+}
+
+/* ========================================
+ * ACCESSIBILITÉ
+ * ======================================== */
+
+/* Focus visible selon WCAG */
+.focus-verone:focus-visible {
+  outline: 2px solid var(--verone-noir);
+  outline-offset: 2px;
+}
+
+/* Touch targets minimum 44px */
+.touch-target {
+  min-height: 44px;
+  min-width: 44px;
+}
+
+/* ========================================
+ * INTERDICTIONS (Documentation)
+ * ======================================== */
+
+/*
+COULEURS INTERDITES:
+- Doré (#C9A86A) : JAMAIS dans les interfaces
+- Toute couleur décorative
+- Dégradés, ombres colorées
+
+LOGO INTERDICTIONS:
+- "by Romeo" sous le logo blanc : JAMAIS
+- Modifications du logo officiel : JAMAIS
+- Logo sur fond inadapté : JAMAIS
+
+DESIGN INTERDICTIONS:
+- Ornements, décorations superflues : JAMAIS
+- Effets 3D, textures : JAMAIS
+- Typographies non autorisées : JAMAIS
+- Animations flashy : JAMAIS
+*/
