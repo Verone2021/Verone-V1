@@ -1,14 +1,53 @@
 "use client"
 
-import { Bell, Search, User } from "lucide-react"
+import { Bell, Search, User, LogOut, Settings, Users } from "lucide-react"
 import { Button } from "../ui/button"
 import { cn } from "../../lib/utils"
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "../ui/dropdown-menu"
+import { createClient } from "@/lib/supabase/client"
+import { useRouter } from "next/navigation"
+import { useEffect, useState } from "react"
 
 interface AppHeaderProps {
   className?: string
 }
 
 export function AppHeader({ className }: AppHeaderProps) {
+  const router = useRouter()
+  const [userRole, setUserRole] = useState<string | null>(null)
+
+  // Récupérer le rôle de l'utilisateur au chargement
+  useEffect(() => {
+    const fetchUserRole = async () => {
+      const supabase = createClient()
+      const { data: { user } } = await supabase.auth.getUser()
+
+      if (user) {
+        const { data: profile } = await supabase
+          .from('user_profiles')
+          .select('role')
+          .eq('user_id', user.id)
+          .single()
+
+        setUserRole(profile?.role || null)
+      }
+    }
+
+    fetchUserRole()
+  }, [])
+
+  const handleLogout = async () => {
+    const supabase = createClient()
+    await supabase.auth.signOut()
+    router.push('/')
+  }
+
   return (
     <header className={cn(
       "flex h-16 items-center justify-between border-b border-black bg-white px-6",
@@ -37,11 +76,47 @@ export function AppHeader({ className }: AppHeaderProps) {
           <span className="sr-only">Notifications</span>
         </Button>
 
-        {/* Profil utilisateur */}
-        <Button variant="ghost" size="icon">
-          <User className="h-5 w-5" />
-          <span className="sr-only">Profil utilisateur</span>
-        </Button>
+        {/* Menu Profil utilisateur */}
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button variant="ghost" size="icon">
+              <User className="h-5 w-5" />
+              <span className="sr-only">Menu profil</span>
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end" className="w-56">
+            <DropdownMenuItem
+              className="cursor-pointer"
+              onClick={() => router.push('/profile')}
+            >
+              <Settings className="mr-2 h-4 w-4" />
+              <span>Mon Profil</span>
+            </DropdownMenuItem>
+
+            {/* Lien Administration - Visible uniquement pour les owners */}
+            {userRole === 'owner' && (
+              <>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem
+                  className="cursor-pointer"
+                  onClick={() => router.push('/admin/users')}
+                >
+                  <Users className="mr-2 h-4 w-4" />
+                  <span>Administration</span>
+                </DropdownMenuItem>
+              </>
+            )}
+
+            <DropdownMenuSeparator />
+            <DropdownMenuItem
+              className="cursor-pointer text-verone-black font-medium hover:bg-gray-100 focus:bg-gray-100"
+              onClick={handleLogout}
+            >
+              <LogOut className="mr-2 h-4 w-4" />
+              <span>Se déconnecter</span>
+            </DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
       </div>
     </header>
   )

@@ -137,8 +137,8 @@ export function AppSidebar({ className }: AppSidebarProps) {
           onClick={() => {
             // Supprimer le cookie d'authentification
             document.cookie = 'verone-auth=; path=/; max-age=0'
-            // Redirection vers login
-            window.location.href = '/login'
+            // Redirection vers page d'accueil
+            window.location.href = '/'
           }}
           className="flex w-full items-center space-x-2 px-3 py-2 text-sm text-black opacity-70 hover:opacity-100 hover:bg-black hover:bg-opacity-5 transition-all duration-150"
         >

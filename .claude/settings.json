@@ -1,8 +1,8 @@
 {
-  "enableAllProjectMcpServers": false,
+  "enableAllProjectMcpServers": true,
   "enabledMcpServers": [
     "supabase",
-    "context7", 
+    "context7",
     "serena",
     "sequential-thinking",
     "playwright",
@@ -11,67 +11,101 @@
   ],
   "permissions": {
     "allow": [
+      "mcp__serena__*",
+      "mcp__sequential-thinking__*",
+      "mcp__context7__*",
+      "mcp__supabase__*",
+      "mcp__playwright__*",
+      "mcp__github__*",
+      "mcp__vercel__*",
+      "mcp__ide__*",
       "Read",
-      "Write", 
+      "Write",
       "Edit",
       "MultiEdit",
-      "Bash",
+      "Bash(mkdir:*)",
+      "Bash(npm init:*)",
+      "Bash(npm install:*)",
+      "Bash(npx tailwindcss init:*)",
+      "Bash(./node_modules/.bin/tailwindcss:*)",
+      "Bash(gh repo create:*)",
+      "Bash(git --version)",
+      "Bash(cp:*)",
+      "Bash(git init:*)",
+      "Bash(npm run dev:*)",
+      "Bash(git add:*)",
+      "Bash(git commit:*)",
+      "Bash(npm run build:*)",
+      "Bash(rm:*)",
+      "Bash(git branch:*)",
+      "Bash(git remote add:*)",
+      "Bash(git push:*)",
+      "Bash(git clone:*)",
+      "Bash(mv:*)",
+      "Bash(npx playwright test:*)",
+      "Bash(turbo:*)",
+      "Bash(npx playwright:*)",
+      "Bash(pkill:*)",
+      "Bash(lsof:*)",
+      "Bash(npm run type-check:*)",
+      "Bash(curl:*)",
+      "Bash(chmod:*)",
+      "Bash(export:*)",
+      "Bash(PGPASSWORD:*)",
+      "Bash(psql:*)",
       "Glob",
       "Grep",
       "TodoWrite",
       "WebSearch",
       "WebFetch",
-      "Task"
-    ]
+      "NotebookEdit",
+      "Task",
+      "ExitPlanMode"
+    ],
+    "deny": []
   },
   "hooks": {
-    "pre_write": {
-      "command": "echo '🔧 Vérone: Vérification avant écriture fichier'",
-      "patterns": [
-        "**/*.ts",
-        "**/*.tsx",
-        "**/*.js",
-        "**/*.jsx",
-        "**/package.json",
-        "**/.env*"
-      ],
-      "timeout": 3000,
-      "non_blocking": true
-    },
-    "post_write": {
-      "command": "timeout 5s ./scripts/verify-code.sh 2>/dev/null || echo 'Hook completed with timeout'",
-      "patterns": [
-        "**/*.ts",
-        "**/*.tsx",
-        "**/*.js",
-        "**/*.jsx"
-      ],
-      "timeout": 5000,
-      "non_blocking": true,
-      "on_error": "continue"
-    }
-  },
-  "notifications": {
-    "validation_required": {
-      "sound": "afplay /System/Library/Sounds/Sosumi.aiff",
-      "message": "🤔 Validation requise - Action en attente"
-    },
-    "task_completed": {
-      "sound": "afplay /System/Library/Sounds/Hero.aiff",
-      "message": "✅ Tâche terminée avec succès"
-    },
-    "agent_working": {
-      "sound": "afplay /System/Library/Sounds/Tink.aiff",
-      "message": "⚡ Agent MCP en action"
-    }
+    "Stop": [
+      {
+        "matcher": "",
+        "hooks": [
+          {
+            "type": "command",
+            "command": ".claude/scripts/task-completed.sh"
+          }
+        ]
+      }
+    ],
+    "Notification": [
+      {
+        "matcher": "",
+        "hooks": [
+          {
+            "type": "command",
+            "command": ".claude/scripts/validation-required.sh"
+          }
+        ]
+      }
+    ],
+    "SubagentStop": [
+      {
+        "matcher": "",
+        "hooks": [
+          {
+            "type": "command",
+            "command": ".claude/scripts/agent-finished.sh"
+          }
+        ]
+      }
+    ]
   },
   "project": {
     "name": "Vérone Back Office",
-    "description": "CRM/ERP modulaire pour Vérone - Décoration et mobilier d'intérieur", 
+    "description": "CRM/ERP modulaire pour Vérone - Décoration et mobilier d'intérieur",
     "type": "next-js-supabase-crm",
     "stack": [
       "Next.js 15",
-      "React 18", 
+      "React 18",
       "TypeScript",
       "Supabase",
       "Tailwind CSS",
@@ -102,7 +136,7 @@
       "business_rules_validation": "mandatory",
       "manifests_reference": "required",
       "specialization": [
-        "business_rules_compliance", 
+        "business_rules_compliance",
         "architecture_coordination",
         "integration_orchestration",
         "quality_assurance"
@@ -121,7 +155,7 @@
       "specialization": [
         "e2e_testing",
         "business_rules_testing",
-        "integration_testing", 
+        "integration_testing",
         "performance_testing"
       ],
       "workflows_priority": [
@@ -133,7 +167,7 @@
       ]
     },
     "verone-design-expert": {
-      "priority": "medium", 
+      "priority": "medium",
       "design_system_enforcement": true,
       "mcp_tools": [
         "mcp__context7__*",
@@ -143,7 +177,7 @@
       "ux_focus": "business_productivity",
       "specialization": [
         "design_system_maintenance",
-        "user_experience_optimization", 
+        "user_experience_optimization",
         "responsive_design",
         "accessibility_compliance"
       ],
@@ -162,58 +196,17 @@
       "manifests_validation": "required"
     },
     "design-verone": {
-      "workflow": "analyze_design_prototype_validate", 
+      "workflow": "analyze_design_prototype_validate",
       "agents": ["verone-design-expert", "verone-orchestrator"],
       "ux_standards": "verone_design_system",
       "accessibility": "wcag_aa"
-    }
-  },
-  "mcp_auto_approve": [
-    "mcp__serena__*",
-    "mcp__sequential-thinking__*",
-    "mcp__context7__*",
-    "mcp__supabase__*",
-    "mcp__playwright__*",
-    "mcp__github__*",
-    "mcp__vercel__*",
-    "mcp__ide__*",
-    "Write",
-    "Edit",
-    "MultiEdit",
-    "Read",
-    "Bash",
-    "Glob",
-    "Grep",
-    "TodoWrite",
-    "WebSearch",
-    "WebFetch",
-    "NotebookEdit",
-    "Task"
-  ],
-  "auto_approve_settings": {
-    "threshold_seconds": 2,
-    "skip_validation_for_patterns": [
-      "read_only_operations",
-      "search_operations",
-      "analysis_operations"
-    ],
-    "always_require_validation": [
-      "deployment_operations",
-      "database_migrations",
-      "external_api_calls_with_side_effects"
-    ],
-    "fast_mode": {
-      "enabled": true,
-      "auto_approve_all_mcp": true,
-      "skip_non_critical_hooks": true,
-      "notification_mode": "minimal"
     }
   },
   "business_rules": {
     "manifests_reference": "manifests/",
     "business_rules_priority": [
       "tarification",
-      "catalogue", 
+      "catalogue",
       "integrations-externes",
       "workflows"
     ],
@@ -235,7 +228,7 @@
     },
     "performance": {
       "dashboard_load": "2000ms",
-      "feeds_generation": "10000ms", 
+      "feeds_generation": "10000ms",
       "pdf_export": "5000ms",
       "search_response": "1000ms"
     }
@@ -263,25 +256,5 @@
       "performance_monitoring": true,
       "business_metrics": true
     }
-  },
-  "logging": {
-    "enabled": true,
-    "log_directory": ".claude/logs",
-    "log_level": "info",
-    "hook_performance": true,
-    "mcp_operations": true,
-    "auto_cleanup_days": 7,
-    "log_files": {
-      "hooks": ".claude/logs/hooks.log",
-      "mcp": ".claude/logs/mcp.log",
-      "performance": ".claude/logs/performance.log",
-      "errors": ".claude/logs/errors.log"
-    }
-  },
-  "performance_monitoring": {
-    "hook_timeout_alerts": true,
-    "mcp_slow_operation_threshold": 5000,
-    "notification_on_slow_operations": true,
-    "daily_performance_report": true
   }
 }

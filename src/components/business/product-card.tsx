@@ -54,7 +54,7 @@ const statusConfig = {
   coming_soon: {
     label: "Bientôt",
     variant: "outline" as const,
-    className: "bg-yellow-600 text-white"
+    className: "bg-black text-white"
   },
   discontinued: {
     label: "Arrêté",

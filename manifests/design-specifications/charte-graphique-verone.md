@@ -23,8 +23,7 @@ La marque Vérone incarne **l'élégance par la simplicité**. Notre identité v
 ```
 
 ### **Couleurs Interdites**
-- **Doré** (#C9A86A) : Présent dans la charte historique mais **NON AUTORISÉ** pour les interfaces
-- **Toutes autres couleurs décoratives** : Strictement interdites
+- **Toutes couleurs décoratives** : Strictement interdites (y compris jaune, doré, etc.)
 - **Dégradés** : Non autorisés
 
 ### **Couleurs Fonctionnelles** (Système uniquement)
@@ -190,8 +189,7 @@ La marque Vérone incarne **l'élégance par la simplicité**. Notre identité v
 ## 🚫 Interdictions Strictes
 
 ### **Couleurs**
-- ❌ Couleur dorée (#C9A86A) dans les interfaces
-- ❌ Toute couleur décorative
+- ❌ Toute couleur décorative (jaune, doré, etc.)
 - ❌ Dégradés, ombres colorées
 
 ### **Logo**

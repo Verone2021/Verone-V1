@@ -12,7 +12,7 @@ const badgeVariants = cva(
         destructive: "bg-red-600 text-white border-red-600",
         outline: "bg-transparent text-black border-black",
         success: "bg-green-600 text-white border-green-600",
-        warning: "bg-yellow-600 text-white border-yellow-600",
+        warning: "bg-black text-white border-black",
         info: "bg-blue-600 text-white border-blue-600"
       }
     },

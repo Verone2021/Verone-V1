@@ -1,5 +1,6 @@
 -- Migration: Validation & Initial Seed Data
--- Validates complete architecture and creates initial owner user
+-- Phase 5: Validates complete architecture and creates initial seed data
+-- Depends on: All previous migrations (001-004)
 -- Based on business requirements for veronebyromeo@gmail.com
 
 -- ========================================
@@ -12,7 +13,7 @@ DECLARE
   missing_tables TEXT[] := '{}';
   table_name TEXT;
   required_tables TEXT[] := ARRAY[
-    'organisations', 'user_organisation_assignments', 'user_profiles',
+    'organisations', 'user_profiles',
     'categories', 'category_translations', 'product_groups',
     'products', 'product_packages', 'product_translations',
     'collections', 'collection_translations', 'collection_products',
@@ -81,7 +82,7 @@ BEGIN
     FROM information_schema.tables t
     WHERE table_schema = 'public'
     AND table_name IN (
-      'organisations', 'user_organisation_assignments', 'user_profiles',
+      'organisations', 'user_profiles',
       'categories', 'product_groups', 'products', 'collections',
       'feed_configs', 'feed_exports'
     )

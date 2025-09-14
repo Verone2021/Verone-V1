@@ -4,6 +4,7 @@ import { useState } from "react"
 import { useRouter } from "next/navigation"
 import { Eye, EyeOff, LogIn } from "lucide-react"
 import { Button } from "@/components/ui/button"
+import { createClient } from "@/lib/supabase/client"
 
 export default function LoginPage() {
   const [email, setEmail] = useState('')
@@ -18,18 +19,30 @@ export default function LoginPage() {
     setIsLoading(true)
     setError('')
 
-    // Simulation login pour MVP - remplacer par Supabase Auth
-    if (email === 'veronebyromeo@gmail.com' && password === 'Abc123456') {
-      // Définir le cookie d'authentification
-      document.cookie = 'verone-auth=authenticated; path=/; max-age=86400; secure; samesite=strict'
+    try {
+      const supabase = createClient()
 
-      // Succès - redirection vers dashboard
-      router.push('/dashboard')
-    } else {
-      setError('Email ou mot de passe incorrect')
+      // Authentification avec Supabase
+      const { data, error: authError } = await supabase.auth.signInWithPassword({
+        email,
+        password,
+      })
+
+      if (authError) {
+        setError('Email ou mot de passe incorrect')
+        return
+      }
+
+      if (data.user) {
+        // Succès - redirection vers dashboard
+        router.push('/dashboard')
+        router.refresh()
+      }
+    } catch (err) {
+      setError('Une erreur est survenue lors de la connexion')
+    } finally {
+      setIsLoading(false)
     }
-
-    setIsLoading(false)
   }
 
   return (

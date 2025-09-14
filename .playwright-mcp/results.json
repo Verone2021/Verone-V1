@@ -1,0 +1,312 @@
+{
+  "config": {
+    "configFile": "/Users/romeodossantos/verone-back-office/playwright.config.ts",
+    "rootDir": "/Users/romeodossantos/verone-back-office/tests/e2e",
+    "forbidOnly": false,
+    "fullyParallel": true,
+    "globalSetup": null,
+    "globalTeardown": null,
+    "globalTimeout": 0,
+    "grep": {},
+    "grepInvert": null,
+    "maxFailures": 0,
+    "metadata": {
+      "actualWorkers": 1
+    },
+    "preserveOutput": "always",
+    "reporter": [
+      [
+        "html",
+        {
+          "outputFolder": ".playwright-mcp/reports"
+        }
+      ],
+      [
+        "json",
+        {
+          "outputFile": ".playwright-mcp/results.json"
+        }
+      ],
+      [
+        "list",
+        null
+      ]
+    ],
+    "reportSlowTests": {
+      "max": 5,
+      "threshold": 300000
+    },
+    "quiet": false,
+    "projects": [
+      {
+        "outputDir": "/Users/romeodossantos/verone-back-office/.playwright-mcp/test-results",
+        "repeatEach": 1,
+        "retries": 1,
+        "metadata": {
+          "actualWorkers": 1
+        },
+        "id": "chrome-business-critical",
+        "name": "chrome-business-critical",
+        "testDir": "/Users/romeodossantos/verone-back-office/tests/e2e",
+        "testIgnore": [],
+        "testMatch": [
+          "**/*critical*.spec.ts",
+          "**/business-workflows.spec.ts"
+        ],
+        "timeout": 60000
+      },
+      {
+        "outputDir": "/Users/romeodossantos/verone-back-office/.playwright-mcp/test-results",
+        "repeatEach": 1,
+        "retries": 1,
+        "metadata": {
+          "actualWorkers": 1
+        },
+        "id": "mobile-workflows",
+        "name": "mobile-workflows",
+        "testDir": "/Users/romeodossantos/verone-back-office/tests/e2e",
+        "testIgnore": [],
+        "testMatch": [
+          "**/mobile-*.spec.ts",
+          "**/responsive.spec.ts"
+        ],
+        "timeout": 60000
+      },
+      {
+        "outputDir": "/Users/romeodossantos/verone-back-office/.playwright-mcp/test-results",
+        "repeatEach": 1,
+        "retries": 1,
+        "metadata": {
+          "actualWorkers": 1
+        },
+        "id": "performance-benchmarks",
+        "name": "performance-benchmarks",
+        "testDir": "/Users/romeodossantos/verone-back-office/tests/e2e",
+        "testIgnore": [],
+        "testMatch": [
+          "**/performance-*.spec.ts"
+        ],
+        "timeout": 60000
+      },
+      {
+        "outputDir": "/Users/romeodossantos/verone-back-office/.playwright-mcp/test-results",
+        "repeatEach": 1,
+        "retries": 1,
+        "metadata": {
+          "actualWorkers": 1
+        },
+        "id": "api-tests",
+        "name": "api-tests",
+        "testDir": "/Users/romeodossantos/verone-back-office/tests/e2e",
+        "testIgnore": [],
+        "testMatch": [
+          "**/api-*.spec.ts"
+        ],
+        "timeout": 60000
+      }
+    ],
+    "shard": null,
+    "updateSnapshots": "missing",
+    "updateSourceMethod": "patch",
+    "version": "1.55.0",
+    "workers": 4,
+    "webServer": null
+  },
+  "suites": [
+    {
+      "title": "business-workflows.spec.ts",
+      "file": "business-workflows.spec.ts",
+      "column": 0,
+      "line": 0,
+      "specs": [],
+      "suites": [
+        {
+          "title": "🎯 Vérone MVP - Workflows Critiques",
+          "file": "business-workflows.spec.ts",
+          "line": 27,
+          "column": 6,
+          "specs": [
+            {
+              "title": "🔐 Authentication - Login complet avec validation",
+              "ok": false,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 60000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chrome-business-critical",
+                  "projectName": "chrome-business-critical",
+                  "results": [
+                    {
+                      "workerIndex": 0,
+                      "parallelIndex": 0,
+                      "status": "failed",
+                      "duration": 1348,
+                      "error": {
+                        "message": "Error: expect.toBeVisible: Error: strict mode violation: locator('text=VÉRONE') resolved to 2 elements:\n    1) <div class=\"font-logo text-4xl font-light tracking-wider text-black mb-2\">VÉRONE</div> aka getByText('VÉRONE', { exact: true })\n    2) <p class=\"text-xs text-black opacity-50\">Vérone Back Office - Version MVP</p> aka getByText('Vérone Back Office - Version')\n\nCall log:\n\u001b[2m  - Expect \"toBeVisible\" with timeout 10000ms\u001b[22m\n\u001b[2m  - waiting for locator('text=VÉRONE')\u001b[22m\n",
+                        "stack": "Error: expect.toBeVisible: Error: strict mode violation: locator('text=VÉRONE') resolved to 2 elements:\n    1) <div class=\"font-logo text-4xl font-light tracking-wider text-black mb-2\">VÉRONE</div> aka getByText('VÉRONE', { exact: true })\n    2) <p class=\"text-xs text-black opacity-50\">Vérone Back Office - Version MVP</p> aka getByText('Vérone Back Office - Version')\n\nCall log:\n\u001b[2m  - Expect \"toBeVisible\" with timeout 10000ms\u001b[22m\n\u001b[2m  - waiting for locator('text=VÉRONE')\u001b[22m\n\n    at /Users/romeodossantos/verone-back-office/tests/e2e/business-workflows.spec.ts:43:49\n    at /Users/romeodossantos/verone-back-office/tests/e2e/business-workflows.spec.ts:40:5",
+                        "location": {
+                          "file": "/Users/romeodossantos/verone-back-office/tests/e2e/business-workflows.spec.ts",
+                          "column": 49,
+                          "line": 43
+                        },
+                        "snippet": "  41 |       await page.goto('/login');\n  42 |       await expect(page).toHaveTitle(/Vérone|Login/);\n> 43 |       await expect(page.locator('text=VÉRONE')).toBeVisible();\n     |                                                 ^\n  44 |     });\n  45 |\n  46 |     // Test responsive design"
+                      },
+                      "errors": [
+                        {
+                          "location": {
+                            "file": "/Users/romeodossantos/verone-back-office/tests/e2e/business-workflows.spec.ts",
+                            "column": 49,
+                            "line": 43
+                          },
+                          "message": "Error: expect.toBeVisible: Error: strict mode violation: locator('text=VÉRONE') resolved to 2 elements:\n    1) <div class=\"font-logo text-4xl font-light tracking-wider text-black mb-2\">VÉRONE</div> aka getByText('VÉRONE', { exact: true })\n    2) <p class=\"text-xs text-black opacity-50\">Vérone Back Office - Version MVP</p> aka getByText('Vérone Back Office - Version')\n\nCall log:\n\u001b[2m  - Expect \"toBeVisible\" with timeout 10000ms\u001b[22m\n\u001b[2m  - waiting for locator('text=VÉRONE')\u001b[22m\n\n\n  41 |       await page.goto('/login');\n  42 |       await expect(page).toHaveTitle(/Vérone|Login/);\n> 43 |       await expect(page.locator('text=VÉRONE')).toBeVisible();\n     |                                                 ^\n  44 |     });\n  45 |\n  46 |     // Test responsive design\n    at /Users/romeodossantos/verone-back-office/tests/e2e/business-workflows.spec.ts:43:49\n    at /Users/romeodossantos/verone-back-office/tests/e2e/business-workflows.spec.ts:40:5"
+                        }
+                      ],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "steps": [
+                        {
+                          "title": "Navigation vers page de connexion",
+                          "duration": 1049,
+                          "error": {
+                            "message": "Error: expect.toBeVisible: Error: strict mode violation: locator('text=VÉRONE') resolved to 2 elements:\n    1) <div class=\"font-logo text-4xl font-light tracking-wider text-black mb-2\">VÉRONE</div> aka getByText('VÉRONE', { exact: true })\n    2) <p class=\"text-xs text-black opacity-50\">Vérone Back Office - Version MVP</p> aka getByText('Vérone Back Office - Version')\n\nCall log:\n\u001b[2m  - Expect \"toBeVisible\" with timeout 10000ms\u001b[22m\n\u001b[2m  - waiting for locator('text=VÉRONE')\u001b[22m\n",
+                            "stack": "Error: expect.toBeVisible: Error: strict mode violation: locator('text=VÉRONE') resolved to 2 elements:\n    1) <div class=\"font-logo text-4xl font-light tracking-wider text-black mb-2\">VÉRONE</div> aka getByText('VÉRONE', { exact: true })\n    2) <p class=\"text-xs text-black opacity-50\">Vérone Back Office - Version MVP</p> aka getByText('Vérone Back Office - Version')\n\nCall log:\n\u001b[2m  - Expect \"toBeVisible\" with timeout 10000ms\u001b[22m\n\u001b[2m  - waiting for locator('text=VÉRONE')\u001b[22m\n\n    at /Users/romeodossantos/verone-back-office/tests/e2e/business-workflows.spec.ts:43:49\n    at /Users/romeodossantos/verone-back-office/tests/e2e/business-workflows.spec.ts:40:5",
+                            "location": {
+                              "file": "/Users/romeodossantos/verone-back-office/tests/e2e/business-workflows.spec.ts",
+                              "column": 49,
+                              "line": 43
+                            },
+                            "snippet": "  41 |       await page.goto('/login');\n  42 |       await expect(page).toHaveTitle(/Vérone|Login/);\n> 43 |       await expect(page.locator('text=VÉRONE')).toBeVisible();\n     |                                                 ^\n  44 |     });\n  45 |\n  46 |     // Test responsive design"
+                          }
+                        }
+                      ],
+                      "startTime": "2025-09-14T00:35:41.324Z",
+                      "annotations": [],
+                      "attachments": [
+                        {
+                          "name": "screenshot",
+                          "contentType": "image/png",
+                          "path": "/Users/romeodossantos/verone-back-office/.playwright-mcp/test-results/business-workflows-🎯-Véro-bc16d-gin-complet-avec-validation-chrome-business-critical/test-failed-1.png"
+                        },
+                        {
+                          "name": "video",
+                          "contentType": "video/webm",
+                          "path": "/Users/romeodossantos/verone-back-office/.playwright-mcp/test-results/business-workflows-🎯-Véro-bc16d-gin-complet-avec-validation-chrome-business-critical/video.webm"
+                        },
+                        {
+                          "name": "error-context",
+                          "contentType": "text/markdown",
+                          "path": "/Users/romeodossantos/verone-back-office/.playwright-mcp/test-results/business-workflows-🎯-Véro-bc16d-gin-complet-avec-validation-chrome-business-critical/error-context.md"
+                        },
+                        {
+                          "name": "trace",
+                          "contentType": "application/zip",
+                          "path": "/Users/romeodossantos/verone-back-office/.playwright-mcp/test-results/business-workflows-🎯-Véro-bc16d-gin-complet-avec-validation-chrome-business-critical/trace.zip"
+                        }
+                      ],
+                      "errorLocation": {
+                        "file": "/Users/romeodossantos/verone-back-office/tests/e2e/business-workflows.spec.ts",
+                        "column": 49,
+                        "line": 43
+                      }
+                    },
+                    {
+                      "workerIndex": 1,
+                      "parallelIndex": 0,
+                      "status": "failed",
+                      "duration": 575,
+                      "error": {
+                        "message": "Error: expect.toBeVisible: Error: strict mode violation: locator('text=VÉRONE') resolved to 2 elements:\n    1) <div class=\"font-logo text-4xl font-light tracking-wider text-black mb-2\">VÉRONE</div> aka getByText('VÉRONE', { exact: true })\n    2) <p class=\"text-xs text-black opacity-50\">Vérone Back Office - Version MVP</p> aka getByText('Vérone Back Office - Version')\n\nCall log:\n\u001b[2m  - Expect \"toBeVisible\" with timeout 10000ms\u001b[22m\n\u001b[2m  - waiting for locator('text=VÉRONE')\u001b[22m\n",
+                        "stack": "Error: expect.toBeVisible: Error: strict mode violation: locator('text=VÉRONE') resolved to 2 elements:\n    1) <div class=\"font-logo text-4xl font-light tracking-wider text-black mb-2\">VÉRONE</div> aka getByText('VÉRONE', { exact: true })\n    2) <p class=\"text-xs text-black opacity-50\">Vérone Back Office - Version MVP</p> aka getByText('Vérone Back Office - Version')\n\nCall log:\n\u001b[2m  - Expect \"toBeVisible\" with timeout 10000ms\u001b[22m\n\u001b[2m  - waiting for locator('text=VÉRONE')\u001b[22m\n\n    at /Users/romeodossantos/verone-back-office/tests/e2e/business-workflows.spec.ts:43:49\n    at /Users/romeodossantos/verone-back-office/tests/e2e/business-workflows.spec.ts:40:5",
+                        "location": {
+                          "file": "/Users/romeodossantos/verone-back-office/tests/e2e/business-workflows.spec.ts",
+                          "column": 49,
+                          "line": 43
+                        },
+                        "snippet": "  41 |       await page.goto('/login');\n  42 |       await expect(page).toHaveTitle(/Vérone|Login/);\n> 43 |       await expect(page.locator('text=VÉRONE')).toBeVisible();\n     |                                                 ^\n  44 |     });\n  45 |\n  46 |     // Test responsive design"
+                      },
+                      "errors": [
+                        {
+                          "location": {
+                            "file": "/Users/romeodossantos/verone-back-office/tests/e2e/business-workflows.spec.ts",
+                            "column": 49,
+                            "line": 43
+                          },
+                          "message": "Error: expect.toBeVisible: Error: strict mode violation: locator('text=VÉRONE') resolved to 2 elements:\n    1) <div class=\"font-logo text-4xl font-light tracking-wider text-black mb-2\">VÉRONE</div> aka getByText('VÉRONE', { exact: true })\n    2) <p class=\"text-xs text-black opacity-50\">Vérone Back Office - Version MVP</p> aka getByText('Vérone Back Office - Version')\n\nCall log:\n\u001b[2m  - Expect \"toBeVisible\" with timeout 10000ms\u001b[22m\n\u001b[2m  - waiting for locator('text=VÉRONE')\u001b[22m\n\n\n  41 |       await page.goto('/login');\n  42 |       await expect(page).toHaveTitle(/Vérone|Login/);\n> 43 |       await expect(page.locator('text=VÉRONE')).toBeVisible();\n     |                                                 ^\n  44 |     });\n  45 |\n  46 |     // Test responsive design\n    at /Users/romeodossantos/verone-back-office/tests/e2e/business-workflows.spec.ts:43:49\n    at /Users/romeodossantos/verone-back-office/tests/e2e/business-workflows.spec.ts:40:5"
+                        }
+                      ],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 1,
+                      "steps": [
+                        {
+                          "title": "Navigation vers page de connexion",
+                          "duration": 426,
+                          "error": {
+                            "message": "Error: expect.toBeVisible: Error: strict mode violation: locator('text=VÉRONE') resolved to 2 elements:\n    1) <div class=\"font-logo text-4xl font-light tracking-wider text-black mb-2\">VÉRONE</div> aka getByText('VÉRONE', { exact: true })\n    2) <p class=\"text-xs text-black opacity-50\">Vérone Back Office - Version MVP</p> aka getByText('Vérone Back Office - Version')\n\nCall log:\n\u001b[2m  - Expect \"toBeVisible\" with timeout 10000ms\u001b[22m\n\u001b[2m  - waiting for locator('text=VÉRONE')\u001b[22m\n",
+                            "stack": "Error: expect.toBeVisible: Error: strict mode violation: locator('text=VÉRONE') resolved to 2 elements:\n    1) <div class=\"font-logo text-4xl font-light tracking-wider text-black mb-2\">VÉRONE</div> aka getByText('VÉRONE', { exact: true })\n    2) <p class=\"text-xs text-black opacity-50\">Vérone Back Office - Version MVP</p> aka getByText('Vérone Back Office - Version')\n\nCall log:\n\u001b[2m  - Expect \"toBeVisible\" with timeout 10000ms\u001b[22m\n\u001b[2m  - waiting for locator('text=VÉRONE')\u001b[22m\n\n    at /Users/romeodossantos/verone-back-office/tests/e2e/business-workflows.spec.ts:43:49\n    at /Users/romeodossantos/verone-back-office/tests/e2e/business-workflows.spec.ts:40:5",
+                            "location": {
+                              "file": "/Users/romeodossantos/verone-back-office/tests/e2e/business-workflows.spec.ts",
+                              "column": 49,
+                              "line": 43
+                            },
+                            "snippet": "  41 |       await page.goto('/login');\n  42 |       await expect(page).toHaveTitle(/Vérone|Login/);\n> 43 |       await expect(page.locator('text=VÉRONE')).toBeVisible();\n     |                                                 ^\n  44 |     });\n  45 |\n  46 |     // Test responsive design"
+                          }
+                        }
+                      ],
+                      "startTime": "2025-09-14T00:35:43.447Z",
+                      "annotations": [],
+                      "attachments": [
+                        {
+                          "name": "screenshot",
+                          "contentType": "image/png",
+                          "path": "/Users/romeodossantos/verone-back-office/.playwright-mcp/test-results/business-workflows-🎯-Véro-bc16d-gin-complet-avec-validation-chrome-business-critical-retry1/test-failed-1.png"
+                        },
+                        {
+                          "name": "video",
+                          "contentType": "video/webm",
+                          "path": "/Users/romeodossantos/verone-back-office/.playwright-mcp/test-results/business-workflows-🎯-Véro-bc16d-gin-complet-avec-validation-chrome-business-critical-retry1/video.webm"
+                        },
+                        {
+                          "name": "error-context",
+                          "contentType": "text/markdown",
+                          "path": "/Users/romeodossantos/verone-back-office/.playwright-mcp/test-results/business-workflows-🎯-Véro-bc16d-gin-complet-avec-validation-chrome-business-critical-retry1/error-context.md"
+                        },
+                        {
+                          "name": "trace",
+                          "contentType": "application/zip",
+                          "path": "/Users/romeodossantos/verone-back-office/.playwright-mcp/test-results/business-workflows-🎯-Véro-bc16d-gin-complet-avec-validation-chrome-business-critical-retry1/trace.zip"
+                        }
+                      ],
+                      "errorLocation": {
+                        "file": "/Users/romeodossantos/verone-back-office/tests/e2e/business-workflows.spec.ts",
+                        "column": 49,
+                        "line": 43
+                      }
+                    }
+                  ],
+                  "status": "unexpected"
+                }
+              ],
+              "id": "864e6cb03d80b509e0eb-4c474bb2bef023300331",
+              "file": "business-workflows.spec.ts",
+              "line": 36,
+              "column": 7
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "errors": [],
+  "stats": {
+    "startTime": "2025-09-14T00:35:40.911Z",
+    "duration": 3293.6769999999997,
+    "expected": 0,
+    "skipped": 0,
+    "unexpected": 1,
+    "flaky": 0
+  }
+}

@@ -34,8 +34,8 @@ async function healthCheck(req: NextRequest) {
   // Vérification mémoire critique
   const memoryUsage = process.memoryUsage().heapUsed / 1024 / 1024;
   if (memoryUsage > 500) { // 500MB limite
-    health.checks.memory.status = 'warning';
-    health.status = 'warning';
+    health.checks.memory.status = 'caution';
+    health.status = 'caution';
   }
 
   const responseTime = Date.now() - startTime;

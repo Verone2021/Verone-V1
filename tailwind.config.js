@@ -47,6 +47,59 @@ module.exports = {
           foreground: "hsl(var(--card-foreground))",
         },
       },
+      fontFamily: {
+        // Typographies officielles Vérone selon design-tokens
+        'logo': ['Balgin Light SM Expanded', 'serif'],      // UNIQUEMENT pour logo
+        'heading': ['Monarch Regular', 'serif'],             // Sous-titres, navigation
+        'body': ['Fieldwork 10 Geo Regular', 'sans-serif'], // Interface, corps
+        'mono': ['JetBrains Mono', 'monospace'],            // Code, références
+
+        // Fallbacks system pour compatibilité
+        'sans': ['Fieldwork 10 Geo Regular', 'ui-sans-serif', 'system-ui', 'sans-serif'],
+        'serif': ['Monarch Regular', 'ui-serif', 'Georgia', 'serif'],
+      },
+      fontSize: {
+        // Scale harmonieuse Vérone selon design-tokens
+        'xs': ['0.75rem', { lineHeight: '1rem' }],      // 12px - Labels, métadonnées
+        'sm': ['0.875rem', { lineHeight: '1.25rem' }],   // 14px - Descriptions, sous-textes
+        'base': ['1rem', { lineHeight: '1.5rem' }],      // 16px - Corps principal
+        'lg': ['1.125rem', { lineHeight: '1.75rem' }],   // 18px - Sous-titres
+        'xl': ['1.25rem', { lineHeight: '1.75rem' }],    // 20px - Titres de sections
+        '2xl': ['1.5rem', { lineHeight: '2rem' }],       // 24px - Titres principaux
+        '3xl': ['1.875rem', { lineHeight: '2.25rem' }],  // 30px - Headers display
+
+        // Tailles spéciales pour logo
+        '6xl': ['3.75rem', { lineHeight: '1', letterSpacing: '0.15em' }],  // 60px
+        '7xl': ['4.5rem', { lineHeight: '1', letterSpacing: '0.15em' }],   // 72px
+        '8xl': ['6rem', { lineHeight: '1', letterSpacing: '0.15em' }],     // 96px
+      },
+      letterSpacing: {
+        // Espacement typographique Vérone
+        'tightest': '-0.075em',
+        'tighter': '-0.05em',
+        'tight': '-0.025em',
+        'normal': '0',
+        'wide': '0.025em',
+        'wider': '0.05em',
+        'widest': '0.1em',
+        'ultra': '0.25em',    // Pour effet hover logo
+        'luxury': '0.3em',    // Pour effet premium
+      },
+      animation: {
+        // Animations personnalisées Vérone
+        'fade-in': 'fadeIn 0.7s ease-out forwards',
+        'fade-in-up': 'fadeInUp 0.7s ease-out forwards',
+        'scale-in': 'scaleIn 0.5s ease-out forwards',
+        'shimmer': 'shimmer 2s ease-in-out infinite',
+        'pulse-subtle': 'pulseSubtle 2s ease-in-out infinite',
+      },
+      transitionDuration: {
+        // Durées standards selon design-tokens
+        'fast': '150ms',      // Hovers, micro-interactions
+        'normal': '300ms',    // Modals, navigation
+        'slow': '500ms',      // Transitions de page
+        'ultra': '700ms',     // Animations premium
+      },
       borderRadius: {
         lg: "var(--radius)",
         md: "calc(var(--radius) - 2px)",

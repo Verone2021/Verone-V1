@@ -1,9 +1,7 @@
 -- Migration: Feeds Export System
--- Creates tables for Meta/Google feeds management
+-- Phase 4: Creates tables for Meta/Google feeds management
 -- Based on ERD-CATALOGUE-V1.md and integrations-externes.md
-
--- Enable required extensions
-CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
+-- Depends on: 001_create_base_types, 002_create_auth_tables, 003_create_rls_policies
 
 -- ========================================
 -- FEED CONFIGURATIONS
@@ -203,7 +201,7 @@ CREATE POLICY "feed_exports_access" ON feed_exports
 -- Insert/Update exports: only system can write (service_role)
 CREATE POLICY "feed_exports_system_write" ON feed_exports
   FOR INSERT TO service_role
-  USING (true);
+  WITH CHECK (true);
 
 CREATE POLICY "feed_exports_system_update" ON feed_exports
   FOR UPDATE TO service_role

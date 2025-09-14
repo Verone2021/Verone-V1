@@ -1,10 +1,35 @@
--- Migration: Create Catalogue Tables
--- Based on ERD-CATALOGUE-V1.md specifications
+-- Migration: Create Base Types and Extensions
+-- Phase 1: Foundation types and extensions needed by all other migrations
 
 -- Enable UUID extension
 CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
 
--- Create custom types
+-- Create base types (used across all modules)
+DO $$ BEGIN
+  CREATE TYPE user_role_type AS ENUM ('owner', 'admin', 'catalog_manager', 'sales', 'partner_manager');
+EXCEPTION
+  WHEN duplicate_object THEN null;
+END $$;
+
+DO $$ BEGIN
+  CREATE TYPE user_type AS ENUM ('staff', 'supplier', 'customer', 'partner');
+EXCEPTION
+  WHEN duplicate_object THEN null;
+END $$;
+
+DO $$ BEGIN
+  CREATE TYPE organisation_type AS ENUM ('internal', 'supplier', 'customer', 'partner');
+EXCEPTION
+  WHEN duplicate_object THEN null;
+END $$;
+
+DO $$ BEGIN
+  CREATE TYPE language_type AS ENUM ('fr', 'en', 'pt');
+EXCEPTION
+  WHEN duplicate_object THEN null;
+END $$;
+
+-- Catalogue-specific types
 DO $$ BEGIN
   CREATE TYPE product_status_type AS ENUM ('draft', 'active', 'inactive', 'discontinued');
 EXCEPTION
@@ -19,18 +44,6 @@ END $$;
 
 DO $$ BEGIN
   CREATE TYPE package_type AS ENUM ('single', 'pack', 'bulk', 'custom');
-EXCEPTION
-  WHEN duplicate_object THEN null;
-END $$;
-
-DO $$ BEGIN
-  CREATE TYPE user_role_type AS ENUM ('owner', 'admin', 'catalog_manager', 'sales', 'partner_manager');
-EXCEPTION
-  WHEN duplicate_object THEN null;
-END $$;
-
-DO $$ BEGIN
-  CREATE TYPE language_type AS ENUM ('fr', 'en', 'pt');
 EXCEPTION
   WHEN duplicate_object THEN null;
 END $$;
@@ -75,24 +88,28 @@ CREATE TABLE IF NOT EXISTS category_translations (
 -- Product groups
 CREATE TABLE IF NOT EXISTS product_groups (
   id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-  
+
   -- Identification
   name VARCHAR(255) NOT NULL,
   description TEXT,
   slug VARCHAR(255) UNIQUE NOT NULL,
-  
+
   -- Classification
   category_id UUID NOT NULL REFERENCES categories(id),
   brand VARCHAR(100),
-  
+
   -- Status
   status product_status_type DEFAULT 'draft',
-  
+
+  -- Traceability (Business Rules: all Vérone products have source_organisation_id = 1)
+  source_organisation_id UUID, -- Will add FK constraint after organisations table is created
+  created_by_type user_type DEFAULT 'staff',
+
   -- Metadata
   created_at TIMESTAMPTZ DEFAULT NOW(),
   updated_at TIMESTAMPTZ DEFAULT NOW(),
   created_by UUID REFERENCES auth.users(id),
-  
+
   -- Constraints
   CONSTRAINT product_groups_name_check CHECK (length(name) >= 2),
   CONSTRAINT product_groups_slug_check CHECK (slug ~ '^[a-z0-9\-]+$')
@@ -254,19 +271,13 @@ CREATE TABLE IF NOT EXISTS collection_products (
   UNIQUE(collection_id, product_group_id)
 );
 
--- User profiles
-CREATE TABLE IF NOT EXISTS user_profiles (
-  user_id UUID PRIMARY KEY REFERENCES auth.users(id),
-  role user_role_type NOT NULL,
-  scopes TEXT[] DEFAULT '{}',
-  partner_id UUID, -- Will reference partners table created next
-  created_at TIMESTAMPTZ DEFAULT NOW(),
-  updated_at TIMESTAMPTZ DEFAULT NOW()
-);
+-- Note: user_profiles table will be created in migration 002
 
 -- Indexes for performance
 CREATE INDEX IF NOT EXISTS idx_product_groups_status ON product_groups(status);
 CREATE INDEX IF NOT EXISTS idx_product_groups_category ON product_groups(category_id);
+CREATE INDEX IF NOT EXISTS idx_product_groups_source_org ON product_groups(source_organisation_id);
+CREATE INDEX IF NOT EXISTS idx_product_groups_created_by_type ON product_groups(created_by_type);
 CREATE INDEX IF NOT EXISTS idx_product_groups_created_at ON product_groups(created_at DESC);
 
 CREATE INDEX IF NOT EXISTS idx_products_sku ON products(sku);

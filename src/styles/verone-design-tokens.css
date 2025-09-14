@@ -23,7 +23,7 @@
    * ======================================== */
 
   --system-success: #22c55e;        /* Confirmations */
-  --system-warning: #f59e0b;        /* Alertes */
+  --system-warning: #000000;        /* Alertes - Noir selon charte */
   --system-error: #ef4444;          /* Erreurs */
   --system-info: #3b82f6;           /* Informations */
 
@@ -171,7 +171,7 @@
 }
 
 .status-warning {
-  color: var(--system-warning);
+  color: var(--verone-noir);
 }
 
 .status-error {
@@ -204,7 +204,7 @@
 
 /*
 COULEURS INTERDITES:
-- Doré (#C9A86A) : JAMAIS dans les interfaces
+- Couleurs décoratives (jaune, doré, etc.) : JAMAIS dans les interfaces
 - Toute couleur décorative
 - Dégradés, ombres colorées
 

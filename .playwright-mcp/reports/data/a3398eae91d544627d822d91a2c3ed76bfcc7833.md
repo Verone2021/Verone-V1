@@ -1,0 +1,42 @@
+# Page snapshot
+
+```yaml
+- generic [active] [ref=e1]:
+  - status [ref=e2]:
+    - generic [ref=e3]:
+      - img [ref=e5]
+      - generic [ref=e7]:
+        - text: Static route
+        - button "Hide static indicator" [ref=e8] [cursor=pointer]:
+          - img [ref=e9] [cursor=pointer]
+  - alert [ref=e12]
+  - generic [ref=e15]:
+    - generic [ref=e16]:
+      - generic [ref=e17]: VÉRONE
+      - paragraph [ref=e18]: Back Office - Connexion
+    - generic [ref=e19]:
+      - generic [ref=e20]:
+        - generic [ref=e21]:
+          - generic [ref=e22]: Email
+          - textbox "Email" [ref=e23]
+        - generic [ref=e24]:
+          - generic [ref=e25]: Mot de passe
+          - generic [ref=e26]:
+            - textbox "Mot de passe" [ref=e27]
+            - button [ref=e28] [cursor=pointer]:
+              - img [ref=e29] [cursor=pointer]
+        - button "Se connecter" [ref=e32] [cursor=pointer]:
+          - generic [ref=e33] [cursor=pointer]:
+            - img [ref=e34] [cursor=pointer]
+            - generic [ref=e37] [cursor=pointer]: Se connecter
+      - generic [ref=e38]:
+        - paragraph [ref=e39]: "Compte de test MVP :"
+        - generic [ref=e40]:
+          - generic [ref=e41]:
+            - text: "Email :"
+            - code [ref=e42]: veronebyromeo@gmail.com
+          - generic [ref=e43]:
+            - text: "Mot de passe :"
+            - code [ref=e44]: Abc123456
+    - paragraph [ref=e46]: Vérone Back Office - Version MVP
+```

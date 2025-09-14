@@ -1,5 +1,6 @@
 -- Migration: RLS Policies for Security
--- Based on roles-permissions-v1.md specifications
+-- Phase 3: Row Level Security policies and helper functions
+-- Depends on: 001_create_base_types, 002_create_auth_tables
 
 -- ========================================
 -- HELPER FUNCTIONS FOR RLS
@@ -11,14 +12,11 @@ RETURNS user_role_type AS $$
   SELECT role FROM user_profiles WHERE user_id = auth.uid()
 $$ LANGUAGE SQL SECURITY DEFINER;
 
--- Get current user's organisation ID
+-- Get current user's organisation ID (MVP: always Vérone organisation)
+-- TODO Phase 3: Implement multi-tenancy when user_organisation_assignments is added
 CREATE OR REPLACE FUNCTION get_user_organisation_id()
 RETURNS UUID AS $$
-  SELECT organisation_id
-  FROM user_organisation_assignments
-  WHERE user_id = auth.uid()
-  AND is_active = TRUE
-  LIMIT 1
+  SELECT id FROM organisations WHERE slug = 'verone' LIMIT 1
 $$ LANGUAGE SQL SECURITY DEFINER;
 
 -- Check if user has specific scope
@@ -58,7 +56,6 @@ $$ LANGUAGE plpgsql SECURITY DEFINER;
 
 -- Auth tables
 ALTER TABLE organisations ENABLE ROW LEVEL SECURITY;
-ALTER TABLE user_organisation_assignments ENABLE ROW LEVEL SECURITY;
 ALTER TABLE user_profiles ENABLE ROW LEVEL SECURITY;
 
 -- Catalogue tables
@@ -80,14 +77,11 @@ ALTER TABLE collection_products ENABLE ROW LEVEL SECURITY;
 -- ORGANISATIONS POLICIES
 -- ========================================
 
--- Select: Users can see organisations they belong to
-CREATE POLICY "users_can_view_their_organisations" ON organisations
+-- Select: All authenticated users can see active organisations (MVP: simplified)
+-- TODO Phase 3: Restrict to user's assigned organisations only
+CREATE POLICY "users_can_view_organisations" ON organisations
   FOR SELECT USING (
-    id IN (
-      SELECT organisation_id
-      FROM user_organisation_assignments
-      WHERE user_id = auth.uid() AND is_active = TRUE
-    )
+    auth.role() = 'authenticated' AND is_active = TRUE
   );
 
 -- Insert: Only owners can create organisations
@@ -96,53 +90,21 @@ CREATE POLICY "owners_can_create_organisations" ON organisations
     get_user_role() = 'owner'
   );
 
--- Update: Owners and admins can update their organisation
+-- Update: Owners and admins can update organisations
 CREATE POLICY "admins_can_update_organisation" ON organisations
   FOR UPDATE USING (
-    id = get_user_organisation_id()
-    AND get_user_role() IN ('owner', 'admin')
-  );
-
--- ========================================
--- USER ASSIGNMENTS POLICIES
--- ========================================
-
--- Select: Users can view assignments in their organisation
-CREATE POLICY "users_can_view_org_assignments" ON user_organisation_assignments
-  FOR SELECT USING (
-    organisation_id = get_user_organisation_id()
-  );
-
--- Insert: Owners and admins can assign users
-CREATE POLICY "admins_can_assign_users" ON user_organisation_assignments
-  FOR INSERT WITH CHECK (
-    organisation_id = get_user_organisation_id()
-    AND get_user_role() IN ('owner', 'admin')
-  );
-
--- Update: Owners and admins can update assignments
-CREATE POLICY "admins_can_update_assignments" ON user_organisation_assignments
-  FOR UPDATE USING (
-    organisation_id = get_user_organisation_id()
-    AND get_user_role() IN ('owner', 'admin')
+    get_user_role() IN ('owner', 'admin')
   );
 
 -- ========================================
 -- USER PROFILES POLICIES
 -- ========================================
 
--- Select: Users can view their profile and org members
+-- Select: Users can view their profile and other team members (MVP: simplified)
+-- TODO Phase 3: Restrict to same organisation when multi-tenancy is implemented
 CREATE POLICY "users_can_view_profiles" ON user_profiles
   FOR SELECT USING (
-    user_id = auth.uid()
-    OR EXISTS (
-      SELECT 1 FROM user_organisation_assignments uoa1
-      JOIN user_organisation_assignments uoa2 ON uoa1.organisation_id = uoa2.organisation_id
-      WHERE uoa1.user_id = auth.uid()
-      AND uoa2.user_id = user_profiles.user_id
-      AND uoa1.is_active = TRUE
-      AND uoa2.is_active = TRUE
-    )
+    auth.role() = 'authenticated'
   );
 
 -- Insert/Update: Users can manage their own profile
@@ -298,6 +260,6 @@ CREATE POLICY "collection_products_follow_collections" ON collection_products
 -- ========================================
 
 COMMENT ON FUNCTION get_user_role() IS 'Returns current authenticated user role from user_profiles';
-COMMENT ON FUNCTION get_user_organisation_id() IS 'Returns current user active organisation ID';
+COMMENT ON FUNCTION get_user_organisation_id() IS 'Returns Vérone organisation ID (MVP), will be user-specific in Phase 3';
 COMMENT ON FUNCTION has_scope(TEXT) IS 'Check if current user has specific permission scope';
 COMMENT ON FUNCTION validate_rls_setup() IS 'Validate RLS is properly configured on all tables';

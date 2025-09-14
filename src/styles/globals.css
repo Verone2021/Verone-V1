@@ -16,7 +16,7 @@
 
   /* Couleurs système uniquement */
   --system-success: #22c55e;
-  --system-warning: #f59e0b;
+  --system-warning: #000000;
   --system-error: #ef4444;
   --system-info: #3b82f6;
 
@@ -225,12 +225,12 @@ h4, h5, h6 {
 
 /* États système */
 .text-success { color: var(--system-success); }
-.text-warning { color: var(--system-warning); }
+.text-warning { color: var(--verone-noir); }
 .text-error { color: var(--system-error); }
 .text-info { color: var(--system-info); }
 
 .bg-success { background-color: var(--system-success); }
-.bg-warning { background-color: var(--system-warning); }
+.bg-warning { background-color: var(--verone-noir); }
 .bg-error { background-color: var(--system-error); }
 .bg-info { background-color: var(--system-info); }
 

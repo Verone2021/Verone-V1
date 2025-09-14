@@ -11,6 +11,8 @@ import { useEffect, useState } from 'react'
 import { AppSidebar } from './app-sidebar'
 import { AppHeader } from './app-header'
 import { PublicLayout } from './public-layout'
+import { createClient } from '@/lib/supabase/client'
+import type { User } from '@supabase/supabase-js'
 
 interface AuthWrapperProps {
   children: React.ReactNode
@@ -21,27 +23,31 @@ const PUBLIC_PAGES = ['/', '/login']
 
 export function AuthWrapper({ children }: AuthWrapperProps) {
   const pathname = usePathname()
-  const [isAuthenticated, setIsAuthenticated] = useState(false)
+  const [user, setUser] = useState<User | null>(null)
   const [isLoading, setIsLoading] = useState(true)
 
-  // Vérification authentification côté client
+  // Vérification authentification avec Supabase
   useEffect(() => {
-    const checkAuth = () => {
-      // Pour MVP : vérification simple du cookie
-      const authCookie = document.cookie
-        .split('; ')
-        .find(row => row.startsWith('verone-auth='))
-        ?.split('=')[1]
+    const supabase = createClient()
 
-      setIsAuthenticated(authCookie === 'authenticated')
+    // Obtenir la session courante
+    const getSession = async () => {
+      const { data: { session } } = await supabase.auth.getSession()
+      setUser(session?.user ?? null)
       setIsLoading(false)
     }
 
-    checkAuth()
+    getSession()
 
-    // Écouter les changements de cookies (pour déconnexion)
-    const interval = setInterval(checkAuth, 1000)
-    return () => clearInterval(interval)
+    // Écouter les changements d'authentification
+    const {
+      data: { subscription },
+    } = supabase.auth.onAuthStateChange((_event, session) => {
+      setUser(session?.user ?? null)
+      setIsLoading(false)
+    })
+
+    return () => subscription.unsubscribe()
   }, [])
 
   // Pendant le chargement, affichage minimal
@@ -57,7 +63,7 @@ export function AuthWrapper({ children }: AuthWrapperProps) {
 
   // Page publique OU utilisateur non authentifié
   const isPublicPage = PUBLIC_PAGES.includes(pathname)
-  const shouldUsePublicLayout = isPublicPage || !isAuthenticated
+  const shouldUsePublicLayout = isPublicPage || !user
 
   if (shouldUsePublicLayout) {
     return <PublicLayout>{children}</PublicLayout>

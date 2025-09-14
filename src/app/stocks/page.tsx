@@ -49,7 +49,7 @@ const products: Product[] = [
   },
   {
     id: '3',
-    name: 'Lampe Florence dorée',
+    name: 'Lampe Florence',
     sku: 'LAM-FLO-DOR',
     category: 'Éclairage',
     stock: 0,
