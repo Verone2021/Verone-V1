@@ -223,8 +223,8 @@ variant: {
   default: "bg-black text-white border-black",
   success: "bg-green-600 text-white border-green-600",    // En stock
   destructive: "bg-red-600 text-white border-red-600",    // Rupture
-  warning: "bg-yellow-600 text-white border-yellow-600",  // Bientôt
-  info: "bg-blue-600 text-white border-blue-600"          // Précommande
+  warning: "bg-black text-white border-black",           // Bientôt
+  info: "bg-black text-white border-black"               // Précommande
 }
 ```
 

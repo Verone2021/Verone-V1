@@ -133,7 +133,7 @@ export default function DashboardPage() {
                 <Clock className="h-4 w-4" />
                 <span>{performanceMetrics.loadTime}ms</span>
                 {performanceMetrics.loadTime > 2000 && (
-                  <AlertTriangle className="h-4 w-4 text-yellow-500" title="Performance dégradée" />
+                  <AlertTriangle className="h-4 w-4 text-black" title="Performance dégradée" />
                 )}
               </div>
             )}

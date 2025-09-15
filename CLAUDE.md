@@ -19,6 +19,183 @@
 
 ---
 
+## 🚨 **RÈGLES STRICTES - ORGANISATION REPOSITORY PROFESSIONNELLE**
+
+> **RÈGLE CRITIQUE AJOUTÉE** : Suite à un désordre constaté dans le repository (fichiers éparpillés), ces règles **ABSOLUES** empêchent tout futur désordre.
+
+### **🚫 INTERDICTIONS ABSOLUES - RACINE REPOSITORY**
+
+#### **❌ JAMAIS À LA RACINE (hors configs projet)**
+```bash
+# ❌ INTERDITS - Scripts temporaires/debug
+*.js, *.ts, *.sql       # Sauf configs (next.config.js, etc.)
+test-*.js, debug-*.js   # → tests/debug/
+fix-*.js, apply-*.js    # → tests/debug/
+
+# ❌ INTERDITS - Assets et médias
+*.png, *.jpg, *.csv     # → tests/fixtures/
+*.webm, *.mp4          # → tests/screenshots/
+PHOTO*.*, test-*.png   # → tests/fixtures/images/
+
+# ❌ INTERDITS - Migrations/SQL
+*.sql                  # → supabase/migrations/
+enhance-*.sql          # → supabase/migrations/
+```
+
+#### **✅ SEULS FICHIERS AUTORISÉS À LA RACINE**
+```bash
+# Configuration projet (OBLIGATOIRES)
+CLAUDE.md              # Ce fichier (documentation centrale)
+package.json           # Dépendances npm
+tsconfig.json          # Configuration TypeScript
+next.config.js         # Configuration Next.js
+tailwind.config.js     # Configuration Tailwind
+playwright.config.ts   # Configuration Playwright
+postcss.config.js      # Configuration PostCSS
+
+# Environnement et Git
+.env*                  # Variables environnement
+.gitignore             # Exclusions Git
+.eslintrc.json         # Configuration ESLint
+.prettierrc            # Configuration Prettier
+README.md              # Documentation projet
+vercel.json            # Configuration Vercel
+
+# Workspace et legacy (à évaluer)
+*.code-workspace       # Workspace VS Code
+```
+
+### **📁 STRUCTURE OBLIGATOIRE PROFESSIONNELLE**
+
+#### **🗂️ Organisation Stricte par Type**
+```bash
+verone-back-office/
+├── CLAUDE.md                    # ✅ SEUL fichier doc racine
+├── package.json, *.config.*    # ✅ Configs projet uniquement
+│
+├── src/                         # ✅ Code application
+├── supabase/migrations/         # ✅ TOUTES migrations SQL
+├── scripts/                     # ✅ Scripts production SEULEMENT
+├── tests/                       # ✅ TOUS tests et debug
+│   ├── e2e/                    # Tests Playwright E2E
+│   ├── debug/                  # Scripts debug/validation
+│   │   ├── rls-policies/       # Tests RLS Supabase
+│   │   ├── storage/           # Tests upload/storage
+│   │   └── forms/             # Tests composants forms
+│   ├── fixtures/              # Données test (CSV, images)
+│   │   ├── csv/               # Fichiers CSV test
+│   │   ├── images/            # Images test
+│   │   └── sql/               # Scripts SQL test
+│   └── screenshots/           # Assets Playwright organisés
+│       ├── auth/              # Screenshots authentification
+│       ├── catalogue/         # Screenshots catalogue
+│       ├── families/          # Screenshots familles
+│       └── dashboard/         # Screenshots dashboard
+├── docs/                       # ✅ Documentation technique
+│   ├── deployment/            # Guides déploiement
+│   ├── development/           # Setup développement
+│   ├── troubleshooting/       # Résolution problèmes
+│   └── api/                   # Documentation API
+├── manifests/                 # ✅ Documentation business
+└── .claude/                   # ✅ Config Claude Code
+```
+
+### **📏 CONVENTIONS NOMMAGE STRICTES**
+
+#### **🔤 Formats Obligatoires**
+```bash
+# Fichiers et dossiers
+kebab-case              # test-family-form.js, upload-images.js
+PascalCase              # Components React uniquement
+snake_case              # Scripts utilitaires legacy
+
+# Extensions par type
+.js, .ts               # Scripts Node.js
+.tsx                   # Composants React
+.sql                   # Migrations Supabase
+.md                    # Documentation
+.png, .jpg             # Images/screenshots
+.json                  # Configuration
+```
+
+#### **🏷️ Préfixes par Contexte**
+```bash
+# Scripts debug
+test-[feature]-[action].js     # test-rls-validation.js
+debug-[module].js              # debug-rls-policies.js
+fix-[issue].js                # fix-storage-policies.js
+
+# Screenshots Playwright
+[feature]-[state]-[context].png # login-error-validation.png
+[page]-[action]-[result].png   # family-form-submit-success.png
+
+# Migrations SQL
+YYYYMMDD_NNN_[description].sql # 20250915_001_add_products_table.sql
+```
+
+### **✅ VALIDATION OBLIGATOIRE AVANT COMMIT**
+
+#### **🔍 Checklist Pré-Commit**
+```bash
+# 1. Vérifier racine propre
+ls *.js *.ts *.sql *.png *.csv 2>/dev/null && echo "❌ FICHIERS MAL PLACÉS"
+
+# 2. Vérifier structure dossiers
+[ -d "tests/debug" ] && [ -d "tests/fixtures" ] || echo "❌ STRUCTURE MANQUANTE"
+
+# 3. Vérifier migrations Supabase
+find . -name "*.sql" -not -path "./supabase/migrations/*" -not -path "./tests/*"
+
+# 4. Vérifier nommage conventions
+find . -name "*[A-Z]*" -not -path "./src/components/*" | grep -v ".md\|.js\|.ts"
+```
+
+#### **🛠️ Auto-Fix Commands**
+```bash
+# Nettoyer racine automatiquement
+mkdir -p tests/debug tests/fixtures tests/screenshots
+mv test-*.js debug-*.js fix-*.js tests/debug/ 2>/dev/null
+mv *.png *.jpg *.csv tests/fixtures/ 2>/dev/null
+mv *.sql supabase/migrations/ 2>/dev/null
+```
+
+### **📋 RÈGLES DE CRÉATION FICHIERS**
+
+#### **🎯 Avant Création - Questions Obligatoires**
+1. **Où va ce fichier ?** → Consulter structure obligatoire
+2. **Est-ce temporaire ?** → `tests/debug/` ou `tests/fixtures/`
+3. **Est-ce une migration ?** → `supabase/migrations/`
+4. **Est-ce documentation ?** → `docs/` (technique) ou `manifests/` (business)
+5. **Convention nommage ?** → Respecter formats obligatoires
+
+#### **⚠️ PROCESSUS DE VALIDATION AUTOMATIQUE**
+- **Toute création fichier** → Vérifier emplacement selon règles
+- **Tout commit Git** → Valider structure avec checklist
+- **Toute session Claude** → Rappel règles si violations détectées
+
+### **🚨 AUTO-ENFORCEMENT - RAPPELS AUTOMATIQUES**
+
+#### **🔔 Déclencheurs d'Alerte**
+Si Claude détecte :
+- Fichiers `.js/.ts/.sql` à la racine → **STOP + RAPPEL RÈGLES**
+- Screenshots hors `tests/screenshots/` → **RÉORGANISATION IMMÉDIATE**
+- Migrations hors `supabase/migrations/` → **DÉPLACEMENT OBLIGATOIRE**
+- Données test hors `tests/fixtures/` → **CORRECTION AUTOMATIQUE**
+
+#### **📢 Message Standard de Rappel**
+```
+🚨 VIOLATION STRUCTURE REPOSITORY DÉTECTÉE
+
+Fichier mal placé: [FILENAME]
+Emplacement correct: [CORRECT_PATH]
+Règle violée: [RULE]
+
+ACTION REQUISE: Déplacer le fichier selon structure professionnelle.
+Référence: Section "RÈGLES STRICTES" dans CLAUDE.md
+```
+
+---
+
 ## 🗂 Aperçu du Projet
 
 **Vérone Back Office** - CRM/ERP modulaire pour Vérone, spécialisé dans la décoration et le mobilier d'intérieur haut de gamme.
@@ -172,15 +349,37 @@ claude --restart
 - **Use Cases**: Business rules analysis, integration planning, performance optimization
 - **Essential for**: MVP catalog development, complex tarification rules
 
-### 🎭 **Playwright** — Browser Automation & Testing
-- **Status**: ✅ Configured for comprehensive E2E testing
+### 🌐 **Browser MCP** — Chrome Extension Control
+- **Status**: ✅ Extension Chrome installée et configurée
+- **Type**: Extension Google Chrome native pour contrôle direct du navigateur
+- **Features**: Contrôle direct de Chrome sans lancement de nouvelles instances
+- **Browser Setup**:
+  - ✅ **Chrome Extension** : "Browser MCP" installée dans Chrome
+  - 🎯 **Contrôle direct** : Utilise l'onglet Chrome actuel
+  - 👁️ **Mode visible** : Toutes actions visibles dans Chrome
+  - 🚀 **Performance** : Pas de lancement Chromium, utilise Chrome existant
+- **Capabilities**:
+  - Navigation et interaction directe dans Chrome
+  - Screenshots et captures d'état
+  - Form filling et automation workflows
+  - Debug visuel en temps réel
+- **Avantages vs Playwright** : Plus rapide, plus visible, plus stable
+
+### 🎭 **Playwright MCP** — Browser Automation & Testing
+- **Status**: ✅ Configured for comprehensive E2E testing with Chrome Extension
+- **Configuration**: `--extension` flag pour utiliser Chrome au lieu de Chromium
 - **Features**: Cross-browser automation, business workflow testing
+- **Browser Setup**:
+  - ✅ **Chrome** : Extension "Playwright MCP Bridge" installée
+  - ❌ **Chromium** : JAMAIS utilisé (cause bugs et fenêtres invisibles)
+  - 🎯 **Mode visible** : Tests s'exécutent dans Chrome ouvert
 - **Capabilities**:
   - Test complete Vérone workflows (catalog creation → sharing → PDF export)
   - Validate business rules (tarification, stock management, permissions)
   - Performance testing (feeds generation, dashboard load times)
   - Integration testing (Brevo webhooks, external APIs)
 - **Critical for**: MVP validation, user acceptance testing
+- **Usage**: Principalement pour tests E2E automatisés
 
 ### 🐙 **GitHub** — Repository Management
 - **Requires**: `GITHUB_TOKEN` environment variable
@@ -389,14 +588,58 @@ node scripts/log-analyzer.js --level error --hours 24 --export-claude
 
 ---
 
+## 🚨 **POLITIQUE ABSOLUE - JAMAIS DE DONNÉES MOCK**
+
+> **RÈGLE CRITIQUE**: Cette politique a été établie suite à un incident où des données de test n'étaient pas sauvegardées car l'interface utilisait des données simulées au lieu de la vraie base de données.
+
+### **⚠️ INTERDICTIONS ABSOLUES**
+```typescript
+// ❌ INTERDIT - Données mock/simulées
+const mockFamilies = [...]
+const mockCategories = [...]
+const fakeData = [...]
+
+// ❌ INTERDIT - Données statiques en dur
+const families = [
+  { id: '1', name: 'Test Family' },
+  { id: '2', name: 'Another Family' }
+]
+
+// ❌ INTERDIT - Local Storage pour données business
+localStorage.setItem('families', JSON.stringify(data))
+```
+
+### **✅ OBLIGATIONS STRICTES**
+```typescript
+// ✅ OBLIGATOIRE - Hooks Supabase réels
+import { useFamilies } from '@/hooks/use-families'
+import { useCategories } from '@/hooks/use-categories'
+import { useSubcategories } from '@/hooks/use-subcategories'
+
+// ✅ OBLIGATOIRE - Connexion directe Supabase
+const { families, loading, error, createFamily } = useFamilies()
+
+// ✅ OBLIGATOIRE - CRUD operations réelles
+await createFamily(formData) // Sauvegarde directe en DB
+```
+
+### **🔐 VALIDATION SYSTÉMATIQUE**
+Avant tout développement, vérifier :
+1. **Aucune donnée mock** dans les composants
+2. **Hooks Supabase utilisés** pour toutes opérations CRUD
+3. **Tests E2E validés** avec vraie base de données
+4. **Données persistées** et récupérables après rafraîchissement
+
+---
+
 ## 🎯 Workflow TDD Enhanced
 
 ### **Approche Business Rules First**
 1. **📖 Documentation First** : Toujours partir des manifests/ business rules
-2. **🧪 Tests First** : Écrire tests E2E qui échouent (RED)
-3. **⚡ Code Minimal** : Implémentation minimale pour faire passer tests (GREEN)
+2. **🧪 Tests First** : Écrire tests E2E qui échouent (RED) avec vraies données Supabase
+3. **⚡ Code Minimal** : Implémentation minimale pour faire passer tests (GREEN) - JAMAIS de mock
 4. **🔧 Refactor** : Optimisation performance + clean code
-5. **📊 Verify** : Validation SLOs + business rules compliance
+5. **📊 Verify** : Validation SLOs + business rules compliance + données réelles persistées
 
 ### **Agents Coordination Pattern**
 ```
@@ -427,10 +670,28 @@ Validation finale (business + tech + UX)
   /* Contextes business */
   --price-highlight: #000000;         /* Prix, promotions */
   --stock-available: #22c55e;         /* Vert - En stock */
-  --stock-limited: #f59e0b;           /* Orange - Sur commande */
+  --stock-limited: #000000;           /* Noir - Sur commande */
   --stock-out: #ef4444;               /* Rouge - Rupture */
 }
 ```
+
+### **🚨 INTERDICTION ABSOLUE - COULEURS JAUNES/DORÉES**
+
+> **RÈGLE CRITIQUE VÉRONE** : AUCUNE couleur jaune, dorée, ambre ou orange (#ffff*, #ff0*, #f59e0b, #fbbf24, bg-yellow*, text-yellow*, border-yellow*, bg-amber*, text-amber*, border-amber*, bg-gold*, text-gold*, border-gold*) ne doit JAMAIS être utilisée dans le système Vérone.
+
+**Violations = Échec immédiat** :
+- ❌ Toute nuance de jaune, doré, ambre
+- ❌ text-yellow-*, bg-yellow-*, border-yellow-*
+- ❌ text-amber-*, bg-amber-*, border-amber-*
+- ❌ text-gold-*, bg-gold-*, border-gold-*
+- ❌ Codes hex #ffff*, #ff0*, #f59e0b, #fbbf24
+
+**Alternatives OBLIGATOIRES** :
+- ✅ Avertissements → `text-black` ou `border-black`
+- ✅ Highlights → `bg-black text-white`
+- ✅ Status → `text-black` avec `border-black`
+
+Cette règle s'applique à TOUS les fichiers : composants React, CSS, Tailwind, documentation, agents MCP, et mémoires.
 
 ### **Composants Métier Spécialisés**
 - **`<ProductCard />`** : Affichage produits avec images premium

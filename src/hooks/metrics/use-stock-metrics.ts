@@ -5,7 +5,7 @@
 
 'use client';
 
-import { createClientComponentClient } from '@supabase/auth-helpers-nextjs';
+import { createBrowserClient } from '@supabase/ssr';
 
 interface StockAlert {
   id: string;
@@ -15,50 +15,46 @@ interface StockAlert {
 }
 
 export function useStockMetrics() {
-  const supabase = createClientComponentClient();
+  const supabase = createBrowserClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+  );
 
   const fetch = async () => {
     try {
       // Récupération de tous les produits avec leurs infos de stock
-      // Note: Dans le futur, cela pourrait venir d'une table "inventory" dédiée
       const { data: products, error } = await supabase
         .from('products')
         .select('id, name, status, stock_quantity, min_stock_level');
 
       if (error) throw error;
 
-      // Pour l'instant, on simule les quantités de stock car les colonnes
-      // n'existent pas encore dans la base de données
-      const simulatedProducts = products?.map(p => ({
+      // Utilisation des vraies données depuis la base
+      const productsWithDefaults = products?.map(p => ({
         ...p,
-        // Simulation basée sur le statut
-        stock_quantity: p.status === 'in_stock'
-          ? Math.floor(Math.random() * 50) + 10
-          : p.status === 'out_of_stock'
-          ? 0
-          : Math.floor(Math.random() * 5),
-        min_stock_level: 5, // Niveau minimum par défaut
+        stock_quantity: p.stock_quantity ?? 0,
+        min_stock_level: p.min_stock_level ?? 5,
       })) || [];
 
       // Calcul des métriques de stock
-      const inStock = simulatedProducts.filter(p =>
+      const inStock = productsWithDefaults.filter(p =>
         p.stock_quantity > p.min_stock_level
       ).length;
 
-      const outOfStock = simulatedProducts.filter(p =>
+      const outOfStock = productsWithDefaults.filter(p =>
         p.stock_quantity === 0
       ).length;
 
-      const lowStock = simulatedProducts.filter(p =>
+      const lowStock = productsWithDefaults.filter(p =>
         p.stock_quantity > 0 && p.stock_quantity <= p.min_stock_level
       ).length;
 
-      const critical = simulatedProducts.filter(p =>
+      const critical = productsWithDefaults.filter(p =>
         p.stock_quantity > 0 && p.stock_quantity <= 2
       ).length;
 
       // Génération des alertes de stock
-      const alerts: StockAlert[] = simulatedProducts
+      const alerts: StockAlert[] = productsWithDefaults
         .filter(p => p.stock_quantity <= p.min_stock_level)
         .map(p => ({
           id: p.id,

@@ -82,8 +82,8 @@ export function DeleteUserDialog({
     <Dialog open={open} onOpenChange={handleClose}>
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
-          <DialogTitle className="flex items-center space-x-2 text-red-600">
-            <AlertTriangle className="h-5 w-5" />
+          <DialogTitle className="flex items-center space-x-2 text-black">
+            <AlertTriangle className="h-5 w-5 text-red-600" />
             <span>Supprimer l'utilisateur</span>
           </DialogTitle>
           <DialogDescription>

@@ -5,7 +5,6 @@
       "args": [
         "-y",
         "@supabase/mcp-server-supabase@latest",
-        "--read-only",
         "--project-ref=aorroydfjsrygmosnzrl"
       ],
       "env": {
@@ -63,7 +62,8 @@
       "command": "npx",
       "args": [
         "-y",
-        "@playwright/mcp@latest"
+        "@playwright/mcp@latest",
+        "--extension"
       ]
     },
     "ref": {
@@ -73,7 +73,7 @@
         "@ref-tools/mcp@latest"
       ],
       "env": {
-        "REF_API_KEY": "ref-adba3c10044809167187"
+        "REF_API_KEY": "${REF_API_KEY}"
       }
     }
   }

@@ -1,6 +1,7 @@
 "use client"
 
 import Image from "next/image"
+import { useRouter } from "next/navigation"
 import { Badge } from "../ui/badge"
 import { Button } from "../ui/button"
 import { cn } from "../../lib/utils"
@@ -69,12 +70,21 @@ export function ProductCard({
   showActions = true,
   onClick
 }: ProductCardProps) {
+  const router = useRouter()
   const status = statusConfig[product.status]
 
   const handleClick = () => {
     if (onClick) {
       onClick(product)
+    } else {
+      // Navigation par défaut vers la page détail
+      router.push(`/catalogue/${product.id}`)
     }
+  }
+
+  const handleDetailsClick = (e: React.MouseEvent) => {
+    e.stopPropagation()
+    router.push(`/catalogue/${product.id}`)
   }
 
   return (
@@ -154,27 +164,14 @@ export function ProductCard({
 
         {/* Actions */}
         {showActions && (
-          <div className="flex space-x-2 pt-2">
+          <div className="flex pt-2">
             <Button
               variant="default"
               size="sm"
               className="flex-1"
-              onClick={(e) => {
-                e.stopPropagation()
-                // Action ajouter au panier
-              }}
+              onClick={handleDetailsClick}
             >
-              Ajouter
-            </Button>
-            <Button
-              variant="secondary"
-              size="sm"
-              onClick={(e) => {
-                e.stopPropagation()
-                // Action voir détails
-              }}
-            >
-              Détails
+              Voir détails
             </Button>
           </div>
         )}

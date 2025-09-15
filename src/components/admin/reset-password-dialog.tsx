@@ -147,7 +147,7 @@ export function ResetPasswordDialog({
                 type={showPassword ? 'text' : 'password'}
                 value={newPassword}
                 onChange={(e) => setNewPassword(e.target.value)}
-                className="border-black focus:ring-black pr-10"
+                className="bg-white border-black text-black placeholder:text-black placeholder:opacity-50 focus:ring-black focus:border-black focus:ring-2 focus:ring-offset-0 pr-10"
                 placeholder="Minimum 8 caractères"
                 required
               />
@@ -178,7 +178,7 @@ export function ResetPasswordDialog({
                 type={showConfirmPassword ? 'text' : 'password'}
                 value={confirmPassword}
                 onChange={(e) => setConfirmPassword(e.target.value)}
-                className="border-black focus:ring-black pr-10"
+                className="bg-white border-black text-black placeholder:text-black placeholder:opacity-50 focus:ring-black focus:border-black focus:ring-2 focus:ring-offset-0 pr-10"
                 placeholder="Retaper le mot de passe"
                 required
               />
@@ -238,7 +238,7 @@ export function ResetPasswordDialog({
               type="submit"
               disabled={isResetting || !isFormValid}
               className={cn(
-                "bg-orange-600 hover:bg-orange-700 text-white",
+                "bg-black hover:bg-gray-800 text-white",
                 (isResetting || !isFormValid) && "opacity-50 cursor-not-allowed"
               )}
             >

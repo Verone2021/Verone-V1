@@ -17,7 +17,9 @@
     "test:e2e:debug": "./tests/run-e2e-tests.sh --headed --debug",
     "playwright:install": "npx playwright install",
     "playwright:codegen": "npx playwright codegen localhost:3000",
-    "playwright:show-report": "npx playwright show-report .playwright-mcp/reports"
+    "playwright:show-report": "npx playwright show-report .playwright-mcp/reports",
+    "validate:structure": "node scripts/validate-repository-structure.js",
+    "fix:structure": "node scripts/auto-fix-structure.js"
   },
   "dependencies": {
     "@radix-ui/react-avatar": "^1.1.10",
@@ -35,6 +37,7 @@
     "@tanstack/react-query": "^5.20.1",
     "class-variance-authority": "^0.7.0",
     "clsx": "^2.1.0",
+    "csv-parse": "^6.1.0",
     "dotenv": "^17.2.2",
     "lucide-react": "^0.309.0",
     "next": "15.0.3",

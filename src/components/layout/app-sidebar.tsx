@@ -2,6 +2,7 @@
 
 import Link from "next/link"
 import { usePathname } from "next/navigation"
+import { useState } from "react"
 import { cn } from "../../lib/utils"
 import {
   Home,
@@ -10,18 +11,24 @@ import {
   Users,
   Settings,
   BookOpen,
-  LogOut
+  LogOut,
+  ChevronDown,
+  ChevronRight,
+  Grid3x3,
+  FolderOpen,
+  Tags
 } from "lucide-react"
 
-// Interface pour les éléments de navigation
+// Interface pour les éléments de navigation hiérarchique
 interface NavItem {
   title: string
-  href: string
+  href?: string
   icon: React.ComponentType<{ className?: string }>
   description?: string
+  children?: NavItem[]
 }
 
-// Configuration navigation selon charte Vérone
+// Configuration navigation hiérarchique selon bonnes pratiques e-commerce
 const navItems: NavItem[] = [
   {
     title: "Dashboard",
@@ -31,21 +38,40 @@ const navItems: NavItem[] = [
   },
   {
     title: "Catalogue",
-    href: "/catalogue",
     icon: BookOpen,
-    description: "Gestion produits et collections"
+    description: "Gestion produits et collections",
+    children: [
+      {
+        title: "Produits",
+        href: "/catalogue",
+        icon: Grid3x3,
+        description: "Liste et gestion des produits"
+      },
+      {
+        title: "Catégories",
+        href: "/catalogue/categories",
+        icon: Tags,
+        description: "Organisation par catégories"
+      },
+      {
+        title: "Collections",
+        href: "/catalogue/collections",
+        icon: FolderOpen,
+        description: "Collections thématiques"
+      },
+      {
+        title: "Stocks",
+        href: "/catalogue/stocks",
+        icon: Package,
+        description: "Inventaire et approvisionnement"
+      }
+    ]
   },
   {
     title: "Commandes",
     href: "/commandes",
     icon: ShoppingCart,
     description: "Suivi des commandes clients"
-  },
-  {
-    title: "Stocks",
-    href: "/stocks",
-    icon: Package,
-    description: "Inventaire et approvisionnement"
   },
   {
     title: "Clients",
@@ -67,6 +93,27 @@ interface AppSidebarProps {
 
 export function AppSidebar({ className }: AppSidebarProps) {
   const pathname = usePathname()
+  const [expandedItems, setExpandedItems] = useState<string[]>(['Catalogue']) // Catalogue ouvert par défaut
+
+  // Fonction pour basculer l'état d'expansion d'un élément
+  const toggleExpanded = (title: string) => {
+    setExpandedItems(prev =>
+      prev.includes(title)
+        ? prev.filter(item => item !== title)
+        : [...prev, title]
+    )
+  }
+
+  // Fonction pour vérifier si un élément ou ses enfants sont actifs
+  const isActiveOrHasActiveChild = (item: NavItem): boolean => {
+    if (item.href && (pathname === item.href || (item.href !== '/dashboard' && pathname.startsWith(item.href)))) {
+      return true
+    }
+    if (item.children) {
+      return item.children.some(child => isActiveOrHasActiveChild(child))
+    }
+    return false
+  }
 
   return (
     <aside className={cn(
@@ -86,36 +133,113 @@ export function AppSidebar({ className }: AppSidebarProps) {
       <nav className="flex-1 p-4">
         <ul className="space-y-2">
           {navItems.map((item) => {
-            const isActive = pathname === item.href ||
-              (item.href !== '/dashboard' && pathname.startsWith(item.href))
+            const isExpanded = expandedItems.includes(item.title)
+            const isActiveItem = isActiveOrHasActiveChild(item)
 
             return (
-              <li key={item.href}>
-                <Link
-                  href={item.href}
-                  className={cn(
-                    // Base styles Vérone
-                    "nav-item flex w-full items-center space-x-3 px-3 py-2.5 text-sm transition-all duration-150 ease-out",
-                    "border border-transparent",
-                    // État par défaut
-                    "text-black hover:opacity-70",
-                    // État actif selon charte
-                    isActive && "bg-black text-white border-black"
-                  )}
-                >
-                  <item.icon className="h-5 w-5 flex-shrink-0" />
-                  <div className="flex flex-col">
-                    <span className="font-medium">{item.title}</span>
-                    {item.description && (
-                      <span className={cn(
-                        "text-xs opacity-70",
-                        isActive ? "text-white" : "text-black"
-                      )}>
-                        {item.description}
-                      </span>
+              <li key={item.title}>
+                {/* Élément principal */}
+                {item.children ? (
+                  // Élément parent avec enfants (bouton d'expansion)
+                  <button
+                    onClick={() => toggleExpanded(item.title)}
+                    className={cn(
+                      // Base styles Vérone
+                      "nav-item flex w-full items-center space-x-3 px-3 py-2.5 text-sm transition-all duration-150 ease-out",
+                      "border border-transparent",
+                      // État par défaut
+                      "text-black hover:opacity-70",
+                      // État actif si enfant sélectionné
+                      isActiveItem && "bg-black text-white border-black"
                     )}
-                  </div>
-                </Link>
+                  >
+                    <item.icon className="h-5 w-5 flex-shrink-0" />
+                    <div className="flex flex-col flex-1">
+                      <span className="font-medium">{item.title}</span>
+                      {item.description && (
+                        <span className={cn(
+                          "text-xs opacity-70",
+                          isActiveItem ? "text-white" : "text-black"
+                        )}>
+                          {item.description}
+                        </span>
+                      )}
+                    </div>
+                    {/* Icône d'expansion */}
+                    {isExpanded ? (
+                      <ChevronDown className="h-4 w-4 flex-shrink-0" />
+                    ) : (
+                      <ChevronRight className="h-4 w-4 flex-shrink-0" />
+                    )}
+                  </button>
+                ) : (
+                  // Élément simple sans enfants
+                  <Link
+                    href={item.href!}
+                    className={cn(
+                      // Base styles Vérone
+                      "nav-item flex w-full items-center space-x-3 px-3 py-2.5 text-sm transition-all duration-150 ease-out",
+                      "border border-transparent",
+                      // État par défaut
+                      "text-black hover:opacity-70",
+                      // État actif selon charte
+                      isActiveItem && "bg-black text-white border-black"
+                    )}
+                  >
+                    <item.icon className="h-5 w-5 flex-shrink-0" />
+                    <div className="flex flex-col">
+                      <span className="font-medium">{item.title}</span>
+                      {item.description && (
+                        <span className={cn(
+                          "text-xs opacity-70",
+                          isActiveItem ? "text-white" : "text-black"
+                        )}>
+                          {item.description}
+                        </span>
+                      )}
+                    </div>
+                  </Link>
+                )}
+
+                {/* Sous-menu (enfants) */}
+                {item.children && isExpanded && (
+                  <ul className="mt-1 space-y-1">
+                    {item.children.map((child) => {
+                      const isChildActive = pathname === child.href ||
+                        (child.href !== '/dashboard' && pathname.startsWith(child.href!))
+
+                      return (
+                        <li key={child.href}>
+                          <Link
+                            href={child.href!}
+                            className={cn(
+                              // Base styles pour enfants (indentés)
+                              "nav-item flex w-full items-center space-x-3 px-6 py-2 text-sm transition-all duration-150 ease-out",
+                              "border border-transparent ml-4",
+                              // État par défaut enfant
+                              "text-black hover:opacity-70",
+                              // État actif enfant
+                              isChildActive && "bg-black text-white border-black"
+                            )}
+                          >
+                            <child.icon className="h-4 w-4 flex-shrink-0" />
+                            <div className="flex flex-col">
+                              <span className="font-medium">{child.title}</span>
+                              {child.description && (
+                                <span className={cn(
+                                  "text-xs opacity-70",
+                                  isChildActive ? "text-white" : "text-black"
+                                )}>
+                                  {child.description}
+                                </span>
+                              )}
+                            </div>
+                          </Link>
+                        </li>
+                      )
+                    })}
+                  </ul>
+                )}
               </li>
             )
           })}

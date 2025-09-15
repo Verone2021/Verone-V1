@@ -101,7 +101,7 @@ Workflow de conception UX/UI pour les interfaces Vérone, basé sur le **Design 
   /* Contextes business */
   --price-highlight: #[Couleur prix/promotions];
   --stock-available: #22c55e;    /* Vert - En stock */
-  --stock-limited: #f59e0b;      /* Orange - Sur commande */
+  --stock-limited: #000000;      /* Noir - Sur commande */
   --stock-out: #ef4444;          /* Rouge - Rupture */
 }
 ```

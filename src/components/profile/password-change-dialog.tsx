@@ -74,7 +74,7 @@ export function PasswordChangeDialog({ open, onOpenChange }: PasswordChangeDialo
         break
       case 2:
         label = 'Faible'
-        color = 'text-orange-500'
+        color = 'text-black'
         break
       case 3:
         label = 'Moyen'

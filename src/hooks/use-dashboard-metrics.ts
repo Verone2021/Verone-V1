@@ -7,7 +7,7 @@
 'use client';
 
 import useSWR from 'swr';
-import { createClientComponentClient } from '@supabase/auth-helpers-nextjs';
+import { createBrowserClient } from '@supabase/ssr';
 import { useProductMetrics } from './metrics/use-product-metrics';
 import { useUserMetrics } from './metrics/use-user-metrics';
 import { useStockMetrics } from './metrics/use-stock-metrics';
@@ -106,7 +106,10 @@ const SWR_CONFIG = {
 
 export function useDashboardMetrics() {
   const startTime = performance.now();
-  const supabase = createClientComponentClient();
+  const supabase = createBrowserClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+  );
 
   // Hooks modulaires pour chaque type de métrique
   const productMetrics = useProductMetrics();

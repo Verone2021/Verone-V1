@@ -78,7 +78,7 @@ Variables critiques :
 
 /* Couleurs système (usage exceptionnel) */
 --system-success: #22c55e;
---system-warning: #f59e0b;
+--system-warning: #000000;
 --system-error: #ef4444;
 --system-info: #3b82f6;
 ```

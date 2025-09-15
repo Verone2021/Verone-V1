@@ -154,7 +154,7 @@ export function EditUserDialog({
               id="email"
               value={user.email}
               disabled
-              className="border-black opacity-60 cursor-not-allowed"
+              className="bg-gray-50 border-black text-black opacity-60 cursor-not-allowed"
             />
             <p className="text-xs text-black opacity-50">
               L'adresse e-mail ne peut pas être modifiée
@@ -170,7 +170,7 @@ export function EditUserDialog({
               id="first_name"
               value={formData.first_name}
               onChange={(e) => handleInputChange('first_name', e.target.value)}
-              className="border-black focus:ring-black"
+              className="bg-white border-black text-black placeholder:text-black placeholder:opacity-50 focus:ring-black focus:border-black focus:ring-2 focus:ring-offset-0"
               placeholder="Prénom de l'utilisateur"
               required
             />
@@ -185,7 +185,7 @@ export function EditUserDialog({
               id="last_name"
               value={formData.last_name}
               onChange={(e) => handleInputChange('last_name', e.target.value)}
-              className="border-black focus:ring-black"
+              className="bg-white border-black text-black placeholder:text-black placeholder:opacity-50 focus:ring-black focus:border-black focus:ring-2 focus:ring-offset-0"
               placeholder="Nom de famille"
             />
           </div>
@@ -199,7 +199,7 @@ export function EditUserDialog({
               id="job_title"
               value={formData.job_title}
               onChange={(e) => handleInputChange('job_title', e.target.value)}
-              className="border-black focus:ring-black"
+              className="bg-white border-black text-black placeholder:text-black placeholder:opacity-50 focus:ring-black focus:border-black focus:ring-2 focus:ring-offset-0"
               placeholder="Fonction dans l'entreprise"
             />
           </div>
@@ -210,13 +210,13 @@ export function EditUserDialog({
               Rôle système
             </Label>
             <Select value={formData.role} onValueChange={(value) => handleInputChange('role', value)}>
-              <SelectTrigger className="border-black focus:ring-black">
+              <SelectTrigger className="bg-white border-black text-black focus:ring-black focus:border-black focus:ring-2 focus:ring-offset-0">
                 <SelectValue placeholder="Sélectionner un rôle" />
               </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="catalog_manager">Catalog Manager</SelectItem>
-                <SelectItem value="admin">Admin</SelectItem>
-                <SelectItem value="owner">Owner</SelectItem>
+              <SelectContent className="bg-white border-black">
+                <SelectItem value="catalog_manager" className="text-black focus:bg-gray-100 focus:text-black">Catalog Manager</SelectItem>
+                <SelectItem value="admin" className="text-black focus:bg-gray-100 focus:text-black">Admin</SelectItem>
+                <SelectItem value="owner" className="text-black focus:bg-gray-100 focus:text-black">Owner</SelectItem>
               </SelectContent>
             </Select>
           </div>

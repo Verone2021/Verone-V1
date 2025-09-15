@@ -145,19 +145,19 @@ export function UserManagementTable({ users }: UserManagementTableProps) {
             placeholder="Rechercher par nom ou email..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
-            className="border-black focus:ring-black"
+            className="bg-white border-black text-black placeholder:text-black placeholder:opacity-50 focus:ring-black focus:border-black focus:ring-2 focus:ring-offset-0"
           />
         </div>
 
         <Select value={roleFilter} onValueChange={setRoleFilter}>
-          <SelectTrigger className="w-48 border-black focus:ring-black">
+          <SelectTrigger className="w-48 bg-white border-black text-black focus:ring-black focus:border-black focus:ring-2 focus:ring-offset-0">
             <SelectValue placeholder="Filtrer par rôle" />
           </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">Tous les rôles</SelectItem>
-            <SelectItem value="owner">Owner</SelectItem>
-            <SelectItem value="admin">Admin</SelectItem>
-            <SelectItem value="catalog_manager">Catalog Manager</SelectItem>
+          <SelectContent className="bg-white border-black">
+            <SelectItem value="all" className="text-black focus:bg-gray-100 focus:text-black">Tous les rôles</SelectItem>
+            <SelectItem value="owner" className="text-black focus:bg-gray-100 focus:text-black">Owner</SelectItem>
+            <SelectItem value="admin" className="text-black focus:bg-gray-100 focus:text-black">Admin</SelectItem>
+            <SelectItem value="catalog_manager" className="text-black focus:bg-gray-100 focus:text-black">Catalog Manager</SelectItem>
           </SelectContent>
         </Select>
       </div>
@@ -230,7 +230,7 @@ export function UserManagementTable({ users }: UserManagementTableProps) {
                       <Button
                         variant="ghost"
                         size="icon"
-                        className="h-8 w-8 hover:bg-blue-50 hover:text-blue-600"
+                        className="h-8 w-8 text-black hover:bg-gray-100 hover:text-black border border-transparent hover:border-black"
                         onClick={() => handleViewUserDetails(user)}
                         title="Voir les détails"
                       >
@@ -241,17 +241,17 @@ export function UserManagementTable({ users }: UserManagementTableProps) {
                       <Button
                         variant="ghost"
                         size="icon"
-                        className="h-8 w-8 hover:bg-gray-100"
+                        className="h-8 w-8 text-black hover:bg-gray-100 hover:text-black border border-transparent hover:border-black"
                         onClick={() => handleEditUser(user)}
                       >
-                        <Edit className="h-4 w-4 text-black" />
+                        <Edit className="h-4 w-4" />
                         <span className="sr-only">Éditer utilisateur</span>
                       </Button>
 
                       <Button
                         variant="ghost"
                         size="icon"
-                        className="h-8 w-8 hover:bg-orange-50 hover:text-orange-600"
+                        className="h-8 w-8 text-black hover:bg-gray-100 hover:text-black border border-transparent hover:border-black"
                         onClick={() => handleResetPassword(user)}
                       >
                         <Key className="h-4 w-4" />
@@ -264,7 +264,7 @@ export function UserManagementTable({ users }: UserManagementTableProps) {
                         <Button
                           variant="ghost"
                           size="icon"
-                          className="h-8 w-8 hover:bg-red-50 hover:text-red-600"
+                          className="h-8 w-8 text-black hover:bg-gray-100 hover:text-black border border-transparent hover:border-black"
                           onClick={() => handleDeleteUser(user)}
                         >
                           <Trash2 className="h-4 w-4" />

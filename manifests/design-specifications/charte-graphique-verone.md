@@ -30,7 +30,7 @@ La marque Vérone incarne **l'élégance par la simplicité**. Notre identité v
 ```css
 /* États système - usage exceptionnel uniquement */
 --system-success: #22c55e;        /* Confirmations */
---system-warning: #f59e0b;        /* Alertes */
+--system-warning: #000000;        /* Alertes */
 --system-error: #ef4444;          /* Erreurs */
 --system-info: #3b82f6;           /* Informations */
 ```

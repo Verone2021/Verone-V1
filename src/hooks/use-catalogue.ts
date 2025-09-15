@@ -7,7 +7,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { createClient } from '@supabase/supabase-js';
+import { createClient } from '../lib/supabase/client';
 
 // Types selon ERD-CATALOGUE-V1.md
 interface ProductGroup {
@@ -82,10 +82,6 @@ interface CatalogueState {
   total: number;
 }
 
-// Configuration Supabase (remplacer par variables d'environnement)
-const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || '';
-const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || '';
-
 export const useCatalogue = () => {
   const [state, setState] = useState<CatalogueState>({
     productGroups: [],
@@ -97,7 +93,7 @@ export const useCatalogue = () => {
     total: 0
   });
 
-  const supabase = createClient(supabaseUrl, supabaseKey);
+  const supabase = createClient();
 
   // Chargement initial des données
   useEffect(() => {
@@ -160,7 +156,7 @@ export const useCatalogue = () => {
         product_groups!inner(
           id,
           name,
-          category_id,
+          subcategory_id,
           status
         )
       `, { count: 'exact' });
@@ -175,7 +171,7 @@ export const useCatalogue = () => {
     }
 
     if (filters.categories && filters.categories.length > 0) {
-      query = query.in('product_groups.category_id', filters.categories);
+      query = query.in('product_groups.subcategory_id', filters.categories);
     }
 
     if (filters.priceMin !== undefined) {
@@ -186,8 +182,8 @@ export const useCatalogue = () => {
       query = query.lte('price_ht', filters.priceMax * 100);
     }
 
-    // Pagination
-    const limit = filters.limit || 50;
+    // Pagination - Augmenté pour afficher tous les produits importés
+    const limit = filters.limit || 500; // Support jusqu'à 500 produits (largement suffisant pour les 241 importés)
     const offset = filters.offset || 0;
     query = query.range(offset, offset + limit - 1);
 
@@ -301,8 +297,8 @@ export const useCatalogue = () => {
     resetFilters,
 
     // Helpers
-    getProductsByCategory: (categoryId: string) =>
-      state.products.filter(p => p.product_groups?.category_id === categoryId),
+    getProductsBySubcategory: (subcategoryId: string) =>
+      state.products.filter(p => p.product_groups?.subcategory_id === subcategoryId),
 
     getCategoryById: (id: string) =>
       state.categories.find(c => c.id === id),

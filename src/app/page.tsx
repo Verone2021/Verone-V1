@@ -20,6 +20,7 @@ export default function HomePage() {
             src="/logo-verone-clean.png"
             alt="Vérone"
             fill
+            sizes="(max-width: 768px) 100vw, 192px"
             className="object-contain"
             priority
             style={{

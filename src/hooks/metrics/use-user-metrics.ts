@@ -5,10 +5,13 @@
 
 'use client';
 
-import { createClientComponentClient } from '@supabase/auth-helpers-nextjs';
+import { createBrowserClient } from '@supabase/ssr';
 
 export function useUserMetrics() {
-  const supabase = createClientComponentClient();
+  const supabase = createBrowserClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+  );
 
   const fetch = async () => {
     try {
@@ -31,9 +34,13 @@ export function useUserMetrics() {
       const thirtyDaysAgo = new Date();
       thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
 
-      const activeUsers = profiles?.filter(p =>
-        p.last_sign_in_at && new Date(p.last_sign_in_at) > thirtyDaysAgo
-      ).length || 0;
+      const activeUsers = profiles?.filter(p => {
+        try {
+          return p.last_sign_in_at && new Date(p.last_sign_in_at) > thirtyDaysAgo;
+        } catch {
+          return false;
+        }
+      }).length || 0;
 
       // Comptage par rôle
       const byRole = {
