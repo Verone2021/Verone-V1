@@ -609,7 +609,7 @@ export default function CategoriesPage() {
       </div>
 
       {/* Validation SLO */}
-      {checkSLOCompliance(loadTime, 2000) && (
+      {loadTime && loadTime < 2000 && (
         <div className="bg-green-50 border border-green-200 rounded-lg p-3">
           <span className="text-green-800 text-sm">
             ✅ Performance optimale : {loadTime}ms (SLO : &lt;2s)
@@ -687,7 +687,6 @@ export default function CategoriesPage() {
           initialData={formState.data}
           mode={formState.mode}
           type={formState.type}
-          parentId={formState.parentId}
         />
       )}
     </div>

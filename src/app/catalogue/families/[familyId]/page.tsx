@@ -359,7 +359,7 @@ export default function FamilyDetailPage() {
           id: family.id,
           name: family.name,
           description: family.description || '',
-          is_active: family.is_active,
+          is_active: family.is_active ?? true,
           sort_order: family.sort_order || 1,
           image_url: family.image_url || undefined
         } : undefined}

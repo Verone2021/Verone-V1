@@ -14,6 +14,7 @@ interface ProductImageGalleryProps {
   productStatus: 'in_stock' | 'out_of_stock' | 'preorder' | 'coming_soon' | 'discontinued'
   fallbackImage?: string
   className?: string
+  compact?: boolean
 }
 
 const statusConfig = {
@@ -29,12 +30,13 @@ export function ProductImageGallery({
   productName,
   productStatus,
   fallbackImage = '/placeholder-product.jpg',
-  className
+  className,
+  compact = true
 }: ProductImageGalleryProps) {
   const [selectedImageIndex, setSelectedImageIndex] = useState(0)
   const [showUploadDialog, setShowUploadDialog] = useState(false)
 
-  // Hook pour gérer les images du produit
+  // ✨ Hook optimisé - interface simplifiée
   const {
     images,
     primaryImage,
@@ -45,25 +47,19 @@ export function ProductImageGallery({
     uploadImage,
     deleteImage,
     setPrimaryImage,
-    hasImages
+    hasImages,
+    galleryImages
   } = useProductImages({
     productId,
-    transformations: {
-      width: 200,
-      height: 200,
-      resize: 'cover',
-      format: 'webp'
-    }
+    autoFetch: true
   })
 
-  // Image principale à afficher
+  // ✨ Image principale optimisée - URL automatique depuis trigger
   const displayImage = hasImages
     ? images[selectedImageIndex] || primaryImage
     : null
 
-  const mainImageSrc = displayImage?.transformed_url ||
-                       displayImage?.public_url ||
-                       fallbackImage
+  const mainImageSrc = displayImage?.public_url || fallbackImage
 
   const handleImageSelect = (index: number) => {
     setSelectedImageIndex(index)
@@ -160,7 +156,7 @@ export function ProductImageGallery({
         )}
       </div>
 
-      {/* Miniatures galerie compactes 50x50 */}
+      {/* ✨ Miniatures optimisées avec URL automatique */}
       {hasImages && images.length > 1 && (
         <div className="flex flex-wrap gap-1 max-w-[200px]">
           {images.slice(0, 8).map((image, index) => (
@@ -173,13 +169,13 @@ export function ProductImageGallery({
               )}
             >
               <Image
-                src={image.transformed_url || image.public_url}
+                src={image.public_url || fallbackImage}
                 alt={image.alt_text || `Vue ${index + 1}`}
                 fill
                 className="object-cover transition-transform group-hover:scale-110"
                 sizes="48px"
                 onError={() => {
-                  console.warn(`Erreur chargement miniature: ${image.transformed_url || image.public_url}`)
+                  console.warn(`❌ Erreur chargement miniature: ${image.public_url}`)
                 }}
               />
 
@@ -254,12 +250,12 @@ export function ProductImageGallery({
         </div>
       )}
 
-      {/* Stats images */}
+      {/* ✨ Stats optimisées avec helpers du hook */}
       {hasImages && (
         <div className="text-xs text-gray-500 text-center">
           {images.length} image{images.length > 1 ? 's' : ''} •
           {images.filter(img => img.is_primary).length} principale •
-          {images.filter(img => img.image_type === 'gallery').length} galerie
+          {galleryImages.length} galerie
         </div>
       )}
     </div>

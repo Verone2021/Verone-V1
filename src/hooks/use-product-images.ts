@@ -8,37 +8,29 @@ type ProductImage = Database['public']['Tables']['product_images']['Row']
 type ProductImageInsert = Database['public']['Tables']['product_images']['Insert']
 type ProductImageUpdate = Database['public']['Tables']['product_images']['Update']
 
-export interface ProductImageWithUrl extends ProductImage {
-  public_url?: string
-  transformed_url?: string
-}
+// Types enum simplifiés selon la nouvelle table
+export type ImageType = 'primary' | 'gallery' | 'technical' | 'lifestyle' | 'thumbnail'
 
+// Interface simplifiée - plus de transformations complexes
 interface UseProductImagesOptions {
   productId: string
-  productType?: 'product' | 'draft'
   bucketName?: string
-  transformations?: {
-    width?: number
-    height?: number
-    resize?: 'contain' | 'cover' | 'fill'
-    format?: 'webp' | 'jpeg' | 'png'
-  }
+  autoFetch?: boolean
 }
 
 export function useProductImages({
   productId,
-  productType = 'product',
   bucketName = 'product-images',
-  transformations = { width: 200, height: 200, resize: 'cover', format: 'webp' }
+  autoFetch = true
 }: UseProductImagesOptions) {
-  const [images, setImages] = useState<ProductImageWithUrl[]>([])
+  const [images, setImages] = useState<ProductImage[]>([])
   const [loading, setLoading] = useState(false)
   const [uploading, setUploading] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
   const supabase = createClient()
 
-  // Fetch all images for a product
+  // ✨ Fetch optimisé - URL publique générée automatiquement par trigger
   const fetchImages = useCallback(async () => {
     // Early return for empty/invalid productId (new products without ID)
     if (!productId || productId.trim() === '') {
@@ -52,64 +44,51 @@ export function useProductImages({
       setLoading(true)
       setError(null)
 
+      // 🚀 Requête simplifiée - plus de product_type, URL automatique
       const { data, error } = await supabase
         .from('product_images')
         .select('*')
         .eq('product_id', productId)
-        .eq('product_type', productType)
         .order('display_order')
         .order('created_at')
 
       if (error) throw error
 
-      // Generate public URLs (Supabase Storage ne supporte pas les transformations /transform/)
-      const imagesWithUrls: ProductImageWithUrl[] = (data || []).map(image => {
-        const { data: urlData } = supabase.storage
-          .from(bucketName)
-          .getPublicUrl(image.storage_path)
-
-        console.log(`🔍 Image URL générée: ${urlData.publicUrl}`)
-
-        return {
-          ...image,
-          public_url: urlData.publicUrl,
-          transformed_url: urlData.publicUrl // Même URL pour l'instant
-        }
-      })
-
-      setImages(imagesWithUrls)
+      // ✅ Plus besoin de générer les URLs - automatique via trigger
+      console.log(`✅ ${data?.length || 0} images chargées pour produit ${productId}`)
+      setImages(data || [])
     } catch (err) {
-      const errorMessage = err instanceof Error ? err.message : 'Erreur inconnue lors du chargement des images'
-      console.error('❌ Erreur lors du chargement des images:', errorMessage)
+      const errorMessage = err instanceof Error ? err.message : 'Erreur chargement images'
+      console.error('❌ Erreur chargement images:', errorMessage)
       setError(errorMessage)
     } finally {
       setLoading(false)
     }
-  }, [productId, productType, bucketName, transformations, supabase])
+  }, [productId, bucketName, supabase])
 
-  // Upload single image
+  // ✨ Upload optimisé avec triggers automatiques et enum typé
   const uploadImage = useCallback(async (
     file: File,
     options: {
       isPrimary?: boolean
-      imageType?: 'gallery' | 'thumbnail' | 'technical' | 'lifestyle'
+      imageType?: ImageType
       altText?: string
     } = {}
   ) => {
     // Prevent upload for products without valid ID
     if (!productId || productId.trim() === '') {
-      throw new Error('Impossible d\'uploader une image sans ID de produit valide')
+      throw new Error('ID produit requis pour upload')
     }
 
     try {
       setUploading(true)
       setError(null)
 
-      // Generate unique filename
-      const fileExt = file.name.split('.').pop()
-      const fileName = `${productType}s/${productId}/${Date.now()}-${Math.random().toString(36).substring(2)}.${fileExt}`
+      // 📁 Generate unique filename with proper structure
+      const fileExt = file.name.split('.').pop()?.toLowerCase()
+      const fileName = `products/${productId}/${Date.now()}-${Math.random().toString(36).substring(2)}.${fileExt}`
 
-      // Upload to Supabase Storage
+      // 📤 Upload to Supabase Storage
       const { data: uploadData, error: uploadError } = await supabase.storage
         .from(bucketName)
         .upload(fileName, file, {
@@ -119,12 +98,11 @@ export function useProductImages({
 
       if (uploadError) throw uploadError
 
-      // Get next display order
+      // 🔢 Get next display order
       const { data: existingImages } = await supabase
         .from('product_images')
         .select('display_order')
         .eq('product_id', productId)
-        .eq('product_type', productType)
         .order('display_order', { ascending: false })
         .limit(1)
 
@@ -132,26 +110,19 @@ export function useProductImages({
         ? (existingImages[0].display_order || 0) + 1
         : 0
 
-      // If setting as primary, unset other primary images
-      if (options.isPrimary) {
-        await supabase
-          .from('product_images')
-          .update({ is_primary: false })
-          .eq('product_id', productId)
-          .eq('product_type', productType)
-      }
-
-      // Create database record
+      // 🎯 Create database record - triggers gèrent primary + URL automatiquement
       const imageData: ProductImageInsert = {
         product_id: productId,
-        product_type: productType,
         storage_path: uploadData.path,
         display_order: nextOrder,
         is_primary: options.isPrimary || false,
         image_type: options.imageType || 'gallery',
         alt_text: options.altText || file.name,
         file_size: file.size,
-        format: fileExt?.toLowerCase() || 'jpg',
+        format: fileExt || 'jpg',
+        width: undefined, // Sera ajouté plus tard si nécessaire
+        height: undefined,
+        created_by: undefined // Supabase auth automatique
       }
 
       const { data: dbData, error: dbError } = await supabase
@@ -166,27 +137,28 @@ export function useProductImages({
         throw dbError
       }
 
-      console.log('✅ Image uploadée:', file.name)
+      console.log('✅ Image uploadée avec triggers automatiques:', file.name)
 
       // Refresh images list
       await fetchImages()
 
       return dbData
     } catch (err) {
-      console.error('❌ Erreur lors de l\'upload:', err)
+      console.error('❌ Erreur upload:', err)
       setError(err instanceof Error ? err.message : 'Erreur upload')
       throw err
     } finally {
       setUploading(false)
     }
-  }, [productId, productType, bucketName, supabase, fetchImages])
+  }, [productId, bucketName, supabase, fetchImages])
 
-  // Upload multiple images
+  // ✨ Upload multiple optimisé
   const uploadMultipleImages = useCallback(async (
     files: File[],
     options: {
-      imageType?: 'gallery' | 'thumbnail' | 'technical' | 'lifestyle'
+      imageType?: ImageType
       altTextPrefix?: string
+      firstImagePrimary?: boolean
     } = {}
   ) => {
     const results = []
@@ -195,13 +167,13 @@ export function useProductImages({
       const file = files[i]
       try {
         const result = await uploadImage(file, {
-          imageType: options.imageType,
+          imageType: options.imageType || 'gallery',
           altText: options.altTextPrefix ? `${options.altTextPrefix} ${i + 1}` : file.name,
-          isPrimary: i === 0 // First image is primary by default
+          isPrimary: options.firstImagePrimary && i === 0 // Première image primary si demandé
         })
         results.push(result)
       } catch (err) {
-        console.error(`❌ Erreur upload fichier ${file.name}:`, err)
+        console.error(`❌ Erreur upload ${file.name}:`, err)
         // Continue with other files
       }
     }
@@ -209,7 +181,7 @@ export function useProductImages({
     return results
   }, [uploadImage])
 
-  // Delete image
+  // ✨ Delete simplifiée - triggers gèrent le CASCADE DELETE automatiquement
   const deleteImage = useCallback(async (imageId: string) => {
     try {
       setError(null)
@@ -229,10 +201,10 @@ export function useProductImages({
         .remove([imageData.storage_path])
 
       if (storageError) {
-        console.warn('⚠️ Erreur suppression storage (fichier peut-être déjà supprimé):', storageError)
+        console.warn('⚠️ Erreur suppression storage:', storageError)
       }
 
-      // Delete from database
+      // Delete from database - CASCADE DELETE automatique
       const { error: dbError } = await supabase
         .from('product_images')
         .delete()
@@ -241,17 +213,15 @@ export function useProductImages({
       if (dbError) throw dbError
 
       console.log('✅ Image supprimée:', imageData.storage_path)
-
-      // Refresh images list
       await fetchImages()
     } catch (err) {
-      console.error('❌ Erreur lors de la suppression:', err)
+      console.error('❌ Erreur suppression:', err)
       setError(err instanceof Error ? err.message : 'Erreur suppression')
       throw err
     }
   }, [bucketName, supabase, fetchImages])
 
-  // Reorder images
+  // ✨ Reorder optimisé
   const reorderImages = useCallback(async (imageIds: string[]) => {
     try {
       setError(null)
@@ -265,31 +235,21 @@ export function useProductImages({
       )
 
       await Promise.all(updates)
-
-      console.log('✅ Ordre des images mis à jour')
-
-      // Refresh images list
+      console.log('✅ Ordre images mis à jour')
       await fetchImages()
     } catch (err) {
-      console.error('❌ Erreur lors du réordonnancement:', err)
+      console.error('❌ Erreur réordonnancement:', err)
       setError(err instanceof Error ? err.message : 'Erreur réordonnancement')
       throw err
     }
   }, [supabase, fetchImages])
 
-  // Set primary image
+  // ✨ Primary image - trigger automatique gère la logique "single primary"
   const setPrimaryImage = useCallback(async (imageId: string) => {
     try {
       setError(null)
 
-      // Unset all primary images for this product
-      await supabase
-        .from('product_images')
-        .update({ is_primary: false })
-        .eq('product_id', productId)
-        .eq('product_type', productType)
-
-      // Set new primary image
+      // 🎯 Trigger automatique gère le "unset other primary images"
       const { error } = await supabase
         .from('product_images')
         .update({ is_primary: true })
@@ -297,23 +257,21 @@ export function useProductImages({
 
       if (error) throw error
 
-      console.log('✅ Image principale mise à jour')
-
-      // Refresh images list
+      console.log('✅ Image principale via trigger automatique')
       await fetchImages()
     } catch (err) {
-      console.error('❌ Erreur lors de la définition image principale:', err)
+      console.error('❌ Erreur image principale:', err)
       setError(err instanceof Error ? err.message : 'Erreur image principale')
       throw err
     }
-  }, [productId, productType, supabase, fetchImages])
+  }, [supabase, fetchImages])
 
-  // Update image metadata
+  // ✨ Update metadata optimisé avec enum typé
   const updateImageMetadata = useCallback(async (
     imageId: string,
     metadata: {
       alt_text?: string
-      image_type?: 'gallery' | 'thumbnail' | 'technical' | 'lifestyle'
+      image_type?: ImageType
       width?: number
       height?: number
     }
@@ -321,56 +279,51 @@ export function useProductImages({
     try {
       setError(null)
 
+      // 🎯 Trigger updated_at automatique - pas besoin de le spécifier
       const { error } = await supabase
         .from('product_images')
-        .update({
-          ...metadata,
-          updated_at: new Date().toISOString()
-        })
+        .update(metadata)
         .eq('id', imageId)
 
       if (error) throw error
 
-      console.log('✅ Métadonnées image mises à jour')
-
-      // Refresh images list
+      console.log('✅ Métadonnées mises à jour')
       await fetchImages()
     } catch (err) {
-      console.error('❌ Erreur lors de la mise à jour des métadonnées:', err)
-      setError(err instanceof Error ? err.message : 'Erreur mise à jour métadonnées')
+      console.error('❌ Erreur métadonnées:', err)
+      setError(err instanceof Error ? err.message : 'Erreur métadonnées')
       throw err
     }
   }, [supabase, fetchImages])
 
-  // Get primary image
+  // 🎯 Helpers optimisés
   const getPrimaryImage = useCallback(() => {
     return images.find(img => img.is_primary) || images[0] || null
   }, [images])
 
-  // Get images by type
-  const getImagesByType = useCallback((type: 'gallery' | 'thumbnail' | 'technical' | 'lifestyle') => {
+  const getImagesByType = useCallback((type: ImageType) => {
     return images.filter(img => img.image_type === type)
   }, [images])
 
-  // Auto-fetch images when productId changes
+  // ✨ Auto-fetch optimisé
   useEffect(() => {
-    if (productId && productId.trim() !== '') {
-      console.log('🔄 Auto-fetch images pour productId:', productId)
+    if (autoFetch && productId && productId.trim() !== '') {
+      console.log('🔄 Auto-fetch images:', productId)
       fetchImages()
     }
-  }, [productId, productType, fetchImages])
+  }, [productId, fetchImages, autoFetch])
 
   return {
-    // Data
+    // 📊 Data
     images,
     primaryImage: getPrimaryImage(),
 
-    // State
+    // 🔄 State
     loading,
     uploading,
     error,
 
-    // Actions
+    // 🎬 Actions
     fetchImages,
     uploadImage,
     uploadMultipleImages,
@@ -379,11 +332,13 @@ export function useProductImages({
     setPrimaryImage,
     updateImageMetadata,
 
-    // Helpers
+    // 🛠️ Helpers
     getImagesByType,
 
-    // Stats
+    // 📈 Stats
     totalImages: images.length,
-    hasImages: images.length > 0
+    hasImages: images.length > 0,
+    galleryImages: getImagesByType('gallery'),
+    technicalImages: getImagesByType('technical')
   }
 }

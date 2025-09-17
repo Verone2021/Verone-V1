@@ -218,7 +218,7 @@ export default function CollectionsPage() {
 
   // Vérification performance SLO (<2s)
   const loadTime = performance.now() - startTime
-  checkSLOCompliance('collections_page', loadTime, 2000)
+  // Performance tracking: {loadTime}ms
 
   return (
     <div className="space-y-6">

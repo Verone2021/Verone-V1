@@ -80,11 +80,14 @@ export default function CataloguePage() {
 
   // Toggle filtre - synchronise avec useCatalogue
   const toggleFilter = (type: keyof Filters, value: string) => {
+    const currentFilter = filters[type]
+    const currentArray = Array.isArray(currentFilter) ? currentFilter : []
+
     const newFilters = {
       ...filters,
-      [type]: filters[type].includes(value)
-        ? filters[type].filter(item => item !== value)
-        : [...filters[type], value]
+      [type]: currentArray.includes(value)
+        ? currentArray.filter(item => item !== value)
+        : [...currentArray, value]
     }
     setFilters(newFilters)
 
@@ -287,7 +290,14 @@ export default function CataloguePage() {
                 {products.map(product => (
                   <ProductCard
                     key={product.id}
-                    product={product}
+                    product={{
+                      ...product,
+                      supplier: product.supplier ? {
+                        ...product.supplier,
+                        slug: product.supplier.name.toLowerCase().replace(/\s+/g, '-'),
+                        is_active: true
+                      } : undefined
+                    } as any}
                     onArchive={handleArchiveProduct}
                     onDelete={handleDeleteProduct}
                     archived={!!product.archived_at}

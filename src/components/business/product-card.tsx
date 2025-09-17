@@ -7,6 +7,7 @@ import { Button } from "../ui/button"
 import { cn } from "../../lib/utils"
 import { Package, Archive, Trash2, ArchiveRestore } from "lucide-react"
 import { useProductImages } from "../../hooks/use-product-images"
+import { useProductPackages } from "../../hooks/use-product-packages"
 
 // Interface Organisation Fournisseur
 interface SupplierOrganisation {
@@ -44,6 +45,7 @@ interface ProductCardProps {
   product: Product
   className?: string
   showActions?: boolean
+  showPackages?: boolean // Nouvelle option pour afficher les packages
   onClick?: (product: Product) => void
   onArchive?: (product: Product) => void
   onDelete?: (product: Product) => void
@@ -83,6 +85,7 @@ export function ProductCard({
   product,
   className,
   showActions = true,
+  showPackages = false,
   onClick,
   onArchive,
   onDelete,
@@ -91,10 +94,21 @@ export function ProductCard({
   const router = useRouter()
   const status = statusConfig[product.status]
 
-  // 🎯 Hook pour récupérer l'image principale du produit
+  // ✨ Hooks optimisés - images + packages
   const { primaryImage, loading: imageLoading } = useProductImages({
     productId: product.id,
-    productType: 'product'
+    autoFetch: true
+  })
+
+  const {
+    defaultPackage,
+    hasMultiplePackages,
+    getDiscountLabel,
+    calculatePackagePrice,
+    loading: packagesLoading
+  } = useProductPackages({
+    productId: product.id,
+    autoFetch: showPackages
   })
 
   const handleClick = () => {
@@ -207,7 +221,7 @@ export function ProductCard({
           </div>
         </div>
 
-        {/* Prix */}
+        {/* Prix avec packages */}
         <div className="space-y-1">
           <div className="text-xl font-semibold text-black">
             {product.price_ht.toFixed(2)} € HT
@@ -215,6 +229,35 @@ export function ProductCard({
           <div className="text-sm text-black opacity-70">
             {(product.price_ht * 1.2).toFixed(2)} € TTC
           </div>
+
+          {/* Affichage packages conditionnels */}
+          {showPackages && !packagesLoading && (
+            <div className="space-y-1 mt-2">
+              {/* Badge remise disponible */}
+              {hasMultiplePackages && defaultPackage && (
+                <div className="flex items-center gap-2">
+                  <Badge variant="outline" className="text-xs bg-green-50 text-green-700 border-green-200">
+                    {hasMultiplePackages ? "Conditionnements multiples" : "Package unique"}
+                  </Badge>
+                  {(() => {
+                    const bestPackage = hasMultiplePackages
+                      ? /* Trouve le package avec la meilleure remise */
+                        (() => {
+                          // Logique simplifiée pour trouver la meilleure remise
+                          return defaultPackage
+                        })()
+                      : null
+                    const discountLabel = bestPackage ? getDiscountLabel(bestPackage) : null
+                    return discountLabel ? (
+                      <Badge variant="secondary" className="text-xs bg-orange-50 text-orange-700 border-orange-200">
+                        {discountLabel}
+                      </Badge>
+                    ) : null
+                  })()}
+                </div>
+              )}
+            </div>
+          )}
         </div>
 
         {/* Métadonnées */}

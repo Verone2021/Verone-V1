@@ -143,7 +143,7 @@ export default function ProductDetailPage() {
   // Hook pour gestion images
   const { images, hasImages, loading: imagesLoading } = useProductImages({
     productId: params.productId as string,
-    productType: 'product'
+    autoFetch: true
   })
 
   // Gestionnaire de mise à jour produit
