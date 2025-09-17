@@ -314,7 +314,7 @@ export function useImageUpload({
       setError(uploadError)
       setState('error')
 
-      onUploadError?.(uploadError)
+      onUploadError?.(uploadError, meta)
       return false
     }
   }, [

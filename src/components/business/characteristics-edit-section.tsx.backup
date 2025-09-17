@@ -1,0 +1,365 @@
+"use client"
+
+import { useState } from 'react'
+import { Package, Save, X, Plus, Trash2, Play } from 'lucide-react'
+import { Button } from '../ui/button'
+import { cn } from '../../lib/utils'
+import { useInlineEdit, type EditableSection } from '../../hooks/use-inline-edit'
+
+interface Product {
+  id: string
+  variant_attributes?: Record<string, any>
+  dimensions?: Record<string, any>
+  weight?: number
+  video_url?: string
+}
+
+interface CharacteristicsEditSectionProps {
+  product: Product
+  onUpdate: (updatedProduct: Partial<Product>) => void
+  className?: string
+}
+
+interface AttributeEntry {
+  key: string
+  value: string
+}
+
+export function CharacteristicsEditSection({ product, onUpdate, className }: CharacteristicsEditSectionProps) {
+  const {
+    isEditing,
+    isSaving,
+    getError,
+    getEditedData,
+    startEdit,
+    cancelEdit,
+    updateEditedData,
+    saveChanges,
+    hasChanges
+  } = useInlineEdit({
+    productId: product.id,
+    onUpdate: (updatedData) => {
+      onUpdate(updatedData)
+    },
+    onError: (error) => {
+      console.error('❌ Erreur mise à jour caractéristiques:', error)
+    }
+  })
+
+  const section: EditableSection = 'characteristics'
+  const editData = getEditedData(section)
+  const error = getError(section)
+
+  // Convertir les objets en arrays pour l'édition
+  const attributesToArray = (obj?: Record<string, any>): AttributeEntry[] => {
+    if (!obj) return []
+    return Object.entries(obj).map(([key, value]) => ({ key, value: String(value) }))
+  }
+
+  const arrayToAttributes = (arr: AttributeEntry[]): Record<string, any> => {
+    return arr.reduce((acc, { key, value }) => {
+      if (key.trim()) {
+        acc[key.trim()] = value.trim()
+      }
+      return acc
+    }, {} as Record<string, any>)
+  }
+
+  const handleStartEdit = () => {
+    startEdit(section, {
+      variant_attributes: product.variant_attributes || {},
+      dimensions: product.dimensions || {},
+      weight: product.weight || 0,
+      video_url: product.video_url || '',
+      // States pour l'édition des attributs
+      variant_attrs_array: attributesToArray(product.variant_attributes),
+      dimensions_array: attributesToArray(product.dimensions)
+    })
+  }
+
+  const handleSave = async () => {
+    // Convertir les arrays en objets avant sauvegarde
+    if (editData) {
+      const updatedData = {
+        ...editData,
+        variant_attributes: arrayToAttributes(editData.variant_attrs_array || []),
+        dimensions: arrayToAttributes(editData.dimensions_array || [])
+      }
+      delete updatedData.variant_attrs_array
+      delete updatedData.dimensions_array
+
+      updateEditedData(section, updatedData)
+    }
+
+    const success = await saveChanges(section)
+    if (success) {
+      // Optionnel : afficher une notification de succès
+    }
+  }
+
+  const handleCancel = () => {
+    cancelEdit(section)
+  }
+
+  const handleFieldChange = (field: string, value: any) => {
+    updateEditedData(section, { [field]: value })
+  }
+
+  const addAttribute = (type: 'variant_attrs_array' | 'dimensions_array') => {
+    const currentArray = editData?.[type] || []
+    const newArray = [...currentArray, { key: '', value: '' }]
+    handleFieldChange(type, newArray)
+  }
+
+  const removeAttribute = (type: 'variant_attrs_array' | 'dimensions_array', index: number) => {
+    const currentArray = editData?.[type] || []
+    const newArray = currentArray.filter((_: any, i: number) => i !== index)
+    handleFieldChange(type, newArray)
+  }
+
+  const updateAttribute = (type: 'variant_attrs_array' | 'dimensions_array', index: number, field: 'key' | 'value', value: string) => {
+    const currentArray = editData?.[type] || []
+    const newArray = [...currentArray]
+    newArray[index] = { ...newArray[index], [field]: value }
+    handleFieldChange(type, newArray)
+  }
+
+  const renderAttributeEditor = (
+    title: string,
+    type: 'variant_attrs_array' | 'dimensions_array',
+    description: string
+  ) => {
+    const attributes = editData?.[type] || []
+
+    return (
+      <div>
+        <div className="flex items-center justify-between mb-2">
+          <label className="block text-sm font-medium text-black">
+            {title}
+          </label>
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            onClick={() => addAttribute(type)}
+            className="h-7 text-xs"
+          >
+            <Plus className="h-3 w-3 mr-1" />
+            Ajouter
+          </Button>
+        </div>
+        <div className="text-xs text-gray-500 mb-2">{description}</div>
+
+        <div className="space-y-2">
+          {attributes.map((attr: AttributeEntry, index: number) => (
+            <div key={index} className="flex gap-2 items-center">
+              <input
+                type="text"
+                placeholder="Nom"
+                value={attr.key}
+                onChange={(e) => updateAttribute(type, index, 'key', e.target.value)}
+                className="flex-1 px-2 py-1 text-sm border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-black"
+              />
+              <input
+                type="text"
+                placeholder="Valeur"
+                value={attr.value}
+                onChange={(e) => updateAttribute(type, index, 'value', e.target.value)}
+                className="flex-1 px-2 py-1 text-sm border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-black"
+              />
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                onClick={() => removeAttribute(type, index)}
+                className="h-7 w-7 p-0 text-red-600 hover:text-red-700"
+              >
+                <Trash2 className="h-3 w-3" />
+              </Button>
+            </div>
+          ))}
+          {attributes.length === 0 && (
+            <div className="text-xs text-gray-400 italic p-2 bg-gray-50 rounded">
+              Aucun attribut défini. Cliquez sur "Ajouter" pour en créer un.
+            </div>
+          )}
+        </div>
+      </div>
+    )
+  }
+
+  if (isEditing(section)) {
+    return (
+      <div className={cn("card-verone p-4", className)}>
+        <div className="flex items-center justify-between mb-3">
+          <h3 className="text-lg font-medium text-black flex items-center">
+            <Package className="h-5 w-5 mr-2" />
+            Caractéristiques
+          </h3>
+          <div className="flex space-x-2">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={handleCancel}
+              disabled={isSaving(section)}
+            >
+              <X className="h-3 w-3 mr-1" />
+              Annuler
+            </Button>
+            <Button
+              variant="default"
+              size="sm"
+              onClick={handleSave}
+              disabled={!hasChanges(section) || isSaving(section)}
+            >
+              <Save className="h-3 w-3 mr-1" />
+              {isSaving(section) ? 'Sauvegarde...' : 'Sauvegarder'}
+            </Button>
+          </div>
+        </div>
+
+        <div className="space-y-6">
+          {/* Attributs variantes */}
+          {renderAttributeEditor(
+            'Attributs Variantes',
+            'variant_attrs_array',
+            'Couleur, matière, finition, etc. Ces attributs distinguent les variantes.'
+          )}
+
+          {/* Dimensions */}
+          {renderAttributeEditor(
+            'Dimensions',
+            'dimensions_array',
+            'Longueur, largeur, hauteur, diamètre, etc. en cm ou mm.'
+          )}
+
+          {/* Poids */}
+          <div>
+            <label className="block text-sm font-medium text-black mb-1">
+              Poids (kg)
+            </label>
+            <input
+              type="number"
+              value={editData?.weight || ''}
+              onChange={(e) => handleFieldChange('weight', parseFloat(e.target.value) || 0)}
+              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-black focus:border-black"
+              step="0.1"
+              min="0"
+              placeholder="0.0"
+            />
+            <div className="text-xs text-gray-500 mt-1">
+              Poids du produit en kilogrammes
+            </div>
+          </div>
+
+          {/* URL Vidéo */}
+          <div>
+            <label className="block text-sm font-medium text-black mb-1">
+              URL Vidéo produit
+            </label>
+            <input
+              type="url"
+              value={editData?.video_url || ''}
+              onChange={(e) => handleFieldChange('video_url', e.target.value)}
+              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-black focus:border-black"
+              placeholder="https://example.com/video.mp4"
+            />
+            <div className="text-xs text-gray-500 mt-1">
+              URL vers une vidéo de présentation du produit (MP4, WebM)
+            </div>
+            {editData?.video_url && (
+              <div className="mt-2 p-2 bg-blue-50 rounded text-xs">
+                <Play className="h-3 w-3 inline mr-1" />
+                Aperçu vidéo disponible
+              </div>
+            )}
+          </div>
+        </div>
+
+        {/* Message d'erreur */}
+        {error && (
+          <div className="mt-3 text-sm text-red-600 bg-red-50 p-2 rounded">
+            ❌ {error}
+          </div>
+        )}
+      </div>
+    )
+  }
+
+  // Mode affichage
+  return (
+    <div className={cn("card-verone p-4", className)}>
+      <div className="flex items-center justify-between mb-3">
+        <h3 className="text-lg font-medium text-black flex items-center">
+          <Package className="h-5 w-5 mr-2" />
+          Caractéristiques
+        </h3>
+        <Button variant="outline" size="sm" onClick={handleStartEdit}>
+          <Package className="h-3 w-3 mr-1" />
+          Modifier
+        </Button>
+      </div>
+
+      <div className="space-y-3">
+        {/* Attributs variantes */}
+        {product.variant_attributes && Object.keys(product.variant_attributes).length > 0 && (
+          <div>
+            <span className="text-black opacity-70 font-medium text-sm">Variantes:</span>
+            <div className="mt-2 grid grid-cols-1 gap-1">
+              {Object.entries(product.variant_attributes).map(([key, value]) => (
+                <div key={key} className="flex justify-between text-sm">
+                  <span className="capitalize text-black opacity-70">{key}:</span>
+                  <span className="font-medium text-black">{String(value)}</span>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* Poids */}
+        {product.weight && (
+          <div className="flex justify-between">
+            <span className="text-black opacity-70">Poids:</span>
+            <span className="font-medium text-black">{product.weight} kg</span>
+          </div>
+        )}
+
+        {/* Dimensions */}
+        {product.dimensions && Object.keys(product.dimensions).length > 0 && (
+          <div>
+            <span className="text-black opacity-70 text-sm">Dimensions:</span>
+            <div className="mt-1 text-xs bg-gray-50 p-2 rounded">
+              {typeof product.dimensions === 'object' && Object.entries(product.dimensions).map(([key, value]) => (
+                <div key={key} className="flex justify-between">
+                  <span className="capitalize">{key}:</span>
+                  <span>{String(value)}</span>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* Vidéo */}
+        {product.video_url && (
+          <div>
+            <span className="text-black opacity-70 text-sm">Vidéo:</span>
+            <div className="mt-1 flex items-center text-xs bg-blue-50 p-2 rounded">
+              <Play className="h-3 w-3 mr-1 text-blue-600" />
+              <span className="text-blue-600">Vidéo disponible</span>
+            </div>
+          </div>
+        )}
+
+        {/* Message si aucune caractéristique */}
+        {(!product.variant_attributes || Object.keys(product.variant_attributes).length === 0) &&
+         (!product.dimensions || Object.keys(product.dimensions).length === 0) &&
+         !product.weight &&
+         !product.video_url && (
+          <div className="text-sm text-gray-400 italic">
+            Aucune caractéristique définie
+          </div>
+        )}
+      </div>
+    </div>
+  )
+}

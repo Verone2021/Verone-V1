@@ -6,96 +6,21 @@ import { Button } from "../../../components/ui/button"
 import { Badge } from "../../../components/ui/badge"
 import { cn } from "../../../lib/utils"
 import { checkSLOCompliance } from "../../../lib/utils"
-
-// Interface Collection selon schéma business
-interface Collection {
-  id: string
-  name: string
-  description?: string
-  is_active: boolean
-  visibility: 'public' | 'private'
-  shared_link_token?: string
-  product_count: number
-  shared_count: number
-  last_shared?: string
-  created_at: string
-  updated_at: string
-  products?: Array<{
-    id: string
-    name: string
-    image_url: string
-    price_ht: number
-  }>
-}
+import { useCollections, Collection, CollectionFilters } from "@/hooks/use-collections"
 
 // Interface filtres collections
-interface CollectionFilters {
+interface LocalCollectionFilters {
   search: string
   status: 'all' | 'active' | 'inactive'
   visibility: 'all' | 'public' | 'private'
   shared: 'all' | 'shared' | 'not_shared'
 }
 
-// Mock data pour démonstration (sera remplacé par Supabase)
-const mockCollections: Collection[] = [
-  {
-    id: "1",
-    name: "Salon Moderne 2024",
-    description: "Collection tendance pour salons contemporains - Automne 2024",
-    is_active: true,
-    visibility: 'public',
-    shared_link_token: 'pub_salon_mod_2024_abc123',
-    product_count: 15,
-    shared_count: 23,
-    last_shared: "2024-01-20T14:30:00Z",
-    created_at: "2024-01-15T10:00:00Z",
-    updated_at: "2024-01-20T14:30:00Z",
-    products: [
-      {
-        id: "p1",
-        name: "Canapé Luxe 3 Places",
-        image_url: "https://images.unsplash.com/photo-1555041469-a586c61ea9bc?ixlib=rb-4.0.3&w=200",
-        price_ht: 149900
-      },
-      {
-        id: "p2",
-        name: "Table Basse Design",
-        image_url: "https://images.unsplash.com/photo-1586023492125-27b2c045efd7?ixlib=rb-4.0.3&w=200",
-        price_ht: 89900
-      }
-    ]
-  },
-  {
-    id: "2",
-    name: "Éclairage Premium",
-    description: "Sélection de luminaires haut de gamme",
-    is_active: true,
-    visibility: 'private',
-    product_count: 8,
-    shared_count: 5,
-    last_shared: "2024-01-18T09:15:00Z",
-    created_at: "2024-01-12T15:00:00Z",
-    updated_at: "2024-01-18T09:15:00Z"
-  },
-  {
-    id: "3",
-    name: "Chambre Cocooning",
-    description: "Ambiance douce et chaleureuse pour la chambre",
-    is_active: false,
-    visibility: 'public',
-    shared_link_token: 'pub_chambre_coco_xyz789',
-    product_count: 12,
-    shared_count: 0,
-    created_at: "2024-01-10T11:00:00Z",
-    updated_at: "2024-01-15T16:20:00Z"
-  }
-]
-
 export default function CollectionsPage() {
   const startTime = performance.now()
 
   // États pour la gestion des filtres et de l'interface
-  const [filters, setFilters] = useState<CollectionFilters>({
+  const [filters, setFilters] = useState<LocalCollectionFilters>({
     search: "",
     status: 'all',
     visibility: 'all',
@@ -104,39 +29,26 @@ export default function CollectionsPage() {
   const [selectedCollections, setSelectedCollections] = useState<string[]>([])
   const [showShareModal, setShowShareModal] = useState<string | null>(null)
 
-  // Filtrage des collections selon les critères
-  const filteredCollections = useMemo(() => {
-    let filtered = [...mockCollections]
+  // Hook pour récupérer les collections réelles depuis Supabase
+  const {
+    collections,
+    loading,
+    error,
+    refetch,
+    createCollection,
+    deleteCollection,
+    toggleCollectionStatus,
+    generateShareToken,
+    recordShare
+  } = useCollections({
+    search: filters.search || undefined,
+    status: filters.status,
+    visibility: filters.visibility,
+    shared: filters.shared
+  })
 
-    // Filtre par recherche
-    if (filters.search) {
-      const searchLower = filters.search.toLowerCase()
-      filtered = filtered.filter(col =>
-        col.name.toLowerCase().includes(searchLower) ||
-        col.description?.toLowerCase().includes(searchLower)
-      )
-    }
-
-    // Filtre par statut
-    if (filters.status !== 'all') {
-      const isActiveFilter = filters.status === 'active'
-      filtered = filtered.filter(col => col.is_active === isActiveFilter)
-    }
-
-    // Filtre par visibilité
-    if (filters.visibility !== 'all') {
-      filtered = filtered.filter(col => col.visibility === filters.visibility)
-    }
-
-    // Filtre par partage
-    if (filters.shared === 'shared') {
-      filtered = filtered.filter(col => col.shared_count > 0)
-    } else if (filters.shared === 'not_shared') {
-      filtered = filtered.filter(col => col.shared_count === 0)
-    }
-
-    return filtered
-  }, [filters])
+  // Pas besoin de filtrage manuel, le hook s'en charge
+  const filteredCollections = collections
 
   // Fonctions utilitaires
   const toggleCollectionSelection = (collectionId: string) => {
@@ -147,19 +59,29 @@ export default function CollectionsPage() {
     )
   }
 
-  const handleShareCollection = (collection: Collection) => {
+  const handleShareCollection = async (collection: Collection) => {
     if (collection.shared_link_token) {
       const shareUrl = `${window.location.origin}/c/${collection.shared_link_token}`
       navigator.clipboard.writeText(shareUrl)
+      await recordShare(collection.id, 'link')
       console.log(`Lien copié: ${shareUrl}`)
     } else {
-      console.log(`Générer lien de partage pour: ${collection.id}`)
+      const token = await generateShareToken(collection.id)
+      if (token) {
+        const shareUrl = `${window.location.origin}/c/${token}`
+        navigator.clipboard.writeText(shareUrl)
+        await recordShare(collection.id, 'link')
+        console.log(`Lien généré et copié: ${shareUrl}`)
+      }
     }
   }
 
-  const handleBulkStatusToggle = () => {
+  const handleBulkStatusToggle = async () => {
     console.log("Changement de statut en lot pour :", selectedCollections)
-    // TODO: Implémenter avec Supabase
+    for (const collectionId of selectedCollections) {
+      await toggleCollectionStatus(collectionId)
+    }
+    setSelectedCollections([])
   }
 
   const formatPrice = (priceInCents: number) => {
@@ -223,7 +145,7 @@ export default function CollectionsPage() {
               <Button
                 variant="ghost"
                 size="sm"
-                onClick={() => console.log(`Toggle status for ${collection.id}`)}
+                onClick={() => toggleCollectionStatus(collection.id)}
               >
                 {collection.is_active ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
               </Button>
@@ -393,7 +315,24 @@ export default function CollectionsPage() {
 
       {/* Grille des collections */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        {filteredCollections.length > 0 ? (
+        {loading ? (
+          Array.from({ length: 6 }).map((_, i) => (
+            <div key={i} className="bg-white rounded-lg border border-gray-200 animate-pulse">
+              <div className="p-4 border-b border-gray-200">
+                <div className="h-6 bg-gray-200 rounded w-3/4 mb-2"></div>
+                <div className="h-4 bg-gray-200 rounded w-1/2"></div>
+              </div>
+              <div className="p-4">
+                <div className="h-4 bg-gray-200 rounded w-full mb-2"></div>
+                <div className="h-20 bg-gray-200 rounded"></div>
+              </div>
+            </div>
+          ))
+        ) : error ? (
+          <div className="col-span-full p-8 text-center text-red-500 bg-white rounded-lg border border-red-200">
+            Erreur lors du chargement des collections: {error}
+          </div>
+        ) : filteredCollections.length > 0 ? (
           filteredCollections.map(collection => (
             <CollectionCard key={collection.id} collection={collection} />
           ))
@@ -408,25 +347,25 @@ export default function CollectionsPage() {
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
         <div className="bg-white p-4 rounded-lg border border-gray-200">
           <div className="text-2xl font-light text-black">
-            {mockCollections.length}
+            {loading ? '...' : collections.length}
           </div>
           <div className="text-sm text-gray-600">Collections totales</div>
         </div>
         <div className="bg-white p-4 rounded-lg border border-gray-200">
           <div className="text-2xl font-light text-black">
-            {mockCollections.filter(c => c.is_active).length}
+            {loading ? '...' : collections.filter(c => c.is_active).length}
           </div>
           <div className="text-sm text-gray-600">Collections actives</div>
         </div>
         <div className="bg-white p-4 rounded-lg border border-gray-200">
           <div className="text-2xl font-light text-black">
-            {mockCollections.filter(c => c.shared_link_token).length}
+            {loading ? '...' : collections.filter(c => c.shared_link_token).length}
           </div>
           <div className="text-sm text-gray-600">Collections partagées</div>
         </div>
         <div className="bg-white p-4 rounded-lg border border-gray-200">
           <div className="text-2xl font-light text-black">
-            {mockCollections.reduce((sum, c) => sum + c.shared_count, 0)}
+            {loading ? '...' : collections.reduce((sum, c) => sum + c.shared_count, 0)}
           </div>
           <div className="text-sm text-gray-600">Partages totaux</div>
         </div>

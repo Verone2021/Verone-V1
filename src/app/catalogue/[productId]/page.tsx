@@ -2,23 +2,81 @@
 
 import { useState, useEffect } from "react"
 import { useParams, useRouter } from "next/navigation"
-import Image from "next/image"
-import { ArrowLeft, Edit, Share2, Clock, Package, Calendar, Truck, DollarSign, BarChart3, Tag, Layers } from "lucide-react"
+import { ArrowLeft, Edit, Share2, Settings, FileText, Image as ImageIcon, Package, Tag, Clock } from "lucide-react"
 import { Button } from "../../../components/ui/button"
 import { Badge } from "../../../components/ui/badge"
+import { Progress } from "../../../components/ui/progress"
+import { ProductImageGallery } from "../../../components/business/product-image-gallery"
+import { ProductPhotosModal } from "../../../components/business/product-photos-modal"
+import { ProductCharacteristicsModal } from "../../../components/business/product-characteristics-modal"
+import { ProductDescriptionsModal } from "../../../components/business/product-descriptions-modal"
+import { SupplierVsPricingEditSection } from "../../../components/business/supplier-vs-pricing-edit-section"
+import { GeneralInfoEditSection } from "../../../components/business/general-info-edit-section"
+import { StockEditSection } from "../../../components/business/stock-edit-section"
+import { ProductFixedCharacteristics } from "../../../components/business/product-fixed-characteristics"
+import { IdentifiersEditSection } from "../../../components/business/identifiers-edit-section"
 import { cn, formatPrice, checkSLOCompliance } from "../../../lib/utils"
 import { createClient } from "../../../lib/supabase/client"
+import { useProductImages } from "../../../hooks/use-product-images"
+
+// Champs obligatoires pour un produit complet
+const REQUIRED_PRODUCT_FIELDS = [
+  'name',
+  'sku',
+  'supplier_id',
+  'subcategory_id',
+  'price_ht',
+  'description'
+] as const
+
+// Mapping des champs avec leurs libellés
+const PRODUCT_FIELD_LABELS: Record<string, string> = {
+  name: 'Nom du produit',
+  sku: 'Référence SKU',
+  supplier_id: 'Fournisseur',
+  subcategory_id: 'Sous-catégorie',
+  price_ht: 'Prix de vente HT',
+  description: 'Description'
+}
+
+// Fonction pour calculer la progression d'un produit
+function calculateProductProgress(product: Product): { percentage: number, missingFields: string[] } {
+  const filledFields = REQUIRED_PRODUCT_FIELDS.filter(field => {
+    const value = product[field as keyof Product]
+    if (typeof value === 'string') {
+      return value.trim().length > 0
+    }
+    return value !== null && value !== undefined && value !== 0
+  })
+
+  const missingFields = REQUIRED_PRODUCT_FIELDS.filter(field => {
+    const value = product[field as keyof Product]
+    if (typeof value === 'string') {
+      return value.trim().length === 0
+    }
+    return value === null || value === undefined || value === 0
+  }).map(field => PRODUCT_FIELD_LABELS[field] || field)
+
+  const percentage = Math.round((filledFields.length / REQUIRED_PRODUCT_FIELDS.length) * 100)
+
+  return { percentage, missingFields }
+}
 
 // Types selon structure DB Supabase
 interface Product {
   // Identifiants & Références
   id: string
-  product_group_id: string
   sku: string
   name: string
+  description?: string
   slug: string
   supplier_reference?: string
   gtin?: string
+
+  // Relations directes
+  subcategory_id?: string
+  brand?: string
+  supplier_id?: string
 
   // Tarification & Business
   price_ht: number // En centimes
@@ -35,9 +93,11 @@ interface Product {
   weight?: number
 
   // Médias
-  primary_image_url: string
-  gallery_images?: string[]
   video_url?: string
+
+  // Descriptions enrichies
+  technical_description?: string
+  selling_points?: string[]
 
   // Stock & Gestion
   stock_quantity?: number
@@ -47,23 +107,20 @@ interface Product {
   created_at: string
   updated_at: string
 
-  // Relations
-  product_groups?: {
+  // Relations jointes
+  supplier?: {
     id: string
     name: string
-    description?: string
-    brand?: string
-    status: string
-    subcategories?: {
+  }
+  subcategories?: {
+    id: string
+    name: string
+    categories?: {
       id: string
       name: string
-      categories?: {
+      families?: {
         id: string
         name: string
-        families?: {
-          id: string
-          name: string
-        }
       }
     }
   }
@@ -79,7 +136,22 @@ export default function ProductDetailPage() {
   const [product, setProduct] = useState<Product | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
-  const [selectedImageIndex, setSelectedImageIndex] = useState(0)
+  const [showPhotosModal, setShowPhotosModal] = useState(false)
+  const [showCharacteristicsModal, setShowCharacteristicsModal] = useState(false)
+  const [showDescriptionsModal, setShowDescriptionsModal] = useState(false)
+
+  // Hook pour gestion images
+  const { images, hasImages, loading: imagesLoading } = useProductImages({
+    productId: params.productId as string,
+    productType: 'product'
+  })
+
+  // Gestionnaire de mise à jour produit
+  const handleProductUpdate = (updatedData: Partial<Product>) => {
+    if (product) {
+      setProduct({ ...product, ...updatedData })
+    }
+  }
 
   // Charger le produit depuis Supabase
   useEffect(() => {
@@ -98,22 +170,16 @@ export default function ProductDetailPage() {
           .from('products')
           .select(`
             *,
-            product_groups (
+            supplier:organisations!supplier_id(id, name),
+            subcategories!subcategory_id(
               id,
               name,
-              description,
-              brand,
-              status,
-              subcategories (
+              categories (
                 id,
                 name,
-                categories (
+                families (
                   id,
-                  name,
-                  families (
-                    id,
-                    name
-                  )
+                  name
                 )
               )
             )
@@ -168,10 +234,12 @@ export default function ProductDetailPage() {
     )
   }
 
+  const { percentage } = calculateProductProgress(product)
+
   return (
-    <div className="space-y-6">
-      {/* Navigation */}
-      <div className="flex items-center justify-between">
+    <div className="space-y-4">
+      {/* Header compact avec navigation */}
+      <div className="flex items-center justify-between bg-white border border-gray-200 rounded-lg p-4">
         <div className="flex items-center space-x-4">
           <Button
             variant="ghost"
@@ -180,379 +248,353 @@ export default function ProductDetailPage() {
             className="pl-2"
           >
             <ArrowLeft className="h-4 w-4 mr-2" />
-            Retour au catalogue
+            Retour
           </Button>
 
-          {/* Breadcrumb */}
-          <nav className="text-sm text-black opacity-70">
+          {/* Breadcrumb compact */}
+          <nav className="text-sm text-gray-600">
             <span>Catalogue</span>
-            <span className="mx-2">›</span>
-            {product.product_groups?.subcategories?.categories?.families && (
+            {product.subcategories?.categories?.name && (
               <>
-                <span>{product.product_groups.subcategories.categories.families.name}</span>
-                <span className="mx-2">›</span>
+                <span className="mx-1">›</span>
+                <span>{product.subcategories.categories.name}</span>
               </>
             )}
-            {product.product_groups?.subcategories?.categories && (
+            {product.subcategories?.name && (
               <>
-                <span>{product.product_groups.subcategories.categories.name}</span>
-                <span className="mx-2">›</span>
+                <span className="mx-1">›</span>
+                <span>{product.subcategories.name}</span>
               </>
-            )}
-            {product.product_groups?.subcategories && (
-              <span>{product.product_groups.subcategories.name}</span>
             )}
           </nav>
         </div>
 
-        {/* Actions */}
+        {/* Actions header */}
         <div className="flex items-center space-x-2">
-          <Badge variant={sloCompliance.isCompliant ? "success" : "destructive"}>
+          <Badge variant={sloCompliance.isCompliant ? "default" : "destructive"} className="text-xs">
             {sloCompliance.duration}ms
           </Badge>
-          <Button variant="secondary" size="sm">
-            <Share2 className="h-4 w-4 mr-2" />
+          <Button variant="outline" size="sm">
+            <Share2 className="h-4 w-4 mr-1" />
             Partager
           </Button>
-          <Button variant="default" size="sm">
-            <Edit className="h-4 w-4 mr-2" />
-            Modifier
-          </Button>
         </div>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-        {/* Section Médias */}
-        <div className="space-y-4">
-          {/* Image principale */}
-          <div className="relative aspect-square overflow-hidden card-verone">
-            <Image
-              src={product.gallery_images?.[selectedImageIndex] || product.primary_image_url}
-              alt={product.name}
-              fill
-              className="object-cover"
-              sizes="(max-width: 1024px) 100vw, 50vw"
+      {/* Layout 3 colonnes compact */}
+      <div className="grid grid-cols-1 xl:grid-cols-12 gap-4">
+
+        {/* COLONNE 1: Images & Métadonnées (25% - xl:col-span-3) */}
+        <div className="xl:col-span-3 space-y-4">
+          {/* Galerie images compacte */}
+          <div className="bg-white border border-gray-200 rounded-lg p-4">
+            <ProductImageGallery
+              productId={product.id}
+              productName={product.name}
+              productStatus={product.status}
+              className=""
             />
 
-            {/* Badge statut */}
-            <div className="absolute top-4 right-4">
-              <Badge
-                className={cn(
-                  product.status === 'in_stock' && "bg-green-600 text-white",
-                  product.status === 'out_of_stock' && "bg-red-600 text-white",
-                  product.status === 'preorder' && "bg-blue-600 text-white",
-                  product.status === 'coming_soon' && "bg-black text-white",
-                  product.status === 'discontinued' && "bg-gray-600 text-white"
-                )}
+            {/* Actions rapides images */}
+            <div className="mt-3 space-y-2">
+              <Button
+                variant="outline"
+                size="sm"
+                className="w-full text-xs"
+                onClick={() => setShowPhotosModal(true)}
               >
-                {product.status === 'in_stock' && '✓ En stock'}
-                {product.status === 'out_of_stock' && '✕ Rupture'}
-                {product.status === 'preorder' && '📅 Précommande'}
-                {product.status === 'coming_soon' && '⏳ Bientôt'}
-                {product.status === 'discontinued' && '⚠ Arrêté'}
-              </Badge>
+                <ImageIcon className="h-3 w-3 mr-1" />
+                Gérer photos ({images.length})
+              </Button>
             </div>
           </div>
 
-          {/* Miniatures galerie */}
-          {product.gallery_images && product.gallery_images.length > 1 && (
-            <div className="flex space-x-2">
-              {product.gallery_images.map((image, index) => (
-                <button
-                  key={index}
-                  onClick={() => setSelectedImageIndex(index)}
-                  className={cn(
-                    "relative aspect-square w-20 overflow-hidden border-2 transition-all",
-                    selectedImageIndex === index ? "border-black" : "border-gray-200 hover:border-gray-400"
-                  )}
-                >
-                  <Image
-                    src={image}
-                    alt={`${product.name} - Vue ${index + 1}`}
-                    fill
-                    className="object-cover"
-                    sizes="80px"
-                  />
-                </button>
-              ))}
-            </div>
-          )}
-
-          {/* Vidéo si disponible */}
-          {product.video_url && (
-            <div className="card-verone p-4">
-              <h3 className="text-sm font-medium text-black mb-2">Vidéo produit</h3>
-              <video controls className="w-full rounded">
-                <source src={product.video_url} type="video/mp4" />
-                Votre navigateur ne supporte pas la vidéo.
-              </video>
-            </div>
-          )}
-        </div>
-
-        {/* Section Informations */}
-        <div className="space-y-6">
-          {/* En-tête produit */}
-          <div>
-            <h1 className="text-3xl font-light text-black mb-2">
-              {product.name}
-            </h1>
-            {product.product_groups?.description && (
-              <p className="text-black opacity-70 mb-4">
-                {product.product_groups.description}
-              </p>
-            )}
-            <div className="flex items-center space-x-4 text-sm text-black opacity-60">
-              <span>SKU: {product.sku}</span>
-              {product.product_groups?.brand && (
-                <>
-                  <span>•</span>
-                  <span>Marque: {product.product_groups.brand}</span>
-                </>
-              )}
-              {product.stock_quantity !== undefined && (
-                <>
-                  <span>•</span>
-                  <span>Stock: {product.stock_quantity} unités</span>
-                </>
-              )}
-            </div>
-          </div>
-
-          {/* SECTION 1: IDENTIFIANTS & RÉFÉRENCES */}
-          <div className="card-verone p-4">
-            <h3 className="text-lg font-medium text-black mb-4 flex items-center">
-              <Tag className="h-5 w-5 mr-2" />
-              Identifiants & Références
+          {/* Métadonnées automatiques */}
+          <div className="bg-white border border-gray-200 rounded-lg p-4">
+            <h3 className="text-sm font-medium text-black flex items-center mb-3">
+              <Clock className="h-4 w-4 mr-1" />
+              Métadonnées
             </h3>
-            <div className="grid grid-cols-2 gap-4 text-sm">
-              <div>
-                <span className="text-black opacity-70">ID Produit:</span>
-                <span className="ml-2 font-mono text-xs bg-gray-100 px-2 py-1 rounded">{product.id}</span>
+            <div className="space-y-2 text-xs">
+              <div className="flex justify-between">
+                <span className="text-gray-600">ID:</span>
+                <span className="font-mono">{product.id.slice(0, 8)}...</span>
               </div>
-              <div>
-                <span className="text-black opacity-70">ID Groupe:</span>
-                <span className="ml-2 font-mono text-xs bg-gray-100 px-2 py-1 rounded">{product.product_group_id}</span>
+              <div className="flex justify-between">
+                <span className="text-gray-600">Créé:</span>
+                <span>{new Date(product.created_at).toLocaleDateString('fr-FR')}</span>
               </div>
-              <div>
-                <span className="text-black opacity-70">SKU:</span>
-                <span className="ml-2 font-medium text-black">{product.sku}</span>
+              <div className="flex justify-between">
+                <span className="text-gray-600">Modifié:</span>
+                <span>{new Date(product.updated_at).toLocaleDateString('fr-FR')}</span>
               </div>
-              <div>
-                <span className="text-black opacity-70">Slug URL:</span>
-                <span className="ml-2 font-mono text-xs text-blue-600">{product.slug}</span>
-              </div>
-              {product.supplier_reference && (
-                <div>
-                  <span className="text-black opacity-70">Ref. Fournisseur:</span>
-                  <span className="ml-2 font-medium text-black">{product.supplier_reference}</span>
-                </div>
-              )}
-              {product.gtin && (
-                <div>
-                  <span className="text-black opacity-70">GTIN/EAN:</span>
-                  <span className="ml-2 font-mono text-black">{product.gtin}</span>
+              {product.supplier && (
+                <div className="flex justify-between">
+                  <span className="text-gray-600">Fournisseur:</span>
+                  <span className="font-medium">{product.supplier.name}</span>
                 </div>
               )}
             </div>
           </div>
 
-          {/* SECTION 2: TARIFICATION & BUSINESS */}
-          <div className="card-verone p-4">
-            <h3 className="text-lg font-medium text-black mb-4 flex items-center">
-              <DollarSign className="h-5 w-5 mr-2" />
-              Tarification & Business
-            </h3>
+          {/* Status & Progression */}
+          <div className="bg-white border border-gray-200 rounded-lg p-4">
             <div className="space-y-3">
-              <div className="flex justify-between items-center">
-                <span className="text-black opacity-70">Prix de vente HT:</span>
-                <span className="text-xl font-bold text-black">{formatPrice(product.price_ht)}</span>
-              </div>
-              <div className="flex justify-between items-center">
-                <span className="text-black opacity-70">Prix TTC (TVA {((product.tax_rate || 0.2) * 100).toFixed(0)}%):</span>
-                <span className="text-lg font-semibold text-black">
-                  {formatPrice(product.price_ht * (1 + (product.tax_rate || 0.2)))}
-                </span>
-              </div>
-              {product.cost_price && (
-                <>
-                  <div className="flex justify-between items-center">
-                    <span className="text-red-600 opacity-70">Prix d'achat HT (confidentiel):</span>
-                    <span className="text-red-600 font-medium">{formatPrice(product.cost_price)}</span>
-                  </div>
-                  <div className="flex justify-between items-center">
-                    <span className="text-green-600 opacity-70">Marge brute:</span>
-                    <span className="text-green-600 font-semibold">
-                      {formatPrice(product.price_ht - product.cost_price)}
-                      ({Math.round(((product.price_ht - product.cost_price) / product.price_ht) * 100)}%)
-                    </span>
-                  </div>
-                </>
-              )}
-            </div>
-          </div>
-
-          {/* SECTION 3: STATUTS & CONDITIONS */}
-          <div className="card-verone p-4">
-            <h3 className="text-lg font-medium text-black mb-4 flex items-center">
-              <BarChart3 className="h-5 w-5 mr-2" />
-              Statuts & Conditions
-            </h3>
-            <div className="grid grid-cols-2 gap-4">
               <div>
-                <span className="text-black opacity-70">Statut disponibilité:</span>
                 <Badge
                   className={cn(
-                    "ml-2",
-                    product.status === 'in_stock' && "bg-green-600 text-white",
-                    product.status === 'out_of_stock' && "bg-red-600 text-white",
-                    product.status === 'preorder' && "bg-blue-600 text-white",
-                    product.status === 'coming_soon' && "bg-black text-white",
-                    product.status === 'discontinued' && "bg-gray-600 text-white"
+                    "text-xs",
+                    product.status === 'in_stock' ? 'bg-green-600 text-white' : 'bg-red-600 text-white'
                   )}
                 >
-                  {product.status}
+                  {product.status === 'in_stock' ? 'En stock' : 'Hors stock'}
                 </Badge>
               </div>
+
               <div>
-                <span className="text-black opacity-70">Condition:</span>
-                <Badge variant="outline" className="ml-2">
-                  {product.condition === 'new' && 'Neuf'}
-                  {product.condition === 'refurbished' && 'Reconditionné'}
-                  {product.condition === 'used' && 'Occasion'}
-                </Badge>
+                <div className="text-xs text-gray-600 mb-1">Complétude</div>
+                <div className="flex items-center gap-2">
+                  <Progress value={percentage} className="flex-1 h-2" />
+                  <span className="text-xs font-medium">{percentage}%</span>
+                </div>
               </div>
             </div>
           </div>
+        </div>
 
-          {/* SECTION 4: CARACTÉRISTIQUES PHYSIQUES */}
-          <div className="card-verone p-4">
-            <h3 className="text-lg font-medium text-black mb-4 flex items-center">
-              <Package className="h-5 w-5 mr-2" />
-              Caractéristiques Physiques
-            </h3>
-            <div className="space-y-3">
-              {/* Attributs variantes */}
-              {product.variant_attributes && Object.keys(product.variant_attributes).length > 0 && (
+        {/* COLONNE 2: Informations Principales (45% - xl:col-span-5) */}
+        <div className="xl:col-span-5 space-y-4">
+
+          {/* Header produit compact */}
+          <div className="bg-white border border-gray-200 rounded-lg p-4">
+            <div className="flex items-start justify-between">
+              <div className="flex-1">
+                <h1 className="text-xl font-bold text-black mb-1">{product.name}</h1>
+                <div className="flex items-center gap-3 text-sm text-gray-600 mb-2">
+                  <span>SKU: {product.sku}</span>
+                  {product.supplier_reference && <span>Réf. fournisseur: {product.supplier_reference}</span>}
+                </div>
+                <div className="text-lg font-semibold text-black">
+                  {formatPrice(product.price_ht)}
+                </div>
+              </div>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setShowDescriptionsModal(true)}
+              >
+                <Edit className="h-4 w-4 mr-1" />
+                Modifier
+              </Button>
+            </div>
+          </div>
+
+          {/* Description rapide */}
+          <div className="bg-white border border-gray-200 rounded-lg p-4">
+            <div className="flex items-center justify-between mb-2">
+              <h3 className="text-sm font-medium text-black">Description</h3>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => setShowDescriptionsModal(true)}
+                className="text-xs"
+              >
+                <FileText className="h-3 w-3 mr-1" />
+                Éditer
+              </Button>
+            </div>
+            <p className="text-sm text-gray-700 line-clamp-3">
+              {product.description || "Aucune description disponible"}
+            </p>
+          </div>
+
+          {/* Caractéristiques rapides */}
+          <div className="bg-white border border-gray-200 rounded-lg p-4">
+            <div className="flex items-center justify-between mb-3">
+              <h3 className="text-sm font-medium text-black">Caractéristiques</h3>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => setShowCharacteristicsModal(true)}
+                className="text-xs"
+              >
+                <Settings className="h-3 w-3 mr-1" />
+                Gérer
+              </Button>
+            </div>
+            <div className="grid grid-cols-2 gap-2 text-xs">
+              {product.variant_attributes?.color && (
                 <div>
-                  <span className="text-black opacity-70 font-medium">Attributs variantes:</span>
-                  <div className="mt-2 grid grid-cols-2 gap-2">
-                    {Object.entries(product.variant_attributes).map(([key, value]) => (
-                      <div key={key} className="flex justify-between">
-                        <span className="capitalize text-black opacity-70">{key}:</span>
-                        <span className="font-medium text-black">{String(value)}</span>
-                      </div>
-                    ))}
-                  </div>
+                  <span className="text-gray-600">Couleur:</span>
+                  <div className="font-medium">{product.variant_attributes.color}</div>
                 </div>
               )}
-
-              {/* Dimensions */}
-              {product.dimensions && Object.keys(product.dimensions).length > 0 && (
+              {product.variant_attributes?.material && (
                 <div>
-                  <span className="text-black opacity-70 font-medium">Dimensions:</span>
-                  <div className="mt-2 text-sm">
-                    <pre className="bg-gray-100 p-2 rounded font-mono text-xs overflow-x-auto">
-                      {JSON.stringify(product.dimensions, null, 2)}
-                    </pre>
-                  </div>
+                  <span className="text-gray-600">Matière:</span>
+                  <div className="font-medium">{product.variant_attributes.material}</div>
                 </div>
               )}
-
-              {/* Poids */}
               {product.weight && (
-                <div className="flex justify-between">
-                  <span className="text-black opacity-70">Poids:</span>
-                  <span className="font-medium text-black">{product.weight} kg</span>
+                <div>
+                  <span className="text-gray-600">Poids:</span>
+                  <div className="font-medium">{product.weight} kg</div>
+                </div>
+              )}
+              {product.dimensions && (
+                <div>
+                  <span className="text-gray-600">Dimensions:</span>
+                  <div className="font-medium text-xs">
+                    {product.dimensions.width}×{product.dimensions.height}×{product.dimensions.depth} cm
+                  </div>
                 </div>
               )}
             </div>
           </div>
 
-          {/* SECTION 5: STOCK & GESTION */}
-          <div className="card-verone p-4">
-            <h3 className="text-lg font-medium text-black mb-4 flex items-center">
-              <Truck className="h-5 w-5 mr-2" />
-              Stock & Gestion
-            </h3>
-            <div className="grid grid-cols-2 gap-4">
-              <div className="flex justify-between">
-                <span className="text-black opacity-70">Stock actuel:</span>
-                <span className={cn(
-                  "font-semibold",
-                  (product.stock_quantity || 0) > (product.min_stock_level || 5) ? "text-green-600" :
-                  (product.stock_quantity || 0) > 0 ? "text-orange-600" : "text-red-600"
-                )}>
-                  {product.stock_quantity || 0} unités
-                </span>
-              </div>
-              <div className="flex justify-between">
-                <span className="text-black opacity-70">Seuil minimum:</span>
-                <span className="font-medium text-black">{product.min_stock_level || 5} unités</span>
-              </div>
-            </div>
-          </div>
-
-          {/* SECTION 6: TIMESTAMPS */}
-          <div className="card-verone p-4">
-            <h3 className="text-lg font-medium text-black mb-4 flex items-center">
-              <Clock className="h-5 w-5 mr-2" />
-              Dates & Historique
-            </h3>
-            <div className="grid grid-cols-1 gap-2 text-sm">
-              <div className="flex justify-between">
-                <span className="text-black opacity-70">Créé le:</span>
-                <span className="font-mono text-black">
-                  {new Date(product.created_at).toLocaleString('fr-FR')}
-                </span>
-              </div>
-              <div className="flex justify-between">
-                <span className="text-black opacity-70">Modifié le:</span>
-                <span className="font-mono text-black">
-                  {new Date(product.updated_at).toLocaleString('fr-FR')}
-                </span>
-              </div>
-            </div>
-          </div>
-
-          {/* SECTION 7: RELATIONS */}
-          {product.product_groups && (
-            <div className="card-verone p-4">
-              <h3 className="text-lg font-medium text-black mb-4 flex items-center">
-                <Layers className="h-5 w-5 mr-2" />
-                Relations & Hiérarchie
+          {/* Catégorisation */}
+          {product.subcategories && (
+            <div className="bg-white border border-gray-200 rounded-lg p-4">
+              <h3 className="text-sm font-medium text-black flex items-center mb-3">
+                <Tag className="h-4 w-4 mr-1" />
+                Catégorisation
               </h3>
-              <div className="space-y-3 text-sm">
-                <div>
-                  <span className="text-black opacity-70">Groupe de produits:</span>
-                  <div className="mt-1 bg-gray-100 p-2 rounded">
-                    <div className="font-medium text-black">{product.product_groups.name}</div>
-                    {product.product_groups.description && (
-                      <div className="text-xs text-black opacity-70 mt-1">
-                        {product.product_groups.description}
-                      </div>
-                    )}
-                  </div>
-                </div>
-
-                {/* Hiérarchie complète */}
-                {product.product_groups.subcategories && (
-                  <div>
-                    <span className="text-black opacity-70">Hiérarchie complète:</span>
-                    <div className="mt-1 text-xs text-black opacity-80">
-                      {product.product_groups.subcategories.categories?.families?.name}
-                      {' › '}
-                      {product.product_groups.subcategories.categories?.name}
-                      {' › '}
-                      {product.product_groups.subcategories.name}
-                    </div>
+              <div className="space-y-2 text-xs">
+                {product.subcategories.categories?.families && (
+                  <div className="flex justify-between">
+                    <span className="text-gray-600">Famille:</span>
+                    <span className="font-medium">{product.subcategories.categories.families.name}</span>
                   </div>
                 )}
+                {product.subcategories.categories && (
+                  <div className="flex justify-between">
+                    <span className="text-gray-600">Catégorie:</span>
+                    <span className="font-medium">{product.subcategories.categories.name}</span>
+                  </div>
+                )}
+                <div className="flex justify-between">
+                  <span className="text-gray-600">Sous-catégorie:</span>
+                  <span className="font-medium">{product.subcategories.name}</span>
+                </div>
               </div>
             </div>
           )}
         </div>
+
+        {/* COLONNE 3: Actions & Gestion (30% - xl:col-span-4) */}
+        <div className="xl:col-span-4 space-y-4">
+
+          {/* Actions rapides */}
+          <div className="bg-white border border-gray-200 rounded-lg p-4">
+            <h3 className="text-sm font-medium text-black mb-3">Actions</h3>
+            <div className="space-y-2">
+              <Button
+                variant="outline"
+                size="sm"
+                className="w-full justify-start text-xs"
+                onClick={() => setShowPhotosModal(true)}
+              >
+                <ImageIcon className="h-3 w-3 mr-2" />
+                Gérer les photos
+              </Button>
+              <Button
+                variant="outline"
+                size="sm"
+                className="w-full justify-start text-xs"
+                onClick={() => setShowCharacteristicsModal(true)}
+              >
+                <Settings className="h-3 w-3 mr-2" />
+                Caractéristiques
+              </Button>
+              <Button
+                variant="outline"
+                size="sm"
+                className="w-full justify-start text-xs"
+                onClick={() => setShowDescriptionsModal(true)}
+              >
+                <FileText className="h-3 w-3 mr-2" />
+                Descriptions
+              </Button>
+            </div>
+          </div>
+
+          {/* Stock & Gestion */}
+          <StockEditSection
+            product={{
+              id: product.id,
+              status: product.status,
+              condition: product.condition,
+              stock_quantity: product.stock_quantity,
+              min_stock_level: product.min_stock_level
+            }}
+            onUpdate={handleProductUpdate}
+          />
+
+          {/* Tarification */}
+          <SupplierVsPricingEditSection
+            product={{
+              id: product.id,
+              selling_price: product.price_ht,
+              supplier_price: product.cost_price,
+              tax_rate: product.tax_rate,
+              price_ht: product.price_ht,
+              cost_price: product.cost_price
+            }}
+            onUpdate={handleProductUpdate}
+          />
+
+          {/* Identifiants */}
+          <IdentifiersEditSection
+            product={{
+              id: product.id,
+              sku: product.sku,
+              slug: product.slug,
+              supplier_reference: product.supplier_reference,
+              gtin: product.gtin,
+              variant_attributes: product.variant_attributes
+            }}
+            onUpdate={handleProductUpdate}
+          />
+        </div>
       </div>
+
+      {/* Modal de gestion des photos */}
+      <ProductPhotosModal
+        isOpen={showPhotosModal}
+        onClose={() => setShowPhotosModal(false)}
+        productId={product.id}
+        productName={product.name}
+        productType="product"
+        maxImages={20}
+      />
+
+      {/* Modal de gestion des caractéristiques */}
+      <ProductCharacteristicsModal
+        isOpen={showCharacteristicsModal}
+        onClose={() => setShowCharacteristicsModal(false)}
+        productId={product.id}
+        productName={product.name}
+        initialData={{
+          variant_attributes: product.variant_attributes,
+          dimensions: product.dimensions,
+          weight: product.weight
+        }}
+        onUpdate={handleProductUpdate}
+      />
+
+      {/* Modal de gestion des descriptions */}
+      <ProductDescriptionsModal
+        isOpen={showDescriptionsModal}
+        onClose={() => setShowDescriptionsModal(false)}
+        productId={product.id}
+        productName={product.name}
+        initialData={{
+          description: product.description,
+          technical_description: product.technical_description,
+          selling_points: product.selling_points
+        }}
+        onUpdate={handleProductUpdate}
+      />
     </div>
   )
 }

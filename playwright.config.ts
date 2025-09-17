@@ -105,10 +105,9 @@ export default defineConfig({
     timeout: 10000,
 
     // Comparaison screenshots
-    threshold: 0.2,
     toHaveScreenshot: {
-      mode: 'css',
-      animations: 'disabled'
+      animations: 'disabled',
+      threshold: 0.2
     }
   }
 });

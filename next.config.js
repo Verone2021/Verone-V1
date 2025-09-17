@@ -28,7 +28,7 @@ const nextConfig = {
       },
       {
         protocol: 'https',
-        hostname: 'v5.airtableusercontent.com',
+        hostname: 'placehold.co',
         port: '',
         pathname: '/**',
       },

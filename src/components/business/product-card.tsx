@@ -5,18 +5,28 @@ import { useRouter } from "next/navigation"
 import { Badge } from "../ui/badge"
 import { Button } from "../ui/button"
 import { cn } from "../../lib/utils"
-import { formatPrice } from "../../lib/utils"
+import { Package, Archive, Trash2, ArchiveRestore } from "lucide-react"
+import { useProductImages } from "../../hooks/use-product-images"
 
-// Interface Produit selon business rules
+// Interface Organisation Fournisseur
+interface SupplierOrganisation {
+  id: string
+  name: string
+  slug: string
+  email?: string
+  country?: string
+  is_active: boolean
+}
+
+// Interface Produit selon business rules - migration brand → supplier (CORRIGÉ : images gérées par useProductImages)
 interface Product {
   id: string
   sku: string
   name: string
-  price_ht: number // Prix en centimes
+  price_ht: number // Prix en euros
   status: 'in_stock' | 'out_of_stock' | 'preorder' | 'coming_soon' | 'discontinued'
   condition: 'new' | 'refurbished' | 'used'
-  primary_image_url: string
-  gallery_images?: string[]
+  // Images gérées par product_images table via useProductImages hook
   weight?: number
   dimensions?: {
     length?: number
@@ -24,8 +34,10 @@ interface Product {
     height?: number
     unit?: string
   }
-  brand?: string
+  supplier?: SupplierOrganisation
   category?: string
+  archived_at?: string | null
+  created_at: string
 }
 
 interface ProductCardProps {
@@ -33,6 +45,9 @@ interface ProductCardProps {
   className?: string
   showActions?: boolean
   onClick?: (product: Product) => void
+  onArchive?: (product: Product) => void
+  onDelete?: (product: Product) => void
+  archived?: boolean
 }
 
 // Configuration statuts selon system colors
@@ -68,10 +83,19 @@ export function ProductCard({
   product,
   className,
   showActions = true,
-  onClick
+  onClick,
+  onArchive,
+  onDelete,
+  archived = false
 }: ProductCardProps) {
   const router = useRouter()
   const status = statusConfig[product.status]
+
+  // 🎯 Hook pour récupérer l'image principale du produit
+  const { primaryImage, loading: imageLoading } = useProductImages({
+    productId: product.id,
+    productType: 'product'
+  })
 
   const handleClick = () => {
     if (onClick) {
@@ -87,6 +111,20 @@ export function ProductCard({
     router.push(`/catalogue/${product.id}`)
   }
 
+  const handleArchiveClick = (e: React.MouseEvent) => {
+    e.stopPropagation()
+    if (onArchive) {
+      onArchive(product)
+    }
+  }
+
+  const handleDeleteClick = (e: React.MouseEvent) => {
+    e.stopPropagation()
+    if (onDelete) {
+      onDelete(product)
+    }
+  }
+
   return (
     <div
       className={cn(
@@ -97,14 +135,31 @@ export function ProductCard({
       onClick={handleClick}
     >
       {/* Image produit */}
-      <div className="relative aspect-square overflow-hidden border-b border-black">
-        <Image
-          src={product.primary_image_url}
-          alt={product.name}
-          fill
-          className="object-cover transition-transform duration-300 group-hover:scale-105"
-          sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 25vw"
-        />
+      <div className="relative aspect-[4/3] overflow-hidden border-b border-black">
+        {primaryImage?.public_url && !imageLoading ? (
+          <Image
+            src={primaryImage.public_url}
+            alt={primaryImage.alt_text || product.name}
+            fill
+            className="object-cover transition-transform duration-300 group-hover:scale-105"
+            sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 25vw"
+            onError={() => {
+              // En cas d'erreur de chargement, afficher le placeholder
+              console.warn(`Erreur chargement image: ${primaryImage.public_url}`)
+            }}
+          />
+        ) : (
+          /* Placeholder quand pas d'image ou en cours de chargement */
+          <div className="w-full h-full bg-gray-100 flex items-center justify-center">
+            {imageLoading ? (
+              <div className="animate-pulse">
+                <Package className="h-12 w-12 text-gray-300" />
+              </div>
+            ) : (
+              <Package className="h-12 w-12 text-gray-400" />
+            )}
+          </div>
+        )}
 
         {/* Badge statut */}
         <div className="absolute top-2 right-2">
@@ -121,6 +176,20 @@ export function ProductCard({
             </Badge>
           </div>
         )}
+
+        {/* Badge "nouveau" pour les produits créés dans les 30 derniers jours */}
+        {(() => {
+          const createdAt = new Date(product.created_at)
+          const thirtyDaysAgo = new Date()
+          thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30)
+          return createdAt > thirtyDaysAgo
+        })() && (
+          <div className="absolute bottom-2 left-2">
+            <Badge variant="secondary" className="bg-green-100 text-green-800 border-green-300">
+              nouveau
+            </Badge>
+          </div>
+        )}
       </div>
 
       {/* Informations produit */}
@@ -132,8 +201,8 @@ export function ProductCard({
           </h3>
           <div className="flex items-center justify-between text-sm text-black opacity-70">
             <span>SKU: {product.sku}</span>
-            {product.brand && (
-              <span>{product.brand}</span>
+            {product.supplier && (
+              <span>{product.supplier.name}</span>
             )}
           </div>
         </div>
@@ -141,10 +210,10 @@ export function ProductCard({
         {/* Prix */}
         <div className="space-y-1">
           <div className="text-xl font-semibold text-black">
-            {formatPrice(product.price_ht)} HT
+            {product.price_ht.toFixed(2)} € HT
           </div>
           <div className="text-sm text-black opacity-70">
-            {formatPrice(product.price_ht * 1.2)} TTC
+            {(product.price_ht * 1.2).toFixed(2)} € TTC
           </div>
         </div>
 
@@ -164,11 +233,50 @@ export function ProductCard({
 
         {/* Actions */}
         {showActions && (
-          <div className="flex pt-2">
+          <div className="space-y-2 pt-2">
+            {/* Actions principales */}
+            <div className="flex gap-2">
+              {/* Archiver/Restaurer */}
+              {onArchive && (
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={handleArchiveClick}
+                  className={`flex-1 min-w-0 ${archived ? "text-blue-600 border-blue-200 hover:bg-blue-50" : "text-orange-600 border-orange-200 hover:bg-orange-50"}`}
+                >
+                  {archived ? (
+                    <>
+                      <ArchiveRestore className="h-4 w-4 mr-1" />
+                      Restaurer
+                    </>
+                  ) : (
+                    <>
+                      <Archive className="h-4 w-4 mr-1" />
+                      Archiver
+                    </>
+                  )}
+                </Button>
+              )}
+
+              {/* Supprimer */}
+              {onDelete && (
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={handleDeleteClick}
+                  className="flex-1 min-w-0 text-red-600 border-red-200 hover:bg-red-50"
+                >
+                  <Trash2 className="h-4 w-4 mr-1" />
+                  Supprimer
+                </Button>
+              )}
+            </div>
+
+            {/* Voir détails */}
             <Button
-              variant="default"
+              variant="ghost"
               size="sm"
-              className="flex-1"
+              className="w-full"
               onClick={handleDetailsClick}
             >
               Voir détails

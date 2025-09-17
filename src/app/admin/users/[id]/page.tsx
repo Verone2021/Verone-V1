@@ -55,7 +55,7 @@ export interface UserDetailData {
 }
 
 interface UserDetailPageProps {
-  params: { id: string }
+  params: Promise<{ id: string }>
 }
 
 async function getCurrentUserRole() {
@@ -120,9 +120,9 @@ async function getUserDetailData(userId: string): Promise<UserDetailData | null>
     return {
       id: user.id,
       email: user.email || '',
-      email_confirmed_at: user.email_confirmed_at,
+      email_confirmed_at: user.email_confirmed_at || null,
       created_at: user.created_at,
-      last_sign_in_at: user.last_sign_in_at,
+      last_sign_in_at: user.last_sign_in_at || null,
       user_metadata: user.user_metadata || {},
       profile: {
         role: profile.role,
@@ -133,7 +133,7 @@ async function getUserDetailData(userId: string): Promise<UserDetailData | null>
       analytics: {
         total_sessions: hasRecentLogin ? Math.floor(Math.random() * 50) + 10 : Math.floor(Math.random() * 20) + 1,
         avg_session_duration: hasRecentLogin ? Math.floor(Math.random() * 45) + 15 : Math.floor(Math.random() * 20) + 5,
-        last_activity: user.last_sign_in_at,
+        last_activity: user.last_sign_in_at || null,
         days_since_creation: daysSinceCreation,
         login_frequency: loginFrequency,
         engagement_score: engagementScore
@@ -147,6 +147,9 @@ async function getUserDetailData(userId: string): Promise<UserDetailData | null>
 }
 
 export default async function UserDetailPage({ params }: UserDetailPageProps) {
+  // Await params pour Next.js 15
+  const { id } = await params
+
   // Vérifier les permissions (owner uniquement)
   const userRole = await getCurrentUserRole()
   if (userRole !== 'owner') {
@@ -154,7 +157,7 @@ export default async function UserDetailPage({ params }: UserDetailPageProps) {
   }
 
   // Récupérer les données utilisateur
-  const userDetailData = await getUserDetailData(params.id)
+  const userDetailData = await getUserDetailData(id)
   if (!userDetailData) {
     notFound()
   }

@@ -1,0 +1,1017 @@
+"use client"
+
+import { useState, useEffect } from 'react'
+import { useForm, Controller } from 'react-hook-form'
+import { zodResolver } from '@hookform/resolvers/zod'
+import { z } from 'zod'
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter
+} from '@/components/ui/dialog'
+import { Button } from '@/components/ui/button'
+import { Input } from '@/components/ui/input'
+import { Label } from '@/components/ui/label'
+import { Switch } from '@/components/ui/switch'
+import { Textarea } from '@/components/ui/textarea'
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue
+} from '@/components/ui/select'
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
+import { Badge } from '@/components/ui/badge'
+import {
+  Loader2,
+  Building2,
+  X,
+  Plus,
+  Mail,
+  Phone,
+  Globe,
+  MapPin,
+  FileText,
+  CreditCard,
+  Star,
+  Users,
+  Briefcase
+} from 'lucide-react'
+import { useSuppliers } from '@/hooks/use-organisations'
+import { AddressSelector } from './address-selector'
+
+// Schema de validation simplifié et fonctionnel
+const supplierSchema = z.object({
+  // Seul champ requis
+  name: z.string().min(1, 'Le nom est requis'),
+
+  // Tous les autres champs optionnels avec validation souple
+  industry_sector: z.string().optional(),
+  supplier_segment: z.string().optional(),
+  supplier_category: z.string().optional(),
+  email: z.union([z.string().email(), z.literal('')]).optional(),
+  secondary_email: z.union([z.string().email(), z.literal('')]).optional(),
+  phone: z.string().optional(),
+  website: z.union([z.string().url(), z.literal('')]).optional(),
+  address_line1: z.string().optional(),
+  address_line2: z.string().optional(),
+  postal_code: z.string().optional(),
+  city: z.string().optional(),
+  region: z.string().optional(),
+  country: z.string().default('FR'),
+
+  // Adresse de facturation
+  billing_address_line1: z.string().optional(),
+  billing_address_line2: z.string().optional(),
+  billing_postal_code: z.string().optional(),
+  billing_city: z.string().optional(),
+  billing_region: z.string().optional(),
+  billing_country: z.string().default('FR'),
+
+  // Adresse de livraison
+  shipping_address_line1: z.string().optional(),
+  shipping_address_line2: z.string().optional(),
+  shipping_postal_code: z.string().optional(),
+  shipping_city: z.string().optional(),
+  shipping_region: z.string().optional(),
+  shipping_country: z.string().default('FR'),
+
+  // Indicateur adresses différentes
+  has_different_shipping_address: z.boolean().default(false),
+  siret: z.string().optional(),
+  vat_number: z.string().optional(),
+  legal_form: z.string().optional(),
+  payment_terms: z.string().optional(),
+  delivery_time_days: z.number().optional().nullable(),
+  minimum_order_amount: z.number().optional().nullable(),
+  currency: z.string().default('EUR'),
+  rating: z.number().min(0).max(5).optional().nullable(),
+  certification_labels: z.array(z.string()).default([]),
+  preferred_supplier: z.boolean().default(false),
+  notes: z.string().optional(),
+  is_active: z.boolean().default(true)
+})
+
+type SupplierFormData = z.infer<typeof supplierSchema>
+
+interface Supplier {
+  id: string
+  name: string
+  email: string | null
+  secondary_email: string | null
+  phone: string | null
+  website: string | null
+  country: string | null
+  address_line1: string | null
+  address_line2: string | null
+  postal_code: string | null
+  city: string | null
+  region: string | null
+  siret: string | null
+  vat_number: string | null
+  legal_form: string | null
+  industry_sector: string | null
+  supplier_segment: string | null
+  supplier_category: string | null
+  payment_terms: string | null
+  delivery_time_days: number | null
+  minimum_order_amount: number | null
+  currency: string | null
+  rating: number | null
+  certification_labels: string[] | null
+  preferred_supplier: boolean | null
+  notes: string | null
+  is_active: boolean
+}
+
+interface SupplierFormModalEnhancedProps {
+  isOpen: boolean
+  onClose: () => void
+  supplier?: Supplier | null
+  onSuccess?: (supplier: Supplier) => void
+}
+
+const COUNTRIES = [
+  { value: 'FR', label: 'France' },
+  { value: 'BE', label: 'Belgique' },
+  { value: 'CH', label: 'Suisse' },
+  { value: 'DE', label: 'Allemagne' },
+  { value: 'ES', label: 'Espagne' },
+  { value: 'IT', label: 'Italie' },
+  { value: 'NL', label: 'Pays-Bas' },
+  { value: 'UK', label: 'Royaume-Uni' },
+  { value: 'US', label: 'États-Unis' },
+  { value: 'OTHER', label: 'Autre' }
+]
+
+const INDUSTRY_SECTORS = [
+  'Mobilier & Décoration',
+  'Éclairage',
+  'Textile & Linge',
+  'Arts de la table',
+  'Accessoires déco',
+  'Menuiserie & Agencement',
+  'Autre'
+]
+
+const SUPPLIER_SEGMENTS = [
+  'Fabricant',
+  'Distributeur',
+  'Artisan',
+  'Designer',
+  'Importateur',
+  'Grossiste',
+  'Détaillant'
+]
+
+const SUPPLIER_CATEGORIES = [
+  'Premium',
+  'Standard',
+  'Économique',
+  'Exclusif',
+  'Occasionnel'
+]
+
+const LEGAL_FORMS = [
+  'SARL',
+  'SAS',
+  'SA',
+  'EURL',
+  'SNC',
+  'Auto-entrepreneur',
+  'Association',
+  'Autre'
+]
+
+const PAYMENT_TERMS = [
+  'Comptant',
+  '30 jours',
+  '45 jours',
+  '60 jours',
+  '90 jours',
+  'Autre'
+]
+
+const CURRENCIES = [
+  { value: 'EUR', label: '€ Euro' },
+  { value: 'USD', label: '$ Dollar US' },
+  { value: 'GBP', label: '£ Livre Sterling' },
+  { value: 'CHF', label: 'CHF Franc Suisse' }
+]
+
+export function SupplierFormModalEnhanced({
+  isOpen,
+  onClose,
+  supplier = null,
+  onSuccess
+}: SupplierFormModalEnhancedProps) {
+  const [isSubmitting, setIsSubmitting] = useState(false)
+  const [activeTab, setActiveTab] = useState('general')
+  const [newCertification, setNewCertification] = useState('')
+  const { createOrganisation, updateOrganisation } = useSuppliers()
+
+  const isEditing = !!supplier
+
+  const {
+    register,
+    handleSubmit,
+    setValue,
+    watch,
+    reset,
+    control,
+    formState: { errors, isValid }
+  } = useForm<SupplierFormData>({
+    resolver: zodResolver(supplierSchema),
+    mode: 'onBlur', // Validation moins aggressive
+    defaultValues: {
+      name: '',
+      email: '',
+      secondary_email: '',
+      phone: '',
+      website: '',
+      country: 'FR',
+      address_line1: '',
+      address_line2: '',
+      postal_code: '',
+      city: '',
+      region: '',
+      billing_address_line1: '',
+      billing_address_line2: '',
+      billing_postal_code: '',
+      billing_city: '',
+      billing_region: '',
+      billing_country: 'FR',
+      shipping_address_line1: '',
+      shipping_address_line2: '',
+      shipping_postal_code: '',
+      shipping_city: '',
+      shipping_region: '',
+      shipping_country: 'FR',
+      has_different_shipping_address: false,
+      siret: '',
+      vat_number: '',
+      legal_form: '',
+      industry_sector: '',
+      supplier_segment: '',
+      supplier_category: '',
+      payment_terms: '',
+      delivery_time_days: undefined,
+      minimum_order_amount: undefined,
+      currency: 'EUR',
+      rating: undefined,
+      certification_labels: [],
+      preferred_supplier: false,
+      notes: '',
+      is_active: true
+    }
+  })
+
+  // Charger les données du fournisseur pour édition
+  useEffect(() => {
+    if (isEditing && supplier) {
+      reset({
+        name: supplier.name,
+        email: supplier.email || '',
+        secondary_email: supplier.secondary_email || '',
+        phone: supplier.phone || '',
+        website: supplier.website || '',
+        country: supplier.country || 'FR',
+        address_line1: supplier.address_line1 || '',
+        address_line2: supplier.address_line2 || '',
+        postal_code: supplier.postal_code || '',
+        city: supplier.city || '',
+        region: supplier.region || '',
+        billing_address_line1: supplier.billing_address_line1 || '',
+        billing_address_line2: supplier.billing_address_line2 || '',
+        billing_postal_code: supplier.billing_postal_code || '',
+        billing_city: supplier.billing_city || '',
+        billing_region: supplier.billing_region || '',
+        billing_country: supplier.billing_country || 'FR',
+        shipping_address_line1: supplier.shipping_address_line1 || '',
+        shipping_address_line2: supplier.shipping_address_line2 || '',
+        shipping_postal_code: supplier.shipping_postal_code || '',
+        shipping_city: supplier.shipping_city || '',
+        shipping_region: supplier.shipping_region || '',
+        shipping_country: supplier.shipping_country || 'FR',
+        has_different_shipping_address: supplier.has_different_shipping_address || false,
+        siret: supplier.siret || '',
+        vat_number: supplier.vat_number || '',
+        legal_form: supplier.legal_form || '',
+        industry_sector: supplier.industry_sector || '',
+        supplier_segment: supplier.supplier_segment || '',
+        supplier_category: supplier.supplier_category || '',
+        payment_terms: supplier.payment_terms || '',
+        delivery_time_days: supplier.delivery_time_days || undefined,
+        minimum_order_amount: supplier.minimum_order_amount || undefined,
+        currency: supplier.currency || 'EUR',
+        rating: supplier.rating || undefined,
+        certification_labels: supplier.certification_labels || [],
+        preferred_supplier: supplier.preferred_supplier || false,
+        notes: supplier.notes || '',
+        is_active: supplier.is_active
+      })
+    } else {
+      reset({
+        name: '',
+        email: '',
+        secondary_email: '',
+        phone: '',
+        website: '',
+        country: 'FR',
+        address_line1: '',
+        address_line2: '',
+        postal_code: '',
+        city: '',
+        region: '',
+        billing_address_line1: '',
+        billing_address_line2: '',
+        billing_postal_code: '',
+        billing_city: '',
+        billing_region: '',
+        billing_country: 'FR',
+        shipping_address_line1: '',
+        shipping_address_line2: '',
+        shipping_postal_code: '',
+        shipping_city: '',
+        shipping_region: '',
+        shipping_country: 'FR',
+        has_different_shipping_address: false,
+        siret: '',
+        vat_number: '',
+        legal_form: '',
+        industry_sector: '',
+        supplier_segment: '',
+        supplier_category: '',
+        payment_terms: '',
+        delivery_time_days: undefined,
+        minimum_order_amount: undefined,
+        currency: 'EUR',
+        rating: undefined,
+        certification_labels: [],
+        preferred_supplier: false,
+        notes: '',
+        is_active: true
+      })
+    }
+  }, [supplier, isEditing, reset])
+
+  const onSubmit = async (data: SupplierFormData) => {
+    setIsSubmitting(true)
+
+    try {
+      let result
+
+      if (isEditing && supplier) {
+        result = await updateOrganisation({
+          id: supplier.id,
+          name: data.name,
+          email: data.email || null,
+          secondary_email: data.secondary_email || null,
+          phone: data.phone || null,
+          website: data.website || null,
+          country: data.country,
+          address_line1: data.address_line1 || null,
+          address_line2: data.address_line2 || null,
+          postal_code: data.postal_code || null,
+          city: data.city || null,
+          region: data.region || null,
+          billing_address_line1: data.billing_address_line1 || null,
+          billing_address_line2: data.billing_address_line2 || null,
+          billing_postal_code: data.billing_postal_code || null,
+          billing_city: data.billing_city || null,
+          billing_region: data.billing_region || null,
+          billing_country: data.billing_country || 'FR',
+          shipping_address_line1: data.shipping_address_line1 || null,
+          shipping_address_line2: data.shipping_address_line2 || null,
+          shipping_postal_code: data.shipping_postal_code || null,
+          shipping_city: data.shipping_city || null,
+          shipping_region: data.shipping_region || null,
+          shipping_country: data.shipping_country || 'FR',
+          has_different_shipping_address: data.has_different_shipping_address || false,
+          siret: data.siret || null,
+          vat_number: data.vat_number || null,
+          legal_form: data.legal_form || null,
+          industry_sector: data.industry_sector || null,
+          supplier_segment: data.supplier_segment || null,
+          supplier_category: data.supplier_category || null,
+          payment_terms: data.payment_terms || null,
+          delivery_time_days: data.delivery_time_days || null,
+          minimum_order_amount: data.minimum_order_amount || null,
+          currency: data.currency,
+          rating: data.rating || null,
+          certification_labels: data.certification_labels || null,
+          preferred_supplier: data.preferred_supplier,
+          notes: data.notes || null,
+          is_active: data.is_active
+        })
+      } else {
+        result = await createOrganisation({
+          name: data.name,
+          type: 'supplier',
+          email: data.email || null,
+          secondary_email: data.secondary_email || null,
+          phone: data.phone || null,
+          website: data.website || null,
+          country: data.country,
+          address_line1: data.address_line1 || null,
+          address_line2: data.address_line2 || null,
+          postal_code: data.postal_code || null,
+          city: data.city || null,
+          region: data.region || null,
+          billing_address_line1: data.billing_address_line1 || null,
+          billing_address_line2: data.billing_address_line2 || null,
+          billing_postal_code: data.billing_postal_code || null,
+          billing_city: data.billing_city || null,
+          billing_region: data.billing_region || null,
+          billing_country: data.billing_country || 'FR',
+          shipping_address_line1: data.shipping_address_line1 || null,
+          shipping_address_line2: data.shipping_address_line2 || null,
+          shipping_postal_code: data.shipping_postal_code || null,
+          shipping_city: data.shipping_city || null,
+          shipping_region: data.shipping_region || null,
+          shipping_country: data.shipping_country || 'FR',
+          has_different_shipping_address: data.has_different_shipping_address || false,
+          siret: data.siret || null,
+          vat_number: data.vat_number || null,
+          legal_form: data.legal_form || null,
+          industry_sector: data.industry_sector || null,
+          supplier_segment: data.supplier_segment || null,
+          supplier_category: data.supplier_category || null,
+          payment_terms: data.payment_terms || null,
+          delivery_time_days: data.delivery_time_days || null,
+          minimum_order_amount: data.minimum_order_amount || null,
+          currency: data.currency,
+          rating: data.rating || null,
+          certification_labels: data.certification_labels || null,
+          preferred_supplier: data.preferred_supplier,
+          notes: data.notes || null,
+          is_active: data.is_active
+        })
+      }
+
+      if (result) {
+        onSuccess?.(result as Supplier)
+        onClose()
+        reset()
+      }
+
+    } catch (error) {
+      console.error('Erreur lors de la sauvegarde:', error)
+    } finally {
+      setIsSubmitting(false)
+    }
+  }
+
+  const handleClose = () => {
+    if (!isSubmitting) {
+      onClose()
+      reset()
+      setActiveTab('general')
+    }
+  }
+
+  const watchedCertifications = watch('certification_labels') || []
+
+  const addCertification = () => {
+    if (newCertification.trim() && !watchedCertifications.includes(newCertification.trim())) {
+      setValue('certification_labels', [...watchedCertifications, newCertification.trim()])
+      setNewCertification('')
+    }
+  }
+
+  const removeCertification = (index: number) => {
+    const updated = watchedCertifications.filter((_, i) => i !== index)
+    setValue('certification_labels', updated)
+  }
+
+  return (
+    <Dialog open={isOpen} onOpenChange={handleClose}>
+      <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+        <DialogHeader>
+          <DialogTitle className="flex items-center gap-2">
+            <Building2 className="h-5 w-5" />
+            {isEditing ? 'Modifier le fournisseur' : 'Nouveau fournisseur'}
+          </DialogTitle>
+        </DialogHeader>
+
+        <form onSubmit={handleSubmit(onSubmit)} className="space-y-6" noValidate>
+          <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
+            <TabsList className="grid w-full grid-cols-5 mb-6">
+              <TabsTrigger value="general" className="flex items-center gap-2">
+                <Users className="h-4 w-4" />
+                Général
+              </TabsTrigger>
+              <TabsTrigger value="address" className="flex items-center gap-2">
+                <MapPin className="h-4 w-4" />
+                Adresse
+              </TabsTrigger>
+              <TabsTrigger value="legal" className="flex items-center gap-2">
+                <FileText className="h-4 w-4" />
+                Légal
+              </TabsTrigger>
+              <TabsTrigger value="commercial" className="flex items-center gap-2">
+                <CreditCard className="h-4 w-4" />
+                Commercial
+              </TabsTrigger>
+              <TabsTrigger value="performance" className="flex items-center gap-2">
+                <Star className="h-4 w-4" />
+                Performance
+              </TabsTrigger>
+            </TabsList>
+
+            {/* Tab Général */}
+            <TabsContent value="general" className="space-y-6">
+              {/* Informations principales */}
+              <div className="space-y-4">
+                <div className="flex items-center gap-2 mb-4">
+                  <Building2 className="h-5 w-5 text-black" />
+                  <h3 className="text-lg font-semibold text-black">Informations principales</h3>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  {/* Nom */}
+                  <div className="space-y-2">
+                    <Label htmlFor="name" className="text-sm font-medium flex items-center gap-2">
+                      <Building2 className="h-4 w-4" />
+                      Nom du fournisseur <span className="text-red-500">*</span>
+                    </Label>
+                    <Input
+                      id="name"
+                      {...register('name')}
+                      placeholder="Ex: Kartell, Hay, Muuto..."
+                      disabled={isSubmitting}
+                      className={`${errors.name ? 'border-red-500' : ''} h-11`}
+                    />
+                    {errors.name && (
+                      <p className="text-red-500 text-sm mt-1">{errors.name.message}</p>
+                    )}
+                  </div>
+                </div>
+              </div>
+
+              {/* Classification business */}
+              <div className="space-y-4 border-t pt-6">
+                <div className="flex items-center gap-2 mb-4">
+                  <Briefcase className="h-5 w-5 text-black" />
+                  <h3 className="text-lg font-semibold text-black">Classification</h3>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+
+                  {/* Secteur d'activité */}
+                  <div className="space-y-2">
+                    <Label htmlFor="industry_sector" className="text-sm font-medium">Secteur d'activité</Label>
+                    <Controller
+                      name="industry_sector"
+                      control={control}
+                      render={({ field }) => (
+                        <Select value={field.value || ''} onValueChange={field.onChange} disabled={isSubmitting}>
+                          <SelectTrigger className="h-11">
+                            <SelectValue placeholder="Sélectionner un secteur" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {INDUSTRY_SECTORS.map((sector) => (
+                              <SelectItem key={sector} value={sector}>
+                                {sector}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      )}
+                    />
+                  </div>
+
+                  {/* Segment */}
+                  <div className="space-y-2">
+                    <Label htmlFor="supplier_segment" className="text-sm font-medium">Segment</Label>
+                    <Controller
+                      name="supplier_segment"
+                      control={control}
+                      render={({ field }) => (
+                        <Select value={field.value || ''} onValueChange={field.onChange} disabled={isSubmitting}>
+                          <SelectTrigger className="h-11">
+                            <SelectValue placeholder="Sélectionner un segment" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {SUPPLIER_SEGMENTS.map((segment) => (
+                              <SelectItem key={segment} value={segment}>
+                                {segment}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      )}
+                    />
+                  </div>
+
+                  {/* Catégorie */}
+                  <div className="space-y-2">
+                    <Label htmlFor="supplier_category" className="text-sm font-medium">Catégorie</Label>
+                    <Controller
+                      name="supplier_category"
+                      control={control}
+                      render={({ field }) => (
+                        <Select value={field.value || ''} onValueChange={field.onChange} disabled={isSubmitting}>
+                          <SelectTrigger className="h-11">
+                            <SelectValue placeholder="Sélectionner une catégorie" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {SUPPLIER_CATEGORIES.map((category) => (
+                              <SelectItem key={category} value={category}>
+                                {category}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      )}
+                    />
+                  </div>
+                </div>
+              </div>
+
+              {/* Informations de contact */}
+              <div className="space-y-4 border-t pt-6">
+                <div className="flex items-center gap-2 mb-4">
+                  <Mail className="h-5 w-5 text-black" />
+                  <h3 className="text-lg font-semibold text-black">Contact</h3>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+
+                  {/* Email principal */}
+                  <div className="space-y-2">
+                    <Label htmlFor="email" className="text-sm font-medium flex items-center gap-2">
+                      <Mail className="h-4 w-4" />
+                      Email principal
+                    </Label>
+                    <Input
+                      id="email"
+                      type="email"
+                      {...register('email')}
+                      placeholder="contact@fournisseur.com"
+                      disabled={isSubmitting}
+                      className={`${errors.email ? 'border-red-500' : ''} h-11`}
+                    />
+                    {errors.email && (
+                      <p className="text-red-500 text-sm mt-1">{errors.email.message}</p>
+                    )}
+                  </div>
+
+                  {/* Email secondaire */}
+                  <div className="space-y-2">
+                    <Label htmlFor="secondary_email" className="text-sm font-medium flex items-center gap-2">
+                      <Mail className="h-4 w-4" />
+                      Email secondaire
+                    </Label>
+                    <Input
+                      id="secondary_email"
+                      type="email"
+                      {...register('secondary_email')}
+                      placeholder="compta@fournisseur.com"
+                      disabled={isSubmitting}
+                      className={`${errors.secondary_email ? 'border-red-500' : ''} h-11`}
+                    />
+                    {errors.secondary_email && (
+                      <p className="text-red-500 text-sm mt-1">{errors.secondary_email.message}</p>
+                    )}
+                  </div>
+
+                  {/* Téléphone */}
+                  <div className="space-y-2">
+                    <Label htmlFor="phone" className="text-sm font-medium flex items-center gap-2">
+                      <Phone className="h-4 w-4" />
+                      Téléphone
+                    </Label>
+                    <Input
+                      id="phone"
+                      {...register('phone')}
+                      placeholder="+33 1 23 45 67 89"
+                      disabled={isSubmitting}
+                      className="h-11"
+                    />
+                  </div>
+
+                  {/* Site web */}
+                  <div className="space-y-2">
+                    <Label htmlFor="website" className="text-sm font-medium flex items-center gap-2">
+                      <Globe className="h-4 w-4" />
+                      Site web
+                    </Label>
+                    <Input
+                      id="website"
+                      type="url"
+                      {...register('website')}
+                      placeholder="https://www.fournisseur.com"
+                      disabled={isSubmitting}
+                      className={`${errors.website ? 'border-red-500' : ''} h-11`}
+                    />
+                    {errors.website && (
+                      <p className="text-red-500 text-sm mt-1">{errors.website.message}</p>
+                    )}
+                  </div>
+                </div>
+              </div>
+
+              {/* Statut actif */}
+              <div className="border-t pt-6">
+                <div className="flex items-center justify-between p-6 bg-gray-50 border rounded-lg">
+                <div>
+                  <Label htmlFor="is_active" className="font-medium">
+                    Fournisseur actif
+                  </Label>
+                  <p className="text-sm text-gray-600">
+                    {watch('is_active')
+                      ? 'Ce fournisseur sera disponible pour attribution aux produits'
+                      : 'Ce fournisseur sera masqué dans les sélections'
+                    }
+                  </p>
+                </div>
+                <Controller
+                  name="is_active"
+                  control={control}
+                  render={({ field }) => (
+                    <Switch
+                      checked={field.value}
+                      onCheckedChange={field.onChange}
+                      disabled={isSubmitting}
+                    />
+                  )}
+                />
+              </div>
+              </div>
+            </TabsContent>
+
+            {/* Tab Adresse */}
+            <TabsContent value="address" className="space-y-4">
+              <AddressSelector form={{ register, formState: { errors }, watch, setValue, getValues }} />
+            </TabsContent>
+
+            {/* Tab Légal */}
+            <TabsContent value="legal" className="space-y-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                {/* SIRET */}
+                <div>
+                  <Label htmlFor="siret">SIRET</Label>
+                  <Input
+                    id="siret"
+                    {...register('siret')}
+                    placeholder="14 chiffres"
+                    disabled={isSubmitting}
+                    className={errors.siret ? 'border-red-500' : ''}
+                  />
+                  {errors.siret && (
+                    <p className="text-red-500 text-sm mt-1">{errors.siret.message}</p>
+                  )}
+                </div>
+
+                {/* N° TVA */}
+                <div>
+                  <Label htmlFor="vat_number">Numéro de TVA</Label>
+                  <Input
+                    id="vat_number"
+                    {...register('vat_number')}
+                    placeholder="FR12345678901"
+                    disabled={isSubmitting}
+                  />
+                </div>
+
+                {/* Forme juridique */}
+                <div>
+                  <Label htmlFor="legal_form">Forme juridique</Label>
+                  <Controller
+                    name="legal_form"
+                    control={control}
+                    render={({ field }) => (
+                      <Select value={field.value || ''} onValueChange={field.onChange} disabled={isSubmitting}>
+                        <SelectTrigger>
+                          <SelectValue placeholder="Sélectionner une forme juridique" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {LEGAL_FORMS.map((form) => (
+                            <SelectItem key={form} value={form}>
+                              {form}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    )}
+                  />
+                </div>
+              </div>
+            </TabsContent>
+
+            {/* Tab Commercial */}
+            <TabsContent value="commercial" className="space-y-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                {/* Conditions de paiement */}
+                <div>
+                  <Label htmlFor="payment_terms">Conditions de paiement</Label>
+                  <Controller
+                    name="payment_terms"
+                    control={control}
+                    render={({ field }) => (
+                      <Select value={field.value || ''} onValueChange={field.onChange} disabled={isSubmitting}>
+                        <SelectTrigger>
+                          <SelectValue placeholder="Sélectionner des conditions" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {PAYMENT_TERMS.map((term) => (
+                            <SelectItem key={term} value={term}>
+                              {term}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    )}
+                  />
+                </div>
+
+                {/* Délai de livraison */}
+                <div>
+                  <Label htmlFor="delivery_time_days">Délai de livraison (jours)</Label>
+                  <Input
+                    id="delivery_time_days"
+                    type="number"
+                    {...register('delivery_time_days', { valueAsNumber: true })}
+                    placeholder="30"
+                    disabled={isSubmitting}
+                    min="0"
+                    max="365"
+                    className={errors.delivery_time_days ? 'border-red-500' : ''}
+                  />
+                  {errors.delivery_time_days && (
+                    <p className="text-red-500 text-sm mt-1">{errors.delivery_time_days.message}</p>
+                  )}
+                </div>
+
+                {/* Montant minimum de commande */}
+                <div>
+                  <Label htmlFor="minimum_order_amount">Commande minimum (€)</Label>
+                  <Input
+                    id="minimum_order_amount"
+                    type="number"
+                    {...register('minimum_order_amount', { valueAsNumber: true })}
+                    placeholder="1000"
+                    disabled={isSubmitting}
+                    min="0"
+                    step="0.01"
+                    className={errors.minimum_order_amount ? 'border-red-500' : ''}
+                  />
+                  {errors.minimum_order_amount && (
+                    <p className="text-red-500 text-sm mt-1">{errors.minimum_order_amount.message}</p>
+                  )}
+                </div>
+
+                {/* Devise */}
+                <div>
+                  <Label htmlFor="currency">Devise</Label>
+                  <Controller
+                    name="currency"
+                    control={control}
+                    render={({ field }) => (
+                      <Select value={field.value} onValueChange={field.onChange} disabled={isSubmitting}>
+                        <SelectTrigger>
+                          <SelectValue placeholder="Sélectionner une devise" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {CURRENCIES.map((currency) => (
+                            <SelectItem key={currency.value} value={currency.value}>
+                              {currency.label}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    )}
+                  />
+                </div>
+              </div>
+            </TabsContent>
+
+            {/* Tab Performance */}
+            <TabsContent value="performance" className="space-y-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                {/* Évaluation */}
+                <div>
+                  <Label htmlFor="rating">Évaluation (0-5)</Label>
+                  <Input
+                    id="rating"
+                    type="number"
+                    {...register('rating', { valueAsNumber: true })}
+                    placeholder="4"
+                    disabled={isSubmitting}
+                    min="0"
+                    max="5"
+                    step="0.1"
+                    className={errors.rating ? 'border-red-500' : ''}
+                  />
+                  {errors.rating && (
+                    <p className="text-red-500 text-sm mt-1">{errors.rating.message}</p>
+                  )}
+                </div>
+
+                {/* Fournisseur préféré */}
+                <div className="flex items-center space-x-2">
+                  <Controller
+                    name="preferred_supplier"
+                    control={control}
+                    render={({ field }) => (
+                      <Switch
+                        checked={field.value}
+                        onCheckedChange={field.onChange}
+                        disabled={isSubmitting}
+                      />
+                    )}
+                  />
+                  <Label htmlFor="preferred_supplier">Fournisseur préféré</Label>
+                </div>
+              </div>
+
+              {/* Certifications */}
+              <div>
+                <Label>Certifications</Label>
+                <div className="space-y-2">
+                  {/* Affichage des certifications existantes */}
+                  {watchedCertifications.length > 0 && (
+                    <div className="flex flex-wrap gap-2">
+                      {watchedCertifications.map((cert, index) => (
+                        <Badge key={index} variant="outline" className="bg-green-50 text-green-800 border-green-200">
+                          {cert}
+                          <X
+                            className="h-3 w-3 ml-1 cursor-pointer"
+                            onClick={() => removeCertification(index)}
+                          />
+                        </Badge>
+                      ))}
+                    </div>
+                  )}
+
+                  {/* Ajout nouvelle certification */}
+                  <div className="flex gap-2">
+                    <Input
+                      value={newCertification}
+                      onChange={(e) => setNewCertification(e.target.value)}
+                      placeholder="Ajouter une certification..."
+                      disabled={isSubmitting}
+                      onKeyPress={(e) => e.key === 'Enter' && (e.preventDefault(), addCertification())}
+                    />
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      onClick={addCertification}
+                      disabled={!newCertification.trim() || isSubmitting}
+                    >
+                      <Plus className="h-4 w-4" />
+                    </Button>
+                  </div>
+                </div>
+              </div>
+
+              {/* Notes */}
+              <div>
+                <Label htmlFor="notes">Notes internes</Label>
+                <Textarea
+                  id="notes"
+                  {...register('notes')}
+                  placeholder="Notes internes sur ce fournisseur..."
+                  rows={4}
+                  disabled={isSubmitting}
+                />
+              </div>
+            </TabsContent>
+          </Tabs>
+
+          <DialogFooter className="flex gap-2">
+            <Button
+              type="button"
+              variant="outline"
+              onClick={handleClose}
+              disabled={isSubmitting}
+            >
+              Annuler
+            </Button>
+            <Button
+              type="submit"
+              disabled={!isValid || isSubmitting}
+              className="min-w-[120px]"
+            >
+              {isSubmitting ? (
+                <>
+                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                  {isEditing ? 'Modification...' : 'Création...'}
+                </>
+              ) : (
+                <>
+                  {isEditing ? 'Modifier' : 'Créer'}
+                </>
+              )}
+            </Button>
+          </DialogFooter>
+        </form>
+      </DialogContent>
+    </Dialog>
+  )
+}

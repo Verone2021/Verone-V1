@@ -10,17 +10,25 @@ export function cn(...inputs: ClassValue[]) {
 // ========================================
 
 /**
- * Formate un prix en centimes vers euros avec devise
- * @param priceInCents Prix en centimes
+ * Formate un prix en euros avec devise
+ * @param priceInEuros Prix en euros
  * @returns Prix formaté (ex: "149,90 €")
  */
-export function formatPrice(priceInCents: number): string {
-  const priceInEuros = priceInCents / 100
+export function formatPrice(priceInEuros: number): string {
   return new Intl.NumberFormat('fr-FR', {
     style: 'currency',
     currency: 'EUR',
     minimumFractionDigits: 2
   }).format(priceInEuros)
+}
+
+/**
+ * Formate un prix stocké en centimes vers euros avec devise
+ * @param priceInCents Prix en centimes (format base de données)
+ * @returns Prix formaté (ex: "149,90 €")
+ */
+export function formatPriceFromCents(priceInCents: number): string {
+  return formatPrice(priceInCents / 100)
 }
 
 /**
@@ -230,4 +238,40 @@ export function calculateDiscountPercentage(
 export function applyDiscount(price: number, discountPercent: number): number {
   const discount = price * (discountPercent / 100)
   return Math.round(price - discount)
+}
+
+/**
+ * Formate une devise selon locale
+ * @param amount Montant
+ * @param currency Code devise (EUR par défaut)
+ * @returns Montant formaté avec devise
+ */
+export function formatCurrency(
+  amount: number | string,
+  currency: string = 'EUR'
+): string {
+  const numericAmount = typeof amount === 'string' ? parseFloat(amount) : amount
+
+  if (isNaN(numericAmount)) return '0,00 €'
+
+  return new Intl.NumberFormat('fr-FR', {
+    style: 'currency',
+    currency: currency,
+    minimumFractionDigits: 2
+  }).format(numericAmount)
+}
+
+/**
+ * Formate une date courte
+ * @param date Date à formater
+ * @returns Date formatée courte (ex: "15/03/2024")
+ */
+export function formatDateShort(date: Date | string): string {
+  const dateObj = typeof date === 'string' ? new Date(date) : date
+
+  return new Intl.DateTimeFormat('fr-FR', {
+    day: '2-digit',
+    month: '2-digit',
+    year: 'numeric'
+  }).format(dateObj)
 }

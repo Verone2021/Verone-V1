@@ -25,7 +25,6 @@ interface ProductGroup {
 
 interface Product {
   id: string;
-  product_group_id: string;
   sku: string;
   name: string;
   slug: string;
@@ -42,8 +41,21 @@ interface Product {
   video_url?: string;
   supplier_reference?: string;
   gtin?: string;
+  archived_at?: string | null;
   created_at: string;
   updated_at: string;
+  // Nouvelles relations directes
+  subcategory_id?: string;
+  brand?: string;
+  supplier_id?: string;
+  supplier?: {
+    id: string;
+    name: string;
+  };
+  subcategories?: {
+    id: string;
+    name: string;
+  };
 }
 
 interface Category {
@@ -153,12 +165,8 @@ export const useCatalogue = () => {
       .from('products')
       .select(`
         *,
-        product_groups!inner(
-          id,
-          name,
-          subcategory_id,
-          status
-        )
+        supplier:organisations!supplier_id(id, name),
+        subcategories!subcategory_id(id, name)
       `, { count: 'exact' });
 
     // Filtres selon business rules
@@ -171,15 +179,15 @@ export const useCatalogue = () => {
     }
 
     if (filters.categories && filters.categories.length > 0) {
-      query = query.in('product_groups.subcategory_id', filters.categories);
+      query = query.in('subcategory_id', filters.categories);
     }
 
     if (filters.priceMin !== undefined) {
-      query = query.gte('price_ht', filters.priceMin * 100); // Conversion euros -> centimes
+      query = query.gte('price_ht', filters.priceMin); // Prix en euros NUMERIC(10,2)
     }
 
     if (filters.priceMax !== undefined) {
-      query = query.lte('price_ht', filters.priceMax * 100);
+      query = query.lte('price_ht', filters.priceMax); // Prix en euros NUMERIC(10,2)
     }
 
     // Pagination - Augmenté pour afficher tous les produits importés
@@ -248,6 +256,70 @@ export const useCatalogue = () => {
     }
   };
 
+  const archiveProduct = async (id: string) => {
+    try {
+      const { error } = await supabase
+        .from('products')
+        .update({
+          status: 'discontinued',
+          archived_at: new Date().toISOString()
+        })
+        .eq('id', id);
+
+      if (error) throw error;
+
+      // Mise à jour optimiste du state
+      setState(prev => ({
+        ...prev,
+        products: prev.products.map(p =>
+          p.id === id ? {
+            ...p,
+            status: 'discontinued' as const,
+            archived_at: new Date().toISOString()
+          } : p
+        )
+      }));
+
+      return true;
+
+    } catch (error) {
+      console.error('Erreur archivage produit:', error);
+      throw error;
+    }
+  };
+
+  const unarchiveProduct = async (id: string) => {
+    try {
+      const { error } = await supabase
+        .from('products')
+        .update({
+          status: 'in_stock',
+          archived_at: null
+        })
+        .eq('id', id);
+
+      if (error) throw error;
+
+      // Mise à jour optimiste du state
+      setState(prev => ({
+        ...prev,
+        products: prev.products.map(p =>
+          p.id === id ? {
+            ...p,
+            status: 'in_stock' as const,
+            archived_at: null
+          } : p
+        )
+      }));
+
+      return true;
+
+    } catch (error) {
+      console.error('Erreur restauration produit:', error);
+      throw error;
+    }
+  };
+
   const deleteProduct = async (id: string) => {
     try {
       const { error } = await supabase
@@ -263,6 +335,8 @@ export const useCatalogue = () => {
         products: prev.products.filter(p => p.id !== id),
         total: prev.total - 1
       }));
+
+      return true;
 
     } catch (error) {
       console.error('Erreur suppression produit:', error);
@@ -292,13 +366,15 @@ export const useCatalogue = () => {
     loadCatalogueData,
     createProduct,
     updateProduct,
+    archiveProduct,
+    unarchiveProduct,
     deleteProduct,
     setFilters,
     resetFilters,
 
     // Helpers
     getProductsBySubcategory: (subcategoryId: string) =>
-      state.products.filter(p => p.product_groups?.subcategory_id === subcategoryId),
+      state.products.filter(p => p.subcategory_id === subcategoryId),
 
     getCategoryById: (id: string) =>
       state.categories.find(c => c.id === id),

@@ -115,9 +115,9 @@ export function UserHeader({ user }: UserHeaderProps) {
                 <Mail className="h-4 w-4 text-black opacity-60" />
                 <span className="text-sm text-black">{user.email}</span>
                 {isEmailConfirmed ? (
-                  <CheckCircle className="h-4 w-4 text-green-600" title="Email confirmé" />
+                  <CheckCircle className="h-4 w-4 text-green-600" />
                 ) : (
-                  <XCircle className="h-4 w-4 text-red-500" title="Email non confirmé" />
+                  <XCircle className="h-4 w-4 text-red-500" />
                 )}
               </div>
 

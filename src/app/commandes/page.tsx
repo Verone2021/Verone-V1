@@ -1,195 +1,281 @@
-import React from 'react'
+'use client'
+
+import { useState, useEffect } from 'react'
+import Link from 'next/link'
 import {
   ShoppingCart,
-  Search,
-  Filter,
-  Plus,
-  Eye,
-  Edit,
-  Trash2
+  Package,
+  TrendingUp,
+  Users,
+  Truck,
+  Clock,
+  CheckCircle,
+  AlertCircle,
+  ArrowRight,
+  BarChart3,
+  ShoppingBag
 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
-import { Input } from '@/components/ui/input'
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
+import { Badge } from '@/components/ui/badge'
+import { useSalesOrders } from '@/hooks/use-sales-orders'
+import { usePurchaseOrders } from '@/hooks/use-purchase-orders'
+import { formatCurrency } from '@/lib/utils'
 
-interface Order {
-  id: string
-  number: string
-  client: string
-  date: string
-  status: 'En cours' | 'Expédiée' | 'Livrée' | 'Annulée'
-  total: number
-  items: number
-}
+export default function CommandesOverviewPage() {
+  const {
+    loading: salesLoading,
+    orders: salesOrders,
+    stats: salesStats,
+    fetchOrders: fetchSalesOrders,
+    fetchStats: fetchSalesStats
+  } = useSalesOrders()
 
-const orders: Order[] = [
-  {
-    id: '1',
-    number: 'CMD-001',
-    client: 'Marie Dubois',
-    date: '2024-01-15',
-    status: 'En cours',
-    total: 2450,
-    items: 3
-  },
-  {
-    id: '2',
-    number: 'CMD-002',
-    client: 'Pierre Martin',
-    date: '2024-01-14',
-    status: 'Expédiée',
-    total: 1890,
-    items: 2
-  },
-  {
-    id: '3',
-    number: 'CMD-003',
-    client: 'Sophie Laurent',
-    date: '2024-01-13',
-    status: 'Livrée',
-    total: 3200,
-    items: 5
-  },
-  {
-    id: '4',
-    number: 'CMD-004',
-    client: 'Thomas Leroy',
-    date: '2024-01-12',
-    status: 'En cours',
-    total: 1650,
-    items: 2
-  }
-]
+  const {
+    loading: purchaseLoading,
+    orders: purchaseOrders,
+    stats: purchaseStats,
+    fetchOrders: fetchPurchaseOrders,
+    fetchStats: fetchPurchaseStats
+  } = usePurchaseOrders()
 
-function getStatusColor(status: Order['status']) {
-  switch (status) {
-    case 'En cours':
-      return 'bg-blue-100 text-blue-800'
-    case 'Expédiée':
-      return 'bg-orange-100 text-orange-800'
-    case 'Livrée':
-      return 'bg-green-100 text-green-800'
-    case 'Annulée':
-      return 'bg-red-100 text-red-800'
-    default:
-      return 'bg-gray-100 text-gray-800'
-  }
-}
+  useEffect(() => {
+    fetchSalesOrders()
+    fetchSalesStats()
+    fetchPurchaseOrders()
+    fetchPurchaseStats()
+  }, [fetchSalesOrders, fetchSalesStats, fetchPurchaseOrders, fetchPurchaseStats])
 
-export default function CommandesPage() {
+  const isLoading = salesLoading || purchaseLoading
+
+  // Statistiques combinées
+  const totalOrders = (salesStats?.total_orders || 0) + (purchaseStats?.total_orders || 0)
+  const totalValue = (salesStats?.total_value || 0) + (purchaseStats?.total_value || 0)
+
   return (
-    <div className="space-y-6">
-      {/* Page header */}
+    <div className="space-y-6 p-6">
+      {/* En-tête */}
       <div className="border-b border-gray-200 pb-4">
         <div className="flex items-center justify-between">
           <div className="flex items-center space-x-3">
             <ShoppingCart className="h-8 w-8 text-black" />
             <div>
-              <h1 className="text-2xl font-bold text-black">Commandes</h1>
-              <p className="text-gray-600">Gestion des commandes clients</p>
+              <h1 className="text-3xl font-bold text-black">Commandes</h1>
+              <p className="text-gray-600">Vue d&apos;ensemble des commandes clients et fournisseurs</p>
             </div>
           </div>
-          <Button className="flex items-center space-x-2">
-            <Plus className="h-4 w-4" />
-            <span>Nouvelle commande</span>
-          </Button>
+          <div className="flex space-x-3">
+            <Link href="/commandes/clients">
+              <Button variant="outline" className="flex items-center space-x-2">
+                <ShoppingBag className="h-4 w-4" />
+                <span>Commandes Clients</span>
+              </Button>
+            </Link>
+            <Link href="/commandes/fournisseurs">
+              <Button className="flex items-center space-x-2">
+                <Package className="h-4 w-4" />
+                <span>Commandes Fournisseurs</span>
+              </Button>
+            </Link>
+          </div>
         </div>
       </div>
 
-      {/* Filters and search */}
-      <div className="bg-white rounded-lg border border-gray-200 p-4">
-        <div className="flex flex-col sm:flex-row gap-4">
-          <div className="flex-1">
-            <div className="relative">
-              <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
-              <Input
-                type="search"
-                placeholder="Rechercher par numéro, client..."
-                className="pl-10"
-              />
-            </div>
-          </div>
-          <Button variant="outline" className="flex items-center space-x-2">
-            <Filter className="h-4 w-4" />
-            <span>Filtres</span>
-          </Button>
+      {isLoading ? (
+        <div className="flex justify-center py-12">
+          <div className="text-gray-500">Chargement des statistiques...</div>
         </div>
-      </div>
+      ) : (
+        <>
+          {/* Statistiques globales */}
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+            <Card>
+              <CardHeader className="pb-2">
+                <CardTitle className="text-sm font-medium text-gray-600 flex items-center space-x-2">
+                  <BarChart3 className="h-4 w-4" />
+                  <span>Total Commandes</span>
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="text-2xl font-bold text-black">{totalOrders}</div>
+                <p className="text-xs text-gray-500">Toutes catégories confondues</p>
+              </CardContent>
+            </Card>
 
-      {/* Orders table */}
-      <div className="bg-white rounded-lg border border-gray-200 overflow-hidden">
-        <div className="overflow-x-auto">
-          <table className="w-full">
-            <thead className="bg-gray-50 border-b border-gray-200">
-              <tr>
-                <th className="text-left py-3 px-4 font-medium text-gray-900">Numéro</th>
-                <th className="text-left py-3 px-4 font-medium text-gray-900">Client</th>
-                <th className="text-left py-3 px-4 font-medium text-gray-900">Date</th>
-                <th className="text-left py-3 px-4 font-medium text-gray-900">Statut</th>
-                <th className="text-left py-3 px-4 font-medium text-gray-900">Articles</th>
-                <th className="text-left py-3 px-4 font-medium text-gray-900">Total</th>
-                <th className="text-left py-3 px-4 font-medium text-gray-900">Actions</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-gray-200">
-              {orders.map((order) => (
-                <tr key={order.id} className="hover:bg-gray-50">
-                  <td className="py-3 px-4">
-                    <span className="font-medium text-black">{order.number}</span>
-                  </td>
-                  <td className="py-3 px-4">
-                    <span className="text-gray-900">{order.client}</span>
-                  </td>
-                  <td className="py-3 px-4">
-                    <span className="text-gray-500">
-                      {new Date(order.date).toLocaleDateString('fr-FR')}
-                    </span>
-                  </td>
-                  <td className="py-3 px-4">
-                    <span className={`px-2 py-1 rounded-full text-xs font-medium ${getStatusColor(order.status)}`}>
-                      {order.status}
-                    </span>
-                  </td>
-                  <td className="py-3 px-4">
-                    <span className="text-gray-900">{order.items} articles</span>
-                  </td>
-                  <td className="py-3 px-4">
-                    <span className="font-medium text-black">{order.total.toLocaleString()}€</span>
-                  </td>
-                  <td className="py-3 px-4">
-                    <div className="flex items-center space-x-2">
-                      <Button variant="ghost" size="sm">
-                        <Eye className="h-4 w-4" />
-                      </Button>
-                      <Button variant="ghost" size="sm">
-                        <Edit className="h-4 w-4" />
-                      </Button>
-                      <Button variant="ghost" size="sm">
-                        <Trash2 className="h-4 w-4 text-red-500" />
-                      </Button>
+            <Card>
+              <CardHeader className="pb-2">
+                <CardTitle className="text-sm font-medium text-gray-600 flex items-center space-x-2">
+                  <TrendingUp className="h-4 w-4" />
+                  <span>Valeur Totale</span>
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="text-2xl font-bold text-black">{formatCurrency(totalValue)}</div>
+                <p className="text-xs text-gray-500">Chiffre d&apos;affaires + achats</p>
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardHeader className="pb-2">
+                <CardTitle className="text-sm font-medium text-gray-600 flex items-center space-x-2">
+                  <ShoppingBag className="h-4 w-4" />
+                  <span>Ventes</span>
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="text-2xl font-bold text-green-600">{formatCurrency(salesStats?.total_value || 0)}</div>
+                <p className="text-xs text-gray-500">{salesStats?.total_orders || 0} commandes clients</p>
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardHeader className="pb-2">
+                <CardTitle className="text-sm font-medium text-gray-600 flex items-center space-x-2">
+                  <Package className="h-4 w-4" />
+                  <span>Achats</span>
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="text-2xl font-bold text-blue-600">{formatCurrency(purchaseStats?.total_value || 0)}</div>
+                <p className="text-xs text-gray-500">{purchaseStats?.total_orders || 0} commandes fournisseurs</p>
+              </CardContent>
+            </Card>
+          </div>
+
+          {/* Sections détaillées */}
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            {/* Commandes Clients */}
+            <Card>
+              <CardHeader>
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center space-x-2">
+                    <ShoppingBag className="h-5 w-5 text-green-600" />
+                    <CardTitle className="text-lg">Commandes Clients</CardTitle>
+                  </div>
+                  <Link href="/commandes/clients">
+                    <Button variant="ghost" size="sm" className="flex items-center space-x-1">
+                      <span>Voir tout</span>
+                      <ArrowRight className="h-4 w-4" />
+                    </Button>
+                  </Link>
+                </div>
+                <CardDescription>Ventes et expéditions clients</CardDescription>
+              </CardHeader>
+              <CardContent>
+                {salesStats ? (
+                  <div className="space-y-4">
+                    <div className="grid grid-cols-2 gap-4">
+                      <div className="text-center p-3 bg-green-50 rounded-lg">
+                        <div className="text-lg font-bold text-green-700">{salesStats.delivered_orders}</div>
+                        <div className="text-xs text-green-600">Livrées</div>
+                      </div>
+                      <div className="text-center p-3 bg-blue-50 rounded-lg">
+                        <div className="text-lg font-bold text-blue-700">{salesStats.pending_orders}</div>
+                        <div className="text-xs text-blue-600">En cours</div>
+                      </div>
                     </div>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-      </div>
+                    <div className="grid grid-cols-2 gap-4">
+                      <div className="text-center p-3 bg-orange-50 rounded-lg">
+                        <div className="text-lg font-bold text-orange-700">{salesStats.shipped_orders}</div>
+                        <div className="text-xs text-orange-600">Expédiées</div>
+                      </div>
+                      <div className="text-center p-3 bg-red-50 rounded-lg">
+                        <div className="text-lg font-bold text-red-700">{salesStats.cancelled_orders}</div>
+                        <div className="text-xs text-red-600">Annulées</div>
+                      </div>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="text-center py-4 text-gray-500">
+                    Aucune donnée disponible
+                  </div>
+                )}
+              </CardContent>
+            </Card>
 
-      {/* Pagination */}
-      <div className="flex items-center justify-between">
-        <p className="text-sm text-gray-700">
-          Affichage de <span className="font-medium">1</span> à <span className="font-medium">4</span> sur{' '}
-          <span className="font-medium">4</span> commandes
-        </p>
-        <div className="flex items-center space-x-2">
-          <Button variant="outline" size="sm" disabled>
-            Précédent
-          </Button>
-          <Button variant="outline" size="sm" disabled>
-            Suivant
-          </Button>
-        </div>
-      </div>
+            {/* Commandes Fournisseurs */}
+            <Card>
+              <CardHeader>
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center space-x-2">
+                    <Package className="h-5 w-5 text-blue-600" />
+                    <CardTitle className="text-lg">Commandes Fournisseurs</CardTitle>
+                  </div>
+                  <Link href="/commandes/fournisseurs">
+                    <Button variant="ghost" size="sm" className="flex items-center space-x-1">
+                      <span>Voir tout</span>
+                      <ArrowRight className="h-4 w-4" />
+                    </Button>
+                  </Link>
+                </div>
+                <CardDescription>Achats et approvisionnements</CardDescription>
+              </CardHeader>
+              <CardContent>
+                {purchaseStats ? (
+                  <div className="space-y-4">
+                    <div className="grid grid-cols-2 gap-4">
+                      <div className="text-center p-3 bg-green-50 rounded-lg">
+                        <div className="text-lg font-bold text-green-700">{purchaseStats.received_orders}</div>
+                        <div className="text-xs text-green-600">Reçues</div>
+                      </div>
+                      <div className="text-center p-3 bg-yellow-50 rounded-lg">
+                        <div className="text-lg font-bold text-yellow-700">{purchaseStats.pending_orders}</div>
+                        <div className="text-xs text-yellow-600">En cours</div>
+                      </div>
+                    </div>
+                    <div className="grid grid-cols-1 gap-4">
+                      <div className="text-center p-3 bg-red-50 rounded-lg">
+                        <div className="text-lg font-bold text-red-700">{purchaseStats.cancelled_orders}</div>
+                        <div className="text-xs text-red-600">Annulées</div>
+                      </div>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="text-center py-4 text-gray-500">
+                    Aucune donnée disponible
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          </div>
+
+          {/* Actions rapides */}
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-lg">Actions Rapides</CardTitle>
+              <CardDescription>Accès direct aux fonctionnalités principales</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                <Link href="/commandes/clients">
+                  <Button variant="outline" className="w-full flex items-center space-x-2 justify-start">
+                    <ShoppingBag className="h-4 w-4" />
+                    <span>Nouvelle Vente</span>
+                  </Button>
+                </Link>
+                <Link href="/commandes/fournisseurs">
+                  <Button variant="outline" className="w-full flex items-center space-x-2 justify-start">
+                    <Package className="h-4 w-4" />
+                    <span>Nouvel Achat</span>
+                  </Button>
+                </Link>
+                <Link href="/catalogue/stocks">
+                  <Button variant="outline" className="w-full flex items-center space-x-2 justify-start">
+                    <BarChart3 className="h-4 w-4" />
+                    <span>État Stocks</span>
+                  </Button>
+                </Link>
+                <Link href="/contacts-organisations">
+                  <Button variant="outline" className="w-full flex items-center space-x-2 justify-start">
+                    <Users className="h-4 w-4" />
+                    <span>Organisations</span>
+                  </Button>
+                </Link>
+              </div>
+            </CardContent>
+          </Card>
+        </>
+      )}
     </div>
   )
 }

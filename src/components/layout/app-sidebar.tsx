@@ -16,7 +16,14 @@ import {
   ChevronRight,
   Grid3x3,
   FolderOpen,
-  Tags
+  Tags,
+  Layers,
+  Building2,
+  Phone,
+  Truck,
+  UserCheck,
+  BarChart3,
+  ShoppingBag
 } from "lucide-react"
 
 // Interface pour les éléments de navigation hiérarchique
@@ -69,15 +76,47 @@ const navItems: NavItem[] = [
   },
   {
     title: "Commandes",
-    href: "/commandes",
     icon: ShoppingCart,
-    description: "Suivi des commandes clients"
+    description: "Gestion des commandes clients et fournisseurs",
+    children: [
+      {
+        title: "Vue d'ensemble",
+        href: "/commandes",
+        icon: BarChart3,
+        description: "Dashboard et statistiques commandes"
+      },
+      {
+        title: "Commandes Clients",
+        href: "/commandes/clients",
+        icon: ShoppingBag,
+        description: "Ventes et expéditions"
+      },
+      {
+        title: "Commandes Fournisseurs",
+        href: "/commandes/fournisseurs",
+        icon: Package,
+        description: "Achats et approvisionnements"
+      }
+    ]
   },
   {
-    title: "Clients",
-    href: "/clients",
-    icon: Users,
-    description: "Gestion de la clientèle"
+    title: "Contacts & Organisations",
+    icon: Building2,
+    description: "Fournisseurs, clients et contacts",
+    children: [
+      {
+        title: "Organisations",
+        href: "/contacts-organisations",
+        icon: Building2,
+        description: "Dashboard fournisseurs et structures"
+      },
+      {
+        title: "Clients Particuliers",
+        href: "/contacts-organisations/customers?type=individual",
+        icon: UserCheck,
+        description: "Clients particuliers B2C"
+      }
+    ]
   },
   {
     title: "Paramètres",
@@ -93,7 +132,7 @@ interface AppSidebarProps {
 
 export function AppSidebar({ className }: AppSidebarProps) {
   const pathname = usePathname()
-  const [expandedItems, setExpandedItems] = useState<string[]>(['Catalogue']) // Catalogue ouvert par défaut
+  const [expandedItems, setExpandedItems] = useState<string[]>(['Catalogue', 'Commandes', 'Contacts & Organisations']) // Sections principales ouvertes par défaut
 
   // Fonction pour basculer l'état d'expansion d'un élément
   const toggleExpanded = (title: string) => {

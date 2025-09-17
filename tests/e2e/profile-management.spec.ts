@@ -34,7 +34,7 @@ test.describe('Gestion des Profils Utilisateur', () => {
 
   test('Affichage de la page profil avec tous les champs', async ({ page }) => {
     // Vérifier la présence de tous les champs
-    await expect(page.locator('text=Nom d\\'affichage')).toBeVisible()
+    await expect(page.locator("text=Nom d'affichage")).toBeVisible()
     await expect(page.locator('text=Prénom')).toBeVisible()
     await expect(page.locator('text=Nom de famille')).toBeVisible()
     await expect(page.locator('text=Téléphone')).toBeVisible()
@@ -54,14 +54,14 @@ test.describe('Gestion des Profils Utilisateur', () => {
     await page.click('button:has-text("Modifier")')
 
     // Vérifier que les champs sont maintenant éditables
-    await expect(page.locator('input[placeholder="Nom d\\'affichage"]')).toBeVisible()
+    await expect(page.locator("input[placeholder=\"Nom d'affichage\"]")).toBeVisible()
     await expect(page.locator('input[placeholder="Votre prénom"]')).toBeVisible()
     await expect(page.locator('input[placeholder="Votre nom de famille"]')).toBeVisible()
     await expect(page.locator('input[placeholder*="0X XX XX XX XX"]')).toBeVisible()
     await expect(page.locator('input[placeholder="Votre fonction/poste"]')).toBeVisible()
 
     // Remplir les champs avec des données de test
-    await page.fill('input[placeholder="Nom d\\'affichage"]', 'Romeo Test')
+    await page.fill("input[placeholder=\"Nom d'affichage\"]", 'Romeo Test')
     await page.fill('input[placeholder="Votre prénom"]', 'Romeo')
     await page.fill('input[placeholder="Votre nom de famille"]', 'Dos Santos')
     await page.fill('input[placeholder*="0X XX XX XX XX"]', '0123456789')
@@ -71,7 +71,7 @@ test.describe('Gestion des Profils Utilisateur', () => {
     await page.click('button:has-text("Enregistrer")')
 
     // Vérifier que le mode édition est désactivé
-    await expect(page.locator('input[placeholder="Nom d\\'affichage"]')).not.toBeVisible()
+    await expect(page.locator("input[placeholder=\"Nom d'affichage\"]")).not.toBeVisible()
 
     // Vérifier que les données sont affichées
     await expect(page.locator('text=Romeo Test')).toBeVisible()
@@ -195,19 +195,19 @@ test.describe('Gestion des Profils Utilisateur', () => {
 
   test('Annulation des modifications', async ({ page }) => {
     // Noter les valeurs initiales
-    const initialDisplayName = await page.locator('text=Nom d\\'affichage').locator('..').locator('p.font-medium').textContent()
+    const initialDisplayName = await page.locator("text=Nom d'affichage").locator('..').locator('p.font-medium').textContent()
 
     // Cliquer sur Modifier
     await page.click('button:has-text("Modifier")')
 
     // Modifier le nom d'affichage
-    await page.fill('input[placeholder="Nom d\\'affichage"]', 'Nouveau Nom Temporaire')
+    await page.fill("input[placeholder=\"Nom d'affichage\"]", 'Nouveau Nom Temporaire')
 
     // Cliquer sur Annuler
     await page.click('button:has-text("Annuler")')
 
     // Vérifier que les modifications sont annulées
-    await expect(page.locator('input[placeholder="Nom d\\'affichage"]')).not.toBeVisible()
+    await expect(page.locator("input[placeholder=\"Nom d'affichage\"]")).not.toBeVisible()
 
     // Vérifier que la valeur originale est préservée
     if (initialDisplayName) {
@@ -246,7 +246,7 @@ test.describe('Gestion des Profils Utilisateur', () => {
 
     // Tester l'édition en mode mobile
     await page.click('button:has-text("Modifier")')
-    await expect(page.locator('input[placeholder="Nom d\\'affichage"]')).toBeVisible()
+    await expect(page.locator("input[placeholder=\"Nom d'affichage\"]")).toBeVisible()
 
     // Tester le modal en mode mobile
     await page.click('button:has-text("Annuler")')
