@@ -35,8 +35,8 @@ export default function LoginPage() {
 
       if (data.user) {
         // Succès - redirection vers dashboard
-        router.push('/dashboard')
-        router.refresh()
+        const redirectUrl = new URLSearchParams(window.location.search).get('redirect') || '/dashboard'
+        router.push(redirectUrl)
       }
     } catch (err) {
       setError('Une erreur est survenue lors de la connexion')

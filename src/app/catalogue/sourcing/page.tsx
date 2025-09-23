@@ -29,7 +29,7 @@ import { useToast } from '../../../hooks/use-toast'
 export default function SourcingManagementPage() {
   const router = useRouter()
   const { toast } = useToast()
-  const { drafts, loading, loadDrafts, updateSampleRequirement, validateDraft } = useDrafts()
+  const { drafts, loading, loadDrafts, updateSampleRequirement, validateDraft, finalizeToProduct } = useDrafts()
 
   const [searchTerm, setSearchTerm] = useState('')
   const [clientFilter, setClientFilter] = useState('all')
@@ -105,15 +105,15 @@ export default function SourcingManagementPage() {
 
   const handleValidateToCatalog = async (productId: string) => {
     try {
-      await validateDraft(productId)
+      await finalizeToProduct(productId)
       toast({
-        title: "Produit ajouté au catalogue",
-        description: "Le produit a été validé et ajouté au catalogue principal"
+        title: "Produit finalisé et ajouté au catalogue",
+        description: "Le produit sourcing a été transféré avec succès vers le catalogue principal"
       })
     } catch (error) {
       toast({
         title: "Erreur",
-        description: error instanceof Error ? error.message : "Impossible de valider le produit",
+        description: error instanceof Error ? error.message : "Impossible de finaliser le produit sourcing",
         variant: "destructive"
       })
     }

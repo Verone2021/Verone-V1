@@ -111,22 +111,26 @@
 - Remises conditionnelles
 - Grille tarifaire dynamique
 
-### **📦 Gestion Stock + Traçabilité**
-- **Status** : ✅ COMPLET + AMÉLIORÉ (22/09/2025)
+### **📦 Gestion Stock + Prévisionnel**
+- **Status** : ✅ COMPLET + PRÉVISIONNEL VALIDÉ (18/01/2025)
 - **Features** :
+  - **🎯 SYSTÈME PRÉVISIONNEL COMPLET** : Stock réel + forecasted_in + forecasted_out ✨ NOUVEAU
+  - **🔄 WORKFLOWS ERP COMPLETS** : Commandes achat/vente avec impact stock automatique
+  - **📊 CALCULS DYNAMIQUES** : stock_available = real + forecasted_in - forecasted_out
+  - **⚡ TRIGGERS AUTOMATIQUES** : Synchronisation commandes ↔ stocks temps réel
+  - **🔍 TRAÇABILITÉ COMPLÈTE** : Origine et utilisateur pour chaque mouvement
+  - **📝 AJUSTEMENTS MANUELS** : Corrections stock avec raisons et audit
   - Mouvements stock temps réel (IN/OUT/ADJUST/TRANSFER)
-  - **🔍 TRAÇABILITÉ COMPLÈTE** : Origine et utilisateur pour chaque mouvement ✨ NOUVEAU
-  - **Colonne "Origine"** : Distinction Manuel vs Commandes avec badges visuels
-  - **Triggers Automatiques** : Mouvements auto lors confirmation/expédition commandes
-  - **Attribution Utilisateur** : 100% des mouvements avec responsable identifié
-  - Calcul stock disponible avec réservations (réel + prévisionnel)
+  - Colonne "Origine" : Distinction Manuel vs Commandes avec badges visuels
+  - Attribution Utilisateur : 100% des mouvements avec responsable identifié
   - Interface gestion avec filtres avancés + export CSV
   - Statistiques et métriques en temps réel
   - Page dédiée `/historique-mouvements` avec analytics complètes
 - **Performance** : <2s chargement, pagination optimisée, zero console errors
-- **Tables** : stock_movements avec affects_forecast, forecast_type + RLS
-- **Architecture** : Triggers PL/pgSQL pour automatisation workflow commandes
-- **Test Coverage** : Validé manuellement + 19 mouvements test avec traçabilité
+- **Tables** : products avec colonnes forecasting, stock_movements avec triggers
+- **Architecture** : PostgreSQL functions + triggers pour automatisation ERP
+- **Test Coverage** : Plan de test complet créé - Prêt validation finale
+- **Documentation** : 3 guides tests détaillés avec workflows pratiques
 
 ### **🛒 Module Commandes**
 - **Status** : ✅ COMPLET + B2B/B2C (22/11/2024)
@@ -144,6 +148,29 @@
 - **Tables** : purchase_orders, sales_orders, individual_customers + items avec RLS
 - **Business Logic** : Prévention survente, workflow strict, relations polymorphiques
 - **UX Enhancement** : CustomerSelector unifié + AddressInput intelligent
+
+### **🤝 Consultations Clients**
+- **Status** : ✅ COMPLET + ASSOCIATIONS PRODUITS (23/09/2025) ✨ NOUVEAU
+- **Features** :
+  - **Workflow Consultation Complet** : Création, gestion statuts, assignation
+  - **Associations Produits M:N** : Produits catalogue ET sourcing disponibles
+  - **ProductSelector Avancé** : Interface avec onglets Catalogue/Sourcing/Tous
+  - **Prix Personnalisés** : Proposition prix spécifique par consultation
+  - **Notes Commerciales** : Annotations et conditions spéciales par produit
+  - **Propositions Principales** : Une seule proposition main par consultation
+  - **Filtrage Intelligent** : Produits éligibles selon client et statut
+  - **Interface Responsive** : Composants réutilisables avec design system
+- **Corrections Majeures** :
+  - **Fonction SQL** : get_consultation_eligible_products étendue aux produits catalogue
+  - **API Authentication** : Passage hook Supabase direct → API routes avec auth
+  - **Business Logic** : Règles éligibilité clarifiées (sourcing + catalogue)
+  - **Gestion Erreurs** : Validation robuste côté client et serveur
+- **Components Créés** :
+  - `ProductSelector` : Sélection produits avec recherche et filtres
+  - `ConsultationProductAssociation` : Workflow complet association
+- **Performance** : <3s chargement produits, validation temps réel
+- **Tables** : client_consultations + consultation_products (liaison M:N)
+- **Architecture** : API routes Next.js + hooks React optimisés
 
 ### **📧 Intégrations Externes**
 - Webhooks Brevo
@@ -223,9 +250,10 @@
 
 ---
 
-*Dernière mise à jour : 22 novembre 2024*
-*Ajout majeur : SUPPORT B2B/B2C COMPLET - Table individual_customers + Relations polymorphiques*
-*Features critiques : Sélection intelligente clients B2B/B2C + Auto-remplissage adresses + Validation temps réel*
-*Architecture : Pattern fetch manuel pour relations polymorphiques Supabase*
-*Business Impact : Support complet clients particuliers + Workflow unifié commandes*
-*Prochaine révision : Consolidation documentation + Harmonisation nomenclature*
+*Dernière mise à jour : 23 septembre 2025*
+*Ajout majeur : WORKFLOW CONSULTATIONS CLIENTS COMPLET - Associations produits M:N fonctionnelles*
+*Features critiques : ProductSelector avancé + Associations catalogue/sourcing + Prix personnalisés*
+*Corrections techniques : API auth, Fonction SQL étendue, Business logic clarifiée*
+*Architecture : API routes Next.js + Components réutilisables + Hooks optimisés*
+*Business Impact : Support complet workflow consultation-devis + Associations produits flexibles*
+*Prochaine révision : Optimisation performance + Tests E2E consultations*

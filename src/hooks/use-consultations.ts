@@ -28,6 +28,7 @@ export interface ClientConsultation {
   responded_by?: string
 }
 
+// Interface existante maintenue pour rétrocompatibilité
 export interface ConsultationProduct {
   id: string
   consultation_id: string
@@ -35,6 +36,8 @@ export interface ConsultationProduct {
   proposed_price?: number
   notes?: string
   is_primary_proposal: boolean
+  quantity: number
+  is_free: boolean
   created_at: string
   created_by?: string
   // Relations
@@ -42,9 +45,30 @@ export interface ConsultationProduct {
     id: string
     name: string
     sku: string
-    status: string
     requires_sample: boolean
     supplier_name?: string
+  }
+}
+
+// Nouvelle interface simplifiée pour le workflow type commande
+export interface ConsultationItem {
+  id: string
+  consultation_id: string
+  product_id: string
+  quantity: number
+  unit_price?: number
+  is_free: boolean
+  notes?: string
+  created_at: string
+  created_by?: string
+  // Relations
+  product?: {
+    id: string
+    name: string
+    sku: string
+    requires_sample: boolean
+    supplier_name?: string
+    price_ht?: number
   }
 }
 
@@ -60,12 +84,32 @@ export interface CreateConsultationData {
   estimated_response_date?: string
 }
 
+// Interface existante maintenue pour rétrocompatibilité
 export interface AssignProductData {
   consultation_id: string
   product_id: string
   proposed_price?: number
   notes?: string
   is_primary_proposal?: boolean
+  quantity?: number
+  is_free?: boolean
+}
+
+// Nouvelles interfaces simplifiées pour le workflow type commande
+export interface CreateConsultationItemData {
+  consultation_id: string
+  product_id: string
+  quantity: number
+  unit_price?: number
+  is_free?: boolean
+  notes?: string
+}
+
+export interface UpdateConsultationItemData {
+  quantity?: number
+  unit_price?: number
+  is_free?: boolean
+  notes?: string
 }
 
 export interface ConsultationFilters {
@@ -245,16 +289,76 @@ export function useConsultations() {
   }
 }
 
-// Hook pour gérer les produits associés aux consultations
+// Hook DÉPRÉCIÉ - utilisez useConsultationItems à la place
+// Conservé temporairement pour rétrocompatibilité
 export function useConsultationProducts(consultationId?: string) {
-  const [consultationProducts, setConsultationProducts] = useState<ConsultationProduct[]>([])
+  console.warn('useConsultationProducts est déprécié. Utilisez useConsultationItems à la place.')
+
+  // Redirection vers le nouveau hook
+  const {
+    consultationItems,
+    eligibleProducts,
+    loading,
+    error,
+    addItem,
+    removeItem,
+    updateItem
+  } = useConsultationItems(consultationId)
+
+  // Adapter l'interface pour rétrocompatibilité
+  const consultationProducts = consultationItems.map(item => ({
+    id: item.id,
+    consultation_id: item.consultation_id,
+    product_id: item.product_id,
+    proposed_price: item.unit_price,
+    notes: item.notes,
+    is_primary_proposal: false, // Plus utilisé
+    quantity: item.quantity,
+    is_free: item.is_free,
+    created_at: item.created_at,
+    created_by: item.created_by,
+    product: item.product
+  }))
+
+  return {
+    consultationProducts,
+    eligibleProducts,
+    loading,
+    error,
+    fetchConsultationProducts: (id: string) => {}, // Noop - le nouveau hook gère automatiquement
+    fetchEligibleProducts: () => {}, // Noop - le nouveau hook gère automatiquement
+    assignProduct: async (data: AssignProductData) => {
+      return addItem({
+        consultation_id: data.consultation_id,
+        product_id: data.product_id,
+        quantity: data.quantity || 1,
+        unit_price: data.proposed_price,
+        is_free: data.is_free || false,
+        notes: data.notes
+      })
+    },
+    removeProduct: removeItem,
+    updateConsultationProduct: async (id: string, updates: Partial<ConsultationProduct>) => {
+      return updateItem(id, {
+        quantity: updates.quantity,
+        unit_price: updates.proposed_price,
+        is_free: updates.is_free,
+        notes: updates.notes
+      })
+    }
+  }
+}
+
+// Nouveau hook simplifié pour le workflow type commande
+export function useConsultationItems(consultationId?: string) {
+  const [consultationItems, setConsultationItems] = useState<ConsultationItem[]>([])
   const [eligibleProducts, setEligibleProducts] = useState<any[]>([])
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const { toast } = useToast()
 
-  // Charger les produits de la consultation
-  const fetchConsultationProducts = async (id: string) => {
+  // Charger les items de la consultation
+  const fetchConsultationItems = async (id: string) => {
     try {
       setLoading(true)
       setError(null)
@@ -262,14 +366,21 @@ export function useConsultationProducts(consultationId?: string) {
       const { data, error } = await supabase
         .from('consultation_products')
         .select(`
-          *,
+          id,
+          consultation_id,
+          product_id,
+          quantity,
+          proposed_price,
+          is_free,
+          notes,
+          created_at,
+          created_by,
           product:products(
             id,
             name,
             sku,
-            status,
             requires_sample,
-            supplier:organisations(name)
+            price_ht
           )
         `)
         .eq('consultation_id', id)
@@ -277,24 +388,47 @@ export function useConsultationProducts(consultationId?: string) {
 
       if (error) throw error
 
-      setConsultationProducts(data || [])
+      // Transform to ConsultationItem format
+      const items: ConsultationItem[] = (data || []).map(item => ({
+        id: item.id,
+        consultation_id: item.consultation_id,
+        product_id: item.product_id,
+        quantity: item.quantity || 1,
+        unit_price: item.proposed_price || item.product?.price_ht,
+        is_free: item.is_free || false,
+        notes: item.notes,
+        created_at: item.created_at,
+        created_by: item.created_by,
+        product: item.product ? {
+          id: item.product.id,
+          name: item.product.name,
+          sku: item.product.sku,
+          requires_sample: item.product.requires_sample,
+          supplier_name: undefined, // Temporairement désactivé
+          price_ht: item.product.price_ht
+        } : undefined
+      }))
+
+      setConsultationItems(items)
     } catch (err) {
-      const message = err instanceof Error ? err.message : 'Erreur lors du chargement des produits'
+      const message = err instanceof Error ? err.message : 'Erreur lors du chargement des items'
       setError(message)
-      console.error('Erreur fetchConsultationProducts:', err)
+      console.error('Erreur fetchConsultationItems:', err)
     } finally {
       setLoading(false)
     }
   }
 
-  // Charger les produits éligibles (sourcing uniquement)
-  const fetchEligibleProducts = async () => {
+  // Charger les produits éligibles
+  const fetchEligibleProducts = async (targetConsultationId?: string) => {
     try {
       setLoading(true)
       setError(null)
 
       const { data, error } = await supabase
-        .rpc('get_consultation_eligible_products')
+        .rpc('get_consultation_eligible_products', {
+          target_consultation_id: targetConsultationId || null
+        })
 
       if (error) throw error
 
@@ -308,30 +442,46 @@ export function useConsultationProducts(consultationId?: string) {
     }
   }
 
-  // Assigner un produit à une consultation
-  const assignProduct = async (data: AssignProductData): Promise<boolean> => {
+  // Ajouter un item à la consultation
+  const addItem = async (data: CreateConsultationItemData): Promise<boolean> => {
     try {
       setError(null)
 
-      const { error } = await supabase
-        .from('consultation_products')
-        .insert([data])
+      const response = await fetch('/api/consultations/associations', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          consultation_id: data.consultation_id,
+          product_id: data.product_id,
+          proposed_price: data.unit_price,
+          quantity: data.quantity,
+          is_free: data.is_free,
+          notes: data.notes,
+          is_primary_proposal: false // Plus utilisé dans le nouveau workflow
+        })
+      })
 
-      if (error) throw error
+      const result = await response.json()
 
-      // Recharger les produits de la consultation
+      if (!response.ok) {
+        throw new Error(result.error || 'Erreur lors de l\'ajout de l\'item')
+      }
+
+      // Recharger les items
       if (consultationId) {
-        await fetchConsultationProducts(consultationId)
+        await fetchConsultationItems(consultationId)
       }
 
       toast({
-        title: "Produit assigné",
+        title: "Item ajouté",
         description: "Le produit a été ajouté à la consultation"
       })
 
       return true
     } catch (err) {
-      const message = err instanceof Error ? err.message : 'Erreur lors de l\'assignation du produit'
+      const message = err instanceof Error ? err.message : 'Erreur lors de l\'ajout de l\'item'
       setError(message)
       toast({
         title: "Erreur",
@@ -342,67 +492,44 @@ export function useConsultationProducts(consultationId?: string) {
     }
   }
 
-  // Retirer un produit d'une consultation
-  const removeProduct = async (consultationProductId: string): Promise<boolean> => {
-    try {
-      setError(null)
-
-      const { error } = await supabase
-        .from('consultation_products')
-        .delete()
-        .eq('id', consultationProductId)
-
-      if (error) throw error
-
-      // Mettre à jour la liste locale
-      setConsultationProducts(prev =>
-        prev.filter(cp => cp.id !== consultationProductId)
-      )
-
-      toast({
-        title: "Produit retiré",
-        description: "Le produit a été retiré de la consultation"
-      })
-
-      return true
-    } catch (err) {
-      const message = err instanceof Error ? err.message : 'Erreur lors de la suppression'
-      setError(message)
-      toast({
-        title: "Erreur",
-        description: message,
-        variant: "destructive"
-      })
-      return false
-    }
-  }
-
-  // Mettre à jour les détails d'un produit dans la consultation
-  const updateConsultationProduct = async (
-    consultationProductId: string,
-    updates: Partial<ConsultationProduct>
+  // Mettre à jour un item
+  const updateItem = async (
+    itemId: string,
+    updates: UpdateConsultationItemData
   ): Promise<boolean> => {
     try {
       setError(null)
 
+      const updateData: any = {}
+      if (updates.quantity !== undefined) updateData.quantity = updates.quantity
+      if (updates.unit_price !== undefined) updateData.proposed_price = updates.unit_price
+      if (updates.is_free !== undefined) updateData.is_free = updates.is_free
+      if (updates.notes !== undefined) updateData.notes = updates.notes
+
       const { error } = await supabase
         .from('consultation_products')
-        .update(updates)
-        .eq('id', consultationProductId)
+        .update(updateData)
+        .eq('id', itemId)
 
       if (error) throw error
 
       // Mettre à jour la liste locale
-      setConsultationProducts(prev =>
-        prev.map(cp =>
-          cp.id === consultationProductId
-            ? { ...cp, ...updates }
-            : cp
+      setConsultationItems(prev =>
+        prev.map(item =>
+          item.id === itemId
+            ? {
+                ...item,
+                quantity: updates.quantity ?? item.quantity,
+                unit_price: updates.unit_price ?? item.unit_price,
+                is_free: updates.is_free ?? item.is_free,
+                notes: updates.notes ?? item.notes
+              }
+            : item
         )
       )
 
       toast({
-        title: "Produit mis à jour",
+        title: "Item mis à jour",
         description: "Les modifications ont été enregistrées"
       })
 
@@ -419,25 +546,88 @@ export function useConsultationProducts(consultationId?: string) {
     }
   }
 
-  // Charger les produits au changement de consultation
+  // Supprimer un item
+  const removeItem = async (itemId: string): Promise<boolean> => {
+    try {
+      setError(null)
+
+      const { error } = await supabase
+        .from('consultation_products')
+        .delete()
+        .eq('id', itemId)
+
+      if (error) throw error
+
+      // Mettre à jour la liste locale
+      setConsultationItems(prev =>
+        prev.filter(item => item.id !== itemId)
+      )
+
+      toast({
+        title: "Item supprimé",
+        description: "Le produit a été retiré de la consultation"
+      })
+
+      return true
+    } catch (err) {
+      const message = err instanceof Error ? err.message : 'Erreur lors de la suppression'
+      setError(message)
+      toast({
+        title: "Erreur",
+        description: message,
+        variant: "destructive"
+      })
+      return false
+    }
+  }
+
+  // Basculer l'état gratuit d'un item
+  const toggleFreeItem = async (itemId: string): Promise<boolean> => {
+    const item = consultationItems.find(i => i.id === itemId)
+    if (!item) return false
+
+    return updateItem(itemId, { is_free: !item.is_free })
+  }
+
+  // Calculer le total de la consultation
+  const calculateTotal = () => {
+    return consultationItems.reduce((total, item) => {
+      if (item.is_free) return total
+      const price = item.unit_price || 0
+      return total + (price * item.quantity)
+    }, 0)
+  }
+
+  // Calculer le nombre total d'items
+  const getTotalItemsCount = () => {
+    return consultationItems.reduce((total, item) => total + item.quantity, 0)
+  }
+
+  // Charger les items au changement de consultation
   useEffect(() => {
     if (consultationId) {
-      fetchConsultationProducts(consultationId)
+      fetchConsultationItems(consultationId)
+      fetchEligibleProducts(consultationId)
     }
   }, [consultationId])
 
   return {
     // État
-    consultationProducts,
+    consultationItems,
     eligibleProducts,
     loading,
     error,
 
     // Actions
-    fetchConsultationProducts,
+    fetchConsultationItems,
     fetchEligibleProducts,
-    assignProduct,
-    removeProduct,
-    updateConsultationProduct
+    addItem,
+    updateItem,
+    removeItem,
+    toggleFreeItem,
+
+    // Utilitaires
+    calculateTotal,
+    getTotalItemsCount
   }
 }

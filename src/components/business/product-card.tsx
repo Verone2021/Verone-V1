@@ -61,7 +61,11 @@ export function ProductCard({
   archived = false
 }: ProductCardProps) {
   const router = useRouter()
-  const status = statusConfig[product.status]
+  const status = statusConfig[product.status] || {
+    label: product.status || "Statut inconnu",
+    variant: "outline" as const,
+    className: "bg-gray-600 text-white"
+  }
 
   // ✨ Hooks optimisés - images + packages
   const { primaryImage, loading: imageLoading } = useProductImages({

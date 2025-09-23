@@ -6,6 +6,7 @@ const protectedRoutes = [
   '/dashboard',
   '/catalogue',
   '/commandes',
+  '/consultations',
   '/stocks',
   '/clients',
   '/parametres'
@@ -21,10 +22,8 @@ export async function middleware(request: NextRequest) {
   const pathname = request.nextUrl.pathname
 
   // Créer le client Supabase pour le middleware
-  let response = NextResponse.next({
-    request: {
-      headers: request.headers,
-    },
+  let supabaseResponse = NextResponse.next({
+    request,
   })
 
   const supabase = createServerClient(
@@ -41,12 +40,12 @@ export async function middleware(request: NextRequest) {
             value,
             ...options,
           })
-          response = NextResponse.next({
+          supabaseResponse = NextResponse.next({
             request: {
               headers: request.headers,
             },
           })
-          response.cookies.set({
+          supabaseResponse.cookies.set({
             name,
             value,
             ...options,
@@ -58,12 +57,12 @@ export async function middleware(request: NextRequest) {
             value: '',
             ...options,
           })
-          response = NextResponse.next({
+          supabaseResponse = NextResponse.next({
             request: {
               headers: request.headers,
             },
           })
-          response.cookies.set({
+          supabaseResponse.cookies.set({
             name,
             value: '',
             ...options,
@@ -73,7 +72,7 @@ export async function middleware(request: NextRequest) {
     }
   )
 
-  // Vérifier l'authentification avec Supabase
+  // IMPORTANT: DO NOT REMOVE auth.getUser()
   const { data: { user }, error } = await supabase.auth.getUser()
   const isAuthenticated = !error && !!user
 
@@ -90,7 +89,8 @@ export async function middleware(request: NextRequest) {
     return NextResponse.redirect(new URL(redirectUrl, request.url))
   }
 
-  return response
+  // IMPORTANT: You *must* return the supabaseResponse object as it is.
+  return supabaseResponse
 }
 
 export const config = {

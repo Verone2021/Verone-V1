@@ -247,7 +247,7 @@ export default function CatalogueDashboardPage() {
               <Button
                 variant="outline"
                 className="h-16 border-black text-black hover:bg-black hover:text-white"
-                onClick={() => router.push('/sourcing')}
+                onClick={() => router.push('/catalogue/sourcing')}
               >
                 <div className="flex items-center">
                   <Eye className="h-5 w-5 mr-2" />

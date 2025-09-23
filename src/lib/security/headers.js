@@ -13,11 +13,15 @@ const securityHeaders = {
         "'self'",
         "'unsafe-inline'", // Required for Next.js
         "'unsafe-eval'", // Required for Next.js development
+        "http://localhost:*", // Development localhost
+        "https://localhost:*", // Development localhost HTTPS
         "https://aorroydfjsrygmosnzrl.supabase.co"
       ],
       styleSrc: [
         "'self'",
         "'unsafe-inline'", // Required for Tailwind CSS
+        "http://localhost:*", // Development localhost
+        "https://localhost:*", // Development localhost HTTPS
         "https://fonts.googleapis.com"
       ],
       imgSrc: [
@@ -30,6 +34,10 @@ const securityHeaders = {
       fontSrc: ["'self'", "https://fonts.gstatic.com"],
       connectSrc: [
         "'self'",
+        "http://localhost:*", // Development localhost
+        "https://localhost:*", // Development localhost HTTPS
+        "ws://localhost:*", // Webpack hot reload
+        "wss://localhost:*", // Webpack hot reload HTTPS
         "https://aorroydfjsrygmosnzrl.supabase.co",
         "wss://aorroydfjsrygmosnzrl.supabase.co"
       ],

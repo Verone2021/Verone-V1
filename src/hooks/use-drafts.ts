@@ -144,7 +144,6 @@ export function useDrafts() {
         .from('product_drafts')
         .select('*', { count: 'exact' })
         .eq('created_by', user.id)
-        .neq('creation_mode', 'sourcing')
         .order('updated_at', { ascending: false })
 
       if (error) throw error
@@ -535,21 +534,58 @@ export function useDrafts() {
 
       if (draftError) throw draftError
 
-      // 2. Vérifier que le brouillon est finalisable
+      // 2. Vérifier si c'est un produit sourcing - workflow différent
+      if (draft.creation_mode === 'sourcing') {
+        // ✅ WORKFLOW SOURCING CORRIGÉ : Ne pas transférer automatiquement vers products
+        // Vérifier les validations requises pour sourcing
+        if (!draft.supplier_id) {
+          throw new Error('Fournisseur obligatoire pour valider un produit sourcing')
+        }
+
+        // Si échantillon requis, on ne peut pas valider directement vers catalogue
+        if (draft.requires_sample) {
+          throw new Error('Les produits nécessitant un échantillon doivent d\'abord passer par la validation échantillons')
+        }
+
+        // Mettre à jour le statut pour marquer comme "prêt pour catalogue"
+        const { data: updatedDraft, error: updateError } = await supabase
+          .from('product_drafts')
+          .update({
+            status: 'ready_for_catalog',
+            validated_at: new Date().toISOString(),
+            updated_at: new Date().toISOString()
+          })
+          .eq('id', draftId)
+          .select()
+          .single()
+
+        if (updateError) throw updateError
+
+        // Recharger la liste
+        await loadDrafts()
+
+        console.log('✅ Produit sourcing marqué comme prêt pour catalogue')
+        return updatedDraft
+      }
+
+      // 3. Pour les produits non-sourcing : workflow classique
+      // Vérifier que le brouillon est finalisable
       const progress = calculateRealProgress(draft)
       if (progress < 100) {
         throw new Error(`Brouillon incomplet (${progress}%). Complétez tous les champs obligatoires.`)
       }
 
-      // 3. Récupérer les images du brouillon
+      // 4. Récupérer les images du brouillon
       const { data: draftImages } = await supabase
         .from('product_draft_images')
         .select('*')
         .eq('product_draft_id', draftId)
 
-      // 4. Créer le produit dans la table products
+      // 5. Créer le produit dans la table products (workflow classique uniquement)
       const productData = {
+        sku: `VER-${Date.now()}`, // SKU obligatoire
         name: draft.name,
+        price_ht: draft.estimated_selling_price || draft.cost_price * 1.5, // Prix HT obligatoire
         description: draft.description,
         technical_description: draft.technical_description,
         selling_points: draft.selling_points || [],
@@ -569,8 +605,7 @@ export function useDrafts() {
         video_url: draft.video_url,
         gtin: draft.gtin,
         availability_type: draft.availability_type || 'normal',
-        target_margin_percentage: draft.target_margin_percentage,
-        estimated_selling_price: draft.estimated_selling_price
+        target_margin_percentage: draft.target_margin_percentage
       }
 
       const { data: newProduct, error: productError } = await supabase
@@ -616,6 +651,116 @@ export function useDrafts() {
 
     } catch (error) {
       console.error('❌ Erreur validation brouillon:', error)
+      throw error
+    }
+  }
+
+  // NOUVELLE FONCTION : Finaliser un produit sourcing vers le catalogue
+  const finalizeToProduct = async (draftId: string): Promise<any> => {
+    try {
+      const { data: { user } } = await supabase.auth.getUser()
+      if (!user) throw new Error('Utilisateur non authentifié')
+
+      // 1. Récupérer le brouillon sourcing
+      const { data: draft, error: draftError } = await supabase
+        .from('product_drafts')
+        .select('*')
+        .eq('id', draftId)
+        .eq('creation_mode', 'sourcing')
+        .single()
+
+      if (draftError) throw draftError
+
+      // 2. Validations business rules sourcing
+      if (!draft.supplier_id) {
+        throw new Error('Fournisseur obligatoire pour finaliser un produit sourcing')
+      }
+
+      if (draft.requires_sample) {
+        throw new Error('Les produits nécessitant un échantillon doivent d\'abord être validés via échantillons')
+      }
+
+      if (!draft.cost_price || draft.cost_price <= 0) {
+        throw new Error('Prix d\'achat obligatoire pour finaliser un produit sourcing')
+      }
+
+      // 3. Récupérer les images du brouillon
+      const { data: draftImages } = await supabase
+        .from('product_draft_images')
+        .select('*')
+        .eq('product_draft_id', draftId)
+
+      // 4. Créer le produit final dans la table products
+      const productData = {
+        sku: `VER-${Date.now()}`, // SKU obligatoire généré automatiquement
+        name: draft.name,
+        price_ht: draft.estimated_selling_price || draft.cost_price * 1.5, // Prix HT obligatoire
+        description: draft.description,
+        technical_description: draft.technical_description,
+        selling_points: draft.selling_points || [],
+        cost_price: draft.cost_price,
+        supplier_page_url: draft.supplier_page_url,
+        product_type: draft.product_type || 'standard',
+        assigned_client_id: draft.assigned_client_id,
+        creation_mode: draft.creation_mode,
+        requires_sample: false, // Déjà validé
+        subcategory_id: draft.subcategory_id,
+        supplier_id: draft.supplier_id,
+        supplier_reference: draft.supplier_reference,
+        condition: draft.condition || 'new',
+        variant_attributes: draft.variant_attributes,
+        dimensions: draft.dimensions,
+        weight: draft.weight,
+        video_url: draft.video_url,
+        gtin: draft.gtin,
+        availability_type: draft.availability_type || 'normal',
+        target_margin_percentage: draft.target_margin_percentage,
+        estimated_selling_price: draft.estimated_selling_price,
+        status: 'in_stock' // Produit actif dans le catalogue
+      }
+
+      const { data: newProduct, error: productError } = await supabase
+        .from('products')
+        .insert(productData)
+        .select()
+        .single()
+
+      if (productError) throw productError
+
+      // 5. Migrer les images vers product_images
+      if (draftImages && draftImages.length > 0) {
+        const productImages = draftImages.map(img => ({
+          product_id: newProduct.id,
+          storage_path: img.storage_path,
+          is_primary: img.is_primary,
+          image_type: img.image_type,
+          alt_text: img.alt_text,
+          file_size: img.file_size,
+          format: img.format,
+          display_order: img.display_order
+        }))
+
+        const { error: imagesError } = await supabase
+          .from('product_images')
+          .insert(productImages)
+
+        if (imagesError) {
+          console.error('⚠️ Erreur migration images:', imagesError)
+        }
+      }
+
+      // 6. Supprimer le brouillon sourcing et ses images
+      await supabase.from('product_draft_images').delete().eq('product_draft_id', draftId)
+      await supabase.from('product_drafts').delete().eq('id', draftId)
+
+      // 7. Recharger la liste des brouillons
+      await loadDrafts()
+
+      console.log('✅ Produit sourcing finalisé et ajouté au catalogue:', newProduct.sku)
+      return newProduct
+
+    } catch (error) {
+      console.error('❌ Erreur finalisation produit sourcing:', error)
       throw error
     }
   }
@@ -681,6 +826,7 @@ export function useDrafts() {
     getDraftForEdit,
     updateDraft,
     validateDraft,
+    finalizeToProduct,
     updateSampleRequirement,
     stats
   }
