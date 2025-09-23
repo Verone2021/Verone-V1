@@ -89,7 +89,6 @@ export function CategorySelector({
 
       setFamilies(data || [])
     } catch (err) {
-      console.error('❌ Erreur chargement familles:', err)
       setError('Erreur de chargement')
     } finally {
       setLoading(false)
@@ -111,7 +110,6 @@ export function CategorySelector({
       setSelectedCategory(null)
       setSelectedSubcategory(null)
     } catch (err) {
-      console.error('❌ Erreur chargement catégories:', err)
       setError('Erreur de chargement')
     }
   }
@@ -129,7 +127,6 @@ export function CategorySelector({
       setSubcategories(data || [])
       setSelectedSubcategory(null)
     } catch (err) {
-      console.error('❌ Erreur chargement sous-catégories:', err)
       setError('Erreur de chargement')
     }
   }
@@ -160,13 +157,13 @@ export function CategorySelector({
 
       if (error) throw error
 
-      if (data?.categories?.families) {
-        const family = data.categories.families
+      if (data && (data as any).categories && (data as any).categories.families) {
+        const family = (data as any).categories.families
         const category = {
-          id: data.categories.id,
-          name: data.categories.name,
-          description: data.categories.description,
-          family_id: data.categories.family_id
+          id: (data as any).categories.id,
+          name: (data as any).categories.name,
+          description: (data as any).categories.description,
+          family_id: (data as any).categories.family_id
         }
         const subcategory = {
           id: data.id,
@@ -184,7 +181,7 @@ export function CategorySelector({
         await loadSubcategories(category.id)
       }
     } catch (err) {
-      console.error('❌ Erreur chargement sélection initiale:', err)
+      // Silence initial selection errors
     }
   }
 

@@ -10,16 +10,20 @@ import { useStockMovements } from './use-stock-movements'
 
 // Types pour les commandes clients
 export type SalesOrderStatus = 'draft' | 'confirmed' | 'partially_shipped' | 'shipped' | 'delivered' | 'cancelled'
+export type PaymentStatus = 'pending' | 'partial' | 'paid' | 'refunded' | 'overdue'
 
 export interface SalesOrder {
   id: string
   order_number: string
   customer_id: string
+  customer_type: 'organization' | 'individual'
   status: SalesOrderStatus
+  payment_status?: PaymentStatus
   currency: string
   tax_rate: number
   total_ht: number
   total_ttc: number
+  paid_amount?: number
   expected_delivery_date?: string
   shipping_address?: any
   billing_address?: any
@@ -36,14 +40,28 @@ export interface SalesOrder {
   shipped_at?: string
   delivered_at?: string
   cancelled_at?: string
+  paid_at?: string
+  warehouse_exit_at?: string
+  warehouse_exit_by?: string
 
   created_at: string
   updated_at: string
 
-  // Relations jointes
+  // Relations jointes (polymorphiques selon customer_type)
   organisations?: {
     id: string
     name: string
+    email?: string
+    phone?: string
+    address_line1?: string
+    address_line2?: string
+    postal_code?: string
+    city?: string
+  }
+  individual_customers?: {
+    id: string
+    first_name: string
+    last_name: string
     email?: string
     phone?: string
     address_line1?: string
@@ -73,13 +91,16 @@ export interface SalesOrderItem {
     id: string
     name: string
     sku: string
-    primary_image_url?: string
     stock_quantity?: number
+    stock_real?: number
+    stock_forecasted_in?: number
+    stock_forecasted_out?: number
   }
 }
 
 export interface CreateSalesOrderData {
   customer_id: string
+  customer_type: 'organization' | 'individual'
   expected_delivery_date?: string
   shipping_address?: any
   billing_address?: any
@@ -145,24 +166,16 @@ export function useSalesOrders() {
         .from('sales_orders')
         .select(`
           *,
-          organisations (
-            id,
-            name,
-            email,
-            phone,
-            address_line1,
-            address_line2,
-            postal_code,
-            city
-          ),
           sales_order_items (
             *,
             products (
               id,
               name,
               sku,
-              primary_image_url,
-              stock_quantity
+              stock_quantity,
+              stock_real,
+              stock_forecasted_in,
+              stock_forecasted_out
             )
           )
         `)
@@ -185,13 +198,41 @@ export function useSalesOrders() {
         query = query.ilike('order_number', `%${filters.order_number}%`)
       }
 
-      const { data, error } = await query
+      const { data: ordersData, error } = await query
 
       if (error) throw error
 
-      setOrders(data || [])
-    } catch (error) {
-      console.error('Erreur lors de la récupération des commandes:', error)
+      // Fetch manuel des données clients pour chaque commande (relations polymorphiques)
+      const ordersWithCustomers = await Promise.all(
+        (ordersData || []).map(async order => {
+          let customerData = null
+
+          if (order.customer_type === 'organization' && order.customer_id) {
+            const { data: org } = await supabase
+              .from('organisations')
+              .select('id, name, email, phone, address_line1, address_line2, postal_code, city')
+              .eq('id', order.customer_id)
+              .single()
+            customerData = { organisations: org }
+          } else if (order.customer_type === 'individual' && order.customer_id) {
+            const { data: individual } = await supabase
+              .from('individual_customers')
+              .select('id, first_name, last_name, email, phone, address_line1, address_line2, postal_code, city')
+              .eq('id', order.customer_id)
+              .single()
+            customerData = { individual_customers: individual }
+          }
+
+          return {
+            ...order,
+            ...customerData
+          }
+        })
+      )
+
+      setOrders(ordersWithCustomers)
+    } catch (error: any) {
+      console.error('Erreur lors de la récupération des commandes:', error?.message || 'Erreur inconnue')
       toast({
         title: "Erreur",
         description: "Impossible de récupérer les commandes",
@@ -206,28 +247,20 @@ export function useSalesOrders() {
   const fetchOrder = useCallback(async (orderId: string) => {
     setLoading(true)
     try {
-      const { data, error } = await supabase
+      const { data: orderData, error } = await supabase
         .from('sales_orders')
         .select(`
           *,
-          organisations (
-            id,
-            name,
-            email,
-            phone,
-            address_line1,
-            address_line2,
-            postal_code,
-            city
-          ),
           sales_order_items (
             *,
             products (
               id,
               name,
               sku,
-              primary_image_url,
-              stock_quantity
+              stock_quantity,
+              stock_real,
+              stock_forecasted_in,
+              stock_forecasted_out
             )
           )
         `)
@@ -236,8 +269,32 @@ export function useSalesOrders() {
 
       if (error) throw error
 
-      setCurrentOrder(data)
-      return data
+      // Fetch manuel des données client selon le type (relation polymorphique)
+      let customerData = null
+
+      if (orderData.customer_type === 'organization' && orderData.customer_id) {
+        const { data: org } = await supabase
+          .from('organisations')
+          .select('id, name, email, phone, address_line1, address_line2, postal_code, city')
+          .eq('id', orderData.customer_id)
+          .single()
+        customerData = { organisations: org }
+      } else if (orderData.customer_type === 'individual' && orderData.customer_id) {
+        const { data: individual } = await supabase
+          .from('individual_customers')
+          .select('id, first_name, last_name, email, phone, address_line1, address_line2, postal_code, city')
+          .eq('id', orderData.customer_id)
+          .single()
+        customerData = { individual_customers: individual }
+      }
+
+      const orderWithCustomer = {
+        ...orderData,
+        ...customerData
+      }
+
+      setCurrentOrder(orderWithCustomer)
+      return orderWithCustomer
     } catch (error) {
       console.error('Erreur lors de la récupération de la commande:', error)
       toast({
@@ -300,8 +357,8 @@ export function useSalesOrders() {
       })
 
       setStats(statsData || null)
-    } catch (error) {
-      console.error('Erreur lors de la récupération des statistiques:', error)
+    } catch (error: any) {
+      console.error('Erreur lors de la récupération des statistiques:', error?.message || 'Erreur inconnue')
     }
   }, [supabase])
 
@@ -322,8 +379,115 @@ export function useSalesOrders() {
     return availabilityCheck
   }, [getAvailableStock])
 
+  // Obtenir le stock disponible avec prévisionnel
+  const getStockWithForecasted = useCallback(async (productId: string) => {
+    try {
+      const { data, error } = await supabase
+        .from('products')
+        .select('stock_real, stock_forecasted_in, stock_forecasted_out')
+        .eq('id', productId)
+        .single()
+
+      if (error) throw error
+
+      return {
+        stock_real: data?.stock_real || 0,
+        stock_forecasted_in: data?.stock_forecasted_in || 0,
+        stock_forecasted_out: data?.stock_forecasted_out || 0,
+        stock_available: (data?.stock_real || 0) + (data?.stock_forecasted_in || 0) - (data?.stock_forecasted_out || 0),
+        stock_future: (data?.stock_real || 0) + (data?.stock_forecasted_in || 0)
+      }
+    } catch (error) {
+      console.error('Erreur lors de la récupération du stock:', error)
+      return {
+        stock_real: 0,
+        stock_forecasted_in: 0,
+        stock_forecasted_out: 0,
+        stock_available: 0,
+        stock_future: 0
+      }
+    }
+  }, [supabase])
+
+  // Marquer une commande comme payée
+  const markAsPaid = useCallback(async (orderId: string, amount?: number) => {
+    setLoading(true)
+    try {
+      const { data: order } = await supabase
+        .from('sales_orders')
+        .select('total_ttc')
+        .eq('id', orderId)
+        .single()
+
+      if (!order) throw new Error('Commande non trouvée')
+
+      const paidAmount = amount || order.total_ttc
+
+      const { error } = await supabase
+        .rpc('mark_payment_received', {
+          p_order_id: orderId,
+          p_amount: paidAmount
+        })
+
+      if (error) throw error
+
+      toast({
+        title: "Succès",
+        description: "Paiement enregistré avec succès"
+      })
+
+      await fetchOrders()
+      if (currentOrder?.id === orderId) {
+        await fetchOrder(orderId)
+      }
+    } catch (error: any) {
+      console.error('Erreur lors de l\'enregistrement du paiement:', error)
+      toast({
+        title: "Erreur",
+        description: error.message || "Impossible d'enregistrer le paiement",
+        variant: "destructive"
+      })
+      throw error
+    } finally {
+      setLoading(false)
+    }
+  }, [supabase, toast, fetchOrders, currentOrder, fetchOrder])
+
+  // Marquer la sortie entrepôt
+  const markWarehouseExit = useCallback(async (orderId: string) => {
+    setLoading(true)
+    try {
+      const { error } = await supabase
+        .rpc('mark_warehouse_exit', {
+          p_order_id: orderId
+        })
+
+      if (error) throw error
+
+      toast({
+        title: "Succès",
+        description: "Sortie entrepôt enregistrée avec succès"
+      })
+
+      await fetchOrders()
+      if (currentOrder?.id === orderId) {
+        await fetchOrder(orderId)
+      }
+    } catch (error: any) {
+      console.error('Erreur lors de la sortie entrepôt:', error)
+      toast({
+        title: "Erreur",
+        description: error.message || "Impossible d'enregistrer la sortie entrepôt",
+        variant: "destructive"
+      })
+      throw error
+    } finally {
+      setLoading(false)
+    }
+  }, [supabase, toast, fetchOrders, currentOrder, fetchOrder])
+
   // Créer une nouvelle commande avec vérification de stock
-  const createOrder = useCallback(async (data: CreateSalesOrderData, autoReserve = true) => {
+  const createOrder = useCallback(async (data: CreateSalesOrderData, autoReserve = false) => {
     setLoading(true)
     try {
       // 1. Vérifier la disponibilité du stock
@@ -365,6 +529,7 @@ export function useSalesOrders() {
         .insert({
           order_number: soNumber,
           customer_id: data.customer_id,
+          customer_type: data.customer_type,
           expected_delivery_date: data.expected_delivery_date,
           shipping_address: data.shipping_address,
           billing_address: data.billing_address,
@@ -545,10 +710,22 @@ export function useSalesOrders() {
     try {
       // 1. Mettre à jour les quantités expédiées
       for (const item of itemsToShip) {
+        // Récupérer la quantité actuelle
+        const { data: currentItem, error: fetchError } = await supabase
+          .from('sales_order_items')
+          .select('quantity_shipped')
+          .eq('id', item.item_id)
+          .single()
+
+        if (fetchError) throw fetchError
+
+        // Mettre à jour avec la nouvelle quantité
+        const newQuantity = (currentItem.quantity_shipped || 0) + item.quantity_shipped
+
         const { error: updateError } = await supabase
           .from('sales_order_items')
           .update({
-            quantity_shipped: supabase.raw('quantity_shipped + ?', [item.quantity_shipped])
+            quantity_shipped: newQuantity
           })
           .eq('id', item.item_id)
 
@@ -688,9 +865,12 @@ export function useSalesOrders() {
     updateStatus,
     shipItems,
     deleteOrder,
+    markAsPaid,
+    markWarehouseExit,
 
     // Utilitaires
     checkStockAvailability,
+    getStockWithForecasted,
     setCurrentOrder
   }
 }

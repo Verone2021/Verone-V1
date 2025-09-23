@@ -29,7 +29,8 @@ import {
   CheckCircle,
   Hash,
   Type,
-  List
+  List,
+  Edit
 } from 'lucide-react'
 import { cn } from '../../lib/utils'
 import { createClient } from '@/lib/supabase/client'
@@ -211,7 +212,68 @@ export function ProductDescriptionsModal({
             </Alert>
           )}
 
-          <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
+          {/* Mode Aperçu Global */}
+          {previewMode ? (
+            <div className="space-y-6">
+              <div className="bg-gray-50 border border-gray-200 rounded-lg p-6">
+                <h3 className="text-lg font-semibold text-black mb-4">Aperçu Final - {productName}</h3>
+
+                {/* Description principale */}
+                <div className="mb-6">
+                  <h4 className="text-sm font-medium text-gray-800 mb-2">Description</h4>
+                  <div className="text-sm text-gray-700 whitespace-pre-wrap">
+                    {description || "Aucune description générale."}
+                  </div>
+                </div>
+
+                {/* Description technique */}
+                {technicalDescription && (
+                  <div className="mb-6">
+                    <h4 className="text-sm font-medium text-gray-800 mb-2">Spécifications techniques</h4>
+                    <div className="text-sm text-gray-700 whitespace-pre-wrap">
+                      {technicalDescription}
+                    </div>
+                  </div>
+                )}
+
+                {/* Points de vente */}
+                {sellingPoints.length > 0 && (
+                  <div className="mb-6">
+                    <h4 className="text-sm font-medium text-gray-800 mb-2">Points forts</h4>
+                    <ul className="space-y-1">
+                      {sellingPoints.map((point, index) => (
+                        <li key={index} className="flex items-start gap-2 text-sm text-gray-700">
+                          <div className="w-1.5 h-1.5 bg-black rounded-full flex-shrink-0 mt-2"></div>
+                          {point}
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                )}
+
+                {/* Message si tout est vide */}
+                {!description && !technicalDescription && sellingPoints.length === 0 && (
+                  <div className="text-center py-8 text-gray-500">
+                    <FileText className="h-12 w-12 mx-auto mb-3 text-gray-300" />
+                    <div className="text-sm">Aucune description disponible</div>
+                    <div className="text-xs text-gray-400 mt-1">Commencez par remplir la description générale</div>
+                  </div>
+                )}
+              </div>
+
+              <div className="flex justify-center">
+                <Button
+                  variant="outline"
+                  onClick={() => setPreviewMode(false)}
+                  className="text-sm"
+                >
+                  <Edit className="h-4 w-4 mr-2" />
+                  Retour à l'édition
+                </Button>
+              </div>
+            </div>
+          ) : (
+            <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
             <TabsList className="grid w-full grid-cols-3">
               <TabsTrigger value="main" className="flex items-center gap-2">
                 <Type className="h-4 w-4" />
@@ -380,6 +442,7 @@ export function ProductDescriptionsModal({
               </div>
             </TabsContent>
           </Tabs>
+          )}
         </div>
 
         {/* Footer avec statistiques et actions */}

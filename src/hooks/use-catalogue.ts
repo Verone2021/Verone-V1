@@ -6,7 +6,7 @@
 
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { createClient } from '../lib/supabase/client';
 
 // Types selon ERD-CATALOGUE-V1.md
@@ -105,7 +105,7 @@ export const useCatalogue = () => {
     total: 0
   });
 
-  const supabase = createClient();
+  const supabase = useMemo(() => createClient(), []);
 
   // Chargement initial des données
   useEffect(() => {
@@ -169,6 +169,9 @@ export const useCatalogue = () => {
         subcategories!subcategory_id(id, name)
       `, { count: 'exact' });
 
+    // IMPORTANT : Exclure les produits archivés par défaut
+    query = query.is('archived_at', null);
+
     // Filtres selon business rules
     if (filters.search) {
       query = query.or(`name.ilike.%${filters.search}%,sku.ilike.%${filters.search}%`);
@@ -206,7 +209,7 @@ export const useCatalogue = () => {
       products: data || [],
       total: count || 0
     };
-  };
+  };;
 
   // Actions CRUD selon permissions RLS
   const createProduct = async (productData: Partial<Product>) => {

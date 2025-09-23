@@ -133,7 +133,7 @@ export default function DashboardPage() {
                 <Clock className="h-4 w-4" />
                 <span>{performanceMetrics.loadTime}ms</span>
                 {performanceMetrics.loadTime > 2000 && (
-                  <AlertTriangle className="h-4 w-4 text-black" title="Performance dégradée" />
+                  <AlertTriangle className="h-4 w-4 text-black" />
                 )}
               </div>
             )}
@@ -215,7 +215,7 @@ export default function DashboardPage() {
                 </div>
               ))}
             </div>
-          ) : metrics?.orders?.recentOrders?.length > 0 ? (
+          ) : metrics?.orders?.recentOrders && metrics.orders.recentOrders.length > 0 ? (
             <div className="space-y-3">
               {metrics.orders.recentOrders.slice(0, 4).map((order, index) => (
                 <div key={index} className="flex items-center justify-between py-2 border-b border-gray-100 last:border-b-0">
@@ -250,7 +250,7 @@ export default function DashboardPage() {
                 </div>
               ))}
             </div>
-          ) : metrics?.stock?.alerts?.length > 0 ? (
+          ) : metrics?.stock?.alerts && metrics.stock.alerts.length > 0 ? (
             <div className="space-y-3">
               {metrics.stock.alerts.slice(0, 4).map((alert, index) => (
                 <div key={index} className="flex items-center justify-between py-2 border-b border-gray-100 last:border-b-0">

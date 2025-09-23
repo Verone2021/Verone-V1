@@ -64,7 +64,7 @@ export function useProductImages({
     } finally {
       setLoading(false)
     }
-  }, [productId, bucketName, supabase])
+  }, [productId, supabase])
 
   // ✨ Upload optimisé avec triggers automatiques et enum typé
   const uploadImage = useCallback(async (
@@ -305,13 +305,13 @@ export function useProductImages({
     return images.filter(img => img.image_type === type)
   }, [images])
 
-  // ✨ Auto-fetch optimisé
+  // ✨ Auto-fetch optimisé - FIX: Supprimer fetchImages des dépendances pour éviter la boucle infinie
   useEffect(() => {
     if (autoFetch && productId && productId.trim() !== '') {
       console.log('🔄 Auto-fetch images:', productId)
       fetchImages()
     }
-  }, [productId, fetchImages, autoFetch])
+  }, [productId, autoFetch]) // Supprimé fetchImages des dépendances
 
   return {
     // 📊 Data

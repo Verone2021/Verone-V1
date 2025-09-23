@@ -271,9 +271,7 @@ export const CollectionGrid: React.FC<CollectionGridProps> = ({
               {filteredProducts.map(product => (
                 <ProductCard
                   key={product.id}
-                  {...product}
-                  onEdit={onProductEdit}
-                  onView={onProductView}
+                  product={product as any}
                   className={viewMode === 'list' ? "flex-row" : undefined}
                 />
               ))}

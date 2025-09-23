@@ -492,7 +492,7 @@ export default function SuppliersPage() {
       <SupplierFormModal
         isOpen={isModalOpen}
         onClose={handleCloseModal}
-        supplier={selectedSupplier}
+        supplier={selectedSupplier as any}
         onSuccess={handleSupplierSuccess}
       />
     </div>

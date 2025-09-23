@@ -2,10 +2,12 @@
  * 🛋️ Catalogue Products API - Vérone Back Office
  *
  * API pour gestion produits catalogue avec logging business intégré.
+ * Sécurisé avec authentification, rate limiting et validation.
  */
 
 import { NextRequest, NextResponse } from 'next/server';
 import { withLogging } from '@/lib/middleware/logging';
+import { withApiSecurity, validateInput, sanitizeString } from '@/lib/middleware/api-security';
 import { logger, catalogueLogger } from '@/lib/logger';
 
 // Mock data pour démonstration
@@ -270,14 +272,17 @@ export const POST = withLogging(createProduct, {
   slowRequestThreshold: 2000
 });
 
-// Options pour CORS
-export async function OPTIONS() {
-  return new NextResponse(null, {
-    status: 200,
-    headers: {
-      'Access-Control-Allow-Origin': '*',
-      'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
-      'Access-Control-Allow-Headers': 'Content-Type, Authorization',
+// Handle OPTIONS requests with secure CORS
+export async function OPTIONS(request: NextRequest) {
+  return withApiSecurity(
+    request,
+    async (req: NextRequest) => {
+      return new NextResponse(null, { status: 204 });
     },
-  });
+    {
+      requireAuth: false, // OPTIONS requests don't need auth
+      rateLimit: false,   // No rate limiting for preflight
+      allowedMethods: ['OPTIONS']
+    }
+  );
 }

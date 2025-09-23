@@ -69,8 +69,10 @@ export interface PurchaseOrderItem {
     id: string
     name: string
     sku: string
-    primary_image_url?: string
     stock_quantity?: number
+    stock_real?: number
+    stock_forecasted_in?: number
+    stock_forecasted_out?: number
   }
 }
 
@@ -152,8 +154,10 @@ export function usePurchaseOrders() {
               id,
               name,
               sku,
-              primary_image_url,
-              stock_quantity
+              stock_quantity,
+              stock_real,
+              stock_forecasted_in,
+              stock_forecasted_out
             )
           )
         `)
@@ -214,8 +218,10 @@ export function usePurchaseOrders() {
               id,
               name,
               sku,
-              primary_image_url,
-              stock_quantity
+              stock_quantity,
+              stock_real,
+              stock_forecasted_in,
+              stock_forecasted_out
             )
           )
         `)
@@ -458,10 +464,22 @@ export function usePurchaseOrders() {
     try {
       // 1. Mettre à jour les quantités reçues
       for (const item of itemsToReceive) {
+        // Récupérer la quantité actuelle
+        const { data: currentItem, error: fetchError } = await supabase
+          .from('purchase_order_items')
+          .select('quantity_received')
+          .eq('id', item.item_id)
+          .single()
+
+        if (fetchError) throw fetchError
+
+        // Mettre à jour avec la nouvelle quantité
+        const newQuantity = (currentItem.quantity_received || 0) + item.quantity_received
+
         const { error: updateError } = await supabase
           .from('purchase_order_items')
           .update({
-            quantity_received: supabase.raw('quantity_received + ?', [item.quantity_received])
+            quantity_received: newQuantity
           })
           .eq('id', item.item_id)
 
@@ -559,6 +577,46 @@ export function usePurchaseOrders() {
     }
   }, [supabase, toast, fetchOrders, currentOrder])
 
+  // Obtenir le stock avec prévisionnel pour les commandes fournisseurs
+  const getStockWithForecasted = useCallback(async (productId: string) => {
+    try {
+      const { data, error } = await supabase
+        .from('products')
+        .select('stock_real, stock_forecasted_in, stock_forecasted_out')
+        .eq('id', productId)
+        .single()
+
+      if (error) throw error
+
+      return {
+        stock_real: data?.stock_real || 0,
+        stock_forecasted_in: data?.stock_forecasted_in || 0,
+        stock_forecasted_out: data?.stock_forecasted_out || 0,
+        stock_available: (data?.stock_real || 0) + (data?.stock_forecasted_in || 0) - (data?.stock_forecasted_out || 0),
+        stock_future: (data?.stock_real || 0) + (data?.stock_forecasted_in || 0)
+      }
+    } catch (error) {
+      console.error('Erreur lors de la récupération du stock:', error)
+      return {
+        stock_real: 0,
+        stock_forecasted_in: 0,
+        stock_forecasted_out: 0,
+        stock_available: 0,
+        stock_future: 0
+      }
+    }
+  }, [supabase])
+
+  // Marquer une commande comme confirmée (déclenche stock prévisionnel)
+  const confirmOrder = useCallback(async (orderId: string) => {
+    return updateStatus(orderId, 'confirmed')
+  }, [updateStatus])
+
+  // Marquer réception complète
+  const markAsReceived = useCallback(async (orderId: string) => {
+    return updateStatus(orderId, 'received')
+  }, [updateStatus])
+
   return {
     // État
     loading,
@@ -575,8 +633,11 @@ export function usePurchaseOrders() {
     updateStatus,
     receiveItems,
     deleteOrder,
+    confirmOrder,
+    markAsReceived,
 
     // Utilitaires
+    getStockWithForecasted,
     setCurrentOrder
   }
 }

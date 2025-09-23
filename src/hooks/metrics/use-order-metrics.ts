@@ -45,9 +45,8 @@ export function useOrderMetrics() {
           status,
           total_ht,
           created_at,
-          organisations (
-            name
-          )
+          customer_type,
+          customer_id
         `)
         .gte('created_at', thirtyDaysAgoISO)
         .order('created_at', { ascending: false });
@@ -91,15 +90,39 @@ export function useOrderMetrics() {
         trend = 100; // Si pas de commandes avant, 100% d'augmentation
       }
 
-      // Formater les commandes récentes
-      const formattedRecentOrders = (recentOrders || [])
-        .slice(0, 5) // Prendre les 5 plus récentes
-        .map(order => ({
-          id: order.order_number,
-          customer: order.organisations?.name || 'Client inconnu',
-          amount: order.total_ht / 100, // Convertir centimes en euros
-          status: order.status
-        }));
+      // Formater les commandes récentes avec fetch manuel des données clients
+      const formattedRecentOrders = await Promise.all(
+        (recentOrders || [])
+          .slice(0, 5) // Prendre les 5 plus récentes
+          .map(async order => {
+            let customerName = 'Client inconnu';
+
+            if (order.customer_type === 'organization' && order.customer_id) {
+              const { data: org } = await supabase
+                .from('organisations')
+                .select('name')
+                .eq('id', order.customer_id)
+                .single();
+              customerName = org?.name || 'Organisation inconnue';
+            } else if (order.customer_type === 'individual' && order.customer_id) {
+              const { data: individual } = await supabase
+                .from('individual_customers')
+                .select('first_name, last_name')
+                .eq('id', order.customer_id)
+                .single();
+              if (individual) {
+                customerName = `${individual.first_name} ${individual.last_name}`;
+              }
+            }
+
+            return {
+              id: order.order_number,
+              customer: customerName,
+              amount: order.total_ht || 0, // Total déjà en euros
+              status: order.status
+            };
+          })
+      );
 
       return {
         pending,
@@ -110,8 +133,8 @@ export function useOrderMetrics() {
         recentOrders: formattedRecentOrders,
       };
 
-    } catch (error) {
-      console.error('Erreur lors de la récupération des métriques de commandes:', error);
+    } catch (error: any) {
+      console.error('Erreur lors de la récupération des métriques de commandes:', error?.message || 'Erreur inconnue');
 
       // Retourner des valeurs vides en cas d'erreur
       return {

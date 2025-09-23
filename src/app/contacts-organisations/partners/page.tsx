@@ -241,12 +241,6 @@ export default function PartnersPage() {
                     </div>
                   )}
 
-                  {partner.partner_type && (
-                    <div className="flex items-center gap-2 text-sm text-gray-600">
-                      <Award className="h-4 w-4" />
-                      <span>{partner.partner_type}</span>
-                    </div>
-                  )}
                 </div>
 
                 {/* Actions */}

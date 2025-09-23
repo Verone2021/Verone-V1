@@ -63,7 +63,7 @@ export function ProductPhotosModal({
     fetchImages
   } = useProductImages({
     productId,
-    productType
+    autoFetch: true
   })
 
   // États locaux pour UI
@@ -71,31 +71,50 @@ export function ProductPhotosModal({
   const [deletingImageId, setDeletingImageId] = useState<string | null>(null)
   const [settingPrimaryId, setSettingPrimaryId] = useState<string | null>(null)
 
+  // Référence pour l'input file réutilisable
+  const fileInputRef = React.useRef<HTMLInputElement>(null)
+
   /**
    * 📁 Gestion upload fichiers multiples
    */
   const handleFilesDrop = async (files: FileList) => {
-    if (!files || files.length === 0) return
+    console.log('🚀 handleFilesDrop started with', files?.length || 0, 'files')
+
+    if (!files || files.length === 0) {
+      console.warn('⚠️ No files provided to handleFilesDrop')
+      return
+    }
 
     const fileArray = Array.from(files)
     const remainingSlots = maxImages - images.length
+    console.log(`📊 Current images: ${images.length}, Max: ${maxImages}, Remaining slots: ${remainingSlots}`)
 
     if (fileArray.length > remainingSlots) {
-      alert(`⚠️ Vous ne pouvez ajouter que ${remainingSlots} image(s) supplémentaire(s) (limite: ${maxImages})`)
+      const message = `⚠️ Vous ne pouvez ajouter que ${remainingSlots} image(s) supplémentaire(s) (limite: ${maxImages})`
+      console.warn(message)
+      alert(message)
       return
     }
 
     try {
-      for (const file of fileArray) {
+      console.log('📤 Starting upload process...')
+      for (let i = 0; i < fileArray.length; i++) {
+        const file = fileArray[i]
+        console.log(`📷 Uploading file ${i + 1}/${fileArray.length}:`, file.name, file.size, 'bytes')
+
         await uploadImage(file, {
           imageType: 'gallery',
           altText: `${productName} - ${file.name}`,
           isPrimary: !primaryImage && images.length === 0 // Première image = principale
         })
+
+        console.log(`✅ File ${i + 1} uploaded successfully:`, file.name)
       }
-      console.log('✅ Upload multiple terminé avec succès')
+      console.log('🎉 Upload multiple terminé avec succès')
     } catch (error) {
       console.error('❌ Erreur upload multiple:', error)
+      // Afficher l'erreur à l'utilisateur
+      alert(`Erreur lors de l'upload: ${error instanceof Error ? error.message : 'Erreur inconnue'}`)
     }
   }
 
@@ -168,15 +187,42 @@ export function ProductPhotosModal({
   }
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    console.log('🎯 handleInputChange triggered')
     const files = e.target.files
+    console.log('📁 Files selected:', files?.length || 0)
     if (files) {
       handleFilesDrop(files)
+    } else {
+      console.warn('⚠️ No files selected')
+    }
+    // Reset input après utilisation pour permettre la re-sélection du même fichier
+    if (e.target) {
+      e.target.value = ''
+    }
+  }
+
+  const openFileDialog = () => {
+    console.log('🖱️ Opening file dialog')
+    if (fileInputRef.current) {
+      fileInputRef.current.click()
+    } else {
+      console.error('❌ File input ref not available')
     }
   }
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="max-w-5xl max-h-[90vh] overflow-hidden flex flex-col">
+        {/* Input file caché réutilisable */}
+        <input
+          ref={fileInputRef}
+          type="file"
+          multiple
+          accept="image/*"
+          onChange={handleInputChange}
+          style={{ display: 'none' }}
+        />
+
         <DialogHeader className="pb-4 border-b">
           <DialogTitle className="flex items-center gap-3">
             <Camera className="h-6 w-6 text-black" />
@@ -229,14 +275,7 @@ export function ProductPhotosModal({
               onDragLeave={handleDragOut}
               onDragOver={handleDrag}
               onDrop={handleDrop}
-              onClick={() => {
-                const input = document.createElement('input')
-                input.type = 'file'
-                input.multiple = true
-                input.accept = 'image/*'
-                input.onchange = handleInputChange
-                input.click()
-              }}
+              onClick={openFileDialog}
             >
               <div className="flex flex-col items-center space-y-3">
                 <div className="w-16 h-16 rounded-full bg-black flex items-center justify-center">
@@ -329,9 +368,9 @@ export function ProductPhotosModal({
                       </div>
                     )}
 
-                    {/* Overlay avec contrôles */}
-                    <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-all duration-200 flex items-end justify-center p-3">
-                      <div className="flex space-x-2">
+                    {/* Overlay avec contrôles - Z-index élevé pour assurer les clicks */}
+                    <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-all duration-200 flex items-end justify-center p-3 z-20">
+                      <div className="flex space-x-2 z-30">
                         {/* Bouton définir comme principale */}
                         {!image.is_primary && (
                           <Button
@@ -339,7 +378,7 @@ export function ProductPhotosModal({
                             variant="secondary"
                             onClick={() => handleSetPrimary(image.id)}
                             disabled={settingPrimaryId === image.id}
-                            className="h-9 px-3 bg-white/90 hover:bg-white text-black border-0"
+                            className="h-9 px-3 bg-white/90 hover:bg-white text-black border-0 relative z-40"
                             title="Définir comme image principale"
                           >
                             {settingPrimaryId === image.id ? (
@@ -359,7 +398,7 @@ export function ProductPhotosModal({
                           variant="destructive"
                           onClick={() => handleDeleteImage(image.id, image.is_primary)}
                           disabled={deletingImageId === image.id}
-                          className="h-9 px-3 bg-red-500/90 hover:bg-red-600 text-white border-0"
+                          className="h-9 px-3 bg-red-500/90 hover:bg-red-600 text-white border-0 relative z-40"
                           title="Supprimer la photo"
                         >
                           {deletingImageId === image.id ? (
@@ -371,8 +410,8 @@ export function ProductPhotosModal({
                       </div>
                     </div>
 
-                    {/* Informations image en bas */}
-                    <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/80 to-transparent text-white p-3 pt-6">
+                    {/* Informations image en bas - Z-index plus bas pour ne pas interférer */}
+                    <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/80 to-transparent text-white p-3 pt-6 z-10 pointer-events-none">
                       <p className="text-xs font-medium truncate">
                         Photo {index + 1}
                       </p>
@@ -399,14 +438,7 @@ export function ProductPhotosModal({
                 Commencez par ajouter vos premières photos au produit
               </p>
               <Button
-                onClick={() => {
-                  const input = document.createElement('input')
-                  input.type = 'file'
-                  input.multiple = true
-                  input.accept = 'image/*'
-                  input.onchange = handleInputChange
-                  input.click()
-                }}
+                onClick={openFileDialog}
                 className="bg-black hover:bg-gray-800 text-white"
               >
                 <Camera className="h-4 w-4 mr-2" />

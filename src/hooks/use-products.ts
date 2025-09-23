@@ -3,15 +3,16 @@
 import { useState, useEffect, useCallback } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import { useToast } from '@/hooks/use-toast'
+import { calculateMinimumSellingPrice, formatPrice } from '@/lib/pricing-utils'
 
 export interface Product {
   id: string
   sku: string
   name: string
   slug: string
-  price_ht: number
-  cost_price?: number
-  tax_rate: number
+  price_ht: number // Prix d'achat fournisseur (legacy - sera remplacé par supplier_cost_price)
+  supplier_cost_price?: number // NOUVEAU: Prix d'achat fournisseur clarifié
+  cost_price?: number // Autre coût si défini séparément
   status: 'in_stock' | 'out_of_stock' | 'preorder' | 'coming_soon' | 'discontinued'
   condition: 'new' | 'refurbished' | 'used'
   variant_attributes?: any
@@ -25,17 +26,28 @@ export interface Product {
   min_stock_level?: number
   supplier_page_url?: string
   supplier_id?: string
-  margin_percentage?: number
-  estimated_selling_price?: number
+  margin_percentage?: number // Marge minimum en pourcentage
+  // Champs descriptions ajoutés lors de la migration
+  description?: string
+  technical_description?: string
+  selling_points?: string[]
   created_at: string
   updated_at: string
 
-  // Relations jointes
-  organisations?: {
+  // NOUVEAUX CHAMPS - Système sourcing et différenciation
+  product_type?: 'standard' | 'custom'
+  assigned_client_id?: string
+  creation_mode?: 'sourcing' | 'complete'
+
+  // Relation fournisseur
+  supplier?: {
     id: string
     name: string
     type: string
   }
+
+  // CALCULÉ: Prix minimum de vente (prix d'achat + marge)
+  minimumSellingPrice?: number
 }
 
 export interface ProductFilters {
@@ -50,25 +62,60 @@ export interface ProductFilters {
 }
 
 export interface CreateProductData {
-  sku: string
-  name: string
-  price_ht: number
-  cost_price?: number
-  tax_rate?: number
-  status?: string
+  // Champs obligatoires selon business rules (CONDITIONNELS selon mode)
+  name: string // Obligatoire TOUJOURS
+  supplier_cost_price?: number // NOUVEAU: Prix d'achat fournisseur (obligatoire en mode COMPLETE)
+  description?: string // Obligatoire en mode COMPLETE uniquement
+  subcategory_id?: string // Obligatoire en mode COMPLETE uniquement
+
+  // NOUVEAUX CHAMPS - Système sourcing et différenciation
+  product_type?: 'standard' | 'custom' // Type de produit
+  assigned_client_id?: string // Client assigné (obligatoire si product_type = 'custom')
+  creation_mode?: 'sourcing' | 'complete' // Mode de création
+  supplier_page_url?: string // URL fournisseur (obligatoire en mode SOURCING)
+
+  // Champs automatiques (générés par la DB)
+  // sku: généré automatiquement
+  // status: calculé automatiquement depuis le stock
+
+  // Champs business rules
+  availability_type?: string // normal, preorder, coming_soon, discontinued
+  technical_description?: string // Description technique interne
+  selling_points?: string[] // Points de vente
+
+  // Champs de marge et pricing - NOUVELLE LOGIQUE
+  margin_percentage?: number // Marge minimum en pourcentage (ex: 50 = 50%)
+  // minimumSellingPrice sera calculé automatiquement: supplier_cost_price × (1 + margin_percentage/100)
+
+  // Legacy (à supprimer progressivement)
+  cost_price?: number // Autre coût si défini séparément
+
+  // Champs optionnels existants
+  slug?: string
   condition?: string
   variant_attributes?: any
   dimensions?: any
   weight?: number
-  // Images gérées séparément par product_images table
+  brand?: string
+
+  // URLs et références
   video_url?: string
   supplier_reference?: string
   gtin?: string
-  stock_quantity?: number
-  min_stock_level?: number
-  supplier_page_url?: string
   supplier_id?: string
-  margin_percentage?: number
+}
+
+// NOUVELLE interface spécialisée pour le sourcing rapide
+export interface SourcingFormData {
+  // 3 champs OBLIGATOIRES pour sourcing rapide
+  name: string
+  supplier_page_url: string
+  // image: géré séparément via upload
+
+  // Champs automatiques injectés
+  creation_mode: 'sourcing'
+  sourcing_type: 'interne' | 'client' // Calculé automatiquement selon assigned_client_id
+  assigned_client_id?: string // Facultatif - si rempli → sourcing_type = 'client'
 }
 
 export function useProducts(filters?: ProductFilters) {
@@ -92,8 +139,8 @@ export function useProducts(filters?: ProductFilters) {
           name,
           slug,
           price_ht,
+          supplier_cost_price,
           cost_price,
-          tax_rate,
           status,
           condition,
           variant_attributes,
@@ -107,10 +154,17 @@ export function useProducts(filters?: ProductFilters) {
           supplier_page_url,
           supplier_id,
           margin_percentage,
-          estimated_selling_price,
+          target_margin_percentage,
+          availability_type,
+          description,
+          technical_description,
+          selling_points,
+          product_type,
+          assigned_client_id,
+          creation_mode,
           created_at,
           updated_at,
-          organisations (
+          supplier:organisations!supplier_id (
             id,
             name,
             type
@@ -119,7 +173,7 @@ export function useProducts(filters?: ProductFilters) {
         .order('created_at', { ascending: false })
 
       // Appliquer les filtres
-      if (filters?.search) {
+      if (filters?.search && filters.search.trim()) {
         query = query.or(`name.ilike.%${filters.search}%,sku.ilike.%${filters.search}%`)
       }
 
@@ -150,7 +204,23 @@ export function useProducts(filters?: ProductFilters) {
         return
       }
 
-      setProducts(data || [])
+      // Enrichir les produits avec le prix minimum de vente calculé
+      const enrichedProducts = (data || []).map(product => {
+        // Utiliser supplier_cost_price en priorité, sinon price_ht en fallback
+        const supplierCost = product.supplier_cost_price || product.price_ht
+        const margin = product.margin_percentage || 0
+
+        const minimumSellingPrice = supplierCost && margin
+          ? calculateMinimumSellingPrice(supplierCost, margin)
+          : 0
+
+        return {
+          ...product,
+          minimumSellingPrice
+        }
+      })
+
+      setProducts(enrichedProducts)
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Erreur inconnue')
     } finally {
@@ -167,13 +237,26 @@ export function useProducts(filters?: ProductFilters) {
       const { data: newProduct, error } = await supabase
         .from('products')
         .insert([{
-          sku: data.sku,
+          // SKU sera généré automatiquement par la fonction DB
           name: data.name,
-          slug: data.name.toLowerCase().replace(/[^a-z0-9]/g, '-').replace(/-+/g, '-'),
-          price_ht: data.price_ht,
-          cost_price: data.cost_price,
-          tax_rate: data.tax_rate || 0.2,
-          status: data.status || 'in_stock',
+          slug: data.slug || data.name.toLowerCase().replace(/[^a-z0-9]/g, '-').replace(/-+/g, '-'),
+          // NOUVELLE LOGIQUE PRIX
+          supplier_cost_price: data.supplier_cost_price, // Prix d'achat fournisseur
+          price_ht: data.supplier_cost_price || 0, // Legacy - prix d'achat (sera supprimé plus tard)
+          margin_percentage: data.margin_percentage || 0, // Marge minimum
+          // Nouveaux champs business rules
+          availability_type: data.availability_type || 'normal',
+          cost_price: data.cost_price, // Autre coût si défini séparément
+          description: data.description, // Obligatoire en mode complete
+          subcategory_id: data.subcategory_id, // Obligatoire en mode complete
+          technical_description: data.technical_description,
+          selling_points: data.selling_points || [],
+          // NOUVEAUX CHAMPS - Système sourcing et différenciation
+          product_type: data.product_type || 'standard',
+          assigned_client_id: data.assigned_client_id,
+          creation_mode: data.creation_mode || 'complete',
+          supplier_page_url: data.supplier_page_url,
+          // Champs optionnels existants
           condition: data.condition || 'new',
           variant_attributes: data.variant_attributes,
           dimensions: data.dimensions,
@@ -181,11 +264,8 @@ export function useProducts(filters?: ProductFilters) {
           video_url: data.video_url,
           supplier_reference: data.supplier_reference,
           gtin: data.gtin,
-          stock_quantity: data.stock_quantity || 0,
-          min_stock_level: data.min_stock_level || 5,
-          supplier_page_url: data.supplier_page_url,
           supplier_id: data.supplier_id,
-          margin_percentage: data.margin_percentage
+          brand: data.brand
         }])
         .select()
         .single()
@@ -321,8 +401,8 @@ export function useProduct(id: string) {
             name,
             slug,
             price_ht,
+            supplier_cost_price,
             cost_price,
-            tax_rate,
             status,
             condition,
             variant_attributes,
@@ -336,10 +416,17 @@ export function useProduct(id: string) {
             supplier_page_url,
             supplier_id,
             margin_percentage,
-            estimated_selling_price,
+            target_margin_percentage,
+            availability_type,
+            description,
+            technical_description,
+            selling_points,
+            product_type,
+            assigned_client_id,
+            creation_mode,
             created_at,
             updated_at,
-            organisations (
+            supplier:organisations!supplier_id (
               id,
               name,
               type
@@ -353,7 +440,20 @@ export function useProduct(id: string) {
           return
         }
 
-        setProduct(data)
+        // Enrichir le produit avec le prix minimum de vente calculé
+        if (data) {
+          const supplierCost = data.supplier_cost_price || data.price_ht
+          const margin = data.margin_percentage || 0
+
+          const minimumSellingPrice = supplierCost && margin
+            ? calculateMinimumSellingPrice(supplierCost, margin)
+            : 0
+
+          setProduct({
+            ...data,
+            minimumSellingPrice
+          })
+        }
       } catch (err) {
         setError(err instanceof Error ? err.message : 'Erreur inconnue')
       } finally {

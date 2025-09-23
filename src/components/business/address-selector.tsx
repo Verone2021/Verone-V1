@@ -98,7 +98,7 @@ export function AddressSelector({ form, className }: AddressSelectorProps) {
               />
               {form.formState.errors.billing_address_line1 && (
                 <p className="text-sm text-red-600 mt-1">
-                  {form.formState.errors.billing_address_line1.message}
+                  {String(form.formState.errors.billing_address_line1?.message || 'Champ requis')}
                 </p>
               )}
             </div>
@@ -121,7 +121,7 @@ export function AddressSelector({ form, className }: AddressSelectorProps) {
               />
               {form.formState.errors.billing_postal_code && (
                 <p className="text-sm text-red-600 mt-1">
-                  {form.formState.errors.billing_postal_code.message}
+                  {String(form.formState.errors.billing_postal_code?.message || 'Champ requis')}
                 </p>
               )}
             </div>
@@ -135,7 +135,7 @@ export function AddressSelector({ form, className }: AddressSelectorProps) {
               />
               {form.formState.errors.billing_city && (
                 <p className="text-sm text-red-600 mt-1">
-                  {form.formState.errors.billing_city.message}
+                  {String(form.formState.errors.billing_city?.message || 'Champ requis')}
                 </p>
               )}
             </div>
@@ -207,7 +207,7 @@ export function AddressSelector({ form, className }: AddressSelectorProps) {
                 />
                 {form.formState.errors.shipping_address_line1 && (
                   <p className="text-sm text-red-600 mt-1">
-                    {form.formState.errors.shipping_address_line1.message}
+                    {String(form.formState.errors.shipping_address_line1?.message || 'Champ requis')}
                   </p>
                 )}
               </div>
@@ -230,7 +230,7 @@ export function AddressSelector({ form, className }: AddressSelectorProps) {
                 />
                 {form.formState.errors.shipping_postal_code && (
                   <p className="text-sm text-red-600 mt-1">
-                    {form.formState.errors.shipping_postal_code.message}
+                    {String(form.formState.errors.shipping_postal_code?.message || 'Champ requis')}
                   </p>
                 )}
               </div>
@@ -244,7 +244,7 @@ export function AddressSelector({ form, className }: AddressSelectorProps) {
                 />
                 {form.formState.errors.shipping_city && (
                   <p className="text-sm text-red-600 mt-1">
-                    {form.formState.errors.shipping_city.message}
+                    {String(form.formState.errors.shipping_city?.message || 'Champ requis')}
                   </p>
                 )}
               </div>

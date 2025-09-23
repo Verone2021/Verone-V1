@@ -15,7 +15,7 @@ import { createServerClient, createAdminClient } from '@/lib/supabase/server'
 export interface CreateUserData {
   email: string
   password: string
-  role: 'owner' | 'admin' | 'catalog_manager'
+  role: 'owner' | 'admin' | 'catalog_manager' | 'sales' | 'partner_manager'
   firstName: string
   lastName: string
   phone: string

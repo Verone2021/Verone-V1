@@ -15,10 +15,13 @@ import { useOrganisations, Organisation } from '@/hooks/use-organisations'
 import { useProducts } from '@/hooks/use-products'
 import { usePurchaseOrders, CreatePurchaseOrderData, CreatePurchaseOrderItemData } from '@/hooks/use-purchase-orders'
 import { formatCurrency } from '@/lib/utils'
-import { AddressInput } from './address-input'
 
 interface PurchaseOrderFormModalProps {
+  isOpen?: boolean
+  onClose?: () => void
   onSuccess?: () => void
+  prefilledProduct?: any
+  prefilledSupplier?: string
 }
 
 interface OrderItem extends CreatePurchaseOrderItemData {
@@ -31,16 +34,22 @@ interface OrderItem extends CreatePurchaseOrderItemData {
   }
 }
 
-export function PurchaseOrderFormModal({ onSuccess }: PurchaseOrderFormModalProps) {
-  const [open, setOpen] = useState(false)
+export function PurchaseOrderFormModal({
+  isOpen,
+  onClose,
+  onSuccess,
+  prefilledProduct,
+  prefilledSupplier
+}: PurchaseOrderFormModalProps) {
+  const [open, setOpen] = useState(isOpen || false)
   const [loading, setLoading] = useState(false)
 
   // Form data
   const [selectedSupplierId, setSelectedSupplierId] = useState('')
   const [selectedSupplier, setSelectedSupplier] = useState<Organisation | null>(null)
   const [expectedDeliveryDate, setExpectedDeliveryDate] = useState('')
-  const [deliveryAddress, setDeliveryAddress] = useState('')
-  const [paymentTerms, setPaymentTerms] = useState('')
+  // Adresse d'entrepôt par défaut
+  const [deliveryAddress, setDeliveryAddress] = useState('Groupe DSA - (Verone)\n4, rue du Pérou\n91300 Massy\nFrance')
   const [notes, setNotes] = useState('')
 
   // Items management
@@ -50,8 +59,59 @@ export function PurchaseOrderFormModal({ onSuccess }: PurchaseOrderFormModalProp
 
   // Hooks
   const { organisations: suppliers, getOrganisationById } = useOrganisations({ type: 'supplier', is_active: true })
-  const { products } = useProducts({ search: productSearchTerm })
+  // Filtrer les produits par fournisseur sélectionné
+  const { products } = useProducts({
+    search: productSearchTerm,
+    supplier_id: selectedSupplierId || undefined
+  })
   const { createOrder } = usePurchaseOrders()
+
+  // Synchroniser avec les props externes
+  useEffect(() => {
+    if (typeof isOpen !== 'undefined') {
+      setOpen(isOpen)
+    }
+  }, [isOpen])
+
+  // Pré-remplir avec produit fourni
+  useEffect(() => {
+    if (prefilledProduct && open) {
+      // Vérifier si le produit n'est pas déjà dans les items
+      const existingItem = items.find(item => item.product_id === prefilledProduct.id)
+      if (!existingItem) {
+        const newItem: OrderItem = {
+          id: Math.random().toString(36).substr(2, 9),
+          product_id: prefilledProduct.id,
+          quantity: 1, // Quantité échantillon par défaut
+          unit_price_ht: prefilledProduct.cost_price || 0,
+          discount_percentage: 0,
+          notes: 'Échantillon pour validation',
+          product: {
+            id: prefilledProduct.id,
+            name: prefilledProduct.name || 'Produit sans nom',
+            sku: prefilledProduct.sku || '',
+            primary_image_url: prefilledProduct.primary_image_url
+          }
+        }
+        setItems([newItem])
+      }
+
+      // Pré-sélectionner le fournisseur si disponible
+      if (prefilledProduct.supplier_id && prefilledProduct.supplier_id !== selectedSupplierId) {
+        handleSupplierChange(prefilledProduct.supplier_id)
+      } else if (prefilledSupplier && prefilledSupplier !== selectedSupplierId) {
+        handleSupplierChange(prefilledSupplier)
+      }
+
+      // Ajouter note indiquant que c'est pour échantillon
+      if (prefilledProduct.requires_sample) {
+        setNotes(prev => {
+          const sampleNote = `Commande d'échantillon pour le produit "${prefilledProduct.name || 'sans nom'}"`
+          return prev ? `${prev}\n\n${sampleNote}` : sampleNote
+        })
+      }
+    }
+  }, [prefilledProduct, open, prefilledSupplier])
 
   // Calculs totaux
   const totalHT = items.reduce((sum, item) => {
@@ -77,11 +137,17 @@ export function PurchaseOrderFormModal({ onSuccess }: PurchaseOrderFormModalProp
     setSelectedSupplierId('')
     setSelectedSupplier(null)
     setExpectedDeliveryDate('')
-    setDeliveryAddress('')
-    setPaymentTerms('')
+    setDeliveryAddress('Groupe DSA - (Verone)\n4, rue du Pérou\n91300 Massy\nFrance')
     setNotes('')
     setItems([])
     setProductSearchTerm('')
+  }
+
+  const handleClose = () => {
+    setOpen(false)
+    if (onClose) {
+      onClose()
+    }
   }
 
   const addProduct = (product: any) => {
@@ -134,7 +200,8 @@ export function PurchaseOrderFormModal({ onSuccess }: PurchaseOrderFormModalProp
       const orderData: CreatePurchaseOrderData = {
         supplier_id: selectedSupplierId,
         expected_delivery_date: expectedDeliveryDate || undefined,
-        payment_terms: paymentTerms || undefined,
+        payment_terms: selectedSupplier?.payment_terms || undefined,
+        delivery_address: deliveryAddress || undefined,
         notes: notes || undefined,
         items: items.map(item => ({
           product_id: item.product_id,
@@ -149,7 +216,7 @@ export function PurchaseOrderFormModal({ onSuccess }: PurchaseOrderFormModalProp
       await createOrder(orderData)
 
       resetForm()
-      setOpen(false)
+      handleClose()
       onSuccess?.()
     } catch (error) {
       console.error('Erreur lors de la création:', error)
@@ -158,14 +225,26 @@ export function PurchaseOrderFormModal({ onSuccess }: PurchaseOrderFormModalProp
     }
   }
 
+  const handleOpenChange = (newOpen: boolean) => {
+    setOpen(newOpen)
+    if (!newOpen && onClose) {
+      onClose()
+    }
+  }
+
   return (
-    <Dialog open={open} onOpenChange={setOpen}>
-      <DialogTrigger asChild>
-        <Button className="flex items-center gap-2">
-          <Plus className="h-4 w-4" />
-          Nouvelle commande
-        </Button>
-      </DialogTrigger>
+    <Dialog
+      open={open}
+      onOpenChange={typeof isOpen !== 'undefined' ? handleOpenChange : setOpen}
+    >
+      {typeof isOpen === 'undefined' && (
+        <DialogTrigger asChild>
+          <Button className="flex items-center gap-2">
+            <Plus className="h-4 w-4" />
+            Nouvelle commande
+          </Button>
+        </DialogTrigger>
+      )}
       <DialogContent className="max-w-6xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>Nouvelle Commande Fournisseur</DialogTitle>
@@ -207,24 +286,22 @@ export function PurchaseOrderFormModal({ onSuccess }: PurchaseOrderFormModalProp
                 />
               </div>
 
-              <AddressInput
-                label="Adresse de livraison"
-                value={deliveryAddress}
-                onChange={setDeliveryAddress}
-                selectedOrganisation={selectedSupplier}
-                placeholder="Adresse de réception de la commande..."
-                className="col-span-2"
-              />
-
-              <div className="space-y-2">
-                <Label htmlFor="paymentTerms">Conditions de paiement</Label>
-                <Input
-                  id="paymentTerms"
-                  placeholder="Ex: 30 jours net"
-                  value={paymentTerms}
-                  onChange={(e) => setPaymentTerms(e.target.value)}
+              <div className="space-y-2 col-span-2">
+                <Label htmlFor="deliveryAddress">Adresse de livraison (Entrepôt)</Label>
+                <Textarea
+                  id="deliveryAddress"
+                  value={deliveryAddress}
+                  onChange={(e) => setDeliveryAddress(e.target.value)}
+                  className="min-h-[100px] resize-none"
                 />
               </div>
+
+              {selectedSupplier && selectedSupplier.payment_terms && (
+                <div className="space-y-2 col-span-2 p-3 bg-gray-50 border rounded-lg">
+                  <Label className="text-sm font-medium">Conditions de paiement du fournisseur</Label>
+                  <p className="text-sm text-gray-700">{selectedSupplier.payment_terms}</p>
+                </div>
+              )}
 
               <div className="space-y-2">
                 <Label htmlFor="notes">Notes</Label>
@@ -376,7 +453,7 @@ export function PurchaseOrderFormModal({ onSuccess }: PurchaseOrderFormModalProp
 
           {/* Actions */}
           <div className="flex justify-end gap-4">
-            <Button type="button" variant="outline" onClick={() => setOpen(false)}>
+            <Button type="button" variant="outline" onClick={handleClose}>
               Annuler
             </Button>
             <Button

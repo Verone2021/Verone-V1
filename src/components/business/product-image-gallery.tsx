@@ -1,12 +1,13 @@
 "use client"
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import Image from 'next/image'
 import { Edit, Upload, Trash2, RotateCw, Eye } from 'lucide-react'
 import { Button } from '../ui/button'
 import { Badge } from '../ui/badge'
 import { cn } from '../../lib/utils'
 import { useProductImages } from '../../hooks/use-product-images'
+import { ProductImageViewerModal } from './product-image-viewer-modal'
 
 interface ProductImageGalleryProps {
   productId: string
@@ -35,6 +36,7 @@ export function ProductImageGallery({
 }: ProductImageGalleryProps) {
   const [selectedImageIndex, setSelectedImageIndex] = useState(0)
   const [showUploadDialog, setShowUploadDialog] = useState(false)
+  const [showImageViewer, setShowImageViewer] = useState(false)
 
   // ✨ Hook optimisé - interface simplifiée
   const {
@@ -53,6 +55,16 @@ export function ProductImageGallery({
     productId,
     autoFetch: true
   })
+
+  // ✨ Synchroniser l'index sélectionné avec l'image principale
+  useEffect(() => {
+    if (hasImages && images.length > 0) {
+      const primaryIndex = images.findIndex(img => img.is_primary)
+      if (primaryIndex !== -1) {
+        setSelectedImageIndex(primaryIndex)
+      }
+    }
+  }, [images, hasImages])
 
   // ✨ Image principale optimisée - URL automatique depuis trigger
   const displayImage = hasImages
@@ -119,8 +131,8 @@ export function ProductImageGallery({
 
         {/* Badge statut overlay */}
         <div className="absolute top-2 right-2">
-          <Badge className={cn("text-xs", statusConfig[productStatus].className)}>
-            {statusConfig[productStatus].label}
+          <Badge className={cn("text-xs", statusConfig[productStatus]?.className || "bg-gray-600 text-white")}>
+            {statusConfig[productStatus]?.label || "⚪ Statut inconnu"}
           </Badge>
         </div>
 
@@ -137,7 +149,12 @@ export function ProductImageGallery({
         {hasImages && (
           <div className="absolute inset-0 bg-black bg-opacity-0 hover:bg-opacity-30 transition-all duration-300 flex items-center justify-center opacity-0 hover:opacity-100">
             <div className="flex space-x-2">
-              <Button size="sm" variant="secondary" className="text-xs">
+              <Button
+                size="sm"
+                variant="secondary"
+                className="text-xs"
+                onClick={() => setShowImageViewer(true)}
+              >
                 <Eye className="h-3 w-3 mr-1" />
                 Voir
               </Button>
@@ -206,34 +223,16 @@ export function ProductImageGallery({
 
       {/* Actions rapides images */}
       <div className="space-y-2">
-        <Button
-          variant="outline"
-          size="sm"
-          className="w-full text-xs"
-          onClick={() => setShowUploadDialog(true)}
-          disabled={uploading}
-        >
-          <Upload className="h-3 w-3 mr-1" />
-          {uploading ? 'Upload en cours...' : 'Ajouter images'}
-        </Button>
-
         {hasImages && (
-          <>
-            <Button variant="outline" size="sm" className="w-full text-xs">
-              <Edit className="h-3 w-3 mr-1" />
-              Gérer images ({images.length})
-            </Button>
-
-            <Button
-              variant="outline"
-              size="sm"
-              className="w-full text-xs"
-              onClick={fetchImages}
-            >
-              <RotateCw className="h-3 w-3 mr-1" />
-              Actualiser
-            </Button>
-          </>
+          <Button
+            variant="outline"
+            size="sm"
+            className="w-full text-xs"
+            onClick={fetchImages}
+          >
+            <RotateCw className="h-3 w-3 mr-1" />
+            Actualiser
+          </Button>
         )}
       </div>
 
@@ -258,6 +257,15 @@ export function ProductImageGallery({
           {galleryImages.length} galerie
         </div>
       )}
+
+      {/* Modal de visualisation des images */}
+      <ProductImageViewerModal
+        isOpen={showImageViewer}
+        onClose={() => setShowImageViewer(false)}
+        images={images}
+        initialImageIndex={selectedImageIndex}
+        productName={productName}
+      />
     </div>
   )
 }

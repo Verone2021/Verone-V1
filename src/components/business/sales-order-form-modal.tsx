@@ -1,30 +1,32 @@
 'use client'
 
-import { useState, useEffect } from 'react'
-import { Plus, Trash2, Search, AlertTriangle } from 'lucide-react'
+import { useState } from 'react'
+import { Plus, X, Search, AlertTriangle } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Textarea } from '@/components/ui/textarea'
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog'
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
-import { Badge } from '@/components/ui/badge'
 import { Alert, AlertDescription } from '@/components/ui/alert'
-import { useOrganisations, Organisation } from '@/hooks/use-organisations'
+import { Badge } from '@/components/ui/badge'
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
+import { CustomerSelector, UnifiedCustomer } from './customer-selector'
 import { useProducts } from '@/hooks/use-products'
-import { useSalesOrders, CreateSalesOrderData, CreateSalesOrderItemData } from '@/hooks/use-sales-orders'
+import { useSalesOrders, CreateSalesOrderData } from '@/hooks/use-sales-orders'
 import { useStockMovements } from '@/hooks/use-stock-movements'
 import { formatCurrency } from '@/lib/utils'
 import { AddressInput } from './address-input'
 
-interface SalesOrderFormModalProps {
-  onSuccess?: () => void
-}
-
-interface OrderItem extends CreateSalesOrderItemData {
+interface OrderItem {
   id: string
+  product_id: string
+  quantity: number
+  unit_price_ht: number
+  discount_percentage: number
+  expected_delivery_date?: string
+  notes?: string
   product?: {
     id: string
     name: string
@@ -35,17 +37,19 @@ interface OrderItem extends CreateSalesOrderItemData {
   availableStock?: number
 }
 
+interface SalesOrderFormModalProps {
+  onSuccess?: () => void
+}
+
 export function SalesOrderFormModal({ onSuccess }: SalesOrderFormModalProps) {
   const [open, setOpen] = useState(false)
   const [loading, setLoading] = useState(false)
 
   // Form data
-  const [selectedCustomerId, setSelectedCustomerId] = useState('')
-  const [selectedCustomer, setSelectedCustomer] = useState<Organisation | null>(null)
+  const [selectedCustomer, setSelectedCustomer] = useState<UnifiedCustomer | null>(null)
   const [expectedDeliveryDate, setExpectedDeliveryDate] = useState('')
   const [shippingAddress, setShippingAddress] = useState('')
   const [billingAddress, setBillingAddress] = useState('')
-  const [paymentTerms, setPaymentTerms] = useState('')
   const [notes, setNotes] = useState('')
 
   // Items management
@@ -55,9 +59,8 @@ export function SalesOrderFormModal({ onSuccess }: SalesOrderFormModalProps) {
   const [stockWarnings, setStockWarnings] = useState<string[]>([])
 
   // Hooks
-  const { organisations: customers, getOrganisationById } = useOrganisations({ type: 'customer', is_active: true })
-  const { products } = useProducts({ search: productSearchTerm, in_stock_only: true })
-  const { createOrder, checkStockAvailability } = useSalesOrders()
+  const { products } = useProducts({ search: productSearchTerm })
+  const { createOrder } = useSalesOrders()
   const { getAvailableStock } = useStockMovements()
 
   // Calculs totaux
@@ -69,24 +72,17 @@ export function SalesOrderFormModal({ onSuccess }: SalesOrderFormModalProps) {
   const totalTTC = totalHT * 1.2 // TVA 20%
 
   // Gérer le changement de client
-  const handleCustomerChange = async (customerId: string) => {
-    setSelectedCustomerId(customerId)
-
-    if (customerId) {
-      const customer = await getOrganisationById(customerId)
-      setSelectedCustomer(customer)
-    } else {
-      setSelectedCustomer(null)
-    }
+  const handleCustomerChange = (customer: UnifiedCustomer | null) => {
+    setSelectedCustomer(customer)
+    // Note: Les adresses ne sont plus pré-remplies automatiquement
+    // L'utilisateur peut utiliser les boutons "Copier" des AddressInput
   }
 
   const resetForm = () => {
-    setSelectedCustomerId('')
     setSelectedCustomer(null)
     setExpectedDeliveryDate('')
     setShippingAddress('')
     setBillingAddress('')
-    setPaymentTerms('')
     setNotes('')
     setItems([])
     setProductSearchTerm('')
@@ -167,7 +163,7 @@ export function SalesOrderFormModal({ onSuccess }: SalesOrderFormModalProps) {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-    if (!selectedCustomerId || items.length === 0) return
+    if (!selectedCustomer || items.length === 0) return
 
     // Vérification finale du stock
     if (stockWarnings.length > 0) {
@@ -178,12 +174,23 @@ export function SalesOrderFormModal({ onSuccess }: SalesOrderFormModalProps) {
 
     setLoading(true)
     try {
+      // Construire les conditions de paiement automatiquement depuis le client
+      let autoPaymentTerms = ''
+      if (selectedCustomer.prepayment_required) {
+        autoPaymentTerms = selectedCustomer.payment_terms
+          ? `Prépaiement requis + ${selectedCustomer.payment_terms} jours`
+          : 'Prépaiement requis'
+      } else if (selectedCustomer.payment_terms) {
+        autoPaymentTerms = `${selectedCustomer.payment_terms} jours`
+      }
+
       const orderData: CreateSalesOrderData = {
-        customer_id: selectedCustomerId,
+        customer_id: selectedCustomer.id,
+        customer_type: selectedCustomer.type === 'professional' ? 'organization' : 'individual',
         expected_delivery_date: expectedDeliveryDate || undefined,
         shipping_address: shippingAddress ? JSON.parse(`{"address": "${shippingAddress}"}`) : undefined,
         billing_address: billingAddress ? JSON.parse(`{"address": "${billingAddress}"}`) : undefined,
-        payment_terms: paymentTerms || undefined,
+        payment_terms: autoPaymentTerms || undefined,
         notes: notes || undefined,
         items: items.map(item => ({
           product_id: item.product_id,
@@ -244,56 +251,72 @@ export function SalesOrderFormModal({ onSuccess }: SalesOrderFormModalProps) {
             <CardHeader>
               <CardTitle>Informations générales</CardTitle>
             </CardHeader>
-            <CardContent className="grid grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label htmlFor="customer">Client *</Label>
-                <Select value={selectedCustomerId} onValueChange={handleCustomerChange}>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Sélectionner un client" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {customers.map((customer) => (
-                      <SelectItem key={customer.id} value={customer.id}>
-                        {customer.name}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+            <CardContent className="space-y-6">
+              <CustomerSelector
+                selectedCustomer={selectedCustomer}
+                onCustomerChange={handleCustomerChange}
+                disabled={loading}
+              />
+
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label htmlFor="deliveryDate">Date de livraison prévue</Label>
+                  <Input
+                    id="deliveryDate"
+                    type="date"
+                    value={expectedDeliveryDate}
+                    onChange={(e) => setExpectedDeliveryDate(e.target.value)}
+                    disabled={loading}
+                  />
+                </div>
+
+                {/* Affichage automatique des conditions de paiement */}
+                <div className="space-y-2">
+                  <Label className="text-sm font-medium">Conditions de paiement</Label>
+                  {selectedCustomer ? (
+                    <div className="p-3 bg-gray-50 border rounded-lg">
+                      {selectedCustomer.prepayment_required ? (
+                        <div className="flex items-center gap-2">
+                          <Badge variant="secondary" className="bg-orange-100 text-orange-800">
+                            Prépaiement requis
+                          </Badge>
+                          {selectedCustomer.payment_terms && (
+                            <span className="text-sm text-gray-700">+ {selectedCustomer.payment_terms} jours</span>
+                          )}
+                        </div>
+                      ) : selectedCustomer.payment_terms ? (
+                        <p className="text-sm text-gray-700">{selectedCustomer.payment_terms} jours</p>
+                      ) : (
+                        <p className="text-sm text-gray-500 italic">Conditions à définir dans la fiche client</p>
+                      )}
+                    </div>
+                  ) : (
+                    <div className="p-3 bg-gray-50 border rounded-lg">
+                      <p className="text-sm text-gray-500 italic">Sélectionnez un client</p>
+                    </div>
+                  )}
+                </div>
               </div>
 
-              <div className="space-y-2">
-                <Label htmlFor="deliveryDate">Date de livraison prévue</Label>
-                <Input
-                  id="deliveryDate"
-                  type="date"
-                  value={expectedDeliveryDate}
-                  onChange={(e) => setExpectedDeliveryDate(e.target.value)}
+              <div className="grid grid-cols-2 gap-4">
+                <AddressInput
+                  label="Adresse de livraison"
+                  value={shippingAddress}
+                  onChange={setShippingAddress}
+                  selectedCustomer={selectedCustomer}
+                  addressType="shipping"
+                  placeholder="Adresse complète de livraison"
+                  disabled={loading}
                 />
-              </div>
 
-              <AddressInput
-                label="Adresse de livraison"
-                value={shippingAddress}
-                onChange={setShippingAddress}
-                selectedOrganisation={selectedCustomer}
-                placeholder="Adresse complète de livraison..."
-              />
-
-              <AddressInput
-                label="Adresse de facturation"
-                value={billingAddress}
-                onChange={setBillingAddress}
-                selectedOrganisation={selectedCustomer}
-                placeholder="Adresse complète de facturation..."
-              />
-
-              <div className="space-y-2">
-                <Label htmlFor="paymentTerms">Conditions de paiement</Label>
-                <Input
-                  id="paymentTerms"
-                  placeholder="Ex: 30 jours net"
-                  value={paymentTerms}
-                  onChange={(e) => setPaymentTerms(e.target.value)}
+                <AddressInput
+                  label="Adresse de facturation"
+                  value={billingAddress}
+                  onChange={setBillingAddress}
+                  selectedCustomer={selectedCustomer}
+                  addressType="billing"
+                  placeholder="Adresse complète de facturation"
+                  disabled={loading}
                 />
               </div>
 
@@ -301,10 +324,10 @@ export function SalesOrderFormModal({ onSuccess }: SalesOrderFormModalProps) {
                 <Label htmlFor="notes">Notes</Label>
                 <Textarea
                   id="notes"
-                  placeholder="Notes additionnelles..."
                   value={notes}
                   onChange={(e) => setNotes(e.target.value)}
-                  className="min-h-[80px]"
+                  placeholder="Notes sur la commande"
+                  disabled={loading}
                 />
               </div>
             </CardContent>
@@ -312,50 +335,43 @@ export function SalesOrderFormModal({ onSuccess }: SalesOrderFormModalProps) {
 
           {/* Articles */}
           <Card>
-            <CardHeader>
-              <div className="flex items-center justify-between">
-                <div>
-                  <CardTitle>Articles</CardTitle>
-                  <CardDescription>
-                    {items.length} article(s) dans la commande
-                  </CardDescription>
-                </div>
-                <Button
-                  type="button"
-                  variant="outline"
-                  onClick={() => setShowProductSearch(true)}
-                >
-                  <Plus className="h-4 w-4 mr-2" />
-                  Ajouter un produit
-                </Button>
-              </div>
+            <CardHeader className="flex flex-row items-center justify-between">
+              <CardTitle>Articles</CardTitle>
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => setShowProductSearch(true)}
+                disabled={loading}
+              >
+                <Plus className="h-4 w-4 mr-2" />
+                Ajouter un produit
+              </Button>
             </CardHeader>
             <CardContent>
               {items.length === 0 ? (
-                <div className="text-center py-8 text-gray-500">
-                  Aucun article ajouté. Cliquez sur "Ajouter un produit" pour commencer.
-                </div>
+                <p className="text-center text-gray-500 py-8">Aucun produit ajouté</p>
               ) : (
                 <div className="overflow-x-auto">
                   <Table>
                     <TableHeader>
                       <TableRow>
                         <TableHead>Produit</TableHead>
-                        <TableHead>Stock</TableHead>
+                        <TableHead>SKU</TableHead>
                         <TableHead>Quantité</TableHead>
                         <TableHead>Prix unitaire HT</TableHead>
                         <TableHead>Remise (%)</TableHead>
                         <TableHead>Total HT</TableHead>
-                        <TableHead>Actions</TableHead>
+                        <TableHead>Stock</TableHead>
+                        <TableHead></TableHead>
                       </TableRow>
                     </TableHeader>
                     <TableBody>
                       {items.map((item) => {
                         const itemTotal = item.quantity * item.unit_price_ht * (1 - (item.discount_percentage || 0) / 100)
-                        const hasStockIssue = (item.availableStock || 0) < item.quantity
+                        const stockStatus = (item.availableStock || 0) >= item.quantity
 
                         return (
-                          <TableRow key={item.id} className={hasStockIssue ? 'bg-red-50' : ''}>
+                          <TableRow key={item.id}>
                             <TableCell>
                               <div className="flex items-center gap-3">
                                 {item.product?.primary_image_url && (
@@ -367,55 +383,58 @@ export function SalesOrderFormModal({ onSuccess }: SalesOrderFormModalProps) {
                                 )}
                                 <div>
                                   <p className="font-medium">{item.product?.name}</p>
-                                  <p className="text-sm text-gray-500">{item.product?.sku}</p>
                                 </div>
                               </div>
                             </TableCell>
-                            <TableCell>
-                              <Badge variant={hasStockIssue ? 'destructive' : 'outline'}>
-                                {item.availableStock || 0} dispo
-                              </Badge>
-                            </TableCell>
+                            <TableCell>{item.product?.sku}</TableCell>
                             <TableCell>
                               <Input
                                 type="number"
-                                value={item.quantity}
-                                onChange={(e) => updateItem(item.id, 'quantity', parseInt(e.target.value) || 0)}
-                                className={`w-20 ${hasStockIssue ? 'border-red-300' : ''}`}
                                 min="1"
+                                value={item.quantity}
+                                onChange={(e) => updateItem(item.id, 'quantity', parseInt(e.target.value) || 1)}
+                                className="w-20"
+                                disabled={loading}
                               />
                             </TableCell>
                             <TableCell>
                               <Input
                                 type="number"
                                 step="0.01"
+                                min="0"
                                 value={item.unit_price_ht}
                                 onChange={(e) => updateItem(item.id, 'unit_price_ht', parseFloat(e.target.value) || 0)}
                                 className="w-24"
-                                min="0"
+                                disabled={loading}
                               />
                             </TableCell>
                             <TableCell>
                               <Input
                                 type="number"
-                                value={item.discount_percentage || 0}
-                                onChange={(e) => updateItem(item.id, 'discount_percentage', parseFloat(e.target.value) || 0)}
-                                className="w-20"
                                 min="0"
                                 max="100"
+                                step="0.1"
+                                value={item.discount_percentage}
+                                onChange={(e) => updateItem(item.id, 'discount_percentage', parseFloat(e.target.value) || 0)}
+                                className="w-20"
+                                disabled={loading}
                               />
                             </TableCell>
+                            <TableCell>{formatCurrency(itemTotal)}</TableCell>
                             <TableCell>
-                              {formatCurrency(itemTotal)}
+                              <Badge variant={stockStatus ? 'default' : 'destructive'}>
+                                {item.availableStock || 0} dispo
+                              </Badge>
                             </TableCell>
                             <TableCell>
                               <Button
                                 type="button"
-                                variant="outline"
+                                variant="ghost"
                                 size="sm"
                                 onClick={() => removeItem(item.id)}
+                                disabled={loading}
                               >
-                                <Trash2 className="h-4 w-4" />
+                                <X className="h-4 w-4" />
                               </Button>
                             </TableCell>
                           </TableRow>
@@ -431,22 +450,18 @@ export function SalesOrderFormModal({ onSuccess }: SalesOrderFormModalProps) {
           {/* Totaux */}
           {items.length > 0 && (
             <Card>
-              <CardHeader>
-                <CardTitle>Récapitulatif</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="grid grid-cols-3 gap-4 text-center">
-                  <div>
-                    <p className="text-sm text-gray-600">Total HT</p>
-                    <p className="text-lg font-semibold">{formatCurrency(totalHT)}</p>
-                  </div>
-                  <div>
-                    <p className="text-sm text-gray-600">TVA (20%)</p>
-                    <p className="text-lg font-semibold">{formatCurrency(totalTTC - totalHT)}</p>
-                  </div>
-                  <div>
-                    <p className="text-sm text-gray-600">Total TTC</p>
-                    <p className="text-xl font-bold">{formatCurrency(totalTTC)}</p>
+              <CardContent className="pt-6">
+                <div className="flex justify-end space-y-2">
+                  <div className="text-right space-y-1">
+                    <p className="text-lg">
+                      <span className="font-medium">Total HT:</span> {formatCurrency(totalHT)}
+                    </p>
+                    <p className="text-sm text-gray-600">
+                      TVA (20%): {formatCurrency(totalTTC - totalHT)}
+                    </p>
+                    <p className="text-xl font-bold">
+                      Total TTC: {formatCurrency(totalTTC)}
+                    </p>
                   </div>
                 </div>
               </CardContent>
@@ -455,79 +470,85 @@ export function SalesOrderFormModal({ onSuccess }: SalesOrderFormModalProps) {
 
           {/* Actions */}
           <div className="flex justify-end gap-4">
-            <Button type="button" variant="outline" onClick={() => setOpen(false)}>
+            <Button type="button" variant="outline" onClick={() => setOpen(false)} disabled={loading}>
               Annuler
             </Button>
             <Button
               type="submit"
-              disabled={loading || !selectedCustomerId || items.length === 0}
-              variant={stockWarnings.length > 0 ? 'destructive' : 'default'}
+              disabled={loading || !selectedCustomer || items.length === 0}
             >
-              {loading ? 'Création...' : stockWarnings.length > 0 ? 'Créer malgré les alertes' : 'Créer la commande'}
+              {loading ? 'Création...' : 'Créer la commande'}
             </Button>
           </div>
         </form>
 
         {/* Modal de recherche de produits */}
         <Dialog open={showProductSearch} onOpenChange={setShowProductSearch}>
-          <DialogContent className="max-w-4xl">
+          <DialogContent className="max-w-4xl max-h-[80vh] overflow-y-auto">
             <DialogHeader>
-              <DialogTitle>Ajouter un produit</DialogTitle>
-              <DialogDescription>
-                Rechercher et sélectionner un produit à ajouter à la commande
-              </DialogDescription>
+              <DialogTitle>Rechercher un produit</DialogTitle>
             </DialogHeader>
 
             <div className="space-y-4">
-              <div className="relative">
-                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
-                <Input
-                  placeholder="Rechercher par nom ou SKU..."
-                  value={productSearchTerm}
-                  onChange={(e) => setProductSearchTerm(e.target.value)}
-                  className="pl-10"
-                />
+              <div className="flex gap-2">
+                <div className="relative flex-1">
+                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
+                  <Input
+                    placeholder="Rechercher par nom ou SKU..."
+                    value={productSearchTerm}
+                    onChange={(e) => setProductSearchTerm(e.target.value)}
+                    className="pl-10"
+                  />
+                </div>
               </div>
 
-              <div className="max-h-80 overflow-y-auto">
-                {products.length === 0 ? (
-                  <div className="text-center py-8 text-gray-500">
-                    {productSearchTerm ? 'Aucun produit trouvé' : 'Saisissez un terme de recherche'}
-                  </div>
-                ) : (
-                  <div className="grid gap-2">
+              <div className="overflow-x-auto">
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>Produit</TableHead>
+                      <TableHead>SKU</TableHead>
+                      <TableHead>Prix HT</TableHead>
+                      <TableHead>Stock</TableHead>
+                      <TableHead></TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
                     {products.map((product) => (
-                      <div
-                        key={product.id}
-                        className="flex items-center justify-between p-3 border rounded-lg hover:bg-gray-50 cursor-pointer"
-                        onClick={() => addProduct(product)}
-                      >
-                        <div className="flex items-center gap-3">
-                          {product.primary_image_url && (
-                            <img
-                              src={product.primary_image_url}
-                              alt={product.name}
-                              className="w-12 h-12 object-cover rounded"
-                            />
-                          )}
-                          <div>
-                            <p className="font-medium">{product.name}</p>
-                            <p className="text-sm text-gray-500">{product.sku}</p>
-                            <Badge variant="outline" className="text-xs">
-                              Stock: {product.stock_quantity || 0}
-                            </Badge>
+                      <TableRow key={product.id}>
+                        <TableCell>
+                          <div className="flex items-center gap-3">
+                            {product.primary_image_url && (
+                              <img
+                                src={product.primary_image_url}
+                                alt={product.name}
+                                className="w-10 h-10 object-cover rounded"
+                              />
+                            )}
+                            <div>
+                              <p className="font-medium">{product.name}</p>
+                            </div>
                           </div>
-                        </div>
-                        <div className="text-right">
-                          <p className="font-medium">
-                            {formatCurrency(product.price_ht || 0)}
-                          </p>
-                          <p className="text-sm text-gray-500">Prix de vente</p>
-                        </div>
-                      </div>
+                        </TableCell>
+                        <TableCell>{product.sku}</TableCell>
+                        <TableCell>{formatCurrency(product.price_ht)}</TableCell>
+                        <TableCell>
+                          <Badge variant={product.stock_quantity > 0 ? 'default' : 'secondary'}>
+                            {product.stock_quantity}
+                          </Badge>
+                        </TableCell>
+                        <TableCell>
+                          <Button
+                            size="sm"
+                            onClick={() => addProduct(product)}
+                          >
+                            Ajouter
+                          </Button>
+                        </TableCell>
+                      </TableRow>
                     ))}
-                  </div>
-                )}
+                  </TableBody>
+                </Table>
               </div>
             </div>
           </DialogContent>

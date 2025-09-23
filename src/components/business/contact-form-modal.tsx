@@ -45,14 +45,14 @@ const contactSchema = z.object({
     .optional()
     .or(z.literal('')),
   direct_line: z.string().optional(),
-  is_primary_contact: z.boolean().default(false),
-  is_billing_contact: z.boolean().default(false),
-  is_technical_contact: z.boolean().default(false),
-  is_commercial_contact: z.boolean().default(true),
-  preferred_communication_method: z.enum(['email', 'phone', 'both']).default('email'),
-  accepts_marketing: z.boolean().default(true),
-  accepts_notifications: z.boolean().default(true),
-  language_preference: z.string().default('fr'),
+  is_primary_contact: z.boolean(),
+  is_billing_contact: z.boolean(),
+  is_technical_contact: z.boolean(),
+  is_commercial_contact: z.boolean(),
+  preferred_communication_method: z.enum(['email', 'phone', 'both']),
+  accepts_marketing: z.boolean(),
+  accepts_notifications: z.boolean(),
+  language_preference: z.string(),
   notes: z.string().optional()
 })
 

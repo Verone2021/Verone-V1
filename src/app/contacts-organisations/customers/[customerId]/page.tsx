@@ -337,7 +337,7 @@ export default function CustomerDetailPage() {
               organisationId={customer.id}
               organisationName={customer.name}
               organisationType="customer"
-              onUpdate={handleCustomerUpdate}
+              onUpdate={() => handleCustomerUpdate({})}
             />
           )}
         </div>

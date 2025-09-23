@@ -2,11 +2,12 @@
 
 import { useState } from 'react'
 import { useDrafts, DraftWithMeta } from '../../hooks/use-drafts'
+import { useToast } from '../../hooks/use-toast'
 import { Card, CardContent, CardHeader, CardTitle } from '../ui/card'
 import { Button } from '../ui/button'
 import { Badge } from '../ui/badge'
 import { Progress } from '../ui/progress'
-import { Pencil, Copy, Trash2, FileText, Plus, ImageIcon } from 'lucide-react'
+import { Pencil, Copy, Trash2, FileText, Plus, ImageIcon, CheckCircle, Eye } from 'lucide-react'
 import { useRouter } from 'next/navigation'
 import {
   Dialog,
@@ -23,14 +24,21 @@ interface DraftsListProps {
 }
 
 export function DraftsList({ onCreateNew, onEditDraft }: DraftsListProps) {
-  const { drafts, loading, error, deleteDraft, duplicateDraft, stats } = useDrafts()
+  const { drafts, loading, error, deleteDraft, duplicateDraft, validateDraft, stats } = useDrafts()
+  const { toast } = useToast()
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false)
   const [selectedDraftId, setSelectedDraftId] = useState<string | null>(null)
   const [actionLoading, setActionLoading] = useState<string | null>(null)
   const router = useRouter()
 
   const handleEdit = (draft: DraftWithMeta) => {
-    onEditDraft?.(draft.id)
+    // Si un callback est fourni, l'utiliser (mode intégré)
+    if (onEditDraft) {
+      onEditDraft(draft.id)
+    } else {
+      // Sinon, naviguer vers la page d'édition dédiée
+      router.push(`/catalogue/edit/${draft.id}`)
+    }
   }
 
   const handleDelete = async (draftId: string) => {
@@ -57,6 +65,31 @@ export function DraftsList({ onCreateNew, onEditDraft }: DraftsListProps) {
     }
   }
 
+  const handleValidate = async (draftId: string) => {
+    try {
+      setActionLoading(draftId)
+      const newProduct = await validateDraft(draftId)
+
+      toast({
+        title: "Produit validé",
+        description: `Le brouillon a été converti en produit ${newProduct.sku}`
+      })
+
+      // Optionnel : naviguer vers le produit créé
+      // router.push(`/catalogue/${newProduct.id}`)
+
+    } catch (error) {
+      console.error('Erreur validation:', error)
+      toast({
+        title: "Erreur de validation",
+        description: error instanceof Error ? error.message : "Impossible de valider le brouillon",
+        variant: "destructive"
+      })
+    } finally {
+      setActionLoading(null)
+    }
+  }
+
   const getStatusBadge = (draft: DraftWithMeta) => {
     if (draft.canFinalize) {
       return <Badge variant="default" className="bg-green-100 text-green-800">Prêt à finaliser</Badge>
@@ -65,6 +98,26 @@ export function DraftsList({ onCreateNew, onEditDraft }: DraftsListProps) {
       return <Badge variant="secondary">En cours</Badge>
     }
     return <Badge variant="outline">Nouveau</Badge>
+  }
+
+  const getSourcingTypeBadge = (draft: DraftWithMeta) => {
+    if (draft.creation_mode === 'sourcing' && draft.sourcing_type) {
+      if (draft.sourcing_type === 'client') {
+        return (
+          <Badge variant="outline" className="bg-blue-50 text-blue-700 border-blue-200">
+            Sourcing Client
+          </Badge>
+        )
+      }
+      if (draft.sourcing_type === 'interne') {
+        return (
+          <Badge variant="outline" className="bg-gray-50 text-gray-700 border-gray-200">
+            Sourcing Interne
+          </Badge>
+        )
+      }
+    }
+    return null
   }
 
   if (loading) {
@@ -95,7 +148,7 @@ export function DraftsList({ onCreateNew, onEditDraft }: DraftsListProps) {
   return (
     <div className="space-y-6">
       {/* Stats Overview */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+      <div className="grid grid-cols-1 md:grid-cols-6 gap-4">
         <Card>
           <CardContent className="p-4">
             <div className="text-2xl font-bold">{stats.total}</div>
@@ -116,8 +169,20 @@ export function DraftsList({ onCreateNew, onEditDraft }: DraftsListProps) {
         </Card>
         <Card>
           <CardContent className="p-4">
-            <div className="text-2xl font-bold text-orange-600">{stats.recent}</div>
-            <div className="text-sm text-gray-600">Modifiés récemment</div>
+            <div className="text-2xl font-bold text-purple-600">{stats.sourcing}</div>
+            <div className="text-sm text-gray-600">Sourcing</div>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardContent className="p-4">
+            <div className="text-2xl font-bold text-blue-700">{drafts.filter(d => d.sourcing_type === 'client').length}</div>
+            <div className="text-sm text-gray-600">Sourcing Client</div>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardContent className="p-4">
+            <div className="text-2xl font-bold text-gray-600">{drafts.filter(d => d.sourcing_type === 'interne').length}</div>
+            <div className="text-sm text-gray-600">Sourcing Interne</div>
           </CardContent>
         </Card>
       </div>
@@ -174,7 +239,10 @@ export function DraftsList({ onCreateNew, onEditDraft }: DraftsListProps) {
                         <h3 className="font-semibold truncate">
                           {draft.name || 'Produit sans nom'}
                         </h3>
-                        {getStatusBadge(draft)}
+                        <div className="flex gap-2">
+                          {getStatusBadge(draft)}
+                          {getSourcingTypeBadge(draft)}
+                        </div>
                       </div>
 
                       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 text-sm text-gray-600 mb-3">
@@ -206,13 +274,40 @@ export function DraftsList({ onCreateNew, onEditDraft }: DraftsListProps) {
                     </div>
 
                     <div className="flex items-center gap-2 ml-4">
+                      {/* Bouton Modifier */}
                       <Button
                         variant="outline"
                         size="sm"
                         onClick={() => handleEdit(draft)}
                         disabled={actionLoading === draft.id}
+                        title="Modifier le brouillon"
                       >
                         <Pencil className="h-4 w-4" />
+                      </Button>
+
+                      {/* Bouton Valider - seulement si le brouillon est prêt */}
+                      {draft.canFinalize && (
+                        <Button
+                          variant="default"
+                          size="sm"
+                          onClick={() => handleValidate(draft.id)}
+                          disabled={actionLoading === draft.id}
+                          className="bg-green-600 hover:bg-green-700 text-white"
+                          title="Valider et convertir en produit"
+                        >
+                          <CheckCircle className="h-4 w-4" />
+                        </Button>
+                      )}
+
+                      {/* Bouton Voir le détail */}
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => router.push(`/catalogue/${draft.id}`)}
+                        disabled={actionLoading === draft.id}
+                        title="Voir le détail"
+                      >
+                        <Eye className="h-4 w-4" />
                       </Button>
 
                       <Button
@@ -220,6 +315,7 @@ export function DraftsList({ onCreateNew, onEditDraft }: DraftsListProps) {
                         size="sm"
                         onClick={() => handleDuplicate(draft.id)}
                         disabled={actionLoading === draft.id}
+                        title="Dupliquer le brouillon"
                       >
                         <Copy className="h-4 w-4" />
                       </Button>
@@ -233,6 +329,7 @@ export function DraftsList({ onCreateNew, onEditDraft }: DraftsListProps) {
                         }}
                         disabled={actionLoading === draft.id}
                         className="text-red-600 hover:text-red-700"
+                        title="Supprimer le brouillon"
                       >
                         <Trash2 className="h-4 w-4" />
                       </Button>

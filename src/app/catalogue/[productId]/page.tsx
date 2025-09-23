@@ -10,6 +10,7 @@ import { ProductImageGallery } from "../../../components/business/product-image-
 import { ProductPhotosModal } from "../../../components/business/product-photos-modal"
 import { ProductCharacteristicsModal } from "../../../components/business/product-characteristics-modal"
 import { ProductDescriptionsModal } from "../../../components/business/product-descriptions-modal"
+import { SampleRequirementSection } from "../../../components/business/sample-requirement-section"
 import { SupplierVsPricingEditSection } from "../../../components/business/supplier-vs-pricing-edit-section"
 import { GeneralInfoEditSection } from "../../../components/business/general-info-edit-section"
 import { StockEditSection } from "../../../components/business/stock-edit-section"
@@ -49,90 +50,75 @@ function calculateProductProgress(product: Product): { percentage: number, missi
     return value !== null && value !== undefined && value !== 0
   })
 
+  const percentage = (filledFields.length / REQUIRED_PRODUCT_FIELDS.length) * 100
   const missingFields = REQUIRED_PRODUCT_FIELDS.filter(field => {
     const value = product[field as keyof Product]
     if (typeof value === 'string') {
       return value.trim().length === 0
     }
     return value === null || value === undefined || value === 0
-  }).map(field => PRODUCT_FIELD_LABELS[field] || field)
-
-  const percentage = Math.round((filledFields.length / REQUIRED_PRODUCT_FIELDS.length) * 100)
+  }).map(field => PRODUCT_FIELD_LABELS[field])
 
   return { percentage, missingFields }
 }
 
-// Types selon structure DB Supabase
+// Interface pour un produit
 interface Product {
-  // Identifiants & Références
   id: string
-  sku: string
   name: string
-  description?: string
-  slug: string
-  supplier_reference?: string
-  gtin?: string
-
-  // Relations directes
-  subcategory_id?: string
-  brand?: string
-  supplier_id?: string
-
-  // Tarification & Business
-  price_ht: number // En centimes
-  cost_price?: number // En centimes
-  tax_rate?: number
-
-  // Statuts & Conditions
+  sku: string | null
+  description: string | null
+  technical_description: string | null
+  selling_points: string | null
+  price_ht: number | null
+  cost_price: number | null
+  tax_rate: number | null
   status: 'in_stock' | 'out_of_stock' | 'preorder' | 'coming_soon' | 'discontinued'
-  condition: 'new' | 'refurbished' | 'used'
-
-  // Caractéristiques Physiques
-  variant_attributes?: Record<string, any> // JSON
-  dimensions?: Record<string, any> // JSON
-  weight?: number
-
-  // Médias
-  video_url?: string
-
-  // Descriptions enrichies
-  technical_description?: string
-  selling_points?: string[]
-
-  // Stock & Gestion
-  stock_quantity?: number
-  min_stock_level?: number
-
-  // Timestamps
+  condition: 'new' | 'used' | 'refurbished'
+  stock_quantity: number | null
+  min_stock_level: number | null
+  supplier_id: string | null
+  supplier_reference: string | null
+  subcategory_id: string | null
+  family_id: string | null
+  dimensions: string | null
+  weight: number | null
+  variant_attributes: Record<string, any> | null
+  gtin: string | null
+  slug: string | null
+  images: any[]
+  requires_sample: boolean | null  // Ajout du champ échantillon
   created_at: string
   updated_at: string
-
-  // Relations jointes
+  organisation_id: string
+  // Relations
   supplier?: {
     id: string
     name: string
-  }
-  subcategories?: {
+    email: string | null
+    phone: string | null
+    slug: string
+    is_active: boolean
+  } | null
+  subcategory?: {
     id: string
     name: string
-    categories?: {
+    category?: {
       id: string
       name: string
-      families?: {
+      family?: {
         id: string
         name: string
       }
     }
-  }
+  } | null
 }
 
 export default function ProductDetailPage() {
-  const startTime = Date.now()
   const params = useParams()
   const router = useRouter()
-  const supabase = createClient()
+  const productId = params.productId as string
 
-  // États locaux
   const [product, setProduct] = useState<Product | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
@@ -140,179 +126,179 @@ export default function ProductDetailPage() {
   const [showCharacteristicsModal, setShowCharacteristicsModal] = useState(false)
   const [showDescriptionsModal, setShowDescriptionsModal] = useState(false)
 
-  // Hook pour gestion images
-  const { images, hasImages, loading: imagesLoading } = useProductImages({
-    productId: params.productId as string,
-    autoFetch: true
-  })
+  const startTime = Date.now()
 
-  // Gestionnaire de mise à jour produit
+  // Charger le produit
+  const fetchProduct = async () => {
+    try {
+      setLoading(true)
+      setError(null)
+
+      const supabase = createClient()
+
+      const { data, error } = await supabase
+        .from('products')
+        .select(`
+          *,
+          supplier:organisations!products_supplier_id_fkey(
+            id, name, email, phone
+          ),
+          subcategory:subcategories(
+            id, name,
+            category:categories(
+              id, name,
+              family:families(id, name)
+            )
+          )
+        `)
+        .eq('id', productId)
+        .single()
+
+      if (error) {
+        throw new Error(error.message)
+      }
+
+      if (!data) {
+        throw new Error('Produit non trouvé')
+      }
+
+      setProduct({
+        ...data,
+        supplier: data.supplier ? {
+          ...data.supplier,
+          slug: data.supplier.name.toLowerCase().replace(/\s+/g, '-'),
+          is_active: true
+        } : null
+      })
+
+    } catch (err) {
+      console.error('Erreur lors du chargement du produit:', err)
+      setError(err instanceof Error ? err.message : 'Erreur lors du chargement du produit')
+    } finally {
+      setLoading(false)
+
+      // Vérification SLO
+      const loadTime = Date.now() - startTime
+      checkSLOCompliance('ProductDetail', loadTime, 2000)
+    }
+  }
+
+  // Handler pour mettre à jour le produit
   const handleProductUpdate = (updatedData: Partial<Product>) => {
     if (product) {
       setProduct({ ...product, ...updatedData })
     }
   }
 
-  // Charger le produit depuis Supabase
-  useEffect(() => {
-    const fetchProduct = async () => {
-      if (!params.productId || typeof params.productId !== 'string') {
-        setError('ID produit invalide')
-        setLoading(false)
-        return
-      }
-
-      try {
-        setLoading(true)
-        setError(null)
-
-        const { data, error } = await supabase
-          .from('products')
-          .select(`
-            *,
-            supplier:organisations!supplier_id(id, name),
-            subcategories!subcategory_id(
-              id,
-              name,
-              categories (
-                id,
-                name,
-                families (
-                  id,
-                  name
-                )
-              )
-            )
-          `)
-          .eq('id', params.productId)
-          .single()
-
-        if (error) throw error
-
-        setProduct(data)
-      } catch (err) {
-        console.error('❌ Erreur lors du chargement du produit:', err)
-        setError(err instanceof Error ? err.message : 'Erreur inconnue')
-      } finally {
-        setLoading(false)
-      }
+  // Handler pour naviguer vers la page de partage
+  const handleShare = () => {
+    if (product?.slug) {
+      const shareUrl = `/share/product/${product.slug}`
+      router.push(shareUrl)
     }
+  }
 
+  useEffect(() => {
     fetchProduct()
-  }, [params.productId, supabase])
+  }, [productId])
 
-  // SLO compliance check
-  const sloCompliance = checkSLOCompliance(startTime, 'dashboard')
-
-  // États de chargement
   if (loading) {
     return (
-      <div className="flex items-center justify-center h-64">
-        <div className="text-black opacity-70">Chargement du produit...</div>
+      <div className="container mx-auto py-6">
+        <div className="flex items-center justify-center h-64">
+          <div className="text-center">
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-black mx-auto mb-4"></div>
+            <p>Chargement du produit...</p>
+          </div>
+        </div>
       </div>
     )
   }
 
   if (error || !product) {
     return (
-      <div className="space-y-4">
-        <Button
-          variant="ghost"
-          size="sm"
-          onClick={() => router.back()}
-          className="pl-2"
-        >
-          <ArrowLeft className="h-4 w-4 mr-2" />
-          Retour au catalogue
-        </Button>
+      <div className="container mx-auto py-6">
         <div className="flex items-center justify-center h-64">
-          <div className="text-red-600">
-            {error || 'Produit introuvable'}
+          <div className="text-center">
+            <p className="text-red-600 mb-4">{error || 'Produit non trouvé'}</p>
+            <Button variant="outline" onClick={() => router.back()}>
+              <ArrowLeft className="h-4 w-4 mr-2" />
+              Retour
+            </Button>
           </div>
         </div>
       </div>
     )
   }
 
-  const { percentage } = calculateProductProgress(product)
+  // Calculer la progression
+  const { percentage: completionPercentage, missingFields } = calculateProductProgress(product)
+
+  // Générer le breadcrumb
+  const breadcrumbParts = ['Catalogue']
+  if (product.subcategory?.category?.family?.name) {
+    breadcrumbParts.push(product.subcategory.category.family.name)
+  }
+  if (product.subcategory?.category?.name) {
+    breadcrumbParts.push(product.subcategory.category.name)
+  }
+  if (product.subcategory?.name) {
+    breadcrumbParts.push(product.subcategory.name)
+  }
 
   return (
-    <div className="space-y-4">
-      {/* Header compact avec navigation */}
-      <div className="flex items-center justify-between bg-white border border-gray-200 rounded-lg p-4">
+    <div className="container mx-auto py-6 space-y-6">
+      {/* En-tête */}
+      <div className="flex items-center justify-between">
         <div className="flex items-center space-x-4">
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={() => router.back()}
-            className="pl-2"
-          >
+          <Button variant="ghost" size="sm" onClick={() => router.back()}>
             <ArrowLeft className="h-4 w-4 mr-2" />
             Retour
           </Button>
-
-          {/* Breadcrumb compact */}
           <nav className="text-sm text-gray-600">
-            <span>Catalogue</span>
-            {product.subcategories?.categories?.name && (
-              <>
-                <span className="mx-1">›</span>
-                <span>{product.subcategories.categories.name}</span>
-              </>
-            )}
-            {product.subcategories?.name && (
-              <>
-                <span className="mx-1">›</span>
-                <span>{product.subcategories.name}</span>
-              </>
-            )}
+            {breadcrumbParts.join('›')}
           </nav>
         </div>
-
-        {/* Actions header */}
         <div className="flex items-center space-x-2">
-          <Badge variant={sloCompliance.isCompliant ? "default" : "destructive"} className="text-xs">
-            {sloCompliance.duration}ms
-          </Badge>
-          <Button variant="outline" size="sm">
-            <Share2 className="h-4 w-4 mr-1" />
+          <div className="text-xs text-gray-500">
+            {Date.now() - startTime}ms
+          </div>
+          <Button variant="outline" size="sm" onClick={handleShare}>
+            <Share2 className="h-4 w-4 mr-2" />
             Partager
           </Button>
         </div>
       </div>
 
-      {/* Layout 3 colonnes compact */}
-      <div className="grid grid-cols-1 xl:grid-cols-12 gap-4">
-
+      {/* Contenu principal - Layout 3 colonnes */}
+      <div className="grid grid-cols-1 xl:grid-cols-12 gap-6">
         {/* COLONNE 1: Images & Métadonnées (25% - xl:col-span-3) */}
         <div className="xl:col-span-3 space-y-4">
-          {/* Galerie images compacte */}
-          <div className="bg-white border border-gray-200 rounded-lg p-4">
+          {/* Galerie d'images */}
+          <div className="bg-white border border-black">
             <ProductImageGallery
               productId={product.id}
               productName={product.name}
               productStatus={product.status}
-              className=""
+              compact={true}
             />
-
-            {/* Actions rapides images */}
-            <div className="mt-3 space-y-2">
+            <div className="p-3 border-t border-black">
               <Button
                 variant="outline"
                 size="sm"
-                className="w-full text-xs"
+                className="w-full justify-start text-xs"
                 onClick={() => setShowPhotosModal(true)}
               >
-                <ImageIcon className="h-3 w-3 mr-1" />
-                Gérer photos ({images.length})
+                <ImageIcon className="h-3 w-3 mr-2" />
+                Gérer photos ({product.images?.length || 0})
               </Button>
             </div>
           </div>
 
-          {/* Métadonnées automatiques */}
-          <div className="bg-white border border-gray-200 rounded-lg p-4">
-            <h3 className="text-sm font-medium text-black flex items-center mb-3">
-              <Clock className="h-4 w-4 mr-1" />
+          {/* Métadonnées */}
+          <div className="bg-white border border-black p-4">
+            <h3 className="font-medium mb-3 flex items-center text-sm">
+              <Clock className="h-4 w-4 mr-2" />
               Métadonnées
             </h3>
             <div className="space-y-2 text-xs">
@@ -322,41 +308,40 @@ export default function ProductDetailPage() {
               </div>
               <div className="flex justify-between">
                 <span className="text-gray-600">Créé:</span>
-                <span>{new Date(product.created_at).toLocaleDateString('fr-FR')}</span>
+                <span>{new Date(product.created_at).toLocaleDateString()}</span>
               </div>
               <div className="flex justify-between">
                 <span className="text-gray-600">Modifié:</span>
-                <span>{new Date(product.updated_at).toLocaleDateString('fr-FR')}</span>
+                <span>{new Date(product.updated_at).toLocaleDateString()}</span>
               </div>
               {product.supplier && (
                 <div className="flex justify-between">
                   <span className="text-gray-600">Fournisseur:</span>
-                  <span className="font-medium">{product.supplier.name}</span>
+                  <span>{product.supplier.name}</span>
                 </div>
               )}
             </div>
           </div>
 
-          {/* Status & Progression */}
-          <div className="bg-white border border-gray-200 rounded-lg p-4">
+          {/* Status badge et progression */}
+          <div className="bg-white border border-black p-4">
             <div className="space-y-3">
+              <Badge className={cn(
+                "text-xs",
+                product.status === 'in_stock' ? "bg-green-600 text-white" :
+                product.status === 'out_of_stock' ? "bg-red-600 text-white" :
+                "bg-black text-white"
+              )}>
+                {product.status === 'in_stock' ? 'En stock' :
+                 product.status === 'out_of_stock' ? 'Rupture' :
+                 'Autre statut'}
+              </Badge>
               <div>
-                <Badge
-                  className={cn(
-                    "text-xs",
-                    product.status === 'in_stock' ? 'bg-green-600 text-white' : 'bg-red-600 text-white'
-                  )}
-                >
-                  {product.status === 'in_stock' ? 'En stock' : 'Hors stock'}
-                </Badge>
-              </div>
-
-              <div>
-                <div className="text-xs text-gray-600 mb-1">Complétude</div>
-                <div className="flex items-center gap-2">
-                  <Progress value={percentage} className="flex-1 h-2" />
-                  <span className="text-xs font-medium">{percentage}%</span>
+                <div className="flex items-center justify-between mb-1">
+                  <span className="text-xs text-gray-600">Complétude</span>
+                  <span className="text-xs font-medium">{Math.round(completionPercentage)}%</span>
                 </div>
+                <Progress value={completionPercentage} className="h-2" />
               </div>
             </div>
           </div>
@@ -364,129 +349,110 @@ export default function ProductDetailPage() {
 
         {/* COLONNE 2: Informations Principales (45% - xl:col-span-5) */}
         <div className="xl:col-span-5 space-y-4">
-
-          {/* Header produit compact */}
-          <div className="bg-white border border-gray-200 rounded-lg p-4">
-            <div className="flex items-start justify-between">
-              <div className="flex-1">
+          {/* Header produit */}
+          <div className="bg-white border border-black p-4">
+            <div className="flex items-start justify-between mb-3">
+              <div>
                 <h1 className="text-xl font-bold text-black mb-1">{product.name}</h1>
-                <div className="flex items-center gap-3 text-sm text-gray-600 mb-2">
-                  <span>SKU: {product.sku}</span>
-                  {product.supplier_reference && <span>Réf. fournisseur: {product.supplier_reference}</span>}
+                <div className="text-sm text-gray-600 mb-2">
+                  SKU: {product.sku || 'Non défini'}
                 </div>
                 <div className="text-lg font-semibold text-black">
-                  {formatPrice(product.price_ht)}
+                  {product.price_ht ? formatPrice(product.price_ht) : 'Prix non défini'}
                 </div>
               </div>
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => setShowDescriptionsModal(true)}
-              >
-                <Edit className="h-4 w-4 mr-1" />
+              <Button variant="outline" size="sm">
+                <Edit className="h-4 w-4 mr-2" />
                 Modifier
               </Button>
             </div>
           </div>
 
-          {/* Description rapide */}
-          <div className="bg-white border border-gray-200 rounded-lg p-4">
-            <div className="flex items-center justify-between mb-2">
-              <h3 className="text-sm font-medium text-black">Description</h3>
+          {/* Informations générales */}
+          <GeneralInfoEditSection
+            product={{
+              id: product.id,
+              name: product.name,
+              sku: product.sku,
+              description: product.description,
+              technical_description: product.technical_description,
+              selling_points: product.selling_points,
+              subcategory_id: product.subcategory_id,
+              supplier_id: product.supplier_id
+            }}
+            onUpdate={handleProductUpdate}
+          />
+
+          {/* Description */}
+          <div className="bg-white border border-black p-4">
+            <div className="flex items-center justify-between mb-3">
+              <h3 className="font-medium text-sm">Description</h3>
               <Button
                 variant="ghost"
                 size="sm"
                 onClick={() => setShowDescriptionsModal(true)}
-                className="text-xs"
               >
-                <FileText className="h-3 w-3 mr-1" />
+                <Edit className="h-3 w-3 mr-1" />
                 Éditer
               </Button>
             </div>
-            <p className="text-sm text-gray-700 line-clamp-3">
-              {product.description || "Aucune description disponible"}
+            <p className="text-sm text-gray-700">
+              {product.description || 'Aucune description disponible'}
             </p>
           </div>
 
-          {/* Caractéristiques rapides */}
-          <div className="bg-white border border-gray-200 rounded-lg p-4">
+          {/* Caractéristiques */}
+          <div className="bg-white border border-black p-4">
             <div className="flex items-center justify-between mb-3">
-              <h3 className="text-sm font-medium text-black">Caractéristiques</h3>
+              <h3 className="font-medium text-sm">Caractéristiques</h3>
               <Button
                 variant="ghost"
                 size="sm"
                 onClick={() => setShowCharacteristicsModal(true)}
-                className="text-xs"
               >
                 <Settings className="h-3 w-3 mr-1" />
                 Gérer
               </Button>
             </div>
-            <div className="grid grid-cols-2 gap-2 text-xs">
-              {product.variant_attributes?.color && (
-                <div>
-                  <span className="text-gray-600">Couleur:</span>
-                  <div className="font-medium">{product.variant_attributes.color}</div>
+            <ProductFixedCharacteristics
+              product={product}
+            />
+          </div>
+
+          {/* Catégorisation */}
+          <div className="bg-white border border-black p-4">
+            <h3 className="font-medium mb-3 flex items-center text-sm">
+              <Tag className="h-4 w-4 mr-2" />
+              Catégorisation
+            </h3>
+            <div className="space-y-2 text-sm">
+              {product.subcategory?.category?.family && (
+                <div className="flex justify-between">
+                  <span className="text-gray-600">Famille:</span>
+                  <span>{product.subcategory.category.family.name}</span>
                 </div>
               )}
-              {product.variant_attributes?.material && (
-                <div>
-                  <span className="text-gray-600">Matière:</span>
-                  <div className="font-medium">{product.variant_attributes.material}</div>
+              {product.subcategory?.category && (
+                <div className="flex justify-between">
+                  <span className="text-gray-600">Catégorie:</span>
+                  <span>{product.subcategory.category.name}</span>
                 </div>
               )}
-              {product.weight && (
-                <div>
-                  <span className="text-gray-600">Poids:</span>
-                  <div className="font-medium">{product.weight} kg</div>
-                </div>
-              )}
-              {product.dimensions && (
-                <div>
-                  <span className="text-gray-600">Dimensions:</span>
-                  <div className="font-medium text-xs">
-                    {product.dimensions.width}×{product.dimensions.height}×{product.dimensions.depth} cm
-                  </div>
+              {product.subcategory && (
+                <div className="flex justify-between">
+                  <span className="text-gray-600">Sous-catégorie:</span>
+                  <span>{product.subcategory.name}</span>
                 </div>
               )}
             </div>
           </div>
-
-          {/* Catégorisation */}
-          {product.subcategories && (
-            <div className="bg-white border border-gray-200 rounded-lg p-4">
-              <h3 className="text-sm font-medium text-black flex items-center mb-3">
-                <Tag className="h-4 w-4 mr-1" />
-                Catégorisation
-              </h3>
-              <div className="space-y-2 text-xs">
-                {product.subcategories.categories?.families && (
-                  <div className="flex justify-between">
-                    <span className="text-gray-600">Famille:</span>
-                    <span className="font-medium">{product.subcategories.categories.families.name}</span>
-                  </div>
-                )}
-                {product.subcategories.categories && (
-                  <div className="flex justify-between">
-                    <span className="text-gray-600">Catégorie:</span>
-                    <span className="font-medium">{product.subcategories.categories.name}</span>
-                  </div>
-                )}
-                <div className="flex justify-between">
-                  <span className="text-gray-600">Sous-catégorie:</span>
-                  <span className="font-medium">{product.subcategories.name}</span>
-                </div>
-              </div>
-            </div>
-          )}
         </div>
 
         {/* COLONNE 3: Actions & Gestion (30% - xl:col-span-4) */}
         <div className="xl:col-span-4 space-y-4">
-
           {/* Actions rapides */}
-          <div className="bg-white border border-gray-200 rounded-lg p-4">
-            <h3 className="text-sm font-medium text-black mb-3">Actions</h3>
+          <div className="bg-white border border-black p-4">
+            <h3 className="font-medium mb-3 text-sm">Actions</h3>
             <div className="space-y-2">
               <Button
                 variant="outline"
@@ -555,6 +521,19 @@ export default function ProductDetailPage() {
             }}
             onUpdate={handleProductUpdate}
           />
+
+          {/* Section échantillon */}
+          <div className="bg-white border border-black p-4">
+            <h3 className="font-medium mb-3 text-sm">Gestion Échantillons</h3>
+            <SampleRequirementSection
+              requiresSample={product.requires_sample || false}
+              isProduct={true}
+              productName={product.name}
+              onRequirementChange={(requiresSample) => {
+                handleProductUpdate({ requires_sample: requiresSample })
+              }}
+            />
+          </div>
         </div>
       </div>
 

@@ -19,6 +19,38 @@
 
 ---
 
+## 🚨 **Console Error Checking - RÈGLE ABSOLUE**
+
+**JAMAIS déclarer le succès du système tant qu'il y a des erreurs console visibles**
+
+### **Processus Obligatoire de Vérification Console**
+
+1. **Vérification Systématique** : À chaque test, TOUJOURS regarder en bas à gauche de l'écran
+2. **Indicateur Rouge** : Si présent (ex: "4 errors", "3 errors"), CLIQUER DESSUS IMMÉDIATEMENT
+3. **Analyse Complète** : Examiner chaque erreur avec le bouton "Next" pour voir toutes les erreurs
+4. **Résolution Avant Succès** : Corriger TOUTES les erreurs avant de déclarer que le système fonctionne
+
+### **Méthodologie Testing Correcte**
+
+```typescript
+// ❌ FAUX : Déclarer succès avec erreurs visibles
+console.log("✅ Le système fonctionne parfaitement !") // Alors qu'il y a un indicateur rouge "4 errors"
+
+// ✅ CORRECT : Vérification systématique
+1. Cliquer sur l'indicateur rouge d'erreur (bottom-left)
+2. Naviguer entre toutes les erreurs avec "Next"/"Previous"
+3. Résoudre chaque erreur (foreign keys, colonnes manquantes, etc.)
+4. Re-tester jusqu'à ZÉRO erreur console
+5. SEULEMENT ALORS déclarer le succès
+```
+
+### **Outils de Debug**
+- **Browser Console** : `mcp__playwright__browser_console_messages`
+- **Error Navigator** : Cliquer indicateur rouge → boutons Next/Previous
+- **Supabase Logs** : `mcp__supabase__get_logs` pour erreurs API
+
+---
+
 ## ⚡ **Commandes Essentielles**
 
 ```bash
@@ -37,6 +69,18 @@ cat .env.local                          # Variables environnement
 ---
 
 ## 🚨 **Règles Business Critiques**
+
+### **🚨 RÈGLE ABSOLUE - PROFESSIONNALISME**
+```typescript
+// ❌ JAMAIS inventer de solutions sans validation
+// ❌ JAMAIS coder sans consulter docs officielles
+// ❌ JAMAIS supposer ou deviner des implémentations
+
+// ✅ TOUJOURS poser questions en cas de doute
+// ✅ TOUJOURS consulter Context7 et docs officielles
+// ✅ TOUJOURS utiliser verone-orchestrator pour coordination
+// ✅ TOUJOURS mettre à jour Memory Bank après chaque session
+```
 
 ### **JAMAIS de Données Mock**
 ```typescript

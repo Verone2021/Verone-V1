@@ -200,27 +200,43 @@ export function FamilyCrudForm({
             <div className="space-y-2">
               <Label htmlFor="parent">
                 {type === 'category' ? 'Famille parent' : 'Catégorie parent'}
-                <span className="text-red-500 ml-1">*</span>
+                {mode === 'create' && <span className="text-red-500 ml-1">*</span>}
               </Label>
-              <Select
-                value={formData.parent_id || ""}
-                onValueChange={(value) => updateField('parent_id', value)}
-              >
-                <SelectTrigger className={cn(errors.parent_id && "border-red-500")}>
-                  <SelectValue
-                    placeholder={`Sélectionner une ${type === 'category' ? 'famille' : 'catégorie'}`}
-                  />
-                </SelectTrigger>
-                <SelectContent>
-                  {parentOptions.map((option) => (
-                    <SelectItem key={option.id} value={option.id}>
-                      {option.name}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-              {errors.parent_id && (
-                <p className="text-sm text-red-600">{errors.parent_id}</p>
+
+              {mode === 'edit' ? (
+                // Mode édition : affichage en lecture seule
+                <div className="space-y-2">
+                  <div className="w-full px-3 py-2 border border-gray-200 rounded-md bg-gray-50 text-gray-700">
+                    {parentOptions.find(option => option.id === formData.parent_id)?.name || 'Parent non trouvé'}
+                  </div>
+                  <p className="text-xs text-gray-500">
+                    La {type === 'category' ? 'famille' : 'catégorie'} parent ne peut pas être modifiée après création pour préserver la cohérence de l'arborescence.
+                  </p>
+                </div>
+              ) : (
+                // Mode création : sélection normale
+                <>
+                  <Select
+                    value={formData.parent_id || ""}
+                    onValueChange={(value) => updateField('parent_id', value)}
+                  >
+                    <SelectTrigger className={cn(errors.parent_id && "border-red-500")}>
+                      <SelectValue
+                        placeholder={`Sélectionner une ${type === 'category' ? 'famille' : 'catégorie'}`}
+                      />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {parentOptions.map((option) => (
+                        <SelectItem key={option.id} value={option.id}>
+                          {option.name}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  {errors.parent_id && (
+                    <p className="text-sm text-red-600">{errors.parent_id}</p>
+                  )}
+                </>
               )}
             </div>
           )}

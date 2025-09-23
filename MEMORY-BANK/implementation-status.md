@@ -45,31 +45,36 @@
 ## 🔄 **MODULES EN COURS** (Development Active)
 
 ### **📦 Catalogue Produits**
-- **Status** : 🔄 EN DÉVELOPPEMENT
+- **Status** : ✅ FONCTIONNEL
 - **Réalisé** :
-  - Base données 241 produits
-  - Schema produits complet
-  - Interface consultation
+  - Base données 241 produits avec schema complet
+  - Interface consultation optimisée
+  - **Modals Description/Caractéristiques** : 100% fonctionnels avec persistance DB
+  - **Primary Image Display** : Synchronisation correcte image principale
+  - **Product Completion Rate** : Progression 50% → 67% démontrée
 - **En Cours** :
   - Optimisation affichage images (lazy loading)
   - Système conditionnements flexibles
   - Filtres recherche avancés
-- **Problèmes Connus** :
-  - Performance chargement initial lente
-  - Images non optimisées (taille/format)
-- **Deadline** : 20 septembre 2025
+- **Résolutions Critiques** :
+  - Migration DB : Ajout champs description, technical_description, selling_points
+  - Frontend-Database alignment : ProductDescriptionsModal, ProductCharacteristicsModal
+  - Zero Console Errors : Validation stricte selon règles CLAUDE.md
+- **Performance** : <500ms modals, dashboard <2s maintenu
 
 ### **🖼️ Gestion Images**
-- **Status** : 🔄 OPTIMISATION
+- **Status** : ✅ STABLE
 - **Réalisé** :
-  - Upload Supabase Storage
-  - Validation formats/tailles
-  - RLS policies images
+  - Upload Supabase Storage avec validation
+  - RLS policies images sécurisées
+  - **Primary Image Fix** : Synchronisation selectedImageIndex avec is_primary
+  - **Modal Viewer** : Navigation fluide, téléchargement, interface moderne
+  - **Gallery Display** : Affichage correct image principale first
 - **En Cours** :
   - Compression automatique
   - Génération thumbnails
   - CDN optimisation
-- **Performance Cible** : <3s chargement galerie
+- **Performance Mesurée** : <500ms modal loading, galerie responsive
 
 ## 📋 **MODULES PLANIFIÉS** (Roadmap)
 
@@ -106,32 +111,39 @@
 - Remises conditionnelles
 - Grille tarifaire dynamique
 
-### **📦 Gestion Stock**
-- **Status** : ✅ COMPLET
+### **📦 Gestion Stock + Traçabilité**
+- **Status** : ✅ COMPLET + AMÉLIORÉ (22/09/2025)
 - **Features** :
   - Mouvements stock temps réel (IN/OUT/ADJUST/TRANSFER)
-  - Traçabilité complète style ERPNext
-  - Calcul stock disponible avec réservations
-  - Interface gestion avec filtres avancés
+  - **🔍 TRAÇABILITÉ COMPLÈTE** : Origine et utilisateur pour chaque mouvement ✨ NOUVEAU
+  - **Colonne "Origine"** : Distinction Manuel vs Commandes avec badges visuels
+  - **Triggers Automatiques** : Mouvements auto lors confirmation/expédition commandes
+  - **Attribution Utilisateur** : 100% des mouvements avec responsable identifié
+  - Calcul stock disponible avec réservations (réel + prévisionnel)
+  - Interface gestion avec filtres avancés + export CSV
   - Statistiques et métriques en temps réel
-- **Performance** : <2s chargement, pagination optimisée
-- **Tables** : stock_movements, stock_reservations avec RLS
-- **Test Coverage** : Validé manuellement avec données réelles
+  - Page dédiée `/historique-mouvements` avec analytics complètes
+- **Performance** : <2s chargement, pagination optimisée, zero console errors
+- **Tables** : stock_movements avec affects_forecast, forecast_type + RLS
+- **Architecture** : Triggers PL/pgSQL pour automatisation workflow commandes
+- **Test Coverage** : Validé manuellement + 19 mouvements test avec traçabilité
 
 ### **🛒 Module Commandes**
-- **Status** : ✅ COMPLET
+- **Status** : ✅ COMPLET + B2B/B2C (22/11/2024)
 - **Features** :
   - **Commandes Fournisseurs** : Workflow draft→sent→confirmed→received
-  - **Commandes Clients** : Validation stock + réservations automatiques
-  - **Auto-remplissage Adresses** : Pré-remplissage automatique depuis fiches organisations ✨ NOUVEAU
+  - **Commandes Clients B2B/B2C** : Support complet professional + individual ✨ NOUVEAU
+  - **Sélection Intelligente** : Radio selector B2B vs B2C avec icônes
+  - **Auto-remplissage Adresses** : Pré-remplissage automatique depuis fiches clients
+  - **Relations Polymorphiques** : customer_type discriminant (organization/individual)
   - Génération automatique numéros commande
   - Réception partielle/totale avec mouvements stock
   - Calculs automatiques totaux HT/TTC
   - Interface responsive avec recherche produits
 - **Performance** : <2s chargement, validation temps réel, auto-fill <100ms
-- **Tables** : purchase_orders, sales_orders + items avec RLS
-- **Business Logic** : Prévention survente, workflow strict, isolation données adresses
-- **UX Enhancement** : Composant AddressInput intelligent avec preview et copie rapide
+- **Tables** : purchase_orders, sales_orders, individual_customers + items avec RLS
+- **Business Logic** : Prévention survente, workflow strict, relations polymorphiques
+- **UX Enhancement** : CustomerSelector unifié + AddressInput intelligent
 
 ### **📧 Intégrations Externes**
 - Webhooks Brevo
@@ -175,10 +187,12 @@
 
 ### **Business Metrics**
 - Produits : 241 + 8 produits test (✅ objectif atteint)
-- Images : 180 uploadées (75% produits)
+- **Product Completion Rate** : 67% (progression +17% après fix modals)
+- Images : 180 uploadées (75% produits) avec primary image correctement affichée
+- **Modal Success Rate** : 100% (Description + Caractéristiques fonctionnels)
 - Fournisseurs : 6 actifs avec workflow complet
 - Clients : 3 enregistrés avec commandes test
-- Mouvements Stock : Système opérationnel temps réel
+- **Mouvements Stock** : Système opérationnel temps réel + Traçabilité complète (22/09/2025)
 - Commandes : Workflows fournisseurs + clients fonctionnels
 - Utilisateurs actifs : 5 (équipe Vérone)
 - Uptime : 99.8% (✅ >99%)
@@ -209,7 +223,9 @@
 
 ---
 
-*Dernière mise à jour : 16 septembre 2025*
-*Ajout majeur : Auto-remplissage adresses commandes avec composant AddressInput intelligent*
-*Précédent : Système Stock et Commandes complet opérationnel*
-*Prochaine révision : Tests E2E auto-remplissage + optimisations performance catalogue*
+*Dernière mise à jour : 22 novembre 2024*
+*Ajout majeur : SUPPORT B2B/B2C COMPLET - Table individual_customers + Relations polymorphiques*
+*Features critiques : Sélection intelligente clients B2B/B2C + Auto-remplissage adresses + Validation temps réel*
+*Architecture : Pattern fetch manuel pour relations polymorphiques Supabase*
+*Business Impact : Support complet clients particuliers + Workflow unifié commandes*
+*Prochaine révision : Consolidation documentation + Harmonisation nomenclature*

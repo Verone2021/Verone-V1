@@ -10,6 +10,23 @@ import { useToast } from '@/hooks/use-toast'
 // Types pour les mouvements de stock
 export type MovementType = 'IN' | 'OUT' | 'ADJUST' | 'TRANSFER'
 
+// Motifs détaillés pour les mouvements (enum de la DB)
+export type StockReasonCode =
+  // Sorties normales
+  | 'sale' | 'transfer_out'
+  // Pertes & Dégradations
+  | 'damage_transport' | 'damage_handling' | 'damage_storage' | 'theft' | 'loss_unknown'
+  // Usage Commercial
+  | 'sample_client' | 'sample_showroom' | 'marketing_event' | 'photography'
+  // R&D & Production
+  | 'rd_testing' | 'prototype' | 'quality_control'
+  // Retours & SAV
+  | 'return_supplier' | 'return_customer' | 'warranty_replacement'
+  // Ajustements & Corrections
+  | 'inventory_correction' | 'write_off' | 'obsolete'
+  // Entrées spéciales
+  | 'purchase_reception' | 'return_from_client' | 'found_inventory' | 'manual_adjustment'
+
 export interface StockMovement {
   id: string
   product_id: string
@@ -22,6 +39,9 @@ export interface StockMovement {
   reference_type?: string
   reference_id?: string
   notes?: string
+  reason_code?: StockReasonCode
+  affects_forecast?: boolean
+  forecast_type?: 'in' | 'out'
   performed_by: string
   performed_at: string
   created_at: string
@@ -48,12 +68,17 @@ export interface CreateStockMovementData {
   reference_type?: string
   reference_id?: string
   notes?: string
+  reason_code?: StockReasonCode
+  affects_forecast?: boolean
+  forecast_type?: 'in' | 'out'
 }
 
 export interface StockMovementFilters {
   product_id?: string
   movement_type?: MovementType
   reference_type?: string
+  reason_code?: StockReasonCode
+  affects_forecast?: boolean
   date_from?: string
   date_to?: string
   performed_by?: string
@@ -190,16 +215,16 @@ export function useStockMovements() {
   const createMovement = useCallback(async (data: CreateStockMovementData) => {
     setLoading(true)
     try {
-      // 1. Récupérer le stock actuel du produit
+      // 1. Récupérer le stock actuel du produit (priorité stock_real)
       const { data: product, error: productError } = await supabase
         .from('products')
-        .select('stock_quantity')
+        .select('stock_real, stock_quantity, stock_forecasted_in, stock_forecasted_out')
         .eq('id', data.product_id)
         .single()
 
       if (productError) throw productError
 
-      const currentStock = product.stock_quantity || 0
+      const currentStock = product.stock_real || product.stock_quantity || 0
 
       // 2. Calculer la nouvelle quantité selon le type de mouvement
       let newQuantity: number
@@ -234,7 +259,7 @@ export function useStockMovements() {
           throw new Error('Type de mouvement invalide')
       }
 
-      // 3. Créer le mouvement de stock
+      // 3. Créer le mouvement de stock avec nouvelles colonnes
       const { data: movement, error: movementError } = await supabase
         .from('stock_movements')
         .insert({
@@ -247,6 +272,9 @@ export function useStockMovements() {
           reference_type: data.reference_type,
           reference_id: data.reference_id,
           notes: data.notes,
+          reason_code: data.reason_code,
+          affects_forecast: data.affects_forecast || false,
+          forecast_type: data.forecast_type,
           performed_by: (await supabase.auth.getUser()).data.user?.id
         })
         .select()
@@ -278,18 +306,30 @@ export function useStockMovements() {
     }
   }, [supabase, toast, fetchMovements])
 
-  // Récupérer le stock disponible d'un produit (physique - réservé)
-  const getAvailableStock = useCallback(async (productId: string): Promise<number> => {
+  // Récupérer le stock disponible avancé (réel - prévisionnel)
+  const getAvailableStock = useCallback(async (productId: string) => {
     try {
       const { data, error } = await supabase
-        .rpc('get_available_stock', { p_product_id: productId })
+        .rpc('get_available_stock_advanced', { p_product_id: productId })
 
       if (error) throw error
 
-      return data || 0
+      return data?.[0] || {
+        stock_real: 0,
+        stock_forecasted_in: 0,
+        stock_forecasted_out: 0,
+        stock_available: 0,
+        stock_total_forecasted: 0
+      }
     } catch (error) {
       console.error('Erreur lors de la récupération du stock disponible:', error)
-      return 0
+      return {
+        stock_real: 0,
+        stock_forecasted_in: 0,
+        stock_forecasted_out: 0,
+        stock_available: 0,
+        stock_total_forecasted: 0
+      }
     }
   }, [supabase])
 
@@ -297,21 +337,39 @@ export function useStockMovements() {
   const getProductHistory = useCallback(async (productId: string) => {
     setLoading(true)
     try {
-      const { data, error } = await supabase
+      // Première requête : récupérer les mouvements de stock
+      const { data: movements, error: movementsError } = await supabase
         .from('stock_movements')
-        .select(`
-          *,
-          user_profiles!stock_movements_performed_by_fkey (
-            first_name,
-            last_name
-          )
-        `)
+        .select('*')
         .eq('product_id', productId)
         .order('performed_at', { ascending: false })
 
-      if (error) throw error
+      if (movementsError) throw movementsError
 
-      return data || []
+      if (!movements || movements.length === 0) {
+        return []
+      }
+
+      // Récupérer les IDs utilisateurs uniques
+      const userIds = [...new Set(movements.map(m => m.performed_by).filter(Boolean))]
+
+      // Deuxième requête : récupérer les profils utilisateurs
+      const { data: userProfiles, error: profilesError } = await supabase
+        .from('user_profiles')
+        .select('user_id, first_name, last_name')
+        .in('user_id', userIds)
+
+      if (profilesError) {
+        console.warn('Erreur récupération profils:', profilesError)
+      }
+
+      // Combiner les données
+      const enrichedMovements = movements.map(movement => ({
+        ...movement,
+        user_profiles: userProfiles?.find(profile => profile.user_id === movement.performed_by) || null
+      }))
+
+      return enrichedMovements
     } catch (error) {
       console.error('Erreur lors de la récupération de l\'historique:', error)
       toast({
@@ -358,6 +416,88 @@ export function useStockMovements() {
     })
   }, [createMovement])
 
+  // Obtenir la description d'un motif
+  const getReasonDescription = useCallback((reasonCode: StockReasonCode): string => {
+    const descriptions: Record<StockReasonCode, string> = {
+      // Sorties normales
+      'sale': 'Vente client',
+      'transfer_out': 'Transfert sortant',
+      // Pertes & Dégradations
+      'damage_transport': 'Casse transport',
+      'damage_handling': 'Casse manipulation',
+      'damage_storage': 'Dégradation stockage',
+      'theft': 'Vol/Disparition',
+      'loss_unknown': 'Perte inexpliquée',
+      // Usage Commercial
+      'sample_client': 'Échantillon client',
+      'sample_showroom': 'Échantillon showroom',
+      'marketing_event': 'Événement marketing',
+      'photography': 'Séance photo',
+      // R&D & Production
+      'rd_testing': 'Tests R&D',
+      'prototype': 'Prototype',
+      'quality_control': 'Contrôle qualité',
+      // Retours & SAV
+      'return_supplier': 'Retour fournisseur',
+      'return_customer': 'Retour client SAV',
+      'warranty_replacement': 'Remplacement garantie',
+      // Ajustements
+      'inventory_correction': 'Correction inventaire',
+      'write_off': 'Mise au rebut',
+      'obsolete': 'Produit obsolète',
+      // Entrées spéciales
+      'purchase_reception': 'Réception fournisseur',
+      'return_from_client': 'Retour client',
+      'found_inventory': 'Trouvaille inventaire',
+      'manual_adjustment': 'Ajustement manuel'
+    }
+    return descriptions[reasonCode] || 'Motif inconnu'
+  }, [])
+
+  // Obtenir les motifs groupés par catégorie
+  const getReasonsByCategory = useCallback(() => {
+    return {
+      sorties_normales: [
+        { code: 'sale' as StockReasonCode, label: 'Vente client' },
+        { code: 'transfer_out' as StockReasonCode, label: 'Transfert sortant' }
+      ],
+      pertes_degradations: [
+        { code: 'damage_transport' as StockReasonCode, label: 'Casse transport' },
+        { code: 'damage_handling' as StockReasonCode, label: 'Casse manipulation' },
+        { code: 'damage_storage' as StockReasonCode, label: 'Dégradation stockage' },
+        { code: 'theft' as StockReasonCode, label: 'Vol/Disparition' },
+        { code: 'loss_unknown' as StockReasonCode, label: 'Perte inexpliquée' }
+      ],
+      usage_commercial: [
+        { code: 'sample_client' as StockReasonCode, label: 'Échantillon client' },
+        { code: 'sample_showroom' as StockReasonCode, label: 'Échantillon showroom' },
+        { code: 'marketing_event' as StockReasonCode, label: 'Événement marketing' },
+        { code: 'photography' as StockReasonCode, label: 'Séance photo' }
+      ],
+      rd_production: [
+        { code: 'rd_testing' as StockReasonCode, label: 'Tests R&D' },
+        { code: 'prototype' as StockReasonCode, label: 'Prototype' },
+        { code: 'quality_control' as StockReasonCode, label: 'Contrôle qualité' }
+      ],
+      retours_sav: [
+        { code: 'return_supplier' as StockReasonCode, label: 'Retour fournisseur' },
+        { code: 'return_customer' as StockReasonCode, label: 'Retour client SAV' },
+        { code: 'warranty_replacement' as StockReasonCode, label: 'Remplacement garantie' }
+      ],
+      ajustements: [
+        { code: 'inventory_correction' as StockReasonCode, label: 'Correction inventaire' },
+        { code: 'write_off' as StockReasonCode, label: 'Mise au rebut' },
+        { code: 'obsolete' as StockReasonCode, label: 'Produit obsolète' }
+      ],
+      entrees_speciales: [
+        { code: 'purchase_reception' as StockReasonCode, label: 'Réception fournisseur' },
+        { code: 'return_from_client' as StockReasonCode, label: 'Retour client' },
+        { code: 'found_inventory' as StockReasonCode, label: 'Trouvaille inventaire' },
+        { code: 'manual_adjustment' as StockReasonCode, label: 'Ajustement manuel' }
+      ]
+    }
+  }, [])
+
   return {
     // État
     loading,
@@ -374,6 +514,10 @@ export function useStockMovements() {
     // Actions simplifiées
     addStock,
     removeStock,
-    adjustStock
+    adjustStock,
+
+    // Helpers motifs
+    getReasonDescription,
+    getReasonsByCategory
   }
 }

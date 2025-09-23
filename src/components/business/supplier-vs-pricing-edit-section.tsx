@@ -3,7 +3,7 @@
 import { useState } from 'react'
 import { DollarSign, Save, X, Edit, AlertCircle, TrendingUp } from 'lucide-react'
 import { Button } from '../ui/button'
-import { cn, formatPriceFromCents } from '../../lib/utils'
+import { cn, formatPrice } from '../../lib/utils'
 import { useInlineEdit, type EditableSection } from '../../hooks/use-inline-edit'
 
 interface Product {
@@ -165,7 +165,7 @@ export function SupplierVsPricingEditSection({
               />
               {editData?.supplier_price && (
                 <div className="text-xs text-red-600 mt-1">
-                  💰 Coût: {formatPriceFromCents(editData.supplier_price)}
+                  💰 Coût: {formatPrice(editData.supplier_price)}
                 </div>
               )}
             </div>
@@ -191,7 +191,7 @@ export function SupplierVsPricingEditSection({
                 required
               />
               <div className="text-xs text-green-600 mt-1">
-                💳 Prix client: {formatPriceFromCents(editData?.selling_price || 0)}
+                💳 Prix client: {formatPrice(editData?.selling_price || 0)}
               </div>
             </div>
           </div>
@@ -225,7 +225,7 @@ export function SupplierVsPricingEditSection({
                 <div className="flex justify-between">
                   <span className="text-blue-700">Prix TTC client:</span>
                   <span className="font-semibold text-blue-800">
-                    {formatPriceFromCents((editData.selling_price || 0) * (1 + (editData.tax_rate || 0.2)))}
+                    {formatPrice((editData.selling_price || 0) * (1 + (editData.tax_rate || 0.2)))}
                   </span>
                 </div>
 
@@ -239,7 +239,7 @@ export function SupplierVsPricingEditSection({
                         "font-semibold",
                         currentMargin.amount > 0 ? "text-green-600" : "text-red-600"
                       )}>
-                        {formatPriceFromCents(currentMargin.amount)}
+                        {formatPrice(currentMargin.amount)}
                       </span>
                     </div>
                     <div className="flex justify-between">
@@ -309,13 +309,13 @@ export function SupplierVsPricingEditSection({
           <div className="flex justify-between items-center">
             <span className="text-green-700 font-medium">Prix HT:</span>
             <span className="text-xl font-bold text-green-800">
-              {formatPriceFromCents(currentSellingPrice)}
+              {formatPrice(currentSellingPrice)}
             </span>
           </div>
           <div className="flex justify-between items-center text-sm">
             <span className="text-green-700">Prix TTC:</span>
             <span className="font-semibold text-green-700">
-              {formatPriceFromCents(currentSellingPrice * (1 + (product.tax_rate || 0.2)))}
+              {formatPrice(currentSellingPrice * (1 + (product.tax_rate || 0.2)))}
             </span>
           </div>
         </div>
@@ -327,7 +327,7 @@ export function SupplierVsPricingEditSection({
             <div className="flex justify-between items-center">
               <span className="text-red-700 font-medium">Coût HT:</span>
               <span className="text-lg font-bold text-red-800">
-                {formatPriceFromCents(currentSupplierPrice)}
+                {formatPrice(currentSupplierPrice)}
               </span>
             </div>
           </div>
@@ -343,7 +343,7 @@ export function SupplierVsPricingEditSection({
                 "text-lg font-bold",
                 currentMargin.amount > 0 ? "text-green-600" : "text-red-600"
               )}>
-                {formatPriceFromCents(currentMargin.amount)}
+                {formatPrice(currentMargin.amount)}
               </span>
             </div>
             <div className="flex justify-between items-center text-sm">

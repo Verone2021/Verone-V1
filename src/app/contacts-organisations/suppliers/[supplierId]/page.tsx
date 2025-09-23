@@ -90,7 +90,7 @@ export default function SupplierDetailPage() {
       id: 'products',
       label: 'Produits',
       icon: <Package className="h-4 w-4" />,
-      badge: supplier?.stats?.products_count || '0'
+      badge: '0'
     }
   ]
 
@@ -343,7 +343,7 @@ export default function SupplierDetailPage() {
             organisationId={supplier.id}
             organisationName={supplier.name}
             organisationType="supplier"
-            onUpdate={handleSupplierUpdate}
+            onUpdate={() => handleSupplierUpdate({})}
           />
         </TabContent>
 

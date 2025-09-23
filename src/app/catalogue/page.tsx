@@ -2,16 +2,15 @@
 
 import { useState, useMemo } from "react"
 import { useRouter } from "next/navigation"
-import { Search, Filter, Grid, List, Plus, FileText, Package } from "lucide-react"
+import Image from "next/image"
+import { Search, Filter, Grid, List, Plus, FileText, Package, Zap } from "lucide-react"
 import { Button } from "../../components/ui/button"
 import { ProductCard } from "../../components/business/product-card"
 import { Badge } from "../../components/ui/badge"
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "../../components/ui/tabs"
 import { cn } from "../../lib/utils"
 import { checkSLOCompliance, debounce } from "../../lib/utils"
 import { useCatalogue, Product, Category } from "../../hooks/use-catalogue"
-import { ProductCreationWizard } from "../../components/forms/product-creation-wizard"
-import { DraftsList } from "../../components/business/drafts-list"
+import { useProductImages } from "../../hooks/use-product-images"
 
 // Interface Produit selon business rules - utilise maintenant celle du hook useCatalogue
 
@@ -21,6 +20,41 @@ interface Filters {
   status: string[]
   category: string[]
   supplier: string[]
+}
+
+// Composant image pour la vue liste
+function ProductImageThumb({ productId }: { productId: string }) {
+  const { primaryImage, loading: imageLoading } = useProductImages({
+    productId,
+    autoFetch: true
+  })
+
+  return (
+    <div className="h-16 w-16 flex-shrink-0 overflow-hidden rounded border border-gray-200 bg-gray-100">
+      {primaryImage?.public_url && !imageLoading ? (
+        <Image
+          src={primaryImage.public_url}
+          alt={primaryImage.alt_text || "Image produit"}
+          width={64}
+          height={64}
+          className="object-contain w-full h-full"
+          onError={() => {
+            console.warn(`Erreur chargement image: ${primaryImage.public_url}`)
+          }}
+        />
+      ) : (
+        <div className="w-full h-full bg-gray-100 flex items-center justify-center">
+          {imageLoading ? (
+            <div className="animate-pulse">
+              <Package className="h-6 w-6 text-gray-300" />
+            </div>
+          ) : (
+            <Package className="h-6 w-6 text-gray-400" />
+          )}
+        </div>
+      )}
+    </div>
+  )
 }
 
 export default function CataloguePage() {
@@ -49,8 +83,6 @@ export default function CataloguePage() {
     category: [],
     supplier: []
   })
-  const [showCreateWizard, setShowCreateWizard] = useState(false)
-  const [editingDraftId, setEditingDraftId] = useState<string | null>(null)
 
   // Fonction de recherche debouncée - synchronise avec useCatalogue
   const debouncedSearch = useMemo(
@@ -162,13 +194,25 @@ export default function CataloguePage() {
 
         {/* Actions et indicateur SLO performance */}
         <div className="flex items-center space-x-4">
-          <Button
-            onClick={() => setShowCreateWizard(true)}
-            className="flex items-center space-x-2"
-          >
-            <Plus className="h-4 w-4" />
-            <span>Nouveau produit</span>
-          </Button>
+          {/* Boutons de création */}
+          <div className="flex items-center space-x-2">
+            <Button
+              onClick={() => router.push('/catalogue/sourcing')}
+              variant="outline"
+              className="flex items-center space-x-2 border-black text-black hover:bg-black hover:text-white"
+            >
+              <Zap className="h-4 w-4" />
+              <span>Sourcing Rapide</span>
+            </Button>
+
+            <Button
+              onClick={() => router.push('/catalogue/create')}
+              className="flex items-center space-x-2 bg-black hover:bg-gray-800 text-white"
+            >
+              <Plus className="h-4 w-4" />
+              <span>Nouveau Produit</span>
+            </Button>
+          </div>
 
           <div className="flex items-center space-x-2">
             <Badge variant={dashboardSLO.isCompliant ? "success" : "destructive"}>
@@ -181,20 +225,8 @@ export default function CataloguePage() {
         </div>
       </div>
 
-      {/* Onglets Produits vs Brouillons */}
-      <Tabs defaultValue="products" className="w-full">
-        <TabsList className="grid w-full grid-cols-2">
-          <TabsTrigger value="products" className="flex items-center gap-2">
-            <Package className="h-4 w-4" />
-            Produits finalisés
-          </TabsTrigger>
-          <TabsTrigger value="drafts" className="flex items-center gap-2">
-            <FileText className="h-4 w-4" />
-            Brouillons
-          </TabsTrigger>
-        </TabsList>
-
-        <TabsContent value="products" className="space-y-6">
+      {/* Contenu principal catalogue */}
+      <div className="space-y-6">
           {/* Barre de recherche et actions pour produits */}
           <div className="flex items-center space-x-4">
             {/* Recherche */}
@@ -305,12 +337,12 @@ export default function CataloguePage() {
                 ))}
               </div>
             ) : (
-              // Vue liste (à implémenter)
+              // Vue liste avec images
               <div className="space-y-4">
                 {products.map(product => (
                   <div key={product.id} className="card-verone p-4">
                     <div className="flex items-center space-x-4">
-                      <div className="h-16 w-16 bg-gray-200 flex-shrink-0"></div>
+                      <ProductImageThumb productId={product.id} />
                       <div className="flex-1">
                         <h3 className="font-medium text-black">{product.name}</h3>
                         <p className="text-sm text-black opacity-70">{product.sku}</p>
@@ -354,44 +386,8 @@ export default function CataloguePage() {
               </div>
             )}
           </div>
-        </TabsContent>
+        </div>
 
-        <TabsContent value="drafts" className="space-y-6">
-          <DraftsList
-            onCreateNew={() => {
-              setEditingDraftId(null)
-              setShowCreateWizard(true)
-            }}
-            onEditDraft={(draftId) => {
-              setEditingDraftId(draftId)
-              setShowCreateWizard(true)
-            }}
-          />
-        </TabsContent>
-      </Tabs>
-
-      {/* Wizard de création de produit */}
-      <ProductCreationWizard
-        isOpen={showCreateWizard}
-        draftId={editingDraftId || undefined}
-        onClose={() => {
-          setShowCreateWizard(false)
-          setEditingDraftId(null)
-        }}
-        onSuccess={(productId) => {
-          console.log('✅ Produit créé avec succès:', productId)
-          setShowCreateWizard(false)
-          setEditingDraftId(null)
-          // Optionnel: rediriger vers le détail du produit
-          router.push(`/catalogue/${productId}`)
-        }}
-        onDraftSaved={(draftId) => {
-          console.log('💾 Brouillon sauvegardé:', draftId)
-          if (!editingDraftId) {
-            setEditingDraftId(draftId)
-          }
-        }}
-      />
     </div>
   )
 }

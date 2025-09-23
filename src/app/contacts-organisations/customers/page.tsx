@@ -52,7 +52,7 @@ export default function CustomersPage() {
   // Utiliser useMemo pour stabiliser l'objet filters et éviter la boucle infinie
   const filters = useMemo(() => ({
     type: 'customer' as const,
-    customer_type: currentCustomerType,
+    customer_type: currentCustomerType as 'all' | 'professional' | 'individual',
     is_active: showActiveOnly ? true : undefined,
     search: searchQuery || undefined
   }), [currentCustomerType, showActiveOnly, searchQuery])

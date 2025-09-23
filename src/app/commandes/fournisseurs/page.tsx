@@ -13,6 +13,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { usePurchaseOrders, PurchaseOrder, PurchaseOrderStatus } from '@/hooks/use-purchase-orders'
 import { useOrganisations } from '@/hooks/use-organisations'
 import { PurchaseOrderFormModal } from '@/components/business/purchase-order-form-modal'
+import { PurchaseOrderReceptionModal } from '@/components/business/purchase-order-reception-modal'
 import { formatCurrency, formatDate } from '@/lib/utils'
 import { Separator } from '@/components/ui/separator'
 
@@ -52,6 +53,7 @@ export default function PurchaseOrdersPage() {
   const [supplierFilter, setSuppliersFilter] = useState<string>('all')
   const [selectedOrder, setSelectedOrder] = useState<PurchaseOrder | null>(null)
   const [showOrderDetail, setShowOrderDetail] = useState(false)
+  const [showReceptionModal, setShowReceptionModal] = useState(false)
 
   useEffect(() => {
     const filters = {
@@ -92,6 +94,11 @@ export default function PurchaseOrdersPage() {
   const openOrderDetail = (order: PurchaseOrder) => {
     setSelectedOrder(order)
     setShowOrderDetail(true)
+  }
+
+  const openReceptionModal = (order: PurchaseOrder) => {
+    setSelectedOrder(order)
+    setShowReceptionModal(true)
   }
 
   return (
@@ -291,7 +298,8 @@ export default function PurchaseOrdersPage() {
                             <Button
                               variant="outline"
                               size="sm"
-                              onClick={() => openOrderDetail(order)}
+                              onClick={() => openReceptionModal(order)}
+                              title="Réceptionner la commande"
                             >
                               <Truck className="h-4 w-4" />
                             </Button>
@@ -410,14 +418,42 @@ export default function PurchaseOrdersPage() {
               <TabsContent value="reception" className="space-y-4">
                 <div className="text-center py-8">
                   <Truck className="mx-auto h-12 w-12 text-gray-400 mb-4" />
-                  <p className="text-gray-500">Module de réception en cours de développement</p>
-                  <p className="text-sm text-gray-400">Cette fonctionnalité permettra de gérer la réception partielle ou totale des commandes</p>
+                  <p className="text-gray-500">Cliquez sur le bouton camion dans la liste des commandes</p>
+                  <p className="text-sm text-gray-400">Pour réceptionner une commande confirmée ou partiellement reçue</p>
+                  <Button
+                    variant="outline"
+                    className="mt-4"
+                    onClick={() => {
+                      setShowOrderDetail(false)
+                      setShowReceptionModal(true)
+                    }}
+                  >
+                    <Truck className="h-4 w-4 mr-2" />
+                    Ouvrir le module de réception
+                  </Button>
                 </div>
               </TabsContent>
             </Tabs>
           )}
         </DialogContent>
       </Dialog>
+
+      {/* Modal de réception */}
+      {selectedOrder && (
+        <PurchaseOrderReceptionModal
+          order={selectedOrder}
+          open={showReceptionModal}
+          onClose={() => {
+            setShowReceptionModal(false)
+            setSelectedOrder(null)
+          }}
+          onSuccess={() => {
+            fetchOrders()
+            setShowReceptionModal(false)
+            setSelectedOrder(null)
+          }}
+        />
+      )}
     </div>
   )
 }

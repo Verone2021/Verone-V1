@@ -23,7 +23,19 @@ import {
   Truck,
   UserCheck,
   BarChart3,
-  ShoppingBag
+  ShoppingBag,
+  MessageCircle,
+  Search,
+  Archive,
+  TrendingUp,
+  ArrowUpDown,
+  ArrowDownToLine,
+  ArrowUpFromLine,
+  AlertTriangle,
+  Target,
+  Eye,
+  CheckCircle,
+  Plus
 } from "lucide-react"
 
 // Interface pour les éléments de navigation hiérarchique
@@ -35,7 +47,7 @@ interface NavItem {
   children?: NavItem[]
 }
 
-// Configuration navigation hiérarchique selon bonnes pratiques e-commerce
+// Configuration navigation optimisée selon best practices ERP 2025
 const navItems: NavItem[] = [
   {
     title: "Dashboard",
@@ -46,13 +58,19 @@ const navItems: NavItem[] = [
   {
     title: "Catalogue",
     icon: BookOpen,
-    description: "Gestion produits et collections",
+    description: "Produits et collections",
     children: [
+      {
+        title: "Dashboard",
+        href: "/catalogue/dashboard",
+        icon: BarChart3,
+        description: "Vue d'ensemble et KPIs"
+      },
       {
         title: "Produits",
         href: "/catalogue",
         icon: Grid3x3,
-        description: "Liste et gestion des produits"
+        description: "Liste et gestion unifiée"
       },
       {
         title: "Catégories",
@@ -67,37 +85,117 @@ const navItems: NavItem[] = [
         description: "Collections thématiques"
       },
       {
-        title: "Stocks",
-        href: "/catalogue/stocks",
-        icon: Package,
-        description: "Inventaire et approvisionnement"
+        title: "Nouveau Produit",
+        href: "/catalogue/create",
+        icon: Plus,
+        description: "Création unifiée"
       }
     ]
   },
   {
-    title: "Commandes",
-    icon: ShoppingCart,
-    description: "Gestion des commandes clients et fournisseurs",
+    title: "Stocks",
+    icon: Package,
+    description: "Inventaire et mouvements",
     children: [
       {
-        title: "Vue d'ensemble",
-        href: "/commandes",
+        title: "Vue d'Ensemble",
+        href: "/stocks",
         icon: BarChart3,
-        description: "Dashboard et statistiques commandes"
+        description: "Dashboard et statistiques"
+      },
+      {
+        title: "Inventaire",
+        href: "/stocks/inventaire",
+        icon: Grid3x3,
+        description: "Gestion des stocks"
+      },
+      {
+        title: "Mouvements",
+        href: "/stocks/mouvements",
+        icon: ArrowUpDown,
+        description: "Historique unifié"
+      },
+      {
+        title: "Entrées",
+        href: "/stocks/entrees",
+        icon: ArrowDownToLine,
+        description: "Réceptions"
+      },
+      {
+        title: "Sorties",
+        href: "/stocks/sorties",
+        icon: ArrowUpFromLine,
+        description: "Expéditions"
+      },
+      {
+        title: "Alertes",
+        href: "/stocks/alertes",
+        icon: AlertTriangle,
+        description: "Ruptures et seuils"
+      }
+    ]
+  },
+  {
+    title: "Sourcing",
+    icon: Target,
+    description: "Approvisionnement et échantillons",
+    children: [
+      {
+        title: "Dashboard",
+        href: "/sourcing",
+        icon: BarChart3,
+        description: "Vue d'ensemble sourcing"
+      },
+      {
+        title: "Produits à Sourcer",
+        href: "/sourcing/produits",
+        icon: Search,
+        description: "Internes et clients"
+      },
+      {
+        title: "Échantillons",
+        href: "/sourcing/echantillons",
+        icon: Eye,
+        description: "Commandes et suivi"
+      },
+      {
+        title: "Validation",
+        href: "/sourcing/validation",
+        icon: CheckCircle,
+        description: "Passage au catalogue"
+      }
+    ]
+  },
+  {
+    title: "Interactions Clients",
+    icon: MessageCircle,
+    description: "Consultations et commandes",
+    children: [
+      {
+        title: "Dashboard Client",
+        href: "/interactions/dashboard",
+        icon: BarChart3,
+        description: "Vue d'ensemble"
+      },
+      {
+        title: "Consultations",
+        href: "/consultations",
+        icon: MessageCircle,
+        description: "Demandes et devis"
       },
       {
         title: "Commandes Clients",
         href: "/commandes/clients",
         icon: ShoppingBag,
-        description: "Ventes et expéditions"
-      },
-      {
-        title: "Commandes Fournisseurs",
-        href: "/commandes/fournisseurs",
-        icon: Package,
-        description: "Achats et approvisionnements"
+        description: "Ventes et suivi"
       }
     ]
+  },
+  {
+    title: "Commandes Fournisseurs",
+    href: "/commandes/fournisseurs",
+    icon: Truck,
+    description: "Achats et approvisionnements"
   },
   {
     title: "Contacts & Organisations",
@@ -132,7 +230,7 @@ interface AppSidebarProps {
 
 export function AppSidebar({ className }: AppSidebarProps) {
   const pathname = usePathname()
-  const [expandedItems, setExpandedItems] = useState<string[]>(['Catalogue', 'Commandes', 'Contacts & Organisations']) // Sections principales ouvertes par défaut
+  const [expandedItems, setExpandedItems] = useState<string[]>(['Catalogue', 'Stocks', 'Sourcing', 'Interactions Clients']) // Sections principales ouvertes par défaut
 
   // Fonction pour basculer l'état d'expansion d'un élément
   const toggleExpanded = (title: string) => {

@@ -78,7 +78,7 @@ export function CommercialEditSection({ organisation, onUpdate, className }: Com
     cancelEdit(section)
   }
 
-  const handleFieldChange = (field: string, value: string | number) => {
+  const handleFieldChange = (field: string, value: string | number | boolean) => {
     let processedValue: any = value
 
     if (field === 'delivery_time_days') {

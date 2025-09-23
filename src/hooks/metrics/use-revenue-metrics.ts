@@ -78,11 +78,11 @@ export function useRevenueMetrics() {
 
       if (previousMonthError) throw previousMonthError;
 
-      // Calculer les totaux (convertir centimes en euros)
-      const today = (todayOrders || []).reduce((sum, order) => sum + (order.total_ht || 0), 0) / 100;
-      const month = (monthOrders || []).reduce((sum, order) => sum + (order.total_ht || 0), 0) / 100;
-      const year = (yearOrders || []).reduce((sum, order) => sum + (order.total_ht || 0), 0) / 100;
-      const previousMonth = (previousMonthOrders || []).reduce((sum, order) => sum + (order.total_ht || 0), 0) / 100;
+      // Calculer les totaux (les montants sont déjà en euros dans la DB)
+      const today = (todayOrders || []).reduce((sum, order) => sum + parseFloat(order.total_ht || 0), 0);
+      const month = (monthOrders || []).reduce((sum, order) => sum + parseFloat(order.total_ht || 0), 0);
+      const year = (yearOrders || []).reduce((sum, order) => sum + parseFloat(order.total_ht || 0), 0);
+      const previousMonth = (previousMonthOrders || []).reduce((sum, order) => sum + parseFloat(order.total_ht || 0), 0);
 
       // Calculer la tendance mensuelle
       let trend = 0;
@@ -105,8 +105,8 @@ export function useRevenueMetrics() {
         averageOrderValue: Math.round(averageOrderValue * 100) / 100,
       };
 
-    } catch (error) {
-      console.error('Erreur lors de la récupération des métriques de revenus:', error);
+    } catch (error: any) {
+      console.error('Erreur lors de la récupération des métriques de revenus:', error?.message || 'Erreur inconnue');
 
       // Retourner des valeurs vides en cas d'erreur
       return {
