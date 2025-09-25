@@ -1,6 +1,6 @@
 "use client"
 
-import { Bell, Search, User, LogOut, Settings, Users } from "lucide-react"
+import { Bell, Search, User, LogOut, Settings, Users, FileText, Bug, AlertTriangle, XCircle } from "lucide-react"
 import { Button } from "../ui/button"
 import { cn } from "../../lib/utils"
 import {
@@ -10,9 +10,13 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "../ui/dropdown-menu"
+import { Badge } from "../ui/badge"
 import { createClient } from "@/lib/supabase/client"
 import { useRouter } from "next/navigation"
 import { useEffect, useState } from "react"
+import * as Sentry from "@sentry/nextjs"
+// Import conditionnel Sentry - CLIENT ONLY
+import type { SentryAutoDetector } from "@/lib/error-detection/sentry-auto-detection"
 
 interface AppHeaderProps {
   className?: string
@@ -21,6 +25,10 @@ interface AppHeaderProps {
 export function AppHeader({ className }: AppHeaderProps) {
   const router = useRouter()
   const [userRole, setUserRole] = useState<string | null>(null)
+  const [testsProgress, setTestsProgress] = useState({ completed: 0, total: 195 })
+  const [sentryErrors, setSentryErrors] = useState<number>(0)
+  const [sentryStatus, setSentryStatus] = useState<'healthy' | 'warning' | 'critical'>('healthy')
+  const [sentryDetector, setSentryDetector] = useState<SentryAutoDetector | null>(null)
 
   // Récupérer le rôle de l'utilisateur au chargement
   useEffect(() => {
@@ -42,10 +50,179 @@ export function AppHeader({ className }: AppHeaderProps) {
     fetchUserRole()
   }, [])
 
+  // Récupérer le progress des tests manuels
+  useEffect(() => {
+    const fetchTestsProgress = () => {
+      try {
+        const savedProgress = localStorage.getItem('manual-tests-progress')
+        if (savedProgress) {
+          const progress = JSON.parse(savedProgress)
+          const completedCount = Object.values(progress).filter((status) => status === 'completed').length
+          setTestsProgress({ completed: completedCount, total: 195 })
+        }
+      } catch (error) {
+        console.error('Error fetching tests progress:', error)
+      }
+    }
+
+    fetchTestsProgress()
+
+    // Écouter les changements de localStorage avec délai pour éviter setState pendant render
+    const handleStorageChange = () => {
+      setTimeout(() => {
+        fetchTestsProgress()
+      }, 0)
+    }
+
+    window.addEventListener('storage', handleStorageChange)
+    return () => window.removeEventListener('storage', handleStorageChange)
+  }, [])
+
+  // 🚀 RÉVOLUTIONNAIRE: Auto-détection Sentry intelligente avec patterns avancés (CLIENT ONLY)
+  useEffect(() => {
+    // Import dynamique côté client seulement
+    if (typeof window !== 'undefined') {
+      import('@/lib/error-detection/sentry-auto-detection').then((module) => {
+        setSentryDetector(module.globalSentryDetector)
+      })
+    }
+  }, [])
+
+  useEffect(() => {
+    if (!sentryDetector || typeof window === 'undefined') return
+
+    // Initialisation du monitoring automatique
+    const updateSentryStatus = () => {
+      try {
+        const errorCount = parseInt(localStorage.getItem('sentry-error-count') || '0')
+        setSentryErrors(errorCount)
+
+        // Statut intelligent basé sur sévérité des erreurs
+        const errorStats = sentryDetector.getErrorStats()
+
+        if (errorStats.criticalErrors > 0) {
+          setSentryStatus('critical')
+        } else if (errorCount > 5) {
+          setSentryStatus('warning')
+        } else if (errorCount > 0) {
+          setSentryStatus('warning')
+        } else {
+          setSentryStatus('healthy')
+        }
+      } catch (error) {
+        console.error('Error updating Sentry status:', error)
+      }
+    }
+
+    updateSentryStatus()
+
+    // Écouter les événements d'erreur du système de détection automatique
+    const handleAutoDetectedError = (event: CustomEvent) => {
+      setSentryErrors(event.detail.count)
+      updateSentryStatus()
+
+      console.log('🤖 [Header] Auto-erreur détectée:', event.detail)
+    }
+
+    window.addEventListener('sentry-error-detected', handleAutoDetectedError as EventListener)
+
+    // Actualisation périodique des stats
+    const statsInterval = setInterval(updateSentryStatus, 5000)
+
+    // Cleanup
+    return () => {
+      window.removeEventListener('sentry-error-detected', handleAutoDetectedError as EventListener)
+      clearInterval(statsInterval)
+    }
+  }, [sentryDetector])
+
   const handleLogout = async () => {
     const supabase = createClient()
     await supabase.auth.signOut()
     router.push('/')
+  }
+
+  // 🎯 Rapport Sentry Intelligent avec Auto-Détection Avancée
+  const handleSentryReport = () => {
+    if (!sentryDetector || typeof window === 'undefined') {
+      console.warn('Sentry detector not available')
+      return
+    }
+
+    // Récupération des statistiques avancées du détecteur automatique
+    const errorStats = sentryDetector.getErrorStats()
+
+    // Rapport complet avec analyse intelligente
+    Sentry.captureMessage('Rapport Global Sentry - Détection Automatique', {
+      level: sentryStatus === 'critical' ? 'error' : sentryStatus === 'warning' ? 'warning' : 'info',
+      tags: {
+        source: 'header_global_auto',
+        error_count: sentryErrors,
+        status: sentryStatus,
+        tests_completed: testsProgress.completed,
+        tests_total: testsProgress.total,
+        auto_detection: 'enabled',
+        critical_errors: errorStats.criticalErrors
+      },
+      contexts: {
+        application: {
+          total_errors: sentryErrors,
+          critical_errors: errorStats.criticalErrors,
+          recent_errors_1h: errorStats.recentErrors.length,
+          auto_corrections_available: errorStats.autoCorrectionsAvailable,
+          health_status: sentryStatus,
+          tests_progress: `${testsProgress.completed}/${testsProgress.total}`,
+          completion_percentage: Math.round((testsProgress.completed / testsProgress.total) * 100)
+        },
+        auto_detection_stats: {
+          total_detected: errorStats.totalErrors,
+          critical_detected: errorStats.criticalErrors,
+          auto_fix_suggestions: errorStats.autoCorrectionsAvailable,
+          recent_activity: errorStats.recentErrors.slice(0, 5).map(e => ({
+            type: e.errorType,
+            severity: e.severity,
+            timestamp: e.timestamp
+          }))
+        }
+      }
+    })
+
+    // Feedback intelligent avec stats détaillées
+    const criticalInfo = errorStats.criticalErrors > 0 ?
+      `\n⚠️ CRITIQUE: ${errorStats.criticalErrors} erreurs critiques détectées` : ''
+
+    const autoFixInfo = errorStats.autoCorrectionsAvailable > 0 ?
+      `\n🔧 ${errorStats.autoCorrectionsAvailable} corrections automatiques disponibles` : ''
+
+    alert(`🚀 Rapport Sentry Intelligent envoyé !
+
+📊 Statut: ${sentryStatus.toUpperCase()}
+🔢 Total erreurs: ${sentryErrors}
+⚡ Tests: ${testsProgress.completed}/${testsProgress.total}${criticalInfo}${autoFixInfo}
+
+✅ Analyse automatique Sentry complète !`)
+
+    // Reset intelligent du compteur
+    sentryDetector.resetErrorCounter()
+    setSentryErrors(0)
+    setSentryStatus('healthy')
+  }
+
+  // 🎯 Fonction pour naviguer vers Tests Manuels (corrigé)
+  const handleTestsNavigation = () => {
+    router.push('/tests-manuels') // Corrigé: '/tests-manuels' au lieu de '/documentation/tests-manuels'
+  }
+
+  // 🎨 Fonction pour obtenir l'icône et couleur Sentry selon le statut
+  const getSentryIconAndColor = () => {
+    switch (sentryStatus) {
+      case 'critical':
+        return { icon: XCircle, color: 'text-red-500 bg-red-100' }
+      case 'warning':
+        return { icon: AlertTriangle, color: 'text-yellow-500 bg-yellow-100' }
+      default:
+        return { icon: Bug, color: 'text-green-500 bg-green-100' }
+    }
   }
 
   return (
@@ -74,6 +251,43 @@ export function AppHeader({ className }: AppHeaderProps) {
             3
           </span>
           <span className="sr-only">Notifications</span>
+        </Button>
+
+        {/* Documentation / Tests Manuels */}
+        <Button
+          variant="ghost"
+          size="icon"
+          className="relative"
+          onClick={handleTestsNavigation}
+          title={`Tests Manuels - ${testsProgress.completed}/${testsProgress.total} complétés (${Math.round((testsProgress.completed / testsProgress.total) * 100)}%)`}
+        >
+          <FileText className="h-5 w-5" />
+          {testsProgress.completed > 0 && (
+            <span className="absolute -top-1 -right-1 h-4 w-auto min-w-[16px] px-1 bg-black text-white rounded-full text-xs flex items-center justify-center font-medium">
+              {testsProgress.completed}
+            </span>
+          )}
+          <span className="sr-only">Tests Manuels</span>
+        </Button>
+
+        {/* 🚀 RÉVOLUTIONNAIRE: Sentry Report Global Button */}
+        <Button
+          variant="ghost"
+          size="icon"
+          className={`relative ${getSentryIconAndColor().color}`}
+          onClick={handleSentryReport}
+          title={`Sentry Report - ${sentryStatus.toUpperCase()} (${sentryErrors} erreurs)`}
+        >
+          {(() => {
+            const { icon: Icon } = getSentryIconAndColor()
+            return <Icon className="h-5 w-5" />
+          })()}
+          {sentryErrors > 0 && (
+            <span className="absolute -top-1 -right-1 h-4 w-auto min-w-[16px] px-1 bg-red-500 text-white rounded-full text-xs flex items-center justify-center font-medium">
+              {sentryErrors}
+            </span>
+          )}
+          <span className="sr-only">Sentry Error Report</span>
         </Button>
 
         {/* Menu Profil utilisateur */}

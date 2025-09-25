@@ -1,4 +1,5 @@
 const { getSecurityHeaders } = require('./src/lib/security/headers.js');
+const { withSentryConfig } = require('@sentry/nextjs');
 
 /** @type {import('next').NextConfig} */
 const nextConfig = {
@@ -54,4 +55,21 @@ const nextConfig = {
   },
 };
 
-module.exports = nextConfig;
+// Configuration Sentry pour Next.js
+const sentryWebpackPluginOptions = {
+  // Configuration optimisée pour Vérone Back Office
+  org: 'verone',
+  project: 'verone-backoffice',
+
+  // Disable source maps upload in development
+  silent: process.env.NODE_ENV === 'development',
+
+  // Automatically tree-shake Sentry logger statements
+  hideSourceMaps: true,
+
+  // For all available options, see:
+  // https://github.com/getsentry/sentry-webpack-plugin#options.
+};
+
+// Export avec wrapper Sentry
+module.exports = withSentryConfig(nextConfig, sentryWebpackPluginOptions);

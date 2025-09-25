@@ -10,6 +10,7 @@ import { ProductImageGallery } from "../../../components/business/product-image-
 import { ProductPhotosModal } from "../../../components/business/product-photos-modal"
 import { ProductCharacteristicsModal } from "../../../components/business/product-characteristics-modal"
 import { ProductDescriptionsModal } from "../../../components/business/product-descriptions-modal"
+import { ProductVariantsSection } from "../../../components/business/product-variants-section"
 import { SampleRequirementSection } from "../../../components/business/sample-requirement-section"
 import { SupplierVsPricingEditSection } from "../../../components/business/supplier-vs-pricing-edit-section"
 import { GeneralInfoEditSection } from "../../../components/business/general-info-edit-section"
@@ -76,7 +77,7 @@ interface Product {
   status: 'in_stock' | 'out_of_stock' | 'preorder' | 'coming_soon' | 'discontinued'
   condition: 'new' | 'used' | 'refurbished'
   stock_quantity: number | null
-  min_stock_level: number | null
+  min_stock: number | null
   supplier_id: string | null
   supplier_reference: string | null
   subcategory_id: string | null
@@ -138,38 +139,18 @@ export default function ProductDetailPage() {
 
       const { data, error } = await supabase
         .from('products')
-        .select(`
-          *,
-          supplier:organisations!products_supplier_id_fkey(
-            id, name, email, phone
-          ),
-          subcategory:subcategories(
-            id, name,
-            category:categories(
-              id, name,
-              family:families(id, name)
-            )
-          )
-        `)
+        .select('*')
         .eq('id', productId)
-        .single()
 
       if (error) {
         throw new Error(error.message)
       }
 
-      if (!data) {
+      if (!data || data.length === 0) {
         throw new Error('Produit non trouvé')
       }
 
-      setProduct({
-        ...data,
-        supplier: data.supplier ? {
-          ...data.supplier,
-          slug: data.supplier.name.toLowerCase().replace(/\s+/g, '-'),
-          is_active: true
-        } : null
-      })
+      setProduct(data[0])
 
     } catch (err) {
       console.error('Erreur lors du chargement du produit:', err)
@@ -419,6 +400,13 @@ export default function ProductDetailPage() {
             />
           </div>
 
+          {/* Variantes Produit */}
+          <ProductVariantsSection
+            productId={product.id}
+            productName={product.name}
+            onVariantsUpdate={fetchProduct}
+          />
+
           {/* Catégorisation */}
           <div className="bg-white border border-black p-4">
             <h3 className="font-medium mb-3 flex items-center text-sm">
@@ -491,7 +479,7 @@ export default function ProductDetailPage() {
               status: product.status,
               condition: product.condition,
               stock_quantity: product.stock_quantity,
-              min_stock_level: product.min_stock_level
+              min_stock: product.min_stock
             }}
             onUpdate={handleProductUpdate}
           />

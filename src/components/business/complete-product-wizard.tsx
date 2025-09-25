@@ -40,11 +40,11 @@ interface CompleteProductWizardProps {
 }
 
 export interface WizardFormData {
-  // Informations générales - TOUS les champs de la table products
+  // Informations générales - REFACTORISÉ selon nouvelle logique
   name: string
   slug: string
   description: string
-  technical_description: string
+  // technical_description: SUPPRIMÉ - consolidé dans description
   selling_points: string[]
   condition: string
   availability_type: string
@@ -60,10 +60,9 @@ export interface WizardFormData {
   supplier_page_url: string
   supplier_reference: string
 
-  // Tarification et coûts
-  price_ht: string
+  // Tarification et coûts - REFACTORISÉ logique prix minimum
   cost_price: string
-  supplier_cost_price: string
+  // supplier_cost_price: SUPPRIMÉ - n'existe plus
   target_margin_percentage: string
   margin_percentage: string
 
@@ -85,7 +84,6 @@ export interface WizardFormData {
   stock_real: string
   stock_forecasted_in: string
   stock_forecasted_out: string
-  min_stock_level: string
   min_stock: string
   reorder_point: string
 
@@ -119,7 +117,6 @@ export function CompleteProductWizard({
     name: '',
     slug: '',
     description: '',
-    technical_description: '',
     selling_points: [],
     condition: 'new',
     availability_type: 'normal',
@@ -136,9 +133,7 @@ export function CompleteProductWizard({
     supplier_reference: '',
 
     // Tarification et coûts
-    price_ht: '',
     cost_price: '',
-    supplier_cost_price: '',
     target_margin_percentage: '',
     margin_percentage: '',
 
@@ -160,7 +155,6 @@ export function CompleteProductWizard({
     stock_real: '',
     stock_forecasted_in: '',
     stock_forecasted_out: '',
-    min_stock_level: '',
     min_stock: '',
     reorder_point: ''
   })
@@ -185,9 +179,12 @@ export function CompleteProductWizard({
       if (draft) {
         setFormData({
           name: draft.name || '',
+          slug: draft.slug || '',
           description: draft.description || '',
-          technical_description: draft.technical_description || '',
           selling_points: Array.isArray(draft.selling_points) ? draft.selling_points : [],
+          condition: draft.condition || 'new',
+          availability_type: draft.availability_type || 'normal',
+          video_url: draft.video_url || '',
           family_id: draft.family_id || '',
           category_id: draft.category_id || '',
           subcategory_id: draft.subcategory_id || '',
@@ -195,19 +192,22 @@ export function CompleteProductWizard({
           supplier_page_url: draft.supplier_page_url || '',
           supplier_reference: draft.supplier_reference || '',
           cost_price: draft.cost_price?.toString() || '',
-          estimated_selling_price: draft.estimated_selling_price?.toString() || '',
+          target_margin_percentage: draft.target_margin_percentage?.toString() || '',
           margin_percentage: draft.margin_percentage?.toString() || '',
           brand: draft.brand || '',
-          color: draft.color || '',
-          material: draft.material || '',
+          variant_attributes: draft.variant_attributes || {},
           dimensions: draft.dimensions || {},
           weight: draft.weight?.toString() || '',
-          condition: draft.condition || 'new',
           gtin: draft.gtin || '',
           product_type: draft.product_type || 'standard',
           assigned_client_id: draft.assigned_client_id || '',
+          creation_mode: draft.creation_mode || 'complete',
           requires_sample: draft.requires_sample || false,
-          min_stock_level: draft.min_stock_level?.toString() || '',
+          stock_quantity: draft.stock_quantity?.toString() || '',
+          stock_real: draft.stock_real?.toString() || '',
+          stock_forecasted_in: draft.stock_forecasted_in?.toString() || '',
+          stock_forecasted_out: draft.stock_forecasted_out?.toString() || '',
+          min_stock: draft.min_stock?.toString() || '',
           reorder_point: draft.reorder_point?.toString() || ''
         })
       }
@@ -249,10 +249,14 @@ export function CompleteProductWizard({
         ...formData,
         creation_mode: 'complete',
         cost_price: formData.cost_price ? parseFloat(formData.cost_price) : null,
-        estimated_selling_price: formData.estimated_selling_price ? parseFloat(formData.estimated_selling_price) : null,
+        target_margin_percentage: formData.target_margin_percentage ? parseFloat(formData.target_margin_percentage) : null,
         margin_percentage: formData.margin_percentage ? parseFloat(formData.margin_percentage) : null,
         weight: formData.weight ? parseFloat(formData.weight) : null,
-        min_stock_level: formData.min_stock_level ? parseInt(formData.min_stock_level) : null,
+        stock_quantity: formData.stock_quantity ? parseInt(formData.stock_quantity) : null,
+        stock_real: formData.stock_real ? parseInt(formData.stock_real) : null,
+        stock_forecasted_in: formData.stock_forecasted_in ? parseInt(formData.stock_forecasted_in) : null,
+        stock_forecasted_out: formData.stock_forecasted_out ? parseInt(formData.stock_forecasted_out) : null,
+        min_stock: formData.min_stock ? parseInt(formData.min_stock) : null,
         reorder_point: formData.reorder_point ? parseInt(formData.reorder_point) : null
       }
 

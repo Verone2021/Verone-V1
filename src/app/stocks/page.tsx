@@ -15,11 +15,11 @@ import {
   Eye,
   Plus
 } from 'lucide-react'
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../../components/ui/card'
-import { Button } from '../../components/ui/button'
-import { Badge } from '../../components/ui/badge'
-import { useStock } from '../../hooks/use-stock'
-import { useMovementsHistory } from '../../hooks/use-movements-history'
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
+import { Button } from '@/components/ui/button'
+import { Badge } from '@/components/ui/badge'
+import { useStock } from '@/hooks/use-stock'
+import { useMovementsHistory } from '@/hooks/use-movements-history'
 
 export default function StocksDashboardPage() {
   const router = useRouter()

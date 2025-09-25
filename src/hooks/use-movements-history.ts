@@ -370,11 +370,18 @@ export function useMovementsHistory() {
     }
   }, [supabase, getReasonDescription])
 
-  // Chargement initial
+  // Chargement initial - ÉVITER BOUCLE INFINIE
   useEffect(() => {
     fetchMovements(filters)
     fetchStats()
-  }, [fetchMovements, fetchStats, filters])
+  }, []) // Chargement initial uniquement - éviter boucle infinie avec filters
+
+  // Effet séparé pour les changements de filtres
+  useEffect(() => {
+    if (Object.keys(filters).length > 0) {
+      fetchMovements(filters)
+    }
+  }, [JSON.stringify(filters)]) // Stabiliser avec JSON.stringify
 
   // Appliquer les filtres
   const applyFilters = useCallback((newFilters: MovementHistoryFilters) => {

@@ -150,7 +150,7 @@ export function useProductImages({
     } finally {
       setUploading(false)
     }
-  }, [productId, bucketName, supabase, fetchImages])
+  }, [productId, bucketName, supabase])
 
   // ✨ Upload multiple optimisé
   const uploadMultipleImages = useCallback(async (
@@ -219,7 +219,7 @@ export function useProductImages({
       setError(err instanceof Error ? err.message : 'Erreur suppression')
       throw err
     }
-  }, [bucketName, supabase, fetchImages])
+  }, [bucketName, supabase])
 
   // ✨ Reorder optimisé
   const reorderImages = useCallback(async (imageIds: string[]) => {
@@ -242,7 +242,7 @@ export function useProductImages({
       setError(err instanceof Error ? err.message : 'Erreur réordonnancement')
       throw err
     }
-  }, [supabase, fetchImages])
+  }, [supabase])
 
   // ✨ Primary image - trigger automatique gère la logique "single primary"
   const setPrimaryImage = useCallback(async (imageId: string) => {
@@ -264,7 +264,7 @@ export function useProductImages({
       setError(err instanceof Error ? err.message : 'Erreur image principale')
       throw err
     }
-  }, [supabase, fetchImages])
+  }, [supabase])
 
   // ✨ Update metadata optimisé avec enum typé
   const updateImageMetadata = useCallback(async (
@@ -294,7 +294,7 @@ export function useProductImages({
       setError(err instanceof Error ? err.message : 'Erreur métadonnées')
       throw err
     }
-  }, [supabase, fetchImages])
+  }, [supabase])
 
   // 🎯 Helpers optimisés
   const getPrimaryImage = useCallback(() => {

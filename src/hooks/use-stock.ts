@@ -16,7 +16,7 @@ export interface StockData {
   stock_forecasted_out: number
   stock_available: number
   stock_total_forecasted: number
-  min_stock_level: number
+  min_stock: number
 
   // Méta-données
   product_name?: string
@@ -64,7 +64,7 @@ export function useStock() {
           stock_real,
           stock_forecasted_in,
           stock_forecasted_out,
-          min_stock_level,
+          min_stock,
           cost_price,
           updated_at
         `)
@@ -86,7 +86,7 @@ export function useStock() {
             stock_forecasted_out: stockAdvanced.stock_forecasted_out,
             stock_available: stockAdvanced.stock_available,
             stock_total_forecasted: stockAdvanced.stock_total_forecasted,
-            min_stock_level: product.min_stock_level || 5,
+            min_stock: product.min_stock || 5,
             last_movement_at: undefined // TODO: Récupérer le dernier mouvement si nécessaire
           }
         })
@@ -148,12 +148,12 @@ export function useStock() {
       // Alertes stock
       if (item.stock_real <= 0) {
         acc.out_of_stock_count++
-      } else if (item.stock_real <= item.min_stock_level) {
+      } else if (item.stock_real <= item.min_stock) {
         acc.low_stock_count++
       }
 
       // Prévision rupture stock
-      if (item.stock_available <= item.min_stock_level) {
+      if (item.stock_available <= item.min_stock) {
         acc.forecasted_shortage_count++
       }
 
@@ -289,7 +289,57 @@ export function useStock() {
 
       // Rafraîchir les données après un court délai pour laisser le trigger s'exécuter
       setTimeout(async () => {
-        await fetchAllStock()
+        // Éviter la boucle infinie en appelant directement au lieu d'utiliser la dépendance
+        setLoading(true)
+        try {
+          const { data, error } = await supabase
+            .from('products')
+            .select(`
+              id,
+              name,
+              sku,
+              stock_real,
+              stock_forecasted_in,
+              stock_forecasted_out,
+              min_stock,
+              cost_price,
+              updated_at
+            `)
+            .order('name')
+
+          if (error) throw error
+
+          // Calculer le stock disponible pour chaque produit
+          const enrichedData: StockData[] = await Promise.all(
+            (data || []).map(async (product) => {
+              const stockAdvanced = await getProductStockAdvanced(product.id)
+
+              return {
+                product_id: product.id,
+                product_name: product.name,
+                product_sku: product.sku,
+                stock_real: stockAdvanced.stock_real,
+                stock_forecasted_in: stockAdvanced.stock_forecasted_in,
+                stock_forecasted_out: stockAdvanced.stock_forecasted_out,
+                stock_available: stockAdvanced.stock_available,
+                stock_total_forecasted: stockAdvanced.stock_total_forecasted,
+                min_stock: product.min_stock || 5,
+                last_movement_at: undefined
+              }
+            })
+          )
+
+          setStockData(enrichedData)
+
+          // Calculer le résumé
+          const summaryData = calculateStockSummary(enrichedData)
+          setSummary(summaryData)
+
+        } catch (error) {
+          console.error('Erreur refresh stock après mouvement:', error)
+        } finally {
+          setLoading(false)
+        }
       }, 500)
 
       return insertedMovement
@@ -356,18 +406,18 @@ export function useStock() {
       if (item.stock_real <= 0) return true
 
       // Stock faible
-      if (item.stock_real <= item.min_stock_level) return true
+      if (item.stock_real <= item.min_stock) return true
 
       // Prévision rupture
-      if (item.stock_available <= item.min_stock_level) return true
+      if (item.stock_available <= item.min_stock) return true
 
       return false
     }).map(item => ({
       ...item,
       alert_type: item.stock_real <= 0 ? 'critical' :
-                 item.stock_real <= item.min_stock_level ? 'low' : 'forecast',
+                 item.stock_real <= item.min_stock ? 'low' : 'forecast',
       alert_message: item.stock_real <= 0 ? 'Stock épuisé' :
-                    item.stock_real <= item.min_stock_level ? 'Stock faible' :
+                    item.stock_real <= item.min_stock ? 'Stock faible' :
                     'Rupture prévisionnelle'
     }))
   }, [stockData])
@@ -388,7 +438,7 @@ export function useStock() {
       if (filters.minReal !== undefined && item.stock_real < filters.minReal) return false
       if (filters.maxReal !== undefined && item.stock_real > filters.maxReal) return false
       if (filters.hasForecasted && (item.stock_forecasted_in + item.stock_forecasted_out) === 0) return false
-      if (filters.lowStock && item.stock_real > item.min_stock_level) return false
+      if (filters.lowStock && item.stock_real > item.min_stock) return false
       return true
     })
   }, [stockData])

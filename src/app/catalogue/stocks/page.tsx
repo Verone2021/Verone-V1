@@ -405,7 +405,7 @@ export default function CatalogueStocksPage() {
                         <TableCell>
                           <StockDisplay
                             stock_real={product.stock_real}
-                            min_stock_level={5}
+                            min_stock={5}
                             size="sm"
                           />
                         </TableCell>

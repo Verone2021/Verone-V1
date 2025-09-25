@@ -93,15 +93,18 @@ export interface DashboardMetricsState {
   };
 }
 
-// Configuration SWR
+// Configuration SWR OPTIMISÉE pour performance <2s
 const SWR_CONFIG = {
-  refreshInterval: 30000, // Refresh toutes les 30 secondes
-  revalidateOnFocus: true,
+  refreshInterval: 60000, // Refresh toutes les 60 secondes (réduit de 30s)
+  revalidateOnFocus: false, // Désactivé pour éviter les requêtes inutiles
   revalidateOnReconnect: true,
-  dedupingInterval: 5000,
+  dedupingInterval: 10000, // Augmenté à 10s pour éviter les doublons
   shouldRetryOnError: true,
-  errorRetryCount: 3,
-  errorRetryInterval: 5000,
+  errorRetryCount: 2, // Réduit à 2 tentatives
+  errorRetryInterval: 3000, // Réduit le délai entre tentatives
+  // Cache agressif pour la performance
+  revalidateIfStale: false, // Ne revalide pas si les données sont stales
+  focusThrottleInterval: 30000, // Throttle les revalidations sur focus
 };
 
 export function useDashboardMetrics() {

@@ -142,39 +142,31 @@ export function useDrafts() {
 
       const { data, error, count } = await supabase
         .from('product_drafts')
-        .select('*', { count: 'exact' })
+        .select(`
+          *,
+          product_draft_images!product_draft_images_product_draft_id_fkey(
+            storage_path,
+            is_primary
+          )
+        `, { count: 'exact' })
         .eq('created_by', user.id)
         .order('updated_at', { ascending: false })
 
       if (error) throw error
 
-      // Enrichir les données avec des métadonnées calculées
-      const enrichedDrafts: DraftWithMeta[] = await Promise.all((data || []).map(async draft => {
-        // Récupérer l'image principale depuis la table product_draft_images
+      // Enrichir les données avec des métadonnées calculées - OPTIMISÉ
+      const enrichedDrafts: DraftWithMeta[] = (data || []).map(draft => {
+        // L'image principale est déjà récupérée via JOIN
         let primaryImageUrl: string | undefined = undefined
 
-        try {
-          console.log(`🔍 Recherche image pour brouillon ${draft.id}:`, draft.name)
-
-          const { data: primaryImage, error: imageError } = await supabase
-            .from('product_draft_images')
-            .select('storage_path')
-            .eq('product_draft_id', draft.id)
-            .eq('is_primary', true)
-            .maybeSingle()
-
-          if (imageError) {
-            console.error(`❌ Erreur récupération image pour ${draft.id}:`, imageError)
-          } else if (primaryImage && primaryImage.storage_path) {
+        if (draft.product_draft_images && draft.product_draft_images.length > 0) {
+          // Chercher d'abord l'image primaire
+          const primaryImage = draft.product_draft_images.find(img => img.is_primary) || draft.product_draft_images[0]
+          if (primaryImage?.storage_path) {
             primaryImageUrl = supabase.storage
               .from('product-images')
               .getPublicUrl(primaryImage.storage_path).data.publicUrl
-            console.log(`✅ Image trouvée pour ${draft.name}:`, primaryImageUrl)
-          } else {
-            console.log(`⚪ Aucune image trouvée pour ${draft.name}`)
           }
-        } catch (imageError) {
-          console.error(`⚠️ Erreur lors de la récupération d'image pour ${draft.name}:`, imageError)
         }
 
         return {
@@ -200,7 +192,7 @@ export function useDrafts() {
           // URL de l'image principale depuis la table normalisée
           primary_image_url: primaryImageUrl
         }
-      }))
+      });
 
       setState(prev => ({
         ...prev,
@@ -790,6 +782,325 @@ export function useDrafts() {
     }
   }
 
+  // ===== WORKFLOW SOURCING AVANCÉ 2025 - IMPLÉMENTATION COMPLÈTE =====
+
+  // NOUVELLE FONCTION : Valider un brouillon sourcing avec workflow conditionnel
+  const validateSourcingDraft = async (draftId: string, validationData: {
+    supplier_id: string
+    cost_price: number
+    requires_sample: boolean
+    estimated_selling_price?: number
+  }) => {
+    try {
+      const { data: { user } } = await supabase.auth.getUser()
+      if (!user) throw new Error('Utilisateur non authentifié')
+
+      // Appel fonction RPC pour validation avec business rules
+      const { data: result, error } = await supabase.rpc('validate_sourcing_draft', {
+        p_draft_id: draftId,
+        p_supplier_id: validationData.supplier_id,
+        p_cost_price: validationData.cost_price,
+        p_requires_sample: validationData.requires_sample,
+        p_estimated_selling_price: validationData.estimated_selling_price,
+        p_validated_by: user.id
+      })
+
+      if (error) throw error
+
+      // Recharger la liste
+      await loadDrafts()
+
+      console.log('✅ Brouillon sourcing validé avec succès')
+      return result
+    } catch (error) {
+      console.error('❌ Erreur validation sourcing:', error)
+      throw error
+    }
+  }
+
+  // NOUVELLE FONCTION : Ajouter un échantillon à une commande groupée
+  const addSampleToOrder = async (
+    draftId: string,
+    orderId: string | null,
+    sampleData: {
+      description: string
+      estimated_cost: number
+      delivery_time_days: number
+      supplier_id: string
+    }
+  ) => {
+    try {
+      const { data: { user } } = await supabase.auth.getUser()
+      if (!user) throw new Error('Utilisateur non authentifié')
+
+      // Si pas d'ordre existant, créer un nouveau
+      let actualOrderId = orderId
+      if (!actualOrderId) {
+        const { data: newOrder, error: orderError } = await supabase
+          .from('sample_orders')
+          .insert({
+            supplier_id: sampleData.supplier_id,
+            status: 'draft',
+            created_by: user.id,
+            estimated_total_cost: sampleData.estimated_cost,
+            expected_delivery_days: sampleData.delivery_time_days
+          })
+          .select()
+          .single()
+
+        if (orderError) throw orderError
+        actualOrderId = newOrder.id
+      }
+
+      // Ajouter l'item à la commande
+      const { data: orderItem, error: itemError } = await supabase
+        .from('sample_order_items')
+        .insert({
+          sample_order_id: actualOrderId,
+          product_draft_id: draftId,
+          description: sampleData.description,
+          estimated_cost: sampleData.estimated_cost,
+          delivery_time_days: sampleData.delivery_time_days,
+          status: 'pending'
+        })
+        .select()
+        .single()
+
+      if (itemError) throw itemError
+
+      // Mettre à jour le brouillon avec les infos échantillon
+      await supabase
+        .from('product_drafts')
+        .update({
+          sample_status: 'request_pending',
+          sample_description: sampleData.description,
+          sample_estimated_cost: sampleData.estimated_cost,
+          sample_delivery_time_days: sampleData.delivery_time_days,
+          sample_requested_at: new Date().toISOString(),
+          updated_at: new Date().toISOString()
+        })
+        .eq('id', draftId)
+
+      // Recharger la liste
+      await loadDrafts()
+
+      console.log('✅ Échantillon ajouté à la commande groupée')
+      return { orderId: actualOrderId, itemId: orderItem.id }
+    } catch (error) {
+      console.error('❌ Erreur ajout échantillon à commande:', error)
+      throw error
+    }
+  }
+
+  // NOUVELLE FONCTION : Soumettre une commande d'échantillons pour approbation
+  const submitSampleOrderForApproval = async (orderId: string) => {
+    try {
+      // Appel fonction RPC pour soumission avec validation
+      const { data: result, error } = await supabase.rpc('submit_sample_order_for_approval', {
+        p_order_id: orderId
+      })
+
+      if (error) throw error
+
+      // Recharger la liste pour mettre à jour les statuts
+      await loadDrafts()
+
+      console.log('✅ Commande d\'échantillons soumise pour approbation')
+      return result
+    } catch (error) {
+      console.error('❌ Erreur soumission commande échantillons:', error)
+      throw error
+    }
+  }
+
+  // NOUVELLE FONCTION : Approuver une commande d'échantillons
+  const approveSampleOrder = async (orderId: string, approvalNotes?: string) => {
+    try {
+      const { data: { user } } = await supabase.auth.getUser()
+      if (!user) throw new Error('Utilisateur non authentifié')
+
+      // Appel fonction RPC pour approbation
+      const { data: result, error } = await supabase.rpc('approve_sample_order', {
+        p_order_id: orderId,
+        p_approved_by: user.id,
+        p_approval_notes: approvalNotes
+      })
+
+      if (error) throw result
+
+      // Recharger la liste
+      await loadDrafts()
+
+      console.log('✅ Commande d\'échantillons approuvée')
+      return result
+    } catch (error) {
+      console.error('❌ Erreur approbation commande échantillons:', error)
+      throw error
+    }
+  }
+
+  // NOUVELLE FONCTION : Marquer une commande comme livrée
+  const markSampleOrderDelivered = async (orderId: string) => {
+    try {
+      // Appel fonction RPC pour marquage livraison
+      const { data: result, error } = await supabase.rpc('mark_sample_order_delivered', {
+        p_order_id: orderId
+      })
+
+      if (error) throw error
+
+      // Recharger la liste
+      await loadDrafts()
+
+      console.log('✅ Commande marquée comme livrée')
+      return result
+    } catch (error) {
+      console.error('❌ Erreur marquage livraison:', error)
+      throw error
+    }
+  }
+
+  // NOUVELLE FONCTION : Valider des échantillons
+  const validateSamples = async (
+    draftIds: string[],
+    validationResult: 'approved' | 'rejected',
+    validationNotes?: string
+  ) => {
+    try {
+      const { data: { user } } = await supabase.auth.getUser()
+      if (!user) throw new Error('Utilisateur non authentifié')
+
+      // Appel fonction RPC pour validation échantillons
+      const { data: result, error } = await supabase.rpc('validate_samples', {
+        p_draft_ids: draftIds,
+        p_validation_result: validationResult,
+        p_validation_notes: validationNotes,
+        p_validated_by: user.id
+      })
+
+      if (error) throw error
+
+      // Recharger la liste
+      await loadDrafts()
+
+      console.log(`✅ Échantillons ${validationResult === 'approved' ? 'validés' : 'rejetés'}`)
+      return result
+    } catch (error) {
+      console.error('❌ Erreur validation échantillons:', error)
+      throw error
+    }
+  }
+
+  // NOUVELLE FONCTION : Transférer vers catalogue après validation échantillons
+  const transferToProductCatalog = async (draftId: string) => {
+    try {
+      // Appel fonction RPC pour transfert sécurisé avec business rules
+      const { data: result, error } = await supabase.rpc('transfer_to_product_catalog', {
+        p_draft_id: draftId
+      })
+
+      if (error) throw error
+
+      // Recharger la liste
+      await loadDrafts()
+
+      console.log('✅ Produit transféré au catalogue avec succès')
+      return result
+    } catch (error) {
+      console.error('❌ Erreur transfert vers catalogue:', error)
+      throw error
+    }
+  }
+
+  // NOUVELLE FONCTION : Obtenir les commandes d'échantillons groupées
+  const getSampleOrdersForSupplier = async (supplierId: string) => {
+    try {
+      const { data: orders, error } = await supabase
+        .from('sample_orders')
+        .select(`
+          *,
+          sample_order_items (
+            *,
+            product_drafts (
+              id,
+              name,
+              supplier_page_url
+            )
+          ),
+          suppliers (
+            id,
+            name,
+            contact_email,
+            contact_phone
+          )
+        `)
+        .eq('supplier_id', supplierId)
+        .order('created_at', { ascending: false })
+
+      if (error) throw error
+
+      console.log(`✅ Commandes échantillons récupérées pour fournisseur ${supplierId}`)
+      return orders || []
+    } catch (error) {
+      console.error('❌ Erreur récupération commandes échantillons:', error)
+      throw error
+    }
+  }
+
+  // NOUVELLE FONCTION : Obtenir les métriques de workflow sourcing
+  const getSourcingWorkflowMetrics = async () => {
+    try {
+      const { data: metrics, error } = await supabase
+        .from('sourcing_workflow_metrics')
+        .select('*')
+        .single()
+
+      if (error) throw error
+
+      console.log('✅ Métriques workflow sourcing récupérées')
+      return metrics
+    } catch (error) {
+      console.error('❌ Erreur récupération métriques sourcing:', error)
+      throw error
+    }
+  }
+
+  // NOUVELLE FONCTION : Filtrer les brouillons par statut workflow
+  const filterByWorkflowStatus = (status: string) => {
+    return state.drafts.filter(d => {
+      const sourcingStatus = (d as any).sourcing_status || 'draft'
+      return sourcingStatus === status
+    })
+  }
+
+  // NOUVELLE FONCTION : Obtenir les brouillons nécessitant des échantillons
+  const getDraftsRequiringSamples = () => {
+    return state.drafts.filter(d =>
+      d.creation_mode === 'sourcing' &&
+      d.requires_sample === true &&
+      (d as any).sample_status !== 'approved'
+    )
+  }
+
+  // NOUVELLE FONCTION : Obtenir les brouillons prêts pour le catalogue
+  const getDraftsReadyForCatalog = () => {
+    return state.drafts.filter(d => {
+      if (d.creation_mode !== 'sourcing') return false
+
+      // Cas 1: Pas d'échantillon requis ET sourcing validé
+      if (d.requires_sample === false && (d as any).sourcing_status === 'sourcing_validated') {
+        return true
+      }
+
+      // Cas 2: Échantillon requis ET échantillon validé
+      if (d.requires_sample === true && (d as any).sample_status === 'approved') {
+        return true
+      }
+
+      return false
+    })
+  }
+
   // Charger les données au montage
   useEffect(() => {
     loadDrafts()
@@ -828,6 +1139,19 @@ export function useDrafts() {
     validateDraft,
     finalizeToProduct,
     updateSampleRequirement,
+    // WORKFLOW SOURCING AVANCÉ 2025
+    validateSourcingDraft,
+    addSampleToOrder,
+    submitSampleOrderForApproval,
+    approveSampleOrder,
+    markSampleOrderDelivered,
+    validateSamples,
+    transferToProductCatalog,
+    getSampleOrdersForSupplier,
+    getSourcingWorkflowMetrics,
+    filterByWorkflowStatus,
+    getDraftsRequiringSamples,
+    getDraftsReadyForCatalog,
     stats
   }
 }

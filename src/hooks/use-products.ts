@@ -23,7 +23,7 @@ export interface Product {
   supplier_reference?: string
   gtin?: string
   stock_quantity?: number
-  min_stock_level?: number
+  min_stock?: number
   supplier_page_url?: string
   supplier_id?: string
   margin_percentage?: number // Marge minimum en pourcentage
@@ -150,7 +150,7 @@ export function useProducts(filters?: ProductFilters) {
           supplier_reference,
           gtin,
           stock_quantity,
-          min_stock_level,
+          min_stock,
           supplier_page_url,
           supplier_id,
           margin_percentage,
@@ -412,7 +412,7 @@ export function useProduct(id: string) {
             supplier_reference,
             gtin,
             stock_quantity,
-            min_stock_level,
+            min_stock,
             supplier_page_url,
             supplier_id,
             margin_percentage,

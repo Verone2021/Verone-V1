@@ -125,24 +125,27 @@ const completeConsultation = async (consultationId: string) => {
 };
 ```
 
-## 🎯 Intégration Produits Sourcing
+## 🎯 Intégration Produits
 
-### **Règle Fondamentale : Sourcing Uniquement**
+### **Règle Fondamentale : Tous Produits Éligibles**
 
-**SEULS les produits avec `creation_mode = 'sourcing'` peuvent être liés aux consultations**
+**TOUS les produits (catalogue + sourcing) peuvent être liés aux consultations**
 
 ```sql
--- Fonction validation automatique
+-- Plus de restriction sur le type de produit
+-- Tous les produits peuvent être liés aux consultations
+-- La fonction de validation peut être supprimée ou simplifiée
+
 CREATE FUNCTION validate_consultation_product_link()
 RETURNS TRIGGER AS $$
 BEGIN
-    -- Vérifier que le produit est en mode sourcing
+    -- Vérifier que le produit existe et n'est pas archivé
     IF NOT EXISTS (
         SELECT 1 FROM products
         WHERE id = NEW.product_id
-        AND creation_mode = 'sourcing'
+        AND archived_at IS NULL
     ) THEN
-        RAISE EXCEPTION 'Seuls les produits en mode sourcing peuvent être liés aux consultations';
+        RAISE EXCEPTION 'Le produit n''existe pas ou est archivé';
     END IF;
 
     RETURN NEW;
@@ -150,7 +153,7 @@ END;
 $$ LANGUAGE plpgsql;
 
 -- Trigger sur consultation_products
-CREATE TRIGGER ensure_sourcing_products_only
+CREATE TRIGGER ensure_valid_products
     BEFORE INSERT OR UPDATE ON consultation_products
     FOR EACH ROW
     EXECUTE FUNCTION validate_consultation_product_link();
@@ -167,18 +170,16 @@ RETURNS TABLE (
     status availability_status_type,
     requires_sample BOOLEAN,
     supplier_name TEXT,
-    sourcing_type VARCHAR
+    creation_mode VARCHAR
 ) AS $$
 BEGIN
     RETURN QUERY
     SELECT p.id, p.name, p.sku, p.status, p.requires_sample,
            o.name as supplier_name,
-           COALESCE(pd.sourcing_type, 'interne') as sourcing_type
+           p.creation_mode
     FROM products p
     LEFT JOIN organisations o ON p.supplier_id = o.id
-    LEFT JOIN product_drafts pd ON pd.id = p.id
-    WHERE p.creation_mode = 'sourcing'
-    AND p.status IN ('sourcing', 'pret_a_commander', 'echantillon_a_commander')
+    WHERE p.archived_at IS NULL  -- Tous les produits non archivés
     ORDER BY p.name;
 END;
 $$ LANGUAGE plpgsql;

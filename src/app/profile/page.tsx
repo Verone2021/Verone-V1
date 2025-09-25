@@ -128,14 +128,60 @@ export default function ProfilePage() {
 
       // Update user profile with validated and sanitized data
       const sanitizedData = sanitizeProfileData(validationResult.formatted)
-      const { error: profileError } = await supabase
-        .from('user_profiles')
-        .update(sanitizedData)
-        .eq('user_id', user.id)
+      console.log('🔍 Diagnostic profile update:', {
+        user_id: user.id,
+        sanitizedData,
+        originalFormData: validationResult.formatted
+      })
 
-      if (profileError) {
-        console.error('Error updating profile:', profileError)
-        return
+      // Vérifier si le profil existe avant update
+      const { data: existingProfile, error: checkError } = await supabase
+        .from('user_profiles')
+        .select('user_id')
+        .eq('user_id', user.id)
+        .single()
+
+      if (checkError) {
+        console.error('❌ Erreur vérification profil existant:', checkError)
+        console.log('Profil inexistant - tentative de création')
+
+        // Profil n'existe pas, le créer
+        const { error: createError } = await supabase
+          .from('user_profiles')
+          .insert({
+            user_id: user.id,
+            ...sanitizedData
+          })
+
+        if (createError) {
+          console.error('❌ Erreur création profil:', {
+            message: createError.message,
+            details: createError.details,
+            hint: createError.hint,
+            code: createError.code
+          })
+          return
+        }
+        console.log('✅ Profil créé avec succès')
+      } else {
+        console.log('✅ Profil existant trouvé, tentative update')
+
+        const { error: profileError } = await supabase
+          .from('user_profiles')
+          .update(sanitizedData)
+          .eq('user_id', user.id)
+
+        if (profileError) {
+          console.error('❌ Erreur update profil détaillée:', {
+            message: profileError.message,
+            details: profileError.details,
+            hint: profileError.hint,
+            code: profileError.code,
+            errorObject: profileError
+          })
+          return
+        }
+        console.log('✅ Profil mis à jour avec succès')
       }
 
       // Refresh user data

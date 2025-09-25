@@ -1,14 +1,16 @@
 "use client"
 
-import { useState } from 'react'
+import { useState, Suspense, lazy } from 'react'
 import { useRouter } from 'next/navigation'
 import { ArrowLeft, Package, Zap, Settings, CheckCircle, Circle, ArrowRight } from 'lucide-react'
 import { Button } from '../ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../ui/card'
 import { Badge } from '../ui/badge'
-import { SourcingQuickForm } from './sourcing-quick-form'
-import { CompleteProductWizard } from './complete-product-wizard'
 import { cn } from '../../lib/utils'
+
+// Lazy loading des composants lourds pour éviter les erreurs 400 au chargement initial
+const SourcingQuickForm = lazy(() => import('./sourcing-quick-form').then(module => ({ default: module.SourcingQuickForm })))
+const CompleteProductWizard = lazy(() => import('./complete-product-wizard').then(module => ({ default: module.CompleteProductWizard })))
 
 interface ProductCreationWizardProps {
   onSuccess?: (productId: string) => void
@@ -211,16 +213,30 @@ export function ProductCreationWizard({
           </div>
         ) : selectedType === 'sourcing' ? (
           // ÉTAPE 2A - Formulaire Sourcing Rapide
-          <SourcingQuickForm
-            onSuccess={handleSuccess}
-            onCancel={handleBack}
-          />
+          <Suspense fallback={
+            <div className="flex items-center justify-center py-12">
+              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-black mr-3"></div>
+              <span className="text-gray-600">Chargement du formulaire sourcing...</span>
+            </div>
+          }>
+            <SourcingQuickForm
+              onSuccess={handleSuccess}
+              onCancel={handleBack}
+            />
+          </Suspense>
         ) : (
           // ÉTAPE 2B - Wizard Produit Complet
-          <CompleteProductWizard
-            onSuccess={handleSuccess}
-            onCancel={handleBack}
-          />
+          <Suspense fallback={
+            <div className="flex items-center justify-center py-12">
+              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-black mr-3"></div>
+              <span className="text-gray-600">Chargement du formulaire complet...</span>
+            </div>
+          }>
+            <CompleteProductWizard
+              onSuccess={handleSuccess}
+              onCancel={handleBack}
+            />
+          </Suspense>
         )}
       </div>
     </div>

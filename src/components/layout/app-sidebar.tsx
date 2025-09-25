@@ -4,6 +4,8 @@ import Link from "next/link"
 import { usePathname } from "next/navigation"
 import { useState } from "react"
 import { cn } from "../../lib/utils"
+import { featureFlags, getModuleDeploymentStatus } from "@/lib/feature-flags"
+import { InactiveModuleWrapper, PhaseIndicator } from "@/components/ui/phase-indicator"
 import {
   Home,
   ShoppingCart,
@@ -35,7 +37,10 @@ import {
   Target,
   Eye,
   CheckCircle,
-  Plus
+  Plus,
+  Globe,
+  Store,
+  Smartphone
 } from "lucide-react"
 
 // Interface pour les éléments de navigation hiérarchique
@@ -83,6 +88,12 @@ const navItems: NavItem[] = [
         href: "/catalogue/collections",
         icon: FolderOpen,
         description: "Collections thématiques"
+      },
+      {
+        title: "Variantes",
+        href: "/catalogue/variantes",
+        icon: Layers,
+        description: "Couleurs, tailles, matériaux"
       },
       {
         title: "Nouveau Produit",
@@ -198,6 +209,12 @@ const navItems: NavItem[] = [
     description: "Achats et approvisionnements"
   },
   {
+    title: "Canaux de Vente",
+    href: "/canaux-vente",
+    icon: ShoppingBag,
+    description: "Dashboard tous canaux de distribution"
+  },
+  {
     title: "Contacts & Organisations",
     icon: Building2,
     description: "Fournisseurs, clients et contacts",
@@ -230,7 +247,7 @@ interface AppSidebarProps {
 
 export function AppSidebar({ className }: AppSidebarProps) {
   const pathname = usePathname()
-  const [expandedItems, setExpandedItems] = useState<string[]>(['Catalogue', 'Stocks', 'Sourcing', 'Interactions Clients']) // Sections principales ouvertes par défaut
+  const [expandedItems, setExpandedItems] = useState<string[]>(['Catalogue', 'Stocks', 'Sourcing', 'Interactions Clients', 'Canaux de Vente']) // Sections principales ouvertes par défaut
 
   // Fonction pour basculer l'état d'expansion d'un élément
   const toggleExpanded = (title: string) => {
@@ -252,6 +269,164 @@ export function AppSidebar({ className }: AppSidebarProps) {
     return false
   }
 
+  // Helper pour obtenir le nom de module à partir du titre
+  const getModuleName = (title: string): string => {
+    const moduleMap: Record<string, string> = {
+      'Catalogue': 'catalogue',
+      'Stocks': 'stocks', 
+      'Sourcing': 'sourcing',
+      'Interactions Clients': 'interactions',
+      'Commandes Fournisseurs': 'commandes',
+      'Canaux de Vente': 'canaux-vente',
+      'Contacts & Organisations': 'contacts'
+    }
+    return moduleMap[title] || title.toLowerCase()
+  }
+
+  // Fonction pour rendre un élément de navigation avec gestion des phases
+  const renderNavItem = (item: NavItem) => {
+    const moduleName = getModuleName(item.title)
+    const moduleStatus = getModuleDeploymentStatus(moduleName)
+    const isExpanded = expandedItems.includes(item.title)
+    const isActiveItem = isActiveOrHasActiveChild(item)
+
+    // Élément de navigation principal
+    const navElement = (
+      <>
+        {item.children ? (
+          // Élément parent avec enfants (bouton d'expansion)
+          <button
+            onClick={() => moduleStatus === 'active' ? toggleExpanded(item.title) : undefined}
+            className={cn(
+              // Base styles Vérone
+              "nav-item flex w-full items-center space-x-3 px-3 py-2.5 text-sm transition-all duration-150 ease-out",
+              "border border-transparent",
+              // État par défaut
+              "text-black hover:opacity-70",
+              // État actif si enfant sélectionné
+              isActiveItem && "bg-black text-white border-black",
+              // État désactivé pour modules inactifs
+              moduleStatus !== 'active' && "opacity-60 cursor-not-allowed"
+            )}
+          >
+            <item.icon className="h-5 w-5 flex-shrink-0" />
+            <div className="flex flex-col flex-1">
+              <div className="flex items-center justify-between">
+                <span className="font-medium">{item.title}</span>
+                {moduleStatus !== 'active' && (
+                  <PhaseIndicator 
+                    moduleName={moduleName}
+                    variant="badge"
+                    className="ml-2 scale-75"
+                  />
+                )}
+              </div>
+              {item.description && (
+                <span className={cn(
+                  "text-xs opacity-70",
+                  isActiveItem ? "text-white" : "text-black"
+                )}>
+                  {item.description}
+                </span>
+              )}
+            </div>
+            {/* Icône d'expansion */}
+            {moduleStatus === 'active' && (
+              <>
+                {isExpanded ? (
+                  <ChevronDown className="h-4 w-4 flex-shrink-0" />
+                ) : (
+                  <ChevronRight className="h-4 w-4 flex-shrink-0" />
+                )}
+              </>
+            )}
+          </button>
+        ) : (
+          // Élément simple sans enfants
+          <Link
+            href={moduleStatus === 'active' ? item.href! : '#'}
+            onClick={(e) => moduleStatus !== 'active' && e.preventDefault()}
+            className={cn(
+              // Base styles Vérone
+              "nav-item flex w-full items-center space-x-3 px-3 py-2.5 text-sm transition-all duration-150 ease-out",
+              "border border-transparent",
+              // État par défaut
+              "text-black hover:opacity-70",
+              // État actif selon charte
+              isActiveItem && "bg-black text-white border-black",
+              // État désactivé pour modules inactifs
+              moduleStatus !== 'active' && "opacity-60 cursor-not-allowed"
+            )}
+          >
+            <item.icon className="h-5 w-5 flex-shrink-0" />
+            <div className="flex flex-col flex-1">
+              <div className="flex items-center justify-between">
+                <span className="font-medium">{item.title}</span>
+                {moduleStatus !== 'active' && (
+                  <PhaseIndicator 
+                    moduleName={moduleName}
+                    variant="badge"
+                    className="ml-2 scale-75"
+                  />
+                )}
+              </div>
+              {item.description && (
+                <span className={cn(
+                  "text-xs opacity-70",
+                  isActiveItem ? "text-white" : "text-black"
+                )}>
+                  {item.description}
+                </span>
+              )}
+            </div>
+          </Link>
+        )}
+
+        {/* Sous-menu (enfants) - seulement si module actif */}
+        {item.children && isExpanded && moduleStatus === 'active' && (
+          <ul className="mt-1 space-y-1">
+            {item.children.map((child) => {
+              const isChildActive = pathname === child.href ||
+                (child.href !== '/dashboard' && pathname.startsWith(child.href!))
+
+              return (
+                <li key={child.href}>
+                  <Link
+                    href={child.href!}
+                    className={cn(
+                      // Base styles pour enfants (indentés)
+                      "nav-item flex w-full items-center space-x-3 px-6 py-2 text-sm transition-all duration-150 ease-out",
+                      "border border-transparent ml-4",
+                      // État par défaut enfant
+                      "text-black hover:opacity-70",
+                      // État actif enfant
+                      isChildActive && "bg-black text-white border-black"
+                    )}
+                  >
+                    <child.icon className="h-4 w-4 flex-shrink-0" />
+                    <div className="flex flex-col">
+                      <span className="font-medium">{child.title}</span>
+                      {child.description && (
+                        <span className={cn(
+                          "text-xs opacity-70",
+                          isChildActive ? "text-white" : "text-black"
+                        )}>
+                          {child.description}
+                        </span>
+                      )}
+                    </div>
+                  </Link>
+                </li>
+              )
+            })}
+          </ul>
+        )}
+      </>
+    )
+
+    return navElement
+  }
+
   return (
     <aside className={cn(
       "flex h-full w-64 flex-col border-r border-black bg-white",
@@ -270,113 +445,9 @@ export function AppSidebar({ className }: AppSidebarProps) {
       <nav className="flex-1 p-4">
         <ul className="space-y-2">
           {navItems.map((item) => {
-            const isExpanded = expandedItems.includes(item.title)
-            const isActiveItem = isActiveOrHasActiveChild(item)
-
             return (
               <li key={item.title}>
-                {/* Élément principal */}
-                {item.children ? (
-                  // Élément parent avec enfants (bouton d'expansion)
-                  <button
-                    onClick={() => toggleExpanded(item.title)}
-                    className={cn(
-                      // Base styles Vérone
-                      "nav-item flex w-full items-center space-x-3 px-3 py-2.5 text-sm transition-all duration-150 ease-out",
-                      "border border-transparent",
-                      // État par défaut
-                      "text-black hover:opacity-70",
-                      // État actif si enfant sélectionné
-                      isActiveItem && "bg-black text-white border-black"
-                    )}
-                  >
-                    <item.icon className="h-5 w-5 flex-shrink-0" />
-                    <div className="flex flex-col flex-1">
-                      <span className="font-medium">{item.title}</span>
-                      {item.description && (
-                        <span className={cn(
-                          "text-xs opacity-70",
-                          isActiveItem ? "text-white" : "text-black"
-                        )}>
-                          {item.description}
-                        </span>
-                      )}
-                    </div>
-                    {/* Icône d'expansion */}
-                    {isExpanded ? (
-                      <ChevronDown className="h-4 w-4 flex-shrink-0" />
-                    ) : (
-                      <ChevronRight className="h-4 w-4 flex-shrink-0" />
-                    )}
-                  </button>
-                ) : (
-                  // Élément simple sans enfants
-                  <Link
-                    href={item.href!}
-                    className={cn(
-                      // Base styles Vérone
-                      "nav-item flex w-full items-center space-x-3 px-3 py-2.5 text-sm transition-all duration-150 ease-out",
-                      "border border-transparent",
-                      // État par défaut
-                      "text-black hover:opacity-70",
-                      // État actif selon charte
-                      isActiveItem && "bg-black text-white border-black"
-                    )}
-                  >
-                    <item.icon className="h-5 w-5 flex-shrink-0" />
-                    <div className="flex flex-col">
-                      <span className="font-medium">{item.title}</span>
-                      {item.description && (
-                        <span className={cn(
-                          "text-xs opacity-70",
-                          isActiveItem ? "text-white" : "text-black"
-                        )}>
-                          {item.description}
-                        </span>
-                      )}
-                    </div>
-                  </Link>
-                )}
-
-                {/* Sous-menu (enfants) */}
-                {item.children && isExpanded && (
-                  <ul className="mt-1 space-y-1">
-                    {item.children.map((child) => {
-                      const isChildActive = pathname === child.href ||
-                        (child.href !== '/dashboard' && pathname.startsWith(child.href!))
-
-                      return (
-                        <li key={child.href}>
-                          <Link
-                            href={child.href!}
-                            className={cn(
-                              // Base styles pour enfants (indentés)
-                              "nav-item flex w-full items-center space-x-3 px-6 py-2 text-sm transition-all duration-150 ease-out",
-                              "border border-transparent ml-4",
-                              // État par défaut enfant
-                              "text-black hover:opacity-70",
-                              // État actif enfant
-                              isChildActive && "bg-black text-white border-black"
-                            )}
-                          >
-                            <child.icon className="h-4 w-4 flex-shrink-0" />
-                            <div className="flex flex-col">
-                              <span className="font-medium">{child.title}</span>
-                              {child.description && (
-                                <span className={cn(
-                                  "text-xs opacity-70",
-                                  isChildActive ? "text-white" : "text-black"
-                                )}>
-                                  {child.description}
-                                </span>
-                              )}
-                            </div>
-                          </Link>
-                        </li>
-                      )
-                    })}
-                  </ul>
-                )}
+                {renderNavItem(item)}
               </li>
             )
           })}

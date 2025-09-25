@@ -1,0 +1,512 @@
+"use client"
+
+import { useState, useEffect } from 'react'
+import { useRouter } from 'next/navigation'
+import {
+  CheckCircle,
+  ArrowRight,
+  Package,
+  Clock,
+  Eye,
+  Edit,
+  X,
+  AlertTriangle,
+  Star,
+  Building,
+  User,
+  Calendar,
+  Euro,
+  ImageIcon,
+  MoreHorizontal,
+  Loader2,
+  Plus,
+  Settings
+} from 'lucide-react'
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
+import { Button } from '@/components/ui/button'
+import { Badge } from '@/components/ui/badge'
+import { Input } from '@/components/ui/input'
+import { Label } from '@/components/ui/label'
+import { Textarea } from '@/components/ui/textarea'
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select'
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from '@/components/ui/dialog'
+import { useDrafts, DraftWithMeta } from '@/hooks/use-drafts'
+import { useToast } from '@/hooks/use-toast'
+import { SampleOrderValidation } from '@/components/business/sample-order-validation'
+
+export default function SourcingValidationPage() {
+  const router = useRouter()
+  const { toast } = useToast()
+  const {
+    drafts,
+    loading,
+    getDraftsReadyForCatalog,
+    getDraftsRequiringSamples,
+    validateSourcingDraft,
+    transferToProductCatalog,
+    getSourcingWorkflowMetrics,
+    loadDrafts
+  } = useDrafts()
+
+  const [selectedProduct, setSelectedProduct] = useState<DraftWithMeta | null>(null)
+  const [validationNotes, setValidationNotes] = useState('')
+  const [activeTab, setActiveTab] = useState<'validation' | 'samples'>('validation')
+  const [workflowMetrics, setWorkflowMetrics] = useState<any>(null)
+  const [validationData, setValidationData] = useState({
+    supplier_id: '',
+    cost_price: 0,
+    requires_sample: false,
+    estimated_selling_price: 0
+  })
+
+  // Charger les métriques du workflow
+  const loadMetrics = async () => {
+    try {
+      const metrics = await getSourcingWorkflowMetrics()
+      setWorkflowMetrics(metrics)
+    } catch (error) {
+      console.warn('Métriques workflow non disponibles:', error)
+    }
+  }
+
+  // Valider un produit sourcing
+  const handleValidateProduct = async (draft: DraftWithMeta, action: 'approve' | 'reject') => {
+    if (action === 'reject') {
+      // TODO: Implémenter rejet de produit
+      toast({
+        title: "Fonctionnalité à venir",
+        description: "Le rejet de produits sourcing sera bientôt disponible",
+        variant: "destructive"
+      })
+      return
+    }
+
+    try {
+      await validateSourcingDraft(draft.id, validationData)
+
+      toast({
+        title: "Produit validé",
+        description: draft.requires_sample
+          ? "Le produit nécessite une validation d'échantillons avant le catalogue"
+          : "Le produit est prêt pour transfert au catalogue"
+      })
+
+      setSelectedProduct(null)
+      setValidationNotes('')
+      setValidationData({ supplier_id: '', cost_price: 0, requires_sample: false, estimated_selling_price: 0 })
+    } catch (error) {
+      console.error('Erreur validation produit:', error)
+      toast({
+        title: "Erreur",
+        description: error instanceof Error ? error.message : "Impossible de valider le produit",
+        variant: "destructive"
+      })
+    }
+  }
+
+  // Transférer vers catalogue
+  const handleTransferToCatalog = async (draftId: string) => {
+    try {
+      await transferToProductCatalog(draftId)
+
+      toast({
+        title: "Transfert réussi",
+        description: "Le produit a été ajouté au catalogue"
+      })
+    } catch (error) {
+      console.error('Erreur transfert catalogue:', error)
+      toast({
+        title: "Erreur",
+        description: error instanceof Error ? error.message : "Impossible de transférer vers le catalogue",
+        variant: "destructive"
+      })
+    }
+  }
+
+  // Obtenir le badge de statut
+  const getStatusBadge = (draft: DraftWithMeta) => {
+    const sourcingStatus = (draft as any).sourcing_status || 'draft'
+    const sampleStatus = (draft as any).sample_status
+
+    if (draft.requires_sample && sampleStatus !== 'approved') {
+      return <Badge variant="outline" className="border-orange-300 text-orange-600">En attente échantillons</Badge>
+    }
+
+    switch (sourcingStatus) {
+      case 'draft':
+        return <Badge variant="outline" className="border-gray-300 text-gray-600">Brouillon</Badge>
+      case 'sourcing_validated':
+        return <Badge variant="outline" className="border-green-300 text-green-600">Sourcing validé</Badge>
+      case 'ready_for_catalog':
+        return <Badge variant="outline" className="border-blue-300 text-blue-600">Prêt pour catalogue</Badge>
+      default:
+        return <Badge variant="outline">En cours</Badge>
+    }
+  }
+
+  // Obtenir les produits prêts pour validation
+  const productsToValidate = drafts.filter(d =>
+    d.creation_mode === 'sourcing' &&
+    ((d as any).sourcing_status === 'draft' || (d as any).sourcing_status === 'sourcing_validated')
+  )
+
+  // Obtenir les produits prêts pour le catalogue
+  const productsReadyForCatalog = getDraftsReadyForCatalog()
+
+  // Obtenir les produits nécessitant des échantillons
+  const productsRequiringSamples = getDraftsRequiringSamples()
+
+  // Chargement initial
+  useEffect(() => {
+    loadDrafts()
+    loadMetrics()
+  }, [])
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center min-h-screen">
+        <Loader2 className="h-8 w-8 animate-spin text-gray-600" />
+      </div>
+    )
+  }
+
+  return (
+    <div className="min-h-screen bg-gray-50">
+      {/* Header */}
+      <div className="bg-white border-b border-gray-200">
+        <div className="container mx-auto px-4 py-6">
+          <div className="flex items-center justify-between">
+            <div>
+              <h1 className="text-3xl font-bold text-black">Validation Produits Sourcing</h1>
+              <p className="text-gray-600 mt-1">Workflow complet: Sourcing → Échantillons → Catalogue</p>
+            </div>
+            <div className="flex items-center space-x-3">
+              <Button
+                variant="outline"
+                onClick={() => router.push('/sourcing')}
+                className="border-black text-black hover:bg-black hover:text-white"
+              >
+                Retour Dashboard
+              </Button>
+              <Button
+                onClick={() => router.push('/catalogue')}
+                className="bg-black hover:bg-gray-800 text-white"
+              >
+                <ArrowRight className="h-4 w-4 mr-2" />
+                Voir Catalogue
+              </Button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div className="container mx-auto px-4 py-8">
+        {/* Onglets de navigation */}
+        <div className="flex space-x-1 mb-6">
+          <Button
+            variant={activeTab === 'validation' ? 'default' : 'outline'}
+            onClick={() => setActiveTab('validation')}
+            className={activeTab === 'validation' ? 'bg-black text-white' : ''}
+          >
+            <Settings className="h-4 w-4 mr-2" />
+            Validation Sourcing ({productsToValidate.length})
+          </Button>
+          <Button
+            variant={activeTab === 'samples' ? 'default' : 'outline'}
+            onClick={() => setActiveTab('samples')}
+            className={activeTab === 'samples' ? 'bg-black text-white' : ''}
+          >
+            <Package className="h-4 w-4 mr-2" />
+            Échantillons Groupés ({productsRequiringSamples.length})
+          </Button>
+        </div>
+
+        {/* Statistiques workflow */}
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-6">
+          <Card className="border-black">
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium text-gray-600">À Valider</CardTitle>
+              <Clock className="h-4 w-4 text-orange-600" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold text-black">{productsToValidate.length}</div>
+              <p className="text-xs text-gray-600">produits sourcing</p>
+            </CardContent>
+          </Card>
+
+          <Card className="border-black">
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium text-gray-600">Échantillons</CardTitle>
+              <Package className="h-4 w-4 text-blue-600" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold text-black">{productsRequiringSamples.length}</div>
+              <p className="text-xs text-gray-600">nécessitent validation</p>
+            </CardContent>
+          </Card>
+
+          <Card className="border-black">
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium text-gray-600">Prêts Catalogue</CardTitle>
+              <CheckCircle className="h-4 w-4 text-green-600" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold text-black">{productsReadyForCatalog.length}</div>
+              <p className="text-xs text-gray-600">transfert possible</p>
+            </CardContent>
+          </Card>
+
+          <Card className="border-black">
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium text-gray-600">Métriques</CardTitle>
+              <Star className="h-4 w-4 text-yellow-600" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold text-black">
+                {workflowMetrics?.avg_validation_days?.toFixed(1) || 'N/A'}j
+              </div>
+              <p className="text-xs text-gray-600">validation moyenne</p>
+            </CardContent>
+          </Card>
+        </div>
+
+        {/* Contenu selon l'onglet actif */}
+        {activeTab === 'validation' ? (
+          /* Onglet Validation Sourcing */
+          <Card className="border-black">
+            <CardHeader>
+              <CardTitle className="text-black">Validation Sourcing ({productsToValidate.length})</CardTitle>
+              <CardDescription>Produits sourcing à valider avant passage échantillons/catalogue</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-6">
+                {productsToValidate.length === 0 ? (
+                  <div className="text-center py-8">
+                    <CheckCircle className="h-12 w-12 text-gray-400 mx-auto mb-4" />
+                    <p className="text-gray-600">Aucun produit en attente de validation</p>
+                    <p className="text-sm text-gray-500">Tous les produits sourcés ont été traités</p>
+                  </div>
+                ) : (
+                  productsToValidate.map((product) => (
+                    <div key={product.id} className="border border-gray-200 rounded-lg p-6 hover:bg-gray-50 transition-colors">
+                      {/* En-tête produit */}
+                      <div className="flex items-start justify-between mb-4">
+                        <div className="flex-1">
+                          <div className="flex items-center space-x-3 mb-2">
+                            <h3 className="font-semibold text-black text-lg">{product.name}</h3>
+                            {getStatusBadge(product)}
+                            <Badge variant="outline" className="text-xs">
+                              {product.progressPercentage}% complété
+                            </Badge>
+                          </div>
+                          <p className="text-gray-600 mb-3">{product.description || 'Pas de description'}</p>
+                          <p className="text-sm text-gray-500">
+                            Créé le {product.lastModified} • Type: {product.creation_mode}
+                          </p>
+                        </div>
+                        <div className="flex items-center space-x-2 ml-4">
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            className="border-gray-300"
+                            onClick={() => router.push(`/catalogue/${product.id}`)}
+                          >
+                            <Eye className="h-4 w-4" />
+                          </Button>
+                        </div>
+                      </div>
+
+                      {/* Informations sourcing */}
+                      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4 text-sm">
+                        <div>
+                          <span className="text-gray-600">URL fournisseur:</span>
+                          <a
+                            href={product.supplier_page_url}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="text-blue-600 hover:underline block truncate"
+                          >
+                            {product.supplier_page_url}
+                          </a>
+                        </div>
+                        <div>
+                          <span className="text-gray-600">Type sourcing:</span>
+                          <span className="font-medium text-black ml-1">
+                            {(product as any).sourcing_type === 'client' ? 'Client spécifique' : 'Catalogue général'}
+                          </span>
+                        </div>
+                        <div>
+                          <span className="text-gray-600">Échantillons requis:</span>
+                          <span className={`font-medium ml-1 ${product.requires_sample ? 'text-orange-600' : 'text-green-600'}`}>
+                            {product.requires_sample ? 'Oui' : 'Non'}
+                          </span>
+                        </div>
+                      </div>
+
+                      {/* Actions de validation */}
+                      <div className="flex items-center justify-between pt-4 border-t border-gray-200">
+                        <div className="text-sm text-gray-500">
+                          {product.missingFields.length > 0
+                            ? `Champs manquants: ${product.missingFields.join(', ')}`
+                            : 'Prêt pour validation'}
+                        </div>
+                        <div className="flex space-x-2">
+                          <Dialog>
+                            <DialogTrigger asChild>
+                              <Button
+                                size="sm"
+                                className="bg-black hover:bg-gray-800 text-white"
+                                onClick={() => setSelectedProduct(product)}
+                              >
+                                <Settings className="h-4 w-4 mr-2" />
+                                Valider Sourcing
+                              </Button>
+                            </DialogTrigger>
+                          </Dialog>
+                        </div>
+                      </div>
+                    </div>
+                  ))
+                )}
+              </div>
+            </CardContent>
+          </Card>
+        ) : (
+          /* Onglet Échantillons Groupés */
+          <SampleOrderValidation />
+        )}
+
+        {/* Produits prêts pour le catalogue */}
+        {productsReadyForCatalog.length > 0 && (
+          <Card className="border-green-500 mt-6">
+            <CardHeader>
+              <CardTitle className="text-green-700">Prêts pour Catalogue ({productsReadyForCatalog.length})</CardTitle>
+              <CardDescription>Produits validés prêts pour transfert au catalogue</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-4">
+                {productsReadyForCatalog.map((product) => (
+                  <div key={product.id} className="flex items-center justify-between p-4 bg-green-50 rounded-lg border border-green-200">
+                    <div className="flex-1">
+                      <h4 className="font-medium text-black">{product.name}</h4>
+                      <p className="text-sm text-gray-600">
+                        {product.requires_sample ? 'Échantillons validés' : 'Pas d\'échantillons requis'}
+                      </p>
+                    </div>
+                    <Button
+                      size="sm"
+                      onClick={() => handleTransferToCatalog(product.id)}
+                      className="bg-green-600 hover:bg-green-700 text-white"
+                    >
+                      <ArrowRight className="h-4 w-4 mr-2" />
+                      Transférer
+                    </Button>
+                  </div>
+                ))}
+              </div>
+            </CardContent>
+          </Card>
+        )}
+
+        {/* Dialog de validation sourcing */}
+        {selectedProduct && (
+          <Dialog open={!!selectedProduct} onOpenChange={() => setSelectedProduct(null)}>
+            <DialogContent className="max-w-lg">
+              <DialogHeader>
+                <DialogTitle>Valider le sourcing</DialogTitle>
+                <DialogDescription>
+                  Compléter les informations pour valider {selectedProduct.name}
+                </DialogDescription>
+              </DialogHeader>
+              <div className="space-y-4">
+                <div>
+                  <Label htmlFor="supplier_id">ID Fournisseur *</Label>
+                  <Input
+                    id="supplier_id"
+                    placeholder="Sélectionner ou saisir l'ID fournisseur"
+                    value={validationData.supplier_id}
+                    onChange={(e) => setValidationData(prev => ({ ...prev, supplier_id: e.target.value }))}
+                    className="border-black focus:ring-black"
+                  />
+                </div>
+                <div>
+                  <Label htmlFor="cost_price">Prix d'achat (€) *</Label>
+                  <Input
+                    id="cost_price"
+                    type="number"
+                    step="0.01"
+                    min="0"
+                    value={validationData.cost_price}
+                    onChange={(e) => setValidationData(prev => ({ ...prev, cost_price: parseFloat(e.target.value) || 0 }))}
+                    className="border-black focus:ring-black"
+                  />
+                </div>
+                <div>
+                  <Label htmlFor="estimated_selling_price">Prix de vente estimé (€)</Label>
+                  <Input
+                    id="estimated_selling_price"
+                    type="number"
+                    step="0.01"
+                    min="0"
+                    value={validationData.estimated_selling_price}
+                    onChange={(e) => setValidationData(prev => ({ ...prev, estimated_selling_price: parseFloat(e.target.value) || 0 }))}
+                    className="border-black focus:ring-black"
+                  />
+                </div>
+                <div className="flex items-center space-x-2">
+                  <input
+                    type="checkbox"
+                    id="requires_sample"
+                    checked={validationData.requires_sample}
+                    onChange={(e) => setValidationData(prev => ({ ...prev, requires_sample: e.target.checked }))}
+                    className="rounded border-gray-300"
+                  />
+                  <Label htmlFor="requires_sample">Nécessite validation d'échantillons</Label>
+                </div>
+                <Textarea
+                  placeholder="Notes de validation (optionnel)..."
+                  value={validationNotes}
+                  onChange={(e) => setValidationNotes(e.target.value)}
+                  className="border-black focus:ring-black"
+                />
+              </div>
+              <DialogFooter>
+                <Button
+                  variant="outline"
+                  onClick={() => {
+                    setSelectedProduct(null)
+                    setValidationNotes('')
+                    setValidationData({ supplier_id: '', cost_price: 0, requires_sample: false, estimated_selling_price: 0 })
+                  }}
+                >
+                  Annuler
+                </Button>
+                <Button
+                  onClick={() => handleValidateProduct(selectedProduct, 'approve')}
+                  className="bg-black hover:bg-gray-800 text-white"
+                  disabled={!validationData.supplier_id || validationData.cost_price <= 0}
+                >
+                  Valider Sourcing
+                </Button>
+              </DialogFooter>
+            </DialogContent>
+          </Dialog>
+        )}
+      </div>
+    </div>
+  )
+}

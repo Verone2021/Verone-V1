@@ -273,7 +273,7 @@ export default function StockInventairePage() {
   const [reservations, setReservations] = useState<any[]>([])
 
   const { toast } = useToast()
-  const { products, loading: productsLoading, fetchProducts } = useCatalogue()
+  const { products, loading: productsLoading, loadCatalogueData } = useCatalogue()
   const { stats: movementStats, fetchStats } = useStockMovements()
   const { fetchReservations, getAvailableStockForProduct } = useStockReservations()
 
@@ -284,7 +284,7 @@ export default function StockInventairePage() {
 
   const loadData = async () => {
     await Promise.all([
-      fetchProducts(),
+      loadCatalogueData(),
       fetchStats(),
       fetchReservations({ is_active: true })
     ])
@@ -297,7 +297,7 @@ export default function StockInventairePage() {
     return products.reduce((stats, product) => {
       stats.total++
       const stock = product.stock_quantity || 0
-      const minStock = product.min_stock_level || 5
+      const minStock = product.min_stock || 5
 
       if (stock === 0) {
         stats.outOfStock++
@@ -328,7 +328,7 @@ export default function StockInventairePage() {
       // Filtre de statut
       if (filters.status !== 'all') {
         const stock = product.stock_quantity || 0
-        const minStock = product.min_stock_level || 5
+        const minStock = product.min_stock || 5
 
         switch (filters.status) {
           case 'out_of_stock':
@@ -384,7 +384,7 @@ export default function StockInventairePage() {
 
   const getStockStatus = (product: any) => {
     const stock = product.stock_quantity || 0
-    const minStock = product.min_stock_level || 5
+    const minStock = product.min_stock || 5
 
     if (stock === 0) {
       return { label: 'Rupture', color: 'bg-red-100 text-red-800', icon: TrendingDown }
@@ -646,7 +646,7 @@ export default function StockInventairePage() {
                           </div>
                         </td>
                         <td className="py-3 px-4">
-                          <span className="text-gray-500">{product.min_stock_level || 5}</span>
+                          <span className="text-gray-500">{product.min_stock || 5}</span>
                         </td>
                         <td className="py-3 px-4">
                           <span className={`px-2 py-1 rounded-full text-xs font-medium ${status.color}`}>

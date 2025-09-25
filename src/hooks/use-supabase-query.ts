@@ -112,7 +112,7 @@ export function useSupabaseQuery<T = any>(
 
   useEffect(() => {
     fetchData()
-  }, [fetchData])
+  }, [queryKey, enabled]) // Éviter boucle infinie - ne pas inclure fetchData
 
   // Optional: refetch on window focus
   useEffect(() => {
@@ -121,7 +121,7 @@ export function useSupabaseQuery<T = any>(
     const handleFocus = () => fetchData()
     window.addEventListener('focus', handleFocus)
     return () => window.removeEventListener('focus', handleFocus)
-  }, [fetchData, refetchOnWindowFocus])
+  }, [refetchOnWindowFocus]) // Éviter boucle infinie - ne pas inclure fetchData
 
   const refetch = useCallback(async () => {
     // Clear cache for this query

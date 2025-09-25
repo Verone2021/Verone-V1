@@ -80,7 +80,7 @@ export function GeneralStockMovementModal({ isOpen, onClose, onSuccess }: Genera
   }, [products, productSearch])
 
   const currentStock = selectedProduct?.stock_real || 0
-  const minLevel = selectedProduct?.min_stock_level || 5
+  const minLevel = selectedProduct?.min_stock || 5
   const reasonsByCategory = getReasonsByCategory()
 
   // Validation en temps réel
@@ -301,7 +301,7 @@ export function GeneralStockMovementModal({ isOpen, onClose, onSuccess }: Genera
                           </div>
                           <StockDisplay
                             stock_real={product.stock_real || 0}
-                            min_stock_level={product.min_stock_level}
+                            min_stock={product.min_stock}
                             size="sm"
                           />
                         </div>

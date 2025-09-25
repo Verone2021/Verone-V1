@@ -26,17 +26,44 @@ export function StockSection({
     })
   }
 
-  // Calculs de statut stock
+  // Calculs de statut stock basés sur min_stock uniquement
   const stockReal = parseInt(formData.stock_real || '0')
   const stockMin = parseInt(formData.min_stock || '0')
   const reorderPoint = parseInt(formData.reorder_point || '0')
+  const stockForecastedIn = parseInt(formData.stock_forecasted_in || '0')
+  const stockForecastedOut = parseInt(formData.stock_forecasted_out || '0')
 
   const getStockStatus = () => {
-    if (stockReal <= 0) return { status: 'out', label: 'Rupture', color: 'text-red-600' }
-    if (stockReal <= stockMin) return { status: 'low', label: 'Stock faible', color: 'text-orange-600' }
-    if (stockReal <= reorderPoint) return { status: 'reorder', label: 'À réapprovisionner', color: 'text-yellow-600' }
-    return { status: 'ok', label: 'Stock correct', color: 'text-green-600' }
+    if (stockReal <= 0) return {
+      status: 'rupture',
+      label: 'Rupture de stock',
+      color: 'text-red-600',
+      icon: '🚨'
+    }
+    if (stockReal <= stockMin) return {
+      status: 'critique',
+      label: 'Stock critique',
+      color: 'text-orange-600',
+      icon: '⚠️'
+    }
+    if (stockReal <= reorderPoint) return {
+      status: 'reappro',
+      label: 'À réapprovisionner',
+      color: 'text-yellow-600',
+      icon: '📦'
+    }
+    return {
+      status: 'ok',
+      label: 'Stock correct',
+      color: 'text-green-600',
+      icon: '✅'
+    }
   }
+
+  // Calculer le stock disponible (réel - réservé)
+  const stockAvailable = Math.max(0, stockReal - stockForecastedOut)
+  // Calculer le stock projeté (réel + entrant - sortant)
+  const stockProjected = stockReal + stockForecastedIn - stockForecastedOut
 
   const stockStatus = getStockStatus()
 
@@ -53,168 +80,216 @@ export function StockSection({
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-6">
-          {/* Stock actuel et gestion */}
-          <div className="grid md:grid-cols-2 gap-4">
-            <div className="space-y-2">
-              <Label htmlFor="stock_real">
-                Stock physique réel
-              </Label>
-              <Input
-                id="stock_real"
-                type="number"
-                min="0"
-                value={formData.stock_real}
-                onChange={(e) => updateField('stock_real', e.target.value)}
-                placeholder="0"
-              />
-              <p className="text-xs text-gray-500">
-                Quantité réellement présente en entrepôt
-              </p>
+          {/* STOCKS AUTOMATIQUES - LECTURE SEULE */}
+          <div className="bg-gray-50 p-4 rounded-lg border-l-4 border-blue-500">
+            <div className="flex items-center mb-3">
+              <Info className="h-4 w-4 mr-2 text-blue-600" />
+              <h4 className="font-medium text-blue-800">Stocks calculés automatiquement</h4>
+            </div>
+            <p className="text-xs text-blue-600 mb-4">
+              Ces valeurs sont mises à jour automatiquement par les mouvements de stock, commandes et réceptions.
+            </p>
+
+            <div className="grid md:grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label className="text-gray-600 flex items-center">
+                  <Package className="h-4 w-4 mr-1" />
+                  Stock physique réel
+                </Label>
+                <div className="relative">
+                  <Input
+                    type="text"
+                    value={`${formData.stock_real || '0'} unités`}
+                    disabled
+                    className="bg-gray-100 text-gray-700 cursor-not-allowed"
+                  />
+                </div>
+                <p className="text-xs text-gray-500">
+                  ⚡ Calculé automatiquement par les mouvements de stock
+                </p>
+              </div>
+
+              <div className="space-y-2">
+                <Label className="text-gray-600 flex items-center">
+                  <Package className="h-4 w-4 mr-1" />
+                  Stock total
+                </Label>
+                <div className="relative">
+                  <Input
+                    type="text"
+                    value={`${formData.stock_quantity || '0'} unités`}
+                    disabled
+                    className="bg-gray-100 text-gray-700 cursor-not-allowed"
+                  />
+                </div>
+                <p className="text-xs text-gray-500">
+                  ⚡ Synchronisé automatiquement avec le stock réel
+                </p>
+              </div>
             </div>
 
-            <div className="space-y-2">
-              <Label htmlFor="stock_quantity">
-                Stock total (legacy)
-              </Label>
-              <Input
-                id="stock_quantity"
-                type="number"
-                min="0"
-                value={formData.stock_quantity}
-                onChange={(e) => updateField('stock_quantity', e.target.value)}
-                placeholder="0"
-              />
-              <p className="text-xs text-gray-500">
-                Stock total actuel (champ legacy)
-              </p>
-            </div>
-          </div>
+            <div className="grid md:grid-cols-2 gap-4 mt-4">
+              <div className="space-y-2">
+                <Label className="text-gray-600 flex items-center">
+                  <TrendingUp className="h-4 w-4 mr-1 text-green-600" />
+                  Stock prévu en entrée
+                </Label>
+                <div className="relative">
+                  <Input
+                    type="text"
+                    value={`${formData.stock_forecasted_in || '0'} unités`}
+                    disabled
+                    className="bg-gray-100 text-gray-700 cursor-not-allowed"
+                  />
+                </div>
+                <p className="text-xs text-gray-500">
+                  ⚡ Calculé par les commandes fournisseurs en cours
+                </p>
+              </div>
 
-          {/* Stock prévisionnel */}
-          <div className="grid md:grid-cols-2 gap-4">
-            <div className="space-y-2">
-              <Label htmlFor="stock_forecasted_in" className="flex items-center">
-                <TrendingUp className="h-4 w-4 mr-1 text-green-600" />
-                Stock prévu en entrée
-              </Label>
-              <Input
-                id="stock_forecasted_in"
-                type="number"
-                min="0"
-                value={formData.stock_forecasted_in}
-                onChange={(e) => updateField('stock_forecasted_in', e.target.value)}
-                placeholder="0"
-              />
-              <p className="text-xs text-gray-500">
-                Quantité en commande chez les fournisseurs
-              </p>
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="stock_forecasted_out" className="flex items-center">
-                <TrendingDown className="h-4 w-4 mr-1 text-red-600" />
-                Stock prévu en sortie
-              </Label>
-              <Input
-                id="stock_forecasted_out"
-                type="number"
-                min="0"
-                value={formData.stock_forecasted_out}
-                onChange={(e) => updateField('stock_forecasted_out', e.target.value)}
-                placeholder="0"
-              />
-              <p className="text-xs text-gray-500">
-                Quantité réservée par les commandes clients
-              </p>
-            </div>
-          </div>
-
-          {/* Seuils de réapprovisionnement */}
-          <div className="grid md:grid-cols-3 gap-4">
-            <div className="space-y-2">
-              <Label htmlFor="min_stock" className="flex items-center">
-                <AlertTriangle className="h-4 w-4 mr-1 text-orange-600" />
-                Stock minimum critique
-              </Label>
-              <Input
-                id="min_stock"
-                type="number"
-                min="0"
-                value={formData.min_stock}
-                onChange={(e) => updateField('min_stock', e.target.value)}
-                placeholder="5"
-              />
-              <p className="text-xs text-gray-500">
-                Seuil d'alerte stock critique
-              </p>
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="min_stock_level">
-                Niveau minimum (legacy)
-              </Label>
-              <Input
-                id="min_stock_level"
-                type="number"
-                min="0"
-                value={formData.min_stock_level}
-                onChange={(e) => updateField('min_stock_level', e.target.value)}
-                placeholder="5"
-              />
-              <p className="text-xs text-gray-500">
-                Niveau de stock minimum (champ legacy)
-              </p>
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="reorder_point">
-                Point de réapprovisionnement
-              </Label>
-              <Input
-                id="reorder_point"
-                type="number"
-                min="0"
-                value={formData.reorder_point}
-                onChange={(e) => updateField('reorder_point', e.target.value)}
-                placeholder="10"
-              />
-              <p className="text-xs text-gray-500">
-                Seuil pour déclencher une commande
-              </p>
+              <div className="space-y-2">
+                <Label className="text-gray-600 flex items-center">
+                  <TrendingDown className="h-4 w-4 mr-1 text-red-600" />
+                  Stock prévu en sortie
+                </Label>
+                <div className="relative">
+                  <Input
+                    type="text"
+                    value={`${formData.stock_forecasted_out || '0'} unités`}
+                    disabled
+                    className="bg-gray-100 text-gray-700 cursor-not-allowed"
+                  />
+                </div>
+                <p className="text-xs text-gray-500">
+                  ⚡ Calculé par les commandes clients confirmées
+                </p>
+              </div>
             </div>
           </div>
 
-          {/* Statut du stock calculé */}
+          {/* SEUILS CONFIGURABLES - MODIFIABLES PAR L'UTILISATEUR */}
+          <div className="bg-white p-4 rounded-lg border-l-4 border-green-500">
+            <div className="flex items-center mb-3">
+              <AlertTriangle className="h-4 w-4 mr-2 text-green-600" />
+              <h4 className="font-medium text-green-800">Paramètres configurables</h4>
+            </div>
+            <p className="text-xs text-green-600 mb-4">
+              Ces seuils sont configurés par vous selon vos besoins métier et stratégie de stock.
+            </p>
+
+            <div className="grid md:grid-cols-2 gap-6">
+              <div className="space-y-2">
+                <Label htmlFor="min_stock" className="flex items-center text-base font-medium">
+                  <AlertTriangle className="h-4 w-4 mr-2 text-orange-600" />
+                  Stock minimum critique
+                </Label>
+                <Input
+                  id="min_stock"
+                  type="number"
+                  min="0"
+                  value={formData.min_stock}
+                  onChange={(e) => updateField('min_stock', e.target.value)}
+                  placeholder="5"
+                  className="border-orange-200 focus:border-orange-500 focus:ring-orange-500"
+                />
+                <div className="text-xs space-y-1">
+                  <p className="text-orange-600 font-medium">
+                    ⚠️ Seuil d'alerte critique - Déclenche statut "Stock faible"
+                  </p>
+                  <p className="text-gray-500">
+                    Stock de sécurité minimum pour éviter les ruptures
+                  </p>
+                </div>
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="reorder_point" className="flex items-center text-base font-medium">
+                  <TrendingUp className="h-4 w-4 mr-2 text-blue-600" />
+                  Point de réapprovisionnement
+                </Label>
+                <Input
+                  id="reorder_point"
+                  type="number"
+                  min="0"
+                  value={formData.reorder_point}
+                  onChange={(e) => updateField('reorder_point', e.target.value)}
+                  placeholder="10"
+                  className="border-blue-200 focus:border-blue-500 focus:ring-blue-500"
+                />
+                <div className="text-xs space-y-1">
+                  <p className="text-blue-600 font-medium">
+                    📦 Seuil de récommande - Déclenche statut "À réapprovisionner"
+                  </p>
+                  <p className="text-gray-500">
+                    Généralement 2-3x le stock minimum selon délai fournisseur
+                  </p>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* ANALYSE ET STATUT DU STOCK */}
           {(formData.stock_real || formData.min_stock || formData.reorder_point) && (
-            <Alert>
-              <Info className="h-4 w-4" />
-              <AlertDescription>
-                <div className="space-y-2">
-                  <div className="font-medium">Analyse du stock :</div>
-                  <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
+            <Alert className="bg-slate-50 border-slate-200">
+              <div className="flex items-center">
+                {stockStatus.icon && <span className="text-lg mr-2">{stockStatus.icon}</span>}
+                <Info className="h-4 w-4 mr-2" />
+                <span className="font-medium">Analyse automatique du stock</span>
+              </div>
+              <AlertDescription className="mt-3">
+                <div className="space-y-3">
+                  {/* Statut principal */}
+                  <div className="flex items-center space-x-3">
+                    <span className="text-gray-600">Statut actuel:</span>
+                    <span className={`font-semibold ${stockStatus.color}`}>
+                      {stockStatus.label}
+                    </span>
+                  </div>
+
+                  {/* Métriques détaillées */}
+                  <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm bg-white p-3 rounded border">
                     <div>
-                      <div className="text-gray-600">Stock réel</div>
-                      <div className="font-semibold">{stockReal} unités</div>
+                      <div className="text-gray-600 text-xs">Stock physique</div>
+                      <div className="font-semibold text-lg">{stockReal}</div>
+                      <div className="text-xs text-gray-500">unités en entrepôt</div>
                     </div>
                     <div>
-                      <div className="text-gray-600">Statut</div>
-                      <div className={`font-semibold ${stockStatus.color}`}>
-                        {stockStatus.label}
+                      <div className="text-gray-600 text-xs">Stock disponible</div>
+                      <div className="font-semibold text-lg text-green-600">{stockAvailable}</div>
+                      <div className="text-xs text-gray-500">vendable immédiatement</div>
+                    </div>
+                    <div>
+                      <div className="text-gray-600 text-xs">Stock projeté</div>
+                      <div className={`font-semibold text-lg ${stockProjected > stockReal ? 'text-blue-600' : stockProjected < stockReal ? 'text-orange-600' : 'text-gray-700'}`}>
+                        {stockProjected}
                       </div>
+                      <div className="text-xs text-gray-500">après mouvements prévus</div>
                     </div>
                     <div>
-                      <div className="text-gray-600">Stock disponible</div>
-                      <div className="font-semibold">
-                        {Math.max(0, stockReal - parseInt(formData.stock_forecasted_out || '0'))} unités
-                      </div>
-                    </div>
-                    <div>
-                      <div className="text-gray-600">Stock futur</div>
-                      <div className="font-semibold text-blue-600">
-                        {stockReal + parseInt(formData.stock_forecasted_in || '0') - parseInt(formData.stock_forecasted_out || '0')} unités
+                      <div className="text-gray-600 text-xs">Seuils configurés</div>
+                      <div className="text-sm space-y-1">
+                        <div>Min: <span className="font-medium text-orange-600">{stockMin}</span></div>
+                        <div>Réappro: <span className="font-medium text-blue-600">{reorderPoint}</span></div>
                       </div>
                     </div>
                   </div>
+
+                  {/* Alertes et recommandations */}
+                  {stockStatus.status === 'rupture' && (
+                    <div className="bg-red-50 text-red-800 p-2 rounded text-xs">
+                      🚨 <strong>Action urgente requise:</strong> Stock en rupture - Réapprovisionnement prioritaire
+                    </div>
+                  )}
+                  {stockStatus.status === 'critique' && (
+                    <div className="bg-orange-50 text-orange-800 p-2 rounded text-xs">
+                      ⚠️ <strong>Stock critique:</strong> Niveau inférieur au minimum de sécurité ({stockMin} unités)
+                    </div>
+                  )}
+                  {stockStatus.status === 'reappro' && (
+                    <div className="bg-yellow-50 text-yellow-800 p-2 rounded text-xs">
+                      📦 <strong>Réapprovisionnement recommandé:</strong> Stock sous le point de commande ({reorderPoint} unités)
+                    </div>
+                  )}
                 </div>
               </AlertDescription>
             </Alert>

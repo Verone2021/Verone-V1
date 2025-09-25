@@ -7,7 +7,9 @@ import { Button } from "../../../components/ui/button"
 import { Badge } from "../../../components/ui/badge"
 import { cn } from "../../../lib/utils"
 import { checkSLOCompliance } from "../../../lib/utils"
-import { FamilyCrudForm } from "../../../components/forms/FamilyCrudForm"
+import { FamilyForm } from "../../../components/forms/FamilyForm"
+import { CategoryForm } from "../../../components/forms/CategoryForm"
+import { SubcategoryForm } from "../../../components/forms/SubcategoryForm"
 
 // 🔗 HOOKS SUPABASE - Connexion aux vraies données
 import { useFamilies } from "../../../hooks/use-families"
@@ -678,15 +680,40 @@ export default function CategoriesPage() {
         </div>
       )}
 
-      {/* Formulaire CRUD */}
-      {formState.isOpen && (
-        <FamilyCrudForm
+      {/* Formulaires séparés selon le type */}
+      {formState.isOpen && formState.type === 'family' && (
+        <FamilyForm
           isOpen={formState.isOpen}
           onClose={closeForm}
           onSubmit={handleFormSubmit}
           initialData={formState.data}
           mode={formState.mode}
-          type={formState.type}
+        />
+      )}
+
+      {formState.isOpen && formState.type === 'category' && (
+        <CategoryForm
+          isOpen={formState.isOpen}
+          onClose={closeForm}
+          onSubmit={handleFormSubmit}
+          initialData={formState.data}
+          mode={formState.mode}
+          families={families?.map(f => ({ id: f.id, name: f.name })) || []}
+        />
+      )}
+
+      {formState.isOpen && formState.type === 'subcategory' && (
+        <SubcategoryForm
+          isOpen={formState.isOpen}
+          onClose={closeForm}
+          onSubmit={handleFormSubmit}
+          initialData={formState.data}
+          mode={formState.mode}
+          categories={allCategories?.map(c => ({
+            id: c.id,
+            name: c.name,
+            family_name: families?.find(f => f.id === c.family_id)?.name || 'Famille inconnue'
+          })) || []}
         />
       )}
     </div>

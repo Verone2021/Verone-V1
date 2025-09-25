@@ -12,7 +12,7 @@ interface Product {
   status: 'in_stock' | 'out_of_stock' | 'preorder' | 'coming_soon' | 'discontinued'
   condition: 'new' | 'refurbished' | 'used'
   stock_quantity?: number
-  min_stock_level?: number
+  min_stock?: number
 }
 
 interface StockEditSectionProps {
@@ -65,7 +65,7 @@ export function StockEditSection({ product, onUpdate, className }: StockEditSect
       status: product.status,
       condition: product.condition,
       stock_quantity: product.stock_quantity || 0,
-      min_stock_level: product.min_stock_level || 5
+      min_stock: product.min_stock || 5
     })
   }
 
@@ -92,7 +92,7 @@ export function StockEditSection({ product, onUpdate, className }: StockEditSect
   }
 
   if (isEditing(section)) {
-    const stockStatus = getStockStatus(editData?.stock_quantity || 0, editData?.min_stock_level || 5)
+    const stockStatus = getStockStatus(editData?.stock_quantity || 0, editData?.min_stock || 5)
 
     return (
       <div className={cn("card-verone p-4", className)}>
@@ -186,8 +186,8 @@ export function StockEditSection({ product, onUpdate, className }: StockEditSect
             </label>
             <input
               type="number"
-              value={editData?.min_stock_level || 5}
-              onChange={(e) => handleFieldChange('min_stock_level', parseInt(e.target.value) || 0)}
+              value={editData?.min_stock || 5}
+              onChange={(e) => handleFieldChange('min_stock', parseInt(e.target.value) || 0)}
               className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-black focus:border-black"
               min="0"
               step="1"
@@ -228,12 +228,12 @@ export function StockEditSection({ product, onUpdate, className }: StockEditSect
           </div>
 
           {/* Alertes et validation */}
-          {editData && editData.stock_quantity <= (editData.min_stock_level || 5) && (
+          {editData && editData.stock_quantity <= (editData.min_stock || 5) && (
             <div className="bg-orange-50 border border-orange-200 p-3 rounded-md">
               <div className="flex items-center text-orange-700">
                 <AlertTriangle className="h-4 w-4 mr-2" />
                 <span className="text-sm font-medium">
-                  Attention: Stock faible ({editData.stock_quantity} ≤ {editData.min_stock_level})
+                  Attention: Stock faible ({editData.stock_quantity} ≤ {editData.min_stock})
                 </span>
               </div>
             </div>
@@ -251,7 +251,7 @@ export function StockEditSection({ product, onUpdate, className }: StockEditSect
   }
 
   // Mode affichage
-  const stockStatus = getStockStatus(product.stock_quantity || 0, product.min_stock_level || 5)
+  const stockStatus = getStockStatus(product.stock_quantity || 0, product.min_stock || 5)
   const currentStatus = STATUS_OPTIONS.find(opt => opt.value === product.status)
   const currentCondition = CONDITION_OPTIONS.find(opt => opt.value === product.condition)
 
@@ -285,7 +285,7 @@ export function StockEditSection({ product, onUpdate, className }: StockEditSect
         </div>
         <div className="flex justify-between items-center">
           <span className="text-black opacity-70">Seuil minimum:</span>
-          <span className="text-black">{product.min_stock_level || 5} unités</span>
+          <span className="text-black">{product.min_stock || 5} unités</span>
         </div>
         <div className="flex justify-between items-center">
           <span className="text-black opacity-70">Condition:</span>

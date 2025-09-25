@@ -10,7 +10,7 @@ interface StockDisplayProps {
   stock_forecasted_in?: number
   stock_forecasted_out?: number
   stock_available?: number
-  min_stock_level?: number
+  min_stock?: number
   showDetails?: boolean
   size?: 'sm' | 'md' | 'lg'
 }
@@ -20,7 +20,7 @@ export function StockDisplay({
   stock_forecasted_in = 0,
   stock_forecasted_out = 0,
   stock_available,
-  min_stock_level = 5,
+  min_stock = 5,
   showDetails = false,
   size = 'md'
 }: StockDisplayProps) {
@@ -29,8 +29,8 @@ export function StockDisplay({
   // Déterminer le statut du stock
   const getStockStatus = () => {
     if (stock_real <= 0) return 'critical'
-    if (stock_real <= min_stock_level) return 'low'
-    if (available <= min_stock_level) return 'forecasted_low'
+    if (stock_real <= min_stock) return 'low'
+    if (available <= min_stock) return 'forecasted_low'
     return 'normal'
   }
 
@@ -111,7 +111,7 @@ export function StockDisplay({
   }
 
   // Affichage détaillé
-  const stockLevel = Math.min((stock_real / (min_stock_level * 2)) * 100, 100)
+  const stockLevel = Math.min((stock_real / (min_stock * 2)) * 100, 100)
 
   return (
     <div className={`p-4 rounded-lg border ${config.bgColor} ${config.borderColor}`}>
@@ -132,7 +132,7 @@ export function StockDisplay({
       <div className="mb-3">
         <div className="flex justify-between text-xs text-gray-600 mb-1">
           <span>Niveau de stock</span>
-          <span>Seuil: {min_stock_level}</span>
+          <span>Seuil: {min_stock}</span>
         </div>
         <Progress
           value={stockLevel}
@@ -182,7 +182,7 @@ export function StockDisplay({
                 <Clock className="h-3 w-3" />
                 Stock disponible
               </span>
-              <span className={available <= min_stock_level ? 'text-amber-600' : 'text-green-600'}>
+              <span className={available <= min_stock ? 'text-amber-600' : 'text-green-600'}>
                 {available}
               </span>
             </div>
@@ -195,7 +195,7 @@ export function StockDisplay({
         <div className="mt-3 p-2 rounded bg-white/50 border border-white/20">
           <div className={`text-xs ${config.color}`}>
             {status === 'critical' && 'Stock épuisé - Réapprovisionnement urgent'}
-            {status === 'low' && `Stock sous le seuil minimum (${min_stock_level} unités)`}
+            {status === 'low' && `Stock sous le seuil minimum (${min_stock} unités)`}
             {status === 'forecasted_low' && 'Stock disponible faible avec les prévisions'}
           </div>
         </div>

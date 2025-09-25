@@ -35,7 +35,7 @@ interface StockMovementModalProps {
     sku: string
     stock_real?: number
     stock_quantity?: number
-    min_stock_level?: number
+    min_stock?: number
   }
   isOpen: boolean
   onClose: () => void
@@ -56,7 +56,7 @@ export function StockMovementModal({ product, isOpen, onClose, onSuccess }: Stoc
   const { toast } = useToast()
 
   const currentStock = product.stock_real || product.stock_quantity || 0
-  const minLevel = product.min_stock_level || 5
+  const minLevel = product.min_stock || 5
   const reasonsByCategory = getReasonsByCategory()
 
   // Validation en temps réel

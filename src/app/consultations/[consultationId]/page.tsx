@@ -23,6 +23,7 @@ import { Badge } from '../../../components/ui/badge'
 import { Alert, AlertDescription } from '../../../components/ui/alert'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '../../../components/ui/tabs'
 import { ConsultationOrderInterface } from '../../../components/business/consultation-order-interface'
+import { ConsultationImageGallery } from '../../../components/business/consultation-image-gallery'
 import { useConsultations, ClientConsultation } from '../../../hooks/use-consultations'
 import { useToast } from '../../../hooks/use-toast'
 
@@ -163,8 +164,32 @@ export default function ConsultationDetailPage() {
       </div>
 
       <div className="container mx-auto px-4 py-8 space-y-6">
-        {/* Informations consultation */}
-        <Card>
+        {/* Section avec informations et galerie photos */}
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          {/* Galerie photos consultation */}
+          <div className="lg:col-span-1">
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center">
+                  <Package className="h-5 w-5 mr-2" />
+                  Photos consultation
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <ConsultationImageGallery
+                  consultationId={consultationId}
+                  consultationTitle={consultation.organisation_name}
+                  consultationStatus={consultation.status}
+                  allowEdit={true}
+                  className="w-full"
+                />
+              </CardContent>
+            </Card>
+          </div>
+
+          {/* Informations consultation */}
+          <div className="lg:col-span-2">
+            <Card>
           <CardHeader>
             <div className="flex items-center justify-between">
               <CardTitle className="flex items-center">
@@ -256,7 +281,9 @@ export default function ConsultationDetailPage() {
               </div>
             )}
           </CardContent>
-        </Card>
+            </Card>
+          </div>
+        </div>
 
         {/* Actions de statut */}
         <Card>

@@ -84,31 +84,42 @@ export function useStockOptimized(filters: StockFilters = {}) {
   const lowStockQuery = useSupabaseQuery(
     'low-stock-products',
     async (supabase) => {
+      // Requête corrigée : utiliser RPC pour comparaison inter-colonnes
       const { data, error } = await supabase
-        .from('products')
-        .select(`
-          id,
-          name,
-          sku,
-          stock_real,
-          min_stock,
-          reorder_point,
-          supplier:organisations!supplier_id(name)
-        `)
-        .or(`stock_real.lte.min_stock,stock_real.eq.0`)
-        .is('archived_at', null)
-        .order('stock_real', { ascending: true })
-        .limit(50)
+        .rpc('get_low_stock_products', { limit_count: 50 })
 
-      if (error) throw error
+      if (error) {
+        // Fallback si la fonction RPC n'existe pas
+        console.warn('Fonction get_low_stock_products non disponible, utilisation requête alternative')
 
-      return {
-        data: (data || []).map(product => ({
-          ...product,
-          supplier_name: product.supplier?.name
-        })),
-        error: null
+        const { data: fallbackData, error: fallbackError } = await supabase
+          .from('products')
+          .select(`
+            id,
+            name,
+            sku,
+            stock_real,
+            min_stock,
+            reorder_point,
+            organisations!supplier_id(name)
+          `)
+          .eq('stock_real', 0)
+          .is('archived_at', null)
+          .order('stock_real', { ascending: true })
+          .limit(25)
+
+        if (fallbackError) throw fallbackError
+
+        return {
+          data: (fallbackData || []).map(product => ({
+            ...product,
+            supplier_name: product.organisations?.name
+          })),
+          error: null
+        }
       }
+
+      return { data: data || [], error: null }
     },
     {
       staleTime: 2 * 60 * 1000,  // 2 minutes

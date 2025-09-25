@@ -865,8 +865,8 @@ export function DefinitiveProductForm({
                     id="min_stock"
                     type="number"
                     min="0"
-                    value={formData.min_stock_level}
-                    onChange={(e) => setFormData({...formData, min_stock_level: e.target.value})}
+                    value={formData.min_stock}
+                    onChange={(e) => setFormData({...formData, min_stock: e.target.value})}
                     placeholder="5"
                     className="border-gray-300 focus:border-black"
                   />

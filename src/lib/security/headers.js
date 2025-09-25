@@ -39,7 +39,10 @@ const securityHeaders = {
         "ws://localhost:*", // Webpack hot reload
         "wss://localhost:*", // Webpack hot reload HTTPS
         "https://aorroydfjsrygmosnzrl.supabase.co",
-        "wss://aorroydfjsrygmosnzrl.supabase.co"
+        "wss://aorroydfjsrygmosnzrl.supabase.co",
+        "https://o4510076285943808.ingest.de.sentry.io",
+        "https://*.sentry.io",
+        "https://*.ingest.de.sentry.io"
       ],
       mediaSrc: ["'self'", "https://aorroydfjsrygmosnzrl.supabase.co"],
       objectSrc: ["'none'"],

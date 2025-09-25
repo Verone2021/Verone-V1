@@ -23,7 +23,7 @@ export interface Product {
   stock_real?: number
   stock_forecasted_in?: number
   stock_forecasted_out?: number
-  min_stock_level?: number
+  min_stock?: number
   supplier_id?: string
   subcategory_id?: string
   brand?: string
@@ -383,7 +383,7 @@ export function useCatalogueOptimized(filters: CatalogueFilters = {}) {
       outOfStock: products.filter(p => p.status === 'out_of_stock').length,
       preorder: products.filter(p => p.status === 'preorder').length,
       comingSoon: products.filter(p => p.status === 'coming_soon').length,
-      lowStock: products.filter(p => (p.stock_real || 0) <= (p.min_stock_level || 5)).length,
+      lowStock: products.filter(p => (p.stock_real || 0) <= (p.min_stock || 5)).length,
       averageMargin: products.reduce((acc, p) => acc + (p.margin_percentage || 0), 0) / (products.length || 1)
     }
   }, [productsQuery.data])

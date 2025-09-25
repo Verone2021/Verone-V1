@@ -13,7 +13,7 @@ interface Product {
   status: 'in_stock' | 'out_of_stock' | 'preorder' | 'coming_soon' | 'discontinued'
   condition: 'new' | 'refurbished' | 'used'
   stock_quantity?: number
-  min_stock_level?: number
+  min_stock?: number
 }
 
 interface StockViewSectionProps {
@@ -45,7 +45,7 @@ export function StockViewSection({ product, className }: StockViewSectionProps) 
     return { color: 'text-green-600', level: 'Bon' }
   }
 
-  const stockStatus = getStockStatus(product.stock_quantity || 0, product.min_stock_level || 5)
+  const stockStatus = getStockStatus(product.stock_quantity || 0, product.min_stock || 5)
   const currentStatus = STATUS_OPTIONS.find(opt => opt.value === product.status)
   const currentCondition = CONDITION_OPTIONS.find(opt => opt.value === product.condition)
 
@@ -98,7 +98,7 @@ export function StockViewSection({ product, className }: StockViewSectionProps) 
 
         <div className="flex justify-between items-center">
           <span className="text-black opacity-70">Seuil minimum:</span>
-          <span className="text-black">{product.min_stock_level || 5} unités</span>
+          <span className="text-black">{product.min_stock || 5} unités</span>
         </div>
 
         <div className="flex justify-between items-center">

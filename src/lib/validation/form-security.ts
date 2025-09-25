@@ -194,8 +194,14 @@ export const SecureProductSchema = z.object({
     height: z.number().min(0).optional()
   }).optional(),
   stock_quantity: z.number().int().min(0),
-  min_stock_level: z.number().int().min(0).optional(),
-  status: z.enum(['in_stock', 'out_of_stock', 'preorder', 'coming_soon', 'discontinued'])
+  min_stock: z.number().int().min(0).optional(),
+  reorder_point: z.number().int().min(0).optional(),
+  status: z.enum([
+    // Statuts automatiques (calculés par le système)
+    'in_stock', 'out_of_stock', 'coming_soon',
+    // Statuts manuels uniquement (modifiables par l'utilisateur)
+    'preorder', 'discontinued', 'sourcing', 'pret_a_commander', 'echantillon_a_commander'
+  ])
 })
 
 /**

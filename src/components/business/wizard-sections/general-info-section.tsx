@@ -8,7 +8,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '.
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../../ui/card'
 import { Badge } from '../../ui/badge'
 import { Button } from '../../ui/button'
-import { Plus, X, Info } from 'lucide-react'
+import { Plus, X, Info, Tag } from 'lucide-react'
 import { CategorySelector } from '../category-selector'
 import { WizardFormData } from '../complete-product-wizard'
 
@@ -57,93 +57,49 @@ export function GeneralInfoSection({
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-6">
-          {/* Nom et SKU */}
-          <div className="grid md:grid-cols-2 gap-4">
-            <div className="space-y-2">
-              <Label htmlFor="name">
-                Nom du produit
-              </Label>
-              <Input
-                id="name"
-                value={formData.name}
-                onChange={(e) => updateField('name', e.target.value)}
-                placeholder="Ex: Fauteuil design scandinave..."
-              />
-              <p className="text-xs text-gray-500">
-                Nom commercial du produit visible aux clients
-              </p>
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="slug">
-                Slug URL (optionnel)
-              </Label>
-              <Input
-                id="slug"
-                value={formData.slug}
-                onChange={(e) => updateField('slug', e.target.value)}
-                placeholder="fauteuil-design-scandinave"
-              />
-              <p className="text-xs text-gray-500">
-                URL conviviale pour le produit (généré automatiquement si vide)
-              </p>
-            </div>
+          {/* NOM DU PRODUIT - EN PREMIER */}
+          <div className="space-y-2">
+            <Label htmlFor="name" className="text-base font-medium">
+              Nom du produit
+            </Label>
+            <Input
+              id="name"
+              value={formData.name}
+              onChange={(e) => updateField('name', e.target.value)}
+              placeholder="Ex: Fauteuil design scandinave..."
+              className="text-lg"
+            />
+            <p className="text-xs text-gray-500">
+              Nom commercial du produit visible aux clients
+            </p>
           </div>
 
-          {/* Description principale */}
+          {/* DESCRIPTION UNIFIÉE - Fusion commerciale + technique */}
           <div className="space-y-2">
-            <Label htmlFor="description">
-              Description principale
+            <Label htmlFor="description" className="text-base font-medium">
+              Description complète
             </Label>
             <Textarea
               id="description"
               value={formData.description}
               onChange={(e) => updateField('description', e.target.value)}
-              placeholder="Description commerciale du produit visible aux clients..."
-              rows={3}
+              placeholder="Description commerciale et spécifications techniques du produit...
+
+Exemple:
+• Description commerciale pour les clients
+• Dimensions et matériaux
+• Avantages et caractéristiques techniques
+• Informations de mise en œuvre"
+              rows={5}
             />
             <p className="text-xs text-gray-500">
-              Description marketing principale visible sur les catalogues
+              Description unifiée visible sur les catalogues (commerciale + technique)
             </p>
           </div>
 
-          {/* Description technique */}
-          <div className="space-y-2">
-            <Label htmlFor="technical_description">
-              Description technique
-            </Label>
-            <Textarea
-              id="technical_description"
-              value={formData.technical_description}
-              onChange={(e) => updateField('technical_description', e.target.value)}
-              placeholder="Spécifications techniques détaillées..."
-              rows={3}
-            />
-            <p className="text-xs text-gray-500">
-              Informations techniques et spécifications détaillées
-            </p>
-          </div>
-
-          {/* URL Vidéo */}
-          <div className="space-y-2">
-            <Label htmlFor="video_url">
-              URL Vidéo (optionnel)
-            </Label>
-            <Input
-              id="video_url"
-              type="url"
-              value={formData.video_url}
-              onChange={(e) => updateField('video_url', e.target.value)}
-              placeholder="https://youtube.com/watch?v=..."
-            />
-            <p className="text-xs text-gray-500">
-              Lien vers une vidéo de présentation du produit
-            </p>
-          </div>
-
-          {/* Points de vente */}
+          {/* POINTS DE VENTE - Arguments de vente conformes à la page détail */}
           <div className="space-y-3">
-            <Label>Arguments de vente</Label>
+            <Label className="text-base font-medium">Arguments de vente</Label>
 
             {/* Liste des points existants */}
             {formData.selling_points.length > 0 && (
@@ -182,8 +138,50 @@ export function GeneralInfoSection({
               </Button>
             </div>
             <p className="text-xs text-gray-500">
-              Points forts et avantages du produit pour la vente
+              Points forts et avantages du produit pour la vente (conformes à la page détail)
             </p>
+          </div>
+
+          {/* URL Vidéo */}
+          <div className="space-y-2">
+            <Label htmlFor="video_url">
+              URL Vidéo (optionnel)
+            </Label>
+            <Input
+              id="video_url"
+              type="url"
+              value={formData.video_url}
+              onChange={(e) => updateField('video_url', e.target.value)}
+              placeholder="https://youtube.com/watch?v=..."
+            />
+            <p className="text-xs text-gray-500">
+              Lien vers une vidéo de présentation du produit
+            </p>
+          </div>
+
+          {/* SECTION IDENTIFIANTS & RÉFÉRENCES */}
+          <div className="bg-gray-50 p-4 rounded-lg border-l-4 border-black">
+            <div className="space-y-4">
+              <h4 className="font-medium text-black flex items-center">
+                <Tag className="h-4 w-4 mr-2" />
+                Identifiants & Références
+              </h4>
+
+              <div className="space-y-2">
+                <Label htmlFor="slug">
+                  Slug URL (optionnel)
+                </Label>
+                <Input
+                  id="slug"
+                  value={formData.slug}
+                  onChange={(e) => updateField('slug', e.target.value)}
+                  placeholder="fauteuil-design-scandinave"
+                />
+                <p className="text-xs text-gray-500">
+                  URL conviviale pour le produit (généré automatiquement si vide)
+                </p>
+              </div>
+            </div>
           </div>
 
           {/* État du produit */}
@@ -294,12 +292,13 @@ export function GeneralInfoSection({
         </CardHeader>
         <CardContent>
           <CategorySelector
-            selectedFamilyId={formData.family_id}
-            selectedCategoryId={formData.category_id}
-            selectedSubcategoryId={formData.subcategory_id}
-            onFamilyChange={(familyId) => updateField('family_id', familyId)}
-            onCategoryChange={(categoryId) => updateField('category_id', categoryId)}
-            onSubcategoryChange={(subcategoryId) => updateField('subcategory_id', subcategoryId)}
+            value={formData.subcategory_id}
+            onChange={(subcategoryId, hierarchy) => {
+              updateField('subcategory_id', subcategoryId)
+              updateField('family_id', hierarchy.family.id)
+              updateField('category_id', hierarchy.category.id)
+            }}
+            placeholder="Sélectionner une sous-catégorie..."
             required={false}
           />
         </CardContent>

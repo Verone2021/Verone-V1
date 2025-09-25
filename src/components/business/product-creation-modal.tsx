@@ -87,7 +87,7 @@ export function ProductCreationModal({ isOpen, onClose, onSuccess }: ProductCrea
         description: description.trim() || undefined,
         price_ht: priceHtValue,
         price_ttc: priceTtc,
-        min_stock_level: parseInt(minStockLevel),
+        min_stock: parseInt(minStockLevel),
         stock_real: 0, // Nouveau produit commence avec 0 stock
         category: 'general', // Catégorie par défaut
         status: 'active' as const,

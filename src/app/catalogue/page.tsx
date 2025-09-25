@@ -10,8 +10,6 @@ import { Badge } from "../../components/ui/badge"
 import { cn } from "../../lib/utils"
 import { checkSLOCompliance, debounce } from "../../lib/utils"
 import { useCatalogue, Product, Category } from "../../hooks/use-catalogue"
-import { useProductImages } from "../../hooks/use-product-images"
-
 // Interface Produit selon business rules - utilise maintenant celle du hook useCatalogue
 
 // Interface filtres - migration brand → supplier
@@ -20,41 +18,6 @@ interface Filters {
   status: string[]
   category: string[]
   supplier: string[]
-}
-
-// Composant image pour la vue liste
-function ProductImageThumb({ productId }: { productId: string }) {
-  const { primaryImage, loading: imageLoading } = useProductImages({
-    productId,
-    autoFetch: true
-  })
-
-  return (
-    <div className="h-16 w-16 flex-shrink-0 overflow-hidden rounded border border-gray-200 bg-gray-100">
-      {primaryImage?.public_url && !imageLoading ? (
-        <Image
-          src={primaryImage.public_url}
-          alt={primaryImage.alt_text || "Image produit"}
-          width={64}
-          height={64}
-          className="object-contain w-full h-full"
-          onError={() => {
-            console.warn(`Erreur chargement image: ${primaryImage.public_url}`)
-          }}
-        />
-      ) : (
-        <div className="w-full h-full bg-gray-100 flex items-center justify-center">
-          {imageLoading ? (
-            <div className="animate-pulse">
-              <Package className="h-6 w-6 text-gray-300" />
-            </div>
-          ) : (
-            <Package className="h-6 w-6 text-gray-400" />
-          )}
-        </div>
-      )}
-    </div>
-  )
 }
 
 export default function CataloguePage() {
@@ -342,7 +305,9 @@ export default function CataloguePage() {
                 {products.map(product => (
                   <div key={product.id} className="card-verone p-4">
                     <div className="flex items-center space-x-4">
-                      <ProductImageThumb productId={product.id} />
+                      <div className="h-16 w-16 flex-shrink-0 overflow-hidden rounded border border-gray-200 bg-gray-100 flex items-center justify-center">
+                        <Package className="h-6 w-6 text-gray-400" />
+                      </div>
                       <div className="flex-1">
                         <h3 className="font-medium text-black">{product.name}</h3>
                         <p className="text-sm text-black opacity-70">{product.sku}</p>
