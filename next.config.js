@@ -53,6 +53,54 @@ const nextConfig = {
   env: {
     BUILD_TIME: new Date().toISOString(),
   },
+
+  // Webpack optimizations for large files performance
+  webpack: (config, { isServer, dev }) => {
+    // Optimize performance for large files (like use-manual-tests.ts)
+    if (!dev) {
+      config.optimization.splitChunks = {
+        ...config.optimization.splitChunks,
+        cacheGroups: {
+          ...config.optimization.splitChunks.cacheGroups,
+          // Separate large hooks/utils into their own chunks
+          largeHooks: {
+            name: 'large-hooks',
+            chunks: 'all',
+            test: /use-manual-tests|use-.*-optimized|.*-history/,
+            priority: 30,
+            minSize: 100000, // 100KB minimum
+          },
+          // Separate business components
+          businessComponents: {
+            name: 'business-components',
+            chunks: 'all',
+            test: /business\/.*\.tsx?$/,
+            priority: 25,
+            minSize: 50000, // 50KB minimum
+          },
+        },
+      };
+    }
+
+    // Development optimizations to reduce webpack warnings
+    if (dev) {
+      // Reduce webpack cache warnings for large strings
+      config.cache = {
+        ...config.cache,
+        compression: false, // Disable compression for dev to reduce warnings
+      };
+
+      // Optimize module resolution for large files
+      config.optimization.splitChunks = {
+        ...config.optimization.splitChunks,
+        chunks: 'all',
+        minSize: 20000,
+        maxSize: 244000, // Reduce max size to avoid large string warnings
+      };
+    }
+
+    return config;
+  },
 };
 
 // Configuration Sentry pour Next.js
