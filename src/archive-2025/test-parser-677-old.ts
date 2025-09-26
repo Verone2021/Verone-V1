@@ -55,7 +55,7 @@ export class Test677ClientParser {
     // Générer 59 tests Dashboard selon spécifications TASKS/modules-features/01-dashboard-features.md
     for (let i = 1; i <= 59; i++) {
       tests.push({
-        id: `test_dashboard_T${i.toString().padStart(3, '0')}`,
+        id: `1_dashboard_${i.toString().padStart(3, '0')}`,
         title: this.getDashboardTestTitle(i),
         description: this.getDashboardTestDescription(i),
         status: 'pending' as TestStatus,
@@ -87,7 +87,7 @@ export class Test677ClientParser {
     // Générer 134 tests Catalogue selon spécifications TASKS/modules-features/02-catalogue-features.md
     for (let i = 60; i <= 193; i++) {
       tests.push({
-        id: `test_catalogue_T${i.toString().padStart(3, '0')}`,
+        id: `2_catalogue_${i.toString().padStart(3, '0')}`,
         title: this.getCatalogueTestTitle(i),
         description: this.getCatalogueTestDescription(i),
         status: 'pending' as TestStatus,
@@ -119,7 +119,7 @@ export class Test677ClientParser {
     // Générer 67 tests Stocks selon spécifications TASKS/modules-features/03-stocks-features.md
     for (let i = 194; i <= 260; i++) {
       tests.push({
-        id: `test_stocks_T${i.toString().padStart(3, '0')}`,
+        id: `3_stocks_${i.toString().padStart(3, '0')}`,
         title: this.getStocksTestTitle(i),
         description: this.getStocksTestDescription(i),
         status: 'pending' as TestStatus,
@@ -151,7 +151,7 @@ export class Test677ClientParser {
     // Générer 63 tests Sourcing selon spécifications TASKS/modules-features/04-sourcing-features.md
     for (let i = 261; i <= 323; i++) {
       tests.push({
-        id: `test_sourcing_T${i.toString().padStart(3, '0')}`,
+        id: `4_sourcing_${i.toString().padStart(3, '0')}`,
         title: this.getSourcingTestTitle(i),
         description: this.getSourcingTestDescription(i),
         status: 'pending' as TestStatus,
@@ -183,7 +183,7 @@ export class Test677ClientParser {
     // Générer 86 tests Interactions selon spécifications TASKS/modules-features/05-interactions-features.md
     for (let i = 324; i <= 412; i++) {
       tests.push({
-        id: `test_interactions_T${i.toString().padStart(3, '0')}`,
+        id: `5_interactions_${i.toString().padStart(3, '0')}`,
         title: this.getInteractionsTestTitle(i),
         description: this.getInteractionsTestDescription(i),
         status: 'pending' as TestStatus,
@@ -215,7 +215,7 @@ export class Test677ClientParser {
     // Générer 76 tests Commandes selon spécifications TASKS/modules-features/06-commandes-features.md
     for (let i = 413; i <= 488; i++) {
       tests.push({
-        id: `test_commandes_T${i.toString().padStart(3, '0')}`,
+        id: `6_commandes_${i.toString().padStart(3, '0')}`,
         title: this.getCommandesTestTitle(i),
         description: this.getCommandesTestDescription(i),
         status: 'pending' as TestStatus,
@@ -247,7 +247,7 @@ export class Test677ClientParser {
     // Générer 72 tests Canaux selon spécifications TASKS/modules-features/07-canaux-features.md
     for (let i = 489; i <= 560; i++) {
       tests.push({
-        id: `test_canaux_T${i.toString().padStart(3, '0')}`,
+        id: `7_canaux_${i.toString().padStart(3, '0')}`,
         title: this.getCanauxTestTitle(i),
         description: this.getCanauxTestDescription(i),
         status: 'pending' as TestStatus,
@@ -279,7 +279,7 @@ export class Test677ClientParser {
     // Générer 69 tests Contacts selon spécifications TASKS/modules-features/08-contacts-features.md
     for (let i = 561; i <= 633; i++) {
       tests.push({
-        id: `test_contacts_T${i.toString().padStart(3, '0')}`,
+        id: `8_contacts_${i.toString().padStart(3, '0')}`,
         title: this.getContactsTestTitle(i),
         description: this.getContactsTestDescription(i),
         status: 'pending' as TestStatus,
@@ -311,7 +311,7 @@ export class Test677ClientParser {
     // Générer 78 tests Paramètres selon spécifications TASKS/modules-features/09-parametres-features.md
     for (let i = 634; i <= 711; i++) {
       tests.push({
-        id: `test_parametres_T${i.toString().padStart(3, '0')}`,
+        id: `9_parametres_${i.toString().padStart(3, '0')}`,
         title: this.getParametresTestTitle(i),
         description: this.getParametresTestDescription(i),
         status: 'pending' as TestStatus,
@@ -343,7 +343,7 @@ export class Test677ClientParser {
     // Générer 73 tests Pages & Workflows selon spécifications TASKS/modules-features/10-pages-workflows-features.md
     for (let i = 712; i <= 784; i++) {
       tests.push({
-        id: `test_pages_T${i.toString().padStart(3, '0')}`,
+        id: `10_pages_${i.toString().padStart(3, '0')}`,
         title: this.getPagesTestTitle(i),
         description: this.getPagesTestDescription(i),
         status: 'pending' as TestStatus,
@@ -372,7 +372,7 @@ export class Test677ClientParser {
   private getWorkflowsTransversaux(): TestSection {
     const tests: TestItem[] = [
       {
-        id: 'test_workflows_T001',
+        id: '11_workflows_001',
         title: 'Workflow Création Produit End-to-End',
         description: '/catalogue/create → Upload images → /stocks/entrees → /canaux-vente/sync → Validation complète business',
         status: 'pending' as TestStatus,
@@ -381,7 +381,7 @@ export class Test677ClientParser {
         lastUpdated: new Date()
       },
       {
-        id: 'test_workflows_T002',
+        id: '11_workflows_002',
         title: 'Workflow Consultation → Commande Client',
         description: '/consultations → Association produits → Devis génération → /commandes/clients → Expédition tracking',
         status: 'pending' as TestStatus,
@@ -390,7 +390,7 @@ export class Test677ClientParser {
         lastUpdated: new Date()
       },
       {
-        id: 'test_workflows_T003',
+        id: '11_workflows_003',
         title: 'Workflow Réapprovisionnement Intelligent',
         description: '/stocks/alertes → /commandes/fournisseurs → Réception validation → Niveaux stock update',
         status: 'pending' as TestStatus,
@@ -399,7 +399,7 @@ export class Test677ClientParser {
         lastUpdated: new Date()
       },
       {
-        id: 'test_workflows_T004',
+        id: '11_workflows_004',
         title: 'Workflow Sourcing → Catalogue',
         description: '/sourcing/besoins → Échantillons commande → Validation qualité → /catalogue/create final',
         status: 'pending' as TestStatus,
@@ -408,7 +408,7 @@ export class Test677ClientParser {
         lastUpdated: new Date()
       },
       {
-        id: 'test_workflows_T005',
+        id: '11_workflows_005',
         title: 'Workflows Quotidiens Opérationnels',
         description: 'Dashboard matinal → Alertes traitement → Consultations processing → Commandes quotidiennes',
         status: 'pending' as TestStatus,

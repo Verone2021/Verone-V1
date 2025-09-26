@@ -94,8 +94,8 @@ export default function DashboardPage() {
     {
       title: 'Produits en stock',
       value: metrics.stock.inStock.toLocaleString(),
-      change: `${metrics.products.trend > 0 ? '+' : ''}${metrics.products.trend}%`,
-      isPositive: metrics.products.trend > 0,
+      change: `${(metrics.products.trend || 0) > 0 ? '+' : ''}${metrics.products.trend || 0}%`,
+      isPositive: (metrics.products.trend || 0) > 0,
       icon: <Package className="h-6 w-6 text-gray-600" />
     },
     {

@@ -33,28 +33,55 @@ export function useProductMetrics() {
           supabase.from('products').select('id', { count: 'exact', head: true }).in('status', ['coming_soon', 'preorder'])
         ]);
 
-        // 2. Tendance: comparaison avec hier (optimisée)
-        const yesterday = new Date();
-        yesterday.setDate(yesterday.getDate() - 1);
-        yesterday.setHours(23, 59, 59, 999);
+        // 2. Tendance: comparaison robuste (7 derniers jours vs 7 précédents)
+        const today = new Date();
+        const sevenDaysAgo = new Date(today);
+        sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
+        const fourteenDaysAgo = new Date(today);
+        fourteenDaysAgo.setDate(fourteenDaysAgo.getDate() - 14);
 
-        const { count: yesterdayCount } = await supabase
+        // Produits créés dans les 7 derniers jours
+        const { count: recentCount } = await supabase
           .from('products')
           .select('id', { count: 'exact', head: true })
-          .lte('created_at', yesterday.toISOString());
+          .gte('created_at', sevenDaysAgo.toISOString());
+
+        // Produits créés entre il y a 14 jours et il y a 7 jours
+        const { count: previousCount } = await supabase
+          .from('products')
+          .select('id', { count: 'exact', head: true })
+          .gte('created_at', fourteenDaysAgo.toISOString())
+          .lt('created_at', sevenDaysAgo.toISOString());
 
         const total = totalResult.count || 0;
-        const trend = yesterdayCount && yesterdayCount > 0
-          ? ((total - yesterdayCount) / yesterdayCount) * 100
-          : 0;
 
-        return {
+        // Calcul robuste de la tendance - toujours retourner un nombre valide
+        const recentValidCount = Number(recentCount) || 0;
+        const previousValidCount = Number(previousCount) || 0;
+
+        let trend = 0;
+        if (previousValidCount > 0) {
+          trend = ((recentValidCount - previousValidCount) / previousValidCount) * 100;
+        } else if (recentValidCount > 0) {
+          trend = 100; // 100% d'augmentation si aucun produit la période précédente
+        }
+
+        // S'assurer que trend est toujours un nombre valide
+        trend = Number.isFinite(trend) ? Math.round(trend * 10) / 10 : 0;
+
+        const result = {
           total,
           active: activeResult.count || 0,
           inactive: inactiveResult.count || 0,
           draft: draftResult.count || 0,
-          trend: Math.round(trend * 10) / 10,
+          trend,
         };
+
+        // DEBUG: Log pour identifier le problème undefined%
+        console.log('🐛 DEBUG useProductMetrics result:', result);
+        console.log('🐛 trend value type:', typeof result.trend, 'value:', result.trend);
+
+        return result;
       }
 
       // Si la RPC existe, utiliser directement ses résultats

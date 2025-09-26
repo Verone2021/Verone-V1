@@ -45,7 +45,7 @@ export interface ActivityStats {
 }
 
 // Session storage pour tracking côté client
-let currentSession: UserSession = {
+const currentSession: UserSession = {
   start_time: Date.now(),
   page_views: 0,
   actions_count: 0,

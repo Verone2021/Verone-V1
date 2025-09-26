@@ -210,6 +210,56 @@ export const useCatalogue = () => {
       total: count || 0
     };
   };;
+  const loadArchivedProducts = async (filters: CatalogueFilters = {}) => {
+    let query = supabase
+      .from('products')
+      .select(`
+        *,
+        supplier:organisations!supplier_id(id, name),
+        subcategories!subcategory_id(id, name)
+      `, { count: 'exact' });
+
+    // IMPORTANT : Inclure SEULEMENT les produits archivés
+    query = query.not('archived_at', 'is', null);
+
+    // Filtres selon business rules
+    if (filters.search) {
+      query = query.or(`name.ilike.%${filters.search}%,sku.ilike.%${filters.search}%`);
+    }
+
+    if (filters.statuses && filters.statuses.length > 0) {
+      query = query.in('status', filters.statuses);
+    }
+
+    if (filters.categories && filters.categories.length > 0) {
+      query = query.in('subcategory_id', filters.categories);
+    }
+
+    if (filters.priceMin !== undefined) {
+      query = query.gte('price_ht', filters.priceMin);
+    }
+
+    if (filters.priceMax !== undefined) {
+      query = query.lte('price_ht', filters.priceMax);
+    }
+
+    // Pagination
+    const limit = filters.limit || 500;
+    const offset = filters.offset || 0;
+    query = query.range(offset, offset + limit - 1);
+
+    // Tri par date d'archivage (plus récent en premier)
+    query = query.order('archived_at', { ascending: false });
+
+    const { data, error, count } = await query;
+
+    if (error) throw error;
+
+    return {
+      products: data || [],
+      total: count || 0
+    };
+  };
 
   // Actions CRUD selon permissions RLS
   const createProduct = async (productData: Partial<Product>) => {
@@ -271,16 +321,11 @@ export const useCatalogue = () => {
 
       if (error) throw error;
 
-      // Mise à jour optimiste du state
+      // Retirer le produit de la liste active immédiatement
       setState(prev => ({
         ...prev,
-        products: prev.products.map(p =>
-          p.id === id ? {
-            ...p,
-            status: 'discontinued' as const,
-            archived_at: new Date().toISOString()
-          } : p
-        )
+        products: prev.products.filter(p => p.id !== id),
+        total: prev.total - 1
       }));
 
       return true;
@@ -296,24 +341,14 @@ export const useCatalogue = () => {
       const { error } = await supabase
         .from('products')
         .update({
-          status: 'in_stock',
           archived_at: null
         })
         .eq('id', id);
 
       if (error) throw error;
 
-      // Mise à jour optimiste du state
-      setState(prev => ({
-        ...prev,
-        products: prev.products.map(p =>
-          p.id === id ? {
-            ...p,
-            status: 'in_stock' as const,
-            archived_at: null
-          } : p
-        )
-      }));
+      // Recharger les données pour synchroniser les listes
+      await loadCatalogueData();
 
       return true;
 
@@ -367,6 +402,7 @@ export const useCatalogue = () => {
 
     // Actions
     loadCatalogueData,
+    loadArchivedProducts,
     createProduct,
     updateProduct,
     archiveProduct,

@@ -8,7 +8,7 @@
         "--project-ref=aorroydfjsrygmosnzrl"
       ],
       "env": {
-        "SUPABASE_ACCESS_TOKEN": "${SUPABASE_ACCESS_TOKEN}"
+        "SUPABASE_ACCESS_TOKEN": "sbp_a38334ba650a3fe5820e1641e3d156c01528089b"
       }
     },
     "context7": {
@@ -28,7 +28,7 @@
         "--context",
         "ide-assistant",
         "--project",
-        "${PWD}"
+        "/Users/romeodossantos/verone-back-office"
       ]
     },
     "github": {
@@ -66,14 +66,46 @@
         "--extension"
       ]
     },
-    "ref": {
+    "orchestrator": {
       "command": "npx",
       "args": [
         "-y",
-        "@ref-tools/mcp@latest"
+        "@anthropic/task-orchestrator@latest"
       ],
       "env": {
-        "REF_API_KEY": "${REF_API_KEY}"
+        "ORCHESTRATOR_MODE": "central"
+      }
+    },
+    "security-scanner": {
+      "command": "npx",
+      "args": [
+        "-y",
+        "@anthropic/security-scanner@latest"
+      ],
+      "env": {
+        "SECURITY_LEVEL": "strict"
+      }
+    },
+    "filesystem-guardian": {
+      "command": "npx",
+      "args": [
+        "-y",
+        "@anthropic/filesystem-guardian@latest"
+      ],
+      "env": {
+        "PROTECTION_LEVEL": "yolo-safe",
+        "ALLOWED_PATHS": "/Users/romeodossantos/verone-back-office"
+      }
+    },
+    "docker-agent": {
+      "command": "npx",
+      "args": [
+        "-y",
+        "@docker/mcp-agent@latest"
+      ],
+      "env": {
+        "DOCKER_MODE": "isolation",
+        "NETWORK_ISOLATION": "true"
       }
     }
   }

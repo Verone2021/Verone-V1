@@ -15,6 +15,7 @@ interface ProductCardProps {
   className?: string
   showActions?: boolean
   showPackages?: boolean // Nouvelle option pour afficher les packages
+  priority?: boolean // Nouvelle option pour optimiser LCP (première image)
   onClick?: (product: Product) => void
   onArchive?: (product: Product) => void
   onDelete?: (product: Product) => void
@@ -55,6 +56,7 @@ export function ProductCard({
   className,
   showActions = true,
   showPackages = false,
+  priority = false,
   onClick,
   onArchive,
   onDelete,
@@ -128,6 +130,7 @@ export function ProductCard({
             src={primaryImage.public_url}
             alt={primaryImage.alt_text || product.name}
             fill
+            priority={priority} // 🚀 Optimisation LCP pour première image
             className="object-contain transition-transform duration-300 group-hover:scale-105"
             sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 25vw"
             onError={() => {
@@ -186,11 +189,8 @@ export function ProductCard({
           <h3 className="font-medium text-base text-black line-clamp-2 group-hover:underline">
             {product.name}
           </h3>
-          <div className="flex items-center justify-between text-sm text-black opacity-70">
+          <div className="text-sm text-black opacity-70">
             <span>SKU: {product.sku}</span>
-            {product.supplier && (
-              <span>{product.supplier.name}</span>
-            )}
           </div>
         </div>
 

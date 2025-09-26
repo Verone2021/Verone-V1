@@ -184,12 +184,13 @@ export function useManualTests(options: UseManualTestsOptions = {}) {
 
       console.log(`Synchronized ${testsToSync.length} tests successfully`)
     } catch (err: any) {
-      console.error('Sync error:', {
+      const errorInfo = {
         message: err?.message || 'Unknown error',
         code: err?.code || 'NO_CODE',
         details: err?.details || 'No details',
         hint: err?.hint || 'No hint'
-      })
+      }
+      console.error('Sync error:', errorInfo)
       setError(`Sync failed: ${err.message}`)
 
       // Ajouter à la queue pour retry

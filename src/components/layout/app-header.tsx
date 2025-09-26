@@ -1,6 +1,6 @@
 "use client"
 
-import { Bell, Search, User, LogOut, Settings, Users, FileText, Bug, AlertTriangle, XCircle } from "lucide-react"
+import { Bell, Search, User, LogOut, Settings, Users, Bug, AlertTriangle, XCircle } from "lucide-react"
 import { Button } from "../ui/button"
 import { cn } from "../../lib/utils"
 import {
@@ -17,6 +17,8 @@ import { useEffect, useState } from "react"
 import * as Sentry from "@sentry/nextjs"
 // Import conditionnel Sentry - CLIENT ONLY
 import type { SentryAutoDetector } from "@/lib/error-detection/sentry-auto-detection"
+// 🔔 Hook notifications intelligent
+import { useNotifications } from "../../hooks/use-notifications"
 
 interface AppHeaderProps {
   className?: string
@@ -25,10 +27,12 @@ interface AppHeaderProps {
 export function AppHeader({ className }: AppHeaderProps) {
   const router = useRouter()
   const [userRole, setUserRole] = useState<string | null>(null)
-  const [testsProgress, setTestsProgress] = useState({ completed: 0, total: 195 })
   const [sentryErrors, setSentryErrors] = useState<number>(0)
   const [sentryStatus, setSentryStatus] = useState<'healthy' | 'warning' | 'critical'>('healthy')
   const [sentryDetector, setSentryDetector] = useState<SentryAutoDetector | null>(null)
+
+  // 🔔 Hook notifications intelligent pour remplacer mock-up
+  const { unreadCount, loading: notificationsLoading } = useNotifications()
 
   // Récupérer le rôle de l'utilisateur au chargement
   useEffect(() => {
@@ -50,33 +54,6 @@ export function AppHeader({ className }: AppHeaderProps) {
     fetchUserRole()
   }, [])
 
-  // Récupérer le progress des tests manuels
-  useEffect(() => {
-    const fetchTestsProgress = () => {
-      try {
-        const savedProgress = localStorage.getItem('manual-tests-progress')
-        if (savedProgress) {
-          const progress = JSON.parse(savedProgress)
-          const completedCount = Object.values(progress).filter((status) => status === 'completed').length
-          setTestsProgress({ completed: completedCount, total: 195 })
-        }
-      } catch (error) {
-        console.error('Error fetching tests progress:', error)
-      }
-    }
-
-    fetchTestsProgress()
-
-    // Écouter les changements de localStorage avec délai pour éviter setState pendant render
-    const handleStorageChange = () => {
-      setTimeout(() => {
-        fetchTestsProgress()
-      }, 0)
-    }
-
-    window.addEventListener('storage', handleStorageChange)
-    return () => window.removeEventListener('storage', handleStorageChange)
-  }, [])
 
   // 🚀 RÉVOLUTIONNAIRE: Auto-détection Sentry intelligente avec patterns avancés (CLIENT ONLY)
   useEffect(() => {
@@ -159,8 +136,6 @@ export function AppHeader({ className }: AppHeaderProps) {
         source: 'header_global_auto',
         error_count: sentryErrors,
         status: sentryStatus,
-        tests_completed: testsProgress.completed,
-        tests_total: testsProgress.total,
         auto_detection: 'enabled',
         critical_errors: errorStats.criticalErrors
       },
@@ -171,8 +146,6 @@ export function AppHeader({ className }: AppHeaderProps) {
           recent_errors_1h: errorStats.recentErrors.length,
           auto_corrections_available: errorStats.autoCorrectionsAvailable,
           health_status: sentryStatus,
-          tests_progress: `${testsProgress.completed}/${testsProgress.total}`,
-          completion_percentage: Math.round((testsProgress.completed / testsProgress.total) * 100)
         },
         auto_detection_stats: {
           total_detected: errorStats.totalErrors,
@@ -197,8 +170,7 @@ export function AppHeader({ className }: AppHeaderProps) {
     alert(`🚀 Rapport Sentry Intelligent envoyé !
 
 📊 Statut: ${sentryStatus.toUpperCase()}
-🔢 Total erreurs: ${sentryErrors}
-⚡ Tests: ${testsProgress.completed}/${testsProgress.total}${criticalInfo}${autoFixInfo}
+🔢 Total erreurs: ${sentryErrors}${criticalInfo}${autoFixInfo}
 
 ✅ Analyse automatique Sentry complète !`)
 
@@ -208,10 +180,6 @@ export function AppHeader({ className }: AppHeaderProps) {
     setSentryStatus('healthy')
   }
 
-  // 🎯 Fonction pour naviguer vers Tests Manuels (corrigé)
-  const handleTestsNavigation = () => {
-    router.push('/tests-manuels') // Corrigé: '/tests-manuels' au lieu de '/documentation/tests-manuels'
-  }
 
   // 🎨 Fonction pour obtenir l'icône et couleur Sentry selon le statut
   const getSentryIconAndColor = () => {
@@ -244,31 +212,22 @@ export function AppHeader({ className }: AppHeaderProps) {
 
       {/* Actions utilisateur */}
       <div className="flex items-center space-x-2">
-        {/* Notifications */}
-        <Button variant="ghost" size="icon" className="relative">
-          <Bell className="h-5 w-5" />
-          <span className="absolute -top-1 -right-1 h-3 w-3 bg-red-500 rounded-full text-xs text-white flex items-center justify-center">
-            3
-          </span>
-          <span className="sr-only">Notifications</span>
-        </Button>
-
-        {/* Documentation / Tests Manuels */}
+        {/* Notifications - Compteur intelligent */}
         <Button
           variant="ghost"
           size="icon"
           className="relative"
-          onClick={handleTestsNavigation}
-          title={`Tests Manuels - ${testsProgress.completed}/${testsProgress.total} complétés (${Math.round((testsProgress.completed / testsProgress.total) * 100)}%)`}
+          title={notificationsLoading ? 'Chargement...' : `${unreadCount} notifications non lues`}
         >
-          <FileText className="h-5 w-5" />
-          {testsProgress.completed > 0 && (
-            <span className="absolute -top-1 -right-1 h-4 w-auto min-w-[16px] px-1 bg-black text-white rounded-full text-xs flex items-center justify-center font-medium">
-              {testsProgress.completed}
+          <Bell className="h-5 w-5" />
+          {!notificationsLoading && unreadCount > 0 && (
+            <span className="absolute -top-1 -right-1 h-4 w-auto min-w-[16px] px-1 bg-red-500 rounded-full text-xs text-white flex items-center justify-center font-medium">
+              {unreadCount > 99 ? '99+' : unreadCount}
             </span>
           )}
-          <span className="sr-only">Tests Manuels</span>
+          <span className="sr-only">{unreadCount} Notifications</span>
         </Button>
+
 
         {/* 🚀 RÉVOLUTIONNAIRE: Sentry Report Global Button */}
         <Button

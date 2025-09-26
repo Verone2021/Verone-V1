@@ -124,8 +124,16 @@ export class SentryAutoDetector {
     // Intercepteur console.error global
     const originalError = console.error
     console.error = (...args: any[]) => {
-      originalError(...args)
-      this.processConsoleError(args)
+      // Protection contre les arguments vides ou invalides
+      try {
+        if (args.length > 0) {
+          originalError(...args)
+          this.processConsoleError(args)
+        }
+      } catch (err) {
+        // Fallback sécurisé si originalError échoue
+        originalError('Console error interceptor failed:', err)
+      }
     }
 
     // Intercepteur erreurs non capturées

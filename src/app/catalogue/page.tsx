@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useMemo } from "react"
+import { useState, useMemo, useEffect } from "react"
 import { useRouter } from "next/navigation"
 import Image from "next/image"
 import { Search, Filter, Grid, List, Plus, FileText, Package, Zap } from "lucide-react"
@@ -32,6 +32,7 @@ export default function CataloguePage() {
     error,
     setFilters: setCatalogueFilters,
     resetFilters,
+    loadArchivedProducts,
     archiveProduct,
     unarchiveProduct,
     deleteProduct,
@@ -40,6 +41,9 @@ export default function CataloguePage() {
 
   // État local
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid')
+  const [activeTab, setActiveTab] = useState<'active' | 'archived'>('active')
+  const [archivedProducts, setArchivedProducts] = useState<Product[]>([])
+  const [archivedLoading, setArchivedLoading] = useState(false)
   const [filters, setFilters] = useState<Filters>({
     search: '',
     status: [],
@@ -61,6 +65,26 @@ export default function CataloguePage() {
     }, 300),
     [filters, setCatalogueFilters]
   )
+
+  // Fonction pour charger les produits archivés
+  const loadArchivedProductsData = async () => {
+    setArchivedLoading(true)
+    try {
+      const result = await loadArchivedProducts(filters)
+      setArchivedProducts(result.products)
+    } catch (error) {
+      console.error('Erreur chargement produits archivés:', error)
+    } finally {
+      setArchivedLoading(false)
+    }
+  }
+
+  // Charger les produits archivés quand on change d'onglet
+  useEffect(() => {
+    if (activeTab === 'archived') {
+      loadArchivedProductsData()
+    }
+  }, [activeTab, filters])
 
   // Le filtrage est maintenant géré par le hook useCatalogue
 
@@ -100,9 +124,13 @@ export default function CataloguePage() {
       if (product.archived_at) {
         await unarchiveProduct(product.id)
         console.log('✅ Produit restauré:', product.name)
+        // Rafraîchir la liste des archivés après restauration
+        await loadArchivedProductsData()
       } else {
         await archiveProduct(product.id)
         console.log('✅ Produit archivé:', product.name)
+        // Rafraîchir la liste des archivés après archivage
+        await loadArchivedProductsData()
       }
     } catch (error) {
       console.error('❌ Erreur archivage produit:', error)
@@ -224,6 +252,30 @@ export default function CataloguePage() {
             </div>
           </div>
 
+          {/* Onglets produits actifs/archivés */}
+          <div className="flex border-b border-black">
+            <button
+              onClick={() => setActiveTab('active')}
+              className={`px-6 py-3 font-medium transition-colors ${
+                activeTab === 'active'
+                  ? 'border-b-2 border-black text-black'
+                  : 'text-black opacity-60 hover:opacity-80'
+              }`}
+            >
+              Produits Actifs ({products.length})
+            </button>
+            <button
+              onClick={() => setActiveTab('archived')}
+              className={`px-6 py-3 font-medium transition-colors ${
+                activeTab === 'archived'
+                  ? 'border-b-2 border-black text-black'
+                  : 'text-black opacity-60 hover:opacity-80'
+              }`}
+            >
+              Produits Archivés ({archivedProducts.length})
+            </button>
+          </div>
+
           {/* Filtres rapides */}
           <div className="space-y-4">
             {/* Filtres par statut */}
@@ -267,88 +319,116 @@ export default function CataloguePage() {
 
           {/* Résultats */}
           <div className="space-y-4">
-            {/* Compteur résultats */}
-            <div className="flex items-center justify-between text-sm text-black opacity-70">
-              <span>
-                {products.length} produit{products.length > 1 ? 's' : ''} trouvé{products.length > 1 ? 's' : ''}
-              </span>
-              {filters.search && (
-                <span>
-                  Recherche: "{filters.search}"
-                </span>
-              )}
-            </div>
-
-            {/* Grille produits */}
-            {viewMode === 'grid' ? (
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-                {products.map(product => (
-                  <ProductCard
-                    key={product.id}
-                    product={{
-                      ...product,
-                      supplier: product.supplier ? {
-                        ...product.supplier,
-                        slug: product.supplier.name.toLowerCase().replace(/\s+/g, '-'),
-                        is_active: true
-                      } : undefined
-                    } as any}
-                    onArchive={handleArchiveProduct}
-                    onDelete={handleDeleteProduct}
-                    archived={!!product.archived_at}
-                  />
-                ))}
+            {/* Gestion du chargement et erreurs */}
+            {((activeTab === 'active' && loading) || (activeTab === 'archived' && archivedLoading)) ? (
+              <div className="flex items-center justify-center h-32">
+                <div className="text-black opacity-70">Chargement...</div>
               </div>
             ) : (
-              // Vue liste avec images
-              <div className="space-y-4">
-                {products.map(product => (
-                  <div key={product.id} className="card-verone p-4">
-                    <div className="flex items-center space-x-4">
-                      <div className="h-16 w-16 flex-shrink-0 overflow-hidden rounded border border-gray-200 bg-gray-100 flex items-center justify-center">
-                        <Package className="h-6 w-6 text-gray-400" />
-                      </div>
-                      <div className="flex-1">
-                        <h3 className="font-medium text-black">{product.name}</h3>
-                        <p className="text-sm text-black opacity-70">{product.sku}</p>
-                      </div>
-                      <div className="text-right">
-                        <div className="font-semibold text-black">
-                          {product.price_ht.toFixed(2)} € HT
-                        </div>
-                        <div className="flex items-center gap-2 mt-1">
-                          <Badge>
-                            {product.status}
-                          </Badge>
-                          {/* Badge "nouveau" pour les produits créés dans les 30 derniers jours */}
-                          {(() => {
-                            const createdAt = new Date(product.created_at)
-                            const thirtyDaysAgo = new Date()
-                            thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30)
-                            return createdAt > thirtyDaysAgo
-                          })() && (
-                            <Badge variant="secondary" className="bg-green-100 text-green-800 border-green-300">
-                              nouveau
-                            </Badge>
-                          )}
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            )}
-
-            {/* État vide */}
-            {products.length === 0 && (
-              <div className="text-center py-12">
-                <div className="text-black opacity-50 text-lg">
-                  Aucun produit trouvé
+              <>
+                {/* Compteur résultats */}
+                <div className="flex items-center justify-between text-sm text-black opacity-70">
+                  <span>
+                    {activeTab === 'active'
+                      ? `${products.length} produit${products.length > 1 ? 's' : ''} actif${products.length > 1 ? 's' : ''}`
+                      : `${archivedProducts.length} produit${archivedProducts.length > 1 ? 's' : ''} archivé${archivedProducts.length > 1 ? 's' : ''}`
+                    }
+                  </span>
+                  {filters.search && (
+                    <span>
+                      Recherche: "{filters.search}"
+                    </span>
+                  )}
                 </div>
-                <p className="text-black opacity-30 text-sm mt-2">
-                  Essayez de modifier vos critères de recherche
-                </p>
-              </div>
+
+                {/* Grille produits */}
+                {(() => {
+                  const currentProducts = activeTab === 'active' ? products : archivedProducts
+
+                  return viewMode === 'grid' ? (
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+                      {currentProducts.map((product, index) => (
+                        <ProductCard
+                          key={product.id}
+                          product={{
+                            ...product,
+                            supplier: product.supplier ? {
+                              ...product.supplier,
+                              slug: product.supplier.name.toLowerCase().replace(/\s+/g, '-'),
+                              is_active: true
+                            } : undefined
+                          } as any}
+                          priority={index === 0} // 🚀 Optimisation LCP pour première ProductCard
+                          onArchive={handleArchiveProduct}
+                          onDelete={handleDeleteProduct}
+                          archived={!!product.archived_at}
+                        />
+                      ))}
+                    </div>
+                  ) : (
+                    // Vue liste avec images
+                    <div className="space-y-4">
+                      {currentProducts.map(product => (
+                        <div key={product.id} className="card-verone p-4">
+                          <div className="flex items-center space-x-4">
+                            <div className="h-16 w-16 flex-shrink-0 overflow-hidden rounded border border-gray-200 bg-gray-100 flex items-center justify-center">
+                              <Package className="h-6 w-6 text-gray-400" />
+                            </div>
+                            <div className="flex-1">
+                              <h3 className="font-medium text-black">{product.name}</h3>
+                              <p className="text-sm text-black opacity-70">{product.sku}</p>
+                            </div>
+                            <div className="text-right">
+                              <div className="font-semibold text-black">
+                                {product.price_ht.toFixed(2)} € HT
+                              </div>
+                              <div className="flex items-center gap-2 mt-1">
+                                <Badge>
+                                  {product.status}
+                                </Badge>
+                                {/* Badge "nouveau" pour les produits créés dans les 30 derniers jours */}
+                                {(() => {
+                                  const createdAt = new Date(product.created_at)
+                                  const thirtyDaysAgo = new Date()
+                                  thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30)
+                                  return createdAt > thirtyDaysAgo
+                                })() && (
+                                  <Badge variant="secondary" className="bg-green-100 text-green-800 border-green-300">
+                                    nouveau
+                                  </Badge>
+                                )}
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  )
+                })()}
+
+                {/* État vide */}
+                {(() => {
+                  const currentProducts = activeTab === 'active' ? products : archivedProducts
+                  const isEmpty = currentProducts.length === 0
+
+                  return isEmpty && (
+                    <div className="text-center py-12">
+                      <div className="text-black opacity-50 text-lg">
+                        {activeTab === 'active'
+                          ? 'Aucun produit actif trouvé'
+                          : 'Aucun produit archivé trouvé'
+                        }
+                      </div>
+                      <p className="text-black opacity-30 text-sm mt-2">
+                        {activeTab === 'active'
+                          ? 'Essayez de modifier vos critères de recherche'
+                          : 'Les produits archivés apparaîtront ici'
+                        }
+                      </p>
+                    </div>
+                  )
+                })()}
+              </>
             )}
           </div>
         </div>

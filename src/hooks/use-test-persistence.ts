@@ -1,502 +1,312 @@
-"use client"
+/**
+ * 🔒 Hook Validation Persistante - Meilleures Pratiques 2025
+ * Tests verrouillés automatiquement après validation
+ * Protection du code contre les régressions
+ */
 
-import { useState, useEffect, useCallback, useRef } from "react"
-import { createClient } from "@/lib/supabase/client"
-import { TestSection, TestStatus } from "./use-manual-tests"
+'use client'
 
-// Types pour la persistence
-interface PersistenceOptions {
-  enableLocalStorage?: boolean
-  enableSupabaseSync?: boolean
-  syncDebounceMs?: number
-  maxRetries?: number
-  retryDelayMs?: number
-}
+import { useState, useEffect, useCallback } from 'react'
+import { createBrowserClient } from '@supabase/ssr'
 
-interface SyncStatus {
-  isOnline: boolean
-  lastSync: Date | null
-  pendingChanges: number
-  syncErrors: string[]
-  retryCount: number
-}
-
-interface PersistenceError {
-  type: 'storage' | 'network' | 'supabase'
-  message: string
-  timestamp: Date
-  recoverable: boolean
-}
-
-const STORAGE_KEY = 'manual-tests-progress'
-const SECTIONS_KEY = 'manual-tests-sections'
-const PENDING_CHANGES_KEY = 'manual-tests-pending-changes'
-
-// Queue des changements en attente (pour mode offline)
-interface PendingChange {
+interface TestValidationState {
   id: string
-  type: 'test_update' | 'section_update' | 'batch_update'
-  data: any
-  timestamp: Date
-  retryCount: number
+  test_id: string
+  status: 'pending' | 'running' | 'validated' | 'failed'
+  execution_time_ms?: number
+  error_details?: any
+  validation_timestamp?: string
+  locked: boolean
+  module_name: string
+  test_title: string
+  browser_screenshot_url?: string
+  performance_metrics?: any
+  console_errors?: any
+  created_at: string
+  updated_at: string
 }
 
-export function useTestPersistence(options: PersistenceOptions = {}) {
-  const {
-    enableLocalStorage = true,
-    enableSupabaseSync = true,
-    syncDebounceMs = 1000,
-    maxRetries = 3,
-    retryDelayMs = 2000
-  } = options
+interface ModuleProgress {
+  module_name: string
+  total_tests: number
+  validated_tests: number
+  failed_tests: number
+  locked_tests: number
+  completion_percentage: number
+  last_validation?: string
+}
 
-  // États de la persistence
-  const [syncStatus, setSyncStatus] = useState<SyncStatus>({
-    isOnline: navigator.onLine,
-    lastSync: null,
-    pendingChanges: 0,
-    syncErrors: [],
-    retryCount: 0
-  })
+export function useTestPersistence() {
+  const [validationStates, setValidationStates] = useState<TestValidationState[]>([])
+  const [moduleProgress, setModuleProgress] = useState<ModuleProgress[]>([])
+  const [isLoading, setIsLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
 
-  const [errors, setErrors] = useState<PersistenceError[]>([])
-  const [isInitialized, setIsInitialized] = useState(false)
+  const supabase = createBrowserClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+  )
 
-  // Refs pour la gestion des timers et retry
-  const syncTimeoutRef = useRef<NodeJS.Timeout>()
-  const retryTimeoutRef = useRef<NodeJS.Timeout>()
-  const pendingChangesRef = useRef<Map<string, PendingChange>>(new Map())
-
-  const supabase = createClient()
-
-  // Surveillance de l'état réseau
-  useEffect(() => {
-    const handleOnline = () => {
-      setSyncStatus(prev => ({ ...prev, isOnline: true }))
-      // Tenter de synchroniser les changements en attente
-      if (enableSupabaseSync) {
-        processPendingChanges()
-      }
-    }
-
-    const handleOffline = () => {
-      setSyncStatus(prev => ({ ...prev, isOnline: false }))
-    }
-
-    window.addEventListener('online', handleOnline)
-    window.addEventListener('offline', handleOffline)
-
-    return () => {
-      window.removeEventListener('online', handleOnline)
-      window.removeEventListener('offline', handleOffline)
-    }
-  }, [enableSupabaseSync])
-
-  // Nettoyage des timers
-  useEffect(() => {
-    return () => {
-      if (syncTimeoutRef.current) {
-        clearTimeout(syncTimeoutRef.current)
-      }
-      if (retryTimeoutRef.current) {
-        clearTimeout(retryTimeoutRef.current)
-      }
-    }
-  }, [])
-
-  // Charger les changements en attente depuis le localStorage
-  const loadPendingChanges = useCallback((): PendingChange[] => {
-    if (!enableLocalStorage) return []
-
+  // 📊 Charger l'état de validation des tests
+  const loadValidationStates = useCallback(async (moduleFilter?: string) => {
     try {
-      const stored = localStorage.getItem(PENDING_CHANGES_KEY)
-      if (stored) {
-        const changes = JSON.parse(stored)
-        return changes.map((change: any) => ({
-          ...change,
-          timestamp: new Date(change.timestamp)
-        }))
-      }
-      return []
-    } catch (error) {
-      console.error('Error loading pending changes:', error)
-      return []
-    }
-  }, [enableLocalStorage])
+      setIsLoading(true)
+      setError(null)
 
-  // Sauvegarder les changements en attente
-  const savePendingChanges = useCallback((changes: PendingChange[]) => {
-    if (!enableLocalStorage) return
+      let query = supabase
+        .from('test_validation_state')
+        .select('*')
+        .order('test_id')
 
-    try {
-      localStorage.setItem(PENDING_CHANGES_KEY, JSON.stringify(changes))
-      setSyncStatus(prev => ({ ...prev, pendingChanges: changes.length }))
-    } catch (error) {
-      console.error('Error saving pending changes:', error)
-      addError({
-        type: 'storage',
-        message: 'Impossible de sauvegarder les changements en attente',
-        timestamp: new Date(),
-        recoverable: false
-      })
-    }
-  }, [enableLocalStorage])
-
-  // Ajouter une erreur à la liste
-  const addError = useCallback((error: PersistenceError) => {
-    setErrors(prev => {
-      const newErrors = [error, ...prev].slice(0, 10) // Garder max 10 erreurs
-      return newErrors
-    })
-  }, [])
-
-  // Initialiser la persistence
-  const initialize = useCallback(async () => {
-    if (isInitialized) return
-
-    try {
-      // Charger les changements en attente depuis le localStorage
-      const pendingChanges = loadPendingChanges()
-      pendingChanges.forEach(change => {
-        pendingChangesRef.current.set(change.id, change)
-      })
-
-      setSyncStatus(prev => ({
-        ...prev,
-        pendingChanges: pendingChanges.length
-      }))
-
-      // Traiter les changements en attente si en ligne
-      if (syncStatus.isOnline && enableSupabaseSync) {
-        await processPendingChanges()
+      if (moduleFilter) {
+        query = query.eq('module_name', moduleFilter)
       }
 
-      setIsInitialized(true)
-    } catch (error) {
-      console.error('Error initializing persistence:', error)
-      addError({
-        type: 'storage',
-        message: 'Erreur d\'initialisation de la persistence',
-        timestamp: new Date(),
-        recoverable: true
-      })
-    }
-  }, [isInitialized, loadPendingChanges, syncStatus.isOnline, enableSupabaseSync])
+      const { data, error: fetchError } = await query
 
-  // Sauvegarder dans localStorage
-  const saveToLocalStorage = useCallback((sections: TestSection[]) => {
-    if (!enableLocalStorage) return
-
-    try {
-      // Sauvegarder l'état des tests
-      const testsProgress: Record<string, TestStatus> = {}
-      sections.forEach(section => {
-        section.tests.forEach(test => {
-          testsProgress[test.id] = test.status
-        })
-      })
-
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(testsProgress))
-      localStorage.setItem(SECTIONS_KEY, JSON.stringify(sections))
-
-      // Déclencher l'événement pour le header
-      window.dispatchEvent(new Event('storage'))
-
-    } catch (error) {
-      console.error('Error saving to localStorage:', error)
-      addError({
-        type: 'storage',
-        message: 'Impossible de sauvegarder en local',
-        timestamp: new Date(),
-        recoverable: false
-      })
-    }
-  }, [enableLocalStorage, addError])
-
-  // Charger depuis localStorage
-  const loadFromLocalStorage = useCallback((): {
-    tests: Record<string, TestStatus>
-    sections: TestSection[]
-  } => {
-    if (!enableLocalStorage) return { tests: {}, sections: [] }
-
-    try {
-      const testsData = localStorage.getItem(STORAGE_KEY)
-      const sectionsData = localStorage.getItem(SECTIONS_KEY)
-
-      return {
-        tests: testsData ? JSON.parse(testsData) : {},
-        sections: sectionsData ? JSON.parse(sectionsData) : []
+      if (fetchError) {
+        throw fetchError
       }
-    } catch (error) {
-      console.error('Error loading from localStorage:', error)
-      addError({
-        type: 'storage',
-        message: 'Impossible de charger les données locales',
-        timestamp: new Date(),
-        recoverable: true
-      })
-      return { tests: {}, sections: [] }
-    }
-  }, [enableLocalStorage, addError])
 
-  // Ajouter un changement à la queue
-  const queueChange = useCallback((change: Omit<PendingChange, 'id' | 'timestamp' | 'retryCount'>) => {
-    const pendingChange: PendingChange = {
-      ...change,
-      id: `change_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
-      timestamp: new Date(),
-      retryCount: 0
-    }
+      setValidationStates(data || [])
 
-    pendingChangesRef.current.set(pendingChange.id, pendingChange)
+      // Charger aussi les statistiques des modules
+      const { data: progressData, error: progressError } = await supabase
+        .from('module_test_progress')
+        .select('*')
+        .order('module_name')
 
-    // Sauvegarder les changements en attente
-    const allChanges = Array.from(pendingChangesRef.current.values())
-    savePendingChanges(allChanges)
-
-    // Déclencher la synchronisation avec debounce
-    if (syncTimeoutRef.current) {
-      clearTimeout(syncTimeoutRef.current)
-    }
-
-    syncTimeoutRef.current = setTimeout(() => {
-      if (syncStatus.isOnline && enableSupabaseSync) {
-        processPendingChanges()
+      if (progressError) {
+        console.warn('Erreur chargement progress:', progressError)
+      } else {
+        setModuleProgress(progressData || [])
       }
-    }, syncDebounceMs)
 
-  }, [savePendingChanges, syncStatus.isOnline, enableSupabaseSync, syncDebounceMs])
-
-  // Traiter les changements en attente
-  const processPendingChanges = useCallback(async () => {
-    if (!enableSupabaseSync || !syncStatus.isOnline) return
-
-    const changes = Array.from(pendingChangesRef.current.values())
-    if (changes.length === 0) return
-
-    setSyncStatus(prev => ({ ...prev, syncErrors: [] }))
-
-    for (const change of changes) {
-      try {
-        await processChange(change)
-
-        // Retirer le changement traité avec succès
-        pendingChangesRef.current.delete(change.id)
-
-      } catch (error) {
-        console.error('Error processing change:', error)
-
-        // Incrémenter le compteur de retry
-        change.retryCount++
-
-        if (change.retryCount >= maxRetries) {
-          // Retirer le changement après max retries
-          pendingChangesRef.current.delete(change.id)
-
-          addError({
-            type: 'supabase',
-            message: `Échec définitif de synchronisation: ${error}`,
-            timestamp: new Date(),
-            recoverable: false
-          })
-        } else {
-          // Programmer un retry
-          setTimeout(() => {
-            processPendingChanges()
-          }, retryDelayMs * Math.pow(2, change.retryCount)) // Backoff exponential
-        }
-      }
-    }
-
-    // Sauvegarder les changements restants
-    const remainingChanges = Array.from(pendingChangesRef.current.values())
-    savePendingChanges(remainingChanges)
-
-    setSyncStatus(prev => ({
-      ...prev,
-      lastSync: new Date(),
-      pendingChanges: remainingChanges.length,
-      retryCount: 0
-    }))
-
-  }, [enableSupabaseSync, syncStatus.isOnline, maxRetries, retryDelayMs, addError, savePendingChanges])
-
-  // Traiter un changement spécifique
-  const processChange = useCallback(async (change: PendingChange) => {
-    switch (change.type) {
-      case 'test_update':
-        const { testId, status, notes, sectionName } = change.data
-
-        const { error: upsertError } = await supabase
-          .from('manual_tests_progress')
-          .upsert({
-            test_id: testId,
-            section_name: sectionName || 'default',
-            subsection_name: sectionName || 'default',
-            test_title: `Test ${testId}`,
-            test_description: notes || 'Test description',
-            status,
-            notes,
-            updated_at: new Date().toISOString()
-          }, {
-            onConflict: 'test_id'
-          })
-
-        if (upsertError) throw upsertError
-        break
-
-      case 'batch_update':
-        const { testIds, status: batchStatus } = change.data
-
-        for (const testId of testIds) {
-          const { error } = await supabase
-            .from('manual_tests_progress')
-            .upsert({
-              test_id: testId,
-              section_name: 'batch',
-              subsection_name: 'batch',
-              test_title: `Test ${testId}`,
-              test_description: 'Batch updated test',
-              status: batchStatus,
-              updated_at: new Date().toISOString()
-            }, {
-              onConflict: 'test_id'
-            })
-
-          if (error) throw error
-        }
-        break
-
-      case 'section_update':
-        // Traitement des mises à jour de section
-        // À implémenter selon les besoins
-        break
-
-      default:
-        throw new Error(`Unknown change type: ${change.type}`)
+    } catch (err: any) {
+      console.error('Erreur chargement validation states:', err)
+      setError(err.message || 'Erreur inconnue')
+    } finally {
+      setIsLoading(false)
     }
   }, [supabase])
 
-  // Synchroniser avec Supabase (récupération des changements distants)
-  const syncFromSupabase = useCallback(async (): Promise<TestSection[] | null> => {
-    if (!enableSupabaseSync || !syncStatus.isOnline) return null
-
-    try {
-      const { data: remoteTests, error } = await supabase
-        .from('manual_tests_progress')
-        .select('*')
-        .order('updated_at', { ascending: false })
-
-      if (error) throw error
-
-      return remoteTests || []
-    } catch (error) {
-      console.error('Error syncing from Supabase:', error)
-      addError({
-        type: 'supabase',
-        message: `Erreur de synchronisation: ${error}`,
-        timestamp: new Date(),
-        recoverable: true
-      })
-      return null
+  // 🔄 Mettre à jour le statut d'un test (avec verrouillage automatique)
+  const updateTestStatus = useCallback(async (
+    testId: string,
+    status: TestValidationState['status'],
+    additionalData?: {
+      execution_time_ms?: number
+      error_details?: any
+      browser_screenshot_url?: string
+      performance_metrics?: any
+      console_errors?: any
     }
-  }, [enableSupabaseSync, syncStatus.isOnline, supabase, addError])
+  ) => {
+    try {
+      setError(null)
 
-  // API publique du hook
-  const persistence = {
-    // États
-    syncStatus,
-    errors,
-    isInitialized,
-
-    // Actions de persistence
-    initialize,
-    saveToLocalStorage,
-    loadFromLocalStorage,
-
-    // Synchronisation Supabase
-    queueChange,
-    syncFromSupabase,
-    processPendingChanges,
-
-    // Méthodes de convenance
-    queueTestUpdate: (testId: string, status: TestStatus, notes?: string, sectionName?: string) => {
-      queueChange({
-        type: 'test_update',
-        data: { testId, status, notes, sectionName }
-      })
-    },
-
-    queueBatchUpdate: (testIds: string[], status: TestStatus) => {
-      queueChange({
-        type: 'batch_update',
-        data: { testIds, status }
-      })
-    },
-
-    // Utilitaires
-    clearErrors: () => setErrors([]),
-
-    retry: () => {
-      if (syncStatus.isOnline) {
-        processPendingChanges()
+      const updateData: any = {
+        status,
+        ...additionalData
       }
-    },
 
-    // Statistiques de debug
-    getDebugInfo: () => ({
-      pendingChangesCount: pendingChangesRef.current.size,
-      pendingChanges: Array.from(pendingChangesRef.current.values()),
-      syncStatus,
-      errors: errors.slice(0, 5) // Dernières 5 erreurs
-    })
-  }
+      // Le trigger auto_lock_validated_test() se charge du verrouillage automatique
+      const { data, error: updateError } = await supabase
+        .from('test_validation_state')
+        .update(updateData)
+        .eq('test_id', testId)
+        .select('*')
+        .single()
 
-  return persistence
-}
+      if (updateError) {
+        throw updateError
+      }
 
-// Hook léger pour juste localStorage (sans Supabase)
-export function useLocalStoragePersistence() {
-  const saveProgress = useCallback((sections: TestSection[]) => {
-    try {
-      const testsProgress: Record<string, TestStatus> = {}
-      sections.forEach(section => {
-        section.tests.forEach(test => {
-          testsProgress[test.id] = test.status
-        })
+      // Mettre à jour l'état local immédiatement
+      setValidationStates(prev => prev.map(test =>
+        test.test_id === testId
+          ? { ...test, ...data }
+          : test
+      ))
+
+      // Recharger les statistiques des modules
+      const { data: progressData } = await supabase
+        .from('module_test_progress')
+        .select('*')
+        .order('module_name')
+
+      if (progressData) {
+        setModuleProgress(progressData)
+      }
+
+      console.log(`🔒 Test ${testId} mis à jour:`, {
+        status,
+        locked: data.locked,
+        validation_timestamp: data.validation_timestamp
       })
 
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(testsProgress))
-      localStorage.setItem(SECTIONS_KEY, JSON.stringify(sections))
+      return data
 
-      // Déclencher l'événement pour le header
-      window.dispatchEvent(new Event('storage'))
-    } catch (error) {
-      console.error('Error saving to localStorage:', error)
+    } catch (err: any) {
+      console.error('Erreur mise à jour test status:', err)
+      setError(err.message || 'Erreur mise à jour')
+      throw err
     }
-  }, [])
+  }, [supabase])
 
-  const loadProgress = useCallback((): {
-    tests: Record<string, TestStatus>
-    sections: TestSection[]
-  } => {
+  // 🎯 Obtenir le statut d'un test spécifique
+  const getTestStatus = useCallback((testId: string): TestValidationState | null => {
+    return validationStates.find(test => test.test_id === testId) || null
+  }, [validationStates])
+
+  // 🔒 Vérifier si un test est verrouillé (protection code)
+  const isTestLocked = useCallback((testId: string): boolean => {
+    const test = getTestStatus(testId)
+    return test?.locked || false
+  }, [getTestStatus])
+
+  // 📊 Obtenir les stats d'un module
+  const getModuleStats = useCallback((moduleName: string): ModuleProgress | null => {
+    return moduleProgress.find(module => module.module_name === moduleName) || null
+  }, [moduleProgress])
+
+  // 🧹 Réinitialiser les tests d'un module (pour développement)
+  const resetModuleTests = useCallback(async (moduleName: string, force: boolean = false) => {
     try {
-      const testsData = localStorage.getItem(STORAGE_KEY)
-      const sectionsData = localStorage.getItem(SECTIONS_KEY)
+      if (!force) {
+        console.warn('🔒 SÉCURITÉ: Réinitialisation bloquée - utilisez force=true en dev uniquement')
+        return false
+      }
+
+      const { error: resetError } = await supabase
+        .from('test_validation_state')
+        .update({
+          status: 'pending',
+          locked: false,
+          validation_timestamp: null,
+          execution_time_ms: null,
+          error_details: null,
+          console_errors: null
+        })
+        .eq('module_name', moduleName)
+
+      if (resetError) {
+        throw resetError
+      }
+
+      await loadValidationStates(moduleName)
+      return true
+
+    } catch (err: any) {
+      console.error('Erreur reset module:', err)
+      setError(err.message)
+      return false
+    }
+  }, [supabase, loadValidationStates])
+
+  // 🎯 Exécuter un test avec validation automatique
+  const executeTestWithValidation = useCallback(async (
+    testId: string,
+    testExecution: () => Promise<{
+      success: boolean
+      execution_time_ms: number
+      error_details?: any
+      browser_screenshot_url?: string
+      performance_metrics?: any
+      console_errors?: any
+    }>
+  ) => {
+    // Vérifier si le test est verrouillé
+    if (isTestLocked(testId)) {
+      console.log(`🔒 Test ${testId} verrouillé - exécution bloquée`)
+      return {
+        success: false,
+        error: 'Test verrouillé - validation déjà effectuée',
+        locked: true
+      }
+    }
+
+    try {
+      // Marquer comme en cours
+      await updateTestStatus(testId, 'running')
+
+      // Exécuter le test
+      const result = await testExecution()
+
+      // Sauvegarder le résultat avec verrouillage automatique
+      const finalStatus = result.success ? 'validated' : 'failed'
+      await updateTestStatus(testId, finalStatus, result)
 
       return {
-        tests: testsData ? JSON.parse(testsData) : {},
-        sections: sectionsData ? JSON.parse(sectionsData) : []
+        success: result.success,
+        locked: result.success, // Verrouillage automatique si validé
+        ...result
       }
-    } catch (error) {
-      console.error('Error loading from localStorage:', error)
-      return { tests: {}, sections: [] }
+
+    } catch (err: any) {
+      // Marquer comme échoué
+      await updateTestStatus(testId, 'failed', {
+        error_details: { error: err.message, stack: err.stack }
+      })
+
+      return {
+        success: false,
+        error: err.message,
+        locked: false
+      }
     }
-  }, [])
+  }, [updateTestStatus, isTestLocked])
+
+  // Chargement initial
+  useEffect(() => {
+    loadValidationStates()
+  }, [loadValidationStates])
+
+  // Abonnement temps réel aux changements
+  useEffect(() => {
+    const channel = supabase
+      .channel('test_validation_changes')
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'test_validation_state'
+        },
+        (payload) => {
+          console.log('🔄 Changement validation détecté:', payload)
+          loadValidationStates()
+        }
+      )
+      .subscribe()
+
+    return () => {
+      channel.unsubscribe()
+    }
+  }, [supabase, loadValidationStates])
 
   return {
-    saveProgress,
-    loadProgress
+    // État
+    validationStates,
+    moduleProgress,
+    isLoading,
+    error,
+
+    // Actions principales
+    loadValidationStates,
+    updateTestStatus,
+    executeTestWithValidation,
+
+    // Utilitaires
+    getTestStatus,
+    isTestLocked,
+    getModuleStats,
+    resetModuleTests,
+
+    // Stats rapides
+    totalTests: validationStates.length,
+    validatedTests: validationStates.filter(t => t.status === 'validated').length,
+    lockedTests: validationStates.filter(t => t.locked).length,
+    failedTests: validationStates.filter(t => t.status === 'failed').length
   }
 }
