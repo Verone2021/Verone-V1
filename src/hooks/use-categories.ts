@@ -23,19 +23,54 @@ export function useCategories() {
   const fetchCategories = async () => {
     try {
       setLoading(true)
-      const { data, error } = await supabase
-        .from('categories')
-        .select('*')
-        .order('level')
-        .order('display_order')
 
-      if (error) throw error
+      // Requête SQL pour obtenir le comptage réel des sous-catégories
+      const { data, error } = await supabase
+        .rpc('get_categories_with_real_counts')
+
+      if (error) {
+        // Fallback: requête manuelle avec deux étapes
+        console.warn('RPC non disponible, utilisation de requête manuelle')
+
+        const { data: categoriesData, error: categoriesError } = await supabase
+          .from('categories')
+          .select('*')
+          .order('level')
+          .order('display_order')
+
+        if (categoriesError) throw categoriesError
+
+        // Obtenir les comptages pour chaque catégorie
+        const categoriesWithCount = await Promise.all(
+          (categoriesData || []).map(async (category) => {
+            const { count, error: countError } = await supabase
+              .from('subcategories')
+              .select('*', { count: 'exact', head: true })
+              .eq('category_id', category.id)
+
+            if (countError) {
+              console.error('Erreur comptage pour', category.name, countError)
+              return { ...category, subcategory_count: 0 }
+            }
+
+            return { ...category, subcategory_count: count || 0 }
+          })
+        )
+
+        setAllCategories(categoriesWithCount)
+        const hierarchical = buildHierarchy(categoriesWithCount)
+        setCategories(hierarchical)
+        return
+      }
+
+      // Si la RPC fonctionne, utiliser les données directement
+      const categoriesWithCount = data || []
 
       // Stocker la liste plate pour accès par family_id
-      setAllCategories(data || [])
+      setAllCategories(categoriesWithCount)
 
       // Organiser en hiérarchie
-      const hierarchical = buildHierarchy(data || [])
+      const hierarchical = buildHierarchy(categoriesWithCount)
       setCategories(hierarchical)
     } catch (err) {
       console.error('Erreur lors du chargement des catégories:', err)

@@ -28,7 +28,7 @@ export function useSubcategories(categoryId?: string) {
       setLoading(true)
       setError(null)
 
-      let query = supabase
+      let baseQuery = supabase
         .from('subcategories')
         .select(`
           *,
@@ -41,25 +41,38 @@ export function useSubcategories(categoryId?: string) {
 
       // Filtrer par catégorie si spécifiée
       if (categoryId) {
-        query = query.eq('category_id', categoryId)
+        baseQuery = baseQuery.eq('category_id', categoryId)
       }
 
-      const { data, error } = await query
+      const { data: subcategoriesData, error } = await baseQuery
         .order('sort_order')
         .order('name')
 
       if (error) throw error
 
-      // Transformer les données pour inclure les détails
-      const subcategoriesWithDetails: SubcategoryWithDetails[] = (data || []).map(sub => ({
-        ...sub,
-        products_count: 0, // TODO: Calculer via join avec products si nécessaire
-        category: sub.categories ? {
-          id: sub.categories.id,
-          name: sub.categories.name,
-          family_id: sub.categories.family_id
-        } : undefined
-      }))
+      // Obtenir les comptages pour chaque sous-catégorie
+      const subcategoriesWithDetails: SubcategoryWithDetails[] = await Promise.all(
+        (subcategoriesData || []).map(async (sub) => {
+          const { count, error: countError } = await supabase
+            .from('products')
+            .select('*', { count: 'exact', head: true })
+            .eq('subcategory_id', sub.id)
+
+          if (countError) {
+            console.error('Erreur comptage produits pour', sub.name, countError)
+          }
+
+          return {
+            ...sub,
+            product_count: count || 0, // Comptage réel des produits
+            category: sub.categories ? {
+              id: sub.categories.id,
+              name: sub.categories.name,
+              family_id: sub.categories.family_id
+            } : undefined
+          }
+        })
+      )
 
       setSubcategories(subcategoriesWithDetails)
     } catch (err) {
