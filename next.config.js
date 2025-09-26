@@ -1,5 +1,5 @@
 const { getSecurityHeaders } = require('./src/lib/security/headers.js');
-const { withSentryConfig } = require('@sentry/nextjs');
+// const { withSentryConfig } = require('@sentry/nextjs'); // Temporairement désactivé
 
 /** @type {import('next').NextConfig} */
 const nextConfig = {
@@ -127,5 +127,6 @@ const sentryWebpackPluginOptions = {
   // https://github.com/getsentry/sentry-webpack-plugin#options.
 };
 
-// Export avec wrapper Sentry
-module.exports = withSentryConfig(nextConfig, sentryWebpackPluginOptions);
+// Export sans wrapper Sentry (temporairement désactivé)
+module.exports = nextConfig;
+// module.exports = withSentryConfig(nextConfig, sentryWebpackPluginOptions);

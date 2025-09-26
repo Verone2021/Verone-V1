@@ -10,6 +10,7 @@ import { Badge } from '../ui/badge'
 interface Product {
   id: string
   sku: string
+  slug?: string
   brand?: string
   gtin?: string
   condition?: string
@@ -62,6 +63,7 @@ export function IdentifiersCompleteEditSection({
 
   const handleStartEdit = () => {
     startEdit(section, {
+      slug: product.slug || '',
       brand: product.brand || '',
       gtin: product.gtin || '',
       condition: product.condition || 'new'
@@ -126,6 +128,28 @@ export function IdentifiersCompleteEditSection({
             </div>
             <div className="text-xs text-gray-600 mt-1">
               Référence unique Vérone (non modifiable)
+            </div>
+          </div>
+
+          {/* SLUG URL */}
+          <div className="bg-blue-50 p-4 rounded-lg border border-blue-200">
+            <h4 className="text-sm font-medium text-blue-800 mb-3">
+              🔗 SLUG URL
+            </h4>
+            <div>
+              <label className="block text-sm font-medium text-blue-700 mb-1">
+                URL Slug du produit
+              </label>
+              <input
+                type="text"
+                value={editData?.slug || ''}
+                onChange={(e) => handleFieldChange('slug', e.target.value)}
+                className="w-full px-3 py-2 border border-blue-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 font-mono"
+                placeholder="url-slug-produit"
+              />
+              <div className="text-xs text-blue-600 mt-1">
+                Utilisé pour l'URL du produit (ex: /catalogue/url-slug-produit)
+              </div>
             </div>
           </div>
 
@@ -248,6 +272,18 @@ export function IdentifiersCompleteEditSection({
             <span className="text-gray-900 font-mono font-bold">{product.sku}</span>
           </div>
         </div>
+
+        {/* Slug URL */}
+        {product.slug && (
+          <div className="bg-blue-50 p-3 rounded-lg">
+            <div className="text-xs text-blue-600 font-medium mb-1">
+              🔗 SLUG URL
+            </div>
+            <div className="flex justify-between items-center">
+              <span className="text-blue-900 font-mono text-sm">{product.slug}</span>
+            </div>
+          </div>
+        )}
 
         {/* Marque */}
         {product.brand && (

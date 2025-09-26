@@ -1,7 +1,7 @@
 "use client"
 
 import { useState, useEffect } from 'react'
-import { Settings, Save, Eye, AlertCircle, CheckCircle, FolderTree, FileText, Tags, Truck, Package, DollarSign, BarChart3 } from 'lucide-react'
+import { Settings, Eye, FolderTree, FileText, Tags, Truck, Package, DollarSign, BarChart3 } from 'lucide-react'
 import { Button } from '../ui/button'
 import { Badge } from '../ui/badge'
 import { Input } from '../ui/input'
@@ -35,8 +35,9 @@ export function ProductEditMode({ product, onSwitchToView, onUpdate, className }
     slug: product.slug || '',
     subcategory_id: product.subcategory_id || '',
     supplier_id: product.supplier_id || '',
-    cost_price: product.cost_price || '',
+    base_cost: product.base_cost || '', // CORRECTION: base_cost au lieu de cost_price
     selling_price: product.selling_price || '',
+    min_price: product.min_price || '', // AJOUT: prix minimum manquant
     margin_percentage: product.margin_percentage || '',
     tax_rate: product.tax_rate || 20,
     status: product.status || 'draft',
@@ -52,6 +53,8 @@ export function ProductEditMode({ product, onSwitchToView, onUpdate, className }
     dimensions_unit: product.dimensions_unit || 'cm',
     weight: product.weight || '',
     weight_unit: product.weight_unit || 'kg',
+    supplier_reference: product.supplier_reference || '',
+    supplier_page_url: product.supplier_page_url || '',
   })
 
   const [showCategorizeModal, setShowCategorizeModal] = useState(false)
@@ -76,492 +79,644 @@ export function ProductEditMode({ product, onSwitchToView, onUpdate, className }
     onUpdate({ [field]: value })
   }
 
-  const getStockBadge = () => {
-    const stockQty = product.stock_quantity || 0
-    if (stockQty > 10) {
-      return (
-        <div className="flex items-center gap-2 text-green-700 bg-green-50 px-2 py-1 rounded-md">
-          <CheckCircle className="h-3 w-3" />
-          <span className="font-semibold text-xs">En stock ({stockQty})</span>
-        </div>
-      )
-    }
-    if (stockQty > 0 && stockQty <= 10) {
-      return (
-        <div className="flex items-center gap-2 text-orange-700 bg-orange-50 px-2 py-1 rounded-md">
-          <AlertCircle className="h-3 w-3" />
-          <span className="font-semibold text-xs">Stock limité ({stockQty})</span>
-        </div>
-      )
-    }
-    return (
-      <div className="flex items-center gap-2 text-red-700 bg-red-50 px-2 py-1 rounded-md">
-        <AlertCircle className="h-3 w-3" />
-        <span className="font-semibold text-xs">Rupture de stock</span>
-      </div>
-    )
-  }
-
+  // Calculer la progression (amélioré selon les vrais requis)
+  const REQUIRED_FIELDS = ['name', 'subcategory_id', 'supplier_id', 'base_cost', 'selling_price', 'sku']
   const completionPercentage = Math.round((
-    [product.name, product.description, product.subcategory_id, product.supplier_id,
-     product.selling_price, product.dimensions_length, product.sku].filter(Boolean).length / 7
+    REQUIRED_FIELDS.filter(field => {
+      const value = formData[field as keyof typeof formData]
+      return value !== null && value !== undefined && value !== ''
+    }).length / REQUIRED_FIELDS.length
   ) * 100)
+
+  const missingFields = REQUIRED_FIELDS.filter(field => {
+    const value = formData[field as keyof typeof formData]
+    return value === null || value === undefined || value === ''
+  })
 
   return (
     <div className={cn("w-full", className)}>
+      {/* Header compact avec navigation retour */}
+      <div className="flex items-center justify-between mb-3">
+        <div className="flex items-center space-x-2">
+          <Button variant="ghost" size="sm" onClick={onSwitchToView} className="h-6 text-[10px] px-2">
+            <Eye className="h-3 w-3 mr-1" />
+            Présentation
+          </Button>
+          <nav className="text-[10px] text-gray-600">
+            Administration › {product.name}
+          </nav>
+        </div>
+        <div className="flex items-center space-x-1">
+          <Badge variant="outline" className="text-[9px] px-1 py-0">
+            {completionPercentage}% complet
+          </Badge>
+        </div>
+      </div>
 
-      {/* Layout miroir du mode présentation: 40% gauche / 60% droite */}
-      <div className="grid grid-cols-1 lg:grid-cols-[40%_60%] gap-6 max-w-7xl mx-auto">
+      {/* Layout 3 colonnes ultra-dense restauré */}
+      <div className="grid grid-cols-1 xl:grid-cols-12 gap-3">
 
-        {/* COLONNE GAUCHE: Images + Stock + Échantillons + Données fixes */}
-        <div className="space-y-4">
+        {/* COLONNE 1: Images & Métadonnées (25% - xl:col-span-3) */}
+        <div className="xl:col-span-3 space-y-2">
 
-          {/* Galerie images */}
-          <div className="bg-white border border-gray-200 rounded-lg overflow-hidden shadow-sm">
+          {/* Galerie d'images compacte */}
+          <div className="bg-white border border-black">
             <ProductImageGallery
               productId={product.id}
               productName={product.name}
               productStatus={product.status}
-              compact={false}
+              compact={true}
             />
           </div>
 
-          {/* Stock badge */}
-          <div className="flex justify-center">
-            {getStockBadge()}
+          {/* Actions sous l'image */}
+          <div className="bg-white border border-black p-2">
+            <h3 className="font-medium mb-2 text-[10px]">Actions</h3>
+            <div className="space-y-1">
+              <Button
+                variant="outline"
+                size="sm"
+                className="w-full justify-start text-[9px] h-5"
+                onClick={() => setShowImagesModal(true)}
+              >
+                <Settings className="h-2 w-2 mr-1" />
+                Photos ({product.images?.length || 0})
+              </Button>
+            </div>
           </div>
 
-          {/* Échantillons avec règle métier */}
-          <div className="bg-white border border-gray-200 rounded-lg p-3 shadow-sm">
-            <h3 className="text-[10px] font-semibold text-gray-600 mb-2 uppercase tracking-wide">
-              Échantillons
+          {/* Métadonnées système ultra-compact */}
+          <div className="bg-white border border-black p-2">
+            <h3 className="font-medium mb-2 flex items-center text-[10px]">
+              <Package className="h-3 w-3 mr-1" />
+              Métadonnées
             </h3>
-            {product.stock_quantity === 0 || product.stock_quantity === null ? (
-              <div>
-                <SampleRequirementSection
-                  requiresSample={product.requires_sample || false}
-                  isProduct={true}
-                  productName={product.name}
-                  onRequirementChange={(requiresSample) => {
-                    onUpdate({ requires_sample: requiresSample })
-                  }}
-                />
-                <div className="mt-2 p-1.5 bg-blue-50 border border-blue-200 rounded text-[10px]">
-                  <p className="text-blue-800 font-medium">ℹ️ Phase sourcing</p>
-                  <p className="text-blue-700 mt-0.5">Jamais en stock, échantillon disponible</p>
-                </div>
-              </div>
-            ) : (
-              <div className="p-2 bg-gray-50 border border-gray-200 rounded">
-                <p className="text-[10px] text-gray-600 font-medium">🚫 Échantillon non disponible</p>
-                <p className="text-[10px] text-gray-500 mt-1">Produit déjà en stock (qty: {product.stock_quantity})</p>
-              </div>
-            )}
-          </div>
-
-          {/* Données fixes système */}
-          <div className="bg-gray-50 border border-gray-200 rounded-lg p-3 shadow-sm">
-            <h3 className="text-[10px] font-semibold text-gray-600 mb-2 uppercase tracking-wide">
-              Données système
-            </h3>
-            <div className="space-y-1.5 text-[10px]">
-              <div className="flex justify-between">
-                <span className="text-gray-600">SKU:</span>
-                <span className="font-mono text-gray-800">{product.sku || 'N/A'}</span>
-              </div>
+            <div className="space-y-1 text-[9px]">
               <div className="flex justify-between">
                 <span className="text-gray-600">ID:</span>
-                <span className="font-mono text-gray-800">{product.id.slice(0, 8)}...</span>
+                <span className="font-mono">{product.id.slice(0, 6)}...</span>
               </div>
               <div className="flex justify-between">
                 <span className="text-gray-600">Créé:</span>
-                <span className="text-gray-800">
-                  {product.created_at ? new Date(product.created_at).toLocaleDateString('fr-FR', {
-                    day: '2-digit', month: '2-digit', year: '2-digit'
-                  }) : 'N/A'}
-                </span>
+                <span>{new Date(product.created_at).toLocaleDateString('fr-FR', { day: '2-digit', month: '2-digit' })}</span>
               </div>
               <div className="flex justify-between">
                 <span className="text-gray-600">MAJ:</span>
-                <span className="text-gray-800">
-                  {product.updated_at ? new Date(product.updated_at).toLocaleDateString('fr-FR', {
-                    day: '2-digit', month: '2-digit', year: '2-digit'
-                  }) : 'N/A'}
-                </span>
+                <span>{new Date(product.updated_at).toLocaleDateString('fr-FR', { day: '2-digit', month: '2-digit' })}</span>
+              </div>
+            </div>
+          </div>
+
+          {/* Status et progression compact */}
+          <div className="bg-white border border-black p-2">
+            <div className="space-y-2">
+              <Badge className={cn(
+                "text-[9px] px-1 py-0",
+                product.status === 'active' ? "bg-green-600 text-white" :
+                product.status === 'draft' ? "bg-yellow-600 text-white" :
+                "bg-gray-600 text-white"
+              )}>
+                {product.status === 'active' ? 'Actif' :
+                 product.status === 'draft' ? 'Brouillon' :
+                 'Archivé'}
+              </Badge>
+              <div>
+                <div className="flex items-center justify-between mb-1">
+                  <span className="text-[9px] text-gray-600">Complétude</span>
+                  <span className="text-[9px] font-medium">{completionPercentage}%</span>
+                </div>
+                <div className="w-full bg-gray-200 rounded-full h-1">
+                  <div
+                    className="bg-black h-1 rounded-full transition-all"
+                    style={{ width: `${completionPercentage}%` }}
+                  ></div>
+                </div>
+                {missingFields.length > 0 && (
+                  <p className="text-[8px] text-red-600 mt-1">
+                    Manque: {missingFields.slice(0, 2).join(', ')}
+                  </p>
+                )}
               </div>
             </div>
           </div>
         </div>
 
-        {/* COLONNE DROITE: Header + Formulaire unifié dense */}
-        <div className="space-y-4">
+        {/* COLONNE 2: Informations Principales (45% - xl:col-span-5) */}
+        <div className="xl:col-span-5 space-y-2">
 
-          {/* Header compact */}
-          <div className="bg-gradient-to-r from-gray-50 to-white border-l-4 border-black p-3 rounded-lg shadow-sm">
-            <div className="flex items-center justify-between mb-2">
-              <div className="flex items-center gap-2">
-                <Settings className="h-4 w-4" />
-                <h1 className="text-base font-bold">Mode Administration</h1>
+          {/* Header produit avec bouton modifier */}
+          <div className="bg-white border border-black p-2">
+            <div className="flex items-start justify-between mb-2">
+              <div className="flex-1">
+                <Label className="text-[9px] text-gray-600 mb-1 block">Nom du produit</Label>
+                <Input
+                  value={formData.name}
+                  onChange={(e) => handleFieldChange('name', e.target.value)}
+                  className="text-sm font-bold border-0 p-0 h-auto bg-transparent"
+                  placeholder="Nom du produit"
+                />
+                <div className="text-[9px] text-gray-600 mt-1">
+                  SKU: {product.sku || 'Auto-généré'}
+                </div>
               </div>
-              <div className="flex items-center gap-2">
-                <Badge variant="outline" className="text-[10px] px-2 py-0.5">
-                  {completionPercentage}% complet
-                </Badge>
-                <Button
-                  variant="outline"
-                  onClick={onSwitchToView}
-                  className="h-7 text-xs px-2"
-                >
-                  <Eye className="h-3 w-3 mr-1" />
-                  Présentation
-                </Button>
+              <Button variant="outline" size="sm" className="h-5 text-[9px] px-1">
+                <Settings className="h-2 w-2 mr-1" />
+                Modifier
+              </Button>
+            </div>
+          </div>
+
+          {/* Informations générales avec bouton modifier */}
+          <div className="bg-white border border-black p-2">
+            <div className="flex items-center justify-between mb-2">
+              <h3 className="font-medium flex items-center text-[10px]">
+                <FileText className="h-3 w-3 mr-1" />
+                Informations générales
+              </h3>
+              <Button variant="outline" size="sm" className="h-5 text-[9px] px-1">
+                <Settings className="h-2 w-2 mr-1" />
+                Modifier
+              </Button>
+            </div>
+            <div className="space-y-2">
+              <div>
+                <Label className="text-[9px] text-gray-600">Slug URL</Label>
+                <Input
+                  value={formData.slug}
+                  onChange={(e) => handleFieldChange('slug', e.target.value)}
+                  className="h-6 text-[10px]"
+                  placeholder="url-produit"
+                />
               </div>
             </div>
           </div>
 
-          {/* Formulaire unifié ultra-dense */}
-          <div className="bg-white border border-gray-200 rounded-lg p-4 shadow-sm">
-
-            {/* Section 1: Identité */}
-            <div className="mb-4">
-              <h3 className="text-[10px] font-semibold text-gray-600 mb-2 uppercase tracking-wide flex items-center">
-                <FileText className="h-3 w-3 mr-1" />
-                Identité produit
+          {/* Catégorisation avec bouton modifier */}
+          <div className="bg-white border border-black p-2">
+            <div className="flex items-center justify-between mb-2">
+              <h3 className="font-medium flex items-center text-[10px]">
+                <FolderTree className="h-3 w-3 mr-1" />
+                Catégorisation
               </h3>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setShowCategorizeModal(true)}
+                className="h-5 text-[9px] px-1"
+              >
+                <Settings className="h-2 w-2 mr-1" />
+                Modifier
+              </Button>
+            </div>
+
+            {/* Affichage hiérarchie actuelle compact */}
+            {product.subcategory?.category?.family || product.subcategory?.category || product.subcategory ? (
+              <div className="bg-gray-50 p-2 rounded border">
+                <div className="flex items-center space-x-1 flex-wrap text-[9px]">
+                  {product.subcategory?.category?.family && (
+                    <>
+                      <div className="flex items-center space-x-1 bg-green-100 px-1 py-0.5 rounded">
+                        <span className="text-green-800 font-medium">
+                          {product.subcategory.category.family.name}
+                        </span>
+                      </div>
+                      <span className="text-gray-400">›</span>
+                    </>
+                  )}
+                  {product.subcategory?.category && (
+                    <>
+                      <div className="flex items-center space-x-1 bg-blue-100 px-1 py-0.5 rounded">
+                        <span className="text-blue-800 font-medium">
+                          {product.subcategory.category.name}
+                        </span>
+                      </div>
+                      <span className="text-gray-400">›</span>
+                    </>
+                  )}
+                  {product.subcategory && (
+                    <div className="flex items-center space-x-1 bg-purple-100 px-1 py-0.5 rounded">
+                      <span className="text-purple-800 font-medium">
+                        {product.subcategory.name}
+                      </span>
+                    </div>
+                  )}
+                </div>
+              </div>
+            ) : (
+              <div className="bg-red-50 p-2 rounded border border-red-200">
+                <p className="text-red-700 text-[9px]">
+                  Aucune catégorisation définie
+                </p>
+              </div>
+            )}
+          </div>
+
+          {/* Fournisseur avec bouton modifier */}
+          <div className="bg-white border border-black p-2">
+            <div className="flex items-center justify-between mb-2">
+              <h3 className="font-medium flex items-center text-[10px]">
+                <Truck className="h-3 w-3 mr-1" />
+                Fournisseur & Références
+              </h3>
+              <Button variant="outline" size="sm" className="h-5 text-[9px] px-1">
+                <Settings className="h-2 w-2 mr-1" />
+                Modifier
+              </Button>
+            </div>
+            <div className="space-y-2">
+              <div>
+                <Label className="text-[9px] text-gray-600">Fournisseur</Label>
+                <Select
+                  value={formData.supplier_id}
+                  onValueChange={(value) => handleFieldChange('supplier_id', value)}
+                >
+                  <SelectTrigger className="h-6 text-[10px]">
+                    <SelectValue placeholder="Sélectionner..." />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {suppliers.map((supplier) => (
+                      <SelectItem key={supplier.id} value={supplier.id} className="text-[10px]">
+                        {supplier.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
               <div className="grid grid-cols-2 gap-2">
-                <div className="col-span-2">
-                  <Label className="text-[10px] text-gray-600">Nom</Label>
+                <div>
+                  <Label className="text-[9px] text-gray-600">Référence fournisseur</Label>
                   <Input
-                    value={formData.name}
-                    onChange={(e) => handleFieldChange('name', e.target.value)}
-                    className="h-7 text-xs"
-                    placeholder="Nom du produit"
+                    value={formData.supplier_reference}
+                    onChange={(e) => handleFieldChange('supplier_reference', e.target.value)}
+                    className="h-6 text-[10px]"
+                    placeholder="REF-SUPP"
                   />
                 </div>
                 <div>
-                  <Label className="text-[10px] text-gray-600">Catégorie</Label>
+                  <Label className="text-[9px] text-gray-600">Page fournisseur</Label>
+                  <Input
+                    value={formData.supplier_page_url}
+                    onChange={(e) => handleFieldChange('supplier_page_url', e.target.value)}
+                    className="h-6 text-[10px]"
+                    placeholder="https://..."
+                  />
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Description avec bouton modifier */}
+          <div className="bg-white border border-black p-2">
+            <div className="flex items-center justify-between mb-2">
+              <h3 className="font-medium text-[10px]">Description</h3>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => setShowDescriptionsModal(true)}
+                className="h-5 text-[9px] px-1"
+              >
+                <Settings className="h-2 w-2 mr-1" />
+                Modifier
+              </Button>
+            </div>
+            <p className="text-[10px] text-gray-700 line-clamp-2">
+              {product.description || 'Aucune description disponible'}
+            </p>
+          </div>
+
+          {/* Caractéristiques avec bouton modifier */}
+          <div className="bg-white border border-black p-2">
+            <div className="flex items-center justify-between mb-2">
+              <h3 className="font-medium text-[10px]">Caractéristiques</h3>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => setShowCharacteristicsModal(true)}
+                className="h-5 text-[9px] px-1"
+              >
+                <Settings className="h-2 w-2 mr-1" />
+                Modifier
+              </Button>
+            </div>
+            <div className="space-y-1 text-[10px]">
+              {product.color && (
+                <div className="flex justify-between">
+                  <span className="text-gray-600">Couleur:</span>
+                  <span>{product.color}</span>
+                </div>
+              )}
+              {product.material && (
+                <div className="flex justify-between">
+                  <span className="text-gray-600">Matière:</span>
+                  <span>{product.material}</span>
+                </div>
+              )}
+              {(!product.color && !product.material) && (
+                <p className="text-gray-400 italic text-[9px]">Aucune caractéristique définie</p>
+              )}
+            </div>
+          </div>
+        </div>
+
+        {/* COLONNE 3: Gestion (30% - xl:col-span-4) */}
+        <div className="xl:col-span-4 space-y-2">
+
+          {/* Stock & Gestion avec bouton modifier */}
+          <div className="bg-white border border-black p-2">
+            <div className="flex items-center justify-between mb-2">
+              <h3 className="font-medium flex items-center text-[10px]">
+                <BarChart3 className="h-3 w-3 mr-1" />
+                Stock & Disponibilité
+              </h3>
+              <Button variant="outline" size="sm" className="h-5 text-[9px] px-1">
+                <Settings className="h-2 w-2 mr-1" />
+                Modifier
+              </Button>
+            </div>
+            <div className="space-y-2">
+              <div className="grid grid-cols-2 gap-2">
+                <div>
+                  <Label className="text-[9px] text-gray-600">Statut</Label>
                   <Select
-                    value={formData.subcategory_id}
-                    onValueChange={(value) => handleFieldChange('subcategory_id', value)}
+                    value={formData.status}
+                    onValueChange={(value) => handleFieldChange('status', value)}
                   >
-                    <SelectTrigger className="h-7 text-xs">
-                      <SelectValue placeholder="Sélectionner..." />
+                    <SelectTrigger className="h-6 text-[10px]">
+                      <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
-                      {subcategories.map((sub) => (
-                        <SelectItem key={sub.id} value={sub.id} className="text-xs">
-                          {sub.name}
-                        </SelectItem>
-                      ))}
+                      <SelectItem value="draft" className="text-[10px]">Brouillon</SelectItem>
+                      <SelectItem value="active" className="text-[10px]">Actif</SelectItem>
+                      <SelectItem value="archived" className="text-[10px]">Archivé</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
                 <div>
-                  <Label className="text-[10px] text-gray-600">Fournisseur</Label>
+                  <Label className="text-[9px] text-gray-600">Condition</Label>
                   <Select
-                    value={formData.supplier_id}
-                    onValueChange={(value) => handleFieldChange('supplier_id', value)}
+                    value={formData.condition}
+                    onValueChange={(value) => handleFieldChange('condition', value)}
                   >
-                    <SelectTrigger className="h-7 text-xs">
-                      <SelectValue placeholder="Sélectionner..." />
+                    <SelectTrigger className="h-6 text-[10px]">
+                      <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
-                      {suppliers.map((sup) => (
-                        <SelectItem key={sup.id} value={sup.id} className="text-xs">
-                          {sup.name}
-                        </SelectItem>
-                      ))}
+                      <SelectItem value="new" className="text-[10px]">Neuf</SelectItem>
+                      <SelectItem value="used" className="text-[10px]">Occasion</SelectItem>
+                      <SelectItem value="refurbished" className="text-[10px]">Reconditionné</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
               </div>
-            </div>
-
-            <div className="border-t border-gray-200 my-4" />
-
-            {/* Section 2: Tarification */}
-            <div className="mb-4">
-              <h3 className="text-[10px] font-semibold text-gray-600 mb-2 uppercase tracking-wide flex items-center">
-                <DollarSign className="h-3 w-3 mr-1" />
-                Tarification
-              </h3>
-              <div className="grid grid-cols-4 gap-2">
+              <div className="grid grid-cols-2 gap-2">
                 <div>
-                  <Label className="text-[10px] text-gray-600">Coût HT</Label>
+                  <Label className="text-[9px] text-gray-600">Quantité stock</Label>
                   <Input
                     type="number"
-                    step="0.01"
-                    value={formData.cost_price}
-                    onChange={(e) => handleFieldChange('cost_price', parseFloat(e.target.value))}
-                    className="h-7 text-xs"
-                    placeholder="0.00"
+                    value={formData.stock_quantity}
+                    onChange={(e) => handleFieldChange('stock_quantity', parseInt(e.target.value))}
+                    className="h-6 text-[10px]"
                   />
                 </div>
                 <div>
-                  <Label className="text-[10px] text-gray-600">Prix vente HT</Label>
+                  <Label className="text-[9px] text-gray-600">Stock minimum</Label>
+                  <Input
+                    type="number"
+                    value={formData.min_stock}
+                    onChange={(e) => handleFieldChange('min_stock', parseInt(e.target.value))}
+                    className="h-6 text-[10px]"
+                  />
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Tarification corrigée avec bouton modifier */}
+          <div className="bg-white border border-black p-2">
+            <div className="flex items-center justify-between mb-2">
+              <h3 className="font-medium flex items-center text-[10px]">
+                <DollarSign className="h-3 w-3 mr-1" />
+                Tarification
+              </h3>
+              <Button variant="outline" size="sm" className="h-5 text-[9px] px-1">
+                <Settings className="h-2 w-2 mr-1" />
+                Modifier
+              </Button>
+            </div>
+            <div className="space-y-2">
+              <div>
+                <Label className="text-[9px] text-gray-600">Coût fournisseur HT</Label>
+                <Input
+                  type="number"
+                  step="0.01"
+                  value={formData.base_cost}
+                  onChange={(e) => handleFieldChange('base_cost', parseFloat(e.target.value))}
+                  className="h-6 text-[10px]"
+                  placeholder="0.00"
+                />
+              </div>
+              <div className="grid grid-cols-2 gap-2">
+                <div>
+                  <Label className="text-[9px] text-gray-600">Prix vente HT</Label>
                   <Input
                     type="number"
                     step="0.01"
                     value={formData.selling_price}
                     onChange={(e) => handleFieldChange('selling_price', parseFloat(e.target.value))}
-                    className="h-7 text-xs"
+                    className="h-6 text-[10px]"
                     placeholder="0.00"
                   />
                 </div>
                 <div>
-                  <Label className="text-[10px] text-gray-600">Marge %</Label>
+                  <Label className="text-[9px] text-gray-600">Prix minimum HT</Label>
+                  <Input
+                    type="number"
+                    step="0.01"
+                    value={formData.min_price}
+                    onChange={(e) => handleFieldChange('min_price', parseFloat(e.target.value))}
+                    className="h-6 text-[10px]"
+                    placeholder="0.00"
+                  />
+                </div>
+              </div>
+              <div className="grid grid-cols-2 gap-2">
+                <div>
+                  <Label className="text-[9px] text-gray-600">Marge %</Label>
                   <Input
                     type="number"
                     step="0.1"
                     value={formData.margin_percentage}
                     onChange={(e) => handleFieldChange('margin_percentage', parseFloat(e.target.value))}
-                    className="h-7 text-xs"
+                    className="h-6 text-[10px] bg-gray-50"
                     placeholder="0"
+                    disabled
                   />
                 </div>
                 <div>
-                  <Label className="text-[10px] text-gray-600">TVA %</Label>
+                  <Label className="text-[9px] text-gray-600">TVA %</Label>
                   <Input
                     type="number"
                     value={formData.tax_rate}
                     onChange={(e) => handleFieldChange('tax_rate', parseFloat(e.target.value))}
-                    className="h-7 text-xs"
+                    className="h-6 text-[10px]"
                     placeholder="20"
                   />
                 </div>
               </div>
+              {formData.base_cost && formData.selling_price && (
+                <div className="text-[9px] text-gray-600 bg-gray-50 p-1 rounded">
+                  <div className="flex justify-between">
+                    <span>Marge brute:</span>
+                    <span className="font-medium">
+                      {((parseFloat(formData.selling_price) - parseFloat(formData.base_cost)) / parseFloat(formData.base_cost) * 100).toFixed(1)}%
+                    </span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span>Prix TTC:</span>
+                    <span className="font-medium">
+                      {(parseFloat(formData.selling_price) * (1 + parseFloat(formData.tax_rate) / 100)).toFixed(2)}€
+                    </span>
+                  </div>
+                </div>
+              )}
             </div>
+          </div>
 
-            <div className="border-t border-gray-200 my-4" />
-
-            {/* Section 3: Stock */}
-            <div className="mb-4">
-              <h3 className="text-[10px] font-semibold text-gray-600 mb-2 uppercase tracking-wide flex items-center">
-                <BarChart3 className="h-3 w-3 mr-1" />
-                Stock & Disponibilité
-              </h3>
-              <div className="grid grid-cols-4 gap-2">
-                <div>
-                  <Label className="text-[10px] text-gray-600">Statut</Label>
-                  <Select
-                    value={formData.status}
-                    onValueChange={(value) => handleFieldChange('status', value)}
-                  >
-                    <SelectTrigger className="h-7 text-xs">
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="draft" className="text-xs">Brouillon</SelectItem>
-                      <SelectItem value="active" className="text-xs">Actif</SelectItem>
-                      <SelectItem value="archived" className="text-xs">Archivé</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-                <div>
-                  <Label className="text-[10px] text-gray-600">Condition</Label>
-                  <Select
-                    value={formData.condition}
-                    onValueChange={(value) => handleFieldChange('condition', value)}
-                  >
-                    <SelectTrigger className="h-7 text-xs">
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="new" className="text-xs">Neuf</SelectItem>
-                      <SelectItem value="used" className="text-xs">Occasion</SelectItem>
-                      <SelectItem value="refurbished" className="text-xs">Reconditionné</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-                <div>
-                  <Label className="text-[10px] text-gray-600">Quantité</Label>
-                  <Input
-                    type="number"
-                    value={formData.stock_quantity}
-                    onChange={(e) => handleFieldChange('stock_quantity', parseInt(e.target.value))}
-                    className="h-7 text-xs"
-                    placeholder="0"
-                  />
-                </div>
-                <div>
-                  <Label className="text-[10px] text-gray-600">Stock min</Label>
-                  <Input
-                    type="number"
-                    value={formData.min_stock}
-                    onChange={(e) => handleFieldChange('min_stock', parseInt(e.target.value))}
-                    className="h-7 text-xs"
-                    placeholder="0"
-                  />
-                </div>
-              </div>
-            </div>
-
-            <div className="border-t border-gray-200 my-4" />
-
-            {/* Section 4: Identifiants */}
-            <div className="mb-4">
-              <h3 className="text-[10px] font-semibold text-gray-600 mb-2 uppercase tracking-wide flex items-center">
+          {/* Identifiants avec bouton modifier */}
+          <div className="bg-white border border-black p-2">
+            <div className="flex items-center justify-between mb-2">
+              <h3 className="font-medium flex items-center text-[10px]">
                 <Tags className="h-3 w-3 mr-1" />
                 Identifiants
               </h3>
-              <div className="grid grid-cols-3 gap-2">
+              <Button variant="outline" size="sm" className="h-5 text-[9px] px-1">
+                <Settings className="h-2 w-2 mr-1" />
+                Modifier
+              </Button>
+            </div>
+            <div className="space-y-2">
+              <div>
+                <Label className="text-[9px] text-gray-600">SKU (auto-généré)</Label>
+                <Input
+                  value={formData.sku}
+                  disabled
+                  className="h-6 bg-gray-50 text-[10px]"
+                />
+              </div>
+              <div className="grid grid-cols-2 gap-2">
                 <div>
-                  <Label className="text-[10px] text-gray-600">SKU</Label>
-                  <Input
-                    value={formData.sku}
-                    disabled
-                    className="h-7 text-xs bg-gray-50"
-                    placeholder="Auto"
-                  />
-                </div>
-                <div>
-                  <Label className="text-[10px] text-gray-600">Marque</Label>
+                  <Label className="text-[9px] text-gray-600">Marque</Label>
                   <Input
                     value={formData.brand}
                     onChange={(e) => handleFieldChange('brand', e.target.value)}
-                    className="h-7 text-xs"
+                    className="h-6 text-[10px]"
                     placeholder="Marque"
                   />
                 </div>
                 <div>
-                  <Label className="text-[10px] text-gray-600">GTIN</Label>
+                  <Label className="text-[9px] text-gray-600">GTIN/EAN</Label>
                   <Input
                     value={formData.gtin}
                     onChange={(e) => handleFieldChange('gtin', e.target.value)}
-                    className="h-7 text-xs"
+                    className="h-6 text-[10px]"
                     placeholder="13 chiffres"
                   />
                 </div>
               </div>
             </div>
+          </div>
 
-            <div className="border-t border-gray-200 my-4" />
-
-            {/* Section 5: Dimensions */}
-            <div className="mb-4">
-              <h3 className="text-[10px] font-semibold text-gray-600 mb-2 uppercase tracking-wide flex items-center">
+          {/* Dimensions avec bouton modifier */}
+          <div className="bg-white border border-black p-2">
+            <div className="flex items-center justify-between mb-2">
+              <h3 className="font-medium flex items-center text-[10px]">
                 <Package className="h-3 w-3 mr-1" />
                 Dimensions & Poids
               </h3>
-              <div className="grid grid-cols-4 gap-2 mb-2">
+              <Button variant="outline" size="sm" className="h-5 text-[9px] px-1">
+                <Settings className="h-2 w-2 mr-1" />
+                Modifier
+              </Button>
+            </div>
+            <div className="space-y-2">
+              <div className="grid grid-cols-3 gap-1">
                 <div>
-                  <Label className="text-[10px] text-gray-600">Longueur</Label>
+                  <Label className="text-[9px] text-gray-600">L</Label>
                   <Input
                     type="number"
                     step="0.1"
                     value={formData.dimensions_length}
                     onChange={(e) => handleFieldChange('dimensions_length', parseFloat(e.target.value))}
-                    className="h-7 text-xs"
+                    className="h-6 text-[10px]"
                     placeholder="0"
                   />
                 </div>
                 <div>
-                  <Label className="text-[10px] text-gray-600">Largeur</Label>
+                  <Label className="text-[9px] text-gray-600">l</Label>
                   <Input
                     type="number"
                     step="0.1"
                     value={formData.dimensions_width}
                     onChange={(e) => handleFieldChange('dimensions_width', parseFloat(e.target.value))}
-                    className="h-7 text-xs"
+                    className="h-6 text-[10px]"
                     placeholder="0"
                   />
                 </div>
                 <div>
-                  <Label className="text-[10px] text-gray-600">Hauteur</Label>
+                  <Label className="text-[9px] text-gray-600">H</Label>
                   <Input
                     type="number"
                     step="0.1"
                     value={formData.dimensions_height}
                     onChange={(e) => handleFieldChange('dimensions_height', parseFloat(e.target.value))}
-                    className="h-7 text-xs"
+                    className="h-6 text-[10px]"
                     placeholder="0"
                   />
-                </div>
-                <div>
-                  <Label className="text-[10px] text-gray-600">Unité</Label>
-                  <Select
-                    value={formData.dimensions_unit}
-                    onValueChange={(value) => handleFieldChange('dimensions_unit', value)}
-                  >
-                    <SelectTrigger className="h-7 text-xs">
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="cm" className="text-xs">cm</SelectItem>
-                      <SelectItem value="m" className="text-xs">m</SelectItem>
-                      <SelectItem value="in" className="text-xs">in</SelectItem>
-                    </SelectContent>
-                  </Select>
                 </div>
               </div>
               <div className="grid grid-cols-2 gap-2">
                 <div>
-                  <Label className="text-[10px] text-gray-600">Poids</Label>
+                  <Label className="text-[9px] text-gray-600">Poids</Label>
                   <Input
                     type="number"
                     step="0.01"
                     value={formData.weight}
                     onChange={(e) => handleFieldChange('weight', parseFloat(e.target.value))}
-                    className="h-7 text-xs"
+                    className="h-6 text-[10px]"
                     placeholder="0"
                   />
                 </div>
                 <div>
-                  <Label className="text-[10px] text-gray-600">Unité poids</Label>
+                  <Label className="text-[9px] text-gray-600">Unité</Label>
                   <Select
                     value={formData.weight_unit}
                     onValueChange={(value) => handleFieldChange('weight_unit', value)}
                   >
-                    <SelectTrigger className="h-7 text-xs">
+                    <SelectTrigger className="h-6 text-[10px]">
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="kg" className="text-xs">kg</SelectItem>
-                      <SelectItem value="g" className="text-xs">g</SelectItem>
-                      <SelectItem value="lb" className="text-xs">lb</SelectItem>
+                      <SelectItem value="kg" className="text-[10px]">kg</SelectItem>
+                      <SelectItem value="g" className="text-[10px]">g</SelectItem>
+                      <SelectItem value="lb" className="text-[10px]">lb</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
               </div>
             </div>
+          </div>
 
-            <div className="border-t border-gray-200 my-4" />
-
-            {/* Actions rapides en ligne */}
-            <div className="flex gap-2">
-              <Button
-                variant="outline"
-                className="flex-1 justify-start text-xs h-7"
-                onClick={() => setShowCategorizeModal(true)}
-              >
-                <FolderTree className="h-3 w-3 mr-1" />
-                Catégorisation
-              </Button>
-              <Button
-                variant="outline"
-                className="flex-1 justify-start text-xs h-7"
-                onClick={() => setShowDescriptionsModal(true)}
-              >
-                <FileText className="h-3 w-3 mr-1" />
-                Descriptions
-              </Button>
-              <Button
-                variant="outline"
-                className="flex-1 justify-start text-xs h-7"
-                onClick={() => setShowCharacteristicsModal(true)}
-              >
-                <Tags className="h-3 w-3 mr-1" />
-                Caractéristiques
-              </Button>
-            </div>
-
-            {/* Bouton publier si >80% */}
-            {completionPercentage >= 80 && (
-              <Button className="w-full bg-green-600 hover:bg-green-700 text-xs h-8 mt-3">
-                <Save className="h-3 w-3 mr-1" />
-                Publier le produit
-              </Button>
-            )}
+          {/* Section échantillon */}
+          <div className="bg-white border border-black p-2">
+            <h3 className="font-medium mb-2 text-[10px]">Gestion Échantillons</h3>
+            <SampleRequirementSection
+              requiresSample={product.requires_sample || false}
+              isProduct={true}
+              productName={product.name}
+              onRequirementChange={(requiresSample) => {
+                onUpdate({ requires_sample: requiresSample })
+              }}
+            />
           </div>
         </div>
       </div>

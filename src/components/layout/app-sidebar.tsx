@@ -437,8 +437,7 @@ export function AppSidebar({ className }: AppSidebarProps) {
 
       {/* Zone utilisateur */}
       <div className="border-t border-black p-4">
-        <div className="flex items-center space-x-3 mb-3">
-          <div className="h-8 w-8 bg-black rounded-full"></div>
+        <div className="flex items-center mb-3">
           <div className="flex-1">
             <p className="text-sm font-medium text-black">Admin</p>
             <p className="text-xs text-black opacity-70">Owner</p>

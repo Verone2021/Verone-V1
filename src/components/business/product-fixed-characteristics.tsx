@@ -6,10 +6,22 @@ import { cn } from '../../lib/utils'
 
 interface Product {
   id: string
+  name?: string
   // Caractéristiques fixes de la variante (couleur/matière uniquement)
   color?: string
   material?: string
   video_url?: string
+
+  // Navigation catégorielle
+  subcategory?: {
+    name?: string
+    category?: {
+      name?: string
+      family?: {
+        name?: string
+      }
+    }
+  }
 
   // Données héritées du Product Group (lecture seule)
   product_groups?: {
@@ -25,6 +37,105 @@ interface ProductFixedCharacteristicsProps {
   onEditVideoUrl?: () => void // Seule action d'édition autorisée
 }
 
+/**
+ * Détermine les pièces de maison compatibles selon le type de produit
+ * Règles métier :
+ * - chaise → toutes les pièces
+ * - lavabo → "wc salle de bains"
+ * - lit → "chambre"
+ * - meuble général → pièces appropriées selon usage
+ */
+function getCompatibleRooms(product: Product): string[] {
+  const productName = product.name?.toLowerCase() || ''
+  const subcategoryName = product.subcategory?.name?.toLowerCase() || ''
+  const categoryName = product.subcategory?.category?.name?.toLowerCase() || ''
+  const familyName = product.subcategory?.category?.family?.name?.toLowerCase() || ''
+
+  // Toutes les pièces disponibles
+  const allRooms = [
+    'salon', 'chambre', 'cuisine', 'salle à manger', 'bureau',
+    'entrée', 'couloir', 'salle de bains', 'wc', 'dressing',
+    'terrasse', 'jardin', 'cave', 'garage'
+  ]
+
+  // Chaises et sièges → toutes les pièces
+  if (productName.includes('chaise') ||
+      productName.includes('fauteuil') ||
+      productName.includes('siège') ||
+      productName.includes('tabouret') ||
+      subcategoryName.includes('chaise') ||
+      subcategoryName.includes('siège')) {
+    return allRooms
+  }
+
+  // Lavabos et sanitaires → salle de bains/wc uniquement
+  if (productName.includes('lavabo') ||
+      productName.includes('vasque') ||
+      productName.includes('évier') ||
+      productName.includes('toilette') ||
+      subcategoryName.includes('sanitaire') ||
+      categoryName.includes('sanitaire')) {
+    return ['wc', 'salle de bains']
+  }
+
+  // Lits → chambre uniquement
+  if (productName.includes('lit') ||
+      productName.includes('matelas') ||
+      productName.includes('sommier') ||
+      subcategoryName.includes('lit') ||
+      subcategoryName.includes('couchage')) {
+    return ['chambre']
+  }
+
+  // Tables → selon le type
+  if (productName.includes('table')) {
+    if (productName.includes('chevet') || productName.includes('nuit')) {
+      return ['chambre']
+    }
+    if (productName.includes('salle à manger') || productName.includes('repas')) {
+      return ['salle à manger']
+    }
+    if (productName.includes('bureau') || productName.includes('travail')) {
+      return ['bureau']
+    }
+    if (productName.includes('basse') || productName.includes('salon')) {
+      return ['salon']
+    }
+    // Table générique → salon, salle à manger, bureau
+    return ['salon', 'salle à manger', 'bureau']
+  }
+
+  // Éclairage → toutes les pièces
+  if (categoryName.includes('éclairage') ||
+      productName.includes('lampe') ||
+      productName.includes('luminaire') ||
+      productName.includes('applique')) {
+    return allRooms
+  }
+
+  // Armoires et rangements
+  if (productName.includes('armoire') ||
+      productName.includes('placard') ||
+      productName.includes('commode') ||
+      subcategoryName.includes('rangement')) {
+    if (productName.includes('dressing') || productName.includes('penderie')) {
+      return ['chambre', 'dressing']
+    }
+    // Rangement générique → plusieurs pièces
+    return ['salon', 'chambre', 'bureau', 'entrée']
+  }
+
+  // Canapés → salon principalement
+  if (productName.includes('canapé') ||
+      productName.includes('sofa') ||
+      subcategoryName.includes('canapé')) {
+    return ['salon']
+  }
+
+  // Par défaut : pièces principales
+  return ['salon', 'chambre', 'bureau']
+}
+
 export function ProductFixedCharacteristics({
   product,
   className,
@@ -33,6 +144,7 @@ export function ProductFixedCharacteristics({
   const dimensions = product.product_groups?.dimensions
   const weight = product.product_groups?.weight
   const technicalSpecs = product.product_groups?.technical_specs
+  const compatibleRooms = getCompatibleRooms(product)
 
   return (
     <div className={cn("card-verone p-4", className)}>
@@ -83,6 +195,28 @@ export function ProductFixedCharacteristics({
           </div>
           <div className="text-xs text-blue-600 mt-1">
             ℹ️ Couleur et matière sont gérées au niveau Product Group
+          </div>
+        </div>
+
+        {/* Pièces compatibles (automatique selon type produit) */}
+        <div>
+          <h4 className="text-sm font-medium text-black mb-2 opacity-70">
+            Pièces de maison compatibles
+          </h4>
+          <div className="bg-green-50 p-3 rounded">
+            <div className="flex flex-wrap gap-2">
+              {compatibleRooms.map((room, index) => (
+                <span
+                  key={index}
+                  className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800"
+                >
+                  {room}
+                </span>
+              ))}
+            </div>
+            <div className="text-xs text-green-600 mt-2">
+              🏠 Pièces déterminées automatiquement selon le type de produit
+            </div>
           </div>
         </div>
 
@@ -214,12 +348,22 @@ export function ProductFixedCharacteristics({
  *
  * Caractéristiques affichées :
  * - Couleur/Matière : Spécifiques à la variante (fixes, gérées au niveau Product Group)
+ * - Pièces compatibles : Déterminées automatiquement selon le type de produit
  * - Dimensions/Poids : Héritées du Product Group (communes à toutes variantes)
  * - Spécifications techniques : Héritées du Product Group
  * - Vidéo : Spécifique à la variante (modifiable)
  *
+ * Logique pièces maison :
+ * - Chaises/sièges → toutes les pièces
+ * - Lavabos/sanitaires → WC et salle de bains uniquement
+ * - Lits → chambre uniquement
+ * - Tables → selon le type (chevet→chambre, basse→salon, etc.)
+ * - Éclairage → toutes les pièces
+ * - Autres → pièces appropriées selon l'usage
+ *
  * Conforme aux business rules :
  * - R-VAR-002 : Seules couleur/matière modifiables par variante
  * - R-VAR-003 : Dimensions/poids héritées du Product Group
+ * - R-ROOMS-001 : Pièces compatibles déterminées par type produit
  * - Pas d'édition dynamique d'attributs arbitraires
  */

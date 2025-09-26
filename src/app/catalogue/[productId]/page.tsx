@@ -2,70 +2,122 @@
 
 import { useState, useEffect } from "react"
 import { useParams, useRouter } from "next/navigation"
-import { ArrowLeft, Loader2 } from "lucide-react"
+import { ArrowLeft, Edit, Share2, Image as ImageIcon, Package, Tag, Clock, TreePine, FolderOpen, Tags, ChevronRight } from "lucide-react"
 import { Button } from "../../../components/ui/button"
+import { Badge } from "../../../components/ui/badge"
+import { Progress } from "../../../components/ui/progress"
+import { ProductImageGallery } from "../../../components/business/product-image-gallery"
+import { ProductPhotosModal } from "../../../components/business/product-photos-modal"
+import { ProductCharacteristicsModal } from "../../../components/business/product-characteristics-modal"
+import { ProductDescriptionsModal } from "../../../components/business/product-descriptions-modal"
+import { CategoryHierarchySelector } from "../../../components/business/category-hierarchy-selector"
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "../../../components/ui/dialog"
+import { ProductVariantsSection } from "../../../components/business/product-variants-section"
+import { SampleRequirementSection } from "../../../components/business/sample-requirement-section"
+import { SupplierVsPricingEditSection } from "../../../components/business/supplier-vs-pricing-edit-section"
+import { StockEditSection } from "../../../components/business/stock-edit-section"
+import { ProductFixedCharacteristics } from "../../../components/business/product-fixed-characteristics"
+import { IdentifiersEditSection } from "../../../components/business/identifiers-edit-section"
+import { SupplierEditSection } from "../../../components/business/supplier-edit-section"
+import { IdentifiersCompleteEditSection } from "../../../components/business/identifiers-complete-edit-section"
+import { cn, formatPrice, checkSLOCompliance } from "../../../lib/utils"
 import { createClient } from "../../../lib/supabase/client"
-import { ProductDualMode } from "../../../components/business/product-dual-mode"
+import { useProductImages } from "../../../hooks/use-product-images"
 
+// Champs obligatoires pour un produit complet
+const REQUIRED_PRODUCT_FIELDS = [
+  'name',
+  'sku',
+  'supplier_id',
+  'subcategory_id',
+  'price_ht',
+  'description'
+] as const
+
+// Mapping des champs avec leurs libellés
+const PRODUCT_FIELD_LABELS: Record<string, string> = {
+  name: 'Nom du produit',
+  sku: 'Référence SKU',
+  supplier_id: 'Fournisseur',
+  subcategory_id: 'Sous-catégorie',
+  price_ht: 'Prix de vente HT',
+  description: 'Description'
+}
+
+// Fonction pour calculer la progression d'un produit
+function calculateProductProgress(product: Product): { percentage: number, missingFields: string[] } {
+  const filledFields = REQUIRED_PRODUCT_FIELDS.filter(field => {
+    const value = product[field as keyof Product]
+    if (typeof value === 'string') {
+      return value.trim().length > 0
+    }
+    return value !== null && value !== undefined && value !== 0
+  })
+
+  const percentage = (filledFields.length / REQUIRED_PRODUCT_FIELDS.length) * 100
+  const missingFields = REQUIRED_PRODUCT_FIELDS.filter(field => {
+    const value = product[field as keyof Product]
+    if (typeof value === 'string') {
+      return value.trim().length === 0
+    }
+    return value === null || value === undefined || value === 0
+  }).map(field => PRODUCT_FIELD_LABELS[field])
+
+  return { percentage, missingFields }
+}
+
+// Interface pour un produit
 interface Product {
   id: string
   name: string
-  slug: string
-  sku: string
-  description?: string
-  technical_description?: string
-  status: 'draft' | 'active' | 'archived'
-
+  sku: string | null
+  description: string | null
+  technical_description: string | null
+  selling_points: string | null
+  price_ht: number | null
+  cost_price: number | null
+  tax_rate: number | null
+  status: 'in_stock' | 'out_of_stock' | 'preorder' | 'coming_soon' | 'discontinued'
+  condition: 'new' | 'used' | 'refurbished'
+  stock_quantity: number | null
+  min_stock: number | null
+  supplier_id: string | null
+  supplier_reference: string | null
+  subcategory_id: string | null
+  family_id: string | null
+  dimensions: string | null
+  weight: number | null
+  variant_attributes: Record<string, any> | null
+  gtin: string | null
+  slug: string | null
+  images: any[]
+  requires_sample: boolean | null  // Ajout du champ échantillon
+  created_at: string
+  updated_at: string
+  organisation_id: string
   // Relations
-  supplier_id?: string
   supplier?: {
     id: string
     name: string
-  }
-
-  // Catégorisation
-  subcategory_id?: string
+    email: string | null
+    phone: string | null
+    is_active: boolean
+  } | null
   subcategory?: {
     id: string
     name: string
+    slug: string
     category?: {
       id: string
       name: string
+      slug: string
       family?: {
         id: string
         name: string
+        slug: string
       }
     }
-  }
-
-  // Dimensions physiques
-  dimensions_length?: number
-  dimensions_width?: number
-  dimensions_height?: number
-  dimensions_unit?: string
-  weight?: number
-  weight_unit?: string
-
-  // Prix
-  base_cost?: number
-  selling_price?: number
-
-  // Fournisseur
-  supplier_reference?: string
-  supplier_page_url?: string
-
-  // Variants
-  variant_group_id?: string
-  is_variant_parent?: boolean
-  variant_position?: number
-  variant_attributes?: any
-  variants?: Product[]
-
-  // Métadonnées
-  created_at?: string
-  updated_at?: string
-  brand?: string
-  condition?: string
+  } | null
 }
 
 export default function ProductDetailPage() {
@@ -76,97 +128,123 @@ export default function ProductDetailPage() {
   const [product, setProduct] = useState<Product | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
+  const [showPhotosModal, setShowPhotosModal] = useState(false)
+  const [showCharacteristicsModal, setShowCharacteristicsModal] = useState(false)
+  const [showDescriptionsModal, setShowDescriptionsModal] = useState(false)
+  const [isCategorizeModalOpen, setIsCategorizeModalOpen] = useState(false)
 
-  // Chargement du produit avec toutes ses relations
-  useEffect(() => {
-    if (!productId) return
+  const startTime = Date.now()
 
-    const fetchProduct = async () => {
-      try {
-        setLoading(true)
-        const supabase = createClient()
+  // Charger le produit
+  const fetchProduct = async () => {
+    try {
+      setLoading(true)
+      setError(null)
 
-        const { data, error } = await supabase
-          .from('products')
-          .select(`
-            *,
-            supplier:organisations!supplier_id(id, name),
-            subcategory:subcategories(
+      const supabase = createClient()
+
+      const { data, error } = await supabase
+        .from('products')
+        .select(`
+          *,
+          supplier:organisations!products_supplier_id_fkey(
+            id,
+            name,
+            email,
+            phone,
+            is_active
+          ),
+          subcategory:subcategories(
+            id,
+            name,
+            slug,
+            category:categories(
               id,
               name,
-              category:categories(
+              slug,
+              family:families(
                 id,
                 name,
-                family:families(id, name)
+                slug
               )
             )
-          `)
-          .eq('id', productId)
-          .single()
+          )
+        `)
+        .eq('id', productId)
+        .single()
 
-        if (error) {
-          console.error('Erreur chargement produit:', error)
-          setError('Produit introuvable')
-          return
-        }
-
-        // Charger les variantes si le produit fait partie d'un groupe
-        if (data.variant_group_id) {
-          const { data: variants } = await supabase
-            .from('products')
-            .select('id, name, sku, variant_attributes, variant_position')
-            .eq('variant_group_id', data.variant_group_id)
-            .neq('id', productId)
-            .order('variant_position', { ascending: true })
-
-          data.variants = variants || []
-        }
-
-        setProduct(data)
-      } catch (err) {
-        console.error('Erreur:', err)
-        setError('Erreur lors du chargement du produit')
-      } finally {
-        setLoading(false)
+      if (error) {
+        throw new Error(error.message)
       }
+
+      if (!data) {
+        throw new Error('Produit non trouvé')
+      }
+
+      setProduct(data)
+
+    } catch (err) {
+      console.error('Erreur lors du chargement du produit:', err)
+      setError(err instanceof Error ? err.message : 'Erreur lors du chargement du produit')
+    } finally {
+      setLoading(false)
+
+      // Vérification SLO
+      checkSLOCompliance(startTime, 'dashboard')
     }
+  }
 
-    fetchProduct()
-  }, [productId])
-
-  // Mise à jour du produit
+  // Handler pour mettre à jour le produit avec persistance en base
   const handleProductUpdate = async (updatedData: Partial<Product>) => {
     if (!product) return
 
     try {
       const supabase = createClient()
 
-      const { error } = await supabase
+      // Mettre à jour en base de données
+      const { data, error } = await supabase
         .from('products')
-        .update(updatedData)
+        .update({
+          ...updatedData,
+          updated_at: new Date().toISOString()
+        })
         .eq('id', product.id)
+        .select()
+        .single()
 
       if (error) {
-        console.error('Erreur mise à jour:', error)
-        return
+        console.error('❌ Erreur lors de la mise à jour du produit:', error)
+        throw error
       }
 
-      // Mettre à jour l'état local
-      setProduct(prev => prev ? { ...prev, ...updatedData } : null)
-    } catch (err) {
-      console.error('Erreur mise à jour produit:', err)
+      // Mettre à jour l'état local avec les données retournées de la base
+      setProduct({ ...product, ...data })
+      console.log('✅ Produit mis à jour avec succès:', data)
+    } catch (error) {
+      console.error('❌ Erreur lors de la mise à jour:', error)
+      // En cas d'erreur, on garde l'ancien état (pas de mise à jour locale)
     }
   }
 
+  // Handler pour naviguer vers la page de partage
+  const handleShare = () => {
+    if (product?.slug) {
+      const shareUrl = `/share/product/${product.slug}`
+      router.push(shareUrl)
+    }
+  }
+
+  useEffect(() => {
+    fetchProduct()
+  }, [productId])
+
   if (loading) {
     return (
-      <div className="min-h-screen bg-gray-50">
-        <div className="max-w-7xl mx-auto px-4 py-8">
-          <div className="flex items-center justify-center h-64">
-            <div className="text-center">
-              <Loader2 className="h-8 w-8 animate-spin mx-auto mb-4" />
-              <p className="text-gray-600">Chargement du produit...</p>
-            </div>
+      <div className="container mx-auto py-6">
+        <div className="flex items-center justify-center h-64">
+          <div className="text-center">
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-black mx-auto mb-4"></div>
+            <p>Chargement du produit...</p>
           </div>
         </div>
       </div>
@@ -175,15 +253,13 @@ export default function ProductDetailPage() {
 
   if (error || !product) {
     return (
-      <div className="min-h-screen bg-gray-50">
-        <div className="max-w-7xl mx-auto px-4 py-8">
+      <div className="container mx-auto py-6">
+        <div className="flex items-center justify-center h-64">
           <div className="text-center">
-            <h1 className="text-2xl font-bold text-gray-900 mb-4">
-              {error || 'Produit introuvable'}
-            </h1>
-            <Button onClick={() => router.push('/catalogue')} variant="outline">
+            <p className="text-red-600 mb-4">{error || 'Produit non trouvé'}</p>
+            <Button variant="outline" onClick={() => router.back()}>
               <ArrowLeft className="h-4 w-4 mr-2" />
-              Retour au catalogue
+              Retour
             </Button>
           </div>
         </div>
@@ -191,40 +267,452 @@ export default function ProductDetailPage() {
     )
   }
 
-  return (
-    <div className="min-h-screen bg-gray-50">
-      {/* Header de navigation */}
-      <div className="bg-white border-b border-gray-200">
-        <div className="max-w-7xl mx-auto px-4 py-4">
-          <div className="flex items-center space-x-4">
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => router.push('/catalogue')}
-            >
-              <ArrowLeft className="h-4 w-4 mr-2" />
-              Catalogue
-            </Button>
+  // Calculer la progression
+  const { percentage: completionPercentage, missingFields } = calculateProductProgress(product)
 
-            <div className="flex-1">
-              <h1 className="text-xl font-semibold text-gray-900 truncate">
-                {product.name}
-              </h1>
-              <p className="text-sm text-gray-500">
-                SKU: {product.sku || 'Non défini'} •
-                Statut: {product.status === 'active' ? 'Actif' : 'Brouillon'}
-              </p>
+  // Générer le breadcrumb
+  const breadcrumbParts = ['Catalogue']
+  if (product.subcategory?.category?.family?.name) {
+    breadcrumbParts.push(product.subcategory.category.family.name)
+  }
+  if (product.subcategory?.category?.name) {
+    breadcrumbParts.push(product.subcategory.category.name)
+  }
+  if (product.subcategory?.name) {
+    breadcrumbParts.push(product.subcategory.name)
+  }
+
+  return (
+    <div className="container mx-auto py-6 space-y-6">
+      {/* En-tête */}
+      <div className="flex items-center justify-between">
+        <div className="flex items-center space-x-4">
+          <Button variant="ghost" size="sm" onClick={() => router.back()}>
+            <ArrowLeft className="h-4 w-4 mr-2" />
+            Retour
+          </Button>
+          <nav className="text-sm text-gray-600">
+            {breadcrumbParts.join('›')}
+          </nav>
+        </div>
+        <div className="flex items-center space-x-2">
+          <div className="text-xs text-gray-500">
+            {Date.now() - startTime}ms
+          </div>
+          <Button variant="outline" size="sm" onClick={handleShare}>
+            <Share2 className="h-4 w-4 mr-2" />
+            Partager
+          </Button>
+        </div>
+      </div>
+
+      {/* Contenu principal - Layout 3 colonnes */}
+      <div className="grid grid-cols-1 xl:grid-cols-12 gap-6">
+        {/* COLONNE 1: Images & Métadonnées (25% - xl:col-span-3) */}
+        <div className="xl:col-span-3 space-y-4">
+          {/* Galerie d'images */}
+          <div className="bg-white border border-black">
+            <ProductImageGallery
+              productId={product.id}
+              productName={product.name}
+              productStatus={product.status}
+              compact={true}
+            />
+          </div>
+
+          {/* Actions sous l'image (déplacées depuis colonne 3) */}
+          <div className="bg-white border border-black p-4">
+            <h3 className="font-medium mb-3 text-sm">Actions</h3>
+            <div className="space-y-2">
+              <Button
+                variant="outline"
+                size="sm"
+                className="w-full justify-start text-xs"
+                onClick={() => setShowPhotosModal(true)}
+              >
+                <ImageIcon className="h-3 w-3 mr-2" />
+                Gérer photos ({product.images?.length || 0})
+              </Button>
             </div>
+          </div>
+
+          {/* Métadonnées */}
+          <div className="bg-white border border-black p-4">
+            <h3 className="font-medium mb-3 flex items-center text-sm">
+              <Clock className="h-4 w-4 mr-2" />
+              Métadonnées
+            </h3>
+            <div className="space-y-2 text-xs">
+              <div className="flex justify-between">
+                <span className="text-gray-600">ID:</span>
+                <span className="font-mono">{product.id.slice(0, 8)}...</span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-gray-600">Créé:</span>
+                <span>{new Date(product.created_at).toLocaleDateString()}</span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-gray-600">Modifié:</span>
+                <span>{new Date(product.updated_at).toLocaleDateString()}</span>
+              </div>
+              {product.supplier && (
+                <div className="flex justify-between">
+                  <span className="text-gray-600">Fournisseur:</span>
+                  <span>{product.supplier.name}</span>
+                </div>
+              )}
+            </div>
+          </div>
+
+          {/* Status badge et progression */}
+          <div className="bg-white border border-black p-4">
+            <div className="space-y-3">
+              <Badge className={cn(
+                "text-xs",
+                product.status === 'in_stock' ? "bg-green-600 text-white" :
+                product.status === 'out_of_stock' ? "bg-red-600 text-white" :
+                "bg-black text-white"
+              )}>
+                {product.status === 'in_stock' ? 'En stock' :
+                 product.status === 'out_of_stock' ? 'Rupture' :
+                 'Autre statut'}
+              </Badge>
+              <div>
+                <div className="flex items-center justify-between mb-1">
+                  <span className="text-xs text-gray-600">Complétude</span>
+                  <span className="text-xs font-medium">{Math.round(completionPercentage)}%</span>
+                </div>
+                <Progress value={completionPercentage} className="h-2" />
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* COLONNE 2: Informations Principales (45% - xl:col-span-5) */}
+        <div className="xl:col-span-5 space-y-4">
+          {/* Header produit */}
+          <div className="bg-white border border-black p-4">
+            <div className="flex items-start justify-between mb-3">
+              <div>
+                <h1 className="text-xl font-bold text-black mb-1">{product.name}</h1>
+                <div className="text-sm text-gray-600 mb-2">
+                  SKU: {product.sku || 'Non défini'}
+                </div>
+                <div className="text-lg font-semibold text-black">
+                  {product.price_ht ? formatPrice(product.price_ht) : 'Prix non défini'}
+                </div>
+              </div>
+              <Button variant="outline" size="sm">
+                <Edit className="h-4 w-4 mr-2" />
+                Modifier
+              </Button>
+            </div>
+          </div>
+
+
+          {/* Catégorisation - Arborescence complète */}
+          <div className="bg-white border border-black p-4">
+            <div className="flex items-center justify-between mb-3">
+              <h3 className="font-medium flex items-center text-sm">
+                <Tag className="h-4 w-4 mr-2" />
+                Catégorisation
+              </h3>
+              <Button
+                variant="outline"
+                size="sm"
+                className="border-black text-black hover:bg-black hover:text-white"
+                onClick={() => setIsCategorizeModalOpen(true)}
+              >
+                <Edit className="h-3 w-3 mr-1" />
+                Modifier
+              </Button>
+            </div>
+
+            {/* Fil d'Ariane hiérarchique */}
+            <div className="space-y-3">
+              {product.subcategory?.category?.family || product.subcategory?.category || product.subcategory ? (
+                <div className="bg-gray-50 p-3 rounded border">
+                  <div className="flex items-center space-x-2 flex-wrap text-sm">
+                    {product.subcategory?.category?.family && (
+                      <>
+                        <div className="flex items-center space-x-1 bg-green-100 px-2 py-1 rounded">
+                          <TreePine className="h-3 w-3 text-green-600" />
+                          <span className="text-green-800 font-medium">
+                            {product.subcategory.category.family.name}
+                          </span>
+                        </div>
+                        <ChevronRight className="h-3 w-3 text-gray-400" />
+                      </>
+                    )}
+
+                    {product.subcategory?.category && (
+                      <>
+                        <div className="flex items-center space-x-1 bg-blue-100 px-2 py-1 rounded">
+                          <FolderOpen className="h-3 w-3 text-blue-600" />
+                          <span className="text-blue-800 font-medium">
+                            {product.subcategory.category.name}
+                          </span>
+                        </div>
+                        <ChevronRight className="h-3 w-3 text-gray-400" />
+                      </>
+                    )}
+
+                    {product.subcategory && (
+                      <div className="flex items-center space-x-1 bg-purple-100 px-2 py-1 rounded">
+                        <Tags className="h-3 w-3 text-purple-600" />
+                        <span className="text-purple-800 font-medium">
+                          {product.subcategory.name}
+                        </span>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              ) : (
+                <div className="bg-red-50 p-3 rounded border border-red-200">
+                  <p className="text-red-700 text-sm flex items-center">
+                    <Tag className="h-4 w-4 mr-2" />
+                    Aucune catégorisation définie
+                  </p>
+                  <p className="text-red-600 text-xs mt-1">
+                    Ce produit n'est associé à aucune famille, catégorie ou sous-catégorie
+                  </p>
+                </div>
+              )}
+
+              {/* Détails techniques (si disponibles) */}
+              {(product.subcategory?.category?.family || product.subcategory?.category || product.subcategory) && (
+                <div className="space-y-1 text-xs text-gray-600">
+                  {product.subcategory?.category?.family && (
+                    <div className="flex justify-between">
+                      <span>ID Famille:</span>
+                      <span className="font-mono">{product.subcategory.category.family.id.slice(0, 8)}...</span>
+                    </div>
+                  )}
+                  {product.subcategory?.category && (
+                    <div className="flex justify-between">
+                      <span>ID Catégorie:</span>
+                      <span className="font-mono">{product.subcategory.category.id.slice(0, 8)}...</span>
+                    </div>
+                  )}
+                  {product.subcategory && (
+                    <div className="flex justify-between">
+                      <span>ID Sous-catégorie:</span>
+                      <span className="font-mono">{product.subcategory.id.slice(0, 8)}...</span>
+                    </div>
+                  )}
+                </div>
+              )}
+            </div>
+          </div>
+
+          {/* Fournisseur & Références */}
+          <SupplierEditSection
+            product={{
+              id: product.id,
+              supplier_id: product.supplier_id,
+              supplier_reference: product.supplier_reference,
+              supplier_page_url: product.supplier_page_url,
+              supplier: product.supplier
+            }}
+            onUpdate={handleProductUpdate}
+          />
+
+          {/* Description */}
+          <div className="bg-white border border-black p-4">
+            <div className="flex items-center justify-between mb-3">
+              <h3 className="font-medium text-sm">Description</h3>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => setShowDescriptionsModal(true)}
+              >
+                <Edit className="h-3 w-3 mr-1" />
+                Modifier
+              </Button>
+            </div>
+            <p className="text-sm text-gray-700">
+              {product.description || 'Aucune description disponible'}
+            </p>
+          </div>
+
+          {/* Caractéristiques */}
+          <div className="bg-white border border-black p-4">
+            <div className="flex items-center justify-between mb-3">
+              <h3 className="font-medium text-sm">Caractéristiques</h3>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => setShowCharacteristicsModal(true)}
+              >
+                <Edit className="h-3 w-3 mr-1" />
+                Modifier
+              </Button>
+            </div>
+            <ProductFixedCharacteristics
+              product={product}
+            />
+          </div>
+
+          {/* Variantes Produit */}
+          <ProductVariantsSection
+            productId={product.id}
+            productName={product.name}
+            productData={{
+              id: product.id,
+              name: product.name,
+              sku: product.sku,
+              supplier_id: product.supplier_id,
+              supplier: product.supplier,
+              dimensions_length: product.dimensions_length,
+              dimensions_width: product.dimensions_width,
+              dimensions_height: product.dimensions_height,
+              dimensions_unit: product.dimensions_unit,
+              weight: product.weight,
+              weight_unit: product.weight_unit,
+              base_cost: product.base_cost,
+              selling_price: product.selling_price,
+              description: product.description,
+              technical_description: product.technical_description,
+              category_id: product.category_id,
+              subcategory_id: product.subcategory_id,
+              variant_group_id: product.variant_group_id
+            }}
+            onVariantsUpdate={fetchProduct}
+          />
+
+        </div>
+
+        {/* COLONNE 3: Gestion (30% - xl:col-span-4) */}
+        <div className="xl:col-span-4 space-y-4">
+
+          {/* Stock & Gestion */}
+          <StockEditSection
+            product={{
+              id: product.id,
+              status: product.status,
+              condition: product.condition,
+              stock_quantity: product.stock_quantity,
+              min_stock: product.min_stock
+            }}
+            onUpdate={handleProductUpdate}
+          />
+
+          {/* Tarification */}
+          <SupplierVsPricingEditSection
+            product={{
+              id: product.id,
+              cost_price: product.cost_price,
+              margin_percentage: product.margin_percentage,
+              selling_price: product.selling_price
+            }}
+            onUpdate={handleProductUpdate}
+          />
+
+          {/* Identifiants Complets */}
+          <IdentifiersCompleteEditSection
+            product={{
+              id: product.id,
+              sku: product.sku,
+              brand: product.brand,
+              gtin: product.gtin,
+              condition: product.condition
+            }}
+            onUpdate={handleProductUpdate}
+          />
+
+          {/* Section échantillon */}
+          <div className="bg-white border border-black p-4">
+            <h3 className="font-medium mb-3 text-sm">Gestion Échantillons</h3>
+            <SampleRequirementSection
+              requiresSample={product.requires_sample || false}
+              isProduct={true}
+              productName={product.name}
+              disabled={product.stock_quantity >= 1} // Griser si le produit a déjà été commandé (stock >= 1)
+              onRequirementChange={(requiresSample) => {
+                handleProductUpdate({ requires_sample: requiresSample })
+              }}
+            />
           </div>
         </div>
       </div>
 
-      {/* Interface dual-mode */}
-      <ProductDualMode
-        product={product}
-        onUpdate={handleProductUpdate}
-        initialMode="view"
+      {/* Modal de gestion des photos */}
+      <ProductPhotosModal
+        isOpen={showPhotosModal}
+        onClose={() => setShowPhotosModal(false)}
+        productId={product.id}
+        productName={product.name}
+        productType="product"
+        maxImages={20}
       />
+
+      {/* Modal de gestion des caractéristiques */}
+      <ProductCharacteristicsModal
+        isOpen={showCharacteristicsModal}
+        onClose={() => setShowCharacteristicsModal(false)}
+        productId={product.id}
+        productName={product.name}
+        initialData={{
+          variant_attributes: product.variant_attributes,
+          dimensions: product.dimensions,
+          weight: product.weight
+        }}
+        onUpdate={handleProductUpdate}
+      />
+
+      {/* Modal de gestion des descriptions */}
+      <ProductDescriptionsModal
+        isOpen={showDescriptionsModal}
+        onClose={() => setShowDescriptionsModal(false)}
+        productId={product.id}
+        productName={product.name}
+        initialData={{
+          description: product.description,
+          technical_description: product.technical_description,
+          selling_points: product.selling_points
+        }}
+        onUpdate={handleProductUpdate}
+      />
+
+      {/* Modal de modification de la catégorisation */}
+      <Dialog open={isCategorizeModalOpen} onOpenChange={setIsCategorizeModalOpen}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle className="flex items-center">
+              <Tag className="h-4 w-4 mr-2" />
+              Modifier la catégorisation
+            </DialogTitle>
+            <DialogDescription>
+              Sélectionnez une nouvelle sous-catégorie pour ce produit. La famille et la catégorie seront automatiquement mises à jour.
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="py-4">
+            <CategoryHierarchySelector
+              value={product.subcategory_id || ''}
+              onChange={(subcategoryId, hierarchyInfo) => {
+                if (subcategoryId && hierarchyInfo) {
+                  handleProductUpdate({
+                    subcategory_id: subcategoryId
+                  })
+                  setIsCategorizeModalOpen(false)
+                }
+              }}
+              placeholder="Sélectionner une sous-catégorie"
+              className="w-full"
+            />
+          </div>
+
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={() => setIsCategorizeModalOpen(false)}
+            >
+              Annuler
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   )
 }

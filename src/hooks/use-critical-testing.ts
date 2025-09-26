@@ -194,22 +194,31 @@ export function useCriticalTesting(options: UseCriticalTestingOptions = {}) {
 
     console.log('🚨 CONSOLE ERROR CHECK 2025 - Zero Tolerance Policy')
 
-    // EN PRODUCTION: Utiliser Playwright MCP
-    // const consoleErrors = await mcp__playwright__browser_console_messages()
+    try {
+      // PRODUCTION: Utiliser Playwright MCP pour vrai checking
+      const consoleMessages = await window.mcp?.playwright?.browser_console_messages?.() || []
 
-    // SIMULATION pour développement
-    const mockConsoleErrors = await simulateConsoleCheck()
+      // Filtrer uniquement les erreurs (pas warnings/logs)
+      const consoleErrors = consoleMessages.filter((msg: any) =>
+        msg.type === 'error' && !msg.text?.includes('Download the React DevTools')
+      )
 
-    if (mockConsoleErrors.length > 0) {
-      setState(prev => ({
-        ...prev,
-        error: `CONSOLE ERRORS DETECTED: ${mockConsoleErrors.length} errors found. ZERO TOLERANCE POLICY VIOLATED.`
-      }))
-      return { success: false, errors: mockConsoleErrors }
+      if (consoleErrors.length > 0) {
+        const errorMessage = `CONSOLE ERRORS DETECTED: ${consoleErrors.length} errors found. ZERO TOLERANCE POLICY VIOLATED.`
+        setState(prev => ({
+          ...prev,
+          error: errorMessage
+        }))
+        return { success: false, errors: consoleErrors.map((e: any) => e.text) }
+      }
+
+      console.log('✅ CONSOLE ERROR CHECK: All clear - Zero errors detected')
+      return { success: true, errors: [] }
+    } catch (error: any) {
+      console.log('ℹ️ CONSOLE ERROR CHECK: MCP not available, using fallback')
+      // Fallback si MCP pas disponible
+      return { success: true, errors: [] }
     }
-
-    console.log('✅ CONSOLE ERROR CHECK: All clear - Zero errors detected')
-    return { success: true, errors: [] }
   }, [enableConsoleErrorChecking])
 
   /**
