@@ -17,6 +17,8 @@ import { useFamilies } from '../../../../hooks/use-families'
 import { useCategories } from '../../../../hooks/use-categories'
 import { useSubcategories } from '../../../../hooks/use-subcategories'
 import { FamilyCrudForm } from '../../../../components/forms/FamilyCrudForm'
+import { SubcategoryForm } from '../../../../components/forms/SubcategoryForm'
+import { VéroneCard } from '../../../../components/ui/verone-card'
 import type { Database } from '../../../../lib/supabase/types'
 
 type Family = Database['public']['Tables']['families']['Row']
@@ -341,59 +343,20 @@ export default function CategoryDetailPage() {
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
               {categorySubcategories.map((subcategory) => (
-                <Card
+                <VéroneCard
                   key={subcategory.id}
-                  className="cursor-pointer hover:shadow-md transition-shadow border border-gray-200 hover:border-black"
+                  title={subcategory.name}
+                  imageUrl={subcategory.image_url || undefined}
+                  entityType="subcategory"
+                  slug={subcategory.slug}
+                  count={subcategory.product_count || 0}
+                  countLabel="produit"
+                  isActive={subcategory.is_active}
+                  iconPosition="top-right"
                   onClick={() => handleSubcategoryClick(subcategory.id)}
-                >
-                  <CardHeader>
-                    <div className="flex items-start justify-between">
-                      <div className="flex-1">
-                        <CardTitle className="text-lg text-black">{subcategory.name}</CardTitle>
-                        {subcategory.description && (
-                          <CardDescription className="mt-2 text-gray-600">
-                            {subcategory.description}
-                          </CardDescription>
-                        )}
-                      </div>
-                      <div className="flex items-center space-x-1 ml-3">
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          className="w-8 h-8 p-0 hover:bg-gray-100"
-                          onClick={(e) => {
-                            e.stopPropagation()
-                            handleEditSubcategory(subcategory)
-                          }}
-                        >
-                          <Edit className="w-4 h-4" />
-                        </Button>
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          className="w-8 h-8 p-0 hover:bg-gray-100 hover:text-red-600"
-                          onClick={(e) => {
-                            e.stopPropagation()
-                            handleDeleteSubcategory(subcategory.id, subcategory.name)
-                          }}
-                        >
-                          <Trash2 className="w-4 h-4" />
-                        </Button>
-                      </div>
-                    </div>
-                  </CardHeader>
-
-                  <CardContent>
-                    <div className="flex items-center justify-between">
-                      <Badge variant="outline" className="border-black text-black">
-                        #{subcategory.slug}
-                      </Badge>
-                      <div className="text-sm text-gray-600">
-                        {subcategory.product_count || 0} produit{(subcategory.product_count || 0) !== 1 ? 's' : ''}
-                      </div>
-                    </div>
-                  </CardContent>
-                </Card>
+                  onEdit={() => handleEditSubcategory(subcategory)}
+                  onDelete={() => handleDeleteSubcategory(subcategory.id, subcategory.name)}
+                />
               ))}
             </div>
           )}
@@ -421,35 +384,55 @@ export default function CategoryDetailPage() {
       />
 
       {/* Nouvelle sous-catégorie */}
-      <FamilyCrudForm
+      <SubcategoryForm
         isOpen={isNewSubcategoryOpen}
         onClose={() => setIsNewSubcategoryOpen(false)}
-        type="subcategory"
         mode="create"
-        parentOptions={allCategories?.map(c => ({ id: c.id, name: c.name })) || []}
-        onSubmit={handleSubmitNewSubcategory}
+        categories={allCategories?.map(c => ({ id: c.id, name: c.name, family_name: family?.name || '' })) || []}
+        onSubmit={(subcategory) => {
+          // Adapter la réponse pour le hook useSubcategories
+          handleSubmitNewSubcategory({
+            name: subcategory.name,
+            description: subcategory.description,
+            category_id: subcategory.parent_id,
+            is_active: subcategory.is_active,
+            sort_order: subcategory.display_order,
+            image_url: subcategory.image_url
+          })
+        }}
       />
 
       {/* Modification sous-catégorie */}
-      <FamilyCrudForm
+      <SubcategoryForm
         isOpen={isEditSubcategoryOpen}
         onClose={() => {
           setIsEditSubcategoryOpen(false)
           setEditingSubcategory(null)
         }}
-        type="subcategory"
         mode="edit"
         initialData={editingSubcategory ? {
           id: editingSubcategory.id,
-          name: editingSubcategory.name,
-          description: editingSubcategory.description || '',
-          is_active: editingSubcategory.is_active,
-          sort_order: editingSubcategory.sort_order || 1,
           parent_id: editingSubcategory.category_id,
-          image_url: editingSubcategory.image_url || undefined
-        } : undefined}
-        parentOptions={allCategories?.map(c => ({ id: c.id, name: c.name })) || []}
-        onSubmit={handleSubmitEditSubcategory}
+          family_id: category?.family_id || '',
+          name: editingSubcategory.name,
+          slug: editingSubcategory.slug,
+          description: editingSubcategory.description || '',
+          image_url: editingSubcategory.image_url || '',
+          display_order: editingSubcategory.sort_order || 1,
+          is_active: editingSubcategory.is_active,
+          level: 2 as const
+        } : null}
+        categories={allCategories?.map(c => ({ id: c.id, name: c.name, family_name: family?.name || '' })) || []}
+        onSubmit={(subcategory) => {
+          // Adapter la réponse pour le hook useSubcategories
+          handleSubmitEditSubcategory({
+            name: subcategory.name,
+            description: subcategory.description,
+            is_active: subcategory.is_active,
+            sort_order: subcategory.display_order,
+            image_url: subcategory.image_url
+          })
+        }}
       />
     </div>
   )

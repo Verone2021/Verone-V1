@@ -44,7 +44,7 @@ import {
   DialogTitle,
   DialogTrigger,
 } from '@/components/ui/dialog'
-import { useDrafts, DraftWithMeta } from '@/hooks/use-drafts'
+import { useSourcingProducts } from '@/hooks/use-sourcing-products'
 import { useToast } from '@/hooks/use-toast'
 import { SampleOrderValidation } from '@/components/business/sample-order-validation'
 

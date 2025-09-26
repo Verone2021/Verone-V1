@@ -22,7 +22,7 @@ import { Progress } from '../ui/progress'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '../ui/tabs'
 import { Alert, AlertDescription } from '../ui/alert'
 import { useToast } from '../../hooks/use-toast'
-import { useDrafts } from '../../hooks/use-drafts'
+import { useSourcingProducts } from '../../hooks/use-sourcing-products'
 
 // Sections du wizard
 import { GeneralInfoSection } from './wizard-sections/general-info-section'

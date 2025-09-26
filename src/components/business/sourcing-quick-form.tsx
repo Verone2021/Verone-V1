@@ -7,7 +7,7 @@ import { Button } from '../ui/button'
 import { Input } from '../ui/input'
 import { Label } from '../ui/label'
 import { cn } from '../../lib/utils'
-import { useDrafts } from '../../hooks/use-drafts'
+import { useSourcingProducts } from '../../hooks/use-sourcing-products'
 import { useToast } from '../../hooks/use-toast'
 import { ClientAssignmentSelector } from './client-assignment-selector'
 import { ConsultationSuggestions } from './consultation-suggestions'
@@ -25,7 +25,7 @@ export function SourcingQuickForm({
 }: SourcingQuickFormProps) {
   const router = useRouter()
   const { toast } = useToast()
-  const { createSourcingDraft } = useDrafts()
+  const { createSourcingProduct } = useSourcingProducts({})
 
   // États du formulaire - Simplifié pour la nouvelle logique
   const [formData, setFormData] = useState({
@@ -125,7 +125,7 @@ export function SourcingQuickForm({
       // Calculer automatiquement le type de sourcing
       const sourcingType = formData.assigned_client_id ? 'client' : 'interne'
 
-      const draftData = {
+      const productData = {
         name: formData.name,
         supplier_page_url: formData.supplier_page_url,
         creation_mode: 'sourcing' as const,
@@ -134,19 +134,19 @@ export function SourcingQuickForm({
         imageFile: selectedImage || undefined
       }
 
-      const newDraft = await createSourcingDraft(draftData)
+      const newProduct = await createSourcingProduct(productData)
 
-      if (newDraft) {
+      if (newProduct) {
         toast({
           title: "Sourcing enregistré",
-          description: "Le produit a été ajouté aux brouillons"
+          description: "Le produit a été ajouté au sourcing"
         })
 
         // Callback ou redirection
         if (onSuccess) {
-          onSuccess(newDraft.id)
+          onSuccess(newProduct.id)
         } else {
-          router.push('/catalogue?tab=drafts')
+          router.push('/sourcing/produits')
         }
       }
 

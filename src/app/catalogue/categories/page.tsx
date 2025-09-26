@@ -340,9 +340,6 @@ export default function CategoriesPage() {
                 {family.categories_count} catégorie(s)
               </span>
             </div>
-            {family.description && (
-              <p className="text-sm text-gray-600 mt-1">{family.description}</p>
-            )}
           </div>
 
           <div className="flex space-x-1">
@@ -443,9 +440,6 @@ export default function CategoriesPage() {
                 {categorySubcategories.length} sous-catégorie(s)
               </span>
             </div>
-            {category.description && (
-              <p className="text-sm text-gray-600 mt-1">{category.description}</p>
-            )}
           </div>
 
           <div className="flex space-x-1">
@@ -517,9 +511,6 @@ export default function CategoriesPage() {
                     {subcategory.is_active ? "Actif" : "Inactif"}
                   </Badge>
                 </div>
-                {subcategory.description && (
-                  <p className="text-sm text-gray-600 mt-1">{subcategory.description}</p>
-                )}
               </div>
 
               <div className="flex space-x-1">
@@ -707,7 +698,11 @@ export default function CategoriesPage() {
           isOpen={formState.isOpen}
           onClose={closeForm}
           onSubmit={handleFormSubmit}
-          initialData={formState.data}
+          initialData={formState.data ? {
+            ...formState.data,
+            parent_id: formState.data.category_id || formState.data.parent_id,
+            family_id: formState.data.family_id
+          } : null}
           mode={formState.mode}
           categories={allCategories?.map(c => ({
             id: c.id,

@@ -16,6 +16,7 @@ import { Badge } from '../../../../components/ui/badge'
 import { useFamilies } from '../../../../hooks/use-families'
 import { useCategories } from '../../../../hooks/use-categories'
 import { useSubcategories } from '../../../../hooks/use-subcategories'
+import { VéroneCard } from '../../../../components/ui/verone-card'
 import type { Database } from '../../../../lib/supabase/types'
 
 type Family = Database['public']['Tables']['families']['Row']
@@ -316,80 +317,26 @@ export default function SubcategoryDetailPage() {
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
               {products.map((product) => (
-                <Card
+                <VéroneCard
                   key={product.id}
-                  className="cursor-pointer hover:shadow-md transition-shadow border border-gray-200 hover:border-black"
+                  title={product.name}
+                  description={product.description || undefined}
+                  imageUrl={product.image_url || undefined}
+                  entityType="product"
+                  slug={product.sku || undefined}
+                  isActive={product.is_active}
+                  iconPosition="top-right"
                   onClick={() => handleProductClick(product.id)}
-                >
-                  <CardHeader className="pb-3">
-                    {/* Product Image Placeholder */}
-                    <div className="w-full h-32 bg-gray-100 rounded-lg mb-3 flex items-center justify-center">
-                      <Package className="w-8 h-8 text-gray-400" />
-                    </div>
-
-                    <div className="flex items-start justify-between">
-                      <div className="flex-1">
-                        <CardTitle className="text-base text-black">{product.name}</CardTitle>
-                        {product.description && (
-                          <CardDescription className="mt-1 text-sm text-gray-600 line-clamp-2">
-                            {product.description}
-                          </CardDescription>
-                        )}
-                      </div>
-                      <div className="flex items-center space-x-1 ml-2">
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          className="w-6 h-6 p-0 hover:bg-gray-100"
-                          onClick={(e) => {
-                            e.stopPropagation()
-                            // TODO: Implement edit functionality
-                          }}
-                        >
-                          <Edit className="w-3 h-3" />
-                        </Button>
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          className="w-6 h-6 p-0 hover:bg-gray-100 hover:text-red-600"
-                          onClick={(e) => {
-                            e.stopPropagation()
-                            // TODO: Implement delete functionality
-                          }}
-                        >
-                          <Trash2 className="w-3 h-3" />
-                        </Button>
-                      </div>
-                    </div>
-                  </CardHeader>
-
-                  <CardContent className="pt-0">
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center space-x-2">
-                        <Badge variant="outline" className="border-black text-black text-xs">
-                          {product.sku || 'N/A'}
-                        </Badge>
-                        {product.is_active ? (
-                          <Badge variant="outline" className="border-green-500 text-green-700 text-xs">
-                            Actif
-                          </Badge>
-                        ) : (
-                          <Badge variant="outline" className="border-gray-500 text-gray-600 text-xs">
-                            Inactif
-                          </Badge>
-                        )}
-                      </div>
-                      {product.price && (
-                        <div className="text-sm font-semibold text-black">
-                          {product.price.toLocaleString('fr-FR', {
-                            style: 'currency',
-                            currency: 'EUR'
-                          })}
-                        </div>
-                      )}
-                    </div>
-                  </CardContent>
-                </Card>
+                  onEdit={() => {
+                    // TODO: Implement edit functionality when products table exists
+                    console.log('Edit product:', product.id)
+                  }}
+                  onDelete={() => {
+                    // TODO: Implement delete functionality when products table exists
+                    console.log('Delete product:', product.id)
+                  }}
+                  className="xl:max-w-sm" // Limite la largeur sur très grands écrans
+                />
               ))}
             </div>
           )}

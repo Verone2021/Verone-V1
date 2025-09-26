@@ -16,6 +16,7 @@ import { Badge } from '../../../../components/ui/badge'
 import { useFamilies } from '../../../../hooks/use-families'
 import { useCategories } from '../../../../hooks/use-categories'
 import { FamilyCrudForm } from '../../../../components/forms/FamilyCrudForm'
+import { VéroneCard } from '../../../../components/ui/verone-card'
 import type { Database } from '../../../../lib/supabase/types'
 
 type Family = Database['public']['Tables']['families']['Row']
@@ -268,7 +269,7 @@ export default function FamilyDetailPage() {
           </Card>
         </div>
 
-        {/* Catégories */}
+        {/* Catégories avec VéroneCard */}
         <div className="space-y-6">
           <h2 className="text-xl font-semibold text-black">Catégories</h2>
 
@@ -289,59 +290,20 @@ export default function FamilyDetailPage() {
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
               {familyCategories.map((category) => (
-                <Card
+                <VéroneCard
                   key={category.id}
-                  className="cursor-pointer hover:shadow-md transition-shadow border border-gray-200 hover:border-black"
+                  title={category.name}
+                  imageUrl={category.image_url || undefined}
+                  entityType="category"
+                  slug={category.slug}
+                  count={category.subcategory_count || 0}
+                  countLabel="sous-catégorie"
+                  isActive={category.is_active}
+                  iconPosition="top-right"
                   onClick={() => handleCategoryClick(category.id)}
-                >
-                  <CardHeader>
-                    <div className="flex items-start justify-between">
-                      <div className="flex-1">
-                        <CardTitle className="text-lg text-black">{category.name}</CardTitle>
-                        {category.description && (
-                          <CardDescription className="mt-2 text-gray-600">
-                            {category.description}
-                          </CardDescription>
-                        )}
-                      </div>
-                      <div className="flex items-center space-x-1 ml-3">
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          className="w-8 h-8 p-0 hover:bg-gray-100"
-                          onClick={(e) => {
-                            e.stopPropagation()
-                            handleEditCategory(category)
-                          }}
-                        >
-                          <Edit className="w-4 h-4" />
-                        </Button>
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          className="w-8 h-8 p-0 hover:bg-gray-100 hover:text-red-600"
-                          onClick={(e) => {
-                            e.stopPropagation()
-                            handleDeleteCategory(category.id, category.name)
-                          }}
-                        >
-                          <Trash2 className="w-4 h-4" />
-                        </Button>
-                      </div>
-                    </div>
-                  </CardHeader>
-
-                  <CardContent>
-                    <div className="flex items-center justify-between">
-                      <Badge variant="outline" className="border-black text-black">
-                        #{category.slug}
-                      </Badge>
-                      <div className="text-sm text-gray-600">
-                        {category.subcategory_count || 0} sous-catégorie{(category.subcategory_count || 0) !== 1 ? 's' : ''}
-                      </div>
-                    </div>
-                  </CardContent>
-                </Card>
+                  onEdit={() => handleEditCategory(category)}
+                  onDelete={() => handleDeleteCategory(category.id, category.name)}
+                />
               ))}
             </div>
           )}

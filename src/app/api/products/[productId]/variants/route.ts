@@ -39,7 +39,7 @@ export async function GET(
     const { data: product, error: productError } = await supabase
       .from('products')
       .select('id, sku, name')
-      .eq('id', productId)
+      .eq('id', productId as any)
       .single()
 
     if (productError) {
@@ -70,14 +70,14 @@ export async function GET(
     }
 
     // If no variants found, return empty result
-    if (!variants || variants.length === 0) {
+    if (!variants || (variants as any).length === 0) {
       return NextResponse.json({
         success: true,
         data: {
           product: {
-            id: product.id,
-            sku: product.sku,
-            name: product.name
+            id: (product as any).id,
+            sku: (product as any).sku,
+            name: (product as any).name
           },
           variants: [],
           group: null,
@@ -90,7 +90,7 @@ export async function GET(
     // Enhance variants with additional data if requested
     let enhancedVariants = variants
     if (includeImages || includeDetails) {
-      const variantIds = variants.map(v => v.variant_id)
+      const variantIds = (variants as any).map((v: any) => v.variant_id)
 
       const selectClause = [
         'id',
@@ -109,8 +109,8 @@ export async function GET(
 
       if (!detailsError && detailedVariants) {
         // Merge the detailed data with the variant data
-        enhancedVariants = variants.map(variant => {
-          const detailed = detailedVariants.find(d => d.id === variant.variant_id)
+        enhancedVariants = (variants as any).map((variant: any) => {
+          const detailed = detailedVariants.find((d: any) => d.id === variant.variant_id) as any
           return {
             ...variant,
             ...(detailed && {

@@ -10,12 +10,12 @@
 export async function register() {
   if (process.env.NEXT_RUNTIME === 'nodejs') {
     // Import et initialisation Sentry pour le serveur
-    await import('../sentry.server.config');
+    await import('../config/monitoring/sentry.server.config');
   }
 
   if (process.env.NEXT_RUNTIME === 'edge') {
     // Import et initialisation Sentry pour Edge Runtime
-    await import('../sentry.edge.config');
+    await import('../config/monitoring/sentry.edge.config');
   }
 }
 

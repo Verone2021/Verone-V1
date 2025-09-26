@@ -4,14 +4,15 @@ import { useRouter } from 'next/navigation'
 import { DraftCompletionWizard } from '../../../../components/business/draft-completion-wizard'
 
 interface DraftEditPageProps {
-  params: {
+  params: Promise<{
     draftId: string
-  }
+  }>
 }
 
-export default function DraftEditPage({ params }: DraftEditPageProps) {
+export default async function DraftEditPage({ params }: DraftEditPageProps) {
   const router = useRouter()
-  const { draftId } = params
+  const resolvedParams = await params
+  const { draftId } = resolvedParams
 
   const handleCancel = () => {
     router.back()

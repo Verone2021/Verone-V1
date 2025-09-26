@@ -6,12 +6,14 @@ import { Button } from '../ui/button'
 import { cn } from '../../lib/utils'
 import { useInlineEdit, type EditableSection } from '../../hooks/use-inline-edit'
 import { generateVariantName } from '../../lib/business-rules/naming-rules'
+import { CategoryHierarchySelector } from './category-hierarchy-selector'
 
 interface Product {
   id: string
   name: string
-  description?: string
   slug: string
+  subcategory_id?: string
+  supplier_id?: string
 }
 
 interface GeneralInfoEditSectionProps {
@@ -48,8 +50,9 @@ export function GeneralInfoEditSection({ product, onUpdate, className }: General
   const handleStartEdit = () => {
     startEdit(section, {
       name: product.name,
-      description: product.description || '',
-      slug: product.slug
+      slug: product.slug,
+      subcategory_id: product.subcategory_id || '',
+      supplier_id: product.supplier_id || ''
     })
   }
 
@@ -131,17 +134,18 @@ export function GeneralInfoEditSection({ product, onUpdate, className }: General
             />
           </div>
 
-          {/* Description */}
+
+          {/* Catégorisation */}
           <div>
-            <label className="block text-sm font-medium text-black mb-1">
-              Description
-            </label>
-            <textarea
-              value={editData?.description || ''}
-              onChange={(e) => handleFieldChange('description', e.target.value)}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-black focus:border-black"
-              placeholder="Description du produit..."
-              rows={3}
+            <CategoryHierarchySelector
+              value={editData?.subcategory_id || ''}
+              onChange={(subcategoryId, hierarchyInfo) => {
+                updateEditedData(section, {
+                  subcategory_id: subcategoryId || ''
+                })
+              }}
+              placeholder="Sélectionner une sous-catégorie"
+              required={true}
             />
           </div>
 
@@ -192,12 +196,6 @@ export function GeneralInfoEditSection({ product, onUpdate, className }: General
           <span className="text-sm text-black opacity-70">Nom:</span>
           <div className="text-lg font-semibold text-black">{product.name}</div>
         </div>
-        {product.description && (
-          <div>
-            <span className="text-sm text-black opacity-70">Description:</span>
-            <div className="text-sm text-black opacity-80 mt-1">{product.description}</div>
-          </div>
-        )}
         <div>
           <span className="text-sm text-black opacity-70">URL Slug:</span>
           <div className="text-sm font-mono text-blue-600 bg-blue-50 px-2 py-1 rounded mt-1">{product.slug}</div>

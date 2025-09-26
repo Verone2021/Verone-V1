@@ -2,14 +2,14 @@
  * 🔖 SubcategoryForm - Formulaire pour sous-catégories
  *
  * Formulaire séparé pour la gestion des sous-catégories (niveau 2)
- * Avec sélection de catégorie parent obligatoire
+ * CORRECTION: Utilise la table subcategories avec category_id
  */
 
 "use client"
 
 import { useState, useEffect } from 'react'
 import { Button } from '@/components/ui/button'
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog'
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 import { Input } from '@/components/ui/input'
 import { Textarea } from '@/components/ui/textarea'
 import { Label } from '@/components/ui/label'
@@ -26,21 +26,19 @@ interface CategoryWithFamily {
 
 interface Subcategory {
   id: string
-  parent_id: string | null
-  family_id: string
+  category_id: string // ID de la catégorie parent
   name: string
   slug: string
   description?: string
   image_url?: string
-  display_order: number
+  sort_order: number
   is_active: boolean
-  level: 2
   created_at?: string
   updated_at?: string
 }
 
 interface SubcategoryFormData {
-  parent_id: string // ID de la catégorie parent
+  parent_id: string // ID de la catégorie parent (mappé depuis category_id)
   family_id: string // Récupéré automatiquement depuis la catégorie parent
   name: string
   description: string
@@ -70,14 +68,14 @@ export function SubcategoryForm({
   const [loading, setLoading] = useState(false)
   const [uploadingImage, setUploadingImage] = useState(false)
 
-  // État du formulaire
+  // État du formulaire - CORRECTION: utiliser category_id au lieu de parent_id
   const [formData, setFormData] = useState<SubcategoryFormData>({
-    parent_id: initialData?.parent_id || '',
-    family_id: initialData?.family_id || '',
+    parent_id: initialData?.category_id || '', // Support mapping category_id -> parent_id
+    family_id: '', // Sera récupéré depuis la catégorie
     name: initialData?.name || '',
     description: initialData?.description || '',
     image_url: initialData?.image_url || '',
-    display_order: initialData?.display_order || 1,
+    display_order: initialData?.sort_order || 1,
     is_active: initialData?.is_active ?? true
   })
 
@@ -85,12 +83,12 @@ export function SubcategoryForm({
   useEffect(() => {
     if (isOpen) {
       setFormData({
-        parent_id: initialData?.parent_id || '',
-        family_id: initialData?.family_id || '',
+        parent_id: initialData?.category_id || '',
+        family_id: '', // Sera récupéré automatiquement
         name: initialData?.name || '',
         description: initialData?.description || '',
         image_url: initialData?.image_url || '',
-        display_order: initialData?.display_order || 1,
+        display_order: initialData?.sort_order || 1,
         is_active: initialData?.is_active ?? true
       })
     }
@@ -113,7 +111,7 @@ export function SubcategoryForm({
 
       setFormData(prev => ({ ...prev, family_id: data.family_id }))
     } catch (error) {
-      console.error('Error fetching category family_id:', error)
+      console.error('Erreur récupération family_id catégorie:', error?.message || JSON.stringify(error))
     }
   }
 
@@ -155,7 +153,7 @@ export function SubcategoryForm({
         description: "L'image a été uploadée avec succès"
       })
     } catch (error) {
-      console.error('Upload error:', error)
+      console.error('Erreur upload image sous-catégorie:', error?.message || JSON.stringify(error))
       toast({
         title: "❌ Erreur upload",
         description: "Impossible de télécharger l'image",
@@ -171,7 +169,7 @@ export function SubcategoryForm({
     setFormData(prev => ({ ...prev, image_url: '' }))
   }
 
-  // Soumission du formulaire
+  // Soumission du formulaire - CORRECTION: utiliser table subcategories
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
 
@@ -199,17 +197,22 @@ export function SubcategoryForm({
       const supabase = createClient()
       const slug = generateSlug(formData.name)
 
-      const subcategoryData = {
-        ...formData,
-        slug,
-        level: 2 as const
-      }
-
       let result
 
       if (mode === 'create') {
+        // CORRECTION: Utiliser la table subcategories avec category_id
+        const subcategoryData = {
+          category_id: formData.parent_id,
+          name: formData.name,
+          slug,
+          description: formData.description,
+          image_url: formData.image_url,
+          sort_order: formData.display_order,
+          is_active: formData.is_active
+        }
+
         const { data, error } = await supabase
-          .from('categories')
+          .from('subcategories')
           .insert([subcategoryData])
           .select()
           .single()
@@ -222,12 +225,20 @@ export function SubcategoryForm({
           description: `La sous-catégorie "${formData.name}" a été créée`
         })
       } else {
+        // CORRECTION: Mettre à jour dans la table subcategories
+        const updateData = {
+          name: formData.name,
+          description: formData.description,
+          image_url: formData.image_url,
+          sort_order: formData.display_order,
+          is_active: formData.is_active,
+          slug,
+          updated_at: new Date().toISOString()
+        }
+
         const { data, error } = await supabase
-          .from('categories')
-          .update({
-            ...subcategoryData,
-            updated_at: new Date().toISOString()
-          })
+          .from('subcategories')
+          .update(updateData)
           .eq('id', initialData!.id)
           .select()
           .single()
@@ -245,7 +256,7 @@ export function SubcategoryForm({
       onClose()
 
     } catch (error: any) {
-      console.error('Form submission error:', error)
+      console.error('Erreur soumission formulaire sous-catégorie:', error?.message || JSON.stringify(error))
       toast({
         title: "❌ Erreur",
         description: error.message || "Une erreur est survenue",
@@ -264,6 +275,9 @@ export function SubcategoryForm({
       <DialogContent className="sm:max-w-[600px] max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle className="text-black">{title}</DialogTitle>
+          <DialogDescription>
+            {mode === 'create' ? 'Créer une nouvelle sous-catégorie dans une catégorie existante' : 'Modifier les informations de cette sous-catégorie'}
+          </DialogDescription>
         </DialogHeader>
 
         <form onSubmit={handleSubmit} className="space-y-6">

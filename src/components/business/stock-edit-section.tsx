@@ -21,13 +21,20 @@ interface StockEditSectionProps {
   className?: string
 }
 
-const STATUS_OPTIONS = [
-  { value: 'in_stock', label: '✓ En stock', color: 'bg-green-600 text-white' },
-  { value: 'out_of_stock', label: '✕ Rupture', color: 'bg-red-600 text-white' },
-  { value: 'preorder', label: '📅 Précommande', color: 'bg-blue-600 text-white' },
-  { value: 'coming_soon', label: '⏳ Bientôt', color: 'bg-black text-white' },
-  { value: 'discontinued', label: '⚠ Arrêté', color: 'bg-gray-600 text-white' }
+// Statuts automatiques (calculés par le système)
+const AUTOMATIC_STATUS_OPTIONS = [
+  { value: 'in_stock', label: '✓ En stock', color: 'bg-green-600 text-white', description: 'Stock disponible (calculé automatiquement)' },
+  { value: 'out_of_stock', label: '✕ Rupture', color: 'bg-red-600 text-white', description: 'Aucun stock disponible (calculé automatiquement)' },
+  { value: 'coming_soon', label: '⏳ Bientôt', color: 'bg-black text-white', description: 'Commande fournisseur en cours (calculé automatiquement)' }
 ] as const
+
+// Statuts manuels (modifiables par l'utilisateur)
+const MANUAL_STATUS_OPTIONS = [
+  { value: 'preorder', label: '📅 Précommande', color: 'bg-blue-600 text-white', description: 'Produit en précommande' },
+  { value: 'discontinued', label: '⚠ Arrêté', color: 'bg-gray-600 text-white', description: 'Produit arrêté du catalogue' }
+] as const
+
+const ALL_STATUS_OPTIONS = [...AUTOMATIC_STATUS_OPTIONS, ...MANUAL_STATUS_OPTIONS]
 
 const CONDITION_OPTIONS = [
   { value: 'new', label: 'Neuf' },
@@ -124,13 +131,45 @@ export function StockEditSection({ product, onUpdate, className }: StockEditSect
         </div>
 
         <div className="space-y-4">
-          {/* Statut produit */}
+          {/* Statuts automatiques (lecture seule) */}
           <div>
             <label className="block text-sm font-medium text-black mb-2">
-              Statut produit *
+              Statuts automatiques (gérés par le système)
+            </label>
+            <div className="bg-gray-50 p-3 rounded-md border-2 border-gray-200">
+              <div className="space-y-2">
+                {AUTOMATIC_STATUS_OPTIONS.map((option) => (
+                  <div
+                    key={option.value}
+                    className={cn(
+                      "flex items-center p-2 rounded-md",
+                      editData?.status === option.value ? "bg-white border border-gray-300 shadow-sm" : "opacity-60"
+                    )}
+                  >
+                    <Badge className={cn(option.color, "mr-3")}>{option.label}</Badge>
+                    <div className="flex-1">
+                      <span className="text-sm text-black">
+                        {option.description}
+                      </span>
+                      {editData?.status === option.value && (
+                        <div className="text-xs text-gray-600 mt-1">
+                          ✅ Statut actuel - Calculé automatiquement par le système
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+
+          {/* Statuts manuels (éditables) */}
+          <div>
+            <label className="block text-sm font-medium text-black mb-2">
+              Statuts manuels (modifiables)
             </label>
             <div className="grid grid-cols-1 gap-2">
-              {STATUS_OPTIONS.map((option) => (
+              {MANUAL_STATUS_OPTIONS.map((option) => (
                 <label
                   key={option.value}
                   className={cn(
@@ -150,32 +189,37 @@ export function StockEditSection({ product, onUpdate, className }: StockEditSect
                   />
                   <Badge className={cn(option.color, "mr-3")}>{option.label}</Badge>
                   <span className="text-sm text-black">
-                    {option.value === 'in_stock' && 'Produit disponible immédiatement'}
-                    {option.value === 'out_of_stock' && 'Produit en rupture de stock'}
-                    {option.value === 'preorder' && 'Produit en précommande'}
-                    {option.value === 'coming_soon' && 'Produit bientôt disponible'}
-                    {option.value === 'discontinued' && 'Produit arrêté'}
+                    {option.description}
                   </span>
                 </label>
               ))}
             </div>
           </div>
 
-          {/* Quantité stock */}
+          {/* Quantité stock (calculée automatiquement) */}
           <div>
             <label className="block text-sm font-medium text-black mb-1">
-              Quantité en stock
+              Quantité en stock (calculée automatiquement)
             </label>
-            <input
-              type="number"
-              value={editData?.stock_quantity || 0}
-              onChange={(e) => handleFieldChange('stock_quantity', parseInt(e.target.value) || 0)}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-black focus:border-black"
-              min="0"
-              step="1"
-            />
-            <div className={cn("text-xs mt-1 font-medium", stockStatus.color)}>
-              Niveau: {stockStatus.level}
+            <div className="bg-gray-100 p-3 rounded-md border-2 border-gray-200">
+              <div className="flex items-center justify-between">
+                <div>
+                  <div className={cn("text-2xl font-bold", stockStatus.color)}>
+                    {editData?.stock_quantity || 0} unités
+                  </div>
+                  <div className="text-xs text-gray-600 mt-1">
+                    📊 Calculé automatiquement selon les mouvements de stock
+                  </div>
+                </div>
+                <div className="text-right">
+                  <div className={cn("text-sm font-medium", stockStatus.color)}>
+                    {stockStatus.level}
+                  </div>
+                  <div className="text-xs text-gray-600">
+                    Niveau stock
+                  </div>
+                </div>
+              </div>
             </div>
           </div>
 
@@ -252,7 +296,7 @@ export function StockEditSection({ product, onUpdate, className }: StockEditSect
 
   // Mode affichage
   const stockStatus = getStockStatus(product.stock_quantity || 0, product.min_stock || 5)
-  const currentStatus = STATUS_OPTIONS.find(opt => opt.value === product.status)
+  const currentStatus = ALL_STATUS_OPTIONS.find(opt => opt.value === product.status)
   const currentCondition = CONDITION_OPTIONS.find(opt => opt.value === product.condition)
 
   return (

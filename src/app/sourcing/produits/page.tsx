@@ -11,6 +11,7 @@ import {
   CheckCircle,
   Clock,
   User,
+  Users,
   Building,
   Calendar,
   Package,
@@ -123,6 +124,14 @@ export default function SourcingProduitsPage() {
                 className="border-black text-black hover:bg-black hover:text-white"
               >
                 Retour Dashboard
+              </Button>
+              <Button
+                variant="outline"
+                onClick={() => router.push('/contacts-organisations/customers?type=professional')}
+                className="border-black text-black hover:bg-black hover:text-white"
+              >
+                <Users className="h-4 w-4 mr-2" />
+                Client Professionnel
               </Button>
               <Button
                 className="bg-black hover:bg-gray-800 text-white"

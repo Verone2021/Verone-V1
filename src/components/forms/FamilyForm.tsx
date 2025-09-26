@@ -105,7 +105,7 @@ export function FamilyForm({
         description: "L'image a été uploadée avec succès"
       })
     } catch (error) {
-      console.error('Upload error:', error)
+      console.error('Erreur upload image famille:', error?.message || JSON.stringify(error))
       toast({
         title: "❌ Erreur upload",
         description: "Impossible de télécharger l'image",
@@ -185,7 +185,7 @@ export function FamilyForm({
       onClose()
 
     } catch (error: any) {
-      console.error('Form submission error:', error)
+      console.error('Erreur soumission formulaire famille:', error?.message || JSON.stringify(error))
       toast({
         title: "❌ Erreur",
         description: error.message || "Une erreur est survenue",

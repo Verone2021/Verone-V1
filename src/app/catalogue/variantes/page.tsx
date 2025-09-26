@@ -16,10 +16,17 @@ import {
   AlertCircle,
   Users,
   ShoppingCart,
-  Settings
+  Settings,
+  ChevronRight,
+  TreePine,
+  FolderOpen,
+  Tags
 } from 'lucide-react'
 import { useVariantGroups } from '@/hooks/use-variant-groups'
 import { useVariantProducts } from '@/hooks/use-variant-products'
+import { useFamilies } from '@/hooks/use-families'
+import { useCategories } from '@/hooks/use-categories'
+import { useSubcategories } from '@/hooks/use-subcategories'
 import { VariantGroupForm } from '@/components/forms/VariantGroupForm'
 import { ProductSelector } from '@/components/forms/ProductSelector'
 import { QuickVariantForm } from '@/components/forms/QuickVariantForm'
@@ -48,6 +55,9 @@ export default function CatalogueVariantesPage() {
   const [searchTerm, setSearchTerm] = useState('')
   const [statusFilter, setStatusFilter] = useState('all')
   const [typeFilter, setTypeFilter] = useState('all')
+  const [selectedFamilyId, setSelectedFamilyId] = useState<string>('all')
+  const [selectedCategoryId, setSelectedCategoryId] = useState<string>('all')
+  const [selectedSubcategoryId, setSelectedSubcategoryId] = useState<string>('all')
 
   // Modals state
   const [variantGroupFormOpen, setVariantGroupFormOpen] = useState(false)
@@ -64,6 +74,11 @@ export default function CatalogueVariantesPage() {
   })
 
   const { removeProductFromVariantGroup } = useVariantProducts()
+
+  // Hooks pour l'arborescence hiérarchique
+  const { families, loading: familiesLoading } = useFamilies()
+  const { allCategories, getCategoriesByFamily } = useCategories()
+  const { getSubcategoriesByCategory } = useSubcategories()
 
   // Fonction pour obtenir le badge de statut
   const getStatusBadge = (group: any) => {
@@ -98,6 +113,60 @@ export default function CatalogueVariantesPage() {
   // Fonction pour formater les dates
   const formatDate = (dateString: string) => {
     return new Date(dateString).toLocaleDateString('fr-FR')
+  }
+
+  // Fonctions pour gérer la hiérarchie
+  const getFilteredCategories = () => {
+    if (selectedFamilyId === 'all') return []
+    return getCategoriesByFamily(selectedFamilyId)
+  }
+
+  const getFilteredSubcategories = async () => {
+    if (selectedCategoryId === 'all') return []
+    try {
+      return await getSubcategoriesByCategory(selectedCategoryId)
+    } catch (error) {
+      console.error('Erreur lors du chargement des sous-catégories:', error)
+      return []
+    }
+  }
+
+  // Fonction pour construire le fil d'Ariane hiérarchique
+  const buildBreadcrumb = () => {
+    const breadcrumb = []
+
+    if (selectedFamilyId !== 'all') {
+      const family = families.find(f => f.id === selectedFamilyId)
+      if (family) {
+        breadcrumb.push({
+          name: family.name,
+          icon: TreePine,
+          level: 'famille'
+        })
+      }
+    }
+
+    if (selectedCategoryId !== 'all') {
+      const category = allCategories.find(c => c.id === selectedCategoryId)
+      if (category) {
+        breadcrumb.push({
+          name: category.name,
+          icon: FolderOpen,
+          level: 'catégorie'
+        })
+      }
+    }
+
+    if (selectedSubcategoryId !== 'all') {
+      // Récupération asynchrone - on affiche seulement si disponible
+      breadcrumb.push({
+        name: 'Sous-catégorie sélectionnée',
+        icon: Tags,
+        level: 'sous-catégorie'
+      })
+    }
+
+    return breadcrumb
   }
 
   // Handlers pour les actions
@@ -187,51 +256,123 @@ export default function CatalogueVariantesPage() {
         <Card className="border-black mb-6">
           <CardHeader>
             <CardTitle className="text-black">Filtres et Recherche</CardTitle>
+            <CardDescription>Rechercher par groupe de variantes et catégorisation des produits</CardDescription>
           </CardHeader>
           <CardContent>
-            <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-              <div className="relative">
-                <Search className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
-                <Input
-                  placeholder="Rechercher un groupe..."
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                  className="pl-10 border-black focus:ring-black"
-                />
+            <div className="space-y-4">
+              {/* Première ligne - Recherche et Type de variante */}
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div className="relative">
+                  <Search className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
+                  <Input
+                    placeholder="Rechercher un groupe..."
+                    value={searchTerm}
+                    onChange={(e) => setSearchTerm(e.target.value)}
+                    className="pl-10 border-black focus:ring-black"
+                  />
+                </div>
+
+                <Select value={statusFilter} onValueChange={setStatusFilter}>
+                  <SelectTrigger className="border-black">
+                    <SelectValue placeholder="Statut" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">Tous les statuts</SelectItem>
+                    <SelectItem value="active">Actifs</SelectItem>
+                    <SelectItem value="inactive">Inactifs</SelectItem>
+                  </SelectContent>
+                </Select>
+
+                <Select value={typeFilter} onValueChange={setTypeFilter}>
+                  <SelectTrigger className="border-black">
+                    <SelectValue placeholder="Type variante" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">Tous les types</SelectItem>
+                    <SelectItem value="color">Couleur</SelectItem>
+                    <SelectItem value="size">Taille</SelectItem>
+                    <SelectItem value="material">Matériau</SelectItem>
+                    <SelectItem value="pattern">Motif</SelectItem>
+                  </SelectContent>
+                </Select>
               </div>
 
-              <Select value={statusFilter} onValueChange={setStatusFilter}>
-                <SelectTrigger className="border-black">
-                  <SelectValue placeholder="Statut" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">Tous les statuts</SelectItem>
-                  <SelectItem value="active">Actifs</SelectItem>
-                  <SelectItem value="inactive">Inactifs</SelectItem>
-                </SelectContent>
-              </Select>
+              {/* Deuxième ligne - Hiérarchie produits */}
+              <div className="border-t border-gray-200 pt-4">
+                <h4 className="text-sm font-medium text-gray-700 mb-3 flex items-center">
+                  <TreePine className="h-4 w-4 mr-2" />
+                  Filtrer par catégorisation des produits
+                </h4>
+                <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+                  <Select
+                    value={selectedFamilyId}
+                    onValueChange={(value) => {
+                      setSelectedFamilyId(value)
+                      setSelectedCategoryId('all')
+                      setSelectedSubcategoryId('all')
+                    }}
+                  >
+                    <SelectTrigger className="border-gray-300">
+                      <TreePine className="h-4 w-4 mr-2 text-green-600" />
+                      <SelectValue placeholder="Famille" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="all">Toutes les familles</SelectItem>
+                      {families.map((family) => (
+                        <SelectItem key={family.id} value={family.id}>
+                          {family.name}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
 
-              <Select value={typeFilter} onValueChange={setTypeFilter}>
-                <SelectTrigger className="border-black">
-                  <SelectValue placeholder="Type variante" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">Tous les types</SelectItem>
-                  <SelectItem value="color">Couleur</SelectItem>
-                  <SelectItem value="size">Taille</SelectItem>
-                  <SelectItem value="material">Matériau</SelectItem>
-                  <SelectItem value="pattern">Motif</SelectItem>
-                </SelectContent>
-              </Select>
+                  <Select
+                    value={selectedCategoryId}
+                    onValueChange={(value) => {
+                      setSelectedCategoryId(value)
+                      setSelectedSubcategoryId('all')
+                    }}
+                    disabled={selectedFamilyId === 'all'}
+                  >
+                    <SelectTrigger className="border-gray-300">
+                      <FolderOpen className="h-4 w-4 mr-2 text-blue-600" />
+                      <SelectValue placeholder="Catégorie" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="all">Toutes les catégories</SelectItem>
+                      {getFilteredCategories().map((category) => (
+                        <SelectItem key={category.id} value={category.id}>
+                          {category.name}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
 
-              <Button
-                variant="outline"
-                className="border-black text-black hover:bg-black hover:text-white"
-                onClick={refetch}
-              >
-                <Filter className="h-4 w-4 mr-2" />
-                Actualiser
-              </Button>
+                  <Select
+                    value={selectedSubcategoryId}
+                    onValueChange={setSelectedSubcategoryId}
+                    disabled={selectedCategoryId === 'all'}
+                  >
+                    <SelectTrigger className="border-gray-300">
+                      <Tags className="h-4 w-4 mr-2 text-purple-600" />
+                      <SelectValue placeholder="Sous-catégorie" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="all">Toutes les sous-catégories</SelectItem>
+                      {/* Elles seront chargées dynamiquement selon la catégorie */}
+                    </SelectContent>
+                  </Select>
+
+                  <Button
+                    variant="outline"
+                    className="border-black text-black hover:bg-black hover:text-white"
+                    onClick={refetch}
+                  >
+                    <Filter className="h-4 w-4 mr-2" />
+                    Actualiser
+                  </Button>
+                </div>
+              </div>
             </div>
           </CardContent>
         </Card>

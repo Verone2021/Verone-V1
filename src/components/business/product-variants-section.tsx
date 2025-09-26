@@ -25,6 +25,7 @@ import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { Separator } from '@/components/ui/separator'
 import { cn, formatPrice } from '@/lib/utils'
+import { VariantCreationModal } from './variant-creation-modal'
 
 interface ProductVariant {
   variant_id: string
@@ -66,12 +67,36 @@ interface ProductVariantsData {
 interface ProductVariantsSectionProps {
   productId: string
   productName: string
+  productData?: {
+    id: string
+    name: string
+    sku: string
+    supplier_id?: string
+    supplier?: {
+      id: string
+      name: string
+    }
+    dimensions_length?: number
+    dimensions_width?: number
+    dimensions_height?: number
+    dimensions_unit?: string
+    weight?: number
+    weight_unit?: string
+    base_cost?: number
+    selling_price?: number
+    description?: string
+    technical_description?: string
+    category_id?: string
+    subcategory_id?: string
+    variant_group_id?: string
+  }
   onVariantsUpdate?: () => void
 }
 
 export function ProductVariantsSection({
   productId,
   productName,
+  productData,
   onVariantsUpdate
 }: ProductVariantsSectionProps) {
   const router = useRouter()
@@ -79,6 +104,7 @@ export function ProductVariantsSection({
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [showManageModal, setShowManageModal] = useState(false)
+  const [showCreateModal, setShowCreateModal] = useState(false)
 
   const fetchVariants = async () => {
     try {
@@ -106,8 +132,12 @@ export function ProductVariantsSection({
   }
 
   const handleManageVariants = () => {
-    // TODO: Open variants management modal
-    setShowManageModal(true)
+    setShowCreateModal(true)
+  }
+
+  const handleVariantCreated = () => {
+    fetchVariants()
+    if (onVariantsUpdate) onVariantsUpdate()
   }
 
   const getVariantAttributeDisplay = (attributes: Record<string, any> | undefined) => {
@@ -323,31 +353,14 @@ export function ProductVariantsSection({
         Ajouter une variante à ce groupe
       </Button>
 
-      {/* Future: Variants Management Modal */}
-      {showManageModal && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-white p-6 rounded-lg max-w-md w-full mx-4">
-            <div className="flex items-center justify-between mb-4">
-              <h3 className="font-medium">Gestion des Variantes</h3>
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={() => setShowManageModal(false)}
-              >
-                <X className="h-4 w-4" />
-              </Button>
-            </div>
-            <p className="text-sm text-gray-600 mb-4">
-              Interface de gestion des variantes à développer dans Phase 3.
-            </p>
-            <Button
-              className="w-full"
-              onClick={() => setShowManageModal(false)}
-            >
-              Fermer
-            </Button>
-          </div>
-        </div>
+      {/* Variant Creation Modal */}
+      {productData && (
+        <VariantCreationModal
+          isOpen={showCreateModal}
+          onClose={() => setShowCreateModal(false)}
+          productData={productData}
+          onVariantCreated={handleVariantCreated}
+        />
       )}
     </div>
   )

@@ -130,7 +130,7 @@ export function CategoryForm({
         description: "L'image a été uploadée avec succès"
       })
     } catch (error) {
-      console.error('Upload error:', error)
+      console.error('Erreur upload image catégorie:', error?.message || JSON.stringify(error))
       toast({
         title: "❌ Erreur upload",
         description: "Impossible de télécharger l'image",
@@ -220,7 +220,7 @@ export function CategoryForm({
       onClose()
 
     } catch (error: any) {
-      console.error('Form submission error:', error)
+      console.error('Erreur soumission formulaire catégorie:', error?.message || JSON.stringify(error))
       toast({
         title: "❌ Erreur",
         description: error.message || "Une erreur est survenue",

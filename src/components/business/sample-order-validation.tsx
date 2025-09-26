@@ -41,7 +41,7 @@ import {
   DialogTitle,
   DialogTrigger,
 } from '../ui/dialog'
-import { useDrafts } from '../../hooks/use-drafts'
+import { useSourcingProducts } from '../../hooks/use-sourcing-products'
 import { useToast } from '../../hooks/use-toast'
 import { createClient } from '../../lib/supabase/client'
 

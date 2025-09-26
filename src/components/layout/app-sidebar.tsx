@@ -215,25 +215,6 @@ const navItems: NavItem[] = [
     description: "Dashboard tous canaux de distribution"
   },
   {
-    title: "Contacts & Organisations",
-    icon: Building2,
-    description: "Fournisseurs, clients et contacts",
-    children: [
-      {
-        title: "Organisations",
-        href: "/contacts-organisations",
-        icon: Building2,
-        description: "Dashboard fournisseurs et structures"
-      },
-      {
-        title: "Clients Particuliers",
-        href: "/contacts-organisations/customers?type=individual",
-        icon: UserCheck,
-        description: "Clients particuliers B2C"
-      }
-    ]
-  },
-  {
     title: "Paramètres",
     href: "/parametres",
     icon: Settings,

@@ -7,7 +7,7 @@
 
 import { NextRequest, NextResponse } from 'next/server'
 import { getGoogleMerchantClient } from '@/lib/google-merchant/client'
-import { createClient } from '@/lib/supabase/server'
+import { createServerClient } from '@/lib/supabase/server'
 
 interface SyncResponse {
   success: boolean
@@ -90,10 +90,11 @@ function validateProductForSync(product: any): { valid: boolean; errors: string[
  */
 export async function POST(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ): Promise<NextResponse<SyncResponse>> {
   try {
-    const productId = params.id
+    const resolvedParams = await params
+    const productId = resolvedParams.id
 
     console.log(`[API] Sync product request for ID: ${productId}`)
 
@@ -106,7 +107,7 @@ export async function POST(
     }
 
     // 2. Initialisation Supabase
-    const supabase = createClient()
+    const supabase = await createServerClient()
 
     // 3. Récupération du produit avec relations
     let product
@@ -174,15 +175,16 @@ export async function POST(
  */
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ): Promise<NextResponse<SyncResponse>> {
   try {
-    const productId = params.id
+    const resolvedParams = await params
+    const productId = resolvedParams.id
 
     console.log(`[API] Get sync status for product ID: ${productId}`)
 
     // 1. Initialisation Supabase
-    const supabase = createClient()
+    const supabase = await createServerClient()
 
     // 2. Récupération du produit
     const { data: product, error } = await supabase

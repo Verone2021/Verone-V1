@@ -126,8 +126,25 @@ export function ProductDescriptionsModal({
       }, 1500)
 
     } catch (err) {
-      console.error('❌ Erreur sauvegarde descriptions:', err)
-      setError(err instanceof Error ? err.message : 'Erreur sauvegarde')
+      // Amélioration de la gestion d'erreur pour éviter les objets vides
+      let errorMessage = 'Erreur lors de la sauvegarde des descriptions'
+
+      if (err instanceof Error) {
+        errorMessage = err.message
+      } else if (typeof err === 'string') {
+        errorMessage = err
+      } else if (err && typeof err === 'object' && 'message' in err) {
+        errorMessage = (err as any).message || errorMessage
+      }
+
+      console.error('❌ Erreur sauvegarde descriptions:', {
+        error: err,
+        message: errorMessage,
+        productId,
+        updateData: { description: description.trim(), technical_description: technicalDescription.trim() }
+      })
+
+      setError(errorMessage)
     } finally {
       setSaving(false)
     }

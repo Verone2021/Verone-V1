@@ -8,14 +8,13 @@ import { useInlineEdit, type EditableSection } from '../../hooks/use-inline-edit
 
 interface Product {
   id: string
-  // Prix clarifiés selon nouvelles règles business
-  supplier_price?: number      // Prix d'achat fournisseur HT (centimes)
-  selling_price: number        // Prix de vente Vérone HT (centimes)
-  tax_rate?: number
+  // Tarification simplifiée 2025
+  cost_price?: number          // Prix d'achat fournisseur HT (euros)
+  margin_percentage?: number   // Taux de marge en pourcentage (ex: 25 pour 25%)
+  tax_rate?: number           // Taux de TVA (ex: 0.2 pour 20%)
 
-  // Champs de transition (anciens noms)
-  price_ht?: number           // À migrer vers selling_price
-  cost_price?: number         // À migrer vers supplier_price
+  // Champs calculés automatiquement
+  selling_price?: number      // Prix minimum de vente calculé
 }
 
 interface SupplierVsPricingEditSectionProps {
@@ -53,47 +52,58 @@ export function SupplierVsPricingEditSection({
   const editData = getEditedData(section)
   const error = getError(section)
 
-  // Récupération des prix avec CORRECTION de l'inversion (price_ht = prix d'achat, cost_price = prix de vente)
-  const currentSellingPrice = product.selling_price || product.cost_price || 0  // CORRIGÉ : cost_price devient selling_price
-  const currentSupplierPrice = product.supplier_price || product.price_ht || 0  // CORRIGÉ : price_ht devient supplier_price
+  // Récupération des données de tarification simplifiée
+  const currentCostPrice = product.cost_price || 0
+  const currentMarginPercentage = product.margin_percentage || 25 // Défaut 25%
 
-  // Calculs automatiques
-  const calculateMargin = (sellingPrice: number, supplierPrice: number) => {
-    if (!supplierPrice || supplierPrice <= 0) return null
-    return {
-      amount: sellingPrice - supplierPrice,
-      percentage: ((sellingPrice - supplierPrice) / supplierPrice) * 100
-    }
+  // Calcul automatique du prix de vente minimum
+  const calculateMinSellingPrice = (costPrice: number, marginPercentage: number) => {
+    if (!costPrice || costPrice <= 0) return 0
+    return costPrice * (1 + (marginPercentage / 100))
   }
+
+  const currentSellingPrice = calculateMinSellingPrice(currentCostPrice, currentMarginPercentage)
 
   const handleStartEdit = () => {
     startEdit(section, {
-      selling_price: currentSellingPrice,
-      supplier_price: currentSupplierPrice,
-      tax_rate: product.tax_rate || 0.2
+      cost_price: currentCostPrice,
+      margin_percentage: currentMarginPercentage
     })
   }
 
   const handleSave = async () => {
     // Validation business rules avant sauvegarde
-    if (editData?.supplier_price && editData?.selling_price) {
-      if (editData.selling_price <= editData.supplier_price) {
-        alert('⚠️ Le prix de vente doit être supérieur au prix d\'achat fournisseur')
-        return
-      }
-
-      const margin = calculateMargin(editData.selling_price, editData.supplier_price)
-      if (margin && margin.percentage < 5) {
-        const confirmed = confirm(`⚠️ Marge très faible (${margin.percentage.toFixed(1)}%). Continuer ?`)
-        if (!confirmed) return
-      }
+    if (editData?.cost_price && editData.cost_price <= 0) {
+      alert('⚠️ Le prix d\'achat doit être supérieur à 0')
+      return
     }
 
-    const success = await saveChanges(section)
-    if (success) {
-      // Notification de succès
-      console.log('✅ Prix mis à jour avec succès')
+    if (editData?.margin_percentage && editData.margin_percentage < 5) {
+      const confirmed = confirm(`⚠️ Marge très faible (${editData.margin_percentage}%). Continuer ?`)
+      if (!confirmed) return
     }
+
+    // Calculer le prix de vente pour sauvegarde
+    const sellingPrice = editData?.cost_price
+      ? calculateMinSellingPrice(editData.cost_price, editData.margin_percentage || 25)
+      : 0
+
+    const dataToSave = {
+      cost_price: editData?.cost_price,
+      margin_percentage: editData?.margin_percentage,
+      selling_price: sellingPrice // Prix calculé automatiquement
+    }
+
+    // Directement sauvegarder avec les données finales
+    updateEditedData(section, dataToSave)
+
+    // Attendre un cycle pour que l'état soit mis à jour
+    setTimeout(async () => {
+      const success = await saveChanges(section)
+      if (success) {
+        console.log('✅ Tarification mise à jour avec succès')
+      }
+    }, 0)
   }
 
   const handleCancel = () => {
@@ -101,17 +111,25 @@ export function SupplierVsPricingEditSection({
   }
 
   const handlePriceChange = (field: string, value: string) => {
-    const numValue = field === 'tax_rate'
-      ? parseFloat(value) / 100  // Conversion pourcentage → décimal
-      : parseFloat(value) || 0 // Prix en euros (changé de parseInt vers parseFloat)
+    let numValue: number
+
+    if (field === 'margin_percentage') {
+      numValue = parseFloat(value) || 0   // Garde le pourcentage tel quel
+    } else {
+      numValue = parseFloat(value) || 0   // Prix en euros
+    }
 
     updateEditedData(section, { [field]: numValue })
   }
 
-  // Calculer marge en temps réel pendant l'édition
-  const currentMargin = editData
-    ? calculateMargin(editData.selling_price || 0, editData.supplier_price || 0)
-    : calculateMargin(currentSellingPrice, currentSupplierPrice)
+  // Calculer prix de vente en temps réel pendant l'édition
+  const editSellingPrice = editData
+    ? calculateMinSellingPrice(editData.cost_price || 0, editData.margin_percentage || 25)
+    : currentSellingPrice
+
+  const editMarginAmount = editData
+    ? editSellingPrice - (editData.cost_price || 0)
+    : currentSellingPrice - currentCostPrice
 
   if (isEditing(section)) {
     return (
@@ -121,21 +139,23 @@ export function SupplierVsPricingEditSection({
             <DollarSign className="h-5 w-5 mr-2" />
             Tarification Fournisseur vs Vérone
           </h3>
-          <div className="flex space-x-2">
+          <div className="flex space-x-1">
             <Button
               variant="outline"
-              size="sm"
+              size="xs"
               onClick={handleCancel}
               disabled={isSaving(section)}
+              className="text-xs px-2 py-1"
             >
               <X className="h-3 w-3 mr-1" />
               Annuler
             </Button>
             <Button
               variant="default"
-              size="sm"
+              size="xs"
               onClick={handleSave}
               disabled={!hasChanges(section) || isSaving(section)}
+              className="text-xs px-2 py-1"
             >
               <Save className="h-3 w-3 mr-1" />
               {isSaving(section) ? 'Sauvegarde...' : 'Sauvegarder'}
@@ -143,137 +163,90 @@ export function SupplierVsPricingEditSection({
           </div>
         </div>
 
-        <div className="space-y-5">
-          {/* SECTION FOURNISSEUR */}
+        <div className="space-y-4">
+          {/* PRIX D'ACHAT */}
           <div className="bg-red-50 p-4 rounded-lg border border-red-200">
-            <h4 className="text-sm font-medium text-red-800 mb-3 flex items-center">
-              📦 Prix Fournisseur (Coût d'achat)
+            <h4 className="text-sm font-medium text-red-800 mb-3">
+              📦 PRIX D'ACHAT FOURNISSEUR
             </h4>
-
             <div>
               <label className="block text-sm font-medium text-red-700 mb-1">
-                Prix d'achat fournisseur HT (en euros)
+                Prix d'achat HT (en euros) *
               </label>
               <input
                 type="number"
-                value={editData?.supplier_price || ''}
-                onChange={(e) => handlePriceChange('supplier_price', e.target.value)}
+                value={editData?.cost_price || ''}
+                onChange={(e) => handlePriceChange('cost_price', e.target.value)}
                 className="w-full px-3 py-2 border border-red-300 rounded-md focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-red-500"
-                step="1"
+                step="0.01"
                 min="0"
                 placeholder="Prix d'achat chez le fournisseur"
+                required
               />
-              {editData?.supplier_price && (
+              {editData?.cost_price && (
                 <div className="text-xs text-red-600 mt-1">
-                  💰 Coût: {formatPrice(editData.supplier_price)}
+                  💰 Coût: {formatPrice(editData.cost_price)}
                 </div>
               )}
             </div>
           </div>
 
-          {/* SECTION VÉRONE (PRIX DE VENTE) */}
-          <div className="bg-green-50 p-4 rounded-lg border border-green-200">
-            <h4 className="text-sm font-medium text-green-800 mb-3 flex items-center">
-              🏪 Prix Vérone (Prix de vente client)
+          {/* TAUX DE MARGE */}
+          <div className="bg-blue-50 p-4 rounded-lg border border-blue-200">
+            <h4 className="text-sm font-medium text-blue-800 mb-3">
+              📈 TAUX DE MARGE
             </h4>
-
             <div>
-              <label className="block text-sm font-medium text-green-700 mb-1">
-                Prix de vente Vérone HT (en euros) *
+              <label className="block text-sm font-medium text-blue-700 mb-1">
+                Taux de marge (%)
               </label>
               <input
                 type="number"
-                value={editData?.selling_price || 0}
-                onChange={(e) => handlePriceChange('selling_price', e.target.value)}
-                className="w-full px-3 py-2 border border-green-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500"
+                value={editData?.margin_percentage || ''}
+                onChange={(e) => handlePriceChange('margin_percentage', e.target.value)}
+                className="w-full px-3 py-2 border border-blue-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                 step="1"
                 min="0"
-                required
+                max="500"
+                placeholder="Taux de marge en %"
               />
-              <div className="text-xs text-green-600 mt-1">
-                💳 Prix client: {formatPrice(editData?.selling_price || 0)}
+              <div className="text-xs text-blue-600 mt-1">
+                Exemple: 25% = prix de vente 25% supérieur au prix d'achat
               </div>
             </div>
           </div>
 
-          {/* TVA */}
-          <div>
-            <label className="block text-sm font-medium text-black mb-1">
-              Taux TVA (%)
-            </label>
-            <input
-              type="number"
-              value={Math.round((editData?.tax_rate || 0.2) * 100)}
-              onChange={(e) => handlePriceChange('tax_rate', e.target.value)}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-black focus:border-black"
-              step="0.1"
-              min="0"
-              max="100"
-            />
-          </div>
-
-          {/* CALCULS AUTOMATIQUES */}
-          {editData && (
-            <div className="bg-blue-50 p-4 rounded-lg border border-blue-200">
-              <h4 className="text-sm font-medium text-blue-800 mb-3 flex items-center">
-                <TrendingUp className="h-4 w-4 mr-1" />
-                Calculs Automatiques
+          {/* PRIX DE VENTE CALCULÉ AUTOMATIQUEMENT */}
+          {editData?.cost_price && editData?.margin_percentage && (
+            <div className="bg-green-50 p-4 rounded-lg border border-green-200">
+              <h4 className="text-sm font-medium text-green-800 mb-3">
+                💰 PRIX MINIMUM DE VENTE (calculé)
               </h4>
-
-              <div className="space-y-2 text-sm">
-                {/* Prix TTC */}
-                <div className="flex justify-between">
-                  <span className="text-blue-700">Prix TTC client:</span>
-                  <span className="font-semibold text-blue-800">
-                    {formatPrice((editData.selling_price || 0) * (1 + (editData.tax_rate || 0.2)))}
+              <div className="space-y-2">
+                <div className="flex justify-between items-center">
+                  <span className="text-green-700 font-medium">Prix HT:</span>
+                  <span className="text-xl font-bold text-green-800">
+                    {formatPrice(editSellingPrice)}
                   </span>
                 </div>
-
-                {/* Marge si prix fournisseur défini */}
-                {currentMargin && (
-                  <>
-                    <div className="border-t border-blue-200 pt-2"></div>
-                    <div className="flex justify-between">
-                      <span className="text-blue-700">Marge brute (€):</span>
-                      <span className={cn(
-                        "font-semibold",
-                        currentMargin.amount > 0 ? "text-green-600" : "text-red-600"
-                      )}>
-                        {formatPrice(currentMargin.amount)}
-                      </span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span className="text-blue-700">Marge (%):</span>
-                      <span className={cn(
-                        "font-semibold",
-                        currentMargin.percentage > 20 ? "text-green-600" :
-                        currentMargin.percentage > 5 ? "text-orange-600" : "text-red-600"
-                      )}>
-                        {currentMargin.percentage.toFixed(1)}%
-                        {currentMargin.percentage < 5 && " ⚠️"}
-                      </span>
-                    </div>
-                  </>
-                )}
-              </div>
-
-              {/* Alertes Business */}
-              {editData.supplier_price && editData.selling_price && (
-                <div className="mt-3 pt-3 border-t border-blue-200">
-                  {editData.selling_price <= editData.supplier_price && (
-                    <div className="flex items-center text-red-600 text-xs">
-                      <AlertCircle className="h-3 w-3 mr-1" />
-                      🚨 Marge négative ! Prix de vente inférieur au prix d'achat
-                    </div>
-                  )}
-                  {currentMargin && currentMargin.percentage < 5 && currentMargin.percentage > 0 && (
-                    <div className="flex items-center text-orange-600 text-xs">
-                      <AlertCircle className="h-3 w-3 mr-1" />
-                      ⚠️ Marge très faible (&lt;5%)
-                    </div>
-                  )}
+                <div className="flex justify-between items-center text-sm">
+                  <span className="text-green-700">Marge brute:</span>
+                  <span className="font-semibold text-green-700">
+                    {formatPrice(editMarginAmount)}
+                  </span>
                 </div>
-              )}
+              </div>
+            </div>
+          )}
+
+
+          {/* Alertes */}
+          {editData?.margin_percentage && editData.margin_percentage < 5 && (
+            <div className="bg-orange-50 p-3 rounded-lg border border-orange-200">
+              <div className="flex items-center text-orange-600 text-sm">
+                <AlertCircle className="h-4 w-4 mr-2" />
+                ⚠️ Marge très faible (moins de 5%)
+              </div>
             </div>
           )}
         </div>
@@ -303,66 +276,63 @@ export function SupplierVsPricingEditSection({
       </div>
 
       <div className="space-y-4">
-        {/* Prix de Vente Vérone */}
-        <div className="bg-green-50 p-3 rounded-lg">
-          <div className="text-xs text-green-600 font-medium mb-1">🏪 PRIX DE VENTE VÉRONE</div>
-          <div className="flex justify-between items-center">
-            <span className="text-green-700 font-medium">Prix HT:</span>
-            <span className="text-xl font-bold text-green-800">
-              {formatPrice(currentSellingPrice)}
-            </span>
-          </div>
-          <div className="flex justify-between items-center text-sm">
-            <span className="text-green-700">Prix TTC:</span>
-            <span className="font-semibold text-green-700">
-              {formatPrice(currentSellingPrice * (1 + (product.tax_rate || 0.2)))}
-            </span>
-          </div>
-        </div>
-
-        {/* Prix Fournisseur */}
-        {currentSupplierPrice > 0 && (
+        {/* Prix d'achat */}
+        {currentCostPrice > 0 && (
           <div className="bg-red-50 p-3 rounded-lg">
             <div className="text-xs text-red-600 font-medium mb-1">📦 PRIX D'ACHAT FOURNISSEUR</div>
             <div className="flex justify-between items-center">
               <span className="text-red-700 font-medium">Coût HT:</span>
               <span className="text-lg font-bold text-red-800">
-                {formatPrice(currentSupplierPrice)}
+                {formatPrice(currentCostPrice)}
               </span>
             </div>
           </div>
         )}
 
-        {/* Marge */}
-        {currentMargin && (
+        {/* Taux de marge */}
+        {currentMarginPercentage > 0 && (
           <div className="bg-blue-50 p-3 rounded-lg">
-            <div className="text-xs text-blue-600 font-medium mb-1">📊 MARGE COMMERCIALE</div>
+            <div className="text-xs text-blue-600 font-medium mb-1">📈 TAUX DE MARGE</div>
             <div className="flex justify-between items-center">
-              <span className="text-blue-700 font-medium">Marge:</span>
+              <span className="text-blue-700 font-medium">Pourcentage:</span>
               <span className={cn(
                 "text-lg font-bold",
-                currentMargin.amount > 0 ? "text-green-600" : "text-red-600"
+                currentMarginPercentage > 20 ? "text-green-600" :
+                currentMarginPercentage > 5 ? "text-orange-600" : "text-red-600"
               )}>
-                {formatPrice(currentMargin.amount)}
+                {currentMarginPercentage}%
+              </span>
+            </div>
+          </div>
+        )}
+
+        {/* Prix de vente calculé */}
+        {currentCostPrice > 0 && currentMarginPercentage > 0 && (
+          <div className="bg-green-50 p-3 rounded-lg">
+            <div className="text-xs text-green-600 font-medium mb-1">💰 PRIX MINIMUM DE VENTE</div>
+            <div className="flex justify-between items-center">
+              <span className="text-green-700 font-medium">Prix HT:</span>
+              <span className="text-xl font-bold text-green-800">
+                {formatPrice(currentSellingPrice)}
               </span>
             </div>
             <div className="flex justify-between items-center text-sm">
-              <span className="text-blue-700">Pourcentage:</span>
-              <span className={cn(
-                "font-semibold",
-                currentMargin.percentage > 20 ? "text-green-600" :
-                currentMargin.percentage > 5 ? "text-orange-600" : "text-red-600"
-              )}>
-                {currentMargin.percentage.toFixed(1)}%
+              <span className="text-green-700">Marge brute:</span>
+              <span className="font-semibold text-green-700">
+                {formatPrice(currentSellingPrice - currentCostPrice)}
               </span>
             </div>
           </div>
         )}
 
-        {/* Message si pas de prix fournisseur */}
-        {!currentSupplierPrice && (
+        {/* Message si pas de données */}
+        {(!currentCostPrice || !currentMarginPercentage) && (
           <div className="text-center text-gray-400 text-xs italic py-2">
-            Prix d'achat fournisseur non renseigné
+            {!currentCostPrice && !currentMarginPercentage
+              ? "Prix d'achat et taux de marge non renseignés"
+              : !currentCostPrice
+                ? "Prix d'achat non renseigné"
+                : "Taux de marge non renseigné"}
           </div>
         )}
       </div>

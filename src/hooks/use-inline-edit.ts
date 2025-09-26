@@ -4,7 +4,7 @@ import { useState, useCallback } from 'react'
 import { createClient } from '@/lib/supabase/client'
 
 // Types des sections éditables
-export type EditableSection = 'general' | 'pricing' | 'relations' | 'identifiers' | 'stock' | 'contact' | 'address' | 'legal' | 'commercial' | 'performance' | 'personal' | 'roles' | 'preferences'
+export type EditableSection = 'general' | 'pricing' | 'supplier' | 'relations' | 'identifiers' | 'stock' | 'contact' | 'address' | 'legal' | 'commercial' | 'performance' | 'personal' | 'roles' | 'preferences'
 
 // Interface pour les options du hook
 export interface UseInlineEditOptions {

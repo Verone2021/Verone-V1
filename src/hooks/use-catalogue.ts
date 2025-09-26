@@ -209,7 +209,8 @@ export const useCatalogue = () => {
       products: data || [],
       total: count || 0
     };
-  };;
+  };
+  
   const loadArchivedProducts = async (filters: CatalogueFilters = {}) => {
     let query = supabase
       .from('products')
@@ -331,7 +332,7 @@ export const useCatalogue = () => {
       return true;
 
     } catch (error) {
-      console.error('Erreur archivage produit:', error);
+      console.error('❌ Erreur archivage produit:', error);
       throw error;
     }
   };
@@ -427,6 +428,6 @@ export const useCatalogue = () => {
       comingSoon: state.products.filter(p => p.status === 'coming_soon').length
     }
   };
-};
+};;
 
 export type { Product, ProductGroup, Category, CatalogueFilters, CatalogueState };

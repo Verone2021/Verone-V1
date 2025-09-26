@@ -18,24 +18,40 @@ import {
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
+import { useSourcingProducts } from '@/hooks/use-sourcing-products'
 
 export default function SourcingDashboardPage() {
   const router = useRouter()
 
-  // Données mock pour le dashboard
+  // Données réelles via hook Supabase
+  const { products: sourcingProducts, loading: sourcingLoading } = useSourcingProducts({})
+
+  // Calculs des statistiques basées sur les vraies données
   const stats = {
-    totalDrafts: 45,
-    pendingValidation: 12,
-    samplesOrdered: 8,
-    completedThisMonth: 23
+    totalDrafts: sourcingProducts?.filter(p => p.status === 'sourcing').length || 0,
+    pendingValidation: sourcingProducts?.filter(p => p.status === 'echantillon_a_commander').length || 0,
+    samplesOrdered: sourcingProducts?.filter(p => p.status === 'echantillon_commande').length || 0,
+    completedThisMonth: sourcingProducts?.filter(p => {
+      if (p.status === 'in_stock' && p.created_at) {
+        const createdDate = new Date(p.created_at)
+        const currentMonth = new Date().getMonth()
+        const currentYear = new Date().getFullYear()
+        return createdDate.getMonth() === currentMonth && createdDate.getFullYear() === currentYear
+      }
+      return false
+    }).length || 0
   }
 
-  const recentActivity = [
-    { id: 1, type: 'draft', title: 'Chaise vintage scandinave', client: 'Marie L.', status: 'pending', date: '2025-01-18' },
-    { id: 2, type: 'sample', title: 'Table en chêne massif', client: 'Pierre M.', status: 'ordered', date: '2025-01-17' },
-    { id: 3, type: 'validation', title: 'Lampe suspension design', client: 'Interne', status: 'ready', date: '2025-01-16' },
-    { id: 4, type: 'draft', title: 'Canapé 3 places tissu', client: 'Sophie K.', status: 'pending', date: '2025-01-15' }
-  ]
+  // Activité récente basée sur les vraies données (5 plus récents)
+  const recentActivity = sourcingProducts?.slice(0, 4).map(product => ({
+    id: product.id,
+    type: product.status === 'sourcing' ? 'draft' : product.requires_sample ? 'sample' : 'validation',
+    title: product.name,
+    client: product.assigned_client?.name || 'Interne',
+    status: product.status === 'sourcing' ? 'pending' :
+            product.status === 'echantillon_commande' ? 'ordered' : 'ready',
+    date: new Date(product.created_at).toLocaleDateString('fr-FR')
+  })) || []
 
   const getStatusBadge = (status: string) => {
     switch (status) {
@@ -103,7 +119,9 @@ export default function SourcingDashboardPage() {
               <Search className="h-4 w-4 text-black" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold text-black">{stats.totalDrafts}</div>
+              <div className="text-2xl font-bold text-black">
+                {sourcingLoading ? '...' : stats.totalDrafts}
+              </div>
               <p className="text-xs text-gray-600">
                 produits en cours de sourcing
               </p>
@@ -116,7 +134,9 @@ export default function SourcingDashboardPage() {
               <AlertTriangle className="h-4 w-4 text-orange-600" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold text-black">{stats.pendingValidation}</div>
+              <div className="text-2xl font-bold text-black">
+                {sourcingLoading ? '...' : stats.pendingValidation}
+              </div>
               <p className="text-xs text-gray-600">
                 produits à valider
               </p>
@@ -129,7 +149,9 @@ export default function SourcingDashboardPage() {
               <Eye className="h-4 w-4 text-blue-600" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold text-black">{stats.samplesOrdered}</div>
+              <div className="text-2xl font-bold text-black">
+                {sourcingLoading ? '...' : stats.samplesOrdered}
+              </div>
               <p className="text-xs text-gray-600">
                 commandes en cours
               </p>
@@ -142,7 +164,9 @@ export default function SourcingDashboardPage() {
               <TrendingUp className="h-4 w-4 text-green-600" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold text-black">{stats.completedThisMonth}</div>
+              <div className="text-2xl font-bold text-black">
+                {sourcingLoading ? '...' : stats.completedThisMonth}
+              </div>
               <p className="text-xs text-gray-600">
                 ce mois-ci
               </p>

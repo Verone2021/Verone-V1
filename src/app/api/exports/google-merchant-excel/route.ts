@@ -87,7 +87,7 @@ function generateExcelFile(excelData: any[], fileName: string): Buffer {
 
   // 2. Préparer les données avec headers
   const worksheetData = [
-    GOOGLE_MERCHANT_EXCEL_HEADERS, // En-têtes en première ligne
+    [...GOOGLE_MERCHANT_EXCEL_HEADERS], // En-têtes en première ligne (copie mutable)
     ...excelData.map(row =>
       GOOGLE_MERCHANT_EXCEL_HEADERS.map(header => row[header] || '')
     )
@@ -186,7 +186,7 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
     }
 
     // 3. Enrichir les produits avec les item_group_id des variantes
-    const enrichedProducts = products.map(product => {
+    const enrichedProducts = products.map((product: any) => {
       // Extraire l'item_group_id si le produit fait partie d'un groupe de variantes
       const variantGroup = product.variant_group?.[0]?.group
       const item_group_id = variantGroup?.item_group_id || null
@@ -199,7 +199,7 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
 
     console.log(`[API] Products enriched with variant data:`, {
       total: enrichedProducts.length,
-      withVariants: enrichedProducts.filter(p => p.item_group_id).length
+      withVariants: enrichedProducts.filter((p: any) => p.item_group_id).length
     })
 
     // 4. Transformation des données pour Excel
@@ -250,7 +250,7 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
     }
 
     // 7. Retourner le fichier Excel pour téléchargement
-    return new NextResponse(excelBuffer, {
+    return new NextResponse(new Uint8Array(excelBuffer), {
       status: 200,
       headers: {
         'Content-Type': 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
@@ -331,7 +331,7 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
     const fileName = options.fileName || `google-merchant-export-${Date.now()}.xlsx`
     const excelBuffer = generateExcelFile(excelData, fileName)
 
-    return new NextResponse(excelBuffer, {
+    return new NextResponse(new Uint8Array(excelBuffer), {
       status: 200,
       headers: {
         'Content-Type': 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',

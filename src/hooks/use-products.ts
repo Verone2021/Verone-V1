@@ -138,8 +138,6 @@ export function useProducts(filters?: ProductFilters) {
           sku,
           name,
           slug,
-          price_ht,
-          supplier_cost_price,
           cost_price,
           status,
           condition,
@@ -153,6 +151,7 @@ export function useProducts(filters?: ProductFilters) {
           min_stock,
           supplier_page_url,
           supplier_id,
+          subcategory_id,
           margin_percentage,
           target_margin_percentage,
           availability_type,
@@ -163,12 +162,7 @@ export function useProducts(filters?: ProductFilters) {
           assigned_client_id,
           creation_mode,
           created_at,
-          updated_at,
-          supplier:organisations!supplier_id (
-            id,
-            name,
-            type
-          )
+          updated_at
         `)
         .order('created_at', { ascending: false })
 
