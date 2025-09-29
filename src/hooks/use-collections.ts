@@ -57,6 +57,7 @@ export function useCollections(filters?: CollectionFilters) {
   const supabase = createClient()
 
   const fetchCollections = useCallback(async () => {
+    console.log('🔍 [useCollections] Démarrage fetchCollections avec filtres:', filters)
     setLoading(true)
     setError(null)
 
@@ -78,6 +79,7 @@ export function useCollections(filters?: CollectionFilters) {
           created_by
         `)
         .order('updated_at', { ascending: false })
+        .limit(10) // LIMITE TEMPORAIRE pour éviter trop de requêtes
 
       // Apply filters
       if (filters?.status && filters.status !== 'all') {
@@ -101,49 +103,36 @@ export function useCollections(filters?: CollectionFilters) {
         query = query.or(`name.ilike.%${filters.search}%,description.ilike.%${filters.search}%`)
       }
 
+      console.log('🔍 [useCollections] Exécution requête principale')
       const { data, error: fetchError } = await query
 
       if (fetchError) {
+        console.error('❌ [useCollections] Erreur requête principale:', fetchError)
         setError(fetchError.message)
         return
       }
 
-      // For each collection, get sample products for preview
-      const collectionsWithProducts = await Promise.all(
-        (data || []).map(async (collection) => {
-          // Get first 4 products for preview
-          const { data: products } = await supabase
-            .from('collection_products')
-            .select(`
-              products:product_id (
-                id,
-                name,
-                image_url,
-                price_ht
-              )
-            `)
-            .eq('collection_id', collection.id)
-            .order('position', { ascending: true })
-            .limit(4)
+      console.log('✅ [useCollections] Collections récupérées:', data?.length || 0)
 
-          return {
-            ...collection,
-            products: products?.map(cp => cp.products).filter(Boolean) || []
-          }
-        })
-      )
+      // Simplification temporaire : ne pas charger les produits pour éviter trop de requêtes
+      setCollections((data || []).map(collection => ({
+        ...collection,
+        products: [] // Produits vides temporairement
+      })) as Collection[])
 
-      setCollections(collectionsWithProducts as Collection[])
     } catch (err) {
+      console.error('💥 [useCollections] Erreur catch:', err)
       setError(err instanceof Error ? err.message : 'Erreur inconnue')
     } finally {
       setLoading(false)
+      console.log('🏁 [useCollections] fetchCollections terminé')
     }
-  }, [filters])
+  }, []) // CORRECTION: Dépendances vides pour éviter boucle infinie
 
+  // useEffect stable qui se déclenche seulement au montage initial
   useEffect(() => {
     fetchCollections()
-  }, [fetchCollections])
+  }, []) // CORRECTION: Dépendances vides pour chargement initial seulement
 
   const createCollection = async (data: CreateCollectionData): Promise<Collection | null> => {
     try {

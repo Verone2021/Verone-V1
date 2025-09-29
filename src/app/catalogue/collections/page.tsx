@@ -230,13 +230,25 @@ export default function CollectionsPage() {
             Créez et partagez des sélections thématiques de produits
           </p>
         </div>
-        <Button
-          onClick={() => console.log("Créer une nouvelle collection")}
-          className="bg-black text-white hover:bg-gray-800"
-        >
-          <Plus className="h-4 w-4 mr-2" />
-          Nouvelle collection
-        </Button>
+        <div className="flex space-x-2">
+          <Button
+            onClick={() => {
+              console.log("🔄 Test chargement manuel collections")
+              refetch()
+            }}
+            variant="outline"
+            className="border-black text-black hover:bg-gray-100"
+          >
+            🔄 Charger données
+          </Button>
+          <Button
+            onClick={() => console.log("Créer une nouvelle collection")}
+            className="bg-black text-white hover:bg-gray-800"
+          >
+            <Plus className="h-4 w-4 mr-2" />
+            Nouvelle collection
+          </Button>
+        </div>
       </div>
 
       {/* Barre de recherche et filtres */}
