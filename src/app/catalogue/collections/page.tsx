@@ -1,12 +1,13 @@
 "use client"
 
-import { useState, useMemo } from "react"
+import { useState, useMemo, useCallback, memo } from "react"
 import { Search, Plus, Edit3, Trash2, Share2, Eye, EyeOff, ExternalLink, Copy } from "lucide-react"
 import { Button } from "../../../components/ui/button"
 import { Badge } from "../../../components/ui/badge"
 import { cn } from "../../../lib/utils"
-import { checkSLOCompliance } from "../../../lib/utils"
 import { useCollections, Collection, CollectionFilters } from "@/hooks/use-collections"
+import { CollectionEditModal } from "@/components/business/collection-edit-modal"
+import { useToast } from "@/hooks/use-toast"
 
 // Interface filtres collections
 interface LocalCollectionFilters {
@@ -17,7 +18,7 @@ interface LocalCollectionFilters {
 }
 
 export default function CollectionsPage() {
-  const startTime = performance.now()
+  const { toast } = useToast()
 
   // États pour la gestion des filtres et de l'interface
   const [filters, setFilters] = useState<LocalCollectionFilters>({
@@ -28,6 +29,8 @@ export default function CollectionsPage() {
   })
   const [selectedCollections, setSelectedCollections] = useState<string[]>([])
   const [showShareModal, setShowShareModal] = useState<string | null>(null)
+  const [editingCollection, setEditingCollection] = useState<Collection | null>(null)
+  const [showEditModal, setShowEditModal] = useState(false)
 
   // Hook pour récupérer les collections réelles depuis Supabase
   const {
@@ -62,26 +65,37 @@ export default function CollectionsPage() {
   const handleShareCollection = async (collection: Collection) => {
     if (collection.shared_link_token) {
       const shareUrl = `${window.location.origin}/c/${collection.shared_link_token}`
-      navigator.clipboard.writeText(shareUrl)
+      await navigator.clipboard.writeText(shareUrl)
       await recordShare(collection.id, 'link')
-      console.log(`Lien copié: ${shareUrl}`)
+      toast({
+        title: "Lien copié !",
+        description: "Le lien de partage a été copié dans le presse-papier",
+      })
     } else {
       const token = await generateShareToken(collection.id)
       if (token) {
         const shareUrl = `${window.location.origin}/c/${token}`
-        navigator.clipboard.writeText(shareUrl)
+        await navigator.clipboard.writeText(shareUrl)
         await recordShare(collection.id, 'link')
-        console.log(`Lien généré et copié: ${shareUrl}`)
+        toast({
+          title: "Lien généré et copié !",
+          description: "Le lien de partage a été créé et copié dans le presse-papier",
+        })
       }
     }
   }
 
   const handleBulkStatusToggle = async () => {
-    console.log("Changement de statut en lot pour :", selectedCollections)
+    let successCount = 0
     for (const collectionId of selectedCollections) {
-      await toggleCollectionStatus(collectionId)
+      const success = await toggleCollectionStatus(collectionId)
+      if (success) successCount++
     }
     setSelectedCollections([])
+    toast({
+      title: "Statut mis à jour",
+      description: `${successCount} collection(s) modifiée(s) avec succès`,
+    })
   }
 
   const formatPrice = (priceInCents: number) => {
@@ -100,8 +114,39 @@ export default function CollectionsPage() {
     })
   }
 
-  // Composant Collection Card
-  const CollectionCard = ({ collection }: { collection: Collection }) => {
+  const handleEditCollection = useCallback((collection: Collection) => {
+    setEditingCollection(collection)
+    setShowEditModal(true)
+  }, [])
+
+  const handleCreateCollection = useCallback(() => {
+    setEditingCollection(null)
+    setShowEditModal(true)
+  }, [])
+
+  const handleSaveCollection = useCallback(async (data: Partial<Collection>) => {
+    if (data.id) {
+      const result = await updateCollection(data as any)
+      if (result) {
+        toast({
+          title: "Collection mise à jour",
+          description: "Les modifications ont été enregistrées",
+        })
+      }
+    } else {
+      const result = await createCollection(data as any)
+      if (result) {
+        toast({
+          title: "Collection créée",
+          description: "La nouvelle collection a été créée avec succès",
+        })
+      }
+    }
+    setShowEditModal(false)
+  }, [createCollection, updateCollection, toast])
+
+  // Composant Collection Card avec memoization
+  const CollectionCard = memo(({ collection }: { collection: Collection }) => {
     const isSelected = selectedCollections.includes(collection.id)
     const hasSharedLink = collection.shared_link_token
 
@@ -160,7 +205,7 @@ export default function CollectionsPage() {
               <Button
                 variant="ghost"
                 size="sm"
-                onClick={() => console.log(`Edit collection ${collection.id}`)}
+                onClick={() => handleEditCollection(collection)}
               >
                 <Edit3 className="h-4 w-4" />
               </Button>
@@ -214,11 +259,15 @@ export default function CollectionsPage() {
         </div>
       </div>
     )
-  }
+  })
 
-  // Vérification performance SLO (<2s)
-  const loadTime = performance.now() - startTime
-  // Performance tracking: {loadTime}ms
+  // Optimisation: Memoization des collections filtrées
+  const stats = useMemo(() => ({
+    total: collections.length,
+    active: collections.filter(c => c.is_active).length,
+    shared: collections.filter(c => c.shared_link_token).length,
+    totalShares: collections.reduce((sum, c) => sum + c.shared_count, 0),
+  }), [collections])
 
   return (
     <div className="space-y-6">
@@ -230,19 +279,9 @@ export default function CollectionsPage() {
             Créez et partagez des sélections thématiques de produits
           </p>
         </div>
-        <div className="flex space-x-2">
+        <div>
           <Button
-            onClick={() => {
-              console.log("🔄 Test chargement manuel collections")
-              refetch()
-            }}
-            variant="outline"
-            className="border-black text-black hover:bg-gray-100"
-          >
-            🔄 Charger données
-          </Button>
-          <Button
-            onClick={() => console.log("Créer une nouvelle collection")}
+            onClick={handleCreateCollection}
             className="bg-black text-white hover:bg-gray-800"
           >
             <Plus className="h-4 w-4 mr-2" />
@@ -309,7 +348,9 @@ export default function CollectionsPage() {
           <Button
             variant="ghost"
             size="sm"
-            onClick={() => console.log("Partage en lot")}
+            onClick={() => {
+              // TODO: Implémenter partage en lot
+            }}
             className="text-blue-600 hover:text-blue-700"
           >
             Partager
@@ -317,7 +358,9 @@ export default function CollectionsPage() {
           <Button
             variant="ghost"
             size="sm"
-            onClick={() => console.log("Suppression en lot")}
+            onClick={() => {
+              // TODO: Implémenter suppression en lot
+            }}
             className="text-red-600 hover:text-red-700"
           >
             Supprimer
@@ -359,29 +402,37 @@ export default function CollectionsPage() {
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
         <div className="bg-white p-4 rounded-lg border border-gray-200">
           <div className="text-2xl font-light text-black">
-            {loading ? '...' : collections.length}
+            {loading ? '...' : stats.total}
           </div>
           <div className="text-sm text-gray-600">Collections totales</div>
         </div>
         <div className="bg-white p-4 rounded-lg border border-gray-200">
           <div className="text-2xl font-light text-black">
-            {loading ? '...' : collections.filter(c => c.is_active).length}
+            {loading ? '...' : stats.active}
           </div>
           <div className="text-sm text-gray-600">Collections actives</div>
         </div>
         <div className="bg-white p-4 rounded-lg border border-gray-200">
           <div className="text-2xl font-light text-black">
-            {loading ? '...' : collections.filter(c => c.shared_link_token).length}
+            {loading ? '...' : stats.shared}
           </div>
           <div className="text-sm text-gray-600">Collections partagées</div>
         </div>
         <div className="bg-white p-4 rounded-lg border border-gray-200">
           <div className="text-2xl font-light text-black">
-            {loading ? '...' : collections.reduce((sum, c) => sum + c.shared_count, 0)}
+            {loading ? '...' : stats.totalShares}
           </div>
           <div className="text-sm text-gray-600">Partages totaux</div>
         </div>
       </div>
+
+      {/* Modal d'édition/création */}
+      <CollectionEditModal
+        collection={editingCollection}
+        isOpen={showEditModal}
+        onClose={() => setShowEditModal(false)}
+        onSave={handleSaveCollection}
+      />
     </div>
   )
 }

@@ -1,0 +1,69 @@
+{
+  "timestamp": "2025-09-28T22:36:03.573Z",
+  "testTarget": "/catalogue/collections avec authentification",
+  "summary": {
+    "totalErrors": 0,
+    "totalWarnings": 0,
+    "authSteps": 7,
+    "successfulSteps": 7,
+    "authenticationWorking": true,
+    "collectionsAccessible": true,
+    "uiFunctional": true,
+    "criticalIssues": 0
+  },
+  "authSteps": [
+    {
+      "step": 1,
+      "action": "Navigation login",
+      "status": "SUCCESS",
+      "timestamp": "2025-09-28T22:35:43.915Z"
+    },
+    {
+      "step": 2,
+      "action": "Remplissage formulaire",
+      "status": "SUCCESS",
+      "timestamp": "2025-09-28T22:35:46.064Z"
+    },
+    {
+      "step": 3,
+      "action": "Tentative connexion",
+      "status": "SUCCESS",
+      "resultUrl": "http://localhost:3001/dashboard",
+      "timestamp": "2025-09-28T22:35:50.140Z"
+    },
+    {
+      "step": 4,
+      "action": "Navigation collections",
+      "status": "SUCCESS",
+      "collectionsUrl": "http://localhost:3001/catalogue/collections",
+      "timestamp": "2025-09-28T22:35:55.879Z"
+    },
+    {
+      "step": 5,
+      "action": "Test fonctionnalités",
+      "status": "SUCCESS",
+      "uiElements": {
+        "createButton": true,
+        "hasContent": true,
+        "hasLoader": false
+      },
+      "timestamp": "2025-09-28T22:35:58.988Z"
+    },
+    {
+      "step": 6,
+      "action": "Test modal création",
+      "status": "SUCCESS",
+      "modalVisible": true,
+      "timestamp": "2025-09-28T22:36:01.545Z"
+    },
+    {
+      "step": 7,
+      "action": "Remplissage formulaire",
+      "status": "SUCCESS",
+      "timestamp": "2025-09-28T22:36:01.649Z"
+    }
+  ],
+  "errors": [],
+  "warnings": [],
+  "recommendations": []
+}

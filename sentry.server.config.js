@@ -1,0 +1,1 @@
+scripts/config/sentry/sentry.server.config.js

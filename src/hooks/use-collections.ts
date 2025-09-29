@@ -7,7 +7,7 @@
 
 'use client'
 
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useCallback, useRef, useMemo } from 'react'
 import { createClient } from '@/lib/supabase/client'
 
 export interface Collection {
@@ -54,12 +54,18 @@ export function useCollections(filters?: CollectionFilters) {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
 
+  // Utiliser useRef pour stocker les filtres sans causer de re-renders
+  const filtersRef = useRef(filters)
+  filtersRef.current = filters
+
   const supabase = createClient()
 
   const fetchCollections = useCallback(async () => {
-    console.log('🔍 [useCollections] Démarrage fetchCollections avec filtres:', filters)
     setLoading(true)
     setError(null)
+
+    // Récupérer les filtres actuels depuis la ref
+    const currentFilters = filtersRef.current
 
     try {
       let query = supabase
@@ -79,60 +85,82 @@ export function useCollections(filters?: CollectionFilters) {
           created_by
         `)
         .order('updated_at', { ascending: false })
-        .limit(10) // LIMITE TEMPORAIRE pour éviter trop de requêtes
 
       // Apply filters
-      if (filters?.status && filters.status !== 'all') {
-        const isActive = filters.status === 'active'
+      if (currentFilters?.status && currentFilters.status !== 'all') {
+        const isActive = currentFilters.status === 'active'
         query = query.eq('is_active', isActive)
       }
 
-      if (filters?.visibility && filters.visibility !== 'all') {
-        query = query.eq('visibility', filters.visibility)
+      if (currentFilters?.visibility && currentFilters.visibility !== 'all') {
+        query = query.eq('visibility', currentFilters.visibility)
       }
 
-      if (filters?.shared && filters.shared !== 'all') {
-        if (filters.shared === 'shared') {
+      if (currentFilters?.shared && currentFilters.shared !== 'all') {
+        if (currentFilters.shared === 'shared') {
           query = query.gt('shared_count', 0)
-        } else if (filters.shared === 'not_shared') {
+        } else if (currentFilters.shared === 'not_shared') {
           query = query.eq('shared_count', 0)
         }
       }
 
-      if (filters?.search) {
-        query = query.or(`name.ilike.%${filters.search}%,description.ilike.%${filters.search}%`)
+      if (currentFilters?.search) {
+        query = query.or(`name.ilike.%${currentFilters.search}%,description.ilike.%${currentFilters.search}%`)
       }
 
-      console.log('🔍 [useCollections] Exécution requête principale')
       const { data, error: fetchError } = await query
 
       if (fetchError) {
-        console.error('❌ [useCollections] Erreur requête principale:', fetchError)
         setError(fetchError.message)
         return
       }
 
-      console.log('✅ [useCollections] Collections récupérées:', data?.length || 0)
+      // Charger les produits pour les premières collections seulement
+      const collectionsWithProducts = await Promise.all(
+        (data || []).slice(0, 5).map(async (collection) => {
+          const { data: products } = await supabase
+            .from('collection_products')
+            .select(`
+              products:product_id (
+                id,
+                name,
+                image_url,
+                price_ht
+              )
+            `)
+            .eq('collection_id', collection.id)
+            .limit(4)
 
-      // Simplification temporaire : ne pas charger les produits pour éviter trop de requêtes
-      setCollections((data || []).map(collection => ({
+          return {
+            ...collection,
+            products: products?.map(cp => cp.products).filter(Boolean) || []
+          }
+        })
+      )
+
+      // Ajouter les collections restantes sans produits pour optimiser
+      const remainingCollections = (data || []).slice(5).map(collection => ({
         ...collection,
-        products: [] // Produits vides temporairement
-      })) as Collection[])
+        products: []
+      }))
+
+      setCollections([...collectionsWithProducts, ...remainingCollections] as Collection[])
 
     } catch (err) {
-      console.error('💥 [useCollections] Erreur catch:', err)
       setError(err instanceof Error ? err.message : 'Erreur inconnue')
     } finally {
       setLoading(false)
-      console.log('🏁 [useCollections] fetchCollections terminé')
     }
-  }, []) // CORRECTION: Dépendances vides pour éviter boucle infinie
+  }, [supabase])
 
-  // useEffect stable qui se déclenche seulement au montage initial
+  // useEffect qui réagit aux changements de filtres avec debounce sur la recherche
   useEffect(() => {
-    fetchCollections()
-  }, []) // CORRECTION: Dépendances vides pour chargement initial seulement
+    const timeoutId = setTimeout(() => {
+      fetchCollections()
+    }, filters?.search ? 300 : 0) // Debounce de 300ms sur la recherche
+
+    return () => clearTimeout(timeoutId)
+  }, [filters?.search, filters?.status, filters?.visibility, filters?.shared, fetchCollections])
 
   const createCollection = async (data: CreateCollectionData): Promise<Collection | null> => {
     try {

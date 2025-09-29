@@ -11,31 +11,31 @@ export async function register() {
   // Sentry temporairement désactivé pour résoudre erreurs de compilation
   // Sera réactivé après mise à jour version Sentry compatible
 
-  // if (process.env.NEXT_RUNTIME === 'nodejs') {
-  //   // Import et initialisation Sentry pour le serveur
-  //   await import('../config/monitoring/sentry.server.config');
-  // }
+  if (process.env.NEXT_RUNTIME === 'nodejs') {
+    // Import et initialisation Sentry pour le serveur
+    await import('../scripts/config/sentry/sentry.server.config.js');
+  }
 
-  // if (process.env.NEXT_RUNTIME === 'edge') {
-  //   // Import et initialisation Sentry pour Edge Runtime
-  //   await import('../config/monitoring/sentry.edge.config');
-  // }
+  if (process.env.NEXT_RUNTIME === 'edge') {
+    // Import et initialisation Sentry pour Edge Runtime
+    await import('../scripts/config/sentry/sentry.edge.config.js');
+  }
 }
 
 export async function onRequestError(err: any, request: any, context: any) {
-  // Gestionnaire d'erreur global Sentry pour Next.js 15+ - temporairement désactivé
-  // console.error('Request error:', err);
+  // Gestionnaire d'erreur global Sentry pour Next.js 15+
+  console.error('Request error:', err);
 
-  // const { captureException } = await import('@sentry/nextjs');
-  // captureException(err, {
-  //   tags: {
-  //     source: 'onRequestError',
-  //     method: request.method,
-  //     url: request.url,
-  //   },
-  //   extra: {
-  //     context,
-  //     timestamp: new Date().toISOString(),
-  //   },
-  // });
+  const { captureException } = await import('@sentry/nextjs');
+  captureException(err, {
+    tags: {
+      source: 'onRequestError',
+      method: request.method,
+      url: request.url,
+    },
+    extra: {
+      context,
+      timestamp: new Date().toISOString(),
+    },
+  });
 }

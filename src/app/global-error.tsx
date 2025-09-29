@@ -1,6 +1,6 @@
 'use client'
 
-import * as Sentry from '@sentry/nextjs'
+// import * as Sentry from '@sentry/nextjs'
 import { useEffect } from 'react'
 import { AlertCircle, RotateCcw } from 'lucide-react'
 
@@ -12,21 +12,21 @@ export default function GlobalError({
   reset: () => void
 }) {
   useEffect(() => {
-    // Report to Sentry with Vérone business context
-    Sentry.captureException(error, {
-      tags: {
-        application: 'verone-back-office',
-        source: 'global-error-boundary',
-        environment: process.env.NODE_ENV || 'development',
-      },
-      extra: {
-        digest: error.digest,
-        timestamp: new Date().toISOString(),
-        userAgent: typeof window !== 'undefined' ? window.navigator.userAgent : 'unknown',
-        url: typeof window !== 'undefined' ? window.location.href : 'unknown',
-      },
-      level: 'fatal',
-    })
+    // Report to Sentry with Vérone business context - TEMPORARILY DISABLED
+    // Sentry.captureException(error, {
+    //   tags: {
+    //     application: 'verone-back-office',
+    //     source: 'global-error-boundary',
+    //     environment: process.env.NODE_ENV || 'development',
+    //   },
+    //   extra: {
+    //     digest: error.digest,
+    //     timestamp: new Date().toISOString(),
+    //     userAgent: typeof window !== 'undefined' ? window.navigator.userAgent : 'unknown',
+    //     url: typeof window !== 'undefined' ? window.location.href : 'unknown',
+    //   },
+    //   level: 'fatal',
+    // })
 
     // Console log for development debugging
     if (process.env.NODE_ENV === 'development') {
@@ -37,9 +37,7 @@ export default function GlobalError({
   }, [error])
 
   return (
-    <html>
-      <body>
-        <div className="min-h-screen bg-gray-50 flex items-center justify-center p-4">
+    <div className="min-h-screen bg-gray-50 flex items-center justify-center p-4">
           <div className="max-w-md w-full bg-white shadow-lg rounded-lg p-6 border border-gray-200">
             {/* Icon d'erreur */}
             <div className="flex items-center justify-center w-16 h-16 bg-red-100 rounded-full mx-auto mb-4">
@@ -97,8 +95,6 @@ export default function GlobalError({
               </p>
             </div>
           </div>
-        </div>
-      </body>
-    </html>
+    </div>
   )
 }
