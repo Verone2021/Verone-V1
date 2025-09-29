@@ -1,5 +1,5 @@
 const { getSecurityHeaders } = require('./src/lib/security/headers.js');
-// const { withSentryConfig } = require('@sentry/nextjs'); // Temporairement désactivé
+const { withSentryConfig } = require('@sentry/nextjs');
 
 /** @type {import('next').NextConfig} */
 const nextConfig = {
@@ -111,22 +111,39 @@ const nextConfig = {
   },
 };
 
-// Configuration Sentry pour Next.js
+// Configuration Sentry pour Next.js selon documentation officielle 2024
 const sentryWebpackPluginOptions = {
-  // Configuration optimisée pour Vérone Back Office
-  org: 'verone',
-  project: 'verone-backoffice',
+  // Configuration organisationnelle
+  org: process.env.SENTRY_ORG,
+  project: process.env.SENTRY_PROJECT_ID,
 
-  // Disable source maps upload in development
+  // Token d'authentification
+  authToken: process.env.SENTRY_AUTH_TOKEN,
+
+  // Contrôle verbosité (silent en dev, verbose en prod pour debug)
   silent: process.env.NODE_ENV === 'development',
+  debug: process.env.NODE_ENV === 'development',
 
-  // Automatically tree-shake Sentry logger statements
-  hideSourceMaps: true,
+  // Source maps et sécurité
+  hideSourceMaps: process.env.NODE_ENV === 'production',
+  widenClientFileUpload: true,
+
+  // Optimisations automatiques
+  automaticVercelMonitors: false, // Désactivé car pas sur Vercel
+
+  // Transpilation et bundle analyzer
+  transpileClientSDK: true,
+  tunnelRoute: "/monitoring",
+
+  // Release tracking
+  release: {
+    name: process.env.SENTRY_RELEASE,
+    finalize: false, // Allow manual finalization
+  },
 
   // For all available options, see:
   // https://github.com/getsentry/sentry-webpack-plugin#options.
 };
 
-// Export sans wrapper Sentry (temporairement désactivé)
-module.exports = nextConfig;
-// module.exports = withSentryConfig(nextConfig, sentryWebpackPluginOptions);
+// Export avec configuration Sentry activée pour capture erreurs client
+module.exports = withSentryConfig(nextConfig, sentryWebpackPluginOptions);

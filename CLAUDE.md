@@ -37,13 +37,20 @@ Deploy: GitHub (PR creation) + Vercel (auto-deployment)
 Monitor: Sentry (real-time issues) + Supabase (advisors)
 ```
 
-### **🚨 Phase 3: CONSOLE ERROR CHECKING (Règle Sacrée)**
+### **🚨 Phase 3: CONSOLE ERROR CHECKING (Règle Sacrée - MCP BROWSER ONLY)**
 ```typescript
 // JAMAIS déclarer succès avec erreurs console
-1. Playwright: browser_console_messages()
-2. Si erreurs → STOP → Fix ALL errors
-3. Sentry MCP: escalate si critique
-4. Re-test jusqu'à console 100% clean
+// 🚫 INTERDIT: Créer scripts de test (*.js, *.mjs, *.ts)
+// ✅ OBLIGATOIRE: MCP Playwright Browser direct uniquement
+
+1. mcp__playwright__browser_navigate(url)              // Navigation visible
+2. mcp__playwright__browser_console_messages()         // Check console errors
+3. Si erreurs → STOP → Fix ALL errors → Re-test MCP
+4. mcp__playwright__browser_take_screenshot()          // Proof visuelle
+5. Sentry MCP: escalate si critique
+6. Re-test MCP jusqu'à console 100% clean
+
+// VALIDATION VISUELLE OBLIGATOIRE: Browser s'ouvre devant vous
 ```
 
 ### **📦 Phase 4: AUTO-UPDATE REPOSITORY**
@@ -217,13 +224,21 @@ mcp__supabase__get_advisors            // Sécurité/performance
 mcp__supabase__generate_typescript_types  // Types après migrations
 ```
 
-### **🌐 Playwright - Browser Testing (Simplifié)**
+### **🌐 Playwright MCP - Browser Testing Révolutionnaire (JAMAIS DE SCRIPTS)**
 ```typescript
-// FINI l'usine à gaz 677 tests !
-mcp__playwright__browser_navigate      // Navigation ciblée
-mcp__playwright__browser_console_messages  // Erreurs console
-mcp__playwright__browser_snapshot      // Accessibility check
-// Usage: 5-10 tests critiques MAX par module
+// 🚫 INTERDIT ABSOLU: Créer des scripts de test
+// ✅ OBLIGATOIRE: Utiliser MCP Playwright Browser directement
+
+// Navigation & Testing en temps réel
+mcp__playwright__browser_navigate      // Navigation visible en temps réel
+mcp__playwright__browser_console_messages  // Vérification erreurs console
+mcp__playwright__browser_take_screenshot   // Captures visuelles
+mcp__playwright__browser_snapshot      // Tests accessibilité
+mcp__playwright__browser_click         // Interactions utilisateur
+
+// RÈGLE ABSOLUE: JAMAIS créer *.js, *.mjs, *.ts pour tests
+// TOUJOURS utiliser MCP Browser direct pour validation immédiate
+// Usage: Browser visible + interaction en temps réel
 ```
 
 ### **📚 Context7 - Documentation Officielle**
@@ -342,22 +357,34 @@ main                    # Production deployable
 
 ## 🚨 **RÈGLES BUSINESS CRITIQUES 2025**
 
-### **Console Error Checking Protocol**
+### **Console Error Checking Protocol (MCP BROWSER RÉVOLUTIONNAIRE)**
 ```typescript
 // WORKFLOW OBLIGATOIRE (Règle Sacrée)
-1. browser_console_messages() avant TOUTE validation
-2. Zero tolerance: 1 erreur = échec système
-3. Fix ALL errors before success declaration
-4. Sentry MCP escalation si récurrent
+// 🚫 INTERDIT ABSOLU: Scripts de test *.js, *.mjs, *.ts
+// ✅ OBLIGATOIRE: MCP Playwright Browser visible uniquement
+
+1. mcp__playwright__browser_navigate(url) avant TOUTE validation
+2. mcp__playwright__browser_console_messages() - vérification visible
+3. Zero tolerance: 1 erreur console = échec système complet
+4. Browser s'ouvre devant vous - validation visuelle REQUIRED
+5. mcp__playwright__browser_take_screenshot() comme preuve
+6. Fix ALL errors before success declaration
+7. Sentry MCP escalation si récurrent
+
+// RÉVOLUTIONNAIRE: Voir browser en temps réel = confiance maximale
 ```
 
-### **Agent Usage Patterns**
+### **Agent Usage Patterns (MCP BROWSER FIRST)**
 ```typescript
 // Complex Planning: Sequential Thinking MANDATORY
 // Code Changes: Serena symbolic analysis FIRST
 // New Features: Context7 official docs REQUIRED
-// Testing: Playwright console check ALWAYS
+// Testing: MCP Playwright Browser visible ALWAYS (JAMAIS scripts)
+// Validation: Browser s'ouvre + console check + screenshot proof
 // Production: Sentry MCP monitoring CONTINUOUS
+
+// 🚫 BANNIR DÉFINITIVEMENT: *.js, *.mjs, *.ts test scripts
+// ✅ RÉVOLUTION 2025: MCP Browser direct = transparence totale
 ```
 
 ### **Repository Auto-Update**

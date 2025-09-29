@@ -14,20 +14,29 @@ export interface Collection {
   id: string
   name: string
   description?: string
+  is_featured?: boolean
+  created_by?: string
+  created_at: string
+  updated_at: string
   is_active: boolean
   visibility: 'public' | 'private'
   shared_link_token?: string
   product_count: number
   shared_count: number
   last_shared?: string
-  created_at: string
-  updated_at: string
-  created_by?: string
+  style?: string
+  room_category?: string
+  theme_tags?: string[]
+  sort_order?: number
+  meta_title?: string
+  meta_description?: string
+  image_url?: string
+  color_theme?: string
+  archived_at?: string
   products?: Array<{
     id: string
     name: string
-    image_url: string
-    price_ht: number
+    image_url?: string
   }>
 }
 
@@ -71,20 +80,10 @@ export function useCollections(filters?: CollectionFilters) {
       let query = supabase
         .from('collections')
         .select(`
-          id,
-          name,
-          description,
-          is_active,
-          visibility,
-          shared_link_token,
-          product_count,
-          shared_count,
-          last_shared,
-          created_at,
-          updated_at,
-          created_by
+          *
         `)
         .order('updated_at', { ascending: false })
+        .is('archived_at', null)
 
       // Apply filters
       if (currentFilters?.status && currentFilters.status !== 'all') {
@@ -124,16 +123,22 @@ export function useCollections(filters?: CollectionFilters) {
               products:product_id (
                 id,
                 name,
-                image_url,
-                price_ht
+                product_images!inner (
+                  public_url
+                )
               )
             `)
             .eq('collection_id', collection.id)
+            .eq('products.product_images.is_primary', true)
             .limit(4)
 
           return {
             ...collection,
-            products: products?.map(cp => cp.products).filter(Boolean) || []
+            products: products?.map(cp => ({
+              id: cp.products.id,
+              name: cp.products.name,
+              image_url: cp.products.product_images?.[0]?.public_url
+            })).filter(Boolean) || []
           }
         })
       )
@@ -153,6 +158,26 @@ export function useCollections(filters?: CollectionFilters) {
     }
   }, [supabase])
 
+  const loadArchivedCollections = useCallback(async () => {
+    try {
+      const { data, error } = await supabase
+        .from('collections')
+        .select(`
+          *
+        `)
+        .not('archived_at', 'is', null)
+        .order('archived_at', { ascending: false })
+
+      if (error) throw error
+
+      return (data || []) as Collection[]
+    } catch (err) {
+      console.error('Erreur chargement collections archivées:', err)
+      setError(err instanceof Error ? err.message : 'Erreur lors du chargement des collections archivées')
+      return []
+    }
+  }, [supabase])
+
   // useEffect qui réagit aux changements de filtres avec debounce sur la recherche
   useEffect(() => {
     const timeoutId = setTimeout(() => {
@@ -164,6 +189,14 @@ export function useCollections(filters?: CollectionFilters) {
 
   const createCollection = async (data: CreateCollectionData): Promise<Collection | null> => {
     try {
+      // Récupérer l'utilisateur actuel (Owner ou Admin selon la documentation des rôles)
+      const { data: { user } } = await supabase.auth.getUser()
+
+      if (!user) {
+        setError('Utilisateur non authentifié')
+        return null
+      }
+
       const { data: newCollection, error } = await supabase
         .from('collections')
         .insert([{
@@ -171,6 +204,7 @@ export function useCollections(filters?: CollectionFilters) {
           description: data.description || null,
           is_active: data.is_active ?? true,
           visibility: data.visibility || 'private',
+          created_by: user.id, // Ajouter l'ID de l'utilisateur (Owner/Admin)
         }])
         .select()
         .single()
@@ -258,6 +292,54 @@ export function useCollections(filters?: CollectionFilters) {
       return true
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Erreur lors du changement de statut')
+      return false
+    }
+  }
+
+  const archiveCollection = async (id: string): Promise<boolean> => {
+    try {
+      const { error } = await supabase
+        .from('collections')
+        .update({
+          archived_at: new Date().toISOString(),
+          updated_at: new Date().toISOString()
+        })
+        .eq('id', id)
+
+      if (error) {
+        setError(error.message)
+        return false
+      }
+
+      // Retirer la collection de la liste active immédiatement
+      setCollections(prev => prev.filter(c => c.id !== id))
+      return true
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Erreur lors de l\'archivage')
+      return false
+    }
+  }
+
+  const unarchiveCollection = async (id: string): Promise<boolean> => {
+    try {
+      const { error } = await supabase
+        .from('collections')
+        .update({
+          archived_at: null,
+          updated_at: new Date().toISOString()
+        })
+        .eq('id', id)
+
+      if (error) {
+        setError(error.message)
+        return false
+      }
+
+      // Recharger les données pour synchroniser les listes
+      await fetchCollections()
+      return true
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Erreur lors de la restauration')
       return false
     }
   }
@@ -371,10 +453,13 @@ export function useCollections(filters?: CollectionFilters) {
     loading,
     error,
     refetch: fetchCollections,
+    loadArchivedCollections,
     createCollection,
     updateCollection,
     deleteCollection,
     toggleCollectionStatus,
+    archiveCollection,
+    unarchiveCollection,
     generateShareToken,
     addProductToCollection,
     removeProductFromCollection,
@@ -400,18 +485,7 @@ export function useCollection(id: string) {
         const { data, error: fetchError } = await supabase
           .from('collections')
           .select(`
-            id,
-            name,
-            description,
-            is_active,
-            visibility,
-            shared_link_token,
-            product_count,
-            shared_count,
-            last_shared,
-            created_at,
-            updated_at,
-            created_by
+            *
           `)
           .eq('id', id)
           .single()
@@ -429,16 +503,22 @@ export function useCollection(id: string) {
             products:product_id (
               id,
               name,
-              image_url,
-              price_ht
+              product_images!inner (
+                public_url
+              )
             )
           `)
           .eq('collection_id', id)
+          .eq('products.product_images.is_primary', true)
           .order('position', { ascending: true })
 
         setCollection({
           ...data,
-          products: products?.map(cp => cp.products).filter(Boolean) || []
+          products: products?.map(cp => ({
+            id: cp.products.id,
+            name: cp.products.name,
+            image_url: cp.products.product_images?.[0]?.public_url
+          })).filter(Boolean) || []
         })
       } catch (err) {
         setError(err instanceof Error ? err.message : 'Erreur inconnue')

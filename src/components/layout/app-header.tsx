@@ -1,6 +1,6 @@
 "use client"
 
-import { Bell, Search, User, LogOut, Settings, Users, Bug, AlertTriangle, XCircle } from "lucide-react"
+import { Bell, Search, User, LogOut, Settings, Users, Bug, AlertTriangle, XCircle, RefreshCw } from "lucide-react"
 import { Button } from "../ui/button"
 import { cn } from "../../lib/utils"
 import {
@@ -15,8 +15,8 @@ import { createClient } from "@/lib/supabase/client"
 import { useRouter } from "next/navigation"
 import { useEffect, useState } from "react"
 import * as Sentry from "@sentry/nextjs"
-// Import conditionnel Sentry - CLIENT ONLY
-import type { SentryAutoDetector } from "@/lib/error-detection/sentry-auto-detection"
+// 🚀 RÉVOLUTIONNAIRE: Hook Sentry Unifié - Source de vérité unique
+import { useSentryUnified } from "../../hooks/use-sentry-unified"
 // 🔔 Hook notifications intelligent
 import { useNotifications } from "../../hooks/use-notifications"
 
@@ -27,9 +27,20 @@ interface AppHeaderProps {
 export function AppHeader({ className }: AppHeaderProps) {
   const router = useRouter()
   const [userRole, setUserRole] = useState<string | null>(null)
-  const [sentryErrors, setSentryErrors] = useState<number>(0)
-  const [sentryStatus, setSentryStatus] = useState<'healthy' | 'warning' | 'critical'>('healthy')
-  const [sentryDetector, setSentryDetector] = useState<SentryAutoDetector | null>(null)
+
+  // 🚀 RÉVOLUTIONNAIRE: Hook Sentry Unifié - Remplace les deux systèmes précédents
+  const {
+    totalErrorCount,
+    stats,
+    isConnected,
+    isHealthy,
+    loading: sentryLoading,
+    refresh: refreshSentry
+  } = useSentryUnified({
+    pollingInterval: 30000, // Polling intelligent toutes les 30s
+    enableLocalDetection: true, // Garder l'auto-détection locale
+    autoRefresh: true
+  })
 
   // 🔔 Hook notifications intelligent pour remplacer mock-up
   const { unreadCount, loading: notificationsLoading } = useNotifications()
@@ -55,63 +66,8 @@ export function AppHeader({ className }: AppHeaderProps) {
   }, [])
 
 
-  // 🚀 RÉVOLUTIONNAIRE: Auto-détection Sentry intelligente avec patterns avancés (CLIENT ONLY)
-  useEffect(() => {
-    // Import dynamique côté client seulement
-    if (typeof window !== 'undefined') {
-      import('@/lib/error-detection/sentry-auto-detection').then((module) => {
-        setSentryDetector(module.globalSentryDetector)
-      })
-    }
-  }, [])
+  // 🎯 Logique Sentry simplifiée grâce au hook unifié - FINI les systèmes doubles !
 
-  useEffect(() => {
-    if (!sentryDetector || typeof window === 'undefined') return
-
-    // Initialisation du monitoring automatique
-    const updateSentryStatus = () => {
-      try {
-        const errorCount = parseInt(localStorage.getItem('sentry-error-count') || '0')
-        setSentryErrors(errorCount)
-
-        // Statut intelligent basé sur sévérité des erreurs
-        const errorStats = sentryDetector.getErrorStats()
-
-        if (errorStats.criticalErrors > 0) {
-          setSentryStatus('critical')
-        } else if (errorCount > 5) {
-          setSentryStatus('warning')
-        } else if (errorCount > 0) {
-          setSentryStatus('warning')
-        } else {
-          setSentryStatus('healthy')
-        }
-      } catch (error) {
-        console.error('Error updating Sentry status:', error)
-      }
-    }
-
-    updateSentryStatus()
-
-    // Écouter les événements d'erreur du système de détection automatique
-    const handleAutoDetectedError = (event: CustomEvent) => {
-      setSentryErrors(event.detail.count)
-      updateSentryStatus()
-
-      console.log('🤖 [Header] Auto-erreur détectée:', event.detail)
-    }
-
-    window.addEventListener('sentry-error-detected', handleAutoDetectedError as EventListener)
-
-    // Actualisation périodique des stats
-    const statsInterval = setInterval(updateSentryStatus, 5000)
-
-    // Cleanup
-    return () => {
-      window.removeEventListener('sentry-error-detected', handleAutoDetectedError as EventListener)
-      clearInterval(statsInterval)
-    }
-  }, [sentryDetector])
 
   const handleLogout = async () => {
     const supabase = createClient()
@@ -119,71 +75,57 @@ export function AppHeader({ className }: AppHeaderProps) {
     router.push('/')
   }
 
-  // 🎯 Rapport Sentry Intelligent avec Auto-Détection Avancée
+  // 🚀 RÉVOLUTIONNAIRE: Accès Dashboard Sentry Unifié - Simple et efficace
   const handleSentryReport = () => {
-    if (!sentryDetector || typeof window === 'undefined') {
-      console.warn('Sentry detector not available')
-      return
-    }
-
-    // Récupération des statistiques avancées du détecteur automatique
-    const errorStats = sentryDetector.getErrorStats()
-
-    // Rapport complet avec analyse intelligente
-    Sentry.captureMessage('Rapport Global Sentry - Détection Automatique', {
-      level: sentryStatus === 'critical' ? 'error' : sentryStatus === 'warning' ? 'warning' : 'info',
+    // Rapport complet avec les vraies données unifiées
+    Sentry.captureMessage('Dashboard Sentry - Accès depuis Header', {
+      level: stats.status === 'critical' ? 'error' : stats.status === 'warning' ? 'warning' : 'info',
       tags: {
-        source: 'header_global_auto',
-        error_count: sentryErrors,
-        status: sentryStatus,
-        auto_detection: 'enabled',
-        critical_errors: errorStats.criticalErrors
+        source: 'header_dashboard_unified',
+        total_error_count: totalErrorCount,
+        status: stats.status,
+        connection_status: isConnected ? 'connected' : 'disconnected',
+        api_health: stats.apiHealth
       },
       contexts: {
-        application: {
-          total_errors: sentryErrors,
-          critical_errors: errorStats.criticalErrors,
-          recent_errors_1h: errorStats.recentErrors.length,
-          auto_corrections_available: errorStats.autoCorrectionsAvailable,
-          health_status: sentryStatus,
-        },
-        auto_detection_stats: {
-          total_detected: errorStats.totalErrors,
-          critical_detected: errorStats.criticalErrors,
-          auto_fix_suggestions: errorStats.autoCorrectionsAvailable,
-          recent_activity: errorStats.recentErrors.slice(0, 5).map(e => ({
-            type: e.errorType,
-            severity: e.severity,
-            timestamp: e.timestamp
-          }))
+        unified_sentry_stats: {
+          total_errors: totalErrorCount,
+          unresolved_api: stats.unresolvedCount,
+          local_errors: stats.localErrorsDetected,
+          critical_errors: stats.criticalCount,
+          affected_users: stats.affectedUsers,
+          last_sync: stats.lastSync?.toISOString(),
+          is_connected: isConnected,
+          api_health: stats.apiHealth
         }
       }
     })
 
-    // Feedback intelligent avec stats détaillées
-    const criticalInfo = errorStats.criticalErrors > 0 ?
-      `\n⚠️ CRITIQUE: ${errorStats.criticalErrors} erreurs critiques détectées` : ''
+    console.log('🚀 [Header Unifié] Accès dashboard:', {
+      totalErrors: totalErrorCount,
+      status: stats.status,
+      connected: isConnected
+    })
 
-    const autoFixInfo = errorStats.autoCorrectionsAvailable > 0 ?
-      `\n🔧 ${errorStats.autoCorrectionsAvailable} corrections automatiques disponibles` : ''
-
-    alert(`🚀 Rapport Sentry Intelligent envoyé !
-
-📊 Statut: ${sentryStatus.toUpperCase()}
-🔢 Total erreurs: ${sentryErrors}${criticalInfo}${autoFixInfo}
-
-✅ Analyse automatique Sentry complète !`)
-
-    // Reset intelligent du compteur
-    sentryDetector.resetErrorCounter()
-    setSentryErrors(0)
-    setSentryStatus('healthy')
+    // Rediriger vers le dashboard des erreurs Sentry
+    router.push('/admin/monitoring/errors')
   }
 
 
-  // 🎨 Fonction pour obtenir l'icône et couleur Sentry selon le statut
+  // 🚀 RÉVOLUTIONNAIRE: Icône et couleur Sentry unifiée avec indicateur de connexion
   const getSentryIconAndColor = () => {
-    switch (sentryStatus) {
+    // Mode loading avec spinner
+    if (sentryLoading) {
+      return { icon: RefreshCw, color: 'text-blue-500 bg-blue-100 animate-spin' }
+    }
+
+    // Mode déconnecté
+    if (!isConnected) {
+      return { icon: XCircle, color: 'text-gray-500 bg-gray-100' }
+    }
+
+    // Status basé sur les vraies données unifiées
+    switch (stats.status) {
       case 'critical':
         return { icon: XCircle, color: 'text-red-500 bg-red-100' }
       case 'warning':
@@ -229,24 +171,28 @@ export function AppHeader({ className }: AppHeaderProps) {
         </Button>
 
 
-        {/* 🚀 RÉVOLUTIONNAIRE: Sentry Report Global Button */}
+        {/* 🚀 RÉVOLUTIONNAIRE: Sentry Report Unifié - Données synchronisées */}
         <Button
           variant="ghost"
           size="icon"
-          className={`relative ${getSentryIconAndColor().color}`}
+          className={`relative transition-all duration-200 ${getSentryIconAndColor().color}`}
           onClick={handleSentryReport}
-          title={`Sentry Report - ${sentryStatus.toUpperCase()} (${sentryErrors} erreurs)`}
+          title={`Sentry Report - ${stats.status.toUpperCase()} (${totalErrorCount} erreurs) - ${isConnected ? 'Connecté' : 'Déconnecté'}`}
+          disabled={sentryLoading}
         >
           {(() => {
             const { icon: Icon } = getSentryIconAndColor()
             return <Icon className="h-5 w-5" />
           })()}
-          {sentryErrors > 0 && (
+          {totalErrorCount > 0 && !sentryLoading && (
             <span className="absolute -top-1 -right-1 h-4 w-auto min-w-[16px] px-1 bg-red-500 text-white rounded-full text-xs flex items-center justify-center font-medium">
-              {sentryErrors}
+              {totalErrorCount > 99 ? '99+' : totalErrorCount}
             </span>
           )}
-          <span className="sr-only">Sentry Error Report</span>
+          {!isConnected && !sentryLoading && (
+            <span className="absolute -bottom-1 -right-1 h-2 w-2 bg-gray-400 rounded-full border border-white"></span>
+          )}
+          <span className="sr-only">Sentry Error Report - {totalErrorCount} erreurs</span>
         </Button>
 
         {/* Menu Profil utilisateur */}

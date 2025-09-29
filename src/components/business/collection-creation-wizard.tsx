@@ -6,6 +6,7 @@ import { Button } from '../ui/button'
 import { Badge } from '../ui/badge'
 import { cn } from '../../lib/utils'
 import {
+  Collection,
   CollectionFormState,
   CollectionFormErrors,
   CreateCollectionInput,
@@ -22,6 +23,7 @@ interface CollectionCreationWizardProps {
   onClose: () => void
   onSubmit: (data: CreateCollectionInput) => Promise<boolean>
   loading?: boolean
+  editingCollection?: Collection
 }
 
 type WizardStep = 1 | 2 | 3
@@ -30,7 +32,8 @@ export function CollectionCreationWizard({
   isOpen,
   onClose,
   onSubmit,
-  loading = false
+  loading = false,
+  editingCollection
 }: CollectionCreationWizardProps) {
   const [currentStep, setCurrentStep] = useState<WizardStep>(1)
   const [formData, setFormData] = useState<CollectionFormState>({
@@ -52,11 +55,23 @@ export function CollectionCreationWizard({
   const [errors, setErrors] = useState<CollectionFormErrors>({})
   const [completedSteps, setCompletedSteps] = useState<Set<WizardStep>>(new Set())
 
-  // Reset form when modal opens
+  // Initialize form when modal opens (create or edit mode)
   useEffect(() => {
     if (isOpen) {
       setCurrentStep(1)
-      setFormData({
+      setFormData(editingCollection ? {
+        name: editingCollection.name || '',
+        description: editingCollection.description || '',
+        image_url: editingCollection.image_url || '',
+        style: editingCollection.style || null,
+        room_category: editingCollection.room_category || null,
+        color_theme: editingCollection.color_theme || '#FFFFFF',
+        visibility: editingCollection.visibility || 'private',
+        theme_tags: editingCollection.theme_tags || [],
+        meta_title: editingCollection.meta_title || '',
+        meta_description: editingCollection.meta_description || '',
+        sort_order: editingCollection.sort_order || 0
+      } : {
         name: '',
         description: '',
         image_url: '',
@@ -72,7 +87,7 @@ export function CollectionCreationWizard({
       setErrors({})
       setCompletedSteps(new Set())
     }
-  }, [isOpen])
+  }, [isOpen, editingCollection])
 
   const updateFormData = (updates: Partial<CollectionFormState>) => {
     setFormData(prev => ({ ...prev, ...updates }))
@@ -100,9 +115,9 @@ export function CollectionCreationWizard({
         }
 
         if (formData.image_url && !isValidUrl(formData.image_url)) {
-          newErrors.image_url = 'URL d\\'image invalide'
+          newErrors.image_url = 'URL image invalide';
         }
-        break
+        break;
 
       case 2:
         if (!formData.style) {
@@ -207,7 +222,9 @@ export function CollectionCreationWizard({
         {/* Header */}
         <div className="flex items-center justify-between p-6 border-b border-gray-200">
           <div>
-            <h2 className="text-xl font-semibold text-black">Créer une collection</h2>
+            <h2 className="text-xl font-semibold text-black">
+              {editingCollection ? 'Modifier la collection' : 'Créer une collection'}
+            </h2>
             <p className="text-sm text-gray-600 mt-1">
               Organisez vos produits selon votre style et vos besoins
             </p>

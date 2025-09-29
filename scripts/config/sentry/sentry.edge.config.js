@@ -11,6 +11,12 @@ import * as Sentry from '@sentry/nextjs'
 Sentry.init({
   dsn: process.env.SENTRY_DSN,
 
+  // 🔧 Release version - OBLIGATOIRE pour sessions Sentry
+  release: process.env.SENTRY_RELEASE || `verone-back-office@${process.env.npm_package_version || '1.0.0'}`,
+
+  // 🌍 Environment - Améliore le tracking
+  environment: process.env.NODE_ENV || 'development',
+
   // Échantillonnage réduit pour Edge (performance)
   tracesSampleRate: process.env.NODE_ENV === 'production' ? 0.05 : 0.5,
 

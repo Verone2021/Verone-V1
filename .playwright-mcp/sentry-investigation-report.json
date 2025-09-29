@@ -1,0 +1,446 @@
+{
+  "timestamp": "2025-09-29T16:39:55.486Z",
+  "consoleErrors": [],
+  "networkRequests": [
+    {
+      "timestamp": "2025-09-29T16:38:40.876Z",
+      "method": "GET",
+      "url": "http://localhost:3000/admin/monitoring/errors",
+      "type": "request"
+    },
+    {
+      "timestamp": "2025-09-29T16:38:40.995Z",
+      "status": 200,
+      "url": "http://localhost:3000/admin/monitoring/errors",
+      "type": "response"
+    },
+    {
+      "timestamp": "2025-09-29T16:38:41.056Z",
+      "method": "GET",
+      "url": "http://localhost:3000/_next/static/chunks/vendors-_app-pages-browser_node_modules_sentry_core_build_esm_exports_js-_app-pages-browser_n-6deb53.js",
+      "type": "request"
+    },
+    {
+      "timestamp": "2025-09-29T16:38:41.056Z",
+      "method": "GET",
+      "url": "http://localhost:3000/_next/static/chunks/app/admin/monitoring/errors/page.js",
+      "type": "request"
+    },
+    {
+      "timestamp": "2025-09-29T16:38:41.218Z",
+      "status": 200,
+      "url": "http://localhost:3000/_next/static/chunks/app/admin/monitoring/errors/page.js",
+      "type": "response"
+    },
+    {
+      "timestamp": "2025-09-29T16:38:41.228Z",
+      "status": 200,
+      "url": "http://localhost:3000/_next/static/chunks/vendors-_app-pages-browser_node_modules_sentry_core_build_esm_exports_js-_app-pages-browser_n-6deb53.js",
+      "type": "response"
+    },
+    {
+      "timestamp": "2025-09-29T16:38:41.499Z",
+      "method": "GET",
+      "url": "http://localhost:3000/api/monitoring/sentry-issues",
+      "type": "request"
+    },
+    {
+      "timestamp": "2025-09-29T16:38:41.499Z",
+      "method": "GET",
+      "url": "http://localhost:3000/api/monitoring/sentry-issues",
+      "type": "request"
+    },
+    {
+      "timestamp": "2025-09-29T16:38:42.584Z",
+      "status": 200,
+      "url": "http://localhost:3000/api/monitoring/sentry-issues",
+      "type": "response",
+      "body": "{\"issues\":[{\"id\":\"66127105\",\"shareId\":null,\"shortId\":\"VERONE-8\",\"title\":\"Error: 🔥 [TEST API] Erreur Serveur Volontaire - 2025-09-29T05:51:47.893Z\",\"culprit\":\"GET(route.ts)\",\"permalink\":\"https://verone.sentry.io/issues/66127105/\",\"logger\":null,\"level\":\"error\",\"status\":\"unresolved\",\"statusDetails\":{},\"substatus\":\"new\",\"isPublic\":false,\"platform\":\"node\",\"project\":{\"id\":\"4510095142289488\",\"name\":\"verone\",\"slug\":\"verone\",\"platform\":\"javascript-nextjs\"},\"type\":\"error\",\"metadata\":{\"value\":\"🔥 [TEST API] Erreur Serveur Volontaire - 2025-09-29T05:51:47.893Z\",\"type\":\"Error\",\"filename\":\"webpack-internal:///(rsc)/./src/app/api/test-sentry-error/route.ts\",\"function\":\"GET\",\"in_app_frame_mix\":\"mixed\",\"sdk\":{\"name\":\"sentry.javascript.nextjs\",\"name_normalized\":\"sentry.javascript.nextjs\"},\"initial_priority\":75},\"numComments\":0,\"assignedTo\":null,\"isBookmarked\":false,\"isSubscribed\":false,\"subscriptionDetails\":null,\"hasSeen\":true,\"annotations\":[],\"issueType\":\"error\",\"issueCategory\":\"error\",\"priority\":\"high\",\"priorityLockedAt\":null,\"seerFixabilityScore\":null,\"seerAutofixLastTriggered\":null,\"isUnhandled\":false,\"count\":\"1\",\"userCount\":0,\"firstSeen\":\"2025-09-29T05:51:47Z\",\"lastSeen\":\"2025-09-29T05:51:47Z\",\"stats\":{\"24h\":[[1759078800,0],[1759082400,0],[1759086000,0],[1759089600,0],[1759093200,0],[1759096800,0],[1759100400,0],[1759104000,0],[1759107600,0],[1759111200,0],[1759114800,0],[1759118400,0],[1759122000,1],[1759125600,0],[1759129200,0],[1759132800,0],[1759136400,0],[1759140000,0],[1759143600,0],[1759147200,0],[1759150800,0],[1759154400,0],[1759158000,0],[1759161600,0]]},\"lifetime\":{\"count\":\"1\",\"userCount\":0,\"firstSeen\":\"2025-09-29T05:51:47.898000Z\",\"lastSeen\":\"2025-09-29T05:51:47Z\",\"stats\":null},\"filtered\":null},{\"id\":\"66102663\",\"shareId\":null,\"shortId\":\"VERONE-7\",\"title\":\"Error: 🔥 [TEST API] Erreur Serveur Volontaire - 2025-09-29T04:02:57.796Z\",\"culprit\":\"GET /api/test-sentry-error\",\"permalink\":\"https://verone.sentry.io/issues/66102663/\",\"logger\":null,\"level\":\"error\",\"status\":\"unresolved\",\"statusDetails\":{},\"substatus\":\"regressed\",\"isPublic\":false,\"platform\":\"node\",\"project\":{\"id\":\"4510095142289488\",\"name\":\"verone\",\"slug\":\"verone\",\"platform\":\"javascript-nextjs\"},\"type\":\"error\",\"metadata\":{\"value\":\"🔥 [TEST API] Erreur Serveur Volontaire - 2025-09-29T04:02:57.796Z\",\"type\":\"Error\",\"filename\":\"src/app/api/test-sentry-error/route.ts\",\"function\":\"GET$1\",\"in_app_frame_mix\":\"mixed\",\"sdk\":{\"name\":\"sentry.javascript.nextjs\",\"name_normalized\":\"sentry.javascript.nextjs\"},\"initial_priority\":75,\"title\":null},\"numComments\":0,\"assignedTo\":null,\"isBookmarked\":false,\"isSubscribed\":true,\"subscriptionDetails\":{\"reason\":\"changed_status\"},\"hasSeen\":false,\"annotations\":[],\"issueType\":\"error\",\"issueCategory\":\"error\",\"priority\":\"high\",\"priorityLockedAt\":null,\"seerFixabilityScore\":null,\"seerAutofixLastTriggered\":null,\"isUnhandled\":false,\"count\":\"2\",\"userCount\":0,\"firstSeen\":\"2025-09-29T02:34:28Z\",\"lastSeen\":\"2025-09-29T04:02:57Z\",\"stats\":{\"24h\":[[1759078800,0],[1759082400,0],[1759086000,0],[1759089600,0],[1759093200,0],[1759096800,0],[1759100400,0],[1759104000,0],[1759107600,0],[1759111200,1],[1759114800,0],[1759118400,1],[1759122000,0],[1759125600,0],[1759129200,0],[1759132800,0],[1759136400,0],[1759140000,0],[1759143600,0],[1759147200,0],[1759150800,0],[1759154400,0],[1759158000,0],[1759161600,0]]},\"lifetime\":{\"count\":\"2\",\"userCount\":0,\"firstSeen\":\"2025-09-29T02:34:28.527000Z\",\"lastSeen\":\"2025-09-29T04:02:57Z\",\"stats\":null},\"filtered\":null}],\"stats\":{\"totalIssues\":2,\"unresolvedCount\":2,\"last24hCount\":2,\"criticalCount\":2,\"affectedUsers\":0},\"timestamp\":\"2025-09-29T16:38:42.583Z\"}"
+    },
+    {
+      "timestamp": "2025-09-29T16:38:43.487Z",
+      "status": 200,
+      "url": "http://localhost:3000/api/monitoring/sentry-issues",
+      "type": "response",
+      "body": "{\"issues\":[{\"id\":\"66127105\",\"shareId\":null,\"shortId\":\"VERONE-8\",\"title\":\"Error: 🔥 [TEST API] Erreur Serveur Volontaire - 2025-09-29T05:51:47.893Z\",\"culprit\":\"GET(route.ts)\",\"permalink\":\"https://verone.sentry.io/issues/66127105/\",\"logger\":null,\"level\":\"error\",\"status\":\"unresolved\",\"statusDetails\":{},\"substatus\":\"new\",\"isPublic\":false,\"platform\":\"node\",\"project\":{\"id\":\"4510095142289488\",\"name\":\"verone\",\"slug\":\"verone\",\"platform\":\"javascript-nextjs\"},\"type\":\"error\",\"metadata\":{\"value\":\"🔥 [TEST API] Erreur Serveur Volontaire - 2025-09-29T05:51:47.893Z\",\"type\":\"Error\",\"filename\":\"webpack-internal:///(rsc)/./src/app/api/test-sentry-error/route.ts\",\"function\":\"GET\",\"in_app_frame_mix\":\"mixed\",\"sdk\":{\"name\":\"sentry.javascript.nextjs\",\"name_normalized\":\"sentry.javascript.nextjs\"},\"initial_priority\":75},\"numComments\":0,\"assignedTo\":null,\"isBookmarked\":false,\"isSubscribed\":false,\"subscriptionDetails\":null,\"hasSeen\":true,\"annotations\":[],\"issueType\":\"error\",\"issueCategory\":\"error\",\"priority\":\"high\",\"priorityLockedAt\":null,\"seerFixabilityScore\":null,\"seerAutofixLastTriggered\":null,\"isUnhandled\":false,\"count\":\"1\",\"userCount\":0,\"firstSeen\":\"2025-09-29T05:51:47Z\",\"lastSeen\":\"2025-09-29T05:51:47Z\",\"stats\":{\"24h\":[[1759078800,0],[1759082400,0],[1759086000,0],[1759089600,0],[1759093200,0],[1759096800,0],[1759100400,0],[1759104000,0],[1759107600,0],[1759111200,0],[1759114800,0],[1759118400,0],[1759122000,1],[1759125600,0],[1759129200,0],[1759132800,0],[1759136400,0],[1759140000,0],[1759143600,0],[1759147200,0],[1759150800,0],[1759154400,0],[1759158000,0],[1759161600,0]]},\"lifetime\":{\"count\":\"1\",\"userCount\":0,\"firstSeen\":\"2025-09-29T05:51:47.898000Z\",\"lastSeen\":\"2025-09-29T05:51:47Z\",\"stats\":null},\"filtered\":null},{\"id\":\"66102663\",\"shareId\":null,\"shortId\":\"VERONE-7\",\"title\":\"Error: 🔥 [TEST API] Erreur Serveur Volontaire - 2025-09-29T04:02:57.796Z\",\"culprit\":\"GET /api/test-sentry-error\",\"permalink\":\"https://verone.sentry.io/issues/66102663/\",\"logger\":null,\"level\":\"error\",\"status\":\"unresolved\",\"statusDetails\":{},\"substatus\":\"regressed\",\"isPublic\":false,\"platform\":\"node\",\"project\":{\"id\":\"4510095142289488\",\"name\":\"verone\",\"slug\":\"verone\",\"platform\":\"javascript-nextjs\"},\"type\":\"error\",\"metadata\":{\"value\":\"🔥 [TEST API] Erreur Serveur Volontaire - 2025-09-29T04:02:57.796Z\",\"type\":\"Error\",\"filename\":\"src/app/api/test-sentry-error/route.ts\",\"function\":\"GET$1\",\"in_app_frame_mix\":\"mixed\",\"sdk\":{\"name\":\"sentry.javascript.nextjs\",\"name_normalized\":\"sentry.javascript.nextjs\"},\"initial_priority\":75,\"title\":null},\"numComments\":0,\"assignedTo\":null,\"isBookmarked\":false,\"isSubscribed\":true,\"subscriptionDetails\":{\"reason\":\"changed_status\"},\"hasSeen\":false,\"annotations\":[],\"issueType\":\"error\",\"issueCategory\":\"error\",\"priority\":\"high\",\"priorityLockedAt\":null,\"seerFixabilityScore\":null,\"seerAutofixLastTriggered\":null,\"isUnhandled\":false,\"count\":\"2\",\"userCount\":0,\"firstSeen\":\"2025-09-29T02:34:28Z\",\"lastSeen\":\"2025-09-29T04:02:57Z\",\"stats\":{\"24h\":[[1759078800,0],[1759082400,0],[1759086000,0],[1759089600,0],[1759093200,0],[1759096800,0],[1759100400,0],[1759104000,0],[1759107600,0],[1759111200,1],[1759114800,0],[1759118400,1],[1759122000,0],[1759125600,0],[1759129200,0],[1759132800,0],[1759136400,0],[1759140000,0],[1759143600,0],[1759147200,0],[1759150800,0],[1759154400,0],[1759158000,0],[1759161600,0]]},\"lifetime\":{\"count\":\"2\",\"userCount\":0,\"firstSeen\":\"2025-09-29T02:34:28.527000Z\",\"lastSeen\":\"2025-09-29T04:02:57Z\",\"stats\":null},\"filtered\":null}],\"stats\":{\"totalIssues\":2,\"unresolvedCount\":2,\"last24hCount\":2,\"criticalCount\":2,\"affectedUsers\":0},\"timestamp\":\"2025-09-29T16:38:43.485Z\"}"
+    },
+    {
+      "timestamp": "2025-09-29T16:38:49.202Z",
+      "method": "GET",
+      "url": "http://localhost:3000/_next/static/chunks/vendors-_app-pages-browser_node_modules_sentry_core_build_esm_exports_js-_app-pages-browser_n-6deb53.js",
+      "type": "request"
+    },
+    {
+      "timestamp": "2025-09-29T16:38:49.342Z",
+      "status": 200,
+      "url": "http://localhost:3000/_next/static/chunks/vendors-_app-pages-browser_node_modules_sentry_core_build_esm_exports_js-_app-pages-browser_n-6deb53.js",
+      "type": "response"
+    },
+    {
+      "timestamp": "2025-09-29T16:39:54.306Z",
+      "method": "GET",
+      "url": "http://localhost:3000/api/monitoring/sentry-issues",
+      "type": "request"
+    },
+    {
+      "timestamp": "2025-09-29T16:39:55.403Z",
+      "status": 200,
+      "url": "http://localhost:3000/api/monitoring/sentry-issues",
+      "type": "response",
+      "body": "{\"issues\":[{\"id\":\"66127105\",\"shareId\":null,\"shortId\":\"VERONE-8\",\"title\":\"Error: 🔥 [TEST API] Erreur Serveur Volontaire - 2025-09-29T05:51:47.893Z\",\"culprit\":\"GET(route.ts)\",\"permalink\":\"https://verone.sentry.io/issues/66127105/\",\"logger\":null,\"level\":\"error\",\"status\":\"unresolved\",\"statusDetails\":{},\"substatus\":\"new\",\"isPublic\":false,\"platform\":\"node\",\"project\":{\"id\":\"4510095142289488\",\"name\":\"verone\",\"slug\":\"verone\",\"platform\":\"javascript-nextjs\"},\"type\":\"error\",\"metadata\":{\"value\":\"🔥 [TEST API] Erreur Serveur Volontaire - 2025-09-29T05:51:47.893Z\",\"type\":\"Error\",\"filename\":\"webpack-internal:///(rsc)/./src/app/api/test-sentry-error/route.ts\",\"function\":\"GET\",\"in_app_frame_mix\":\"mixed\",\"sdk\":{\"name\":\"sentry.javascript.nextjs\",\"name_normalized\":\"sentry.javascript.nextjs\"},\"initial_priority\":75},\"numComments\":0,\"assignedTo\":null,\"isBookmarked\":false,\"isSubscribed\":false,\"subscriptionDetails\":null,\"hasSeen\":true,\"annotations\":[],\"issueType\":\"error\",\"issueCategory\":\"error\",\"priority\":\"high\",\"priorityLockedAt\":null,\"seerFixabilityScore\":null,\"seerAutofixLastTriggered\":null,\"isUnhandled\":false,\"count\":\"1\",\"userCount\":0,\"firstSeen\":\"2025-09-29T05:51:47Z\",\"lastSeen\":\"2025-09-29T05:51:47Z\",\"stats\":{\"24h\":[[1759078800,0],[1759082400,0],[1759086000,0],[1759089600,0],[1759093200,0],[1759096800,0],[1759100400,0],[1759104000,0],[1759107600,0],[1759111200,0],[1759114800,0],[1759118400,0],[1759122000,1],[1759125600,0],[1759129200,0],[1759132800,0],[1759136400,0],[1759140000,0],[1759143600,0],[1759147200,0],[1759150800,0],[1759154400,0],[1759158000,0],[1759161600,0]]},\"lifetime\":{\"count\":\"1\",\"userCount\":0,\"firstSeen\":\"2025-09-29T05:51:47.898000Z\",\"lastSeen\":\"2025-09-29T05:51:47Z\",\"stats\":null},\"filtered\":null},{\"id\":\"66102663\",\"shareId\":null,\"shortId\":\"VERONE-7\",\"title\":\"Error: 🔥 [TEST API] Erreur Serveur Volontaire - 2025-09-29T04:02:57.796Z\",\"culprit\":\"GET /api/test-sentry-error\",\"permalink\":\"https://verone.sentry.io/issues/66102663/\",\"logger\":null,\"level\":\"error\",\"status\":\"unresolved\",\"statusDetails\":{},\"substatus\":\"regressed\",\"isPublic\":false,\"platform\":\"node\",\"project\":{\"id\":\"4510095142289488\",\"name\":\"verone\",\"slug\":\"verone\",\"platform\":\"javascript-nextjs\"},\"type\":\"error\",\"metadata\":{\"value\":\"🔥 [TEST API] Erreur Serveur Volontaire - 2025-09-29T04:02:57.796Z\",\"type\":\"Error\",\"filename\":\"src/app/api/test-sentry-error/route.ts\",\"function\":\"GET$1\",\"in_app_frame_mix\":\"mixed\",\"sdk\":{\"name\":\"sentry.javascript.nextjs\",\"name_normalized\":\"sentry.javascript.nextjs\"},\"initial_priority\":75,\"title\":null},\"numComments\":0,\"assignedTo\":null,\"isBookmarked\":false,\"isSubscribed\":true,\"subscriptionDetails\":{\"reason\":\"changed_status\"},\"hasSeen\":false,\"annotations\":[],\"issueType\":\"error\",\"issueCategory\":\"error\",\"priority\":\"high\",\"priorityLockedAt\":null,\"seerFixabilityScore\":null,\"seerAutofixLastTriggered\":null,\"isUnhandled\":false,\"count\":\"2\",\"userCount\":0,\"firstSeen\":\"2025-09-29T02:34:28Z\",\"lastSeen\":\"2025-09-29T04:02:57Z\",\"stats\":{\"24h\":[[1759078800,0],[1759082400,0],[1759086000,0],[1759089600,0],[1759093200,0],[1759096800,0],[1759100400,0],[1759104000,0],[1759107600,0],[1759111200,1],[1759114800,0],[1759118400,1],[1759122000,0],[1759125600,0],[1759129200,0],[1759132800,0],[1759136400,0],[1759140000,0],[1759143600,0],[1759147200,0],[1759150800,0],[1759154400,0],[1759158000,0],[1759161600,0]]},\"lifetime\":{\"count\":\"2\",\"userCount\":0,\"firstSeen\":\"2025-09-29T02:34:28.527000Z\",\"lastSeen\":\"2025-09-29T04:02:57Z\",\"stats\":null},\"filtered\":null}],\"stats\":{\"totalIssues\":2,\"unresolvedCount\":2,\"last24hCount\":2,\"criticalCount\":2,\"affectedUsers\":0},\"timestamp\":\"2025-09-29T16:39:55.396Z\"}"
+    }
+  ],
+  "dashboardElements": {
+    "title": "Dashboard Erreurs Sentry",
+    "errorElements": 0,
+    "loadingElements": 0
+  },
+  "apiTest": {
+    "status": 200,
+    "data": {
+      "issues": [
+        {
+          "id": "66127105",
+          "shareId": null,
+          "shortId": "VERONE-8",
+          "title": "Error: 🔥 [TEST API] Erreur Serveur Volontaire - 2025-09-29T05:51:47.893Z",
+          "culprit": "GET(route.ts)",
+          "permalink": "https://verone.sentry.io/issues/66127105/",
+          "logger": null,
+          "level": "error",
+          "status": "unresolved",
+          "statusDetails": {},
+          "substatus": "new",
+          "isPublic": false,
+          "platform": "node",
+          "project": {
+            "id": "4510095142289488",
+            "name": "verone",
+            "slug": "verone",
+            "platform": "javascript-nextjs"
+          },
+          "type": "error",
+          "metadata": {
+            "value": "🔥 [TEST API] Erreur Serveur Volontaire - 2025-09-29T05:51:47.893Z",
+            "type": "Error",
+            "filename": "webpack-internal:///(rsc)/./src/app/api/test-sentry-error/route.ts",
+            "function": "GET",
+            "in_app_frame_mix": "mixed",
+            "sdk": {
+              "name": "sentry.javascript.nextjs",
+              "name_normalized": "sentry.javascript.nextjs"
+            },
+            "initial_priority": 75
+          },
+          "numComments": 0,
+          "assignedTo": null,
+          "isBookmarked": false,
+          "isSubscribed": false,
+          "subscriptionDetails": null,
+          "hasSeen": true,
+          "annotations": [],
+          "issueType": "error",
+          "issueCategory": "error",
+          "priority": "high",
+          "priorityLockedAt": null,
+          "seerFixabilityScore": null,
+          "seerAutofixLastTriggered": null,
+          "isUnhandled": false,
+          "count": "1",
+          "userCount": 0,
+          "firstSeen": "2025-09-29T05:51:47Z",
+          "lastSeen": "2025-09-29T05:51:47Z",
+          "stats": {
+            "24h": [
+              [
+                1759078800,
+                0
+              ],
+              [
+                1759082400,
+                0
+              ],
+              [
+                1759086000,
+                0
+              ],
+              [
+                1759089600,
+                0
+              ],
+              [
+                1759093200,
+                0
+              ],
+              [
+                1759096800,
+                0
+              ],
+              [
+                1759100400,
+                0
+              ],
+              [
+                1759104000,
+                0
+              ],
+              [
+                1759107600,
+                0
+              ],
+              [
+                1759111200,
+                0
+              ],
+              [
+                1759114800,
+                0
+              ],
+              [
+                1759118400,
+                0
+              ],
+              [
+                1759122000,
+                1
+              ],
+              [
+                1759125600,
+                0
+              ],
+              [
+                1759129200,
+                0
+              ],
+              [
+                1759132800,
+                0
+              ],
+              [
+                1759136400,
+                0
+              ],
+              [
+                1759140000,
+                0
+              ],
+              [
+                1759143600,
+                0
+              ],
+              [
+                1759147200,
+                0
+              ],
+              [
+                1759150800,
+                0
+              ],
+              [
+                1759154400,
+                0
+              ],
+              [
+                1759158000,
+                0
+              ],
+              [
+                1759161600,
+                0
+              ]
+            ]
+          },
+          "lifetime": {
+            "count": "1",
+            "userCount": 0,
+            "firstSeen": "2025-09-29T05:51:47.898000Z",
+            "lastSeen": "2025-09-29T05:51:47Z",
+            "stats": null
+          },
+          "filtered": null
+        },
+        {
+          "id": "66102663",
+          "shareId": null,
+          "shortId": "VERONE-7",
+          "title": "Error: 🔥 [TEST API] Erreur Serveur Volontaire - 2025-09-29T04:02:57.796Z",
+          "culprit": "GET /api/test-sentry-error",
+          "permalink": "https://verone.sentry.io/issues/66102663/",
+          "logger": null,
+          "level": "error",
+          "status": "unresolved",
+          "statusDetails": {},
+          "substatus": "regressed",
+          "isPublic": false,
+          "platform": "node",
+          "project": {
+            "id": "4510095142289488",
+            "name": "verone",
+            "slug": "verone",
+            "platform": "javascript-nextjs"
+          },
+          "type": "error",
+          "metadata": {
+            "value": "🔥 [TEST API] Erreur Serveur Volontaire - 2025-09-29T04:02:57.796Z",
+            "type": "Error",
+            "filename": "src/app/api/test-sentry-error/route.ts",
+            "function": "GET$1",
+            "in_app_frame_mix": "mixed",
+            "sdk": {
+              "name": "sentry.javascript.nextjs",
+              "name_normalized": "sentry.javascript.nextjs"
+            },
+            "initial_priority": 75,
+            "title": null
+          },
+          "numComments": 0,
+          "assignedTo": null,
+          "isBookmarked": false,
+          "isSubscribed": true,
+          "subscriptionDetails": {
+            "reason": "changed_status"
+          },
+          "hasSeen": false,
+          "annotations": [],
+          "issueType": "error",
+          "issueCategory": "error",
+          "priority": "high",
+          "priorityLockedAt": null,
+          "seerFixabilityScore": null,
+          "seerAutofixLastTriggered": null,
+          "isUnhandled": false,
+          "count": "2",
+          "userCount": 0,
+          "firstSeen": "2025-09-29T02:34:28Z",
+          "lastSeen": "2025-09-29T04:02:57Z",
+          "stats": {
+            "24h": [
+              [
+                1759078800,
+                0
+              ],
+              [
+                1759082400,
+                0
+              ],
+              [
+                1759086000,
+                0
+              ],
+              [
+                1759089600,
+                0
+              ],
+              [
+                1759093200,
+                0
+              ],
+              [
+                1759096800,
+                0
+              ],
+              [
+                1759100400,
+                0
+              ],
+              [
+                1759104000,
+                0
+              ],
+              [
+                1759107600,
+                0
+              ],
+              [
+                1759111200,
+                1
+              ],
+              [
+                1759114800,
+                0
+              ],
+              [
+                1759118400,
+                1
+              ],
+              [
+                1759122000,
+                0
+              ],
+              [
+                1759125600,
+                0
+              ],
+              [
+                1759129200,
+                0
+              ],
+              [
+                1759132800,
+                0
+              ],
+              [
+                1759136400,
+                0
+              ],
+              [
+                1759140000,
+                0
+              ],
+              [
+                1759143600,
+                0
+              ],
+              [
+                1759147200,
+                0
+              ],
+              [
+                1759150800,
+                0
+              ],
+              [
+                1759154400,
+                0
+              ],
+              [
+                1759158000,
+                0
+              ],
+              [
+                1759161600,
+                0
+              ]
+            ]
+          },
+          "lifetime": {
+            "count": "2",
+            "userCount": 0,
+            "firstSeen": "2025-09-29T02:34:28.527000Z",
+            "lastSeen": "2025-09-29T04:02:57Z",
+            "stats": null
+          },
+          "filtered": null
+        }
+      ],
+      "stats": {
+        "totalIssues": 2,
+        "unresolvedCount": 2,
+        "last24hCount": 2,
+        "criticalCount": 2,
+        "affectedUsers": 0
+      },
+      "timestamp": "2025-09-29T16:39:55.396Z"
+    }
+  },
+  "localStorage": {
+    "sentryErrors": null,
+    "errorCount": null,
+    "allKeys": []
+  },
+  "screenshots": [
+    "sentry-dashboard-initial-state.png",
+    "dashboard-after-header-click.png",
+    "sentry-dashboard-final-analysis.png"
+  ]
+}

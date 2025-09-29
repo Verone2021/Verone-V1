@@ -1,12 +1,14 @@
 "use client"
 
-import { useState, useMemo, useCallback, memo } from "react"
-import { Search, Plus, Edit3, Trash2, Share2, Eye, EyeOff, ExternalLink, Copy } from "lucide-react"
+import { useState, useMemo, useCallback, useEffect } from "react"
+import { useRouter } from "next/navigation"
+import { Search, Plus, Edit3, Trash2, Eye, EyeOff, ExternalLink, Package, Archive } from "lucide-react"
 import { Button } from "../../../components/ui/button"
 import { Badge } from "../../../components/ui/badge"
 import { cn } from "../../../lib/utils"
-import { useCollections, Collection, CollectionFilters } from "@/hooks/use-collections"
-import { CollectionEditModal } from "@/components/business/collection-edit-modal"
+import { useCollections, Collection, CollectionFilters, CreateCollectionData } from "@/hooks/use-collections"
+import { CollectionCreationWizard, CreateCollectionInput } from "@/components/business/collection-creation-wizard"
+import { CollectionProductsModal } from "@/components/business/collection-products-modal"
 import { useToast } from "@/hooks/use-toast"
 
 // Interface filtres collections
@@ -14,23 +16,26 @@ interface LocalCollectionFilters {
   search: string
   status: 'all' | 'active' | 'inactive'
   visibility: 'all' | 'public' | 'private'
-  shared: 'all' | 'shared' | 'not_shared'
 }
 
 export default function CollectionsPage() {
   const { toast } = useToast()
+  const router = useRouter()
 
   // États pour la gestion des filtres et de l'interface
   const [filters, setFilters] = useState<LocalCollectionFilters>({
     search: "",
     status: 'all',
-    visibility: 'all',
-    shared: 'all'
+    visibility: 'all'
   })
   const [selectedCollections, setSelectedCollections] = useState<string[]>([])
-  const [showShareModal, setShowShareModal] = useState<string | null>(null)
   const [editingCollection, setEditingCollection] = useState<Collection | null>(null)
   const [showEditModal, setShowEditModal] = useState(false)
+  const [managingProductsCollection, setManagingProductsCollection] = useState<Collection | null>(null)
+  const [showProductsModal, setShowProductsModal] = useState(false)
+  const [activeTab, setActiveTab] = useState<'active' | 'archived'>('active')
+  const [archivedCollections, setArchivedCollections] = useState<Collection[]>([])
+  const [archivedLoading, setArchivedLoading] = useState(false)
 
   // Hook pour récupérer les collections réelles depuis Supabase
   const {
@@ -38,17 +43,38 @@ export default function CollectionsPage() {
     loading,
     error,
     refetch,
+    loadArchivedCollections,
     createCollection,
+    updateCollection,
     deleteCollection,
     toggleCollectionStatus,
-    generateShareToken,
-    recordShare
+    archiveCollection,
+    unarchiveCollection
   } = useCollections({
     search: filters.search || undefined,
     status: filters.status,
-    visibility: filters.visibility,
-    shared: filters.shared
+    visibility: filters.visibility
   })
+
+  // Fonction pour charger les collections archivées
+  const loadArchivedCollectionsData = async () => {
+    setArchivedLoading(true)
+    try {
+      const result = await loadArchivedCollections()
+      setArchivedCollections(result)
+    } catch (error) {
+      console.error('Erreur chargement collections archivées:', error)
+    } finally {
+      setArchivedLoading(false)
+    }
+  }
+
+  // Charger les collections archivées quand on change d'onglet
+  useEffect(() => {
+    if (activeTab === 'archived') {
+      loadArchivedCollectionsData()
+    }
+  }, [activeTab])
 
   // Pas besoin de filtrage manuel, le hook s'en charge
   const filteredCollections = collections
@@ -62,28 +88,6 @@ export default function CollectionsPage() {
     )
   }
 
-  const handleShareCollection = async (collection: Collection) => {
-    if (collection.shared_link_token) {
-      const shareUrl = `${window.location.origin}/c/${collection.shared_link_token}`
-      await navigator.clipboard.writeText(shareUrl)
-      await recordShare(collection.id, 'link')
-      toast({
-        title: "Lien copié !",
-        description: "Le lien de partage a été copié dans le presse-papier",
-      })
-    } else {
-      const token = await generateShareToken(collection.id)
-      if (token) {
-        const shareUrl = `${window.location.origin}/c/${token}`
-        await navigator.clipboard.writeText(shareUrl)
-        await recordShare(collection.id, 'link')
-        toast({
-          title: "Lien généré et copié !",
-          description: "Le lien de partage a été créé et copié dans le presse-papier",
-        })
-      }
-    }
-  }
 
   const handleBulkStatusToggle = async () => {
     let successCount = 0
@@ -119,36 +123,78 @@ export default function CollectionsPage() {
     setShowEditModal(true)
   }, [])
 
+  const handleManageProducts = useCallback((collection: Collection) => {
+    setManagingProductsCollection(collection)
+    setShowProductsModal(true)
+  }, [])
+
   const handleCreateCollection = useCallback(() => {
     setEditingCollection(null)
     setShowEditModal(true)
   }, [])
 
-  const handleSaveCollection = useCallback(async (data: Partial<Collection>) => {
-    if (data.id) {
-      const result = await updateCollection(data as any)
+  const handleSaveCollection = useCallback(async (data: CreateCollectionInput) => {
+    if (editingCollection) {
+      // Mode édition
+      const result = await updateCollection(editingCollection.id, data)
       if (result) {
         toast({
-          title: "Collection mise à jour",
-          description: "Les modifications ont été enregistrées",
+          title: "Collection modifiée",
+          description: "La collection a été modifiée avec succès",
         })
+        setShowEditModal(false)
+        setEditingCollection(null)
+        return true
       }
     } else {
-      const result = await createCollection(data as any)
+      // Mode création
+      const result = await createCollection(data)
       if (result) {
         toast({
           title: "Collection créée",
           description: "La nouvelle collection a été créée avec succès",
         })
+        setShowEditModal(false)
+        return true
       }
     }
-    setShowEditModal(false)
-  }, [createCollection, updateCollection, toast])
+    return false
+  }, [editingCollection, createCollection, updateCollection, toast])
 
-  // Composant Collection Card avec memoization
-  const CollectionCard = memo(({ collection }: { collection: Collection }) => {
+  const handleArchiveCollection = useCallback(async (collection: Collection) => {
+    try {
+      if (collection.archived_at) {
+        await unarchiveCollection(collection.id)
+        console.log('✅ Collection restaurée:', collection.name)
+        toast({
+          title: "Collection restaurée",
+          description: "La collection a été restaurée avec succès",
+        })
+        // Rafraîchir la liste des archivées après restauration
+        await loadArchivedCollectionsData()
+      } else {
+        await archiveCollection(collection.id)
+        console.log('✅ Collection archivée:', collection.name)
+        toast({
+          title: "Collection archivée",
+          description: "La collection a été archivée avec succès",
+        })
+        // Rafraîchir la liste des archivées après archivage
+        await loadArchivedCollectionsData()
+      }
+    } catch (error) {
+      console.error('❌ Erreur archivage collection:', error)
+      toast({
+        title: "Erreur",
+        description: "Une erreur est survenue lors de l'archivage",
+        variant: "destructive"
+      })
+    }
+  }, [archiveCollection, unarchiveCollection, toast, loadArchivedCollectionsData])
+
+  // Composant Collection Card
+  const renderCollectionCard = (collection: Collection) => {
     const isSelected = selectedCollections.includes(collection.id)
-    const hasSharedLink = collection.shared_link_token
 
     return (
       <div className={cn(
@@ -186,26 +232,47 @@ export default function CollectionsPage() {
             </div>
 
             {/* Actions rapides */}
-            <div className="flex items-center space-x-1 ml-2">
+            <div className="flex items-center space-x-2 ml-2">
               <Button
                 variant="ghost"
                 size="sm"
                 onClick={() => toggleCollectionStatus(collection.id)}
+                title={collection.is_active ? "Désactiver" : "Activer"}
               >
                 {collection.is_active ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
               </Button>
               <Button
                 variant="ghost"
                 size="sm"
-                onClick={() => handleShareCollection(collection)}
-                className={cn(hasSharedLink && "text-blue-600")}
+                onClick={() => handleManageProducts(collection)}
+                className="text-purple-600"
+                title="Gérer les produits"
               >
-                {hasSharedLink ? <Copy className="h-4 w-4" /> : <Share2 className="h-4 w-4" />}
+                <Package className="h-4 w-4" />
+              </Button>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => handleArchiveCollection(collection)}
+                className="text-orange-600"
+                title={collection.archived_at ? "Restaurer" : "Archiver"}
+              >
+                <Archive className="h-4 w-4" />
+              </Button>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => router.push(`/catalogue/collections/${collection.id}`)}
+                className="text-blue-600"
+                title="Voir détail"
+              >
+                <ExternalLink className="h-4 w-4" />
               </Button>
               <Button
                 variant="ghost"
                 size="sm"
                 onClick={() => handleEditCollection(collection)}
+                title="Modifier"
               >
                 <Edit3 className="h-4 w-4" />
               </Button>
@@ -218,10 +285,7 @@ export default function CollectionsPage() {
           <div className="flex items-center justify-between text-sm text-gray-600 mb-3">
             <span>{collection.product_count} produit{collection.product_count !== 1 ? 's' : ''}</span>
             <span>
-              {collection.shared_count} partage{collection.shared_count !== 1 ? 's' : ''}
-              {collection.last_shared && (
-                <span className="ml-1">• {formatDate(collection.last_shared)}</span>
-              )}
+              Créé le {formatDate(collection.created_at)}
             </span>
           </div>
 
@@ -245,29 +309,17 @@ export default function CollectionsPage() {
             </div>
           )}
 
-          {/* Lien de partage */}
-          {hasSharedLink && (
-            <div className="mt-3 p-2 bg-blue-50 rounded text-xs">
-              <div className="flex items-center space-x-2">
-                <ExternalLink className="h-3 w-3 text-blue-600" />
-                <span className="text-blue-600 font-mono truncate flex-1">
-                  /c/{collection.shared_link_token}
-                </span>
-              </div>
-            </div>
-          )}
         </div>
       </div>
     )
-  })
+  }
 
   // Optimisation: Memoization des collections filtrées
   const stats = useMemo(() => ({
     total: collections.length,
     active: collections.filter(c => c.is_active).length,
-    shared: collections.filter(c => c.shared_link_token).length,
-    totalShares: collections.reduce((sum, c) => sum + c.shared_count, 0),
-  }), [collections])
+    archived: archivedCollections.length,
+  }), [collections, archivedCollections])
 
   return (
     <div className="space-y-6">
@@ -288,6 +340,30 @@ export default function CollectionsPage() {
             Nouvelle collection
           </Button>
         </div>
+      </div>
+
+      {/* Onglets collections actives/archivées */}
+      <div className="flex border-b border-gray-200">
+        <button
+          onClick={() => setActiveTab('active')}
+          className={`px-6 py-3 font-medium transition-colors ${
+            activeTab === 'active'
+              ? 'border-b-2 border-black text-black'
+              : 'text-gray-600 hover:text-gray-800'
+          }`}
+        >
+          Collections Actives ({collections.length})
+        </button>
+        <button
+          onClick={() => setActiveTab('archived')}
+          className={`px-6 py-3 font-medium transition-colors ${
+            activeTab === 'archived'
+              ? 'border-b-2 border-black text-black'
+              : 'text-gray-600 hover:text-gray-800'
+          }`}
+        >
+          Collections Archivées ({archivedCollections.length})
+        </button>
       </div>
 
       {/* Barre de recherche et filtres */}
@@ -324,15 +400,6 @@ export default function CollectionsPage() {
             <option value="private">Privées</option>
           </select>
 
-          <select
-            value={filters.shared}
-            onChange={(e) => setFilters(prev => ({ ...prev, shared: e.target.value as any }))}
-            className="border border-gray-300 rounded-md px-3 py-2"
-          >
-            <option value="all">Tous</option>
-            <option value="shared">Partagées</option>
-            <option value="not_shared">Non partagées</option>
-          </select>
         </div>
       </div>
 
@@ -370,7 +437,7 @@ export default function CollectionsPage() {
 
       {/* Grille des collections */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        {loading ? (
+        {((activeTab === 'active' && loading) || (activeTab === 'archived' && archivedLoading)) ? (
           Array.from({ length: 6 }).map((_, i) => (
             <div key={i} className="bg-white rounded-lg border border-gray-200 animate-pulse">
               <div className="p-4 border-b border-gray-200">
@@ -387,14 +454,22 @@ export default function CollectionsPage() {
           <div className="col-span-full p-8 text-center text-red-500 bg-white rounded-lg border border-red-200">
             Erreur lors du chargement des collections: {error}
           </div>
-        ) : filteredCollections.length > 0 ? (
-          filteredCollections.map(collection => (
-            <CollectionCard key={collection.id} collection={collection} />
-          ))
         ) : (
-          <div className="col-span-full p-8 text-center text-gray-500 bg-white rounded-lg border border-gray-200">
-            Aucune collection trouvée pour les critères sélectionnés
-          </div>
+          (() => {
+            const currentCollections = activeTab === 'active' ? filteredCollections : archivedCollections
+            return currentCollections.length > 0 ? (
+              currentCollections.map(collection => (
+                <div key={collection.id}>{renderCollectionCard(collection)}</div>
+              ))
+            ) : (
+              <div className="col-span-full p-8 text-center text-gray-500 bg-white rounded-lg border border-gray-200">
+                {activeTab === 'active'
+                  ? 'Aucune collection trouvée pour les critères sélectionnés'
+                  : 'Aucune collection archivée'
+                }
+              </div>
+            )
+          })()
         )}
       </div>
 
@@ -414,24 +489,26 @@ export default function CollectionsPage() {
         </div>
         <div className="bg-white p-4 rounded-lg border border-gray-200">
           <div className="text-2xl font-light text-black">
-            {loading ? '...' : stats.shared}
+            {archivedLoading ? '...' : stats.archived}
           </div>
-          <div className="text-sm text-gray-600">Collections partagées</div>
-        </div>
-        <div className="bg-white p-4 rounded-lg border border-gray-200">
-          <div className="text-2xl font-light text-black">
-            {loading ? '...' : stats.totalShares}
-          </div>
-          <div className="text-sm text-gray-600">Partages totaux</div>
+          <div className="text-sm text-gray-600">Collections archivées</div>
         </div>
       </div>
 
-      {/* Modal d'édition/création */}
-      <CollectionEditModal
-        collection={editingCollection}
+      {/* Modal de création de collection avec wizard complet */}
+      <CollectionCreationWizard
         isOpen={showEditModal}
         onClose={() => setShowEditModal(false)}
-        onSave={handleSaveCollection}
+        onSubmit={handleSaveCollection}
+        editingCollection={editingCollection}
+      />
+
+      {/* Modal de gestion des produits */}
+      <CollectionProductsModal
+        collection={managingProductsCollection}
+        isOpen={showProductsModal}
+        onClose={() => setShowProductsModal(false)}
+        onUpdate={refetch}
       />
     </div>
   )
