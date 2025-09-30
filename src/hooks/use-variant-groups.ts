@@ -3,49 +3,13 @@
 import { useState, useEffect, useCallback } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import { useToast } from '@/hooks/use-toast'
-
-export interface VariantGroup {
-  id: string
-  name: string
-  description?: string
-  base_product_id: string | null
-  item_group_id: string
-  variant_type: 'color' | 'size' | 'material' | 'pattern'
-  is_active: boolean
-  created_at: string
-  updated_at: string
-  // Relations
-  base_product?: {
-    id: string
-    name: string
-    sku: string
-    price_ht: number
-  }
-  products?: Array<{
-    id: string
-    name: string
-    sku: string
-    price_ht: number
-    variant_attributes?: any
-  }>
-  total_products?: number
-  active_products?: number
-}
-
-interface VariantGroupFilters {
-  search?: string
-  variant_type?: 'color' | 'size' | 'material' | 'pattern'
-  is_active?: boolean
-  has_products?: boolean
-}
-
-interface CreateVariantGroupData {
-  name: string
-  description?: string
-  base_product_id?: string
-  variant_type: 'color' | 'size' | 'material' | 'pattern'
-  is_active?: boolean
-}
+import type {
+  VariantGroup,
+  VariantProduct,
+  CreateVariantGroupData,
+  AddProductsToGroupData,
+  VariantGroupFilters
+} from '@/types/variant-groups'
 
 export function useVariantGroups(filters?: VariantGroupFilters) {
   const [variantGroups, setVariantGroups] = useState<VariantGroup[]>([])
@@ -54,83 +18,113 @@ export function useVariantGroups(filters?: VariantGroupFilters) {
   const { toast } = useToast()
   const supabase = createClient()
 
-  // Génération d'un item_group_id unique pour Google Merchant Center
-  const generateItemGroupId = (): string => {
-    const timestamp = Date.now().toString(36)
-    const random = Math.random().toString(36).substr(2, 5)
-    return `VG-${timestamp}-${random}`.toUpperCase()
-  }
-
+  // Récupérer tous les groupes de variantes
   const fetchVariantGroups = useCallback(async () => {
     setLoading(true)
     setError(null)
 
     try {
-      // Version simplifiée pour débogage - sans filtres pour éviter les loops
-      const { data: groupsData, error: fetchError } = await supabase
+      let query = supabase
         .from('variant_groups')
-        .select('*')
-        .limit(10)
+        .select(`
+          *,
+          subcategory:subcategories (
+            id,
+            name,
+            category:categories (
+              id,
+              name
+            )
+          )
+        `)
+        .order('created_at', { ascending: false })
+
+      // Appliquer les filtres
+      if (filters?.search) {
+        query = query.ilike('name', `%${filters.search}%`)
+      }
+      if (filters?.subcategory_id) {
+        query = query.eq('subcategory_id', filters.subcategory_id)
+      }
+      if (filters?.has_products) {
+        query = query.gt('product_count', 0)
+      }
+
+      const { data, error: fetchError } = await query
 
       if (fetchError) {
         setError(fetchError.message)
-        setVariantGroups([])
-      } else {
-        // Version simplifiée - juste les données de base
-        const simpleGroups = (groupsData || []).map(group => ({
-          ...group,
-          products: [],
-          total_products: 0,
-          active_products: 0
-        }))
-        setVariantGroups(simpleGroups)
+        console.error('Erreur fetch variant groups:', fetchError)
+        return
       }
+
+      // Pour chaque groupe, récupérer les produits associés
+      const groupsWithProducts = await Promise.all(
+        (data || []).map(async (group) => {
+          const { data: products } = await supabase
+            .from('products')
+            .select('id, name, sku, status, price_ht:cost_price, variant_position')
+            .eq('variant_group_id', group.id)
+            .order('variant_position', { ascending: true })
+
+          // Récupérer les images
+          const productsWithImages = await Promise.all(
+            (products || []).map(async (product) => {
+              const { data: images } = await supabase
+                .from('product_images')
+                .select('public_url, alt_text, display_order')
+                .eq('product_id', product.id)
+                .order('display_order', { ascending: true })
+                .limit(1)
+
+              return {
+                ...product,
+                image_url: images?.[0]?.public_url
+              }
+            })
+          )
+
+          return {
+            ...group,
+            products: productsWithImages,
+            product_count: productsWithImages.length
+          }
+        })
+      )
+
+      setVariantGroups(groupsWithProducts)
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Erreur inconnue')
-      setVariantGroups([])
+      console.error('Erreur:', err)
     } finally {
       setLoading(false)
     }
-  }, [supabase]) // Seulement supabase comme dépendance
+  }, [supabase, filters])
 
   useEffect(() => {
     fetchVariantGroups()
   }, [fetchVariantGroups])
 
   // Créer un nouveau groupe de variantes
-  const createVariantGroup = async (data: CreateVariantGroupData) => {
+  const createVariantGroup = async (data: CreateVariantGroupData): Promise<boolean> => {
     try {
-      // Validation Google Merchant Center
-      const supportedTypes = ['color', 'size', 'material', 'pattern']
-      if (!supportedTypes.includes(data.variant_type)) {
-        toast({
-          title: "Erreur",
-          description: "Type de variante non supporté par Google Merchant Center",
-          variant: "destructive"
-        })
-        return null
-      }
-
-      const { data: newGroup, error } = await supabase
+      const { data: newGroup, error: createError } = await supabase
         .from('variant_groups')
-        .insert([{
+        .insert({
           name: data.name,
-          description: data.description,
-          base_product_id: data.base_product_id,
-          item_group_id: generateItemGroupId(),
-          variant_type: data.variant_type,
-          is_active: data.is_active ?? true
-        }])
+          subcategory_id: data.subcategory_id,
+          product_count: 0
+        })
         .select()
         .single()
 
-      if (error) {
+      if (createError) {
         toast({
           title: "Erreur",
-          description: error.message,
+          description: createError.message,
           variant: "destructive"
         })
-        return null
+        return false
       }
 
       toast({
@@ -139,48 +133,201 @@ export function useVariantGroups(filters?: VariantGroupFilters) {
       })
 
       await fetchVariantGroups()
-      return newGroup
+      return true
     } catch (err) {
+      console.error('Erreur création groupe:', err)
       toast({
         title: "Erreur",
-        description: "Impossible de créer le groupe de variantes",
+        description: "Impossible de créer le groupe",
         variant: "destructive"
       })
-      return null
+      return false
     }
   }
 
-  // Mettre à jour un groupe de variantes
-  const updateVariantGroup = async (groupId: string, data: Partial<CreateVariantGroupData>) => {
+  // Ajouter des produits à un groupe
+  const addProductsToGroup = async (data: AddProductsToGroupData): Promise<boolean> => {
     try {
-      const { error } = await supabase
-        .from('variant_groups')
-        .update({
-          ...data,
-          updated_at: new Date().toISOString()
-        })
-        .eq('id', groupId)
+      // Vérifier que les produits ne sont pas déjà dans un groupe
+      const { data: existingProducts, error: checkError } = await supabase
+        .from('products')
+        .select('id, name, variant_group_id')
+        .in('id', data.product_ids)
+        .not('variant_group_id', 'is', null)
 
-      if (error) {
+      if (checkError) {
         toast({
           title: "Erreur",
-          description: error.message,
+          description: checkError.message,
           variant: "destructive"
         })
         return false
       }
 
+      if (existingProducts && existingProducts.length > 0) {
+        toast({
+          title: "Attention",
+          description: `${existingProducts.length} produit(s) déjà dans un groupe`,
+          variant: "destructive"
+        })
+        return false
+      }
+
+      // Récupérer le nombre actuel de produits dans le groupe
+      const { data: groupData, error: groupError } = await supabase
+        .from('variant_groups')
+        .select('product_count')
+        .eq('id', data.variant_group_id)
+        .single()
+
+      if (groupError) {
+        toast({
+          title: "Erreur",
+          description: groupError.message,
+          variant: "destructive"
+        })
+        return false
+      }
+
+      const currentCount = groupData?.product_count || 0
+
+      // Assigner les produits au groupe avec leur position
+      const updates = data.product_ids.map((productId, index) => ({
+        id: productId,
+        variant_group_id: data.variant_group_id,
+        variant_position: currentCount + index + 1
+      }))
+
+      // Mettre à jour les produits par batch
+      for (const update of updates) {
+        const { error: updateError } = await supabase
+          .from('products')
+          .update({
+            variant_group_id: update.variant_group_id,
+            variant_position: update.variant_position
+          })
+          .eq('id', update.id)
+
+        if (updateError) {
+          console.error('Erreur update produit:', updateError)
+          toast({
+            title: "Erreur",
+            description: `Impossible d'ajouter le produit`,
+            variant: "destructive"
+          })
+          return false
+        }
+      }
+
+      // Mettre à jour le compteur du groupe
+      const { error: countError } = await supabase
+        .from('variant_groups')
+        .update({
+          product_count: currentCount + data.product_ids.length,
+          updated_at: new Date().toISOString()
+        })
+        .eq('id', data.variant_group_id)
+
+      if (countError) {
+        console.error('Erreur update count:', countError)
+      }
+
       toast({
         title: "Succès",
-        description: "Groupe de variantes mis à jour"
+        description: `${data.product_ids.length} produit(s) ajouté(s) au groupe`
       })
 
       await fetchVariantGroups()
       return true
     } catch (err) {
+      console.error('Erreur ajout produits:', err)
       toast({
         title: "Erreur",
-        description: "Impossible de mettre à jour le groupe",
+        description: "Impossible d'ajouter les produits",
+        variant: "destructive"
+      })
+      return false
+    }
+  }
+
+  // Retirer un produit d'un groupe
+  const removeProductFromGroup = async (productId: string): Promise<boolean> => {
+    try {
+      // Récupérer le groupe actuel du produit
+      const { data: product, error: fetchError } = await supabase
+        .from('products')
+        .select('variant_group_id, variant_position')
+        .eq('id', productId)
+        .single()
+
+      if (fetchError || !product?.variant_group_id) {
+        toast({
+          title: "Erreur",
+          description: "Produit non trouvé ou pas dans un groupe",
+          variant: "destructive"
+        })
+        return false
+      }
+
+      // Retirer le produit du groupe
+      const { error: updateError } = await supabase
+        .from('products')
+        .update({
+          variant_group_id: null,
+          variant_position: null
+        })
+        .eq('id', productId)
+
+      if (updateError) {
+        toast({
+          title: "Erreur",
+          description: updateError.message,
+          variant: "destructive"
+        })
+        return false
+      }
+
+      // Réorganiser les positions des autres produits
+      const { data: remainingProducts } = await supabase
+        .from('products')
+        .select('id')
+        .eq('variant_group_id', product.variant_group_id)
+        .order('variant_position', { ascending: true })
+
+      if (remainingProducts) {
+        for (let i = 0; i < remainingProducts.length; i++) {
+          await supabase
+            .from('products')
+            .update({ variant_position: i + 1 })
+            .eq('id', remainingProducts[i].id)
+        }
+      }
+
+      // Mettre à jour le compteur du groupe
+      const { error: countError } = await supabase
+        .from('variant_groups')
+        .update({
+          product_count: remainingProducts?.length || 0,
+          updated_at: new Date().toISOString()
+        })
+        .eq('id', product.variant_group_id)
+
+      if (countError) {
+        console.error('Erreur update count:', countError)
+      }
+
+      toast({
+        title: "Succès",
+        description: "Produit retiré du groupe"
+      })
+
+      await fetchVariantGroups()
+      return true
+    } catch (err) {
+      console.error('Erreur retrait produit:', err)
+      toast({
+        title: "Erreur",
+        description: "Impossible de retirer le produit",
         variant: "destructive"
       })
       return false
@@ -188,28 +335,36 @@ export function useVariantGroups(filters?: VariantGroupFilters) {
   }
 
   // Supprimer un groupe de variantes
-  const deleteVariantGroup = async (groupId: string) => {
+  const deleteVariantGroup = async (groupId: string): Promise<boolean> => {
     try {
-      // Vérifier qu'il n'y a pas de produits associés
-      const group = variantGroups.find(g => g.id === groupId)
-      if (group && (group.total_products || 0) > 0) {
+      // D'abord retirer tous les produits du groupe
+      const { error: updateError } = await supabase
+        .from('products')
+        .update({
+          variant_group_id: null,
+          variant_position: null
+        })
+        .eq('variant_group_id', groupId)
+
+      if (updateError) {
         toast({
           title: "Erreur",
-          description: "Impossible de supprimer un groupe contenant des produits",
+          description: updateError.message,
           variant: "destructive"
         })
         return false
       }
 
-      const { error } = await supabase
+      // Supprimer le groupe
+      const { error: deleteError } = await supabase
         .from('variant_groups')
         .delete()
         .eq('id', groupId)
 
-      if (error) {
+      if (deleteError) {
         toast({
           title: "Erreur",
-          description: error.message,
+          description: deleteError.message,
           variant: "destructive"
         })
         return false
@@ -223,6 +378,7 @@ export function useVariantGroups(filters?: VariantGroupFilters) {
       await fetchVariantGroups()
       return true
     } catch (err) {
+      console.error('Erreur suppression groupe:', err)
       toast({
         title: "Erreur",
         description: "Impossible de supprimer le groupe",
@@ -232,62 +388,38 @@ export function useVariantGroups(filters?: VariantGroupFilters) {
     }
   }
 
-  // Obtenir un groupe spécifique avec ses produits
-  const getVariantGroupById = async (groupId: string): Promise<VariantGroup | null> => {
-    try {
-      const { data: groupData, error } = await supabase
-        .from('variant_groups')
-        .select(`
-          id,
-          name,
-          description,
-          base_product_id,
-          item_group_id,
-          variant_type,
-          is_active,
-          created_at,
-          updated_at,
-          base_product:base_product_id (
-            id,
-            name,
-            sku,
-            price_ht
-          )
-        `)
-        .eq('id', groupId)
-        .single()
+  // Récupérer les produits disponibles (pas encore dans un groupe)
+  const getAvailableProducts = async (subcategoryId?: string) => {
+    let query = supabase
+      .from('products')
+      .select('id, name, sku, status')
+      .is('variant_group_id', null)
+      .eq('status', 'active')
+      .order('name', { ascending: true })
 
-      if (error || !groupData) {
-        return null
-      }
-
-      // Récupérer les produits du groupe
-      const { data: productsData } = await supabase
-        .from('products')
-        .select('id, name, sku, price_ht, variant_attributes, status')
-        .eq('variant_group_id', groupId)
-        .is('archived_at', null)
-
-      return {
-        ...groupData,
-        products: productsData || [],
-        total_products: productsData?.length || 0,
-        active_products: productsData?.filter(p => p.status === 'in_stock').length || 0
-      }
-    } catch (err) {
-      console.error('Error fetching variant group:', err)
-      return null
+    if (subcategoryId) {
+      query = query.eq('subcategory_id', subcategoryId)
     }
+
+    const { data, error } = await query
+
+    if (error) {
+      console.error('Erreur fetch produits disponibles:', error)
+      return []
+    }
+
+    return data || []
   }
 
   return {
     variantGroups,
     loading,
     error,
-    refetch: fetchVariantGroups,
     createVariantGroup,
-    updateVariantGroup,
+    addProductsToGroup,
+    removeProductFromGroup,
     deleteVariantGroup,
-    getVariantGroupById
+    getAvailableProducts,
+    refetch: fetchVariantGroups
   }
 }

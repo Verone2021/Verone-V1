@@ -18,6 +18,40 @@ interface LocalCollectionFilters {
   visibility: 'all' | 'public' | 'private'
 }
 
+// Helper pour formater le style de collection
+const formatCollectionStyle = (style?: string): string => {
+  if (!style) return ''
+  const styleMap: Record<string, string> = {
+    'minimaliste': 'Minimaliste',
+    'contemporain': 'Contemporain',
+    'moderne': 'Moderne',
+    'scandinave': 'Scandinave',
+    'industriel': 'Industriel',
+    'classique': 'Classique',
+    'boheme': 'Bohème',
+    'art_deco': 'Art Déco'
+  }
+  return styleMap[style] || style
+}
+
+// Helper pour formater la catégorie de pièce
+const formatRoomCategory = (roomCategory?: string): string => {
+  if (!roomCategory) return ''
+  const roomMap: Record<string, string> = {
+    'chambre': 'Chambre',
+    'wc_salle_bain': 'Salle de bain',
+    'salon': 'Salon',
+    'cuisine': 'Cuisine',
+    'bureau': 'Bureau',
+    'salle_a_manger': 'Salle à manger',
+    'entree': 'Entrée',
+    'plusieurs_pieces': 'Plusieurs pièces',
+    'exterieur_balcon': 'Balcon',
+    'exterieur_jardin': 'Jardin'
+  }
+  return roomMap[roomCategory] || roomCategory
+}
+
 export default function CollectionsPage() {
   const { toast } = useToast()
   const router = useRouter()
@@ -220,13 +254,23 @@ export default function CollectionsPage() {
                     {collection.description}
                   </p>
                 )}
-                <div className="flex items-center space-x-2 mt-2">
+                <div className="flex items-center flex-wrap gap-2 mt-2">
                   <Badge variant={collection.is_active ? "default" : "secondary"}>
                     {collection.is_active ? "Actif" : "Inactif"}
                   </Badge>
                   <Badge variant={collection.visibility === 'public' ? "outline" : "secondary"}>
                     {collection.visibility === 'public' ? "Public" : "Privé"}
                   </Badge>
+                  {collection.style && (
+                    <Badge variant="outline" className="bg-purple-50 text-purple-700 border-purple-200">
+                      {formatCollectionStyle(collection.style)}
+                    </Badge>
+                  )}
+                  {collection.room_category && (
+                    <Badge variant="outline" className="bg-blue-50 text-blue-700 border-blue-200">
+                      {formatRoomCategory(collection.room_category)}
+                    </Badge>
+                  )}
                 </div>
               </div>
             </div>

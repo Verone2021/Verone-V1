@@ -1,5 +1,6 @@
 'use client'
 
+import { use } from 'react'
 import { useRouter } from 'next/navigation'
 import { ChevronLeft, Eye, Package, Calendar, Users } from 'lucide-react'
 import { Button } from '@/components/ui/button'
@@ -9,14 +10,15 @@ import { useCollection } from '@/hooks/use-collections'
 import Image from 'next/image'
 
 interface CollectionDetailPageProps {
-  params: {
+  params: Promise<{
     collectionId: string
-  }
+  }>
 }
 
 export default function CollectionDetailPage({ params }: CollectionDetailPageProps) {
   const router = useRouter()
-  const { collection, loading, error } = useCollection(params.collectionId)
+  const { collectionId } = use(params)
+  const { collection, loading, error } = useCollection(collectionId)
 
   if (loading) {
     return (

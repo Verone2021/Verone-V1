@@ -1,1 +1,0 @@
-scripts/config/sentry/sentry.edge.config.js

@@ -65,48 +65,6 @@
         "@playwright/mcp@latest",
         "--extension"
       ]
-    },
-    "orchestrator": {
-      "command": "npx",
-      "args": [
-        "-y",
-        "@anthropic/task-orchestrator@latest"
-      ],
-      "env": {
-        "ORCHESTRATOR_MODE": "central"
-      }
-    },
-    "security-scanner": {
-      "command": "npx",
-      "args": [
-        "-y",
-        "@anthropic/security-scanner@latest"
-      ],
-      "env": {
-        "SECURITY_LEVEL": "strict"
-      }
-    },
-    "filesystem-guardian": {
-      "command": "npx",
-      "args": [
-        "-y",
-        "@anthropic/filesystem-guardian@latest"
-      ],
-      "env": {
-        "PROTECTION_LEVEL": "yolo-safe",
-        "ALLOWED_PATHS": "/Users/romeodossantos/verone-back-office"
-      }
-    },
-    "docker-agent": {
-      "command": "npx",
-      "args": [
-        "-y",
-        "@docker/mcp-agent@latest"
-      ],
-      "env": {
-        "DOCKER_MODE": "isolation",
-        "NETWORK_ISOLATION": "true"
-      }
     }
   }
 }

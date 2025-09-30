@@ -476,10 +476,15 @@ export function useCollection(id: string) {
 
   useEffect(() => {
     const fetchCollection = async () => {
-      if (!id) return
+      if (!id) {
+        setLoading(false)
+        return
+      }
 
+      // 🔄 État de chargement unifié - un seul setState
       setLoading(true)
       setError(null)
+      setCollection(null)
 
       try {
         const { data, error: fetchError } = await supabase
@@ -491,7 +496,10 @@ export function useCollection(id: string) {
           .single()
 
         if (fetchError) {
+          // 🚨 État d'erreur unifié - un seul setState
+          setLoading(false)
           setError(fetchError.message)
+          setCollection(null)
           return
         }
 
@@ -512,23 +520,32 @@ export function useCollection(id: string) {
           .eq('products.product_images.is_primary', true)
           .order('position', { ascending: true })
 
-        setCollection({
+        // ✅ État de succès unifié - un seul setState groupé
+        const collectionWithProducts = {
           ...data,
           products: products?.map(cp => ({
             id: cp.products.id,
             name: cp.products.name,
             image_url: cp.products.product_images?.[0]?.public_url
           })).filter(Boolean) || []
-        })
-      } catch (err) {
-        setError(err instanceof Error ? err.message : 'Erreur inconnue')
-      } finally {
+        }
+
+        // 🎯 Batch setState pour éviter multiples re-renders
+        setCollection(collectionWithProducts)
         setLoading(false)
+        setError(null)
+
+      } catch (err) {
+        // 🚨 État d'erreur catch unifié - un seul setState
+        const errorMessage = err instanceof Error ? err.message : 'Erreur inconnue'
+        setLoading(false)
+        setError(errorMessage)
+        setCollection(null)
       }
     }
 
     fetchCollection()
-  }, [id])
+  }, [id, supabase])
 
   return { collection, loading, error }
 }

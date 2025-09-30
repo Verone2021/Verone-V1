@@ -1,100 +1,144 @@
 "use client"
 
-import { useState } from 'react'
+import { useState, useMemo, useCallback } from 'react'
 import { useRouter } from 'next/navigation'
 import {
   Search,
-  Filter,
   Plus,
+  Edit3,
+  Trash2,
   Eye,
-  Edit,
+  EyeOff,
+  ExternalLink,
   Package,
-  Layers,
   Palette,
   Ruler,
-  MoreHorizontal,
-  AlertCircle,
-  Users,
-  ShoppingCart,
-  Settings,
-  ChevronRight,
+  Layers,
   TreePine,
   FolderOpen,
   Tags
 } from 'lucide-react'
+import { Button } from '../../../components/ui/button'
+import { Badge } from '../../../components/ui/badge'
+import { cn } from '../../../lib/utils'
 import { useVariantGroups } from '@/hooks/use-variant-groups'
-import { useVariantProducts } from '@/hooks/use-variant-products'
 import { useFamilies } from '@/hooks/use-families'
 import { useCategories } from '@/hooks/use-categories'
 import { useSubcategories } from '@/hooks/use-subcategories'
 import { VariantGroupForm } from '@/components/forms/VariantGroupForm'
-import { ProductSelector } from '@/components/forms/ProductSelector'
-import { QuickVariantForm } from '@/components/forms/QuickVariantForm'
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
-import { Button } from '@/components/ui/button'
-import { Badge } from '@/components/ui/badge'
-import { Input } from '@/components/ui/input'
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select'
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuLabel,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from '@/components/ui/dropdown-menu'
+import { useToast } from '@/hooks/use-toast'
 
-export default function CatalogueVariantesPage() {
+// Interface filtres variantes
+interface LocalVariantFilters {
+  search: string
+  status: 'all' | 'active' | 'inactive'
+  type: 'all' | 'color' | 'size' | 'material' | 'pattern'
+  familyId: string
+  categoryId: string
+  subcategoryId: string
+}
+
+// Helper pour formater le type de variante
+const formatVariantType = (type?: string): string => {
+  if (!type) return ''
+  const typeMap: Record<string, string> = {
+    'color': 'Couleur',
+    'size': 'Taille',
+    'material': 'Matériau',
+    'pattern': 'Motif'
+  }
+  return typeMap[type] || type
+}
+
+export default function VariantesPage() {
+  const { toast } = useToast()
   const router = useRouter()
-  const [searchTerm, setSearchTerm] = useState('')
-  const [statusFilter, setStatusFilter] = useState('all')
-  const [typeFilter, setTypeFilter] = useState('all')
-  const [selectedFamilyId, setSelectedFamilyId] = useState<string>('all')
-  const [selectedCategoryId, setSelectedCategoryId] = useState<string>('all')
-  const [selectedSubcategoryId, setSelectedSubcategoryId] = useState<string>('all')
 
-  // Modals state
-  const [variantGroupFormOpen, setVariantGroupFormOpen] = useState(false)
-  const [productSelectorOpen, setProductSelectorOpen] = useState(false)
-  const [quickVariantFormOpen, setQuickVariantFormOpen] = useState(false)
-  const [selectedGroup, setSelectedGroup] = useState<any>(null)
-  const [formMode, setFormMode] = useState<'create' | 'edit'>('create')
-
-  // Hooks pour les données réelles
-  const { variantGroups, loading, error, refetch, createVariantGroup, updateVariantGroup, deleteVariantGroup } = useVariantGroups({
-    search: searchTerm || undefined,
-    variant_type: typeFilter === 'all' ? undefined : (typeFilter as 'color' | 'size' | 'material' | 'pattern'),
-    is_active: statusFilter === 'all' ? undefined : statusFilter === 'active'
+  // États pour la gestion des filtres et de l'interface
+  const [filters, setFilters] = useState<LocalVariantFilters>({
+    search: "",
+    status: 'all',
+    type: 'all',
+    familyId: 'all',
+    categoryId: 'all',
+    subcategoryId: 'all'
   })
+  const [selectedGroups, setSelectedGroups] = useState<string[]>([])
+  const [editingGroup, setEditingGroup] = useState<any>(null)
+  const [showEditModal, setShowEditModal] = useState(false)
 
-  const { removeProductFromVariantGroup } = useVariantProducts()
+  // Hooks pour les données
+  const {
+    variantGroups,
+    loading,
+    error,
+    refetch,
+    createVariantGroup,
+    updateVariantGroup,
+    deleteVariantGroup
+  } = useVariantGroups({
+    search: filters.search || undefined,
+    variant_type: filters.type === 'all' ? undefined : filters.type as any,
+    is_active: filters.status === 'all' ? undefined : filters.status === 'active'
+  })
 
   // Hooks pour l'arborescence hiérarchique
   const { families, loading: familiesLoading } = useFamilies()
   const { allCategories, getCategoriesByFamily } = useCategories()
   const { getSubcategoriesByCategory } = useSubcategories()
 
-  // Fonction pour obtenir le badge de statut
-  const getStatusBadge = (group: any) => {
-    if (!group.total_products || group.total_products === 0) {
-      return <Badge variant="outline" className="border-gray-300 text-gray-600">Vide</Badge>
-    }
-    if (group.active_products === group.total_products) {
-      return <Badge variant="outline" className="border-green-300 text-green-600">Toutes actives</Badge>
-    } else if (group.active_products > 0) {
-      return <Badge variant="outline" className="border-orange-300 text-orange-600">Partielles</Badge>
-    } else {
-      return <Badge variant="outline" className="border-red-300 text-red-600">Inactives</Badge>
-    }
+  // Filtres calculés
+  const filteredCategories = useMemo(() => {
+    if (filters.familyId === 'all') return []
+    return getCategoriesByFamily(filters.familyId)
+  }, [filters.familyId, getCategoriesByFamily])
+
+  const filteredSubcategories = useMemo(() => {
+    if (filters.categoryId === 'all') return []
+    // Note: getSubcategoriesByCategory est async, on pourrait améliorer ça
+    return []
+  }, [filters.categoryId])
+
+  // Fonctions utilitaires
+  const toggleGroupSelection = (groupId: string) => {
+    setSelectedGroups(prev =>
+      prev.includes(groupId)
+        ? prev.filter(id => id !== groupId)
+        : [...prev, groupId]
+    )
   }
 
-  // Fonction pour obtenir l'icône du type de variante
+  const formatDate = (dateString: string) => {
+    return new Date(dateString).toLocaleDateString('fr-FR', {
+      day: '2-digit',
+      month: '2-digit',
+      year: 'numeric'
+    })
+  }
+
+  const handleEditGroup = useCallback((group: any) => {
+    setEditingGroup(group)
+    setShowEditModal(true)
+  }, [])
+
+  const handleCreateGroup = useCallback(() => {
+    setEditingGroup(null)
+    setShowEditModal(true)
+  }, [])
+
+  const handleDeleteGroup = useCallback(async (groupId: string) => {
+    if (!confirm('Êtes-vous sûr de vouloir supprimer ce groupe de variantes ?')) return
+
+    const result = await deleteVariantGroup(groupId)
+    if (result) {
+      toast({
+        title: "Groupe supprimé",
+        description: "Le groupe de variantes a été supprimé avec succès",
+      })
+    }
+  }, [deleteVariantGroup, toast])
+
+  // Obtenir l'icône du type de variante
   const getVariantTypeIcon = (type: string) => {
     switch (type) {
       case 'color':
@@ -110,501 +154,332 @@ export default function CatalogueVariantesPage() {
     }
   }
 
-  // Fonction pour formater les dates
-  const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleDateString('fr-FR')
-  }
+  // Composant Groupe Card
+  const renderGroupCard = (group: any) => {
+    const isSelected = selectedGroups.includes(group.id)
 
-  // Fonctions pour gérer la hiérarchie
-  const getFilteredCategories = () => {
-    if (selectedFamilyId === 'all') return []
-    return getCategoriesByFamily(selectedFamilyId)
-  }
-
-  const getFilteredSubcategories = async () => {
-    if (selectedCategoryId === 'all') return []
-    try {
-      return await getSubcategoriesByCategory(selectedCategoryId)
-    } catch (error) {
-      console.error('Erreur lors du chargement des sous-catégories:', error)
-      return []
-    }
-  }
-
-  // Fonction pour construire le fil d'Ariane hiérarchique
-  const buildBreadcrumb = () => {
-    const breadcrumb = []
-
-    if (selectedFamilyId !== 'all') {
-      const family = families.find(f => f.id === selectedFamilyId)
-      if (family) {
-        breadcrumb.push({
-          name: family.name,
-          icon: TreePine,
-          level: 'famille'
-        })
-      }
-    }
-
-    if (selectedCategoryId !== 'all') {
-      const category = allCategories.find(c => c.id === selectedCategoryId)
-      if (category) {
-        breadcrumb.push({
-          name: category.name,
-          icon: FolderOpen,
-          level: 'catégorie'
-        })
-      }
-    }
-
-    if (selectedSubcategoryId !== 'all') {
-      // Récupération asynchrone - on affiche seulement si disponible
-      breadcrumb.push({
-        name: 'Sous-catégorie sélectionnée',
-        icon: Tags,
-        level: 'sous-catégorie'
-      })
-    }
-
-    return breadcrumb
-  }
-
-  // Handlers pour les actions
-  const handleCreateGroup = () => {
-    setSelectedGroup(null)
-    setFormMode('create')
-    setVariantGroupFormOpen(true)
-  }
-
-  const handleEditGroup = (group: any) => {
-    setSelectedGroup(group)
-    setFormMode('edit')
-    setVariantGroupFormOpen(true)
-  }
-
-  const handleAddExistingProducts = (group: any) => {
-    setSelectedGroup(group)
-    setProductSelectorOpen(true)
-  }
-
-  const handleCreateQuickVariant = (group: any) => {
-    setSelectedGroup(group)
-    setQuickVariantFormOpen(true)
-  }
-
-  const handleDeleteGroup = async (groupId: string) => {
-    if (confirm('Êtes-vous sûr de vouloir supprimer ce groupe de variantes ?')) {
-      await deleteVariantGroup(groupId)
-    }
-  }
-
-  const handleRemoveProduct = async (productId: string) => {
-    if (confirm('Êtes-vous sûr de vouloir retirer ce produit du groupe ?')) {
-      await removeProductFromVariantGroup(productId)
-      refetch()
-    }
-  }
-
-  const handleFormSubmit = (group: any) => {
-    console.log('Groupe soumis:', group)
-    refetch()
-  }
-
-  const handleProductsAdded = (count: number) => {
-    console.log(`${count} produits ajoutés`)
-    refetch()
-  }
-
-  const handleProductCreated = (product: any) => {
-    console.log('Produit créé:', product)
-    refetch()
-  }
-
-  return (
-    <div className="min-h-screen bg-gray-50">
-      {/* Header */}
-      <div className="bg-white border-b border-gray-200">
-        <div className="container mx-auto px-4 py-6">
-          <div className="flex items-center justify-between">
-            <div>
-              <h1 className="text-3xl font-bold text-black">Gestion des Variantes</h1>
-              <p className="text-gray-600 mt-1">Organisation des variantes de produits (couleurs, tailles, matériaux)</p>
-              <p className="text-sm text-blue-600 mt-1">Compatible Google Merchant Center 2024</p>
+    return (
+      <div className={cn(
+        "bg-white rounded-lg border border-gray-200 overflow-hidden hover:shadow-md transition-shadow",
+        isSelected && "ring-2 ring-black"
+      )}>
+        {/* En-tête avec sélection */}
+        <div className="p-4 border-b border-gray-200">
+          <div className="flex items-start justify-between">
+            <div className="flex items-start space-x-3 flex-1">
+              <input
+                type="checkbox"
+                checked={isSelected}
+                onChange={() => toggleGroupSelection(group.id)}
+                className="mt-1 h-4 w-4 rounded border-gray-300"
+              />
+              <div className="flex-1 min-w-0">
+                <div className="flex items-center gap-2">
+                  {getVariantTypeIcon(group.variant_type)}
+                  <h3 className="font-medium text-gray-900 truncate">
+                    {group.name}
+                  </h3>
+                </div>
+                {group.subcategory && (
+                  <p className="text-sm text-gray-600 mt-1">
+                    {group.subcategory.category?.name} → {group.subcategory.name}
+                  </p>
+                )}
+                <div className="flex items-center flex-wrap gap-2 mt-2">
+                  <Badge variant="outline" className="bg-purple-50 text-purple-700 border-purple-200">
+                    {formatVariantType(group.variant_type)}
+                  </Badge>
+                  {group.dimensions_length && (
+                    <Badge variant="outline" className="bg-blue-50 text-blue-700 border-blue-200">
+                      {group.dimensions_length}×{group.dimensions_width}×{group.dimensions_height} {group.dimensions_unit}
+                    </Badge>
+                  )}
+                </div>
+              </div>
             </div>
-            <div className="flex items-center space-x-3">
+
+            {/* Actions rapides */}
+            <div className="flex items-center space-x-2 ml-2">
               <Button
-                variant="outline"
-                onClick={() => router.push('/catalogue')}
-                className="border-black text-black hover:bg-black hover:text-white"
+                variant="ghost"
+                size="sm"
+                onClick={() => router.push(`/catalogue/variantes/${group.id}`)}
+                className="text-blue-600"
+                title="Voir détail"
               >
-                Retour Catalogue
+                <ExternalLink className="h-4 w-4" />
               </Button>
               <Button
-                className="bg-black hover:bg-gray-800 text-white"
-                onClick={handleCreateGroup}
+                variant="ghost"
+                size="sm"
+                onClick={() => handleEditGroup(group)}
+                title="Modifier"
               >
-                <Plus className="h-4 w-4 mr-2" />
-                Nouveau Groupe
+                <Edit3 className="h-4 w-4" />
+              </Button>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => handleDeleteGroup(group.id)}
+                className="text-red-600"
+                title="Supprimer"
+              >
+                <Trash2 className="h-4 w-4" />
               </Button>
             </div>
           </div>
         </div>
+
+        {/* Aperçu des produits */}
+        <div className="p-4">
+          <div className="flex items-center justify-between text-sm text-gray-600 mb-3">
+            <span>{group.product_count || 0} produit{(group.product_count || 0) !== 1 ? 's' : ''}</span>
+            <span>
+              Créé le {formatDate(group.created_at)}
+            </span>
+          </div>
+
+          {/* Mini-galerie produits */}
+          {group.products && group.products.length > 0 && (
+            <div className="flex space-x-2 overflow-x-auto">
+              {group.products.slice(0, 4).map((product: any) => (
+                <div key={product.id} className="flex-shrink-0 w-20 h-20 rounded bg-gray-100 overflow-hidden">
+                  {product.image_url ? (
+                    <img
+                      src={product.image_url}
+                      alt={product.name}
+                      className="w-full h-full object-cover"
+                    />
+                  ) : (
+                    <div className="w-full h-full flex items-center justify-center">
+                      <Package className="h-8 w-8 text-gray-400" />
+                    </div>
+                  )}
+                </div>
+              ))}
+              {(group.product_count || 0) > 4 && (
+                <div className="flex-shrink-0 w-20 h-20 rounded bg-gray-100 flex items-center justify-center text-xs text-gray-500">
+                  +{(group.product_count || 0) - 4}
+                </div>
+              )}
+            </div>
+          )}
+        </div>
+      </div>
+    )
+  }
+
+  // Statistiques
+  const stats = useMemo(() => ({
+    total: variantGroups.length,
+    totalProducts: variantGroups.reduce((sum, g) => sum + (g.product_count || 0), 0),
+    types: new Set(variantGroups.map(g => g.variant_type)).size,
+  }), [variantGroups])
+
+  return (
+    <div className="space-y-6">
+      {/* En-tête */}
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="text-2xl font-light text-black">Gestion des Variantes</h1>
+          <p className="text-gray-600 mt-1">
+            Organisation des variantes de produits (couleurs, tailles, matériaux)
+          </p>
+          <p className="text-sm text-blue-600 mt-1">Compatible Google Merchant Center 2024</p>
+        </div>
+        <div>
+          <Button
+            onClick={handleCreateGroup}
+            className="bg-black text-white hover:bg-gray-800"
+          >
+            <Plus className="h-4 w-4 mr-2" />
+            Nouveau groupe
+          </Button>
+        </div>
       </div>
 
-      <div className="container mx-auto px-4 py-8">
-        {/* Filtres et recherche */}
-        <Card className="border-black mb-6">
-          <CardHeader>
-            <CardTitle className="text-black">Filtres et Recherche</CardTitle>
-            <CardDescription>Rechercher par groupe de variantes et catégorisation des produits</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-4">
-              {/* Première ligne - Recherche et Type de variante */}
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                <div className="relative">
-                  <Search className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
-                  <Input
-                    placeholder="Rechercher un groupe..."
-                    value={searchTerm}
-                    onChange={(e) => setSearchTerm(e.target.value)}
-                    className="pl-10 border-black focus:ring-black"
-                  />
-                </div>
+      {/* Barre de recherche et filtres */}
+      <div className="space-y-4">
+        <div className="flex flex-col space-y-4 sm:flex-row sm:space-y-0 sm:space-x-4">
+          <div className="flex-1 relative">
+            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
+            <input
+              type="text"
+              placeholder="Rechercher un groupe..."
+              value={filters.search}
+              onChange={(e) => setFilters(prev => ({ ...prev, search: e.target.value }))}
+              className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-black focus:border-transparent"
+            />
+          </div>
 
-                <Select value={statusFilter} onValueChange={setStatusFilter}>
-                  <SelectTrigger className="border-black">
-                    <SelectValue placeholder="Statut" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="all">Tous les statuts</SelectItem>
-                    <SelectItem value="active">Actifs</SelectItem>
-                    <SelectItem value="inactive">Inactifs</SelectItem>
-                  </SelectContent>
-                </Select>
+          <div className="flex space-x-2">
+            <select
+              value={filters.status}
+              onChange={(e) => setFilters(prev => ({ ...prev, status: e.target.value as any }))}
+              className="border border-gray-300 rounded-md px-3 py-2"
+            >
+              <option value="all">Tous les statuts</option>
+              <option value="active">Actifs</option>
+              <option value="inactive">Inactifs</option>
+            </select>
 
-                <Select value={typeFilter} onValueChange={setTypeFilter}>
-                  <SelectTrigger className="border-black">
-                    <SelectValue placeholder="Type variante" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="all">Tous les types</SelectItem>
-                    <SelectItem value="color">Couleur</SelectItem>
-                    <SelectItem value="size">Taille</SelectItem>
-                    <SelectItem value="material">Matériau</SelectItem>
-                    <SelectItem value="pattern">Motif</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-
-              {/* Deuxième ligne - Hiérarchie produits */}
-              <div className="border-t border-gray-200 pt-4">
-                <h4 className="text-sm font-medium text-gray-700 mb-3 flex items-center">
-                  <TreePine className="h-4 w-4 mr-2" />
-                  Filtrer par catégorisation des produits
-                </h4>
-                <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-                  <Select
-                    value={selectedFamilyId}
-                    onValueChange={(value) => {
-                      setSelectedFamilyId(value)
-                      setSelectedCategoryId('all')
-                      setSelectedSubcategoryId('all')
-                    }}
-                  >
-                    <SelectTrigger className="border-gray-300">
-                      <TreePine className="h-4 w-4 mr-2 text-green-600" />
-                      <SelectValue placeholder="Famille" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="all">Toutes les familles</SelectItem>
-                      {families.map((family) => (
-                        <SelectItem key={family.id} value={family.id}>
-                          {family.name}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-
-                  <Select
-                    value={selectedCategoryId}
-                    onValueChange={(value) => {
-                      setSelectedCategoryId(value)
-                      setSelectedSubcategoryId('all')
-                    }}
-                    disabled={selectedFamilyId === 'all'}
-                  >
-                    <SelectTrigger className="border-gray-300">
-                      <FolderOpen className="h-4 w-4 mr-2 text-blue-600" />
-                      <SelectValue placeholder="Catégorie" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="all">Toutes les catégories</SelectItem>
-                      {getFilteredCategories().map((category) => (
-                        <SelectItem key={category.id} value={category.id}>
-                          {category.name}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-
-                  <Select
-                    value={selectedSubcategoryId}
-                    onValueChange={setSelectedSubcategoryId}
-                    disabled={selectedCategoryId === 'all'}
-                  >
-                    <SelectTrigger className="border-gray-300">
-                      <Tags className="h-4 w-4 mr-2 text-purple-600" />
-                      <SelectValue placeholder="Sous-catégorie" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="all">Toutes les sous-catégories</SelectItem>
-                      {/* Elles seront chargées dynamiquement selon la catégorie */}
-                    </SelectContent>
-                  </Select>
-
-                  <Button
-                    variant="outline"
-                    className="border-black text-black hover:bg-black hover:text-white"
-                    onClick={refetch}
-                  >
-                    <Filter className="h-4 w-4 mr-2" />
-                    Actualiser
-                  </Button>
-                </div>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-
-        {/* Statistiques rapides */}
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
-          <Card className="border-black">
-            <CardContent className="p-4">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm text-gray-600">Groupes Total</p>
-                  <p className="text-2xl font-bold text-black">{variantGroups.length}</p>
-                </div>
-                <Package className="h-8 w-8 text-black" />
-              </div>
-            </CardContent>
-          </Card>
-
-          <Card className="border-black">
-            <CardContent className="p-4">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm text-gray-600">Produits Totaux</p>
-                  <p className="text-2xl font-bold text-blue-600">
-                    {variantGroups.reduce((sum, group) => sum + (group.total_products || 0), 0)}
-                  </p>
-                </div>
-                <Layers className="h-8 w-8 text-blue-600" />
-              </div>
-            </CardContent>
-          </Card>
-
-          <Card className="border-black">
-            <CardContent className="p-4">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm text-gray-600">Produits Actifs</p>
-                  <p className="text-2xl font-bold text-green-600">
-                    {variantGroups.reduce((sum, group) => sum + (group.active_products || 0), 0)}
-                  </p>
-                </div>
-                <Palette className="h-8 w-8 text-green-600" />
-              </div>
-            </CardContent>
-          </Card>
-
-          <Card className="border-black">
-            <CardContent className="p-4">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm text-gray-600">Types Différents</p>
-                  <p className="text-2xl font-bold text-purple-600">
-                    {new Set(variantGroups.map(g => g.variant_type)).size}
-                  </p>
-                </div>
-                <Ruler className="h-8 w-8 text-purple-600" />
-              </div>
-            </CardContent>
-          </Card>
+            <select
+              value={filters.type}
+              onChange={(e) => setFilters(prev => ({ ...prev, type: e.target.value as any }))}
+              className="border border-gray-300 rounded-md px-3 py-2"
+            >
+              <option value="all">Tous les types</option>
+              <option value="color">Couleur</option>
+              <option value="size">Taille</option>
+              <option value="material">Matériau</option>
+              <option value="pattern">Motif</option>
+            </select>
+          </div>
         </div>
 
-        {/* Liste des groupes de variantes */}
-        <Card className="border-black">
-          <CardHeader>
-            <CardTitle className="text-black">Groupes de Variantes ({variantGroups.length})</CardTitle>
-            <CardDescription>Gestion centralisée des groupes de variantes de produits</CardDescription>
-          </CardHeader>
-          <CardContent>
-            {loading && (
-              <div className="text-center py-8">
-                <Package className="h-12 w-12 text-gray-400 mx-auto mb-4 animate-spin" />
-                <p className="text-gray-600">Chargement des groupes de variantes...</p>
-              </div>
-            )}
+        {/* Filtres hiérarchiques */}
+        <div className="border-t border-gray-200 pt-4">
+          <h4 className="text-sm font-medium text-gray-700 mb-3 flex items-center">
+            <TreePine className="h-4 w-4 mr-2" />
+            Filtrer par catégorisation des produits
+          </h4>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <select
+              value={filters.familyId}
+              onChange={(e) => {
+                setFilters(prev => ({
+                  ...prev,
+                  familyId: e.target.value,
+                  categoryId: 'all',
+                  subcategoryId: 'all'
+                }))
+              }}
+              className="border border-gray-300 rounded-md px-3 py-2"
+            >
+              <option value="all">Toutes les familles</option>
+              {families.map((family) => (
+                <option key={family.id} value={family.id}>
+                  {family.name}
+                </option>
+              ))}
+            </select>
 
-            {error && (
-              <div className="text-center py-8">
-                <AlertCircle className="h-12 w-12 text-red-400 mx-auto mb-4" />
-                <p className="text-red-600">Erreur: {error}</p>
-                <Button onClick={refetch} className="mt-4">Réessayer</Button>
-              </div>
-            )}
+            <select
+              value={filters.categoryId}
+              onChange={(e) => {
+                setFilters(prev => ({
+                  ...prev,
+                  categoryId: e.target.value,
+                  subcategoryId: 'all'
+                }))
+              }}
+              disabled={filters.familyId === 'all'}
+              className="border border-gray-300 rounded-md px-3 py-2 disabled:bg-gray-100"
+            >
+              <option value="all">Toutes les catégories</option>
+              {filteredCategories.map((category) => (
+                <option key={category.id} value={category.id}>
+                  {category.name}
+                </option>
+              ))}
+            </select>
 
-            {!loading && !error && (
-              <div className="space-y-4">
-                {variantGroups.map((group) => (
-                  <div key={group.id} className="border border-gray-200 rounded-lg p-4 hover:bg-gray-50 transition-colors">
-                    <div className="flex items-start justify-between">
-                      <div className="flex-1">
-                        <div className="flex items-center space-x-3 mb-3">
-                          <h3 className="font-semibold text-black text-lg">{group.name}</h3>
-                          {getStatusBadge(group)}
-                          <Badge variant="outline" className="text-xs bg-blue-50 border-blue-200 text-blue-700">
-                            {group.item_group_id}
-                          </Badge>
-                        </div>
-
-                        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
-                          <div className="flex items-center space-x-2">
-                            {getVariantTypeIcon(group.variant_type)}
-                            <span className="text-gray-600 capitalize">
-                              <strong>Type:</strong> {group.variant_type}
-                            </span>
-                          </div>
-
-                          <div className="flex items-center space-x-2">
-                            <Users className="h-4 w-4 text-gray-400" />
-                            <span className="text-gray-600">
-                              <strong>Produits:</strong> {group.active_products || 0}/{group.total_products || 0}
-                            </span>
-                          </div>
-
-                          <div className="flex items-center space-x-2">
-                            <Package className="h-4 w-4 text-gray-400" />
-                            <span className="text-gray-600">
-                              <strong>Mis à jour:</strong> {formatDate(group.updated_at)}
-                            </span>
-                          </div>
-                        </div>
-
-                        {/* Affichage du produit de base */}
-                        {group.base_product && (
-                          <div className="mb-3 p-2 bg-blue-50 rounded">
-                            <p className="text-sm font-medium text-blue-900">
-                              Produit de base: {group.base_product.name} (SKU: {group.base_product.sku})
-                            </p>
-                          </div>
-                        )}
-
-                        {/* Description */}
-                        {group.description && (
-                          <div className="mb-3">
-                            <p className="text-sm text-gray-600">{group.description}</p>
-                          </div>
-                        )}
-                      </div>
-
-                      <div className="flex items-center space-x-2 ml-4">
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          className="border-gray-300"
-                          onClick={() => handleAddExistingProducts(group)}
-                        >
-                          <Users className="h-4 w-4" />
-                        </Button>
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          className="border-gray-300"
-                          onClick={() => handleEditGroup(group)}
-                        >
-                          <Settings className="h-4 w-4" />
-                        </Button>
-                        <DropdownMenu>
-                          <DropdownMenuTrigger asChild>
-                            <Button variant="outline" size="sm" className="border-gray-300">
-                              <MoreHorizontal className="h-4 w-4" />
-                            </Button>
-                          </DropdownMenuTrigger>
-                          <DropdownMenuContent align="end">
-                            <DropdownMenuLabel>Actions</DropdownMenuLabel>
-                            <DropdownMenuItem onClick={() => handleCreateQuickVariant(group)}>
-                              <Plus className="h-4 w-4 mr-2" />
-                              Créer variante rapide
-                            </DropdownMenuItem>
-                            <DropdownMenuItem onClick={() => handleAddExistingProducts(group)}>
-                              <Users className="h-4 w-4 mr-2" />
-                              Ajouter produits existants
-                            </DropdownMenuItem>
-                            <DropdownMenuSeparator />
-                            <DropdownMenuItem onClick={() => handleEditGroup(group)}>
-                              <Edit className="h-4 w-4 mr-2" />
-                              Modifier le groupe
-                            </DropdownMenuItem>
-                            <DropdownMenuItem
-                              onClick={() => handleDeleteGroup(group.id)}
-                              className="text-red-600"
-                            >
-                              <Package className="h-4 w-4 mr-2" />
-                              Supprimer le groupe
-                            </DropdownMenuItem>
-                          </DropdownMenuContent>
-                        </DropdownMenu>
-                      </div>
-                    </div>
-                  </div>
-                ))}
-
-                {variantGroups.length === 0 && (
-                  <div className="text-center py-8">
-                    <Layers className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-                    <p className="text-gray-600">Aucun groupe de variantes trouvé</p>
-                    <p className="text-sm text-gray-500 mb-4">Créez votre premier groupe de variantes</p>
-                    <Button onClick={handleCreateGroup} className="bg-black hover:bg-gray-800 text-white">
-                      <Plus className="h-4 w-4 mr-2" />
-                      Créer un groupe
-                    </Button>
-                  </div>
-                )}
-              </div>
-            )}
-          </CardContent>
-        </Card>
+            <select
+              value={filters.subcategoryId}
+              onChange={(e) => setFilters(prev => ({ ...prev, subcategoryId: e.target.value }))}
+              disabled={filters.categoryId === 'all'}
+              className="border border-gray-300 rounded-md px-3 py-2 disabled:bg-gray-100"
+            >
+              <option value="all">Toutes les sous-catégories</option>
+              {/* Les sous-catégories seront chargées dynamiquement */}
+            </select>
+          </div>
+        </div>
       </div>
 
-      {/* Modals */}
-      <VariantGroupForm
-        isOpen={variantGroupFormOpen}
-        onClose={() => setVariantGroupFormOpen(false)}
-        onSubmit={handleFormSubmit}
-        initialData={selectedGroup}
-        mode={formMode}
-      />
+      {/* Actions groupées */}
+      {selectedGroups.length > 0 && (
+        <div className="flex items-center space-x-2 p-4 bg-blue-50 rounded-md">
+          <span className="text-sm text-gray-700">
+            {selectedGroups.length} groupe{selectedGroups.length !== 1 ? 's' : ''} sélectionné{selectedGroups.length !== 1 ? 's' : ''}
+          </span>
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => {
+              // TODO: Implémenter actions en lot
+            }}
+            className="text-red-600 hover:text-red-700"
+          >
+            Supprimer
+          </Button>
+        </div>
+      )}
 
-      <ProductSelector
-        isOpen={productSelectorOpen}
-        onClose={() => setProductSelectorOpen(false)}
-        variantGroupId={selectedGroup?.id || ''}
-        groupName={selectedGroup?.name || ''}
-        onProductsAdded={handleProductsAdded}
-      />
+      {/* Grille des groupes */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        {loading ? (
+          Array.from({ length: 6 }).map((_, i) => (
+            <div key={i} className="bg-white rounded-lg border border-gray-200 animate-pulse">
+              <div className="p-4 border-b border-gray-200">
+                <div className="h-6 bg-gray-200 rounded w-3/4 mb-2"></div>
+                <div className="h-4 bg-gray-200 rounded w-1/2"></div>
+              </div>
+              <div className="p-4">
+                <div className="h-4 bg-gray-200 rounded w-full mb-2"></div>
+                <div className="h-20 bg-gray-200 rounded"></div>
+              </div>
+            </div>
+          ))
+        ) : error ? (
+          <div className="col-span-full p-8 text-center text-red-500 bg-white rounded-lg border border-red-200">
+            Erreur lors du chargement des groupes: {error}
+          </div>
+        ) : variantGroups.length > 0 ? (
+          variantGroups.map(group => (
+            <div key={group.id}>{renderGroupCard(group)}</div>
+          ))
+        ) : (
+          <div className="col-span-full p-8 text-center text-gray-500 bg-white rounded-lg border border-gray-200">
+            Aucun groupe de variantes trouvé pour les critères sélectionnés
+          </div>
+        )}
+      </div>
 
-      <QuickVariantForm
-        isOpen={quickVariantFormOpen}
-        onClose={() => setQuickVariantFormOpen(false)}
-        variantGroupId={selectedGroup?.id || ''}
-        baseProductId={selectedGroup?.base_product_id || ''}
-        groupName={selectedGroup?.name || ''}
-        variantType={selectedGroup?.variant_type || 'color'}
-        onProductCreated={handleProductCreated}
-      />
+      {/* Statistiques */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <div className="bg-white p-4 rounded-lg border border-gray-200">
+          <div className="text-2xl font-light text-black">
+            {loading ? '...' : stats.total}
+          </div>
+          <div className="text-sm text-gray-600">Groupes totaux</div>
+        </div>
+        <div className="bg-white p-4 rounded-lg border border-gray-200">
+          <div className="text-2xl font-light text-black">
+            {loading ? '...' : stats.totalProducts}
+          </div>
+          <div className="text-sm text-gray-600">Produits totaux</div>
+        </div>
+        <div className="bg-white p-4 rounded-lg border border-gray-200">
+          <div className="text-2xl font-light text-black">
+            {loading ? '...' : stats.types}
+          </div>
+          <div className="text-sm text-gray-600">Types différents</div>
+        </div>
+      </div>
+
+      {/* Modal de création/édition de groupe */}
+      {showEditModal && (
+        <VariantGroupForm
+          isOpen={showEditModal}
+          onClose={() => setShowEditModal(false)}
+          onSubmit={(data) => {
+            console.log('Groupe soumis:', data)
+            refetch()
+          }}
+          editingGroup={editingGroup}
+        />
+      )}
     </div>
   )
 }
