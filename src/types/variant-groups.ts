@@ -1,9 +1,13 @@
 // Types simplifiés pour le système de variantes minimaliste
 
+// Types de variante supportés (Google Merchant Center 2024)
+export type VariantType = 'color' | 'size' | 'material' | 'pattern'
+
 export interface VariantGroup {
   id: string
   name: string
   subcategory_id: string
+  variant_type?: VariantType // Type de variante du groupe
   product_count?: number
   created_at: string
   updated_at: string
@@ -29,6 +33,8 @@ export interface VariantProduct {
   status?: string
   variant_group_id?: string
   variant_position?: number
+  item_group_id?: string // Google Merchant Center identifier
+  variant_attributes?: Record<string, any> // Attributs variantes JSONB (color, size, material, etc.)
   // Image principale pour affichage
   image_url?: string
 }
@@ -48,6 +54,7 @@ export interface ProductWithVariants {
 export interface CreateVariantGroupData {
   name: string
   subcategory_id: string
+  variant_type?: VariantType // Type de variante (color/size/material/pattern)
 }
 
 // Données pour ajouter des produits à un groupe
@@ -65,6 +72,8 @@ export interface RemoveProductFromGroupData {
 export interface VariantGroupFilters {
   search?: string
   subcategory_id?: string
+  variant_type?: VariantType | 'all' // Filtre par type de variante
+  is_active?: boolean // Filtre par statut (avec/sans produits)
   has_products?: boolean
 }
 

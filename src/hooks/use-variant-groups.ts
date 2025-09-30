@@ -46,6 +46,15 @@ export function useVariantGroups(filters?: VariantGroupFilters) {
       if (filters?.subcategory_id) {
         query = query.eq('subcategory_id', filters.subcategory_id)
       }
+      if (filters?.variant_type) {
+        query = query.eq('variant_type', filters.variant_type)
+      }
+      if (filters?.is_active !== undefined) {
+        // Filtre par statut actif (groupes avec produits)
+        if (filters.is_active) {
+          query = query.gt('product_count', 0)
+        }
+      }
       if (filters?.has_products) {
         query = query.gt('product_count', 0)
       }
@@ -113,6 +122,7 @@ export function useVariantGroups(filters?: VariantGroupFilters) {
         .insert({
           name: data.name,
           subcategory_id: data.subcategory_id,
+          variant_type: data.variant_type || 'color', // Type de variante (color/size/material/pattern)
           product_count: 0
         })
         .select()

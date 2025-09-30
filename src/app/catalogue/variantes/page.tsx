@@ -26,6 +26,7 @@ import { useFamilies } from '@/hooks/use-families'
 import { useCategories } from '@/hooks/use-categories'
 import { useSubcategories } from '@/hooks/use-subcategories'
 import { VariantGroupForm } from '@/components/forms/VariantGroupForm'
+import { AddProductsToGroupModal } from '@/components/forms/AddProductsToGroupModal'
 import { useToast } from '@/hooks/use-toast'
 
 // Interface filtres variantes
@@ -66,6 +67,8 @@ export default function VariantesPage() {
   const [selectedGroups, setSelectedGroups] = useState<string[]>([])
   const [editingGroup, setEditingGroup] = useState<any>(null)
   const [showEditModal, setShowEditModal] = useState(false)
+  const [showAddProductsModal, setShowAddProductsModal] = useState(false)
+  const [selectedGroupForProducts, setSelectedGroupForProducts] = useState<any>(null)
 
   // Hooks pour les données
   const {
@@ -137,6 +140,11 @@ export default function VariantesPage() {
       })
     }
   }, [deleteVariantGroup, toast])
+
+  const handleAddProducts = useCallback((group: any) => {
+    setSelectedGroupForProducts(group)
+    setShowAddProductsModal(true)
+  }, [])
 
   // Obtenir l'icône du type de variante
   const getVariantTypeIcon = (type: string) => {
@@ -230,17 +238,23 @@ export default function VariantesPage() {
           </div>
         </div>
 
-        {/* Aperçu des produits */}
+        {/* Aperçu des produits + Bouton Ajouter */}
         <div className="p-4">
           <div className="flex items-center justify-between text-sm text-gray-600 mb-3">
             <span>{group.product_count || 0} produit{(group.product_count || 0) !== 1 ? 's' : ''}</span>
-            <span>
-              Créé le {formatDate(group.created_at)}
-            </span>
+            <Button
+              size="sm"
+              variant="outline"
+              onClick={() => handleAddProducts(group)}
+              className="text-xs h-7"
+            >
+              <Plus className="h-3 w-3 mr-1" />
+              Ajouter produits
+            </Button>
           </div>
 
           {/* Mini-galerie produits */}
-          {group.products && group.products.length > 0 && (
+          {group.products && group.products.length > 0 ? (
             <div className="flex space-x-2 overflow-x-auto">
               {group.products.slice(0, 4).map((product: any) => (
                 <div key={product.id} className="flex-shrink-0 w-20 h-20 rounded bg-gray-100 overflow-hidden">
@@ -263,7 +277,15 @@ export default function VariantesPage() {
                 </div>
               )}
             </div>
+          ) : (
+            <div className="text-center py-4 text-sm text-gray-500 border border-dashed border-gray-200 rounded">
+              Aucun produit - Cliquez sur "Ajouter produits"
+            </div>
           )}
+
+          <p className="text-xs text-gray-500 mt-2">
+            Créé le {formatDate(group.created_at)}
+          </p>
         </div>
       </div>
     )
@@ -478,6 +500,25 @@ export default function VariantesPage() {
             refetch()
           }}
           editingGroup={editingGroup}
+        />
+      )}
+
+      {/* Modal ajout produits */}
+      {showAddProductsModal && selectedGroupForProducts && (
+        <AddProductsToGroupModal
+          isOpen={showAddProductsModal}
+          onClose={() => {
+            setShowAddProductsModal(false)
+            setSelectedGroupForProducts(null)
+          }}
+          variantGroup={selectedGroupForProducts}
+          onProductsAdded={() => {
+            refetch()
+            toast({
+              title: "Produits ajoutés",
+              description: "Les produits ont été ajoutés au groupe avec succès"
+            })
+          }}
         />
       )}
     </div>
