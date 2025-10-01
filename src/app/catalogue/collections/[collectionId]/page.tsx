@@ -1,15 +1,17 @@
 'use client'
 
-import { use } from 'react'
+import { use, useState, useCallback } from 'react'
 import { useRouter } from 'next/navigation'
-import { ChevronLeft, Eye, Package, Calendar, Users, Home } from 'lucide-react'
+import { ChevronLeft, Eye, Package, Calendar, Users, Home, Edit3 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
-import { useCollection } from '@/hooks/use-collections'
+import { useCollection, useCollections } from '@/hooks/use-collections'
 import Image from 'next/image'
 import { getRoomLabel, type RoomType } from '@/types/room-types'
 import { COLLECTION_STYLE_OPTIONS } from '@/types/collections'
+import { CollectionCreationWizard, CreateCollectionInput } from '@/components/business/collection-creation-wizard'
+import { useToast } from '@/hooks/use-toast'
 
 interface CollectionDetailPageProps {
   params: Promise<{
@@ -19,8 +21,25 @@ interface CollectionDetailPageProps {
 
 export default function CollectionDetailPage({ params }: CollectionDetailPageProps) {
   const router = useRouter()
+  const { toast } = useToast()
   const { collectionId } = use(params)
-  const { collection, loading, error } = useCollection(collectionId)
+  const { collection, loading, error, refetch } = useCollection(collectionId)
+  const { updateCollection } = useCollections()
+  const [showEditModal, setShowEditModal] = useState(false)
+
+  const handleSaveCollection = useCallback(async (data: CreateCollectionInput) => {
+    const result = await updateCollection(collectionId, data)
+    if (result) {
+      toast({
+        title: "Collection modifiée",
+        description: "La collection a été modifiée avec succès",
+      })
+      setShowEditModal(false)
+      refetch()
+      return true
+    }
+    return false
+  }, [collectionId, updateCollection, toast, refetch])
 
   if (loading) {
     return (
@@ -85,6 +104,15 @@ export default function CollectionDetailPage({ params }: CollectionDetailPagePro
           </div>
         </div>
         <div className="flex items-center space-x-2">
+          <Button
+            variant="default"
+            size="sm"
+            onClick={() => setShowEditModal(true)}
+            className="bg-black text-white hover:bg-gray-800"
+          >
+            <Edit3 className="h-4 w-4 mr-2" />
+            Modifier
+          </Button>
           <Badge variant={collection.is_active ? 'default' : 'secondary'}>
             {collection.is_active ? 'Active' : 'Inactive'}
           </Badge>
@@ -231,6 +259,14 @@ export default function CollectionDetailPage({ params }: CollectionDetailPagePro
           </div>
         )}
       </div>
+
+      {/* Modal d'édition de collection */}
+      <CollectionCreationWizard
+        isOpen={showEditModal}
+        onClose={() => setShowEditModal(false)}
+        onSubmit={handleSaveCollection}
+        editingCollection={collection}
+      />
     </div>
   )
 }

@@ -85,7 +85,7 @@ export function isModuleEnabled(moduleName: keyof FeatureFlags): boolean {
  * Helper pour obtenir la phase d'un module
  */
 export function getModulePhase(moduleName: string): number {
-  const phase1Modules = ['dashboard', 'profiles', 'catalogue']
+  const phase1Modules = ['dashboard', 'profiles', 'catalogue', 'organisation']
   const phase2Modules = ['stocks', 'sourcing', 'commandes']
   const phase3Modules = ['interactions', 'canaux-vente', 'contacts']
 

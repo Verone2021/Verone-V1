@@ -2,7 +2,7 @@
 
 import { useState, useMemo, useCallback, useEffect } from "react"
 import { useRouter } from "next/navigation"
-import { Search, Plus, Edit3, Trash2, Eye, EyeOff, ExternalLink, Package, Archive } from "lucide-react"
+import { Search, Plus, Edit3, Trash2, ExternalLink, Package, Archive } from "lucide-react"
 import { Button } from "../../../components/ui/button"
 import { Badge } from "../../../components/ui/badge"
 import { cn } from "../../../lib/utils"
@@ -290,15 +290,24 @@ export default function CollectionsPage() {
               </div>
             </div>
 
-            {/* Actions rapides */}
+            {/* Actions rapides - Ordre standard CRUD */}
             <div className="flex items-center space-x-2 ml-2">
               <Button
                 variant="ghost"
                 size="sm"
-                onClick={() => toggleCollectionStatus(collection.id)}
-                title={collection.is_active ? "Désactiver" : "Activer"}
+                onClick={() => router.push(`/catalogue/collections/${collection.id}`)}
+                className="text-blue-600"
+                title="Voir détail"
               >
-                {collection.is_active ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                <ExternalLink className="h-4 w-4" />
+              </Button>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => handleEditCollection(collection)}
+                title="Modifier"
+              >
+                <Edit3 className="h-4 w-4" />
               </Button>
               <Button
                 variant="ghost"
@@ -318,23 +327,6 @@ export default function CollectionsPage() {
               >
                 <Archive className="h-4 w-4" />
               </Button>
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={() => router.push(`/catalogue/collections/${collection.id}`)}
-                className="text-blue-600"
-                title="Voir détail"
-              >
-                <ExternalLink className="h-4 w-4" />
-              </Button>
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={() => handleEditCollection(collection)}
-                title="Modifier"
-              >
-                <Edit3 className="h-4 w-4" />
-              </Button>
             </div>
           </div>
         </div>
@@ -352,16 +344,16 @@ export default function CollectionsPage() {
           {collection.products && (
             <div className="flex space-x-2 overflow-x-auto">
               {collection.products.slice(0, 4).map(product => (
-                <div key={product.id} className="flex-shrink-0 w-20 h-20 rounded bg-gray-100 overflow-hidden">
+                <div key={product.id} className="flex-shrink-0 w-24 h-24 rounded bg-white border border-gray-200 overflow-hidden p-1">
                   <img
                     src={product.image_url}
                     alt={product.name}
-                    className="w-full h-full object-cover"
+                    className="w-full h-full object-contain"
                   />
                 </div>
               ))}
               {collection.product_count > 4 && (
-                <div className="flex-shrink-0 w-20 h-20 rounded bg-gray-100 flex items-center justify-center text-xs text-gray-500">
+                <div className="flex-shrink-0 w-24 h-24 rounded bg-gray-100 flex items-center justify-center text-xs text-gray-500">
                   +{collection.product_count - 4}
                 </div>
               )}

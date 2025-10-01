@@ -12,7 +12,8 @@ import {
   Eye,
   Filter,
   Download,
-  Truck
+  Truck,
+  Palette
 } from 'lucide-react'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../../../components/ui/card'
 import { Button } from '../../../components/ui/button'
@@ -189,11 +190,11 @@ export default function CatalogueDashboardPage() {
               <Button
                 variant="outline"
                 className="h-12 border-gray-200 text-gray-700 hover:bg-gray-50 hover:border-gray-300"
-                onClick={() => router.push('/catalogue/create')}
+                onClick={() => router.push('/catalogue/variantes')}
               >
                 <div className="flex flex-col items-center gap-1">
-                  <Plus className="h-4 w-4" />
-                  <span className="text-xs">Nouveau Produit</span>
+                  <Palette className="h-4 w-4" />
+                  <span className="text-xs">Variantes</span>
                 </div>
               </Button>
 
