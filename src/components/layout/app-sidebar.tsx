@@ -104,6 +104,12 @@ const navItems: NavItem[] = [
     ]
   },
   {
+    title: "Organisation",
+    href: "/organisation",
+    icon: Building2,
+    description: "Entreprise, contacts et partenaires"
+  },
+  {
     title: "Stocks",
     icon: Package,
     description: "Inventaire et mouvements",

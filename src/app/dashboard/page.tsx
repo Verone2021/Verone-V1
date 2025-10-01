@@ -1,6 +1,7 @@
 'use client'
 
 import React from 'react'
+import Link from 'next/link'
 import {
   LayoutDashboard,
   Package,
@@ -8,9 +9,10 @@ import {
   TrendingDown,
   Activity,
   RefreshCw,
-  AlertTriangle
+  AlertTriangle,
+  ArrowRight
 } from 'lucide-react'
-import { useRealDashboardMetrics } from '@/hooks/use-real-dashboard-metrics'
+import { useCompleteDashboardMetrics } from '@/hooks/use-complete-dashboard-metrics'
 
 interface StatCardProps {
   title: string
@@ -19,9 +21,10 @@ interface StatCardProps {
   isPositive: boolean
   icon: React.ReactNode
   isLoading?: boolean
+  href?: string // URL de navigation au clic
 }
 
-function StatCard({ title, value, change, isPositive, icon, isLoading }: StatCardProps) {
+function StatCard({ title, value, change, isPositive, icon, isLoading, href }: StatCardProps) {
   if (isLoading) {
     return (
       <div className="bg-white rounded-lg border border-gray-200 p-6">
@@ -37,27 +40,45 @@ function StatCard({ title, value, change, isPositive, icon, isLoading }: StatCar
     )
   }
 
-  return (
-    <div className="bg-white rounded-lg border border-gray-200 p-6">
-      <div className="flex items-center justify-between">
-        <div>
-          <p className="text-sm font-medium text-gray-600">{title}</p>
-          <p className="text-2xl font-bold text-black">{value}</p>
-          <div className="flex items-center mt-2">
-            {isPositive ? (
-              <TrendingUp className="h-4 w-4 text-green-500" />
-            ) : (
-              <TrendingDown className="h-4 w-4 text-red-500" />
-            )}
-            <span className={`text-sm ml-1 ${isPositive ? 'text-green-500' : 'text-red-500'}`}>
-              {change}
-            </span>
-          </div>
-        </div>
-        <div className="h-12 w-12 bg-gray-100 rounded-lg flex items-center justify-center">
-          {icon}
+  const CardContent = (
+    <div className="flex items-center justify-between">
+      <div>
+        <p className="text-sm font-medium text-gray-600">{title}</p>
+        <p className="text-2xl font-bold text-black">{value}</p>
+        <div className="flex items-center mt-2">
+          {isPositive ? (
+            <TrendingUp className="h-4 w-4 text-green-500" />
+          ) : (
+            <TrendingDown className="h-4 w-4 text-red-500" />
+          )}
+          <span className={`text-sm ml-1 ${isPositive ? 'text-green-500' : 'text-red-500'}`}>
+            {change}
+          </span>
         </div>
       </div>
+      <div className="h-12 w-12 bg-gray-100 rounded-lg flex items-center justify-center group-hover:bg-gray-200 transition-colors">
+        {icon}
+      </div>
+    </div>
+  )
+
+  if (href) {
+    return (
+      <Link href={href} className="block group">
+        <div className="bg-white rounded-lg border border-gray-200 p-6 hover:border-black hover:shadow-md transition-all cursor-pointer">
+          {CardContent}
+          <div className="flex items-center justify-end mt-2 text-xs text-gray-500 group-hover:text-black transition-colors">
+            <span>Voir détails</span>
+            <ArrowRight className="h-3 w-3 ml-1" />
+          </div>
+        </div>
+      </Link>
+    )
+  }
+
+  return (
+    <div className="bg-white rounded-lg border border-gray-200 p-6">
+      {CardContent}
     </div>
   )
 }
@@ -66,39 +87,74 @@ export default function DashboardPage() {
   const {
     metrics,
     isLoading,
-    error,
-    refetch
-  } = useRealDashboardMetrics()
+    error
+  } = useCompleteDashboardMetrics()
 
-  // Formatage des métriques pour l'affichage
+  // Formatage des métriques pour l'affichage avec navigation - 8 KPIs
   const stats = metrics ? [
     {
       title: 'Total Produits',
-      value: metrics.products.total.toLocaleString(),
-      change: `${metrics.products.trend > 0 ? '+' : ''}${metrics.products.trend}%`,
-      isPositive: metrics.products.trend > 0,
-      icon: <Package className="h-6 w-6 text-gray-600" />
+      value: metrics.catalogue.totalProducts.toLocaleString(),
+      change: `${metrics.catalogue.trend > 0 ? '+' : ''}${metrics.catalogue.trend}%`,
+      isPositive: metrics.catalogue.trend > 0,
+      icon: <Package className="h-6 w-6 text-gray-600" />,
+      href: '/catalogue'
     },
     {
       title: 'Produits Actifs',
-      value: metrics.products.active.toLocaleString(),
+      value: metrics.catalogue.activeProducts.toLocaleString(),
       change: `Disponibles à la vente`,
-      isPositive: metrics.products.active > 0,
-      icon: <TrendingUp className="h-6 w-6 text-green-600" />
-    },
-    {
-      title: 'Produits Publiés',
-      value: metrics.products.published.toLocaleString(),
-      change: `${Math.round((metrics.products.published / metrics.products.total) * 100)}% du catalogue`,
-      isPositive: metrics.products.published > 0,
-      icon: <Activity className="h-6 w-6 text-gray-600" />
+      isPositive: metrics.catalogue.activeProducts > 0,
+      icon: <TrendingUp className="h-6 w-6 text-green-600" />,
+      href: '/catalogue?filter=active'
     },
     {
       title: 'Collections',
-      value: metrics.collections.total.toLocaleString(),
-      change: `${metrics.collections.active} actives`,
-      isPositive: metrics.collections.active > 0,
-      icon: <Package className="h-6 w-6 text-gray-600" />
+      value: metrics.catalogue.collections.toLocaleString(),
+      change: `Groupements thématiques`,
+      isPositive: metrics.catalogue.collections > 0,
+      icon: <Package className="h-6 w-6 text-gray-600" />,
+      href: '/catalogue/collections'
+    },
+    {
+      title: 'Fournisseurs',
+      value: metrics.organisations.suppliers.toLocaleString(),
+      change: `Partenaires commerciaux`,
+      isPositive: metrics.organisations.suppliers > 0,
+      icon: <Activity className="h-6 w-6 text-blue-600" />,
+      href: '/organisation'
+    },
+    {
+      title: 'Valeur Stock',
+      value: `${(metrics.stocks.totalValue / 1000).toFixed(1)}k €`,
+      change: `${metrics.stocks.lowStockItems} en rupture`,
+      isPositive: metrics.stocks.lowStockItems < 10,
+      icon: <Package className="h-6 w-6 text-gray-600" />,
+      href: '/stocks'
+    },
+    {
+      title: 'Commandes Achat',
+      value: metrics.orders.purchaseOrders.toLocaleString(),
+      change: `En cours fournisseurs`,
+      isPositive: metrics.orders.purchaseOrders > 0,
+      icon: <TrendingUp className="h-6 w-6 text-gray-600" />,
+      href: '/commandes/fournisseurs'
+    },
+    {
+      title: 'CA du Mois',
+      value: `${(metrics.orders.monthRevenue / 1000).toFixed(1)}k €`,
+      change: `${metrics.orders.salesOrders} commandes`,
+      isPositive: metrics.orders.monthRevenue > 0,
+      icon: <Activity className="h-6 w-6 text-green-600" />,
+      href: '/commandes/clients'
+    },
+    {
+      title: 'À Sourcer',
+      value: metrics.sourcing.productsToSource.toLocaleString(),
+      change: `${metrics.sourcing.samplesWaiting} échantillons`,
+      isPositive: true,
+      icon: <Package className="h-6 w-6 text-gray-600" />,
+      href: '/sourcing'
     }
   ] : []
 
@@ -115,15 +171,10 @@ export default function DashboardPage() {
             </div>
           </div>
           <div className="flex items-center space-x-4">
-            {/* Bouton de refresh */}
-            <button
-              onClick={refetch}
-              disabled={isLoading}
-              className="p-2 hover:bg-gray-100 rounded-lg transition-colors disabled:opacity-50"
-              title="Rafraîchir les données"
-            >
-              <RefreshCw className={`h-5 w-5 text-gray-600 ${isLoading ? 'animate-spin' : ''}`} />
-            </button>
+            {/* Indicateur de chargement */}
+            {isLoading && (
+              <RefreshCw className="h-5 w-5 text-gray-600 animate-spin" />
+            )}
           </div>
         </div>
       </div>
@@ -143,11 +194,11 @@ export default function DashboardPage() {
         </div>
       )}
 
-      {/* Stats grid */}
+      {/* Stats grid - 8 KPIs sur 2 lignes */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
         {isLoading ? (
-          // Skeleton loading pour les cartes
-          Array.from({ length: 4 }).map((_, index) => (
+          // Skeleton loading pour 8 cartes
+          Array.from({ length: 8 }).map((_, index) => (
             <StatCard
               key={index}
               title=""
@@ -192,7 +243,7 @@ export default function DashboardPage() {
                   <p className="text-sm text-gray-500">Disponibles à la vente</p>
                 </div>
                 <div className="text-right">
-                  <p className="font-medium text-green-600">{metrics.products.active}</p>
+                  <p className="font-medium text-green-600">{metrics.catalogue.activeProducts}</p>
                 </div>
               </div>
               <div className="flex items-center justify-between py-2 border-b border-gray-100">
@@ -201,16 +252,16 @@ export default function DashboardPage() {
                   <p className="text-sm text-gray-500">Disponibles dans le catalogue</p>
                 </div>
                 <div className="text-right">
-                  <p className="font-medium text-black">{metrics.products.published}</p>
+                  <p className="font-medium text-black">{metrics.catalogue.publishedProducts}</p>
                 </div>
               </div>
               <div className="flex items-center justify-between py-2 border-b border-gray-100">
                 <div>
-                  <p className="font-medium text-black">Produits Archivés</p>
-                  <p className="text-sm text-gray-500">Retirés du catalogue</p>
+                  <p className="font-medium text-black">Stock Faible</p>
+                  <p className="text-sm text-gray-500">Produits en rupture</p>
                 </div>
                 <div className="text-right">
-                  <p className="font-medium text-gray-500">{metrics.products.archived}</p>
+                  <p className="font-medium text-gray-500">{metrics.stocks.lowStockItems}</p>
                 </div>
               </div>
               <div className="flex items-center justify-between py-2">
@@ -219,7 +270,7 @@ export default function DashboardPage() {
                   <p className="text-sm text-gray-500">Produits variantes</p>
                 </div>
                 <div className="text-right">
-                  <p className="font-medium text-black">{metrics.variantGroups.total}</p>
+                  <p className="font-medium text-black">{metrics.catalogue.variantGroups}</p>
                 </div>
               </div>
             </div>
