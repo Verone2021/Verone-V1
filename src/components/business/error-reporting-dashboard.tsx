@@ -134,22 +134,22 @@ export const ErrorReportingDashboard: React.FC = () => {
   }, [metrics, alertConfig])
 
   return (
-    <div className=\"min-h-screen bg-gray-50 p-6\">
-      <div className=\"max-w-7xl mx-auto space-y-8\">
+    <div className="min-h-screen bg-gray-50 p-6">
+      <div className="max-w-7xl mx-auto space-y-8">
 
         {/* 🎯 HEADER */}
-        <div className=\"flex items-center justify-between\">
-          <div className=\"space-y-2\">
-            <h1 className=\"text-3xl font-bold text-black flex items-center gap-3\">
-              <Activity className=\"w-8 h-8 text-blue-600\" />
+        <div className="flex items-center justify-between">
+          <div className="space-y-2">
+            <h1 className="text-3xl font-bold text-black flex items-center gap-3">
+              <Activity className="w-8 h-8 text-blue-600" />
               Error Reporting Intelligence
             </h1>
-            <p className=\"text-gray-600\">
+            <p className="text-gray-600">
               Système révolutionnaire d'auto-résolution avec 85%+ de succès
             </p>
           </div>
 
-          <div className=\"flex items-center gap-4\">
+          <div className="flex items-center gap-4">
             <SystemStatusIndicator
               isRunning={isRunning}
               healthScore={metrics.queue_health_score}
@@ -172,20 +172,20 @@ export const ErrorReportingDashboard: React.FC = () => {
         <MetricsOverview metrics={metrics} />
 
         {/* 📈 TABS DÉTAILLÉES */}
-        <Tabs value={selectedTab} onValueChange={setSelectedTab} className=\"space-y-6\">
-          <TabsList className=\"grid w-full grid-cols-5\">
-            <TabsTrigger value=\"overview\">Vue d'ensemble</TabsTrigger>
-            <TabsTrigger value=\"queue\">Queue de traitement</TabsTrigger>
-            <TabsTrigger value=\"workers\">Workers Pool</TabsTrigger>
-            <TabsTrigger value=\"analytics\">Analytics</TabsTrigger>
-            <TabsTrigger value=\"settings\">Configuration</TabsTrigger>
+        <Tabs value={selectedTab} onValueChange={setSelectedTab} className="space-y-6">
+          <TabsList className="grid w-full grid-cols-5">
+            <TabsTrigger value="overview">Vue d'ensemble</TabsTrigger>
+            <TabsTrigger value="queue">Queue de traitement</TabsTrigger>
+            <TabsTrigger value="workers">Workers Pool</TabsTrigger>
+            <TabsTrigger value="analytics">Analytics</TabsTrigger>
+            <TabsTrigger value="settings">Configuration</TabsTrigger>
           </TabsList>
 
-          <TabsContent value=\"overview\" className=\"space-y-6\">
-            <div className=\"grid gap-6 md:grid-cols-2\">
+          <TabsContent value="overview" className="space-y-6">
+            <div className="grid gap-6 md:grid-cols-2">
               <RecentErrorsPanel
                 errors={queueSnapshot?.recent_completed || []}
-                title=\"Dernières Résolutions\"
+                title="Dernières Résolutions"
               />
               <ProcessingQueuePanel
                 processingTasks={queueSnapshot?.processing || []}
@@ -194,7 +194,7 @@ export const ErrorReportingDashboard: React.FC = () => {
             </div>
           </TabsContent>
 
-          <TabsContent value=\"queue\" className=\"space-y-6\">
+          <TabsContent value="queue" className="space-y-6">
             <QueueManagement
               snapshot={queueSnapshot}
               metrics={metrics}
@@ -202,21 +202,21 @@ export const ErrorReportingDashboard: React.FC = () => {
             />
           </TabsContent>
 
-          <TabsContent value=\"workers\" className=\"space-y-6\">
+          <TabsContent value="workers" className="space-y-6">
             <WorkersPoolDashboard
               workers={workers}
               metrics={metrics}
             />
           </TabsContent>
 
-          <TabsContent value=\"analytics\" className=\"space-y-6\">
+          <TabsContent value="analytics" className="space-y-6">
             <AnalyticsDashboard
               metrics={metrics}
               workers={workers}
             />
           </TabsContent>
 
-          <TabsContent value=\"settings\" className=\"space-y-6\">
+          <TabsContent value="settings" className="space-y-6">
             <SettingsPanel
               alertConfig={alertConfig}
               metrics={metrics}
@@ -250,13 +250,13 @@ const SystemStatusIndicator: React.FC<{
   }
 
   return (
-    <div className=\"flex items-center gap-3\">
+    <div className="flex items-center gap-3">
       <div className={`w-3 h-3 rounded-full ${getStatusColor()} animate-pulse`} />
-      <div className=\"text-sm font-medium\">
+      <div className="text-sm font-medium">
         <div className={`${isRunning ? 'text-green-700' : 'text-gray-700'}`}>
           {getStatusText()}
         </div>
-        <div className=\"text-gray-500\">
+        <div className="text-gray-500">
           Santé: {healthScore}/100
         </div>
       </div>
@@ -274,21 +274,21 @@ const QueueControlButtons: React.FC<{
   onClearCompleted: () => void
 }> = ({ isRunning, onPause, onResume, onClearCompleted }) => {
   return (
-    <div className=\"flex items-center gap-2\">
+    <div className="flex items-center gap-2">
       {isRunning ? (
-        <Button onClick={onPause} variant=\"outline\" size=\"sm\">
-          <Pause className=\"w-4 h-4 mr-2\" />
+        <Button onClick={onPause} variant="outline" size="sm">
+          <Pause className="w-4 h-4 mr-2" />
           Pause
         </Button>
       ) : (
-        <Button onClick={onResume} size=\"sm\">
-          <Play className=\"w-4 h-4 mr-2\" />
+        <Button onClick={onResume} size="sm">
+          <Play className="w-4 h-4 mr-2" />
           Reprendre
         </Button>
       )}
 
-      <Button onClick={onClearCompleted} variant=\"outline\" size=\"sm\">
-        <Trash2 className=\"w-4 h-4 mr-2\" />
+      <Button onClick={onClearCompleted} variant="outline" size="sm">
+        <Trash2 className="w-4 h-4 mr-2" />
         Nettoyer
       </Button>
     </div>
@@ -306,7 +306,7 @@ const AlertSection: React.FC<{
   }>
 }> = ({ alerts }) => {
   return (
-    <div className=\"space-y-3\">
+    <div className="space-y-3">
       {alerts.map((alert, index) => (
         <div
           key={index}
@@ -316,10 +316,10 @@ const AlertSection: React.FC<{
               : 'bg-yellow-50 border-yellow-500 text-yellow-800'
           }`}
         >
-          <div className=\"flex items-center justify-between\">
-            <div className=\"flex items-center gap-3\">
-              <AlertTriangle className=\"w-5 h-5\" />
-              <span className=\"font-medium\">{alert.message}</span>
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <AlertTriangle className="w-5 h-5" />
+              <span className="font-medium">{alert.message}</span>
             </div>
             <Badge variant={alert.type === 'critical' ? 'destructive' : 'secondary'}>
               {alert.type.toUpperCase()}
@@ -371,19 +371,19 @@ const MetricsOverview: React.FC<{ metrics: QueueMetrics }> = ({ metrics }) => {
   ]
 
   return (
-    <div className=\"grid gap-6 md:grid-cols-2 lg:grid-cols-4\">
+    <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
       {kpis.map((kpi, index) => (
-        <Card key={index} className=\"relative overflow-hidden\">
-          <CardContent className=\"p-6\">
-            <div className=\"flex items-center justify-between\">
+        <Card key={index} className="relative overflow-hidden">
+          <CardContent className="p-6">
+            <div className="flex items-center justify-between">
               <div>
-                <p className=\"text-sm font-medium text-gray-600 mb-2\">
+                <p className="text-sm font-medium text-gray-600 mb-2">
                   {kpi.title}
                 </p>
-                <p className=\"text-3xl font-bold text-black mb-1\">
+                <p className="text-3xl font-bold text-black mb-1">
                   {kpi.value}
                 </p>
-                <p className=\"text-xs text-gray-500\">
+                <p className="text-xs text-gray-500">
                   Target: {kpi.target}
                 </p>
               </div>
@@ -408,8 +408,8 @@ const RecentErrorsPanel: React.FC<{
   return (
     <Card>
       <CardHeader>
-        <CardTitle className=\"flex items-center gap-2\">
-          <CheckCircle className=\"w-5 h-5 text-green-600\" />
+        <CardTitle className="flex items-center gap-2">
+          <CheckCircle className="w-5 h-5 text-green-600" />
           {title}
         </CardTitle>
         <CardDescription>
@@ -417,38 +417,38 @@ const RecentErrorsPanel: React.FC<{
         </CardDescription>
       </CardHeader>
       <CardContent>
-        <div className=\"space-y-3\">
+        <div className="space-y-3">
           {errors.slice(0, 5).map((task, index) => (
             <div
               key={task.id}
-              className=\"flex items-center justify-between p-3 bg-gray-50 rounded-lg\"
+              className="flex items-center justify-between p-3 bg-gray-50 rounded-lg"
             >
-              <div className=\"flex-1 min-w-0\">
-                <p className=\"font-medium text-sm text-black truncate\">
+              <div className="flex-1 min-w-0">
+                <p className="font-medium text-sm text-black truncate">
                   {task.error.message.substring(0, 60)}...
                 </p>
-                <div className=\"flex items-center gap-2 mt-1\">
-                  <Badge variant=\"outline\" className=\"text-xs\">
+                <div className="flex items-center gap-2 mt-1">
+                  <Badge variant="outline" className="text-xs">
                     {task.error.module}
                   </Badge>
-                  <span className=\"text-xs text-gray-500\">
+                  <span className="text-xs text-gray-500">
                     {task.execution_time}ms
                   </span>
                 </div>
               </div>
-              <div className=\"flex items-center gap-2\">
+              <div className="flex items-center gap-2">
                 {task.result?.success ? (
-                  <CheckCircle className=\"w-4 h-4 text-green-600\" />
+                  <CheckCircle className="w-4 h-4 text-green-600" />
                 ) : (
-                  <AlertTriangle className=\"w-4 h-4 text-yellow-600\" />
+                  <AlertTriangle className="w-4 h-4 text-yellow-600" />
                 )}
               </div>
             </div>
           ))}
 
           {errors.length === 0 && (
-            <div className=\"text-center py-8 text-gray-500\">
-              <Activity className=\"w-8 h-8 mx-auto mb-2 text-gray-400\" />
+            <div className="text-center py-8 text-gray-500">
+              <Activity className="w-8 h-8 mx-auto mb-2 text-gray-400" />
               <p>Aucune résolution récente</p>
             </div>
           )}
@@ -468,8 +468,8 @@ const ProcessingQueuePanel: React.FC<{
   return (
     <Card>
       <CardHeader>
-        <CardTitle className=\"flex items-center gap-2\">
-          <Zap className=\"w-5 h-5 text-blue-600\" />
+        <CardTitle className="flex items-center gap-2">
+          <Zap className="w-5 h-5 text-blue-600" />
           Traitement en Cours
         </CardTitle>
         <CardDescription>
@@ -477,36 +477,36 @@ const ProcessingQueuePanel: React.FC<{
         </CardDescription>
       </CardHeader>
       <CardContent>
-        <div className=\"space-y-3\">
+        <div className="space-y-3">
           {processingTasks.map((task, index) => (
             <div
               key={task.id}
-              className=\"flex items-center justify-between p-3 bg-blue-50 rounded-lg\"
+              className="flex items-center justify-between p-3 bg-blue-50 rounded-lg"
             >
-              <div className=\"flex-1 min-w-0\">
-                <p className=\"font-medium text-sm text-black truncate\">
+              <div className="flex-1 min-w-0">
+                <p className="font-medium text-sm text-black truncate">
                   {task.error.message.substring(0, 50)}...
                 </p>
-                <div className=\"flex items-center gap-2 mt-1\">
-                  <Badge variant=\"outline\" className=\"text-xs\">
+                <div className="flex items-center gap-2 mt-1">
+                  <Badge variant="outline" className="text-xs">
                     Worker {task.worker_id}
                   </Badge>
-                  <span className=\"text-xs text-gray-500\">
+                  <span className="text-xs text-gray-500">
                     Tentative {task.attempts}/{task.max_attempts}
                   </span>
                 </div>
               </div>
-              <div className=\"flex items-center gap-2\">
-                <RefreshCw className=\"w-4 h-4 text-blue-600 animate-spin\" />
+              <div className="flex items-center gap-2">
+                <RefreshCw className="w-4 h-4 text-blue-600 animate-spin" />
               </div>
             </div>
           ))}
 
           {processingTasks.length === 0 && (
-            <div className=\"text-center py-8 text-gray-500\">
-              <Clock className=\"w-8 h-8 mx-auto mb-2 text-gray-400\" />
+            <div className="text-center py-8 text-gray-500">
+              <Clock className="w-8 h-8 mx-auto mb-2 text-gray-400" />
               <p>Aucun traitement en cours</p>
-              <p className=\"text-sm\">{pendingCount} tâches en attente</p>
+              <p className="text-sm">{pendingCount} tâches en attente</p>
             </div>
           )}
         </div>
@@ -523,42 +523,42 @@ const WorkersPoolDashboard: React.FC<{
   metrics: QueueMetrics
 }> = ({ workers, metrics }) => {
   return (
-    <div className=\"space-y-6\">
-      <div className=\"flex items-center justify-between\">
-        <h2 className=\"text-2xl font-bold text-black\">Workers Pool</h2>
-        <Badge variant=\"outline\">
+    <div className="space-y-6">
+      <div className="flex items-center justify-between">
+        <h2 className="text-2xl font-bold text-black">Workers Pool</h2>
+        <Badge variant="outline">
           {metrics.workers_active}/{metrics.workers_total} actifs
         </Badge>
       </div>
 
-      <div className=\"grid gap-4 md:grid-cols-2 lg:grid-cols-4\">
+      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
         {workers.map((worker) => (
-          <Card key={worker.id} className=\"relative\">
-            <CardContent className=\"p-4\">
-              <div className=\"flex items-center justify-between mb-3\">
-                <h3 className=\"font-medium text-black\">{worker.id}</h3>
+          <Card key={worker.id} className="relative">
+            <CardContent className="p-4">
+              <div className="flex items-center justify-between mb-3">
+                <h3 className="font-medium text-black">{worker.id}</h3>
                 <Badge
                   variant={worker.status === 'busy' ? 'default' : 'secondary'}
-                  className=\"text-xs\"
+                  className="text-xs"
                 >
                   {worker.status}
                 </Badge>
               </div>
 
-              <div className=\"space-y-2 text-sm text-gray-600\">
-                <div className=\"flex justify-between\">
+              <div className="space-y-2 text-sm text-gray-600">
+                <div className="flex justify-between">
                   <span>Traités:</span>
-                  <span className=\"font-medium\">{worker.processed_count}</span>
+                  <span className="font-medium">{worker.processed_count}</span>
                 </div>
-                <div className=\"flex justify-between\">
+                <div className="flex justify-between">
                   <span>Succès:</span>
-                  <span className=\"font-medium\">{worker.success_rate}%</span>
+                  <span className="font-medium">{worker.success_rate}%</span>
                 </div>
                 <div>
-                  <span className=\"block mb-1\">Spécialisations:</span>
-                  <div className=\"flex flex-wrap gap-1\">
+                  <span className="block mb-1">Spécialisations:</span>
+                  <div className="flex flex-wrap gap-1">
                     {worker.specialization.map((spec, idx) => (
-                      <Badge key={idx} variant=\"outline\" className=\"text-xs\">
+                      <Badge key={idx} variant="outline" className="text-xs">
                         {spec}
                       </Badge>
                     ))}
@@ -567,8 +567,8 @@ const WorkersPoolDashboard: React.FC<{
               </div>
 
               {worker.current_task && (
-                <div className=\"mt-3 p-2 bg-blue-50 rounded text-xs\">
-                  <span className=\"text-blue-800\">
+                <div className="mt-3 p-2 bg-blue-50 rounded text-xs">
+                  <span className="text-blue-800">
                     Tâche: {worker.current_task}
                   </span>
                 </div>
@@ -589,30 +589,30 @@ const AnalyticsDashboard: React.FC<{
   workers: QueueWorker[]
 }> = ({ metrics, workers }) => {
   return (
-    <div className=\"space-y-6\">
-      <h2 className=\"text-2xl font-bold text-black\">Analytics & Insights</h2>
+    <div className="space-y-6">
+      <h2 className="text-2xl font-bold text-black">Analytics & Insights</h2>
 
-      <div className=\"grid gap-6 md:grid-cols-2\">
+      <div className="grid gap-6 md:grid-cols-2">
         <Card>
           <CardHeader>
             <CardTitle>Performance Globale</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className=\"space-y-4\">
+            <div className="space-y-4">
               <div>
-                <div className=\"flex justify-between text-sm mb-2\">
+                <div className="flex justify-between text-sm mb-2">
                   <span>Taux de Succès</span>
                   <span>{metrics.success_rate}%</span>
                 </div>
-                <Progress value={metrics.success_rate} className=\"h-2\" />
+                <Progress value={metrics.success_rate} className="h-2" />
               </div>
 
               <div>
-                <div className=\"flex justify-between text-sm mb-2\">
+                <div className="flex justify-between text-sm mb-2">
                   <span>Santé de la Queue</span>
                   <span>{metrics.queue_health_score}/100</span>
                 </div>
-                <Progress value={metrics.queue_health_score} className=\"h-2\" />
+                <Progress value={metrics.queue_health_score} className="h-2" />
               </div>
             </div>
           </CardContent>
@@ -623,19 +623,19 @@ const AnalyticsDashboard: React.FC<{
             <CardTitle>Efficacité Workers</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className=\"space-y-3\">
+            <div className="space-y-3">
               {workers
                 .sort((a, b) => b.success_rate - a.success_rate)
                 .slice(0, 5)
                 .map((worker, idx) => (
-                <div key={worker.id} className=\"flex items-center justify-between\">
-                  <div className=\"flex items-center gap-2\">
+                <div key={worker.id} className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
                     <div className={`w-2 h-2 rounded-full ${
                       worker.status === 'busy' ? 'bg-blue-500' : 'bg-gray-400'
                     }`} />
-                    <span className=\"text-sm\">{worker.id}</span>
+                    <span className="text-sm">{worker.id}</span>
                   </div>
-                  <div className=\"text-sm font-medium\">
+                  <div className="text-sm font-medium">
                     {worker.success_rate}% ({worker.processed_count})
                   </div>
                 </div>
@@ -656,50 +656,50 @@ const SettingsPanel: React.FC<{
   metrics: QueueMetrics
 }> = ({ alertConfig, metrics }) => {
   return (
-    <div className=\"space-y-6\">
-      <h2 className=\"text-2xl font-bold text-black\">Configuration</h2>
+    <div className="space-y-6">
+      <h2 className="text-2xl font-bold text-black">Configuration</h2>
 
       <Card>
         <CardHeader>
-          <CardTitle className=\"flex items-center gap-2\">
-            <Settings className=\"w-5 h-5\" />
+          <CardTitle className="flex items-center gap-2">
+            <Settings className="w-5 h-5" />
             Seuils d'Alertes
           </CardTitle>
         </CardHeader>
         <CardContent>
-          <div className=\"grid gap-4 md:grid-cols-2\">
+          <div className="grid gap-4 md:grid-cols-2">
             <div>
-              <label className=\"text-sm font-medium text-gray-700\">
+              <label className="text-sm font-medium text-gray-700">
                 Erreurs Critiques Max
               </label>
-              <div className=\"mt-1 text-lg font-bold text-black\">
+              <div className="mt-1 text-lg font-bold text-black">
                 {alertConfig.critical_threshold}
               </div>
             </div>
 
             <div>
-              <label className=\"text-sm font-medium text-gray-700\">
+              <label className="text-sm font-medium text-gray-700">
                 Temps Réponse Max (ms)
               </label>
-              <div className=\"mt-1 text-lg font-bold text-black\">
+              <div className="mt-1 text-lg font-bold text-black">
                 {alertConfig.response_time_threshold}
               </div>
             </div>
 
             <div>
-              <label className=\"text-sm font-medium text-gray-700\">
+              <label className="text-sm font-medium text-gray-700">
                 Taux Succès Min (%)
               </label>
-              <div className=\"mt-1 text-lg font-bold text-black\">
+              <div className="mt-1 text-lg font-bold text-black">
                 {alertConfig.success_rate_threshold}%
               </div>
             </div>
 
             <div>
-              <label className=\"text-sm font-medium text-gray-700\">
+              <label className="text-sm font-medium text-gray-700">
                 Santé Queue Min
               </label>
-              <div className=\"mt-1 text-lg font-bold text-black\">
+              <div className="mt-1 text-lg font-bold text-black">
                 {alertConfig.queue_health_threshold}/100
               </div>
             </div>
@@ -719,9 +719,9 @@ const QueueManagement: React.FC<{
   onEnqueueTest: (error: VeroneError, priority?: number) => Promise<string>
 }> = ({ snapshot, metrics, onEnqueueTest }) => {
   return (
-    <div className=\"space-y-6\">
-      <div className=\"flex items-center justify-between\">
-        <h2 className=\"text-2xl font-bold text-black\">Gestion de la Queue</h2>
+    <div className="space-y-6">
+      <div className="flex items-center justify-between">
+        <h2 className="text-2xl font-bold text-black">Gestion de la Queue</h2>
         <Button
           onClick={() => {
             // Créer une erreur de test
@@ -747,27 +747,27 @@ const QueueManagement: React.FC<{
 
             onEnqueueTest(testError, 7)
           }}
-          variant=\"outline\"
+          variant="outline"
         >
-          <Zap className=\"w-4 h-4 mr-2\" />
+          <Zap className="w-4 h-4 mr-2" />
           Test Auto-résolution
         </Button>
       </div>
 
-      <div className=\"grid gap-6 md:grid-cols-3\">
+      <div className="grid gap-6 md:grid-cols-3">
         <Card>
           <CardHeader>
-            <CardTitle className=\"text-lg\">En Attente</CardTitle>
+            <CardTitle className="text-lg">En Attente</CardTitle>
             <CardDescription>{snapshot?.pending.length || 0} tâches</CardDescription>
           </CardHeader>
           <CardContent>
-            <div className=\"space-y-2\">
+            <div className="space-y-2">
               {snapshot?.pending.slice(0, 3).map((task) => (
-                <div key={task.id} className=\"p-2 bg-yellow-50 rounded text-sm\">
-                  <div className=\"font-medium truncate\">
+                <div key={task.id} className="p-2 bg-yellow-50 rounded text-sm">
+                  <div className="font-medium truncate">
                     {task.error.message.substring(0, 40)}...
                   </div>
-                  <div className=\"text-xs text-gray-500 mt-1\">
+                  <div className="text-xs text-gray-500 mt-1">
                     Priorité: {task.priority} | Module: {task.error.module}
                   </div>
                 </div>
@@ -778,17 +778,17 @@ const QueueManagement: React.FC<{
 
         <Card>
           <CardHeader>
-            <CardTitle className=\"text-lg\">En Traitement</CardTitle>
+            <CardTitle className="text-lg">En Traitement</CardTitle>
             <CardDescription>{snapshot?.processing.length || 0} tâches</CardDescription>
           </CardHeader>
           <CardContent>
-            <div className=\"space-y-2\">
+            <div className="space-y-2">
               {snapshot?.processing.map((task) => (
-                <div key={task.id} className=\"p-2 bg-blue-50 rounded text-sm\">
-                  <div className=\"font-medium truncate\">
+                <div key={task.id} className="p-2 bg-blue-50 rounded text-sm">
+                  <div className="font-medium truncate">
                     {task.error.message.substring(0, 40)}...
                   </div>
-                  <div className=\"text-xs text-gray-500 mt-1\">
+                  <div className="text-xs text-gray-500 mt-1">
                     Worker: {task.worker_id} | Tentative: {task.attempts}
                   </div>
                 </div>
@@ -799,17 +799,17 @@ const QueueManagement: React.FC<{
 
         <Card>
           <CardHeader>
-            <CardTitle className=\"text-lg\">Terminées</CardTitle>
+            <CardTitle className="text-lg">Terminées</CardTitle>
             <CardDescription>{snapshot?.recent_completed.length || 0} récentes</CardDescription>
           </CardHeader>
           <CardContent>
-            <div className=\"space-y-2\">
+            <div className="space-y-2">
               {snapshot?.recent_completed.slice(0, 3).map((task) => (
-                <div key={task.id} className=\"p-2 bg-green-50 rounded text-sm\">
-                  <div className=\"font-medium truncate\">
+                <div key={task.id} className="p-2 bg-green-50 rounded text-sm">
+                  <div className="font-medium truncate">
                     {task.error.message.substring(0, 40)}...
                   </div>
-                  <div className=\"text-xs text-gray-500 mt-1\">
+                  <div className="text-xs text-gray-500 mt-1">
                     {task.execution_time}ms | {task.result?.success ? '✅' : '❌'}
                   </div>
                 </div>

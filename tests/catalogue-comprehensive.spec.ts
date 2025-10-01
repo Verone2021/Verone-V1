@@ -102,7 +102,7 @@ test.describe('🏗️ NAVIGATION & PAGES CATALOGUE', () => {
     await expect(page.locator('[data-testid="collections-grid"]').or(page.locator('text=Collections')), { timeout: 5000 }).toBeVisible()
 
     // Vérifier fonctionnalités collections
-    await expect(page.locator('text=Collection').or(page.locator('[data-testid="collection-card"]')).toBeVisible()
+    await expect(page.locator('text=Collection').or(page.locator('[data-testid="collection-card"]'))).toBeVisible()
 
     console.log('✅ Page collections fonctionnelle')
   })

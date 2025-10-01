@@ -213,20 +213,20 @@ export const CatalogueErrorIntegration: React.FC = () => {
   const alerts = getCriticalAlerts()
 
   return (
-    <div className=\"space-y-6\">
+    <div className="space-y-6">
       {/* 🎯 HEADER */}
-      <div className=\"flex items-center justify-between\">
-        <div className=\"space-y-1\">
-          <h2 className=\"text-xl font-bold text-black flex items-center gap-2\">
-            <Package className=\"w-5 h-5 text-green-600\" />
+      <div className="flex items-center justify-between">
+        <div className="space-y-1">
+          <h2 className="text-xl font-bold text-black flex items-center gap-2">
+            <Package className="w-5 h-5 text-green-600" />
             Catalogue Error Protection
           </h2>
-          <p className=\"text-sm text-gray-600\">
+          <p className="text-sm text-gray-600">
             Surveillance intelligente des produits et performances catalogue
           </p>
         </div>
 
-        <div className=\"flex items-center gap-3\">
+        <div className="flex items-center gap-3">
           <CatalogueStatusBadge
             isActive={isActive}
             criticalErrors={criticalErrorsCount}
@@ -235,22 +235,22 @@ export const CatalogueErrorIntegration: React.FC = () => {
           <Button
             onClick={simulateCatalogueScan}
             disabled={isScanning}
-            variant=\"outline\"
-            size=\"sm\"
+            variant="outline"
+            size="sm"
           >
             {isScanning ? (
-              <RefreshCw className=\"w-4 h-4 mr-2 animate-spin\" />
+              <RefreshCw className="w-4 h-4 mr-2 animate-spin" />
             ) : (
-              <Eye className=\"w-4 h-4 mr-2\" />
+              <Eye className="w-4 h-4 mr-2" />
             )}
             Scan Catalogue
           </Button>
           <Button
             onClick={handleGlobalDetection}
             disabled={isScanning}
-            size=\"sm\"
+            size="sm"
           >
-            <Activity className=\"w-4 h-4 mr-2\" />
+            <Activity className="w-4 h-4 mr-2" />
             Scan Global
           </Button>
         </div>
@@ -258,13 +258,13 @@ export const CatalogueErrorIntegration: React.FC = () => {
 
       {/* 🚨 ALERTES CRITIQUES */}
       {alerts.length > 0 && (
-        <div className=\"space-y-2\">
+        <div className="space-y-2">
           {alerts.map((alert, index) => (
-            <Alert key={index} className=\"border-red-200 bg-red-50\">
-              <AlertTriangle className=\"w-4 h-4 text-red-600\" />
-              <AlertDescription className=\"text-red-800\">
+            <Alert key={index} className="border-red-200 bg-red-50">
+              <AlertTriangle className="w-4 h-4 text-red-600" />
+              <AlertDescription className="text-red-800">
                 <strong>CATALOGUE:</strong> {alert.message}
-                <div className=\"text-xs text-red-600 mt-1\">
+                <div className="text-xs text-red-600 mt-1">
                   {alert.timestamp.toLocaleString()}
                 </div>
               </AlertDescription>
@@ -274,9 +274,9 @@ export const CatalogueErrorIntegration: React.FC = () => {
       )}
 
       {/* 📊 MÉTRIQUES PRINCIPALES */}
-      <div className=\"grid gap-4 md:grid-cols-4\">
+      <div className="grid gap-4 md:grid-cols-4">
         <CatalogueMetricsCard
-          title=\"Erreurs Produits\"
+          title="Erreurs Produits"
           value={catalogueStats.total_errors}
           subValue={`${catalogueStats.resolved_errors} résolues`}
           icon={AlertTriangle}
@@ -285,66 +285,66 @@ export const CatalogueErrorIntegration: React.FC = () => {
         />
 
         <CatalogueMetricsCard
-          title=\"Temps Moyen\"
+          title="Temps Moyen"
           value={`${performance.average_product_load_time}ms`}
-          subValue=\"par produit\"
+          subValue="par produit"
           icon={Clock}
           color={performance.average_product_load_time > 2000 ? 'text-yellow-600' : 'text-green-600'}
           bgColor={performance.average_product_load_time > 2000 ? 'bg-yellow-100' : 'bg-green-100'}
         />
 
         <CatalogueMetricsCard
-          title=\"Taux Succès\"
+          title="Taux Succès"
           value={`${catalogueStats.success_rate}%`}
-          subValue=\"auto-résolution\"
+          subValue="auto-résolution"
           icon={CheckCircle}
           color={catalogueStats.success_rate >= 85 ? 'text-green-600' : 'text-red-600'}
           bgColor={catalogueStats.success_rate >= 85 ? 'bg-green-100' : 'bg-red-100'}
         />
 
         <CatalogueMetricsCard
-          title=\"Produits Scannés\"
+          title="Produits Scannés"
           value={performance.total_products_scanned}
           subValue={`${performance.failed_products.length} échecs`}
           icon={Package}
-          color=\"text-blue-600\"
-          bgColor=\"bg-blue-100\"
+          color="text-blue-600"
+          bgColor="bg-blue-100"
         />
       </div>
 
       {/* 📈 ANALYSE DÉTAILLÉE */}
-      <div className=\"grid gap-6 md:grid-cols-2\">
+      <div className="grid gap-6 md:grid-cols-2">
         {/* 🔍 Erreurs par type */}
         <Card>
           <CardHeader>
-            <CardTitle className=\"text-lg\">Erreurs par Type</CardTitle>
+            <CardTitle className="text-lg">Erreurs par Type</CardTitle>
             <CardDescription>Répartition des erreurs catalogue</CardDescription>
           </CardHeader>
           <CardContent>
-            <div className=\"space-y-3\">
+            <div className="space-y-3">
               <ErrorTypeRow
-                type=\"Chargement Produit\"
+                type="Chargement Produit"
                 count={productErrors.product_load_errors}
                 icon={Package}
-                color=\"text-red-600\"
+                color="text-red-600"
               />
               <ErrorTypeRow
-                type=\"Images Produit\"
+                type="Images Produit"
                 count={productErrors.image_load_errors}
                 icon={Image}
-                color=\"text-orange-600\"
+                color="text-orange-600"
               />
               <ErrorTypeRow
-                type=\"Calcul Prix\"
+                type="Calcul Prix"
                 count={productErrors.pricing_calculation_errors}
                 icon={ShoppingCart}
-                color=\"text-purple-600\"
+                color="text-purple-600"
               />
               <ErrorTypeRow
-                type=\"Vérif Disponibilité\"
+                type="Vérif Disponibilité"
                 count={productErrors.availability_check_errors}
                 icon={Database}
-                color=\"text-blue-600\"
+                color="text-blue-600"
               />
             </div>
           </CardContent>
@@ -353,36 +353,36 @@ export const CatalogueErrorIntegration: React.FC = () => {
         {/* ⚡ Performance */}
         <Card>
           <CardHeader>
-            <CardTitle className=\"text-lg\">Performance Catalogue</CardTitle>
+            <CardTitle className="text-lg">Performance Catalogue</CardTitle>
             <CardDescription>Produits avec temps de chargement élevés</CardDescription>
           </CardHeader>
           <CardContent>
-            <div className=\"space-y-3\">
+            <div className="space-y-3">
               {performance.slow_products.length > 0 ? (
                 performance.slow_products.map((product, index) => (
-                  <div key={product.id} className=\"flex items-center justify-between p-2 bg-yellow-50 rounded-lg\">
-                    <div className=\"flex-1 min-w-0\">
-                      <div className=\"font-medium text-sm text-black truncate\">
+                  <div key={product.id} className="flex items-center justify-between p-2 bg-yellow-50 rounded-lg">
+                    <div className="flex-1 min-w-0">
+                      <div className="font-medium text-sm text-black truncate">
                         {product.name}
                       </div>
-                      <div className=\"text-xs text-gray-500\">
+                      <div className="text-xs text-gray-500">
                         ID: {product.id}
                       </div>
                     </div>
-                    <div className=\"text-right\">
-                      <div className=\"font-medium text-yellow-700\">
+                    <div className="text-right">
+                      <div className="font-medium text-yellow-700">
                         {Math.round(product.load_time)}ms
                       </div>
                       <Progress
                         value={Math.min((product.load_time / 3000) * 100, 100)}
-                        className=\"w-16 h-1 mt-1\"
+                        className="w-16 h-1 mt-1"
                       />
                     </div>
                   </div>
                 ))
               ) : (
-                <div className=\"text-center py-4 text-gray-500\">
-                  <Clock className=\"w-8 h-8 mx-auto mb-2 text-gray-400\" />
+                <div className="text-center py-4 text-gray-500">
+                  <Clock className="w-8 h-8 mx-auto mb-2 text-gray-400" />
                   <p>Aucun produit lent détecté</p>
                 </div>
               )}
@@ -407,8 +407,8 @@ const CatalogueStatusBadge: React.FC<{
 }> = ({ isActive, criticalErrors, totalProducts }) => {
   if (!isActive) {
     return (
-      <Badge variant=\"secondary\" className=\"flex items-center gap-1\">
-        <Package className=\"w-3 h-3\" />
+      <Badge variant="secondary" className="flex items-center gap-1">
+        <Package className="w-3 h-3" />
         Protection Désactivée
       </Badge>
     )
@@ -416,16 +416,16 @@ const CatalogueStatusBadge: React.FC<{
 
   if (criticalErrors > 0) {
     return (
-      <Badge variant=\"destructive\" className=\"flex items-center gap-1\">
-        <AlertTriangle className=\"w-3 h-3\" />
+      <Badge variant="destructive" className="flex items-center gap-1">
+        <AlertTriangle className="w-3 h-3" />
         {criticalErrors} Erreur{criticalErrors > 1 ? 's' : ''} Critique{criticalErrors > 1 ? 's' : ''}
       </Badge>
     )
   }
 
   return (
-    <Badge variant=\"default\" className=\"flex items-center gap-1 bg-green-600\">
-      <CheckCircle className=\"w-3 h-3\" />
+    <Badge variant="default" className="flex items-center gap-1 bg-green-600">
+      <CheckCircle className="w-3 h-3" />
       {totalProducts} Produits Surveillés
     </Badge>
   )
@@ -444,12 +444,12 @@ const CatalogueMetricsCard: React.FC<{
 }> = ({ title, value, subValue, icon: Icon, color, bgColor }) => {
   return (
     <Card>
-      <CardContent className=\"p-4\">
-        <div className=\"flex items-center justify-between\">
+      <CardContent className="p-4">
+        <div className="flex items-center justify-between">
           <div>
-            <p className=\"text-sm font-medium text-gray-600 mb-1\">{title}</p>
-            <p className=\"text-2xl font-bold text-black\">{value}</p>
-            <p className=\"text-xs text-gray-500 mt-1\">{subValue}</p>
+            <p className="text-sm font-medium text-gray-600 mb-1">{title}</p>
+            <p className="text-2xl font-bold text-black">{value}</p>
+            <p className="text-xs text-gray-500 mt-1">{subValue}</p>
           </div>
           <div className={`p-2 rounded-lg ${bgColor}`}>
             <Icon className={`w-5 h-5 ${color}`} />
@@ -470,10 +470,10 @@ const ErrorTypeRow: React.FC<{
   color: string
 }> = ({ type, count, icon: Icon, color }) => {
   return (
-    <div className=\"flex items-center justify-between p-2 bg-gray-50 rounded-lg\">
-      <div className=\"flex items-center gap-2\">
+    <div className="flex items-center justify-between p-2 bg-gray-50 rounded-lg">
+      <div className="flex items-center gap-2">
         <Icon className={`w-4 h-4 ${color}`} />
-        <span className=\"text-sm font-medium text-black\">{type}</span>
+        <span className="text-sm font-medium text-black">{type}</span>
       </div>
       <Badge variant={count > 0 ? 'destructive' : 'secondary'}>
         {count}
@@ -491,32 +491,32 @@ const CatalogueIntegrationGuide: React.FC = () => {
   return (
     <Card>
       <CardHeader>
-        <CardTitle className=\"text-lg\">Guide d'Intégration Catalogue</CardTitle>
+        <CardTitle className="text-lg">Guide d'Intégration Catalogue</CardTitle>
         <CardDescription>
           Comment intégrer Error Reporting dans vos composants produits
         </CardDescription>
       </CardHeader>
       <CardContent>
-        <div className=\"space-y-4\">
-          <div className=\"flex items-center justify-between\">
-            <p className=\"text-sm text-gray-600\">
+        <div className="space-y-4">
+          <div className="flex items-center justify-between">
+            <p className="text-sm text-gray-600">
               Patterns d'intégration pour le module Catalogue
             </p>
             <Button
               onClick={() => setShowGuide(!showGuide)}
-              variant=\"outline\"
-              size=\"sm\"
+              variant="outline"
+              size="sm"
             >
               {showGuide ? 'Masquer' : 'Voir le Guide'}
             </Button>
           </div>
 
           {showGuide && (
-            <div className=\"space-y-4\">
-              <div className=\"grid gap-3 md:grid-cols-2\">
-                <div className=\"p-4 bg-green-50 rounded-lg border-l-4 border-green-500\">
-                  <h4 className=\"font-medium text-green-900 mb-2\">Détection Automatique</h4>
-                  <ul className=\"text-sm text-green-800 space-y-1\">
+            <div className="space-y-4">
+              <div className="grid gap-3 md:grid-cols-2">
+                <div className="p-4 bg-green-50 rounded-lg border-l-4 border-green-500">
+                  <h4 className="font-medium text-green-900 mb-2">Détection Automatique</h4>
+                  <ul className="text-sm text-green-800 space-y-1">
                     <li>• Erreurs de chargement produit</li>
                     <li>• Images manquantes/corrompues</li>
                     <li>• Calculs de prix échoués</li>
@@ -524,19 +524,19 @@ const CatalogueIntegrationGuide: React.FC = () => {
                   </ul>
                 </div>
 
-                <div className=\"p-4 bg-blue-50 rounded-lg border-l-4 border-blue-500\">
-                  <h4 className=\"font-medium text-blue-900 mb-2\">SLOs Performance</h4>
-                  <ul className=\"text-sm text-blue-800 space-y-1\">
-                    <li>• Chargement produit: <2s</li>
-                    <li>• Page catalogue: <3s</li>
-                    <li>• Recherche: <1s</li>
-                    <li>• Images: <500ms</li>
+                <div className="p-4 bg-blue-50 rounded-lg border-l-4 border-blue-500">
+                  <h4 className="font-medium text-blue-900 mb-2">SLOs Performance</h4>
+                  <ul className="text-sm text-blue-800 space-y-1">
+                    <li>• Chargement produit: {'<'}2s</li>
+                    <li>• Page catalogue: {'<'}3s</li>
+                    <li>• Recherche: {'<'}1s</li>
+                    <li>• Images: {'<'}500ms</li>
                   </ul>
                 </div>
               </div>
 
-              <div className=\"bg-gray-900 text-gray-100 rounded-lg p-4 text-xs\">
-                <pre className=\"whitespace-pre-wrap\">{`
+              <div className="bg-gray-900 text-gray-100 rounded-lg p-4 text-xs">
+                <pre className="whitespace-pre-wrap">{`
 // 🔍 EXEMPLE INTÉGRATION PRODUIT
 import { useCatalogueErrorReporting } from '@/hooks/use-error-reporting-integration'
 
