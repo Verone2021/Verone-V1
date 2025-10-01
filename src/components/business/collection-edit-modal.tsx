@@ -24,6 +24,14 @@ import {
   SelectValue,
 } from '@/components/ui/select'
 import { Collection } from '@/hooks/use-collections'
+import {
+  COLLECTION_STYLE_OPTIONS,
+  ROOM_CATEGORY_OPTIONS,
+  CollectionStyle,
+  RoomCategory
+} from '@/types/collections'
+import { RoomMultiSelect } from '@/components/ui/room-multi-select'
+import type { RoomType } from '@/types/room-types'
 
 interface CollectionEditModalProps {
   collection: Collection | null
@@ -44,6 +52,9 @@ export function CollectionEditModal({
     description: collection?.description || '',
     visibility: collection?.visibility || 'private',
     is_active: collection?.is_active ?? true,
+    style: collection?.style || null,
+    room_category: collection?.room_category || null,
+    suitable_rooms: collection?.suitable_rooms || [],
   })
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -116,6 +127,68 @@ export function CollectionEditModal({
                   <SelectItem value="public">Publique</SelectItem>
                 </SelectContent>
               </Select>
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="style">Style décoratif</Label>
+              <Select
+                value={formData.style || ''}
+                onValueChange={(value: CollectionStyle) =>
+                  setFormData({ ...formData, style: value })
+                }
+              >
+                <SelectTrigger id="style">
+                  <SelectValue placeholder="Sélectionner un style" />
+                </SelectTrigger>
+                <SelectContent>
+                  {COLLECTION_STYLE_OPTIONS.map((option) => (
+                    <SelectItem key={option.value} value={option.value}>
+                      {option.label}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="room_category">Catégorie de pièce</Label>
+              <Select
+                value={formData.room_category || ''}
+                onValueChange={(value: RoomCategory) =>
+                  setFormData({ ...formData, room_category: value })
+                }
+              >
+                <SelectTrigger id="room_category">
+                  <SelectValue placeholder="Sélectionner une catégorie" />
+                </SelectTrigger>
+                <SelectContent>
+                  {ROOM_CATEGORY_OPTIONS.map((option) => (
+                    <SelectItem key={option.value} value={option.value}>
+                      {option.icon} {option.label}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="suitable_rooms">Pièces compatibles</Label>
+              <p className="text-xs text-gray-600 mb-2">
+                Sélectionnez les pièces où cette collection peut être utilisée
+              </p>
+              <RoomMultiSelect
+                value={formData.suitable_rooms as RoomType[]}
+                onChange={(rooms) =>
+                  setFormData({ ...formData, suitable_rooms: rooms })
+                }
+                placeholder="Sélectionner les pièces compatibles..."
+                className="w-full"
+              />
+              {formData.suitable_rooms.length > 0 && (
+                <p className="text-xs text-gray-500 mt-1">
+                  {formData.suitable_rooms.length} pièce{formData.suitable_rooms.length > 1 ? 's' : ''} sélectionnée{formData.suitable_rooms.length > 1 ? 's' : ''}
+                </p>
+              )}
             </div>
 
             <div className="flex items-center space-x-2">

@@ -17,6 +17,8 @@ import {
   ROOM_CATEGORY_OPTIONS,
   COLLECTION_VISIBILITY_OPTIONS
 } from '../../types/collections'
+import { RoomMultiSelect } from '../ui/room-multi-select'
+import type { RoomType } from '../../types/room-types'
 
 interface CollectionCreationWizardProps {
   isOpen: boolean
@@ -44,6 +46,7 @@ export function CollectionCreationWizard({
     // Step 2: Style & Category
     style: null,
     room_category: null,
+    suitable_rooms: [],
     color_theme: '#FFFFFF',
     // Step 3: Metadata & Settings
     visibility: 'private',
@@ -65,6 +68,7 @@ export function CollectionCreationWizard({
         image_url: editingCollection.image_url || '',
         style: editingCollection.style || null,
         room_category: editingCollection.room_category || null,
+        suitable_rooms: editingCollection.suitable_rooms || [],
         color_theme: editingCollection.color_theme || '#FFFFFF',
         visibility: editingCollection.visibility || 'private',
         theme_tags: editingCollection.theme_tags || [],
@@ -77,6 +81,7 @@ export function CollectionCreationWizard({
         image_url: '',
         style: null,
         room_category: null,
+        suitable_rooms: [],
         color_theme: '#FFFFFF',
         visibility: 'private',
         theme_tags: [],
@@ -186,6 +191,7 @@ export function CollectionCreationWizard({
       image_url: formData.image_url || undefined,
       style: formData.style || undefined,
       room_category: formData.room_category || undefined,
+      suitable_rooms: formData.suitable_rooms.length > 0 ? formData.suitable_rooms : undefined,
       color_theme: formData.color_theme,
       visibility: formData.visibility,
       theme_tags: formData.theme_tags,
@@ -454,6 +460,27 @@ export function CollectionCreationWizard({
                 </div>
                 {errors.room_category && (
                   <p className="mt-2 text-sm text-red-600">{errors.room_category}</p>
+                )}
+              </div>
+
+              {/* Suitable Rooms (aligné avec products) */}
+              <div>
+                <label className="block text-sm font-medium text-black mb-3">
+                  Pièces de la maison compatibles
+                </label>
+                <p className="text-xs text-gray-600 mb-2">
+                  Sélectionnez les pièces où cette collection peut être utilisée (aligné avec la table products pour automatisation via triggers)
+                </p>
+                <RoomMultiSelect
+                  value={formData.suitable_rooms as RoomType[]}
+                  onChange={(rooms) => updateFormData({ suitable_rooms: rooms })}
+                  placeholder="Sélectionner les pièces compatibles..."
+                  className="w-full"
+                />
+                {formData.suitable_rooms.length > 0 && (
+                  <p className="text-xs text-gray-500 mt-2">
+                    {formData.suitable_rooms.length} pièce{formData.suitable_rooms.length > 1 ? 's' : ''} sélectionnée{formData.suitable_rooms.length > 1 ? 's' : ''}
+                  </p>
                 )}
               </div>
             </div>

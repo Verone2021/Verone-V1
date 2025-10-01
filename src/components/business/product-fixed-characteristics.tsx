@@ -7,9 +7,9 @@ import { cn } from '../../lib/utils'
 interface Product {
   id: string
   name?: string
-  // Caractéristiques fixes de la variante (couleur/matière uniquement)
-  color?: string
-  material?: string
+  // Caractéristiques fixes de la variante (nouveau système variant_groups)
+  variant_attributes?: Record<string, any> | null
+  variant_group_id?: string | null
   video_url?: string
 
   // Navigation catégorielle
@@ -136,6 +136,14 @@ function getCompatibleRooms(product: Product): string[] {
   return ['salon', 'chambre', 'bureau']
 }
 
+// Labels pour les types d'attributs variantes
+const VARIANT_ATTRIBUTE_LABELS: Record<string, { label: string; emoji: string }> = {
+  color: { label: 'Couleur', emoji: '🎨' },
+  size: { label: 'Taille', emoji: '📏' },
+  material: { label: 'Matériau', emoji: '🧵' },
+  pattern: { label: 'Motif', emoji: '🔷' }
+}
+
 export function ProductFixedCharacteristics({
   product,
   className,
@@ -145,6 +153,8 @@ export function ProductFixedCharacteristics({
   const weight = product.product_groups?.weight
   const technicalSpecs = product.product_groups?.technical_specs
   const compatibleRooms = getCompatibleRooms(product)
+  const variantAttributes = product.variant_attributes || {}
+  const hasVariantAttributes = Object.keys(variantAttributes).length > 0
 
   return (
     <div className={cn("card-verone p-4", className)}>
@@ -167,36 +177,43 @@ export function ProductFixedCharacteristics({
       </div>
 
       <div className="space-y-4">
-        {/* Caractéristiques Variante (Couleur/Matière) */}
-        <div>
-          <h4 className="text-sm font-medium text-black mb-2 opacity-70">
-            Variante (couleur/matière)
-          </h4>
-          <div className="grid grid-cols-2 gap-3">
-            {/* Couleur */}
-            <div className="bg-gray-50 p-2 rounded">
-              <span className="text-xs text-black opacity-60">Couleur</span>
-              <div className="font-medium text-black">
-                {product.color || (
-                  <span className="text-gray-400 italic">Non définie</span>
-                )}
-              </div>
+        {/* Caractéristiques Variante (Système variant_groups) */}
+        {hasVariantAttributes && product.variant_group_id && (
+          <div>
+            <h4 className="text-sm font-medium text-black mb-2 opacity-70">
+              Attributs de variante
+            </h4>
+            <div className="grid grid-cols-2 gap-3">
+              {Object.entries(variantAttributes).map(([key, value]) => {
+                const attributeInfo = VARIANT_ATTRIBUTE_LABELS[key] || { label: key, emoji: '🔹' }
+                return (
+                  <div key={key} className="bg-purple-50 p-2 rounded border border-purple-200">
+                    <span className="text-xs text-black opacity-60 flex items-center gap-1">
+                      <span>{attributeInfo.emoji}</span>
+                      {attributeInfo.label}
+                    </span>
+                    <div className="font-medium text-black">
+                      {value || (
+                        <span className="text-gray-400 italic">Non défini</span>
+                      )}
+                    </div>
+                  </div>
+                )
+              })}
             </div>
-
-            {/* Matière */}
-            <div className="bg-gray-50 p-2 rounded">
-              <span className="text-xs text-black opacity-60">Matière</span>
-              <div className="font-medium text-black">
-                {product.material || (
-                  <span className="text-gray-400 italic">Non définie</span>
-                )}
-              </div>
+            <div className="text-xs text-purple-600 mt-1 flex items-center gap-1">
+              ℹ️ Attributs spécifiques à cette variante du groupe
+              {product.variant_group_id && (
+                <a
+                  href={`/catalogue/variantes/${product.variant_group_id}`}
+                  className="underline font-medium hover:text-purple-800"
+                >
+                  (voir le groupe)
+                </a>
+              )}
             </div>
           </div>
-          <div className="text-xs text-blue-600 mt-1">
-            ℹ️ Couleur et matière sont gérées au niveau Product Group
-          </div>
-        </div>
+        )}
 
         {/* Pièces compatibles (automatique selon type produit) */}
         <div>
@@ -314,44 +331,50 @@ export function ProductFixedCharacteristics({
         )}
 
         {/* Message si caractéristiques manquantes */}
-        {!product.color && !product.material && !dimensions && !weight && !technicalSpecs && !product.video_url && (
+        {!hasVariantAttributes && !dimensions && !weight && !technicalSpecs && !product.video_url && (
           <div className="text-center py-6">
             <Package className="h-8 w-8 mx-auto text-gray-300 mb-2" />
             <div className="text-sm text-gray-400">
               Aucune caractéristique définie
             </div>
-            <div className="text-xs text-gray-400 mt-1">
-              Les caractéristiques sont héritées du Product Group
-            </div>
+            {product.variant_group_id && (
+              <div className="text-xs text-gray-400 mt-1">
+                Les caractéristiques sont gérées au niveau du groupe de variantes
+              </div>
+            )}
           </div>
         )}
 
         {/* Note explicative pour l'utilisateur */}
-        <div className="border-t border-gray-200 pt-3 mt-4">
-          <div className="text-xs text-gray-600 space-y-1">
-            <div className="font-medium">📋 Règles de gestion :</div>
-            <ul className="list-disc list-inside space-y-1 ml-2">
-              <li><strong>Couleur/Matière</strong> : Seules différences autorisées entre variantes</li>
-              <li><strong>Dimensions/Poids</strong> : Identiques pour toutes les variantes du groupe</li>
-              <li><strong>Édition</strong> : Gérer les variantes depuis la page Product Group</li>
-              <li><strong>Vidéo</strong> : Seule caractéristique modifiable au niveau variante</li>
-            </ul>
+        {product.variant_group_id && (
+          <div className="border-t border-gray-200 pt-3 mt-4">
+            <div className="text-xs text-gray-600 space-y-1">
+              <div className="font-medium">📋 Règles de gestion (système variant_groups) :</div>
+              <ul className="list-disc list-inside space-y-1 ml-2">
+                <li><strong>Attributs variantes</strong> : Différences spécifiques entre produits du groupe (couleur, matériau)</li>
+                <li><strong>Dimensions/Poids</strong> : Peuvent varier ou être communes selon le groupe</li>
+                <li><strong>Édition</strong> : Gérer les variantes depuis la page du groupe</li>
+                <li><strong>Images/Vidéos</strong> : Spécifiques à chaque produit (modifiables individuellement)</li>
+              </ul>
+            </div>
           </div>
-        </div>
+        )}
       </div>
     </div>
   )
 }
 
 /**
- * Composant en lecture seule pour afficher les caractéristiques fixes d'un produit
+ * Composant en lecture seule pour afficher les caractéristiques d'un produit
  *
- * Caractéristiques affichées :
- * - Couleur/Matière : Spécifiques à la variante (fixes, gérées au niveau Product Group)
+ * Caractéristiques affichées (système variant_groups 2025) :
+ * - Attributs variantes : Stockés dans variant_attributes JSONB (couleur, taille, matériau, motif)
+ *   → Affichés uniquement si product.variant_group_id existe
+ *   → Dynamiques selon le type de variante du groupe
  * - Pièces compatibles : Déterminées automatiquement selon le type de produit
- * - Dimensions/Poids : Héritées du Product Group (communes à toutes variantes)
+ * - Dimensions/Poids : Héritées du Product Group (communes ou spécifiques selon groupe)
  * - Spécifications techniques : Héritées du Product Group
- * - Vidéo : Spécifique à la variante (modifiable)
+ * - Vidéo : Spécifique à chaque produit (modifiable individuellement)
  *
  * Logique pièces maison :
  * - Chaises/sièges → toutes les pièces
@@ -361,9 +384,9 @@ export function ProductFixedCharacteristics({
  * - Éclairage → toutes les pièces
  * - Autres → pièces appropriées selon l'usage
  *
- * Conforme aux business rules :
- * - R-VAR-002 : Seules couleur/matière modifiables par variante
- * - R-VAR-003 : Dimensions/poids héritées du Product Group
+ * Conforme aux business rules (variant_groups) :
+ * - R-VAR-GROUPS-001 : variant_attributes JSONB pour flexibilité (color, size, material, pattern)
+ * - R-VAR-GROUPS-002 : variant_group_id FK vers variant_groups.id
+ * - R-VAR-GROUPS-003 : Édition gérée au niveau groupe uniquement
  * - R-ROOMS-001 : Pièces compatibles déterminées par type produit
- * - Pas d'édition dynamique d'attributs arbitraires
  */

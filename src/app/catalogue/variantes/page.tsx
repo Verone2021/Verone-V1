@@ -16,7 +16,8 @@ import {
   Layers,
   TreePine,
   FolderOpen,
-  Tags
+  Tags,
+  X
 } from 'lucide-react'
 import { Button } from '../../../components/ui/button'
 import { Badge } from '../../../components/ui/badge'
@@ -33,7 +34,7 @@ import { useToast } from '@/hooks/use-toast'
 interface LocalVariantFilters {
   search: string
   status: 'all' | 'active' | 'inactive'
-  type: 'all' | 'color' | 'size' | 'material' | 'pattern'
+  type: 'all' | 'color' | 'material'
   familyId: string
   categoryId: string
   subcategoryId: string
@@ -44,9 +45,7 @@ const formatVariantType = (type?: string): string => {
   if (!type) return ''
   const typeMap: Record<string, string> = {
     'color': 'Couleur',
-    'size': 'Taille',
-    'material': 'Matériau',
-    'pattern': 'Motif'
+    'material': 'Matériau'
   }
   return typeMap[type] || type
 }
@@ -70,6 +69,13 @@ export default function VariantesPage() {
   const [showAddProductsModal, setShowAddProductsModal] = useState(false)
   const [selectedGroupForProducts, setSelectedGroupForProducts] = useState<any>(null)
 
+  // Stabiliser les filtres avec useMemo pour éviter boucle infinie
+  const stableFilters = useMemo(() => ({
+    search: filters.search || undefined,
+    variant_type: filters.type === 'all' ? undefined : filters.type as any,
+    is_active: filters.status === 'all' ? undefined : filters.status === 'active'
+  }), [filters.search, filters.type, filters.status])
+
   // Hooks pour les données
   const {
     variantGroups,
@@ -78,12 +84,9 @@ export default function VariantesPage() {
     refetch,
     createVariantGroup,
     updateVariantGroup,
-    deleteVariantGroup
-  } = useVariantGroups({
-    search: filters.search || undefined,
-    variant_type: filters.type === 'all' ? undefined : filters.type as any,
-    is_active: filters.status === 'all' ? undefined : filters.status === 'active'
-  })
+    deleteVariantGroup,
+    removeProductFromGroup
+  } = useVariantGroups(stableFilters)
 
   // Hooks pour l'arborescence hiérarchique
   const { families, loading: familiesLoading } = useFamilies()
@@ -146,6 +149,19 @@ export default function VariantesPage() {
     setShowAddProductsModal(true)
   }, [])
 
+  const handleRemoveProduct = useCallback(async (productId: string, productName: string) => {
+    if (!confirm(`Êtes-vous sûr de vouloir retirer "${productName}" de ce groupe ?`)) return
+
+    const result = await removeProductFromGroup(productId)
+    if (result) {
+      toast({
+        title: "Produit retiré",
+        description: `"${productName}" a été retiré du groupe`,
+      })
+      refetch()
+    }
+  }, [removeProductFromGroup, toast, refetch])
+
   // Obtenir l'icône du type de variante
   const getVariantTypeIcon = (type: string) => {
     switch (type) {
@@ -200,6 +216,11 @@ export default function VariantesPage() {
                   {group.dimensions_length && (
                     <Badge variant="outline" className="bg-blue-50 text-blue-700 border-blue-200">
                       {group.dimensions_length}×{group.dimensions_width}×{group.dimensions_height} {group.dimensions_unit}
+                    </Badge>
+                  )}
+                  {group.common_weight && (
+                    <Badge variant="outline" className="bg-green-50 text-green-700 border-green-200">
+                      ⚖️ {group.common_weight} kg
                     </Badge>
                   )}
                 </div>
@@ -257,7 +278,7 @@ export default function VariantesPage() {
           {group.products && group.products.length > 0 ? (
             <div className="flex space-x-2 overflow-x-auto">
               {group.products.slice(0, 4).map((product: any) => (
-                <div key={product.id} className="flex-shrink-0 w-20 h-20 rounded bg-gray-100 overflow-hidden">
+                <div key={product.id} className="relative flex-shrink-0 w-20 h-20 rounded bg-gray-100 overflow-hidden group/product">
                   {product.image_url ? (
                     <img
                       src={product.image_url}
@@ -269,6 +290,17 @@ export default function VariantesPage() {
                       <Package className="h-8 w-8 text-gray-400" />
                     </div>
                   )}
+                  {/* Bouton retirer en hover */}
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation()
+                      handleRemoveProduct(product.id, product.name)
+                    }}
+                    className="absolute top-1 right-1 bg-red-500 text-white rounded-full p-1 opacity-0 group-hover/product:opacity-100 transition-opacity hover:bg-red-600"
+                    title={`Retirer ${product.name}`}
+                  >
+                    <X className="h-3 w-3" />
+                  </button>
                 </div>
               ))}
               {(group.product_count || 0) > 4 && (
@@ -352,9 +384,7 @@ export default function VariantesPage() {
             >
               <option value="all">Tous les types</option>
               <option value="color">Couleur</option>
-              <option value="size">Taille</option>
               <option value="material">Matériau</option>
-              <option value="pattern">Motif</option>
             </select>
           </div>
         </div>

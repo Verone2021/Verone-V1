@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react"
 import { useParams, useRouter } from "next/navigation"
-import { ArrowLeft, Edit, Share2, Image as ImageIcon, Package, Tag, Clock, TreePine, FolderOpen, Tags, ChevronRight } from "lucide-react"
+import { ArrowLeft, Edit, Share2, Image as ImageIcon, Package, Tag, Clock, TreePine, FolderOpen, Tags, ChevronRight, Save, X } from "lucide-react"
 import { Button } from "../../../components/ui/button"
 import { Badge } from "../../../components/ui/badge"
 import { Progress } from "../../../components/ui/progress"
@@ -88,6 +88,7 @@ interface Product {
   dimensions: string | null
   weight: number | null
   variant_attributes: Record<string, any> | null
+  variant_group_id: string | null  // ID du groupe de variantes
   gtin: string | null
   slug: string | null
   images: any[]
@@ -132,6 +133,11 @@ export default function ProductDetailPage() {
   const [showCharacteristicsModal, setShowCharacteristicsModal] = useState(false)
   const [showDescriptionsModal, setShowDescriptionsModal] = useState(false)
   const [isCategorizeModalOpen, setIsCategorizeModalOpen] = useState(false)
+
+  // États pour l'édition du nom
+  const [isEditingName, setIsEditingName] = useState(false)
+  const [editedName, setEditedName] = useState('')
+  const [savingName, setSavingName] = useState(false)
 
   const startTime = Date.now()
 
@@ -224,6 +230,38 @@ export default function ProductDetailPage() {
       console.error('❌ Erreur lors de la mise à jour:', error)
       // En cas d'erreur, on garde l'ancien état (pas de mise à jour locale)
     }
+  }
+
+  // Gestion de l'édition du nom
+  const handleStartEditName = () => {
+    if (product?.variant_group_id) {
+      // Si le produit est dans un groupe de variantes, ne pas permettre l'édition
+      return
+    }
+    setEditedName(product?.name || '')
+    setIsEditingName(true)
+  }
+
+  const handleSaveName = async () => {
+    if (!editedName.trim() || editedName === product?.name) {
+      setIsEditingName(false)
+      return
+    }
+
+    setSavingName(true)
+    try {
+      await handleProductUpdate({ name: editedName.trim() })
+      setIsEditingName(false)
+    } catch (error) {
+      console.error('Erreur lors de la mise à jour du nom:', error)
+    } finally {
+      setSavingName(false)
+    }
+  }
+
+  const handleCancelEditName = () => {
+    setIsEditingName(false)
+    setEditedName('')
   }
 
   // Handler pour naviguer vers la page de partage
@@ -320,6 +358,37 @@ export default function ProductDetailPage() {
             />
           </div>
 
+          {/* Section Variantes - Affichée uniquement si produit dans un groupe */}
+          {product.variant_group_id && (
+            <div className="bg-white border border-black">
+              <ProductVariantsSection
+                productId={product.id}
+                productName={product.name}
+                productData={{
+                  id: product.id,
+                  name: product.name,
+                  sku: product.sku,
+                  supplier_id: product.supplier_id,
+                  supplier: product.supplier,
+                  dimensions_length: product.dimensions_length,
+                  dimensions_width: product.dimensions_width,
+                  dimensions_height: product.dimensions_height,
+                  dimensions_unit: product.dimensions_unit,
+                  weight: product.weight,
+                  weight_unit: product.weight_unit,
+                  base_cost: product.base_cost,
+                  selling_price: product.selling_price,
+                  description: product.description,
+                  technical_description: product.technical_description,
+                  category_id: product.category_id,
+                  subcategory_id: product.subcategory_id,
+                  variant_group_id: product.variant_group_id
+                }}
+                onVariantsUpdate={fetchProduct}
+              />
+            </div>
+          )}
+
           {/* Actions sous l'image (déplacées depuis colonne 3) */}
           <div className="bg-white border border-black p-4">
             <h3 className="font-medium mb-3 text-sm">Actions</h3>
@@ -393,19 +462,79 @@ export default function ProductDetailPage() {
           {/* Header produit */}
           <div className="bg-white border border-black p-4">
             <div className="flex items-start justify-between mb-3">
-              <div>
-                <h1 className="text-xl font-bold text-black mb-1">{product.name}</h1>
-                <div className="text-sm text-gray-600 mb-2">
-                  SKU: {product.sku || 'Non défini'}
-                </div>
-                <div className="text-lg font-semibold text-black">
-                  {product.price_ht ? formatPrice(product.price_ht) : 'Prix non défini'}
-                </div>
+              <div className="flex-1">
+                {isEditingName ? (
+                  // Mode édition du nom
+                  <div className="space-y-2">
+                    <input
+                      type="text"
+                      value={editedName}
+                      onChange={(e) => setEditedName(e.target.value)}
+                      onKeyDown={(e) => {
+                        if (e.key === 'Enter') handleSaveName()
+                        if (e.key === 'Escape') handleCancelEditName()
+                      }}
+                      className="w-full text-xl font-bold text-black border border-gray-300 rounded px-2 py-1 focus:outline-none focus:ring-2 focus:ring-black"
+                      disabled={savingName}
+                      autoFocus
+                    />
+                    <div className="flex space-x-2">
+                      <Button
+                        size="sm"
+                        onClick={handleSaveName}
+                        disabled={savingName || !editedName.trim()}
+                        className="bg-black text-white hover:bg-gray-800"
+                      >
+                        <Save className="h-3 w-3 mr-1" />
+                        {savingName ? 'Sauvegarde...' : 'Sauvegarder'}
+                      </Button>
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        onClick={handleCancelEditName}
+                        disabled={savingName}
+                      >
+                        <X className="h-3 w-3 mr-1" />
+                        Annuler
+                      </Button>
+                    </div>
+                  </div>
+                ) : (
+                  // Mode affichage
+                  <div>
+                    <div className="flex items-center gap-2">
+                      <h1 className="text-xl font-bold text-black mb-1">{product.name}</h1>
+                      {!product.variant_group_id && (
+                        <Button
+                          size="sm"
+                          variant="ghost"
+                          onClick={handleStartEditName}
+                          className="h-6 w-6 p-0"
+                        >
+                          <Edit className="h-3 w-3" />
+                        </Button>
+                      )}
+                    </div>
+                    {product.variant_group_id && (
+                      <p className="text-xs text-orange-600 mb-2">
+                        ℹ️ Nom géré par le groupe de variantes.{' '}
+                        <a
+                          href={`/catalogue/variantes/${product.variant_group_id}`}
+                          className="underline hover:text-orange-800"
+                        >
+                          Modifier depuis la page du groupe
+                        </a>
+                      </p>
+                    )}
+                    <div className="text-sm text-gray-600 mb-2">
+                      SKU: {product.sku || 'Non défini'}
+                    </div>
+                    <div className="text-lg font-semibold text-black">
+                      {product.price_ht ? formatPrice(product.price_ht) : 'Prix non défini'}
+                    </div>
+                  </div>
+                )}
               </div>
-              <Button variant="outline" size="sm">
-                <Edit className="h-4 w-4 mr-2" />
-                Modifier
-              </Button>
             </div>
           </div>
 
@@ -417,15 +546,21 @@ export default function ProductDetailPage() {
                 <Tag className="h-4 w-4 mr-2" />
                 Catégorisation
               </h3>
-              <Button
-                variant="outline"
-                size="sm"
-                className="border-black text-black hover:bg-black hover:text-white"
-                onClick={() => setIsCategorizeModalOpen(true)}
-              >
-                <Edit className="h-3 w-3 mr-1" />
-                Modifier
-              </Button>
+              {!product.variant_group_id ? (
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="border-black text-black hover:bg-black hover:text-white"
+                  onClick={() => setIsCategorizeModalOpen(true)}
+                >
+                  <Edit className="h-3 w-3 mr-1" />
+                  Modifier
+                </Button>
+              ) : (
+                <p className="text-xs text-orange-600">
+                  ℹ️ Géré par le groupe de variantes
+                </p>
+              )}
             </div>
 
             {/* Fil d'Ariane hiérarchique */}
@@ -543,42 +678,29 @@ export default function ProductDetailPage() {
                 variant="ghost"
                 size="sm"
                 onClick={() => setShowCharacteristicsModal(true)}
+                disabled={!!product.variant_group_id}
+                className={product.variant_group_id ? "opacity-50 cursor-not-allowed" : ""}
+                title={product.variant_group_id ? "Géré depuis le groupe de variantes" : "Modifier les caractéristiques"}
               >
                 <Edit className="h-3 w-3 mr-1" />
                 Modifier
               </Button>
             </div>
+            {product.variant_group_id && (
+              <div className="mb-3 p-2 bg-blue-50 border border-blue-200 rounded text-xs text-blue-800">
+                ℹ️ Les caractéristiques sont gérées au niveau du groupe de variantes.{' '}
+                <a
+                  href={`/catalogue/variantes/${product.variant_group_id}`}
+                  className="underline font-medium hover:text-blue-900"
+                >
+                  Voir le groupe
+                </a>
+              </div>
+            )}
             <ProductFixedCharacteristics
               product={product}
             />
           </div>
-
-          {/* Variantes Produit */}
-          <ProductVariantsSection
-            productId={product.id}
-            productName={product.name}
-            productData={{
-              id: product.id,
-              name: product.name,
-              sku: product.sku,
-              supplier_id: product.supplier_id,
-              supplier: product.supplier,
-              dimensions_length: product.dimensions_length,
-              dimensions_width: product.dimensions_width,
-              dimensions_height: product.dimensions_height,
-              dimensions_unit: product.dimensions_unit,
-              weight: product.weight,
-              weight_unit: product.weight_unit,
-              base_cost: product.base_cost,
-              selling_price: product.selling_price,
-              description: product.description,
-              technical_description: product.technical_description,
-              category_id: product.category_id,
-              subcategory_id: product.subcategory_id,
-              variant_group_id: product.variant_group_id
-            }}
-            onVariantsUpdate={fetchProduct}
-          />
 
         </div>
 

@@ -28,6 +28,7 @@ export function VariantAddProductModal({
   const [selectedProductId, setSelectedProductId] = useState('')
   const [color, setColor] = useState('')
   const [material, setMaterial] = useState('')
+  const [commonWeight, setCommonWeight] = useState<number | undefined>()
   const [isSubmitting, setIsSubmitting] = useState(false)
 
   const availableProducts = useMemo(() => {
@@ -50,6 +51,7 @@ export function VariantAddProductModal({
       setSelectedProductId('')
       setColor('')
       setMaterial('')
+      setCommonWeight(undefined)
     }
   }, [isOpen])
 
@@ -152,6 +154,25 @@ export function VariantAddProductModal({
                   </div>
                 </div>
 
+                <div>
+                  <Label htmlFor="common_weight" className="text-sm font-medium">
+                    Poids commun (kg)
+                  </Label>
+                  <Input
+                    id="common_weight"
+                    type="number"
+                    step="0.01"
+                    min="0"
+                    value={commonWeight || ''}
+                    onChange={(e) => setCommonWeight(e.target.value ? parseFloat(e.target.value) : undefined)}
+                    placeholder="Ex: 2.5"
+                    className="mt-1"
+                  />
+                  <p className="text-xs text-gray-600 mt-1">
+                    Poids que tous les produits du groupe partageront
+                  </p>
+                </div>
+
                 {(!color && !material) && (
                   <div className="bg-orange-50 border border-orange-200 rounded-lg p-3 flex items-start space-x-2">
                     <AlertCircle className="h-5 w-5 text-orange-600 flex-shrink-0 mt-0.5" />
@@ -205,6 +226,11 @@ export function VariantAddProductModal({
                     {(group.dimensions_length || group.dimensions_width || group.dimensions_height) && (
                       <li>
                         → Dimensions : {group.dimensions_length || 0} × {group.dimensions_width || 0} × {group.dimensions_height || 0} {group.dimensions_unit}
+                      </li>
+                    )}
+                    {commonWeight && (
+                      <li>
+                        → Poids commun : {commonWeight} kg
                       </li>
                     )}
                   </ul>

@@ -10,6 +10,7 @@ import { useCollections, Collection, CollectionFilters, CreateCollectionData } f
 import { CollectionCreationWizard, CreateCollectionInput } from "@/components/business/collection-creation-wizard"
 import { CollectionProductsModal } from "@/components/business/collection-products-modal"
 import { useToast } from "@/hooks/use-toast"
+import { getRoomLabel, type RoomType } from "@/types/room-types"
 
 // Interface filtres collections
 interface LocalCollectionFilters {
@@ -270,6 +271,20 @@ export default function CollectionsPage() {
                     <Badge variant="outline" className="bg-blue-50 text-blue-700 border-blue-200">
                       {formatRoomCategory(collection.room_category)}
                     </Badge>
+                  )}
+                  {collection.suitable_rooms && collection.suitable_rooms.length > 0 && (
+                    <>
+                      {collection.suitable_rooms.slice(0, 2).map((room) => (
+                        <Badge key={room} variant="outline" className="bg-green-50 text-green-700 border-green-200 text-xs">
+                          {getRoomLabel(room as RoomType)}
+                        </Badge>
+                      ))}
+                      {collection.suitable_rooms.length > 2 && (
+                        <Badge variant="outline" className="bg-gray-50 text-gray-700 border-gray-200 text-xs">
+                          +{collection.suitable_rooms.length - 2}
+                        </Badge>
+                      )}
+                    </>
                   )}
                 </div>
               </div>

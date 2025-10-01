@@ -1,6 +1,7 @@
 'use client'
 
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useCallback, useMemo } from 'react'
+import useSWR from 'swr'
 import { createClient } from '@/lib/supabase/client'
 import { useToast } from '@/hooks/use-toast'
 import { calculateMinimumSellingPrice, formatPrice } from '@/lib/pricing-utils'
@@ -118,209 +119,179 @@ export interface SourcingFormData {
   assigned_client_id?: string // Facultatif - si rempli → sourcing_type = 'client'
 }
 
-export function useProducts(filters?: ProductFilters) {
-  const [products, setProducts] = useState<Product[]>([])
-  const [loading, setLoading] = useState(true)
-  const [error, setError] = useState<string | null>(null)
-  const { toast } = useToast()
+// 🚀 Configuration pagination et cache
+const PRODUCTS_PER_PAGE = 50
+const CACHE_REVALIDATION_TIME = 5 * 60 * 1000 // 5 minutes
 
+// 📊 Fetcher optimisé SWR avec SELECT allégé pour vue liste
+const productsFetcher = async (
+  key: string,
+  filters: ProductFilters | undefined,
+  page: number = 0
+) => {
   const supabase = createClient()
 
-  const fetchProducts = useCallback(async () => {
-    setLoading(true)
-    setError(null)
+  // 🎯 SELECT optimisé - SEULEMENT 8 colonnes pour vue liste (vs 26 avant)
+  let query = supabase
+    .from('products')
+    .select(`
+      id,
+      name,
+      sku,
+      status,
+      cost_price,
+      margin_percentage,
+      created_at,
+      subcategory_id
+    `, { count: 'exact' })
+    .order('created_at', { ascending: false })
+    .range(page * PRODUCTS_PER_PAGE, (page + 1) * PRODUCTS_PER_PAGE - 1)
 
-    try {
-      let query = supabase
-        .from('products')
-        .select(`
-          id,
-          sku,
-          name,
-          slug,
-          cost_price,
-          status,
-          condition,
-          variant_attributes,
-          dimensions,
-          weight,
-          video_url,
-          supplier_reference,
-          gtin,
-          stock_quantity,
-          min_stock,
-          supplier_page_url,
-          supplier_id,
-          subcategory_id,
-          margin_percentage,
-          target_margin_percentage,
-          availability_type,
-          description,
-          technical_description,
-          selling_points,
-          product_type,
-          assigned_client_id,
-          creation_mode,
-          created_at,
-          updated_at
-        `)
-        .order('created_at', { ascending: false })
+  // Appliquer les filtres
+  if (filters?.search && filters.search.trim()) {
+    query = query.or(`name.ilike.%${filters.search}%,sku.ilike.%${filters.search}%`)
+  }
 
-      // Appliquer les filtres
-      if (filters?.search && filters.search.trim()) {
-        query = query.or(`name.ilike.%${filters.search}%,sku.ilike.%${filters.search}%`)
-      }
+  if (filters?.status) {
+    query = query.eq('status', filters.status)
+  }
 
-      if (filters?.status) {
-        query = query.eq('status', filters.status)
-      }
+  if (filters?.supplier_id) {
+    query = query.eq('supplier_id', filters.supplier_id)
+  }
 
-      if (filters?.supplier_id) {
-        query = query.eq('supplier_id', filters.supplier_id)
-      }
+  if (filters?.min_price) {
+    query = query.gte('cost_price', filters.min_price)
+  }
 
-      if (filters?.min_price) {
-        query = query.gte('price_ht', filters.min_price)
-      }
+  if (filters?.max_price) {
+    query = query.lte('cost_price', filters.max_price)
+  }
 
-      if (filters?.max_price) {
-        query = query.lte('price_ht', filters.max_price)
-      }
+  if (filters?.in_stock_only) {
+    query = query.gt('stock_quantity', 0)
+  }
 
-      if (filters?.in_stock_only) {
-        query = query.gt('stock_quantity', 0)
-      }
+  const { data, error, count } = await query
 
-      const { data, error: fetchError } = await query
+  if (error) throw error
 
-      if (fetchError) {
-        setError(fetchError.message)
-        return
-      }
+  // Enrichir avec prix minimum de vente (calcul rapide côté client)
+  const enriched = (data || []).map(product => ({
+    ...product,
+    minimumSellingPrice: product.cost_price && product.margin_percentage
+      ? calculateMinimumSellingPrice(product.cost_price, product.margin_percentage)
+      : 0
+  }))
 
-      // Enrichir les produits avec le prix minimum de vente calculé
-      const enrichedProducts = (data || []).map(product => {
-        // Utiliser supplier_cost_price en priorité, sinon price_ht en fallback
-        const supplierCost = product.supplier_cost_price || product.price_ht
-        const margin = product.margin_percentage || 0
+  return { products: enriched, totalCount: count || 0 }
+}
 
-        const minimumSellingPrice = supplierCost && margin
-          ? calculateMinimumSellingPrice(supplierCost, margin)
-          : 0
+export function useProducts(filters?: ProductFilters, page: number = 0) {
+  const { toast } = useToast()
+  const supabase = createClient()
 
-        return {
-          ...product,
-          minimumSellingPrice
-        }
-      })
+  // 🔑 Clé SWR stable basée sur filtres + page
+  const swrKey = useMemo(() =>
+    ['products', JSON.stringify(filters || {}), page],
+    [filters, page]
+  )
 
-      setProducts(enrichedProducts)
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Erreur inconnue')
-    } finally {
-      setLoading(false)
+  // 🚀 Utiliser SWR avec cache et revalidation automatique
+  const { data, error, isLoading, mutate } = useSWR(
+    swrKey,
+    ([_, filtersJson]) => productsFetcher('products', JSON.parse(filtersJson), page),
+    {
+      revalidateOnFocus: false,
+      revalidateOnReconnect: true,
+      dedupingInterval: CACHE_REVALIDATION_TIME,
+      keepPreviousData: true // Garde les données pendant rechargement
     }
-  }, [filters, supabase])
+  )
 
-  useEffect(() => {
-    fetchProducts()
-  }, [fetchProducts])
+  const products = data?.products || []
+  const totalCount = data?.totalCount || 0
+  const totalPages = Math.ceil(totalCount / PRODUCTS_PER_PAGE)
 
-  const createProduct = async (data: CreateProductData): Promise<Product | null> => {
+  // 📝 Méthodes CRUD avec invalidation cache SWR
+  const createProduct = async (productData: CreateProductData): Promise<Product | null> => {
     try {
       const { data: newProduct, error } = await supabase
         .from('products')
         .insert([{
-          // SKU sera généré automatiquement par la fonction DB
-          name: data.name,
-          slug: data.slug || data.name.toLowerCase().replace(/[^a-z0-9]/g, '-').replace(/-+/g, '-'),
-          // NOUVELLE LOGIQUE PRIX
-          supplier_cost_price: data.supplier_cost_price, // Prix d'achat fournisseur
-          price_ht: data.supplier_cost_price || 0, // Legacy - prix d'achat (sera supprimé plus tard)
-          margin_percentage: data.margin_percentage || 0, // Marge minimum
-          // Nouveaux champs business rules
-          availability_type: data.availability_type || 'normal',
-          cost_price: data.cost_price, // Autre coût si défini séparément
-          description: data.description, // Obligatoire en mode complete
-          subcategory_id: data.subcategory_id, // Obligatoire en mode complete
-          technical_description: data.technical_description,
-          selling_points: data.selling_points || [],
-          // NOUVEAUX CHAMPS - Système sourcing et différenciation
-          product_type: data.product_type || 'standard',
-          assigned_client_id: data.assigned_client_id,
-          creation_mode: data.creation_mode || 'complete',
-          supplier_page_url: data.supplier_page_url,
-          // Champs optionnels existants
-          condition: data.condition || 'new',
-          variant_attributes: data.variant_attributes,
-          dimensions: data.dimensions,
-          weight: data.weight,
-          video_url: data.video_url,
-          supplier_reference: data.supplier_reference,
-          gtin: data.gtin,
-          supplier_id: data.supplier_id,
-          brand: data.brand
+          name: productData.name,
+          slug: productData.slug || productData.name.toLowerCase().replace(/[^a-z0-9]/g, '-').replace(/-+/g, '-'),
+          supplier_cost_price: productData.supplier_cost_price,
+          price_ht: productData.supplier_cost_price || 0,
+          margin_percentage: productData.margin_percentage || 0,
+          availability_type: productData.availability_type || 'normal',
+          cost_price: productData.cost_price,
+          description: productData.description,
+          subcategory_id: productData.subcategory_id,
+          technical_description: productData.technical_description,
+          selling_points: productData.selling_points || [],
+          product_type: productData.product_type || 'standard',
+          assigned_client_id: productData.assigned_client_id,
+          creation_mode: productData.creation_mode || 'complete',
+          supplier_page_url: productData.supplier_page_url,
+          condition: productData.condition || 'new',
+          variant_attributes: productData.variant_attributes,
+          dimensions: productData.dimensions,
+          weight: productData.weight,
+          video_url: productData.video_url,
+          supplier_reference: productData.supplier_reference,
+          gtin: productData.gtin,
+          supplier_id: productData.supplier_id,
+          brand: productData.brand
         }])
         .select()
         .single()
 
-      if (error) {
-        setError(error.message)
-        toast({
-          title: "Erreur",
-          description: error.message,
-          variant: "destructive"
-        })
-        return null
-      }
+      if (error) throw error
 
-      await fetchProducts()
+      // 🔄 Invalider cache SWR pour refresh auto
+      await mutate()
+
       toast({
         title: "Succès",
         description: "Produit créé avec succès"
       })
       return newProduct
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Erreur lors de la création')
+      const errorMessage = err instanceof Error ? err.message : 'Erreur lors de la création'
       toast({
         title: "Erreur",
-        description: "Impossible de créer le produit",
+        description: errorMessage,
         variant: "destructive"
       })
       return null
     }
   }
 
-  const updateProduct = async (id: string, data: Partial<CreateProductData>): Promise<Product | null> => {
+  const updateProduct = async (id: string, productData: Partial<CreateProductData>): Promise<Product | null> => {
     try {
       const { data: updatedProduct, error } = await supabase
         .from('products')
-        .update(data)
+        .update(productData)
         .eq('id', id)
         .select()
         .single()
 
-      if (error) {
-        setError(error.message)
-        toast({
-          title: "Erreur",
-          description: error.message,
-          variant: "destructive"
-        })
-        return null
-      }
+      if (error) throw error
 
-      await fetchProducts()
+      // 🔄 Invalider cache SWR
+      await mutate()
+
       toast({
         title: "Succès",
         description: "Produit mis à jour avec succès"
       })
       return updatedProduct
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Erreur lors de la mise à jour')
+      const errorMessage = err instanceof Error ? err.message : 'Erreur lors de la mise à jour'
       toast({
         title: "Erreur",
-        description: "Impossible de mettre à jour le produit",
+        description: errorMessage,
         variant: "destructive"
       })
       return null
@@ -334,27 +305,21 @@ export function useProducts(filters?: ProductFilters) {
         .delete()
         .eq('id', id)
 
-      if (error) {
-        setError(error.message)
-        toast({
-          title: "Erreur",
-          description: error.message,
-          variant: "destructive"
-        })
-        return false
-      }
+      if (error) throw error
 
-      await fetchProducts()
+      // 🔄 Invalider cache SWR
+      await mutate()
+
       toast({
         title: "Succès",
         description: "Produit supprimé avec succès"
       })
       return true
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Erreur lors de la suppression')
+      const errorMessage = err instanceof Error ? err.message : 'Erreur lors de la suppression'
       toast({
         title: "Erreur",
-        description: "Impossible de supprimer le produit",
+        description: errorMessage,
         variant: "destructive"
       })
       return false
@@ -363,12 +328,18 @@ export function useProducts(filters?: ProductFilters) {
 
   return {
     products,
-    loading,
-    error,
-    refetch: fetchProducts,
+    loading: isLoading,
+    error: error?.message || null,
+    refetch: () => mutate(),
     createProduct,
     updateProduct,
-    deleteProduct
+    deleteProduct,
+    // 📄 Pagination
+    page,
+    totalCount,
+    totalPages,
+    hasNextPage: page < totalPages - 1,
+    hasPreviousPage: page > 0
   }
 }
 

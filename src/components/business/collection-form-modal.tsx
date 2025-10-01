@@ -10,6 +10,8 @@ import { Badge } from '../ui/badge'
 import { X, Tag, Plus } from 'lucide-react'
 import { cn } from '../../lib/utils'
 import type { Collection, CollectionStyle, RoomCategory, CreateCollectionData } from '../../hooks/use-collections'
+import { RoomMultiSelect } from '../ui/room-multi-select'
+import type { RoomType } from '../../types/room-types'
 
 const COLLECTION_STYLES: { value: CollectionStyle; label: string; description: string }[] = [
   { value: 'minimaliste', label: 'Minimaliste', description: 'Épuré et fonctionnel' },
@@ -54,6 +56,7 @@ export function CollectionFormModal({
   const [description, setDescription] = useState('')
   const [style, setStyle] = useState<CollectionStyle | undefined>()
   const [roomCategory, setRoomCategory] = useState<RoomCategory | undefined>()
+  const [suitableRooms, setSuitableRooms] = useState<RoomType[]>([])
   const [tags, setTags] = useState<string[]>([])
   const [newTag, setNewTag] = useState('')
   const [visibility, setVisibility] = useState<'public' | 'private'>('private')
@@ -66,6 +69,7 @@ export function CollectionFormModal({
       setDescription(collection.description || '')
       setStyle(collection.style)
       setRoomCategory(collection.room_category)
+      setSuitableRooms((collection.suitable_rooms || []) as RoomType[])
       setTags(collection.theme_tags || [])
       setVisibility(collection.visibility)
       setIsActive(collection.is_active)
@@ -74,6 +78,7 @@ export function CollectionFormModal({
       setDescription('')
       setStyle(undefined)
       setRoomCategory(undefined)
+      setSuitableRooms([])
       setTags([])
       setVisibility('private')
       setIsActive(true)
@@ -102,6 +107,7 @@ export function CollectionFormModal({
         description: description.trim() || undefined,
         style,
         room_category: roomCategory,
+        suitable_rooms: suitableRooms.length > 0 ? suitableRooms : undefined,
         theme_tags: tags,
         visibility,
         is_active: isActive,
@@ -184,6 +190,27 @@ export function CollectionFormModal({
                 </button>
               ))}
             </div>
+          </div>
+
+          {/* Pièces de la maison compatibles (aligné avec products) */}
+          <div className="space-y-3">
+            <Label className="text-sm font-medium">
+              Pièces de la maison compatibles
+            </Label>
+            <p className="text-xs text-gray-600 mb-2">
+              Sélectionnez les pièces où cette collection peut être utilisée (aligné avec la table products)
+            </p>
+            <RoomMultiSelect
+              value={suitableRooms}
+              onChange={setSuitableRooms}
+              placeholder="Sélectionner les pièces compatibles..."
+              className="w-full"
+            />
+            {suitableRooms.length > 0 && (
+              <p className="text-xs text-gray-500">
+                {suitableRooms.length} pièce{suitableRooms.length > 1 ? 's' : ''} sélectionnée{suitableRooms.length > 1 ? 's' : ''}
+              </p>
+            )}
           </div>
 
           {/* Catégorie de pièce */}

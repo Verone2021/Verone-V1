@@ -2,12 +2,14 @@
 
 import { use } from 'react'
 import { useRouter } from 'next/navigation'
-import { ChevronLeft, Eye, Package, Calendar, Users } from 'lucide-react'
+import { ChevronLeft, Eye, Package, Calendar, Users, Home } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { useCollection } from '@/hooks/use-collections'
 import Image from 'next/image'
+import { getRoomLabel, type RoomType } from '@/types/room-types'
+import { COLLECTION_STYLE_OPTIONS } from '@/types/collections'
 
 interface CollectionDetailPageProps {
   params: Promise<{
@@ -89,6 +91,11 @@ export default function CollectionDetailPage({ params }: CollectionDetailPagePro
           <Badge variant={collection.visibility === 'public' ? 'default' : 'outline'}>
             {collection.visibility === 'public' ? 'Publique' : 'Privée'}
           </Badge>
+          {collection.style && (
+            <Badge variant="outline" className="bg-purple-50 text-purple-800 border-purple-200">
+              {COLLECTION_STYLE_OPTIONS.find(s => s.value === collection.style)?.label}
+            </Badge>
+          )}
         </div>
       </div>
 
@@ -138,6 +145,37 @@ export default function CollectionDetailPage({ params }: CollectionDetailPagePro
           </CardContent>
         </Card>
       </div>
+
+      {/* Pièces compatibles (aligné avec products) */}
+      {collection.suitable_rooms && collection.suitable_rooms.length > 0 && (
+        <Card className="mb-8">
+          <CardHeader>
+            <CardTitle className="flex items-center text-lg">
+              <Home className="h-5 w-5 mr-2" />
+              Pièces de la maison compatibles
+            </CardTitle>
+            <p className="text-sm text-gray-600">
+              Cette collection peut être utilisée dans les espaces suivants
+            </p>
+          </CardHeader>
+          <CardContent>
+            <div className="flex flex-wrap gap-2">
+              {collection.suitable_rooms.map((room) => (
+                <Badge
+                  key={room}
+                  variant="secondary"
+                  className="bg-green-50 text-green-800 border-green-200 px-3 py-1"
+                >
+                  {getRoomLabel(room as RoomType)}
+                </Badge>
+              ))}
+            </div>
+            <p className="text-xs text-gray-500 mt-3">
+              📍 Aligné avec la table products pour automatisation future via triggers
+            </p>
+          </CardContent>
+        </Card>
+      )}
 
       {/* Liste des produits */}
       <div className="space-y-6">

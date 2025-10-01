@@ -26,6 +26,7 @@ export interface Collection {
   last_shared?: string
   style?: string
   room_category?: string
+  suitable_rooms?: string[] // Aligné avec products.suitable_rooms (40 pièces)
   theme_tags?: string[]
   sort_order?: number
   meta_title?: string
@@ -52,6 +53,10 @@ export interface CreateCollectionData {
   description?: string
   is_active?: boolean
   visibility?: 'public' | 'private'
+  style?: string
+  room_category?: string
+  suitable_rooms?: string[] // Aligné avec products
+  theme_tags?: string[]
 }
 
 export interface UpdateCollectionData extends Partial<CreateCollectionData> {
@@ -205,6 +210,10 @@ export function useCollections(filters?: CollectionFilters) {
           is_active: data.is_active ?? true,
           visibility: data.visibility || 'private',
           created_by: user.id, // Ajouter l'ID de l'utilisateur (Owner/Admin)
+          suitable_rooms: data.suitable_rooms || null,
+          style: data.style || null,
+          room_category: data.room_category || null,
+          theme_tags: data.theme_tags || null,
         }])
         .select()
         .single()

@@ -5,7 +5,11 @@ import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, D
 import { Button } from '../ui/button'
 import { Input } from '../ui/input'
 import { Label } from '../ui/label'
+import { Checkbox } from '../ui/checkbox'
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../ui/select'
 import { useSubcategories } from '../../hooks/use-subcategories'
+import { useSuppliers } from '../../hooks/use-suppliers'
+import { normalizeForSKU } from '../../lib/sku-generator'
 import type { CreateVariantGroupData } from '../../types/variant-groups'
 
 interface VariantGroupCreateModalProps {
@@ -27,39 +31,69 @@ export function VariantGroupCreateModal({
   onSubmit
 }: VariantGroupCreateModalProps) {
   const { subcategories, loading: subcategoriesLoading } = useSubcategories()
+  const { suppliers, loading: suppliersLoading } = useSuppliers()
 
   const [name, setName] = useState('')
+  const [baseSku, setBaseSku] = useState('')
+  const [variantType, setVariantType] = useState<'color' | 'material'>('color')
   const [subcategoryId, setSubcategoryId] = useState('')
   const [dimensionsLength, setDimensionsLength] = useState<number | undefined>()
   const [dimensionsWidth, setDimensionsWidth] = useState<number | undefined>()
   const [dimensionsHeight, setDimensionsHeight] = useState<number | undefined>()
   const [dimensionsUnit, setDimensionsUnit] = useState<'cm' | 'm' | 'mm' | 'in'>('cm')
+  const [commonWeight, setCommonWeight] = useState<number | undefined>()
+  const [hasCommonSupplier, setHasCommonSupplier] = useState(false)
+  const [supplierId, setSupplierId] = useState<string | undefined>()
   const [isSubmitting, setIsSubmitting] = useState(false)
+
+  // Auto-générer base_sku quand le nom change
+  useEffect(() => {
+    if (name.trim()) {
+      const generatedSku = normalizeForSKU(name, 30)
+      setBaseSku(generatedSku)
+    }
+  }, [name])
 
   useEffect(() => {
     if (!isOpen) {
       setName('')
+      setBaseSku('')
+      setVariantType('color')
       setSubcategoryId('')
       setDimensionsLength(undefined)
       setDimensionsWidth(undefined)
       setDimensionsHeight(undefined)
       setDimensionsUnit('cm')
+      setCommonWeight(undefined)
+      setHasCommonSupplier(false)
+      setSupplierId(undefined)
     }
   }, [isOpen])
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-    if (!name.trim() || !subcategoryId) return
+    if (!name.trim() || !baseSku.trim() || !subcategoryId) return
+
+    // Validation: si fournisseur commun coché, un fournisseur doit être sélectionné
+    if (hasCommonSupplier && !supplierId) {
+      alert('Veuillez sélectionner un fournisseur ou décocher la case "Même fournisseur pour tous les produits"')
+      return
+    }
 
     setIsSubmitting(true)
     try {
       await onSubmit({
         name: name.trim(),
+        base_sku: baseSku.trim(),
+        variant_type: variantType,
         subcategory_id: subcategoryId,
         dimensions_length: dimensionsLength,
         dimensions_width: dimensionsWidth,
         dimensions_height: dimensionsHeight,
         dimensions_unit: dimensionsUnit,
+        common_weight: commonWeight,
+        has_common_supplier: hasCommonSupplier,
+        supplier_id: hasCommonSupplier ? supplierId : null,
       })
       onClose()
     } catch (error) {
@@ -95,6 +129,42 @@ export function VariantGroupCreateModal({
               />
               <p className="text-xs text-gray-600 mt-1">
                 Ce nom sera la base pour tous les produits du groupe
+              </p>
+            </div>
+
+            <div>
+              <Label htmlFor="base_sku" className="text-sm font-medium">
+                SKU de base *
+              </Label>
+              <Input
+                id="base_sku"
+                value={baseSku}
+                onChange={(e) => setBaseSku(e.target.value)}
+                placeholder="Ex: CHAISE-DESIGN-SCANDI"
+                className="mt-1 font-mono text-sm"
+                required
+              />
+              <p className="text-xs text-gray-600 mt-1">
+                Généré automatiquement depuis le nom. Pattern: {baseSku ? `${baseSku}-[VARIANTE]` : 'BASE_SKU-[VARIANTE]'}
+              </p>
+            </div>
+
+            <div>
+              <Label htmlFor="variant_type" className="text-sm font-medium">
+                Type de variante *
+              </Label>
+              <select
+                id="variant_type"
+                value={variantType}
+                onChange={(e) => setVariantType(e.target.value as 'color' | 'material')}
+                className="mt-1 w-full border border-gray-300 rounded-md px-3 py-2 focus:ring-2 focus:ring-black focus:border-black"
+                required
+              >
+                <option value="color">🎨 Couleur</option>
+                <option value="material">🧵 Matériau</option>
+              </select>
+              <p className="text-xs text-gray-600 mt-1">
+                Définit l'attribut principal qui différencie les produits du groupe
               </p>
             </div>
 
@@ -195,6 +265,75 @@ export function VariantGroupCreateModal({
             </div>
           </div>
 
+          <div className="space-y-3 pt-4 border-t">
+            <Label className="text-sm font-medium">Poids commun (optionnel)</Label>
+            <p className="text-xs text-gray-600">
+              Si tous les produits du groupe ont le même poids
+            </p>
+            <div className="flex items-end space-x-2">
+              <Input
+                id="common_weight"
+                type="number"
+                step="0.01"
+                min="0"
+                value={commonWeight || ''}
+                onChange={(e) => setCommonWeight(e.target.value ? parseFloat(e.target.value) : undefined)}
+                placeholder="0.00"
+                className="flex-1"
+              />
+              <span className="text-sm text-gray-600 mb-2 min-w-[30px]">kg</span>
+            </div>
+          </div>
+
+          <div className="space-y-4 pt-4 border-t">
+            <div className="flex items-center space-x-2">
+              <Checkbox
+                id="has-common-supplier"
+                checked={hasCommonSupplier}
+                onCheckedChange={(checked) => {
+                  setHasCommonSupplier(checked as boolean)
+                  if (!checked) setSupplierId(undefined)
+                }}
+              />
+              <Label
+                htmlFor="has-common-supplier"
+                className="text-sm font-medium cursor-pointer"
+              >
+                🏢 Même fournisseur pour tous les produits
+              </Label>
+            </div>
+            <p className="text-xs text-gray-600 ml-6">
+              Si cochée, tous les produits du groupe hériteront automatiquement du fournisseur sélectionné
+            </p>
+
+            {hasCommonSupplier && (
+              <div className="ml-6 space-y-2">
+                <Label htmlFor="supplier" className="text-sm font-medium">
+                  Fournisseur commun <span className="text-red-500">*</span>
+                </Label>
+                <Select
+                  value={supplierId}
+                  onValueChange={setSupplierId}
+                  disabled={suppliersLoading}
+                >
+                  <SelectTrigger className="w-full">
+                    <SelectValue placeholder="Sélectionner un fournisseur" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {suppliers.map((supplier) => (
+                      <SelectItem key={supplier.id} value={supplier.id}>
+                        {supplier.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                <p className="text-xs text-blue-700 bg-blue-50 p-2 rounded border border-blue-200">
+                  💡 Ce fournisseur sera appliqué automatiquement à tous les produits du groupe et ne pourra pas être modifié individuellement
+                </p>
+              </div>
+            )}
+          </div>
+
           <DialogFooter>
             <Button
               type="button"
@@ -206,7 +345,7 @@ export function VariantGroupCreateModal({
             </Button>
             <Button
               type="submit"
-              disabled={!name.trim() || !subcategoryId || isSubmitting}
+              disabled={!name.trim() || !baseSku.trim() || !subcategoryId || isSubmitting}
               className="bg-black text-white hover:bg-gray-800"
             >
               {isSubmitting ? 'Création...' : 'Créer le groupe'}

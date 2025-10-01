@@ -1,144 +1,191 @@
-/**
- * 🎨 VariantGroupForm - Formulaire pour groupes de variantes
- *
- * Formulaire pour créer/modifier des groupes de variantes
- * Compatible Google Merchant Center 2024
- */
-
 "use client"
 
-import { useState, useEffect } from 'react'
+import { useState, useMemo, useEffect, useCallback } from 'react'
+import { X, Plus } from 'lucide-react'
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog'
 import { Button } from '@/components/ui/button'
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 import { Input } from '@/components/ui/input'
-import { Textarea } from '@/components/ui/textarea'
 import { Label } from '@/components/ui/label'
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
+import { useFamilies } from '@/hooks/use-families'
+import { useCategories } from '@/hooks/use-categories'
+import { useSubcategories } from '@/hooks/use-subcategories'
+import { useVariantGroups } from '@/hooks/use-variant-groups'
 import { useToast } from '@/hooks/use-toast'
-import { Save, Loader2 } from 'lucide-react'
-import { createClient } from '@/lib/supabase/client'
-
-interface Product {
-  id: string
-  name: string
-  sku: string
-  price_ht: number
-}
-
-interface VariantGroup {
-  id: string
-  name: string
-  description?: string
-  base_product_id: string | null
-  item_group_id: string
-  variant_type: 'color' | 'size' | 'material' | 'pattern'
-  is_active: boolean
-  created_at: string
-  updated_at: string
-}
-
-interface VariantGroupFormData {
-  name: string
-  description: string
-  base_product_id: string
-  variant_type: 'color' | 'size' | 'material' | 'pattern'
-  is_active: boolean
-}
+import { RoomMultiSelect } from '@/components/ui/room-multi-select'
+import { COLLECTION_STYLE_OPTIONS } from '@/types/collections'
+import { normalizeForSKU } from '@/lib/sku-generator'
+import type { VariantGroup, VariantType } from '@/types/variant-groups'
+import type { RoomType } from '@/types/room-types'
 
 interface VariantGroupFormProps {
   isOpen: boolean
   onClose: () => void
-  onSubmit: (group: VariantGroup) => void
-  initialData?: VariantGroup | null
-  mode: 'create' | 'edit'
-  availableProducts?: Product[]
+  onSubmit: (data: any) => void
+  editingGroup?: VariantGroup | null
+}
+
+interface FormData {
+  name: string
+  base_sku: string
+  subcategory_id: string
+  variant_type: VariantType
+  // Attributs de catégorisation
+  style: string
+  suitable_rooms: RoomType[]
+  // Nouveaux champs pour attributs communs
+  common_length: string
+  common_width: string
+  common_height: string
+  common_dimensions_unit: 'cm' | 'm'
 }
 
 export function VariantGroupForm({
   isOpen,
   onClose,
   onSubmit,
-  initialData = null,
-  mode,
-  availableProducts = []
+  editingGroup
 }: VariantGroupFormProps) {
   const { toast } = useToast()
-  const [loading, setLoading] = useState(false)
-  const [products, setProducts] = useState<Product[]>(availableProducts)
+  const { createVariantGroup, updateVariantGroup } = useVariantGroups()
 
-  // État du formulaire
-  const [formData, setFormData] = useState<VariantGroupFormData>({
-    name: initialData?.name || '',
-    description: initialData?.description || '',
-    base_product_id: initialData?.base_product_id || '',
-    variant_type: initialData?.variant_type || 'color',
-    is_active: initialData?.is_active ?? true
+  // États du formulaire
+  const [formData, setFormData] = useState<FormData>({
+    name: '',
+    base_sku: '',
+    subcategory_id: '',
+    variant_type: 'color',
+    style: '',
+    suitable_rooms: [],
+    common_length: '',
+    common_width: '',
+    common_height: '',
+    common_dimensions_unit: 'cm'
   })
+  const [filters, setFilters] = useState({
+    familyId: '',
+    categoryId: ''
+  })
+  const [loading, setLoading] = useState(false)
+  const [errors, setErrors] = useState<Partial<FormData>>({})
 
-  // Reset form when modal opens/closes or initialData changes
+  // Hooks hiérarchie
+  const { families } = useFamilies()
+  const { getCategoriesByFamily } = useCategories()
+  const { getSubcategoriesByCategory } = useSubcategories()
+
+  // Catégories et sous-catégories filtrées
+  const filteredCategories = useMemo(() => {
+    if (!filters.familyId) return []
+    return getCategoriesByFamily(filters.familyId)
+  }, [filters.familyId, getCategoriesByFamily])
+
+  const [filteredSubcategories, setFilteredSubcategories] = useState<any[]>([])
+
+  // Charger sous-catégories quand catégorie change
   useEffect(() => {
-    if (isOpen) {
-      setFormData({
-        name: initialData?.name || '',
-        description: initialData?.description || '',
-        base_product_id: initialData?.base_product_id || '',
-        variant_type: initialData?.variant_type || 'color',
-        is_active: initialData?.is_active ?? true
-      })
+    if (!filters.categoryId) {
+      setFilteredSubcategories([])
+      return
     }
-  }, [isOpen, initialData])
 
-  // Charger les produits disponibles si pas fournis
-  useEffect(() => {
-    const fetchProducts = async () => {
-      if (availableProducts.length === 0 && isOpen) {
-        try {
-          const supabase = createClient()
-          const { data, error } = await supabase
-            .from('products')
-            .select('id, name, sku, price_ht')
-            .is('variant_group_id', null)
-            .is('archived_at', null)
-            .eq('status', 'in_stock')
-            .neq('creation_mode', 'sourcing')
-            .order('created_at', { ascending: false })
-            .limit(5)
+    let isMounted = true
 
-          if (error) throw error
-          setProducts(data || [])
-        } catch (error) {
-          console.error('Error fetching products:', error)
+    const loadSubcategories = async () => {
+      try {
+        const subcats = await getSubcategoriesByCategory(filters.categoryId)
+        if (isMounted) {
+          setFilteredSubcategories(subcats)
+        }
+      } catch (err) {
+        console.error('Erreur chargement sous-catégories:', err)
+        if (isMounted) {
+          setFilteredSubcategories([])
         }
       }
     }
 
-    fetchProducts()
-  }, [isOpen, availableProducts])
+    loadSubcategories()
 
-  // Génération d'un item_group_id unique pour Google Merchant Center
-  const generateItemGroupId = (): string => {
-    const timestamp = Date.now().toString(36)
-    const random = Math.random().toString(36).substr(2, 5)
-    return `VG-${timestamp}-${random}`.toUpperCase()
+    return () => {
+      isMounted = false
+    }
+  }, [filters.categoryId]) // Enlevé getSubcategoriesByCategory des dépendances
+
+  // Auto-générer base_sku quand le nom change
+  useEffect(() => {
+    if (formData.name.trim() && !editingGroup) {
+      const generatedSku = normalizeForSKU(formData.name, 30)
+      setFormData(prev => ({ ...prev, base_sku: generatedSku }))
+    }
+  }, [formData.name, editingGroup])
+
+  // Réinitialiser le formulaire à l'ouverture
+  useEffect(() => {
+    if (isOpen) {
+      if (editingGroup) {
+        // Mode édition
+        const dimensions = editingGroup.common_dimensions as any || {}
+        setFormData({
+          name: editingGroup.name,
+          base_sku: editingGroup.base_sku,
+          subcategory_id: editingGroup.subcategory_id,
+          variant_type: editingGroup.variant_type || 'color',
+          style: editingGroup.style || '',
+          suitable_rooms: (editingGroup.suitable_rooms || []) as RoomType[],
+          common_length: dimensions.length?.toString() || '',
+          common_width: dimensions.width?.toString() || '',
+          common_height: dimensions.height?.toString() || '',
+          common_dimensions_unit: dimensions.unit || 'cm'
+        })
+      } else {
+        // Mode création
+        setFormData({
+          name: '',
+          base_sku: '',
+          subcategory_id: '',
+          variant_type: 'color',
+          style: '',
+          suitable_rooms: [],
+          common_length: '',
+          common_width: '',
+          common_height: '',
+          common_dimensions_unit: 'cm'
+        })
+        setFilters({
+          familyId: '',
+          categoryId: ''
+        })
+      }
+      setErrors({})
+    }
+  }, [isOpen, editingGroup])
+
+  // Validation du formulaire
+  const validateForm = (): boolean => {
+    const newErrors: Partial<FormData> = {}
+
+    if (!formData.name.trim()) {
+      newErrors.name = 'Le nom du groupe est obligatoire'
+    } else if (formData.name.trim().length < 3) {
+      newErrors.name = 'Le nom doit contenir au moins 3 caractères'
+    }
+
+    if (!formData.subcategory_id) {
+      newErrors.subcategory_id = 'La sous-catégorie est obligatoire'
+    }
+
+    setErrors(newErrors)
+    return Object.keys(newErrors).length === 0
   }
 
   // Soumission du formulaire
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
 
-    if (!formData.name.trim()) {
+    if (!validateForm()) {
       toast({
-        title: "❌ Nom requis",
-        description: "Le nom du groupe de variantes est obligatoire",
-        variant: "destructive"
-      })
-      return
-    }
-
-    if (!formData.base_product_id) {
-      toast({
-        title: "❌ Produit de base requis",
-        description: "Vous devez sélectionner un produit de base pour le groupe",
+        title: "Erreur de validation",
+        description: "Veuillez remplir tous les champs obligatoires",
         variant: "destructive"
       })
       return
@@ -147,57 +194,56 @@ export function VariantGroupForm({
     setLoading(true)
 
     try {
-      const supabase = createClient()
+      // Construire common_dimensions si au moins une dimension est renseignée
+      const hasDimensions = formData.common_length || formData.common_width || formData.common_height
+      const common_dimensions = hasDimensions ? {
+        length: parseFloat(formData.common_length) || null,
+        width: parseFloat(formData.common_width) || null,
+        height: parseFloat(formData.common_height) || null,
+        unit: formData.common_dimensions_unit
+      } : null
 
       const groupData = {
-        ...formData,
-        item_group_id: mode === 'create' ? generateItemGroupId() : initialData?.item_group_id
+        name: formData.name.trim(),
+        base_sku: formData.base_sku.trim(),
+        subcategory_id: formData.subcategory_id,
+        variant_type: formData.variant_type,
+        style: formData.style || null,
+        suitable_rooms: formData.suitable_rooms.length > 0 ? formData.suitable_rooms : null,
+        common_dimensions
       }
 
-      let result
+      let success = false
 
-      if (mode === 'create') {
-        const { data, error } = await supabase
-          .from('variant_groups')
-          .insert([groupData])
-          .select()
-          .single()
-
-        if (error) throw error
-        result = data
-
-        toast({
-          title: "✅ Groupe de variantes créé",
-          description: `Le groupe "${formData.name}" a été créé avec l'ID: ${result.item_group_id}`
-        })
-      } else {
-        const { data, error } = await supabase
-          .from('variant_groups')
-          .update({
-            ...groupData,
-            updated_at: new Date().toISOString()
+      if (editingGroup) {
+        // Mode édition
+        success = await updateVariantGroup(editingGroup.id, groupData)
+        if (success) {
+          toast({
+            title: "Succès",
+            description: `Groupe "${formData.name}" modifié avec succès`
           })
-          .eq('id', initialData!.id)
-          .select()
-          .single()
-
-        if (error) throw error
-        result = data
-
-        toast({
-          title: "✅ Groupe de variantes modifié",
-          description: `Le groupe "${formData.name}" a été mis à jour`
-        })
+        }
+      } else {
+        // Mode création
+        success = await createVariantGroup(groupData)
+        if (success) {
+          toast({
+            title: "Succès",
+            description: `Groupe "${formData.name}" créé avec succès`
+          })
+        }
       }
 
-      onSubmit(result as VariantGroup)
-      onClose()
-
-    } catch (error: any) {
-      console.error('Form submission error:', error)
+      if (success) {
+        onSubmit(formData) // Callback pour refetch
+        onClose()
+      }
+    } catch (err) {
+      console.error('Erreur soumission groupe:', err)
       toast({
-        title: "❌ Erreur",
-        description: error.message || "Une erreur est survenue",
+        title: "Erreur",
+        description: editingGroup ? "Impossible de modifier le groupe" : "Impossible de créer le groupe",
         variant: "destructive"
       })
     } finally {
@@ -205,173 +251,276 @@ export function VariantGroupForm({
     }
   }
 
-  const title = mode === 'create' ? 'Nouveau groupe de variantes' : 'Modifier le groupe de variantes'
-  const selectedProduct = products.find(p => p.id === formData.base_product_id)
-
-  // Types de variantes supportés par Google Merchant Center 2024
-  const variantTypes = [
-    { value: 'color', label: 'Couleur', description: 'Variantes par couleur (rouge, bleu, vert...)' },
-    { value: 'size', label: 'Taille', description: 'Variantes par taille (S, M, L, XL...)' },
-    { value: 'material', label: 'Matériau', description: 'Variantes par matériau (cuir, tissu, métal...)' },
-    { value: 'pattern', label: 'Motif', description: 'Variantes par motif (rayé, uni, fleuri...)' }
-  ]
-
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="sm:max-w-[600px] max-h-[90vh] overflow-y-auto">
+      <DialogContent className="max-w-2xl">
         <DialogHeader>
-          <DialogTitle className="text-black">{title}</DialogTitle>
+          <DialogTitle className="text-xl font-light">
+            {editingGroup ? 'Modifier le groupe' : 'Nouveau groupe de variantes'}
+          </DialogTitle>
+          <DialogDescription>
+            Créez un groupe pour organiser les variantes de produits (couleurs, tailles, matériaux)
+          </DialogDescription>
         </DialogHeader>
 
         <form onSubmit={handleSubmit} className="space-y-6">
           {/* Nom du groupe */}
           <div className="space-y-2">
-            <Label htmlFor="name" className="text-black">
-              Nom du groupe de variantes*
+            <Label htmlFor="name" className="text-sm font-medium">
+              Nom du groupe <span className="text-red-500">*</span>
             </Label>
             <Input
               id="name"
+              type="text"
+              placeholder="Ex: Paniers Osier Naturel"
               value={formData.name}
               onChange={(e) => setFormData(prev => ({ ...prev, name: e.target.value }))}
-              placeholder="Ex: Chaise Scandinave, Table Bois Massif..."
-              className="border-gray-300 focus:border-black"
-              required
+              className={errors.name ? 'border-red-500' : ''}
             />
+            {errors.name && (
+              <p className="text-sm text-red-500">{errors.name}</p>
+            )}
           </div>
 
-          {/* Description */}
+          {/* SKU de base */}
           <div className="space-y-2">
-            <Label htmlFor="description" className="text-black">
-              Description du groupe
+            <Label htmlFor="base_sku" className="text-sm font-medium">
+              SKU de base <span className="text-red-500">*</span>
             </Label>
-            <Textarea
-              id="description"
-              value={formData.description}
-              onChange={(e) => setFormData(prev => ({ ...prev, description: e.target.value }))}
-              placeholder="Description de ce groupe de variantes..."
-              className="border-gray-300 focus:border-black resize-none"
-              rows={3}
+            <Input
+              id="base_sku"
+              type="text"
+              placeholder="Ex: PANIERS-OSIER-NATUREL"
+              value={formData.base_sku}
+              onChange={(e) => setFormData(prev => ({ ...prev, base_sku: e.target.value }))}
+              className="font-mono text-sm"
             />
+            <p className="text-xs text-gray-600">
+              Généré automatiquement depuis le nom. Pattern: {formData.base_sku ? `${formData.base_sku}-[VARIANTE]` : 'BASE_SKU-[VARIANTE]'}
+            </p>
           </div>
 
-          {/* Produit de base */}
-          <div className="space-y-2">
-            <Label className="text-black">
-              Produit de base*
+          {/* Sélection hiérarchique */}
+          <div className="space-y-4">
+            <Label className="text-sm font-medium">
+              Catégorisation <span className="text-red-500">*</span>
             </Label>
-            {mode === 'edit' && selectedProduct ? (
-              <div className="p-3 bg-gray-50 rounded-lg border">
-                <div className="text-sm font-medium text-gray-900">
-                  {selectedProduct.name}
-                </div>
-                <div className="text-xs text-gray-500 mt-1">
-                  SKU: {selectedProduct.sku} • Prix: {selectedProduct.price_ht}€ HT
-                </div>
-                <p className="text-xs text-gray-500 mt-1">
-                  Le produit de base ne peut pas être modifié après création pour préserver la cohérence du groupe.
-                </p>
-              </div>
-            ) : (
-              <Select
-                value={formData.base_product_id}
-                onValueChange={(value) => setFormData(prev => ({ ...prev, base_product_id: value }))}
-                required
-              >
-                <SelectTrigger className="border-gray-300 focus:border-black">
-                  <SelectValue placeholder="Sélectionnez un produit de base..." />
-                </SelectTrigger>
-                <SelectContent>
-                  {products.map((product) => (
-                    <SelectItem key={product.id} value={product.id}>
-                      {product.name}
-                    </SelectItem>
+            <p className="text-xs text-gray-600">
+              Sélectionnez la hiérarchie pour identifier la sous-catégorie des produits
+            </p>
+
+            <div className="grid grid-cols-3 gap-3">
+              {/* Famille */}
+              <div className="space-y-2">
+                <Label htmlFor="family" className="text-xs text-gray-600">Famille</Label>
+                <select
+                  id="family"
+                  value={filters.familyId}
+                  onChange={(e) => {
+                    setFilters({ familyId: e.target.value, categoryId: '' })
+                    setFormData(prev => ({ ...prev, subcategory_id: '' }))
+                  }}
+                  className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm"
+                >
+                  <option value="">Sélectionner...</option>
+                  {families.map((family) => (
+                    <option key={family.id} value={family.id}>
+                      {family.name}
+                    </option>
                   ))}
-                </SelectContent>
-              </Select>
+                </select>
+              </div>
+
+              {/* Catégorie */}
+              <div className="space-y-2">
+                <Label htmlFor="category" className="text-xs text-gray-600">Catégorie</Label>
+                <select
+                  id="category"
+                  value={filters.categoryId}
+                  onChange={(e) => {
+                    setFilters(prev => ({ ...prev, categoryId: e.target.value }))
+                    setFormData(prev => ({ ...prev, subcategory_id: '' }))
+                  }}
+                  disabled={!filters.familyId}
+                  className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm disabled:bg-gray-100"
+                >
+                  <option value="">Sélectionner...</option>
+                  {filteredCategories.map((category) => (
+                    <option key={category.id} value={category.id}>
+                      {category.name}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              {/* Sous-catégorie */}
+              <div className="space-y-2">
+                <Label htmlFor="subcategory" className="text-xs text-gray-600">Sous-catégorie</Label>
+                <select
+                  id="subcategory"
+                  value={formData.subcategory_id}
+                  onChange={(e) => setFormData(prev => ({ ...prev, subcategory_id: e.target.value }))}
+                  disabled={!filters.categoryId}
+                  className={`w-full border rounded-md px-3 py-2 text-sm disabled:bg-gray-100 ${
+                    errors.subcategory_id ? 'border-red-500' : 'border-gray-300'
+                  }`}
+                >
+                  <option value="">Sélectionner...</option>
+                  {filteredSubcategories.map((subcategory) => (
+                    <option key={subcategory.id} value={subcategory.id}>
+                      {subcategory.name}
+                    </option>
+                  ))}
+                </select>
+              </div>
+            </div>
+
+            {errors.subcategory_id && (
+              <p className="text-sm text-red-500">{errors.subcategory_id}</p>
             )}
           </div>
 
           {/* Type de variante */}
           <div className="space-y-2">
-            <Label className="text-black">Type de variante*</Label>
-            <Select
-              value={formData.variant_type}
-              onValueChange={(value: 'color' | 'size' | 'material' | 'pattern') =>
-                setFormData(prev => ({ ...prev, variant_type: value }))}
-              required
-            >
-              <SelectTrigger className="border-gray-300 focus:border-black">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                {variantTypes.map((type) => (
-                  <SelectItem key={type.value} value={type.value}>
-                    <div>
-                      <div className="font-medium">{type.label}</div>
-                      <div className="text-xs text-gray-500">{type.description}</div>
-                    </div>
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-            <p className="text-xs text-gray-500">
-              Types compatibles Google Merchant Center 2024 uniquement
+            <Label htmlFor="variant_type" className="text-sm font-medium">
+              Type de variante
+            </Label>
+            <p className="text-xs text-gray-600">
+              Définissez comment les produits varient dans ce groupe
             </p>
-          </div>
-
-          {/* Statut */}
-          <div className="space-y-2">
-            <Label className="text-black">Statut</Label>
-            <Select
-              value={formData.is_active ? 'active' : 'inactive'}
-              onValueChange={(value) => setFormData(prev => ({
-                ...prev,
-                is_active: value === 'active'
-              }))}
+            <select
+              id="variant_type"
+              value={formData.variant_type}
+              onChange={(e) => setFormData(prev => ({ ...prev, variant_type: e.target.value as VariantType }))}
+              className="w-full border border-gray-300 rounded-md px-3 py-2"
             >
-              <SelectTrigger className="border-gray-300 focus:border-black">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="active">Actif</SelectItem>
-                <SelectItem value="inactive">Inactif</SelectItem>
-              </SelectContent>
-            </Select>
+              <option value="color">Couleur</option>
+              <option value="material">Matériau</option>
+            </select>
           </div>
 
-          {/* Informations Google Merchant Center */}
-          {mode === 'edit' && initialData && (
-            <div className="p-4 bg-blue-50 rounded-lg border border-blue-200">
-              <h4 className="font-medium text-blue-900 mb-2">Informations Google Merchant Center</h4>
-              <div className="text-sm text-blue-700">
-                <p><strong>Item Group ID:</strong> {initialData.item_group_id}</p>
-                <p><strong>Type:</strong> {variantTypes.find(t => t.value === initialData.variant_type)?.label}</p>
-                <p className="text-xs mt-2">Cet ID sera utilisé pour regrouper les variantes dans Google Merchant Center</p>
+          {/* Style décoratif */}
+          <div className="space-y-2">
+            <Label htmlFor="style" className="text-sm font-medium">
+              Style décoratif
+            </Label>
+            <p className="text-xs text-gray-600">
+              Choisissez le style esthétique des produits de ce groupe
+            </p>
+            <select
+              id="style"
+              value={formData.style}
+              onChange={(e) => setFormData(prev => ({ ...prev, style: e.target.value }))}
+              className="w-full border border-gray-300 rounded-md px-3 py-2"
+            >
+              <option value="">Aucun style défini</option>
+              {COLLECTION_STYLE_OPTIONS.map((styleOption) => (
+                <option key={styleOption.value} value={styleOption.value}>
+                  {styleOption.label}
+                </option>
+              ))}
+            </select>
+          </div>
+
+          {/* Pièces compatibles */}
+          <div className="space-y-2">
+            <Label className="text-sm font-medium">
+              Pièces compatibles
+            </Label>
+            <p className="text-xs text-gray-600">
+              Sélectionnez les pièces où ces produits peuvent être utilisés
+            </p>
+            <RoomMultiSelect
+              value={formData.suitable_rooms}
+              onChange={(rooms) => setFormData(prev => ({ ...prev, suitable_rooms: rooms }))}
+              placeholder="Sélectionner les pièces compatibles..."
+              className="w-full"
+            />
+            {formData.suitable_rooms.length > 0 && (
+              <p className="text-xs text-gray-600">
+                {formData.suitable_rooms.length} pièce{formData.suitable_rooms.length > 1 ? 's' : ''} sélectionnée{formData.suitable_rooms.length > 1 ? 's' : ''}
+              </p>
+            )}
+          </div>
+
+          {/* Attributs communs */}
+          <div className="space-y-3 p-4 bg-gray-50 rounded-lg border border-gray-200">
+            <div>
+              <Label className="text-sm font-medium">Attributs communs (optionnels)</Label>
+              <p className="text-xs text-gray-600 mt-1">
+                Ces informations seront automatiquement copiées vers tous les produits du groupe
+              </p>
+            </div>
+
+            {/* Dimensions */}
+            <div className="space-y-2">
+              <Label className="text-xs font-medium text-gray-700">📐 Dimensions</Label>
+              <div className="grid grid-cols-4 gap-2">
+                <Input
+                  type="number"
+                  placeholder="Longueur"
+                  value={formData.common_length}
+                  onChange={(e) => setFormData(prev => ({ ...prev, common_length: e.target.value }))}
+                  className="text-sm"
+                  step="0.1"
+                  min="0"
+                />
+                <Input
+                  type="number"
+                  placeholder="Largeur"
+                  value={formData.common_width}
+                  onChange={(e) => setFormData(prev => ({ ...prev, common_width: e.target.value }))}
+                  className="text-sm"
+                  step="0.1"
+                  min="0"
+                />
+                <Input
+                  type="number"
+                  placeholder="Hauteur"
+                  value={formData.common_height}
+                  onChange={(e) => setFormData(prev => ({ ...prev, common_height: e.target.value }))}
+                  className="text-sm"
+                  step="0.1"
+                  min="0"
+                />
+                <select
+                  value={formData.common_dimensions_unit}
+                  onChange={(e) => setFormData(prev => ({ ...prev, common_dimensions_unit: e.target.value as 'cm' | 'm' }))}
+                  className="border border-gray-300 rounded-md px-2 py-2 text-sm"
+                >
+                  <option value="cm">cm</option>
+                  <option value="m">m</option>
+                </select>
               </div>
             </div>
-          )}
+          </div>
 
           {/* Actions */}
-          <div className="flex justify-end space-x-4 pt-4">
+          <div className="flex items-center justify-end space-x-3 pt-4 border-t">
             <Button
               type="button"
               variant="outline"
               onClick={onClose}
-              className="border-gray-300 hover:bg-gray-50"
+              disabled={loading}
             >
               Annuler
             </Button>
             <Button
               type="submit"
               disabled={loading}
-              className="bg-black hover:bg-gray-800 text-white"
+              className="bg-black text-white hover:bg-gray-800"
             >
               {loading ? (
-                <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                <>
+                  <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+                  {editingGroup ? 'Modification...' : 'Création...'}
+                </>
               ) : (
-                <Save className="h-4 w-4 mr-2" />
+                <>
+                  <Plus className="h-4 w-4 mr-2" />
+                  {editingGroup ? 'Modifier le groupe' : 'Créer le groupe'}
+                </>
               )}
-              {mode === 'create' ? 'Créer' : 'Modifier'}
             </Button>
           </div>
         </form>

@@ -7,12 +7,13 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Badge } from '@/components/ui/badge'
 import { Checkbox } from '@/components/ui/checkbox'
-import { Label } from '@/components/ui/label'
 import { createClient } from '@/lib/supabase/client'
 import { useFamilies } from '@/hooks/use-families'
 import { useCategories } from '@/hooks/use-categories'
 import { useSubcategories } from '@/hooks/use-subcategories'
-import type { VariantGroup, VariantType } from '@/types/variant-groups'
+import { useVariantGroups } from '@/hooks/use-variant-groups'
+import { useToast } from '@/hooks/use-toast'
+import type { VariantGroup } from '@/types/variant-groups'
 
 interface AddProductsToGroupModalProps {
   isOpen: boolean
@@ -37,6 +38,8 @@ export function AddProductsToGroupModal({
   onProductsAdded
 }: AddProductsToGroupModalProps) {
   const supabase = createClient()
+  const { toast } = useToast()
+  const { addProductsToGroup } = useVariantGroups()
 
   // États
   const [products, setProducts] = useState<Product[]>([])
@@ -48,7 +51,6 @@ export function AddProductsToGroupModal({
     categoryId: 'all',
     subcategoryId: 'all'
   })
-  const [variantAttributes, setVariantAttributes] = useState<Record<string, string>>({})
 
   // Hooks hiérarchie
   const { families } = useFamilies()
@@ -77,7 +79,8 @@ export function AddProductsToGroupModal({
           .from('products')
           .select('id, name, sku, status, subcategory_id')
           .is('variant_group_id', null)
-          .eq('status', 'active')
+          .in('status', ['in_stock', 'preorder', 'coming_soon', 'pret_a_commander'])
+          .eq('creation_mode', 'complete')
           .order('name', { ascending: true })
 
         if (filters.subcategoryId !== 'all') {
@@ -132,88 +135,48 @@ export function AddProductsToGroupModal({
     )
   }
 
-  // Ajouter produits au groupe
+  // Ajouter produits au groupe en utilisant la fonction du hook
   const handleSubmit = async () => {
-    if (selectedProductIds.length === 0) return
+    if (selectedProductIds.length === 0) {
+      toast({
+        title: "Aucun produit sélectionné",
+        description: "Veuillez sélectionner au moins un produit",
+        variant: "destructive"
+      })
+      return
+    }
 
     setLoading(true)
+
     try {
-      // Récupérer product_count actuel du groupe
-      const { data: groupData } = await supabase
-        .from('variant_groups')
-        .select('product_count')
-        .eq('id', variantGroup.id)
-        .single()
+      // Utiliser la fonction du hook qui implémente TOUTE la logique métier
+      const success = await addProductsToGroup({
+        variant_group_id: variantGroup.id,
+        product_ids: selectedProductIds
+      })
 
-      const currentCount = groupData?.product_count || 0
-
-      // Mettre à jour chaque produit
-      for (let i = 0; i < selectedProductIds.length; i++) {
-        const productId = selectedProductIds[i]
-        const attributes = variantAttributes[productId] || {}
-
-        await supabase
-          .from('products')
-          .update({
-            variant_group_id: variantGroup.id,
-            variant_position: currentCount + i + 1,
-            variant_attributes: Object.keys(attributes).length > 0 ? attributes : null
-          })
-          .eq('id', productId)
-      }
-
-      // Mettre à jour product_count du groupe
-      await supabase
-        .from('variant_groups')
-        .update({
-          product_count: currentCount + selectedProductIds.length,
-          updated_at: new Date().toISOString()
+      if (success) {
+        toast({
+          title: "Produits ajoutés",
+          description: `${selectedProductIds.length} produit(s) ajouté(s) au groupe avec succès`
         })
-        .eq('id', variantGroup.id)
 
-      onProductsAdded()
-      onClose()
-    } catch (err) {
-      console.error('Erreur ajout produits:', err)
+        onProductsAdded()
+        onClose()
+
+        // Réinitialiser la sélection
+        setSelectedProductIds([])
+      }
+    } catch (error: any) {
+      console.error('Erreur ajout produits:', error)
+      toast({
+        title: "Erreur",
+        description: error.message || "Impossible d'ajouter les produits au groupe",
+        variant: "destructive"
+      })
     } finally {
       setLoading(false)
     }
-  }
-
-  // Champ attribut variante selon type
-  const renderVariantAttributeField = (productId: string) => {
-    if (!variantGroup.variant_type) return null
-
-    const attributeKey = variantGroup.variant_type
-    const value = variantAttributes[productId]?.[attributeKey] || ''
-
-    const labels: Record<VariantType, string> = {
-      color: 'Couleur',
-      size: 'Taille',
-      material: 'Matériau',
-      pattern: 'Motif'
-    }
-
-    return (
-      <div className="mt-2">
-        <Label className="text-xs text-gray-600">{labels[variantGroup.variant_type]}</Label>
-        <Input
-          type="text"
-          placeholder={`Ex: ${variantGroup.variant_type === 'color' ? 'Rouge' : variantGroup.variant_type === 'size' ? 'L' : 'Coton'}`}
-          value={value}
-          onChange={(e) => {
-            setVariantAttributes(prev => ({
-              ...prev,
-              [productId]: {
-                ...prev[productId],
-                [attributeKey]: e.target.value
-              }
-            }))
-          }}
-          className="mt-1 h-8 text-sm"
-        />
-      </div>
-    )
   }
 
   return (
@@ -321,8 +284,6 @@ export function AddProductsToGroupModal({
                       <div className="flex-1 min-w-0">
                         <h4 className="font-medium text-sm truncate">{product.name}</h4>
                         <p className="text-xs text-gray-600 mt-1">SKU: {product.sku}</p>
-
-                        {isSelected && renderVariantAttributeField(product.id)}
                       </div>
                     </div>
                   </div>

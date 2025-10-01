@@ -50,6 +50,7 @@ export interface CollectionBase {
   last_shared: string | null
   style: CollectionStyle | null
   room_category: RoomCategory | null
+  suitable_rooms: string[] | null // Aligné avec products.suitable_rooms (40 pièces)
   theme_tags: string[]
   sort_order: number
   meta_title: string | null
@@ -111,6 +112,7 @@ export interface CollectionListItem {
   shared_count: number
   style: CollectionStyle | null
   room_category: RoomCategory | null
+  suitable_rooms: string[] | null // Aligné avec products
   theme_tags: string[]
   updated_at: string
   is_active: boolean
@@ -155,6 +157,7 @@ export interface CreateCollectionInput {
   visibility?: CollectionVisibility
   style?: CollectionStyle
   room_category?: RoomCategory
+  suitable_rooms?: string[] // Aligné avec products (40 room types)
   theme_tags?: string[]
   sort_order?: number
   meta_title?: string
@@ -370,6 +373,7 @@ export interface CollectionFormState {
   // Step 2: Style & Category
   style: CollectionStyle | null
   room_category: RoomCategory | null
+  suitable_rooms: string[] // Aligné avec products (40 room types)
   color_theme: string
   // Step 3: Metadata & Settings
   visibility: CollectionVisibility
