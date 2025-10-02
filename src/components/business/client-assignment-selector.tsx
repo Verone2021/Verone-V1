@@ -1,12 +1,12 @@
 "use client"
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useMemo } from 'react'
 import { Search, Users, Check, ChevronDown } from 'lucide-react'
 import { Button } from '../ui/button'
 import { Input } from '../ui/input'
 import { Label } from '../ui/label'
 import { cn } from '../../lib/utils'
-import { createClient } from '../../lib/supabase/client'
+import { useOrganisations } from '../../hooks/use-organisations'
 
 interface Client {
   id: string
@@ -35,94 +35,49 @@ export function ClientAssignmentSelector({
   label = "Client assigné",
   required = false
 }: ClientAssignmentSelectorProps) {
-  const supabase = createClient()
+  // Utiliser le hook useOrganisations au lieu de requêtes Supabase directes
+  const { organisations, loading, error: loadingError } = useOrganisations()
 
   // États du composant
-  const [clients, setClients] = useState<Client[]>([])
-  const [filteredClients, setFilteredClients] = useState<Client[]>([])
   const [selectedClient, setSelectedClient] = useState<Client | null>(null)
   const [searchTerm, setSearchTerm] = useState('')
   const [isOpen, setIsOpen] = useState(false)
-  const [loading, setLoading] = useState(false)
-  const [error, setError] = useState<string | null>(null)
 
-  // Charger les clients professionnels
-  useEffect(() => {
-    loadClients()
-  }, [])
+  // Filtrer uniquement les clients professionnels (type='customer')
+  const clients = useMemo(() => {
+    return organisations
+      .filter(org => org.type === 'customer')
+      .map(org => ({
+        id: org.id,
+        name: org.name,
+        type: org.type,
+        email: org.email || undefined,
+        city: org.city || undefined
+      }))
+  }, [organisations])
 
   // Charger le client sélectionné si fourni
   useEffect(() => {
-    if (value && !selectedClient) {
-      loadSelectedClient(value)
+    if (value && !selectedClient && clients.length > 0) {
+      const client = clients.find(c => c.id === value)
+      if (client) {
+        setSelectedClient(client)
+      }
     }
-  }, [value])
+  }, [value, clients, selectedClient])
 
   // Filtrer les clients selon le terme de recherche
-  useEffect(() => {
+  const filteredClients = useMemo(() => {
     if (!searchTerm.trim()) {
-      setFilteredClients(clients)
-    } else {
-      const filtered = clients.filter(client =>
-        client.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        client.email?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        client.city?.toLowerCase().includes(searchTerm.toLowerCase())
-      )
-      setFilteredClients(filtered)
+      return clients
     }
+
+    return clients.filter(client =>
+      client.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      client.email?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      client.city?.toLowerCase().includes(searchTerm.toLowerCase())
+    )
   }, [searchTerm, clients])
-
-  const loadClients = async () => {
-    try {
-      setLoading(true)
-      setError(null)
-
-      const { data, error } = await supabase
-        .from('organisations')
-        .select(`
-          id,
-          name,
-          type,
-          email,
-          city
-        `)
-        .eq('type', 'customer') // Seulement les clients professionnels
-        .order('name')
-
-      if (error) throw error
-
-      setClients(data || [])
-    } catch (err) {
-      console.error('❌ Erreur chargement clients:', err)
-      setError('Erreur de chargement des clients')
-    } finally {
-      setLoading(false)
-    }
-  }
-
-  const loadSelectedClient = async (clientId: string) => {
-    try {
-      const { data, error } = await supabase
-        .from('organisations')
-        .select(`
-          id,
-          name,
-          type,
-          email,
-          city
-        `)
-        .eq('id', clientId)
-        .single()
-
-      if (error) throw error
-
-      if (data) {
-        setSelectedClient(data)
-      }
-    } catch (err) {
-      console.error('❌ Erreur chargement client sélectionné:', err)
-    }
-  }
 
   const handleClientSelect = (client: Client) => {
     setSelectedClient(client)
@@ -152,7 +107,7 @@ export function ClientAssignmentSelector({
     )
   }
 
-  if (error) {
+  if (loadingError) {
     return (
       <div className={cn("space-y-2", className)}>
         {label && (
@@ -161,7 +116,7 @@ export function ClientAssignmentSelector({
           </Label>
         )}
         <div className="w-full p-3 border border-red-300 rounded-md bg-red-50 text-red-600 text-sm">
-          {error}
+          Erreur de chargement des clients
         </div>
       </div>
     )
