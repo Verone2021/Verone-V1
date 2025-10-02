@@ -55,7 +55,7 @@ export function useSourcingProducts(filters?: SourcingFilters) {
     setError(null)
 
     try {
-      // Requête de base pour produits en sourcing - simplifiée pour debug
+      // Requête de base pour produits en sourcing avec jointures organisations
       let query = supabase
         .from('products')
         .select(`
@@ -72,7 +72,17 @@ export function useSourcingProducts(filters?: SourcingFilters) {
           assigned_client_id,
           margin_percentage,
           created_at,
-          updated_at
+          updated_at,
+          supplier:organisations!products_supplier_id_fkey(
+            id,
+            name,
+            type
+          ),
+          assigned_client:organisations!products_assigned_client_id_fkey(
+            id,
+            name,
+            is_professional
+          )
         `)
         .eq('creation_mode', 'sourcing')
         .is('archived_at', null)
