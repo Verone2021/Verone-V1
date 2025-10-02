@@ -23,6 +23,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '../ui/tabs'
 import { Alert, AlertDescription } from '../ui/alert'
 import { useToast } from '../../hooks/use-toast'
 import { useSourcingProducts } from '../../hooks/use-sourcing-products'
+import { useDrafts } from '../../hooks/use-drafts'
 
 // Sections du wizard
 import { GeneralInfoSection } from './wizard-sections/general-info-section'
