@@ -2,8 +2,8 @@
  * 🚀 Feature Flags Configuration - Déploiement Progressif Phase 1
  *
  * Système de feature flags pour le déploiement progressif par phases
- * Phase 1: Dashboard + Profiles + Catalogue Complet
- * Phase 2: Stocks + Sourcing + Commandes
+ * Phase 1: Dashboard + Profiles + Catalogue + Sourcing
+ * Phase 2: Stocks + Commandes
  * Phase 3: Interactions + Canaux + Contacts
  */
 
@@ -17,10 +17,10 @@ export interface FeatureFlags {
   dashboardEnabled: boolean
   profilesEnabled: boolean
   catalogueEnabled: boolean
+  sourcingEnabled: boolean
 
   // Modules Phase 2 (INACTIFS pour Phase 1)
   stocksEnabled: boolean
-  sourcingEnabled: boolean
   commandesEnabled: boolean
 
   // Modules Phase 3 (INACTIFS pour Phase 1)
@@ -52,10 +52,10 @@ export const featureFlags: FeatureFlags = {
   dashboardEnabled: process.env.NEXT_PUBLIC_DASHBOARD_ENABLED === 'true',
   profilesEnabled: process.env.NEXT_PUBLIC_PROFILES_ENABLED === 'true',
   catalogueEnabled: process.env.NEXT_PUBLIC_CATALOGUE_ENABLED === 'true',
+  sourcingEnabled: process.env.NEXT_PUBLIC_SOURCING_ENABLED === 'true',
 
   // Phase 2 - INACTIFS
   stocksEnabled: process.env.NEXT_PUBLIC_STOCKS_ENABLED === 'true',
-  sourcingEnabled: process.env.NEXT_PUBLIC_SOURCING_ENABLED === 'true',
   commandesEnabled: process.env.NEXT_PUBLIC_COMMANDES_ENABLED === 'true',
 
   // Phase 3 - INACTIFS
@@ -85,8 +85,8 @@ export function isModuleEnabled(moduleName: keyof FeatureFlags): boolean {
  * Helper pour obtenir la phase d'un module
  */
 export function getModulePhase(moduleName: string): number {
-  const phase1Modules = ['dashboard', 'profiles', 'catalogue', 'organisation']
-  const phase2Modules = ['stocks', 'sourcing', 'commandes']
+  const phase1Modules = ['dashboard', 'profiles', 'catalogue', 'organisation', 'sourcing']
+  const phase2Modules = ['stocks', 'commandes']
   const phase3Modules = ['interactions', 'canaux-vente', 'contacts']
 
   if (phase1Modules.includes(moduleName)) return 1
