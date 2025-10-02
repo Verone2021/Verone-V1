@@ -170,12 +170,13 @@ const navItems: NavItem[] = [
         icon: Search,
         description: "Internes et clients"
       },
-      {
-        title: "Échantillons",
-        href: "/sourcing/echantillons",
-        icon: Eye,
-        description: "Commandes et suivi"
-      },
+      // Phase 1: Échantillons désactivé temporairement (pas de commandes fournisseurs)
+      // {
+      //   title: "Échantillons",
+      //   href: "/sourcing/echantillons",
+      //   icon: Eye,
+      //   description: "Commandes et suivi"
+      // },
       {
         title: "Validation",
         href: "/sourcing/validation",
