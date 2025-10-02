@@ -84,22 +84,23 @@ export function useCompleteDashboardMetrics() {
     partners: organisations.filter(o => o.type === 'partner').length
   }
 
-  // Phase 2 - Mock data intelligent basé sur données réelles
-  const stocksMock = {
-    totalValue: catalogueMetrics ? catalogueMetrics.products.total * 500 : 14500, // ~500€ par produit
-    lowStockItems: Math.floor((catalogueMetrics?.products.total || 29) * 0.27), // ~27% en rupture
-    recentMovements: Math.floor((catalogueMetrics?.products.total || 29) * 1.2) // ~1.2 mouvements par produit/mois
+  // Phase 2 - Données réelles (0 pour base vide)
+  // TODO Phase 2: Remplacer par vraies requêtes Supabase quand modules activés
+  const stocksData = {
+    totalValue: 0, // Base de données vide
+    lowStockItems: 0,
+    recentMovements: 0
   }
 
-  const ordersMock = {
-    purchaseOrders: Math.floor(organisationsStats.suppliers * 0.33), // ~33% fournisseurs ont commande active
-    salesOrders: Math.floor(organisationsStats.customersB2B * 1.5), // ~1.5 commande par client
-    monthRevenue: catalogueMetrics ? catalogueMetrics.products.published * 980 : 28420 // ~980€ par produit publié
+  const ordersData = {
+    purchaseOrders: 0, // Base de données vide
+    salesOrders: 0,
+    monthRevenue: 0
   }
 
-  const sourcingMock = {
-    productsToSource: Math.floor((catalogueMetrics?.products.total || 29) * 0.52), // ~52% à sourcer
-    samplesWaiting: Math.floor(organisationsStats.suppliers * 0.47) // ~47% fournisseurs ont échantillon en attente
+  const sourcingData = {
+    productsToSource: 0, // Base de données vide
+    samplesWaiting: 0
   }
 
   const metrics: CompleteDashboardMetrics = {
@@ -112,9 +113,9 @@ export function useCompleteDashboardMetrics() {
       trend: catalogueMetrics?.products.trend || 0
     },
     organisations: organisationsStats,
-    stocks: stocksMock,
-    orders: ordersMock,
-    sourcing: sourcingMock,
+    stocks: stocksData,
+    orders: ordersData,
+    sourcing: sourcingData,
     // Compatibilité avec sections de détail du dashboard
     collections: {
       total: catalogueMetrics?.collections.total || 0,
