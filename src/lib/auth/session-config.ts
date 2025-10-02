@@ -98,6 +98,13 @@ export class SessionManager {
    * Démarre le refresh automatique du token
    */
   private startTokenRefresh() {
+    // 🔥 FIX CRITIQUE: Désactiver refresh automatique en développement
+    // En dev, le refresh token peut être invalide/manquant, causant boucle infinie d'erreurs 400
+    if (process.env.NODE_ENV === 'development') {
+      console.warn('⚠️ Refresh automatique DÉSACTIVÉ en développement')
+      return
+    }
+
     this.refreshInterval = setInterval(async () => {
       await this.refreshSession()
     }, SESSION_CONFIG.REFRESH_INTERVAL)
@@ -140,12 +147,30 @@ export class SessionManager {
   private async refreshSession() {
     try {
       const supabase = createClient()
+
+      // Vérifier d'abord si une session existe
+      const { data: { session } } = await supabase.auth.getSession()
+
+      if (!session) {
+        // Pas de session active, ne pas tenter de refresh
+        console.warn('⚠️ Pas de session active, skip refresh')
+        return
+      }
+
       const { error } = await supabase.auth.refreshSession()
 
       if (error) {
         console.error('Erreur refresh session:', error)
+        // Ne pas déconnecter automatiquement en cas d'erreur refresh
+        // L'utilisateur peut continuer à travailler avec sa session courante
         if (error.message.includes('refresh_token_not_found')) {
-          await this.handleSessionExpiry('Session invalide')
+          console.warn('⚠️ Refresh token non trouvé - ARRÊT refresh automatique')
+
+          // 🔥 CRITIQUE: Arrêter l'intervalle de refresh pour éviter boucle infinie
+          if (this.refreshInterval) {
+            clearInterval(this.refreshInterval)
+            this.refreshInterval = undefined
+          }
         }
       }
     } catch (error) {
