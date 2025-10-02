@@ -1,5 +1,6 @@
 import "./globals.css"
 import { Inter } from "next/font/google"
+import { Analytics } from '@vercel/analytics/react'
 import { AuthWrapper } from "../components/layout/auth-wrapper"
 
 const inter = Inter({ subsets: ["latin"] })
@@ -20,6 +21,7 @@ export default function RootLayout({
         <AuthWrapper>
           {children}
         </AuthWrapper>
+        <Analytics />
       </body>
     </html>
   )

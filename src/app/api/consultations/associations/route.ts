@@ -1,19 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { createClient } from '@supabase/supabase-js'
-
-const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.SUPABASE_SERVICE_ROLE_KEY!,
-  {
-    auth: {
-      autoRefreshToken: false,
-      persistSession: false
-    }
-  }
-)
+import { createAdminClient } from '@/lib/supabase/server'
 
 export async function POST(request: NextRequest) {
   try {
+    const supabase = createAdminClient()
     const body = await request.json()
 
     const {
@@ -50,7 +40,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Vérifier que le produit existe et est éligible
-    const { data: product, error: productError } = await supabase
+    const { data: product, error: productError} = await supabase
       .from('products')
       .select('id, name, status, creation_mode, assigned_client_id, archived_at')
       .eq('id', product_id)
@@ -194,6 +184,7 @@ export async function POST(request: NextRequest) {
 
 export async function GET(request: NextRequest) {
   try {
+    const supabase = createAdminClient()
     const url = new URL(request.url)
     const consultationId = url.searchParams.get('consultation_id')
     const productId = url.searchParams.get('product_id')
