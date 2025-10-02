@@ -62,6 +62,7 @@ const navItems: NavItem[] = [
   },
   {
     title: "Catalogue",
+    href: "/catalogue", // Navigation directe vers la page produits
     icon: BookOpen,
     description: "Produits et collections",
     children: [
@@ -281,53 +282,113 @@ export function AppSidebar({ className }: AppSidebarProps) {
     const navElement = (
       <>
         {item.children ? (
-          // Élément parent avec enfants (bouton d'expansion)
-          <button
-            onClick={() => moduleStatus === 'active' ? toggleExpanded(item.title) : undefined}
-            className={cn(
-              // Base styles Vérone
-              "nav-item flex w-full items-center space-x-3 px-3 py-2.5 text-sm transition-all duration-150 ease-out",
-              "border border-transparent",
-              // État par défaut
-              "text-black hover:opacity-70",
-              // État actif si enfant sélectionné
-              isActiveItem && "bg-black text-white border-black",
-              // État désactivé pour modules inactifs
-              moduleStatus !== 'active' && "opacity-60 cursor-not-allowed"
-            )}
-          >
-            <item.icon className="h-5 w-5 flex-shrink-0" />
-            <div className="flex flex-col flex-1">
-              <div className="flex items-center justify-between">
-                <span className="font-medium">{item.title}</span>
-                {moduleStatus !== 'active' && (
-                  <PhaseIndicator 
-                    moduleName={moduleName}
-                    variant="badge"
-                    className="ml-2 scale-75"
-                  />
+          // Élément parent avec enfants - Si href existe, navigation + expansion, sinon juste expansion
+          item.href ? (
+            // Élément avec href et children : lien cliquable + bouton chevron séparé
+            <div className="flex w-full">
+              <Link
+                href={moduleStatus === 'active' ? item.href : '#'}
+                onClick={(e) => moduleStatus !== 'active' && e.preventDefault()}
+                className={cn(
+                  // Base styles Vérone
+                  "nav-item flex flex-1 items-center space-x-3 px-3 py-2.5 text-sm transition-all duration-150 ease-out",
+                  "border border-transparent rounded-l",
+                  // État par défaut
+                  "text-black hover:opacity-70",
+                  // État actif si enfant sélectionné
+                  isActiveItem && "bg-black text-white border-black",
+                  // État désactivé pour modules inactifs
+                  moduleStatus !== 'active' && "opacity-60 cursor-not-allowed"
                 )}
-              </div>
-              {item.description && (
-                <span className={cn(
-                  "text-xs opacity-70",
-                  isActiveItem ? "text-white" : "text-black"
-                )}>
-                  {item.description}
-                </span>
+              >
+                <item.icon className="h-5 w-5 flex-shrink-0" />
+                <div className="flex flex-col flex-1">
+                  <div className="flex items-center justify-between">
+                    <span className="font-medium">{item.title}</span>
+                    {moduleStatus !== 'active' && (
+                      <PhaseIndicator
+                        moduleName={moduleName}
+                        variant="badge"
+                        className="ml-2 scale-75"
+                      />
+                    )}
+                  </div>
+                  {item.description && (
+                    <span className={cn(
+                      "text-xs opacity-70",
+                      isActiveItem ? "text-white" : "text-black"
+                    )}>
+                      {item.description}
+                    </span>
+                  )}
+                </div>
+              </Link>
+              {/* Bouton chevron séparé pour expansion */}
+              {moduleStatus === 'active' && (
+                <button
+                  onClick={() => toggleExpanded(item.title)}
+                  className={cn(
+                    "px-2 border-l border-black/10 transition-all",
+                    isActiveItem ? "bg-black text-white" : "text-black hover:bg-black/5"
+                  )}
+                >
+                  {isExpanded ? (
+                    <ChevronDown className="h-4 w-4" />
+                  ) : (
+                    <ChevronRight className="h-4 w-4" />
+                  )}
+                </button>
               )}
             </div>
-            {/* Icône d'expansion */}
-            {moduleStatus === 'active' && (
-              <>
-                {isExpanded ? (
-                  <ChevronDown className="h-4 w-4 flex-shrink-0" />
-                ) : (
-                  <ChevronRight className="h-4 w-4 flex-shrink-0" />
+          ) : (
+            // Élément sans href : bouton d'expansion uniquement
+            <button
+              onClick={() => moduleStatus === 'active' ? toggleExpanded(item.title) : undefined}
+              className={cn(
+                // Base styles Vérone
+                "nav-item flex w-full items-center space-x-3 px-3 py-2.5 text-sm transition-all duration-150 ease-out",
+                "border border-transparent",
+                // État par défaut
+                "text-black hover:opacity-70",
+                // État actif si enfant sélectionné
+                isActiveItem && "bg-black text-white border-black",
+                // État désactivé pour modules inactifs
+                moduleStatus !== 'active' && "opacity-60 cursor-not-allowed"
+              )}
+            >
+              <item.icon className="h-5 w-5 flex-shrink-0" />
+              <div className="flex flex-col flex-1">
+                <div className="flex items-center justify-between">
+                  <span className="font-medium">{item.title}</span>
+                  {moduleStatus !== 'active' && (
+                    <PhaseIndicator
+                      moduleName={moduleName}
+                      variant="badge"
+                      className="ml-2 scale-75"
+                    />
+                  )}
+                </div>
+                {item.description && (
+                  <span className={cn(
+                    "text-xs opacity-70",
+                    isActiveItem ? "text-white" : "text-black"
+                  )}>
+                    {item.description}
+                  </span>
                 )}
-              </>
-            )}
-          </button>
+              </div>
+              {/* Icône d'expansion */}
+              {moduleStatus === 'active' && (
+                <>
+                  {isExpanded ? (
+                    <ChevronDown className="h-4 w-4 flex-shrink-0" />
+                  ) : (
+                    <ChevronRight className="h-4 w-4 flex-shrink-0" />
+                  )}
+                </>
+              )}
+            </button>
+          )
         ) : (
           // Élément simple sans enfants
           <Link
