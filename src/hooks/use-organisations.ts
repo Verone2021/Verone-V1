@@ -288,26 +288,27 @@ export function useOrganisations(filters?: OrganisationFilters) {
 
   const createOrganisation = async (data: CreateOrganisationData): Promise<Organisation | null> => {
     try {
+      // Générer slug automatiquement depuis le nom
+      const slug = data.name
+        .toLowerCase()
+        .normalize('NFD')
+        .replace(/[\u0300-\u036f]/g, '') // Retirer accents
+        .replace(/[^a-z0-9]+/g, '-')     // Remplacer non-alphanumériques par -
+        .replace(/^-+|-+$/g, '')         // Retirer - en début/fin
+        .substring(0, 100)               // Limiter à 100 caractères
+
       const { data: newOrg, error } = await supabase
         .from('organisations')
         .insert([{
+          // ✅ Colonnes de base (REQUIRED)
           name: data.name,
+          slug: slug, // ✅ AJOUTÉ - Requis en BD
           type: data.type,
           email: data.email || null,
           country: data.country || 'FR',
           is_active: data.is_active ?? true,
-          // Nouveaux champs
-          phone: data.phone || null,
-          website: data.website || null,
-          secondary_email: data.secondary_email || null,
-          // Anciens champs (compatibilité)
-          address_line1: data.address_line1 || null,
-          address_line2: data.address_line2 || null,
-          postal_code: data.postal_code || null,
-          city: data.city || null,
-          region: data.region || null,
 
-          // Nouveaux champs d'adresse de facturation
+          // ✅ Adresses de facturation (existantes en BD)
           billing_address_line1: data.billing_address_line1 || null,
           billing_address_line2: data.billing_address_line2 || null,
           billing_postal_code: data.billing_postal_code || null,
@@ -315,30 +316,20 @@ export function useOrganisations(filters?: OrganisationFilters) {
           billing_region: data.billing_region || null,
           billing_country: data.billing_country || 'FR',
 
-          // Nouveaux champs d'adresse de livraison
+          // ✅ Adresses de livraison (existantes en BD)
           shipping_address_line1: data.shipping_address_line1 || null,
           shipping_address_line2: data.shipping_address_line2 || null,
           shipping_postal_code: data.shipping_postal_code || null,
           shipping_city: data.shipping_city || null,
           shipping_region: data.shipping_region || null,
           shipping_country: data.shipping_country || 'FR',
-
-          // Indicateur adresses différentes
           has_different_shipping_address: data.has_different_shipping_address ?? false,
-          siret: data.siret || null,
-          vat_number: data.vat_number || null,
-          legal_form: data.legal_form || null,
-          industry_sector: data.industry_sector || null,
-          supplier_segment: data.supplier_segment || null,
-          supplier_category: data.supplier_category || null,
-          payment_terms: data.payment_terms || null,
-          delivery_time_days: data.delivery_time_days || null,
-          minimum_order_amount: data.minimum_order_amount || null,
-          currency: data.currency || 'EUR',
-          prepayment_required: data.prepayment_required ?? false,
-          customer_type: data.customer_type || null,
 
-          // Champs spécifiques clients particuliers
+          // ✅ Classification client (existantes en BD)
+          customer_type: data.customer_type || null,
+          prepayment_required: data.prepayment_required ?? false,
+
+          // ✅ Champs clients particuliers (existants en BD)
           first_name: data.first_name || null,
           mobile_phone: data.mobile_phone || null,
           date_of_birth: data.date_of_birth || null,
@@ -347,10 +338,13 @@ export function useOrganisations(filters?: OrganisationFilters) {
           communication_preference: data.communication_preference || null,
           marketing_consent: data.marketing_consent ?? false,
 
-          rating: data.rating || null,
-          certification_labels: data.certification_labels || null,
-          preferred_supplier: data.preferred_supplier ?? false,
-          notes: data.notes || null,
+          // ❌ RETIRÉES - Colonnes inexistantes en BD :
+          // phone, website, secondary_email,
+          // address_line1, address_line2, postal_code, city, region,
+          // siret, vat_number, legal_form,
+          // industry_sector, supplier_segment, supplier_category,
+          // payment_terms, delivery_time_days, minimum_order_amount, currency,
+          // rating, certification_labels, preferred_supplier, notes
         }])
         .select()
         .single()
@@ -370,12 +364,32 @@ export function useOrganisations(filters?: OrganisationFilters) {
 
   const updateOrganisation = async (data: UpdateOrganisationData): Promise<Organisation | null> => {
     try {
-      const updateData: any = { ...data }
-      delete updateData.id
+      // Filtrer uniquement les colonnes valides existantes en BD
+      const validData: any = {}
+
+      // Colonnes de base autorisées
+      const allowedFields = [
+        'name', 'type', 'email', 'country', 'is_active',
+        'billing_address_line1', 'billing_address_line2', 'billing_postal_code',
+        'billing_city', 'billing_region', 'billing_country',
+        'shipping_address_line1', 'shipping_address_line2', 'shipping_postal_code',
+        'shipping_city', 'shipping_region', 'shipping_country',
+        'has_different_shipping_address',
+        'customer_type', 'prepayment_required',
+        'first_name', 'mobile_phone', 'date_of_birth',
+        'nationality', 'preferred_language', 'communication_preference', 'marketing_consent'
+      ]
+
+      // Copier uniquement les champs autorisés
+      allowedFields.forEach(field => {
+        if (field in data) {
+          validData[field] = data[field as keyof UpdateOrganisationData]
+        }
+      })
 
       const { data: updatedOrg, error } = await supabase
         .from('organisations')
-        .update(updateData)
+        .update(validData)
         .eq('id', data.id)
         .select()
         .single()
