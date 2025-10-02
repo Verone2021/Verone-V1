@@ -98,9 +98,11 @@ export function SourcingQuickForm({
       }
     }
 
-    if (!selectedImage) {
-      newErrors.image = 'Une image est obligatoire'
-    }
+    // 🔥 FIX: Image facultative (BD accepte image_url NULL)
+    // L'image peut être ajoutée plus tard via édition
+    // if (!selectedImage) {
+    //   newErrors.image = 'Une image est obligatoire'
+    // }
 
     setErrors(newErrors)
     return Object.keys(newErrors).length === 0
@@ -182,10 +184,10 @@ export function SourcingQuickForm({
 
       {/* Formulaire */}
       <form onSubmit={handleSubmit} className="p-6 space-y-6">
-        {/* 1. UPLOAD IMAGE - Obligatoire */}
+        {/* 1. UPLOAD IMAGE - Facultatif */}
         <div className="space-y-2">
           <Label className="text-sm font-medium">
-            Image du produit *
+            Image du produit (facultatif)
           </Label>
 
           <div
