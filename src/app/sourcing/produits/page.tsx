@@ -134,6 +134,7 @@ export default function SourcingProduitsPage() {
                 Client Professionnel
               </Button>
               <Button
+                onClick={() => router.push('/catalogue/create')}
                 className="bg-black hover:bg-gray-800 text-white"
               >
                 <Plus className="h-4 w-4 mr-2" />
