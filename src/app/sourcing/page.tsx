@@ -245,49 +245,32 @@ export default function SourcingDashboardPage() {
           </CardContent>
         </Card>
 
-        {/* Performance Overview */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          <Card className="border-black">
-            <CardHeader>
-              <CardTitle className="text-black">Performance Sourcing</CardTitle>
-              <CardDescription>Métriques et tendances</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-4">
-                <div className="flex justify-between items-center">
-                  <span className="text-sm text-gray-600">Taux de conversion</span>
-                  <span className="font-medium text-green-600">78%</span>
-                </div>
-                <div className="flex justify-between items-center">
-                  <span className="text-sm text-gray-600">Temps moyen sourcing</span>
-                  <span className="font-medium text-black">5.2 jours</span>
-                </div>
-                <div className="flex justify-between items-center">
-                  <span className="text-sm text-gray-600">Satisfaction client</span>
-                  <span className="font-medium text-green-600">4.6/5</span>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-
+        {/* Actions Prioritaires - 100% Données Réelles */}
+        <div className="grid grid-cols-1 gap-6">
           <Card className="border-black">
             <CardHeader>
               <CardTitle className="text-black">Prochaines Actions</CardTitle>
-              <CardDescription>Tâches prioritaires</CardDescription>
+              <CardDescription>Tâches prioritaires (données réelles)</CardDescription>
             </CardHeader>
             <CardContent>
               <div className="space-y-3">
                 <div className="flex items-center space-x-2">
                   <Clock className="h-4 w-4 text-orange-600" />
-                  <span className="text-sm">12 produits en attente de validation</span>
+                  <span className="text-sm">
+                    {sourcingLoading ? '...' : stats.pendingValidation} produits en attente de validation
+                  </span>
                 </div>
                 <div className="flex items-center space-x-2">
                   <Eye className="h-4 w-4 text-blue-600" />
-                  <span className="text-sm">3 échantillons attendus cette semaine</span>
+                  <span className="text-sm">
+                    {sourcingLoading ? '...' : stats.samplesOrdered} échantillons commandés
+                  </span>
                 </div>
                 <div className="flex items-center space-x-2">
                   <Users className="h-4 w-4 text-green-600" />
-                  <span className="text-sm">5 demandes clients à traiter</span>
+                  <span className="text-sm">
+                    {sourcingLoading ? '...' : sourcingProducts?.filter(p => p.sourcing_type === 'client').length || 0} demandes clients
+                  </span>
                 </div>
               </div>
             </CardContent>
