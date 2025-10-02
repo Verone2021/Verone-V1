@@ -44,7 +44,7 @@ import {
   DialogTitle,
   DialogTrigger,
 } from '@/components/ui/dialog'
-import { useSourcingProducts } from '@/hooks/use-sourcing-products'
+import { useSourcingProducts, SourcingProduct } from '@/hooks/use-sourcing-products'
 import { useToast } from '@/hooks/use-toast'
 import { SampleOrderValidation } from '@/components/business/sample-order-validation'
 
@@ -52,17 +52,12 @@ export default function SourcingValidationPage() {
   const router = useRouter()
   const { toast } = useToast()
   const {
-    drafts,
+    products,
     loading,
-    getDraftsReadyForCatalog,
-    getDraftsRequiringSamples,
-    validateSourcingDraft,
-    transferToProductCatalog,
-    getSourcingWorkflowMetrics,
-    loadDrafts
-  } = useDrafts()
+    validateSourcing
+  } = useSourcingProducts({})
 
-  const [selectedProduct, setSelectedProduct] = useState<DraftWithMeta | null>(null)
+  const [selectedProduct, setSelectedProduct] = useState<SourcingProduct | null>(null)
   const [validationNotes, setValidationNotes] = useState('')
   const [activeTab, setActiveTab] = useState<'validation' | 'samples'>('validation')
   const [workflowMetrics, setWorkflowMetrics] = useState<any>(null)
@@ -73,41 +68,21 @@ export default function SourcingValidationPage() {
     estimated_selling_price: 0
   })
 
-  // Charger les métriques du workflow
-  const loadMetrics = async () => {
+  // Valider un produit sourcing et le transférer au catalogue
+  const handleValidateProduct = async (product: SourcingProduct) => {
     try {
-      const metrics = await getSourcingWorkflowMetrics()
-      setWorkflowMetrics(metrics)
-    } catch (error) {
-      console.warn('Métriques workflow non disponibles:', error)
-    }
-  }
+      const success = await validateSourcing(product.id)
 
-  // Valider un produit sourcing
-  const handleValidateProduct = async (draft: DraftWithMeta, action: 'approve' | 'reject') => {
-    if (action === 'reject') {
-      // TODO: Implémenter rejet de produit
-      toast({
-        title: "Fonctionnalité à venir",
-        description: "Le rejet de produits sourcing sera bientôt disponible",
-        variant: "destructive"
-      })
-      return
-    }
+      if (success) {
+        toast({
+          title: "Produit validé",
+          description: "Le produit a été transféré au catalogue"
+        })
 
-    try {
-      await validateSourcingDraft(draft.id, validationData)
-
-      toast({
-        title: "Produit validé",
-        description: draft.requires_sample
-          ? "Le produit nécessite une validation d'échantillons avant le catalogue"
-          : "Le produit est prêt pour transfert au catalogue"
-      })
-
-      setSelectedProduct(null)
-      setValidationNotes('')
-      setValidationData({ supplier_id: '', cost_price: 0, requires_sample: false, estimated_selling_price: 0 })
+        setSelectedProduct(null)
+        setValidationNotes('')
+        setValidationData({ supplier_id: '', cost_price: 0, requires_sample: false, estimated_selling_price: 0 })
+      }
     } catch (error) {
       console.error('Erreur validation produit:', error)
       toast({
@@ -118,63 +93,36 @@ export default function SourcingValidationPage() {
     }
   }
 
-  // Transférer vers catalogue
-  const handleTransferToCatalog = async (draftId: string) => {
-    try {
-      await transferToProductCatalog(draftId)
-
-      toast({
-        title: "Transfert réussi",
-        description: "Le produit a été ajouté au catalogue"
-      })
-    } catch (error) {
-      console.error('Erreur transfert catalogue:', error)
-      toast({
-        title: "Erreur",
-        description: error instanceof Error ? error.message : "Impossible de transférer vers le catalogue",
-        variant: "destructive"
-      })
-    }
-  }
-
   // Obtenir le badge de statut
-  const getStatusBadge = (draft: DraftWithMeta) => {
-    const sourcingStatus = (draft as any).sourcing_status || 'draft'
-    const sampleStatus = (draft as any).sample_status
-
-    if (draft.requires_sample && sampleStatus !== 'approved') {
-      return <Badge variant="outline" className="border-orange-300 text-orange-600">En attente échantillons</Badge>
+  const getStatusBadge = (product: SourcingProduct) => {
+    if (product.requires_sample) {
+      return <Badge variant="outline" className="border-orange-300 text-orange-600">Échantillons requis</Badge>
     }
 
-    switch (sourcingStatus) {
-      case 'draft':
-        return <Badge variant="outline" className="border-gray-300 text-gray-600">Brouillon</Badge>
-      case 'sourcing_validated':
-        return <Badge variant="outline" className="border-green-300 text-green-600">Sourcing validé</Badge>
-      case 'ready_for_catalog':
-        return <Badge variant="outline" className="border-blue-300 text-blue-600">Prêt pour catalogue</Badge>
+    switch (product.status) {
+      case 'sourcing':
+        return <Badge variant="outline" className="border-gray-300 text-gray-600">En sourcing</Badge>
+      case 'echantillon_a_commander':
+        return <Badge variant="outline" className="border-orange-300 text-orange-600">Échantillon à commander</Badge>
+      case 'echantillon_commande':
+        return <Badge variant="outline" className="border-blue-300 text-blue-600">Échantillon commandé</Badge>
+      case 'in_stock':
+        return <Badge variant="outline" className="border-green-300 text-green-600">En stock</Badge>
       default:
         return <Badge variant="outline">En cours</Badge>
     }
   }
 
-  // Obtenir les produits prêts pour validation
-  const productsToValidate = drafts.filter(d =>
-    d.creation_mode === 'sourcing' &&
-    ((d as any).sourcing_status === 'draft' || (d as any).sourcing_status === 'sourcing_validated')
+  // Filtrer les produits en sourcing (status = 'sourcing')
+  const productsToValidate = products.filter(p => p.status === 'sourcing')
+
+  // Produits avec fournisseur assigné (prêts pour validation)
+  const productsReadyForCatalog = products.filter(p =>
+    p.supplier_id && p.status === 'sourcing' && !p.requires_sample
   )
 
-  // Obtenir les produits prêts pour le catalogue
-  const productsReadyForCatalog = getDraftsReadyForCatalog()
-
-  // Obtenir les produits nécessitant des échantillons
-  const productsRequiringSamples = getDraftsRequiringSamples()
-
-  // Chargement initial
-  useEffect(() => {
-    loadDrafts()
-    loadMetrics()
-  }, [])
+  // Produits nécessitant des échantillons
+  const productsRequiringSamples = products.filter(p => p.requires_sample)
 
   if (loading) {
     return (
@@ -272,14 +220,14 @@ export default function SourcingValidationPage() {
 
           <Card className="border-black">
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium text-gray-600">Métriques</CardTitle>
+              <CardTitle className="text-sm font-medium text-gray-600">Total Sourcing</CardTitle>
               <Star className="h-4 w-4 text-yellow-600" />
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold text-black">
-                {workflowMetrics?.avg_validation_days?.toFixed(1) || 'N/A'}j
+                {products.length}
               </div>
-              <p className="text-xs text-gray-600">validation moyenne</p>
+              <p className="text-xs text-gray-600">produits en sourcing</p>
             </CardContent>
           </Card>
         </div>
@@ -309,13 +257,9 @@ export default function SourcingValidationPage() {
                           <div className="flex items-center space-x-3 mb-2">
                             <h3 className="font-semibold text-black text-lg">{product.name}</h3>
                             {getStatusBadge(product)}
-                            <Badge variant="outline" className="text-xs">
-                              {product.progressPercentage}% complété
-                            </Badge>
                           </div>
-                          <p className="text-gray-600 mb-3">{product.description || 'Pas de description'}</p>
                           <p className="text-sm text-gray-500">
-                            Créé le {product.lastModified} • Type: {product.creation_mode}
+                            Créé le {new Date(product.created_at).toLocaleDateString('fr-FR')} • SKU: {product.sku}
                           </p>
                         </div>
                         <div className="flex items-center space-x-2 ml-4">
@@ -360,9 +304,7 @@ export default function SourcingValidationPage() {
                       {/* Actions de validation */}
                       <div className="flex items-center justify-between pt-4 border-t border-gray-200">
                         <div className="text-sm text-gray-500">
-                          {product.missingFields.length > 0
-                            ? `Champs manquants: ${product.missingFields.join(', ')}`
-                            : 'Prêt pour validation'}
+                          {product.supplier_id ? 'Prêt pour validation' : 'Fournisseur requis'}
                         </div>
                         <div className="flex space-x-2">
                           <Dialog>
@@ -409,7 +351,7 @@ export default function SourcingValidationPage() {
                     </div>
                     <Button
                       size="sm"
-                      onClick={() => handleTransferToCatalog(product.id)}
+                      onClick={() => handleValidateProduct(product)}
                       className="bg-green-600 hover:bg-green-700 text-white"
                     >
                       <ArrowRight className="h-4 w-4 mr-2" />
@@ -496,9 +438,9 @@ export default function SourcingValidationPage() {
                   Annuler
                 </Button>
                 <Button
-                  onClick={() => handleValidateProduct(selectedProduct, 'approve')}
+                  onClick={() => handleValidateProduct(selectedProduct)}
                   className="bg-black hover:bg-gray-800 text-white"
-                  disabled={!validationData.supplier_id || validationData.cost_price <= 0}
+                  disabled={!selectedProduct.supplier_id}
                 >
                   Valider Sourcing
                 </Button>
