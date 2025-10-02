@@ -73,3 +73,5 @@ next-env.d.ts
 
 # Husky
 .husky/_
+# Playwright MCP Browser screenshots (obsolete)
+.playwright-mcp/
