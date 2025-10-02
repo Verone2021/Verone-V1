@@ -127,15 +127,21 @@ export function useSourcingProducts(filters?: SourcingFilters) {
 
       // Récupérer les images principales
       const productIds = data?.map(p => p.id) || []
-      const imagesResponse = await supabase
-        .from('product_images')
-        .select('product_id, image_url')
-        .in('product_id', productIds)
-        .eq('is_primary', true)
 
-      const imageMap = new Map(
-        imagesResponse.data?.map(img => [img.product_id, img.image_url]) || []
-      )
+      // 🔥 FIX: Ne pas charger images si aucun produit (évite requête bloquante)
+      let imageMap = new Map<string, string>()
+
+      if (productIds.length > 0) {
+        const imagesResponse = await supabase
+          .from('product_images')
+          .select('product_id, image_url')
+          .in('product_id', productIds)
+          .eq('is_primary', true)
+
+        imageMap = new Map(
+          imagesResponse.data?.map(img => [img.product_id, img.image_url]) || []
+        )
+      }
 
       // Enrichir les produits avec les calculs
       const enrichedProducts = (data || []).map(product => {
