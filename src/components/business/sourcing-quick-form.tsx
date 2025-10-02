@@ -124,16 +124,11 @@ export function SourcingQuickForm({
     setIsSubmitting(true)
 
     try {
-      // Calculer automatiquement le type de sourcing
-      const sourcingType = formData.assigned_client_id ? 'client' : 'interne'
-
       const productData = {
         name: formData.name,
         supplier_page_url: formData.supplier_page_url,
-        creation_mode: 'sourcing' as const,
-        sourcing_type: sourcingType,
-        assigned_client_id: formData.assigned_client_id || undefined,
-        imageFile: selectedImage || undefined
+        supplier_cost_price: 0, // Prix d'achat à définir lors de la validation
+        assigned_client_id: formData.assigned_client_id || undefined
       }
 
       const newProduct = await createSourcingProduct(productData)
@@ -369,7 +364,7 @@ export function SourcingQuickForm({
                 </>
               ) : (
                 <>
-                  Enregistrer en brouillon
+                  Valider
                   <ArrowRight className="h-4 w-4 ml-2" />
                 </>
               )}
