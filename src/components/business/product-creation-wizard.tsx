@@ -43,7 +43,7 @@ export function ProductCreationWizard({
   const handleSuccess = (productId: string) => {
     if (selectedType === 'sourcing') {
       // Rediriger vers la page sourcing
-      router.push('/catalogue/sourcing')
+      router.push('/sourcing/produits')
     } else {
       // Rediriger vers la page produit créé
       router.push(`/catalogue/${productId}`)
