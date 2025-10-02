@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useCallback } from 'react'
+import { useState, useCallback, useEffect } from 'react'
 
 export interface Toast {
   id: string
@@ -105,10 +105,10 @@ export function useToast() {
   }, [])
 
   // Subscribe to global state changes
-  useState(() => {
+  useEffect(() => {
     const unsubscribe = subscribe(setState)
     return unsubscribe
-  })
+  }, [subscribe])
 
   return {
     toast,
