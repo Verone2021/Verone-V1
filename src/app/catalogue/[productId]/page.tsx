@@ -483,7 +483,6 @@ export default function ProductDetailPage() {
                   weight: product.weight,
                   weight_unit: product.weight_unit,
                   base_cost: product.base_cost,
-                  selling_price: product.selling_price,
                   description: product.description,
                   technical_description: product.technical_description,
                   category_id: product.category_id,
@@ -964,8 +963,7 @@ export default function ProductDetailPage() {
             product={{
               id: product.id,
               cost_price: product.cost_price,
-              margin_percentage: product.margin_percentage,
-              selling_price: product.selling_price
+              margin_percentage: product.margin_percentage
             }}
             onUpdate={handleProductUpdate}
           />
