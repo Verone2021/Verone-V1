@@ -417,6 +417,78 @@ export function useSourcingProducts(filters?: SourcingFilters) {
     }
   }
 
+  // Mettre à jour un produit en sourcing
+  const updateSourcingProduct = async (productId: string, data: {
+    name?: string
+    supplier_page_url?: string
+    cost_price?: number
+    supplier_id?: string | null
+    margin_percentage?: number
+  }) => {
+    try {
+      // Validation basique
+      if (data.cost_price !== undefined && data.cost_price <= 0) {
+        toast({
+          title: "Erreur",
+          description: "Le prix d'achat doit être > 0€",
+          variant: "destructive"
+        })
+        return false
+      }
+
+      if (data.name !== undefined && !data.name.trim()) {
+        toast({
+          title: "Erreur",
+          description: "Le nom du produit ne peut pas être vide",
+          variant: "destructive"
+        })
+        return false
+      }
+
+      // Construire l'objet de mise à jour avec uniquement les champs fournis
+      const updateData: any = {}
+
+      if (data.name !== undefined) updateData.name = data.name
+      if (data.supplier_page_url !== undefined) updateData.supplier_page_url = data.supplier_page_url
+      if (data.cost_price !== undefined) updateData.cost_price = data.cost_price
+      if (data.margin_percentage !== undefined) updateData.margin_percentage = data.margin_percentage
+
+      // Gérer supplier_id (peut être null pour retirer le fournisseur)
+      if (data.supplier_id !== undefined) {
+        updateData.supplier_id = data.supplier_id
+      }
+
+      const { error } = await supabase
+        .from('products')
+        .update(updateData)
+        .eq('id', productId)
+
+      if (error) {
+        toast({
+          title: "Erreur",
+          description: error.message,
+          variant: "destructive"
+        })
+        return false
+      }
+
+      toast({
+        title: "Succès",
+        description: "Produit mis à jour avec succès"
+      })
+
+      await fetchSourcingProducts()
+      return true
+    } catch (err) {
+      toast({
+        title: "Erreur",
+        description: "Impossible de mettre à jour le produit",
+        variant: "destructive"
+      })
+      return false
+    }
+  }
+
   return {
     products,
     loading,
@@ -424,6 +496,7 @@ export function useSourcingProducts(filters?: SourcingFilters) {
     refetch: fetchSourcingProducts,
     validateSourcing,
     orderSample,
-    createSourcingProduct
+    createSourcingProduct,
+    updateSourcingProduct
   }
 }

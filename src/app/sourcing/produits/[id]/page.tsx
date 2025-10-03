@@ -22,12 +22,15 @@ import { Badge } from '@/components/ui/badge'
 import { Alert, AlertDescription } from '@/components/ui/alert'
 import { useSourcingProducts } from '@/hooks/use-sourcing-products'
 import { useToast } from '@/hooks/use-toast'
+import { EditSourcingProductModal } from '@/components/business/edit-sourcing-product-modal'
+import { SupplierSelector } from '@/components/business/supplier-selector'
 
 export default function SourcingProductDetailPage() {
   const router = useRouter()
   const params = useParams()
   const { toast } = useToast()
-  const { products, loading, validateSourcing, orderSample } = useSourcingProducts()
+  const { products, loading, validateSourcing, orderSample, updateSourcingProduct, refetch } = useSourcingProducts()
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false)
 
   const productId = params.id as string
   const product = products.find(p => p.id === productId)
@@ -136,7 +139,7 @@ export default function SourcingProductDetailPage() {
             <div className="flex items-center space-x-2">
               <Button
                 variant="outline"
-                onClick={() => router.push(`/catalogue/${productId}/edit`)}
+                onClick={() => setIsEditModalOpen(true)}
                 className="border-black text-black hover:bg-black hover:text-white"
               >
                 <Edit className="h-4 w-4 mr-2" />
@@ -344,6 +347,23 @@ export default function SourcingProductDetailPage() {
                 </AlertDescription>
               </Alert>
             )}
+
+            {/* Sélection fournisseur inline si absent */}
+            {!product.supplier_id && (
+              <div className="mt-4 p-4 bg-gray-50 rounded-lg border border-gray-300">
+                <SupplierSelector
+                  selectedSupplierId={null}
+                  onSupplierChange={async (supplierId) => {
+                    if (supplierId) {
+                      await updateSourcingProduct(productId, { supplier_id: supplierId })
+                    }
+                  }}
+                  label="Sélectionner un fournisseur pour activer la validation"
+                  placeholder="Choisir un fournisseur..."
+                  required={false}
+                />
+              </div>
+            )}
           </CardContent>
         </Card>
 
@@ -356,6 +376,16 @@ export default function SourcingProductDetailPage() {
           </AlertDescription>
         </Alert>
       </div>
+
+      {/* Modal d'édition */}
+      {product && (
+        <EditSourcingProductModal
+          isOpen={isEditModalOpen}
+          onClose={() => setIsEditModalOpen(false)}
+          product={product}
+          onUpdate={updateSourcingProduct}
+        />
+      )}
     </div>
   )
 }
