@@ -20,7 +20,8 @@ import {
   MoreHorizontal,
   ExternalLink,
   Euro,
-  AlertCircle
+  AlertCircle,
+  Globe
 } from 'lucide-react'
 import { useSourcingProducts } from '@/hooks/use-sourcing-products'
 import { useSuppliers, useCustomers } from '@/hooks/use-organisations'
@@ -294,17 +295,6 @@ export default function SourcingProduitsPage() {
                     <div className="flex items-start justify-between">
                       <div className="flex-1">
                         <div className="flex items-start space-x-4 mb-4">
-                          {/* Image du produit */}
-                          {product.main_image_url && (
-                            <div className="w-16 h-16 bg-gray-100 rounded-lg overflow-hidden flex-shrink-0">
-                              <img
-                                src={product.main_image_url}
-                                alt={product.name}
-                                className="w-full h-full object-cover"
-                              />
-                            </div>
-                          )}
-
                           <div className="flex-1">
                             <div className="flex items-center space-x-3 mb-2">
                               <h3 className="font-semibold text-black">{product.name}</h3>
@@ -322,13 +312,6 @@ export default function SourcingProduitsPage() {
                                 <div className="flex items-center space-x-2">
                                   <Euro className="h-4 w-4 text-gray-400" />
                                   <span className="text-gray-600">Coût: {formatPrice(product.cost_price)}</span>
-                                </div>
-                              )}
-
-                              {product.estimated_selling_price && (
-                                <div className="flex items-center space-x-2">
-                                  <Euro className="h-4 w-4 text-green-600" />
-                                  <span className="text-green-600">Prix estimé: {formatPrice(product.estimated_selling_price)}</span>
                                 </div>
                               )}
 
@@ -357,7 +340,22 @@ export default function SourcingProduitsPage() {
                                 </div>
                               )}
 
-                              {/* Lien vers URL externe fournisseur (page web) */}
+                              {/* Site web général du fournisseur */}
+                              {product.supplier?.website && (
+                                <div className="flex items-center space-x-2">
+                                  <Globe className="h-4 w-4 text-gray-400" />
+                                  <a
+                                    href={product.supplier.website}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    className="text-blue-600 hover:underline"
+                                  >
+                                    Site web fournisseur
+                                  </a>
+                                </div>
+                              )}
+
+                              {/* Lien vers URL externe fournisseur (page produit spécifique) */}
                               {product.supplier_page_url && (
                                 <div className="flex items-center space-x-2">
                                   <ExternalLink className="h-4 w-4 text-gray-400" />
@@ -367,7 +365,7 @@ export default function SourcingProduitsPage() {
                                     rel="noopener noreferrer"
                                     className="text-blue-600 hover:underline"
                                   >
-                                    Page web fournisseur
+                                    Page produit chez fournisseur
                                   </a>
                                 </div>
                               )}
@@ -393,7 +391,7 @@ export default function SourcingProduitsPage() {
                           variant="outline"
                           size="sm"
                           className="border-gray-300"
-                          onClick={() => router.push(`/catalogue/${product.id}`)}
+                          onClick={() => router.push(`/sourcing/produits/${product.id}`)}
                         >
                           <Eye className="h-4 w-4" />
                         </Button>
@@ -413,7 +411,7 @@ export default function SourcingProduitsPage() {
                           </DropdownMenuTrigger>
                           <DropdownMenuContent align="end">
                             <DropdownMenuLabel>Actions</DropdownMenuLabel>
-                            <DropdownMenuItem onClick={() => router.push(`/catalogue/${product.id}`)}>
+                            <DropdownMenuItem onClick={() => router.push(`/sourcing/produits/${product.id}`)}>
                               <Eye className="h-4 w-4 mr-2" />
                               Voir détails
                             </DropdownMenuItem>

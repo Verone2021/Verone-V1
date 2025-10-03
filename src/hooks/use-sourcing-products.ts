@@ -80,7 +80,8 @@ export function useSourcingProducts(filters?: SourcingFilters) {
           supplier:organisations!products_supplier_id_fkey(
             id,
             name,
-            type
+            type,
+            website
           ),
           assigned_client:organisations!products_assigned_client_id_fkey(
             id,
