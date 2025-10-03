@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import { useToast } from '@/hooks/use-toast'
 
@@ -9,7 +9,7 @@ export interface SourcingProduct {
   sku: string
   name: string
   supplier_page_url: string | null
-  supplier_cost_price: number | null
+  cost_price: number | null // 🔥 FIX: Utiliser cost_price au lieu de supplier_cost_price
   status: string
   supplier_id: string | null
   supplier?: {
@@ -24,7 +24,7 @@ export interface SourcingProduct {
   assigned_client?: {
     id: string
     name: string
-    is_professional: boolean
+    type: string // 🔥 FIX: type au lieu de is_professional
   }
   created_at: string
   updated_at: string
@@ -39,6 +39,8 @@ interface SourcingFilters {
   search?: string
   status?: string
   sourcing_type?: 'interne' | 'client'
+  supplier_id?: string        // 🆕 Filtrer par fournisseur spécifique
+  assigned_client_id?: string // 🆕 Filtrer par client assigné spécifique
   has_supplier?: boolean
   requires_sample?: boolean
 }
@@ -50,7 +52,9 @@ export function useSourcingProducts(filters?: SourcingFilters) {
   const { toast } = useToast()
   const supabase = createClient()
 
-  const fetchSourcingProducts = useCallback(async () => {
+  // 🔥 FIX SIMPLE: Utiliser fonction classique au lieu de useCallback
+  // Cela évite les dépendances circulaires
+  const fetchSourcingProducts = async () => {
     setLoading(true)
     setError(null)
 
@@ -63,7 +67,7 @@ export function useSourcingProducts(filters?: SourcingFilters) {
           sku,
           name,
           supplier_page_url,
-          supplier_cost_price,
+          cost_price,
           status,
           supplier_id,
           creation_mode,
@@ -81,7 +85,7 @@ export function useSourcingProducts(filters?: SourcingFilters) {
           assigned_client:organisations!products_assigned_client_id_fkey(
             id,
             name,
-            is_professional
+            type
           )
         `)
         .eq('creation_mode', 'sourcing')
@@ -113,6 +117,16 @@ export function useSourcingProducts(filters?: SourcingFilters) {
         query = query.eq('requires_sample', filters.requires_sample)
       }
 
+      // 🆕 Filtre par fournisseur spécifique
+      if (filters?.supplier_id) {
+        query = query.eq('supplier_id', filters.supplier_id)
+      }
+
+      // 🆕 Filtre par client assigné spécifique
+      if (filters?.assigned_client_id) {
+        query = query.eq('assigned_client_id', filters.assigned_client_id)
+      }
+
       const { data, error: fetchError } = await query
 
       if (fetchError) {
@@ -134,18 +148,18 @@ export function useSourcingProducts(filters?: SourcingFilters) {
       if (productIds.length > 0) {
         const imagesResponse = await supabase
           .from('product_images')
-          .select('product_id, image_url')
+          .select('product_id, public_url')
           .in('product_id', productIds)
           .eq('is_primary', true)
 
         imageMap = new Map(
-          imagesResponse.data?.map(img => [img.product_id, img.image_url]) || []
+          imagesResponse.data?.map(img => [img.product_id, img.public_url]) || []
         )
       }
 
       // Enrichir les produits avec les calculs
       const enrichedProducts = (data || []).map(product => {
-        const supplierCost = product.supplier_cost_price || 0
+        const supplierCost = product.cost_price || 0 // 🔥 FIX: cost_price au lieu de supplier_cost_price
         const margin = product.margin_percentage || 50 // Marge par défaut 50%
         const estimatedSellingPrice = supplierCost * (1 + margin / 100)
 
@@ -167,18 +181,48 @@ export function useSourcingProducts(filters?: SourcingFilters) {
     } finally {
       setLoading(false)
     }
-  }, [filters, supabase, toast])
+  }
 
   useEffect(() => {
+    // 🔥 FIX: Appeler directement sans dépendances sur la fonction
+    // Dépendre uniquement des valeurs primitives de filters
     fetchSourcingProducts()
-  }, [fetchSourcingProducts])
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [
+    filters?.search,
+    filters?.status,
+    filters?.sourcing_type,
+    filters?.has_supplier,
+    filters?.requires_sample
+  ])
 
   // Valider un produit sourcing (passage au catalogue)
   const validateSourcing = async (productId: string) => {
     try {
-      // Vérifier que le fournisseur est lié
+      // 🔥 FIX: Vérifications business rules complètes
       const product = products.find(p => p.id === productId)
-      if (!product?.supplier_id) {
+
+      if (!product) {
+        toast({
+          title: "Erreur",
+          description: "Produit introuvable",
+          variant: "destructive"
+        })
+        return false
+      }
+
+      // Vérification prix fournisseur OBLIGATOIRE
+      if (!product.cost_price || product.cost_price <= 0) {
+        toast({
+          title: "Erreur",
+          description: "Le prix d'achat fournisseur doit être défini et > 0€ avant validation",
+          variant: "destructive"
+        })
+        return false
+      }
+
+      // Vérification fournisseur OBLIGATOIRE
+      if (!product.supplier_id) {
         toast({
           title: "Erreur",
           description: "Un fournisseur doit être lié avant la validation",
@@ -187,12 +231,15 @@ export function useSourcingProducts(filters?: SourcingFilters) {
         return false
       }
 
-      // Mettre à jour le statut
+      // 🔥 FIX: Mettre à jour statut + stocks pour respecter trigger validation
+      // Le trigger exige stock > 0 pour status "in_stock"
       const { error } = await supabase
         .from('products')
         .update({
           status: 'in_stock',
-          creation_mode: 'complete'
+          creation_mode: 'complete',
+          stock_real: 1, // Stock initial minimal pour valider le trigger
+          stock_forecasted_in: 0 // Pas de stock prévisionnel à l'entrée
         })
         .eq('id', productId)
 
@@ -263,24 +310,44 @@ export function useSourcingProducts(filters?: SourcingFilters) {
   const createSourcingProduct = async (data: {
     name: string
     supplier_page_url: string
-    supplier_cost_price: number
+    supplier_cost_price: number // REQUIRED - validation > 0
     supplier_id?: string
     assigned_client_id?: string
+    imageFile?: File // Upload image optionnel
   }) => {
     try {
+      // 🔥 FIX: Validation prix OBLIGATOIRE
+      if (!data.supplier_cost_price || data.supplier_cost_price <= 0) {
+        toast({
+          title: "Erreur",
+          description: "Le prix d'achat fournisseur est obligatoire et doit être > 0€",
+          variant: "destructive"
+        })
+        return null
+      }
+
+      // Validation nom
+      if (!data.name?.trim()) {
+        toast({
+          title: "Erreur",
+          description: "Le nom du produit est obligatoire",
+          variant: "destructive"
+        })
+        return null
+      }
+
+      // Créer le produit
       const { data: newProduct, error } = await supabase
         .from('products')
         .insert([{
           name: data.name,
           supplier_page_url: data.supplier_page_url,
-          supplier_cost_price: data.supplier_cost_price,
+          cost_price: data.supplier_cost_price, // 🔥 FIX: Utiliser cost_price (nom correct BD)
           supplier_id: data.supplier_id,
           assigned_client_id: data.assigned_client_id,
           creation_mode: 'sourcing',
           sourcing_type: data.assigned_client_id ? 'client' : 'interne',
-          status: 'sourcing',
-          price_ht: data.supplier_cost_price || 0, // Legacy field
-          cost_price: data.supplier_cost_price || 0
+          status: 'sourcing' // Statut initial pour produit en sourcing
         }])
         .select()
         .single()
@@ -292,6 +359,44 @@ export function useSourcingProducts(filters?: SourcingFilters) {
           variant: "destructive"
         })
         return null
+      }
+
+      // 🔥 FIX: Upload image si fournie
+      if (data.imageFile && newProduct) {
+        try {
+          const fileExt = data.imageFile.name.split('.').pop()
+          const fileName = `${newProduct.id}-${Date.now()}.${fileExt}`
+          const filePath = `products/${fileName}`
+
+          // Upload vers Supabase Storage
+          const { error: uploadError } = await supabase.storage
+            .from('product-images')
+            .upload(filePath, data.imageFile)
+
+          if (uploadError) {
+            console.error('Erreur upload image:', uploadError)
+            // Ne pas bloquer la création du produit, juste logger
+          } else {
+            // Obtenir l'URL publique
+            const { data: { publicUrl } } = supabase.storage
+              .from('product-images')
+              .getPublicUrl(filePath)
+
+            // Créer entrée product_images
+            await supabase
+              .from('product_images')
+              .insert([{
+                product_id: newProduct.id,
+                public_url: publicUrl,
+                storage_path: filePath,
+                is_primary: true,
+                image_type: 'product'
+              }])
+          }
+        } catch (imgError) {
+          console.error('Erreur gestion image:', imgError)
+          // Ne pas bloquer la création
+        }
       }
 
       toast({

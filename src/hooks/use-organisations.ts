@@ -539,6 +539,10 @@ export function useSuppliers(filters?: Omit<OrganisationFilters, 'type'>) {
   return useOrganisations({ ...filters, type: 'supplier' })
 }
 
+export function useCustomers(filters?: Omit<OrganisationFilters, 'type'>) {
+  return useOrganisations({ ...filters, type: 'customer' })
+}
+
 export function useOrganisation(id: string) {
   const [organisation, setOrganisation] = useState<Organisation | null>(null)
   const [loading, setLoading] = useState(true)

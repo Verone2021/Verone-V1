@@ -2,6 +2,7 @@
 
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
+import Link from 'next/link'
 import {
   Search,
   Filter,
@@ -22,6 +23,7 @@ import {
   AlertCircle
 } from 'lucide-react'
 import { useSourcingProducts } from '@/hooks/use-sourcing-products'
+import { useSuppliers, useCustomers } from '@/hooks/use-organisations'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
@@ -47,12 +49,20 @@ export default function SourcingProduitsPage() {
   const [searchTerm, setSearchTerm] = useState('')
   const [statusFilter, setStatusFilter] = useState('all')
   const [sourcingTypeFilter, setSourcingTypeFilter] = useState('all')
+  const [supplierFilter, setSupplierFilter] = useState('all') // 🆕 Filtre fournisseur
+  const [clientFilter, setClientFilter] = useState('all') // 🆕 Filtre client
+
+  // Hooks pour charger fournisseurs et clients professionnels
+  const { organisations: suppliers } = useSuppliers()
+  const { organisations: customers } = useCustomers()
 
   // Hook Supabase pour les produits sourcing
   const { products: sourcingProducts, loading, error, validateSourcing, orderSample } = useSourcingProducts({
     search: searchTerm || undefined,
     status: statusFilter === 'all' ? undefined : statusFilter,
-    sourcing_type: sourcingTypeFilter === 'all' ? undefined : (sourcingTypeFilter as 'interne' | 'client')
+    sourcing_type: sourcingTypeFilter === 'all' ? undefined : (sourcingTypeFilter as 'interne' | 'client'),
+    supplier_id: supplierFilter === 'all' ? undefined : supplierFilter, // 🆕
+    assigned_client_id: clientFilter === 'all' ? undefined : clientFilter // 🆕
   })
 
   const getStatusBadge = (status: string) => {
@@ -308,10 +318,10 @@ export default function SourcingProduitsPage() {
                                 <span className="text-gray-600">SKU: {product.sku}</span>
                               </div>
 
-                              {product.supplier_cost_price && (
+                              {product.cost_price && (
                                 <div className="flex items-center space-x-2">
                                   <Euro className="h-4 w-4 text-gray-400" />
-                                  <span className="text-gray-600">Coût: {formatPrice(product.supplier_cost_price)}</span>
+                                  <span className="text-gray-600">Coût: {formatPrice(product.cost_price)}</span>
                                 </div>
                               )}
 
@@ -334,6 +344,20 @@ export default function SourcingProduitsPage() {
                                 <span className="text-gray-600">Créé: {formatDate(product.created_at)}</span>
                               </div>
 
+                              {/* Lien vers page détails fournisseur (navigation interne) */}
+                              {product.supplier && (
+                                <div className="flex items-center space-x-2">
+                                  <Building className="h-4 w-4 text-gray-400" />
+                                  <Link
+                                    href={`/contacts-organisations/suppliers/${product.supplier.id}`}
+                                    className="text-blue-600 hover:underline"
+                                  >
+                                    Voir le fournisseur
+                                  </Link>
+                                </div>
+                              )}
+
+                              {/* Lien vers URL externe fournisseur (page web) */}
                               {product.supplier_page_url && (
                                 <div className="flex items-center space-x-2">
                                   <ExternalLink className="h-4 w-4 text-gray-400" />
@@ -343,7 +367,7 @@ export default function SourcingProduitsPage() {
                                     rel="noopener noreferrer"
                                     className="text-blue-600 hover:underline"
                                   >
-                                    Lien fournisseur
+                                    Page web fournisseur
                                   </a>
                                 </div>
                               )}
@@ -355,7 +379,7 @@ export default function SourcingProduitsPage() {
                                   <User className="h-4 w-4 text-blue-600" />
                                   <span className="text-blue-600">
                                     <strong>Client assigné:</strong> {product.assigned_client.name}
-                                    {product.assigned_client.is_professional ? ' (Professionnel)' : ' (Particulier)'}
+                                    {product.assigned_client.type === 'client' ? ' (Client)' : ` (${product.assigned_client.type})`}
                                   </span>
                                 </div>
                               </div>

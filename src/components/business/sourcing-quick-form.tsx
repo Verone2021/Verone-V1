@@ -2,7 +2,7 @@
 
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
-import { Upload, Link, Package, ArrowRight, Loader2 } from 'lucide-react'
+import { Upload, Link, Package, ArrowRight, Loader2, Euro } from 'lucide-react'
 import { Button } from '../ui/button'
 import { Input } from '../ui/input'
 import { Label } from '../ui/label'
@@ -11,6 +11,7 @@ import { useSourcingProducts } from '../../hooks/use-sourcing-products'
 import { useToast } from '../../hooks/use-toast'
 import { ClientAssignmentSelector } from './client-assignment-selector'
 import { ConsultationSuggestions } from './consultation-suggestions'
+import { SupplierSelector } from './supplier-selector'
 
 interface SourcingQuickFormProps {
   onSuccess?: (draftId: string) => void
@@ -31,6 +32,8 @@ export function SourcingQuickForm({
   const [formData, setFormData] = useState({
     name: '',
     supplier_page_url: '',
+    supplier_cost_price: 0, // Prix d'achat fournisseur HT - OBLIGATOIRE
+    supplier_id: '', // Facultatif - fournisseur assigné
     assigned_client_id: '' // Facultatif - détermine automatiquement le type de sourcing
   })
   const [selectedImage, setSelectedImage] = useState<File | null>(null)
@@ -98,6 +101,11 @@ export function SourcingQuickForm({
       }
     }
 
+    // Validation prix fournisseur OBLIGATOIRE
+    if (!formData.supplier_cost_price || formData.supplier_cost_price <= 0) {
+      newErrors.supplier_cost_price = 'Le prix d\'achat fournisseur est obligatoire et doit être > 0€'
+    }
+
     // 🔥 FIX: Image facultative (BD accepte image_url NULL)
     // L'image peut être ajoutée plus tard via édition
     // if (!selectedImage) {
@@ -127,8 +135,10 @@ export function SourcingQuickForm({
       const productData = {
         name: formData.name,
         supplier_page_url: formData.supplier_page_url,
-        supplier_cost_price: 0, // Prix d'achat à définir lors de la validation
-        assigned_client_id: formData.assigned_client_id || undefined
+        supplier_cost_price: formData.supplier_cost_price, // 🔥 FIX: Prix réel saisi par utilisateur
+        supplier_id: formData.supplier_id || undefined, // Facultatif - pour activer lien fournisseur
+        assigned_client_id: formData.assigned_client_id || undefined,
+        imageFile: selectedImage || undefined // Upload image si fournie
       }
 
       const newProduct = await createSourcingProduct(productData)
@@ -304,7 +314,56 @@ export function SourcingQuickForm({
           </p>
         </div>
 
-        {/* 4. ORGANISATION CLIENT PROFESSIONNELLE - Facultatif */}
+        {/* 4. PRIX FOURNISSEUR - Obligatoire */}
+        <div className="space-y-2">
+          <Label htmlFor="supplier_cost_price" className="text-sm font-medium">
+            Prix d'achat fournisseur HT (€) *
+          </Label>
+          <div className="relative">
+            <Euro className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
+            <Input
+              id="supplier_cost_price"
+              type="number"
+              step="0.01"
+              min="0.01"
+              value={formData.supplier_cost_price || ''}
+              onChange={(e) => {
+                const value = parseFloat(e.target.value) || 0
+                setFormData(prev => ({ ...prev, supplier_cost_price: value }))
+                if (errors.supplier_cost_price) setErrors(prev => ({ ...prev, supplier_cost_price: '' }))
+              }}
+              placeholder="250.00"
+              className={cn(
+                "pl-10 transition-colors",
+                errors.supplier_cost_price && "border-red-300 focus:border-red-500"
+              )}
+            />
+          </div>
+          {errors.supplier_cost_price && (
+            <p className="text-sm text-red-600">{errors.supplier_cost_price}</p>
+          )}
+          <p className="text-xs text-gray-500">
+            Prix d'achat HT chez le fournisseur (requis pour validation sourcing)
+          </p>
+        </div>
+
+        {/* 5. FOURNISSEUR - Facultatif */}
+        <div className="space-y-2">
+          <SupplierSelector
+            selectedSupplierId={formData.supplier_id || null}
+            onSupplierChange={(supplierId) => {
+              setFormData(prev => ({ ...prev, supplier_id: supplierId || '' }))
+            }}
+            label="Fournisseur (facultatif)"
+            placeholder="Sélectionner un fournisseur..."
+            required={false}
+          />
+          <p className="text-xs text-gray-500">
+            Assignez un fournisseur pour activer le lien "détail fournisseur" dans la liste
+          </p>
+        </div>
+
+        {/* 6. ORGANISATION CLIENT PROFESSIONNELLE - Facultatif */}
         <div className="space-y-2">
           <ClientAssignmentSelector
             value={formData.assigned_client_id}
