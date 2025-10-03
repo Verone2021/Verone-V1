@@ -30,7 +30,7 @@ const REQUIRED_PRODUCT_FIELDS = [
   'sku',
   'supplier_id',
   'subcategory_id',
-  'price_ht',
+  'cost_price',
   'description'
 ] as const
 
@@ -40,7 +40,7 @@ const PRODUCT_FIELD_LABELS: Record<string, string> = {
   sku: 'Référence SKU',
   supplier_id: 'Fournisseur',
   subcategory_id: 'Sous-catégorie',
-  price_ht: 'Prix de vente HT',
+  cost_price: 'Prix d\'achat HT',
   description: 'Description'
 }
 
@@ -307,9 +307,9 @@ export default function ProductDetailPage() {
     setEditedSku('')
   }
 
-  // Gestion de l'édition du Prix HT
+  // Gestion de l'édition du Prix d'achat HT
   const handleStartEditPrice = () => {
-    setEditedPrice(product?.price_ht?.toString() || '')
+    setEditedPrice(product?.cost_price?.toString() || '')
     setIsEditingPrice(true)
   }
 
@@ -321,14 +321,14 @@ export default function ProductDetailPage() {
       return
     }
 
-    if (priceValue === product?.price_ht) {
+    if (priceValue === product?.cost_price) {
       setIsEditingPrice(false)
       return
     }
 
     setSavingPrice(true)
     try {
-      await handleProductUpdate({ price_ht: priceValue })
+      await handleProductUpdate({ cost_price: priceValue })
       setIsEditingPrice(false)
     } catch (error) {
       console.error('Erreur lors de la mise à jour du prix:', error)
@@ -699,7 +699,7 @@ export default function ProductDetailPage() {
                       ) : (
                         <div className="flex items-center space-x-2 group">
                           <span className="text-lg font-semibold text-black">
-                            {product.price_ht ? formatPrice(product.price_ht) : 'Prix non défini'}
+                            {product.cost_price ? formatPrice(product.cost_price) : 'Prix non défini'}
                           </span>
                           <Button
                             size="sm"
