@@ -15,6 +15,7 @@ import { VariantGroupEditModal } from '@/components/business/variant-group-edit-
 import { AddProductsToGroupModal } from '@/components/forms/AddProductsToGroupModal'
 import { CreateProductInGroupModal } from '@/components/forms/CreateProductInGroupModal'
 import { EditProductVariantModal } from '@/components/business/edit-product-variant-modal'
+import { ProductDuplicateButton } from '@/components/catalogue/product-duplicate-button'
 import type { VariantProduct } from '@/types/variant-groups'
 import { formatAttributesForDisplay, type VariantAttributes } from '@/types/variant-attributes-types'
 import { COLLECTION_STYLE_OPTIONS } from '@/types/collections'
@@ -64,6 +65,7 @@ interface VariantProductCardProps {
   hasCommonSupplier: boolean
   onRemove: (id: string, name: string) => void
   onEdit: (product: any) => void
+  onDuplicate?: (newProduct: any) => void
   router: any
 }
 
@@ -73,13 +75,14 @@ function VariantProductCard({
   hasCommonSupplier,
   onRemove,
   onEdit,
+  onDuplicate,
   router
 }: VariantProductCardProps) {
   // Formater les attributs pour affichage
   const attributesDisplay = formatAttributesForDisplay(product.variant_attributes as VariantAttributes)
 
   return (
-    <Card className="overflow-hidden hover:shadow-lg transition-shadow relative">
+    <Card id={`product-${product.id}`} className="overflow-hidden hover:shadow-lg transition-shadow relative">
       <div className="aspect-square relative bg-gray-50">
         {product.image_url ? (
           <Image
@@ -159,15 +162,25 @@ function VariantProductCard({
 
         {/* Zone boutons - hauteur fixe toujours visible */}
         <div className="flex-none space-y-2 mt-3">
-          <Button
-            variant="default"
-            size="sm"
-            className="w-full bg-black text-white hover:bg-gray-800"
-            onClick={() => onEdit(product)}
-          >
-            <Edit3 className="w-4 h-4 mr-2" />
-            Modifier
-          </Button>
+          <div className="grid grid-cols-2 gap-2">
+            <Button
+              variant="default"
+              size="sm"
+              className="bg-black text-white hover:bg-gray-800"
+              onClick={() => onEdit(product)}
+            >
+              <Edit3 className="w-4 h-4 mr-1" />
+              Modifier
+            </Button>
+            <ProductDuplicateButton
+              product={product}
+              variantType={variantType}
+              onSuccess={onDuplicate}
+              variant="outline"
+              size="sm"
+              showLabel={true}
+            />
+          </div>
           <Button
             variant="outline"
             size="sm"
@@ -336,6 +349,27 @@ export default function VariantGroupDetailPage({ params }: VariantGroupDetailPag
     // Refetch les données (va déclencher le useEffect)
     await refetch()
   }, [refetch])
+
+  // Duplication d'un produit
+  const handleDuplicateProduct = useCallback(async (newProduct: any) => {
+    // Afficher toast de succès
+    toast({
+      title: "✅ Produit dupliqué",
+      description: `${newProduct.name} a été créé avec succès`,
+      duration: 3000
+    })
+
+    // Refetch pour afficher le nouveau produit
+    await refetch()
+
+    // Scroll vers le nouveau produit après un court délai
+    setTimeout(() => {
+      const element = document.getElementById(`product-${newProduct.id}`)
+      if (element) {
+        element.scrollIntoView({ behavior: 'smooth', block: 'center' })
+      }
+    }, 300)
+  }, [refetch, toast])
 
   if (loading) {
     return (
@@ -661,6 +695,7 @@ export default function VariantGroupDetailPage({ params }: VariantGroupDetailPag
                 hasCommonSupplier={variantGroup.has_common_supplier || false}
                 onRemove={handleRemoveProduct}
                 onEdit={handleEditProduct}
+                onDuplicate={handleDuplicateProduct}
                 router={router}
               />
             ))}

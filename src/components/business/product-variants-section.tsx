@@ -19,7 +19,9 @@ import {
   Settings,
   ChevronRight,
   Star,
-  AlertCircle
+  AlertCircle,
+  ChevronDown,
+  ChevronUp
 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
@@ -106,6 +108,18 @@ export function ProductVariantsSection({
   const [showManageModal, setShowManageModal] = useState(false)
   const [showCreateModal, setShowCreateModal] = useState(false)
 
+  // Accordéon state avec persistance localStorage
+  const [isCollapsed, setIsCollapsed] = useState(() => {
+    if (typeof window !== 'undefined') {
+      const saved = localStorage.getItem(`product-variants-collapsed-${productId}`)
+      // Si saved est null (première visite), on collapse par défaut
+      // Si saved === 'true', c'est collapsed
+      // Si saved === 'false', c'est expanded
+      return saved === null ? true : saved === 'true'
+    }
+    return true // Par défaut: collapsed
+  })
+
   const fetchVariants = async () => {
     try {
       setLoading(true)
@@ -138,6 +152,14 @@ export function ProductVariantsSection({
   const handleVariantCreated = () => {
     fetchVariants()
     if (onVariantsUpdate) onVariantsUpdate()
+  }
+
+  const toggleCollapse = () => {
+    const newState = !isCollapsed
+    setIsCollapsed(newState)
+    if (typeof window !== 'undefined') {
+      localStorage.setItem(`product-variants-collapsed-${productId}`, String(newState))
+    }
   }
 
   const getVariantAttributeDisplay = (attributes: Record<string, any> | undefined) => {
@@ -229,13 +251,21 @@ export function ProductVariantsSection({
   return (
     <div className="bg-white border border-black p-4">
       <div className="flex items-center justify-between mb-3">
-        <h3 className="font-medium text-sm flex items-center">
+        <button
+          onClick={toggleCollapse}
+          className="font-medium text-sm flex items-center hover:text-gray-700 transition-colors cursor-pointer group"
+        >
           <Package className="h-4 w-4 mr-2" />
           Variantes Produit
           <Badge variant="outline" className="ml-2 text-xs">
             {total_variants}
           </Badge>
-        </h3>
+          {isCollapsed ? (
+            <ChevronDown className="h-4 w-4 ml-2 text-gray-500 group-hover:text-black transition-colors" />
+          ) : (
+            <ChevronUp className="h-4 w-4 ml-2 text-gray-500 group-hover:text-black transition-colors" />
+          )}
+        </button>
         <div className="flex items-center space-x-2">
           <Button
             variant="ghost"
@@ -248,110 +278,132 @@ export function ProductVariantsSection({
         </div>
       </div>
 
-      {/* Group Information */}
-      {group && (
-        <div className="bg-gray-50 border border-gray-200 rounded p-3 mb-4">
-          <div className="flex items-center justify-between">
-            <div>
-              <h4 className="font-medium text-sm text-gray-900">{group.name}</h4>
-              <p className="text-xs text-gray-600 font-mono">
-                Group ID: {group.item_group_id}
-              </p>
-            </div>
-            <Badge variant="outline" className="text-xs">
-              Google Merchant
-            </Badge>
-          </div>
-        </div>
-      )}
-
-      {/* Variants List */}
-      <div className="space-y-3">
-        {variants.map((variant, index) => (
-          <div
-            key={variant.variant_id}
-            className="border border-gray-200 rounded p-3 hover:bg-gray-50 transition-colors"
-          >
-            <div className="flex items-start justify-between">
-              <div className="flex-1 min-w-0">
-                <div className="flex items-center space-x-2 mb-1">
-                  <h4 className="font-medium text-sm text-gray-900 truncate">
-                    {variant.variant_name}
-                  </h4>
-                  {variant.is_primary_variant && (
-                    <Star className="h-3 w-3 text-yellow-500 fill-current" />
-                  )}
-                </div>
-
-                <div className="flex items-center space-x-2 mb-2">
-                  <span className="text-xs text-gray-600 font-mono">
-                    {variant.variant_sku}
-                  </span>
-                  <span className="text-xs font-medium">
-                    {formatPrice(variant.variant_price)}
-                  </span>
-                  {variant.variant_details?.status && (
-                    <Badge
-                      className={cn(
-                        "text-xs",
-                        getStatusBadgeColor(variant.variant_details.status)
-                      )}
-                    >
-                      {variant.variant_details.status}
-                    </Badge>
-                  )}
-                </div>
-
-                {/* Variant Attributes */}
-                {variant.variant_details?.variant_attributes && (
-                  <div className="flex flex-wrap gap-1 mb-2">
-                    {getVariantAttributeDisplay(variant.variant_details.variant_attributes)}
-                  </div>
-                )}
-
-                {/* Primary Image */}
-                {variant.variant_details?.images?.length > 0 && (
-                  <div className="flex items-center space-x-1">
-                    <div className="w-8 h-8 bg-gray-200 rounded overflow-hidden">
-                      <img
-                        src={variant.variant_details.images.find(img => img.is_primary)?.public_url || variant.variant_details.images[0]?.public_url}
-                        alt={variant.variant_name}
-                        className="w-full h-full object-cover"
-                      />
-                    </div>
-                    <span className="text-xs text-gray-500">
-                      {variant.variant_details.images.length} image(s)
-                    </span>
-                  </div>
-                )}
-              </div>
-
-              <div className="flex items-center space-x-1 ml-3">
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={() => handleNavigateToVariant(variant.variant_id)}
-                  className="h-8 w-8 p-0"
-                >
-                  <ExternalLink className="h-3 w-3" />
-                </Button>
-              </div>
-            </div>
-          </div>
-        ))}
-      </div>
-
-      {/* Add New Variant Quick Action */}
-      <Separator className="my-4" />
-      <Button
-        variant="outline"
-        size="sm"
-        className="w-full text-xs"
-        onClick={handleManageVariants}
+      {/* Contenu collapsible */}
+      <div
+        className={cn(
+          "overflow-hidden transition-all duration-300 ease-in-out",
+          isCollapsed ? "max-h-0 opacity-0" : "max-h-[600px] opacity-100"
+        )}
       >
-        <Plus className="h-3 w-3 mr-2" />
-        Ajouter une variante à ce groupe
-      </Button>
+        {/* Group Information */}
+        {group && (
+          <div className="bg-gray-50 border border-gray-200 rounded p-3 mb-4">
+            <div className="flex items-center justify-between">
+              <div>
+                <h4 className="font-medium text-sm text-gray-900">{group.name}</h4>
+                <p className="text-xs text-gray-600 font-mono">
+                  Group ID: {group.item_group_id}
+                </p>
+              </div>
+              <Badge variant="outline" className="text-xs">
+                Google Merchant
+              </Badge>
+            </div>
+          </div>
+        )}
+
+        {/* Variants List - Scrollable */}
+        <div className="max-h-[450px] overflow-y-auto space-y-3 pr-1 scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-gray-100">
+          {variants.map((variant, index) => (
+            <div
+              key={variant.variant_id}
+              className={cn(
+                "border rounded p-3 transition-all cursor-pointer",
+                variant.variant_id === productId
+                  ? "border-black border-2 bg-gray-50"
+                  : "border-gray-200 hover:bg-gray-50 hover:border-gray-400"
+              )}
+              onClick={() => handleNavigateToVariant(variant.variant_id)}
+            >
+              <div className="flex items-start justify-between">
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center space-x-2 mb-1">
+                    <h4 className="font-medium text-sm text-gray-900 truncate">
+                      {variant.variant_name}
+                    </h4>
+                    {variant.is_primary_variant && (
+                      <Star className="h-3 w-3 text-yellow-500 fill-current" />
+                    )}
+                    {variant.variant_id === productId && (
+                      <Badge variant="outline" className="text-xs bg-black text-white">
+                        Active
+                      </Badge>
+                    )}
+                  </div>
+
+                  <div className="flex items-center space-x-2 mb-2">
+                    <span className="text-xs text-gray-600 font-mono">
+                      {variant.variant_sku}
+                    </span>
+                    <span className="text-xs font-medium">
+                      {formatPrice(variant.variant_price)}
+                    </span>
+                    {variant.variant_details?.status && (
+                      <Badge
+                        className={cn(
+                          "text-xs",
+                          getStatusBadgeColor(variant.variant_details.status)
+                        )}
+                      >
+                        {variant.variant_details.status}
+                      </Badge>
+                    )}
+                  </div>
+
+                  {/* Variant Attributes */}
+                  {variant.variant_details?.variant_attributes && (
+                    <div className="flex flex-wrap gap-1 mb-2">
+                      {getVariantAttributeDisplay(variant.variant_details.variant_attributes)}
+                    </div>
+                  )}
+
+                  {/* Primary Image */}
+                  {variant.variant_details?.images?.length > 0 && (
+                    <div className="flex items-center space-x-1">
+                      <div className="w-8 h-8 bg-gray-200 rounded overflow-hidden">
+                        <img
+                          src={variant.variant_details.images.find(img => img.is_primary)?.public_url || variant.variant_details.images[0]?.public_url}
+                          alt={variant.variant_name}
+                          className="w-full h-full object-cover"
+                        />
+                      </div>
+                      <span className="text-xs text-gray-500">
+                        {variant.variant_details.images.length} image(s)
+                      </span>
+                    </div>
+                  )}
+                </div>
+
+                <div className="flex items-center space-x-1 ml-3">
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={(e) => {
+                      e.stopPropagation()
+                      handleNavigateToVariant(variant.variant_id)
+                    }}
+                    className="h-8 w-8 p-0"
+                  >
+                    <ExternalLink className="h-3 w-3" />
+                  </Button>
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
+
+        {/* Add New Variant Quick Action */}
+        <Separator className="my-4" />
+        <Button
+          variant="outline"
+          size="sm"
+          className="w-full text-xs"
+          onClick={handleManageVariants}
+        >
+          <Plus className="h-3 w-3 mr-2" />
+          Ajouter une variante à ce groupe
+        </Button>
+      </div>
 
       {/* Variant Creation Modal */}
       {productData && (
