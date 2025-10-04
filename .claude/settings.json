@@ -12,7 +12,32 @@
     "memory"
   ],
   "permissions": {
-    "allow": ["*"],
+    "allow": [
+      "mcp__serena__*",
+      "mcp__sequential-thinking__*",
+      "mcp__context7__*",
+      "mcp__supabase__*",
+      "mcp__playwright__*",
+      "mcp__github__*",
+      "mcp__vercel__*",
+      "mcp__filesystem__*",
+      "mcp__memory__*",
+      "mcp__sentry__*",
+      "mcp__ide__*",
+      "Read",
+      "Write",
+      "Edit",
+      "Glob",
+      "Grep",
+      "Bash",
+      "TodoWrite",
+      "WebSearch",
+      "WebFetch",
+      "Task",
+      "ExitPlanMode",
+      "NotebookEdit",
+      "SlashCommand"
+    ],
     "deny": [],
     "ask": []
   },
