@@ -65,11 +65,9 @@
       "WebFetch",
       "NotebookEdit",
       "Task",
-      "ExitPlanMode",
-      "SlashCommand"
+      "ExitPlanMode"
     ],
-    "deny": [],
-    "ask": []
+    "deny": []
   },
   "hooks": {
     "Stop": [

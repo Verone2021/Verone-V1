@@ -30,7 +30,7 @@ const REQUIRED_PRODUCT_FIELDS = [
   'sku',
   'supplier_id',
   'subcategory_id',
-  'price_ht',
+  'cost_price',
   'description'
 ] as const
 
@@ -40,7 +40,7 @@ const PRODUCT_FIELD_LABELS: Record<string, string> = {
   sku: 'Référence SKU',
   supplier_id: 'Fournisseur',
   subcategory_id: 'Sous-catégorie',
-  price_ht: 'Prix de vente HT',
+  cost_price: 'Prix d\'achat HT',
   description: 'Description'
 }
 
@@ -138,6 +138,21 @@ export default function ProductDetailPage() {
   const [isEditingName, setIsEditingName] = useState(false)
   const [editedName, setEditedName] = useState('')
   const [savingName, setSavingName] = useState(false)
+
+  // États pour l'édition du SKU
+  const [isEditingSku, setIsEditingSku] = useState(false)
+  const [editedSku, setEditedSku] = useState('')
+  const [savingSku, setSavingSku] = useState(false)
+
+  // États pour l'édition du Prix HT
+  const [isEditingPrice, setIsEditingPrice] = useState(false)
+  const [editedPrice, setEditedPrice] = useState('')
+  const [savingPrice, setSavingPrice] = useState(false)
+
+  // États pour l'édition de la Description
+  const [isEditingDescription, setIsEditingDescription] = useState(false)
+  const [editedDescription, setEditedDescription] = useState('')
+  const [savingDescription, setSavingDescription] = useState(false)
 
   const startTime = Date.now()
 
@@ -264,6 +279,97 @@ export default function ProductDetailPage() {
     setEditedName('')
   }
 
+  // Gestion de l'édition du SKU
+  const handleStartEditSku = () => {
+    setEditedSku(product?.sku || '')
+    setIsEditingSku(true)
+  }
+
+  const handleSaveSku = async () => {
+    if (editedSku === product?.sku) {
+      setIsEditingSku(false)
+      return
+    }
+
+    setSavingSku(true)
+    try {
+      await handleProductUpdate({ sku: editedSku.trim() || null })
+      setIsEditingSku(false)
+    } catch (error) {
+      console.error('Erreur lors de la mise à jour du SKU:', error)
+    } finally {
+      setSavingSku(false)
+    }
+  }
+
+  const handleCancelEditSku = () => {
+    setIsEditingSku(false)
+    setEditedSku('')
+  }
+
+  // Gestion de l'édition du Prix d'achat HT
+  const handleStartEditPrice = () => {
+    setEditedPrice(product?.cost_price?.toString() || '')
+    setIsEditingPrice(true)
+  }
+
+  const handleSavePrice = async () => {
+    const priceValue = parseFloat(editedPrice)
+
+    if (isNaN(priceValue) || priceValue < 0) {
+      setIsEditingPrice(false)
+      return
+    }
+
+    if (priceValue === product?.cost_price) {
+      setIsEditingPrice(false)
+      return
+    }
+
+    setSavingPrice(true)
+    try {
+      await handleProductUpdate({ cost_price: priceValue })
+      setIsEditingPrice(false)
+    } catch (error) {
+      console.error('Erreur lors de la mise à jour du prix:', error)
+    } finally {
+      setSavingPrice(false)
+    }
+  }
+
+  const handleCancelEditPrice = () => {
+    setIsEditingPrice(false)
+    setEditedPrice('')
+  }
+
+  // Gestion de l'édition de la Description
+  const handleStartEditDescription = () => {
+    setEditedDescription(product?.description || '')
+    setIsEditingDescription(true)
+  }
+
+  const handleSaveDescription = async () => {
+    if (editedDescription === product?.description) {
+      setIsEditingDescription(false)
+      return
+    }
+
+    setSavingDescription(true)
+    try {
+      await handleProductUpdate({ description: editedDescription.trim() || null })
+      setIsEditingDescription(false)
+    } catch (error) {
+      console.error('Erreur lors de la mise à jour de la description:', error)
+    } finally {
+      setSavingDescription(false)
+    }
+  }
+
+  const handleCancelEditDescription = () => {
+    setIsEditingDescription(false)
+    setEditedDescription('')
+  }
+
   // Handler pour naviguer vers la page de partage
   const handleShare = () => {
     if (product?.slug) {
@@ -377,7 +483,6 @@ export default function ProductDetailPage() {
                   weight: product.weight,
                   weight_unit: product.weight_unit,
                   base_cost: product.base_cost,
-                  selling_price: product.selling_price,
                   description: product.description,
                   technical_description: product.technical_description,
                   category_id: product.category_id,
@@ -526,11 +631,85 @@ export default function ProductDetailPage() {
                         </a>
                       </p>
                     )}
-                    <div className="text-sm text-gray-600 mb-2">
-                      SKU: {product.sku || 'Non défini'}
+                    {/* SKU - Édition inline */}
+                    <div className="mb-2">
+                      {isEditingSku ? (
+                        <div className="flex items-center space-x-2">
+                          <span className="text-sm text-gray-600">SKU:</span>
+                          <input
+                            type="text"
+                            value={editedSku}
+                            onChange={(e) => setEditedSku(e.target.value)}
+                            onKeyDown={(e) => {
+                              if (e.key === 'Enter') handleSaveSku()
+                              if (e.key === 'Escape') handleCancelEditSku()
+                            }}
+                            onBlur={handleSaveSku}
+                            className="text-sm border border-gray-300 rounded px-2 py-1 focus:outline-none focus:ring-2 focus:ring-black flex-1"
+                            disabled={savingSku}
+                            autoFocus
+                            placeholder="Ex: MILO-TISSU-MARRON"
+                          />
+                          {savingSku && (
+                            <span className="text-xs text-gray-500">Sauvegarde...</span>
+                          )}
+                        </div>
+                      ) : (
+                        <div className="flex items-center space-x-2 group">
+                          <span className="text-sm text-gray-600">
+                            SKU: {product.sku || 'Non défini'}
+                          </span>
+                          <Button
+                            size="sm"
+                            variant="ghost"
+                            onClick={handleStartEditSku}
+                            className="h-5 w-5 p-0 opacity-0 group-hover:opacity-100 transition-opacity"
+                          >
+                            <Edit className="h-3 w-3" />
+                          </Button>
+                        </div>
+                      )}
                     </div>
-                    <div className="text-lg font-semibold text-black">
-                      {product.price_ht ? formatPrice(product.price_ht) : 'Prix non défini'}
+                    {/* Prix HT - Édition inline */}
+                    <div>
+                      {isEditingPrice ? (
+                        <div className="flex items-center space-x-2">
+                          <input
+                            type="number"
+                            step="0.01"
+                            min="0"
+                            value={editedPrice}
+                            onChange={(e) => setEditedPrice(e.target.value)}
+                            onKeyDown={(e) => {
+                              if (e.key === 'Enter') handleSavePrice()
+                              if (e.key === 'Escape') handleCancelEditPrice()
+                            }}
+                            onBlur={handleSavePrice}
+                            className="text-lg font-semibold border border-gray-300 rounded px-2 py-1 focus:outline-none focus:ring-2 focus:ring-black w-32"
+                            disabled={savingPrice}
+                            autoFocus
+                            placeholder="0.00"
+                          />
+                          <span className="text-lg font-semibold text-gray-600">€</span>
+                          {savingPrice && (
+                            <span className="text-xs text-gray-500">Sauvegarde...</span>
+                          )}
+                        </div>
+                      ) : (
+                        <div className="flex items-center space-x-2 group">
+                          <span className="text-lg font-semibold text-black">
+                            {product.cost_price ? formatPrice(product.cost_price) : 'Prix non défini'}
+                          </span>
+                          <Button
+                            size="sm"
+                            variant="ghost"
+                            onClick={handleStartEditPrice}
+                            className="h-5 w-5 p-0 opacity-0 group-hover:opacity-100 transition-opacity"
+                          >
+                            <Edit className="h-3 w-3" />
+                          </Button>
+                        </div>
+                      )}
                     </div>
                   </div>
                 )}
@@ -652,22 +831,82 @@ export default function ProductDetailPage() {
             onUpdate={handleProductUpdate}
           />
 
-          {/* Description */}
+          {/* Description - Édition inline */}
           <div className="bg-white border border-black p-4">
             <div className="flex items-center justify-between mb-3">
               <h3 className="font-medium text-sm">Description</h3>
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={() => setShowDescriptionsModal(true)}
-              >
-                <Edit className="h-3 w-3 mr-1" />
-                Modifier
-              </Button>
+              {!isEditingDescription && (
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={handleStartEditDescription}
+                >
+                  <Edit className="h-3 w-3 mr-1" />
+                  Modifier
+                </Button>
+              )}
             </div>
-            <p className="text-sm text-gray-700">
-              {product.description || 'Aucune description disponible'}
-            </p>
+            {isEditingDescription ? (
+              <div className="space-y-2">
+                <textarea
+                  value={editedDescription}
+                  onChange={(e) => setEditedDescription(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Escape') handleCancelEditDescription()
+                    // Ctrl+Enter pour sauvegarder
+                    if (e.key === 'Enter' && e.ctrlKey) handleSaveDescription()
+                  }}
+                  className="w-full text-sm text-gray-700 border border-gray-300 rounded p-2 focus:outline-none focus:ring-2 focus:ring-black min-h-[100px]"
+                  disabled={savingDescription}
+                  autoFocus
+                  placeholder="Décrivez le produit..."
+                />
+                <div className="flex items-center justify-between">
+                  <span className="text-xs text-gray-500">
+                    Ctrl+Entrée pour sauvegarder, Échap pour annuler
+                  </span>
+                  <div className="flex space-x-2">
+                    <Button
+                      size="sm"
+                      onClick={handleSaveDescription}
+                      disabled={savingDescription}
+                      className="bg-black text-white hover:bg-gray-800"
+                    >
+                      <Save className="h-3 w-3 mr-1" />
+                      {savingDescription ? 'Sauvegarde...' : 'Sauvegarder'}
+                    </Button>
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      onClick={handleCancelEditDescription}
+                      disabled={savingDescription}
+                    >
+                      <X className="h-3 w-3 mr-1" />
+                      Annuler
+                    </Button>
+                  </div>
+                </div>
+              </div>
+            ) : (
+              <div className="group relative">
+                <p className="text-sm text-gray-700 whitespace-pre-wrap">
+                  {product.description || 'Aucune description disponible'}
+                </p>
+                {product.description && (
+                  <div className="absolute top-0 right-0 opacity-0 group-hover:opacity-100 transition-opacity">
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => setShowDescriptionsModal(true)}
+                      className="h-6"
+                      title="Ouvrir l'éditeur complet"
+                    >
+                      <Edit className="h-3 w-3" />
+                    </Button>
+                  </div>
+                )}
+              </div>
+            )}
           </div>
 
           {/* Caractéristiques */}
@@ -724,8 +963,7 @@ export default function ProductDetailPage() {
             product={{
               id: product.id,
               cost_price: product.cost_price,
-              margin_percentage: product.margin_percentage,
-              selling_price: product.selling_price
+              margin_percentage: product.margin_percentage
             }}
             onUpdate={handleProductUpdate}
           />
