@@ -65,6 +65,24 @@
         "@playwright/mcp@latest",
         "--extension"
       ]
+    },
+    "filesystem": {
+      "command": "npx",
+      "args": [
+        "-y",
+        "@modelcontextprotocol/server-filesystem@latest",
+        "/Users/romeodossantos/verone-back-office"
+      ]
+    },
+    "memory": {
+      "command": "npx",
+      "args": [
+        "-y",
+        "@modelcontextprotocol/server-memory"
+      ],
+      "env": {
+        "MEMORY_FILE_PATH": "/Users/romeodossantos/verone-back-office/.aim/verone-knowledge-graph.json"
+      }
     }
   }
 }
