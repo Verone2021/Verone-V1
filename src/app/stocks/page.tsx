@@ -242,7 +242,7 @@ export default function StocksDashboardPage() {
 
                 <div className="flex justify-between items-center">
                   <span className="text-sm text-gray-600">Mouvements à valider</span>
-                  <span className="font-medium text-orange-600">0 en attente</span>
+                  <span className="font-medium text-black">0 en attente</span>
                 </div>
 
                 <div className="flex justify-between items-center">

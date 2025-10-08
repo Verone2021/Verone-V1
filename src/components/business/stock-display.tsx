@@ -54,9 +54,9 @@ export function StockDisplay({
       badgeVariant: 'destructive' as const
     },
     low: {
-      color: 'text-amber-600',
-      bgColor: 'bg-amber-50',
-      borderColor: 'border-amber-200',
+      color: 'text-white',
+      bgColor: 'bg-gray-100',
+      borderColor: 'border-gray-300',
       icon: AlertTriangle,
       label: 'Stock faible',
       badgeVariant: 'secondary' as const
@@ -182,7 +182,7 @@ export function StockDisplay({
                 <Clock className="h-3 w-3" />
                 Stock disponible
               </span>
-              <span className={available <= min_stock ? 'text-amber-600' : 'text-green-600'}>
+              <span className={available <= min_stock ? 'text-white' : 'text-green-600'}>
                 {available}
               </span>
             </div>
@@ -225,7 +225,7 @@ export function StockSummaryCard({
     blue: 'text-blue-600 bg-blue-50 border-blue-200',
     green: 'text-green-600 bg-green-50 border-green-200',
     red: 'text-red-600 bg-red-50 border-red-200',
-    amber: 'text-amber-600 bg-amber-50 border-amber-200'
+    gray: 'text-gray-900 bg-gray-100 border-gray-300'
   }
 
   return (

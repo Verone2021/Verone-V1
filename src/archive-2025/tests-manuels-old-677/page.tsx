@@ -139,7 +139,7 @@ export default function TestsManuelsComplete() {
     switch (status) {
       case 'completed': return <CheckCircle className="h-4 w-4 text-green-600" />
       case 'failed': return <AlertCircle className="h-4 w-4 text-red-600" />
-      case 'warning': return <AlertCircle className="h-4 w-4 text-yellow-600" />
+      case 'warning': return <AlertCircle className="h-4 w-4 text-gray-700" />
       default: return <Clock className="h-4 w-4 text-gray-400" />
     }
   }

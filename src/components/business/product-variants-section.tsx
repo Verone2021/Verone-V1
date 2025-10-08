@@ -279,7 +279,7 @@ export function ProductVariantsSection({
                     {variant.variant_name}
                   </h4>
                   {variant.is_primary_variant && (
-                    <Star className="h-3 w-3 text-yellow-500 fill-current" />
+                    <Star className="h-3 w-3 text-gray-700 fill-current" />
                   )}
                 </div>
 

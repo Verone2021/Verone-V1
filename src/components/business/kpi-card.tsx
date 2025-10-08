@@ -23,14 +23,14 @@ export interface KPICardProps {
 const variantStyles = {
   default: 'border-black',
   success: 'border-green-300 bg-green-50',
-  warning: 'border-orange-300 bg-orange-50',
+  warning: 'border-gray-300 bg-gray-50',
   danger: 'border-red-300 bg-red-50',
   info: 'border-blue-300 bg-blue-50'
 }
 
 const iconColorMap = {
   green: 'text-green-600',
-  orange: 'text-orange-600',
+  orange: 'text-black',
   red: 'text-red-600',
   blue: 'text-blue-600',
   purple: 'text-purple-600',

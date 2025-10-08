@@ -174,9 +174,9 @@ export function VariantAddProductModal({
                 </div>
 
                 {(!color && !material) && (
-                  <div className="bg-orange-50 border border-orange-200 rounded-lg p-3 flex items-start space-x-2">
-                    <AlertCircle className="h-5 w-5 text-orange-600 flex-shrink-0 mt-0.5" />
-                    <div className="text-sm text-orange-800">
+                  <div className="bg-gray-50 border border-gray-200 rounded-lg p-3 flex items-start space-x-2">
+                    <AlertCircle className="h-5 w-5 text-black flex-shrink-0 mt-0.5" />
+                    <div className="text-sm text-gray-900">
                       <p className="font-medium">Au moins une variante requise</p>
                       <p className="text-xs mt-1">Veuillez renseigner la couleur et/ou la matière</p>
                     </div>

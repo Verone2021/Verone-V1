@@ -40,8 +40,8 @@ interface BugReporterProps {
 
 const SEVERITY_OPTIONS = [
   { value: 'low', label: 'Faible', color: 'bg-green-100 text-green-800', icon: '🟢' },
-  { value: 'medium', label: 'Moyenne', color: 'bg-yellow-100 text-yellow-800', icon: '🟡' },
-  { value: 'high', label: 'Élevée', color: 'bg-orange-100 text-orange-800', icon: '🟠' },
+  { value: 'medium', label: 'Moyenne', color: 'bg-gray-100 text-gray-900', icon: '🟡' },
+  { value: 'high', label: 'Élevée', color: 'bg-gray-100 text-gray-900', icon: '🟠' },
   { value: 'critical', label: 'Critique', color: 'bg-red-100 text-red-800', icon: '🔴' }
 ]
 

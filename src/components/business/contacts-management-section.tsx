@@ -149,7 +149,7 @@ export function ContactsManagementSection({
 
   const getContactTypeIcon = (contact: Contact) => {
     if (contact.is_primary_contact) {
-      return <Star className="h-4 w-4 text-yellow-500" />
+      return <Star className="h-4 w-4 text-gray-700" />
     }
     return <Users className="h-4 w-4 text-gray-400" />
   }
@@ -159,7 +159,7 @@ export function ContactsManagementSection({
 
     if (contact.is_primary_contact) {
       badges.push(
-        <Badge key="primary" variant="default" className="bg-yellow-100 text-yellow-800 border-yellow-200">
+        <Badge key="primary" variant="default" className="bg-gray-100 text-gray-900 border-gray-200">
           <Star className="h-3 w-3 mr-1" />
           Principal
         </Badge>
@@ -304,7 +304,7 @@ export function ContactsManagementSection({
                           variant="outline"
                           size="sm"
                           onClick={() => handleSetPrimary(contact)}
-                          className="text-yellow-600 border-yellow-200 hover:bg-yellow-50"
+                          className="text-gray-700 border-gray-200 hover:bg-gray-50"
                           title="Définir comme contact principal"
                         >
                           <StarOff className="h-4 w-4" />

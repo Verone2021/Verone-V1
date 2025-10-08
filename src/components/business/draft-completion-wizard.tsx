@@ -293,12 +293,12 @@ export function DraftCompletionWizard({
 
           {/* Champs manquants */}
           {draft.missingFields && draft.missingFields.length > 0 && (
-            <div className="mt-4 p-3 bg-orange-50 border border-orange-200 rounded-lg">
+            <div className="mt-4 p-3 bg-gray-50 border border-gray-200 rounded-lg">
               <div className="flex items-start space-x-2">
-                <AlertCircle className="h-4 w-4 text-orange-600 mt-0.5" />
+                <AlertCircle className="h-4 w-4 text-black mt-0.5" />
                 <div>
-                  <h4 className="text-sm font-medium text-orange-800">Champs à compléter</h4>
-                  <p className="text-sm text-orange-700 mt-1">
+                  <h4 className="text-sm font-medium text-gray-900">Champs à compléter</h4>
+                  <p className="text-sm text-gray-800 mt-1">
                     {draft.missingFields.join(', ')}
                   </p>
                 </div>

@@ -20,7 +20,7 @@ interface ConsultationImageGalleryProps {
 }
 
 const statusConfig = {
-  en_attente: { label: "⏳ En attente", className: "bg-yellow-600 text-white" },
+  en_attente: { label: "⏳ En attente", className: "bg-gray-100 text-white" },
   en_cours: { label: "🔄 En cours", className: "bg-blue-600 text-white" },
   terminee: { label: "✅ Terminée", className: "bg-green-600 text-white" },
   annulee: { label: "❌ Annulée", className: "bg-gray-600 text-white" }

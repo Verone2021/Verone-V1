@@ -183,7 +183,7 @@ export function ProductCreationWizard({
                   </div>
 
                   <div className="space-y-2">
-                    <div className="text-sm font-medium text-orange-700 mb-2">
+                    <div className="text-sm font-medium text-gray-800 mb-2">
                       🔄 Avantages :
                     </div>
                     <ul className="text-sm text-gray-600 space-y-1">

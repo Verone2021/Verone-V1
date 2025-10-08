@@ -162,7 +162,7 @@ export function PricingSection({
                     </div>
                     <div>
                       <div className="text-gray-600">Marge cible</div>
-                      <div className="font-semibold text-orange-600">{formData.target_margin_percentage || '0'}%</div>
+                      <div className="font-semibold text-black">{formData.target_margin_percentage || '0'}%</div>
                     </div>
                     <div>
                       <div className="text-gray-600">Prix minimum</div>

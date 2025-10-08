@@ -90,9 +90,9 @@ export function ProductSelector({
       case 'in_stock': return 'bg-green-100 text-green-800'
       case 'out_of_stock': return 'bg-red-100 text-red-800'
       case 'sourcing': return 'bg-blue-100 text-blue-800'
-      case 'preorder': return 'bg-yellow-100 text-yellow-800'
+      case 'preorder': return 'bg-gray-100 text-gray-900'
       case 'coming_soon': return 'bg-purple-100 text-purple-800'
-      case 'pret_a_commander': return 'bg-orange-100 text-orange-800'
+      case 'pret_a_commander': return 'bg-gray-100 text-gray-900'
       case 'echantillon_a_commander': return 'bg-gray-100 text-gray-800'
       default: return 'bg-gray-100 text-gray-600'
     }
@@ -144,7 +144,7 @@ export function ProductSelector({
               )}
 
               {product.requires_sample && (
-                <Badge variant="outline" className="border-orange-500 text-orange-700">
+                <Badge variant="outline" className="border-black text-gray-800">
                   <Info className="h-3 w-3 mr-1" />
                   Échantillon
                 </Badge>

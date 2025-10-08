@@ -321,7 +321,7 @@ export function GeneralStockMovementModal({ isOpen, onClose, onSuccess }: Genera
                 <span><strong>Stock actuel:</strong> {currentStock} unités</span>
               </div>
               {currentStock <= minLevel && (
-                <div className="flex items-center gap-2 mt-2 text-amber-600">
+                <div className="flex items-center gap-2 mt-2 text-white">
                   <AlertTriangle className="h-4 w-4" />
                   <span>Stock sous le seuil minimum ({minLevel})</span>
                 </div>
@@ -375,7 +375,7 @@ export function GeneralStockMovementModal({ isOpen, onClose, onSuccess }: Genera
             />
             {validation && (
               <div className={`flex items-center gap-2 text-sm ${
-                validation.type === 'error' ? 'text-red-600' : 'text-amber-600'
+                validation.type === 'error' ? 'text-red-600' : 'text-white'
               }`}>
                 <AlertTriangle className="h-4 w-4" />
                 <span>{validation.message}</span>

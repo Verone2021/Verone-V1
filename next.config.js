@@ -6,10 +6,14 @@ const nextConfig = {
   // Next.js 15 App Router configuration
   reactStrictMode: true,
 
-  // URGENCE: Désactivation temporaire ESLint et TypeScript pour rebuild
+  // ESLint: Temporairement ignoré pendant build (Phase 1 focus: TypeScript errors only)
+  // Phase 4 corrigera exhaustive-deps + no-img-element, puis on réactivera
   eslint: {
     ignoreDuringBuilds: true,
   },
+
+  // TypeScript: Ignorer erreurs temporairement (inférence types Supabase à corriger)
+  // TODO Phase dédiée : corriger tous les types Supabase `never` avec assertions explicites
   typescript: {
     ignoreBuildErrors: true,
   },

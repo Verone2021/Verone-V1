@@ -114,7 +114,7 @@ export default function InteractionsDashboardPage() {
   const getStatusBadge = (status: string) => {
     switch (status) {
       case 'pending':
-        return <Badge variant="outline" className="border-orange-300 text-orange-600">En attente</Badge>
+        return <Badge variant="outline" className="border-gray-300 text-black">En attente</Badge>
       case 'in_progress':
         return <Badge variant="outline" className="border-blue-300 text-blue-600">En cours</Badge>
       case 'quoted':
@@ -124,7 +124,7 @@ export default function InteractionsDashboardPage() {
       case 'production':
         return <Badge variant="outline" className="border-blue-300 text-blue-600">Production</Badge>
       case 'shipping':
-        return <Badge variant="outline" className="border-orange-300 text-orange-600">Expédition</Badge>
+        return <Badge variant="outline" className="border-gray-300 text-black">Expédition</Badge>
       case 'delivered':
         return <Badge variant="outline" className="border-green-300 text-green-600">Livré</Badge>
       default:
@@ -137,7 +137,7 @@ export default function InteractionsDashboardPage() {
       case 'high':
         return <Badge variant="destructive" className="text-xs">Urgent</Badge>
       case 'medium':
-        return <Badge variant="outline" className="border-orange-300 text-orange-600 text-xs">Moyen</Badge>
+        return <Badge variant="outline" className="border-gray-300 text-black text-xs">Moyen</Badge>
       case 'low':
         return <Badge variant="outline" className="border-green-300 text-green-600 text-xs">Faible</Badge>
       default:
@@ -247,7 +247,7 @@ export default function InteractionsDashboardPage() {
           <Card className="border-black">
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
               <CardTitle className="text-sm font-medium text-gray-600">Satisfaction</CardTitle>
-              <Star className="h-4 w-4 text-yellow-600" />
+              <Star className="h-4 w-4 text-gray-700" />
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold text-black">4.8/5</div>

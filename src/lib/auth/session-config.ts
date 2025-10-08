@@ -187,7 +187,7 @@ export class SessionManager {
     // Créer notification
     const notification = document.createElement('div')
     notification.id = 'session-warning'
-    notification.className = 'fixed bottom-4 right-4 bg-amber-500 text-white p-4 rounded-lg shadow-lg z-50 max-w-sm'
+    notification.className = 'fixed bottom-4 right-4 bg-black text-white p-4 rounded-lg shadow-lg z-50 max-w-sm'
     notification.innerHTML = `
       <div class="flex items-start space-x-3">
         <svg class="w-6 h-6 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -202,7 +202,7 @@ export class SessionManager {
           </p>
           <button
             onclick="window.sessionManager?.extendSession()"
-            class="mt-2 px-3 py-1 bg-white text-amber-600 rounded text-sm font-semibold hover:bg-gray-100"
+            class="mt-2 px-3 py-1 bg-white text-white rounded text-sm font-semibold hover:bg-gray-100"
           >
             Prolonger la session
           </button>
@@ -289,7 +289,7 @@ export class SessionManager {
     const colors = {
       success: 'bg-green-500',
       error: 'bg-red-500',
-      warning: 'bg-amber-500'
+      warning: 'bg-black'
     }
 
     const notification = document.createElement('div')

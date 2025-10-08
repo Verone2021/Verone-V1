@@ -48,7 +48,7 @@ async function getUsersWithProfiles(): Promise<UserWithProfile[]> {
       created_at,
       updated_at
     `)
-    .order('created_at', { ascending: false })
+    .order('created_at', { ascending: false }) as { data: any[]; error: any }
 
   if (error) {
     console.error('Erreur lors de la récupération des profils:', error)
@@ -108,7 +108,7 @@ async function getCurrentUserRole() {
     .from('user_profiles')
     .select('role')
     .eq('user_id', user.id)
-    .single()
+    .single() as { data: any }
 
   return profile?.role || null
 }

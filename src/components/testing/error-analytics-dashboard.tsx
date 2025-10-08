@@ -22,7 +22,8 @@ import {
   TrendingUp,
   Activity,
   Database,
-  Gauge
+  Gauge,
+  RefreshCw
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { useErrorDetection } from '@/lib/error-detection/verone-error-system'
@@ -239,7 +240,7 @@ export function ErrorAnalyticsDashboard({
               <Gauge className={cn(
                 "h-8 w-8",
                 (computedMetrics?.healthScore || 0) >= 80 ? "text-green-500" :
-                (computedMetrics?.healthScore || 0) >= 60 ? "text-yellow-500" : "text-red-500"
+                (computedMetrics?.healthScore || 0) >= 60 ? "text-gray-700" : "text-red-500"
               )} />
             </div>
           </CardContent>
@@ -362,7 +363,7 @@ export function ErrorAnalyticsDashboard({
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
-            <Zap className="h-5 w-5 text-yellow-500" />
+            <Zap className="h-5 w-5 text-gray-700" />
             Actions Intelligence
           </CardTitle>
         </CardHeader>

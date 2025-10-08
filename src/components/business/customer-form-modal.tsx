@@ -458,7 +458,7 @@ export function CustomerFormModal({
 
             {/* Prépaiement conditionnel */}
             {form.watch('payment_terms') === '0' && (
-              <div className="bg-amber-50 border border-amber-200 rounded-lg p-4">
+              <div className="bg-gray-50 border border-gray-300 rounded-lg p-4">
                 <div className="flex items-center space-x-3">
                   <Switch
                     id="prepayment_required"
@@ -466,10 +466,10 @@ export function CustomerFormModal({
                     onCheckedChange={(checked) => form.setValue('prepayment_required', checked)}
                   />
                   <div className="flex-1">
-                    <Label htmlFor="prepayment_required" className="text-amber-800 font-medium">
+                    <Label htmlFor="prepayment_required" className="text-gray-900 font-medium">
                       Prépaiement obligatoire
                     </Label>
-                    <p className="text-xs text-amber-700">
+                    <p className="text-xs text-gray-900">
                       {form.watch('prepayment_required')
                         ? 'Commande bloquée jusqu\'au règlement préalable'
                         : 'Envoi et facturation simultanés'

@@ -254,7 +254,7 @@ export default function StockAlertesPage() {
   const getSeverityIcon = (severity: AlertSeverity) => {
     switch (severity) {
       case 'critical': return <XCircle className="h-4 w-4 text-red-600" />
-      case 'warning': return <AlertTriangle className="h-4 w-4 text-orange-600" />
+      case 'warning': return <AlertTriangle className="h-4 w-4 text-black" />
       case 'info': return <Info className="h-4 w-4 text-blue-600" />
     }
   }
@@ -262,7 +262,7 @@ export default function StockAlertesPage() {
   const getSeverityColor = (severity: AlertSeverity) => {
     switch (severity) {
       case 'critical': return 'border-red-300 text-red-600 bg-red-50'
-      case 'warning': return 'border-orange-300 text-orange-600 bg-orange-50'
+      case 'warning': return 'border-gray-300 text-black bg-gray-50'
       case 'info': return 'border-blue-300 text-blue-600 bg-blue-50'
     }
   }
@@ -344,10 +344,10 @@ export default function StockAlertesPage() {
           <Card className="border-black">
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
               <CardTitle className="text-sm font-medium text-gray-600">Avertissement</CardTitle>
-              <AlertTriangle className="h-4 w-4 text-orange-600" />
+              <AlertTriangle className="h-4 w-4 text-black" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold text-orange-600">{alertStats.warning}</div>
+              <div className="text-2xl font-bold text-black">{alertStats.warning}</div>
               <p className="text-xs text-gray-600">
                 surveillance requise
               </p>

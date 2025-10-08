@@ -173,7 +173,7 @@ export function ProductEditMode({ product, onSwitchToView, onUpdate, className }
               <Badge className={cn(
                 "text-[9px] px-1 py-0",
                 product.status === 'active' ? "bg-green-600 text-white" :
-                product.status === 'draft' ? "bg-yellow-600 text-white" :
+                product.status === 'draft' ? "bg-gray-100 text-white" :
                 "bg-gray-600 text-white"
               )}>
                 {product.status === 'active' ? 'Actif' :

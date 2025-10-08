@@ -125,6 +125,6 @@ export const PHASE_LABELS = {
  */
 export const PHASE_COLORS = {
   active: 'bg-green-100 text-green-800',
-  'coming-soon': 'bg-orange-100 text-orange-800',
+  'coming-soon': 'bg-gray-100 text-gray-900',
   disabled: 'bg-gray-100 text-gray-600'
 } as const

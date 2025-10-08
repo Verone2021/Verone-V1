@@ -67,7 +67,7 @@ export function ContactRolesEditSection({ contact, onUpdate, className }: Contac
 
     if (contactData?.is_primary_contact) {
       badges.push(
-        <Badge key="primary" variant="default" className="bg-yellow-100 text-yellow-800 border-yellow-200">
+        <Badge key="primary" variant="default" className="bg-gray-100 text-gray-900 border-gray-200">
           <Star className="h-3 w-3 mr-1" />
           Principal
         </Badge>
@@ -143,11 +143,11 @@ export function ContactRolesEditSection({ contact, onUpdate, className }: Contac
               id="is_primary_contact"
               checked={editData?.is_primary_contact || false}
               onChange={(e) => handleRoleChange('is_primary_contact', e.target.checked)}
-              className="h-4 w-4 text-yellow-600 focus:ring-yellow-500 border-gray-300 rounded"
+              className="h-4 w-4 text-gray-700 focus:ring-gray-500 border-gray-300 rounded"
             />
             <label htmlFor="is_primary_contact" className="flex-1 cursor-pointer">
               <div className="flex items-center">
-                <Star className="h-4 w-4 mr-2 text-yellow-600" />
+                <Star className="h-4 w-4 mr-2 text-gray-700" />
                 <span className="font-medium text-black">Contact Principal</span>
               </div>
               <div className="text-sm text-gray-600 mt-1">
@@ -250,7 +250,7 @@ export function ContactRolesEditSection({ contact, onUpdate, className }: Contac
         <div className="space-y-2 text-sm text-gray-600">
           {contact.is_primary_contact && (
             <div className="flex items-center">
-              <Star className="h-3 w-3 mr-2 text-yellow-600" />
+              <Star className="h-3 w-3 mr-2 text-gray-700" />
               Contact privilégié pour toutes les communications importantes
             </div>
           )}

@@ -236,7 +236,7 @@ export function ConsultationProductAssociation({
             <div className="flex items-center justify-between p-4 border rounded-lg bg-gray-50">
               <div className="space-y-1">
                 <div className="flex items-center">
-                  <Star className="h-4 w-4 mr-2 text-orange-500" />
+                  <Star className="h-4 w-4 mr-2 text-gray-900" />
                   <Label htmlFor="isPrimary">Proposition principale</Label>
                 </div>
                 <p className="text-xs text-gray-600">

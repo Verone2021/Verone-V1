@@ -289,10 +289,10 @@ export function RelationsEditSection({ product, onUpdate, className }: Relations
 
           {/* Avertissement */}
           {editData?.product_group_id !== product.product_group_id && (
-            <div className="bg-orange-50 border border-orange-200 p-3 rounded-md">
+            <div className="bg-gray-50 border border-gray-200 p-3 rounded-md">
               <div className="flex items-start">
-                <AlertCircle className="h-4 w-4 text-orange-600 mr-2 mt-0.5" />
-                <div className="text-sm text-orange-700">
+                <AlertCircle className="h-4 w-4 text-black mr-2 mt-0.5" />
+                <div className="text-sm text-gray-800">
                   <div className="font-medium">Attention: Changement de groupe</div>
                   <div className="mt-1">
                     Changer le groupe de produit peut affecter la catégorisation et les relations avec d'autres variantes.

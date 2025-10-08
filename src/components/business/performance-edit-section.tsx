@@ -104,8 +104,8 @@ export function PerformanceEditSection({ organisation, onUpdate, className }: Pe
           key={index}
           className={cn(
             "h-5 w-5",
-            filled ? "fill-yellow-400 text-yellow-400" : "text-gray-300",
-            editable ? "cursor-pointer hover:text-yellow-400" : ""
+            filled ? "fill-gray-600 text-gray-600" : "text-gray-300",
+            editable ? "cursor-pointer hover:text-gray-600" : ""
           )}
           onClick={editable ? () => handleRatingChange(index + 1) : undefined}
         />
@@ -311,8 +311,8 @@ export function PerformanceEditSection({ organisation, onUpdate, className }: Pe
           <div className="space-y-3">
             {/* Évaluation */}
             {organisation.rating && organisation.rating > 0 && (
-              <div className="bg-yellow-50 p-3 rounded-lg">
-                <div className="text-xs text-yellow-600 font-medium mb-1 flex items-center">
+              <div className="bg-gray-50 p-3 rounded-lg">
+                <div className="text-xs text-gray-700 font-medium mb-1 flex items-center">
                   <Star className="h-3 w-3 mr-1" />
                   ÉVALUATION GLOBALE
                 </div>
@@ -320,7 +320,7 @@ export function PerformanceEditSection({ organisation, onUpdate, className }: Pe
                   <div className="flex space-x-1">
                     {renderStars(organisation.rating)}
                   </div>
-                  <span className="text-sm font-semibold text-yellow-800">
+                  <span className="text-sm font-semibold text-gray-900">
                     {organisation.rating}/5
                   </span>
                 </div>

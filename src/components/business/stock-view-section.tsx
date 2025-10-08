@@ -40,8 +40,8 @@ export function StockViewSection({ product, className }: StockViewSectionProps) 
 
   const getStockStatus = (quantity: number, minLevel: number) => {
     if (quantity <= 0) return { color: 'text-red-600', level: 'Rupture' }
-    if (quantity <= minLevel) return { color: 'text-orange-600', level: 'Critique' }
-    if (quantity <= minLevel * 2) return { color: 'text-yellow-600', level: 'Faible' }
+    if (quantity <= minLevel) return { color: 'text-black', level: 'Critique' }
+    if (quantity <= minLevel * 2) return { color: 'text-gray-700', level: 'Faible' }
     return { color: 'text-green-600', level: 'Bon' }
   }
 

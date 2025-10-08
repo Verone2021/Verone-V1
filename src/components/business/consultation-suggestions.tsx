@@ -81,7 +81,7 @@ export function ConsultationSuggestions({
   const getStatusColor = (status: string) => {
     switch (status) {
       case 'en_attente':
-        return 'bg-orange-100 text-orange-800'
+        return 'bg-gray-100 text-gray-900'
       case 'en_cours':
         return 'bg-blue-100 text-blue-800'
       case 'terminee':
@@ -98,7 +98,7 @@ export function ConsultationSuggestions({
       case 5:
         return { label: 'Très urgent', color: 'text-red-600' }
       case 4:
-        return { label: 'Urgent', color: 'text-orange-600' }
+        return { label: 'Urgent', color: 'text-black' }
       case 3:
         return { label: 'Normal+', color: 'text-blue-600' }
       case 2:

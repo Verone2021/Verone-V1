@@ -11,8 +11,15 @@
     "filesystem",
     "memory"
   ],
+  "statusLine": {
+    "type": "command",
+    "command": "npx ccusage@latest statusline --visual-burn-rate emoji --no-offline",
+    "padding": 0
+  },
   "permissions": {
+    "mode": "rules",
     "allow": [
+      "mcp__*",
       "mcp__serena__*",
       "mcp__sequential-thinking__*",
       "mcp__context7__*",
@@ -57,6 +64,37 @@
       "Bash(export:*)",
       "Bash(PGPASSWORD:*)",
       "Bash(psql:*)",
+      "Bash(node:*)",
+      "Bash(npm run build:*)",
+      "Bash(git reset:*)",
+      "Bash(tree:*)",
+      "Bash(claude --version)",
+      "Bash(open http://localhost:3000/catalogue/dashboard)",
+      "Bash(npx:*)",
+      "Bash(claude-monitor:*)",
+      "Bash(ccmonitor:*)",
+      "Bash(cmonitor:*)",
+      "Bash(ccm:*)",
+      "Bash(.claude/scripts/token-cost-calculator.sh:*)",
+      "Bash(.claude/scripts/session-token-report.sh:*)",
+      "Bash(.claude/scripts/execute-color-migration.sh:*)",
+      "Bash(ps:*)",
+      "Bash(grep:*)",
+      "Bash(awk:*)",
+      "Bash(kill:*)",
+      "Bash(xargs:*)",
+      "Bash(ls:*)",
+      "Bash(cat:*)",
+      "Bash(echo:*)",
+      "Bash(touch:*)",
+      "Bash(date:*)",
+      "Bash(pwd)",
+      "Bash(whoami)",
+      "Bash(sleep:*)",
+      "Bash(PGPASSWORD=*)",
+      "Bash(claude mcp:*)",
+      "Bash(open:*)",
+      "Bash(*)",
       "Glob",
       "Grep",
       "TodoWrite",
@@ -75,7 +113,11 @@
         "hooks": [
           {
             "type": "command",
-            "command": ".claude/scripts/task-completed.sh"
+            "command": "\"$CLAUDE_PROJECT_DIR\"/.claude/scripts/task-completed.sh"
+          },
+          {
+            "type": "command",
+            "command": "\"$CLAUDE_PROJECT_DIR\"/.claude/scripts/session-token-report.sh"
           }
         ]
       }
@@ -86,7 +128,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": ".claude/scripts/validation-required.sh"
+            "command": "\"$CLAUDE_PROJECT_DIR\"/.claude/scripts/validation-required.sh"
           }
         ]
       }
@@ -97,7 +139,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": ".claude/scripts/agent-finished.sh"
+            "command": "\"$CLAUDE_PROJECT_DIR\"/.claude/scripts/agent-finished.sh"
           }
         ]
       }
@@ -179,6 +221,68 @@
       "error_tracking": true,
       "performance_monitoring": true,
       "business_metrics": true
+    }
+  },
+  "token_monitoring": {
+    "enabled": true,
+    "tracking": {
+      "track_per_session": true,
+      "track_per_workflow": true,
+      "track_mcp_calls": true,
+      "report_in_summary": true,
+      "auto_dashboard": true
+    },
+    "budgets": {
+      "daily": 5.0,
+      "weekly": 30.0,
+      "monthly": 100.0,
+      "session_max": 1.0
+    },
+    "alerts": {
+      "enabled": true,
+      "budget_threshold": 0.9,
+      "efficiency_threshold": 70,
+      "session_duration_max": 1800,
+      "mcp_calls_max": 50,
+      "cost_alerts": true
+    },
+    "optimization": {
+      "target": "minimize_while_effective",
+      "auto_suggestions": true,
+      "session_splitting": true,
+      "cache_optimization": true,
+      "mcp_deduplication": true
+    },
+    "reporting": {
+      "auto_report_on_stop": true,
+      "include_efficiency_score": true,
+      "include_cost_breakdown": true,
+      "include_recommendations": true,
+      "export_format": "json"
+    },
+    "tools": {
+      "claude_monitor": {
+        "enabled": true,
+        "default_plan": "custom",
+        "auto_launch": false
+      },
+      "ccusage": {
+        "enabled": true,
+        "default_view": "daily",
+        "live_monitoring": false
+      },
+      "custom_script": {
+        "enabled": true,
+        "path": ".claude/scripts/token-cost-calculator.sh",
+        "default_mode": "quick"
+      }
+    },
+    "excellence_targets": {
+      "tokens_per_session": 10000,
+      "efficiency_score": 80,
+      "cache_hit_rate": 70,
+      "cost_per_feature": 2.0,
+      "session_optimization": 85
     }
   }
 }

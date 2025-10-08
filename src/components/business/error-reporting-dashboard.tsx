@@ -238,7 +238,7 @@ const SystemStatusIndicator: React.FC<{
   const getStatusColor = () => {
     if (!isRunning) return 'bg-gray-500'
     if (healthScore >= 90) return 'bg-green-500'
-    if (healthScore >= 70) return 'bg-yellow-500'
+    if (healthScore >= 70) return 'bg-gray-500'
     return 'bg-red-500'
   }
 
@@ -313,7 +313,7 @@ const AlertSection: React.FC<{
           className={`p-4 rounded-lg border-l-4 ${
             alert.type === 'critical'
               ? 'bg-red-50 border-red-500 text-red-800'
-              : 'bg-yellow-50 border-yellow-500 text-yellow-800'
+              : 'bg-gray-50 border-gray-500 text-gray-900'
           }`}
         >
           <div className="flex items-center justify-between">
@@ -348,8 +348,8 @@ const MetricsOverview: React.FC<{ metrics: QueueMetrics }> = ({ metrics }) => {
       title: 'Temps Moyen',
       value: `${metrics.average_processing_time}ms`,
       icon: Clock,
-      color: metrics.average_processing_time <= 5000 ? 'text-green-600' : 'text-yellow-600',
-      bgColor: metrics.average_processing_time <= 5000 ? 'bg-green-100' : 'bg-yellow-100',
+      color: metrics.average_processing_time <= 5000 ? 'text-green-600' : 'text-gray-700',
+      bgColor: metrics.average_processing_time <= 5000 ? 'bg-green-100' : 'bg-gray-100',
       target: '<5s'
     },
     {
@@ -440,7 +440,7 @@ const RecentErrorsPanel: React.FC<{
                 {task.result?.success ? (
                   <CheckCircle className="w-4 h-4 text-green-600" />
                 ) : (
-                  <AlertTriangle className="w-4 h-4 text-yellow-600" />
+                  <AlertTriangle className="w-4 h-4 text-gray-700" />
                 )}
               </div>
             </div>
@@ -763,7 +763,7 @@ const QueueManagement: React.FC<{
           <CardContent>
             <div className="space-y-2">
               {snapshot?.pending.slice(0, 3).map((task) => (
-                <div key={task.id} className="p-2 bg-yellow-50 rounded text-sm">
+                <div key={task.id} className="p-2 bg-gray-50 rounded text-sm">
                   <div className="font-medium truncate">
                     {task.error.message.substring(0, 40)}...
                   </div>

@@ -355,12 +355,12 @@ export function ErrorDetectionPanel({
           <CardContent className="pt-6">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-2xl font-bold text-orange-600">
+                <p className="text-2xl font-bold text-black">
                   {errorsBySeverity.high.length}
                 </p>
                 <p className="text-sm text-muted-foreground">Importantes</p>
               </div>
-              <Bug className="w-8 h-8 text-orange-600" />
+              <Bug className="w-8 h-8 text-black" />
             </div>
           </CardContent>
         </Card>
@@ -496,7 +496,7 @@ function ErrorSection({
 
   const severityColors = {
     [ErrorSeverity.CRITICAL]: 'border-red-500 bg-red-50',
-    [ErrorSeverity.HIGH]: 'border-orange-500 bg-orange-50',
+    [ErrorSeverity.HIGH]: 'border-black bg-gray-50',
     [ErrorSeverity.MEDIUM]: 'border-gray-500 bg-gray-50',
     [ErrorSeverity.LOW]: 'border-gray-400 bg-gray-25'
   }
@@ -537,7 +537,7 @@ interface ErrorItemProps {
 function ErrorItem({ error, onResolve, isResolving, resolutionResult }: ErrorItemProps) {
   const severityBadgeColors = {
     [ErrorSeverity.CRITICAL]: 'bg-red-500',
-    [ErrorSeverity.HIGH]: 'bg-orange-500',
+    [ErrorSeverity.HIGH]: 'bg-gray-500',
     [ErrorSeverity.MEDIUM]: 'bg-gray-600',
     [ErrorSeverity.LOW]: 'bg-gray-500'
   }
@@ -587,7 +587,7 @@ function ErrorItem({ error, onResolve, isResolving, resolutionResult }: ErrorIte
           'text-xs p-3 rounded border-l-4',
           resolutionResult.success
             ? 'bg-green-50 border-green-400'
-            : 'bg-orange-50 border-orange-400'
+            : 'bg-gray-50 border-gray-400'
         )}>
           <div className="font-medium mb-1">
             {resolutionResult.success ? '✅ Résolu' : '⚠️ Assistance nécessaire'}

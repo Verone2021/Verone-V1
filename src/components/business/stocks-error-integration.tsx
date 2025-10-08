@@ -356,7 +356,7 @@ export const StocksErrorIntegration: React.FC = () => {
                 type="Calculs Stock"
                 count={stockErrors.calculation_errors}
                 icon={Calculator}
-                color="text-orange-600"
+                color="text-black"
                 description="Erreurs de calcul stock réel"
               />
               <StockErrorTypeRow

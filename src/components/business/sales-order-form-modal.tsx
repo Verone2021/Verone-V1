@@ -277,7 +277,7 @@ export function SalesOrderFormModal({ onSuccess }: SalesOrderFormModalProps) {
                     <div className="p-3 bg-gray-50 border rounded-lg">
                       {selectedCustomer.prepayment_required ? (
                         <div className="flex items-center gap-2">
-                          <Badge variant="secondary" className="bg-orange-100 text-orange-800">
+                          <Badge variant="secondary" className="bg-gray-100 text-gray-900">
                             Prépaiement requis
                           </Badge>
                           {selectedCustomer.payment_terms && (

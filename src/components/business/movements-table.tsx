@@ -242,7 +242,7 @@ export function MovementsTable({ movements, loading, onMovementClick }: Movement
                   {formatDate(movement.performed_at)}
                 </div>
                 {movement.affects_forecast && (
-                  <div className="text-xs text-orange-600 mt-1">
+                  <div className="text-xs text-black mt-1">
                     Prévisionnel {movement.forecast_type === 'in' ? '↗' : '↘'}
                   </div>
                 )}

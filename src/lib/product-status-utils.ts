@@ -176,7 +176,7 @@ export function formatStatusForDisplay(status: ProductStatus): {
     preorder: {
       label: 'Précommande',
       variant: 'secondary' as const,
-      color: 'text-orange-600'
+      color: 'text-black'
     },
     discontinued: {
       label: 'Produit arrêté',

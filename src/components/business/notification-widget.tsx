@@ -42,10 +42,10 @@ const typeConfig = {
   },
   warning: {
     icon: AlertTriangle,
-    bgColor: 'bg-orange-50',
-    borderColor: 'border-orange-200',
-    iconColor: 'text-orange-600',
-    badgeColor: 'border-orange-300 text-orange-600'
+    bgColor: 'bg-gray-50',
+    borderColor: 'border-gray-200',
+    iconColor: 'text-black',
+    badgeColor: 'border-gray-300 text-black'
   },
   error: {
     icon: XCircle,

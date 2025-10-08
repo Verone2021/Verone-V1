@@ -57,7 +57,7 @@ export default function OrganisationPage() {
       count: stats.partners,
       href: '/contacts-organisations/partners',
       icon: <Settings className="h-6 w-6" />,
-      color: 'bg-orange-50 border-orange-200 text-orange-700',
+      color: 'bg-gray-50 border-gray-200 text-gray-800',
       available: true
     }
   ]
@@ -132,10 +132,10 @@ export default function OrganisationPage() {
             <CardTitle className="text-sm font-medium text-gray-600">
               Prestataires
             </CardTitle>
-            <Settings className="h-4 w-4 text-orange-500" />
+            <Settings className="h-4 w-4 text-gray-900" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-orange-600">
+            <div className="text-2xl font-bold text-black">
               {loading ? '...' : stats.partners}
             </div>
             <p className="text-xs text-gray-500">
@@ -245,8 +245,8 @@ export default function OrganisationPage() {
           </div>
 
           <div className="flex items-center space-x-4">
-            <div className="p-2 rounded-full bg-orange-50">
-              <Settings className="h-4 w-4 text-orange-600" />
+            <div className="p-2 rounded-full bg-gray-50">
+              <Settings className="h-4 w-4 text-black" />
             </div>
             <div className="flex-1">
               <p className="text-sm font-medium text-black">{stats.partners} prestataires actifs</p>

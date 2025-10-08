@@ -293,7 +293,7 @@ export function NotificationBell({ className }: { className?: string }) {
     switch (type) {
       case 'success': return <CheckCircle className="w-4 h-4 text-green-600" />
       case 'error': return <XCircle className="w-4 h-4 text-red-600" />
-      case 'warning': return <AlertTriangle className="w-4 h-4 text-orange-600" />
+      case 'warning': return <AlertTriangle className="w-4 h-4 text-black" />
       case 'critical': return <AlertTriangle className="w-4 h-4 text-red-700" />
       default: return <Info className="w-4 h-4 text-gray-600" />
     }
@@ -413,7 +413,7 @@ function NotificationItem({
     switch (type) {
       case 'success': return <CheckCircle className="w-4 h-4 text-green-600" />
       case 'error': return <XCircle className="w-4 h-4 text-red-600" />
-      case 'warning': return <AlertTriangle className="w-4 h-4 text-orange-600" />
+      case 'warning': return <AlertTriangle className="w-4 h-4 text-black" />
       case 'critical': return <AlertTriangle className="w-4 h-4 text-red-700" />
       default: return <Info className="w-4 h-4 text-gray-600" />
     }
@@ -424,7 +424,7 @@ function NotificationItem({
       case 'critical':
         return <Badge className="bg-red-500 text-white">Critique</Badge>
       case 'high':
-        return <Badge className="bg-orange-500 text-white">Haute</Badge>
+        return <Badge className="bg-gray-500 text-white">Haute</Badge>
       case 'medium':
         return <Badge variant="outline">Moyenne</Badge>
       case 'low':
@@ -440,7 +440,7 @@ function NotificationItem({
           notification.read ? "opacity-60" : "",
           notification.type === 'critical' && "border-red-500",
           notification.type === 'error' && "border-red-400",
-          notification.type === 'warning' && "border-orange-400",
+          notification.type === 'warning' && "border-gray-400",
           notification.type === 'success' && "border-green-400",
           notification.type === 'info' && "border-gray-400"
         )}
@@ -476,7 +476,7 @@ function NotificationItem({
       "w-80 shadow-lg border-l-4 animate-in slide-in-from-right duration-300",
       notification.type === 'critical' && "border-red-500",
       notification.type === 'error' && "border-red-400",
-      notification.type === 'warning' && "border-orange-400",
+      notification.type === 'warning' && "border-gray-400",
       notification.type === 'success' && "border-green-400",
       notification.type === 'info' && "border-gray-400"
     )}>

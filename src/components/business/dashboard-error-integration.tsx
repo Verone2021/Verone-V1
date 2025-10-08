@@ -144,8 +144,8 @@ export const DashboardErrorIntegration: React.FC = () => {
           value={dashboardStats.total_errors}
           subValue={`${dashboardStats.resolved_errors} résolues`}
           icon={AlertTriangle}
-          color={dashboardStats.total_errors > 0 ? 'text-yellow-600' : 'text-green-600'}
-          bgColor={dashboardStats.total_errors > 0 ? 'bg-yellow-100' : 'bg-green-100'}
+          color={dashboardStats.total_errors > 0 ? 'text-gray-700' : 'text-green-600'}
+          bgColor={dashboardStats.total_errors > 0 ? 'bg-gray-100' : 'bg-green-100'}
         />
 
         <MetricsCard

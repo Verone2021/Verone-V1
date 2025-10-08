@@ -8,6 +8,8 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Badge } from '@/components/ui/badge'
 import type { VariantGroup, VariantType } from '@/types/variant-groups'
+import { DynamicColorSelector } from '@/components/business/DynamicColorSelector'
+import { useGroupUsedColors } from '@/hooks/use-product-colors'
 
 interface CreateProductInGroupModalProps {
   isOpen: boolean
@@ -45,6 +47,9 @@ export function CreateProductInGroupModal({
   const variantType = variantGroup.variant_type || 'color'
   const typeInfo = variantTypeLabels[variantType]
 
+  // Récupérer les couleurs déjà utilisées dans ce groupe
+  const { usedColors } = useGroupUsedColors(variantGroup.id, variantType)
+
   // Nom prévisualisé du produit
   const previewName = variantValue
     ? `${variantGroup.name} - ${variantValue}`
@@ -79,7 +84,7 @@ export function CreateProductInGroupModal({
       <DialogContent className="max-w-lg">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2 text-xl font-light">
-            <Sparkles className="h-5 w-5 text-yellow-600" />
+            <Sparkles className="h-5 w-5 text-gray-700" />
             Créer un nouveau produit
           </DialogTitle>
           <DialogDescription>
@@ -93,21 +98,35 @@ export function CreateProductInGroupModal({
         <form onSubmit={handleSubmit} className="space-y-6 pt-4">
           {/* Input variante */}
           <div className="space-y-3">
-            <Label htmlFor="variant_value" className="text-sm font-medium">
-              Valeur de la variante <span className="text-red-500">*</span>
-            </Label>
-            <p className="text-xs text-gray-600">
-              Indiquez la {typeInfo.singular.toLowerCase()} de ce produit. Le nom sera généré automatiquement.
-            </p>
-            <Input
-              id="variant_value"
-              type="text"
-              placeholder={`Ex: ${typeInfo.placeholder}`}
-              value={variantValue}
-              onChange={(e) => setVariantValue(e.target.value)}
-              autoFocus
-              className="text-base"
-            />
+            {variantType === 'color' ? (
+              // Sélecteur de couleurs dynamique avec filtrage
+              <DynamicColorSelector
+                value={variantValue}
+                onChange={setVariantValue}
+                required={true}
+                excludeColors={usedColors}
+                placeholder={`Rechercher ou créer une ${typeInfo.singular.toLowerCase()}...`}
+              />
+            ) : (
+              // Input classique pour autres types (material, size, pattern)
+              <>
+                <Label htmlFor="variant_value" className="text-sm font-medium">
+                  Valeur de la variante <span className="text-red-500">*</span>
+                </Label>
+                <p className="text-xs text-gray-600">
+                  Indiquez la {typeInfo.singular.toLowerCase()} de ce produit. Le nom sera généré automatiquement.
+                </p>
+                <Input
+                  id="variant_value"
+                  type="text"
+                  placeholder={`Ex: ${typeInfo.placeholder}`}
+                  value={variantValue}
+                  onChange={(e) => setVariantValue(e.target.value)}
+                  autoFocus
+                  className="text-base"
+                />
+              </>
+            )}
           </div>
 
           {/* Prévisualisation */}
@@ -143,8 +162,8 @@ export function CreateProductInGroupModal({
           )}
 
           {/* Info */}
-          <div className="p-3 bg-amber-50 border border-amber-200 rounded-lg">
-            <p className="text-xs text-amber-800">
+          <div className="p-3 bg-gray-50 border border-gray-300 rounded-lg">
+            <p className="text-xs text-gray-900">
               ℹ️ Le produit sera créé en statut <strong>prêt à commander</strong>.
               Vous pourrez compléter les autres informations (prix, stock, images)
               directement dans sa fiche produit.

@@ -61,7 +61,7 @@ export function SampleRequirementSection({
   const getSampleStatusBadge = () => {
     if (requiresSample) {
       return (
-        <Badge className="bg-orange-100 text-orange-800 border-orange-200">
+        <Badge className="bg-gray-100 text-gray-900 border-gray-200">
           <AlertCircle className="h-3 w-3 mr-1" />
           Échantillon requis
         </Badge>
@@ -92,18 +92,18 @@ export function SampleRequirementSection({
     }
 
     return (
-      <div className="text-sm text-orange-600 bg-orange-50 p-3 rounded-lg border border-orange-200">
+      <div className="text-sm text-black bg-gray-50 p-3 rounded-lg border border-gray-200">
         <div className="flex items-center gap-2">
           <Clock className="h-4 w-4" />
           <span className="font-medium">Workflow d'échantillonnage</span>
         </div>
-        <div className="mt-2 space-y-1 text-orange-700">
+        <div className="mt-2 space-y-1 text-gray-800">
           <p>1. Demande d'échantillon</p>
           <p>2. Validation de l'échantillon</p>
           <p>3. Commande ou validation du produit</p>
         </div>
         {isProduct && (
-          <p className="mt-2 text-xs text-orange-600">
+          <p className="mt-2 text-xs text-black">
             <FileText className="h-3 w-3 inline mr-1" />
             Un workflow sera créé automatiquement lors de la première commande
           </p>

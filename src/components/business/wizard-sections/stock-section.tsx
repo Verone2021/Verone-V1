@@ -43,13 +43,13 @@ export function StockSection({
     if (stockReal <= stockMin) return {
       status: 'critique',
       label: 'Stock critique',
-      color: 'text-orange-600',
+      color: 'text-black',
       icon: '⚠️'
     }
     if (stockReal <= reorderPoint) return {
       status: 'reappro',
       label: 'À réapprovisionner',
-      color: 'text-yellow-600',
+      color: 'text-gray-700',
       icon: '📦'
     }
     return {
@@ -180,7 +180,7 @@ export function StockSection({
             <div className="grid md:grid-cols-2 gap-6">
               <div className="space-y-2">
                 <Label htmlFor="min_stock" className="flex items-center text-base font-medium">
-                  <AlertTriangle className="h-4 w-4 mr-2 text-orange-600" />
+                  <AlertTriangle className="h-4 w-4 mr-2 text-black" />
                   Stock minimum critique
                 </Label>
                 <Input
@@ -190,10 +190,10 @@ export function StockSection({
                   value={formData.min_stock}
                   onChange={(e) => updateField('min_stock', e.target.value)}
                   placeholder="5"
-                  className="border-orange-200 focus:border-orange-500 focus:ring-orange-500"
+                  className="border-gray-200 focus:border-black focus:ring-gray-500"
                 />
                 <div className="text-xs space-y-1">
-                  <p className="text-orange-600 font-medium">
+                  <p className="text-black font-medium">
                     ⚠️ Seuil d'alerte critique - Déclenche statut "Stock faible"
                   </p>
                   <p className="text-gray-500">
@@ -260,7 +260,7 @@ export function StockSection({
                     </div>
                     <div>
                       <div className="text-gray-600 text-xs">Stock projeté</div>
-                      <div className={`font-semibold text-lg ${stockProjected > stockReal ? 'text-blue-600' : stockProjected < stockReal ? 'text-orange-600' : 'text-gray-700'}`}>
+                      <div className={`font-semibold text-lg ${stockProjected > stockReal ? 'text-blue-600' : stockProjected < stockReal ? 'text-black' : 'text-gray-700'}`}>
                         {stockProjected}
                       </div>
                       <div className="text-xs text-gray-500">après mouvements prévus</div>
@@ -268,7 +268,7 @@ export function StockSection({
                     <div>
                       <div className="text-gray-600 text-xs">Seuils configurés</div>
                       <div className="text-sm space-y-1">
-                        <div>Min: <span className="font-medium text-orange-600">{stockMin}</span></div>
+                        <div>Min: <span className="font-medium text-black">{stockMin}</span></div>
                         <div>Réappro: <span className="font-medium text-blue-600">{reorderPoint}</span></div>
                       </div>
                     </div>
@@ -281,12 +281,12 @@ export function StockSection({
                     </div>
                   )}
                   {stockStatus.status === 'critique' && (
-                    <div className="bg-orange-50 text-orange-800 p-2 rounded text-xs">
+                    <div className="bg-gray-50 text-gray-900 p-2 rounded text-xs">
                       ⚠️ <strong>Stock critique:</strong> Niveau inférieur au minimum de sécurité ({stockMin} unités)
                     </div>
                   )}
                   {stockStatus.status === 'reappro' && (
-                    <div className="bg-yellow-50 text-yellow-800 p-2 rounded text-xs">
+                    <div className="bg-gray-50 text-gray-900 p-2 rounded text-xs">
                       📦 <strong>Réapprovisionnement recommandé:</strong> Stock sous le point de commande ({reorderPoint} unités)
                     </div>
                   )}
@@ -317,11 +317,11 @@ export function StockSection({
               </div>
             </div>
 
-            <div className="p-4 bg-orange-50 rounded-lg">
-              <div className="text-sm font-medium text-orange-800 mb-2">
+            <div className="p-4 bg-gray-50 rounded-lg">
+              <div className="text-sm font-medium text-gray-900 mb-2">
                 Stock minimum critique
               </div>
-              <div className="text-xs text-orange-600">
+              <div className="text-xs text-black">
                 Correspond au stock de sécurité pour éviter les ruptures.
                 Basé sur la variabilité de la demande.
               </div>

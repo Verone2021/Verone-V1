@@ -19,7 +19,7 @@ export function UserStatsCards({ user }: UserStatsCardsProps) {
   const getEngagementLevel = (score: number) => {
     if (score >= 80) return { level: 'Très élevé', color: 'text-green-600' }
     if (score >= 60) return { level: 'Élevé', color: 'text-blue-600' }
-    if (score >= 40) return { level: 'Moyen', color: 'text-orange-500' }
+    if (score >= 40) return { level: 'Moyen', color: 'text-gray-900' }
     return { level: 'Faible', color: 'text-red-500' }
   }
 
@@ -27,7 +27,7 @@ export function UserStatsCards({ user }: UserStatsCardsProps) {
     switch (frequency) {
       case 'high': return { label: 'Fréquent', color: 'text-green-600' }
       case 'medium': return { label: 'Régulier', color: 'text-blue-600' }
-      case 'low': return { label: 'Occasionnel', color: 'text-orange-500' }
+      case 'low': return { label: 'Occasionnel', color: 'text-gray-900' }
       default: return { label: 'Inconnu', color: 'text-gray-500' }
     }
   }

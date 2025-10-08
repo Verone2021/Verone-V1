@@ -267,7 +267,7 @@ export function DraftsList({ onCreateNew, onEditDraft }: DraftsListProps) {
 
                       {/* Missing Fields Display */}
                       {draft.missingFields && draft.missingFields.length > 0 && (
-                        <div className="text-xs text-orange-600 bg-orange-50 px-2 py-1 rounded">
+                        <div className="text-xs text-black bg-gray-50 px-2 py-1 rounded">
                           <span className="font-medium">Champs manquants:</span> {draft.missingFields.join(', ')}
                         </div>
                       )}

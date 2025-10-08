@@ -394,11 +394,11 @@ export function OptimizedImageUploadDemo({
                 <div className="text-sm text-purple-700">Temps total</div>
               </div>
 
-              <div className="text-center p-4 bg-orange-50 rounded-lg">
-                <div className="text-2xl font-bold text-orange-600">
+              <div className="text-center p-4 bg-gray-50 rounded-lg">
+                <div className="text-2xl font-bold text-black">
                   {Math.round(results.performance.uploadSpeedKbps)}
                 </div>
-                <div className="text-sm text-orange-700">Kbps moyenne</div>
+                <div className="text-sm text-gray-800">Kbps moyenne</div>
               </div>
             </div>
 

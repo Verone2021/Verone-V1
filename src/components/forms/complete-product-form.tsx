@@ -472,12 +472,12 @@ export default function CompleteProductForm({ onSuccess, onCancel }: CompletePro
               </div>
             )}
 
-            <div className="p-4 bg-amber-50 border border-amber-200 rounded-lg">
+            <div className="p-4 bg-gray-50 border border-gray-300 rounded-lg">
               <div className="flex items-center space-x-2">
-                <Info className="h-4 w-4 text-amber-500" />
-                <span className="text-sm text-amber-700 font-medium">Information</span>
+                <Info className="h-4 w-4 text-gray-900" />
+                <span className="text-sm text-gray-900 font-medium">Information</span>
               </div>
-              <p className="text-sm text-amber-600 mt-1">
+              <p className="text-sm text-white mt-1">
                 Le SKU, les prix de vente et la TVA seront calculés automatiquement selon les règles métier Vérone.
               </p>
             </div>

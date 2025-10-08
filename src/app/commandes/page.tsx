@@ -175,9 +175,9 @@ export default function CommandesOverviewPage() {
                       </div>
                     </div>
                     <div className="grid grid-cols-2 gap-4">
-                      <div className="text-center p-3 bg-orange-50 rounded-lg">
-                        <div className="text-lg font-bold text-orange-700">{salesStats.shipped_orders}</div>
-                        <div className="text-xs text-orange-600">Expédiées</div>
+                      <div className="text-center p-3 bg-gray-50 rounded-lg">
+                        <div className="text-lg font-bold text-gray-800">{salesStats.shipped_orders}</div>
+                        <div className="text-xs text-black">Expédiées</div>
                       </div>
                       <div className="text-center p-3 bg-red-50 rounded-lg">
                         <div className="text-lg font-bold text-red-700">{salesStats.cancelled_orders}</div>
@@ -218,9 +218,9 @@ export default function CommandesOverviewPage() {
                         <div className="text-lg font-bold text-green-700">{purchaseStats.received_orders}</div>
                         <div className="text-xs text-green-600">Reçues</div>
                       </div>
-                      <div className="text-center p-3 bg-yellow-50 rounded-lg">
-                        <div className="text-lg font-bold text-yellow-700">{purchaseStats.pending_orders}</div>
-                        <div className="text-xs text-yellow-600">En cours</div>
+                      <div className="text-center p-3 bg-gray-50 rounded-lg">
+                        <div className="text-lg font-bold text-gray-800">{purchaseStats.pending_orders}</div>
+                        <div className="text-xs text-gray-700">En cours</div>
                       </div>
                     </div>
                     <div className="grid grid-cols-1 gap-4">

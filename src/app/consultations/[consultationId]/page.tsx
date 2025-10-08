@@ -58,7 +58,7 @@ export default function ConsultationDetailPage() {
 
   const getStatusColor = (status: string) => {
     switch (status) {
-      case 'en_attente': return 'bg-yellow-100 text-yellow-800 border-yellow-200'
+      case 'en_attente': return 'bg-gray-100 text-gray-900 border-gray-200'
       case 'en_cours': return 'bg-blue-100 text-blue-800 border-blue-200'
       case 'terminee': return 'bg-green-100 text-green-800 border-green-200'
       case 'annulee': return 'bg-gray-100 text-gray-800 border-gray-200'
@@ -79,7 +79,7 @@ export default function ConsultationDetailPage() {
   const getPriorityColor = (level: number) => {
     switch (level) {
       case 1: return 'bg-red-100 text-red-800 border-red-200'
-      case 2: return 'bg-orange-100 text-orange-800 border-orange-200'
+      case 2: return 'bg-gray-100 text-gray-900 border-gray-200'
       case 3: return 'bg-blue-100 text-blue-800 border-blue-200'
       case 4: return 'bg-green-100 text-green-800 border-green-200'
       case 5: return 'bg-gray-100 text-gray-800 border-gray-200'
@@ -275,7 +275,7 @@ export default function ConsultationDetailPage() {
             {consultation.notes_internes && (
               <div className="mt-4">
                 <p className="text-sm text-gray-600 mb-2">Notes internes</p>
-                <p className="bg-yellow-50 p-4 rounded-lg border-l-4 border-yellow-400">
+                <p className="bg-gray-50 p-4 rounded-lg border-l-4 border-gray-300">
                   {consultation.notes_internes}
                 </p>
               </div>

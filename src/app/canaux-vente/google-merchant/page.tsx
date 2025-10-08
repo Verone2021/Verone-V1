@@ -119,7 +119,7 @@ export default function GoogleMerchantPage() {
       case 'approved':
         return <Badge variant="outline" className="border-green-300 text-green-600">Approuvé</Badge>
       case 'pending':
-        return <Badge variant="outline" className="border-orange-300 text-orange-600">En attente</Badge>
+        return <Badge variant="outline" className="border-gray-300 text-black">En attente</Badge>
       case 'rejected':
         return <Badge variant="outline" className="border-red-300 text-red-600">Rejeté</Badge>
       default:
@@ -309,9 +309,9 @@ export default function GoogleMerchantPage() {
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-sm text-gray-600">Conversions</p>
-                  <p className="text-2xl font-bold text-orange-600">{stats.totalConversions}</p>
+                  <p className="text-2xl font-bold text-black">{stats.totalConversions}</p>
                 </div>
-                <Euro className="h-6 w-6 text-orange-600" />
+                <Euro className="h-6 w-6 text-black" />
               </div>
             </CardContent>
           </Card>

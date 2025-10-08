@@ -13,6 +13,13 @@
 - `/deploy-check` : Validation pré-déploiement complète
 - `/context-update` : Mise à jour repository automatique
 
+### **📊 Token Monitoring (NOUVEAU 2025)**
+- `/token-stats` : Monitoring tokens & coûts Claude Code
+- `/token-stats --quick` : Résumé rapide inline
+- `/token-stats --today` : Rapport journalier détaillé
+- `/token-stats --week` : Rapport hebdomadaire
+- `/token-stats --session` : Sessions actives détail
+
 ### **🔒 Sécurité & Performance**
 - `/yolo-secure` : Mode développement accéléré avec sécurité maximale
 - `/performance-slo` : Validation SLOs < 2s Dashboard, < 3s Catalogue

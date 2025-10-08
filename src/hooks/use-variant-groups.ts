@@ -33,6 +33,7 @@ export function useVariantGroups(filters?: VariantGroupFilters) {
       let query = supabase
         .from('variant_groups')
         .select('*')
+        .is('archived_at', null) // IMPORTANT : Exclure les groupes archivés par défaut
         .order('created_at', { ascending: false })
 
       // Appliquer les filtres
@@ -120,24 +121,24 @@ export function useVariantGroups(filters?: VariantGroupFilters) {
   // Créer un nouveau groupe de variantes
   const createVariantGroup = async (data: CreateVariantGroupData): Promise<boolean> => {
     try {
-      // Construire les dimensions communes si fournies
-      const commonDimensions = (data.dimensions_length && data.dimensions_width && data.dimensions_height) ? {
-        length: data.dimensions_length,
-        width: data.dimensions_width,
-        height: data.dimensions_height,
-        unit: data.dimensions_unit || 'cm'
-      } : null
-
-      const { data: newGroup, error: createError } = await supabase
+      const { data: newGroup, error: createError} = await supabase
         .from('variant_groups')
         .insert({
           name: data.name,
           base_sku: data.base_sku, // SKU de base pour génération automatique
           subcategory_id: data.subcategory_id,
           variant_type: data.variant_type || 'color', // Type de variante (color/material)
-          common_dimensions: commonDimensions,
+          // Dimensions en colonnes séparées (aligné avec schéma SQL)
+          dimensions_length: data.dimensions_length || null,
+          dimensions_width: data.dimensions_width || null,
+          dimensions_height: data.dimensions_height || null,
+          dimensions_unit: data.dimensions_unit || 'cm',
+          // Poids commun
+          common_weight: data.common_weight || null,
+          // Catégorisation
           style: data.style || null,
           suitable_rooms: data.suitable_rooms || null,
+          // Fournisseur commun
           supplier_id: data.supplier_id || null, // Fournisseur commun (si has_common_supplier = true)
           has_common_supplier: data.has_common_supplier || false, // Flag fournisseur commun
           product_count: 0
@@ -323,7 +324,7 @@ export function useVariantGroups(filters?: VariantGroupFilters) {
       // 1. Récupérer le groupe pour avoir le nom, base_sku et les attributs communs
       const { data: group, error: groupError } = await supabase
         .from('variant_groups')
-        .select('name, base_sku, product_count, subcategory_id, common_dimensions, style, suitable_rooms')
+        .select('name, base_sku, product_count, subcategory_id, common_dimensions, style, suitable_rooms, has_common_supplier, supplier_id')
         .eq('id', groupId)
         .single()
 
@@ -387,17 +388,32 @@ export function useVariantGroups(filters?: VariantGroupFilters) {
             height: commonDims.height || null,
             unit: commonDims.unit || 'cm'
           }
+        }),
+        // ✅ Hériter du fournisseur commun si défini dans le groupe
+        ...(group.has_common_supplier && group.supplier_id && {
+          supplier_id: group.supplier_id
         })
       }
 
-      const { error: createError } = await supabase
+      console.log('🔄 Creating product in group with data:', {
+        productName,
+        groupId,
+        hasCommonSupplier: group.has_common_supplier,
+        supplierId: group.supplier_id,
+        willInheritSupplier: group.has_common_supplier && group.supplier_id
+      })
+
+      const { error: createError, data: createdProduct } = await supabase
         .from('products')
         .insert(newProduct)
+        .select()
 
       if (createError) {
-        console.error('Erreur création produit:', createError)
+        console.error('❌ Erreur création produit:', createError)
         throw createError
       }
+
+      console.log('✅ Product created successfully:', createdProduct)
 
       // 7. Mettre à jour le compteur du groupe
       const { error: updateError } = await supabase
@@ -665,20 +681,9 @@ export function useVariantGroups(filters?: VariantGroupFilters) {
       if (data.has_common_supplier !== undefined) updateData.has_common_supplier = data.has_common_supplier
       if (data.supplier_id !== undefined) updateData.supplier_id = data.supplier_id
 
-      // Gestion des dimensions communes
+      // Gestion des dimensions communes (JSONB - format moderne)
       if (data.common_dimensions !== undefined) {
-        const dims = data.common_dimensions
-        if (dims) {
-          updateData.dimensions_length = dims.length
-          updateData.dimensions_width = dims.width
-          updateData.dimensions_height = dims.height
-          updateData.dimensions_unit = dims.unit || 'cm'
-        } else {
-          updateData.dimensions_length = null
-          updateData.dimensions_width = null
-          updateData.dimensions_height = null
-          updateData.dimensions_unit = null
-        }
+        updateData.common_dimensions = data.common_dimensions
       }
 
       // Gestion du poids commun
@@ -686,13 +691,26 @@ export function useVariantGroups(filters?: VariantGroupFilters) {
         updateData.common_weight = data.common_weight
       }
 
-      // Mettre à jour le groupe
-      const { error: updateError } = await supabase
+      console.log('🔄 Updating variant group with data:', {
+        groupId,
+        updateData
+      })
+
+      // Mettre à jour le groupe avec logging détaillé
+      const { error: updateError, data: updatedGroup } = await supabase
         .from('variant_groups')
         .update(updateData)
         .eq('id', groupId)
+        .select()
 
       if (updateError) {
+        console.error('❌ Supabase update error:', {
+          message: updateError.message,
+          details: updateError.details,
+          hint: updateError.hint,
+          code: updateError.code,
+          updateData
+        })
         toast({
           title: "Erreur",
           description: updateError.message,
@@ -701,40 +719,48 @@ export function useVariantGroups(filters?: VariantGroupFilters) {
         return false
       }
 
+      console.log('✅ Variant group updated successfully:', updatedGroup)
+
       // Propager le fournisseur aux produits si has_common_supplier est activé
       if (data.has_common_supplier !== undefined || data.supplier_id !== undefined) {
-        if (data.has_common_supplier) {
-          // Si fournisseur commun activé, propager supplier_id à tous les produits
+        if (data.has_common_supplier && data.supplier_id) {
+          // Si fournisseur commun activé ET supplier_id valide, propager à tous les produits
+          console.log('🔄 Propagating supplier to products:', {
+            groupId,
+            supplierId: data.supplier_id
+          })
+
           const { error: supplierPropagationError } = await supabase
             .from('products')
             .update({ supplier_id: data.supplier_id })
             .eq('variant_group_id', groupId)
 
           if (supplierPropagationError) {
-            console.error('Erreur propagation fournisseur aux produits:', supplierPropagationError)
+            console.error('❌ Erreur propagation fournisseur aux produits:', supplierPropagationError)
+          } else {
+            console.log('✅ Supplier propagated to products')
           }
         }
-        // Si has_common_supplier est désactivé, les produits gardent leur supplier_id actuel
+        // Si has_common_supplier est désactivé ou supplier_id null, les produits gardent leur supplier_id actuel
       }
 
       // Si des attributs ont été modifiés, propager aux produits du groupe
-      if (data.common_dimensions !== undefined ||
-          data.style !== undefined || data.suitable_rooms !== undefined ||
-          data.subcategory_id !== undefined || data.name !== undefined ||
-          data.common_weight !== undefined) {
+      const needsPropagation = data.common_dimensions !== undefined ||
+                               data.style !== undefined ||
+                               data.suitable_rooms !== undefined ||
+                               data.subcategory_id !== undefined ||
+                               data.name !== undefined ||
+                               data.common_weight !== undefined
 
-        const dims = data.common_dimensions
-        const hasDimensions = dims?.length || dims?.width || dims?.height
-        const productDimensions = hasDimensions ? {
-          length: dims.length || null,
-          width: dims.width || null,
-          height: dims.height || null,
-          unit: dims.unit || 'cm'
-        } : null
-
+      if (needsPropagation) {
         const productsUpdateData: any = {}
-        if (productDimensions) productsUpdateData.dimensions = productDimensions
-        if (data.style !== undefined) productsUpdateData.style = data.style
+
+        // Dimensions communes (JSONB direct)
+        if (data.common_dimensions !== undefined) {
+          productsUpdateData.dimensions = data.common_dimensions
+        }
+
+        // Autres champs communs (NOTE: style n'existe pas dans products, donc pas de propagation)
         if (data.suitable_rooms !== undefined) productsUpdateData.suitable_rooms = data.suitable_rooms
         if (data.subcategory_id !== undefined) productsUpdateData.subcategory_id = data.subcategory_id
         if (data.common_weight !== undefined) productsUpdateData.weight = data.common_weight
@@ -794,7 +820,7 @@ export function useVariantGroups(filters?: VariantGroupFilters) {
       await fetchVariantGroups()
       return true
     } catch (err) {
-      console.error('Erreur mise à jour groupe:', err)
+      console.error('❌ Exception during variant group update:', err)
       toast({
         title: "Erreur",
         description: "Impossible de mettre à jour le groupe",
@@ -828,6 +854,185 @@ export function useVariantGroups(filters?: VariantGroupFilters) {
     return data || []
   }
 
+  // Archiver un groupe de variantes (archive groupe + TOUS ses produits)
+  const archiveVariantGroup = async (groupId: string): Promise<boolean> => {
+    try {
+      // 1. Archiver le groupe
+      const { error: groupError } = await supabase
+        .from('variant_groups')
+        .update({
+          archived_at: new Date().toISOString(),
+          updated_at: new Date().toISOString()
+        })
+        .eq('id', groupId)
+
+      if (groupError) {
+        toast({
+          title: "Erreur",
+          description: groupError.message,
+          variant: "destructive"
+        })
+        return false
+      }
+
+      // 2. Archiver TOUS les produits du groupe en cascade
+      const { error: productsError } = await supabase
+        .from('products')
+        .update({
+          archived_at: new Date().toISOString(),
+          status: 'discontinued',
+          updated_at: new Date().toISOString()
+        })
+        .eq('variant_group_id', groupId)
+        .is('archived_at', null) // Ne modifier que les produits non-archivés
+
+      if (productsError) {
+        toast({
+          title: "Avertissement",
+          description: `Erreur lors de l'archivage des produits: ${productsError.message}`,
+          variant: "destructive"
+        })
+        // Continue quand même, le groupe est archivé
+      }
+
+      toast({
+        title: "Groupe archivé",
+        description: "Le groupe et tous ses produits ont été archivés"
+      })
+
+      await fetchVariantGroups()
+      return true
+    } catch (err) {
+      console.error('Erreur archivage groupe:', err)
+      toast({
+        title: "Erreur",
+        description: "Impossible d'archiver le groupe",
+        variant: "destructive"
+      })
+      return false
+    }
+  }
+
+  // Restaurer un groupe archivé (restaure groupe + TOUS ses produits)
+  const unarchiveVariantGroup = async (groupId: string): Promise<boolean> => {
+    try {
+      // 1. Restaurer le groupe
+      const { error: groupError } = await supabase
+        .from('variant_groups')
+        .update({
+          archived_at: null,
+          updated_at: new Date().toISOString()
+        })
+        .eq('id', groupId)
+
+      if (groupError) {
+        toast({
+          title: "Erreur",
+          description: groupError.message,
+          variant: "destructive"
+        })
+        return false
+      }
+
+      // 2. Restaurer TOUS les produits du groupe
+      const { error: productsError } = await supabase
+        .from('products')
+        .update({
+          archived_at: null,
+          status: 'in_stock', // Remettre en stock par défaut
+          updated_at: new Date().toISOString()
+        })
+        .eq('variant_group_id', groupId)
+        .not('archived_at', 'is', null) // Ne modifier que les produits archivés
+
+      if (productsError) {
+        toast({
+          title: "Avertissement",
+          description: `Erreur lors de la restauration des produits: ${productsError.message}`,
+          variant: "destructive"
+        })
+      }
+
+      toast({
+        title: "Groupe restauré",
+        description: "Le groupe et tous ses produits ont été restaurés"
+      })
+
+      await fetchVariantGroups()
+      return true
+    } catch (err) {
+      console.error('Erreur restauration groupe:', err)
+      toast({
+        title: "Erreur",
+        description: "Impossible de restaurer le groupe",
+        variant: "destructive"
+      })
+      return false
+    }
+  }
+
+  // Charger les groupes de variantes archivés
+  const loadArchivedVariantGroups = async () => {
+    try {
+      const { data, error: fetchError } = await supabase
+        .from('variant_groups')
+        .select('*')
+        .not('archived_at', 'is', null)
+        .order('archived_at', { ascending: false })
+
+      if (fetchError) {
+        console.error('Erreur chargement groupes archivés:', fetchError)
+        return []
+      }
+
+      // Récupérer les produits des groupes archivés (incluant archivés et actifs)
+      const groupIds = (data || []).map(g => g.id)
+      let allProducts: any[] = []
+
+      if (groupIds.length > 0) {
+        const { data: productsData } = await supabase
+          .from('products')
+          .select('id, name, sku, status, variant_group_id, variant_position, cost_price, weight, variant_attributes, archived_at')
+          .in('variant_group_id', groupIds)
+          .order('variant_position', { ascending: true })
+
+        allProducts = productsData || []
+      }
+
+      // Récupérer les images
+      const productIds = allProducts.map(p => p.id)
+      let allImages: any[] = []
+
+      if (productIds.length > 0) {
+        const { data: imagesData } = await supabase
+          .from('product_images')
+          .select('product_id, public_url')
+          .in('product_id', productIds)
+          .order('display_order', { ascending: true })
+
+        allImages = imagesData || []
+      }
+
+      // Associer les images aux produits
+      const productsWithImages = allProducts.map(product => ({
+        ...product,
+        image_url: allImages.find(img => img.product_id === product.id)?.public_url
+      }))
+
+      // Grouper les produits par variant_group_id
+      const groupsWithProducts = (data || []).map(group => ({
+        ...group,
+        products: productsWithImages.filter(p => p.variant_group_id === group.id),
+        product_count: productsWithImages.filter(p => p.variant_group_id === group.id).length
+      }))
+
+      return groupsWithProducts
+    } catch (err) {
+      console.error('Erreur:', err)
+      return []
+    }
+  }
+
   return {
     variantGroups,
     loading,
@@ -839,6 +1044,9 @@ export function useVariantGroups(filters?: VariantGroupFilters) {
     updateProductInGroup,
     removeProductFromGroup,
     deleteVariantGroup,
+    archiveVariantGroup,
+    unarchiveVariantGroup,
+    loadArchivedVariantGroups,
     getAvailableProducts,
     refetch: fetchVariantGroups
   }
@@ -1020,7 +1228,7 @@ export function useVariantGroup(groupId: string) {
                 )
               )
             ),
-            supplier:suppliers (
+            supplier:organisations (
               id,
               name
             )

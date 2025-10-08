@@ -2,6 +2,7 @@ import "./globals.css"
 import { Inter } from "next/font/google"
 import { Analytics } from '@vercel/analytics/react'
 import { AuthWrapper } from "../components/layout/auth-wrapper"
+import { ClientOnlyActivityTracker } from "../components/providers/client-only-activity-tracker"
 
 const inter = Inter({ subsets: ["latin"] })
 
@@ -19,7 +20,9 @@ export default function RootLayout({
     <html lang="fr" className="h-full">
       <body className={`${inter.className} h-full bg-white text-black antialiased`}>
         <AuthWrapper>
-          {children}
+          <ClientOnlyActivityTracker>
+            {children}
+          </ClientOnlyActivityTracker>
         </AuthWrapper>
         <Analytics />
       </body>

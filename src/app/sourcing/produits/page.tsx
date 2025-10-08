@@ -71,9 +71,9 @@ export default function SourcingProduitsPage() {
       case 'sourcing':
         return <Badge variant="outline" className="border-blue-300 text-blue-600">En sourcing</Badge>
       case 'echantillon_a_commander':
-        return <Badge variant="outline" className="border-orange-300 text-orange-600">Échantillon à commander</Badge>
+        return <Badge variant="outline" className="border-gray-300 text-black">Échantillon à commander</Badge>
       case 'echantillon_commande':
-        return <Badge variant="outline" className="border-orange-300 text-orange-600">Échantillon commandé</Badge>
+        return <Badge variant="outline" className="border-gray-300 text-black">Échantillon commandé</Badge>
       case 'in_stock':
         return <Badge variant="outline" className="border-green-300 text-green-600">En stock</Badge>
       case 'draft':
@@ -85,7 +85,7 @@ export default function SourcingProduitsPage() {
 
   const getSourcingTypeBadge = (sourcing_type: string | undefined, requires_sample: boolean) => {
     if (requires_sample) {
-      return <Badge variant="outline" className="border-orange-300 text-orange-600 text-xs">Échantillon requis</Badge>
+      return <Badge variant="outline" className="border-gray-300 text-black text-xs">Échantillon requis</Badge>
     }
     switch (sourcing_type) {
       case 'client':

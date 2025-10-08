@@ -192,7 +192,7 @@ export default function CustomerDetailPage() {
           <Button
             variant="outline"
             onClick={handleArchive}
-            className={customer.archived_at ? "text-blue-600 border-blue-200 hover:bg-blue-50" : "text-orange-600 border-orange-200 hover:bg-orange-50"}
+            className={customer.archived_at ? "text-blue-600 border-blue-200 hover:bg-blue-50" : "text-black border-gray-200 hover:bg-gray-50"}
           >
             {customer.archived_at ? (
               <>

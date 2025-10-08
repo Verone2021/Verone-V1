@@ -2,7 +2,7 @@
 
 import { useState, useMemo, useCallback, useEffect } from "react"
 import { useRouter } from "next/navigation"
-import { Search, Plus, Edit3, Trash2, ExternalLink, Package, Archive } from "lucide-react"
+import { Search, Plus, Edit3, Trash2, ExternalLink, Package, Archive, ArchiveRestore } from "lucide-react"
 import { Button } from "../../../components/ui/button"
 import { Badge } from "../../../components/ui/badge"
 import { cn } from "../../../lib/utils"
@@ -168,6 +168,22 @@ export default function CollectionsPage() {
     setShowEditModal(true)
   }, [])
 
+  const handleDeleteCollection = useCallback(async (collectionId: string) => {
+    if (!confirm('Êtes-vous sûr de vouloir supprimer définitivement cette collection ?')) return
+
+    const result = await deleteCollection(collectionId)
+    if (result) {
+      toast({
+        title: "Collection supprimée",
+        description: "La collection a été supprimée définitivement",
+      })
+      // Recharger les collections archivées
+      if (activeTab === 'archived') {
+        await loadArchivedCollectionsData()
+      }
+    }
+  }, [deleteCollection, toast, activeTab, loadArchivedCollectionsData])
+
   const handleSaveCollection = useCallback(async (data: CreateCollectionInput) => {
     if (editingCollection) {
       // Mode édition
@@ -227,139 +243,222 @@ export default function CollectionsPage() {
     }
   }, [archiveCollection, unarchiveCollection, toast, loadArchivedCollectionsData])
 
-  // Composant Collection Card
-  const renderCollectionCard = (collection: Collection) => {
+  // Composant Collection Card - Aligné sur le design Variantes
+  const renderCollectionCard = (collection: Collection, isArchived: boolean = false) => {
     const isSelected = selectedCollections.includes(collection.id)
 
     return (
       <div className={cn(
-        "bg-white rounded-lg border border-gray-200 overflow-hidden hover:shadow-md transition-shadow",
+        "bg-white rounded-lg border border-gray-200 overflow-hidden hover:shadow-md transition-shadow flex flex-col h-full",
         isSelected && "ring-2 ring-black"
       )}>
-        {/* En-tête avec sélection */}
-        <div className="p-4 border-b border-gray-200">
-          <div className="flex items-start justify-between">
-            <div className="flex items-start space-x-3 flex-1">
+        {/* En-tête avec sélection - HAUTEUR FIXE */}
+        <div className="p-4 border-b border-gray-200 flex-none">
+          <div className="flex items-start justify-between mb-3">
+            <div className="flex items-start space-x-3 flex-1 min-w-0">
               <input
                 type="checkbox"
                 checked={isSelected}
                 onChange={() => toggleCollectionSelection(collection.id)}
-                className="mt-1 h-4 w-4 rounded border-gray-300"
+                className="mt-1 h-4 w-4 rounded border-gray-300 flex-shrink-0"
               />
               <div className="flex-1 min-w-0">
-                <h3 className="font-medium text-gray-900 truncate">
+                <h3 className="font-semibold text-gray-900 truncate text-base">
                   {collection.name}
                 </h3>
                 {collection.description && (
-                  <p className="text-sm text-gray-600 mt-1 line-clamp-2">
+                  <p className="text-xs text-gray-500 truncate mt-0.5">
                     {collection.description}
                   </p>
                 )}
-                <div className="flex items-center flex-wrap gap-2 mt-2">
-                  <Badge variant={collection.is_active ? "default" : "secondary"}>
-                    {collection.is_active ? "Actif" : "Inactif"}
-                  </Badge>
-                  <Badge variant={collection.visibility === 'public' ? "outline" : "secondary"}>
-                    {collection.visibility === 'public' ? "Public" : "Privé"}
-                  </Badge>
-                  {collection.style && (
-                    <Badge variant="outline" className="bg-purple-50 text-purple-700 border-purple-200">
-                      {formatCollectionStyle(collection.style)}
-                    </Badge>
-                  )}
-                  {collection.room_category && (
-                    <Badge variant="outline" className="bg-blue-50 text-blue-700 border-blue-200">
-                      {formatRoomCategory(collection.room_category)}
-                    </Badge>
-                  )}
-                  {collection.suitable_rooms && collection.suitable_rooms.length > 0 && (
-                    <>
-                      {collection.suitable_rooms.slice(0, 2).map((room) => (
-                        <Badge key={room} variant="outline" className="bg-green-50 text-green-700 border-green-200 text-xs">
-                          {getRoomLabel(room as RoomType)}
-                        </Badge>
-                      ))}
-                      {collection.suitable_rooms.length > 2 && (
-                        <Badge variant="outline" className="bg-gray-50 text-gray-700 border-gray-200 text-xs">
-                          +{collection.suitable_rooms.length - 2}
-                        </Badge>
-                      )}
-                    </>
-                  )}
-                </div>
               </div>
             </div>
+          </div>
 
-            {/* Actions rapides - Ordre standard CRUD */}
-            <div className="flex items-center space-x-2 ml-2">
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={() => router.push(`/catalogue/collections/${collection.id}`)}
-                className="text-blue-600"
-                title="Voir détail"
-              >
-                <ExternalLink className="h-4 w-4" />
-              </Button>
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={() => handleEditCollection(collection)}
-                title="Modifier"
-              >
-                <Edit3 className="h-4 w-4" />
-              </Button>
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={() => handleManageProducts(collection)}
-                className="text-purple-600"
-                title="Gérer les produits"
-              >
-                <Package className="h-4 w-4" />
-              </Button>
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={() => handleArchiveCollection(collection)}
-                className="text-orange-600"
-                title={collection.archived_at ? "Restaurer" : "Archiver"}
-              >
-                <Archive className="h-4 w-4" />
-              </Button>
+          {/* Badges compacts sur deux lignes */}
+          <div className="space-y-1.5">
+            {/* Ligne 1: Status, Visibilité, Style, Room Category */}
+            <div className="flex items-center gap-1.5 overflow-x-auto scrollbar-hide">
+              <Badge variant={collection.is_active ? "default" : "secondary"} className="text-[10px] px-1.5 py-0.5 flex-shrink-0">
+                {collection.is_active ? "Actif" : "Inactif"}
+              </Badge>
+              <Badge variant={collection.visibility === 'public' ? "outline" : "secondary"} className="text-[10px] px-1.5 py-0.5 flex-shrink-0">
+                {collection.visibility === 'public' ? "Public" : "Privé"}
+              </Badge>
+              {collection.style && (
+                <Badge variant="outline" className="bg-purple-50 text-purple-700 border-purple-200 text-[10px] px-1.5 py-0.5 flex-shrink-0">
+                  {formatCollectionStyle(collection.style)}
+                </Badge>
+              )}
+              {collection.room_category && (
+                <Badge variant="outline" className="bg-blue-50 text-blue-700 border-blue-200 text-[10px] px-1.5 py-0.5 flex-shrink-0">
+                  {formatRoomCategory(collection.room_category)}
+                </Badge>
+              )}
+            </div>
+
+            {/* Ligne 2: Suitable Rooms + Theme Tags */}
+            <div className="flex items-center gap-1.5 overflow-x-auto scrollbar-hide">
+              {/* Pièces compatibles (aligné avec products) */}
+              {collection.suitable_rooms && collection.suitable_rooms.length > 0 && (
+                collection.suitable_rooms.slice(0, 3).map((room) => (
+                  <Badge
+                    key={room}
+                    variant="outline"
+                    className="bg-green-50 text-green-700 border-green-200 text-[10px] px-1.5 py-0.5 flex-shrink-0"
+                  >
+                    {getRoomLabel(room as RoomType)}
+                  </Badge>
+                ))
+              )}
+              {collection.suitable_rooms && collection.suitable_rooms.length > 3 && (
+                <Badge variant="outline" className="bg-green-50 text-green-700 border-green-200 text-[10px] px-1.5 py-0.5 flex-shrink-0">
+                  +{collection.suitable_rooms.length - 3}
+                </Badge>
+              )}
+
+              {/* Tags personnalisés */}
+              {collection.theme_tags && collection.theme_tags.length > 0 && (
+                collection.theme_tags.slice(0, 2).map((tag) => (
+                  <Badge
+                    key={tag}
+                    variant="outline"
+                    className="bg-gray-50 text-gray-700 border-gray-200 text-[10px] px-1.5 py-0.5 flex-shrink-0"
+                  >
+                    🏷️ {tag}
+                  </Badge>
+                ))
+              )}
+              {collection.theme_tags && collection.theme_tags.length > 2 && (
+                <Badge variant="outline" className="bg-gray-50 text-gray-700 border-gray-200 text-[10px] px-1.5 py-0.5 flex-shrink-0">
+                  +{collection.theme_tags.length - 2}
+                </Badge>
+              )}
             </div>
           </div>
         </div>
 
-        {/* Aperçu des produits */}
-        <div className="p-4">
-          <div className="flex items-center justify-between text-sm text-gray-600 mb-3">
-            <span>{collection.product_count} produit{collection.product_count !== 1 ? 's' : ''}</span>
-            <span>
+        {/* Aperçu des produits - HAUTEUR FLEXIBLE */}
+        <div className="p-4 flex-1 flex flex-col">
+          <div className="flex items-center justify-between text-xs text-gray-600 mb-3">
+            <span className="font-medium">{collection.product_count} produit{collection.product_count !== 1 ? 's' : ''}</span>
+            <span className="text-[10px] text-gray-400">
               Créé le {formatDate(collection.created_at)}
             </span>
           </div>
 
-          {/* Mini-galerie produits */}
-          {collection.products && (
-            <div className="flex space-x-2 overflow-x-auto">
-              {collection.products.slice(0, 4).map(product => (
-                <div key={product.id} className="flex-shrink-0 w-24 h-24 rounded bg-white border border-gray-200 overflow-hidden p-1">
-                  <img
-                    src={product.image_url}
-                    alt={product.name}
-                    className="w-full h-full object-contain"
-                  />
-                </div>
-              ))}
-              {collection.product_count > 4 && (
-                <div className="flex-shrink-0 w-24 h-24 rounded bg-gray-100 flex items-center justify-center text-xs text-gray-500">
-                  +{collection.product_count - 4}
-                </div>
-              )}
+          {/* Mini-galerie produits - HAUTEUR RÉDUITE */}
+          <div className="mb-2 h-14">
+            {collection.products && collection.products.length > 0 ? (
+              <div className="flex space-x-1.5 overflow-x-auto h-full scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-transparent">
+                {collection.products.slice(0, 5).map((product: any) => (
+                  <div key={product.id} className="relative flex-shrink-0 w-14 h-14 rounded bg-gray-100 overflow-hidden">
+                    {product.image_url ? (
+                      <img
+                        src={product.image_url}
+                        alt={product.name}
+                        className="w-full h-full object-contain"
+                      />
+                    ) : (
+                      <div className="w-full h-full flex items-center justify-center">
+                        <Package className="h-6 w-6 text-gray-400" />
+                      </div>
+                    )}
+                  </div>
+                ))}
+                {collection.product_count > 5 && (
+                  <div className="flex-shrink-0 w-14 h-14 rounded bg-gray-100 flex items-center justify-center text-[10px] text-gray-500 font-medium">
+                    +{collection.product_count - 5}
+                  </div>
+                )}
+              </div>
+            ) : (
+              <div className="h-full flex items-center justify-center text-xs text-gray-400 border border-dashed border-gray-200 rounded">
+                Aucun produit
+              </div>
+            )}
+          </div>
+        </div>
+
+        {/* Footer avec actions - ULTRA COMPACT */}
+        <div className="px-3 pb-2 pt-1.5 border-t border-gray-100 flex-none">
+          {!isArchived ? (
+            // Collections actives: Produits, Détails, Modifier, Archiver
+            <div className="grid grid-cols-4 gap-1">
+              <Button
+                size="sm"
+                variant="outline"
+                onClick={() => handleManageProducts(collection)}
+                className="text-[10px] h-6 w-full px-1"
+                title="Gérer produits"
+              >
+                <Package className="h-2.5 w-2.5 mr-0.5" />
+                Produits
+              </Button>
+              <Button
+                size="sm"
+                variant="outline"
+                onClick={() => router.push(`/catalogue/collections/${collection.id}`)}
+                className="text-[10px] h-6 w-full px-1"
+                title="Voir les détails"
+              >
+                <ExternalLink className="h-2.5 w-2.5 mr-0.5" />
+                Détails
+              </Button>
+              <Button
+                size="sm"
+                variant="ghost"
+                onClick={() => handleEditCollection(collection)}
+                className="text-[10px] h-6 w-full px-1"
+                title="Modifier la collection"
+              >
+                <Edit3 className="h-2.5 w-2.5 mr-0.5" />
+                Modifier
+              </Button>
+              <Button
+                size="sm"
+                variant="ghost"
+                onClick={() => handleArchiveCollection(collection)}
+                className="text-[10px] h-6 w-full text-black hover:text-gray-800 hover:bg-gray-50 px-1"
+                title="Archiver"
+              >
+                <Archive className="h-2.5 w-2.5" />
+              </Button>
+            </div>
+          ) : (
+            // Collections archivées: Détails, Restaurer, Supprimer
+            <div className="grid grid-cols-3 gap-1">
+              <Button
+                size="sm"
+                variant="outline"
+                onClick={() => router.push(`/catalogue/collections/${collection.id}`)}
+                className="text-[10px] h-6 w-full px-1"
+                title="Voir les détails"
+              >
+                <ExternalLink className="h-2.5 w-2.5 mr-0.5" />
+                Détails
+              </Button>
+              <Button
+                size="sm"
+                variant="ghost"
+                onClick={() => handleArchiveCollection(collection)}
+                className="text-[10px] h-6 w-full text-green-600 hover:text-green-700 hover:bg-green-50 px-1"
+                title="Restaurer"
+              >
+                <ArchiveRestore className="h-2.5 w-2.5 mr-0.5" />
+                Restaurer
+              </Button>
+              <Button
+                size="sm"
+                variant="ghost"
+                onClick={() => handleDeleteCollection(collection.id)}
+                className="text-[10px] h-6 w-full text-red-600 hover:text-red-700 hover:bg-red-50 px-1"
+                title="Supprimer"
+              >
+                <Trash2 className="h-2.5 w-2.5" />
+              </Button>
             </div>
           )}
-
         </div>
       </div>
     )
@@ -486,8 +585,8 @@ export default function CollectionsPage() {
         </div>
       )}
 
-      {/* Grille des collections */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+      {/* Grille des collections - hauteur uniforme */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 auto-rows-fr">
         {((activeTab === 'active' && loading) || (activeTab === 'archived' && archivedLoading)) ? (
           Array.from({ length: 6 }).map((_, i) => (
             <div key={i} className="bg-white rounded-lg border border-gray-200 animate-pulse">
@@ -508,9 +607,10 @@ export default function CollectionsPage() {
         ) : (
           (() => {
             const currentCollections = activeTab === 'active' ? filteredCollections : archivedCollections
+            const isArchived = activeTab === 'archived'
             return currentCollections.length > 0 ? (
               currentCollections.map(collection => (
-                <div key={collection.id}>{renderCollectionCard(collection)}</div>
+                <div key={collection.id}>{renderCollectionCard(collection, isArchived)}</div>
               ))
             ) : (
               <div className="col-span-full p-8 text-center text-gray-500 bg-white rounded-lg border border-gray-200">

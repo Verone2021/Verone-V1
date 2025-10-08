@@ -45,7 +45,7 @@ const getVariantTypeIcon = (type: string) => {
     case 'material':
       return <Layers className="h-5 w-5 text-green-600" />
     case 'pattern':
-      return <Layers className="h-5 w-5 text-orange-600" />
+      return <Layers className="h-5 w-5 text-black" />
     default:
       return <Package className="h-5 w-5 text-gray-600" />
   }
@@ -57,11 +57,12 @@ const formatStyle = (style?: string): string => {
   return styleOption?.label || style
 }
 
-// Composant pour carte produit
+// Composant pour carte produit COMPACTE (style catalogue)
 interface VariantProductCardProps {
   product: any
   variantType: string
   hasCommonSupplier: boolean
+  groupDimensions: { length: number | null, width: number | null, height: number | null, unit: string } | null
   onRemove: (id: string, name: string) => void
   onEdit: (product: any) => void
   router: any
@@ -71,6 +72,7 @@ function VariantProductCard({
   product,
   variantType,
   hasCommonSupplier,
+  groupDimensions,
   onRemove,
   onEdit,
   router
@@ -79,107 +81,106 @@ function VariantProductCard({
   const attributesDisplay = formatAttributesForDisplay(product.variant_attributes as VariantAttributes)
 
   return (
-    <Card className="overflow-hidden hover:shadow-lg transition-shadow relative">
-      <div className="aspect-square relative bg-gray-50">
+    <div className="bg-white rounded-lg border border-gray-200 overflow-hidden hover:shadow-md transition-shadow flex flex-col h-full">
+      {/* Image compacte */}
+      <div className="relative w-full h-32 bg-gray-50 flex-shrink-0">
         {product.image_url ? (
           <Image
             src={product.image_url}
             alt={product.name}
             fill
-            className="object-cover"
-            sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+            className="object-contain p-2"
+            sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 25vw"
           />
         ) : (
           <div className="w-full h-full flex items-center justify-center">
-            <Package className="w-12 h-12 text-gray-400" />
+            <Package className="w-8 h-8 text-gray-400" />
           </div>
         )}
-        {/* Badge position variante */}
+        {/* Badge position - petit */}
         {product.variant_position && (
-          <div className="absolute top-2 left-2">
-            <Badge className="bg-black text-white">
+          <div className="absolute top-1.5 left-1.5">
+            <Badge className="bg-black text-white text-[10px] px-1.5 py-0.5">
               #{product.variant_position}
             </Badge>
           </div>
         )}
-        {/* Bouton retirer */}
+        {/* Bouton retirer - petit */}
         <button
           onClick={() => onRemove(product.id, product.name)}
-          className="absolute top-2 right-2 bg-red-500 text-white rounded-full p-2 opacity-0 hover:opacity-100 transition-opacity hover:bg-red-600"
+          className="absolute top-1.5 right-1.5 bg-red-500 text-white rounded-full p-1 opacity-0 hover:opacity-100 transition-opacity hover:bg-red-600"
           title={`Retirer ${product.name}`}
         >
-          <X className="h-4 w-4" />
+          <X className="h-3 w-3" />
         </button>
       </div>
-      <CardContent className="p-4 flex flex-col h-[280px]">
-        {/* Zone titre/SKU - hauteur fixe */}
-        <div className="flex-none">
-          <h3 className="font-semibold text-sm text-gray-900 h-10 line-clamp-2 mb-1">
+
+      {/* Contenu compact */}
+      <div className="p-3 flex-1 flex flex-col">
+        {/* Nom + SKU compacts */}
+        <div className="flex-none mb-2">
+          <h3 className="font-semibold text-xs text-gray-900 line-clamp-2 mb-0.5">
             {product.name}
           </h3>
-          <p className="text-xs text-gray-600 h-5 mb-3">SKU: {product.sku}</p>
+          <p className="text-[10px] text-gray-500">SKU: {product.sku}</p>
         </div>
 
-        {/* Zone prix/attributs - hauteur flexible */}
-        <div className="flex-1 space-y-2 overflow-hidden">
-          <div className="flex items-center justify-between">
-            <span className="text-xs font-medium text-gray-700">💰 Prix d'achat</span>
-            <span className="text-sm font-medium">{product.cost_price || '0'} €</span>
+        {/* Prix compact */}
+        <div className="flex-none mb-2">
+          <div className="text-sm font-semibold text-black">
+            {product.cost_price ? `${product.cost_price.toFixed(2)} €` : 'N/A'}
           </div>
+        </div>
 
-          {/* Attributs et poids */}
-          <div className="border-t pt-2 mt-2 space-y-2">
-            {/* Attributs en lecture seule (labels français) */}
-            {attributesDisplay.length > 0 && (
-              <div>
-                <p className="text-xs font-medium text-gray-700 mb-1">Attributs:</p>
-                <div className="flex flex-wrap gap-1">
-                  {attributesDisplay.map((attr, idx) => (
-                    <Badge key={idx} variant="secondary" className="text-xs">
-                      {attr.value}
-                    </Badge>
-                  ))}
-                  {/* Poids affiché avec les attributs */}
-                  {product.weight && (
-                    <Badge variant="outline" className="text-xs bg-amber-50 text-amber-700 border-amber-200">
-                      ⚖️ {product.weight} kg
-                    </Badge>
-                  )}
-                  {/* Fournisseur individuel (si groupe SANS fournisseur commun) */}
-                  {!hasCommonSupplier && product.supplier && (
-                    <Badge variant="outline" className="text-xs bg-blue-50 text-blue-700 border-blue-200">
-                      🏢 {product.supplier.name}
-                    </Badge>
-                  )}
-                </div>
-              </div>
+        {/* Badges compacts */}
+        <div className="flex-1 mb-2">
+          <div className="flex flex-wrap gap-1">
+            {attributesDisplay.map((attr, idx) => (
+              <Badge key={idx} variant="secondary" className="text-[10px] px-1.5 py-0.5">
+                {attr.value}
+              </Badge>
+            ))}
+            {product.weight && (
+              <Badge variant="outline" className="text-[10px] px-1.5 py-0.5 bg-gray-50 text-gray-900 border-gray-300">
+                ⚖️ {product.weight}kg
+              </Badge>
+            )}
+            {!hasCommonSupplier && product.supplier && (
+              <Badge variant="outline" className="text-[10px] px-1.5 py-0.5 bg-blue-50 text-blue-700 border-blue-200">
+                🏢 {product.supplier.name}
+              </Badge>
+            )}
+            {groupDimensions && groupDimensions.length && (
+              <Badge variant="outline" className="text-[10px] px-1.5 py-0.5 bg-green-50 text-green-700 border-green-200">
+                📐 {groupDimensions.length}×{groupDimensions.width}×{groupDimensions.height}
+              </Badge>
             )}
           </div>
         </div>
 
-        {/* Zone boutons - hauteur fixe toujours visible */}
-        <div className="flex-none space-y-2 mt-3">
+        {/* Boutons compacts en grille */}
+        <div className="flex-none grid grid-cols-2 gap-1">
           <Button
-            variant="default"
+            variant="outline"
             size="sm"
-            className="w-full bg-black text-white hover:bg-gray-800"
+            className="text-[10px] h-7 w-full px-1"
             onClick={() => onEdit(product)}
           >
-            <Edit3 className="w-4 h-4 mr-2" />
+            <Edit3 className="w-3 h-3 mr-1" />
             Modifier
           </Button>
           <Button
             variant="outline"
             size="sm"
-            className="w-full"
+            className="text-[10px] h-7 w-full px-1"
             onClick={() => router.push(`/catalogue/${product.id}`)}
           >
-            <Eye className="w-4 h-4 mr-2" />
-            Voir détails
+            <Eye className="w-3 h-3 mr-1" />
+            Détails
           </Button>
         </div>
-      </CardContent>
-    </Card>
+      </div>
+    </div>
   )
 }
 
@@ -584,18 +585,35 @@ export default function VariantGroupDetailPage({ params }: VariantGroupDetailPag
             )}
           </div>
 
-          {/* Dimensions si présentes */}
+          {/* Dimensions communes si présentes */}
           {variantGroup.dimensions_length && (
-            <div className="md:col-span-2">
-              <label className="text-sm font-medium text-gray-700 block mb-2">
-                Dimensions
+            <div>
+              <label className="text-sm font-medium text-gray-700 block mb-2 flex items-center gap-2">
+                📐 Dimensions communes
+                <Badge variant="outline" className="text-xs bg-blue-50 text-blue-700 border-blue-200">
+                  Héritées par tous les produits
+                </Badge>
               </label>
-              <p className="text-sm text-gray-900">
-                {variantGroup.dimensions_length} × {variantGroup.dimensions_width} × {variantGroup.dimensions_height} {variantGroup.dimensions_unit}
+              <p className="text-sm text-gray-900 font-medium">
+                L: {variantGroup.dimensions_length} × l: {variantGroup.dimensions_width} × H: {variantGroup.dimensions_height} {variantGroup.dimensions_unit}
               </p>
             </div>
           )}
 
+          {/* Poids commun si présent */}
+          {variantGroup.common_weight && (
+            <div>
+              <label className="text-sm font-medium text-gray-700 block mb-2 flex items-center gap-2">
+                ⚖️ Poids commun
+                <Badge variant="outline" className="text-xs bg-gray-50 text-gray-900 border-gray-300">
+                  Hérité par tous les produits
+                </Badge>
+              </label>
+              <p className="text-sm text-gray-900 font-medium">
+                {variantGroup.common_weight} kg
+              </p>
+            </div>
+          )}
 
           {/* Style décoratif */}
           {variantGroup.style && (
@@ -617,7 +635,7 @@ export default function VariantGroupDetailPage({ params }: VariantGroupDetailPag
               </label>
               <div className="flex flex-wrap gap-2">
                 {variantGroup.suitable_rooms.map((room, index) => (
-                  <Badge key={index} variant="outline" className="bg-amber-50 text-amber-700 border-amber-200">
+                  <Badge key={index} variant="outline" className="bg-gray-50 text-gray-900 border-gray-300">
                     <Home className="h-3 w-3 mr-1" />
                     {room}
                   </Badge>
@@ -652,13 +670,19 @@ export default function VariantGroupDetailPage({ params }: VariantGroupDetailPag
         </h2>
 
         {variantGroup.products && variantGroup.products.length > 0 ? (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 items-start">
+          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-6 gap-4 auto-rows-fr">
             {variantGroup.products.map((product) => (
               <VariantProductCard
                 key={product.id}
                 product={product}
                 variantType={variantGroup.variant_type}
                 hasCommonSupplier={variantGroup.has_common_supplier || false}
+                groupDimensions={variantGroup.dimensions_length ? {
+                  length: variantGroup.dimensions_length,
+                  width: variantGroup.dimensions_width,
+                  height: variantGroup.dimensions_height,
+                  unit: variantGroup.dimensions_unit
+                } : null}
                 onRemove={handleRemoveProduct}
                 onEdit={handleEditProduct}
                 router={router}

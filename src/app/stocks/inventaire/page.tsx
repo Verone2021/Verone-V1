@@ -41,7 +41,7 @@ import {
   DialogTrigger,
 } from '@/components/ui/dialog'
 import { useToast } from '@/hooks/use-toast'
-import { useCatalogue } from '@/hooks/use-catalogue'
+import { useStock } from '@/hooks/use-stock'
 import { useStockMovements } from '@/hooks/use-stock-movements'
 import { useStockReservations } from '@/hooks/use-stock-reservations'
 import { formatPrice } from '@/lib/utils'
@@ -271,9 +271,11 @@ export default function StockInventairePage() {
   const [isMovementModalOpen, setIsMovementModalOpen] = useState(false)
   const [isHistoryModalOpen, setIsHistoryModalOpen] = useState(false)
   const [reservations, setReservations] = useState<any[]>([])
+  const [products, setProducts] = useState<any[]>([])
+  const [productsLoading, setProductsLoading] = useState(true)
 
   const { toast } = useToast()
-  const { products, loading: productsLoading, loadCatalogueData } = useCatalogue()
+  const { fetchInventoryProducts } = useStock()
   const { stats: movementStats, fetchStats } = useStockMovements()
   const { fetchReservations, getAvailableStockForProduct } = useStockReservations()
 
@@ -283,11 +285,17 @@ export default function StockInventairePage() {
   }, [])
 
   const loadData = async () => {
-    await Promise.all([
-      loadCatalogueData(),
-      fetchStats(),
-      fetchReservations({ is_active: true })
-    ])
+    setProductsLoading(true)
+    try {
+      const [inventoryProducts] = await Promise.all([
+        fetchInventoryProducts(),
+        fetchStats(),
+        fetchReservations({ is_active: true })
+      ])
+      setProducts(inventoryProducts)
+    } finally {
+      setProductsLoading(false)
+    }
   }
 
   // Calculer les statistiques de stock
@@ -389,7 +397,7 @@ export default function StockInventairePage() {
     if (stock === 0) {
       return { label: 'Rupture', color: 'bg-red-100 text-red-800', icon: TrendingDown }
     } else if (stock <= minStock) {
-      return { label: 'Stock faible', color: 'bg-orange-100 text-orange-800', icon: AlertTriangle }
+      return { label: 'Stock faible', color: 'bg-gray-100 text-gray-900', icon: AlertTriangle }
     } else {
       return { label: 'En stock', color: 'bg-green-100 text-green-800', icon: TrendingUp }
     }
@@ -480,10 +488,10 @@ export default function StockInventairePage() {
           </div>
           <div className="bg-white rounded-lg border border-black p-6">
             <div className="flex items-center">
-              <AlertTriangle className="h-8 w-8 text-orange-500" />
+              <AlertTriangle className="h-8 w-8 text-gray-900" />
               <div className="ml-4">
                 <p className="text-sm font-medium text-gray-600">Stock faible</p>
-                <p className="text-2xl font-bold text-orange-600">{stockStats.lowStock}</p>
+                <p className="text-2xl font-bold text-black">{stockStats.lowStock}</p>
               </div>
             </div>
           </div>

@@ -23,6 +23,7 @@ import { useToast } from "../../hooks/use-toast"
 import { createClient } from "../../lib/supabase/client"
 import Image from "next/image"
 import { cn } from "../../lib/utils"
+import { DynamicColorSelector } from "../business/DynamicColorSelector"
 
 interface DefinitiveProductFormProps {
   onSuccess?: (productId: string) => void
@@ -41,7 +42,7 @@ const STOCK_STATUSES = [
 const AVAILABILITY_TYPES = [
   { value: 'normal', label: 'Normal', icon: '📦', color: 'bg-gray-100 text-gray-800' },
   { value: 'preorder', label: 'Précommande', icon: '📅', color: 'bg-blue-100 text-blue-800' },
-  { value: 'coming_soon', label: 'Bientôt disponible', icon: '⏳', color: 'bg-yellow-100 text-yellow-800' },
+  { value: 'coming_soon', label: 'Bientôt disponible', icon: '⏳', color: 'bg-gray-100 text-gray-900' },
   { value: 'discontinued', label: 'Arrêté', icon: '🚫', color: 'bg-red-100 text-red-800' }
 ]
 
@@ -70,6 +71,9 @@ export function DefinitiveProductForm({
   const { subcategories } = useSubcategories()
   const { organisations: suppliers } = useSuppliers()
   const supabase = createClient()
+
+  // Vérifier si le produit est dans un groupe de variantes (dimensions read-only)
+  const isInVariantGroup = Boolean(existingProduct?.variant_group_id)
 
   // État complet du formulaire selon nouvelles règles métier
   const [formData, setFormData] = useState({
@@ -988,9 +992,21 @@ export function DefinitiveProductForm({
             {/* Dimensions */}
             <div>
               <h3 className="text-lg font-semibold mb-4">Dimensions</h3>
+
+              {isInVariantGroup && (
+                <Alert className="mb-4 border-blue-200 bg-blue-50">
+                  <Info className="h-4 w-4 text-blue-600" />
+                  <AlertDescription className="text-blue-800">
+                    Les dimensions sont définies au niveau du groupe de variantes et ne peuvent pas être modifiées individuellement.
+                  </AlertDescription>
+                </Alert>
+              )}
+
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                 <div className="space-y-2">
-                  <Label htmlFor="width">Largeur (cm)</Label>
+                  <Label htmlFor="width" className={isInVariantGroup ? "text-gray-500" : ""}>
+                    Largeur (cm)
+                  </Label>
                   <Input
                     id="width"
                     type="number"
@@ -1000,11 +1016,14 @@ export function DefinitiveProductForm({
                     onChange={(e) => setFormData({...formData, dimensions: {...formData.dimensions, width: e.target.value}})}
                     placeholder="50"
                     className="border-gray-300 focus:border-black"
+                    disabled={isInVariantGroup}
                   />
                 </div>
 
                 <div className="space-y-2">
-                  <Label htmlFor="height">Hauteur (cm)</Label>
+                  <Label htmlFor="height" className={isInVariantGroup ? "text-gray-500" : ""}>
+                    Hauteur (cm)
+                  </Label>
                   <Input
                     id="height"
                     type="number"
@@ -1014,11 +1033,14 @@ export function DefinitiveProductForm({
                     onChange={(e) => setFormData({...formData, dimensions: {...formData.dimensions, height: e.target.value}})}
                     placeholder="80"
                     className="border-gray-300 focus:border-black"
+                    disabled={isInVariantGroup}
                   />
                 </div>
 
                 <div className="space-y-2">
-                  <Label htmlFor="depth">Profondeur (cm)</Label>
+                  <Label htmlFor="depth" className={isInVariantGroup ? "text-gray-500" : ""}>
+                    Profondeur (cm)
+                  </Label>
                   <Input
                     id="depth"
                     type="number"
@@ -1028,6 +1050,7 @@ export function DefinitiveProductForm({
                     onChange={(e) => setFormData({...formData, dimensions: {...formData.dimensions, depth: e.target.value}})}
                     placeholder="45"
                     className="border-gray-300 focus:border-black"
+                    disabled={isInVariantGroup}
                   />
                 </div>
               </div>
@@ -1053,13 +1076,10 @@ export function DefinitiveProductForm({
               <h3 className="text-lg font-semibold mb-4">Attributs de variante</h3>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div className="space-y-2">
-                  <Label htmlFor="color">Couleur</Label>
-                  <Input
-                    id="color"
+                  <DynamicColorSelector
                     value={formData.variant_attributes.color}
-                    onChange={(e) => setFormData({...formData, variant_attributes: {...formData.variant_attributes, color: e.target.value}})}
-                    placeholder="Blanc"
-                    className="border-gray-300 focus:border-black"
+                    onChange={(value) => setFormData({...formData, variant_attributes: {...formData.variant_attributes, color: value}})}
+                    placeholder="Rechercher ou créer une couleur..."
                   />
                 </div>
 

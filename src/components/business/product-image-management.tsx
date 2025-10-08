@@ -387,7 +387,7 @@ export function ProductImageManagement({
               )}
             </div>
             {images.length === maxImages && (
-              <span className="text-orange-600 text-xs">
+              <span className="text-black text-xs">
                 Limite d'images atteinte
               </span>
             )}

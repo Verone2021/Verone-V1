@@ -230,7 +230,7 @@ export function TestProgressBar({
             <span className={cn(
               "font-medium",
               failureRate > 10 ? "text-red-600" :
-              failureRate > 5 ? "text-yellow-600" : "text-gray-600"
+              failureRate > 5 ? "text-gray-700" : "text-gray-600"
             )}>
               {failureRate}%
             </span>

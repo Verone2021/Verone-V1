@@ -90,9 +90,9 @@ const roleConfigs: Record<UserRole, RoleConfig> = {
       'Génération de rapports vente',
       'Export catalogues clients'
     ],
-    bgClass: 'bg-orange-100',
-    textClass: 'text-orange-800',
-    borderClass: 'border-orange-200'
+    bgClass: 'bg-gray-100',
+    textClass: 'text-gray-900',
+    borderClass: 'border-gray-200'
   },
   partner_manager: {
     label: 'Gestionnaire Partenaires',

@@ -96,14 +96,14 @@ export default function SourcingValidationPage() {
   // Obtenir le badge de statut
   const getStatusBadge = (product: SourcingProduct) => {
     if (product.requires_sample) {
-      return <Badge variant="outline" className="border-orange-300 text-orange-600">Échantillons requis</Badge>
+      return <Badge variant="outline" className="border-gray-300 text-black">Échantillons requis</Badge>
     }
 
     switch (product.status) {
       case 'sourcing':
         return <Badge variant="outline" className="border-gray-300 text-gray-600">En sourcing</Badge>
       case 'echantillon_a_commander':
-        return <Badge variant="outline" className="border-orange-300 text-orange-600">Échantillon à commander</Badge>
+        return <Badge variant="outline" className="border-gray-300 text-black">Échantillon à commander</Badge>
       case 'echantillon_commande':
         return <Badge variant="outline" className="border-blue-300 text-blue-600">Échantillon commandé</Badge>
       case 'in_stock':
@@ -188,7 +188,7 @@ export default function SourcingValidationPage() {
           <Card className="border-black">
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
               <CardTitle className="text-sm font-medium text-gray-600">À Valider</CardTitle>
-              <Clock className="h-4 w-4 text-orange-600" />
+              <Clock className="h-4 w-4 text-black" />
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold text-black">{productsToValidate.length}</div>
@@ -221,7 +221,7 @@ export default function SourcingValidationPage() {
           <Card className="border-black">
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
               <CardTitle className="text-sm font-medium text-gray-600">Total Sourcing</CardTitle>
-              <Star className="h-4 w-4 text-yellow-600" />
+              <Star className="h-4 w-4 text-gray-700" />
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold text-black">
@@ -295,7 +295,7 @@ export default function SourcingValidationPage() {
                         </div>
                         <div>
                           <span className="text-gray-600">Échantillons requis:</span>
-                          <span className={`font-medium ml-1 ${product.requires_sample ? 'text-orange-600' : 'text-green-600'}`}>
+                          <span className={`font-medium ml-1 ${product.requires_sample ? 'text-black' : 'text-green-600'}`}>
                             {product.requires_sample ? 'Oui' : 'Non'}
                           </span>
                         </div>

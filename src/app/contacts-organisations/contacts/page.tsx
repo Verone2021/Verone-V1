@@ -234,10 +234,10 @@ export default function ContactsPage() {
             <CardTitle className="text-sm font-medium text-gray-600">
               Actifs
             </CardTitle>
-            <Phone className="h-4 w-4 text-orange-500" />
+            <Phone className="h-4 w-4 text-gray-900" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-orange-600">{stats.activeContacts}</div>
+            <div className="text-2xl font-bold text-black">{stats.activeContacts}</div>
             <p className="text-xs text-gray-500">
               Contacts actifs
             </p>
@@ -426,7 +426,7 @@ export default function ContactsPage() {
                               variant="outline"
                               size="sm"
                               onClick={() => handleArchive(contact)}
-                              className={`${!contact.is_active ? "text-blue-600 border-blue-200 hover:bg-blue-50" : "text-orange-600 border-orange-200 hover:bg-orange-50"}`}
+                              className={`${!contact.is_active ? "text-blue-600 border-blue-200 hover:bg-blue-50" : "text-black border-gray-200 hover:bg-gray-50"}`}
                             >
                               {!contact.is_active ? (
                                 <ArchiveRestore className="h-4 w-4" />

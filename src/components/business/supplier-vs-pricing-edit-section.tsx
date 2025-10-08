@@ -242,8 +242,8 @@ export function SupplierVsPricingEditSection({
 
           {/* Alertes */}
           {editData?.margin_percentage && editData.margin_percentage < 5 && (
-            <div className="bg-orange-50 p-3 rounded-lg border border-orange-200">
-              <div className="flex items-center text-orange-600 text-sm">
+            <div className="bg-gray-50 p-3 rounded-lg border border-gray-200">
+              <div className="flex items-center text-black text-sm">
                 <AlertCircle className="h-4 w-4 mr-2" />
                 ⚠️ Marge très faible (moins de 5%)
               </div>
@@ -298,7 +298,7 @@ export function SupplierVsPricingEditSection({
               <span className={cn(
                 "text-lg font-bold",
                 currentMarginPercentage > 20 ? "text-green-600" :
-                currentMarginPercentage > 5 ? "text-orange-600" : "text-red-600"
+                currentMarginPercentage > 5 ? "text-black" : "text-red-600"
               )}>
                 {currentMarginPercentage}%
               </span>

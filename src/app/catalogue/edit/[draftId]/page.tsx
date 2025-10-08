@@ -1,5 +1,6 @@
 'use client'
 
+import { use } from 'react'
 import { useRouter } from 'next/navigation'
 import { DraftCompletionWizard } from '../../../../components/business/draft-completion-wizard'
 
@@ -9,9 +10,9 @@ interface DraftEditPageProps {
   }>
 }
 
-export default async function DraftEditPage({ params }: DraftEditPageProps) {
+export default function DraftEditPage({ params }: DraftEditPageProps) {
   const router = useRouter()
-  const resolvedParams = await params
+  const resolvedParams = use(params)
   const { draftId } = resolvedParams
 
   const handleCancel = () => {

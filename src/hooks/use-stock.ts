@@ -443,6 +443,93 @@ export function useStock() {
     })
   }, [stockData])
 
+  // Récupérer UNIQUEMENT les produits présents en inventaire
+  // (ceux ayant eu des mouvements de stock OU ayant stock_quantity > 0)
+  const fetchInventoryProducts = useCallback(async () => {
+    setLoading(true)
+    try {
+      // Stratégie 1: Récupérer tous les produits avec stock > 0
+      const { data: productsWithStock, error: stockError } = await supabase
+        .from('products')
+        .select(`
+          id,
+          name,
+          sku,
+          stock_quantity,
+          min_stock,
+          price_ht,
+          updated_at,
+          primary_image_url,
+          status
+        `)
+        .gt('stock_quantity', 0)
+        .is('archived_at', null)
+
+      if (stockError) throw stockError
+
+      // Stratégie 2: Récupérer tous les product_id ayant des mouvements
+      const { data: movements, error: movementsError } = await supabase
+        .from('stock_movements')
+        .select('product_id')
+
+      if (movementsError) throw movementsError
+
+      // Extraire les IDs uniques de produits avec mouvements
+      const productIdsWithMovements = [...new Set(movements?.map(m => m.product_id) || [])]
+
+      // Récupérer les produits avec mouvements mais stock = 0
+      const productIdsToFetch = productIdsWithMovements.filter(
+        id => !productsWithStock?.some(p => p.id === id)
+      )
+
+      let productsWithMovements: any[] = []
+      if (productIdsToFetch.length > 0) {
+        const { data, error } = await supabase
+          .from('products')
+          .select(`
+            id,
+            name,
+            sku,
+            stock_quantity,
+            min_stock,
+            price_ht,
+            updated_at,
+            primary_image_url,
+            status
+          `)
+          .in('id', productIdsToFetch)
+          .is('archived_at', null)
+
+        if (error) throw error
+        productsWithMovements = data || []
+      }
+
+      // Combiner les deux listes et dédupliquer
+      const allInventoryProducts = [
+        ...(productsWithStock || []),
+        ...productsWithMovements
+      ]
+
+      // Trier par date de mise à jour (plus récent en premier)
+      allInventoryProducts.sort((a, b) =>
+        new Date(b.updated_at).getTime() - new Date(a.updated_at).getTime()
+      )
+
+      return allInventoryProducts
+
+    } catch (error) {
+      console.error('❌ Erreur chargement inventaire:', error)
+      toast({
+        title: "Erreur",
+        description: "Impossible de charger l'inventaire",
+        variant: "destructive"
+      })
+      return []
+    } finally {
+      setLoading(false)
+    }
+  }, [supabase, toast])
+
   return {
     // État
     loading,
@@ -451,6 +538,7 @@ export function useStock() {
 
     // Actions principales
     fetchAllStock,
+    fetchInventoryProducts,
     getProductStockAdvanced,
     createManualMovement,
     createForecastMovement,

@@ -198,7 +198,7 @@ export function ProductConsultationManager({
                     : 0}%
                 </p>
               </div>
-              <CheckCircle className="h-8 w-8 text-orange-600" />
+              <CheckCircle className="h-8 w-8 text-black" />
             </div>
           </CardContent>
         </Card>

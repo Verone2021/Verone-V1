@@ -5,6 +5,7 @@
  */
 
 import { createServerClient as createSupabaseServerClient } from '@supabase/ssr'
+import { createClient as createSupabaseClient } from '@supabase/supabase-js'
 import { cookies } from 'next/headers'
 import { Database } from './types'
 
@@ -27,6 +28,14 @@ export const createServerClient = async () => {
         },
       },
     }
+  )
+}
+
+// Edge Runtime Compatible Client (pour API routes avec runtime = 'edge')
+export const createClient = () => {
+  return createSupabaseClient<Database>(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
   )
 }
 

@@ -174,6 +174,16 @@ export default function ProductDetailPage() {
                 slug
               )
             )
+          ),
+          variant_group:variant_groups(
+            id,
+            name,
+            dimensions_length,
+            dimensions_width,
+            dimensions_height,
+            dimensions_unit,
+            has_common_supplier,
+            supplier_id
           )
         `)
         .eq('id', productId)
@@ -358,6 +368,22 @@ export default function ProductDetailPage() {
             />
           </div>
 
+          {/* Actions sous l'image */}
+          <div className="bg-white border border-black p-4">
+            <h3 className="font-medium mb-3 text-sm">Actions</h3>
+            <div className="space-y-2">
+              <Button
+                variant="outline"
+                size="sm"
+                className="w-full justify-start text-xs"
+                onClick={() => setShowPhotosModal(true)}
+              >
+                <ImageIcon className="h-3 w-3 mr-2" />
+                Gérer photos ({product.images?.length || 0})
+              </Button>
+            </div>
+          </div>
+
           {/* Section Variantes - Affichée uniquement si produit dans un groupe */}
           {product.variant_group_id && (
             <div className="bg-white border border-black">
@@ -388,22 +414,6 @@ export default function ProductDetailPage() {
               />
             </div>
           )}
-
-          {/* Actions sous l'image (déplacées depuis colonne 3) */}
-          <div className="bg-white border border-black p-4">
-            <h3 className="font-medium mb-3 text-sm">Actions</h3>
-            <div className="space-y-2">
-              <Button
-                variant="outline"
-                size="sm"
-                className="w-full justify-start text-xs"
-                onClick={() => setShowPhotosModal(true)}
-              >
-                <ImageIcon className="h-3 w-3 mr-2" />
-                Gérer photos ({product.images?.length || 0})
-              </Button>
-            </div>
-          </div>
 
           {/* Métadonnées */}
           <div className="bg-white border border-black p-4">
@@ -516,11 +526,11 @@ export default function ProductDetailPage() {
                       )}
                     </div>
                     {product.variant_group_id && (
-                      <p className="text-xs text-orange-600 mb-2">
+                      <p className="text-xs text-black mb-2">
                         ℹ️ Nom géré par le groupe de variantes.{' '}
                         <a
                           href={`/catalogue/variantes/${product.variant_group_id}`}
-                          className="underline hover:text-orange-800"
+                          className="underline hover:text-gray-900"
                         >
                           Modifier depuis la page du groupe
                         </a>
@@ -557,7 +567,7 @@ export default function ProductDetailPage() {
                   Modifier
                 </Button>
               ) : (
-                <p className="text-xs text-orange-600">
+                <p className="text-xs text-black">
                   ℹ️ Géré par le groupe de variantes
                 </p>
               )}
@@ -647,8 +657,10 @@ export default function ProductDetailPage() {
               supplier_id: product.supplier_id,
               supplier_reference: product.supplier_reference,
               supplier_page_url: product.supplier_page_url,
-              supplier: product.supplier
+              supplier: product.supplier,
+              variant_group_id: product.variant_group_id
             }}
+            variantGroup={product.variant_group}
             onUpdate={handleProductUpdate}
           />
 
@@ -766,6 +778,7 @@ export default function ProductDetailPage() {
         productName={product.name}
         productType="product"
         maxImages={20}
+        onImagesUpdated={fetchProduct}
       />
 
       {/* Modal de gestion des caractéristiques */}

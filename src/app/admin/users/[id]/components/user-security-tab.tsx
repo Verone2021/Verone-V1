@@ -88,7 +88,7 @@ export function UserSecurityTab({ user }: UserSecurityTabProps) {
 
   const getSecurityLevel = (score: number) => {
     if (score >= 80) return { level: 'Élevé', color: 'text-green-600', bgColor: 'bg-green-50' }
-    if (score >= 60) return { level: 'Moyen', color: 'text-orange-500', bgColor: 'bg-orange-50' }
+    if (score >= 60) return { level: 'Moyen', color: 'text-gray-900', bgColor: 'bg-gray-50' }
     return { level: 'Faible', color: 'text-red-500', bgColor: 'bg-red-50' }
   }
 
@@ -175,7 +175,7 @@ export function UserSecurityTab({ user }: UserSecurityTabProps) {
               </div>
               <div className="flex justify-between">
                 <span className="text-black opacity-70">Double authentification:</span>
-                <span className="text-orange-500">Non configurée</span>
+                <span className="text-gray-900">Non configurée</span>
               </div>
             </div>
           </div>
@@ -350,8 +350,8 @@ export function UserSecurityTab({ user }: UserSecurityTabProps) {
 
           <div className="space-y-2">
             {!isEmailConfirmed && (
-              <div className="p-4 bg-orange-50 border border-orange-200 rounded">
-                <div className="flex items-center space-x-2 text-orange-600">
+              <div className="p-4 bg-gray-50 border border-gray-200 rounded">
+                <div className="flex items-center space-x-2 text-black">
                   <AlertTriangle className="h-4 w-4" />
                   <span className="font-medium">Email non confirmé</span>
                 </div>

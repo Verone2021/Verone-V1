@@ -232,7 +232,7 @@ export function AIInsightsPanel({ className, refreshInterval = 30000 }: AIInsigh
           color="purple"
         />
         <MetricCard
-          icon={<Activity className="w-6 h-6 text-orange-600" />}
+          icon={<Activity className="w-6 h-6 text-black" />}
           title="Learning Rate"
           value={`${combinedMetrics.learning_velocity.toFixed(1)}`}
           subtitle="Patterns/jour"
@@ -283,7 +283,7 @@ export function AIInsightsPanel({ className, refreshInterval = 30000 }: AIInsigh
                 />
               </div>
               <div className="text-center">
-                <div className="text-2xl font-bold text-orange-600">
+                <div className="text-2xl font-bold text-black">
                   {operationalMetrics.predicted_downtime}min
                 </div>
                 <div className="text-sm text-muted-foreground">Predicted Downtime/Day</div>
@@ -464,7 +464,7 @@ function MetricCard({ icon, title, value, subtitle, trend, color }: MetricCardPr
     blue: 'border-blue-200 bg-blue-50',
     green: 'border-green-200 bg-green-50',
     purple: 'border-purple-200 bg-purple-50',
-    orange: 'border-orange-200 bg-orange-50',
+    orange: 'border-gray-200 bg-gray-50',
     red: 'border-red-200 bg-red-50'
   }
 
@@ -502,8 +502,8 @@ interface PredictionCardProps {
 function PredictionCard({ prediction }: PredictionCardProps) {
   const impactColors = {
     critical: 'border-red-500 bg-red-50',
-    high: 'border-orange-500 bg-orange-50',
-    medium: 'border-yellow-500 bg-yellow-50',
+    high: 'border-black bg-gray-50',
+    medium: 'border-gray-500 bg-gray-50',
     low: 'border-gray-500 bg-gray-50'
   }
 
@@ -789,7 +789,7 @@ function SystemAIPanel({
             <Button
               onClick={onClearHistory}
               variant="outline"
-              className="w-full text-orange-600 hover:text-orange-700"
+              className="w-full text-black hover:text-gray-800"
             >
               Clear Analysis History
             </Button>

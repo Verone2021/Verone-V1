@@ -205,7 +205,7 @@ export function UserProfileTab({ user }: UserProfileTabProps) {
                   <span className="font-medium">Compte actif</span>
                 </div>
               ) : (
-                <div className="flex items-center space-x-2 text-orange-500">
+                <div className="flex items-center space-x-2 text-gray-900">
                   <Clock className="h-4 w-4" />
                   <span className="font-medium">Compte dormant</span>
                 </div>

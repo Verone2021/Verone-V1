@@ -128,7 +128,7 @@ export default function ConsultationsPage() {
                   <p className="text-sm text-gray-600">En attente</p>
                   <p className="text-2xl font-bold">{consultationsByStatus.en_attente.length}</p>
                 </div>
-                <Clock className="h-8 w-8 text-yellow-600" />
+                <Clock className="h-8 w-8 text-gray-700" />
               </div>
             </CardContent>
           </Card>
@@ -258,7 +258,7 @@ export default function ConsultationsPage() {
                           <Badge
                             variant="outline"
                             className={
-                              consultation.status === 'en_attente' ? 'border-yellow-200 text-yellow-700' :
+                              consultation.status === 'en_attente' ? 'border-gray-200 text-gray-800' :
                               consultation.status === 'en_cours' ? 'border-blue-200 text-blue-700' :
                               consultation.status === 'terminee' ? 'border-green-200 text-green-700' :
                               'border-gray-200 text-gray-700'

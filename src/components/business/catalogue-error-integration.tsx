@@ -289,8 +289,8 @@ export const CatalogueErrorIntegration: React.FC = () => {
           value={`${performance.average_product_load_time}ms`}
           subValue="par produit"
           icon={Clock}
-          color={performance.average_product_load_time > 2000 ? 'text-yellow-600' : 'text-green-600'}
-          bgColor={performance.average_product_load_time > 2000 ? 'bg-yellow-100' : 'bg-green-100'}
+          color={performance.average_product_load_time > 2000 ? 'text-gray-700' : 'text-green-600'}
+          bgColor={performance.average_product_load_time > 2000 ? 'bg-gray-100' : 'bg-green-100'}
         />
 
         <CatalogueMetricsCard
@@ -332,7 +332,7 @@ export const CatalogueErrorIntegration: React.FC = () => {
                 type="Images Produit"
                 count={productErrors.image_load_errors}
                 icon={Image}
-                color="text-orange-600"
+                color="text-black"
               />
               <ErrorTypeRow
                 type="Calcul Prix"
@@ -360,7 +360,7 @@ export const CatalogueErrorIntegration: React.FC = () => {
             <div className="space-y-3">
               {performance.slow_products.length > 0 ? (
                 performance.slow_products.map((product, index) => (
-                  <div key={product.id} className="flex items-center justify-between p-2 bg-yellow-50 rounded-lg">
+                  <div key={product.id} className="flex items-center justify-between p-2 bg-gray-50 rounded-lg">
                     <div className="flex-1 min-w-0">
                       <div className="font-medium text-sm text-black truncate">
                         {product.name}
@@ -370,7 +370,7 @@ export const CatalogueErrorIntegration: React.FC = () => {
                       </div>
                     </div>
                     <div className="text-right">
-                      <div className="font-medium text-yellow-700">
+                      <div className="font-medium text-gray-800">
                         {Math.round(product.load_time)}ms
                       </div>
                       <Progress

@@ -40,10 +40,6 @@ export function register() {
     // 🔒 Sécurité et vie privée
     sendDefaultPii: process.env.NODE_ENV === 'development',
 
-    // 📋 Configuration avancée
-    autoSessionTracking: true,
-    enableTracing: true,
-
     // 🎨 Tags par défaut
     initialScope: {
       tags: {
@@ -123,7 +119,7 @@ export function register() {
       }
 
       // Ignorer erreurs réseau communes en production
-      if (['ChunkLoadError', 'NetworkError', 'TypeError'].includes(errorType) &&
+      if (errorType && ['ChunkLoadError', 'NetworkError', 'TypeError'].includes(errorType) &&
           errorValue.includes('Loading chunk')) {
         return null
       }
@@ -193,16 +189,16 @@ export function register() {
     }
 
     // 🧪 Helpers de test Sentry (disponibles dans console navigateur)
-    window.testSentry = (message = 'Test Sentry depuis console') => {
+    (window as any).testSentry = (message = 'Test Sentry depuis console') => {
       Sentry.captureMessage(message, 'error')
       console.log('✅ Message test envoyé à Sentry:', message)
     }
 
-    window.testSentryError = () => {
+    (window as any).testSentryError = () => {
       throw new Error('Test: Erreur JavaScript non gérée')
     }
 
-    window.testSentryWithContext = () => {
+    (window as any).testSentryWithContext = () => {
       Sentry.withScope((scope) => {
         scope.setTag('test', 'true')
         scope.setLevel('warning')

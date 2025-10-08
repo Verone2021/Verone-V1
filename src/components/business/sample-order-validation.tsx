@@ -270,7 +270,7 @@ export function SampleOrderValidation({ className }: SampleOrderValidationProps)
       case 'draft':
         return <Badge variant="outline" className="border-gray-300 text-gray-600">Brouillon</Badge>
       case 'pending_approval':
-        return <Badge variant="outline" className="border-orange-300 text-orange-600">En attente d'approbation</Badge>
+        return <Badge variant="outline" className="border-gray-300 text-black">En attente d'approbation</Badge>
       case 'approved':
         return <Badge variant="outline" className="border-green-300 text-green-600">Approuvée</Badge>
       case 'ordered':
@@ -333,8 +333,8 @@ export function SampleOrderValidation({ className }: SampleOrderValidationProps)
               <div className="text-2xl font-bold text-black">{workflowMetrics.total_sourcing || 0}</div>
               <div className="text-sm text-gray-600">Total sourcing</div>
             </div>
-            <div className="text-center p-4 bg-orange-50 rounded-lg">
-              <div className="text-2xl font-bold text-orange-600">{workflowMetrics.requiring_samples || 0}</div>
+            <div className="text-center p-4 bg-gray-50 rounded-lg">
+              <div className="text-2xl font-bold text-black">{workflowMetrics.requiring_samples || 0}</div>
               <div className="text-sm text-gray-600">Nécessitent échantillons</div>
             </div>
             <div className="text-center p-4 bg-green-50 rounded-lg">

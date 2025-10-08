@@ -88,7 +88,7 @@ export function ProductStatusSelector({
             size="sm"
             onClick={handleForceRecalculation}
             disabled={disabled || isChanging}
-            className="text-orange-600 border-orange-200 hover:bg-orange-50"
+            className="text-black border-gray-200 hover:bg-gray-50"
           >
             <RefreshCw className={`h-3 w-3 mr-1 ${isChanging ? 'animate-spin' : ''}`} />
             Recalculer
@@ -139,9 +139,9 @@ export function ProductStatusSelector({
         <div className="space-y-2">
           {/* Statut incohérent */}
           {isInconsistent && (
-            <Alert className="border-orange-200 bg-orange-50">
-              <AlertTriangle className="h-4 w-4 text-orange-600" />
-              <AlertDescription className="text-orange-800">
+            <Alert className="border-gray-200 bg-gray-50">
+              <AlertTriangle className="h-4 w-4 text-black" />
+              <AlertDescription className="text-gray-900">
                 <strong>Statut incohérent:</strong> Avec stock_real={stockReal} et stock_forecasted_in={stockForecastedIn},
                 le statut devrait être "{formatStatusForDisplay(calculatedAutomaticStatus).label}".
               </AlertDescription>

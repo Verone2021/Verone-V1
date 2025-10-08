@@ -259,7 +259,7 @@ export default function CatalogueDashboardPage() {
                           className={`text-xs ${
                             completion.isComplete
                               ? 'text-green-600 border-green-200 bg-green-50'
-                              : 'text-orange-600 border-orange-200 bg-orange-50'
+                              : 'text-black border-gray-200 bg-gray-50'
                           }`}
                         >
                           {completion.isComplete ? 'Complet' : 'Incomplet'}

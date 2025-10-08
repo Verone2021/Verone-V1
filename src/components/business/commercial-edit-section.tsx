@@ -161,7 +161,7 @@ export function CommercialEditSection({ organisation, onUpdate, className }: Com
 
           {/* Système de prépaiement */}
           {editData?.payment_terms === '0' && (
-            <div className="bg-amber-50 border border-amber-200 rounded-lg p-4">
+            <div className="bg-gray-50 border border-gray-300 rounded-lg p-4">
               <div className="flex items-center space-x-3">
                 <input
                   type="checkbox"
@@ -171,10 +171,10 @@ export function CommercialEditSection({ organisation, onUpdate, className }: Com
                   className="h-4 w-4 text-black focus:ring-black border-gray-300 rounded"
                 />
                 <label htmlFor="prepayment_required" className="flex-1">
-                  <div className="text-sm font-medium text-amber-800">
+                  <div className="text-sm font-medium text-gray-900">
                     Prépaiement obligatoire
                   </div>
-                  <div className="text-xs text-amber-700">
+                  <div className="text-xs text-gray-900">
                     {editData?.prepayment_required
                       ? 'Commande bloquée jusqu\'au règlement préalable'
                       : 'Envoi et facturation simultanés'
@@ -328,7 +328,7 @@ export function CommercialEditSection({ organisation, onUpdate, className }: Com
                   {paymentTermsOptions.find(opt => opt.value === organisation.payment_terms)?.label || organisation.payment_terms}
                 </div>
                 {organisation.payment_terms === '0' && organisation.prepayment_required && (
-                  <div className="text-xs text-amber-700 bg-amber-100 px-2 py-1 rounded mt-2">
+                  <div className="text-xs text-gray-900 bg-gray-100 px-2 py-1 rounded mt-2">
                     ⚠️ Prépaiement obligatoire - Commande bloquée jusqu'au règlement
                   </div>
                 )}
@@ -348,12 +348,12 @@ export function CommercialEditSection({ organisation, onUpdate, className }: Com
             )}
 
             {organisation.minimum_order_amount && organisation.minimum_order_amount > 0 && (
-              <div className="bg-orange-50 p-3 rounded-lg">
-                <div className="text-xs text-orange-600 font-medium mb-1 flex items-center">
+              <div className="bg-gray-50 p-3 rounded-lg">
+                <div className="text-xs text-black font-medium mb-1 flex items-center">
                   <DollarSign className="h-3 w-3 mr-1" />
                   COMMANDE MINIMUM
                 </div>
-                <div className="text-sm font-semibold text-orange-800">
+                <div className="text-sm font-semibold text-gray-900">
                   {organisation.minimum_order_amount.toFixed(2)} {organisation.currency || 'EUR'}
                 </div>
               </div>

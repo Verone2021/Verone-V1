@@ -265,9 +265,9 @@ export default function CatalogueStocksPage() {
 
       {/* Alertes importantes */}
       {stockAlerts.length > 0 && (
-        <Card className="border-amber-200 bg-amber-50">
+        <Card className="border-gray-300 bg-gray-50">
           <CardHeader>
-            <CardTitle className="flex items-center gap-2 text-amber-800">
+            <CardTitle className="flex items-center gap-2 text-gray-900">
               <AlertTriangle className="h-5 w-5" />
               Alertes Stock ({stockAlerts.length})
             </CardTitle>
@@ -286,7 +286,7 @@ export default function CatalogueStocksPage() {
                 </div>
               ))}
               {stockAlerts.length > 3 && (
-                <p className="text-sm text-amber-700">
+                <p className="text-sm text-gray-900">
                   Et {stockAlerts.length - 3} autre(s) alerte(s)...
                 </p>
               )}

@@ -93,8 +93,8 @@ export function StockEditSection({ product, onUpdate, className }: StockEditSect
 
   const getStockStatus = (quantity: number, minLevel: number) => {
     if (quantity <= 0) return { color: 'text-red-600', level: 'Rupture' }
-    if (quantity <= minLevel) return { color: 'text-orange-600', level: 'Critique' }
-    if (quantity <= minLevel * 2) return { color: 'text-yellow-600', level: 'Faible' }
+    if (quantity <= minLevel) return { color: 'text-black', level: 'Critique' }
+    if (quantity <= minLevel * 2) return { color: 'text-gray-700', level: 'Faible' }
     return { color: 'text-green-600', level: 'Bon' }
   }
 
@@ -273,8 +273,8 @@ export function StockEditSection({ product, onUpdate, className }: StockEditSect
 
           {/* Alertes et validation */}
           {editData && editData.stock_quantity <= (editData.min_stock || 5) && (
-            <div className="bg-orange-50 border border-orange-200 p-3 rounded-md">
-              <div className="flex items-center text-orange-700">
+            <div className="bg-gray-50 border border-gray-200 p-3 rounded-md">
+              <div className="flex items-center text-gray-800">
                 <AlertTriangle className="h-4 w-4 mr-2" />
                 <span className="text-sm font-medium">
                   Attention: Stock faible ({editData.stock_quantity} ≤ {editData.min_stock})

@@ -10,7 +10,7 @@ export default function ArchivedProductsPage() {
   const statusConfig = {
     archived: { label: "📦 Archivé", className: "bg-gray-600 text-white" },
     discontinued: { label: "⛔ Arrêté", className: "bg-red-600 text-white" },
-    end_of_life: { label: "🔚 Fin de série", className: "bg-orange-600 text-white" }
+    end_of_life: { label: "🔚 Fin de série", className: "bg-gray-100 text-white" }
   }
 
   return (
@@ -52,7 +52,7 @@ export default function ArchivedProductsPage() {
           <div className="text-sm text-gray-600">Arrêtés</div>
         </div>
         <div className="bg-white border border-gray-200 p-4">
-          <div className="text-2xl font-bold text-orange-600">0</div>
+          <div className="text-2xl font-bold text-black">0</div>
           <div className="text-sm text-gray-600">Fin de série</div>
         </div>
       </div>

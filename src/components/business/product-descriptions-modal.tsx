@@ -179,7 +179,7 @@ export function ProductDescriptionsModal({
       chars,
       words,
       lines,
-      charColor: chars < 50 ? 'text-red-600' : chars > 500 ? 'text-orange-600' : 'text-green-600'
+      charColor: chars < 50 ? 'text-red-600' : chars > 500 ? 'text-black' : 'text-green-600'
     }
   }
 

@@ -28,8 +28,8 @@ const statusLabels: Record<SalesOrderStatus, string> = {
 const statusColors: Record<SalesOrderStatus, string> = {
   draft: 'bg-gray-100 text-gray-800',
   confirmed: 'bg-blue-100 text-blue-800',
-  partially_shipped: 'bg-orange-100 text-orange-800',
-  shipped: 'bg-yellow-100 text-yellow-800',
+  partially_shipped: 'bg-gray-100 text-gray-900',
+  shipped: 'bg-gray-100 text-gray-900',
   delivered: 'bg-green-100 text-green-800',
   cancelled: 'bg-red-100 text-red-800'
 }
@@ -137,7 +137,7 @@ export default function SalesOrdersPage() {
               <CardTitle className="text-sm font-medium text-gray-600">Expédiées</CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold text-yellow-600">{stats.shipped_orders}</div>
+              <div className="text-2xl font-bold text-gray-700">{stats.shipped_orders}</div>
             </CardContent>
           </Card>
           <Card>
@@ -404,7 +404,7 @@ export default function SalesOrdersPage() {
                           <TableCell>{item.discount_percentage}%</TableCell>
                           <TableCell>{formatCurrency(item.total_ht)}</TableCell>
                           <TableCell>
-                            <span className={item.quantity_shipped >= item.quantity ? 'text-green-600' : 'text-orange-600'}>
+                            <span className={item.quantity_shipped >= item.quantity ? 'text-green-600' : 'text-black'}>
                               {item.quantity_shipped}/{item.quantity}
                             </span>
                           </TableCell>

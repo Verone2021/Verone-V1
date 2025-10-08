@@ -4,12 +4,13 @@ import type { AddProductToGroupData } from '@/types/variant-groups'
 
 export async function POST(
   request: Request,
-  { params }: { params: { groupId: string } }
+  { params }: { params: Promise<{ groupId: string }> }
 ) {
   try {
     const supabase = await createServerClient()
     const body: AddProductToGroupData = await request.json()
-    const groupId = params.groupId
+    const resolvedParams = await params
+    const groupId = resolvedParams.groupId
 
     const { product_id, variant_attributes } = body
 

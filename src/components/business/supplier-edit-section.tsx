@@ -12,6 +12,7 @@ interface Product {
   supplier_id?: string
   supplier_reference?: string
   supplier_page_url?: string
+  variant_group_id?: string | null
   supplier?: {
     id: string
     name: string
@@ -20,17 +21,28 @@ interface Product {
   }
 }
 
+interface VariantGroup {
+  id: string
+  name: string
+  has_common_supplier: boolean
+  supplier_id?: string | null
+}
+
 interface SupplierEditSectionProps {
   product: Product
+  variantGroup?: VariantGroup | null
   onUpdate: (updatedProduct: Partial<Product>) => void
   className?: string
 }
 
 export function SupplierEditSection({
   product,
+  variantGroup,
   onUpdate,
   className
 }: SupplierEditSectionProps) {
+  // Vérifier si le fournisseur est géré au niveau du groupe
+  const isSupplierManagedByGroup = !!(variantGroup?.has_common_supplier && product.variant_group_id)
   const {
     isEditing,
     isSaving,
@@ -209,11 +221,30 @@ export function SupplierEditSection({
           <Truck className="h-5 w-5 mr-2" />
           Fournisseur
         </h3>
-        <Button variant="outline" size="sm" onClick={handleStartEdit}>
-          <Edit className="h-3 w-3 mr-1" />
-          Modifier
-        </Button>
+        {isSupplierManagedByGroup ? (
+          <p className="text-xs text-black">
+            ℹ️ Géré par le groupe de variantes
+          </p>
+        ) : (
+          <Button variant="outline" size="sm" onClick={handleStartEdit}>
+            <Edit className="h-3 w-3 mr-1" />
+            Modifier
+          </Button>
+        )}
       </div>
+
+      {/* Message informatif si géré par le groupe */}
+      {isSupplierManagedByGroup && (
+        <div className="mb-3 p-2 bg-blue-50 border border-blue-200 rounded text-xs text-blue-800">
+          ℹ️ Le fournisseur est commun à toutes les variantes du groupe "{variantGroup?.name}".{' '}
+          <a
+            href={`/catalogue/variantes/${variantGroup?.id}`}
+            className="underline font-medium hover:text-blue-900"
+          >
+            Modifier depuis la page du groupe
+          </a>
+        </div>
+      )}
 
       <div className="space-y-3">
         {/* Fournisseur */}

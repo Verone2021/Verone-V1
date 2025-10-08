@@ -68,7 +68,7 @@ async function getCurrentUserRole() {
     .from('user_profiles')
     .select('role')
     .eq('user_id', user.id)
-    .single()
+    .single() as { data: { role: string } | null }
 
   return profile?.role || null
 }
@@ -82,7 +82,7 @@ async function getUserDetailData(userId: string): Promise<UserDetailData | null>
     .from('user_profiles')
     .select('*')
     .eq('user_id', userId)
-    .single()
+    .single() as { data: any; error: any }
 
   if (profileError || !profile) {
     console.error('Erreur récupération profil:', profileError)

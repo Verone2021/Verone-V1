@@ -95,7 +95,7 @@ export default function ContactDetailPage() {
 
     if (contact.is_primary_contact) {
       badges.push(
-        <Badge key="primary" variant="default" className="bg-yellow-100 text-yellow-800 border-yellow-200">
+        <Badge key="primary" variant="default" className="bg-gray-100 text-gray-900 border-gray-200">
           <Star className="h-3 w-3 mr-1" />
           Principal
         </Badge>
@@ -217,7 +217,7 @@ export default function ContactDetailPage() {
           <Button
             variant="outline"
             onClick={handleToggleActive}
-            className={currentContact.is_active ? "text-orange-600 border-orange-200 hover:bg-orange-50" : "text-blue-600 border-blue-200 hover:bg-blue-50"}
+            className={currentContact.is_active ? "text-black border-gray-200 hover:bg-gray-50" : "text-blue-600 border-blue-200 hover:bg-blue-50"}
           >
             {currentContact.is_active ? (
               <>

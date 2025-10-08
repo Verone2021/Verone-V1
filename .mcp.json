@@ -28,7 +28,7 @@
         "--context",
         "ide-assistant",
         "--project",
-        "/Users/romeodossantos/verone-back-office"
+        "."
       ]
     },
     "github": {
@@ -63,7 +63,8 @@
       "args": [
         "-y",
         "@playwright/mcp@latest",
-        "--extension"
+        "--browser",
+        "chrome"
       ]
     },
     "filesystem": {
@@ -71,7 +72,7 @@
       "args": [
         "-y",
         "@modelcontextprotocol/server-filesystem@latest",
-        "/Users/romeodossantos/verone-back-office"
+        "."
       ]
     },
     "memory": {
@@ -81,7 +82,7 @@
         "@modelcontextprotocol/server-memory"
       ],
       "env": {
-        "MEMORY_FILE_PATH": "/Users/romeodossantos/verone-back-office/.aim/verone-knowledge-graph.json"
+        "MEMORY_FILE_PATH": ".aim/verone-knowledge-graph.json"
       }
     }
   }

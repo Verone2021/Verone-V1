@@ -123,8 +123,8 @@ export function ProductCard({
       )}
       onClick={handleClick}
     >
-      {/* Image produit */}
-      <div className="relative aspect-[4/3] overflow-hidden border-b border-black">
+      {/* Image produit - ULTRA COMPACT */}
+      <div className="relative h-32 overflow-hidden border-b border-black">
         {primaryImage?.public_url && !imageLoading ? (
           <Image
             src={primaryImage.public_url}
@@ -143,72 +143,72 @@ export function ProductCard({
           <div className="w-full h-full bg-gray-100 flex items-center justify-center">
             {imageLoading ? (
               <div className="animate-pulse">
-                <Package className="h-12 w-12 text-gray-300" />
+                <Package className="h-8 w-8 text-gray-300" />
               </div>
             ) : (
-              <Package className="h-12 w-12 text-gray-400" />
+              <Package className="h-8 w-8 text-gray-400" />
             )}
           </div>
         )}
 
-        {/* Badge statut */}
-        <div className="absolute top-2 right-2">
-          <Badge className={status.className}>
+        {/* Badge statut - MINI */}
+        <div className="absolute top-1 right-1">
+          <Badge className={cn("text-[10px] px-1.5 py-0.5", status.className)}>
             {status.label}
           </Badge>
         </div>
 
-        {/* Badge condition si pas neuf */}
+        {/* Badge condition si pas neuf - MINI */}
         {product.condition !== 'new' && (
-          <div className="absolute top-2 left-2">
-            <Badge variant="outline" className="bg-white text-black">
+          <div className="absolute top-1 left-1">
+            <Badge variant="outline" className="bg-white text-black text-[10px] px-1.5 py-0.5">
               {product.condition === 'refurbished' ? 'Reconditionné' : 'Occasion'}
             </Badge>
           </div>
         )}
 
-        {/* Badge "nouveau" pour les produits créés dans les 30 derniers jours */}
+        {/* Badge "nouveau" pour les produits créés dans les 30 derniers jours - MINI */}
         {(() => {
           const createdAt = new Date(product.created_at)
           const thirtyDaysAgo = new Date()
           thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30)
           return createdAt > thirtyDaysAgo
         })() && (
-          <div className="absolute bottom-2 left-2">
-            <Badge variant="secondary" className="bg-green-100 text-green-800 border-green-300">
+          <div className="absolute bottom-1 left-1">
+            <Badge variant="secondary" className="bg-green-100 text-green-800 border-green-300 text-[10px] px-1.5 py-0.5">
               nouveau
             </Badge>
           </div>
         )}
       </div>
 
-      {/* Informations produit */}
-      <div className="p-4 space-y-3">
-        {/* En-tête */}
-        <div className="space-y-1">
-          <h3 className="font-medium text-base text-black line-clamp-2 group-hover:underline">
+      {/* Informations produit - ULTRA COMPACT */}
+      <div className="p-2 space-y-1.5">
+        {/* En-tête - COMPACT avec truncate pour éviter deux lignes */}
+        <div className="space-y-0.5">
+          <h3 className="font-medium text-xs text-black truncate group-hover:underline">
             {product.name}
           </h3>
-          <div className="text-sm text-black opacity-70">
+          <div className="text-[10px] text-black opacity-70">
             <span>SKU: {product.sku}</span>
           </div>
         </div>
 
-        {/* Prix d'achat uniquement */}
-        <div className="space-y-1">
+        {/* Prix d'achat uniquement - COMPACT */}
+        <div className="space-y-0.5">
           {product.cost_price && (
-            <div className="text-xl font-semibold text-black">
-              Prix d'achat : {product.cost_price.toFixed(2)} € HT
+            <div className="text-sm font-semibold text-black">
+              {product.cost_price.toFixed(2)} € HT
             </div>
           )}
 
-          {/* Affichage packages conditionnels */}
+          {/* Affichage packages conditionnels - MINI */}
           {showPackages && !packagesLoading && (
-            <div className="space-y-1 mt-2">
+            <div className="space-y-0.5 mt-1">
               {/* Badge remise disponible */}
               {hasMultiplePackages && defaultPackage && (
-                <div className="flex items-center gap-2">
-                  <Badge variant="outline" className="text-xs bg-green-50 text-green-700 border-green-200">
+                <div className="flex items-center gap-1">
+                  <Badge variant="outline" className="text-[9px] bg-green-50 text-green-700 border-green-200 px-1 py-0">
                     {hasMultiplePackages ? "Conditionnements multiples" : "Package unique"}
                   </Badge>
                   {(() => {
@@ -221,7 +221,7 @@ export function ProductCard({
                       : null
                     const discountLabel = bestPackage ? getDiscountLabel(bestPackage) : null
                     return discountLabel ? (
-                      <Badge variant="secondary" className="text-xs bg-orange-50 text-orange-700 border-orange-200">
+                      <Badge variant="secondary" className="text-[9px] bg-gray-50 text-gray-800 border-gray-200 px-1 py-0">
                         {discountLabel}
                       </Badge>
                     ) : null
@@ -233,27 +233,27 @@ export function ProductCard({
         </div>
 
 
-        {/* Actions */}
+        {/* Actions - ULTRA COMPACT */}
         {showActions && (
-          <div className="space-y-2 pt-2">
+          <div className="space-y-1 pt-1">
             {/* Actions principales */}
-            <div className="flex gap-2">
+            <div className="flex gap-1">
               {/* Archiver/Restaurer */}
               {onArchive && (
                 <Button
                   variant="outline"
                   size="sm"
                   onClick={handleArchiveClick}
-                  className={`flex-1 min-w-0 ${archived ? "text-blue-600 border-blue-200 hover:bg-blue-50" : "text-orange-600 border-orange-200 hover:bg-orange-50"}`}
+                  className={`flex-1 min-w-0 h-6 text-[10px] px-1.5 ${archived ? "text-blue-600 border-blue-200 hover:bg-blue-50" : "text-black border-gray-200 hover:bg-gray-50"}`}
                 >
                   {archived ? (
                     <>
-                      <ArchiveRestore className="h-4 w-4 mr-1" />
+                      <ArchiveRestore className="h-2.5 w-2.5 mr-0.5" />
                       Restaurer
                     </>
                   ) : (
                     <>
-                      <Archive className="h-4 w-4 mr-1" />
+                      <Archive className="h-2.5 w-2.5 mr-0.5" />
                       Archiver
                     </>
                   )}
@@ -266,9 +266,9 @@ export function ProductCard({
                   variant="outline"
                   size="sm"
                   onClick={handleDeleteClick}
-                  className="flex-1 min-w-0 text-red-600 border-red-200 hover:bg-red-50"
+                  className="flex-1 min-w-0 h-6 text-[10px] px-1.5 text-red-600 border-red-200 hover:bg-red-50"
                 >
-                  <Trash2 className="h-4 w-4 mr-1" />
+                  <Trash2 className="h-2.5 w-2.5 mr-0.5" />
                   Supprimer
                 </Button>
               )}
@@ -278,7 +278,7 @@ export function ProductCard({
             <Button
               variant="ghost"
               size="sm"
-              className="w-full"
+              className="w-full h-6 text-[10px]"
               onClick={handleDetailsClick}
             >
               Voir détails

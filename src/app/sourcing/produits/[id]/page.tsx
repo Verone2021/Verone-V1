@@ -176,7 +176,7 @@ export default function SourcingProductDetailPage() {
                   </Badge>
                 )}
                 {product.requires_sample && (
-                  <Badge variant="outline" className="border-orange-300 text-orange-600">
+                  <Badge variant="outline" className="border-gray-300 text-black">
                     <AlertCircle className="h-3 w-3 mr-1" />
                     Échantillon requis
                   </Badge>
@@ -297,10 +297,10 @@ export default function SourcingProductDetailPage() {
           <CardContent>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               {/* Commander échantillon */}
-              <Card className="border-orange-200">
+              <Card className="border-gray-200">
                 <CardContent className="p-6">
                   <div className="flex items-center mb-3">
-                    <Package className="h-6 w-6 text-orange-600 mr-2" />
+                    <Package className="h-6 w-6 text-black mr-2" />
                     <h4 className="font-semibold text-black">Demander un échantillon</h4>
                   </div>
                   <p className="text-sm text-gray-600 mb-4">
@@ -308,7 +308,7 @@ export default function SourcingProductDetailPage() {
                   </p>
                   <Button
                     onClick={handleOrderSample}
-                    className="w-full bg-orange-600 hover:bg-orange-700 text-white"
+                    className="w-full bg-gray-100 hover:bg-gray-800 text-white"
                   >
                     <Package className="h-4 w-4 mr-2" />
                     Commander échantillon

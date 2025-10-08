@@ -38,6 +38,7 @@ interface ProductPhotosModalProps {
   productName: string
   productType?: 'draft' | 'product'
   maxImages?: number
+  onImagesUpdated?: () => void // Callback pour actualiser la galerie externe
 }
 
 export function ProductPhotosModal({
@@ -46,7 +47,8 @@ export function ProductPhotosModal({
   productId,
   productName,
   productType = 'product',
-  maxImages = 20
+  maxImages = 20,
+  onImagesUpdated
 }: ProductPhotosModalProps) {
   // Hook principal pour gestion images
   const {
@@ -111,6 +113,10 @@ export function ProductPhotosModal({
         console.log(`✅ File ${i + 1} uploaded successfully:`, file.name)
       }
       console.log('🎉 Upload multiple terminé avec succès')
+
+      // Actualiser la galerie externe
+      onImagesUpdated?.()
+
     } catch (error) {
       console.error('❌ Erreur upload multiple:', error)
       // Afficher l'erreur à l'utilisateur
@@ -133,6 +139,8 @@ export function ProductPhotosModal({
     try {
       await deleteImage(imageId)
       console.log('✅ Image supprimée avec succès')
+      // Actualiser la galerie externe
+      onImagesUpdated?.()
     } catch (error) {
       console.error('❌ Erreur suppression image:', error)
     } finally {
@@ -148,6 +156,8 @@ export function ProductPhotosModal({
     try {
       await setPrimaryImage(imageId)
       console.log('✅ Image principale mise à jour')
+      // Actualiser la galerie externe
+      onImagesUpdated?.()
     } catch (error) {
       console.error('❌ Erreur changement image principale:', error)
     } finally {
@@ -201,28 +211,9 @@ export function ProductPhotosModal({
     }
   }
 
-  const openFileDialog = () => {
-    console.log('🖱️ Opening file dialog')
-    if (fileInputRef.current) {
-      fileInputRef.current.click()
-    } else {
-      console.error('❌ File input ref not available')
-    }
-  }
-
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="max-w-5xl max-h-[90vh] overflow-hidden flex flex-col">
-        {/* Input file caché réutilisable */}
-        <input
-          ref={fileInputRef}
-          type="file"
-          multiple
-          accept="image/*"
-          onChange={handleInputChange}
-          style={{ display: 'none' }}
-        />
-
         <DialogHeader className="pb-4 border-b">
           <DialogTitle className="flex items-center gap-3">
             <Camera className="h-6 w-6 text-black" />
@@ -267,16 +258,27 @@ export function ProductPhotosModal({
           {images.length < maxImages && (
             <div
               className={cn(
-                "border-2 border-dashed border-gray-300 rounded-lg p-8 text-center transition-all cursor-pointer hover:border-gray-400 hover:bg-gray-50",
+                "relative border-2 border-dashed border-gray-300 rounded-lg p-8 text-center transition-all",
                 dragActive && "border-black bg-gray-100",
-                error && "border-red-500 bg-red-50"
+                error && "border-red-500 bg-red-50",
+                !uploading && "cursor-pointer hover:border-gray-400 hover:bg-gray-50"
               )}
               onDragEnter={handleDragIn}
               onDragLeave={handleDragOut}
               onDragOver={handleDrag}
               onDrop={handleDrop}
-              onClick={openFileDialog}
             >
+              {/* Input file invisible qui couvre toute la zone - cliquable directement */}
+              <input
+                ref={fileInputRef}
+                type="file"
+                multiple
+                accept="image/*"
+                onChange={handleInputChange}
+                disabled={uploading}
+                className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-20"
+              />
+
               <div className="flex flex-col items-center space-y-3">
                 <div className="w-16 h-16 rounded-full bg-black flex items-center justify-center">
                   {uploading ? (
@@ -438,7 +440,7 @@ export function ProductPhotosModal({
                 Commencez par ajouter vos premières photos au produit
               </p>
               <Button
-                onClick={openFileDialog}
+                onClick={() => fileInputRef.current?.click()}
                 className="bg-black hover:bg-gray-800 text-white"
               >
                 <Camera className="h-4 w-4 mr-2" />
@@ -460,7 +462,7 @@ export function ProductPhotosModal({
                 </span>
               )}
               {images.length === maxImages && (
-                <span className="text-orange-600">
+                <span className="text-black">
                   Limite d'images atteinte
                 </span>
               )}

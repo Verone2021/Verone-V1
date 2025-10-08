@@ -28,7 +28,7 @@ export function ProductViewMode({ product, onSwitchToEdit, className }: ProductV
 
     if (stockQty > 0 && stockQty <= 10) {
       return (
-        <div className="flex items-center gap-2 text-orange-700 bg-orange-50 px-4 py-2 rounded-lg">
+        <div className="flex items-center gap-2 text-gray-800 bg-gray-50 px-4 py-2 rounded-lg">
           <AlertCircle className="h-4 w-4" />
           <span className="font-medium text-sm">Stock limité ({stockQty} disponibles)</span>
         </div>
@@ -189,7 +189,7 @@ export function ProductViewMode({ product, onSwitchToEdit, className }: ProductV
               <ul className="space-y-3">
                 {product.selling_points.map((point: string, idx: number) => (
                   <li key={idx} className="flex items-start">
-                    <Star className="h-5 w-5 mr-3 mt-0.5 flex-shrink-0 text-yellow-500" />
+                    <Star className="h-5 w-5 mr-3 mt-0.5 flex-shrink-0 text-gray-700" />
                     <span className="text-gray-700">{point}</span>
                   </li>
                 ))}

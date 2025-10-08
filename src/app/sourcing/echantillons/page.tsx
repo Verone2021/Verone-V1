@@ -109,7 +109,7 @@ export default function SourcingEchantillonsPage() {
       case 'ordered':
         return <Badge variant="outline" className="border-blue-300 text-blue-600">Commandé</Badge>
       case 'in_transit':
-        return <Badge variant="outline" className="border-orange-300 text-orange-600">En transit</Badge>
+        return <Badge variant="outline" className="border-gray-300 text-black">En transit</Badge>
       case 'delivered':
         return <Badge variant="outline" className="border-green-300 text-green-600">Livré</Badge>
       default:
@@ -124,7 +124,7 @@ export default function SourcingEchantillonsPage() {
       case 'ordered':
         return <Package className="h-4 w-4 text-blue-600" />
       case 'in_transit':
-        return <Truck className="h-4 w-4 text-orange-600" />
+        return <Truck className="h-4 w-4 text-black" />
       case 'delivered':
         return <CheckCircle className="h-4 w-4 text-green-600" />
       default:
@@ -189,7 +189,7 @@ export default function SourcingEchantillonsPage() {
           <Card className="border-black">
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
               <CardTitle className="text-sm font-medium text-gray-600">En Cours</CardTitle>
-              <Truck className="h-4 w-4 text-orange-600" />
+              <Truck className="h-4 w-4 text-black" />
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold text-black">

@@ -22,9 +22,10 @@ interface StatCardProps {
   icon: React.ReactNode
   isLoading?: boolean
   href?: string // URL de navigation au clic
+  isMock?: boolean // Badge "MOCK - À connecter"
 }
 
-function StatCard({ title, value, change, isPositive, icon, isLoading, href }: StatCardProps) {
+function StatCard({ title, value, change, isPositive, icon, isLoading, href, isMock }: StatCardProps) {
   if (isLoading) {
     return (
       <div className="bg-white rounded-lg border border-gray-200 p-6">
@@ -42,17 +43,26 @@ function StatCard({ title, value, change, isPositive, icon, isLoading, href }: S
 
   const CardContent = (
     <div className="flex items-center justify-between">
-      <div>
-        <p className="text-sm font-medium text-gray-600">{title}</p>
+      <div className="flex-1">
+        <div className="flex items-center gap-2">
+          <p className="text-sm font-medium text-gray-600">{title}</p>
+          {isMock && (
+            <span className="px-2 py-0.5 text-xs font-medium bg-gray-100 text-gray-800 rounded border border-gray-300">
+              ⚠️ MOCK
+            </span>
+          )}
+        </div>
         <p className="text-2xl font-bold text-black">{value}</p>
         <div className="flex items-center mt-2">
-          {isPositive ? (
+          {isMock ? (
+            <AlertTriangle className="h-4 w-4 text-gray-900" />
+          ) : isPositive ? (
             <TrendingUp className="h-4 w-4 text-green-500" />
           ) : (
             <TrendingDown className="h-4 w-4 text-red-500" />
           )}
-          <span className={`text-sm ml-1 ${isPositive ? 'text-green-500' : 'text-red-500'}`}>
-            {change}
+          <span className={`text-sm ml-1 ${isMock ? 'text-black' : isPositive ? 'text-green-500' : 'text-red-500'}`}>
+            {isMock ? 'À connecter' : change}
           </span>
         </div>
       </div>

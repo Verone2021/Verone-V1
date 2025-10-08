@@ -56,7 +56,7 @@ export default function SourcingDashboardPage() {
   const getStatusBadge = (status: string) => {
     switch (status) {
       case 'pending':
-        return <Badge variant="outline" className="border-orange-300 text-orange-600">En attente</Badge>
+        return <Badge variant="outline" className="border-gray-300 text-black">En attente</Badge>
       case 'ordered':
         return <Badge variant="outline" className="border-blue-300 text-blue-600">Commandé</Badge>
       case 'ready':
@@ -69,7 +69,7 @@ export default function SourcingDashboardPage() {
   const getActivityIcon = (type: string) => {
     switch (type) {
       case 'draft':
-        return <Search className="h-4 w-4 text-orange-600" />
+        return <Search className="h-4 w-4 text-black" />
       case 'sample':
         return <Eye className="h-4 w-4 text-blue-600" />
       case 'validation':
@@ -131,7 +131,7 @@ export default function SourcingDashboardPage() {
           <Card className="border-black">
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
               <CardTitle className="text-sm font-medium text-gray-600">En Validation</CardTitle>
-              <AlertTriangle className="h-4 w-4 text-orange-600" />
+              <AlertTriangle className="h-4 w-4 text-black" />
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold text-black">
@@ -255,7 +255,7 @@ export default function SourcingDashboardPage() {
             <CardContent>
               <div className="space-y-3">
                 <div className="flex items-center space-x-2">
-                  <Clock className="h-4 w-4 text-orange-600" />
+                  <Clock className="h-4 w-4 text-black" />
                   <span className="text-sm">
                     {sourcingLoading ? '...' : stats.pendingValidation} produits en attente de validation
                   </span>

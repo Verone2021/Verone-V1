@@ -58,7 +58,7 @@ export function IdentifiersCompleteEditSection({
   const conditionOptions = [
     { value: 'new', label: 'Neuf', color: 'bg-green-100 text-green-800' },
     { value: 'refurbished', label: 'Reconditionné', color: 'bg-blue-100 text-blue-800' },
-    { value: 'used', label: 'Occasion', color: 'bg-orange-100 text-orange-800' }
+    { value: 'used', label: 'Occasion', color: 'bg-gray-100 text-gray-900' }
   ]
 
   const handleStartEdit = () => {
@@ -319,7 +319,7 @@ export function IdentifiersCompleteEditSection({
               "text-sm",
               currentCondition === 'new' ? 'bg-green-100 text-green-800' :
               currentCondition === 'refurbished' ? 'bg-blue-100 text-blue-800' :
-              'bg-orange-100 text-orange-800'
+              'bg-gray-100 text-gray-900'
             )}>
               {currentCondition === 'new' ? 'Neuf' :
                currentCondition === 'refurbished' ? 'Reconditionné' : 'Occasion'}

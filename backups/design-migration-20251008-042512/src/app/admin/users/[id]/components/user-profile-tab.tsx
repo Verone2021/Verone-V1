@@ -1,0 +1,287 @@
+/**
+ * 👤 Onglet Profil Utilisateur - Vérone
+ *
+ * Composant affichant toutes les informations détaillées
+ * du profil utilisateur dans l'interface d'administration.
+ */
+
+"use client"
+
+import React from 'react'
+import {
+  User,
+  Mail,
+  Phone,
+  Briefcase,
+  Calendar,
+  MapPin,
+  Building,
+  Tag,
+  CheckCircle,
+  XCircle,
+  Clock,
+  Shield,
+  Database,
+  Key
+} from 'lucide-react'
+import { RoleBadge, type UserRole } from '@/components/ui/role-badge'
+import { UserDetailData } from '../page'
+
+interface UserProfileTabProps {
+  user: UserDetailData
+}
+
+export function UserProfileTab({ user }: UserProfileTabProps) {
+  const formatDate = (dateString: string) => {
+    return new Date(dateString).toLocaleDateString('fr-FR', {
+      year: 'numeric',
+      month: 'long',
+      day: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit'
+    })
+  }
+
+  const formatUserName = (email: string, user_metadata: any = null) => {
+    if (user_metadata?.name) {
+      return user_metadata.name
+    }
+
+    if (user_metadata?.first_name || user_metadata?.last_name) {
+      return [user_metadata.first_name, user_metadata.last_name]
+        .filter(Boolean)
+        .join(' ')
+        .trim()
+    }
+
+    const tempName = email.split('@')[0].split('.') || ['']
+    return tempName.length > 1 ? tempName.join(' ') : tempName[0]
+  }
+
+  const getFirstName = (email: string, user_metadata: any = null) => {
+    if (user_metadata?.first_name) return user_metadata.first_name
+    const tempName = email.split('@')[0].split('.') || ['']
+    return tempName[0] || ''
+  }
+
+  const getLastName = (email: string, user_metadata: any = null) => {
+    if (user_metadata?.last_name) return user_metadata.last_name
+    const tempName = email.split('@')[0].split('.') || ['']
+    return tempName[1] || ''
+  }
+
+  const isEmailConfirmed = !!user.email_confirmed_at
+
+  return (
+    <div className="space-y-8">
+      {/* Informations personnelles */}
+      <div className="space-y-4">
+        <h3 className="text-lg font-semibold text-black flex items-center space-x-2">
+          <User className="h-5 w-5" />
+          <span>Informations personnelles</span>
+        </h3>
+
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          {/* Prénom */}
+          <div className="space-y-2">
+            <label className="text-sm font-medium text-black opacity-70">Prénom</label>
+            <div className="p-3 bg-gray-50 border border-gray-200 rounded">
+              <span className="text-black">{getFirstName(user.email, user.user_metadata) || 'Non renseigné'}</span>
+            </div>
+          </div>
+
+          {/* Nom */}
+          <div className="space-y-2">
+            <label className="text-sm font-medium text-black opacity-70">Nom</label>
+            <div className="p-3 bg-gray-50 border border-gray-200 rounded">
+              <span className="text-black">{getLastName(user.email, user.user_metadata) || 'Non renseigné'}</span>
+            </div>
+          </div>
+
+          {/* Email */}
+          <div className="space-y-2">
+            <label className="text-sm font-medium text-black opacity-70">Adresse e-mail</label>
+            <div className="p-3 bg-gray-50 border border-gray-200 rounded flex items-center justify-between">
+              <div className="flex items-center space-x-2">
+                <Mail className="h-4 w-4 text-black opacity-60" />
+                <span className="text-black">{user.email}</span>
+              </div>
+              {isEmailConfirmed ? (
+                <div className="flex items-center space-x-1 text-green-600">
+                  <CheckCircle className="h-4 w-4" />
+                  <span className="text-xs">Confirmé</span>
+                </div>
+              ) : (
+                <div className="flex items-center space-x-1 text-red-500">
+                  <XCircle className="h-4 w-4" />
+                  <span className="text-xs">Non confirmé</span>
+                </div>
+              )}
+            </div>
+          </div>
+
+          {/* Téléphone */}
+          <div className="space-y-2">
+            <label className="text-sm font-medium text-black opacity-70">Téléphone</label>
+            <div className="p-3 bg-gray-50 border border-gray-200 rounded flex items-center space-x-2">
+              <Phone className="h-4 w-4 text-black opacity-60" />
+              <span className="text-black">
+                {user.user_metadata?.phone || 'Non renseigné'}
+              </span>
+            </div>
+          </div>
+
+          {/* Poste */}
+          <div className="space-y-2">
+            <label className="text-sm font-medium text-black opacity-70">Poste</label>
+            <div className="p-3 bg-gray-50 border border-gray-200 rounded flex items-center space-x-2">
+              <Briefcase className="h-4 w-4 text-black opacity-60" />
+              <span className="text-black">
+                {user.user_metadata?.job_title || 'Non renseigné'}
+              </span>
+            </div>
+          </div>
+
+          {/* Nom complet affiché */}
+          <div className="space-y-2">
+            <label className="text-sm font-medium text-black opacity-70">Nom d'affichage</label>
+            <div className="p-3 bg-gray-50 border border-gray-200 rounded">
+              <span className="text-black font-medium">
+                {formatUserName(user.email, user.user_metadata)}
+              </span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Informations système */}
+      <div className="space-y-4">
+        <h3 className="text-lg font-semibold text-black flex items-center space-x-2">
+          <Shield className="h-5 w-5" />
+          <span>Informations système</span>
+        </h3>
+
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          {/* Rôle */}
+          <div className="space-y-2">
+            <label className="text-sm font-medium text-black opacity-70">Rôle système</label>
+            <div className="p-3 bg-gray-50 border border-gray-200 rounded">
+              {user.profile?.role ? (
+                <RoleBadge role={user.profile.role as UserRole} />
+              ) : (
+                <span className="text-black opacity-60">Non défini</span>
+              )}
+            </div>
+          </div>
+
+          {/* Type utilisateur */}
+          <div className="space-y-2">
+            <label className="text-sm font-medium text-black opacity-70">Type utilisateur</label>
+            <div className="p-3 bg-gray-50 border border-gray-200 rounded flex items-center space-x-2">
+              <Tag className="h-4 w-4 text-black opacity-60" />
+              <span className="text-black">
+                {user.profile?.user_type === 'staff' ? 'Équipe Vérone' : 'Utilisateur standard'}
+              </span>
+            </div>
+          </div>
+
+          {/* ID Utilisateur */}
+          <div className="space-y-2">
+            <label className="text-sm font-medium text-black opacity-70">Identifiant unique</label>
+            <div className="p-3 bg-gray-50 border border-gray-200 rounded flex items-center space-x-2">
+              <Key className="h-4 w-4 text-black opacity-60" />
+              <span className="text-black font-mono text-xs">{user.id}</span>
+            </div>
+          </div>
+
+          {/* Statut du compte */}
+          <div className="space-y-2">
+            <label className="text-sm font-medium text-black opacity-70">Statut du compte</label>
+            <div className="p-3 bg-gray-50 border border-gray-200 rounded">
+              {user.last_sign_in_at &&
+                (Date.now() - new Date(user.last_sign_in_at).getTime()) < (30 * 24 * 60 * 60 * 1000) ? (
+                <div className="flex items-center space-x-2 text-green-600">
+                  <CheckCircle className="h-4 w-4" />
+                  <span className="font-medium">Compte actif</span>
+                </div>
+              ) : (
+                <div className="flex items-center space-x-2 text-orange-500">
+                  <Clock className="h-4 w-4" />
+                  <span className="font-medium">Compte dormant</span>
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Dates importantes */}
+      <div className="space-y-4">
+        <h3 className="text-lg font-semibold text-black flex items-center space-x-2">
+          <Calendar className="h-5 w-5" />
+          <span>Chronologie du compte</span>
+        </h3>
+
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          {/* Date de création */}
+          <div className="space-y-2">
+            <label className="text-sm font-medium text-black opacity-70">Compte créé le</label>
+            <div className="p-3 bg-gray-50 border border-gray-200 rounded flex items-center space-x-2">
+              <Calendar className="h-4 w-4 text-black opacity-60" />
+              <span className="text-black">{formatDate(user.created_at)}</span>
+            </div>
+          </div>
+
+          {/* Dernière connexion */}
+          <div className="space-y-2">
+            <label className="text-sm font-medium text-black opacity-70">Dernière connexion</label>
+            <div className="p-3 bg-gray-50 border border-gray-200 rounded flex items-center space-x-2">
+              <Clock className="h-4 w-4 text-black opacity-60" />
+              <span className="text-black">
+                {user.last_sign_in_at ? formatDate(user.last_sign_in_at) : 'Jamais connecté'}
+              </span>
+            </div>
+          </div>
+
+          {/* Confirmation email */}
+          {user.email_confirmed_at && (
+            <div className="space-y-2">
+              <label className="text-sm font-medium text-black opacity-70">Email confirmé le</label>
+              <div className="p-3 bg-gray-50 border border-gray-200 rounded flex items-center space-x-2">
+                <CheckCircle className="h-4 w-4 text-green-600" />
+                <span className="text-black">{formatDate(user.email_confirmed_at)}</span>
+              </div>
+            </div>
+          )}
+
+          {/* Dernière mise à jour profil */}
+          {user.profile?.updated_at && (
+            <div className="space-y-2">
+              <label className="text-sm font-medium text-black opacity-70">Profil mis à jour</label>
+              <div className="p-3 bg-gray-50 border border-gray-200 rounded flex items-center space-x-2">
+                <Database className="h-4 w-4 text-black opacity-60" />
+                <span className="text-black">{formatDate(user.profile.updated_at)}</span>
+              </div>
+            </div>
+          )}
+        </div>
+      </div>
+
+      {/* Métadonnées utilisateur (si disponibles) */}
+      {user.user_metadata && Object.keys(user.user_metadata).length > 0 && (
+        <div className="space-y-4">
+          <h3 className="text-lg font-semibold text-black flex items-center space-x-2">
+            <Database className="h-5 w-5" />
+            <span>Métadonnées utilisateur</span>
+          </h3>
+
+          <div className="p-4 bg-gray-50 border border-gray-200 rounded">
+            <pre className="text-xs text-black font-mono whitespace-pre-wrap overflow-auto max-h-48">
+              {JSON.stringify(user.user_metadata, null, 2)}
+            </pre>
+          </div>
+        </div>
+      )}
+    </div>
+  )
+}

@@ -92,7 +92,7 @@ export default function CanauxVentePage() {
       case 'active':
         return <Badge variant="outline" className="border-green-300 text-green-600">Actif</Badge>
       case 'setup_required':
-        return <Badge variant="outline" className="border-orange-300 text-orange-600">Configuration requise</Badge>
+        return <Badge variant="outline" className="border-gray-300 text-black">Configuration requise</Badge>
       case 'inactive':
         return <Badge variant="outline" className="border-gray-300 text-gray-600">Inactif</Badge>
       default:
@@ -226,9 +226,9 @@ export default function CanauxVentePage() {
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-sm text-gray-600">Taux conversion</p>
-                  <p className="text-2xl font-bold text-orange-600">2.3%</p>
+                  <p className="text-2xl font-bold text-black">2.3%</p>
                 </div>
-                <ArrowUpDown className="h-8 w-8 text-orange-600" />
+                <ArrowUpDown className="h-8 w-8 text-black" />
               </div>
             </CardContent>
           </Card>

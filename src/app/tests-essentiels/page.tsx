@@ -163,10 +163,10 @@ export default function TestsEssentielsPage() {
         </Card>
 
         {/* Tests Critiques Seulement */}
-        <Card className="border-orange-200">
+        <Card className="border-gray-200">
           <CardHeader className="pb-3">
             <CardTitle className="text-lg flex items-center gap-2">
-              <Zap className="h-4 w-4 text-orange-600" />
+              <Zap className="h-4 w-4 text-black" />
               Tests Critiques
             </CardTitle>
             <CardDescription className="text-sm">

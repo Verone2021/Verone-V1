@@ -81,13 +81,13 @@ const ERROR_TYPE_CONFIG = {
     label: 'Bug Interface',
     icon: Monitor,
     description: 'Problème d\'affichage ou d\'interaction',
-    color: 'text-orange-600'
+    color: 'text-black'
   },
   performance: {
     label: 'Performance',
     icon: Zap,
     description: 'Lenteur ou problème de performance',
-    color: 'text-yellow-600'
+    color: 'text-gray-700'
   },
   functionality: {
     label: 'Fonctionnalité',
@@ -295,7 +295,7 @@ export function ErrorReportModal({
       <DialogContent className="max-w-4xl max-h-[90vh] overflow-hidden">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
-            <AlertTriangle className="h-5 w-5 text-orange-600" />
+            <AlertTriangle className="h-5 w-5 text-black" />
             Rapport d'Erreur - {testTitle}
           </DialogTitle>
         </DialogHeader>
@@ -401,7 +401,7 @@ export function ErrorReportModal({
                       </SelectItem>
                       <SelectItem value="in_progress">
                         <div className="flex items-center gap-2">
-                          <div className="h-2 w-2 bg-yellow-500 rounded-full" />
+                          <div className="h-2 w-2 bg-gray-500 rounded-full" />
                           En cours
                         </div>
                       </SelectItem>
@@ -718,13 +718,13 @@ export function QuickErrorReport({
       className={cn("h-8 w-8 p-0", className)}
       title="Signaler une erreur"
     >
-      <AlertTriangle className="h-4 w-4 text-orange-600" />
+      <AlertTriangle className="h-4 w-4 text-black" />
     </Button>
   ) : (
     <Button
       variant="outline"
       size={size}
-      className={cn("text-orange-600 border-orange-600 hover:bg-orange-50", className)}
+      className={cn("text-black border-gray-300 hover:bg-gray-50", className)}
     >
       <AlertTriangle className="mr-2 h-4 w-4" />
       Signaler erreur

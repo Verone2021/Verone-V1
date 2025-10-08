@@ -29,8 +29,8 @@ const statusLabels: Record<PurchaseOrderStatus, string> = {
 const statusColors: Record<PurchaseOrderStatus, string> = {
   draft: 'bg-gray-100 text-gray-800',
   sent: 'bg-blue-100 text-blue-800',
-  confirmed: 'bg-yellow-100 text-yellow-800',
-  partially_received: 'bg-orange-100 text-orange-800',
+  confirmed: 'bg-gray-100 text-gray-900',
+  partially_received: 'bg-gray-100 text-gray-900',
   received: 'bg-green-100 text-green-800',
   cancelled: 'bg-red-100 text-red-800'
 }
@@ -136,7 +136,7 @@ export default function PurchaseOrdersPage() {
               <CardTitle className="text-sm font-medium text-gray-600">En cours</CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold text-yellow-600">{stats.pending_orders}</div>
+              <div className="text-2xl font-bold text-gray-700">{stats.pending_orders}</div>
             </CardContent>
           </Card>
           <Card>
@@ -404,7 +404,7 @@ export default function PurchaseOrdersPage() {
                           <TableCell>{item.discount_percentage}%</TableCell>
                           <TableCell>{formatCurrency(item.total_ht)}</TableCell>
                           <TableCell>
-                            <span className={item.quantity_received >= item.quantity ? 'text-green-600' : 'text-orange-600'}>
+                            <span className={item.quantity_received >= item.quantity ? 'text-green-600' : 'text-black'}>
                               {item.quantity_received}/{item.quantity}
                             </span>
                           </TableCell>
