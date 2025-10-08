@@ -47,7 +47,7 @@ export function useProductImages({
       // 🚀 Requête simplifiée - plus de product_type, URL automatique
       const { data, error } = await supabase
         .from('product_images')
-        .select('*')
+        .select('id, product_id, public_url, display_order, alt_text, is_primary, created_at, updated_at')
         .eq('product_id', productId)
         .order('display_order')
         .order('created_at')
@@ -189,7 +189,7 @@ export function useProductImages({
       // Get image info before deletion
       const { data: imageData, error: fetchError } = await supabase
         .from('product_images')
-        .select('*')
+        .select('id, product_id, storage_path, public_url')
         .eq('id', imageId)
         .single()
 

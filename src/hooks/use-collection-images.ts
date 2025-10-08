@@ -65,7 +65,7 @@ export function useCollectionImages({
       // 🚀 Requête simplifiée - URL automatique via trigger
       const { data, error } = await supabase
         .from('collection_images')
-        .select('*')
+        .select('id, collection_id, public_url, storage_path, display_order, alt_text, is_cover, created_at, updated_at')
         .eq('collection_id', collectionId)
         .order('display_order')
         .order('created_at')
@@ -204,7 +204,7 @@ export function useCollectionImages({
       // Get image info before deletion
       const { data: imageData, error: fetchError } = await supabase
         .from('collection_images')
-        .select('*')
+        .select('id, collection_id, storage_path, public_url')
         .eq('id', imageId)
         .single()
 

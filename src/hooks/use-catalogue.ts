@@ -151,7 +151,7 @@ export const useCatalogue = () => {
   const loadCategories = async (): Promise<Category[]> => {
     const { data, error } = await supabase
       .from('categories')
-      .select('*')
+      .select('id, name, slug, level, parent_id, display_order, is_active')
       .eq('is_active', true)
       .order('level', { ascending: true })
       .order('display_order', { ascending: true });
@@ -164,7 +164,12 @@ export const useCatalogue = () => {
     let query = supabase
       .from('products')
       .select(`
-        *,
+        id, sku, name, slug,
+        price_ht, cost_price, tax_rate,
+        status, condition,
+        primary_image_url,
+        subcategory_id, supplier_id, brand,
+        archived_at, created_at, updated_at,
         supplier:organisations!supplier_id(id, name),
         subcategories!subcategory_id(id, name)
       `, { count: 'exact' });
@@ -209,13 +214,18 @@ export const useCatalogue = () => {
       products: data || [],
       total: count || 0
     };
-  };
+  };;
   
   const loadArchivedProducts = async (filters: CatalogueFilters = {}) => {
     let query = supabase
       .from('products')
       .select(`
-        *,
+        id, sku, name, slug,
+        price_ht, cost_price, tax_rate,
+        status, condition,
+        primary_image_url,
+        subcategory_id, supplier_id, brand,
+        archived_at, created_at, updated_at,
         supplier:organisations!supplier_id(id, name),
         subcategories!subcategory_id(id, name)
       `, { count: 'exact' });

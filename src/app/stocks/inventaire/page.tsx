@@ -622,15 +622,7 @@ export default function StockInventairePage() {
                         <td className="py-3 px-4">
                           <div className="flex items-center">
                             <div className="h-10 w-10 bg-gray-100 rounded-lg flex items-center justify-center mr-3">
-                              {product.primary_image_url ? (
-                                <img
-                                  src={product.primary_image_url}
-                                  alt={product.name}
-                                  className="h-8 w-8 object-cover rounded"
-                                />
-                              ) : (
-                                <Package className="h-5 w-5 text-gray-400" />
-                              )}
+                              <Package className="h-5 w-5 text-gray-400" />
                             </div>
                             <div>
                               <span className="font-medium text-black">{product.name}</span>
@@ -663,7 +655,7 @@ export default function StockInventairePage() {
                         </td>
                         <td className="py-3 px-4">
                           <span className="font-medium text-black">
-                            {formatPrice(product.price_ht)}
+                            {formatPrice(product.cost_price)}
                           </span>
                         </td>
                         <td className="py-3 px-4">

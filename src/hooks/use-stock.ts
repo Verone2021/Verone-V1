@@ -457,9 +457,8 @@ export function useStock() {
           sku,
           stock_quantity,
           min_stock,
-          price_ht,
+          cost_price,
           updated_at,
-          primary_image_url,
           status
         `)
         .gt('stock_quantity', 0)
@@ -492,9 +491,8 @@ export function useStock() {
             sku,
             stock_quantity,
             min_stock,
-            price_ht,
+            cost_price,
             updated_at,
-            primary_image_url,
             status
           `)
           .in('id', productIdsToFetch)

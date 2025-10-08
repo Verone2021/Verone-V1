@@ -40,7 +40,7 @@ export function useProductPackages({
 
       const { data, error } = await supabase
         .from('product_packages')
-        .select('*')
+        .select('id, product_id, quantity, unit, unit_price, display_order, is_active, created_at, updated_at')
         .eq('product_id', productId)
         .eq('is_active', true)
         .order('display_order')

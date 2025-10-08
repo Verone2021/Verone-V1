@@ -1,5 +1,6 @@
 "use client"
 
+import { memo, useCallback } from "react"
 import Image from "next/image"
 import { useRouter } from "next/navigation"
 import { Badge } from "../ui/badge"
@@ -51,7 +52,7 @@ const statusConfig = {
   }
 }
 
-export function ProductCard({
+export const ProductCard = memo(function ProductCard({
   product,
   className,
   showActions = true,
@@ -86,33 +87,33 @@ export function ProductCard({
     autoFetch: showPackages
   })
 
-  const handleClick = () => {
+  const handleClick = useCallback(() => {
     if (onClick) {
       onClick(product)
     } else {
       // Navigation par défaut vers la page détail
       router.push(`/catalogue/${product.id}`)
     }
-  }
+  }, [product, onClick, router])
 
-  const handleDetailsClick = (e: React.MouseEvent) => {
+  const handleDetailsClick = useCallback((e: React.MouseEvent) => {
     e.stopPropagation()
     router.push(`/catalogue/${product.id}`)
-  }
+  }, [product.id, router])
 
-  const handleArchiveClick = (e: React.MouseEvent) => {
+  const handleArchiveClick = useCallback((e: React.MouseEvent) => {
     e.stopPropagation()
     if (onArchive) {
       onArchive(product)
     }
-  }
+  }, [product, onArchive])
 
-  const handleDeleteClick = (e: React.MouseEvent) => {
+  const handleDeleteClick = useCallback((e: React.MouseEvent) => {
     e.stopPropagation()
     if (onDelete) {
       onDelete(product)
     }
-  }
+  }, [product, onDelete])
 
   return (
     <div
@@ -288,4 +289,4 @@ export function ProductCard({
       </div>
     </div>
   )
-}
+})

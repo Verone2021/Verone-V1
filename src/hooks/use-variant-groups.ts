@@ -32,7 +32,13 @@ export function useVariantGroups(filters?: VariantGroupFilters) {
     try {
       let query = supabase
         .from('variant_groups')
-        .select('*')
+        .select(`
+          id, name, base_sku, subcategory_id, variant_type,
+          product_count, has_common_supplier, supplier_id,
+          dimensions_length, dimensions_width, dimensions_height, dimensions_unit,
+          style, suitable_rooms, common_weight,
+          archived_at, created_at, updated_at
+        `)
         .is('archived_at', null) // IMPORTANT : Exclure les groupes archivés par défaut
         .order('created_at', { ascending: false })
 
