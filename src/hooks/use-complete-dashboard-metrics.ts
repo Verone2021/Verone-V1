@@ -78,12 +78,12 @@ export function useCompleteDashboardMetrics() {
   } = useStockOrdersMetrics()
 
   // Calcul statistiques organisations (excluant particuliers)
-  const organisationsOnly = organisations.filter(o =>
-    o.type !== 'customer' || (o.type === 'customer' && o.customer_type !== 'individual')
+  const professionalOrganisations = organisations.filter(o =>
+    !(o.type === 'customer' && o.customer_type === 'individual')
   )
 
   const organisationsStats = {
-    totalOrganisations: organisationsOnly.length,
+    totalOrganisations: professionalOrganisations.length,
     suppliers: organisations.filter(o => o.type === 'supplier').length,
     customersB2B: organisations.filter(o =>
       o.type === 'customer' && (!o.customer_type || o.customer_type === 'professional')
@@ -94,19 +94,19 @@ export function useCompleteDashboardMetrics() {
   // Phase 2 - Données réelles depuis Supabase
   const stocksData = {
     totalValue: stockOrdersMetrics?.stock_value || 0,
-    lowStockItems: 0, // Pas de seuil défini pour l'instant
-    recentMovements: 0 // Pas de tracking des mouvements récents pour l'instant
+    lowStockItems: 0, // TODO #VERONE-STOCK-001: Implémenter seuil stock minimum
+    recentMovements: 0 // TODO #VERONE-STOCK-002: Implémenter tracking mouvements
   }
 
   const ordersData = {
     purchaseOrders: stockOrdersMetrics?.purchase_orders_count || 0,
-    salesOrders: 0, // Pas de comptage des commandes vente pour l'instant
+    salesOrders: 0, // TODO #VERONE-ORDERS-001: Implémenter comptage commandes vente
     monthRevenue: stockOrdersMetrics?.month_revenue || 0
   }
 
   const sourcingData = {
     productsToSource: stockOrdersMetrics?.products_to_source || 0,
-    samplesWaiting: 0 // Pas de comptage échantillons en attente pour l'instant
+    samplesWaiting: 0 // TODO #VERONE-SOURCING-001: Implémenter tracking échantillons en attente
   }
 
   const metrics: CompleteDashboardMetrics = {
@@ -115,7 +115,7 @@ export function useCompleteDashboardMetrics() {
       activeProducts: catalogueMetrics?.products.active || 0,
       publishedProducts: catalogueMetrics?.products.published || 0,
       collections: catalogueMetrics?.collections.total || 0,
-      variantGroups: 4, // Mock pour variantes (à remplacer si hook disponible)
+      variantGroups: catalogueMetrics?.variantGroups.total || 0,
       trend: catalogueMetrics?.products.trend || 0
     },
     organisations: organisationsStats,
@@ -128,7 +128,7 @@ export function useCompleteDashboardMetrics() {
       active: catalogueMetrics?.collections.active || 0
     },
     variantGroups: {
-      total: 4 // Mock pour variantes (à remplacer si hook disponible)
+      total: catalogueMetrics?.variantGroups.total || 0
     },
     products: {
       trend: catalogueMetrics?.products.trend || 0
