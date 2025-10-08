@@ -52,6 +52,17 @@ export function MovementsFilters({ filters, onFiltersChange, onReset, hasFilters
   const { getReasonsByCategory } = useStockMovements()
   const reasonsByCategory = getReasonsByCategory()
 
+  // Labels français professionnels pour les catégories
+  const categoryLabels: Record<string, string> = {
+    sorties_normales: 'Sorties Normales',
+    pertes_degradations: 'Pertes & Dégradations',
+    usage_commercial: 'Usage Commercial',
+    rd_production: 'R&D & Production',
+    retours_sav: 'Retours & SAV',
+    ajustements: 'Ajustements',
+    entrees_speciales: 'Entrées Spéciales'
+  }
+
   // Charger les utilisateurs ayant effectué des mouvements
   useEffect(() => {
     const loadUsers = async () => {
@@ -346,14 +357,21 @@ export function MovementsFilters({ filters, onFiltersChange, onReset, hasFilters
 
         {/* Motifs */}
         <div className="space-y-3">
-          <Label>Motifs</Label>
-          <div className="space-y-3 max-h-48 overflow-y-auto">
+          <Label className="flex items-center justify-between">
+            <span>Motifs</span>
+            {localFilters.reasonCodes && localFilters.reasonCodes.length > 0 && (
+              <Badge variant="secondary" className="ml-2">
+                {localFilters.reasonCodes.length} sélectionné{localFilters.reasonCodes.length > 1 ? 's' : ''}
+              </Badge>
+            )}
+          </Label>
+          <div className="space-y-3 max-h-48 overflow-y-auto pr-2">
             {Object.entries(reasonsByCategory).map(([category, reasons]) => (
               <div key={category} className="space-y-2">
-                <div className="text-sm font-medium text-gray-700 capitalize">
-                  {category.replace('_', ' ')}
+                <div className="text-sm font-semibold text-gray-900">
+                  {categoryLabels[category] || category}
                 </div>
-                <div className="space-y-1 pl-4">
+                <div className="space-y-1.5 pl-4">
                   {reasons.map((reason) => (
                     <div key={reason.code} className="flex items-center space-x-2">
                       <Checkbox
@@ -363,9 +381,9 @@ export function MovementsFilters({ filters, onFiltersChange, onReset, hasFilters
                       />
                       <Label
                         htmlFor={`reason-${reason.code}`}
-                        className="text-sm cursor-pointer"
+                        className="text-sm cursor-pointer font-normal"
                       >
-                        {reason.description}
+                        {reason.label}
                       </Label>
                     </div>
                   ))}

@@ -289,8 +289,8 @@ export default function StockInventairePage() {
     try {
       const [inventoryProducts] = await Promise.all([
         fetchInventoryProducts(),
-        fetchStats(),
-        fetchReservations({ is_active: true })
+        fetchStats()
+        // fetchReservations désactivé temporairement - erreur clé étrangère
       ])
       setProducts(inventoryProducts)
     } finally {

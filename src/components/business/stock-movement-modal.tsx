@@ -1,7 +1,8 @@
 'use client'
 
-import React, { useState } from 'react'
+import React, { useState, useEffect } from 'react'
 import { RefreshCw, AlertTriangle, Package } from 'lucide-react'
+import { createClient } from '@/lib/supabase/client'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
@@ -29,21 +30,25 @@ import { useStock } from '@/hooks/use-stock'
 import { useStockMovements, type StockReasonCode } from '@/hooks/use-stock-movements'
 
 interface StockMovementModalProps {
-  product: {
+  product?: {
     id: string
     name: string
     sku: string
-    stock_real?: number
     stock_quantity?: number
     min_stock?: number
-  }
+  } | null
   isOpen: boolean
   onClose: () => void
   onSuccess: () => void
+  movementType?: 'add' | 'remove' | 'adjust'
+  title?: string
 }
 
-export function StockMovementModal({ product, isOpen, onClose, onSuccess }: StockMovementModalProps) {
-  const [movementType, setMovementType] = useState<'add' | 'remove' | 'adjust'>('add')
+export function StockMovementModal({ product: initialProduct, isOpen, onClose, onSuccess, movementType: initialMovementType, title }: StockMovementModalProps) {
+  const [selectedProduct, setSelectedProduct] = useState<typeof initialProduct>(initialProduct)
+  const [products, setProducts] = useState<any[]>([])
+  const [loadingProducts, setLoadingProducts] = useState(false)
+  const [movementType, setMovementType] = useState<'add' | 'remove' | 'adjust'>(initialMovementType || 'add')
   const [quantity, setQuantity] = useState('')
   const [reasonCode, setReasonCode] = useState<StockReasonCode>('manual_adjustment')
   const [unitCost, setUnitCost] = useState('')
@@ -54,10 +59,41 @@ export function StockMovementModal({ product, isOpen, onClose, onSuccess }: Stoc
   const { createManualMovement } = useStock()
   const { getReasonsByCategory, getReasonDescription } = useStockMovements()
   const { toast } = useToast()
+  const supabase = createClient()
 
-  const currentStock = product.stock_real || product.stock_quantity || 0
-  const minLevel = product.min_stock || 5
+  const currentStock = selectedProduct?.stock_quantity || 0
+  const minLevel = selectedProduct?.min_stock || 5
   const reasonsByCategory = getReasonsByCategory()
+
+  // Charger les produits du catalogue et sourcing (non archivés) si pas de produit initial
+  useEffect(() => {
+    if (!initialProduct && isOpen) {
+      loadAvailableProducts()
+    }
+  }, [isOpen, initialProduct])
+
+  const loadAvailableProducts = async () => {
+    setLoadingProducts(true)
+    try {
+      const { data, error } = await supabase
+        .from('products')
+        .select('id, name, sku, stock_quantity, min_stock')
+        .is('archived_at', null)
+        .order('name')
+
+      if (error) throw error
+      setProducts(data || [])
+    } catch (error) {
+      console.error('Erreur chargement produits:', error)
+      toast({
+        title: "Erreur",
+        description: "Impossible de charger les produits",
+        variant: "destructive"
+      })
+    } finally {
+      setLoadingProducts(false)
+    }
+  }
 
   // Validation en temps réel
   const getValidationMessage = () => {
@@ -101,6 +137,15 @@ export function StockMovementModal({ product, isOpen, onClose, onSuccess }: Stoc
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
 
+    if (!selectedProduct) {
+      toast({
+        title: "Erreur",
+        description: "Veuillez sélectionner un produit",
+        variant: "destructive"
+      })
+      return
+    }
+
     if (!quantity || parseInt(quantity) <= 0) {
       toast({
         title: "Erreur de validation",
@@ -122,7 +167,7 @@ export function StockMovementModal({ product, isOpen, onClose, onSuccess }: Stoc
     setLoading(true)
     try {
       await createManualMovement({
-        product_id: product.id,
+        product_id: selectedProduct.id,
         movement_type: movementType,
         quantity: parseInt(quantity),
         reason_code: reasonCode,
@@ -151,8 +196,11 @@ export function StockMovementModal({ product, isOpen, onClose, onSuccess }: Stoc
     setUnitCost('')
     setNotes('')
     setReasonCode('manual_adjustment')
-    setMovementType('add')
+    setMovementType(initialMovementType || 'add')
     setShowAdvanced(false)
+    if (!initialProduct) {
+      setSelectedProduct(null)
+    }
   }
 
   const handleClose = () => {
@@ -186,24 +234,51 @@ export function StockMovementModal({ product, isOpen, onClose, onSuccess }: Stoc
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <Package className="h-5 w-5" />
-            Mouvement de stock - {product.name}
+            {title || `Mouvement de stock${selectedProduct ? ` - ${selectedProduct.name}` : ''}`}
           </DialogTitle>
         </DialogHeader>
 
         <form onSubmit={handleSubmit} className="space-y-6">
-          {/* Informations produit */}
-          <div className="bg-gray-50 p-3 rounded-lg text-sm">
-            <div className="flex justify-between items-center">
-              <span><strong>SKU:</strong> {product.sku}</span>
-              <span><strong>Stock actuel:</strong> {currentStock} unités</span>
+          {/* Sélecteur de produit si pas de produit initial */}
+          {!initialProduct && (
+            <div className="space-y-2">
+              <Label>Produit</Label>
+              <Select
+                value={selectedProduct?.id || ''}
+                onValueChange={(value) => {
+                  const product = products.find(p => p.id === value)
+                  setSelectedProduct(product || null)
+                }}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder={loadingProducts ? "Chargement..." : "Sélectionner un produit"} />
+                </SelectTrigger>
+                <SelectContent>
+                  {products.map((product) => (
+                    <SelectItem key={product.id} value={product.id}>
+                      {product.name} - {product.sku}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             </div>
-            {currentStock <= minLevel && (
-              <div className="flex items-center gap-2 mt-2 text-white">
-                <AlertTriangle className="h-4 w-4" />
-                <span>Stock sous le seuil minimum ({minLevel})</span>
+          )}
+
+          {/* Informations produit */}
+          {selectedProduct && (
+            <div className="bg-gray-50 p-3 rounded-lg text-sm">
+              <div className="flex justify-between items-center">
+                <span><strong>SKU:</strong> {selectedProduct.sku}</span>
+                <span><strong>Stock actuel:</strong> {currentStock} unités</span>
               </div>
-            )}
-          </div>
+              {currentStock <= minLevel && (
+                <div className="flex items-center gap-2 mt-2 text-orange-600">
+                  <AlertTriangle className="h-4 w-4" />
+                  <span>Stock sous le seuil minimum ({minLevel})</span>
+                </div>
+              )}
+            </div>
+          )}
 
           {/* Type de mouvement */}
           <div className="space-y-3">
@@ -226,6 +301,158 @@ export function StockMovementModal({ product, isOpen, onClose, onSuccess }: Stoc
                 Retirer (-)
               </Button>
               <Button
+                type="button"
+                variant={movementType === 'adjust' ? 'default' : 'outline'}
+                onClick={() => setMovementType('adjust')}
+                className="justify-start"
+              >
+                Ajuster (=)
+              </Button>
+            </div>
+          </div>
+
+          {/* Quantité */}
+          <div className="space-y-2">
+            <Label>
+              {movementType === 'adjust' ? 'Nouvelle quantité finale' : 'Quantité à traiter'}
+            </Label>
+            <Input
+              type="number"
+              min="1"
+              value={quantity}
+              onChange={(e) => setQuantity(e.target.value)}
+              placeholder={movementType === 'adjust' ? 'Quantité finale souhaitée' : 'Nombre d\'unités'}
+              required
+            />
+            {validation && (
+              <div className={`flex items-center gap-2 text-sm ${
+                validation.type === 'error' ? 'text-red-600' : 'text-orange-600'
+              }`}>
+                <AlertTriangle className="h-4 w-4" />
+                <span>{validation.message}</span>
+              </div>
+            )}
+          </div>
+
+          {/* Motif */}
+          <div className="space-y-3">
+            <Label>Motif de l'opération</Label>
+
+            {/* Motifs suggérés */}
+            <div className="space-y-2">
+              <p className="text-sm text-gray-600">Motifs courants :</p>
+              <div className="grid grid-cols-2 gap-2">
+                {suggestedReasons.slice(0, 4).map((reason) => (
+                  <Button
+                    key={reason.code}
+                    type="button"
+                    variant={reasonCode === reason.code ? 'default' : 'outline'}
+                    size="sm"
+                    onClick={() => setReasonCode(reason.code)}
+                    className="justify-start text-left h-auto py-2"
+                  >
+                    <div>
+                      <div className="font-medium">{reason.label}</div>
+                    </div>
+                  </Button>
+                ))}
+              </div>
+            </div>
+
+            {/* Tous les motifs */}
+            <Collapsible open={showAdvanced} onOpenChange={setShowAdvanced}>
+              <CollapsibleTrigger asChild>
+                <Button variant="ghost" size="sm" className="text-blue-600">
+                  {showAdvanced ? 'Masquer' : 'Voir tous les motifs'}
+                </Button>
+              </CollapsibleTrigger>
+              <CollapsibleContent className="space-y-2 mt-2">
+                <Select value={reasonCode} onValueChange={(value: StockReasonCode) => setReasonCode(value)}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Sélectionner un motif détaillé" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {Object.entries(reasonsByCategory).map(([category, reasons]) => (
+                      <div key={category}>
+                        <div className="px-2 py-1 text-xs font-semibold text-gray-500 uppercase">
+                          {category.replace('_', ' ')}
+                        </div>
+                        {reasons.map((reason) => (
+                          <SelectItem key={reason.code} value={reason.code}>
+                            {reason.label}
+                          </SelectItem>
+                        ))}
+                      </div>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </CollapsibleContent>
+            </Collapsible>
+
+            {/* Description du motif sélectionné */}
+            <div className="text-sm text-gray-600 bg-blue-50 p-2 rounded">
+              <strong>Motif sélectionné:</strong> {getReasonDescription(reasonCode)}
+            </div>
+          </div>
+
+          {/* Notes obligatoires pour certains motifs */}
+          <div className="space-y-2">
+            <Label>
+              Notes explicatives
+              {['theft', 'loss_unknown', 'damage_transport', 'write_off'].includes(reasonCode) && (
+                <span className="text-red-500 ml-1">*</span>
+              )}
+            </Label>
+            <Textarea
+              value={notes}
+              onChange={(e) => setNotes(e.target.value)}
+              placeholder="Détails sur l'opération (obligatoire pour certains motifs)..."
+              rows={3}
+              required={['theft', 'loss_unknown', 'damage_transport', 'write_off'].includes(reasonCode)}
+            />
+          </div>
+
+          {/* Coût unitaire optionnel */}
+          {movementType === 'add' && (
+            <div className="space-y-2">
+              <Label>Coût unitaire (optionnel)</Label>
+              <Input
+                type="number"
+                step="0.01"
+                min="0"
+                value={unitCost}
+                onChange={(e) => setUnitCost(e.target.value)}
+                placeholder="0.00 €"
+              />
+            </div>
+          )}
+
+          {/* Actions */}
+          <div className="flex gap-3 pt-4">
+            <Button
+              type="button"
+              variant="outline"
+              onClick={handleClose}
+              className="flex-1"
+            >
+              Annuler
+            </Button>
+            <Button
+              type="submit"
+              disabled={loading || validation?.type === 'error' || !selectedProduct}
+              className="flex-1"
+            >
+              {loading ? (
+                <RefreshCw className="h-4 w-4 animate-spin mr-2" />
+              ) : null}
+              Enregistrer le mouvement
+            </Button>
+          </div>
+        </form>
+      </DialogContent>
+    </Dialog>
+  )
+}
                 type="button"
                 variant={movementType === 'adjust' ? 'default' : 'outline'}
                 onClick={() => setMovementType('adjust')}

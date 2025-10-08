@@ -78,12 +78,12 @@ export function useCompleteDashboardMetrics() {
   } = useStockOrdersMetrics()
 
   // Calcul statistiques organisations (excluant particuliers)
-  const professionalOrganisations = organisations.filter(o =>
-    !(o.type === 'customer' && o.customer_type === 'individual')
+  const organisationsOnly = organisations.filter(o =>
+    o.type !== 'customer' || (o.type === 'customer' && o.customer_type !== 'individual')
   )
 
   const organisationsStats = {
-    totalOrganisations: professionalOrganisations.length,
+    totalOrganisations: organisationsOnly.length,
     suppliers: organisations.filter(o => o.type === 'supplier').length,
     customersB2B: organisations.filter(o =>
       o.type === 'customer' && (!o.customer_type || o.customer_type === 'professional')

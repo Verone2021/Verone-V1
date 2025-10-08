@@ -28,7 +28,6 @@ export interface StockReservation {
     id: string
     name: string
     sku: string
-    primary_image_url?: string
     stock_quantity?: number
   }
   user_profiles?: {
@@ -86,16 +85,7 @@ export function useStockReservations() {
             id,
             name,
             sku,
-            primary_image_url,
             stock_quantity
-          ),
-          user_profiles!stock_reservations_reserved_by_fkey (
-            first_name,
-            last_name
-          ),
-          released_user_profiles:user_profiles!stock_reservations_released_by_fkey (
-            first_name,
-            last_name
           )
         `)
         .order('reserved_at', { ascending: false })
@@ -415,13 +405,7 @@ export function useStockReservations() {
     try {
       const { data, error } = await supabase
         .from('stock_reservations')
-        .select(`
-          *,
-          user_profiles!stock_reservations_reserved_by_fkey (
-            first_name,
-            last_name
-          )
-        `)
+        .select('*')
         .eq('product_id', productId)
         .is('released_at', null)
         .order('reserved_at', { ascending: false })

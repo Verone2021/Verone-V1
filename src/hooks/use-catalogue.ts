@@ -151,7 +151,7 @@ export const useCatalogue = () => {
   const loadCategories = async (): Promise<Category[]> => {
     const { data, error } = await supabase
       .from('categories')
-      .select('id, name, slug, level, parent_id, display_order, is_active')
+      .select('id, name, slug, level, display_order, is_active')
       .eq('is_active', true)
       .order('level', { ascending: true })
       .order('display_order', { ascending: true });
@@ -165,9 +165,8 @@ export const useCatalogue = () => {
       .from('products')
       .select(`
         id, sku, name, slug,
-        price_ht, cost_price, tax_rate,
+        cost_price,
         status, condition,
-        primary_image_url,
         subcategory_id, supplier_id, brand,
         archived_at, created_at, updated_at,
         supplier:organisations!supplier_id(id, name),
@@ -191,11 +190,11 @@ export const useCatalogue = () => {
     }
 
     if (filters.priceMin !== undefined) {
-      query = query.gte('price_ht', filters.priceMin); // Prix en euros NUMERIC(10,2)
+      query = query.gte('cost_price', filters.priceMin);
     }
 
     if (filters.priceMax !== undefined) {
-      query = query.lte('price_ht', filters.priceMax); // Prix en euros NUMERIC(10,2)
+      query = query.lte('cost_price', filters.priceMax);
     }
 
     // Pagination - Augmenté pour afficher tous les produits importés
@@ -221,9 +220,8 @@ export const useCatalogue = () => {
       .from('products')
       .select(`
         id, sku, name, slug,
-        price_ht, cost_price, tax_rate,
+        cost_price,
         status, condition,
-        primary_image_url,
         subcategory_id, supplier_id, brand,
         archived_at, created_at, updated_at,
         supplier:organisations!supplier_id(id, name),
@@ -247,11 +245,11 @@ export const useCatalogue = () => {
     }
 
     if (filters.priceMin !== undefined) {
-      query = query.gte('price_ht', filters.priceMin);
+      query = query.gte('cost_price', filters.priceMin);
     }
 
     if (filters.priceMax !== undefined) {
-      query = query.lte('price_ht', filters.priceMax);
+      query = query.lte('cost_price', filters.priceMax);
     }
 
     // Pagination
