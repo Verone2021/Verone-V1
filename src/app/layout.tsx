@@ -3,6 +3,7 @@ import { Inter } from "next/font/google"
 import { Analytics } from '@vercel/analytics/react'
 import { AuthWrapper } from "../components/layout/auth-wrapper"
 import { ClientOnlyActivityTracker } from "../components/providers/client-only-activity-tracker"
+import { ReactQueryProvider } from "../components/providers/react-query-provider"
 
 const inter = Inter({ subsets: ["latin"] })
 
@@ -37,12 +38,15 @@ export default function RootLayout({
   return (
     <html lang="fr" className="h-full">
       <body className={`${inter.className} h-full bg-white text-black antialiased`}>
-        <AuthWrapper>
-          <ClientOnlyActivityTracker>
-            {children}
-          </ClientOnlyActivityTracker>
-        </AuthWrapper>
-        <Analytics />
+        <ReactQueryProvider>
+          <AuthWrapper>
+            <ClientOnlyActivityTracker>
+              {children}
+            </ClientOnlyActivityTracker>
+          </AuthWrapper>
+        </ReactQueryProvider>
+        {/* Vercel Analytics - uniquement en production (détection automatique) */}
+        {process.env.VERCEL_ENV === 'production' && <Analytics />}
       </body>
     </html>
   )

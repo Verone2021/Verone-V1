@@ -415,8 +415,8 @@ export default function TresoreriePage() {
 
       {/* Quick Actions */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <Card className="hover:shadow-md transition-shadow cursor-pointer" asChild>
-          <Link href="/finance/factures-fournisseurs">
+        <Link href="/finance/factures-fournisseurs">
+          <Card className="hover:shadow-md transition-shadow cursor-pointer">
             <CardHeader>
               <CardTitle className="text-sm">Factures Fournisseurs</CardTitle>
             </CardHeader>
@@ -426,11 +426,11 @@ export default function TresoreriePage() {
               </p>
               <p className="text-xs text-gray-500">À payer</p>
             </CardContent>
-          </Link>
-        </Card>
+          </Card>
+        </Link>
 
-        <Card className="hover:shadow-md transition-shadow cursor-pointer" asChild>
-          <Link href="/factures">
+        <Link href="/factures">
+          <Card className="hover:shadow-md transition-shadow cursor-pointer">
             <CardHeader>
               <CardTitle className="text-sm">Factures Clients</CardTitle>
             </CardHeader>
@@ -440,11 +440,11 @@ export default function TresoreriePage() {
               </p>
               <p className="text-xs text-gray-500">À encaisser</p>
             </CardContent>
-          </Link>
-        </Card>
+          </Card>
+        </Link>
 
-        <Card className="hover:shadow-md transition-shadow cursor-pointer" asChild>
-          <Link href="/finance/depenses">
+        <Link href="/finance/depenses">
+          <Card className="hover:shadow-md transition-shadow cursor-pointer">
             <CardHeader>
               <CardTitle className="text-sm">Dépenses</CardTitle>
             </CardHeader>
@@ -458,8 +458,8 @@ export default function TresoreriePage() {
               </p>
               <p className="text-xs text-gray-500">Prévu 30j</p>
             </CardContent>
-          </Link>
-        </Card>
+          </Card>
+        </Link>
       </div>
     </div>
   )
