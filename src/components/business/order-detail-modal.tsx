@@ -252,9 +252,14 @@ export function OrderDetailModal({ order, open, onClose, onUpdate }: OrderDetail
                           </div>
 
                           {item.discount_percentage && item.discount_percentage > 0 && (
-                            <Badge variant="secondary" className="mt-2">
-                              Remise {item.discount_percentage}%
-                            </Badge>
+                            <div className="flex gap-2 mt-2">
+                              <Badge variant="secondary" className="bg-green-100 text-green-800 border-green-200">
+                                Remise {item.discount_percentage.toFixed(1)}%
+                              </Badge>
+                              <span className="text-xs text-gray-600 self-center">
+                                Économie: {formatCurrency(item.quantity * item.unit_price_ht * (item.discount_percentage / 100))}
+                              </span>
+                            </div>
                           )}
                         </div>
                       </div>

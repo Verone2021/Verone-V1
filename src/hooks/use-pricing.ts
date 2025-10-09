@@ -18,7 +18,7 @@
  */
 
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
-import { createClientComponentClient } from '@supabase/auth-helpers-nextjs'
+import { createClient } from '@/lib/supabase/client'
 import { logger } from '@/lib/logger'
 
 // =====================================================================
@@ -71,7 +71,7 @@ export interface BatchPricingResult {
 // =====================================================================
 
 export function useProductPrice(params: PricingParams) {
-  const supabase = createClientComponentClient()
+  const supabase = createClient()
 
   return useQuery({
     queryKey: ['pricing-v2', params],
@@ -140,7 +140,7 @@ export function useProductPrice(params: PricingParams) {
 // =====================================================================
 
 export function useBatchPricing() {
-  const supabase = createClientComponentClient()
+  const supabase = createClient()
   const queryClient = useQueryClient()
 
   return useMutation({
@@ -248,7 +248,7 @@ export interface SalesChannel {
 }
 
 export function useSalesChannels() {
-  const supabase = createClientComponentClient()
+  const supabase = createClient()
 
   return useQuery({
     queryKey: ['sales-channels'],

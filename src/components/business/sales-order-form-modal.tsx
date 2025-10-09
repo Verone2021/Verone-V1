@@ -16,8 +16,10 @@ import { CustomerSelector, UnifiedCustomer } from './customer-selector'
 import { useProducts } from '@/hooks/use-products'
 import { useSalesOrders, CreateSalesOrderData } from '@/hooks/use-sales-orders'
 import { useStockMovements } from '@/hooks/use-stock-movements'
+import { useProductPrice, formatPrice } from '@/hooks/use-pricing'
 import { formatCurrency } from '@/lib/utils'
 import { AddressInput } from './address-input'
+import { createClient } from '@/lib/supabase/client'
 
 interface OrderItem {
   id: string
@@ -35,6 +37,10 @@ interface OrderItem {
     stock_quantity?: number
   }
   availableStock?: number
+  // Pricing V2 metadata
+  pricing_source?: 'customer_specific' | 'customer_group' | 'channel' | 'base_catalog'
+  original_price_ht?: number
+  auto_calculated?: boolean // Indique si le prix vient du pricing V2
 }
 
 interface SalesOrderFormModalProps {
@@ -44,6 +50,7 @@ interface SalesOrderFormModalProps {
 export function SalesOrderFormModal({ onSuccess }: SalesOrderFormModalProps) {
   const [open, setOpen] = useState(false)
   const [loading, setLoading] = useState(false)
+  const supabase = createClient()
 
   // Form data
   const [selectedCustomer, setSelectedCustomer] = useState<UnifiedCustomer | null>(null)
@@ -51,6 +58,7 @@ export function SalesOrderFormModal({ onSuccess }: SalesOrderFormModalProps) {
   const [shippingAddress, setShippingAddress] = useState('')
   const [billingAddress, setBillingAddress] = useState('')
   const [notes, setNotes] = useState('')
+  const [rfaDiscount, setRfaDiscount] = useState<number>(0) // Remise Fin d'Affaire globale (%)
 
   // Items management
   const [items, setItems] = useState<OrderItem[]>([])
@@ -64,11 +72,14 @@ export function SalesOrderFormModal({ onSuccess }: SalesOrderFormModalProps) {
   const { getAvailableStock } = useStockMovements()
 
   // Calculs totaux
-  const totalHT = items.reduce((sum, item) => {
+  const subtotalHT = items.reduce((sum, item) => {
     const itemTotal = item.quantity * item.unit_price_ht * (1 - (item.discount_percentage || 0) / 100)
     return sum + itemTotal
   }, 0)
 
+  // Appliquer remise RFA sur le sous-total
+  const rfaAmount = subtotalHT * (rfaDiscount / 100)
+  const totalHT = subtotalHT - rfaAmount
   const totalTTC = totalHT * 1.2 // TVA 20%
 
   // Gérer le changement de client
@@ -84,6 +95,7 @@ export function SalesOrderFormModal({ onSuccess }: SalesOrderFormModalProps) {
     setShippingAddress('')
     setBillingAddress('')
     setNotes('')
+    setRfaDiscount(0)
     setItems([])
     setProductSearchTerm('')
     setStockWarnings([])
@@ -106,27 +118,113 @@ export function SalesOrderFormModal({ onSuccess }: SalesOrderFormModalProps) {
     setStockWarnings(warnings)
   }
 
+  // Calculer le prix d'un produit avec pricing V2
+  const calculateProductPrice = async (productId: string, quantity: number = 1) => {
+    if (!selectedCustomer) {
+      // Pas de client sélectionné, utiliser prix catalogue de base
+      const product = products.find(p => p.id === productId)
+      return {
+        unit_price_ht: product?.price_ht || 0,
+        discount_percentage: 0,
+        pricing_source: 'base_catalog' as const,
+        original_price_ht: product?.price_ht || 0,
+        auto_calculated: false
+      }
+    }
+
+    try {
+      // Appel Supabase RPC calculate_product_price_v2
+      const { data, error } = await supabase.rpc('calculate_product_price_v2', {
+        p_product_id: productId,
+        p_quantity: quantity,
+        p_channel_id: null, // TODO: Ajouter sélecteur canal si besoin
+        p_customer_id: selectedCustomer.id,
+        p_customer_type: selectedCustomer.type === 'professional' ? 'organization' : 'individual',
+        p_date: new Date().toISOString().split('T')[0]
+      })
+
+      if (error) {
+        console.error('Erreur calcul pricing V2:', error)
+        // Fallback sur prix catalogue
+        const product = products.find(p => p.id === productId)
+        return {
+          unit_price_ht: product?.price_ht || 0,
+          discount_percentage: 0,
+          pricing_source: 'base_catalog' as const,
+          original_price_ht: product?.price_ht || 0,
+          auto_calculated: false
+        }
+      }
+
+      const pricingResult = data?.[0]
+      if (pricingResult) {
+        return {
+          unit_price_ht: pricingResult.price_ht,
+          discount_percentage: (pricingResult.discount_rate || 0) * 100,
+          pricing_source: pricingResult.price_source,
+          original_price_ht: pricingResult.original_price,
+          auto_calculated: true
+        }
+      }
+
+      // Fallback
+      const product = products.find(p => p.id === productId)
+      return {
+        unit_price_ht: product?.price_ht || 0,
+        discount_percentage: 0,
+        pricing_source: 'base_catalog' as const,
+        original_price_ht: product?.price_ht || 0,
+        auto_calculated: false
+      }
+    } catch (err) {
+      console.error('Exception calcul pricing:', err)
+      const product = products.find(p => p.id === productId)
+      return {
+        unit_price_ht: product?.price_ht || 0,
+        discount_percentage: 0,
+        pricing_source: 'base_catalog' as const,
+        original_price_ht: product?.price_ht || 0,
+        auto_calculated: false
+      }
+    }
+  }
+
   const addProduct = async (product: any) => {
     const existingItem = items.find(item => item.product_id === product.id)
 
     if (existingItem) {
       // Augmenter la quantité si le produit existe déjà
+      const newQuantity = existingItem.quantity + 1
+
+      // Recalculer le prix avec la nouvelle quantité (paliers!)
+      const pricing = await calculateProductPrice(product.id, newQuantity)
+
       const updatedItems = items.map(item =>
         item.product_id === product.id
-          ? { ...item, quantity: item.quantity + 1 }
+          ? {
+              ...item,
+              quantity: newQuantity,
+              unit_price_ht: pricing.unit_price_ht,
+              discount_percentage: pricing.discount_percentage,
+              pricing_source: pricing.pricing_source,
+              original_price_ht: pricing.original_price_ht,
+              auto_calculated: pricing.auto_calculated
+            }
           : item
       )
       setItems(updatedItems)
       await checkAllStockAvailability(updatedItems)
     } else {
-      // Ajouter un nouvel item
+      // Ajouter un nouvel item avec pricing V2
       const stockData = await getAvailableStock(product.id)
+      const pricing = await calculateProductPrice(product.id, 1)
+
       const newItem: OrderItem = {
         id: Date.now().toString(),
         product_id: product.id,
         quantity: 1,
-        unit_price_ht: product.price_ht || 0,
-        discount_percentage: 0,
+        unit_price_ht: pricing.unit_price_ht,
+        discount_percentage: pricing.discount_percentage,
         product: {
           id: product.id,
           name: product.name,
@@ -134,7 +232,10 @@ export function SalesOrderFormModal({ onSuccess }: SalesOrderFormModalProps) {
           primary_image_url: product.primary_image_url,
           stock_quantity: product.stock_quantity
         },
-        availableStock: stockData?.stock_available || 0
+        availableStock: stockData?.stock_available || 0,
+        pricing_source: pricing.pricing_source,
+        original_price_ht: pricing.original_price_ht,
+        auto_calculated: pricing.auto_calculated
       }
       const updatedItems = [...items, newItem]
       setItems(updatedItems)
@@ -363,6 +464,7 @@ export function SalesOrderFormModal({ onSuccess }: SalesOrderFormModalProps) {
                         <TableHead>Remise (%)</TableHead>
                         <TableHead>Total HT</TableHead>
                         <TableHead>Stock</TableHead>
+                        <TableHead>Source</TableHead>
                         <TableHead></TableHead>
                       </TableRow>
                     </TableHeader>
@@ -370,6 +472,20 @@ export function SalesOrderFormModal({ onSuccess }: SalesOrderFormModalProps) {
                       {items.map((item) => {
                         const itemTotal = item.quantity * item.unit_price_ht * (1 - (item.discount_percentage || 0) / 100)
                         const stockStatus = (item.availableStock || 0) >= item.quantity
+
+                        // Labels et couleurs pour source pricing
+                        const pricingSourceLabels = {
+                          customer_specific: 'Contrat',
+                          customer_group: 'Groupe',
+                          channel: 'Canal',
+                          base_catalog: 'Catalogue'
+                        }
+                        const pricingSourceColors = {
+                          customer_specific: 'bg-purple-100 text-purple-800 border-purple-200',
+                          customer_group: 'bg-blue-100 text-blue-800 border-blue-200',
+                          channel: 'bg-green-100 text-green-800 border-green-200',
+                          base_catalog: 'bg-gray-100 text-gray-800 border-gray-200'
+                        }
 
                         return (
                           <TableRow key={item.id}>
@@ -399,15 +515,22 @@ export function SalesOrderFormModal({ onSuccess }: SalesOrderFormModalProps) {
                               />
                             </TableCell>
                             <TableCell>
-                              <Input
-                                type="number"
-                                step="0.01"
-                                min="0"
-                                value={item.unit_price_ht}
-                                onChange={(e) => updateItem(item.id, 'unit_price_ht', parseFloat(e.target.value) || 0)}
-                                className="w-24"
-                                disabled={loading}
-                              />
+                              <div className="space-y-1">
+                                <Input
+                                  type="number"
+                                  step="0.01"
+                                  min="0"
+                                  value={item.unit_price_ht}
+                                  onChange={(e) => updateItem(item.id, 'unit_price_ht', parseFloat(e.target.value) || 0)}
+                                  className="w-24"
+                                  disabled={loading || item.auto_calculated}
+                                />
+                                {item.auto_calculated && item.original_price_ht && item.original_price_ht > item.unit_price_ht && (
+                                  <p className="text-xs text-gray-500 line-through">
+                                    {formatCurrency(item.original_price_ht)}
+                                  </p>
+                                )}
+                              </div>
                             </TableCell>
                             <TableCell>
                               <Input
@@ -418,7 +541,7 @@ export function SalesOrderFormModal({ onSuccess }: SalesOrderFormModalProps) {
                                 value={item.discount_percentage}
                                 onChange={(e) => updateItem(item.id, 'discount_percentage', parseFloat(e.target.value) || 0)}
                                 className="w-20"
-                                disabled={loading}
+                                disabled={loading || item.auto_calculated}
                               />
                             </TableCell>
                             <TableCell>{formatCurrency(itemTotal)}</TableCell>
@@ -426,6 +549,16 @@ export function SalesOrderFormModal({ onSuccess }: SalesOrderFormModalProps) {
                               <Badge variant={stockStatus ? 'default' : 'destructive'}>
                                 {item.availableStock || 0} dispo
                               </Badge>
+                            </TableCell>
+                            <TableCell>
+                              {item.pricing_source && (
+                                <Badge
+                                  variant="outline"
+                                  className={pricingSourceColors[item.pricing_source]}
+                                >
+                                  {pricingSourceLabels[item.pricing_source]}
+                                </Badge>
+                              )}
                             </TableCell>
                             <TableCell>
                               <Button
@@ -448,12 +581,63 @@ export function SalesOrderFormModal({ onSuccess }: SalesOrderFormModalProps) {
             </CardContent>
           </Card>
 
+          {/* Remise RFA (Remise Fin d'Affaire) */}
+          {items.length > 0 && (
+            <Card>
+              <CardHeader>
+                <CardTitle className="text-lg">Remise Exceptionnelle (RFA)</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="flex items-center gap-4">
+                  <div className="flex-1">
+                    <Label htmlFor="rfaDiscount">Remise Fin d'Affaire (%)</Label>
+                    <Input
+                      id="rfaDiscount"
+                      type="number"
+                      min="0"
+                      max="100"
+                      step="0.5"
+                      value={rfaDiscount}
+                      onChange={(e) => setRfaDiscount(parseFloat(e.target.value) || 0)}
+                      placeholder="0"
+                      disabled={loading}
+                      className="w-32"
+                    />
+                  </div>
+                  {rfaDiscount > 0 && (
+                    <div className="flex-1">
+                      <p className="text-sm text-gray-600">Montant remise RFA</p>
+                      <p className="text-lg font-semibold text-green-700">
+                        -{formatCurrency(rfaAmount)}
+                      </p>
+                    </div>
+                  )}
+                </div>
+                {rfaDiscount > 0 && (
+                  <Alert className="mt-3 bg-green-50 border-green-200">
+                    <AlertDescription className="text-sm text-gray-700">
+                      <strong>Remise exceptionnelle appliquée :</strong> Une remise globale de {rfaDiscount}% sera appliquée sur le montant total HT de la commande.
+                    </AlertDescription>
+                  </Alert>
+                )}
+              </CardContent>
+            </Card>
+          )}
+
           {/* Totaux */}
           {items.length > 0 && (
             <Card>
               <CardContent className="pt-6">
                 <div className="flex justify-end space-y-2">
                   <div className="text-right space-y-1">
+                    <p className="text-base text-gray-600">
+                      <span className="font-medium">Sous-total HT:</span> {formatCurrency(subtotalHT)}
+                    </p>
+                    {rfaDiscount > 0 && (
+                      <p className="text-base text-green-700">
+                        <span className="font-medium">Remise RFA ({rfaDiscount}%):</span> -{formatCurrency(rfaAmount)}
+                      </p>
+                    )}
                     <p className="text-lg">
                       <span className="font-medium">Total HT:</span> {formatCurrency(totalHT)}
                     </p>
