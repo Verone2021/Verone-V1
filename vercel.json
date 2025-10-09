@@ -32,6 +32,16 @@
       "destination": "/api/feeds/:path*"
     }
   ],
+  "crons": [
+    {
+      "path": "/api/cron/sync-abby-queue",
+      "schedule": "*/5 * * * *"
+    },
+    {
+      "path": "/api/cron/cleanup-abby-data",
+      "schedule": "0 2 * * *"
+    }
+  ],
   "cleanUrls": true,
   "trailingSlash": false
 }
