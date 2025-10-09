@@ -43,7 +43,8 @@ import {
   Smartphone,
   Wallet,
   FileText,
-  Banknote
+  Banknote,
+  RefreshCw
 } from "lucide-react"
 
 // Interface pour les éléments de navigation hiérarchique
@@ -235,6 +236,12 @@ const navItems: NavItem[] = [
         href: "/tresorerie",
         icon: Banknote,
         description: "Comptes bancaires Qonto"
+      },
+      {
+        title: "Rapprochement",
+        href: "/finance/rapprochement",
+        icon: RefreshCw,
+        description: "Matching bancaire automatique"
       }
     ]
   },
