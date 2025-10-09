@@ -39,7 +39,6 @@ interface Organisation {
 
 interface ExpenseCategory {
   id: string
-  code: string
   name: string
   account_code: string | null
 }
@@ -114,7 +113,7 @@ export function ExpenseForm({ onSuccess, onCancel }: ExpenseFormProps) {
         // Catégories dépenses
         const { data: categoriesData, error: categoriesError } = await supabase
           .from('expense_categories')
-          .select('id, code, name, account_code')
+          .select('id, name, account_code')
           .eq('is_active', true)
           .order('name')
 
@@ -321,7 +320,7 @@ export function ExpenseForm({ onSuccess, onCancel }: ExpenseFormProps) {
                 <SelectContent>
                   {categories.map((cat) => (
                     <SelectItem key={cat.id} value={cat.id}>
-                      {cat.code} - {cat.name}{' '}
+                      {cat.name}{' '}
                       {cat.account_code && `(${cat.account_code})`}
                     </SelectItem>
                   ))}
