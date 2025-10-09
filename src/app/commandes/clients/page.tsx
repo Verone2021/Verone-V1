@@ -1,18 +1,17 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { Plus, Filter, Search, Eye, Edit, Trash2, ShoppingCart, Truck, CheckCircle, XCircle } from 'lucide-react'
+import { Plus, Filter, Search, Eye, Edit, Trash2, ShoppingCart, Truck, CheckCircle, XCircle, DollarSign, CreditCard } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog'
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
-import { useSalesOrders, SalesOrder, SalesOrderStatus } from '@/hooks/use-sales-orders'
+import { useSalesOrders, SalesOrder, SalesOrderStatus, PaymentStatus } from '@/hooks/use-sales-orders'
 import { useOrganisations } from '@/hooks/use-organisations'
 import { SalesOrderFormModal } from '@/components/business/sales-order-form-modal'
+import { OrderDetailModal } from '@/components/business/order-detail-modal'
 import { formatCurrency, formatDate } from '@/lib/utils'
 import { Separator } from '@/components/ui/separator'
 
@@ -34,6 +33,22 @@ const statusColors: Record<SalesOrderStatus, string> = {
   cancelled: 'bg-red-100 text-red-800'
 }
 
+const paymentStatusLabels: Record<string, string> = {
+  pending: 'En attente',
+  partial: 'Partiel',
+  paid: 'Payé',
+  refunded: 'Remboursé',
+  overdue: 'En retard'
+}
+
+const paymentStatusColors: Record<string, string> = {
+  pending: 'bg-orange-100 text-orange-800',
+  partial: 'bg-yellow-100 text-yellow-800',
+  paid: 'bg-green-100 text-green-800',
+  refunded: 'bg-gray-100 text-gray-800',
+  overdue: 'bg-red-100 text-red-800'
+}
+
 export default function SalesOrdersPage() {
   const {
     loading,
@@ -42,7 +57,8 @@ export default function SalesOrdersPage() {
     fetchOrders,
     fetchStats,
     updateStatus,
-    deleteOrder
+    deleteOrder,
+    markAsPaid
   } = useSalesOrders()
 
   const { organisations: customers } = useOrganisations({ type: 'customer' })
@@ -50,6 +66,7 @@ export default function SalesOrdersPage() {
   const [searchTerm, setSearchTerm] = useState('')
   const [statusFilter, setStatusFilter] = useState<SalesOrderStatus | 'all'>('all')
   const [customerFilter, setCustomerFilter] = useState<string>('all')
+  const [workflowFilter, setWorkflowFilter] = useState<string>('all')
   const [selectedOrder, setSelectedOrder] = useState<SalesOrder | null>(null)
   const [showOrderDetail, setShowOrderDetail] = useState(false)
 
@@ -66,9 +83,36 @@ export default function SalesOrdersPage() {
   const filteredOrders = orders.filter(order => {
     const matchesSearch = searchTerm === '' ||
       order.order_number.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      order.organisations?.name.toLowerCase().includes(searchTerm.toLowerCase())
+      order.organisations?.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      order.individual_customers?.first_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      order.individual_customers?.last_name.toLowerCase().includes(searchTerm.toLowerCase())
 
-    return matchesSearch
+    // Filtre workflow métier
+    let matchesWorkflow = true
+    if (workflowFilter !== 'all') {
+      switch (workflowFilter) {
+        case 'awaiting_validation':
+          matchesWorkflow = order.status === 'draft'
+          break
+        case 'awaiting_payment':
+          matchesWorkflow = order.status === 'confirmed' &&
+            (order.payment_status === 'pending' || order.payment_status === 'partial')
+          break
+        case 'to_process':
+          matchesWorkflow = order.status === 'confirmed' &&
+            order.payment_status === 'paid' &&
+            !order.shipped_at
+          break
+        case 'shipped':
+          matchesWorkflow = order.status === 'shipped' || order.status === 'partially_shipped'
+          break
+        case 'delivered':
+          matchesWorkflow = order.status === 'delivered'
+          break
+      }
+    }
+
+    return matchesSearch && matchesWorkflow
   })
 
   const handleStatusChange = async (orderId: string, newStatus: SalesOrderStatus) => {
@@ -76,6 +120,14 @@ export default function SalesOrdersPage() {
       await updateStatus(orderId, newStatus)
     } catch (error) {
       console.error('Erreur lors du changement de statut:', error)
+    }
+  }
+
+  const handleMarkAsPaid = async (orderId: string) => {
+    try {
+      await markAsPaid(orderId)
+    } catch (error) {
+      console.error('Erreur lors du marquage comme payé:', error)
     }
   }
 
@@ -177,6 +229,19 @@ export default function SalesOrdersPage() {
                 />
               </div>
             </div>
+            <Select value={workflowFilter} onValueChange={setWorkflowFilter}>
+              <SelectTrigger className="w-full lg:w-56">
+                <SelectValue placeholder="Vue rapide" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">Toutes les commandes</SelectItem>
+                <SelectItem value="awaiting_validation">En attente de validation</SelectItem>
+                <SelectItem value="awaiting_payment">En attente de paiement</SelectItem>
+                <SelectItem value="to_process">À traiter</SelectItem>
+                <SelectItem value="shipped">Expédiées</SelectItem>
+                <SelectItem value="delivered">Livrées</SelectItem>
+              </SelectContent>
+            </Select>
             <Select value={statusFilter} onValueChange={(value) => setStatusFilter(value as SalesOrderStatus | 'all')}>
               <SelectTrigger className="w-full lg:w-48">
                 <SelectValue placeholder="Statut" />
@@ -234,80 +299,121 @@ export default function SalesOrdersPage() {
                     <TableHead>N° Commande</TableHead>
                     <TableHead>Client</TableHead>
                     <TableHead>Statut</TableHead>
+                    <TableHead>Statut Paiement</TableHead>
                     <TableHead>Date création</TableHead>
                     <TableHead>Date livraison</TableHead>
-                    <TableHead>Montant HT</TableHead>
+                    <TableHead>Montant TTC</TableHead>
                     <TableHead>Actions</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {filteredOrders.map((order) => (
-                    <TableRow key={order.id}>
-                      <TableCell className="font-medium">
-                        {order.order_number}
-                      </TableCell>
-                      <TableCell>
-                        {order.organisations?.name || 'Non défini'}
-                      </TableCell>
-                      <TableCell>
-                        <Badge className={statusColors[order.status]}>
-                          {statusLabels[order.status]}
-                        </Badge>
-                      </TableCell>
-                      <TableCell>
-                        {formatDate(order.created_at)}
-                      </TableCell>
-                      <TableCell>
-                        {order.expected_delivery_date ? formatDate(order.expected_delivery_date) : 'Non définie'}
-                      </TableCell>
-                      <TableCell>
-                        {formatCurrency(order.total_ht)}
-                      </TableCell>
-                      <TableCell>
-                        <div className="flex items-center gap-2">
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            onClick={() => openOrderDetail(order)}
-                          >
-                            <Eye className="h-4 w-4" />
-                          </Button>
-                          {order.status === 'draft' && (
-                            <>
-                              <Button variant="outline" size="sm">
-                                <Edit className="h-4 w-4" />
-                              </Button>
-                              <Button
-                                variant="outline"
-                                size="sm"
-                                onClick={() => handleDelete(order.id)}
-                              >
-                                <Trash2 className="h-4 w-4" />
-                              </Button>
-                            </>
+                  {filteredOrders.map((order) => {
+                    const customerName = order.customer_type === 'organization'
+                      ? order.organisations?.name
+                      : `${order.individual_customers?.first_name} ${order.individual_customers?.last_name}`
+
+                    return (
+                      <TableRow key={order.id}>
+                        <TableCell className="font-medium">
+                          {order.order_number}
+                        </TableCell>
+                        <TableCell>
+                          <div>
+                            <div className="font-medium">{customerName || 'Non défini'}</div>
+                            <div className="text-xs text-gray-500">
+                              {order.customer_type === 'organization' ? 'Professionnel' : 'Particulier'}
+                            </div>
+                          </div>
+                        </TableCell>
+                        <TableCell>
+                          <Badge className={statusColors[order.status]}>
+                            {statusLabels[order.status]}
+                          </Badge>
+                        </TableCell>
+                        <TableCell>
+                          {order.payment_status && (
+                            <Badge className={paymentStatusColors[order.payment_status]}>
+                              {paymentStatusLabels[order.payment_status]}
+                            </Badge>
                           )}
-                          {order.status === 'draft' && (
-                            <Button
-                              variant="outline"
-                              size="sm"
-                              onClick={() => handleStatusChange(order.id, 'confirmed')}
-                            >
-                              <CheckCircle className="h-4 w-4" />
-                            </Button>
-                          )}
-                          {(order.status === 'confirmed' || order.status === 'partially_shipped') && (
+                        </TableCell>
+                        <TableCell>
+                          {formatDate(order.created_at)}
+                        </TableCell>
+                        <TableCell>
+                          {order.expected_delivery_date ? formatDate(order.expected_delivery_date) : 'Non définie'}
+                        </TableCell>
+                        <TableCell>
+                          <div>
+                            <div className="font-medium">{formatCurrency(order.total_ttc || order.total_ht)}</div>
+                            {order.payment_status === 'paid' && order.paid_amount && (
+                              <div className="text-xs text-green-600">Payé</div>
+                            )}
+                          </div>
+                        </TableCell>
+                        <TableCell>
+                          <div className="flex items-center gap-2">
                             <Button
                               variant="outline"
                               size="sm"
                               onClick={() => openOrderDetail(order)}
+                              title="Voir détails"
                             >
-                              <Truck className="h-4 w-4" />
+                              <Eye className="h-4 w-4" />
                             </Button>
-                          )}
-                        </div>
-                      </TableCell>
-                    </TableRow>
-                  ))}
+
+                            {/* Bouton Confirmer (draft uniquement) */}
+                            {order.status === 'draft' && (
+                              <>
+                                <Button
+                                  variant="outline"
+                                  size="sm"
+                                  onClick={() => handleStatusChange(order.id, 'confirmed')}
+                                  title="Confirmer commande"
+                                >
+                                  <CheckCircle className="h-4 w-4" />
+                                </Button>
+                                <Button
+                                  variant="outline"
+                                  size="sm"
+                                  onClick={() => handleDelete(order.id)}
+                                  title="Supprimer"
+                                >
+                                  <Trash2 className="h-4 w-4 text-red-600" />
+                                </Button>
+                              </>
+                            )}
+
+                            {/* Bouton Marquer comme payé (confirmée + en attente de paiement) */}
+                            {order.status === 'confirmed' &&
+                             (order.payment_status === 'pending' || order.payment_status === 'partial') && (
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                onClick={() => handleMarkAsPaid(order.id)}
+                                title="Marquer comme payé"
+                                className="text-green-600"
+                              >
+                                <CreditCard className="h-4 w-4" />
+                              </Button>
+                            )}
+
+                            {/* Bouton Expédier (confirmée + payée) */}
+                            {order.status === 'confirmed' && order.payment_status === 'paid' && (
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                onClick={() => openOrderDetail(order)}
+                                title="Gérer expédition"
+                              >
+                                <Truck className="h-4 w-4" />
+                              </Button>
+                            )}
+                          </div>
+                        </TableCell>
+                      </TableRow>
+                    )
+                  })}
                 </TableBody>
               </Table>
             </div>
@@ -316,116 +422,15 @@ export default function SalesOrdersPage() {
       </Card>
 
       {/* Modal Détail Commande */}
-      <Dialog open={showOrderDetail} onOpenChange={setShowOrderDetail}>
-        <DialogContent className="max-w-4xl max-h-[80vh] overflow-y-auto">
-          <DialogHeader>
-            <DialogTitle>Détail Commande {selectedOrder?.order_number}</DialogTitle>
-            <DialogDescription>
-              Informations détaillées et gestion de l'expédition
-            </DialogDescription>
-          </DialogHeader>
-
-          {selectedOrder && (
-            <Tabs defaultValue="general" className="w-full">
-              <TabsList className="grid w-full grid-cols-3">
-                <TabsTrigger value="general">Informations</TabsTrigger>
-                <TabsTrigger value="items">Articles</TabsTrigger>
-                <TabsTrigger value="shipping">Expédition</TabsTrigger>
-              </TabsList>
-
-              <TabsContent value="general" className="space-y-4">
-                <div className="grid grid-cols-2 gap-4">
-                  <div className="space-y-2">
-                    <h3 className="font-semibold">Informations générales</h3>
-                    <div className="text-sm space-y-1">
-                      <p><span className="font-medium">Numéro:</span> {selectedOrder.order_number}</p>
-                      <p><span className="font-medium">Client:</span> {selectedOrder.organisations?.name}</p>
-                      <p><span className="font-medium">Statut:</span>
-                        <Badge className={`ml-2 ${statusColors[selectedOrder.status]}`}>
-                          {statusLabels[selectedOrder.status]}
-                        </Badge>
-                      </p>
-                      <p><span className="font-medium">Date création:</span> {formatDate(selectedOrder.created_at)}</p>
-                      <p><span className="font-medium">Date livraison prévue:</span> {selectedOrder.expected_delivery_date ? formatDate(selectedOrder.expected_delivery_date) : 'Non définie'}</p>
-                    </div>
-                  </div>
-                  <div className="space-y-2">
-                    <h3 className="font-semibold">Montants</h3>
-                    <div className="text-sm space-y-1">
-                      <p><span className="font-medium">Total HT:</span> {formatCurrency(selectedOrder.total_ht)}</p>
-                      <p><span className="font-medium">TVA ({(selectedOrder.tax_rate * 100).toFixed(1)}%):</span> {formatCurrency((selectedOrder.total_ttc || 0) - selectedOrder.total_ht)}</p>
-                      <p><span className="font-medium">Total TTC:</span> {formatCurrency(selectedOrder.total_ttc || 0)}</p>
-                      <p><span className="font-medium">Devise:</span> {selectedOrder.currency}</p>
-                    </div>
-                  </div>
-                </div>
-                {selectedOrder.notes && (
-                  <div className="space-y-2">
-                    <h3 className="font-semibold">Notes</h3>
-                    <p className="text-sm text-gray-600">{selectedOrder.notes}</p>
-                  </div>
-                )}
-              </TabsContent>
-
-              <TabsContent value="items" className="space-y-4">
-                <div className="overflow-x-auto">
-                  <Table>
-                    <TableHeader>
-                      <TableRow>
-                        <TableHead>Produit</TableHead>
-                        <TableHead>SKU</TableHead>
-                        <TableHead>Quantité</TableHead>
-                        <TableHead>Prix unitaire</TableHead>
-                        <TableHead>Remise</TableHead>
-                        <TableHead>Total HT</TableHead>
-                        <TableHead>Expédié</TableHead>
-                      </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                      {selectedOrder.sales_order_items?.map((item) => (
-                        <TableRow key={item.id}>
-                          <TableCell>
-                            <div className="flex items-center gap-3">
-                              {item.products?.primary_image_url && (
-                                <img
-                                  src={item.products.primary_image_url}
-                                  alt={item.products.name}
-                                  className="w-10 h-10 object-cover rounded"
-                                />
-                              )}
-                              <div>
-                                <p className="font-medium">{item.products?.name}</p>
-                              </div>
-                            </div>
-                          </TableCell>
-                          <TableCell>{item.products?.sku}</TableCell>
-                          <TableCell>{item.quantity}</TableCell>
-                          <TableCell>{formatCurrency(item.unit_price_ht)}</TableCell>
-                          <TableCell>{item.discount_percentage}%</TableCell>
-                          <TableCell>{formatCurrency(item.total_ht)}</TableCell>
-                          <TableCell>
-                            <span className={item.quantity_shipped >= item.quantity ? 'text-green-600' : 'text-black'}>
-                              {item.quantity_shipped}/{item.quantity}
-                            </span>
-                          </TableCell>
-                        </TableRow>
-                      ))}
-                    </TableBody>
-                  </Table>
-                </div>
-              </TabsContent>
-
-              <TabsContent value="shipping" className="space-y-4">
-                <div className="text-center py-8">
-                  <Truck className="mx-auto h-12 w-12 text-gray-400 mb-4" />
-                  <p className="text-gray-500">Module d'expédition en cours de développement</p>
-                  <p className="text-sm text-gray-400">Cette fonctionnalité permettra de gérer l'expédition partielle ou totale des commandes</p>
-                </div>
-              </TabsContent>
-            </Tabs>
-          )}
-        </DialogContent>
-      </Dialog>
+      <OrderDetailModal
+        order={selectedOrder}
+        open={showOrderDetail}
+        onClose={() => setShowOrderDetail(false)}
+        onUpdate={() => {
+          fetchOrders()
+          fetchStats()
+        }}
+      />
     </div>
   )
 }

@@ -154,6 +154,15 @@ TEST_PLAN.md             # → TASKS/testing/
 *.md + "API" → docs/api/
 *.md + "architecture" → docs/architecture/
 *.md + "decision" → docs/decisions/
+
+// NOUVEAUX PATTERNS RENFORCÉS (2025)
+"START-HERE-" + "MIGRATION" → docs/security/
+"START-HERE-" + "GUIDE" → docs/guides/
+"RAPPORT-" + date + "session" → MEMORY-BANK/sessions/
+"RAPPORT-" + "ORCHESTRATION" → docs/security/
+"*-AUDIT-*" → docs/reports/
+"EXECUTIVE-SUMMARY" → docs/reports/
+"SECURITY-" → docs/security/
 ```
 
 #### **Content-Based Classification**
@@ -165,6 +174,24 @@ TEST_PLAN.md             # → TASKS/testing/
 "Migration:" → docs/migrations/
 "Test Plan:" → TASKS/testing/
 "Business Rule:" → manifests/business-rules/
+
+// NOUVEAUX PATTERNS (2025)
+"RAPPORT FINAL" → MEMORY-BANK/sessions/
+"AUDIT" + "EXECUTIVE" → docs/reports/
+"ORCHESTRATION" + "FINALE" → docs/security/
+"START HERE" → docs/security/ OU docs/guides/
+```
+
+#### **RÈGLE STRICTE : ZÉRO FICHIER MD À LA RACINE**
+```typescript
+// RÈGLE ABSOLUE
+*.md SAUF (README.md | CLAUDE.md) → JAMAIS à la racine
+
+// Si fichier MD créé à la racine:
+1. Auto-classifier selon patterns ci-dessus
+2. Si pattern non reconnu → Demander utilisateur
+3. Déplacer IMMÉDIATEMENT vers dossier approprié
+4. ERREUR si reste à la racine après création
 ```
 
 ### **📋 Auto-Update Workflow**

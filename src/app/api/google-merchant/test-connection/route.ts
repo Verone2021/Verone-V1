@@ -9,6 +9,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { getGoogleMerchantClient, testGoogleMerchantConnection } from '@/lib/google-merchant/client'
 import { testGoogleMerchantAuth } from '@/lib/google-merchant/auth'
 import { GOOGLE_MERCHANT_CONFIG } from '@/lib/google-merchant/config'
+import logger from '@/lib/logger'
 
 interface TestConnectionResponse {
   success: boolean
@@ -28,8 +29,13 @@ interface TestConnectionResponse {
  * GET - Teste la connexion complète à Google Merchant Center
  */
 export async function GET(request: NextRequest): Promise<NextResponse<TestConnectionResponse>> {
+  const timer = logger.startTimer()
+
   try {
-    console.log('[API] Testing Google Merchant Center connection...')
+    logger.info('Testing Google Merchant Center connection', {
+      operation: 'google_merchant_test',
+      accountId: GOOGLE_MERCHANT_CONFIG.accountId
+    })
 
     const testResults = {
       authentication: false,
@@ -41,18 +47,23 @@ export async function GET(request: NextRequest): Promise<NextResponse<TestConnec
     }
 
     // 1. Test d'authentification
-    console.log('[API] Testing authentication...')
+    logger.info('Testing authentication', { operation: 'auth_test' })
     try {
       testResults.authentication = await testGoogleMerchantAuth()
-      console.log(`[API] Authentication test: ${testResults.authentication ? '✅' : '❌'}`)
+      logger.info(`Authentication test: ${testResults.authentication ? 'SUCCESS' : 'FAILED'}`, {
+        operation: 'auth_test',
+        success: testResults.authentication
+      })
     } catch (error: any) {
-      console.error('[API] Authentication test failed:', error)
+      logger.error('Authentication test failed', error, {
+        operation: 'auth_test_failed'
+      })
       testResults.details.authError = error.message
     }
 
     // 2. Test de connexion API
     if (testResults.authentication) {
-      console.log('[API] Testing API connection...')
+      logger.info('Testing API connection', { operation: 'api_connection_test' })
       try {
         const client = getGoogleMerchantClient()
         const connectionResult = await client.testConnection()
@@ -64,18 +75,25 @@ export async function GET(request: NextRequest): Promise<NextResponse<TestConnec
           testResults.details.apiError = connectionResult.error
         }
 
-        console.log(`[API] API connection test: ${testResults.apiConnection ? '✅' : '❌'}`)
+        logger.info(`API connection test: ${testResults.apiConnection ? 'SUCCESS' : 'FAILED'}`, {
+          operation: 'api_connection_test',
+          success: testResults.apiConnection
+        })
       } catch (error: any) {
-        console.error('[API] API connection test failed:', error)
+        logger.error('API connection test failed', error, {
+          operation: 'api_connection_test_failed'
+        })
         testResults.details.apiError = error.message
       }
     } else {
-      console.log('[API] Skipping API connection test due to authentication failure')
+      logger.warn('Skipping API connection test - auth failed', {
+        operation: 'api_connection_test_skipped'
+      })
       testResults.details.apiError = 'Authentication failed, skipping API test'
     }
 
     // 3. Test configuration
-    console.log('[API] Validating configuration...')
+    logger.info('Validating configuration', { operation: 'config_validation' })
     testResults.details.configuration = {
       accountId: GOOGLE_MERCHANT_CONFIG.accountId,
       dataSourceId: GOOGLE_MERCHANT_CONFIG.dataSourceId,
@@ -87,15 +105,26 @@ export async function GET(request: NextRequest): Promise<NextResponse<TestConnec
 
     // 4. Déterminer le succès global
     const overallSuccess = testResults.authentication && testResults.apiConnection
+    const duration = timer()
 
     if (overallSuccess) {
-      console.log('[API] Google Merchant Center connection test: ✅ SUCCESS')
+      logger.info('Google Merchant Center connection test: SUCCESS', {
+        operation: 'google_merchant_test_complete',
+        success: true
+      }, { duration_ms: duration })
+
       return NextResponse.json({
         success: true,
         data: testResults
       })
     } else {
-      console.log('[API] Google Merchant Center connection test: ❌ FAILED')
+      logger.warn('Google Merchant Center connection test: FAILED', {
+        operation: 'google_merchant_test_complete',
+        success: false,
+        authSuccess: testResults.authentication,
+        apiSuccess: testResults.apiConnection
+      }, { duration_ms: duration })
+
       return NextResponse.json({
         success: false,
         error: 'Connection test failed',
@@ -104,7 +133,9 @@ export async function GET(request: NextRequest): Promise<NextResponse<TestConnec
     }
 
   } catch (error: any) {
-    console.error('[API] Connection test crashed:', error)
+    logger.error('Connection test crashed', error, {
+      operation: 'google_merchant_test_crash'
+    })
 
     return NextResponse.json({
       success: false,
@@ -123,7 +154,9 @@ export async function GET(request: NextRequest): Promise<NextResponse<TestConnec
  */
 export async function POST(request: NextRequest): Promise<NextResponse<TestConnectionResponse>> {
   try {
-    console.log('[API] Extended connection test requested...')
+    logger.info('Extended connection test requested', {
+      operation: 'google_merchant_extended_test'
+    })
 
     // Récupérer les données de la requête pour des tests spécifiques
     const body = await request.json().catch(() => ({}))
@@ -142,7 +175,7 @@ export async function POST(request: NextRequest): Promise<NextResponse<TestConne
 
     // Test listage des produits
     if (includeProductList) {
-      console.log('[API] Testing product listing...')
+      logger.info('Testing product listing', { operation: 'product_list_test' })
       try {
         const client = getGoogleMerchantClient()
         const listResult = await client.listProducts(5) // Liste 5 produits max
@@ -163,7 +196,10 @@ export async function POST(request: NextRequest): Promise<NextResponse<TestConne
 
     // Test d'un produit spécifique
     if (testProduct) {
-      console.log(`[API] Testing specific product: ${testProduct}`)
+      logger.info('Testing specific product', {
+        operation: 'specific_product_test',
+        productSku: testProduct
+      })
       try {
         const client = getGoogleMerchantClient()
         const productResult = await client.getProduct(testProduct)
@@ -193,7 +229,9 @@ export async function POST(request: NextRequest): Promise<NextResponse<TestConne
     })
 
   } catch (error: any) {
-    console.error('[API] Extended connection test failed:', error)
+    logger.error('Extended connection test failed', error, {
+      operation: 'google_merchant_extended_test_failed'
+    })
 
     return NextResponse.json({
       success: false,

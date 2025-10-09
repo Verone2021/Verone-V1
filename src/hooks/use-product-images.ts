@@ -3,6 +3,7 @@
 import { useState, useCallback, useEffect } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import type { Database } from '@/lib/supabase/types'
+import logger from '@/lib/logger'
 
 type ProductImage = Database['public']['Tables']['product_images']['Row']
 type ProductImageInsert = Database['public']['Tables']['product_images']['Insert']
@@ -55,11 +56,18 @@ export function useProductImages({
       if (error) throw error
 
       // ✅ Plus besoin de générer les URLs - automatique via trigger
-      console.log(`✅ ${data?.length || 0} images chargées pour produit ${productId}`)
+      logger.info('Images chargées pour produit', {
+        operation: 'fetch_product_images',
+        productId,
+        imagesCount: data?.length || 0
+      })
       setImages(data || [])
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : 'Erreur chargement images'
-      console.error('❌ Erreur chargement images:', errorMessage)
+      logger.error('Erreur chargement images', err as Error, {
+        operation: 'fetch_product_images_failed',
+        productId
+      })
       setError(errorMessage)
     } finally {
       setLoading(false)
@@ -137,14 +145,22 @@ export function useProductImages({
         throw dbError
       }
 
-      console.log('✅ Image uploadée avec triggers automatiques:', file.name)
+      logger.info('Image uploadée avec succès', {
+        operation: 'upload_product_image',
+        productId,
+        fileName: file.name,
+        fileSize: file.size
+      })
 
       // Refresh images list
       await fetchImages()
 
       return dbData
     } catch (err) {
-      console.error('❌ Erreur upload:', err)
+      logger.error('Erreur upload image', err as Error, {
+        operation: 'upload_product_image_failed',
+        productId
+      })
       setError(err instanceof Error ? err.message : 'Erreur upload')
       throw err
     } finally {
@@ -173,7 +189,11 @@ export function useProductImages({
         })
         results.push(result)
       } catch (err) {
-        console.error(`❌ Erreur upload ${file.name}:`, err)
+        logger.error('Erreur upload image multiple', err as Error, {
+          operation: 'upload_multiple_images_failed',
+          productId,
+          fileName: file.name
+        })
         // Continue with other files
       }
     }
@@ -201,7 +221,10 @@ export function useProductImages({
         .remove([imageData.storage_path])
 
       if (storageError) {
-        console.warn('⚠️ Erreur suppression storage:', storageError)
+        logger.warn('Erreur suppression storage (non-bloquant)', {
+          operation: 'delete_storage_file_warning',
+          errorMessage: storageError.message
+        })
       }
 
       // Delete from database - CASCADE DELETE automatique
@@ -212,10 +235,16 @@ export function useProductImages({
 
       if (dbError) throw dbError
 
-      console.log('✅ Image supprimée:', imageData.storage_path)
+      logger.info('Image supprimée avec succès', {
+        operation: 'delete_product_image',
+        imageId
+      })
       await fetchImages()
     } catch (err) {
-      console.error('❌ Erreur suppression:', err)
+      logger.error('Erreur suppression image', err as Error, {
+        operation: 'delete_product_image_failed',
+        imageId
+      })
       setError(err instanceof Error ? err.message : 'Erreur suppression')
       throw err
     }
@@ -235,10 +264,17 @@ export function useProductImages({
       )
 
       await Promise.all(updates)
-      console.log('✅ Ordre images mis à jour')
+      logger.info('Ordre images mis à jour', {
+        operation: 'reorder_product_images',
+        productId,
+        imagesCount: imageIds.length
+      })
       await fetchImages()
     } catch (err) {
-      console.error('❌ Erreur réordonnancement:', err)
+      logger.error('Erreur réordonnancement images', err as Error, {
+        operation: 'reorder_product_images_failed',
+        productId
+      })
       setError(err instanceof Error ? err.message : 'Erreur réordonnancement')
       throw err
     }
@@ -257,10 +293,16 @@ export function useProductImages({
 
       if (error) throw error
 
-      console.log('✅ Image principale via trigger automatique')
+      logger.info('Image principale définie', {
+        operation: 'set_primary_image',
+        imageId
+      })
       await fetchImages()
     } catch (err) {
-      console.error('❌ Erreur image principale:', err)
+      logger.error('Erreur définition image principale', err as Error, {
+        operation: 'set_primary_image_failed',
+        imageId
+      })
       setError(err instanceof Error ? err.message : 'Erreur image principale')
       throw err
     }
@@ -287,10 +329,16 @@ export function useProductImages({
 
       if (error) throw error
 
-      console.log('✅ Métadonnées mises à jour')
+      logger.info('Métadonnées image mises à jour', {
+        operation: 'update_image_metadata',
+        imageId
+      })
       await fetchImages()
     } catch (err) {
-      console.error('❌ Erreur métadonnées:', err)
+      logger.error('Erreur mise à jour métadonnées', err as Error, {
+        operation: 'update_image_metadata_failed',
+        imageId
+      })
       setError(err instanceof Error ? err.message : 'Erreur métadonnées')
       throw err
     }
@@ -308,7 +356,10 @@ export function useProductImages({
   // ✨ Auto-fetch optimisé - FIX: Supprimer fetchImages des dépendances pour éviter la boucle infinie
   useEffect(() => {
     if (autoFetch && productId && productId.trim() !== '') {
-      console.log('🔄 Auto-fetch images:', productId)
+      logger.debug('Auto-fetch images déclenché', {
+        operation: 'auto_fetch_images',
+        productId
+      })
       fetchImages()
     }
   }, [productId, autoFetch]) // Supprimé fetchImages des dépendances

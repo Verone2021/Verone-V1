@@ -197,19 +197,22 @@ export function useStock() {
       // Calculer le mouvement selon le type
       switch (movementData.movement_type) {
         case 'add':
+        case 'IN':
           quantityChange = Math.abs(movementData.quantity)
           newQuantity = currentStock + quantityChange
           break
 
         case 'remove':
-          quantityChange = Math.abs(movementData.quantity) // Positive value - trigger handles subtraction
-          newQuantity = currentStock - quantityChange
+        case 'OUT':
+          quantityChange = -Math.abs(movementData.quantity) // Negative value for OUT movements
+          newQuantity = currentStock + quantityChange
           if (newQuantity < 0) {
             throw new Error(`Stock insuffisant. Disponible: ${currentStock}, Demandé: ${movementData.quantity}`)
           }
           break
 
         case 'adjust':
+        case 'ADJUST':
           newQuantity = Math.abs(movementData.quantity)
           quantityChange = newQuantity - currentStock
           break
@@ -218,9 +221,14 @@ export function useStock() {
           throw new Error('Type de mouvement invalide')
       }
 
+      // Normaliser le type de mouvement pour la base de données
+      const dbMovementType =
+        (movementData.movement_type === 'add' || movementData.movement_type === 'IN') ? 'IN' :
+        (movementData.movement_type === 'remove' || movementData.movement_type === 'OUT') ? 'OUT' : 'ADJUST'
+
       console.log('Création mouvement:', {
         product_id: movementData.product_id,
-        movement_type: movementData.movement_type,
+        movement_type: dbMovementType,
         quantity_change: quantityChange,
         quantity_before: currentStock,
         quantity_after: newQuantity,
@@ -232,8 +240,7 @@ export function useStock() {
         .from('stock_movements')
         .insert({
           product_id: movementData.product_id,
-          movement_type: movementData.movement_type === 'add' ? 'IN' :
-                        movementData.movement_type === 'remove' ? 'OUT' : 'ADJUST',
+          movement_type: dbMovementType,
           quantity_change: quantityChange,
           quantity_before: currentStock,
           quantity_after: newQuantity,
@@ -277,12 +284,12 @@ export function useStock() {
       console.log('Mouvement créé avec succès:', insertedMovement)
 
       // Message de succès personnalisé
-      const actionText = movementData.movement_type === 'add' ? 'ajoutées' :
-                        movementData.movement_type === 'remove' ? 'retirées' : 'ajusté à'
+      const actionText = dbMovementType === 'IN' ? 'ajoutées' :
+                        dbMovementType === 'OUT' ? 'retirées' : 'ajusté à'
 
       toast({
         title: "✅ Stock mis à jour",
-        description: movementData.movement_type === 'adjust'
+        description: dbMovementType === 'ADJUST'
           ? `Stock ajusté à ${newQuantity} unités pour ${product.name}`
           : `${Math.abs(movementData.quantity)} unités ${actionText} pour ${product.name}. Nouveau stock: ${newQuantity}`
       })

@@ -164,11 +164,14 @@ export function StockMovementModal({ product: initialProduct, isOpen, onClose, o
       return
     }
 
+    // Conversion du type de mouvement vers le format DB
+    const dbMovementType = movementType === 'add' ? 'IN' : movementType === 'remove' ? 'OUT' : 'ADJUST'
+
     setLoading(true)
     try {
       await createManualMovement({
         product_id: selectedProduct.id,
-        movement_type: movementType,
+        movement_type: dbMovementType,
         quantity: parseInt(quantity),
         reason_code: reasonCode,
         notes: notes.trim() || undefined,
@@ -280,26 +283,35 @@ export function StockMovementModal({ product: initialProduct, isOpen, onClose, o
             </div>
           )}
 
-          {/* Type de mouvement */}
+          {/* Type de mouvement - Context-aware selon initialMovementType */}
           <div className="space-y-3">
             <Label>Type d'opération</Label>
-            <div className="grid grid-cols-3 gap-2">
-              <Button
-                type="button"
-                variant={movementType === 'add' ? 'default' : 'outline'}
-                onClick={() => setMovementType('add')}
-                className="justify-start"
-              >
-                Ajouter (+)
-              </Button>
-              <Button
-                type="button"
-                variant={movementType === 'remove' ? 'default' : 'outline'}
-                onClick={() => setMovementType('remove')}
-                className="justify-start"
-              >
-                Retirer (-)
-              </Button>
+            <div className={`grid gap-2 ${initialMovementType ? 'grid-cols-2' : 'grid-cols-3'}`}>
+              {/* Ajouter - Visible uniquement si contexte entrée ou inventaire */}
+              {(!initialMovementType || initialMovementType === 'add') && (
+                <Button
+                  type="button"
+                  variant={movementType === 'add' ? 'default' : 'outline'}
+                  onClick={() => setMovementType('add')}
+                  className="justify-start"
+                >
+                  Ajouter (+)
+                </Button>
+              )}
+
+              {/* Retirer - Visible uniquement si contexte sortie ou inventaire */}
+              {(!initialMovementType || initialMovementType === 'remove' || initialMovementType === 'OUT') && (
+                <Button
+                  type="button"
+                  variant={movementType === 'remove' ? 'default' : 'outline'}
+                  onClick={() => setMovementType('remove')}
+                  className="justify-start"
+                >
+                  Retirer (-)
+                </Button>
+              )}
+
+              {/* Ajuster - Toujours visible (correction inventaire) */}
               <Button
                 type="button"
                 variant={movementType === 'adjust' ? 'default' : 'outline'}
@@ -309,6 +321,22 @@ export function StockMovementModal({ product: initialProduct, isOpen, onClose, o
                 Ajuster (=)
               </Button>
             </div>
+            {movementType === 'adjust' && (
+              <div className="bg-blue-50 border border-blue-200 rounded-md p-3 space-y-1">
+                <p className="text-sm font-medium text-blue-900 flex items-center gap-2">
+                  💡 Quand utiliser l'ajustement ?
+                </p>
+                <ul className="text-xs text-blue-800 space-y-1 ml-4 list-disc">
+                  <li><strong>Stock initial</strong> lors de la migration système</li>
+                  <li><strong>Correction après inventaire physique</strong> (comptage réel ≠ système)</li>
+                  <li><strong>Produits retrouvés/cassés</strong> non déclarés en entrée/sortie</li>
+                  <li><strong>Écarts inexpliqués</strong> détectés lors des contrôles</li>
+                </ul>
+                <p className="text-xs text-blue-700 italic mt-2">
+                  ⚠️ L'ajustement crée une ligne séparée dans l'inventaire pour traçabilité comptable
+                </p>
+              </div>
+            )}
           </div>
 
           {/* Quantité */}
@@ -440,158 +468,6 @@ export function StockMovementModal({ product: initialProduct, isOpen, onClose, o
             <Button
               type="submit"
               disabled={loading || validation?.type === 'error' || !selectedProduct}
-              className="flex-1"
-            >
-              {loading ? (
-                <RefreshCw className="h-4 w-4 animate-spin mr-2" />
-              ) : null}
-              Enregistrer le mouvement
-            </Button>
-          </div>
-        </form>
-      </DialogContent>
-    </Dialog>
-  )
-}
-                type="button"
-                variant={movementType === 'adjust' ? 'default' : 'outline'}
-                onClick={() => setMovementType('adjust')}
-                className="justify-start"
-              >
-                Ajuster (=)
-              </Button>
-            </div>
-          </div>
-
-          {/* Quantité */}
-          <div className="space-y-2">
-            <Label>
-              {movementType === 'adjust' ? 'Nouvelle quantité finale' : 'Quantité à traiter'}
-            </Label>
-            <Input
-              type="number"
-              min="1"
-              value={quantity}
-              onChange={(e) => setQuantity(e.target.value)}
-              placeholder={movementType === 'adjust' ? 'Quantité finale souhaitée' : 'Nombre d\'unités'}
-              required
-            />
-            {validation && (
-              <div className={`flex items-center gap-2 text-sm ${
-                validation.type === 'error' ? 'text-red-600' : 'text-white'
-              }`}>
-                <AlertTriangle className="h-4 w-4" />
-                <span>{validation.message}</span>
-              </div>
-            )}
-          </div>
-
-          {/* Motif */}
-          <div className="space-y-3">
-            <Label>Motif de l'opération</Label>
-
-            {/* Motifs suggérés */}
-            <div className="space-y-2">
-              <p className="text-sm text-gray-600">Motifs courants :</p>
-              <div className="grid grid-cols-2 gap-2">
-                {suggestedReasons.slice(0, 4).map((reason) => (
-                  <Button
-                    key={reason.code}
-                    type="button"
-                    variant={reasonCode === reason.code ? 'default' : 'outline'}
-                    size="sm"
-                    onClick={() => setReasonCode(reason.code)}
-                    className="justify-start text-left h-auto py-2"
-                  >
-                    <div>
-                      <div className="font-medium">{reason.label}</div>
-                    </div>
-                  </Button>
-                ))}
-              </div>
-            </div>
-
-            {/* Tous les motifs */}
-            <Collapsible open={showAdvanced} onOpenChange={setShowAdvanced}>
-              <CollapsibleTrigger asChild>
-                <Button variant="ghost" size="sm" className="text-blue-600">
-                  {showAdvanced ? 'Masquer' : 'Voir tous les motifs'}
-                </Button>
-              </CollapsibleTrigger>
-              <CollapsibleContent className="space-y-2 mt-2">
-                <Select value={reasonCode} onValueChange={(value: StockReasonCode) => setReasonCode(value)}>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Sélectionner un motif détaillé" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {Object.entries(reasonsByCategory).map(([category, reasons]) => (
-                      <div key={category}>
-                        <div className="px-2 py-1 text-xs font-semibold text-gray-500 uppercase">
-                          {category.replace('_', ' ')}
-                        </div>
-                        {reasons.map((reason) => (
-                          <SelectItem key={reason.code} value={reason.code}>
-                            {reason.label}
-                          </SelectItem>
-                        ))}
-                      </div>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </CollapsibleContent>
-            </Collapsible>
-
-            {/* Description du motif sélectionné */}
-            <div className="text-sm text-gray-600 bg-blue-50 p-2 rounded">
-              <strong>Motif sélectionné:</strong> {getReasonDescription(reasonCode)}
-            </div>
-          </div>
-
-          {/* Notes obligatoires pour certains motifs */}
-          <div className="space-y-2">
-            <Label>
-              Notes explicatives
-              {['theft', 'loss_unknown', 'damage_transport', 'write_off'].includes(reasonCode) && (
-                <span className="text-red-500 ml-1">*</span>
-              )}
-            </Label>
-            <Textarea
-              value={notes}
-              onChange={(e) => setNotes(e.target.value)}
-              placeholder="Détails sur l'opération (obligatoire pour certains motifs)..."
-              rows={3}
-              required={['theft', 'loss_unknown', 'damage_transport', 'write_off'].includes(reasonCode)}
-            />
-          </div>
-
-          {/* Coût unitaire optionnel */}
-          {movementType === 'add' && (
-            <div className="space-y-2">
-              <Label>Coût unitaire (optionnel)</Label>
-              <Input
-                type="number"
-                step="0.01"
-                min="0"
-                value={unitCost}
-                onChange={(e) => setUnitCost(e.target.value)}
-                placeholder="0.00 €"
-              />
-            </div>
-          )}
-
-          {/* Actions */}
-          <div className="flex gap-3 pt-4">
-            <Button
-              type="button"
-              variant="outline"
-              onClick={handleClose}
-              className="flex-1"
-            >
-              Annuler
-            </Button>
-            <Button
-              type="submit"
-              disabled={loading || validation?.type === 'error'}
               className="flex-1"
             >
               {loading ? (

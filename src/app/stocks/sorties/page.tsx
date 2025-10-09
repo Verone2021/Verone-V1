@@ -2,6 +2,8 @@
 
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
+import Image from 'next/image'
+import Link from 'next/link'
 import {
   ArrowUpFromLine,
   ArrowLeft,
@@ -23,11 +25,13 @@ import { Label } from '../../../components/ui/label'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../../../components/ui/select'
 import { StockMovementModal } from '../../../components/business/stock-movement-modal'
 import { useStockOptimized } from '../../../hooks/use-stock-optimized'
+import { useStockMovements } from '../../../hooks/use-stock-movements'
 import { useToast } from '../../../hooks/use-toast'
 
 export default function StockSortiesPage() {
   const router = useRouter()
   const { toast } = useToast()
+  const { getReasonDescription } = useStockMovements()
 
   // Filtres pour mouvements de sortie uniquement
   const [filters, setFilters] = useState({
@@ -373,12 +377,28 @@ export default function StockSortiesPage() {
                       key={movement.id}
                       className="border border-gray-200 rounded-lg p-4 hover:shadow-md transition-shadow"
                     >
-                      <div className="flex items-start justify-between">
+                      <div className="flex items-start gap-4">
+                        {/* Image produit */}
+                        {movement.product_image_url && (
+                          <div className="flex-shrink-0">
+                            <Image
+                              src={movement.product_image_url}
+                              alt={movement.product_name || 'Produit'}
+                              width={80}
+                              height={80}
+                              className="rounded-md object-cover border border-gray-200"
+                            />
+                          </div>
+                        )}
+
                         <div className="flex-1">
                           <div className="flex items-center space-x-3 mb-2">
-                            <h3 className="font-medium text-black">
+                            <Link
+                              href={`/catalogue/${movement.product_id}`}
+                              className="font-medium text-black hover:text-blue-600 hover:underline transition-colors"
+                            >
                               {movement.product_name || 'Produit inconnu'}
-                            </h3>
+                            </Link>
                             {movement.product_sku && (
                               <Badge variant="outline" className="text-xs">
                                 {movement.product_sku}
@@ -401,7 +421,7 @@ export default function StockSortiesPage() {
                               <span className="font-medium">Stock après:</span> {movement.quantity_after}
                             </div>
                             <div>
-                              <span className="font-medium">Motif:</span> {movement.reason_code || 'Non spécifié'}
+                              <span className="font-medium">Motif:</span> {getReasonDescription(movement.reason_code)}
                             </div>
                             <div>
                               <span className="font-medium">Par:</span> {movement.performer_name || 'Système'}
@@ -441,7 +461,7 @@ export default function StockSortiesPage() {
           isOpen={showExitModal}
           onClose={() => setShowExitModal(false)}
           onSubmit={handleQuickExit}
-          movementType="OUT"
+          movementType="remove"
           title="Nouvelle Sortie de Stock"
         />
       )}

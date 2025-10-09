@@ -149,26 +149,28 @@ export default function InteractionsDashboardPage() {
     <div className="min-h-screen bg-gray-50">
       {/* Header */}
       <div className="bg-white border-b border-gray-200">
-        <div className="container mx-auto px-4 py-6">
+        <div className="container mx-auto px-4 py-4">
           <div className="flex items-center justify-between">
             <div>
-              <h1 className="text-3xl font-bold text-black">Dashboard Interactions Clients</h1>
-              <p className="text-gray-600 mt-1">Vue d'ensemble des consultations et commandes clients</p>
+              <h1 className="text-2xl font-bold text-black">Dashboard Interactions Clients</h1>
+              <p className="text-sm text-gray-600">Vue d'ensemble des consultations et commandes clients</p>
             </div>
-            <div className="flex items-center space-x-3">
+            <div className="flex items-center space-x-2">
               <Button
                 variant="outline"
+                size="sm"
                 onClick={() => router.push('/consultations')}
-                className="border-black text-black hover:bg-black hover:text-white"
+                className="h-8 border-black text-black hover:bg-black hover:text-white"
               >
-                <MessageCircle className="h-4 w-4 mr-2" />
+                <MessageCircle className="h-3 w-3 mr-1.5" />
                 Consultations
               </Button>
               <Button
+                size="sm"
                 onClick={() => router.push('/consultations')}
-                className="bg-black hover:bg-gray-800 text-white"
+                className="h-8 bg-black hover:bg-gray-800 text-white"
               >
-                <Plus className="h-4 w-4 mr-2" />
+                <Plus className="h-3 w-3 mr-1.5" />
                 Nouvelle Consultation
               </Button>
             </div>
@@ -176,16 +178,16 @@ export default function InteractionsDashboardPage() {
         </div>
       </div>
 
-      <div className="container mx-auto px-4 py-8 space-y-8">
+      <div className="container mx-auto px-4 py-6 space-y-4">
         {/* KPIs Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
           <Card className="border-black">
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium text-gray-600">Consultations Actives</CardTitle>
-              <MessageCircle className="h-4 w-4 text-black" />
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-1">
+              <CardTitle className="text-xs font-medium text-gray-600">Consultations Actives</CardTitle>
+              <MessageCircle className="h-3.5 w-3.5 text-black" />
             </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold text-black">{stats.totalConsultations}</div>
+            <CardContent className="pt-1">
+              <div className="text-xl font-bold text-black">{stats.totalConsultations}</div>
               <p className="text-xs text-gray-600">
                 {stats.pendingConsultations} en attente
               </p>
@@ -193,12 +195,12 @@ export default function InteractionsDashboardPage() {
           </Card>
 
           <Card className="border-black">
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium text-gray-600">Commandes en Cours</CardTitle>
-              <ShoppingBag className="h-4 w-4 text-blue-600" />
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-1">
+              <CardTitle className="text-xs font-medium text-gray-600">Commandes en Cours</CardTitle>
+              <ShoppingBag className="h-3.5 w-3.5 text-blue-600" />
             </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold text-black">{stats.activeOrders}</div>
+            <CardContent className="pt-1">
+              <div className="text-xl font-bold text-black">{stats.activeOrders}</div>
               <p className="text-xs text-gray-600">
                 commandes actives
               </p>
@@ -206,12 +208,12 @@ export default function InteractionsDashboardPage() {
           </Card>
 
           <Card className="border-black">
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium text-gray-600">CA Mensuel</CardTitle>
-              <Euro className="h-4 w-4 text-green-600" />
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-1">
+              <CardTitle className="text-xs font-medium text-gray-600">CA Mensuel</CardTitle>
+              <Euro className="h-3.5 w-3.5 text-green-600" />
             </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold text-black">{stats.monthlyRevenue.toLocaleString()}€</div>
+            <CardContent className="pt-1">
+              <div className="text-xl font-bold text-black">{stats.monthlyRevenue.toLocaleString()}€</div>
               <p className="text-xs text-gray-600">
                 ce mois-ci
               </p>
@@ -219,12 +221,12 @@ export default function InteractionsDashboardPage() {
           </Card>
 
           <Card className="border-black">
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium text-gray-600">Taux Conversion</CardTitle>
-              <TrendingUp className="h-4 w-4 text-green-600" />
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-1">
+              <CardTitle className="text-xs font-medium text-gray-600">Taux Conversion</CardTitle>
+              <TrendingUp className="h-3.5 w-3.5 text-green-600" />
             </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold text-black">{stats.conversionRate}%</div>
+            <CardContent className="pt-1">
+              <div className="text-xl font-bold text-black">{stats.conversionRate}%</div>
               <p className="text-xs text-gray-600">
                 consultation → commande
               </p>
@@ -232,12 +234,12 @@ export default function InteractionsDashboardPage() {
           </Card>
 
           <Card className="border-black">
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium text-gray-600">Panier Moyen</CardTitle>
-              <BarChart3 className="h-4 w-4 text-blue-600" />
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-1">
+              <CardTitle className="text-xs font-medium text-gray-600">Panier Moyen</CardTitle>
+              <BarChart3 className="h-3.5 w-3.5 text-blue-600" />
             </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold text-black">{stats.averageOrderValue.toLocaleString()}€</div>
+            <CardContent className="pt-1">
+              <div className="text-xl font-bold text-black">{stats.averageOrderValue.toLocaleString()}€</div>
               <p className="text-xs text-gray-600">
                 valeur moyenne
               </p>
@@ -245,12 +247,12 @@ export default function InteractionsDashboardPage() {
           </Card>
 
           <Card className="border-black">
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium text-gray-600">Satisfaction</CardTitle>
-              <Star className="h-4 w-4 text-gray-700" />
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-1">
+              <CardTitle className="text-xs font-medium text-gray-600">Satisfaction</CardTitle>
+              <Star className="h-3.5 w-3.5 text-gray-700" />
             </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold text-black">4.8/5</div>
+            <CardContent className="pt-1">
+              <div className="text-xl font-bold text-black">4.8/5</div>
               <p className="text-xs text-gray-600">
                 note moyenne clients
               </p>
@@ -259,61 +261,49 @@ export default function InteractionsDashboardPage() {
         </div>
 
         {/* Actions Rapides */}
-        <Card className="border-black">
-          <CardHeader>
-            <CardTitle className="text-black">Actions Rapides</CardTitle>
-            <CardDescription>Accès rapide aux fonctionnalités client</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              <Button
-                variant="outline"
-                className="h-20 border-black text-black hover:bg-black hover:text-white"
-                onClick={() => router.push('/consultations')}
-              >
-                <div className="flex flex-col items-center">
-                  <MessageCircle className="h-6 w-6 mb-2" />
-                  <span>Consultations</span>
-                </div>
-              </Button>
-
-              <Button
-                variant="outline"
-                className="h-20 border-black text-black hover:bg-black hover:text-white"
-                onClick={() => router.push('/commandes/clients')}
-              >
-                <div className="flex flex-col items-center">
-                  <ShoppingBag className="h-6 w-6 mb-2" />
-                  <span>Commandes</span>
-                </div>
-              </Button>
-
-              <Button
-                variant="outline"
-                className="h-20 border-black text-black hover:bg-black hover:text-white"
-                onClick={() => router.push('/contacts-organisations')}
-              >
-                <div className="flex flex-col items-center">
-                  <Users className="h-6 w-6 mb-2" />
-                  <span>Contacts</span>
-                </div>
-              </Button>
-            </div>
-          </CardContent>
-        </Card>
+        <div className="flex items-center gap-2 bg-gray-50 border border-gray-200 rounded-lg px-3 py-2">
+          <span className="text-xs text-gray-600 font-medium mr-2">Actions rapides:</span>
+          <Button
+            variant="ghost"
+            size="sm"
+            className="h-7 px-2 text-xs hover:bg-black hover:text-white"
+            onClick={() => router.push('/consultations')}
+          >
+            <MessageCircle className="h-3 w-3 mr-1" />
+            Consultations
+          </Button>
+          <Button
+            variant="ghost"
+            size="sm"
+            className="h-7 px-2 text-xs hover:bg-black hover:text-white"
+            onClick={() => router.push('/commandes/clients')}
+          >
+            <ShoppingBag className="h-3 w-3 mr-1" />
+            Commandes
+          </Button>
+          <Button
+            variant="ghost"
+            size="sm"
+            className="h-7 px-2 text-xs hover:bg-black hover:text-white"
+            onClick={() => router.push('/contacts-organisations')}
+          >
+            <Users className="h-3 w-3 mr-1" />
+            Contacts
+          </Button>
+        </div>
 
         {/* Consultations Récentes et Commandes */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
           {/* Consultations récentes */}
           <Card className="border-black">
-            <CardHeader>
-              <CardTitle className="text-black">Consultations Récentes</CardTitle>
-              <CardDescription>Dernières demandes clients</CardDescription>
+            <CardHeader className="pb-3">
+              <CardTitle className="text-base text-black">Consultations Récentes</CardTitle>
+              <CardDescription className="text-xs">Dernières demandes clients</CardDescription>
             </CardHeader>
             <CardContent>
-              <div className="space-y-4">
+              <div className="space-y-2">
                 {recentConsultations.map((consultation) => (
-                  <div key={consultation.id} className="border border-gray-200 rounded-lg p-4">
+                  <div key={consultation.id} className="border border-gray-200 rounded-lg p-3">
                     <div className="flex items-start justify-between mb-3">
                       <div className="flex-1">
                         <h4 className="font-medium text-black">{consultation.subject}</h4>
@@ -350,14 +340,14 @@ export default function InteractionsDashboardPage() {
 
           {/* Commandes en cours */}
           <Card className="border-black">
-            <CardHeader>
-              <CardTitle className="text-black">Commandes en Cours</CardTitle>
-              <CardDescription>Suivi des commandes actives</CardDescription>
+            <CardHeader className="pb-3">
+              <CardTitle className="text-base text-black">Commandes en Cours</CardTitle>
+              <CardDescription className="text-xs">Suivi des commandes actives</CardDescription>
             </CardHeader>
             <CardContent>
-              <div className="space-y-4">
+              <div className="space-y-2">
                 {recentOrders.map((order) => (
-                  <div key={order.id} className="border border-gray-200 rounded-lg p-4">
+                  <div key={order.id} className="border border-gray-200 rounded-lg p-3">
                     <div className="flex items-start justify-between mb-3">
                       <div>
                         <h4 className="font-medium text-black">{order.id}</h4>

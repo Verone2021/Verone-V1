@@ -229,48 +229,42 @@ export default function ActiviteUtilisateursPage() {
 
       {/* Stats summary */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <div className="bg-white rounded-lg border border-gray-200 p-6">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-sm font-medium text-gray-600">Utilisateurs Actifs</p>
-              <p className="text-2xl font-bold text-black">
-                {users.filter(u => u.is_active_now).length}
-              </p>
-              <p className="text-sm text-gray-500 mt-1">En ligne maintenant</p>
+        <div className="bg-white rounded-lg border border-gray-200">
+          <div className="flex flex-row items-center justify-between space-y-0 p-4 pb-2">
+            <div className="text-sm font-medium text-gray-600">Utilisateurs Actifs</div>
+            <CheckCircle className="h-4 w-4 text-green-600" />
+          </div>
+          <div className="px-4 pb-4">
+            <div className="text-2xl font-bold text-black">
+              {users.filter(u => u.is_active_now).length}
             </div>
-            <div className="h-12 w-12 bg-green-100 rounded-lg flex items-center justify-center">
-              <CheckCircle className="h-6 w-6 text-green-600" />
-            </div>
+            <p className="text-xs text-gray-600">En ligne maintenant</p>
           </div>
         </div>
 
-        <div className="bg-white rounded-lg border border-gray-200 p-6">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-sm font-medium text-gray-600">Total Utilisateurs</p>
-              <p className="text-2xl font-bold text-black">{users.length}</p>
-              <p className="text-sm text-gray-500 mt-1">Équipe complète</p>
-            </div>
-            <div className="h-12 w-12 bg-blue-100 rounded-lg flex items-center justify-center">
-              <User className="h-6 w-6 text-blue-600" />
-            </div>
+        <div className="bg-white rounded-lg border border-gray-200">
+          <div className="flex flex-row items-center justify-between space-y-0 p-4 pb-2">
+            <div className="text-sm font-medium text-gray-600">Total Utilisateurs</div>
+            <User className="h-4 w-4 text-blue-600" />
+          </div>
+          <div className="px-4 pb-4">
+            <div className="text-2xl font-bold text-black">{users.length}</div>
+            <p className="text-xs text-gray-600">Équipe complète</p>
           </div>
         </div>
 
-        <div className="bg-white rounded-lg border border-gray-200 p-6">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-sm font-medium text-gray-600">Engagement Moyen</p>
-              <p className="text-2xl font-bold text-black">
-                {users.length > 0
-                  ? Math.round(users.reduce((sum, u) => sum + u.engagement_score, 0) / users.length)
-                  : 0}
-              </p>
-              <p className="text-sm text-gray-500 mt-1">Score sur 100</p>
+        <div className="bg-white rounded-lg border border-gray-200">
+          <div className="flex flex-row items-center justify-between space-y-0 p-4 pb-2">
+            <div className="text-sm font-medium text-gray-600">Engagement Moyen</div>
+            <TrendingUp className="h-4 w-4 text-purple-600" />
+          </div>
+          <div className="px-4 pb-4">
+            <div className="text-2xl font-bold text-black">
+              {users.length > 0
+                ? Math.round(users.reduce((sum, u) => sum + u.engagement_score, 0) / users.length)
+                : 0}
             </div>
-            <div className="h-12 w-12 bg-purple-100 rounded-lg flex items-center justify-center">
-              <TrendingUp className="h-6 w-6 text-purple-600" />
-            </div>
+            <p className="text-xs text-gray-600">Score sur 100</p>
           </div>
         </div>
       </div>

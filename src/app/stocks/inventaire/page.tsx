@@ -1,188 +1,50 @@
 'use client'
 
-import React, { useState, useEffect, useMemo } from 'react'
+import React, { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
+import Image from 'next/image'
+import Link from 'next/link'
 import {
   Package,
   Search,
-  Filter,
-  Plus,
-  AlertTriangle,
-  TrendingDown,
-  TrendingUp,
-  Eye,
-  Edit,
-  History,
-  BarChart3,
-  Settings,
+  ArrowLeft,
   RefreshCw,
   Download,
-  Upload,
+  TrendingUp,
+  TrendingDown,
+  BarChart3,
+  History,
   Calendar,
-  ArrowUpDown,
-  X,
-  ArrowLeft
+  Clock,
+  User,
+  FileText,
+  ExternalLink
 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Badge } from '@/components/ui/badge'
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select'
+import { Card, CardContent } from '@/components/ui/card'
+import { useStockInventory } from '@/hooks/use-stock-inventory'
+import { useStockMovements } from '@/hooks/use-stock-movements'
+import { formatPrice } from '@/lib/utils'
 import {
   Dialog,
   DialogContent,
   DialogHeader,
   DialogTitle,
-  DialogTrigger,
 } from '@/components/ui/dialog'
-import { useToast } from '@/hooks/use-toast'
-import { useStock } from '@/hooks/use-stock'
-import { useStockMovements } from '@/hooks/use-stock-movements'
-import { useStockReservations } from '@/hooks/use-stock-reservations'
-import { formatPrice } from '@/lib/utils'
+import { StockReportsModal } from '@/components/business/stock-reports-modal'
 
-interface StockFilters {
-  search: string
-  status: 'all' | 'in_stock' | 'low_stock' | 'out_of_stock'
-  category: string
-  sortBy: 'name' | 'sku' | 'stock' | 'updated_at'
-  sortOrder: 'asc' | 'desc'
-}
-
-interface StockMovementModalProps {
+interface ProductHistoryModalProps {
   product: any
   isOpen: boolean
   onClose: () => void
-  onSuccess: () => void
 }
 
-function StockMovementModal({ product, isOpen, onClose, onSuccess }: StockMovementModalProps) {
-  const [movementType, setMovementType] = useState<'IN' | 'OUT' | 'ADJUST'>('IN')
-  const [quantity, setQuantity] = useState('')
-  const [unitCost, setUnitCost] = useState('')
-  const [notes, setNotes] = useState('')
-  const [loading, setLoading] = useState(false)
-  const { createMovement } = useStockMovements()
-  const { toast } = useToast()
-
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault()
-    if (!quantity || parseInt(quantity) <= 0) {
-      toast({
-        title: "Erreur",
-        description: "Veuillez saisir une quantité valide",
-        variant: "destructive"
-      })
-      return
-    }
-
-    setLoading(true)
-    try {
-      await createMovement({
-        product_id: product.id,
-        movement_type: movementType,
-        quantity_change: parseInt(quantity),
-        unit_cost: unitCost ? parseFloat(unitCost) : undefined,
-        reference_type: 'manual_entry',
-        notes: notes
-      })
-
-      onSuccess()
-      onClose()
-      setQuantity('')
-      setUnitCost('')
-      setNotes('')
-    } catch (error) {
-      // L'erreur est déjà gérée dans le hook
-    } finally {
-      setLoading(false)
-    }
-  }
-
-  return (
-    <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="sm:max-w-md">
-        <DialogHeader>
-          <DialogTitle>Mouvement de stock - {product?.name}</DialogTitle>
-        </DialogHeader>
-        <form onSubmit={handleSubmit} className="space-y-4">
-          <div>
-            <label className="block text-sm font-medium mb-2">Type de mouvement</label>
-            <Select value={movementType} onValueChange={(value: any) => setMovementType(value)}>
-              <SelectTrigger>
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="IN">Entrée (+)</SelectItem>
-                <SelectItem value="OUT">Sortie (-)</SelectItem>
-                <SelectItem value="ADJUST">Ajustement</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
-
-          <div>
-            <label className="block text-sm font-medium mb-2">
-              {movementType === 'ADJUST' ? 'Nouvelle quantité' : 'Quantité'}
-            </label>
-            <Input
-              type="number"
-              min="1"
-              value={quantity}
-              onChange={(e) => setQuantity(e.target.value)}
-              placeholder={movementType === 'ADJUST' ? 'Quantité finale souhaitée' : 'Quantité du mouvement'}
-              required
-            />
-            {product && (
-              <p className="text-xs text-gray-500 mt-1">
-                Stock actuel: {product.stock_quantity || 0} unités
-              </p>
-            )}
-          </div>
-
-          <div>
-            <label className="block text-sm font-medium mb-2">Coût unitaire (optionnel)</label>
-            <Input
-              type="number"
-              step="0.01"
-              min="0"
-              value={unitCost}
-              onChange={(e) => setUnitCost(e.target.value)}
-              placeholder="0.00"
-            />
-          </div>
-
-          <div>
-            <label className="block text-sm font-medium mb-2">Notes</label>
-            <Input
-              value={notes}
-              onChange={(e) => setNotes(e.target.value)}
-              placeholder="Raison du mouvement..."
-            />
-          </div>
-
-          <div className="flex gap-2 pt-4">
-            <Button type="button" variant="outline" onClick={onClose} className="flex-1">
-              Annuler
-            </Button>
-            <Button type="submit" disabled={loading} className="flex-1">
-              {loading ? <RefreshCw className="h-4 w-4 animate-spin" /> : 'Enregistrer'}
-            </Button>
-          </div>
-        </form>
-      </DialogContent>
-    </Dialog>
-  )
-}
-
-function ProductHistoryModal({ product, isOpen, onClose }: { product: any, isOpen: boolean, onClose: () => void }) {
+function ProductHistoryModal({ product, isOpen, onClose }: ProductHistoryModalProps) {
   const [movements, setMovements] = useState([])
   const [loading, setLoading] = useState(false)
-  const { getProductHistory } = useStockMovements()
+  const { getProductHistory, getReasonDescription } = useStockMovements()
 
   useEffect(() => {
     if (isOpen && product) {
@@ -202,214 +64,271 @@ function ProductHistoryModal({ product, isOpen, onClose }: { product: any, isOpe
     }
   }
 
+  const getMovementTypeLabel = (type: string) => {
+    const labels: Record<string, string> = {
+      IN: 'Entrée',
+      OUT: 'Sortie',
+      ADJUST: 'Ajustement',
+      TRANSFER: 'Transfert'
+    }
+    return labels[type] || type
+  }
+
+  const getMovementTypeColor = (type: string) => {
+    const colors: Record<string, string> = {
+      IN: 'bg-black text-white',
+      OUT: 'bg-gray-700 text-white',
+      ADJUST: 'bg-gray-500 text-white',
+      TRANSFER: 'bg-gray-400 text-white'
+    }
+    return colors[type] || 'bg-gray-300 text-black'
+  }
+
+  const getSourceInfo = (movement: any) => {
+    // Si c'est lié à une commande
+    if (movement.reference_type === 'order' && movement.reference_id) {
+      return {
+        type: 'order',
+        label: 'Commande',
+        link: `/commandes/${movement.reference_id}`,
+        reference: movement.reference_id
+      }
+    }
+
+    // Si c'est lié à une vente
+    if (movement.reference_type === 'sale' && movement.reference_id) {
+      return {
+        type: 'sale',
+        label: 'Vente',
+        link: `/commandes/${movement.reference_id}`,
+        reference: movement.reference_id
+      }
+    }
+
+    // Mouvement manuel
+    return {
+      type: 'manual',
+      label: 'Manuel',
+      link: null,
+      reference: null
+    }
+  }
+
+  const getPerformerName = (movement: any) => {
+    if (movement.user_profiles) {
+      const { first_name, last_name } = movement.user_profiles
+      if (first_name || last_name) {
+        return `${first_name || ''} ${last_name || ''}`.trim()
+      }
+    }
+    return 'Admin'
+  }
+
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="sm:max-w-2xl">
-        <DialogHeader>
-          <DialogTitle>Historique des mouvements - {product?.name}</DialogTitle>
+      <DialogContent className="max-w-6xl max-h-[85vh]">
+        <DialogHeader className="border-b border-gray-200 pb-3">
+          <DialogTitle className="text-xl font-bold text-black flex items-center gap-3">
+            <History className="h-5 w-5" />
+            Historique complet - {product?.name}
+            <Badge variant="outline" className="ml-2 text-xs font-mono">
+              {product?.sku}
+            </Badge>
+          </DialogTitle>
         </DialogHeader>
-        <div className="max-h-96 overflow-y-auto">
+
+        <div className="overflow-y-auto pr-2" style={{ maxHeight: 'calc(85vh - 100px)' }}>
           {loading ? (
-            <div className="flex justify-center py-8">
-              <RefreshCw className="h-6 w-6 animate-spin" />
+            <div className="flex justify-center py-12">
+              <RefreshCw className="h-8 w-8 animate-spin text-gray-400" />
             </div>
           ) : movements.length === 0 ? (
-            <p className="text-center text-gray-500 py-8">Aucun mouvement trouvé</p>
+            <div className="text-center py-12">
+              <Package className="h-12 w-12 text-gray-300 mx-auto mb-4" />
+              <p className="text-gray-500 font-medium">Aucun mouvement trouvé</p>
+              <p className="text-sm text-gray-400 mt-1">
+                Ce produit n'a pas encore d'historique de mouvements
+              </p>
+            </div>
           ) : (
-            <div className="space-y-3">
-              {movements.map((movement: any) => (
-                <div key={movement.id} className="border rounded-lg p-3">
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-2">
-                      <Badge
-                        variant={movement.movement_type === 'IN' ? 'default' :
-                                movement.movement_type === 'OUT' ? 'destructive' : 'secondary'}
-                      >
-                        {movement.movement_type}
-                      </Badge>
-                      <span className="font-medium">
-                        {movement.quantity_change > 0 ? '+' : ''}{movement.quantity_change}
-                      </span>
+            <div className="space-y-0">
+              {/* Header table */}
+              <div className="grid grid-cols-12 gap-2 px-3 py-2 bg-gray-50 border-b border-gray-200 text-xs font-medium text-gray-700 sticky top-0">
+                <div className="col-span-2">Date & Heure</div>
+                <div className="col-span-1">Type</div>
+                <div className="col-span-1 text-right">Quantité</div>
+                <div className="col-span-2 text-center">Stock</div>
+                <div className="col-span-2">Motif / Notes</div>
+                <div className="col-span-2">Par</div>
+                <div className="col-span-2">Source</div>
+              </div>
+
+              {/* Timeline entries */}
+              <div className="relative">
+                {/* Ligne verticale timeline */}
+                <div className="absolute left-[16.666%] top-0 bottom-0 w-px bg-gray-200" />
+
+                {movements.map((movement: any, index: number) => {
+                  const sourceInfo = getSourceInfo(movement)
+                  const performerName = getPerformerName(movement)
+                  const reasonLabel = movement.reason_code
+                    ? getReasonDescription(movement.reason_code)
+                    : '-'
+
+                  return (
+                    <div
+                      key={movement.id}
+                      className="grid grid-cols-12 gap-2 px-3 py-3 border-b border-gray-100 hover:bg-gray-50 transition-colors text-sm relative"
+                    >
+                      {/* Date & Heure */}
+                      <div className="col-span-2 flex flex-col gap-0.5">
+                        <div className="flex items-center gap-1.5 text-black font-medium">
+                          <Calendar className="h-3 w-3 text-gray-500" />
+                          {new Date(movement.performed_at).toLocaleDateString('fr-FR', {
+                            day: '2-digit',
+                            month: '2-digit',
+                            year: 'numeric'
+                          })}
+                        </div>
+                        <div className="flex items-center gap-1.5 text-gray-600 text-xs ml-4">
+                          <Clock className="h-3 w-3" />
+                          {new Date(movement.performed_at).toLocaleTimeString('fr-FR', {
+                            hour: '2-digit',
+                            minute: '2-digit'
+                          })}
+                        </div>
+                      </div>
+
+                      {/* Type */}
+                      <div className="col-span-1 flex items-center relative z-10">
+                        {/* Dot sur la timeline */}
+                        <div className="absolute left-[-8.333%] w-2 h-2 rounded-full bg-black border-2 border-white" />
+                        <Badge className={`text-xs font-medium ${getMovementTypeColor(movement.movement_type)}`}>
+                          {getMovementTypeLabel(movement.movement_type)}
+                        </Badge>
+                      </div>
+
+                      {/* Quantité */}
+                      <div className="col-span-1 flex items-center justify-end">
+                        <span className={`font-bold text-base ${
+                          movement.quantity_change > 0 ? 'text-black' : 'text-gray-700'
+                        }`}>
+                          {movement.quantity_change > 0 ? '+' : ''}{movement.quantity_change}
+                        </span>
+                      </div>
+
+                      {/* Stock (avant → après) */}
+                      <div className="col-span-2 flex items-center justify-center gap-2 font-mono text-sm">
+                        <span className="text-gray-500">{movement.quantity_before}</span>
+                        <span className="text-gray-400">→</span>
+                        <span className="text-black font-bold">{movement.quantity_after}</span>
+                      </div>
+
+                      {/* Motif / Notes */}
+                      <div className="col-span-2 flex flex-col gap-1">
+                        {movement.reason_code && (
+                          <span className="text-gray-900 text-xs font-medium">
+                            {reasonLabel}
+                          </span>
+                        )}
+                        {movement.notes && (
+                          <span className="text-gray-600 text-xs line-clamp-2">
+                            {movement.notes}
+                          </span>
+                        )}
+                        {!movement.reason_code && !movement.notes && (
+                          <span className="text-gray-400 text-xs">-</span>
+                        )}
+                      </div>
+
+                      {/* Par (Performer) */}
+                      <div className="col-span-2 flex items-center gap-2">
+                        <User className="h-3 w-3 text-gray-500 flex-shrink-0" />
+                        <span className="text-gray-900 text-xs font-medium truncate">
+                          {performerName}
+                        </span>
+                      </div>
+
+                      {/* Source */}
+                      <div className="col-span-2 flex items-center gap-2">
+                        {sourceInfo.type === 'manual' ? (
+                          <Badge variant="outline" className="text-xs border-gray-300 text-gray-600">
+                            <FileText className="h-3 w-3 mr-1" />
+                            {sourceInfo.label}
+                          </Badge>
+                        ) : (
+                          <Link
+                            href={sourceInfo.link || '#'}
+                            className="flex items-center gap-1.5 text-black hover:text-gray-700 transition-colors group"
+                            onClick={(e) => e.stopPropagation()}
+                          >
+                            <Badge className="bg-black text-white text-xs group-hover:bg-gray-700 transition-colors">
+                              {sourceInfo.label}
+                            </Badge>
+                            <ExternalLink className="h-3 w-3 text-gray-500 group-hover:text-black" />
+                          </Link>
+                        )}
+                      </div>
                     </div>
-                    <span className="text-sm text-gray-500">
-                      {new Date(movement.performed_at).toLocaleString('fr-FR')}
-                    </span>
-                  </div>
-                  <div className="mt-1 text-sm text-gray-600">
-                    Stock: {movement.quantity_before} → {movement.quantity_after}
-                  </div>
-                  {movement.notes && (
-                    <div className="mt-1 text-sm text-gray-500">
-                      {movement.notes}
-                    </div>
-                  )}
-                  {movement.user_profiles && (
-                    <div className="mt-1 text-xs text-gray-400">
-                      Par: {movement.user_profiles.first_name} {movement.user_profiles.last_name}
-                    </div>
-                  )}
-                </div>
-              ))}
+                  )
+                })}
+              </div>
             </div>
           )}
         </div>
+
+        {/* Footer stats */}
+        {movements.length > 0 && (
+          <div className="border-t border-gray-200 pt-3 mt-2">
+            <div className="flex items-center justify-between text-xs text-gray-600">
+              <div className="flex items-center gap-4">
+                <span className="font-medium text-black">
+                  {movements.length} mouvement{movements.length > 1 ? 's' : ''}
+                </span>
+                <span>Stock actuel: <strong className="text-black">{product?.stock_quantity || 0}</strong></span>
+              </div>
+              <span className="text-gray-500">
+                Dernier mouvement: {new Date(movements[0]?.performed_at).toLocaleDateString('fr-FR')}
+              </span>
+            </div>
+          </div>
+        )}
       </DialogContent>
     </Dialog>
   )
 }
 
-export default function StockInventairePage() {
+export default function InventairePage() {
   const router = useRouter()
-  const [filters, setFilters] = useState<StockFilters>({
+  const [filters, setFilters] = useState({
     search: '',
-    status: 'all',
-    category: 'all',
-    sortBy: 'name',
-    sortOrder: 'asc'
+    dateFrom: '',
+    dateTo: ''
   })
   const [selectedProduct, setSelectedProduct] = useState<any>(null)
-  const [isMovementModalOpen, setIsMovementModalOpen] = useState(false)
   const [isHistoryModalOpen, setIsHistoryModalOpen] = useState(false)
-  const [reservations, setReservations] = useState<any[]>([])
-  const [products, setProducts] = useState<any[]>([])
-  const [productsLoading, setProductsLoading] = useState(true)
+  const [isReportsModalOpen, setIsReportsModalOpen] = useState(false)
 
-  const { toast } = useToast()
-  const { fetchInventoryProducts } = useStock()
-  const { stats: movementStats, fetchStats } = useStockMovements()
-  const { fetchReservations, getAvailableStockForProduct } = useStockReservations()
+  const { inventory, stats, loading, fetchInventory, exportInventoryCSV } = useStockInventory()
 
-  // Charger les données au montage
   useEffect(() => {
-    loadData()
-  }, [])
+    fetchInventory()
+  }, [fetchInventory])
 
-  const loadData = async () => {
-    setProductsLoading(true)
-    try {
-      const [inventoryProducts] = await Promise.all([
-        fetchInventoryProducts(),
-        fetchStats()
-        // fetchReservations désactivé temporairement - erreur clé étrangère
-      ])
-      setProducts(inventoryProducts)
-    } finally {
-      setProductsLoading(false)
-    }
+  const handleRefresh = () => {
+    fetchInventory(filters)
   }
 
-  // Calculer les statistiques de stock
-  const stockStats = useMemo(() => {
-    if (!products) return { total: 0, inStock: 0, lowStock: 0, outOfStock: 0 }
-
-    return products.reduce((stats, product) => {
-      stats.total++
-      const stock = product.stock_quantity || 0
-      const minStock = product.min_stock || 5
-
-      if (stock === 0) {
-        stats.outOfStock++
-      } else if (stock <= minStock) {
-        stats.lowStock++
-      } else {
-        stats.inStock++
-      }
-
-      return stats
-    }, { total: 0, inStock: 0, lowStock: 0, outOfStock: 0 })
-  }, [products])
-
-  // Filtrer et trier les produits
-  const filteredProducts = useMemo(() => {
-    if (!products) return []
-
-    const filtered = products.filter(product => {
-      // Filtre de recherche
-      if (filters.search) {
-        const searchLower = filters.search.toLowerCase()
-        const matchesSearch =
-          product.name.toLowerCase().includes(searchLower) ||
-          product.sku.toLowerCase().includes(searchLower)
-        if (!matchesSearch) return false
-      }
-
-      // Filtre de statut
-      if (filters.status !== 'all') {
-        const stock = product.stock_quantity || 0
-        const minStock = product.min_stock || 5
-
-        switch (filters.status) {
-          case 'out_of_stock':
-            if (stock > 0) return false
-            break
-          case 'low_stock':
-            if (stock === 0 || stock > minStock) return false
-            break
-          case 'in_stock':
-            if (stock <= minStock) return false
-            break
-        }
-      }
-
-      return true
-    })
-
-    // Trier
-    filtered.sort((a, b) => {
-      let aValue: any
-      let bValue: any
-
-      switch (filters.sortBy) {
-        case 'name':
-          aValue = a.name
-          bValue = b.name
-          break
-        case 'sku':
-          aValue = a.sku
-          bValue = b.sku
-          break
-        case 'stock':
-          aValue = a.stock_quantity || 0
-          bValue = b.stock_quantity || 0
-          break
-        case 'updated_at':
-          aValue = new Date(a.updated_at)
-          bValue = new Date(b.updated_at)
-          break
-        default:
-          aValue = a.name
-          bValue = b.name
-      }
-
-      if (filters.sortOrder === 'desc') {
-        return aValue < bValue ? 1 : -1
-      }
-      return aValue > bValue ? 1 : -1
-    })
-
-    return filtered
-  }, [products, filters])
-
-  const getStockStatus = (product: any) => {
-    const stock = product.stock_quantity || 0
-    const minStock = product.min_stock || 5
-
-    if (stock === 0) {
-      return { label: 'Rupture', color: 'bg-red-100 text-red-800', icon: TrendingDown }
-    } else if (stock <= minStock) {
-      return { label: 'Stock faible', color: 'bg-gray-100 text-gray-900', icon: AlertTriangle }
-    } else {
-      return { label: 'En stock', color: 'bg-green-100 text-green-800', icon: TrendingUp }
-    }
+  const handleExport = () => {
+    exportInventoryCSV(inventory)
   }
 
-  const handleMovementSuccess = () => {
-    loadData()
+  const handleSearch = (value: string) => {
+    setFilters(prev => ({ ...prev, search: value }))
   }
 
-  const openMovementModal = (product: any) => {
-    setSelectedProduct(product)
-    setIsMovementModalOpen(true)
+  const handleApplyFilters = () => {
+    fetchInventory(filters)
   }
 
   const openHistoryModal = (product: any) => {
@@ -419,45 +338,54 @@ export default function StockInventairePage() {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      {/* Header avec navigation */}
+      {/* Header - Compact */}
       <div className="bg-white border-b border-gray-200">
         <div className="container mx-auto px-4 py-4">
           <div className="flex items-center justify-between">
             <div className="flex items-center space-x-4">
               <Button
                 variant="ghost"
+                size="sm"
                 onClick={() => router.push('/stocks')}
-                className="flex items-center text-gray-600 hover:text-black"
+                className="flex items-center text-gray-600 hover:text-black h-8 px-2"
               >
-                <ArrowLeft className="h-4 w-4 mr-2" />
-                Retour aux Stocks
+                <ArrowLeft className="h-3 w-3 mr-1.5" />
+                Retour
               </Button>
-              <div className="flex items-center space-x-3">
-                <Package className="h-8 w-8 text-black" />
+              <div className="flex items-center space-x-2">
+                <Package className="h-6 w-6 text-black" />
                 <div>
-                  <h1 className="text-2xl font-bold text-black">Inventaire Détaillé</h1>
-                  <p className="text-gray-600">Suivi temps réel des mouvements et réservations</p>
+                  <h1 className="text-xl font-bold text-black">Inventaire Stock</h1>
+                  <p className="text-xs text-gray-600">Vue consolidée des mouvements</p>
                 </div>
               </div>
             </div>
             <div className="flex gap-2">
               <Button
                 variant="outline"
-                onClick={loadData}
-                disabled={productsLoading}
-                className="border-black text-black hover:bg-black hover:text-white"
+                size="sm"
+                onClick={handleRefresh}
+                disabled={loading}
+                className="border-black text-black hover:bg-black hover:text-white h-8 text-xs"
               >
-                <RefreshCw className={`h-4 w-4 ${productsLoading ? 'animate-spin' : ''}`} />
+                <RefreshCw className={`h-3 w-3 mr-1.5 ${loading ? 'animate-spin' : ''}`} />
+                Actualiser
               </Button>
               <Button
                 variant="outline"
-                className="border-black text-black hover:bg-black hover:text-white"
+                size="sm"
+                onClick={handleExport}
+                className="border-black text-black hover:bg-black hover:text-white h-8 text-xs"
               >
-                <Download className="h-4 w-4 mr-2" />
-                Exporter
+                <Download className="h-3 w-3 mr-1.5" />
+                CSV
               </Button>
-              <Button className="bg-black hover:bg-gray-800 text-white">
-                <BarChart3 className="h-4 w-4 mr-2" />
+              <Button
+                size="sm"
+                className="bg-black hover:bg-gray-800 text-white h-8 text-xs"
+                onClick={() => setIsReportsModalOpen(true)}
+              >
+                <BarChart3 className="h-3 w-3 mr-1.5" />
                 Rapports
               </Button>
             </div>
@@ -465,260 +393,262 @@ export default function StockInventairePage() {
         </div>
       </div>
 
-      <div className="container mx-auto px-4 py-6 space-y-6">
-        {/* Stock summary */}
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-          <div className="bg-white rounded-lg border border-black p-6">
-            <div className="flex items-center">
-              <Package className="h-8 w-8 text-blue-500" />
-              <div className="ml-4">
-                <p className="text-sm font-medium text-gray-600">Total produits</p>
-                <p className="text-2xl font-bold text-black">{stockStats.total}</p>
+      <div className="container mx-auto px-4 py-4 space-y-4">
+        {/* Statistiques KPIs - Ultra compact */}
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-3">
+          {/* Produits Actifs */}
+          <Card className="border-black">
+            <CardContent className="p-3">
+              <div className="flex items-center justify-between">
+                <div className="flex-1">
+                  <p className="text-xs font-medium text-gray-600 mb-1">Produits Actifs</p>
+                  <p className="text-2xl font-bold text-black">{stats.products_with_activity}</p>
+                  <p className="text-xs text-gray-500 mt-0.5">
+                    sur {stats.total_products}
+                  </p>
+                </div>
+                <Package className="h-5 w-5 text-gray-400 flex-shrink-0" />
               </div>
-            </div>
-          </div>
-          <div className="bg-white rounded-lg border border-black p-6">
-            <div className="flex items-center">
-              <TrendingUp className="h-8 w-8 text-green-500" />
-              <div className="ml-4">
-                <p className="text-sm font-medium text-gray-600">En stock</p>
-                <p className="text-2xl font-bold text-green-600">{stockStats.inStock}</p>
+            </CardContent>
+          </Card>
+
+          {/* Mouvements Totaux */}
+          <Card className="border-black">
+            <CardContent className="p-3">
+              <div className="flex items-center justify-between">
+                <div className="flex-1">
+                  <p className="text-xs font-medium text-gray-600 mb-1">Mouvements</p>
+                  <p className="text-2xl font-bold text-black">{stats.total_movements}</p>
+                  <p className="text-xs text-gray-500 mt-0.5">
+                    totaux
+                  </p>
+                </div>
+                <TrendingUp className="h-5 w-5 text-gray-400 flex-shrink-0" />
               </div>
-            </div>
-          </div>
-          <div className="bg-white rounded-lg border border-black p-6">
-            <div className="flex items-center">
-              <AlertTriangle className="h-8 w-8 text-gray-900" />
-              <div className="ml-4">
-                <p className="text-sm font-medium text-gray-600">Stock faible</p>
-                <p className="text-2xl font-bold text-black">{stockStats.lowStock}</p>
+            </CardContent>
+          </Card>
+
+          {/* Valeur Stock */}
+          <Card className="border-black">
+            <CardContent className="p-3">
+              <div className="flex items-center justify-between">
+                <div className="flex-1">
+                  <p className="text-xs font-medium text-gray-600 mb-1">Valeur Stock</p>
+                  <p className="text-2xl font-bold text-black">
+                    {formatPrice(stats.total_stock_value)}
+                  </p>
+                  <p className="text-xs text-gray-500 mt-0.5">
+                    valorisation
+                  </p>
+                </div>
+                <BarChart3 className="h-5 w-5 text-gray-400 flex-shrink-0" />
               </div>
-            </div>
-          </div>
-          <div className="bg-white rounded-lg border border-black p-6">
-            <div className="flex items-center">
-              <TrendingDown className="h-8 w-8 text-red-500" />
-              <div className="ml-4">
-                <p className="text-sm font-medium text-gray-600">Ruptures</p>
-                <p className="text-2xl font-bold text-red-600">{stockStats.outOfStock}</p>
+            </CardContent>
+          </Card>
+
+          {/* Dernière MAJ */}
+          <Card className="border-black">
+            <CardContent className="p-3">
+              <div className="flex items-center justify-between">
+                <div className="flex-1">
+                  <p className="text-xs font-medium text-gray-600 mb-1">Dernière MAJ</p>
+                  <p className="text-lg font-bold text-black">
+                    {new Date().toLocaleDateString('fr-FR')}
+                  </p>
+                  <p className="text-xs text-gray-500 mt-0.5">
+                    {new Date().toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' })}
+                  </p>
+                </div>
+                <Calendar className="h-5 w-5 text-gray-400 flex-shrink-0" />
               </div>
-            </div>
-          </div>
+            </CardContent>
+          </Card>
         </div>
 
-        {/* Filters and search */}
-        <div className="bg-white rounded-lg border border-black p-4">
-          <div className="flex flex-col lg:flex-row gap-4">
-            <div className="flex-1">
-              <div className="relative">
-                <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
-                <Input
-                  type="search"
-                  placeholder="Rechercher par nom, SKU..."
-                  className="pl-10"
-                  value={filters.search}
-                  onChange={(e) => setFilters(prev => ({ ...prev, search: e.target.value }))}
-                />
-              </div>
+        {/* Filtres - Inline compact */}
+        <div className="bg-white border border-black rounded-lg p-3">
+          <div className="flex items-center gap-2">
+            <div className="flex-1 relative">
+              <Search className="absolute left-2.5 top-1/2 transform -translate-y-1/2 h-3 w-3 text-gray-400" />
+              <Input
+                placeholder="Rechercher produit, SKU..."
+                value={filters.search}
+                onChange={(e) => handleSearch(e.target.value)}
+                className="pl-8 border-gray-300 h-9 text-sm"
+              />
             </div>
-
-            <Select
-              value={filters.status}
-              onValueChange={(value: any) => setFilters(prev => ({ ...prev, status: value }))}
-            >
-              <SelectTrigger className="w-[180px]">
-                <SelectValue placeholder="Statut" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">Tous les statuts</SelectItem>
-                <SelectItem value="in_stock">En stock</SelectItem>
-                <SelectItem value="low_stock">Stock faible</SelectItem>
-                <SelectItem value="out_of_stock">Rupture</SelectItem>
-              </SelectContent>
-            </Select>
-
-            <Select
-              value={filters.sortBy}
-              onValueChange={(value: any) => setFilters(prev => ({ ...prev, sortBy: value }))}
-            >
-              <SelectTrigger className="w-[160px]">
-                <SelectValue placeholder="Trier par" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="name">Nom</SelectItem>
-                <SelectItem value="sku">SKU</SelectItem>
-                <SelectItem value="stock">Stock</SelectItem>
-                <SelectItem value="updated_at">Mise à jour</SelectItem>
-              </SelectContent>
-            </Select>
-
+            <Input
+              type="date"
+              value={filters.dateFrom}
+              onChange={(e) => setFilters(prev => ({ ...prev, dateFrom: e.target.value }))}
+              className="border-gray-300 w-40 h-9 text-sm"
+              placeholder="Date début"
+            />
+            <Input
+              type="date"
+              value={filters.dateTo}
+              onChange={(e) => setFilters(prev => ({ ...prev, dateTo: e.target.value }))}
+              className="border-gray-300 w-40 h-9 text-sm"
+              placeholder="Date fin"
+            />
             <Button
-              variant="outline"
-              size="icon"
-              onClick={() => setFilters(prev => ({
-                ...prev,
-                sortOrder: prev.sortOrder === 'asc' ? 'desc' : 'asc'
-              }))}
-              className="border-black text-black hover:bg-black hover:text-white"
+              onClick={handleApplyFilters}
+              size="sm"
+              className="bg-black hover:bg-gray-800 text-white h-9 px-4 text-sm"
             >
-              <ArrowUpDown className="h-4 w-4" />
+              Appliquer
             </Button>
-
-            {(filters.search || filters.status !== 'all') && (
-              <Button
-                variant="outline"
-                size="icon"
-                onClick={() => setFilters({
-                  search: '',
-                  status: 'all',
-                  category: 'all',
-                  sortBy: 'name',
-                  sortOrder: 'asc'
-                })}
-                className="border-black text-black hover:bg-black hover:text-white"
-              >
-                <X className="h-4 w-4" />
-              </Button>
-            )}
           </div>
         </div>
 
-        {/* Products table */}
-        <div className="bg-white rounded-lg border border-black overflow-hidden">
-          <div className="overflow-x-auto">
-            <table className="w-full">
-              <thead className="bg-gray-50 border-b border-gray-200">
-                <tr>
-                  <th className="text-left py-3 px-4 font-medium text-gray-900">Produit</th>
-                  <th className="text-left py-3 px-4 font-medium text-gray-900">SKU</th>
-                  <th className="text-left py-3 px-4 font-medium text-gray-900">Stock</th>
-                  <th className="text-left py-3 px-4 font-medium text-gray-900">Seuil min</th>
-                  <th className="text-left py-3 px-4 font-medium text-gray-900">Statut</th>
-                  <th className="text-left py-3 px-4 font-medium text-gray-900">Prix</th>
-                  <th className="text-left py-3 px-4 font-medium text-gray-900">Dernière MAJ</th>
-                  <th className="text-left py-3 px-4 font-medium text-gray-900">Actions</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-gray-200">
-                {productsLoading ? (
-                  <tr>
-                    <td colSpan={8} className="py-8 text-center">
-                      <RefreshCw className="h-6 w-6 animate-spin mx-auto" />
-                    </td>
-                  </tr>
-                ) : filteredProducts.length === 0 ? (
-                  <tr>
-                    <td colSpan={8} className="py-8 text-center text-gray-500">
-                      Aucun produit trouvé
-                    </td>
-                  </tr>
-                ) : (
-                  filteredProducts.map((product) => {
-                    const status = getStockStatus(product)
-                    const StatusIcon = status.icon
-
-                    return (
-                      <tr key={product.id} className="hover:bg-gray-50">
-                        <td className="py-3 px-4">
-                          <div className="flex items-center">
-                            <div className="h-10 w-10 bg-gray-100 rounded-lg flex items-center justify-center mr-3">
-                              <Package className="h-5 w-5 text-gray-400" />
-                            </div>
-                            <div>
-                              <span className="font-medium text-black">{product.name}</span>
-                              {product.stock_quantity === 0 && (
-                                <Badge variant="destructive" className="ml-2 text-xs">
-                                  Rupture
-                                </Badge>
-                              )}
-                            </div>
-                          </div>
-                        </td>
-                        <td className="py-3 px-4">
-                          <span className="text-gray-500 font-mono text-sm">{product.sku}</span>
-                        </td>
-                        <td className="py-3 px-4">
-                          <div className="flex items-center">
-                            <StatusIcon className="h-4 w-4 mr-1" />
-                            <span className="font-medium text-black">
-                              {product.stock_quantity || 0}
-                            </span>
-                          </div>
-                        </td>
-                        <td className="py-3 px-4">
-                          <span className="text-gray-500">{product.min_stock || 5}</span>
-                        </td>
-                        <td className="py-3 px-4">
-                          <span className={`px-2 py-1 rounded-full text-xs font-medium ${status.color}`}>
-                            {status.label}
-                          </span>
-                        </td>
-                        <td className="py-3 px-4">
-                          <span className="font-medium text-black">
-                            {formatPrice(product.cost_price)}
-                          </span>
-                        </td>
-                        <td className="py-3 px-4">
-                          <span className="text-gray-500 text-sm">
-                            {new Date(product.updated_at).toLocaleDateString('fr-FR')}
-                          </span>
-                        </td>
-                        <td className="py-3 px-4">
-                          <div className="flex items-center space-x-1">
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              onClick={() => openHistoryModal(product)}
-                              title="Voir l'historique"
+        {/* Table Inventaire - Dense */}
+        <Card className="border-black">
+          <div className="p-3 border-b border-gray-200 bg-gray-50">
+            <h2 className="text-sm font-bold text-black">
+              Inventaire Consolidé ({inventory.length} produits)
+            </h2>
+          </div>
+          <CardContent className="p-0">
+            {loading ? (
+              <div className="flex justify-center py-12">
+                <RefreshCw className="h-8 w-8 animate-spin text-gray-400" />
+              </div>
+            ) : inventory.length === 0 ? (
+              <div className="text-center py-12">
+                <Package className="h-12 w-12 text-gray-300 mx-auto mb-4" />
+                <p className="text-gray-500">Aucun mouvement de stock trouvé</p>
+                <p className="text-sm text-gray-400 mt-2">
+                  Les produits apparaîtront après leur première entrée ou sortie
+                </p>
+              </div>
+            ) : (
+              <div className="overflow-x-auto">
+                <table className="w-full">
+                  <thead className="bg-gray-50 border-b border-gray-200">
+                    <tr>
+                      <th className="text-left py-2 px-3 font-medium text-gray-900 text-xs">Produit</th>
+                      <th className="text-left py-2 px-3 font-medium text-gray-900 text-xs">SKU</th>
+                      <th className="text-right py-2 px-3 font-medium text-gray-900 text-xs">Entrées</th>
+                      <th className="text-right py-2 px-3 font-medium text-gray-900 text-xs">Sorties</th>
+                      <th className="text-right py-2 px-3 font-medium text-gray-900 text-xs">Ajust.</th>
+                      <th className="text-right py-2 px-3 font-medium text-gray-900 text-xs">Stock</th>
+                      <th className="text-left py-2 px-3 font-medium text-gray-900 text-xs">Dernière MAJ</th>
+                      <th className="text-center py-2 px-3 font-medium text-gray-900 text-xs">Actions</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-gray-100">
+                    {inventory.map((item) => (
+                      <tr key={item.id} className="hover:bg-gray-50 transition-colors">
+                        <td className="py-2 px-3">
+                          <div className="flex items-center gap-2">
+                            {item.product_image_url && (
+                              <Image
+                                src={item.product_image_url}
+                                alt={item.name}
+                                width={32}
+                                height={32}
+                                className="rounded object-cover border border-gray-200"
+                              />
+                            )}
+                            <Link
+                              href={`/catalogue/${item.id}`}
+                              className="font-medium text-black hover:text-gray-700 hover:underline transition-colors text-sm"
                             >
-                              <History className="h-4 w-4" />
-                            </Button>
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              onClick={() => openMovementModal(product)}
-                              title="Nouveau mouvement"
-                            >
-                              <Plus className="h-4 w-4" />
-                            </Button>
-                            <Button variant="ghost" size="sm" title="Modifier">
-                              <Edit className="h-4 w-4" />
-                            </Button>
+                              {item.name}
+                            </Link>
                           </div>
+                        </td>
+                        <td className="py-2 px-3">
+                          <span className="text-gray-500 font-mono text-xs">{item.sku}</span>
+                        </td>
+                        <td className="py-2 px-3 text-right">
+                          <div className="flex items-center justify-end gap-1">
+                            <TrendingUp className="h-3 w-3 text-black" />
+                            <span className="font-medium text-black text-sm">+{item.total_in}</span>
+                          </div>
+                        </td>
+                        <td className="py-2 px-3 text-right">
+                          <div className="flex items-center justify-end gap-1">
+                            <TrendingDown className="h-3 w-3 text-gray-600" />
+                            <span className="font-medium text-gray-700 text-sm">-{item.total_out}</span>
+                          </div>
+                        </td>
+                        <td className="py-2 px-3 text-right">
+                          <div className="flex items-center justify-end gap-1">
+                            {item.total_adjustments !== 0 ? (
+                              <>
+                                {item.total_adjustments > 0 ? (
+                                  <TrendingUp className="h-3 w-3 text-gray-500" />
+                                ) : (
+                                  <TrendingDown className="h-3 w-3 text-gray-500" />
+                                )}
+                                <span className="font-medium text-gray-700 text-sm">
+                                  {item.total_adjustments > 0 ? '+' : ''}{item.total_adjustments}
+                                </span>
+                              </>
+                            ) : (
+                              <span className="text-gray-400 text-xs">-</span>
+                            )}
+                          </div>
+                        </td>
+                        <td className="py-2 px-3 text-right">
+                          <span className="font-bold text-black text-base">{item.stock_quantity}</span>
+                        </td>
+                        <td className="py-2 px-3">
+                          <span className="text-xs text-gray-600">
+                            {item.last_movement_at
+                              ? new Date(item.last_movement_at).toLocaleString('fr-FR', {
+                                  day: '2-digit',
+                                  month: '2-digit',
+                                  hour: '2-digit',
+                                  minute: '2-digit'
+                                })
+                              : 'N/A'}
+                          </span>
+                        </td>
+                        <td className="py-2 px-3 text-center">
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => openHistoryModal(item)}
+                            title="Voir historique détaillé"
+                            className="h-7 w-7 p-0 hover:bg-black hover:text-white transition-colors"
+                          >
+                            <History className="h-3 w-3" />
+                          </Button>
                         </td>
                       </tr>
-                    )
-                  })
-                )}
-              </tbody>
-            </table>
-          </div>
-        </div>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            )}
+          </CardContent>
+        </Card>
 
-        {/* Pagination */}
-        <div className="flex items-center justify-between">
-          <p className="text-sm text-gray-700">
-            Affichage de <span className="font-medium">{filteredProducts.length}</span> produit(s)
+        {/* Footer stats - Compact */}
+        <div className="flex items-center justify-between text-xs text-gray-600 px-1">
+          <p>
+            <span className="font-medium text-black">{inventory.length}</span> produit(s) avec mouvements
           </p>
-          <div className="text-sm text-gray-500">
-            Dernière mise à jour: {new Date().toLocaleTimeString('fr-FR')}
-          </div>
+          <p className="text-gray-500">
+            {stats.total_movements} mouvements totaux
+          </p>
         </div>
-
-        {/* Modals */}
-        <StockMovementModal
-          product={selectedProduct}
-          isOpen={isMovementModalOpen}
-          onClose={() => setIsMovementModalOpen(false)}
-          onSuccess={handleMovementSuccess}
-        />
-
-        <ProductHistoryModal
-          product={selectedProduct}
-          isOpen={isHistoryModalOpen}
-          onClose={() => setIsHistoryModalOpen(false)}
-        />
       </div>
+
+      {/* Modal Historique - Professionnel */}
+      <ProductHistoryModal
+        product={selectedProduct}
+        isOpen={isHistoryModalOpen}
+        onClose={() => setIsHistoryModalOpen(false)}
+      />
+
+      {/* Modal Rapports - Catalogue complet */}
+      <StockReportsModal
+        isOpen={isReportsModalOpen}
+        onClose={() => setIsReportsModalOpen(false)}
+      />
     </div>
   )
 }

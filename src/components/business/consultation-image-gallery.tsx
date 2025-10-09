@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import Image from 'next/image'
 import { Edit, Upload, Trash2, RotateCw, Eye, Camera } from 'lucide-react'
 import { Button } from '../ui/button'
@@ -37,7 +37,6 @@ export function ConsultationImageGallery({
 }: ConsultationImageGalleryProps) {
   const [selectedImageIndex, setSelectedImageIndex] = useState(0)
   const [showImageViewer, setShowImageViewer] = useState(false)
-  const [showUploadDialog, setShowUploadDialog] = useState(false)
 
   // Hook optimisé pour les images de consultation
   const {
@@ -155,9 +154,6 @@ export function ConsultationImageGallery({
           className="object-cover transition-all duration-300 hover:scale-105"
           sizes="200px"
           priority
-          onError={() => {
-            console.warn(`Erreur chargement image consultation: ${mainImageSrc}`)
-          }}
         />
 
         {/* Badge statut consultation overlay */}
@@ -201,11 +197,12 @@ export function ConsultationImageGallery({
               </Button>
             )}
             {allowEdit && (
-              <label className="cursor-pointer">
+              <label htmlFor="consultation-file-input-overlay" className="cursor-pointer inline-block">
                 <Button
                   size="sm"
                   variant="secondary"
                   className="text-xs"
+                  type="button"
                   asChild
                 >
                   <span>
@@ -214,6 +211,7 @@ export function ConsultationImageGallery({
                   </span>
                 </Button>
                 <input
+                  id="consultation-file-input-overlay"
                   type="file"
                   multiple
                   accept="image/*"
@@ -244,9 +242,6 @@ export function ConsultationImageGallery({
                 fill
                 className="object-cover transition-transform group-hover:scale-110"
                 sizes="48px"
-                onError={() => {
-                  console.warn(`❌ Erreur chargement miniature consultation: ${image.public_url}`)
-                }}
               />
 
               {/* Badge principale minimal */}
@@ -288,14 +283,21 @@ export function ConsultationImageGallery({
           <Camera className="h-8 w-8 text-gray-300 mx-auto mb-2" />
           <div className="text-sm">Aucune photo de consultation</div>
           {allowEdit && (
-            <label className="cursor-pointer">
-              <Button variant="outline" size="sm" className="mt-2" asChild>
+            <label htmlFor="consultation-file-input-empty" className="cursor-pointer inline-block">
+              <Button
+                variant="outline"
+                size="sm"
+                className="mt-2"
+                type="button"
+                asChild
+              >
                 <span>
                   <Upload className="h-3 w-3 mr-1" />
                   Ajouter des photos
                 </span>
               </Button>
               <input
+                id="consultation-file-input-empty"
                 type="file"
                 multiple
                 accept="image/*"

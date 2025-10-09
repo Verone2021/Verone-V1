@@ -73,7 +73,7 @@ export interface ConsultationItem {
 }
 
 export interface CreateConsultationData {
-  organisation_name: string
+  organisation_id: string  // Relation vers table organisations (clients professionnels uniquement)
   client_email: string
   client_phone?: string
   descriptif: string
@@ -380,7 +380,7 @@ export function useConsultationItems(consultationId?: string) {
             name,
             sku,
             requires_sample,
-            price_ht
+            cost_price
           )
         `)
         .eq('consultation_id', id)
@@ -394,7 +394,7 @@ export function useConsultationItems(consultationId?: string) {
         consultation_id: item.consultation_id,
         product_id: item.product_id,
         quantity: item.quantity || 1,
-        unit_price: item.proposed_price || item.product?.price_ht,
+        unit_price: item.proposed_price || item.product?.cost_price,
         is_free: item.is_free || false,
         notes: item.notes,
         created_at: item.created_at,
@@ -405,7 +405,7 @@ export function useConsultationItems(consultationId?: string) {
           sku: item.product.sku,
           requires_sample: item.product.requires_sample,
           supplier_name: undefined, // Temporairement désactivé
-          price_ht: item.product.price_ht
+          price_ht: item.product.cost_price
         } : undefined
       }))
 

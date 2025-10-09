@@ -153,49 +153,53 @@ export default async function AdminUsersPage() {
 
       {/* Statistiques rapides */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-        <div className="bg-white border border-black p-4">
-          <div className="flex items-center space-x-2">
-            <Users className="h-5 w-5 text-black opacity-60" />
-            <div>
-              <p className="text-sm text-black opacity-60">Total Utilisateurs</p>
-              <p className="text-lg font-semibold text-black">{users.length}</p>
-            </div>
+        <div className="bg-white border border-black">
+          <div className="flex flex-row items-center justify-between space-y-0 p-4 pb-2">
+            <div className="text-sm font-medium text-gray-600">Total Utilisateurs</div>
+            <Users className="h-4 w-4 text-black" />
+          </div>
+          <div className="px-4 pb-4">
+            <div className="text-2xl font-bold text-black">{users.length}</div>
+            <p className="text-xs text-gray-600">Tous rôles confondus</p>
           </div>
         </div>
 
-        <div className="bg-white border border-black p-4">
-          <div className="flex items-center space-x-2">
-            <Shield className="h-5 w-5 text-black opacity-60" />
-            <div>
-              <p className="text-sm text-black opacity-60">Owners</p>
-              <p className="text-lg font-semibold text-black">
-                {users.filter(u => u.profile?.role === 'owner').length}
-              </p>
+        <div className="bg-white border border-black">
+          <div className="flex flex-row items-center justify-between space-y-0 p-4 pb-2">
+            <div className="text-sm font-medium text-gray-600">Owners</div>
+            <Shield className="h-4 w-4 text-purple-600" />
+          </div>
+          <div className="px-4 pb-4">
+            <div className="text-2xl font-bold text-black">
+              {users.filter(u => u.profile?.role === 'owner').length}
             </div>
+            <p className="text-xs text-gray-600">Administrateurs système</p>
           </div>
         </div>
 
-        <div className="bg-white border border-black p-4">
-          <div className="flex items-center space-x-2">
-            <Shield className="h-5 w-5 text-black opacity-60" />
-            <div>
-              <p className="text-sm text-black opacity-60">Admins</p>
-              <p className="text-lg font-semibold text-black">
-                {users.filter(u => u.profile?.role === 'admin').length}
-              </p>
+        <div className="bg-white border border-black">
+          <div className="flex flex-row items-center justify-between space-y-0 p-4 pb-2">
+            <div className="text-sm font-medium text-gray-600">Admins</div>
+            <Shield className="h-4 w-4 text-blue-600" />
+          </div>
+          <div className="px-4 pb-4">
+            <div className="text-2xl font-bold text-black">
+              {users.filter(u => u.profile?.role === 'admin').length}
             </div>
+            <p className="text-xs text-gray-600">Gestionnaires</p>
           </div>
         </div>
 
-        <div className="bg-white border border-black p-4">
-          <div className="flex items-center space-x-2">
-            <Shield className="h-5 w-5 text-black opacity-60" />
-            <div>
-              <p className="text-sm text-black opacity-60">Catalog Managers</p>
-              <p className="text-lg font-semibold text-black">
-                {users.filter(u => u.profile?.role === 'catalog_manager').length}
-              </p>
+        <div className="bg-white border border-black">
+          <div className="flex flex-row items-center justify-between space-y-0 p-4 pb-2">
+            <div className="text-sm font-medium text-gray-600">Catalog Managers</div>
+            <Shield className="h-4 w-4 text-green-600" />
+          </div>
+          <div className="px-4 pb-4">
+            <div className="text-2xl font-bold text-black">
+              {users.filter(u => u.profile?.role === 'catalog_manager').length}
             </div>
+            <p className="text-xs text-gray-600">Gestionnaires catalogue</p>
           </div>
         </div>
       </div>

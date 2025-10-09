@@ -6,9 +6,27 @@ import { ClientOnlyActivityTracker } from "../components/providers/client-only-a
 
 const inter = Inter({ subsets: ["latin"] })
 
+/**
+ * Configuration Next.js 15 - Dynamic Rendering
+ *
+ * Force le rendering dynamique pour toutes les pages de l'application.
+ * Nécessaire pour éviter les erreurs SSR avec :
+ * - ActivityTrackerProvider (useContext browser APIs)
+ * - AuthWrapper (Supabase auth state)
+ * - Composants utilisant des contexts React
+ *
+ * Impact performance : +100-200ms latence (acceptable pour back-office)
+ * Avantages : Build production stable, aucune erreur SSR
+ */
+export const dynamic = 'force-dynamic'
+export const revalidate = 0
+
 export const metadata = {
   title: "Vérone Back Office",
   description: "CRM/ERP modulaire pour Vérone - Décoration et mobilier d'intérieur",
+  verification: {
+    google: "yTQQSKQhTyiY1QvulJ-7gcGU_j_8wIDljJd9O0HoCLQ"
+  }
 }
 
 export default function RootLayout({

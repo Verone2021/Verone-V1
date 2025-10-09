@@ -49,8 +49,9 @@ export type GoogleMerchantConfig = typeof GOOGLE_MERCHANT_CONFIG
 export const getResourcePaths = (accountId = GOOGLE_MERCHANT_CONFIG.accountId) => ({
   account: `accounts/${accountId}`,
   dataSource: `accounts/${accountId}/dataSources/${GOOGLE_MERCHANT_CONFIG.dataSourceId}`,
-  productInputs: `accounts/${accountId}/productInputs`,
-  products: `accounts/${accountId}/products`
+  // 🔧 FIX: URLs correctes selon documentation officielle Google Merchant API v1beta
+  productInputs: `products/${GOOGLE_MERCHANT_CONFIG.apiVersion}/accounts/${accountId}/productInputs`,
+  products: `products/${GOOGLE_MERCHANT_CONFIG.apiVersion}/accounts/${accountId}/products`
 })
 
 // Helper pour validation des champs requis

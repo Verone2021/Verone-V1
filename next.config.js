@@ -149,5 +149,7 @@ const sentryWebpackPluginOptions = {
   // https://github.com/getsentry/sentry-webpack-plugin#options.
 };
 
-// Export avec configuration Sentry activée pour capture erreurs client
-module.exports = withSentryConfig(nextConfig, sentryWebpackPluginOptions);
+// Export SANS Sentry temporairement pour débloquer build production
+// Sentry sera réactivé après résolution Next.js 15 App Router compatibility
+// module.exports = withSentryConfig(nextConfig, sentryWebpackPluginOptions);
+module.exports = nextConfig;

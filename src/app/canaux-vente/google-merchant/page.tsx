@@ -43,13 +43,34 @@ import {
 } from "@/components/ui/table"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
+import { GoogleMerchantConfigModal } from '@/components/business/google-merchant-config-modal'
+import { useGoogleMerchantSync } from '@/hooks/use-google-merchant-sync'
+import { logger } from '@/lib/logger'
 
 export default function GoogleMerchantPage() {
   const router = useRouter()
-  const [syncStatus, setSyncStatus] = useState<'idle' | 'syncing' | 'success' | 'error'>('idle')
   const [selectedProducts, setSelectedProducts] = useState<string[]>([])
   const [searchTerm, setSearchTerm] = useState('')
   const [statusFilter, setStatusFilter] = useState('all')
+  const [configModalOpen, setConfigModalOpen] = useState(false)
+
+  // 🚀 NOUVEAU: Utiliser le hook de synchronisation réel
+  const {
+    isLoading,
+    isSuccess,
+    isError,
+    synced,
+    failed,
+    skipped,
+    total,
+    progress,
+    duration,
+    results,
+    error,
+    insertProducts,
+    updateProducts,
+    reset
+  } = useGoogleMerchantSync()
 
   // Configuration Google Merchant (à récupérer depuis la DB)
   const merchantConfig = {
@@ -63,35 +84,35 @@ export default function GoogleMerchantPage() {
     sync_frequency: 'daily'
   }
 
-  // Produits synchronisés (données temporaires)
+  // 🚀 NOUVEAU: Produits réels Supabase pour test synchronisation
   const syncedProducts = [
     {
-      id: '1',
-      sku: 'CHR-001',
-      name: 'Chaise Scandinave Nordic',
-      price: 150,
+      id: '25d2e61c-18d5-45a8-aec5-2a18f1b9cb55', // UUID réel Supabase
+      sku: 'FMIL-BEIGE-05',
+      name: 'Fauteuil Milo - Beige',
+      price: 141.70, // 109 * 1.30
       status: 'approved',
       google_status: 'active',
-      impressions: 1250,
-      clicks: 45,
-      conversions: 3
+      impressions: 0,
+      clicks: 0,
+      conversions: 0
     },
     {
-      id: '2',
-      sku: 'TBL-002',
-      name: 'Table en Chêne Massif',
-      price: 890,
+      id: 'cb45e989-981a-46fe-958d-bd3b81f12e8b', // UUID réel Supabase
+      sku: 'FMIL-BLEUV-16',
+      name: 'Fauteuil Milo - Bleu',
+      price: 141.70,
       status: 'approved',
       google_status: 'active',
-      impressions: 890,
-      clicks: 32,
-      conversions: 2
+      impressions: 0,
+      clicks: 0,
+      conversions: 0
     },
     {
-      id: '3',
-      sku: 'CNP-003',
-      name: 'Canapé 3 Places Velours',
-      price: 1890,
+      id: '5a05855a-e3d4-40c9-8043-3f504c1b73a7', // UUID réel Supabase
+      sku: 'FMIL-MARRO-03',
+      name: 'Fauteuil Milo - Marron',
+      price: 141.70,
       status: 'pending',
       google_status: 'pending_review',
       impressions: 0,
@@ -100,13 +121,34 @@ export default function GoogleMerchantPage() {
     }
   ]
 
+  // 🚀 NOUVEAU: Synchronisation réelle avec le hook
   const handleSync = async () => {
-    setSyncStatus('syncing')
-    // Simulation de synchronisation
-    setTimeout(() => {
-      setSyncStatus('success')
-      setTimeout(() => setSyncStatus('idle'), 3000)
-    }, 2000)
+    // Utiliser les UUIDs des produits Supabase
+    const productIds = syncedProducts.map(p => p.id)
+
+    await insertProducts(productIds, {
+      onSuccess: (data) => {
+        logger.info('[Google Merchant Page] Sync completed successfully', {
+          total: data.total,
+          synced: data.synced,
+          failed: data.failed,
+          skipped: data.skipped,
+          duration: data.duration
+        })
+      },
+      onError: (error) => {
+        logger.error('[Google Merchant Page] Sync failed', {
+          error
+        })
+      },
+      onProgress: ({ synced, total }) => {
+        logger.info('[Google Merchant Page] Sync progress', {
+          synced,
+          total,
+          progress: Math.round((synced / total) * 100)
+        })
+      }
+    })
   }
 
   const handleExport = () => {
@@ -152,8 +194,17 @@ export default function GoogleMerchantPage() {
     conversionRate: 4.2
   }
 
+  // 🚀 NOUVEAU: Déterminer le statut de synchronisation basé sur le hook
+  const syncStatus = isLoading ? 'syncing' : isSuccess ? 'success' : isError ? 'error' : 'idle'
+
   return (
     <div className="min-h-screen bg-gray-50">
+      {/* Configuration Modal */}
+      <GoogleMerchantConfigModal
+        open={configModalOpen}
+        onOpenChange={setConfigModalOpen}
+      />
+
       {/* Header */}
       <div className="bg-white border-b border-gray-200">
         <div className="container mx-auto px-4 py-6">
@@ -179,6 +230,7 @@ export default function GoogleMerchantPage() {
               <Button
                 variant="outline"
                 className="border-black text-black hover:bg-black hover:text-white"
+                onClick={() => setConfigModalOpen(true)}
               >
                 <Settings className="h-4 w-4 mr-2" />
                 Configuration
@@ -201,13 +253,62 @@ export default function GoogleMerchantPage() {
       </div>
 
       <div className="container mx-auto px-4 py-8">
-        {/* Alerte de statut */}
+        {/* 🚀 NOUVEAU: Feedback de synchronisation enrichi */}
+
+        {/* Synchronisation en cours */}
+        {syncStatus === 'syncing' && (
+          <Card className="mb-6 border-black">
+            <CardContent className="p-6">
+              <div className="space-y-4">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center space-x-3">
+                    <RefreshCw className="h-5 w-5 text-black animate-spin" />
+                    <div>
+                      <h3 className="font-semibold text-black">Synchronisation en cours...</h3>
+                      <p className="text-sm text-gray-600">
+                        {synced}/{total} produits synchronisés
+                      </p>
+                    </div>
+                  </div>
+                  <div className="text-right">
+                    <p className="text-2xl font-bold text-black">{progress}%</p>
+                  </div>
+                </div>
+                <Progress value={progress} className="h-2" />
+              </div>
+            </CardContent>
+          </Card>
+        )}
+
+        {/* Synchronisation réussie */}
         {syncStatus === 'success' && (
           <Alert className="mb-6 border-green-300 bg-green-50">
             <CheckCircle className="h-4 w-4 text-green-600" />
-            <AlertTitle className="text-green-800">Synchronisation réussie</AlertTitle>
+            <AlertTitle className="text-green-800">Synchronisation terminée avec succès</AlertTitle>
             <AlertDescription className="text-green-700">
-              Vos produits ont été synchronisés avec Google Merchant Center
+              <div className="mt-2 space-y-1">
+                <p>✅ {synced} produits synchronisés</p>
+                {failed > 0 && <p className="text-red-600">❌ {failed} échecs</p>}
+                {skipped > 0 && <p className="text-gray-600">⏭️ {skipped} ignorés</p>}
+                <p className="text-xs text-gray-600 mt-2">Durée: {(duration / 1000).toFixed(1)}s</p>
+              </div>
+            </AlertDescription>
+          </Alert>
+        )}
+
+        {/* Synchronisation échouée */}
+        {syncStatus === 'error' && (
+          <Alert className="mb-6 border-red-300 bg-red-50">
+            <AlertCircle className="h-4 w-4 text-red-600" />
+            <AlertTitle className="text-red-800">Échec de synchronisation</AlertTitle>
+            <AlertDescription className="text-red-700">
+              <p>{error || 'Une erreur est survenue lors de la synchronisation'}</p>
+              {failed > 0 && (
+                <div className="mt-2 space-y-1">
+                  <p>❌ {failed} produits en échec</p>
+                  {synced > 0 && <p>✅ {synced} produits synchronisés avant erreur</p>}
+                </div>
+              )}
             </AlertDescription>
           </Alert>
         )}

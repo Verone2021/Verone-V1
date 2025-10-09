@@ -8,6 +8,7 @@
 
 import { useState, useCallback, useEffect } from 'react'
 import { createClient } from '@/lib/supabase/client'
+import logger from '@/lib/logger'
 
 // Types simplifiés pour collection_images table
 export interface CollectionImage {
@@ -72,11 +73,18 @@ export function useCollectionImages({
 
       if (error) throw error
 
-      console.log(`✅ ${data?.length || 0} images chargées pour collection ${collectionId}`)
+      logger.info('Images collection chargées', {
+        operation: 'fetch_collection_images',
+        collectionId,
+        imagesCount: data?.length || 0
+      })
       setImages((data || []) as CollectionImage[])
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : 'Erreur chargement images'
-      console.error('❌ Erreur chargement images collection:', errorMessage)
+      logger.error('Erreur chargement images collection', err as Error, {
+        operation: 'fetch_collection_images_failed',
+        collectionId
+      })
       setError(errorMessage)
     } finally {
       setLoading(false)
@@ -152,14 +160,22 @@ export function useCollectionImages({
         throw dbError
       }
 
-      console.log('✅ Image collection uploadée:', file.name)
+      logger.info('Image collection uploadée', {
+        operation: 'upload_collection_image',
+        collectionId,
+        fileName: file.name,
+        fileSize: file.size
+      })
 
       // Refresh images list
       await fetchImages()
 
       return dbData as CollectionImage
     } catch (err) {
-      console.error('❌ Erreur upload collection image:', err)
+      logger.error('Erreur upload image collection', err as Error, {
+        operation: 'upload_collection_image_failed',
+        collectionId
+      })
       setError(err instanceof Error ? err.message : 'Erreur upload')
       throw err
     } finally {
@@ -188,7 +204,11 @@ export function useCollectionImages({
         })
         results.push(result)
       } catch (err) {
-        console.error(`❌ Erreur upload ${file.name}:`, err)
+        logger.error('Erreur upload multiple images collection', err as Error, {
+          operation: 'upload_multiple_collection_images_failed',
+          collectionId,
+          fileName: file.name
+        })
         // Continue with other files
       }
     }
@@ -216,7 +236,10 @@ export function useCollectionImages({
         .remove([imageData.storage_path])
 
       if (storageError) {
-        console.warn('⚠️ Erreur suppression storage:', storageError)
+        logger.warn('Erreur suppression storage collection (non-bloquant)', {
+          operation: 'delete_collection_storage_warning',
+          errorMessage: storageError.message
+        })
       }
 
       // Delete from database
@@ -227,10 +250,16 @@ export function useCollectionImages({
 
       if (dbError) throw dbError
 
-      console.log('✅ Image collection supprimée:', imageData.storage_path)
+      logger.info('Image collection supprimée', {
+        operation: 'delete_collection_image',
+        imageId
+      })
       await fetchImages()
     } catch (err) {
-      console.error('❌ Erreur suppression collection image:', err)
+      logger.error('Erreur suppression image collection', err as Error, {
+        operation: 'delete_collection_image_failed',
+        imageId
+      })
       setError(err instanceof Error ? err.message : 'Erreur suppression')
       throw err
     }
@@ -250,10 +279,17 @@ export function useCollectionImages({
       )
 
       await Promise.all(updates)
-      console.log('✅ Ordre images collection mis à jour')
+      logger.info('Ordre images collection mis à jour', {
+        operation: 'reorder_collection_images',
+        collectionId,
+        imagesCount: imageIds.length
+      })
       await fetchImages()
     } catch (err) {
-      console.error('❌ Erreur réordonnancement collection images:', err)
+      logger.error('Erreur réordonnancement images collection', err as Error, {
+        operation: 'reorder_collection_images_failed',
+        collectionId
+      })
       setError(err instanceof Error ? err.message : 'Erreur réordonnancement')
       throw err
     }
@@ -272,10 +308,16 @@ export function useCollectionImages({
 
       if (error) throw error
 
-      console.log('✅ Image principale collection via trigger')
+      logger.info('Image principale collection définie', {
+        operation: 'set_primary_collection_image',
+        imageId
+      })
       await fetchImages()
     } catch (err) {
-      console.error('❌ Erreur image principale collection:', err)
+      logger.error('Erreur définition image principale collection', err as Error, {
+        operation: 'set_primary_collection_image_failed',
+        imageId
+      })
       setError(err instanceof Error ? err.message : 'Erreur image principale')
       throw err
     }
@@ -302,10 +344,16 @@ export function useCollectionImages({
 
       if (error) throw error
 
-      console.log('✅ Métadonnées collection mises à jour')
+      logger.info('Métadonnées image collection mises à jour', {
+        operation: 'update_collection_image_metadata',
+        imageId
+      })
       await fetchImages()
     } catch (err) {
-      console.error('❌ Erreur métadonnées collection:', err)
+      logger.error('Erreur mise à jour métadonnées collection', err as Error, {
+        operation: 'update_collection_image_metadata_failed',
+        imageId
+      })
       setError(err instanceof Error ? err.message : 'Erreur métadonnées')
       throw err
     }
@@ -323,7 +371,10 @@ export function useCollectionImages({
   // ✨ Auto-fetch optimisé
   useEffect(() => {
     if (autoFetch && collectionId && collectionId.trim() !== '') {
-      console.log('🔄 Auto-fetch collection images:', collectionId)
+      logger.debug('Auto-fetch collection images déclenché', {
+        operation: 'auto_fetch_collection_images',
+        collectionId
+      })
       fetchImages()
     }
   }, [collectionId, autoFetch]) // fetchImages exclu pour éviter boucle infinie

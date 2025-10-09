@@ -4,6 +4,7 @@ import { useState, useEffect, useCallback, useRef } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import { useToast } from '@/hooks/use-toast'
 import { generateProductSKU } from '@/lib/sku-generator'
+import logger from '@/lib/logger'
 import type {
   VariantGroup,
   VariantProduct,
@@ -66,7 +67,9 @@ export function useVariantGroups(filters?: VariantGroupFilters) {
 
       if (fetchError) {
         setError(fetchError.message)
-        console.error('Erreur fetch variant groups:', fetchError)
+        logger.error('Erreur fetch variant groups', fetchError, {
+          operation: 'fetch_variant_groups_failed'
+        })
         return
       }
 
@@ -114,7 +117,9 @@ export function useVariantGroups(filters?: VariantGroupFilters) {
       setVariantGroups(groupsWithProducts)
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Erreur inconnue')
-      console.error('Erreur:', err)
+      logger.error('Erreur chargement variant groups', err as Error, {
+        operation: 'load_variant_groups_failed'
+      })
     } finally {
       setLoading(false)
     }
@@ -169,7 +174,9 @@ export function useVariantGroups(filters?: VariantGroupFilters) {
       await fetchVariantGroups()
       return true
     } catch (err) {
-      console.error('Erreur création groupe:', err)
+      logger.error('Erreur création groupe', err as Error, {
+        operation: 'create_variant_group_failed'
+      })
       toast({
         title: "Erreur",
         description: "Impossible de créer le groupe",
@@ -279,7 +286,9 @@ export function useVariantGroups(filters?: VariantGroupFilters) {
           .eq('id', update.id)
 
         if (updateError) {
-          console.error('Erreur update produit:', updateError)
+          logger.error('Erreur update produit', updateError, {
+            operation: 'update_product_in_group_failed'
+          })
           toast({
             title: "Erreur",
             description: `Impossible d'ajouter le produit`,
@@ -299,7 +308,9 @@ export function useVariantGroups(filters?: VariantGroupFilters) {
         .eq('id', data.variant_group_id)
 
       if (countError) {
-        console.error('Erreur update count:', countError)
+        logger.error('Erreur update count', countError, {
+          operation: 'update_variant_count_failed'
+        })
       }
 
       toast({
@@ -310,7 +321,9 @@ export function useVariantGroups(filters?: VariantGroupFilters) {
       await fetchVariantGroups()
       return true
     } catch (err) {
-      console.error('Erreur ajout produits:', err)
+      logger.error('Erreur ajout produits', err as Error, {
+        operation: 'add_products_to_group_failed'
+      })
       toast({
         title: "Erreur",
         description: "Impossible d'ajouter les produits",
@@ -401,7 +414,8 @@ export function useVariantGroups(filters?: VariantGroupFilters) {
         })
       }
 
-      console.log('🔄 Creating product in group with data:', {
+      logger.info('Création produit dans groupe', {
+        operation: 'create_product_in_group',
         productName,
         groupId,
         hasCommonSupplier: group.has_common_supplier,
@@ -415,11 +429,17 @@ export function useVariantGroups(filters?: VariantGroupFilters) {
         .select()
 
       if (createError) {
-        console.error('❌ Erreur création produit:', createError)
+        logger.error('Erreur création produit', createError, {
+          operation: 'create_product_failed'
+        })
         throw createError
       }
 
-      console.log('✅ Product created successfully:', createdProduct)
+      logger.info('Produit créé avec succès', {
+        operation: 'create_product_success',
+        productId: createdProduct.id,
+        sku: createdProduct.sku
+      })
 
       // 7. Mettre à jour le compteur du groupe
       const { error: updateError } = await supabase
@@ -431,7 +451,9 @@ export function useVariantGroups(filters?: VariantGroupFilters) {
         .eq('id', groupId)
 
       if (updateError) {
-        console.error('Erreur mise à jour compteur:', updateError)
+        logger.error('Erreur mise à jour compteur', updateError, {
+          operation: 'update_variant_counter_failed'
+        })
       }
 
       toast({
@@ -441,7 +463,9 @@ export function useVariantGroups(filters?: VariantGroupFilters) {
 
       return true
     } catch (err) {
-      console.error('Erreur createProductInGroup:', err)
+      logger.error('Erreur createProductInGroup', err as Error, {
+        operation: 'create_product_in_group_exception'
+      })
       toast({
         title: "Erreur",
         description: "Impossible de créer le produit",
@@ -503,7 +527,9 @@ export function useVariantGroups(filters?: VariantGroupFilters) {
         .eq('id', productId)
 
       if (updateError) {
-        console.error('Erreur mise à jour produit:', updateError)
+        logger.error('Erreur mise à jour produit', updateError, {
+          operation: 'update_product_failed'
+        })
         toast({
           title: "Erreur",
           description: updateError.message,
@@ -519,7 +545,9 @@ export function useVariantGroups(filters?: VariantGroupFilters) {
 
       return true
     } catch (err) {
-      console.error('Erreur updateProductInGroup:', err)
+      logger.error('Erreur updateProductInGroup', err as Error, {
+        operation: 'update_product_in_group_exception'
+      })
       toast({
         title: "Erreur",
         description: "Impossible de mettre à jour le produit",
@@ -592,7 +620,9 @@ export function useVariantGroups(filters?: VariantGroupFilters) {
         .eq('id', product.variant_group_id)
 
       if (countError) {
-        console.error('Erreur update count:', countError)
+        logger.error('Erreur update count', countError, {
+          operation: 'update_variant_count_failed'
+        })
       }
 
       // Rafraîchir la liste AVANT d'afficher le toast pour éviter l'erreur React
@@ -606,7 +636,9 @@ export function useVariantGroups(filters?: VariantGroupFilters) {
 
       return true
     } catch (err) {
-      console.error('Erreur retrait produit:', err)
+      logger.error('Erreur retrait produit', err as Error, {
+        operation: 'remove_product_from_group_failed'
+      })
       toast({
         title: "Erreur",
         description: "Impossible de retirer le produit",
@@ -660,7 +692,9 @@ export function useVariantGroups(filters?: VariantGroupFilters) {
       await fetchVariantGroups()
       return true
     } catch (err) {
-      console.error('Erreur suppression groupe:', err)
+      logger.error('Erreur suppression groupe', err as Error, {
+        operation: 'delete_variant_group_failed'
+      })
       toast({
         title: "Erreur",
         description: "Impossible de supprimer le groupe",
@@ -697,7 +731,8 @@ export function useVariantGroups(filters?: VariantGroupFilters) {
         updateData.common_weight = data.common_weight
       }
 
-      console.log('🔄 Updating variant group with data:', {
+      logger.info('Mise à jour variant group', {
+        operation: 'update_variant_group',
         groupId,
         updateData
       })
@@ -710,7 +745,8 @@ export function useVariantGroups(filters?: VariantGroupFilters) {
         .select()
 
       if (updateError) {
-        console.error('❌ Supabase update error:', {
+        logger.error('Supabase update error', new Error(updateError.message), {
+          operation: 'update_variant_group_supabase_error',
           message: updateError.message,
           details: updateError.details,
           hint: updateError.hint,
@@ -725,13 +761,18 @@ export function useVariantGroups(filters?: VariantGroupFilters) {
         return false
       }
 
-      console.log('✅ Variant group updated successfully:', updatedGroup)
+      logger.info('Variant group mis à jour avec succès', {
+        operation: 'update_variant_group_success',
+        groupId: updatedGroup.id,
+        name: updatedGroup.name
+      })
 
       // Propager le fournisseur aux produits si has_common_supplier est activé
       if (data.has_common_supplier !== undefined || data.supplier_id !== undefined) {
         if (data.has_common_supplier && data.supplier_id) {
           // Si fournisseur commun activé ET supplier_id valide, propager à tous les produits
-          console.log('🔄 Propagating supplier to products:', {
+          logger.info('Propagation fournisseur aux produits', {
+            operation: 'propagate_supplier_to_products',
             groupId,
             supplierId: data.supplier_id
           })
@@ -742,9 +783,13 @@ export function useVariantGroups(filters?: VariantGroupFilters) {
             .eq('variant_group_id', groupId)
 
           if (supplierPropagationError) {
-            console.error('❌ Erreur propagation fournisseur aux produits:', supplierPropagationError)
+            logger.error('Erreur propagation fournisseur', supplierPropagationError, {
+              operation: 'propagate_supplier_failed'
+            })
           } else {
-            console.log('✅ Supplier propagated to products')
+            logger.info('Fournisseur propagé avec succès', {
+              operation: 'propagate_supplier_success'
+            })
           }
         }
         // Si has_common_supplier est désactivé ou supplier_id null, les produits gardent leur supplier_id actuel
@@ -812,7 +857,9 @@ export function useVariantGroups(filters?: VariantGroupFilters) {
             .eq('variant_group_id', groupId)
 
           if (productsError) {
-            console.error('Erreur propagation dimensions aux produits:', productsError)
+            logger.error('Erreur propagation dimensions', productsError, {
+              operation: 'propagate_dimensions_failed'
+            })
             // Ne pas faire échouer toute l'opération si la propagation échoue
           }
         }
@@ -826,7 +873,9 @@ export function useVariantGroups(filters?: VariantGroupFilters) {
       await fetchVariantGroups()
       return true
     } catch (err) {
-      console.error('❌ Exception during variant group update:', err)
+      logger.error('Exception durant mise à jour variant group', err as Error, {
+        operation: 'update_variant_group_exception'
+      })
       toast({
         title: "Erreur",
         description: "Impossible de mettre à jour le groupe",
@@ -853,7 +902,9 @@ export function useVariantGroups(filters?: VariantGroupFilters) {
     const { data, error } = await query
 
     if (error) {
-      console.error('Erreur fetch produits disponibles:', error)
+      logger.error('Erreur fetch produits disponibles', error, {
+        operation: 'fetch_available_products_failed'
+      })
       return []
     }
 
@@ -909,7 +960,9 @@ export function useVariantGroups(filters?: VariantGroupFilters) {
       await fetchVariantGroups()
       return true
     } catch (err) {
-      console.error('Erreur archivage groupe:', err)
+      logger.error('Erreur archivage groupe', err as Error, {
+        operation: 'archive_variant_group_failed'
+      })
       toast({
         title: "Erreur",
         description: "Impossible d'archiver le groupe",
@@ -967,7 +1020,9 @@ export function useVariantGroups(filters?: VariantGroupFilters) {
       await fetchVariantGroups()
       return true
     } catch (err) {
-      console.error('Erreur restauration groupe:', err)
+      logger.error('Erreur restauration groupe', err as Error, {
+        operation: 'restore_variant_group_failed'
+      })
       toast({
         title: "Erreur",
         description: "Impossible de restaurer le groupe",
@@ -987,7 +1042,9 @@ export function useVariantGroups(filters?: VariantGroupFilters) {
         .order('archived_at', { ascending: false })
 
       if (fetchError) {
-        console.error('Erreur chargement groupes archivés:', fetchError)
+        logger.error('Erreur chargement groupes archivés', fetchError, {
+          operation: 'fetch_archived_groups_failed'
+        })
         return []
       }
 
@@ -1034,7 +1091,9 @@ export function useVariantGroups(filters?: VariantGroupFilters) {
 
       return groupsWithProducts
     } catch (err) {
-      console.error('Erreur:', err)
+      logger.error('Erreur chargement variant groups', err as Error, {
+        operation: 'load_variant_groups_failed'
+      })
       return []
     }
   }
@@ -1090,7 +1149,9 @@ export function useProductVariantEditing() {
       })
       return true
     } catch (err) {
-      console.error('Erreur mise à jour prix:', err)
+      logger.error('Erreur mise à jour prix', err as Error, {
+        operation: 'update_product_price_failed'
+      })
       toast({
         title: "Erreur",
         description: "Impossible de mettre à jour le prix",
@@ -1180,7 +1241,9 @@ export function useProductVariantEditing() {
       })
       return true
     } catch (err) {
-      console.error('Erreur mise à jour attribut:', err)
+      logger.error('Erreur mise à jour attribut', err as Error, {
+        operation: 'update_product_attribute_failed'
+      })
       toast({
         title: "Erreur",
         description: "Impossible de mettre à jour l'attribut",

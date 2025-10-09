@@ -94,7 +94,8 @@ export function SalesOrderFormModal({ onSuccess }: SalesOrderFormModalProps) {
     const warnings: string[] = []
 
     for (const item of currentItems) {
-      const availableStock = await getAvailableStock(item.product_id)
+      const stockData = await getAvailableStock(item.product_id)
+      const availableStock = stockData?.stock_available || 0
       if (availableStock < item.quantity) {
         warnings.push(
           `${item.product?.name} : Stock insuffisant (Disponible: ${availableStock}, Demandé: ${item.quantity})`
@@ -119,7 +120,7 @@ export function SalesOrderFormModal({ onSuccess }: SalesOrderFormModalProps) {
       await checkAllStockAvailability(updatedItems)
     } else {
       // Ajouter un nouvel item
-      const availableStock = await getAvailableStock(product.id)
+      const stockData = await getAvailableStock(product.id)
       const newItem: OrderItem = {
         id: Date.now().toString(),
         product_id: product.id,
@@ -133,7 +134,7 @@ export function SalesOrderFormModal({ onSuccess }: SalesOrderFormModalProps) {
           primary_image_url: product.primary_image_url,
           stock_quantity: product.stock_quantity
         },
-        availableStock
+        availableStock: stockData?.stock_available || 0
       }
       const updatedItems = [...items, newItem]
       setItems(updatedItems)

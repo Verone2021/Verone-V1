@@ -2,9 +2,12 @@
 
 import { useState, useEffect } from 'react'
 import { Label } from '@/components/ui/label'
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group'
+import { Combobox } from '@/components/ui/combobox'
+import { CreateOrganisationModal } from './create-organisation-modal'
+import { CreateIndividualCustomerModal } from './create-individual-customer-modal'
 import { createClient } from '@/lib/supabase/client'
+import { useToast } from '@/hooks/use-toast'
 
 export type CustomerType = 'professional' | 'individual'
 
@@ -56,6 +59,7 @@ export function CustomerSelector({ selectedCustomer, onCustomerChange, disabled 
   const [customers, setCustomers] = useState<UnifiedCustomer[]>([])
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const { toast } = useToast()
 
   // Charger les clients selon le type sélectionné
   useEffect(() => {
@@ -176,6 +180,62 @@ export function CustomerSelector({ selectedCustomer, onCustomerChange, disabled 
     }
   }
 
+  // Handler pour la création d'organisation professionnelle
+  const handleOrganisationCreated = async (organisationId: string, organisationName: string) => {
+    // Rafraîchir la liste
+    await loadCustomers()
+
+    // Trouver et auto-sélectionner la nouvelle organisation
+    const newOrg = customers.find(c => c.id === organisationId)
+    if (newOrg) {
+      onCustomerChange(newOrg)
+    } else {
+      // Si pas encore dans la liste, créer l'objet manuellement
+      const customer: UnifiedCustomer = {
+        id: organisationId,
+        name: organisationName,
+        type: 'professional'
+      }
+      onCustomerChange(customer)
+    }
+
+    toast({
+      title: "✅ Client créé et sélectionné",
+      description: `${organisationName} a été créé et sélectionné automatiquement.`
+    })
+  }
+
+  // Handler pour la création de client particulier
+  const handleIndividualCustomerCreated = async (customerId: string, customerName: string) => {
+    // Rafraîchir la liste
+    await loadCustomers()
+
+    // Trouver et auto-sélectionner le nouveau client
+    const newCustomer = customers.find(c => c.id === customerId)
+    if (newCustomer) {
+      onCustomerChange(newCustomer)
+    } else {
+      // Si pas encore dans la liste, créer l'objet manuellement
+      const customer: UnifiedCustomer = {
+        id: customerId,
+        name: customerName,
+        type: 'individual'
+      }
+      onCustomerChange(customer)
+    }
+
+    toast({
+      title: "✅ Client créé et sélectionné",
+      description: `${customerName} a été créé et sélectionné automatiquement.`
+    })
+  }
+
+  // Options pour le Combobox
+  const customerOptions = customers.map(customer => ({
+    value: customer.id,
+    label: customer.name
+  }))
+
   return (
     <div className="space-y-4">
       {/* Choix du type de client */}
@@ -204,13 +264,7 @@ export function CustomerSelector({ selectedCustomer, onCustomerChange, disabled 
           {customerType === 'professional' ? 'Organisation' : 'Client particulier'} *
         </Label>
 
-        {loading ? (
-          <Select disabled>
-            <SelectTrigger>
-              <SelectValue placeholder="Chargement..." />
-            </SelectTrigger>
-          </Select>
-        ) : error ? (
+        {error ? (
           <div className="p-3 bg-red-50 border border-red-200 rounded-md">
             <p className="text-red-600 text-sm">❌ {error}</p>
             <button
@@ -222,24 +276,31 @@ export function CustomerSelector({ selectedCustomer, onCustomerChange, disabled 
             </button>
           </div>
         ) : (
-          <Select
-            value={selectedCustomer?.id || ''}
-            onValueChange={handleCustomerChange}
-            disabled={disabled}
-          >
-            <SelectTrigger>
-              <SelectValue
-                placeholder={`Sélectionner ${customerType === 'professional' ? 'une organisation' : 'un client particulier'}`}
+          <div className="flex gap-2">
+            <div className="flex-1">
+              <Combobox
+                options={customerOptions}
+                value={selectedCustomer?.id || ''}
+                onValueChange={handleCustomerChange}
+                placeholder={loading ? "Chargement..." : `Sélectionner ${customerType === 'professional' ? 'une organisation' : 'un client particulier'}...`}
+                searchPlaceholder="Rechercher..."
+                emptyMessage="Aucun client trouvé."
+                disabled={disabled || loading}
               />
-            </SelectTrigger>
-            <SelectContent>
-              {customers.map((customer) => (
-                <SelectItem key={customer.id} value={customer.id}>
-                  {customer.name}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+            </div>
+
+            {/* Bouton création selon le type */}
+            {customerType === 'professional' ? (
+              <CreateOrganisationModal
+                onOrganisationCreated={handleOrganisationCreated}
+                defaultType="customer"
+              />
+            ) : (
+              <CreateIndividualCustomerModal
+                onCustomerCreated={handleIndividualCustomerCreated}
+              />
+            )}
+          </div>
         )}
       </div>
 

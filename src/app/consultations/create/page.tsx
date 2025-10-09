@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { ArrowLeft, Send, Upload, Calendar, AlertCircle } from 'lucide-react'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../../../components/ui/card'
@@ -9,18 +9,25 @@ import { Input } from '../../../components/ui/input'
 import { Label } from '../../../components/ui/label'
 import { Textarea } from '../../../components/ui/textarea'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../../../components/ui/select'
+import { Combobox } from '../../../components/ui/combobox'
+import { CreateOrganisationModal } from '../../../components/business/create-organisation-modal'
 import { useConsultations } from '../../../hooks/use-consultations'
+import { useOrganisations } from '../../../hooks/use-organisations'
 import { useToast } from '../../../hooks/use-toast'
 import type { CreateConsultationData } from '../../../hooks/use-consultations'
 
 export default function CreateConsultationPage() {
   const router = useRouter()
   const { createConsultation } = useConsultations()
+  const { organisations, loading: loadingOrgs, refetch } = useOrganisations({
+    type: 'customer',
+    is_active: true
+  })
   const { toast } = useToast()
 
   const [loading, setLoading] = useState(false)
   const [formData, setFormData] = useState<CreateConsultationData>({
-    organisation_name: '',
+    organisation_id: '',
     client_email: '',
     client_phone: '',
     descriptif: '',
@@ -33,6 +40,12 @@ export default function CreateConsultationPage() {
 
   const [errors, setErrors] = useState<Record<string, string>>({})
 
+  // Options pour le Combobox
+  const organisationOptions = organisations.map(org => ({
+    value: org.id,
+    label: org.name
+  }))
+
   const handleInputChange = (field: keyof CreateConsultationData, value: any) => {
     setFormData(prev => ({ ...prev, [field]: value }))
 
@@ -42,12 +55,26 @@ export default function CreateConsultationPage() {
     }
   }
 
+  // Handler pour la création d'organisation depuis le modal
+  const handleOrganisationCreated = async (organisationId: string, organisationName: string) => {
+    // Rafraîchir la liste des organisations
+    await refetch()
+
+    // Auto-sélectionner la nouvelle organisation
+    setFormData(prev => ({ ...prev, organisation_id: organisationId }))
+
+    toast({
+      title: "✅ Client créé et sélectionné",
+      description: `${organisationName} a été créé et sélectionné automatiquement.`
+    })
+  }
+
   const validateForm = (): boolean => {
     const newErrors: Record<string, string> = {}
 
     // Required fields
-    if (!formData.organisation_name.trim()) {
-      newErrors.organisation_name = 'Le nom de l\'organisation est requis'
+    if (!formData.organisation_id.trim()) {
+      newErrors.organisation_id = 'L\'organisation cliente est requise'
     }
 
     if (!formData.client_email.trim()) {
@@ -85,7 +112,7 @@ export default function CreateConsultationPage() {
     try {
       // Préparer les données en supprimant les champs vides optionnels
       const dataToSubmit: CreateConsultationData = {
-        organisation_name: formData.organisation_name.trim(),
+        organisation_id: formData.organisation_id.trim(),
         client_email: formData.client_email.trim(),
         descriptif: formData.descriptif.trim(),
         priority_level: formData.priority_level || 2,
@@ -172,22 +199,34 @@ export default function CreateConsultationPage() {
                 <div className="space-y-4">
                   <h3 className="text-lg font-medium text-black">Informations Client</h3>
 
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="grid grid-cols-1 gap-4">
+                    {/* Sélection organisation client + Création */}
                     <div className="space-y-2">
-                      <Label htmlFor="organisation_name">
-                        Nom de l'organisation <span className="text-red-500">*</span>
+                      <Label htmlFor="organisation_id">
+                        Client Professionnel <span className="text-red-500">*</span>
                       </Label>
-                      <Input
-                        id="organisation_name"
-                        value={formData.organisation_name}
-                        onChange={(e) => handleInputChange('organisation_name', e.target.value)}
-                        placeholder="Nom de l'entreprise ou organisation"
-                        className={`border-black ${errors.organisation_name ? 'border-red-500' : ''}`}
-                      />
-                      {errors.organisation_name && (
+                      <div className="flex gap-2">
+                        <div className="flex-1">
+                          <Combobox
+                            options={organisationOptions}
+                            value={formData.organisation_id}
+                            onValueChange={(value) => handleInputChange('organisation_id', value)}
+                            placeholder={loadingOrgs ? "Chargement..." : "Sélectionner un client..."}
+                            searchPlaceholder="Rechercher un client..."
+                            emptyMessage="Aucun client trouvé."
+                            disabled={loadingOrgs}
+                            className={errors.organisation_id ? 'border-red-500' : ''}
+                          />
+                        </div>
+                        <CreateOrganisationModal
+                          onOrganisationCreated={handleOrganisationCreated}
+                          defaultType="customer"
+                        />
+                      </div>
+                      {errors.organisation_id && (
                         <p className="text-xs text-red-500 flex items-center">
                           <AlertCircle className="h-3 w-3 mr-1" />
-                          {errors.organisation_name}
+                          {errors.organisation_id}
                         </p>
                       )}
                     </div>

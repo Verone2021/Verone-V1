@@ -12,6 +12,7 @@ import {
   AlertTriangle,
   ArrowRight
 } from 'lucide-react'
+import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card'
 import { useCompleteDashboardMetrics } from '@/hooks/use-complete-dashboard-metrics'
 
 interface StatCardProps {
@@ -28,69 +29,67 @@ interface StatCardProps {
 function StatCard({ title, value, change, isPositive, icon, isLoading, href, isMock }: StatCardProps) {
   if (isLoading) {
     return (
-      <div className="bg-white rounded-lg border border-gray-200 p-6">
-        <div className="flex items-center justify-between">
-          <div className="space-y-2">
-            <div className="h-4 w-24 bg-gray-200 rounded animate-pulse" />
-            <div className="h-8 w-16 bg-gray-200 rounded animate-pulse" />
-            <div className="h-4 w-12 bg-gray-200 rounded animate-pulse" />
-          </div>
-          <div className="h-12 w-12 bg-gray-100 rounded-lg animate-pulse" />
-        </div>
-      </div>
+      <Card className="border-gray-200">
+        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+          <div className="h-4 w-24 bg-gray-200 rounded animate-pulse" />
+          <div className="h-4 w-4 bg-gray-200 rounded animate-pulse" />
+        </CardHeader>
+        <CardContent>
+          <div className="h-8 w-16 bg-gray-200 rounded animate-pulse mb-1" />
+          <div className="h-3 w-20 bg-gray-200 rounded animate-pulse" />
+        </CardContent>
+      </Card>
     )
   }
 
-  const CardContent = (
-    <div className="flex items-center justify-between">
-      <div className="flex-1">
+  const cardContent = (
+    <Card className="border-gray-200 hover:border-black hover:shadow-md transition-all">
+      <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
         <div className="flex items-center gap-2">
-          <p className="text-sm font-medium text-gray-600">{title}</p>
+          <CardTitle className="text-sm font-medium text-gray-600">{title}</CardTitle>
           {isMock && (
             <span className="px-2 py-0.5 text-xs font-medium bg-gray-100 text-gray-800 rounded border border-gray-300">
               ⚠️ MOCK
             </span>
           )}
         </div>
-        <p className="text-2xl font-bold text-black">{value}</p>
-        <div className="flex items-center mt-2">
+        <div className="h-4 w-4 flex items-center justify-center">
+          {icon}
+        </div>
+      </CardHeader>
+      <CardContent>
+        <div className="text-2xl font-bold text-black">{value}</div>
+        <div className="flex items-center mt-1">
           {isMock ? (
-            <AlertTriangle className="h-4 w-4 text-gray-900" />
+            <AlertTriangle className="h-3 w-3 text-gray-900" />
           ) : isPositive ? (
-            <TrendingUp className="h-4 w-4 text-green-500" />
+            <TrendingUp className="h-3 w-3 text-green-500" />
           ) : (
-            <TrendingDown className="h-4 w-4 text-red-500" />
+            <TrendingDown className="h-3 w-3 text-red-500" />
           )}
-          <span className={`text-sm ml-1 ${isMock ? 'text-black' : isPositive ? 'text-green-500' : 'text-red-500'}`}>
+          <span className={`text-xs ml-1 ${isMock ? 'text-black' : isPositive ? 'text-green-500' : 'text-red-500'}`}>
             {isMock ? 'À connecter' : change}
           </span>
         </div>
-      </div>
-      <div className="h-12 w-12 bg-gray-100 rounded-lg flex items-center justify-center group-hover:bg-gray-200 transition-colors">
-        {icon}
-      </div>
-    </div>
+        {href && (
+          <div className="flex items-center justify-end mt-2 text-xs text-gray-500 group-hover:text-black transition-colors">
+            <span>Voir détails</span>
+            <ArrowRight className="h-3 w-3 ml-1" />
+          </div>
+        )}
+      </CardContent>
+    </Card>
   )
 
   if (href) {
     return (
       <Link href={href} className="block group">
-        <div className="bg-white rounded-lg border border-gray-200 p-6 hover:border-black hover:shadow-md transition-all cursor-pointer">
-          {CardContent}
-          <div className="flex items-center justify-end mt-2 text-xs text-gray-500 group-hover:text-black transition-colors">
-            <span>Voir détails</span>
-            <ArrowRight className="h-3 w-3 ml-1" />
-          </div>
-        </div>
+        {cardContent}
       </Link>
     )
   }
 
-  return (
-    <div className="bg-white rounded-lg border border-gray-200 p-6">
-      {CardContent}
-    </div>
-  )
+  return cardContent
 }
 
 export default function DashboardPage() {

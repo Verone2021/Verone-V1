@@ -37,7 +37,9 @@ export default function GlobalError({
   }, [error])
 
   return (
-    <div className="min-h-screen bg-gray-50 flex items-center justify-center p-4">
+    <html lang="fr">
+      <body>
+        <div className="min-h-screen bg-gray-50 flex items-center justify-center p-4">
           <div className="max-w-md w-full bg-white shadow-lg rounded-lg p-6 border border-gray-200">
             {/* Icon d'erreur */}
             <div className="flex items-center justify-center w-16 h-16 bg-red-100 rounded-full mx-auto mb-4">
@@ -95,6 +97,8 @@ export default function GlobalError({
               </p>
             </div>
           </div>
-    </div>
+        </div>
+      </body>
+    </html>
   )
 }

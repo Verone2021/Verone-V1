@@ -95,6 +95,7 @@ export interface SalesOrderItem {
     stock_real?: number
     stock_forecasted_in?: number
     stock_forecasted_out?: number
+    primary_image_url?: string | null
   }
 }
 

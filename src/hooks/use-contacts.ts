@@ -6,6 +6,7 @@
 import { useState, useCallback } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import { useToast } from '@/hooks/use-toast'
+import logger from '@/lib/logger'
 
 // Types pour les contacts
 export interface Contact {
@@ -167,7 +168,11 @@ export function useContacts() {
 
       setContacts(data || [])
     } catch (error) {
-      console.error('Erreur lors de la récupération des contacts:', error)
+      logger.error('Erreur récupération contacts', error instanceof Error ? error : new Error(String(error)), {
+        operation: 'fetch_contacts',
+        resource: 'contacts',
+        filtersApplied: !!filters
+      })
       toast({
         title: "Erreur",
         description: "Impossible de récupérer les contacts",
@@ -201,7 +206,11 @@ export function useContacts() {
       setCurrentContact(data)
       return data
     } catch (error) {
-      console.error('Erreur lors de la récupération du contact:', error)
+      logger.error('Erreur récupération contact', error instanceof Error ? error : new Error(String(error)), {
+        operation: 'fetch_contact',
+        resource: 'contacts',
+        contactId
+      })
       toast({
         title: "Erreur",
         description: "Impossible de récupérer le contact",
@@ -241,7 +250,11 @@ export function useContacts() {
 
       return data || null
     } catch (error) {
-      console.error('Erreur lors de la récupération du contact principal:', error)
+      logger.error('Erreur récupération contact principal', error instanceof Error ? error : new Error(String(error)), {
+        operation: 'fetch_primary_contact',
+        resource: 'contacts',
+        organisationId
+      })
       return null
     }
   }, [supabase])
@@ -269,8 +282,9 @@ export function useContacts() {
         created_by: user.data.user?.id
       }
 
-      console.log('📤 Création contact - Données envoyées:', {
-        insertData,
+      logger.info('Création contact en cours', {
+        operation: 'create_contact',
+        resource: 'contacts',
         userId: user.data.user?.id,
         organisationId: data.organisation_id
       })
@@ -289,12 +303,22 @@ export function useContacts() {
         `)
         .single()
 
-      console.log('📥 Réponse Supabase:', { contact, error })
-
       if (error) {
-        console.error('🚨 Erreur Supabase détaillée:', JSON.stringify(error, null, 2))
+        logger.error('Erreur Supabase création contact', new Error(error.message), {
+          operation: 'create_contact',
+          resource: 'contacts',
+          errorCode: error.code,
+          organisationId: data.organisation_id
+        })
         throw error
       }
+
+      logger.info('Contact créé avec succès', {
+        operation: 'create_contact_success',
+        resource: 'contacts',
+        contactId: contact.id,
+        organisationId: data.organisation_id
+      })
 
       toast({
         title: "Succès",
@@ -304,20 +328,15 @@ export function useContacts() {
       await fetchContacts()
       return contact
     } catch (error: any) {
-      console.error('❌ ERREUR CRÉATION CONTACT:')
-      console.error('Error object:', error)
-      console.error('Error string:', String(error))
-      console.error('Error message:', error?.message)
-      console.error('Error details:', error?.details)
-      console.error('Error hint:', error?.hint)
-      console.error('Error code:', error?.code)
-      console.error('Data sent:', data)
+      logger.error('Erreur création contact', error instanceof Error ? error : new Error(String(error)), {
+        operation: 'create_contact_failed',
+        resource: 'contacts',
+        errorCode: error?.code,
+        errorDetails: error?.details,
+        errorHint: error?.hint,
+        organisationId: data.organisation_id
+      })
 
-      try {
-        console.error('Error JSON:', JSON.stringify(error, null, 2))
-      } catch (e) {
-        console.error('Cannot stringify error:', e)
-      }
       toast({
         title: "Erreur",
         description: error.message || "Impossible de créer le contact",
@@ -361,7 +380,11 @@ export function useContacts() {
       }
       return contact
     } catch (error: any) {
-      console.error('Erreur lors de la mise à jour:', error)
+      logger.error('Erreur mise à jour contact', error instanceof Error ? error : new Error(String(error)), {
+        operation: 'update_contact',
+        resource: 'contacts',
+        contactId
+      })
       toast({
         title: "Erreur",
         description: error.message || "Impossible de mettre à jour le contact",
@@ -414,7 +437,11 @@ export function useContacts() {
         setCurrentContact(null)
       }
     } catch (error: any) {
-      console.error('Erreur lors de la suppression:', error)
+      logger.error('Erreur suppression contact', error instanceof Error ? error : new Error(String(error)), {
+        operation: 'delete_contact',
+        resource: 'contacts',
+        contactId
+      })
       toast({
         title: "Erreur",
         description: error.message || "Impossible de supprimer le contact",

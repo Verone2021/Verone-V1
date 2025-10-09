@@ -6,6 +6,7 @@
 
 import React from 'react'
 import { createClient } from '@/lib/supabase/client'
+import logger from '@/lib/logger'
 
 // Configuration des timeouts
 export const SESSION_CONFIG = {
@@ -101,7 +102,10 @@ export class SessionManager {
     // 🔥 FIX CRITIQUE: Désactiver refresh automatique en développement
     // En dev, le refresh token peut être invalide/manquant, causant boucle infinie d'erreurs 400
     if (process.env.NODE_ENV === 'development') {
-      console.warn('⚠️ Refresh automatique DÉSACTIVÉ en développement')
+      logger.warn('Refresh automatique DÉSACTIVÉ en développement', {
+        operation: 'session_refresh_disabled',
+        environment: 'development'
+      })
       return
     }
 
@@ -153,18 +157,24 @@ export class SessionManager {
 
       if (!session) {
         // Pas de session active, ne pas tenter de refresh
-        console.warn('⚠️ Pas de session active, skip refresh')
+        logger.warn('Pas de session active, skip refresh', {
+          operation: 'session_refresh_skipped'
+        })
         return
       }
 
       const { error } = await supabase.auth.refreshSession()
 
       if (error) {
-        console.error('Erreur refresh session:', error)
+        logger.error('Erreur refresh session', error as Error, {
+          operation: 'session_refresh_failed'
+        })
         // Ne pas déconnecter automatiquement en cas d'erreur refresh
         // L'utilisateur peut continuer à travailler avec sa session courante
         if (error.message.includes('refresh_token_not_found')) {
-          console.warn('⚠️ Refresh token non trouvé - ARRÊT refresh automatique')
+          logger.warn('Refresh token non trouvé - ARRÊT refresh automatique', {
+            operation: 'refresh_token_missing'
+          })
 
           // 🔥 CRITIQUE: Arrêter l'intervalle de refresh pour éviter boucle infinie
           if (this.refreshInterval) {
@@ -174,7 +184,9 @@ export class SessionManager {
         }
       }
     } catch (error) {
-      console.error('Erreur refresh session:', error)
+      logger.error('Erreur refresh session', error as Error, {
+        operation: 'session_refresh_exception'
+      })
     }
   }
 
@@ -230,8 +242,11 @@ export class SessionManager {
   private async handleSessionExpiry(reason: string) {
     this.cleanup()
 
-    // Log l'expiration
-    console.log('Session expirée:', reason)
+    // Log l'expiration (audit sécurité)
+    logger.security('Session expirée', {
+      reason,
+      operation: 'session_expired'
+    })
 
     // Déconnexion Supabase
     const supabase = createClient()

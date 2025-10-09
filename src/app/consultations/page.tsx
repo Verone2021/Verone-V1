@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
+import Image from 'next/image'
 import {
   Users,
   Package,
@@ -16,7 +17,8 @@ import {
   AlertCircle,
   Mail,
   Calendar,
-  XCircle
+  XCircle,
+  Camera
 } from 'lucide-react'
 import { Button } from '../../components/ui/button'
 import { Input } from '../../components/ui/input'
@@ -27,8 +29,150 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '.
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '../../components/ui/tabs'
 import { Alert, AlertDescription } from '../../components/ui/alert'
 import { ConsultationOrderInterface } from '../../components/business/consultation-order-interface'
+import { ConsultationImageViewerModal } from '../../components/business/consultation-image-viewer-modal'
 import { useConsultations } from '../../hooks/use-consultations'
+import { useConsultationImages } from '../../hooks/use-consultation-images'
 import { useToast } from '../../hooks/use-toast'
+
+// Composant pour afficher une ligne de consultation avec miniature photo
+interface ConsultationRowProps {
+  consultation: any
+  onOpenPhotoModal: (id: string, title: string) => void
+  onViewDetails: () => void
+}
+
+function ConsultationRow({ consultation, onOpenPhotoModal, onViewDetails }: ConsultationRowProps) {
+  const { primaryImage, hasImages, loading } = useConsultationImages({
+    consultationId: consultation.id,
+    autoFetch: true
+  })
+
+  return (
+    <div className="border rounded-lg p-4 hover:shadow-md transition-shadow">
+      <div className="flex items-start justify-between gap-4">
+        {/* Miniature photo cliquable */}
+        <div className="flex-shrink-0">
+          {loading ? (
+            <div className="w-12 h-12 bg-gray-100 animate-pulse rounded" />
+          ) : hasImages && primaryImage ? (
+            <button
+              onClick={() => onOpenPhotoModal(consultation.id, consultation.organisation_name)}
+              className="relative w-12 h-12 overflow-hidden rounded border border-gray-200 hover:border-black transition-colors group"
+              title="Cliquer pour voir toutes les photos"
+            >
+              <Image
+                src={primaryImage.public_url || '/placeholder-consultation.jpg'}
+                alt={`Photo ${consultation.organisation_name}`}
+                fill
+                className="object-cover group-hover:scale-110 transition-transform"
+                sizes="48px"
+              />
+              <div className="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-20 transition-all flex items-center justify-center">
+                <Eye className="h-4 w-4 text-white opacity-0 group-hover:opacity-100 transition-opacity" />
+              </div>
+            </button>
+          ) : (
+            <div className="w-12 h-12 bg-gray-100 rounded border border-gray-200 flex items-center justify-center">
+              <Camera className="h-5 w-5 text-gray-400" />
+            </div>
+          )}
+        </div>
+
+        {/* Contenu consultation */}
+        <div className="flex-1 space-y-2">
+          <div className="flex items-center space-x-4">
+            <h3 className="text-lg font-semibold">{consultation.organisation_name}</h3>
+            <Badge
+              variant="outline"
+              className={
+                consultation.status === 'en_attente' ? 'border-gray-200 text-gray-800' :
+                consultation.status === 'en_cours' ? 'border-blue-200 text-blue-700' :
+                consultation.status === 'terminee' ? 'border-green-200 text-green-700' :
+                'border-gray-200 text-gray-700'
+              }
+            >
+              {consultation.status === 'en_attente' && <Clock className="h-3 w-3 mr-1" />}
+              {consultation.status === 'en_cours' && <AlertCircle className="h-3 w-3 mr-1" />}
+              {consultation.status === 'terminee' && <CheckCircle className="h-3 w-3 mr-1" />}
+              {consultation.status === 'annulee' && <XCircle className="h-3 w-3 mr-1" />}
+              {consultation.status.replace('_', ' ')}
+            </Badge>
+            <Badge
+              variant="outline"
+              className={
+                consultation.priority_level <= 2 ? 'border-red-200 text-red-700' :
+                consultation.priority_level === 3 ? 'border-blue-200 text-blue-700' :
+                'border-gray-200 text-gray-700'
+              }
+            >
+              Priorité {consultation.priority_level}
+            </Badge>
+          </div>
+
+          <p className="text-gray-600 text-sm line-clamp-2">{consultation.descriptif}</p>
+
+          <div className="flex items-center space-x-4 text-sm text-gray-500">
+            <div className="flex items-center">
+              <Mail className="h-4 w-4 mr-1" />
+              {consultation.client_email}
+            </div>
+            <div className="flex items-center">
+              <Calendar className="h-4 w-4 mr-1" />
+              {new Date(consultation.created_at).toLocaleDateString('fr-FR')}
+            </div>
+            {consultation.tarif_maximum && (
+              <div className="flex items-center">
+                <span>Budget: {consultation.tarif_maximum}€</span>
+              </div>
+            )}
+          </div>
+        </div>
+
+        {/* Bouton voir détails */}
+        <div className="flex items-center space-x-2">
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={onViewDetails}
+          >
+            <Eye className="h-4 w-4 mr-1" />
+            Voir détails
+          </Button>
+        </div>
+      </div>
+    </div>
+  )
+}
+
+// Composant modal pour afficher les photos d'une consultation
+interface ConsultationPhotoModalProps {
+  consultationId: string
+  consultationTitle: string
+  isOpen: boolean
+  onClose: () => void
+}
+
+function ConsultationPhotoModal({ consultationId, consultationTitle, isOpen, onClose }: ConsultationPhotoModalProps) {
+  const { images } = useConsultationImages({
+    consultationId,
+    autoFetch: true
+  })
+
+  const [selectedImageIndex] = useState(0)
+
+  if (!isOpen) return null
+
+  return (
+    <ConsultationImageViewerModal
+      isOpen={isOpen}
+      onClose={onClose}
+      images={images}
+      initialImageIndex={selectedImageIndex}
+      consultationTitle={consultationTitle}
+      allowEdit={false}
+    />
+  )
+}
 
 export default function ConsultationsPage() {
   const router = useRouter()
@@ -37,6 +181,9 @@ export default function ConsultationsPage() {
   const [searchTerm, setSearchTerm] = useState('')
   const [statusFilter, setStatusFilter] = useState('all')
   const [priorityFilter, setPriorityFilter] = useState('all')
+  const [photoModalOpen, setPhotoModalOpen] = useState(false)
+  const [selectedConsultationId, setSelectedConsultationId] = useState<string | null>(null)
+  const [selectedConsultationTitle, setSelectedConsultationTitle] = useState('')
 
   useEffect(() => {
     fetchConsultations()
@@ -61,6 +208,12 @@ export default function ConsultationsPage() {
     en_cours: filteredConsultations.filter(c => c.status === 'en_cours'),
     terminee: filteredConsultations.filter(c => c.status === 'terminee'),
     annulee: filteredConsultations.filter(c => c.status === 'annulee')
+  }
+
+  const handleOpenPhotoModal = (consultationId: string, consultationTitle: string) => {
+    setSelectedConsultationId(consultationId)
+    setSelectedConsultationTitle(consultationTitle)
+    setPhotoModalOpen(true)
   }
 
   if (loading) {
@@ -110,50 +263,46 @@ export default function ConsultationsPage() {
         {/* Statistiques rapides */}
         <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
           <Card>
-            <CardContent className="p-4">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm text-gray-600">Total consultations</p>
-                  <p className="text-2xl font-bold">{consultations.length}</p>
-                </div>
-                <Users className="h-8 w-8 text-blue-600" />
-              </div>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium text-gray-600">Total consultations</CardTitle>
+              <Users className="h-4 w-4 text-blue-600" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold">{consultations.length}</div>
+              <p className="text-xs text-gray-600">Toutes consultations</p>
             </CardContent>
           </Card>
 
           <Card>
-            <CardContent className="p-4">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm text-gray-600">En attente</p>
-                  <p className="text-2xl font-bold">{consultationsByStatus.en_attente.length}</p>
-                </div>
-                <Clock className="h-8 w-8 text-gray-700" />
-              </div>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium text-gray-600">En attente</CardTitle>
+              <Clock className="h-4 w-4 text-gray-700" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold">{consultationsByStatus.en_attente.length}</div>
+              <p className="text-xs text-gray-600">À traiter</p>
             </CardContent>
           </Card>
 
           <Card>
-            <CardContent className="p-4">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm text-gray-600">En cours</p>
-                  <p className="text-2xl font-bold">{consultationsByStatus.en_cours.length}</p>
-                </div>
-                <AlertCircle className="h-8 w-8 text-blue-600" />
-              </div>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium text-gray-600">En cours</CardTitle>
+              <AlertCircle className="h-4 w-4 text-blue-600" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold">{consultationsByStatus.en_cours.length}</div>
+              <p className="text-xs text-gray-600">En traitement</p>
             </CardContent>
           </Card>
 
           <Card>
-            <CardContent className="p-4">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm text-gray-600">Terminées</p>
-                  <p className="text-2xl font-bold">{consultationsByStatus.terminee.length}</p>
-                </div>
-                <CheckCircle className="h-8 w-8 text-green-600" />
-              </div>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium text-gray-600">Terminées</CardTitle>
+              <CheckCircle className="h-4 w-4 text-green-600" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold">{consultationsByStatus.terminee.length}</div>
+              <p className="text-xs text-gray-600">Clôturées</p>
             </CardContent>
           </Card>
         </div>
@@ -236,7 +385,7 @@ export default function ConsultationsPage() {
         <Card>
           <CardHeader>
             <CardTitle>Liste des consultations ({filteredConsultations.length})</CardTitle>
-            <CardDescription>Cliquez sur "Voir détails" pour gérer les produits de chaque consultation</CardDescription>
+            <CardDescription>Cliquez sur la photo pour voir toutes les images, ou sur "Voir détails" pour gérer les produits</CardDescription>
           </CardHeader>
           <CardContent>
             {filteredConsultations.length === 0 ? (
@@ -247,78 +396,32 @@ export default function ConsultationsPage() {
             ) : (
               <div className="space-y-4">
                 {filteredConsultations.map((consultation) => (
-                  <div
+                  <ConsultationRow
                     key={consultation.id}
-                    className="border rounded-lg p-4 hover:shadow-md transition-shadow"
-                  >
-                    <div className="flex items-start justify-between">
-                      <div className="flex-1 space-y-2">
-                        <div className="flex items-center space-x-4">
-                          <h3 className="text-lg font-semibold">{consultation.organisation_name}</h3>
-                          <Badge
-                            variant="outline"
-                            className={
-                              consultation.status === 'en_attente' ? 'border-gray-200 text-gray-800' :
-                              consultation.status === 'en_cours' ? 'border-blue-200 text-blue-700' :
-                              consultation.status === 'terminee' ? 'border-green-200 text-green-700' :
-                              'border-gray-200 text-gray-700'
-                            }
-                          >
-                            {consultation.status === 'en_attente' && <Clock className="h-3 w-3 mr-1" />}
-                            {consultation.status === 'en_cours' && <AlertCircle className="h-3 w-3 mr-1" />}
-                            {consultation.status === 'terminee' && <CheckCircle className="h-3 w-3 mr-1" />}
-                            {consultation.status === 'annulee' && <XCircle className="h-3 w-3 mr-1" />}
-                            {consultation.status.replace('_', ' ')}
-                          </Badge>
-                          <Badge
-                            variant="outline"
-                            className={
-                              consultation.priority_level <= 2 ? 'border-red-200 text-red-700' :
-                              consultation.priority_level === 3 ? 'border-blue-200 text-blue-700' :
-                              'border-gray-200 text-gray-700'
-                            }
-                          >
-                            Priorité {consultation.priority_level}
-                          </Badge>
-                        </div>
-
-                        <p className="text-gray-600 text-sm line-clamp-2">{consultation.descriptif}</p>
-
-                        <div className="flex items-center space-x-4 text-sm text-gray-500">
-                          <div className="flex items-center">
-                            <Mail className="h-4 w-4 mr-1" />
-                            {consultation.client_email}
-                          </div>
-                          <div className="flex items-center">
-                            <Calendar className="h-4 w-4 mr-1" />
-                            {new Date(consultation.created_at).toLocaleDateString('fr-FR')}
-                          </div>
-                          {consultation.tarif_maximum && (
-                            <div className="flex items-center">
-                              <span>Budget: {consultation.tarif_maximum}€</span>
-                            </div>
-                          )}
-                        </div>
-                      </div>
-
-                      <div className="flex items-center space-x-2">
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={() => router.push(`/consultations/${consultation.id}`)}
-                        >
-                          <Eye className="h-4 w-4 mr-1" />
-                          Voir détails
-                        </Button>
-                      </div>
-                    </div>
-                  </div>
+                    consultation={consultation}
+                    onOpenPhotoModal={handleOpenPhotoModal}
+                    onViewDetails={() => router.push(`/consultations/${consultation.id}`)}
+                  />
                 ))}
               </div>
             )}
           </CardContent>
         </Card>
       </div>
+
+      {/* Modal Photo Viewer */}
+      {selectedConsultationId && (
+        <ConsultationPhotoModal
+          consultationId={selectedConsultationId}
+          consultationTitle={selectedConsultationTitle}
+          isOpen={photoModalOpen}
+          onClose={() => {
+            setPhotoModalOpen(false)
+            setSelectedConsultationId(null)
+            setSelectedConsultationTitle('')
+          }}
+        />
+      )}
     </div>
   )
 }
