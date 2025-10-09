@@ -40,7 +40,10 @@ import {
   Plus,
   Globe,
   Store,
-  Smartphone
+  Smartphone,
+  Wallet,
+  FileText,
+  Banknote
 } from "lucide-react"
 
 // Interface pour les éléments de navigation hiérarchique
@@ -217,6 +220,25 @@ const navItems: NavItem[] = [
     description: "Achats et approvisionnements"
   },
   {
+    title: "Finance",
+    icon: Wallet,
+    description: "Facturation et trésorerie",
+    children: [
+      {
+        title: "Factures",
+        href: "/factures",
+        icon: FileText,
+        description: "Gestion factures clients"
+      },
+      {
+        title: "Trésorerie",
+        href: "/tresorerie",
+        icon: Banknote,
+        description: "Comptes bancaires Qonto"
+      }
+    ]
+  },
+  {
     title: "Canaux de Vente",
     href: "/canaux-vente",
     icon: ShoppingBag,
@@ -236,7 +258,7 @@ interface AppSidebarProps {
 
 export function AppSidebar({ className }: AppSidebarProps) {
   const pathname = usePathname()
-  const [expandedItems, setExpandedItems] = useState<string[]>(['Catalogue', 'Stocks', 'Sourcing', 'Interactions Clients', 'Canaux de Vente']) // Sections principales ouvertes par défaut
+  const [expandedItems, setExpandedItems] = useState<string[]>(['Catalogue', 'Stocks', 'Sourcing', 'Interactions Clients', 'Finance', 'Canaux de Vente']) // Sections principales ouvertes par défaut
 
   // Fonction pour basculer l'état d'expansion d'un élément
   const toggleExpanded = (title: string) => {
