@@ -15,6 +15,7 @@ import { useFamilies } from "../../hooks/use-families"
 import { useCategories } from "../../hooks/use-categories"
 import { useSubcategories } from "../../hooks/use-subcategories"
 import { CategoryHierarchyFilterV2 } from "../../components/business/category-hierarchy-filter-v2"
+import { ChannelSelector } from "../../components/business/channel-selector"
 // Interface Produit selon business rules - utilise maintenant celle du hook useCatalogue
 
 // Interface filtres - migration brand → supplier
@@ -54,6 +55,7 @@ export default function CataloguePage() {
   const [activeTab, setActiveTab] = useState<'active' | 'archived'>('active')
   const [archivedProducts, setArchivedProducts] = useState<Product[]>([])
   const [archivedLoading, setArchivedLoading] = useState(false)
+  const [selectedChannelId, setSelectedChannelId] = useState<string | null>(null) // 💰 État canal sélectionné
   const [filters, setFilters] = useState<Filters>({
     search: '',
     status: [],
@@ -262,6 +264,14 @@ export default function CataloguePage() {
               />
             </div>
 
+            {/* 💰 Sélecteur Canal de Vente (Pricing V2) */}
+            <ChannelSelector
+              value={selectedChannelId}
+              onValueChange={setSelectedChannelId}
+              placeholder="Canal de vente"
+              showAllOption={true}
+            />
+
             {/* Toggle vue */}
             <div className="flex border border-black">
               <Button
@@ -383,6 +393,8 @@ export default function CataloguePage() {
                             } : undefined
                           } as any}
                           priority={index === 0} // 🚀 Optimisation LCP pour première ProductCard
+                          showPricing={true} // 💰 Activer affichage pricing V2
+                          channelId={selectedChannelId} // 💰 Canal sélectionné
                           onArchive={handleArchiveProduct}
                           onDelete={handleDeleteProduct}
                           archived={!!product.archived_at}

@@ -9,6 +9,7 @@ import { cn } from "../../lib/utils"
 import { Package, Archive, Trash2, ArchiveRestore } from "lucide-react"
 import { useProductImages } from "../../hooks/use-product-images"
 import { useProductPackages } from "../../hooks/use-product-packages"
+import { useProductPrice, formatPrice } from "../../hooks/use-pricing"
 import type { Product } from "../../hooks/use-catalogue"
 
 interface ProductCardProps {
@@ -16,6 +17,8 @@ interface ProductCardProps {
   className?: string
   showActions?: boolean
   showPackages?: boolean // Nouvelle option pour afficher les packages
+  showPricing?: boolean // Nouvelle option pour afficher les prix par canal
+  channelId?: string | null // Canal de vente sélectionné (null = prix base)
   priority?: boolean // Nouvelle option pour optimiser LCP (première image)
   onClick?: (product: Product) => void
   onArchive?: (product: Product) => void
@@ -57,6 +60,8 @@ export const ProductCard = memo(function ProductCard({
   className,
   showActions = true,
   showPackages = false,
+  showPricing = false,
+  channelId = null,
   priority = false,
   onClick,
   onArchive,
@@ -85,6 +90,13 @@ export const ProductCard = memo(function ProductCard({
   } = useProductPackages({
     productId: product.id,
     autoFetch: showPackages
+  })
+
+  // 💰 Hook pricing V2 - Prix par canal
+  const { data: pricing, isLoading: pricingLoading } = useProductPrice({
+    productId: product.id,
+    channelId: channelId || undefined,
+    quantity: 1
   })
 
   const handleClick = useCallback(() => {
@@ -195,12 +207,47 @@ export const ProductCard = memo(function ProductCard({
           </div>
         </div>
 
-        {/* Prix d'achat uniquement - COMPACT */}
+        {/* Prix de vente - Pricing V2 */}
         <div className="space-y-0.5">
-          {product.cost_price && (
-            <div className="text-sm font-semibold text-black">
-              {product.cost_price.toFixed(2)} € HT
+          {showPricing && !pricingLoading && pricing ? (
+            <div className="space-y-1">
+              {/* Prix de vente HT */}
+              <div className="text-sm font-semibold text-black">
+                {formatPrice(pricing.final_price_ht)}
+              </div>
+
+              {/* Affichage remise si applicable */}
+              {pricing.discount_applied > 0 && (
+                <div className="flex items-center gap-1 text-[10px]">
+                  <span className="text-gray-500 line-through">
+                    {formatPrice(pricing.original_price_ht)}
+                  </span>
+                  <Badge variant="outline" className="bg-green-50 text-green-700 border-green-200 text-[9px] px-1 py-0">
+                    -{(pricing.discount_applied * 100).toFixed(0)}%
+                  </Badge>
+                </div>
+              )}
+
+              {/* Source du prix (debug - à masquer en prod) */}
+              {pricing.pricing_source !== 'base_catalog' && (
+                <div className="text-[9px] text-gray-500 italic">
+                  {pricing.pricing_source === 'channel' && 'Prix canal'}
+                  {pricing.pricing_source === 'customer_specific' && 'Prix contrat'}
+                  {pricing.pricing_source === 'customer_group' && 'Prix groupe'}
+                </div>
+              )}
             </div>
+          ) : showPricing && pricingLoading ? (
+            <div className="text-sm text-gray-400 italic">
+              Calcul prix...
+            </div>
+          ) : (
+            /* Fallback: Prix d'achat si pricing non activé */
+            product.cost_price && (
+              <div className="text-sm font-semibold text-black">
+                {product.cost_price.toFixed(2)} € HT
+              </div>
+            )
           )}
 
           {/* Affichage packages conditionnels - MINI */}
