@@ -420,16 +420,21 @@ export default function CataloguePage() {
                               onClick={() => router.push(`/catalogue/${product.id}`)}
                             >
                               <div className="flex items-center space-x-3">
-                                {/* Image produit */}
-                                <div className="h-12 w-12 flex-shrink-0 overflow-hidden rounded border border-gray-200 bg-gray-100 flex items-center justify-center">
+                                {/* Image produit - 🚀 Optimisée avec next/Image */}
+                                <div className="relative h-12 w-12 flex-shrink-0 overflow-hidden rounded border border-gray-200 bg-gray-100">
                                   {primaryImage?.public_url && !imageLoading ? (
-                                    <img
+                                    <Image
                                       src={primaryImage.public_url}
                                       alt={product.name}
-                                      className="w-full h-full object-contain"
+                                      fill
+                                      sizes="48px"
+                                      className="object-contain"
+                                      loading="lazy"
                                     />
                                   ) : (
-                                    <Package className="h-5 w-5 text-gray-400" />
+                                    <div className="w-full h-full flex items-center justify-center">
+                                      <Package className="h-5 w-5 text-gray-400" />
+                                    </div>
                                   )}
                                 </div>
                                 <div className="flex-1 min-w-0">

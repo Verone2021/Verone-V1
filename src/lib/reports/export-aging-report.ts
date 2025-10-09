@@ -1,6 +1,5 @@
 import jsPDF from 'jspdf'
 import autoTable from 'jspdf-autotable'
-import * as XLSX from 'xlsx'
 import type { AgingReportData } from '@/hooks/use-aging-report'
 
 // =============================================
@@ -167,7 +166,9 @@ export function exportAgingReportToPDF(report: AgingReportData) {
 // EXPORT EXCEL - Formatage Professionnel
 // =============================================
 
-export function exportAgingReportToExcel(report: AgingReportData) {
+export async function exportAgingReportToExcel(report: AgingReportData) {
+  // Dynamic import pour optimiser bundle (xlsx = ~200kB)
+  const XLSX = await import('xlsx')
   const wb = XLSX.utils.book_new()
 
   // ============================================

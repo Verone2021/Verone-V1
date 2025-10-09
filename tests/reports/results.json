@@ -1,0 +1,746 @@
+{
+  "config": {
+    "configFile": "/Users/romeodossantos/verone-back-office-V1/playwright.config.ts",
+    "rootDir": "/Users/romeodossantos/verone-back-office-V1/tests",
+    "forbidOnly": false,
+    "fullyParallel": false,
+    "globalSetup": null,
+    "globalTeardown": null,
+    "globalTimeout": 0,
+    "grep": {},
+    "grepInvert": null,
+    "maxFailures": 0,
+    "metadata": {
+      "actualWorkers": 1
+    },
+    "preserveOutput": "always",
+    "reporter": [
+      [
+        "html",
+        {
+          "outputFolder": "tests/reports/html"
+        }
+      ],
+      [
+        "json",
+        {
+          "outputFile": "tests/reports/results.json"
+        }
+      ],
+      [
+        "list",
+        null
+      ]
+    ],
+    "reportSlowTests": {
+      "max": 5,
+      "threshold": 300000
+    },
+    "quiet": false,
+    "projects": [
+      {
+        "outputDir": "/Users/romeodossantos/verone-back-office-V1/test-results",
+        "repeatEach": 1,
+        "retries": 0,
+        "metadata": {
+          "actualWorkers": 1
+        },
+        "id": "setup",
+        "name": "setup",
+        "testDir": "/Users/romeodossantos/verone-back-office-V1/tests",
+        "testIgnore": [],
+        "testMatch": [
+          "/.*\\.setup\\.ts/"
+        ],
+        "timeout": 30000
+      },
+      {
+        "outputDir": "/Users/romeodossantos/verone-back-office-V1/test-results",
+        "repeatEach": 1,
+        "retries": 0,
+        "metadata": {
+          "actualWorkers": 1
+        },
+        "id": "chromium",
+        "name": "chromium",
+        "testDir": "/Users/romeodossantos/verone-back-office-V1/tests",
+        "testIgnore": [],
+        "testMatch": [
+          "**/*.spec.ts"
+        ],
+        "timeout": 30000
+      }
+    ],
+    "shard": null,
+    "updateSnapshots": "missing",
+    "updateSourceMethod": "patch",
+    "version": "1.55.0",
+    "workers": 1,
+    "webServer": {
+      "command": "npm run dev",
+      "url": "http://localhost:3001",
+      "reuseExistingServer": true,
+      "timeout": 120000
+    }
+  },
+  "suites": [
+    {
+      "title": "auth.setup.ts",
+      "file": "auth.setup.ts",
+      "column": 0,
+      "line": 0,
+      "specs": [
+        {
+          "title": "authenticate",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 30000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "setup",
+              "projectName": "setup",
+              "results": [
+                {
+                  "workerIndex": 0,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 2206,
+                  "errors": [],
+                  "stdout": [
+                    {
+                      "text": "🔐 Démarrage authentification Playwright...\n"
+                    },
+                    {
+                      "text": "✅ Page login chargée\n"
+                    },
+                    {
+                      "text": "📝 Credentials remplis\n"
+                    },
+                    {
+                      "text": "🔄 Clic sur Se connecter...\n"
+                    },
+                    {
+                      "text": "✅ Redirection vers dashboard réussie\n"
+                    },
+                    {
+                      "text": "✅ Dashboard chargé - authentification réussie\n"
+                    },
+                    {
+                      "text": "💾 Storage state sauvegardé : /Users/romeodossantos/verone-back-office-V1/tests/.auth/user.json\n"
+                    },
+                    {
+                      "text": "🎉 Authentification Playwright terminée avec succès!\n"
+                    }
+                  ],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2025-10-09T18:39:18.191Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "17e3fe6f4d9d8bd79c6b-60f085b113a677673906",
+          "file": "auth.setup.ts",
+          "line": 13,
+          "column": 6
+        }
+      ]
+    },
+    {
+      "title": "e2e/dashboard.spec.ts",
+      "file": "e2e/dashboard.spec.ts",
+      "column": 0,
+      "line": 0,
+      "specs": [],
+      "suites": [
+        {
+          "title": "🏠 DASHBOARD PRINCIPAL",
+          "file": "e2e/dashboard.spec.ts",
+          "line": 27,
+          "column": 6,
+          "specs": [
+            {
+              "title": "01. Dashboard charge correctement avec KPIs",
+              "ok": false,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [
+                    {
+                      "workerIndex": 1,
+                      "parallelIndex": 0,
+                      "status": "failed",
+                      "duration": 7239,
+                      "error": {
+                        "message": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mpage\u001b[39m\u001b[2m).\u001b[22mtoHaveTitle\u001b[2m(\u001b[22m\u001b[32mexpected\u001b[39m\u001b[2m)\u001b[22m failed\n\nExpected pattern: \u001b[32m/dashboard/i\u001b[39m\nReceived string:  \u001b[31m\"Vérone Back Office\"\u001b[39m\nTimeout: 5000ms\n\nCall log:\n\u001b[2m  - Expect \"toHaveTitle\" with timeout 5000ms\u001b[22m\n\u001b[2m    9 × unexpected value \"Vérone Back Office\"\u001b[22m\n",
+                        "stack": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mpage\u001b[39m\u001b[2m).\u001b[22mtoHaveTitle\u001b[2m(\u001b[22m\u001b[32mexpected\u001b[39m\u001b[2m)\u001b[22m failed\n\nExpected pattern: \u001b[32m/dashboard/i\u001b[39m\nReceived string:  \u001b[31m\"Vérone Back Office\"\u001b[39m\nTimeout: 5000ms\n\nCall log:\n\u001b[2m  - Expect \"toHaveTitle\" with timeout 5000ms\u001b[22m\n\u001b[2m    9 × unexpected value \"Vérone Back Office\"\u001b[22m\n\n    at /Users/romeodossantos/verone-back-office-V1/tests/e2e/dashboard.spec.ts:35:24",
+                        "location": {
+                          "file": "/Users/romeodossantos/verone-back-office-V1/tests/e2e/dashboard.spec.ts",
+                          "column": 24,
+                          "line": 35
+                        },
+                        "snippet": "  33 |\n  34 |     // Vérifier titre page\n> 35 |     await expect(page).toHaveTitle(/dashboard/i)\n     |                        ^\n  36 |\n  37 |     // Vérifier présence widgets principaux (flexibles)\n  38 |     const hasKPIs = await page.locator('[data-testid=\"dashboard-metrics\"]').isVisible().catch(() => false)"
+                      },
+                      "errors": [
+                        {
+                          "location": {
+                            "file": "/Users/romeodossantos/verone-back-office-V1/tests/e2e/dashboard.spec.ts",
+                            "column": 24,
+                            "line": 35
+                          },
+                          "message": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mpage\u001b[39m\u001b[2m).\u001b[22mtoHaveTitle\u001b[2m(\u001b[22m\u001b[32mexpected\u001b[39m\u001b[2m)\u001b[22m failed\n\nExpected pattern: \u001b[32m/dashboard/i\u001b[39m\nReceived string:  \u001b[31m\"Vérone Back Office\"\u001b[39m\nTimeout: 5000ms\n\nCall log:\n\u001b[2m  - Expect \"toHaveTitle\" with timeout 5000ms\u001b[22m\n\u001b[2m    9 × unexpected value \"Vérone Back Office\"\u001b[22m\n\n\n  33 |\n  34 |     // Vérifier titre page\n> 35 |     await expect(page).toHaveTitle(/dashboard/i)\n     |                        ^\n  36 |\n  37 |     // Vérifier présence widgets principaux (flexibles)\n  38 |     const hasKPIs = await page.locator('[data-testid=\"dashboard-metrics\"]').isVisible().catch(() => false)\n    at /Users/romeodossantos/verone-back-office-V1/tests/e2e/dashboard.spec.ts:35:24"
+                        }
+                      ],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2025-10-09T18:39:21.054Z",
+                      "annotations": [],
+                      "attachments": [
+                        {
+                          "name": "screenshot",
+                          "contentType": "image/png",
+                          "path": "/Users/romeodossantos/verone-back-office-V1/test-results/e2e-dashboard-🏠-DASHBOARD-ea72c-arge-correctement-avec-KPIs-chromium/test-failed-1.png"
+                        },
+                        {
+                          "name": "video",
+                          "contentType": "video/webm",
+                          "path": "/Users/romeodossantos/verone-back-office-V1/test-results/e2e-dashboard-🏠-DASHBOARD-ea72c-arge-correctement-avec-KPIs-chromium/video.webm"
+                        },
+                        {
+                          "name": "error-context",
+                          "contentType": "text/markdown",
+                          "path": "/Users/romeodossantos/verone-back-office-V1/test-results/e2e-dashboard-🏠-DASHBOARD-ea72c-arge-correctement-avec-KPIs-chromium/error-context.md"
+                        },
+                        {
+                          "name": "trace",
+                          "contentType": "application/zip",
+                          "path": "/Users/romeodossantos/verone-back-office-V1/test-results/e2e-dashboard-🏠-DASHBOARD-ea72c-arge-correctement-avec-KPIs-chromium/trace.zip"
+                        }
+                      ],
+                      "errorLocation": {
+                        "file": "/Users/romeodossantos/verone-back-office-V1/tests/e2e/dashboard.spec.ts",
+                        "column": 24,
+                        "line": 35
+                      }
+                    }
+                  ],
+                  "status": "unexpected"
+                }
+              ],
+              "id": "d892c21f4fe98edf46bf-e16a561655716c48e764",
+              "file": "e2e/dashboard.spec.ts",
+              "line": 28,
+              "column": 7
+            },
+            {
+              "title": "02. KPIs business affichés (CA, Commandes, Stocks)",
+              "ok": false,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [
+                    {
+                      "workerIndex": 2,
+                      "parallelIndex": 0,
+                      "status": "failed",
+                      "duration": 2045,
+                      "error": {
+                        "message": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mreceived\u001b[39m\u001b[2m).\u001b[22mtoBeGreaterThan\u001b[2m(\u001b[22m\u001b[32mexpected\u001b[39m\u001b[2m)\u001b[22m\n\nExpected: > \u001b[32m0\u001b[39m\nReceived:   \u001b[31m0\u001b[39m",
+                        "stack": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mreceived\u001b[39m\u001b[2m).\u001b[22mtoBeGreaterThan\u001b[2m(\u001b[22m\u001b[32mexpected\u001b[39m\u001b[2m)\u001b[22m\n\nExpected: > \u001b[32m0\u001b[39m\nReceived:   \u001b[31m0\u001b[39m\n    at /Users/romeodossantos/verone-back-office-V1/tests/e2e/dashboard.spec.ts:66:25",
+                        "location": {
+                          "file": "/Users/romeodossantos/verone-back-office-V1/tests/e2e/dashboard.spec.ts",
+                          "column": 25,
+                          "line": 66
+                        },
+                        "snippet": "  64 |       // Fallback: chercher cartes génériques\n  65 |       const cardCount = await page.locator('[data-testid=\"kpi-card\"]').count()\n> 66 |       expect(cardCount).toBeGreaterThan(0)\n     |                         ^\n  67 |     }\n  68 |\n  69 |     console.log(`✅ KPIs business présents: CA=${hasRevenue}, Commandes=${hasOrders}, Stocks=${hasStock}`)"
+                      },
+                      "errors": [
+                        {
+                          "location": {
+                            "file": "/Users/romeodossantos/verone-back-office-V1/tests/e2e/dashboard.spec.ts",
+                            "column": 25,
+                            "line": 66
+                          },
+                          "message": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mreceived\u001b[39m\u001b[2m).\u001b[22mtoBeGreaterThan\u001b[2m(\u001b[22m\u001b[32mexpected\u001b[39m\u001b[2m)\u001b[22m\n\nExpected: > \u001b[32m0\u001b[39m\nReceived:   \u001b[31m0\u001b[39m\n\n  64 |       // Fallback: chercher cartes génériques\n  65 |       const cardCount = await page.locator('[data-testid=\"kpi-card\"]').count()\n> 66 |       expect(cardCount).toBeGreaterThan(0)\n     |                         ^\n  67 |     }\n  68 |\n  69 |     console.log(`✅ KPIs business présents: CA=${hasRevenue}, Commandes=${hasOrders}, Stocks=${hasStock}`)\n    at /Users/romeodossantos/verone-back-office-V1/tests/e2e/dashboard.spec.ts:66:25"
+                        }
+                      ],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2025-10-09T18:39:28.888Z",
+                      "annotations": [],
+                      "attachments": [
+                        {
+                          "name": "screenshot",
+                          "contentType": "image/png",
+                          "path": "/Users/romeodossantos/verone-back-office-V1/test-results/e2e-dashboard-🏠-DASHBOARD-a0d01-fichés-CA-Commandes-Stocks--chromium/test-failed-1.png"
+                        },
+                        {
+                          "name": "video",
+                          "contentType": "video/webm",
+                          "path": "/Users/romeodossantos/verone-back-office-V1/test-results/e2e-dashboard-🏠-DASHBOARD-a0d01-fichés-CA-Commandes-Stocks--chromium/video.webm"
+                        },
+                        {
+                          "name": "error-context",
+                          "contentType": "text/markdown",
+                          "path": "/Users/romeodossantos/verone-back-office-V1/test-results/e2e-dashboard-🏠-DASHBOARD-a0d01-fichés-CA-Commandes-Stocks--chromium/error-context.md"
+                        },
+                        {
+                          "name": "trace",
+                          "contentType": "application/zip",
+                          "path": "/Users/romeodossantos/verone-back-office-V1/test-results/e2e-dashboard-🏠-DASHBOARD-a0d01-fichés-CA-Commandes-Stocks--chromium/trace.zip"
+                        }
+                      ],
+                      "errorLocation": {
+                        "file": "/Users/romeodossantos/verone-back-office-V1/tests/e2e/dashboard.spec.ts",
+                        "column": 25,
+                        "line": 66
+                      }
+                    }
+                  ],
+                  "status": "unexpected"
+                }
+              ],
+              "id": "d892c21f4fe98edf46bf-27b389865aa13b068fde",
+              "file": "e2e/dashboard.spec.ts",
+              "line": 51,
+              "column": 7
+            },
+            {
+              "title": "03. Navigation rapide vers modules depuis dashboard",
+              "ok": false,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [
+                    {
+                      "workerIndex": 3,
+                      "parallelIndex": 0,
+                      "status": "failed",
+                      "duration": 1903,
+                      "error": {
+                        "message": "Error: locator.isVisible: Unexpected token \"=\" while parsing css selector \"a[href*=\"catalogue\"], text=/catalogue/i\". Did you mean to CSS.escape it?\nCall log:\n\u001b[2m    - checking visibility of a[href*=\"catalogue\"], text=/catalogue/i >> nth=0\u001b[22m\n",
+                        "stack": "Error: locator.isVisible: Unexpected token \"=\" while parsing css selector \"a[href*=\"catalogue\"], text=/catalogue/i\". Did you mean to CSS.escape it?\nCall log:\n\u001b[2m    - checking visibility of a[href*=\"catalogue\"], text=/catalogue/i >> nth=0\u001b[22m\n\n    at /Users/romeodossantos/verone-back-office-V1/tests/e2e/dashboard.spec.ts:78:29",
+                        "location": {
+                          "file": "/Users/romeodossantos/verone-back-office-V1/tests/e2e/dashboard.spec.ts",
+                          "column": 29,
+                          "line": 78
+                        },
+                        "snippet": "  76 |     // Tester navigation vers Catalogue\n  77 |     const catalogueLink = page.locator('a[href*=\"catalogue\"], text=/catalogue/i').first()\n> 78 |     if (await catalogueLink.isVisible({ timeout: 3000 })) {\n     |                             ^\n  79 |       await catalogueLink.click()\n  80 |       await expect(page).toHaveURL(/catalogue/)\n  81 |       await page.goBack()"
+                      },
+                      "errors": [
+                        {
+                          "location": {
+                            "file": "/Users/romeodossantos/verone-back-office-V1/tests/e2e/dashboard.spec.ts",
+                            "column": 29,
+                            "line": 78
+                          },
+                          "message": "Error: locator.isVisible: Unexpected token \"=\" while parsing css selector \"a[href*=\"catalogue\"], text=/catalogue/i\". Did you mean to CSS.escape it?\nCall log:\n\u001b[2m    - checking visibility of a[href*=\"catalogue\"], text=/catalogue/i >> nth=0\u001b[22m\n\n\n  76 |     // Tester navigation vers Catalogue\n  77 |     const catalogueLink = page.locator('a[href*=\"catalogue\"], text=/catalogue/i').first()\n> 78 |     if (await catalogueLink.isVisible({ timeout: 3000 })) {\n     |                             ^\n  79 |       await catalogueLink.click()\n  80 |       await expect(page).toHaveURL(/catalogue/)\n  81 |       await page.goBack()\n    at /Users/romeodossantos/verone-back-office-V1/tests/e2e/dashboard.spec.ts:78:29"
+                        }
+                      ],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2025-10-09T18:39:31.530Z",
+                      "annotations": [],
+                      "attachments": [
+                        {
+                          "name": "screenshot",
+                          "contentType": "image/png",
+                          "path": "/Users/romeodossantos/verone-back-office-V1/test-results/e2e-dashboard-🏠-DASHBOARD-77b7d-rs-modules-depuis-dashboard-chromium/test-failed-1.png"
+                        },
+                        {
+                          "name": "video",
+                          "contentType": "video/webm",
+                          "path": "/Users/romeodossantos/verone-back-office-V1/test-results/e2e-dashboard-🏠-DASHBOARD-77b7d-rs-modules-depuis-dashboard-chromium/video.webm"
+                        },
+                        {
+                          "name": "error-context",
+                          "contentType": "text/markdown",
+                          "path": "/Users/romeodossantos/verone-back-office-V1/test-results/e2e-dashboard-🏠-DASHBOARD-77b7d-rs-modules-depuis-dashboard-chromium/error-context.md"
+                        },
+                        {
+                          "name": "trace",
+                          "contentType": "application/zip",
+                          "path": "/Users/romeodossantos/verone-back-office-V1/test-results/e2e-dashboard-🏠-DASHBOARD-77b7d-rs-modules-depuis-dashboard-chromium/trace.zip"
+                        }
+                      ],
+                      "errorLocation": {
+                        "file": "/Users/romeodossantos/verone-back-office-V1/tests/e2e/dashboard.spec.ts",
+                        "column": 29,
+                        "line": 78
+                      }
+                    }
+                  ],
+                  "status": "unexpected"
+                }
+              ],
+              "id": "d892c21f4fe98edf46bf-d863809eabbec1f6f099",
+              "file": "e2e/dashboard.spec.ts",
+              "line": 72,
+              "column": 7
+            },
+            {
+              "title": "04. Filtres dates/périodes dashboard",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [
+                    {
+                      "workerIndex": 4,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 1932,
+                      "errors": [],
+                      "stdout": [
+                        {
+                          "text": "ℹ️ Pas de filtres dates visibles (pas bloquant)\n"
+                        }
+                      ],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2025-10-09T18:39:34.011Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "d892c21f4fe98edf46bf-af28d4fe539bb44dd4ad",
+              "file": "e2e/dashboard.spec.ts",
+              "line": 95,
+              "column": 7
+            },
+            {
+              "title": "05. Refresh données temps réel",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [
+                    {
+                      "workerIndex": 4,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 3490,
+                      "errors": [],
+                      "stdout": [
+                        {
+                          "text": "ℹ️ Pas de bouton refresh (rechargement page OK)\n"
+                        }
+                      ],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2025-10-09T18:39:36.072Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "d892c21f4fe98edf46bf-5372227420f7c1969577",
+              "file": "e2e/dashboard.spec.ts",
+              "line": 117,
+              "column": 7
+            }
+          ]
+        },
+        {
+          "title": "🚨 CONSOLE ERROR CHECKING DASHBOARD",
+          "file": "e2e/dashboard.spec.ts",
+          "line": 145,
+          "column": 6,
+          "specs": [
+            {
+              "title": "06. Zero erreur console dashboard principal",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [
+                    {
+                      "workerIndex": 4,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 3735,
+                      "errors": [],
+                      "stdout": [
+                        {
+                          "text": "✅ Zero erreur console dashboard\n"
+                        }
+                      ],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2025-10-09T18:39:39.569Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "d892c21f4fe98edf46bf-071443fcd922665dc02b",
+              "file": "e2e/dashboard.spec.ts",
+              "line": 146,
+              "column": 7
+            },
+            {
+              "title": "07. Zero erreur navigation entre widgets",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [
+                    {
+                      "workerIndex": 4,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 2750,
+                      "errors": [],
+                      "stdout": [
+                        {
+                          "text": "✅ Zero erreur interactions widgets\n"
+                        }
+                      ],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2025-10-09T18:39:43.311Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "d892c21f4fe98edf46bf-efda11aa1da7f0093251",
+              "file": "e2e/dashboard.spec.ts",
+              "line": 169,
+              "column": 7
+            }
+          ]
+        },
+        {
+          "title": "⚡ PERFORMANCE DASHBOARD",
+          "file": "e2e/dashboard.spec.ts",
+          "line": 198,
+          "column": 6,
+          "specs": [
+            {
+              "title": "08. SLO Dashboard <2s (critique)",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [
+                    {
+                      "workerIndex": 4,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 1662,
+                      "errors": [],
+                      "stdout": [
+                        {
+                          "text": "✅ SLO respecté: 1564ms < 2000ms\n"
+                        }
+                      ],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2025-10-09T18:39:46.068Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "d892c21f4fe98edf46bf-590e0cb6dcd5379dae0e",
+              "file": "e2e/dashboard.spec.ts",
+              "line": 199,
+              "column": 7
+            },
+            {
+              "title": "09. Refresh KPIs <1s",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [
+                    {
+                      "workerIndex": 4,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 1718,
+                      "errors": [],
+                      "stdout": [
+                        {
+                          "text": "ℹ️ Pas de bouton refresh, test passé\n"
+                        }
+                      ],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2025-10-09T18:39:47.736Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "d892c21f4fe98edf46bf-5d895450a1b3980f17da",
+              "file": "e2e/dashboard.spec.ts",
+              "line": 216,
+              "column": 7
+            }
+          ]
+        },
+        {
+          "title": "📱 ACCESSIBILITÉ DASHBOARD",
+          "file": "e2e/dashboard.spec.ts",
+          "line": 239,
+          "column": 6,
+          "specs": [
+            {
+              "title": "10. Navigation keyboard entre KPIs",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [
+                    {
+                      "workerIndex": 4,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 2122,
+                      "errors": [],
+                      "stdout": [
+                        {
+                          "text": "✅ Navigation keyboard fonctionnelle (focus: A)\n"
+                        }
+                      ],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2025-10-09T18:39:49.461Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "d892c21f4fe98edf46bf-62d1f2cb75df8cae8b40",
+              "file": "e2e/dashboard.spec.ts",
+              "line": 240,
+              "column": 7
+            },
+            {
+              "title": "11. Contraste couleurs WCAG AA",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [
+                    {
+                      "workerIndex": 4,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 1934,
+                      "errors": [],
+                      "stdout": [
+                        {
+                          "text": "✅ Styles dashboard: { backgroundColor: \u001b[32m'rgb(255, 255, 255)'\u001b[39m, color: \u001b[32m'rgb(0, 0, 0)'\u001b[39m }\n"
+                        }
+                      ],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2025-10-09T18:39:51.590Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "d892c21f4fe98edf46bf-55c01186fe60965f8af3",
+              "file": "e2e/dashboard.spec.ts",
+              "line": 257,
+              "column": 7
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "errors": [],
+  "stats": {
+    "startTime": "2025-10-09T18:39:17.653Z",
+    "duration": 35921.332,
+    "expected": 9,
+    "skipped": 0,
+    "unexpected": 3,
+    "flaky": 0
+  }
+}

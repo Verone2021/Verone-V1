@@ -41,10 +41,10 @@ export function AgingReportView({ dateFrom, dateTo }: AgingReportViewProps) {
     }
   }
 
-  const handleExportExcel = () => {
+  const handleExportExcel = async () => {
     if (!report) return
     try {
-      exportAgingReportToExcel(report)
+      await exportAgingReportToExcel(report)
       toast({
         title: "Export Excel réussi",
         description: "Le rapport a été téléchargé au format Excel."
