@@ -1,15 +1,17 @@
 /**
- * Hook React: Pricing Intelligent Multi-Canaux & Clients
+ * Hook React: Pricing Intelligent Multi-Canaux & Clients - V2
  *
  * Gestion complète du calcul de prix avec waterfall priorités:
- * 1. customer_pricing (prix client spécifique) → PRIORITÉ MAX
- * 2. channel_pricing (prix par canal de vente)
- * 3. product_packages (conditionnements avec discounts)
- * 4. products.price_ht (prix de base) → FALLBACK
+ * 1. Prix contrat client spécifique → PRIORITÉ MAX
+ * 2. Prix groupe client (B2B Gold, VIP, etc.) → HAUTE PRIORITÉ
+ * 3. Prix canal de vente (Retail, Wholesale, B2B) → PRIORITÉ NORMALE
+ * 4. Prix catalogue base → FALLBACK
  *
  * Features:
  * - Cache intelligent avec React Query
  * - Support batch pricing (plusieurs produits)
+ * - Support paliers quantités natifs
+ * - Support listes de prix avec priorités
  * - Invalidation automatique cache
  * - Types TypeScript stricts
  * - Error handling complet
@@ -20,12 +22,27 @@ import { createClientComponentClient } from '@supabase/auth-helpers-nextjs'
 import { logger } from '@/lib/logger'
 
 // =====================================================================
-// TYPES
+// TYPES - Version 2.0 (Price Lists System)
 // =====================================================================
 
+export interface PricingResultV2 {
+  price_ht: number
+  original_price: number
+  discount_rate: number | null
+  price_list_id: string
+  price_list_name: string
+  price_source: 'customer_specific' | 'customer_group' | 'channel' | 'base_catalog'
+  min_quantity: number
+  max_quantity: number | null
+  currency: string
+  margin_rate: number | null
+  notes: string | null
+}
+
+// Type legacy pour compatibilité (mapping vers PricingResultV2)
 export interface PricingResult {
   final_price_ht: number
-  pricing_source: 'customer_pricing' | 'channel_pricing' | 'package' | 'base'
+  pricing_source: 'customer_specific' | 'customer_group' | 'channel' | 'base_catalog'
   discount_applied: number
   original_price_ht: number
 }
@@ -57,15 +74,16 @@ export function useProductPrice(params: PricingParams) {
   const supabase = createClientComponentClient()
 
   return useQuery({
-    queryKey: ['pricing', params],
+    queryKey: ['pricing-v2', params],
     queryFn: async (): Promise<PricingResult> => {
       try {
-        const { data, error } = await supabase.rpc('calculate_product_price', {
+        // IMPORTANT: Utiliser calculate_product_price_v2 (nouvelle architecture Price Lists)
+        const { data, error } = await supabase.rpc('calculate_product_price_v2', {
           p_product_id: params.productId,
-          p_customer_id: params.customerId || null,
-          p_customer_type: params.customerType || 'organization',
-          p_channel_id: params.channelId || null,
           p_quantity: params.quantity || 1,
+          p_channel_id: params.channelId || null,
+          p_customer_id: params.customerId || null,
+          p_customer_type: params.customerType || null,
           p_date: params.date || new Date().toISOString().split('T')[0]
         })
 
@@ -82,14 +100,23 @@ export function useProductPrice(params: PricingParams) {
           throw new Error('No pricing data returned')
         }
 
-        // Fonction RPC retourne un array avec 1 élément
-        const result = data[0] as PricingResult
+        // Fonction RPC retourne un array avec 1 élément (PricingResultV2)
+        const resultV2 = data[0] as PricingResultV2
 
-        logger.info('Product price calculated successfully', {
+        // Mapper vers format legacy pour compatibilité
+        const result: PricingResult = {
+          final_price_ht: resultV2.price_ht,
+          pricing_source: resultV2.price_source,
+          discount_applied: resultV2.discount_rate || 0,
+          original_price_ht: resultV2.original_price
+        }
+
+        logger.info('Product price calculated successfully (V2)', {
           operation: 'useProductPrice',
           productId: params.productId,
           finalPrice: result.final_price_ht,
-          source: result.pricing_source
+          source: result.pricing_source,
+          priceList: resultV2.price_list_name
         })
 
         return result
@@ -119,7 +146,7 @@ export function useBatchPricing() {
   return useMutation({
     mutationFn: async (request: BatchPricingRequest): Promise<BatchPricingResult[]> => {
       try {
-        logger.info('Batch pricing calculation started', {
+        logger.info('Batch pricing calculation started (V2)', {
           operation: 'useBatchPricing',
           itemsCount: request.items.length
         })
@@ -128,12 +155,13 @@ export function useBatchPricing() {
         const results = await Promise.all(
           request.items.map(async (params): Promise<BatchPricingResult> => {
             try {
-              const { data, error } = await supabase.rpc('calculate_product_price', {
+              // IMPORTANT: Utiliser calculate_product_price_v2
+              const { data, error } = await supabase.rpc('calculate_product_price_v2', {
                 p_product_id: params.productId,
-                p_customer_id: params.customerId || null,
-                p_customer_type: params.customerType || 'organization',
-                p_channel_id: params.channelId || null,
                 p_quantity: params.quantity || 1,
+                p_channel_id: params.channelId || null,
+                p_customer_id: params.customerId || null,
+                p_customer_type: params.customerType || null,
                 p_date: params.date || new Date().toISOString().split('T')[0]
               })
 
@@ -145,9 +173,24 @@ export function useBatchPricing() {
                 }
               }
 
+              // Mapper résultat V2 vers legacy
+              const resultV2 = data?.[0] as PricingResultV2
+              if (resultV2) {
+                const pricing: PricingResult = {
+                  final_price_ht: resultV2.price_ht,
+                  pricing_source: resultV2.price_source,
+                  discount_applied: resultV2.discount_rate || 0,
+                  original_price_ht: resultV2.original_price
+                }
+                return {
+                  productId: params.productId,
+                  pricing
+                }
+              }
+
               return {
                 productId: params.productId,
-                pricing: data?.[0] as PricingResult || null
+                pricing: null
               }
             } catch (err) {
               return {
@@ -162,7 +205,7 @@ export function useBatchPricing() {
         const successCount = results.filter(r => r.pricing !== null).length
         const failureCount = results.filter(r => r.error).length
 
-        logger.info('Batch pricing calculation completed', {
+        logger.info('Batch pricing calculation completed (V2)', {
           operation: 'useBatchPricing',
           total: results.length,
           success: successCount,
@@ -179,9 +222,9 @@ export function useBatchPricing() {
       }
     },
     onSuccess: (results) => {
-      // Invalider cache des produits concernés
+      // Invalider cache des produits concernés (queryKey V2)
       results.forEach(result => {
-        queryClient.invalidateQueries({ queryKey: ['pricing', { productId: result.productId }] })
+        queryClient.invalidateQueries({ queryKey: ['pricing-v2', { productId: result.productId }] })
       })
     }
   })
@@ -414,24 +457,24 @@ export function useInvalidatePricing() {
 
   return {
     invalidateAll: () => {
-      queryClient.invalidateQueries({ queryKey: ['pricing'] })
+      queryClient.invalidateQueries({ queryKey: ['pricing-v2'] })
       queryClient.invalidateQueries({ queryKey: ['channel-pricing'] })
       queryClient.invalidateQueries({ queryKey: ['customer-pricing'] })
-      logger.info('All pricing caches invalidated', {
+      logger.info('All pricing caches invalidated (V2)', {
         operation: 'invalidatePricing'
       })
     },
     invalidateProduct: (productId: string) => {
-      queryClient.invalidateQueries({ queryKey: ['pricing', { productId }] })
+      queryClient.invalidateQueries({ queryKey: ['pricing-v2', { productId }] })
       queryClient.invalidateQueries({ queryKey: ['channel-pricing', productId] })
-      logger.info('Product pricing cache invalidated', {
+      logger.info('Product pricing cache invalidated (V2)', {
         operation: 'invalidatePricing',
         productId
       })
     },
     invalidateCustomer: (customerId: string) => {
       queryClient.invalidateQueries({ queryKey: ['customer-pricing', customerId] })
-      logger.info('Customer pricing cache invalidated', {
+      logger.info('Customer pricing cache invalidated (V2)', {
         operation: 'invalidatePricing',
         customerId
       })

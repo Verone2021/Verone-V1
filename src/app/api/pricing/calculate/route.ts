@@ -1,23 +1,29 @@
 /**
- * API Route: Calcul Pricing Intelligent
+ * API Route: Calcul Pricing Intelligent - V2
  *
  * POST /api/pricing/calculate
- * Calcul prix avec waterfall priorités (customer > channel > package > base)
+ * GET /api/pricing/calculate?productId=...
+ *
+ * Calcul prix avec waterfall priorités (Price Lists V2):
+ * 1. Prix contrat client spécifique → PRIORITÉ MAX
+ * 2. Prix groupe client (B2B Gold, VIP) → HAUTE PRIORITÉ
+ * 3. Prix canal de vente (Retail, Wholesale) → PRIORITÉ NORMALE
+ * 4. Prix catalogue base → FALLBACK
  *
  * Features:
  * - Batch pricing support (plusieurs produits)
+ * - Support paliers quantités natifs
  * - Validation params stricte
  * - Error handling complet
  * - Logging structuré
  */
 
 import { NextRequest, NextResponse } from 'next/server'
-import { createRouteHandlerClient } from '@supabase/auth-helpers-nextjs'
-import { cookies } from 'next/headers'
+import { createClient } from '@/lib/supabase/server'
 import { logger } from '@/lib/logger'
 
 // =====================================================================
-// TYPES
+// TYPES - Version 2.0 (Price Lists System)
 // =====================================================================
 
 interface PricingRequestItem {
@@ -33,9 +39,24 @@ interface PricingRequest {
   items: PricingRequestItem[]
 }
 
+interface PricingResultV2 {
+  price_ht: number
+  original_price: number
+  discount_rate: number | null
+  price_list_id: string
+  price_list_name: string
+  price_source: 'customer_specific' | 'customer_group' | 'channel' | 'base_catalog'
+  min_quantity: number
+  max_quantity: number | null
+  currency: string
+  margin_rate: number | null
+  notes: string | null
+}
+
+// Type legacy pour compatibilité
 interface PricingResult {
   final_price_ht: number
-  pricing_source: 'customer_pricing' | 'channel_pricing' | 'package' | 'base'
+  pricing_source: 'customer_specific' | 'customer_group' | 'channel' | 'base_catalog'
   discount_applied: number
   original_price_ht: number
 }
@@ -139,7 +160,7 @@ export async function POST(request: NextRequest) {
     })
 
     // 3. Authentification Supabase
-    const supabase = createRouteHandlerClient({ cookies })
+    const supabase = await createClient()
 
     const { data: { session }, error: authError } = await supabase.auth.getSession()
 
@@ -155,21 +176,22 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    // 4. Calcul pricing pour chaque item (parallèle)
+    // 4. Calcul pricing pour chaque item (parallèle) - UTILISER V2
     const results = await Promise.all(
       items.map(async (item: PricingRequestItem): Promise<PricingResponseItem> => {
         try {
-          const { data, error } = await supabase.rpc('calculate_product_price', {
+          // IMPORTANT: Utiliser calculate_product_price_v2 (nouvelle architecture)
+          const { data, error } = await supabase.rpc('calculate_product_price_v2', {
             p_product_id: item.productId,
-            p_customer_id: item.customerId || null,
-            p_customer_type: item.customerType || 'organization',
-            p_channel_id: item.channelId || null,
             p_quantity: item.quantity || 1,
+            p_channel_id: item.channelId || null,
+            p_customer_id: item.customerId || null,
+            p_customer_type: item.customerType || null,
             p_date: item.date || new Date().toISOString().split('T')[0]
           })
 
           if (error) {
-            logger.error('Failed to calculate price for product', {
+            logger.error('Failed to calculate price for product (V2)', {
               operation: 'pricing_calculate',
               productId: item.productId,
               error: error.message
@@ -190,13 +212,21 @@ export async function POST(request: NextRequest) {
             }
           }
 
-          const pricing = data[0] as PricingResult
+          // Mapper résultat V2 vers format legacy
+          const resultV2 = data[0] as PricingResultV2
+          const pricing: PricingResult = {
+            final_price_ht: resultV2.price_ht,
+            pricing_source: resultV2.price_source,
+            discount_applied: resultV2.discount_rate || 0,
+            original_price_ht: resultV2.original_price
+          }
 
-          logger.info('Price calculated successfully', {
+          logger.info('Price calculated successfully (V2)', {
             operation: 'pricing_calculate',
             productId: item.productId,
             finalPrice: pricing.final_price_ht,
-            source: pricing.pricing_source
+            source: pricing.pricing_source,
+            priceList: resultV2.price_list_name
           })
 
           return {
@@ -320,7 +350,7 @@ export async function GET(request: NextRequest) {
     })
 
     // 5. Authentification Supabase
-    const supabase = createRouteHandlerClient({ cookies })
+    const supabase = await createClient()
 
     const { data: { session }, error: authError } = await supabase.auth.getSession()
 
@@ -336,18 +366,18 @@ export async function GET(request: NextRequest) {
       )
     }
 
-    // 6. Calcul pricing
-    const { data, error } = await supabase.rpc('calculate_product_price', {
+    // 6. Calcul pricing - UTILISER V2
+    const { data, error } = await supabase.rpc('calculate_product_price_v2', {
       p_product_id: productId,
-      p_customer_id: customerId || null,
-      p_customer_type: customerType || 'organization',
-      p_channel_id: channelId || null,
       p_quantity: quantity,
+      p_channel_id: channelId || null,
+      p_customer_id: customerId || null,
+      p_customer_type: customerType || null,
       p_date: date || new Date().toISOString().split('T')[0]
     })
 
     if (error) {
-      logger.error('Failed to calculate price', {
+      logger.error('Failed to calculate price (V2)', {
         operation: 'pricing_calculate_get',
         productId,
         error: error.message
@@ -372,14 +402,22 @@ export async function GET(request: NextRequest) {
       )
     }
 
-    const pricing = data[0] as PricingResult
+    // Mapper résultat V2 vers format legacy
+    const resultV2 = data[0] as PricingResultV2
+    const pricing: PricingResult = {
+      final_price_ht: resultV2.price_ht,
+      pricing_source: resultV2.price_source,
+      discount_applied: resultV2.discount_rate || 0,
+      original_price_ht: resultV2.original_price
+    }
     const duration = Date.now() - startTime
 
-    logger.info('Price calculated successfully', {
+    logger.info('Price calculated successfully (V2)', {
       operation: 'pricing_calculate_get',
       productId,
       finalPrice: pricing.final_price_ht,
       source: pricing.pricing_source,
+      priceList: resultV2.price_list_name,
       duration
     })
 
