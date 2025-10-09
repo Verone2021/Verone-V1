@@ -460,6 +460,7 @@ export function useInvalidatePricing() {
       queryClient.invalidateQueries({ queryKey: ['pricing-v2'] })
       queryClient.invalidateQueries({ queryKey: ['channel-pricing'] })
       queryClient.invalidateQueries({ queryKey: ['customer-pricing'] })
+      queryClient.invalidateQueries({ queryKey: ['quantity-breaks'] })
       logger.info('All pricing caches invalidated (V2)', {
         operation: 'invalidatePricing'
       })
@@ -467,6 +468,7 @@ export function useInvalidatePricing() {
     invalidateProduct: (productId: string) => {
       queryClient.invalidateQueries({ queryKey: ['pricing-v2', { productId }] })
       queryClient.invalidateQueries({ queryKey: ['channel-pricing', productId] })
+      queryClient.invalidateQueries({ queryKey: ['quantity-breaks', productId] })
       logger.info('Product pricing cache invalidated (V2)', {
         operation: 'invalidatePricing',
         productId
@@ -480,4 +482,76 @@ export function useInvalidatePricing() {
       })
     }
   }
+}
+
+// =====================================================================
+// HOOK: useQuantityBreaks (Paliers Quantités)
+// =====================================================================
+
+export interface QuantityBreak {
+  min_quantity: number
+  max_quantity: number | null
+  price_ht: number
+  discount_rate: number | null
+  price_list_name: string
+  savings_amount: number
+  savings_percent: number
+}
+
+export interface QuantityBreaksParams {
+  productId: string
+  channelId?: string
+  customerId?: string
+  customerType?: 'organization' | 'individual'
+  date?: string
+}
+
+export function useQuantityBreaks(params: QuantityBreaksParams) {
+  const supabase = createClientComponentClient()
+
+  return useQuery({
+    queryKey: ['quantity-breaks', params],
+    queryFn: async (): Promise<QuantityBreak[]> => {
+      try {
+        const { data, error } = await supabase.rpc('get_quantity_breaks', {
+          p_product_id: params.productId,
+          p_channel_id: params.channelId || null,
+          p_customer_id: params.customerId || null,
+          p_customer_type: params.customerType || null,
+          p_date: params.date || new Date().toISOString().split('T')[0]
+        })
+
+        if (error) {
+          logger.error('Failed to fetch quantity breaks', {
+            operation: 'useQuantityBreaks',
+            error: error.message,
+            params
+          })
+          throw new Error(`Quantity breaks fetch failed: ${error.message}`)
+        }
+
+        if (!data) {
+          return []
+        }
+
+        logger.info('Quantity breaks fetched successfully', {
+          operation: 'useQuantityBreaks',
+          productId: params.productId,
+          breaksCount: data.length
+        })
+
+        return data as QuantityBreak[]
+      } catch (error) {
+        logger.error('Exception in useQuantityBreaks', {
+          operation: 'useQuantityBreaks',
+          error: error instanceof Error ? error.message : String(error),
+          params
+        })
+        throw error
+      }
+    },
+    enabled: !!params.productId,
+    staleTime: 10 * 60 * 1000,  // 10 minutes (paliers changent rarement)
+    cacheTime: 30 * 60 * 1000   // 30 minutes retention
+  })
 }

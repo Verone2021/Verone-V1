@@ -394,6 +394,7 @@ export default function CataloguePage() {
                           } as any}
                           priority={index === 0} // 🚀 Optimisation LCP pour première ProductCard
                           showPricing={true} // 💰 Activer affichage pricing V2
+                          showQuantityBreaks={true} // 📦 Activer affichage paliers quantités
                           channelId={selectedChannelId} // 💰 Canal sélectionné
                           onArchive={handleArchiveProduct}
                           onDelete={handleDeleteProduct}

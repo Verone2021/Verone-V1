@@ -9,7 +9,8 @@ import { cn } from "../../lib/utils"
 import { Package, Archive, Trash2, ArchiveRestore } from "lucide-react"
 import { useProductImages } from "../../hooks/use-product-images"
 import { useProductPackages } from "../../hooks/use-product-packages"
-import { useProductPrice, formatPrice } from "../../hooks/use-pricing"
+import { useProductPrice, useQuantityBreaks, formatPrice } from "../../hooks/use-pricing"
+import { QuantityBreaksDisplay } from "./quantity-breaks-display"
 import type { Product } from "../../hooks/use-catalogue"
 
 interface ProductCardProps {
@@ -18,6 +19,7 @@ interface ProductCardProps {
   showActions?: boolean
   showPackages?: boolean // Nouvelle option pour afficher les packages
   showPricing?: boolean // Nouvelle option pour afficher les prix par canal
+  showQuantityBreaks?: boolean // Nouvelle option pour afficher les paliers quantités
   channelId?: string | null // Canal de vente sélectionné (null = prix base)
   priority?: boolean // Nouvelle option pour optimiser LCP (première image)
   onClick?: (product: Product) => void
@@ -61,6 +63,7 @@ export const ProductCard = memo(function ProductCard({
   showActions = true,
   showPackages = false,
   showPricing = false,
+  showQuantityBreaks = false,
   channelId = null,
   priority = false,
   onClick,
@@ -97,6 +100,12 @@ export const ProductCard = memo(function ProductCard({
     productId: product.id,
     channelId: channelId || undefined,
     quantity: 1
+  })
+
+  // 📦 Hook paliers quantités - Économies selon quantité
+  const { data: quantityBreaks, isLoading: breaksLoading } = useQuantityBreaks({
+    productId: product.id,
+    channelId: channelId || undefined
   })
 
   const handleClick = useCallback(() => {
@@ -276,6 +285,17 @@ export const ProductCard = memo(function ProductCard({
                   })()}
                 </div>
               )}
+            </div>
+          )}
+
+          {/* 📦 Affichage paliers quantités - Économies */}
+          {showQuantityBreaks && !breaksLoading && quantityBreaks && quantityBreaks.length > 0 && (
+            <div className="mt-1.5">
+              <QuantityBreaksDisplay
+                breaks={quantityBreaks}
+                currentQuantity={1}
+                variant="compact"
+              />
             </div>
           )}
         </div>
