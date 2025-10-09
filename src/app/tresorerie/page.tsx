@@ -1,53 +1,70 @@
+/**
+ * Page: Trésorerie Dashboard 360°
+ * Route: /tresorerie
+ * Description: Dashboard trésorerie complet avec Qonto + AR/AP unifiés
+ *
+ * Features:
+ * - Soldes bancaires temps réel (Qonto)
+ * - KPIs AR + AP
+ * - Transactions récentes
+ * - Prévisions 30/60/90 jours
+ * - Alertes échéances
+ */
+
+'use client'
+
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
+import { Badge } from '@/components/ui/badge'
+import { Button } from '@/components/ui/button'
+import { Skeleton } from '@/components/ui/skeleton'
+import { TreasuryKPIs } from '@/components/business/treasury-kpis'
+import { useTreasuryStats } from '@/hooks/use-treasury-stats'
+import {
+  Banknote,
+  TrendingUp,
+  TrendingDown,
+  RefreshCw,
+  Download,
+  AlertTriangle,
+  Calendar,
+  ArrowRight
+} from 'lucide-react'
+import { useState, useEffect } from 'react'
+import Link from 'next/link'
+
 // =====================================================================
-// Trésorerie Page
-// Date: 2025-10-11
-// Description: Dashboard trésorerie temps réel (Qonto)
+// TYPES
 // =====================================================================
 
-import { Suspense } from 'react';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Skeleton } from '@/components/ui/skeleton';
-import { Badge } from '@/components/ui/badge';
-import { Banknote, TrendingUp, TrendingDown, RefreshCw, Download } from 'lucide-react';
-import { getQontoClient } from '@/lib/qonto';
-import type { QontoBankAccount, QontoTransaction } from '@/lib/qonto/types';
+interface BankAccount {
+  id: string
+  name: string
+  iban: string
+  balance: number
+  currency: string
+  status: string
+  authorized_balance: number
+}
 
-export const dynamic = 'force-dynamic';
-
-// =====================================================================
-// DATA FETCHING
-// =====================================================================
-
-async function getTreasuryData() {
-  const qontoClient = getQontoClient();
-
-  const [accounts, { transactions, meta }] = await Promise.all([
-    qontoClient.getBankAccounts(),
-    qontoClient.getTransactions({
-      perPage: 20,
-      sortBy: 'settled_at',
-    }),
-  ]);
-
-  // Filtrer comptes actifs uniquement
-  const activeAccounts = accounts.filter((acc) => acc.status === 'active');
-
-  // Calculer solde total
-  const totalBalance = activeAccounts.reduce((sum, acc) => sum + acc.balance, 0);
-
-  return {
-    accounts: activeAccounts,
-    totalBalance,
-    recentTransactions: transactions,
-    totalTransactionsCount: meta.total_count,
-  };
+interface Transaction {
+  transaction_id: string
+  label: string
+  amount: number
+  currency: string
+  side: 'credit' | 'debit'
+  operation_type: string
+  settled_at: string | null
+  status: string
+  counterparty?: {
+    name: string
+  }
 }
 
 // =====================================================================
-// COMPONENTS
+// COMPOSANT: Bank Account Card
 // =====================================================================
 
-function BankAccountCard({ account }: { account: QontoBankAccount }) {
+function BankAccountCard({ account }: { account: BankAccount }) {
   return (
     <Card>
       <CardHeader>
@@ -67,7 +84,7 @@ function BankAccountCard({ account }: { account: QontoBankAccount }) {
             <p className="text-2xl font-bold">
               {account.balance.toLocaleString('fr-FR', {
                 style: 'currency',
-                currency: account.currency,
+                currency: account.currency
               })}
             </p>
             <p className="text-xs text-muted-foreground mt-1">Solde disponible</p>
@@ -86,7 +103,7 @@ function BankAccountCard({ account }: { account: QontoBankAccount }) {
               <span className="font-medium text-foreground">
                 {account.authorized_balance.toLocaleString('fr-FR', {
                   style: 'currency',
-                  currency: account.currency,
+                  currency: account.currency
                 })}
               </span>
             </p>
@@ -94,11 +111,15 @@ function BankAccountCard({ account }: { account: QontoBankAccount }) {
         )}
       </CardContent>
     </Card>
-  );
+  )
 }
 
-function TransactionRow({ transaction }: { transaction: QontoTransaction }) {
-  const isCredit = transaction.side === 'credit';
+// =====================================================================
+// COMPOSANT: Transaction Row
+// =====================================================================
+
+function TransactionRow({ transaction }: { transaction: Transaction }) {
+  const isCredit = transaction.side === 'credit'
 
   return (
     <div className="flex items-center justify-between py-3 border-b last:border-0">
@@ -124,7 +145,7 @@ function TransactionRow({ transaction }: { transaction: QontoTransaction }) {
             {isCredit ? '+' : '-'}
             {Math.abs(transaction.amount).toLocaleString('fr-FR', {
               style: 'currency',
-              currency: transaction.currency,
+              currency: transaction.currency
             })}
           </p>
           <p className="text-xs text-muted-foreground">
@@ -151,68 +172,194 @@ function TransactionRow({ transaction }: { transaction: QontoTransaction }) {
         </Badge>
       </div>
     </div>
-  );
+  )
 }
 
-async function TreasuryContent() {
-  const { accounts, totalBalance, recentTransactions, totalTransactionsCount } =
-    await getTreasuryData();
+// =====================================================================
+// COMPOSANT PRINCIPAL
+// =====================================================================
+
+export default function TresoreriePage() {
+  const [accounts, setAccounts] = useState<BankAccount[]>([])
+  const [transactions, setTransactions] = useState<Transaction[]>([])
+  const [loadingBank, setLoadingBank] = useState(true)
+
+  // Hook treasury stats (AR + AP)
+  const {
+    stats,
+    forecasts,
+    bankBalance,
+    loading: loadingStats,
+    refresh,
+    refreshBankBalance
+  } = useTreasuryStats()
+
+  // Fetch Qonto data
+  useEffect(() => {
+    const fetchQontoData = async () => {
+      try {
+        setLoadingBank(true)
+
+        // Fetch accounts
+        const accountsRes = await fetch('/api/qonto/accounts')
+        if (accountsRes.ok) {
+          const accountsData = await accountsRes.json()
+          setAccounts(accountsData.accounts || [])
+        }
+
+        // Fetch recent transactions
+        const transactionsRes = await fetch('/api/qonto/transactions?limit=10')
+        if (transactionsRes.ok) {
+          const transactionsData = await transactionsRes.json()
+          setTransactions(transactionsData.transactions || [])
+        }
+      } catch (error) {
+        console.error('Error fetching Qonto data:', error)
+      } finally {
+        setLoadingBank(false)
+      }
+    }
+
+    fetchQontoData()
+  }, [])
+
+  // Calculer total balance bancaire
+  const totalBalance = accounts.reduce((sum, acc) => sum + acc.balance, 0)
+
+  // Gérer refresh
+  const handleRefresh = () => {
+    refresh()
+    refreshBankBalance()
+    window.location.reload() // Reload pour refetch Qonto
+  }
 
   return (
-    <div className="space-y-6">
+    <div className="container mx-auto py-6 px-4 space-y-6">
       {/* Header */}
-      <div>
-        <h1 className="text-3xl font-bold">Trésorerie</h1>
-        <p className="text-muted-foreground mt-1">
-          Suivi temps réel de vos comptes bancaires Qonto
-        </p>
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="text-3xl font-bold">Trésorerie</h1>
+          <p className="text-muted-foreground mt-1">
+            Dashboard 360° - Qonto + AR/AP temps réel
+          </p>
+        </div>
+
+        <Button onClick={handleRefresh} variant="outline">
+          <RefreshCw className="h-4 w-4 mr-2" />
+          Actualiser
+        </Button>
       </div>
 
-      {/* KPI Card */}
-      <Card className="bg-gradient-to-br from-blue-50 to-indigo-50 dark:from-blue-950 dark:to-indigo-950">
-        <CardHeader>
-          <div className="flex items-center justify-between">
-            <div>
-              <CardTitle className="text-sm font-medium text-muted-foreground">
-                Trésorerie totale
-              </CardTitle>
-              <p className="text-4xl font-bold mt-2">
-                {totalBalance.toLocaleString('fr-FR', {
-                  style: 'currency',
-                  currency: 'EUR',
-                })}
-              </p>
-              <p className="text-xs text-muted-foreground mt-2">
-                {accounts.length} compte{accounts.length > 1 ? 's' : ''} actif
-                {accounts.length > 1 ? 's' : ''}
-              </p>
-            </div>
-            <div className="h-16 w-16 rounded-full bg-blue-600 flex items-center justify-center">
-              <Banknote className="h-8 w-8 text-white" />
-            </div>
-          </div>
-        </CardHeader>
-      </Card>
+      {/* KPIs AR + AP */}
+      <div>
+        <h2 className="text-xl font-semibold mb-4">Métriques Financières</h2>
+        <TreasuryKPIs stats={stats} bankBalance={totalBalance} loading={loadingStats} />
+      </div>
 
-      {/* Comptes bancaires */}
+      {/* Prévisions */}
+      {forecasts && forecasts.length > 0 && (
+        <div>
+          <h2 className="text-xl font-semibold mb-4">Prévisions Trésorerie</h2>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            {forecasts.map((forecast) => (
+              <Card key={forecast.period}>
+                <CardHeader>
+                  <CardTitle className="text-sm font-medium text-gray-700">
+                    Prévision {forecast.period === '30d' ? '30' : forecast.period === '60d' ? '60' : '90'} jours
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="space-y-2">
+                    <div className="flex justify-between">
+                      <span className="text-xs text-gray-500">À encaisser (AR)</span>
+                      <span className="text-sm font-medium text-green-600">
+                        +{forecast.expected_inbound.toLocaleString('fr-FR', {
+                          style: 'currency',
+                          currency: 'EUR',
+                          minimumFractionDigits: 0
+                        })}
+                      </span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="text-xs text-gray-500">À décaisser (AP)</span>
+                      <span className="text-sm font-medium text-red-600">
+                        -{forecast.expected_outbound.toLocaleString('fr-FR', {
+                          style: 'currency',
+                          currency: 'EUR',
+                          minimumFractionDigits: 0
+                        })}
+                      </span>
+                    </div>
+                    <div className="flex justify-between pt-2 border-t">
+                      <span className="text-sm font-medium">Balance projetée</span>
+                      <span className={`text-sm font-bold ${forecast.projected_balance >= 0 ? 'text-green-600' : 'text-red-600'}`}>
+                        {forecast.projected_balance.toLocaleString('fr-FR', {
+                          style: 'currency',
+                          currency: 'EUR',
+                          minimumFractionDigits: 0
+                        })}
+                      </span>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* Alertes (si balance projetée négative) */}
+      {forecasts && forecasts.some(f => f.projected_balance < 0) && (
+        <Card className="border-orange-200 bg-orange-50">
+          <CardHeader>
+            <div className="flex items-center gap-2">
+              <AlertTriangle className="h-5 w-5 text-orange-600" />
+              <CardTitle className="text-orange-900">Alertes Trésorerie</CardTitle>
+            </div>
+          </CardHeader>
+          <CardContent>
+            <ul className="space-y-2">
+              {forecasts
+                .filter(f => f.projected_balance < 0)
+                .map((forecast) => (
+                  <li key={forecast.period} className="flex items-center gap-2 text-sm text-orange-800">
+                    <Calendar className="h-4 w-4" />
+                    <span>
+                      Balance négative prévue dans{' '}
+                      {forecast.period === '30d' ? '30' : forecast.period === '60d' ? '60' : '90'} jours :{' '}
+                      <strong>
+                        {forecast.projected_balance.toLocaleString('fr-FR', {
+                          style: 'currency',
+                          currency: 'EUR'
+                        })}
+                      </strong>
+                    </span>
+                  </li>
+                ))}
+            </ul>
+          </CardContent>
+        </Card>
+      )}
+
+      {/* Comptes bancaires Qonto */}
       <div>
         <div className="flex items-center justify-between mb-4">
-          <h2 className="text-xl font-semibold">Comptes bancaires</h2>
-          <div className="flex gap-2">
-            <button className="inline-flex items-center gap-2 px-3 py-1.5 text-sm font-medium rounded-md border hover:bg-accent">
-              <RefreshCw className="h-4 w-4" />
-              Actualiser
-            </button>
+          <h2 className="text-xl font-semibold">Comptes Bancaires (Qonto)</h2>
+        </div>
+
+        {loadingBank ? (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            {[1, 2, 3].map((i) => (
+              <Skeleton key={i} className="h-32" />
+            ))}
           </div>
-        </div>
-
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-          {accounts.map((account) => (
-            <BankAccountCard key={account.id} account={account} />
-          ))}
-        </div>
-
-        {accounts.length === 0 && (
+        ) : accounts.length > 0 ? (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            {accounts.map((account) => (
+              <BankAccountCard key={account.id} account={account} />
+            ))}
+          </div>
+        ) : (
           <Card>
             <CardContent className="flex items-center justify-center py-12">
               <p className="text-muted-foreground">Aucun compte bancaire actif trouvé</p>
@@ -226,21 +373,35 @@ async function TreasuryContent() {
         <CardHeader>
           <div className="flex items-center justify-between">
             <div>
-              <CardTitle>Dernières transactions</CardTitle>
+              <CardTitle>Dernières Transactions</CardTitle>
               <CardDescription>
-                {totalTransactionsCount} transaction{totalTransactionsCount > 1 ? 's' : ''} au total
+                Transactions récentes Qonto
               </CardDescription>
             </div>
-            <button className="inline-flex items-center gap-2 px-3 py-1.5 text-sm font-medium rounded-md border hover:bg-accent">
-              <Download className="h-4 w-4" />
-              Exporter
-            </button>
+            <div className="flex gap-2">
+              <Button variant="outline" size="sm" asChild>
+                <Link href="/finance/rapprochement">
+                  Rapprochement
+                  <ArrowRight className="h-4 w-4 ml-2" />
+                </Link>
+              </Button>
+              <Button variant="outline" size="sm">
+                <Download className="h-4 w-4 mr-2" />
+                Export
+              </Button>
+            </div>
           </div>
         </CardHeader>
         <CardContent>
-          {recentTransactions.length > 0 ? (
+          {loadingBank ? (
+            <div className="space-y-3">
+              {[1, 2, 3, 4, 5].map((i) => (
+                <Skeleton key={i} className="h-16 w-full" />
+              ))}
+            </div>
+          ) : transactions.length > 0 ? (
             <div className="space-y-0">
-              {recentTransactions.map((transaction) => (
+              {transactions.map((transaction) => (
                 <TransactionRow key={transaction.transaction_id} transaction={transaction} />
               ))}
             </div>
@@ -251,69 +412,55 @@ async function TreasuryContent() {
           )}
         </CardContent>
       </Card>
-    </div>
-  );
-}
 
-// =====================================================================
-// LOADING STATE
-// =====================================================================
-
-function TreasurySkeleton() {
-  return (
-    <div className="space-y-6">
-      <div>
-        <Skeleton className="h-9 w-48" />
-        <Skeleton className="h-5 w-96 mt-2" />
-      </div>
-
-      <Card>
-        <CardHeader>
-          <Skeleton className="h-6 w-32" />
-          <Skeleton className="h-10 w-48 mt-2" />
-        </CardHeader>
-      </Card>
-
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-        {[1, 2, 3].map((i) => (
-          <Card key={i}>
+      {/* Quick Actions */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <Card className="hover:shadow-md transition-shadow cursor-pointer" asChild>
+          <Link href="/finance/factures-fournisseurs">
             <CardHeader>
-              <Skeleton className="h-5 w-32" />
-              <Skeleton className="h-4 w-full mt-2" />
+              <CardTitle className="text-sm">Factures Fournisseurs</CardTitle>
             </CardHeader>
             <CardContent>
-              <Skeleton className="h-8 w-32" />
+              <p className="text-2xl font-bold text-orange-600">
+                {stats?.unpaid_count_ap || 0}
+              </p>
+              <p className="text-xs text-gray-500">À payer</p>
             </CardContent>
-          </Card>
-        ))}
+          </Link>
+        </Card>
+
+        <Card className="hover:shadow-md transition-shadow cursor-pointer" asChild>
+          <Link href="/factures">
+            <CardHeader>
+              <CardTitle className="text-sm">Factures Clients</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <p className="text-2xl font-bold text-green-600">
+                {stats?.unpaid_count_ar || 0}
+              </p>
+              <p className="text-xs text-gray-500">À encaisser</p>
+            </CardContent>
+          </Link>
+        </Card>
+
+        <Card className="hover:shadow-md transition-shadow cursor-pointer" asChild>
+          <Link href="/finance/depenses">
+            <CardHeader>
+              <CardTitle className="text-sm">Dépenses</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <p className="text-2xl font-bold text-blue-600">
+                {forecasts?.[0]?.expected_outbound.toLocaleString('fr-FR', {
+                  style: 'currency',
+                  currency: 'EUR',
+                  minimumFractionDigits: 0
+                }) || '0 €'}
+              </p>
+              <p className="text-xs text-gray-500">Prévu 30j</p>
+            </CardContent>
+          </Link>
+        </Card>
       </div>
-
-      <Card>
-        <CardHeader>
-          <Skeleton className="h-6 w-48" />
-        </CardHeader>
-        <CardContent>
-          <div className="space-y-4">
-            {[1, 2, 3, 4, 5].map((i) => (
-              <Skeleton key={i} className="h-16 w-full" />
-            ))}
-          </div>
-        </CardContent>
-      </Card>
     </div>
-  );
-}
-
-// =====================================================================
-// PAGE
-// =====================================================================
-
-export default function TresoreriePage() {
-  return (
-    <div className="container mx-auto py-6 px-4">
-      <Suspense fallback={<TreasurySkeleton />}>
-        <TreasuryContent />
-      </Suspense>
-    </div>
-  );
+  )
 }
