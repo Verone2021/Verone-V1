@@ -588,11 +588,5 @@ function SidebarContent() {
 }
 
 export function AppSidebar({ className }: { className?: string }) {
-  return (
-    <TooltipProvider>
-      <SidebarProvider defaultOpen={true}>
-        <SidebarContent />
-      </SidebarProvider>
-    </TooltipProvider>
-  )
+  return <SidebarContent />
 }

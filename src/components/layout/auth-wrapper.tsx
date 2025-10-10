@@ -13,6 +13,8 @@ import { AppHeader } from './app-header'
 import { PublicLayout } from './public-layout'
 import { createClient } from '@/lib/supabase/client'
 import type { User } from '@supabase/supabase-js'
+import { SidebarProvider } from '@/components/ui/sidebar'
+import { TooltipProvider } from '@/components/ui/tooltip'
 
 interface AuthWrapperProps {
   children: React.ReactNode
@@ -71,17 +73,19 @@ export function AuthWrapper({ children }: AuthWrapperProps) {
 
   // Layout authentifié avec sidebar/header
   return (
-    <div className="flex h-full">
-      {/* Sidebar fixe */}
-      <AppSidebar />
+    <TooltipProvider>
+      <SidebarProvider defaultOpen={true}>
+        {/* Sidebar fixe */}
+        <AppSidebar />
 
-      {/* Contenu principal */}
-      <div className="flex flex-1 flex-col">
-        <AppHeader />
-        <main className="flex-1 overflow-auto p-6">
-          {children}
-        </main>
-      </div>
-    </div>
+        {/* Contenu principal */}
+        <div className="flex flex-1 flex-col">
+          <AppHeader />
+          <main className="flex-1 overflow-auto p-6">
+            {children}
+          </main>
+        </div>
+      </SidebarProvider>
+    </TooltipProvider>
   )
 }
