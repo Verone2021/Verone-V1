@@ -79,42 +79,57 @@ export function useBankReconciliation() {
 
       if (transactionsError) throw transactionsError;
 
-      // 2. Fetch unpaid invoices
+      // 2. Fetch unpaid invoices from financial_documents
+      // TEMP FIX: Utiliser financial_documents au lieu de invoices (migration en cours)
       const { data: invoices, error: invoicesError } = await supabase
-        .from('invoices')
+        .from('financial_documents')
         .select(`
           id,
-          invoice_number,
-          customer_id,
-          customer_type,
-          total_amount,
+          document_number,
+          partner_id,
+          partner_type,
+          total_ttc,
           amount_paid,
           status,
-          issue_date,
+          document_date,
           due_date
         `)
-        .in('status', ['sent', 'overdue'])
-        .order('issue_date', { ascending: false });
+        .eq('document_type', 'customer_invoice')
+        .in('status', ['sent', 'overdue', 'partially_paid'])
+        .order('document_date', { ascending: false });
 
-      if (invoicesError) throw invoicesError;
+      // Si erreur OU table vide, retourner état vide gracieusement
+      if (invoicesError || !invoices || invoices.length === 0) {
+        console.warn('No invoices found in financial_documents, feature disabled temporarily');
+        setUnmatchedTransactions(transactions || []);
+        setUnpaidInvoices([]);
+        setStats({
+          total_unmatched: transactions?.length || 0,
+          total_amount_pending: 0,
+          auto_match_rate: 0,
+          manual_review_count: 0,
+        });
+        setLoading(false);
+        return;
+      }
 
       // 3. Enrichir invoices avec customer_name et calculer amount_remaining
       const enrichedInvoices: UnpaidInvoice[] = await Promise.all(
-        (invoices || []).map(async (invoice) => {
+        (invoices || []).map(async (invoice: any) => {
           let customerName = 'N/A';
 
-          if (invoice.customer_type === 'organisation') {
+          if (invoice.partner_type === 'organisation') {
             const { data: org } = await supabase
               .from('organisations')
               .select('name')
-              .eq('id', invoice.customer_id)
+              .eq('id', invoice.partner_id)
               .single();
             customerName = org?.name || 'N/A';
           } else {
             const { data: individual } = await supabase
               .from('individual_customers')
               .select('first_name, last_name')
-              .eq('id', invoice.customer_id)
+              .eq('id', invoice.partner_id)
               .single();
             customerName = individual
               ? `${individual.first_name} ${individual.last_name}`
@@ -130,9 +145,17 @@ export function useBankReconciliation() {
           }
 
           return {
-            ...invoice,
+            id: invoice.id,
+            invoice_number: invoice.document_number,
+            customer_id: invoice.partner_id,
+            customer_type: invoice.partner_type,
             customer_name: customerName,
-            amount_remaining: invoice.total_amount - (invoice.amount_paid || 0),
+            total_amount: invoice.total_ttc,
+            amount_paid: invoice.amount_paid || 0,
+            amount_remaining: invoice.total_ttc - (invoice.amount_paid || 0),
+            status: invoice.status,
+            issue_date: invoice.document_date,
+            due_date: invoice.due_date,
             days_overdue: daysOverdue,
           };
         })
@@ -207,7 +230,7 @@ export function useBankReconciliation() {
         .single();
 
       const { data: invoice } = await supabase
-        .from('invoices')
+        .from('financial_documents')
         .select('*')
         .eq('id', invoiceId)
         .single();
@@ -247,12 +270,12 @@ export function useBankReconciliation() {
 
       if (txUpdateError) throw txUpdateError;
 
-      // 4. Update invoice
+      // 4. Update invoice (financial_documents)
       const newAmountPaid = (invoice.amount_paid || 0) + transaction.amount;
-      const newStatus = newAmountPaid >= invoice.total_amount ? 'paid' : invoice.status;
+      const newStatus = newAmountPaid >= invoice.total_ttc ? 'paid' : invoice.status;
 
       const { error: invoiceUpdateError } = await supabase
-        .from('invoices')
+        .from('financial_documents')
         .update({
           amount_paid: newAmountPaid,
           status: newStatus,

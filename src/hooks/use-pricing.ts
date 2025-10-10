@@ -306,7 +306,7 @@ export interface ChannelPricing {
 }
 
 export function useChannelPricing(productId: string) {
-  const supabase = createClientComponentClient()
+  const supabase = createClient()
 
   return useQuery({
     queryKey: ['channel-pricing', productId],
@@ -373,7 +373,7 @@ export interface CustomerPricing {
 }
 
 export function useCustomerPricing(customerId: string, customerType: 'organization' | 'individual') {
-  const supabase = createClientComponentClient()
+  const supabase = createClient()
 
   return useQuery({
     queryKey: ['customer-pricing', customerId, customerType],
@@ -507,7 +507,7 @@ export interface QuantityBreaksParams {
 }
 
 export function useQuantityBreaks(params: QuantityBreaksParams) {
-  const supabase = createClientComponentClient()
+  const supabase = createClient()
 
   return useQuery({
     queryKey: ['quantity-breaks', params],
