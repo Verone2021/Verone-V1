@@ -2,129 +2,94 @@
 
 import Link from "next/link"
 import { usePathname } from "next/navigation"
-import { useState } from "react"
-import { cn } from "../../lib/utils"
+import { useState, useEffect, useMemo } from "react"
+import { cn } from "@/lib/utils"
 import { featureFlags, getModuleDeploymentStatus } from "@/lib/feature-flags"
 import { InactiveModuleWrapper, PhaseIndicator } from "@/components/ui/phase-indicator"
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible"
+import { Tooltip, TooltipContent, TooltipTrigger, TooltipProvider } from "@/components/ui/tooltip"
+import { SidebarProvider, SidebarTrigger, SidebarInput, useSidebar } from "@/components/ui/sidebar"
+import { Badge } from "@/components/ui/badge"
 import {
   Home,
-  ShoppingCart,
-  Package,
-  Users,
-  Settings,
   BookOpen,
+  Package,
+  Target,
+  ShoppingBag,
+  Truck,
+  Wallet,
+  Building2,
+  Settings,
   LogOut,
   ChevronDown,
   ChevronRight,
   Grid3x3,
-  FolderOpen,
   Tags,
   Layers,
-  Building2,
-  Phone,
-  Truck,
-  UserCheck,
-  BarChart3,
-  ShoppingBag,
-  MessageCircle,
   Search,
-  Archive,
-  TrendingUp,
-  ArrowUpDown,
-  ArrowDownToLine,
-  ArrowUpFromLine,
-  AlertTriangle,
-  Target,
-  Eye,
   CheckCircle,
-  Plus,
-  Globe,
-  Store,
-  Smartphone,
-  Wallet,
+  MessageCircle,
   FileText,
   Banknote,
-  RefreshCw
+  RefreshCw,
+  X,
+  Moon,
+  Sun,
 } from "lucide-react"
 
-// Interface pour les éléments de navigation hiérarchique
+// Interface pour les éléments de navigation
 interface NavItem {
   title: string
   href?: string
   icon: React.ComponentType<{ className?: string }>
   description?: string
+  badge?: number
+  badgeVariant?: "default" | "urgent"
   children?: NavItem[]
 }
 
-// Configuration navigation optimisée selon best practices ERP 2025
+// STRUCTURE OPTIMISÉE avec badges notifications
 const navItems: NavItem[] = [
   {
     title: "Dashboard",
     href: "/dashboard",
     icon: Home,
-    description: "Vue d'ensemble et indicateurs"
+    description: "Vue d'ensemble"
   },
   {
     title: "Catalogue",
-    href: "/catalogue", // Navigation directe vers la page produits
+    href: "/catalogue",
     icon: BookOpen,
     description: "Produits et collections",
     children: [
       {
-        title: "Dashboard",
-        href: "/catalogue/dashboard",
-        icon: BarChart3,
-        description: "Vue d'ensemble et KPIs"
-      },
-      {
         title: "Produits",
         href: "/catalogue",
         icon: Grid3x3,
-        description: "Liste et gestion unifiée"
+        description: "Gestion unifiée"
       },
       {
-        title: "Catégories",
+        title: "Catégories & Collections",
         href: "/catalogue/categories",
         icon: Tags,
-        description: "Organisation par catégories"
-      },
-      {
-        title: "Collections",
-        href: "/catalogue/collections",
-        icon: FolderOpen,
-        description: "Collections thématiques"
+        description: "Organisation"
       },
       {
         title: "Variantes",
         href: "/catalogue/variantes",
         icon: Layers,
         description: "Couleurs, tailles, matériaux"
-      },
-      {
-        title: "Nouveau Produit",
-        href: "/catalogue/create",
-        icon: Plus,
-        description: "Création unifiée"
       }
     ]
   },
   {
-    title: "Organisation",
-    href: "/organisation",
-    icon: Building2,
-    description: "Entreprise, contacts et partenaires"
-  },
-  {
     title: "Stocks",
+    href: "/stocks",
     icon: Package,
     description: "Inventaire et mouvements",
+    badge: 11,
+    badgeVariant: "urgent",
     children: [
-      {
-        title: "Vue d'Ensemble",
-        href: "/stocks",
-        icon: BarChart3,
-        description: "Dashboard et statistiques"
-      },
       {
         title: "Inventaire",
         href: "/stocks/inventaire",
@@ -134,53 +99,31 @@ const navItems: NavItem[] = [
       {
         title: "Mouvements",
         href: "/stocks/mouvements",
-        icon: ArrowUpDown,
-        description: "Historique unifié"
-      },
-      {
-        title: "Entrées",
-        href: "/stocks/entrees",
-        icon: ArrowDownToLine,
-        description: "Réceptions"
-      },
-      {
-        title: "Sorties",
-        href: "/stocks/sorties",
-        icon: ArrowUpFromLine,
-        description: "Expéditions"
+        icon: RefreshCw,
+        description: "Entrées et sorties"
       },
       {
         title: "Alertes",
         href: "/stocks/alertes",
-        icon: AlertTriangle,
-        description: "Ruptures et seuils"
+        icon: CheckCircle,
+        description: "Ruptures et seuils",
+        badge: 11,
+        badgeVariant: "urgent"
       }
     ]
   },
   {
     title: "Sourcing",
+    href: "/sourcing",
     icon: Target,
-    description: "Approvisionnement et échantillons",
+    description: "Approvisionnement",
     children: [
-      {
-        title: "Dashboard",
-        href: "/sourcing",
-        icon: BarChart3,
-        description: "Vue d'ensemble sourcing"
-      },
       {
         title: "Produits à Sourcer",
         href: "/sourcing/produits",
         icon: Search,
         description: "Internes et clients"
       },
-      // Phase 1: Échantillons désactivé temporairement (pas de commandes fournisseurs)
-      // {
-      //   title: "Échantillons",
-      //   href: "/sourcing/echantillons",
-      //   icon: Eye,
-      //   description: "Commandes et suivi"
-      // },
       {
         title: "Validation",
         href: "/sourcing/validation",
@@ -190,84 +133,116 @@ const navItems: NavItem[] = [
     ]
   },
   {
-    title: "Interactions Clients",
-    icon: MessageCircle,
+    title: "Ventes",
+    href: "/consultations",
+    icon: ShoppingBag,
     description: "Consultations et commandes",
+    badge: 5,
+    badgeVariant: "default",
     children: [
-      {
-        title: "Dashboard Client",
-        href: "/interactions/dashboard",
-        icon: BarChart3,
-        description: "Vue d'ensemble"
-      },
       {
         title: "Consultations",
         href: "/consultations",
         icon: MessageCircle,
-        description: "Demandes et devis"
+        description: "Demandes et devis",
+        badge: 3,
+        badgeVariant: "default"
       },
       {
         title: "Commandes Clients",
         href: "/commandes/clients",
         icon: ShoppingBag,
-        description: "Ventes et suivi"
+        description: "Ventes et suivi",
+        badge: 2,
+        badgeVariant: "default"
       }
     ]
   },
   {
-    title: "Commandes Fournisseurs",
+    title: "Achats",
     href: "/commandes/fournisseurs",
     icon: Truck,
-    description: "Achats et approvisionnements"
+    description: "Commandes fournisseurs"
   },
   {
     title: "Finance",
+    href: "/factures",
     icon: Wallet,
     description: "Facturation et trésorerie",
+    badge: 2,
+    badgeVariant: "default",
     children: [
       {
         title: "Factures",
         href: "/factures",
         icon: FileText,
-        description: "Gestion factures clients"
+        description: "Gestion factures",
+        badge: 2,
+        badgeVariant: "default"
       },
       {
         title: "Trésorerie",
         href: "/tresorerie",
         icon: Banknote,
-        description: "Comptes bancaires Qonto"
+        description: "Comptes Qonto"
       },
       {
         title: "Rapprochement",
         href: "/finance/rapprochement",
         icon: RefreshCw,
-        description: "Matching bancaire automatique"
+        description: "Matching bancaire"
       }
     ]
   },
   {
-    title: "Canaux de Vente",
-    href: "/canaux-vente",
-    icon: ShoppingBag,
-    description: "Dashboard tous canaux de distribution"
+    title: "Organisation",
+    href: "/organisation",
+    icon: Building2,
+    description: "Contacts et partenaires"
   },
   {
     title: "Paramètres",
     href: "/parametres",
     icon: Settings,
-    description: "Configuration du système"
+    description: "Configuration"
   }
 ]
 
-interface AppSidebarProps {
-  className?: string
-}
-
-export function AppSidebar({ className }: AppSidebarProps) {
+function SidebarContent() {
   const pathname = usePathname()
-  const [expandedItems, setExpandedItems] = useState<string[]>(['Catalogue', 'Stocks', 'Sourcing', 'Interactions Clients', 'Finance', 'Canaux de Vente']) // Sections principales ouvertes par défaut
+  const { state } = useSidebar()
+  const isCollapsed = state === "collapsed"
 
-  // Fonction pour basculer l'état d'expansion d'un élément
+  // Search functionality
+  const [searchQuery, setSearchQuery] = useState("")
+
+  // State persistence avec localStorage
+  const [expandedItems, setExpandedItems] = useState<string[]>(() => {
+    if (typeof window !== 'undefined') {
+      const saved = localStorage.getItem('verone-sidebar-expanded')
+      return saved ? JSON.parse(saved) : ['Catalogue', 'Stocks', 'Ventes', 'Finance']
+    }
+    return ['Catalogue', 'Stocks', 'Ventes', 'Finance']
+  })
+
+  // Theme toggle
+  const [theme, setTheme] = useState<'light' | 'dark'>(() => {
+    if (typeof window !== 'undefined') {
+      return (localStorage.getItem('verone-theme') as 'light' | 'dark') || 'light'
+    }
+    return 'light'
+  })
+
+  // Sauvegarder l'état dans localStorage
+  useEffect(() => {
+    localStorage.setItem('verone-sidebar-expanded', JSON.stringify(expandedItems))
+  }, [expandedItems])
+
+  useEffect(() => {
+    localStorage.setItem('verone-theme', theme)
+    document.documentElement.classList.toggle('dark', theme === 'dark')
+  }, [theme])
+
   const toggleExpanded = (title: string) => {
     setExpandedItems(prev =>
       prev.includes(title)
@@ -276,7 +251,6 @@ export function AppSidebar({ className }: AppSidebarProps) {
     )
   }
 
-  // Fonction pour vérifier si un élément ou ses enfants sont actifs
   const isActiveOrHasActiveChild = (item: NavItem): boolean => {
     if (item.href && (pathname === item.href || (item.href !== '/dashboard' && pathname.startsWith(item.href)))) {
       return true
@@ -287,106 +261,173 @@ export function AppSidebar({ className }: AppSidebarProps) {
     return false
   }
 
-  // Helper pour obtenir le nom de module à partir du titre
   const getModuleName = (title: string): string => {
     const moduleMap: Record<string, string> = {
       'Catalogue': 'catalogue',
-      'Stocks': 'stocks', 
+      'Stocks': 'stocks',
       'Sourcing': 'sourcing',
-      'Interactions Clients': 'interactions',
-      'Commandes Fournisseurs': 'commandes',
-      'Canaux de Vente': 'canaux-vente',
-      'Contacts & Organisations': 'contacts'
+      'Ventes': 'interactions',
+      'Achats': 'commandes',
+      'Finance': 'finance',
+      'Organisation': 'contacts'
     }
     return moduleMap[title] || title.toLowerCase()
   }
 
-  // Fonction pour rendre un élément de navigation avec gestion des phases
+  // Filter items based on search
+  const filteredItems = useMemo(() => {
+    if (!searchQuery.trim()) return navItems
+
+    return navItems.filter(item => {
+      const matchTitle = item.title.toLowerCase().includes(searchQuery.toLowerCase())
+      const matchDesc = item.description?.toLowerCase().includes(searchQuery.toLowerCase())
+      const matchChildren = item.children?.some(child =>
+        child.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        child.description?.toLowerCase().includes(searchQuery.toLowerCase())
+      )
+      return matchTitle || matchDesc || matchChildren
+    })
+  }, [searchQuery])
+
   const renderNavItem = (item: NavItem) => {
     const moduleName = getModuleName(item.title)
     const moduleStatus = getModuleDeploymentStatus(moduleName)
     const isExpanded = expandedItems.includes(item.title)
     const isActiveItem = isActiveOrHasActiveChild(item)
 
-    // Élément de navigation principal
-    const navElement = (
-      <>
+    const navContent = (
+      <li key={item.title} className="relative">
         {item.children ? (
-          // Élément parent avec enfants - Si href existe, navigation + expansion, sinon juste expansion
-          item.href ? (
-            // Élément avec href et children : lien cliquable + bouton chevron séparé
-            <div className="flex w-full">
+          <Collapsible open={isExpanded} onOpenChange={() => moduleStatus === 'active' && toggleExpanded(item.title)}>
+            <div className="flex w-full items-center">
               <Link
-                href={moduleStatus === 'active' ? item.href : '#'}
+                href={moduleStatus === 'active' ? item.href! : '#'}
                 onClick={(e) => moduleStatus !== 'active' && e.preventDefault()}
                 className={cn(
-                  // Base styles Vérone
-                  "nav-item flex flex-1 items-center space-x-3 px-3 py-2.5 text-sm transition-all duration-150 ease-out",
-                  "border border-transparent rounded-l",
-                  // État par défaut
+                  "nav-item flex flex-1 items-center gap-3 px-3 py-2.5 text-sm transition-all duration-150 ease-out rounded-l relative",
                   "text-black hover:opacity-70",
-                  // État actif si enfant sélectionné
-                  isActiveItem && "bg-black text-white border-black",
-                  // État désactivé pour modules inactifs
-                  moduleStatus !== 'active' && "opacity-60 cursor-not-allowed"
+                  isActiveItem && "bg-black text-white",
+                  moduleStatus !== 'active' && "opacity-60 cursor-not-allowed",
+                  isCollapsed && "justify-center px-2"
                 )}
               >
                 <item.icon className="h-5 w-5 flex-shrink-0" />
-                <div className="flex flex-col flex-1">
-                  <div className="flex items-center justify-between">
-                    <span className="font-medium">{item.title}</span>
-                    {moduleStatus !== 'active' && (
-                      <PhaseIndicator
-                        moduleName={moduleName}
-                        variant="badge"
-                        className="ml-2 scale-75"
-                      />
+                {!isCollapsed && (
+                  <div className="flex flex-col flex-1">
+                    <div className="flex items-center justify-between">
+                      <span className="font-medium">{item.title}</span>
+                      {moduleStatus !== 'active' && (
+                        <PhaseIndicator
+                          moduleName={moduleName}
+                          variant="badge"
+                          className="ml-2 scale-75"
+                        />
+                      )}
+                    </div>
+                    {item.description && (
+                      <span className={cn(
+                        "text-xs opacity-70",
+                        isActiveItem ? "text-white" : "text-black"
+                      )}>
+                        {item.description}
+                      </span>
                     )}
                   </div>
-                  {item.description && (
-                    <span className={cn(
-                      "text-xs opacity-70",
-                      isActiveItem ? "text-white" : "text-black"
-                    )}>
-                      {item.description}
-                    </span>
-                  )}
-                </div>
+                )}
+                {item.badge && !isCollapsed && (
+                  <Badge
+                    variant={item.badgeVariant === "urgent" ? "destructive" : "default"}
+                    className="ml-auto"
+                  >
+                    {item.badge}
+                  </Badge>
+                )}
               </Link>
-              {/* Bouton chevron séparé pour expansion */}
-              {moduleStatus === 'active' && (
-                <button
-                  onClick={() => toggleExpanded(item.title)}
+
+              {moduleStatus === 'active' && !isCollapsed && (
+                <CollapsibleTrigger
                   className={cn(
-                    "px-2 border-l border-black/10 transition-all",
+                    "px-3 py-2.5 transition-all duration-200 rounded-r",
                     isActiveItem ? "bg-black text-white" : "text-black hover:bg-black/5"
                   )}
                 >
-                  {isExpanded ? (
-                    <ChevronDown className="h-4 w-4" />
-                  ) : (
-                    <ChevronRight className="h-4 w-4" />
-                  )}
-                </button>
+                  <ChevronDown
+                    className={cn(
+                      "h-4 w-4 transition-transform duration-200",
+                      isExpanded ? "rotate-0" : "-rotate-90"
+                    )}
+                  />
+                </CollapsibleTrigger>
               )}
             </div>
-          ) : (
-            // Élément sans href : bouton d'expansion uniquement
-            <button
-              onClick={() => moduleStatus === 'active' ? toggleExpanded(item.title) : undefined}
-              className={cn(
-                // Base styles Vérone
-                "nav-item flex w-full items-center space-x-3 px-3 py-2.5 text-sm transition-all duration-150 ease-out",
-                "border border-transparent",
-                // État par défaut
-                "text-black hover:opacity-70",
-                // État actif si enfant sélectionné
-                isActiveItem && "bg-black text-white border-black",
-                // État désactivé pour modules inactifs
-                moduleStatus !== 'active' && "opacity-60 cursor-not-allowed"
-              )}
-            >
-              <item.icon className="h-5 w-5 flex-shrink-0" />
+
+            {moduleStatus === 'active' && !isCollapsed && (
+              <CollapsibleContent
+                className="overflow-hidden transition-all duration-200 data-[state=closed]:animate-accordion-up data-[state=open]:animate-accordion-down"
+              >
+                <ul className="mt-1 space-y-1 ml-4">
+                  {item.children.map((child, idx) => {
+                    const isChildActive = pathname === child.href ||
+                      (child.href !== '/dashboard' && pathname.startsWith(child.href!))
+
+                    return (
+                      <li
+                        key={child.href}
+                        style={{
+                          animationDelay: `${idx * 50}ms`,
+                          animation: isExpanded ? 'slideIn 200ms ease-out forwards' : 'none'
+                        }}
+                      >
+                        <Link
+                          href={child.href!}
+                          className={cn(
+                            "nav-item flex items-center gap-3 px-3 py-2 text-sm transition-all duration-150 ease-out rounded-md relative",
+                            "text-black hover:opacity-70",
+                            isChildActive && "bg-black text-white"
+                          )}
+                        >
+                          <child.icon className="h-4 w-4 flex-shrink-0" />
+                          <div className="flex flex-col flex-1">
+                            <span className="font-medium">{child.title}</span>
+                            {child.description && (
+                              <span className={cn(
+                                "text-xs opacity-70",
+                                isChildActive ? "text-white" : "text-black"
+                              )}>
+                                {child.description}
+                              </span>
+                            )}
+                          </div>
+                          {child.badge && (
+                            <Badge
+                              variant={child.badgeVariant === "urgent" ? "destructive" : "default"}
+                              className="ml-auto"
+                            >
+                              {child.badge}
+                            </Badge>
+                          )}
+                        </Link>
+                      </li>
+                    )
+                  })}
+                </ul>
+              </CollapsibleContent>
+            )}
+          </Collapsible>
+        ) : (
+          <Link
+            href={moduleStatus === 'active' ? item.href! : '#'}
+            onClick={(e) => moduleStatus !== 'active' && e.preventDefault()}
+            className={cn(
+              "nav-item flex items-center gap-3 px-3 py-2.5 text-sm transition-all duration-150 ease-out rounded-md relative",
+              "text-black hover:opacity-70",
+              isActiveItem && "bg-black text-white",
+              moduleStatus !== 'active' && "opacity-60 cursor-not-allowed",
+              isCollapsed && "justify-center px-2"
+            )}
+          >
+            <item.icon className="h-5 w-5 flex-shrink-0" />
+            {!isCollapsed && (
               <div className="flex flex-col flex-1">
                 <div className="flex items-center justify-between">
                   <span className="font-medium">{item.title}</span>
@@ -407,154 +448,151 @@ export function AppSidebar({ className }: AppSidebarProps) {
                   </span>
                 )}
               </div>
-              {/* Icône d'expansion */}
-              {moduleStatus === 'active' && (
-                <>
-                  {isExpanded ? (
-                    <ChevronDown className="h-4 w-4 flex-shrink-0" />
-                  ) : (
-                    <ChevronRight className="h-4 w-4 flex-shrink-0" />
-                  )}
-                </>
-              )}
-            </button>
-          )
-        ) : (
-          // Élément simple sans enfants
-          <Link
-            href={moduleStatus === 'active' ? item.href! : '#'}
-            onClick={(e) => moduleStatus !== 'active' && e.preventDefault()}
-            className={cn(
-              // Base styles Vérone
-              "nav-item flex w-full items-center space-x-3 px-3 py-2.5 text-sm transition-all duration-150 ease-out",
-              "border border-transparent",
-              // État par défaut
-              "text-black hover:opacity-70",
-              // État actif selon charte
-              isActiveItem && "bg-black text-white border-black",
-              // État désactivé pour modules inactifs
-              moduleStatus !== 'active' && "opacity-60 cursor-not-allowed"
             )}
-          >
-            <item.icon className="h-5 w-5 flex-shrink-0" />
-            <div className="flex flex-col flex-1">
-              <div className="flex items-center justify-between">
-                <span className="font-medium">{item.title}</span>
-                {moduleStatus !== 'active' && (
-                  <PhaseIndicator 
-                    moduleName={moduleName}
-                    variant="badge"
-                    className="ml-2 scale-75"
-                  />
-                )}
-              </div>
-              {item.description && (
-                <span className={cn(
-                  "text-xs opacity-70",
-                  isActiveItem ? "text-white" : "text-black"
-                )}>
-                  {item.description}
-                </span>
-              )}
-            </div>
+            {item.badge && !isCollapsed && (
+              <Badge
+                variant={item.badgeVariant === "urgent" ? "destructive" : "default"}
+                className="ml-auto"
+              >
+                {item.badge}
+              </Badge>
+            )}
           </Link>
         )}
-
-        {/* Sous-menu (enfants) - seulement si module actif */}
-        {item.children && isExpanded && moduleStatus === 'active' && (
-          <ul className="mt-1 space-y-1">
-            {item.children.map((child) => {
-              const isChildActive = pathname === child.href ||
-                (child.href !== '/dashboard' && pathname.startsWith(child.href!))
-
-              return (
-                <li key={child.href}>
-                  <Link
-                    href={child.href!}
-                    className={cn(
-                      // Base styles pour enfants (indentés)
-                      "nav-item flex w-full items-center space-x-3 px-6 py-2 text-sm transition-all duration-150 ease-out",
-                      "border border-transparent ml-4",
-                      // État par défaut enfant
-                      "text-black hover:opacity-70",
-                      // État actif enfant
-                      isChildActive && "bg-black text-white border-black"
-                    )}
-                  >
-                    <child.icon className="h-4 w-4 flex-shrink-0" />
-                    <div className="flex flex-col">
-                      <span className="font-medium">{child.title}</span>
-                      {child.description && (
-                        <span className={cn(
-                          "text-xs opacity-70",
-                          isChildActive ? "text-white" : "text-black"
-                        )}>
-                          {child.description}
-                        </span>
-                      )}
-                    </div>
-                  </Link>
-                </li>
-              )
-            })}
-          </ul>
-        )}
-      </>
+      </li>
     )
 
-    return navElement
+    // Wrap with tooltip if collapsed
+    if (isCollapsed && moduleStatus === 'active') {
+      return (
+        <Tooltip key={item.title} delayDuration={300}>
+          <TooltipTrigger asChild>
+            {navContent}
+          </TooltipTrigger>
+          <TooltipContent side="right" className="font-medium">
+            <p>{item.title}</p>
+            {item.description && <p className="text-xs opacity-70">{item.description}</p>}
+          </TooltipContent>
+        </Tooltip>
+      )
+    }
+
+    return navContent
   }
 
   return (
     <aside className={cn(
-      "flex h-full w-64 flex-col border-r border-black bg-white",
-      className
+      "flex h-full flex-col border-r border-black bg-white transition-all duration-300",
+      isCollapsed ? "w-16" : "w-64"
     )}>
-      {/* Logo Vérone */}
-      <div className="flex h-16 items-center border-b border-black px-6">
-        <Link href="/dashboard" className="flex items-center space-x-2">
-          <div className="logo-black font-logo text-xl font-light tracking-wider">
-            VÉRONE
-          </div>
-        </Link>
+      {/* Logo Vérone + Toggle */}
+      <div className={cn(
+        "flex h-16 items-center border-b border-black transition-all",
+        isCollapsed ? "justify-center px-2" : "justify-between px-6"
+      )}>
+        {!isCollapsed && (
+          <Link href="/dashboard" className="flex items-center space-x-2">
+            <div className="logo-black font-logo text-xl font-light tracking-wider">
+              VÉRONE
+            </div>
+          </Link>
+        )}
+        <SidebarTrigger />
       </div>
 
+      {/* Search Bar */}
+      {!isCollapsed && (
+        <div className="p-4 border-b border-black/10">
+          <div className="relative">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-black/50" />
+            <SidebarInput
+              type="text"
+              placeholder="Rechercher..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="pl-9 pr-8"
+            />
+            {searchQuery && (
+              <button
+                onClick={() => setSearchQuery("")}
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-black/50 hover:text-black"
+              >
+                <X className="h-4 w-4" />
+              </button>
+            )}
+          </div>
+        </div>
+      )}
+
       {/* Navigation principale */}
-      <nav className="flex-1 p-4">
+      <nav className="flex-1 p-4 overflow-auto">
         <ul className="space-y-2">
-          {navItems.map((item) => {
-            return (
-              <li key={item.title}>
-                {renderNavItem(item)}
-              </li>
-            )
-          })}
+          {filteredItems.map((item) => renderNavItem(item))}
         </ul>
       </nav>
 
-      {/* Zone utilisateur */}
+      {/* Zone utilisateur + Theme toggle */}
       <div className="border-t border-black p-4">
-        <div className="flex items-center mb-3">
-          <div className="flex-1">
-            <p className="text-sm font-medium text-black">Admin</p>
-            <p className="text-xs text-black opacity-70">Owner</p>
+        {!isCollapsed && (
+          <div className="flex items-center justify-between mb-3">
+            <div className="flex-1">
+              <p className="text-sm font-medium text-black">Admin</p>
+              <p className="text-xs text-black opacity-70">Owner</p>
+            </div>
+            <button
+              onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}
+              className="p-2 rounded-md hover:bg-black/5 transition-colors"
+            >
+              {theme === 'dark' ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
+            </button>
           </div>
-        </div>
+        )}
 
-        {/* Bouton déconnexion */}
         <button
           onClick={() => {
-            // Supprimer le cookie d'authentification
             document.cookie = 'verone-auth=; path=/; max-age=0'
-            // Redirection vers page d'accueil
             window.location.href = '/'
           }}
-          className="flex w-full items-center space-x-2 px-3 py-2 text-sm text-black opacity-70 hover:opacity-100 hover:bg-black hover:bg-opacity-5 transition-all duration-150"
+          className={cn(
+            "flex w-full items-center space-x-2 px-3 py-2 text-sm text-black opacity-70 hover:opacity-100 hover:bg-black hover:bg-opacity-5 transition-all duration-150 rounded-md",
+            isCollapsed && "justify-center"
+          )}
         >
           <LogOut className="h-4 w-4" />
-          <span>Déconnexion</span>
+          {!isCollapsed && <span>Déconnexion</span>}
         </button>
       </div>
+
+      <style jsx>{`
+        @keyframes slideIn {
+          from {
+            opacity: 0;
+            transform: translateX(-10px);
+          }
+          to {
+            opacity: 1;
+            transform: translateX(0);
+          }
+        }
+
+        @media (prefers-reduced-motion: reduce) {
+          * {
+            animation-duration: 0.01ms !important;
+            animation-iteration-count: 1 !important;
+            transition-duration: 0.01ms !important;
+          }
+        }
+      `}</style>
     </aside>
+  )
+}
+
+export function AppSidebar({ className }: { className?: string }) {
+  return (
+    <TooltipProvider>
+      <SidebarProvider defaultOpen={true}>
+        <SidebarContent />
+      </SidebarProvider>
+    </TooltipProvider>
   )
 }

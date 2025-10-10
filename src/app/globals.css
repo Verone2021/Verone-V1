@@ -13,6 +13,28 @@
   body {
     @apply bg-background text-foreground;
   }
+  :root {
+    /* Sidebar Vérone - Design System Noir & Blanc */
+    --sidebar-background: 0 0% 100%; /* Pure white */
+    --sidebar-foreground: 0 0% 0%; /* Pure black */
+    --sidebar-primary: 0 0% 0%; /* Black */
+    --sidebar-primary-foreground: 0 0% 100%; /* White */
+    --sidebar-accent: 0 0% 0%; /* Black accent */
+    --sidebar-accent-foreground: 0 0% 100%; /* White on black */
+    --sidebar-border: 0 0% 0%; /* Black border */
+    --sidebar-ring: 0 0% 0%; /* Black focus ring */
+  }
+  .dark {
+    /* Dark mode - Inversé pour Vérone */
+    --sidebar-background: 0 0% 0%; /* Black background */
+    --sidebar-foreground: 0 0% 100%; /* White text */
+    --sidebar-primary: 0 0% 100%;
+    --sidebar-primary-foreground: 0 0% 0%;
+    --sidebar-accent: 0 0% 100%;
+    --sidebar-accent-foreground: 0 0% 0%;
+    --sidebar-border: 0 0% 100%;
+    --sidebar-ring: 0 0% 100%;
+  }
 }
 
 /* Centrage renforcé pour la page d'accueil Vérone */

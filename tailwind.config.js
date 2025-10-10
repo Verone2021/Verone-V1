@@ -4,6 +4,8 @@ module.exports = {
     './src/pages/**/*.{js,ts,jsx,tsx,mdx}',
     './src/components/**/*.{js,ts,jsx,tsx,mdx}',
     './src/app/**/*.{js,ts,jsx,tsx,mdx}',
+    // Tremor React content paths
+    './node_modules/@tremor/**/*.{js,ts,jsx,tsx}',
   ],
   theme: {
     extend: {
@@ -92,6 +94,19 @@ module.exports = {
         'scale-in': 'scaleIn 0.5s ease-out forwards',
         'shimmer': 'shimmer 2s ease-in-out infinite',
         'pulse-subtle': 'pulseSubtle 2s ease-in-out infinite',
+        // Animations sidebar collapsible
+        'accordion-down': 'accordion-down 200ms ease-out',
+        'accordion-up': 'accordion-up 200ms ease-out',
+      },
+      keyframes: {
+        'accordion-down': {
+          from: { height: '0' },
+          to: { height: 'var(--radix-accordion-content-height)' },
+        },
+        'accordion-up': {
+          from: { height: 'var(--radix-accordion-content-height)' },
+          to: { height: '0' },
+        },
       },
       transitionDuration: {
         // Durées standards selon design-tokens
