@@ -1,0 +1,6 @@
+A  src/components/business/financial-payment-form.tsx
+A  src/components/providers/react-query-provider.tsx
+A  src/components/ui/form.tsx
+A  src/hooks/use-financial-documents.ts
+A  src/hooks/use-financial-payments.ts
+?? git-status-baseline.txt
