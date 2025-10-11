@@ -23,84 +23,49 @@ export const metadata = {
 // =====================================================================
 
 export default function FacturesPage() {
-  return (
-    <div className="container mx-auto py-8 space-y-6">
-      {/* Header avec actions */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-        <div>
-          <h1 className="text-3xl font-bold tracking-tight">Factures</h1>
-          <p className="text-muted-foreground mt-1">
-            Gestion et suivi des factures clients
-          </p>
-        </div>
-
-        <div className="flex items-center gap-2">
-          {/* Bouton Rapport BFA */}
-          <BFAReportModal />
-
-          {/* Bouton Export (placeholder) */}
-          <Button variant="outline" disabled>
-            <FileText className="mr-2 h-4 w-4" />
-            Exporter
-          </Button>
-        </div>
-      </div>
-
-      {/* Statistiques rapides */}
-      <div className="grid gap-4 md:grid-cols-4">
-        <Card>
-          <CardHeader className="pb-2">
-            <CardDescription>Factures envoyées</CardDescription>
-            <CardTitle className="text-2xl">-</CardTitle>
+  // FEATURE FLAG: Finance module disabled for Phase 1
+  if (!featureFlags.financeEnabled) {
+    return (
+      <div className="container mx-auto py-8">
+        <Card className="border-orange-200 bg-orange-50">
+          <CardHeader>
+            <div className="flex items-center gap-3">
+              <Lock className="h-6 w-6 text-orange-600" />
+              <div>
+                <CardTitle className="text-orange-900">Module Finance - Phase 2</CardTitle>
+                <CardDescription className="text-orange-700">
+                  Ce module sera disponible après le déploiement Phase 1
+                </CardDescription>
+              </div>
+            </div>
           </CardHeader>
           <CardContent>
-            <p className="text-xs text-muted-foreground">Ce mois</p>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader className="pb-2">
-            <CardDescription>En attente</CardDescription>
-            <CardTitle className="text-2xl">-</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <p className="text-xs text-muted-foreground">À encaisser</p>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader className="pb-2">
-            <CardDescription>Payées</CardDescription>
-            <CardTitle className="text-2xl">-</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <p className="text-xs text-muted-foreground">Ce mois</p>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader className="pb-2">
-            <CardDescription>CA encaissé</CardDescription>
-            <CardTitle className="text-2xl">-</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <p className="text-xs text-muted-foreground">Ce mois</p>
+            <div className="space-y-3">
+              <div className="flex items-start gap-2">
+                <AlertCircle className="h-5 w-5 text-orange-600 mt-0.5 flex-shrink-0" />
+                <div>
+                  <p className="font-medium text-orange-900">Phase 1 (Actuelle)</p>
+                  <p className="text-sm text-orange-700">
+                    Sourcing • Catalogue • Organisations • Stock • Commandes
+                  </p>
+                </div>
+              </div>
+              <div className="flex items-start gap-2">
+                <Lock className="h-5 w-5 text-orange-600 mt-0.5 flex-shrink-0" />
+                <div>
+                  <p className="font-medium text-orange-900">Phase 2 (Prochainement)</p>
+                  <p className="text-sm text-orange-700">
+                    Facturation • Trésorerie • Rapprochement bancaire • Intégrations (Qonto, Abby)
+                  </p>
+                </div>
+              </div>
+            </div>
           </CardContent>
         </Card>
       </div>
+    );
+  }
 
-      {/* Liste des factures avec suspense */}
-      <Suspense
-        fallback={
-          <Card>
-            <CardContent className="flex items-center justify-center p-12">
-              <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
-            </CardContent>
-          </Card>
-        }
-      >
-        <InvoicesList />
-      </Suspense>
-    </div>
-  );
+  // CODE ORIGINAL - Ce code sera réactivé en Phase 2
+  return null;
 }
