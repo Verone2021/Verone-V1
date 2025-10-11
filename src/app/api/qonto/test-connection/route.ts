@@ -23,8 +23,8 @@ export async function GET() {
     { status: 503 } // Service Unavailable
   );
 
-  /* CODE ORIGINAL - RÉACTIVATION PHASE 2
-  {
+  // CODE ORIGINAL DISPONIBLE DANS L'HISTORIQUE GIT - RÉACTIVATION PHASE 2
+  /*
   try {
     const qontoClient = getQontoClient();
 
@@ -149,4 +149,5 @@ export async function GET() {
       { status: error.statusCode || 500 }
     );
   }
+  */
 }
