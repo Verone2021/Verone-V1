@@ -40,8 +40,10 @@ export const createClient = () => {
 }
 
 // Client Admin avec Service Role Key pour les opérations d'administration
+// Utilise createSupabaseClient (pas createServerClient) car Service Role Key
+// ne nécessite pas de gestion cookies (server-to-server auth)
 export const createAdminClient = () => {
-  return createSupabaseServerClient<Database>(
+  return createSupabaseClient<Database>(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
     process.env.SUPABASE_SERVICE_ROLE_KEY!,
     {

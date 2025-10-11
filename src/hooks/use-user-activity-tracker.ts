@@ -53,32 +53,58 @@ const currentSession: UserSession = {
   current_page: ''
 }
 
-// Queue pour batch les événements
-const eventQueue: ActivityEvent[] = []
+// Configuration batching (constantes globales OK)
 const BATCH_SIZE = 10
 const BATCH_INTERVAL = 30000 // 30 secondes
 
 export function useUserActivityTracker() {
+  // ✅ FIX: useRef pour eventQueue (stable entre renders)
+  const eventQueueRef = useRef<ActivityEvent[]>([])
   const batchIntervalRef = useRef<NodeJS.Timeout>()
 
-  // Mutation pour logger les activités vers audit_logs
+  // ✅ FIX CRITIQUE: Générer session_id unique (stable pour toute la session)
+  const sessionIdRef = useRef<string>(
+    typeof window !== 'undefined' && typeof crypto !== 'undefined' && crypto.randomUUID
+      ? crypto.randomUUID()
+      : `session-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`
+  )
+
+  // Mutation pour logger les activités vers user_activity_logs (TABLE CORRECTE)
   const logActivityMutation = useSupabaseMutation<boolean>(
     async (supabase, events: ActivityEvent[]) => {
+      // ✅ FIX CRITIQUE: Récupérer user_id de la session
+      const { data: { user } } = await supabase.auth.getUser()
+
+      if (!user) {
+        console.warn('❌ Activity tracking: No authenticated user')
+        return { data: false, error: new Error('No authenticated user') }
+      }
+
       const { error } = await supabase
-        .from('audit_logs')
+        .from('user_activity_logs') // ✅ FIX: Table correcte avec session_id
         .insert(
           events.map(event => ({
+            user_id: user.id,
+            session_id: sessionIdRef.current, // ✅ FIX: session_id pour trigger
             action: event.action,
             table_name: event.table_name,
             record_id: event.record_id,
             old_data: event.old_data,
             new_data: event.new_data,
             severity: event.severity || 'info',
+            page_url: event.metadata?.page_url,
             ip_address: event.metadata?.ip_address,
             user_agent: event.metadata?.user_agent || navigator.userAgent,
+            metadata: event.metadata,
             created_at: new Date().toISOString()
           }))
         )
+
+      if (error) {
+        console.error('❌ Activity tracking insert error:', error)
+      } else {
+        console.log(`✅ Activity tracking: ${events.length} events logged for user ${user.id} (session: ${sessionIdRef.current.substring(0, 8)}...)`)
+      }
 
       return { data: !error, error }
     }
@@ -150,26 +176,27 @@ export function useUserActivityTracker() {
     }
   )
 
-  // Fonction pour flusher la queue
+  // ✅ FIX: Mémoriser flushEventQueue avec useCallback
   const flushEventQueue = useCallback(async () => {
-    if (eventQueue.length === 0) return
+    if (eventQueueRef.current.length === 0) return
 
-    const events = eventQueue.splice(0, eventQueue.length)
+    const events = [...eventQueueRef.current]
+    eventQueueRef.current = []
     await logActivityMutation.mutate(events)
   }, [logActivityMutation])
 
-  // Auto-flush périodique (DÉSACTIVÉ temporairement - boucle infinie)
+  // ✅ FIX: Réactiver auto-flush périodique avec cleanup proper
   useEffect(() => {
-    // TODO: Fixer la boucle infinie avant de réactiver
-    // batchIntervalRef.current = setInterval(flushEventQueue, BATCH_INTERVAL)
+    batchIntervalRef.current = setInterval(flushEventQueue, BATCH_INTERVAL)
 
     return () => {
       if (batchIntervalRef.current) {
         clearInterval(batchIntervalRef.current)
       }
-      // flushEventQueue() // Flush final au démontage
+      // Flush final au démontage (garantir 0 perte)
+      flushEventQueue()
     }
-  }, [])
+  }, [flushEventQueue])
 
   // Tracking automatique des changements de page
   useEffect(() => {
@@ -302,13 +329,13 @@ export function useUserActivityTracker() {
       }
     }
 
-    // Ajouter à la queue
-    eventQueue.push(enrichedEvent)
+    // ✅ FIX: Ajouter à la queue useRef
+    eventQueueRef.current.push(enrichedEvent)
     currentSession.actions_count++
     currentSession.last_activity = Date.now()
 
     // Flush si la queue est pleine
-    if (eventQueue.length >= BATCH_SIZE) {
+    if (eventQueueRef.current.length >= BATCH_SIZE) {
       flushEventQueue()
     }
   }, [flushEventQueue])
