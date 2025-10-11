@@ -30,7 +30,7 @@ export function ProductImageGallery({
   productId,
   productName,
   productStatus,
-  fallbackImage = '/placeholder-product.jpg',
+  fallbackImage = 'https://placehold.co/400x400/f5f5f5/666?text=Produit+Sans+Image',
   className,
   compact = true
 }: ProductImageGalleryProps) {
@@ -147,122 +147,82 @@ export function ProductImageGallery({
                   size="sm"
                   variant="secondary"
                   className="text-xs"
-                  onClick={() => displayImage && handleSetPrimary(displayImage.id, selectedImageIndex)}
+                  onClick={() => handleSetPrimary(displayImage?.id || '', selectedImageIndex)}
                 >
-                  ★ Principal
+                  <RotateCw className="h-3 w-3 mr-1" />
+                  Définir principale
                 </Button>
               )}
             </div>
           </div>
         )}
-      </div>
 
-      {/* Footer avec badges - en dehors de l'image */}
-      <div className="w-[200px] bg-gray-50 border border-t-0 border-gray-200 rounded-b-lg p-2 flex items-center justify-between">
-        <Badge className={cn("text-xs", statusConfig[productStatus]?.className || "bg-gray-600 text-white")}>
-          {statusConfig[productStatus]?.label || "⚪ Statut inconnu"}
-        </Badge>
-
-        {hasImages && displayImage?.is_primary && (
-          <Badge variant="secondary" className="text-xs">
-            ★ Principale
+        {/* Badges status et principale */}
+        <div className="absolute top-2 left-2 flex flex-col gap-1">
+          <Badge
+            variant="secondary"
+            className={cn(
+              "text-[10px] px-1.5 py-0.5 font-medium",
+              statusConfig[productStatus]?.className
+            )}
+          >
+            {statusConfig[productStatus]?.label}
           </Badge>
-        )}
-      </div>
-
-      {/* ✨ Miniatures optimisées avec URL automatique */}
-      {hasImages && images.length > 1 && (
-        <div className="flex flex-wrap gap-1 max-w-[200px]">
-          {images.slice(0, 8).map((image, index) => (
-            <button
-              key={image.id}
-              onClick={() => handleImageSelect(index)}
-              className={cn(
-                "relative w-[48px] h-[48px] overflow-hidden border transition-all rounded group",
-                selectedImageIndex === index ? "border-black ring-1 ring-black" : "border-gray-300 hover:border-gray-500"
-              )}
+          {displayImage?.is_primary && (
+            <Badge
+              variant="secondary"
+              className="text-[10px] px-1.5 py-0.5 bg-black text-white border-black"
             >
-              <Image
-                src={image.public_url || fallbackImage}
-                alt={image.alt_text || `Vue ${index + 1}`}
-                fill
-                className="object-cover transition-transform group-hover:scale-110"
-                sizes="48px"
-                onError={() => {
-                  console.warn(`❌ Erreur chargement miniature: ${image.public_url}`)
-                }}
-              />
-
-              {/* Badge principale minimal */}
-              {image.is_primary && (
-                <div className="absolute -top-1 -right-1 w-3 h-3 bg-black rounded-full flex items-center justify-center">
-                  <span className="text-white text-[8px]">★</span>
-                </div>
-              )}
-            </button>
-          ))}
-
-          {/* Indicateur s'il y a plus d'images */}
-          {images.length > 8 && (
-            <div className="w-[48px] h-[48px] border border-dashed border-gray-300 rounded flex items-center justify-center text-gray-500 text-xs">
-              +{images.length - 8}
-            </div>
+              ★ Principale
+            </Badge>
           )}
         </div>
-      )}
-
-      {/* Message si pas d'images */}
-      {!hasImages && (
-        <div className="text-center py-4 text-gray-500">
-          <div className="text-sm">Aucune image disponible</div>
-        </div>
-      )}
-
-      {/* Actions rapides images */}
-      <div className="space-y-2">
-        {hasImages && (
-          <Button
-            variant="outline"
-            size="sm"
-            className="w-full text-xs"
-            onClick={fetchImages}
-          >
-            <RotateCw className="h-3 w-3 mr-1" />
-            Actualiser
-          </Button>
-        )}
       </div>
 
-      {/* Messages d'état */}
-      {error && (
-        <div className="text-xs text-red-600 bg-red-50 p-2 rounded">
-          ❌ {error}
+      {/* Bouton actualiser compacté */}
+      <div className="flex items-center justify-between px-2">
+        <Button
+          onClick={fetchImages}
+          disabled={loading}
+          variant="outline"
+          size="sm"
+          className="text-xs h-7"
+        >
+          <RotateCw className="h-3 w-3 mr-1" />
+          Actualiser
+        </Button>
+        <div className="text-[10px] text-gray-500">
+          {images.length} image{images.length !== 1 ? 's' : ''} •
+          {images.filter(i => i.is_primary).length} principale •
+          {images.filter(i => !i.is_primary).length} galerie
         </div>
-      )}
+      </div>
 
-      {uploading && (
-        <div className="text-xs text-blue-600 bg-blue-50 p-2 rounded">
-          ⏳ Upload en cours...
-        </div>
-      )}
+      {/* Actions section */}
+      <div className="card-verone p-3">
+        <h3 className="text-xs font-semibold mb-2">Actions</h3>
+        <Button
+          onClick={() => setShowUploadDialog(true)}
+          variant="outline"
+          size="sm"
+          className="w-full text-xs h-7"
+          disabled={uploading}
+        >
+          <Upload className="h-3 w-3 mr-1" />
+          Gérer photos ({galleryImages.length})
+        </Button>
+      </div>
 
-      {/* ✨ Stats optimisées avec helpers du hook */}
-      {hasImages && (
-        <div className="text-xs text-gray-500 text-center">
-          {images.length} image{images.length > 1 ? 's' : ''} •
-          {images.filter(img => img.is_primary).length} principale •
-          {galleryImages.length} galerie
-        </div>
+      {/* Product Image Viewer Modal */}
+      {showImageViewer && displayImage && (
+        <ProductImageViewerModal
+          isOpen={showImageViewer}
+          onClose={() => setShowImageViewer(false)}
+          images={images}
+          initialIndex={selectedImageIndex}
+          productName={productName}
+        />
       )}
-
-      {/* Modal de visualisation des images */}
-      <ProductImageViewerModal
-        isOpen={showImageViewer}
-        onClose={() => setShowImageViewer(false)}
-        images={images}
-        initialImageIndex={selectedImageIndex}
-        productName={productName}
-      />
     </div>
   )
 }

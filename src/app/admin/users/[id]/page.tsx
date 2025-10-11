@@ -104,18 +104,51 @@ async function getUserDetailData(userId: string): Promise<UserDetailData | null>
     const user = users?.find(u => u.id === userId)
     if (!user) return null
 
-    // Calculer les métriques d'analytics (simulées pour le MVP)
+    // Calculer days_since_creation
     const createdDate = new Date(user.created_at)
     const daysSinceCreation = Math.floor(
       (Date.now() - createdDate.getTime()) / (1000 * 60 * 60 * 24)
     )
 
-    // Estimation des métriques basée sur les données disponibles
-    const hasRecentLogin = user.last_sign_in_at &&
-      (Date.now() - new Date(user.last_sign_in_at).getTime()) < (7 * 24 * 60 * 60 * 1000)
+    // ✅ Récupérer VRAIES analytics directement depuis Supabase RPC
+    let realAnalytics = {
+      total_sessions: 0,
+      total_actions: 0,
+      avg_session_duration: 0,
+      most_used_module: null,
+      engagement_score: 0,
+      last_activity: null
+    }
 
-    const loginFrequency: 'high' | 'medium' | 'low' = hasRecentLogin ? 'high' : daysSinceCreation < 30 ? 'medium' : 'low'
-    const engagementScore = hasRecentLogin ? 85 : daysSinceCreation < 30 ? 65 : 35
+    try {
+      // Appel direct RPC Supabase (pas de fetch HTTP)
+      const { data: stats, error: statsError } = await (supabase as any).rpc('get_user_activity_stats', {
+        p_user_id: userId,
+        p_days: 30
+      })
+
+      if (!statsError && stats && stats.length > 0) {
+        realAnalytics = {
+          total_sessions: stats[0].total_sessions || 0,
+          total_actions: stats[0].total_actions || 0,
+          avg_session_duration: stats[0].avg_session_duration || 0,
+          most_used_module: stats[0].most_used_module || null,
+          engagement_score: stats[0].engagement_score || 0,
+          last_activity: stats[0].last_activity || null
+        }
+      } else if (statsError) {
+        console.warn('Erreur RPC get_user_activity_stats:', statsError)
+      }
+    } catch (activityError) {
+      console.warn('Erreur appel RPC activity:', activityError)
+      // Fallback sur données vides si erreur
+    }
+
+    // Déterminer login_frequency basé sur engagement_score réel
+    const loginFrequency: 'high' | 'medium' | 'low' = 
+      realAnalytics.engagement_score > 70 ? 'high' 
+      : realAnalytics.engagement_score > 40 ? 'medium' 
+      : 'low'
 
     return {
       id: user.id,
@@ -131,12 +164,12 @@ async function getUserDetailData(userId: string): Promise<UserDetailData | null>
         updated_at: profile.updated_at
       },
       analytics: {
-        total_sessions: hasRecentLogin ? Math.floor(Math.random() * 50) + 10 : Math.floor(Math.random() * 20) + 1,
-        avg_session_duration: hasRecentLogin ? Math.floor(Math.random() * 45) + 15 : Math.floor(Math.random() * 20) + 5,
-        last_activity: user.last_sign_in_at || null,
+        total_sessions: realAnalytics.total_sessions,
+        avg_session_duration: realAnalytics.avg_session_duration || 0,
+        last_activity: realAnalytics.last_activity || user.last_sign_in_at || null,
         days_since_creation: daysSinceCreation,
         login_frequency: loginFrequency,
-        engagement_score: engagementScore
+        engagement_score: realAnalytics.engagement_score
       }
     }
 
@@ -145,6 +178,9 @@ async function getUserDetailData(userId: string): Promise<UserDetailData | null>
     return null
   }
 }
+
+// ✅ Cache Next.js : revalide toutes les 5 minutes
+export const revalidate = 300
 
 export default async function UserDetailPage({ params }: UserDetailPageProps) {
   // Await params pour Next.js 15

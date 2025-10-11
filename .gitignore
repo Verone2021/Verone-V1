@@ -75,3 +75,14 @@ next-env.d.ts
 .husky/_
 # Playwright MCP Browser screenshots (obsolete)
 .playwright-mcp/
+
+# Project-specific temporary files
+/tests/reports/
+/backups/
+git-status-*.txt
+*-temp.js
+*-temp.ts
+*-old.ts
+*-old.tsx
+*-backup.ts
+*-backup.tsx
