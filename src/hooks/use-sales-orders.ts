@@ -660,9 +660,46 @@ export function useSalesOrders() {
         throw new Error('Impossible de modifier une commande déjà payée')
       }
 
-      // 2. Vérifier la disponibilité du stock pour les nouveaux items
-      const stockCheck = await checkStockAvailability(items)
-      const unavailableItems = stockCheck.filter(item => !item.is_available)
+      // 2. Récupérer les items existants AVANT la vérification du stock
+      const { data: existingItems, error: itemsError } = await supabase
+        .from('sales_order_items')
+        .select('id, product_id, quantity, unit_price_ht, discount_percentage')
+        .eq('sales_order_id', orderId)
+
+      if (itemsError) throw itemsError
+
+      // 3. Vérifier la disponibilité du stock en tenant compte des quantités actuelles
+      const existingItemsMap = new Map(
+        (existingItems || []).map(item => [item.product_id, item])
+      )
+
+      // Pour chaque item demandé, vérifier le stock disponible
+      const stockCheckResults = []
+      for (const item of items) {
+        const availableStockData = await getAvailableStock(item.product_id)
+        const availableStock = availableStockData.stock_available || 0
+
+        // Quantité actuellement allouée dans cette commande
+        const currentlyAllocated = existingItemsMap.get(item.product_id)?.quantity || 0
+
+        // Stock disponible réel = stock disponible + quantité actuellement allouée
+        const effectiveAvailableStock = availableStock + currentlyAllocated
+
+        // Quantité additionnelle demandée
+        const additionalQuantityNeeded = item.quantity - currentlyAllocated
+
+        stockCheckResults.push({
+          product_id: item.product_id,
+          requested_quantity: item.quantity,
+          currently_allocated: currentlyAllocated,
+          available_stock: availableStock,
+          effective_available_stock: effectiveAvailableStock,
+          additional_needed: additionalQuantityNeeded,
+          is_available: effectiveAvailableStock >= item.quantity
+        })
+      }
+
+      const unavailableItems = stockCheckResults.filter(item => !item.is_available)
 
       if (unavailableItems.length > 0) {
         const itemNames = await Promise.all(
@@ -672,26 +709,14 @@ export function useSalesOrders() {
               .select('name')
               .eq('id', item.product_id)
               .single()
-            return product?.name || item.product_id
+            return `${product?.name || item.product_id} (demandé: ${item.requested_quantity}, disponible: ${item.effective_available_stock})`
           })
         )
 
         throw new Error(`Stock insuffisant pour: ${itemNames.join(', ')}`)
       }
 
-      // 3. Récupérer les items existants pour faire le diff
-      const { data: existingItems, error: itemsError } = await supabase
-        .from('sales_order_items')
-        .select('id, product_id, quantity, unit_price_ht, discount_percentage')
-        .eq('sales_order_id', orderId)
-
-      if (itemsError) throw itemsError
-
-      // 4. Calculer le diff des items
-      const existingItemsMap = new Map(
-        (existingItems || []).map(item => [item.product_id, item])
-      )
-
+      // 4. Calculer le diff des items (existingItems et existingItemsMap déjà créés ci-dessus)
       const newItemsMap = new Map(
         items.map(item => [item.product_id, item])
       )
@@ -808,7 +833,7 @@ export function useSalesOrders() {
     } finally {
       setLoading(false)
     }
-  }, [supabase, toast, fetchOrders, currentOrder, fetchOrder, checkStockAvailability])
+  }, [supabase, toast, fetchOrders, currentOrder, fetchOrder, getAvailableStock])
 
   // Changer le statut d'une commande
   const updateStatus = useCallback(async (orderId: string, newStatus: SalesOrderStatus) => {
