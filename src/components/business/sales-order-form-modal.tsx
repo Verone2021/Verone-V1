@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { Plus, X, Search, AlertTriangle } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -44,12 +44,33 @@ interface OrderItem {
 }
 
 interface SalesOrderFormModalProps {
+  mode?: 'create' | 'edit'
+  orderId?: string
+  open?: boolean
+  onOpenChange?: (open: boolean) => void
   onSuccess?: () => void
 }
 
-export function SalesOrderFormModal({ onSuccess }: SalesOrderFormModalProps) {
-  const [open, setOpen] = useState(false)
+export function SalesOrderFormModal({
+  mode = 'create',
+  orderId,
+  open: controlledOpen,
+  onOpenChange,
+  onSuccess
+}: SalesOrderFormModalProps) {
+  const [internalOpen, setInternalOpen] = useState(false)
+
+  // Utiliser l'état contrôlé si fourni, sinon l'état interne
+  const open = controlledOpen !== undefined ? controlledOpen : internalOpen
+  const setOpen = (value: boolean) => {
+    if (controlledOpen !== undefined) {
+      onOpenChange?.(value)
+    } else {
+      setInternalOpen(value)
+    }
+  }
   const [loading, setLoading] = useState(false)
+  const [loadingOrder, setLoadingOrder] = useState(false)
   const supabase = createClient()
 
   // Form data
@@ -68,8 +89,112 @@ export function SalesOrderFormModal({ onSuccess }: SalesOrderFormModalProps) {
 
   // Hooks
   const { products } = useProducts({ search: productSearchTerm })
-  const { createOrder } = useSalesOrders()
+  const { createOrder, updateOrderWithItems, fetchOrder } = useSalesOrders()
   const { getAvailableStock } = useStockMovements()
+
+  // Charger la commande existante en mode édition
+  const loadExistingOrder = async (orderIdToLoad: string) => {
+    setLoadingOrder(true)
+    try {
+      const order = await fetchOrder(orderIdToLoad)
+      if (!order) throw new Error('Commande non trouvée')
+
+      // Construire l'objet customer unifié
+      const customer: UnifiedCustomer = order.customer_type === 'organization'
+        ? {
+            id: order.customer_id,
+            type: 'professional' as const,
+            name: order.organisations?.name || '',
+            email: order.organisations?.email,
+            phone: order.organisations?.phone,
+            address: [
+              order.organisations?.address_line1,
+              order.organisations?.address_line2,
+              order.organisations?.postal_code,
+              order.organisations?.city
+            ].filter(Boolean).join(', '),
+            payment_terms: null,
+            prepayment_required: false
+          }
+        : {
+            id: order.customer_id,
+            type: 'individual' as const,
+            name: `${order.individual_customers?.first_name} ${order.individual_customers?.last_name}`,
+            email: order.individual_customers?.email,
+            phone: order.individual_customers?.phone,
+            address: [
+              order.individual_customers?.address_line1,
+              order.individual_customers?.address_line2,
+              order.individual_customers?.postal_code,
+              order.individual_customers?.city
+            ].filter(Boolean).join(', '),
+            payment_terms: null,
+            prepayment_required: false
+          }
+
+      setSelectedCustomer(customer)
+
+      // Charger les données de la commande
+      setExpectedDeliveryDate(order.expected_delivery_date || '')
+      setShippingAddress(
+        order.shipping_address
+          ? (typeof order.shipping_address === 'string'
+              ? order.shipping_address
+              : order.shipping_address.address || '')
+          : ''
+      )
+      setBillingAddress(
+        order.billing_address
+          ? (typeof order.billing_address === 'string'
+              ? order.billing_address
+              : order.billing_address.address || '')
+          : ''
+      )
+      setNotes(order.notes || '')
+
+      // Transformer les items de la commande en OrderItem[]
+      const loadedItems: OrderItem[] = await Promise.all(
+        (order.sales_order_items || []).map(async (item) => {
+          const stockData = await getAvailableStock(item.product_id)
+
+          return {
+            id: item.id,
+            product_id: item.product_id,
+            quantity: item.quantity,
+            unit_price_ht: item.unit_price_ht,
+            discount_percentage: item.discount_percentage,
+            expected_delivery_date: item.expected_delivery_date,
+            notes: item.notes,
+            product: item.products ? {
+              id: item.products.id,
+              name: item.products.name,
+              sku: item.products.sku,
+              primary_image_url: null,
+              stock_quantity: item.products.stock_quantity
+            } : undefined,
+            availableStock: stockData?.stock_available || 0,
+            pricing_source: 'base_catalog' as const,
+            original_price_ht: item.unit_price_ht,
+            auto_calculated: false
+          }
+        })
+      )
+
+      setItems(loadedItems)
+      await checkAllStockAvailability(loadedItems)
+    } catch (error) {
+      console.error('Erreur lors du chargement de la commande:', error)
+    } finally {
+      setLoadingOrder(false)
+    }
+  }
+
+  // Effet : charger la commande en mode édition quand la modal s'ouvre
+  useEffect(() => {
+    if (open && mode === 'edit' && orderId) {
+      loadExistingOrder(orderId)
+    }
+  }, [open, mode, orderId])
 
   // Calculs totaux
   const subtotalHT = items.reduce((sum, item) => {
@@ -286,31 +411,47 @@ export function SalesOrderFormModal({ onSuccess }: SalesOrderFormModalProps) {
         autoPaymentTerms = `${selectedCustomer.payment_terms} jours`
       }
 
-      const orderData: CreateSalesOrderData = {
-        customer_id: selectedCustomer.id,
-        customer_type: selectedCustomer.type === 'professional' ? 'organization' : 'individual',
-        expected_delivery_date: expectedDeliveryDate || undefined,
-        shipping_address: shippingAddress ? JSON.parse(`{"address": "${shippingAddress}"}`) : undefined,
-        billing_address: billingAddress ? JSON.parse(`{"address": "${billingAddress}"}`) : undefined,
-        payment_terms: autoPaymentTerms || undefined,
-        notes: notes || undefined,
-        items: items.map(item => ({
-          product_id: item.product_id,
-          quantity: item.quantity,
-          unit_price_ht: item.unit_price_ht,
-          discount_percentage: item.discount_percentage,
-          expected_delivery_date: item.expected_delivery_date,
-          notes: item.notes
-        }))
-      }
+      const itemsData = items.map(item => ({
+        product_id: item.product_id,
+        quantity: item.quantity,
+        unit_price_ht: item.unit_price_ht,
+        discount_percentage: item.discount_percentage,
+        expected_delivery_date: item.expected_delivery_date,
+        notes: item.notes
+      }))
 
-      await createOrder(orderData)
+      if (mode === 'edit' && orderId) {
+        // Mode édition : mettre à jour la commande existante
+        const updateData = {
+          expected_delivery_date: expectedDeliveryDate || undefined,
+          shipping_address: shippingAddress ? JSON.parse(`{"address": "${shippingAddress}"}`) : undefined,
+          billing_address: billingAddress ? JSON.parse(`{"address": "${billingAddress}"}`) : undefined,
+          payment_terms: autoPaymentTerms || undefined,
+          notes: notes || undefined
+        }
+
+        await updateOrderWithItems(orderId, updateData, itemsData)
+      } else {
+        // Mode création : créer une nouvelle commande
+        const orderData: CreateSalesOrderData = {
+          customer_id: selectedCustomer.id,
+          customer_type: selectedCustomer.type === 'professional' ? 'organization' : 'individual',
+          expected_delivery_date: expectedDeliveryDate || undefined,
+          shipping_address: shippingAddress ? JSON.parse(`{"address": "${shippingAddress}"}`) : undefined,
+          billing_address: billingAddress ? JSON.parse(`{"address": "${billingAddress}"}`) : undefined,
+          payment_terms: autoPaymentTerms || undefined,
+          notes: notes || undefined,
+          items: itemsData
+        }
+
+        await createOrder(orderData)
+      }
 
       resetForm()
       setOpen(false)
       onSuccess?.()
     } catch (error) {
-      console.error('Erreur lors de la création:', error)
+      console.error(`Erreur lors de ${mode === 'edit' ? 'la mise à jour' : 'la création'}:`, error)
     } finally {
       setLoading(false)
     }
@@ -326,11 +467,22 @@ export function SalesOrderFormModal({ onSuccess }: SalesOrderFormModalProps) {
       </DialogTrigger>
       <DialogContent className="max-w-6xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle>Nouvelle Commande Client</DialogTitle>
+          <DialogTitle>
+            {mode === 'edit' ? 'Modifier la Commande Client' : 'Nouvelle Commande Client'}
+          </DialogTitle>
           <DialogDescription>
-            Créer une nouvelle commande client avec vérification du stock
+            {mode === 'edit'
+              ? 'Modifier la commande existante (items, quantités, adresses, dates)'
+              : 'Créer une nouvelle commande client avec vérification du stock'
+            }
           </DialogDescription>
         </DialogHeader>
+
+        {loadingOrder && (
+          <div className="flex justify-center py-8">
+            <div className="text-gray-500">Chargement de la commande...</div>
+          </div>
+        )}
 
         <form onSubmit={handleSubmit} className="space-y-6">
           {/* Alertes de stock */}
@@ -357,8 +509,13 @@ export function SalesOrderFormModal({ onSuccess }: SalesOrderFormModalProps) {
               <CustomerSelector
                 selectedCustomer={selectedCustomer}
                 onCustomerChange={handleCustomerChange}
-                disabled={loading}
+                disabled={loading || mode === 'edit'}
               />
+              {mode === 'edit' && (
+                <p className="text-sm text-gray-500 italic">
+                  Le client ne peut pas être modifié pour une commande existante
+                </p>
+              )}
 
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
@@ -660,9 +817,12 @@ export function SalesOrderFormModal({ onSuccess }: SalesOrderFormModalProps) {
             </Button>
             <Button
               type="submit"
-              disabled={loading || !selectedCustomer || items.length === 0}
+              disabled={loading || loadingOrder || !selectedCustomer || items.length === 0}
             >
-              {loading ? 'Création...' : 'Créer la commande'}
+              {loading
+                ? (mode === 'edit' ? 'Mise à jour...' : 'Création...')
+                : (mode === 'edit' ? 'Mettre à jour la commande' : 'Créer la commande')
+              }
             </Button>
           </div>
         </form>

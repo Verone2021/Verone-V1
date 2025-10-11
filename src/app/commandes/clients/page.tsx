@@ -69,6 +69,8 @@ export default function SalesOrdersPage() {
   const [workflowFilter, setWorkflowFilter] = useState<string>('all')
   const [selectedOrder, setSelectedOrder] = useState<SalesOrder | null>(null)
   const [showOrderDetail, setShowOrderDetail] = useState(false)
+  const [editingOrderId, setEditingOrderId] = useState<string | null>(null)
+  const [showEditModal, setShowEditModal] = useState(false)
 
   useEffect(() => {
     const filters = {
@@ -144,6 +146,11 @@ export default function SalesOrdersPage() {
   const openOrderDetail = (order: SalesOrder) => {
     setSelectedOrder(order)
     setShowOrderDetail(true)
+  }
+
+  const openEditOrder = (orderId: string) => {
+    setEditingOrderId(orderId)
+    setShowEditModal(true)
   }
 
   return (
@@ -367,10 +374,7 @@ export default function SalesOrdersPage() {
                               <Button
                                 variant="outline"
                                 size="sm"
-                                onClick={() => {
-                                  // TODO: Ouvrir SalesOrderFormModal en mode édition
-                                  console.log('Modifier commande:', order.id)
-                                }}
+                                onClick={() => openEditOrder(order.id)}
                                 title="Modifier la commande"
                               >
                                 <Edit className="h-4 w-4" />
@@ -446,6 +450,27 @@ export default function SalesOrdersPage() {
           fetchStats()
         }}
       />
+
+      {/* Modal Édition Commande */}
+      {editingOrderId && (
+        <SalesOrderFormModal
+          mode="edit"
+          orderId={editingOrderId}
+          open={showEditModal}
+          onOpenChange={(value) => {
+            setShowEditModal(value)
+            if (!value) {
+              setEditingOrderId(null)
+            }
+          }}
+          onSuccess={() => {
+            setShowEditModal(false)
+            setEditingOrderId(null)
+            fetchOrders()
+            fetchStats()
+          }}
+        />
+      )}
     </div>
   )
 }

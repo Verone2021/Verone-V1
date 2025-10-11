@@ -605,7 +605,7 @@ export function useSalesOrders() {
     }
   }, [supabase, toast, fetchOrders, checkStockAvailability, getAvailableStock])
 
-  // Mettre à jour une commande
+  // Mettre à jour une commande (métadonnées uniquement)
   const updateOrder = useCallback(async (orderId: string, data: UpdateSalesOrderData) => {
     setLoading(true)
     try {
@@ -637,6 +637,178 @@ export function useSalesOrders() {
       setLoading(false)
     }
   }, [supabase, toast, fetchOrders, currentOrder, fetchOrder])
+
+  // Mettre à jour une commande avec ses items (édition complète)
+  const updateOrderWithItems = useCallback(async (
+    orderId: string,
+    data: UpdateSalesOrderData,
+    items: CreateSalesOrderItemData[]
+  ) => {
+    setLoading(true)
+    try {
+      // 1. Vérifier que la commande n'est pas payée (règle métier stricte)
+      const { data: existingOrder, error: fetchError } = await supabase
+        .from('sales_orders')
+        .select('payment_status, status, order_number')
+        .eq('id', orderId)
+        .single()
+
+      if (fetchError) throw fetchError
+      if (!existingOrder) throw new Error('Commande non trouvée')
+
+      if (existingOrder.payment_status === 'paid') {
+        throw new Error('Impossible de modifier une commande déjà payée')
+      }
+
+      // 2. Vérifier la disponibilité du stock pour les nouveaux items
+      const stockCheck = await checkStockAvailability(items)
+      const unavailableItems = stockCheck.filter(item => !item.is_available)
+
+      if (unavailableItems.length > 0) {
+        const itemNames = await Promise.all(
+          unavailableItems.map(async (item) => {
+            const { data: product } = await supabase
+              .from('products')
+              .select('name')
+              .eq('id', item.product_id)
+              .single()
+            return product?.name || item.product_id
+          })
+        )
+
+        throw new Error(`Stock insuffisant pour: ${itemNames.join(', ')}`)
+      }
+
+      // 3. Récupérer les items existants pour faire le diff
+      const { data: existingItems, error: itemsError } = await supabase
+        .from('sales_order_items')
+        .select('id, product_id, quantity, unit_price_ht, discount_percentage')
+        .eq('sales_order_id', orderId)
+
+      if (itemsError) throw itemsError
+
+      // 4. Calculer le diff des items
+      const existingItemsMap = new Map(
+        (existingItems || []).map(item => [item.product_id, item])
+      )
+
+      const newItemsMap = new Map(
+        items.map(item => [item.product_id, item])
+      )
+
+      // Items à supprimer (présents dans existing mais pas dans new)
+      const itemsToDelete = (existingItems || []).filter(
+        item => !newItemsMap.has(item.product_id)
+      )
+
+      // Items à ajouter (présents dans new mais pas dans existing)
+      const itemsToAdd = items.filter(
+        item => !existingItemsMap.has(item.product_id)
+      )
+
+      // Items à mettre à jour (présents dans les deux, mais modifiés)
+      const itemsToUpdate = items.filter(newItem => {
+        const existingItem = existingItemsMap.get(newItem.product_id)
+        if (!existingItem) return false
+
+        return (
+          existingItem.quantity !== newItem.quantity ||
+          existingItem.unit_price_ht !== newItem.unit_price_ht ||
+          (existingItem.discount_percentage || 0) !== (newItem.discount_percentage || 0)
+        )
+      })
+
+      // 5. Supprimer les items obsolètes
+      if (itemsToDelete.length > 0) {
+        const { error: deleteError } = await supabase
+          .from('sales_order_items')
+          .delete()
+          .in('id', itemsToDelete.map(item => item.id))
+
+        if (deleteError) throw deleteError
+      }
+
+      // 6. Ajouter les nouveaux items
+      if (itemsToAdd.length > 0) {
+        const { error: insertError } = await supabase
+          .from('sales_order_items')
+          .insert(
+            itemsToAdd.map(item => ({
+              sales_order_id: orderId,
+              product_id: item.product_id,
+              quantity: item.quantity,
+              unit_price_ht: item.unit_price_ht,
+              discount_percentage: item.discount_percentage || 0,
+              expected_delivery_date: item.expected_delivery_date,
+              notes: item.notes
+            }))
+          )
+
+        if (insertError) throw insertError
+      }
+
+      // 7. Mettre à jour les items modifiés
+      for (const itemToUpdate of itemsToUpdate) {
+        const existingItem = existingItemsMap.get(itemToUpdate.product_id)
+        if (!existingItem) continue
+
+        const { error: updateItemError } = await supabase
+          .from('sales_order_items')
+          .update({
+            quantity: itemToUpdate.quantity,
+            unit_price_ht: itemToUpdate.unit_price_ht,
+            discount_percentage: itemToUpdate.discount_percentage || 0,
+            expected_delivery_date: itemToUpdate.expected_delivery_date,
+            notes: itemToUpdate.notes
+          })
+          .eq('id', existingItem.id)
+
+        if (updateItemError) throw updateItemError
+      }
+
+      // 8. Recalculer les totaux de la commande
+      const totalHT = items.reduce((sum, item) => {
+        const itemTotal = item.quantity * item.unit_price_ht * (1 - (item.discount_percentage || 0) / 100)
+        return sum + itemTotal
+      }, 0)
+
+      const totalTTC = totalHT * (1 + 0.2) // TVA par défaut
+
+      // 9. Mettre à jour les métadonnées et les totaux de la commande
+      const { error: updateOrderError } = await supabase
+        .from('sales_orders')
+        .update({
+          ...data,
+          total_ht: totalHT,
+          total_ttc: totalTTC
+        })
+        .eq('id', orderId)
+
+      if (updateOrderError) throw updateOrderError
+
+      toast({
+        title: "Succès",
+        description: `Commande ${existingOrder.order_number} mise à jour avec succès`
+      })
+
+      await fetchOrders()
+      if (currentOrder?.id === orderId) {
+        await fetchOrder(orderId)
+      }
+
+      return true
+    } catch (error: any) {
+      console.error('Erreur lors de la mise à jour de la commande:', error)
+      toast({
+        title: "Erreur",
+        description: error.message || "Impossible de mettre à jour la commande",
+        variant: "destructive"
+      })
+      throw error
+    } finally {
+      setLoading(false)
+    }
+  }, [supabase, toast, fetchOrders, currentOrder, fetchOrder, checkStockAvailability])
 
   // Changer le statut d'une commande
   const updateStatus = useCallback(async (orderId: string, newStatus: SalesOrderStatus) => {
@@ -863,6 +1035,7 @@ export function useSalesOrders() {
     fetchStats,
     createOrder,
     updateOrder,
+    updateOrderWithItems,
     updateStatus,
     shipItems,
     deleteOrder,
