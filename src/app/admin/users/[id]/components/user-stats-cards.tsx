@@ -3,6 +3,8 @@
  *
  * Composant affichant les métriques clés d'engagement et d'activité
  * de l'utilisateur sous forme de cartes d'information.
+ *
+ * Chaque carte affiche un badge indiquant si les données sont RÉELLES ou MOCK.
  */
 
 "use client"
@@ -10,6 +12,7 @@
 import React from 'react'
 import { Clock, Activity, Calendar, TrendingUp, Users, Target } from 'lucide-react'
 import { UserDetailData } from '../page'
+import { DataStatusBadge } from '@/components/ui/data-status-badge'
 
 interface UserStatsCardsProps {
   user: UserDetailData
@@ -38,7 +41,8 @@ export function UserStatsCards({ user }: UserStatsCardsProps) {
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
       {/* Sessions totales */}
-      <div className="bg-white border border-black p-4">
+      <div className="bg-white border border-black p-4 relative">
+        <DataStatusBadge type="real" className="absolute top-2 right-2" />
         <div className="flex items-center justify-between">
           <div className="space-y-1">
             <p className="text-sm text-black opacity-60">Sessions totales</p>
@@ -56,7 +60,8 @@ export function UserStatsCards({ user }: UserStatsCardsProps) {
       </div>
 
       {/* Durée moyenne session */}
-      <div className="bg-white border border-black p-4">
+      <div className="bg-white border border-black p-4 relative">
+        <DataStatusBadge type="mock" className="absolute top-2 right-2" />
         <div className="flex items-center justify-between">
           <div className="space-y-1">
             <p className="text-sm text-black opacity-60">Durée moy. session</p>
@@ -74,7 +79,8 @@ export function UserStatsCards({ user }: UserStatsCardsProps) {
       </div>
 
       {/* Fréquence de connexion */}
-      <div className="bg-white border border-black p-4">
+      <div className="bg-white border border-black p-4 relative">
+        <DataStatusBadge type="real" className="absolute top-2 right-2" />
         <div className="flex items-center justify-between">
           <div className="space-y-1">
             <p className="text-sm text-black opacity-60">Fréquence</p>
@@ -92,7 +98,8 @@ export function UserStatsCards({ user }: UserStatsCardsProps) {
       </div>
 
       {/* Score d'engagement */}
-      <div className="bg-white border border-black p-4">
+      <div className="bg-white border border-black p-4 relative">
+        <DataStatusBadge type="real" className="absolute top-2 right-2" />
         <div className="flex items-center justify-between">
           <div className="space-y-1">
             <p className="text-sm text-black opacity-60">Engagement</p>
@@ -110,7 +117,8 @@ export function UserStatsCards({ user }: UserStatsCardsProps) {
       </div>
 
       {/* Ancienneté du compte */}
-      <div className="bg-white border border-black p-4">
+      <div className="bg-white border border-black p-4 relative">
+        <DataStatusBadge type="real" className="absolute top-2 right-2" />
         <div className="flex items-center justify-between">
           <div className="space-y-1">
             <p className="text-sm text-black opacity-60">Ancienneté</p>
@@ -128,7 +136,8 @@ export function UserStatsCards({ user }: UserStatsCardsProps) {
       </div>
 
       {/* Statut d'activité */}
-      <div className="bg-white border border-black p-4">
+      <div className="bg-white border border-black p-4 relative">
+        <DataStatusBadge type="real" className="absolute top-2 right-2" />
         <div className="flex items-center justify-between">
           <div className="space-y-1">
             <p className="text-sm text-black opacity-60">Statut</p>
@@ -149,7 +158,8 @@ export function UserStatsCards({ user }: UserStatsCardsProps) {
       </div>
 
       {/* Type de compte */}
-      <div className="bg-white border border-black p-4">
+      <div className="bg-white border border-black p-4 relative">
+        <DataStatusBadge type="real" className="absolute top-2 right-2" />
         <div className="flex items-center justify-between">
           <div className="space-y-1">
             <p className="text-sm text-black opacity-60">Type compte</p>
@@ -167,7 +177,8 @@ export function UserStatsCards({ user }: UserStatsCardsProps) {
       </div>
 
       {/* Score de productivité (calculé) */}
-      <div className="bg-white border border-black p-4">
+      <div className="bg-white border border-black p-4 relative">
+        <DataStatusBadge type="mock" className="absolute top-2 right-2" />
         <div className="flex items-center justify-between">
           <div className="space-y-1">
             <p className="text-sm text-black opacity-60">Productivité</p>
