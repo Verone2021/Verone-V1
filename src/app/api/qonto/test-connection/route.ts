@@ -2,14 +2,29 @@
 // Qonto Test Connection API Route
 // Date: 2025-10-11
 // Description: Endpoint test pour vérifier connexion Qonto API
+// STATUS: DÉSACTIVÉ Phase 1 (Finance module disabled)
 // =====================================================================
 
 import { NextResponse } from 'next/server';
-import { getQontoClient } from '@/lib/qonto';
+// import { getQontoClient } from '@/lib/qonto'; // Désactivé Phase 1
 
 export const dynamic = 'force-dynamic';
 
 export async function GET() {
+  // FEATURE FLAG: Finance module disabled for Phase 1
+  return NextResponse.json(
+    {
+      success: false,
+      disabled: true,
+      message: 'Module Finance désactivé pour déploiement Phase 1',
+      phase: 'Phase 1 - Catalogue/Stock/Commandes uniquement',
+      availability: 'Module Qonto disponible en Phase 2',
+    },
+    { status: 503 } // Service Unavailable
+  );
+
+  /* CODE ORIGINAL - RÉACTIVATION PHASE 2
+  {
   try {
     const qontoClient = getQontoClient();
 

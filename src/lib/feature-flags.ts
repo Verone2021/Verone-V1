@@ -37,6 +37,12 @@ export interface FeatureFlags {
   photoUploadWorkflowEnabled: boolean
   googleMerchantSyncEnabled: boolean
   mcpMonitoringEnabled: boolean
+
+  // Modules Finance (Phase 2)
+  financeEnabled: boolean
+  facturationEnabled: boolean
+  tresorerieEnabled: boolean
+  rapprochementEnabled: boolean
 }
 
 /**
@@ -71,7 +77,13 @@ export const featureFlags: FeatureFlags = {
   // Features spécifiques
   photoUploadWorkflowEnabled: process.env.NEXT_PUBLIC_PHOTO_UPLOAD_WORKFLOW_ENABLED === 'true',
   googleMerchantSyncEnabled: process.env.NEXT_PUBLIC_GOOGLE_MERCHANT_SYNC_ENABLED === 'true',
-  mcpMonitoringEnabled: process.env.NEXT_PUBLIC_MCP_MONITORING_ENABLED === 'true'
+  mcpMonitoringEnabled: process.env.NEXT_PUBLIC_MCP_MONITORING_ENABLED === 'true',
+
+  // Modules Finance (Phase 2) - DÉSACTIVÉS pour Phase 1 déploiement
+  financeEnabled: process.env.NEXT_PUBLIC_FINANCE_ENABLED === 'true' || false,
+  facturationEnabled: process.env.NEXT_PUBLIC_FACTURATION_ENABLED === 'true' || false,
+  tresorerieEnabled: process.env.NEXT_PUBLIC_TRESORERIE_ENABLED === 'true' || false,
+  rapprochementEnabled: process.env.NEXT_PUBLIC_RAPPROCHEMENT_ENABLED === 'true' || false
 }
 
 /**

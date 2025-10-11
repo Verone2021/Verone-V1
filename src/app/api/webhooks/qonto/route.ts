@@ -2,12 +2,14 @@
 // Qonto Webhook Handler
 // Date: 2025-10-11
 // Description: Réception webhooks Qonto temps réel + auto-matching
+// STATUS: DÉSACTIVÉ Phase 1 (Finance module disabled)
 // =====================================================================
 
 import { NextRequest, NextResponse } from 'next/server';
-import { createClient } from '@/lib/supabase/server';
-import type { QontoWebhookPayload } from '@/lib/qonto/types';
-import crypto from 'crypto';
+// DÉSACTIVÉ PHASE 1
+// import { createClient } from '@/lib/supabase/server';
+// import type { QontoWebhookPayload } from '@/lib/qonto/types';
+// import crypto from 'crypto';
 
 export const dynamic = 'force-dynamic';
 
@@ -47,6 +49,18 @@ function validateWebhookSignature(
 // =====================================================================
 
 export async function POST(request: NextRequest) {
+  // FEATURE FLAG: Finance module disabled for Phase 1
+  return NextResponse.json(
+    {
+      success: false,
+      disabled: true,
+      message: 'Webhook Qonto désactivé pour déploiement Phase 1',
+      phase: 'Phase 1 - Finance module en Phase 2',
+    },
+    { status: 503 }
+  );
+
+  /* CODE ORIGINAL - RÉACTIVATION PHASE 2
   try {
     const rawBody = await request.text();
     const signature = request.headers.get('x-qonto-signature') || '';

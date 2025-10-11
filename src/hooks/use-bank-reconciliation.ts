@@ -2,11 +2,13 @@
 // Hook: Bank Reconciliation
 // Date: 2025-10-11
 // Description: Gestion rapprochement bancaire - transactions unmatched + factures unpaid
+// STATUS: DÉSACTIVÉ Phase 1 (returns mocks uniquement)
 // =====================================================================
 
 import { useState, useEffect } from 'react';
 import { createClient } from '@/lib/supabase/client';
 import type { BankTransaction } from '@/lib/qonto/types';
+import { featureFlags } from '@/lib/feature-flags';
 
 // =====================================================================
 // TYPES
@@ -57,6 +59,29 @@ export function useBankReconciliation() {
   const [stats, setStats] = useState<ReconciliationStats | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+
+  // ===================================================================
+  // FEATURE FLAG: FINANCE MODULE DISABLED (Phase 1)
+  // ===================================================================
+
+  if (!featureFlags.financeEnabled) {
+    // Return mocks immédiatement pour éviter appels API/Supabase
+    return {
+      unmatchedTransactions: [],
+      unpaidInvoices: [],
+      stats: {
+        total_unmatched: 0,
+        total_amount_pending: 0,
+        auto_match_rate: 0,
+        manual_review_count: 0
+      },
+      loading: false,
+      error: 'Module Finance désactivé (Phase 1)',
+      matchTransaction: async () => {},
+      ignoreTransaction: async () => {},
+      refresh: () => {}
+    }
+  }
 
   // ===================================================================
   // FETCH DATA

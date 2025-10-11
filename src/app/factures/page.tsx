@@ -2,14 +2,12 @@
 // Page: Liste des Factures
 // Date: 2025-10-11
 // Description: Page principale gestion factures avec filtres et pagination
+// STATUS: DÉSACTIVÉ Phase 1 - Placeholder uniquement
 // =====================================================================
 
-import { Suspense } from 'react';
-import { InvoicesList } from '@/components/business/invoices-list';
-import { BFAReportModal } from '@/components/business/bfa-report-modal';
-import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { FileText, TrendingUp, Loader2 } from 'lucide-react';
+import { AlertCircle, Lock } from 'lucide-react';
+import { featureFlags } from '@/lib/feature-flags';
 
 // =====================================================================
 // METADATA

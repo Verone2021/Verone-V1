@@ -7,11 +7,14 @@
  * - Factures fournisseurs (supplier_invoice)
  * - Dépenses (expense)
  * - Avoirs (credit_notes)
+ *
+ * STATUS: DÉSACTIVÉ Phase 1 (returns mocks uniquement)
  */
 
 import { useState, useEffect } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import { toast } from 'react-hot-toast'
+import { featureFlags } from '@/lib/feature-flags'
 
 // =====================================================================
 // TYPES
@@ -102,6 +105,23 @@ export function useFinancialDocuments(filters?: FinancialDocumentFilters) {
   const [error, setError] = useState<string | null>(null)
 
   const supabase = createClient()
+
+  // ===================================================================
+  // FEATURE FLAG: FINANCE MODULE DISABLED (Phase 1)
+  // ===================================================================
+
+  if (!featureFlags.financeEnabled) {
+    // Return mocks immédiatement
+    return {
+      documents: [],
+      loading: false,
+      error: 'Module Finance désactivé (Phase 1)',
+      createDocument: async () => {},
+      updateDocument: async () => {},
+      deleteDocument: async () => {},
+      refresh: () => {}
+    }
+  }
 
   // Fetch documents avec filtres
   const fetchDocuments = async () => {

@@ -164,6 +164,7 @@ const navItems: NavItem[] = [
     icon: Truck,
     description: "Commandes fournisseurs"
   },
+  /* DÉSACTIVÉ PHASE 1 - Finance Module (réactivation Phase 2)
   {
     title: "Finance",
     href: "/factures",
@@ -194,6 +195,7 @@ const navItems: NavItem[] = [
       }
     ]
   },
+  */
   {
     title: "Organisation",
     href: "/organisation",
@@ -220,9 +222,9 @@ function SidebarContent() {
   const [expandedItems, setExpandedItems] = useState<string[]>(() => {
     if (typeof window !== 'undefined') {
       const saved = localStorage.getItem('verone-sidebar-expanded')
-      return saved ? JSON.parse(saved) : ['Catalogue', 'Stocks', 'Ventes', 'Finance']
+      return saved ? JSON.parse(saved) : ['Catalogue', 'Stocks', 'Ventes'] // Removed 'Finance' Phase 1
     }
-    return ['Catalogue', 'Stocks', 'Ventes', 'Finance']
+    return ['Catalogue', 'Stocks', 'Ventes'] // Removed 'Finance' Phase 1
   })
 
   // Theme toggle

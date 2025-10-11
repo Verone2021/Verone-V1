@@ -7,11 +7,14 @@
  * - Prévisions 30/60/90 jours
  * - Évolution historique
  * - Répartition dépenses par catégorie
+ *
+ * STATUS: DÉSACTIVÉ Phase 1 (returns mocks uniquement)
  */
 
 import { useState, useEffect } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import { toast } from 'react-hot-toast'
+import { featureFlags } from '@/lib/feature-flags'
 
 // =====================================================================
 // TYPES
@@ -73,6 +76,25 @@ export function useTreasuryStats(
   const [error, setError] = useState<string | null>(null)
 
   const supabase = createClient()
+
+  // ===================================================================
+  // FEATURE FLAG: FINANCE MODULE DISABLED (Phase 1)
+  // ===================================================================
+
+  if (!featureFlags.financeEnabled) {
+    // Return mocks immédiatement pour éviter appels API Qonto/Supabase
+    return {
+      stats: null,
+      evolution: [],
+      expenseBreakdown: [],
+      forecasts: [],
+      bankBalance: null,
+      loading: false,
+      error: 'Module Finance désactivé (Phase 1)',
+      refresh: () => {},
+      refreshBankBalance: () => {}
+    }
+  }
 
   // Dates par défaut : 30 derniers jours
   const defaultStartDate = startDate || new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0]

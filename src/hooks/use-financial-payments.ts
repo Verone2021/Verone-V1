@@ -6,11 +6,14 @@
  * - Paiements factures clients
  * - Paiements factures fournisseurs
  * - Paiements dépenses
+ *
+ * STATUS: DÉSACTIVÉ Phase 1 (returns mocks uniquement)
  */
 
 import { useState, useEffect } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import { toast } from 'react-hot-toast'
+import { featureFlags } from '@/lib/feature-flags'
 
 // =====================================================================
 // TYPES
@@ -51,6 +54,22 @@ export function useFinancialPayments(documentId?: string) {
   const [error, setError] = useState<string | null>(null)
 
   const supabase = createClient()
+
+  // ===================================================================
+  // FEATURE FLAG: FINANCE MODULE DISABLED (Phase 1)
+  // ===================================================================
+
+  if (!featureFlags.financeEnabled) {
+    // Return mocks immédiatement
+    return {
+      payments: [],
+      loading: false,
+      error: 'Module Finance désactivé (Phase 1)',
+      createPayment: async () => {},
+      deletePayment: async () => {},
+      refresh: () => {}
+    }
+  }
 
   // Fetch paiements
   const fetchPayments = async () => {
