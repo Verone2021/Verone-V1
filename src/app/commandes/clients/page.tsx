@@ -17,7 +17,7 @@ import { Separator } from '@/components/ui/separator'
 
 const statusLabels: Record<SalesOrderStatus, string> = {
   draft: 'Brouillon',
-  confirmed: 'Confirmée',
+  confirmed: 'Validée',
   partially_shipped: 'Partiellement expédiée',
   shipped: 'Expédiée',
   delivered: 'Livrée',
@@ -249,7 +249,7 @@ export default function SalesOrdersPage() {
               <SelectContent>
                 <SelectItem value="all">Tous les statuts</SelectItem>
                 <SelectItem value="draft">Brouillon</SelectItem>
-                <SelectItem value="confirmed">Confirmée</SelectItem>
+                <SelectItem value="confirmed">Validée</SelectItem>
                 <SelectItem value="partially_shipped">Partiellement expédiée</SelectItem>
                 <SelectItem value="shipped">Expédiée</SelectItem>
                 <SelectItem value="delivered">Livrée</SelectItem>
@@ -362,14 +362,29 @@ export default function SalesOrdersPage() {
                               <Eye className="h-4 w-4" />
                             </Button>
 
-                            {/* Bouton Confirmer (draft uniquement) */}
+                            {/* Bouton Modifier (si commande modifiable) */}
+                            {(order.status === 'draft' || (order.status === 'confirmed' && order.payment_status !== 'paid')) && (
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                onClick={() => {
+                                  // TODO: Ouvrir SalesOrderFormModal en mode édition
+                                  console.log('Modifier commande:', order.id)
+                                }}
+                                title="Modifier la commande"
+                              >
+                                <Edit className="h-4 w-4" />
+                              </Button>
+                            )}
+
+                            {/* Bouton Valider (draft uniquement) */}
                             {order.status === 'draft' && (
                               <>
                                 <Button
                                   variant="outline"
                                   size="sm"
                                   onClick={() => handleStatusChange(order.id, 'confirmed')}
-                                  title="Confirmer commande"
+                                  title="Valider la commande pour autoriser le traitement"
                                 >
                                   <CheckCircle className="h-4 w-4" />
                                 </Button>

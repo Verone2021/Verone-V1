@@ -36,7 +36,7 @@ const paymentStatusColors: Record<string, string> = {
 
 const orderStatusLabels: Record<string, string> = {
   draft: 'Brouillon',
-  confirmed: 'Confirmée',
+  confirmed: 'Validée',
   partially_shipped: 'Partiellement expédiée',
   shipped: 'Expédiée',
   delivered: 'Livrée',
@@ -408,11 +408,21 @@ export function OrderDetailModal({ order, open, onClose, onUpdate }: OrderDetail
                   <CardTitle className="text-lg">Actions</CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-2">
-                  <Button variant="outline" className="w-full justify-start">
+                  <Button
+                    variant="outline"
+                    className="w-full justify-start opacity-50"
+                    disabled={true}
+                    title="Fonctionnalité disponible en Phase 2"
+                  >
                     <FileText className="h-4 w-4 mr-2" />
                     Télécharger bon de commande
                   </Button>
-                  <Button variant="outline" className="w-full justify-start">
+                  <Button
+                    variant="outline"
+                    className="w-full justify-start opacity-50"
+                    disabled={true}
+                    title="Fonctionnalité disponible en Phase 2"
+                  >
                     <FileText className="h-4 w-4 mr-2" />
                     Générer facture
                   </Button>

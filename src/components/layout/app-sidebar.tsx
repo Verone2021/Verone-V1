@@ -155,6 +155,12 @@ const navItems: NavItem[] = [
         description: "Ventes et suivi",
         badge: 2,
         badgeVariant: "default"
+      },
+      {
+        title: "Expéditions",
+        href: "/commandes/expeditions",
+        icon: Truck,
+        description: "Livraisons en attente"
       }
     ]
   },
