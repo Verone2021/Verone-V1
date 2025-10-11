@@ -1,6 +1,6 @@
 "use client"
 
-import { Bell, Search, User, LogOut, Settings, Users, Activity } from "lucide-react"
+import { Search, User, LogOut, Settings, Users, Activity } from "lucide-react"
 import { Button } from "../ui/button"
 import { cn } from "../../lib/utils"
 import {
@@ -13,7 +13,7 @@ import {
 import { createClient } from "@/lib/supabase/client"
 import { useRouter } from "next/navigation"
 import { useEffect, useState } from "react"
-import { useNotifications } from "../../hooks/use-notifications"
+import { NotificationsDropdown } from "../business/notifications-dropdown"
 
 interface AppHeaderProps {
   className?: string
@@ -22,9 +22,6 @@ interface AppHeaderProps {
 export function AppHeader({ className }: AppHeaderProps) {
   const router = useRouter()
   const [userRole, setUserRole] = useState<string | null>(null)
-
-  // Hook notifications
-  const { unreadCount, loading: notificationsLoading } = useNotifications()
 
   // Récupérer le rôle de l'utilisateur au chargement
   useEffect(() => {
@@ -71,21 +68,8 @@ export function AppHeader({ className }: AppHeaderProps) {
 
       {/* Actions utilisateur */}
       <div className="flex items-center space-x-2">
-        {/* Notifications - Compteur intelligent */}
-        <Button
-          variant="ghost"
-          size="icon"
-          className="relative"
-          title={notificationsLoading ? 'Chargement...' : `${unreadCount} notifications non lues`}
-        >
-          <Bell className="h-5 w-5" />
-          {!notificationsLoading && unreadCount > 0 && (
-            <span className="absolute -top-1 -right-1 h-4 w-auto min-w-[16px] px-1 bg-red-500 rounded-full text-xs text-white flex items-center justify-center font-medium">
-              {unreadCount > 99 ? '99+' : unreadCount}
-            </span>
-          )}
-          <span className="sr-only">{unreadCount} Notifications</span>
-        </Button>
+        {/* Notifications - Dropdown intelligent avec liste complète */}
+        <NotificationsDropdown />
 
         {/* Menu Profil utilisateur */}
         <DropdownMenu>
