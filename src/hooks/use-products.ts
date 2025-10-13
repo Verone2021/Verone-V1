@@ -19,7 +19,8 @@ export interface Product {
   variant_attributes?: any
   dimensions?: any
   weight?: number
-  // Images gérées par product_images table via useProductImages hook
+  // Images: URL publique de l'image primaire (chargée via product_images JOIN)
+  primary_image_url?: string | null
   video_url?: string
   supplier_reference?: string
   gtin?: string
@@ -131,7 +132,7 @@ const productsFetcher = async (
 ) => {
   const supabase = createClient()
 
-  // 🎯 SELECT optimisé - SEULEMENT 8 colonnes pour vue liste (vs 26 avant)
+  // 🎯 SELECT optimisé - colonnes essentielles + stock + image primaire
   let query = supabase
     .from('products')
     .select(`
@@ -140,9 +141,15 @@ const productsFetcher = async (
       sku,
       status,
       cost_price,
+      stock_quantity,
       margin_percentage,
+      price_ht,
       created_at,
-      subcategory_id
+      subcategory_id,
+      product_images!product_id(
+        public_url,
+        is_primary
+      )
     `, { count: 'exact' })
     .order('created_at', { ascending: false })
     .range(page * PRODUCTS_PER_PAGE, (page + 1) * PRODUCTS_PER_PAGE - 1)
@@ -176,13 +183,21 @@ const productsFetcher = async (
 
   if (error) throw error
 
-  // Enrichir avec prix minimum de vente (calcul rapide côté client)
-  const enriched = (data || []).map(product => ({
-    ...product,
-    minimumSellingPrice: product.cost_price && product.margin_percentage
-      ? calculateMinimumSellingPrice(product.cost_price, product.margin_percentage)
-      : 0
-  }))
+  // Enrichir avec prix minimum de vente + image primaire
+  const enriched = (data || []).map(product => {
+    // Extraire l'image primaire de la relation product_images
+    const primaryImage = Array.isArray(product.product_images)
+      ? product.product_images.find((img: any) => img.is_primary === true)
+      : null
+
+    return {
+      ...product,
+      primary_image_url: primaryImage?.public_url || null,
+      minimumSellingPrice: product.cost_price && product.margin_percentage
+        ? calculateMinimumSellingPrice(product.cost_price, product.margin_percentage)
+        : 0
+    }
+  })
 
   return { products: enriched, totalCount: count || 0 }
 }
@@ -395,6 +410,10 @@ export function useProduct(id: string) {
               id,
               name,
               type
+            ),
+            product_images!product_id(
+              public_url,
+              is_primary
             )
           `)
           .eq('id', id)
@@ -405,7 +424,7 @@ export function useProduct(id: string) {
           return
         }
 
-        // Enrichir le produit avec le prix minimum de vente calculé
+        // Enrichir le produit avec le prix minimum de vente + image primaire
         if (data) {
           const supplierCost = data.supplier_cost_price || data.price_ht
           const margin = data.margin_percentage || 0
@@ -414,8 +433,14 @@ export function useProduct(id: string) {
             ? calculateMinimumSellingPrice(supplierCost, margin)
             : 0
 
+          // Extraire l'image primaire
+          const primaryImage = Array.isArray(data.product_images)
+            ? data.product_images.find((img: any) => img.is_primary === true)
+            : null
+
           setProduct({
             ...data,
+            primary_image_url: primaryImage?.public_url || null,
             minimumSellingPrice
           })
         }
