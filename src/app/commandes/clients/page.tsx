@@ -109,14 +109,24 @@ export default function SalesOrdersPage() {
         }
       }
 
-      // Filtre recherche
+      // Filtre recherche (case-insensitive + accents + whitespace)
       if (searchTerm) {
-        const term = searchTerm.toLowerCase()
-        const matchesOrderNumber = order.order_number.toLowerCase().includes(term)
-        const matchesOrgName = order.organisations?.name?.toLowerCase().includes(term)
+        // Fonction defensive: gère NULL, accents Unicode, whitespace
+        const normalizeString = (str: string | null | undefined): string => {
+          if (!str) return ''
+          return str
+            .trim()
+            .toLowerCase()
+            .normalize('NFD')
+            .replace(/[\u0300-\u036f]/g, '') // Supprime diacritiques
+        }
+
+        const term = normalizeString(searchTerm)
+        const matchesOrderNumber = normalizeString(order.order_number).includes(term)
+        const matchesOrgName = normalizeString(order.organisations?.name).includes(term)
         const matchesIndividualName =
-          order.individual_customers?.first_name?.toLowerCase().includes(term) ||
-          order.individual_customers?.last_name?.toLowerCase().includes(term)
+          normalizeString(order.individual_customers?.first_name).includes(term) ||
+          normalizeString(order.individual_customers?.last_name).includes(term)
 
         if (!matchesOrderNumber && !matchesOrgName && !matchesIndividualName) {
           return false
