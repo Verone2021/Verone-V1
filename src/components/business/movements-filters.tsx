@@ -205,7 +205,9 @@ export function MovementsFilters({ filters, onFiltersChange, onReset, hasFilters
     localFilters.movementTypes?.length,
     localFilters.reasonCodes?.length,
     localFilters.userIds?.length,
-    localFilters.productSearch
+    localFilters.productSearch,
+    localFilters.affects_forecast !== undefined,
+    localFilters.forecast_type
   ].filter(Boolean).length
 
   return (
@@ -243,6 +245,54 @@ export function MovementsFilters({ filters, onFiltersChange, onReset, hasFilters
             onKeyDown={(e) => e.key === 'Enter' && applyFilters()}
           />
         </div>
+
+        {/* Nouveau filtre : Type mouvement (Réel vs Prévisionnel) */}
+        <div className="space-y-2">
+          <Label className="text-xs font-medium text-gray-700">Type de Mouvement</Label>
+          <Select
+            value={localFilters.affects_forecast === undefined ? 'all' : localFilters.affects_forecast ? 'forecast' : 'real'}
+            onValueChange={(value) => {
+              setLocalFilters(prev => ({
+                ...prev,
+                affects_forecast: value === 'all' ? undefined : value === 'forecast'
+              }))
+            }}
+          >
+            <SelectTrigger className="border-black">
+              <SelectValue placeholder="Tous les types" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">Tous les mouvements</SelectItem>
+              <SelectItem value="real">Mouvements Réels</SelectItem>
+              <SelectItem value="forecast">Mouvements Prévisionnels</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
+
+        {/* Filtre forecast_type (si prévisionnel sélectionné) */}
+        {localFilters.affects_forecast === true && (
+          <div className="space-y-2">
+            <Label className="text-xs font-medium text-gray-700">Direction Prévisionnel</Label>
+            <Select
+              value={localFilters.forecast_type || 'all'}
+              onValueChange={(value) => {
+                setLocalFilters(prev => ({
+                  ...prev,
+                  forecast_type: value === 'all' ? undefined : value as 'in' | 'out'
+                }))
+              }}
+            >
+              <SelectTrigger className="border-black">
+                <SelectValue placeholder="Toutes directions" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">Toutes directions</SelectItem>
+                <SelectItem value="in">Entrées Prévues</SelectItem>
+                <SelectItem value="out">Sorties Prévues</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+        )}
 
         {/* Période */}
         <div className="space-y-3">

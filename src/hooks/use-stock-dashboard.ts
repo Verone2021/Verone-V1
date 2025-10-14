@@ -14,6 +14,9 @@ interface StockOverview {
   products_below_min: number       // Produits sous seuil minimum
   total_products: number           // Total produits non archivés
   total_quantity: number           // Quantité totale toutes références
+  total_forecasted_in: number      // Total entrées prévisionnelles (commandes fournisseurs)
+  total_forecasted_out: number     // Total sorties prévisionnelles (commandes clients)
+  total_available: number          // Stock disponible (réel - prévisionnel sortant)
 }
 
 interface MovementsSummary {
@@ -37,6 +40,7 @@ interface LowStockProduct {
   stock_quantity: number
   min_stock: number
   cost_price: number
+  stock_forecasted_out: number
 }
 
 interface RecentMovement {
@@ -78,21 +82,37 @@ export function useStockDashboard() {
       // ============================================
       const { data: products, error: productsError } = await supabase
         .from('products')
-        .select('id, name, sku, stock_quantity, min_stock, cost_price')
+        .select('id, name, sku, stock_quantity, stock_real, stock_forecasted_in, stock_forecasted_out, min_stock, cost_price')
         .is('archived_at', null)
 
       if (productsError) throw productsError
 
+      // ============================================
+      // CALCUL ALERTES INTELLIGENTES (vue stock_alerts_view)
+      // ============================================
+      const { data: allAlerts, error: allAlertsError } = await supabase
+        .from('stock_alerts_view')
+        .select('alert_status, alert_priority')
+
+      if (allAlertsError) throw allAlertsError
+
+      const alertsCount = {
+        out_of_stock: (allAlerts || []).filter(a => a.alert_status === 'out_of_stock').length,
+        low_stock: (allAlerts || []).filter(a => a.alert_status === 'low_stock').length
+      }
+
       // Calculs agrégés en JS (plus rapide que COUNT() multiples)
       const overview: StockOverview = {
         total_products: products.length,
-        total_quantity: products.reduce((sum, p) => sum + (p.stock_quantity || 0), 0),
-        total_value: products.reduce((sum, p) => sum + ((p.stock_quantity || 0) * (p.cost_price || 0)), 0),
-        products_in_stock: products.filter(p => (p.stock_quantity || 0) > 0).length,
-        products_out_of_stock: products.filter(p => (p.stock_quantity || 0) <= 0).length,
-        products_below_min: products.filter(p =>
-          (p.stock_quantity || 0) > 0 && (p.stock_quantity || 0) < (p.min_stock || 5)
-        ).length
+        total_quantity: products.reduce((sum, p) => sum + (p.stock_real || p.stock_quantity || 0), 0),
+        total_value: products.reduce((sum, p) => sum + ((p.stock_real || p.stock_quantity || 0) * (p.cost_price || 0)), 0),
+        products_in_stock: products.filter(p => (p.stock_real || p.stock_quantity || 0) > 0).length,
+        products_out_of_stock: alertsCount.out_of_stock,  // Seulement produits commandés en rupture
+        products_below_min: alertsCount.low_stock,  // Seulement produits commandés sous seuil
+        // NOUVEAUX CALCULS PRÉVISIONNELS
+        total_forecasted_in: products.reduce((sum, p) => sum + (p.stock_forecasted_in || 0), 0),
+        total_forecasted_out: products.reduce((sum, p) => sum + (p.stock_forecasted_out || 0), 0),
+        total_available: products.reduce((sum, p) => sum + Math.max((p.stock_real || 0) - (p.stock_forecasted_out || 0), 0), 0)
       }
 
       // ============================================
@@ -142,21 +162,32 @@ export function useStockDashboard() {
       }
 
       // ============================================
-      // QUERY 3: Top 5 produits stock faible
-      // Filtrage JS car query dynamique RPC complexe
+      // QUERY 3: Top 5 produits stock faible (utilise vue intelligente)
+      // Seulement produits commandés avec stock < min_stock
       // ============================================
-      const lowStockProducts: LowStockProduct[] = products
-        .filter(p => (p.stock_quantity || 0) < (p.min_stock || 5))
-        .sort((a, b) => (a.stock_quantity || 0) - (b.stock_quantity || 0))
-        .slice(0, 5)
-        .map(p => ({
-          id: (p as any).id || '',
-          name: (p as any).name || '',
-          sku: (p as any).sku || '',
-          stock_quantity: p.stock_quantity || 0,
-          min_stock: p.min_stock || 5,
-          cost_price: p.cost_price || 0
-        }))
+      const { data: alertsData, error: alertsError } = await supabase
+        .from('stock_alerts_view')
+        .select('product_id, product_name, sku, stock_quantity, min_stock, alert_status, alert_priority')
+        .order('alert_priority', { ascending: false })
+        .order('stock_quantity', { ascending: true })
+        .limit(5)
+
+      if (alertsError) throw alertsError
+
+      // Enrichir avec stock_forecasted_out depuis products
+      const lowStockProducts: LowStockProduct[] = []
+      for (const alert of (alertsData || [])) {
+        const product = products.find(p => p.id === alert.product_id)
+        lowStockProducts.push({
+          id: alert.product_id,
+          name: alert.product_name,
+          sku: alert.sku,
+          stock_quantity: alert.stock_quantity,
+          min_stock: alert.min_stock,
+          cost_price: 0, // Pas besoin ici
+          stock_forecasted_out: product?.stock_forecasted_out || 0
+        })
+      }
 
       // ============================================
       // QUERY 4: 5 derniers mouvements (timeline)

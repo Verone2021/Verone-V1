@@ -2,7 +2,7 @@
 
 import React, { useState } from 'react'
 import { useRouter } from 'next/navigation'
-import { ArrowUpDown, Download, RefreshCw, ChevronLeft, ChevronRight, Eye, ArrowLeft } from 'lucide-react'
+import { ArrowUpDown, Download, RefreshCw, ChevronLeft, ChevronRight, Eye, ArrowLeft, Plus } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import {
   Card,
@@ -22,9 +22,10 @@ import { Badge } from '@/components/ui/badge'
 import { MovementsTable } from '@/components/business/movements-table'
 import { MovementsFilters } from '@/components/business/movements-filters'
 import { MovementsStatsCards } from '@/components/business/movements-stats'
-import { ProductStockHistoryModal } from '@/components/business/product-stock-history-modal'
+import { MovementDetailsModal } from '@/components/business/movement-details-modal'
+import { CancelMovementModal } from '@/components/business/cancel-movement-modal'
+import { QuickStockMovementModal } from '@/components/business/quick-stock-movement-modal'
 import { useMovementsHistory, MovementWithDetails } from '@/hooks/use-movements-history'
-import { useCatalogue } from '@/hooks/use-catalogue'
 
 export default function StockMovementsPage() {
   const router = useRouter()
@@ -41,9 +42,11 @@ export default function StockMovementsPage() {
     pagination
   } = useMovementsHistory()
 
-  const { products } = useCatalogue()
   const [selectedMovement, setSelectedMovement] = useState<MovementWithDetails | null>(null)
-  const [showProductHistory, setShowProductHistory] = useState(false)
+  const [showMovementDetails, setShowMovementDetails] = useState(false)
+  const [movementToCancel, setMovementToCancel] = useState<MovementWithDetails | null>(null)
+  const [showCancelModal, setShowCancelModal] = useState(false)
+  const [showQuickMovementModal, setShowQuickMovementModal] = useState(false)
 
   // Pagination
   const handlePageChange = (newPage: number) => {
@@ -62,27 +65,22 @@ export default function StockMovementsPage() {
     })
   }
 
-  // Voir détails produit
+  // Voir détails mouvement
   const handleMovementClick = (movement: MovementWithDetails) => {
     setSelectedMovement(movement)
-    setShowProductHistory(true)
+    setShowMovementDetails(true)
   }
 
-  // Trouver le produit correspondant pour le modal
-  const getProductForModal = () => {
-    if (!selectedMovement) return null
+  // Annuler mouvement
+  const handleCancelClick = (movement: MovementWithDetails) => {
+    setMovementToCancel(movement)
+    setShowCancelModal(true)
+  }
 
-    const product = products.find(p => p.id === selectedMovement.product_id)
-    return product ? {
-      id: product.id,
-      name: product.name,
-      sku: product.sku,
-      primary_image_url: product.primary_image_url
-    } : {
-      id: selectedMovement.product_id,
-      name: selectedMovement.product_name || 'Produit supprimé',
-      sku: selectedMovement.product_sku || 'SKU inconnu'
-    }
+  // Succès annulation
+  const handleCancelSuccess = () => {
+    // Recharger les données
+    window.location.reload()
   }
 
   return (
@@ -112,6 +110,14 @@ export default function StockMovementsPage() {
             </div>
 
             <div className="flex items-center gap-3">
+              <Button
+                onClick={() => setShowQuickMovementModal(true)}
+                className="bg-black text-white hover:bg-gray-800"
+              >
+                <Plus className="h-4 w-4 mr-2" />
+                Nouveau Mouvement
+              </Button>
+
               <Button
                 variant="outline"
                 onClick={() => window.location.reload()}
@@ -238,6 +244,7 @@ export default function StockMovementsPage() {
                   movements={movements}
                   loading={loading}
                   onMovementClick={handleMovementClick}
+                  onCancelClick={handleCancelClick}
                 />
               </CardContent>
             </Card>
@@ -283,14 +290,32 @@ export default function StockMovementsPage() {
           </div>
         </div>
 
-        {/* Modal historique produit */}
-        <ProductStockHistoryModal
-          product={getProductForModal()}
-          isOpen={showProductHistory}
+        {/* Modal détails mouvement */}
+        <MovementDetailsModal
+          movement={selectedMovement}
+          isOpen={showMovementDetails}
           onClose={() => {
-            setShowProductHistory(false)
+            setShowMovementDetails(false)
             setSelectedMovement(null)
           }}
+        />
+
+        {/* Modal annulation mouvement */}
+        <CancelMovementModal
+          movement={movementToCancel}
+          isOpen={showCancelModal}
+          onClose={() => {
+            setShowCancelModal(false)
+            setMovementToCancel(null)
+          }}
+          onSuccess={handleCancelSuccess}
+        />
+
+        {/* Modal nouveau mouvement rapide */}
+        <QuickStockMovementModal
+          isOpen={showQuickMovementModal}
+          onClose={() => setShowQuickMovementModal(false)}
+          onSuccess={() => window.location.reload()}
         />
       </div>
     </div>

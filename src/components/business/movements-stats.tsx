@@ -106,6 +106,37 @@ export function MovementsStatsCards({ stats, loading }: MovementsStatsCardsProps
         </Card>
       </div>
 
+      {/* Cartes Mouvements Réels vs Prévisionnels */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <Card className="border-black">
+          <CardHeader className="pb-2">
+            <CardTitle className="text-sm font-medium text-gray-600">Mouvements Réels</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold text-black">
+              {formatNumber(stats.realMovements || 0)}
+            </div>
+            <p className="text-xs text-gray-600 mt-1">
+              Impactent le stock physique
+            </p>
+          </CardContent>
+        </Card>
+
+        <Card className="border-black">
+          <CardHeader className="pb-2">
+            <CardTitle className="text-sm font-medium text-gray-600">Mouvements Prévisionnels</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold text-black">
+              {formatNumber(stats.forecastMovements || 0)}
+            </div>
+            <p className="text-xs text-gray-600 mt-1">
+              Réservations futures
+            </p>
+          </CardContent>
+        </Card>
+      </div>
+
       {/* Répartition par type */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         <Card>

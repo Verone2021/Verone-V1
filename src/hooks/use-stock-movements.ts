@@ -111,7 +111,10 @@ export function useStockMovements() {
             id,
             name,
             sku,
-            primary_image_url
+            product_images!left (
+              public_url,
+              is_primary
+            )
           ),
           user_profiles!stock_movements_performed_by_fkey (
             first_name,
@@ -139,12 +142,24 @@ export function useStockMovements() {
       if (filters?.performed_by) {
         query = query.eq('performed_by', filters.performed_by)
       }
+      if (filters?.affects_forecast !== undefined) {
+        query = query.eq('affects_forecast', filters.affects_forecast)
+      }
 
       const { data, error } = await query
 
       if (error) throw error
 
-      setMovements(data || [])
+      // Enrichir les produits avec primary_image_url (BR-TECH-002)
+      const enrichedMovements = (data || []).map(movement => ({
+        ...movement,
+        products: movement.products ? {
+          ...movement.products,
+          primary_image_url: movement.products.product_images?.[0]?.public_url || null
+        } : null
+      }))
+
+      setMovements(enrichedMovements)
     } catch (error) {
       console.error('Erreur lors de la récupération des mouvements:', error)
       toast({
@@ -236,24 +251,43 @@ export function useStockMovements() {
           newQuantity = currentStock + quantityChange
           break
         case 'OUT':
-          quantityChange = -Math.abs(data.quantity_change)
-          newQuantity = currentStock + quantityChange
-          if (newQuantity < 0) {
-            throw new Error('Stock insuffisant pour cette sortie')
+          const quantityToRemove = Math.abs(data.quantity_change)
+
+          // Validation stricte ERP : impossible de retirer plus que le stock disponible
+          if (quantityToRemove > currentStock) {
+            throw new Error(
+              `Stock insuffisant. Vous tentez de retirer ${quantityToRemove} unités mais seulement ${currentStock} unité(s) disponible(s) en stock.`
+            )
           }
+
+          quantityChange = -quantityToRemove
+          newQuantity = currentStock + quantityChange
           break
         case 'ADJUST':
           // Pour un ajustement, quantity_change représente la nouvelle quantité souhaitée
-          newQuantity = Math.abs(data.quantity_change)
+          const newTargetQuantity = Math.abs(data.quantity_change)
+
+          // Validation : quantité cible doit être >= 0
+          if (newTargetQuantity < 0) {
+            throw new Error('La quantité cible d\'un ajustement doit être supérieure ou égale à 0')
+          }
+
+          newQuantity = newTargetQuantity
           quantityChange = newQuantity - currentStock
           break
         case 'TRANSFER':
           // Pour un transfert, on gère comme une sortie pour l'instant
-          quantityChange = -Math.abs(data.quantity_change)
-          newQuantity = currentStock + quantityChange
-          if (newQuantity < 0) {
-            throw new Error('Stock insuffisant pour ce transfert')
+          const quantityToTransfer = Math.abs(data.quantity_change)
+
+          // Validation stricte ERP : impossible de transférer plus que le stock disponible
+          if (quantityToTransfer > currentStock) {
+            throw new Error(
+              `Stock insuffisant pour le transfert. Vous tentez de transférer ${quantityToTransfer} unités mais seulement ${currentStock} unité(s) disponible(s) en stock.`
+            )
           }
+
+          quantityChange = -quantityToTransfer
+          newQuantity = currentStock + quantityChange
           break
         default:
           throw new Error('Type de mouvement invalide')

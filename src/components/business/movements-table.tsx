@@ -1,8 +1,10 @@
 'use client'
 
 import React from 'react'
-import { Clock, User, Package, TrendingUp, TrendingDown, RotateCcw, FileText, Settings, ShoppingCart } from 'lucide-react'
+import Link from 'next/link'
+import { Clock, Package, TrendingUp, TrendingDown, RotateCcw, FileText, Settings, ShoppingCart, ExternalLink, X } from 'lucide-react'
 import { Badge } from '@/components/ui/badge'
+import { Button } from '@/components/ui/button'
 import {
   Table,
   TableBody,
@@ -12,15 +14,15 @@ import {
   TableRow,
 } from '@/components/ui/table'
 import { MovementWithDetails } from '@/hooks/use-movements-history'
-import { formatPrice } from '@/lib/utils'
 
 interface MovementsTableProps {
   movements: MovementWithDetails[]
   loading: boolean
   onMovementClick?: (movement: MovementWithDetails) => void
+  onCancelClick?: (movement: MovementWithDetails) => void
 }
 
-export function MovementsTable({ movements, loading, onMovementClick }: MovementsTableProps) {
+export function MovementsTable({ movements, loading, onMovementClick, onCancelClick }: MovementsTableProps) {
   const formatDate = (dateString: string) => {
     const date = new Date(dateString)
     const now = new Date()
@@ -155,11 +157,9 @@ export function MovementsTable({ movements, loading, onMovementClick }: Movement
               <TableHead>Produit</TableHead>
               <TableHead>Type</TableHead>
               <TableHead>Quantité</TableHead>
-              <TableHead>Motif</TableHead>
+              <TableHead>Commande Liée</TableHead>
               <TableHead>Origine</TableHead>
-              <TableHead>Utilisateur</TableHead>
-              <TableHead>Coût</TableHead>
-              <TableHead>Notes</TableHead>
+              {onCancelClick && <TableHead className="w-[100px] text-center">Actions</TableHead>}
             </TableRow>
           </TableHeader>
           <TableBody>
@@ -183,15 +183,11 @@ export function MovementsTable({ movements, loading, onMovementClick }: Movement
                 <TableCell>
                   <div className="h-4 bg-gray-200 rounded animate-pulse"></div>
                 </TableCell>
-                <TableCell>
-                  <div className="h-4 bg-gray-200 rounded animate-pulse"></div>
-                </TableCell>
-                <TableCell>
-                  <div className="h-4 bg-gray-200 rounded animate-pulse"></div>
-                </TableCell>
-                <TableCell>
-                  <div className="h-4 bg-gray-200 rounded animate-pulse"></div>
-                </TableCell>
+                {onCancelClick && (
+                  <TableCell>
+                    <div className="h-4 bg-gray-200 rounded animate-pulse"></div>
+                  </TableCell>
+                )}
               </TableRow>
             ))}
           </TableBody>
@@ -223,45 +219,48 @@ export function MovementsTable({ movements, loading, onMovementClick }: Movement
             <TableHead>Produit</TableHead>
             <TableHead>Type</TableHead>
             <TableHead>Quantité</TableHead>
-            <TableHead>Motif</TableHead>
+            <TableHead>Commande Liée</TableHead>
             <TableHead>Origine</TableHead>
-            <TableHead>Utilisateur</TableHead>
-            <TableHead>Coût</TableHead>
-            <TableHead>Notes</TableHead>
+            {onCancelClick && <TableHead className="w-[100px] text-center">Actions</TableHead>}
           </TableRow>
         </TableHeader>
         <TableBody>
           {movements.map((movement) => (
             <TableRow
               key={movement.id}
-              className={onMovementClick ? "cursor-pointer hover:bg-gray-50" : ""}
+              className={onMovementClick ? "cursor-pointer hover:bg-gray-50 transition-colors" : ""}
               onClick={() => onMovementClick?.(movement)}
             >
+              {/* Date / Heure */}
               <TableCell>
                 <div className="font-medium text-sm">
                   {formatDate(movement.performed_at)}
                 </div>
                 {movement.affects_forecast && (
-                  <div className="text-xs text-black mt-1">
+                  <div className="text-xs text-blue-600 mt-1">
                     Prévisionnel {movement.forecast_type === 'in' ? '↗' : '↘'}
                   </div>
                 )}
               </TableCell>
 
+              {/* Produit - Avec lien cliquable */}
               <TableCell>
-                <div className="flex items-center gap-2">
-                  <Package className="h-4 w-4 text-gray-400" />
+                <Link
+                  href={`/catalogue/${movement.product_id}`}
+                  onClick={(e) => e.stopPropagation()}
+                  className="flex items-center gap-2 hover:text-black transition-colors group"
+                >
+                  <Package className="h-4 w-4 text-gray-400 group-hover:text-black transition-colors" />
                   <div>
-                    <div className="font-medium text-sm">
+                    <div className="font-medium text-sm group-hover:underline">
                       {movement.product_name || 'Produit supprimé'}
                     </div>
-                    <div className="text-xs text-gray-500">
-                      {movement.product_sku || 'SKU inconnu'}
-                    </div>
                   </div>
-                </div>
+                  <ExternalLink className="h-3 w-3 text-gray-400 opacity-0 group-hover:opacity-100 transition-opacity" />
+                </Link>
               </TableCell>
 
+              {/* Type */}
               <TableCell>
                 <div className="flex items-center gap-2">
                   {getMovementTypeIcon(movement.movement_type)}
@@ -269,29 +268,47 @@ export function MovementsTable({ movements, loading, onMovementClick }: Movement
                 </div>
               </TableCell>
 
+              {/* Quantité */}
               <TableCell>
                 {getQuantityChangeDisplay(movement)}
               </TableCell>
 
+              {/* Commande Liée */}
               <TableCell>
-                <div className="max-w-[200px]">
-                  {movement.reason_code ? (
-                    <div>
-                      <div className="font-medium text-sm">
-                        {movement.reason_description}
-                      </div>
-                      <div className="text-xs text-gray-500 uppercase">
-                        {movement.reason_code}
-                      </div>
-                    </div>
-                  ) : (
-                    <span className="text-gray-400 text-sm">Non spécifié</span>
-                  )}
-                </div>
+                {movement.reference_type === 'sales_order' && movement.reference_id ? (
+                  <Link
+                    href={`/ventes/commandes?highlight=${movement.reference_id}`}
+                    onClick={(e) => e.stopPropagation()}
+                    className="text-sm text-blue-600 hover:underline flex items-center gap-1"
+                  >
+                    <span>Commande Client</span>
+                    {movement.affects_forecast && (
+                      <Badge variant="outline" className="ml-1 text-xs border-purple-300 text-purple-600">
+                        Prév. {movement.forecast_type?.toUpperCase()}
+                      </Badge>
+                    )}
+                  </Link>
+                ) : movement.reference_type === 'purchase_order' && movement.reference_id ? (
+                  <Link
+                    href={`/achats/commandes?highlight=${movement.reference_id}`}
+                    onClick={(e) => e.stopPropagation()}
+                    className="text-sm text-green-600 hover:underline flex items-center gap-1"
+                  >
+                    <span>Commande Fournisseur</span>
+                    {movement.affects_forecast && (
+                      <Badge variant="outline" className="ml-1 text-xs border-purple-300 text-purple-600">
+                        Prév. {movement.forecast_type?.toUpperCase()}
+                      </Badge>
+                    )}
+                  </Link>
+                ) : (
+                  <span className="text-xs text-gray-400">-</span>
+                )}
               </TableCell>
 
+              {/* Origine */}
               <TableCell>
-                <div className="max-w-[220px]">
+                <div className="max-w-[250px]">
                   {(() => {
                     const origin = getMovementOrigin(movement)
                     return (
@@ -300,8 +317,8 @@ export function MovementsTable({ movements, loading, onMovementClick }: Movement
                           {origin.icon}
                           {origin.badge}
                         </div>
-                        <div className="text-xs text-gray-600 truncate" title={origin.text}>
-                          {origin.text}
+                        <div className="text-xs text-gray-600">
+                          {movement.user_name || 'Utilisateur inconnu'}
                         </div>
                       </div>
                     )
@@ -309,34 +326,37 @@ export function MovementsTable({ movements, loading, onMovementClick }: Movement
                 </div>
               </TableCell>
 
-              <TableCell>
-                <div className="flex items-center gap-2">
-                  <User className="h-3 w-3 text-gray-400" />
-                  <span className="text-sm">
-                    {movement.user_name || 'Utilisateur inconnu'}
-                  </span>
-                </div>
-              </TableCell>
-
-              <TableCell>
-                {movement.unit_cost ? (
-                  <div className="text-sm font-medium">
-                    {formatPrice(movement.unit_cost)}
-                  </div>
-                ) : (
-                  <span className="text-gray-400 text-sm">-</span>
-                )}
-              </TableCell>
-
-              <TableCell>
-                {movement.notes ? (
-                  <div className="max-w-[200px] text-sm text-gray-600 truncate" title={movement.notes}>
-                    {movement.notes}
-                  </div>
-                ) : (
-                  <span className="text-gray-400 text-sm">-</span>
-                )}
-              </TableCell>
+              {/* Actions */}
+              {onCancelClick && (
+                <TableCell className="text-center">
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={(e) => {
+                      e.stopPropagation()
+                      onCancelClick(movement)
+                    }}
+                    className="text-red-600 hover:text-red-700 hover:bg-red-50"
+                    disabled={
+                      movement.affects_forecast ||
+                      (movement.reference_type !== 'manual_adjustment' &&
+                       movement.reference_type !== 'manual_entry' &&
+                       !!movement.reference_type)
+                    }
+                    title={
+                      movement.affects_forecast
+                        ? "Impossible d'annuler un mouvement prévisionnel"
+                        : (movement.reference_type !== 'manual_adjustment' &&
+                           movement.reference_type !== 'manual_entry' &&
+                           !!movement.reference_type)
+                        ? "Impossible d'annuler un mouvement lié à une commande"
+                        : "Annuler ce mouvement manuel"
+                    }
+                  >
+                    <X className="h-4 w-4" />
+                  </Button>
+                </TableCell>
+              )}
             </TableRow>
           ))}
         </TableBody>
