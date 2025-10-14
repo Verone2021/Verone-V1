@@ -147,20 +147,18 @@ export default function StocksDashboardPage() {
             </CardContent>
           </Card>
 
-          {/* KPI 4: Taux Couverture Stock */}
+          {/* KPI 4: Valeur Stock Réel */}
           <Card className="border-black">
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium text-gray-600">Taux Couverture</CardTitle>
-              <Clock className="h-4 w-4 text-gray-600" />
+              <CardTitle className="text-sm font-medium text-gray-600">Valeur Stock</CardTitle>
+              <TrendingUp className="h-4 w-4 text-blue-600" />
             </CardHeader>
             <CardContent className="pb-3">
               <div className="text-xl font-bold text-black">
-                {Math.abs(overview.total_forecasted_out || 0) > 0
-                  ? Math.round(((overview.total_available || 0) / Math.abs(overview.total_forecasted_out || 1)) * 100)
-                  : 100}%
+                {new Intl.NumberFormat('fr-FR', { style: 'currency', currency: 'EUR' }).format(overview.total_value || 0)}
               </div>
               <p className="text-xs text-gray-600">
-                Capacité à honorer commandes
+                + TVA 20% = {new Intl.NumberFormat('fr-FR', { style: 'currency', currency: 'EUR' }).format((overview.total_value || 0) * 1.2)} TTC
               </p>
             </CardContent>
           </Card>
