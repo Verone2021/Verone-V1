@@ -145,11 +145,23 @@ interface SalesOrderFilters {
 
 interface SalesOrderStats {
   total_orders: number
-  total_value: number
-  pending_orders: number
+  total_value: number  // Maintenu pour compatibilité (alias de total_ttc)
+  total_ht: number     // Total HT
+  total_tva: number    // Total TVA
+  total_ttc: number    // Total TTC
+  average_basket: number // Panier moyen (total_ttc / total_orders)
+  pending_orders: number // draft + confirmed
   shipped_orders: number
   delivered_orders: number
   cancelled_orders: number
+  orders_by_status: {
+    draft: number
+    confirmed: number
+    partially_shipped: number
+    shipped: number
+    delivered: number
+    cancelled: number
+  }
 }
 
 export function useSalesOrders() {
@@ -344,7 +356,7 @@ export function useSalesOrders() {
     try {
       let query = supabase
         .from('sales_orders')
-        .select('status, total_ht')
+        .select('status, total_ht, total_ttc')
 
       if (filters?.date_from) {
         query = query.gte('created_at', filters.date_from)
@@ -359,33 +371,70 @@ export function useSalesOrders() {
 
       const statsData = data?.reduce((acc, order) => {
         acc.total_orders++
-        acc.total_value += order.total_ht || 0
+        acc.total_ht += order.total_ht || 0
+        acc.total_ttc += order.total_ttc || 0
 
+        // Compteurs par statut
         switch (order.status) {
           case 'draft':
+            acc.orders_by_status.draft++
+            acc.pending_orders++
+            break
           case 'confirmed':
+            acc.orders_by_status.confirmed++
+            acc.pending_orders++
+            break
           case 'partially_shipped':
+            acc.orders_by_status.partially_shipped++
             acc.pending_orders++
             break
           case 'shipped':
+            acc.orders_by_status.shipped++
             acc.shipped_orders++
             break
           case 'delivered':
+            acc.orders_by_status.delivered++
             acc.delivered_orders++
             break
           case 'cancelled':
+            acc.orders_by_status.cancelled++
             acc.cancelled_orders++
             break
         }
         return acc
       }, {
         total_orders: 0,
-        total_value: 0,
+        total_ht: 0,
+        total_ttc: 0,
+        total_tva: 0, // Calculé après
+        total_value: 0, // Calculé après (alias total_ttc)
+        average_basket: 0, // Calculé après
         pending_orders: 0,
         shipped_orders: 0,
         delivered_orders: 0,
-        cancelled_orders: 0
+        cancelled_orders: 0,
+        orders_by_status: {
+          draft: 0,
+          confirmed: 0,
+          partially_shipped: 0,
+          shipped: 0,
+          delivered: 0,
+          cancelled: 0
+        }
       })
+
+      if (statsData) {
+        // Calculer total_tva
+        statsData.total_tva = statsData.total_ttc - statsData.total_ht
+
+        // Calculer panier moyen (seulement si commandes > 0)
+        statsData.average_basket = statsData.total_orders > 0
+          ? statsData.total_ttc / statsData.total_orders
+          : 0
+
+        // Maintenir total_value pour compatibilité (= total_ttc)
+        statsData.total_value = statsData.total_ttc
+      }
 
       setStats(statsData || null)
     } catch (error: any) {

@@ -1,19 +1,19 @@
 'use client'
 
-import { useState, useEffect } from 'react'
-import { Plus, Filter, Search, Eye, Edit, Trash2, ShoppingCart, Truck, CheckCircle, XCircle, DollarSign, CreditCard } from 'lucide-react'
+import { useState, useEffect, useMemo } from 'react'
+import { Plus, Search, Eye, Edit, Trash2, CheckCircle, XCircle, RotateCcw, Ban, ArrowUpDown, ArrowUp, ArrowDown, FileText } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
-import { useSalesOrders, SalesOrder, SalesOrderStatus, PaymentStatus } from '@/hooks/use-sales-orders'
-import { useOrganisations } from '@/hooks/use-organisations'
+import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs'
+import { useSalesOrders, SalesOrder, SalesOrderStatus } from '@/hooks/use-sales-orders'
 import { SalesOrderFormModal } from '@/components/business/sales-order-form-modal'
 import { OrderDetailModal } from '@/components/business/order-detail-modal'
 import { formatCurrency, formatDate } from '@/lib/utils'
-import { Separator } from '@/components/ui/separator'
+import { useToast } from '@/hooks/use-toast'
 
 const statusLabels: Record<SalesOrderStatus, string> = {
   draft: 'Brouillon',
@@ -27,27 +27,14 @@ const statusLabels: Record<SalesOrderStatus, string> = {
 const statusColors: Record<SalesOrderStatus, string> = {
   draft: 'bg-gray-100 text-gray-800',
   confirmed: 'bg-blue-100 text-blue-800',
-  partially_shipped: 'bg-gray-100 text-gray-900',
-  shipped: 'bg-gray-100 text-gray-900',
+  partially_shipped: 'bg-yellow-100 text-yellow-800',
+  shipped: 'bg-green-100 text-green-800',
   delivered: 'bg-green-100 text-green-800',
   cancelled: 'bg-red-100 text-red-800'
 }
 
-const paymentStatusLabels: Record<string, string> = {
-  pending: 'En attente',
-  partial: 'Partiel',
-  paid: 'Payé',
-  refunded: 'Remboursé',
-  overdue: 'En retard'
-}
-
-const paymentStatusColors: Record<string, string> = {
-  pending: 'bg-orange-100 text-orange-800',
-  partial: 'bg-yellow-100 text-yellow-800',
-  paid: 'bg-green-100 text-green-800',
-  refunded: 'bg-gray-100 text-gray-800',
-  overdue: 'bg-red-100 text-red-800'
-}
+type SortColumn = 'date' | 'client' | 'amount' | null
+type SortDirection = 'asc' | 'desc'
 
 export default function SalesOrdersPage() {
   const {
@@ -57,79 +44,200 @@ export default function SalesOrdersPage() {
     fetchOrders,
     fetchStats,
     updateStatus,
-    deleteOrder,
-    markAsPaid
+    deleteOrder
   } = useSalesOrders()
 
-  const { organisations: customers } = useOrganisations({ type: 'customer' })
+  const { toast } = useToast()
 
+  // États filtres
   const [searchTerm, setSearchTerm] = useState('')
-  const [statusFilter, setStatusFilter] = useState<SalesOrderStatus | 'all'>('all')
-  const [customerFilter, setCustomerFilter] = useState<string>('all')
-  const [workflowFilter, setWorkflowFilter] = useState<string>('all')
+  const [activeTab, setActiveTab] = useState<SalesOrderStatus | 'all'>('all')
+  const [customerTypeFilter, setCustomerTypeFilter] = useState<'all' | 'professional' | 'individual'>('all')
+  const [periodFilter, setPeriodFilter] = useState<'all' | 'month' | 'quarter' | 'year'>('all')
+
+  // États tri
+  const [sortColumn, setSortColumn] = useState<SortColumn>(null)
+  const [sortDirection, setSortDirection] = useState<SortDirection>('desc')
+
+  // États modals
   const [selectedOrder, setSelectedOrder] = useState<SalesOrder | null>(null)
   const [showOrderDetail, setShowOrderDetail] = useState(false)
   const [editingOrderId, setEditingOrderId] = useState<string | null>(null)
   const [showEditModal, setShowEditModal] = useState(false)
 
   useEffect(() => {
-    const filters = {
-      ...(statusFilter !== 'all' && { status: statusFilter }),
-      ...(customerFilter !== 'all' && { customer_id: customerFilter }),
-      ...(searchTerm && { order_number: searchTerm })
+    fetchOrders()
+    fetchStats()
+  }, [fetchOrders, fetchStats])
+
+  // Filtrage des commandes
+  const filteredOrders = useMemo(() => {
+    let filtered = orders.filter(order => {
+      // Filtre onglet statut
+      if (activeTab !== 'all' && order.status !== activeTab) {
+        return false
+      }
+
+      // Filtre type client
+      if (customerTypeFilter !== 'all') {
+        if (customerTypeFilter === 'professional' && order.customer_type !== 'organization') {
+          return false
+        }
+        if (customerTypeFilter === 'individual' && order.customer_type !== 'individual') {
+          return false
+        }
+      }
+
+      // Filtre période
+      if (periodFilter !== 'all') {
+        const orderDate = new Date(order.created_at)
+        const now = new Date()
+
+        switch (periodFilter) {
+          case 'month':
+            const monthAgo = new Date(now.getFullYear(), now.getMonth() - 1, now.getDate())
+            if (orderDate < monthAgo) return false
+            break
+          case 'quarter':
+            const quarterAgo = new Date(now.getFullYear(), now.getMonth() - 3, now.getDate())
+            if (orderDate < quarterAgo) return false
+            break
+          case 'year':
+            const yearAgo = new Date(now.getFullYear() - 1, now.getMonth(), now.getDate())
+            if (orderDate < yearAgo) return false
+            break
+        }
+      }
+
+      // Filtre recherche
+      if (searchTerm) {
+        const term = searchTerm.toLowerCase()
+        const matchesOrderNumber = order.order_number.toLowerCase().includes(term)
+        const matchesOrgName = order.organisations?.name?.toLowerCase().includes(term)
+        const matchesIndividualName =
+          order.individual_customers?.first_name?.toLowerCase().includes(term) ||
+          order.individual_customers?.last_name?.toLowerCase().includes(term)
+
+        if (!matchesOrderNumber && !matchesOrgName && !matchesIndividualName) {
+          return false
+        }
+      }
+
+      return true
+    })
+
+    // Tri des commandes
+    if (sortColumn) {
+      filtered.sort((a, b) => {
+        let comparison = 0
+
+        switch (sortColumn) {
+          case 'date':
+            comparison = new Date(a.created_at).getTime() - new Date(b.created_at).getTime()
+            break
+          case 'client':
+            const nameA = a.customer_type === 'organization'
+              ? a.organisations?.name || ''
+              : `${a.individual_customers?.first_name} ${a.individual_customers?.last_name}`
+            const nameB = b.customer_type === 'organization'
+              ? b.organisations?.name || ''
+              : `${b.individual_customers?.first_name} ${b.individual_customers?.last_name}`
+            comparison = nameA.localeCompare(nameB)
+            break
+          case 'amount':
+            comparison = (a.total_ttc || 0) - (b.total_ttc || 0)
+            break
+        }
+
+        return sortDirection === 'asc' ? comparison : -comparison
+      })
     }
-    fetchOrders(filters)
-    fetchStats(filters)
-  }, [fetchOrders, fetchStats, statusFilter, customerFilter, searchTerm])
 
-  const filteredOrders = orders.filter(order => {
-    const matchesSearch = searchTerm === '' ||
-      order.order_number.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      order.organisations?.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      order.individual_customers?.first_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      order.individual_customers?.last_name.toLowerCase().includes(searchTerm.toLowerCase())
+    return filtered
+  }, [orders, activeTab, customerTypeFilter, periodFilter, searchTerm, sortColumn, sortDirection])
 
-    // Filtre workflow métier
-    let matchesWorkflow = true
-    if (workflowFilter !== 'all') {
-      switch (workflowFilter) {
-        case 'awaiting_validation':
-          matchesWorkflow = order.status === 'draft'
-          break
-        case 'awaiting_payment':
-          matchesWorkflow = order.status === 'confirmed' &&
-            (order.payment_status === 'pending' || order.payment_status === 'partial')
-          break
-        case 'to_process':
-          matchesWorkflow = order.status === 'confirmed' &&
-            order.payment_status === 'paid' &&
-            !order.shipped_at
-          break
-        case 'shipped':
-          matchesWorkflow = order.status === 'shipped' || order.status === 'partially_shipped'
-          break
-        case 'delivered':
-          matchesWorkflow = order.status === 'delivered'
-          break
+  // KPI dynamiques calculés sur commandes filtrées
+  const filteredStats = useMemo(() => {
+    if (filteredOrders.length === 0) {
+      return {
+        total_orders: 0,
+        total_ht: 0,
+        total_tva: 0,
+        total_ttc: 0,
+        average_basket: 0,
+        pending_orders: 0,
+        shipped_orders: 0
       }
     }
 
-    return matchesSearch && matchesWorkflow
-  })
+    const stats = filteredOrders.reduce((acc, order) => {
+      acc.total_orders++
+      acc.total_ht += order.total_ht || 0
+      acc.total_ttc += order.total_ttc || 0
 
-  const handleStatusChange = async (orderId: string, newStatus: SalesOrderStatus) => {
-    try {
-      await updateStatus(orderId, newStatus)
-    } catch (error) {
-      console.error('Erreur lors du changement de statut:', error)
+      if (order.status === 'draft' || order.status === 'confirmed') {
+        acc.pending_orders++
+      } else if (order.status === 'shipped' || order.status === 'partially_shipped') {
+        acc.shipped_orders++
+      }
+
+      return acc
+    }, {
+      total_orders: 0,
+      total_ht: 0,
+      total_ttc: 0,
+      total_tva: 0,
+      average_basket: 0,
+      pending_orders: 0,
+      shipped_orders: 0
+    })
+
+    stats.total_tva = stats.total_ttc - stats.total_ht
+    stats.average_basket = stats.total_orders > 0 ? stats.total_ttc / stats.total_orders : 0
+
+    return stats
+  }, [filteredOrders])
+
+  // Compteurs par onglet (sur toutes les commandes, pas filtrées)
+  const tabCounts = useMemo(() => {
+    return {
+      all: orders.length,
+      draft: orders.filter(o => o.status === 'draft').length,
+      confirmed: orders.filter(o => o.status === 'confirmed').length,
+      shipped: orders.filter(o => o.status === 'shipped' || o.status === 'partially_shipped').length,
+      cancelled: orders.filter(o => o.status === 'cancelled').length
+    }
+  }, [orders])
+
+  // Handlers tri
+  const handleSort = (column: SortColumn) => {
+    if (sortColumn === column) {
+      setSortDirection(sortDirection === 'asc' ? 'desc' : 'asc')
+    } else {
+      setSortColumn(column)
+      setSortDirection('desc')
     }
   }
 
-  const handleMarkAsPaid = async (orderId: string) => {
+  const renderSortIcon = (column: SortColumn) => {
+    if (sortColumn !== column) {
+      return <ArrowUpDown className="h-4 w-4 ml-1 inline" />
+    }
+    return sortDirection === 'asc'
+      ? <ArrowUp className="h-4 w-4 ml-1 inline" />
+      : <ArrowDown className="h-4 w-4 ml-1 inline" />
+  }
+
+  // Handlers actions
+  const handleStatusChange = async (orderId: string, newStatus: SalesOrderStatus) => {
     try {
-      await markAsPaid(orderId)
+      await updateStatus(orderId, newStatus)
+      toast({
+        title: "Succès",
+        description: `Commande ${newStatus === 'draft' ? 'dévalidée' : 'mise à jour'} avec succès`
+      })
     } catch (error) {
-      console.error('Erreur lors du marquage comme payé:', error)
+      console.error('Erreur lors du changement de statut:', error)
     }
   }
 
@@ -141,6 +249,25 @@ export default function SalesOrdersPage() {
         console.error('Erreur lors de la suppression:', error)
       }
     }
+  }
+
+  const handleCancel = async (orderId: string) => {
+    if (confirm('Êtes-vous sûr de vouloir annuler cette commande ?')) {
+      try {
+        await handleStatusChange(orderId, 'cancelled')
+      } catch (error) {
+        console.error('Erreur lors de l\'annulation:', error)
+      }
+    }
+  }
+
+  const handlePrintPDF = (order: SalesOrder) => {
+    // TODO: Implémenter génération PDF
+    toast({
+      title: "Fonctionnalité à venir",
+      description: "La génération PDF sera disponible prochainement",
+      variant: "default"
+    })
   }
 
   const openOrderDetail = (order: SalesOrder) => {
@@ -161,129 +288,142 @@ export default function SalesOrdersPage() {
           <h1 className="text-3xl font-bold text-gray-900">Commandes Clients</h1>
           <p className="text-gray-600 mt-1">Gestion des commandes et expéditions clients</p>
         </div>
-        <SalesOrderFormModal onSuccess={() => fetchOrders()} />
+        <SalesOrderFormModal onSuccess={() => {
+          fetchOrders()
+          fetchStats()
+        }} />
       </div>
 
-      {/* Statistiques */}
-      {stats && (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-6 gap-4">
-          <Card>
-            <CardHeader className="pb-2">
-              <CardTitle className="text-sm font-medium text-gray-600">Total commandes</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">{stats.total_orders}</div>
-            </CardContent>
-          </Card>
-          <Card>
-            <CardHeader className="pb-2">
-              <CardTitle className="text-sm font-medium text-gray-600">Chiffre d'affaires</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">{formatCurrency(stats.total_value)}</div>
-            </CardContent>
-          </Card>
-          <Card>
-            <CardHeader className="pb-2">
-              <CardTitle className="text-sm font-medium text-gray-600">En cours</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold text-blue-600">{stats.pending_orders}</div>
-            </CardContent>
-          </Card>
-          <Card>
-            <CardHeader className="pb-2">
-              <CardTitle className="text-sm font-medium text-gray-600">Expédiées</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold text-gray-700">{stats.shipped_orders}</div>
-            </CardContent>
-          </Card>
-          <Card>
-            <CardHeader className="pb-2">
-              <CardTitle className="text-sm font-medium text-gray-600">Livrées</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold text-green-600">{stats.delivered_orders}</div>
-            </CardContent>
-          </Card>
-          <Card>
-            <CardHeader className="pb-2">
-              <CardTitle className="text-sm font-medium text-gray-600">Annulées</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold text-red-600">{stats.cancelled_orders}</div>
-            </CardContent>
-          </Card>
-        </div>
-      )}
+      {/* Statistiques KPI (5 cartes - dynamiques filtrées) */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
+        <Card>
+          <CardHeader className="pb-2">
+            <CardTitle className="text-sm font-medium text-gray-600">Total</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">{filteredStats.total_orders}</div>
+            <p className="text-xs text-gray-500 mt-1">commandes</p>
+          </CardContent>
+        </Card>
 
-      {/* Filtres */}
+        <Card>
+          <CardHeader className="pb-2">
+            <CardTitle className="text-sm font-medium text-gray-600">Chiffre d'affaires</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">{formatCurrency(filteredStats.total_ttc)}</div>
+            <div className="text-xs text-gray-500 mt-1">
+              <div>HT: {formatCurrency(filteredStats.total_ht)}</div>
+              <div>TVA: {formatCurrency(filteredStats.total_tva)}</div>
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader className="pb-2">
+            <CardTitle className="text-sm font-medium text-gray-600">Panier Moyen</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">{formatCurrency(filteredStats.average_basket)}</div>
+            <p className="text-xs text-gray-500 mt-1">par commande</p>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader className="pb-2">
+            <CardTitle className="text-sm font-medium text-gray-600">En cours</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold text-blue-600">{filteredStats.pending_orders}</div>
+            <p className="text-xs text-gray-500 mt-1">draft + validée</p>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader className="pb-2">
+            <CardTitle className="text-sm font-medium text-gray-600">Expédiées</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold text-green-600">{filteredStats.shipped_orders}</div>
+            <p className="text-xs text-gray-500 mt-1">commandes</p>
+          </CardContent>
+        </Card>
+      </div>
+
+      {/* Onglets Statuts + Filtres */}
       <Card>
         <CardHeader>
           <CardTitle>Filtres</CardTitle>
         </CardHeader>
-        <CardContent>
+        <CardContent className="space-y-4">
+          {/* Onglets Statuts */}
+          <Tabs value={activeTab} onValueChange={(value) => setActiveTab(value as SalesOrderStatus | 'all')}>
+            <TabsList className="grid w-full grid-cols-5">
+              <TabsTrigger value="all">
+                Toutes ({tabCounts.all})
+              </TabsTrigger>
+              <TabsTrigger value="draft">
+                Brouillon ({tabCounts.draft})
+              </TabsTrigger>
+              <TabsTrigger value="confirmed">
+                Validée ({tabCounts.confirmed})
+              </TabsTrigger>
+              <TabsTrigger value="shipped">
+                Expédiée ({tabCounts.shipped})
+              </TabsTrigger>
+              <TabsTrigger value="cancelled">
+                Annulée ({tabCounts.cancelled})
+              </TabsTrigger>
+            </TabsList>
+          </Tabs>
+
+          {/* Filtres complémentaires */}
           <div className="flex flex-col lg:flex-row gap-4">
+            {/* Recherche */}
             <div className="flex-1">
               <div className="relative">
                 <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
                 <Input
-                  placeholder="Rechercher par numéro de commande ou client..."
+                  placeholder="Rechercher par numéro ou client..."
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
                   className="pl-10"
                 />
               </div>
             </div>
-            <Select value={workflowFilter} onValueChange={setWorkflowFilter}>
+
+            {/* Type client */}
+            <Select value={customerTypeFilter} onValueChange={(value: any) => setCustomerTypeFilter(value)}>
               <SelectTrigger className="w-full lg:w-56">
-                <SelectValue placeholder="Vue rapide" />
+                <SelectValue placeholder="Type de client" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="all">Toutes les commandes</SelectItem>
-                <SelectItem value="awaiting_validation">En attente de validation</SelectItem>
-                <SelectItem value="awaiting_payment">En attente de paiement</SelectItem>
-                <SelectItem value="to_process">À traiter</SelectItem>
-                <SelectItem value="shipped">Expédiées</SelectItem>
-                <SelectItem value="delivered">Livrées</SelectItem>
+                <SelectItem value="all">Tous les types</SelectItem>
+                <SelectItem value="professional">Clients professionnels</SelectItem>
+                <SelectItem value="individual">Clients particuliers</SelectItem>
               </SelectContent>
             </Select>
-            <Select value={statusFilter} onValueChange={(value) => setStatusFilter(value as SalesOrderStatus | 'all')}>
+
+            {/* Période */}
+            <Select value={periodFilter} onValueChange={(value: any) => setPeriodFilter(value)}>
               <SelectTrigger className="w-full lg:w-48">
-                <SelectValue placeholder="Statut" />
+                <SelectValue placeholder="Période" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="all">Tous les statuts</SelectItem>
-                <SelectItem value="draft">Brouillon</SelectItem>
-                <SelectItem value="confirmed">Validée</SelectItem>
-                <SelectItem value="partially_shipped">Partiellement expédiée</SelectItem>
-                <SelectItem value="shipped">Expédiée</SelectItem>
-                <SelectItem value="delivered">Livrée</SelectItem>
-                <SelectItem value="cancelled">Annulée</SelectItem>
-              </SelectContent>
-            </Select>
-            <Select value={customerFilter} onValueChange={setCustomerFilter}>
-              <SelectTrigger className="w-full lg:w-48">
-                <SelectValue placeholder="Client" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">Tous les clients</SelectItem>
-                {customers.map((customer) => (
-                  <SelectItem key={customer.id} value={customer.id}>
-                    {customer.name}
-                  </SelectItem>
-                ))}
+                <SelectItem value="all">Toute période</SelectItem>
+                <SelectItem value="month">Ce mois</SelectItem>
+                <SelectItem value="quarter">Ce trimestre</SelectItem>
+                <SelectItem value="year">Cette année</SelectItem>
               </SelectContent>
             </Select>
           </div>
         </CardContent>
       </Card>
 
-      {/* Liste des commandes */}
+      {/* Tableau commandes */}
       <Card>
         <CardHeader>
-          <CardTitle>Commandes Clients</CardTitle>
+          <CardTitle>Commandes</CardTitle>
           <CardDescription>
             {filteredOrders.length} commande(s) trouvée(s)
           </CardDescription>
@@ -295,7 +435,6 @@ export default function SalesOrdersPage() {
             </div>
           ) : filteredOrders.length === 0 ? (
             <div className="text-center py-8">
-              <ShoppingCart className="mx-auto h-12 w-12 text-gray-400 mb-4" />
               <p className="text-gray-500">Aucune commande trouvée</p>
             </div>
           ) : (
@@ -304,12 +443,25 @@ export default function SalesOrdersPage() {
                 <TableHeader>
                   <TableRow>
                     <TableHead>N° Commande</TableHead>
-                    <TableHead>Client</TableHead>
+                    <TableHead
+                      className="cursor-pointer hover:bg-gray-50"
+                      onClick={() => handleSort('client')}
+                    >
+                      Client {renderSortIcon('client')}
+                    </TableHead>
                     <TableHead>Statut</TableHead>
-                    <TableHead>Statut Paiement</TableHead>
-                    <TableHead>Date création</TableHead>
-                    <TableHead>Date livraison</TableHead>
-                    <TableHead>Montant TTC</TableHead>
+                    <TableHead
+                      className="cursor-pointer hover:bg-gray-50"
+                      onClick={() => handleSort('date')}
+                    >
+                      Date {renderSortIcon('date')}
+                    </TableHead>
+                    <TableHead
+                      className="cursor-pointer hover:bg-gray-50"
+                      onClick={() => handleSort('amount')}
+                    >
+                      Montant {renderSortIcon('amount')}
+                    </TableHead>
                     <TableHead>Actions</TableHead>
                   </TableRow>
                 </TableHeader>
@@ -318,6 +470,8 @@ export default function SalesOrdersPage() {
                     const customerName = order.customer_type === 'organization'
                       ? order.organisations?.name
                       : `${order.individual_customers?.first_name} ${order.individual_customers?.last_name}`
+
+                    const canDelete = order.status === 'draft' || order.status === 'cancelled'
 
                     return (
                       <TableRow key={order.id}>
@@ -338,28 +492,14 @@ export default function SalesOrdersPage() {
                           </Badge>
                         </TableCell>
                         <TableCell>
-                          {order.payment_status && (
-                            <Badge className={paymentStatusColors[order.payment_status]}>
-                              {paymentStatusLabels[order.payment_status]}
-                            </Badge>
-                          )}
-                        </TableCell>
-                        <TableCell>
                           {formatDate(order.created_at)}
                         </TableCell>
                         <TableCell>
-                          {order.expected_delivery_date ? formatDate(order.expected_delivery_date) : 'Non définie'}
-                        </TableCell>
-                        <TableCell>
-                          <div>
-                            <div className="font-medium">{formatCurrency(order.total_ttc || order.total_ht)}</div>
-                            {order.payment_status === 'paid' && order.paid_amount && (
-                              <div className="text-xs text-green-600">Payé</div>
-                            )}
-                          </div>
+                          <div className="font-medium">{formatCurrency(order.total_ttc || order.total_ht)}</div>
                         </TableCell>
                         <TableCell>
                           <div className="flex items-center gap-2">
+                            {/* Voir */}
                             <Button
                               variant="outline"
                               size="sm"
@@ -369,65 +509,78 @@ export default function SalesOrdersPage() {
                               <Eye className="h-4 w-4" />
                             </Button>
 
-                            {/* Bouton Modifier (si commande modifiable) */}
-                            {(order.status === 'draft' || (order.status === 'confirmed' && order.payment_status !== 'paid')) && (
+                            {/* Modifier (draft ou confirmed non payée) */}
+                            {(order.status === 'draft' || order.status === 'confirmed') && (
                               <Button
                                 variant="outline"
                                 size="sm"
                                 onClick={() => openEditOrder(order.id)}
-                                title="Modifier la commande"
+                                title="Modifier"
                               >
                                 <Edit className="h-4 w-4" />
                               </Button>
                             )}
 
-                            {/* Bouton Valider (draft uniquement) */}
+                            {/* Valider (draft uniquement) */}
                             {order.status === 'draft' && (
-                              <>
-                                <Button
-                                  variant="outline"
-                                  size="sm"
-                                  onClick={() => handleStatusChange(order.id, 'confirmed')}
-                                  title="Valider la commande pour autoriser le traitement"
-                                >
-                                  <CheckCircle className="h-4 w-4" />
-                                </Button>
-                                <Button
-                                  variant="outline"
-                                  size="sm"
-                                  onClick={() => handleDelete(order.id)}
-                                  title="Supprimer"
-                                >
-                                  <Trash2 className="h-4 w-4 text-red-600" />
-                                </Button>
-                              </>
-                            )}
-
-                            {/* Bouton Marquer comme payé (confirmée + en attente de paiement) */}
-                            {order.status === 'confirmed' &&
-                             (order.payment_status === 'pending' || order.payment_status === 'partial') && (
                               <Button
                                 variant="outline"
                                 size="sm"
-                                onClick={() => handleMarkAsPaid(order.id)}
-                                title="Marquer comme payé"
-                                className="text-green-600"
+                                onClick={() => handleStatusChange(order.id, 'confirmed')}
+                                title="Valider"
+                                className="text-green-600 border-green-300 hover:bg-green-50"
                               >
-                                <CreditCard className="h-4 w-4" />
+                                <CheckCircle className="h-4 w-4" />
                               </Button>
                             )}
 
-                            {/* Bouton Expédier (confirmée + payée) */}
-                            {order.status === 'confirmed' && order.payment_status === 'paid' && (
+                            {/* Dévalider (confirmed uniquement) */}
+                            {order.status === 'confirmed' && (
                               <Button
                                 variant="outline"
                                 size="sm"
-                                onClick={() => openOrderDetail(order)}
-                                title="Gérer expédition"
+                                onClick={() => handleStatusChange(order.id, 'draft')}
+                                title="Dévalider (retour brouillon)"
+                                className="text-orange-600 border-orange-300 hover:bg-orange-50"
                               >
-                                <Truck className="h-4 w-4" />
+                                <RotateCcw className="h-4 w-4" />
                               </Button>
                             )}
+
+                            {/* Annuler (confirmed ou shipped) */}
+                            {(order.status === 'confirmed' || order.status === 'shipped') && (
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                onClick={() => handleCancel(order.id)}
+                                title="Annuler la commande"
+                                className="text-red-600 border-red-300 hover:bg-red-50"
+                              >
+                                <Ban className="h-4 w-4" />
+                              </Button>
+                            )}
+
+                            {/* Supprimer (draft ou cancelled uniquement) */}
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={() => handleDelete(order.id)}
+                              disabled={!canDelete}
+                              title={canDelete ? "Supprimer" : "Annulez d'abord la commande pour la supprimer"}
+                              className={canDelete ? "text-red-600" : ""}
+                            >
+                              <Trash2 className="h-4 w-4" />
+                            </Button>
+
+                            {/* Imprimer PDF */}
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={() => handlePrintPDF(order)}
+                              title="Imprimer PDF"
+                            >
+                              <FileText className="h-4 w-4" />
+                            </Button>
                           </div>
                         </TableCell>
                       </TableRow>
