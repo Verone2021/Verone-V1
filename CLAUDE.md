@@ -1,499 +1,251 @@
-# 🚀 Vérone Back Office - Configuration Claude Code 2025
+# 🚀 Vérone Back Office - Claude Code 2025
 
 **CRM/ERP modulaire** pour décoration et mobilier d'intérieur haut de gamme
-**MVP Catalogue Partageable** : Next.js + Supabase + shadcn/ui
+**Stack** : Next.js 15 + Supabase + shadcn/ui
 
 ---
 
-## 🇫🇷 **LANGUE - RÈGLE ABSOLUE**
+## 🇫🇷 LANGUE
 
-**TOUJOURS COMMUNIQUER EN FRANÇAIS UNIQUEMENT**
-- ✅ Tous les messages en français
-- ✅ Documentation en français
-- ✅ Commentaires code en français
-- ✅ Messages d'erreur en français
-- ❌ JAMAIS utiliser l'anglais dans les réponses
+**TOUJOURS communiquer en français** - Messages, docs, commentaires, erreurs
 
 ---
 
-## 🧠 **WORKFLOW RÉVOLUTIONNAIRE 2025**
+## 🧠 WORKFLOW 2025
 
-**RÈGLE ABSOLUE** : Plan-First → Agent Orchestration → Console Clean → Deploy
+**Plan-First → Agent Orchestration → Console Clean → Deploy**
 
-### **🎯 Phase 1: PLAN-FIRST (Sequential Thinking Mandatory)**
+### Phase 1: PLAN-FIRST
 ```typescript
-// TOUJOURS utiliser Sequential Thinking pour planification complexe
+// Tâches complexes (>3 étapes) → Sequential Thinking MANDATORY
 mcp__sequential-thinking__sequentialthinking
 ```
 
-### **🤖 Phase 2: AGENT ORCHESTRATION (Systématique)**
+### Phase 2: AGENT ORCHESTRATION
 ```typescript
-// Workflow type par phase
 Think: Sequential Thinking + Serena (symbols overview)
-Research: Context7 (docs officielles) + Serena (code analysis)
-Implement: Serena (symbolic editing) + Supabase (data validation)
-Test: Playwright (console errors) + Supabase (logs)
-Deploy: GitHub (PR creation) + Vercel (auto-deployment)
-Monitor: Sentry (real-time issues) + Supabase (advisors)
+Research: Context7 (docs) + Serena (code analysis)
+Implement: Serena (symbolic editing) + Supabase (validation)
+Test: Playwright Browser (console) + Supabase (logs)
+Deploy: GitHub (PR) + Vercel (auto)
+Monitor: Sentry (issues) + Supabase (advisors)
 ```
 
-### **🚨 Phase 3: CONSOLE ERROR CHECKING (Règle Sacrée - MCP BROWSER ONLY)**
+### Phase 3: CONSOLE ERROR CHECKING (Règle Sacrée)
 ```typescript
-// JAMAIS déclarer succès avec erreurs console
-// 🚫 INTERDIT: Créer scripts de test (*.js, *.mjs, *.ts)
-// ✅ OBLIGATOIRE: MCP Playwright Browser direct uniquement
+// 🚫 INTERDIT: Scripts test (*.js, *.mjs, *.ts)
+// ✅ OBLIGATOIRE: MCP Playwright Browser direct
 
-1. mcp__playwright__browser_navigate(url)              // Navigation visible
-2. mcp__playwright__browser_console_messages()         // Check console errors
-3. Si erreurs → STOP → Fix ALL errors → Re-test MCP
-4. mcp__playwright__browser_take_screenshot()          // Proof visuelle
-5. Sentry MCP: escalate si critique
-6. Re-test MCP jusqu'à console 100% clean
-
-// VALIDATION VISUELLE OBLIGATOIRE: Browser s'ouvre devant vous
-```
-
-### **📦 Phase 4: AUTO-UPDATE REPOSITORY**
-```typescript
-// Après CHAQUE tâche terminée
-1. Update manifests/business-rules/ (règles validées)
-2. Update MEMORY-BANK/active-context.md (session courante)
-3. Update TASKS/completed/ (tâche archivée)
-4. GitHub commit automatique avec description
-```
-
-### **🛡️ Phase 5: SECURITY & YOLO MODE (2025)**
-```typescript
-// Mode YOLO sécurisé UNIQUEMENT
-1. Docker container isolation MANDATORY
-2. Backup automatique avant modifications
-3. Security scan avant exécution
-4. Filesystem restrictions actives
-5. Network isolation pour protection données
+1. mcp__playwright__browser_navigate(url)
+2. mcp__playwright__browser_console_messages()
+3. Si erreurs → STOP → Fix ALL → Re-test
+4. mcp__playwright__browser_take_screenshot()
+5. Zero tolerance: 1 erreur = échec complet
 ```
 
 ---
 
-## 📁 **FILE ORGANIZATION RULES 2025**
+## 📁 FILE ORGANIZATION
 
-**RÈGLE ABSOLUE** : JAMAIS créer de fichiers à la racine du projet
+**RÈGLE ABSOLUE** : JAMAIS créer fichiers MD à la racine (sauf README.md, CLAUDE.md)
 
-### **🎯 Classification Automatique des Fichiers**
-
-#### **Documentation & Guides**
-```typescript
-// ✅ CORRECT placement
-docs/
-├── migrations/           # Migration guides (ex: MIGRATION_TESTS_2025.md)
-├── architecture/         # Technical specifications
-├── decisions/           # Architecture Decision Records (ADRs)
-├── guides/             # User guides and tutorials
-└── api/               # API documentation
-
-// ❌ INTERDIT - Never at root
-MIGRATION_TESTS_2025.md     # → docs/migrations/
-REVOLUTION_2025.md          # → docs/guides/
-API_SPEC.md                # → docs/api/
+### Dossiers Standards
+```
+docs/               # Guides, migrations, architecture, API
+manifests/          # Business rules, PRDs, features
+MEMORY-BANK/        # Sessions, context, learnings
+TASKS/              # active, completed, testing
+supabase/migrations/  # Database migrations
 ```
 
-#### **Business & Project Management**
+### Auto-Classification Patterns
 ```typescript
-// ✅ CORRECT placement
-manifests/
-├── business-rules/     # Validated business rules only
-├── features/          # Feature specifications
-├── prd/              # Product Requirements Documents
-├── decisions/        # Business decisions with rationale
-└── compliance/       # Legal and compliance docs
-
-// ❌ INTERDIT - Never at root
-BUSINESS_PLAN.md           # → manifests/prd/
-FEATURE_SPEC.md           # → manifests/features/
-COMPLIANCE.md             # → manifests/compliance/
-```
-
-#### **Session & Context Management**
-```typescript
-// ✅ CORRECT placement
-MEMORY-BANK/
-├── sessions/          # Individual session summaries
-├── context/          # Persistent context between sessions
-├── learnings/        # Key insights and patterns
-└── archive/          # Completed session archives
-
-// ❌ INTERDIT - Never at root
-SESSION_SUMMARY.md        # → MEMORY-BANK/sessions/
-CONTEXT_2025.md          # → MEMORY-BANK/context/
-LEARNINGS.md             # → MEMORY-BANK/learnings/
-```
-
-#### **Task & Project Tracking**
-```typescript
-// ✅ CORRECT placement
-TASKS/
-├── active/           # Current work in progress
-├── completed/        # Finished tasks with summaries
-├── backlog/         # Future planned work
-└── testing/         # Test plans and strategies
-
-// ❌ INTERDIT - Never at root
-TODO.md                   # → TASKS/active/
-COMPLETED_TASKS.md       # → TASKS/completed/
-TEST_PLAN.md             # → TASKS/testing/
-```
-
-### **🤖 Auto-Classification Rules**
-
-#### **File Type Detection**
-```typescript
-// Automatic classification patterns
-*.md + "migration" → docs/migrations/
-*.md + "test plan" → TASKS/testing/
-*.md + "business rule" → manifests/business-rules/
-*.md + "session" → MEMORY-BANK/sessions/
-*.md + "API" → docs/api/
-*.md + "architecture" → docs/architecture/
-*.md + "decision" → docs/decisions/
-
-// NOUVEAUX PATTERNS RENFORCÉS (2025)
-"START-HERE-" + "MIGRATION" → docs/security/
-"START-HERE-" + "GUIDE" → docs/guides/
-"RAPPORT-" + date + "session" → MEMORY-BANK/sessions/
-"RAPPORT-" + "ORCHESTRATION" → docs/security/
-"*-AUDIT-*" → docs/reports/
-"EXECUTIVE-SUMMARY" → docs/reports/
-"SECURITY-" → docs/security/
-```
-
-#### **Content-Based Classification**
-```typescript
-// Classification by content keywords
+"migration" → docs/migrations/
+"session" → MEMORY-BANK/sessions/
+"RAPPORT-" → MEMORY-BANK/sessions/
+"business rule" → manifests/business-rules/
 "PRD:" → manifests/prd/
-"ADR:" → docs/decisions/
-"Session:" → MEMORY-BANK/sessions/
-"Migration:" → docs/migrations/
-"Test Plan:" → TASKS/testing/
-"Business Rule:" → manifests/business-rules/
-
-// NOUVEAUX PATTERNS (2025)
-"RAPPORT FINAL" → MEMORY-BANK/sessions/
-"AUDIT" + "EXECUTIVE" → docs/reports/
-"ORCHESTRATION" + "FINALE" → docs/security/
-"START HERE" → docs/security/ OU docs/guides/
-```
-
-#### **RÈGLE STRICTE : ZÉRO FICHIER MD À LA RACINE**
-```typescript
-// RÈGLE ABSOLUE
-*.md SAUF (README.md | CLAUDE.md) → JAMAIS à la racine
-
-// Si fichier MD créé à la racine:
-1. Auto-classifier selon patterns ci-dessus
-2. Si pattern non reconnu → Demander utilisateur
-3. Déplacer IMMÉDIATEMENT vers dossier approprié
-4. ERREUR si reste à la racine après création
-```
-
-### **📋 Auto-Update Workflow**
-
-#### **Post-Task Automation (SYSTEMATIC)**
-```bash
-# Après chaque tâche terminée
-/organize-files     # Classify and move files automatically
-/session-summary   # Create summary in MEMORY-BANK/sessions/
-/update-manifests  # Update business rules if needed
-/context-preserve  # Update active context
-```
-
-#### **Quality Control Rules**
-```typescript
-// File placement validation
-1. Scan root directory for misplaced files
-2. Auto-suggest correct location based on content
-3. Move files to appropriate directories
-4. Update all references and links
-5. Commit changes with descriptive message
 ```
 
 ---
 
-## 🎮 **CUSTOM COMMANDS SYSTEM**
+## 🤖 AGENTS MCP - USAGE PRIORITAIRE
 
-**Localisation** : `.claude/commands/` (voir dossier pour commandes disponibles)
-
-### **Commandes Principales Disponibles**
-```bash
-/feature-start <name>     # Démarrer nouvelle fonctionnalité
-/error-check              # Console error checking complet
-/test-critical            # Tests essentiels uniquement (pas 677!)
-/deploy-check             # Validation pré-déploiement
-/context-update           # Mise à jour manifests/memory-bank
+### Serena - Code Intelligence
+```typescript
+mcp__serena__get_symbols_overview   // Explorer fichier AVANT modification
+mcp__serena__find_symbol            // Localiser symboles
+mcp__serena__replace_symbol_body    // Édition précise
+mcp__serena__write_memory           // Context persistant
 ```
 
----
-
-## 🤖 **AGENTS MCP - ORCHESTRATION INTELLIGENTE**
-
-### **🧠 Serena - Code Intelligence (Usage Prioritaire)**
+### Supabase - Database
 ```typescript
-// TOUJOURS utiliser avant modification code
-mcp__serena__get_symbols_overview      // Explorer fichier
-mcp__serena__find_symbol               // Localiser symboles
-mcp__serena__replace_symbol_body       // Édition précise
-mcp__serena__write_memory              // Context persistant
-```
+// 🔑 CREDENTIALS: TOUJOURS lire depuis .env.local (ligne 19)
+// Fichier: /Users/romeodossantos/verone-back-office-V1/.env.local
+// Connection: aws-1-eu-west-3.pooler.supabase.com:5432
+// Password: ADFVKDJCJDNC934
 
-### **🗄️ Supabase - Database Operations**
-```typescript
-mcp__supabase__execute_sql             // Queries directes
-mcp__supabase__get_logs                // Debug API
-mcp__supabase__get_advisors            // Sécurité/performance
+mcp__supabase__execute_sql          // Queries directes
+mcp__supabase__get_advisors         // Sécurité/performance
 mcp__supabase__generate_typescript_types  // Types après migrations
+
+// Workflow automatisé:
+1. Read .env.local pour DATABASE_URL
+2. Essayer Session Pooler (5432) en priorité
+3. Si échec → Direct Connection (6543)
+4. JAMAIS demander credentials manuellement
 ```
 
-### **🌐 Playwright MCP - Browser Testing Révolutionnaire (JAMAIS DE SCRIPTS)**
+### Playwright - Browser Testing
 ```typescript
-// 🚫 INTERDIT ABSOLU: Créer des scripts de test
-// ✅ OBLIGATOIRE: Utiliser MCP Playwright Browser directement
+// 🚫 INTERDIT: Créer scripts test
+// ✅ OBLIGATOIRE: MCP Browser direct visible
 
-// Navigation & Testing en temps réel
-mcp__playwright__browser_navigate      // Navigation visible en temps réel
-mcp__playwright__browser_console_messages  // Vérification erreurs console
-mcp__playwright__browser_take_screenshot   // Captures visuelles
-mcp__playwright__browser_snapshot      // Tests accessibilité
-mcp__playwright__browser_click         // Interactions utilisateur
-
-// RÈGLE ABSOLUE: JAMAIS créer *.js, *.mjs, *.ts pour tests
-// TOUJOURS utiliser MCP Browser direct pour validation immédiate
-// Usage: Browser visible + interaction en temps réel
+mcp__playwright__browser_navigate
+mcp__playwright__browser_console_messages
+mcp__playwright__browser_click
+mcp__playwright__browser_take_screenshot
+mcp__playwright__browser_snapshot   // Accessibility
 ```
 
-### **📚 Context7 - Documentation Officielle**
+### Autres Agents
 ```typescript
-mcp__context7__resolve-library-id      // Find library docs
-mcp__context7__get-library-docs        // Framework officiel
-// TOUJOURS consulter avant implémentation nouvelle
-```
-
-### **🔧 Sequential Thinking - Architecture Complexe**
-```typescript
-mcp__sequential-thinking__sequentialthinking
-// Usage: Planification, architecture, décisions complexes
-// MANDATORY pour tâches > 3 étapes
-```
-
-### **🐙 GitHub - Repository Management**
-```typescript
-mcp__github__create_pull_request       // PR automatisées
-mcp__github__create_branch             // Feature branches
-mcp__github__push_files                // Commits batch
-// GitHub Flow: feature → main (simple!)
-```
-
-### **🚨 Sentry MCP - Monitoring Production**
-```typescript
-mcp__sentry__get_recent_issues         // Issues temps réel
-mcp__sentry__create_issue              // Escalation auto
-// Monitoring continu sans tests manuels exhaustifs
-```
-
-### **🚀 Vercel - Deployment**
-```typescript
-// Auto-deployment sur push main
-// Configuration CI/CD GitHub Actions
+mcp__context7__get-library-docs           // Docs officielles frameworks
+mcp__sequential-thinking__sequentialthinking  // Architecture complexe
+mcp__github__create_pull_request          // PR automatisées
+mcp__sentry__get_recent_issues            // Monitoring production
 ```
 
 ---
 
-## 🧪 **STRATÉGIE TESTS RÉVOLUTIONNAIRE 2025**
+## 🧪 STRATÉGIE TESTS
 
-### **❌ TERMINÉ : Système 677 Tests "Usine à Gaz"**
-- Parser complexe supprimé
-- Hooks sur-engineered supprimés
-- Sync Supabase exhaustive supprimée
+### Ancien Système ❌
+- 677 tests exhaustifs (supprimé)
+- Parser complexe (supprimé)
+- Sync Supabase exhaustive (supprimée)
 
-### **✅ NOUVEAU : Tests Ciblés Intelligents**
+### Nouveau Système ✅
 ```typescript
-// Dashboard: 5 tests critiques (vs 59)
-// Catalogue: 7 tests essentiels (vs 134)
-// Stocks: 4 tests bloquants (vs 87)
-// Total: ~50 tests max (vs 677!)
-
-// Stratégie:
+// ~50 tests ciblés max (vs 677)
 1. Console Error Checking (Playwright) - PRIORITÉ 1
 2. Sentry MCP monitoring temps réel - PRIORITÉ 2
 3. Tests manuels ciblés browser - PRIORITÉ 3
 4. Accessibility snapshots - PRIORITÉ 4
 ```
 
-### **🎯 Tests par Module (Révolutionnaire)**
-```bash
-# Dashboard (5 tests vs 59)
-/test-dashboard-critical   # KPIs load, navigation, errors
+---
 
-# Catalogue (7 tests vs 134)
-/test-catalogue-core       # Products list, search, details
+## 🚨 RÈGLES BUSINESS CRITIQUES
 
-# Workflow automatisé
-/error-check → /test-critical → /deploy-check
+### Console Error Protocol
+```typescript
+// Zero tolerance: 1 erreur console = échec
+1. MCP Browser navigate avant validation
+2. Check console messages
+3. Screenshot comme preuve
+4. Fix ALL errors before success
+```
+
+### Product Images Pattern (BR-TECH-002)
+```typescript
+// ✅ OBLIGATOIRE: Jointure product_images
+const { data } = await supabase
+  .from('products')
+  .select(`
+    id, name, sku,
+    product_images!left (public_url, is_primary)
+  `)
+
+// Enrichissement MANDATORY
+const enriched = data.map(p => ({
+  ...p,
+  primary_image_url: p.product_images?.[0]?.public_url || null
+}))
+
+// ❌ INTERDIT: products.primary_image_url (colonne supprimée)
+```
+
+### Design System Vérone
+```css
+--verone-primary: #000000    /* Noir signature */
+--verone-secondary: #FFFFFF  /* Blanc pur */
+--verone-accent: #666666     /* Gris élégant */
+/* ❌ INTERDIT: jaune/doré/ambre */
 ```
 
 ---
 
-## ⚡ **COMMANDES ESSENTIELLES 2025**
+## 🔄 GITHUB FLOW
 
-```bash
-# Développement
-npm run dev              # Next.js development server
-npm run build           # Production build validation
-npm run lint            # ESLint + TypeScript check
-
-# Workflows automatisés
-/feature-start "nom"    # Custom command: branch + planning
-/error-check            # Console error checking complet
-/context-update         # Update manifests/memory-bank post-task
-
-# Vérifications rapides
-ls .claude/commands/    # Commandes disponibles
-cat manifests/business-rules/WORKFLOWS.md  # Règles métier
-```
-
----
-
-## 🔄 **GITHUB FLOW SIMPLIFIÉ 2025**
-
-### **Branching Strategy**
 ```bash
 main                    # Production deployable
-├── feature/dashboard   # Feature branches uniquement
-├── feature/catalogue   # Auto-deployment on merge
-└── hotfix/critical     # Emergency fixes only
-```
+├── feature/nom        # Feature branches
+└── hotfix/critical    # Emergency fixes
 
-### **Workflow Automatisé**
-```typescript
-1. /feature-start → Create branch + Sequential Planning
-2. Code avec agents MCP systématiques
-3. /error-check → Console 100% clean mandatory
-4. /test-critical → Tests essentiels uniquement
-5. GitHub PR avec description auto + deployment
+# Workflow:
+1. /feature-start → Branch + Sequential Planning
+2. Code avec agents MCP
+3. /error-check → Console 100% clean
+4. /test-critical → Tests essentiels
+5. GitHub PR + auto-deployment
 6. /context-update → Update manifests/memory-bank
 ```
 
 ---
 
-## 🚨 **RÈGLES BUSINESS CRITIQUES 2025**
+## ⚡ COMMANDES ESSENTIELLES
 
-### **Console Error Checking Protocol (MCP BROWSER RÉVOLUTIONNAIRE)**
-```typescript
-// WORKFLOW OBLIGATOIRE (Règle Sacrée)
-// 🚫 INTERDIT ABSOLU: Scripts de test *.js, *.mjs, *.ts
-// ✅ OBLIGATOIRE: MCP Playwright Browser visible uniquement
+```bash
+# Développement
+npm run dev              # Next.js dev server
+npm run build            # Production build
 
-1. mcp__playwright__browser_navigate(url) avant TOUTE validation
-2. mcp__playwright__browser_console_messages() - vérification visible
-3. Zero tolerance: 1 erreur console = échec système complet
-4. Browser s'ouvre devant vous - validation visuelle REQUIRED
-5. mcp__playwright__browser_take_screenshot() comme preuve
-6. Fix ALL errors before success declaration
-7. Sentry MCP escalation si récurrent
+# Custom Commands (.claude/commands/)
+/feature-start <name>    # Démarrer feature
+/error-check             # Console checking
+/test-critical           # Tests essentiels
+/context-update          # Update manifests
 
-// RÉVOLUTIONNAIRE: Voir browser en temps réel = confiance maximale
-```
-
-### **Agent Usage Patterns (MCP BROWSER FIRST)**
-```typescript
-// Complex Planning: Sequential Thinking MANDATORY
-// Code Changes: Serena symbolic analysis FIRST
-// New Features: Context7 official docs REQUIRED
-// Testing: MCP Playwright Browser visible ALWAYS (JAMAIS scripts)
-// Validation: Browser s'ouvre + console check + screenshot proof
-// Production: Sentry MCP monitoring CONTINUOUS
-
-// 🚫 BANNIR DÉFINITIVEMENT: *.js, *.mjs, *.ts test scripts
-// ✅ RÉVOLUTION 2025: MCP Browser direct = transparence totale
-```
-
-### **Repository Auto-Update**
-```typescript
-// Post-Task Automation (SYSTEMATIC)
-manifests/business-rules/    # Validated rules
-MEMORY-BANK/active-context/  # Current session
-TASKS/completed/            # Archived tasks
-// GitHub commit avec description détaillée
-```
-
-### **Design System Vérone (Unchanged)**
-```css
-/* Couleurs autorisées uniquement */
---verone-primary: #000000    /* Noir signature */
---verone-secondary: #FFFFFF  /* Blanc pur */
---verone-accent: #666666     /* Gris élégant */
-/* INTERDIT ABSOLU: jaune/doré/ambre */
+# Vérifications
+ls .claude/commands/     # Commandes disponibles
+cat manifests/business-rules/WORKFLOWS.md
 ```
 
 ---
 
-## 📁 **REPOSITORY STRUCTURE 2025**
+## 📁 REPOSITORY STRUCTURE
 
 ```
-.claude/                   # Claude Code 2025 configuration
-├── commands/             # Custom slash commands
-└── workflows/           # Agent orchestration templates
-
-src/                     # Next.js application code
-├── app/                # App Router (inchangé)
-├── components/         # shadcn/ui + business
-├── hooks/              # Supabase hooks optimisés
-└── lib/                # Utilities et configurations
-
+.claude/commands/        # Custom slash commands
+src/                    # Next.js app
 manifests/              # Business rules (auto-updated)
-├── business-rules/     # Règles métier validées
-├── prd/               # PRDs à jour
-├── architecture/      # Schémas techniques
-└── archive-2025/      # Archive automatique sessions
-
-MEMORY-BANK/           # Context management system
-├── active-context.md  # Session courante
-├── ai-context.md      # Context IA persistant
-└── process-archive/   # Sessions archivées
-
-TASKS/                 # Task management (auto-updated)
-├── active/           # Tâches en cours
-├── completed/        # Tâches terminées
-└── templates/        # Templates tâches
-
-supabase/migrations/  # Database migrations uniquement
+MEMORY-BANK/            # Context sessions
+TASKS/                  # Task management
+supabase/migrations/    # Database migrations
 ```
 
 ---
 
-## 🎯 **SUCCESS METRICS 2025**
+## 🎯 SUCCESS METRICS
 
-### **Performance Targets (Inchangés)**
+### Performance Targets
 - Dashboard <2s, Catalogue <3s, Feeds <10s, PDF <5s
 
-### **Development Efficiency (Révolutionnaire)**
-- **-80% temps tests** (50 vs 677 tests)
+### Development Efficiency
+- **-80% temps tests** (50 vs 677)
 - **+300% vitesse dev** (agents systématiques)
 - **0 erreur console** (checking automatisé)
 - **10x déploiement** (GitHub Flow simple)
 
-### **Quality Assurance**
-- Console errors: 0 tolérance
-- Agent utilization: 100% systematic
-- Repository updates: 100% automatic
-- Documentation: Always current
-
 ---
 
-## 🏆 **RÉVOLUTION WORKFLOW 2025**
+## 🏆 RÉVOLUTION 2025
 
-**Transformation complète :**
-- ❌ **677 tests exhaustifs** → ✅ **50 tests ciblés**
-- ❌ **Développement manuel** → ✅ **Agent orchestration**
-- ❌ **Repository maintenance** → ✅ **Auto-update system**
-- ❌ **GitFlow complexe** → ✅ **GitHub Flow simple**
-- ❌ **Console errors ignored** → ✅ **Zero tolerance policy**
+- ❌ 677 tests → ✅ 50 tests ciblés
+- ❌ Dev manuel → ✅ Agent orchestration
+- ❌ GitFlow complexe → ✅ GitHub Flow simple
+- ❌ Console errors ignored → ✅ Zero tolerance
 
-*Vérone Back Office 2025 - Professional AI-Assisted Development Excellence*
+*Vérone Back Office 2025 - Professional AI-Assisted Development*
