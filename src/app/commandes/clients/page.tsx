@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect, useMemo } from 'react'
-import { Plus, Search, Eye, Edit, Trash2, CheckCircle, XCircle, RotateCcw, Ban, ArrowUpDown, ArrowUp, ArrowDown, FileText } from 'lucide-react'
+import { Plus, Search, Eye, Edit, Trash2, CheckCircle, XCircle, RotateCcw, Ban, ArrowUpDown, ArrowUp, ArrowDown, FileText, FileSpreadsheet } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
@@ -280,6 +280,53 @@ export default function SalesOrdersPage() {
     })
   }
 
+  const handleExportExcel = async () => {
+    try {
+      toast({
+        title: "Export en cours...",
+        description: "Génération du fichier Excel"
+      })
+
+      const response = await fetch('/api/sales-orders/export', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          activeTab,
+          customerTypeFilter,
+          periodFilter,
+          searchTerm
+        })
+      })
+
+      if (!response.ok) throw new Error('Erreur export')
+
+      // Télécharger le fichier
+      const blob = await response.blob()
+      const url = window.URL.createObjectURL(blob)
+      const a = document.createElement('a')
+      a.href = url
+      a.download = `commandes-clients-${new Date().toISOString().split('T')[0]}.xlsx`
+      document.body.appendChild(a)
+      a.click()
+      window.URL.revokeObjectURL(url)
+      document.body.removeChild(a)
+
+      toast({
+        title: "Export réussi",
+        description: "Le fichier Excel a été téléchargé"
+      })
+    } catch (error) {
+      console.error('Erreur export Excel:', error)
+      toast({
+        title: "Erreur",
+        description: "Impossible d'exporter les commandes",
+        variant: "destructive"
+      })
+    }
+  }
+
   const openOrderDetail = (order: SalesOrder) => {
     setSelectedOrder(order)
     setShowOrderDetail(true)
@@ -298,10 +345,20 @@ export default function SalesOrdersPage() {
           <h1 className="text-3xl font-bold text-gray-900">Commandes Clients</h1>
           <p className="text-gray-600 mt-1">Gestion des commandes et expéditions clients</p>
         </div>
-        <SalesOrderFormModal onSuccess={() => {
-          fetchOrders()
-          fetchStats()
-        }} />
+        <div className="flex gap-2">
+          <Button
+            onClick={handleExportExcel}
+            variant="outline"
+            className="flex items-center gap-2"
+          >
+            <FileSpreadsheet className="h-4 w-4" />
+            Exporter Excel
+          </Button>
+          <SalesOrderFormModal onSuccess={() => {
+            fetchOrders()
+            fetchStats()
+          }} />
+        </div>
       </div>
 
       {/* Statistiques KPI (5 cartes - dynamiques filtrées) */}
