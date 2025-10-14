@@ -1,7 +1,8 @@
 # 📦 Politique Backorders - Vérone Back Office
 
-**Version**: 1.0
+**Version**: 1.1
 **Date**: 2025-10-14
+**Dernière MAJ**: 2025-10-14 (Fix frontend validation)
 **Statut**: ✅ **ACTIF**
 
 ---
@@ -91,6 +92,19 @@ stock_forecasted_out INTEGER  -- Peut être < 0
 1. `handle_sales_order_stock()`: Gestion réservations + déductions
 2. `maintain_stock_coherence()`: Cohérence stock_real
 3. `recalculate_forecasted_stock()`: Calcul prévisionnels
+
+### **Frontend (React Hooks)**
+```typescript
+// src/hooks/use-sales-orders.ts (ligne 817-820)
+// ✅ FIX 2025-10-14: Warning au lieu de throw Error
+if (unavailableItems.length > 0) {
+  // BACKORDERS AUTORISÉS: Warning au lieu de throw (Politique 2025-10-14)
+  // Stock négatif = backorder selon standards ERP 2025
+  console.warn(`⚠️ Stock insuffisant (backorder autorisé): ${itemNames.join(', ')}`)
+  // ❌ AVANT: throw new Error() → Bloquant
+  // ✅ APRÈS: console.warn() → Non bloquant
+}
+```
 
 ---
 
@@ -237,20 +251,26 @@ graph TD
 | Date | Version | Modification | Auteur |
 |------|---------|--------------|--------|
 | 2025-10-14 | 1.0 | Création politique backorders | Claude Code |
-| 2025-10-14 | 1.0 | Migration 005 appliquée | System |
+| 2025-10-14 | 1.0 | Migration 005 appliquée (database) | System |
+| 2025-10-14 | 1.1 | Fix frontend validation (use-sales-orders.ts ligne 817) | Claude Code |
 
 ---
 
 ## 📎 **RÉFÉRENCES TECHNIQUES**
 
-### **Migrations**
+### **Migrations Database**
 - `supabase/migrations/20251014_005_allow_negative_stock.sql`
 
-### **Documentation**
-- `MEMORY-BANK/sessions/RAPPORT-SESSION-BACKORDERS-2025-10-14.md`
+### **Code Frontend**
+- `src/hooks/use-sales-orders.ts` (ligne 817-820)
 
-### **Tests**
-- Screenshot: `.playwright-mcp/test-backorders-success-stock-negatif.png`
+### **Documentation**
+- `MEMORY-BANK/sessions/RAPPORT-SESSION-BACKORDERS-2025-10-14.md` (Implémentation initiale)
+- `MEMORY-BANK/sessions/RAPPORT-FIX-FRONTEND-BACKORDERS-2025-10-14.md` (Fix validation frontend)
+
+### **Tests & Screenshots**
+- `.playwright-mcp/test-backorders-success-stock-negatif.png` (Test initial)
+- `.playwright-mcp/test-backorders-fix-frontend-success.png` (Test fix frontend)
 - Commande test: SO-2025-00017 (Hotel Le Luxe, Fauteuil Milo Kaki)
 
 ---

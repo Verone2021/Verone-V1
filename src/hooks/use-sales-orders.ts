@@ -78,6 +78,7 @@ export interface SalesOrderItem {
   product_id: string
   quantity: number
   unit_price_ht: number
+  tax_rate: number           // Taux de TVA par ligne (ex: 0.2000 = 20%)
   discount_percentage: number
   total_ht: number
   quantity_shipped: number
@@ -114,6 +115,7 @@ export interface CreateSalesOrderItemData {
   product_id: string
   quantity: number
   unit_price_ht: number
+  tax_rate?: number          // Taux de TVA (défaut: 0.20 = 20%)
   discount_percentage?: number
   expected_delivery_date?: string
   notes?: string
@@ -176,7 +178,11 @@ export function useSalesOrders() {
               stock_quantity,
               stock_real,
               stock_forecasted_in,
-              stock_forecasted_out
+              stock_forecasted_out,
+              product_images!left (
+                public_url,
+                is_primary
+              )
             )
           )
         `)
@@ -224,8 +230,18 @@ export function useSalesOrders() {
             customerData = { individual_customers: individual }
           }
 
+          // Enrichir les produits avec primary_image_url (BR-TECH-002)
+          const enrichedItems = (order.sales_order_items || []).map(item => ({
+            ...item,
+            products: item.products ? {
+              ...item.products,
+              primary_image_url: item.products.product_images?.[0]?.public_url || null
+            } : null
+          }))
+
           return {
             ...order,
+            sales_order_items: enrichedItems,
             ...customerData
           }
         })
@@ -261,7 +277,11 @@ export function useSalesOrders() {
               stock_quantity,
               stock_real,
               stock_forecasted_in,
-              stock_forecasted_out
+              stock_forecasted_out,
+              product_images!left (
+                public_url,
+                is_primary
+              )
             )
           )
         `)
@@ -289,8 +309,18 @@ export function useSalesOrders() {
         customerData = { individual_customers: individual }
       }
 
+      // Enrichir les produits avec primary_image_url (BR-TECH-002)
+      const enrichedItems = (orderData.sales_order_items || []).map(item => ({
+        ...item,
+        products: item.products ? {
+          ...item.products,
+          primary_image_url: item.products.product_images?.[0]?.public_url || null
+        } : null
+      }))
+
       const orderWithCustomer = {
         ...orderData,
+        sales_order_items: enrichedItems,
         ...customerData
       }
 
@@ -491,23 +521,38 @@ export function useSalesOrders() {
   const createOrder = useCallback(async (data: CreateSalesOrderData, autoReserve = false) => {
     setLoading(true)
     try {
-      // 1. Vérifier la disponibilité du stock
+      // 1. Vérifier la disponibilité du stock (sans bloquer)
       const stockCheck = await checkStockAvailability(data.items)
       const unavailableItems = stockCheck.filter(item => !item.is_available)
 
+      // ⚠️ NOUVEAU: Ne plus bloquer, juste logger les produits en stock insuffisant
       if (unavailableItems.length > 0) {
         const itemNames = await Promise.all(
           unavailableItems.map(async (item) => {
             const { data: product } = await supabase
               .from('products')
-              .select('name')
+              .select('name, stock_real, stock_forecasted_out')
               .eq('id', item.product_id)
               .single()
-            return product?.name || item.product_id
+            return {
+              name: product?.name || item.product_id,
+              product_id: item.product_id,
+              requested: item.requested_quantity,
+              available: item.available_stock,
+              current_forecasted_out: product?.stock_forecasted_out || 0,
+              stock_real: product?.stock_real || 0
+            }
           })
         )
 
-        throw new Error(`Stock insuffisant pour: ${itemNames.join(', ')}`)
+        console.warn('⚠️ Commande avec stock insuffisant:', itemNames)
+
+        // Afficher un toast informatif (non bloquant)
+        toast({
+          title: "⚠️ Attention Stock",
+          description: `Stock insuffisant pour ${itemNames.length} produit(s). La commande sera créée en stock prévisionnel négatif.`,
+          variant: "default"
+        })
       }
 
       // 2. Générer le numéro de commande
@@ -562,22 +607,78 @@ export function useSalesOrders() {
 
       if (itemsError) throw itemsError
 
-      // 6. Réserver le stock automatiquement si demandé
+      // 6. 🆕 NOUVEAU: Mettre à jour stock_forecasted_out selon le statut de la commande
+      // RÈGLE MÉTIER:
+      // - Brouillon (draft): Aucun impact stock
+      // - Validée (validated): Impact stock_forecasted_out pour TOUS les produits
+      // - Expédiée/Livrée: Impact stock_real (géré par workflows séparés)
+
+      // On met à jour stock_forecasted_out UNIQUEMENT si la commande est créée directement en statut 'validated'
+      // Sinon, la mise à jour se fera lors de la validation (transition draft → validated)
+      const initialStatus = order.status || 'draft' // Par défaut: brouillon
+
+      if (initialStatus === 'validated') {
+        // Commande validée → Impact stock prévisionnel pour TOUS les produits
+        for (const item of data.items) {
+          // Récupérer les valeurs actuelles
+          const { data: product, error: productError } = await supabase
+            .from('products')
+            .select('stock_real, stock_forecasted_out')
+            .eq('id', item.product_id)
+            .single()
+
+          if (productError) {
+            console.error('Erreur récupération produit pour forecast:', productError)
+            continue
+          }
+
+          const currentReal = product?.stock_real || 0
+          const currentForecastedOut = product?.stock_forecasted_out || 0
+
+          // Nouvelle quantité prévue en sortie (additionnée)
+          const newForecastedOut = currentForecastedOut + item.quantity
+
+          // Mettre à jour le stock prévisionnel
+          const { error: updateError } = await supabase
+            .from('products')
+            .update({
+              stock_forecasted_out: newForecastedOut
+            })
+            .eq('id', item.product_id)
+
+          if (updateError) {
+            console.error('Erreur mise à jour stock prévisionnel:', updateError)
+          } else {
+            console.log(`✅ Stock prévisionnel mis à jour pour produit ${item.product_id}: forecasted_out=${newForecastedOut}, disponible=${currentReal - newForecastedOut}`)
+
+            // Si le stock disponible devient négatif, le trigger notify_negative_forecast_stock()
+            // créera automatiquement une notification pour commander chez le fournisseur
+          }
+        }
+      } else {
+        console.log(`ℹ️ Commande créée en statut '${initialStatus}' → Pas d'impact stock prévisionnel (sera mis à jour lors de la validation)`)
+      }
+
+      // 7. Réserver le stock automatiquement si demandé (seulement pour items disponibles)
       if (autoReserve) {
         try {
           const userId = (await supabase.auth.getUser()).data.user?.id
 
           for (const item of data.items) {
-            await supabase
-              .from('stock_reservations')
-              .insert({
-                product_id: item.product_id,
-                reserved_quantity: item.quantity,
-                reference_type: 'sales_order',
-                reference_id: order.id,
-                reserved_by: userId,
-                expires_at: data.expected_delivery_date ? new Date(new Date(data.expected_delivery_date).getTime() + 7 * 24 * 60 * 60 * 1000).toISOString() : null // 7 jours après la livraison prévue
-              })
+            // Ne réserver que si stock disponible
+            const stockInfo = stockCheck.find(s => s.product_id === item.product_id)
+            if (stockInfo && stockInfo.is_available) {
+              await supabase
+                .from('stock_reservations')
+                .insert({
+                  product_id: item.product_id,
+                  reserved_quantity: item.quantity,
+                  reference_type: 'sales_order',
+                  reference_id: order.id,
+                  reserved_by: userId,
+                  expires_at: data.expected_delivery_date ? new Date(new Date(data.expected_delivery_date).getTime() + 7 * 24 * 60 * 60 * 1000).toISOString() : null // 7 jours après la livraison prévue
+                })
+            }
           }
         } catch (reservationError) {
           console.warn('Erreur lors de la réservation automatique:', reservationError)
@@ -713,7 +814,9 @@ export function useSalesOrders() {
           })
         )
 
-        throw new Error(`Stock insuffisant pour: ${itemNames.join(', ')}`)
+        // BACKORDERS AUTORISÉS: Warning au lieu de throw (Politique 2025-10-14)
+        // Stock négatif = backorder selon standards ERP 2025
+        console.warn(`⚠️ Stock insuffisant (backorder autorisé): ${itemNames.join(', ')}`)
       }
 
       // 4. Calculer le diff des items (existingItems et existingItemsMap déjà créés ci-dessus)
@@ -836,49 +939,32 @@ export function useSalesOrders() {
   }, [supabase, toast, fetchOrders, currentOrder, fetchOrder, getAvailableStock])
 
   // Changer le statut d'une commande
+  // 🔧 FIX RLS 403: Utilise Server Action pour transmission JWT correcte au contexte PostgreSQL RLS
   const updateStatus = useCallback(async (orderId: string, newStatus: SalesOrderStatus) => {
     setLoading(true)
     try {
-      const userId = (await supabase.auth.getUser()).data.user?.id
-      const updateData: any = { status: newStatus }
+      // Utiliser Server Action pour bypass du problème RLS 403
+      const { updateSalesOrderStatus } = await import('@/app/actions/sales-orders')
 
-      // Mettre à jour les timestamps selon le statut
-      switch (newStatus) {
-        case 'confirmed':
-          updateData.confirmed_at = new Date().toISOString()
-          updateData.confirmed_by = userId
-          break
-        case 'shipped':
-        case 'partially_shipped':
-          updateData.shipped_at = new Date().toISOString()
-          updateData.shipped_by = userId
-          break
-        case 'delivered':
-          updateData.delivered_at = new Date().toISOString()
-          updateData.delivered_by = userId
-          break
-        case 'cancelled':
-          updateData.cancelled_at = new Date().toISOString()
+      const result = await updateSalesOrderStatus(orderId, newStatus)
 
-          // Libérer les réservations de stock en cas d'annulation
-          await supabase
-            .from('stock_reservations')
-            .update({
-              released_at: new Date().toISOString(),
-              released_by: userId
-            })
-            .eq('reference_type', 'sales_order')
-            .eq('reference_id', orderId)
-            .is('released_at', null)
-          break
+      if (!result.success) {
+        throw new Error(result.error || 'Erreur lors de la mise à jour du statut')
       }
 
-      const { error } = await supabase
-        .from('sales_orders')
-        .update(updateData)
-        .eq('id', orderId)
-
-      if (error) throw error
+      // Libérer les réservations de stock en cas d'annulation (via client car pas bloqué par RLS)
+      if (newStatus === 'cancelled') {
+        const userId = (await supabase.auth.getUser()).data.user?.id
+        await supabase
+          .from('stock_reservations')
+          .update({
+            released_at: new Date().toISOString(),
+            released_by: userId
+          })
+          .eq('reference_type', 'sales_order')
+          .eq('reference_id', orderId)
+          .is('released_at', null)
+      }
 
       toast({
         title: "Succès",
