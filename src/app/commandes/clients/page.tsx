@@ -614,8 +614,8 @@ export default function SalesOrdersPage() {
                               </Button>
                             )}
 
-                            {/* Annuler (confirmed ou shipped) */}
-                            {(order.status === 'confirmed' || order.status === 'shipped') && (
+                            {/* Annuler (toutes sauf cancelled) */}
+                            {order.status !== 'cancelled' && (
                               <Button
                                 variant="outline"
                                 size="sm"
@@ -627,17 +627,18 @@ export default function SalesOrdersPage() {
                               </Button>
                             )}
 
-                            {/* Supprimer (draft ou cancelled uniquement) */}
-                            <Button
-                              variant="outline"
-                              size="sm"
-                              onClick={() => handleDelete(order.id)}
-                              disabled={!canDelete}
-                              title={canDelete ? "Supprimer" : "Annulez d'abord la commande pour la supprimer"}
-                              className={canDelete ? "text-red-600" : ""}
-                            >
-                              <Trash2 className="h-4 w-4" />
-                            </Button>
+                            {/* Supprimer (cancelled uniquement) */}
+                            {order.status === 'cancelled' && (
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                onClick={() => handleDelete(order.id)}
+                                title="Supprimer"
+                                className="text-red-600 border-red-300 hover:bg-red-50"
+                              >
+                                <Trash2 className="h-4 w-4" />
+                              </Button>
+                            )}
 
                             {/* Imprimer PDF */}
                             <Button
