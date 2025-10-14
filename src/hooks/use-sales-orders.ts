@@ -175,6 +175,7 @@ export function useSalesOrders() {
 
   // Récupérer toutes les commandes avec filtres
   const fetchOrders = useCallback(async (filters?: SalesOrderFilters) => {
+    console.log('🔄 [FETCH] Début fetchOrders, filtres:', filters)
     setLoading(true)
     try {
       let query = supabase
@@ -219,6 +220,9 @@ export function useSalesOrders() {
 
       const { data: ordersData, error } = await query
 
+      console.log('📊 [FETCH] Données reçues:', ordersData?.length, 'commandes')
+      console.log('📊 [FETCH] Erreur:', error)
+
       if (error) throw error
 
       // Fetch manuel des données clients pour chaque commande (relations polymorphiques)
@@ -259,15 +263,18 @@ export function useSalesOrders() {
         })
       )
 
+      console.log('✅ [FETCH] Mise à jour state avec', ordersWithCustomers.length, 'commandes')
       setOrders(ordersWithCustomers)
+      console.log('🎉 [FETCH] fetchOrders terminé avec succès')
     } catch (error: any) {
-      console.error('Erreur lors de la récupération des commandes:', error?.message || 'Erreur inconnue')
+      console.error('❌ [FETCH] Erreur lors de la récupération des commandes:', error?.message || 'Erreur inconnue', error)
       toast({
         title: "Erreur",
         description: "Impossible de récupérer les commandes",
         variant: "destructive"
       })
     } finally {
+      console.log('🏁 [FETCH] fetchOrders finally block')
       setLoading(false)
     }
   }, [supabase, toast])
@@ -1151,14 +1158,51 @@ export function useSalesOrders() {
         .eq('reference_id', orderId)
         .is('released_at', null)
 
-      // Supprimer la commande
-      const { error } = await supabase
+      console.log('🔍 [DELETE] Début suppression commande:', orderId)
+
+      // Vérifier d'abord le statut de la commande
+      const { data: order, error: fetchError } = await supabase
+        .from('sales_orders')
+        .select('status')
+        .eq('id', orderId)
+        .single()
+
+      console.log('📊 [DELETE] Statut récupéré:', order, 'Erreur:', fetchError)
+
+      if (fetchError) {
+        console.error('❌ [DELETE] Erreur fetch status:', fetchError)
+        throw fetchError
+      }
+
+      // Sécurité : seules les commandes draft ou cancelled peuvent être supprimées
+      if (order.status !== 'draft' && order.status !== 'cancelled') {
+        console.error('🚫 [DELETE] Statut invalide:', order.status)
+        throw new Error('Seules les commandes en brouillon ou annulées peuvent être supprimées')
+      }
+
+      console.log('✅ [DELETE] Validation statut OK, suppression en cours...')
+
+      // Supprimer la commande (avec count pour vérifier si suppression effective)
+      const { data, error, count } = await supabase
         .from('sales_orders')
         .delete()
         .eq('id', orderId)
-        .eq('status', 'draft') // Sécurité : seules les commandes draft peuvent être supprimées
+        .select()
 
-      if (error) throw error
+      console.log('🗑️ [DELETE] Résultat suppression - Data:', data, 'Count:', count, 'Erreur:', error)
+
+      if (error) {
+        console.error('❌ [DELETE] Erreur Supabase delete:', error)
+        throw error
+      }
+
+      // Vérifier si la suppression a réellement eu lieu (RLS peut bloquer silencieusement)
+      if (!data || data.length === 0) {
+        console.error('❌ [DELETE] RLS POLICY BLOQUE LA SUPPRESSION - Aucune ligne affectée')
+        throw new Error('Impossible de supprimer : permissions insuffisantes (RLS policy). Vérifiez que vous êtes le créateur de la commande.')
+      }
+
+      console.log('🎉 [DELETE] Suppression réussie !', data.length, 'ligne(s) supprimée(s)')
 
       toast({
         title: "Succès",
