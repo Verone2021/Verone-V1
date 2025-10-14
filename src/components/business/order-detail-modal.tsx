@@ -251,7 +251,8 @@ export function OrderDetailModal({ order, open, onClose, onUpdate }: OrderDetail
                             </div>
                           </div>
 
-                          {item.discount_percentage && item.discount_percentage > 0 && (
+                          {/* Afficher remise seulement si > 0 (éviter affichage "0" en JSX) */}
+                          {item.discount_percentage > 0 && (
                             <div className="flex gap-2 mt-2">
                               <Badge variant="secondary" className="bg-green-100 text-green-800 border-green-200">
                                 Remise {item.discount_percentage.toFixed(1)}%
