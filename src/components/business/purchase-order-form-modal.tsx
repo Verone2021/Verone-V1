@@ -7,14 +7,16 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Textarea } from '@/components/ui/textarea'
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog'
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
+import { CreateOrganisationModal } from './create-organisation-modal'
 import { useOrganisations, Organisation } from '@/hooks/use-organisations'
 import { useProducts } from '@/hooks/use-products'
 import { usePurchaseOrders, CreatePurchaseOrderData, CreatePurchaseOrderItemData } from '@/hooks/use-purchase-orders'
 import { formatCurrency } from '@/lib/utils'
+import { useToast } from '@/hooks/use-toast'
 
 interface PurchaseOrderFormModalProps {
   isOpen?: boolean
@@ -31,6 +33,7 @@ interface OrderItem extends CreatePurchaseOrderItemData {
     name: string
     sku: string
     primary_image_url?: string
+    cost_price?: number  // Prix d'achat catalogue pour comparaison
   }
 }
 
@@ -58,13 +61,14 @@ export function PurchaseOrderFormModal({
   const [productSearchTerm, setProductSearchTerm] = useState('')
 
   // Hooks
-  const { organisations: suppliers, getOrganisationById } = useOrganisations({ type: 'supplier', is_active: true })
+  const { organisations: suppliers, getOrganisationById, refetch: refetchSuppliers } = useOrganisations({ type: 'supplier', is_active: true })
   // Filtrer les produits par fournisseur sélectionné
   const { products } = useProducts({
     search: productSearchTerm,
     supplier_id: selectedSupplierId || undefined
   })
   const { createOrder } = usePurchaseOrders()
+  const { toast } = useToast()
 
   // Synchroniser avec les props externes
   useEffect(() => {
@@ -90,7 +94,8 @@ export function PurchaseOrderFormModal({
             id: prefilledProduct.id,
             name: prefilledProduct.name || 'Produit sans nom',
             sku: prefilledProduct.sku || '',
-            primary_image_url: prefilledProduct.primary_image_url
+            primary_image_url: prefilledProduct.primary_image_url,
+            cost_price: prefilledProduct.cost_price  // Stocker prix catalogue pour comparaison
           }
         }
         setItems([newItem])
@@ -133,6 +138,20 @@ export function PurchaseOrderFormModal({
     }
   }
 
+  // Handler pour la création d'un nouveau fournisseur
+  const handleSupplierCreated = async (supplierId: string, supplierName: string) => {
+    // Rafraîchir la liste des fournisseurs
+    await refetchSuppliers()
+
+    // Auto-sélectionner le nouveau fournisseur
+    await handleSupplierChange(supplierId)
+
+    toast({
+      title: "✅ Fournisseur créé et sélectionné",
+      description: `${supplierName} a été créé et sélectionné automatiquement.`
+    })
+  }
+
   const resetForm = () => {
     setSelectedSupplierId('')
     setSelectedSupplier(null)
@@ -172,7 +191,8 @@ export function PurchaseOrderFormModal({
           id: product.id,
           name: product.name,
           sku: product.sku,
-          primary_image_url: product.primary_image_url
+          primary_image_url: product.primary_image_url,
+          cost_price: product.cost_price  // Stocker prix catalogue pour comparaison
         }
       }
       setItems([...items, newItem])
@@ -262,18 +282,29 @@ export function PurchaseOrderFormModal({
             <CardContent className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
                 <Label htmlFor="supplier">Fournisseur *</Label>
-                <Select value={selectedSupplierId} onValueChange={handleSupplierChange}>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Sélectionner un fournisseur" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {suppliers.map((supplier) => (
-                      <SelectItem key={supplier.id} value={supplier.id}>
-                        {supplier.name}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+                <div className="flex gap-2">
+                  <div className="flex-1">
+                    <Select
+                      value={selectedSupplierId}
+                      onValueChange={handleSupplierChange}
+                    >
+                      <SelectTrigger className="border-black">
+                        <SelectValue placeholder="Sélectionner un fournisseur..." />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {suppliers.map((supplier) => (
+                          <SelectItem key={supplier.id} value={supplier.id}>
+                            {supplier.name}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <CreateOrganisationModal
+                    onOrganisationCreated={handleSupplierCreated}
+                    defaultType="supplier"
+                  />
+                </div>
               </div>
 
               <div className="space-y-2">
@@ -349,13 +380,17 @@ export function PurchaseOrderFormModal({
                         <TableHead>Produit</TableHead>
                         <TableHead>Quantité</TableHead>
                         <TableHead>Prix unitaire HT</TableHead>
-                        <TableHead>Remise (%)</TableHead>
+                        {/* Afficher colonne Remise seulement si au moins 1 item a une remise > 0 */}
+                        {items.some(item => (item.discount_percentage || 0) > 0) && (
+                          <TableHead>Remise (%)</TableHead>
+                        )}
                         <TableHead>Total HT</TableHead>
                         <TableHead>Actions</TableHead>
                       </TableRow>
                     </TableHeader>
                     <TableBody>
                       {items.map((item) => {
+                        const hasAnyDiscount = items.some(item => (item.discount_percentage || 0) > 0)
                         const itemTotal = item.quantity * item.unit_price_ht * (1 - (item.discount_percentage || 0) / 100)
                         return (
                           <TableRow key={item.id}>
@@ -384,25 +419,35 @@ export function PurchaseOrderFormModal({
                               />
                             </TableCell>
                             <TableCell>
-                              <Input
-                                type="number"
-                                step="0.01"
-                                value={item.unit_price_ht}
-                                onChange={(e) => updateItem(item.id, 'unit_price_ht', parseFloat(e.target.value) || 0)}
-                                className="w-24"
-                                min="0"
-                              />
+                              <div className="space-y-1">
+                                <Input
+                                  type="number"
+                                  step="0.01"
+                                  value={item.unit_price_ht}
+                                  onChange={(e) => updateItem(item.id, 'unit_price_ht', parseFloat(e.target.value) || 0)}
+                                  className="w-24"
+                                  min="0"
+                                />
+                                {item.product?.cost_price && item.unit_price_ht !== item.product.cost_price && (
+                                  <p className="text-xs text-gray-500 line-through">
+                                    Prix minimum de vente: {formatCurrency(item.product.cost_price)}
+                                  </p>
+                                )}
+                              </div>
                             </TableCell>
-                            <TableCell>
-                              <Input
-                                type="number"
-                                value={item.discount_percentage || 0}
-                                onChange={(e) => updateItem(item.id, 'discount_percentage', parseFloat(e.target.value) || 0)}
-                                className="w-20"
-                                min="0"
-                                max="100"
-                              />
-                            </TableCell>
+                            {/* Afficher cellule Remise seulement si au moins 1 item a une remise > 0 */}
+                            {hasAnyDiscount && (
+                              <TableCell>
+                                <Input
+                                  type="number"
+                                  value={item.discount_percentage || 0}
+                                  onChange={(e) => updateItem(item.id, 'discount_percentage', parseFloat(e.target.value) || 0)}
+                                  className="w-20"
+                                  min="0"
+                                  max="100"
+                                />
+                              </TableCell>
+                            )}
                             <TableCell>
                               {formatCurrency(itemTotal)}
                             </TableCell>
