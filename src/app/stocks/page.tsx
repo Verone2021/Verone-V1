@@ -158,7 +158,7 @@ export default function StocksDashboardPage() {
                 {new Intl.NumberFormat('fr-FR', { style: 'currency', currency: 'EUR' }).format(overview.total_value || 0)}
               </div>
               <p className="text-xs text-gray-600">
-                + TVA 20% = {new Intl.NumberFormat('fr-FR', { style: 'currency', currency: 'EUR' }).format((overview.total_value || 0) * 1.2)} TTC
+                TVA {new Intl.NumberFormat('fr-FR', { style: 'currency', currency: 'EUR' }).format((overview.total_value || 0) * 0.2)} · TTC {new Intl.NumberFormat('fr-FR', { style: 'currency', currency: 'EUR' }).format((overview.total_value || 0) * 1.2)}
               </p>
             </CardContent>
           </Card>
