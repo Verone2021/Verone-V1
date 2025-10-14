@@ -241,7 +241,11 @@ export function usePriceListItems(priceListId: string | null) {
               id,
               name,
               sku,
-              price_ht
+              price_ht,
+              product_images!left (
+                public_url,
+                is_primary
+              )
             ),
             price_lists (
               id,
@@ -267,7 +271,16 @@ export function usePriceListItems(priceListId: string | null) {
           count: data?.length || 0
         })
 
-        return data || []
+        // Enrichir les produits avec primary_image_url (BR-TECH-002)
+        const enrichedItems = (data || []).map(item => ({
+          ...item,
+          products: item.products ? {
+            ...item.products,
+            primary_image_url: item.products.product_images?.[0]?.public_url || null
+          } : null
+        }))
+
+        return enrichedItems
       } catch (error) {
         logger.error('Exception in usePriceListItems', {
           operation: 'usePriceListItems',

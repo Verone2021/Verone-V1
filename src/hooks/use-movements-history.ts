@@ -20,6 +20,8 @@ export interface MovementHistoryFilters {
   reasonCodes?: string[]
   userIds?: string[]
   productSearch?: string
+  affects_forecast?: boolean
+  forecast_type?: 'in' | 'out'
   limit?: number
   offset?: number
 }
@@ -63,6 +65,9 @@ export interface MovementsStats {
     ADJUST: number
     TRANSFER: number
   }
+
+  realMovements?: number
+  forecastMovements?: number
 
   topReasons: Array<{
     code: string
@@ -118,6 +123,16 @@ export function useMovementsHistory() {
       // Filtres par utilisateurs
       if (appliedFilters.userIds && appliedFilters.userIds.length > 0) {
         query = query.in('performed_by', appliedFilters.userIds)
+      }
+
+      // Filtre par type de mouvement (réel vs prévisionnel)
+      if (appliedFilters.affects_forecast !== undefined) {
+        query = query.eq('affects_forecast', appliedFilters.affects_forecast)
+      }
+
+      // Filtre par direction prévisionnel
+      if (appliedFilters.forecast_type) {
+        query = query.eq('forecast_type', appliedFilters.forecast_type)
       }
 
       // Recherche produit
@@ -257,6 +272,17 @@ export function useMovementsHistory() {
         TRANSFER: typeStats?.filter(m => m.movement_type === 'TRANSFER').length || 0
       }
 
+      // Comptage mouvements réels vs prévisionnels
+      const { count: realCount } = await supabase
+        .from('stock_movements')
+        .select('*', { count: 'exact', head: true })
+        .eq('affects_forecast', false)
+
+      const { count: forecastCount } = await supabase
+        .from('stock_movements')
+        .select('*', { count: 'exact', head: true })
+        .eq('affects_forecast', true)
+
       // Top motifs du mois
       const { data: reasonStats } = await supabase
         .from('stock_movements')
@@ -360,6 +386,8 @@ export function useMovementsHistory() {
         movementsThisWeek: weekCount || 0,
         movementsThisMonth: monthCount || 0,
         byType,
+        realMovements: realCount || 0,
+        forecastMovements: forecastCount || 0,
         topReasons,
         topUsers,
         recentActivity
@@ -420,6 +448,14 @@ export function useMovementsHistory() {
 
       if (exportFilters.userIds && exportFilters.userIds.length > 0) {
         query = query.in('performed_by', exportFilters.userIds)
+      }
+
+      if (exportFilters.affects_forecast !== undefined) {
+        query = query.eq('affects_forecast', exportFilters.affects_forecast)
+      }
+
+      if (exportFilters.forecast_type) {
+        query = query.eq('forecast_type', exportFilters.forecast_type)
       }
 
       if (exportFilters.productSearch) {

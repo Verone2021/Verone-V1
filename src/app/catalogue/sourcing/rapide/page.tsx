@@ -7,8 +7,8 @@ import { Button } from '../../../../components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../../../../components/ui/card'
 import { Badge } from '../../../../components/ui/badge'
 
-// Lazy loading du formulaire sourcing
-const SourcingQuickForm = lazy(() => import('../../../../components/business/sourcing-quick-form').then(module => ({ default: module.SourcingQuickForm })))
+// Lazy loading du formulaire produit complet (remplace SourcingQuickForm)
+const CompleteProductWizard = lazy(() => import('../../../../components/business/complete-product-wizard').then(module => ({ default: module.CompleteProductWizard })))
 
 export default function SourcingRapidePage() {
   const router = useRouter()
@@ -141,10 +141,10 @@ export default function SourcingRapidePage() {
           <Suspense fallback={
             <div className="flex items-center justify-center py-12">
               <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-black mr-3"></div>
-              <span className="text-gray-600">Chargement du formulaire sourcing...</span>
+              <span className="text-gray-600">Chargement du formulaire produit...</span>
             </div>
           }>
-            <SourcingQuickForm
+            <CompleteProductWizard
               onSuccess={handleSuccess}
               onCancel={handleBack}
             />

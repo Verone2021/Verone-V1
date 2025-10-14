@@ -270,37 +270,168 @@ export function useSourcingProducts(filters?: SourcingFilters) {
     }
   }
 
-  // Commander un échantillon
+  // Commander un échantillon - Logique métier complète
   const orderSample = async (productId: string) => {
     try {
-      const { error } = await supabase
+      // 1. Récupérer les infos du produit (notamment le fournisseur et le prix)
+      const { data: product, error: productError } = await supabase
         .from('products')
-        .update({
-          status: 'echantillon_a_commander',
-          requires_sample: true
-        })
+        .select('name, supplier_id, cost_price')
         .eq('id', productId)
+        .single()
 
-      if (error) {
+      if (productError) throw productError
+
+      // Vérification fournisseur OBLIGATOIRE pour échantillon
+      if (!product.supplier_id) {
         toast({
           title: "Erreur",
-          description: error.message,
+          description: "Un fournisseur doit être lié au produit avant de commander un échantillon",
           variant: "destructive"
         })
         return false
       }
 
-      toast({
-        title: "Succès",
-        description: "Commande d'échantillon enregistrée"
-      })
+      // Vérification prix OBLIGATOIRE
+      if (!product.cost_price || product.cost_price <= 0) {
+        toast({
+          title: "Erreur",
+          description: "Le prix d'achat fournisseur doit être défini avant de commander un échantillon",
+          variant: "destructive"
+        })
+        return false
+      }
+
+      // 2. Vérifier s'il existe une commande fournisseur en "draft" pour ce fournisseur
+      const { data: existingDraftOrders, error: ordersError } = await supabase
+        .from('purchase_orders')
+        .select('id, po_number')
+        .eq('supplier_id', product.supplier_id)
+        .eq('status', 'draft')
+        .order('created_at', { ascending: false })
+        .limit(1)
+
+      if (ordersError) throw ordersError
+
+      let purchaseOrderId: string
+
+      if (existingDraftOrders && existingDraftOrders.length > 0) {
+        // 3a. Ajouter l'échantillon à la commande draft existante
+        purchaseOrderId = existingDraftOrders[0].id
+
+        // Ajouter un item à la commande existante
+        const { error: itemError } = await supabase
+          .from('purchase_order_items')
+          .insert({
+            purchase_order_id: purchaseOrderId,
+            product_id: productId,
+            quantity: 1, // Échantillon = quantité 1
+            unit_price_ht: product.cost_price,
+            discount_percentage: 0,
+            notes: 'Échantillon pour validation'
+          })
+
+        if (itemError) throw itemError
+
+        // Mettre à jour le total de la commande
+        const { data: orderItems, error: itemsError } = await supabase
+          .from('purchase_order_items')
+          .select('quantity, unit_price_ht, discount_percentage')
+          .eq('purchase_order_id', purchaseOrderId)
+
+        if (itemsError) throw itemsError
+
+        const newTotalHT = orderItems.reduce((sum, item) => {
+          return sum + (item.quantity * item.unit_price_ht * (1 - item.discount_percentage / 100))
+        }, 0)
+
+        const newTotalTTC = newTotalHT * 1.2 // TVA 20%
+
+        await supabase
+          .from('purchase_orders')
+          .update({
+            total_ht: newTotalHT,
+            total_ttc: newTotalTTC
+          })
+          .eq('id', purchaseOrderId)
+
+        toast({
+          title: "Succès",
+          description: `Échantillon ajouté à la commande existante ${existingDraftOrders[0].po_number}`
+        })
+      } else {
+        // 3b. Créer une nouvelle commande fournisseur en "draft"
+        // Générer le numéro de commande
+        const { data: poNumber, error: numberError } = await supabase
+          .rpc('generate_po_number')
+
+        if (numberError) throw numberError
+
+        const totalHT = product.cost_price * 1 // 1 échantillon
+        const totalTTC = totalHT * 1.2 // TVA 20%
+
+        // Récupérer l'utilisateur actuel
+        const { data: { user } } = await supabase.auth.getUser()
+
+        // Créer la commande
+        const { data: newOrder, error: orderError } = await supabase
+          .from('purchase_orders')
+          .insert({
+            po_number: poNumber,
+            supplier_id: product.supplier_id,
+            status: 'draft',
+            currency: 'EUR',
+            tax_rate: 20,
+            total_ht: totalHT,
+            total_ttc: totalTTC,
+            notes: 'Commande échantillon automatique',
+            created_by: user?.id
+          })
+          .select('id')
+          .single()
+
+        if (orderError) throw orderError
+
+        purchaseOrderId = newOrder.id
+
+        // Créer l'item échantillon
+        const { error: itemError } = await supabase
+          .from('purchase_order_items')
+          .insert({
+            purchase_order_id: purchaseOrderId,
+            product_id: productId,
+            quantity: 1,
+            unit_price_ht: product.cost_price,
+            discount_percentage: 0,
+            notes: 'Échantillon pour validation'
+          })
+
+        if (itemError) throw itemError
+
+        toast({
+          title: "Succès",
+          description: `Nouvelle commande fournisseur ${poNumber} créée avec l'échantillon`
+        })
+      }
+
+      // 4. Mettre à jour le statut du produit
+      const { error: updateError } = await supabase
+        .from('products')
+        .update({
+          status: 'echantillon_commande', // Passage à "commandé" car ajouté à commande
+          requires_sample: true
+        })
+        .eq('id', productId)
+
+      if (updateError) throw updateError
 
       await fetchSourcingProducts()
       return true
-    } catch (err) {
+    } catch (err: any) {
+      console.error('Erreur commande échantillon:', err)
       toast({
         title: "Erreur",
-        description: "Impossible de commander l'échantillon",
+        description: err.message || "Impossible de commander l'échantillon",
         variant: "destructive"
       })
       return false

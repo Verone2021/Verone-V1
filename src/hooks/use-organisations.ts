@@ -288,23 +288,14 @@ export function useOrganisations(filters?: OrganisationFilters) {
 
   const createOrganisation = async (data: CreateOrganisationData): Promise<Organisation | null> => {
     try {
-      // Générer slug automatiquement depuis le nom
-      const slug = data.name
-        .toLowerCase()
-        .normalize('NFD')
-        .replace(/[\u0300-\u036f]/g, '') // Retirer accents
-        .replace(/[^a-z0-9]+/g, '-')     // Remplacer non-alphanumériques par -
-        .replace(/^-+|-+$/g, '')         // Retirer - en début/fin
-        .substring(0, 100)               // Limiter à 100 caractères
-
       const { data: newOrg, error } = await supabase
         .from('organisations')
         .insert([{
           // ✅ Colonnes de base (REQUIRED)
           name: data.name,
-          slug: slug, // ✅ AJOUTÉ - Requis en BD
           type: data.type,
           email: data.email || null,
+          phone: data.phone || null, // ✅ CORRIGÉ - phone existe en BD (pas slug)
           country: data.country || 'FR',
           is_active: data.is_active ?? true,
 
@@ -329,22 +320,9 @@ export function useOrganisations(filters?: OrganisationFilters) {
           customer_type: data.customer_type || null,
           prepayment_required: data.prepayment_required ?? false,
 
-          // ✅ Champs clients particuliers (existants en BD)
-          first_name: data.first_name || null,
-          mobile_phone: data.mobile_phone || null,
-          date_of_birth: data.date_of_birth || null,
-          nationality: data.nationality || null,
-          preferred_language: data.preferred_language || null,
-          communication_preference: data.communication_preference || null,
-          marketing_consent: data.marketing_consent ?? false,
-
-          // ❌ RETIRÉES - Colonnes inexistantes en BD :
-          // phone, website, secondary_email,
-          // address_line1, address_line2, postal_code, city, region,
-          // siret, vat_number, legal_form,
-          // industry_sector, supplier_segment, supplier_category,
-          // payment_terms, delivery_time_days, minimum_order_amount, currency,
-          // rating, certification_labels, preferred_supplier, notes
+          // ❌ RETIRÉES - Colonnes pour individual_customers uniquement :
+          // first_name, mobile_phone, date_of_birth, nationality,
+          // preferred_language, communication_preference, marketing_consent
         }])
         .select()
         .single()

@@ -369,12 +369,20 @@ export const useCatalogue = () => {
 
   const deleteProduct = async (id: string) => {
     try {
-      const { error } = await supabase
+      const { data, error } = await supabase
         .from('products')
         .delete()
         .eq('id', id);
 
-      if (error) throw error;
+      if (error) {
+        console.error('❌ Erreur Supabase DELETE:', {
+          message: error.message,
+          details: error.details,
+          hint: error.hint,
+          code: error.code
+        });
+        throw error;
+      }
 
       // Mise à jour optimiste du state
       setState(prev => ({
@@ -383,10 +391,17 @@ export const useCatalogue = () => {
         total: prev.total - 1
       }));
 
+      console.log('✅ Produit supprimé avec succès:', id);
       return true;
 
     } catch (error) {
-      console.error('Erreur suppression produit:', error);
+      console.error('❌ Erreur suppression produit:', error);
+      // Log plus détaillé de l'erreur
+      if (error instanceof Error) {
+        console.error('Error name:', error.name);
+        console.error('Error message:', error.message);
+        console.error('Error stack:', error.stack);
+      }
       throw error;
     }
   };

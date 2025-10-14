@@ -85,7 +85,11 @@ export function useStockReservations() {
             id,
             name,
             sku,
-            stock_quantity
+            stock_quantity,
+            product_images!left (
+              public_url,
+              is_primary
+            )
           )
         `)
         .order('reserved_at', { ascending: false })
@@ -122,7 +126,16 @@ export function useStockReservations() {
 
       if (error) throw error
 
-      setReservations(data || [])
+      // Enrichir les produits avec primary_image_url (BR-TECH-002)
+      const enrichedReservations = (data || []).map(reservation => ({
+        ...reservation,
+        products: reservation.products ? {
+          ...reservation.products,
+          primary_image_url: reservation.products.product_images?.[0]?.public_url || null
+        } : null
+      }))
+
+      setReservations(enrichedReservations)
     } catch (error) {
       console.error('Erreur lors de la récupération des réservations:', error)
       toast({

@@ -58,11 +58,24 @@ interface RecentMovement {
   performer_name: string | null
 }
 
+interface ForecastedOrder {
+  id: string
+  order_number: string
+  order_type: 'purchase' | 'sales'
+  client_name?: string
+  supplier_name?: string
+  total_quantity: number
+  expected_date: string
+  status: string
+}
+
 export interface StockDashboardMetrics {
   overview: StockOverview
   movements: MovementsSummary
   low_stock_products: LowStockProduct[]
   recent_movements: RecentMovement[]
+  incoming_orders: ForecastedOrder[] // TOP 5 commandes fournisseurs
+  outgoing_orders: ForecastedOrder[] // TOP 5 commandes clients
 }
 
 export function useStockDashboard() {
@@ -228,13 +241,56 @@ export function useStockDashboard() {
       }
 
       // ============================================
+      // QUERY 5 & 6: Commandes Prévisionnelles (Désactivées temporairement)
+      // TODO: Réactiver quand données de test disponibles
+      // Problème: Foreign key disambiguation avec PostgREST
+      // ============================================
+
+      // Retourner tableaux vides pour éviter erreurs console
+      const incomingOrders: ForecastedOrder[] = []
+      const outgoingOrders: ForecastedOrder[] = []
+
+      /*
+      // VERSION AVEC JOINS - À RÉACTIVER APRÈS TESTS
+      const { data: purchaseOrders, error: poError } = await supabase
+        .from('purchase_orders')
+        .select(`
+          id,
+          po_number,
+          expected_delivery_date,
+          status,
+          purchase_order_items(quantity)
+        `)
+        .in('status', ['draft', 'sent', 'confirmed'])
+        .order('expected_delivery_date', { ascending: true })
+        .limit(5)
+
+      const { data: salesOrders, error: soError } = await supabase
+        .from('sales_orders')
+        .select(`
+          id,
+          order_number,
+          expected_delivery_date,
+          status,
+          sales_order_items(quantity)
+        `)
+        .in('status', ['confirmed', 'partially_shipped'])
+        .order('expected_delivery_date', { ascending: true })
+        .limit(5)
+
+      // Mapper avec supplier/customer names via requêtes séparées
+      */
+
+      // ============================================
       // Consolidation des métriques
       // ============================================
       setMetrics({
         overview,
         movements: movementsSummary,
         low_stock_products: lowStockProducts,
-        recent_movements: recentMovements
+        recent_movements: recentMovements,
+        incoming_orders: incomingOrders,
+        outgoing_orders: outgoingOrders
       })
 
     } catch (err: any) {

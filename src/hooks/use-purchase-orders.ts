@@ -157,7 +157,11 @@ export function usePurchaseOrders() {
               stock_quantity,
               stock_real,
               stock_forecasted_in,
-              stock_forecasted_out
+              stock_forecasted_out,
+              product_images!left (
+                public_url,
+                is_primary
+              )
             )
           )
         `)
@@ -184,7 +188,19 @@ export function usePurchaseOrders() {
 
       if (error) throw error
 
-      setOrders(data || [])
+      // Enrichir les produits avec primary_image_url (BR-TECH-002)
+      const enrichedOrders = (data || []).map(order => ({
+        ...order,
+        purchase_order_items: (order.purchase_order_items || []).map(item => ({
+          ...item,
+          products: item.products ? {
+            ...item.products,
+            primary_image_url: item.products.product_images?.[0]?.public_url || null
+          } : null
+        }))
+      }))
+
+      setOrders(enrichedOrders)
     } catch (error) {
       console.error('Erreur lors de la récupération des commandes:', error)
       toast({
@@ -221,7 +237,11 @@ export function usePurchaseOrders() {
               stock_quantity,
               stock_real,
               stock_forecasted_in,
-              stock_forecasted_out
+              stock_forecasted_out,
+              product_images!left (
+                public_url,
+                is_primary
+              )
             )
           )
         `)
@@ -230,8 +250,22 @@ export function usePurchaseOrders() {
 
       if (error) throw error
 
-      setCurrentOrder(data)
-      return data
+      // Enrichir les produits avec primary_image_url (BR-TECH-002)
+      const enrichedItems = (data.purchase_order_items || []).map(item => ({
+        ...item,
+        products: item.products ? {
+          ...item.products,
+          primary_image_url: item.products.product_images?.[0]?.public_url || null
+        } : null
+      }))
+
+      const enrichedOrder = {
+        ...data,
+        purchase_order_items: enrichedItems
+      }
+
+      setCurrentOrder(enrichedOrder)
+      return enrichedOrder
     } catch (error) {
       console.error('Erreur lors de la récupération de la commande:', error)
       toast({

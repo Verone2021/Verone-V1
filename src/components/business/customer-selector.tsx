@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react'
 import { Label } from '@/components/ui/label'
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group'
-import { Combobox } from '@/components/ui/combobox'
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { CreateOrganisationModal } from './create-organisation-modal'
 import { CreateIndividualCustomerModal } from './create-individual-customer-modal'
 import { createClient } from '@/lib/supabase/client'
@@ -67,14 +67,17 @@ export function CustomerSelector({ selectedCustomer, onCustomerChange, disabled 
   }, [customerType])
 
   const loadCustomers = async () => {
+    console.log('🔍 [CustomerSelector] Début loadCustomers, type:', customerType)
     try {
       setLoading(true)
+      console.log('🔄 [CustomerSelector] Loading state = true')
       setError(null)
 
       const supabase = createClient()
 
       if (customerType === 'professional') {
         // Charger les organisations professionnelles (B2B)
+        console.log('🏢 [CustomerSelector] Chargement organisations B2B...')
         const { data: organisations, error: orgError } = await supabase
           .from('organisations')
           .select(`
@@ -100,8 +103,12 @@ export function CustomerSelector({ selectedCustomer, onCustomerChange, disabled 
           .eq('is_active', true)
           .order('name')
 
-        if (orgError) throw orgError
+        if (orgError) {
+          console.error('❌ [CustomerSelector] Erreur Supabase organisations:', orgError)
+          throw orgError
+        }
 
+        console.log('✅ [CustomerSelector] Organisations chargées:', organisations?.length || 0)
         setCustomers((organisations || []).map(org => ({
           ...org,
           type: 'professional' as const
@@ -109,6 +116,7 @@ export function CustomerSelector({ selectedCustomer, onCustomerChange, disabled 
 
       } else {
         // Charger les clients particuliers (B2C)
+        console.log('👤 [CustomerSelector] Chargement clients B2C...')
         const { data: individuals, error: indError } = await supabase
           .from('individual_customers')
           .select(`
@@ -132,8 +140,12 @@ export function CustomerSelector({ selectedCustomer, onCustomerChange, disabled 
           .eq('is_active', true)
           .order('first_name')
 
-        if (indError) throw indError
+        if (indError) {
+          console.error('❌ [CustomerSelector] Erreur Supabase individual_customers:', indError)
+          throw indError
+        }
 
+        console.log('✅ [CustomerSelector] Clients B2C chargés:', individuals?.length || 0)
         setCustomers((individuals || []).map(ind => ({
           id: ind.id,
           name: `${ind.first_name} ${ind.last_name}`,
@@ -155,9 +167,10 @@ export function CustomerSelector({ selectedCustomer, onCustomerChange, disabled 
       }
 
     } catch (err) {
-      console.error('Erreur chargement clients:', err)
+      console.error('❌ [CustomerSelector] Exception dans loadCustomers:', err)
       setError(err instanceof Error ? err.message : 'Erreur inconnue')
     } finally {
+      console.log('✔️ [CustomerSelector] Fin loadCustomers, loading = false')
       setLoading(false)
     }
   }
@@ -278,15 +291,30 @@ export function CustomerSelector({ selectedCustomer, onCustomerChange, disabled 
         ) : (
           <div className="flex gap-2">
             <div className="flex-1">
-              <Combobox
-                options={customerOptions}
+              <Select
                 value={selectedCustomer?.id || ''}
                 onValueChange={handleCustomerChange}
-                placeholder={loading ? "Chargement..." : `Sélectionner ${customerType === 'professional' ? 'une organisation' : 'un client particulier'}...`}
-                searchPlaceholder="Rechercher..."
-                emptyMessage="Aucun client trouvé."
                 disabled={disabled || loading}
-              />
+              >
+                <SelectTrigger>
+                  <SelectValue
+                    placeholder={loading ? "Chargement..." : `Sélectionner ${customerType === 'professional' ? 'une organisation' : 'un client particulier'}...`}
+                  />
+                </SelectTrigger>
+                <SelectContent>
+                  {customerOptions.length === 0 ? (
+                    <div className="p-2 text-sm text-gray-500 text-center">
+                      Aucun client trouvé.
+                    </div>
+                  ) : (
+                    customerOptions.map((option) => (
+                      <SelectItem key={option.value} value={option.value}>
+                        {option.label}
+                      </SelectItem>
+                    ))
+                  )}
+                </SelectContent>
+              </Select>
             </div>
 
             {/* Bouton création selon le type */}

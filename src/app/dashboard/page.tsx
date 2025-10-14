@@ -14,6 +14,11 @@ import {
 } from 'lucide-react'
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card'
 import { useCompleteDashboardMetrics } from '@/hooks/use-complete-dashboard-metrics'
+import { useDashboardAnalytics } from '@/hooks/use-dashboard-analytics'
+import { RevenueChart } from '@/components/business/revenue-chart'
+import { ProductsChart } from '@/components/business/products-chart'
+import { StockMovementsChart } from '@/components/business/stock-movements-chart'
+import { PurchaseOrdersChart } from '@/components/business/purchase-orders-chart'
 
 interface StatCardProps {
   title: string
@@ -98,6 +103,13 @@ export default function DashboardPage() {
     isLoading,
     error
   } = useCompleteDashboardMetrics()
+
+  // Hook analytics pour les graphiques Recharts
+  const {
+    analytics,
+    isLoading: isLoadingAnalytics,
+    error: analyticsError
+  } = useDashboardAnalytics()
 
   // Formatage des métriques pour l'affichage avec navigation - 8 KPIs
   const stats = metrics ? [
@@ -347,6 +359,68 @@ export default function DashboardPage() {
           ) : (
             <p className="text-gray-500 text-sm">Aucune donnée disponible</p>
           )}
+        </div>
+      </div>
+
+      {/* Section Analytics - 4 Graphiques Recharts */}
+      <div className="border-t border-gray-200 pt-6">
+        <div className="mb-6">
+          <h2 className="text-xl font-bold text-black mb-2">Analytics - 30 derniers jours</h2>
+          <p className="text-gray-600">Évolution de vos indicateurs clés sur les 30 derniers jours</p>
+        </div>
+
+        {/* Gestion des erreurs Analytics */}
+        {analyticsError && (
+          <div className="bg-red-50 border border-red-200 rounded-lg p-4 mb-6">
+            <div className="flex">
+              <AlertTriangle className="h-5 w-5 text-red-400 mt-0.5" />
+              <div className="ml-3">
+                <h3 className="text-sm font-medium text-red-800">Erreur de chargement des analytics</h3>
+                <p className="mt-1 text-sm text-red-700">
+                  Impossible de charger les graphiques. Veuillez réessayer.
+                </p>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Grille 2x2 des graphiques */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          {/* Graphique 1 : Évolution CA */}
+          <div className="bg-white rounded-lg border border-gray-200 p-6">
+            <h3 className="text-lg font-semibold text-black mb-4">Évolution du Chiffre d&apos;Affaires</h3>
+            <RevenueChart
+              data={analytics?.revenue || []}
+              isLoading={isLoadingAnalytics}
+            />
+          </div>
+
+          {/* Graphique 2 : Produits ajoutés */}
+          <div className="bg-white rounded-lg border border-gray-200 p-6">
+            <h3 className="text-lg font-semibold text-black mb-4">Produits Ajoutés par Semaine</h3>
+            <ProductsChart
+              data={analytics?.products || []}
+              isLoading={isLoadingAnalytics}
+            />
+          </div>
+
+          {/* Graphique 3 : Mouvements stock */}
+          <div className="bg-white rounded-lg border border-gray-200 p-6">
+            <h3 className="text-lg font-semibold text-black mb-4">Mouvements de Stock (Entrées/Sorties)</h3>
+            <StockMovementsChart
+              data={analytics?.stockMovements || []}
+              isLoading={isLoadingAnalytics}
+            />
+          </div>
+
+          {/* Graphique 4 : Commandes fournisseurs */}
+          <div className="bg-white rounded-lg border border-gray-200 p-6">
+            <h3 className="text-lg font-semibold text-black mb-4">Commandes Fournisseurs par Semaine</h3>
+            <PurchaseOrdersChart
+              data={analytics?.purchaseOrders || []}
+              isLoading={isLoadingAnalytics}
+            />
+          </div>
         </div>
       </div>
     </div>

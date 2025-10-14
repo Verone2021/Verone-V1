@@ -10,6 +10,7 @@ import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/component
 import { Tooltip, TooltipContent, TooltipTrigger, TooltipProvider } from "@/components/ui/tooltip"
 import { SidebarProvider, SidebarTrigger, SidebarInput, useSidebar } from "@/components/ui/sidebar"
 import { Badge } from "@/components/ui/badge"
+import { useStockAlertsCount } from "@/hooks/use-stock-alerts-count"
 import {
   Home,
   BookOpen,
@@ -48,8 +49,8 @@ interface NavItem {
   children?: NavItem[]
 }
 
-// STRUCTURE OPTIMISÉE avec badges notifications
-const navItems: NavItem[] = [
+// STRUCTURE OPTIMISÉE avec badges notifications (fonction pour valeurs dynamiques)
+const getNavItems = (stockAlertsCount: number): NavItem[] => [
   {
     title: "Dashboard",
     href: "/dashboard",
@@ -87,30 +88,8 @@ const navItems: NavItem[] = [
     href: "/stocks",
     icon: Package,
     description: "Inventaire et mouvements",
-    badge: 11,
-    badgeVariant: "urgent",
-    children: [
-      {
-        title: "Inventaire",
-        href: "/stocks/inventaire",
-        icon: Grid3x3,
-        description: "Gestion des stocks"
-      },
-      {
-        title: "Mouvements",
-        href: "/stocks/mouvements",
-        icon: RefreshCw,
-        description: "Entrées et sorties"
-      },
-      {
-        title: "Alertes",
-        href: "/stocks/alertes",
-        icon: CheckCircle,
-        description: "Ruptures et seuils",
-        badge: 11,
-        badgeVariant: "urgent"
-      }
-    ]
+    badge: stockAlertsCount > 0 ? stockAlertsCount : undefined,
+    badgeVariant: "urgent"
   },
   {
     title: "Sourcing",
@@ -134,35 +113,9 @@ const navItems: NavItem[] = [
   },
   {
     title: "Ventes",
-    href: "/consultations",
+    href: "/ventes",
     icon: ShoppingBag,
-    description: "Consultations et commandes",
-    badge: 5,
-    badgeVariant: "default",
-    children: [
-      {
-        title: "Consultations",
-        href: "/consultations",
-        icon: MessageCircle,
-        description: "Demandes et devis",
-        badge: 3,
-        badgeVariant: "default"
-      },
-      {
-        title: "Commandes Clients",
-        href: "/commandes/clients",
-        icon: ShoppingBag,
-        description: "Ventes et suivi",
-        badge: 2,
-        badgeVariant: "default"
-      },
-      {
-        title: "Expéditions",
-        href: "/commandes/expeditions",
-        icon: Truck,
-        description: "Livraisons en attente"
-      }
-    ]
+    description: "Consultations et commandes"
   },
   {
     title: "Achats",
@@ -220,6 +173,9 @@ function SidebarContent() {
   const pathname = usePathname()
   const { state } = useSidebar()
   const isCollapsed = state === "collapsed"
+
+  // Hook pour récupérer le nombre d'alertes stock
+  const { count: stockAlertsCount } = useStockAlertsCount()
 
   // Search functionality
   const [searchQuery, setSearchQuery] = useState("")
@@ -282,8 +238,9 @@ function SidebarContent() {
     return moduleMap[title] || title.toLowerCase()
   }
 
-  // Filter items based on search
+  // Filter items based on search (avec count dynamique)
   const filteredItems = useMemo(() => {
+    const navItems = getNavItems(stockAlertsCount)
     if (!searchQuery.trim()) return navItems
 
     return navItems.filter(item => {
@@ -295,7 +252,7 @@ function SidebarContent() {
       )
       return matchTitle || matchDesc || matchChildren
     })
-  }, [searchQuery])
+  }, [searchQuery, stockAlertsCount])
 
   const renderNavItem = (item: NavItem) => {
     const moduleName = getModuleName(item.title)

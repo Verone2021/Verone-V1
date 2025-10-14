@@ -72,7 +72,7 @@ export default function SalesOrdersPage() {
 
   // Filtrage des commandes
   const filteredOrders = useMemo(() => {
-    let filtered = orders.filter(order => {
+    const filtered = orders.filter(order => {
       // Filtre onglet statut
       if (activeTab !== 'all' && order.status !== activeTab) {
         return false
@@ -271,13 +271,50 @@ export default function SalesOrdersPage() {
     }
   }
 
-  const handlePrintPDF = (order: SalesOrder) => {
-    // TODO: Implémenter génération PDF
-    toast({
-      title: "Fonctionnalité à venir",
-      description: "La génération PDF sera disponible prochainement",
-      variant: "default"
-    })
+  const handlePrintPDF = async (order: SalesOrder) => {
+    try {
+      toast({
+        title: "Génération PDF...",
+        description: `Préparation de la commande ${order.order_number}`
+      })
+
+      // Appel API pour générer le PDF
+      const response = await fetch(`/api/sales-orders/${order.id}/pdf`, {
+        method: 'GET',
+      })
+
+      if (!response.ok) {
+        throw new Error(`Erreur HTTP ${response.status}`)
+      }
+
+      // Récupérer le blob PDF
+      const blob = await response.blob()
+
+      // Créer URL temporaire et déclencher téléchargement
+      const url = window.URL.createObjectURL(blob)
+      const link = document.createElement('a')
+      link.href = url
+      link.download = `commande-${order.order_number}-${new Date().toISOString().split('T')[0]}.pdf`
+      document.body.appendChild(link)
+      link.click()
+
+      // Cleanup
+      document.body.removeChild(link)
+      window.URL.revokeObjectURL(url)
+
+      toast({
+        title: "PDF généré avec succès",
+        description: "Le téléchargement a démarré",
+        variant: "default"
+      })
+    } catch (error) {
+      console.error('Erreur génération PDF:', error)
+      toast({
+        title: "Erreur",
+        description: "Impossible de générer le PDF",
+        variant: "destructive"
+      })
+    }
   }
 
   const handleExportExcel = async () => {
@@ -614,14 +651,43 @@ export default function SalesOrdersPage() {
                               </Button>
                             )}
 
-                            {/* Annuler (toutes sauf cancelled) */}
-                            {order.status !== 'cancelled' && (
+                            {/* Annuler (UNIQUEMENT brouillon - Workflow: dévalidation obligatoire) */}
+                            {order.status === 'draft' && (
                               <Button
                                 variant="outline"
                                 size="sm"
                                 onClick={() => handleCancel(order.id)}
-                                title="Annuler la commande"
+                                title="Annuler la commande (brouillon uniquement)"
                                 className="text-red-600 border-red-300 hover:bg-red-50"
+                              >
+                                <Ban className="h-4 w-4" />
+                              </Button>
+                            )}
+
+                            {/* Annuler disabled pour confirmed - Doit dévalider d'abord */}
+                            {order.status === 'confirmed' && (
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                disabled
+                                title="Impossible d'annuler directement une commande validée. Veuillez d'abord la dévalider (retour brouillon), puis l'annuler."
+                                className="text-gray-400 border-gray-200 cursor-not-allowed opacity-50"
+                              >
+                                <Ban className="h-4 w-4" />
+                              </Button>
+                            )}
+
+                            {/* Annuler disabled pour paid/delivered - Règle absolue */}
+                            {(order.payment_status === 'paid' || order.status === 'delivered') && order.status !== 'cancelled' && order.status !== 'draft' && order.status !== 'confirmed' && (
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                disabled
+                                title={order.payment_status === 'paid'
+                                  ? "Impossible d'annuler : commande déjà payée. Contacter un administrateur pour remboursement."
+                                  : "Impossible d'annuler : commande déjà livrée. Créer un avoir."
+                                }
+                                className="text-gray-400 border-gray-200 cursor-not-allowed opacity-50"
                               >
                                 <Ban className="h-4 w-4" />
                               </Button>

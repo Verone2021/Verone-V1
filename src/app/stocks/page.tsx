@@ -22,6 +22,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { useStockDashboard } from '@/hooks/use-stock-dashboard'
+import { ForecastSummaryWidget } from '@/components/business/forecast-summary-widget'
 import { formatPrice } from '@/lib/utils'
 
 export default function StocksDashboardPage() {
@@ -46,8 +47,20 @@ export default function StocksDashboardPage() {
 
   const lowStockProducts = metrics?.low_stock_products || []
   const recentMovements = metrics?.recent_movements || []
+  const incomingOrders = metrics?.incoming_orders || []
+  const outgoingOrders = metrics?.outgoing_orders || []
 
   const totalAlerts = overview.products_out_of_stock + overview.products_below_min
+
+  // Handler pour ouvrir les détails de commande (modal)
+  const handleOrderClick = (orderId: string, orderType: 'purchase' | 'sales') => {
+    // TODO: Ouvrir modal avec détails commande
+    if (orderType === 'purchase') {
+      router.push(`/commandes/fournisseurs/${orderId}`)
+    } else {
+      router.push(`/commandes/clients/${orderId}`)
+    }
+  }
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -90,114 +103,58 @@ export default function StocksDashboardPage() {
       </div>
 
       <div className="container mx-auto px-4 py-8 space-y-8">
-        {/* KPIs Cards - 8 métriques professionnelles */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-          {/* KPI 1: Valeur Stock Totale */}
-          <Card className="border-black">
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium text-gray-600">Valeur Stock Totale</CardTitle>
-              <Euro className="h-4 w-4 text-blue-600" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold text-black">{formatPrice(overview.total_value)}</div>
-              <p className="text-xs text-gray-600">
-                {overview.total_quantity} unités · {overview.total_products} produits
-              </p>
-            </CardContent>
-          </Card>
-
-          {/* KPI 2: Stock Réel Total */}
+        {/* KPIs Cards - 4 KPIs compacts en 1 ligne */}
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+          {/* KPI 1: Stock Réel Total */}
           <Card className="border-black">
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
               <CardTitle className="text-sm font-medium text-gray-600">Stock Réel</CardTitle>
               <Package className="h-4 w-4 text-green-600" />
             </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold text-black">{overview.total_quantity}</div>
+            <CardContent className="pb-3">
+              <div className="text-xl font-bold text-black">{overview.total_quantity}</div>
               <p className="text-xs text-gray-600">
                 {overview.products_in_stock} produits en stock
               </p>
             </CardContent>
           </Card>
 
-          {/* KPI 3: Stock Disponible */}
+          {/* KPI 2: Stock Disponible */}
           <Card className="border-black">
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
               <CardTitle className="text-sm font-medium text-gray-600">Stock Disponible</CardTitle>
               <TrendingUp className="h-4 w-4 text-purple-600" />
             </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold text-black">{overview.total_available || 0}</div>
+            <CardContent className="pb-3">
+              <div className="text-xl font-bold text-black">{overview.total_available || 0}</div>
               <p className="text-xs text-gray-600">
                 Réel - Réservations clients
               </p>
             </CardContent>
           </Card>
 
-          {/* KPI 4: Alertes Stock */}
+          {/* KPI 3: Alertes Stock */}
           <Card className="border-black">
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
               <CardTitle className="text-sm font-medium text-gray-600">Alertes Stock</CardTitle>
               <AlertTriangle className="h-4 w-4 text-orange-600" />
             </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold text-black">{totalAlerts}</div>
+            <CardContent className="pb-3">
+              <div className="text-xl font-bold text-black">{totalAlerts}</div>
               <p className="text-xs text-gray-600">
                 {overview.products_below_min} sous seuil · {overview.products_out_of_stock} ruptures
               </p>
             </CardContent>
           </Card>
 
-          {/* KPI 5: Prévisionnel Entrée */}
-          <Card className="border-black">
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium text-gray-600">Entrées Prévues</CardTitle>
-              <ArrowDownToLine className="h-4 w-4 text-green-600" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold text-black">{overview.total_forecasted_in || 0}</div>
-              <p className="text-xs text-gray-600">
-                Commandes fournisseurs actives
-              </p>
-            </CardContent>
-          </Card>
-
-          {/* KPI 6: Prévisionnel Sortie */}
-          <Card className="border-black">
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium text-gray-600">Sorties Prévues</CardTitle>
-              <ArrowUpFromLine className="h-4 w-4 text-red-600" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold text-black">{Math.abs(overview.total_forecasted_out || 0)}</div>
-              <p className="text-xs text-gray-600">
-                Commandes clients confirmées
-              </p>
-            </CardContent>
-          </Card>
-
-          {/* KPI 7: Mouvements 7 Jours */}
-          <Card className="border-black">
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium text-gray-600">Mouvements 7j</CardTitle>
-              <BarChart3 className="h-4 w-4 text-blue-600" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold text-black">{movements.total_movements}</div>
-              <p className="text-xs text-gray-600">
-                {movements.last_7_days.entries.count} IN · {movements.last_7_days.exits.count} OUT
-              </p>
-            </CardContent>
-          </Card>
-
-          {/* KPI 8: Taux Couverture Stock */}
+          {/* KPI 4: Taux Couverture Stock */}
           <Card className="border-black">
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
               <CardTitle className="text-sm font-medium text-gray-600">Taux Couverture</CardTitle>
               <Clock className="h-4 w-4 text-gray-600" />
             </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold text-black">
+            <CardContent className="pb-3">
+              <div className="text-xl font-bold text-black">
                 {Math.abs(overview.total_forecasted_out || 0) > 0
                   ? Math.round(((overview.total_available || 0) / Math.abs(overview.total_forecasted_out || 1)) * 100)
                   : 100}%
@@ -302,6 +259,15 @@ export default function StocksDashboardPage() {
             </div>
           </div>
         </div>
+
+        {/* Widget Prévisionnel Stock - Entrées/Sorties */}
+        <ForecastSummaryWidget
+          incomingOrders={incomingOrders}
+          outgoingOrders={outgoingOrders}
+          totalIn={overview.total_forecasted_in || 0}
+          totalOut={Math.abs(overview.total_forecasted_out || 0)}
+          onOrderClick={handleOrderClick}
+        />
 
         {/* Performance et Activité - Données Réelles */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
