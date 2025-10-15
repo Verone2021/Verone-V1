@@ -3,7 +3,7 @@
 import React from 'react'
 import { useRouter } from 'next/navigation'
 import { Building2, Truck, Settings, Phone, TrendingUp } from 'lucide-react'
-import { CompactKpiCard } from '@/components/ui-v2/compact-kpi-card'
+import { MediumKpiCard } from '@/components/ui-v2/medium-kpi-card'
 import { ButtonV2 } from '@/components/ui-v2/button'
 import { useOrganisations } from '@/hooks/use-organisations'
 
@@ -59,38 +59,38 @@ export default function ContactsOrganisationsPage() {
       </div>
 
       <div className="p-6 space-y-6">
-        {/* Zone 1: KPIs Ultra-Compacts */}
+        {/* Zone 1: KPIs Design V2 */}
         <div>
           <h2 className="text-sm font-semibold text-slate-700 mb-3">Vue d'ensemble</h2>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3">
-            <CompactKpiCard
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+            <MediumKpiCard
               label="Total Organisations"
               value={stats.totalOrganisations}
               icon={Building2}
-              color="primary"
+              iconColor="primary"
             />
 
-            <CompactKpiCard
+            <MediumKpiCard
               label="Fournisseurs"
               value={stats.suppliers}
               icon={Truck}
-              color="primary"
+              iconColor="primary"
               onClick={() => router.push('/contacts-organisations/suppliers')}
             />
 
-            <CompactKpiCard
+            <MediumKpiCard
               label="Clients Pro"
               value={stats.customersProfessional}
               icon={Building2}
-              color="success"
+              iconColor="success"
               onClick={() => router.push('/contacts-organisations/customers?type=professional')}
             />
 
-            <CompactKpiCard
+            <MediumKpiCard
               label="Prestataires"
               value={stats.partners}
               icon={Settings}
-              color="accent"
+              iconColor="accent"
               onClick={() => router.push('/contacts-organisations/partners')}
             />
           </div>
