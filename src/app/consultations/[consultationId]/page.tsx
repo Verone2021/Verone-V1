@@ -119,10 +119,10 @@ export default function ConsultationDetailPage() {
             <p className="text-gray-600 mb-4">
               Cette consultation n'existe pas ou a été supprimée.
             </p>
-            <Button onClick={() => router.push('/consultations')}>
+            <ButtonV2 onClick={() => router.push('/consultations')}>
               <ArrowLeft className="h-4 w-4 mr-2" />
               Retour aux consultations
-            </Button>
+            </ButtonV2>
           </CardContent>
         </Card>
       </div>
@@ -136,14 +136,14 @@ export default function ConsultationDetailPage() {
         <div className="container mx-auto px-4 py-4">
           <div className="flex items-center justify-between">
             <div className="flex items-center space-x-4">
-              <Button
+              <ButtonV2
                 variant="ghost"
                 onClick={() => router.push('/consultations')}
                 className="flex items-center text-gray-600 hover:text-black"
               >
                 <ArrowLeft className="h-4 w-4 mr-2" />
                 Retour aux consultations
-              </Button>
+              </ButtonV2>
               <div>
                 <h1 className="text-2xl font-bold text-black">Détail Consultation</h1>
                 <p className="text-gray-600">{consultation.organisation_name}</p>
@@ -196,10 +196,10 @@ export default function ConsultationDetailPage() {
                 <Building className="h-5 w-5 mr-2" />
                 Informations de la consultation
               </CardTitle>
-              <Button variant="outline" size="sm">
+              <ButtonV2 variant="outline" size="sm">
                 <Edit className="h-4 w-4 mr-2" />
                 Modifier
-              </Button>
+              </ButtonV2>
             </div>
           </CardHeader>
           <CardContent>
@@ -293,23 +293,23 @@ export default function ConsultationDetailPage() {
           </CardHeader>
           <CardContent>
             <div className="flex items-center space-x-2">
-              <Button
+              <ButtonV2
                 variant={consultation.status === 'en_attente' ? 'default' : 'outline'}
                 onClick={() => handleStatusChange('en_attente')}
                 disabled={consultation.status === 'en_attente'}
               >
                 <Clock className="h-4 w-4 mr-2" />
                 En attente
-              </Button>
-              <Button
+              </ButtonV2>
+              <ButtonV2
                 variant={consultation.status === 'en_cours' ? 'default' : 'outline'}
                 onClick={() => handleStatusChange('en_cours')}
                 disabled={consultation.status === 'en_cours'}
               >
                 <AlertCircle className="h-4 w-4 mr-2" />
                 En cours
-              </Button>
-              <Button
+              </ButtonV2>
+              <ButtonV2
                 variant={consultation.status === 'terminee' ? 'default' : 'outline'}
                 onClick={() => handleStatusChange('terminee')}
                 disabled={consultation.status === 'terminee'}
@@ -317,8 +317,8 @@ export default function ConsultationDetailPage() {
               >
                 <CheckCircle className="h-4 w-4 mr-2" />
                 Terminée
-              </Button>
-              <Button
+              </ButtonV2>
+              <ButtonV2
                 variant={consultation.status === 'annulee' ? 'default' : 'outline'}
                 onClick={() => handleStatusChange('annulee')}
                 disabled={consultation.status === 'annulee'}
@@ -326,7 +326,7 @@ export default function ConsultationDetailPage() {
               >
                 <XCircle className="h-4 w-4 mr-2" />
                 Annulée
-              </Button>
+              </ButtonV2>
             </div>
           </CardContent>
         </Card>

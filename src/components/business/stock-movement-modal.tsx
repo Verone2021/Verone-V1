@@ -289,7 +289,7 @@ export function StockMovementModal({ product: initialProduct, isOpen, onClose, o
             <div className={`grid gap-2 ${initialMovementType ? 'grid-cols-2' : 'grid-cols-3'}`}>
               {/* Ajouter - Visible uniquement si contexte entrée ou inventaire */}
               {(!initialMovementType || initialMovementType === 'add') && (
-                <Button
+                <ButtonV2
                   type="button"
                   variant={movementType === 'add' ? 'default' : 'outline'}
                   onClick={() => setMovementType('add')}
@@ -301,7 +301,7 @@ export function StockMovementModal({ product: initialProduct, isOpen, onClose, o
 
               {/* Retirer - Visible uniquement si contexte sortie ou inventaire */}
               {(!initialMovementType || initialMovementType === 'remove' || initialMovementType === 'OUT') && (
-                <Button
+                <ButtonV2
                   type="button"
                   variant={movementType === 'remove' ? 'default' : 'outline'}
                   onClick={() => setMovementType('remove')}
@@ -312,7 +312,7 @@ export function StockMovementModal({ product: initialProduct, isOpen, onClose, o
               )}
 
               {/* Ajuster - Toujours visible (correction inventaire) */}
-              <Button
+              <ButtonV2
                 type="button"
                 variant={movementType === 'adjust' ? 'default' : 'outline'}
                 onClick={() => setMovementType('adjust')}
@@ -371,7 +371,7 @@ export function StockMovementModal({ product: initialProduct, isOpen, onClose, o
               <p className="text-sm text-gray-600">Motifs courants :</p>
               <div className="grid grid-cols-2 gap-2">
                 {suggestedReasons.slice(0, 4).map((reason) => (
-                  <Button
+                  <ButtonV2
                     key={reason.code}
                     type="button"
                     variant={reasonCode === reason.code ? 'default' : 'outline'}
@@ -457,7 +457,7 @@ export function StockMovementModal({ product: initialProduct, isOpen, onClose, o
 
           {/* Actions */}
           <div className="flex gap-3 pt-4">
-            <Button
+            <ButtonV2
               type="button"
               variant="outline"
               onClick={handleClose}
@@ -465,7 +465,7 @@ export function StockMovementModal({ product: initialProduct, isOpen, onClose, o
             >
               Annuler
             </ButtonV2>
-            <Button
+            <ButtonV2
               type="submit"
               disabled={loading || validation?.type === 'error' || !selectedProduct}
               className="flex-1"

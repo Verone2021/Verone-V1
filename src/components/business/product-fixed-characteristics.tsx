@@ -171,7 +171,7 @@ export function ProductFixedCharacteristics({
           Caractéristiques
         </h3>
         {onEditVideoUrl && (
-          <Button
+          <ButtonV2
             variant="outline"
             size="sm"
             onClick={onEditVideoUrl}
@@ -283,7 +283,7 @@ export function ProductFixedCharacteristics({
                   <span className="text-green-700 font-medium">Vidéo disponible</span>
                 </div>
                 {onEditVideoUrl && (
-                  <Button
+                  <ButtonV2
                     variant="outline"
                     size="sm"
                     onClick={onEditVideoUrl}

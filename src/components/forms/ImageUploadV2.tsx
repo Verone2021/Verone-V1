@@ -220,7 +220,7 @@ export function ImageUploadV2({
         <AlertDescription className="flex items-center justify-between">
           <span>{errorMessage}</span>
           {error?.retryable && (
-            <Button
+            <ButtonV2
               variant="outline"
               size="sm"
               onClick={() => fileInputRef.current?.click()}
@@ -251,7 +251,7 @@ export function ImageUploadV2({
               className="object-cover"
             />
           </div>
-          <Button
+          <ButtonV2
             type="button"
             variant="destructive"
             size="sm"
@@ -316,7 +316,7 @@ export function ImageUploadV2({
 
       {/* Bouton pour remplacer l'image existante */}
       {displayImageUrl && allowReplace && !isUploading && canUpload && (
-        <Button
+        <ButtonV2
           type="button"
           variant="outline"
           size="sm"

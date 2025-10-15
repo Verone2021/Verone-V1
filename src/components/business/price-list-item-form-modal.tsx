@@ -321,7 +321,7 @@ export function PriceListItemFormModal({
                               </TableCell>
                               <TableCell>{formatCurrency(product.price_ht)}</TableCell>
                               <TableCell>
-                                <Button
+                                <ButtonV2
                                   type="button"
                                   size="sm"
                                   onClick={() => handleSelectProduct(product)}
@@ -353,7 +353,7 @@ export function PriceListItemFormModal({
                     </p>
                   </div>
                   {!isEditMode && (
-                    <Button
+                    <ButtonV2
                       type="button"
                       variant="outline"
                       size="sm"
@@ -379,7 +379,7 @@ export function PriceListItemFormModal({
                     {isEditMode ? 'Paramètres du Palier' : '2. Configurer les Paliers de Prix'}
                   </CardTitle>
                   {!isEditMode && (
-                    <Button
+                    <ButtonV2
                       type="button"
                       variant="outline"
                       size="sm"
@@ -399,7 +399,7 @@ export function PriceListItemFormModal({
                       <div className="flex items-center justify-between">
                         <Badge variant="secondary">Palier {index + 1}</Badge>
                         {!isEditMode && tiers.length > 1 && (
-                          <Button
+                          <ButtonV2
                             type="button"
                             variant="outline"
                             size="sm"

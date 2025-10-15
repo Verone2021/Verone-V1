@@ -143,14 +143,14 @@ export default function SourcingValidationPage() {
               <p className="text-gray-600 mt-1">Workflow complet: Sourcing → Échantillons → Catalogue</p>
             </div>
             <div className="flex items-center space-x-3">
-              <Button
+              <ButtonV2
                 variant="outline"
                 onClick={() => router.push('/sourcing')}
                 className="border-black text-black hover:bg-black hover:text-white"
               >
                 Retour Dashboard
               </ButtonV2>
-              <Button
+              <ButtonV2
                 onClick={() => router.push('/catalogue')}
                 className="bg-black hover:bg-gray-800 text-white"
               >
@@ -165,7 +165,7 @@ export default function SourcingValidationPage() {
       <div className="container mx-auto px-4 py-8">
         {/* Onglets de navigation */}
         <div className="flex space-x-1 mb-6">
-          <Button
+          <ButtonV2
             variant={activeTab === 'validation' ? 'default' : 'outline'}
             onClick={() => setActiveTab('validation')}
             className={activeTab === 'validation' ? 'bg-black text-white' : ''}
@@ -173,7 +173,7 @@ export default function SourcingValidationPage() {
             <Settings className="h-4 w-4 mr-2" />
             Validation Sourcing ({productsToValidate.length})
           </ButtonV2>
-          <Button
+          <ButtonV2
             variant={activeTab === 'samples' ? 'default' : 'outline'}
             onClick={() => setActiveTab('samples')}
             className={activeTab === 'samples' ? 'bg-black text-white' : ''}
@@ -263,7 +263,7 @@ export default function SourcingValidationPage() {
                           </p>
                         </div>
                         <div className="flex items-center space-x-2 ml-4">
-                          <Button
+                          <ButtonV2
                             variant="outline"
                             size="sm"
                             className="border-gray-300"
@@ -309,7 +309,7 @@ export default function SourcingValidationPage() {
                         <div className="flex space-x-2">
                           <Dialog>
                             <DialogTrigger asChild>
-                              <Button
+                              <ButtonV2
                                 size="sm"
                                 className="bg-black hover:bg-gray-800 text-white"
                                 onClick={() => setSelectedProduct(product)}
@@ -349,7 +349,7 @@ export default function SourcingValidationPage() {
                         {product.requires_sample ? 'Échantillons validés' : 'Pas d\'échantillons requis'}
                       </p>
                     </div>
-                    <Button
+                    <ButtonV2
                       size="sm"
                       onClick={() => handleValidateProduct(product)}
                       className="bg-green-600 hover:bg-green-700 text-white"
@@ -427,7 +427,7 @@ export default function SourcingValidationPage() {
                 />
               </div>
               <DialogFooter>
-                <Button
+                <ButtonV2
                   variant="outline"
                   onClick={() => {
                     setSelectedProduct(null)
@@ -437,7 +437,7 @@ export default function SourcingValidationPage() {
                 >
                   Annuler
                 </ButtonV2>
-                <Button
+                <ButtonV2
                   onClick={() => handleValidateProduct(selectedProduct)}
                   className="bg-black hover:bg-gray-800 text-white"
                   disabled={!selectedProduct.supplier_id}

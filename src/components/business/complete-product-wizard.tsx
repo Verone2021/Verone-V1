@@ -478,7 +478,7 @@ export function CompleteProductWizard({
         <CardContent className="pt-6">
           <div className="flex items-center justify-between">
             <div className="flex items-center space-x-3">
-              <Button
+              <ButtonV2
                 variant="outline"
                 onClick={prevSection}
                 disabled={currentSection === 0}
@@ -487,7 +487,7 @@ export function CompleteProductWizard({
                 Précédent
               </ButtonV2>
 
-              <Button
+              <ButtonV2
                 variant="outline"
                 onClick={nextSection}
                 disabled={currentSection === WIZARD_SECTIONS.length - 1}
@@ -498,7 +498,7 @@ export function CompleteProductWizard({
             </div>
 
             <div className="flex items-center space-x-3">
-              <Button
+              <ButtonV2
                 variant="outline"
                 onClick={() => saveDraft()}
                 disabled={isSaving}
@@ -522,7 +522,7 @@ export function CompleteProductWizard({
                 </ButtonV2>
               )}
 
-              <Button
+              <ButtonV2
                 onClick={finalizeDraft}
                 disabled={isLoading || !draftIdState}
                 className="bg-black hover:bg-gray-800 text-white"

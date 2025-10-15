@@ -129,14 +129,14 @@ export default function SourcingProduitsPage() {
               <p className="text-gray-600 mt-1">Gestion des demandes de sourcing clients et internes</p>
             </div>
             <div className="flex items-center space-x-3">
-              <Button
+              <ButtonV2
                 variant="outline"
                 onClick={() => router.push('/sourcing')}
                 className="border-black text-black hover:bg-black hover:text-white"
               >
                 Retour Dashboard
               </ButtonV2>
-              <Button
+              <ButtonV2
                 variant="outline"
                 onClick={() => router.push('/contacts-organisations/customers?type=professional')}
                 className="border-black text-black hover:bg-black hover:text-white"
@@ -144,7 +144,7 @@ export default function SourcingProduitsPage() {
                 <Users className="h-4 w-4 mr-2" />
                 Client Professionnel
               </ButtonV2>
-              <Button
+              <ButtonV2
                 onClick={() => router.push('/catalogue/create')}
                 className="bg-black hover:bg-gray-800 text-white"
               >
@@ -199,7 +199,7 @@ export default function SourcingProduitsPage() {
                 </SelectContent>
               </Select>
 
-              <Button
+              <ButtonV2
                 variant="outline"
                 className="border-black text-black hover:bg-black hover:text-white"
               >
@@ -387,7 +387,7 @@ export default function SourcingProduitsPage() {
                       </div>
 
                       <div className="flex items-center space-x-2 ml-4">
-                        <Button
+                        <ButtonV2
                           variant="outline"
                           size="sm"
                           className="border-gray-300"
@@ -395,7 +395,7 @@ export default function SourcingProduitsPage() {
                         >
                           <Eye className="h-4 w-4" />
                         </ButtonV2>
-                        <Button
+                        <ButtonV2
                           variant="outline"
                           size="sm"
                           className="border-gray-300"

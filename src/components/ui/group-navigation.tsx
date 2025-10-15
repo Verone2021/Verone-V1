@@ -25,16 +25,16 @@ export function GroupNavigation({ currentGroupId, groups, className }: GroupNavi
       <div className="flex items-center space-x-2">
         {prevGroup ? (
           <Link href={`/catalogue/product-groups/${prevGroup.id}`}>
-            <Button variant="outline" size="sm" className="flex items-center space-x-1">
+            <ButtonV2 variant="outline" size="sm" className="flex items-center space-x-1">
               <ChevronLeft className="h-4 w-4" />
               <span className="truncate max-w-[120px]">{prevGroup.name}</span>
-            </Button>
+            </ButtonV2>
           </Link>
         ) : (
-          <Button variant="outline" size="sm" disabled className="flex items-center space-x-1">
+          <ButtonV2 variant="outline" size="sm" disabled className="flex items-center space-x-1">
             <ChevronLeft className="h-4 w-4" />
             <span>Précédent</span>
-          </Button>
+          </ButtonV2>
         )}
       </div>
 
@@ -45,16 +45,16 @@ export function GroupNavigation({ currentGroupId, groups, className }: GroupNavi
       <div className="flex items-center space-x-2">
         {nextGroup ? (
           <Link href={`/catalogue/product-groups/${nextGroup.id}`}>
-            <Button variant="outline" size="sm" className="flex items-center space-x-1">
+            <ButtonV2 variant="outline" size="sm" className="flex items-center space-x-1">
               <span className="truncate max-w-[120px]">{nextGroup.name}</span>
               <ChevronRight className="h-4 w-4" />
-            </Button>
+            </ButtonV2>
           </Link>
         ) : (
-          <Button variant="outline" size="sm" disabled className="flex items-center space-x-1">
+          <ButtonV2 variant="outline" size="sm" disabled className="flex items-center space-x-1">
             <span>Suivant</span>
             <ChevronRight className="h-4 w-4" />
-          </Button>
+          </ButtonV2>
         )}
       </div>
     </div>

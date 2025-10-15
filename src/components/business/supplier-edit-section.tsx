@@ -104,7 +104,7 @@ export function SupplierEditSection({
             Informations Fournisseur
           </h3>
           <div className="flex space-x-1">
-            <Button
+            <ButtonV2
               variant="outline"
               size="xs"
               onClick={handleCancel}
@@ -114,7 +114,7 @@ export function SupplierEditSection({
               <X className="h-3 w-3 mr-1" />
               Annuler
             </ButtonV2>
-            <Button
+            <ButtonV2
               variant="default"
               size="xs"
               onClick={handleSave}
@@ -185,7 +185,7 @@ export function SupplierEditSection({
                   placeholder="https://fournisseur.com/produit/123"
                 />
                 {editData?.supplier_page_url && (
-                  <Button
+                  <ButtonV2
                     variant="outline"
                     size="sm"
                     onClick={() => window.open(editData.supplier_page_url, '_blank')}

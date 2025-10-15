@@ -59,7 +59,7 @@ export function ProductCreationWizard({
       <div className="bg-white border-b">
         <div className="container mx-auto px-4 py-4">
           <div className="flex items-center justify-between">
-            <Button
+            <ButtonV2
               variant="ghost"
               onClick={handleBack}
               className="flex items-center text-gray-600 hover:text-black"

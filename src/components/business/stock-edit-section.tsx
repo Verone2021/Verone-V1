@@ -109,7 +109,7 @@ export function StockEditSection({ product, onUpdate, className }: StockEditSect
             Stock & Disponibilité
           </h3>
           <div className="flex space-x-2">
-            <Button
+            <ButtonV2
               variant="outline"
               size="sm"
               onClick={handleCancel}
@@ -118,7 +118,7 @@ export function StockEditSection({ product, onUpdate, className }: StockEditSect
               <X className="h-3 w-3 mr-1" />
               Annuler
             </ButtonV2>
-            <Button
+            <ButtonV2
               variant="default"
               size="sm"
               onClick={handleSave}

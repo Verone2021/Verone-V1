@@ -317,7 +317,7 @@ export function CategoryForm({
                     alt="Preview"
                     className="w-full h-32 object-cover rounded-lg"
                   />
-                  <Button
+                  <ButtonV2
                     type="button"
                     variant="destructive"
                     size="sm"
@@ -404,7 +404,7 @@ export function CategoryForm({
 
           {/* Actions */}
           <div className="flex justify-end space-x-4 pt-4">
-            <Button
+            <ButtonV2
               type="button"
               variant="outline"
               onClick={onClose}
@@ -412,7 +412,7 @@ export function CategoryForm({
             >
               Annuler
             </ButtonV2>
-            <Button
+            <ButtonV2
               type="submit"
               disabled={loading || uploadingImage}
               className="bg-black hover:bg-gray-800 text-white"

@@ -321,7 +321,7 @@ export function FamilyCrudForm({
 
           {/* Actions */}
           <div className="flex justify-end space-x-3 pt-4">
-            <Button
+            <ButtonV2
               type="button"
               variant="ghost"
               onClick={onClose}
@@ -329,7 +329,7 @@ export function FamilyCrudForm({
             >
               Annuler
             </ButtonV2>
-            <Button
+            <ButtonV2
               type="submit"
               disabled={isSubmitting}
               className="bg-black text-white hover:bg-gray-800"

@@ -214,7 +214,7 @@ export default function ContactDetailPage() {
 
         {/* Actions */}
         <div className="flex gap-2">
-          <Button
+          <ButtonV2
             variant="outline"
             onClick={handleToggleActive}
             className={currentContact.is_active ? "text-black border-gray-200 hover:bg-gray-50" : "text-blue-600 border-blue-200 hover:bg-blue-50"}

@@ -383,7 +383,7 @@ export function ProductCharacteristicsModal({
                       <div className="text-sm font-medium text-black">{key}</div>
                       <div className="text-sm text-gray-700">{value}</div>
                     </div>
-                    <Button
+                    <ButtonV2
                       variant="ghost"
                       size="sm"
                       onClick={() => handleRemoveCustomAttribute(key)}
@@ -411,7 +411,7 @@ export function ProductCharacteristicsModal({
                   placeholder="Valeur"
                   className="text-sm flex-1"
                 />
-                <Button
+                <ButtonV2
                   variant="outline"
                   size="sm"
                   onClick={handleAddCustomAttribute}
@@ -434,7 +434,7 @@ export function ProductCharacteristicsModal({
               <ButtonV2 variant="outline" onClick={onClose} disabled={saving}>
                 Annuler
               </ButtonV2>
-              <Button
+              <ButtonV2
                 onClick={handleSave}
                 disabled={saving}
                 className="bg-black hover:bg-gray-800 text-white"

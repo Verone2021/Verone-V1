@@ -92,7 +92,7 @@ function CollectionProductCard({
 
         {/* Bouton Détails */}
         <div className="flex-none mt-auto">
-          <Button
+          <ButtonV2
             variant="outline"
             size="sm"
             className="text-[10px] h-7 w-full px-1"
@@ -385,7 +385,7 @@ export default function CollectionDetailPage({ params }: CollectionDetailPagePro
   if (error || !collection) {
     return (
       <div className="container mx-auto px-4 py-6">
-        <Button
+        <ButtonV2
           variant="ghost"
           onClick={() => router.back()}
           className="mb-6"
@@ -411,7 +411,7 @@ export default function CollectionDetailPage({ params }: CollectionDetailPagePro
       {/* Header avec navigation */}
       <div className="flex items-center justify-between mb-6">
         <div className="flex items-center space-x-4">
-          <Button
+          <ButtonV2
             variant="ghost"
             onClick={() => router.back()}
             className="flex items-center"
@@ -609,7 +609,7 @@ export default function CollectionDetailPage({ params }: CollectionDetailPagePro
                   ))}
                 </div>
                 {savingStyle && <div className="text-xs text-gray-500">Enregistrement...</div>}
-                <Button
+                <ButtonV2
                   variant="outline"
                   size="sm"
                   onClick={handleCancelEditStyle}
@@ -667,7 +667,7 @@ export default function CollectionDetailPage({ params }: CollectionDetailPagePro
                 )}
                 {savingRooms && <div className="text-xs text-gray-500">Enregistrement...</div>}
                 <div className="flex gap-2">
-                  <Button
+                  <ButtonV2
                     size="sm"
                     onClick={handleSaveRooms}
                     disabled={savingRooms}
@@ -675,7 +675,7 @@ export default function CollectionDetailPage({ params }: CollectionDetailPagePro
                   >
                     Enregistrer
                   </ButtonV2>
-                  <Button
+                  <ButtonV2
                     variant="outline"
                     size="sm"
                     onClick={handleCancelEditRooms}
@@ -729,7 +729,7 @@ export default function CollectionDetailPage({ params }: CollectionDetailPagePro
                     }}
                     placeholder="Ex: Eco-responsable, Petit espace..."
                   />
-                  <Button
+                  <ButtonV2
                     type="button"
                     variant="outline"
                     onClick={handleAddTag}
@@ -757,7 +757,7 @@ export default function CollectionDetailPage({ params }: CollectionDetailPagePro
                 )}
                 {savingTags && <div className="text-xs text-gray-500">Enregistrement...</div>}
                 <div className="flex gap-2">
-                  <Button
+                  <ButtonV2
                     size="sm"
                     onClick={handleSaveTags}
                     disabled={savingTags}
@@ -765,7 +765,7 @@ export default function CollectionDetailPage({ params }: CollectionDetailPagePro
                   >
                     Enregistrer
                   </ButtonV2>
-                  <Button
+                  <ButtonV2
                     variant="outline"
                     size="sm"
                     onClick={handleCancelEditTags}
@@ -927,7 +927,7 @@ export default function CollectionDetailPage({ params }: CollectionDetailPagePro
           <div>
             <h4 className="text-sm font-medium text-gray-700 mb-3">Canaux de distribution disponibles</h4>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
-              <Button
+              <ButtonV2
                 variant="outline"
                 disabled
                 className="h-auto py-4 cursor-not-allowed opacity-50 flex flex-col items-center justify-center space-y-2"
@@ -937,7 +937,7 @@ export default function CollectionDetailPage({ params }: CollectionDetailPagePro
                 <Badge variant="secondary" className="text-xs">Bientôt disponible</Badge>
               </ButtonV2>
 
-              <Button
+              <ButtonV2
                 variant="outline"
                 disabled
                 className="h-auto py-4 cursor-not-allowed opacity-50 flex flex-col items-center justify-center space-y-2"
@@ -947,7 +947,7 @@ export default function CollectionDetailPage({ params }: CollectionDetailPagePro
                 <Badge variant="secondary" className="text-xs">Bientôt disponible</Badge>
               </ButtonV2>
 
-              <Button
+              <ButtonV2
                 variant="outline"
                 disabled
                 className="h-auto py-4 cursor-not-allowed opacity-50 flex flex-col items-center justify-center space-y-2"

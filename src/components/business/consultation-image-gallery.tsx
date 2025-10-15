@@ -176,7 +176,7 @@ export function ConsultationImageGallery({
         <div className="absolute inset-0 bg-black bg-opacity-0 hover:bg-opacity-30 transition-all duration-300 flex items-center justify-center opacity-0 hover:opacity-100">
           <div className="flex space-x-2">
             {hasImages && (
-              <Button
+              <ButtonV2
                 size="sm"
                 variant="secondary"
                 className="text-xs"
@@ -187,7 +187,7 @@ export function ConsultationImageGallery({
               </ButtonV2>
             )}
             {allowEdit && hasImages && !displayImage?.is_primary && (
-              <Button
+              <ButtonV2
                 size="sm"
                 variant="secondary"
                 className="text-xs"
@@ -198,7 +198,7 @@ export function ConsultationImageGallery({
             )}
             {allowEdit && (
               <label htmlFor="consultation-file-input-overlay" className="cursor-pointer inline-block">
-                <Button
+                <ButtonV2
                   size="sm"
                   variant="secondary"
                   className="text-xs"
@@ -284,7 +284,7 @@ export function ConsultationImageGallery({
           <div className="text-sm">Aucune photo de consultation</div>
           {allowEdit && (
             <label htmlFor="consultation-file-input-empty" className="cursor-pointer inline-block">
-              <Button
+              <ButtonV2
                 variant="outline"
                 size="sm"
                 className="mt-2"
@@ -312,7 +312,7 @@ export function ConsultationImageGallery({
       {/* Actions rapides */}
       {hasImages && (
         <div className="space-y-2">
-          <Button
+          <ButtonV2
             variant="outline"
             size="sm"
             className="w-full text-xs"

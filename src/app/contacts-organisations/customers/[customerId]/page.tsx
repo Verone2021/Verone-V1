@@ -189,7 +189,7 @@ export default function CustomerDetailPage() {
 
         {/* Actions */}
         <div className="flex gap-2">
-          <Button
+          <ButtonV2
             variant="outline"
             onClick={handleArchive}
             className={customer.archived_at ? "text-blue-600 border-blue-200 hover:bg-blue-50" : "text-black border-gray-200 hover:bg-gray-50"}
@@ -206,7 +206,7 @@ export default function CustomerDetailPage() {
               </>
             )}
           </ButtonV2>
-          <Button
+          <ButtonV2
             variant="outline"
             onClick={handleDelete}
             className="text-red-600 border-red-200 hover:bg-red-50"

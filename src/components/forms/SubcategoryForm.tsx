@@ -364,7 +364,7 @@ export function SubcategoryForm({
                     alt="Preview"
                     className="w-full h-32 object-cover rounded-lg"
                   />
-                  <Button
+                  <ButtonV2
                     type="button"
                     variant="destructive"
                     size="sm"
@@ -451,7 +451,7 @@ export function SubcategoryForm({
 
           {/* Actions */}
           <div className="flex justify-end space-x-4 pt-4">
-            <Button
+            <ButtonV2
               type="button"
               variant="outline"
               onClick={onClose}
@@ -459,7 +459,7 @@ export function SubcategoryForm({
             >
               Annuler
             </ButtonV2>
-            <Button
+            <ButtonV2
               type="submit"
               disabled={loading || uploadingImage}
               className="bg-black hover:bg-gray-800 text-white"

@@ -175,7 +175,7 @@ export function CancelMovementModal({ movement, isOpen, onClose, onSuccess }: Ca
         </div>
 
         <DialogFooter className="gap-2">
-          <Button
+          <ButtonV2
             variant="outline"
             onClick={onClose}
             disabled={cancelling}
@@ -183,7 +183,7 @@ export function CancelMovementModal({ movement, isOpen, onClose, onSuccess }: Ca
           >
             Annuler
           </ButtonV2>
-          <Button
+          <ButtonV2
             variant="destructive"
             onClick={handleCancel}
             disabled={cancelling}

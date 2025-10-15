@@ -159,7 +159,7 @@ export function ProductImageViewerModal({
           </div>
 
           <div className="flex items-center gap-2">
-            <Button
+            <ButtonV2
               variant="outline"
               size="sm"
               onClick={() => downloadImage(currentImage)}
@@ -169,7 +169,7 @@ export function ProductImageViewerModal({
               <Download className="h-4 w-4 mr-1" />
               {downloadingId === currentImage.id ? 'Téléchargement...' : 'Télécharger'}
             </ButtonV2>
-            <Button
+            <ButtonV2
               variant="outline"
               size="sm"
               onClick={onClose}
@@ -192,7 +192,7 @@ export function ProductImageViewerModal({
 
           {/* Navigation précédent */}
           {images.length > 1 && (
-            <Button
+            <ButtonV2
               variant="ghost"
               size="lg"
               onClick={goToPrevious}
@@ -245,7 +245,7 @@ export function ProductImageViewerModal({
 
           {/* Navigation suivant */}
           {images.length > 1 && (
-            <Button
+            <ButtonV2
               variant="ghost"
               size="lg"
               onClick={goToNext}

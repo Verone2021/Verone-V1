@@ -282,7 +282,7 @@ export function MovementsFilters({ filters, onFiltersChange, onReset, hasFilters
           </Label>
 
           <div className="flex flex-wrap gap-2">
-            <Button
+            <ButtonV2
               variant="outline"
               size="sm"
               onClick={() => setDateRange('today')}
@@ -292,14 +292,14 @@ export function MovementsFilters({ filters, onFiltersChange, onReset, hasFilters
             >
               Aujourd'hui
             </ButtonV2>
-            <Button
+            <ButtonV2
               variant="outline"
               size="sm"
               onClick={() => setDateRange('week')}
             >
               Cette semaine
             </ButtonV2>
-            <Button
+            <ButtonV2
               variant="outline"
               size="sm"
               onClick={() => setDateRange('month')}
@@ -336,7 +336,7 @@ export function MovementsFilters({ filters, onFiltersChange, onReset, hasFilters
                   numberOfMonths={2}
                 />
                 <div className="p-3 border-t">
-                  <Button
+                  <ButtonV2
                     onClick={() => {
                       setShowDateRange(false)
                       applyFilters()

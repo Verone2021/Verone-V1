@@ -274,14 +274,14 @@ export default function StockAlertesPage() {
         <div className="container mx-auto px-4 py-6">
           <div className="flex items-center justify-between">
             <div className="flex items-center space-x-4">
-              <Button
+              <ButtonV2
                 variant="ghost"
                 onClick={() => router.back()}
                 className="flex items-center text-gray-600 hover:text-black"
               >
                 <ArrowLeft className="h-4 w-4 mr-2" />
                 Retour
-              </Button>
+              </ButtonV2>
               <div>
                 <h1 className="text-3xl font-bold text-black">Alertes Stock</h1>
                 <p className="text-gray-600 mt-1">
@@ -290,7 +290,7 @@ export default function StockAlertesPage() {
               </div>
             </div>
             <div className="flex items-center space-x-3">
-              <Button
+              <ButtonV2
                 variant="outline"
                 onClick={() => refetch()}
                 disabled={loading}
@@ -298,15 +298,15 @@ export default function StockAlertesPage() {
               >
                 <RefreshCw className={`h-4 w-4 mr-2 ${loading ? 'animate-spin' : ''}`} />
                 Actualiser
-              </Button>
-              <Button
+              </ButtonV2>
+              <ButtonV2
                 onClick={acknowledgeAll}
                 disabled={alertStats.unacknowledged === 0}
                 className="bg-black hover:bg-gray-800 text-white"
               >
                 <CheckCircle className="h-4 w-4 mr-2" />
                 Acquitter tout
-              </Button>
+              </ButtonV2>
             </div>
           </div>
         </div>
@@ -376,14 +376,14 @@ export default function StockAlertesPage() {
                 <Filter className="h-5 w-5 mr-2" />
                 Filtres et recherche
               </span>
-              <Button
+              <ButtonV2
                 variant="outline"
                 size="sm"
                 onClick={() => setShowFilters(!showFilters)}
                 className="border-black text-black hover:bg-black hover:text-white"
               >
                 {showFilters ? 'Masquer' : 'Afficher'} filtres
-              </Button>
+              </ButtonV2>
             </CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
@@ -448,7 +448,7 @@ export default function StockAlertesPage() {
                   </Select>
                 </div>
                 <div className="flex items-end">
-                  <Button
+                  <ButtonV2
                     variant="outline"
                     onClick={() => {
                       setFilters({
@@ -462,7 +462,7 @@ export default function StockAlertesPage() {
                     className="w-full border-black text-black hover:bg-black hover:text-white"
                   >
                     Réinitialiser
-                  </Button>
+                  </ButtonV2>
                 </div>
               </div>
             )}
@@ -488,9 +488,9 @@ export default function StockAlertesPage() {
             {error ? (
               <div className="text-center py-8">
                 <p className="text-red-600 mb-4">{error}</p>
-                <Button variant="outline" onClick={() => refetch()}>
+                <ButtonV2 variant="outline" onClick={() => refetch()}>
                   Réessayer
-                </Button>
+                </ButtonV2>
               </div>
             ) : filteredAlerts.length === 0 ? (
               <div className="text-center py-8">
@@ -562,24 +562,24 @@ export default function StockAlertesPage() {
 
                       <div className="flex items-center space-x-2 ml-4">
                         {alert.action && !alert.acknowledged && (
-                          <Button
+                          <ButtonV2
                             variant="outline"
                             size="sm"
                             onClick={alert.action.handler}
                             className="border-black text-black hover:bg-black hover:text-white"
                           >
                             {alert.action.label}
-                          </Button>
+                          </ButtonV2>
                         )}
                         {!alert.acknowledged && (
-                          <Button
+                          <ButtonV2
                             variant="ghost"
                             size="sm"
                             onClick={() => handleAcknowledge(alert.id)}
                             className="text-gray-500 hover:text-black"
                           >
                             <CheckCircle className="h-4 w-4" />
-                          </Button>
+                          </ButtonV2>
                         )}
                         {alert.acknowledged && (
                           <Badge variant="outline" className="border-green-300 text-green-600">

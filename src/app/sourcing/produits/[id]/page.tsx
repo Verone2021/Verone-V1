@@ -102,7 +102,7 @@ export default function SourcingProductDetailPage() {
             <p className="text-gray-600 mb-4">
               Ce produit n'existe pas ou n'est plus en mode sourcing.
             </p>
-            <Button
+            <ButtonV2
               onClick={() => router.push('/sourcing/produits')}
               className="bg-black hover:bg-gray-800 text-white"
             >
@@ -122,7 +122,7 @@ export default function SourcingProductDetailPage() {
         <div className="container mx-auto px-4 py-6">
           <div className="flex items-center justify-between">
             <div className="flex items-center space-x-4">
-              <Button
+              <ButtonV2
                 variant="ghost"
                 onClick={() => router.push('/sourcing/produits')}
                 className="text-gray-600 hover:text-black"
@@ -137,7 +137,7 @@ export default function SourcingProductDetailPage() {
             </div>
 
             <div className="flex items-center space-x-2">
-              <Button
+              <ButtonV2
                 variant="outline"
                 onClick={() => setIsEditModalOpen(true)}
                 className="border-black text-black hover:bg-black hover:text-white"
@@ -306,7 +306,7 @@ export default function SourcingProductDetailPage() {
                   <p className="text-sm text-gray-600 mb-4">
                     Marquer ce produit comme nécessitant un échantillon et créer une demande de commande.
                   </p>
-                  <Button
+                  <ButtonV2
                     onClick={handleOrderSample}
                     className="w-full bg-gray-100 hover:bg-gray-800 text-white"
                   >
@@ -326,7 +326,7 @@ export default function SourcingProductDetailPage() {
                   <p className="text-sm text-gray-600 mb-4">
                     Valider ce produit sourcing et l'ajouter au catalogue principal.
                   </p>
-                  <Button
+                  <ButtonV2
                     onClick={handleValidateSourcing}
                     disabled={!product.supplier_id}
                     className="w-full bg-green-600 hover:bg-green-700 text-white disabled:bg-gray-300 disabled:cursor-not-allowed"

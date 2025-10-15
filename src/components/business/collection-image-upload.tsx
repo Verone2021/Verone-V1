@@ -170,7 +170,7 @@ export function CollectionImageUpload({
             />
             {/* Overlay suppression */}
             <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
-              <Button
+              <ButtonV2
                 variant="destructive"
                 size="sm"
                 onClick={handleRemoveImage}
@@ -232,7 +232,7 @@ export function CollectionImageUpload({
                 <p className="text-xs text-gray-500 mb-4">
                   ou
                 </p>
-                <Button
+                <ButtonV2
                   type="button"
                   variant="outline"
                   size="sm"

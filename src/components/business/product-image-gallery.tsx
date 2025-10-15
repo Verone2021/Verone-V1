@@ -133,7 +133,7 @@ export function ProductImageGallery({
         {hasImages && (
           <div className="absolute inset-0 bg-black bg-opacity-0 hover:bg-opacity-30 transition-all duration-300 flex items-center justify-center opacity-0 hover:opacity-100">
             <div className="flex space-x-2">
-              <Button
+              <ButtonV2
                 size="sm"
                 variant="secondary"
                 className="text-xs"
@@ -143,7 +143,7 @@ export function ProductImageGallery({
                 Voir
               </ButtonV2>
               {!displayImage?.is_primary && (
-                <Button
+                <ButtonV2
                   size="sm"
                   variant="secondary"
                   className="text-xs"
@@ -181,7 +181,7 @@ export function ProductImageGallery({
 
       {/* Bouton actualiser compacté */}
       <div className="flex items-center justify-between px-2">
-        <Button
+        <ButtonV2
           onClick={fetchImages}
           disabled={loading}
           variant="outline"
@@ -201,7 +201,7 @@ export function ProductImageGallery({
       {/* Actions section */}
       <div className="card-verone p-3">
         <h3 className="text-xs font-semibold mb-2">Actions</h3>
-        <Button
+        <ButtonV2
           onClick={() => setShowUploadDialog(true)}
           variant="outline"
           size="sm"

@@ -343,7 +343,7 @@ export default function InventairePage() {
         <div className="container mx-auto px-4 py-4">
           <div className="flex items-center justify-between">
             <div className="flex items-center space-x-4">
-              <Button
+              <ButtonV2
                 variant="ghost"
                 size="sm"
                 onClick={() => router.push('/stocks')}
@@ -361,7 +361,7 @@ export default function InventairePage() {
               </div>
             </div>
             <div className="flex gap-2">
-              <Button
+              <ButtonV2
                 variant="outline"
                 size="sm"
                 onClick={handleRefresh}
@@ -371,7 +371,7 @@ export default function InventairePage() {
                 <RefreshCw className={`h-3 w-3 mr-1.5 ${loading ? 'animate-spin' : ''}`} />
                 Actualiser
               </ButtonV2>
-              <Button
+              <ButtonV2
                 variant="outline"
                 size="sm"
                 onClick={handleExport}
@@ -380,7 +380,7 @@ export default function InventairePage() {
                 <Download className="h-3 w-3 mr-1.5" />
                 CSV
               </ButtonV2>
-              <Button
+              <ButtonV2
                 size="sm"
                 className="bg-black hover:bg-gray-800 text-white h-8 text-xs"
                 onClick={() => setIsReportsModalOpen(true)}
@@ -491,7 +491,7 @@ export default function InventairePage() {
               className="border-gray-300 w-40 h-9 text-sm"
               placeholder="Date fin"
             />
-            <Button
+            <ButtonV2
               onClick={handleApplyFilters}
               size="sm"
               className="bg-black hover:bg-gray-800 text-white h-9 px-4 text-sm"
@@ -607,7 +607,7 @@ export default function InventairePage() {
                           </span>
                         </td>
                         <td className="py-2 px-3 text-center">
-                          <Button
+                          <ButtonV2
                             variant="ghost"
                             size="sm"
                             onClick={() => openHistoryModal(item)}

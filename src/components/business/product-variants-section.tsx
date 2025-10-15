@@ -204,7 +204,7 @@ export function ProductVariantsSection({
             <Package className="h-4 w-4 mr-2" />
             Variantes Produit
           </h3>
-          <Button
+          <ButtonV2
             variant="outline"
             size="sm"
             onClick={handleManageVariants}
@@ -237,7 +237,7 @@ export function ProductVariantsSection({
           </Badge>
         </h3>
         <div className="flex items-center space-x-2">
-          <Button
+          <ButtonV2
             variant="ghost"
             size="sm"
             onClick={handleManageVariants}
@@ -327,7 +327,7 @@ export function ProductVariantsSection({
               </div>
 
               <div className="flex items-center space-x-1 ml-3">
-                <Button
+                <ButtonV2
                   variant="ghost"
                   size="sm"
                   onClick={() => handleNavigateToVariant(variant.variant_id)}
@@ -343,7 +343,7 @@ export function ProductVariantsSection({
 
       {/* Add New Variant Quick Action */}
       <Separator className="my-4" />
-      <Button
+      <ButtonV2
         variant="outline"
         size="sm"
         className="w-full text-xs"

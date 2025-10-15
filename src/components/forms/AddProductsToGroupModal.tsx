@@ -302,7 +302,7 @@ export function AddProductsToGroupModal({
             <ButtonV2 variant="outline" onClick={onClose}>
               Annuler
             </ButtonV2>
-            <Button
+            <ButtonV2
               onClick={handleSubmit}
               disabled={selectedProductIds.length === 0 || loading}
               className="bg-black text-white hover:bg-gray-800"

@@ -276,7 +276,7 @@ export function EditSourcingProductModal({
 
           {/* Actions */}
           <div className="flex items-center justify-end space-x-3 pt-4 border-t border-gray-200">
-            <Button
+            <ButtonV2
               type="button"
               variant="ghost"
               onClick={onClose}
@@ -286,7 +286,7 @@ export function EditSourcingProductModal({
               Annuler
             </ButtonV2>
 
-            <Button
+            <ButtonV2
               type="submit"
               disabled={isSubmitting}
               className="bg-black hover:bg-gray-800 text-white"

@@ -178,7 +178,7 @@ export function SampleRequirementSection({
 
             <div className="flex items-center justify-between">
               <Label className="text-sm font-medium">Notes sur l'échantillonnage</Label>
-              <Button
+              <ButtonV2
                 variant="ghost"
                 size="sm"
                 onClick={() => setShowNotes(!showNotes)}

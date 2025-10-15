@@ -279,7 +279,7 @@ export function CollectionProductsModal({
                         </div>
                       </div>
                       <div className="flex items-center gap-1">
-                        <Button
+                        <ButtonV2
                           size="sm"
                           variant="ghost"
                           onClick={() => openImageViewer(product.id, product.name)}
@@ -287,7 +287,7 @@ export function CollectionProductsModal({
                         >
                           <Eye className="h-4 w-4" />
                         </ButtonV2>
-                        <Button
+                        <ButtonV2
                           size="sm"
                           variant="ghost"
                           onClick={() => addProductToCollection(product)}
@@ -354,7 +354,7 @@ export function CollectionProductsModal({
                         </div>
                       </div>
                       <div className="flex items-center gap-1">
-                        <Button
+                        <ButtonV2
                           size="sm"
                           variant="ghost"
                           onClick={() => openImageViewer(product.id, product.name)}
@@ -362,7 +362,7 @@ export function CollectionProductsModal({
                         >
                           <Eye className="h-4 w-4" />
                         </ButtonV2>
-                        <Button
+                        <ButtonV2
                           size="sm"
                           variant="ghost"
                           className="text-red-600 hover:text-red-700"

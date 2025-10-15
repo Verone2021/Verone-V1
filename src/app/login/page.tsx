@@ -114,7 +114,7 @@ export default function LoginPage() {
             )}
 
             {/* Bouton de connexion */}
-            <Button
+            <ButtonV2
               type="submit"
               disabled={isLoading}
               className="w-full bg-black text-white hover:bg-white hover:text-black border border-black transition-colors duration-200 py-3 h-auto"

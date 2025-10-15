@@ -150,7 +150,7 @@ export default function TestsEssentielsPage() {
             </CardDescription>
           </CardHeader>
           <CardContent>
-            <Button
+            <ButtonV2
               onClick={() => runConsoleErrorCheck()}
               disabled={isRunning}
               className="w-full"
@@ -174,7 +174,7 @@ export default function TestsEssentielsPage() {
             </CardDescription>
           </CardHeader>
           <CardContent>
-            <Button
+            <ButtonV2
               onClick={() => handleRunTests(undefined, true)}
               disabled={isRunning}
               className="w-full"
@@ -198,7 +198,7 @@ export default function TestsEssentielsPage() {
             </CardDescription>
           </CardHeader>
           <CardContent>
-            <Button
+            <ButtonV2
               onClick={() => handleRunTests()}
               disabled={isRunning}
               className="w-full"
@@ -229,7 +229,7 @@ export default function TestsEssentielsPage() {
                   {module === 'commandes' && '📋'}
                   {module} ({tests.length})
                 </h3>
-                <Button
+                <ButtonV2
                   onClick={() => handleRunTests(module as TestModule)}
                   disabled={isRunning}
                   variant="outline"
@@ -278,7 +278,7 @@ export default function TestsEssentielsPage() {
                 Détails des {results.length} tests exécutés
               </CardDescription>
             </div>
-            <Button
+            <ButtonV2
               onClick={clearResults}
               variant="ghost"
               size="sm"

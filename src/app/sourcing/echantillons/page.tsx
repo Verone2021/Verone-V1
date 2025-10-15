@@ -154,14 +154,14 @@ export default function SourcingEchantillonsPage() {
               <p className="text-gray-600 mt-1">Commandes et suivi des échantillons produits</p>
             </div>
             <div className="flex items-center space-x-3">
-              <Button
+              <ButtonV2
                 variant="outline"
                 onClick={() => router.push('/sourcing')}
                 className="border-black text-black hover:bg-black hover:text-white"
               >
                 Retour Dashboard
               </ButtonV2>
-              <Button
+              <ButtonV2
                 className="bg-black hover:bg-gray-800 text-white"
               >
                 <Plus className="h-4 w-4 mr-2" />
@@ -254,7 +254,7 @@ export default function SourcingEchantillonsPage() {
                 </SelectContent>
               </Select>
 
-              <Button
+              <ButtonV2
                 variant="outline"
                 className="border-black text-black hover:bg-black hover:text-white"
               >

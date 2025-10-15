@@ -208,14 +208,14 @@ export default function CatalogueStocksPage() {
           </p>
         </div>
         <div className="flex gap-2">
-          <Button
+          <ButtonV2
             variant="outline"
             onClick={() => window.location.href = '/historique-mouvements'}
           >
             <History className="h-4 w-4 mr-2" />
             Historique complet
           </ButtonV2>
-          <Button
+          <ButtonV2
             variant="outline"
             onClick={() => setShowGeneralMovementModal(true)}
           >
@@ -340,7 +340,7 @@ export default function CatalogueStocksPage() {
                     <SelectItem value="stock_available">Stock disponible</SelectItem>
                   </SelectContent>
                 </Select>
-                <Button
+                <ButtonV2
                   variant="outline"
                   size="icon"
                   onClick={() => setFilters({ ...filters, sortOrder: filters.sortOrder === 'asc' ? 'desc' : 'asc' })}
@@ -441,7 +441,7 @@ export default function CatalogueStocksPage() {
                         </TableCell>
                         <TableCell className="text-right">
                           <div className="flex items-center justify-end gap-2">
-                            <Button
+                            <ButtonV2
                               variant="outline"
                               size="sm"
                               onClick={() => {
@@ -452,7 +452,7 @@ export default function CatalogueStocksPage() {
                               <Plus className="h-4 w-4 mr-1" />
                               Mouvement
                             </ButtonV2>
-                            <Button
+                            <ButtonV2
                               variant="outline"
                               size="sm"
                               onClick={() => handleShowHistory(product)}

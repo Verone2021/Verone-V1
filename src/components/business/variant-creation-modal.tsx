@@ -116,7 +116,7 @@ export function VariantCreationModal({
             <Copy className="h-5 w-5 mr-2" />
             Créer une Variante
           </h2>
-          <Button
+          <ButtonV2
             variant="ghost"
             size="sm"
             onClick={onClose}
@@ -274,14 +274,14 @@ export function VariantCreationModal({
 
         {/* Actions */}
         <div className="sticky bottom-0 bg-white border-t border-gray-200 p-4 flex justify-end space-x-2">
-          <Button
+          <ButtonV2
             variant="outline"
             onClick={onClose}
             disabled={isCreating}
           >
             Annuler
           </ButtonV2>
-          <Button
+          <ButtonV2
             onClick={handleCreateVariant}
             disabled={isCreating || (!color && !material)}
             className="bg-black hover:bg-gray-800"

@@ -231,7 +231,7 @@ export function CollectionCreationWizard({
               Organisez vos produits selon votre style et vos besoins
             </p>
           </div>
-          <Button
+          <ButtonV2
             variant="ghost"
             size="sm"
             onClick={onClose}
@@ -582,7 +582,7 @@ export function CollectionCreationWizard({
 
         {/* Footer */}
         <div className="flex items-center justify-between p-6 border-t border-gray-200">
-          <Button
+          <ButtonV2
             variant="outline"
             onClick={currentStep === 1 ? onClose : handlePrevious}
             disabled={loading}
@@ -606,7 +606,7 @@ export function CollectionCreationWizard({
             </span>
 
             {currentStep < 3 ? (
-              <Button
+              <ButtonV2
                 onClick={handleNext}
                 disabled={!canProceed(currentStep) || loading}
                 className="bg-black hover:bg-gray-800 text-white"
@@ -615,7 +615,7 @@ export function CollectionCreationWizard({
                 <ArrowRight className="h-4 w-4 ml-2" />
               </ButtonV2>
             ) : (
-              <Button
+              <ButtonV2
                 onClick={handleSubmit}
                 disabled={loading}
                 className="bg-black hover:bg-gray-800 text-white"

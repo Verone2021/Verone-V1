@@ -178,7 +178,7 @@ export function ConsultationOrderInterface({
                 {totalItems} article{totalItems > 1 ? 's' : ''} • Total: {total.toFixed(2)}€ HT
               </CardDescription>
             </div>
-            <Button
+            <ButtonV2
               onClick={() => setShowAddForm(!showAddForm)}
               className="bg-black hover:bg-gray-800 text-white"
             >
@@ -248,7 +248,7 @@ export function ConsultationOrderInterface({
               </div>
 
               <div className="flex items-center space-x-2">
-                <Button
+                <ButtonV2
                   onClick={handleAddItem}
                   disabled={!selectedProductId}
                   className="bg-green-600 hover:bg-green-700 text-white"
@@ -256,7 +256,7 @@ export function ConsultationOrderInterface({
                   <Check className="h-4 w-4 mr-1" />
                   Ajouter
                 </ButtonV2>
-                <Button
+                <ButtonV2
                   variant="outline"
                   onClick={() => setShowAddForm(false)}
                 >
@@ -329,7 +329,7 @@ export function ConsultationOrderInterface({
                           />
                         ) : (
                           <div className="flex items-center justify-center space-x-1">
-                            <Button
+                            <ButtonV2
                               variant="outline"
                               size="sm"
                               onClick={() => changeQuantity(item.id, -1)}
@@ -338,7 +338,7 @@ export function ConsultationOrderInterface({
                               <Minus className="h-3 w-3" />
                             </ButtonV2>
                             <span className="w-8 text-center font-medium">{item.quantity}</span>
-                            <Button
+                            <ButtonV2
                               variant="outline"
                               size="sm"
                               onClick={() => changeQuantity(item.id, 1)}
@@ -393,14 +393,14 @@ export function ConsultationOrderInterface({
                       <td className="p-4 text-center">
                         {editingItem === item.id ? (
                           <div className="flex items-center justify-center space-x-1">
-                            <Button
+                            <ButtonV2
                               size="sm"
                               onClick={() => saveEditItem(item.id)}
                               className="bg-green-600 hover:bg-green-700 text-white"
                             >
                               <Check className="h-3 w-3" />
                             </ButtonV2>
-                            <Button
+                            <ButtonV2
                               size="sm"
                               variant="outline"
                               onClick={cancelEditItem}
@@ -410,14 +410,14 @@ export function ConsultationOrderInterface({
                           </div>
                         ) : (
                           <div className="flex items-center justify-center space-x-1">
-                            <Button
+                            <ButtonV2
                               size="sm"
                               variant="outline"
                               onClick={() => startEditItem(item)}
                             >
                               <Edit className="h-3 w-3" />
                             </ButtonV2>
-                            <Button
+                            <ButtonV2
                               size="sm"
                               variant="outline"
                               onClick={() => handleRemoveItem(item.id, item.product?.name || 'ce produit')}

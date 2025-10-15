@@ -246,7 +246,7 @@ export default function ShipmentsPage() {
                           )}
                         </TableCell>
                         <TableCell>
-                          <Button
+                          <ButtonV2
                             variant="outline"
                             size="sm"
                             onClick={() => openOrderDetail(order)}

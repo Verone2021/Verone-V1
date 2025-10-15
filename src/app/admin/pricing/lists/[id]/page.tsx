@@ -104,7 +104,7 @@ export default function PriceListDetailPage() {
     <div className="container mx-auto py-8 px-4 space-y-6">
       {/* En-tête avec retour */}
       <div className="flex items-center gap-4">
-        <Button
+        <ButtonV2
           variant="outline"
           size="icon"
           onClick={() => router.push('/admin/pricing/lists')}
@@ -190,7 +190,7 @@ export default function PriceListDetailPage() {
                         <span>Prix catalogue: <span className="font-medium">{formatCurrency(product?.price_ht)}</span></span>
                       </div>
                     </div>
-                    <Button
+                    <ButtonV2
                       variant="outline"
                       size="sm"
                       onClick={() => setShowAddItemModal(true)}
@@ -265,14 +265,14 @@ export default function PriceListDetailPage() {
                               </TableCell>
                               <TableCell>
                                 <div className="flex gap-1">
-                                  <Button
+                                  <ButtonV2
                                     variant="outline"
                                     size="sm"
                                     onClick={() => setEditingItemId(tier.id)}
                                   >
                                     <Edit className="h-3 w-3" />
                                   </ButtonV2>
-                                  <Button
+                                  <ButtonV2
                                     variant="outline"
                                     size="sm"
                                     onClick={() => handleDeleteItem(tier.id, product?.name)}

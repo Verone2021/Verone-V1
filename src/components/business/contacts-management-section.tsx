@@ -300,7 +300,7 @@ export function ContactsManagementSection({
 
                     <div className="flex gap-2 ml-4">
                       {!contact.is_primary_contact && (
-                        <Button
+                        <ButtonV2
                           variant="outline"
                           size="sm"
                           onClick={() => handleSetPrimary(contact)}
@@ -310,7 +310,7 @@ export function ContactsManagementSection({
                           <StarOff className="h-4 w-4" />
                         </ButtonV2>
                       )}
-                      <Button
+                      <ButtonV2
                         variant="outline"
                         size="sm"
                         asChild
@@ -320,7 +320,7 @@ export function ContactsManagementSection({
                           <Eye className="h-4 w-4" />
                         </Link>
                       </ButtonV2>
-                      <Button
+                      <ButtonV2
                         variant="outline"
                         size="sm"
                         onClick={() => handleEditContact(contact)}
@@ -328,7 +328,7 @@ export function ContactsManagementSection({
                       >
                         <Edit className="h-4 w-4" />
                       </ButtonV2>
-                      <Button
+                      <ButtonV2
                         variant="outline"
                         size="sm"
                         onClick={() => handleDeleteContact(contact)}

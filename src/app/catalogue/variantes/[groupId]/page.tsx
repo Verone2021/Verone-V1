@@ -161,7 +161,7 @@ function VariantProductCard({
 
         {/* Boutons compacts en grille */}
         <div className="flex-none grid grid-cols-2 gap-1">
-          <Button
+          <ButtonV2
             variant="outline"
             size="sm"
             className="text-[10px] h-7 w-full px-1"
@@ -170,7 +170,7 @@ function VariantProductCard({
             <Edit3 className="w-3 h-3 mr-1" />
             Modifier
           </ButtonV2>
-          <Button
+          <ButtonV2
             variant="outline"
             size="sm"
             className="text-[10px] h-7 w-full px-1"
@@ -360,7 +360,7 @@ export default function VariantGroupDetailPage({ params }: VariantGroupDetailPag
   if (error || !variantGroup) {
     return (
       <div className="container mx-auto px-4 py-6">
-        <Button
+        <ButtonV2
           variant="ghost"
           onClick={() => router.back()}
           className="mb-6"
@@ -386,7 +386,7 @@ export default function VariantGroupDetailPage({ params }: VariantGroupDetailPag
       {/* Header avec navigation */}
       <div className="flex items-center justify-between mb-6">
         <div className="flex items-center space-x-4">
-          <Button
+          <ButtonV2
             variant="ghost"
             onClick={() => router.back()}
             className="flex items-center"
@@ -435,7 +435,7 @@ export default function VariantGroupDetailPage({ params }: VariantGroupDetailPag
           </div>
         </div>
         <div className="flex items-center space-x-2">
-          <Button
+          <ButtonV2
             variant="outline"
             size="sm"
             onClick={handleEditGroup}
@@ -444,7 +444,7 @@ export default function VariantGroupDetailPage({ params }: VariantGroupDetailPag
             <Edit3 className="w-4 h-4 mr-2" />
             Modifier les informations
           </ButtonV2>
-          <Button
+          <ButtonV2
             size="sm"
             onClick={handleCreateProduct}
             className="bg-black text-white hover:bg-gray-800"
@@ -452,7 +452,7 @@ export default function VariantGroupDetailPage({ params }: VariantGroupDetailPag
             <Plus className="w-4 h-4 mr-2" />
             Créer un produit
           </ButtonV2>
-          <Button
+          <ButtonV2
             variant="outline"
             size="sm"
             onClick={handleAddProducts}
@@ -702,7 +702,7 @@ export default function VariantGroupDetailPage({ params }: VariantGroupDetailPag
             <p className="text-gray-600 mb-4">
               Ce groupe ne contient pas encore de produits.
             </p>
-            <Button
+            <ButtonV2
               onClick={handleAddProducts}
               className="bg-black text-white hover:bg-gray-800"
             >

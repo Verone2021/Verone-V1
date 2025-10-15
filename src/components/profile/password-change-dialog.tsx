@@ -308,7 +308,7 @@ export function PasswordChangeDialog({ open, onOpenChange }: PasswordChangeDialo
             )}
 
             <DialogFooter className="flex flex-col-reverse sm:flex-row sm:justify-end sm:space-x-2">
-              <Button
+              <ButtonV2
                 type="button"
                 variant="outline"
                 onClick={handleClose}
@@ -317,7 +317,7 @@ export function PasswordChangeDialog({ open, onOpenChange }: PasswordChangeDialo
               >
                 Annuler
               </ButtonV2>
-              <Button
+              <ButtonV2
                 type="submit"
                 disabled={loading || !isPasswordValid || !isConfirmValid}
                 className="bg-verone-black hover:bg-gray-800 text-verone-white"

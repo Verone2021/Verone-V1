@@ -70,7 +70,7 @@ export function ContactPersonalEditSection({ contact, onUpdate, className }: Con
             Informations Personnelles
           </h3>
           <div className="flex space-x-2">
-            <Button
+            <ButtonV2
               variant="outline"
               size="sm"
               onClick={handleCancel}
@@ -79,7 +79,7 @@ export function ContactPersonalEditSection({ contact, onUpdate, className }: Con
               <X className="h-3 w-3 mr-1" />
               Annuler
             </ButtonV2>
-            <Button
+            <ButtonV2
               variant="default"
               size="sm"
               onClick={handleSave}

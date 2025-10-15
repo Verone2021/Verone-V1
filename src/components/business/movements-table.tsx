@@ -334,7 +334,7 @@ export function MovementsTable({ movements, loading, onMovementClick, onCancelCl
               {/* Actions */}
               {onCancelClick && (
                 <TableCell className="text-center">
-                  <Button
+                  <ButtonV2
                     variant="ghost"
                     size="sm"
                     onClick={(e) => {

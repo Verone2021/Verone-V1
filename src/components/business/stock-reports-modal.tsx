@@ -355,7 +355,7 @@ export function StockReportsModal({ isOpen, onClose }: StockReportsModalProps) {
                     <strong>{AVAILABLE_REPORTS.find(r => r.id === selectedReport)?.name}</strong>
                   </p>
                 </div>
-                <Button
+                <ButtonV2
                   variant="ghost"
                   size="sm"
                   onClick={() => setSelectedReport(null)}
@@ -450,7 +450,7 @@ export function StockReportsModal({ isOpen, onClose }: StockReportsModalProps) {
 
               {/* Actions */}
               <div className="flex gap-2 mt-4">
-                <Button
+                <ButtonV2
                   onClick={handleGenerateReport}
                   className="bg-black text-white hover:bg-gray-800"
                 >

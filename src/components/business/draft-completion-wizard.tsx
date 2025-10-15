@@ -559,7 +559,7 @@ export function DraftCompletionWizard({
             </div>
 
             <div className="flex items-center space-x-3">
-              <Button
+              <ButtonV2
                 variant="outline"
                 onClick={handleSave}
                 disabled={saving || validating}
@@ -572,7 +572,7 @@ export function DraftCompletionWizard({
                 Sauvegarder
               </ButtonV2>
 
-              <Button
+              <ButtonV2
                 onClick={handleValidate}
                 disabled={!draft.canFinalize || saving || validating}
                 className="bg-green-600 hover:bg-green-700"

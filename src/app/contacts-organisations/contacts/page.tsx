@@ -263,21 +263,21 @@ export default function ContactsPage() {
             </div>
             <div className="flex flex-col sm:flex-row gap-4">
               <div className="flex gap-2">
-                <Button
+                <ButtonV2
                   variant={filterType === 'all' ? 'default' : 'outline'}
                   size="sm"
                   onClick={() => setFilterType('all')}
                 >
                   Tous
                 </ButtonV2>
-                <Button
+                <ButtonV2
                   variant={filterType === 'supplier' ? 'default' : 'outline'}
                   size="sm"
                   onClick={() => setFilterType('supplier')}
                 >
                   Fournisseurs
                 </ButtonV2>
-                <Button
+                <ButtonV2
                   variant={filterType === 'customer' ? 'default' : 'outline'}
                   size="sm"
                   onClick={() => setFilterType('customer')}
@@ -286,28 +286,28 @@ export default function ContactsPage() {
                 </ButtonV2>
               </div>
               <div className="flex gap-2">
-                <Button
+                <ButtonV2
                   variant={filterRole === 'all' ? 'default' : 'outline'}
                   size="sm"
                   onClick={() => setFilterRole('all')}
                 >
                   Tous rôles
                 </ButtonV2>
-                <Button
+                <ButtonV2
                   variant={filterRole === 'primary' ? 'default' : 'outline'}
                   size="sm"
                   onClick={() => setFilterRole('primary')}
                 >
                   Principaux
                 </ButtonV2>
-                <Button
+                <ButtonV2
                   variant={filterRole === 'commercial' ? 'default' : 'outline'}
                   size="sm"
                   onClick={() => setFilterRole('commercial')}
                 >
                   Commercial
                 </ButtonV2>
-                <Button
+                <ButtonV2
                   variant={filterRole === 'technical' ? 'default' : 'outline'}
                   size="sm"
                   onClick={() => setFilterRole('technical')}
@@ -422,7 +422,7 @@ export default function ContactsPage() {
                         <td className="py-3 px-4">
                           <div className="flex items-center space-x-2">
                             {/* Archiver/Restaurer */}
-                            <Button
+                            <ButtonV2
                               variant="outline"
                               size="sm"
                               onClick={() => handleArchive(contact)}
@@ -436,7 +436,7 @@ export default function ContactsPage() {
                             </ButtonV2>
 
                             {/* Supprimer */}
-                            <Button
+                            <ButtonV2
                               variant="outline"
                               size="sm"
                               onClick={() => handleDelete(contact)}

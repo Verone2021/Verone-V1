@@ -79,7 +79,7 @@ export function ContactDetailsEditSection({ contact, onUpdate, className }: Cont
             Coordonnées
           </h3>
           <div className="flex space-x-2">
-            <Button
+            <ButtonV2
               variant="outline"
               size="sm"
               onClick={handleCancel}
@@ -88,7 +88,7 @@ export function ContactDetailsEditSection({ contact, onUpdate, className }: Cont
               <X className="h-3 w-3 mr-1" />
               Annuler
             </ButtonV2>
-            <Button
+            <ButtonV2
               variant="default"
               size="sm"
               onClick={handleSave}

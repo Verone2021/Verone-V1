@@ -385,7 +385,7 @@ export default function CollectionsPage() {
           {!isArchived ? (
             // Collections actives: Produits, Détails, Modifier, Archiver
             <div className="grid grid-cols-4 gap-1">
-              <Button
+              <ButtonV2
                 size="sm"
                 variant="outline"
                 onClick={() => handleManageProducts(collection)}
@@ -394,8 +394,8 @@ export default function CollectionsPage() {
               >
                 <Package className="h-2.5 w-2.5 mr-0.5" />
                 Produits
-              </Button>
-              <Button
+              </ButtonV2>
+              <ButtonV2
                 size="sm"
                 variant="outline"
                 onClick={() => router.push(`/catalogue/collections/${collection.id}`)}
@@ -404,8 +404,8 @@ export default function CollectionsPage() {
               >
                 <ExternalLink className="h-2.5 w-2.5 mr-0.5" />
                 Détails
-              </Button>
-              <Button
+              </ButtonV2>
+              <ButtonV2
                 size="sm"
                 variant="ghost"
                 onClick={() => handleEditCollection(collection)}
@@ -414,8 +414,8 @@ export default function CollectionsPage() {
               >
                 <Edit3 className="h-2.5 w-2.5 mr-0.5" />
                 Modifier
-              </Button>
-              <Button
+              </ButtonV2>
+              <ButtonV2
                 size="sm"
                 variant="ghost"
                 onClick={() => handleArchiveCollection(collection)}
@@ -423,12 +423,12 @@ export default function CollectionsPage() {
                 title="Archiver"
               >
                 <Archive className="h-2.5 w-2.5" />
-              </Button>
+              </ButtonV2>
             </div>
           ) : (
             // Collections archivées: Détails, Restaurer, Supprimer
             <div className="grid grid-cols-3 gap-1">
-              <Button
+              <ButtonV2
                 size="sm"
                 variant="outline"
                 onClick={() => router.push(`/catalogue/collections/${collection.id}`)}
@@ -437,8 +437,8 @@ export default function CollectionsPage() {
               >
                 <ExternalLink className="h-2.5 w-2.5 mr-0.5" />
                 Détails
-              </Button>
-              <Button
+              </ButtonV2>
+              <ButtonV2
                 size="sm"
                 variant="ghost"
                 onClick={() => handleArchiveCollection(collection)}
@@ -447,8 +447,8 @@ export default function CollectionsPage() {
               >
                 <ArchiveRestore className="h-2.5 w-2.5 mr-0.5" />
                 Restaurer
-              </Button>
-              <Button
+              </ButtonV2>
+              <ButtonV2
                 size="sm"
                 variant="ghost"
                 onClick={() => handleDeleteCollection(collection.id)}
@@ -456,7 +456,7 @@ export default function CollectionsPage() {
                 title="Supprimer"
               >
                 <Trash2 className="h-2.5 w-2.5" />
-              </Button>
+              </ButtonV2>
             </div>
           )}
         </div>
@@ -482,13 +482,13 @@ export default function CollectionsPage() {
           </p>
         </div>
         <div>
-          <Button
+          <ButtonV2
             onClick={handleCreateCollection}
             className="bg-black text-white hover:bg-gray-800"
           >
             <Plus className="h-4 w-4 mr-2" />
             Nouvelle collection
-          </Button>
+          </ButtonV2>
         </div>
       </div>
 
@@ -559,10 +559,10 @@ export default function CollectionsPage() {
           <span className="text-sm text-gray-700">
             {selectedCollections.length} collection{selectedCollections.length !== 1 ? 's' : ''} sélectionnée{selectedCollections.length !== 1 ? 's' : ''}
           </span>
-          <Button variant="ghost" size="sm" onClick={handleBulkStatusToggle}>
+          <ButtonV2 variant="ghost" size="sm" onClick={handleBulkStatusToggle}>
             Changer le statut
-          </Button>
-          <Button
+          </ButtonV2>
+          <ButtonV2
             variant="ghost"
             size="sm"
             onClick={() => {
@@ -571,8 +571,8 @@ export default function CollectionsPage() {
             className="text-blue-600 hover:text-blue-700"
           >
             Partager
-          </Button>
-          <Button
+          </ButtonV2>
+          <ButtonV2
             variant="ghost"
             size="sm"
             onClick={() => {
@@ -581,7 +581,7 @@ export default function CollectionsPage() {
             className="text-red-600 hover:text-red-700"
           >
             Supprimer
-          </Button>
+          </ButtonV2>
         </div>
       )}
 

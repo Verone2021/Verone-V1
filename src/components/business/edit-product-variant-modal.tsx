@@ -335,7 +335,7 @@ export function EditProductVariantModal({
 
           {/* Actions */}
           <DialogFooter className="gap-2">
-            <Button
+            <ButtonV2
               type="button"
               variant="outline"
               onClick={handleCancel}
@@ -345,7 +345,7 @@ export function EditProductVariantModal({
               <X className="w-4 h-4 mr-2" />
               Annuler
             </ButtonV2>
-            <Button
+            <ButtonV2
               type="submit"
               disabled={isSubmitting}
               className="bg-black text-white hover:bg-gray-800 flex items-center"

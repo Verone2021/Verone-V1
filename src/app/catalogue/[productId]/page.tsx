@@ -305,10 +305,10 @@ export default function ProductDetailPage() {
         <div className="flex items-center justify-center h-64">
           <div className="text-center">
             <p className="text-red-600 mb-4">{error || 'Produit non trouvé'}</p>
-            <Button variant="outline" onClick={() => router.back()}>
+            <ButtonV2 variant="outline" onClick={() => router.back()}>
               <ArrowLeft className="h-4 w-4 mr-2" />
               Retour
-            </Button>
+            </ButtonV2>
           </div>
         </div>
       </div>
@@ -335,10 +335,10 @@ export default function ProductDetailPage() {
       {/* En-tête */}
       <div className="flex items-center justify-between">
         <div className="flex items-center space-x-4">
-          <Button variant="ghost" size="sm" onClick={() => router.back()}>
+          <ButtonV2 variant="ghost" size="sm" onClick={() => router.back()}>
             <ArrowLeft className="h-4 w-4 mr-2" />
             Retour
-          </Button>
+          </ButtonV2>
           <nav className="text-sm text-gray-600">
             {breadcrumbParts.join('›')}
           </nav>
@@ -347,10 +347,10 @@ export default function ProductDetailPage() {
           <div className="text-xs text-gray-500">
             {Date.now() - startTime}ms
           </div>
-          <Button variant="outline" size="sm" onClick={handleShare}>
+          <ButtonV2 variant="outline" size="sm" onClick={handleShare}>
             <Share2 className="h-4 w-4 mr-2" />
             Partager
-          </Button>
+          </ButtonV2>
         </div>
       </div>
 
@@ -372,7 +372,7 @@ export default function ProductDetailPage() {
           <div className="bg-white border border-black p-4">
             <h3 className="font-medium mb-3 text-sm">Actions</h3>
             <div className="space-y-2">
-              <Button
+              <ButtonV2
                 variant="outline"
                 size="sm"
                 className="w-full justify-start text-xs"
@@ -380,7 +380,7 @@ export default function ProductDetailPage() {
               >
                 <ImageIcon className="h-3 w-3 mr-2" />
                 Gérer photos ({product.images?.length || 0})
-              </Button>
+              </ButtonV2>
             </div>
           </div>
 
@@ -489,7 +489,7 @@ export default function ProductDetailPage() {
                       autoFocus
                     />
                     <div className="flex space-x-2">
-                      <Button
+                      <ButtonV2
                         size="sm"
                         onClick={handleSaveName}
                         disabled={savingName || !editedName.trim()}
@@ -497,8 +497,8 @@ export default function ProductDetailPage() {
                       >
                         <Save className="h-3 w-3 mr-1" />
                         {savingName ? 'Sauvegarde...' : 'Sauvegarder'}
-                      </Button>
-                      <Button
+                      </ButtonV2>
+                      <ButtonV2
                         size="sm"
                         variant="outline"
                         onClick={handleCancelEditName}
@@ -506,7 +506,7 @@ export default function ProductDetailPage() {
                       >
                         <X className="h-3 w-3 mr-1" />
                         Annuler
-                      </Button>
+                      </ButtonV2>
                     </div>
                   </div>
                 ) : (
@@ -515,14 +515,14 @@ export default function ProductDetailPage() {
                     <div className="flex items-center gap-2">
                       <h1 className="text-xl font-bold text-black mb-1">{product.name}</h1>
                       {!product.variant_group_id && (
-                        <Button
+                        <ButtonV2
                           size="sm"
                           variant="ghost"
                           onClick={handleStartEditName}
                           className="h-6 w-6 p-0"
                         >
                           <Edit className="h-3 w-3" />
-                        </Button>
+                        </ButtonV2>
                       )}
                     </div>
                     {product.variant_group_id && (
@@ -557,7 +557,7 @@ export default function ProductDetailPage() {
                 Catégorisation
               </h3>
               {!product.variant_group_id ? (
-                <Button
+                <ButtonV2
                   variant="outline"
                   size="sm"
                   className="border-black text-black hover:bg-black hover:text-white"
@@ -565,7 +565,7 @@ export default function ProductDetailPage() {
                 >
                   <Edit className="h-3 w-3 mr-1" />
                   Modifier
-                </Button>
+                </ButtonV2>
               ) : (
                 <p className="text-xs text-black">
                   ℹ️ Géré par le groupe de variantes
@@ -668,14 +668,14 @@ export default function ProductDetailPage() {
           <div className="bg-white border border-black p-4">
             <div className="flex items-center justify-between mb-3">
               <h3 className="font-medium text-sm">Description</h3>
-              <Button
+              <ButtonV2
                 variant="ghost"
                 size="sm"
                 onClick={() => setShowDescriptionsModal(true)}
               >
                 <Edit className="h-3 w-3 mr-1" />
                 Modifier
-              </Button>
+              </ButtonV2>
             </div>
             <p className="text-sm text-gray-700">
               {product.description || 'Aucune description disponible'}
@@ -686,7 +686,7 @@ export default function ProductDetailPage() {
           <div className="bg-white border border-black p-4">
             <div className="flex items-center justify-between mb-3">
               <h3 className="font-medium text-sm">Caractéristiques</h3>
-              <Button
+              <ButtonV2
                 variant="ghost"
                 size="sm"
                 onClick={() => setShowCharacteristicsModal(true)}
@@ -696,7 +696,7 @@ export default function ProductDetailPage() {
               >
                 <Edit className="h-3 w-3 mr-1" />
                 Modifier
-              </Button>
+              </ButtonV2>
             </div>
             {product.variant_group_id && (
               <div className="mb-3 p-2 bg-blue-50 border border-blue-200 rounded text-xs text-blue-800">
@@ -839,12 +839,12 @@ export default function ProductDetailPage() {
           </div>
 
           <DialogFooter>
-            <Button
+            <ButtonV2
               variant="outline"
               onClick={() => setIsCategorizeModalOpen(false)}
             >
               Annuler
-            </Button>
+            </ButtonV2>
           </DialogFooter>
         </DialogContent>
       </Dialog>

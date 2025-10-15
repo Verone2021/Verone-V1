@@ -175,7 +175,7 @@ export default function StockMovementsPage() {
 
                   {pagination.totalPages > 1 && (
                     <div className="flex items-center gap-2">
-                      <Button
+                      <ButtonV2
                         variant="outline"
                         size="sm"
                         onClick={() => handlePageChange(pagination.currentPage - 1)}
@@ -189,7 +189,7 @@ export default function StockMovementsPage() {
                         Page {pagination.currentPage} sur {pagination.totalPages}
                       </span>
 
-                      <Button
+                      <ButtonV2
                         variant="outline"
                         size="sm"
                         onClick={() => handlePageChange(pagination.currentPage + 1)}
@@ -226,7 +226,7 @@ export default function StockMovementsPage() {
                 <p className="text-gray-500 mb-4">
                   Aucun mouvement ne correspond aux critères de recherche sélectionnés.
                 </p>
-                <Button
+                <ButtonV2
                   variant="outline"
                   onClick={resetFilters}
                   className="border-black text-black hover:bg-black hover:text-white"
@@ -264,7 +264,7 @@ export default function StockMovementsPage() {
         <div className="container mx-auto px-4 py-4">
           <div className="flex items-center justify-between">
             <div className="flex items-center space-x-4">
-              <Button
+              <ButtonV2
                 variant="ghost"
                 onClick={() => router.push('/stocks')}
                 className="flex items-center text-gray-600 hover:text-black"
@@ -284,7 +284,7 @@ export default function StockMovementsPage() {
             </div>
 
             <div className="flex items-center gap-3">
-              <Button
+              <ButtonV2
                 onClick={() => setShowQuickMovementModal(true)}
                 className="bg-black text-white hover:bg-gray-800"
               >
@@ -292,7 +292,7 @@ export default function StockMovementsPage() {
                 Nouveau Mouvement
               </ButtonV2>
 
-              <Button
+              <ButtonV2
                 variant="outline"
                 onClick={() => window.location.reload()}
                 disabled={loading}
@@ -302,7 +302,7 @@ export default function StockMovementsPage() {
                 Actualiser
               </ButtonV2>
 
-              <Button
+              <ButtonV2
                 variant="outline"
                 onClick={() => exportMovements('csv')}
                 disabled={loading || movements.length === 0}

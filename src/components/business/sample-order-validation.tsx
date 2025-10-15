@@ -317,7 +317,7 @@ export function SampleOrderValidation({ className }: SampleOrderValidationProps)
             <h2 className="text-2xl font-bold text-black">Validation Échantillons Groupés</h2>
             <p className="text-gray-600">Gestion des commandes d'échantillons par fournisseur</p>
           </div>
-          <Button
+          <ButtonV2
             onClick={() => router.push('/sourcing/validation')}
             className="bg-black hover:bg-gray-800 text-white"
           >
@@ -393,7 +393,7 @@ export function SampleOrderValidation({ className }: SampleOrderValidationProps)
                       {order.status === 'pending_approval' && (
                         <Dialog>
                           <DialogTrigger asChild>
-                            <Button
+                            <ButtonV2
                               size="sm"
                               className="bg-green-600 hover:bg-green-700 text-white"
                               onClick={() => setSelectedOrder(order)}
@@ -405,7 +405,7 @@ export function SampleOrderValidation({ className }: SampleOrderValidationProps)
                         </Dialog>
                       )}
                       {order.status === 'approved' && (
-                        <Button
+                        <ButtonV2
                           size="sm"
                           onClick={() => handleMarkDelivered(order.id)}
                           className="bg-blue-600 hover:bg-blue-700 text-white"
@@ -476,7 +476,7 @@ export function SampleOrderValidation({ className }: SampleOrderValidationProps)
                       <div className="flex space-x-2">
                         <Dialog>
                           <DialogTrigger asChild>
-                            <Button
+                            <ButtonV2
                               variant="outline"
                               size="sm"
                               className="border-red-300 text-red-600 hover:bg-red-50"
@@ -504,7 +504,7 @@ export function SampleOrderValidation({ className }: SampleOrderValidationProps)
                               <ButtonV2 variant="outline" onClick={() => setValidationNotes('')}>
                                 Annuler
                               </ButtonV2>
-                              <Button
+                              <ButtonV2
                                 onClick={() => handleValidateSamples(selectedItems, 'rejected', validationNotes)}
                                 className="bg-red-600 hover:bg-red-700 text-white"
                               >
@@ -516,7 +516,7 @@ export function SampleOrderValidation({ className }: SampleOrderValidationProps)
 
                         <Dialog>
                           <DialogTrigger asChild>
-                            <Button
+                            <ButtonV2
                               size="sm"
                               className="bg-green-600 hover:bg-green-700 text-white"
                             >
@@ -543,7 +543,7 @@ export function SampleOrderValidation({ className }: SampleOrderValidationProps)
                               <ButtonV2 variant="outline" onClick={() => setValidationNotes('')}>
                                 Annuler
                               </ButtonV2>
-                              <Button
+                              <ButtonV2
                                 onClick={async () => {
                                   await handleValidateSamples(selectedItems, 'approved', validationNotes)
                                   await handleTransferToCatalog(selectedItems)
@@ -592,7 +592,7 @@ export function SampleOrderValidation({ className }: SampleOrderValidationProps)
               />
             </div>
             <DialogFooter>
-              <Button
+              <ButtonV2
                 variant="outline"
                 onClick={() => {
                   setSelectedOrder(null)
@@ -601,7 +601,7 @@ export function SampleOrderValidation({ className }: SampleOrderValidationProps)
               >
                 Annuler
               </ButtonV2>
-              <Button
+              <ButtonV2
                 onClick={() => handleApproveOrder(selectedOrder.id, validationNotes)}
                 className="bg-green-600 hover:bg-green-700 text-white"
               >

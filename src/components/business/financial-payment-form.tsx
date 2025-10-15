@@ -191,7 +191,7 @@ export function FinancialPaymentForm({
                 <Popover>
                   <PopoverTrigger asChild>
                     <FormControl>
-                      <Button
+                      <ButtonV2
                         variant="outline"
                         className={cn(
                           'w-full pl-3 text-left font-normal',
@@ -293,7 +293,7 @@ export function FinancialPaymentForm({
 
           {/* Actions */}
           <div className="flex gap-3 pt-4">
-            <Button
+            <ButtonV2
               type="submit"
               disabled={isSubmitting}
               className="flex-1"
@@ -309,7 +309,7 @@ export function FinancialPaymentForm({
             </ButtonV2>
 
             {onCancel && (
-              <Button
+              <ButtonV2
                 type="button"
                 variant="outline"
                 onClick={onCancel}

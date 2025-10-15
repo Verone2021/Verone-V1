@@ -289,7 +289,7 @@ export default function CategoriesPage() {
             className="w-4 h-4 mr-3 rounded border-gray-300"
           />
 
-          <Button
+          <ButtonV2
             variant="ghost"
             size="sm"
             onClick={() => toggleFamilyExpansion(family.id)}
@@ -300,7 +300,7 @@ export default function CategoriesPage() {
             ) : (
               <ChevronRight className="h-4 w-4 text-gray-600" />
             )}
-          </Button>
+          </ButtonV2>
 
           {/* Image thumbnail */}
           <div className="w-16 h-16 mr-3 flex-shrink-0">
@@ -343,22 +343,22 @@ export default function CategoriesPage() {
           </div>
 
           <div className="flex space-x-1">
-            <Button
+            <ButtonV2
               variant="ghost"
               size="sm"
               onClick={() => openEditForm('family', family)}
               title="Modifier"
             >
               <Edit3 className="h-4 w-4" />
-            </Button>
-            <Button
+            </ButtonV2>
+            <ButtonV2
               variant="ghost"
               size="sm"
               onClick={() => handleDelete('family', family.id)}
               title="Supprimer"
             >
               <Trash2 className="h-4 w-4" />
-            </Button>
+            </ButtonV2>
           </div>
         </div>
 
@@ -389,7 +389,7 @@ export default function CategoriesPage() {
             className="w-4 h-4 mr-3 rounded border-gray-300"
           />
 
-          <Button
+          <ButtonV2
             variant="ghost"
             size="sm"
             onClick={() => toggleCategoryExpansion(category.id)}
@@ -400,7 +400,7 @@ export default function CategoriesPage() {
             ) : (
               <ChevronRight className="h-4 w-4 text-gray-600" />
             )}
-          </Button>
+          </ButtonV2>
 
           {/* Image thumbnail */}
           <div className="w-12 h-12 mr-3 flex-shrink-0">
@@ -443,22 +443,22 @@ export default function CategoriesPage() {
           </div>
 
           <div className="flex space-x-1">
-            <Button
+            <ButtonV2
               variant="ghost"
               size="sm"
               onClick={() => openEditForm('category', category)}
               title="Modifier"
             >
               <Edit3 className="h-4 w-4" />
-            </Button>
-            <Button
+            </ButtonV2>
+            <ButtonV2
               variant="ghost"
               size="sm"
               onClick={() => handleDelete('category', category.id)}
               title="Supprimer"
             >
               <Trash2 className="h-4 w-4" />
-            </Button>
+            </ButtonV2>
           </div>
         </div>
 
@@ -514,22 +514,22 @@ export default function CategoriesPage() {
               </div>
 
               <div className="flex space-x-1">
-                <Button
+                <ButtonV2
                   variant="ghost"
                   size="sm"
                   onClick={() => openEditForm('subcategory', subcategory)}
                   title="Modifier"
                 >
                   <Edit3 className="h-4 w-4" />
-                </Button>
-                <Button
+                </ButtonV2>
+                <ButtonV2
                   variant="ghost"
                   size="sm"
                   onClick={() => handleDelete('subcategory', subcategory.id)}
                   title="Supprimer"
                 >
                   <Trash2 className="h-4 w-4" />
-                </Button>
+                </ButtonV2>
               </div>
             </div>
           </div>
@@ -592,13 +592,13 @@ export default function CategoriesPage() {
             )}
           </p>
         </div>
-        <Button
+        <ButtonV2
           onClick={() => openCreateForm('family')}
           className="bg-black text-white hover:bg-gray-800"
         >
           <Plus className="h-4 w-4 mr-2" />
           Nouvelle famille
-        </Button>
+        </ButtonV2>
       </div>
 
       {/* Validation SLO */}
@@ -619,14 +619,14 @@ export default function CategoriesPage() {
           <span className="text-black text-sm font-medium">
             {selectedItems.length} élément(s) sélectionné(s)
           </span>
-          <Button variant="outline" size="sm" onClick={handleBulkStatusToggle}>
+          <ButtonV2 variant="outline" size="sm" onClick={handleBulkStatusToggle}>
             <Eye className="h-4 w-4 mr-1" />
             Changer statut
-          </Button>
-          <Button variant="outline" size="sm" onClick={handleDeleteItems}>
+          </ButtonV2>
+          <ButtonV2 variant="outline" size="sm" onClick={handleDeleteItems}>
             <Trash2 className="h-4 w-4 mr-1" />
             Supprimer
-          </Button>
+          </ButtonV2>
         </div>
       )}
 
@@ -655,13 +655,13 @@ export default function CategoriesPage() {
             <div className="text-center py-8">
               <FolderPlus className="h-12 w-12 text-gray-400 mx-auto mb-3" />
               <p className="text-gray-600">Aucune famille trouvée</p>
-              <Button
+              <ButtonV2
                 onClick={() => openCreateForm('family')}
                 variant="outline"
                 className="mt-3"
               >
                 Créer la première famille
-              </Button>
+              </ButtonV2>
             </div>
           ) : (
             filteredFamilies.map(family => (

@@ -290,7 +290,7 @@ export function ImageUploadZone({
                 )}
 
               {/* Bouton supprimer */}
-              <Button
+              <ButtonV2
                 type="button"
                 variant="ghost"
                 size="icon"

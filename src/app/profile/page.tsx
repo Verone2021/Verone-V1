@@ -11,7 +11,6 @@ import { validateProfileForm, sanitizeProfileData } from '@/lib/validation/profi
 import type { User as SupabaseUser } from '@supabase/supabase-js'
 import { colors, spacing, componentShadows } from '@/lib/design-system'
 import { cn } from '@/lib/utils'
-import { ButtonV2 } from '@/components/ui/button'
 
 interface UserProfile {
   user_id: string

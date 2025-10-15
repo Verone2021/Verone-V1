@@ -243,7 +243,7 @@ export function ProductPhotosModal({
                 <div className="text-xs text-gray-600">Restantes</div>
               </div>
             </div>
-            <Button
+            <ButtonV2
               variant="outline"
               size="sm"
               onClick={() => fetchImages()}
@@ -375,7 +375,7 @@ export function ProductPhotosModal({
                       <div className="flex space-x-2 z-30">
                         {/* Bouton définir comme principale */}
                         {!image.is_primary && (
-                          <Button
+                          <ButtonV2
                             size="sm"
                             variant="secondary"
                             onClick={() => handleSetPrimary(image.id)}
@@ -395,7 +395,7 @@ export function ProductPhotosModal({
                         )}
 
                         {/* Bouton suppression */}
-                        <Button
+                        <ButtonV2
                           size="sm"
                           variant="destructive"
                           onClick={() => handleDeleteImage(image.id, image.is_primary)}
@@ -439,7 +439,7 @@ export function ProductPhotosModal({
               <p className="text-gray-600 mb-6">
                 Commencez par ajouter vos premières photos au produit
               </p>
-              <Button
+              <ButtonV2
                 onClick={() => fileInputRef.current?.click()}
                 className="bg-black hover:bg-gray-800 text-white"
               >

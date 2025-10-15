@@ -316,7 +316,7 @@ export function QuickStockMovementModal({
           </Tabs>
 
           <DialogFooter className="mt-6">
-            <Button
+            <ButtonV2
               type="button"
               variant="outline"
               onClick={onClose}
@@ -325,7 +325,7 @@ export function QuickStockMovementModal({
             >
               Annuler
             </ButtonV2>
-            <Button
+            <ButtonV2
               type="submit"
               disabled={submitting}
               className="bg-black text-white hover:bg-gray-800"

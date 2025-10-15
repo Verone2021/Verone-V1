@@ -197,7 +197,7 @@ export function ProductDescriptionsModal({
               <span className="text-sm text-gray-600 font-normal">{productName}</span>
             </div>
             <div className="ml-auto flex items-center gap-2">
-              <Button
+              <ButtonV2
                 variant="outline"
                 size="sm"
                 onClick={() => setPreviewMode(!previewMode)}
@@ -279,7 +279,7 @@ export function ProductDescriptionsModal({
               </div>
 
               <div className="flex justify-center">
-                <Button
+                <ButtonV2
                   variant="outline"
                   onClick={() => setPreviewMode(false)}
                   className="text-sm"
@@ -397,7 +397,7 @@ export function ProductDescriptionsModal({
                       <div key={index} className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg">
                         <div className="w-2 h-2 bg-black rounded-full flex-shrink-0"></div>
                         <span className="flex-1 text-sm">{point}</span>
-                        <Button
+                        <ButtonV2
                           variant="ghost"
                           size="sm"
                           onClick={() => handleRemoveSellingPoint(index)}
@@ -420,7 +420,7 @@ export function ProductDescriptionsModal({
                       className="flex-1 text-sm"
                       rows={2}
                     />
-                    <Button
+                    <ButtonV2
                       variant="outline"
                       size="sm"
                       onClick={handleAddSellingPoint}
@@ -479,7 +479,7 @@ export function ProductDescriptionsModal({
               <ButtonV2 variant="outline" onClick={onClose} disabled={saving}>
                 Annuler
               </ButtonV2>
-              <Button
+              <ButtonV2
                 onClick={handleSave}
                 disabled={saving}
                 className="bg-black hover:bg-gray-800 text-white"

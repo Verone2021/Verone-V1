@@ -525,7 +525,7 @@ export function VariantGroupForm({
 
           {/* Actions */}
           <div className="flex items-center justify-end space-x-3 pt-4 border-t">
-            <Button
+            <ButtonV2
               type="button"
               variant="outline"
               onClick={onClose}
@@ -533,7 +533,7 @@ export function VariantGroupForm({
             >
               Annuler
             </ButtonV2>
-            <Button
+            <ButtonV2
               type="submit"
               disabled={loading}
               className="bg-black text-white hover:bg-gray-800"

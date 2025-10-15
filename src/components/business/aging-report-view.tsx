@@ -117,7 +117,7 @@ export function AgingReportView({ dateFrom, dateTo }: AgingReportViewProps) {
           </div>
         </div>
         <div className="flex gap-2">
-          <Button
+          <ButtonV2
             onClick={handleExportPDF}
             variant="outline"
             size="sm"
@@ -126,7 +126,7 @@ export function AgingReportView({ dateFrom, dateTo }: AgingReportViewProps) {
             <FileText className="h-4 w-4 mr-2" />
             PDF
           </ButtonV2>
-          <Button
+          <ButtonV2
             onClick={handleExportExcel}
             variant="outline"
             size="sm"
@@ -135,7 +135,7 @@ export function AgingReportView({ dateFrom, dateTo }: AgingReportViewProps) {
             <FileText className="h-4 w-4 mr-2" />
             Excel
           </ButtonV2>
-          <Button
+          <ButtonV2
             onClick={handleExportCSV}
             variant="outline"
             size="sm"

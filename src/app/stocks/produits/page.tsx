@@ -424,7 +424,7 @@ export default function StockInventairePage() {
         <div className="container mx-auto px-4 py-4">
           <div className="flex items-center justify-between">
             <div className="flex items-center space-x-4">
-              <Button
+              <ButtonV2
                 variant="ghost"
                 onClick={() => router.push('/stocks')}
                 className="flex items-center text-gray-600 hover:text-black"
@@ -441,7 +441,7 @@ export default function StockInventairePage() {
               </div>
             </div>
             <div className="flex gap-2">
-              <Button
+              <ButtonV2
                 variant="outline"
                 onClick={loadData}
                 disabled={productsLoading}
@@ -449,7 +449,7 @@ export default function StockInventairePage() {
               >
                 <RefreshCw className={`h-4 w-4 ${productsLoading ? 'animate-spin' : ''}`} />
               </ButtonV2>
-              <Button
+              <ButtonV2
                 variant="outline"
                 className="border-black text-black hover:bg-black hover:text-white"
               >
@@ -552,7 +552,7 @@ export default function StockInventairePage() {
               </SelectContent>
             </Select>
 
-            <Button
+            <ButtonV2
               variant="outline"
               size="icon"
               onClick={() => setFilters(prev => ({
@@ -565,7 +565,7 @@ export default function StockInventairePage() {
             </ButtonV2>
 
             {(filters.search || filters.status !== 'all') && (
-              <Button
+              <ButtonV2
                 variant="outline"
                 size="icon"
                 onClick={() => setFilters({
@@ -665,7 +665,7 @@ export default function StockInventairePage() {
                         </td>
                         <td className="py-3 px-4">
                           <div className="flex items-center space-x-1">
-                            <Button
+                            <ButtonV2
                               variant="ghost"
                               size="sm"
                               onClick={() => openHistoryModal(product)}
@@ -673,7 +673,7 @@ export default function StockInventairePage() {
                             >
                               <History className="h-4 w-4" />
                             </ButtonV2>
-                            <Button
+                            <ButtonV2
                               variant="ghost"
                               size="sm"
                               onClick={() => openMovementModal(product)}

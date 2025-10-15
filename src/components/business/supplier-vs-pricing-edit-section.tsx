@@ -140,7 +140,7 @@ export function SupplierVsPricingEditSection({
             Tarification Fournisseur vs Vérone
           </h3>
           <div className="flex space-x-1">
-            <Button
+            <ButtonV2
               variant="outline"
               size="xs"
               onClick={handleCancel}
@@ -150,7 +150,7 @@ export function SupplierVsPricingEditSection({
               <X className="h-3 w-3 mr-1" />
               Annuler
             </ButtonV2>
-            <Button
+            <ButtonV2
               variant="default"
               size="xs"
               onClick={handleSave}

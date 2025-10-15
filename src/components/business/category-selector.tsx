@@ -235,7 +235,7 @@ export function CategorySelector({
   return (
     <div className={cn("relative", className)}>
       {/* Bouton sélecteur */}
-      <Button
+      <ButtonV2
         type="button"
         variant="outline"
         role="combobox"

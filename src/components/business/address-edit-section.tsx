@@ -156,7 +156,7 @@ export function AddressEditSection({ organisation, onUpdate, className }: Addres
             Adresse
           </h3>
           <div className="flex space-x-2">
-            <Button
+            <ButtonV2
               variant="outline"
               size="sm"
               onClick={handleCancel}
@@ -165,7 +165,7 @@ export function AddressEditSection({ organisation, onUpdate, className }: Addres
               <X className="h-3 w-3 mr-1" />
               Annuler
             </ButtonV2>
-            <Button
+            <ButtonV2
               variant="default"
               size="sm"
               onClick={handleSave}
@@ -185,7 +185,7 @@ export function AddressEditSection({ organisation, onUpdate, className }: Addres
                 <Building className="h-4 w-4" />
                 Adresse de facturation
               </h4>
-              <Button
+              <ButtonV2
                 type="button"
                 variant="outline"
                 size="sm"
@@ -327,7 +327,7 @@ export function AddressEditSection({ organisation, onUpdate, className }: Addres
                   <Home className="h-4 w-4" />
                   Adresse de livraison
                 </h4>
-                <Button
+                <ButtonV2
                   type="button"
                   variant="outline"
                   size="sm"
