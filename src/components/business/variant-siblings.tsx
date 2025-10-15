@@ -13,7 +13,7 @@ interface VariantSibling {
   id: string
   name: string
   status: 'in_stock' | 'out_of_stock' | 'preorder' | 'coming_soon' | 'discontinued'
-  sort_order?: number
+  display_order?: number
   primary_image_url?: string
   variant_attributes?: Record<string, any>
   price_ht: number
@@ -53,7 +53,7 @@ export function VariantSiblings({
           id,
           name,
           status,
-          sort_order,
+          display_order,
           primary_image_url,
           variant_attributes,
           price_ht,

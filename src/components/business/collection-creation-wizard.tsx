@@ -52,7 +52,7 @@ export function CollectionCreationWizard({
     theme_tags: [],
     meta_title: '',
     meta_description: '',
-    sort_order: 0
+    display_order: 0
   })
   const [errors, setErrors] = useState<CollectionFormErrors>({})
   const [completedSteps, setCompletedSteps] = useState<Set<WizardStep>>(new Set())
@@ -74,7 +74,7 @@ export function CollectionCreationWizard({
         theme_tags: editingCollection.theme_tags || [],
         meta_title: editingCollection.meta_title || '',
         meta_description: editingCollection.meta_description || '',
-        sort_order: editingCollection.sort_order || 0
+        display_order: editingCollection.display_order || 0
       } : {
         name: '',
         description: '',
@@ -86,7 +86,7 @@ export function CollectionCreationWizard({
         theme_tags: [],
         meta_title: '',
         meta_description: '',
-        sort_order: 0
+        display_order: 0
       })
       setErrors({})
       setCompletedSteps(new Set())
@@ -191,7 +191,7 @@ export function CollectionCreationWizard({
       theme_tags: formData.theme_tags,
       meta_title: formData.meta_title || undefined,
       meta_description: formData.meta_description || undefined,
-      sort_order: formData.sort_order
+      display_order: formData.display_order
     }
 
     const success = await onSubmit(submitData)

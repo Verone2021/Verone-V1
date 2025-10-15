@@ -45,7 +45,7 @@ export function useSubcategories(categoryId?: string) {
       }
 
       const { data: subcategoriesData, error } = await baseQuery
-        .order('sort_order')
+        .order('display_order')
         .order('name')
 
       if (error) throw error
@@ -93,7 +93,7 @@ export function useSubcategories(categoryId?: string) {
         .insert([{
           ...subcategoryData,
           slug,
-          sort_order: subcategoryData.sort_order || 0
+          display_order: subcategoryData.display_order || 0
         }])
         .select()
         .single()
@@ -207,7 +207,7 @@ export function useSubcategories(categoryId?: string) {
       const { data, error } = await supabase
         .from('subcategories')
         .update({
-          sort_order: sortOrder,
+          display_order: sortOrder,
           updated_at: new Date().toISOString()
         })
         .eq('id', id)
@@ -241,7 +241,7 @@ export function useSubcategories(categoryId?: string) {
           )
         `)
         .eq('category_id', categoryId)
-        .order('sort_order')
+        .order('display_order')
         .order('name')
 
       if (error) throw error

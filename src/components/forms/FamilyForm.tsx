@@ -24,7 +24,7 @@ interface Family {
   slug: string
   description?: string
   image_url?: string
-  sort_order: number
+  display_order: number
   is_active: boolean
   level: 0
   created_at?: string
@@ -35,7 +35,7 @@ interface FamilyFormData {
   name: string
   description: string
   image_url?: string
-  sort_order: number
+  display_order: number
   is_active: boolean
 }
 
@@ -63,7 +63,7 @@ export function FamilyForm({
     name: initialData?.name || '',
     description: initialData?.description || '',
     image_url: initialData?.image_url || '',
-    sort_order: initialData?.sort_order || 1,
+    display_order: initialData?.display_order || 1,
     is_active: initialData?.is_active ?? true
   })
 
@@ -310,10 +310,10 @@ export function FamilyForm({
               id="display_order"
               type="number"
               min="1"
-              value={formData.sort_order}
+              value={formData.display_order}
               onChange={(e) => setFormData(prev => ({
                 ...prev,
-                sort_order: parseInt(e.target.value) || 1
+                display_order: parseInt(e.target.value) || 1
               }))}
               className="border-gray-300 focus:border-black"
             />

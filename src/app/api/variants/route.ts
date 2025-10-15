@@ -187,7 +187,7 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
       product_id: productId,
       group_id: newGroup.id,
       is_primary: productId === (primary_product_id || product_ids[0]),
-      sort_order: index
+      display_order: index
     }))
 
     const { error: membersError } = await supabase

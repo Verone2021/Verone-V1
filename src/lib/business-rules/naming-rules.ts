@@ -12,7 +12,7 @@ interface Product {
   name: string
   variant_attributes?: VariantAttributes
   status: 'in_stock' | 'out_of_stock' | 'preorder' | 'coming_soon' | 'discontinued'
-  sort_order?: number
+  display_order?: number
 }
 
 interface Collection {
@@ -137,7 +137,7 @@ export function sortVariantSiblings(variants: Product[], currentVariantId: strin
   const siblings = variants.filter(v => v.id !== currentVariantId)
 
   return siblings.sort((a, b) => {
-    // 1. Variantes en stock par ordre de sort_order croissant
+    // 1. Variantes en stock par ordre de display_order croissant
     const aInStock = a.status === 'in_stock'
     const bInStock = b.status === 'in_stock'
 
@@ -145,15 +145,15 @@ export function sortVariantSiblings(variants: Product[], currentVariantId: strin
     if (!aInStock && bInStock) return 1
 
     if (aInStock && bInStock) {
-      // Toutes deux en stock : trier par sort_order puis nom
-      const aSortOrder = a.sort_order || 999
-      const bSortOrder = b.sort_order || 999
+      // Toutes deux en stock : trier par display_order puis nom
+      const aSortOrder = a.display_order || 999
+      const bSortOrder = b.display_order || 999
 
       if (aSortOrder !== bSortOrder) {
         return aSortOrder - bSortOrder
       }
 
-      // Si même sort_order, trier par nom alphabétique
+      // Si même display_order, trier par nom alphabétique
       return a.name.localeCompare(b.name, 'fr', { numeric: true })
     }
 

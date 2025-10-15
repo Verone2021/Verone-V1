@@ -52,7 +52,7 @@ export interface CollectionBase {
   room_category: RoomCategory | null
   suitable_rooms: string[] | null // Aligné avec products.suitable_rooms (40 pièces)
   theme_tags: string[]
-  sort_order: number
+  display_order: number
   meta_title: string | null
   meta_description: string | null
   image_url: string | null
@@ -159,7 +159,7 @@ export interface CreateCollectionInput {
   room_category?: RoomCategory
   suitable_rooms?: string[] // Aligné avec products (40 room types)
   theme_tags?: string[]
-  sort_order?: number
+  display_order?: number
   meta_title?: string
   meta_description?: string
   image_url?: string
@@ -212,7 +212,7 @@ export interface CollectionFilters {
   max_products?: number
   created_after?: string
   created_before?: string
-  sort_by?: 'name' | 'created_at' | 'updated_at' | 'product_count' | 'sort_order'
+  sort_by?: 'name' | 'created_at' | 'updated_at' | 'product_count' | 'display_order'
   sort_direction?: 'asc' | 'desc'
   limit?: number
   offset?: number
@@ -379,7 +379,7 @@ export interface CollectionFormState {
   theme_tags: string[]
   meta_title: string
   meta_description: string
-  sort_order: number
+  display_order: number
 }
 
 /**

@@ -520,7 +520,7 @@ export type Database = {
           product_count: number | null
           shared_count: number | null
           shared_link_token: string | null
-          sort_order: number | null
+          display_order: number | null
           style: string | null
           suitable_rooms: string[] | null
           theme_tags: string[] | null
@@ -544,7 +544,7 @@ export type Database = {
           product_count?: number | null
           shared_count?: number | null
           shared_link_token?: string | null
-          sort_order?: number | null
+          display_order?: number | null
           style?: string | null
           suitable_rooms?: string[] | null
           theme_tags?: string[] | null
@@ -568,7 +568,7 @@ export type Database = {
           product_count?: number | null
           shared_count?: number | null
           shared_link_token?: string | null
-          sort_order?: number | null
+          display_order?: number | null
           style?: string | null
           suitable_rooms?: string[] | null
           theme_tags?: string[] | null
@@ -1048,7 +1048,7 @@ export type Database = {
           meta_title: string | null
           name: string
           slug: string
-          sort_order: number | null
+          display_order: number | null
           updated_at: string | null
         }
         Insert: {
@@ -1062,7 +1062,7 @@ export type Database = {
           meta_title?: string | null
           name: string
           slug: string
-          sort_order?: number | null
+          display_order?: number | null
           updated_at?: string | null
         }
         Update: {
@@ -1076,7 +1076,7 @@ export type Database = {
           meta_title?: string | null
           name?: string
           slug?: string
-          sort_order?: number | null
+          display_order?: number | null
           updated_at?: string | null
         }
         Relationships: []
@@ -1873,7 +1873,7 @@ export type Database = {
           id: string
           is_primary: boolean | null
           product_id: string
-          sort_order: number | null
+          display_order: number | null
         }
         Insert: {
           added_at?: string | null
@@ -1881,7 +1881,7 @@ export type Database = {
           id?: string
           is_primary?: boolean | null
           product_id: string
-          sort_order?: number | null
+          display_order?: number | null
         }
         Update: {
           added_at?: string | null
@@ -1889,7 +1889,7 @@ export type Database = {
           id?: string
           is_primary?: boolean | null
           product_id?: string
-          sort_order?: number | null
+          display_order?: number | null
         }
         Relationships: [
           {
@@ -3092,7 +3092,7 @@ export type Database = {
           meta_title: string | null
           name: string
           slug: string
-          sort_order: number | null
+          display_order: number | null
           updated_at: string | null
         }
         Insert: {
@@ -3106,7 +3106,7 @@ export type Database = {
           meta_title?: string | null
           name: string
           slug: string
-          sort_order?: number | null
+          display_order?: number | null
           updated_at?: string | null
         }
         Update: {
@@ -3120,7 +3120,7 @@ export type Database = {
           meta_title?: string | null
           name?: string
           slug?: string
-          sort_order?: number | null
+          display_order?: number | null
           updated_at?: string | null
         }
         Relationships: [
@@ -4664,7 +4664,7 @@ export type Database = {
           product_count: number | null
           shared_count: number | null
           shared_link_token: string | null
-          sort_order: number | null
+          display_order: number | null
           style: string | null
           suitable_rooms: string[] | null
           theme_tags: string[] | null

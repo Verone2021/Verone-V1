@@ -44,7 +44,7 @@ export async function GET(
         )
       `)
       .eq('group_id', groupId)
-      .order('sort_order')
+      .order('display_order')
 
     if (error) {
       return NextResponse.json({
@@ -169,19 +169,19 @@ export async function POST(
     // Get current max sort order
     const { data: maxSortData, error: sortError } = await supabase
       .from('product_group_members')
-      .select('sort_order')
+      .select('display_order')
       .eq('group_id', groupId)
-      .order('sort_order', { ascending: false })
+      .order('display_order', { ascending: false })
       .limit(1)
 
-    const maxSort = maxSortData?.[0]?.sort_order || 0
+    const maxSort = maxSortData?.[0]?.display_order || 0
 
     // Prepare member inserts
     const memberInserts = newProductIds.map((productId, index) => ({
       product_id: productId,
       group_id: groupId,
       is_primary: productId === set_as_primary,
-      sort_order: maxSort + index + 1
+      display_order: maxSort + index + 1
     }))
 
     // Insert new members

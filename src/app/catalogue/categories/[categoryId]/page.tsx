@@ -132,7 +132,7 @@ export default function CategoryDetailPage() {
         name: formData.name,
         description: formData.description,
         is_active: formData.is_active,
-        sort_order: formData.sort_order,
+        display_order: formData.display_order,
         image_url: formData.image_url
       })
       setIsEditCategoryOpen(false)
@@ -153,7 +153,7 @@ export default function CategoryDetailPage() {
         description: formData.description,
         category_id: categoryId,
         is_active: formData.is_active,
-        sort_order: formData.sort_order,
+        display_order: formData.display_order,
         image_url: formData.image_url
       })
       setIsNewSubcategoryOpen(false)
@@ -175,7 +175,7 @@ export default function CategoryDetailPage() {
         name: formData.name,
         description: formData.description,
         is_active: formData.is_active,
-        sort_order: formData.sort_order,
+        display_order: formData.display_order,
         image_url: formData.image_url
       })
       setIsEditSubcategoryOpen(false)
@@ -375,7 +375,7 @@ export default function CategoryDetailPage() {
           name: category.name,
           description: category.description || '',
           is_active: category.is_active,
-          sort_order: category.sort_order || 1,
+          display_order: category.display_order || 1,
           parent_id: category.family_id,
           image_url: category.image_url || undefined
         } : undefined}
@@ -396,7 +396,7 @@ export default function CategoryDetailPage() {
             description: subcategory.description,
             category_id: subcategory.parent_id,
             is_active: subcategory.is_active,
-            sort_order: subcategory.display_order,
+            display_order: subcategory.display_order,
             image_url: subcategory.image_url
           })
         }}
@@ -418,7 +418,7 @@ export default function CategoryDetailPage() {
           slug: editingSubcategory.slug,
           description: editingSubcategory.description || '',
           image_url: editingSubcategory.image_url || '',
-          display_order: editingSubcategory.sort_order || 1,
+          display_order: editingSubcategory.display_order || 1,
           is_active: editingSubcategory.is_active,
           level: 2 as const
         } : null}
@@ -429,7 +429,7 @@ export default function CategoryDetailPage() {
             name: subcategory.name,
             description: subcategory.description,
             is_active: subcategory.is_active,
-            sort_order: subcategory.display_order,
+            display_order: subcategory.display_order,
             image_url: subcategory.image_url
           })
         }}

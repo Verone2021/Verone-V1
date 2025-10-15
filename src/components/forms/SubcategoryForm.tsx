@@ -31,7 +31,7 @@ interface Subcategory {
   slug: string
   description?: string
   image_url?: string
-  sort_order: number
+  display_order: number
   is_active: boolean
   created_at?: string
   updated_at?: string
@@ -75,7 +75,7 @@ export function SubcategoryForm({
     name: initialData?.name || '',
     description: initialData?.description || '',
     image_url: initialData?.image_url || '',
-    display_order: initialData?.sort_order || 1,
+    display_order: initialData?.display_order || 1,
     is_active: initialData?.is_active ?? true
   })
 
@@ -88,7 +88,7 @@ export function SubcategoryForm({
         name: initialData?.name || '',
         description: initialData?.description || '',
         image_url: initialData?.image_url || '',
-        display_order: initialData?.sort_order || 1,
+        display_order: initialData?.display_order || 1,
         is_active: initialData?.is_active ?? true
       })
     }
@@ -207,7 +207,7 @@ export function SubcategoryForm({
           slug,
           description: formData.description,
           image_url: formData.image_url,
-          sort_order: formData.display_order,
+          display_order: formData.display_order,
           is_active: formData.is_active
         }
 
@@ -230,7 +230,7 @@ export function SubcategoryForm({
           name: formData.name,
           description: formData.description,
           image_url: formData.image_url,
-          sort_order: formData.display_order,
+          display_order: formData.display_order,
           is_active: formData.is_active,
           slug,
           updated_at: new Date().toISOString()

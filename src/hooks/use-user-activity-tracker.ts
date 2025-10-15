@@ -101,7 +101,7 @@ export function useUserActivityTracker() {
         )
 
       if (error) {
-        console.error('❌ Activity tracking insert error:', error)
+        console.warn('⚠️ Activity tracking insert error (non-bloquant):', error)
       } else {
         console.log(`✅ Activity tracking: ${events.length} events logged for user ${user.id} (session: ${sessionIdRef.current.substring(0, 8)}...)`)
       }

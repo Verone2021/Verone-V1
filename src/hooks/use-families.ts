@@ -31,7 +31,7 @@ export function useFamilies() {
           *,
           categories!categories_family_id_fkey(id)
         `)
-        .order('sort_order')
+        .order('display_order')
         .order('name')
 
       if (error) throw error
@@ -62,7 +62,7 @@ export function useFamilies() {
         .insert([{
           ...familyData,
           slug,
-          sort_order: familyData.sort_order || 0
+          display_order: familyData.display_order || 0
         }])
         .select()
         .single()
@@ -184,7 +184,7 @@ export function useFamilies() {
       const { data, error } = await supabase
         .from('families')
         .update({
-          sort_order: sortOrder,
+          display_order: sortOrder,
           updated_at: new Date().toISOString()
         })
         .eq('id', id)

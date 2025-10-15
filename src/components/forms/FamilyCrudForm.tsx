@@ -17,7 +17,7 @@ interface FormData {
   name: string
   description: string
   is_active: boolean
-  sort_order: number
+  display_order: number
   parent_id?: string // Pour catégories et sous-catégories
   image_url?: string
 }
@@ -75,7 +75,7 @@ export function FamilyCrudForm({
     name: '',
     description: '',
     is_active: true,
-    sort_order: 1,
+    display_order: 1,
     parent_id: undefined,
     image_url: undefined
   })
@@ -93,7 +93,7 @@ export function FamilyCrudForm({
         name: initialData.name || '',
         description: initialData.description || '',
         is_active: initialData.is_active ?? true,
-        sort_order: initialData.sort_order || 1,
+        display_order: initialData.display_order || 1,
         parent_id: initialData.parent_id,
         image_url: initialData.image_url
       })
@@ -102,7 +102,7 @@ export function FamilyCrudForm({
         name: '',
         description: '',
         is_active: true,
-        sort_order: 1,
+        display_order: 1,
         parent_id: undefined,
         image_url: undefined
       })
@@ -126,8 +126,8 @@ export function FamilyCrudForm({
       newErrors.parent_id = `Vous devez sélectionner une ${type === 'category' ? 'famille' : 'catégorie'} parent`
     }
 
-    if (formData.sort_order < 1 || formData.sort_order > 999) {
-      newErrors.sort_order = 'L\'ordre doit être entre 1 et 999'
+    if (formData.display_order < 1 || formData.display_order > 999) {
+      newErrors.display_order = 'L\'ordre doit être entre 1 et 999'
     }
 
     setErrors(newErrors)
@@ -287,18 +287,18 @@ export function FamilyCrudForm({
 
           {/* Ordre d'affichage */}
           <div className="space-y-2">
-            <Label htmlFor="sort_order">Ordre d'affichage</Label>
+            <Label htmlFor="display_order">Ordre d'affichage</Label>
             <Input
-              id="sort_order"
+              id="display_order"
               type="number"
               min="1"
               max="999"
-              value={formData.sort_order}
-              onChange={(e) => updateField('sort_order', parseInt(e.target.value) || 1)}
-              className={cn(errors.sort_order && "border-red-500")}
+              value={formData.display_order}
+              onChange={(e) => updateField('display_order', parseInt(e.target.value) || 1)}
+              className={cn(errors.display_order && "border-red-500")}
             />
-            {errors.sort_order && (
-              <p className="text-sm text-red-600">{errors.sort_order}</p>
+            {errors.display_order && (
+              <p className="text-sm text-red-600">{errors.display_order}</p>
             )}
           </div>
 

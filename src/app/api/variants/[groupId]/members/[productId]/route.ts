@@ -10,7 +10,7 @@ import { createAdminClient } from '@/lib/supabase/server'
 
 interface UpdateMemberRequest {
   is_primary?: boolean
-  sort_order?: number
+  display_order?: number
 }
 
 /**

@@ -113,7 +113,7 @@ export default function FamilyDetailPage() {
         name: formData.name,
         description: formData.description,
         is_active: formData.is_active,
-        sort_order: formData.sort_order,
+        display_order: formData.display_order,
         image_url: formData.image_url
       })
       setIsEditFamilyOpen(false)
@@ -134,7 +134,7 @@ export default function FamilyDetailPage() {
         description: formData.description,
         family_id: familyId,
         is_active: formData.is_active,
-        sort_order: formData.sort_order,
+        display_order: formData.display_order,
         image_url: formData.image_url
       })
       setIsNewCategoryOpen(false)
@@ -156,7 +156,7 @@ export default function FamilyDetailPage() {
         name: formData.name,
         description: formData.description,
         is_active: formData.is_active,
-        sort_order: formData.sort_order,
+        display_order: formData.display_order,
         image_url: formData.image_url
       })
       setIsEditCategoryOpen(false)
@@ -322,7 +322,7 @@ export default function FamilyDetailPage() {
           name: family.name,
           description: family.description || '',
           is_active: family.is_active ?? true,
-          sort_order: family.sort_order || 1,
+          display_order: family.display_order || 1,
           image_url: family.image_url || undefined
         } : undefined}
         onSubmit={handleSubmitFamily}
@@ -352,7 +352,7 @@ export default function FamilyDetailPage() {
           name: editingCategory.name,
           description: editingCategory.description || '',
           is_active: editingCategory.is_active,
-          sort_order: editingCategory.sort_order || 1,
+          display_order: editingCategory.display_order || 1,
           parent_id: editingCategory.family_id,
           image_url: editingCategory.image_url || undefined
         } : undefined}

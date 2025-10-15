@@ -245,7 +245,7 @@ export default function SubcategoryDetailPage() {
               <div className="flex items-center space-x-3">
                 <Grid3X3 className="w-8 h-8 text-black" />
                 <div>
-                  <p className="text-lg font-bold text-black">Ordre {subcategory.sort_order || 0}</p>
+                  <p className="text-lg font-bold text-black">Ordre {subcategory.display_order || 0}</p>
                   <p className="text-gray-600">Position</p>
                 </div>
               </div>

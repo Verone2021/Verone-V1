@@ -27,7 +27,7 @@ export interface Collection {
   style?: string
   suitable_rooms?: string[] // Aligné avec products.suitable_rooms (40 pièces)
   theme_tags?: string[]
-  sort_order?: number
+  display_order?: number
   meta_title?: string
   meta_description?: string
   image_url?: string // Deprecated - utilise cover_image_url
