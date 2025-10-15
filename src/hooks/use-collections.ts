@@ -233,7 +233,12 @@ export function useCollections(filters?: CollectionFilters) {
         .single()
 
       if (error) {
-        setError(error.message)
+        // Gestion spécifique des erreurs de contrainte unique
+        if (error.code === '23505') {
+          setError('Une collection avec ce nom existe déjà. Veuillez choisir un nom différent.')
+        } else {
+          setError(error.message)
+        }
         return null
       }
 

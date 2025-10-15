@@ -67,7 +67,16 @@ export function useFamilies() {
         .select()
         .single()
 
-      if (error) throw error
+      if (error) {
+        // Gestion spécifique des erreurs de contrainte unique
+        if (error.code === '23505') {
+          // Créer une erreur avec le code préservé pour le form
+          const duplicateError: any = new Error('Une famille avec ce nom existe déjà. Veuillez choisir un nom différent.')
+          duplicateError.code = '23505'
+          throw duplicateError
+        }
+        throw error
+      }
 
       console.log('✅ Famille créée:', data.name)
 

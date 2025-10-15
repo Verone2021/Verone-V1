@@ -257,9 +257,16 @@ export function SubcategoryForm({
 
     } catch (error: any) {
       console.error('Erreur soumission formulaire sous-catégorie:', error?.message || JSON.stringify(error))
+
+      // Gestion spécifique des erreurs de contrainte unique
+      let errorMessage = error.message || "Une erreur est survenue"
+      if (error.code === '23505') {
+        errorMessage = 'Une sous-catégorie avec ce nom existe déjà dans cette catégorie. Veuillez choisir un nom différent.'
+      }
+
       toast({
         title: "❌ Erreur",
-        description: error.message || "Une erreur est survenue",
+        description: errorMessage,
         variant: "destructive"
       })
     } finally {

@@ -118,7 +118,16 @@ export function useCategories() {
         .select()
         .single()
 
-      if (error) throw error
+      if (error) {
+        // Gestion spécifique des erreurs de contrainte unique
+        if (error.code === '23505') {
+          // Créer une erreur avec le code préservé pour le form
+          const duplicateError: any = new Error('Une catégorie avec ce nom existe déjà dans cette famille. Veuillez choisir un nom différent.')
+          duplicateError.code = '23505'
+          throw duplicateError
+        }
+        throw error
+      }
 
       // Recharger les données
       await fetchCategories()

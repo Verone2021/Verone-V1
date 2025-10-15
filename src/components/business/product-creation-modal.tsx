@@ -116,7 +116,7 @@ export function ProductCreationModal({ isOpen, onClose, onSuccess }: ProductCrea
       // Gestion des erreurs spécifiques
       let errorMessage = "Impossible de créer le produit"
 
-      if (error.message?.includes('duplicate key')) {
+      if (error.code === '23505') {
         errorMessage = "Ce SKU existe déjà. Veuillez en choisir un autre."
         setErrors({ sku: "SKU déjà existant" })
       } else if (error.message?.includes('sku_check')) {
