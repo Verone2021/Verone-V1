@@ -9,7 +9,6 @@ import React from 'react'
 import { redirect } from 'next/navigation'
 import { Users, Plus, Shield } from 'lucide-react'
 import { createServerClient, createAdminClient } from '@/lib/supabase/server'
-import { Button } from '@/components/ui/button'
 import { UserManagementTable } from '@/components/admin/user-management-table'
 import { CreateUserDialog } from '@/components/admin/create-user-dialog'
 
@@ -140,13 +139,10 @@ export default async function AdminUsersPage() {
           </div>
 
           <CreateUserDialog>
-            <Button
-              className="bg-black hover:bg-gray-800 text-white"
-              size="sm"
-            >
-              <Plus className="h-4 w-4 mr-2" />
+            <button className="inline-flex items-center justify-center gap-2 font-medium rounded-[10px] transition-all duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 hover:scale-[1.02] active:scale-[0.98] bg-black text-white border-none px-6 py-3 h-11 text-[15px] shadow-sm hover:shadow-md">
+              <Plus className="h-[18px] w-[18px]" strokeWidth={2} />
               Nouvel Utilisateur
-            </Button>
+            </button>
           </CreateUserDialog>
         </div>
       </div>

@@ -10,7 +10,7 @@
 import React, { useState } from 'react'
 import { Edit, Trash2, Shield, Phone, Mail, Calendar, Key, Eye } from 'lucide-react'
 import { useRouter } from 'next/navigation'
-import { Button } from '@/components/ui/button'
+import { ButtonV2 } from '@/components/ui-v2/button'
 import { RoleBadge, type UserRole } from '@/components/ui/role-badge'
 import { Input } from '@/components/ui/input'
 import { UserWithProfile } from '@/app/admin/users/page'
@@ -227,49 +227,40 @@ export function UserManagementTable({ users }: UserManagementTableProps) {
 
                   <TableCell>
                     <div className="flex items-center space-x-2">
-                      <Button
+                      <ButtonV2
                         variant="ghost"
-                        size="icon"
-                        className="h-8 w-8 text-black hover:bg-gray-100 hover:text-black border border-transparent hover:border-black"
+                        size="sm"
+                        icon={Eye}
                         onClick={() => handleViewUserDetails(user)}
                         title="Voir les détails"
-                      >
-                        <Eye className="h-4 w-4" />
-                        <span className="sr-only">Voir les détails</span>
-                      </Button>
+                      />
 
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        className="h-8 w-8 text-black hover:bg-gray-100 hover:text-black border border-transparent hover:border-black"
+                      <ButtonV2
+                        variant="secondary"
+                        size="sm"
+                        icon={Edit}
                         onClick={() => handleEditUser(user)}
-                      >
-                        <Edit className="h-4 w-4" />
-                        <span className="sr-only">Éditer utilisateur</span>
-                      </Button>
+                        title="Éditer utilisateur"
+                      />
 
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        className="h-8 w-8 text-black hover:bg-gray-100 hover:text-black border border-transparent hover:border-black"
+                      <ButtonV2
+                        variant="warning"
+                        size="sm"
+                        icon={Key}
                         onClick={() => handleResetPassword(user)}
-                      >
-                        <Key className="h-4 w-4" />
-                        <span className="sr-only">Réinitialiser le mot de passe</span>
-                      </Button>
+                        title="Réinitialiser le mot de passe"
+                      />
 
                       {/* Ne pas permettre la suppression du dernier owner */}
                       {!(user.profile?.role === 'owner' &&
                         filteredUsers.filter(u => u.profile?.role === 'owner').length === 1) && (
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          className="h-8 w-8 text-black hover:bg-gray-100 hover:text-black border border-transparent hover:border-black"
+                        <ButtonV2
+                          variant="danger"
+                          size="sm"
+                          icon={Trash2}
                           onClick={() => handleDeleteUser(user)}
-                        >
-                          <Trash2 className="h-4 w-4" />
-                          <span className="sr-only">Supprimer utilisateur</span>
-                        </Button>
+                          title="Supprimer utilisateur"
+                        />
                       )}
                     </div>
                   </TableCell>

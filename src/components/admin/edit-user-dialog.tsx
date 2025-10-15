@@ -9,7 +9,7 @@
 
 import React, { useState } from 'react'
 import { Edit, Save, X, User } from 'lucide-react'
-import { Button } from '@/components/ui/button'
+import { ButtonV2 } from '@/components/ui-v2/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import {
@@ -232,26 +232,23 @@ export function EditUserDialog({
           )}
 
           <DialogFooter className="flex flex-col-reverse sm:flex-row sm:justify-end sm:space-x-2 pt-4">
-            <Button
+            <ButtonV2
               type="button"
-              variant="outline"
+              variant="ghost"
               onClick={handleClose}
               disabled={isUpdating}
-              className="border-black text-black hover:bg-gray-50"
             >
               Annuler
-            </Button>
-            <Button
+            </ButtonV2>
+            <ButtonV2
               type="submit"
+              variant="success"
+              icon={Save}
+              loading={isUpdating}
               disabled={isUpdating || !formData.first_name.trim()}
-              className={cn(
-                "bg-black hover:bg-gray-800 text-white",
-                isUpdating && "opacity-50 cursor-not-allowed"
-              )}
             >
-              <Save className="h-4 w-4 mr-2" />
-              {isUpdating ? 'Mise à jour...' : 'Enregistrer'}
-            </Button>
+              Enregistrer
+            </ButtonV2>
           </DialogFooter>
         </form>
       </DialogContent>

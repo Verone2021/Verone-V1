@@ -106,37 +106,6 @@ export function MovementsStatsCards({ stats, loading }: MovementsStatsCardsProps
         </Card>
       </div>
 
-      {/* Cartes Mouvements Réels vs Prévisionnels */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        <Card className="border-black">
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium text-gray-600">Mouvements Réels</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold text-black">
-              {formatNumber(stats.realMovements || 0)}
-            </div>
-            <p className="text-xs text-gray-600 mt-1">
-              Impactent le stock physique
-            </p>
-          </CardContent>
-        </Card>
-
-        <Card className="border-black">
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium text-gray-600">Mouvements Prévisionnels</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold text-black">
-              {formatNumber(stats.forecastMovements || 0)}
-            </div>
-            <p className="text-xs text-gray-600 mt-1">
-              Réservations futures
-            </p>
-          </CardContent>
-        </Card>
-      </div>
-
       {/* Répartition par type */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         <Card>
@@ -234,55 +203,6 @@ export function MovementsStatsCards({ stats, loading }: MovementsStatsCardsProps
           </CardContent>
         </Card>
       </div>
-
-      {/* Activité récente */}
-      {stats.recentActivity.length > 0 && (
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2 text-lg">
-              <Clock className="h-5 w-5" />
-              Activité Récente
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-3">
-              {stats.recentActivity.map((movement) => (
-                <div key={movement.id} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
-                  <div className="flex items-center gap-3">
-                    <div className="flex items-center gap-2">
-                      {movement.movement_type === 'IN' && <TrendingUp className="h-4 w-4 text-green-600" />}
-                      {movement.movement_type === 'OUT' && <TrendingDown className="h-4 w-4 text-red-600" />}
-                      {movement.movement_type === 'ADJUST' && <Activity className="h-4 w-4 text-blue-600" />}
-                      {movement.movement_type === 'TRANSFER' && <BarChart3 className="h-4 w-4 text-purple-600" />}
-                    </div>
-                    <div>
-                      <div className="text-sm font-medium">
-                        {movement.product_name} ({movement.product_sku})
-                      </div>
-                      <div className="text-xs text-gray-500">
-                        {movement.user_name} • {new Date(movement.performed_at).toLocaleString('fr-FR')}
-                      </div>
-                    </div>
-                  </div>
-                  <div className="text-right">
-                    <div className={`text-sm font-medium ${
-                      movement.movement_type === 'IN' ? 'text-green-600' :
-                      movement.movement_type === 'OUT' ? 'text-red-600' : 'text-blue-600'
-                    }`}>
-                      {movement.movement_type === 'OUT' ? '-' : '+'}{Math.abs(movement.quantity_change)} unités
-                    </div>
-                    {movement.reason_description && (
-                      <div className="text-xs text-gray-500">
-                        {movement.reason_description}
-                      </div>
-                    )}
-                  </div>
-                </div>
-              ))}
-            </div>
-          </CardContent>
-        </Card>
-      )}
     </div>
   )
 }

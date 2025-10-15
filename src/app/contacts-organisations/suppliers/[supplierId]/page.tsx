@@ -1,9 +1,9 @@
 'use client'
 
-import { useState, useEffect } from 'react'
-import { useParams, useRouter } from 'next/navigation'
+import { useState } from 'react'
+import { useParams } from 'next/navigation'
 import Link from 'next/link'
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
+import { Card, CardContent } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import {
@@ -11,86 +11,75 @@ import {
   Building2,
   Archive,
   ArchiveRestore,
-  Trash2,
   Package,
   Phone,
   ShoppingCart,
-  FileText,
-  Users
+  FileText
 } from 'lucide-react'
 import { useOrganisation, useSuppliers } from '@/hooks/use-organisations'
-import { useContacts } from '@/hooks/use-contacts'
+import { useOrganisationTabs } from '@/hooks/use-organisation-tabs'
 import { ContactEditSection } from '@/components/business/contact-edit-section'
 import { AddressEditSection } from '@/components/business/address-edit-section'
 import { CommercialEditSection } from '@/components/business/commercial-edit-section'
 import { PerformanceEditSection } from '@/components/business/performance-edit-section'
 import { ContactsManagementSection } from '@/components/business/contacts-management-section'
+import { OrganisationLogoCard } from '@/components/business/organisation-logo-card'
+import { OrganisationStatsCard } from '@/components/business/organisation-stats-card'
+import { OrganisationPurchaseOrdersSection } from '@/components/business/organisation-purchase-orders-section'
+import { OrganisationProductsSection } from '@/components/business/organisation-products-section'
 import { TabsNavigation, TabContent } from '@/components/ui/tabs-navigation'
 import type { Organisation } from '@/hooks/use-organisations'
 
 export default function SupplierDetailPage() {
   const { supplierId } = useParams()
-  const router = useRouter()
   const [activeTab, setActiveTab] = useState('contacts')
 
   const { organisation: supplier, loading, error } = useOrganisation(supplierId as string)
   const {
     archiveOrganisation,
     unarchiveOrganisation,
-    hardDeleteOrganisation,
     refetch
   } = useSuppliers()
 
-  // Hook pour compter les contacts
-  const { contacts, fetchOrganisationContacts } = useContacts()
-  const [contactCount, setContactCount] = useState(0)
-
-  // Mettre à jour le nombre de contacts
-  useEffect(() => {
-    if (supplier?.id) {
-      fetchOrganisationContacts(supplier.id).then(() => {
-        const orgContacts = contacts.filter(contact => contact.organisation_id === supplier.id)
-        setContactCount(orgContacts.length)
-      })
-    }
-  }, [supplier?.id, contacts, fetchOrganisationContacts])
+  // Hook centralisé pour les compteurs d'onglets
+  const { counts, refreshCounts } = useOrganisationTabs({
+    organisationId: supplierId as string,
+    organisationType: 'supplier'
+  })
 
   // Gestionnaire de mise à jour des données fournisseur
   const handleSupplierUpdate = (updatedData: Partial<Organisation>) => {
     // Les données sont automatiquement mises à jour par le hook useInlineEdit
-    // Nous n'avons besoin que de rafraîchir pour obtenir les dernières données
     refetch()
-    // Rafraîchir aussi le nombre de contacts si nécessaire
-    if (supplier?.id) {
-      fetchOrganisationContacts(supplier.id)
-    }
+    // Rafraîchir les compteurs
+    refreshCounts()
   }
 
-  // Configuration des onglets
+  // Configuration des onglets avec compteurs du hook
   const tabs = [
     {
       id: 'contacts',
       label: 'Contacts',
       icon: <Phone className="h-4 w-4" />,
-      badge: contactCount.toString()
+      badge: counts.contacts.toString()
     },
     {
       id: 'orders',
       label: 'Commandes',
       icon: <ShoppingCart className="h-4 w-4" />,
-      disabled: true // TODO: Activer quand le module sera développé
+      badge: counts.orders.toString()
     },
     {
       id: 'invoices',
       label: 'Factures',
       icon: <FileText className="h-4 w-4" />,
-      disabled: true // TODO: Activer quand le module sera développé
+      disabled: true // Module en développement
     },
     {
       id: 'products',
       label: 'Produits',
       icon: <Package className="h-4 w-4" />,
-      badge: '0'
+      badge: counts.products.toString()
     }
   ]
 
@@ -152,30 +141,6 @@ export default function SupplierDetailPage() {
     }
   }
 
-  const handleDelete = async () => {
-    const confirmed = confirm(
-      `Êtes-vous sûr de vouloir supprimer définitivement "${supplier.name}" ?\n\nCette action est irréversible !`
-    )
-
-    if (confirmed) {
-      const success = await hardDeleteOrganisation(supplier.id)
-      if (success) {
-        console.log('✅ Fournisseur supprimé définitivement')
-        router.push('/contacts-organisations/suppliers')
-      }
-    }
-  }
-
-  const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleDateString('fr-FR', {
-      year: 'numeric',
-      month: 'long',
-      day: 'numeric',
-      hour: '2-digit',
-      minute: '2-digit'
-    })
-  }
-
   return (
     <div className="container mx-auto p-6 space-y-6">
       {/* Header */}
@@ -230,14 +195,6 @@ export default function SupplierDetailPage() {
               </>
             )}
           </Button>
-          <Button
-            variant="outline"
-            onClick={handleDelete}
-            className="text-red-600 border-red-200 hover:bg-red-50"
-          >
-            <Trash2 className="h-4 w-4 mr-2" />
-            Supprimer
-          </Button>
         </div>
       </div>
 
@@ -264,69 +221,28 @@ export default function SupplierDetailPage() {
           />
         </div>
 
-        {/* Colonne latérale - Performance et Statistiques */}
+        {/* Colonne latérale - Logo, Performance et Statistiques */}
         <div className="space-y-6">
+          {/* Logo de l'organisation - Composant réutilisable */}
+          <OrganisationLogoCard
+            organisationId={supplier.id}
+            organisationName={supplier.name}
+            organisationType="supplier"
+            currentLogoUrl={supplier.logo_url}
+            onUploadSuccess={() => refetch()}
+          />
+
           {/* Performance & Qualité */}
           <PerformanceEditSection
             organisation={supplier}
             onUpdate={handleSupplierUpdate}
           />
 
-          {/* Statistiques (lecture seule) */}
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Package className="h-5 w-5" />
-                Statistiques
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="flex justify-between items-center">
-                <span className="text-gray-600">Produits référencés:</span>
-                <span className="text-2xl font-bold text-black">
-                  {supplier._count?.products || 0}
-                </span>
-              </div>
-
-              <div className="space-y-2 text-sm text-gray-600">
-                <div className="flex justify-between">
-                  <span>Créé le:</span>
-                  <span>{formatDate(supplier.created_at)}</span>
-                </div>
-                <div className="flex justify-between">
-                  <span>Modifié le:</span>
-                  <span>{formatDate(supplier.updated_at)}</span>
-                </div>
-                {supplier.supplier_segment && (
-                  <div className="flex justify-between">
-                    <span>Segment:</span>
-                    <span className="font-medium">{supplier.supplier_segment}</span>
-                  </div>
-                )}
-                {supplier.supplier_category && (
-                  <div className="flex justify-between">
-                    <span>Catégorie:</span>
-                    <span className="font-medium">{supplier.supplier_category}</span>
-                  </div>
-                )}
-                {supplier.industry_sector && (
-                  <div className="flex justify-between">
-                    <span>Secteur:</span>
-                    <span className="font-medium">{supplier.industry_sector}</span>
-                  </div>
-                )}
-              </div>
-
-              {supplier.archived_at && (
-                <div className="pt-2 border-t border-gray-200">
-                  <div className="flex justify-between text-sm">
-                    <span className="text-red-600">Archivé le:</span>
-                    <span className="text-red-600 font-medium">{formatDate(supplier.archived_at)}</span>
-                  </div>
-                </div>
-              )}
-            </CardContent>
-          </Card>
+          {/* Statistiques - Composant réutilisable */}
+          <OrganisationStatsCard
+            organisation={supplier}
+            organisationType="supplier"
+          />
         </div>
       </div>
 
@@ -348,15 +264,12 @@ export default function SupplierDetailPage() {
         </TabContent>
 
         <TabContent activeTab={activeTab} tabId="orders">
-          <div className="text-center py-12">
-            <ShoppingCart className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-            <h3 className="text-lg font-medium text-black mb-2">
-              Module Commandes
-            </h3>
-            <p className="text-gray-600">
-              Ce module sera disponible dans une prochaine version.
-            </p>
-          </div>
+          <OrganisationPurchaseOrdersSection
+            organisationId={supplier.id}
+            organisationName={supplier.name}
+            organisationType="supplier"
+            onUpdate={() => handleSupplierUpdate({})}
+          />
         </TabContent>
 
         <TabContent activeTab={activeTab} tabId="invoices">
@@ -372,15 +285,12 @@ export default function SupplierDetailPage() {
         </TabContent>
 
         <TabContent activeTab={activeTab} tabId="products">
-          <div className="text-center py-12">
-            <Package className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-            <h3 className="text-lg font-medium text-black mb-2">
-              Produits Fournisseur
-            </h3>
-            <p className="text-gray-600">
-              {supplier._count?.products || 0} produit(s) référencé(s) pour ce fournisseur.
-            </p>
-          </div>
+          <OrganisationProductsSection
+            organisationId={supplier.id}
+            organisationName={supplier.name}
+            organisationType="supplier"
+            onUpdate={() => handleSupplierUpdate({})}
+          />
         </TabContent>
       </div>
 

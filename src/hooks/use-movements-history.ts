@@ -80,8 +80,6 @@ export interface MovementsStats {
     user_name: string
     count: number
   }>
-
-  recentActivity: MovementWithDetails[]
 }
 
 export function useMovementsHistory() {
@@ -340,46 +338,6 @@ export function useMovementsHistory() {
         .sort((a, b) => b.count - a.count)
         .slice(0, 5)
 
-      // Activité récente (5 derniers mouvements)
-      const { data: recentData } = await supabase
-        .from('stock_movements')
-        .select('*')
-        .order('performed_at', { ascending: false })
-        .limit(5)
-
-      let recentActivity: MovementWithDetails[] = []
-      if (recentData && recentData.length > 0) {
-        // Récupérer les IDs utilisateurs et produits pour l'activité récente
-        const recentUserIds = [...new Set(recentData.map(m => m.performed_by).filter(Boolean))]
-        const recentProductIds = [...new Set(recentData.map(m => m.product_id).filter(Boolean))]
-
-        const [recentUserProfiles, recentProducts] = await Promise.all([
-          recentUserIds.length > 0
-            ? supabase.from('user_profiles').select('user_id, first_name, last_name').in('user_id', recentUserIds)
-            : { data: [] },
-          recentProductIds.length > 0
-            ? supabase.from('products').select('id, name, sku').in('id', recentProductIds)
-            : { data: [] }
-        ])
-
-        recentActivity = recentData.map(movement => {
-          const userProfile = recentUserProfiles.data?.find(profile => profile.user_id === movement.performed_by)
-          const product = recentProducts.data?.find(prod => prod.id === movement.product_id)
-
-          return {
-            ...movement,
-            product_name: product?.name || 'Produit supprimé',
-            product_sku: product?.sku || 'SKU inconnu',
-            user_name: userProfile
-              ? `${userProfile.first_name || ''} ${userProfile.last_name || ''}`.trim()
-              : 'Utilisateur inconnu',
-            user_first_name: userProfile?.first_name,
-            user_last_name: userProfile?.last_name,
-            reason_description: movement.reason_code ? getReasonDescription(movement.reason_code) : undefined
-          }
-        })
-      }
-
       setStats({
         totalMovements: totalCount || 0,
         movementsToday: todayCount || 0,
@@ -389,8 +347,7 @@ export function useMovementsHistory() {
         realMovements: realCount || 0,
         forecastMovements: forecastCount || 0,
         topReasons,
-        topUsers,
-        recentActivity
+        topUsers
       })
 
     } catch (error) {
@@ -406,9 +363,7 @@ export function useMovementsHistory() {
 
   // Effet séparé pour les changements de filtres
   useEffect(() => {
-    if (Object.keys(filters).length > 0) {
-      fetchMovements(filters)
-    }
+    fetchMovements(filters)
   }, [JSON.stringify(filters)]) // Stabiliser avec JSON.stringify
 
   // Appliquer les filtres

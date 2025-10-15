@@ -246,28 +246,8 @@ export function MovementsFilters({ filters, onFiltersChange, onReset, hasFilters
           />
         </div>
 
-        {/* Nouveau filtre : Type mouvement (Réel vs Prévisionnel) */}
-        <div className="space-y-2">
-          <Label className="text-xs font-medium text-gray-700">Type de Mouvement</Label>
-          <Select
-            value={localFilters.affects_forecast === undefined ? 'all' : localFilters.affects_forecast ? 'forecast' : 'real'}
-            onValueChange={(value) => {
-              setLocalFilters(prev => ({
-                ...prev,
-                affects_forecast: value === 'all' ? undefined : value === 'forecast'
-              }))
-            }}
-          >
-            <SelectTrigger className="border-black">
-              <SelectValue placeholder="Tous les types" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">Tous les mouvements</SelectItem>
-              <SelectItem value="real">Mouvements Réels</SelectItem>
-              <SelectItem value="forecast">Mouvements Prévisionnels</SelectItem>
-            </SelectContent>
-          </Select>
-        </div>
+        {/* FILTRE DÉSACTIVÉ - Remplacé par Tabs au niveau de la page */}
+        {/* Type mouvement (Réel vs Prévisionnel) désormais géré par Tabs visuels */}
 
         {/* Filtre forecast_type (si prévisionnel sélectionné) */}
         {localFilters.affects_forecast === true && (

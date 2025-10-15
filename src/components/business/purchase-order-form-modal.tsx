@@ -12,6 +12,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Badge } from '@/components/ui/badge'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { CreateOrganisationModal } from './create-organisation-modal'
+import { SupplierSelector } from './supplier-selector'
 import { useOrganisations, Organisation } from '@/hooks/use-organisations'
 import { useProducts } from '@/hooks/use-products'
 import { usePurchaseOrders, CreatePurchaseOrderData, CreatePurchaseOrderItemData } from '@/hooks/use-purchase-orders'
@@ -127,8 +128,8 @@ export function PurchaseOrderFormModal({
   const totalTTC = totalHT * 1.2 // TVA 20%
 
   // Gérer le changement de fournisseur
-  const handleSupplierChange = async (supplierId: string) => {
-    setSelectedSupplierId(supplierId)
+  const handleSupplierChange = async (supplierId: string | null) => {
+    setSelectedSupplierId(supplierId || '')
 
     if (supplierId) {
       const supplier = await getOrganisationById(supplierId)
@@ -281,24 +282,16 @@ export function PurchaseOrderFormModal({
             </CardHeader>
             <CardContent className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
-                <Label htmlFor="supplier">Fournisseur *</Label>
                 <div className="flex gap-2">
                   <div className="flex-1">
-                    <Select
-                      value={selectedSupplierId}
-                      onValueChange={handleSupplierChange}
-                    >
-                      <SelectTrigger className="border-black">
-                        <SelectValue placeholder="Sélectionner un fournisseur..." />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {suppliers.map((supplier) => (
-                          <SelectItem key={supplier.id} value={supplier.id}>
-                            {supplier.name}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
+                    <SupplierSelector
+                      selectedSupplierId={selectedSupplierId || null}
+                      onSupplierChange={handleSupplierChange}
+                      disabled={loading}
+                      required={true}
+                      label="Fournisseur"
+                      placeholder="Sélectionner un fournisseur..."
+                    />
                   </div>
                   <CreateOrganisationModal
                     onOrganisationCreated={handleSupplierCreated}

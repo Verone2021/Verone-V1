@@ -1,41 +1,50 @@
 'use client'
 
-import { useState, useEffect, useMemo } from 'react'
+import { useState, useMemo, useEffect } from 'react'
 import { useSearchParams } from 'next/navigation'
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
-import { Button } from '@/components/ui/button'
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import { ButtonV2 } from '@/components/ui-v2/button'
 import { Input } from '@/components/ui/input'
 import { Badge } from '@/components/ui/badge'
 import {
   Users,
   Search,
-  Filter,
   Plus,
   Phone,
   Mail,
   MapPin,
   Eye,
-  Edit,
   Building2,
   User,
-  ShoppingCart,
-  Euro,
+  ArrowLeft,
   Archive,
-  Trash2,
   ArchiveRestore,
-  ArrowLeft
+  Trash2,
+  ExternalLink
 } from 'lucide-react'
 import Link from 'next/link'
 import { useOrganisations } from '@/hooks/use-organisations'
 import { CustomerFormModal } from '@/components/business/customer-form-modal'
-import { IndividualCustomerFormModal } from '@/components/business/individual-customer-form-modal'
+import { OrganisationLogo } from '@/components/business/organisation-logo'
+import { spacing, colors } from '@/lib/design-system'
+import { createClient } from '@/lib/supabase/client'
+import { cn } from '@/lib/utils'
 
-interface CustomerStats {
-  totalCustomers: number
-  professionalCustomers: number
-  activeCustomers: number
-  averageOrderValue: number
-  totalRevenue: number
+interface Customer {
+  id: string
+  name: string
+  email: string | null
+  phone: string | null
+  city: string | null
+  country: string | null
+  is_active: boolean
+  customer_type: 'professional' | 'individual' | null
+  logo_url: string | null
+  archived_at: string | null
+  website: string | null
+  _count?: {
+    orders: number
+  }
 }
 
 export default function CustomersPage() {
@@ -43,86 +52,123 @@ export default function CustomersPage() {
   const urlType = searchParams.get('type') as 'professional' | 'individual' | null
 
   const [searchQuery, setSearchQuery] = useState('')
-  const [showActiveOnly, setShowActiveOnly] = useState(true)
+  const [activeTab, setActiveTab] = useState<'active' | 'archived'>('active')
+  const [archivedCustomers, setArchivedCustomers] = useState<Customer[]>([])
+  const [archivedLoading, setArchivedLoading] = useState(false)
   const [isModalOpen, setIsModalOpen] = useState(false)
+  const [selectedCustomer, setSelectedCustomer] = useState<Customer | null>(null)
 
-  // Pour cette page, on force toujours le type professional si l'URL l'indique
-  const currentCustomerType = urlType === 'professional' ? 'professional' : (urlType === 'individual' ? 'individual' : undefined)
+  const typeInfo = useMemo(() => {
+    if (urlType === 'professional') {
+      return {
+        title: 'Clients Professionnels',
+        description: 'Gestion des clients professionnels B2B',
+        badgeText: 'Professionnels uniquement'
+      }
+    } else if (urlType === 'individual') {
+      return {
+        title: 'Clients Particuliers',
+        description: 'Gestion des clients particuliers B2C',
+        badgeText: 'Particuliers uniquement'
+      }
+    } else {
+      return {
+        title: 'Clients',
+        description: 'Gestion de tous les clients',
+        badgeText: null
+      }
+    }
+  }, [urlType])
 
-  // Utiliser useMemo pour stabiliser l'objet filters et éviter la boucle infinie
   const filters = useMemo(() => ({
-    type: 'customer' as const,
-    customer_type: currentCustomerType as 'all' | 'professional' | 'individual',
-    is_active: showActiveOnly ? true : undefined,
-    search: searchQuery || undefined
-  }), [currentCustomerType, showActiveOnly, searchQuery])
+    is_active: true,
+    search: searchQuery || undefined,
+    customer_type: urlType || undefined
+  }), [searchQuery, urlType])
 
   const {
     organisations: customers,
     loading,
-    error,
-    toggleOrganisationStatus,
     archiveOrganisation,
     unarchiveOrganisation,
     hardDeleteOrganisation,
     refetch
   } = useOrganisations(filters)
 
+  const filteredCustomers = useMemo(() => {
+    if (!customers) return []
+    return customers.filter(customer => customer.type === 'customer')
+  }, [customers])
 
-  // Les clients sont déjà filtrés par le hook selon customer_type
-  const filteredCustomers = customers
+  const stats = useMemo(() => {
+    const total = filteredCustomers.length
+    const active = filteredCustomers.filter(c => c.is_active).length
+    const professional = filteredCustomers.filter(c => c.customer_type === 'professional').length
+    const individual = filteredCustomers.filter(c => c.customer_type === 'individual').length
 
-  // Calculer les statistiques basées sur les clients filtrés de la page actuelle
-  const stats: CustomerStats = {
-    totalCustomers: filteredCustomers.length,
-    professionalCustomers: filteredCustomers.filter(customer =>
-      !customer.customer_type || customer.customer_type === 'professional'
-    ).length,
-    activeCustomers: filteredCustomers.filter(c => c.is_active).length,
-    averageOrderValue: 0, // À calculer avec les commandes
-    totalRevenue: 0 // À calculer avec les commandes
+    return { total, active, professional, individual }
+  }, [filteredCustomers])
+
+  const handleCreateCustomer = () => {
+    setSelectedCustomer(null)
+    setIsModalOpen(true)
   }
 
-  const getCustomerTypeInfo = (type: string) => {
-    switch (type) {
-      case 'professional':
-        return {
-          icon: <Building2 className="h-4 w-4" />,
-          label: 'Professionnel',
-          color: 'bg-blue-50 text-blue-700 border-blue-200'
-        }
-      case 'individual':
-        return {
-          icon: <User className="h-4 w-4" />,
-          label: 'Particulier',
-          color: 'bg-green-50 text-green-700 border-green-200'
-        }
-      default:
-        return {
-          icon: <User className="h-4 w-4" />,
-          label: 'Client',
-          color: 'bg-gray-50 text-gray-700 border-gray-200'
-        }
+  const handleCloseModal = () => {
+    setIsModalOpen(false)
+    setSelectedCustomer(null)
+  }
+
+  const handleCustomerSuccess = () => {
+    refetch()
+    handleCloseModal()
+  }
+
+  const loadArchivedCustomersData = async () => {
+    setArchivedLoading(true)
+    try {
+      const supabase = createClient()
+      const { data, error } = await supabase
+        .from('organisations')
+        .select('*')
+        .eq('type', 'customer')
+        .not('archived_at', 'is', null)
+        .order('archived_at', { ascending: false })
+
+      if (error) throw error
+      setArchivedCustomers((data || []) as Customer[])
+    } catch (err) {
+      console.error('Erreur chargement clients archivés:', err)
+    } finally {
+      setArchivedLoading(false)
     }
   }
 
-  const handleArchive = async (customer: any) => {
+  useEffect(() => {
+    if (activeTab === 'archived') {
+      loadArchivedCustomersData()
+    }
+  }, [activeTab])
+
+  const handleArchive = async (customer: Customer) => {
     if (!customer.archived_at) {
-      // Archiver
       const success = await archiveOrganisation(customer.id)
       if (success) {
-        console.log('✅ Client archivé avec succès')
+        refetch()
+        if (activeTab === 'archived') {
+          await loadArchivedCustomersData()
+        }
       }
     } else {
-      // Restaurer
       const success = await unarchiveOrganisation(customer.id)
       if (success) {
-        console.log('✅ Client restauré avec succès')
+        refetch()
+        await loadArchivedCustomersData()
       }
     }
   }
 
-  const handleDelete = async (customer: any) => {
+  const handleDelete = async (customer: Customer) => {
     const confirmed = confirm(
       `Êtes-vous sûr de vouloir supprimer définitivement "${customer.name}" ?\n\nCette action est irréversible !`
     )
@@ -130,286 +176,317 @@ export default function CustomersPage() {
     if (confirmed) {
       const success = await hardDeleteOrganisation(customer.id)
       if (success) {
-        console.log('✅ Client supprimé définitivement')
+        await loadArchivedCustomersData()
       }
     }
   }
 
+  const displayedCustomers = activeTab === 'active' ? filteredCustomers : archivedCustomers
+  const isLoading = activeTab === 'active' ? loading : archivedLoading
+
   return (
     <div className="container mx-auto p-6 space-y-6">
       {/* Header */}
-      <div className="flex justify-between items-start">
+      <div className="flex justify-between items-start" style={{ marginBottom: spacing[6] }}>
         <div>
           <div className="flex items-center gap-2 mb-2">
             <Link href="/contacts-organisations">
-              <Button variant="ghost" size="sm">
-                <ArrowLeft className="h-4 w-4 mr-1" />
+              <ButtonV2 variant="ghost" size="sm" icon={ArrowLeft}>
                 Organisations
-              </Button>
+              </ButtonV2>
             </Link>
           </div>
-          <h1 className="text-3xl font-semibold text-black">
-            {urlType === 'professional' ? 'Clients Professionnels' :
-             urlType === 'individual' ? 'Clients Particuliers' : 'Clients'}
+          <h1 className="text-3xl font-semibold" style={{ color: colors.text.DEFAULT }}>
+            {typeInfo.title}
           </h1>
-          <p className="text-gray-600 mt-2">
-            {urlType === 'professional' ? 'Gestion des clients professionnels B2B' :
-             urlType === 'individual' ? 'Gestion des clients particuliers B2C' :
-             'Gestion de tous les clients'}
+          <p className="mt-2" style={{ color: colors.text.subtle }}>
+            {typeInfo.description}
           </p>
-          {urlType && (
+          {typeInfo.badgeText && (
             <div className="mt-2">
-              <Badge variant="outline" className="bg-blue-50 text-blue-700 border-blue-200">
-                Filtré: {urlType === 'professional' ? 'Professionnels uniquement' : 'Particuliers uniquement'}
+              <Badge variant="outline" style={{ backgroundColor: colors.primary[50], color: colors.primary[700], borderColor: colors.primary[200] }}>
+                Filtré: {typeInfo.badgeText}
               </Badge>
             </div>
           )}
         </div>
-        <Button
-          className="bg-black text-white hover:bg-gray-800"
-          onClick={() => setIsModalOpen(true)}
-        >
-          <Plus className="h-4 w-4 mr-2" />
+        <ButtonV2 variant="primary" onClick={handleCreateCustomer} icon={Plus}>
           Nouveau Client
-        </Button>
+        </ButtonV2>
       </div>
 
       {/* Stats */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+      <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
         <Card>
-          <CardContent className="p-4">
-            <div className="text-2xl font-bold text-black">{stats.totalCustomers}</div>
-            <p className="text-sm text-gray-600">Total clients</p>
+          <CardContent style={{ padding: spacing[4] }}>
+            <div className="text-2xl font-bold" style={{ color: colors.text.DEFAULT }}>
+              {stats.total}
+            </div>
+            <p className="text-sm" style={{ color: colors.text.subtle }}>
+              Total clients
+            </p>
           </CardContent>
         </Card>
         <Card>
-          <CardContent className="p-4">
-            <div className="text-2xl font-bold text-green-600">
-              {stats.activeCustomers}
+          <CardContent style={{ padding: spacing[4] }}>
+            <div className="text-2xl font-bold" style={{ color: colors.success[500] }}>
+              {stats.active}
             </div>
-            <p className="text-sm text-gray-600">Actifs</p>
+            <p className="text-sm" style={{ color: colors.text.subtle }}>
+              Actifs
+            </p>
           </CardContent>
         </Card>
         <Card>
-          <CardContent className="p-4">
-            <div className="text-2xl font-bold text-blue-600">
-              {stats.professionalCustomers}
+          <CardContent style={{ padding: spacing[4] }}>
+            <div className="text-2xl font-bold" style={{ color: colors.primary[500] }}>
+              {stats.professional}
             </div>
-            <p className="text-sm text-gray-600">Professionnels</p>
+            <p className="text-sm" style={{ color: colors.text.subtle }}>
+              Professionnels
+            </p>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardContent style={{ padding: spacing[4] }}>
+            <div className="text-2xl font-bold" style={{ color: colors.accent[500] }}>
+              {stats.individual}
+            </div>
+            <p className="text-sm" style={{ color: colors.text.subtle }}>
+              Particuliers
+            </p>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardContent style={{ padding: spacing[4] }}>
+            <div className="text-2xl font-bold" style={{ color: colors.text.DEFAULT }}>
+              {archivedCustomers.length}
+            </div>
+            <p className="text-sm" style={{ color: colors.text.subtle }}>
+              Archivés
+            </p>
           </CardContent>
         </Card>
       </div>
 
-      {/* Filters */}
+      {/* Tabs Actifs/Archivés */}
+      <div className="flex items-center gap-2" style={{ marginBottom: spacing[4] }}>
+        <button
+          onClick={() => setActiveTab('active')}
+          className={cn(
+            'px-4 py-2 rounded-lg text-sm font-medium transition-all',
+            activeTab === 'active'
+              ? 'bg-black text-white'
+              : 'bg-neutral-100 text-neutral-700 hover:bg-neutral-200'
+          )}
+        >
+          Actifs
+          <span className="ml-2 opacity-70">({filteredCustomers.length})</span>
+        </button>
+
+        <button
+          onClick={() => setActiveTab('archived')}
+          className={cn(
+            'px-4 py-2 rounded-lg text-sm font-medium transition-all',
+            activeTab === 'archived'
+              ? 'bg-black text-white'
+              : 'bg-neutral-100 text-neutral-700 hover:bg-neutral-200'
+          )}
+        >
+          Archivés
+          <span className="ml-2 opacity-70">({archivedCustomers.length})</span>
+        </button>
+      </div>
+
+      {/* Search */}
       <Card>
-        <CardContent className="p-4">
-          <div className="flex flex-col md:flex-row gap-4">
-            <div className="flex-1">
-              <div className="relative">
-                <Search className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
-                <Input
-                  placeholder="Rechercher par nom ou email..."
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  className="pl-10"
-                />
-              </div>
-            </div>
-            <div className="flex gap-2">
-              <Button
-                variant={showActiveOnly ? 'default' : 'outline'}
-                onClick={() => setShowActiveOnly(!showActiveOnly)}
-                size="sm"
-              >
-                <Filter className="h-4 w-4 mr-2" />
-                {showActiveOnly ? 'Actifs uniquement' : 'Tous'}
-              </Button>
-            </div>
+        <CardContent style={{ padding: spacing[4] }}>
+          <div className="relative">
+            <Search
+              className="absolute left-3 top-3 h-4 w-4"
+              style={{ color: colors.text.muted }}
+            />
+            <Input
+              placeholder="Rechercher par nom..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="pl-10"
+              style={{ borderColor: colors.border.DEFAULT, color: colors.text.DEFAULT }}
+            />
           </div>
         </CardContent>
       </Card>
 
-      {/* Clients List */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        {loading ? (
-          Array.from({ length: 6 }).map((_, i) => (
+      {/* Customers Grid - 4-5 par ligne, cartes compactes */}
+      <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-3">
+        {isLoading ? (
+          Array.from({ length: 10 }).map((_, i) => (
             <Card key={i} className="animate-pulse">
-              <CardHeader>
-                <div className="h-6 bg-gray-200 rounded w-3/4"></div>
-                <div className="h-4 bg-gray-200 rounded w-1/2"></div>
+              <CardHeader style={{ padding: spacing[2] }}>
+                <div className="h-4 bg-gray-200 rounded w-3/4"></div>
               </CardHeader>
-              <CardContent>
-                <div className="space-y-2">
-                  <div className="h-4 bg-gray-200 rounded w-full"></div>
-                  <div className="h-4 bg-gray-200 rounded w-2/3"></div>
-                </div>
+              <CardContent style={{ padding: spacing[2] }}>
+                <div className="h-3 bg-gray-200 rounded w-full mb-2"></div>
+                <div className="h-3 bg-gray-200 rounded w-2/3"></div>
               </CardContent>
             </Card>
           ))
         ) : (
-          filteredCustomers.map((customer) => {
-            const typeInfo = getCustomerTypeInfo(customer.customer_type || 'individual')
-
-            return (
-              <Card key={customer.id} className="hover:shadow-lg transition-shadow" data-testid="customer-card">
-                <CardHeader>
-                  <div className="flex justify-between items-start">
-                    <div className="flex-1">
-                      <CardTitle className="text-lg text-black flex items-center gap-2" data-testid="customer-name">
-                        {typeInfo.icon}
+          displayedCustomers.map((customer) => (
+            <Card key={customer.id} className="hover:shadow-md transition-shadow" data-testid="customer-card">
+              <CardHeader style={{ padding: spacing[2] }}>
+                <div className="flex justify-between items-start gap-2">
+                  <CardTitle className="text-sm font-medium flex items-center gap-1.5 flex-1 min-w-0">
+                    <OrganisationLogo
+                      logoUrl={customer.logo_url}
+                      organisationName={customer.name}
+                      size="sm"
+                      fallback="initials"
+                      className="flex-shrink-0"
+                    />
+                    {customer.website ? (
+                      <a
+                        href={customer.website}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="hover:underline truncate flex items-center gap-1"
+                        style={{ color: colors.text.DEFAULT }}
+                        data-testid="customer-name"
+                      >
+                        <span className="truncate">{customer.name}</span>
+                        <ExternalLink className="h-3 w-3 flex-shrink-0 opacity-60" />
+                      </a>
+                    ) : (
+                      <span className="truncate" style={{ color: colors.text.DEFAULT }} data-testid="customer-name">
                         {customer.name}
-                      </CardTitle>
-                      <CardDescription className="text-sm">
-                        ID: {customer.id.slice(0, 8)}...
-                      </CardDescription>
-                    </div>
-                    <div className="flex flex-col gap-1">
-                      <Badge
-                        variant={customer.is_active ? 'default' : 'secondary'}
-                        className={customer.is_active ? 'bg-green-100 text-green-800' : ''}
-                      >
-                        {customer.is_active ? 'Actif' : 'Inactif'}
-                      </Badge>
-                      {customer.archived_at && (
-                        <Badge variant="destructive" className="bg-red-100 text-red-800 text-xs">
-                          Archivé
-                        </Badge>
-                      )}
-                      <Badge variant="outline" className={typeInfo.color}>
-                        {typeInfo.label}
-                      </Badge>
-                    </div>
-                  </div>
-                </CardHeader>
-
-                <CardContent className="space-y-4">
-                  {/* Contact Info */}
-                  <div className="space-y-2">
-                    {customer.email && (
-                      <div className="flex items-center gap-2 text-sm text-gray-600">
-                        <Mail className="h-4 w-4" />
-                        <span className="truncate">{customer.email}</span>
-                      </div>
+                      </span>
                     )}
+                  </CardTitle>
+                  {customer.archived_at && (
+                    <Badge
+                      variant="destructive"
+                      className="text-xs flex-shrink-0"
+                      style={{ backgroundColor: colors.danger[100], color: colors.danger[700] }}
+                    >
+                      Archivé
+                    </Badge>
+                  )}
+                </div>
+              </CardHeader>
 
-                    {customer.phone && (
-                      <div className="flex items-center gap-2 text-sm text-gray-600">
-                        <Phone className="h-4 w-4" />
-                        {customer.phone}
-                      </div>
-                    )}
+              <CardContent className="space-y-1.5" style={{ padding: spacing[2] }}>
+                {/* Type client badge */}
+                {customer.customer_type && (
+                  <div className="flex items-center gap-1.5 pb-1.5">
+                    <Badge
+                      variant="outline"
+                      className="text-xs"
+                      style={{
+                        backgroundColor: customer.customer_type === 'professional' ? colors.primary[50] : colors.accent[50],
+                        color: customer.customer_type === 'professional' ? colors.primary[700] : colors.accent[700],
+                        borderColor: customer.customer_type === 'professional' ? colors.primary[200] : colors.accent[200]
+                      }}
+                    >
+                      {customer.customer_type === 'professional' ? 'B2B' : 'B2C'}
+                    </Badge>
                   </div>
+                )}
 
-                  {/* Location */}
-                  <div className="space-y-2">
-                    {(customer.city || customer.country) && (
-                      <div className="flex items-center gap-2 text-sm text-gray-600">
-                        <MapPin className="h-4 w-4" />
-                        <span className="truncate">
-                          {[customer.city, customer.country].filter(Boolean).join(', ')}
-                        </span>
-                      </div>
-                    )}
+                {/* Pays uniquement */}
+                {customer.country && (
+                  <div className="flex items-center gap-1.5 text-xs" style={{ color: colors.text.subtle }}>
+                    <MapPin className="h-3 w-3 flex-shrink-0" />
+                    <span className="truncate">{customer.country}</span>
                   </div>
+                )}
 
-                  {/* Actions */}
-                  <div className="pt-4 border-t">
-                    <div className="flex gap-2 flex-wrap">
-                      {/* 1. Archiver/Restaurer */}
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => handleArchive(customer)}
-                        className={`flex-1 min-w-0 ${customer.archived_at ? "text-blue-600 border-blue-200 hover:bg-blue-50" : "text-black border-gray-200 hover:bg-gray-50"}`}
-                      >
-                        {customer.archived_at ? (
-                          <>
-                            <ArchiveRestore className="h-4 w-4 mr-1" />
-                            Restaurer
-                          </>
-                        ) : (
-                          <>
-                            <Archive className="h-4 w-4 mr-1" />
-                            Archiver
-                          </>
-                        )}
-                      </Button>
+                {/* Actions - Button Group Horizontal */}
+                <div className="pt-1.5 border-t flex items-center gap-1" style={{ borderColor: colors.border.DEFAULT }}>
+                  {activeTab === 'active' ? (
+                    <>
+                      {/* Onglet Actifs: Voir détails + Archive icon */}
+                      <Link href={`/contacts-organisations/customers/${customer.id}`} className="flex-1">
+                        <ButtonV2 variant="ghost" size="sm" className="w-full text-xs">
+                          Voir détails
+                        </ButtonV2>
+                      </Link>
 
-                      {/* 2. Supprimer */}
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => handleDelete(customer)}
-                        className="flex-1 min-w-0 text-red-600 border-red-200 hover:bg-red-50"
-                      >
-                        <Trash2 className="h-4 w-4 mr-1" />
-                        Supprimer
-                      </Button>
-
-                      {/* 3. Voir détails */}
-                      <Button
+                      <ButtonV2
                         variant="ghost"
                         size="sm"
-                        className="flex-1 min-w-0"
-                        data-testid="customer-actions"
-                        asChild
-                      >
-                        <Link href={`/contacts-organisations/customers/${customer.id}`}>
+                        onClick={() => handleArchive(customer)}
+                        icon={Archive}
+                        className="px-2 text-xs"
+                        aria-label="Archiver"
+                      />
+                    </>
+                  ) : (
+                    <>
+                      {/* Onglet Archivés: Icons + Voir détails */}
+                      <ButtonV2
+                        variant="secondary"
+                        size="sm"
+                        onClick={() => handleArchive(customer)}
+                        icon={ArchiveRestore}
+                        className="px-2 text-xs"
+                        aria-label="Restaurer"
+                      />
+
+                      <ButtonV2
+                        variant="danger"
+                        size="sm"
+                        onClick={() => handleDelete(customer)}
+                        icon={Trash2}
+                        className="px-2 text-xs"
+                        aria-label="Supprimer"
+                      />
+
+                      <Link href={`/contacts-organisations/customers/${customer.id}`} className="flex-1">
+                        <ButtonV2 variant="ghost" size="sm" className="w-full text-xs">
                           Voir détails
-                        </Link>
-                      </Button>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-            )
-          })
+                        </ButtonV2>
+                      </Link>
+                    </>
+                  )}
+                </div>
+              </CardContent>
+            </Card>
+          ))
         )}
       </div>
 
-      {filteredCustomers.length === 0 && !loading && (
+      {displayedCustomers.length === 0 && !isLoading && (
         <Card>
-          <CardContent className="p-8 text-center">
-            <Users className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-            <h3 className="text-lg font-medium text-black mb-2">
+          <CardContent className="text-center" style={{ padding: spacing[8] }}>
+            <Building2 className="h-12 w-12 mx-auto mb-4" style={{ color: colors.text.muted }} />
+            <h3 className="text-lg font-medium mb-2" style={{ color: colors.text.DEFAULT }}>
               Aucun client trouvé
             </h3>
-            <p className="text-gray-600 mb-4">
+            <p className="mb-4" style={{ color: colors.text.subtle }}>
               {searchQuery
                 ? 'Aucun client ne correspond à votre recherche.'
-                : 'Commencez par créer votre premier client.'
+                : activeTab === 'active'
+                  ? 'Commencez par créer votre premier client.'
+                  : 'Aucun client archivé.'
               }
             </p>
-            <Button
-              className="bg-black text-white hover:bg-gray-800"
-            >
-              <Plus className="h-4 w-4 mr-2" />
-              Créer un client
-            </Button>
+            {activeTab === 'active' && (
+              <ButtonV2 variant="primary" onClick={handleCreateCustomer} icon={Plus}>
+                Créer un client
+              </ButtonV2>
+            )}
           </CardContent>
         </Card>
       )}
 
-      {/* Customer Form Modal - Professional or Individual based on URL type */}
-      {urlType === 'individual' ? (
-        <IndividualCustomerFormModal
-          isOpen={isModalOpen}
-          onClose={() => setIsModalOpen(false)}
-          onCustomerCreated={() => {
-            setIsModalOpen(false)
-            refetch()
-          }}
-        />
-      ) : (
-        <CustomerFormModal
-          isOpen={isModalOpen}
-          onClose={() => setIsModalOpen(false)}
-          onCustomerCreated={() => {
-            setIsModalOpen(false)
-            refetch()
-          }}
-        />
-      )}
+      <CustomerFormModal
+        isOpen={isModalOpen}
+        onClose={handleCloseModal}
+        onCustomerCreated={handleCustomerSuccess}
+        onCustomerUpdated={handleCustomerSuccess}
+        customer={selectedCustomer as any}
+        mode={selectedCustomer ? 'edit' : 'create'}
+      />
     </div>
   )
 }

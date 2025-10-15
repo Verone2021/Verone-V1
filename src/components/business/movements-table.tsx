@@ -20,9 +20,10 @@ interface MovementsTableProps {
   loading: boolean
   onMovementClick?: (movement: MovementWithDetails) => void
   onCancelClick?: (movement: MovementWithDetails) => void
+  onOrderClick?: (orderId: string, orderType: 'sales' | 'purchase') => void
 }
 
-export function MovementsTable({ movements, loading, onMovementClick, onCancelClick }: MovementsTableProps) {
+export function MovementsTable({ movements, loading, onMovementClick, onCancelClick, onOrderClick }: MovementsTableProps) {
   const formatDate = (dateString: string) => {
     const date = new Date(dateString)
     const now = new Date()
@@ -276,10 +277,12 @@ export function MovementsTable({ movements, loading, onMovementClick, onCancelCl
               {/* Commande Liée */}
               <TableCell>
                 {movement.reference_type === 'sales_order' && movement.reference_id ? (
-                  <Link
-                    href={`/ventes/commandes?highlight=${movement.reference_id}`}
-                    onClick={(e) => e.stopPropagation()}
-                    className="text-sm text-blue-600 hover:underline flex items-center gap-1"
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation()
+                      onOrderClick?.(movement.reference_id!, 'sales')
+                    }}
+                    className="text-sm text-blue-600 hover:underline flex items-center gap-1 cursor-pointer bg-transparent border-none p-0"
                   >
                     <span>Commande Client</span>
                     {movement.affects_forecast && (
@@ -287,12 +290,14 @@ export function MovementsTable({ movements, loading, onMovementClick, onCancelCl
                         Prév. {movement.forecast_type?.toUpperCase()}
                       </Badge>
                     )}
-                  </Link>
+                  </button>
                 ) : movement.reference_type === 'purchase_order' && movement.reference_id ? (
-                  <Link
-                    href={`/achats/commandes?highlight=${movement.reference_id}`}
-                    onClick={(e) => e.stopPropagation()}
-                    className="text-sm text-green-600 hover:underline flex items-center gap-1"
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation()
+                      onOrderClick?.(movement.reference_id!, 'purchase')
+                    }}
+                    className="text-sm text-green-600 hover:underline flex items-center gap-1 cursor-pointer bg-transparent border-none p-0"
                   >
                     <span>Commande Fournisseur</span>
                     {movement.affects_forecast && (
@@ -300,7 +305,7 @@ export function MovementsTable({ movements, loading, onMovementClick, onCancelCl
                         Prév. {movement.forecast_type?.toUpperCase()}
                       </Badge>
                     )}
-                  </Link>
+                  </button>
                 ) : (
                   <span className="text-xs text-gray-400">-</span>
                 )}

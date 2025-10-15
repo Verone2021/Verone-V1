@@ -2,7 +2,8 @@
 
 import { use, useState, useCallback, useEffect, useRef } from 'react'
 import { useRouter } from 'next/navigation'
-import { ChevronLeft, Package, Calendar, Edit3, Plus, X, Eye, Palette, Ruler, Layers, Settings, Home } from 'lucide-react'
+import Link from 'next/link'
+import { ChevronLeft, Package, Calendar, Edit3, Plus, X, Eye, Palette, Ruler, Layers, Settings, Home, ExternalLink } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
@@ -651,9 +652,12 @@ export default function VariantGroupDetailPage({ params }: VariantGroupDetailPag
                 Fournisseur commun
               </label>
               <div className="flex items-center gap-2">
-                <Badge variant="outline" className="bg-blue-50 text-blue-700 border-blue-200">
-                  🏢 {variantGroup.supplier.name}
-                </Badge>
+                <Link href={`/contacts-organisations/suppliers/${variantGroup.supplier.id}`}>
+                  <Badge variant="outline" className="bg-blue-50 text-blue-700 border-blue-200 hover:bg-blue-100 cursor-pointer transition-colors flex items-center gap-1.5">
+                    🏢 {variantGroup.supplier.name}
+                    <ExternalLink className="h-3 w-3 opacity-60" />
+                  </Badge>
+                </Link>
                 <span className="text-xs text-gray-600">
                   (appliqué automatiquement à tous les produits du groupe)
                 </span>

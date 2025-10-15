@@ -167,12 +167,23 @@ const enriched = data.map(p => ({
 // ❌ INTERDIT: products.primary_image_url (colonne supprimée)
 ```
 
-### Design System Vérone
-```css
---verone-primary: #000000    /* Noir signature */
---verone-secondary: #FFFFFF  /* Blanc pur */
---verone-accent: #666666     /* Gris élégant */
-/* ❌ INTERDIT: jaune/doré/ambre */
+### Design System Vérone V2 (2025)
+```typescript
+// Palette Moderne 2025 - Inspirée Odoo, Figma, Dribbble, shadcn/ui
+--verone-primary: #3b86d1      /* Bleu professionnel */
+--verone-success: #38ce3c      /* Vert validation */
+--verone-warning: #ff9b3e      /* Orange attention */
+--verone-accent: #844fc1       /* Violet créatif */
+--verone-danger: #ff4d6b       /* Rouge critique */
+--verone-neutral: #6c7293      /* Gris interface */
+
+// 📁 Fichiers Design System V2:
+// src/lib/design-system/       → Tokens, themes, utils
+// src/lib/theme-v2.ts          → Thème complet avec gradients
+// src/components/ui-v2/        → Composants modernes (Button, KPI Cards, etc.)
+
+// ✅ Couleurs vives et gradients autorisés
+// ✅ Tendances 2025: Rounded corners, micro-interactions, shadows élégantes
 ```
 
 ---

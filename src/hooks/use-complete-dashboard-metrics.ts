@@ -3,6 +3,8 @@
  * Combine données réelles Phase 1 + données réelles Phase 2 (Stock/Commandes)
  */
 
+import { useEffect, useState } from 'react'
+import { createClient } from '@/lib/supabase/client'
 import { useRealDashboardMetrics } from './use-real-dashboard-metrics'
 import { useOrganisations } from './use-organisations'
 import { useStockOrdersMetrics } from './use-stock-orders-metrics'
@@ -77,6 +79,36 @@ export function useCompleteDashboardMetrics() {
     isLoading: stockOrdersLoading
   } = useStockOrdersMetrics()
 
+  // État pour salesOrders
+  const [salesOrdersCount, setSalesOrdersCount] = useState<number>(0)
+  const [salesOrdersLoading, setSalesOrdersLoading] = useState(true)
+
+  // Charger le comptage des commandes de vente
+  useEffect(() => {
+    const fetchSalesOrders = async () => {
+      try {
+        setSalesOrdersLoading(true)
+        const supabase = createClient()
+
+        const { count, error } = await supabase
+          .from('sales_orders')
+          .select('id', { count: 'exact', head: true })
+
+        if (error) {
+          console.error('Erreur comptage sales_orders:', error)
+        } else {
+          setSalesOrdersCount(count || 0)
+        }
+      } catch (err) {
+        console.error('Erreur chargement sales_orders:', err)
+      } finally {
+        setSalesOrdersLoading(false)
+      }
+    }
+
+    fetchSalesOrders()
+  }, [])
+
   // Calcul statistiques organisations (excluant particuliers)
   const organisationsOnly = organisations.filter(o =>
     o.type !== 'customer' || (o.type === 'customer' && o.customer_type !== 'individual')
@@ -100,7 +132,7 @@ export function useCompleteDashboardMetrics() {
 
   const ordersData = {
     purchaseOrders: stockOrdersMetrics?.purchase_orders_count || 0,
-    salesOrders: 0, // TODO #VERONE-ORDERS-001: Implémenter comptage commandes vente
+    salesOrders: salesOrdersCount, // ✅ Données réelles depuis Supabase
     monthRevenue: stockOrdersMetrics?.month_revenue || 0
   }
 
@@ -135,12 +167,12 @@ export function useCompleteDashboardMetrics() {
     }
   }
 
-  const isLoading = catalogueLoading || organisationsLoading || stockOrdersLoading
+  const isLoading = catalogueLoading || organisationsLoading || stockOrdersLoading || salesOrdersLoading
   const error = catalogueError
 
   return {
     metrics,
-    isLoading,
+    isLoading: isLoading,
     error
   }
 }

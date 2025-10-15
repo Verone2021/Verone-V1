@@ -3,6 +3,24 @@
 import { useState, useEffect, useRef } from 'react'
 import { createClient } from '@/lib/supabase/client'
 
+/**
+ * @deprecated HOOK OBSOLÈTE - Utiliser useOrganisations({ type: 'supplier' }) à la place
+ *
+ * Ce hook charge depuis l'ancienne table `suppliers` qui est dépréciée.
+ * La nouvelle architecture utilise la table `organisations` avec type='supplier'.
+ *
+ * ⚠️ PROBLÈME: Les IDs de cette table ne correspondent PAS aux foreign keys
+ * qui pointent vers `organisations` (ex: variant_groups.supplier_id)
+ *
+ * Migration recommandée:
+ * ```tsx
+ * // AVANT
+ * const { suppliers } = useSuppliers()
+ *
+ * // APRÈS
+ * const { organisations: suppliers } = useOrganisations({ type: 'supplier', is_active: true })
+ * ```
+ */
 export interface Supplier {
   id: string
   name: string
@@ -12,7 +30,11 @@ export interface Supplier {
   is_active?: boolean
 }
 
+/**
+ * @deprecated Utiliser useOrganisations({ type: 'supplier' }) à la place
+ */
 export function useSuppliers() {
+  console.warn('⚠️ useSuppliers() est DEPRECATED - Utiliser useOrganisations({ type: "supplier" }) à la place')
   const [suppliers, setSuppliers] = useState<Supplier[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)

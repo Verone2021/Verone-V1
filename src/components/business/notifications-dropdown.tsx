@@ -1,22 +1,22 @@
 /**
- * NotificationsDropdown - Panneau déroulant notifications système
- * Affichage des notifications depuis la base de données avec actions CRUD
+ * NotificationsDropdown - Panneau déroulant notifications système V2
+ * Design System 2025 - Minimaliste, élégant, professionnel
  *
- * Phase 1: UI Panel Notifications
- * - Liste scrollable avec max 5 visibles
- * - Marquer comme lu (individuel + tout)
- * - Supprimer notification
- * - État vide si aucune notification
+ * Refonte complète :
+ * - ButtonV2 avec micro-interactions
+ * - Badges minimalistes sans emojis
+ * - Typography hiérarchisée
+ * - Spacing Design System tokens
+ * - Phrases claires et professionnelles
  */
 
 'use client';
 
-import { Bell, Check, Trash2, CheckCheck, X } from 'lucide-react';
-import { Button } from '@/components/ui/button';
+import { Bell, Check, Trash2, CheckCheck, AlertCircle, CheckCircle, Info, ExternalLink } from 'lucide-react';
+import { ButtonV2 } from '@/components/ui-v2/button';
 import {
   DropdownMenu,
   DropdownMenuContent,
-  DropdownMenuItem,
   DropdownMenuLabel,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
@@ -27,48 +27,68 @@ import { useNotifications, type Notification } from '@/hooks/use-notifications';
 import { formatDistanceToNow } from 'date-fns';
 import { fr } from 'date-fns/locale';
 import { cn } from '@/lib/utils';
+import { spacing, colors } from '@/lib/design-system';
 
 /**
- * Badge de sévérité coloré selon le type de notification
+ * Badge de sévérité - Style minimaliste Design System V2
+ * Suppression des emojis, design professionnel
  */
 const SeverityBadge = ({ severity }: { severity: Notification['severity'] }) => {
   const variants = {
-    urgent: 'bg-red-500 text-white',
-    important: 'bg-orange-500 text-white',
-    info: 'bg-blue-500 text-white',
+    urgent: {
+      className: 'bg-red-500/10 text-red-700 border border-red-200',
+      label: 'Urgent'
+    },
+    important: {
+      className: 'bg-orange-500/10 text-orange-700 border border-orange-200',
+      label: 'Important'
+    },
+    info: {
+      className: 'bg-blue-500/10 text-blue-700 border border-blue-200',
+      label: 'Info'
+    },
   };
 
-  const labels = {
-    urgent: '🚨 Urgent',
-    important: '⚠️ Important',
-    info: '💡 Info',
-  };
+  const config = variants[severity];
 
   return (
-    <Badge className={cn('text-xs', variants[severity])}>
-      {labels[severity]}
+    <Badge className={cn('text-xs font-medium px-2 py-0.5', config.className)}>
+      {config.label}
     </Badge>
   );
 };
 
 /**
- * Icône selon le type de notification
+ * Icône selon le type de notification - Lucide icons professionnels
+ * Remplacement des emojis par des icônes React
  */
-const NotificationIcon = ({ type }: { type: Notification['type'] }) => {
-  const icons = {
-    system: '🔧',
-    business: '💼',
-    catalog: '📦',
-    operations: '⚙️',
-    performance: '📈',
-    maintenance: '🛠️',
-  };
+const NotificationIcon = ({ type, severity }: { type: Notification['type']; severity: Notification['severity'] }) => {
+  // Couleur selon sévérité
+  const colorClass = {
+    urgent: 'text-red-600',
+    important: 'text-orange-600',
+    info: 'text-blue-600',
+  }[severity];
 
-  return <span className="text-lg">{icons[type]}</span>;
+  // Icône selon type
+  const IconComponent = {
+    system: Info,
+    business: CheckCircle,
+    catalog: Info,
+    operations: Info,
+    performance: Info,
+    maintenance: AlertCircle,
+  }[type];
+
+  return (
+    <div className={cn('flex items-center justify-center w-8 h-8 rounded-lg', colorClass, 'bg-current/10')}>
+      <IconComponent className={cn('h-4 w-4', colorClass)} />
+    </div>
+  );
 };
 
 /**
- * Item notification individuel
+ * Item notification individuel - Refonte Design System V2
  */
 interface NotificationItemProps {
   notification: Notification;
@@ -85,67 +105,97 @@ const NotificationItem = ({ notification, onMarkAsRead, onDelete }: Notification
   return (
     <div
       className={cn(
-        'group relative p-3 border-b last:border-b-0 hover:bg-gray-50 transition-colors',
+        'group relative transition-all duration-200',
+        'border-b last:border-b-0',
+        'hover:bg-neutral-50',
         !notification.read && 'bg-blue-50/30'
       )}
+      style={{
+        padding: spacing[4], // Design System: 16px
+      }}
     >
       {/* Badge "non lu" */}
       {!notification.read && (
-        <div className="absolute top-2 right-2 w-2 h-2 bg-blue-500 rounded-full" />
+        <div
+          className="absolute top-4 right-4 w-2 h-2 rounded-full"
+          style={{ backgroundColor: colors.primary[500] }}
+        />
       )}
 
-      {/* En-tête: icône + sévérité */}
-      <div className="flex items-start gap-2 mb-2">
-        <NotificationIcon type={notification.type} />
-        <div className="flex-1">
-          <div className="flex items-center justify-between gap-2">
-            <h4 className="font-medium text-sm">{notification.title}</h4>
+      {/* Layout principal */}
+      <div className="flex items-start gap-3">
+        {/* Icône */}
+        <NotificationIcon type={notification.type} severity={notification.severity} />
+
+        {/* Contenu */}
+        <div className="flex-1 min-w-0">
+          {/* En-tête: titre + sévérité */}
+          <div className="flex items-start justify-between gap-2 mb-1">
+            <h4
+              className="font-semibold text-[15px] leading-tight"
+              style={{ color: colors.text.DEFAULT }}
+            >
+              {notification.title}
+            </h4>
             <SeverityBadge severity={notification.severity} />
           </div>
-          <p className="text-xs text-gray-500 mt-1">{timeAgo}</p>
-        </div>
-      </div>
 
-      {/* Message */}
-      <p className="text-sm text-gray-700 mb-2 pl-7">{notification.message}</p>
-
-      {/* Actions: Action URL + Mark Read + Delete */}
-      <div className="flex items-center gap-2 pl-7">
-        {notification.action_url && notification.action_label && (
-          <Button
-            size="sm"
-            variant="link"
-            className="h-auto p-0 text-xs"
-            onClick={() => {
-              window.location.href = notification.action_url!;
-            }}
+          {/* Timestamp */}
+          <p
+            className="text-xs mb-2"
+            style={{ color: colors.text.tertiary }}
           >
-            {notification.action_label} →
-          </Button>
-        )}
+            {timeAgo}
+          </p>
 
-        <div className="ml-auto flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-          {!notification.read && (
-            <Button
-              size="sm"
-              variant="ghost"
-              className="h-6 w-6 p-0"
-              title="Marquer comme lu"
-              onClick={() => onMarkAsRead(notification.id)}
-            >
-              <Check className="h-3 w-3" />
-            </Button>
-          )}
-
-          <Button
-            size="sm"
-            variant="ghost"
-            className="h-6 w-6 p-0 text-red-500 hover:text-red-700 hover:bg-red-50"
-            title="Supprimer"
-            onClick={() => onDelete(notification.id)}
+          {/* Message */}
+          <p
+            className="text-sm leading-relaxed mb-3"
+            style={{ color: colors.text.secondary }}
           >
-            <Trash2 className="h-3 w-3" />
-          </Button>
+            {notification.message}
+          </p>
+
+          {/* Actions */}
+          <div className="flex items-center gap-2">
+            {/* Bouton action principale */}
+            {notification.action_url && notification.action_label && (
+              <ButtonV2
+                variant="primary"
+                size="sm"
+                icon={ExternalLink}
+                iconPosition="right"
+                onClick={() => {
+                  window.location.href = notification.action_url!;
+                }}
+              >
+                {notification.action_label}
+              </ButtonV2>
+            )}
+
+            {/* Actions secondaires (hover) */}
+            <div className="ml-auto flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+              {!notification.read && (
+                <ButtonV2
+                  variant="ghost"
+                  size="sm"
+                  icon={Check}
+                  className="h-8 w-8 p-0"
+                  title="Marquer comme lu"
+                  onClick={() => onMarkAsRead(notification.id)}
+                />
+              )}
+
+              <ButtonV2
+                variant="ghost"
+                size="sm"
+                icon={Trash2}
+                className="h-8 w-8 p-0 text-red-500 hover:text-red-700 hover:bg-red-50"
+                title="Supprimer"
+                onClick={() => onDelete(notification.id)}
+              />
+            </div>
+          </div>
         </div>
       </div>
     </div>
@@ -153,7 +203,7 @@ const NotificationItem = ({ notification, onMarkAsRead, onDelete }: Notification
 };
 
 /**
- * Dropdown principal des notifications
+ * Dropdown principal des notifications - Design System V2
  */
 export const NotificationsDropdown = () => {
   const {
@@ -168,64 +218,101 @@ export const NotificationsDropdown = () => {
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
-        <Button
-          variant="ghost"
-          size="icon"
-          className="relative"
+        <button
+          className={cn(
+            'relative flex items-center justify-center',
+            'w-10 h-10 rounded-lg',
+            'transition-all duration-200',
+            'hover:bg-neutral-100',
+            'focus:outline-none focus:ring-2 focus:ring-neutral-200'
+          )}
           title={loading ? 'Chargement...' : `${unreadCount} notifications non lues`}
         >
-          <Bell className="h-5 w-5" />
+          <Bell className="h-5 w-5" style={{ color: colors.text.DEFAULT }} />
           {!loading && unreadCount > 0 && (
-            <span className="absolute -top-1 -right-1 h-4 w-auto min-w-[16px] px-1 bg-red-500 rounded-full text-xs text-white flex items-center justify-center font-medium">
+            <span
+              className="absolute -top-1 -right-1 h-5 w-auto min-w-[20px] px-1.5 rounded-full text-xs text-white flex items-center justify-center font-semibold"
+              style={{ backgroundColor: colors.danger[500] }}
+            >
               {unreadCount > 99 ? '99+' : unreadCount}
             </span>
           )}
           <span className="sr-only">{unreadCount} Notifications</span>
-        </Button>
+        </button>
       </DropdownMenuTrigger>
 
-      <DropdownMenuContent align="end" className="w-[400px] p-0">
+      <DropdownMenuContent
+        align="end"
+        className="w-[420px] p-0"
+        style={{ borderRadius: '10px' }}
+      >
         {/* En-tête avec actions globales */}
-        <div className="flex items-center justify-between px-4 py-3 border-b">
-          <DropdownMenuLabel className="p-0 font-semibold">
-            Notifications
+        <div
+          className="flex items-center justify-between border-b"
+          style={{
+            padding: `${spacing[4]} ${spacing[4]}`,
+          }}
+        >
+          <div>
+            <DropdownMenuLabel
+              className="p-0 font-semibold text-base"
+              style={{ color: colors.text.DEFAULT }}
+            >
+              Notifications
+            </DropdownMenuLabel>
             {unreadCount > 0 && (
-              <span className="ml-2 text-xs font-normal text-gray-500">
+              <span
+                className="text-xs font-normal"
+                style={{ color: colors.text.secondary }}
+              >
                 ({unreadCount} non {unreadCount > 1 ? 'lues' : 'lue'})
               </span>
             )}
-          </DropdownMenuLabel>
+          </div>
 
           {unreadCount > 0 && (
-            <Button
-              size="sm"
+            <ButtonV2
               variant="ghost"
-              className="h-7 text-xs gap-1"
+              size="sm"
+              icon={CheckCheck}
               onClick={() => markAllAsRead()}
             >
-              <CheckCheck className="h-3 w-3" />
               Tout marquer lu
-            </Button>
+            </ButtonV2>
           )}
         </div>
 
         {/* Liste des notifications avec scroll */}
         {loading ? (
-          <div className="p-8 text-center text-sm text-gray-500">
-            Chargement des notifications...
+          <div className="p-12 text-center">
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 mx-auto mb-3" style={{ borderColor: colors.primary[500] }} />
+            <p className="text-sm" style={{ color: colors.text.secondary }}>
+              Chargement des notifications...
+            </p>
           </div>
         ) : notifications.length === 0 ? (
-          <div className="p-8 text-center">
-            <Bell className="h-12 w-12 mx-auto text-gray-300 mb-3" />
-            <p className="text-sm text-gray-500 font-medium mb-1">
+          <div className="p-12 text-center">
+            <div
+              className="w-16 h-16 mx-auto mb-4 rounded-full flex items-center justify-center"
+              style={{ backgroundColor: colors.neutral[100] }}
+            >
+              <Bell className="h-8 w-8" style={{ color: colors.text.tertiary }} />
+            </div>
+            <p
+              className="text-sm font-medium mb-1"
+              style={{ color: colors.text.DEFAULT }}
+            >
               Aucune notification
             </p>
-            <p className="text-xs text-gray-400">
+            <p
+              className="text-xs"
+              style={{ color: colors.text.tertiary }}
+            >
               Vous êtes à jour ! 🎉
             </p>
           </div>
         ) : (
-          <ScrollArea className="h-[400px]">
+          <ScrollArea className="h-[500px]">
             {notifications.map((notification) => (
               <NotificationItem
                 key={notification.id}
@@ -237,22 +324,23 @@ export const NotificationsDropdown = () => {
           </ScrollArea>
         )}
 
-        {/* Pied avec lien "Voir toutes" (optionnel - Phase 2) */}
+        {/* Pied avec lien "Voir toutes" */}
         {notifications.length > 0 && (
           <>
             <DropdownMenuSeparator />
-            <div className="p-2 text-center">
-              <Button
+            <div style={{ padding: spacing[2] }}>
+              <ButtonV2
                 variant="ghost"
                 size="sm"
-                className="text-xs w-full"
+                className="w-full"
+                icon={ExternalLink}
+                iconPosition="right"
                 onClick={() => {
-                  // TODO Phase 2: Créer page dédiée /notifications
-                  console.log('Navigation vers page notifications (à implémenter)');
+                  window.location.href = '/notifications';
                 }}
               >
-                Voir toutes les notifications →
-              </Button>
+                Voir toutes les notifications
+              </ButtonV2>
             </div>
           </>
         )}

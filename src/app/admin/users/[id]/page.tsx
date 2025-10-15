@@ -10,7 +10,6 @@ import { redirect, notFound } from 'next/navigation'
 import { ArrowLeft, User, Calendar, Clock, Shield, Activity } from 'lucide-react'
 import Link from 'next/link'
 import { createServerClient, createAdminClient } from '@/lib/supabase/server'
-import { Button } from '@/components/ui/button'
 import { UserHeader } from './components/user-header'
 import { UserStatsCards } from './components/user-stats-cards'
 import { UserProfileTab } from './components/user-profile-tab'
@@ -219,14 +218,10 @@ export default async function UserDetailPage({ params }: UserDetailPageProps) {
       {/* Navigation */}
       <div className="flex items-center space-x-4">
         <Link href="/admin/users">
-          <Button
-            variant="ghost"
-            size="sm"
-            className="text-black hover:bg-gray-100"
-          >
-            <ArrowLeft className="h-4 w-4 mr-2" />
+          <button className="inline-flex items-center justify-center gap-2 font-medium rounded-[10px] transition-all duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 hover:scale-[1.02] active:scale-[0.98] bg-transparent text-black border-none px-4 py-2 h-9 text-[14px] hover:bg-neutral-100">
+            <ArrowLeft className="h-[16px] w-[16px]" strokeWidth={2} />
             Retour aux utilisateurs
-          </Button>
+          </button>
         </Link>
 
         <div className="text-sm text-black opacity-60">

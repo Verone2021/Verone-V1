@@ -31,12 +31,14 @@ interface CreateOrganisationModalProps {
   onOrganisationCreated?: (organisationId: string, organisationName: string) => void
   trigger?: React.ReactNode
   defaultType?: 'supplier' | 'customer' | 'partner' | 'internal'
+  buttonLabel?: string
 }
 
 export function CreateOrganisationModal({
   onOrganisationCreated,
   trigger,
-  defaultType = 'customer'
+  defaultType = 'customer',
+  buttonLabel
 }: CreateOrganisationModalProps) {
   const [open, setOpen] = useState(false)
   const [formData, setFormData] = useState<Partial<CreateOrganisationData>>({
@@ -98,13 +100,30 @@ export function CreateOrganisationModal({
     setFormData(prev => ({ ...prev, [field]: value }))
   }
 
+  // Label par défaut basé sur le type
+  const getDefaultLabel = () => {
+    if (buttonLabel) return buttonLabel
+    switch (defaultType) {
+      case 'supplier':
+        return 'Nouveau fournisseur'
+      case 'customer':
+        return 'Nouveau client'
+      case 'partner':
+        return 'Nouveau partenaire'
+      case 'internal':
+        return 'Nouvelle organisation interne'
+      default:
+        return 'Nouvelle organisation'
+    }
+  }
+
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
         {trigger || (
           <Button variant="outline" size="sm" className="border-black">
             <Plus className="h-4 w-4 mr-2" />
-            Nouveau client pro
+            {getDefaultLabel()}
           </Button>
         )}
       </DialogTrigger>

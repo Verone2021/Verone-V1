@@ -9,7 +9,7 @@
 
 import React, { useState } from 'react'
 import { AlertTriangle, Trash2, X } from 'lucide-react'
-import { Button } from '@/components/ui/button'
+import { ButtonV2 } from '@/components/ui-v2/button'
 import { RoleBadge, type UserRole } from '@/components/ui/role-badge'
 import {
   Dialog,
@@ -143,27 +143,24 @@ export function DeleteUserDialog({
         </div>
 
         <DialogFooter className="flex flex-col-reverse sm:flex-row sm:justify-end sm:space-x-2">
-          <Button
+          <ButtonV2
             type="button"
-            variant="outline"
+            variant="ghost"
             onClick={handleClose}
             disabled={isDeleting}
-            className="border-black text-black hover:bg-gray-50"
           >
             Annuler
-          </Button>
-          <Button
+          </ButtonV2>
+          <ButtonV2
             type="button"
+            variant="danger"
+            icon={Trash2}
             onClick={handleDelete}
+            loading={isDeleting}
             disabled={isDeleting}
-            className={cn(
-              "bg-red-600 hover:bg-red-700 text-white",
-              isDeleting && "opacity-50 cursor-not-allowed"
-            )}
           >
-            <Trash2 className="h-4 w-4 mr-2" />
-            {isDeleting ? 'Suppression...' : 'Supprimer définitivement'}
-          </Button>
+            Supprimer définitivement
+          </ButtonV2>
         </DialogFooter>
       </DialogContent>
     </Dialog>

@@ -1,10 +1,10 @@
 'use client'
 
-import { useState, useEffect } from 'react'
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
-import { Button } from '@/components/ui/button'
-import { Building2, Users, Truck, UserCheck, Plus, TrendingUp, Phone, Mail, Settings } from 'lucide-react'
-import Link from 'next/link'
+import React from 'react'
+import { useRouter } from 'next/navigation'
+import { Building2, Truck, Settings, Phone, TrendingUp } from 'lucide-react'
+import { CompactKpiCard } from '@/components/ui-v2/compact-kpi-card'
+import { ButtonV2 } from '@/components/ui-v2/button'
 import { useOrganisations } from '@/hooks/use-organisations'
 
 interface OrganisationStats {
@@ -15,6 +15,7 @@ interface OrganisationStats {
 }
 
 export default function ContactsOrganisationsPage() {
+  const router = useRouter()
   const { organisations, loading } = useOrganisations()
 
   // Calculer les statistiques des organisations uniquement (excluant les particuliers)
@@ -32,258 +33,207 @@ export default function ContactsOrganisationsPage() {
     partners: organisations.filter(o => o.type === 'partner').length,
   }
 
-  const moduleCards = [
-    {
-      title: 'Fournisseurs',
-      description: 'Gestion des partenaires commerciaux',
-      count: stats.suppliers,
-      href: '/contacts-organisations/suppliers',
-      icon: <Truck className="h-6 w-6" />,
-      color: 'bg-blue-50 border-blue-200 text-blue-700',
-      available: true
-    },
-    {
-      title: 'Clients Professionnels',
-      description: 'Clients B2B et entreprises',
-      count: stats.customersProfessional,
-      href: '/contacts-organisations/customers?type=professional',
-      icon: <Building2 className="h-6 w-6" />,
-      color: 'bg-green-50 border-green-200 text-green-700',
-      available: true
-    },
-    {
-      title: 'Prestataires',
-      description: 'Partenaires de services',
-      count: stats.partners,
-      href: '/contacts-organisations/partners',
-      icon: <Settings className="h-6 w-6" />,
-      color: 'bg-gray-50 border-gray-200 text-gray-800',
-      available: true
-    }
-  ]
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-slate-50 flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
+          <p className="text-slate-600">Chargement des organisations...</p>
+        </div>
+      </div>
+    )
+  }
 
   return (
-    <div className="container mx-auto p-6 space-y-6">
-      {/* Header */}
-      <div className="flex justify-between items-center">
-        <div>
-          <h1 className="text-3xl font-semibold text-black">Contacts & Organisations</h1>
-          <p className="text-gray-600 mt-2">
-            Hub central pour la gestion de l'écosystème relationnel Vérone
-          </p>
+    <div className="min-h-screen bg-slate-50">
+      {/* Header Compact */}
+      <div className="bg-white border-b border-slate-200 px-6 py-4">
+        <div className="flex items-center justify-between">
+          <div>
+            <h1 className="text-xl font-bold text-slate-900">Contacts & Organisations</h1>
+            <p className="text-sm text-slate-600">
+              Hub central pour la gestion de l'écosystème relationnel Vérone
+            </p>
+          </div>
         </div>
       </div>
 
-      {/* Statistiques Organisations */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-        <Card className="border">
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium text-gray-600">
-              Total Organisations
-            </CardTitle>
-            <Building2 className="h-4 w-4 text-gray-400" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold text-black">
-              {loading ? '...' : stats.totalOrganisations}
-            </div>
-            <p className="text-xs text-gray-500">
-              Toutes organisations confondues
-            </p>
-          </CardContent>
-        </Card>
+      <div className="p-6 space-y-6">
+        {/* Zone 1: KPIs Ultra-Compacts */}
+        <div>
+          <h2 className="text-sm font-semibold text-slate-700 mb-3">Vue d'ensemble</h2>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3">
+            <CompactKpiCard
+              label="Total Organisations"
+              value={stats.totalOrganisations}
+              icon={Building2}
+              color="primary"
+            />
 
-        <Card className="border">
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium text-gray-600">
-              Fournisseurs
-            </CardTitle>
-            <Truck className="h-4 w-4 text-blue-500" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold text-blue-600">
-              {loading ? '...' : stats.suppliers}
-            </div>
-            <p className="text-xs text-gray-500">
-              Partenaires commerciaux
-            </p>
-          </CardContent>
-        </Card>
+            <CompactKpiCard
+              label="Fournisseurs"
+              value={stats.suppliers}
+              icon={Truck}
+              color="primary"
+              onClick={() => router.push('/contacts-organisations/suppliers')}
+            />
 
-        <Card className="border">
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium text-gray-600">
-              Clients Pro
-            </CardTitle>
-            <Building2 className="h-4 w-4 text-green-500" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold text-green-600">
-              {loading ? '...' : stats.customersProfessional}
-            </div>
-            <p className="text-xs text-gray-500">
-              Clients professionnels B2B
-            </p>
-          </CardContent>
-        </Card>
+            <CompactKpiCard
+              label="Clients Pro"
+              value={stats.customersProfessional}
+              icon={Building2}
+              color="success"
+              onClick={() => router.push('/contacts-organisations/customers?type=professional')}
+            />
 
-        <Card className="border">
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium text-gray-600">
-              Prestataires
-            </CardTitle>
-            <Settings className="h-4 w-4 text-gray-900" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold text-black">
-              {loading ? '...' : stats.partners}
-            </div>
-            <p className="text-xs text-gray-500">
-              Partenaires de services
-            </p>
-          </CardContent>
-        </Card>
-      </div>
+            <CompactKpiCard
+              label="Prestataires"
+              value={stats.partners}
+              icon={Settings}
+              color="accent"
+              onClick={() => router.push('/contacts-organisations/partners')}
+            />
+          </div>
+        </div>
 
-      {/* Modules de gestion */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        {moduleCards.map((module, index) => (
-          <Card key={index} className={`hover:shadow-lg transition-shadow ${module.available ? 'cursor-pointer' : 'opacity-60'}`}>
-            <CardHeader>
-              <div className="flex items-center justify-between">
-                <div className="flex items-center space-x-3">
-                  <div className={`p-2 rounded-lg ${module.color}`}>
-                    {module.icon}
+        {/* Zone 2: Modules Navigation */}
+        <div>
+          <h2 className="text-sm font-semibold text-slate-700 mb-3">Modules</h2>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            {/* Fournisseurs */}
+            <div className="bg-white rounded-xl border border-slate-200 p-5">
+              <div className="flex items-center justify-between mb-4">
+                <div className="flex items-center gap-3">
+                  <div className="p-2 rounded-lg bg-blue-50">
+                    <Truck className="h-5 w-5 text-blue-600" />
                   </div>
                   <div>
-                    <CardTitle className="text-lg text-black">{module.title}</CardTitle>
-                    <CardDescription>{module.description}</CardDescription>
+                    <h3 className="text-sm font-semibold text-slate-900">Fournisseurs</h3>
+                    <p className="text-xs text-slate-600">Gestion partenaires</p>
                   </div>
                 </div>
-                <div className="text-2xl font-bold text-black">
-                  {loading ? '...' : module.count}
+                <span className="text-2xl font-bold text-slate-900">{stats.suppliers}</span>
+              </div>
+              <ButtonV2
+                variant="primary"
+                size="sm"
+                className="w-full"
+                onClick={() => router.push('/contacts-organisations/suppliers')}
+              >
+                Gérer →
+              </ButtonV2>
+            </div>
+
+            {/* Clients Professionnels */}
+            <div className="bg-white rounded-xl border border-slate-200 p-5">
+              <div className="flex items-center justify-between mb-4">
+                <div className="flex items-center gap-3">
+                  <div className="p-2 rounded-lg bg-green-50">
+                    <Building2 className="h-5 w-5 text-green-600" />
+                  </div>
+                  <div>
+                    <h3 className="text-sm font-semibold text-slate-900">Clients Pro</h3>
+                    <p className="text-xs text-slate-600">Clients B2B</p>
+                  </div>
+                </div>
+                <span className="text-2xl font-bold text-slate-900">{stats.customersProfessional}</span>
+              </div>
+              <ButtonV2
+                variant="success"
+                size="sm"
+                className="w-full"
+                onClick={() => router.push('/contacts-organisations/customers?type=professional')}
+              >
+                Gérer →
+              </ButtonV2>
+            </div>
+
+            {/* Prestataires */}
+            <div className="bg-white rounded-xl border border-slate-200 p-5">
+              <div className="flex items-center justify-between mb-4">
+                <div className="flex items-center gap-3">
+                  <div className="p-2 rounded-lg bg-purple-50">
+                    <Settings className="h-5 w-5 text-purple-600" />
+                  </div>
+                  <div>
+                    <h3 className="text-sm font-semibold text-slate-900">Prestataires</h3>
+                    <p className="text-xs text-slate-600">Services</p>
+                  </div>
+                </div>
+                <span className="text-2xl font-bold text-slate-900">{stats.partners}</span>
+              </div>
+              <ButtonV2
+                variant="secondary"
+                size="sm"
+                className="w-full"
+                onClick={() => router.push('/contacts-organisations/partners')}
+              >
+                Gérer →
+              </ButtonV2>
+            </div>
+          </div>
+        </div>
+
+        {/* Zone 3: Contacts + Activité (grid 2 colonnes) */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          {/* Widget Contacts */}
+          <div className="bg-white rounded-xl border border-slate-200 p-5">
+            <div className="flex items-center justify-between mb-4">
+              <div className="flex items-center gap-2">
+                <Phone className="h-5 w-5 text-orange-600" />
+                <div>
+                  <h3 className="text-base font-semibold text-slate-900">Contacts Professionnels</h3>
+                  <p className="text-xs text-slate-600">Annuaire centralisé</p>
                 </div>
               </div>
-            </CardHeader>
-            <CardContent className="pt-0">
-              <div className="flex justify-between items-center">
-                <p className="text-sm text-gray-600">{module.description}</p>
-                {module.available ? (
-                  <Link href={module.href}>
-                    <Button size="sm">
-                      Gérer
-                    </Button>
-                  </Link>
-                ) : (
-                  <Button size="sm" disabled>
-                    Bientôt disponible
-                  </Button>
-                )}
-              </div>
-            </CardContent>
-          </Card>
-        ))}
-      </div>
-
-      {/* Section Contacts (déplacée vers le bas avec bouton) */}
-      <Card>
-        <CardHeader>
-          <div className="flex items-center justify-between">
-            <div className="flex items-center space-x-3">
-              <div className="p-2 rounded-lg bg-indigo-50 border-indigo-200 text-indigo-700">
-                <Phone className="h-6 w-6" />
-              </div>
-              <div>
-                <CardTitle className="text-lg text-black">Contacts Professionnels</CardTitle>
-                <CardDescription>Annuaire des contacts fournisseurs et clients B2B</CardDescription>
-              </div>
             </div>
-          </div>
-        </CardHeader>
-        <CardContent>
-          <div className="flex justify-between items-center">
-            <p className="text-sm text-gray-600">
+            <p className="text-sm text-slate-600 mb-4">
               Gestion centralisée des contacts avec rôles spécialisés (Commercial, Technique, Facturation)
             </p>
-            <Link href="/contacts-organisations/contacts">
-              <Button size="sm">
-                Accéder aux contacts
-              </Button>
-            </Link>
-          </div>
-        </CardContent>
-      </Card>
-
-      {/* Activité Récente - Organisations uniquement */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <TrendingUp className="h-5 w-5" />
-            Activité Récente
-          </CardTitle>
-          <CardDescription>Dernières interactions et mises à jour</CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          <div className="flex items-center space-x-4">
-            <div className="p-2 rounded-full bg-blue-50">
-              <Truck className="h-4 w-4 text-blue-600" />
-            </div>
-            <div className="flex-1">
-              <p className="text-sm font-medium text-black">{stats.suppliers} fournisseurs actifs</p>
-              <p className="text-xs text-gray-500">Prêts pour création de commandes</p>
-            </div>
+            <ButtonV2
+              variant="secondary"
+              size="sm"
+              className="w-full"
+              onClick={() => router.push('/contacts-organisations/contacts')}
+            >
+              Accéder aux contacts →
+            </ButtonV2>
           </div>
 
-          <div className="flex items-center space-x-4">
-            <div className="p-2 rounded-full bg-green-50">
-              <Building2 className="h-4 w-4 text-green-600" />
+          {/* Widget Activité Récente */}
+          <div className="bg-white rounded-xl border border-slate-200 p-5">
+            <div className="flex items-center gap-2 mb-4">
+              <TrendingUp className="h-5 w-5 text-slate-700" />
+              <h3 className="text-base font-semibold text-slate-900">Activité Récente</h3>
             </div>
-            <div className="flex-1">
-              <p className="text-sm font-medium text-black">{stats.customersProfessional} clients professionnels</p>
-              <p className="text-xs text-gray-500">Entreprises et organisations B2B</p>
-            </div>
-          </div>
+            <div className="space-y-3">
+              <div className="flex items-center justify-between py-2 border-b border-slate-100">
+                <div className="flex items-center gap-2">
+                  <Truck className="h-4 w-4 text-blue-600" />
+                  <span className="text-sm text-slate-700">Fournisseurs actifs</span>
+                </div>
+                <span className="text-sm font-semibold text-slate-900">{stats.suppliers}</span>
+              </div>
 
-          <div className="flex items-center space-x-4">
-            <div className="p-2 rounded-full bg-gray-50">
-              <Settings className="h-4 w-4 text-black" />
-            </div>
-            <div className="flex-1">
-              <p className="text-sm font-medium text-black">{stats.partners} prestataires actifs</p>
-              <p className="text-xs text-gray-500">Partenaires de services</p>
-            </div>
-          </div>
-        </CardContent>
-      </Card>
+              <div className="flex items-center justify-between py-2 border-b border-slate-100">
+                <div className="flex items-center gap-2">
+                  <Building2 className="h-4 w-4 text-green-600" />
+                  <span className="text-sm text-slate-700">Clients B2B</span>
+                </div>
+                <span className="text-sm font-semibold text-slate-900">{stats.customersProfessional}</span>
+              </div>
 
-      {/* Information Architecture */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Building2 className="h-5 w-5" />
-            Architecture Multi-Tenant
-          </CardTitle>
-          <CardDescription>Système de gestion relationnel avec sécurité RLS et isolation des données</CardDescription>
-        </CardHeader>
-        <CardContent className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          <div>
-            <h4 className="font-medium text-black mb-2">Organisations</h4>
-            <ul className="text-sm text-gray-600 space-y-1">
-              <li>• Fournisseurs : Gestion commandes et catalogue</li>
-              <li>• Clients Pro : Contacts multiples et facturation</li>
-              <li>• Prestataires : Services et sous-traitance</li>
-            </ul>
+              <div className="flex items-center justify-between py-2">
+                <div className="flex items-center gap-2">
+                  <Settings className="h-4 w-4 text-purple-600" />
+                  <span className="text-sm text-slate-700">Prestataires</span>
+                </div>
+                <span className="text-sm font-semibold text-slate-900">{stats.partners}</span>
+              </div>
+            </div>
           </div>
-          <div>
-            <h4 className="font-medium text-black mb-2">Contacts</h4>
-            <ul className="text-sm text-gray-600 space-y-1">
-              <li>• Rôles spécialisés (Commercial, Technique, Facturation)</li>
-              <li>• Historique des interactions</li>
-              <li>• Préférences de communication</li>
-            </ul>
-          </div>
-        </CardContent>
-      </Card>
+        </div>
+      </div>
     </div>
   )
 }

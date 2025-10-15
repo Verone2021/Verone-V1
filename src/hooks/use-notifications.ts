@@ -237,16 +237,59 @@ export const useNotifications = () => {
   useEffect(() => {
     loadNotifications();
 
-    // Écouter les changements en temps réel
+    // Écouter les changements en temps réel avec gestion optimiste
     const channel = supabase
       .channel('notifications_changes')
       .on('postgres_changes', {
-        event: '*',
+        event: 'INSERT',
         schema: 'public',
         table: 'notifications'
-      }, () => {
-        // Recharger les notifications quand il y a des changements
-        loadNotifications();
+      }, (payload) => {
+        // Ajouter la nouvelle notification sans recharger
+        const newNotification = payload.new as Notification;
+        setState(prev => ({
+          ...prev,
+          notifications: [newNotification, ...prev.notifications],
+          unreadCount: newNotification.read ? prev.unreadCount : prev.unreadCount + 1
+        }));
+      })
+      .on('postgres_changes', {
+        event: 'UPDATE',
+        schema: 'public',
+        table: 'notifications'
+      }, (payload) => {
+        // Mettre à jour la notification sans recharger
+        const updatedNotification = payload.new as Notification;
+        setState(prev => {
+          const oldNotification = prev.notifications.find(n => n.id === updatedNotification.id);
+          const unreadDelta = oldNotification && !oldNotification.read && updatedNotification.read ? -1 : 0;
+
+          return {
+            ...prev,
+            notifications: prev.notifications.map(n =>
+              n.id === updatedNotification.id ? updatedNotification : n
+            ),
+            unreadCount: Math.max(0, prev.unreadCount + unreadDelta)
+          };
+        });
+      })
+      .on('postgres_changes', {
+        event: 'DELETE',
+        schema: 'public',
+        table: 'notifications'
+      }, (payload) => {
+        // Supprimer la notification sans recharger
+        const deletedId = payload.old.id as string;
+        setState(prev => {
+          const deletedNotification = prev.notifications.find(n => n.id === deletedId);
+          const wasUnread = deletedNotification && !deletedNotification.read;
+
+          return {
+            ...prev,
+            notifications: prev.notifications.filter(n => n.id !== deletedId),
+            unreadCount: wasUnread ? Math.max(0, prev.unreadCount - 1) : prev.unreadCount
+          };
+        });
       })
       .subscribe();
 

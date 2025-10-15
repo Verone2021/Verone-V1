@@ -9,7 +9,7 @@
 
 import React, { useState, ReactNode } from 'react'
 import { User, Mail, Phone, Briefcase, Shield, Eye, EyeOff } from 'lucide-react'
-import { Button } from '@/components/ui/button'
+import { ButtonV2 } from '@/components/ui-v2/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog'
@@ -366,22 +366,22 @@ export function CreateUserDialog({ children }: CreateUserDialogProps) {
           )}
 
           <DialogFooter>
-            <Button
+            <ButtonV2
               type="button"
-              variant="outline"
-              className="border-black text-black hover:bg-black hover:text-white"
+              variant="ghost"
               onClick={() => setIsOpen(false)}
               disabled={isLoading}
             >
               Annuler
-            </Button>
-            <Button
+            </ButtonV2>
+            <ButtonV2
               type="submit"
-              className="bg-black hover:bg-gray-800 text-white"
+              variant="primary"
+              loading={isLoading}
               disabled={isLoading}
             >
-              {isLoading ? 'Création...' : 'Créer l\'utilisateur'}
-            </Button>
+              Créer l'utilisateur
+            </ButtonV2>
           </DialogFooter>
         </form>
       </DialogContent>

@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
+import Link from 'next/link'
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '../ui/dialog'
 import { Button } from '../ui/button'
 import { Input } from '../ui/input'
@@ -8,9 +9,10 @@ import { Label } from '../ui/label'
 import { Checkbox } from '../ui/checkbox'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../ui/select'
 import { useSubcategories } from '../../hooks/use-subcategories'
-import { useSuppliers } from '../../hooks/use-suppliers'
+import { useOrganisations } from '../../hooks/use-organisations'
 import { normalizeForSKU } from '../../lib/sku-generator'
 import type { CreateVariantGroupData } from '../../types/variant-groups'
+import { ExternalLink } from 'lucide-react'
 
 interface VariantGroupCreateModalProps {
   isOpen: boolean
@@ -31,7 +33,10 @@ export function VariantGroupCreateModal({
   onSubmit
 }: VariantGroupCreateModalProps) {
   const { subcategories, loading: subcategoriesLoading } = useSubcategories()
-  const { suppliers, loading: suppliersLoading } = useSuppliers()
+  const { organisations: suppliers, loading: suppliersLoading } = useOrganisations({
+    type: 'supplier',
+    is_active: true
+  })
 
   const [name, setName] = useState('')
   const [baseSku, setBaseSku] = useState('')
@@ -327,6 +332,17 @@ export function VariantGroupCreateModal({
                     ))}
                   </SelectContent>
                 </Select>
+                {supplierId && (
+                  <Link
+                    href={`/contacts-organisations/suppliers/${supplierId}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="inline-flex items-center gap-1.5 text-xs text-blue-600 hover:text-blue-800 hover:underline"
+                  >
+                    <ExternalLink className="w-3 h-3" />
+                    Voir la fiche détail du fournisseur
+                  </Link>
+                )}
                 <p className="text-xs text-blue-700 bg-blue-50 p-2 rounded border border-blue-200">
                   💡 Ce fournisseur sera appliqué automatiquement à tous les produits du groupe et ne pourra pas être modifié individuellement
                 </p>

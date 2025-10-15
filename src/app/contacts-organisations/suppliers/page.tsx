@@ -1,33 +1,31 @@
 'use client'
 
-import { useState, useMemo } from 'react'
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
-import { Button } from '@/components/ui/button'
+import { useState, useMemo, useEffect } from 'react'
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import { ButtonV2 } from '@/components/ui-v2/button'
 import { Input } from '@/components/ui/input'
 import { Badge } from '@/components/ui/badge'
 import {
   Search,
   Plus,
   Building2,
-  Mail,
   MapPin,
-  Trash2,
   ArrowLeft,
-  Filter,
   Archive,
   ArchiveRestore,
-  Phone,
   Globe,
-  FileText,
-  Star,
-  Package,
-  Award,
-  Banknote,
-  Truck
+  Trash2,
+  ExternalLink
 } from 'lucide-react'
 import Link from 'next/link'
 import { useSuppliers } from '@/hooks/use-organisations'
 import { SupplierFormModal } from '@/components/business/supplier-form-modal'
+import { OrganisationLogo } from '@/components/business/organisation-logo'
+import { SupplierSegmentBadge, SupplierSegmentType } from '@/components/business/supplier-segment-badge'
+import { SupplierCategoryBadge, SupplierCategoryCode } from '@/components/business/supplier-category-badge'
+import { spacing, colors } from '@/lib/design-system'
+import { createClient } from '@/lib/supabase/client'
+import { cn } from '@/lib/utils'
 
 interface Supplier {
   id: string
@@ -36,43 +34,10 @@ interface Supplier {
   country: string | null
   is_active: boolean
   archived_at: string | null
-  created_at: string
-  updated_at: string
-
-  // Nouveaux champs de contact
-  phone: string | null
   website: string | null
-  secondary_email: string | null
-
-  // Adresse complète
-  address_line1: string | null
-  address_line2: string | null
-  postal_code: string | null
-  city: string | null
-  region: string | null
-
-  // Identifiants légaux
-  siret: string | null
-  vat_number: string | null
-  legal_form: string | null
-
-  // Classification business
-  industry_sector: string | null
-  supplier_segment: string | null
+  logo_url: string | null
+  supplier_segment: SupplierSegmentType | null
   supplier_category: string | null
-
-  // Informations commerciales
-  payment_terms: string | null
-  delivery_time_days: number | null
-  minimum_order_amount: number | null
-  currency: string | null
-
-  // Performance et qualité
-  rating: number | null
-  certification_labels: string[] | null
-  preferred_supplier: boolean | null
-  notes: string | null
-
   _count?: {
     products: number
   }
@@ -80,21 +45,20 @@ interface Supplier {
 
 export default function SuppliersPage() {
   const [searchQuery, setSearchQuery] = useState('')
-  const [showActiveOnly, setShowActiveOnly] = useState(true)
+  const [activeTab, setActiveTab] = useState<'active' | 'archived'>('active')
+  const [archivedSuppliers, setArchivedSuppliers] = useState<Supplier[]>([])
+  const [archivedLoading, setArchivedLoading] = useState(false)
   const [isModalOpen, setIsModalOpen] = useState(false)
   const [selectedSupplier, setSelectedSupplier] = useState<Supplier | null>(null)
 
-  // Utiliser useMemo pour stabiliser l'objet filters et éviter la boucle infinie
   const filters = useMemo(() => ({
-    is_active: showActiveOnly ? true : undefined,
+    is_active: true,
     search: searchQuery || undefined
-  }), [showActiveOnly, searchQuery])
+  }), [searchQuery])
 
   const {
     organisations: suppliers,
     loading,
-    error,
-    toggleOrganisationStatus,
     archiveOrganisation,
     unarchiveOrganisation,
     hardDeleteOrganisation,
@@ -116,22 +80,64 @@ export default function SuppliersPage() {
     handleCloseModal()
   }
 
-  const handleArchive = async (supplier: Supplier) => {
-    if (!supplier.archived_at) {
-      // Archiver
-      const success = await archiveOrganisation(supplier.id)
-      if (success) {
-        console.log('✅ Fournisseur archivé avec succès')
-      }
-    } else {
-      // Restaurer
-      const success = await unarchiveOrganisation(supplier.id)
-      if (success) {
-        console.log('✅ Fournisseur restauré avec succès')
-      }
+  const loadArchivedSuppliersData = async () => {
+    setArchivedLoading(true)
+    try {
+      const supabase = createClient()
+      const { data, error } = await supabase
+        .from('organisations')
+        .select(`
+          *,
+          products:products(count)
+        `)
+        .eq('type', 'supplier')
+        .not('archived_at', 'is', null)
+        .order('archived_at', { ascending: false })
+
+      if (error) throw error
+
+      // Transform data
+      const organisationsWithCounts = (data || []).map((org: any) => {
+        const { products, ...rest } = org
+        return {
+          ...rest,
+          _count: {
+            products: products?.[0]?.count || 0
+          }
+        }
+      })
+
+      setArchivedSuppliers(organisationsWithCounts as Supplier[])
+    } catch (err) {
+      console.error('Erreur chargement fournisseurs archivés:', err)
+    } finally {
+      setArchivedLoading(false)
     }
   }
 
+  useEffect(() => {
+    if (activeTab === 'archived') {
+      loadArchivedSuppliersData()
+    }
+  }, [activeTab])
+
+  const handleArchive = async (supplier: Supplier) => {
+    if (!supplier.archived_at) {
+      const success = await archiveOrganisation(supplier.id)
+      if (success) {
+        refetch()
+        if (activeTab === 'archived') {
+          await loadArchivedSuppliersData()
+        }
+      }
+    } else {
+      const success = await unarchiveOrganisation(supplier.id)
+      if (success) {
+        refetch()
+        await loadArchivedSuppliersData()
+      }
+    }
+  }
 
   const handleDelete = async (supplier: Supplier) => {
     const confirmed = confirm(
@@ -141,322 +147,281 @@ export default function SuppliersPage() {
     if (confirmed) {
       const success = await hardDeleteOrganisation(supplier.id)
       if (success) {
-        console.log('✅ Fournisseur supprimé définitivement')
+        await loadArchivedSuppliersData()
       }
     }
   }
 
+  const displayedSuppliers = activeTab === 'active' ? suppliers : archivedSuppliers
+  const isLoading = activeTab === 'active' ? loading : archivedLoading
+
   return (
     <div className="container mx-auto p-6 space-y-6">
       {/* Header */}
-      <div className="flex justify-between items-start">
+      <div className="flex justify-between items-start" style={{ marginBottom: spacing[6] }}>
         <div>
           <div className="flex items-center gap-2 mb-2">
             <Link href="/contacts-organisations">
-              <Button variant="ghost" size="sm">
-                <ArrowLeft className="h-4 w-4 mr-1" />
+              <ButtonV2 variant="ghost" size="sm" icon={ArrowLeft}>
                 Organisations
-              </Button>
+              </ButtonV2>
             </Link>
           </div>
-          <h1 className="text-3xl font-semibold text-black">Fournisseurs</h1>
-          <p className="text-gray-600 mt-2">
+          <h1 className="text-3xl font-semibold" style={{ color: colors.text.DEFAULT }}>
+            Fournisseurs
+          </h1>
+          <p className="mt-2" style={{ color: colors.text.subtle }}>
             Gestion des fournisseurs et partenaires commerciaux
           </p>
         </div>
-        <Button
-          className="bg-black text-white hover:bg-gray-800"
-          onClick={handleCreateSupplier}
-        >
-          <Plus className="h-4 w-4 mr-2" />
+        <ButtonV2 variant="primary" onClick={handleCreateSupplier} icon={Plus}>
           Nouveau Fournisseur
-        </Button>
+        </ButtonV2>
       </div>
 
       {/* Stats */}
       <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
         <Card>
-          <CardContent className="p-4">
-            <div className="text-2xl font-bold text-black">{suppliers.length}</div>
-            <p className="text-sm text-gray-600">Total fournisseurs</p>
+          <CardContent style={{ padding: spacing[4] }}>
+            <div className="text-2xl font-bold" style={{ color: colors.text.DEFAULT }}>
+              {suppliers.length}
+            </div>
+            <p className="text-sm" style={{ color: colors.text.subtle }}>
+              Total fournisseurs
+            </p>
           </CardContent>
         </Card>
         <Card>
-          <CardContent className="p-4">
-            <div className="text-2xl font-bold text-green-600">
+          <CardContent style={{ padding: spacing[4] }}>
+            <div className="text-2xl font-bold" style={{ color: colors.success[500] }}>
               {suppliers.filter(s => s.is_active).length}
             </div>
-            <p className="text-sm text-gray-600">Actifs</p>
+            <p className="text-sm" style={{ color: colors.text.subtle }}>
+              Actifs
+            </p>
           </CardContent>
         </Card>
         <Card>
-          <CardContent className="p-4">
-            <div className="text-2xl font-bold text-purple-600">
+          <CardContent style={{ padding: spacing[4] }}>
+            <div className="text-2xl font-bold" style={{ color: colors.accent[500] }}>
               {suppliers.reduce((sum, s) => sum + (s._count?.products || 0), 0)}
             </div>
-            <p className="text-sm text-gray-600">Produits individuels</p>
+            <p className="text-sm" style={{ color: colors.text.subtle }}>
+              Produits individuels
+            </p>
           </CardContent>
         </Card>
         <Card>
-          <CardContent className="p-4">
-            <div className="text-2xl font-bold text-black">
-              {suppliers.filter(s => s.email || s.phone).length}
+          <CardContent style={{ padding: spacing[4] }}>
+            <div className="text-2xl font-bold" style={{ color: colors.text.DEFAULT }}>
+              {suppliers.filter(s => s.email || s.website).length}
             </div>
-            <p className="text-sm text-gray-600">Avec contact</p>
+            <p className="text-sm" style={{ color: colors.text.subtle }}>
+              Avec contact
+            </p>
           </CardContent>
         </Card>
         <Card>
-          <CardContent className="p-4">
-            <div className="text-2xl font-bold text-black">
-              {suppliers.filter(s => s.preferred_supplier).length}
+          <CardContent style={{ padding: spacing[4] }}>
+            <div className="text-2xl font-bold" style={{ color: colors.text.DEFAULT }}>
+              {archivedSuppliers.length}
             </div>
-            <p className="text-sm text-gray-600">Privilégiés</p>
+            <p className="text-sm" style={{ color: colors.text.subtle }}>
+              Archivés
+            </p>
           </CardContent>
         </Card>
       </div>
 
-      {/* Filters */}
+      {/* Tabs Actifs/Archivés */}
+      <div className="flex items-center gap-2" style={{ marginBottom: spacing[4] }}>
+        <button
+          onClick={() => setActiveTab('active')}
+          className={cn(
+            'px-4 py-2 rounded-lg text-sm font-medium transition-all',
+            activeTab === 'active'
+              ? 'bg-black text-white'
+              : 'bg-neutral-100 text-neutral-700 hover:bg-neutral-200'
+          )}
+        >
+          Actifs
+          <span className="ml-2 opacity-70">({suppliers.length})</span>
+        </button>
+
+        <button
+          onClick={() => setActiveTab('archived')}
+          className={cn(
+            'px-4 py-2 rounded-lg text-sm font-medium transition-all',
+            activeTab === 'archived'
+              ? 'bg-black text-white'
+              : 'bg-neutral-100 text-neutral-700 hover:bg-neutral-200'
+          )}
+        >
+          Archivés
+          <span className="ml-2 opacity-70">({archivedSuppliers.length})</span>
+        </button>
+      </div>
+
+      {/* Search */}
       <Card>
-        <CardContent className="p-4">
-          <div className="flex flex-col md:flex-row gap-4">
-            <div className="flex-1">
-              <div className="relative">
-                <Search className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
-                <Input
-                  placeholder="Rechercher par nom ou email..."
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  className="pl-10"
-                />
-              </div>
-            </div>
-            <div className="flex gap-2">
-              <Button
-                variant={showActiveOnly ? 'default' : 'outline'}
-                onClick={() => setShowActiveOnly(!showActiveOnly)}
-                size="sm"
-              >
-                <Filter className="h-4 w-4 mr-2" />
-                {showActiveOnly ? 'Actifs uniquement' : 'Tous'}
-              </Button>
-            </div>
+        <CardContent style={{ padding: spacing[4] }}>
+          <div className="relative">
+            <Search
+              className="absolute left-3 top-3 h-4 w-4"
+              style={{ color: colors.text.muted }}
+            />
+            <Input
+              placeholder="Rechercher par nom..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="pl-10"
+              style={{ borderColor: colors.border.DEFAULT, color: colors.text.DEFAULT }}
+            />
           </div>
         </CardContent>
       </Card>
 
-      {/* Suppliers List */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        {loading ? (
-          Array.from({ length: 6 }).map((_, i) => (
+      {/* Suppliers Grid - 4-5 par ligne, cartes compactes */}
+      <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-3">
+        {isLoading ? (
+          Array.from({ length: 10 }).map((_, i) => (
             <Card key={i} className="animate-pulse">
-              <CardHeader>
-                <div className="h-6 bg-gray-200 rounded w-3/4"></div>
-                <div className="h-4 bg-gray-200 rounded w-1/2"></div>
+              <CardHeader style={{ padding: spacing[2] }}>
+                <div className="h-4 bg-gray-200 rounded w-3/4"></div>
               </CardHeader>
-              <CardContent>
-                <div className="space-y-2">
-                  <div className="h-4 bg-gray-200 rounded w-full"></div>
-                  <div className="h-4 bg-gray-200 rounded w-2/3"></div>
-                </div>
+              <CardContent style={{ padding: spacing[2] }}>
+                <div className="h-3 bg-gray-200 rounded w-full mb-2"></div>
+                <div className="h-3 bg-gray-200 rounded w-2/3"></div>
               </CardContent>
             </Card>
           ))
         ) : (
-          suppliers.map((supplier) => (
-            <Card key={supplier.id} className="hover:shadow-lg transition-shadow" data-testid="supplier-card">
-              <CardHeader>
-                <div className="flex justify-between items-start">
-                  <div className="flex-1">
-                    <CardTitle className="text-lg text-black flex items-center gap-2" data-testid="supplier-name">
-                      <Building2 className="h-5 w-5" />
-                      {supplier.name}
-                    </CardTitle>
-                    <CardDescription className="text-sm">
-                      ID: {supplier.id.slice(0, 8)}...
-                    </CardDescription>
-                  </div>
-                  <div className="flex flex-col gap-1">
-                    <Badge
-                      variant={supplier.is_active ? 'default' : 'secondary'}
-                      className={supplier.is_active ? 'bg-green-100 text-green-800' : ''}
-                    >
-                      {supplier.is_active ? 'Actif' : 'Inactif'}
-                    </Badge>
-                    {supplier.archived_at && (
-                      <Badge variant="destructive" className="bg-red-100 text-red-800 text-xs">
-                        Archivé
-                      </Badge>
-                    )}
-                  </div>
-                </div>
-              </CardHeader>
-
-              <CardContent className="space-y-4">
-                {/* Contact Info */}
-                <div className="space-y-2">
-                  {supplier.email && (
-                    <div className="flex items-center gap-2 text-sm text-gray-600">
-                      <Mail className="h-4 w-4" />
-                      <span className="truncate">{supplier.email}</span>
-                    </div>
-                  )}
-
-                  {supplier.phone && (
-                    <div className="flex items-center gap-2 text-sm text-gray-600">
-                      <Phone className="h-4 w-4" />
-                      {supplier.phone}
-                    </div>
-                  )}
-
-                  {supplier.website && (
-                    <div className="flex items-center gap-2 text-sm text-gray-600">
-                      <Globe className="h-4 w-4" />
+          displayedSuppliers.map((supplier) => (
+            <Card key={supplier.id} className="hover:shadow-md transition-shadow" data-testid="supplier-card">
+              <CardHeader style={{ padding: spacing[2] }}>
+                <div className="flex justify-between items-start gap-2">
+                  <CardTitle className="text-sm font-medium flex items-center gap-1.5 flex-1 min-w-0">
+                    <OrganisationLogo
+                      logoUrl={supplier.logo_url}
+                      organisationName={supplier.name}
+                      size="sm"
+                      fallback="initials"
+                      className="flex-shrink-0"
+                    />
+                    {supplier.website ? (
                       <a
                         href={supplier.website}
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="text-black hover:underline truncate"
+                        className="hover:underline truncate flex items-center gap-1"
+                        style={{ color: colors.text.DEFAULT }}
+                        data-testid="supplier-name"
                       >
-                        Site web
+                        <span className="truncate">{supplier.name}</span>
+                        <ExternalLink className="h-3 w-3 flex-shrink-0 opacity-60" />
                       </a>
-                    </div>
-                  )}
-                </div>
-
-                {/* Location & Legal */}
-                <div className="space-y-2">
-                  {(supplier.city || supplier.country) && (
-                    <div className="flex items-center gap-2 text-sm text-gray-600">
-                      <MapPin className="h-4 w-4" />
-                      <span className="truncate">
-                        {[supplier.city, supplier.country].filter(Boolean).join(', ')}
+                    ) : (
+                      <span className="truncate" style={{ color: colors.text.DEFAULT }} data-testid="supplier-name">
+                        {supplier.name}
                       </span>
-                    </div>
-                  )}
-
-                  {supplier.siret && (
-                    <div className="flex items-center gap-2 text-sm text-gray-600">
-                      <FileText className="h-4 w-4" />
-                      <span>SIRET: {supplier.siret}</span>
-                    </div>
-                  )}
-                </div>
-
-                {/* Performance indicators */}
-                <div className="flex flex-wrap gap-2">
-                  {supplier.preferred_supplier && (
-                    <Badge variant="default" className="bg-black text-white text-xs">
-                      <Star className="h-3 w-3 mr-1" />
-                      Privilégié
-                    </Badge>
-                  )}
-
-                  {supplier.rating && supplier.rating > 0 && (
-                    <Badge variant="outline" className="text-xs">
-                      <Star className="h-3 w-3 mr-1" />
-                      {supplier.rating}/5
-                    </Badge>
-                  )}
-
-                  {supplier.supplier_segment && (
-                    <Badge variant="outline" className="text-xs">
-                      {supplier.supplier_segment}
-                    </Badge>
-                  )}
-
-                  {supplier.certification_labels && supplier.certification_labels.length > 0 && (
-                    <Badge variant="outline" className="text-xs">
-                      <Award className="h-3 w-3 mr-1" />
-                      {supplier.certification_labels.length} certif.
+                    )}
+                  </CardTitle>
+                  {supplier.archived_at && (
+                    <Badge
+                      variant="destructive"
+                      className="text-xs flex-shrink-0"
+                      style={{ backgroundColor: colors.danger[100], color: colors.danger[700] }}
+                    >
+                      Archivé
                     </Badge>
                   )}
                 </div>
+              </CardHeader>
 
-                {/* Commercial Info */}
-                {(supplier.payment_terms || supplier.delivery_time_days || supplier.minimum_order_amount) && (
-                  <div className="space-y-2 text-xs text-gray-600">
-                    {supplier.payment_terms && (
-                      <div className="flex items-center gap-2">
-                        <Banknote className="h-3 w-3" />
-                        <span>Paiement: {supplier.payment_terms}</span>
-                      </div>
+              <CardContent className="space-y-1.5" style={{ padding: spacing[2] }}>
+                {/* Badges Taxonomie: Segment + Catégories */}
+                {(supplier.supplier_segment || supplier.supplier_category) && (
+                  <div className="flex flex-wrap items-center gap-1.5 pb-1.5">
+                    {supplier.supplier_segment && (
+                      <SupplierSegmentBadge segment={supplier.supplier_segment} size="sm" showIcon={true} />
                     )}
-
-                    {supplier.delivery_time_days && (
-                      <div className="flex items-center gap-2">
-                        <Truck className="h-3 w-3" />
-                        <span>Livraison: {supplier.delivery_time_days} jours</span>
-                      </div>
-                    )}
-
-                    {supplier.minimum_order_amount && (
-                      <div className="flex items-center gap-2">
-                        <Package className="h-3 w-3" />
-                        <span>Commande min: {supplier.minimum_order_amount}€</span>
-                      </div>
+                    {supplier.supplier_category && (
+                      <SupplierCategoryBadge
+                        category={supplier.supplier_category}
+                        size="sm"
+                        showIcon={false}
+                        mode="single"
+                      />
                     )}
                   </div>
                 )}
 
-                {/* Stats */}
-                <div className="border-t pt-4">
-                  <div className="text-sm">
-                    <div className="flex justify-between">
-                      <span className="text-gray-600">Produits:</span>
-                      <span className="font-medium text-black">
-                        {supplier._count?.products || 0}
-                      </span>
-                    </div>
+                {/* Pays uniquement */}
+                {supplier.country && (
+                  <div className="flex items-center gap-1.5 text-xs" style={{ color: colors.text.subtle }}>
+                    <MapPin className="h-3 w-3 flex-shrink-0" />
+                    <span className="truncate">{supplier.country}</span>
+                  </div>
+                )}
+
+                {/* Stats produits */}
+                <div className="border-t pt-1.5 mt-1.5" style={{ borderColor: colors.border.DEFAULT }}>
+                  <div className="flex justify-between items-center text-xs">
+                    <span style={{ color: colors.text.subtle }}>Produits:</span>
+                    <span className="font-medium" style={{ color: colors.text.DEFAULT }}>
+                      {supplier._count?.products || 0}
+                    </span>
                   </div>
                 </div>
 
-                {/* Actions */}
-                <div className="pt-4 border-t">
-                  <div className="flex gap-2 flex-wrap">
-                    {/* 1. Archiver/Restaurer */}
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => handleArchive(supplier)}
-                      className={`flex-1 min-w-0 ${supplier.archived_at ? "text-blue-600 border-blue-200 hover:bg-blue-50" : "text-black border-gray-200 hover:bg-gray-50"}`}
-                    >
-                      {supplier.archived_at ? (
-                        <>
-                          <ArchiveRestore className="h-4 w-4 mr-1" />
-                          Restaurer
-                        </>
-                      ) : (
-                        <>
-                          <Archive className="h-4 w-4 mr-1" />
-                          Archiver
-                        </>
-                      )}
-                    </Button>
-
-                    {/* 2. Supprimer */}
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => handleDelete(supplier)}
-                      className="flex-1 min-w-0 text-red-600 border-red-200 hover:bg-red-50"
-                    >
-                      <Trash2 className="h-4 w-4 mr-1" />
-                      Supprimer
-                    </Button>
-
-                    {/* 3. Voir détails */}
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      asChild
-                      className="flex-1 min-w-0"
-                      data-testid="supplier-actions"
-                    >
-                      <Link href={`/contacts-organisations/suppliers/${supplier.id}`}>
-                        Voir détails
+                {/* Actions - Button Group Horizontal */}
+                <div className="pt-1.5 border-t flex items-center gap-1" style={{ borderColor: colors.border.DEFAULT }}>
+                  {activeTab === 'active' ? (
+                    <>
+                      {/* Onglet Actifs: Voir détails + Archive icon */}
+                      <Link href={`/contacts-organisations/suppliers/${supplier.id}`} className="flex-1">
+                        <ButtonV2 variant="ghost" size="sm" className="w-full text-xs">
+                          Voir détails
+                        </ButtonV2>
                       </Link>
-                    </Button>
-                  </div>
+
+                      <ButtonV2
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => handleArchive(supplier)}
+                        icon={Archive}
+                        className="px-2 text-xs"
+                        aria-label="Archiver"
+                      />
+                    </>
+                  ) : (
+                    <>
+                      {/* Onglet Archivés: Icons + Voir détails */}
+                      <ButtonV2
+                        variant="secondary"
+                        size="sm"
+                        onClick={() => handleArchive(supplier)}
+                        icon={ArchiveRestore}
+                        className="px-2 text-xs"
+                        aria-label="Restaurer"
+                      />
+
+                      <ButtonV2
+                        variant="danger"
+                        size="sm"
+                        onClick={() => handleDelete(supplier)}
+                        icon={Trash2}
+                        className="px-2 text-xs"
+                        aria-label="Supprimer"
+                      />
+
+                      <Link href={`/contacts-organisations/suppliers/${supplier.id}`} className="flex-1">
+                        <ButtonV2 variant="ghost" size="sm" className="w-full text-xs">
+                          Voir détails
+                        </ButtonV2>
+                      </Link>
+                    </>
+                  )}
                 </div>
               </CardContent>
             </Card>
@@ -464,31 +429,30 @@ export default function SuppliersPage() {
         )}
       </div>
 
-      {suppliers.length === 0 && !loading && (
+      {displayedSuppliers.length === 0 && !isLoading && (
         <Card>
-          <CardContent className="p-8 text-center">
-            <Building2 className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-            <h3 className="text-lg font-medium text-black mb-2">
+          <CardContent className="text-center" style={{ padding: spacing[8] }}>
+            <Building2 className="h-12 w-12 mx-auto mb-4" style={{ color: colors.text.muted }} />
+            <h3 className="text-lg font-medium mb-2" style={{ color: colors.text.DEFAULT }}>
               Aucun fournisseur trouvé
             </h3>
-            <p className="text-gray-600 mb-4">
+            <p className="mb-4" style={{ color: colors.text.subtle }}>
               {searchQuery
                 ? 'Aucun fournisseur ne correspond à votre recherche.'
-                : 'Commencez par créer votre premier fournisseur.'
+                : activeTab === 'active'
+                  ? 'Commencez par créer votre premier fournisseur.'
+                  : 'Aucun fournisseur archivé.'
               }
             </p>
-            <Button
-              className="bg-black text-white hover:bg-gray-800"
-              onClick={handleCreateSupplier}
-            >
-              <Plus className="h-4 w-4 mr-2" />
-              Créer un fournisseur
-            </Button>
+            {activeTab === 'active' && (
+              <ButtonV2 variant="primary" onClick={handleCreateSupplier} icon={Plus}>
+                Créer un fournisseur
+              </ButtonV2>
+            )}
           </CardContent>
         </Card>
       )}
 
-      {/* Supplier Form Modal */}
       <SupplierFormModal
         isOpen={isModalOpen}
         onClose={handleCloseModal}

@@ -1,425 +1,417 @@
 'use client'
 
 import React from 'react'
-import Link from 'next/link'
+import { useRouter } from 'next/navigation'
 import {
-  LayoutDashboard,
+  DollarSign,
+  ShoppingCart,
+  AlertCircle,
   Package,
   TrendingUp,
-  TrendingDown,
-  Activity,
-  RefreshCw,
-  AlertTriangle,
-  ArrowRight
+  Search,
+  ArrowLeftRight,
+  BarChart3,
+  Plus,
+  FileText,
 } from 'lucide-react'
-import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card'
+import { CompactKpiCard } from '@/components/ui-v2/compact-kpi-card'
+import { ActionButton } from '@/components/ui-v2/action-button'
+import { ActivityTimeline, type TimelineItem } from '@/components/ui-v2/activity-timeline'
+import { StatPill } from '@/components/ui-v2/stat-pill'
 import { useCompleteDashboardMetrics } from '@/hooks/use-complete-dashboard-metrics'
-import { useDashboardAnalytics } from '@/hooks/use-dashboard-analytics'
-import { RevenueChart } from '@/components/business/revenue-chart'
-import { ProductsChart } from '@/components/business/products-chart'
-import { StockMovementsChart } from '@/components/business/stock-movements-chart'
-import { PurchaseOrdersChart } from '@/components/business/purchase-orders-chart'
 
-interface StatCardProps {
-  title: string
-  value: string
-  change: string
-  isPositive: boolean
-  icon: React.ReactNode
-  isLoading?: boolean
-  href?: string // URL de navigation au clic
-  isMock?: boolean // Badge "MOCK - À connecter"
-}
+export default function DashboardV2Page() {
+  const router = useRouter()
+  const { metrics, loading, error } = useCompleteDashboardMetrics()
 
-function StatCard({ title, value, change, isPositive, icon, isLoading, href, isMock }: StatCardProps) {
-  if (isLoading) {
+  if (loading) {
     return (
-      <Card className="border-gray-200">
-        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-          <div className="h-4 w-24 bg-gray-200 rounded animate-pulse" />
-          <div className="h-4 w-4 bg-gray-200 rounded animate-pulse" />
-        </CardHeader>
-        <CardContent>
-          <div className="h-8 w-16 bg-gray-200 rounded animate-pulse mb-1" />
-          <div className="h-3 w-20 bg-gray-200 rounded animate-pulse" />
-        </CardContent>
-      </Card>
+      <div className="min-h-screen bg-slate-50 flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
+          <p className="text-slate-600">Chargement du dashboard...</p>
+        </div>
+      </div>
     )
   }
 
-  const cardContent = (
-    <Card className="border-gray-200 hover:border-black hover:shadow-md transition-all">
-      <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-        <div className="flex items-center gap-2 flex-1 min-w-0">
-          <CardTitle className="text-sm font-medium text-gray-600 truncate">{title}</CardTitle>
-          {isMock && (
-            <span className="px-2 py-0.5 text-xs font-medium bg-gray-100 text-gray-800 rounded border border-gray-300">
-              ⚠️ MOCK
-            </span>
-          )}
-        </div>
-        <div className="h-4 w-4 flex items-center justify-center">
-          {icon}
-        </div>
-      </CardHeader>
-      <CardContent>
-        <div className="text-2xl font-bold text-black">{value}</div>
-        <div className="flex items-center mt-1">
-          {isMock ? (
-            <AlertTriangle className="h-3 w-3 text-gray-900" />
-          ) : isPositive ? (
-            <TrendingUp className="h-3 w-3 text-green-500" />
-          ) : (
-            <TrendingDown className="h-3 w-3 text-red-500" />
-          )}
-          <span className={`text-xs ml-1 ${isMock ? 'text-black' : isPositive ? 'text-green-500' : 'text-red-500'}`}>
-            {isMock ? 'À connecter' : change}
-          </span>
-        </div>
-        {href && (
-          <div className="flex items-center justify-end mt-2 text-xs text-gray-500 group-hover:text-black transition-colors">
-            <span>Voir détails</span>
-            <ArrowRight className="h-3 w-3 ml-1" />
-          </div>
-        )}
-      </CardContent>
-    </Card>
-  )
-
-  if (href) {
+  if (error || !metrics) {
     return (
-      <Link href={href} className="block group">
-        {cardContent}
-      </Link>
+      <div className="min-h-screen bg-slate-50 flex items-center justify-center">
+        <div className="text-center">
+          <AlertCircle className="h-12 w-12 text-red-500 mx-auto mb-4" />
+          <p className="text-slate-900 font-medium">Erreur de chargement</p>
+          <p className="text-slate-600 text-sm">{error || 'Données indisponibles'}</p>
+        </div>
+      </div>
     )
   }
 
-  return cardContent
-}
-
-export default function DashboardPage() {
-  const {
-    metrics,
-    isLoading,
-    error
-  } = useCompleteDashboardMetrics()
-
-  // Hook analytics pour les graphiques Recharts
-  const {
-    analytics,
-    isLoading: isLoadingAnalytics,
-    error: analyticsError
-  } = useDashboardAnalytics()
-
-  // Formatage des métriques pour l'affichage avec navigation - 8 KPIs
-  const stats = metrics ? [
+  // Données mockées pour activité récente (à remplacer par vraies données)
+  const recentActivity: TimelineItem[] = [
     {
-      title: 'Total Produits',
-      value: metrics.catalogue.totalProducts.toLocaleString(),
-      change: `${metrics.catalogue.trend > 0 ? '+' : ''}${metrics.catalogue.trend}%`,
-      isPositive: metrics.catalogue.trend > 0,
-      icon: <Package className="h-6 w-6 text-gray-600" />,
-      href: '/catalogue'
+      id: '1',
+      title: 'Nouvelle commande client',
+      description: 'CMD-2025-001 - 3 produits',
+      timestamp: 'Il y a 5 min',
+      icon: ShoppingCart,
+      iconColor: 'success',
     },
     {
-      title: 'Produits Actifs',
-      value: metrics.catalogue.activeProducts.toLocaleString(),
-      change: `Disponibles à la vente`,
-      isPositive: metrics.catalogue.activeProducts > 0,
-      icon: <TrendingUp className="h-6 w-6 text-green-600" />,
-      href: '/catalogue?filter=active'
+      id: '2',
+      title: 'Alerte stock bas',
+      description: 'Canapé Velours Bleu - Stock: 2',
+      timestamp: 'Il y a 12 min',
+      icon: AlertCircle,
+      iconColor: 'warning',
     },
     {
-      title: 'Collections',
-      value: metrics.catalogue.collections.toLocaleString(),
-      change: `Groupements thématiques`,
-      isPositive: metrics.catalogue.collections > 0,
-      icon: <Package className="h-6 w-6 text-gray-600" />,
-      href: '/catalogue/collections'
+      id: '3',
+      title: 'Produit ajouté',
+      description: 'Lampe Designer Pro',
+      timestamp: 'Il y a 1h',
+      icon: Package,
+      iconColor: 'primary',
     },
     {
-      title: 'Fournisseurs',
-      value: metrics.organisations.suppliers.toLocaleString(),
-      change: `Partenaires commerciaux`,
-      isPositive: metrics.organisations.suppliers > 0,
-      icon: <Activity className="h-6 w-6 text-blue-600" />,
-      href: '/organisation'
+      id: '4',
+      title: 'Mouvement stock',
+      description: 'Ajustement inventaire +15 unités',
+      timestamp: 'Il y a 2h',
+      icon: ArrowLeftRight,
+      iconColor: 'neutral',
     },
     {
-      title: 'Valeur Stock',
-      value: `${(metrics.stocks.totalValue / 1000).toFixed(1)}k €`,
-      change: `${metrics.stocks.lowStockItems} en rupture`,
-      isPositive: metrics.stocks.lowStockItems < 10,
-      icon: <Package className="h-6 w-6 text-gray-600" />,
-      href: '/stocks'
+      id: '5',
+      title: 'Sourcing rapide',
+      description: '3 nouveaux fournisseurs évalués',
+      timestamp: 'Il y a 3h',
+      icon: Search,
+      iconColor: 'accent',
     },
-    {
-      title: 'Commandes Achat',
-      value: metrics.orders.purchaseOrders.toLocaleString(),
-      change: `En cours fournisseurs`,
-      isPositive: metrics.orders.purchaseOrders > 0,
-      icon: <TrendingUp className="h-6 w-6 text-gray-600" />,
-      href: '/commandes/fournisseurs'
-    },
-    {
-      title: 'CA du Mois',
-      value: `${(metrics.orders.monthRevenue / 1000).toFixed(1)}k €`,
-      change: `${metrics.orders.salesOrders} commandes`,
-      isPositive: metrics.orders.monthRevenue > 0,
-      icon: <Activity className="h-6 w-6 text-green-600" />,
-      href: '/commandes/clients'
-    },
-    {
-      title: 'À Sourcer',
-      value: metrics.sourcing.productsToSource.toLocaleString(),
-      change: `${metrics.sourcing.samplesWaiting} échantillons`,
-      isPositive: true,
-      icon: <Package className="h-6 w-6 text-gray-600" />,
-      href: '/sourcing'
-    }
-  ] : []
+  ]
 
   return (
-    <div className="space-y-6">
-      {/* Page header avec indicateurs de performance */}
-      <div className="border-b border-gray-200 pb-4">
+    <div className="min-h-screen bg-slate-50">
+      {/* Header Compact */}
+      <div className="bg-white border-b border-slate-200 px-6 py-4">
         <div className="flex items-center justify-between">
-          <div className="flex items-center space-x-3">
-            <LayoutDashboard className="h-8 w-8 text-black" />
-            <div>
-              <h1 className="text-2xl font-bold text-black">Dashboard</h1>
-              <p className="text-gray-600">Vue d&apos;ensemble de votre activité Vérone</p>
-            </div>
+          <div>
+            <h1 className="text-xl font-bold text-slate-900">Dashboard Vérone</h1>
+            <p className="text-sm text-slate-600">
+              {new Date().toLocaleDateString('fr-FR', {
+                weekday: 'long',
+                year: 'numeric',
+                month: 'long',
+                day: 'numeric',
+              })}
+            </p>
           </div>
-          <div className="flex items-center space-x-4">
-            {/* Indicateur de chargement */}
-            {isLoading && (
-              <RefreshCw className="h-5 w-5 text-gray-600 animate-spin" />
-            )}
-          </div>
+          <button
+            onClick={() => router.push('/dashboard')}
+            className="text-xs text-slate-600 hover:text-slate-900 underline"
+          >
+            Retour ancien dashboard
+          </button>
         </div>
       </div>
 
-      {/* Gestion des erreurs */}
-      {error && (
-        <div className="bg-red-50 border border-red-200 rounded-lg p-4">
-          <div className="flex">
-            <AlertTriangle className="h-5 w-5 text-red-400 mt-0.5" />
-            <div className="ml-3">
-              <h3 className="text-sm font-medium text-red-800">Erreur de chargement</h3>
-              <p className="mt-1 text-sm text-red-700">
-                Impossible de charger les métriques. Veuillez réessayer.
-              </p>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* Stats grid - 8 KPIs sur 2 lignes */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-2 xl:grid-cols-2 gap-6">
-        {isLoading ? (
-          // Skeleton loading pour 8 cartes
-          Array.from({ length: 8 }).map((_, index) => (
-            <StatCard
-              key={index}
-              title=""
-              value=""
-              change=""
-              isPositive={false}
-              icon={null}
-              isLoading={true}
+      <div className="p-6 space-y-6">
+        {/* Zone 2: KPIs Ultra-Compacts */}
+        <div>
+          <h2 className="text-sm font-semibold text-slate-700 mb-3">KPIs Essentiels</h2>
+          <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-5 gap-3">
+            <CompactKpiCard
+              label="CA du Mois"
+              value={new Intl.NumberFormat('fr-FR', {
+                style: 'currency',
+                currency: 'EUR',
+                minimumFractionDigits: 0,
+              }).format(metrics.orders?.monthRevenue || 0)}
+              icon={DollarSign}
+              color="success"
+              trend={{
+                value: 12.5,
+                isPositive: true,
+              }}
+              sparklineData={[45000, 47000, 51000, 48000, 52000, 55000, metrics.orders?.monthRevenue || 50000]}
+              onClick={() => router.push('/commandes/clients')}
             />
-          ))
-        ) : (
-          stats.map((stat, index) => (
-            <StatCard key={index} {...stat} isLoading={false} />
-          ))
-        )}
-      </div>
 
-      {/* Métriques Catalogue */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {/* Répartition Produits */}
-        <div className="bg-white rounded-lg border border-gray-200 p-6">
-          <h3 className="text-lg font-semibold text-black mb-4">Répartition des Produits</h3>
-          {isLoading ? (
-            <div className="space-y-3">
-              {Array.from({ length: 4 }).map((_, i) => (
-                <div key={i} className="flex justify-between py-2 border-b border-gray-100">
-                  <div className="space-y-2">
-                    <div className="h-4 w-24 bg-gray-200 rounded animate-pulse" />
-                    <div className="h-3 w-32 bg-gray-200 rounded animate-pulse" />
-                  </div>
-                  <div className="space-y-2">
-                    <div className="h-4 w-16 bg-gray-200 rounded animate-pulse" />
-                  </div>
-                </div>
-              ))}
-            </div>
-          ) : metrics ? (
-            <div className="space-y-3">
-              <div className="flex items-center justify-between py-2 border-b border-gray-100">
-                <div>
-                  <p className="font-medium text-black">Produits Actifs</p>
-                  <p className="text-sm text-gray-500">Disponibles à la vente</p>
-                </div>
-                <div className="text-right">
-                  <p className="font-medium text-green-600">{metrics.catalogue.activeProducts}</p>
-                </div>
-              </div>
-              <div className="flex items-center justify-between py-2 border-b border-gray-100">
-                <div>
-                  <p className="font-medium text-black">Produits Publiés</p>
-                  <p className="text-sm text-gray-500">Disponibles dans le catalogue</p>
-                </div>
-                <div className="text-right">
-                  <p className="font-medium text-black">{metrics.catalogue.publishedProducts}</p>
-                </div>
-              </div>
-              <div className="flex items-center justify-between py-2 border-b border-gray-100">
-                <div>
-                  <p className="font-medium text-black">Stock Faible</p>
-                  <p className="text-sm text-gray-500">Produits en rupture</p>
-                </div>
-                <div className="text-right">
-                  <p className="font-medium text-gray-500">{metrics.stocks.lowStockItems}</p>
-                </div>
-              </div>
-              <div className="flex items-center justify-between py-2">
-                <div>
-                  <p className="font-medium text-black">Groupes de Variantes</p>
-                  <p className="text-sm text-gray-500">Produits variantes</p>
-                </div>
-                <div className="text-right">
-                  <p className="font-medium text-black">{metrics.catalogue.variantGroups}</p>
-                </div>
-              </div>
-            </div>
-          ) : (
-            <p className="text-gray-500 text-sm">Aucune donnée disponible</p>
-          )}
-        </div>
+            <CompactKpiCard
+              label="Commandes Ventes"
+              value={metrics.orders?.salesOrders || 0}
+              icon={ShoppingCart}
+              color="primary"
+              onClick={() => router.push('/commandes/clients')}
+            />
 
-        {/* Métriques Collections */}
-        <div className="bg-white rounded-lg border border-gray-200 p-6">
-          <h3 className="text-lg font-semibold text-black mb-4">Collections & Catégories</h3>
-          {isLoading ? (
-            <div className="space-y-3">
-              {Array.from({ length: 4 }).map((_, i) => (
-                <div key={i} className="flex justify-between py-2 border-b border-gray-100">
-                  <div className="space-y-2">
-                    <div className="h-4 w-32 bg-gray-200 rounded animate-pulse" />
-                    <div className="h-3 w-20 bg-gray-200 rounded animate-pulse" />
-                  </div>
-                  <div className="h-6 w-16 bg-gray-200 rounded-full animate-pulse" />
-                </div>
-              ))}
-            </div>
-          ) : metrics ? (
-            <div className="space-y-3">
-              <div className="flex items-center justify-between py-2 border-b border-gray-100">
-                <div>
-                  <p className="font-medium text-black">Collections Totales</p>
-                  <p className="text-sm text-gray-500">Tous les groupements</p>
-                </div>
-                <div className="text-right">
-                  <p className="font-medium text-black">{metrics.collections.total}</p>
-                </div>
-              </div>
-              <div className="flex items-center justify-between py-2 border-b border-gray-100">
-                <div>
-                  <p className="font-medium text-black">Collections Actives</p>
-                  <p className="text-sm text-gray-500">Visibles sur le site</p>
-                </div>
-                <div className="text-right">
-                  <p className="font-medium text-green-600">{metrics.collections.active}</p>
-                </div>
-              </div>
-              <div className="flex items-center justify-between py-2 border-b border-gray-100">
-                <div>
-                  <p className="font-medium text-black">Groupes de Variantes</p>
-                  <p className="text-sm text-gray-500">Produits variantes</p>
-                </div>
-                <div className="text-right">
-                  <p className="font-medium text-black">{metrics.variantGroups.total}</p>
-                </div>
-              </div>
-              <div className="flex items-center justify-between py-2">
-                <div>
-                  <p className="font-medium text-black">Croissance Catalogue</p>
-                  <p className="text-sm text-gray-500">Derniers 7 jours</p>
-                </div>
-                <div className="text-right">
-                  <p className={`font-medium ${metrics.products.trend > 0 ? 'text-green-600' : 'text-gray-500'}`}>
-                    {metrics.products.trend > 0 ? '+' : ''}{metrics.products.trend}%
-                  </p>
-                </div>
-              </div>
-            </div>
-          ) : (
-            <p className="text-gray-500 text-sm">Aucune donnée disponible</p>
-          )}
-        </div>
-      </div>
+            <CompactKpiCard
+              label="Alertes Stock"
+              value={metrics.stocks?.lowStockItems || 0}
+              icon={AlertCircle}
+              color={(metrics.stocks?.lowStockItems || 0) > 0 ? 'danger' : 'success'}
+              onClick={() => router.push('/stocks?tab=alerts')}
+            />
 
-      {/* Section Analytics - 4 Graphiques Recharts */}
-      <div className="border-t border-gray-200 pt-6">
-        <div className="mb-6">
-          <h2 className="text-xl font-bold text-black mb-2">Analytics - 30 derniers jours</h2>
-          <p className="text-gray-600">Évolution de vos indicateurs clés sur les 30 derniers jours</p>
-        </div>
+            <CompactKpiCard
+              label="Produits Actifs"
+              value={metrics.catalogue?.activeProducts || 0}
+              icon={Package}
+              color="accent"
+              onClick={() => router.push('/catalogue/produits?status=active')}
+            />
 
-        {/* Gestion des erreurs Analytics */}
-        {analyticsError && (
-          <div className="bg-red-50 border border-red-200 rounded-lg p-4 mb-6">
-            <div className="flex">
-              <AlertTriangle className="h-5 w-5 text-red-400 mt-0.5" />
-              <div className="ml-3">
-                <h3 className="text-sm font-medium text-red-800">Erreur de chargement des analytics</h3>
-                <p className="mt-1 text-sm text-red-700">
-                  Impossible de charger les graphiques. Veuillez réessayer.
-                </p>
-              </div>
-            </div>
+            <CompactKpiCard
+              label="Commandes Achat"
+              value={metrics.orders?.purchaseOrders || 0}
+              icon={TrendingUp}
+              color="warning"
+              onClick={() => router.push('/commandes/fournisseurs')}
+            />
           </div>
-        )}
+        </div>
 
-        {/* Grille 2x2 des graphiques */}
+        {/* Zone 3: Actions Rapides */}
+        <div>
+          <h2 className="text-sm font-semibold text-slate-700 mb-3">Actions Rapides</h2>
+          <div className="grid grid-cols-3 md:grid-cols-6 gap-3">
+            <ActionButton
+              label="Nouvelle Commande"
+              icon={Plus}
+              gradient="blue"
+              onClick={() => router.push('/commandes/clients?action=create')}
+            />
+            <ActionButton
+              label="Ajuster Stock"
+              icon={ArrowLeftRight}
+              gradient="orange"
+              onClick={() => router.push('/stocks/mouvements?action=quick')}
+            />
+            <ActionButton
+              label="Sourcing Rapide"
+              icon={Search}
+              gradient="purple"
+              onClick={() => router.push('/catalogue/sourcing/rapide')}
+            />
+            <ActionButton
+              label="Rapport Ventes"
+              icon={BarChart3}
+              gradient="green"
+              onClick={() => router.push('/commandes/clients')}
+            />
+            <ActionButton
+              label="Nouveau Produit"
+              icon={Package}
+              gradient="blueGreen"
+              onClick={() => router.push('/catalogue/produits?action=create')}
+            />
+            <ActionButton
+              label="Alertes"
+              icon={AlertCircle}
+              gradient="orangeRed"
+              onClick={() => router.push('/stocks?tab=alerts')}
+            />
+          </div>
+        </div>
+
+        {/* Zone 4: Widgets Actionnables (Grid 2x2) */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          {/* Graphique 1 : Évolution CA */}
-          <div className="bg-white rounded-lg border border-gray-200 p-6">
-            <h3 className="text-lg font-semibold text-black mb-4">Évolution du Chiffre d&apos;Affaires</h3>
-            <RevenueChart
-              data={analytics?.revenue || []}
-              isLoading={isLoadingAnalytics}
-            />
+          {/* Activité Récente */}
+          <div className="bg-white rounded-xl border border-slate-200 p-5">
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="text-base font-semibold text-slate-900">Activité Récente</h3>
+              <button
+                onClick={() => router.push('/activite')}
+                className="text-xs text-blue-600 hover:text-blue-700 font-medium"
+              >
+                Voir tout →
+              </button>
+            </div>
+            <ActivityTimeline items={recentActivity} maxItems={5} />
           </div>
 
-          {/* Graphique 2 : Produits ajoutés */}
-          <div className="bg-white rounded-lg border border-gray-200 p-6">
-            <h3 className="text-lg font-semibold text-black mb-4">Produits Ajoutés par Semaine</h3>
-            <ProductsChart
-              data={analytics?.products || []}
-              isLoading={isLoadingAnalytics}
-            />
+          {/* Top 5 Produits */}
+          <div className="bg-white rounded-xl border border-slate-200 p-5">
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="text-base font-semibold text-slate-900">Top 5 Produits</h3>
+              <button
+                onClick={() => router.push('/catalogue/produits?sort=best-sellers')}
+                className="text-xs text-blue-600 hover:text-blue-700 font-medium"
+              >
+                Voir tout →
+              </button>
+            </div>
+            <div className="space-y-3">
+              {[
+                { name: 'Canapé Velours Bleu', sales: 45, stock: 12, trend: 15 },
+                { name: 'Lampe Designer Pro', sales: 38, stock: 8, trend: 8 },
+                { name: 'Table Basse Marbre', sales: 32, stock: 5, trend: -3 },
+                { name: 'Chaise Scandinave', sales: 28, stock: 24, trend: 12 },
+                { name: 'Miroir Art Déco', sales: 22, stock: 15, trend: 5 },
+              ].map((product, index) => (
+                <div
+                  key={product.name}
+                  className="flex items-center justify-between py-2 border-b border-slate-100 last:border-0"
+                >
+                  <div className="flex items-center gap-2 flex-1 min-w-0">
+                    <span className="text-xs font-medium text-slate-400">
+                      #{index + 1}
+                    </span>
+                    <span className="text-sm text-slate-900 truncate">{product.name}</span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <StatPill label="ventes" value={product.sales} variant="primary" size="sm" />
+                    <StatPill
+                      label="stock"
+                      value={product.stock}
+                      variant={product.stock < 10 ? 'danger' : 'success'}
+                      size="sm"
+                    />
+                    <span
+                      className={`text-xs font-medium ${
+                        product.trend >= 0 ? 'text-green-600' : 'text-red-600'
+                      }`}
+                    >
+                      {product.trend >= 0 ? '+' : ''}{product.trend}%
+                    </span>
+                  </div>
+                </div>
+              ))}
+            </div>
           </div>
 
-          {/* Graphique 3 : Mouvements stock */}
-          <div className="bg-white rounded-lg border border-gray-200 p-6">
-            <h3 className="text-lg font-semibold text-black mb-4">Mouvements de Stock (Entrées/Sorties)</h3>
-            <StockMovementsChart
-              data={analytics?.stockMovements || []}
-              isLoading={isLoadingAnalytics}
-            />
+          {/* Statut Commandes */}
+          <div className="bg-white rounded-xl border border-slate-200 p-5">
+            <h3 className="text-base font-semibold text-slate-900 mb-4">Statut Commandes</h3>
+            <div className="space-y-3">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <div className="w-3 h-3 rounded-full bg-green-500"></div>
+                  <span className="text-sm text-slate-700">Commandes Ventes</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <span className="text-lg font-semibold text-slate-900">
+                    {metrics.orders?.salesOrders || 0}
+                  </span>
+                  <span className="text-xs text-slate-500">
+                    {Math.round(
+                      ((metrics.orders?.salesOrders || 0) / ((metrics.orders?.salesOrders || 0) + (metrics.orders?.purchaseOrders || 0) || 1)) * 100
+                    )}%
+                  </span>
+                </div>
+              </div>
+
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <div className="w-3 h-3 rounded-full bg-orange-500"></div>
+                  <span className="text-sm text-slate-700">Commandes Achat</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <span className="text-lg font-semibold text-slate-900">
+                    {metrics.orders?.purchaseOrders || 0}
+                  </span>
+                  <span className="text-xs text-slate-500">
+                    {Math.round(
+                      ((metrics.orders?.purchaseOrders || 0) / ((metrics.orders?.salesOrders || 0) + (metrics.orders?.purchaseOrders || 0) || 1)) * 100
+                    )}%
+                  </span>
+                </div>
+              </div>
+
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <div className="w-3 h-3 rounded-full bg-blue-500"></div>
+                  <span className="text-sm text-slate-700">CA du Mois</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <span className="text-sm font-semibold text-slate-900">
+                    {new Intl.NumberFormat('fr-FR', {
+                      style: 'currency',
+                      currency: 'EUR',
+                      minimumFractionDigits: 0,
+                    }).format(metrics.orders?.monthRevenue || 0)}
+                  </span>
+                </div>
+              </div>
+
+              <div className="pt-3 border-t border-slate-100">
+                <button
+                  onClick={() => router.push('/commandes/clients')}
+                  className="w-full py-2 text-sm font-medium text-blue-600 hover:text-blue-700 hover:bg-blue-50 rounded-lg transition-colors"
+                >
+                  Gérer les commandes →
+                </button>
+              </div>
+            </div>
           </div>
 
-          {/* Graphique 4 : Commandes fournisseurs */}
-          <div className="bg-white rounded-lg border border-gray-200 p-6">
-            <h3 className="text-lg font-semibold text-black mb-4">Commandes Fournisseurs par Semaine</h3>
-            <PurchaseOrdersChart
-              data={analytics?.purchaseOrders || []}
-              isLoading={isLoadingAnalytics}
-            />
+          {/* Notifications */}
+          <div className="bg-white rounded-xl border border-slate-200 p-5">
+            <h3 className="text-base font-semibold text-slate-900 mb-4">Notifications</h3>
+            <div className="space-y-2">
+              {(metrics.stocks?.lowStockItems || 0) > 0 && (
+                <div className="flex items-start gap-2 p-2 bg-red-50 border border-red-100 rounded-lg">
+                  <AlertCircle size={16} className="text-red-600 flex-shrink-0 mt-0.5" />
+                  <div className="flex-1 min-w-0">
+                    <p className="text-xs font-medium text-red-900">
+                      {metrics.stocks.lowStockItems} alertes stock critiques
+                    </p>
+                    <button
+                      onClick={() => router.push('/stocks?tab=alerts')}
+                      className="text-xs text-red-600 hover:text-red-700 underline mt-0.5"
+                    >
+                      Voir les alertes
+                    </button>
+                  </div>
+                </div>
+              )}
+
+              {(metrics.orders?.salesOrders || 0) > 0 && (
+                <div className="flex items-start gap-2 p-2 bg-green-50 border border-green-100 rounded-lg">
+                  <ShoppingCart size={16} className="text-green-600 flex-shrink-0 mt-0.5" />
+                  <div className="flex-1 min-w-0">
+                    <p className="text-xs font-medium text-green-900">
+                      {metrics.orders.salesOrders} commandes ventes actives
+                    </p>
+                    <button
+                      onClick={() => router.push('/commandes/clients')}
+                      className="text-xs text-green-600 hover:text-green-700 underline mt-0.5"
+                    >
+                      Voir les commandes
+                    </button>
+                  </div>
+                </div>
+              )}
+
+              {(metrics.sourcing?.samplesWaiting || 0) > 0 && (
+                <div className="flex items-start gap-2 p-2 bg-blue-50 border border-blue-100 rounded-lg">
+                  <Package size={16} className="text-blue-600 flex-shrink-0 mt-0.5" />
+                  <div className="flex-1 min-w-0">
+                    <p className="text-xs font-medium text-blue-900">
+                      {metrics.sourcing.samplesWaiting} échantillons en attente
+                    </p>
+                    <button
+                      onClick={() => router.push('/catalogue/sourcing')}
+                      className="text-xs text-blue-600 hover:text-blue-700 underline mt-0.5"
+                    >
+                      Voir échantillons
+                    </button>
+                  </div>
+                </div>
+              )}
+
+              {(metrics.stocks?.lowStockItems || 0) === 0 &&
+               (metrics.orders?.salesOrders || 0) === 0 &&
+               (metrics.sourcing?.samplesWaiting || 0) === 0 && (
+                <div className="flex items-center justify-center py-8">
+                  <div className="text-center">
+                    <p className="text-sm text-slate-500 mb-1">Aucune notification</p>
+                    <p className="text-xs text-slate-400">Tout est à jour ! 🎉</p>
+                  </div>
+                </div>
+              )}
+            </div>
           </div>
         </div>
       </div>

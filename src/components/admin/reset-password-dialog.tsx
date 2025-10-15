@@ -10,6 +10,7 @@
 import React, { useState } from 'react'
 import { Key, Save, X, Eye, EyeOff } from 'lucide-react'
 import { Button } from '@/components/ui/button'
+import { ButtonV2 } from '@/components/ui-v2/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { RoleBadge, type UserRole } from '@/components/ui/role-badge'
@@ -225,26 +226,23 @@ export function ResetPasswordDialog({
           )}
 
           <DialogFooter className="flex flex-col-reverse sm:flex-row sm:justify-end sm:space-x-2 pt-4">
-            <Button
+            <ButtonV2
               type="button"
-              variant="outline"
+              variant="ghost"
               onClick={handleClose}
               disabled={isResetting}
-              className="border-black text-black hover:bg-gray-50"
             >
               Annuler
-            </Button>
-            <Button
+            </ButtonV2>
+            <ButtonV2
               type="submit"
+              variant="warning"
+              icon={Key}
+              loading={isResetting}
               disabled={isResetting || !isFormValid}
-              className={cn(
-                "bg-black hover:bg-gray-800 text-white",
-                (isResetting || !isFormValid) && "opacity-50 cursor-not-allowed"
-              )}
             >
-              <Key className="h-4 w-4 mr-2" />
-              {isResetting ? 'Réinitialisation...' : 'Réinitialiser'}
-            </Button>
+              Réinitialiser
+            </ButtonV2>
           </DialogFooter>
         </form>
       </DialogContent>

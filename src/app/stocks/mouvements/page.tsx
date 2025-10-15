@@ -1,7 +1,7 @@
 'use client'
 
 import React, { useState } from 'react'
-import { useRouter } from 'next/navigation'
+import { useRouter, useSearchParams } from 'next/navigation'
 import { ArrowUpDown, Download, RefreshCw, ChevronLeft, ChevronRight, Eye, ArrowLeft, Plus } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import {
@@ -19,16 +19,21 @@ import {
   SelectValue,
 } from '@/components/ui/select'
 import { Badge } from '@/components/ui/badge'
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { MovementsTable } from '@/components/business/movements-table'
 import { MovementsFilters } from '@/components/business/movements-filters'
 import { MovementsStatsCards } from '@/components/business/movements-stats'
 import { MovementDetailsModal } from '@/components/business/movement-details-modal'
 import { CancelMovementModal } from '@/components/business/cancel-movement-modal'
 import { QuickStockMovementModal } from '@/components/business/quick-stock-movement-modal'
+import { UniversalOrderDetailsModal } from '@/components/business/universal-order-details-modal'
 import { useMovementsHistory, MovementWithDetails } from '@/hooks/use-movements-history'
 
 export default function StockMovementsPage() {
   const router = useRouter()
+  const searchParams = useSearchParams()
+  const initialTab = searchParams?.get('tab') || 'all' // Support ?tab=in|out|all
+
   const {
     loading,
     movements,
@@ -47,6 +52,11 @@ export default function StockMovementsPage() {
   const [movementToCancel, setMovementToCancel] = useState<MovementWithDetails | null>(null)
   const [showCancelModal, setShowCancelModal] = useState(false)
   const [showQuickMovementModal, setShowQuickMovementModal] = useState(false)
+
+  // Modal commandes universelle
+  const [selectedOrderId, setSelectedOrderId] = useState<string | null>(null)
+  const [selectedOrderType, setSelectedOrderType] = useState<'sales' | 'purchase' | null>(null)
+  const [showOrderModal, setShowOrderModal] = useState(false)
 
   // Pagination
   const handlePageChange = (newPage: number) => {
@@ -79,9 +89,173 @@ export default function StockMovementsPage() {
 
   // Succès annulation
   const handleCancelSuccess = () => {
-    // Recharger les données
     window.location.reload()
   }
+
+  // Clic sur commande liée
+  const handleOrderClick = (orderId: string, orderType: 'sales' | 'purchase') => {
+    setSelectedOrderId(orderId)
+    setSelectedOrderType(orderType)
+    setShowOrderModal(true)
+  }
+
+  // Composant réutilisable pour le contenu de chaque tab
+  const MovementsContent = ({
+    title,
+    emptyMessage
+  }: {
+    title: string
+    emptyMessage: string
+  }) => (
+    <>
+      {/* Statistiques */}
+      <MovementsStatsCards stats={stats} loading={loading} />
+
+      {/* Layout principal avec filtres et table */}
+      <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
+        {/* Sidebar filtres */}
+        <div className="lg:col-span-1">
+          <MovementsFilters
+            filters={filters}
+            onFiltersChange={applyFilters}
+            onReset={resetFilters}
+            hasFilters={hasFilters}
+          />
+        </div>
+
+        {/* Contenu principal */}
+        <div className="lg:col-span-3 space-y-4">
+          {/* En-tête table avec stats et pagination */}
+          <Card className="border-black">
+            <CardHeader className="pb-4">
+              <div className="flex items-center justify-between">
+                <div>
+                  <CardTitle className="flex items-center gap-2 text-black">
+                    {title}
+                    {hasFilters && (
+                      <Badge variant="outline" className="border-black text-black">Filtré</Badge>
+                    )}
+                  </CardTitle>
+                  <CardDescription>
+                    {loading ? (
+                      'Chargement...'
+                    ) : (
+                      <>
+                        {total === 0 ? (
+                          'Aucun mouvement trouvé'
+                        ) : (
+                          <>
+                            {((pagination.currentPage - 1) * pagination.pageSize) + 1}-
+                            {Math.min(pagination.currentPage * pagination.pageSize, total)} sur {total} mouvements
+                          </>
+                        )}
+                      </>
+                    )}
+                  </CardDescription>
+                </div>
+
+                {/* Pagination et taille de page */}
+                <div className="flex items-center gap-4">
+                  <div className="flex items-center gap-2">
+                    <span className="text-sm text-gray-600">Afficher:</span>
+                    <Select
+                      value={pagination.pageSize.toString()}
+                      onValueChange={handlePageSizeChange}
+                    >
+                      <SelectTrigger className="w-20">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="25">25</SelectItem>
+                        <SelectItem value="50">50</SelectItem>
+                        <SelectItem value="100">100</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+
+                  {pagination.totalPages > 1 && (
+                    <div className="flex items-center gap-2">
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => handlePageChange(pagination.currentPage - 1)}
+                        disabled={pagination.currentPage === 1 || loading}
+                        className="border-black text-black hover:bg-black hover:text-white"
+                      >
+                        <ChevronLeft className="h-4 w-4" />
+                      </Button>
+
+                      <span className="text-sm text-gray-600">
+                        Page {pagination.currentPage} sur {pagination.totalPages}
+                      </span>
+
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => handlePageChange(pagination.currentPage + 1)}
+                        disabled={pagination.currentPage === pagination.totalPages || loading}
+                        className="border-black text-black hover:bg-black hover:text-white"
+                      >
+                        <ChevronRight className="h-4 w-4" />
+                      </Button>
+                    </div>
+                  )}
+                </div>
+              </div>
+            </CardHeader>
+
+            <CardContent className="p-0">
+              <MovementsTable
+                movements={movements}
+                loading={loading}
+                onMovementClick={handleMovementClick}
+                onCancelClick={handleCancelClick}
+                onOrderClick={handleOrderClick}
+              />
+            </CardContent>
+          </Card>
+
+          {/* Message d'aide si aucun résultat */}
+          {!loading && movements.length === 0 && hasFilters && (
+            <Card className="p-8 border-black">
+              <div className="text-center">
+                <Eye className="h-12 w-12 text-gray-300 mx-auto mb-3" />
+                <h3 className="text-lg font-medium text-black mb-2">
+                  Aucun mouvement trouvé
+                </h3>
+                <p className="text-gray-500 mb-4">
+                  Aucun mouvement ne correspond aux critères de recherche sélectionnés.
+                </p>
+                <Button
+                  variant="outline"
+                  onClick={resetFilters}
+                  className="border-black text-black hover:bg-black hover:text-white"
+                >
+                  <RefreshCw className="h-4 w-4 mr-2" />
+                  Réinitialiser les filtres
+                </Button>
+              </div>
+            </Card>
+          )}
+
+          {/* Message d'aide si base vide */}
+          {!loading && movements.length === 0 && !hasFilters && (
+            <Card className="p-8 border-black">
+              <div className="text-center">
+                <ArrowUpDown className="h-12 w-12 text-gray-300 mx-auto mb-3" />
+                <h3 className="text-lg font-medium text-black mb-2">
+                  {emptyMessage}
+                </h3>
+                <p className="text-gray-500">
+                  Les mouvements apparaîtront ici dès qu'ils seront créés.
+                </p>
+              </div>
+            </Card>
+          )}
+        </div>
+      </div>
+    </>
+  )
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -143,152 +317,146 @@ export default function StockMovementsPage() {
       </div>
 
       <div className="container mx-auto px-4 py-6 space-y-6">
-        {/* Statistiques */}
-        <MovementsStatsCards stats={stats} loading={loading} />
+        {/* TABS NIVEAU 1 : Direction (Entrées / Sorties / Tous) */}
+        <Tabs
+          defaultValue={initialTab}
+          onValueChange={(value) => {
+            // Mise à jour de l'URL pour refléter le tab actif
+            const url = new URL(window.location.href)
+            url.searchParams.set('tab', value)
+            window.history.pushState({}, '', url)
+          }}
+          className="w-full"
+        >
+          <TabsList className="grid w-full max-w-lg mx-auto grid-cols-3 mb-6">
+            <TabsTrigger value="in" className="text-sm font-medium">
+              Entrées
+            </TabsTrigger>
+            <TabsTrigger value="out" className="text-sm font-medium">
+              Sorties
+            </TabsTrigger>
+            <TabsTrigger value="all" className="text-sm font-medium">
+              Tous
+            </TabsTrigger>
+          </TabsList>
 
-        {/* Layout principal avec filtres et table */}
-        <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
-          {/* Sidebar filtres */}
-          <div className="lg:col-span-1">
-            <MovementsFilters
-              filters={filters}
-              onFiltersChange={applyFilters}
-              onReset={resetFilters}
-              hasFilters={hasFilters}
-            />
-          </div>
+          {/* ===== TAB ENTRÉES ===== */}
+          <TabsContent value="in" className="space-y-6">
+            <Tabs
+              defaultValue="real"
+              onValueChange={(value) => {
+                applyFilters({
+                  ...filters,
+                  movement_type: 'IN',
+                  affects_forecast: value === 'forecast',
+                  forecast_type: value === 'forecast' ? 'in' : undefined,
+                  offset: 0
+                })
+              }}
+            >
+              <TabsList className="grid w-full max-w-md mx-auto grid-cols-2 mb-6">
+                <TabsTrigger value="real" className="text-sm font-medium">
+                  Entrées Réelles
+                </TabsTrigger>
+                <TabsTrigger value="forecast" className="text-sm font-medium">
+                  Entrées Prévisionnelles
+                </TabsTrigger>
+              </TabsList>
 
-          {/* Contenu principal */}
-          <div className="lg:col-span-3 space-y-4">
-            {/* En-tête table avec stats et pagination */}
-            <Card className="border-black">
-              <CardHeader className="pb-4">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <CardTitle className="flex items-center gap-2 text-black">
-                      Mouvements
-                      {hasFilters && (
-                        <Badge variant="outline" className="border-black text-black">Filtré</Badge>
-                      )}
-                    </CardTitle>
-                    <CardDescription>
-                      {loading ? (
-                        'Chargement...'
-                      ) : (
-                        <>
-                          {total === 0 ? (
-                            'Aucun mouvement trouvé'
-                          ) : (
-                            <>
-                              {((pagination.currentPage - 1) * pagination.pageSize) + 1}-
-                              {Math.min(pagination.currentPage * pagination.pageSize, total)} sur {total} mouvements
-                            </>
-                          )}
-                        </>
-                      )}
-                    </CardDescription>
-                  </div>
-
-                  {/* Pagination et taille de page */}
-                  <div className="flex items-center gap-4">
-                    <div className="flex items-center gap-2">
-                      <span className="text-sm text-gray-600">Afficher:</span>
-                      <Select
-                        value={pagination.pageSize.toString()}
-                        onValueChange={handlePageSizeChange}
-                      >
-                        <SelectTrigger className="w-20">
-                          <SelectValue />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="25">25</SelectItem>
-                          <SelectItem value="50">50</SelectItem>
-                          <SelectItem value="100">100</SelectItem>
-                        </SelectContent>
-                      </Select>
-                    </div>
-
-                    {pagination.totalPages > 1 && (
-                      <div className="flex items-center gap-2">
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={() => handlePageChange(pagination.currentPage - 1)}
-                          disabled={pagination.currentPage === 1 || loading}
-                          className="border-black text-black hover:bg-black hover:text-white"
-                        >
-                          <ChevronLeft className="h-4 w-4" />
-                        </Button>
-
-                        <span className="text-sm text-gray-600">
-                          Page {pagination.currentPage} sur {pagination.totalPages}
-                        </span>
-
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={() => handlePageChange(pagination.currentPage + 1)}
-                          disabled={pagination.currentPage === pagination.totalPages || loading}
-                          className="border-black text-black hover:bg-black hover:text-white"
-                        >
-                          <ChevronRight className="h-4 w-4" />
-                        </Button>
-                      </div>
-                    )}
-                  </div>
-                </div>
-              </CardHeader>
-
-              <CardContent className="p-0">
-                <MovementsTable
-                  movements={movements}
-                  loading={loading}
-                  onMovementClick={handleMovementClick}
-                  onCancelClick={handleCancelClick}
+              <TabsContent value="real" className="space-y-6">
+                <MovementsContent
+                  title="Entrées Réelles"
+                  emptyMessage="Aucune entrée de stock réelle"
                 />
-              </CardContent>
-            </Card>
+              </TabsContent>
 
-            {/* Message d'aide si aucun résultat */}
-            {!loading && movements.length === 0 && hasFilters && (
-              <Card className="p-8 border-black">
-                <div className="text-center">
-                  <Eye className="h-12 w-12 text-gray-300 mx-auto mb-3" />
-                  <h3 className="text-lg font-medium text-black mb-2">
-                    Aucun mouvement trouvé
-                  </h3>
-                  <p className="text-gray-500 mb-4">
-                    Aucun mouvement ne correspond aux critères de recherche sélectionnés.
-                  </p>
-                  <Button
-                    variant="outline"
-                    onClick={resetFilters}
-                    className="border-black text-black hover:bg-black hover:text-white"
-                  >
-                    <RefreshCw className="h-4 w-4 mr-2" />
-                    Réinitialiser les filtres
-                  </Button>
-                </div>
-              </Card>
-            )}
+              <TabsContent value="forecast" className="space-y-6">
+                <MovementsContent
+                  title="Entrées Prévisionnelles"
+                  emptyMessage="Aucune entrée prévisionnelle (commandes fournisseurs)"
+                />
+              </TabsContent>
+            </Tabs>
+          </TabsContent>
 
-            {/* Message d'aide si base vide */}
-            {!loading && movements.length === 0 && !hasFilters && (
-              <Card className="p-8 border-black">
-                <div className="text-center">
-                  <ArrowUpDown className="h-12 w-12 text-gray-300 mx-auto mb-3" />
-                  <h3 className="text-lg font-medium text-black mb-2">
-                    Aucun mouvement de stock
-                  </h3>
-                  <p className="text-gray-500">
-                    Il n'y a encore aucun mouvement de stock enregistré dans le système.
-                    Les mouvements apparaîtront ici dès qu'ils seront créés.
-                  </p>
-                </div>
-              </Card>
-            )}
-          </div>
-        </div>
+          {/* ===== TAB SORTIES ===== */}
+          <TabsContent value="out" className="space-y-6">
+            <Tabs
+              defaultValue="real"
+              onValueChange={(value) => {
+                applyFilters({
+                  ...filters,
+                  movement_type: 'OUT',
+                  affects_forecast: value === 'forecast',
+                  forecast_type: value === 'forecast' ? 'out' : undefined,
+                  offset: 0
+                })
+              }}
+            >
+              <TabsList className="grid w-full max-w-md mx-auto grid-cols-2 mb-6">
+                <TabsTrigger value="real" className="text-sm font-medium">
+                  Sorties Réelles
+                </TabsTrigger>
+                <TabsTrigger value="forecast" className="text-sm font-medium">
+                  Sorties Prévisionnelles
+                </TabsTrigger>
+              </TabsList>
+
+              <TabsContent value="real" className="space-y-6">
+                <MovementsContent
+                  title="Sorties Réelles"
+                  emptyMessage="Aucune sortie de stock réelle"
+                />
+              </TabsContent>
+
+              <TabsContent value="forecast" className="space-y-6">
+                <MovementsContent
+                  title="Sorties Prévisionnelles"
+                  emptyMessage="Aucune sortie prévisionnelle (commandes clients)"
+                />
+              </TabsContent>
+            </Tabs>
+          </TabsContent>
+
+          {/* ===== TAB TOUS ===== */}
+          <TabsContent value="all" className="space-y-6">
+            <Tabs
+              defaultValue="real"
+              onValueChange={(value) => {
+                applyFilters({
+                  ...filters,
+                  movement_type: undefined,
+                  affects_forecast: value === 'forecast',
+                  forecast_type: undefined,
+                  offset: 0
+                })
+              }}
+            >
+              <TabsList className="grid w-full max-w-md mx-auto grid-cols-2 mb-6">
+                <TabsTrigger value="real" className="text-sm font-medium">
+                  Mouvements Réels
+                </TabsTrigger>
+                <TabsTrigger value="forecast" className="text-sm font-medium">
+                  Mouvements Prévisionnels
+                </TabsTrigger>
+              </TabsList>
+
+              <TabsContent value="real" className="space-y-6">
+                <MovementsContent
+                  title="Tous les Mouvements Réels"
+                  emptyMessage="Aucun mouvement de stock réel"
+                />
+              </TabsContent>
+
+              <TabsContent value="forecast" className="space-y-6">
+                <MovementsContent
+                  title="Tous les Mouvements Prévisionnels"
+                  emptyMessage="Aucun mouvement prévisionnel"
+                />
+              </TabsContent>
+            </Tabs>
+          </TabsContent>
+        </Tabs>
 
         {/* Modal détails mouvement */}
         <MovementDetailsModal
@@ -316,6 +484,18 @@ export default function StockMovementsPage() {
           isOpen={showQuickMovementModal}
           onClose={() => setShowQuickMovementModal(false)}
           onSuccess={() => window.location.reload()}
+        />
+
+        {/* Modal détails commande universelle */}
+        <UniversalOrderDetailsModal
+          orderId={selectedOrderId}
+          orderType={selectedOrderType}
+          open={showOrderModal}
+          onClose={() => {
+            setShowOrderModal(false)
+            setSelectedOrderId(null)
+            setSelectedOrderType(null)
+          }}
         />
       </div>
     </div>
