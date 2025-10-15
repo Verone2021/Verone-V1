@@ -3,7 +3,7 @@
 import { useState, useMemo, useCallback, useEffect } from "react"
 import { useRouter } from "next/navigation"
 import { Search, Plus, Edit3, Trash2, ExternalLink, Package, Archive, ArchiveRestore } from "lucide-react"
-import { Button } from "../../../components/ui/button"
+import { ButtonV2 } from "../../../components/ui/button"
 import { Badge } from "../../../components/ui/badge"
 import { cn } from "../../../lib/utils"
 import { useCollections, Collection, CollectionFilters, CreateCollectionData } from "@/hooks/use-collections"

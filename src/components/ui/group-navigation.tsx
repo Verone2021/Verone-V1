@@ -1,7 +1,7 @@
 "use client"
 
 import { ChevronLeft, ChevronRight } from 'lucide-react'
-import { Button } from './button'
+import { ButtonV2 } from './button'
 import Link from 'next/link'
 
 interface GroupNavigationProps {

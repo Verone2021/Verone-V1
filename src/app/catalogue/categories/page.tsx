@@ -3,7 +3,7 @@
 import { useState, useMemo } from "react"
 import { useRouter } from "next/navigation"
 import { Search, Plus, Edit3, Trash2, FolderPlus, Folder, Eye, EyeOff, ChevronRight, ChevronDown, Minus, Image as ImageIcon } from "lucide-react"
-import { Button } from "../../../components/ui/button"
+import { ButtonV2 } from "../../../components/ui/button"
 import { Badge } from "../../../components/ui/badge"
 import { cn } from "../../../lib/utils"
 import { checkSLOCompliance } from "../../../lib/utils"

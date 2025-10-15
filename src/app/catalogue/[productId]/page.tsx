@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react"
 import { useParams, useRouter } from "next/navigation"
 import { ArrowLeft, Edit, Share2, Image as ImageIcon, Package, Tag, Clock, TreePine, FolderOpen, Tags, ChevronRight, Save, X } from "lucide-react"
-import { Button } from "../../../components/ui/button"
+import { ButtonV2 } from "../../../components/ui/button"
 import { Badge } from "../../../components/ui/badge"
 import { Progress } from "../../../components/ui/progress"
 import { ProductImageGallery } from "../../../components/business/product-image-gallery"
