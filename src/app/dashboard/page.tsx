@@ -8,16 +8,10 @@ import {
   AlertCircle,
   Package,
   TrendingUp,
-  Search,
   ArrowLeftRight,
-  BarChart3,
-  Plus,
-  FileText,
 } from 'lucide-react'
-import { CompactKpiCard } from '@/components/ui-v2/compact-kpi-card'
-import { ActionButton } from '@/components/ui-v2/action-button'
+import { ElegantKpiCard } from '@/components/ui-v2/elegant-kpi-card'
 import { ActivityTimeline, type TimelineItem } from '@/components/ui-v2/activity-timeline'
-import { StatPill } from '@/components/ui-v2/stat-pill'
 import { useCompleteDashboardMetrics } from '@/hooks/use-complete-dashboard-metrics'
 
 export default function DashboardV2Page() {
@@ -60,7 +54,7 @@ export default function DashboardV2Page() {
     {
       id: '2',
       title: 'Alerte stock bas',
-      description: 'Canapé Velours Bleu - Stock: 2',
+      description: 'Produit en stock faible',
       timestamp: 'Il y a 12 min',
       icon: AlertCircle,
       iconColor: 'warning',
@@ -68,7 +62,7 @@ export default function DashboardV2Page() {
     {
       id: '3',
       title: 'Produit ajouté',
-      description: 'Lampe Designer Pro',
+      description: 'Nouveau produit catalogue',
       timestamp: 'Il y a 1h',
       icon: Package,
       iconColor: 'primary',
@@ -76,28 +70,20 @@ export default function DashboardV2Page() {
     {
       id: '4',
       title: 'Mouvement stock',
-      description: 'Ajustement inventaire +15 unités',
+      description: 'Ajustement inventaire',
       timestamp: 'Il y a 2h',
       icon: ArrowLeftRight,
       iconColor: 'neutral',
-    },
-    {
-      id: '5',
-      title: 'Sourcing rapide',
-      description: '3 nouveaux fournisseurs évalués',
-      timestamp: 'Il y a 3h',
-      icon: Search,
-      iconColor: 'accent',
     },
   ]
 
   return (
     <div className="min-h-screen bg-slate-50">
-      {/* Header Compact */}
+      {/* Header */}
       <div className="bg-white border-b border-slate-200 px-6 py-4">
         <div className="flex items-center justify-between">
           <div>
-            <h1 className="text-xl font-bold text-slate-900">Dashboard Vérone</h1>
+            <h1 className="text-xl font-bold text-slate-900">Dashboard V2</h1>
             <p className="text-sm text-slate-600">
               {new Date().toLocaleDateString('fr-FR', {
                 weekday: 'long',
@@ -107,21 +93,15 @@ export default function DashboardV2Page() {
               })}
             </p>
           </div>
-          <button
-            onClick={() => router.push('/dashboard')}
-            className="text-xs text-slate-600 hover:text-slate-900 underline"
-          >
-            Retour ancien dashboard
-          </button>
         </div>
       </div>
 
       <div className="p-6 space-y-6">
-        {/* Zone 2: KPIs Ultra-Compacts */}
+        {/* 4 Grandes KPIs */}
         <div>
           <h2 className="text-sm font-semibold text-slate-700 mb-3">KPIs Essentiels</h2>
-          <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-5 gap-3">
-            <CompactKpiCard
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+            <ElegantKpiCard
               label="CA du Mois"
               value={new Intl.NumberFormat('fr-FR', {
                 style: 'currency',
@@ -129,94 +109,107 @@ export default function DashboardV2Page() {
                 minimumFractionDigits: 0,
               }).format(metrics.orders?.monthRevenue || 0)}
               icon={DollarSign}
-              color="success"
               trend={{
                 value: 12.5,
                 isPositive: true,
               }}
-              sparklineData={[45000, 47000, 51000, 48000, 52000, 55000, metrics.orders?.monthRevenue || 50000]}
               onClick={() => router.push('/commandes/clients')}
             />
 
-            <CompactKpiCard
+            <ElegantKpiCard
               label="Commandes Ventes"
               value={metrics.orders?.salesOrders || 0}
               icon={ShoppingCart}
-              color="primary"
               onClick={() => router.push('/commandes/clients')}
             />
 
-            <CompactKpiCard
-              label="Alertes Stock"
-              value={metrics.stocks?.lowStockItems || 0}
-              icon={AlertCircle}
-              color={(metrics.stocks?.lowStockItems || 0) > 0 ? 'danger' : 'success'}
-              onClick={() => router.push('/stocks?tab=alerts')}
-            />
-
-            <CompactKpiCard
-              label="Produits Actifs"
-              value={metrics.catalogue?.activeProducts || 0}
-              icon={Package}
-              color="accent"
-              onClick={() => router.push('/catalogue/produits?status=active')}
-            />
-
-            <CompactKpiCard
-              label="Commandes Achat"
+            <ElegantKpiCard
+              label="Commandes Achats"
               value={metrics.orders?.purchaseOrders || 0}
               icon={TrendingUp}
-              color="warning"
               onClick={() => router.push('/commandes/fournisseurs')}
             />
-          </div>
-        </div>
 
-        {/* Zone 3: Actions Rapides */}
-        <div>
-          <h2 className="text-sm font-semibold text-slate-700 mb-3">Actions Rapides</h2>
-          <div className="grid grid-cols-3 md:grid-cols-6 gap-3">
-            <ActionButton
-              label="Nouvelle Commande"
-              icon={Plus}
-              gradient="blue"
-              onClick={() => router.push('/commandes/clients?action=create')}
-            />
-            <ActionButton
-              label="Ajuster Stock"
-              icon={ArrowLeftRight}
-              gradient="orange"
-              onClick={() => router.push('/stocks/mouvements?action=quick')}
-            />
-            <ActionButton
-              label="Sourcing Rapide"
-              icon={Search}
-              gradient="purple"
-              onClick={() => router.push('/catalogue/sourcing/rapide')}
-            />
-            <ActionButton
-              label="Rapport Ventes"
-              icon={BarChart3}
-              gradient="green"
-              onClick={() => router.push('/commandes/clients')}
-            />
-            <ActionButton
-              label="Nouveau Produit"
+            <ElegantKpiCard
+              label="Valeur Stock"
+              value={new Intl.NumberFormat('fr-FR', {
+                style: 'currency',
+                currency: 'EUR',
+                minimumFractionDigits: 0,
+              }).format(metrics.stocks?.totalValue || 0)}
               icon={Package}
-              gradient="blueGreen"
-              onClick={() => router.push('/catalogue/produits?action=create')}
-            />
-            <ActionButton
-              label="Alertes"
-              icon={AlertCircle}
-              gradient="orangeRed"
-              onClick={() => router.push('/stocks?tab=alerts')}
+              onClick={() => router.push('/stocks')}
             />
           </div>
         </div>
 
-        {/* Zone 4: Widgets Actionnables (Grid 2x2) */}
+        {/* Liens Rapides - Texte Simple en Colonnes */}
+        <div>
+          <h2 className="text-sm font-semibold text-slate-700 mb-3">Accès Rapide</h2>
+          <div className="bg-white rounded-xl border border-slate-200 p-4">
+            <div className="grid grid-cols-3 md:grid-cols-6 gap-x-4 gap-y-2">
+              <button
+                onClick={() => router.push('/catalogue/produits')}
+                className="text-sm text-slate-700 hover:text-blue-600 hover:underline text-left transition-colors"
+              >
+                Catalogue
+              </button>
+              <button
+                onClick={() => router.push('/commandes/clients')}
+                className="text-sm text-slate-700 hover:text-blue-600 hover:underline text-left transition-colors"
+              >
+                Commandes
+              </button>
+              <button
+                onClick={() => router.push('/stocks')}
+                className="text-sm text-slate-700 hover:text-blue-600 hover:underline text-left transition-colors"
+              >
+                Stocks
+              </button>
+              <button
+                onClick={() => router.push('/contacts-organisations/suppliers')}
+                className="text-sm text-slate-700 hover:text-blue-600 hover:underline text-left transition-colors"
+              >
+                Fournisseurs
+              </button>
+              <button
+                onClick={() => router.push('/contacts-organisations/customers')}
+                className="text-sm text-slate-700 hover:text-blue-600 hover:underline text-left transition-colors"
+              >
+                Clients
+              </button>
+              <button
+                onClick={() => router.push('/catalogue/collections')}
+                className="text-sm text-slate-700 hover:text-blue-600 hover:underline text-left transition-colors"
+              >
+                Collections
+              </button>
+            </div>
+          </div>
+        </div>
+
+        {/* Widgets Grid */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          {/* Top 5 Produits - VIDE (pas de données mockées) */}
+          <div className="bg-white rounded-xl border border-slate-200 p-5">
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="text-base font-semibold text-slate-900">Top 5 Produits</h3>
+              <button
+                onClick={() => router.push('/catalogue/produits?sort=best-sellers')}
+                className="text-xs text-blue-600 hover:text-blue-700 font-medium"
+              >
+                Voir tout →
+              </button>
+            </div>
+            <div className="flex items-center justify-center py-12">
+              <div className="text-center">
+                <Package className="h-12 w-12 text-slate-300 mx-auto mb-3" />
+                <p className="text-sm text-slate-500 mb-1">Aucune donnée disponible</p>
+                <p className="text-xs text-slate-400">Les produits populaires apparaîtront ici</p>
+              </div>
+            </div>
+          </div>
+
           {/* Activité Récente */}
           <div className="bg-white rounded-xl border border-slate-200 p-5">
             <div className="flex items-center justify-between mb-4">
@@ -228,57 +221,7 @@ export default function DashboardV2Page() {
                 Voir tout →
               </button>
             </div>
-            <ActivityTimeline items={recentActivity} maxItems={5} />
-          </div>
-
-          {/* Top 5 Produits */}
-          <div className="bg-white rounded-xl border border-slate-200 p-5">
-            <div className="flex items-center justify-between mb-4">
-              <h3 className="text-base font-semibold text-slate-900">Top 5 Produits</h3>
-              <button
-                onClick={() => router.push('/catalogue/produits?sort=best-sellers')}
-                className="text-xs text-blue-600 hover:text-blue-700 font-medium"
-              >
-                Voir tout →
-              </button>
-            </div>
-            <div className="space-y-3">
-              {[
-                { name: 'Canapé Velours Bleu', sales: 45, stock: 12, trend: 15 },
-                { name: 'Lampe Designer Pro', sales: 38, stock: 8, trend: 8 },
-                { name: 'Table Basse Marbre', sales: 32, stock: 5, trend: -3 },
-                { name: 'Chaise Scandinave', sales: 28, stock: 24, trend: 12 },
-                { name: 'Miroir Art Déco', sales: 22, stock: 15, trend: 5 },
-              ].map((product, index) => (
-                <div
-                  key={product.name}
-                  className="flex items-center justify-between py-2 border-b border-slate-100 last:border-0"
-                >
-                  <div className="flex items-center gap-2 flex-1 min-w-0">
-                    <span className="text-xs font-medium text-slate-400">
-                      #{index + 1}
-                    </span>
-                    <span className="text-sm text-slate-900 truncate">{product.name}</span>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <StatPill label="ventes" value={product.sales} variant="primary" size="sm" />
-                    <StatPill
-                      label="stock"
-                      value={product.stock}
-                      variant={product.stock < 10 ? 'danger' : 'success'}
-                      size="sm"
-                    />
-                    <span
-                      className={`text-xs font-medium ${
-                        product.trend >= 0 ? 'text-green-600' : 'text-red-600'
-                      }`}
-                    >
-                      {product.trend >= 0 ? '+' : ''}{product.trend}%
-                    </span>
-                  </div>
-                </div>
-              ))}
-            </div>
+            <ActivityTimeline items={recentActivity} maxItems={4} />
           </div>
 
           {/* Statut Commandes */}
