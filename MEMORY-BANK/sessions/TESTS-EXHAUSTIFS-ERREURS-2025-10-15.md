@@ -492,11 +492,17 @@ Non-bloquante pour tests manuels. Sera traitée séparément si nécessaire.
 ## 🎯 PROCHAINES ÉTAPES
 
 1. ✅ **Terminé:** Tests Groupe 1 (2/3 tests, 1 succès)
-2. ✅ **Terminé:** STOP POINT 1 - Correction Erreur #2 appliquée
-3. 🔴 **ACTUEL:** STOP POINT 2 - Erreur #3 détectée (11 fichiers cassés)
-4. **Requis:** Corriger 11 fichiers business avant continuer
-5. **À venir:** Reprendre Groupe 2 après corrections
+2. ✅ **Terminé:** STOP POINT 1 - Correction Erreur #2 appliquée (address-selector.tsx)
+3. ✅ **Terminé:** STOP POINT 2 - Correction Erreur #3 appliquée (81 fichiers Button/ButtonV2)
+4. ✅ **Débloqué:** Groupe 2 prêt pour tests (Structure Catalogue)
+5. 🎯 **Prochain:** Reprendre tests Groupe 2 (Famille, Catégorie, Sous-catégorie, Collection)
+
+### Corrections Appliquées
+- **Erreur #2:** 1 fichier (address-selector.tsx) - Commit 16:45
+- **Erreur #3:** 81 fichiers (Button/ButtonV2 mismatch) - Commit 61e7dd0 18:30
+- **Total:** 82 fichiers corrigés (445 insertions, 374 deletions)
 
 ---
 
 *Document mis à jour automatiquement pendant les tests*
+*Dernière mise à jour: 18:30 - Erreur #3 résolue*
