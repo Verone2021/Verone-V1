@@ -184,7 +184,7 @@ export function AddressSelector({ form, className }: AddressSelectorProps) {
                 <Home className="h-5 w-5" />
                 Adresse de Livraison
               </CardTitle>
-              <Button
+              <ButtonV2
                 type="button"
                 variant="outline"
                 size="sm"
