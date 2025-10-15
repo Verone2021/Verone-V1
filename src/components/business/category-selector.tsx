@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import { ChevronDown, Folder, FolderOpen } from 'lucide-react'
-import { Button } from '../ui/button'
+import { ButtonV2 } from '@/components/ui/button'
 import { cn } from '../../lib/utils'
 import { createClient } from '../../lib/supabase/client'
 
@@ -252,7 +252,7 @@ export function CategorySelector({
           "h-4 w-4 opacity-50 transition-transform",
           isOpen && "rotate-180"
         )} />
-      </Button>
+      </ButtonV2>
 
       {/* Menu déroulant */}
       {isOpen && (

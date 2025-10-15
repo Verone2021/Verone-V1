@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useMemo } from 'react'
 import { Plus, Search, Eye, Edit, Trash2, CheckCircle, XCircle, RotateCcw, Ban, ArrowUpDown, ArrowUp, ArrowDown, FileText, FileSpreadsheet } from 'lucide-react'
-import { Button } from '@/components/ui/button'
+import { ButtonV2 } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
@@ -383,14 +383,14 @@ export default function SalesOrdersPage() {
           <p className="text-gray-600 mt-1">Gestion des commandes et expéditions clients</p>
         </div>
         <div className="flex gap-2">
-          <Button
+          <ButtonV2
             onClick={handleExportExcel}
             variant="outline"
             className="flex items-center gap-2"
           >
             <FileSpreadsheet className="h-4 w-4" />
             Exporter Excel
-          </Button>
+          </ButtonV2>
           <SalesOrderFormModal onSuccess={() => {
             fetchOrders()
             fetchStats()
@@ -604,30 +604,30 @@ export default function SalesOrdersPage() {
                         <TableCell>
                           <div className="flex items-center gap-2">
                             {/* Voir */}
-                            <Button
+                            <ButtonV2
                               variant="outline"
                               size="sm"
                               onClick={() => openOrderDetail(order)}
                               title="Voir détails"
                             >
                               <Eye className="h-4 w-4" />
-                            </Button>
+                            </ButtonV2>
 
                             {/* Modifier (draft ou confirmed non payée) */}
                             {(order.status === 'draft' || order.status === 'confirmed') && (
-                              <Button
+                              <ButtonV2
                                 variant="outline"
                                 size="sm"
                                 onClick={() => openEditOrder(order.id)}
                                 title="Modifier"
                               >
                                 <Edit className="h-4 w-4" />
-                              </Button>
+                              </ButtonV2>
                             )}
 
                             {/* Valider (draft uniquement) */}
                             {order.status === 'draft' && (
-                              <Button
+                              <ButtonV2
                                 variant="outline"
                                 size="sm"
                                 onClick={() => handleStatusChange(order.id, 'confirmed')}
@@ -635,12 +635,12 @@ export default function SalesOrdersPage() {
                                 className="text-green-600 border-green-300 hover:bg-green-50"
                               >
                                 <CheckCircle className="h-4 w-4" />
-                              </Button>
+                              </ButtonV2>
                             )}
 
                             {/* Dévalider (confirmed uniquement) */}
                             {order.status === 'confirmed' && (
-                              <Button
+                              <ButtonV2
                                 variant="outline"
                                 size="sm"
                                 onClick={() => handleStatusChange(order.id, 'draft')}
@@ -648,12 +648,12 @@ export default function SalesOrdersPage() {
                                 className="text-orange-600 border-orange-300 hover:bg-orange-50"
                               >
                                 <RotateCcw className="h-4 w-4" />
-                              </Button>
+                              </ButtonV2>
                             )}
 
                             {/* Annuler (UNIQUEMENT brouillon - Workflow: dévalidation obligatoire) */}
                             {order.status === 'draft' && (
-                              <Button
+                              <ButtonV2
                                 variant="outline"
                                 size="sm"
                                 onClick={() => handleCancel(order.id)}
@@ -661,12 +661,12 @@ export default function SalesOrdersPage() {
                                 className="text-red-600 border-red-300 hover:bg-red-50"
                               >
                                 <Ban className="h-4 w-4" />
-                              </Button>
+                              </ButtonV2>
                             )}
 
                             {/* Annuler disabled pour confirmed - Doit dévalider d'abord */}
                             {order.status === 'confirmed' && (
-                              <Button
+                              <ButtonV2
                                 variant="outline"
                                 size="sm"
                                 disabled
@@ -674,12 +674,12 @@ export default function SalesOrdersPage() {
                                 className="text-gray-400 border-gray-200 cursor-not-allowed opacity-50"
                               >
                                 <Ban className="h-4 w-4" />
-                              </Button>
+                              </ButtonV2>
                             )}
 
                             {/* Annuler disabled pour paid/delivered - Règle absolue */}
                             {(order.payment_status === 'paid' || order.status === 'delivered') && order.status !== 'cancelled' && order.status !== 'draft' && order.status !== 'confirmed' && (
-                              <Button
+                              <ButtonV2
                                 variant="outline"
                                 size="sm"
                                 disabled
@@ -690,12 +690,12 @@ export default function SalesOrdersPage() {
                                 className="text-gray-400 border-gray-200 cursor-not-allowed opacity-50"
                               >
                                 <Ban className="h-4 w-4" />
-                              </Button>
+                              </ButtonV2>
                             )}
 
                             {/* Supprimer (cancelled uniquement) */}
                             {order.status === 'cancelled' && (
-                              <Button
+                              <ButtonV2
                                 variant="outline"
                                 size="sm"
                                 onClick={() => handleDelete(order.id)}
@@ -703,18 +703,18 @@ export default function SalesOrdersPage() {
                                 className="text-red-600 border-red-300 hover:bg-red-50"
                               >
                                 <Trash2 className="h-4 w-4" />
-                              </Button>
+                              </ButtonV2>
                             )}
 
                             {/* Imprimer PDF */}
-                            <Button
+                            <ButtonV2
                               variant="outline"
                               size="sm"
                               onClick={() => handlePrintPDF(order)}
                               title="Imprimer PDF"
                             >
                               <FileText className="h-4 w-4" />
-                            </Button>
+                            </ButtonV2>
                           </div>
                         </TableCell>
                       </TableRow>

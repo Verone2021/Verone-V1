@@ -2,9 +2,9 @@
 
 import { useState, useEffect } from 'react'
 import { X, Bell, AlertTriangle, CheckCircle, Info, XCircle } from 'lucide-react'
-import { Card, CardContent, CardHeader, CardTitle } from '../ui/card'
-import { Button } from '../ui/button'
-import { Badge } from '../ui/badge'
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import { ButtonV2 } from '@/components/ui/button'
+import { Badge } from '@/components/ui/badge'
 import { cn } from '../../lib/utils'
 
 export type NotificationType = 'success' | 'warning' | 'error' | 'info'
@@ -136,7 +136,7 @@ export function NotificationWidget({
                     className="h-6 w-6 p-0 text-gray-400 hover:text-gray-600"
                   >
                     <X className="h-3 w-3" />
-                  </Button>
+                  </ButtonV2>
                 </div>
               </CardHeader>
               <CardContent className="pt-0">
@@ -157,7 +157,7 @@ export function NotificationWidget({
                       className="h-6 text-xs border-black text-black hover:bg-black hover:text-white"
                     >
                       {notification.action.label}
-                    </Button>
+                    </ButtonV2>
                   )}
                 </div>
               </CardContent>
@@ -271,7 +271,7 @@ export function NotificationToast({
         className="ml-2 h-6 w-6 p-0 text-gray-400 hover:text-gray-600"
       >
         <X className="h-4 w-4" />
-      </Button>
+      </ButtonV2>
     </div>
   )
 }

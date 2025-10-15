@@ -2,12 +2,12 @@
 
 import { useState, useEffect } from 'react'
 import Link from 'next/link'
-import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '../ui/dialog'
-import { Button } from '../ui/button'
-import { Input } from '../ui/input'
-import { Label } from '../ui/label'
-import { Checkbox } from '../ui/checkbox'
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../ui/select'
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog'
+import { ButtonV2 } from '@/components/ui/button'
+import { Input } from '@/components/ui/input'
+import { Label } from '@/components/ui/label'
+import { Checkbox } from '@/components/ui/checkbox'
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { useSubcategories } from '../../hooks/use-subcategories'
 import { useOrganisations } from '../../hooks/use-organisations'
 import { normalizeForSKU } from '../../lib/sku-generator'
@@ -358,14 +358,14 @@ export function VariantGroupCreateModal({
               disabled={isSubmitting}
             >
               Annuler
-            </Button>
+            </ButtonV2>
             <Button
               type="submit"
               disabled={!name.trim() || !baseSku.trim() || !subcategoryId || isSubmitting}
               className="bg-black text-white hover:bg-gray-800"
             >
               {isSubmitting ? 'Création...' : 'Créer le groupe'}
-            </Button>
+            </ButtonV2>
           </DialogFooter>
         </form>
       </DialogContent>

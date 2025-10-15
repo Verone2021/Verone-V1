@@ -23,7 +23,7 @@ import {
   X,
   ArrowLeft
 } from 'lucide-react'
-import { Button } from '@/components/ui/button'
+import { ButtonV2 } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Badge } from '@/components/ui/badge'
 import {
@@ -166,12 +166,12 @@ function StockMovementModal({ product, isOpen, onClose, onSuccess }: StockMoveme
           </div>
 
           <div className="flex gap-2 pt-4">
-            <Button type="button" variant="outline" onClick={onClose} className="flex-1">
+            <ButtonV2 type="button" variant="outline" onClick={onClose} className="flex-1">
               Annuler
-            </Button>
-            <Button type="submit" disabled={loading} className="flex-1">
+            </ButtonV2>
+            <ButtonV2 type="submit" disabled={loading} className="flex-1">
               {loading ? <RefreshCw className="h-4 w-4 animate-spin" /> : 'Enregistrer'}
-            </Button>
+            </ButtonV2>
           </div>
         </form>
       </DialogContent>
@@ -431,7 +431,7 @@ export default function StockInventairePage() {
               >
                 <ArrowLeft className="h-4 w-4 mr-2" />
                 Retour aux Stocks
-              </Button>
+              </ButtonV2>
               <div className="flex items-center space-x-3">
                 <Package className="h-8 w-8 text-black" />
                 <div>
@@ -448,18 +448,18 @@ export default function StockInventairePage() {
                 className="border-black text-black hover:bg-black hover:text-white"
               >
                 <RefreshCw className={`h-4 w-4 ${productsLoading ? 'animate-spin' : ''}`} />
-              </Button>
+              </ButtonV2>
               <Button
                 variant="outline"
                 className="border-black text-black hover:bg-black hover:text-white"
               >
                 <Download className="h-4 w-4 mr-2" />
                 Exporter
-              </Button>
-              <Button className="bg-black hover:bg-gray-800 text-white">
+              </ButtonV2>
+              <ButtonV2 className="bg-black hover:bg-gray-800 text-white">
                 <BarChart3 className="h-4 w-4 mr-2" />
                 Rapports
-              </Button>
+              </ButtonV2>
             </div>
           </div>
         </div>
@@ -562,7 +562,7 @@ export default function StockInventairePage() {
               className="border-black text-black hover:bg-black hover:text-white"
             >
               <ArrowUpDown className="h-4 w-4" />
-            </Button>
+            </ButtonV2>
 
             {(filters.search || filters.status !== 'all') && (
               <Button
@@ -578,7 +578,7 @@ export default function StockInventairePage() {
                 className="border-black text-black hover:bg-black hover:text-white"
               >
                 <X className="h-4 w-4" />
-              </Button>
+              </ButtonV2>
             )}
           </div>
         </div>
@@ -672,7 +672,7 @@ export default function StockInventairePage() {
                               title="Voir l'historique"
                             >
                               <History className="h-4 w-4" />
-                            </Button>
+                            </ButtonV2>
                             <Button
                               variant="ghost"
                               size="sm"
@@ -680,10 +680,10 @@ export default function StockInventairePage() {
                               title="Nouveau mouvement"
                             >
                               <Plus className="h-4 w-4" />
-                            </Button>
-                            <Button variant="ghost" size="sm" title="Modifier">
+                            </ButtonV2>
+                            <ButtonV2 variant="ghost" size="sm" title="Modifier">
                               <Edit className="h-4 w-4" />
-                            </Button>
+                            </ButtonV2>
                           </div>
                         </td>
                       </tr>

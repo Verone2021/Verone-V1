@@ -7,7 +7,7 @@
  */
 
 import React, { useState, useEffect, useCallback } from 'react'
-import { Button } from '@/components/ui/button'
+import { ButtonV2 } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
@@ -309,7 +309,7 @@ export function ErrorDetectionPanel({
                     Force Sync + AI Check
                   </>
                 )}
-              </Button>
+              </ButtonV2>
               <Button
                 onClick={handleGenerateReport}
                 variant="outline"
@@ -317,7 +317,7 @@ export function ErrorDetectionPanel({
               >
                 <Download className="w-4 h-4 mr-2" />
                 Rapport
-              </Button>
+              </ButtonV2>
             </div>
           </div>
         </CardHeader>
@@ -578,7 +578,7 @@ function ErrorItem({ error, onResolve, isResolving, resolutionResult }: ErrorIte
               Résoudre
             </>
           )}
-        </Button>
+        </ButtonV2>
       </div>
 
       {/* Résultat de résolution */}

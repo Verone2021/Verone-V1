@@ -1,7 +1,7 @@
 'use client'
 
 import { useState } from 'react'
-import { Button } from '@/components/ui/button'
+import { ButtonV2 } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Plus, Trash2, Package } from 'lucide-react'
@@ -102,10 +102,10 @@ export function PacklinkShipmentForm({ order, onComplete, onBack }: PacklinkShip
       <div className="space-y-4">
         <div className="flex items-center justify-between">
           <h3 className="font-semibold text-lg">Colis à expédier</h3>
-          <Button onClick={addParcel} variant="outline" size="sm">
+          <ButtonV2 onClick={addParcel} variant="outline" size="sm">
             <Plus className="h-4 w-4 mr-2" />
             Ajouter un colis
-          </Button>
+          </ButtonV2>
         </div>
 
         {parcels.map((parcel, idx) => (
@@ -125,14 +125,14 @@ export function PacklinkShipmentForm({ order, onComplete, onBack }: PacklinkShip
                 </div>
 
                 {parcels.length > 1 && (
-                  <Button
+                  <ButtonV2
                     variant="ghost"
                     size="sm"
                     onClick={() => removeParcel(idx)}
                     className="text-red-600 hover:text-red-700 hover:bg-red-50"
                   >
                     <Trash2 className="h-4 w-4" />
-                  </Button>
+                  </ButtonV2>
                 )}
               </div>
 
@@ -264,12 +264,12 @@ export function PacklinkShipmentForm({ order, onComplete, onBack }: PacklinkShip
 
       {/* Actions */}
       <div className="flex justify-between gap-3 pt-4 border-t">
-        <Button variant="outline" onClick={onBack}>
+        <ButtonV2 variant="outline" onClick={onBack}>
           ← Retour
-        </Button>
-        <Button onClick={handleSubmit} disabled={!canSubmit()} size="lg">
+        </ButtonV2>
+        <ButtonV2 onClick={handleSubmit} disabled={!canSubmit()} size="lg">
           Continuer vers le récapitulatif →
-        </Button>
+        </ButtonV2>
       </div>
 
       {!canSubmit() && (

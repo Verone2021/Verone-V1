@@ -8,7 +8,7 @@
 
 import React, { useState, useEffect, useRef, useCallback, createContext, useContext } from 'react'
 import { createPortal } from 'react-dom'
-import { Button } from '@/components/ui/button'
+import { ButtonV2 } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { Card, CardContent } from '@/components/ui/card'
 import { Progress } from '@/components/ui/progress'
@@ -313,7 +313,7 @@ export function NotificationBell({ className }: { className?: string }) {
               {unreadCount > 99 ? '99+' : unreadCount}
             </Badge>
           )}
-        </Button>
+        </ButtonV2>
       </DropdownMenuTrigger>
 
       <DropdownMenuContent align="end" className="w-80 max-h-96 overflow-y-auto">
@@ -327,7 +327,7 @@ export function NotificationBell({ className }: { className?: string }) {
             >
               <Filter className="w-3 h-3 mr-1" />
               {filter === 'all' ? 'Toutes' : filter === 'unread' ? 'Non lues' : 'Critiques'}
-            </Button>
+            </ButtonV2>
             {unreadCount > 0 && (
               <Button
                 variant="ghost"
@@ -336,7 +336,7 @@ export function NotificationBell({ className }: { className?: string }) {
               >
                 <Eye className="w-3 h-3 mr-1" />
                 Marquer lues
-              </Button>
+              </ButtonV2>
             )}
           </div>
         </DropdownMenuLabel>
@@ -495,7 +495,7 @@ function NotificationItem({
               onClick={() => onDismiss?.(notification.id) || removeNotification(notification.id)}
             >
               <X className="w-3 h-3" />
-            </Button>
+            </ButtonV2>
           </div>
         </div>
 
@@ -522,7 +522,7 @@ function NotificationItem({
                   action.icon && <span className="mr-1">{action.icon}</span>
                 )}
                 {action.label}
-              </Button>
+              </ButtonV2>
             ))}
           </div>
         )}

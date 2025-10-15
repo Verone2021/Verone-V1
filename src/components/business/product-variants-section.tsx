@@ -21,7 +21,7 @@ import {
   Star,
   AlertCircle
 } from 'lucide-react'
-import { Button } from '@/components/ui/button'
+import { ButtonV2 } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { Separator } from '@/components/ui/separator'
 import { cn, formatPrice } from '@/lib/utils'
@@ -211,7 +211,7 @@ export function ProductVariantsSection({
           >
             <Plus className="h-3 w-3 mr-1" />
             Créer
-          </Button>
+          </ButtonV2>
         </div>
         <div className="text-center py-4">
           <Package className="h-8 w-8 text-gray-400 mx-auto mb-2" />
@@ -244,7 +244,7 @@ export function ProductVariantsSection({
           >
             <Settings className="h-3 w-3 mr-1" />
             Gérer
-          </Button>
+          </ButtonV2>
         </div>
       </div>
 
@@ -334,7 +334,7 @@ export function ProductVariantsSection({
                   className="h-8 w-8 p-0"
                 >
                   <ExternalLink className="h-3 w-3" />
-                </Button>
+                </ButtonV2>
               </div>
             </div>
           </div>
@@ -351,7 +351,7 @@ export function ProductVariantsSection({
       >
         <Plus className="h-3 w-3 mr-2" />
         Ajouter une variante à ce groupe
-      </Button>
+      </ButtonV2>
 
       {/* Variant Creation Modal */}
       {productData && (

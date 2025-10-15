@@ -3,10 +3,10 @@
 import { useState } from 'react'
 import { useDrafts, DraftWithMeta } from '../../hooks/use-drafts'
 import { useToast } from '../../hooks/use-toast'
-import { Card, CardContent, CardHeader, CardTitle } from '../ui/card'
-import { Button } from '../ui/button'
-import { Badge } from '../ui/badge'
-import { Progress } from '../ui/progress'
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import { ButtonV2 } from '@/components/ui/button'
+import { Badge } from '@/components/ui/badge'
+import { Progress } from '@/components/ui/progress'
 import { Pencil, Copy, Trash2, FileText, Plus, ImageIcon, CheckCircle, Eye } from 'lucide-react'
 import { useRouter } from 'next/navigation'
 import {
@@ -16,7 +16,7 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-} from '../ui/dialog'
+} from '@/components/ui/dialog'
 
 interface DraftsListProps {
   onCreateNew?: () => void
@@ -196,10 +196,10 @@ export function DraftsList({ onCreateNew, onEditDraft }: DraftsListProps) {
               Mes brouillons ({drafts.length})
             </CardTitle>
             {onCreateNew && (
-              <Button onClick={onCreateNew} size="sm">
+              <ButtonV2 onClick={onCreateNew} size="sm">
                 <Plus className="h-4 w-4 mr-2" />
                 Nouveau produit
-              </Button>
+              </ButtonV2>
             )}
           </div>
         </CardHeader>
@@ -283,7 +283,7 @@ export function DraftsList({ onCreateNew, onEditDraft }: DraftsListProps) {
                         title="Modifier le brouillon"
                       >
                         <Pencil className="h-4 w-4" />
-                      </Button>
+                      </ButtonV2>
 
                       {/* Bouton Valider - seulement si le brouillon est prêt */}
                       {draft.canFinalize && (
@@ -296,7 +296,7 @@ export function DraftsList({ onCreateNew, onEditDraft }: DraftsListProps) {
                           title="Valider et convertir en produit"
                         >
                           <CheckCircle className="h-4 w-4" />
-                        </Button>
+                        </ButtonV2>
                       )}
 
                       {/* Bouton Voir le détail */}
@@ -308,7 +308,7 @@ export function DraftsList({ onCreateNew, onEditDraft }: DraftsListProps) {
                         title="Voir le détail"
                       >
                         <Eye className="h-4 w-4" />
-                      </Button>
+                      </ButtonV2>
 
                       <Button
                         variant="outline"
@@ -318,7 +318,7 @@ export function DraftsList({ onCreateNew, onEditDraft }: DraftsListProps) {
                         title="Dupliquer le brouillon"
                       >
                         <Copy className="h-4 w-4" />
-                      </Button>
+                      </ButtonV2>
 
                       <Button
                         variant="outline"
@@ -332,7 +332,7 @@ export function DraftsList({ onCreateNew, onEditDraft }: DraftsListProps) {
                         title="Supprimer le brouillon"
                       >
                         <Trash2 className="h-4 w-4" />
-                      </Button>
+                      </ButtonV2>
                     </div>
                   </div>
                 </div>
@@ -357,14 +357,14 @@ export function DraftsList({ onCreateNew, onEditDraft }: DraftsListProps) {
               onClick={() => setDeleteDialogOpen(false)}
             >
               Annuler
-            </Button>
+            </ButtonV2>
             <Button
               onClick={() => selectedDraftId && handleDelete(selectedDraftId)}
               disabled={actionLoading === selectedDraftId}
               className="bg-red-600 hover:bg-red-700"
             >
               Supprimer
-            </Button>
+            </ButtonV2>
           </DialogFooter>
         </DialogContent>
       </Dialog>

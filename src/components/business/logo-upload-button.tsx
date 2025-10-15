@@ -2,7 +2,7 @@
 
 import { useState } from 'react'
 import { Upload, Trash2, Loader2, AlertCircle, ImagePlus } from 'lucide-react'
-import { ButtonV2 } from '@/components/ui-v2/button'
+import { ButtonV2 } from '@/components/ui/button'
 import { OrganisationLogo } from './organisation-logo'
 import { useLogoUpload } from '@/hooks/use-logo-upload'
 import { cn } from '@/lib/utils'

@@ -3,8 +3,8 @@
 import { useState, useRef, useCallback } from 'react'
 import { GripVertical, Save, RotateCcw, Check, AlertCircle } from 'lucide-react'
 import { ProductCard } from './product-card'
-import { Button } from '../ui/button'
-import { Badge } from '../ui/badge'
+import { ButtonV2 } from '@/components/ui/button'
+import { Badge } from '@/components/ui/badge'
 import { cn } from '../../lib/utils'
 import { CollectionProduct, ReorderCollectionProductsInput } from '../../types/collections'
 
@@ -256,7 +256,7 @@ export function DraggableProductGrid({
             >
               <RotateCcw className="h-4 w-4 mr-1" />
               Annuler
-            </Button>
+            </ButtonV2>
 
             <Button
               size="sm"
@@ -275,7 +275,7 @@ export function DraggableProductGrid({
                   Sauvegarder
                 </>
               )}
-            </Button>
+            </ButtonV2>
           </div>
         </div>
       )}

@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import { MapPin, Copy } from 'lucide-react'
-import { Button } from '@/components/ui/button'
+import { ButtonV2 } from '@/components/ui/button'
 import { Label } from '@/components/ui/label'
 import { Textarea } from '@/components/ui/textarea'
 import { Organisation } from '@/hooks/use-organisations'
@@ -189,7 +189,7 @@ export function AddressInput({
           {label}
         </Label>
         {showCopyButton && (selectedOrganisation || selectedCustomer) && (
-          <Button
+          <ButtonV2
             type="button"
             variant="outline"
             size="sm"
@@ -199,7 +199,7 @@ export function AddressInput({
           >
             <Copy className="h-3 w-3 mr-1" />
             {getButtonText()}
-          </Button>
+          </ButtonV2>
         )}
       </div>
 

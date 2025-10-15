@@ -11,7 +11,7 @@
 import { useState, useEffect } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
-import { Button } from '@/components/ui/button'
+import { ButtonV2 } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Textarea } from '@/components/ui/textarea'
@@ -502,7 +502,7 @@ export function ExpenseForm({ onSuccess, onCancel }: ExpenseFormProps) {
 
       {/* Actions */}
       <div className="flex items-center gap-3">
-        <Button type="submit" disabled={loading || loadingData}>
+        <ButtonV2 type="submit" disabled={loading || loadingData}>
           {loading ? (
             <>
               <Loader2 className="h-4 w-4 mr-2 animate-spin" />
@@ -514,12 +514,12 @@ export function ExpenseForm({ onSuccess, onCancel }: ExpenseFormProps) {
               Créer la dépense
             </>
           )}
-        </Button>
+        </ButtonV2>
 
         {onCancel && (
-          <Button type="button" variant="outline" onClick={onCancel}>
+          <ButtonV2 type="button" variant="outline" onClick={onCancel}>
             Annuler
-          </Button>
+          </ButtonV2>
         )}
       </div>
     </form>

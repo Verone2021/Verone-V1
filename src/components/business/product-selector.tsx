@@ -2,13 +2,13 @@
 
 import { useState, useEffect } from 'react'
 import { Search, Package, Zap, Info, ExternalLink } from 'lucide-react'
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../ui/card'
-import { Button } from '../ui/button'
-import { Input } from '../ui/input'
-import { Label } from '../ui/label'
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '../ui/tabs'
-import { Badge } from '../ui/badge'
-import { Alert, AlertDescription } from '../ui/alert'
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
+import { ButtonV2 } from '@/components/ui/button'
+import { Input } from '@/components/ui/input'
+import { Label } from '@/components/ui/label'
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
+import { Badge } from '@/components/ui/badge'
+import { Alert, AlertDescription } from '@/components/ui/alert'
 import { createClient } from '../../lib/supabase/client'
 
 const supabase = createClient()

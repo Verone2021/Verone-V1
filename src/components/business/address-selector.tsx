@@ -3,12 +3,12 @@
 import { useState, useEffect } from 'react'
 import { UseFormReturn } from 'react-hook-form'
 import { MapPin, Home, Building, Copy } from 'lucide-react'
-import { Card, CardContent, CardHeader, CardTitle } from '../ui/card'
-import { Label } from '../ui/label'
-import { Input } from '../ui/input'
-import { Checkbox } from '../ui/checkbox'
-import { Button } from '../ui/button'
-import { Separator } from '../ui/separator'
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import { Label } from '@/components/ui/label'
+import { Input } from '@/components/ui/input'
+import { Checkbox } from '@/components/ui/checkbox'
+import { ButtonV2 } from '@/components/ui/button'
+import { Separator } from '@/components/ui/separator'
 
 interface AddressData {
   address_line1?: string
@@ -193,7 +193,7 @@ export function AddressSelector({ form, className }: AddressSelectorProps) {
               >
                 <Copy className="h-4 w-4" />
                 Copier adresse de facturation
-              </Button>
+              </ButtonV2>
             </div>
           </CardHeader>
           <CardContent className="space-y-4">

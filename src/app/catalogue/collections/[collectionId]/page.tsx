@@ -3,7 +3,7 @@
 import { use, useState, useCallback } from 'react'
 import { useRouter } from 'next/navigation'
 import { ChevronLeft, Eye, Package, Calendar, Users, Plus, X, Globe, ShoppingCart, Share2, Link2, Edit3, Tag } from 'lucide-react'
-import { Button } from '@/components/ui/button'
+import { ButtonV2 } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
@@ -100,7 +100,7 @@ function CollectionProductCard({
           >
             <Eye className="w-3 h-3 mr-1" />
             Détails
-          </Button>
+          </ButtonV2>
         </div>
       </div>
     </div>
@@ -392,7 +392,7 @@ export default function CollectionDetailPage({ params }: CollectionDetailPagePro
         >
           <ChevronLeft className="w-4 h-4 mr-2" />
           Retour
-        </Button>
+        </ButtonV2>
         <div className="text-center py-12">
           <Package className="w-12 h-12 text-gray-400 mx-auto mb-4" />
           <h2 className="text-xl font-semibold text-gray-900 mb-2">
@@ -418,7 +418,7 @@ export default function CollectionDetailPage({ params }: CollectionDetailPagePro
           >
             <ChevronLeft className="w-4 h-4 mr-2" />
             Retour
-          </Button>
+          </ButtonV2>
           <div>
             <h1 className="text-2xl font-bold text-gray-900">{collection.name}</h1>
             <p className="text-gray-600 text-sm">
@@ -617,7 +617,7 @@ export default function CollectionDetailPage({ params }: CollectionDetailPagePro
                 >
                   <X className="h-3 w-3 mr-1" />
                   Annuler
-                </Button>
+                </ButtonV2>
               </div>
             ) : (
               <div className="flex items-center gap-2 group">
@@ -674,7 +674,7 @@ export default function CollectionDetailPage({ params }: CollectionDetailPagePro
                     className="bg-black text-white hover:bg-gray-800"
                   >
                     Enregistrer
-                  </Button>
+                  </ButtonV2>
                   <Button
                     variant="outline"
                     size="sm"
@@ -683,7 +683,7 @@ export default function CollectionDetailPage({ params }: CollectionDetailPagePro
                   >
                     <X className="h-3 w-3 mr-1" />
                     Annuler
-                  </Button>
+                  </ButtonV2>
                 </div>
               </div>
             ) : (
@@ -736,7 +736,7 @@ export default function CollectionDetailPage({ params }: CollectionDetailPagePro
                     disabled={!newTag.trim()}
                   >
                     <Plus className="h-4 w-4" />
-                  </Button>
+                  </ButtonV2>
                 </div>
                 {editedTags && editedTags.length > 0 && (
                   <div className="flex flex-wrap gap-2">
@@ -764,7 +764,7 @@ export default function CollectionDetailPage({ params }: CollectionDetailPagePro
                     className="bg-black text-white hover:bg-gray-800"
                   >
                     Enregistrer
-                  </Button>
+                  </ButtonV2>
                   <Button
                     variant="outline"
                     size="sm"
@@ -773,7 +773,7 @@ export default function CollectionDetailPage({ params }: CollectionDetailPagePro
                   >
                     <X className="h-3 w-3 mr-1" />
                     Annuler
-                  </Button>
+                  </ButtonV2>
                 </div>
               </div>
             ) : (
@@ -935,7 +935,7 @@ export default function CollectionDetailPage({ params }: CollectionDetailPagePro
                 <Globe className="h-6 w-6" />
                 <div className="text-sm font-medium">Site Web Vérone</div>
                 <Badge variant="secondary" className="text-xs">Bientôt disponible</Badge>
-              </Button>
+              </ButtonV2>
 
               <Button
                 variant="outline"
@@ -945,7 +945,7 @@ export default function CollectionDetailPage({ params }: CollectionDetailPagePro
                 <ShoppingCart className="h-6 w-6" />
                 <div className="text-sm font-medium">Google Merchant</div>
                 <Badge variant="secondary" className="text-xs">Bientôt disponible</Badge>
-              </Button>
+              </ButtonV2>
 
               <Button
                 variant="outline"
@@ -955,7 +955,7 @@ export default function CollectionDetailPage({ params }: CollectionDetailPagePro
                 <Share2 className="h-6 w-6" />
                 <div className="text-sm font-medium">Autres canaux</div>
                 <Badge variant="secondary" className="text-xs">Bientôt disponible</Badge>
-              </Button>
+              </ButtonV2>
             </div>
             <p className="text-xs text-gray-500 mt-4 p-3 bg-blue-50 rounded-md border border-blue-100">
               💡 Ces options seront activées lors du développement des interfaces de vente et de leur connexion au back-office Vérone.
@@ -970,13 +970,13 @@ export default function CollectionDetailPage({ params }: CollectionDetailPagePro
           <h2 className="text-xl font-semibold text-gray-900">
             Produits de la collection ({collection.products?.length || 0})
           </h2>
-          <Button 
+          <ButtonV2 
             onClick={handleManageProducts}
             className="bg-black text-white hover:bg-gray-800"
           >
             <Plus className="w-4 h-4 mr-2" />
             Ajouter des produits
-          </Button>
+          </ButtonV2>
         </div>
 
         {collection.products && collection.products.length > 0 ? (
@@ -1000,13 +1000,13 @@ export default function CollectionDetailPage({ params }: CollectionDetailPagePro
             <p className="text-gray-600 mb-4">
               Cette collection ne contient pas encore de produits.
             </p>
-            <Button 
+            <ButtonV2 
               onClick={handleManageProducts} 
               className="bg-black text-white hover:bg-gray-800"
             >
               <Plus className="w-4 h-4 mr-2" />
               Ajouter des produits
-            </Button>
+            </ButtonV2>
           </div>
         )}
       </div>

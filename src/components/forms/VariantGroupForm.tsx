@@ -3,7 +3,7 @@
 import { useState, useMemo, useEffect, useCallback } from 'react'
 import { X, Plus } from 'lucide-react'
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog'
-import { Button } from '@/components/ui/button'
+import { ButtonV2 } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { useFamilies } from '@/hooks/use-families'
@@ -532,7 +532,7 @@ export function VariantGroupForm({
               disabled={loading}
             >
               Annuler
-            </Button>
+            </ButtonV2>
             <Button
               type="submit"
               disabled={loading}
@@ -549,7 +549,7 @@ export function VariantGroupForm({
                   {editingGroup ? 'Modifier le groupe' : 'Créer le groupe'}
                 </>
               )}
-            </Button>
+            </ButtonV2>
           </div>
         </form>
       </DialogContent>

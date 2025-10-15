@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
-import { Button } from '@/components/ui/button'
+import { ButtonV2 } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Badge } from '@/components/ui/badge'
 import {
@@ -150,10 +150,10 @@ export default function ContactsPage() {
         <div>
           <div className="flex items-center gap-2 mb-2">
             <Link href="/contacts-organisations">
-              <Button variant="ghost" size="sm">
+              <ButtonV2 variant="ghost" size="sm">
                 <ArrowLeft className="h-4 w-4 mr-1" />
                 Organisations
-              </Button>
+              </ButtonV2>
             </Link>
           </div>
           <h1 className="text-3xl font-semibold text-black">Contacts</h1>
@@ -161,10 +161,10 @@ export default function ContactsPage() {
             Gestion centralisée des contacts fournisseurs et clients professionnels
           </p>
         </div>
-        <Button className="bg-black text-white hover:bg-gray-800">
+        <ButtonV2 className="bg-black text-white hover:bg-gray-800">
           <Plus className="h-4 w-4 mr-2" />
           Nouveau contact
-        </Button>
+        </ButtonV2>
       </div>
 
       {/* Statistiques */}
@@ -269,21 +269,21 @@ export default function ContactsPage() {
                   onClick={() => setFilterType('all')}
                 >
                   Tous
-                </Button>
+                </ButtonV2>
                 <Button
                   variant={filterType === 'supplier' ? 'default' : 'outline'}
                   size="sm"
                   onClick={() => setFilterType('supplier')}
                 >
                   Fournisseurs
-                </Button>
+                </ButtonV2>
                 <Button
                   variant={filterType === 'customer' ? 'default' : 'outline'}
                   size="sm"
                   onClick={() => setFilterType('customer')}
                 >
                   Clients Pro
-                </Button>
+                </ButtonV2>
               </div>
               <div className="flex gap-2">
                 <Button
@@ -292,28 +292,28 @@ export default function ContactsPage() {
                   onClick={() => setFilterRole('all')}
                 >
                   Tous rôles
-                </Button>
+                </ButtonV2>
                 <Button
                   variant={filterRole === 'primary' ? 'default' : 'outline'}
                   size="sm"
                   onClick={() => setFilterRole('primary')}
                 >
                   Principaux
-                </Button>
+                </ButtonV2>
                 <Button
                   variant={filterRole === 'commercial' ? 'default' : 'outline'}
                   size="sm"
                   onClick={() => setFilterRole('commercial')}
                 >
                   Commercial
-                </Button>
+                </ButtonV2>
                 <Button
                   variant={filterRole === 'technical' ? 'default' : 'outline'}
                   size="sm"
                   onClick={() => setFilterRole('technical')}
                 >
                   Technique
-                </Button>
+                </ButtonV2>
               </div>
             </div>
           </div>
@@ -433,7 +433,7 @@ export default function ContactsPage() {
                               ) : (
                                 <Archive className="h-4 w-4" />
                               )}
-                            </Button>
+                            </ButtonV2>
 
                             {/* Supprimer */}
                             <Button
@@ -443,12 +443,12 @@ export default function ContactsPage() {
                               className="text-red-600 border-red-200 hover:bg-red-50"
                             >
                               <Trash2 className="h-4 w-4" />
-                            </Button>
+                            </ButtonV2>
 
                             {/* Voir détails */}
-                            <Button variant="ghost" size="sm">
+                            <ButtonV2 variant="ghost" size="sm">
                               <Eye className="h-4 w-4" />
-                            </Button>
+                            </ButtonV2>
                           </div>
                         </td>
                       </tr>

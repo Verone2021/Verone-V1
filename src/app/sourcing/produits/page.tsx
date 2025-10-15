@@ -26,7 +26,7 @@ import {
 import { useSourcingProducts } from '@/hooks/use-sourcing-products'
 import { useSuppliers, useCustomers } from '@/hooks/use-organisations'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
-import { Button } from '@/components/ui/button'
+import { ButtonV2 } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { Input } from '@/components/ui/input'
 import {
@@ -135,7 +135,7 @@ export default function SourcingProduitsPage() {
                 className="border-black text-black hover:bg-black hover:text-white"
               >
                 Retour Dashboard
-              </Button>
+              </ButtonV2>
               <Button
                 variant="outline"
                 onClick={() => router.push('/contacts-organisations/customers?type=professional')}
@@ -143,14 +143,14 @@ export default function SourcingProduitsPage() {
               >
                 <Users className="h-4 w-4 mr-2" />
                 Client Professionnel
-              </Button>
+              </ButtonV2>
               <Button
                 onClick={() => router.push('/catalogue/create')}
                 className="bg-black hover:bg-gray-800 text-white"
               >
                 <Plus className="h-4 w-4 mr-2" />
                 Nouveau Sourcing
-              </Button>
+              </ButtonV2>
             </div>
           </div>
         </div>
@@ -205,7 +205,7 @@ export default function SourcingProduitsPage() {
               >
                 <Filter className="h-4 w-4 mr-2" />
                 Plus de filtres
-              </Button>
+              </ButtonV2>
             </div>
           </CardContent>
         </Card>
@@ -394,7 +394,7 @@ export default function SourcingProduitsPage() {
                           onClick={() => router.push(`/sourcing/produits/${product.id}`)}
                         >
                           <Eye className="h-4 w-4" />
-                        </Button>
+                        </ButtonV2>
                         <Button
                           variant="outline"
                           size="sm"
@@ -402,12 +402,12 @@ export default function SourcingProduitsPage() {
                           onClick={() => router.push(`/catalogue/${product.id}/edit`)}
                         >
                           <Edit className="h-4 w-4" />
-                        </Button>
+                        </ButtonV2>
                         <DropdownMenu>
                           <DropdownMenuTrigger asChild>
-                            <Button variant="outline" size="sm" className="border-gray-300">
+                            <ButtonV2 variant="outline" size="sm" className="border-gray-300">
                               <MoreHorizontal className="h-4 w-4" />
-                            </Button>
+                            </ButtonV2>
                           </DropdownMenuTrigger>
                           <DropdownMenuContent align="end">
                             <DropdownMenuLabel>Actions</DropdownMenuLabel>

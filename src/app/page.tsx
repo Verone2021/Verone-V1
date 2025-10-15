@@ -8,7 +8,7 @@
 import Link from "next/link"
 import Image from "next/image"
 import { LogIn } from "lucide-react"
-import { Button } from "@/components/ui/button"
+import { ButtonV2 } from "@/components/ui/button"
 
 export default function HomePage() {
   return (
@@ -40,13 +40,13 @@ export default function HomePage() {
         {/* Bouton de connexion */}
         <div className="pt-4">
           <Link href="/login">
-            <Button
+            <ButtonV2
               size="lg"
-              className="bg-black hover:bg-gray-800 text-white px-8 py-3 text-lg font-medium"
+              variant="primary"
             >
               <LogIn className="mr-2 h-5 w-5" />
               Se connecter
-            </Button>
+            </ButtonV2>
           </Link>
         </div>
 

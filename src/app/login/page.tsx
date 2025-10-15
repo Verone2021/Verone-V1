@@ -3,7 +3,7 @@
 import { useState } from "react"
 import { useRouter } from "next/navigation"
 import { Eye, EyeOff, LogIn } from "lucide-react"
-import { Button } from "@/components/ui/button"
+import { ButtonV2 } from "@/components/ui/button"
 import { createClient } from "@/lib/supabase/client"
 
 export default function LoginPage() {
@@ -130,7 +130,7 @@ export default function LoginPage() {
                   <span>Se connecter</span>
                 </div>
               )}
-            </Button>
+            </ButtonV2>
           </form>
 
           {/* Informations de test */}

@@ -11,10 +11,10 @@
  */
 
 import React, { useState } from 'react'
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from '../ui/dialog'
-import { Button } from '../ui/button'
-import { Badge } from '../ui/badge'
-import { Alert, AlertDescription } from '../ui/alert'
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog'
+import { ButtonV2 } from '@/components/ui/button'
+import { Badge } from '@/components/ui/badge'
+import { Alert, AlertDescription } from '@/components/ui/alert'
 import {
   Upload,
   X,
@@ -251,7 +251,7 @@ export function ProductPhotosModal({
             >
               <Upload className="h-4 w-4 mr-2" />
               Actualiser
-            </Button>
+            </ButtonV2>
           </div>
 
           {/* Zone d'upload */}
@@ -391,7 +391,7 @@ export function ProductPhotosModal({
                                 Principal
                               </>
                             )}
-                          </Button>
+                          </ButtonV2>
                         )}
 
                         {/* Bouton suppression */}
@@ -408,7 +408,7 @@ export function ProductPhotosModal({
                           ) : (
                             <Trash2 className="h-4 w-4" />
                           )}
-                        </Button>
+                        </ButtonV2>
                       </div>
                     </div>
 
@@ -445,7 +445,7 @@ export function ProductPhotosModal({
               >
                 <Camera className="h-4 w-4 mr-2" />
                 Ajouter des photos
-              </Button>
+              </ButtonV2>
             </div>
           )}
         </div>
@@ -467,9 +467,9 @@ export function ProductPhotosModal({
                 </span>
               )}
             </div>
-            <Button onClick={onClose} variant="outline">
+            <ButtonV2 onClick={onClose} variant="outline">
               Fermer
-            </Button>
+            </ButtonV2>
           </div>
         </div>
       </DialogContent>

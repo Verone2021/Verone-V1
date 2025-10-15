@@ -1,7 +1,7 @@
 "use client"
 
 import { Trash2, X, AlertTriangle } from 'lucide-react'
-import { Button } from '../ui/button'
+import { ButtonV2 } from '@/components/ui/button'
 import { cn } from '../../lib/utils'
 
 interface ConfirmDeleteModalProps {
@@ -47,7 +47,7 @@ export function ConfirmDeleteModal({
           className="h-8 w-8 p-0"
         >
           <X className="h-4 w-4" />
-        </Button>
+        </ButtonV2>
       </div>
 
       {/* Détails de l'élément à supprimer */}
@@ -86,7 +86,7 @@ export function ConfirmDeleteModal({
           disabled={loading}
         >
           Annuler
-        </Button>
+        </ButtonV2>
         <Button
           variant="destructive"
           onClick={onConfirm}
@@ -104,7 +104,7 @@ export function ConfirmDeleteModal({
               Supprimer
             </>
           )}
-        </Button>
+        </ButtonV2>
       </div>
     </div>
   )

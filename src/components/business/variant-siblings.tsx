@@ -2,8 +2,8 @@
 
 import { useState, useEffect } from 'react'
 import { Eye, Package, ArrowRight, AlertCircle } from 'lucide-react'
-import { Button } from '../ui/button'
-import { Badge } from '../ui/badge'
+import { ButtonV2 } from '@/components/ui/button'
+import { Badge } from '@/components/ui/badge'
 import { cn } from '../../lib/utils'
 import { createClient } from '../../lib/supabase/client'
 import { sortVariantSiblings } from '../../lib/business-rules/naming-rules'
@@ -280,7 +280,7 @@ export function VariantSiblings({
         >
           <Eye className="h-3 w-3 mr-1" />
           Voir toutes les variantes du groupe
-        </Button>
+        </ButtonV2>
       </div>
     </div>
   )

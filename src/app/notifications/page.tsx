@@ -15,7 +15,7 @@
 
 import { useState, useMemo } from 'react';
 import { Bell, Search, CheckCheck, Trash2, Filter, X } from 'lucide-react';
-import { ButtonV2 } from '@/components/ui-v2/button';
+import { ButtonV2 } from '@/components/ui/button';
 import { useNotifications } from '@/hooks/use-notifications';
 import { cn } from '@/lib/utils';
 import { spacing, colors } from '@/lib/design-system';

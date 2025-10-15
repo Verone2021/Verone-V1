@@ -16,7 +16,7 @@ import {
   ShoppingCart
 } from 'lucide-react'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
-import { Button } from '@/components/ui/button'
+import { ButtonV2 } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { useSourcingProducts } from '@/hooks/use-sourcing-products'
 
@@ -90,21 +90,21 @@ export default function SourcingDashboardPage() {
               <p className="text-gray-600 mt-1">Gestion des produits à sourcer et validation catalogue</p>
             </div>
             <div className="flex items-center space-x-3">
-              <Button
+              <ButtonV2
                 variant="outline"
                 onClick={() => router.push('/sourcing/validation')}
                 className="border-black text-black hover:bg-black hover:text-white"
               >
                 <CheckCircle className="h-4 w-4 mr-2" />
                 Validation
-              </Button>
-              <Button
+              </ButtonV2>
+              <ButtonV2
                 onClick={() => router.push('/catalogue/create')}
                 className="bg-black hover:bg-gray-800 text-white"
               >
                 <Plus className="h-4 w-4 mr-2" />
                 Nouveau Sourcing
-              </Button>
+              </ButtonV2>
             </div>
           </div>
         </div>
@@ -182,7 +182,7 @@ export default function SourcingDashboardPage() {
           </CardHeader>
           <CardContent>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              <Button
+              <ButtonV2
                 variant="outline"
                 className="h-20 border-black text-black hover:bg-black hover:text-white"
                 onClick={() => router.push('/catalogue/create')}
@@ -191,9 +191,9 @@ export default function SourcingDashboardPage() {
                   <Plus className="h-6 w-6 mb-2" />
                   <span>Nouveau Sourcing</span>
                 </div>
-              </Button>
+              </ButtonV2>
 
-              <Button
+              <ButtonV2
                 variant="outline"
                 className="h-20 border-black text-black hover:bg-black hover:text-white"
                 onClick={() => router.push('/sourcing/echantillons')}
@@ -202,9 +202,9 @@ export default function SourcingDashboardPage() {
                   <Eye className="h-6 w-6 mb-2" />
                   <span>Échantillons</span>
                 </div>
-              </Button>
+              </ButtonV2>
 
-              <Button
+              <ButtonV2
                 variant="outline"
                 className="h-20 border-black text-black hover:bg-black hover:text-white"
                 onClick={() => router.push('/sourcing/validation')}
@@ -213,7 +213,7 @@ export default function SourcingDashboardPage() {
                   <CheckCircle className="h-6 w-6 mb-2" />
                   <span>Validation</span>
                 </div>
-              </Button>
+              </ButtonV2>
             </div>
           </CardContent>
         </Card>

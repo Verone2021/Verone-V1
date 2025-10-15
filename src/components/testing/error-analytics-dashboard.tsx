@@ -9,7 +9,7 @@
 import React, { useState, useEffect, useMemo } from 'react'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
-import { Button } from '@/components/ui/button'
+import { ButtonV2 } from '@/components/ui/button'
 import { Progress } from '@/components/ui/progress'
 import { Alert, AlertDescription } from '@/components/ui/alert'
 import {
@@ -327,7 +327,7 @@ export function ErrorAnalyticsDashboard({
               disabled={isRefreshing}
             >
               {isRefreshing ? <Clock className="h-4 w-4 animate-spin" /> : <RefreshCw className="h-4 w-4" />}
-            </Button>
+            </ButtonV2>
           </CardTitle>
         </CardHeader>
         <CardContent>
@@ -376,7 +376,7 @@ export function ErrorAnalyticsDashboard({
             >
               <Brain className="h-4 w-4 mr-2" />
               Erreurs Auto-Fixables
-            </Button>
+            </ButtonV2>
             <Button
               variant="outline"
               className="justify-start"
@@ -384,7 +384,7 @@ export function ErrorAnalyticsDashboard({
             >
               <Clock className="h-4 w-4 mr-2" />
               Notifications Pending
-            </Button>
+            </ButtonV2>
             <Button
               variant="outline"
               className="justify-start"
@@ -392,7 +392,7 @@ export function ErrorAnalyticsDashboard({
             >
               <Activity className="h-4 w-4 mr-2" />
               Tests Manuels
-            </Button>
+            </ButtonV2>
           </div>
         </CardContent>
       </Card>

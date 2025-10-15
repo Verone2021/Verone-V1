@@ -6,16 +6,16 @@ import {
   AlertCircle, CheckCircle, Plus, Trash2, Euro, Percent,
   Link, Tag, Building, Box, Calculator, Eye
 } from "lucide-react"
-import { Button } from "../ui/button"
-import { Input } from "../ui/input"
-import { Label } from "../ui/label"
-import { Textarea } from "../ui/textarea"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "../ui/select"
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "../ui/tabs"
-import { Badge } from "../ui/badge"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "../ui/card"
-import { Alert, AlertDescription } from "../ui/alert"
-import { Switch } from "../ui/switch"
+import { ButtonV2 } from "@/components/ui/button"
+import { Input } from "@/components/ui/input"
+import { Label } from "@/components/ui/label"
+import { Textarea } from "@/components/ui/textarea"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
+import { Badge } from "@/components/ui/badge"
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
+import { Alert, AlertDescription } from "@/components/ui/alert"
+import { Switch } from "@/components/ui/switch"
 import { useProducts } from "../../hooks/use-products"
 import { useSubcategories } from "../../hooks/use-subcategories"
 import { useSuppliers } from "../../hooks/use-organisations"
@@ -1314,7 +1314,7 @@ export function DefinitiveProductForm({
                   className="border-gray-300 hover:bg-white"
                 >
                   Annuler
-                </Button>
+                </ButtonV2>
               )}
 
               <Button
@@ -1334,7 +1334,7 @@ export function DefinitiveProductForm({
                     {mode === 'create' ? 'Créer le produit' : 'Mettre à jour'}
                   </>
                 )}
-              </Button>
+              </ButtonV2>
             </div>
           </div>
         </CardContent>

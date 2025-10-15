@@ -5,7 +5,7 @@ import { X, Package, Calendar, User, Loader2, ShoppingCart, TruckIcon } from 'lu
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
-import { Button } from '@/components/ui/button'
+import { ButtonV2 } from '@/components/ui/button'
 import { Separator } from '@/components/ui/separator'
 import { createClient } from '@/lib/supabase/client'
 import { formatCurrency } from '@/lib/utils'
@@ -203,9 +203,9 @@ export function UniversalOrderDetailsModal({
                 <><TruckIcon className="h-6 w-6" /> Commande Fournisseur</>
               )}
             </DialogTitle>
-            <Button variant="ghost" size="sm" onClick={onClose}>
+            <ButtonV2 variant="ghost" size="sm" onClick={onClose}>
               <X className="h-4 w-4" />
-            </Button>
+            </ButtonV2>
           </div>
         </DialogHeader>
 

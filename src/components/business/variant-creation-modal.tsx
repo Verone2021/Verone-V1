@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import { X, Save, AlertCircle, Copy, Palette, Layers } from 'lucide-react'
-import { Button } from '@/components/ui/button'
+import { ButtonV2 } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { cn } from '@/lib/utils'
 
@@ -123,7 +123,7 @@ export function VariantCreationModal({
             disabled={isCreating}
           >
             <X className="h-4 w-4" />
-          </Button>
+          </ButtonV2>
         </div>
 
         <div className="p-6 space-y-6">
@@ -280,7 +280,7 @@ export function VariantCreationModal({
             disabled={isCreating}
           >
             Annuler
-          </Button>
+          </ButtonV2>
           <Button
             onClick={handleCreateVariant}
             disabled={isCreating || (!color && !material)}
@@ -288,7 +288,7 @@ export function VariantCreationModal({
           >
             <Save className="h-4 w-4 mr-2" />
             {isCreating ? 'Création...' : 'Créer la Variante'}
-          </Button>
+          </ButtonV2>
         </div>
       </div>
     </div>

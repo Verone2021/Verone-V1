@@ -245,6 +245,7 @@ export function useUserActivityTracker() {
       history.replaceState = originalReplaceState
       window.removeEventListener('popstate', handlePageChange)
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
   // Tracking des interactions utilisateur
@@ -314,6 +315,7 @@ export function useUserActivityTracker() {
       window.removeEventListener('error', handleError)
       window.removeEventListener('unhandledrejection', handleUnhandledRejection)
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
   // Fonction principale pour tracker un événement

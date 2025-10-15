@@ -1,12 +1,12 @@
 "use client"
 
 import { useState } from 'react'
-import { Button } from '../ui/button'
-import { Input } from '../ui/input'
-import { Label } from '../ui/label'
-import { Badge } from '../ui/badge'
-import { StandardModifyButton } from '../ui/standard-modify-button'
-import { RoomMultiSelect } from '../ui/room-multi-select'
+import { ButtonV2 } from '@/components/ui/button'
+import { Input } from '@/components/ui/input'
+import { Label } from '@/components/ui/label'
+import { Badge } from '@/components/ui/badge'
+import { StandardModifyButton } from '@/components/ui/standard-modify-button'
+import { RoomMultiSelect } from '@/components/ui/room-multi-select'
 import { Save, X, Package, Plus, Home } from 'lucide-react'
 import { cn } from '../../lib/utils'
 import { useInlineEdit, type EditableSection } from '../../hooks/use-inline-edit'
@@ -164,7 +164,7 @@ export function CharacteristicsEditSection({
             >
               <X className="h-3 w-3 mr-1" />
               Annuler
-            </Button>
+            </ButtonV2>
             <Button
               variant="default"
               size="sm"
@@ -174,7 +174,7 @@ export function CharacteristicsEditSection({
             >
               <Save className="h-3 w-3 mr-1" />
               {isSaving(section) ? 'Sauvegarde...' : 'Sauvegarder'}
-            </Button>
+            </ButtonV2>
           </div>
         </div>
 
@@ -195,7 +195,7 @@ export function CharacteristicsEditSection({
                       onClick={() => removeVariantAttribute(key)}
                     >
                       <X className="h-3 w-3" />
-                    </Button>
+                    </ButtonV2>
                   </Badge>
                 ))}
               </div>
@@ -226,7 +226,7 @@ export function CharacteristicsEditSection({
                 disabled={!newAttributeKey.trim() || !newAttributeValue.trim()}
               >
                 <Plus className="h-4 w-4" />
-              </Button>
+              </ButtonV2>
             </div>
           </div>
 
@@ -252,7 +252,7 @@ export function CharacteristicsEditSection({
                   }}
                 >
                   + {key}
-                </Button>
+                </ButtonV2>
               ))}
             </div>
           </div>
@@ -283,7 +283,7 @@ export function CharacteristicsEditSection({
                         onClick={() => removeDimension(key)}
                       >
                         <X className="h-3 w-3" />
-                      </Button>
+                      </ButtonV2>
                     </Badge>
                   ))}
                 </div>
@@ -319,7 +319,7 @@ export function CharacteristicsEditSection({
                   disabled={!newDimensionKey.trim() || !newDimensionValue.trim()}
                 >
                   <Plus className="h-4 w-4" />
-                </Button>
+                </ButtonV2>
               </div>
               <div className="text-xs text-gray-500">
                 Les unités (cm, kg) sont ajoutées automatiquement à l'affichage
@@ -344,7 +344,7 @@ export function CharacteristicsEditSection({
                     }}
                   >
                     + {dimension}
-                  </Button>
+                  </ButtonV2>
                 ))}
               </div>
             </div>

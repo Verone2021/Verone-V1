@@ -5,7 +5,7 @@ import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import * as z from 'zod'
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog'
-import { ButtonV2 } from '@/components/ui-v2/button'
+import { ButtonV2 } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Checkbox } from '@/components/ui/checkbox'
@@ -200,82 +200,44 @@ export function ContactFormModal({
                   <div>
                     <Label
                       htmlFor="first_name"
-                      className="text-sm font-medium"
-                      style={{
-                        color: colors.text.DEFAULT,
-                        display: 'block',
-                        marginBottom: spacing[2]
-                      }}
+                      required
+                      state={form.formState.errors.first_name ? "error" : "default"}
                     >
-                      Prénom *
+                      Prénom
                     </Label>
                     <Input
                       id="first_name"
                       {...form.register('first_name')}
                       placeholder="Jean"
                       disabled={isSubmitting}
-                      style={{
-                        borderColor: form.formState.errors.first_name ? colors.danger[500] : colors.border.DEFAULT,
-                        color: colors.text.DEFAULT
-                      }}
+                      variant={form.formState.errors.first_name ? "error" : "default"}
+                      error={form.formState.errors.first_name?.message}
                     />
-                    {form.formState.errors.first_name && (
-                      <p style={{
-                        color: colors.danger[500],
-                        fontSize: '0.875rem',
-                        marginTop: spacing[1]
-                      }}>
-                        {form.formState.errors.first_name.message}
-                      </p>
-                    )}
                   </div>
 
                   <div>
                     <Label
                       htmlFor="last_name"
-                      className="text-sm font-medium"
-                      style={{
-                        color: colors.text.DEFAULT,
-                        display: 'block',
-                        marginBottom: spacing[2]
-                      }}
+                      required
+                      state={form.formState.errors.last_name ? "error" : "default"}
                     >
-                      Nom *
+                      Nom
                     </Label>
                     <Input
                       id="last_name"
                       {...form.register('last_name')}
                       placeholder="Dupont"
                       disabled={isSubmitting}
-                      style={{
-                        borderColor: form.formState.errors.last_name ? colors.danger[500] : colors.border.DEFAULT,
-                        color: colors.text.DEFAULT
-                      }}
+                      variant={form.formState.errors.last_name ? "error" : "default"}
+                      error={form.formState.errors.last_name?.message}
                     />
-                    {form.formState.errors.last_name && (
-                      <p style={{
-                        color: colors.danger[500],
-                        fontSize: '0.875rem',
-                        marginTop: spacing[1]
-                      }}>
-                        {form.formState.errors.last_name.message}
-                      </p>
-                    )}
                   </div>
                 </div>
 
                 {/* Title + Department */}
                 <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: spacing[3] }}>
                   <div>
-                    <Label
-                      htmlFor="title"
-                      className="text-sm font-medium"
-                      style={{
-                        color: colors.text.DEFAULT,
-                        display: 'block',
-                        marginBottom: spacing[2]
-                      }}
-                    >
+                    <Label htmlFor="title">
                       Fonction
                     </Label>
                     <Input
@@ -283,23 +245,11 @@ export function ContactFormModal({
                       {...form.register('title')}
                       placeholder="Directeur Commercial"
                       disabled={isSubmitting}
-                      style={{
-                        borderColor: colors.border.DEFAULT,
-                        color: colors.text.DEFAULT
-                      }}
                     />
                   </div>
 
                   <div>
-                    <Label
-                      htmlFor="department"
-                      className="text-sm font-medium"
-                      style={{
-                        color: colors.text.DEFAULT,
-                        display: 'block',
-                        marginBottom: spacing[2]
-                      }}
-                    >
+                    <Label htmlFor="department">
                       Département
                     </Label>
                     <Input
@@ -307,10 +257,6 @@ export function ContactFormModal({
                       {...form.register('department')}
                       placeholder="Ventes"
                       disabled={isSubmitting}
-                      style={{
-                        borderColor: colors.border.DEFAULT,
-                        color: colors.text.DEFAULT
-                      }}
                     />
                   </div>
                 </div>
@@ -335,14 +281,10 @@ export function ContactFormModal({
                 <div>
                   <Label
                     htmlFor="email"
-                    className="text-sm font-medium"
-                    style={{
-                      color: colors.text.DEFAULT,
-                      display: 'block',
-                      marginBottom: spacing[2]
-                    }}
+                    required
+                    state={form.formState.errors.email ? "error" : "default"}
                   >
-                    Email *
+                    Email
                   </Label>
                   <Input
                     id="email"
@@ -350,34 +292,15 @@ export function ContactFormModal({
                     {...form.register('email')}
                     placeholder="contact@exemple.com"
                     disabled={isSubmitting}
-                    style={{
-                      borderColor: form.formState.errors.email ? colors.danger[500] : colors.border.DEFAULT,
-                      color: colors.text.DEFAULT
-                    }}
+                    variant={form.formState.errors.email ? "error" : "default"}
+                    error={form.formState.errors.email?.message}
                   />
-                  {form.formState.errors.email && (
-                    <p style={{
-                      color: colors.danger[500],
-                      fontSize: '0.875rem',
-                      marginTop: spacing[1]
-                    }}>
-                      {form.formState.errors.email.message}
-                    </p>
-                  )}
                 </div>
 
                 {/* Phone + Mobile */}
                 <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: spacing[3] }}>
                   <div>
-                    <Label
-                      htmlFor="phone"
-                      className="text-sm font-medium"
-                      style={{
-                        color: colors.text.DEFAULT,
-                        display: 'block',
-                        marginBottom: spacing[2]
-                      }}
-                    >
+                    <Label htmlFor="phone">
                       Téléphone fixe
                     </Label>
                     <Input
@@ -386,23 +309,11 @@ export function ContactFormModal({
                       {...form.register('phone')}
                       placeholder="+33 1 23 45 67 89"
                       disabled={isSubmitting}
-                      style={{
-                        borderColor: colors.border.DEFAULT,
-                        color: colors.text.DEFAULT
-                      }}
                     />
                   </div>
 
                   <div>
-                    <Label
-                      htmlFor="mobile"
-                      className="text-sm font-medium"
-                      style={{
-                        color: colors.text.DEFAULT,
-                        display: 'block',
-                        marginBottom: spacing[2]
-                      }}
-                    >
+                    <Label htmlFor="mobile">
                       Mobile
                     </Label>
                     <Input
@@ -411,10 +322,6 @@ export function ContactFormModal({
                       {...form.register('mobile')}
                       placeholder="+33 6 12 34 56 78"
                       disabled={isSubmitting}
-                      style={{
-                        borderColor: colors.border.DEFAULT,
-                        color: colors.text.DEFAULT
-                      }}
                     />
                   </div>
                 </div>
@@ -446,7 +353,6 @@ export function ContactFormModal({
                   <Label
                     htmlFor="is_primary_contact"
                     className="text-sm font-medium cursor-pointer"
-                    style={{ color: colors.text.DEFAULT }}
                   >
                     Contact principal
                   </Label>
@@ -463,7 +369,6 @@ export function ContactFormModal({
                   <Label
                     htmlFor="is_commercial_contact"
                     className="text-sm font-medium cursor-pointer"
-                    style={{ color: colors.text.DEFAULT }}
                   >
                     Contact commercial
                   </Label>
@@ -480,7 +385,6 @@ export function ContactFormModal({
                   <Label
                     htmlFor="is_billing_contact"
                     className="text-sm font-medium cursor-pointer"
-                    style={{ color: colors.text.DEFAULT }}
                   >
                     Contact facturation
                   </Label>
@@ -497,7 +401,6 @@ export function ContactFormModal({
                   <Label
                     htmlFor="is_technical_contact"
                     className="text-sm font-medium cursor-pointer"
-                    style={{ color: colors.text.DEFAULT }}
                   >
                     Contact technique
                   </Label>

@@ -1,7 +1,7 @@
 "use client"
 
 import { useState, useEffect } from 'react'
-import { ButtonV2 } from '@/components/ui-v2/button'
+import { ButtonV2 } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { spacing, colors } from '@/lib/design-system'
 import { Plus, Mail, Phone, User, Trash2, Edit2 } from 'lucide-react'

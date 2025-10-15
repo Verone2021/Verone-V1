@@ -17,7 +17,7 @@
 
 import { useState, useEffect } from 'react'
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog'
-import { Button } from '@/components/ui/button'
+import { ButtonV2 } from '@/components/ui/button'
 import { Label } from '@/components/ui/label'
 import { Input } from '@/components/ui/input'
 import { Textarea } from '@/components/ui/textarea'
@@ -344,7 +344,7 @@ export function EditProductVariantModal({
             >
               <X className="w-4 h-4 mr-2" />
               Annuler
-            </Button>
+            </ButtonV2>
             <Button
               type="submit"
               disabled={isSubmitting}
@@ -361,7 +361,7 @@ export function EditProductVariantModal({
                   Enregistrer
                 </>
               )}
-            </Button>
+            </ButtonV2>
           </DialogFooter>
         </form>
       </DialogContent>

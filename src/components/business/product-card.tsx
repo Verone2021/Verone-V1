@@ -3,8 +3,8 @@
 import { memo, useCallback } from "react"
 import Image from "next/image"
 import { useRouter } from "next/navigation"
-import { Badge } from "../ui/badge"
-import { Button } from "../ui/button"
+import { Badge } from "@/components/ui/badge"
+import { ButtonV2 } from "@/components/ui/button"
 import { cn } from "../../lib/utils"
 import { Package, Archive, Trash2, ArchiveRestore } from "lucide-react"
 import { useProductImages } from "../../hooks/use-product-images"
@@ -308,8 +308,8 @@ export const ProductCard = memo(function ProductCard({
             <div className="flex gap-1">
               {/* Archiver/Restaurer */}
               {onArchive && (
-                <Button
-                  variant="outline"
+                <ButtonV2
+                  variant="secondary"
                   size="sm"
                   onClick={handleArchiveClick}
                   className={`flex-1 min-w-0 h-6 text-[10px] px-1.5 ${archived ? "text-blue-600 border-blue-200 hover:bg-blue-50" : "text-black border-gray-200 hover:bg-gray-50"}`}
@@ -325,32 +325,32 @@ export const ProductCard = memo(function ProductCard({
                       Archiver
                     </>
                   )}
-                </Button>
+                </ButtonV2>
               )}
 
               {/* Supprimer */}
               {onDelete && (
-                <Button
-                  variant="outline"
+                <ButtonV2
+                  variant="danger"
                   size="sm"
                   onClick={handleDeleteClick}
-                  className="flex-1 min-w-0 h-6 text-[10px] px-1.5 text-red-600 border-red-200 hover:bg-red-50"
+                  className="flex-1 min-w-0 h-6 text-[10px] px-1.5"
                 >
                   <Trash2 className="h-2.5 w-2.5 mr-0.5" />
                   Supprimer
-                </Button>
+                </ButtonV2>
               )}
             </div>
 
             {/* Voir détails */}
-            <Button
+            <ButtonV2
               variant="ghost"
               size="sm"
               className="w-full h-6 text-[10px]"
               onClick={handleDetailsClick}
             >
               Voir détails
-            </Button>
+            </ButtonV2>
           </div>
         )}
       </div>

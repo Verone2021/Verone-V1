@@ -1,5 +1,5 @@
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
-import { Button } from '@/components/ui/button'
+import { ButtonV2 } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { AlertTriangle, XCircle, Package, ExternalLink } from 'lucide-react'
 import Link from 'next/link'
@@ -112,11 +112,11 @@ export function StockAlertCard({ alert, onActionClick }: StockAlertCardProps) {
             className="text-xs"
           >
             {alert.alert_type === 'no_stock_but_ordered' ? 'Voir Commandes' : 'Commander Fournisseur'}
-          </Button>
+          </ButtonV2>
           <Link href={`/catalogue/${alert.product_id}`}>
-            <Button size="sm" variant="ghost" className="text-xs">
+            <ButtonV2 size="sm" variant="ghost" className="text-xs">
               Voir Produit
-            </Button>
+            </ButtonV2>
           </Link>
         </div>
       </CardContent>

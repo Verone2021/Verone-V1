@@ -8,7 +8,7 @@
 import { useEffect, useState } from 'react'
 import { Package, Plus, Eye, Barcode, Euro, Box } from 'lucide-react'
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card'
-import { Button } from '@/components/ui/button'
+import { ButtonV2 } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { useProducts } from '@/hooks/use-products'
 import Link from 'next/link'
@@ -73,12 +73,12 @@ export function OrganisationProductsSection({
                 : `Aucun produit trouvé pour ${organisationName}.`}
             </p>
             {organisationType === 'supplier' && (
-              <Button asChild>
+              <ButtonV2 asChild>
                 <Link href={`/catalogue/create?supplier_id=${organisationId}`}>
                   <Plus className="h-4 w-4 mr-2" />
                   Créer un produit
                 </Link>
-              </Button>
+              </ButtonV2>
             )}
           </div>
         </CardContent>
@@ -110,12 +110,12 @@ export function OrganisationProductsSection({
               </CardDescription>
             </div>
             {organisationType === 'supplier' && (
-              <Button asChild>
+              <ButtonV2 asChild>
                 <Link href={`/catalogue/create?supplier_id=${organisationId}`}>
                   <Plus className="h-4 w-4 mr-2" />
                   Nouveau produit
                 </Link>
-              </Button>
+              </ButtonV2>
             )}
           </div>
         </CardHeader>
@@ -188,12 +188,12 @@ export function OrganisationProductsSection({
                   </Badge>
                 </div>
 
-                <Button variant="outline" size="sm" className="w-full mt-2" asChild>
+                <ButtonV2 variant="outline" size="sm" className="w-full mt-2" asChild>
                   <Link href={`/catalogue/${product.id}`}>
                     <Eye className="h-4 w-4 mr-2" />
                     Voir détails
                   </Link>
-                </Button>
+                </ButtonV2>
               </div>
             </CardContent>
           </Card>

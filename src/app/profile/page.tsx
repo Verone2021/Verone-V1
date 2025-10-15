@@ -3,7 +3,7 @@
 import React, { useEffect, useState } from 'react'
 import { User, Mail, Shield, Building, Edit, Save, X, Phone, Briefcase } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
-import { Button } from '@/components/ui/button'
+import { ButtonV2 } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { RoleBadge, type UserRole } from '@/components/ui/role-badge'
 import { PasswordChangeDialog } from '@/components/profile/password-change-dialog'
@@ -11,7 +11,7 @@ import { validateProfileForm, sanitizeProfileData } from '@/lib/validation/profi
 import type { User as SupabaseUser } from '@supabase/supabase-js'
 import { colors, spacing, componentShadows } from '@/lib/design-system'
 import { cn } from '@/lib/utils'
-import { ButtonV2 } from '@/components/ui-v2/button'
+import { ButtonV2 } from '@/components/ui/button'
 
 interface UserProfile {
   user_id: string

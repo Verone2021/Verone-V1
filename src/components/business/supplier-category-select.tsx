@@ -14,7 +14,7 @@
 import React, { useState, useRef, useEffect } from 'react'
 import { Check, ChevronDown, X } from 'lucide-react'
 import { cn } from '@/lib/utils'
-import { Button } from '@/components/ui/button'
+import { ButtonV2 } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { Label } from '@/components/ui/label'
 import { SupplierCategoryCode, getCategoryLabel } from './supplier-category-badge'
@@ -261,7 +261,7 @@ export function SupplierCategorySelect({
             )}
           </div>
           <ChevronDown className={cn('h-4 w-4 transition-transform', isOpen && 'rotate-180')} />
-        </Button>
+        </ButtonV2>
 
         {/* Dropdown menu */}
         {isOpen && (
@@ -285,7 +285,7 @@ export function SupplierCategorySelect({
                   className="w-full mt-2 text-xs"
                 >
                   Tout désélectionner ({selectedCategories.length})
-                </Button>
+                </ButtonV2>
               )}
             </div>
 

@@ -9,7 +9,7 @@
 
 import Link from 'next/link'
 import { AlertTriangle, Home, ArrowLeft } from 'lucide-react'
-import { Button } from '@/components/ui/button'
+import { ButtonV2 } from '@/components/ui/button'
 
 export default function NotFound() {
   return (
@@ -37,15 +37,15 @@ export default function NotFound() {
         {/* Actions utilisateur */}
         <div className="space-y-4">
           <Link href="/">
-            <Button className="w-full bg-black hover:bg-gray-800 text-white">
+            <ButtonV2 className="w-full bg-black hover:bg-gray-800 text-white">
               <Home className="mr-2 h-4 w-4" />
               Retour à l'accueil
-            </Button>
+            </ButtonV2>
           </Link>
 
-          <Button
-            variant="outline"
-            className="w-full border-black text-black hover:bg-gray-50"
+          <ButtonV2
+            variant="secondary"
+            className="w-full"
             onClick={() => {
               if (typeof window !== 'undefined') {
                 window.history.back()
@@ -54,7 +54,7 @@ export default function NotFound() {
           >
             <ArrowLeft className="mr-2 h-4 w-4" />
             Page précédente
-          </Button>
+          </ButtonV2>
         </div>
 
         {/* Footer Vérone */}

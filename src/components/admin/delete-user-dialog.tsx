@@ -9,7 +9,7 @@
 
 import React, { useState } from 'react'
 import { AlertTriangle, Trash2, X } from 'lucide-react'
-import { ButtonV2 } from '@/components/ui-v2/button'
+import { ButtonV2 } from '@/components/ui/button'
 import { RoleBadge, type UserRole } from '@/components/ui/role-badge'
 import {
   Dialog,

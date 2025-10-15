@@ -4,7 +4,7 @@ import { use, useState, useCallback, useEffect, useRef } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { ChevronLeft, Package, Calendar, Edit3, Plus, X, Eye, Palette, Ruler, Layers, Settings, Home, ExternalLink } from 'lucide-react'
-import { Button } from '@/components/ui/button'
+import { ButtonV2 } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
@@ -169,7 +169,7 @@ function VariantProductCard({
           >
             <Edit3 className="w-3 h-3 mr-1" />
             Modifier
-          </Button>
+          </ButtonV2>
           <Button
             variant="outline"
             size="sm"
@@ -178,7 +178,7 @@ function VariantProductCard({
           >
             <Eye className="w-3 h-3 mr-1" />
             Détails
-          </Button>
+          </ButtonV2>
         </div>
       </div>
     </div>
@@ -367,7 +367,7 @@ export default function VariantGroupDetailPage({ params }: VariantGroupDetailPag
         >
           <ChevronLeft className="w-4 h-4 mr-2" />
           Retour
-        </Button>
+        </ButtonV2>
         <div className="text-center py-12">
           <Package className="w-12 h-12 text-gray-400 mx-auto mb-4" />
           <h2 className="text-xl font-semibold text-gray-900 mb-2">
@@ -393,7 +393,7 @@ export default function VariantGroupDetailPage({ params }: VariantGroupDetailPag
           >
             <ChevronLeft className="w-4 h-4 mr-2" />
             Retour
-          </Button>
+          </ButtonV2>
           <div>
             <div className="flex items-center gap-3">
               {getVariantTypeIcon(variantGroup.variant_type)}
@@ -443,7 +443,7 @@ export default function VariantGroupDetailPage({ params }: VariantGroupDetailPag
           >
             <Edit3 className="w-4 h-4 mr-2" />
             Modifier les informations
-          </Button>
+          </ButtonV2>
           <Button
             size="sm"
             onClick={handleCreateProduct}
@@ -451,7 +451,7 @@ export default function VariantGroupDetailPage({ params }: VariantGroupDetailPag
           >
             <Plus className="w-4 h-4 mr-2" />
             Créer un produit
-          </Button>
+          </ButtonV2>
           <Button
             variant="outline"
             size="sm"
@@ -460,7 +460,7 @@ export default function VariantGroupDetailPage({ params }: VariantGroupDetailPag
           >
             <Package className="w-4 h-4 mr-2" />
             Importer existants
-          </Button>
+          </ButtonV2>
         </div>
       </div>
 
@@ -708,7 +708,7 @@ export default function VariantGroupDetailPage({ params }: VariantGroupDetailPag
             >
               <Plus className="w-4 h-4 mr-2" />
               Ajouter des produits
-            </Button>
+            </ButtonV2>
           </div>
         )}
       </div>

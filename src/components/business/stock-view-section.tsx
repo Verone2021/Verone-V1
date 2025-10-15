@@ -1,8 +1,8 @@
 "use client"
 
 import { ExternalLink, Truck } from 'lucide-react'
-import { Button } from '../ui/button'
-import { Badge } from '../ui/badge'
+import { ButtonV2 } from '@/components/ui/button'
+import { Badge } from '@/components/ui/badge'
 import { cn } from '../../lib/utils'
 import { useRouter } from 'next/navigation'
 
@@ -75,7 +75,7 @@ export function StockViewSection({ product, className }: StockViewSectionProps) 
           >
             <ExternalLink className="h-3 w-3 mr-1" />
             Gérer stock
-          </Button>
+          </ButtonV2>
         </div>
       </div>
 

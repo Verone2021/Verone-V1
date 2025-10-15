@@ -10,7 +10,7 @@ import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
-import { Button } from '@/components/ui/button';
+import { ButtonV2 } from '@/components/ui/button';
 import {
   Form,
   FormControl,
@@ -323,8 +323,8 @@ export function PaymentForm({
                 disabled={isSubmitting}
               >
                 Réinitialiser
-              </Button>
-              <Button type="submit" disabled={isSubmitting}>
+              </ButtonV2>
+              <ButtonV2 type="submit" disabled={isSubmitting}>
                 {isSubmitting ? (
                   <>
                     <Loader2 className="mr-2 h-4 w-4 animate-spin" />
@@ -336,7 +336,7 @@ export function PaymentForm({
                     Enregistrer paiement
                   </>
                 )}
-              </Button>
+              </ButtonV2>
             </div>
           </form>
         </Form>

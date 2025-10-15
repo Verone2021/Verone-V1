@@ -3,9 +3,9 @@
 import { useState, Suspense, lazy } from 'react'
 import { useRouter } from 'next/navigation'
 import { ArrowLeft, Package, Zap, Settings, CheckCircle, Circle, ArrowRight } from 'lucide-react'
-import { Button } from '../ui/button'
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../ui/card'
-import { Badge } from '../ui/badge'
+import { ButtonV2 } from '@/components/ui/button'
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
+import { Badge } from '@/components/ui/badge'
 import { cn } from '../../lib/utils'
 
 // Lazy loading du composant formulaire produit complet
@@ -66,7 +66,7 @@ export function ProductCreationWizard({
             >
               <ArrowLeft className="h-4 w-4 mr-2" />
               {selectedType ? 'Changer de type' : 'Retour au catalogue'}
-            </Button>
+            </ButtonV2>
 
             {/* Indicateur d'étape */}
             <div className="flex items-center space-x-2 text-sm text-gray-500">

@@ -13,7 +13,7 @@
 'use client';
 
 import { Bell, Check, Trash2, CheckCheck, AlertCircle, CheckCircle, Info, ExternalLink } from 'lucide-react';
-import { ButtonV2 } from '@/components/ui-v2/button';
+import { ButtonV2 } from '@/components/ui/button';
 import {
   DropdownMenu,
   DropdownMenuContent,

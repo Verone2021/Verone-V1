@@ -9,7 +9,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog'
-import { Button } from '@/components/ui/button'
+import { ButtonV2 } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { SupplierSelector } from './supplier-selector'
@@ -284,7 +284,7 @@ export function EditSourcingProductModal({
             >
               <X className="h-4 w-4 mr-2" />
               Annuler
-            </Button>
+            </ButtonV2>
 
             <Button
               type="submit"
@@ -302,7 +302,7 @@ export function EditSourcingProductModal({
                   Enregistrer
                 </>
               )}
-            </Button>
+            </ButtonV2>
           </div>
         </form>
       </DialogContent>

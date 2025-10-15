@@ -10,7 +10,7 @@ import { useState, useEffect } from 'react';
 import { createClient } from '@/lib/supabase/client';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { Button } from '@/components/ui/button';
+import { ButtonV2 } from '@/components/ui/button';
 import {
   Select,
   SelectContent,
@@ -281,7 +281,7 @@ export function InvoicesList() {
             disabled={currentPage === 1}
           >
             Précédent
-          </Button>
+          </ButtonV2>
 
           <span className="text-sm text-muted-foreground">
             Page {currentPage} sur {totalPages}
@@ -294,7 +294,7 @@ export function InvoicesList() {
             disabled={currentPage === totalPages}
           >
             Suivant
-          </Button>
+          </ButtonV2>
         </div>
       )}
     </div>

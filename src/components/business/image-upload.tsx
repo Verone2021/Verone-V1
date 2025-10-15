@@ -3,7 +3,7 @@
 import { useCallback, useState } from 'react'
 import Image from 'next/image'
 import { Upload, X, AlertCircle, Camera, Loader2 } from 'lucide-react'
-import { Button } from '../ui/button'
+import { ButtonV2 } from '@/components/ui/button'
 import { useSimpleImageUpload } from '../../hooks/use-simple-image-upload'
 import { cn } from '../../lib/utils'
 
@@ -142,7 +142,7 @@ export function ImageUpload({
                 className="absolute -top-2 -right-2 h-6 w-6 p-0 rounded-full"
               >
                 <X className="h-3 w-3" />
-              </Button>
+              </ButtonV2>
             )}
           </div>
         ) : (

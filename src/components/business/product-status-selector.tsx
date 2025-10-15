@@ -1,10 +1,10 @@
 "use client"
 
 import { useState } from 'react'
-import { Badge } from '../ui/badge'
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../ui/select'
-import { Alert, AlertDescription } from '../ui/alert'
-import { Button } from '../ui/button'
+import { Badge } from '@/components/ui/badge'
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
+import { Alert, AlertDescription } from '@/components/ui/alert'
+import { ButtonV2 } from '@/components/ui/button'
 import { Info, RefreshCw, AlertTriangle } from 'lucide-react'
 import {
   ProductStatus,
@@ -92,7 +92,7 @@ export function ProductStatusSelector({
           >
             <RefreshCw className={`h-3 w-3 mr-1 ${isChanging ? 'animate-spin' : ''}`} />
             Recalculer
-          </Button>
+          </ButtonV2>
         )}
       </div>
 

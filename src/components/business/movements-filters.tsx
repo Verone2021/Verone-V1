@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from 'react'
 import { CalendarDays, Filter, RotateCcw, Search, Users, Package } from 'lucide-react'
-import { Button } from '@/components/ui/button'
+import { ButtonV2 } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import {
@@ -291,26 +291,26 @@ export function MovementsFilters({ filters, onFiltersChange, onReset, hasFilters
                 ? 'bg-black text-white' : ''}
             >
               Aujourd'hui
-            </Button>
+            </ButtonV2>
             <Button
               variant="outline"
               size="sm"
               onClick={() => setDateRange('week')}
             >
               Cette semaine
-            </Button>
+            </ButtonV2>
             <Button
               variant="outline"
               size="sm"
               onClick={() => setDateRange('month')}
             >
               Ce mois
-            </Button>
+            </ButtonV2>
             <Popover open={showDateRange} onOpenChange={setShowDateRange}>
               <PopoverTrigger asChild>
-                <Button variant="outline" size="sm">
+                <ButtonV2 variant="outline" size="sm">
                   Personnalisé
-                </Button>
+                </ButtonV2>
               </PopoverTrigger>
               <PopoverContent className="w-auto p-0" align="start">
                 <Calendar
@@ -344,7 +344,7 @@ export function MovementsFilters({ filters, onFiltersChange, onReset, hasFilters
                     className="w-full"
                   >
                     Appliquer
-                  </Button>
+                  </ButtonV2>
                 </div>
               </PopoverContent>
             </Popover>
@@ -454,15 +454,15 @@ export function MovementsFilters({ filters, onFiltersChange, onReset, hasFilters
 
         {/* Actions */}
         <div className="flex gap-2 pt-4 border-t">
-          <Button onClick={applyFilters} className="flex-1">
+          <ButtonV2 onClick={applyFilters} className="flex-1">
             <Filter className="h-4 w-4 mr-2" />
             Appliquer
-          </Button>
+          </ButtonV2>
           {hasFilters && (
-            <Button variant="outline" onClick={onReset}>
+            <ButtonV2 variant="outline" onClick={onReset}>
               <RotateCcw className="h-4 w-4 mr-2" />
               Reset
-            </Button>
+            </ButtonV2>
           )}
         </div>
       </CardContent>

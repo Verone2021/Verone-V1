@@ -2,9 +2,9 @@
 
 import { useState, useEffect } from 'react'
 import { Search, X, Plus, Check, Package, Filter } from 'lucide-react'
-import { Button } from '../ui/button'
-import { Badge } from '../ui/badge'
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from '../ui/dialog'
+import { ButtonV2 } from '@/components/ui/button'
+import { Badge } from '@/components/ui/badge'
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 import { cn } from '../../lib/utils'
 import { createClient } from '@/lib/supabase/client'
 
@@ -254,7 +254,7 @@ export function ProductSelectorModal({
           }}
         >
           {isSelected ? <Check className="h-4 w-4" /> : <Plus className="h-4 w-4" />}
-        </Button>
+        </ButtonV2>
       </div>
     )
   }
@@ -326,7 +326,7 @@ export function ProductSelectorModal({
             >
               <X className="h-4 w-4 mr-1" />
               Désélectionner tout
-            </Button>
+            </ButtonV2>
           </div>
         )}
 
@@ -376,7 +376,7 @@ export function ProductSelectorModal({
             disabled={submitting}
           >
             Annuler
-          </Button>
+          </ButtonV2>
           <Button
             type="button"
             onClick={handleSubmit}
@@ -394,7 +394,7 @@ export function ProductSelectorModal({
                 Ajouter {selectedProductIds.length > 0 ? `(${selectedProductIds.length})` : ''}
               </>
             )}
-          </Button>
+          </ButtonV2>
         </div>
       </DialogContent>
     </Dialog>

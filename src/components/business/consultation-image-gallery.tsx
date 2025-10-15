@@ -3,8 +3,8 @@
 import { useState, useEffect, useRef } from 'react'
 import Image from 'next/image'
 import { Edit, Upload, Trash2, RotateCw, Eye, Camera } from 'lucide-react'
-import { Button } from '../ui/button'
-import { Badge } from '../ui/badge'
+import { ButtonV2 } from '@/components/ui/button'
+import { Badge } from '@/components/ui/badge'
 import { cn } from '../../lib/utils'
 import { useConsultationImages } from '../../hooks/use-consultation-images'
 import { ConsultationImageViewerModal } from './consultation-image-viewer-modal'
@@ -184,7 +184,7 @@ export function ConsultationImageGallery({
               >
                 <Eye className="h-3 w-3 mr-1" />
                 Voir
-              </Button>
+              </ButtonV2>
             )}
             {allowEdit && hasImages && !displayImage?.is_primary && (
               <Button
@@ -194,7 +194,7 @@ export function ConsultationImageGallery({
                 onClick={() => displayImage && handleSetPrimary(displayImage.id, selectedImageIndex)}
               >
                 ★ Principal
-              </Button>
+              </ButtonV2>
             )}
             {allowEdit && (
               <label htmlFor="consultation-file-input-overlay" className="cursor-pointer inline-block">
@@ -209,7 +209,7 @@ export function ConsultationImageGallery({
                     <Camera className="h-3 w-3 mr-1" />
                     Ajouter
                   </span>
-                </Button>
+                </ButtonV2>
                 <input
                   id="consultation-file-input-overlay"
                   type="file"
@@ -295,7 +295,7 @@ export function ConsultationImageGallery({
                   <Upload className="h-3 w-3 mr-1" />
                   Ajouter des photos
                 </span>
-              </Button>
+              </ButtonV2>
               <input
                 id="consultation-file-input-empty"
                 type="file"
@@ -320,7 +320,7 @@ export function ConsultationImageGallery({
           >
             <RotateCw className="h-3 w-3 mr-1" />
             Actualiser
-          </Button>
+          </ButtonV2>
         </div>
       )}
 

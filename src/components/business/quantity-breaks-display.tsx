@@ -1,13 +1,13 @@
 "use client"
 
 import { memo } from "react"
-import { Badge } from "../ui/badge"
-import { Button } from "../ui/button"
+import { Badge } from "@/components/ui/badge"
+import { ButtonV2 } from "@/components/ui/button"
 import {
   Popover,
   PopoverContent,
   PopoverTrigger,
-} from "../ui/popover"
+} from "@/components/ui/popover"
 import { Package, TrendingDown, Info } from "lucide-react"
 import { cn } from "../../lib/utils"
 import { formatPrice } from "../../hooks/use-pricing"
@@ -67,8 +67,8 @@ export const QuantityBreaksDisplay = memo(function QuantityBreaksDisplay({
     return (
       <Popover>
         <PopoverTrigger asChild>
-          <Button
-            variant="outline"
+          <ButtonV2
+            variant="secondary"
             size="sm"
             className={cn(
               "h-6 text-[10px] px-2 gap-1 border-blue-200 text-blue-700 hover:bg-blue-50",
@@ -82,7 +82,7 @@ export const QuantityBreaksDisplay = memo(function QuantityBreaksDisplay({
                 Jusqu'à -{bestBreak.savings_percent.toFixed(0)}%
               </Badge>
             )}
-          </Button>
+          </ButtonV2>
         </PopoverTrigger>
         <PopoverContent className="w-80 p-0" align="start">
           <div className="border-b border-gray-200 bg-gray-50 px-4 py-2">

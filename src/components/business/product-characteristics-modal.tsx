@@ -11,12 +11,12 @@
  */
 
 import React, { useState, useEffect } from 'react'
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from '../ui/dialog'
-import { Button } from '../ui/button'
-import { Input } from '../ui/input'
-import { Label } from '../ui/label'
-import { Badge } from '../ui/badge'
-import { Alert, AlertDescription } from '../ui/alert'
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog'
+import { ButtonV2 } from '@/components/ui/button'
+import { Input } from '@/components/ui/input'
+import { Label } from '@/components/ui/label'
+import { Badge } from '@/components/ui/badge'
+import { Alert, AlertDescription } from '@/components/ui/alert'
 import {
   Settings,
   Plus,
@@ -390,7 +390,7 @@ export function ProductCharacteristicsModal({
                       className="text-red-600 hover:text-red-800"
                     >
                       <X className="h-4 w-4" />
-                    </Button>
+                    </ButtonV2>
                   </div>
                 ))}
               </div>
@@ -418,7 +418,7 @@ export function ProductCharacteristicsModal({
                   disabled={!newAttributeKey.trim() || !newAttributeValue.trim()}
                 >
                   <Plus className="h-4 w-4" />
-                </Button>
+                </ButtonV2>
               </div>
             </div>
           </div>
@@ -431,9 +431,9 @@ export function ProductCharacteristicsModal({
               {Object.keys(variantAttributes).length + Object.keys(customAttributes).length} attribut(s) défini(s)
             </div>
             <div className="flex gap-2">
-              <Button variant="outline" onClick={onClose} disabled={saving}>
+              <ButtonV2 variant="outline" onClick={onClose} disabled={saving}>
                 Annuler
-              </Button>
+              </ButtonV2>
               <Button
                 onClick={handleSave}
                 disabled={saving}
@@ -447,7 +447,7 @@ export function ProductCharacteristicsModal({
                     Sauvegarder
                   </>
                 )}
-              </Button>
+              </ButtonV2>
             </div>
           </div>
         </div>

@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import { Plus, X, Search, AlertTriangle } from 'lucide-react'
-import { Button } from '@/components/ui/button'
+import { ButtonV2 } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Textarea } from '@/components/ui/textarea'
@@ -566,10 +566,10 @@ export function SalesOrderFormModal({
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
-        <Button className="flex items-center gap-2">
+        <ButtonV2 className="flex items-center gap-2">
           <Plus className="h-4 w-4" />
           Nouvelle commande
-        </Button>
+        </ButtonV2>
       </DialogTrigger>
       <DialogContent className="max-w-6xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
@@ -702,7 +702,7 @@ export function SalesOrderFormModal({
           <Card>
             <CardHeader className="flex flex-row items-center justify-between">
               <CardTitle>Articles</CardTitle>
-              <Button
+              <ButtonV2
                 type="button"
                 variant="outline"
                 onClick={() => setShowProductSearch(true)}
@@ -710,7 +710,7 @@ export function SalesOrderFormModal({
               >
                 <Plus className="h-4 w-4 mr-2" />
                 Ajouter un produit
-              </Button>
+              </ButtonV2>
             </CardHeader>
             <CardContent>
               {items.length === 0 ? (
@@ -849,7 +849,7 @@ export function SalesOrderFormModal({
                               )}
                             </TableCell>
                             <TableCell>
-                              <Button
+                              <ButtonV2
                                 type="button"
                                 variant="ghost"
                                 size="sm"
@@ -857,7 +857,7 @@ export function SalesOrderFormModal({
                                 disabled={loading}
                               >
                                 <X className="h-4 w-4" />
-                              </Button>
+                              </ButtonV2>
                             </TableCell>
                           </TableRow>
                         )
@@ -894,10 +894,10 @@ export function SalesOrderFormModal({
 
           {/* Actions */}
           <div className="flex justify-end gap-4">
-            <Button type="button" variant="outline" onClick={() => setOpen(false)} disabled={loading}>
+            <ButtonV2 type="button" variant="outline" onClick={() => setOpen(false)} disabled={loading}>
               Annuler
-            </Button>
-            <Button
+            </ButtonV2>
+            <ButtonV2
               type="submit"
               disabled={loading || loadingOrder || !selectedCustomer || items.length === 0}
             >
@@ -905,7 +905,7 @@ export function SalesOrderFormModal({
                 ? (mode === 'edit' ? 'Mise à jour...' : 'Création...')
                 : (mode === 'edit' ? 'Mettre à jour la commande' : 'Créer la commande')
               }
-            </Button>
+            </ButtonV2>
           </div>
         </form>
 
@@ -974,12 +974,12 @@ export function SalesOrderFormModal({
                           })()}
                         </TableCell>
                         <TableCell>
-                          <Button
+                          <ButtonV2
                             size="sm"
                             onClick={() => addProduct(product)}
                           >
                             Ajouter
-                          </Button>
+                          </ButtonV2>
                         </TableCell>
                       </TableRow>
                     ))}

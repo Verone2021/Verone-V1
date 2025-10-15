@@ -7,7 +7,7 @@
 'use client';
 
 import { useState } from 'react';
-import { Button } from '@/components/ui/button';
+import { ButtonV2 } from '@/components/ui/button';
 import {
   Dialog,
   DialogContent,
@@ -150,10 +150,10 @@ export function BFAReportModal() {
   return (
     <Dialog open={isOpen} onOpenChange={handleOpenChange}>
       <DialogTrigger asChild>
-        <Button variant="outline">
+        <ButtonV2 variant="outline">
           <FileText className="mr-2 h-4 w-4" />
           Rapport BFA
-        </Button>
+        </ButtonV2>
       </DialogTrigger>
 
       <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
@@ -299,13 +299,13 @@ export function BFAReportModal() {
 
             {/* Actions */}
             <div className="flex justify-end gap-2">
-              <Button variant="outline" onClick={() => setIsOpen(false)}>
+              <ButtonV2 variant="outline" onClick={() => setIsOpen(false)}>
                 Fermer
-              </Button>
-              <Button disabled={reportData.customers.length === 0}>
+              </ButtonV2>
+              <ButtonV2 disabled={reportData.customers.length === 0}>
                 <Download className="mr-2 h-4 w-4" />
                 Exporter PDF
-              </Button>
+              </ButtonV2>
             </div>
           </div>
         )}

@@ -5,7 +5,7 @@ import { X, Package, CreditCard, Truck, Calendar, User, MapPin, FileText } from 
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
-import { Button } from '@/components/ui/button'
+import { ButtonV2 } from '@/components/ui/button'
 import { Separator } from '@/components/ui/separator'
 import { SalesOrder, useSalesOrders } from '@/hooks/use-sales-orders'
 import { formatCurrency } from '@/lib/utils'
@@ -102,9 +102,9 @@ export function OrderDetailModal({ order, open, onClose, onUpdate }: OrderDetail
               <DialogTitle className="text-2xl">
                 Commande {order.order_number}
               </DialogTitle>
-              <Button variant="ghost" size="icon" onClick={onClose}>
+              <ButtonV2 variant="ghost" size="icon" onClick={onClose}>
                 <X className="h-5 w-5" />
-              </Button>
+              </ButtonV2>
             </div>
           </DialogHeader>
 
@@ -331,13 +331,13 @@ export function OrderDetailModal({ order, open, onClose, onUpdate }: OrderDetail
                   )}
 
                   {canMarkAsPaid && (
-                    <Button
+                    <ButtonV2
                       onClick={handleMarkAsPaid}
                       className="w-full bg-green-600 hover:bg-green-700"
                     >
                       <CreditCard className="h-4 w-4 mr-2" />
                       Marquer comme payé
-                    </Button>
+                    </ButtonV2>
                   )}
                 </CardContent>
               </Card>
@@ -377,13 +377,13 @@ export function OrderDetailModal({ order, open, onClose, onUpdate }: OrderDetail
                   )}
 
                   {canShip && (
-                    <Button
+                    <ButtonV2
                       onClick={() => setShowShippingModal(true)}
                       className="w-full"
                     >
                       <Truck className="h-4 w-4 mr-2" />
                       Gérer l'expédition
-                    </Button>
+                    </ButtonV2>
                   )}
                 </CardContent>
               </Card>
@@ -409,7 +409,7 @@ export function OrderDetailModal({ order, open, onClose, onUpdate }: OrderDetail
                   <CardTitle className="text-lg">Actions</CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-2">
-                  <Button
+                  <ButtonV2
                     variant="outline"
                     className="w-full justify-start opacity-50"
                     disabled={true}
@@ -417,8 +417,8 @@ export function OrderDetailModal({ order, open, onClose, onUpdate }: OrderDetail
                   >
                     <FileText className="h-4 w-4 mr-2" />
                     Télécharger bon de commande
-                  </Button>
-                  <Button
+                  </ButtonV2>
+                  <ButtonV2
                     variant="outline"
                     className="w-full justify-start opacity-50"
                     disabled={true}
@@ -426,7 +426,7 @@ export function OrderDetailModal({ order, open, onClose, onUpdate }: OrderDetail
                   >
                     <FileText className="h-4 w-4 mr-2" />
                     Générer facture
-                  </Button>
+                  </ButtonV2>
                 </CardContent>
               </Card>
             </div>

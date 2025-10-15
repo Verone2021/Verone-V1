@@ -2,10 +2,10 @@
 
 import { useState } from 'react'
 import { Tag, Save, X, Edit, Barcode, Award } from 'lucide-react'
-import { Button } from '../ui/button'
+import { ButtonV2 } from '@/components/ui/button'
 import { cn } from '../../lib/utils'
 import { useInlineEdit, type EditableSection } from '../../hooks/use-inline-edit'
-import { Badge } from '../ui/badge'
+import { Badge } from '@/components/ui/badge'
 
 interface Product {
   id: string
@@ -103,7 +103,7 @@ export function IdentifiersCompleteEditSection({
             >
               <X className="h-3 w-3 mr-1" />
               Annuler
-            </Button>
+            </ButtonV2>
             <Button
               variant="default"
               size="xs"
@@ -113,7 +113,7 @@ export function IdentifiersCompleteEditSection({
             >
               <Save className="h-3 w-3 mr-1" />
               {isSaving(section) ? 'Sauvegarde...' : 'Sauvegarder'}
-            </Button>
+            </ButtonV2>
           </div>
         </div>
 
@@ -258,10 +258,10 @@ export function IdentifiersCompleteEditSection({
           <Tag className="h-5 w-5 mr-2" />
           Identifiants
         </h3>
-        <Button variant="outline" size="sm" onClick={handleStartEdit}>
+        <ButtonV2 variant="outline" size="sm" onClick={handleStartEdit}>
           <Edit className="h-3 w-3 mr-1" />
           Modifier
-        </Button>
+        </ButtonV2>
       </div>
 
       <div className="space-y-3">

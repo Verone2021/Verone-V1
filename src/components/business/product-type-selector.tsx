@@ -1,7 +1,7 @@
 "use client"
 
 import { Package, Wrench, Info } from 'lucide-react'
-import { Label } from '../ui/label'
+import { Label } from '@/components/ui/label'
 import { cn } from '../../lib/utils'
 
 interface ProductTypeSelectorProps {

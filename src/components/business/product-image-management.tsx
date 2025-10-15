@@ -11,9 +11,9 @@
 
 import React, { useState } from 'react'
 import { Upload, X, Star, Trash2, Edit3, Plus, AlertCircle, CheckCircle, Loader2 } from 'lucide-react'
-import { Button } from '../ui/button'
-import { Badge } from '../ui/badge'
-import { Alert, AlertDescription } from '../ui/alert'
+import { ButtonV2 } from '@/components/ui/button'
+import { Badge } from '@/components/ui/badge'
+import { Alert, AlertDescription } from '@/components/ui/alert'
 import { cn } from '../../lib/utils'
 import Image from 'next/image'
 import { useProductImages } from '@/hooks/use-product-images'
@@ -188,7 +188,7 @@ export function ProductImageManagement({
         >
           <Upload className="h-4 w-4 mr-2" />
           Actualiser
-        </Button>
+        </ButtonV2>
       </div>
 
       {/* Zone d'upload */}
@@ -324,7 +324,7 @@ export function ProductImageManagement({
                         ) : (
                           <Star className="h-4 w-4" />
                         )}
-                      </Button>
+                      </ButtonV2>
                     )}
 
                     {/* Bouton suppression */}
@@ -341,7 +341,7 @@ export function ProductImageManagement({
                       ) : (
                         <Trash2 className="h-4 w-4" />
                       )}
-                    </Button>
+                    </ButtonV2>
                   </div>
                 </div>
 

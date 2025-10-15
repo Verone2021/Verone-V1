@@ -15,12 +15,12 @@ import {
   AlertCircle,
   Loader2
 } from 'lucide-react'
-import { Button } from '../ui/button'
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../ui/card'
-import { Badge } from '../ui/badge'
-import { Progress } from '../ui/progress'
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '../ui/tabs'
-import { Alert, AlertDescription } from '../ui/alert'
+import { ButtonV2 } from '@/components/ui/button'
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
+import { Badge } from '@/components/ui/badge'
+import { Progress } from '@/components/ui/progress'
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
+import { Alert, AlertDescription } from '@/components/ui/alert'
 import { useToast } from '../../hooks/use-toast'
 import { useSourcingProducts } from '../../hooks/use-sourcing-products'
 import { useDrafts } from '../../hooks/use-drafts'
@@ -485,7 +485,7 @@ export function CompleteProductWizard({
               >
                 <ChevronLeft className="h-4 w-4 mr-2" />
                 Précédent
-              </Button>
+              </ButtonV2>
 
               <Button
                 variant="outline"
@@ -494,7 +494,7 @@ export function CompleteProductWizard({
               >
                 Suivant
                 <ChevronRight className="h-4 w-4 ml-2" />
-              </Button>
+              </ButtonV2>
             </div>
 
             <div className="flex items-center space-x-3">
@@ -514,12 +514,12 @@ export function CompleteProductWizard({
                     Sauvegarder
                   </>
                 )}
-              </Button>
+              </ButtonV2>
 
               {onCancel && (
-                <Button variant="ghost" onClick={onCancel}>
+                <ButtonV2 variant="ghost" onClick={onCancel}>
                   Annuler
-                </Button>
+                </ButtonV2>
               )}
 
               <Button
@@ -538,7 +538,7 @@ export function CompleteProductWizard({
                     Finaliser le produit
                   </>
                 )}
-              </Button>
+              </ButtonV2>
             </div>
           </div>
 

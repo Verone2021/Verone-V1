@@ -19,7 +19,7 @@ import {
   MoreHorizontal
 } from 'lucide-react'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
-import { Button } from '@/components/ui/button'
+import { ButtonV2 } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { Input } from '@/components/ui/input'
 import {
@@ -160,13 +160,13 @@ export default function SourcingEchantillonsPage() {
                 className="border-black text-black hover:bg-black hover:text-white"
               >
                 Retour Dashboard
-              </Button>
+              </ButtonV2>
               <Button
                 className="bg-black hover:bg-gray-800 text-white"
               >
                 <Plus className="h-4 w-4 mr-2" />
                 Nouveau Échantillon
-              </Button>
+              </ButtonV2>
             </div>
           </div>
         </div>
@@ -260,7 +260,7 @@ export default function SourcingEchantillonsPage() {
               >
                 <Filter className="h-4 w-4 mr-2" />
                 Exporter
-              </Button>
+              </ButtonV2>
             </div>
           </CardContent>
         </Card>
@@ -286,9 +286,9 @@ export default function SourcingEchantillonsPage() {
                     </div>
                     <div className="flex items-center space-x-3">
                       {getStatusBadge(order.status)}
-                      <Button variant="outline" size="sm" className="border-gray-300">
+                      <ButtonV2 variant="outline" size="sm" className="border-gray-300">
                         <MoreHorizontal className="h-4 w-4" />
-                      </Button>
+                      </ButtonV2>
                     </div>
                   </div>
 
@@ -363,21 +363,21 @@ export default function SourcingEchantillonsPage() {
                       {order.samples.length} échantillon{order.samples.length > 1 ? 's' : ''}
                     </div>
                     <div className="flex space-x-2">
-                      <Button variant="outline" size="sm" className="border-gray-300">
+                      <ButtonV2 variant="outline" size="sm" className="border-gray-300">
                         <Eye className="h-4 w-4 mr-2" />
                         Voir détails
-                      </Button>
+                      </ButtonV2>
                       {order.status === 'delivered' && (
-                        <Button size="sm" className="bg-green-600 hover:bg-green-700 text-white">
+                        <ButtonV2 size="sm" className="bg-green-600 hover:bg-green-700 text-white">
                           <CheckCircle className="h-4 w-4 mr-2" />
                           Valider échantillons
-                        </Button>
+                        </ButtonV2>
                       )}
                       {order.status === 'in_transit' && (
-                        <Button variant="outline" size="sm" className="border-blue-300 text-blue-600">
+                        <ButtonV2 variant="outline" size="sm" className="border-blue-300 text-blue-600">
                           <Truck className="h-4 w-4 mr-2" />
                           Suivre livraison
-                        </Button>
+                        </ButtonV2>
                       )}
                     </div>
                   </div>

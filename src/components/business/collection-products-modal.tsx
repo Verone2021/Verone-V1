@@ -12,7 +12,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog'
-import { Button } from '@/components/ui/button'
+import { ButtonV2 } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Badge } from '@/components/ui/badge'
 // import { ScrollArea } from '@/components/ui/scroll-area' // Temporairement désactivé
@@ -286,7 +286,7 @@ export function CollectionProductsModal({
                           title="Voir les images"
                         >
                           <Eye className="h-4 w-4" />
-                        </Button>
+                        </ButtonV2>
                         <Button
                           size="sm"
                           variant="ghost"
@@ -294,7 +294,7 @@ export function CollectionProductsModal({
                           title="Ajouter à la collection"
                         >
                           <Plus className="h-4 w-4" />
-                        </Button>
+                        </ButtonV2>
                       </div>
                     </div>
                   ))}
@@ -361,7 +361,7 @@ export function CollectionProductsModal({
                           title="Voir les images"
                         >
                           <Eye className="h-4 w-4" />
-                        </Button>
+                        </ButtonV2>
                         <Button
                           size="sm"
                           variant="ghost"
@@ -370,7 +370,7 @@ export function CollectionProductsModal({
                           title="Retirer de la collection"
                         >
                           <Trash2 className="h-4 w-4" />
-                        </Button>
+                        </ButtonV2>
                       </div>
                     </div>
                   ))}
@@ -384,9 +384,9 @@ export function CollectionProductsModal({
           <div className="text-sm text-gray-600">
             {collectionProducts.length} produit{collectionProducts.length !== 1 ? 's' : ''} dans la collection
           </div>
-          <Button onClick={onClose}>
+          <ButtonV2 onClick={onClose}>
             Fermer
-          </Button>
+          </ButtonV2>
         </div>
       </DialogContent>
 

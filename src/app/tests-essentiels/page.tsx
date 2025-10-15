@@ -10,7 +10,7 @@
 
 import { useState } from "react"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { Button } from "@/components/ui/button"
+import { ButtonV2 } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Progress } from "@/components/ui/progress"
 import { Alert, AlertDescription } from "@/components/ui/alert"
@@ -158,7 +158,7 @@ export default function TestsEssentielsPage() {
             >
               <AlertTriangle className="h-4 w-4 mr-2" />
               Check Console Errors
-            </Button>
+            </ButtonV2>
           </CardContent>
         </Card>
 
@@ -182,7 +182,7 @@ export default function TestsEssentielsPage() {
             >
               <Play className="h-4 w-4 mr-2" />
               Run Critical Only
-            </Button>
+            </ButtonV2>
           </CardContent>
         </Card>
 
@@ -205,7 +205,7 @@ export default function TestsEssentielsPage() {
             >
               <Play className="h-4 w-4 mr-2" />
               Run All Tests
-            </Button>
+            </ButtonV2>
           </CardContent>
         </Card>
       </div>
@@ -238,7 +238,7 @@ export default function TestsEssentielsPage() {
                 >
                   <Play className="h-3 w-3 mr-2" />
                   Test {module}
-                </Button>
+                </ButtonV2>
               </div>
             ))}
           </div>
@@ -284,7 +284,7 @@ export default function TestsEssentielsPage() {
               size="sm"
             >
               Effacer
-            </Button>
+            </ButtonV2>
           </CardHeader>
           <CardContent>
             <div className="space-y-2 max-h-96 overflow-y-auto">

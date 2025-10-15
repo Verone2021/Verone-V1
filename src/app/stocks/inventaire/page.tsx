@@ -20,7 +20,7 @@ import {
   FileText,
   ExternalLink
 } from 'lucide-react'
-import { Button } from '@/components/ui/button'
+import { ButtonV2 } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Badge } from '@/components/ui/badge'
 import { Card, CardContent } from '@/components/ui/card'
@@ -351,7 +351,7 @@ export default function InventairePage() {
               >
                 <ArrowLeft className="h-3 w-3 mr-1.5" />
                 Retour
-              </Button>
+              </ButtonV2>
               <div className="flex items-center space-x-2">
                 <Package className="h-6 w-6 text-black" />
                 <div>
@@ -370,7 +370,7 @@ export default function InventairePage() {
               >
                 <RefreshCw className={`h-3 w-3 mr-1.5 ${loading ? 'animate-spin' : ''}`} />
                 Actualiser
-              </Button>
+              </ButtonV2>
               <Button
                 variant="outline"
                 size="sm"
@@ -379,7 +379,7 @@ export default function InventairePage() {
               >
                 <Download className="h-3 w-3 mr-1.5" />
                 CSV
-              </Button>
+              </ButtonV2>
               <Button
                 size="sm"
                 className="bg-black hover:bg-gray-800 text-white h-8 text-xs"
@@ -387,7 +387,7 @@ export default function InventairePage() {
               >
                 <BarChart3 className="h-3 w-3 mr-1.5" />
                 Rapports
-              </Button>
+              </ButtonV2>
             </div>
           </div>
         </div>
@@ -497,7 +497,7 @@ export default function InventairePage() {
               className="bg-black hover:bg-gray-800 text-white h-9 px-4 text-sm"
             >
               Appliquer
-            </Button>
+            </ButtonV2>
           </div>
         </div>
 
@@ -615,7 +615,7 @@ export default function InventairePage() {
                             className="h-7 w-7 p-0 hover:bg-black hover:text-white transition-colors"
                           >
                             <History className="h-3 w-3" />
-                          </Button>
+                          </ButtonV2>
                         </td>
                       </tr>
                     ))}

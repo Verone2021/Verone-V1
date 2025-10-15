@@ -2,13 +2,13 @@
 
 import { useState } from 'react'
 import { Link, Euro, FileText, Star, Save, X } from 'lucide-react'
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../ui/card'
-import { Button } from '../ui/button'
-import { Input } from '../ui/input'
-import { Label } from '../ui/label'
-import { Textarea } from '../ui/textarea'
-import { Switch } from '../ui/switch'
-import { Alert, AlertDescription } from '../ui/alert'
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
+import { ButtonV2 } from '@/components/ui/button'
+import { Input } from '@/components/ui/input'
+import { Label } from '@/components/ui/label'
+import { Textarea } from '@/components/ui/textarea'
+import { Switch } from '@/components/ui/switch'
+import { Alert, AlertDescription } from '@/components/ui/alert'
 import { useToast } from '../../hooks/use-toast'
 import { ProductSelector } from './product-selector'
 
@@ -263,7 +263,7 @@ export function ConsultationProductAssociation({
                 >
                   <X className="h-4 w-4 mr-2" />
                   Annuler
-                </Button>
+                </ButtonV2>
               )}
 
               <Button
@@ -282,7 +282,7 @@ export function ConsultationProductAssociation({
                     Créer l'association
                   </>
                 )}
-              </Button>
+              </ButtonV2>
             </div>
           </CardContent>
         </Card>

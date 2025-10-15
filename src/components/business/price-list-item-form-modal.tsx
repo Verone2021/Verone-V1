@@ -2,17 +2,17 @@
 
 import { useState, useEffect } from 'react'
 import { Plus, Trash2, Search } from 'lucide-react'
-import { Button } from '../ui/button'
-import { Input } from '../ui/input'
-import { Label } from '../ui/label'
-import { Textarea } from '../ui/textarea'
+import { ButtonV2 } from '@/components/ui/button'
+import { Input } from '@/components/ui/input'
+import { Label } from '@/components/ui/label'
+import { Textarea } from '@/components/ui/textarea'
 import {
   Dialog,
   DialogContent,
   DialogDescription,
   DialogHeader,
   DialogTitle,
-} from '../ui/dialog'
+} from '@/components/ui/dialog'
 import {
   Table,
   TableBody,
@@ -20,10 +20,10 @@ import {
   TableHead,
   TableHeader,
   TableRow,
-} from '../ui/table'
-import { Switch } from '../ui/switch'
-import { Card, CardContent, CardHeader, CardTitle } from '../ui/card'
-import { Badge } from '../ui/badge'
+} from '@/components/ui/table'
+import { Switch } from '@/components/ui/switch'
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import { Badge } from '@/components/ui/badge'
 import { useProducts } from '@/hooks/use-products'
 import {
   useCreatePriceListItem,
@@ -327,7 +327,7 @@ export function PriceListItemFormModal({
                                   onClick={() => handleSelectProduct(product)}
                                 >
                                   Sélectionner
-                                </Button>
+                                </ButtonV2>
                               </TableCell>
                             </TableRow>
                           ))}
@@ -363,7 +363,7 @@ export function PriceListItemFormModal({
                       }}
                     >
                       Changer
-                    </Button>
+                    </ButtonV2>
                   )}
                 </div>
               </CardContent>
@@ -388,7 +388,7 @@ export function PriceListItemFormModal({
                     >
                       <Plus className="h-4 w-4" />
                       Ajouter Palier
-                    </Button>
+                    </ButtonV2>
                   )}
                 </div>
               </CardHeader>
@@ -407,7 +407,7 @@ export function PriceListItemFormModal({
                             className="text-red-600 hover:bg-red-50"
                           >
                             <Trash2 className="h-4 w-4" />
-                          </Button>
+                          </ButtonV2>
                         )}
                       </div>
 
@@ -535,16 +535,16 @@ export function PriceListItemFormModal({
 
           {/* Actions */}
           <div className="flex justify-end gap-4 pt-4">
-            <Button type="button" variant="outline" onClick={onClose} disabled={isLoading}>
+            <ButtonV2 type="button" variant="outline" onClick={onClose} disabled={isLoading}>
               Annuler
-            </Button>
-            <Button type="submit" disabled={isLoading || !selectedProduct}>
+            </ButtonV2>
+            <ButtonV2 type="submit" disabled={isLoading || !selectedProduct}>
               {isLoading
                 ? 'Enregistrement...'
                 : isEditMode
                 ? 'Mettre à jour'
                 : `Créer ${tiers.length} palier${tiers.length > 1 ? 's' : ''}`}
-            </Button>
+            </ButtonV2>
           </div>
         </form>
       </DialogContent>

@@ -8,7 +8,7 @@
 "use client"
 
 import { useState, useEffect } from 'react'
-import { Button } from '@/components/ui/button'
+import { ButtonV2 } from '@/components/ui/button'
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
@@ -399,7 +399,7 @@ export function QuickVariantForm({
                     onClick={handleRemoveImage}
                   >
                     <X className="h-4 w-4" />
-                  </Button>
+                  </ButtonV2>
                 </div>
               ) : (
                 <div className="text-center">
@@ -447,7 +447,7 @@ export function QuickVariantForm({
               className="border-gray-300 hover:bg-gray-50"
             >
               Annuler
-            </Button>
+            </ButtonV2>
             <Button
               type="submit"
               disabled={loading || uploadingImage}
@@ -459,7 +459,7 @@ export function QuickVariantForm({
                 <Save className="h-4 w-4 mr-2" />
               )}
               Créer la variante
-            </Button>
+            </ButtonV2>
           </div>
         </form>
       </DialogContent>

@@ -1,7 +1,7 @@
 'use client'
 
 import { useState } from 'react'
-import { Button } from '@/components/ui/button'
+import { ButtonV2 } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { FileText, Package } from 'lucide-react'
@@ -310,12 +310,12 @@ export function ManualShipmentForm({ order, onComplete, onBack }: ManualShipment
 
       {/* Actions */}
       <div className="flex justify-between gap-3 pt-4 border-t">
-        <Button variant="outline" onClick={onBack}>
+        <ButtonV2 variant="outline" onClick={onBack}>
           ← Retour
-        </Button>
-        <Button onClick={handleSubmit} disabled={!canSubmit()} size="lg">
+        </ButtonV2>
+        <ButtonV2 onClick={handleSubmit} disabled={!canSubmit()} size="lg">
           Continuer vers le récapitulatif →
-        </Button>
+        </ButtonV2>
       </div>
 
       {!canSubmit() && (

@@ -9,8 +9,7 @@
 
 import React, { useState } from 'react'
 import { Key, Save, X, Eye, EyeOff } from 'lucide-react'
-import { Button } from '@/components/ui/button'
-import { ButtonV2 } from '@/components/ui-v2/button'
+import { ButtonV2 } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { RoleBadge, type UserRole } from '@/components/ui/role-badge'
@@ -152,7 +151,7 @@ export function ResetPasswordDialog({
                 placeholder="Minimum 8 caractères"
                 required
               />
-              <Button
+              <ButtonV2
                 type="button"
                 variant="ghost"
                 size="icon"
@@ -164,7 +163,7 @@ export function ResetPasswordDialog({
                 ) : (
                   <Eye className="h-4 w-4 text-black opacity-50" />
                 )}
-              </Button>
+              </ButtonV2>
             </div>
           </div>
 
@@ -183,7 +182,7 @@ export function ResetPasswordDialog({
                 placeholder="Retaper le mot de passe"
                 required
               />
-              <Button
+              <ButtonV2
                 type="button"
                 variant="ghost"
                 size="icon"
@@ -195,7 +194,7 @@ export function ResetPasswordDialog({
                 ) : (
                   <Eye className="h-4 w-4 text-black opacity-50" />
                 )}
-              </Button>
+              </ButtonV2>
             </div>
           </div>
 

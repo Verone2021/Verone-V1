@@ -13,7 +13,7 @@
 import React, { useEffect, useState } from 'react'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
-import { Button } from '@/components/ui/button'
+import { ButtonV2 } from '@/components/ui/button'
 import { Alert, AlertDescription } from '@/components/ui/alert'
 import {
   AlertTriangle,
@@ -116,7 +116,7 @@ export const DashboardErrorIntegration: React.FC = () => {
               <Eye className="w-4 h-4 mr-2" />
             )}
             Scan Maintenant
-          </Button>
+          </ButtonV2>
         </div>
       </div>
 
@@ -366,7 +366,7 @@ export function MyDashboardComponent() {
               size="sm"
             >
               {showCode ? 'Masquer' : 'Voir le Code'}
-            </Button>
+            </ButtonV2>
           </div>
 
           {showCode && (

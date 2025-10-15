@@ -1,13 +1,13 @@
 'use client'
 
 import { useState } from 'react'
-import { Card, CardContent, CardHeader, CardTitle } from '../ui/card'
-import { Button } from '../ui/button'
-import { Badge } from '../ui/badge'
-import { Switch } from '../ui/switch'
-import { Label } from '../ui/label'
-import { Textarea } from '../ui/textarea'
-import { Separator } from '../ui/separator'
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import { ButtonV2 } from '@/components/ui/button'
+import { Badge } from '@/components/ui/badge'
+import { Switch } from '@/components/ui/switch'
+import { Label } from '@/components/ui/label'
+import { Textarea } from '@/components/ui/textarea'
+import { Separator } from '@/components/ui/separator'
 import {
   CheckCircle,
   AlertCircle,
@@ -185,7 +185,7 @@ export function SampleRequirementSection({
               >
                 <Settings className="h-4 w-4" />
                 {showNotes ? 'Masquer' : 'Ajouter des notes'}
-              </Button>
+              </ButtonV2>
             </div>
 
             {showNotes && (

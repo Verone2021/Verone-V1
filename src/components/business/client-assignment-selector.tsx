@@ -2,9 +2,9 @@
 
 import { useState, useEffect, useMemo } from 'react'
 import { Search, Users, Check, ChevronDown } from 'lucide-react'
-import { Button } from '../ui/button'
-import { Input } from '../ui/input'
-import { Label } from '../ui/label'
+import { ButtonV2 } from '@/components/ui/button'
+import { Input } from '@/components/ui/input'
+import { Label } from '@/components/ui/label'
 import { cn } from '../../lib/utils'
 import { useOrganisations } from '../../hooks/use-organisations'
 
@@ -163,7 +163,7 @@ export function ClientAssignmentSelector({
             "h-4 w-4 opacity-50 transition-transform",
             isOpen && "rotate-180"
           )} />
-        </Button>
+        </ButtonV2>
 
         {/* Bouton de suppression si client sélectionné */}
         {selectedClient && !disabled && (
@@ -178,7 +178,7 @@ export function ClientAssignmentSelector({
             className="absolute right-8 top-1/2 transform -translate-y-1/2 h-6 w-6 p-0 hover:bg-gray-100"
           >
             ×
-          </Button>
+          </ButtonV2>
         )}
       </div>
 
@@ -253,7 +253,7 @@ export function ClientAssignmentSelector({
                 className="w-full text-gray-600"
               >
                 Fermer
-              </Button>
+              </ButtonV2>
             </div>
           )}
         </div>

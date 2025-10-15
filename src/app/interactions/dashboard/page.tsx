@@ -21,7 +21,7 @@ import {
   Mail
 } from 'lucide-react'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
-import { Button } from '@/components/ui/button'
+import { ButtonV2 } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 
 export default function InteractionsDashboardPage() {
@@ -156,7 +156,7 @@ export default function InteractionsDashboardPage() {
               <p className="text-sm text-gray-600">Vue d'ensemble des consultations et commandes clients</p>
             </div>
             <div className="flex items-center space-x-2">
-              <Button
+              <ButtonV2
                 variant="outline"
                 size="sm"
                 onClick={() => router.push('/consultations')}
@@ -164,15 +164,15 @@ export default function InteractionsDashboardPage() {
               >
                 <MessageCircle className="h-3 w-3 mr-1.5" />
                 Consultations
-              </Button>
-              <Button
+              </ButtonV2>
+              <ButtonV2
                 size="sm"
                 onClick={() => router.push('/consultations')}
                 className="h-8 bg-black hover:bg-gray-800 text-white"
               >
                 <Plus className="h-3 w-3 mr-1.5" />
                 Nouvelle Consultation
-              </Button>
+              </ButtonV2>
             </div>
           </div>
         </div>
@@ -263,7 +263,7 @@ export default function InteractionsDashboardPage() {
         {/* Actions Rapides */}
         <div className="flex items-center gap-2 bg-gray-50 border border-gray-200 rounded-lg px-3 py-2">
           <span className="text-xs text-gray-600 font-medium mr-2">Actions rapides:</span>
-          <Button
+          <ButtonV2
             variant="ghost"
             size="sm"
             className="h-7 px-2 text-xs hover:bg-black hover:text-white"
@@ -271,8 +271,8 @@ export default function InteractionsDashboardPage() {
           >
             <MessageCircle className="h-3 w-3 mr-1" />
             Consultations
-          </Button>
-          <Button
+          </ButtonV2>
+          <ButtonV2
             variant="ghost"
             size="sm"
             className="h-7 px-2 text-xs hover:bg-black hover:text-white"
@@ -280,8 +280,8 @@ export default function InteractionsDashboardPage() {
           >
             <ShoppingBag className="h-3 w-3 mr-1" />
             Commandes
-          </Button>
-          <Button
+          </ButtonV2>
+          <ButtonV2
             variant="ghost"
             size="sm"
             className="h-7 px-2 text-xs hover:bg-black hover:text-white"
@@ -289,7 +289,7 @@ export default function InteractionsDashboardPage() {
           >
             <Users className="h-3 w-3 mr-1" />
             Contacts
-          </Button>
+          </ButtonV2>
         </div>
 
         {/* Consultations Récentes et Commandes */}
@@ -323,14 +323,14 @@ export default function InteractionsDashboardPage() {
                     </div>
 
                     <div className="flex space-x-2">
-                      <Button variant="outline" size="sm" className="border-gray-300">
+                      <ButtonV2 variant="outline" size="sm" className="border-gray-300">
                         <Eye className="h-3 w-3 mr-1" />
                         Voir
-                      </Button>
-                      <Button variant="outline" size="sm" className="border-gray-300">
+                      </ButtonV2>
+                      <ButtonV2 variant="outline" size="sm" className="border-gray-300">
                         <MessageCircle className="h-3 w-3 mr-1" />
                         Contact
-                      </Button>
+                      </ButtonV2>
                     </div>
                   </div>
                 ))}
@@ -376,10 +376,10 @@ export default function InteractionsDashboardPage() {
                       <div className="text-xs text-gray-600">
                         Livraison: {order.delivery_date}
                       </div>
-                      <Button variant="outline" size="sm" className="border-gray-300">
+                      <ButtonV2 variant="outline" size="sm" className="border-gray-300">
                         <Eye className="h-3 w-3 mr-1" />
                         Suivre
-                      </Button>
+                      </ButtonV2>
                     </div>
                   </div>
                 ))}

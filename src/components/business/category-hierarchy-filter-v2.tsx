@@ -15,9 +15,9 @@
 import { useState, useEffect, useMemo } from 'react'
 import { ChevronRight, ChevronDown, Folder, FolderOpen, Tag, X } from 'lucide-react'
 import { cn } from '../../lib/utils'
-import { Badge } from '../ui/badge'
-import { Button } from '../ui/button'
-import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '../ui/collapsible'
+import { Badge } from '@/components/ui/badge'
+import { ButtonV2 } from '@/components/ui/button'
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible'
 
 // Types de données
 interface Family {
@@ -237,14 +237,14 @@ export function CategoryHierarchyFilterV2({
             <h4 className="text-xs font-medium text-black opacity-70">
               Filtres actifs ({activeFilters.length})
             </h4>
-            <Button
+            <ButtonV2
               variant="ghost"
               size="sm"
               onClick={handleResetAll}
               className="h-6 text-xs text-black hover:bg-gray-100"
             >
               Réinitialiser
-            </Button>
+            </ButtonV2>
           </div>
           <div className="flex flex-wrap gap-2">
             {activeFilters.map((filter) => (

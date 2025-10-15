@@ -1,8 +1,8 @@
 "use client"
 
 import { useState } from 'react'
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from '../ui/dialog'
-import { Button } from '../ui/button'
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog'
+import { ButtonV2 } from '@/components/ui/button'
 import { CategoryHierarchySelector } from './category-hierarchy-selector'
 
 interface CategoryHierarchyModalProps {
@@ -38,12 +38,12 @@ export function CategoryHierarchyModal({ isOpen, onClose, product, onUpdate }: C
           />
 
           <div className="flex justify-end space-x-2">
-            <Button variant="outline" onClick={onClose}>
+            <ButtonV2 variant="outline" onClick={onClose}>
               Annuler
-            </Button>
-            <Button onClick={handleSave}>
+            </ButtonV2>
+            <ButtonV2 onClick={handleSave}>
               Sauvegarder
-            </Button>
+            </ButtonV2>
           </div>
         </div>
       </DialogContent>

@@ -19,7 +19,7 @@ import {
   TrendingUp
 } from 'lucide-react'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
-import { Button } from '@/components/ui/button'
+import { ButtonV2 } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { Progress } from '@/components/ui/progress'
 
@@ -148,19 +148,19 @@ export default function CanauxVentePage() {
               <p className="text-gray-600 mt-1">Gérez vos différents canaux de distribution et marketplaces</p>
             </div>
             <div className="flex items-center space-x-3">
-              <Button
+              <ButtonV2
                 variant="outline"
                 className="border-black text-black hover:bg-black hover:text-white"
               >
                 <Settings className="h-4 w-4 mr-2" />
                 Paramètres
-              </Button>
-              <Button
+              </ButtonV2>
+              <ButtonV2
                 className="bg-black hover:bg-gray-800 text-white"
               >
                 <ShoppingBag className="h-4 w-4 mr-2" />
                 Nouveau Canal
-              </Button>
+              </ButtonV2>
             </div>
           </div>
         </div>

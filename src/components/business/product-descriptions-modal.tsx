@@ -12,13 +12,13 @@
  */
 
 import React, { useState, useEffect } from 'react'
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from '../ui/dialog'
-import { Button } from '../ui/button'
-import { Label } from '../ui/label'
-import { Textarea } from '../ui/textarea'
-import { Badge } from '../ui/badge'
-import { Alert, AlertDescription } from '../ui/alert'
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '../ui/tabs'
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog'
+import { ButtonV2 } from '@/components/ui/button'
+import { Label } from '@/components/ui/label'
+import { Textarea } from '@/components/ui/textarea'
+import { Badge } from '@/components/ui/badge'
+import { Alert, AlertDescription } from '@/components/ui/alert'
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import {
   FileText,
   Save,
@@ -205,7 +205,7 @@ export function ProductDescriptionsModal({
               >
                 <Eye className="h-3 w-3 mr-1" />
                 {previewMode ? 'Éditer' : 'Aperçu'}
-              </Button>
+              </ButtonV2>
             </div>
           </DialogTitle>
         </DialogHeader>
@@ -286,7 +286,7 @@ export function ProductDescriptionsModal({
                 >
                   <Edit className="h-4 w-4 mr-2" />
                   Retour à l'édition
-                </Button>
+                </ButtonV2>
               </div>
             </div>
           ) : (
@@ -404,7 +404,7 @@ export function ProductDescriptionsModal({
                           className="text-red-600 hover:text-red-800 h-8 w-8 p-0"
                         >
                           <X className="h-4 w-4" />
-                        </Button>
+                        </ButtonV2>
                       </div>
                     ))}
                   </div>
@@ -428,7 +428,7 @@ export function ProductDescriptionsModal({
                       className="h-fit mt-auto"
                     >
                       <Plus className="h-4 w-4" />
-                    </Button>
+                    </ButtonV2>
                   </div>
 
                   {/* Suggestions */}
@@ -476,9 +476,9 @@ export function ProductDescriptionsModal({
               )}
             </div>
             <div className="flex gap-2">
-              <Button variant="outline" onClick={onClose} disabled={saving}>
+              <ButtonV2 variant="outline" onClick={onClose} disabled={saving}>
                 Annuler
-              </Button>
+              </ButtonV2>
               <Button
                 onClick={handleSave}
                 disabled={saving}
@@ -492,7 +492,7 @@ export function ProductDescriptionsModal({
                     Sauvegarder
                   </>
                 )}
-              </Button>
+              </ButtonV2>
             </div>
           </div>
         </div>

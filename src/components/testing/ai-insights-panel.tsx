@@ -7,7 +7,7 @@
  */
 
 import React, { useState, useEffect } from 'react'
-import { Button } from '@/components/ui/button'
+import { ButtonV2 } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
@@ -178,7 +178,7 @@ export function AIInsightsPanel({ className, refreshInterval = 30000 }: AIInsigh
                     Refresh AI
                   </>
                 )}
-              </Button>
+              </ButtonV2>
               <Button
                 variant="outline"
                 size="sm"
@@ -186,7 +186,7 @@ export function AIInsightsPanel({ className, refreshInterval = 30000 }: AIInsigh
               >
                 <Download className="w-4 h-4 mr-2" />
                 Export
-              </Button>
+              </ButtonV2>
             </div>
           </div>
         </CardHeader>
@@ -331,7 +331,7 @@ export function AIInsightsPanel({ className, refreshInterval = 30000 }: AIInsigh
                   onClick={() => setSelectedPredictionType(type)}
                 >
                   {type === 'all' ? 'Toutes' : type}
-                </Button>
+                </ButtonV2>
               ))}
             </div>
           </div>
@@ -354,7 +354,7 @@ export function AIInsightsPanel({ className, refreshInterval = 30000 }: AIInsigh
                     disabled={bpGenerating}
                   >
                     {bpGenerating ? 'Génération...' : 'Générer Prédictions'}
-                  </Button>
+                  </ButtonV2>
                 </Card>
               )}
             </div>
@@ -373,7 +373,7 @@ export function AIInsightsPanel({ className, refreshInterval = 30000 }: AIInsigh
             >
               <Brain className="w-4 h-4 mr-2" />
               Régénérer Insights
-            </Button>
+            </ButtonV2>
           </div>
 
           <div className="grid gap-4">
@@ -391,7 +391,7 @@ export function AIInsightsPanel({ className, refreshInterval = 30000 }: AIInsigh
                   disabled={bpGenerating}
                 >
                   Générer Insights
-                </Button>
+                </ButtonV2>
               </Card>
             )}
           </div>
@@ -412,7 +412,7 @@ export function AIInsightsPanel({ className, refreshInterval = 30000 }: AIInsigh
                 className="text-red-600 hover:text-red-700"
               >
                 Clear Patterns
-              </Button>
+              </ButtonV2>
             </div>
           </div>
 
@@ -792,14 +792,14 @@ function SystemAIPanel({
               className="w-full text-black hover:text-gray-800"
             >
               Clear Analysis History
-            </Button>
+            </ButtonV2>
             <Button
               onClick={onClearPatterns}
               variant="outline"
               className="w-full text-red-600 hover:text-red-700"
             >
               Clear All Patterns
-            </Button>
+            </ButtonV2>
           </div>
         </CardContent>
       </Card>

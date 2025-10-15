@@ -2,7 +2,7 @@
 
 import React, { useState, useMemo } from 'react'
 import { RefreshCw, AlertTriangle, Package, Search } from 'lucide-react'
-import { Button } from '@/components/ui/button'
+import { ButtonV2 } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Textarea } from '@/components/ui/textarea'
@@ -254,7 +254,7 @@ export function GeneralStockMovementModal({ isOpen, onClose, onSuccess }: Genera
                     <span className="text-gray-500">Rechercher un produit...</span>
                   )}
                   <Search className="ml-2 h-4 w-4 shrink-0 opacity-50" />
-                </Button>
+                </ButtonV2>
               </PopoverTrigger>
               <PopoverContent className="w-[400px] p-0" style={{ pointerEvents: 'auto' }}>
                 <div className="flex flex-col" style={{ pointerEvents: 'auto' }}>
@@ -340,7 +340,7 @@ export function GeneralStockMovementModal({ isOpen, onClose, onSuccess }: Genera
                 className="justify-start"
               >
                 Ajouter (+)
-              </Button>
+              </ButtonV2>
               <Button
                 type="button"
                 variant={movementType === 'remove' ? 'default' : 'outline'}
@@ -348,7 +348,7 @@ export function GeneralStockMovementModal({ isOpen, onClose, onSuccess }: Genera
                 className="justify-start"
               >
                 Retirer (-)
-              </Button>
+              </ButtonV2>
               <Button
                 type="button"
                 variant={movementType === 'adjust' ? 'default' : 'outline'}
@@ -356,7 +356,7 @@ export function GeneralStockMovementModal({ isOpen, onClose, onSuccess }: Genera
                 className="justify-start"
               >
                 Ajuster (=)
-              </Button>
+              </ButtonV2>
             </div>
           </div>
 
@@ -403,7 +403,7 @@ export function GeneralStockMovementModal({ isOpen, onClose, onSuccess }: Genera
                     <div>
                       <div className="font-medium">{reason.label}</div>
                     </div>
-                  </Button>
+                  </ButtonV2>
                 ))}
               </div>
             </div>
@@ -411,9 +411,9 @@ export function GeneralStockMovementModal({ isOpen, onClose, onSuccess }: Genera
             {/* Tous les motifs */}
             <Collapsible open={showAdvanced} onOpenChange={setShowAdvanced}>
               <CollapsibleTrigger asChild>
-                <Button variant="ghost" size="sm" className="text-blue-600">
+                <ButtonV2 variant="ghost" size="sm" className="text-blue-600">
                   {showAdvanced ? 'Masquer' : 'Voir tous les motifs'}
-                </Button>
+                </ButtonV2>
               </CollapsibleTrigger>
               <CollapsibleContent className="space-y-2 mt-2">
                 <Select value={reasonCode} onValueChange={(value: StockReasonCode) => setReasonCode(value)}>
@@ -485,7 +485,7 @@ export function GeneralStockMovementModal({ isOpen, onClose, onSuccess }: Genera
               className="flex-1"
             >
               Annuler
-            </Button>
+            </ButtonV2>
             <Button
               type="submit"
               disabled={loading || validation?.type === 'error' || !selectedProductId}
@@ -495,7 +495,7 @@ export function GeneralStockMovementModal({ isOpen, onClose, onSuccess }: Genera
                 <RefreshCw className="h-4 w-4 animate-spin mr-2" />
               ) : null}
               Enregistrer le mouvement
-            </Button>
+            </ButtonV2>
           </div>
         </form>
       </DialogContent>

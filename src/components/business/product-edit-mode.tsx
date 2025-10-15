@@ -2,11 +2,11 @@
 
 import { useState, useEffect } from 'react'
 import { Settings, Eye, FolderTree, FileText, Tags, Truck, Package, DollarSign, BarChart3 } from 'lucide-react'
-import { Button } from '../ui/button'
-import { Badge } from '../ui/badge'
-import { Input } from '../ui/input'
-import { Label } from '../ui/label'
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../ui/select'
+import { ButtonV2 } from '@/components/ui/button'
+import { Badge } from '@/components/ui/badge'
+import { Input } from '@/components/ui/input'
+import { Label } from '@/components/ui/label'
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { cn } from '../../lib/utils'
 import { createClient } from '@/lib/supabase/client'
 import { useSubcategories } from '@/hooks/use-subcategories'
@@ -98,10 +98,10 @@ export function ProductEditMode({ product, onSwitchToView, onUpdate, className }
       {/* Header compact avec navigation retour */}
       <div className="flex items-center justify-between mb-3">
         <div className="flex items-center space-x-2">
-          <Button variant="ghost" size="sm" onClick={onSwitchToView} className="h-6 text-[10px] px-2">
+          <ButtonV2 variant="ghost" size="sm" onClick={onSwitchToView} className="h-6 text-[10px] px-2">
             <Eye className="h-3 w-3 mr-1" />
             Présentation
-          </Button>
+          </ButtonV2>
           <nav className="text-[10px] text-gray-600">
             Administration › {product.name}
           </nav>
@@ -141,7 +141,7 @@ export function ProductEditMode({ product, onSwitchToView, onUpdate, className }
               >
                 <Settings className="h-2 w-2 mr-1" />
                 Photos ({product.images?.length || 0})
-              </Button>
+              </ButtonV2>
             </div>
           </div>
 
@@ -219,10 +219,10 @@ export function ProductEditMode({ product, onSwitchToView, onUpdate, className }
                   SKU: {product.sku || 'Auto-généré'}
                 </div>
               </div>
-              <Button variant="outline" size="sm" className="h-5 text-[9px] px-1">
+              <ButtonV2 variant="outline" size="sm" className="h-5 text-[9px] px-1">
                 <Settings className="h-2 w-2 mr-1" />
                 Modifier
-              </Button>
+              </ButtonV2>
             </div>
           </div>
 
@@ -233,10 +233,10 @@ export function ProductEditMode({ product, onSwitchToView, onUpdate, className }
                 <FileText className="h-3 w-3 mr-1" />
                 Informations générales
               </h3>
-              <Button variant="outline" size="sm" className="h-5 text-[9px] px-1">
+              <ButtonV2 variant="outline" size="sm" className="h-5 text-[9px] px-1">
                 <Settings className="h-2 w-2 mr-1" />
                 Modifier
-              </Button>
+              </ButtonV2>
             </div>
             <div className="space-y-2">
               <div>
@@ -266,7 +266,7 @@ export function ProductEditMode({ product, onSwitchToView, onUpdate, className }
               >
                 <Settings className="h-2 w-2 mr-1" />
                 Modifier
-              </Button>
+              </ButtonV2>
             </div>
 
             {/* Affichage hiérarchie actuelle compact */}
@@ -318,10 +318,10 @@ export function ProductEditMode({ product, onSwitchToView, onUpdate, className }
                 <Truck className="h-3 w-3 mr-1" />
                 Fournisseur & Références
               </h3>
-              <Button variant="outline" size="sm" className="h-5 text-[9px] px-1">
+              <ButtonV2 variant="outline" size="sm" className="h-5 text-[9px] px-1">
                 <Settings className="h-2 w-2 mr-1" />
                 Modifier
-              </Button>
+              </ButtonV2>
             </div>
             <div className="space-y-2">
               <div>
@@ -377,7 +377,7 @@ export function ProductEditMode({ product, onSwitchToView, onUpdate, className }
               >
                 <Settings className="h-2 w-2 mr-1" />
                 Modifier
-              </Button>
+              </ButtonV2>
             </div>
             <p className="text-[10px] text-gray-700 line-clamp-2">
               {product.description || 'Aucune description disponible'}
@@ -396,7 +396,7 @@ export function ProductEditMode({ product, onSwitchToView, onUpdate, className }
               >
                 <Settings className="h-2 w-2 mr-1" />
                 Modifier
-              </Button>
+              </ButtonV2>
             </div>
             <div className="space-y-1 text-[10px]">
               {product.color && (
@@ -428,10 +428,10 @@ export function ProductEditMode({ product, onSwitchToView, onUpdate, className }
                 <BarChart3 className="h-3 w-3 mr-1" />
                 Stock & Disponibilité
               </h3>
-              <Button variant="outline" size="sm" className="h-5 text-[9px] px-1">
+              <ButtonV2 variant="outline" size="sm" className="h-5 text-[9px] px-1">
                 <Settings className="h-2 w-2 mr-1" />
                 Modifier
-              </Button>
+              </ButtonV2>
             </div>
             <div className="space-y-2">
               <div className="grid grid-cols-2 gap-2">
@@ -498,10 +498,10 @@ export function ProductEditMode({ product, onSwitchToView, onUpdate, className }
                 <DollarSign className="h-3 w-3 mr-1" />
                 Tarification
               </h3>
-              <Button variant="outline" size="sm" className="h-5 text-[9px] px-1">
+              <ButtonV2 variant="outline" size="sm" className="h-5 text-[9px] px-1">
                 <Settings className="h-2 w-2 mr-1" />
                 Modifier
-              </Button>
+              </ButtonV2>
             </div>
             <div className="space-y-2">
               <div>
@@ -589,10 +589,10 @@ export function ProductEditMode({ product, onSwitchToView, onUpdate, className }
                 <Tags className="h-3 w-3 mr-1" />
                 Identifiants
               </h3>
-              <Button variant="outline" size="sm" className="h-5 text-[9px] px-1">
+              <ButtonV2 variant="outline" size="sm" className="h-5 text-[9px] px-1">
                 <Settings className="h-2 w-2 mr-1" />
                 Modifier
-              </Button>
+              </ButtonV2>
             </div>
             <div className="space-y-2">
               <div>
@@ -633,10 +633,10 @@ export function ProductEditMode({ product, onSwitchToView, onUpdate, className }
                 <Package className="h-3 w-3 mr-1" />
                 Dimensions & Poids
               </h3>
-              <Button variant="outline" size="sm" className="h-5 text-[9px] px-1">
+              <ButtonV2 variant="outline" size="sm" className="h-5 text-[9px] px-1">
                 <Settings className="h-2 w-2 mr-1" />
                 Modifier
-              </Button>
+              </ButtonV2>
             </div>
             <div className="space-y-2">
               <div className="grid grid-cols-3 gap-1">

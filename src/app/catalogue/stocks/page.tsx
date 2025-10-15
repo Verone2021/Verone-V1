@@ -20,7 +20,7 @@ import {
   Clock,
   Boxes
 } from 'lucide-react'
-import { Button } from '@/components/ui/button'
+import { ButtonV2 } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Badge } from '@/components/ui/badge'
 import {
@@ -214,22 +214,22 @@ export default function CatalogueStocksPage() {
           >
             <History className="h-4 w-4 mr-2" />
             Historique complet
-          </Button>
+          </ButtonV2>
           <Button
             variant="outline"
             onClick={() => setShowGeneralMovementModal(true)}
           >
             <Plus className="h-4 w-4 mr-2" />
             Nouveau mouvement
-          </Button>
-          <Button variant="outline" onClick={handleRefresh} disabled={loading}>
+          </ButtonV2>
+          <ButtonV2 variant="outline" onClick={handleRefresh} disabled={loading}>
             <RefreshCw className={`h-4 w-4 mr-2 ${loading ? 'animate-spin' : ''}`} />
             Actualiser
-          </Button>
-          <Button variant="outline">
+          </ButtonV2>
+          <ButtonV2 variant="outline">
             <Download className="h-4 w-4 mr-2" />
             Exporter
-          </Button>
+          </ButtonV2>
         </div>
       </div>
 
@@ -346,7 +346,7 @@ export default function CatalogueStocksPage() {
                   onClick={() => setFilters({ ...filters, sortOrder: filters.sortOrder === 'asc' ? 'desc' : 'asc' })}
                 >
                   <ArrowUpDown className="h-4 w-4" />
-                </Button>
+                </ButtonV2>
               </div>
             </CardContent>
           </Card>
@@ -451,14 +451,14 @@ export default function CatalogueStocksPage() {
                             >
                               <Plus className="h-4 w-4 mr-1" />
                               Mouvement
-                            </Button>
+                            </ButtonV2>
                             <Button
                               variant="outline"
                               size="sm"
                               onClick={() => handleShowHistory(product)}
                             >
                               <History className="h-4 w-4" />
-                            </Button>
+                            </ButtonV2>
                           </div>
                         </TableCell>
                       </TableRow>

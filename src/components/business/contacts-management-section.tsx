@@ -3,7 +3,7 @@
 import { useState, useEffect, useMemo } from 'react'
 import Link from 'next/link'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
-import { Button } from '@/components/ui/button'
+import { ButtonV2 } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import {
   Plus,
@@ -205,10 +205,10 @@ export function ContactsManagementSection({
                 {organisationContacts.length > 0 && ` • ${organisationContacts.length} contact${organisationContacts.length > 1 ? 's' : ''}`}
               </CardDescription>
             </div>
-            <Button onClick={handleCreateContact}>
+            <ButtonV2 onClick={handleCreateContact}>
               <Plus className="h-4 w-4 mr-2" />
               Nouveau contact
-            </Button>
+            </ButtonV2>
           </div>
         </CardHeader>
 
@@ -230,10 +230,10 @@ export function ContactsManagementSection({
               <p className="text-gray-600 mb-4">
                 Commencez par créer le premier contact pour cette organisation.
               </p>
-              <Button onClick={handleCreateContact}>
+              <ButtonV2 onClick={handleCreateContact}>
                 <Plus className="h-4 w-4 mr-2" />
                 Créer le premier contact
-              </Button>
+              </ButtonV2>
             </div>
           ) : (
             <div className="space-y-4">
@@ -308,7 +308,7 @@ export function ContactsManagementSection({
                           title="Définir comme contact principal"
                         >
                           <StarOff className="h-4 w-4" />
-                        </Button>
+                        </ButtonV2>
                       )}
                       <Button
                         variant="outline"
@@ -319,7 +319,7 @@ export function ContactsManagementSection({
                         <Link href={`/contacts-organisations/contacts/${contact.id}`}>
                           <Eye className="h-4 w-4" />
                         </Link>
-                      </Button>
+                      </ButtonV2>
                       <Button
                         variant="outline"
                         size="sm"
@@ -327,7 +327,7 @@ export function ContactsManagementSection({
                         title="Modifier le contact"
                       >
                         <Edit className="h-4 w-4" />
-                      </Button>
+                      </ButtonV2>
                       <Button
                         variant="outline"
                         size="sm"
@@ -336,7 +336,7 @@ export function ContactsManagementSection({
                         title="Supprimer le contact"
                       >
                         <Trash2 className="h-4 w-4" />
-                      </Button>
+                      </ButtonV2>
                     </div>
                   </div>
                 </div>

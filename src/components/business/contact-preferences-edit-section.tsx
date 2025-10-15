@@ -1,8 +1,8 @@
 'use client'
 
 import { Settings, Save, X, Edit, Phone, Mail, Globe2, MessageCircle, Bell } from 'lucide-react'
-import { Button } from '../ui/button'
-import { Badge } from '../ui/badge'
+import { ButtonV2 } from '@/components/ui/button'
+import { Badge } from '@/components/ui/badge'
 import { cn } from '../../lib/utils'
 import { useInlineEdit, type EditableSection } from '../../hooks/use-inline-edit'
 import type { Contact } from '../../hooks/use-contacts'
@@ -108,7 +108,7 @@ export function ContactPreferencesEditSection({ contact, onUpdate, className }: 
             >
               <X className="h-3 w-3 mr-1" />
               Annuler
-            </Button>
+            </ButtonV2>
             <Button
               variant="default"
               size="sm"
@@ -117,7 +117,7 @@ export function ContactPreferencesEditSection({ contact, onUpdate, className }: 
             >
               <Save className="h-3 w-3 mr-1" />
               {isSaving(section) ? 'Sauvegarde...' : 'Sauvegarder'}
-            </Button>
+            </ButtonV2>
           </div>
         </div>
 
@@ -224,10 +224,10 @@ export function ContactPreferencesEditSection({ contact, onUpdate, className }: 
           <Settings className="h-5 w-5 mr-2" />
           Préférences de Communication
         </h3>
-        <Button variant="outline" size="sm" onClick={handleStartEdit}>
+        <ButtonV2 variant="outline" size="sm" onClick={handleStartEdit}>
           <Edit className="h-3 w-3 mr-1" />
           Modifier
-        </Button>
+        </ButtonV2>
       </div>
 
       <div className="space-y-3">

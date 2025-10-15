@@ -1,25 +1,25 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { Button } from '../ui/button'
-import { Input } from '../ui/input'
-import { Label } from '../ui/label'
-import { Textarea } from '../ui/textarea'
+import { ButtonV2 } from '@/components/ui/button'
+import { Input } from '@/components/ui/input'
+import { Label } from '@/components/ui/label'
+import { Textarea } from '@/components/ui/textarea'
 import {
   Dialog,
   DialogContent,
   DialogDescription,
   DialogHeader,
   DialogTitle,
-} from '../ui/dialog'
+} from '@/components/ui/dialog'
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from '../ui/select'
-import { Switch } from '../ui/switch'
+} from '@/components/ui/select'
+import { Switch } from '@/components/ui/switch'
 import {
   useCreatePriceList,
   useUpdatePriceList,
@@ -292,16 +292,16 @@ export function PriceListFormModal({ open, onClose, priceList }: PriceListFormMo
 
           {/* Actions */}
           <div className="flex justify-end gap-4 pt-4">
-            <Button type="button" variant="outline" onClick={onClose} disabled={isLoading}>
+            <ButtonV2 type="button" variant="outline" onClick={onClose} disabled={isLoading}>
               Annuler
-            </Button>
-            <Button type="submit" disabled={isLoading}>
+            </ButtonV2>
+            <ButtonV2 type="submit" disabled={isLoading}>
               {isLoading
                 ? 'Enregistrement...'
                 : isEditMode
                 ? 'Mettre à jour'
                 : 'Créer la liste'}
-            </Button>
+            </ButtonV2>
           </div>
         </form>
       </DialogContent>

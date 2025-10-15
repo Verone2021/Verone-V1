@@ -2,8 +2,8 @@
 
 import { useState, useEffect } from 'react'
 import { Layers, Save, X, Search, ExternalLink, AlertCircle } from 'lucide-react'
-import { Button } from '../ui/button'
-import { Badge } from '../ui/badge'
+import { ButtonV2 } from '@/components/ui/button'
+import { Badge } from '@/components/ui/badge'
 import { cn } from '../../lib/utils'
 import { useInlineEdit, type EditableSection } from '../../hooks/use-inline-edit'
 import { createClient } from '../../lib/supabase/client'
@@ -192,7 +192,7 @@ export function RelationsEditSection({ product, onUpdate, className }: Relations
             >
               <X className="h-3 w-3 mr-1" />
               Annuler
-            </Button>
+            </ButtonV2>
             <Button
               variant="default"
               size="sm"
@@ -201,7 +201,7 @@ export function RelationsEditSection({ product, onUpdate, className }: Relations
             >
               <Save className="h-3 w-3 mr-1" />
               {isSaving(section) ? 'Sauvegarde...' : 'Sauvegarder'}
-            </Button>
+            </ButtonV2>
           </div>
         </div>
 
@@ -321,10 +321,10 @@ export function RelationsEditSection({ product, onUpdate, className }: Relations
           <Layers className="h-4 w-4 mr-1" />
           Relations
         </h3>
-        <Button variant="outline" size="sm" onClick={handleStartEdit}>
+        <ButtonV2 variant="outline" size="sm" onClick={handleStartEdit}>
           <Layers className="h-3 w-3 mr-1" />
           Modifier
-        </Button>
+        </ButtonV2>
       </div>
 
       <div className="space-y-3 text-xs">
@@ -365,7 +365,7 @@ export function RelationsEditSection({ product, onUpdate, className }: Relations
           >
             <ExternalLink className="h-3 w-3 mr-1" />
             Voir le groupe complet
-          </Button>
+          </ButtonV2>
         </div>
       </div>
     </div>

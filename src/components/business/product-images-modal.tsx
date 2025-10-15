@@ -1,8 +1,8 @@
 "use client"
 
 import { useState } from 'react'
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from '../ui/dialog'
-import { Button } from '../ui/button'
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog'
+import { ButtonV2 } from '@/components/ui/button'
 import { ProductPhotosModal } from './product-photos-modal'
 
 interface ProductImagesModalProps {

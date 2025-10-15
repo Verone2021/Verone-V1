@@ -1,7 +1,7 @@
 "use client"
 
 import { Badge, TreePine, FolderOpen, Tags, ExternalLink, Package, Heart, Star, Eye, Calendar, Truck, ShieldCheck, ImageIcon, CheckCircle, AlertCircle, Clock, Settings, ChevronRight } from 'lucide-react'
-import { Button } from '../ui/button'
+import { ButtonV2 } from '@/components/ui/button'
 import { cn } from '../../lib/utils'
 import { ProductImageGallery } from './product-image-gallery'
 import { ProductFixedCharacteristics } from './product-fixed-characteristics'
@@ -152,7 +152,7 @@ export function ProductViewMode({ product, onSwitchToEdit, className }: ProductV
               >
                 <Settings className="h-4 w-4 mr-2" />
                 Mode Administration
-              </Button>
+              </ButtonV2>
             </div>
           </div>
 

@@ -4,16 +4,16 @@ import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { useSourcingProducts } from '../../hooks/use-sourcing-products'
 import { useToast } from '../../hooks/use-toast'
-import { Card, CardContent, CardHeader, CardTitle } from '../ui/card'
-import { Button } from '../ui/button'
-import { Badge } from '../ui/badge'
-import { Progress } from '../ui/progress'
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '../ui/tabs'
-import { Input } from '../ui/input'
-import { Label } from '../ui/label'
-import { Textarea } from '../ui/textarea'
-import { Switch } from '../ui/switch'
-import { Separator } from '../ui/separator'
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import { ButtonV2 } from '@/components/ui/button'
+import { Badge } from '@/components/ui/badge'
+import { Progress } from '@/components/ui/progress'
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
+import { Input } from '@/components/ui/input'
+import { Label } from '@/components/ui/label'
+import { Textarea } from '@/components/ui/textarea'
+import { Switch } from '@/components/ui/switch'
+import { Separator } from '@/components/ui/separator'
 import { SupplierSelector } from './supplier-selector'
 import {
   CheckCircle,
@@ -241,9 +241,9 @@ export function DraftCompletionWizard({
             <h3 className="text-lg font-semibold mb-2">Erreur</h3>
             <p className="text-gray-600 mb-4">{error || 'Brouillon non trouvé'}</p>
             {onCancel && (
-              <Button onClick={onCancel} variant="outline">
+              <ButtonV2 onClick={onCancel} variant="outline">
                 Retour
-              </Button>
+              </ButtonV2>
             )}
           </div>
         </CardContent>
@@ -259,9 +259,9 @@ export function DraftCompletionWizard({
           <div className="flex items-center justify-between">
             <div className="flex items-center space-x-4">
               {onCancel && (
-                <Button variant="ghost" size="sm" onClick={onCancel}>
+                <ButtonV2 variant="ghost" size="sm" onClick={onCancel}>
                   <ArrowLeft className="h-4 w-4" />
-                </Button>
+                </ButtonV2>
               )}
               <div>
                 <CardTitle className="flex items-center gap-2">
@@ -570,7 +570,7 @@ export function DraftCompletionWizard({
                   <Save className="h-4 w-4 mr-2" />
                 )}
                 Sauvegarder
-              </Button>
+              </ButtonV2>
 
               <Button
                 onClick={handleValidate}
@@ -583,7 +583,7 @@ export function DraftCompletionWizard({
                   <CheckCircle className="h-4 w-4 mr-2" />
                 )}
                 Valider le produit
-              </Button>
+              </ButtonV2>
             </div>
           </div>
         </CardContent>

@@ -9,9 +9,9 @@
 
 import React, { useRef, useState } from "react"
 import { Upload, X, Image as ImageIcon, Loader2, CheckCircle, AlertCircle, RefreshCw } from "lucide-react"
-import { Button } from "../ui/button"
-import { Progress } from "../ui/progress"
-import { Alert, AlertDescription } from "../ui/alert"
+import { ButtonV2 } from "@/components/ui/button"
+import { Progress } from "@/components/ui/progress"
+import { Alert, AlertDescription } from "@/components/ui/alert"
 import { cn } from "../../lib/utils"
 import Image from "next/image"
 import { useImageUpload, type UseImageUploadProps } from '@/hooks/use-image-upload'
@@ -228,7 +228,7 @@ export function ImageUploadV2({
             >
               <RefreshCw className="w-3 h-3 mr-1" />
               Réessayer
-            </Button>
+            </ButtonV2>
           )}
         </AlertDescription>
       </Alert>
@@ -259,7 +259,7 @@ export function ImageUploadV2({
             onClick={handleRemoveImage}
           >
             <X className="w-3 h-3" />
-          </Button>
+          </ButtonV2>
         </div>
       )}
 
@@ -325,7 +325,7 @@ export function ImageUploadV2({
         >
           <ImageIcon className="w-4 h-4 mr-2" />
           Remplacer l'image
-        </Button>
+        </ButtonV2>
       )}
     </div>
   )

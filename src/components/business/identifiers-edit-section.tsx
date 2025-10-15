@@ -2,7 +2,7 @@
 
 import { useState } from 'react'
 import { Tag, Save, X, RefreshCw } from 'lucide-react'
-import { Button } from '../ui/button'
+import { ButtonV2 } from '@/components/ui/button'
 import { cn } from '../../lib/utils'
 import { useInlineEdit, type EditableSection } from '../../hooks/use-inline-edit'
 import { generateSKU } from '../../lib/business-rules/naming-rules'
@@ -112,7 +112,7 @@ export function IdentifiersEditSection({ product, onUpdate, className }: Identif
             >
               <X className="h-3 w-3 mr-1" />
               Annuler
-            </Button>
+            </ButtonV2>
             <Button
               variant="default"
               size="sm"
@@ -121,7 +121,7 @@ export function IdentifiersEditSection({ product, onUpdate, className }: Identif
             >
               <Save className="h-3 w-3 mr-1" />
               {isSaving(section) ? 'Sauvegarde...' : 'Sauvegarder'}
-            </Button>
+            </ButtonV2>
           </div>
         </div>
 
@@ -141,7 +141,7 @@ export function IdentifiersEditSection({ product, onUpdate, className }: Identif
               >
                 <RefreshCw className="h-3 w-3 mr-1" />
                 Auto
-              </Button>
+              </ButtonV2>
             </div>
             <input
               type="text"
@@ -171,7 +171,7 @@ export function IdentifiersEditSection({ product, onUpdate, className }: Identif
               >
                 <RefreshCw className="h-3 w-3 mr-1" />
                 Depuis SKU
-              </Button>
+              </ButtonV2>
             </div>
             <input
               type="text"
@@ -270,10 +270,10 @@ export function IdentifiersEditSection({ product, onUpdate, className }: Identif
           <Tag className="h-4 w-4 mr-1" />
           Identifiants & Références
         </h3>
-        <Button variant="outline" size="sm" onClick={handleStartEdit}>
+        <ButtonV2 variant="outline" size="sm" onClick={handleStartEdit}>
           <Tag className="h-3 w-3 mr-1" />
           Modifier
-        </Button>
+        </ButtonV2>
       </div>
 
       <div className="space-y-2 text-xs">

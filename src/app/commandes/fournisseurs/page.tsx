@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import { Plus, Filter, Search, Eye, Edit, Trash2, Package, Truck, CheckCircle, XCircle } from 'lucide-react'
-import { Button } from '@/components/ui/button'
+import { ButtonV2 } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
@@ -264,45 +264,45 @@ export default function PurchaseOrdersPage() {
                       </TableCell>
                       <TableCell>
                         <div className="flex items-center gap-2">
-                          <Button
+                          <ButtonV2
                             variant="outline"
                             size="sm"
                             onClick={() => openOrderDetail(order)}
                           >
                             <Eye className="h-4 w-4" />
-                          </Button>
+                          </ButtonV2>
                           {order.status === 'draft' && (
                             <>
-                              <Button variant="outline" size="sm">
+                              <ButtonV2 variant="outline" size="sm">
                                 <Edit className="h-4 w-4" />
-                              </Button>
-                              <Button
+                              </ButtonV2>
+                              <ButtonV2
                                 variant="outline"
                                 size="sm"
                                 onClick={() => handleDelete(order.id)}
                               >
                                 <Trash2 className="h-4 w-4" />
-                              </Button>
+                              </ButtonV2>
                             </>
                           )}
                           {order.status === 'sent' && (
-                            <Button
+                            <ButtonV2
                               variant="outline"
                               size="sm"
                               onClick={() => handleStatusChange(order.id, 'confirmed')}
                             >
                               <CheckCircle className="h-4 w-4" />
-                            </Button>
+                            </ButtonV2>
                           )}
                           {(order.status === 'confirmed' || order.status === 'partially_received') && (
-                            <Button
+                            <ButtonV2
                               variant="outline"
                               size="sm"
                               onClick={() => openReceptionModal(order)}
                               title="Réceptionner la commande"
                             >
                               <Truck className="h-4 w-4" />
-                            </Button>
+                            </ButtonV2>
                           )}
                         </div>
                       </TableCell>
@@ -420,7 +420,7 @@ export default function PurchaseOrdersPage() {
                   <Truck className="mx-auto h-12 w-12 text-gray-400 mb-4" />
                   <p className="text-gray-500">Cliquez sur le bouton camion dans la liste des commandes</p>
                   <p className="text-sm text-gray-400">Pour réceptionner une commande confirmée ou partiellement reçue</p>
-                  <Button
+                  <ButtonV2
                     variant="outline"
                     className="mt-4"
                     onClick={() => {
@@ -430,7 +430,7 @@ export default function PurchaseOrdersPage() {
                   >
                     <Truck className="h-4 w-4 mr-2" />
                     Ouvrir le module de réception
-                  </Button>
+                  </ButtonV2>
                 </div>
               </TabsContent>
             </Tabs>

@@ -13,7 +13,7 @@
 import React, { useEffect, useState, useCallback } from 'react'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
-import { Button } from '@/components/ui/button'
+import { ButtonV2 } from '@/components/ui/button'
 import { Alert, AlertDescription } from '@/components/ui/alert'
 import { Progress } from '@/components/ui/progress'
 import {
@@ -244,7 +244,7 @@ export const CatalogueErrorIntegration: React.FC = () => {
               <Eye className="w-4 h-4 mr-2" />
             )}
             Scan Catalogue
-          </Button>
+          </ButtonV2>
           <Button
             onClick={handleGlobalDetection}
             disabled={isScanning}
@@ -252,7 +252,7 @@ export const CatalogueErrorIntegration: React.FC = () => {
           >
             <Activity className="w-4 h-4 mr-2" />
             Scan Global
-          </Button>
+          </ButtonV2>
         </div>
       </div>
 
@@ -508,7 +508,7 @@ const CatalogueIntegrationGuide: React.FC = () => {
               size="sm"
             >
               {showGuide ? 'Masquer' : 'Voir le Guide'}
-            </Button>
+            </ButtonV2>
           </div>
 
           {showGuide && (

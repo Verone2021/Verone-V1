@@ -1,12 +1,12 @@
 "use client"
 
 import { useState } from 'react'
-import { Button } from '../ui/button'
-import { Input } from '../ui/input'
-import { Label } from '../ui/label'
-import { Textarea } from '../ui/textarea'
-import { Badge } from '../ui/badge'
-import { StandardModifyButton } from '../ui/standard-modify-button'
+import { ButtonV2 } from '@/components/ui/button'
+import { Input } from '@/components/ui/input'
+import { Label } from '@/components/ui/label'
+import { Textarea } from '@/components/ui/textarea'
+import { Badge } from '@/components/ui/badge'
+import { StandardModifyButton } from '@/components/ui/standard-modify-button'
 import { Save, X, FileText, Package, Star } from 'lucide-react'
 import { cn } from '../../lib/utils'
 import { useInlineEdit, type EditableSection } from '../../hooks/use-inline-edit'
@@ -120,7 +120,7 @@ export function UnifiedDescriptionEditSection({
             >
               <X className="h-3 w-3 mr-1" />
               Annuler
-            </Button>
+            </ButtonV2>
             <Button
               variant="default"
               size="sm"
@@ -130,7 +130,7 @@ export function UnifiedDescriptionEditSection({
             >
               <Save className="h-3 w-3 mr-1" />
               {isSaving(section) ? 'Sauvegarde...' : 'Sauvegarder'}
-            </Button>
+            </ButtonV2>
           </div>
         </div>
 
@@ -170,7 +170,7 @@ export function UnifiedDescriptionEditSection({
                     className="h-8 w-8 p-0"
                   >
                     <X className="h-3 w-3" />
-                  </Button>
+                  </ButtonV2>
                 </div>
               ))}
               <Button
@@ -181,7 +181,7 @@ export function UnifiedDescriptionEditSection({
               >
                 <Package className="h-3 w-3 mr-1" />
                 Ajouter un point de vente
-              </Button>
+              </ButtonV2>
             </div>
           </div>
         </div>

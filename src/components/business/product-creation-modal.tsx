@@ -2,7 +2,7 @@
 
 import React, { useState } from 'react'
 import { Plus, Package, AlertTriangle, RefreshCw } from 'lucide-react'
-import { Button } from '@/components/ui/button'
+import { ButtonV2 } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Textarea } from '@/components/ui/textarea'
@@ -221,7 +221,7 @@ export function ProductCreationModal({ isOpen, onClose, onSuccess }: ProductCrea
                 disabled={!name}
               >
                 Auto
-              </Button>
+              </ButtonV2>
             </div>
             {errors.sku && (
               <p className="text-sm text-red-600 flex items-center gap-1">
@@ -312,7 +312,7 @@ export function ProductCreationModal({ isOpen, onClose, onSuccess }: ProductCrea
               className="flex-1"
             >
               Annuler
-            </Button>
+            </ButtonV2>
             <Button
               type="submit"
               disabled={loading}
@@ -324,7 +324,7 @@ export function ProductCreationModal({ isOpen, onClose, onSuccess }: ProductCrea
                 <Plus className="h-4 w-4 mr-2" />
               )}
               Créer le produit
-            </Button>
+            </ButtonV2>
           </div>
         </form>
       </DialogContent>

@@ -3,8 +3,8 @@
 import React from 'react'
 import { useRouter } from 'next/navigation'
 import { Building2, Truck, Settings, Phone, TrendingUp } from 'lucide-react'
-import { MediumKpiCard } from '@/components/ui-v2/medium-kpi-card'
-import { ButtonV2 } from '@/components/ui-v2/button'
+import { ElegantKpiCard } from '@/components/ui/elegant-kpi-card'
+import { ButtonV2 } from '@/components/ui/button'
 import { useOrganisations } from '@/hooks/use-organisations'
 
 interface OrganisationStats {
@@ -63,34 +63,30 @@ export default function ContactsOrganisationsPage() {
         <div>
           <h2 className="text-sm font-semibold text-slate-700 mb-3">Vue d'ensemble</h2>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-            <MediumKpiCard
+            <ElegantKpiCard
               label="Total Organisations"
               value={stats.totalOrganisations}
               icon={Building2}
-              iconColor="primary"
             />
 
-            <MediumKpiCard
+            <ElegantKpiCard
               label="Fournisseurs"
               value={stats.suppliers}
               icon={Truck}
-              iconColor="primary"
               onClick={() => router.push('/contacts-organisations/suppliers')}
             />
 
-            <MediumKpiCard
+            <ElegantKpiCard
               label="Clients Pro"
               value={stats.customersProfessional}
               icon={Building2}
-              iconColor="success"
               onClick={() => router.push('/contacts-organisations/customers?type=professional')}
             />
 
-            <MediumKpiCard
+            <ElegantKpiCard
               label="Prestataires"
               value={stats.partners}
               icon={Settings}
-              iconColor="accent"
               onClick={() => router.push('/contacts-organisations/partners')}
             />
           </div>

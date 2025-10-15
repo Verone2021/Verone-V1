@@ -2,7 +2,7 @@
 
 import { useState } from 'react'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
-import { Button } from '@/components/ui/button'
+import { ButtonV2 } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import {
   DropdownMenu,
@@ -122,9 +122,9 @@ export function OrganisationCard({
               {showActions && (
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild>
-                    <Button variant="ghost" size="sm">
+                    <ButtonV2 variant="ghost" size="sm">
                       <MoreVertical className="h-4 w-4" />
-                    </Button>
+                    </ButtonV2>
                   </DropdownMenuTrigger>
                   <DropdownMenuContent align="end">
                     <DropdownMenuItem asChild>
@@ -218,11 +218,11 @@ export function OrganisationCard({
               <span className="text-xs text-gray-500">
                 Créé le {new Date(organisation.created_at).toLocaleDateString('fr-FR')}
               </span>
-              <Button variant="ghost" size="sm" asChild>
+              <ButtonV2 variant="ghost" size="sm" asChild>
                 <Link href={getCatalogueLink()}>
                   Voir détails
                 </Link>
-              </Button>
+              </ButtonV2>
             </div>
           </div>
         </CardContent>

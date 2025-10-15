@@ -16,7 +16,7 @@ import {
   Euro,
   Globe
 } from 'lucide-react'
-import { Button } from '@/components/ui/button'
+import { ButtonV2 } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Alert, AlertDescription } from '@/components/ui/alert'
@@ -108,7 +108,7 @@ export default function SourcingProductDetailPage() {
             >
               <ArrowLeft className="h-4 w-4 mr-2" />
               Retour au sourcing
-            </Button>
+            </ButtonV2>
           </CardContent>
         </Card>
       </div>
@@ -129,7 +129,7 @@ export default function SourcingProductDetailPage() {
               >
                 <ArrowLeft className="h-4 w-4 mr-2" />
                 Retour au sourcing
-              </Button>
+              </ButtonV2>
               <div>
                 <h1 className="text-3xl font-bold text-black">Détail Sourcing</h1>
                 <p className="text-gray-600 mt-1">Validation et gestion du produit en sourcing</p>
@@ -144,7 +144,7 @@ export default function SourcingProductDetailPage() {
               >
                 <Edit className="h-4 w-4 mr-2" />
                 Modifier
-              </Button>
+              </ButtonV2>
             </div>
           </div>
         </div>
@@ -312,7 +312,7 @@ export default function SourcingProductDetailPage() {
                   >
                     <Package className="h-4 w-4 mr-2" />
                     Commander échantillon
-                  </Button>
+                  </ButtonV2>
                 </CardContent>
               </Card>
 
@@ -333,7 +333,7 @@ export default function SourcingProductDetailPage() {
                   >
                     <CheckCircle className="h-4 w-4 mr-2" />
                     {product.supplier_id ? 'Valider et ajouter au catalogue' : 'Fournisseur requis'}
-                  </Button>
+                  </ButtonV2>
                 </CardContent>
               </Card>
             </div>

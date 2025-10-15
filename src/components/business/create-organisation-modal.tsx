@@ -10,7 +10,7 @@ import {
   DialogTitle,
   DialogTrigger,
 } from '@/components/ui/dialog'
-import { Button } from '@/components/ui/button'
+import { ButtonV2 } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Textarea } from '@/components/ui/textarea'
@@ -121,10 +121,10 @@ export function CreateOrganisationModal({
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
         {trigger || (
-          <Button variant="outline" size="sm" className="border-black">
+          <ButtonV2 variant="outline" size="sm" className="border-black">
             <Plus className="h-4 w-4 mr-2" />
             {getDefaultLabel()}
-          </Button>
+          </ButtonV2>
         )}
       </DialogTrigger>
       <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
@@ -508,21 +508,21 @@ export function CreateOrganisationModal({
 
           {/* Boutons d'action */}
           <div className="flex justify-end space-x-2 pt-4">
-            <Button
+            <ButtonV2
               type="button"
               variant="outline"
               onClick={() => setOpen(false)}
               disabled={loading}
             >
               Annuler
-            </Button>
-            <Button
+            </ButtonV2>
+            <ButtonV2
               type="submit"
               className="bg-black hover:bg-gray-800 text-white"
               disabled={loading}
             >
               {loading ? 'Création...' : 'Créer l\'organisation'}
-            </Button>
+            </ButtonV2>
           </div>
         </form>
       </DialogContent>

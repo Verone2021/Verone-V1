@@ -7,7 +7,7 @@
 'use client';
 
 import { useState } from 'react';
-import { Button } from '@/components/ui/button';
+import { ButtonV2 } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
 import { FileText, Loader2 } from 'lucide-react';
 
@@ -143,6 +143,6 @@ export function GenerateInvoiceButton({
           Générer facture
         </>
       )}
-    </Button>
+    </ButtonV2>
   );
 }

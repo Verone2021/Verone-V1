@@ -8,7 +8,7 @@
 "use client"
 
 import { useState, useEffect } from 'react'
-import { Button } from '@/components/ui/button'
+import { ButtonV2 } from '@/components/ui/button'
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 import { Input } from '@/components/ui/input'
 import { Badge } from '@/components/ui/badge'
@@ -252,7 +252,7 @@ export function ProductSelector({
                               Ajouter
                             </>
                           )}
-                        </Button>
+                        </ButtonV2>
                       </div>
                     </div>
                   )
@@ -274,7 +274,7 @@ export function ProductSelector({
               className="border-gray-300 hover:bg-gray-50"
             >
               Annuler
-            </Button>
+            </ButtonV2>
             <Button
               onClick={handleAddProducts}
               disabled={loading || selectedProducts.size === 0}
@@ -286,7 +286,7 @@ export function ProductSelector({
                 <Plus className="h-4 w-4 mr-2" />
               )}
               Ajouter {selectedProducts.size > 0 ? `(${selectedProducts.size})` : ''}
-            </Button>
+            </ButtonV2>
           </div>
         </div>
       </DialogContent>

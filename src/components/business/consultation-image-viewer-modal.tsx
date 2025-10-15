@@ -12,10 +12,10 @@
  */
 
 import React, { useState, useEffect, useCallback } from 'react'
-import { Dialog, DialogContent, DialogTitle, DialogDescription } from '../ui/dialog'
+import { Dialog, DialogContent, DialogTitle, DialogDescription } from '@/components/ui/dialog'
 import { VisuallyHidden } from '@radix-ui/react-visually-hidden'
-import { Button } from '../ui/button'
-import { Badge } from '../ui/badge'
+import { ButtonV2 } from '@/components/ui/button'
+import { Badge } from '@/components/ui/badge'
 import {
   ChevronLeft,
   ChevronRight,
@@ -217,7 +217,7 @@ export function ConsultationImageViewerModal({
           </div>
 
           <div className="flex items-center gap-2">
-            <Button
+            <ButtonV2
               variant="outline"
               size="sm"
               onClick={() => downloadImage(currentImage)}
@@ -226,10 +226,10 @@ export function ConsultationImageViewerModal({
             >
               <Download className="h-4 w-4 mr-1" />
               {downloadingId === currentImage.id ? 'Téléchargement...' : 'Télécharger'}
-            </Button>
+            </ButtonV2>
 
             {allowEdit && !currentImage.is_primary && onSetPrimary && (
-              <Button
+              <ButtonV2
                 variant="outline"
                 size="sm"
                 onClick={handleSetPrimary}
@@ -237,11 +237,11 @@ export function ConsultationImageViewerModal({
               >
                 <Star className="h-4 w-4 mr-1" />
                 Principale
-              </Button>
+              </ButtonV2>
             )}
 
             {allowEdit && onDelete && (
-              <Button
+              <ButtonV2
                 variant="outline"
                 size="sm"
                 onClick={handleDeleteCurrent}
@@ -250,17 +250,17 @@ export function ConsultationImageViewerModal({
               >
                 <Trash2 className="h-4 w-4 mr-1" />
                 {deletingId === currentImage.id ? 'Suppression...' : 'Supprimer'}
-              </Button>
+              </ButtonV2>
             )}
 
-            <Button
+            <ButtonV2
               variant="outline"
               size="sm"
               onClick={onClose}
               className="border-black"
             >
               <X className="h-4 w-4" />
-            </Button>
+            </ButtonV2>
           </div>
         </div>
 
@@ -276,14 +276,14 @@ export function ConsultationImageViewerModal({
 
           {/* Navigation précédent */}
           {images.length > 1 && (
-            <Button
+            <ButtonV2
               variant="ghost"
               size="lg"
               onClick={goToPrevious}
               className="absolute left-4 top-1/2 transform -translate-y-1/2 z-10 bg-black/10 hover:bg-black/20 text-black border-0 h-12 w-12 rounded-full"
             >
               <ChevronLeft className="h-6 w-6" />
-            </Button>
+            </ButtonV2>
           )}
 
           {/* Container image avec contraintes strictes */}
@@ -329,14 +329,14 @@ export function ConsultationImageViewerModal({
 
           {/* Navigation suivant */}
           {images.length > 1 && (
-            <Button
+            <ButtonV2
               variant="ghost"
               size="lg"
               onClick={goToNext}
               className="absolute right-4 top-1/2 transform -translate-y-1/2 z-10 bg-black/10 hover:bg-black/20 text-black border-0 h-12 w-12 rounded-full"
             >
               <ChevronRight className="h-6 w-6" />
-            </Button>
+            </ButtonV2>
           )}
         </div>
 

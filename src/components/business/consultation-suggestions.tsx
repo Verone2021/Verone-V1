@@ -2,10 +2,10 @@
 
 import { useState, useEffect } from 'react'
 import { AlertCircle, Clock, Users, ArrowRight, Link } from 'lucide-react'
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../ui/card'
-import { Button } from '../ui/button'
-import { Badge } from '../ui/badge'
-import { Alert, AlertDescription } from '../ui/alert'
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
+import { ButtonV2 } from '@/components/ui/button'
+import { Badge } from '@/components/ui/badge'
+import { Alert, AlertDescription } from '@/components/ui/alert'
 import { useConsultations } from '../../hooks/use-consultations'
 import { useToast } from '../../hooks/use-toast'
 
@@ -198,7 +198,7 @@ export function ConsultationSuggestions({
                   >
                     <Link className="h-3 w-3 mr-1" />
                     Associer
-                  </Button>
+                  </ButtonV2>
                 </div>
               </div>
             </div>

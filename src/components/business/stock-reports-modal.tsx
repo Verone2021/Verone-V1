@@ -15,7 +15,7 @@ import {
   Filter,
   X
 } from 'lucide-react'
-import { Button } from '@/components/ui/button'
+import { ButtonV2 } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
@@ -362,7 +362,7 @@ export function StockReportsModal({ isOpen, onClose }: StockReportsModalProps) {
                   className="h-8 w-8 p-0"
                 >
                   <X className="h-4 w-4" />
-                </Button>
+                </ButtonV2>
               </div>
 
               {/* Formulaire de configuration */}
@@ -456,10 +456,10 @@ export function StockReportsModal({ isOpen, onClose }: StockReportsModalProps) {
                 >
                   <Download className="h-4 w-4 mr-2" />
                   Générer le rapport
-                </Button>
-                <Button variant="outline" onClick={() => setSelectedReport(null)}>
+                </ButtonV2>
+                <ButtonV2 variant="outline" onClick={() => setSelectedReport(null)}>
                   Annuler
-                </Button>
+                </ButtonV2>
               </div>
             </div>
 

@@ -2,8 +2,8 @@
 
 import { useEffect, useState } from 'react'
 import { Lightbulb, Sparkles, TrendingUp, Target, Brain, ChevronRight } from 'lucide-react'
-import { Badge } from '../ui/badge'
-import { Button } from '../ui/button'
+import { Badge } from '@/components/ui/badge'
+import { ButtonV2 } from '@/components/ui/button'
 import { cn } from '../../lib/utils'
 import { useSmartSuggestions } from '../../hooks/use-smart-suggestions'
 import {
@@ -227,7 +227,7 @@ export function SmartSuggestionsPanel({
                           }}
                         >
                           <ChevronRight className="h-3 w-3" />
-                        </Button>
+                        </ButtonV2>
                       )}
                     </div>
                   </div>

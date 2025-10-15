@@ -2,10 +2,10 @@
 
 import { useState, useRef } from "react"
 import { Upload, X, Image as ImageIcon, Loader2, FileText } from "lucide-react"
-import { Button } from "../ui/button"
-import { Label } from "../ui/label"
-import { Input } from "../ui/input"
-import { Textarea } from "../ui/textarea"
+import { ButtonV2 } from "@/components/ui/button"
+import { Label } from "@/components/ui/label"
+import { Input } from "@/components/ui/input"
+import { Textarea } from "@/components/ui/textarea"
 import { cn } from "../../lib/utils"
 import { createClient } from "@/lib/supabase/client"
 import Image from "next/image"
@@ -283,7 +283,7 @@ export function ImageUpload({
             onClick={handleRemoveImage}
           >
             <X className="w-3 h-3" />
-          </Button>
+          </ButtonV2>
         </div>
       )}
 
@@ -371,7 +371,7 @@ export function ImageUpload({
             onChange={handleInputChange}
             className="hidden"
           />
-        </Button>
+        </ButtonV2>
       )}
     </div>
   )

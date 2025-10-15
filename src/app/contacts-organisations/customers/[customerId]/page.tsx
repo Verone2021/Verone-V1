@@ -4,7 +4,7 @@ import { useState } from 'react'
 import { useParams, useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
-import { Button } from '@/components/ui/button'
+import { ButtonV2 } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import {
   ArrowLeft,
@@ -70,12 +70,12 @@ export default function CustomerDetailPage() {
             <p className="text-gray-600 mb-4">
               Ce client n'existe pas ou vous n'avez pas les droits pour le consulter.
             </p>
-            <Button asChild>
+            <ButtonV2 asChild>
               <Link href="/contacts-organisations/customers">
                 <ArrowLeft className="h-4 w-4 mr-2" />
                 Retour aux clients
               </Link>
-            </Button>
+            </ButtonV2>
           </CardContent>
         </Card>
       </div>
@@ -156,10 +156,10 @@ export default function CustomerDetailPage() {
         <div>
           <div className="flex items-center gap-2 mb-2">
             <Link href="/contacts-organisations/customers">
-              <Button variant="ghost" size="sm">
+              <ButtonV2 variant="ghost" size="sm">
                 <ArrowLeft className="h-4 w-4 mr-1" />
                 Clients
-              </Button>
+              </ButtonV2>
             </Link>
           </div>
           <div className="flex items-center gap-3 mb-2">
@@ -205,7 +205,7 @@ export default function CustomerDetailPage() {
                 Archiver
               </>
             )}
-          </Button>
+          </ButtonV2>
           <Button
             variant="outline"
             onClick={handleDelete}
@@ -213,7 +213,7 @@ export default function CustomerDetailPage() {
           >
             <Trash2 className="h-4 w-4 mr-2" />
             Supprimer
-          </Button>
+          </ButtonV2>
         </div>
       </div>
 

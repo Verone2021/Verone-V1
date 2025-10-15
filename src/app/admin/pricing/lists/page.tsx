@@ -2,7 +2,7 @@
 
 import { useState } from 'react'
 import { Plus, Edit, Trash2, Search, Filter } from 'lucide-react'
-import { Button } from '@/components/ui/button'
+import { ButtonV2 } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
@@ -87,10 +87,10 @@ export default function PriceListsAdminPage() {
             Gestion administrative des listes de prix et paliers quantités
           </p>
         </div>
-        <Button onClick={() => setShowCreateModal(true)} className="gap-2">
+        <ButtonV2 onClick={() => setShowCreateModal(true)} className="gap-2">
           <Plus className="h-4 w-4" />
           Nouvelle Liste
-        </Button>
+        </ButtonV2>
       </div>
 
       {/* Filtres */}
@@ -226,29 +226,29 @@ export default function PriceListsAdminPage() {
                       </TableCell>
                       <TableCell>
                         <div className="flex gap-2">
-                          <Button
+                          <ButtonV2
                             variant="default"
                             size="sm"
                             onClick={() => router.push(`/admin/pricing/lists/${list.id}`)}
                             title="Gérer les items et paliers"
                           >
                             Gérer Items
-                          </Button>
-                          <Button
+                          </ButtonV2>
+                          <ButtonV2
                             variant="outline"
                             size="sm"
                             onClick={() => setEditingPriceList(list)}
                           >
                             <Edit className="h-4 w-4" />
-                          </Button>
-                          <Button
+                          </ButtonV2>
+                          <ButtonV2
                             variant="outline"
                             size="sm"
                             onClick={() => handleDelete(list)}
                             className="text-red-600 hover:bg-red-50"
                           >
                             <Trash2 className="h-4 w-4" />
-                          </Button>
+                          </ButtonV2>
                         </div>
                       </TableCell>
                     </TableRow>

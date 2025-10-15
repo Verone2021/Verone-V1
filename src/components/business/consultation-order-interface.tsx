@@ -12,14 +12,14 @@ import {
   Check,
   X
 } from 'lucide-react'
-import { Button } from '../ui/button'
-import { Input } from '../ui/input'
-import { Label } from '../ui/label'
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../ui/card'
-import { Badge } from '../ui/badge'
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../ui/select'
-import { Checkbox } from '../ui/checkbox'
-import { Alert, AlertDescription } from '../ui/alert'
+import { ButtonV2 } from '@/components/ui/button'
+import { Input } from '@/components/ui/input'
+import { Label } from '@/components/ui/label'
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
+import { Badge } from '@/components/ui/badge'
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
+import { Checkbox } from '@/components/ui/checkbox'
+import { Alert, AlertDescription } from '@/components/ui/alert'
 import { useConsultationItems, ConsultationItem, CreateConsultationItemData } from '../../hooks/use-consultations'
 import { useToast } from '../../hooks/use-toast'
 
@@ -184,7 +184,7 @@ export function ConsultationOrderInterface({
             >
               <Plus className="h-4 w-4 mr-2" />
               Ajouter un produit
-            </Button>
+            </ButtonV2>
           </div>
         </CardHeader>
 
@@ -255,13 +255,13 @@ export function ConsultationOrderInterface({
                 >
                   <Check className="h-4 w-4 mr-1" />
                   Ajouter
-                </Button>
+                </ButtonV2>
                 <Button
                   variant="outline"
                   onClick={() => setShowAddForm(false)}
                 >
                   <X className="h-4 w-4" />
-                </Button>
+                </ButtonV2>
               </div>
             </div>
 
@@ -336,7 +336,7 @@ export function ConsultationOrderInterface({
                               disabled={item.quantity <= 1}
                             >
                               <Minus className="h-3 w-3" />
-                            </Button>
+                            </ButtonV2>
                             <span className="w-8 text-center font-medium">{item.quantity}</span>
                             <Button
                               variant="outline"
@@ -344,7 +344,7 @@ export function ConsultationOrderInterface({
                               onClick={() => changeQuantity(item.id, 1)}
                             >
                               <Plus className="h-3 w-3" />
-                            </Button>
+                            </ButtonV2>
                           </div>
                         )}
                       </td>
@@ -399,14 +399,14 @@ export function ConsultationOrderInterface({
                               className="bg-green-600 hover:bg-green-700 text-white"
                             >
                               <Check className="h-3 w-3" />
-                            </Button>
+                            </ButtonV2>
                             <Button
                               size="sm"
                               variant="outline"
                               onClick={cancelEditItem}
                             >
                               <X className="h-3 w-3" />
-                            </Button>
+                            </ButtonV2>
                           </div>
                         ) : (
                           <div className="flex items-center justify-center space-x-1">
@@ -416,7 +416,7 @@ export function ConsultationOrderInterface({
                               onClick={() => startEditItem(item)}
                             >
                               <Edit className="h-3 w-3" />
-                            </Button>
+                            </ButtonV2>
                             <Button
                               size="sm"
                               variant="outline"
@@ -424,7 +424,7 @@ export function ConsultationOrderInterface({
                               className="text-red-600 hover:text-red-700"
                             >
                               <Trash2 className="h-3 w-3" />
-                            </Button>
+                            </ButtonV2>
                           </div>
                         )}
                       </td>

@@ -10,8 +10,8 @@ import {
   TrendingUp,
   ArrowLeftRight,
 } from 'lucide-react'
-import { ElegantKpiCard } from '@/components/ui-v2/elegant-kpi-card'
-import { ActivityTimeline, type TimelineItem } from '@/components/ui-v2/activity-timeline'
+import { ElegantKpiCard } from '@/components/ui/elegant-kpi-card'
+import { ActivityTimeline, type TimelineItem } from '@/components/ui/activity-timeline'
 import { useCompleteDashboardMetrics } from '@/hooks/use-complete-dashboard-metrics'
 
 export default function DashboardV2Page() {
@@ -41,41 +41,8 @@ export default function DashboardV2Page() {
     )
   }
 
-  // Données mockées pour activité récente (à remplacer par vraies données)
-  const recentActivity: TimelineItem[] = [
-    {
-      id: '1',
-      title: 'Nouvelle commande client',
-      description: 'CMD-2025-001 - 3 produits',
-      timestamp: 'Il y a 5 min',
-      icon: ShoppingCart,
-      iconColor: 'success',
-    },
-    {
-      id: '2',
-      title: 'Alerte stock bas',
-      description: 'Produit en stock faible',
-      timestamp: 'Il y a 12 min',
-      icon: AlertCircle,
-      iconColor: 'warning',
-    },
-    {
-      id: '3',
-      title: 'Produit ajouté',
-      description: 'Nouveau produit catalogue',
-      timestamp: 'Il y a 1h',
-      icon: Package,
-      iconColor: 'primary',
-    },
-    {
-      id: '4',
-      title: 'Mouvement stock',
-      description: 'Ajustement inventaire',
-      timestamp: 'Il y a 2h',
-      icon: ArrowLeftRight,
-      iconColor: 'neutral',
-    },
-  ]
+  // Activité récente - pas de données mockées
+  const recentActivity: TimelineItem[] = []
 
   return (
     <div className="min-h-screen bg-slate-50">
@@ -83,7 +50,7 @@ export default function DashboardV2Page() {
       <div className="bg-white border-b border-slate-200 px-6 py-4">
         <div className="flex items-center justify-between">
           <div>
-            <h1 className="text-xl font-bold text-slate-900">Dashboard V2</h1>
+            <h1 className="text-xl font-bold text-slate-900">Dashboard</h1>
             <p className="text-sm text-slate-600">
               {new Date().toLocaleDateString('fr-FR', {
                 weekday: 'long',
@@ -221,7 +188,17 @@ export default function DashboardV2Page() {
                 Voir tout →
               </button>
             </div>
-            <ActivityTimeline items={recentActivity} maxItems={4} />
+            {recentActivity.length > 0 ? (
+              <ActivityTimeline items={recentActivity} maxItems={4} />
+            ) : (
+              <div className="flex items-center justify-center py-12">
+                <div className="text-center">
+                  <ArrowLeftRight className="h-12 w-12 text-slate-300 mx-auto mb-3" />
+                  <p className="text-sm text-slate-500 mb-1">Aucune activité récente</p>
+                  <p className="text-xs text-slate-400">L'historique apparaîtra ici</p>
+                </div>
+              </div>
+            )}
           </div>
 
           {/* Statut Commandes */}

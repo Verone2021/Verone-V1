@@ -2,7 +2,7 @@
 
 import { useState } from 'react'
 import { DollarSign, Save, X, Edit, AlertCircle, TrendingUp } from 'lucide-react'
-import { Button } from '../ui/button'
+import { ButtonV2 } from '@/components/ui/button'
 import { cn, formatPrice } from '../../lib/utils'
 import { useInlineEdit, type EditableSection } from '../../hooks/use-inline-edit'
 
@@ -149,7 +149,7 @@ export function SupplierVsPricingEditSection({
             >
               <X className="h-3 w-3 mr-1" />
               Annuler
-            </Button>
+            </ButtonV2>
             <Button
               variant="default"
               size="xs"
@@ -159,7 +159,7 @@ export function SupplierVsPricingEditSection({
             >
               <Save className="h-3 w-3 mr-1" />
               {isSaving(section) ? 'Sauvegarde...' : 'Sauvegarder'}
-            </Button>
+            </ButtonV2>
           </div>
         </div>
 
@@ -269,10 +269,10 @@ export function SupplierVsPricingEditSection({
           <DollarSign className="h-5 w-5 mr-2" />
           Tarification
         </h3>
-        <Button variant="outline" size="sm" onClick={handleStartEdit}>
+        <ButtonV2 variant="outline" size="sm" onClick={handleStartEdit}>
           <Edit className="h-3 w-3 mr-1" />
           Modifier
-        </Button>
+        </ButtonV2>
       </div>
 
       <div className="space-y-4">

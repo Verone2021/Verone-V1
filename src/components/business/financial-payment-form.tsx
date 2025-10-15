@@ -15,7 +15,7 @@ import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import * as z from 'zod'
 import { useFinancialPayments, PaymentMethod } from '@/hooks/use-financial-payments'
-import { Button } from '@/components/ui/button'
+import { ButtonV2 } from '@/components/ui/button'
 import {
   Form,
   FormControl,
@@ -204,7 +204,7 @@ export function FinancialPaymentForm({
                           <span>Sélectionner une date</span>
                         )}
                         <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
-                      </Button>
+                      </ButtonV2>
                     </FormControl>
                   </PopoverTrigger>
                   <PopoverContent className="w-auto p-0" align="start">
@@ -306,7 +306,7 @@ export function FinancialPaymentForm({
               ) : (
                 'Enregistrer le paiement'
               )}
-            </Button>
+            </ButtonV2>
 
             {onCancel && (
               <Button
@@ -316,7 +316,7 @@ export function FinancialPaymentForm({
                 disabled={isSubmitting}
               >
                 Annuler
-              </Button>
+              </ButtonV2>
             )}
           </div>
         </form>

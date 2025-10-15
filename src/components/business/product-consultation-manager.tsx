@@ -2,13 +2,13 @@
 
 import { useState, useEffect } from 'react'
 import { Search, Link, Unlink, Users, Package, ArrowRight, Plus, Eye, CheckCircle } from 'lucide-react'
-import { Button } from '../ui/button'
-import { Input } from '../ui/input'
-import { Label } from '../ui/label'
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../ui/card'
-import { Badge } from '../ui/badge'
-import { Alert, AlertDescription } from '../ui/alert'
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../ui/select'
+import { ButtonV2 } from '@/components/ui/button'
+import { Input } from '@/components/ui/input'
+import { Label } from '@/components/ui/label'
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
+import { Badge } from '@/components/ui/badge'
+import { Alert, AlertDescription } from '@/components/ui/alert'
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { useConsultations, useConsultationProducts } from '../../hooks/use-consultations'
 import { useToast } from '../../hooks/use-toast'
 import { cn } from '../../lib/utils'
@@ -312,7 +312,7 @@ export function ProductConsultationManager({
                 Créer l'association
               </>
             )}
-          </Button>
+          </ButtonV2>
         </CardContent>
       </Card>
 
@@ -376,7 +376,7 @@ export function ProductConsultationManager({
                 className="w-full"
               >
                 Réinitialiser
-              </Button>
+              </ButtonV2>
             </div>
           </div>
         </CardContent>
@@ -480,7 +480,7 @@ function ConsultationProductsView({
                       onClick={() => onRemoveLink(cp.id)}
                     >
                       <Unlink className="h-4 w-4" />
-                    </Button>
+                    </ButtonV2>
                   </div>
                 </div>
               ))}

@@ -4,7 +4,7 @@ import React from 'react'
 import Link from 'next/link'
 import { Clock, Package, TrendingUp, TrendingDown, RotateCcw, FileText, Settings, ShoppingCart, ExternalLink, X } from 'lucide-react'
 import { Badge } from '@/components/ui/badge'
-import { Button } from '@/components/ui/button'
+import { ButtonV2 } from '@/components/ui/button'
 import {
   Table,
   TableBody,
@@ -359,7 +359,7 @@ export function MovementsTable({ movements, loading, onMovementClick, onCancelCl
                     }
                   >
                     <X className="h-4 w-4" />
-                  </Button>
+                  </ButtonV2>
                 </TableCell>
               )}
             </TableRow>

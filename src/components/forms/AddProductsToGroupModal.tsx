@@ -3,7 +3,7 @@
 import { useState, useEffect, useMemo } from 'react'
 import { X, Search, Plus, Check, Package } from 'lucide-react'
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog'
-import { Button } from '@/components/ui/button'
+import { ButtonV2 } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Badge } from '@/components/ui/badge'
 import { Checkbox } from '@/components/ui/checkbox'
@@ -299,9 +299,9 @@ export function AddProductsToGroupModal({
             {selectedProductIds.length} produit{selectedProductIds.length !== 1 ? 's' : ''} sélectionné{selectedProductIds.length !== 1 ? 's' : ''}
           </div>
           <div className="flex space-x-2">
-            <Button variant="outline" onClick={onClose}>
+            <ButtonV2 variant="outline" onClick={onClose}>
               Annuler
-            </Button>
+            </ButtonV2>
             <Button
               onClick={handleSubmit}
               disabled={selectedProductIds.length === 0 || loading}
@@ -318,7 +318,7 @@ export function AddProductsToGroupModal({
                   Ajouter {selectedProductIds.length > 0 && `(${selectedProductIds.length})`}
                 </>
               )}
-            </Button>
+            </ButtonV2>
           </div>
         </div>
       </DialogContent>

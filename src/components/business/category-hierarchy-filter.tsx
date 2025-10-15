@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react'
 import { ChevronRight, ChevronDown, Folder, FolderOpen, Tag } from 'lucide-react'
 import { cn } from '../../lib/utils'
-import { Badge } from '../ui/badge'
+import { Badge } from '@/components/ui/badge'
 
 interface Family {
   id: string

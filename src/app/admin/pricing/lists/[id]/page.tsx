@@ -3,7 +3,7 @@
 import { useState } from 'react'
 import { useParams, useRouter } from 'next/navigation'
 import { ArrowLeft, Plus, Edit, Trash2, Package } from 'lucide-react'
-import { Button } from '@/components/ui/button'
+import { ButtonV2 } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import {
@@ -92,9 +92,9 @@ export default function PriceListDetailPage() {
       <div className="container mx-auto py-8 px-4">
         <div className="text-center py-12">
           <p className="text-red-600">Liste de prix introuvable</p>
-          <Button onClick={() => router.push('/admin/pricing/lists')} className="mt-4">
+          <ButtonV2 onClick={() => router.push('/admin/pricing/lists')} className="mt-4">
             Retour aux listes
-          </Button>
+          </ButtonV2>
         </div>
       </div>
     )
@@ -110,7 +110,7 @@ export default function PriceListDetailPage() {
           onClick={() => router.push('/admin/pricing/lists')}
         >
           <ArrowLeft className="h-4 w-4" />
-        </Button>
+        </ButtonV2>
         <div className="flex-1">
           <div className="flex items-center gap-3">
             <h1 className="text-3xl font-bold text-black">{priceList.name}</h1>
@@ -130,10 +130,10 @@ export default function PriceListDetailPage() {
             <p className="text-gray-600 mt-2">{priceList.description}</p>
           )}
         </div>
-        <Button onClick={() => setShowAddItemModal(true)} className="gap-2">
+        <ButtonV2 onClick={() => setShowAddItemModal(true)} className="gap-2">
           <Plus className="h-4 w-4" />
           Ajouter Produit
-        </Button>
+        </ButtonV2>
       </div>
 
       {/* Statistiques */}
@@ -198,7 +198,7 @@ export default function PriceListDetailPage() {
                     >
                       <Plus className="h-3 w-3" />
                       Ajouter Palier
-                    </Button>
+                    </ButtonV2>
                   </div>
 
                   {/* Tableau paliers */}
@@ -271,7 +271,7 @@ export default function PriceListDetailPage() {
                                     onClick={() => setEditingItemId(tier.id)}
                                   >
                                     <Edit className="h-3 w-3" />
-                                  </Button>
+                                  </ButtonV2>
                                   <Button
                                     variant="outline"
                                     size="sm"
@@ -279,7 +279,7 @@ export default function PriceListDetailPage() {
                                     className="text-red-600 hover:bg-red-50"
                                   >
                                     <Trash2 className="h-3 w-3" />
-                                  </Button>
+                                  </ButtonV2>
                                 </div>
                               </TableCell>
                             </TableRow>
@@ -309,10 +309,10 @@ export default function PriceListDetailPage() {
               <p className="text-sm mt-1">
                 Ajoutez votre premier produit pour commencer à définir les prix
               </p>
-              <Button onClick={() => setShowAddItemModal(true)} className="mt-4 gap-2">
+              <ButtonV2 onClick={() => setShowAddItemModal(true)} className="mt-4 gap-2">
                 <Plus className="h-4 w-4" />
                 Ajouter Produit
-              </Button>
+              </ButtonV2>
             </div>
           )}
         </CardContent>

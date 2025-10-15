@@ -7,7 +7,7 @@ import {
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from "../ui/select"
+} from "@/components/ui/select"
 import { useSalesChannels } from "../../hooks/use-pricing"
 import { Loader2 } from "lucide-react"
 import { cn } from "../../lib/utils"

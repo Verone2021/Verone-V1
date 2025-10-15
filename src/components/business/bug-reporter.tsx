@@ -2,15 +2,15 @@
 
 import React, { useState, useCallback, useRef } from 'react'
 import { Bug, Camera, Send, X, AlertTriangle, CheckCircle, Loader2, Image as ImageIcon } from 'lucide-react'
-import { Button } from '../ui/button'
-import { Textarea } from '../ui/textarea'
-import { Input } from '../ui/input'
-import { Label } from '../ui/label'
-import { Badge } from '../ui/badge'
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../ui/card'
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../ui/select'
-import { Alert, AlertDescription } from '../ui/alert'
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '../ui/dialog'
+import { ButtonV2 } from '@/components/ui/button'
+import { Textarea } from '@/components/ui/textarea'
+import { Input } from '@/components/ui/input'
+import { Label } from '@/components/ui/label'
+import { Badge } from '@/components/ui/badge'
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
+import { Alert, AlertDescription } from '@/components/ui/alert'
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog'
 import { useSupabaseMutation } from '../../hooks/use-supabase-query'
 import { useUserActivityTracker } from '../../hooks/use-user-activity-tracker'
 import html2canvas from 'html2canvas'
@@ -261,7 +261,7 @@ export function BugReporter({ trigger, onSubmitSuccess }: BugReporterProps) {
     >
       <Bug className="h-4 w-4 mr-2" />
       Signaler un bug
-    </Button>
+    </ButtonV2>
   )
 
   return (
@@ -420,7 +420,7 @@ export function BugReporter({ trigger, onSubmitSuccess }: BugReporterProps) {
                       Prendre une capture d'écran
                     </>
                   )}
-                </Button>
+                </ButtonV2>
               ) : (
                 <div className="space-y-2">
                   <div className="flex items-center justify-between">
@@ -435,7 +435,7 @@ export function BugReporter({ trigger, onSubmitSuccess }: BugReporterProps) {
                       onClick={() => setScreenshot(null)}
                     >
                       <X className="h-4 w-4" />
-                    </Button>
+                    </ButtonV2>
                   </div>
                   <img
                     src={screenshot}
@@ -479,7 +479,7 @@ export function BugReporter({ trigger, onSubmitSuccess }: BugReporterProps) {
               onClick={() => setIsOpen(false)}
             >
               Annuler
-            </Button>
+            </ButtonV2>
             <Button
               type="submit"
               disabled={
@@ -501,7 +501,7 @@ export function BugReporter({ trigger, onSubmitSuccess }: BugReporterProps) {
                   Envoyer le rapport
                 </>
               )}
-            </Button>
+            </ButtonV2>
           </div>
         </form>
       </DialogContent>

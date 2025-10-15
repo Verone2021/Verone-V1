@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import { Package, Truck, Calendar, AlertTriangle, Eye, Search } from 'lucide-react'
-import { Button } from '@/components/ui/button'
+import { ButtonV2 } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
@@ -254,7 +254,7 @@ export default function ShipmentsPage() {
                           >
                             <Truck className="h-4 w-4 mr-2" />
                             Expédier
-                          </Button>
+                          </ButtonV2>
                         </TableCell>
                       </TableRow>
                     )

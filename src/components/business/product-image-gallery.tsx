@@ -3,8 +3,8 @@
 import { useState, useEffect } from 'react'
 import Image from 'next/image'
 import { Edit, Upload, Trash2, RotateCw, Eye } from 'lucide-react'
-import { Button } from '../ui/button'
-import { Badge } from '../ui/badge'
+import { ButtonV2 } from '@/components/ui/button'
+import { Badge } from '@/components/ui/badge'
 import { cn } from '../../lib/utils'
 import { useProductImages } from '../../hooks/use-product-images'
 import { ProductImageViewerModal } from './product-image-viewer-modal'
@@ -141,7 +141,7 @@ export function ProductImageGallery({
               >
                 <Eye className="h-3 w-3 mr-1" />
                 Voir
-              </Button>
+              </ButtonV2>
               {!displayImage?.is_primary && (
                 <Button
                   size="sm"
@@ -151,7 +151,7 @@ export function ProductImageGallery({
                 >
                   <RotateCw className="h-3 w-3 mr-1" />
                   Définir principale
-                </Button>
+                </ButtonV2>
               )}
             </div>
           </div>
@@ -190,7 +190,7 @@ export function ProductImageGallery({
         >
           <RotateCw className="h-3 w-3 mr-1" />
           Actualiser
-        </Button>
+        </ButtonV2>
         <div className="text-[10px] text-gray-500">
           {images.length} image{images.length !== 1 ? 's' : ''} •
           {images.filter(i => i.is_primary).length} principale •
@@ -210,7 +210,7 @@ export function ProductImageGallery({
         >
           <Upload className="h-3 w-3 mr-1" />
           Gérer photos ({galleryImages.length})
-        </Button>
+        </ButtonV2>
       </div>
 
       {/* Product Image Viewer Modal */}

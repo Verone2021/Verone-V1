@@ -1,7 +1,7 @@
 "use client"
 
 import { Package, Edit2 } from 'lucide-react'
-import { Button } from '../ui/button'
+import { ButtonV2 } from '@/components/ui/button'
 import { cn } from '../../lib/utils'
 
 interface Product {
@@ -179,7 +179,7 @@ export function ProductFixedCharacteristics({
           >
             <Edit2 className="h-3 w-3 mr-1" />
             Éditer vidéo
-          </Button>
+          </ButtonV2>
         )}
       </div>
 
@@ -291,7 +291,7 @@ export function ProductFixedCharacteristics({
                   >
                     <Edit2 className="h-3 w-3 mr-1" />
                     Modifier
-                  </Button>
+                  </ButtonV2>
                 )}
               </div>
               <div className="text-xs text-green-600 mt-1 break-all">

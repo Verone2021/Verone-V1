@@ -1,16 +1,16 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '../ui/dialog'
-import { Button } from '../ui/button'
-import { Input } from '../ui/input'
-import { Label } from '../ui/label'
-import { Textarea } from '../ui/textarea'
-import { Badge } from '../ui/badge'
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog'
+import { ButtonV2 } from '@/components/ui/button'
+import { Input } from '@/components/ui/input'
+import { Label } from '@/components/ui/label'
+import { Textarea } from '@/components/ui/textarea'
+import { Badge } from '@/components/ui/badge'
 import { X, Tag, Plus } from 'lucide-react'
 import { cn } from '../../lib/utils'
 import type { Collection, CollectionStyle, RoomCategory, CreateCollectionData } from '../../hooks/use-collections'
-import { RoomMultiSelect } from '../ui/room-multi-select'
+import { RoomMultiSelect } from '@/components/ui/room-multi-select'
 import type { RoomType } from '../../types/room-types'
 import { CollectionImageUpload } from './collection-image-upload'
 import {
@@ -259,7 +259,7 @@ export function CollectionFormModal({
                 disabled={!newTag.trim()}
               >
                 <Plus className="h-4 w-4" />
-              </Button>
+              </ButtonV2>
             </div>
             {tags.length > 0 && (
               <div className="flex flex-wrap gap-2">
@@ -328,14 +328,14 @@ export function CollectionFormModal({
               disabled={isSubmitting}
             >
               Annuler
-            </Button>
+            </ButtonV2>
             <Button
               type="submit"
               disabled={!name.trim() || isSubmitting}
               className="bg-black text-white hover:bg-gray-800"
             >
               {isSubmitting ? 'Enregistrement...' : mode === 'create' ? 'Créer' : 'Enregistrer'}
-            </Button>
+            </ButtonV2>
           </DialogFooter>
         </form>
       </DialogContent>

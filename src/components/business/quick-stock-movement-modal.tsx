@@ -3,7 +3,7 @@
 import React, { useState, useEffect } from 'react'
 import { Plus, Minus, Settings, Loader2 } from 'lucide-react'
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog'
-import { Button } from '@/components/ui/button'
+import { ButtonV2 } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Textarea } from '@/components/ui/textarea'
@@ -324,7 +324,7 @@ export function QuickStockMovementModal({
               className="border-black text-black hover:bg-gray-100"
             >
               Annuler
-            </Button>
+            </ButtonV2>
             <Button
               type="submit"
               disabled={submitting}
@@ -338,7 +338,7 @@ export function QuickStockMovementModal({
               ) : (
                 'Enregistrer le mouvement'
               )}
-            </Button>
+            </ButtonV2>
           </DialogFooter>
         </form>
       </DialogContent>

@@ -8,7 +8,7 @@
 "use client"
 
 import { useState } from 'react'
-import { Button } from '@/components/ui/button'
+import { ButtonV2 } from '@/components/ui/button'
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 import { Input } from '@/components/ui/input'
 import { Textarea } from '@/components/ui/textarea'
@@ -255,7 +255,7 @@ export function FamilyForm({
                     onClick={handleRemoveImage}
                   >
                     <X className="h-4 w-4" />
-                  </Button>
+                  </ButtonV2>
                 </div>
               ) : (
                 <div className="text-center">
@@ -341,7 +341,7 @@ export function FamilyForm({
               className="border-gray-300 hover:bg-gray-50"
             >
               Annuler
-            </Button>
+            </ButtonV2>
             <Button
               type="submit"
               disabled={loading || uploadingImage}
@@ -353,7 +353,7 @@ export function FamilyForm({
                 <Save className="h-4 w-4 mr-2" />
               )}
               {mode === 'create' ? 'Créer' : 'Modifier'}
-            </Button>
+            </ButtonV2>
           </div>
         </form>
       </DialogContent>

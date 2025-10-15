@@ -10,7 +10,7 @@ import {
   DialogTitle,
   DialogTrigger,
 } from '@/components/ui/dialog'
-import { Button } from '@/components/ui/button'
+import { ButtonV2 } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Checkbox } from '@/components/ui/checkbox'
@@ -140,10 +140,10 @@ export function CreateIndividualCustomerModal({
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
         {trigger || (
-          <Button variant="outline" size="sm" className="border-black">
+          <ButtonV2 variant="secondary" size="sm">
             <Plus className="h-4 w-4 mr-2" />
             Nouveau client particulier
-          </Button>
+          </ButtonV2>
         )}
       </DialogTrigger>
       <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
@@ -452,21 +452,22 @@ export function CreateIndividualCustomerModal({
 
           {/* Boutons d'action */}
           <div className="flex justify-end space-x-2 pt-4">
-            <Button
+            <ButtonV2
               type="button"
-              variant="outline"
+              variant="secondary"
               onClick={() => setOpen(false)}
               disabled={loading}
             >
               Annuler
-            </Button>
-            <Button
+            </ButtonV2>
+            <ButtonV2
               type="submit"
-              className="bg-black hover:bg-gray-800 text-white"
+              variant="primary"
               disabled={loading}
+              loading={loading}
             >
               {loading ? 'Création...' : 'Créer le client'}
-            </Button>
+            </ButtonV2>
           </div>
         </form>
       </DialogContent>

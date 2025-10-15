@@ -23,7 +23,7 @@ import {
   Settings
 } from 'lucide-react'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
-import { Button } from '@/components/ui/button'
+import { ButtonV2 } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
@@ -149,14 +149,14 @@ export default function SourcingValidationPage() {
                 className="border-black text-black hover:bg-black hover:text-white"
               >
                 Retour Dashboard
-              </Button>
+              </ButtonV2>
               <Button
                 onClick={() => router.push('/catalogue')}
                 className="bg-black hover:bg-gray-800 text-white"
               >
                 <ArrowRight className="h-4 w-4 mr-2" />
                 Voir Catalogue
-              </Button>
+              </ButtonV2>
             </div>
           </div>
         </div>
@@ -172,7 +172,7 @@ export default function SourcingValidationPage() {
           >
             <Settings className="h-4 w-4 mr-2" />
             Validation Sourcing ({productsToValidate.length})
-          </Button>
+          </ButtonV2>
           <Button
             variant={activeTab === 'samples' ? 'default' : 'outline'}
             onClick={() => setActiveTab('samples')}
@@ -180,7 +180,7 @@ export default function SourcingValidationPage() {
           >
             <Package className="h-4 w-4 mr-2" />
             Échantillons Groupés ({productsRequiringSamples.length})
-          </Button>
+          </ButtonV2>
         </div>
 
         {/* Statistiques workflow */}
@@ -270,7 +270,7 @@ export default function SourcingValidationPage() {
                             onClick={() => router.push(`/catalogue/${product.id}`)}
                           >
                             <Eye className="h-4 w-4" />
-                          </Button>
+                          </ButtonV2>
                         </div>
                       </div>
 
@@ -316,7 +316,7 @@ export default function SourcingValidationPage() {
                               >
                                 <Settings className="h-4 w-4 mr-2" />
                                 Valider Sourcing
-                              </Button>
+                              </ButtonV2>
                             </DialogTrigger>
                           </Dialog>
                         </div>
@@ -356,7 +356,7 @@ export default function SourcingValidationPage() {
                     >
                       <ArrowRight className="h-4 w-4 mr-2" />
                       Transférer
-                    </Button>
+                    </ButtonV2>
                   </div>
                 ))}
               </div>
@@ -436,14 +436,14 @@ export default function SourcingValidationPage() {
                   }}
                 >
                   Annuler
-                </Button>
+                </ButtonV2>
                 <Button
                   onClick={() => handleValidateProduct(selectedProduct)}
                   className="bg-black hover:bg-gray-800 text-white"
                   disabled={!selectedProduct.supplier_id}
                 >
                   Valider Sourcing
-                </Button>
+                </ButtonV2>
               </DialogFooter>
             </DialogContent>
           </Dialog>

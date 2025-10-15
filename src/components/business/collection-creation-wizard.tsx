@@ -2,8 +2,8 @@
 
 import { useState, useEffect } from 'react'
 import { X, ArrowLeft, ArrowRight, Check, Upload, Palette, Settings, Info } from 'lucide-react'
-import { Button } from '../ui/button'
-import { Badge } from '../ui/badge'
+import { ButtonV2 } from '@/components/ui/button'
+import { Badge } from '@/components/ui/badge'
 import { cn } from '../../lib/utils'
 import {
   CollectionFormState,
@@ -16,7 +16,7 @@ import {
 
 // ✅ Export pour utilisation externe
 export type { CreateCollectionInput }
-import { RoomMultiSelect } from '../ui/room-multi-select'
+import { RoomMultiSelect } from '@/components/ui/room-multi-select'
 import type { RoomType } from '../../types/room-types'
 import { CollectionImageUpload } from './collection-image-upload'
 
@@ -238,7 +238,7 @@ export function CollectionCreationWizard({
             className="text-gray-500 hover:text-gray-700"
           >
             <X className="h-5 w-5" />
-          </Button>
+          </ButtonV2>
         </div>
 
         {/* Steps Indicator */}
@@ -598,7 +598,7 @@ export function CollectionCreationWizard({
                 Précédent
               </>
             )}
-          </Button>
+          </ButtonV2>
 
           <div className="flex items-center space-x-3">
             <span className="text-sm text-gray-500">
@@ -613,7 +613,7 @@ export function CollectionCreationWizard({
               >
                 Suivant
                 <ArrowRight className="h-4 w-4 ml-2" />
-              </Button>
+              </ButtonV2>
             ) : (
               <Button
                 onClick={handleSubmit}
@@ -631,7 +631,7 @@ export function CollectionCreationWizard({
                     Créer la collection
                   </>
                 )}
-              </Button>
+              </ButtonV2>
             )}
           </div>
         </div>

@@ -2,7 +2,7 @@
 
 import { useState } from 'react'
 import { Truck, Save, X, Edit, ExternalLink, AlertCircle } from 'lucide-react'
-import { Button } from '../ui/button'
+import { ButtonV2 } from '@/components/ui/button'
 import { cn } from '../../lib/utils'
 import { useInlineEdit, type EditableSection } from '../../hooks/use-inline-edit'
 import { SupplierSelector } from './supplier-selector'
@@ -113,7 +113,7 @@ export function SupplierEditSection({
             >
               <X className="h-3 w-3 mr-1" />
               Annuler
-            </Button>
+            </ButtonV2>
             <Button
               variant="default"
               size="xs"
@@ -123,7 +123,7 @@ export function SupplierEditSection({
             >
               <Save className="h-3 w-3 mr-1" />
               {isSaving(section) ? 'Sauvegarde...' : 'Sauvegarder'}
-            </Button>
+            </ButtonV2>
           </div>
         </div>
 
@@ -192,7 +192,7 @@ export function SupplierEditSection({
                     type="button"
                   >
                     <ExternalLink className="h-4 w-4" />
-                  </Button>
+                  </ButtonV2>
                 )}
               </div>
               <div className="text-xs text-gray-600 mt-1">
@@ -226,10 +226,10 @@ export function SupplierEditSection({
             ℹ️ Géré par le groupe de variantes
           </p>
         ) : (
-          <Button variant="outline" size="sm" onClick={handleStartEdit}>
+          <ButtonV2 variant="outline" size="sm" onClick={handleStartEdit}>
             <Edit className="h-3 w-3 mr-1" />
             Modifier
-          </Button>
+          </ButtonV2>
         )}
       </div>
 

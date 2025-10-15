@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react'
 import { X } from 'lucide-react'
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog'
-import { Button } from '@/components/ui/button'
+import { ButtonV2 } from '@/components/ui/button'
 import { SalesOrder } from '@/hooks/use-sales-orders'
 import { CarrierSelector } from './carrier-selector'
 import { ShipmentRecapModal, type ShipmentRecapData, type ShippingMethod } from './shipment-recap-modal'
@@ -219,9 +219,9 @@ export function ShippingManagerModal({ order, open, onClose, onSuccess }: Shippi
                   )}
                 </p>
               </div>
-              <Button variant="ghost" size="icon" onClick={onClose}>
+              <ButtonV2 variant="ghost" size="icon" onClick={onClose}>
                 <X className="h-5 w-5" />
-              </Button>
+              </ButtonV2>
             </div>
           </DialogHeader>
 

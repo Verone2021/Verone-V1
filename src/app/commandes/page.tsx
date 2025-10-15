@@ -15,7 +15,7 @@ import {
   BarChart3,
   ShoppingBag
 } from 'lucide-react'
-import { Button } from '@/components/ui/button'
+import { ButtonV2 } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { useSalesOrders } from '@/hooks/use-sales-orders'
@@ -66,16 +66,16 @@ export default function CommandesOverviewPage() {
           </div>
           <div className="flex space-x-3">
             <Link href="/commandes/clients">
-              <Button variant="outline" className="flex items-center space-x-2">
+              <ButtonV2 variant="outline" className="flex items-center space-x-2">
                 <ShoppingBag className="h-4 w-4" />
                 <span>Commandes Clients</span>
-              </Button>
+              </ButtonV2>
             </Link>
             <Link href="/commandes/fournisseurs">
-              <Button className="flex items-center space-x-2">
+              <ButtonV2 className="flex items-center space-x-2">
                 <Package className="h-4 w-4" />
                 <span>Commandes Fournisseurs</span>
-              </Button>
+              </ButtonV2>
             </Link>
           </div>
         </div>
@@ -153,10 +153,10 @@ export default function CommandesOverviewPage() {
                     <CardTitle className="text-lg">Commandes Clients</CardTitle>
                   </div>
                   <Link href="/commandes/clients">
-                    <Button variant="ghost" size="sm" className="flex items-center space-x-1">
+                    <ButtonV2 variant="ghost" size="sm" className="flex items-center space-x-1">
                       <span>Voir tout</span>
                       <ArrowRight className="h-4 w-4" />
-                    </Button>
+                    </ButtonV2>
                   </Link>
                 </div>
                 <CardDescription>Ventes et expéditions clients</CardDescription>
@@ -202,10 +202,10 @@ export default function CommandesOverviewPage() {
                     <CardTitle className="text-lg">Commandes Fournisseurs</CardTitle>
                   </div>
                   <Link href="/commandes/fournisseurs">
-                    <Button variant="ghost" size="sm" className="flex items-center space-x-1">
+                    <ButtonV2 variant="ghost" size="sm" className="flex items-center space-x-1">
                       <span>Voir tout</span>
                       <ArrowRight className="h-4 w-4" />
-                    </Button>
+                    </ButtonV2>
                   </Link>
                 </div>
                 <CardDescription>Achats et approvisionnements</CardDescription>
@@ -248,28 +248,28 @@ export default function CommandesOverviewPage() {
             <CardContent>
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
                 <Link href="/commandes/clients">
-                  <Button variant="outline" className="w-full flex items-center space-x-2 justify-start">
+                  <ButtonV2 variant="outline" className="w-full flex items-center space-x-2 justify-start">
                     <ShoppingBag className="h-4 w-4" />
                     <span>Nouvelle Vente</span>
-                  </Button>
+                  </ButtonV2>
                 </Link>
                 <Link href="/commandes/fournisseurs">
-                  <Button variant="outline" className="w-full flex items-center space-x-2 justify-start">
+                  <ButtonV2 variant="outline" className="w-full flex items-center space-x-2 justify-start">
                     <Package className="h-4 w-4" />
                     <span>Nouvel Achat</span>
-                  </Button>
+                  </ButtonV2>
                 </Link>
                 <Link href="/catalogue/stocks">
-                  <Button variant="outline" className="w-full flex items-center space-x-2 justify-start">
+                  <ButtonV2 variant="outline" className="w-full flex items-center space-x-2 justify-start">
                     <BarChart3 className="h-4 w-4" />
                     <span>État Stocks</span>
-                  </Button>
+                  </ButtonV2>
                 </Link>
                 <Link href="/contacts-organisations">
-                  <Button variant="outline" className="w-full flex items-center space-x-2 justify-start">
+                  <ButtonV2 variant="outline" className="w-full flex items-center space-x-2 justify-start">
                     <Users className="h-4 w-4" />
                     <span>Organisations</span>
-                  </Button>
+                  </ButtonV2>
                 </Link>
               </div>
             </CardContent>

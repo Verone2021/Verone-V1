@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect, useMemo, useCallback } from 'react'
 import { History, Clock, User, TrendingUp, TrendingDown, RotateCcw, FileText, Calendar } from 'lucide-react'
-import { Button } from '@/components/ui/button'
+import { ButtonV2 } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import {
   Dialog,
@@ -292,9 +292,9 @@ export function ProductStockHistoryModal({ product, isOpen, onClose }: ProductSt
           )}
 
           <div className="flex justify-end pt-4 border-t">
-            <Button variant="outline" onClick={onClose}>
+            <ButtonV2 variant="outline" onClick={onClose}>
               Fermer
-            </Button>
+            </ButtonV2>
           </div>
         </div>
       </DialogContent>

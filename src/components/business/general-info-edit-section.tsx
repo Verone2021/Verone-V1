@@ -2,7 +2,7 @@
 
 import { useState } from 'react'
 import { Edit2, Save, X, FileText } from 'lucide-react'
-import { Button } from '../ui/button'
+import { ButtonV2 } from '@/components/ui/button'
 import { cn } from '../../lib/utils'
 import { useInlineEdit, type EditableSection } from '../../hooks/use-inline-edit'
 import { generateVariantName } from '../../lib/business-rules/naming-rules'
@@ -105,7 +105,7 @@ export function GeneralInfoEditSection({ product, onUpdate, className }: General
             >
               <X className="h-3 w-3 mr-1" />
               Annuler
-            </Button>
+            </ButtonV2>
             <Button
               variant="default"
               size="sm"
@@ -114,7 +114,7 @@ export function GeneralInfoEditSection({ product, onUpdate, className }: General
             >
               <Save className="h-3 w-3 mr-1" />
               {isSaving(section) ? 'Sauvegarde...' : 'Sauvegarder'}
-            </Button>
+            </ButtonV2>
           </div>
         </div>
 
@@ -185,10 +185,10 @@ export function GeneralInfoEditSection({ product, onUpdate, className }: General
           <FileText className="h-5 w-5 mr-2" />
           Informations Générales
         </h3>
-        <Button variant="outline" size="sm" onClick={handleStartEdit}>
+        <ButtonV2 variant="outline" size="sm" onClick={handleStartEdit}>
           <Edit2 className="h-3 w-3 mr-1" />
           Modifier
-        </Button>
+        </ButtonV2>
       </div>
 
       <div className="space-y-3">

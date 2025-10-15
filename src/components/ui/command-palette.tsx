@@ -8,7 +8,7 @@
 
 import React, { useState, useEffect, useRef, useMemo, useCallback } from 'react'
 import { createPortal } from 'react-dom'
-import { Button } from '@/components/ui/button'
+import { ButtonV2 } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { Input } from '@/components/ui/input'
 import {
@@ -490,7 +490,7 @@ export function CommandPalette({
         <kbd className="pointer-events-none absolute right-2 top-1/2 -translate-y-1/2 select-none items-center gap-1 rounded border bg-muted px-1.5 py-0.5 font-mono text-xs font-medium opacity-100 sm:flex">
           <span className="text-xs">⌘</span>K
         </kbd>
-      </Button>
+      </ButtonV2>
 
       {/* Command Dialog */}
       <CommandDialog open={open} onOpenChange={setOpen}>
@@ -585,7 +585,7 @@ export function CommandPalette({
                           ) : (
                             <Bookmark className="w-3 h-3" />
                           )}
-                        </Button>
+                        </ButtonV2>
                       </div>
                     </CommandItem>
                   )

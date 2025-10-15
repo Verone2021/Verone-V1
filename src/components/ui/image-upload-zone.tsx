@@ -10,7 +10,7 @@
 import { useCallback, useState } from 'react'
 import { useDropzone } from 'react-dropzone'
 import { createClient } from '@/lib/supabase/client'
-import { Button } from '@/components/ui/button'
+import { ButtonV2 } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
 import {
   Upload,
@@ -298,7 +298,7 @@ export function ImageUploadZone({
                 className="h-8 w-8"
               >
                 <X className="h-4 w-4" />
-              </Button>
+              </ButtonV2>
             </div>
           </CardContent>
         </Card>

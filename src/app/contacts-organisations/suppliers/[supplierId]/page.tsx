@@ -4,7 +4,7 @@ import { useState } from 'react'
 import { useParams } from 'next/navigation'
 import Link from 'next/link'
 import { Card, CardContent } from '@/components/ui/card'
-import { Button } from '@/components/ui/button'
+import { ButtonV2 } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import {
   ArrowLeft,
@@ -111,12 +111,12 @@ export default function SupplierDetailPage() {
             <p className="text-gray-600 mb-4">
               Ce fournisseur n'existe pas ou vous n'avez pas les droits pour le consulter.
             </p>
-            <Button asChild>
+            <ButtonV2 asChild>
               <Link href="/contacts-organisations/suppliers">
                 <ArrowLeft className="h-4 w-4 mr-2" />
                 Retour aux fournisseurs
               </Link>
-            </Button>
+            </ButtonV2>
           </CardContent>
         </Card>
       </div>
@@ -148,10 +148,10 @@ export default function SupplierDetailPage() {
         <div>
           <div className="flex items-center gap-2 mb-2">
             <Link href="/contacts-organisations/suppliers">
-              <Button variant="ghost" size="sm">
+              <ButtonV2 variant="ghost" size="sm">
                 <ArrowLeft className="h-4 w-4 mr-1" />
                 Fournisseurs
-              </Button>
+              </ButtonV2>
             </Link>
           </div>
           <div className="flex items-center gap-3 mb-2">
@@ -194,7 +194,7 @@ export default function SupplierDetailPage() {
                 Archiver
               </>
             )}
-          </Button>
+          </ButtonV2>
         </div>
       </div>
 

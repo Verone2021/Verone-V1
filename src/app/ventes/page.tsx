@@ -14,7 +14,7 @@ import {
   Package
 } from 'lucide-react'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
-import { Button } from '@/components/ui/button'
+import { ButtonV2 } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 
 export default function VentesDashboardPage() {
@@ -122,7 +122,7 @@ export default function VentesDashboardPage() {
           <CardContent>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               {/* Consultations */}
-              <Button
+              <ButtonV2
                 variant="outline"
                 className="h-24 border-black text-black hover:bg-black hover:text-white justify-start"
                 onClick={() => router.push('/consultations')}
@@ -141,10 +141,10 @@ export default function VentesDashboardPage() {
                     </Badge>
                   )}
                 </div>
-              </Button>
+              </ButtonV2>
 
               {/* Commandes Clients */}
-              <Button
+              <ButtonV2
                 variant="outline"
                 className="h-24 border-black text-black hover:bg-black hover:text-white justify-start"
                 onClick={() => router.push('/commandes/clients')}
@@ -163,7 +163,7 @@ export default function VentesDashboardPage() {
                     </Badge>
                   )}
                 </div>
-              </Button>
+              </ButtonV2>
             </div>
           </CardContent>
         </Card>
@@ -211,13 +211,13 @@ export default function VentesDashboardPage() {
                   </div>
                 ))}
               </div>
-              <Button
+              <ButtonV2
                 variant="outline"
                 className="w-full mt-4 border-black text-black hover:bg-black hover:text-white"
                 onClick={() => router.push('/consultations')}
               >
                 Voir toutes les consultations
-              </Button>
+              </ButtonV2>
             </CardContent>
           </Card>
 
@@ -262,13 +262,13 @@ export default function VentesDashboardPage() {
                   </div>
                 ))}
               </div>
-              <Button
+              <ButtonV2
                 variant="outline"
                 className="w-full mt-4 border-black text-black hover:bg-black hover:text-white"
                 onClick={() => router.push('/commandes/clients')}
               >
                 Voir toutes les commandes
-              </Button>
+              </ButtonV2>
             </CardContent>
           </Card>
         </div>
@@ -281,7 +281,7 @@ export default function VentesDashboardPage() {
           </CardHeader>
           <CardContent>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              <Button
+              <ButtonV2
                 variant="outline"
                 className="h-16 border-black text-black hover:bg-black hover:text-white"
                 onClick={() => router.push('/consultations/create')}
@@ -290,9 +290,9 @@ export default function VentesDashboardPage() {
                   <MessageCircle className="h-5 w-5" />
                   <span className="text-sm">Nouvelle Consultation</span>
                 </div>
-              </Button>
+              </ButtonV2>
 
-              <Button
+              <ButtonV2
                 variant="outline"
                 className="h-16 border-black text-black hover:bg-black hover:text-white"
                 onClick={() => router.push('/commandes/clients')}
@@ -301,9 +301,9 @@ export default function VentesDashboardPage() {
                   <Calendar className="h-5 w-5" />
                   <span className="text-sm">Calendrier Livraisons</span>
                 </div>
-              </Button>
+              </ButtonV2>
 
-              <Button
+              <ButtonV2
                 variant="outline"
                 className="h-16 border-black text-black hover:bg-black hover:text-white"
                 onClick={() => router.push('/consultations')}
@@ -312,7 +312,7 @@ export default function VentesDashboardPage() {
                   <AlertCircle className="h-5 w-5" />
                   <span className="text-sm">Relances à Faire</span>
                 </div>
-              </Button>
+              </ButtonV2>
             </div>
           </CardContent>
         </Card>

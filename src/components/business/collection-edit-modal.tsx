@@ -12,7 +12,7 @@ import {
   DialogTitle,
   DialogFooter,
 } from '@/components/ui/dialog'
-import { Button } from '@/components/ui/button'
+import { ButtonV2 } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Textarea } from '@/components/ui/textarea'
@@ -215,14 +215,14 @@ export function CollectionEditModal({
               disabled={loading}
             >
               Annuler
-            </Button>
+            </ButtonV2>
             <Button
               type="submit"
               disabled={loading || !formData.name}
               className="bg-black text-white hover:bg-gray-800"
             >
               {loading ? 'Enregistrement...' : 'Enregistrer'}
-            </Button>
+            </ButtonV2>
           </DialogFooter>
         </form>
       </DialogContent>

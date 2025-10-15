@@ -2,7 +2,7 @@
 
 import { useState, useRef } from "react"
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
-import { Button } from "@/components/ui/button"
+import { ButtonV2 } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
@@ -473,7 +473,7 @@ export function ErrorReportModal({
                     >
                       <Camera className="h-4 w-4 mr-2" />
                       Capture écran
-                    </Button>
+                    </ButtonV2>
                     <Button
                       type="button"
                       variant="outline"
@@ -482,7 +482,7 @@ export function ErrorReportModal({
                     >
                       <Upload className="h-4 w-4 mr-2" />
                       Upload fichier
-                    </Button>
+                    </ButtonV2>
                   </div>
                 </div>
 
@@ -532,7 +532,7 @@ export function ErrorReportModal({
                             onClick={() => removeScreenshot(index)}
                           >
                             <X className="h-3 w-3" />
-                          </Button>
+                          </ButtonV2>
                           <p className="text-xs text-gray-600 mt-1 truncate">
                             {file.name}
                           </p>
@@ -609,7 +609,7 @@ export function ErrorReportModal({
                     onClick={addStep}
                   >
                     Ajouter étape
-                  </Button>
+                  </ButtonV2>
                 </div>
 
                 {formData.steps && formData.steps.length > 0 ? (
@@ -634,7 +634,7 @@ export function ErrorReportModal({
                           onClick={() => removeStep(index)}
                         >
                           <Trash2 className="h-4 w-4" />
-                        </Button>
+                        </ButtonV2>
                       </div>
                     ))}
                   </div>
@@ -664,7 +664,7 @@ export function ErrorReportModal({
                 disabled={isSubmitting}
               >
                 Annuler
-              </Button>
+              </ButtonV2>
 
               <Button
                 type="submit"
@@ -682,7 +682,7 @@ export function ErrorReportModal({
                     {existingReport ? 'Mettre à jour' : 'Créer le rapport'}
                   </>
                 )}
-              </Button>
+              </ButtonV2>
             </div>
           </div>
         </form>
@@ -719,7 +719,7 @@ export function QuickErrorReport({
       title="Signaler une erreur"
     >
       <AlertTriangle className="h-4 w-4 text-black" />
-    </Button>
+    </ButtonV2>
   ) : (
     <Button
       variant="outline"
@@ -728,7 +728,7 @@ export function QuickErrorReport({
     >
       <AlertTriangle className="mr-2 h-4 w-4" />
       Signaler erreur
-    </Button>
+    </ButtonV2>
   )
 
   return (

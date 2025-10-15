@@ -12,7 +12,7 @@ import { createClient } from '@/lib/supabase/client'
 import { useFinancialPayments } from '@/hooks/use-financial-payments'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
-import { Button } from '@/components/ui/button'
+import { ButtonV2 } from '@/components/ui/button'
 import { Separator } from '@/components/ui/separator'
 import {
   Table,
@@ -151,11 +151,11 @@ export default function ExpenseDetailPage(props: PageProps) {
     return (
       <div className="flex flex-col gap-6 p-6">
         <div className="flex items-center gap-4">
-          <Button variant="ghost" size="icon" asChild>
+          <ButtonV2 variant="ghost" size="icon" asChild>
             <Link href="/finance/depenses">
               <ArrowLeft className="h-4 w-4" />
             </Link>
-          </Button>
+          </ButtonV2>
 
           <div>
             <h1 className="text-3xl font-bold">Nouvelle Dépense</h1>
@@ -177,12 +177,12 @@ export default function ExpenseDetailPage(props: PageProps) {
         <h3 className="text-lg font-medium text-gray-900 mb-2">
           Dépense introuvable
         </h3>
-        <Button asChild>
+        <ButtonV2 asChild>
           <Link href="/finance/depenses">
             <ArrowLeft className="h-4 w-4 mr-2" />
             Retour à la liste
           </Link>
-        </Button>
+        </ButtonV2>
       </div>
     )
   }
@@ -195,11 +195,11 @@ export default function ExpenseDetailPage(props: PageProps) {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-4">
-          <Button variant="ghost" size="icon" asChild>
+          <ButtonV2 variant="ghost" size="icon" asChild>
             <Link href="/finance/depenses">
               <ArrowLeft className="h-4 w-4" />
             </Link>
-          </Button>
+          </ButtonV2>
 
           <div>
             <h1 className="text-3xl font-bold">{document.document_number}</h1>
@@ -213,12 +213,12 @@ export default function ExpenseDetailPage(props: PageProps) {
           {getStatusBadge(document.status)}
 
           {document.uploaded_file_url && (
-            <Button variant="outline" asChild>
+            <ButtonV2 variant="outline" asChild>
               <a href={document.uploaded_file_url} target="_blank" rel="noopener noreferrer">
                 <Download className="h-4 w-4 mr-2" />
                 Télécharger justificatif
               </a>
-            </Button>
+            </ButtonV2>
           )}
         </div>
       </div>
@@ -355,10 +355,10 @@ export default function ExpenseDetailPage(props: PageProps) {
             <CardTitle>Historique des paiements ({payments.length})</CardTitle>
 
             {!isPaid && remaining > 0 && !showPaymentForm && (
-              <Button onClick={() => setShowPaymentForm(true)}>
+              <ButtonV2 onClick={() => setShowPaymentForm(true)}>
                 <CreditCard className="h-4 w-4 mr-2" />
                 Enregistrer un paiement
-              </Button>
+              </ButtonV2>
             )}
           </div>
         </CardHeader>
@@ -453,12 +453,12 @@ export default function ExpenseDetailPage(props: PageProps) {
                   Facture ou reçu de la dépense
                 </p>
               </div>
-              <Button variant="outline" asChild>
+              <ButtonV2 variant="outline" asChild>
                 <a href={document.uploaded_file_url} target="_blank" rel="noopener noreferrer">
                   <Download className="h-4 w-4 mr-2" />
                   Télécharger
                 </a>
-              </Button>
+              </ButtonV2>
             </div>
           </CardContent>
         </Card>

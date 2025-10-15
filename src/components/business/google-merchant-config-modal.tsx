@@ -26,7 +26,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog'
-import { Button } from '@/components/ui/button'
+import { ButtonV2 } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert'
 import { Card, CardContent } from '@/components/ui/card'
@@ -140,7 +140,7 @@ export function GoogleMerchantConfigModal({
           <div className="space-y-4">
             <div className="flex items-center justify-between">
               <h3 className="text-lg font-semibold text-black">Informations du compte</h3>
-              <Button
+              <ButtonV2
                 variant="ghost"
                 size="sm"
                 onClick={() => setShowCredentials(!showCredentials)}
@@ -157,7 +157,7 @@ export function GoogleMerchantConfigModal({
                     Afficher détails
                   </>
                 )}
-              </Button>
+              </ButtonV2>
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -265,7 +265,7 @@ export function GoogleMerchantConfigModal({
                   </div>
                 )}
 
-                <Button
+                <ButtonV2
                   variant="outline"
                   size="sm"
                   className="w-full border-green-400 text-green-700 hover:bg-green-100"
@@ -273,7 +273,7 @@ export function GoogleMerchantConfigModal({
                 >
                   <ExternalLink className="h-4 w-4 mr-2" />
                   Ouvrir Google Merchant Center
-                </Button>
+                </ButtonV2>
               </CardContent>
             </Card>
           )}
@@ -302,7 +302,7 @@ export function GoogleMerchantConfigModal({
 
           {/* Action Buttons */}
           <div className="flex items-center space-x-3">
-            <Button
+            <ButtonV2
               onClick={testConnection}
               disabled={testing}
               className="flex-1 bg-black hover:bg-gray-800 text-white"
@@ -318,25 +318,25 @@ export function GoogleMerchantConfigModal({
                   Tester la connexion
                 </>
               )}
-            </Button>
+            </ButtonV2>
 
             {connectionStatus !== 'idle' && (
-              <Button
+              <ButtonV2
                 variant="outline"
                 onClick={resetTest}
                 className="border-black text-black hover:bg-gray-100"
               >
                 Réinitialiser
-              </Button>
+              </ButtonV2>
             )}
 
-            <Button
+            <ButtonV2
               variant="outline"
               onClick={() => onOpenChange(false)}
               className="border-gray-300 text-gray-700 hover:bg-gray-100"
             >
               Fermer
-            </Button>
+            </ButtonV2>
           </div>
 
           {/* Documentation Link */}

@@ -2,8 +2,8 @@
 
 import { useState, useEffect } from 'react'
 import { Eye, Settings, ToggleLeft, ToggleRight } from 'lucide-react'
-import { Button } from '../ui/button'
-import { Badge } from '../ui/badge'
+import { ButtonV2 } from '@/components/ui/button'
+import { Badge } from '@/components/ui/badge'
 import { cn } from '../../lib/utils'
 
 import { ProductViewMode } from './product-view-mode'
@@ -112,7 +112,7 @@ export function ProductDualMode({
                 >
                   <Eye className="h-3 w-3 md:h-4 md:w-4 md:mr-1" />
                   <span className="hidden sm:inline">Présentation</span>
-                </Button>
+                </ButtonV2>
 
                 <Button
                   variant={currentMode === 'edit' ? 'default' : 'ghost'}
@@ -128,7 +128,7 @@ export function ProductDualMode({
                 >
                   <Settings className="h-3 w-3 md:h-4 md:w-4 md:mr-1" />
                   <span className="hidden sm:inline">Administration</span>
-                </Button>
+                </ButtonV2>
               </div>
 
               {/* Toggle switch animé - Masqué sur très petit écran */}

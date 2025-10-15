@@ -2,7 +2,7 @@
 
 import { useState } from 'react'
 import { User, Save, X, Edit, Mail, Phone, Globe } from 'lucide-react'
-import { Button } from '../ui/button'
+import { ButtonV2 } from '@/components/ui/button'
 import { cn } from '../../lib/utils'
 import { useInlineEdit, type EditableSection } from '../../hooks/use-inline-edit'
 
@@ -99,7 +99,7 @@ export function ContactEditSection({ organisation, onUpdate, className }: Contac
             >
               <X className="h-3 w-3 mr-1" />
               Annuler
-            </Button>
+            </ButtonV2>
             <Button
               variant="default"
               size="sm"
@@ -108,7 +108,7 @@ export function ContactEditSection({ organisation, onUpdate, className }: Contac
             >
               <Save className="h-3 w-3 mr-1" />
               {isSaving(section) ? 'Sauvegarde...' : 'Sauvegarder'}
-            </Button>
+            </ButtonV2>
           </div>
         </div>
 
@@ -209,10 +209,10 @@ export function ContactEditSection({ organisation, onUpdate, className }: Contac
           <User className="h-5 w-5 mr-2" />
           Informations Contact
         </h3>
-        <Button variant="outline" size="sm" onClick={handleStartEdit}>
+        <ButtonV2 variant="outline" size="sm" onClick={handleStartEdit}>
           <Edit className="h-3 w-3 mr-1" />
           Modifier
-        </Button>
+        </ButtonV2>
       </div>
 
       <div className="space-y-3">

@@ -3,7 +3,7 @@
 import React, { useState, useEffect } from 'react'
 import { RefreshCw, AlertTriangle, Package } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
-import { Button } from '@/components/ui/button'
+import { ButtonV2 } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Textarea } from '@/components/ui/textarea'
@@ -296,7 +296,7 @@ export function StockMovementModal({ product: initialProduct, isOpen, onClose, o
                   className="justify-start"
                 >
                   Ajouter (+)
-                </Button>
+                </ButtonV2>
               )}
 
               {/* Retirer - Visible uniquement si contexte sortie ou inventaire */}
@@ -308,7 +308,7 @@ export function StockMovementModal({ product: initialProduct, isOpen, onClose, o
                   className="justify-start"
                 >
                   Retirer (-)
-                </Button>
+                </ButtonV2>
               )}
 
               {/* Ajuster - Toujours visible (correction inventaire) */}
@@ -319,7 +319,7 @@ export function StockMovementModal({ product: initialProduct, isOpen, onClose, o
                 className="justify-start"
               >
                 Ajuster (=)
-              </Button>
+              </ButtonV2>
             </div>
             {movementType === 'adjust' && (
               <div className="bg-blue-50 border border-blue-200 rounded-md p-3 space-y-1">
@@ -382,7 +382,7 @@ export function StockMovementModal({ product: initialProduct, isOpen, onClose, o
                     <div>
                       <div className="font-medium">{reason.label}</div>
                     </div>
-                  </Button>
+                  </ButtonV2>
                 ))}
               </div>
             </div>
@@ -390,9 +390,9 @@ export function StockMovementModal({ product: initialProduct, isOpen, onClose, o
             {/* Tous les motifs */}
             <Collapsible open={showAdvanced} onOpenChange={setShowAdvanced}>
               <CollapsibleTrigger asChild>
-                <Button variant="ghost" size="sm" className="text-blue-600">
+                <ButtonV2 variant="ghost" size="sm" className="text-blue-600">
                   {showAdvanced ? 'Masquer' : 'Voir tous les motifs'}
-                </Button>
+                </ButtonV2>
               </CollapsibleTrigger>
               <CollapsibleContent className="space-y-2 mt-2">
                 <Select value={reasonCode} onValueChange={(value: StockReasonCode) => setReasonCode(value)}>
@@ -464,7 +464,7 @@ export function StockMovementModal({ product: initialProduct, isOpen, onClose, o
               className="flex-1"
             >
               Annuler
-            </Button>
+            </ButtonV2>
             <Button
               type="submit"
               disabled={loading || validation?.type === 'error' || !selectedProduct}
@@ -474,7 +474,7 @@ export function StockMovementModal({ product: initialProduct, isOpen, onClose, o
                 <RefreshCw className="h-4 w-4 animate-spin mr-2" />
               ) : null}
               Enregistrer le mouvement
-            </Button>
+            </ButtonV2>
           </div>
         </form>
       </DialogContent>

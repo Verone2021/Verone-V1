@@ -2,7 +2,7 @@
 
 import { useState } from 'react'
 import { Check, ChevronDown } from 'lucide-react'
-import { Button } from '../ui/button'
+import { ButtonV2 } from '@/components/ui/button'
 import { cn } from '../../lib/utils'
 
 // Couleurs prédéfinies selon business rules
@@ -106,7 +106,7 @@ export function ColorSelector({
           "h-4 w-4 opacity-50 transition-transform",
           isOpen && "rotate-180"
         )} />
-      </Button>
+      </ButtonV2>
 
       {/* Menu déroulant */}
       {isOpen && (
@@ -180,7 +180,7 @@ export function MaterialSelector({
           "h-4 w-4 opacity-50 transition-transform",
           isOpen && "rotate-180"
         )} />
-      </Button>
+      </ButtonV2>
 
       {/* Menu déroulant */}
       {isOpen && (

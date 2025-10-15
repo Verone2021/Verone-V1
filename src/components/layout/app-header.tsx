@@ -1,7 +1,7 @@
 "use client"
 
 import { Search, User, LogOut, Settings, Users, Activity } from "lucide-react"
-import { Button } from "../ui/button"
+import { ButtonV2 } from "@/components/ui/button"
 import { cn } from "../../lib/utils"
 import {
   DropdownMenu,
@@ -9,7 +9,7 @@ import {
   DropdownMenuItem,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
-} from "../ui/dropdown-menu"
+} from "@/components/ui/dropdown-menu"
 import { createClient } from "@/lib/supabase/client"
 import { useRouter } from "next/navigation"
 import { useEffect, useState } from "react"
@@ -74,10 +74,10 @@ export function AppHeader({ className }: AppHeaderProps) {
         {/* Menu Profil utilisateur */}
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
-            <Button variant="ghost" size="icon">
+            <ButtonV2 variant="ghost" size="icon">
               <User className="h-5 w-5" />
               <span className="sr-only">Menu profil</span>
-            </Button>
+            </ButtonV2>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end" className="w-56">
             <DropdownMenuItem

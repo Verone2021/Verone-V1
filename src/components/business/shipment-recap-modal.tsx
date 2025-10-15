@@ -2,7 +2,7 @@
 
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 import { Card, CardContent } from '@/components/ui/card'
-import { Button } from '@/components/ui/button'
+import { ButtonV2 } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { Package, Truck, MapPin, DollarSign, Calendar, FileText, ArrowLeft, Check } from 'lucide-react'
 import { format } from 'date-fns'
@@ -349,12 +349,12 @@ export function ShipmentRecapModal({ open, data, onConfirm, onBack, loading }: S
 
         {/* Actions */}
         <div className="flex justify-between gap-3 pt-6 border-t mt-6">
-          <Button variant="outline" onClick={onBack} disabled={loading}>
+          <ButtonV2 variant="outline" onClick={onBack} disabled={loading}>
             <ArrowLeft className="h-4 w-4 mr-2" />
             Retour
-          </Button>
+          </ButtonV2>
 
-          <Button onClick={onConfirm} disabled={loading} size="lg" className="min-w-[200px]">
+          <ButtonV2 onClick={onConfirm} disabled={loading} size="lg" className="min-w-[200px]">
             {loading ? (
               'Enregistrement...'
             ) : (
@@ -363,7 +363,7 @@ export function ShipmentRecapModal({ open, data, onConfirm, onBack, loading }: S
                 Valider l'expédition
               </>
             )}
-          </Button>
+          </ButtonV2>
         </div>
       </DialogContent>
     </Dialog>

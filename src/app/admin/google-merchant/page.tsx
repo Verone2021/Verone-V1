@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
-import { Button } from '@/components/ui/button'
+import { ButtonV2 } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import {
   ShoppingBag,
@@ -190,7 +190,7 @@ export default function GoogleMerchantAdminPage() {
               </h1>
               <p className="text-gray-600 mt-1">Configuration et gestion de l'intégration Google Merchant</p>
             </div>
-            <Button
+            <ButtonV2
               variant="outline"
               onClick={testConnection}
               disabled={isTestingConnection}
@@ -202,7 +202,7 @@ export default function GoogleMerchantAdminPage() {
                 <Settings className="h-4 w-4 mr-2" />
               )}
               Test Connexion
-            </Button>
+            </ButtonV2>
           </div>
         </div>
       </div>
@@ -284,7 +284,7 @@ export default function GoogleMerchantAdminPage() {
               <CardDescription>Synchroniser les produits avec Google Merchant Center</CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
-              <Button
+              <ButtonV2
                 onClick={syncTestProduct}
                 disabled={isSyncing || !connectionStatus?.apiConnection}
                 className="w-full bg-black hover:bg-gray-800 text-white"
@@ -295,7 +295,7 @@ export default function GoogleMerchantAdminPage() {
                   <Upload className="h-4 w-4 mr-2" />
                 )}
                 Synchroniser Produit Test
-              </Button>
+              </ButtonV2>
 
               {syncResults.length > 0 && (
                 <div className="space-y-2">
@@ -331,7 +331,7 @@ export default function GoogleMerchantAdminPage() {
               <CardDescription>Télécharger les produits au format Google Merchant</CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
-              <Button
+              <ButtonV2
                 onClick={exportToExcel}
                 disabled={isExporting}
                 variant="outline"
@@ -343,7 +343,7 @@ export default function GoogleMerchantAdminPage() {
                   <Download className="h-4 w-4 mr-2" />
                 )}
                 Télécharger Excel (10 produits)
-              </Button>
+              </ButtonV2>
 
               <div className="text-xs text-gray-600 space-y-1">
                 <p>• Format conforme template Google Merchant</p>

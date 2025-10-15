@@ -3,7 +3,7 @@
 import { useState } from 'react'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
-import { Button } from '@/components/ui/button'
+import { ButtonV2 } from '@/components/ui/button'
 import { ArrowDownToLine, ArrowUpFromLine, ExternalLink, Package, TrendingUp, TrendingDown } from 'lucide-react'
 import Link from 'next/link'
 
@@ -155,7 +155,7 @@ export function ForecastSummaryWidget({
 
         {/* Footer avec liens */}
         <div className="flex gap-2 pt-2 border-t">
-          <Button
+          <ButtonV2
             variant="outline"
             size="sm"
             className="flex-1 text-xs border-black text-black hover:bg-black hover:text-white"
@@ -164,8 +164,8 @@ export function ForecastSummaryWidget({
             <Link href="/commandes/fournisseurs">
               Voir toutes les commandes fournisseurs
             </Link>
-          </Button>
-          <Button
+          </ButtonV2>
+          <ButtonV2
             variant="outline"
             size="sm"
             className="flex-1 text-xs border-black text-black hover:bg-black hover:text-white"
@@ -174,7 +174,7 @@ export function ForecastSummaryWidget({
             <Link href="/commandes/clients">
               Voir toutes les commandes clients
             </Link>
-          </Button>
+          </ButtonV2>
         </div>
       </CardContent>
     </Card>

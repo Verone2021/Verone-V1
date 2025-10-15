@@ -5,7 +5,7 @@
 
 import React, { useState } from 'react';
 import { ProductCard } from './product-card';
-import { Button } from '@/components/ui/button';
+import { ButtonV2 } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { cn } from '@/lib/utils';
 
@@ -168,14 +168,14 @@ export const CollectionGrid: React.FC<CollectionGridProps> = ({
         {/* Actions header */}
         <div className="flex gap-3">
           {onExport && (
-            <Button variant="secondary" onClick={onExport}>
+            <ButtonV2 variant="secondary" onClick={onExport}>
               Exporter
-            </Button>
+            </ButtonV2>
           )}
           {onAddProduct && (
-            <Button onClick={onAddProduct}>
+            <ButtonV2 onClick={onAddProduct}>
               Nouveau produit
-            </Button>
+            </ButtonV2>
           )}
         </div>
       </div>
@@ -222,7 +222,7 @@ export const CollectionGrid: React.FC<CollectionGridProps> = ({
               className="w-full text-left justify-start"
             >
               Réinitialiser les filtres
-            </Button>
+            </ButtonV2>
           )}
 
           {/* Mode d'affichage */}
@@ -235,14 +235,14 @@ export const CollectionGrid: React.FC<CollectionGridProps> = ({
                 onClick={() => setViewMode('grid')}
               >
                 Grille
-              </Button>
+              </ButtonV2>
               <Button
                 variant={viewMode === 'list' ? 'default' : 'secondary'}
                 size="sm"
                 onClick={() => setViewMode('list')}
               >
                 Liste
-              </Button>
+              </ButtonV2>
             </div>
           </div>
         </div>
@@ -255,9 +255,9 @@ export const CollectionGrid: React.FC<CollectionGridProps> = ({
                 Aucun produit trouvé
               </div>
               {(selectedCategories.length > 0 || selectedStatuses.length > 0 || searchQuery) && (
-                <Button variant="secondary" onClick={resetFilters}>
+                <ButtonV2 variant="secondary" onClick={resetFilters}>
                   Voir tous les produits
-                </Button>
+                </ButtonV2>
               )}
             </div>
           ) : (

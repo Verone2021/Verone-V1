@@ -19,19 +19,19 @@ import {
   Loader2,
   Star
 } from 'lucide-react'
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../ui/card'
-import { Button } from '../ui/button'
-import { Badge } from '../ui/badge'
-import { Input } from '../ui/input'
-import { Textarea } from '../ui/textarea'
-import { Label } from '../ui/label'
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
+import { ButtonV2 } from '@/components/ui/button'
+import { Badge } from '@/components/ui/badge'
+import { Input } from '@/components/ui/input'
+import { Textarea } from '@/components/ui/textarea'
+import { Label } from '@/components/ui/label'
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from '../ui/select'
+} from '@/components/ui/select'
 import {
   Dialog,
   DialogContent,
@@ -40,7 +40,7 @@ import {
   DialogHeader,
   DialogTitle,
   DialogTrigger,
-} from '../ui/dialog'
+} from '@/components/ui/dialog'
 import { useSourcingProducts } from '../../hooks/use-sourcing-products'
 import { useToast } from '../../hooks/use-toast'
 import { createClient } from '../../lib/supabase/client'
@@ -323,7 +323,7 @@ export function SampleOrderValidation({ className }: SampleOrderValidationProps)
           >
             <ArrowRight className="h-4 w-4 mr-2" />
             Validation Produits
-          </Button>
+          </ButtonV2>
         </div>
 
         {/* Métriques rapides */}
@@ -387,9 +387,9 @@ export function SampleOrderValidation({ className }: SampleOrderValidationProps)
                     </div>
 
                     <div className="flex items-center space-x-2 ml-4">
-                      <Button variant="outline" size="sm" className="border-gray-300">
+                      <ButtonV2 variant="outline" size="sm" className="border-gray-300">
                         <Eye className="h-4 w-4" />
-                      </Button>
+                      </ButtonV2>
                       {order.status === 'pending_approval' && (
                         <Dialog>
                           <DialogTrigger asChild>
@@ -400,7 +400,7 @@ export function SampleOrderValidation({ className }: SampleOrderValidationProps)
                             >
                               <CheckCircle className="h-4 w-4 mr-2" />
                               Approuver
-                            </Button>
+                            </ButtonV2>
                           </DialogTrigger>
                         </Dialog>
                       )}
@@ -412,7 +412,7 @@ export function SampleOrderValidation({ className }: SampleOrderValidationProps)
                         >
                           <Truck className="h-4 w-4 mr-2" />
                           Marquer livré
-                        </Button>
+                        </ButtonV2>
                       )}
                     </div>
                   </div>
@@ -483,7 +483,7 @@ export function SampleOrderValidation({ className }: SampleOrderValidationProps)
                             >
                               <X className="h-4 w-4 mr-2" />
                               Rejeter
-                            </Button>
+                            </ButtonV2>
                           </DialogTrigger>
                           <DialogContent>
                             <DialogHeader>
@@ -501,15 +501,15 @@ export function SampleOrderValidation({ className }: SampleOrderValidationProps)
                               />
                             </div>
                             <DialogFooter>
-                              <Button variant="outline" onClick={() => setValidationNotes('')}>
+                              <ButtonV2 variant="outline" onClick={() => setValidationNotes('')}>
                                 Annuler
-                              </Button>
+                              </ButtonV2>
                               <Button
                                 onClick={() => handleValidateSamples(selectedItems, 'rejected', validationNotes)}
                                 className="bg-red-600 hover:bg-red-700 text-white"
                               >
                                 Confirmer Rejet
-                              </Button>
+                              </ButtonV2>
                             </DialogFooter>
                           </DialogContent>
                         </Dialog>
@@ -522,7 +522,7 @@ export function SampleOrderValidation({ className }: SampleOrderValidationProps)
                             >
                               <CheckCircle className="h-4 w-4 mr-2" />
                               Valider & Transférer
-                            </Button>
+                            </ButtonV2>
                           </DialogTrigger>
                           <DialogContent>
                             <DialogHeader>
@@ -540,9 +540,9 @@ export function SampleOrderValidation({ className }: SampleOrderValidationProps)
                               />
                             </div>
                             <DialogFooter>
-                              <Button variant="outline" onClick={() => setValidationNotes('')}>
+                              <ButtonV2 variant="outline" onClick={() => setValidationNotes('')}>
                                 Annuler
-                              </Button>
+                              </ButtonV2>
                               <Button
                                 onClick={async () => {
                                   await handleValidateSamples(selectedItems, 'approved', validationNotes)
@@ -551,7 +551,7 @@ export function SampleOrderValidation({ className }: SampleOrderValidationProps)
                                 className="bg-green-600 hover:bg-green-700 text-white"
                               >
                                 Valider & Transférer
-                              </Button>
+                              </ButtonV2>
                             </DialogFooter>
                           </DialogContent>
                         </Dialog>
@@ -600,13 +600,13 @@ export function SampleOrderValidation({ className }: SampleOrderValidationProps)
                 }}
               >
                 Annuler
-              </Button>
+              </ButtonV2>
               <Button
                 onClick={() => handleApproveOrder(selectedOrder.id, validationNotes)}
                 className="bg-green-600 hover:bg-green-700 text-white"
               >
                 Confirmer Approbation
-              </Button>
+              </ButtonV2>
             </DialogFooter>
           </DialogContent>
         </Dialog>

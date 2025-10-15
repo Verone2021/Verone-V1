@@ -9,7 +9,7 @@
 
 import React, { useState, ReactNode } from 'react'
 import { User, Mail, Phone, Briefcase, Shield, Eye, EyeOff } from 'lucide-react'
-import { ButtonV2 } from '@/components/ui-v2/button'
+import { ButtonV2 } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog'

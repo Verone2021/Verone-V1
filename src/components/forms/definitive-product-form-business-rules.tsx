@@ -2,15 +2,15 @@
 
 import { useState, useEffect } from "react"
 import { Upload, X, Loader2, Save, Package, Info, Image as ImageIcon, AlertCircle, CheckCircle } from "lucide-react"
-import { Button } from "../ui/button"
-import { Input } from "../ui/input"
-import { Label } from "../ui/label"
-import { Textarea } from "../ui/textarea"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "../ui/select"
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "../ui/tabs"
-import { Badge } from "../ui/badge"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "../ui/card"
-import { Alert, AlertDescription } from "../ui/alert"
+import { ButtonV2 } from "@/components/ui/button"
+import { Input } from "@/components/ui/input"
+import { Label } from "@/components/ui/label"
+import { Textarea } from "@/components/ui/textarea"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
+import { Badge } from "@/components/ui/badge"
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
+import { Alert, AlertDescription } from "@/components/ui/alert"
 import { useProducts } from "../../hooks/use-products"
 import { CategorySelector } from "../business/category-selector"
 import { useToast } from "../../hooks/use-toast"
@@ -424,7 +424,7 @@ export function DefinitiveProductForm({
                           className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 h-6 w-6 p-0"
                         >
                           <X className="h-4 w-4" />
-                        </Button>
+                        </ButtonV2>
                         {index === 0 && (
                           <Badge className="absolute bottom-2 left-2 bg-green-600">
                             Principale
@@ -448,7 +448,7 @@ export function DefinitiveProductForm({
                 disabled={isSubmitting}
               >
                 Annuler
-              </Button>
+              </ButtonV2>
             )}
             <Button
               type="submit"
@@ -466,7 +466,7 @@ export function DefinitiveProductForm({
                   Créer le produit
                 </>
               )}
-            </Button>
+            </ButtonV2>
           </div>
         </CardContent>
       </Card>

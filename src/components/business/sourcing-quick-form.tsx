@@ -3,9 +3,9 @@
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { Upload, Link, Package, ArrowRight, Loader2, Euro } from 'lucide-react'
-import { Button } from '../ui/button'
-import { Input } from '../ui/input'
-import { Label } from '../ui/label'
+import { ButtonV2 } from '@/components/ui/button'
+import { Input } from '@/components/ui/input'
+import { Label } from '@/components/ui/label'
 import { cn } from '../../lib/utils'
 import { useSourcingProducts } from '../../hooks/use-sourcing-products'
 import { useToast } from '../../hooks/use-toast'
@@ -227,7 +227,7 @@ export function SourcingQuickForm({
                   }}
                 >
                   Changer d'image
-                </Button>
+                </ButtonV2>
               </div>
             ) : (
               <div className="space-y-3">
@@ -408,7 +408,7 @@ export function SourcingQuickForm({
                 disabled={isSubmitting}
               >
                 Annuler
-              </Button>
+              </ButtonV2>
             )}
 
             <Button
@@ -427,7 +427,7 @@ export function SourcingQuickForm({
                   <ArrowRight className="h-4 w-4 ml-2" />
                 </>
               )}
-            </Button>
+            </ButtonV2>
           </div>
         </div>
       </form>

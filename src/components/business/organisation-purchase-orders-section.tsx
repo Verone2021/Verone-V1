@@ -8,7 +8,7 @@
 import { useEffect, useState } from 'react'
 import { ShoppingCart, Plus, Eye, Package, Calendar, Euro } from 'lucide-react'
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card'
-import { Button } from '@/components/ui/button'
+import { ButtonV2 } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { usePurchaseOrders, type PurchaseOrder } from '@/hooks/use-purchase-orders'
 import Link from 'next/link'
@@ -81,12 +81,12 @@ export function OrganisationPurchaseOrdersSection({
             <p className="text-gray-600 mb-6">
               Aucune commande d'achat trouvée pour {organisationName}.
             </p>
-            <Button asChild>
+            <ButtonV2 asChild>
               <Link href={`/commandes/fournisseurs/create?supplier_id=${organisationId}`}>
                 <Plus className="h-4 w-4 mr-2" />
                 Créer une commande
               </Link>
-            </Button>
+            </ButtonV2>
           </div>
         </CardContent>
       </Card>
@@ -108,12 +108,12 @@ export function OrganisationPurchaseOrdersSection({
                 {stats.total} commande(s) • {formatCurrency(stats.totalValue)} TTC
               </CardDescription>
             </div>
-            <Button asChild>
+            <ButtonV2 asChild>
               <Link href={`/commandes/fournisseurs/create?supplier_id=${organisationId}`}>
                 <Plus className="h-4 w-4 mr-2" />
                 Nouvelle commande
               </Link>
-            </Button>
+            </ButtonV2>
           </div>
         </CardHeader>
         <CardContent>
@@ -203,12 +203,12 @@ export function OrganisationPurchaseOrdersSection({
                 </div>
 
                 {/* Actions */}
-                <Button variant="outline" size="sm" asChild>
+                <ButtonV2 variant="outline" size="sm" asChild>
                   <Link href={`/commandes/fournisseurs/${order.id}`}>
                     <Eye className="h-4 w-4 mr-2" />
                     Détails
                   </Link>
-                </Button>
+                </ButtonV2>
               </div>
             </CardContent>
           </Card>

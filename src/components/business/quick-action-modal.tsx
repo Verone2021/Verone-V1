@@ -2,13 +2,13 @@
 
 import { useState } from 'react'
 import { X, Loader2, AlertTriangle, CheckCircle } from 'lucide-react'
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../ui/card'
-import { Button } from '../ui/button'
-import { Badge } from '../ui/badge'
-import { Input } from '../ui/input'
-import { Label } from '../ui/label'
-import { Textarea } from '../ui/textarea'
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../ui/select'
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
+import { ButtonV2 } from '@/components/ui/button'
+import { Badge } from '@/components/ui/badge'
+import { Input } from '@/components/ui/input'
+import { Label } from '@/components/ui/label'
+import { Textarea } from '@/components/ui/textarea'
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { cn } from '../../lib/utils'
 
 export type ActionType = 'create' | 'update' | 'delete' | 'confirm' | 'custom'
@@ -272,7 +272,7 @@ export function QuickActionModal({
               disabled={isSubmitting || loading}
             >
               <X className="h-4 w-4" />
-            </Button>
+            </ButtonV2>
           </div>
         </CardHeader>
 
@@ -294,7 +294,7 @@ export function QuickActionModal({
                 className="border-black text-black hover:bg-black hover:text-white"
               >
                 {cancelText}
-              </Button>
+              </ButtonV2>
 
               <Button
                 type="submit"
@@ -306,7 +306,7 @@ export function QuickActionModal({
                   <Loader2 className="h-4 w-4 mr-2 animate-spin" />
                 )}
                 {config.confirmText}
-              </Button>
+              </ButtonV2>
             </div>
           </form>
         </CardContent>

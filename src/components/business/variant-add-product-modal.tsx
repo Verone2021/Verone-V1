@@ -1,11 +1,11 @@
 'use client'
 
 import { useState, useEffect, useMemo } from 'react'
-import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '../ui/dialog'
-import { Button } from '../ui/button'
-import { Input } from '../ui/input'
-import { Label } from '../ui/label'
-import { Badge } from '../ui/badge'
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog'
+import { ButtonV2 } from '@/components/ui/button'
+import { Input } from '@/components/ui/input'
+import { Label } from '@/components/ui/label'
+import { Badge } from '@/components/ui/badge'
 import { Check, AlertCircle, ArrowRight } from 'lucide-react'
 import { useProducts } from '../../hooks/use-products'
 import type { AddProductToGroupData, VariantGroup } from '../../types/variant-groups'
@@ -247,14 +247,14 @@ export function VariantAddProductModal({
               disabled={isSubmitting}
             >
               Annuler
-            </Button>
+            </ButtonV2>
             <Button
               type="submit"
               disabled={!selectedProductId || (!color && !material) || isSubmitting}
               className="bg-black text-white hover:bg-gray-800"
             >
               {isSubmitting ? 'Ajout en cours...' : 'Ajouter au groupe'}
-            </Button>
+            </ButtonV2>
           </DialogFooter>
         </form>
       </DialogContent>

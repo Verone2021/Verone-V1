@@ -9,8 +9,8 @@
 
 import React, { useState } from 'react'
 import { Eye, EyeOff, Key, AlertCircle, CheckCircle2 } from 'lucide-react'
-import { Button } from '../ui/button'
-import { Input } from '../ui/input'
+import { ButtonV2 } from '@/components/ui/button'
+import { Input } from '@/components/ui/input'
 import {
   Dialog,
   DialogContent,
@@ -18,7 +18,7 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-} from '../ui/dialog'
+} from '@/components/ui/dialog'
 import { createClient } from '@/lib/supabase/client'
 import { cn } from '@/lib/utils'
 
@@ -316,14 +316,14 @@ export function PasswordChangeDialog({ open, onOpenChange }: PasswordChangeDialo
                 className="border-verone-black text-verone-black hover:bg-verone-black hover:text-verone-white"
               >
                 Annuler
-              </Button>
+              </ButtonV2>
               <Button
                 type="submit"
                 disabled={loading || !isPasswordValid || !isConfirmValid}
                 className="bg-verone-black hover:bg-gray-800 text-verone-white"
               >
                 {loading ? 'Mise à jour...' : 'Changer le mot de passe'}
-              </Button>
+              </ButtonV2>
             </DialogFooter>
           </form>
         )}

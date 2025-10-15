@@ -1,14 +1,14 @@
 /**
- * 🎯 VÉRONE - Composant Carte Moderne 2025
+ * 🎯 VÉRONE - Composant Carte Design System V2 2025
  *
- * Carte standardisée avec icônes conditionnelles selon design system Vérone
- * DESIGN STRICT : noir (#000000) / blanc (#FFFFFF) / gris (#666666) UNIQUEMENT
+ * Carte standardisée moderne avec icônes et actions
+ * Design System 2025 : Couleurs vives, gradients, rounded corners
  */
 
 import React from 'react'
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from './card'
 import { Badge } from './badge'
-import { Button } from './button'
+import { ButtonV2 } from './button'
 import { Edit, Trash2, FolderOpen, Package, Tag } from 'lucide-react'
 
 interface VéroneCardProps {
@@ -43,7 +43,7 @@ interface VéroneCardProps {
  * Icônes de fallback selon le type d'entité Vérone
  */
 const getFallbackIcon = (entityType: VéroneCardProps['entityType']) => {
-  const iconProps = { className: "w-8 h-8 text-black" }
+  const iconProps = { className: "w-8 h-8 text-blue-600" }
 
   switch (entityType) {
     case 'family':
@@ -76,24 +76,22 @@ export function VéroneCard({
 }: VéroneCardProps) {
   return (
     <Card
-      className={`vérone-card cursor-pointer hover:shadow-md transition-all duration-200
-        border border-gray-200 hover:border-black bg-white ${className}`}
+      className={`cursor-pointer hover:shadow-lg transition-all duration-200
+        border border-slate-200 hover:border-blue-400 bg-white hover:scale-[1.02] ${className}`}
       onClick={onClick}
     >
       <CardHeader className="pb-3">
         <div className="flex items-start justify-between">
           {/* Section icône conditionnelle */}
           {iconPosition === 'top-left' && (
-            <div className="icône-section flex-shrink-0 mr-3">
+            <div className="flex-shrink-0 mr-3">
               {imageUrl ? (
                 <img
                   src={imageUrl}
                   alt={`Icône ${title}`}
-                  className="w-8 h-8 object-cover rounded border border-gray-200"
+                  className="w-8 h-8 object-cover rounded border border-slate-200"
                   onError={(e) => {
-                    // Fallback si image ne charge pas
                     e.currentTarget.style.display = 'none'
-                    e.currentTarget.parentElement!.innerHTML = getFallbackIcon(entityType).props.children
                   }}
                 />
               ) : (
@@ -103,32 +101,26 @@ export function VéroneCard({
           )}
 
           {/* Section contenu */}
-          <div className="contenu-section flex-1">
-            <CardTitle className="text-lg text-black mb-1">{title}</CardTitle>
+          <div className="flex-1">
+            <CardTitle className="text-lg text-slate-900 mb-1">{title}</CardTitle>
             {description && (
-              <CardDescription className="text-gray-600 text-sm line-clamp-2">
+              <CardDescription className="text-slate-600 text-sm line-clamp-2">
                 {description}
               </CardDescription>
             )}
           </div>
 
           {/* Section icône droite et actions */}
-          <div className="actions-section flex items-start space-x-2 ml-3">
+          <div className="flex items-start space-x-2 ml-3">
             {iconPosition === 'top-right' && (
-              <div className="icône-section flex-shrink-0">
+              <div className="flex-shrink-0">
                 {imageUrl ? (
                   <img
                     src={imageUrl}
                     alt={`Icône ${title}`}
-                    className="w-8 h-8 object-cover rounded border border-gray-200"
+                    className="w-8 h-8 object-cover rounded border border-slate-200"
                     onError={(e) => {
-                      // Fallback si image ne charge pas
-                      const fallbackIcon = getFallbackIcon(entityType)
-                      e.currentTarget.parentElement!.innerHTML = `
-                        <div class="w-8 h-8 text-black flex items-center justify-center">
-                          ${fallbackIcon.type === FolderOpen ? '📁' : fallbackIcon.type === Tag ? '🏷️' : '📦'}
-                        </div>
-                      `
+                      e.currentTarget.style.display = 'none'
                     }}
                   />
                 ) : (
@@ -141,30 +133,30 @@ export function VéroneCard({
             {(onEdit || onDelete) && (
               <div className="flex items-center space-x-1">
                 {onEdit && (
-                  <Button
-                    variant="ghost"
+                  <ButtonV2
+                    variant="secondary"
                     size="sm"
-                    className="w-8 h-8 p-0 hover:bg-gray-100"
+                    className="w-8 h-8 p-0"
                     onClick={(e) => {
                       e.stopPropagation()
                       onEdit()
                     }}
                   >
-                    <Edit className="w-4 h-4 text-gray-600 hover:text-black" />
-                  </Button>
+                    <Edit className="w-4 h-4" />
+                  </ButtonV2>
                 )}
                 {onDelete && (
-                  <Button
-                    variant="ghost"
+                  <ButtonV2
+                    variant="danger"
                     size="sm"
-                    className="w-8 h-8 p-0 hover:bg-gray-100 hover:text-red-600"
+                    className="w-8 h-8 p-0"
                     onClick={(e) => {
                       e.stopPropagation()
                       onDelete()
                     }}
                   >
-                    <Trash2 className="w-4 h-4 text-gray-600 hover:text-red-600" />
-                  </Button>
+                    <Trash2 className="w-4 h-4" />
+                  </ButtonV2>
                 )}
               </div>
             )}
@@ -176,7 +168,7 @@ export function VéroneCard({
         <div className="flex items-center justify-between">
           {/* Badge slug */}
           {slug && (
-            <Badge variant="outline" className="border-black text-black">
+            <Badge variant="secondary" className="font-mono">
               #{slug}
             </Badge>
           )}
@@ -184,19 +176,14 @@ export function VéroneCard({
           {/* Compteur + statut */}
           <div className="flex items-center space-x-3">
             {count !== undefined && countLabel && (
-              <div className="text-sm text-gray-600">
+              <div className="text-sm text-slate-600">
                 {count} {countLabel}{count !== 1 ? 's' : ''}
               </div>
             )}
 
             {isActive !== undefined && (
               <Badge
-                variant="outline"
-                className={
-                  isActive
-                    ? "border-black text-black"
-                    : "border-gray-500 text-gray-600"
-                }
+                variant={isActive ? "success" : "secondary"}
               >
                 {isActive ? 'Actif' : 'Inactif'}
               </Badge>
@@ -207,24 +194,3 @@ export function VéroneCard({
     </Card>
   )
 }
-
-/**
- * Styles CSS additionnels pour le design system Vérone
- */
-export const véroneCardStyles = `
-  .vérone-card {
-    --vérone-primary: #000000;
-    --vérone-secondary: #FFFFFF;
-    --vérone-accent: #666666;
-  }
-
-  .vérone-card:hover {
-    border-color: var(--vérone-primary);
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-  }
-
-  .icône-section img {
-    max-width: 32px;
-    max-height: 32px;
-  }
-`

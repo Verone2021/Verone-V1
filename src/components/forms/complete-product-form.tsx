@@ -3,13 +3,13 @@
 import { useState } from "react"
 import { useRouter } from "next/navigation"
 import { Upload, X, Loader2, Save, Package, Info, Image as ImageIcon, Plus } from "lucide-react"
-import { Button } from "../ui/button"
-import { Input } from "../ui/input"
-import { Label } from "../ui/label"
-import { Textarea } from "../ui/textarea"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "../ui/select"
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "../ui/tabs"
-import { Badge } from "../ui/badge"
+import { ButtonV2 } from "@/components/ui/button"
+import { Input } from "@/components/ui/input"
+import { Label } from "@/components/ui/label"
+import { Textarea } from "@/components/ui/textarea"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
+import { Badge } from "@/components/ui/badge"
 import { useProducts } from "../../hooks/use-products"
 import { useCategories } from "../../hooks/use-categories"
 import { useSuppliers } from "../../hooks/use-organisations"
@@ -582,7 +582,7 @@ export default function CompleteProductForm({ onSuccess, onCancel }: CompletePro
             disabled={isSubmitting}
           >
             Annuler
-          </Button>
+          </ButtonV2>
           <Button
             type="submit"
             disabled={isSubmitting}
@@ -599,7 +599,7 @@ export default function CompleteProductForm({ onSuccess, onCancel }: CompletePro
                 Créer le produit
               </>
             )}
-          </Button>
+          </ButtonV2>
         </div>
       </div>
     </form>

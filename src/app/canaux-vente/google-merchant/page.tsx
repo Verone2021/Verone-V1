@@ -22,7 +22,7 @@ import {
   Info
 } from 'lucide-react'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
-import { Button } from '@/components/ui/button'
+import { ButtonV2 } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { Input } from '@/components/ui/input'
 import { Progress } from '@/components/ui/progress'
@@ -210,14 +210,14 @@ export default function GoogleMerchantPage() {
         <div className="container mx-auto px-4 py-6">
           <div className="flex items-center justify-between">
             <div className="flex items-center space-x-4">
-              <Button
+              <ButtonV2
                 variant="outline"
                 size="icon"
                 onClick={() => router.push('/canaux-vente')}
                 className="border-black text-black hover:bg-black hover:text-white"
               >
                 <ArrowLeft className="h-4 w-4" />
-              </Button>
+              </ButtonV2>
               <div>
                 <h1 className="text-3xl font-bold text-black flex items-center space-x-2">
                   <Globe className="h-8 w-8" />
@@ -227,15 +227,15 @@ export default function GoogleMerchantPage() {
               </div>
             </div>
             <div className="flex items-center space-x-3">
-              <Button
+              <ButtonV2
                 variant="outline"
                 className="border-black text-black hover:bg-black hover:text-white"
                 onClick={() => setConfigModalOpen(true)}
               >
                 <Settings className="h-4 w-4 mr-2" />
                 Configuration
-              </Button>
-              <Button
+              </ButtonV2>
+              <ButtonV2
                 className="bg-black hover:bg-gray-800 text-white"
                 onClick={handleSync}
                 disabled={syncStatus === 'syncing'}
@@ -246,7 +246,7 @@ export default function GoogleMerchantPage() {
                   <RefreshCw className="h-4 w-4 mr-2" />
                 )}
                 Synchroniser
-              </Button>
+              </ButtonV2>
             </div>
           </div>
         </div>
@@ -494,13 +494,13 @@ export default function GoogleMerchantPage() {
                         <TableCell>{product.clicks}</TableCell>
                         <TableCell>{product.conversions}</TableCell>
                         <TableCell className="text-right">
-                          <Button
+                          <ButtonV2
                             variant="outline"
                             size="sm"
                             className="border-gray-300"
                           >
                             <ExternalLink className="h-4 w-4" />
-                          </Button>
+                          </ButtonV2>
                         </TableCell>
                       </TableRow>
                     ))}
@@ -530,14 +530,14 @@ export default function GoogleMerchantPage() {
                     <p className="text-sm text-gray-600">
                       {selectedProducts.length} produits sélectionnés
                     </p>
-                    <Button
+                    <ButtonV2
                       className="bg-black hover:bg-gray-800 text-white"
                       onClick={handleExport}
                       disabled={selectedProducts.length === 0}
                     >
                       <Upload className="h-4 w-4 mr-2" />
                       Exporter vers Google
-                    </Button>
+                    </ButtonV2>
                   </div>
 
                   {/* TODO: Ajouter la sélection de produits depuis le catalogue */}
@@ -592,11 +592,11 @@ export default function GoogleMerchantPage() {
                     <p className="text-sm text-gray-600">
                       Synchronisation automatique activée
                     </p>
-                    <Button
+                    <ButtonV2
                       className="bg-black hover:bg-gray-800 text-white"
                     >
                       Enregistrer les paramètres
-                    </Button>
+                    </ButtonV2>
                   </div>
                 </div>
               </CardContent>

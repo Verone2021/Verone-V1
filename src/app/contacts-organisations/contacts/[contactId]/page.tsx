@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react'
 import { useParams, useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
-import { Button } from '@/components/ui/button'
+import { ButtonV2 } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import {
   ArrowLeft,
@@ -167,10 +167,10 @@ export default function ContactDetailPage() {
             <p className="text-gray-600 mb-4">
               Ce contact n'existe pas ou vous n'avez pas les droits pour le consulter.
             </p>
-            <Button onClick={() => router.back()}>
+            <ButtonV2 onClick={() => router.back()}>
               <ArrowLeft className="h-4 w-4 mr-2" />
               Retour
-            </Button>
+            </ButtonV2>
           </CardContent>
         </Card>
       </div>
@@ -183,10 +183,10 @@ export default function ContactDetailPage() {
       <div className="flex justify-between items-start">
         <div>
           <div className="flex items-center gap-2 mb-2">
-            <Button variant="ghost" size="sm" onClick={() => router.back()}>
+            <ButtonV2 variant="ghost" size="sm" onClick={() => router.back()}>
               <ArrowLeft className="h-4 w-4 mr-1" />
               Retour
-            </Button>
+            </ButtonV2>
           </div>
           <div className="flex items-center gap-3 mb-2">
             <User className="h-8 w-8 text-black" />
@@ -230,7 +230,7 @@ export default function ContactDetailPage() {
                 Réactiver
               </>
             )}
-          </Button>
+          </ButtonV2>
         </div>
       </div>
 

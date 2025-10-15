@@ -2,9 +2,9 @@
 
 import { useState } from 'react'
 import { X, Plus, Trash2, Package, Eye } from 'lucide-react'
-import { Button } from '../ui/button'
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from '../ui/dialog'
-import { Badge } from '../ui/badge'
+import { ButtonV2 } from '@/components/ui/button'
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog'
+import { Badge } from '@/components/ui/badge'
 import { cn } from '../../lib/utils'
 import { useCollectionProducts } from '@/hooks/use-collection-products'
 import { ProductSelectorModal } from './product-selector-modal'
@@ -172,7 +172,7 @@ export function CollectionProductsManagerModal({
             >
               <Plus className="h-4 w-4 mr-2" />
               Ajouter des produits
-            </Button>
+            </ButtonV2>
           </div>
 
           <div className="flex-1 overflow-y-auto">
@@ -212,15 +212,15 @@ export function CollectionProductsManagerModal({
                 >
                   <Plus className="h-4 w-4 mr-2" />
                   Ajouter des produits
-                </Button>
+                </ButtonV2>
               </div>
             )}
           </div>
 
           <div className="flex-shrink-0 flex items-center justify-end pt-4 border-t border-gray-200">
-            <Button variant="outline" onClick={onClose}>
+            <ButtonV2 variant="outline" onClick={onClose}>
               Fermer
-            </Button>
+            </ButtonV2>
           </div>
         </DialogContent>
       </Dialog>

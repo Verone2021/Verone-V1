@@ -8,9 +8,9 @@
 
 import React, { useRef, useState, useEffect } from "react"
 import { Upload, X, Image as ImageIcon, Loader2, CheckCircle, AlertCircle } from "lucide-react"
-import { Button } from "../ui/button"
-import { Alert, AlertDescription } from "../ui/alert"
-import { Badge } from "../ui/badge"
+import { ButtonV2 } from "@/components/ui/button"
+import { Alert, AlertDescription } from "@/components/ui/alert"
+import { Badge } from "@/components/ui/badge"
 import { cn } from "../../lib/utils"
 import Image from "next/image"
 import { useCollectionImages } from '@/hooks/use-collection-images'
@@ -178,7 +178,7 @@ export function CollectionImageUpload({
               >
                 <X className="w-4 h-4 mr-2" />
                 Supprimer
-              </Button>
+              </ButtonV2>
             </div>
           </div>
           <div className="flex items-center gap-2 mt-2">
@@ -241,7 +241,7 @@ export function CollectionImageUpload({
                 >
                   <ImageIcon className="w-4 h-4 mr-2" />
                   Parcourir
-                </Button>
+                </ButtonV2>
                 <p className="text-xs text-gray-400 mt-4">
                   JPG, PNG, WebP • Max 5MB
                 </p>

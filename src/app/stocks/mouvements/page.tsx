@@ -3,7 +3,7 @@
 import React, { useState } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { ArrowUpDown, Download, RefreshCw, ChevronLeft, ChevronRight, Eye, ArrowLeft, Plus } from 'lucide-react'
-import { Button } from '@/components/ui/button'
+import { ButtonV2 } from '@/components/ui/button'
 import {
   Card,
   CardContent,
@@ -183,7 +183,7 @@ export default function StockMovementsPage() {
                         className="border-black text-black hover:bg-black hover:text-white"
                       >
                         <ChevronLeft className="h-4 w-4" />
-                      </Button>
+                      </ButtonV2>
 
                       <span className="text-sm text-gray-600">
                         Page {pagination.currentPage} sur {pagination.totalPages}
@@ -197,7 +197,7 @@ export default function StockMovementsPage() {
                         className="border-black text-black hover:bg-black hover:text-white"
                       >
                         <ChevronRight className="h-4 w-4" />
-                      </Button>
+                      </ButtonV2>
                     </div>
                   )}
                 </div>
@@ -233,7 +233,7 @@ export default function StockMovementsPage() {
                 >
                   <RefreshCw className="h-4 w-4 mr-2" />
                   Réinitialiser les filtres
-                </Button>
+                </ButtonV2>
               </div>
             </Card>
           )}
@@ -271,7 +271,7 @@ export default function StockMovementsPage() {
               >
                 <ArrowLeft className="h-4 w-4 mr-2" />
                 Retour aux Stocks
-              </Button>
+              </ButtonV2>
               <div>
                 <h1 className="text-3xl font-bold text-black flex items-center gap-3">
                   <ArrowUpDown className="h-8 w-8" />
@@ -290,7 +290,7 @@ export default function StockMovementsPage() {
               >
                 <Plus className="h-4 w-4 mr-2" />
                 Nouveau Mouvement
-              </Button>
+              </ButtonV2>
 
               <Button
                 variant="outline"
@@ -300,7 +300,7 @@ export default function StockMovementsPage() {
               >
                 <RefreshCw className={`h-4 w-4 mr-2 ${loading ? 'animate-spin' : ''}`} />
                 Actualiser
-              </Button>
+              </ButtonV2>
 
               <Button
                 variant="outline"
@@ -310,7 +310,7 @@ export default function StockMovementsPage() {
               >
                 <Download className="h-4 w-4 mr-2" />
                 Exporter CSV
-              </Button>
+              </ButtonV2>
             </div>
           </div>
         </div>

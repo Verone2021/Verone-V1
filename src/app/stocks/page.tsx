@@ -19,7 +19,7 @@ import {
   Euro
 } from 'lucide-react'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
-import { Button } from '@/components/ui/button'
+import { ButtonV2 } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { useStockDashboard } from '@/hooks/use-stock-dashboard'
 import { ForecastSummaryWidget } from '@/components/business/forecast-summary-widget'
@@ -73,7 +73,7 @@ export default function StocksDashboardPage() {
               <p className="text-gray-600 mt-1">Vue d'ensemble de l'inventaire et des mouvements Vérone</p>
             </div>
             <div className="flex items-center space-x-3">
-              <Button
+              <ButtonV2
                 variant="outline"
                 onClick={() => refetch()}
                 disabled={loading}
@@ -81,22 +81,22 @@ export default function StocksDashboardPage() {
               >
                 <RefreshCw className={`h-4 w-4 mr-2 ${loading ? 'animate-spin' : ''}`} />
                 Actualiser
-              </Button>
-              <Button
+              </ButtonV2>
+              <ButtonV2
                 variant="outline"
                 onClick={() => router.push('/stocks/mouvements')}
                 className="border-black text-black hover:bg-black hover:text-white"
               >
                 <Eye className="h-4 w-4 mr-2" />
                 Voir Mouvements
-              </Button>
-              <Button
+              </ButtonV2>
+              <ButtonV2
                 onClick={() => router.push('/stocks/entrees')}
                 className="bg-black hover:bg-gray-800 text-white"
               >
                 <Plus className="h-4 w-4 mr-2" />
                 Nouvelle Entrée
-              </Button>
+              </ButtonV2>
             </div>
           </div>
         </div>
@@ -170,7 +170,7 @@ export default function StocksDashboardPage() {
           <div>
             <p className="text-xs font-medium text-gray-500 uppercase tracking-wide mb-2">Pages Stock</p>
             <div className="flex gap-2 flex-wrap">
-              <Button
+              <ButtonV2
                 variant="outline"
                 size="sm"
                 className="h-12 border-black text-black hover:bg-black hover:text-white transition-colors"
@@ -178,9 +178,9 @@ export default function StocksDashboardPage() {
               >
                 <Grid3x3 className="h-4 w-4 mr-2" />
                 <span className="text-xs">Inventaire</span>
-              </Button>
+              </ButtonV2>
 
-              <Button
+              <ButtonV2
                 variant="outline"
                 size="sm"
                 className="h-12 border-black text-black hover:bg-black hover:text-white transition-colors"
@@ -188,9 +188,9 @@ export default function StocksDashboardPage() {
               >
                 <ArrowUpDown className="h-4 w-4 mr-2" />
                 <span className="text-xs">Mouvements</span>
-              </Button>
+              </ButtonV2>
 
-              <Button
+              <ButtonV2
                 variant="outline"
                 size="sm"
                 className="h-12 border-black text-black hover:bg-black hover:text-white transition-colors"
@@ -203,9 +203,9 @@ export default function StocksDashboardPage() {
                     {totalAlerts}
                   </Badge>
                 )}
-              </Button>
+              </ButtonV2>
 
-              <Button
+              <ButtonV2
                 variant="outline"
                 size="sm"
                 className="h-12 border-black text-black hover:bg-black hover:text-white transition-colors"
@@ -213,9 +213,9 @@ export default function StocksDashboardPage() {
               >
                 <ArrowDownToLine className="h-4 w-4 mr-2" />
                 <span className="text-xs">Entrées</span>
-              </Button>
+              </ButtonV2>
 
-              <Button
+              <ButtonV2
                 variant="outline"
                 size="sm"
                 className="h-12 border-black text-black hover:bg-black hover:text-white transition-colors"
@@ -223,7 +223,7 @@ export default function StocksDashboardPage() {
               >
                 <ArrowUpFromLine className="h-4 w-4 mr-2" />
                 <span className="text-xs">Sorties</span>
-              </Button>
+              </ButtonV2>
             </div>
           </div>
 
@@ -371,7 +371,7 @@ export default function StocksDashboardPage() {
                       </div>
                     ))}
                     <div className="pt-2">
-                      <Button
+                      <ButtonV2
                         variant="outline"
                         size="sm"
                         onClick={() => router.push('/stocks/alertes')}
@@ -379,7 +379,7 @@ export default function StocksDashboardPage() {
                       >
                         <AlertTriangle className="h-4 w-4 mr-2" />
                         Voir toutes les alertes ({totalAlerts})
-                      </Button>
+                      </ButtonV2>
                     </div>
                   </>
                 )}
@@ -442,7 +442,7 @@ export default function StocksDashboardPage() {
                     </div>
                   </div>
                 ))}
-                <Button
+                <ButtonV2
                   variant="outline"
                   size="sm"
                   onClick={() => router.push('/stocks/mouvements')}
@@ -450,7 +450,7 @@ export default function StocksDashboardPage() {
                 >
                   <Eye className="h-4 w-4 mr-2" />
                   Voir tous les mouvements
-                </Button>
+                </ButtonV2>
               </div>
             )}
           </CardContent>

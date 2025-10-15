@@ -3,7 +3,7 @@
 import { useState } from 'react'
 import { Plus, Sparkles } from 'lucide-react'
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog'
-import { Button } from '@/components/ui/button'
+import { ButtonV2 } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Badge } from '@/components/ui/badge'
@@ -179,7 +179,7 @@ export function CreateProductInGroupModal({
               disabled={loading}
             >
               Annuler
-            </Button>
+            </ButtonV2>
             <Button
               type="submit"
               disabled={!variantValue.trim() || loading}
@@ -196,7 +196,7 @@ export function CreateProductInGroupModal({
                   Créer le produit
                 </>
               )}
-            </Button>
+            </ButtonV2>
           </div>
         </form>
       </DialogContent>

@@ -2,8 +2,8 @@
 
 import { useState } from 'react'
 import { Truck, Save, X, AlertTriangle } from 'lucide-react'
-import { Button } from '../ui/button'
-import { Badge } from '../ui/badge'
+import { ButtonV2 } from '@/components/ui/button'
+import { Badge } from '@/components/ui/badge'
 import { cn } from '../../lib/utils'
 import { useInlineEdit, type EditableSection } from '../../hooks/use-inline-edit'
 
@@ -117,7 +117,7 @@ export function StockEditSection({ product, onUpdate, className }: StockEditSect
             >
               <X className="h-3 w-3 mr-1" />
               Annuler
-            </Button>
+            </ButtonV2>
             <Button
               variant="default"
               size="sm"
@@ -126,7 +126,7 @@ export function StockEditSection({ product, onUpdate, className }: StockEditSect
             >
               <Save className="h-3 w-3 mr-1" />
               {isSaving(section) ? 'Sauvegarde...' : 'Sauvegarder'}
-            </Button>
+            </ButtonV2>
           </div>
         </div>
 
@@ -306,10 +306,10 @@ export function StockEditSection({ product, onUpdate, className }: StockEditSect
           <Truck className="h-5 w-5 mr-2" />
           Stock & Disponibilité
         </h3>
-        <Button variant="outline" size="sm" onClick={handleStartEdit}>
+        <ButtonV2 variant="outline" size="sm" onClick={handleStartEdit}>
           <Truck className="h-3 w-3 mr-1" />
           Modifier
-        </Button>
+        </ButtonV2>
       </div>
 
       <div className="space-y-3">

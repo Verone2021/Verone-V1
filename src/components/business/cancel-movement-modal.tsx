@@ -3,7 +3,7 @@
 import React, { useState } from 'react'
 import { X, AlertTriangle, TrendingUp, TrendingDown, RotateCcw } from 'lucide-react'
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog'
-import { Button } from '@/components/ui/button'
+import { ButtonV2 } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { MovementWithDetails } from '@/hooks/use-movements-history'
 import { useToast } from '@/hooks/use-toast'
@@ -182,7 +182,7 @@ export function CancelMovementModal({ movement, isOpen, onClose, onSuccess }: Ca
             className="border-black text-black hover:bg-gray-100"
           >
             Annuler
-          </Button>
+          </ButtonV2>
           <Button
             variant="destructive"
             onClick={handleCancel}
@@ -190,7 +190,7 @@ export function CancelMovementModal({ movement, isOpen, onClose, onSuccess }: Ca
             className="bg-red-600 hover:bg-red-700"
           >
             {cancelling ? 'Annulation...' : 'Confirmer l\'annulation'}
-          </Button>
+          </ButtonV2>
         </DialogFooter>
       </DialogContent>
     </Dialog>

@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import { Plus, Trash2, Search } from 'lucide-react'
-import { Button } from '@/components/ui/button'
+import { ButtonV2 } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Textarea } from '@/components/ui/textarea'
@@ -260,10 +260,10 @@ export function PurchaseOrderFormModal({
     >
       {typeof isOpen === 'undefined' && (
         <DialogTrigger asChild>
-          <Button className="flex items-center gap-2">
+          <ButtonV2 className="flex items-center gap-2">
             <Plus className="h-4 w-4" />
             Nouvelle commande
-          </Button>
+          </ButtonV2>
         </DialogTrigger>
       )}
       <DialogContent className="max-w-6xl max-h-[90vh] overflow-y-auto">
@@ -350,14 +350,14 @@ export function PurchaseOrderFormModal({
                     {items.length} article(s) dans la commande
                   </CardDescription>
                 </div>
-                <Button
+                <ButtonV2
                   type="button"
                   variant="outline"
                   onClick={() => setShowProductSearch(true)}
                 >
                   <Plus className="h-4 w-4 mr-2" />
                   Ajouter un produit
-                </Button>
+                </ButtonV2>
               </div>
             </CardHeader>
             <CardContent>
@@ -445,14 +445,14 @@ export function PurchaseOrderFormModal({
                               {formatCurrency(itemTotal)}
                             </TableCell>
                             <TableCell>
-                              <Button
+                              <ButtonV2
                                 type="button"
                                 variant="outline"
                                 size="sm"
                                 onClick={() => removeItem(item.id)}
                               >
                                 <Trash2 className="h-4 w-4" />
-                              </Button>
+                              </ButtonV2>
                             </TableCell>
                           </TableRow>
                         )
@@ -491,15 +491,15 @@ export function PurchaseOrderFormModal({
 
           {/* Actions */}
           <div className="flex justify-end gap-4">
-            <Button type="button" variant="outline" onClick={handleClose}>
+            <ButtonV2 type="button" variant="outline" onClick={handleClose}>
               Annuler
-            </Button>
-            <Button
+            </ButtonV2>
+            <ButtonV2
               type="submit"
               disabled={loading || !selectedSupplierId || items.length === 0}
             >
               {loading ? 'Création...' : 'Créer la commande'}
-            </Button>
+            </ButtonV2>
           </div>
         </form>
 

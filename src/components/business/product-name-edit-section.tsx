@@ -1,10 +1,10 @@
 "use client"
 
 import { useState } from 'react'
-import { Input } from '../ui/input'
-import { Label } from '../ui/label'
-import { Button } from '../ui/button'
-import { StandardModifyButton } from '../ui/standard-modify-button'
+import { Input } from '@/components/ui/input'
+import { Label } from '@/components/ui/label'
+import { ButtonV2 } from '@/components/ui/button'
+import { StandardModifyButton } from '@/components/ui/standard-modify-button'
 import { Save, X } from 'lucide-react'
 import { cn, formatPrice } from '../../lib/utils'
 import { useInlineEdit, type EditableSection } from '../../hooks/use-inline-edit'
@@ -99,7 +99,7 @@ export function ProductNameEditSection({ product, onUpdate, className }: Product
             >
               <X className="h-3 w-3 mr-1" />
               Annuler
-            </Button>
+            </ButtonV2>
             <Button
               variant="default"
               size="sm"
@@ -109,7 +109,7 @@ export function ProductNameEditSection({ product, onUpdate, className }: Product
             >
               <Save className="h-3 w-3 mr-1" />
               {isSaving(section) ? 'Sauvegarde...' : 'Sauvegarder'}
-            </Button>
+            </ButtonV2>
           </div>
         </div>
 

@@ -1,9 +1,9 @@
 "use client"
 
 import { useState } from 'react'
-import { Button } from '../ui/button'
-import { Input } from '../ui/input'
-import { Label } from '../ui/label'
+import { ButtonV2 } from '@/components/ui/button'
+import { Input } from '@/components/ui/input'
+import { Label } from '@/components/ui/label'
 import { Upload, Loader2, CheckCircle, XCircle } from 'lucide-react'
 import { createClient } from '../../lib/supabase/client'
 
@@ -290,7 +290,7 @@ export function SimpleProductForm({ onSuccess, onCancel }: SimpleProductFormProp
               disabled={loading}
             >
               Annuler
-            </Button>
+            </ButtonV2>
           )}
 
           <Button
@@ -306,7 +306,7 @@ export function SimpleProductForm({ onSuccess, onCancel }: SimpleProductFormProp
             ) : (
               'Créer le produit'
             )}
-          </Button>
+          </ButtonV2>
         </div>
       </form>
 

@@ -9,7 +9,7 @@
 
 import React, { useState } from 'react'
 import { Edit, Save, X, User } from 'lucide-react'
-import { ButtonV2 } from '@/components/ui-v2/button'
+import { ButtonV2 } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import {

@@ -11,10 +11,10 @@
  */
 
 import React, { useState, useEffect, useCallback } from 'react'
-import { Dialog, DialogContent, DialogTitle, DialogDescription } from '../ui/dialog'
+import { Dialog, DialogContent, DialogTitle, DialogDescription } from '@/components/ui/dialog'
 import { VisuallyHidden } from '@radix-ui/react-visually-hidden'
-import { Button } from '../ui/button'
-import { Badge } from '../ui/badge'
+import { ButtonV2 } from '@/components/ui/button'
+import { Badge } from '@/components/ui/badge'
 import {
   ChevronLeft,
   ChevronRight,
@@ -168,7 +168,7 @@ export function ProductImageViewerModal({
             >
               <Download className="h-4 w-4 mr-1" />
               {downloadingId === currentImage.id ? 'Téléchargement...' : 'Télécharger'}
-            </Button>
+            </ButtonV2>
             <Button
               variant="outline"
               size="sm"
@@ -176,7 +176,7 @@ export function ProductImageViewerModal({
               className="border-black"
             >
               <X className="h-4 w-4" />
-            </Button>
+            </ButtonV2>
           </div>
         </div>
 
@@ -199,7 +199,7 @@ export function ProductImageViewerModal({
               className="absolute left-4 top-1/2 transform -translate-y-1/2 z-10 bg-black/10 hover:bg-black/20 text-black border-0 h-12 w-12 rounded-full"
             >
               <ChevronLeft className="h-6 w-6" />
-            </Button>
+            </ButtonV2>
           )}
 
           {/* Container image avec contraintes strictes */}
@@ -252,7 +252,7 @@ export function ProductImageViewerModal({
               className="absolute right-4 top-1/2 transform -translate-y-1/2 z-10 bg-black/10 hover:bg-black/20 text-black border-0 h-12 w-12 rounded-full"
             >
               <ChevronRight className="h-6 w-6" />
-            </Button>
+            </ButtonV2>
           )}
         </div>
 

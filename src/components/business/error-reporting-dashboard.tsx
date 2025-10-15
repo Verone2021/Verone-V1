@@ -13,7 +13,7 @@
 import React, { useState, useEffect, useMemo } from 'react'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
-import { Button } from '@/components/ui/button'
+import { ButtonV2 } from '@/components/ui/button'
 import { Progress } from '@/components/ui/progress'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import {
@@ -276,21 +276,21 @@ const QueueControlButtons: React.FC<{
   return (
     <div className="flex items-center gap-2">
       {isRunning ? (
-        <Button onClick={onPause} variant="outline" size="sm">
+        <ButtonV2 onClick={onPause} variant="outline" size="sm">
           <Pause className="w-4 h-4 mr-2" />
           Pause
-        </Button>
+        </ButtonV2>
       ) : (
-        <Button onClick={onResume} size="sm">
+        <ButtonV2 onClick={onResume} size="sm">
           <Play className="w-4 h-4 mr-2" />
           Reprendre
-        </Button>
+        </ButtonV2>
       )}
 
-      <Button onClick={onClearCompleted} variant="outline" size="sm">
+      <ButtonV2 onClick={onClearCompleted} variant="outline" size="sm">
         <Trash2 className="w-4 h-4 mr-2" />
         Nettoyer
-      </Button>
+      </ButtonV2>
     </div>
   )
 }
@@ -751,7 +751,7 @@ const QueueManagement: React.FC<{
         >
           <Zap className="w-4 h-4 mr-2" />
           Test Auto-résolution
-        </Button>
+        </ButtonV2>
       </div>
 
       <div className="grid gap-6 md:grid-cols-3">

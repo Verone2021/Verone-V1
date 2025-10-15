@@ -10,7 +10,7 @@
 import React, { useState } from 'react'
 import { Edit, Trash2, Shield, Phone, Mail, Calendar, Key, Eye } from 'lucide-react'
 import { useRouter } from 'next/navigation'
-import { ButtonV2 } from '@/components/ui-v2/button'
+import { ButtonV2 } from '@/components/ui/button'
 import { RoleBadge, type UserRole } from '@/components/ui/role-badge'
 import { Input } from '@/components/ui/input'
 import { UserWithProfile } from '@/app/admin/users/page'

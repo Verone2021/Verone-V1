@@ -11,7 +11,7 @@ import {
   Database,
   Save
 } from 'lucide-react'
-import { Button } from '@/components/ui/button'
+import { ButtonV2 } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 
 interface SettingSection {
@@ -254,10 +254,10 @@ export default function ParametresPage() {
 
       {/* Save button */}
       <div className="flex justify-end">
-        <Button className="flex items-center space-x-2">
+        <ButtonV2 className="flex items-center space-x-2">
           <Save className="h-4 w-4" />
           <span>Enregistrer les modifications</span>
-        </Button>
+        </ButtonV2>
       </div>
     </div>
   )
