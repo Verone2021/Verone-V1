@@ -4,7 +4,7 @@ import { createServerClient } from '@supabase/ssr'
 // Routes protégées nécessitant une authentification
 const protectedRoutes = [
   '/dashboard',
-  '/catalogue',
+  '/produits',      // Section Produits (Catalogue, Sourcing, Catégories, Variantes, Collections)
   '/commandes',
   '/consultations',
   '/stocks',
