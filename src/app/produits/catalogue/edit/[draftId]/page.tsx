@@ -2,7 +2,7 @@
 
 import { use } from 'react'
 import { useRouter } from 'next/navigation'
-import { DraftCompletionWizard } from '../../../../components/business/draft-completion-wizard'
+import { DraftCompletionWizard } from '@/components/business/draft-completion-wizard'
 
 interface DraftEditPageProps {
   params: Promise<{

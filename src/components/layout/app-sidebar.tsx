@@ -65,19 +65,19 @@ const getNavItems = (stockAlertsCount: number): NavItem[] => [
     children: [
       {
         title: "Sourcing",
-        href: "/sourcing",
+        href: "/produits/sourcing",
         icon: Target,
         description: "Approvisionnement",
         children: [
           {
             title: "Produits à Sourcer",
-            href: "/sourcing/produits",
+            href: "/produits/sourcing/produits",
             icon: Search,
             description: "Internes et clients"
           },
           {
             title: "Validation",
-            href: "/sourcing/validation",
+            href: "/produits/sourcing/validation",
             icon: CheckCircle,
             description: "Passage au catalogue"
           }

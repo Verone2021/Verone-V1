@@ -255,9 +255,9 @@ export function useMCPResolution() {
   // Détecter le module affecté
   const detectModule = (url: string): string => {
     if (url.includes('/dashboard')) return 'dashboard'
-    if (url.includes('/catalogue')) return 'catalogue'
+    if (url.includes('/produits/catalogue')) return 'catalogue'
     if (url.includes('/stocks')) return 'stocks'
-    if (url.includes('/sourcing')) return 'sourcing'
+    if (url.includes('/produits/sourcing')) return 'sourcing'
     if (url.includes('/interactions')) return 'interactions'
     if (url.includes('/commandes')) return 'commandes'
     if (url.includes('/canaux')) return 'canaux'

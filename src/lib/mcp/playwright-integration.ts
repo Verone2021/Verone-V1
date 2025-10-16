@@ -172,9 +172,9 @@ export const mcpPlaywright = new MCPPlaywrightIntegration()
 export function getTestUrlForTest(test: any): string {
   const moduleUrlMap: Record<string, string> = {
     'dashboard': '/dashboard',
-    'catalogue': '/catalogue',
+    'catalogue': '/produits/catalogue',
     'stock': '/stocks',
-    'sourcing': '/sourcing',
+    'sourcing': '/produits/sourcing',
     'interaction': '/consultations',
     'commande': '/commandes',
     'canal': '/canaux',

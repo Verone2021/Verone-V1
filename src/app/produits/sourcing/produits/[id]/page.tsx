@@ -103,7 +103,7 @@ export default function SourcingProductDetailPage() {
               Ce produit n'existe pas ou n'est plus en mode sourcing.
             </p>
             <ButtonV2
-              onClick={() => router.push('/sourcing/produits')}
+              onClick={() => router.push('/produits/sourcing/produits')}
               className="bg-black hover:bg-gray-800 text-white"
             >
               <ArrowLeft className="h-4 w-4 mr-2" />
@@ -124,7 +124,7 @@ export default function SourcingProductDetailPage() {
             <div className="flex items-center space-x-4">
               <ButtonV2
                 variant="ghost"
-                onClick={() => router.push('/sourcing/produits')}
+                onClick={() => router.push('/produits/sourcing/produits')}
                 className="text-gray-600 hover:text-black"
               >
                 <ArrowLeft className="h-4 w-4 mr-2" />

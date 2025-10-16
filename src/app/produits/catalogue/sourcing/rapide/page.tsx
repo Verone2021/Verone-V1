@@ -3,12 +3,12 @@
 import { useState, Suspense, lazy } from 'react'
 import { useRouter } from 'next/navigation'
 import { ArrowLeft, Zap, CheckCircle, Circle, ArrowRight } from 'lucide-react'
-import { Button } from '../../../../components/ui/button'
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../../../../components/ui/card'
-import { Badge } from '../../../../components/ui/badge'
+import { Button } from '@/components/ui/button'
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
+import { Badge } from '@/components/ui/badge'
 
 // Lazy loading du formulaire produit complet (remplace SourcingQuickForm)
-const CompleteProductWizard = lazy(() => import('../../../../components/business/complete-product-wizard').then(module => ({ default: module.CompleteProductWizard })))
+const CompleteProductWizard = lazy(() => import('@/components/business/complete-product-wizard').then(module => ({ default: module.CompleteProductWizard })))
 
 export default function SourcingRapidePage() {
   const router = useRouter()
@@ -16,7 +16,7 @@ export default function SourcingRapidePage() {
 
   const handleSuccess = (productId: string) => {
     // Rediriger vers la page sourcing après création
-    router.push('/sourcing/produits')
+    router.push('/produits/sourcing/produits')
   }
 
   const handleBack = () => {

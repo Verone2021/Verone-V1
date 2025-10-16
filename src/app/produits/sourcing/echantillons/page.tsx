@@ -156,7 +156,7 @@ export default function SourcingEchantillonsPage() {
             <div className="flex items-center space-x-3">
               <ButtonV2
                 variant="outline"
-                onClick={() => router.push('/sourcing')}
+                onClick={() => router.push('/produits/sourcing')}
                 className="border-black text-black hover:bg-black hover:text-white"
               >
                 Retour Dashboard

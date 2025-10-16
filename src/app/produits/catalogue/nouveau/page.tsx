@@ -3,12 +3,12 @@
 import { useState, Suspense, lazy } from 'react'
 import { useRouter } from 'next/navigation'
 import { ArrowLeft, Settings, CheckCircle, Circle, ArrowRight } from 'lucide-react'
-import { Button } from '../../../components/ui/button'
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../../../components/ui/card'
-import { Badge } from '../../../components/ui/badge'
+import { Button } from '@/components/ui/button'
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
+import { Badge } from '@/components/ui/badge'
 
 // Lazy loading du wizard produit complet
-const CompleteProductWizard = lazy(() => import('../../../components/business/complete-product-wizard').then(module => ({ default: module.CompleteProductWizard })))
+const CompleteProductWizard = lazy(() => import('@/components/business/complete-product-wizard').then(module => ({ default: module.CompleteProductWizard })))
 
 export default function NouveauProduitPage() {
   const router = useRouter()

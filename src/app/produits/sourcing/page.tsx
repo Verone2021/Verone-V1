@@ -92,7 +92,7 @@ export default function SourcingDashboardPage() {
             <div className="flex items-center space-x-3">
               <ButtonV2
                 variant="outline"
-                onClick={() => router.push('/sourcing/validation')}
+                onClick={() => router.push('/produits/sourcing/validation')}
                 className="border-black text-black hover:bg-black hover:text-white"
               >
                 <CheckCircle className="h-4 w-4 mr-2" />
@@ -196,7 +196,7 @@ export default function SourcingDashboardPage() {
               <ButtonV2
                 variant="outline"
                 className="h-20 border-black text-black hover:bg-black hover:text-white"
-                onClick={() => router.push('/sourcing/echantillons')}
+                onClick={() => router.push('/produits/sourcing/echantillons')}
               >
                 <div className="flex flex-col items-center">
                   <Eye className="h-6 w-6 mb-2" />
@@ -207,7 +207,7 @@ export default function SourcingDashboardPage() {
               <ButtonV2
                 variant="outline"
                 className="h-20 border-black text-black hover:bg-black hover:text-white"
-                onClick={() => router.push('/sourcing/validation')}
+                onClick={() => router.push('/produits/sourcing/validation')}
               >
                 <div className="flex flex-col items-center">
                   <CheckCircle className="h-6 w-6 mb-2" />

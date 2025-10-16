@@ -153,7 +153,7 @@ export function SourcingQuickForm({
         if (onSuccess) {
           onSuccess(newProduct.id)
         } else {
-          router.push('/sourcing/produits')
+          router.push('/produits/sourcing/produits')
         }
       }
 

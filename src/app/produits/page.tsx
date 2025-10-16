@@ -13,7 +13,7 @@ export default function ProduitsPage() {
       title: 'Sourcing',
       description: 'Gestion des fournisseurs et approvisionnement',
       icon: Package,
-      path: '/sourcing',
+      path: '/produits/sourcing',
       color: 'bg-blue-50 text-blue-600 border-blue-200',
       hoverColor: 'hover:bg-blue-100',
     },

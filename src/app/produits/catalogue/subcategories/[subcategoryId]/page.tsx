@@ -10,14 +10,14 @@
 import { useEffect, useState } from 'react'
 import { useParams, useRouter } from 'next/navigation'
 import { ArrowLeft, Plus, Edit, Trash2, Package, Grid3X3, Tag, Clock } from 'lucide-react'
-import { Button } from '../../../../components/ui/button'
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../../../../components/ui/card'
-import { Badge } from '../../../../components/ui/badge'
-import { useFamilies } from '../../../../hooks/use-families'
-import { useCategories } from '../../../../hooks/use-categories'
-import { useSubcategories } from '../../../../hooks/use-subcategories'
-import { VéroneCard } from '../../../../components/ui/verone-card'
-import type { Database } from '../../../../lib/supabase/types'
+import { Button } from '@/components/ui/button'
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
+import { Badge } from '@/components/ui/badge'
+import { useFamilies } from '@/hooks/use-families'
+import { useCategories } from '@/hooks/use-categories'
+import { useSubcategories } from '@/hooks/use-subcategories'
+import { VéroneCard } from '@/components/ui/verone-card'
+import type { Database } from '@/lib/supabase/types'
 
 type Family = Database['public']['Tables']['families']['Row']
 type Category = Database['public']['Tables']['categories']['Row']

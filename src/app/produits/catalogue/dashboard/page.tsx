@@ -15,10 +15,10 @@ import {
   Truck,
   Palette
 } from 'lucide-react'
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../../../components/ui/card'
-import { Button } from '../../../components/ui/button'
-import { Badge } from '../../../components/ui/badge'
-import { useProducts } from '../../../hooks/use-products'
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
+import { Button } from '@/components/ui/button'
+import { Badge } from '@/components/ui/badge'
+import { useProducts } from '@/hooks/use-products'
 
 // Champs obligatoires pour un produit complet (adaptés aux données disponibles)
 const REQUIRED_PRODUCT_FIELDS = [

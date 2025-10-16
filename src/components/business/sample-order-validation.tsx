@@ -318,7 +318,7 @@ export function SampleOrderValidation({ className }: SampleOrderValidationProps)
             <p className="text-gray-600">Gestion des commandes d'échantillons par fournisseur</p>
           </div>
           <ButtonV2
-            onClick={() => router.push('/sourcing/validation')}
+            onClick={() => router.push('/produits/sourcing/validation')}
             className="bg-black hover:bg-gray-800 text-white"
           >
             <ArrowRight className="h-4 w-4 mr-2" />

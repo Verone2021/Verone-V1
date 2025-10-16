@@ -29,7 +29,7 @@ const nextConfig = {
     ];
   },
 
-  // Redirections 301 - Migration structure /catalogue → /produits/catalogue
+  // Redirections 301 - Migration structure /catalogue → /produits/catalogue, /sourcing → /produits/sourcing
   async redirects() {
     return [
       {
@@ -40,6 +40,16 @@ const nextConfig = {
       {
         source: '/catalogue/:path*',
         destination: '/produits/catalogue/:path*',
+        permanent: true, // 301 redirect
+      },
+      {
+        source: '/sourcing',
+        destination: '/produits/sourcing',
+        permanent: true, // 301 redirect
+      },
+      {
+        source: '/sourcing/:path*',
+        destination: '/produits/sourcing/:path*',
         permanent: true, // 301 redirect
       },
     ];
