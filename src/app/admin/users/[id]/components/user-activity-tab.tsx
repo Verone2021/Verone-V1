@@ -27,6 +27,7 @@ import {
 } from 'lucide-react'
 import { UserDetailData } from '../page'
 import { useEffect, useState } from 'react'
+import { UserModuleActivityDashboard } from './user-module-activity-dashboard'
 
 interface UserActivityTabProps {
   user: UserDetailData
@@ -294,62 +295,9 @@ export function UserActivityTab({ user }: UserActivityTabProps) {
         </div>
       </div>
 
-      {/* Historique des actions récentes */}
+      {/* Dashboard modules avec barres de progression */}
       <div className="space-y-4">
-        <h3 className="text-lg font-semibold text-black flex items-center space-x-2">
-          <Clock className="h-5 w-5" />
-          <span>Activité récente</span>
-          <span className="text-sm text-gray-500 font-normal">
-            ({activityData.recent_actions.length} actions)
-          </span>
-        </h3>
-
-        <div className="bg-white border border-gray-200 rounded">
-          {activityData.recent_actions.length > 0 ? (
-            <div className="divide-y divide-gray-100">
-              {activityData.recent_actions.map((action) => (
-                <div key={action.id} className="p-4 hover:bg-gray-50 transition-colors">
-                  <div className="flex items-start justify-between">
-                    <div className="flex items-start space-x-3 flex-1">
-                      <div className="w-8 h-8 bg-gray-100 rounded-full flex items-center justify-center flex-shrink-0">
-                        {getActionIcon(action.action)}
-                      </div>
-                      <div className="flex-1">
-                        <div className="flex items-center space-x-2">
-                          <span className="text-sm font-medium text-black capitalize">
-                            {action.action.replace('_', ' ')}
-                          </span>
-                          {action.module && (
-                            <span className="px-2 py-0.5 text-xs font-medium bg-gray-100 text-gray-700 rounded">
-                              {getModuleLabel(action.module)}
-                            </span>
-                          )}
-                        </div>
-                        <div className="text-xs text-gray-500 mt-1">
-                          {formatRelativeTime(action.created_at)}
-                        </div>
-                        {action.new_data?.page_url && (
-                          <div className="text-xs text-gray-400 mt-1 font-mono">
-                            {action.new_data.page_url}
-                          </div>
-                        )}
-                      </div>
-                    </div>
-                    <ChevronRight className="h-4 w-4 text-gray-400 flex-shrink-0" />
-                  </div>
-                </div>
-              ))}
-            </div>
-          ) : (
-            <div className="text-center py-12">
-              <Activity className="h-8 w-8 mx-auto mb-2 text-gray-400" />
-              <p className="text-sm text-gray-600">Aucune activité récente enregistrée</p>
-              <p className="text-xs text-gray-500 mt-1">
-                Les actions de l'utilisateur apparaîtront ici
-              </p>
-            </div>
-          )}
-        </div>
+        <UserModuleActivityDashboard userId={user.id} days={30} />
       </div>
 
       {/* Sessions actives */}
