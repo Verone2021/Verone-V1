@@ -85,19 +85,19 @@ const getNavItems = (stockAlertsCount: number): NavItem[] => [
       },
       {
         title: "Catalogue",
-        href: "/catalogue",
+        href: "/produits/catalogue",
         icon: BookOpen,
         description: "Gestion unifiée"
       },
       {
         title: "Catégories",
-        href: "/catalogue/categories",
+        href: "/produits/catalogue/categories",
         icon: Tags,
         description: "Organisation"
       },
       {
         title: "Variantes",
-        href: "/catalogue/variantes",
+        href: "/produits/catalogue/variantes",
         icon: Layers,
         description: "Couleurs, tailles, matériaux"
       }

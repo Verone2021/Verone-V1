@@ -259,7 +259,7 @@ export default function CommandesOverviewPage() {
                     <span>Nouvel Achat</span>
                   </ButtonV2>
                 </Link>
-                <Link href="/catalogue/stocks">
+                <Link href="/produits/catalogue/stocks">
                   <ButtonV2 variant="outline" className="w-full flex items-center space-x-2 justify-start">
                     <BarChart3 className="h-4 w-4" />
                     <span>État Stocks</span>

@@ -29,6 +29,22 @@ const nextConfig = {
     ];
   },
 
+  // Redirections 301 - Migration structure /catalogue → /produits/catalogue
+  async redirects() {
+    return [
+      {
+        source: '/catalogue',
+        destination: '/produits/catalogue',
+        permanent: true, // 301 redirect
+      },
+      {
+        source: '/catalogue/:path*',
+        destination: '/produits/catalogue/:path*',
+        permanent: true, // 301 redirect
+      },
+    ];
+  },
+
   // Monorepo transpilation - transpile workspace packages
   transpilePackages: [
     '@verone/database',

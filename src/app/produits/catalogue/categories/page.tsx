@@ -3,23 +3,23 @@
 import { useState, useMemo } from "react"
 import { useRouter } from "next/navigation"
 import { Search, Plus, Edit3, Trash2, FolderPlus, Folder, Eye, EyeOff, ChevronRight, ChevronDown, Minus, Image as ImageIcon } from "lucide-react"
-import { ButtonV2 } from "../../../components/ui/button"
-import { Badge } from "../../../components/ui/badge"
-import { cn } from "../../../lib/utils"
-import { checkSLOCompliance } from "../../../lib/utils"
-import { FamilyForm } from "../../../components/forms/FamilyForm"
-import { CategoryForm } from "../../../components/forms/CategoryForm"
-import { SubcategoryForm } from "../../../components/forms/SubcategoryForm"
+import { ButtonV2 } from "@/components/ui/button"
+import { Badge } from "@/components/ui/badge"
+import { cn } from "@/lib/utils"
+import { checkSLOCompliance } from "@/lib/utils"
+import { FamilyForm } from "@/components/forms/FamilyForm"
+import { CategoryForm } from "@/components/forms/CategoryForm"
+import { SubcategoryForm } from "@/components/forms/SubcategoryForm"
 
 // 🔗 HOOKS SUPABASE - Connexion aux vraies données
-import { useFamilies } from "../../../hooks/use-families"
-import { useCategories } from "../../../hooks/use-categories"
-import { useSubcategories } from "../../../hooks/use-subcategories"
+import { useFamilies } from "@/hooks/use-families"
+import { useCategories } from "@/hooks/use-categories"
+import { useSubcategories } from "@/hooks/use-subcategories"
 
 // 📋 TYPES - Importés depuis les hooks
-import type { FamilyWithStats } from "../../../hooks/use-families"
-import type { CategoryWithChildren } from "../../../hooks/use-categories"
-import type { SubcategoryWithDetails } from "../../../hooks/use-subcategories"
+import type { FamilyWithStats } from "@/hooks/use-families"
+import type { CategoryWithChildren } from "@/hooks/use-categories"
+import type { SubcategoryWithDetails } from "@/hooks/use-subcategories"
 
 // Interface filtres pour la hiérarchie complète
 interface HierarchyFilters {

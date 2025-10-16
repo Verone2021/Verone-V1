@@ -232,7 +232,7 @@ export default function StocksDashboardPage() {
             <p className="text-xs font-medium text-gray-500 uppercase tracking-wide mb-2">Pages Connexes</p>
             <div className="flex gap-4 flex-wrap items-center text-sm">
               <Link
-                href="/catalogue"
+                href="/produits/catalogue"
                 className="text-gray-600 hover:text-black hover:underline transition-colors flex items-center gap-1"
               >
                 <span>→</span>

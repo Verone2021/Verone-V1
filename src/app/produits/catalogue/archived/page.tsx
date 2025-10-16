@@ -1,7 +1,7 @@
 import Link from 'next/link'
 import { ArrowLeft, Package, RotateCcw, Trash2 } from 'lucide-react'
-import { Badge } from '../../../components/ui/badge'
-import { Button } from '../../../components/ui/button'
+import { Badge } from '@/components/ui/badge'
+import { Button } from '@/components/ui/button'
 
 export default function ArchivedProductsPage() {
   // Données mockées pour l'interface
@@ -19,7 +19,7 @@ export default function ArchivedProductsPage() {
       <div className="flex items-center justify-between">
         <div className="flex items-center space-x-4">
           <Link
-            href="/catalogue"
+            href="/produits/catalogue"
             className="inline-flex items-center px-3 py-1.5 text-sm border border-black text-black bg-white hover:bg-gray-50 transition-colors"
           >
             <ArrowLeft className="h-4 w-4 mr-2" />
@@ -68,7 +68,7 @@ export default function ArchivedProductsPage() {
             Les produits archivés, arrêtés ou en fin de série apparaîtront ici
           </p>
           <Link
-            href="/catalogue"
+            href="/produits/catalogue"
             className="inline-flex items-center px-4 py-2 bg-black text-white text-sm font-medium hover:bg-gray-800 transition-colors"
           >
             <Package className="h-4 w-4 mr-2" />
