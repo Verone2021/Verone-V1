@@ -6,7 +6,7 @@
 
 'use client';
 
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect, useMemo, useCallback } from 'react';
 import { createClient } from '../lib/supabase/client';
 
 // Types selon ERD-CATALOGUE-V1.md
@@ -107,12 +107,8 @@ export const useCatalogue = () => {
 
   const supabase = useMemo(() => createClient(), []);
 
-  // Chargement initial des données
-  useEffect(() => {
-    loadCatalogueData();
-  }, [state.filters]);
-
-  const loadCatalogueData = async () => {
+  // ✅ FIX 3.4: Mémoriser loadCatalogueData avec useCallback
+  const loadCatalogueData = useCallback(async () => {
     try {
       setState(prev => ({ ...prev, loading: true, error: null }));
 
@@ -146,7 +142,12 @@ export const useCatalogue = () => {
         loading: false
       }));
     }
-  };
+  }, [state.filters, supabase]);  // ✅ Dependencies correctes
+
+  // ✅ FIX 3.4: useEffect avec loadCatalogueData mémorisée
+  useEffect(() => {
+    loadCatalogueData();
+  }, [loadCatalogueData]);
 
   const loadCategories = async (): Promise<Category[]> => {
     const { data, error } = await supabase
@@ -460,14 +461,14 @@ export const useCatalogue = () => {
     getCategoryById: (id: string) =>
       state.categories.find(c => c.id === id),
 
-    // Stats utiles
-    stats: {
+    // ✅ FIX 3.3: Stats utiles - MÉMORISÉES pour éviter recalcul à chaque render
+    stats: useMemo(() => ({
       totalProducts: state.products.length,
       inStock: state.products.filter(p => p.status === 'in_stock').length,
       outOfStock: state.products.filter(p => p.status === 'out_of_stock').length,
       preorder: state.products.filter(p => p.status === 'preorder').length,
       comingSoon: state.products.filter(p => p.status === 'coming_soon').length
-    }
+    }), [state.products])  // ✅ Recalculer seulement quand products change
   };
 };;
 

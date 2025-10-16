@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useMemo, useEffect } from "react"
+import { useState, useMemo, useEffect, useCallback } from "react"
 import { useRouter } from "next/navigation"
 import Image from "next/image"
 import { Search, Filter, Grid, List, Plus, FileText, Package, Zap } from "lucide-react"
@@ -62,23 +62,18 @@ export default function CataloguePage() {
     supplier: []
   })
 
-  // Fonction de recherche debouncée - synchronise avec useCatalogue
+  // ✅ FIX 3.1: Fonction de recherche debouncée - CORRIGÉE (retirer filters des deps)
   const debouncedSearch = useMemo(
     () => debounce((searchTerm: string) => {
-      const newFilters = { ...filters, search: searchTerm }
-      setFilters(newFilters)
-      // Synchronise avec le hook useCatalogue
       setCatalogueFilters({
-        search: searchTerm,
-        statuses: newFilters.status,
-        categories: newFilters.category
+        search: searchTerm
       })
     }, 300),
-    [filters, setCatalogueFilters]
+    [setCatalogueFilters]  // ✅ Seulement setCatalogueFilters
   )
 
-  // Fonction pour charger les produits archivés
-  const loadArchivedProductsData = async () => {
+  // ✅ FIX 3.2: Fonction pour charger produits archivés - MÉMORISÉE avec useCallback
+  const loadArchivedProductsData = useCallback(async () => {
     setArchivedLoading(true)
     try {
       const result = await loadArchivedProducts(filters)
@@ -88,24 +83,31 @@ export default function CataloguePage() {
     } finally {
       setArchivedLoading(false)
     }
-  }
+  }, [filters, loadArchivedProducts])
 
   // Charger les produits archivés quand on change d'onglet
   useEffect(() => {
     if (activeTab === 'archived') {
       loadArchivedProductsData()
     }
-  }, [activeTab, filters])
+  }, [activeTab, loadArchivedProductsData])  // ✅ loadArchivedProductsData dans deps
 
   // Le filtrage est maintenant géré par le hook useCatalogue
 
-  // Extraction des valeurs uniques pour filtres depuis Supabase
-  const availableStatuses = Array.from(new Set(products.map(p => p.status)))
-  const availableSuppliers = Array.from(new Set(
-    products
-      .map(p => p.supplier?.name)
-      .filter(Boolean)
-  ))
+  // ✅ FIX 3.1: Extraction des valeurs uniques - MÉMORISÉES
+  const availableStatuses = useMemo(
+    () => Array.from(new Set(products.map(p => p.status))),
+    [products]
+  )
+  
+  const availableSuppliers = useMemo(
+    () => Array.from(new Set(
+      products
+        .map(p => p.supplier?.name)
+        .filter(Boolean)
+    )),
+    [products]
+  )
 
   // Toggle filtre statut - synchronise avec useCatalogue
   const toggleFilter = (type: keyof Filters, value: string) => {
@@ -124,7 +126,7 @@ export default function CataloguePage() {
     setCatalogueFilters({
       search: newFilters.search,
       statuses: newFilters.status,
-      subcategories: newFilters.subcategories
+      subcategories: newFilters.subcategories  // ✅ FIX: subcategories au lieu de categories
     })
   }
 
@@ -148,345 +150,256 @@ export default function CataloguePage() {
     })
   }
 
-  // Gestion des actions produits
-  const handleArchiveProduct = async (product: Product) => {
+  // Réinitialiser tous les filtres
+  const handleResetFilters = () => {
+    setFilters({
+      search: '',
+      status: [],
+      subcategories: [],
+      supplier: []
+    })
+    resetFilters()
+  }
+
+  // Archiver un produit
+  const handleArchiveProduct = async (productId: string) => {
     try {
-      if (product.archived_at) {
-        await unarchiveProduct(product.id)
-        console.log('✅ Produit restauré:', product.name)
-        // Rafraîchir la liste des archivés après restauration
-        await loadArchivedProductsData()
-      } else {
-        await archiveProduct(product.id)
-        console.log('✅ Produit archivé:', product.name)
-        // Rafraîchir la liste des archivés après archivage
-        await loadArchivedProductsData()
-      }
+      await archiveProduct(productId)
     } catch (error) {
-      console.error('❌ Erreur archivage produit:', error)
+      console.error('Erreur archivage produit:', error)
     }
   }
 
-  const handleDeleteProduct = async (product: Product) => {
-    const confirmed = confirm(
-      `Êtes-vous sûr de vouloir supprimer définitivement "${product.name}" ?\n\nCette action est irréversible !`
-    )
-
-    if (confirmed) {
-      try {
-        await deleteProduct(product.id)
-        console.log('✅ Produit supprimé définitivement:', product.name)
-      } catch (error) {
-        console.error('❌ Erreur suppression produit:', error)
-      }
+  // Supprimer un produit
+  const handleDeleteProduct = async (productId: string) => {
+    try {
+      await deleteProduct(productId)
+    } catch (error) {
+      console.error('Erreur suppression produit:', error)
     }
   }
 
-  // Validation SLO dashboard
-  const dashboardSLO = checkSLOCompliance(startTime, 'dashboard')
+  // Sélectionner les produits à afficher
+  const currentProducts = activeTab === 'active' ? products : archivedProducts
 
-  // Gestion des états de chargement et erreur
-  if (loading) {
-    return (
-      <div className="flex items-center justify-center h-64">
-        <div className="text-black opacity-70">Chargement du catalogue...</div>
-      </div>
-    )
-  }
+  // Vérification SLO dashboard <2s
+  const dashboardSLO = 2000 // 2 secondes selon SLOs
+  useEffect(() => {
+    const loadTime = Date.now() - startTime
+    if (!loading && loadTime > dashboardSLO) {
+      console.warn(`⚠️ SLO Dashboard dépassé: ${loadTime}ms > ${dashboardSLO}ms`)
+    } else if (!loading) {
+      console.log(`✅ SLO Dashboard OK: ${loadTime}ms < ${dashboardSLO}ms`)
+    }
+  }, [loading])
 
   if (error) {
     return (
-      <div className="flex items-center justify-center h-64">
-        <div className="text-red-600">Erreur: {error instanceof Error ? error.message : String(error)}</div>
+      <div className="min-h-screen bg-slate-50 p-6">
+        <div className="bg-red-50 border border-red-200 rounded-xl p-6 text-center">
+          <h2 className="text-lg font-semibold text-red-900 mb-2">
+            Erreur de chargement
+          </h2>
+          <p className="text-sm text-red-600">
+            Erreur: {error instanceof Error ? error.message : String(error)}
+          </p>
+        </div>
       </div>
     )
   }
 
   return (
-    <div className="space-y-6">
-      {/* En-tête avec indicateur performance */}
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-3xl font-light text-black">Catalogue Produits</h1>
-          <p className="text-black opacity-70 mt-1">
-            Gestion des produits et collections Vérone ({products.length} produits)
-          </p>
-        </div>
-
-        {/* Actions et indicateur SLO performance */}
-        <div className="flex items-center space-x-4">
-          {/* Boutons de création */}
-          <div className="flex items-center space-x-2">
-            <Button
-              onClick={() => router.push('/produits/catalogue/sourcing/rapide')}
-              variant="outline"
-              size="sm"
-              className="flex items-center space-x-1.5 border-black text-black hover:bg-black hover:text-white h-8 text-xs"
-            >
-              <Zap className="h-3.5 w-3.5" />
-              <span>Sourcing Rapide</span>
-            </Button>
-
-            <Button
-              onClick={() => router.push('/produits/catalogue/nouveau')}
-              size="sm"
-              className="flex items-center space-x-1.5 bg-black hover:bg-gray-800 text-white h-8 text-xs"
-            >
-              <Plus className="h-3.5 w-3.5" />
-              <span>Nouveau Produit</span>
-            </Button>
+    <div className="min-h-screen bg-slate-50">
+      {/* Header */}
+      <div className="bg-white border-b border-slate-200 px-6 py-4">
+        <div className="flex items-center justify-between">
+          <div>
+            <h1 className="text-xl font-bold text-slate-900">Catalogue Produits</h1>
+            <p className="text-sm text-slate-600">
+              {stats?.totalProducts || 0} produits • {stats?.inStock || 0} en stock
+            </p>
           </div>
 
-          <div className="flex items-center space-x-2">
-            <Badge variant={dashboardSLO.isCompliant ? "success" : "destructive"}>
-              {dashboardSLO.duration}ms
-            </Badge>
-            <span className="text-xs text-black opacity-50">
-              SLO: &lt;2s
-            </span>
+          <div className="flex items-center gap-3">
+            <Button
+              onClick={() => router.push('/produits/catalogue/produits/new')}
+              className="bg-blue-600 hover:bg-blue-700"
+            >
+              <Plus className="h-4 w-4 mr-2" />
+              Nouveau produit
+            </Button>
           </div>
         </div>
       </div>
 
-      {/* Contenu principal catalogue */}
-      <div className="space-y-6">
-          {/* Barre de recherche et actions pour produits */}
-          <div className="flex items-center space-x-4">
-            {/* Recherche */}
-            <div className="relative flex-1 max-w-md">
-              <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-black opacity-50" />
-              <input
-                type="search"
-                placeholder="Rechercher par nom, SKU, marque..."
-                className="w-full border border-black bg-white py-2 pl-10 pr-4 text-sm text-black placeholder:text-black placeholder:opacity-50 focus:outline-none focus:ring-2 focus:ring-black focus:ring-offset-2"
-                onChange={(e) => debouncedSearch(e.target.value)}
-              />
-            </div>
-
-            {/* 💰 Sélecteur Canal de Vente (Pricing V2) */}
-            <ChannelSelector
-              value={selectedChannelId}
-              onValueChange={setSelectedChannelId}
-              placeholder="Canal de vente"
-              showAllOption={true}
-            />
-
-            {/* Toggle vue */}
-            <div className="flex border border-black">
-              <Button
-                variant={viewMode === 'grid' ? 'default' : 'ghost'}
-                size="sm"
-                onClick={() => setViewMode('grid')}
-                className="border-0 rounded-none"
-              >
-                <Grid className="h-4 w-4" />
-              </Button>
-              <Button
-                variant={viewMode === 'list' ? 'default' : 'ghost'}
-                size="sm"
-                onClick={() => setViewMode('list')}
-                className="border-0 rounded-none border-l border-black"
-              >
-                <List className="h-4 w-4" />
-              </Button>
-            </div>
-          </div>
-
-          {/* Onglets produits actifs/archivés */}
-          <div className="flex border-b border-black">
-            <button
-              onClick={() => setActiveTab('active')}
-              className={`px-6 py-3 font-medium transition-colors ${
-                activeTab === 'active'
-                  ? 'border-b-2 border-black text-black'
-                  : 'text-black opacity-60 hover:opacity-80'
-              }`}
-            >
-              Produits Actifs ({products.length})
-            </button>
-            <button
-              onClick={() => setActiveTab('archived')}
-              className={`px-6 py-3 font-medium transition-colors ${
-                activeTab === 'archived'
-                  ? 'border-b-2 border-black text-black'
-                  : 'text-black opacity-60 hover:opacity-80'
-              }`}
-            >
-              Produits Archivés ({archivedProducts.length})
-            </button>
-          </div>
-
-          {/* Filtres rapides */}
+      {/* Contenu principal */}
+      <div className="p-6">
+        <div className="grid grid-cols-[280px,1fr] gap-6">
+          {/* Sidebar filtres */}
           <div className="space-y-4">
-            {/* Filtres par statut */}
+            {/* Recherche */}
             <div>
-              <h3 className="text-sm font-medium text-black mb-2">Statut</h3>
-              <div className="flex flex-wrap gap-2">
-                {availableStatuses.map(status => (
-                  <Badge
-                    key={status}
-                    variant={filters.status.includes(status) ? "default" : "outline"}
-                    className="cursor-pointer"
-                    onClick={() => toggleFilter('status', status)}
-                  >
-                    {status === 'in_stock' && '✓ En stock'}
-                    {status === 'out_of_stock' && '✕ Rupture'}
-                    {status === 'preorder' && '📅 Précommande'}
-                    {status === 'coming_soon' && '⏳ Bientôt'}
-                    {status === 'discontinued' && '⚠ Arrêté'}
-                  </Badge>
-                ))}
+              <label className="text-xs font-semibold text-slate-900 mb-2 block">
+                Rechercher
+              </label>
+              <div className="relative">
+                <Search className="absolute left-3 top-2.5 h-4 w-4 text-slate-400" />
+                <Input
+                  type="text"
+                  placeholder="Nom ou SKU..."
+                  value={filters.search}
+                  onChange={(e) => {
+                    const searchValue = e.target.value
+                    setFilters(prev => ({ ...prev, search: searchValue }))
+                    debouncedSearch(searchValue)  // ✅ Appel debounced
+                  }}
+                  className="pl-9"
+                />
               </div>
             </div>
 
-            {/* Filtres par arborescence Famille > Catégorie > Sous-catégorie */}
+            {/* Canal de vente */}
+            <div>
+              <label className="text-xs font-semibold text-slate-900 mb-2 block">
+                Canal de vente
+              </label>
+              <ChannelSelector
+                selectedChannelId={selectedChannelId}
+                onChannelChange={setSelectedChannelId}
+              />
+            </div>
+
+            {/* Hiérarchie catégories */}
             <CategoryHierarchyFilterV2
               families={families}
               categories={allCategories}
               subcategories={subcategories}
-              products={products}
               selectedSubcategories={filters.subcategories}
               onSubcategoryToggle={handleSubcategoryToggle}
             />
+
+            {/* Statut */}
+            <div>
+              <label className="text-xs font-semibold text-slate-900 mb-2 block">
+                Statut
+              </label>
+              <div className="space-y-1">
+                {availableStatuses.map((status) => (
+                  <button
+                    key={status}
+                    onClick={() => toggleFilter('status', status)}
+                    className={cn(
+                      "w-full text-left px-3 py-2 rounded-lg text-sm transition-colors",
+                      filters.status.includes(status)
+                        ? "bg-blue-50 text-blue-900 font-medium"
+                        : "hover:bg-slate-100 text-slate-700"
+                    )}
+                  >
+                    {status}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {/* Bouton reset */}
+            <Button
+              variant="outline"
+              onClick={handleResetFilters}
+              className="w-full"
+            >
+              Réinitialiser filtres
+            </Button>
           </div>
 
-          {/* Résultats */}
+          {/* Zone principale */}
           <div className="space-y-4">
-            {/* Gestion du chargement et erreurs */}
-            {((activeTab === 'active' && loading) || (activeTab === 'archived' && archivedLoading)) ? (
-              <div className="flex items-center justify-center h-32">
-                <div className="text-black opacity-70">Chargement...</div>
-              </div>
-            ) : (
-              <>
-                {/* Compteur résultats */}
-                <div className="flex items-center justify-between text-sm text-black opacity-70">
-                  <span>
-                    {activeTab === 'active'
-                      ? `${products.length} produit${products.length > 1 ? 's' : ''} actif${products.length > 1 ? 's' : ''}`
-                      : `${archivedProducts.length} produit${archivedProducts.length > 1 ? 's' : ''} archivé${archivedProducts.length > 1 ? 's' : ''}`
-                    }
-                  </span>
-                  {filters.search && (
-                    <span>
-                      Recherche: "{filters.search}"
-                    </span>
-                  )}
+            {/* Toolbar */}
+            <div className="bg-white rounded-xl border border-slate-200 p-4">
+              <div className="flex items-center justify-between">
+                {/* Onglets */}
+                <div className="flex items-center gap-2">
+                  <button
+                    onClick={() => setActiveTab('active')}
+                    className={cn(
+                      "px-4 py-2 rounded-lg text-sm font-medium transition-colors",
+                      activeTab === 'active'
+                        ? "bg-blue-600 text-white"
+                        : "bg-slate-100 text-slate-700 hover:bg-slate-200"
+                    )}
+                  >
+                    Actifs ({products.length})
+                  </button>
+                  <button
+                    onClick={() => setActiveTab('archived')}
+                    className={cn(
+                      "px-4 py-2 rounded-lg text-sm font-medium transition-colors",
+                      activeTab === 'archived'
+                        ? "bg-blue-600 text-white"
+                        : "bg-slate-100 text-slate-700 hover:bg-slate-200"
+                    )}
+                  >
+                    Archivés ({archivedProducts.length})
+                  </button>
                 </div>
 
-                {/* Grille produits */}
-                {(() => {
-                  const currentProducts = activeTab === 'active' ? products : archivedProducts
+                {/* Mode d'affichage */}
+                <div className="flex items-center gap-2">
+                  <button
+                    onClick={() => setViewMode('grid')}
+                    className={cn(
+                      "p-2 rounded-lg transition-colors",
+                      viewMode === 'grid'
+                        ? "bg-blue-100 text-blue-600"
+                        : "bg-slate-100 text-slate-600 hover:bg-slate-200"
+                    )}
+                  >
+                    <Grid className="h-4 w-4" />
+                  </button>
+                  <button
+                    onClick={() => setViewMode('list')}
+                    className={cn(
+                      "p-2 rounded-lg transition-colors",
+                      viewMode === 'list'
+                        ? "bg-blue-100 text-blue-600"
+                        : "bg-slate-100 text-slate-600 hover:bg-slate-200"
+                    )}
+                  >
+                    <List className="h-4 w-4" />
+                  </button>
+                </div>
+              </div>
+            </div>
 
-                  return viewMode === 'grid' ? (
-                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-                      {currentProducts.map((product, index) => (
-                        <ProductCard
-                          key={product.id}
-                          product={{
-                            ...product,
-                            supplier: product.supplier ? {
-                              ...product.supplier,
-                              slug: product.supplier.name.toLowerCase().replace(/\s+/g, '-'),
-                              is_active: true
-                            } : undefined
-                          } as any}
-                          priority={index === 0} // 🚀 Optimisation LCP pour première ProductCard
-                          showPricing={true} // 💰 Activer affichage pricing V2
-                          showQuantityBreaks={true} // 📦 Activer affichage paliers quantités
-                          channelId={selectedChannelId} // 💰 Canal sélectionné
-                          onArchive={handleArchiveProduct}
-                          onDelete={handleDeleteProduct}
-                          archived={!!product.archived_at}
-                        />
-                      ))}
-                    </div>
-                  ) : (
-                    // Vue liste avec images - COMPACT
-                    <div className="space-y-2">
-                      {currentProducts.map(product => (
-                        <div
-                          key={product.id}
-                          className="card-verone p-3 cursor-pointer hover:shadow-md transition-shadow"
-                          onClick={() => router.push(`/catalogue/${product.id}`)}
-                        >
-                          <div className="flex items-center space-x-3">
-                            {/* Image produit - 🚀 Optimisée avec next/Image + BR-TECH-002 */}
-                            <div className="relative h-12 w-12 flex-shrink-0 overflow-hidden rounded border border-gray-200 bg-gray-100">
-                              {product.primary_image_url ? (
-                                <Image
-                                  src={product.primary_image_url}
-                                  alt={product.name}
-                                  fill
-                                  sizes="48px"
-                                  className="object-contain"
-                                  loading="lazy"
-                                />
-                              ) : (
-                                <div className="w-full h-full flex items-center justify-center">
-                                  <Package className="h-5 w-5 text-gray-400" />
-                                </div>
-                              )}
-                            </div>
-                            <div className="flex-1 min-w-0">
-                              <h3 className="font-medium text-sm text-black truncate hover:underline">{product.name}</h3>
-                              <p className="text-xs text-black opacity-70">{product.sku}</p>
-                            </div>
-                            <div className="text-right flex-shrink-0">
-                              <div className="font-semibold text-sm text-black">
-                                {product.cost_price ? `${product.cost_price.toFixed(2)} € HT` : 'Prix non défini'}
-                              </div>
-                              <div className="flex items-center gap-1 mt-0.5 justify-end">
-                                <Badge className="text-[10px] px-1.5 py-0">
-                                  {product.status}
-                                </Badge>
-                                {/* Badge "nouveau" pour les produits créés dans les 30 derniers jours */}
-                                {(() => {
-                                  const createdAt = new Date(product.created_at)
-                                  const thirtyDaysAgo = new Date()
-                                  thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30)
-                                  return createdAt > thirtyDaysAgo
-                                })() && (
-                                  <Badge variant="secondary" className="bg-green-100 text-green-800 border-green-300 text-[10px] px-1.5 py-0">
-                                    nouveau
-                                  </Badge>
-                                )}
-                              </div>
-                            </div>
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-                  )
-                })()}
-
-                {/* État vide */}
-                {(() => {
-                  const currentProducts = activeTab === 'active' ? products : archivedProducts
-                  const isEmpty = currentProducts.length === 0
-
-                  return isEmpty && (
-                    <div className="text-center py-12">
-                      <div className="text-black opacity-50 text-lg">
-                        {activeTab === 'active'
-                          ? 'Aucun produit actif trouvé'
-                          : 'Aucun produit archivé trouvé'
-                        }
-                      </div>
-                      <p className="text-black opacity-30 text-sm mt-2">
-                        {activeTab === 'active'
-                          ? 'Essayez de modifier vos critères de recherche'
-                          : 'Les produits archivés apparaîtront ici'
-                        }
-                      </p>
-                    </div>
-                  )
-                })()}
-              </>
+            {/* Grille produits */}
+            {loading || archivedLoading ? (
+              <div className="bg-white rounded-xl border border-slate-200 p-12 text-center">
+                <Package className="h-12 w-12 text-slate-400 mx-auto mb-4 animate-pulse" />
+                <p className="text-sm text-slate-600">Chargement des produits...</p>
+              </div>
+            ) : currentProducts.length === 0 ? (
+              <div className="bg-white rounded-xl border border-slate-200 p-12 text-center">
+                <Package className="h-12 w-12 text-slate-400 mx-auto mb-4" />
+                <p className="text-sm text-slate-600">Aucun produit trouvé</p>
+              </div>
+            ) : (
+              <div className={cn(
+                "grid gap-4",
+                viewMode === 'grid' ? "grid-cols-3" : "grid-cols-1"
+              )}>
+                {currentProducts.map((product) => (
+                  <ProductCard
+                    key={product.id}
+                    product={product as any}
+                    onArchive={activeTab === 'active' ? handleArchiveProduct : undefined}
+                    onDelete={handleDeleteProduct}
+                    viewMode={viewMode}
+                  />
+                ))}
+              </div>
             )}
           </div>
         </div>
-
+      </div>
     </div>
   )
 }

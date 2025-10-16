@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from 'react'
+import { useState, useMemo } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import {
@@ -29,6 +29,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { ButtonV2 } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { Input } from '@/components/ui/input'
+import { debounce } from '@/lib/utils'
 import {
   Select,
   SelectContent,
@@ -47,11 +48,20 @@ import {
 
 export default function SourcingProduitsPage() {
   const router = useRouter()
-  const [searchTerm, setSearchTerm] = useState('')
+  const [searchTerm, setSearchTerm] = useState('')  // État local pour l'input
+  const [debouncedSearchTerm, setDebouncedSearchTerm] = useState('')  // ✅ État debounced pour le hook
   const [statusFilter, setStatusFilter] = useState('all')
   const [sourcingTypeFilter, setSourcingTypeFilter] = useState('all')
   const [supplierFilter, setSupplierFilter] = useState('all') // 🆕 Filtre fournisseur
   const [clientFilter, setClientFilter] = useState('all') // 🆕 Filtre client
+
+  // ✅ FIX 3.5: Fonction debounce mémorisée
+  const debouncedSearch = useMemo(
+    () => debounce((value: string) => {
+      setDebouncedSearchTerm(value)
+    }, 300),
+    []
+  )
 
   // Hooks pour charger fournisseurs et clients professionnels
   const { organisations: suppliers } = useSuppliers()
@@ -59,7 +69,7 @@ export default function SourcingProduitsPage() {
 
   // Hook Supabase pour les produits sourcing
   const { products: sourcingProducts, loading, error, validateSourcing, orderSample } = useSourcingProducts({
-    search: searchTerm || undefined,
+    search: debouncedSearchTerm || undefined,  // ✅ Utiliser debouncedSearchTerm
     status: statusFilter === 'all' ? undefined : statusFilter,
     sourcing_type: sourcingTypeFilter === 'all' ? undefined : (sourcingTypeFilter as 'interne' | 'client'),
     supplier_id: supplierFilter === 'all' ? undefined : supplierFilter, // 🆕
@@ -169,7 +179,11 @@ export default function SourcingProduitsPage() {
                 <Input
                   placeholder="Rechercher un produit..."
                   value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
+                  onChange={(e) => {
+                    const value = e.target.value
+                    setSearchTerm(value)  // ✅ Mise à jour immédiate de l'input
+                    debouncedSearch(value)  // ✅ Recherche debouncée
+                  }}
                   className="pl-10 border-black focus:ring-black"
                 />
               </div>
