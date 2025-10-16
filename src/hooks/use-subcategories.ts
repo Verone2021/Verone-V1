@@ -53,18 +53,27 @@ export function useSubcategories(categoryId?: string) {
       // Obtenir les comptages pour chaque sous-catégorie
       const subcategoriesWithDetails: SubcategoryWithDetails[] = await Promise.all(
         (subcategoriesData || []).map(async (sub) => {
-          const { count, error: countError } = await supabase
-            .from('products')
-            .select('*', { count: 'exact', head: true })
-            .eq('subcategory_id', sub.id)
+          // FIX CORS: Utiliser select sans head:true pour éviter requêtes HEAD directes
+          let productCount = 0
+          try {
+            const { count, error: countError } = await supabase
+              .from('products')
+              .select('id', { count: 'exact', head: false })
+              .eq('subcategory_id', sub.id)
 
-          if (countError) {
-            console.error('Erreur comptage produits pour', sub.name, countError)
+            if (countError) {
+              console.warn('⚠️ Comptage produits échoué pour', sub.name, '- Compteur à 0')
+            } else {
+              productCount = count || 0
+            }
+          } catch (err) {
+            // Silencieux - le comptage n'est pas critique
+            console.warn('⚠️ Comptage produits impossible pour', sub.name)
           }
 
           return {
             ...sub,
-            product_count: count || 0, // Comptage réel des produits
+            products_count: productCount, // FIX: products_count (plural) pour cohérence avec interface
             category: sub.categories ? {
               id: sub.categories.id,
               name: sub.categories.name,

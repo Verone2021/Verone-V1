@@ -170,8 +170,9 @@ export const useCatalogue = () => {
         subcategory_id, supplier_id, brand,
         archived_at, created_at, updated_at,
         supplier:organisations!supplier_id(id, name),
-        subcategories!subcategory_id(id, name)
-      `, { count: 'exact' });
+        subcategories!subcategory_id(id, name),
+        product_images!left(public_url, is_primary)
+      `);
 
     // IMPORTANT : Exclure les produits archivés par défaut
     query = query.is('archived_at', null);
@@ -197,23 +198,31 @@ export const useCatalogue = () => {
       query = query.lte('cost_price', filters.priceMax);
     }
 
-    // Pagination - Augmenté pour afficher tous les produits importés
-    const limit = filters.limit || 500; // Support jusqu'à 500 produits (largement suffisant pour les 241 importés)
+    // Pagination - Optimisé pour performance (pagination normale)
+    const limit = filters.limit || 50; // 50 produits par page (vs 500 avant)
     const offset = filters.offset || 0;
     query = query.range(offset, offset + limit - 1);
 
     // Tri par défaut
     query = query.order('updated_at', { ascending: false });
 
-    const { data, error, count } = await query;
+    const { data, error } = await query;
 
     if (error) throw error;
 
+    // ✅ BR-TECH-002: Enrichir avec primary_image_url depuis product_images
+    const enrichedProducts = (data || []).map(product => ({
+      ...product,
+      primary_image_url: product.product_images?.find((img: any) => img.is_primary)?.public_url ||
+                         product.product_images?.[0]?.public_url ||
+                         null
+    }));
+
     return {
-      products: data || [],
-      total: count || 0
+      products: enrichedProducts,
+      total: enrichedProducts.length // Utiliser length au lieu de count exact
     };
-  };;
+  };;;
   
   const loadArchivedProducts = async (filters: CatalogueFilters = {}) => {
     let query = supabase
@@ -225,8 +234,9 @@ export const useCatalogue = () => {
         subcategory_id, supplier_id, brand,
         archived_at, created_at, updated_at,
         supplier:organisations!supplier_id(id, name),
-        subcategories!subcategory_id(id, name)
-      `, { count: 'exact' });
+        subcategories!subcategory_id(id, name),
+        product_images!left(public_url, is_primary)
+      `);
 
     // IMPORTANT : Inclure SEULEMENT les produits archivés
     query = query.not('archived_at', 'is', null);
@@ -252,21 +262,29 @@ export const useCatalogue = () => {
       query = query.lte('cost_price', filters.priceMax);
     }
 
-    // Pagination
-    const limit = filters.limit || 500;
+    // Pagination - Optimisé
+    const limit = filters.limit || 50;
     const offset = filters.offset || 0;
     query = query.range(offset, offset + limit - 1);
 
     // Tri par date d'archivage (plus récent en premier)
     query = query.order('archived_at', { ascending: false });
 
-    const { data, error, count } = await query;
+    const { data, error } = await query;
 
     if (error) throw error;
 
+    // ✅ BR-TECH-002: Enrichir avec primary_image_url depuis product_images
+    const enrichedProducts = (data || []).map(product => ({
+      ...product,
+      primary_image_url: product.product_images?.find((img: any) => img.is_primary)?.public_url ||
+                         product.product_images?.[0]?.public_url ||
+                         null
+    }));
+
     return {
-      products: data || [],
-      total: count || 0
+      products: enrichedProducts,
+      total: enrichedProducts.length
     };
   };
 

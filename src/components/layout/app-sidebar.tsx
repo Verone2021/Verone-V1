@@ -58,19 +58,39 @@ const getNavItems = (stockAlertsCount: number): NavItem[] => [
     description: "Vue d'ensemble"
   },
   {
-    title: "Catalogue",
-    href: "/catalogue",
-    icon: BookOpen,
-    description: "Produits et collections",
+    title: "Produits",
+    href: "/produits",
+    icon: Package,
+    description: "Catalogue et sourcing",
     children: [
       {
-        title: "Produits",
+        title: "Sourcing",
+        href: "/sourcing",
+        icon: Target,
+        description: "Approvisionnement",
+        children: [
+          {
+            title: "Produits à Sourcer",
+            href: "/sourcing/produits",
+            icon: Search,
+            description: "Internes et clients"
+          },
+          {
+            title: "Validation",
+            href: "/sourcing/validation",
+            icon: CheckCircle,
+            description: "Passage au catalogue"
+          }
+        ]
+      },
+      {
+        title: "Catalogue",
         href: "/catalogue",
-        icon: Grid3x3,
+        icon: BookOpen,
         description: "Gestion unifiée"
       },
       {
-        title: "Catégories & Collections",
+        title: "Catégories",
         href: "/catalogue/categories",
         icon: Tags,
         description: "Organisation"
@@ -90,26 +110,6 @@ const getNavItems = (stockAlertsCount: number): NavItem[] => [
     description: "Inventaire et mouvements",
     badge: stockAlertsCount > 0 ? stockAlertsCount : undefined,
     badgeVariant: "urgent"
-  },
-  {
-    title: "Sourcing",
-    href: "/sourcing",
-    icon: Target,
-    description: "Approvisionnement",
-    children: [
-      {
-        title: "Produits à Sourcer",
-        href: "/sourcing/produits",
-        icon: Search,
-        description: "Internes et clients"
-      },
-      {
-        title: "Validation",
-        href: "/sourcing/validation",
-        icon: CheckCircle,
-        description: "Passage au catalogue"
-      }
-    ]
   },
   {
     title: "Ventes",
@@ -184,9 +184,9 @@ function SidebarContent() {
   const [expandedItems, setExpandedItems] = useState<string[]>(() => {
     if (typeof window !== 'undefined') {
       const saved = localStorage.getItem('verone-sidebar-expanded')
-      return saved ? JSON.parse(saved) : ['Catalogue', 'Stocks', 'Ventes'] // Removed 'Finance' Phase 1
+      return saved ? JSON.parse(saved) : ['Produits', 'Stocks', 'Ventes'] // Produits section expanded by default
     }
-    return ['Catalogue', 'Stocks', 'Ventes'] // Removed 'Finance' Phase 1
+    return ['Produits', 'Stocks', 'Ventes'] // Produits section expanded by default
   })
 
   // Theme toggle
@@ -227,6 +227,7 @@ function SidebarContent() {
 
   const getModuleName = (title: string): string => {
     const moduleMap: Record<string, string> = {
+      'Produits': 'catalogue',
       'Catalogue': 'catalogue',
       'Stocks': 'stocks',
       'Sourcing': 'sourcing',
@@ -253,6 +254,101 @@ function SidebarContent() {
       return matchTitle || matchDesc || matchChildren
     })
   }, [searchQuery, stockAlertsCount])
+
+  // Fonction récursive pour rendre les enfants (support multi-niveaux)
+  const renderChildNavItem = (child: NavItem, idx: number, isParentExpanded: boolean): React.ReactNode => {
+    const isChildActive = pathname === child.href || (child.href !== '/dashboard' && pathname.startsWith(child.href!))
+    const isChildExpanded = expandedItems.includes(child.title)
+
+    if (child.children) {
+      // Sous-menu avec enfants (ex: Sourcing)
+      return (
+        <li
+          key={child.href || child.title}
+          style={{
+            animationDelay: `${idx * 50}ms`,
+            animation: isParentExpanded ? 'slideIn 200ms ease-out forwards' : 'none'
+          }}
+        >
+          <Collapsible open={isChildExpanded} onOpenChange={() => toggleExpanded(child.title)}>
+            <div className="flex w-full items-center">
+              <Link
+                href={child.href!}
+                className={cn(
+                  "nav-item flex flex-1 items-center gap-3 px-3 py-2 text-sm transition-all duration-150 ease-out rounded-l relative",
+                  "text-black hover:opacity-70",
+                  isChildActive && "bg-black text-white"
+                )}
+              >
+                <child.icon className="h-4 w-4 flex-shrink-0" />
+                <div className="flex flex-col flex-1">
+                  <span className="font-medium">{child.title}</span>
+                  {child.description && (
+                    <span className={cn("text-xs opacity-70", isChildActive ? "text-white" : "text-black")}>
+                      {child.description}
+                    </span>
+                  )}
+                </div>
+              </Link>
+              <CollapsibleTrigger
+                className={cn(
+                  "px-3 py-2 transition-all duration-200 rounded-r",
+                  isChildActive ? "bg-black text-white" : "text-black hover:bg-black/5"
+                )}
+              >
+                <ChevronRight
+                  className={cn(
+                    "h-4 w-4 transition-transform duration-200",
+                    isChildExpanded ? "rotate-90" : "rotate-0"
+                  )}
+                />
+              </CollapsibleTrigger>
+            </div>
+            <CollapsibleContent className="overflow-hidden transition-all duration-200">
+              <ul className="mt-1 space-y-1 ml-4">
+                {child.children.map((subChild, subIdx) => renderChildNavItem(subChild, subIdx, isChildExpanded))}
+              </ul>
+            </CollapsibleContent>
+          </Collapsible>
+        </li>
+      )
+    }
+
+    // Enfant simple (sans sous-menu)
+    return (
+      <li
+        key={child.href}
+        style={{
+          animationDelay: `${idx * 50}ms`,
+          animation: isParentExpanded ? 'slideIn 200ms ease-out forwards' : 'none'
+        }}
+      >
+        <Link
+          href={child.href!}
+          className={cn(
+            "nav-item flex items-center gap-3 px-3 py-2 text-sm transition-all duration-150 ease-out rounded-md relative",
+            "text-black hover:opacity-70",
+            isChildActive && "bg-black text-white"
+          )}
+        >
+          <child.icon className="h-4 w-4 flex-shrink-0" />
+          <div className="flex flex-col flex-1">
+            <span className="font-medium">{child.title}</span>
+            {child.description && (
+              <span className={cn("text-xs opacity-70", isChildActive ? "text-white" : "text-black")}>
+                {child.description}
+              </span>
+            )}
+          </div>
+          {child.badge && (
+            <Badge variant={child.badgeVariant === "urgent" ? "destructive" : "default"} className="ml-auto">
+              {child.badge}
+            </Badge>
+          )}
+        </Link>
+      </li>
+    )
+  }
 
   const renderNavItem = (item: NavItem) => {
     const moduleName = getModuleName(item.title)
@@ -331,50 +427,7 @@ function SidebarContent() {
                 className="overflow-hidden transition-all duration-200 data-[state=closed]:animate-accordion-up data-[state=open]:animate-accordion-down"
               >
                 <ul className="mt-1 space-y-1 ml-4">
-                  {item.children.map((child, idx) => {
-                    const isChildActive = pathname === child.href ||
-                      (child.href !== '/dashboard' && pathname.startsWith(child.href!))
-
-                    return (
-                      <li
-                        key={child.href}
-                        style={{
-                          animationDelay: `${idx * 50}ms`,
-                          animation: isExpanded ? 'slideIn 200ms ease-out forwards' : 'none'
-                        }}
-                      >
-                        <Link
-                          href={child.href!}
-                          className={cn(
-                            "nav-item flex items-center gap-3 px-3 py-2 text-sm transition-all duration-150 ease-out rounded-md relative",
-                            "text-black hover:opacity-70",
-                            isChildActive && "bg-black text-white"
-                          )}
-                        >
-                          <child.icon className="h-4 w-4 flex-shrink-0" />
-                          <div className="flex flex-col flex-1">
-                            <span className="font-medium">{child.title}</span>
-                            {child.description && (
-                              <span className={cn(
-                                "text-xs opacity-70",
-                                isChildActive ? "text-white" : "text-black"
-                              )}>
-                                {child.description}
-                              </span>
-                            )}
-                          </div>
-                          {child.badge && (
-                            <Badge
-                              variant={child.badgeVariant === "urgent" ? "destructive" : "default"}
-                              className="ml-auto"
-                            >
-                              {child.badge}
-                            </Badge>
-                          )}
-                        </Link>
-                      </li>
-                    )
-                  })}
+                  {item.children.map((child, idx) => renderChildNavItem(child, idx, isExpanded))}
                 </ul>
               </CollapsibleContent>
             )}

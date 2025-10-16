@@ -95,17 +95,21 @@ export const ProductCard = memo(function ProductCard({
     autoFetch: showPackages
   })
 
-  // 💰 Hook pricing V2 - Prix par canal
+  // 💰 Hook pricing V2 - Prix par canal (UNIQUEMENT si showPricing + channelId)
+  const shouldFetchPricing = showPricing && channelId !== null
   const { data: pricing, isLoading: pricingLoading } = useProductPrice({
     productId: product.id,
-    channelId: channelId || undefined,
-    quantity: 1
+    channelId: shouldFetchPricing ? channelId : undefined,
+    quantity: 1,
+    enabled: shouldFetchPricing
   })
 
-  // 📦 Hook paliers quantités - Économies selon quantité
+  // 📦 Hook paliers quantités - Économies selon quantité (UNIQUEMENT si showQuantityBreaks + channelId)
+  const shouldFetchBreaks = showQuantityBreaks && channelId !== null
   const { data: quantityBreaks, isLoading: breaksLoading } = useQuantityBreaks({
     productId: product.id,
-    channelId: channelId || undefined
+    channelId: shouldFetchBreaks ? channelId : undefined,
+    enabled: shouldFetchBreaks
   })
 
   const handleClick = useCallback(() => {

@@ -54,6 +54,7 @@ export interface PricingParams {
   channelId?: string
   quantity?: number
   date?: string  // YYYY-MM-DD format
+  enabled?: boolean  // Permet de désactiver la query conditionnellement
 }
 
 export interface BatchPricingRequest {
@@ -129,7 +130,7 @@ export function useProductPrice(params: PricingParams) {
         throw error
       }
     },
-    enabled: !!params.productId,
+    enabled: (params.enabled !== false) && !!params.productId,  // Respect external enabled + internal validation
     staleTime: 5 * 60 * 1000,  // 5 minutes cache
     cacheTime: 10 * 60 * 1000  // 10 minutes retention
   })
@@ -504,6 +505,7 @@ export interface QuantityBreaksParams {
   customerId?: string
   customerType?: 'organization' | 'individual'
   date?: string
+  enabled?: boolean  // Permet de désactiver la query conditionnellement
 }
 
 export function useQuantityBreaks(params: QuantityBreaksParams) {
@@ -550,7 +552,7 @@ export function useQuantityBreaks(params: QuantityBreaksParams) {
         throw error
       }
     },
-    enabled: !!params.productId,
+    enabled: (params.enabled !== false) && !!params.productId,  // Respect external enabled + internal validation
     staleTime: 10 * 60 * 1000,  // 10 minutes (paliers changent rarement)
     cacheTime: 30 * 60 * 1000   // 30 minutes retention
   })

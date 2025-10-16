@@ -10,7 +10,6 @@ import { Badge } from "../../components/ui/badge"
 import { cn } from "../../lib/utils"
 import { checkSLOCompliance, debounce } from "../../lib/utils"
 import { useCatalogue, Product, Category } from "../../hooks/use-catalogue"
-import { useProductImages } from "../../hooks/use-product-images"
 import { useFamilies } from "../../hooks/use-families"
 import { useCategories } from "../../hooks/use-categories"
 import { useSubcategories } from "../../hooks/use-subcategories"
@@ -405,70 +404,58 @@ export default function CataloguePage() {
                   ) : (
                     // Vue liste avec images - COMPACT
                     <div className="space-y-2">
-                      {currentProducts.map(product => {
-                        // Hook pour charger l'image
-                        const ProductListItem = () => {
-                          const { primaryImage, loading: imageLoading } = useProductImages({
-                            productId: product.id,
-                            autoFetch: true
-                          })
-
-                          return (
-                            <div
-                              key={product.id}
-                              className="card-verone p-3 cursor-pointer hover:shadow-md transition-shadow"
-                              onClick={() => router.push(`/catalogue/${product.id}`)}
-                            >
-                              <div className="flex items-center space-x-3">
-                                {/* Image produit - 🚀 Optimisée avec next/Image */}
-                                <div className="relative h-12 w-12 flex-shrink-0 overflow-hidden rounded border border-gray-200 bg-gray-100">
-                                  {primaryImage?.public_url && !imageLoading ? (
-                                    <Image
-                                      src={primaryImage.public_url}
-                                      alt={product.name}
-                                      fill
-                                      sizes="48px"
-                                      className="object-contain"
-                                      loading="lazy"
-                                    />
-                                  ) : (
-                                    <div className="w-full h-full flex items-center justify-center">
-                                      <Package className="h-5 w-5 text-gray-400" />
-                                    </div>
-                                  )}
+                      {currentProducts.map(product => (
+                        <div
+                          key={product.id}
+                          className="card-verone p-3 cursor-pointer hover:shadow-md transition-shadow"
+                          onClick={() => router.push(`/catalogue/${product.id}`)}
+                        >
+                          <div className="flex items-center space-x-3">
+                            {/* Image produit - 🚀 Optimisée avec next/Image + BR-TECH-002 */}
+                            <div className="relative h-12 w-12 flex-shrink-0 overflow-hidden rounded border border-gray-200 bg-gray-100">
+                              {product.primary_image_url ? (
+                                <Image
+                                  src={product.primary_image_url}
+                                  alt={product.name}
+                                  fill
+                                  sizes="48px"
+                                  className="object-contain"
+                                  loading="lazy"
+                                />
+                              ) : (
+                                <div className="w-full h-full flex items-center justify-center">
+                                  <Package className="h-5 w-5 text-gray-400" />
                                 </div>
-                                <div className="flex-1 min-w-0">
-                                  <h3 className="font-medium text-sm text-black truncate hover:underline">{product.name}</h3>
-                                  <p className="text-xs text-black opacity-70">{product.sku}</p>
-                                </div>
-                                <div className="text-right flex-shrink-0">
-                                  <div className="font-semibold text-sm text-black">
-                                    {product.cost_price ? `${product.cost_price.toFixed(2)} € HT` : 'Prix non défini'}
-                                  </div>
-                                  <div className="flex items-center gap-1 mt-0.5 justify-end">
-                                    <Badge className="text-[10px] px-1.5 py-0">
-                                      {product.status}
-                                    </Badge>
-                                    {/* Badge "nouveau" pour les produits créés dans les 30 derniers jours */}
-                                    {(() => {
-                                      const createdAt = new Date(product.created_at)
-                                      const thirtyDaysAgo = new Date()
-                                      thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30)
-                                      return createdAt > thirtyDaysAgo
-                                    })() && (
-                                      <Badge variant="secondary" className="bg-green-100 text-green-800 border-green-300 text-[10px] px-1.5 py-0">
-                                        nouveau
-                                      </Badge>
-                                    )}
-                                  </div>
-                                </div>
+                              )}
+                            </div>
+                            <div className="flex-1 min-w-0">
+                              <h3 className="font-medium text-sm text-black truncate hover:underline">{product.name}</h3>
+                              <p className="text-xs text-black opacity-70">{product.sku}</p>
+                            </div>
+                            <div className="text-right flex-shrink-0">
+                              <div className="font-semibold text-sm text-black">
+                                {product.cost_price ? `${product.cost_price.toFixed(2)} € HT` : 'Prix non défini'}
+                              </div>
+                              <div className="flex items-center gap-1 mt-0.5 justify-end">
+                                <Badge className="text-[10px] px-1.5 py-0">
+                                  {product.status}
+                                </Badge>
+                                {/* Badge "nouveau" pour les produits créés dans les 30 derniers jours */}
+                                {(() => {
+                                  const createdAt = new Date(product.created_at)
+                                  const thirtyDaysAgo = new Date()
+                                  thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30)
+                                  return createdAt > thirtyDaysAgo
+                                })() && (
+                                  <Badge variant="secondary" className="bg-green-100 text-green-800 border-green-300 text-[10px] px-1.5 py-0">
+                                    nouveau
+                                  </Badge>
+                                )}
                               </div>
                             </div>
-                          )
-                        }
-
-                        return <ProductListItem key={product.id} />
-                      })}
+                          </div>
+                        </div>
+                      ))}
                     </div>
                   )
                 })()}
