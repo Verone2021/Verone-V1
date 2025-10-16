@@ -116,7 +116,7 @@ export default function DashboardV2Page() {
           <div className="bg-white rounded-xl border border-slate-200 p-4">
             <div className="grid grid-cols-3 md:grid-cols-6 gap-x-4 gap-y-2">
               <button
-                onClick={() => router.push('/catalogue/produits')}
+                onClick={() => router.push('/produits/catalogue/produits')}
                 className="text-sm text-slate-700 hover:text-blue-600 hover:underline text-left transition-colors"
               >
                 Catalogue
@@ -146,7 +146,7 @@ export default function DashboardV2Page() {
                 Clients
               </button>
               <button
-                onClick={() => router.push('/catalogue/collections')}
+                onClick={() => router.push('/produits/catalogue/collections')}
                 className="text-sm text-slate-700 hover:text-blue-600 hover:underline text-left transition-colors"
               >
                 Collections
@@ -162,7 +162,7 @@ export default function DashboardV2Page() {
             <div className="flex items-center justify-between mb-4">
               <h3 className="text-base font-semibold text-slate-900">Top 5 Produits</h3>
               <button
-                onClick={() => router.push('/catalogue/produits?sort=best-sellers')}
+                onClick={() => router.push('/produits/catalogue/produits?sort=best-sellers')}
                 className="text-xs text-blue-600 hover:text-blue-700 font-medium"
               >
                 Voir tout →
@@ -312,7 +312,7 @@ export default function DashboardV2Page() {
                       {metrics.sourcing.samplesWaiting} échantillons en attente
                     </p>
                     <button
-                      onClick={() => router.push('/catalogue/sourcing')}
+                      onClick={() => router.push('/produits/catalogue/sourcing')}
                       className="text-xs text-blue-600 hover:text-blue-700 underline mt-0.5"
                     >
                       Voir échantillons

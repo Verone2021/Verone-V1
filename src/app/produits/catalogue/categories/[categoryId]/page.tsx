@@ -97,7 +97,7 @@ export default function CategoryDetailPage() {
         <div className="max-w-6xl mx-auto text-center">
           <h1 className="text-2xl font-bold text-black mb-4">Catégorie non trouvée</h1>
           <Button
-            onClick={() => router.push('/catalogue/categories')}
+            onClick={() => router.push('/produits/catalogue/categories')}
             variant="outline"
             className="border-black text-black hover:bg-black hover:text-white"
           >
@@ -117,7 +117,7 @@ export default function CategoryDetailPage() {
     if (family) {
       router.push(`/catalogue/families/${family.id}`)
     } else {
-      router.push('/catalogue/categories')
+      router.push('/produits/catalogue/categories')
     }
   }
 
@@ -215,7 +215,7 @@ export default function CategoryDetailPage() {
               <div className="flex items-center space-x-2 text-sm text-gray-600 mb-2">
                 <span
                   className="hover:text-black cursor-pointer"
-                  onClick={() => router.push('/catalogue/categories')}
+                  onClick={() => router.push('/produits/catalogue/categories')}
                 >
                   Catalogue
                 </span>

@@ -218,7 +218,7 @@ export default function CataloguePage() {
           {/* Boutons de création */}
           <div className="flex items-center space-x-2">
             <Button
-              onClick={() => router.push('/catalogue/sourcing/rapide')}
+              onClick={() => router.push('/produits/catalogue/sourcing/rapide')}
               variant="outline"
               size="sm"
               className="flex items-center space-x-1.5 border-black text-black hover:bg-black hover:text-white h-8 text-xs"
@@ -228,7 +228,7 @@ export default function CataloguePage() {
             </Button>
 
             <Button
-              onClick={() => router.push('/catalogue/nouveau')}
+              onClick={() => router.push('/produits/catalogue/nouveau')}
               size="sm"
               className="flex items-center space-x-1.5 bg-black hover:bg-gray-800 text-white h-8 text-xs"
             >

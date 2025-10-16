@@ -112,7 +112,7 @@ export default function CatalogueDashboardPage() {
               </Button>
               <Button
                 size="sm"
-                onClick={() => router.push('/catalogue/create')}
+                onClick={() => router.push('/produits/catalogue/create')}
                 className="bg-black hover:bg-gray-800 text-white"
               >
                 <Plus className="h-3.5 w-3.5 mr-1.5" />
@@ -190,7 +190,7 @@ export default function CatalogueDashboardPage() {
               <Button
                 variant="outline"
                 className="h-12 border-gray-200 text-gray-700 hover:bg-gray-50 hover:border-gray-300"
-                onClick={() => router.push('/catalogue/variantes')}
+                onClick={() => router.push('/produits/catalogue/variantes')}
               >
                 <div className="flex flex-col items-center gap-1">
                   <Palette className="h-4 w-4" />
@@ -201,7 +201,7 @@ export default function CatalogueDashboardPage() {
               <Button
                 variant="outline"
                 className="h-12 border-gray-200 text-gray-700 hover:bg-gray-50 hover:border-gray-300"
-                onClick={() => router.push('/catalogue/categories')}
+                onClick={() => router.push('/produits/catalogue/categories')}
               >
                 <div className="flex flex-col items-center gap-1">
                   <Filter className="h-4 w-4" />
@@ -212,7 +212,7 @@ export default function CatalogueDashboardPage() {
               <Button
                 variant="outline"
                 className="h-12 border-gray-200 text-gray-700 hover:bg-gray-50 hover:border-gray-300"
-                onClick={() => router.push('/catalogue/collections')}
+                onClick={() => router.push('/produits/catalogue/collections')}
               >
                 <div className="flex flex-col items-center gap-1">
                   <Package className="h-4 w-4" />
@@ -322,7 +322,7 @@ export default function CatalogueDashboardPage() {
               <Button
                 variant="outline"
                 className="h-12 border-gray-200 text-gray-700 hover:bg-gray-50 hover:border-gray-300"
-                onClick={() => router.push('/catalogue/sourcing')}
+                onClick={() => router.push('/produits/catalogue/sourcing')}
               >
                 <div className="flex items-center gap-1.5">
                   <Eye className="h-4 w-4" />

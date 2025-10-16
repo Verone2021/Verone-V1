@@ -86,7 +86,7 @@ export default function FamilyDetailPage() {
         <div className="max-w-6xl mx-auto text-center">
           <h1 className="text-2xl font-bold text-black mb-4">Famille non trouvée</h1>
           <Button
-            onClick={() => router.push('/catalogue/categories')}
+            onClick={() => router.push('/produits/catalogue/categories')}
             variant="outline"
             className="border-black text-black hover:bg-black hover:text-white"
           >
@@ -183,7 +183,7 @@ export default function FamilyDetailPage() {
         <div className="flex items-center justify-between mb-8">
           <div className="flex items-center space-x-4">
             <Button
-              onClick={() => router.push('/catalogue/categories')}
+              onClick={() => router.push('/produits/catalogue/categories')}
               variant="outline"
               size="sm"
               className="border-black text-black hover:bg-black hover:text-white"
