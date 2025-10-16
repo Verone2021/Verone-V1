@@ -1,0 +1,347 @@
+{
+  "config": {
+    "configFile": "/Users/romeodossantos/verone-back-office-V1/playwright.config.ts",
+    "rootDir": "/Users/romeodossantos/verone-back-office-V1/tests",
+    "forbidOnly": false,
+    "fullyParallel": false,
+    "globalSetup": null,
+    "globalTeardown": null,
+    "globalTimeout": 0,
+    "grep": {},
+    "grepInvert": null,
+    "maxFailures": 0,
+    "metadata": {
+      "actualWorkers": 1
+    },
+    "preserveOutput": "always",
+    "reporter": [
+      [
+        "html",
+        {
+          "outputFolder": "tests/reports/html"
+        }
+      ],
+      [
+        "json",
+        {
+          "outputFile": "tests/reports/results.json"
+        }
+      ],
+      [
+        "list",
+        null
+      ]
+    ],
+    "reportSlowTests": {
+      "max": 5,
+      "threshold": 300000
+    },
+    "quiet": false,
+    "projects": [
+      {
+        "outputDir": "/Users/romeodossantos/verone-back-office-V1/test-results",
+        "repeatEach": 1,
+        "retries": 0,
+        "metadata": {
+          "actualWorkers": 1
+        },
+        "id": "setup",
+        "name": "setup",
+        "testDir": "/Users/romeodossantos/verone-back-office-V1/tests",
+        "testIgnore": [],
+        "testMatch": [
+          "/.*\\.setup\\.ts/"
+        ],
+        "timeout": 30000
+      },
+      {
+        "outputDir": "/Users/romeodossantos/verone-back-office-V1/test-results",
+        "repeatEach": 1,
+        "retries": 0,
+        "metadata": {
+          "actualWorkers": 1
+        },
+        "id": "chromium",
+        "name": "chromium",
+        "testDir": "/Users/romeodossantos/verone-back-office-V1/tests",
+        "testIgnore": [],
+        "testMatch": [
+          "**/*.spec.ts"
+        ],
+        "timeout": 30000
+      }
+    ],
+    "shard": null,
+    "updateSnapshots": "missing",
+    "updateSourceMethod": "patch",
+    "version": "1.55.0",
+    "workers": 1,
+    "webServer": {
+      "command": "npm run dev",
+      "url": "http://localhost:3001",
+      "reuseExistingServer": true,
+      "timeout": 120000
+    }
+  },
+  "suites": [
+    {
+      "title": "auth.setup.ts",
+      "file": "auth.setup.ts",
+      "column": 0,
+      "line": 0,
+      "specs": [
+        {
+          "title": "authenticate",
+          "ok": false,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 30000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "setup",
+              "projectName": "setup",
+              "results": [
+                {
+                  "workerIndex": 0,
+                  "parallelIndex": 0,
+                  "status": "failed",
+                  "duration": 3271,
+                  "error": {
+                    "message": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mlocator\u001b[39m\u001b[2m).\u001b[22mtoBeVisible\u001b[2m()\u001b[22m failed\n\nLocator:  locator('nav').first()\nExpected: visible\nReceived: undefined\n\nCall log:\n\u001b[2m  - Expect \"toBeVisible\" with timeout 5000ms\u001b[22m\n\u001b[2m  - waiting for locator('nav').first()\u001b[22m\n",
+                    "stack": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mlocator\u001b[39m\u001b[2m).\u001b[22mtoBeVisible\u001b[2m()\u001b[22m failed\n\nLocator:  locator('nav').first()\nExpected: visible\nReceived: undefined\n\nCall log:\n\u001b[2m  - Expect \"toBeVisible\" with timeout 5000ms\u001b[22m\n\u001b[2m  - waiting for locator('nav').first()\u001b[22m\n\n    at /Users/romeodossantos/verone-back-office-V1/tests/auth.setup.ts:43:45",
+                    "location": {
+                      "file": "/Users/romeodossantos/verone-back-office-V1/tests/auth.setup.ts",
+                      "column": 45,
+                      "line": 43
+                    },
+                    "snippet": "  41 |   // Vérification que l'utilisateur est bien connecté\n  42 |   // Vérifier que la sidebar de navigation est visible (signe d'authentification)\n> 43 |   await expect(page.locator('nav').first()).toBeVisible({ timeout: 5000 })\n     |                                             ^\n  44 |   console.log('✅ Dashboard chargé - authentification réussie')\n  45 |\n  46 |   // Sauvegarder le storage state (cookies + localStorage)"
+                  },
+                  "errors": [
+                    {
+                      "location": {
+                        "file": "/Users/romeodossantos/verone-back-office-V1/tests/auth.setup.ts",
+                        "column": 45,
+                        "line": 43
+                      },
+                      "message": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mlocator\u001b[39m\u001b[2m).\u001b[22mtoBeVisible\u001b[2m()\u001b[22m failed\n\nLocator:  locator('nav').first()\nExpected: visible\nReceived: undefined\n\nCall log:\n\u001b[2m  - Expect \"toBeVisible\" with timeout 5000ms\u001b[22m\n\u001b[2m  - waiting for locator('nav').first()\u001b[22m\n\n\n  41 |   // Vérification que l'utilisateur est bien connecté\n  42 |   // Vérifier que la sidebar de navigation est visible (signe d'authentification)\n> 43 |   await expect(page.locator('nav').first()).toBeVisible({ timeout: 5000 })\n     |                                             ^\n  44 |   console.log('✅ Dashboard chargé - authentification réussie')\n  45 |\n  46 |   // Sauvegarder le storage state (cookies + localStorage)\n    at /Users/romeodossantos/verone-back-office-V1/tests/auth.setup.ts:43:45"
+                    }
+                  ],
+                  "stdout": [
+                    {
+                      "text": "🔐 Démarrage authentification Playwright...\n"
+                    },
+                    {
+                      "text": "✅ Page login chargée\n"
+                    },
+                    {
+                      "text": "📝 Credentials remplis\n"
+                    },
+                    {
+                      "text": "🔄 Clic sur Se connecter...\n"
+                    },
+                    {
+                      "text": "✅ Redirection vers dashboard réussie\n"
+                    }
+                  ],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2025-10-12T18:09:02.306Z",
+                  "annotations": [],
+                  "attachments": [
+                    {
+                      "name": "video",
+                      "contentType": "video/webm",
+                      "path": "/Users/romeodossantos/verone-back-office-V1/test-results/auth.setup.ts-authenticate-setup/video.webm"
+                    },
+                    {
+                      "name": "trace",
+                      "contentType": "application/zip",
+                      "path": "/Users/romeodossantos/verone-back-office-V1/test-results/auth.setup.ts-authenticate-setup/trace.zip"
+                    }
+                  ],
+                  "errorLocation": {
+                    "file": "/Users/romeodossantos/verone-back-office-V1/tests/auth.setup.ts",
+                    "column": 45,
+                    "line": 43
+                  }
+                }
+              ],
+              "status": "unexpected"
+            }
+          ],
+          "id": "17e3fe6f4d9d8bd79c6b-60f085b113a677673906",
+          "file": "auth.setup.ts",
+          "line": 13,
+          "column": 6
+        }
+      ]
+    },
+    {
+      "title": "e2e/ventes-system.spec.ts",
+      "file": "e2e/ventes-system.spec.ts",
+      "column": 0,
+      "line": 0,
+      "specs": [],
+      "suites": [
+        {
+          "title": "Système Ventes - Tests Complets",
+          "file": "e2e/ventes-system.spec.ts",
+          "line": 9,
+          "column": 6,
+          "specs": [
+            {
+              "title": "Test 1: Navigation Dashboard Ventes",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "552a8f51164b31681fd5-517399247d12043cf8d4",
+              "file": "e2e/ventes-system.spec.ts",
+              "line": 38,
+              "column": 7
+            },
+            {
+              "title": "Test 2: Consultation avec Client Existant",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "552a8f51164b31681fd5-f489efd082d1cf06198e",
+              "file": "e2e/ventes-system.spec.ts",
+              "line": 76,
+              "column": 7
+            },
+            {
+              "title": "Test 3: Consultation avec Nouveau Client",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "552a8f51164b31681fd5-f5768d95c4657c26bd05",
+              "file": "e2e/ventes-system.spec.ts",
+              "line": 108,
+              "column": 7
+            },
+            {
+              "title": "Test 4: Commande Client B2B Existant",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "552a8f51164b31681fd5-cfaee99f72e43b36975b",
+              "file": "e2e/ventes-system.spec.ts",
+              "line": 142,
+              "column": 7
+            },
+            {
+              "title": "Test 5: Commande Client B2B Nouveau",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "552a8f51164b31681fd5-eda8290cc3a3b70838d1",
+              "file": "e2e/ventes-system.spec.ts",
+              "line": 171,
+              "column": 7
+            },
+            {
+              "title": "Test 6: Commande Client B2C Nouveau",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "552a8f51164b31681fd5-69b6e94f9b15e6726814",
+              "file": "e2e/ventes-system.spec.ts",
+              "line": 210,
+              "column": 7
+            },
+            {
+              "title": "Test 7: Vérification Console Globale",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "552a8f51164b31681fd5-64cb6e37b145c4e8beb2",
+              "file": "e2e/ventes-system.spec.ts",
+              "line": 249,
+              "column": 7
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "errors": [],
+  "stats": {
+    "startTime": "2025-10-12T18:08:49.185Z",
+    "duration": 17652.911,
+    "expected": 0,
+    "skipped": 7,
+    "unexpected": 1,
+    "flaky": 0
+  }
+}
