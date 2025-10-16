@@ -110,7 +110,7 @@ export function CompleteProductWizard({
   draftId
 }: CompleteProductWizardProps) {
   const { toast } = useToast()
-  const { updateDraft, validateDraft, getDraftForEdit } = useDrafts()
+  const { createDraft, updateDraft, validateDraft, getDraftForEdit } = useDrafts()
 
   const [currentSection, setCurrentSection] = useState(0)
   const [formData, setFormData] = useState<WizardFormData>({
@@ -267,8 +267,10 @@ export function CompleteProductWizard({
         result = await updateDraft(draftIdState, draftData)
       } else {
         // Création d'un nouveau brouillon
-        // TODO: Implémenter createCompleteDraft dans useDrafts
-        console.log('Création nouveau brouillon complet:', draftData)
+        result = await createDraft(draftData)
+        if (result?.id) {
+          setDraftIdState(result.id)
+        }
       }
 
       if (showToast) {
