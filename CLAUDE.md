@@ -69,6 +69,90 @@ supabase/migrations/  # Database migrations
 
 ---
 
+## 📚 DOCUMENTATION STRUCTURE
+
+**Source de vérité unique** : `/docs/` (consolidée 2025-10-16)
+
+### Structure docs/ (8 sections)
+```
+docs/
+├── README.md                # Index principal navigation
+├── auth/                    # Rôles, Permissions, RLS
+│   ├── roles-permissions-matrix.md    # Matrice Owner/Admin
+│   ├── rls-policies.md                # Policies Supabase SQL
+│   ├── user-profiles.md               # Profils utilisateurs
+│   └── authentication-flows.md        # Flows login/signup
+├── metrics/                 # Métriques & Analytics
+│   ├── dashboard-kpis.md              # 16 hooks documentés
+│   ├── database-triggers.md           # 13 triggers automatiques
+│   ├── calculations.md                # 21 formules mathématiques
+│   └── components.md                  # Graphiques + KPI Cards
+├── database/                # Database Architecture
+│   ├── schema-overview.md
+│   ├── triggers-hooks.md
+│   ├── functions-rpc.md
+│   └── migrations/
+├── workflows/               # Business Workflows
+│   ├── owner-daily-workflow.md
+│   ├── admin-daily-workflow.md
+│   ├── orders-lifecycle.md
+│   ├── stock-movements.md
+│   └── sourcing-validation.md
+├── api/                     # API Reference
+├── guides/                  # Guides Pratiques
+├── architecture/            # Architecture Système
+└── troubleshooting/         # Dépannage
+```
+
+### Best Practices Documentation
+```typescript
+// Naming: kebab-case
+✅ roles-permissions-matrix.md
+❌ RolesPermissions.md
+
+// Profondeur: Max 2 niveaux
+✅ docs/auth/rls-policies.md
+❌ docs/auth/advanced/rls/policies.md
+
+// README: Obligatoire par section
+✅ docs/auth/README.md (navigation)
+❌ docs/auth/ sans README
+
+// Templates: Utiliser .templates/
+docs/.templates/roles-permissions-matrix.md
+docs/.templates/metric-documentation.md
+docs/.templates/section-readme.md
+```
+
+### ⚠️ RÈGLES MODIFICATION DOCUMENTATION
+
+**NE PLUS MODIFIER sans demande explicite** :
+- `docs/auth/*` (rôles Owner/Admin figés Phase 1)
+- `docs/metrics/*` (métriques Phase 1 complètes)
+- `docs/database/triggers-hooks.md` (triggers validés)
+- `docs/workflows/owner-daily-workflow.md` (workflow validé)
+- `docs/workflows/admin-daily-workflow.md` (workflow validé)
+
+**Modifications autorisées uniquement** :
+- Ajout nouveaux modules Phase 2+ (catalogue, commandes, stocks)
+- Corrections erreurs factuelles (après validation utilisateur)
+- Mise à jour versions (dates, numéros version)
+- Ajout liens vers nouvelle documentation
+
+**Si doute** : Demander confirmation utilisateur AVANT modification
+
+### Archive Documentation
+```
+archive/documentation-2025-10-16/
+├── README.md                # Pourquoi archivé
+├── roles-permissions-v1.md  # Ancienne spec (17 fichiers)
+└── ... (fichiers consolidés dans docs/)
+```
+
+**Archive = Référence historique seulement**. Toujours privilégier `/docs/`.
+
+---
+
 ## 🤖 AGENTS MCP - USAGE PRIORITAIRE
 
 ### Serena - Code Intelligence

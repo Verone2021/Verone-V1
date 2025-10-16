@@ -1,54 +1,185 @@
-# 📚 Documentation Vérone Back Office 2025
+# Documentation Vérone Back Office
 
-**Organisation professionnelle** de toute la documentation selon best practices
-
----
-
-## 📁 **Structure Documentation**
-
-```
-docs/
-├── architecture/           # Décisions architecturales
-│   ├── REVOLUTION_2025_ACCOMPLIE.md
-│   └── ...
-├── deployment/            # Guides déploiement
-│   └── ...
-└── guides/               # Guides développement
-    ├── MIGRATION_TESTS_2025.md
-    └── ...
-```
+**Dernière mise à jour** : 2025-10-16
+**Version** : 2.0
+**Mainteneur** : Vérone Documentation Team
 
 ---
 
-## 🎯 **Types de Documentation**
+## Bienvenue
 
-### **📐 Architecture**
-- Décisions architecturales majeures
-- Patterns et standards adoptés
-- Revues et transformations système
+Documentation complète du système **Vérone Back Office**, CRM/ERP modulaire pour la décoration et le mobilier d'intérieur haut de gamme.
 
-### **🚀 Deployment**
-- Guides déploiement production
-- Configuration environnements
-- Procédures rollback
-
-### **📖 Guides**
-- Guides développement équipe
-- Migration procedures
-- Best practices spécifiques
+**Stack Technique** : Next.js 15 + Supabase + shadcn/ui + React + Tailwind CSS
 
 ---
 
-## 🔗 **Documents Référence**
+## Sections Principales
 
-### **Configuration Centrale**
-- **CLAUDE.md** (racine) : Configuration Claude Code 2025
-- **README.md** (racine) : Présentation projet
+### 🔐 [Authentification & Autorisations](./auth/README.md)
 
-### **Contexte Projet**
-- **MEMORY-BANK/** : Sessions et contexte AI
-- **manifests/** : Business rules et spécifications
+Système de rôles (Owner/Admin), permissions, RLS policies, profils utilisateurs.
+
+**Fichiers clés** :
+- [Matrice Rôles & Permissions](./auth/roles-permissions-matrix.md)
+- [RLS Policies](./auth/rls-policies.md)
+- [Profils Utilisateurs](./auth/user-profiles.md)
+- [Flows Authentification](./auth/authentication-flows.md)
 
 ---
 
-**📚 Documentation 2025 - Structure Professionnelle**
+### 🗄️ [Base de Données](./database/README.md)
+
+Architecture database, schéma ERD, triggers, hooks, fonctions RPC, migrations.
+
+**Fichiers clés** :
+- [Schéma Overview](./database/schema-overview.md)
+- [Triggers & Hooks](./database/triggers-hooks.md)
+- [Fonctions RPC](./database/functions-rpc.md)
+- [Guide Migrations](./database/migrations/README.md)
+
+---
+
+### 📊 [Métriques & Analytics](./metrics/README.md)
+
+16 hooks dashboard, 10 triggers database, 20+ formules calcul, composants Recharts.
+
+**Fichiers clés** :
+- [Dashboard KPIs](./metrics/dashboard-kpis.md)
+- [Métriques Business](./metrics/business-metrics.md)
+- [Métriques Techniques](./metrics/technical-metrics.md)
+- [Triggers Database](./metrics/database-triggers.md)
+- [Formules de Calcul](./metrics/calculations.md)
+- [Composants Graphiques](./metrics/components.md)
+
+---
+
+### 🔌 [API Reference](./api/README.md)
+
+Endpoints REST, fonctions RPC Supabase, webhooks, intégrations externes.
+
+**Fichiers clés** :
+- [REST Endpoints](./api/rest-endpoints.md)
+- [RPC Functions](./api/rpc-functions.md)
+- [Webhooks](./api/webhooks.md)
+
+---
+
+### 📚 [Guides Pratiques](./guides/README.md)
+
+Quickstart, setup développement, tests, déploiement, workflows quotidiens.
+
+**Fichiers clés** :
+- [Quickstart](./guides/quickstart.md)
+- [Development Setup](./guides/development-setup.md)
+- [Testing Guide](./guides/testing-guide.md)
+- [Deployment](./guides/deployment.md)
+
+---
+
+### 🏗️ [Architecture Système](./architecture/README.md)
+
+Tech stack, design system V2 2025, patterns architecture, sécurité.
+
+**Fichiers clés** :
+- [Tech Stack](./architecture/tech-stack.md)
+- [Design System V2](./architecture/design-system.md)
+- [Security Architecture](./architecture/security.md)
+
+---
+
+### 🔄 [Workflows Business](./workflows/README.md)
+
+Workflows quotidiens Owner/Admin, lifecycle commandes, mouvements stock, validation sourcing.
+
+**Fichiers clés** :
+- [Owner Daily Workflow](./workflows/owner-daily-workflow.md)
+- [Admin Daily Workflow](./workflows/admin-daily-workflow.md)
+- [Orders Lifecycle](./workflows/orders-lifecycle.md)
+- [Stock Movements](./workflows/stock-movements.md)
+- [Sourcing Validation](./workflows/sourcing-validation.md)
+
+---
+
+### 🔧 [Troubleshooting](./troubleshooting/README.md)
+
+Erreurs courantes, debugging console, résolution problèmes.
+
+**Fichiers clés** :
+- [Common Errors](./troubleshooting/common-errors.md)
+- [Console Debugging](./troubleshooting/console-debugging.md)
+
+---
+
+## Navigation Rapide
+
+### Par Rôle Utilisateur
+
+- **Développeur Backend** → [Database](./database/README.md), [API](./api/README.md), [Metrics](./metrics/README.md)
+- **Développeur Frontend** → [Architecture](./architecture/README.md), [Guides](./guides/README.md), [Workflows](./workflows/README.md)
+- **Product Owner** → [Workflows](./workflows/README.md), [Metrics](./metrics/README.md)
+- **DevOps** → [Guides/Deployment](./guides/deployment.md), [Database/Migrations](./database/migrations/README.md)
+
+### Par Cas d'Usage
+
+- **Nouvelle Feature** → [Architecture](./architecture/README.md) + [Database Schema](./database/schema-overview.md)
+- **Bug Résolution** → [Troubleshooting](./troubleshooting/README.md) + [RLS Policies](./auth/rls-policies.md)
+- **Onboarding** → [Quickstart](./guides/quickstart.md) + [Tech Stack](./architecture/tech-stack.md)
+- **Ajout Métrique** → [Metrics](./metrics/README.md) + [Database Triggers](./database/triggers-hooks.md)
+
+---
+
+## Ressources Complémentaires
+
+### Manifests (Business Rules)
+
+- [Business Rules](/Users/romeodossantos/verone-back-office-V1/manifests/business-rules/)
+- [PRDs (Product Requirements)](/Users/romeodossantos/verone-back-office-V1/manifests/prd/)
+- [Features Roadmap](/Users/romeodossantos/verone-back-office-V1/manifests/features/)
+
+### MEMORY-BANK (Context)
+
+- [Sessions](/Users/romeodossantos/verone-back-office-V1/MEMORY-BANK/sessions/)
+- [Process Learnings](/Users/romeodossantos/verone-back-office-V1/MEMORY-BANK/process-learnings/)
+- [Architecture Decisions](/Users/romeodossantos/verone-back-office-V1/MEMORY-BANK/architecture-decisions/)
+
+### Templates Documentation
+
+- [Matrice Rôles/Permissions](/Users/romeodossantos/verone-back-office-V1/docs/.templates/roles-permissions-matrix.md)
+- [Documentation Métrique](/Users/romeodossantos/verone-back-office-V1/docs/.templates/metric-documentation.md)
+- [README Section](/Users/romeodossantos/verone-back-office-V1/docs/.templates/section-readme.md)
+
+---
+
+## Conventions
+
+- **Naming** : kebab-case pour fichiers et dossiers
+- **Profondeur** : Maximum 2 niveaux (docs/section/fichier.md)
+- **README** : Obligatoire pour chaque section
+- **Headers** : Standard avec date MAJ, version, mainteneur
+- **Liens** : Chemins absolus pour navigation inter-sections
+
+Voir [CONVENTIONS.md](./CONVENTIONS.md) pour détails complets.
+
+---
+
+## Contribuer
+
+1. Consulter [Conventions](./CONVENTIONS.md)
+2. Utiliser templates dans `.templates/`
+3. Respecter structure à 2 niveaux max
+4. Mettre à jour README section si ajout fichier
+5. Mettre à jour ce README si ajout section
+
+---
+
+## Historique des Versions
+
+| Date | Version | Changements Majeurs |
+|------|---------|---------------------|
+| 2025-10-16 | 2.0 | Refonte complète structure - 8 sections principales |
+| 2024-09-26 | 1.0 | Création initiale documentation |
+
+---
+
+**Vérone Back Office 2025** - Professional AI-Assisted CRM/ERP Development

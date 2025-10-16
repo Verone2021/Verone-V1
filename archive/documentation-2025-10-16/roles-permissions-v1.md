@@ -196,22 +196,4 @@ RETURNS BOOLEAN AS $$
 $$ LANGUAGE SQL SECURITY DEFINER;
 ```
 
-## 📈 **Évolution V2**
-
-### **Rôles Supplémentaires Prévus**
-- **Sales** : Devis, commandes, clients (lecture catalogue)
-- **Purchasing** : Fournisseurs, achats, réceptions
-- **Ops/Warehouse** : Stock, inventaires, mouvements
-- **Accountant** : Facturation, paiements, exports comptables
-- **Marketing Ops** : Feeds, CRM, campagnes
-- **Support/CS** : Clients, SAV, tickets
-- **Viewer** : Lecture seule, reporting, audit
-
-### **Scopes Avancés V2**
-- `can_approve_large_orders` (>10k€)
-- `can_issue_refunds`
-- `can_adjust_stock_negative`
-- `can_send_campaigns`
-- `can_view_financial_data`
-
-Cette structure RBAC V1 assure une sécurité robuste tout en permettant une extension naturelle vers les 6 rôles supplémentaires de la V2.
+Cette structure RBAC V1 assure une sécurité robuste tout en permettant une extension naturelle vers les rôles supplémentaires futurs.

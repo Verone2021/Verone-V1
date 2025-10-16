@@ -50,8 +50,6 @@ export function UserManagementTable({ users }: UserManagementTableProps) {
   const filteredUsers = users.filter(user => {
     const matchesSearch =
       user.email.toLowerCase().includes(searchTerm.toLowerCase())
-      // Note: first_name/last_name pas encore dans le schéma DB
-      // Ces filtres seront ajoutés quand les colonnes seront disponibles
 
     const matchesRole = roleFilter === 'all' || user.profile?.role === roleFilter
 
