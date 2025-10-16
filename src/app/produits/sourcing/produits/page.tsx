@@ -284,7 +284,7 @@ export default function SourcingProduitsPage() {
             {error && (
               <div className="text-center py-8">
                 <AlertCircle className="h-12 w-12 text-red-400 mx-auto mb-4" />
-                <p className="text-red-600">Erreur: {error}</p>
+                <p className="text-red-600">Erreur: {error instanceof Error ? error.message : String(error)}</p>
               </div>
             )}
 

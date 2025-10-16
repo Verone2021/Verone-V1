@@ -602,7 +602,7 @@ export default function CollectionsPage() {
           ))
         ) : error ? (
           <div className="col-span-full p-8 text-center text-red-500 bg-white rounded-lg border border-red-200">
-            Erreur lors du chargement des collections: {error}
+            Erreur lors du chargement des collections: {error instanceof Error ? error.message : String(error)}
           </div>
         ) : (
           (() => {

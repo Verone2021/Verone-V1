@@ -197,7 +197,7 @@ export default function CataloguePage() {
   if (error) {
     return (
       <div className="flex items-center justify-center h-64">
-        <div className="text-red-600">Erreur: {error}</div>
+        <div className="text-red-600">Erreur: {error instanceof Error ? error.message : String(error)}</div>
       </div>
     )
   }

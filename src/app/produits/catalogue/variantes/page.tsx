@@ -580,7 +580,7 @@ export default function VariantesPage() {
             ))
           ) : error ? (
             <div className="col-span-full p-8 text-center text-red-500 bg-white rounded-lg border border-red-200">
-              Erreur lors du chargement des groupes: {error}
+              Erreur lors du chargement des groupes: {error instanceof Error ? error.message : String(error)}
             </div>
           ) : variantGroups.length > 0 ? (
             variantGroups.map(group => (
