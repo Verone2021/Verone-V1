@@ -224,7 +224,7 @@ export const ProductCardV2 = memo(function ProductCardV2({
                 variant="outline"
                 size="xs"
                 onClick={handleArchiveClick}
-                className="w-7 h-7 p-0 flex items-center justify-center"
+                className="w-7 h-7 p-0 flex items-center justify-center border-gray-400 text-gray-700 hover:border-gray-500 hover:bg-gray-50"
                 aria-label={archived ? "Restaurer le produit" : "Archiver le produit"}
               >
                 {archived ? <ArchiveRestore className="h-3.5 w-3.5" /> : <Archive className="h-3.5 w-3.5" />}
