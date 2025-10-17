@@ -270,6 +270,49 @@ const enriched = data.map(p => ({
 // ✅ Tendances 2025: Rounded corners, micro-interactions, shadows élégantes
 ```
 
+### Database Migrations Convention (Supabase)
+```typescript
+// 📁 EMPLACEMENT: supabase/migrations/
+// 📝 NAMING OBLIGATOIRE: YYYYMMDD_NNN_description.sql
+
+// ✅ EXEMPLES CORRECTS:
+20251017_001_add_tax_rate_column.sql
+20251017_002_create_invoices_rpc.sql
+20251017_003_add_rls_policies_stock_movements.sql
+
+// ❌ EXEMPLES INCORRECTS:
+20251017_add_tax_rate.sql              // Manque _NNN_
+add-tax-rate.sql                       // Pas de date
+202510115_005_create_table.sql         // Date invalide (9 chiffres)
+20251017-create-table.sql              // Séparateur incorrect
+
+// 🔑 FORMAT DÉTAILLÉ:
+// YYYYMMDD : Date création (ex: 20251017)
+// NNN      : Numéro séquentiel du jour (001, 002, 003...)
+// description : Description kebab-case (snake_case accepté)
+// .sql     : Extension obligatoire
+
+// 📋 RÈGLES:
+// 1. TOUJOURS utiliser supabase/migrations/ (jamais docs/, scripts/, etc.)
+// 2. Une migration = Un fichier SQL pur (pas de bash, python, etc.)
+// 3. Idempotent (IF NOT EXISTS, IF EXISTS) quand possible
+// 4. Commentaires explicatifs obligatoires
+// 5. Archiver (pas supprimer) migrations obsolètes → archive/YYYY-MM-category/
+
+// 📂 STRUCTURE:
+supabase/migrations/
+├── YYYYMMDD_NNN_*.sql    // Migrations actives
+├── archive/              // Migrations archivées (référence historique)
+│   ├── 2025-10-rollbacks/
+│   ├── 2025-10-debug-iterations/
+│   └── YYYY-phase-name/
+└── README.md             // Documentation process
+
+// ⚠️ ARCHIVAGE (Best Practices 2025):
+// Archiver quand: Migration remplacée, rollback appliqué, iteration debug consolidée
+// Ne JAMAIS delete migrations appliquées production (archive > delete)
+```
+
 ---
 
 ## 🔄 GITHUB FLOW
