@@ -22,7 +22,7 @@ const statusConfig = {
   in_stock: { label: "✓ En stock", className: "bg-green-600 text-white" },
   out_of_stock: { label: "✕ Rupture", className: "bg-red-600 text-white" },
   preorder: { label: "📅 Précommande", className: "bg-blue-600 text-white" },
-  coming_soon: { label: "⏳ Bientôt", className: "bg-black text-white" },
+  coming_soon: { label: "⏳ Bientôt", className: "bg-blue-600 text-white" }, // ✅ Bleu au lieu de noir
   discontinued: { label: "⚠ Arrêté", className: "bg-gray-600 text-white" }
 }
 

@@ -37,7 +37,7 @@ const statusConfig = {
   },
   coming_soon: {
     label: "Bientôt",
-    className: "bg-black text-white",
+    className: "bg-blue-600 text-white", // ✅ Bleu au lieu de noir
   },
   discontinued: {
     label: "Arrêté",
@@ -136,8 +136,8 @@ export const ProductCardV2 = memo(function ProductCardV2({
           </div>
         )}
 
-        {/* Badges - COMPACT */}
-        <div className="absolute top-2 right-2 flex flex-col gap-1">
+        {/* Badges - Espacement amélioré */}
+        <div className="absolute top-2 right-2 flex flex-col gap-2">
           <Badge className={cn("text-[10px] font-medium px-1.5 py-0.5", status.className)}>
             {status.label}
           </Badge>
@@ -149,7 +149,7 @@ export const ProductCardV2 = memo(function ProductCardV2({
           )}
         </div>
 
-        {/* Badge "nouveau" - COMPACT */}
+        {/* Badge "nouveau" */}
         {(() => {
           const createdAt = new Date(product.created_at)
           const thirtyDaysAgo = new Date()
@@ -164,19 +164,19 @@ export const ProductCardV2 = memo(function ProductCardV2({
         )}
       </div>
 
-      {/* Informations produit - COMPACT */}
-      <div className="p-2 space-y-1.5">
+      {/* Informations produit - HIÉRARCHIE CLAIRE */}
+      <div className="p-3 space-y-2">
         {/* Header - NOM + SKU */}
         <div className="space-y-0.5">
-          <h3 className="font-semibold text-sm text-gray-900 line-clamp-2 min-h-[2.5rem] leading-tight">
+          <h3 className="font-semibold text-sm text-black line-clamp-2 min-h-[2.5rem] leading-tight">
             {product.name}
           </h3>
-          <p className="text-[10px] text-gray-500 font-mono">
+          <p className="text-[10px] text-gray-600 font-mono">
             SKU: {product.sku}
           </p>
         </div>
 
-        {/* Stock + Prix - COMPACT */}
+        {/* Stock + Prix Achat - COMPACT */}
         <div className="space-y-1">
           {product.stock_quantity !== undefined && (
             <div className="flex items-center gap-2">
@@ -191,19 +191,22 @@ export const ProductCardV2 = memo(function ProductCardV2({
           )}
 
           {product.cost_price && (
-            <div className="text-lg font-bold text-gray-900">
-              {product.cost_price.toFixed(2)} €
-              <span className="text-xs font-normal text-gray-500 ml-1">HT</span>
+            <div className="space-y-0.5">
+              <span className="text-[10px] text-gray-600">Prix d'achat indicatif</span>
+              <div className="text-lg font-bold text-gray-900">
+                {product.cost_price.toFixed(2)} €
+                <span className="text-xs font-normal text-gray-500 ml-1">HT</span>
+              </div>
             </div>
           )}
         </div>
 
-        {/* Actions - UNE SEULE LIGNE */}
+        {/* Actions - UNE SEULE LIGNE - BOUTONS OUTLINE BLANC/NOIR */}
         {showActions && (
           <div className="flex gap-1.5 pt-1">
-            {/* Bouton principal : Voir détail (avec texte + icône) */}
+            {/* Bouton principal : Voir détail (OUTLINE blanc/noir) */}
             <ButtonV2
-              variant="primary"
+              variant="outline"
               size="sm"
               onClick={handleDetailsClick}
               className="flex-1 text-xs h-7"
@@ -212,10 +215,10 @@ export const ProductCardV2 = memo(function ProductCardV2({
               Voir détail
             </ButtonV2>
 
-            {/* Bouton secondaire : Archive/Restaurer (ICÔNE SEULE) */}
+            {/* Bouton secondaire : Archive/Restaurer (OUTLINE) */}
             {onArchive && (
               <ButtonV2
-                variant={archived ? "secondary" : "ghost"}
+                variant="outline"
                 size="sm"
                 onClick={handleArchiveClick}
                 className="w-7 h-7 p-0 flex items-center justify-center"
@@ -225,13 +228,13 @@ export const ProductCardV2 = memo(function ProductCardV2({
               </ButtonV2>
             )}
 
-            {/* Bouton tertiaire : Supprimer (ICÔNE SEULE + CONDITIONNEL archived only) */}
+            {/* Bouton tertiaire : Supprimer (OUTLINE rouge si archived) */}
             {archived && onDelete && (
               <ButtonV2
-                variant="danger"
+                variant="outline"
                 size="sm"
                 onClick={handleDeleteClick}
-                className="w-7 h-7 p-0 flex items-center justify-center"
+                className="w-7 h-7 p-0 flex items-center justify-center border-red-600 text-red-600 hover:bg-red-50"
                 aria-label="Supprimer le produit"
               >
                 <Trash2 className="h-4 w-4" />

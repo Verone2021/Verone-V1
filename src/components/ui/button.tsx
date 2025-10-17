@@ -7,7 +7,7 @@ import { colors, spacing, componentShadows } from '@/lib/design-system'
 import { cn } from '@/lib/utils'
 
 export interface ButtonV2Props extends React.ButtonHTMLAttributes<HTMLButtonElement> {
-  variant?: 'primary' | 'secondary' | 'success' | 'danger' | 'warning' | 'ghost'
+  variant?: 'primary' | 'secondary' | 'outline' | 'success' | 'danger' | 'warning' | 'ghost'
   size?: 'sm' | 'md' | 'lg'
   icon?: LucideIcon
   iconPosition?: 'left' | 'right'
@@ -44,18 +44,26 @@ export function ButtonV2({
   // Variant styles
   const variantStyles = {
     primary: {
-      backgroundColor: colors.text.DEFAULT, // Noir #212529
+      backgroundColor: colors.primary.DEFAULT, // ✅ Bleu #3b86d1 (plus noir!)
       color: colors.text.inverse, // Blanc
       border: 'none',
-      hoverBg: colors.neutral[900],
+      hoverBg: colors.primary[600],
       shadow: componentShadows.button,
     },
     secondary: {
-      backgroundColor: 'transparent',
-      color: colors.text.DEFAULT,
-      border: `2px solid ${colors.text.DEFAULT}`,
-      hoverBg: colors.text.DEFAULT,
-      hoverColor: colors.text.inverse,
+      backgroundColor: '#ffffff', // ✅ Fond blanc épuré
+      color: colors.primary.DEFAULT, // ✅ Texte bleu
+      border: `2px solid ${colors.primary.DEFAULT}`, // ✅ Bordure bleue
+      hoverBg: colors.primary[50], // ✅ Hover bleu très léger
+      hoverColor: colors.primary[700],
+      shadow: 'none',
+    },
+    outline: {
+      backgroundColor: 'transparent', // ✅ Transparent pour superposition
+      color: colors.text.DEFAULT, // ✅ Texte noir
+      border: `1.5px solid ${colors.border.strong}`, // ✅ Bordure grise
+      hoverBg: colors.background.hover, // ✅ Fond gris léger au hover
+      hoverColor: colors.text.DEFAULT,
       shadow: 'none',
     },
     success: {

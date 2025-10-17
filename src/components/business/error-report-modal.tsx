@@ -128,7 +128,7 @@ const SEVERITY_CONFIG = {
   },
   critical: {
     label: 'Critique',
-    color: 'bg-black text-white',
+    color: 'bg-red-600 text-white', // ✅ Rouge au lieu de noir pour critique
     description: 'Problème bloquant, urgent'
   }
 } as const
