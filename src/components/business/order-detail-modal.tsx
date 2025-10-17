@@ -11,6 +11,14 @@ import { SalesOrder, useSalesOrders } from '@/hooks/use-sales-orders'
 import { formatCurrency } from '@/lib/utils'
 import { ShippingManagerModal } from './shipping-manager-modal'
 
+// ✅ Type Safety: Interface ProductImage stricte
+interface ProductImage {
+  id?: string
+  public_url: string
+  is_primary: boolean
+  display_order?: number
+}
+
 interface OrderDetailModalProps {
   order: SalesOrder | null
   open: boolean
@@ -212,13 +220,20 @@ export function OrderDetailModal({ order, open, onClose, onUpdate }: OrderDetail
                 </CardHeader>
                 <CardContent>
                   <div className="space-y-3">
-                    {order.sales_order_items?.map((item) => (
+                    {order.sales_order_items?.map((item) => {
+                      // ✅ BR-TECH-002: Récupérer image via product_images (colonne primary_image_url supprimée)
+                      const productImages = item.products?.product_images as ProductImage[] | undefined
+                      const primaryImageUrl = productImages?.find(img => img.is_primary)?.public_url ||
+                                             productImages?.[0]?.public_url ||
+                                             null
+
+                      return (
                       <div key={item.id} className="flex gap-4 items-start border-b pb-3 last:border-b-0 last:pb-0">
                         {/* IMAGE PRODUIT - SYSTÉMATIQUE */}
                         <div className="flex-shrink-0">
-                          {item.products?.primary_image_url ? (
+                          {primaryImageUrl ? (
                             <img
-                              src={item.products.primary_image_url}
+                              src={primaryImageUrl}
                               alt={item.products.name}
                               className="w-24 h-24 object-cover rounded border"
                             />
@@ -264,7 +279,8 @@ export function OrderDetailModal({ order, open, onClose, onUpdate }: OrderDetail
                           )}
                         </div>
                       </div>
-                    ))}
+                      )
+                    })}
                   </div>
 
                   {/* Totaux */}

@@ -6,6 +6,10 @@ const nextConfig = {
   // Next.js 15 App Router configuration
   reactStrictMode: true,
 
+  // WORKAROUND (2025-10-17): Désactiver export statique pour résoudre Html import error
+  // Bug Next.js 15.5.4 avec prerendering pages d'erreur /_error, /404, /500
+  output: 'standalone',
+
   // ESLint: Temporairement ignoré pendant build (Phase 1 focus: TypeScript errors only)
   // Phase 4 corrigera exhaustive-deps + no-img-element, puis on réactivera
   eslint: {

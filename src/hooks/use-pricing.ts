@@ -26,7 +26,7 @@ import { logger } from '@/lib/logger'
 // =====================================================================
 
 export interface PricingResultV2 {
-  price_ht: number
+  cost_price: number
   original_price: number
   discount_rate: number | null
   price_list_id: string
@@ -41,10 +41,10 @@ export interface PricingResultV2 {
 
 // Type legacy pour compatibilité (mapping vers PricingResultV2)
 export interface PricingResult {
-  final_price_ht: number
+  final_cost_price: number
   pricing_source: 'customer_specific' | 'customer_group' | 'channel' | 'base_catalog'
   discount_applied: number
-  original_price_ht: number
+  original_cost_price: number
 }
 
 export interface PricingParams {
@@ -106,16 +106,16 @@ export function useProductPrice(params: PricingParams) {
 
         // Mapper vers format legacy pour compatibilité
         const result: PricingResult = {
-          final_price_ht: resultV2.price_ht,
+          final_cost_price: resultV2.cost_price,
           pricing_source: resultV2.price_source,
           discount_applied: resultV2.discount_rate || 0,
-          original_price_ht: resultV2.original_price
+          original_cost_price: resultV2.original_price
         }
 
         logger.info('Product price calculated successfully (V2)', {
           operation: 'useProductPrice',
           productId: params.productId,
-          finalPrice: result.final_price_ht,
+          finalPrice: result.final_cost_price,
           source: result.pricing_source,
           priceList: resultV2.price_list_name
         })
@@ -178,10 +178,10 @@ export function useBatchPricing() {
               const resultV2 = data?.[0] as PricingResultV2
               if (resultV2) {
                 const pricing: PricingResult = {
-                  final_price_ht: resultV2.price_ht,
+                  final_cost_price: resultV2.cost_price,
                   pricing_source: resultV2.price_source,
                   discount_applied: resultV2.discount_rate || 0,
-                  original_price_ht: resultV2.original_price
+                  original_cost_price: resultV2.original_price
                 }
                 return {
                   productId: params.productId,
@@ -296,7 +296,7 @@ export interface ChannelPricing {
   id: string
   product_id: string
   channel_id: string
-  custom_price_ht: number | null
+  custom_cost_price: number | null
   discount_rate: number | null
   markup_rate: number | null
   min_quantity: number
@@ -362,7 +362,7 @@ export interface CustomerPricing {
   customer_id: string
   customer_type: 'organization' | 'individual'
   product_id: string
-  custom_price_ht: number | null
+  custom_cost_price: number | null
   discount_rate: number | null
   contract_reference: string | null
   min_quantity: number
@@ -492,7 +492,7 @@ export function useInvalidatePricing() {
 export interface QuantityBreak {
   min_quantity: number
   max_quantity: number | null
-  price_ht: number
+  cost_price: number
   discount_rate: number | null
   price_list_name: string
   savings_amount: number

@@ -6,20 +6,32 @@ import { createClient } from '@/lib/supabase/client'
 import { useToast } from '@/hooks/use-toast'
 import { calculateMinimumSellingPrice, formatPrice } from '@/lib/pricing-utils'
 
+// ✅ Interface pour product_images (BR-TECH-002)
+interface ProductImage {
+  public_url: string
+  is_primary: boolean
+}
+
 export interface Product {
   id: string
   sku: string
   name: string
   slug: string
-  price_ht: number // Prix d'achat fournisseur (legacy - sera remplacé par supplier_cost_price)
-  supplier_cost_price?: number // NOUVEAU: Prix d'achat fournisseur clarifié
-  cost_price?: number // Autre coût si défini séparément
+
+  // 💰 PRICING - Colonne réelle DB
+  margin_percentage: number    // Marge minimum en pourcentage
+  // ⚠️ minimumSellingPrice = cost_price × (1 + margin_percentage/100) - CALCULÉ, pas stocké
+
+  // ❌ Legacy: selling_price N'EXISTE PAS en Phase 1 - Prix de vente sera dans sales_order_items (Phase 2)
+  cost_price?: number            // Prix de vente HT (colonne products.cost_price) - À SUPPRIMER en Phase 2
+
   status: 'in_stock' | 'out_of_stock' | 'preorder' | 'coming_soon' | 'discontinued'
   condition: 'new' | 'refurbished' | 'used'
   variant_attributes?: any
   dimensions?: any
   weight?: number
-  // Images: URL publique de l'image primaire (chargée via product_images JOIN)
+
+  // ✅ BR-TECH-002: Images via product_images JOIN (primary_image_url enrichi côté client)
   primary_image_url?: string | null
   video_url?: string
   supplier_reference?: string
@@ -28,7 +40,6 @@ export interface Product {
   min_stock?: number
   supplier_page_url?: string
   supplier_id?: string
-  margin_percentage?: number // Marge minimum en pourcentage
   // Champs descriptions ajoutés lors de la migration
   description?: string
   technical_description?: string
@@ -66,7 +77,6 @@ export interface ProductFilters {
 export interface CreateProductData {
   // Champs obligatoires selon business rules (CONDITIONNELS selon mode)
   name: string // Obligatoire TOUJOURS
-  supplier_cost_price?: number // NOUVEAU: Prix d'achat fournisseur (obligatoire en mode COMPLETE)
   description?: string // Obligatoire en mode COMPLETE uniquement
   subcategory_id?: string // Obligatoire en mode COMPLETE uniquement
 
@@ -87,10 +97,10 @@ export interface CreateProductData {
 
   // Champs de marge et pricing - NOUVELLE LOGIQUE
   margin_percentage?: number // Marge minimum en pourcentage (ex: 50 = 50%)
-  // minimumSellingPrice sera calculé automatiquement: supplier_cost_price × (1 + margin_percentage/100)
+  // minimumSellingPrice sera calculé automatiquement: cost_price × (1 + margin_percentage/100)
 
-  // Legacy (à supprimer progressivement)
-  cost_price?: number // Autre coût si défini séparément
+  // Legacy (supprimé - Migration 20251017_003)
+  // cost_price: SUPPRIMÉ
 
   // Champs optionnels existants
   slug?: string
@@ -140,7 +150,6 @@ const productsFetcher = async (
       name,
       sku,
       status,
-      cost_price,
       stock_quantity,
       margin_percentage,
       created_at,
@@ -164,14 +173,6 @@ const productsFetcher = async (
 
   if (filters?.supplier_id) {
     query = query.eq('supplier_id', filters.supplier_id)
-  }
-
-  if (filters?.min_price) {
-    query = query.gte('cost_price', filters.min_price)
-  }
-
-  if (filters?.max_price) {
-    query = query.lte('cost_price', filters.max_price)
   }
 
   if (filters?.in_stock_only) {
@@ -228,11 +229,9 @@ export function useProducts(filters?: ProductFilters, page: number = 0) {
         .insert([{
           name: productData.name,
           slug: productData.slug || productData.name.toLowerCase().replace(/[^a-z0-9]/g, '-').replace(/-+/g, '-'),
-          supplier_cost_price: productData.supplier_cost_price,
-          price_ht: productData.supplier_cost_price || 0,
+          cost_price: productData.cost_price || 0,
           margin_percentage: productData.margin_percentage || 0,
           availability_type: productData.availability_type || 'normal',
-          cost_price: productData.cost_price,
           description: productData.description,
           subcategory_id: productData.subcategory_id,
           technical_description: productData.technical_description,
@@ -372,8 +371,6 @@ export function useProduct(id: string) {
             sku,
             name,
             slug,
-            price_ht,
-            supplier_cost_price,
             cost_price,
             status,
             condition,
@@ -403,6 +400,10 @@ export function useProduct(id: string) {
               name,
               type
             ),
+            product_images!left (
+              public_url,
+              is_primary
+            )
           `)
           .eq('id', id)
           .single()
@@ -414,17 +415,20 @@ export function useProduct(id: string) {
 
         // Enrichir le produit avec le prix minimum de vente + image primaire
         if (data) {
-          const supplierCost = data.supplier_cost_price || data.price_ht
+          const supplierCost = data.cost_price
           const margin = data.margin_percentage || 0
 
           const minimumSellingPrice = supplierCost && margin
             ? calculateMinimumSellingPrice(supplierCost, margin)
             : 0
 
-          // ⚠️ TEMPORAIRE: Images désactivées pour débloquer tests
+          // Extraire image primaire depuis product_images (BR-TECH-002)
+          const primaryImage = data.product_images?.find((img: ProductImage) => img.is_primary)
+          const primaryImageUrl = primaryImage?.public_url || data.product_images?.[0]?.public_url || null
+
           setProduct({
             ...data,
-            primary_image_url: null, // Temporaire
+            primary_image_url: primaryImageUrl,
             minimumSellingPrice
           })
         }

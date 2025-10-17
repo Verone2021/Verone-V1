@@ -2,9 +2,6 @@
 @tailwind components;
 @tailwind utilities;
 
-/* Vérone Design Tokens - Import officiel */
-@import '../styles/verone-design-tokens.css';
-
 @layer base {
   * {
     @apply border-border;

@@ -8,6 +8,7 @@ import { Switch } from '@/components/ui/switch'
 import { Label } from '@/components/ui/label'
 import { Textarea } from '@/components/ui/textarea'
 import { Separator } from '@/components/ui/separator'
+import { SampleOrderButton } from './sample-order-button'
 import {
   CheckCircle,
   AlertCircle,
@@ -26,6 +27,7 @@ interface SampleRequirementSectionProps {
   onRequirementChange?: (requiresSample: boolean) => void
 
   // Métadonnées optionnelles pour l'affichage
+  productId?: string  // ID du produit pour commander échantillon
   productName?: string
   productType?: 'standard' | 'custom'
   assignedClientId?: string
@@ -34,6 +36,8 @@ interface SampleRequirementSectionProps {
     name: string
     type: string
   }
+  supplierName?: string  // Nom du fournisseur
+  costPrice?: number     // Prix d'achat
 
   // État d'édition
   disabled?: boolean
@@ -44,10 +48,13 @@ export function SampleRequirementSection({
   requiresSample,
   isProduct = false,
   onRequirementChange,
+  productId,
   productName,
   productType = 'standard',
   assignedClientId,
   assignedClient,
+  supplierName,
+  costPrice,
   disabled = false,
   className
 }: SampleRequirementSectionProps) {
@@ -79,14 +86,33 @@ export function SampleRequirementSection({
   const getWorkflowInfo = () => {
     if (!requiresSample) {
       return (
-        <div className="text-sm text-green-600 bg-green-50 p-3 rounded-lg border border-green-200">
-          <div className="flex items-center gap-2">
-            <CheckCircle className="h-4 w-4" />
-            <span className="font-medium">Processus normal</span>
+        <div className="space-y-3">
+          <div className="text-sm text-green-600 bg-green-50 p-3 rounded-lg border border-green-200">
+            <div className="flex items-center gap-2">
+              <CheckCircle className="h-4 w-4" />
+              <span className="font-medium">Processus normal</span>
+            </div>
+            <p className="mt-1 text-green-700">
+              Ce produit peut être commandé ou validé directement sans échantillon préalable.
+            </p>
           </div>
-          <p className="mt-1 text-green-700">
-            Ce produit peut être commandé ou validé directement sans échantillon préalable.
-          </p>
+
+          {/* Bouton Commander échantillon si produit existe */}
+          {isProduct && productId && productName && (
+            <div className="flex items-center justify-between p-3 bg-blue-50 rounded-lg border border-blue-200">
+              <div className="text-sm">
+                <p className="font-medium text-blue-900">Besoin de tester le produit ?</p>
+                <p className="text-blue-700">Commandez un échantillon pour validation qualité</p>
+              </div>
+              <SampleOrderButton
+                productId={productId}
+                productName={productName}
+                supplierName={supplierName}
+                costPrice={costPrice}
+                size="sm"
+              />
+            </div>
+          )}
         </div>
       )
     }

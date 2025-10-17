@@ -38,8 +38,8 @@ export default function CompleteProductForm({ onSuccess, onCancel }: CompletePro
     description: "",
     subcategory_id: "",
     
-    // NOUVEAU: Pricing avec supplier_cost_price
-    supplier_cost_price: "", // Prix d'achat fournisseur HT (OBLIGATOIRE)
+    // NOUVEAU: Pricing avec cost_price
+    cost_price: "", // Prix d'achat fournisseur HT (OBLIGATOIRE)
     margin_percentage: "", // Marge en pourcentage (optionnel)
     
     // Statut séparé selon nouvelles règles
@@ -80,8 +80,8 @@ export default function CompleteProductForm({ onSuccess, onCancel }: CompletePro
 
   // Calculer le prix minimum de vente (pour information uniquement)
   const calculateMinimumSellingPrice = () => {
-    if (formData.supplier_cost_price && formData.margin_percentage) {
-      const cost = parseFloat(formData.supplier_cost_price)
+    if (formData.cost_price && formData.margin_percentage) {
+      const cost = parseFloat(formData.cost_price)
       const margin = parseFloat(formData.margin_percentage)
       if (cost > 0 && margin >= 0) {
         return (cost * (1 + margin / 100)).toFixed(2)
@@ -209,7 +209,7 @@ export default function CompleteProductForm({ onSuccess, onCancel }: CompletePro
     const errors: string[] = []
 
     if (!formData.name.trim()) errors.push("Nom du produit requis")
-    if (!formData.supplier_cost_price || parseFloat(formData.supplier_cost_price) <= 0) {
+    if (!formData.cost_price || parseFloat(formData.cost_price) <= 0) {
       errors.push("Prix d'achat fournisseur requis et doit être supérieur à 0")
     }
     if (!formData.subcategory_id) errors.push("Catégorie requise")
@@ -243,8 +243,8 @@ export default function CompleteProductForm({ onSuccess, onCancel }: CompletePro
       // Préparer les données du produit selon nouvelles règles
       const productData: any = {
         name: formData.name.trim(),
-        // NOUVEAU: Utiliser supplier_cost_price au lieu de cost_price/price_ht
-        supplier_cost_price: parseFloat(formData.supplier_cost_price),
+        // NOUVEAU: Utiliser cost_price au lieu de cost_price/price_ht
+        cost_price: parseFloat(formData.cost_price),
         availability_type: formData.availability_type,
         condition: formData.condition,
         subcategory_id: formData.subcategory_id,
@@ -432,14 +432,14 @@ export default function CompleteProductForm({ onSuccess, onCancel }: CompletePro
           <TabsContent value="pricing" className="p-6 space-y-4">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="space-y-2">
-                <Label htmlFor="supplier_cost_price">Prix d'achat (€ HT) *</Label>
+                <Label htmlFor="cost_price">Prix d'achat (€ HT) *</Label>
                 <Input
-                  id="supplier_cost_price"
+                  id="cost_price"
                   type="number"
                   step="0.01"
                   min="0"
-                  value={formData.supplier_cost_price}
-                  onChange={(e) => setFormData({...formData, supplier_cost_price: e.target.value})}
+                  value={formData.cost_price}
+                  onChange={(e) => setFormData({...formData, cost_price: e.target.value})}
                   placeholder="150.00"
                   className="border-gray-300 focus:border-black"
                   required

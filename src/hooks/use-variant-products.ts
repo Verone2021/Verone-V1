@@ -8,7 +8,6 @@ export interface VariantProduct {
   id: string
   sku: string
   name: string
-  price_ht: number
   cost_price: number
   status: string
   variant_attributes?: any
@@ -30,8 +29,7 @@ interface CreateVariantProductData {
     pattern?: string
     [key: string]: any
   }
-  price_ht: number
-  cost_price?: number
+  cost_price: number
   stock_quantity?: number
   image_url?: string
   subcategory_id?: string
@@ -250,8 +248,7 @@ export function useVariantProducts() {
         .insert([{
           sku: newSku,
           name: data.name,
-          price_ht: data.price_ht,
-          cost_price: data.cost_price || data.price_ht * 0.6, // Marge par défaut 40%
+          cost_price: data.cost_price,
           status: 'in_stock',
           variant_attributes: data.variant_attributes,
           variant_group_id: variantGroupId,
@@ -316,9 +313,6 @@ export function useVariantProducts() {
       .map(([_, value]) => value)
       .join(' ')}`
 
-    // Calculer le prix de vente avec marge de 50% par défaut
-    const sellingPrice = data.cost_price * 1.5
-
     const fullProductData: CreateVariantProductData = {
       name: variantName,
       variant_attributes: {
@@ -327,7 +321,6 @@ export function useVariantProducts() {
         material: data.material,
         pattern: data.pattern
       },
-      price_ht: sellingPrice,
       cost_price: data.cost_price,
       stock_quantity: 0,
       image_url: data.image_url
@@ -445,7 +438,7 @@ export function useVariantProducts() {
     try {
       let query = supabase
         .from('products')
-        .select('id, name, sku, price_ht, status, variant_group_id')
+        .select('id, name, sku, cost_price, status, variant_group_id')
         .is('variant_group_id', null) // Seulement les produits non assignés
         .is('archived_at', null)
         .neq('creation_mode', 'sourcing') // Exclure les produits en sourcing

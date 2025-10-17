@@ -46,7 +46,7 @@ import {
 } from '@/components/ui/dialog'
 import { useSourcingProducts, SourcingProduct } from '@/hooks/use-sourcing-products'
 import { useToast } from '@/hooks/use-toast'
-import { SampleOrderValidation } from '@/components/business/sample-order-validation'
+import { SampleValidationSimple } from '@/components/business/sample-validation-simple'
 
 export default function SourcingValidationPage() {
   const router = useRouter()

@@ -41,7 +41,7 @@ export interface PriceListItem {
   id: string
   price_list_id: string
   product_id: string
-  price_ht: number
+  cost_price: number
   discount_rate: number | null
   min_quantity: number
   max_quantity: number | null
@@ -59,7 +59,7 @@ export interface PriceListItem {
     id: string
     name: string
     sku: string
-    price_ht: number
+    cost_price: number
   }
   price_lists?: {
     id: string
@@ -95,7 +95,7 @@ export interface UpdatePriceListData {
 export interface CreatePriceListItemData {
   price_list_id: string
   product_id: string
-  price_ht: number
+  cost_price: number
   discount_rate?: number
   min_quantity?: number
   max_quantity?: number
@@ -108,7 +108,7 @@ export interface CreatePriceListItemData {
 }
 
 export interface UpdatePriceListItemData {
-  price_ht?: number
+  cost_price?: number
   discount_rate?: number
   min_quantity?: number
   max_quantity?: number
@@ -241,7 +241,7 @@ export function usePriceListItems(priceListId: string | null) {
               id,
               name,
               sku,
-              price_ht,
+              cost_price,
               product_images!left (
                 public_url,
                 is_primary
@@ -510,7 +510,7 @@ export function useCreatePriceListItem() {
           .insert({
             price_list_id: data.price_list_id,
             product_id: data.product_id,
-            price_ht: data.price_ht,
+            cost_price: data.cost_price,
             discount_rate: data.discount_rate || null,
             min_quantity: data.min_quantity || 1,
             max_quantity: data.max_quantity || null,

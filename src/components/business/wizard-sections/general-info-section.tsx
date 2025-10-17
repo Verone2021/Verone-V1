@@ -1,14 +1,10 @@
 "use client"
 
-import { useState } from 'react'
 import { Input } from '../../ui/input'
 import { Label } from '../../ui/label'
-import { Textarea } from '../../ui/textarea'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../../ui/select'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../../ui/card'
-import { Badge } from '../../ui/badge'
-import { Button } from '../../ui/button'
-import { Plus, X, Info, Tag } from 'lucide-react'
+import { Info, Tag, FolderTree } from 'lucide-react'
 import { CategorySelector } from '../category-selector'
 import { WizardFormData } from '../complete-product-wizard'
 
@@ -23,25 +19,11 @@ export function GeneralInfoSection({
   setFormData,
   onSave
 }: GeneralInfoSectionProps) {
-  const [newSellingPoint, setNewSellingPoint] = useState('')
-
   const updateField = (field: keyof WizardFormData, value: any) => {
     setFormData({
       ...formData,
       [field]: value
     })
-  }
-
-  const addSellingPoint = () => {
-    if (newSellingPoint.trim()) {
-      updateField('selling_points', [...formData.selling_points, newSellingPoint.trim()])
-      setNewSellingPoint('')
-    }
-  }
-
-  const removeSellingPoint = (index: number) => {
-    const updated = formData.selling_points.filter((_, i) => i !== index)
-    updateField('selling_points', updated)
   }
 
   return (
@@ -74,74 +56,6 @@ export function GeneralInfoSection({
             </p>
           </div>
 
-          {/* DESCRIPTION UNIFIÉE - Fusion commerciale + technique */}
-          <div className="space-y-2">
-            <Label htmlFor="description" className="text-base font-medium">
-              Description complète
-            </Label>
-            <Textarea
-              id="description"
-              value={formData.description}
-              onChange={(e) => updateField('description', e.target.value)}
-              placeholder="Description commerciale et spécifications techniques du produit...
-
-Exemple:
-• Description commerciale pour les clients
-• Dimensions et matériaux
-• Avantages et caractéristiques techniques
-• Informations de mise en œuvre"
-              rows={5}
-            />
-            <p className="text-xs text-gray-500">
-              Description unifiée visible sur les catalogues (commerciale + technique)
-            </p>
-          </div>
-
-          {/* POINTS DE VENTE - Arguments de vente conformes à la page détail */}
-          <div className="space-y-3">
-            <Label className="text-base font-medium">Arguments de vente</Label>
-
-            {/* Liste des points existants */}
-            {formData.selling_points.length > 0 && (
-              <div className="flex flex-wrap gap-2">
-                {formData.selling_points.map((point, index) => (
-                  <Badge key={index} variant="secondary" className="flex items-center gap-1">
-                    {point}
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      className="h-auto p-0 ml-1"
-                      onClick={() => removeSellingPoint(index)}
-                    >
-                      <X className="h-3 w-3" />
-                    </Button>
-                  </Badge>
-                ))}
-              </div>
-            )}
-
-            {/* Ajouter un nouveau point */}
-            <div className="flex gap-2">
-              <Input
-                value={newSellingPoint}
-                onChange={(e) => setNewSellingPoint(e.target.value)}
-                placeholder="Ex: Design contemporain, Matériaux durables..."
-                onKeyPress={(e) => e.key === 'Enter' && addSellingPoint()}
-              />
-              <Button
-                type="button"
-                variant="outline"
-                onClick={addSellingPoint}
-                disabled={!newSellingPoint.trim()}
-              >
-                <Plus className="h-4 w-4" />
-              </Button>
-            </div>
-            <p className="text-xs text-gray-500">
-              Points forts et avantages du produit pour la vente (conformes à la page détail)
-            </p>
-          </div>
-
           {/* URL Vidéo */}
           <div className="space-y-2">
             <Label htmlFor="video_url">
@@ -159,14 +73,18 @@ Exemple:
             </p>
           </div>
 
-          {/* SECTION IDENTIFIANTS & RÉFÉRENCES */}
-          <div className="bg-gray-50 p-4 rounded-lg border-l-4 border-black">
-            <div className="space-y-4">
-              <h4 className="font-medium text-black flex items-center">
-                <Tag className="h-4 w-4 mr-2" />
+          {/* SECTION IDENTIFIANTS & RÉFÉRENCES - Bleu Design V2 #3b86d1 */}
+          <Card className="border-l-4" style={{ borderLeftColor: '#3b86d1' }}>
+            <CardHeader style={{ backgroundColor: 'rgba(232, 244, 252, 0.3)' }}>
+              <CardTitle className="flex items-center text-base" style={{ color: '#1f4d7e' }}>
+                <Tag className="h-4 w-4 mr-2" style={{ color: '#2868a8' }} />
                 Identifiants & Références
-              </h4>
-
+              </CardTitle>
+              <CardDescription>
+                Identifiants uniques et références du produit
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="pt-4 space-y-4">
               <div className="space-y-2">
                 <Label htmlFor="slug">
                   Slug URL (optionnel)
@@ -181,8 +99,8 @@ Exemple:
                   URL conviviale pour le produit (généré automatiquement si vide)
                 </p>
               </div>
-            </div>
-          </div>
+            </CardContent>
+          </Card>
 
           {/* État du produit */}
           <div className="grid md:grid-cols-2 gap-4">
@@ -282,15 +200,18 @@ Exemple:
         </CardContent>
       </Card>
 
-      {/* Catégorisation */}
-      <Card>
-        <CardHeader>
-          <CardTitle>Catégorisation</CardTitle>
+      {/* Catégorisation - Vert Design V2 #38ce3c */}
+      <Card className="border-l-4" style={{ borderLeftColor: '#38ce3c' }}>
+        <CardHeader style={{ backgroundColor: 'rgba(232, 249, 232, 0.3)' }}>
+          <CardTitle className="flex items-center" style={{ color: '#1f6221' }}>
+            <FolderTree className="h-5 w-5 mr-2" style={{ color: '#2ca530' }} />
+            Catégorisation
+          </CardTitle>
           <CardDescription>
             Classification du produit dans le catalogue
           </CardDescription>
         </CardHeader>
-        <CardContent>
+        <CardContent className="pt-4">
           <CategorySelector
             value={formData.subcategory_id}
             onChange={(subcategoryId, hierarchy) => {

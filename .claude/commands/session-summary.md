@@ -1,409 +1,194 @@
-# 📝 Commande Résumé Session
+# /session-summary - Résumé Session Développement
 
-**Documentation automatique** des sessions de développement selon workflow 2025
+Documentation automatique sessions de développement selon workflow 2025.
 
----
-
-## 🎯 **Utilisation**
-
+## Usage
 ```bash
-/session-summary [type] [--auto-save]
+/session-summary [type]
 ```
 
-### **Types de Résumé**
-- `complete` : Résumé complet session courante
-- `quick` : Résumé rapide actions principales
-- `tasks` : Focus sur tâches accomplies
-- `learnings` : Focus sur apprentissages
-- `archive` : Archivage session + nettoyage
+## Types de Résumé
 
----
+### `complete` (défaut)
+Résumé complet session courante : tâches, modifications, learnings, next steps.
 
-## 🧠 **Workflow Automatique**
+### `quick`
+Résumé rapide : actions principales uniquement.
 
-### **📊 Phase 1: Collecte Contexte Session**
-```typescript
-// Analyse complète avec Serena Memory
-mcp__serena__read_memory("active-context")
-mcp__serena__list_memories()
+### `learnings`
+Focus sur insights techniques et processus.
 
-// Git analysis pour changements
-git log --since="today" --oneline
-git status --porcelain
-```
+### `archive`
+Archivage session + nettoyage contexte actif.
 
-### **🔍 Phase 2: Analyse Actions Effectuées**
-```typescript
-interface SessionAnalysis {
-  timespan: {
-    start: Date;
-    end: Date;
-    duration: string;
-  };
+## Workflow
 
-  filesModified: {
-    created: string[];
-    updated: string[];
-    deleted: string[];
-    moved: string[];
-  };
+### 1. Session Context Analysis
+- `mcp__serena__read_memory` "active-context" - Contexte session
+- `mcp__serena__list_memories` - Mémoires disponibles
+- Git log aujourd'hui : `git log --since="today" --oneline`
+- Git status : `git status --porcelain`
 
-  tasksCompleted: {
-    planned: Task[];
-    completed: Task[];
-    inProgress: Task[];
-    blocked: Task[];
-  };
+### 2. Actions Analysis
+**Timespan:**
+- Début/fin session
+- Durée totale
+- Temps effectif vs pauses
 
-  agentsUsed: {
-    agent: string;
-    callsCount: number;
-    primaryTasks: string[];
-  }[];
+**Files Modified:**
+- Créés, modifiés, supprimés, déplacés
+- Catégorisation par module
 
-  achievements: {
-    codeChanges: number;
-    testsAdded: number;
-    bugsFixed: number;
-    performanceImprovements: string[];
-  };
+**Tasks Completed:**
+- Planifiées vs accomplies
+- En cours vs bloquées
+- Taux de complétion
 
-  learnings: {
-    technical: string[];
-    process: string[];
-    decisions: string[];
-  };
+**Agents MCP Used:**
+- Agent → Nombre d'appels
+- Tâches principales par agent
+- Efficacité mesurée
 
-  nextActions: {
-    immediate: string[];
-    shortTerm: string[];
-    longTerm: string[];
-  };
-}
-```
+**Achievements:**
+- Code changes (LOC)
+- Tests ajoutés
+- Bugs fixés
+- Performance improvements
 
-### **📄 Phase 3: Génération Documentation**
-```typescript
-// Auto-génération résumé structuré
-function generateSessionSummary(analysis: SessionAnalysis): string {
-  return `
-# 🎯 Session ${new Date().toISOString().split('T')[0]}
+**Learnings:**
+- Techniques (frameworks, patterns)
+- Process (workflow optimizations)
+- Décisions architecturales
 
-## ✅ Réalisations Principales
-${analysis.achievements.map(a => `- ${a}`).join('\n')}
+**Next Actions:**
+- Immédiates (aujourd'hui)
+- Court terme (semaine)
+- Long terme (mois)
 
-## 🔧 Modifications Techniques
-${analysis.filesModified.created.map(f => `✨ Créé: ${f}`).join('\n')}
-${analysis.filesModified.updated.map(f => `🔄 Modifié: ${f}`).join('\n')}
+### 3. Documentation Generation
 
-## 🤖 Agents MCP Utilisés
-${analysis.agentsUsed.map(a => `- ${a.agent}: ${a.callsCount} appels`).join('\n')}
-
-## 💡 Apprentissages
-${analysis.learnings.technical.map(l => `- ${l}`).join('\n')}
-
-## 🚀 Prochaines Actions
-${analysis.nextActions.immediate.map(a => `- [ ] ${a}`).join('\n')}
-  `;
-}
-```
-
----
-
-## 📋 **Templates Session**
-
-### **Template Résumé Complet**
+**Complete Summary Template:**
 ```markdown
-# 📈 Résumé Session - {{date}}
+# 📈 Session [DATE]
 
-**Durée**: {{duration}}
-**Focus Principal**: {{mainFocus}}
-**Status**: {{sessionStatus}}
+**Durée**: [HH:MM]
+**Focus**: [main task]
+**Status**: ✅ Succès | ⚠️ Partiel | ❌ Bloqué
 
----
+## 🎯 Objectifs
+- [x] [task 1]
+- [x] [task 2]
+- [ ] [task 3] (reporté)
 
-## 🎯 **Objectifs Session**
-{{#plannedTasks}}
-- [{{status}}] {{task}} {{#completedAt}}(✅ {{completedAt}}){{/completedAt}}
-{{/plannedTasks}}
+## ✅ Réalisations
+### Code
+- [description] ([+LOC/-LOC])
 
-## ✅ **Réalisations Principales**
-{{#achievements}}
-### {{category}}
-{{#items}}
-- {{description}} {{#impact}}(Impact: {{impact}}){{/impact}}
-{{/items}}
-{{/achievements}}
+### Tests
+- [tests added/modified]
 
-## 🔧 **Modifications Repository**
-### Fichiers Créés
-{{#filesCreated}}
-- `{{path}}` - {{description}}
-{{/filesCreated}}
+### Bugs Fixed
+- [bug description] → [solution]
 
-### Fichiers Modifiés
-{{#filesModified}}
-- `{{path}}` - {{changes}}
-{{/filesModified}}
+## 🔧 Modifications
+**Créés**: [files]
+**Modifiés**: [files]
+**Supprimés**: [files]
 
-## 🤖 **Utilisation Agents MCP**
-{{#agentUsage}}
-### {{agent}}
-- **Appels**: {{callCount}}
-- **Tâches**: {{tasks}}
-- **Efficacité**: {{efficiency}}%
-{{/agentUsage}}
+## 🤖 Agents MCP
+- [agent]: [calls] appels - [efficiency]%
 
-## 💡 **Apprentissages & Insights**
-### Techniques
-{{#technicalLearnings}}
-- {{learning}} {{#source}}({{source}}){{/source}}
-{{/technicalLearnings}}
+## 💡 Learnings
+**Techniques:**
+- [learning 1]
 
-### Processus
-{{#processLearnings}}
-- {{learning}} {{#improvement}}→ {{improvement}}{{/improvement}}
-{{/processLearnings}}
+**Process:**
+- [improvement discovered]
 
-## 🚀 **Actions Suivantes**
-### Immédiat (Aujourd'hui)
-{{#immediateActions}}
-- [ ] {{action}} {{#priority}}({{priority}}){{/priority}}
-{{/immediateActions}}
+**Décisions:**
+- [architectural choice + why]
 
-### Court Terme (Cette Semaine)
-{{#shortTermActions}}
-- [ ] {{action}} {{#deadline}}(Échéance: {{deadline}}){{/deadline}}
-{{/shortTermActions}}
+## 🚀 Next Steps
+**Immédiat:**
+- [ ] [action 1]
 
-### Moyen Terme (Ce Mois)
-{{#longTermActions}}
-- [ ] {{action}} {{#context}}({{context}}){{/context}}
-{{/longTermActions}}
+**Court Terme:**
+- [ ] [action 2]
+
+## 📊 Metrics
+- Temps: [active time]
+- Files: [count]
+- LOC: +[added]/-[removed]
+- Tests: +[count]
+- Console errors: [count] (Target: 0)
+- Performance: [notes]
+
+## 🔗 Context
+[What to know for next session]
 
 ---
-
-## 📊 **Métriques Session**
-- **Temps effectif**: {{activeTime}}
-- **Fichiers touchés**: {{filesCount}}
-- **Lines of code**: +{{locAdded}} / -{{locRemoved}}
-- **Tests ajoutés**: {{testsAdded}}
-- **Console errors**: {{consoleErrors}} (Target: 0)
-- **Performance**: {{performanceNotes}}
-
-## 🔗 **Contexte pour Session Suivante**
-{{nextSessionContext}}
-
----
-*Session documentée automatiquement par Claude Code 2025*
+*Session Claude Code 2025*
 ```
 
-### **Template Résumé Rapide**
+**Quick Summary Template:**
 ```markdown
-# ⚡ Session {{date}} - Résumé Rapide
+# ⚡ Session [DATE]
 
-**Focus**: {{mainTask}}
-**Statut**: {{status}}
-**Durée**: {{duration}}
+**Focus**: [task]
+**Status**: [status]
+**Durée**: [time]
 
 ## Actions
-{{#quickActions}}
-- {{action}}
-{{/quickActions}}
+- [action 1]
+- [action 2]
 
-## Prochaines étapes
-{{#nextSteps}}
-- {{step}}
-{{/nextSteps}}
-
----
-*Résumé rapide généré automatiquement*
+## Next
+- [next step]
 ```
 
----
+### 4. MEMORY-BANK Integration
+- Update `MEMORY-BANK/active-context.md`
+- Archive → `MEMORY-BANK/sessions/[YYYY-MM-DD].md`
+- Update `MEMORY-BANK/project-context.md` si impact global
 
-## 🔄 **Intégration MEMORY-BANK**
+### 5. Metrics & Trends
+**Productivity:**
+- Tasks/hour
+- Code velocity (LOC/hour)
+- Bug fix rate
 
-### **Mise à Jour Automatique**
-```typescript
-// Sauvegarde dans MEMORY-BANK
-async function updateMemoryBank(sessionSummary: SessionSummary) {
-  // 1. Mise à jour active-context.md
-  await mcp__serena__write_memory(
-    "active-context",
-    sessionSummary.currentContext
-  );
+**Quality:**
+- Console errors (Target: 0)
+- Test coverage added
+- Refactorings count
 
-  // 2. Archive session précédente
-  await archiveSession(sessionSummary.previousSession);
+**Tools:**
+- Agent efficiency map
+- Command usage stats
+- Workflow adherence %
 
-  // 3. Mise à jour project-context.md
-  await updateProjectContext(sessionSummary.projectImpact);
-}
-```
+**Learning:**
+- New concepts discovered
+- Skills improved
+- Process optimizations
 
-### **Organisation Sessions**
-```
-MEMORY-BANK/
-├── active-context.md          # Session courante (toujours)
-├── project-context.md         # Contexte projet global
-└── sessions/                  # Archive sessions
-    ├── 2025-01-15.md
-    ├── 2025-01-16.md
-    └── weekly-summaries/
-        └── week-03-2025.md
-```
-
----
-
-## 📊 **Analytics & Tendances**
-
-### **Métriques Session**
-```typescript
-interface SessionMetrics {
-  productivity: {
-    tasksPerHour: number;
-    codeVelocity: number;      // Lines/hour
-    bugFixRate: number;        // Bugs fixed/hour
-    testCoverage: number;      // % coverage added
-  };
-
-  quality: {
-    consoleErrors: number;     // Target: 0
-    codeReviews: number;
-    refactorings: number;
-    performanceGains: string[];
-  };
-
-  tools: {
-    agentEfficiency: Map<string, number>;
-    commandUsage: Map<string, number>;
-    workflowAdherence: number; // % suivant workflow 2025
-  };
-
-  learning: {
-    newConcepts: string[];
-    skillsImproved: string[];
-    processOptimizations: string[];
-  };
-}
-```
-
-### **Tendances Multi-Sessions**
-```typescript
-// Analyse tendances sur 30 jours
-function analyzeTrends(): SessionTrends {
-  return {
-    productivityTrend: 'increasing', // +15% vs month ago
-    qualityTrend: 'stable',         // Console errors: 0 consistent
-    toolsAdoption: {
-      sequentialThinking: +45%,     // Usage en hausse
-      serenaSymbolic: +60%,         // Adoption excellente
-      playwriteConsole: 100%        // Toujours utilisé
-    },
-    workflowMaturity: 'excellent'   // 95% adherence
-  };
-}
-```
-
----
-
-## 🛠️ **Automatisation Avancée**
-
-### **Auto-Save Intelligent**
+### 6. Git Integration (Optionnel)
+Si `--auto-commit` fourni :
 ```bash
-# Sauvegarde automatique toutes les heures
-/session-summary --auto-save
+git add -A
+git commit -m "📝 Session [DATE]: [summary]
 
-# Résumé automatique fin de journée
-cron: 0 18 * * 1-5 "/session-summary complete --auto-save"
+✅ [achievements]
+🔧 [modifications]
+
+🤖 Claude Code 2025
+Co-Authored-By: Claude <noreply@anthropic.com>"
 ```
 
-### **Intégration Git**
-```typescript
-// Commit automatique avec résumé
-async function autoCommitWithSummary(summary: SessionSummary) {
-  const commitMessage = `
-📝 Session ${summary.date}: ${summary.mainFocus}
+## Success Metrics
+✅ Session documentée complètement
+✅ Context preserved pour next session
+✅ Learnings capturés
+✅ Next steps clairs
 
-✅ Réalisations:
-${summary.achievements.map(a => `• ${a}`).join('\n')}
-
-🔧 Modifications:
-${summary.filesModified.map(f => `• ${f}`).join('\n')}
-
-🤖 Généré avec Claude Code 2025
-
-Co-Authored-By: Claude <noreply@anthropic.com>
-  `;
-
-  await git.add(['-A']);
-  await git.commit(commitMessage);
-}
-```
-
----
-
-## 🎯 **Cas d'Usage**
-
-### **Session Développement Feature**
-```bash
-# Début session
-/feature-start "dashboard-analytics"
-
-# Développement...
-# (utilisation agents MCP, coding, testing)
-
-# Fin session avec résumé auto
-/session-summary complete --auto-save
-
-# Génère automatiquement:
-# - MEMORY-BANK/sessions/2025-01-15.md
-# - Mise à jour active-context.md
-# - Commit git avec résumé
-# - Archive tâches terminées
-```
-
-### **Session Debug Critique**
-```bash
-# Focus résolution bug critique
-/session-summary tasks
-
-# Génère résumé ciblé sur:
-# - Steps debugging
-# - Solutions testées
-# - Root cause analysis
-# - Prévention futures occurrences
-```
-
-### **Session Review & Planning**
-```bash
-# Résumé pour planning sprint suivant
-/session-summary learnings
-
-# Focus sur:
-# - Patterns identifiés
-# - Optimisations possibles
-# - Décisions architecturales
-# - Recommendations équipe
-```
-
----
-
-## 📈 **Bénéfices Business**
-
-### **Continuité Projet**
-- ✅ **Context preservation** entre sessions
-- ✅ **Knowledge transfer** automatique
-- ✅ **Decision history** documentée
-- ✅ **Learning acceleration** équipe
-
-### **Qualité Process**
-- ✅ **Workflow adherence** tracking
-- ✅ **Tool effectiveness** analysis
-- ✅ **Performance trending** visibility
-- ✅ **Best practices** documentation
-
----
-
-**📝 Documentation Session 2025 - Mémoire Organisationnelle**
+**AVANTAGE : Continuité parfaite entre sessions + knowledge retention !**

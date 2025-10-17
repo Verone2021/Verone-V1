@@ -1,0 +1,583 @@
+# 🗄️ SCHÉMA DATABASE VÉRONE - SOURCE DE VÉRITÉ UNIQUE
+
+⚠️ **RÈGLE ABSOLUE** : Consulter CE fichier AVANT toute modification database
+
+**Dernière mise à jour** : 17 octobre 2025
+**Database** : PostgreSQL via Supabase
+**Projet** : aorroydfjsrygmosnzrl
+
+---
+
+## 📊 Vue d'Ensemble
+
+| Élément | Nombre | Documentation |
+|---------|--------|---------------|
+| **Tables** | 78 | Ce fichier |
+| **Colonnes** | 1365 | Ce fichier |
+| **Triggers** | 158 | [triggers.md](./triggers.md) |
+| **RLS Policies** | 239 | [rls-policies.md](./rls-policies.md) |
+| **Fonctions RPC** | 254 | [functions-rpc.md](./functions-rpc.md) |
+| **Foreign Keys** | 143 | [foreign-keys.md](./foreign-keys.md) |
+| **Enums** | 34 | [enums.md](./enums.md) |
+
+---
+
+## 🚨 TABLES CRITIQUES - ANTI-HALLUCINATION
+
+### ❌ INTERDIT : Créer table `suppliers`
+
+**Table existante** : `organisations`
+**Champs** : 50 colonnes incluant `type` enum
+**Utiliser** : `organisations WHERE type IN ('supplier', 'manufacturer')`
+
+**Historique hallucination** :
+- Octobre 2025 : Agent a créé table `suppliers` en doublon
+- Impact : Incohérence données, migration douloureuse
+- Fix : Migration 20251017_002_drop_obsolete_suppliers_table.sql
+
+### ❌ INTERDIT : Créer table `customers`
+
+**Tables existantes** :
+1. `organisations` (50 colonnes) - Clients B2B (WHERE type='customer')
+2. `individual_customers` (27 colonnes) - Clients B2C particuliers
+
+**Ne JAMAIS** créer nouvelle table customers.
+
+### ❌ INTERDIT : Ajouter champ `cost_price` dans `products`
+
+**Système existant** : `price_lists` + `price_list_items`
+**Historique hallucination** :
+- Octobre 2025 : Agent a ajouté products.cost_price
+- Existe : Système pricing via price_lists
+- Fix : Migration 20251017_003_remove_cost_price_column.sql
+
+### ❌ INTERDIT : Modifier triggers `stock_*` sans consultation
+
+**Système complexe** : 12 triggers interdépendants gèrent cohérence stock
+**Tables liées** :
+- products (stock_quantity, stock_real, stock_forecasted_in/out)
+- stock_movements
+- purchase_orders / purchase_order_items
+- sales_orders / sales_order_items
+
+**Règle** : TOUJOURS lire triggers.md AVANT modification
+
+---
+
+## 📋 TABLES PAR MODULE (78 Total)
+
+### Module Facturation & Abby API (7 tables)
+
+#### 1. **abby_sync_queue** (13 colonnes)
+Queue synchronisation vers Abby API facturation
+- **Colonnes clés** : id, operation, entity_type, entity_id, abby_payload, status, retry_count
+- **Triggers** : 2 (calculate_next_retry, mark_sync_operation_success)
+- **Usage** : Facturation asynchrone Abby
+
+#### 2. **abby_webhook_events** (6 colonnes)
+Events webhooks reçus depuis Abby
+- **Colonnes clés** : id, event_id, event_type, event_data, expires_at
+- **Triggers** : 1 (set_webhook_event_expiry)
+
+#### 3. **financial_documents** (31 colonnes)
+Documents financiers (factures, devis, avoirs)
+- **Colonnes clés** : id, document_type, partner_id, document_number, total_ht, total_ttc
+- **Relations** : → organisations (partner), sales_orders, purchase_orders
+
+#### 4. **financial_document_lines** (11 colonnes)
+Lignes détail documents financiers
+- **Colonnes clés** : id, document_id, product_id, quantity, unit_price_ht, total_ht
+- **Relations** : → financial_documents, products, expense_categories
+
+#### 5. **financial_payments** (12 colonnes)
+Paiements liés documents
+- **Colonnes clés** : id, document_id, amount_paid, payment_date, bank_transaction_id
+- **Relations** : → financial_documents, bank_transactions
+
+#### 6. **invoices** (18 colonnes)
+Factures clients (simplifié)
+- **Colonnes clés** : id, sales_order_id, abby_invoice_id, status, total_ttc
+- **Triggers** : 2 (check_invoice_overdue, log_invoice_status_change)
+- **Relations** : → sales_orders
+
+#### 7. **payments** (11 colonnes)
+Paiements factures
+- **Colonnes clés** : id, invoice_id, abby_payment_id, amount_paid, payment_date
+- **Relations** : → invoices
+
+### Module Banking (1 table)
+
+#### 8. **bank_transactions** (22 colonnes)
+Transactions bancaires (Qonto, Revolut)
+- **Colonnes clés** : id, transaction_id, bank_provider, amount, side, label
+- **Relations** : → financial_documents (matched_document_id)
+
+### Module Catalogue (18 tables)
+
+#### 9. **products** ⭐ TABLE CENTRALE (43 colonnes)
+Produits catalogue principal
+- **Colonnes clés** : id, sku, name, slug, status, supplier_id, category_id, stock_quantity, stock_real
+- **Triggers** : 8 (dont trigger_calculate_automatic_product_status)
+- **RLS** : 12 policies
+- **Relations** : → organisations (supplier), categories, families
+- **❌ INTERDIT** : Ajouter cost_price, price_ht, ou base_price (utiliser price_list_items)
+- **⚠️ NOTE PRIX** : La table products ne contient AUCUN champ prix. Tous les prix sont dans price_list_items (cost_price, price_ht, suggested_retail_price). Voir [pricing-architecture.md](./pricing-architecture.md) pour détails architecture multi-canal
+
+#### 10. **product_drafts** (34 colonnes)
+Brouillons produits en création
+- **Colonnes clés** : id, name, slug, supplier_id, category_id, family_id
+- **Relations** : → organisations (supplier), categories, families
+
+#### 11. **product_images** (15 colonnes)
+Images produits (plusieurs par produit)
+- **Colonnes clés** : id, product_id, public_url, is_primary, display_order
+- **Relations** : → products
+- **Triggers** : 1 (ensure_single_primary_image)
+
+#### 12. **product_colors** (6 colonnes)
+Couleurs produits standardisées
+- **Colonnes clés** : id, name, hex_code, is_predefined
+
+#### 13. **product_packages** (14 colonnes)
+Conditionnements produits (lot, carton, palette)
+- **Colonnes clés** : id, product_id, type, base_quantity, discount_rate
+- **Relations** : → products
+
+#### 14. **product_groups** (9 colonnes)
+Groupes produits (variantes)
+- **Colonnes clés** : id, name, item_group_id, group_type, primary_product_id
+
+#### 15. **product_group_members** (6 colonnes)
+Membres groupes produits
+- **Relations** : → products, product_groups
+
+#### 16. **product_status_changes** (6 colonnes)
+Historique changements statut produits
+- **Relations** : → products
+
+#### 17. **categories** (13 colonnes)
+Catégories produits (arbre hiérarchique)
+- **Colonnes clés** : id, name, slug, level, family_id
+- **Relations** : → families
+- **RLS** : 10 policies
+
+#### 18. **category_translations** (6 colonnes)
+Traductions catégories multilingues
+- **Relations** : → categories
+
+#### 19. **subcategories** (12 colonnes)
+Sous-catégories
+- **Relations** : → categories
+
+#### 20. **families** (12 colonnes)
+Familles produits (niveau supérieur)
+- **Colonnes clés** : id, name, slug, is_active
+
+#### 21. **variant_groups** (20 colonnes)
+Groupes variantes produits
+- **Relations** : → subcategories, organisations (supplier)
+
+#### 22. **collections** (22 colonnes)
+Collections marketing
+- **Colonnes clés** : id, name, description, is_featured
+- **RLS** : 5 policies
+
+#### 23. **collection_products** (6 colonnes)
+Produits dans collections
+- **Relations** : → collections, products
+
+#### 24. **collection_images** (15 colonnes)
+Images collections
+- **Relations** : → collections
+
+#### 25. **collection_shares** (6 colonnes)
+Partages collections
+- **Relations** : → collections
+
+#### 26. **collection_translations** (6 colonnes)
+Traductions collections
+- **Relations** : → collections
+
+### Module Pricing (9 tables)
+
+#### 27. **sales_channels** (13 colonnes)
+Canaux de vente (B2B, B2C, Marketplace)
+- **Colonnes clés** : id, code, name, default_discount_rate
+
+#### 28. **price_lists** (18 colonnes)
+Listes de prix
+- **Colonnes clés** : id, code, name, list_type, currency
+
+#### 29. **price_list_items** (21 colonnes)
+Items listes prix (prix par produit)
+- **Colonnes clés** : id, price_list_id, product_id, price_ht
+- **Relations** : → price_lists, products
+
+#### 30. **price_list_history** (15 colonnes)
+Historique modifications prix
+- **Relations** : → price_list_items
+
+#### 31. **channel_price_lists** (17 colonnes)
+Association canaux ↔ listes prix
+- **Relations** : → sales_channels, price_lists
+
+#### 32. **channel_pricing** (14 colonnes)
+Pricing custom par canal
+- **Relations** : → products, sales_channels
+
+#### 33. **customer_price_lists** (16 colonnes)
+Listes prix clients spécifiques
+- **Relations** : → organisations / individual_customers, price_lists
+
+#### 34. **customer_pricing** (18 colonnes)
+Pricing custom par client
+- **Relations** : → products, organisations / individual_customers
+
+#### 35. **group_price_lists** (9 colonnes)
+Listes prix groupes clients
+- **Relations** : → customer_groups, price_lists
+
+### Module Clients & Contacts (7 tables)
+
+#### 36. **organisations** ⭐ TABLE CENTRALE (50 colonnes)
+Organisations (fournisseurs, clients B2B, partenaires)
+- **Colonnes clés** : id, name, type (enum), email, country, is_active
+- **Type enum** : 'supplier', 'manufacturer', 'customer', 'partner'
+- **❌ INTERDIT** : Créer tables suppliers/customers séparées
+- **Utiliser** : WHERE type='supplier' OU type='customer'
+
+#### 37. **individual_customers** (27 colonnes)
+Clients particuliers B2C
+- **Colonnes clés** : id, first_name, last_name, email, phone, address_line1
+
+#### 38. **contacts** (25 colonnes)
+Contacts au sein organisations
+- **Colonnes clés** : id, organisation_id, first_name, last_name, email
+- **Relations** : → organisations
+
+#### 39. **customer_groups** (13 colonnes)
+Groupes clients (segmentation)
+- **Colonnes clés** : id, code, name, group_type, auto_assignment_rules
+
+#### 40. **customer_group_members** (10 colonnes)
+Membres groupes clients
+- **Relations** : → customer_groups, organisations / individual_customers
+
+#### 41. **client_consultations** (18 colonnes)
+Consultations clients (demandes projet)
+- **Colonnes clés** : id, organisation_name, client_email, status, assigned_to
+
+#### 42. **consultation_products** (11 colonnes)
+Produits proposés consultations
+- **Relations** : → client_consultations, products
+
+#### 43. **consultation_images** (15 colonnes)
+Images consultations
+- **Relations** : → client_consultations
+
+### Module Commandes Vente (5 tables)
+
+#### 44. **sales_orders** (35 colonnes)
+Commandes vente clients
+- **Colonnes clés** : id, order_number, customer_id, status, total_ht, total_ttc
+- **Triggers** : 8+ (gestion stock automatique)
+- **Relations** : → organisations / individual_customers
+- **❌ ATTENTION** : Triggers stock complexes
+
+#### 45. **sales_order_items** (13 colonnes)
+Lignes commandes vente
+- **Colonnes clés** : id, sales_order_id, product_id, quantity, unit_price_ht
+- **Relations** : → sales_orders, products
+
+#### 46. **order_discounts** (21 colonnes)
+Remises applicables commandes
+- **Colonnes clés** : id, code, name, discount_type, discount_value
+
+#### 47. **shipments** (32 colonnes)
+Expéditions commandes
+- **Colonnes clés** : id, sales_order_id, tracking_number, carrier_name
+- **Relations** : → sales_orders
+
+#### 48. **shipping_parcels** (10 colonnes)
+Colis expéditions
+- **Colonnes clés** : id, shipment_id, parcel_number, weight_kg
+- **Relations** : → shipments
+
+#### 49. **parcel_items** (5 colonnes)
+Items colis
+- **Relations** : → shipping_parcels, sales_order_items
+
+### Module Commandes Achat (5 tables)
+
+#### 50. **purchase_orders** (22 colonnes)
+Commandes achat fournisseurs
+- **Colonnes clés** : id, po_number, supplier_id, status, total_ht
+- **Relations** : → organisations (supplier)
+- **Triggers** : Gestion forecast stock
+
+#### 51. **purchase_order_items** (12 colonnes)
+Lignes commandes achat
+- **Colonnes clés** : id, purchase_order_id, product_id, quantity, unit_price_ht
+- **Relations** : → purchase_orders, products
+
+#### 52. **purchase_order_receptions** (10 colonnes)
+Réceptions marchandises
+- **Relations** : → purchase_orders, products
+
+#### 53. **sample_orders** (17 colonnes)
+Commandes échantillons fournisseurs
+- **Colonnes clés** : id, order_number, supplier_id, status
+- **Relations** : → organisations (supplier)
+
+#### 54. **sample_order_items** (12 colonnes)
+Items commandes échantillons
+- **Relations** : → sample_orders
+
+### Module Stocks (2 tables)
+
+#### 55. **stock_movements** (18 colonnes)
+Mouvements stock (entrées/sorties)
+- **Colonnes clés** : id, product_id, movement_type, quantity_change, reference_type
+- **Relations** : → products
+- **Triggers** : 12+ triggers interdépendants ⚠️
+- **❌ CRITIQUE** : NE PAS modifier sans lire triggers.md
+
+#### 56. **stock_reservations** (13 colonnes)
+Réservations stock temporaires
+- **Relations** : → products
+
+### Module Google Merchant & Feeds (3 tables)
+
+#### 57. **feed_configs** (16 colonnes)
+Configurations feeds export
+- **Colonnes clés** : id, name, platform (Google/Facebook), schedule_frequency
+
+#### 58. **feed_exports** (15 colonnes)
+Historique exports feeds
+- **Relations** : → feed_configs
+
+#### 59. **feed_performance_metrics** (13 colonnes)
+Métriques performance feeds
+- **Relations** : → feed_configs
+
+### Module Utilisateurs & Activité (5 tables)
+
+#### 60. **user_profiles** (13 colonnes)
+Profils utilisateurs (liés auth.users Supabase)
+- **Colonnes clés** : user_id, role, user_type, scopes, partner_id
+
+#### 61. **user_sessions** (15 colonnes)
+Sessions utilisateurs tracking
+- **Relations** : → user_profiles, organisations
+
+#### 62. **user_activity_logs** (15 colonnes)
+Logs activité utilisateurs
+- **Relations** : → user_profiles, organisations
+
+#### 63. **audit_logs** (11 colonnes)
+Logs audit système
+- **Colonnes clés** : id, user_id, action, table_name, record_id
+
+#### 64. **notifications** (11 colonnes)
+Notifications utilisateurs
+- **Colonnes clés** : id, type, severity, title, message, user_id
+
+#### 65. **notifications_backup_20251014** (11 colonnes)
+Backup notifications (obsolète, peut être supprimée)
+
+### Module Tests & QA (5 tables)
+
+#### 66. **manual_tests_progress** (14 colonnes)
+Progression tests manuels
+
+#### 67. **test_sections_lock** (16 colonnes)
+Verrouillage sections tests
+
+#### 68. **test_validation_state** (14 colonnes)
+État validation tests
+
+#### 69. **test_error_reports** (14 colonnes)
+Rapports erreurs tests
+
+#### 70. **bug_reports** (20 colonnes)
+Rapports bugs utilisateurs
+
+### Module Errors & MCP (4 tables)
+
+#### 71. **error_reports_v2** (32 colonnes)
+Rapports erreurs système V2
+- **Colonnes clés** : id, error_type, severity, module, message, stack_trace
+
+#### 72. **error_notifications_queue** (11 colonnes)
+Queue notifications erreurs
+- **Relations** : → error_reports_v2
+
+#### 73. **error_resolution_history** (11 colonnes)
+Historique résolutions erreurs
+- **Relations** : → error_reports_v2
+
+#### 74. **mcp_resolution_queue** (16 colonnes)
+Queue résolutions MCP automatiques
+- **Relations** : → error_reports_v2
+
+#### 75. **mcp_resolution_strategies** (11 colonnes)
+Stratégies résolution MCP
+
+### Module Divers (3 tables)
+
+#### 76. **expense_categories** (10 colonnes)
+Catégories dépenses comptabilité
+- **Colonnes clés** : id, name, account_code, parent_category_id
+
+#### 77. **supplier_categories** (10 colonnes)
+Catégories fournisseurs (taxonomie)
+- **Colonnes clés** : id, code, label_fr, label_en
+
+#### 78. **audit_log_summary** (Vue matérialisée)
+Vue synthèse logs audit
+
+---
+
+## 🎯 WORKFLOW ANTI-HALLUCINATION
+
+### Avant TOUTE modification database :
+
+#### 1. RECHERCHE (OBLIGATOIRE - 5 min)
+```bash
+# Lire cette source de vérité
+cat docs/database/SCHEMA-REFERENCE.md
+
+# Chercher table concernée (CTRL+F)
+grep -i "nom_table" docs/database/SCHEMA-REFERENCE.md
+
+# Vérifier module
+# Exemple: "supplier" → Module Clients (table organisations)
+```
+
+#### 2. VALIDATION CHECKLIST
+- [ ] Table existe déjà ? → **Réutiliser, NE PAS recréer**
+- [ ] Relations similaires ? → **Suivre pattern existant**
+- [ ] Triggers impactés ? → **Lire triggers.md**
+- [ ] RLS policies ? → **Lire rls-policies.md**
+- [ ] Organisation/Client/Supplier ? → **Utiliser table organisations**
+
+#### 3. CONFIRMATION UTILISATEUR (OBLIGATOIRE)
+**Template message** :
+```
+Je vais [CRÉER/MODIFIER] [TABLE/CHAMP]. J'ai vérifié :
+
+✅ Pas de duplicata avec : [TABLE_EXISTANTE]
+✅ Relations cohérentes avec : [FK_LIST]
+✅ Triggers compatibles : [TRIGGER_LIST]
+✅ RLS policies alignées : [POLICY_LIST]
+
+Confirmes-tu cette modification ?
+```
+
+#### 4. EXÉCUTION (après confirmation)
+- Créer migration `supabase/migrations/YYYYMMDD_NNN_description.sql`
+- Tester localement
+- Valider 0 console errors
+- Déployer
+
+---
+
+## 📚 DOCUMENTATION TECHNIQUE COMPLÈTE
+
+| Document | Contenu | Quand Consulter |
+|----------|---------|-----------------|
+| [triggers.md](./triggers.md) | 158 triggers détaillés | Avant modifier triggers/tables avec triggers |
+| [rls-policies.md](./rls-policies.md) | 217 RLS policies | Avant modifier sécurité/permissions |
+| [functions-rpc.md](./functions-rpc.md) | 254 fonctions RPC | Avant créer/modifier fonctions |
+| [foreign-keys.md](./foreign-keys.md) | 100+ relations FK | Comprendre relations inter-tables |
+| [enums.md](./enums.md) | 15+ enums types | Avant utiliser/créer enum |
+| [best-practices.md](./best-practices.md) | Guide complet anti-hallucination | TOUJOURS lire en premier |
+
+---
+
+## 🚫 ERREURS HISTORIQUES À NE PLUS RÉPÉTER
+
+### Hallucination #1 - Table `suppliers` (Oct 2025)
+- **Créé** : Table suppliers en doublon
+- **Existe** : organisations WHERE type='supplier'
+- **Impact** : Migration douloureuse, incohérence données
+- **Fix** : Migration 20251017_002_drop_obsolete_suppliers_table.sql
+
+### Hallucination #2 - Champ `products.cost_price` (Oct 2025)
+- **Ajouté** : products.cost_price
+- **Existe** : Système price_lists complet
+- **Impact** : Incohérence pricing, confusion
+- **Fix** : Migration 20251017_003_remove_cost_price_column.sql
+
+### Hallucination #3 - Champ `products.price_ht` (Oct 2025)
+- **Erreur** : Code TypeScript référence `products.price_ht` qui n'existe pas
+- **Réalité** : Table products ne contient AUCUN champ prix
+- **Existe** : price_list_items.price_ht (système centralisé)
+- **Impact** : Queries qui échouent, erreurs runtime
+- **Fix Requis** : Supprimer toute référence à `products.price_ht` dans hooks/components
+
+### Hallucination #4 - Triggers stock modifiés sans analyse (Oct 2025)
+- **Modifié** : Triggers stock sans comprendre interdépendances
+- **Impact** : 12 triggers cassés, stock incohérent
+- **Fix** : 8 migrations successives debug
+
+---
+
+## ⚙️ CONNEXION DATABASE
+
+```bash
+# Session Pooler (Priorité 1)
+PGPASSWORD="ADFVKDJCJDNC934" psql \
+  -h aws-1-eu-west-3.pooler.supabase.com \
+  -p 5432 \
+  -U postgres.aorroydfjsrygmosnzrl \
+  -d postgres
+
+# Direct Connection (Fallback)
+PGPASSWORD="ADFVKDJCJDNC934" psql \
+  -h aws-1-eu-west-3.pooler.supabase.com \
+  -p 6543 \
+  -U postgres \
+  -d postgres
+```
+
+**Variables .env.local** :
+```
+DATABASE_URL=postgresql://postgres.aorroydfjsrygmosnzrl:ADFVKDJCJDNC934@aws-1-eu-west-3.pooler.supabase.com:5432/postgres
+```
+
+---
+
+## 📊 STATISTIQUES DATABASE
+
+| Métrique | Valeur |
+|----------|--------|
+| **Tables** | 78 |
+| **Colonnes totales** | 1365 |
+| **Moyenne colonnes/table** | 17.5 |
+| **Triggers** | 158 |
+| **RLS Policies** | 239 |
+| **Fonctions RPC** | 254 |
+| **Foreign Keys** | 143 |
+| **Enums** | 34 |
+| **Indexes** | 200+ |
+
+---
+
+## 🎓 RÈGLES D'OR
+
+1. **UNE source de vérité** : Ce fichier
+2. **TOUJOURS chercher avant créer** : CTRL+F dans ce fichier
+3. **Réutiliser > Recréer** : Tables existantes ont triggers/RLS
+4. **Demander si doute** : NE JAMAIS deviner
+5. **organisations pour tout** : Supplier/Customer/Partner
+6. **Consulter triggers.md** : Avant toucher products/stock
+7. **Documenter immédiatement** : Update docs après migration
+8. **Tester localement** : AVANT déployer production
+
+---
+
+**🎉 Source de Vérité Database Vérone**
+
+*Généré le 17 octobre 2025 - Database aorroydfjsrygmosnzrl*
+*78 tables | 1365 colonnes | 158 triggers | 217 RLS policies | 254 fonctions*

@@ -398,7 +398,7 @@ export function useVariantGroups(filters?: VariantGroupFilters) {
         variant_attributes: { [variantType]: variantValue },
         status: 'pret_a_commander' as const, // Statut initial pour compléter plus tard
         creation_mode: 'complete' as const, // Contrainte: 'sourcing' ou 'complete' uniquement
-        cost_price: 0.01, // Contrainte: cost_price > 0 (pas >= 0), valeur minimale symbolique
+        cost_price: 0.01, // Prix minimal symbolique > 0
         // ❌ RETIRÉ: style, suitable_rooms, common_weight (n'existent PAS dans products, seulement dans variant_groups)
         ...(hasDimensions && {
           dimensions: {

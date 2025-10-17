@@ -8,9 +8,10 @@ import { ButtonV2 } from "@/components/ui/button"
 import { cn } from "../../lib/utils"
 import { Package, Archive, Trash2, ArchiveRestore } from "lucide-react"
 import { useProductImages } from "../../hooks/use-product-images"
-import { useProductPackages } from "../../hooks/use-product-packages"
-import { useProductPrice, useQuantityBreaks, formatPrice } from "../../hooks/use-pricing"
-import { QuantityBreaksDisplay } from "./quantity-breaks-display"
+// 🚀 OPTIMISATION: Imports packages/pricing désactivés temporairement
+// import { useProductPackages } from "../../hooks/use-product-packages"
+// import { useProductPrice, useQuantityBreaks, formatPrice } from "../../hooks/use-pricing"
+// import { QuantityBreaksDisplay } from "./quantity-breaks-display"
 import type { Product } from "../../hooks/use-catalogue"
 
 interface ProductCardProps {
@@ -78,39 +79,40 @@ export const ProductCard = memo(function ProductCard({
     className: "bg-gray-600 text-white"
   }
 
-  // ✨ Hooks optimisés - images + packages
+  // ✨ Hook optimisé - images uniquement
   const { primaryImage, loading: imageLoading } = useProductImages({
     productId: product.id,
     autoFetch: true
   })
 
-  const {
-    defaultPackage,
-    hasMultiplePackages,
-    getDiscountLabel,
-    calculatePackagePrice,
-    loading: packagesLoading
-  } = useProductPackages({
-    productId: product.id,
-    autoFetch: showPackages
-  })
+  // 🚀 OPTIMISATION PERFORMANCE - Hooks packages/pricing désactivés temporairement
+  // const {
+  //   defaultPackage,
+  //   hasMultiplePackages,
+  //   getDiscountLabel,
+  //   calculatePackagePrice,
+  //   loading: packagesLoading
+  // } = useProductPackages({
+  //   productId: product.id,
+  //   autoFetch: showPackages
+  // })
 
-  // 💰 Hook pricing V2 - Prix par canal (UNIQUEMENT si showPricing + channelId)
-  const shouldFetchPricing = showPricing && channelId !== null
-  const { data: pricing, isLoading: pricingLoading } = useProductPrice({
-    productId: product.id,
-    channelId: shouldFetchPricing ? channelId : undefined,
-    quantity: 1,
-    enabled: shouldFetchPricing
-  })
+  // 💰 Hook pricing V2 - Prix par canal (DÉSACTIVÉ pour optimisation)
+  // const shouldFetchPricing = showPricing && channelId !== null
+  // const { data: pricing, isLoading: pricingLoading } = useProductPrice({
+  //   productId: product.id,
+  //   channelId: shouldFetchPricing ? channelId : undefined,
+  //   quantity: 1,
+  //   enabled: shouldFetchPricing
+  // })
 
-  // 📦 Hook paliers quantités - Économies selon quantité (UNIQUEMENT si showQuantityBreaks + channelId)
-  const shouldFetchBreaks = showQuantityBreaks && channelId !== null
-  const { data: quantityBreaks, isLoading: breaksLoading } = useQuantityBreaks({
-    productId: product.id,
-    channelId: shouldFetchBreaks ? channelId : undefined,
-    enabled: shouldFetchBreaks
-  })
+  // 📦 Hook paliers quantités (DÉSACTIVÉ pour optimisation)
+  // const shouldFetchBreaks = showQuantityBreaks && channelId !== null
+  // const { data: quantityBreaks, isLoading: breaksLoading } = useQuantityBreaks({
+  //   productId: product.id,
+  //   channelId: shouldFetchBreaks ? channelId : undefined,
+  //   enabled: shouldFetchBreaks
+  // })
 
   const handleClick = useCallback(() => {
     if (onClick) {
@@ -220,86 +222,19 @@ export const ProductCard = memo(function ProductCard({
           </div>
         </div>
 
-        {/* Prix de vente - Pricing V2 */}
+        {/* 🚀 OPTIMISATION: Affichage simplifié - Stock + Prix basique */}
         <div className="space-y-0.5">
-          {showPricing && !pricingLoading && pricing ? (
-            <div className="space-y-1">
-              {/* Prix de vente HT */}
-              <div className="text-sm font-semibold text-black">
-                {formatPrice(pricing.final_price_ht)}
-              </div>
-
-              {/* Affichage remise si applicable */}
-              {pricing.discount_applied > 0 && (
-                <div className="flex items-center gap-1 text-[10px]">
-                  <span className="text-gray-500 line-through">
-                    {formatPrice(pricing.original_price_ht)}
-                  </span>
-                  <Badge variant="outline" className="bg-green-50 text-green-700 border-green-200 text-[9px] px-1 py-0">
-                    -{(pricing.discount_applied * 100).toFixed(0)}%
-                  </Badge>
-                </div>
-              )}
-
-              {/* Source du prix (debug - à masquer en prod) */}
-              {pricing.pricing_source !== 'base_catalog' && (
-                <div className="text-[9px] text-gray-500 italic">
-                  {pricing.pricing_source === 'channel' && 'Prix canal'}
-                  {pricing.pricing_source === 'customer_specific' && 'Prix contrat'}
-                  {pricing.pricing_source === 'customer_group' && 'Prix groupe'}
-                </div>
-              )}
-            </div>
-          ) : showPricing && pricingLoading ? (
-            <div className="text-sm text-gray-400 italic">
-              Calcul prix...
-            </div>
-          ) : (
-            /* Fallback: Prix d'achat si pricing non activé */
-            product.cost_price && (
-              <div className="text-sm font-semibold text-black">
-                {product.cost_price.toFixed(2)} € HT
-              </div>
-            )
-          )}
-
-          {/* Affichage packages conditionnels - MINI */}
-          {showPackages && !packagesLoading && (
-            <div className="space-y-0.5 mt-1">
-              {/* Badge remise disponible */}
-              {hasMultiplePackages && defaultPackage && (
-                <div className="flex items-center gap-1">
-                  <Badge variant="outline" className="text-[9px] bg-green-50 text-green-700 border-green-200 px-1 py-0">
-                    {hasMultiplePackages ? "Conditionnements multiples" : "Package unique"}
-                  </Badge>
-                  {(() => {
-                    const bestPackage = hasMultiplePackages
-                      ? /* Trouve le package avec la meilleure remise */
-                        (() => {
-                          // Logique simplifiée pour trouver la meilleure remise
-                          return defaultPackage
-                        })()
-                      : null
-                    const discountLabel = bestPackage ? getDiscountLabel(bestPackage) : null
-                    return discountLabel ? (
-                      <Badge variant="secondary" className="text-[9px] bg-gray-50 text-gray-800 border-gray-200 px-1 py-0">
-                        {discountLabel}
-                      </Badge>
-                    ) : null
-                  })()}
-                </div>
-              )}
+          {/* Stock info - Simple affichage */}
+          {product.stock_quantity !== undefined && (
+            <div className="text-[10px] text-black opacity-70">
+              <span>Stock: {product.stock_quantity}</span>
             </div>
           )}
 
-          {/* 📦 Affichage paliers quantités - Économies */}
-          {showQuantityBreaks && !breaksLoading && quantityBreaks && quantityBreaks.length > 0 && (
-            <div className="mt-1.5">
-              <QuantityBreaksDisplay
-                breaks={quantityBreaks}
-                currentQuantity={1}
-                variant="compact"
-              />
+          {/* Fallback: Prix d'achat basique si disponible */}
+          {product.cost_price && (
+            <div className="text-sm font-semibold text-black">
+              {product.cost_price.toFixed(2)} € HT
             </div>
           )}
         </div>

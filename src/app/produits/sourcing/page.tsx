@@ -99,7 +99,7 @@ export default function SourcingDashboardPage() {
                 Validation
               </ButtonV2>
               <ButtonV2
-                onClick={() => router.push('/produits/catalogue/create')}
+                onClick={() => router.push('/produits/sourcing/create')}
                 className="bg-black hover:bg-gray-800 text-white"
               >
                 <Plus className="h-4 w-4 mr-2" />
@@ -185,7 +185,7 @@ export default function SourcingDashboardPage() {
               <ButtonV2
                 variant="outline"
                 className="h-20 border-black text-black hover:bg-black hover:text-white"
-                onClick={() => router.push('/produits/catalogue/create')}
+                onClick={() => router.push('/produits/sourcing/create')}
               >
                 <div className="flex flex-col items-center">
                   <Plus className="h-6 w-6 mb-2" />

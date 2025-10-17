@@ -9,7 +9,7 @@ interface ArchivedProduct {
   name: string
   sku: string
   description?: string
-  price_ht?: number
+  cost_price?: number
   price_ttc?: number
   status: 'archived' | 'discontinued' | 'end_of_life'
   archived_reason?: string
@@ -55,7 +55,7 @@ export function useArchivedProducts() {
           name,
           sku,
           description,
-          price_ht,
+          cost_price,
           price_ttc,
           status,
           archived_reason,

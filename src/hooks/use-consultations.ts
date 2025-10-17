@@ -68,7 +68,7 @@ export interface ConsultationItem {
     sku: string
     requires_sample: boolean
     supplier_name?: string
-    price_ht?: number
+    cost_price?: number
   }
 }
 
@@ -405,7 +405,7 @@ export function useConsultationItems(consultationId?: string) {
           sku: item.product.sku,
           requires_sample: item.product.requires_sample,
           supplier_name: undefined, // Temporairement désactivé
-          price_ht: item.product.cost_price
+          cost_price: item.product.cost_price
         } : undefined
       }))
 

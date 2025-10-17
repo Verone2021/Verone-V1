@@ -5,11 +5,15 @@
  *
  * Page d'erreur 404 avec design Vérone et navigation intelligente
  * Client Component pour utiliser les event handlers onClick
+ *
+ * WORKAROUND (2025-10-17): Force dynamic rendering pour éviter prerendering error
  */
 
 import Link from 'next/link'
 import { AlertTriangle, Home, ArrowLeft } from 'lucide-react'
-import { ButtonV2 } from '@/components/ui/button'
+
+// Force dynamic rendering pour éviter prerendering error avec Html import
+export const dynamic = 'force-dynamic'
 
 export default function NotFound() {
   return (
@@ -36,16 +40,15 @@ export default function NotFound() {
 
         {/* Actions utilisateur */}
         <div className="space-y-4">
-          <Link href="/">
-            <ButtonV2 className="w-full bg-black hover:bg-gray-800 text-white">
+          <Link href="/" className="block">
+            <button className="w-full bg-black hover:bg-gray-800 text-white py-3 px-4 rounded-lg transition-colors flex items-center justify-center">
               <Home className="mr-2 h-4 w-4" />
               Retour à l'accueil
-            </ButtonV2>
+            </button>
           </Link>
 
-          <ButtonV2
-            variant="secondary"
-            className="w-full"
+          <button
+            className="w-full bg-white hover:bg-gray-50 text-black border-2 border-black py-3 px-4 rounded-lg transition-colors flex items-center justify-center"
             onClick={() => {
               if (typeof window !== 'undefined') {
                 window.history.back()
@@ -54,7 +57,7 @@ export default function NotFound() {
           >
             <ArrowLeft className="mr-2 h-4 w-4" />
             Page précédente
-          </ButtonV2>
+          </button>
         </div>
 
         {/* Footer Vérone */}

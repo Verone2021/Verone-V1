@@ -9,6 +9,14 @@ import { cn } from '../../lib/utils'
 import { useCollectionProducts } from '@/hooks/use-collection-products'
 import { ProductSelectorModal } from './product-selector-modal'
 
+// ✅ Type Safety: Interface ProductImage stricte
+interface ProductImage {
+  id?: string
+  public_url: string
+  is_primary: boolean
+  display_order?: number
+}
+
 interface CollectionProductsManagerModalProps {
   isOpen: boolean
   onClose: () => void
@@ -66,12 +74,18 @@ export function CollectionProductsManagerModal({
   const ProductCard = ({ product }: { product: any }) => {
     const isRemoving = removingProductId === product.product_id
 
+    // ✅ BR-TECH-002: Récupérer image via product_images (colonne primary_image_url supprimée)
+    const productImages = product.products.product_images as ProductImage[] | undefined
+    const primaryImageUrl = productImages?.find(img => img.is_primary)?.public_url ||
+                           productImages?.[0]?.public_url ||
+                           null
+
     return (
       <div className="group bg-white border border-gray-200 rounded-lg overflow-hidden hover:shadow-lg transition-all duration-300 animate-in fade-in slide-in-from-bottom-2">
         <div className="aspect-square relative bg-gray-50">
-          {product.products.primary_image_url ? (
+          {primaryImageUrl ? (
             <img
-              src={product.products.primary_image_url}
+              src={primaryImageUrl}
               alt={product.products.name}
               className="w-full h-full object-cover transition-all duration-300"
               loading="lazy"
@@ -91,7 +105,7 @@ export function CollectionProductsManagerModal({
           ) : null}
           <div
             className="w-full h-full bg-gradient-to-br from-gray-50 to-gray-100 flex items-center justify-center transition-all duration-300"
-            style={{ display: product.products.primary_image_url ? 'none' : 'flex' }}
+            style={{ display: primaryImageUrl ? 'none' : 'flex' }}
           >
             <Package className="h-12 w-12 text-gray-400 animate-pulse" />
           </div>

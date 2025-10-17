@@ -1,165 +1,102 @@
 # /test-critical - Tests Essentiels Ciblés
 
-## Description
-**RÉVOLUTION 2025** : Tests ciblés intelligents remplaçant le système 677 tests "usine à gaz". Focus sur les tests critiques uniquement.
+**RÉVOLUTION 2025** : ~50 tests ciblés au lieu de 677. Focus sur ce qui compte vraiment.
 
 ## Usage
 ```bash
 /test-critical [module]
 ```
 
-## Stratégie Tests Révolutionnaire
+## Tests par Module
 
-### **❌ TERMINÉ : Système 677 Tests Complexe**
-- Parser 677 tests supprimé
-- Hooks sur-engineered supprimés
-- Sync Supabase exhaustive supprimée
-- **GAIN TEMPS : -80% (50 tests vs 677)**
+### Dashboard (5 tests vs 59)
+1. **KPIs Loading** : Métriques chargées <2s, données correctes
+2. **Navigation** : Menu principal fonctionnel, redirections OK
+3. **Real-time** : Mises à jour Supabase temps réel
+4. **Responsive** : Mobile/Desktop adaptatif
+5. **Error States** : Gestion erreurs réseau/API
 
-### **✅ NOUVEAU : Tests Ciblés par Priorité**
+### Catalogue (7 tests vs 134)
+1. **Products List** : Affichage <3s, images + données
+2. **Search** : Recherche + filtres fonctionnels
+3. **Product Details** : Page détail complète
+4. **Pagination** : Navigation pages performante
+5. **Add to Cart** : Ajout panier + quantités
+6. **Filters & Sort** : Tri et filtrage précis
+7. **Mobile** : Expérience mobile fluide
 
-#### **Dashboard (5 tests critiques vs 59)**
-1. **KPIs Loading Performance** :
-   - `mcp__playwright__browser_navigate` vers Dashboard
-   - `mcp__playwright__browser_console_messages` (zero errors)
-   - Vérifier chargement métriques <2s
+### Stocks (4 tests vs 87)
+1. **Inventory Display** : Stock temps réel affiché
+2. **Stock Updates** : Modifications persistées DB
+3. **Low Stock Alerts** : Notifications stock bas
+4. **Movement History** : Historique mouvements OK
 
-2. **Navigation Principal** :
-   - Clic sur menu items principaux
-   - Vérifier redirections fonctionnelles
-   - Console clean après navigation
+### Commandes (4 tests)
+1. **Order Creation** : Nouvelle commande fonctionnelle
+2. **Order Lifecycle** : Workflow complet B2B/B2C
+3. **Payment Flow** : Validation paiement OK
+4. **Invoice Generation** : PDF généré <5s
 
-3. **Real-time Updates** :
-   - Supabase real-time data display
-   - `mcp__supabase__get_logs` pour vérifier API calls
+## Workflow Automatisé
 
-4. **Responsive Design** :
-   - `mcp__playwright__browser_resize` mobile/desktop
-   - Vérifier layout adaptatif
+### 1. Environment Check
+- Credentials `.env.local` valides (automatique)
+- Database connectivity OK
+- API endpoints disponibles
 
-5. **Error Handling** :
-   - Simuler erreur réseau
-   - Vérifier UI error states
+### 2. Browser Setup (Playwright)
+- `mcp__playwright__browser_navigate` vers page module
+- Clear cache si nécessaire
+- Viewport standard : 1920x1080
 
-#### **Catalogue (7 tests essentiels vs 134)**
-1. **Products List Loading** :
-   - Navigation catalogue
-   - Performance <3s pour affichage
-   - Console error check
+### 3. Test Execution
+**Pour chaque test :**
+- Navigation vers page concernée
+- `mcp__playwright__browser_console_messages` - Zero errors
+- Interaction UI avec `mcp__playwright__browser_click`
+- Validation résultat attendu
+- `mcp__playwright__browser_take_screenshot` si erreur
+- Log : ✅ SUCCESS ou ❌ FAILURE avec détails
 
-2. **Search Functionality** :
-   - Test recherche produits
-   - Filtres prix/catégorie
-   - Résultats cohérents
+### 4. Performance Monitoring
+**SLOs Mandatory:**
+- Dashboard <2s
+- Catalogue <3s
+- Commandes <4s
+- PDF Generation <5s
 
-3. **Product Details** :
-   - Clic produit → détails
-   - Images, prix, description
-   - Actions ajout panier
+Mesure avec Playwright + `mcp__supabase__execute_sql` pour query perf
 
-4. **Pagination** :
-   - Navigation pages produits
-   - URLs propres
-   - Performance maintained
+### 5. Accessibility Check
+- `mcp__playwright__browser_snapshot` - Accessibility tree
+- Navigation clavier fonctionnelle
+- Contraste couleurs Design System Vérone V2
 
-5. **Add to Cart** :
-   - Fonctionnalité ajout panier
-   - Mise à jour quantités
-   - Persistence session
+### 6. Results Report
+**Format :**
+```
+Module: [nom]
+Tests: [passed]/[total]
+Performance: [temps moyen]
+Console Errors: [count] (Target: 0)
+Status: ✅ SUCCESS | ❌ FAILURE
+```
 
-6. **Filters & Sort** :
-   - Filtres catégorie fonctionnels
-   - Tri prix/nom/date
-   - URL state management
+Si erreurs détectées → Escalation automatique vers `/error-check`
 
-7. **Mobile Experience** :
-   - Responsive catalogue mobile
-   - Touch interactions
-   - Performance maintenue
-
-#### **Stocks (4 tests bloquants vs 87)**
-1. **Inventory Display** :
-   - Affichage stocks actuels
-   - Données temps réel Supabase
-
-2. **Stock Updates** :
-   - Modifications quantités
-   - Persistence database
-
-3. **Low Stock Alerts** :
-   - Notifications stock bas
-   - UI indicators
-
-4. **Movement History** :
-   - Historique mouvements
-   - Export/import data
-
-### Phase 1: PRE-TEST SETUP
-1. **Environment Check** :
-   - `mcp__supabase__get_logs` pour vérifier services up
-   - Database connectivity test
-   - API endpoints disponibles
-
-2. **Browser Preparation** :
-   - `mcp__playwright__browser_navigate` vers home
-   - Clear cache/cookies si nécessaire
-   - Viewport standard (1920x1080)
-
-### Phase 2: CRITICAL TESTS EXECUTION
-1. **Module Selection** :
-   - Si `$ARGUMENTS` fourni : tester module spécifique
-   - Si vide : tester tous modules critiques (Dashboard + Catalogue)
-
-2. **Test Execution** :
-   - Pour chaque test : `mcp__playwright__browser_console_messages`
-   - Capture screenshot si erreur : `mcp__playwright__browser_take_screenshot`
-   - Log résultat : success/failure avec détails
-
-3. **Performance Monitoring** :
-   - Dashboard <2s, Catalogue <3s mandatory
-   - `mcp__supabase__execute_sql` pour query performance
-   - Memory usage reasonable (pas de fuites)
-
-### Phase 3: VALIDATION & REPORTING
-1. **Results Compilation** :
-   - Taux succès par module
-   - Liste erreurs critiques trouvées
-   - Performance metrics
-
-2. **Error Escalation** :
-   - Si erreurs critiques : /error-check automatique
-   - Sentry escalation si récurrent
-   - Block deployment jusqu'à résolution
-
-### Phase 4: ACCESSIBILITY & FINAL CHECK
-1. **Accessibility Validation** :
-   - `mcp__playwright__browser_snapshot` pour accessibility tree
-   - Vérifier navigation clavier
-   - Contraste couleurs (Design System Vérone)
-
-2. **Cross-Browser Basic Check** :
-   - Test sur viewport mobile simulé
-   - Navigation touch events
-   - Performance maintenue
-
-## Arguments Possibles
+## Arguments
 ```bash
 /test-critical              # Tous modules critiques (Dashboard + Catalogue)
-/test-critical dashboard     # Dashboard uniquement (5 tests)
-/test-critical catalogue     # Catalogue uniquement (7 tests)
-/test-critical stocks        # Stocks uniquement (4 tests)
+/test-critical dashboard    # Dashboard uniquement (5 tests)
+/test-critical catalogue    # Catalogue uniquement (7 tests)
+/test-critical stocks       # Stocks uniquement (4 tests)
+/test-critical commandes    # Commandes uniquement (4 tests)
 ```
 
 ## Success Metrics
-- ✅ **100% tests critical passed**
-- ✅ **Performance SLOs respectés**
-- ✅ **Zero console errors**
-- ✅ **Accessibility compliant**
+✅ 100% tests critiques passed
+✅ Performance SLOs respectés (<2s, <3s, <4s, <5s)
+✅ Zero console errors
+✅ Accessibility compliant
 
-## Integration Workflow
-```bash
-# Workflow standard
-/feature-start → development → /error-check → /test-critical → /deploy-check
-```
-
-**AVANTAGE RÉVOLUTIONNAIRE : Tests terminés en 5 minutes au lieu de 2 heures !**
+**GAIN : Tests en 5 minutes au lieu de 2 heures !**

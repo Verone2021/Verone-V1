@@ -17,6 +17,14 @@ import { PurchaseOrderReceptionModal } from '@/components/business/purchase-orde
 import { formatCurrency, formatDate } from '@/lib/utils'
 import { Separator } from '@/components/ui/separator'
 
+// ✅ Type Safety: Interface ProductImage stricte
+interface ProductImage {
+  id?: string
+  public_url: string
+  is_primary: boolean
+  display_order?: number
+}
+
 const statusLabels: Record<PurchaseOrderStatus, string> = {
   draft: 'Brouillon',
   sent: 'Envoyée',
@@ -382,13 +390,20 @@ export default function PurchaseOrdersPage() {
                       </TableRow>
                     </TableHeader>
                     <TableBody>
-                      {selectedOrder.purchase_order_items?.map((item) => (
+                      {selectedOrder.purchase_order_items?.map((item) => {
+                        // ✅ BR-TECH-002: Récupérer image via product_images (colonne primary_image_url supprimée)
+                        const productImages = item.products?.product_images as ProductImage[] | undefined
+                        const primaryImageUrl = productImages?.find(img => img.is_primary)?.public_url ||
+                                               productImages?.[0]?.public_url ||
+                                               null
+
+                        return (
                         <TableRow key={item.id}>
                           <TableCell>
                             <div className="flex items-center gap-3">
-                              {item.products?.primary_image_url && (
+                              {primaryImageUrl && (
                                 <img
-                                  src={item.products.primary_image_url}
+                                  src={primaryImageUrl}
                                   alt={item.products.name}
                                   className="w-10 h-10 object-cover rounded"
                                 />
@@ -409,7 +424,8 @@ export default function PurchaseOrdersPage() {
                             </span>
                           </TableCell>
                         </TableRow>
-                      ))}
+                        )
+                      })}
                     </TableBody>
                   </Table>
                 </div>

@@ -56,7 +56,6 @@ export function useProductVariants(productId: string) {
         if (!productData.variant_group_id) {
           setProduct({
             ...productData,
-            price_ht: productData.cost_price,
             siblings: []
           })
           setSiblings([])
@@ -119,7 +118,6 @@ export function useProductVariants(productId: string) {
 
             return {
               ...sibling,
-              price_ht: sibling.cost_price,
               image_url: images?.[0]?.public_url,
               variant_group_id: productData.variant_group_id
             }
@@ -129,7 +127,6 @@ export function useProductVariants(productId: string) {
         // Construire l'objet produit complet
         const fullProduct: ProductWithVariants = {
           ...productData,
-          price_ht: productData.cost_price,
           variant_group: groupData || undefined,
           siblings: siblingsWithImages
         }

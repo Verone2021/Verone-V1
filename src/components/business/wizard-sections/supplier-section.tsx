@@ -2,9 +2,8 @@
 
 import { Input } from '../../ui/input'
 import { Label } from '../../ui/label'
-import { Textarea } from '../../ui/textarea'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../../ui/card'
-import { Truck, ExternalLink } from 'lucide-react'
+import { Building2, ExternalLink } from 'lucide-react'
 import { WizardFormData } from '../complete-product-wizard'
 import { SupplierSelector } from '../supplier-selector'
 
@@ -19,7 +18,6 @@ export function SupplierSection({
   setFormData,
   onSave
 }: SupplierSectionProps) {
-
   const updateField = (field: keyof WizardFormData, value: any) => {
     setFormData({
       ...formData,
@@ -29,30 +27,45 @@ export function SupplierSection({
 
   return (
     <div className="space-y-6">
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center">
-            <Truck className="h-5 w-5 mr-2" />
-            Informations fournisseur
+      {/* Fournisseur principal */}
+      <Card className="border-l-4" style={{ borderLeftColor: '#3b86d1' }}>
+        <CardHeader style={{ backgroundColor: 'rgba(232, 244, 252, 0.3)' }}>
+          <CardTitle className="flex items-center" style={{ color: '#1f4d7e' }}>
+            <Building2 className="h-5 w-5 mr-2" style={{ color: '#2868a8' }} />
+            Fournisseur
           </CardTitle>
           <CardDescription>
-            Informations sur le fournisseur et l'approvisionnement du produit
+            Sélectionnez le fournisseur principal pour ce produit
           </CardDescription>
         </CardHeader>
-        <CardContent className="space-y-6">
-          {/* Sélection du fournisseur */}
+        <CardContent className="pt-6 space-y-4">
           <div className="space-y-2">
-            <Label htmlFor="supplier_id">
-              Fournisseur
+            <Label htmlFor="supplier" className="text-base font-medium">
+              Fournisseur principal
             </Label>
             <SupplierSelector
-              value={formData.supplier_id}
-              onChange={(supplierId) => updateField('supplier_id', supplierId)}
-              placeholder="Sélectionner un fournisseur..."
+              selectedSupplierId={formData.supplier_id}
+              onSupplierChange={(supplierId) => updateField('supplier_id', supplierId)}
               required={false}
             />
             <p className="text-xs text-gray-500">
-              Organisation fournisseur de ce produit
+              Le fournisseur auprès duquel ce produit est sourcé
+            </p>
+          </div>
+
+          {/* Référence fournisseur */}
+          <div className="space-y-2">
+            <Label htmlFor="supplier_reference">
+              Référence fournisseur
+            </Label>
+            <Input
+              id="supplier_reference"
+              value={formData.supplier_reference}
+              onChange={(e) => updateField('supplier_reference', e.target.value)}
+              placeholder="REF-FOURNISSEUR-123"
+            />
+            <p className="text-xs text-gray-500">
+              Référence ou code produit chez le fournisseur
             </p>
           </div>
 
@@ -83,22 +96,6 @@ export function SupplierSection({
             </div>
             <p className="text-xs text-gray-500">
               Lien direct vers la fiche produit chez le fournisseur
-            </p>
-          </div>
-
-          {/* Référence fournisseur */}
-          <div className="space-y-2">
-            <Label htmlFor="supplier_reference">
-              Référence fournisseur
-            </Label>
-            <Input
-              id="supplier_reference"
-              value={formData.supplier_reference}
-              onChange={(e) => updateField('supplier_reference', e.target.value)}
-              placeholder="REF-FOURNISSEUR-123"
-            />
-            <p className="text-xs text-gray-500">
-              Référence ou code produit chez le fournisseur
             </p>
           </div>
 

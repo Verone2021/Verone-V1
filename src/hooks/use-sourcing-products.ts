@@ -9,7 +9,12 @@ export interface SourcingProduct {
   sku: string
   name: string
   supplier_page_url: string | null
-  cost_price: number | null // 🔥 FIX: Utiliser cost_price au lieu de supplier_cost_price
+
+  // 💰 PRICING - Pattern LPP (Last Purchase Price)
+  cost_price: number | null         // Prix d'achat indicatif (auto-update via trigger PO)
+  margin_percentage?: number         // Marge minimum en pourcentage
+  // ❌ selling_price N'EXISTE PAS - Prix de vente sera dans sales_order_items (Phase 2)
+
   status: string
   supplier_id: string | null
   supplier?: {
@@ -87,6 +92,10 @@ export function useSourcingProducts(filters?: SourcingFilters) {
             id,
             name,
             type
+          ),
+          product_images!left(
+            public_url,
+            is_primary
           )
         `)
         .eq('creation_mode', 'sourcing')
@@ -140,34 +149,20 @@ export function useSourcingProducts(filters?: SourcingFilters) {
         return
       }
 
-      // Récupérer les images principales
-      const productIds = data?.map(p => p.id) || []
-
-      // 🔥 FIX: Ne pas charger images si aucun produit (évite requête bloquante)
-      let imageMap = new Map<string, string>()
-
-      if (productIds.length > 0) {
-        const imagesResponse = await supabase
-          .from('product_images')
-          .select('product_id, public_url')
-          .in('product_id', productIds)
-          .eq('is_primary', true)
-
-        imageMap = new Map(
-          imagesResponse.data?.map(img => [img.product_id, img.public_url]) || []
-        )
-      }
-
-      // Enrichir les produits avec les calculs
+      // Enrichir les produits avec les calculs et images (BR-TECH-002: product_images!left)
       const enrichedProducts = (data || []).map(product => {
-        const supplierCost = product.cost_price || 0 // 🔥 FIX: cost_price au lieu de supplier_cost_price
+        const supplierCost = product.cost_price || 0 // Prix d'achat LPP comme base calcul
         const margin = product.margin_percentage || 50 // Marge par défaut 50%
         const estimatedSellingPrice = supplierCost * (1 + margin / 100)
+
+        // Extraire image primaire depuis product_images (jointure)
+        const primaryImage = product.product_images?.find((img: any) => img.is_primary)
+        const mainImageUrl = primaryImage?.public_url || product.product_images?.[0]?.public_url || null
 
         return {
           ...product,
           estimated_selling_price: estimatedSellingPrice,
-          main_image_url: imageMap.get(product.id) || null
+          main_image_url: mainImageUrl
         }
       })
 
@@ -212,11 +207,11 @@ export function useSourcingProducts(filters?: SourcingFilters) {
         return false
       }
 
-      // Vérification prix fournisseur OBLIGATOIRE
+      // Vérification prix OBLIGATOIRE
       if (!product.cost_price || product.cost_price <= 0) {
         toast({
           title: "Erreur",
-          description: "Le prix d'achat fournisseur doit être défini et > 0€ avant validation",
+          description: "Le prix d'achat doit être défini et > 0€ avant validation",
           variant: "destructive"
         })
         return false
@@ -296,7 +291,7 @@ export function useSourcingProducts(filters?: SourcingFilters) {
       if (!product.cost_price || product.cost_price <= 0) {
         toast({
           title: "Erreur",
-          description: "Le prix d'achat fournisseur doit être défini avant de commander un échantillon",
+          description: "Le prix d'achat doit être défini avant de commander un échantillon",
           variant: "destructive"
         })
         return false
@@ -438,21 +433,138 @@ export function useSourcingProducts(filters?: SourcingFilters) {
     }
   }
 
+  // Approuver échantillon - Transférer vers catalogue
+  const approveSample = async (productId: string) => {
+    try {
+      // 1. Récupérer les infos du produit
+      const product = products.find(p => p.id === productId)
+
+      if (!product) {
+        toast({
+          title: "Erreur",
+          description: "Produit introuvable",
+          variant: "destructive"
+        })
+        return false
+      }
+
+      // Vérifications business rules
+      if (!product.supplier_id) {
+        toast({
+          title: "Erreur",
+          description: "Un fournisseur doit être lié avant validation",
+          variant: "destructive"
+        })
+        return false
+      }
+
+      if (!product.cost_price || product.cost_price <= 0) {
+        toast({
+          title: "Erreur",
+          description: "Le prix d'achat doit être défini",
+          variant: "destructive"
+        })
+        return false
+      }
+
+      // 2. Mettre à jour produit: statut actif + completion 100%
+      const { error } = await supabase
+        .from('products')
+        .update({
+          status: 'in_stock',
+          creation_mode: 'complete',
+          completion_percentage: 100,
+          stock_real: 1, // Stock initial minimal
+          stock_forecasted_in: 0
+        })
+        .eq('id', productId)
+
+      if (error) {
+        toast({
+          title: "Erreur",
+          description: error.message,
+          variant: "destructive"
+        })
+        return false
+      }
+
+      // 3. Notifier utilisateur
+      toast({
+        title: "Échantillon approuvé",
+        description: "Le produit a été ajouté au catalogue avec statut actif"
+      })
+
+      // 4. Recharger liste sourcing
+      await fetchSourcingProducts()
+      return true
+    } catch (err: any) {
+      console.error('Erreur approbation échantillon:', err)
+      toast({
+        title: "Erreur",
+        description: err.message || "Impossible d'approuver l'échantillon",
+        variant: "destructive"
+      })
+      return false
+    }
+  }
+
+  // Rejeter échantillon - Auto-archivage non désarchivable
+  const rejectSample = async (productId: string, reason?: string) => {
+    try {
+      // 1. Auto-archivage avec mention rejet
+      const { error } = await supabase
+        .from('products')
+        .update({
+          status: 'discontinued',
+          archived_at: new Date().toISOString(),
+          rejection_reason: reason || "Échantillon refusé lors de la validation"
+        })
+        .eq('id', productId)
+
+      if (error) {
+        toast({
+          title: "Erreur",
+          description: error.message,
+          variant: "destructive"
+        })
+        return false
+      }
+
+      // 2. Notifier utilisateur
+      toast({
+        title: "Échantillon rejeté",
+        description: "Le produit a été archivé automatiquement et ne peut pas être désarchivé"
+      })
+
+      // 3. Recharger liste sourcing
+      await fetchSourcingProducts()
+      return true
+    } catch (err: any) {
+      console.error('Erreur rejet échantillon:', err)
+      toast({
+        title: "Erreur",
+        description: err.message || "Impossible de rejeter l'échantillon",
+        variant: "destructive"
+      })
+      return false
+    }
+  }
+
   // Créer un produit en sourcing rapide
   const createSourcingProduct = async (data: {
     name: string
     supplier_page_url: string
-    supplier_cost_price: number // REQUIRED - validation > 0
+    cost_price: number // REQUIRED - validation > 0
     supplier_id?: string
     assigned_client_id?: string
     imageFile?: File // Upload image optionnel
   }) => {
     try {
       // 🔥 FIX: Validation prix OBLIGATOIRE
-      if (!data.supplier_cost_price || data.supplier_cost_price <= 0) {
+      if (!data.cost_price || data.cost_price <= 0) {
         toast({
           title: "Erreur",
-          description: "Le prix d'achat fournisseur est obligatoire et doit être > 0€",
+          description: "Le prix d'achat est obligatoire et doit être > 0€",
           variant: "destructive"
         })
         return null
@@ -474,7 +586,7 @@ export function useSourcingProducts(filters?: SourcingFilters) {
         .insert([{
           name: data.name,
           supplier_page_url: data.supplier_page_url,
-          cost_price: data.supplier_cost_price, // 🔥 FIX: Utiliser cost_price (nom correct BD)
+          cost_price: data.cost_price,
           supplier_id: data.supplier_id,
           assigned_client_id: data.assigned_client_id,
           creation_mode: 'sourcing',
@@ -577,7 +689,13 @@ export function useSourcingProducts(filters?: SourcingFilters) {
       }
 
       // Construire l'objet de mise à jour avec uniquement les champs fournis
-      const updateData: any = {}
+      const updateData: Partial<{
+        name: string
+        supplier_page_url: string
+        cost_price: number
+        supplier_id: string | null
+        margin_percentage: number
+      }> = {}
 
       if (data.name !== undefined) updateData.name = data.name
       if (data.supplier_page_url !== undefined) updateData.supplier_page_url = data.supplier_page_url
@@ -627,6 +745,8 @@ export function useSourcingProducts(filters?: SourcingFilters) {
     refetch: fetchSourcingProducts,
     validateSourcing,
     orderSample,
+    approveSample,
+    rejectSample,
     createSourcingProduct,
     updateSourcingProduct
   }

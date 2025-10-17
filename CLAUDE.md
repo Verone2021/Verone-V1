@@ -315,6 +315,107 @@ supabase/migrations/
 
 ---
 
+## 🗄️ DATABASE SCHEMA (Anti-Hallucination)
+
+**Source de vérité unique** : `/docs/database/` (extraction complète 2025-10-17)
+
+### 📊 Statistiques Database
+
+- **78 tables** exhaustivement documentées
+- **158 triggers** avec 10 interdépendants (stock)
+- **217 RLS policies** (sécurité par rôle)
+- **254 fonctions PostgreSQL** (89 triggers, 72 RPC, 45 helpers)
+- **34 types enum** (194 valeurs)
+- **85 foreign keys** (intégrité référentielle)
+
+### 🚫 RÈGLE ANTI-HALLUCINATION
+
+**Problème historique** :
+> *"À chaque fois, mon agent hallucine et crée des tables en plus. Par exemple, il créé une table `suppliers` alors qu'on a déjà `organisations`."*
+
+**WORKFLOW OBLIGATOIRE avant toute modification database** :
+
+```typescript
+// ÉTAPE 1: TOUJOURS consulter documentation AVANT création
+Read("docs/database/SCHEMA-REFERENCE.md")       // 78 tables
+Read("docs/database/best-practices.md")         // Anti-hallucination guide
+
+// ÉTAPE 2: Rechercher structure similaire existante
+mcp__serena__search_for_pattern({
+  pattern: "supplier|customer|price",
+  relative_path: "docs/database/"
+})
+
+// ÉTAPE 3: Si doute → Demander confirmation utilisateur
+AskUserQuestion({
+  question: "Table `suppliers` existe-t-elle déjà sous autre forme?"
+})
+
+// ÉTAPE 4: Migration SQL documentée uniquement
+// Fichier: supabase/migrations/YYYYMMDD_NNN_description.sql
+```
+
+### ❌ TABLES À NE JAMAIS CRÉER (Hallucinations Fréquentes)
+
+| ❌ NE PAS Créer | ✅ Utiliser À La Place |
+|-----------------|------------------------|
+| `suppliers` | `organisations WHERE type='supplier'` |
+| `customers` | `organisations WHERE type='customer'` + `individual_customers` |
+| `products_pricing` | `price_list_items` + `calculate_product_price_v2()` |
+| `product_stock` | `stock_movements` (triggers calculent automatiquement) |
+| `user_roles` | `user_profiles.role` (enum user_role_type) |
+
+### ❌ COLONNES À NE JAMAIS AJOUTER (Hallucinations Fréquentes)
+
+| ❌ NE PAS Ajouter | ✅ Utiliser À La Place |
+|-------------------|------------------------|
+| `products.cost_price` | `price_list_items.cost_price` |
+| `products.sale_price` | `calculate_product_price_v2()` (RPC multi-canal) |
+| `products.primary_image_url` | `product_images WHERE is_primary=true` (LEFT JOIN) |
+| `products.stock_quantity` | Calculé par trigger `maintain_stock_totals()` |
+| `sales_orders.total_amount` | Calculé par trigger `calculate_sales_order_total()` |
+
+### 📖 Documentation Database Complète
+
+```
+docs/database/
+├── SCHEMA-REFERENCE.md        # 78 tables exhaustives (SOURCE VÉRITÉ)
+├── triggers.md                # 158 triggers documentés
+├── rls-policies.md            # 217 RLS policies
+├── functions-rpc.md           # 254 fonctions PostgreSQL
+├── enums.md                   # 34 types enum (194 valeurs)
+├── foreign-keys.md            # 85 contraintes FK
+└── best-practices.md          # Guide anti-hallucination
+```
+
+### ⚠️ CHECKLIST MODIFICATION DATABASE (MANDATORY)
+
+```markdown
+Avant toute création table/colonne/trigger:
+
+- [ ] Lire SCHEMA-REFERENCE.md section concernée
+- [ ] Vérifier enums.md si ajout contrainte
+- [ ] Vérifier foreign-keys.md si ajout relation
+- [ ] Vérifier triggers.md si modification colonne calculée
+- [ ] Vérifier functions-rpc.md si modification logique métier
+- [ ] Rechercher structure similaire existante (search_for_pattern)
+- [ ] AskUserQuestion si doute sur architecture
+- [ ] Créer migration YYYYMMDD_NNN_description.sql
+- [ ] Tester migration sur dev AVANT production
+```
+
+### 🔗 Liens Documentation Database
+
+- **Schema Complet** : [SCHEMA-REFERENCE.md](docs/database/SCHEMA-REFERENCE.md)
+- **Anti-Hallucination** : [best-practices.md](docs/database/best-practices.md)
+- **Triggers** : [triggers.md](docs/database/triggers.md)
+- **RLS Policies** : [rls-policies.md](docs/database/rls-policies.md)
+- **Functions RPC** : [functions-rpc.md](docs/database/functions-rpc.md)
+- **Enums** : [enums.md](docs/database/enums.md)
+- **Foreign Keys** : [foreign-keys.md](docs/database/foreign-keys.md)
+
+---
+
 ## 🔄 GITHUB FLOW
 
 ```bash

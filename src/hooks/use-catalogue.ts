@@ -28,8 +28,7 @@ interface Product {
   sku: string;
   name: string;
   slug: string;
-  price_ht: number; // Prix en centimes
-  cost_price?: number;
+  cost_price: number; // Prix en centimes
   tax_rate: number;
   status: 'in_stock' | 'out_of_stock' | 'preorder' | 'coming_soon' | 'discontinued';
   condition: 'new' | 'refurbished' | 'used';
@@ -90,24 +89,25 @@ interface CatalogueState {
   categories: Category[];
   loading: boolean;
   error: string | null;
-  filters: CatalogueFilters;
   total: number;
 }
 
 export const useCatalogue = () => {
+  // ✅ FIX P0-2: Séparer filters du state principal pour casser circular dependency
+  const [filters, setFiltersState] = useState<CatalogueFilters>({});
+
   const [state, setState] = useState<CatalogueState>({
     productGroups: [],
     products: [],
     categories: [],
     loading: true,
     error: null,
-    filters: {},
     total: 0
   });
 
   const supabase = useMemo(() => createClient(), []);
 
-  // ✅ FIX 3.4: Mémoriser loadCatalogueData avec useCallback
+  // ✅ FIX P0-2: loadCatalogueData dépend maintenant de filters séparé (pas de circular dependency)
   const loadCatalogueData = useCallback(async () => {
     try {
       setState(prev => ({ ...prev, loading: true, error: null }));
@@ -118,7 +118,7 @@ export const useCatalogue = () => {
       // Chargement parallèle pour optimiser performance
       const [categoriesResult, productsResult] = await Promise.all([
         loadCategories(),
-        loadProducts(state.filters)
+        loadProducts(filters)
       ]);
 
       const loadTime = performance.now() - startTime;
@@ -142,9 +142,9 @@ export const useCatalogue = () => {
         loading: false
       }));
     }
-  }, [state.filters, supabase]);  // ✅ Dependencies correctes
+  }, [filters]);  // ✅ FIX P0-2: Dependency sur filters séparé (pas de circular)
 
-  // ✅ FIX 3.4: useEffect avec loadCatalogueData mémorisée
+  // ✅ FIX P0-2: useEffect trigger sur filters change
   useEffect(() => {
     loadCatalogueData();
   }, [loadCatalogueData]);
@@ -166,7 +166,6 @@ export const useCatalogue = () => {
       .from('products')
       .select(`
         id, sku, name, slug,
-        cost_price,
         status, condition,
         subcategory_id, supplier_id, brand,
         archived_at, created_at, updated_at,
@@ -189,14 +188,6 @@ export const useCatalogue = () => {
 
     if (filters.subcategories && filters.subcategories.length > 0) {
       query = query.in('subcategory_id', filters.subcategories);
-    }
-
-    if (filters.priceMin !== undefined) {
-      query = query.gte('cost_price', filters.priceMin);
-    }
-
-    if (filters.priceMax !== undefined) {
-      query = query.lte('cost_price', filters.priceMax);
     }
 
     // Pagination - Optimisé pour performance (pagination normale)
@@ -230,7 +221,6 @@ export const useCatalogue = () => {
       .from('products')
       .select(`
         id, sku, name, slug,
-        cost_price,
         status, condition,
         subcategory_id, supplier_id, brand,
         archived_at, created_at, updated_at,
@@ -253,14 +243,6 @@ export const useCatalogue = () => {
 
     if (filters.subcategories && filters.subcategories.length > 0) {
       query = query.in('subcategory_id', filters.subcategories);
-    }
-
-    if (filters.priceMin !== undefined) {
-      query = query.gte('cost_price', filters.priceMin);
-    }
-
-    if (filters.priceMax !== undefined) {
-      query = query.lte('cost_price', filters.priceMax);
     }
 
     // Pagination - Optimisé
@@ -425,23 +407,20 @@ export const useCatalogue = () => {
     }
   };
 
+  // ✅ FIX P0-2: setFilters utilise maintenant state séparé
   const setFilters = (newFilters: Partial<CatalogueFilters>) => {
-    setState(prev => ({
-      ...prev,
-      filters: { ...prev.filters, ...newFilters }
-    }));
+    setFiltersState(prev => ({ ...prev, ...newFilters }));
   };
 
+  // ✅ FIX P0-2: resetFilters utilise maintenant state séparé
   const resetFilters = () => {
-    setState(prev => ({
-      ...prev,
-      filters: {}
-    }));
+    setFiltersState({});
   };
 
   return {
     // État
     ...state,
+    filters, // ✅ FIX P0-2: Exposer filters séparé
 
     // Actions
     loadCatalogueData,

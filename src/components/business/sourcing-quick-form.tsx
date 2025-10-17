@@ -32,7 +32,7 @@ export function SourcingQuickForm({
   const [formData, setFormData] = useState({
     name: '',
     supplier_page_url: '',
-    supplier_cost_price: 0, // Prix d'achat fournisseur HT - OBLIGATOIRE
+    cost_price: 0, // Prix d'achat fournisseur HT - OBLIGATOIRE
     supplier_id: '', // Facultatif - fournisseur assigné
     assigned_client_id: '' // Facultatif - détermine automatiquement le type de sourcing
   })
@@ -102,8 +102,8 @@ export function SourcingQuickForm({
     }
 
     // Validation prix fournisseur OBLIGATOIRE
-    if (!formData.supplier_cost_price || formData.supplier_cost_price <= 0) {
-      newErrors.supplier_cost_price = 'Le prix d\'achat fournisseur est obligatoire et doit être > 0€'
+    if (!formData.cost_price || formData.cost_price <= 0) {
+      newErrors.cost_price = 'Le prix d\'achat fournisseur est obligatoire et doit être > 0€'
     }
 
     // 🔥 FIX: Image facultative (BD accepte image_url NULL)
@@ -135,7 +135,7 @@ export function SourcingQuickForm({
       const productData = {
         name: formData.name,
         supplier_page_url: formData.supplier_page_url,
-        supplier_cost_price: formData.supplier_cost_price, // 🔥 FIX: Prix réel saisi par utilisateur
+        cost_price: formData.cost_price, // 🔥 FIX: Prix réel saisi par utilisateur
         supplier_id: formData.supplier_id || undefined, // Facultatif - pour activer lien fournisseur
         assigned_client_id: formData.assigned_client_id || undefined,
         imageFile: selectedImage || undefined // Upload image si fournie
@@ -316,31 +316,31 @@ export function SourcingQuickForm({
 
         {/* 4. PRIX FOURNISSEUR - Obligatoire */}
         <div className="space-y-2">
-          <Label htmlFor="supplier_cost_price" className="text-sm font-medium">
+          <Label htmlFor="cost_price" className="text-sm font-medium">
             Prix d'achat fournisseur HT (€) *
           </Label>
           <div className="relative">
             <Euro className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
             <Input
-              id="supplier_cost_price"
+              id="cost_price"
               type="number"
               step="0.01"
               min="0.01"
-              value={formData.supplier_cost_price || ''}
+              value={formData.cost_price || ''}
               onChange={(e) => {
                 const value = parseFloat(e.target.value) || 0
-                setFormData(prev => ({ ...prev, supplier_cost_price: value }))
-                if (errors.supplier_cost_price) setErrors(prev => ({ ...prev, supplier_cost_price: '' }))
+                setFormData(prev => ({ ...prev, cost_price: value }))
+                if (errors.cost_price) setErrors(prev => ({ ...prev, cost_price: '' }))
               }}
               placeholder="250.00"
               className={cn(
                 "pl-10 transition-colors",
-                errors.supplier_cost_price && "border-red-300 focus:border-red-500"
+                errors.cost_price && "border-red-300 focus:border-red-500"
               )}
             />
           </div>
-          {errors.supplier_cost_price && (
-            <p className="text-sm text-red-600">{errors.supplier_cost_price}</p>
+          {errors.cost_price && (
+            <p className="text-sm text-red-600">{errors.cost_price}</p>
           )}
           <p className="text-xs text-gray-500">
             Prix d'achat HT chez le fournisseur (requis pour validation sourcing)

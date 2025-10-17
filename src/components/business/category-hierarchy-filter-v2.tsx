@@ -90,12 +90,16 @@ export function CategoryHierarchyFilterV2({
   const enrichedHierarchy = useMemo(() => {
     // Compteurs par sous-catégorie
     const subcategoryProductCounts = new Map<string, number>()
-    products.forEach(product => {
-      if (product.subcategory_id) {
-        const count = subcategoryProductCounts.get(product.subcategory_id) || 0
-        subcategoryProductCounts.set(product.subcategory_id, count + 1)
-      }
-    })
+
+    // Vérification sécurité : products peut être undefined pendant le chargement
+    if (products && Array.isArray(products)) {
+      products.forEach(product => {
+        if (product.subcategory_id) {
+          const count = subcategoryProductCounts.get(product.subcategory_id) || 0
+          subcategoryProductCounts.set(product.subcategory_id, count + 1)
+        }
+      })
+    }
 
     // Enrichir sous-catégories
     const enrichedSubcategories = subcategories.map(sub => ({
