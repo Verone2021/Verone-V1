@@ -454,7 +454,7 @@ export default function CataloguePage() {
                               is_active: true
                             } : undefined
                           } as any}
-                          priority={index === 0} // 🚀 Optimisation LCP pour première ProductCard
+                          index={index}
                           onArchive={handleArchiveProduct}
                           onDelete={handleDeleteProduct}
                           archived={!!product.archived_at}

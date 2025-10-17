@@ -15,6 +15,7 @@ interface ProductCardProps {
   className?: string
   showActions?: boolean
   priority?: boolean
+  index?: number  // Priority dynamique LCP (6 premiers produits)
   onClick?: (product: Product) => void
   onArchive?: (product: Product) => void
   onDelete?: (product: Product) => void
@@ -50,6 +51,7 @@ export const ProductCardV2 = memo(function ProductCardV2({
   className,
   showActions = true,
   priority = false,
+  index,
   onClick,
   onArchive,
   onDelete,
@@ -117,7 +119,8 @@ export const ProductCardV2 = memo(function ProductCardV2({
             src={primaryImage.public_url}
             alt={primaryImage.alt_text || product.name}
             fill
-            priority={priority}
+            priority={priority || (index !== undefined && index < 6)}
+            loading={priority || (index !== undefined && index < 6) ? undefined : "lazy"}
             className={cn(
               "object-contain transition-transform duration-300",
               isHovered && "scale-110"

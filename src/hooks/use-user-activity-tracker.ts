@@ -114,14 +114,14 @@ export function useUserActivityTracker() {
   const activityStatsQuery = useSupabaseQuery(
     'activity-stats',
     async (supabase) => {
-      // Statistiques des 30 derniers jours
-      const thirtyDaysAgo = new Date()
-      thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30)
+      // Statistiques des 7 derniers jours (optimisation SLO <2s)
+      const sevenDaysAgo = new Date()
+      sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7)
 
       const { data: logs, error } = await supabase
         .from('audit_logs')
         .select('*')
-        .gte('created_at', thirtyDaysAgo.toISOString())
+        .gte('created_at', sevenDaysAgo.toISOString())
 
       if (error) throw error
 
