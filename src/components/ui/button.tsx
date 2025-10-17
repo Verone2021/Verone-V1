@@ -8,7 +8,7 @@ import { cn } from '@/lib/utils'
 
 export interface ButtonV2Props extends React.ButtonHTMLAttributes<HTMLButtonElement> {
   variant?: 'primary' | 'secondary' | 'outline' | 'success' | 'danger' | 'warning' | 'ghost'
-  size?: 'sm' | 'md' | 'lg'
+  size?: 'xs' | 'sm' | 'md' | 'lg' | 'xl'
   icon?: LucideIcon
   iconPosition?: 'left' | 'right'
   loading?: boolean
@@ -96,24 +96,36 @@ export function ButtonV2({
     },
   }
 
-  // Size styles
+  // Size styles - Optimisés selon standards 2025 (shadcn/ui, Linear, Vercel)
   const sizeStyles = {
+    xs: {
+      padding: `${spacing[1.5]} ${spacing[3]}`, // 6px 12px
+      fontSize: '12px',
+      height: '28px',
+      iconSize: 14,
+    },
     sm: {
-      padding: `${spacing[2]} ${spacing[4]}`, // 8px 16px
-      fontSize: '14px',
-      height: '36px',
+      padding: `${spacing[2]} ${spacing[3]}`, // 8px 12px (réduit de 16px)
+      fontSize: '13px',
+      height: '32px', // Réduit: 36px → 32px
       iconSize: 16,
     },
     md: {
-      padding: `${spacing[3]} ${spacing[6]}`, // 12px 24px
-      fontSize: '15px',
-      height: '44px',
-      iconSize: 18,
+      padding: `${spacing[2.5]} ${spacing[4]}`, // 10px 16px (réduit de 24px)
+      fontSize: '14px',
+      height: '36px', // Réduit: 44px → 36px (Material Design 3 standard)
+      iconSize: 16,
     },
     lg: {
-      padding: `${spacing[4]} ${spacing[8]}`, // 16px 32px
+      padding: `${spacing[3]} ${spacing[5]}`, // 12px 20px (réduit de 32px)
+      fontSize: '15px',
+      height: '40px', // Réduit: 52px → 40px (shadcn/ui large)
+      iconSize: 18,
+    },
+    xl: {
+      padding: `${spacing[3.5]} ${spacing[6]}`, // 14px 24px
       fontSize: '16px',
-      height: '52px',
+      height: '44px', // Touch-friendly (≥44px mobile accessibility)
       iconSize: 20,
     },
   }

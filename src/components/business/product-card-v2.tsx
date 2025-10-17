@@ -110,8 +110,8 @@ export const ProductCardV2 = memo(function ProductCardV2({
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
     >
-      {/* Image produit - FOND BLANC */}
-      <div className="relative h-32 overflow-hidden bg-white">
+      {/* Image produit - FOND BLANC - Optimisé 2025: h-32 → h-24 (réduction 25%) */}
+      <div className="relative h-24 overflow-hidden bg-white">
         {primaryImage?.public_url && !imageLoading ? (
           <Image
             src={primaryImage.public_url}
@@ -136,36 +136,36 @@ export const ProductCardV2 = memo(function ProductCardV2({
           </div>
         )}
 
-        {/* Badges - Espacement amélioré */}
-        <div className="absolute top-2 right-2 flex flex-col gap-2">
-          <Badge className={cn("text-[10px] font-medium px-1.5 py-0.5", status.className)}>
+        {/* Badges - Optimisés 2025: text-[10px]→[9px], padding réduit */}
+        <div className="absolute top-1.5 right-1.5 flex flex-col gap-1.5">
+          <Badge className={cn("text-[9px] font-medium px-1 py-0.5", status.className)}>
             {status.label}
           </Badge>
 
           {product.condition !== 'new' && (
-            <Badge variant="outline" className="bg-white/90 backdrop-blur-sm text-black text-[10px] px-1.5 py-0.5">
+            <Badge variant="outline" className="bg-white/90 backdrop-blur-sm text-black text-[9px] px-1 py-0.5">
               {product.condition === 'refurbished' ? 'Reconditionné' : 'Occasion'}
             </Badge>
           )}
         </div>
 
-        {/* Badge "nouveau" */}
+        {/* Badge "nouveau" - Optimisé 2025 */}
         {(() => {
           const createdAt = new Date(product.created_at)
           const thirtyDaysAgo = new Date()
           thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30)
           return createdAt > thirtyDaysAgo
         })() && (
-          <div className="absolute top-2 left-2">
-            <Badge className="bg-green-500 text-white text-[10px] font-medium px-1.5 py-0.5">
+          <div className="absolute top-1.5 left-1.5">
+            <Badge className="bg-green-500 text-white text-[9px] font-medium px-1 py-0.5">
               🆕 Nouveau
             </Badge>
           </div>
         )}
       </div>
 
-      {/* Informations produit - HIÉRARCHIE CLAIRE */}
-      <div className="p-3 space-y-2">
+      {/* Informations produit - HIÉRARCHIE CLAIRE - Optimisé 2025: p-3→p-2.5, space-y-2→1.5 */}
+      <div className="p-2.5 space-y-1.5">
         {/* Header - NOM + SKU */}
         <div className="space-y-0.5">
           <h3 className="font-semibold text-sm text-black line-clamp-2 min-h-[2.5rem] leading-tight">
@@ -201,43 +201,43 @@ export const ProductCardV2 = memo(function ProductCardV2({
           )}
         </div>
 
-        {/* Actions - UNE SEULE LIGNE - BOUTONS OUTLINE BLANC/NOIR */}
+        {/* Actions - UNE SEULE LIGNE - BOUTONS OPTIMISÉS 2025: size="xs" au lieu de "sm" */}
         {showActions && (
-          <div className="flex gap-1.5 pt-1">
-            {/* Bouton principal : Voir détail (OUTLINE blanc/noir) */}
+          <div className="flex gap-1.5 pt-0.5">
+            {/* Bouton principal : Voir détail (OUTLINE blanc/noir) - Optimisé: size="xs" */}
             <ButtonV2
               variant="outline"
-              size="sm"
+              size="xs"
               onClick={handleDetailsClick}
-              className="flex-1 text-xs h-7"
+              className="flex-1 text-xs"
               icon={Eye}
             >
               Voir détail
             </ButtonV2>
 
-            {/* Bouton secondaire : Archive/Restaurer (OUTLINE) */}
+            {/* Bouton secondaire : Archive/Restaurer (OUTLINE) - Optimisé: size="xs" */}
             {onArchive && (
               <ButtonV2
                 variant="outline"
-                size="sm"
+                size="xs"
                 onClick={handleArchiveClick}
                 className="w-7 h-7 p-0 flex items-center justify-center"
                 aria-label={archived ? "Restaurer le produit" : "Archiver le produit"}
               >
-                {archived ? <ArchiveRestore className="h-4 w-4" /> : <Archive className="h-4 w-4" />}
+                {archived ? <ArchiveRestore className="h-3.5 w-3.5" /> : <Archive className="h-3.5 w-3.5" />}
               </ButtonV2>
             )}
 
-            {/* Bouton tertiaire : Supprimer (OUTLINE rouge si archived) */}
+            {/* Bouton tertiaire : Supprimer (OUTLINE rouge si archived) - Optimisé: size="xs" */}
             {archived && onDelete && (
               <ButtonV2
                 variant="outline"
-                size="sm"
+                size="xs"
                 onClick={handleDeleteClick}
                 className="w-7 h-7 p-0 flex items-center justify-center border-red-600 text-red-600 hover:bg-red-50"
                 aria-label="Supprimer le produit"
               >
-                <Trash2 className="h-4 w-4" />
+                <Trash2 className="h-3.5 w-3.5" />
               </ButtonV2>
             )}
           </div>
