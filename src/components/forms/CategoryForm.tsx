@@ -254,13 +254,13 @@ export function CategoryForm({
             <Label className="text-black">
               Famille parent*
             </Label>
-            {mode === 'edit' && selectedFamily ? (
+            {(mode === 'edit' || (mode === 'create' && initialData?.family_id)) && selectedFamily ? (
               <div className="p-3 bg-gray-50 rounded-lg border">
                 <div className="text-sm font-medium text-gray-900">
                   {selectedFamily.name}
                 </div>
                 <p className="text-xs text-gray-500 mt-1">
-                  La famille parent ne peut pas être modifiée après création pour préserver la cohérence de l'arborescence.
+                  La famille parent ne peut pas être modifiée pour préserver la cohérence de l'arborescence.
                 </p>
               </div>
             ) : (

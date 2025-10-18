@@ -293,7 +293,7 @@ export function SubcategoryForm({
             <Label className="text-black">
               Catégorie parent*
             </Label>
-            {mode === 'edit' && selectedCategory ? (
+            {(mode === 'edit' || (mode === 'create' && initialData?.category_id)) && selectedCategory ? (
               <div className="p-3 bg-gray-50 rounded-lg border">
                 <div className="text-sm font-medium text-gray-900">
                   {selectedCategory.name}
@@ -302,7 +302,7 @@ export function SubcategoryForm({
                   Famille: {selectedCategory.family_name}
                 </div>
                 <p className="text-xs text-gray-500 mt-1">
-                  La catégorie parent ne peut pas être modifiée après création pour préserver la cohérence de l'arborescence.
+                  La catégorie parent ne peut pas être modifiée pour préserver la cohérence de l'arborescence.
                 </p>
               </div>
             ) : (

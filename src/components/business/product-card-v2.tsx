@@ -218,16 +218,17 @@ export const ProductCardV2 = memo(function ProductCardV2({
               Voir détail
             </ButtonV2>
 
-            {/* Bouton secondaire : Archive/Restaurer (OUTLINE) - Optimisé: size="xs" */}
+            {/* Bouton secondaire : Archive/Restaurer (OUTLINE orange) - Optimisé: size="xs" */}
             {onArchive && (
               <ButtonV2
                 variant="outline"
                 size="xs"
                 onClick={handleArchiveClick}
-                className="w-7 h-7 p-0 flex items-center justify-center border-gray-400 text-gray-700 hover:border-gray-500 hover:bg-gray-50"
+                className="w-7 h-7 p-0 flex items-center justify-center border-orange-500 text-orange-600 hover:border-orange-600 hover:bg-orange-50"
+                style={{ padding: 0 }}
                 aria-label={archived ? "Restaurer le produit" : "Archiver le produit"}
               >
-                {archived ? <ArchiveRestore className="h-3.5 w-3.5" /> : <Archive className="h-3.5 w-3.5" />}
+                {archived ? <ArchiveRestore className="h-4 w-4" /> : <Archive className="h-4 w-4" />}
               </ButtonV2>
             )}
 
@@ -237,10 +238,11 @@ export const ProductCardV2 = memo(function ProductCardV2({
                 variant="outline"
                 size="xs"
                 onClick={handleDeleteClick}
-                className="w-7 h-7 p-0 flex items-center justify-center border-red-600 text-red-600 hover:bg-red-50"
+                className="w-7 h-7 p-0 flex items-center justify-center border-red-600 text-red-600 hover:border-red-700 hover:bg-red-50"
+                style={{ padding: 0 }}
                 aria-label="Supprimer le produit"
               >
-                <Trash2 className="h-3.5 w-3.5" />
+                <Trash2 className="h-4 w-4" />
               </ButtonV2>
             )}
           </div>

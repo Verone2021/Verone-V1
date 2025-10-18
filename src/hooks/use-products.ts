@@ -68,6 +68,7 @@ export interface ProductFilters {
   status?: string
   supplier_id?: string
   category_id?: string
+  subcategory_id?: string
   family_id?: string
   min_price?: number
   max_price?: number
@@ -173,6 +174,10 @@ const productsFetcher = async (
 
   if (filters?.supplier_id) {
     query = query.eq('supplier_id', filters.supplier_id)
+  }
+
+  if (filters?.subcategory_id) {
+    query = query.eq('subcategory_id', filters.subcategory_id)
   }
 
   if (filters?.in_stock_only) {

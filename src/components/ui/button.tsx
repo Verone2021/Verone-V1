@@ -38,6 +38,7 @@ export function ButtonV2({
   disabled,
   className,
   children,
+  style: customStyle,
   ...props
 }: ButtonV2Props) {
 
@@ -150,7 +151,7 @@ export function ButtonV2({
       )}
       style={{
         backgroundColor: variantStyle.backgroundColor,
-        color: variantStyle.color,
+        ...(variant !== 'outline' && { color: variantStyle.color }), // Outline: laisser CSS gérer la couleur
         border: variantStyle.border,
         padding: sizeStyle.padding,
         height: sizeStyle.height,
@@ -159,6 +160,8 @@ export function ButtonV2({
         // Transitions CSS
         transitionTimingFunction: 'cubic-bezier(0.4, 0, 0.2, 1)',
         transitionProperty: 'transform, box-shadow, background-color, color',
+        // Custom style override
+        ...customStyle,
       }}
       onMouseEnter={(e) => {
         if (!isDisabled) {

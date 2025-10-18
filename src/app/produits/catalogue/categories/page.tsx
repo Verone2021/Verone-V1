@@ -344,6 +344,16 @@ export default function CategoriesPage() {
 
           <div className="flex space-x-1">
             <ButtonV2
+              variant="primary"
+              size="sm"
+              onClick={() => openCreateForm('category', family.id)}
+              title="Ajouter une catégorie"
+              className="text-xs"
+            >
+              <Plus className="h-4 w-4 mr-1" />
+              Catégorie
+            </ButtonV2>
+            <ButtonV2
               variant="ghost"
               size="sm"
               onClick={() => openEditForm('family', family)}
@@ -443,6 +453,16 @@ export default function CategoriesPage() {
           </div>
 
           <div className="flex space-x-1">
+            <ButtonV2
+              variant="primary"
+              size="sm"
+              onClick={() => openCreateForm('subcategory', category.id)}
+              title="Ajouter une sous-catégorie"
+              className="text-xs"
+            >
+              <Plus className="h-4 w-4 mr-1" />
+              Sous-catégorie
+            </ButtonV2>
             <ButtonV2
               variant="ghost"
               size="sm"
@@ -687,7 +707,10 @@ export default function CategoriesPage() {
           isOpen={formState.isOpen}
           onClose={closeForm}
           onSubmit={handleFormSubmit}
-          initialData={formState.data}
+          initialData={formState.mode === 'create' && formState.parentId
+            ? { family_id: formState.parentId } as any
+            : formState.data
+          }
           mode={formState.mode}
           families={families?.map(f => ({ id: f.id, name: f.name })) || []}
         />
@@ -698,11 +721,14 @@ export default function CategoriesPage() {
           isOpen={formState.isOpen}
           onClose={closeForm}
           onSubmit={handleFormSubmit}
-          initialData={formState.data ? {
-            ...formState.data,
-            parent_id: formState.data.category_id || formState.data.parent_id,
-            family_id: formState.data.family_id
-          } : null}
+          initialData={formState.mode === 'create' && formState.parentId
+            ? { category_id: formState.parentId } as any
+            : formState.data ? {
+                ...formState.data,
+                parent_id: formState.data.category_id || formState.data.parent_id,
+                family_id: formState.data.family_id
+              } : null
+          }
           mode={formState.mode}
           categories={allCategories?.map(c => ({
             id: c.id,

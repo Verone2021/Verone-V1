@@ -2,27 +2,26 @@
 
 import { useState, useEffect } from "react"
 import { useParams, useRouter } from "next/navigation"
-import { ArrowLeft, Edit, Share2, Image as ImageIcon, Package, Tag, Clock, TreePine, FolderOpen, Tags, ChevronRight, Save, X } from "lucide-react"
+import { ArrowLeft, Share2, ImageIcon, Package, Tag, Truck, Boxes, DollarSign, Settings, Hash, Beaker, Clock, Info } from "lucide-react"
 import { ButtonV2 } from "@/components/ui/button"
-import { Badge } from "@/components/ui/badge"
-import { Progress } from "@/components/ui/progress"
 import { ProductImageGallery } from "@/components/business/product-image-gallery"
 import { ProductPhotosModal } from "@/components/business/product-photos-modal"
 import { ProductCharacteristicsModal } from "@/components/business/product-characteristics-modal"
 import { ProductDescriptionsModal } from "@/components/business/product-descriptions-modal"
 import { CategoryHierarchySelector } from "@/components/business/category-hierarchy-selector"
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog"
-import { ProductVariantsSection } from "@/components/business/product-variants-section"
+import { ProductDetailAccordion } from "@/components/business/product-detail-accordion"
+import { ProductInfoSection } from "@/components/business/product-info-section"
+import { ProductVariantsGrid } from "@/components/business/product-variants-grid"
 import { SampleRequirementSection } from "@/components/business/sample-requirement-section"
 import { SupplierVsPricingEditSection } from "@/components/business/supplier-vs-pricing-edit-section"
 import { StockEditSection } from "@/components/business/stock-edit-section"
 import { ProductFixedCharacteristics } from "@/components/business/product-fixed-characteristics"
-import { IdentifiersEditSection } from "@/components/business/identifiers-edit-section"
 import { SupplierEditSection } from "@/components/business/supplier-edit-section"
 import { IdentifiersCompleteEditSection } from "@/components/business/identifiers-complete-edit-section"
-import { cn, formatPrice, checkSLOCompliance } from "@/lib/utils"
+import { ProductDescriptionsEditSection } from "@/components/business/product-descriptions-edit-section"
+import { cn, checkSLOCompliance } from "@/lib/utils"
 import { createClient } from "@/lib/supabase/client"
-import { useProductImages } from "@/hooks/use-product-images"
 
 // Champs obligatoires pour un produit complet
 const REQUIRED_PRODUCT_FIELDS = [
@@ -30,7 +29,7 @@ const REQUIRED_PRODUCT_FIELDS = [
   'sku',
   'supplier_id',
   'subcategory_id',
-  'price_ht',
+  'cost_price',
   'description'
 ] as const
 
@@ -40,30 +39,37 @@ const PRODUCT_FIELD_LABELS: Record<string, string> = {
   sku: 'Référence SKU',
   supplier_id: 'Fournisseur',
   subcategory_id: 'Sous-catégorie',
-  price_ht: 'Prix de vente HT',
+  cost_price: 'Prix d\'achat HT',
   description: 'Description'
 }
 
-// Fonction pour calculer la progression d'un produit
-function calculateProductProgress(product: Product): { percentage: number, missingFields: string[] } {
-  const filledFields = REQUIRED_PRODUCT_FIELDS.filter(field => {
-    const value = product[field as keyof Product]
-    if (typeof value === 'string') {
-      return value.trim().length > 0
-    }
-    return value !== null && value !== undefined && value !== 0
-  })
+/**
+ * Calcule champs obligatoires manquants par section
+ * Basé sur REQUIRED_PRODUCT_FIELDS
+ */
+function calculateMissingFields(product: any | null) {
+  if (!product) return { infosGenerales: 0, descriptions: 0, categorisation: 0, fournisseur: 0, identifiants: 0 }
 
-  const percentage = (filledFields.length / REQUIRED_PRODUCT_FIELDS.length) * 100
-  const missingFields = REQUIRED_PRODUCT_FIELDS.filter(field => {
-    const value = product[field as keyof Product]
-    if (typeof value === 'string') {
-      return value.trim().length === 0
-    }
-    return value === null || value === undefined || value === 0
-  }).map(field => PRODUCT_FIELD_LABELS[field])
+  return {
+    // Informations Générales : name, cost_price, status
+    infosGenerales: [
+      !product.name || product.name.trim() === '',
+      !product.cost_price || product.cost_price <= 0,
+      !product.status
+    ].filter(Boolean).length,
 
-  return { percentage, missingFields }
+    // Descriptions : description (obligatoire seulement)
+    descriptions: !product.description || product.description.trim() === '' ? 1 : 0,
+
+    // Catégorisation : subcategory_id (hiérarchie complète)
+    categorisation: !product.subcategory_id ? 1 : 0,
+
+    // Fournisseur : supplier_id
+    fournisseur: !product.supplier_id ? 1 : 0,
+
+    // Identifiants : sku
+    identifiants: !product.sku || product.sku.trim() === '' ? 1 : 0
+  }
 }
 
 // Interface pour un produit
@@ -77,6 +83,9 @@ interface Product {
   price_ht: number | null
   cost_price: number | null
   tax_rate: number | null
+  selling_price: number | null
+  margin_percentage: number | null
+  brand: string | null
   status: 'in_stock' | 'out_of_stock' | 'preorder' | 'coming_soon' | 'discontinued'
   condition: 'new' | 'used' | 'refurbished'
   stock_quantity: number | null
@@ -88,15 +97,14 @@ interface Product {
   dimensions: string | null
   weight: number | null
   variant_attributes: Record<string, any> | null
-  variant_group_id: string | null  // ID du groupe de variantes
+  variant_group_id: string | null
   gtin: string | null
   slug: string | null
   images: any[]
-  requires_sample: boolean | null  // Ajout du champ échantillon
+  requires_sample: boolean | null
   created_at: string
   updated_at: string
   organisation_id: string
-  // Relations
   supplier?: {
     id: string
     name: string
@@ -119,6 +127,16 @@ interface Product {
       }
     }
   } | null
+  variant_group?: {
+    id: string
+    name: string
+    dimensions_length: number | null
+    dimensions_width: number | null
+    dimensions_height: number | null
+    dimensions_unit: string | null
+    has_common_supplier: boolean | null
+    supplier_id: string | null
+  } | null
 }
 
 export default function ProductDetailPage() {
@@ -133,11 +151,6 @@ export default function ProductDetailPage() {
   const [showCharacteristicsModal, setShowCharacteristicsModal] = useState(false)
   const [showDescriptionsModal, setShowDescriptionsModal] = useState(false)
   const [isCategorizeModalOpen, setIsCategorizeModalOpen] = useState(false)
-
-  // États pour l'édition du nom
-  const [isEditingName, setIsEditingName] = useState(false)
-  const [editedName, setEditedName] = useState('')
-  const [savingName, setSavingName] = useState(false)
 
   const startTime = Date.now()
 
@@ -204,8 +217,6 @@ export default function ProductDetailPage() {
       setError(err instanceof Error ? err.message : 'Erreur lors du chargement du produit')
     } finally {
       setLoading(false)
-
-      // Vérification SLO
       checkSLOCompliance(startTime, 'dashboard')
     }
   }
@@ -238,40 +249,7 @@ export default function ProductDetailPage() {
       console.log('✅ Produit mis à jour avec succès:', data)
     } catch (error) {
       console.error('❌ Erreur lors de la mise à jour:', error)
-      // En cas d'erreur, on garde l'ancien état (pas de mise à jour locale)
     }
-  }
-
-  // Gestion de l'édition du nom
-  const handleStartEditName = () => {
-    if (product?.variant_group_id) {
-      // Si le produit est dans un groupe de variantes, ne pas permettre l'édition
-      return
-    }
-    setEditedName(product?.name || '')
-    setIsEditingName(true)
-  }
-
-  const handleSaveName = async () => {
-    if (!editedName.trim() || editedName === product?.name) {
-      setIsEditingName(false)
-      return
-    }
-
-    setSavingName(true)
-    try {
-      await handleProductUpdate({ name: editedName.trim() })
-      setIsEditingName(false)
-    } catch (error) {
-      console.error('Erreur lors de la mise à jour du nom:', error)
-    } finally {
-      setSavingName(false)
-    }
-  }
-
-  const handleCancelEditName = () => {
-    setIsEditingName(false)
-    setEditedName('')
   }
 
   // Handler pour naviguer vers la page de partage
@@ -286,6 +264,7 @@ export default function ProductDetailPage() {
     fetchProduct()
   }, [productId])
 
+  // État de chargement
   if (loading) {
     return (
       <div className="container mx-auto py-6">
@@ -299,475 +278,344 @@ export default function ProductDetailPage() {
     )
   }
 
+  // État d'erreur
   if (error || !product) {
     return (
       <div className="container mx-auto py-6">
-        <div className="flex items-center justify-center h-64">
-          <div className="text-center">
-            <p className="text-red-600 mb-4">{error || 'Produit non trouvé'}</p>
-            <ButtonV2 variant="outline" onClick={() => router.back()}>
-              <ArrowLeft className="h-4 w-4 mr-2" />
-              Retour
-            </ButtonV2>
-          </div>
+        <div className="bg-red-50 border border-red-200 rounded-lg p-6 text-center">
+          <p className="text-red-700 font-medium">
+            {error || 'Produit non trouvé'}
+          </p>
+          <ButtonV2
+            onClick={() => router.push('/produits/catalogue')}
+            className="mt-4"
+          >
+            Retour au catalogue
+          </ButtonV2>
         </div>
       </div>
     )
   }
 
-  // Calculer la progression
-  const { percentage: completionPercentage, missingFields } = calculateProductProgress(product)
-
-  // Générer le breadcrumb
-  const breadcrumbParts = ['Catalogue']
-  if (product.subcategory?.category?.family?.name) {
+  // Breadcrumb
+  const breadcrumbParts: string[] = []
+  if (product.subcategory?.category?.family) {
     breadcrumbParts.push(product.subcategory.category.family.name)
   }
-  if (product.subcategory?.category?.name) {
+  if (product.subcategory?.category) {
     breadcrumbParts.push(product.subcategory.category.name)
   }
-  if (product.subcategory?.name) {
+  if (product.subcategory) {
     breadcrumbParts.push(product.subcategory.name)
   }
+  breadcrumbParts.push(product.name)
+
+  // Calcul complétude accordéons
+  const missingFields = calculateMissingFields(product)
 
   return (
-    <div className="container mx-auto py-6 space-y-6">
-      {/* En-tête */}
-      <div className="flex items-center justify-between">
-        <div className="flex items-center space-x-4">
-          <ButtonV2 variant="ghost" size="sm" onClick={() => router.back()}>
-            <ArrowLeft className="h-4 w-4 mr-2" />
-            Retour
-          </ButtonV2>
-          <nav className="text-sm text-gray-600">
-            {breadcrumbParts.join('›')}
-          </nav>
-        </div>
-        <div className="flex items-center space-x-2">
-          <div className="text-xs text-gray-500">
-            {Date.now() - startTime}ms
+    <div className="min-h-screen bg-neutral-50 pb-20">
+      {/* Header fixe avec navigation */}
+      <div className="bg-white border-b border-neutral-200 sticky top-0 z-10">
+        <div className="max-w-[1800px] mx-auto px-4 py-3">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <ButtonV2
+                variant="ghost"
+                size="sm"
+                onClick={() => router.push('/produits/catalogue')}
+                className="inline-flex items-center gap-2"
+              >
+                <ArrowLeft className="h-4 w-4" />
+                Retour
+              </ButtonV2>
+              <div className="h-6 w-px bg-neutral-200" />
+              <nav className="text-sm text-neutral-600">
+                {breadcrumbParts.join(' › ')}
+              </nav>
+            </div>
+            <ButtonV2
+              variant="outline"
+              size="sm"
+              onClick={handleShare}
+              className="inline-flex items-center gap-2"
+            >
+              <Share2 className="h-4 w-4" />
+              Partager
+            </ButtonV2>
           </div>
-          <ButtonV2 variant="outline" size="sm" onClick={handleShare}>
-            <Share2 className="h-4 w-4 mr-2" />
-            Partager
-          </ButtonV2>
         </div>
       </div>
 
-      {/* Contenu principal - Layout 3 colonnes */}
-      <div className="grid grid-cols-1 xl:grid-cols-12 gap-6">
-        {/* COLONNE 1: Images & Métadonnées (25% - xl:col-span-3) */}
-        <div className="xl:col-span-3 space-y-4">
-          {/* Galerie d'images */}
-          <div className="bg-white border border-black">
+      {/* Layout Grid 2 colonnes */}
+      <div className="max-w-[1800px] mx-auto grid grid-cols-1 lg:grid-cols-[320px_1fr] gap-4 p-4">
+
+        {/* SIDEBAR FIXE - Galerie Images */}
+        <aside className="lg:sticky lg:top-20 lg:h-[calc(100vh-6rem)] space-y-3">
+          {/* Galerie principale */}
+          <div className="bg-white rounded-lg shadow-sm border border-neutral-200 overflow-hidden">
             <ProductImageGallery
               productId={product.id}
               productName={product.name}
               productStatus={product.status}
-              compact={true}
+              compact={false}
             />
           </div>
 
-          {/* Actions sous l'image */}
-          <div className="bg-white border border-black p-4">
-            <h3 className="font-medium mb-3 text-sm">Actions</h3>
-            <div className="space-y-2">
+          {/* Actions sous galerie */}
+          <div className="bg-white rounded-lg shadow-sm border border-neutral-200 p-3 space-y-2">
+            <ButtonV2
+              variant="outline"
+              size="sm"
+              className="w-full justify-start gap-2"
+              onClick={() => setShowPhotosModal(true)}
+            >
+              <ImageIcon className="h-4 w-4" />
+              Gérer photos ({product.images?.length || 0})
+            </ButtonV2>
+            <ButtonV2
+              variant="outline"
+              size="sm"
+              className="w-full justify-start gap-2"
+              onClick={handleShare}
+            >
+              <Share2 className="h-4 w-4" />
+              Partager
+            </ButtonV2>
+          </div>
+        </aside>
+
+        {/* CONTENT AREA - Accordions scrollables */}
+        <main className="space-y-3 max-w-6xl">
+
+          {/* Accordion 1: Informations Générales */}
+          <ProductDetailAccordion
+            title="Informations Générales"
+            icon={Info}
+            defaultOpen={true}
+            badge={missingFields.infosGenerales > 0 ? missingFields.infosGenerales : undefined}
+          >
+            <ProductInfoSection
+              product={{
+                id: product.id,
+                name: product.name,
+                sku: product.sku,
+                cost_price: product.cost_price,
+                status: product.status,
+                supplier_id: product.supplier_id,
+                subcategory_id: product.subcategory_id,
+                variant_group_id: product.variant_group_id,
+              }}
+              onUpdate={handleProductUpdate}
+            />
+          </ProductDetailAccordion>
+
+          {/* Accordion 2: Descriptions */}
+          <ProductDetailAccordion
+            title="Descriptions"
+            icon={Beaker}
+            defaultOpen={false}
+            badge={missingFields.descriptions > 0 ? missingFields.descriptions : undefined}
+          >
+            <ProductDescriptionsEditSection
+              product={{
+                id: product.id,
+                description: product.description,
+                technical_description: product.technical_description,
+                selling_points: product.selling_points,
+              }}
+              onUpdate={handleProductUpdate}
+            />
+          </ProductDetailAccordion>
+
+          {/* Accordion 3: Catégorisation */}
+          <ProductDetailAccordion
+            title="Catégorisation"
+            icon={Tag}
+            defaultOpen={false}
+            badge={missingFields.categorisation > 0 ? missingFields.categorisation : undefined}
+          >
+            <div className="space-y-3">
+              {/* Hiérarchie actuelle */}
+              {breadcrumbParts.length > 1 && (
+                <div className="bg-neutral-50 rounded-md p-3 text-sm">
+                  <p className="text-neutral-600 mb-1">Classification actuelle:</p>
+                  <p className="font-medium text-neutral-900">{breadcrumbParts.slice(0, -1).join(' › ')}</p>
+                </div>
+              )}
+
               <ButtonV2
                 variant="outline"
                 size="sm"
-                className="w-full justify-start text-xs"
-                onClick={() => setShowPhotosModal(true)}
+                onClick={() => setIsCategorizeModalOpen(true)}
               >
-                <ImageIcon className="h-3 w-3 mr-2" />
-                Gérer photos ({product.images?.length || 0})
+                Modifier la catégorisation
               </ButtonV2>
             </div>
-          </div>
+          </ProductDetailAccordion>
 
-          {/* Section Variantes - Affichée uniquement si produit dans un groupe */}
+          {/* Accordion 3: Fournisseur & Références */}
+          <ProductDetailAccordion
+            title="Fournisseur & Références"
+            icon={Truck}
+            defaultOpen={false}
+            badge={missingFields.fournisseur > 0 ? missingFields.fournisseur : undefined}
+          >
+            <SupplierEditSection
+              product={product}
+              variantGroup={product.variant_group || undefined}
+              onUpdate={handleProductUpdate}
+            />
+          </ProductDetailAccordion>
+
+          {/* Accordion 4: Variantes Produit (conditionnel) */}
           {product.variant_group_id && (
-            <div className="bg-white border border-black">
-              <ProductVariantsSection
+            <ProductDetailAccordion
+              title="Variantes Produit"
+              icon={Package}
+              defaultOpen={true}
+            >
+              <ProductVariantsGrid
                 productId={product.id}
-                productName={product.name}
-                productData={{
-                  id: product.id,
-                  name: product.name,
-                  sku: product.sku,
-                  supplier_id: product.supplier_id,
-                  supplier: product.supplier,
-                  dimensions_length: product.dimensions_length,
-                  dimensions_width: product.dimensions_width,
-                  dimensions_height: product.dimensions_height,
-                  dimensions_unit: product.dimensions_unit,
-                  weight: product.weight,
-                  weight_unit: product.weight_unit,
-                  base_cost: product.base_cost,
-                  selling_price: product.selling_price,
-                  description: product.description,
-                  technical_description: product.technical_description,
-                  category_id: product.category_id,
-                  subcategory_id: product.subcategory_id,
-                  variant_group_id: product.variant_group_id
-                }}
-                onVariantsUpdate={fetchProduct}
+                currentProductId={product.id}
               />
-            </div>
+            </ProductDetailAccordion>
           )}
 
-          {/* Métadonnées */}
-          <div className="bg-white border border-black p-4">
-            <h3 className="font-medium mb-3 flex items-center text-sm">
-              <Clock className="h-4 w-4 mr-2" />
-              Métadonnées
-            </h3>
-            <div className="space-y-2 text-xs">
-              <div className="flex justify-between">
-                <span className="text-gray-600">ID:</span>
-                <span className="font-mono">{product.id.slice(0, 8)}...</span>
-              </div>
-              <div className="flex justify-between">
-                <span className="text-gray-600">Créé:</span>
-                <span>{new Date(product.created_at).toLocaleDateString()}</span>
-              </div>
-              <div className="flex justify-between">
-                <span className="text-gray-600">Modifié:</span>
-                <span>{new Date(product.updated_at).toLocaleDateString()}</span>
-              </div>
-              {product.supplier && (
-                <div className="flex justify-between">
-                  <span className="text-gray-600">Fournisseur:</span>
-                  <span>{product.supplier.name}</span>
-                </div>
-              )}
-            </div>
-          </div>
+          {/* Accordion 5: Stock & Disponibilité */}
+          <ProductDetailAccordion
+            title="Stock & Disponibilité"
+            icon={Boxes}
+            defaultOpen={false}
+          >
+            <StockEditSection
+              product={{
+                id: product.id,
+                status: product.status,
+                condition: product.condition,
+                stock_quantity: product.stock_quantity,
+                min_stock: product.min_stock
+              }}
+              onUpdate={handleProductUpdate}
+            />
+          </ProductDetailAccordion>
 
-          {/* Status badge et progression */}
-          <div className="bg-white border border-black p-4">
-            <div className="space-y-3">
-              <Badge className={cn(
-                "text-xs",
-                product.status === 'in_stock' ? "bg-green-600 text-white" :
-                product.status === 'out_of_stock' ? "bg-red-600 text-white" :
-                "bg-black text-white"
-              )}>
-                {product.status === 'in_stock' ? 'En stock' :
-                 product.status === 'out_of_stock' ? 'Rupture' :
-                 'Autre statut'}
-              </Badge>
-              <div>
-                <div className="flex items-center justify-between mb-1">
-                  <span className="text-xs text-gray-600">Complétude</span>
-                  <span className="text-xs font-medium">{Math.round(completionPercentage)}%</span>
-                </div>
-                <Progress value={completionPercentage} className="h-2" />
-              </div>
-            </div>
-          </div>
-        </div>
+          {/* Accordion 6: Tarification */}
+          <ProductDetailAccordion
+            title="Tarification"
+            icon={DollarSign}
+            defaultOpen={false}
+          >
+            <SupplierVsPricingEditSection
+              product={{
+                id: product.id,
+                cost_price: product.cost_price,
+                margin_percentage: product.margin_percentage,
+                selling_price: product.selling_price
+              }}
+              onUpdate={handleProductUpdate}
+            />
+          </ProductDetailAccordion>
 
-        {/* COLONNE 2: Informations Principales (45% - xl:col-span-5) */}
-        <div className="xl:col-span-5 space-y-4">
-          {/* Header produit */}
-          <div className="bg-white border border-black p-4">
-            <div className="flex items-start justify-between mb-3">
-              <div className="flex-1">
-                {isEditingName ? (
-                  // Mode édition du nom
-                  <div className="space-y-2">
-                    <input
-                      type="text"
-                      value={editedName}
-                      onChange={(e) => setEditedName(e.target.value)}
-                      onKeyDown={(e) => {
-                        if (e.key === 'Enter') handleSaveName()
-                        if (e.key === 'Escape') handleCancelEditName()
-                      }}
-                      className="w-full text-xl font-bold text-black border border-gray-300 rounded px-2 py-1 focus:outline-none focus:ring-2 focus:ring-black"
-                      disabled={savingName}
-                      autoFocus
-                    />
-                    <div className="flex space-x-2">
-                      <ButtonV2
-                        size="sm"
-                        onClick={handleSaveName}
-                        disabled={savingName || !editedName.trim()}
-                        className="bg-black text-white hover:bg-gray-800"
-                      >
-                        <Save className="h-3 w-3 mr-1" />
-                        {savingName ? 'Sauvegarde...' : 'Sauvegarder'}
-                      </ButtonV2>
-                      <ButtonV2
-                        size="sm"
-                        variant="outline"
-                        onClick={handleCancelEditName}
-                        disabled={savingName}
-                      >
-                        <X className="h-3 w-3 mr-1" />
-                        Annuler
-                      </ButtonV2>
-                    </div>
-                  </div>
-                ) : (
-                  // Mode affichage
-                  <div>
-                    <div className="flex items-center gap-2">
-                      <h1 className="text-xl font-bold text-black mb-1">{product.name}</h1>
-                      {!product.variant_group_id && (
-                        <ButtonV2
-                          size="sm"
-                          variant="ghost"
-                          onClick={handleStartEditName}
-                          className="h-6 w-6 p-0"
-                        >
-                          <Edit className="h-3 w-3" />
-                        </ButtonV2>
-                      )}
-                    </div>
-                    {product.variant_group_id && (
-                      <p className="text-xs text-black mb-2">
-                        ℹ️ Nom géré par le groupe de variantes.{' '}
-                        <a
-                          href={`/catalogue/variantes/${product.variant_group_id}`}
-                          className="underline hover:text-gray-900"
-                        >
-                          Modifier depuis la page du groupe
-                        </a>
-                      </p>
-                    )}
-                    <div className="text-sm text-gray-600 mb-2">
-                      SKU: {product.sku || 'Non défini'}
-                    </div>
-                    <div className="text-lg font-semibold text-black">
-                      {product.price_ht ? formatPrice(product.price_ht) : 'Prix non défini'}
-                    </div>
-                  </div>
-                )}
-              </div>
-            </div>
-          </div>
-
-
-          {/* Catégorisation - Arborescence complète */}
-          <div className="bg-white border border-black p-4">
-            <div className="flex items-center justify-between mb-3">
-              <h3 className="font-medium flex items-center text-sm">
-                <Tag className="h-4 w-4 mr-2" />
-                Catégorisation
-              </h3>
-              {!product.variant_group_id ? (
-                <ButtonV2
-                  variant="outline"
-                  size="sm"
-                  className="border-black text-black hover:bg-black hover:text-white"
-                  onClick={() => setIsCategorizeModalOpen(true)}
-                >
-                  <Edit className="h-3 w-3 mr-1" />
-                  Modifier
-                </ButtonV2>
-              ) : (
-                <p className="text-xs text-black">
-                  ℹ️ Géré par le groupe de variantes
-                </p>
-              )}
-            </div>
-
-            {/* Fil d'Ariane hiérarchique */}
-            <div className="space-y-3">
-              {product.subcategory?.category?.family || product.subcategory?.category || product.subcategory ? (
-                <div className="bg-gray-50 p-3 rounded border">
-                  <div className="flex items-center space-x-2 flex-wrap text-sm">
-                    {product.subcategory?.category?.family && (
-                      <>
-                        <div className="flex items-center space-x-1 bg-green-100 px-2 py-1 rounded">
-                          <TreePine className="h-3 w-3 text-green-600" />
-                          <span className="text-green-800 font-medium">
-                            {product.subcategory.category.family.name}
-                          </span>
-                        </div>
-                        <ChevronRight className="h-3 w-3 text-gray-400" />
-                      </>
-                    )}
-
-                    {product.subcategory?.category && (
-                      <>
-                        <div className="flex items-center space-x-1 bg-blue-100 px-2 py-1 rounded">
-                          <FolderOpen className="h-3 w-3 text-blue-600" />
-                          <span className="text-blue-800 font-medium">
-                            {product.subcategory.category.name}
-                          </span>
-                        </div>
-                        <ChevronRight className="h-3 w-3 text-gray-400" />
-                      </>
-                    )}
-
-                    {product.subcategory && (
-                      <div className="flex items-center space-x-1 bg-purple-100 px-2 py-1 rounded">
-                        <Tags className="h-3 w-3 text-purple-600" />
-                        <span className="text-purple-800 font-medium">
-                          {product.subcategory.name}
-                        </span>
-                      </div>
-                    )}
-                  </div>
-                </div>
-              ) : (
-                <div className="bg-red-50 p-3 rounded border border-red-200">
-                  <p className="text-red-700 text-sm flex items-center">
-                    <Tag className="h-4 w-4 mr-2" />
-                    Aucune catégorisation définie
-                  </p>
-                  <p className="text-red-600 text-xs mt-1">
-                    Ce produit n'est associé à aucune famille, catégorie ou sous-catégorie
-                  </p>
-                </div>
-              )}
-
-              {/* Détails techniques (si disponibles) */}
-              {(product.subcategory?.category?.family || product.subcategory?.category || product.subcategory) && (
-                <div className="space-y-1 text-xs text-gray-600">
-                  {product.subcategory?.category?.family && (
-                    <div className="flex justify-between">
-                      <span>ID Famille:</span>
-                      <span className="font-mono">{product.subcategory.category.family.id.slice(0, 8)}...</span>
-                    </div>
-                  )}
-                  {product.subcategory?.category && (
-                    <div className="flex justify-between">
-                      <span>ID Catégorie:</span>
-                      <span className="font-mono">{product.subcategory.category.id.slice(0, 8)}...</span>
-                    </div>
-                  )}
-                  {product.subcategory && (
-                    <div className="flex justify-between">
-                      <span>ID Sous-catégorie:</span>
-                      <span className="font-mono">{product.subcategory.id.slice(0, 8)}...</span>
-                    </div>
-                  )}
-                </div>
-              )}
-            </div>
-          </div>
-
-          {/* Fournisseur & Références */}
-          <SupplierEditSection
-            product={{
-              id: product.id,
-              supplier_id: product.supplier_id,
-              supplier_reference: product.supplier_reference,
-              supplier_page_url: product.supplier_page_url,
-              supplier: product.supplier,
-              variant_group_id: product.variant_group_id
-            }}
-            variantGroup={product.variant_group}
-            onUpdate={handleProductUpdate}
-          />
-
-          {/* Description */}
-          <div className="bg-white border border-black p-4">
-            <div className="flex items-center justify-between mb-3">
-              <h3 className="font-medium text-sm">Description</h3>
-              <ButtonV2
-                variant="ghost"
-                size="sm"
-                onClick={() => setShowDescriptionsModal(true)}
-              >
-                <Edit className="h-3 w-3 mr-1" />
-                Modifier
-              </ButtonV2>
-            </div>
-            <p className="text-sm text-gray-700">
-              {product.description || 'Aucune description disponible'}
-            </p>
-          </div>
-
-          {/* Caractéristiques */}
-          <div className="bg-white border border-black p-4">
-            <div className="flex items-center justify-between mb-3">
-              <h3 className="font-medium text-sm">Caractéristiques</h3>
-              <ButtonV2
-                variant="ghost"
-                size="sm"
-                onClick={() => setShowCharacteristicsModal(true)}
-                disabled={!!product.variant_group_id}
-                className={product.variant_group_id ? "opacity-50 cursor-not-allowed" : ""}
-                title={product.variant_group_id ? "Géré depuis le groupe de variantes" : "Modifier les caractéristiques"}
-              >
-                <Edit className="h-3 w-3 mr-1" />
-                Modifier
-              </ButtonV2>
-            </div>
+          {/* Accordion 7: Caractéristiques */}
+          <ProductDetailAccordion
+            title="Caractéristiques"
+            icon={Settings}
+            defaultOpen={false}
+          >
             {product.variant_group_id && (
               <div className="mb-3 p-2 bg-blue-50 border border-blue-200 rounded text-xs text-blue-800">
                 ℹ️ Les caractéristiques sont gérées au niveau du groupe de variantes.{' '}
                 <a
-                  href={`/catalogue/variantes/${product.variant_group_id}`}
+                  href={`/produits/catalogue/variantes/${product.variant_group_id}`}
                   className="underline font-medium hover:text-blue-900"
                 >
                   Voir le groupe
                 </a>
               </div>
             )}
-            <ProductFixedCharacteristics
-              product={product}
+            <ProductFixedCharacteristics product={product} />
+
+            <div className="mt-4">
+              <ButtonV2
+                variant="outline"
+                size="sm"
+                onClick={() => setShowCharacteristicsModal(true)}
+              >
+                Éditer caractéristiques
+              </ButtonV2>
+            </div>
+          </ProductDetailAccordion>
+
+          {/* Accordion 8: Identifiants */}
+          <ProductDetailAccordion
+            title="Identifiants"
+            icon={Hash}
+            defaultOpen={false}
+            badge={missingFields.identifiants > 0 ? missingFields.identifiants : undefined}
+          >
+            <IdentifiersCompleteEditSection
+              product={{
+                id: product.id,
+                sku: product.sku,
+                brand: product.brand,
+                gtin: product.gtin,
+                condition: product.condition
+              }}
+              onUpdate={handleProductUpdate}
             />
-          </div>
+          </ProductDetailAccordion>
 
-        </div>
-
-        {/* COLONNE 3: Gestion (30% - xl:col-span-4) */}
-        <div className="xl:col-span-4 space-y-4">
-
-          {/* Stock & Gestion */}
-          <StockEditSection
-            product={{
-              id: product.id,
-              status: product.status,
-              condition: product.condition,
-              stock_quantity: product.stock_quantity,
-              min_stock: product.min_stock
-            }}
-            onUpdate={handleProductUpdate}
-          />
-
-          {/* Tarification */}
-          <SupplierVsPricingEditSection
-            product={{
-              id: product.id,
-              cost_price: product.cost_price,
-              margin_percentage: product.margin_percentage,
-              selling_price: product.selling_price
-            }}
-            onUpdate={handleProductUpdate}
-          />
-
-          {/* Identifiants Complets */}
-          <IdentifiersCompleteEditSection
-            product={{
-              id: product.id,
-              sku: product.sku,
-              brand: product.brand,
-              gtin: product.gtin,
-              condition: product.condition
-            }}
-            onUpdate={handleProductUpdate}
-          />
-
-          {/* Section échantillon */}
-          <div className="bg-white border border-black p-4">
-            <h3 className="font-medium mb-3 text-sm">Gestion Échantillons</h3>
+          {/* Accordion 9: Échantillons */}
+          <ProductDetailAccordion
+            title="Gestion Échantillons"
+            icon={Beaker}
+            defaultOpen={false}
+          >
             <SampleRequirementSection
               requiresSample={product.requires_sample || false}
               isProduct={true}
               productName={product.name}
-              disabled={product.stock_quantity >= 1} // Griser si le produit a déjà été commandé (stock >= 1)
+              disabled={product.stock_quantity >= 1}
               onRequirementChange={(requiresSample) => {
                 handleProductUpdate({ requires_sample: requiresSample })
               }}
             />
-          </div>
-        </div>
+          </ProductDetailAccordion>
+
+          {/* Accordion 10: Métadonnées & Audit */}
+          <ProductDetailAccordion
+            title="Métadonnées & Audit"
+            icon={Clock}
+            defaultOpen={false}
+          >
+            <div className="space-y-2 text-sm">
+              <div className="flex justify-between py-2 border-b border-neutral-100">
+                <span className="text-neutral-600">ID:</span>
+                <span className="font-mono text-neutral-900">{product.id.slice(0, 8)}...</span>
+              </div>
+              <div className="flex justify-between py-2 border-b border-neutral-100">
+                <span className="text-neutral-600">Créé le:</span>
+                <span className="text-neutral-900">
+                  {new Date(product.created_at).toLocaleString('fr-FR')}
+                </span>
+              </div>
+              <div className="flex justify-between py-2 border-b border-neutral-100">
+                <span className="text-neutral-600">Modifié le:</span>
+                <span className="text-neutral-900">
+                  {new Date(product.updated_at).toLocaleString('fr-FR')}
+                </span>
+              </div>
+              <div className="flex justify-between py-2">
+                <span className="text-neutral-600">Organisation ID:</span>
+                <span className="font-mono text-neutral-900">
+                  {product.organisation_id ? product.organisation_id.slice(0, 8) + '...' : 'N/A'}
+                </span>
+              </div>
+            </div>
+          </ProductDetailAccordion>
+
+        </main>
       </div>
 
       {/* Modal de gestion des photos */}

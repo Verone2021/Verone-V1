@@ -291,7 +291,7 @@ export default function CategoryDetailPage() {
                 <Package className="w-8 h-8 text-black" />
                 <div>
                   <p className="text-2xl font-bold text-black">
-                    {categorySubcategories.reduce((sum, sub) => sum + (sub.product_count || 0), 0)}
+                    {categorySubcategories.reduce((sum, sub) => sum + (sub.products_count || 0), 0)}
                   </p>
                   <p className="text-gray-600">Produits</p>
                 </div>
@@ -349,7 +349,7 @@ export default function CategoryDetailPage() {
                   imageUrl={subcategory.image_url || undefined}
                   entityType="subcategory"
                   slug={subcategory.slug}
-                  count={subcategory.product_count || 0}
+                  count={subcategory.products_count || 0}
                   countLabel="produit"
                   isActive={subcategory.is_active}
                   iconPosition="top-right"

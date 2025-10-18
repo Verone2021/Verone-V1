@@ -102,7 +102,13 @@ export function VéroneCard({
 
           {/* Section contenu */}
           <div className="flex-1">
-            <CardTitle className="text-lg text-slate-900 mb-1">{title}</CardTitle>
+            <CardTitle className="text-base text-slate-900 mb-1">{title}</CardTitle>
+            {/* Badge slug sous le titre */}
+            {slug && (
+              <Badge variant="secondary" className="font-mono text-xs mb-1">
+                #{slug}
+              </Badge>
+            )}
             {description && (
               <CardDescription className="text-slate-600 text-sm line-clamp-2">
                 {description}
@@ -113,18 +119,27 @@ export function VéroneCard({
           {/* Section icône droite et actions */}
           <div className="flex items-start space-x-2 ml-3">
             {iconPosition === 'top-right' && (
-              <div className="flex-shrink-0">
+              <div className="flex-shrink-0 flex flex-col items-center gap-2">
                 {imageUrl ? (
                   <img
                     src={imageUrl}
                     alt={`Icône ${title}`}
-                    className="w-8 h-8 object-cover rounded border border-slate-200"
+                    className="w-12 h-12 object-cover rounded border border-slate-200"
                     onError={(e) => {
                       e.currentTarget.style.display = 'none'
                     }}
                   />
                 ) : (
                   getFallbackIcon(entityType)
+                )}
+                {/* Badge statut sous l'image */}
+                {isActive !== undefined && (
+                  <Badge
+                    variant={isActive ? "success" : "secondary"}
+                    className="text-xs px-2 py-0.5"
+                  >
+                    {isActive ? 'Actif' : 'Inactif'}
+                  </Badge>
                 )}
               </div>
             )}
@@ -165,31 +180,12 @@ export function VéroneCard({
       </CardHeader>
 
       <CardContent className="pt-0">
-        <div className="flex items-center justify-between">
-          {/* Badge slug */}
-          {slug && (
-            <Badge variant="secondary" className="font-mono">
-              #{slug}
-            </Badge>
-          )}
-
-          {/* Compteur + statut */}
-          <div className="flex items-center space-x-3">
-            {count !== undefined && countLabel && (
-              <div className="text-sm text-slate-600">
-                {count} {countLabel}{count !== 1 ? 's' : ''}
-              </div>
-            )}
-
-            {isActive !== undefined && (
-              <Badge
-                variant={isActive ? "success" : "secondary"}
-              >
-                {isActive ? 'Actif' : 'Inactif'}
-              </Badge>
-            )}
+        {/* Compteur si présent */}
+        {count !== undefined && countLabel && (
+          <div className="text-sm text-slate-600">
+            {count} {countLabel}{count !== 1 ? 's' : ''}
           </div>
-        </div>
+        )}
       </CardContent>
     </Card>
   )

@@ -116,7 +116,7 @@ export function ProductImageGallery({
   return (
     <div className={cn("space-y-2", className)}>
       {/* Image principale compacte 200x200 */}
-      <div className="relative w-[200px] h-[200px] overflow-hidden rounded-t-lg border border-gray-200 bg-white">
+      <div className="relative w-[200px] h-[200px] flex items-center justify-center p-4 overflow-hidden rounded-t-lg border border-gray-200 bg-white">
         <Image
           src={mainImageSrc}
           alt={productName}

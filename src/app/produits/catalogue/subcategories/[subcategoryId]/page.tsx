@@ -16,24 +16,13 @@ import { Badge } from '@/components/ui/badge'
 import { useFamilies } from '@/hooks/use-families'
 import { useCategories } from '@/hooks/use-categories'
 import { useSubcategories } from '@/hooks/use-subcategories'
+import { useProducts } from '@/hooks/use-products'
 import { VéroneCard } from '@/components/ui/verone-card'
 import type { Database } from '@/lib/supabase/types'
 
 type Family = Database['public']['Tables']['families']['Row']
 type Category = Database['public']['Tables']['categories']['Row']
 type Subcategory = Database['public']['Tables']['subcategories']['Row']
-
-// Placeholder interface for products (when table exists)
-interface Product {
-  id: string
-  name: string
-  description?: string
-  price?: number
-  image_url?: string
-  sku?: string
-  is_active: boolean
-  created_at: string
-}
 
 export default function SubcategoryDetailPage() {
   const params = useParams()
@@ -44,10 +33,14 @@ export default function SubcategoryDetailPage() {
   const { allCategories, loading: categoriesLoading } = useCategories()
   const { subcategories, loading: subcategoriesLoading } = useSubcategories()
 
+  // ✅ Hook pour charger les produits de la sous-catégorie
+  const { products, loading: productsLoading } = useProducts(
+    subcategoryId ? { subcategory_id: subcategoryId } : undefined
+  )
+
   const [subcategory, setSubcategory] = useState<Subcategory | null>(null)
   const [category, setCategory] = useState<Category | null>(null)
   const [family, setFamily] = useState<Family | null>(null)
-  const [products, setProducts] = useState<Product[]>([]) // Placeholder for future products
 
   useEffect(() => {
     if (subcategories && subcategoryId) {
@@ -70,23 +63,7 @@ export default function SubcategoryDetailPage() {
     }
   }, [families, category])
 
-  // TODO: Fetch products when products table exists
-  useEffect(() => {
-    if (subcategoryId) {
-      // Placeholder: Load products for this subcategory
-      // const loadProducts = async () => {
-      //   const { data } = await supabase
-      //     .from('products')
-      //     .select('*')
-      //     .eq('subcategory_id', subcategoryId)
-      //   setProducts(data || [])
-      // }
-      // loadProducts()
-      setProducts([]) // For now, empty array
-    }
-  }, [subcategoryId])
-
-  const loading = familiesLoading || categoriesLoading || subcategoriesLoading
+  const loading = familiesLoading || categoriesLoading || subcategoriesLoading || productsLoading
 
   if (loading) {
     return (
@@ -302,9 +279,6 @@ export default function SubcategoryDetailPage() {
               <CardContent className="pt-6 text-center">
                 <Package className="w-16 h-16 text-gray-400 mx-auto mb-4" />
                 <p className="text-gray-500 mb-4">Aucun produit dans cette sous-catégorie</p>
-                <p className="text-sm text-gray-400 mb-6">
-                  Les produits seront affichés ici une fois la table <code>products</code> implémentée
-                </p>
                 <Button
                   variant="outline"
                   className="border-black text-black hover:bg-black hover:text-white"
@@ -321,21 +295,13 @@ export default function SubcategoryDetailPage() {
                   key={product.id}
                   title={product.name}
                   description={product.description || undefined}
-                  imageUrl={product.image_url || undefined}
+                  imageUrl={product.primary_image_url || undefined}
                   entityType="product"
                   slug={product.sku || undefined}
-                  isActive={product.is_active}
+                  isActive={product.status !== 'discontinued'}
                   iconPosition="top-right"
                   onClick={() => handleProductClick(product.id)}
-                  onEdit={() => {
-                    // TODO: Implement edit functionality when products table exists
-                    console.log('Edit product:', product.id)
-                  }}
-                  onDelete={() => {
-                    // TODO: Implement delete functionality when products table exists
-                    console.log('Delete product:', product.id)
-                  }}
-                  className="xl:max-w-sm" // Limite la largeur sur très grands écrans
+                  className="xl:max-w-sm"
                 />
               ))}
             </div>
