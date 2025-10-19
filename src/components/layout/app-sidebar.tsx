@@ -13,6 +13,9 @@ import { Badge } from "@/components/ui/badge"
 import { useStockAlertsCount } from "@/hooks/use-stock-alerts-count"
 import {
   Home,
+  Users,
+  User,
+  Activity,
   BookOpen,
   Package,
   Target,
@@ -49,83 +52,8 @@ interface NavItem {
   children?: NavItem[]
 }
 
-// STRUCTURE PHASE 1 - Auth + Profil + Admin uniquement
-const getNavItems = (stockAlertsCount: number): NavItem[] => [
-  {
-    title: "Dashboard",
-    href: "/dashboard",
-    icon: Home,
-    description: "Vue d'ensemble"
-  },
-  {
-    title: "Administration",
-    href: "/admin/users",
-    icon: Users,
-    description: "Gestion plateforme",
-    children: [
-      {
-        title: "Utilisateurs",
-        href: "/admin/users",
-        icon: User,
-        description: "Gestion utilisateurs"
-      },
-      {
-        title: "Activité",
-        href: "/admin/activite-utilisateurs",
-        icon: Activity,
-        description: "Rapports d'activité"
-      }
-    ]
-  },
-  {
-    title: "Paramètres",
-    href: "/parametres",
-    icon: Settings,
-    description: "Configuration"
-  }
-
-  /* 🚧 PHASE 2+ - Modules désactivés (déploiement progressif)
-
-  {
-    title: "Produits",
-    href: "/produits/catalogue/dashboard",
-    icon: Package,
-    description: "Catalogue"
-  },
-  {
-    title: "Stocks",
-    href: "/stocks",
-    icon: Package,
-    description: "Inventaire et mouvements",
-    badge: stockAlertsCount > 0 ? stockAlertsCount : undefined,
-    badgeVariant: "urgent"
-  },
-  {
-    title: "Ventes",
-    href: "/ventes",
-    icon: ShoppingBag,
-    description: "Consultations et commandes"
-  },
-  {
-    title: "Achats",
-    href: "/commandes/fournisseurs",
-    icon: Truck,
-    description: "Commandes fournisseurs"
-  },
-  {
-    title: "Finance",
-    href: "/factures",
-    icon: Wallet,
-    description: "Facturation et trésorerie"
-  },
-  {
-    title: "Contacts",
-    href: "/contacts-organisations",
-    icon: Building2,
-    description: "Contacts et partenaires"
-  }
-  */
-]
+// SIDEBAR VIDE - Navigation sera reconstruite module par module
+const getNavItems = (stockAlertsCount: number): NavItem[] => []
 
 function SidebarContent() {
   const pathname = usePathname()
