@@ -24,6 +24,7 @@ import { Alert, AlertDescription } from '../../../components/ui/alert'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '../../../components/ui/tabs'
 import { ConsultationOrderInterface } from '../../../components/business/consultation-order-interface'
 import { ConsultationImageGallery } from '../../../components/business/consultation-image-gallery'
+import { EditConsultationModal } from '../../../components/business/edit-consultation-modal'
 import { useConsultations, ClientConsultation } from '../../../hooks/use-consultations'
 import { useToast } from '../../../hooks/use-toast'
 
@@ -31,10 +32,21 @@ export default function ConsultationDetailPage() {
   const router = useRouter()
   const params = useParams()
   const { toast } = useToast()
-  const { consultations, loading, fetchConsultations, updateStatus } = useConsultations()
+  const {
+    consultations,
+    loading,
+    fetchConsultations,
+    updateStatus,
+    updateConsultation,
+    validateConsultation,
+    archiveConsultation,
+    unarchiveConsultation,
+    deleteConsultation
+  } = useConsultations()
 
   const consultationId = params.consultationId as string
   const [consultation, setConsultation] = useState<ClientConsultation | null>(null)
+  const [showEditModal, setShowEditModal] = useState(false)
 
   useEffect(() => {
     fetchConsultations()
@@ -56,6 +68,43 @@ export default function ConsultationDetailPage() {
     }
   }
 
+  const handleUpdateConsultation = async (updates: Partial<ClientConsultation>): Promise<boolean> => {
+    const success = await updateConsultation(consultationId, updates)
+    if (success) {
+      // Recharger pour avoir les données fraîches
+      await fetchConsultations()
+    }
+    return success
+  }
+
+  const handleValidateConsultation = async () => {
+    const success = await validateConsultation(consultationId)
+    if (success) {
+      await fetchConsultations()
+    }
+  }
+
+  const handleArchiveConsultation = async () => {
+    const success = await archiveConsultation(consultationId)
+    if (success) {
+      await fetchConsultations()
+    }
+  }
+
+  const handleUnarchiveConsultation = async () => {
+    const success = await unarchiveConsultation(consultationId)
+    if (success) {
+      await fetchConsultations()
+    }
+  }
+
+  const handleDeleteConsultation = async () => {
+    const success = await deleteConsultation(consultationId)
+    if (success) {
+      router.push('/consultations') // Rediriger après suppression
+    }
+  }
+
   const getStatusColor = (status: string) => {
     switch (status) {
       case 'en_attente': return 'bg-gray-100 text-gray-900 border-gray-200'
@@ -68,11 +117,11 @@ export default function ConsultationDetailPage() {
 
   const getStatusIcon = (status: string) => {
     switch (status) {
-      case 'en_attente': return <Clock className="h-4 w-4" />
-      case 'en_cours': return <AlertCircle className="h-4 w-4" />
-      case 'terminee': return <CheckCircle className="h-4 w-4" />
-      case 'annulee': return <XCircle className="h-4 w-4" />
-      default: return <Clock className="h-4 w-4" />
+      case 'en_attente': return <Clock className="h-3 w-3" />
+      case 'en_cours': return <AlertCircle className="h-3 w-3" />
+      case 'terminee': return <CheckCircle className="h-3 w-3" />
+      case 'annulee': return <XCircle className="h-3 w-3" />
+      default: return <Clock className="h-3 w-3" />
     }
   }
 
@@ -102,7 +151,7 @@ export default function ConsultationDetailPage() {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
         <div className="text-center">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-black mx-auto mb-4"></div>
+          <div className="animate-spin rounded-full h-3 w-3 border-b-2 border-black mx-auto mb-1"></div>
           <p className="text-gray-600">Chargement de la consultation...</p>
         </div>
       </div>
@@ -113,14 +162,14 @@ export default function ConsultationDetailPage() {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
         <Card className="max-w-md">
-          <CardContent className="text-center p-6">
-            <AlertCircle className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-            <h3 className="text-lg font-medium text-gray-900 mb-2">Consultation non trouvée</h3>
-            <p className="text-gray-600 mb-4">
+          <CardContent className="text-center p-1">
+            <AlertCircle className="h-3 w-3 text-gray-400 mx-auto mb-1" />
+            <h3 className="text-xs font-medium text-gray-900 mb-1">Consultation non trouvée</h3>
+            <p className="text-gray-600 mb-1">
               Cette consultation n'existe pas ou a été supprimée.
             </p>
             <ButtonV2 onClick={() => router.push('/consultations')}>
-              <ArrowLeft className="h-4 w-4 mr-2" />
+              <ArrowLeft className="h-3 w-3 mr-2" />
               Retour aux consultations
             </ButtonV2>
           </CardContent>
@@ -133,7 +182,7 @@ export default function ConsultationDetailPage() {
     <div className="min-h-screen bg-gray-50">
       {/* Header */}
       <div className="bg-white border-b">
-        <div className="container mx-auto px-4 py-4">
+        <div className="container mx-auto px-2 py-1">
           <div className="flex items-center justify-between">
             <div className="flex items-center space-x-4">
               <ButtonV2
@@ -141,11 +190,11 @@ export default function ConsultationDetailPage() {
                 onClick={() => router.push('/consultations')}
                 className="flex items-center text-gray-600 hover:text-black"
               >
-                <ArrowLeft className="h-4 w-4 mr-2" />
+                <ArrowLeft className="h-3 w-3 mr-2" />
                 Retour aux consultations
               </ButtonV2>
               <div>
-                <h1 className="text-2xl font-bold text-black">Détail Consultation</h1>
+                <h1 className="text-xs font-bold text-black">Détail Consultation</h1>
                 <p className="text-gray-600">{consultation.organisation_name}</p>
               </div>
             </div>
@@ -163,15 +212,15 @@ export default function ConsultationDetailPage() {
         </div>
       </div>
 
-      <div className="container mx-auto px-4 py-8 space-y-6">
+      <div className="container mx-auto px-2 py-1 space-y-1">
         {/* Section avec informations et galerie photos */}
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-1">
           {/* Galerie photos consultation */}
           <div className="lg:col-span-1">
             <Card>
               <CardHeader>
                 <CardTitle className="flex items-center">
-                  <Package className="h-5 w-5 mr-2" />
+                  <Package className="h-3 w-3 mr-2" />
                   Photos consultation
                 </CardTitle>
               </CardHeader>
@@ -193,49 +242,53 @@ export default function ConsultationDetailPage() {
           <CardHeader>
             <div className="flex items-center justify-between">
               <CardTitle className="flex items-center">
-                <Building className="h-5 w-5 mr-2" />
+                <Building className="h-3 w-3 mr-2" />
                 Informations de la consultation
               </CardTitle>
-              <ButtonV2 variant="outline" size="sm">
-                <Edit className="h-4 w-4 mr-2" />
+              <ButtonV2
+                variant="outline"
+                size="sm"
+                onClick={() => setShowEditModal(true)}
+              >
+                <Edit className="h-3 w-3 mr-2" />
                 Modifier
               </ButtonV2>
             </div>
           </CardHeader>
           <CardContent>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <div className="space-y-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-1">
+              <div className="space-y-1">
                 <div>
-                  <p className="text-sm text-gray-600">Organisation</p>
+                  <p className="text-xs text-gray-600">Organisation</p>
                   <p className="font-medium">{consultation.organisation_name}</p>
                 </div>
                 <div>
-                  <p className="text-sm text-gray-600">Email client</p>
+                  <p className="text-xs text-gray-600">Email client</p>
                   <div className="flex items-center">
-                    <Mail className="h-4 w-4 text-gray-400 mr-2" />
+                    <Mail className="h-3 w-3 text-gray-400 mr-2" />
                     <p className="font-medium">{consultation.client_email}</p>
                   </div>
                 </div>
                 {consultation.client_phone && (
                   <div>
-                    <p className="text-sm text-gray-600">Téléphone</p>
+                    <p className="text-xs text-gray-600">Téléphone</p>
                     <div className="flex items-center">
-                      <Phone className="h-4 w-4 text-gray-400 mr-2" />
+                      <Phone className="h-3 w-3 text-gray-400 mr-2" />
                       <p className="font-medium">{consultation.client_phone}</p>
                     </div>
                   </div>
                 )}
                 <div>
-                  <p className="text-sm text-gray-600">Canal d'origine</p>
+                  <p className="text-xs text-gray-600">Canal d'origine</p>
                   <p className="font-medium capitalize">{consultation.source_channel}</p>
                 </div>
               </div>
 
-              <div className="space-y-4">
+              <div className="space-y-1">
                 <div>
-                  <p className="text-sm text-gray-600">Créée le</p>
+                  <p className="text-xs text-gray-600">Créée le</p>
                   <div className="flex items-center">
-                    <Calendar className="h-4 w-4 text-gray-400 mr-2" />
+                    <Calendar className="h-3 w-3 text-gray-400 mr-2" />
                     <p className="font-medium">
                       {new Date(consultation.created_at).toLocaleDateString('fr-FR')}
                     </p>
@@ -243,13 +296,13 @@ export default function ConsultationDetailPage() {
                 </div>
                 {consultation.tarif_maximum && (
                   <div>
-                    <p className="text-sm text-gray-600">Budget maximum</p>
+                    <p className="text-xs text-gray-600">Budget maximum</p>
                     <p className="font-medium">{consultation.tarif_maximum}€</p>
                   </div>
                 )}
                 {consultation.estimated_response_date && (
                   <div>
-                    <p className="text-sm text-gray-600">Réponse estimée</p>
+                    <p className="text-xs text-gray-600">Réponse estimée</p>
                     <p className="font-medium">
                       {new Date(consultation.estimated_response_date).toLocaleDateString('fr-FR')}
                     </p>
@@ -257,9 +310,9 @@ export default function ConsultationDetailPage() {
                 )}
                 {consultation.assigned_to && (
                   <div>
-                    <p className="text-sm text-gray-600">Assignée à</p>
+                    <p className="text-xs text-gray-600">Assignée à</p>
                     <div className="flex items-center">
-                      <User className="h-4 w-4 text-gray-400 mr-2" />
+                      <User className="h-3 w-3 text-gray-400 mr-2" />
                       <p className="font-medium">{consultation.assigned_to}</p>
                     </div>
                   </div>
@@ -267,15 +320,15 @@ export default function ConsultationDetailPage() {
               </div>
             </div>
 
-            <div className="mt-6">
-              <p className="text-sm text-gray-600 mb-2">Description</p>
-              <p className="bg-gray-50 p-4 rounded-lg">{consultation.descriptif}</p>
+            <div className="mt-1">
+              <p className="text-xs text-gray-600 mb-1">Description</p>
+              <p className="bg-gray-50 p-1 rounded">{consultation.descriptif}</p>
             </div>
 
             {consultation.notes_internes && (
-              <div className="mt-4">
-                <p className="text-sm text-gray-600 mb-2">Notes internes</p>
-                <p className="bg-gray-50 p-4 rounded-lg border-l-4 border-gray-300">
+              <div className="mt-1">
+                <p className="text-xs text-gray-600 mb-1">Notes internes</p>
+                <p className="bg-gray-50 p-1 rounded border-l-4 border-gray-300">
                   {consultation.notes_internes}
                 </p>
               </div>
@@ -298,7 +351,7 @@ export default function ConsultationDetailPage() {
                 onClick={() => handleStatusChange('en_attente')}
                 disabled={consultation.status === 'en_attente'}
               >
-                <Clock className="h-4 w-4 mr-2" />
+                <Clock className="h-3 w-3 mr-2" />
                 En attente
               </ButtonV2>
               <ButtonV2
@@ -306,7 +359,7 @@ export default function ConsultationDetailPage() {
                 onClick={() => handleStatusChange('en_cours')}
                 disabled={consultation.status === 'en_cours'}
               >
-                <AlertCircle className="h-4 w-4 mr-2" />
+                <AlertCircle className="h-3 w-3 mr-2" />
                 En cours
               </ButtonV2>
               <ButtonV2
@@ -315,7 +368,7 @@ export default function ConsultationDetailPage() {
                 disabled={consultation.status === 'terminee'}
                 className="bg-green-600 hover:bg-green-700 text-white"
               >
-                <CheckCircle className="h-4 w-4 mr-2" />
+                <CheckCircle className="h-3 w-3 mr-2" />
                 Terminée
               </ButtonV2>
               <ButtonV2
@@ -324,9 +377,80 @@ export default function ConsultationDetailPage() {
                 disabled={consultation.status === 'annulee'}
                 className="bg-red-600 hover:bg-red-700 text-white"
               >
-                <XCircle className="h-4 w-4 mr-2" />
+                <XCircle className="h-3 w-3 mr-2" />
                 Annulée
               </ButtonV2>
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Gestion lifecycle: Validation, Archivage, Suppression */}
+        <Card>
+          <CardHeader>
+            <CardTitle>Gestion de la consultation</CardTitle>
+            <CardDescription>Validation, archivage et suppression</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="flex items-center space-x-3 flex-wrap gap-1">
+              {/* Badge Validée si applicable */}
+              {consultation.validated_at && (
+                <Badge className="bg-green-600 text-white">
+                  ✅ Validée le {new Date(consultation.validated_at).toLocaleDateString('fr-FR')}
+                </Badge>
+              )}
+
+              {/* Bouton Valider (si pas encore validée) */}
+              {!consultation.validated_at && !consultation.archived_at && (
+                <ButtonV2
+                  variant="default"
+                  onClick={handleValidateConsultation}
+                  className="bg-green-600 hover:bg-green-700 text-white"
+                >
+                  <CheckCircle className="h-3 w-3 mr-2" />
+                  Valider la consultation
+                </ButtonV2>
+              )}
+
+              {/* Badge Archivée si applicable */}
+              {consultation.archived_at && (
+                <Badge variant="outline" className="border-gray-400 text-gray-700">
+                  📦 Archivée le {new Date(consultation.archived_at).toLocaleDateString('fr-FR')}
+                </Badge>
+              )}
+
+              {/* Bouton Archiver (si pas archivée) */}
+              {!consultation.archived_at && (
+                <ButtonV2
+                  variant="outline"
+                  onClick={handleArchiveConsultation}
+                  className="border-gray-400 hover:bg-gray-100"
+                >
+                  📦 Archiver
+                </ButtonV2>
+              )}
+
+              {/* Bouton Désarchiver (si archivée) */}
+              {consultation.archived_at && (
+                <ButtonV2
+                  variant="outline"
+                  onClick={handleUnarchiveConsultation}
+                  className="border-blue-400 text-blue-600 hover:bg-blue-50"
+                >
+                  ↩️ Désarchiver
+                </ButtonV2>
+              )}
+
+              {/* Bouton Supprimer (seulement si archivée) */}
+              {consultation.archived_at && (
+                <ButtonV2
+                  variant="destructive"
+                  onClick={handleDeleteConsultation}
+                  className="bg-red-600 hover:bg-red-700 text-white"
+                >
+                  <XCircle className="h-3 w-3 mr-2" />
+                  Supprimer définitivement
+                </ButtonV2>
+              )}
             </div>
           </CardContent>
         </Card>
@@ -340,6 +464,16 @@ export default function ConsultationDetailPage() {
           }}
         />
       </div>
+
+      {/* Modal d'édition consultation */}
+      {consultation && (
+        <EditConsultationModal
+          open={showEditModal}
+          onClose={() => setShowEditModal(false)}
+          consultation={consultation}
+          onUpdated={handleUpdateConsultation}
+        />
+      )}
     </div>
   )
 }

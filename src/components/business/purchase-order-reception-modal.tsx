@@ -1,7 +1,10 @@
 'use client'
 
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog'
+import { useState, useEffect } from 'react'
+import { Dialog, DialogContent } from '@/components/ui/dialog'
 import { PurchaseOrder } from '@/hooks/use-purchase-orders'
+import { usePurchaseReceptions } from '@/hooks/use-purchase-receptions'
+import { PurchaseOrderReceptionForm } from '@/components/business/purchase-order-reception-form'
 
 interface PurchaseOrderReceptionModalProps {
   order: PurchaseOrder
@@ -16,18 +19,43 @@ export function PurchaseOrderReceptionModal({
   onClose,
   onSuccess
 }: PurchaseOrderReceptionModalProps) {
+  const { loadPurchaseOrderForReception } = usePurchaseReceptions()
+  const [enrichedOrder, setEnrichedOrder] = useState<any>(null)
+  const [loading, setLoading] = useState(true)
+
+  useEffect(() => {
+    if (open && order?.id) {
+      setLoading(true)
+      loadPurchaseOrderForReception(order.id).then(data => {
+        setEnrichedOrder(data)
+        setLoading(false)
+      })
+    }
+  }, [open, order?.id, loadPurchaseOrderForReception])
+
+  const handleSuccess = () => {
+    onSuccess?.()
+    onClose()
+  }
+
   return (
     <Dialog open={open} onOpenChange={onClose}>
-      <DialogContent>
-        <DialogHeader>
-          <DialogTitle>Reception de commande</DialogTitle>
-          <DialogDescription>
-            Module de reception en cours de developpement
-          </DialogDescription>
-        </DialogHeader>
-        <div className="text-center py-8">
-          <p>Fonctionnalite bientot disponible</p>
-        </div>
+      <DialogContent className="max-w-6xl max-h-[90vh] overflow-y-auto">
+        {loading ? (
+          <div className="flex justify-center items-center py-12">
+            <div className="text-muted-foreground">Chargement des données...</div>
+          </div>
+        ) : enrichedOrder ? (
+          <PurchaseOrderReceptionForm
+            purchaseOrder={enrichedOrder}
+            onSuccess={handleSuccess}
+            onCancel={onClose}
+          />
+        ) : (
+          <div className="text-center py-8 text-red-600">
+            Erreur lors du chargement de la commande
+          </div>
+        )}
       </DialogContent>
     </Dialog>
   )

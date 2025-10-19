@@ -8,6 +8,7 @@ import { Badge } from '@/components/ui/badge'
 import { cn } from '../../lib/utils'
 import { useConsultationImages } from '../../hooks/use-consultation-images'
 import { ConsultationImageViewerModal } from './consultation-image-viewer-modal'
+import { ConsultationPhotosModal } from './consultation-photos-modal'
 
 interface ConsultationImageGalleryProps {
   consultationId: string
@@ -30,13 +31,17 @@ export function ConsultationImageGallery({
   consultationId,
   consultationTitle,
   consultationStatus,
-  fallbackImage = '/placeholder-consultation.jpg',
+  fallbackImage = '/placeholder-consultation.svg',
   className,
   compact = true,
   allowEdit = false
 }: ConsultationImageGalleryProps) {
   const [selectedImageIndex, setSelectedImageIndex] = useState(0)
   const [showImageViewer, setShowImageViewer] = useState(false)
+  const [showPhotosModal, setShowPhotosModal] = useState(false)
+
+  // Référence pour l'input file (pattern React 2024)
+  const fileInputRef = useRef<HTMLInputElement>(null)
 
   // Hook optimisé pour les images de consultation
   const {
@@ -132,8 +137,8 @@ export function ConsultationImageGallery({
 
   if (loading) {
     return (
-      <div className={cn("space-y-4", className)}>
-        <div className="relative aspect-square bg-gray-100 animate-pulse rounded-lg"></div>
+      <div className={cn("space-y-1", className)}>
+        <div className="relative aspect-square bg-gray-100 animate-pulse rounded"></div>
         <div className="grid grid-cols-4 gap-1">
           {[1, 2, 3, 4].map(i => (
             <div key={i} className="aspect-square bg-gray-100 animate-pulse rounded"></div>
@@ -144,9 +149,9 @@ export function ConsultationImageGallery({
   }
 
   return (
-    <div className={cn("space-y-2", className)}>
+    <div className={cn("space-y-1", className)}>
       {/* Image principale compacte 200x200 */}
-      <div className="relative w-[200px] h-[200px] overflow-hidden rounded-lg border border-gray-200 bg-white">
+      <div className="relative w-[200px] h-[200px] overflow-hidden rounded border border-gray-200 bg-white">
         <Image
           src={mainImageSrc}
           alt={`Photo consultation ${consultationTitle}`}
@@ -157,7 +162,7 @@ export function ConsultationImageGallery({
         />
 
         {/* Badge statut consultation overlay */}
-        <div className="absolute top-2 right-2">
+        <div className="absolute top-1 right-2">
           <Badge className={cn("text-xs", statusConfig[consultationStatus]?.className || "bg-gray-600 text-white")}>
             {statusConfig[consultationStatus]?.label || "⚪ Statut inconnu"}
           </Badge>
@@ -165,7 +170,7 @@ export function ConsultationImageGallery({
 
         {/* Badge image principale */}
         {hasImages && displayImage?.is_primary && (
-          <div className="absolute top-2 left-2">
+          <div className="absolute top-1 left-2">
             <Badge variant="secondary" className="text-xs">
               ★ Principale
             </Badge>
@@ -197,28 +202,16 @@ export function ConsultationImageGallery({
               </ButtonV2>
             )}
             {allowEdit && (
-              <label htmlFor="consultation-file-input-overlay" className="cursor-pointer inline-block">
-                <ButtonV2
-                  size="sm"
-                  variant="secondary"
-                  className="text-xs"
-                  type="button"
-                  asChild
-                >
-                  <span>
-                    <Camera className="h-3 w-3 mr-1" />
-                    Ajouter
-                  </span>
-                </ButtonV2>
-                <input
-                  id="consultation-file-input-overlay"
-                  type="file"
-                  multiple
-                  accept="image/*"
-                  onChange={handleFileUpload}
-                  className="hidden"
-                />
-              </label>
+              <ButtonV2
+                size="sm"
+                variant="secondary"
+                className="text-xs"
+                type="button"
+                onClick={() => fileInputRef.current?.click()}
+              >
+                <Camera className="h-3 w-3 mr-1" />
+                Ajouter
+              </ButtonV2>
             )}
           </div>
         </div>
@@ -279,39 +272,48 @@ export function ConsultationImageGallery({
 
       {/* Message si pas d'images */}
       {!hasImages && (
-        <div className="text-center py-4 text-gray-500">
-          <Camera className="h-8 w-8 text-gray-300 mx-auto mb-2" />
-          <div className="text-sm">Aucune photo de consultation</div>
+        <div className="text-center py-1 text-gray-500">
+          <Camera className="h-3 w-3 text-gray-300 mx-auto mb-1" />
+          <div className="text-xs">Aucune photo de consultation</div>
           {allowEdit && (
-            <label htmlFor="consultation-file-input-empty" className="cursor-pointer inline-block">
-              <ButtonV2
-                variant="outline"
-                size="sm"
-                className="mt-2"
-                type="button"
-                asChild
-              >
-                <span>
-                  <Upload className="h-3 w-3 mr-1" />
-                  Ajouter des photos
-                </span>
-              </ButtonV2>
-              <input
-                id="consultation-file-input-empty"
-                type="file"
-                multiple
-                accept="image/*"
-                onChange={handleFileUpload}
-                className="hidden"
-              />
-            </label>
+            <ButtonV2
+              variant="outline"
+              size="sm"
+              className="mt-1"
+              type="button"
+              onClick={() => fileInputRef.current?.click()}
+            >
+              <Upload className="h-3 w-3 mr-1" />
+              Ajouter des photos
+            </ButtonV2>
           )}
         </div>
       )}
 
+      {/* Input file unique réutilisé par tous les boutons */}
+      {allowEdit && (
+        <input
+          ref={fileInputRef}
+          type="file"
+          multiple
+          accept="image/*"
+          onChange={handleFileUpload}
+          className="hidden"
+        />
+      )}
+
       {/* Actions rapides */}
-      {hasImages && (
-        <div className="space-y-2">
+      {hasImages && allowEdit && (
+        <div className="space-y-1">
+          <ButtonV2
+            variant="outline"
+            size="sm"
+            className="w-full text-xs"
+            onClick={() => setShowPhotosModal(true)}
+          >
+            <Camera className="h-3 w-3 mr-1" />
+            Gérer les photos
+          </ButtonV2>
           <ButtonV2
             variant="outline"
             size="sm"
@@ -326,13 +328,13 @@ export function ConsultationImageGallery({
 
       {/* Messages d'état */}
       {error && (
-        <div className="text-xs text-red-600 bg-red-50 p-2 rounded">
+        <div className="text-xs text-red-600 bg-red-50 p-1 rounded">
           ❌ {error}
         </div>
       )}
 
       {uploading && (
-        <div className="text-xs text-blue-600 bg-blue-50 p-2 rounded">
+        <div className="text-xs text-blue-600 bg-blue-50 p-1 rounded">
           ⏳ Upload en cours...
         </div>
       )}
@@ -357,6 +359,17 @@ export function ConsultationImageGallery({
         onDelete={allowEdit ? handleDeleteImage : undefined}
         onSetPrimary={allowEdit ? setPrimaryImage : undefined}
       />
+
+      {/* Modal de gestion des photos */}
+      {allowEdit && (
+        <ConsultationPhotosModal
+          isOpen={showPhotosModal}
+          onClose={() => setShowPhotosModal(false)}
+          consultationId={consultationId}
+          consultationTitle={consultationTitle}
+          onImagesUpdated={fetchImages}
+        />
+      )}
     </div>
   )
 }

@@ -12,8 +12,10 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, Di
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { usePurchaseOrders, PurchaseOrder, PurchaseOrderStatus } from '@/hooks/use-purchase-orders'
 import { useOrganisations } from '@/hooks/use-organisations'
+import { usePurchaseReceptions } from '@/hooks/use-purchase-receptions'
 import { PurchaseOrderFormModal } from '@/components/business/purchase-order-form-modal'
 import { PurchaseOrderReceptionModal } from '@/components/business/purchase-order-reception-modal'
+import { PurchaseOrderReceptionForm } from '@/components/business/purchase-order-reception-form'
 import { formatCurrency, formatDate } from '@/lib/utils'
 import { Separator } from '@/components/ui/separator'
 
@@ -41,6 +43,66 @@ const statusColors: Record<PurchaseOrderStatus, string> = {
   partially_received: 'bg-gray-100 text-gray-900',
   received: 'bg-green-100 text-green-800',
   cancelled: 'bg-red-100 text-red-800'
+}
+
+// Composant pour l'onglet Réception
+function ReceptionTabContent({
+  order,
+  onSuccess,
+  onCancel
+}: {
+  order: PurchaseOrder
+  onSuccess: () => void
+  onCancel: () => void
+}) {
+  const { loadPurchaseOrderForReception } = usePurchaseReceptions()
+  const [enrichedOrder, setEnrichedOrder] = useState<any>(null)
+  const [loading, setLoading] = useState(true)
+
+  useEffect(() => {
+    if (order?.id) {
+      setLoading(true)
+      loadPurchaseOrderForReception(order.id).then(data => {
+        setEnrichedOrder(data)
+        setLoading(false)
+      })
+    }
+  }, [order?.id, loadPurchaseOrderForReception])
+
+  // Vérifier si la commande peut être réceptionnée
+  if (!['confirmed', 'partially_received'].includes(order.status)) {
+    return (
+      <div className="text-center py-8">
+        <Truck className="mx-auto h-12 w-12 text-gray-400 mb-4" />
+        <p className="text-gray-500">Cette commande doit être confirmée avant d'être réceptionnée</p>
+        <p className="text-sm text-gray-400 mt-2">Statut actuel : {statusLabels[order.status]}</p>
+      </div>
+    )
+  }
+
+  if (loading) {
+    return (
+      <div className="flex justify-center items-center py-12">
+        <div className="text-muted-foreground">Chargement des données de réception...</div>
+      </div>
+    )
+  }
+
+  if (!enrichedOrder) {
+    return (
+      <div className="text-center py-8 text-red-600">
+        Erreur lors du chargement de la commande
+      </div>
+    )
+  }
+
+  return (
+    <PurchaseOrderReceptionForm
+      purchaseOrder={enrichedOrder}
+      onSuccess={onSuccess}
+      onCancel={onCancel}
+    />
+  )
 }
 
 export default function PurchaseOrdersPage() {
@@ -348,11 +410,12 @@ export default function PurchaseOrdersPage() {
                     <div className="text-sm space-y-1">
                       <p><span className="font-medium">Numéro:</span> {selectedOrder.po_number}</p>
                       <p><span className="font-medium">Fournisseur:</span> {selectedOrder.organisations?.name}</p>
-                      <p><span className="font-medium">Statut:</span>
-                        <Badge className={`ml-2 ${statusColors[selectedOrder.status]}`}>
+                      <div className="flex items-center gap-2">
+                        <span className="font-medium text-sm">Statut:</span>
+                        <Badge className={statusColors[selectedOrder.status]}>
                           {statusLabels[selectedOrder.status]}
                         </Badge>
-                      </p>
+                      </div>
                       <p><span className="font-medium">Date création:</span> {formatDate(selectedOrder.created_at)}</p>
                       <p><span className="font-medium">Date livraison prévue:</span> {selectedOrder.expected_delivery_date ? formatDate(selectedOrder.expected_delivery_date) : 'Non définie'}</p>
                     </div>
@@ -432,22 +495,14 @@ export default function PurchaseOrdersPage() {
               </TabsContent>
 
               <TabsContent value="reception" className="space-y-4">
-                <div className="text-center py-8">
-                  <Truck className="mx-auto h-12 w-12 text-gray-400 mb-4" />
-                  <p className="text-gray-500">Cliquez sur le bouton camion dans la liste des commandes</p>
-                  <p className="text-sm text-gray-400">Pour réceptionner une commande confirmée ou partiellement reçue</p>
-                  <ButtonV2
-                    variant="outline"
-                    className="mt-4"
-                    onClick={() => {
-                      setShowOrderDetail(false)
-                      setShowReceptionModal(true)
-                    }}
-                  >
-                    <Truck className="h-4 w-4 mr-2" />
-                    Ouvrir le module de réception
-                  </ButtonV2>
-                </div>
+                <ReceptionTabContent
+                  order={selectedOrder}
+                  onSuccess={() => {
+                    fetchOrders()
+                    setShowOrderDetail(false)
+                  }}
+                  onCancel={() => setShowOrderDetail(false)}
+                />
               </TabsContent>
             </Tabs>
           )}

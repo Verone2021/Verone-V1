@@ -2,7 +2,7 @@
 
 import React from 'react'
 import Link from 'next/link'
-import { Clock, Package, TrendingUp, TrendingDown, RotateCcw, FileText, Settings, ShoppingCart, ExternalLink, X } from 'lucide-react'
+import { Clock, Package, TrendingUp, TrendingDown, RotateCcw, FileText, ExternalLink, X } from 'lucide-react'
 import { Badge } from '@/components/ui/badge'
 import { ButtonV2 } from '@/components/ui/button'
 import {
@@ -114,39 +114,6 @@ export function MovementsTable({ movements, loading, onMovementClick, onCancelCl
     }
   }
 
-  const getMovementOrigin = (movement: MovementWithDetails) => {
-    const userName = movement.user_name || 'Utilisateur inconnu'
-    const referenceType = movement.reference_type
-
-    // Mouvement manuel
-    if (referenceType === 'manual_adjustment' || referenceType === 'manual_entry') {
-      return {
-        icon: <Settings className="h-3 w-3 text-blue-600" />,
-        text: `Manuel - ${userName}`,
-        badge: <Badge variant="default" className="bg-blue-50 text-blue-700 hover:bg-blue-50">Manuel</Badge>
-      }
-    }
-
-    // Mouvements liés aux commandes
-    if (referenceType?.includes('order') || referenceType?.includes('purchase') || referenceType?.includes('sale')) {
-      const orderType = referenceType.includes('purchase') ? 'ACHAT' :
-                       referenceType.includes('sale') ? 'VENTE' : 'CMD'
-      const orderRef = movement.reference_id?.substring(0, 8) || 'INCONNUE'
-
-      return {
-        icon: <ShoppingCart className="h-3 w-3 text-purple-600" />,
-        text: `Commande ${orderType}-${orderRef} - ${userName}`,
-        badge: <Badge variant="default" className="bg-purple-50 text-purple-700 hover:bg-purple-50">Commande</Badge>
-      }
-    }
-
-    // Autres types de mouvements
-    return {
-      icon: <Clock className="h-3 w-3 text-gray-600" />,
-      text: `${referenceType || 'Non spécifié'} - ${userName}`,
-      badge: <Badge variant="secondary">{referenceType || 'Autre'}</Badge>
-    }
-  }
 
   if (loading) {
     return (
@@ -159,16 +126,12 @@ export function MovementsTable({ movements, loading, onMovementClick, onCancelCl
               <TableHead>Type</TableHead>
               <TableHead>Quantité</TableHead>
               <TableHead>Commande Liée</TableHead>
-              <TableHead>Origine</TableHead>
               {onCancelClick && <TableHead className="w-[100px] text-center">Actions</TableHead>}
             </TableRow>
           </TableHeader>
           <TableBody>
             {[...Array(10)].map((_, i) => (
               <TableRow key={i}>
-                <TableCell>
-                  <div className="h-4 bg-gray-200 rounded animate-pulse"></div>
-                </TableCell>
                 <TableCell>
                   <div className="h-4 bg-gray-200 rounded animate-pulse"></div>
                 </TableCell>
@@ -221,7 +184,6 @@ export function MovementsTable({ movements, loading, onMovementClick, onCancelCl
             <TableHead>Type</TableHead>
             <TableHead>Quantité</TableHead>
             <TableHead>Commande Liée</TableHead>
-            <TableHead>Origine</TableHead>
             {onCancelClick && <TableHead className="w-[100px] text-center">Actions</TableHead>}
           </TableRow>
         </TableHeader>
@@ -309,26 +271,6 @@ export function MovementsTable({ movements, loading, onMovementClick, onCancelCl
                 ) : (
                   <span className="text-xs text-gray-400">-</span>
                 )}
-              </TableCell>
-
-              {/* Origine */}
-              <TableCell>
-                <div className="max-w-[250px]">
-                  {(() => {
-                    const origin = getMovementOrigin(movement)
-                    return (
-                      <div>
-                        <div className="flex items-center gap-2 mb-1">
-                          {origin.icon}
-                          {origin.badge}
-                        </div>
-                        <div className="text-xs text-gray-600">
-                          {movement.user_name || 'Utilisateur inconnu'}
-                        </div>
-                      </div>
-                    )
-                  })()}
-                </div>
               </TableCell>
 
               {/* Actions */}

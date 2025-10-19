@@ -132,7 +132,7 @@ export function ClientAssignmentSelector({
 
       {/* Sélecteur principal */}
       <div className="relative">
-        <Button
+        <ButtonV2
           type="button"
           variant="outline"
           role="combobox"
@@ -167,7 +167,7 @@ export function ClientAssignmentSelector({
 
         {/* Bouton de suppression si client sélectionné */}
         {selectedClient && !disabled && (
-          <Button
+          <ButtonV2
             type="button"
             variant="ghost"
             size="sm"
@@ -245,7 +245,7 @@ export function ClientAssignmentSelector({
           {/* Actions */}
           {clients.length > 0 && (
             <div className="p-3 border-t border-gray-200">
-              <Button
+              <ButtonV2
                 type="button"
                 variant="ghost"
                 size="sm"

@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from 'react'
+import { useState, useRef } from 'react'
 import { useRouter } from 'next/navigation'
 import { Upload, Link, Package, ArrowRight, Loader2, Euro } from 'lucide-react'
 import { ButtonV2 } from '@/components/ui/button'
@@ -17,12 +17,14 @@ interface SourcingQuickFormProps {
   onSuccess?: (draftId: string) => void
   onCancel?: () => void
   className?: string
+  showHeader?: boolean // Afficher le header (défaut: true)
 }
 
 export function SourcingQuickForm({
   onSuccess,
   onCancel,
-  className
+  className,
+  showHeader = true
 }: SourcingQuickFormProps) {
   const router = useRouter()
   const { toast } = useToast()
@@ -40,6 +42,9 @@ export function SourcingQuickForm({
   const [imagePreview, setImagePreview] = useState<string>('')
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [errors, setErrors] = useState<Record<string, string>>({})
+
+  // Référence pour l'input file (pattern React 2024)
+  const fileInputRef = useRef<HTMLInputElement>(null)
 
   // Gestion upload image
   const handleImageSelect = (file: File) => {
@@ -172,20 +177,22 @@ export function SourcingQuickForm({
   return (
     <div className={cn("bg-white", className)}>
       {/* Header */}
-      <div className="border-b border-gray-200 px-6 py-4">
-        <div className="flex items-center justify-between">
-          <div>
-            <h1 className="text-2xl font-bold text-black">Sourcing Rapide</h1>
-            <p className="text-gray-600 mt-1">
-              Ajoutez rapidement un produit à sourcer pour le catalogue général ou pour un client spécifique
-            </p>
-          </div>
-          <div className="flex items-center text-sm text-gray-500">
-            <Package className="h-4 w-4 mr-2" />
-            Mode Sourcing
+      {showHeader && (
+        <div className="border-b border-gray-200 px-6 py-4">
+          <div className="flex items-center justify-between">
+            <div>
+              <h1 className="text-2xl font-bold text-black">Sourcing Rapide</h1>
+              <p className="text-gray-600 mt-1">
+                Ajoutez rapidement un produit à sourcer pour le catalogue général ou pour un client spécifique
+              </p>
+            </div>
+            <div className="flex items-center text-sm text-gray-500">
+              <Package className="h-4 w-4 mr-2" />
+              Mode Sourcing
+            </div>
           </div>
         </div>
-      </div>
+      )}
 
       {/* Formulaire */}
       <form onSubmit={handleSubmit} className="p-6 space-y-6">
@@ -217,7 +224,7 @@ export function SourcingQuickForm({
                 <div className="text-sm text-gray-600">
                   {selectedImage?.name}
                 </div>
-                <Button
+                <ButtonV2
                   type="button"
                   variant="outline"
                   size="sm"
@@ -236,18 +243,24 @@ export function SourcingQuickForm({
                   <p className="text-gray-600">
                     Glissez-déposez une image ou
                   </p>
-                  <Label className="cursor-pointer text-black hover:underline">
+                  <ButtonV2
+                    type="button"
+                    variant="link"
+                    onClick={() => fileInputRef.current?.click()}
+                    className="text-black hover:underline p-0 h-auto font-normal"
+                  >
                     cliquez pour sélectionner
-                    <input
-                      type="file"
-                      accept="image/*"
-                      className="hidden"
-                      onChange={(e) => {
-                        const file = e.target.files?.[0]
-                        if (file) handleImageSelect(file)
-                      }}
-                    />
-                  </Label>
+                  </ButtonV2>
+                  <input
+                    ref={fileInputRef}
+                    type="file"
+                    accept="image/*"
+                    className="hidden"
+                    onChange={(e) => {
+                      const file = e.target.files?.[0]
+                      if (file) handleImageSelect(file)
+                    }}
+                  />
                 </div>
                 <p className="text-xs text-gray-500">
                   PNG, JPG, WEBP jusqu'à 10MB
@@ -401,7 +414,7 @@ export function SourcingQuickForm({
 
           <div className="flex items-center space-x-3">
             {onCancel && (
-              <Button
+              <ButtonV2
                 type="button"
                 variant="ghost"
                 onClick={onCancel}
@@ -411,7 +424,7 @@ export function SourcingQuickForm({
               </ButtonV2>
             )}
 
-            <Button
+            <ButtonV2
               type="submit"
               disabled={isSubmitting}
               className="bg-black hover:bg-gray-800 text-white"

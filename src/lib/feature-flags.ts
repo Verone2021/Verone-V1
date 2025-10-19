@@ -46,44 +46,58 @@ export interface FeatureFlags {
 }
 
 /**
- * Configuration des feature flags basée sur les variables d'environnement
+ * Configuration des feature flags - PHASE 1 DÉPLOIEMENT: Auth + Profil uniquement
+ *
+ * ✅ ACTIVÉ Phase 1:
+ * - Auth (login/logout)
+ * - Profil utilisateur
+ * - Admin (gestion users)
+ * - Dashboard (vue basique)
+ *
+ * 🚧 DÉSACTIVÉ Phase 2+:
+ * - Produits (catalogue, sourcing)
+ * - Consultations
+ * - Commandes (clients, fournisseurs)
+ * - Stocks
+ * - Finance
+ * - Canaux vente
  */
 export const featureFlags: FeatureFlags = {
-  // Phases
-  phase1Enabled: process.env.NEXT_PUBLIC_PHASE_1_ENABLED === 'true',
-  phase2Enabled: process.env.NEXT_PUBLIC_PHASE_2_ENABLED === 'true',
-  phase3Enabled: process.env.NEXT_PUBLIC_PHASE_3_ENABLED === 'true',
+  // Phases - PHASE 1 SEULEMENT
+  phase1Enabled: true,   // Auth + Profil + Dashboard basique
+  phase2Enabled: false,  // Stocks + Commandes (désactivé)
+  phase3Enabled: false,  // Interactions + Canaux (désactivé)
 
-  // Phase 1 - ACTIFS
-  dashboardEnabled: process.env.NEXT_PUBLIC_DASHBOARD_ENABLED === 'true',
-  profilesEnabled: process.env.NEXT_PUBLIC_PROFILES_ENABLED === 'true',
-  catalogueEnabled: process.env.NEXT_PUBLIC_CATALOGUE_ENABLED === 'true',
-  sourcingEnabled: process.env.NEXT_PUBLIC_SOURCING_ENABLED === 'true',
+  // Phase 1 - Dashboard basique + Profil
+  dashboardEnabled: true,      // Dashboard basique (sans dépendances produits/stock)
+  profilesEnabled: true,       // ✅ Profil utilisateur
+  catalogueEnabled: false,     // 🚧 Produits désactivés Phase 1
+  sourcingEnabled: false,      // 🚧 Sourcing désactivé Phase 1
 
-  // Phase 2 - INACTIFS
-  stocksEnabled: process.env.NEXT_PUBLIC_STOCKS_ENABLED === 'true',
-  commandesEnabled: process.env.NEXT_PUBLIC_COMMANDES_ENABLED === 'true',
+  // Phase 2 - DÉSACTIVÉ
+  stocksEnabled: false,        // 🚧 Stocks désactivés
+  commandesEnabled: false,     // 🚧 Commandes désactivées
 
-  // Phase 3 - INACTIFS
-  interactionsEnabled: process.env.NEXT_PUBLIC_INTERACTIONS_ENABLED === 'true',
-  canauxVenteEnabled: process.env.NEXT_PUBLIC_CANAUX_VENTE_ENABLED === 'true',
-  contactsEnabled: process.env.NEXT_PUBLIC_CONTACTS_ENABLED === 'true',
+  // Phase 3 - DÉSACTIVÉ
+  interactionsEnabled: false,  // 🚧 Consultations désactivées
+  canauxVenteEnabled: false,   // 🚧 Canaux vente désactivés
+  contactsEnabled: false,      // 🚧 Contacts désactivés
 
-  // Modules spéciaux
-  adminEnabled: process.env.NEXT_PUBLIC_ADMIN_ENABLED === 'true',
-  parametresEnabled: process.env.NEXT_PUBLIC_PARAMETRES_ENABLED === 'true',
-  testsManuelsEnabled: process.env.NEXT_PUBLIC_TESTS_MANUELS_ENABLED === 'true',
+  // Modules spéciaux - Admin + Paramètres actifs
+  adminEnabled: true,          // ✅ Gestion users/rôles
+  parametresEnabled: true,     // ✅ Paramètres application
+  testsManuelsEnabled: false,  // 🚧 Tests manuels désactivés
 
-  // Features spécifiques
-  photoUploadWorkflowEnabled: process.env.NEXT_PUBLIC_PHOTO_UPLOAD_WORKFLOW_ENABLED === 'true',
-  googleMerchantSyncEnabled: process.env.NEXT_PUBLIC_GOOGLE_MERCHANT_SYNC_ENABLED === 'true',
-  mcpMonitoringEnabled: process.env.NEXT_PUBLIC_MCP_MONITORING_ENABLED === 'true',
+  // Features spécifiques - TOUT DÉSACTIVÉ Phase 1
+  photoUploadWorkflowEnabled: false,     // 🚧 Upload photos désactivé
+  googleMerchantSyncEnabled: false,      // 🚧 Google Merchant désactivé
+  mcpMonitoringEnabled: false,           // 🚧 Monitoring désactivé
 
-  // Modules Finance (Phase 2) - DÉSACTIVÉS pour Phase 1 déploiement
-  financeEnabled: process.env.NEXT_PUBLIC_FINANCE_ENABLED === 'true' || false,
-  facturationEnabled: process.env.NEXT_PUBLIC_FACTURATION_ENABLED === 'true' || false,
-  tresorerieEnabled: process.env.NEXT_PUBLIC_TRESORERIE_ENABLED === 'true' || false,
-  rapprochementEnabled: process.env.NEXT_PUBLIC_RAPPROCHEMENT_ENABLED === 'true' || false
+  // Modules Finance - TOUT DÉSACTIVÉ Phase 1
+  financeEnabled: false,
+  facturationEnabled: false,
+  tresorerieEnabled: false,
+  rapprochementEnabled: false
 }
 
 /**

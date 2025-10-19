@@ -92,15 +92,14 @@ export function UniversalOrderDetailsModal({
               status,
               created_at,
               expected_delivery_date,
-              total_amount,
+              total_ttc,
+              customer_id,
               customer_type,
-              organisations(name),
-              individual_customers(first_name, last_name),
               sales_order_items(
                 id,
                 quantity,
-                unit_price,
-                total_price,
+                unit_price_ht,
+                total_ht,
                 products(name)
               )
             `)
@@ -109,9 +108,24 @@ export function UniversalOrderDetailsModal({
 
           if (orderError) throw orderError
 
-          const customerName = order.customer_type === 'organization'
-            ? order.organisations?.name
-            : `${order.individual_customers?.first_name} ${order.individual_customers?.last_name}`
+          // Récupérer nom client selon type (jointure manuelle polymorphe)
+          let customerName = 'Client inconnu'
+
+          if (order.customer_type === 'organization' && order.customer_id) {
+            const { data: org } = await supabase
+              .from('organisations')
+              .select('name')
+              .eq('id', order.customer_id)
+              .single()
+            customerName = org?.name || 'Organisation inconnue'
+          } else if (order.customer_type === 'individual' && order.customer_id) {
+            const { data: individual } = await supabase
+              .from('individual_customers')
+              .select('first_name, last_name')
+              .eq('id', order.customer_id)
+              .single()
+            customerName = individual ? `${individual.first_name} ${individual.last_name}` : 'Particulier inconnu'
+          }
 
           setOrderDetails({
             id: order.id,
@@ -119,14 +133,14 @@ export function UniversalOrderDetailsModal({
             status: order.status,
             created_at: order.created_at,
             expected_delivery_date: order.expected_delivery_date,
-            total_amount: order.total_amount,
+            total_amount: order.total_ttc,
             customer_name: customerName,
             items: order.sales_order_items.map((item: any) => ({
               id: item.id,
               product_name: item.products?.name || 'Produit inconnu',
               quantity: item.quantity,
-              unit_price: item.unit_price,
-              total_price: item.total_price
+              unit_price: item.unit_price_ht,
+              total_price: item.total_ht
             }))
           })
         } else if (orderType === 'purchase') {
@@ -139,13 +153,13 @@ export function UniversalOrderDetailsModal({
               status,
               created_at,
               expected_delivery_date,
-              total_amount,
-              suppliers(name),
+              total_ttc,
+              supplier_id,
               purchase_order_items(
                 id,
                 quantity,
-                unit_price,
-                total_price,
+                unit_price_ht,
+                total_ht,
                 products(name)
               )
             `)
@@ -154,26 +168,52 @@ export function UniversalOrderDetailsModal({
 
           if (orderError) throw orderError
 
+          // Récupérer nom fournisseur (supplier_id → organisations)
+          let supplierName = 'Fournisseur inconnu'
+
+          if (order.supplier_id) {
+            const { data: supplier } = await supabase
+              .from('organisations')
+              .select('name')
+              .eq('id', order.supplier_id)
+              .single()
+            supplierName = supplier?.name || 'Fournisseur inconnu'
+          }
+
           setOrderDetails({
             id: order.id,
             order_number: order.po_number,
             status: order.status,
             created_at: order.created_at,
             expected_delivery_date: order.expected_delivery_date,
-            total_amount: order.total_amount,
-            supplier_name: order.suppliers?.name,
+            total_amount: order.total_ttc,
+            supplier_name: supplierName,
             items: order.purchase_order_items.map((item: any) => ({
               id: item.id,
               product_name: item.products?.name || 'Produit inconnu',
               quantity: item.quantity,
-              unit_price: item.unit_price,
-              total_price: item.total_price
+              unit_price: item.unit_price_ht,
+              total_price: item.total_ht
             }))
           })
         }
       } catch (err: any) {
-        console.error('Erreur chargement commande:', err)
-        setError(err.message || 'Erreur lors du chargement de la commande')
+        // Logs détaillés pour debugging Supabase errors
+        console.error('[UniversalOrderDetailsModal] Erreur chargement commande:', {
+          orderId,
+          orderType,
+          errorMessage: err?.message,
+          errorCode: err?.code,
+          errorDetails: err?.details,
+          errorHint: err?.hint,
+          fullError: err
+        })
+
+        // Message utilisateur clair
+        const errorMessage = err?.message ||
+          `Impossible de charger la commande ${orderType === 'sales' ? 'client' : 'fournisseur'}`
+
+        setError(errorMessage)
       } finally {
         setLoading(false)
       }

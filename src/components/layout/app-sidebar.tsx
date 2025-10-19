@@ -49,7 +49,7 @@ interface NavItem {
   children?: NavItem[]
 }
 
-// STRUCTURE OPTIMISÉE avec badges notifications (fonction pour valeurs dynamiques)
+// STRUCTURE PHASE 1 - Auth + Profil + Admin uniquement
 const getNavItems = (stockAlertsCount: number): NavItem[] => [
   {
     title: "Dashboard",
@@ -58,50 +58,39 @@ const getNavItems = (stockAlertsCount: number): NavItem[] => [
     description: "Vue d'ensemble"
   },
   {
-    title: "Produits",
-    href: "/produits",
-    icon: Package,
-    description: "Catalogue et sourcing",
+    title: "Administration",
+    href: "/admin/users",
+    icon: Users,
+    description: "Gestion plateforme",
     children: [
       {
-        title: "Sourcing",
-        href: "/produits/sourcing",
-        icon: Target,
-        description: "Approvisionnement",
-        children: [
-          {
-            title: "Produits à Sourcer",
-            href: "/produits/sourcing/produits",
-            icon: Search,
-            description: "Internes et clients"
-          },
-          {
-            title: "Validation",
-            href: "/produits/sourcing/validation",
-            icon: CheckCircle,
-            description: "Passage au catalogue"
-          }
-        ]
+        title: "Utilisateurs",
+        href: "/admin/users",
+        icon: User,
+        description: "Gestion utilisateurs"
       },
       {
-        title: "Catalogue",
-        href: "/produits/catalogue",
-        icon: BookOpen,
-        description: "Gestion unifiée"
-      },
-      {
-        title: "Catégories",
-        href: "/produits/catalogue/categories",
-        icon: Tags,
-        description: "Organisation"
-      },
-      {
-        title: "Variantes",
-        href: "/produits/catalogue/variantes",
-        icon: Layers,
-        description: "Couleurs, tailles, matériaux"
+        title: "Activité",
+        href: "/admin/activite-utilisateurs",
+        icon: Activity,
+        description: "Rapports d'activité"
       }
     ]
+  },
+  {
+    title: "Paramètres",
+    href: "/parametres",
+    icon: Settings,
+    description: "Configuration"
+  }
+
+  /* 🚧 PHASE 2+ - Modules désactivés (déploiement progressif)
+
+  {
+    title: "Produits",
+    href: "/produits/catalogue/dashboard",
+    icon: Package,
+    description: "Catalogue"
   },
   {
     title: "Stocks",
@@ -123,50 +112,19 @@ const getNavItems = (stockAlertsCount: number): NavItem[] => [
     icon: Truck,
     description: "Commandes fournisseurs"
   },
-  /* DÉSACTIVÉ PHASE 1 - Finance Module (réactivation Phase 2)
   {
     title: "Finance",
     href: "/factures",
     icon: Wallet,
-    description: "Facturation et trésorerie",
-    badge: 2,
-    badgeVariant: "default",
-    children: [
-      {
-        title: "Factures",
-        href: "/factures",
-        icon: FileText,
-        description: "Gestion factures",
-        badge: 2,
-        badgeVariant: "default"
-      },
-      {
-        title: "Trésorerie",
-        href: "/tresorerie",
-        icon: Banknote,
-        description: "Comptes Qonto"
-      },
-      {
-        title: "Rapprochement",
-        href: "/finance/rapprochement",
-        icon: RefreshCw,
-        description: "Matching bancaire"
-      }
-    ]
+    description: "Facturation et trésorerie"
   },
-  */
   {
-    title: "Organisation",
-    href: "/organisation",
+    title: "Contacts",
+    href: "/contacts-organisations",
     icon: Building2,
     description: "Contacts et partenaires"
-  },
-  {
-    title: "Paramètres",
-    href: "/parametres",
-    icon: Settings,
-    description: "Configuration"
   }
+  */
 ]
 
 function SidebarContent() {
@@ -184,9 +142,9 @@ function SidebarContent() {
   const [expandedItems, setExpandedItems] = useState<string[]>(() => {
     if (typeof window !== 'undefined') {
       const saved = localStorage.getItem('verone-sidebar-expanded')
-      return saved ? JSON.parse(saved) : ['Produits', 'Stocks', 'Ventes'] // Produits section expanded by default
+      return saved ? JSON.parse(saved) : ['Administration'] // Administration section expanded by default
     }
-    return ['Produits', 'Stocks', 'Ventes'] // Produits section expanded by default
+    return ['Administration'] // Administration section expanded by default
   })
 
   // Theme toggle

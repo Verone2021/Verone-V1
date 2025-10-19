@@ -187,8 +187,8 @@ export default function DashboardProduitsPage() {
   return (
     <div className="min-h-screen bg-neutral-50">
       {/* Header */}
-      <div className="bg-white border-b border-neutral-200 px-6 py-6">
-        <div className="max-w-7xl mx-auto">
+      <div className="bg-white border-b border-neutral-200">
+        <div className="container mx-auto px-6 py-6">
           <div className="flex items-center justify-between">
             <div>
               <h1 className="text-2xl font-bold text-neutral-900 mb-1">
@@ -211,7 +211,7 @@ export default function DashboardProduitsPage() {
       </div>
 
       {/* Contenu principal */}
-      <div className="max-w-7xl mx-auto p-6 space-y-8">
+      <div className="container mx-auto px-6 py-6 space-y-8">
         {/* Section KPIs */}
         <div>
           <h2 className="text-lg font-semibold text-neutral-900 mb-4">
@@ -272,14 +272,14 @@ export default function DashboardProduitsPage() {
               </p>
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
               {section.cards.map((card) => {
                 const Icon = card.icon
                 return (
                   <button
                     key={card.id}
                     onClick={() => router.push(card.path)}
-                    className="group relative overflow-hidden rounded-xl bg-white border border-neutral-200 p-4 text-left transition-all duration-200 hover:shadow-lg hover:border-neutral-300 hover:-translate-y-1"
+                    className="group relative overflow-hidden rounded-xl bg-white border border-neutral-200 p-3 text-left transition-all duration-200 hover:shadow-lg hover:border-neutral-300 hover:-translate-y-1"
                     aria-label={`Accéder à ${card.title}`}
                   >
                     {/* Gradient Background (hover) */}
@@ -289,18 +289,18 @@ export default function DashboardProduitsPage() {
                     />
 
                     {/* Content */}
-                    <div className="relative z-10 flex items-start gap-3">
+                    <div className="relative z-10 flex items-start gap-2">
                       {/* Icon */}
                       <div
-                        className={`flex-shrink-0 w-10 h-10 rounded-lg ${card.iconBg} flex items-center justify-center transition-transform duration-200 group-hover:scale-110`}
+                        className={`flex-shrink-0 w-8 h-8 rounded-lg ${card.iconBg} flex items-center justify-center transition-transform duration-200 group-hover:scale-110`}
                       >
-                        <Icon className={`w-5 h-5 ${card.iconColor}`} strokeWidth={2} aria-hidden="true" />
+                        <Icon className={`w-4 h-4 ${card.iconColor}`} strokeWidth={2} aria-hidden="true" />
                       </div>
 
                       {/* Text */}
                       <div className="flex-1 min-w-0">
                         <div className="flex items-center gap-2 mb-1">
-                          <h3 className="text-base font-semibold text-neutral-900 group-hover:text-blue-600 transition-colors">
+                          <h3 className="text-sm font-semibold text-neutral-900 group-hover:text-blue-600 transition-colors">
                             {card.title}
                           </h3>
                           {card.badge !== undefined && card.badge > 0 && (
@@ -309,14 +309,14 @@ export default function DashboardProduitsPage() {
                             </Badge>
                           )}
                         </div>
-                        <p className="text-sm text-neutral-600 leading-snug">
+                        <p className="text-xs text-neutral-600 leading-snug">
                           {card.description}
                         </p>
                       </div>
                     </div>
 
                     {/* Arrow indicator */}
-                    <div className="absolute top-4 right-4 text-neutral-400 group-hover:text-blue-600 transition-all duration-200 group-hover:translate-x-1">
+                    <div className="absolute top-3 right-3 text-neutral-400 group-hover:text-blue-600 transition-all duration-200 group-hover:translate-x-1">
                       <svg
                         width="16"
                         height="16"

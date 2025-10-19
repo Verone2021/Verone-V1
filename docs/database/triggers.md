@@ -1,8 +1,9 @@
 # 🔧 TRIGGERS - Documentation Complète
 
 **Date création** : 17 octobre 2025
+**Dernière mise à jour** : 19 octobre 2025 (Réceptions/Expéditions - 22 triggers + Algorithme Idempotent)
 **Database** : Supabase PostgreSQL (aorroydfjsrygmosnzrl)
-**Total** : 158 triggers sur 59 tables
+**Total** : 159 triggers sur 59 tables
 **Statut** : ✅ Production Active
 
 ---
@@ -1327,7 +1328,33 @@ EXECUTE FUNCTION validate_payment_amount()
 
 ---
 
-### 7. COMMANDES ACHAT (11 triggers)
+### 7. COMMANDES ACHAT (12 triggers)
+
+#### 🏗️ Architecture Bi-Trigger (2025-10-18)
+
+**Problème historique** : Le trigger `handle_purchase_order_forecast()` (sur `purchase_orders`) ne pouvait PAS gérer les réceptions partielles car le LATERAL JOIN pour comparer OLD vs NEW `quantity_received` était cassé (OLD.id = NEW.id → même table déjà updated).
+
+**Solution adoptée** : Séparation des responsabilités en 2 triggers spécialisés :
+
+| Trigger | Table | Responsabilité |
+|---------|-------|----------------|
+| **Trigger A** : `handle_purchase_order_forecast()` | `purchase_orders` | Transitions status globales (confirmed, cancelled, received TOTAL) |
+| **Trigger B** : `handle_purchase_order_item_receipt()` | `purchase_order_items` | Réceptions partielles item par item (quantity_received changes) |
+
+**Workflow réceptions partielles** :
+1. PO passe en `partially_received` → Trigger A ne fait RIEN
+2. User update `quantity_received` sur item → **Trigger B s'active**
+3. Trigger B détecte OLD.quantity_received vs NEW.quantity_received
+4. Trigger B crée 2 mouvements : OUT forecast (-delta) + IN real (+delta)
+5. Répéter étapes 2-4 pour chaque réception partielle
+
+**Avantages** :
+- ✅ Accès direct OLD/NEW values sur `purchase_order_items`
+- ✅ Trigger auto-filtré via clause WHEN (performance)
+- ✅ Traçabilité item par item via `stock_movements.purchase_order_item_id`
+- ✅ Logique simple et testable (Single Responsibility)
+
+---
 
 #### Table: `purchase_orders` (7 triggers)
 
@@ -1417,9 +1444,32 @@ FOR EACH ROW
 EXECUTE FUNCTION validate_po_supplier()
 ```
 
-#### Table: `purchase_order_items` (1 trigger)
+#### Table: `purchase_order_items` (2 triggers)
 
-##### 7.8. purchase_order_items_updated_at
+##### 7.8. trigger_purchase_order_item_receipt (AFTER UPDATE) ⭐ NOUVEAU 2025-10-18
+- **Timing** : AFTER UPDATE
+- **Événement** : UPDATE OF quantity_received
+- **Condition** : `WHEN (NEW.quantity_received IS DISTINCT FROM OLD.quantity_received)`
+- **Fonction** : `handle_purchase_order_item_receipt()`
+- **Description** : **Architecture Bi-Trigger** - Gère réceptions partielles item par item
+- **Workflow** :
+  1. Détecte changements `quantity_received` (OLD vs NEW)
+  2. Vérifie PO parent status (must be `partially_received` ou `received`)
+  3. Cas 1 (première réception) : OUT prévisionnel + IN réel
+  4. Cas 2 (réception supplémentaire) : OUT prévisionnel + IN réel
+  5. Enregistre `purchase_order_item_id` pour traçabilité
+- **Création** : Migration `20251018_001_add_purchase_order_item_receipt_trigger.sql`
+- **Root Cause Fix** : Résout problème LATERAL JOIN cassé (OLD.id = NEW.id dans trigger sur purchase_orders)
+- **Définition SQL** :
+```sql
+CREATE TRIGGER trigger_purchase_order_item_receipt
+AFTER UPDATE OF quantity_received ON public.purchase_order_items
+FOR EACH ROW
+WHEN (NEW.quantity_received IS DISTINCT FROM OLD.quantity_received)
+EXECUTE FUNCTION handle_purchase_order_item_receipt()
+```
+
+##### 7.9. purchase_order_items_updated_at
 - **Timing** : BEFORE UPDATE
 - **Événement** : UPDATE
 - **Condition** : Aucune
@@ -2020,6 +2070,146 @@ Confirmes-tu cette modification ?
 - sales_orders (workflow commandes)
 - purchase_orders (workflow achats)
 ```
+
+---
+
+## 📦 RÉCEPTIONS/EXPÉDITIONS - DÉCOUVERTES 2025
+
+**Date extraction** : 19 octobre 2025
+**Agent** : verone-database-architect (Anti-Hallucination)
+**Scope** : 6 tables (shipments, sales_orders, sales_order_items, purchase_orders, purchase_order_items, purchase_order_receptions)
+**Rapport complet** : [RAPPORT-EXTRACTION-TRIGGERS-RECEPTIONS-EXPEDITIONS.md](../../MEMORY-BANK/sessions/RAPPORT-EXTRACTION-TRIGGERS-RECEPTIONS-EXPEDITIONS.md) (30 KB)
+
+### 🎯 Résumé Exécutif
+
+**Triggers extraits** :
+- **Réceptions fournisseurs** : 12 triggers (purchase_orders, purchase_order_items, purchase_order_receptions)
+- **Expéditions clients** : 10 triggers (sales_orders, sales_order_items, shipments)
+- **Total** : 22 triggers documentés
+
+**Fonctions clés** : 7 fonctions PostgreSQL avec code SQL complet
+
+### 🏗️ Architecture Dual-Workflow
+
+**Innovation majeure** : 2 workflows parallèles (simplifié + avancé) pour réceptions ET expéditions
+
+| Workflow | Description | Tables utilisées |
+|----------|-------------|------------------|
+| **Simplifié** | Incrémentation directe colonnes `quantity_received/shipped` | `purchase_order_items.quantity_received`, `sales_order_items.quantity_shipped` |
+| **Avancé** | Traçabilité complète avec métadonnées (lots, batch, tracking) | `purchase_order_receptions` (lots), `shipments` (multi-transporteur) |
+
+### 🔑 Algorithme Différentiel Idempotent (FIX 2025-10-17)
+
+**Problème résolu** : Duplication mouvements stock lors réceptions/expéditions partielles multiples
+
+**Solution** :
+```sql
+-- Comparer quantity_received/shipped avec SUM des mouvements RÉELS déjà créés
+SELECT COALESCE(SUM(ABS(quantity_change)), 0)
+INTO v_already_received
+FROM stock_movements
+WHERE reference_type = 'purchase_order'
+  AND reference_id = NEW.id
+  AND product_id = v_item.product_id
+  AND affects_forecast = false  -- Mouvement RÉEL uniquement
+  AND movement_type = 'IN';
+
+-- Différence = ce qui doit être ajouté MAINTENANT
+v_qty_diff := v_item.quantity_received - v_already_received;
+```
+
+**Avantages** :
+- ✅ **Idempotent** : Peut être appelé N fois sans dupliquer
+- ✅ **Source de vérité unique** : `stock_movements` (pas colonnes calculées)
+- ✅ **Compatible multi-opérations** : Gère réceptions/expéditions partielles successives
+
+### 📊 Triggers Réceptions Fournisseurs (12 triggers)
+
+#### Table `purchase_orders` (7 triggers)
+1. `prevent_completed_po_modification` (BEFORE UPDATE) - Empêche modification PO completed
+2. `purchase_orders_updated_at` (BEFORE UPDATE) - Update timestamp
+3. `trigger_calculate_po_total` (AFTER INSERT/UPDATE purchase_order_items) - Recalcule total
+4. `trigger_handle_po_cancellation` (AFTER UPDATE) - Annule prévisions stock
+5. `trigger_set_po_number` (BEFORE INSERT) - Génère PO-YYYY-XXXX
+6-7. `trigger_validate_po_supplier` (BEFORE INSERT/UPDATE) - Valide supplier_id
+
+#### Table `purchase_order_items` (3 triggers)
+1. `trigger_calculate_po_total` (AFTER INSERT/UPDATE) - Recalcule total PO
+2. `trigger_purchase_order_item_receipt` (AFTER UPDATE OF quantity_received) - **Gestion réceptions partielles**
+   - Algorithme différentiel idempotent
+   - Création mouvements stock IN réel
+   - Traçabilité via `purchase_order_item_id`
+3. `purchase_order_items_updated_at` (BEFORE UPDATE) - Update timestamp
+
+#### Table `purchase_order_receptions` (2 triggers)
+1. `trg_purchase_receptions_stock_automation` (AFTER INSERT) - **Workflow avancé réceptions**
+   - Création mouvements stock avec metadata (lot, batch_number)
+   - Appelle fonction `create_purchase_reception_movement()`
+2. `trigger_purchase_order_receptions_updated_at` (BEFORE UPDATE) - Update timestamp
+
+**⚠️ Note Duplication** :
+- `trg_purchase_receptions_stock_automation()` (nouveau - workflow avancé)
+- `handle_purchase_reception()` (legacy - à nettoyer)
+- **Action recommandée** : Supprimer trigger legacy après validation workflow
+
+### 📦 Triggers Expéditions Clients (10 triggers)
+
+#### Table `sales_orders` (8 triggers)
+1. `prevent_completed_order_modification` (BEFORE UPDATE) - Empêche modification completed
+2. `sales_orders_updated_at` (BEFORE UPDATE) - Update timestamp
+3. `trigger_calculate_order_total` (AFTER INSERT/UPDATE sales_order_items) - Recalcule total
+4. `trigger_handle_order_cancellation` (AFTER UPDATE) - Libère stock réservé
+5. `trigger_reserve_stock_on_confirmation` (AFTER UPDATE) - Réserve stock
+6. `trigger_set_order_number` (BEFORE INSERT) - Génère SO-YYYY-XXXX
+7-8. `trigger_validate_order_customer` (BEFORE INSERT/UPDATE) - Valide customer_id
+
+**⚠️ IMPORTANT** : Trigger `handle_sales_order_stock()` gère expéditions partielles via `sales_order_items.quantity_shipped`
+
+#### Table `sales_order_items` (1 trigger)
+1. `trigger_calculate_order_total` (AFTER INSERT/UPDATE) - Recalcule total SO
+
+**📦 Gestion expéditions** : UPDATE `quantity_shipped` déclenche `handle_sales_order_stock()` (trigger sur `sales_orders`)
+
+#### Table `shipments` (1 trigger)
+1. `shipments_updated_at` (BEFORE UPDATE) - Update timestamp
+
+**⚠️ Note** : Pas de trigger direct pour création mouvements stock. Gestion via `handle_sales_order_stock()` lors UPDATE `sales_order_items.quantity_shipped`.
+
+### 🔧 Fonctions Clés Extraites (Code SQL Complet)
+
+| Fonction | Table | Objectif | Complexité |
+|----------|-------|----------|------------|
+| `handle_purchase_order_forecast()` | purchase_orders | Gestion stock prévisionnel + réceptions | 🟡 Moyenne |
+| `handle_sales_order_stock()` | sales_orders | Gestion stock prévisionnel + expéditions | 🟡 Moyenne |
+| `process_shipment_stock()` | shipments | Déduction stock lors expédition (2 workflows) | 🔴 Élevée |
+| `create_purchase_reception_movement()` | purchase_order_receptions | Mouvement stock IN lors réception | 🟢 Simple |
+| `handle_purchase_reception()` | purchase_order_receptions | Automatisation réception (legacy) | 🟡 Moyenne |
+| `update_sourcing_product_status_on_reception()` | purchase_order_receptions | Update statut produits sourcés | 🟢 Simple |
+| `create_sales_order_shipment_movements()` | sales_orders | Mouvements expédition complète (legacy) | 🟢 Simple |
+
+**📖 Code SQL complet** : Voir rapport MEMORY-BANK (30 KB) avec toutes les définitions
+
+### ⚠️ Points d'Attention
+
+1. **Duplication trigger réception** :
+   - `trg_purchase_receptions_stock_automation()` (nouveau)
+   - `handle_purchase_reception()` (legacy)
+   - **Action** : Nettoyer trigger legacy après validation
+
+2. **Complexité workflow avancé expéditions** :
+   - 4 tables interdépendantes (`sales_orders`, `shipments`, `shipping_parcels`, `parcel_items`)
+   - **Action** : Créer diagrammes séquence Mermaid
+
+3. **Performance** :
+   - Triggers parcourant `sales_order_items` en boucle
+   - **Action** : Analyser `EXPLAIN ANALYZE` sur grosses commandes (>50 items)
+
+### 📚 Références Complètes
+
+- **Rapport extraction complet** : [RAPPORT-EXTRACTION-TRIGGERS-RECEPTIONS-EXPEDITIONS.md](../../MEMORY-BANK/sessions/RAPPORT-EXTRACTION-TRIGGERS-RECEPTIONS-EXPEDITIONS.md)
+- **Matrice comparaison workflows** : Section 4 du rapport
+- **Code SQL fonctions** : Sections 1-3 du rapport
+- **Recommandations architecture** : Section 5 du rapport
 
 ---
 

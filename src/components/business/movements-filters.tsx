@@ -211,7 +211,7 @@ export function MovementsFilters({ filters, onFiltersChange, onReset, hasFilters
   ].filter(Boolean).length
 
   return (
-    <Card className="w-full">
+    <Card className="w-full border-black rounded-[10px] shadow-md">
       <CardHeader className="pb-4">
         <CardTitle className="flex items-center gap-2 text-lg">
           <Filter className="h-5 w-5" />

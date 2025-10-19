@@ -2,7 +2,7 @@
 
 ⚠️ **RÈGLE ABSOLUE** : Consulter CE fichier AVANT toute modification database
 
-**Dernière mise à jour** : 17 octobre 2025
+**Dernière mise à jour** : 19 octobre 2025
 **Database** : PostgreSQL via Supabase
 **Projet** : aorroydfjsrygmosnzrl
 
@@ -287,6 +287,10 @@ Commandes vente clients
 #### 45. **sales_order_items** (13 colonnes)
 Lignes commandes vente
 - **Colonnes clés** : id, sales_order_id, product_id, quantity, unit_price_ht
+- **📦 Gestion Expéditions** : `quantity_shipped` INTEGER NOT NULL DEFAULT 0 - Quantité expédiée (expéditions partielles)
+  - **Calcul différentiel** : `quantity_remaining = quantity - quantity_shipped`
+  - **Workflow** : Incrémentation lors création shipments (voir table `shipments`)
+  - **Trigger** : Déclenche `handle_sales_order_stock()` lors UPDATE
 - **Relations** : → sales_orders, products
 
 #### 46. **order_discounts** (21 colonnes)
@@ -294,9 +298,82 @@ Remises applicables commandes
 - **Colonnes clés** : id, code, name, discount_type, discount_value
 
 #### 47. **shipments** (32 colonnes)
-Expéditions commandes
-- **Colonnes clés** : id, sales_order_id, tracking_number, carrier_name
-- **Relations** : → sales_orders
+Expéditions commandes clients - Multi-transporteur (Packlink, Mondial Relay, Chronotruck)
+
+**Colonnes principales** :
+- `id` UUID - Identifiant unique (PK)
+- `sales_order_id` UUID NOT NULL - Référence commande client (FK → sales_orders)
+- `shipping_method` shipping_method_type NOT NULL - Méthode ('packlink', 'mondial_relay', 'chronotruck', 'manual')
+- `shipment_type` shipment_type NOT NULL DEFAULT 'parcel' - Type de colis ('parcel', 'pallet')
+
+**Suivi & Transporteur** :
+- `carrier_name` TEXT - Nom transporteur
+- `service_name` TEXT - Service utilisé (ex: Colissimo, Chronopost)
+- `tracking_number` TEXT - Numéro suivi
+- `tracking_url` TEXT - URL tracking
+- `cost_paid_eur` NUMERIC(10,2) DEFAULT 0 - Coût payé transporteur
+- `cost_charged_eur` NUMERIC(10,2) DEFAULT 0 - Coût facturé client
+
+**Dates & Timeline** :
+- `created_at` TIMESTAMPTZ NOT NULL DEFAULT now() - Date création
+- `shipped_at` TIMESTAMPTZ - Date expédition
+- `delivered_at` TIMESTAMPTZ - Date livraison
+- `estimated_delivery_at` TIMESTAMPTZ - Livraison estimée
+- `updated_at` TIMESTAMPTZ DEFAULT now() - Dernière modification
+
+**Adresse** :
+- `shipping_address` JSONB - Adresse complète expédition
+
+**Packlink Integration** :
+- `packlink_shipment_id` TEXT - ID expédition Packlink
+- `packlink_label_url` TEXT - URL étiquette
+- `packlink_service_id` INTEGER - ID service Packlink
+- `packlink_response` JSONB - Réponse API complète
+
+**Mondial Relay Integration** :
+- `mondial_relay_point_id` TEXT - ID point relais
+- `mondial_relay_point_name` TEXT - Nom point relais
+- `mondial_relay_point_address` TEXT - Adresse point relais
+- `mondial_relay_label_url` TEXT - URL étiquette
+- `mondial_relay_response` JSONB - Réponse API complète
+
+**Chronotruck Integration** :
+- `chronotruck_reference` TEXT - Référence transport
+- `chronotruck_palette_count` INTEGER - Nombre palettes
+- `chronotruck_url` TEXT - URL suivi
+- `chronotruck_data` JSONB - Données transport
+
+**Métadonnées** :
+- `notes` TEXT - Notes internes
+- `metadata` JSONB DEFAULT '{}' - Données additionnelles
+- `created_by` UUID - Créateur (⚠️ Non contrainte, pas de FK user_profiles)
+
+**Relations** :
+- → sales_orders (1-N : une commande peut avoir plusieurs expéditions partielles)
+
+**Index** :
+- PRIMARY KEY (id)
+- idx_shipments_sales_order (sales_order_id) - Recherche par commande
+- idx_shipments_method (shipping_method) - Filtres transporteur
+- idx_shipments_type (shipment_type) - Filtres type colis
+- idx_shipments_tracking (tracking_number WHERE tracking_number IS NOT NULL) - Index partiel
+
+**Triggers** : Aucun trigger direct (gestion via sales_orders)
+
+**RLS Policies** : 3 policies (⚠️ VULNÉRABILITÉS détectées - voir rapport audit)
+- ⚠️ Policies trop permissives (authenticated vs Owner/Admin/Sales)
+- ⚠️ Aucune validation organisation
+- ⚠️ Migration SQL recommandée (voir docs/database/rls-policies.md)
+
+**Workflow** :
+1. Commande confirmée (sales_orders.status = 'confirmed')
+2. Préparation expédition → Création shipment
+3. Saisie infos transporteur + numéro tracking
+4. Update sales_order_items.quantity_shipped (différentiel)
+5. Trigger handle_sales_order_stock() → Création mouvements stock OUT
+6. Update sales_orders.status ('partially_shipped' ou 'shipped')
+
+**⚠️ IMPORTANT** : Pas de table `shipment_items` - Traçabilité via `sales_order_items.quantity_shipped` directement
 
 #### 48. **shipping_parcels** (10 colonnes)
 Colis expéditions
@@ -318,6 +395,12 @@ Commandes achat fournisseurs
 #### 51. **purchase_order_items** (12 colonnes)
 Lignes commandes achat
 - **Colonnes clés** : id, purchase_order_id, product_id, quantity, unit_price_ht
+- **📦 Gestion Réceptions** : `quantity_received` INTEGER NOT NULL DEFAULT 0 - Quantité reçue (réceptions partielles)
+  - **Calcul différentiel** : `quantity_remaining = quantity - quantity_received`
+  - **Workflow Simplifié** : Incrémentation directe via API `/api/purchase-receptions/validate`
+  - **Workflow Avancé** : Via table `purchase_order_receptions` (avec lots, batch_number)
+  - **Trigger** : Déclenche `handle_purchase_order_forecast()` lors UPDATE
+  - **Algorithme Idempotent** : Compare avec SUM mouvements stock déjà créés (évite duplications)
 - **Relations** : → purchase_orders, products
 
 #### 52. **purchase_order_receptions** (10 colonnes)

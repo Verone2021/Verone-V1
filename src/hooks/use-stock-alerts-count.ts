@@ -13,9 +13,9 @@ export function useStockAlertsCount() {
   useEffect(() => {
     const fetchCount = async () => {
       try {
-        const { count: alertCount, error } = await supabase
-          .from('stock_alerts_view')
-          .select('*', { count: 'exact', head: true })
+        // Utiliser RPC au lieu de vue (bypass RLS avec SECURITY DEFINER)
+        const { data: alertCount, error } = await supabase
+          .rpc('get_stock_alerts_count')
 
         if (error) {
           console.error('Erreur comptage alertes:', error)

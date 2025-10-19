@@ -39,6 +39,7 @@ export function ButtonV2({
   className,
   children,
   style: customStyle,
+  asChild, // ✅ Destructuré pour ne pas le propager au DOM
   ...props
 }: ButtonV2Props) {
 

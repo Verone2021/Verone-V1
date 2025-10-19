@@ -1,8 +1,9 @@
 'use client'
 
-import React, { useState } from 'react'
+import React, { useState, useEffect } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
-import { ArrowUpDown, Download, RefreshCw, ChevronLeft, ChevronRight, Eye, ArrowLeft, Plus } from 'lucide-react'
+import { ArrowUpDown, Download, RefreshCw, ChevronLeft, ChevronRight, Eye, ArrowLeft, Plus, Filter, ChevronDown } from 'lucide-react'
+import { cn } from '@/lib/utils'
 import { ButtonV2 } from '@/components/ui/button'
 import {
   Card,
@@ -52,6 +53,24 @@ export default function StockMovementsPage() {
   const [movementToCancel, setMovementToCancel] = useState<MovementWithDetails | null>(null)
   const [showCancelModal, setShowCancelModal] = useState(false)
   const [showQuickMovementModal, setShowQuickMovementModal] = useState(false)
+
+  // États pour filtres sidebar collapsible
+  const [filtersOpen, setFiltersOpen] = useState(false)
+  const [activeFiltersCount, setActiveFiltersCount] = useState(0)
+
+  // Compter filtres actifs
+  useEffect(() => {
+    const count = Object.keys(filters).filter(key => {
+      const value = filters[key as keyof typeof filters]
+      return (
+        value !== undefined &&
+        value !== null &&
+        key !== 'limit' &&
+        key !== 'offset'
+      )
+    }).length
+    setActiveFiltersCount(count)
+  }, [filters])
 
   // Modal commandes universelle
   const [selectedOrderId, setSelectedOrderId] = useState<string | null>(null)
@@ -111,22 +130,55 @@ export default function StockMovementsPage() {
       {/* Statistiques */}
       <MovementsStatsCards stats={stats} loading={loading} />
 
-      {/* Layout principal avec filtres et table */}
-      <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
-        {/* Sidebar filtres */}
-        <div className="lg:col-span-1">
-          <MovementsFilters
-            filters={filters}
-            onFiltersChange={applyFilters}
-            onReset={resetFilters}
-            hasFilters={hasFilters}
-          />
+      {/* Layout principal avec filtres collapsible */}
+      <div className="relative">
+        {/* Bouton Toggle Filtres */}
+        <div className="mb-4">
+          <ButtonV2
+            variant="outline"
+            size="sm"
+            onClick={() => setFiltersOpen(!filtersOpen)}
+            className="border-black text-black hover:bg-black hover:text-white transition-all"
+          >
+            <Filter className="h-4 w-4 mr-2" />
+            Filtres
+            {activeFiltersCount > 0 && (
+              <Badge className="ml-2 bg-blue-600 text-white">
+                {activeFiltersCount}
+              </Badge>
+            )}
+            <ChevronDown className={cn(
+              "h-4 w-4 ml-2 transition-transform duration-300",
+              filtersOpen && "rotate-180"
+            )} />
+          </ButtonV2>
         </div>
 
-        {/* Contenu principal */}
-        <div className="lg:col-span-3 space-y-4">
+        {/* Layout avec sidebar collapsible */}
+        <div className="flex gap-6">
+          {/* Sidebar Filters (Collapsible) */}
+          <div
+            className={cn(
+              "transition-all duration-300 ease-in-out overflow-hidden",
+              filtersOpen ? "w-[280px]" : "w-0"
+            )}
+          >
+            {filtersOpen && (
+              <div className="w-[280px]">
+                <MovementsFilters
+                  filters={filters}
+                  onFiltersChange={applyFilters}
+                  onReset={resetFilters}
+                  hasFilters={hasFilters}
+                />
+              </div>
+            )}
+          </div>
+
+          {/* Contenu Principal (Tableau) */}
+          <div className="flex-1 space-y-4">
           {/* En-tête table avec stats et pagination */}
-          <Card className="border-black">
+          <Card className="border-black rounded-[10px] shadow-md">
             <CardHeader className="pb-4">
               <div className="flex items-center justify-between">
                 <div>
@@ -217,7 +269,7 @@ export default function StockMovementsPage() {
 
           {/* Message d'aide si aucun résultat */}
           {!loading && movements.length === 0 && hasFilters && (
-            <Card className="p-8 border-black">
+            <Card className="p-8 border-black rounded-[10px] shadow-md">
               <div className="text-center">
                 <Eye className="h-12 w-12 text-gray-300 mx-auto mb-3" />
                 <h3 className="text-lg font-medium text-black mb-2">
@@ -240,7 +292,7 @@ export default function StockMovementsPage() {
 
           {/* Message d'aide si base vide */}
           {!loading && movements.length === 0 && !hasFilters && (
-            <Card className="p-8 border-black">
+            <Card className="p-8 border-black rounded-[10px] shadow-md">
               <div className="text-center">
                 <ArrowUpDown className="h-12 w-12 text-gray-300 mx-auto mb-3" />
                 <h3 className="text-lg font-medium text-black mb-2">
@@ -252,6 +304,7 @@ export default function StockMovementsPage() {
               </div>
             </Card>
           )}
+          </div>
         </div>
       </div>
     </>

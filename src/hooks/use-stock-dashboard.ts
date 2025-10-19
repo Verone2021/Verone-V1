@@ -250,17 +250,11 @@ export function useStockDashboard() {
       })
 
       // ============================================
-      // QUERY 5 & 6: Commandes Prévisionnelles (Désactivées temporairement)
-      // TODO: Réactiver quand données de test disponibles
-      // Problème: Foreign key disambiguation avec PostgREST
+      // QUERY 5 & 6: Commandes Prévisionnelles
+      // Récupération des commandes fournisseurs et clients en cours
       // ============================================
 
-      // Retourner tableaux vides pour éviter erreurs console
-      const incomingOrders: ForecastedOrder[] = []
-      const outgoingOrders: ForecastedOrder[] = []
-
-      /*
-      // VERSION AVEC JOINS - À RÉACTIVER APRÈS TESTS
+      // QUERY 5: Purchase Orders (commandes fournisseurs)
       const { data: purchaseOrders, error: poError } = await supabase
         .from('purchase_orders')
         .select(`
@@ -268,12 +262,16 @@ export function useStockDashboard() {
           po_number,
           expected_delivery_date,
           status,
+          supplier_id,
           purchase_order_items(quantity)
         `)
-        .in('status', ['draft', 'sent', 'confirmed'])
+        .in('status', ['draft', 'sent', 'confirmed', 'partially_received'])
         .order('expected_delivery_date', { ascending: true })
         .limit(5)
 
+      if (poError) throw poError
+
+      // QUERY 6: Sales Orders (commandes clients)
       const { data: salesOrders, error: soError } = await supabase
         .from('sales_orders')
         .select(`
@@ -281,14 +279,75 @@ export function useStockDashboard() {
           order_number,
           expected_delivery_date,
           status,
+          customer_id,
+          customer_type,
           sales_order_items(quantity)
         `)
         .in('status', ['confirmed', 'partially_shipped'])
         .order('expected_delivery_date', { ascending: true })
         .limit(5)
 
-      // Mapper avec supplier/customer names via requêtes séparées
-      */
+      if (soError) throw soError
+
+      // Mapper Purchase Orders avec supplier names
+      const incomingOrders: ForecastedOrder[] = []
+      for (const po of (purchaseOrders || [])) {
+        let supplierName = 'Fournisseur inconnu'
+
+        if (po.supplier_id) {
+          const { data: supplier } = await supabase
+            .from('organisations')
+            .select('name')
+            .eq('id', po.supplier_id)
+            .single()
+
+          supplierName = supplier?.name || 'Fournisseur inconnu'
+        }
+
+        incomingOrders.push({
+          id: po.id,
+          order_number: po.po_number,
+          order_type: 'purchase',
+          supplier_name: supplierName,
+          total_quantity: (po.purchase_order_items || []).reduce((sum: number, item: any) => sum + (item.quantity || 0), 0),
+          expected_date: po.expected_delivery_date || '',
+          status: po.status
+        })
+      }
+
+      // Mapper Sales Orders avec customer names (gestion polymorphe)
+      const outgoingOrders: ForecastedOrder[] = []
+      for (const so of (salesOrders || [])) {
+        let customerName = 'Client inconnu'
+
+        if (so.customer_type === 'organization' && so.customer_id) {
+          const { data: org } = await supabase
+            .from('organisations')
+            .select('name')
+            .eq('id', so.customer_id)
+            .single()
+
+          customerName = org?.name || 'Organisation inconnue'
+        } else if (so.customer_type === 'individual' && so.customer_id) {
+          const { data: individual } = await supabase
+            .from('individual_customers')
+            .select('first_name, last_name')
+            .eq('id', so.customer_id)
+            .single()
+
+          customerName = individual ? `${individual.first_name} ${individual.last_name}` : 'Particulier inconnu'
+        }
+
+        outgoingOrders.push({
+          id: so.id,
+          order_number: so.order_number,
+          order_type: 'sales',
+          client_name: customerName,
+          total_quantity: (so.sales_order_items || []).reduce((sum: number, item: any) => sum + (item.quantity || 0), 0),
+          expected_date: so.expected_delivery_date || '',
+          status: so.status
+        })
+      }
 
       // ============================================
       // Consolidation des métriques

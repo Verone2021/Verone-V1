@@ -61,7 +61,7 @@ function ConsultationRow({ consultation, onOpenPhotoModal, onViewDetails }: Cons
               title="Cliquer pour voir toutes les photos"
             >
               <Image
-                src={primaryImage.public_url || '/placeholder-consultation.jpg'}
+                src={primaryImage.public_url || '/placeholder-consultation.svg'}
                 alt={`Photo ${consultation.organisation_name}`}
                 fill
                 className="object-cover group-hover:scale-110 transition-transform"

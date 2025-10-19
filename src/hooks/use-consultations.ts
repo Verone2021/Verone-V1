@@ -26,6 +26,13 @@ export interface ClientConsultation {
   created_by?: string
   responded_at?: string
   responded_by?: string
+  // Lifecycle columns (ajoutées 2025-10-20)
+  validated_at?: string
+  validated_by?: string
+  archived_at?: string
+  archived_by?: string
+  deleted_at?: string
+  deleted_by?: string
 }
 
 // Interface existante maintenue pour rétrocompatibilité
@@ -274,6 +281,165 @@ export function useConsultations() {
     return updateConsultation(consultationId, updates)
   }
 
+  // Valider une consultation (utilisée Phase 2 pour pricing)
+  const validateConsultation = async (consultationId: string): Promise<boolean> => {
+    try {
+      setError(null)
+
+      const { error } = await supabase
+        .from('client_consultations')
+        .update({
+          validated_at: new Date().toISOString(),
+          status: 'terminee'
+        })
+        .eq('id', consultationId)
+
+      if (error) throw error
+
+      // Mettre à jour la liste locale
+      setConsultations(prev =>
+        prev.map(consultation =>
+          consultation.id === consultationId
+            ? { ...consultation, validated_at: new Date().toISOString(), status: 'terminee' as const }
+            : consultation
+        )
+      )
+
+      toast({
+        title: "Consultation validée",
+        description: "La consultation a été marquée comme validée"
+      })
+
+      return true
+    } catch (err) {
+      const message = err instanceof Error ? err.message : 'Erreur lors de la validation'
+      setError(message)
+      toast({
+        title: "Erreur",
+        description: message,
+        variant: "destructive"
+      })
+      return false
+    }
+  }
+
+  // Archiver une consultation
+  const archiveConsultation = async (consultationId: string): Promise<boolean> => {
+    try {
+      setError(null)
+
+      const { error } = await supabase
+        .from('client_consultations')
+        .update({ archived_at: new Date().toISOString() })
+        .eq('id', consultationId)
+
+      if (error) throw error
+
+      // Mettre à jour la liste locale
+      setConsultations(prev =>
+        prev.map(consultation =>
+          consultation.id === consultationId
+            ? { ...consultation, archived_at: new Date().toISOString() }
+            : consultation
+        )
+      )
+
+      toast({
+        title: "Consultation archivée",
+        description: "La consultation a été archivée"
+      })
+
+      return true
+    } catch (err) {
+      const message = err instanceof Error ? err.message : 'Erreur lors de l\'archivage'
+      setError(message)
+      toast({
+        title: "Erreur",
+        description: message,
+        variant: "destructive"
+      })
+      return false
+    }
+  }
+
+  // Désarchiver une consultation
+  const unarchiveConsultation = async (consultationId: string): Promise<boolean> => {
+    try {
+      setError(null)
+
+      const { error } = await supabase
+        .from('client_consultations')
+        .update({ archived_at: null })
+        .eq('id', consultationId)
+
+      if (error) throw error
+
+      // Mettre à jour la liste locale
+      setConsultations(prev =>
+        prev.map(consultation =>
+          consultation.id === consultationId
+            ? { ...consultation, archived_at: undefined }
+            : consultation
+        )
+      )
+
+      toast({
+        title: "Consultation désarchivée",
+        description: "La consultation a été désarchivée"
+      })
+
+      return true
+    } catch (err) {
+      const message = err instanceof Error ? err.message : 'Erreur lors du désarchivage'
+      setError(message)
+      toast({
+        title: "Erreur",
+        description: message,
+        variant: "destructive"
+      })
+      return false
+    }
+  }
+
+  // Supprimer une consultation (soft delete)
+  const deleteConsultation = async (consultationId: string): Promise<boolean> => {
+    if (!confirm('Êtes-vous sûr de vouloir supprimer cette consultation ?')) {
+      return false
+    }
+
+    try {
+      setError(null)
+
+      const { error } = await supabase
+        .from('client_consultations')
+        .update({ deleted_at: new Date().toISOString() })
+        .eq('id', consultationId)
+
+      if (error) throw error
+
+      // Retirer de la liste locale
+      setConsultations(prev =>
+        prev.filter(consultation => consultation.id !== consultationId)
+      )
+
+      toast({
+        title: "Consultation supprimée",
+        description: "La consultation a été supprimée"
+      })
+
+      return true
+    } catch (err) {
+      const message = err instanceof Error ? err.message : 'Erreur lors de la suppression'
+      setError(message)
+      toast({
+        title: "Erreur",
+        description: message,
+        variant: "destructive"
+      })
+      return false
+    }
+  }
+
   return {
     // État
     consultations,
@@ -285,7 +451,11 @@ export function useConsultations() {
     createConsultation,
     updateConsultation,
     assignConsultation,
-    updateStatus
+    updateStatus,
+    validateConsultation,
+    archiveConsultation,
+    unarchiveConsultation,
+    deleteConsultation
   }
 }
 

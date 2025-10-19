@@ -9,7 +9,7 @@ import { ButtonV2 } from '@/components/ui/button'
 import { Separator } from '@/components/ui/separator'
 import { SalesOrder, useSalesOrders } from '@/hooks/use-sales-orders'
 import { formatCurrency } from '@/lib/utils'
-import { ShippingManagerModal } from './shipping-manager-modal'
+import { SalesOrderShipmentModal } from './sales-order-shipment-modal'
 
 // ✅ Type Safety: Interface ProductImage stricte
 interface ProductImage {
@@ -97,9 +97,9 @@ export function OrderDetailModal({ order, open, onClose, onUpdate }: OrderDetail
   const canMarkAsPaid = order.status === 'confirmed' &&
     (order.payment_status === 'pending' || order.payment_status === 'partial')
 
-  const canShip = order.status === 'confirmed' &&
-    order.payment_status === 'paid' &&
-    !order.shipped_at
+  // Workflow Odoo-inspired: Permettre expédition pour confirmed + partially_shipped
+  // Paiement non requis (clients avec conditions paiement 30j par exemple)
+  const canShip = ['confirmed', 'partially_shipped'].includes(order.status)
 
   return (
     <>
@@ -451,7 +451,7 @@ export function OrderDetailModal({ order, open, onClose, onUpdate }: OrderDetail
       </Dialog>
 
       {/* Modal Gestion Expédition */}
-      <ShippingManagerModal
+      <SalesOrderShipmentModal
         order={order}
         open={showShippingModal}
         onClose={() => setShowShippingModal(false)}

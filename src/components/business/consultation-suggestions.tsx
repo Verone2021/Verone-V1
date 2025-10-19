@@ -191,7 +191,7 @@ export function ConsultationSuggestions({
 
                 {/* Actions */}
                 <div className="flex items-center space-x-2">
-                  <Button
+                  <ButtonV2
                     variant="outline"
                     size="sm"
                     onClick={() => handleLinkToConsultation(consultation.id)}

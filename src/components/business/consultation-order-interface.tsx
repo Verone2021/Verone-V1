@@ -10,18 +10,21 @@ import {
   Calculator,
   Edit,
   Check,
-  X
+  X,
+  Sparkles
 } from 'lucide-react'
 import { ButtonV2 } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Checkbox } from '@/components/ui/checkbox'
 import { Alert, AlertDescription } from '@/components/ui/alert'
-import { useConsultationItems, ConsultationItem, CreateConsultationItemData } from '../../hooks/use-consultations'
+import { useConsultationItems, ConsultationItem } from '../../hooks/use-consultations'
 import { useToast } from '../../hooks/use-toast'
+import { AddProductModal } from './add-product-modal'
+import { SourcingProductModal } from './sourcing-product-modal'
+import { useProducts } from '@/hooks/use-products'
 
 interface ConsultationOrderInterfaceProps {
   consultationId: string
@@ -35,24 +38,19 @@ export function ConsultationOrderInterface({
   const { toast } = useToast()
   const {
     consultationItems,
-    eligibleProducts,
     loading,
     error,
-    addItem,
     updateItem,
     removeItem,
     toggleFreeItem,
     calculateTotal,
-    getTotalItemsCount
+    getTotalItemsCount,
+    fetchConsultationItems
   } = useConsultationItems(consultationId)
 
-  // État pour l'ajout de nouveaux produits
-  const [showAddForm, setShowAddForm] = useState(false)
-  const [selectedProductId, setSelectedProductId] = useState('')
-  const [newQuantity, setNewQuantity] = useState(1)
-  const [newPrice, setNewPrice] = useState('')
-  const [newNotes, setNewNotes] = useState('')
-  const [newIsFree, setNewIsFree] = useState(false)
+  // État pour les modals
+  const [showAddModal, setShowAddModal] = useState(false)
+  const [showSourcingModal, setShowSourcingModal] = useState(false)
 
   // État pour l'édition inline
   const [editingItem, setEditingItem] = useState<string | null>(null)
@@ -60,41 +58,21 @@ export function ConsultationOrderInterface({
   const [editPrice, setEditPrice] = useState('')
   const [editNotes, setEditNotes] = useState('')
 
+  // Récupérer tous les produits non archivés pour le modal
+  const { products } = useProducts({
+    archived: false
+    // Note: On ne filtre pas par status pour permettre tous les produits non archivés
+  })
+
   // Gérer le changement d'items
   useEffect(() => {
     onItemsChanged?.()
   }, [consultationItems, onItemsChanged])
 
-  // Ajouter un nouvel item
-  const handleAddItem = async () => {
-    if (!selectedProductId) {
-      toast({
-        title: "Produit requis",
-        description: "Veuillez sélectionner un produit",
-        variant: "destructive"
-      })
-      return
-    }
-
-    const data: CreateConsultationItemData = {
-      consultation_id: consultationId,
-      product_id: selectedProductId,
-      quantity: newQuantity,
-      unit_price: newIsFree ? 0 : (newPrice ? parseFloat(newPrice) : undefined),
-      is_free: newIsFree,
-      notes: newNotes || undefined
-    }
-
-    const success = await addItem(data)
-    if (success) {
-      // Reset form
-      setSelectedProductId('')
-      setNewQuantity(1)
-      setNewPrice('')
-      setNewNotes('')
-      setNewIsFree(false)
-      setShowAddForm(false)
-    }
+  // Handler après ajout de produit via modal
+  const handleProductAdded = () => {
+    fetchConsultationItems(consultationId)
+    onItemsChanged?.()
   }
 
   // Commencer l'édition d'un item
@@ -178,104 +156,28 @@ export function ConsultationOrderInterface({
                 {totalItems} article{totalItems > 1 ? 's' : ''} • Total: {total.toFixed(2)}€ HT
               </CardDescription>
             </div>
-            <ButtonV2
-              onClick={() => setShowAddForm(!showAddForm)}
-              className="bg-black hover:bg-gray-800 text-white"
-            >
-              <Plus className="h-4 w-4 mr-2" />
-              Ajouter un produit
-            </ButtonV2>
+
+            {/* Boutons actions */}
+            <div className="flex gap-2">
+              <ButtonV2
+                onClick={() => setShowAddModal(true)}
+                className="bg-black hover:bg-gray-800 text-white"
+              >
+                <Plus className="h-4 w-4 mr-2" />
+                Ajouter un produit
+              </ButtonV2>
+
+              <ButtonV2
+                variant="outline"
+                onClick={() => setShowSourcingModal(true)}
+                className="border-purple-600 text-purple-600 hover:bg-purple-50"
+              >
+                <Sparkles className="h-4 w-4 mr-2" />
+                Sourcer un produit
+              </ButtonV2>
+            </div>
           </div>
         </CardHeader>
-
-        {/* Formulaire d'ajout */}
-        {showAddForm && (
-          <CardContent className="border-t bg-gray-50">
-            <div className="grid grid-cols-1 md:grid-cols-6 gap-4 items-end">
-              <div className="md:col-span-2">
-                <Label>Produit</Label>
-                <Select value={selectedProductId} onValueChange={setSelectedProductId}>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Sélectionner un produit..." />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {eligibleProducts.map(product => (
-                      <SelectItem key={product.id} value={product.id}>
-                        <div className="flex flex-col">
-                          <span className="font-medium">{product.name}</span>
-                          <span className="text-xs text-gray-500">
-                            {product.sku} • {product.supplier_name}
-                          </span>
-                        </div>
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-
-              <div>
-                <Label>Quantité</Label>
-                <Input
-                  type="number"
-                  min="1"
-                  value={newQuantity}
-                  onChange={(e) => setNewQuantity(parseInt(e.target.value) || 1)}
-                />
-              </div>
-
-              <div>
-                <Label>Prix unitaire</Label>
-                <div className="relative">
-                  <Input
-                    type="number"
-                    step="0.01"
-                    value={newPrice}
-                    onChange={(e) => setNewPrice(e.target.value)}
-                    disabled={newIsFree}
-                    placeholder="Auto"
-                  />
-                  <Euro className="absolute right-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
-                </div>
-              </div>
-
-              <div className="flex items-center space-x-2">
-                <Checkbox
-                  id="new-free"
-                  checked={newIsFree}
-                  onCheckedChange={(checked) => setNewIsFree(checked as boolean)}
-                />
-                <Label htmlFor="new-free">Gratuit</Label>
-              </div>
-
-              <div className="flex items-center space-x-2">
-                <ButtonV2
-                  onClick={handleAddItem}
-                  disabled={!selectedProductId}
-                  className="bg-green-600 hover:bg-green-700 text-white"
-                >
-                  <Check className="h-4 w-4 mr-1" />
-                  Ajouter
-                </ButtonV2>
-                <ButtonV2
-                  variant="outline"
-                  onClick={() => setShowAddForm(false)}
-                >
-                  <X className="h-4 w-4" />
-                </ButtonV2>
-              </div>
-            </div>
-
-            {/* Notes optionnelles */}
-            <div className="mt-4">
-              <Label>Notes (optionnelles)</Label>
-              <Input
-                value={newNotes}
-                onChange={(e) => setNewNotes(e.target.value)}
-                placeholder="Remarques particulières..."
-              />
-            </div>
-          </CardContent>
-        )}
       </Card>
 
       {/* Liste des produits */}
@@ -457,6 +359,23 @@ export function ConsultationOrderInterface({
           </div>
         )}
       </Card>
+
+      {/* Modals */}
+      <AddProductModal
+        open={showAddModal}
+        onClose={() => setShowAddModal(false)}
+        onProductAdded={handleProductAdded}
+        contextType="consultation"
+        contextId={consultationId}
+        showSalePrice={true}
+      />
+
+      <SourcingProductModal
+        open={showSourcingModal}
+        onClose={() => setShowSourcingModal(false)}
+        consultationId={consultationId}
+        onProductCreatedAndAdded={handleProductAdded}
+      />
     </div>
   )
 }

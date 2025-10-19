@@ -28,7 +28,7 @@ Research: Context7 (docs) + Serena (code analysis)
 Implement: Serena (symbolic editing) + Supabase (validation)
 Test: Playwright Browser (console) + Supabase (logs)
 Deploy: GitHub (PR) + Vercel (auto)
-Monitor: Sentry (issues) + Supabase (advisors)
+Monitor: Supabase (advisors + logs)
 ```
 
 ### Phase 3: CONSOLE ERROR CHECKING (Règle Sacrée)
@@ -198,7 +198,6 @@ mcp__playwright__browser_snapshot   // Accessibility
 mcp__context7__get-library-docs           // Docs officielles frameworks
 mcp__sequential-thinking__sequentialthinking  // Architecture complexe
 mcp__github__create_pull_request          // PR automatisées
-mcp__sentry__get_recent_issues            // Monitoring production
 ```
 
 ---
@@ -214,9 +213,9 @@ mcp__sentry__get_recent_issues            // Monitoring production
 ```typescript
 // ~50 tests ciblés max (vs 677)
 1. Console Error Checking (Playwright) - PRIORITÉ 1
-2. Sentry MCP monitoring temps réel - PRIORITÉ 2
-3. Tests manuels ciblés browser - PRIORITÉ 3
-4. Accessibility snapshots - PRIORITÉ 4
+2. Tests manuels ciblés browser - PRIORITÉ 2
+3. Accessibility snapshots - PRIORITÉ 3
+4. Supabase logs monitoring - PRIORITÉ 4
 ```
 
 ---
