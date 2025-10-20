@@ -1,8 +1,13 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
 
-const PACKLINK_API_KEY = '03df0c0d63fc1038eac7bf0964b2190b57460810d1025a38e4a54de57e804346'
+// SECURITY FIX 2025-10-20: Externalize API key to environment variable
+const PACKLINK_API_KEY = process.env.PACKLINK_API_KEY
 const PACKLINK_API_URL = 'https://api.packlink.com/v1'
+
+if (!PACKLINK_API_KEY) {
+  throw new Error('PACKLINK_API_KEY environment variable is required')
+}
 
 interface ParcelData {
   weight_kg: number

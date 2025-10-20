@@ -1,5 +1,6 @@
 const { getSecurityHeaders } = require('./src/lib/security/headers.js');
-const { withSentryConfig } = require('@sentry/nextjs');
+// Sentry temporairement désactivé (ligne 185)
+// const { withSentryConfig } = require('@sentry/nextjs');
 
 /** @type {import('next').NextConfig} */
 const nextConfig = {
