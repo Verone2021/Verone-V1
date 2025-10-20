@@ -438,11 +438,7 @@ function SidebarContent() {
       {/* Zone utilisateur + Theme toggle */}
       <div className="border-t border-black p-4">
         {!isCollapsed && (
-          <div className="flex items-center justify-between mb-3">
-            <div className="flex-1">
-              <p className="text-sm font-medium text-black">Admin</p>
-              <p className="text-xs text-black opacity-70">Owner</p>
-            </div>
+          <div className="flex items-center justify-end mb-3">
             <button
               onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}
               className="p-2 rounded-md hover:bg-black/5 transition-colors"
