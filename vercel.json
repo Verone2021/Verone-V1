@@ -13,7 +13,11 @@
       "headers": [
         {
           "key": "Access-Control-Allow-Origin",
-          "value": "*"
+          "value": "https://verone-backoffice.vercel.app"
+        },
+        {
+          "key": "Access-Control-Allow-Credentials",
+          "value": "true"
         },
         {
           "key": "Access-Control-Allow-Methods",
@@ -22,6 +26,22 @@
         {
           "key": "Access-Control-Allow-Headers",
           "value": "X-Requested-With, Content-Type, Authorization"
+        },
+        {
+          "key": "X-Frame-Options",
+          "value": "DENY"
+        },
+        {
+          "key": "X-Content-Type-Options",
+          "value": "nosniff"
+        },
+        {
+          "key": "Strict-Transport-Security",
+          "value": "max-age=31536000; includeSubDomains"
+        },
+        {
+          "key": "X-XSS-Protection",
+          "value": "1; mode=block"
         }
       ]
     }
@@ -35,7 +55,7 @@
   "crons": [
     {
       "path": "/api/cron/sync-abby-queue",
-      "schedule": "*/5 * * * *"
+      "schedule": "0 3 * * *"
     },
     {
       "path": "/api/cron/cleanup-abby-data",
