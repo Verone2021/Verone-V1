@@ -2,12 +2,14 @@ import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
 
 // SECURITY FIX 2025-10-20: Externalize API key to environment variable
+// DISABLED 2025-10-20: API Packlink désactivée pour éviter échec build
 const PACKLINK_API_KEY = process.env.PACKLINK_API_KEY
 const PACKLINK_API_URL = 'https://api.packlink.com/v1'
 
-if (!PACKLINK_API_KEY) {
-  throw new Error('PACKLINK_API_KEY environment variable is required')
-}
+// Ne plus throw d'erreur au build - vérifier au runtime dans POST
+// if (!PACKLINK_API_KEY) {
+//   throw new Error('PACKLINK_API_KEY environment variable is required')
+// }
 
 interface ParcelData {
   weight_kg: number
@@ -22,6 +24,14 @@ interface ParcelData {
 
 export async function POST(request: NextRequest) {
   try {
+    // Vérifier si l'API Packlink est configurée
+    if (!PACKLINK_API_KEY) {
+      return NextResponse.json(
+        { error: 'API Packlink non configurée. Veuillez contacter l\'administrateur.' },
+        { status: 501 } // 501 Not Implemented
+      )
+    }
+
     const supabase = createClient()
 
     // Authentification requise
