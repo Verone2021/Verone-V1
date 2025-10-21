@@ -14,8 +14,7 @@ import {
   Phone,
   FileText
 } from 'lucide-react'
-import { useOrganisation } from '@/hooks/use-organisations'
-import { useOrganisations } from '@/hooks/use-organisations'
+import { useOrganisation, useOrganisations, getOrganisationDisplayName } from '@/hooks/use-organisations'
 import { useOrganisationTabs } from '@/hooks/use-organisation-tabs'
 import { ContactEditSection } from '@/components/business/contact-edit-section'
 import { AddressEditSection } from '@/components/business/address-edit-section'
@@ -140,7 +139,7 @@ export default function PartnerDetailPage() {
           </div>
           <div className="flex items-center gap-3 mb-2">
             <Building2 className="h-6 w-6 text-black" />
-            <h1 className="text-2xl font-semibold text-black">{partner.name}</h1>
+            <h1 className="text-2xl font-semibold text-black">{getOrganisationDisplayName(partner)}</h1>
             <div className="flex gap-2">
               <Badge
                 variant={partner.is_active ? 'default' : 'secondary'}
@@ -210,7 +209,7 @@ export default function PartnerDetailPage() {
           {/* Logo de l'organisation - Composant réutilisable */}
           <OrganisationLogoCard
             organisationId={partner.id}
-            organisationName={partner.name}
+            organisationName={partner.legal_name}
             organisationType="partner"
             currentLogoUrl={partner.logo_url}
             onUploadSuccess={() => refetch()}
@@ -221,6 +220,37 @@ export default function PartnerDetailPage() {
             organisation={partner}
             organisationType="partner"
           />
+
+          {/* Identité Légale */}
+          <Card>
+            <CardContent className="p-6">
+              <h3 className="text-sm font-semibold text-gray-700 mb-4">Identité Légale</h3>
+              <div className="space-y-3 text-sm">
+                <div>
+                  <span className="text-gray-500 block mb-1">Dénomination sociale</span>
+                  <p className="font-medium text-black">{partner.legal_name}</p>
+                </div>
+                {partner.has_different_trade_name && partner.trade_name && (
+                  <div>
+                    <span className="text-gray-500 block mb-1">Nom commercial</span>
+                    <p className="font-medium text-black">{partner.trade_name}</p>
+                  </div>
+                )}
+                {partner.siren && (
+                  <div>
+                    <span className="text-gray-500 block mb-1">SIREN</span>
+                    <p className="font-medium font-mono text-black">{partner.siren}</p>
+                  </div>
+                )}
+                {partner.siret && (
+                  <div>
+                    <span className="text-gray-500 block mb-1">SIRET</span>
+                    <p className="font-medium font-mono text-black">{partner.siret}</p>
+                  </div>
+                )}
+              </div>
+            </CardContent>
+          </Card>
         </div>
       </div>
 
@@ -235,7 +265,7 @@ export default function PartnerDetailPage() {
         <TabContent activeTab={activeTab} tabId="contacts">
           <ContactsManagementSection
             organisationId={partner.id}
-            organisationName={partner.name}
+            organisationName={getOrganisationDisplayName(partner)}
             organisationType="partner"
             onUpdate={() => handlePartnerUpdate({})}
           />

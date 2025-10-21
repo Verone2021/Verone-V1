@@ -53,7 +53,7 @@ export interface Contact {
   // Relations jointes
   organisation?: {
     id: string
-    name: string
+    legal_name: string
     type: string
     customer_type?: string
   }
@@ -130,7 +130,7 @@ export function useContacts() {
           *,
           organisation:organisations (
             id,
-            name,
+            legal_name,
             type,
             customer_type
           )
@@ -193,7 +193,7 @@ export function useContacts() {
           *,
           organisation:organisations (
             id,
-            name,
+            legal_name,
             type,
             customer_type
           )
@@ -236,7 +236,7 @@ export function useContacts() {
           *,
           organisation:organisations (
             id,
-            name,
+            legal_name,
             type,
             customer_type
           )
@@ -296,7 +296,7 @@ export function useContacts() {
           *,
           organisation:organisations (
             id,
-            name,
+            legal_name,
             type,
             customer_type
           )
@@ -360,7 +360,7 @@ export function useContacts() {
           *,
           organisation:organisations (
             id,
-            name,
+            legal_name,
             type,
             customer_type
           )

@@ -25,7 +25,9 @@ export type OrganisationType = 'supplier' | 'customer' | 'partner' | 'internal' 
 
 export interface Organisation {
   id: string
-  name: string
+  legal_name: string // Dénomination sociale (nom enregistré RCS)
+  trade_name: string | null // Nom commercial (si différent)
+  has_different_trade_name: boolean | null // Indicateur nom commercial
   type: OrganisationType
   country: string | null
   is_active: boolean
@@ -49,7 +51,8 @@ export interface Organisation {
   has_different_shipping_address: boolean
 
   legal_form: string | null
-  siret: string | null
+  siren: string | null // SIREN (9 chiffres)
+  siret: string | null // SIRET (14 chiffres)
   vat_number: string | null
   industry_sector: string | null
   currency: string
@@ -59,7 +62,9 @@ export interface Organisation {
 }
 
 const baseOrganisationSchema = z.object({
-  name: z.string().min(1, 'Le nom est obligatoire'),
+  legal_name: z.string().min(1, 'La dénomination sociale est obligatoire'),
+  trade_name: z.string().optional().or(z.literal('')),
+  has_different_trade_name: z.boolean().default(false),
   country: z.string().min(1, 'Le pays est obligatoire'),
   is_active: z.boolean().default(true),
   notes: z.string().optional().or(z.literal('')),
@@ -83,7 +88,18 @@ const baseOrganisationSchema = z.object({
 
   // Légal
   legal_form: z.string().optional().or(z.literal('')),
-  siret: z.string().optional().or(z.literal('')),
+  siren: z.string()
+    .optional()
+    .or(z.literal(''))
+    .refine((val) => !val || /^\d{9}$/.test(val), {
+      message: 'Le SIREN doit contenir exactement 9 chiffres'
+    }),
+  siret: z.string()
+    .optional()
+    .or(z.literal(''))
+    .refine((val) => !val || /^\d{14}$/.test(val), {
+      message: 'Le SIRET doit contenir exactement 14 chiffres'
+    }),
   vat_number: z.string().optional().or(z.literal('')),
   industry_sector: z.string().optional().or(z.literal('')),
 
@@ -155,7 +171,9 @@ const SUPPLIER_SEGMENTS = [
 const getDefaultValues = (organisation?: Organisation | null): OrganisationFormData => {
   if (!organisation) {
     return {
-      name: '',
+      legal_name: '',
+      trade_name: '',
+      has_different_trade_name: false,
       country: 'FR',
       is_active: true,
       notes: '',
@@ -175,6 +193,7 @@ const getDefaultValues = (organisation?: Organisation | null): OrganisationFormD
       shipping_country: 'FR',
       has_different_shipping_address: false,
       legal_form: '',
+      siren: '',
       siret: '',
       vat_number: '',
       industry_sector: '',
@@ -185,7 +204,9 @@ const getDefaultValues = (organisation?: Organisation | null): OrganisationFormD
   }
 
   return {
-    name: organisation.name,
+    legal_name: organisation.legal_name,
+    trade_name: organisation.trade_name || '',
+    has_different_trade_name: organisation.has_different_trade_name || false,
     country: organisation.country || 'FR',
     is_active: organisation.is_active,
     notes: organisation.notes || '',
@@ -205,6 +226,7 @@ const getDefaultValues = (organisation?: Organisation | null): OrganisationFormD
     shipping_country: organisation.shipping_country || 'FR',
     has_different_shipping_address: organisation.has_different_shipping_address || false,
     legal_form: organisation.legal_form || '',
+    siren: organisation.siren || '',
     siret: organisation.siret || '',
     vat_number: organisation.vat_number || '',
     industry_sector: organisation.industry_sector || '',
@@ -339,7 +361,7 @@ export function UnifiedOrganisationForm({
                 </Label>
                 <LogoUploadButton
                   organisationId={organisation.id}
-                  organisationName={organisation.name}
+                  organisationName={organisation.legal_name}
                   currentLogoUrl={organisation.logo_url}
                   onUploadSuccess={onLogoUploadSuccess}
                   size="xl"
@@ -361,10 +383,10 @@ export function UnifiedOrganisationForm({
               </h3>
 
               <div style={{ display: 'flex', flexDirection: 'column', gap: spacing[4] }}>
-                {/* Name */}
+                {/* Dénomination sociale (legal_name) */}
                 <div>
                   <Label
-                    htmlFor="name"
+                    htmlFor="legal_name"
                     className="text-sm font-medium"
                     style={{
                       color: colors.text.DEFAULT,
@@ -372,30 +394,78 @@ export function UnifiedOrganisationForm({
                       marginBottom: spacing[2]
                     }}
                   >
-                    Nom de l'organisation *
+                    Dénomination sociale *
+                    <span className="text-xs text-gray-500 ml-2">(Nom enregistré au RCS)</span>
                   </Label>
                   <Input
-                    id="name"
-                    {...form.register('name')}
-                    placeholder="Ex: Entreprise ABC"
+                    id="legal_name"
+                    {...form.register('legal_name')}
+                    placeholder="Ex: SAS Meubles Prestige"
                     disabled={isSubmitting}
                     className="transition-all duration-200"
                     style={{
-                      borderColor: form.formState.errors.name ? colors.danger[500] : colors.border.DEFAULT,
+                      borderColor: form.formState.errors.legal_name ? colors.danger[500] : colors.border.DEFAULT,
                       color: colors.text.DEFAULT,
                       borderRadius: '8px'
                     }}
                   />
-                  {form.formState.errors.name && (
+                  {form.formState.errors.legal_name && (
                     <p style={{
                       color: colors.danger[500],
                       fontSize: '0.875rem',
                       marginTop: spacing[1]
                     }}>
-                      {form.formState.errors.name.message}
+                      {form.formState.errors.legal_name.message}
                     </p>
                   )}
                 </div>
+
+                {/* Checkbox: Nom commercial différent */}
+                <div style={{ display: 'flex', alignItems: 'center', gap: spacing[2] }}>
+                  <Checkbox
+                    id="has_different_trade_name"
+                    checked={form.watch('has_different_trade_name')}
+                    onCheckedChange={(checked) => form.setValue('has_different_trade_name', checked as boolean)}
+                    disabled={isSubmitting}
+                  />
+                  <Label
+                    htmlFor="has_different_trade_name"
+                    className="text-sm font-medium cursor-pointer"
+                    style={{ color: colors.text.DEFAULT }}
+                  >
+                    Le nom commercial est différent de la dénomination sociale
+                  </Label>
+                </div>
+
+                {/* Nom commercial (trade_name) - Conditionnel */}
+                {form.watch('has_different_trade_name') && (
+                  <div>
+                    <Label
+                      htmlFor="trade_name"
+                      className="text-sm font-medium"
+                      style={{
+                        color: colors.text.DEFAULT,
+                        display: 'block',
+                        marginBottom: spacing[2]
+                      }}
+                    >
+                      Nom commercial *
+                      <span className="text-xs text-gray-500 ml-2">(Nom utilisé publiquement)</span>
+                    </Label>
+                    <Input
+                      id="trade_name"
+                      {...form.register('trade_name')}
+                      placeholder="Ex: Déco Luxe Paris"
+                      disabled={isSubmitting}
+                      className="transition-all duration-200"
+                      style={{
+                        borderColor: colors.border.DEFAULT,
+                        color: colors.text.DEFAULT,
+                        borderRadius: '8px'
+                      }}
+                    />
+                  </div>
+                )}
 
                 {/* Country */}
                 <div>
@@ -703,6 +773,43 @@ export function UnifiedOrganisationForm({
                   </Select>
                 </div>
 
+                {/* SIREN */}
+                <div>
+                  <Label
+                    htmlFor="siren"
+                    className="text-sm font-medium"
+                    style={{
+                      color: colors.text.DEFAULT,
+                      display: 'block',
+                      marginBottom: spacing[2]
+                    }}
+                  >
+                    SIREN
+                    <span className="text-xs text-gray-500 ml-2">(9 chiffres - obligatoire sur factures depuis juillet 2024)</span>
+                  </Label>
+                  <Input
+                    id="siren"
+                    {...form.register('siren')}
+                    placeholder="123456789"
+                    maxLength={9}
+                    disabled={isSubmitting}
+                    style={{
+                      borderColor: form.formState.errors.siren ? colors.danger[500] : colors.border.DEFAULT,
+                      color: colors.text.DEFAULT,
+                      fontFamily: 'monospace'
+                    }}
+                  />
+                  {form.formState.errors.siren && (
+                    <p style={{
+                      color: colors.danger[500],
+                      fontSize: '0.875rem',
+                      marginTop: spacing[1]
+                    }}>
+                      {form.formState.errors.siren.message}
+                    </p>
+                  )}
+                </div>
+
                 {/* SIRET */}
                 <div>
                   <Label
@@ -715,17 +822,29 @@ export function UnifiedOrganisationForm({
                     }}
                   >
                     SIRET
+                    <span className="text-xs text-gray-500 ml-2">(14 chiffres)</span>
                   </Label>
                   <Input
                     id="siret"
                     {...form.register('siret')}
-                    placeholder="123 456 789 00012"
+                    placeholder="12345678900012"
+                    maxLength={14}
                     disabled={isSubmitting}
                     style={{
-                      borderColor: colors.border.DEFAULT,
-                      color: colors.text.DEFAULT
+                      borderColor: form.formState.errors.siret ? colors.danger[500] : colors.border.DEFAULT,
+                      color: colors.text.DEFAULT,
+                      fontFamily: 'monospace'
                     }}
                   />
+                  {form.formState.errors.siret && (
+                    <p style={{
+                      color: colors.danger[500],
+                      fontSize: '0.875rem',
+                      marginTop: spacing[1]
+                    }}>
+                      {form.formState.errors.siret.message}
+                    </p>
+                  )}
                 </div>
 
                 {/* VAT Number */}

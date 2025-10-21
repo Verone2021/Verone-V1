@@ -16,7 +16,7 @@ import {
   ShoppingCart,
   FileText
 } from 'lucide-react'
-import { useOrganisation, useSuppliers } from '@/hooks/use-organisations'
+import { useOrganisation, useSuppliers, getOrganisationDisplayName } from '@/hooks/use-organisations'
 import { useOrganisationTabs } from '@/hooks/use-organisation-tabs'
 import { ContactEditSection } from '@/components/business/contact-edit-section'
 import { AddressEditSection } from '@/components/business/address-edit-section'
@@ -156,7 +156,7 @@ export default function SupplierDetailPage() {
           </div>
           <div className="flex items-center gap-3 mb-2">
             <Building2 className="h-6 w-6 text-black" />
-            <h1 className="text-2xl font-semibold text-black">{supplier.name}</h1>
+            <h1 className="text-2xl font-semibold text-black">{getOrganisationDisplayName(supplier)}</h1>
             <div className="flex gap-2">
               <Badge
                 variant={supplier.is_active ? 'default' : 'secondary'}
@@ -226,7 +226,7 @@ export default function SupplierDetailPage() {
           {/* Logo de l'organisation - Composant réutilisable */}
           <OrganisationLogoCard
             organisationId={supplier.id}
-            organisationName={supplier.name}
+            organisationName={supplier.legal_name}
             organisationType="supplier"
             currentLogoUrl={supplier.logo_url}
             onUploadSuccess={() => refetch()}
@@ -243,6 +243,37 @@ export default function SupplierDetailPage() {
             organisation={supplier}
             organisationType="supplier"
           />
+
+          {/* Identité Légale */}
+          <Card>
+            <CardContent className="p-6">
+              <h3 className="text-sm font-semibold text-gray-700 mb-4">Identité Légale</h3>
+              <div className="space-y-3 text-sm">
+                <div>
+                  <span className="text-gray-500 block mb-1">Dénomination sociale</span>
+                  <p className="font-medium text-black">{supplier.legal_name}</p>
+                </div>
+                {supplier.has_different_trade_name && supplier.trade_name && (
+                  <div>
+                    <span className="text-gray-500 block mb-1">Nom commercial</span>
+                    <p className="font-medium text-black">{supplier.trade_name}</p>
+                  </div>
+                )}
+                {supplier.siren && (
+                  <div>
+                    <span className="text-gray-500 block mb-1">SIREN</span>
+                    <p className="font-medium font-mono text-black">{supplier.siren}</p>
+                  </div>
+                )}
+                {supplier.siret && (
+                  <div>
+                    <span className="text-gray-500 block mb-1">SIRET</span>
+                    <p className="font-medium font-mono text-black">{supplier.siret}</p>
+                  </div>
+                )}
+              </div>
+            </CardContent>
+          </Card>
         </div>
       </div>
 
@@ -257,7 +288,7 @@ export default function SupplierDetailPage() {
         <TabContent activeTab={activeTab} tabId="contacts">
           <ContactsManagementSection
             organisationId={supplier.id}
-            organisationName={supplier.name}
+            organisationName={getOrganisationDisplayName(supplier)}
             organisationType="supplier"
             onUpdate={() => handleSupplierUpdate({})}
           />
@@ -266,7 +297,7 @@ export default function SupplierDetailPage() {
         <TabContent activeTab={activeTab} tabId="orders">
           <OrganisationPurchaseOrdersSection
             organisationId={supplier.id}
-            organisationName={supplier.name}
+            organisationName={getOrganisationDisplayName(supplier)}
             organisationType="supplier"
             onUpdate={() => handleSupplierUpdate({})}
           />
@@ -287,7 +318,7 @@ export default function SupplierDetailPage() {
         <TabContent activeTab={activeTab} tabId="products">
           <OrganisationProductsSection
             organisationId={supplier.id}
-            organisationName={supplier.name}
+            organisationName={getOrganisationDisplayName(supplier)}
             organisationType="supplier"
             onUpdate={() => handleSupplierUpdate({})}
           />
