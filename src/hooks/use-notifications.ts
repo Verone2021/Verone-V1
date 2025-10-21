@@ -334,49 +334,193 @@ export const useNotifications = () => {
 
 // Fonctions utilitaires pour créer des notifications type ERP/CRM
 export const NotificationTemplates = {
-  // 🚨 NIVEAU 1 - URGENT
+  // ========================================
+  // NIVEAU 1 - URGENT
+  // ========================================
+
   systemError: (message: string): CreateNotificationData => ({
     type: 'system',
     severity: 'urgent',
-    title: '🚨 Erreur Système Critique',
+    title: 'Erreur systeme critique',
     message,
     action_label: 'Diagnostiquer',
   }),
 
-  criticalStock: (productName: string, stock: number): CreateNotificationData => ({
+  stockCritical: (productName: string, stock: number, minStock: number): CreateNotificationData => ({
     type: 'business',
     severity: 'urgent',
-    title: '🚨 Stock Critique',
-    message: `Stock épuisé : ${productName} (${stock} unités restantes)`,
+    title: 'Stock critique',
+    message: `Stock epuise : ${productName} (${stock} unites restantes, seuil min: ${minStock})`,
+    action_url: '/stocks/inventaire',
+    action_label: 'Reapprovisionner',
+  }),
+
+  stockNegativeForecast: (productName: string, forecast: number): CreateNotificationData => ({
+    type: 'business',
+    severity: 'urgent',
+    title: 'Stock previsionnel negatif',
+    message: `Le stock previsionnel de ${productName} sera negatif (${forecast} unites)`,
+    action_url: '/stocks/inventaire',
+    action_label: 'Voir Details',
+  }),
+
+  poDelayed: (poNumber: string, daysLate: number): CreateNotificationData => ({
+    type: 'operations',
+    severity: 'urgent',
+    title: 'Commande fournisseur en retard',
+    message: `La commande fournisseur ${poNumber} est en retard de ${daysLate} jour(s)`,
+    action_url: '/commandes/fournisseurs',
+    action_label: 'Contacter Fournisseur',
+  }),
+
+  // ========================================
+  // NIVEAU 2 - IMPORTANT
+  // ========================================
+
+  orderConfirmed: (orderNumber: string): CreateNotificationData => ({
+    type: 'business',
+    severity: 'important',
+    title: 'Commande validee',
+    message: `La commande ${orderNumber} a ete validee avec succes`,
+    action_url: '/commandes/clients',
+    action_label: 'Voir Details',
+  }),
+
+  orderPaid: (orderNumber: string, amount: number): CreateNotificationData => ({
+    type: 'operations',
+    severity: 'important',
+    title: 'Paiement recu',
+    message: `Paiement de ${amount.toFixed(2)} EUR recu pour la commande ${orderNumber}`,
+    action_url: '/commandes/clients',
+    action_label: 'Voir Commande',
+  }),
+
+  orderCancelled: (orderNumber: string): CreateNotificationData => ({
+    type: 'business',
+    severity: 'important',
+    title: 'Commande annulee',
+    message: `La commande ${orderNumber} a ete annulee`,
+    action_url: '/commandes/clients',
+    action_label: 'Voir Details',
+  }),
+
+  poConfirmed: (poNumber: string): CreateNotificationData => ({
+    type: 'operations',
+    severity: 'important',
+    title: 'Commande fournisseur confirmee',
+    message: `La commande fournisseur ${poNumber} a ete confirmee par le fournisseur`,
+    action_url: '/commandes/fournisseurs',
+    action_label: 'Voir Details',
+  }),
+
+  poReceived: (poNumber: string): CreateNotificationData => ({
+    type: 'operations',
+    severity: 'important',
+    title: 'Reception complete',
+    message: `La commande fournisseur ${poNumber} a ete recue integralement`,
+    action_url: '/commandes/fournisseurs',
+    action_label: 'Voir Reception',
+  }),
+
+  productIncomplete: (count: number): CreateNotificationData => ({
+    type: 'catalog',
+    severity: 'important',
+    title: 'Catalogue incomplet',
+    message: `${count} produits sans images ou prix d'achat`,
+    action_url: '/catalogue',
+    action_label: 'Completer',
+  }),
+
+  invoiceOverdue: (count: number, amount: number): CreateNotificationData => ({
+    type: 'operations',
+    severity: 'important',
+    title: 'Factures impayees',
+    message: `${count} factures impayees (${amount.toFixed(2)} EUR)`,
+    action_url: '/finance/invoices',
+    action_label: 'Gerer',
+  }),
+
+  // ========================================
+  // NIVEAU 3 - INFORMATIF
+  // ========================================
+
+  orderShipped: (orderNumber: string): CreateNotificationData => ({
+    type: 'operations',
+    severity: 'info',
+    title: 'Commande expediee',
+    message: `La commande ${orderNumber} a ete expediee avec succes`,
+    action_url: '/commandes/clients',
+    action_label: 'Voir Commande',
+  }),
+
+  orderDelivered: (orderNumber: string): CreateNotificationData => ({
+    type: 'operations',
+    severity: 'info',
+    title: 'Commande livree',
+    message: `La commande ${orderNumber} a ete livree au client`,
+    action_url: '/commandes/clients',
+    action_label: 'Voir Commande',
+  }),
+
+  poCreated: (poNumber: string, supplierName: string): CreateNotificationData => ({
+    type: 'operations',
+    severity: 'info',
+    title: 'Commande fournisseur creee',
+    message: `Nouvelle commande fournisseur ${poNumber} creee pour ${supplierName}`,
+    action_url: '/commandes/fournisseurs',
+    action_label: 'Voir Commande',
+  }),
+
+  poPartialReceived: (poNumber: string): CreateNotificationData => ({
+    type: 'operations',
+    severity: 'info',
+    title: 'Reception partielle',
+    message: `Reception partielle pour la commande fournisseur ${poNumber}`,
+    action_url: '/commandes/fournisseurs',
+    action_label: 'Voir Reception',
+  }),
+
+  stockReplenished: (productName: string, quantityAdded: number): CreateNotificationData => ({
+    type: 'operations',
+    severity: 'info',
+    title: 'Reapprovisionnement effectue',
+    message: `Le produit ${productName} a ete reapprovisionne (+${quantityAdded} unites)`,
+    action_url: '/stocks/inventaire',
+    action_label: 'Voir Stock',
+  }),
+
+  productOutOfStock: (productName: string): CreateNotificationData => ({
+    type: 'catalog',
+    severity: 'info',
+    title: 'Produit epuise',
+    message: `Le produit ${productName} est completement epuise`,
     action_url: '/catalogue',
     action_label: 'Voir Produit',
   }),
 
-  // ⚠️ NIVEAU 2 - IMPORTANT
-  incompleteProducts: (count: number): CreateNotificationData => ({
+  productVariantMissing: (productName: string): CreateNotificationData => ({
     type: 'catalog',
-    severity: 'important',
-    title: '📦 Catalogue Incomplet',
-    message: `${count} produits sans images ou prix d'achat`,
+    severity: 'info',
+    title: 'Variantes manquantes',
+    message: `Le produit ${productName} a des variantes manquantes`,
     action_url: '/catalogue',
-    action_label: 'Compléter',
+    action_label: 'Completer Variantes',
   }),
 
-  overdueInvoices: (count: number, amount: number): CreateNotificationData => ({
-    type: 'operations',
-    severity: 'important',
-    title: '💰 Factures Impayées',
-    message: `${count} factures impayées (${amount.toFixed(2)}€)`,
-    action_url: '/finance/invoices',
-    action_label: 'Gérer',
+  collectionPublished: (collectionName: string): CreateNotificationData => ({
+    type: 'catalog',
+    severity: 'info',
+    title: 'Collection publiee',
+    message: `La collection ${collectionName} a ete publiee avec succes`,
+    action_url: '/catalogue/collections',
+    action_label: 'Voir Collection',
   }),
 
-  // 💡 NIVEAU 3 - INFORMATIF
   dailySummary: (orders: number, revenue: number): CreateNotificationData => ({
     type: 'performance',
     severity: 'info',
-    title: '📈 Résumé Quotidien',
-    message: `${orders} nouvelles commandes (${revenue.toFixed(2)}€)`,
+    title: 'Resume quotidien',
+    message: `${orders} nouvelles commandes (${revenue.toFixed(2)} EUR)`,
     action_url: '/dashboard',
     action_label: 'Voir Dashboard',
   }),
@@ -384,8 +528,17 @@ export const NotificationTemplates = {
   backupComplete: (): CreateNotificationData => ({
     type: 'maintenance',
     severity: 'info',
-    title: '✅ Sauvegarde Terminée',
-    message: 'Sauvegarde quotidienne terminée avec succès',
+    title: 'Sauvegarde terminee',
+    message: 'Sauvegarde quotidienne terminee avec succes',
+  }),
+
+  paymentReceived: (amount: number, source: string): CreateNotificationData => ({
+    type: 'operations',
+    severity: 'info',
+    title: 'Paiement recu',
+    message: `Paiement de ${amount.toFixed(2)} EUR recu via ${source}`,
+    action_url: '/finance/payments',
+    action_label: 'Voir Details',
   }),
 };
 
