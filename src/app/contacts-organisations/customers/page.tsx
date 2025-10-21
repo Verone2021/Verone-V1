@@ -23,7 +23,7 @@ import {
   ExternalLink
 } from 'lucide-react'
 import Link from 'next/link'
-import { useOrganisations } from '@/hooks/use-organisations'
+import { useOrganisations, getOrganisationDisplayName } from '@/hooks/use-organisations'
 import { CustomerFormModal } from '@/components/business/customer-form-modal'
 import { OrganisationLogo } from '@/components/business/organisation-logo'
 import { spacing, colors } from '@/lib/design-system'
@@ -32,7 +32,9 @@ import { cn } from '@/lib/utils'
 
 interface Customer {
   id: string
-  name: string
+  legal_name: string // Dénomination sociale
+  trade_name: string | null // Nom commercial (si différent)
+  has_different_trade_name: boolean | null
   email: string | null
   phone: string | null
   city: string | null
@@ -175,7 +177,7 @@ export default function CustomersPage() {
 
   const handleDelete = async (customer: Customer) => {
     const confirmed = confirm(
-      `Êtes-vous sûr de vouloir supprimer définitivement "${customer.name}" ?\n\nCette action est irréversible !`
+      `Êtes-vous sûr de vouloir supprimer définitivement "${getOrganisationDisplayName(customer)}" ?\n\nCette action est irréversible !`
     )
 
     if (confirmed) {
@@ -345,7 +347,7 @@ export default function CustomersPage() {
                   {/* Logo GAUCHE - MD (48px) */}
                   <OrganisationLogo
                     logoUrl={customer.logo_url}
-                    organisationName={customer.name}
+                    organisationName={getOrganisationDisplayName(customer)}
                     size="md"
                     fallback="initials"
                     className="flex-shrink-0"
@@ -365,11 +367,11 @@ export default function CustomersPage() {
                             style={{ color: colors.text.DEFAULT }}
                             data-testid="customer-name"
                           >
-                            {customer.name}
+                            {getOrganisationDisplayName(customer)}
                           </a>
                         ) : (
                           <span style={{ color: colors.text.DEFAULT }} data-testid="customer-name">
-                            {customer.name}
+                            {getOrganisationDisplayName(customer)}
                           </span>
                         )}
                       </CardTitle>

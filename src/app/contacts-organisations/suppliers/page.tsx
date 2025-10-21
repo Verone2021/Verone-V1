@@ -20,7 +20,7 @@ import {
   Package
 } from 'lucide-react'
 import Link from 'next/link'
-import { useSuppliers } from '@/hooks/use-organisations'
+import { useSuppliers, getOrganisationDisplayName } from '@/hooks/use-organisations'
 import { SupplierFormModal } from '@/components/business/supplier-form-modal'
 import { OrganisationLogo } from '@/components/business/organisation-logo'
 import { SupplierSegmentBadge, SupplierSegmentType } from '@/components/business/supplier-segment-badge'
@@ -31,7 +31,9 @@ import { cn } from '@/lib/utils'
 
 interface Supplier {
   id: string
-  name: string
+  legal_name: string // Dénomination sociale
+  trade_name: string | null // Nom commercial (si différent)
+  has_different_trade_name: boolean | null
   email: string | null
   city: string | null
   country: string | null
@@ -149,7 +151,7 @@ export default function SuppliersPage() {
 
   const handleDelete = async (supplier: Supplier) => {
     const confirmed = confirm(
-      `Êtes-vous sûr de vouloir supprimer définitivement "${supplier.name}" ?\n\nCette action est irréversible !`
+      `Êtes-vous sûr de vouloir supprimer définitivement "${getOrganisationDisplayName(supplier)}" ?\n\nCette action est irréversible !`
     )
 
     if (confirmed) {
@@ -312,7 +314,7 @@ export default function SuppliersPage() {
                   {/* Logo GAUCHE - MD (48px) */}
                   <OrganisationLogo
                     logoUrl={supplier.logo_url}
-                    organisationName={supplier.name}
+                    organisationName={getOrganisationDisplayName(supplier)}
                     size="md"
                     fallback="initials"
                     className="flex-shrink-0"
@@ -332,11 +334,11 @@ export default function SuppliersPage() {
                             style={{ color: colors.text.DEFAULT }}
                             data-testid="supplier-name"
                           >
-                            {supplier.name}
+                            {getOrganisationDisplayName(supplier)}
                           </a>
                         ) : (
                           <span style={{ color: colors.text.DEFAULT }} data-testid="supplier-name">
-                            {supplier.name}
+                            {getOrganisationDisplayName(supplier)}
                           </span>
                         )}
                       </CardTitle>

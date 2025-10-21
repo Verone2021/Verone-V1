@@ -26,7 +26,7 @@ import {
   Eye
 } from 'lucide-react'
 import Link from 'next/link'
-import { useOrganisations } from '@/hooks/use-organisations'
+import { useOrganisations, getOrganisationDisplayName } from '@/hooks/use-organisations'
 import { PartnerFormModal } from '@/components/business/partner-form-modal'
 import { OrganisationLogo } from '@/components/business/organisation-logo'
 import { spacing, colors } from '@/lib/design-system'
@@ -35,7 +35,9 @@ import { cn } from '@/lib/utils'
 
 interface Partner {
   id: string
-  name: string
+  legal_name: string // Dénomination sociale
+  trade_name: string | null // Nom commercial (si différent)
+  has_different_trade_name: boolean | null
   email: string | null
   phone: string | null
   city: string | null
@@ -99,7 +101,7 @@ export default function PartnersPage() {
 
   const handleDelete = async (partner: Partner) => {
     const confirmed = confirm(
-      `Êtes-vous sûr de vouloir supprimer définitivement "${partner.name}" ?\n\nCette action est irréversible !`
+      `Êtes-vous sûr de vouloir supprimer définitivement "${getOrganisationDisplayName(partner)}" ?\n\nCette action est irréversible !`
     )
 
     if (confirmed) {
@@ -307,7 +309,7 @@ export default function PartnersPage() {
                   {/* Logo GAUCHE - MD (48px) */}
                   <OrganisationLogo
                     logoUrl={partner.logo_url}
-                    organisationName={partner.name}
+                    organisationName={getOrganisationDisplayName(partner)}
                     size="md"
                     fallback="initials"
                     className="flex-shrink-0"
@@ -327,11 +329,11 @@ export default function PartnersPage() {
                             style={{ color: colors.text.DEFAULT }}
                             data-testid="partner-name"
                           >
-                            {partner.name}
+                            {getOrganisationDisplayName(partner)}
                           </a>
                         ) : (
                           <span style={{ color: colors.text.DEFAULT }} data-testid="partner-name">
-                            {partner.name}
+                            {getOrganisationDisplayName(partner)}
                           </span>
                         )}
                       </CardTitle>

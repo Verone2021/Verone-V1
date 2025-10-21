@@ -5,7 +5,9 @@ import { createClient } from '@/lib/supabase/client'
 
 export interface Organisation {
   id: string
-  name: string
+  legal_name: string // Dénomination sociale officielle (ex-name)
+  trade_name: string | null // Nom commercial (si différent)
+  has_different_trade_name: boolean | null // Indicateur nom commercial
   type: 'supplier' | 'customer' | 'partner' | 'internal'
   email: string | null
   country: string | null
@@ -14,6 +16,7 @@ export interface Organisation {
   created_at: string
   updated_at: string
   created_by: string | null
+  logo_url: string | null
 
   // Nouveaux champs de contact
   phone: string | null
@@ -47,7 +50,8 @@ export interface Organisation {
   has_different_shipping_address: boolean | null
 
   // Identifiants légaux
-  siret: string | null
+  siren: string | null // SIREN (9 chiffres) - obligatoire factures depuis juillet 2024
+  siret: string | null // SIRET (14 chiffres)
   vat_number: string | null
   legal_form: string | null
 
@@ -96,7 +100,9 @@ export interface OrganisationFilters {
 }
 
 export interface CreateOrganisationData {
-  name: string
+  legal_name: string // Dénomination sociale OBLIGATOIRE
+  trade_name?: string // Nom commercial OPTIONNEL
+  has_different_trade_name?: boolean // Indicateur nom commercial
   type: 'supplier' | 'customer' | 'partner' | 'internal'
   email?: string
   country?: string
@@ -134,7 +140,8 @@ export interface CreateOrganisationData {
   has_different_shipping_address?: boolean
 
   // Identifiants légaux
-  siret?: string
+  siren?: string // SIREN (9 chiffres)
+  siret?: string // SIRET (14 chiffres)
   vat_number?: string
   legal_form?: string
 
@@ -211,7 +218,7 @@ export function useOrganisations(filters?: OrganisationFilters) {
       let query = supabase
         .from('organisations')
         .select('*')
-        .order('name', { ascending: true })
+        .order('legal_name', { ascending: true }) // ✅ CORRIGÉ - name → legal_name
 
       // Apply filters
       if (filters?.type) {
@@ -227,7 +234,8 @@ export function useOrganisations(filters?: OrganisationFilters) {
       }
 
       if (filters?.search) {
-        query = query.or(`name.ilike.%${filters.search}%,email.ilike.%${filters.search}%`)
+        // ✅ CORRIGÉ - recherche sur legal_name OU trade_name OU email
+        query = query.or(`legal_name.ilike.%${filters.search}%,trade_name.ilike.%${filters.search}%,email.ilike.%${filters.search}%`)
       }
 
       // Filtre customer_type pour les clients uniquement
@@ -306,12 +314,20 @@ export function useOrganisations(filters?: OrganisationFilters) {
         .from('organisations')
         .insert([{
           // ✅ Colonnes de base (REQUIRED)
-          name: data.name,
+          legal_name: data.legal_name, // ✅ CORRIGÉ - name → legal_name
+          trade_name: data.trade_name || null, // ✅ NOUVEAU - nom commercial
+          has_different_trade_name: data.has_different_trade_name ?? false, // ✅ NOUVEAU
           type: data.type,
           email: data.email || null,
-          phone: data.phone || null, // ✅ CORRIGÉ - phone existe en BD (pas slug)
+          phone: data.phone || null,
           country: data.country || 'FR',
           is_active: data.is_active ?? true,
+
+          // ✅ Identifiants légaux
+          siren: data.siren || null, // ✅ NOUVEAU - SIREN (9 chiffres)
+          siret: data.siret || null,
+          vat_number: data.vat_number || null,
+          legal_form: data.legal_form || null,
 
           // ✅ Adresses de facturation (existantes en BD)
           billing_address_line1: data.billing_address_line1 || null,
@@ -361,7 +377,9 @@ export function useOrganisations(filters?: OrganisationFilters) {
 
       // Colonnes de base autorisées
       const allowedFields = [
-        'name', 'type', 'email', 'country', 'is_active',
+        'legal_name', 'trade_name', 'has_different_trade_name', // ✅ CORRIGÉ - name → legal_name + nouveaux champs
+        'type', 'email', 'country', 'is_active',
+        'siren', 'siret', 'vat_number', 'legal_form', // ✅ AJOUTÉ - siren
         'billing_address_line1', 'billing_address_line2', 'billing_postal_code',
         'billing_city', 'billing_region', 'billing_country',
         'shipping_address_line1', 'shipping_address_line2', 'shipping_postal_code',
@@ -527,6 +545,21 @@ export function useOrganisations(filters?: OrganisationFilters) {
   }
 }
 
+/**
+ * Helper function: Retourne le nom d'affichage préféré d'une organisation
+ * Si l'organisation a un nom commercial différent, retourne trade_name
+ * Sinon, retourne legal_name (dénomination sociale)
+ */
+export function getOrganisationDisplayName(organisation: Organisation | null | undefined): string {
+  if (!organisation) return ''
+
+  if (organisation.has_different_trade_name && organisation.trade_name) {
+    return organisation.trade_name
+  }
+
+  return organisation.legal_name
+}
+
 export function useSuppliers(filters?: Omit<OrganisationFilters, 'type'>) {
   return useOrganisations({ ...filters, type: 'supplier' })
 }
@@ -554,7 +587,9 @@ export function useOrganisation(id: string) {
           .from('organisations')
           .select(`
             id,
-            name,
+            legal_name,
+            trade_name,
+            has_different_trade_name,
             type,
             email,
             country,
@@ -585,6 +620,7 @@ export function useOrganisation(id: string) {
             shipping_region,
             shipping_country,
             has_different_shipping_address,
+            siren,
             siret,
             vat_number,
             legal_form,
