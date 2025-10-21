@@ -33,7 +33,7 @@ export function useOrganisationTabs({ organisationId, organisationType }: UseOrg
   // Hooks pour récupérer les données
   const { contacts, fetchOrganisationContacts } = useContacts()
   const { orders, fetchOrders } = usePurchaseOrders()
-  const { products, fetchProducts } = useProducts()
+  const { products, refetch: refetchProducts } = useProducts()
 
   // Charger et compter les contacts
   useEffect(() => {
@@ -58,7 +58,7 @@ export function useOrganisationTabs({ organisationId, organisationType }: UseOrg
   // Charger et compter les produits (si fournisseur)
   useEffect(() => {
     if (organisationId && organisationType === 'supplier') {
-      fetchProducts().then(() => {
+      refetchProducts().then(() => {
         const orgProducts = products.filter(p => p.supplier_id === organisationId)
         setCounts(prev => ({ ...prev, products: orgProducts.length }))
       })
@@ -80,7 +80,7 @@ export function useOrganisationTabs({ organisationId, organisationType }: UseOrg
 
       // Produits (fournisseurs)
       if (organisationType === 'supplier') {
-        await fetchProducts()
+        await refetchProducts()
       }
 
       setCounts(prev => ({ ...prev, loading: false }))

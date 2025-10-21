@@ -85,7 +85,7 @@ export default function SupplierDetailPage() {
 
   if (loading) {
     return (
-      <div className="container mx-auto p-6 space-y-6">
+      <div className="container mx-auto p-4 space-y-4">
         <div className="animate-pulse">
           <div className="h-8 bg-gray-200 rounded w-1/3 mb-4"></div>
           <div className="h-6 bg-gray-200 rounded w-1/2 mb-8"></div>
@@ -101,7 +101,7 @@ export default function SupplierDetailPage() {
 
   if (error || !supplier) {
     return (
-      <div className="container mx-auto p-6">
+      <div className="container mx-auto p-4">
         <Card>
           <CardContent className="p-8 text-center">
             <Building2 className="h-12 w-12 text-gray-400 mx-auto mb-4" />
@@ -142,7 +142,7 @@ export default function SupplierDetailPage() {
   }
 
   return (
-    <div className="container mx-auto p-6 space-y-6">
+    <div className="container mx-auto p-4 space-y-4">
       {/* Header */}
       <div className="flex justify-between items-start">
         <div>
@@ -155,8 +155,8 @@ export default function SupplierDetailPage() {
             </Link>
           </div>
           <div className="flex items-center gap-3 mb-2">
-            <Building2 className="h-8 w-8 text-black" />
-            <h1 className="text-3xl font-semibold text-black">{supplier.name}</h1>
+            <Building2 className="h-6 w-6 text-black" />
+            <h1 className="text-2xl font-semibold text-black">{supplier.name}</h1>
             <div className="flex gap-2">
               <Badge
                 variant={supplier.is_active ? 'default' : 'secondary'}
@@ -171,7 +171,7 @@ export default function SupplierDetailPage() {
               )}
             </div>
           </div>
-          <p className="text-gray-600">
+          <p className="text-sm text-gray-600">
             Fournisseur • {supplier.supplier_segment && `${supplier.supplier_segment} • `}ID: {supplier.id.slice(0, 8)}
           </p>
         </div>
@@ -199,9 +199,9 @@ export default function SupplierDetailPage() {
       </div>
 
       {/* Layout en 2 colonnes avec composants EditSection */}
-      <div className="grid grid-cols-1 xl:grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 xl:grid-cols-3 gap-4">
         {/* Colonne principale - Informations éditables */}
-        <div className="xl:col-span-2 space-y-6">
+        <div className="xl:col-span-2 space-y-4">
           {/* Informations de Contact */}
           <ContactEditSection
             organisation={supplier}
@@ -222,7 +222,7 @@ export default function SupplierDetailPage() {
         </div>
 
         {/* Colonne latérale - Logo, Performance et Statistiques */}
-        <div className="space-y-6">
+        <div className="space-y-4">
           {/* Logo de l'organisation - Composant réutilisable */}
           <OrganisationLogoCard
             organisationId={supplier.id}

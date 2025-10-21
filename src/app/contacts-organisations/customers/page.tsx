@@ -37,6 +37,11 @@ interface Customer {
   phone: string | null
   city: string | null
   country: string | null
+  billing_address_line1: string | null
+  billing_address_line2: string | null
+  billing_city: string | null
+  billing_country: string | null
+  billing_postal_code: string | null
   is_active: boolean
   customer_type: 'professional' | 'individual' | null
   logo_url: string | null
@@ -333,121 +338,126 @@ export default function CustomersPage() {
           ))
         ) : (
           displayedCustomers.map((customer) => (
-            <Card key={customer.id} className="hover:shadow-md transition-shadow" data-testid="customer-card">
-              <CardHeader style={{ padding: spacing[2] }}>
-                <div className="flex justify-between items-start gap-2">
-                  <CardTitle className="text-sm font-medium flex items-center gap-1.5 flex-1 min-w-0">
-                    <OrganisationLogo
-                      logoUrl={customer.logo_url}
-                      organisationName={customer.name}
-                      size="sm"
-                      fallback="initials"
-                      className="flex-shrink-0"
-                    />
-                    {customer.website ? (
-                      <a
-                        href={customer.website}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="hover:underline truncate flex items-center gap-1"
-                        style={{ color: colors.text.DEFAULT }}
-                        data-testid="customer-name"
-                      >
-                        <span className="truncate">{customer.name}</span>
-                        <ExternalLink className="h-3 w-3 flex-shrink-0 opacity-60" />
-                      </a>
-                    ) : (
-                      <span className="truncate" style={{ color: colors.text.DEFAULT }} data-testid="customer-name">
-                        {customer.name}
-                      </span>
+            <Card key={customer.id} className="hover:shadow-lg transition-all duration-200" data-testid="customer-card">
+              <CardContent style={{ padding: spacing[4] }}>
+                {/* Layout Horizontal Spacieux - Logo GAUCHE + Infos DROITE */}
+                <div className="flex gap-4">
+                  {/* Logo GAUCHE - MD (48px) */}
+                  <OrganisationLogo
+                    logoUrl={customer.logo_url}
+                    organisationName={customer.name}
+                    size="md"
+                    fallback="initials"
+                    className="flex-shrink-0"
+                  />
+
+                  {/* Contenu DROITE - Stack vertical spacieux */}
+                  <div className="flex-1 min-w-0 space-y-2">
+                    {/* Ligne 1: Nom + Badge Archivé */}
+                    <div className="flex items-start justify-between gap-3">
+                      <CardTitle className="text-sm font-semibold line-clamp-2 flex-1">
+                        {customer.website ? (
+                          <a
+                            href={customer.website}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="hover:underline"
+                            style={{ color: colors.text.DEFAULT }}
+                            data-testid="customer-name"
+                          >
+                            {customer.name}
+                          </a>
+                        ) : (
+                          <span style={{ color: colors.text.DEFAULT }} data-testid="customer-name">
+                            {customer.name}
+                          </span>
+                        )}
+                      </CardTitle>
+
+                      {customer.archived_at && (
+                        <Badge
+                          variant="destructive"
+                          className="text-xs flex-shrink-0"
+                          style={{ backgroundColor: colors.danger[100], color: colors.danger[700] }}
+                        >
+                          Archivé
+                        </Badge>
+                      )}
+                    </div>
+
+                    {/* Adresse de facturation complète - Polices plus petites */}
+                    {(customer.billing_address_line1 || customer.billing_city || customer.billing_country) && (
+                      <div className="space-y-0.5">
+                        {customer.billing_address_line1 && (
+                          <div className="flex items-center gap-1.5 text-xs" style={{ color: colors.text.subtle }}>
+                            <MapPin className="h-3 w-3 flex-shrink-0" />
+                            <span className="truncate">{customer.billing_address_line1}</span>
+                          </div>
+                        )}
+                        {(customer.billing_postal_code || customer.billing_city) && (
+                          <div className="text-xs pl-[18px]" style={{ color: colors.text.subtle }}>
+                            <span className="truncate">
+                              {customer.billing_postal_code && `${customer.billing_postal_code}, `}
+                              {customer.billing_city}
+                            </span>
+                          </div>
+                        )}
+                        {customer.billing_country && (
+                          <div className="text-xs pl-[18px]" style={{ color: colors.text.subtle }}>
+                            <span className="truncate">{customer.billing_country}</span>
+                          </div>
+                        )}
+                      </div>
                     )}
-                  </CardTitle>
-                  {customer.archived_at && (
-                    <Badge
-                      variant="destructive"
-                      className="text-xs flex-shrink-0"
-                      style={{ backgroundColor: colors.danger[100], color: colors.danger[700] }}
-                    >
-                      Archivé
-                    </Badge>
-                  )}
-                </div>
-              </CardHeader>
 
-              <CardContent className="space-y-1.5" style={{ padding: spacing[2] }}>
-                {/* Type client badge */}
-                {customer.customer_type && (
-                  <div className="flex items-center gap-1.5 pb-1.5">
-                    <Badge
-                      variant="outline"
-                      className="text-xs"
-                      style={{
-                        backgroundColor: customer.customer_type === 'professional' ? colors.primary[50] : colors.accent[50],
-                        color: customer.customer_type === 'professional' ? colors.primary[700] : colors.accent[700],
-                        borderColor: customer.customer_type === 'professional' ? colors.primary[200] : colors.accent[200]
-                      }}
-                    >
-                      {customer.customer_type === 'professional' ? 'B2B' : 'B2C'}
-                    </Badge>
+                    {/* Séparateur + Boutons minimalistes */}
+                    <div>
+                      <div className="border-t my-2" style={{ borderColor: colors.border.DEFAULT }} />
+                      <div className="flex items-center gap-2">
+                        {activeTab === 'active' ? (
+                          <>
+                            <Link href={`/contacts-organisations/customers/${customer.id}`}>
+                              <ButtonV2 variant="ghost" size="sm" className="text-xs h-7 px-3" icon={Eye}>
+                                Voir
+                              </ButtonV2>
+                            </Link>
+                            <ButtonV2
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => handleArchive(customer)}
+                              icon={Archive}
+                              className="h-7 px-2"
+                              aria-label="Archiver"
+                            />
+                          </>
+                        ) : (
+                          <>
+                            <ButtonV2
+                              variant="secondary"
+                              size="sm"
+                              onClick={() => handleArchive(customer)}
+                              icon={ArchiveRestore}
+                              className="h-7 px-2"
+                              aria-label="Restaurer"
+                            />
+                            <ButtonV2
+                              variant="danger"
+                              size="sm"
+                              onClick={() => handleDelete(customer)}
+                              icon={Trash2}
+                              className="h-7 px-2"
+                              aria-label="Supprimer"
+                            />
+                            <Link href={`/contacts-organisations/customers/${customer.id}`}>
+                              <ButtonV2 variant="ghost" size="sm" className="text-xs h-7 px-3" icon={Eye}>
+                                Voir
+                              </ButtonV2>
+                            </Link>
+                          </>
+                        )}
+                      </div>
+                    </div>
                   </div>
-                )}
-
-                {/* Pays uniquement */}
-                {customer.country && (
-                  <div className="flex items-center gap-1.5 text-xs" style={{ color: colors.text.subtle }}>
-                    <MapPin className="h-3 w-3 flex-shrink-0" />
-                    <span className="truncate">{customer.country}</span>
-                  </div>
-                )}
-
-                {/* Actions - Button Group Horizontal */}
-                <div className="pt-1.5 border-t flex items-center gap-1" style={{ borderColor: colors.border.DEFAULT }}>
-                  {activeTab === 'active' ? (
-                    <>
-                      {/* Onglet Actifs: Voir détails + Archive icon */}
-                      <Link href={`/contacts-organisations/customers/${customer.id}`} className="flex-1">
-                        <ButtonV2 variant="ghost" size="sm" className="w-full text-xs">
-                          Voir détails
-                        </ButtonV2>
-                      </Link>
-
-                      <ButtonV2
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => handleArchive(customer)}
-                        icon={Archive}
-                        className="px-2 text-xs"
-                        aria-label="Archiver"
-                      />
-                    </>
-                  ) : (
-                    <>
-                      {/* Onglet Archivés: Icons + Voir détails */}
-                      <ButtonV2
-                        variant="secondary"
-                        size="sm"
-                        onClick={() => handleArchive(customer)}
-                        icon={ArchiveRestore}
-                        className="px-2 text-xs"
-                        aria-label="Restaurer"
-                      />
-
-                      <ButtonV2
-                        variant="danger"
-                        size="sm"
-                        onClick={() => handleDelete(customer)}
-                        icon={Trash2}
-                        className="px-2 text-xs"
-                        aria-label="Supprimer"
-                      />
-
-                      <Link href={`/contacts-organisations/customers/${customer.id}`} className="flex-1">
-                        <ButtonV2 variant="ghost" size="sm" className="w-full text-xs">
-                          Voir détails
-                        </ButtonV2>
-                      </Link>
-                    </>
-                  )}
                 </div>
               </CardContent>
             </Card>

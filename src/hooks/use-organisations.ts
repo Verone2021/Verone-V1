@@ -563,6 +563,7 @@ export function useOrganisation(id: string) {
             created_at,
             updated_at,
             created_by,
+            logo_url,
             phone,
             website,
             secondary_email,

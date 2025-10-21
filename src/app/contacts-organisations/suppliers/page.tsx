@@ -15,7 +15,9 @@ import {
   ArchiveRestore,
   Globe,
   Trash2,
-  ExternalLink
+  ExternalLink,
+  Eye,
+  Package
 } from 'lucide-react'
 import Link from 'next/link'
 import { useSuppliers } from '@/hooks/use-organisations'
@@ -31,7 +33,13 @@ interface Supplier {
   id: string
   name: string
   email: string | null
+  city: string | null
   country: string | null
+  billing_address_line1: string | null
+  billing_address_line2: string | null
+  billing_city: string | null
+  billing_country: string | null
+  billing_postal_code: string | null
   is_active: boolean
   archived_at: string | null
   website: string | null
@@ -297,131 +305,134 @@ export default function SuppliersPage() {
           ))
         ) : (
           displayedSuppliers.map((supplier) => (
-            <Card key={supplier.id} className="hover:shadow-md transition-shadow" data-testid="supplier-card">
-              <CardHeader style={{ padding: spacing[2] }}>
-                <div className="flex justify-between items-start gap-2">
-                  <CardTitle className="text-sm font-medium flex items-center gap-1.5 flex-1 min-w-0">
-                    <OrganisationLogo
-                      logoUrl={supplier.logo_url}
-                      organisationName={supplier.name}
-                      size="sm"
-                      fallback="initials"
-                      className="flex-shrink-0"
-                    />
-                    {supplier.website ? (
-                      <a
-                        href={supplier.website}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="hover:underline truncate flex items-center gap-1"
-                        style={{ color: colors.text.DEFAULT }}
-                        data-testid="supplier-name"
-                      >
-                        <span className="truncate">{supplier.name}</span>
-                        <ExternalLink className="h-3 w-3 flex-shrink-0 opacity-60" />
-                      </a>
-                    ) : (
-                      <span className="truncate" style={{ color: colors.text.DEFAULT }} data-testid="supplier-name">
-                        {supplier.name}
-                      </span>
+            <Card key={supplier.id} className="hover:shadow-lg transition-all duration-200" data-testid="supplier-card">
+              <CardContent style={{ padding: spacing[4] }}>
+                {/* Layout Horizontal Spacieux - Logo GAUCHE + Infos DROITE */}
+                <div className="flex gap-4">
+                  {/* Logo GAUCHE - MD (48px) */}
+                  <OrganisationLogo
+                    logoUrl={supplier.logo_url}
+                    organisationName={supplier.name}
+                    size="md"
+                    fallback="initials"
+                    className="flex-shrink-0"
+                  />
+
+                  {/* Contenu DROITE - Stack vertical spacieux */}
+                  <div className="flex-1 min-w-0 space-y-2">
+                    {/* Ligne 1: Nom + Badge Archivé */}
+                    <div className="flex items-start justify-between gap-3">
+                      <CardTitle className="text-sm font-semibold line-clamp-2 flex-1">
+                        {supplier.website ? (
+                          <a
+                            href={supplier.website}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="hover:underline"
+                            style={{ color: colors.text.DEFAULT }}
+                            data-testid="supplier-name"
+                          >
+                            {supplier.name}
+                          </a>
+                        ) : (
+                          <span style={{ color: colors.text.DEFAULT }} data-testid="supplier-name">
+                            {supplier.name}
+                          </span>
+                        )}
+                      </CardTitle>
+
+                      {supplier.archived_at && (
+                        <Badge
+                          variant="destructive"
+                          className="text-xs flex-shrink-0"
+                          style={{ backgroundColor: colors.danger[100], color: colors.danger[700] }}
+                        >
+                          Archivé
+                        </Badge>
+                      )}
+                    </div>
+
+                    {/* Adresse de facturation complète - Polices plus petites */}
+                    {(supplier.billing_address_line1 || supplier.billing_city || supplier.billing_country) && (
+                      <div className="space-y-0.5">
+                        {supplier.billing_address_line1 && (
+                          <div className="flex items-center gap-1.5 text-xs" style={{ color: colors.text.subtle }}>
+                            <MapPin className="h-3 w-3 flex-shrink-0" />
+                            <span className="truncate">{supplier.billing_address_line1}</span>
+                          </div>
+                        )}
+                        {(supplier.billing_postal_code || supplier.billing_city) && (
+                          <div className="text-xs pl-[18px]" style={{ color: colors.text.subtle }}>
+                            <span className="truncate">
+                              {supplier.billing_postal_code && `${supplier.billing_postal_code}, `}
+                              {supplier.billing_city}
+                            </span>
+                          </div>
+                        )}
+                        {supplier.billing_country && (
+                          <div className="text-xs pl-[18px]" style={{ color: colors.text.subtle }}>
+                            <span className="truncate">{supplier.billing_country}</span>
+                          </div>
+                        )}
+                      </div>
                     )}
-                  </CardTitle>
-                  {supplier.archived_at && (
-                    <Badge
-                      variant="destructive"
-                      className="text-xs flex-shrink-0"
-                      style={{ backgroundColor: colors.danger[100], color: colors.danger[700] }}
-                    >
-                      Archivé
-                    </Badge>
-                  )}
-                </div>
-              </CardHeader>
 
-              <CardContent className="space-y-1.5" style={{ padding: spacing[2] }}>
-                {/* Badges Taxonomie: Segment + Catégories */}
-                {(supplier.supplier_segment || supplier.supplier_category) && (
-                  <div className="flex flex-wrap items-center gap-1.5 pb-1.5">
-                    {supplier.supplier_segment && (
-                      <SupplierSegmentBadge segment={supplier.supplier_segment} size="sm" showIcon={true} />
+                    {/* COMPTEUR PRODUITS - SPÉCIFIQUE SUPPLIERS */}
+                    {supplier._count?.products !== undefined && (
+                      <div className="flex items-center gap-1.5 text-xs" style={{ color: colors.text.muted }}>
+                        <Package className="h-3 w-3 flex-shrink-0" />
+                        <span>{supplier._count.products} produit(s)</span>
+                      </div>
                     )}
-                    {supplier.supplier_category && (
-                      <SupplierCategoryBadge
-                        category={supplier.supplier_category}
-                        size="sm"
-                        showIcon={false}
-                        mode="single"
-                      />
-                    )}
+
+                    {/* Séparateur + Boutons minimalistes */}
+                    <div>
+                      <div className="border-t my-2" style={{ borderColor: colors.border.DEFAULT }} />
+                      <div className="flex items-center gap-2">
+                        {activeTab === 'active' ? (
+                          <>
+                            <Link href={`/contacts-organisations/suppliers/${supplier.id}`}>
+                              <ButtonV2 variant="ghost" size="sm" className="text-xs h-7 px-3" icon={Eye}>
+                                Voir
+                              </ButtonV2>
+                            </Link>
+                            <ButtonV2
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => handleArchive(supplier)}
+                              icon={Archive}
+                              className="h-7 px-2"
+                              aria-label="Archiver"
+                            />
+                          </>
+                        ) : (
+                          <>
+                            <ButtonV2
+                              variant="secondary"
+                              size="sm"
+                              onClick={() => handleArchive(supplier)}
+                              icon={ArchiveRestore}
+                              className="h-7 px-2"
+                              aria-label="Restaurer"
+                            />
+                            <ButtonV2
+                              variant="danger"
+                              size="sm"
+                              onClick={() => handleDelete(supplier)}
+                              icon={Trash2}
+                              className="h-7 px-2"
+                              aria-label="Supprimer"
+                            />
+                            <Link href={`/contacts-organisations/suppliers/${supplier.id}`}>
+                              <ButtonV2 variant="ghost" size="sm" className="text-xs h-7 px-3" icon={Eye}>
+                                Voir
+                              </ButtonV2>
+                            </Link>
+                          </>
+                        )}
+                      </div>
+                    </div>
                   </div>
-                )}
-
-                {/* Pays uniquement */}
-                {supplier.country && (
-                  <div className="flex items-center gap-1.5 text-xs" style={{ color: colors.text.subtle }}>
-                    <MapPin className="h-3 w-3 flex-shrink-0" />
-                    <span className="truncate">{supplier.country}</span>
-                  </div>
-                )}
-
-                {/* Stats produits */}
-                <div className="border-t pt-1.5 mt-1.5" style={{ borderColor: colors.border.DEFAULT }}>
-                  <div className="flex justify-between items-center text-xs">
-                    <span style={{ color: colors.text.subtle }}>Produits:</span>
-                    <span className="font-medium" style={{ color: colors.text.DEFAULT }}>
-                      {supplier._count?.products || 0}
-                    </span>
-                  </div>
-                </div>
-
-                {/* Actions - Button Group Horizontal */}
-                <div className="pt-1.5 border-t flex items-center gap-1" style={{ borderColor: colors.border.DEFAULT }}>
-                  {activeTab === 'active' ? (
-                    <>
-                      {/* Onglet Actifs: Voir détails + Archive icon */}
-                      <Link href={`/contacts-organisations/suppliers/${supplier.id}`} className="flex-1">
-                        <ButtonV2 variant="ghost" size="sm" className="w-full text-xs">
-                          Voir détails
-                        </ButtonV2>
-                      </Link>
-
-                      <ButtonV2
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => handleArchive(supplier)}
-                        icon={Archive}
-                        className="px-2 text-xs"
-                        aria-label="Archiver"
-                      />
-                    </>
-                  ) : (
-                    <>
-                      {/* Onglet Archivés: Icons + Voir détails */}
-                      <ButtonV2
-                        variant="secondary"
-                        size="sm"
-                        onClick={() => handleArchive(supplier)}
-                        icon={ArchiveRestore}
-                        className="px-2 text-xs"
-                        aria-label="Restaurer"
-                      />
-
-                      <ButtonV2
-                        variant="danger"
-                        size="sm"
-                        onClick={() => handleDelete(supplier)}
-                        icon={Trash2}
-                        className="px-2 text-xs"
-                        aria-label="Supprimer"
-                      />
-
-                      <Link href={`/contacts-organisations/suppliers/${supplier.id}`} className="flex-1">
-                        <ButtonV2 variant="ghost" size="sm" className="w-full text-xs">
-                          Voir détails
-                        </ButtonV2>
-                      </Link>
-                    </>
-                  )}
                 </div>
               </CardContent>
             </Card>

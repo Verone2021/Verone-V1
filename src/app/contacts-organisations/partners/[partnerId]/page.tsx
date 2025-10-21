@@ -11,43 +11,40 @@ import {
   Building2,
   Archive,
   ArchiveRestore,
-  Package,
   Phone,
-  ShoppingCart,
   FileText
 } from 'lucide-react'
-import { useOrganisation, useOrganisations } from '@/hooks/use-organisations'
+import { useOrganisation } from '@/hooks/use-organisations'
+import { useOrganisations } from '@/hooks/use-organisations'
 import { useOrganisationTabs } from '@/hooks/use-organisation-tabs'
 import { ContactEditSection } from '@/components/business/contact-edit-section'
 import { AddressEditSection } from '@/components/business/address-edit-section'
 import { CommercialEditSection } from '@/components/business/commercial-edit-section'
-import { PerformanceEditSection } from '@/components/business/performance-edit-section'
 import { ContactsManagementSection } from '@/components/business/contacts-management-section'
 import { OrganisationLogoCard } from '@/components/business/organisation-logo-card'
 import { OrganisationStatsCard } from '@/components/business/organisation-stats-card'
-import { OrganisationProductsSection } from '@/components/business/organisation-products-section'
 import { TabsNavigation, TabContent } from '@/components/ui/tabs-navigation'
 import type { Organisation } from '@/hooks/use-organisations'
 
-export default function CustomerDetailPage() {
-  const { customerId } = useParams()
+export default function PartnerDetailPage() {
+  const { partnerId } = useParams()
   const [activeTab, setActiveTab] = useState('contacts')
 
-  const { organisation: customer, loading, error } = useOrganisation(customerId as string)
+  const { organisation: partner, loading, error } = useOrganisation(partnerId as string)
   const {
     archiveOrganisation,
     unarchiveOrganisation,
     refetch
-  } = useOrganisations({ type: 'customer' })
+  } = useOrganisations({ type: 'partner' })
 
   // Hook centralisé pour les compteurs d'onglets
   const { counts, refreshCounts } = useOrganisationTabs({
-    organisationId: customerId as string,
-    organisationType: 'customer'
+    organisationId: partnerId as string,
+    organisationType: 'provider'
   })
 
-  // Gestionnaire de mise à jour des données client
-  const handleCustomerUpdate = (updatedData: Partial<Organisation>) => {
+  // Gestionnaire de mise à jour des données partenaire
+  const handlePartnerUpdate = (updatedData: Partial<Organisation>) => {
     // Les données sont automatiquement mises à jour par le hook useInlineEdit
     refetch()
     // Rafraîchir les compteurs
@@ -63,22 +60,10 @@ export default function CustomerDetailPage() {
       badge: counts.contacts.toString()
     },
     {
-      id: 'orders',
-      label: 'Commandes',
-      icon: <ShoppingCart className="h-4 w-4" />,
-      disabled: true // Module en développement
-    },
-    {
       id: 'invoices',
       label: 'Factures',
       icon: <FileText className="h-4 w-4" />,
       disabled: true // Module en développement
-    },
-    {
-      id: 'products',
-      label: 'Produits',
-      icon: <Package className="h-4 w-4" />,
-      badge: counts.products.toString()
     }
   ]
 
@@ -98,22 +83,22 @@ export default function CustomerDetailPage() {
     )
   }
 
-  if (error || !customer) {
+  if (error || !partner) {
     return (
       <div className="container mx-auto p-4">
         <Card>
           <CardContent className="p-8 text-center">
             <Building2 className="h-12 w-12 text-gray-400 mx-auto mb-4" />
             <h3 className="text-lg font-medium text-black mb-2">
-              Client introuvable
+              Partenaire introuvable
             </h3>
             <p className="text-gray-600 mb-4">
-              Ce client n'existe pas ou vous n'avez pas les droits pour le consulter.
+              Ce partenaire n'existe pas ou vous n'avez pas les droits pour le consulter.
             </p>
             <ButtonV2 asChild>
-              <Link href="/contacts-organisations/customers">
+              <Link href="/contacts-organisations/partners">
                 <ArrowLeft className="h-4 w-4 mr-2" />
-                Retour aux clients
+                Retour aux partenaires
               </Link>
             </ButtonV2>
           </CardContent>
@@ -123,18 +108,18 @@ export default function CustomerDetailPage() {
   }
 
   const handleArchive = async () => {
-    if (!customer.archived_at) {
+    if (!partner.archived_at) {
       // Archiver
-      const success = await archiveOrganisation(customer.id)
+      const success = await archiveOrganisation(partner.id)
       if (success) {
-        console.log('✅ Client archivé avec succès')
+        console.log('✅ Partenaire archivé avec succès')
         refetch()
       }
     } else {
       // Restaurer
-      const success = await unarchiveOrganisation(customer.id)
+      const success = await unarchiveOrganisation(partner.id)
       if (success) {
-        console.log('✅ Client restauré avec succès')
+        console.log('✅ Partenaire restauré avec succès')
         refetch()
       }
     }
@@ -146,37 +131,32 @@ export default function CustomerDetailPage() {
       <div className="flex justify-between items-start">
         <div>
           <div className="flex items-center gap-2 mb-2">
-            <Link href="/contacts-organisations/customers">
+            <Link href="/contacts-organisations/partners">
               <ButtonV2 variant="ghost" size="sm">
                 <ArrowLeft className="h-4 w-4 mr-1" />
-                Clients
+                Partenaires
               </ButtonV2>
             </Link>
           </div>
           <div className="flex items-center gap-3 mb-2">
             <Building2 className="h-6 w-6 text-black" />
-            <h1 className="text-2xl font-semibold text-black">{customer.name}</h1>
+            <h1 className="text-2xl font-semibold text-black">{partner.name}</h1>
             <div className="flex gap-2">
               <Badge
-                variant={customer.is_active ? 'default' : 'secondary'}
-                className={customer.is_active ? 'bg-green-100 text-green-800' : ''}
+                variant={partner.is_active ? 'default' : 'secondary'}
+                className={partner.is_active ? 'bg-green-100 text-green-800' : ''}
               >
-                {customer.is_active ? 'Actif' : 'Inactif'}
+                {partner.is_active ? 'Actif' : 'Inactif'}
               </Badge>
-              {customer.archived_at && (
+              {partner.archived_at && (
                 <Badge variant="destructive" className="bg-red-100 text-red-800">
                   Archivé
-                </Badge>
-              )}
-              {customer.customer_type && (
-                <Badge variant="outline" className="bg-blue-50 text-blue-700 border-blue-200">
-                  {customer.customer_type === 'professional' ? 'Client Professionnel' : 'Client Particulier'}
                 </Badge>
               )}
             </div>
           </div>
           <p className="text-sm text-gray-600">
-            Entreprise • {customer.customer_type === 'professional' ? 'B2B' : 'B2C'} • ID: {customer.id.slice(0, 8)}
+            Partenaire • ID: {partner.id.slice(0, 8)}
           </p>
         </div>
 
@@ -185,9 +165,9 @@ export default function CustomerDetailPage() {
           <ButtonV2
             variant="outline"
             onClick={handleArchive}
-            className={customer.archived_at ? "text-blue-600 border-blue-200 hover:bg-blue-50" : "text-black border-gray-200 hover:bg-gray-50"}
+            className={partner.archived_at ? "text-blue-600 border-blue-200 hover:bg-blue-50" : "text-black border-gray-200 hover:bg-gray-50"}
           >
-            {customer.archived_at ? (
+            {partner.archived_at ? (
               <>
                 <ArchiveRestore className="h-4 w-4 mr-2" />
                 Restaurer
@@ -208,48 +188,38 @@ export default function CustomerDetailPage() {
         <div className="xl:col-span-2 space-y-4">
           {/* Informations de Contact */}
           <ContactEditSection
-            organisation={customer}
-            onUpdate={handleCustomerUpdate}
+            organisation={partner}
+            onUpdate={handlePartnerUpdate}
           />
 
           {/* Adresse */}
           <AddressEditSection
-            organisation={customer}
-            onUpdate={handleCustomerUpdate}
+            organisation={partner}
+            onUpdate={handlePartnerUpdate}
           />
 
-          {/* Conditions Commerciales - Uniquement pour les clients professionnels */}
-          {customer.customer_type === 'professional' && (
-            <CommercialEditSection
-              organisation={customer}
-              onUpdate={handleCustomerUpdate}
-            />
-          )}
+          {/* Conditions Commerciales */}
+          <CommercialEditSection
+            organisation={partner}
+            onUpdate={handlePartnerUpdate}
+          />
         </div>
 
-        {/* Colonne latérale - Logo, Performance et Statistiques */}
+        {/* Colonne latérale - Logo et Statistiques */}
         <div className="space-y-4">
           {/* Logo de l'organisation - Composant réutilisable */}
           <OrganisationLogoCard
-            organisationId={customer.id}
-            organisationName={customer.name}
-            organisationType="customer"
-            currentLogoUrl={customer.logo_url}
+            organisationId={partner.id}
+            organisationName={partner.name}
+            organisationType="partner"
+            currentLogoUrl={partner.logo_url}
             onUploadSuccess={() => refetch()}
           />
 
-          {/* Performance & Qualité - Uniquement pour les clients professionnels */}
-          {customer.customer_type === 'professional' && (
-            <PerformanceEditSection
-              organisation={customer}
-              onUpdate={handleCustomerUpdate}
-            />
-          )}
-
           {/* Statistiques - Composant réutilisable */}
           <OrganisationStatsCard
-            organisation={customer}
-            organisationType="customer"
+            organisation={partner}
+            organisationType="partner"
           />
         </div>
       </div>
@@ -264,23 +234,11 @@ export default function CustomerDetailPage() {
 
         <TabContent activeTab={activeTab} tabId="contacts">
           <ContactsManagementSection
-            organisationId={customer.id}
-            organisationName={customer.name}
-            organisationType="customer"
-            onUpdate={() => handleCustomerUpdate({})}
+            organisationId={partner.id}
+            organisationName={partner.name}
+            organisationType="partner"
+            onUpdate={() => handlePartnerUpdate({})}
           />
-        </TabContent>
-
-        <TabContent activeTab={activeTab} tabId="orders">
-          <div className="text-center py-12">
-            <ShoppingCart className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-            <h3 className="text-lg font-medium text-black mb-2">
-              Module Commandes Vente
-            </h3>
-            <p className="text-gray-600">
-              Ce module sera disponible dans une prochaine version.
-            </p>
-          </div>
         </TabContent>
 
         <TabContent activeTab={activeTab} tabId="invoices">
@@ -293,15 +251,6 @@ export default function CustomerDetailPage() {
               Ce module sera disponible dans une prochaine version.
             </p>
           </div>
-        </TabContent>
-
-        <TabContent activeTab={activeTab} tabId="products">
-          <OrganisationProductsSection
-            organisationId={customer.id}
-            organisationName={customer.name}
-            organisationType="customer"
-            onUpdate={() => handleCustomerUpdate({})}
-          />
         </TabContent>
       </div>
 

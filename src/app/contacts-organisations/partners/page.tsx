@@ -22,7 +22,8 @@ import {
   ArrowLeft,
   Award,
   ExternalLink,
-  Building2
+  Building2,
+  Eye
 } from 'lucide-react'
 import Link from 'next/link'
 import { useOrganisations } from '@/hooks/use-organisations'
@@ -32,13 +33,31 @@ import { spacing, colors } from '@/lib/design-system'
 import { createClient } from '@/lib/supabase/client'
 import { cn } from '@/lib/utils'
 
+interface Partner {
+  id: string
+  name: string
+  email: string | null
+  phone: string | null
+  city: string | null
+  country: string | null
+  billing_address_line1: string | null
+  billing_address_line2: string | null
+  billing_city: string | null
+  billing_country: string | null
+  billing_postal_code: string | null
+  is_active: boolean
+  archived_at: string | null
+  website: string | null
+  logo_url: string | null
+}
+
 export default function PartnersPage() {
   const [searchQuery, setSearchQuery] = useState('')
   const [activeTab, setActiveTab] = useState<'active' | 'archived'>('active')
-  const [archivedPartners, setArchivedPartners] = useState<any[]>([])
+  const [archivedPartners, setArchivedPartners] = useState<Partner[]>([])
   const [archivedLoading, setArchivedLoading] = useState(false)
   const [isModalOpen, setIsModalOpen] = useState(false)
-  const [selectedPartner, setSelectedPartner] = useState<any>(null)
+  const [selectedPartner, setSelectedPartner] = useState<Partner | null>(null)
 
   // Utiliser useMemo pour stabiliser l'objet filters et éviter la boucle infinie
   const filters = useMemo(() => ({
@@ -58,7 +77,7 @@ export default function PartnersPage() {
     refetch
   } = useOrganisations(filters)
 
-  const handleArchive = async (partner: any) => {
+  const handleArchive = async (partner: Partner) => {
     if (!partner.archived_at) {
       // Archiver
       const success = await archiveOrganisation(partner.id)
@@ -78,7 +97,7 @@ export default function PartnersPage() {
     }
   }
 
-  const handleDelete = async (partner: any) => {
+  const handleDelete = async (partner: Partner) => {
     const confirmed = confirm(
       `Êtes-vous sûr de vouloir supprimer définitivement "${partner.name}" ?\n\nCette action est irréversible !`
     )
@@ -118,7 +137,7 @@ export default function PartnersPage() {
         .order('archived_at', { ascending: false })
 
       if (error) throw error
-      setArchivedPartners((data || []) as any[])
+      setArchivedPartners((data || []) as Partner[])
     } catch (err) {
       console.error('Erreur chargement partenaires archivés:', err)
     } finally {
@@ -281,104 +300,126 @@ export default function PartnersPage() {
           ))
         ) : (
           displayedPartners.map((partner) => (
-            <Card key={partner.id} className="hover:shadow-md transition-shadow" data-testid="partner-card">
-              <CardHeader style={{ padding: spacing[2] }}>
-                <div className="flex justify-between items-start gap-2">
-                  <CardTitle className="text-sm font-medium flex items-center gap-1.5 flex-1 min-w-0">
-                    <OrganisationLogo
-                      logoUrl={partner.logo_url}
-                      organisationName={partner.name}
-                      size="sm"
-                      fallback="initials"
-                      className="flex-shrink-0"
-                    />
-                    {partner.website ? (
-                      <a
-                        href={partner.website}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="hover:underline truncate flex items-center gap-1"
-                        style={{ color: colors.text.DEFAULT }}
-                        data-testid="partner-name"
-                      >
-                        <span className="truncate">{partner.name}</span>
-                        <ExternalLink className="h-3 w-3 flex-shrink-0 opacity-60" />
-                      </a>
-                    ) : (
-                      <span className="truncate" style={{ color: colors.text.DEFAULT }} data-testid="partner-name">
-                        {partner.name}
-                      </span>
+            <Card key={partner.id} className="hover:shadow-lg transition-all duration-200" data-testid="partner-card">
+              <CardContent style={{ padding: spacing[4] }}>
+                {/* Layout Horizontal Spacieux - Logo GAUCHE + Infos DROITE */}
+                <div className="flex gap-4">
+                  {/* Logo GAUCHE - MD (48px) */}
+                  <OrganisationLogo
+                    logoUrl={partner.logo_url}
+                    organisationName={partner.name}
+                    size="md"
+                    fallback="initials"
+                    className="flex-shrink-0"
+                  />
+
+                  {/* Contenu DROITE - Stack vertical spacieux */}
+                  <div className="flex-1 min-w-0 space-y-2">
+                    {/* Ligne 1: Nom + Badge Archivé */}
+                    <div className="flex items-start justify-between gap-3">
+                      <CardTitle className="text-sm font-semibold line-clamp-2 flex-1">
+                        {partner.website ? (
+                          <a
+                            href={partner.website}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="hover:underline"
+                            style={{ color: colors.text.DEFAULT }}
+                            data-testid="partner-name"
+                          >
+                            {partner.name}
+                          </a>
+                        ) : (
+                          <span style={{ color: colors.text.DEFAULT }} data-testid="partner-name">
+                            {partner.name}
+                          </span>
+                        )}
+                      </CardTitle>
+
+                      {partner.archived_at && (
+                        <Badge
+                          variant="destructive"
+                          className="text-xs flex-shrink-0"
+                          style={{ backgroundColor: colors.danger[100], color: colors.danger[700] }}
+                        >
+                          Archivé
+                        </Badge>
+                      )}
+                    </div>
+
+                    {/* Adresse de facturation complète - Polices plus petites */}
+                    {(partner.billing_address_line1 || partner.billing_city || partner.billing_country) && (
+                      <div className="space-y-0.5">
+                        {partner.billing_address_line1 && (
+                          <div className="flex items-center gap-1.5 text-xs" style={{ color: colors.text.subtle }}>
+                            <MapPin className="h-3 w-3 flex-shrink-0" />
+                            <span className="truncate">{partner.billing_address_line1}</span>
+                          </div>
+                        )}
+                        {(partner.billing_postal_code || partner.billing_city) && (
+                          <div className="text-xs pl-[18px]" style={{ color: colors.text.subtle }}>
+                            <span className="truncate">
+                              {partner.billing_postal_code && `${partner.billing_postal_code}, `}
+                              {partner.billing_city}
+                            </span>
+                          </div>
+                        )}
+                        {partner.billing_country && (
+                          <div className="text-xs pl-[18px]" style={{ color: colors.text.subtle }}>
+                            <span className="truncate">{partner.billing_country}</span>
+                          </div>
+                        )}
+                      </div>
                     )}
-                  </CardTitle>
-                  {partner.archived_at && (
-                    <Badge
-                      variant="destructive"
-                      className="text-xs flex-shrink-0"
-                      style={{ backgroundColor: colors.danger[100], color: colors.danger[700] }}
-                    >
-                      Archivé
-                    </Badge>
-                  )}
-                </div>
-              </CardHeader>
 
-              <CardContent className="space-y-1.5" style={{ padding: spacing[2] }}>
-                {/* Pays uniquement */}
-                {partner.country && (
-                  <div className="flex items-center gap-1.5 text-xs" style={{ color: colors.text.subtle }}>
-                    <MapPin className="h-3 w-3 flex-shrink-0" />
-                    <span className="truncate">{partner.country}</span>
+                    {/* Séparateur + Boutons minimalistes */}
+                    <div>
+                      <div className="border-t my-2" style={{ borderColor: colors.border.DEFAULT }} />
+                      <div className="flex items-center gap-2">
+                        {activeTab === 'active' ? (
+                          <>
+                            <Link href={`/contacts-organisations/partners/${partner.id}`}>
+                              <ButtonV2 variant="ghost" size="sm" className="text-xs h-7 px-3" icon={Eye}>
+                                Voir
+                              </ButtonV2>
+                            </Link>
+                            <ButtonV2
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => handleArchive(partner)}
+                              icon={Archive}
+                              className="h-7 px-2"
+                              aria-label="Archiver"
+                            />
+                          </>
+                        ) : (
+                          <>
+                            <ButtonV2
+                              variant="secondary"
+                              size="sm"
+                              onClick={() => handleArchive(partner)}
+                              icon={ArchiveRestore}
+                              className="h-7 px-2"
+                              aria-label="Restaurer"
+                            />
+                            <ButtonV2
+                              variant="danger"
+                              size="sm"
+                              onClick={() => handleDelete(partner)}
+                              icon={Trash2}
+                              className="h-7 px-2"
+                              aria-label="Supprimer"
+                            />
+                            <Link href={`/contacts-organisations/partners/${partner.id}`}>
+                              <ButtonV2 variant="ghost" size="sm" className="text-xs h-7 px-3" icon={Eye}>
+                                Voir
+                              </ButtonV2>
+                            </Link>
+                          </>
+                        )}
+                      </div>
+                    </div>
                   </div>
-                )}
-
-                {/* Actions - Button Group Horizontal */}
-                <div className="pt-1.5 border-t flex items-center gap-1" style={{ borderColor: colors.border.DEFAULT }}>
-                  {activeTab === 'active' ? (
-                    <>
-                      {/* Onglet Actifs: Voir détails + Archive icon */}
-                      <Link href={`/contacts-organisations/partners/${partner.id}`} className="flex-1">
-                        <ButtonV2 variant="ghost" size="sm" className="w-full text-xs">
-                          Voir détails
-                        </ButtonV2>
-                      </Link>
-
-                      <ButtonV2
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => handleArchive(partner)}
-                        icon={Archive}
-                        className="px-2 text-xs"
-                        aria-label="Archiver"
-                      />
-                    </>
-                  ) : (
-                    <>
-                      {/* Onglet Archivés: Icons + Voir détails */}
-                      <ButtonV2
-                        variant="secondary"
-                        size="sm"
-                        onClick={() => handleArchive(partner)}
-                        icon={ArchiveRestore}
-                        className="px-2 text-xs"
-                        aria-label="Restaurer"
-                      />
-
-                      <ButtonV2
-                        variant="danger"
-                        size="sm"
-                        onClick={() => handleDelete(partner)}
-                        icon={Trash2}
-                        className="px-2 text-xs"
-                        aria-label="Supprimer"
-                      />
-
-                      <Link href={`/contacts-organisations/partners/${partner.id}`} className="flex-1">
-                        <ButtonV2 variant="ghost" size="sm" className="w-full text-xs">
-                          Voir détails
-                        </ButtonV2>
-                      </Link>
-                    </>
-                  )}
                 </div>
               </CardContent>
             </Card>

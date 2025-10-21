@@ -21,9 +21,10 @@ import {
   Archive,
   ArchiveRestore
 } from 'lucide-react'
-import { Button } from '@/components/ui/button'
+import { ButtonV2 } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { cn } from '@/lib/utils'
+import { PageHeader } from '@/components/layout/page-header'
 import { useVariantGroups } from '@/hooks/use-variant-groups'
 import { useFamilies } from '@/hooks/use-families'
 import { useCategories } from '@/hooks/use-categories'
@@ -223,8 +224,8 @@ export default function VariantesPage() {
         isSelected && "ring-2 ring-black"
       )}>
         {/* En-tête avec sélection - HAUTEUR FIXE */}
-        <div className="p-4 border-b border-gray-200 flex-none">
-          <div className="flex items-start justify-between mb-3">
+        <div className="p-3 border-b border-gray-200 flex-none">
+          <div className="flex items-start justify-between mb-2">
             <div className="flex items-start space-x-3 flex-1 min-w-0">
               <input
                 type="checkbox"
@@ -235,7 +236,7 @@ export default function VariantesPage() {
               <div className="flex-1 min-w-0">
                 <div className="flex items-center gap-2 mb-1">
                   {getVariantTypeIcon(group.variant_type)}
-                  <h3 className="font-semibold text-gray-900 truncate text-base">
+                  <h3 className="font-semibold text-gray-900 truncate text-sm">
                     {group.name}
                   </h3>
                 </div>
@@ -257,7 +258,7 @@ export default function VariantesPage() {
         </div>
 
         {/* Aperçu des produits - HAUTEUR FLEXIBLE */}
-        <div className="p-4 flex-1 flex flex-col">
+        <div className="p-3 flex-1 flex flex-col">
           <div className="flex items-center justify-between text-xs text-gray-600 mb-3">
             <span className="font-medium">{group.product_count || 0} produit{(group.product_count || 0) !== 1 ? 's' : ''}</span>
             <span className="text-[10px] text-gray-400">
@@ -310,11 +311,11 @@ export default function VariantesPage() {
         </div>
 
         {/* Footer avec actions - ULTRA COMPACT */}
-        <div className="px-3 pb-2 pt-1.5 border-t border-gray-100 flex-none">
+        <div className="px-2 pb-2 pt-1 border-t border-gray-100 flex-none">
           {!isArchived ? (
             // Variantes actives: Ajouter, Détails, Modifier, Archiver
             <div className="grid grid-cols-4 gap-1">
-              <Button
+              <ButtonV2
                 size="sm"
                 variant="outline"
                 onClick={() => handleAddProducts(group)}
@@ -323,8 +324,8 @@ export default function VariantesPage() {
               >
                 <Plus className="h-2.5 w-2.5 mr-0.5" />
                 Ajouter
-              </Button>
-              <Button
+              </ButtonV2>
+              <ButtonV2
                 size="sm"
                 variant="outline"
                 onClick={() => router.push(`/catalogue/variantes/${group.id}`)}
@@ -333,8 +334,8 @@ export default function VariantesPage() {
               >
                 <ExternalLink className="h-2.5 w-2.5 mr-0.5" />
                 Détails
-              </Button>
-              <Button
+              </ButtonV2>
+              <ButtonV2
                 size="sm"
                 variant="ghost"
                 onClick={() => handleEditGroup(group)}
@@ -343,21 +344,20 @@ export default function VariantesPage() {
               >
                 <Edit3 className="h-2.5 w-2.5 mr-0.5" />
                 Modifier
-              </Button>
-              <Button
+              </ButtonV2>
+              <ButtonV2
                 size="sm"
                 variant="ghost"
                 onClick={() => handleArchiveGroup(group.id, false)}
-                className="text-[10px] h-6 w-full text-black hover:text-gray-800 hover:bg-gray-50 px-1"
+                className="text-[10px] h-6 w-full px-1"
                 title="Archiver le groupe"
-              >
-                <Archive className="h-2.5 w-2.5" />
-              </Button>
+                icon={Archive}
+              />
             </div>
           ) : (
             // Variantes archivées: Détails, Restaurer, Supprimer
             <div className="grid grid-cols-3 gap-1">
-              <Button
+              <ButtonV2
                 size="sm"
                 variant="outline"
                 onClick={() => router.push(`/catalogue/variantes/${group.id}`)}
@@ -366,26 +366,25 @@ export default function VariantesPage() {
               >
                 <ExternalLink className="h-2.5 w-2.5 mr-0.5" />
                 Détails
-              </Button>
-              <Button
+              </ButtonV2>
+              <ButtonV2
                 size="sm"
-                variant="ghost"
+                variant="secondary"
                 onClick={() => handleArchiveGroup(group.id, true)}
-                className="text-[10px] h-6 w-full text-green-600 hover:text-green-700 hover:bg-green-50 px-1"
+                className="text-[10px] h-6 w-full px-1"
                 title="Restaurer le groupe"
+                icon={ArchiveRestore}
               >
-                <ArchiveRestore className="h-2.5 w-2.5 mr-0.5" />
                 Restaurer
-              </Button>
-              <Button
+              </ButtonV2>
+              <ButtonV2
                 size="sm"
-                variant="ghost"
+                variant="danger"
                 onClick={() => handleDeleteGroup(group.id)}
-                className="text-[10px] h-6 w-full text-red-600 hover:text-red-700 hover:bg-red-50 px-1"
+                className="text-[10px] h-6 w-full px-1"
                 title="Supprimer le groupe"
-              >
-                <Trash2 className="h-2.5 w-2.5" />
-              </Button>
+                icon={Trash2}
+              />
             </div>
           )}
         </div>
@@ -401,26 +400,25 @@ export default function VariantesPage() {
   }), [variantGroups])
 
   return (
-    <div className="space-y-6">
-      {/* En-tête */}
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl font-light text-black">Gestion des Variantes</h1>
-          <p className="text-gray-600 mt-1">
-            Organisation des variantes de produits (couleurs, tailles, matériaux)
-          </p>
-          <p className="text-sm text-blue-600 mt-1">Compatible Google Merchant Center 2024</p>
-        </div>
-        <div>
-          <Button
+    <div className="min-h-screen bg-slate-50">
+      <PageHeader
+        title="Gestion des Variantes"
+        description="Organisation des variantes de produits (couleurs, tailles, matériaux)"
+        icon={Palette}
+      />
+
+      <div className="p-6 space-y-4">
+        {/* Actions */}
+        <div className="flex justify-between items-center">
+          <p className="text-sm text-blue-600">Compatible Google Merchant Center 2024</p>
+          <ButtonV2
+            variant="primary"
+            icon={Plus}
             onClick={handleCreateGroup}
-            className="bg-black text-white hover:bg-gray-800"
           >
-            <Plus className="h-4 w-4 mr-2" />
             Nouveau groupe
-          </Button>
+          </ButtonV2>
         </div>
-      </div>
 
       {/* Barre de recherche et filtres */}
       {/* Onglets variantes actives/archivées */}
@@ -545,25 +543,24 @@ export default function VariantesPage() {
 
       {/* Actions groupées */}
       {selectedGroups.length > 0 && (
-        <div className="flex items-center space-x-2 p-4 bg-blue-50 rounded-md">
+        <div className="flex items-center space-x-2 p-3 bg-blue-50 rounded-md">
           <span className="text-sm text-gray-700">
             {selectedGroups.length} groupe{selectedGroups.length !== 1 ? 's' : ''} sélectionné{selectedGroups.length !== 1 ? 's' : ''}
           </span>
-          <Button
-            variant="ghost"
+          <ButtonV2
+            variant="danger"
             size="sm"
             onClick={() => {
               // TODO: Implémenter actions en lot
             }}
-            className="text-red-600 hover:text-red-700"
           >
             Supprimer
-          </Button>
+          </ButtonV2>
         </div>
       )}
 
       {/* Grille des groupes - hauteur uniforme */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 auto-rows-fr">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 auto-rows-fr">
         {activeTab === 'active' ? (
           loading ? (
             Array.from({ length: 6 }).map((_, i) => (
@@ -618,24 +615,24 @@ export default function VariantesPage() {
       </div>
 
       {/* Statistiques */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <div className="bg-white p-4 rounded-lg border border-gray-200">
-          <div className="text-2xl font-light text-black">
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+        <div className="bg-white p-3 rounded-lg border border-gray-200">
+          <div className="text-xl font-light text-black">
             {loading ? '...' : stats.total}
           </div>
-          <div className="text-sm text-gray-600">Groupes totaux</div>
+          <div className="text-xs text-gray-600">Groupes totaux</div>
         </div>
-        <div className="bg-white p-4 rounded-lg border border-gray-200">
-          <div className="text-2xl font-light text-black">
+        <div className="bg-white p-3 rounded-lg border border-gray-200">
+          <div className="text-xl font-light text-black">
             {loading ? '...' : stats.totalProducts}
           </div>
-          <div className="text-sm text-gray-600">Produits totaux</div>
+          <div className="text-xs text-gray-600">Produits totaux</div>
         </div>
-        <div className="bg-white p-4 rounded-lg border border-gray-200">
-          <div className="text-2xl font-light text-black">
+        <div className="bg-white p-3 rounded-lg border border-gray-200">
+          <div className="text-xl font-light text-black">
             {loading ? '...' : stats.types}
           </div>
-          <div className="text-sm text-gray-600">Types différents</div>
+          <div className="text-xs text-gray-600">Types différents</div>
         </div>
       </div>
 
@@ -670,6 +667,7 @@ export default function VariantesPage() {
           }}
         />
       )}
+      </div>
     </div>
   )
 }

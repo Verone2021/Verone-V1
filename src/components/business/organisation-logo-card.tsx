@@ -2,12 +2,22 @@
 
 /**
  * Composant réutilisable : Card Logo Organisation
- * Wrapper autour de LogoUploadButton avec header unifié
+ * Affiche le logo avec preview + bouton upload/modification dans un modal
  */
 
-import { Building2 } from 'lucide-react'
+import { useState } from 'react'
+import { Building2, Edit } from 'lucide-react'
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card'
+import { ButtonV2 } from '@/components/ui/button'
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle
+} from '@/components/ui/dialog'
 import { LogoUploadButton } from './logo-upload-button'
+import { OrganisationLogo } from './organisation-logo'
 
 interface OrganisationLogoCardProps {
   organisationId: string
@@ -26,11 +36,20 @@ export function OrganisationLogoCard({
   onUploadSuccess,
   className
 }: OrganisationLogoCardProps) {
+  const [modalOpen, setModalOpen] = useState(false)
+
   // Labels selon type
   const typeLabels = {
     supplier: 'du fournisseur',
     customer: 'du client',
     provider: 'du prestataire'
+  }
+
+  const handleUploadSuccess = () => {
+    setModalOpen(false)
+    if (onUploadSuccess) {
+      onUploadSuccess()
+    }
   }
 
   return (
@@ -44,14 +63,49 @@ export function OrganisationLogoCard({
           Gérer le logo {typeLabels[organisationType]}
         </CardDescription>
       </CardHeader>
-      <CardContent>
-        <LogoUploadButton
-          organisationId={organisationId}
-          organisationName={organisationName}
-          currentLogoUrl={currentLogoUrl}
-          onUploadSuccess={onUploadSuccess}
-          size="xl"
-        />
+      <CardContent className="space-y-4">
+        {/* Preview du logo si existe */}
+        {currentLogoUrl && (
+          <div className="flex justify-center">
+            <OrganisationLogo
+              logoUrl={currentLogoUrl}
+              organisationName={organisationName}
+              size="xl"
+              fallback="initials"
+            />
+          </div>
+        )}
+
+        {/* Bouton pour ouvrir le modal */}
+        <ButtonV2
+          variant="outline"
+          onClick={() => setModalOpen(true)}
+          icon={Edit}
+          className="w-full"
+        >
+          {currentLogoUrl ? 'Modifier le logo' : 'Ajouter un logo'}
+        </ButtonV2>
+
+        {/* Modal avec LogoUploadButton */}
+        <Dialog open={modalOpen} onOpenChange={setModalOpen}>
+          <DialogContent className="sm:max-w-[500px]">
+            <DialogHeader>
+              <DialogTitle>
+                {currentLogoUrl ? 'Modifier le logo' : 'Ajouter un logo'}
+              </DialogTitle>
+              <DialogDescription>
+                Gérer le logo de {organisationName}
+              </DialogDescription>
+            </DialogHeader>
+            <LogoUploadButton
+              organisationId={organisationId}
+              organisationName={organisationName}
+              currentLogoUrl={currentLogoUrl}
+              onUploadSuccess={handleUploadSuccess}
+              size="xl"
+            />
+          </DialogContent>
+        </Dialog>
       </CardContent>
     </Card>
   )
