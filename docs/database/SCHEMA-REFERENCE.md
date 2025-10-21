@@ -236,12 +236,34 @@ Listes prix groupes clients
 
 ### Module Clients & Contacts (7 tables)
 
-#### 35. **organisations** ⭐ TABLE CENTRALE (50 colonnes)
+#### 35. **organisations** ⭐ TABLE CENTRALE (53 colonnes)
 Organisations (fournisseurs, clients B2B, partenaires)
-- **Colonnes clés** : id, name, type (enum), email, country, is_active
-- **Type enum** : 'supplier', 'manufacturer', 'customer', 'partner'
-- **❌ INTERDIT** : Créer tables suppliers/customers séparées
-- **Utiliser** : WHERE type='supplier' OU type='customer'
+
+**Identité & Conformité Légale** (Migration 20251022_001):
+- `legal_name` VARCHAR(255) NOT NULL - Dénomination sociale officielle enregistrée au RCS
+- `trade_name` VARCHAR(255) NULL - Nom commercial utilisé publiquement (si différent)
+- `has_different_trade_name` BOOLEAN DEFAULT FALSE - Indicateur nom commercial différent
+- `siren` VARCHAR(9) NULL - Numéro SIREN (9 chiffres) - Obligatoire factures depuis juillet 2024
+- `siret` VARCHAR(14) NULL - Numéro SIRET (14 chiffres) - SIREN + numéro établissement
+
+**Colonnes clés** : id, legal_name, trade_name, type (enum), email, country, is_active
+**Type enum** : 'supplier', 'manufacturer', 'customer', 'partner'
+**❌ INTERDIT** : Créer tables suppliers/customers séparées
+**Utiliser** : WHERE type='supplier' OU type='customer'
+
+**Contraintes de validation**:
+- `check_siren_format` - SIREN doit être NULL ou exactement 9 chiffres
+- `check_siret_format` - SIRET doit être NULL ou exactement 14 chiffres
+- `check_trade_name_consistency` - Si has_different_trade_name=TRUE alors trade_name NOT NULL
+
+**Indexes de performance**:
+- `idx_organisations_legal_name` - Index sur legal_name (recherche par dénomination)
+- `idx_organisations_siren` - Index partiel sur siren (WHERE siren IS NOT NULL)
+- `idx_organisations_siret` - Index partiel sur siret (WHERE siret IS NOT NULL)
+- `idx_organisations_display_name` - Index composite (legal_name, trade_name) pour recherche
+
+**Fonctions helper**:
+- `get_organisation_display_name(org organisations)` - Retourne trade_name si défini, sinon legal_name
 
 #### 36. **individual_customers** (27 colonnes)
 Clients particuliers B2C

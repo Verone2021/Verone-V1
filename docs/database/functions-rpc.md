@@ -1,8 +1,9 @@
 # ⚙️ FUNCTIONS & RPC - Documentation Complète
 
 **Date création** : 17 octobre 2025
+**Dernière mise à jour** : 22 octobre 2025
 **Database** : Supabase PostgreSQL (aorroydfjsrygmosnzrl)
-**Total** : 254 fonctions PostgreSQL
+**Total** : 255 fonctions PostgreSQL
 **Statut** : ✅ Production Active
 
 ---
@@ -23,13 +24,13 @@
 
 | Catégorie | Total | Description |
 |-----------|-------|-------------|
-| **Fonctions TRIGGER** | 89 | Exécutées automatiquement par triggers (35.0%) |
-| **Fonctions RPC** | 72 | Appelables depuis client/API (28.3%) |
-| **Fonctions HELPER** | 45 | Utilitaires internes (17.7%) |
+| **Fonctions TRIGGER** | 89 | Exécutées automatiquement par triggers (34.9%) |
+| **Fonctions RPC** | 72 | Appelables depuis client/API (28.2%) |
+| **Fonctions HELPER** | 46 | Utilitaires internes (18.0%) |
 | **Fonctions CALCULATION** | 28 | Calculs métier complexes (11.0%) |
 | **Fonctions VALIDATION** | 15 | Validation business rules (5.9%) |
 | **Fonctions SYSTEM** | 5 | Maintenance/Cron (2.0%) |
-| **TOTAL** | **254** | **100%** |
+| **TOTAL** | **255** | **100%** |
 
 ### Répartition par Type de Retour
 
@@ -632,10 +633,11 @@ $function$
 - `is_valid_phone(phone text)` - Valide téléphone
 - 9 autres helpers validation
 
-#### 3.3. Format (10 fonctions)
+#### 3.3. Format (11 fonctions)
 
 - `format_price(amount numeric)` - Formatte prix
 - `format_date(date timestamptz)` - Formatte date
+- `get_organisation_display_name(org organisations)` - Nom affichage organisation
 - `slugify(text text)` - Génère slug
 - 7 autres helpers format
 
@@ -715,8 +717,9 @@ $function$
 53. `get_product_variants` - RPC - Variantes
 54. `get_product_with_images` - RPC - Produit complet
 55. `get_user_activity_summary` - RPC - Résumé activité
-56. `get_user_permissions` - RPC - Permissions user
-57. `get_user_role` ⭐ - HELPER - Rôle user (CRITICAL)
+56. `get_organisation_display_name` - HELPER - Nom affichage org
+57. `get_user_permissions` - RPC - Permissions user
+58. `get_user_role` ⭐ - HELPER - Rôle user (CRITICAL)
 
 ### H-L
 
