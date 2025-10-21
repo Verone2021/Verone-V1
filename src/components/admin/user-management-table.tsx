@@ -143,60 +143,60 @@ export function UserManagementTable({ users }: UserManagementTableProps) {
             placeholder="Rechercher par nom ou email..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
-            className="bg-white border-black text-black placeholder:text-black placeholder:opacity-50 focus:ring-black focus:border-black focus:ring-2 focus:ring-offset-0"
+            className="bg-white border-neutral-300 text-neutral-900 placeholder:text-neutral-500 focus:ring-primary-500 focus:border-primary-500 focus:ring-2 focus:ring-offset-0"
           />
         </div>
 
         <Select value={roleFilter} onValueChange={setRoleFilter}>
-          <SelectTrigger className="w-48 bg-white border-black text-black focus:ring-black focus:border-black focus:ring-2 focus:ring-offset-0">
+          <SelectTrigger className="w-48 bg-white border-neutral-300 text-neutral-900 focus:ring-primary-500 focus:border-primary-500 focus:ring-2 focus:ring-offset-0">
             <SelectValue placeholder="Filtrer par rôle" />
           </SelectTrigger>
-          <SelectContent className="bg-white border-black">
-            <SelectItem value="all" className="text-black focus:bg-gray-100 focus:text-black">Tous les rôles</SelectItem>
-            <SelectItem value="owner" className="text-black focus:bg-gray-100 focus:text-black">Owner</SelectItem>
-            <SelectItem value="admin" className="text-black focus:bg-gray-100 focus:text-black">Admin</SelectItem>
-            <SelectItem value="catalog_manager" className="text-black focus:bg-gray-100 focus:text-black">Catalog Manager</SelectItem>
+          <SelectContent className="bg-white border-neutral-200">
+            <SelectItem value="all" className="text-neutral-900 focus:bg-neutral-100 focus:text-neutral-900">Tous les rôles</SelectItem>
+            <SelectItem value="owner" className="text-neutral-900 focus:bg-neutral-100 focus:text-neutral-900">Owner</SelectItem>
+            <SelectItem value="admin" className="text-neutral-900 focus:bg-neutral-100 focus:text-neutral-900">Admin</SelectItem>
+            <SelectItem value="catalog_manager" className="text-neutral-900 focus:bg-neutral-100 focus:text-neutral-900">Catalog Manager</SelectItem>
           </SelectContent>
         </Select>
       </div>
 
       {/* Tableau des utilisateurs */}
-      <div className="border border-black rounded-none">
+      <div className="border border-neutral-200 rounded-lg overflow-hidden">
         <Table>
           <TableHeader>
-            <TableRow className="border-black">
-              <TableHead className="text-black font-semibold">Prénom</TableHead>
-              <TableHead className="text-black font-semibold">Nom</TableHead>
-              <TableHead className="text-black font-semibold">Rôle</TableHead>
-              <TableHead className="text-black font-semibold">Poste</TableHead>
-              <TableHead className="text-black font-semibold">Créé le</TableHead>
-              <TableHead className="text-black font-semibold">Actions</TableHead>
+            <TableRow className="border-neutral-200">
+              <TableHead className="text-neutral-500 font-medium text-xs uppercase">Prénom</TableHead>
+              <TableHead className="text-neutral-500 font-medium text-xs uppercase">Nom</TableHead>
+              <TableHead className="text-neutral-500 font-medium text-xs uppercase">Rôle</TableHead>
+              <TableHead className="text-neutral-500 font-medium text-xs uppercase">Poste</TableHead>
+              <TableHead className="text-neutral-500 font-medium text-xs uppercase">Créé le</TableHead>
+              <TableHead className="text-neutral-500 font-medium text-xs uppercase">Actions</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
             {filteredUsers.length === 0 ? (
               <TableRow>
-                <TableCell colSpan={6} className="text-center py-8 text-black opacity-60">
+                <TableCell colSpan={6} className="text-center py-8 text-neutral-500">
                   Aucun utilisateur trouvé
                 </TableCell>
               </TableRow>
             ) : (
               filteredUsers.map((user) => (
-                <TableRow key={user.id} className="border-black hover:bg-gray-50">
+                <TableRow key={user.id} className="border-neutral-200 hover:bg-neutral-50">
                   {/* Prénom */}
                   <TableCell>
-                    <div className="font-medium text-black">
+                    <div className="font-medium text-neutral-900">
                       {getFirstName(user.email, user.user_metadata)}
                     </div>
-                    <div className="flex items-center space-x-2 text-xs text-black opacity-50 mt-1">
-                      <Mail className="h-3 w-3" />
+                    <div className="flex items-center space-x-2 text-[11px] text-neutral-500 mt-1">
+                      <Mail className="h-2.5 w-2.5" />
                       <span>{user.email}</span>
                     </div>
                   </TableCell>
 
                   {/* Nom */}
                   <TableCell>
-                    <div className="font-medium text-black">
+                    <div className="font-medium text-neutral-900">
                       {getLastName(user.email, user.user_metadata)}
                     </div>
                   </TableCell>
@@ -210,15 +210,15 @@ export function UserManagementTable({ users }: UserManagementTableProps) {
 
                   {/* Poste */}
                   <TableCell>
-                    <span className={`text-sm ${getJobTitle(user.user_metadata) === 'Non renseigné' ? 'text-black opacity-50' : 'text-black'}`}>
+                    <span className={`text-sm ${getJobTitle(user.user_metadata) === 'Non renseigné' ? 'text-neutral-500' : 'text-neutral-900'}`}>
                       {getJobTitle(user.user_metadata)}
                     </span>
                   </TableCell>
 
                   {/* Date de création */}
                   <TableCell>
-                    <div className="flex items-center space-x-2 text-sm text-black opacity-60">
-                      <Calendar className="h-3 w-3" />
+                    <div className="flex items-center space-x-2 text-sm text-neutral-500">
+                      <Calendar className="h-2.5 w-2.5" />
                       <span>{formatDate(user.created_at)}</span>
                     </div>
                   </TableCell>
@@ -253,11 +253,12 @@ export function UserManagementTable({ users }: UserManagementTableProps) {
                       {!(user.profile?.role === 'owner' &&
                         filteredUsers.filter(u => u.profile?.role === 'owner').length === 1) && (
                         <ButtonV2
-                          variant="danger"
+                          variant="ghost"
                           size="sm"
                           icon={Trash2}
                           onClick={() => handleDeleteUser(user)}
                           title="Supprimer utilisateur"
+                          className="text-danger-500 hover:bg-danger-50 hover:text-danger-600"
                         />
                       )}
                     </div>
@@ -270,23 +271,23 @@ export function UserManagementTable({ users }: UserManagementTableProps) {
       </div>
 
       {/* Footer avec statistiques */}
-      <div className="flex justify-between items-center text-sm text-black opacity-60 pt-4 border-t border-black">
+      <div className="flex justify-between items-center text-xs text-neutral-500 pt-3 border-t border-neutral-200">
         <span>
           {filteredUsers.length} utilisateur{filteredUsers.length > 1 ? 's' : ''} affiché{filteredUsers.length > 1 ? 's' : ''}
           {searchTerm && ` (filtré${filteredUsers.length > 1 ? 's' : ''} sur ${users.length})`}
         </span>
 
-        <div className="flex items-center space-x-4">
+        <div className="flex items-center space-x-3">
           <span className="flex items-center space-x-1">
-            <Shield className="h-3 w-3" />
+            <Shield className="h-2.5 w-2.5" />
             <span>{users.filter(u => u.profile?.role === 'owner').length} Owner(s)</span>
           </span>
           <span className="flex items-center space-x-1">
-            <Shield className="h-3 w-3" />
+            <Shield className="h-2.5 w-2.5" />
             <span>{users.filter(u => u.profile?.role === 'admin').length} Admin(s)</span>
           </span>
           <span className="flex items-center space-x-1">
-            <Shield className="h-3 w-3" />
+            <Shield className="h-2.5 w-2.5" />
             <span>{users.filter(u => u.profile?.role === 'catalog_manager').length} Manager(s)</span>
           </span>
         </div>

@@ -253,26 +253,40 @@ export function useOrganisations(filters?: OrganisationFilters) {
         return
       }
 
-      // Add product counts for suppliers
-      const organisationsWithCounts = await Promise.all(
-        (data || []).map(async (org) => {
-          if (org.type === 'supplier') {
-            // Compter les produits individuels directement par supplier_id
-            const { count: productsCount } = await supabase
-              .from('products')
-              .select('*', { count: 'exact', head: true })
-              .eq('supplier_id', org.id)
+      // Add product counts for suppliers (optimized - single query)
+      let organisationsWithCounts = data || []
 
+      // Si on a des fournisseurs, on compte tous les produits en une seule requête groupée
+      const suppliers = (data || []).filter(org => org.type === 'supplier')
+      if (suppliers.length > 0) {
+        const supplierIds = suppliers.map(s => s.id)
+
+        // Requête groupée pour compter les produits par supplier_id
+        const { data: productCounts } = await supabase
+          .from('products')
+          .select('supplier_id')
+          .in('supplier_id', supplierIds)
+
+        // Créer un Map de comptage
+        const countsMap = new Map<string, number>()
+        productCounts?.forEach(p => {
+          const count = countsMap.get(p.supplier_id) || 0
+          countsMap.set(p.supplier_id, count + 1)
+        })
+
+        // Merger les comptes avec les organisations
+        organisationsWithCounts = (data || []).map(org => {
+          if (org.type === 'supplier') {
             return {
               ...org,
               _count: {
-                products: productsCount || 0
+                products: countsMap.get(org.id) || 0
               }
             }
           }
           return org
         })
-      )
+      }
 
       setOrganisations(organisationsWithCounts)
     } catch (err) {

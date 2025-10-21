@@ -61,13 +61,22 @@ export function AppHeader({ className }: AppHeaderProps) {
           <input
             type="search"
             placeholder="Rechercher produits, collections..."
-            className="w-full border border-black bg-white py-2 pl-10 pr-4 text-sm text-black placeholder:text-black placeholder:opacity-50 focus:outline-none focus:ring-2 focus:ring-black focus:ring-offset-2"
+            className="w-full bg-transparent py-2 pl-10 pr-4 text-sm text-black placeholder:text-black placeholder:opacity-50 focus:outline-none"
           />
         </div>
       </div>
 
       {/* Actions utilisateur */}
       <div className="flex items-center space-x-2">
+        {/* Date */}
+        <div className="text-xs text-slate-600 px-3 border-r border-slate-200">
+          {new Date().toLocaleDateString('fr-FR', {
+            weekday: 'short',
+            day: 'numeric',
+            month: 'short'
+          })}
+        </div>
+
         {/* Notifications - Dropdown intelligent avec liste complète */}
         <NotificationsDropdown />
 

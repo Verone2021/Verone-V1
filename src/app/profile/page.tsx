@@ -9,7 +9,7 @@ import { RoleBadge, type UserRole } from '@/components/ui/role-badge'
 import { PasswordChangeDialog } from '@/components/profile/password-change-dialog'
 import { validateProfileForm, sanitizeProfileData } from '@/lib/validation/profile-validation'
 import type { User as SupabaseUser } from '@supabase/supabase-js'
-import { colors, spacing, componentShadows } from '@/lib/design-system'
+import { themeV2 } from '@/lib/theme-v2'
 import { cn } from '@/lib/utils'
 
 interface UserProfile {
@@ -213,54 +213,32 @@ export default function ProfilePage() {
 
   if (loading) {
     return (
-      <div
-        className="min-h-screen flex items-center justify-center"
-        style={{ backgroundColor: colors.background.subtle }}
-      >
+      <div className="min-h-screen flex items-center justify-center bg-neutral-50">
         <div className="text-center">
-          <div
-            className="animate-spin rounded-full h-12 w-12 border-b-2 mx-auto mb-4"
-            style={{ borderColor: colors.primary[500] }}
-          ></div>
-          <p style={{ color: colors.text.subtle }}>Chargement du profil...</p>
+          <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-primary-500 mx-auto mb-3"></div>
+          <p className="text-neutral-600 text-sm">Chargement du profil...</p>
         </div>
       </div>
     )
   }
 
   return (
-    <div
-      className="min-h-screen"
-      style={{
-        backgroundColor: colors.background.subtle,
-        padding: spacing[6],
-      }}
-    >
+    <div className="min-h-screen bg-neutral-50 p-4">
       {/* Page header */}
-      <div
-        className="-mx-6 -mt-6 mb-6"
-        style={{
-          backgroundColor: colors.background.DEFAULT,
-          borderBottom: `1px solid ${colors.border.DEFAULT}`,
-          padding: `${spacing[4]} ${spacing[6]}`,
-        }}
-      >
+      <div className="-mx-4 -mt-4 mb-4 bg-white border-b border-neutral-200 px-4 py-3">
         <div className="flex items-center justify-between">
-          <div className="flex items-center space-x-3">
-            <User className="h-8 w-8" style={{ color: colors.text.DEFAULT }} />
+          <div className="flex items-center space-x-2.5">
+            <User className="h-5 w-5 text-neutral-900" />
             <div>
-              <div className="flex items-center space-x-3">
-                <h1
-                  className="text-2xl font-bold"
-                  style={{ color: colors.text.DEFAULT }}
-                >
+              <div className="flex items-center space-x-2.5">
+                <h1 className="text-lg font-bold text-neutral-900">
                   Mon Profil
                 </h1>
                 {profile && (
                   <RoleBadge role={profile.role as UserRole} />
                 )}
               </div>
-              <p style={{ color: colors.text.subtle }}>
+              <p className="text-sm text-neutral-600">
                 Informations de votre compte Vérone
               </p>
             </div>
@@ -306,29 +284,18 @@ export default function ProfilePage() {
       </div>
 
       {/* Profile information */}
-      <div className="max-w-2xl">
-        <div
-          className="rounded-xl space-y-6"
-          style={{
-            backgroundColor: colors.background.DEFAULT,
-            border: `1px solid ${colors.border.strong}`,
-            padding: spacing[6],
-            boxShadow: componentShadows.card,
-          }}
-        >
-          <h2
-            className="text-lg font-semibold"
-            style={{ color: colors.text.DEFAULT }}
-          >
+      <div className="max-w-lg">
+        <div className="rounded-xl space-y-4 bg-white border border-neutral-300 p-5 shadow-sm">
+          <h2 className="text-base font-semibold text-neutral-900">
             Informations personnelles
           </h2>
 
-          <div className="grid grid-cols-1 gap-6">
+          <div className="grid grid-cols-1 gap-4">
             {/* Nom d'affichage */}
-            <div className="flex items-center space-x-3">
-              <User className="h-5 w-5" style={{ color: colors.neutral[400] }} />
+            <div className="flex items-center space-x-2.5">
+              <User className="h-3.5 w-3.5 text-neutral-400" />
               <div className="flex-1">
-                <p className="text-sm mb-1" style={{ color: colors.text.subtle }}>
+                <p className="text-[11px] mb-1 text-neutral-600">
                   Nom d'affichage
                 </p>
                 {isEditing ? (
@@ -342,17 +309,15 @@ export default function ProfilePage() {
                       }
                     })}
                     placeholder="Nom d'affichage"
-                    style={{
-                      borderColor: colors.neutral[300],
-                    }}
+                    className="border-neutral-300"
                   />
                 ) : (
-                  <p className="font-medium" style={{ color: colors.text.DEFAULT }}>
+                  <p className="font-medium text-xs text-neutral-900">
                     {user?.user_metadata?.name || user?.email?.split('@')[0] || 'Non défini'}
                   </p>
                 )}
                 {validationErrors.displayName && (
-                  <p className="text-xs mt-1" style={{ color: colors.danger[500] }}>
+                  <p className="text-xs mt-1 text-danger-500">
                     {validationErrors.displayName}
                   </p>
                 )}
@@ -360,11 +325,11 @@ export default function ProfilePage() {
             </div>
 
             {/* Prénom */}
-            <div className="flex items-center space-x-3">
-              <User className="h-5 w-5" style={{ color: colors.neutral[400] }} />
+            <div className="flex items-center space-x-2.5">
+              <User className="h-3.5 w-3.5 text-neutral-400" />
               <div className="flex-1">
-                <p className="text-sm mb-1" style={{ color: colors.text.subtle }}>
-                  Prénom <span className="text-xs">(optionnel)</span>
+                <p className="text-[11px] mb-1 text-neutral-600">
+                  Prénom <span className="text-[11px]">(optionnel)</span>
                 </p>
                 {isEditing ? (
                   <Input
@@ -375,15 +340,15 @@ export default function ProfilePage() {
                     })}
                     placeholder="Votre prénom"
                     maxLength={50}
-                    style={{ borderColor: colors.neutral[300] }}
+                    className="border-neutral-300"
                   />
                 ) : (
-                  <p className="font-medium" style={{ color: colors.text.DEFAULT }}>
+                  <p className="font-medium text-xs text-neutral-900">
                     {profile?.first_name || 'Non renseigné'}
                   </p>
                 )}
                 {validationErrors.firstName && (
-                  <p className="text-xs mt-1" style={{ color: colors.danger[500] }}>
+                  <p className="text-xs mt-1 text-danger-500">
                     {validationErrors.firstName}
                   </p>
                 )}
@@ -391,11 +356,11 @@ export default function ProfilePage() {
             </div>
 
             {/* Nom de famille */}
-            <div className="flex items-center space-x-3">
-              <User className="h-5 w-5" style={{ color: colors.neutral[400] }} />
+            <div className="flex items-center space-x-2.5">
+              <User className="h-3.5 w-3.5 text-neutral-400" />
               <div className="flex-1">
-                <p className="text-sm mb-1" style={{ color: colors.text.subtle }}>
-                  Nom de famille <span className="text-xs">(optionnel)</span>
+                <p className="text-[11px] mb-1 text-neutral-600">
+                  Nom de famille <span className="text-[11px]">(optionnel)</span>
                 </p>
                 {isEditing ? (
                   <Input
@@ -406,15 +371,15 @@ export default function ProfilePage() {
                     })}
                     placeholder="Votre nom de famille"
                     maxLength={50}
-                    style={{ borderColor: colors.neutral[300] }}
+                    className="border-neutral-300"
                   />
                 ) : (
-                  <p className="font-medium" style={{ color: colors.text.DEFAULT }}>
+                  <p className="font-medium text-xs text-neutral-900">
                     {profile?.last_name || 'Non renseigné'}
                   </p>
                 )}
                 {validationErrors.lastName && (
-                  <p className="text-xs mt-1" style={{ color: colors.danger[500] }}>
+                  <p className="text-xs mt-1 text-danger-500">
                     {validationErrors.lastName}
                   </p>
                 )}
@@ -422,11 +387,11 @@ export default function ProfilePage() {
             </div>
 
             {/* Téléphone */}
-            <div className="flex items-center space-x-3">
-              <Phone className="h-5 w-5" style={{ color: colors.neutral[400] }} />
+            <div className="flex items-center space-x-2.5">
+              <Phone className="h-3.5 w-3.5 text-neutral-400" />
               <div className="flex-1">
-                <p className="text-sm mb-1" style={{ color: colors.text.subtle }}>
-                  Téléphone <span className="text-xs">(optionnel)</span>
+                <p className="text-[11px] mb-1 text-neutral-600">
+                  Téléphone <span className="text-[11px]">(optionnel)</span>
                 </p>
                 {isEditing ? (
                   <Input
@@ -437,20 +402,20 @@ export default function ProfilePage() {
                     })}
                     placeholder="0X XX XX XX XX ou +33 X XX XX XX XX"
                     type="tel"
-                    style={{ borderColor: colors.neutral[300] }}
+                    className="border-neutral-300"
                   />
                 ) : (
-                  <p className="font-medium" style={{ color: colors.text.DEFAULT }}>
+                  <p className="font-medium text-xs text-neutral-900">
                     {profile?.phone || 'Non renseigné'}
                   </p>
                 )}
                 {isEditing && (
-                  <p className="text-xs mt-1" style={{ color: colors.text.muted }}>
+                  <p className="text-xs mt-1 text-neutral-500">
                     Format français accepté : 0123456789 ou +33123456789
                   </p>
                 )}
                 {validationErrors.phone && (
-                  <p className="text-xs mt-1" style={{ color: colors.danger[500] }}>
+                  <p className="text-xs mt-1 text-danger-500">
                     {validationErrors.phone}
                   </p>
                 )}
@@ -458,11 +423,11 @@ export default function ProfilePage() {
             </div>
 
             {/* Intitulé de poste */}
-            <div className="flex items-center space-x-3">
-              <Briefcase className="h-5 w-5" style={{ color: colors.neutral[400] }} />
+            <div className="flex items-center space-x-2.5">
+              <Briefcase className="h-3.5 w-3.5 text-neutral-400" />
               <div className="flex-1">
-                <p className="text-sm mb-1" style={{ color: colors.text.subtle }}>
-                  Intitulé de poste <span className="text-xs">(optionnel)</span>
+                <p className="text-[11px] mb-1 text-neutral-600">
+                  Intitulé de poste <span className="text-[11px]">(optionnel)</span>
                 </p>
                 {isEditing ? (
                   <Input
@@ -473,15 +438,15 @@ export default function ProfilePage() {
                     })}
                     placeholder="Votre fonction/poste"
                     maxLength={100}
-                    style={{ borderColor: colors.neutral[300] }}
+                    className="border-neutral-300"
                   />
                 ) : (
-                  <p className="font-medium" style={{ color: colors.text.DEFAULT }}>
+                  <p className="font-medium text-xs text-neutral-900">
                     {profile?.job_title || 'Non renseigné'}
                   </p>
                 )}
                 {validationErrors.jobTitle && (
-                  <p className="text-xs mt-1" style={{ color: colors.danger[500] }}>
+                  <p className="text-xs mt-1 text-danger-500">
                     {validationErrors.jobTitle}
                   </p>
                 )}
@@ -489,15 +454,15 @@ export default function ProfilePage() {
             </div>
 
             {/* Email */}
-            <div className="flex items-center space-x-3">
-              <Mail className="h-5 w-5" style={{ color: colors.neutral[400] }} />
+            <div className="flex items-center space-x-2.5">
+              <Mail className="h-3.5 w-3.5 text-neutral-400" />
               <div className="flex-1">
-                <p className="text-sm" style={{ color: colors.text.subtle }}>Email</p>
-                <p className="font-medium" style={{ color: colors.text.DEFAULT }}>
+                <p className="text-[11px] text-neutral-600">Email</p>
+                <p className="font-medium text-xs text-neutral-900">
                   {user?.email}
                 </p>
                 {isEditing && (
-                  <p className="text-xs mt-1" style={{ color: colors.text.muted }}>
+                  <p className="text-xs mt-1 text-neutral-500">
                     L'email ne peut pas être modifié depuis cette interface
                   </p>
                 )}
@@ -505,10 +470,10 @@ export default function ProfilePage() {
             </div>
 
             {/* Role */}
-            <div className="flex items-center space-x-3">
-              <Shield className="h-5 w-5" style={{ color: colors.neutral[400] }} />
+            <div className="flex items-center space-x-2.5">
+              <Shield className="h-3.5 w-3.5 text-neutral-400" />
               <div className="flex-1">
-                <p className="text-sm mb-2" style={{ color: colors.text.subtle }}>
+                <p className="text-[11px] mb-2 text-neutral-600">
                   Rôle et permissions
                 </p>
                 {profile && (
@@ -518,20 +483,20 @@ export default function ProfilePage() {
             </div>
 
             {/* Organisation */}
-            <div className="flex items-center space-x-3">
-              <Building className="h-5 w-5" style={{ color: colors.neutral[400] }} />
+            <div className="flex items-center space-x-2.5">
+              <Building className="h-3.5 w-3.5 text-neutral-400" />
               <div>
-                <p className="text-sm" style={{ color: colors.text.subtle }}>Organisation</p>
-                <p className="font-medium" style={{ color: colors.text.DEFAULT }}>Vérone</p>
+                <p className="text-[11px] text-neutral-600">Organisation</p>
+                <p className="font-medium text-xs text-neutral-900">Vérone</p>
               </div>
             </div>
 
             {/* User ID */}
-            <div className="flex items-center space-x-3">
-              <User className="h-5 w-5" style={{ color: colors.neutral[400] }} />
+            <div className="flex items-center space-x-2.5">
+              <User className="h-3.5 w-3.5 text-neutral-400" />
               <div>
-                <p className="text-sm" style={{ color: colors.text.subtle }}>ID Utilisateur</p>
-                <p className="font-medium font-mono text-sm" style={{ color: colors.text.DEFAULT }}>
+                <p className="text-[11px] text-neutral-600">ID Utilisateur</p>
+                <p className="font-medium font-mono text-[11px] text-neutral-900">
                   {user?.id}
                 </p>
               </div>
@@ -539,17 +504,11 @@ export default function ProfilePage() {
           </div>
 
           {/* Additional Actions */}
-          <div
-            className="pt-4"
-            style={{
-              borderTop: `1px solid ${colors.border.strong}`,
-              paddingTop: spacing[4],
-            }}
-          >
-            <div className="flex space-x-4">
+          <div className="pt-4 border-t border-neutral-300">
+            <div className="flex space-x-2">
               <ButtonV2
                 variant="secondary"
-                size="md"
+                size="sm"
                 onClick={() => setShowPasswordDialog(true)}
               >
                 Changer le mot de passe
@@ -557,7 +516,7 @@ export default function ProfilePage() {
               {profile?.role === 'owner' && (
                 <ButtonV2
                   variant="secondary"
-                  size="md"
+                  size="sm"
                 >
                   Paramètres système
                 </ButtonV2>

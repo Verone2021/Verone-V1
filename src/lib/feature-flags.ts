@@ -81,7 +81,7 @@ export const featureFlags: FeatureFlags = {
   // Phase 3 - DÉSACTIVÉ
   interactionsEnabled: false,  // 🚧 Consultations désactivées
   canauxVenteEnabled: false,   // 🚧 Canaux vente désactivés
-  contactsEnabled: false,      // 🚧 Contacts désactivés
+  contactsEnabled: true,       // ✅ Contacts activés
 
   // Modules spéciaux - Admin + Paramètres actifs
   adminEnabled: true,          // ✅ Gestion users/rôles
@@ -111,9 +111,9 @@ export function isModuleEnabled(moduleName: keyof FeatureFlags): boolean {
  * Helper pour obtenir la phase d'un module
  */
 export function getModulePhase(moduleName: string): number {
-  const phase1Modules = ['dashboard', 'profiles', 'catalogue', 'organisation', 'sourcing']
+  const phase1Modules = ['dashboard', 'profiles', 'catalogue', 'organisation', 'sourcing', 'contacts']
   const phase2Modules = ['stocks', 'commandes']
-  const phase3Modules = ['interactions', 'canaux-vente', 'contacts']
+  const phase3Modules = ['interactions', 'canaux-vente']
 
   if (phase1Modules.includes(moduleName)) return 1
   if (phase2Modules.includes(moduleName)) return 2

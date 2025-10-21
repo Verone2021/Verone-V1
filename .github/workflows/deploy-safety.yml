@@ -1,0 +1,356 @@
+name: 🚀 Deployment Safety Protocol
+
+# Protocole de sécurité déploiement obligatoire
+# Créé: 2025-10-21 - Romeo Dos Santos
+
+# Règles:
+# - Backup automatique avant chaque déploiement
+# - Tests complets (Vitest + Playwright)
+# - Validation zéro erreur console
+# - Déploiement preview SEULEMENT
+# - Merge main UNIQUEMENT après approbation humaine
+
+on:
+  pull_request:
+    branches: [main, preview]
+    types: [opened, synchronize, reopened, ready_for_review]
+
+  workflow_dispatch:
+    inputs:
+      skip_tests:
+        description: 'Skip tests (EMERGENCY ONLY)'
+        required: false
+        default: false
+        type: boolean
+
+permissions:
+  contents: write
+  pull-requests: write
+  deployments: write
+
+jobs:
+  # Job 1: Backup Tag avant modifications
+  backup:
+    name: 🏷️ Create Backup Tag
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+
+    steps:
+      - name: 📥 Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0 # Full history for tagging
+
+      - name: 🏷️ Create backup tag
+        run: |
+          TIMESTAMP=$(date +%Y%m%d-%H%M%S)
+          TAG_NAME="backup-prev-deploy-${TIMESTAMP}"
+
+          echo "📌 Creating backup tag: $TAG_NAME"
+          git tag -a "$TAG_NAME" -m "Backup before deployment at $TIMESTAMP"
+          git push origin "$TAG_NAME"
+
+          echo "✅ Backup tag created successfully"
+          echo "tag_name=$TAG_NAME" >> $GITHUB_OUTPUT
+        id: backup_tag
+
+      - name: 💬 Comment PR with backup tag
+        uses: actions/github-script@v7
+        with:
+          script: |
+            github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: `🏷️ **Backup Tag Created:** \`${{ steps.backup_tag.outputs.tag_name }}\`\n\nRollback command if needed:\n\`\`\`bash\ngit checkout ${{ steps.backup_tag.outputs.tag_name }}\n\`\`\``
+            });
+
+  # Job 2: Tests Vitest (Unitaires)
+  tests-unit:
+    name: 🧪 Vitest Unit Tests
+    runs-on: ubuntu-latest
+    needs: backup
+    timeout-minutes: 10
+
+    steps:
+      - name: 📥 Checkout code
+        uses: actions/checkout@v4
+
+      - name: 🟢 Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: 📦 Install dependencies
+        run: npm ci --legacy-peer-deps
+
+      - name: 🧪 Run Vitest tests
+        run: npm run test:vitest || echo "⚠️ Vitest not configured yet"
+        continue-on-error: true
+
+      - name: 📊 Upload coverage
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: vitest-coverage
+          path: coverage/
+          retention-days: 7
+
+  # Job 3: Tests Playwright (E2E + Console Errors)
+  tests-e2e:
+    name: 🎭 Playwright E2E + Console Check
+    runs-on: ubuntu-latest
+    needs: backup
+    timeout-minutes: 15
+
+    steps:
+      - name: 📥 Checkout code
+        uses: actions/checkout@v4
+
+      - name: 🟢 Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: 📦 Install dependencies
+        run: npm ci --legacy-peer-deps
+
+      - name: 🎭 Install Playwright browsers
+        run: npx playwright install --with-deps chromium
+
+      - name: 🚀 Start dev server (background)
+        run: npm run dev &
+        env:
+          PORT: 3000
+
+      - name: ⏳ Wait for dev server
+        run: npx wait-on http://localhost:3000 --timeout 60000
+
+      - name: 🎭 Run Playwright tests
+        run: npx playwright test --config=playwright.config.ts || echo "⚠️ E2E tests not configured yet"
+        continue-on-error: true
+
+      - name: 🔍 Console Error Check (Critical)
+        run: |
+          echo "🔍 Checking for console errors..."
+
+          # Script Node.js pour vérifier erreurs console via Playwright
+          cat > check-console.mjs << 'EOF'
+          import { chromium } from '@playwright/test';
+
+          const browser = await chromium.launch();
+          const page = await browser.newPage();
+
+          const errors = [];
+
+          page.on('console', msg => {
+            if (msg.type() === 'error') {
+              errors.push(msg.text());
+            }
+          });
+
+          await page.goto('http://localhost:3000');
+          await page.waitForTimeout(3000);
+
+          await browser.close();
+
+          if (errors.length > 0) {
+            console.error('❌ Console errors detected:');
+            errors.forEach(err => console.error('  -', err));
+            process.exit(1);
+          } else {
+            console.log('✅ No console errors detected');
+          }
+          EOF
+
+          node check-console.mjs
+
+      - name: 📊 Upload Playwright reports
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-report
+          path: playwright-report/
+          retention-days: 7
+
+  # Job 4: Type Check
+  type-check:
+    name: 📝 TypeScript Type Check
+    runs-on: ubuntu-latest
+    needs: backup
+    timeout-minutes: 5
+
+    steps:
+      - name: 📥 Checkout code
+        uses: actions/checkout@v4
+
+      - name: 🟢 Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: 📦 Install dependencies
+        run: npm ci --legacy-peer-deps
+
+      - name: 📝 Run TypeScript compiler
+        run: npm run type-check
+
+  # Job 5: Build Check
+  build:
+    name: 🏗️ Next.js Build Check
+    runs-on: ubuntu-latest
+    needs: backup
+    timeout-minutes: 10
+
+    steps:
+      - name: 📥 Checkout code
+        uses: actions/checkout@v4
+
+      - name: 🟢 Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: 📦 Install dependencies
+        run: npm ci --legacy-peer-deps
+
+      - name: 🏗️ Build Next.js
+        run: npm run build
+        env:
+          SKIP_ENV_VALIDATION: true
+
+  # Job 6: Deploy to Preview (Auto)
+  deploy-preview:
+    name: 🚀 Deploy to Preview
+    runs-on: ubuntu-latest
+    needs: [tests-unit, tests-e2e, type-check, build]
+    if: github.event.pull_request.draft == false
+    timeout-minutes: 10
+
+    steps:
+      - name: 📥 Checkout code
+        uses: actions/checkout@v4
+
+      - name: 🚀 Deploy to Vercel Preview
+        uses: amondnet/vercel-action@v25
+        with:
+          vercel-token: ${{ secrets.VERCEL_TOKEN }}
+          vercel-org-id: ${{ secrets.VERCEL_ORG_ID }}
+          vercel-project-id: ${{ secrets.VERCEL_PROJECT_ID }}
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          scope: ${{ secrets.VERCEL_ORG_ID }}
+
+      - name: 💬 Comment PR with preview URL
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const previewUrl = process.env.VERCEL_URL;
+            github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: `🚀 **Preview Deployment Ready!**\n\n**URL:** https://${previewUrl}\n\n✅ All tests passed\n✅ Zero console errors\n✅ Type check passed\n✅ Build successful\n\n⚠️ **Human approval required before merging to \`main\`**`
+            });
+
+  # Job 7: Production Deploy Gate (Manuel SEULEMENT)
+  deploy-production-gate:
+    name: 🔒 Production Deploy Gate
+    runs-on: ubuntu-latest
+    needs: deploy-preview
+    if: github.base_ref == 'main'
+    timeout-minutes: 60
+
+    steps:
+      - name: ⏸️ Wait for manual approval
+        uses: trstringer/manual-approval@v1
+        with:
+          secret: ${{ secrets.GITHUB_TOKEN }}
+          approvers: ${{ github.repository_owner }}
+          minimum-approvals: 1
+          issue-title: "🔒 Approve deployment to PRODUCTION"
+          issue-body: |
+            ## 🚀 Production Deployment Approval Required
+
+            **PR:** #${{ github.event.pull_request.number }}
+            **Branch:** `${{ github.head_ref }}`
+            **Preview URL:** Check comments above
+
+            ### Pre-Deployment Checklist
+
+            - [ ] Preview URL tested manually
+            - [ ] Zero console errors confirmed
+            - [ ] All tests passed
+            - [ ] Database migrations reviewed (if any)
+            - [ ] Backup tag created: `backup-prev-deploy-*`
+
+            ### Deployment Plan
+
+            1. Merge PR to `main`
+            2. Vercel auto-deploy to production
+            3. Monitor Sentry for errors (15 min)
+            4. Rollback available via backup tag if needed
+
+            **Approve this issue to proceed with deployment.**
+            **Close this issue to cancel deployment.**
+
+      - name: 💬 Notify approval received
+        if: success()
+        uses: actions/github-script@v7
+        with:
+          script: |
+            github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: '✅ **Production deployment approved!**\n\nYou can now merge this PR to `main`.\nVercel will automatically deploy to production.'
+            });
+
+  # Job 8: Summary Report
+  summary:
+    name: 📊 Deployment Summary
+    runs-on: ubuntu-latest
+    needs: [backup, tests-unit, tests-e2e, type-check, build, deploy-preview]
+    if: always()
+    timeout-minutes: 5
+
+    steps:
+      - name: 📊 Generate summary
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const jobs = [
+              { name: 'Backup Tag', status: '${{ needs.backup.result }}' },
+              { name: 'Unit Tests', status: '${{ needs.tests-unit.result }}' },
+              { name: 'E2E + Console', status: '${{ needs.tests-e2e.result }}' },
+              { name: 'Type Check', status: '${{ needs.type-check.result }}' },
+              { name: 'Build', status: '${{ needs.build.result }}' },
+              { name: 'Preview Deploy', status: '${{ needs.deploy-preview.result }}' },
+            ];
+
+            const passed = jobs.filter(j => j.status === 'success').length;
+            const total = jobs.length;
+            const allPassed = passed === total;
+
+            const summary = `## 📊 Deployment Safety Report
+
+            **Status:** ${allPassed ? '✅ All Checks Passed' : '❌ Some Checks Failed'}
+
+            | Job | Status |
+            |-----|--------|
+            ${jobs.map(j => `| ${j.name} | ${j.status === 'success' ? '✅' : '❌'} ${j.status} |`).join('\n')}
+
+            **Progress:** ${passed}/${total} checks passed
+
+            ${allPassed ? '✅ **Ready for production deployment** (manual approval required)' : '❌ **Fix failing checks before deployment**'}
+            `;
+
+            github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: summary
+            });

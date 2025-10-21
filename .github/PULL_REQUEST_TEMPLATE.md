@@ -1,241 +1,205 @@
-# 🚀 Pull Request - Vérone Back Office
+# Pull Request - Vérone Back Office
 
-## 📋 Description
+## 📋 Type de changement
 
-<!-- Décrire brièvement les changements apportés en 2-3 phrases -->
+<!-- Cocher la case appropriée -->
 
-**Type de changement:**
-- [ ] ✨ Feature (nouvelle fonctionnalité)
-- [ ] 🐛 Fix (correction de bug)
-- [ ] 🔧 Refactor (refactoring sans changement fonctionnel)
-- [ ] 📝 Docs (documentation uniquement)
-- [ ] 🎨 Style (formatage, pas de changement logique)
-- [ ] ⚡ Performance (amélioration performance)
-- [ ] 🚨 Hotfix (correction urgente production)
-- [ ] 📦 Data (insertion/migration données)
-
----
-
-## 🎯 Objectif
-
-<!-- Expliquer POURQUOI ces changements sont nécessaires -->
-
-**Contexte:**
-<!-- Issue GitHub liée, demande client, bug découvert, amélioration technique -->
-
-**Résultat attendu:**
-<!-- Qu'est-ce qui doit fonctionner après ce merge? -->
+- [ ] 🐛 Bug fix (correction non-breaking)
+- [ ] ✨ New feature (nouvelle fonctionnalité non-breaking)
+- [ ] 💥 Breaking change (modification incompatible avec versions précédentes)
+- [ ] 📚 Documentation (mise à jour docs uniquement)
+- [ ] 🔧 Refactoring (amélioration code sans changement fonctionnel)
+- [ ] ⚡ Performance (optimisation performance)
+- [ ] 🧪 Tests (ajout ou modification tests)
+- [ ] 🔒 Security (correctif sécurité)
 
 ---
 
-## 🔍 Changements détaillés
+## 🎯 Contexte & Motivation
 
-### Fichiers modifiés principaux
+**Pourquoi ce changement est nécessaire ?**
 
-<!-- Lister les fichiers importants et expliquer brièvement -->
-
-- `src/app/...` :
-- `src/components/...` :
-- `src/hooks/...` :
-- `src/lib/...` :
-
-### Migrations base de données
-
-- [ ] Aucune migration nécessaire
-- [ ] Migration ajoutée: `supabase/migrations/YYYYMMDD_*.sql`
-- [ ] Migration appliquée localement: ✅
-- [ ] Migration testée: ✅
+<!-- Décrire le problème résolu ou la fonctionnalité ajoutée -->
+<!-- Lien vers issue/ticket si applicable : Closes #XX -->
 
 ---
 
-## ✅ Checklist de validation
+## 📝 Description détaillée
 
-### Tests locaux
+**Quoi exactement a été modifié ?**
 
-- [ ] **Développement local testé** (`npm run dev`)
-- [ ] **Build production OK** (`npm run build`)
-- [ ] **Lint passé** (`npm run lint`)
-- [ ] **TypeScript OK** (pas d'erreurs de types)
+<!-- Description technique précise des modifications -->
+<!-- Lister fichiers principaux modifiés et raisons -->
 
-### Vérifications console (OBLIGATOIRE)
-
-- [ ] **Aucune erreur console** (vérifié avec MCP Playwright)
-- [ ] **Aucun warning bloquant**
-- [ ] **Pas de console.log debug oublié**
-
-### Qualité code
-
-- [ ] **Code commenté** si logique complexe
-- [ ] **Pas de secrets exposés** (tokens, passwords, API keys)
-- [ ] **Gestion des erreurs** implémentée
-- [ ] **Types TypeScript** corrects et complets
-
-### Documentation
-
-- [ ] **README mis à jour** (si nécessaire)
-- [ ] **MEMORY-BANK actualisé** (si changements importants)
-- [ ] **Commentaires code** ajoutés si logique complexe
+**Changements clés** :
+-
+-
+-
 
 ---
 
-## 🧪 Plan de test
+## ✅ Tests effectués
 
-### Tests manuels effectués
+<!-- Décrire comment les changements ont été validés -->
 
-<!-- Décrire les tests réalisés localement -->
+### Tests unitaires
 
-1. **Navigation:**
-   - [ ] Page chargée sans erreur
-   - [ ] Navigation entre pages OK
+- [ ] Tests unitaires ajoutés/modifiés (Vitest)
+- [ ] Coverage > 80% sur code modifié
+- [ ] Tous tests passent : \`npm run test\`
 
-2. **Fonctionnalité:**
-   - [ ] Feature principale testée
-   - [ ] Cas limites vérifiés
-   - [ ] Erreurs gérées correctement
+### Tests E2E / Manuel
 
-3. **Performance:**
-   - [ ] Temps de chargement acceptable
-   - [ ] Pas de ralentissement visible
+- [ ] Tests manuels effectués
+- [ ] Scénarios testés :
+  - [ ] Scénario 1 : ...
+  - [ ] Scénario 2 : ...
 
-### Scénarios de test suggérés (pour reviewer)
+### Console Error Check (MANDATORY)
 
-<!-- Comment tester cette PR? -->
+- [ ] **Zero console errors** : Playwright browser check effectué
+- [ ] Screenshot console clean attaché ci-dessous
 
-1. Aller sur la page `/...`
-2. Cliquer sur le bouton "..."
-3. Vérifier que ...
+**Screenshot Playwright Console** :
+<!-- Ajouter capture d'écran console propre ici -->
 
 ---
 
-## 📸 Captures d'écran / Vidéos
+## ⚠️ Risques & Impacts
 
-<!-- Si changements UI, ajouter des captures -->
+**Quels sont les risques potentiels de ce changement ?**
 
-**Avant:**
-<!-- Image ou description état avant -->
+<!-- Identifier impacts possibles sur autres modules/features -->
+<!-- Lister dépendances affectées -->
 
-**Après:**
-<!-- Image ou description état après -->
-
----
-
-## 🔗 Références
-
-### Issues liées
-
-<!-- Mentionner les issues GitHub si applicable -->
-
-- Closes #
-- Fixes #
-- Related to #
-
-### Documentation connexe
-
-- [Guide workflow](../docs/guides/GITHUB-WORKFLOW-POST-PRODUCTION.md)
-- [Business rules](../manifests/business-rules/)
+**Impacts identifiés** :
+- [ ] Aucun impact (changement isolé)
+- [ ] Impact modules : ...
+- [ ] Impact database : ... (migration requise ?)
+- [ ] Impact performance : ...
+- [ ] Impact UI/UX : ...
 
 ---
 
-## ⚠️ Points d'attention
+## 🔄 Rollback
 
-### Breaking changes
+**Procédure de rollback si problème en production**
 
-- [ ] Aucun breaking change
-- [ ] Breaking changes documentés ci-dessous:
+<!-- OBLIGATOIRE : Décrire comment revenir en arrière -->
 
-<!-- Si breaking changes, décrire impact + migration nécessaire -->
+### Rollback Database (si migration SQL)
 
-### Dépendances
+\`\`\`sql
+-- Script de rollback
+-- Exemple : DROP COLUMN, DROP TABLE, etc.
+\`\`\`
 
-- [ ] Aucune dépendance ajoutée
-- [ ] Dépendances ajoutées (listées ci-dessous):
+### Rollback Code
 
-```json
-// package.json nouvelles dépendances
-```
+- [ ] Revert commit possible sans impact
+- [ ] Feature flag pour désactivation : \`FEATURE_XXX=false\`
+- [ ] Backup requis avant déploiement
 
-### Configuration requise
-
-- [ ] Aucune configuration requise
-- [ ] Configuration nécessaire:
-
-```bash
-# Variables d'environnement à ajouter
-```
-
----
-
-## 🚀 Déploiement
-
-### Impact production
-
-- [ ] **Risque faible** (changements mineurs, UI uniquement)
-- [ ] **Risque moyen** (nouvelles features, logique métier)
-- [ ] **Risque élevé** (changements critiques, données sensibles)
-
-### Rollback plan
-
-- [ ] Rollback simple (revert commit)
-- [ ] Rollback complexe (procédure ci-dessous):
-
-<!-- Expliquer comment revenir en arrière si problème -->
-
-### Monitoring post-déploiement
-
-- [ ] Vérifier logs Sentry (erreurs temps réel)
-- [ ] Vérifier métriques Vercel (performance)
-- [ ] Tester workflow utilisateur complet
-- [ ] Vérifier données Supabase (cohérence)
-
----
-
-## 👤 Reviewer notes
-
-<!-- Notes pour vous-même ou futurs collaborateurs -->
-
-### Points à vérifier en priorité
-
+**Procédure détaillée** :
 1.
 2.
 3.
 
-### Zones de code sensibles
+---
 
-<!-- Code complexe ou critique à examiner attentivement -->
+## 📸 Screenshots (si UI modifié)
+
+<!-- Ajouter captures avant/après si changement visuel -->
+
+**Avant** :
+
+
+**Après** :
+
 
 ---
 
-## 📝 Notes additionnelles
+## 📚 Documentation
 
-<!-- Toute autre information utile pour la review -->
+<!-- Cocher si applicable -->
 
----
-
-## ✍️ Signature
-
-**Développeur:** Romeo Dos Santos
-**Date:** <!-- Date de création PR -->
-**Branche source:** `feature/...` ou `fix/...`
-**Branche cible:** `main`
+- [ ] README mis à jour
+- [ ] CLAUDE.md mis à jour
+- [ ] Documentation technique ajoutée (docs/)
+- [ ] Storybook story ajoutée (si nouveau composant)
+- [ ] KPI documenté en YAML (si nouveau KPI)
+- [ ] Changelog mis à jour
 
 ---
 
-**🎯 Review Guidelines (Rappel)**
+## ✨ Checklist finale
 
-- ✅ Console errors = 0 (OBLIGATOIRE)
-- ✅ Tester sur Preview Vercel
-- ✅ Respect design system Vérone (noir/blanc/gris uniquement)
-- ✅ Performance targets (Dashboard <2s, Catalogue <3s)
-- ✅ Pas de secrets exposés
-- ✅ TypeScript sans erreurs
+**Avant de soumettre cette PR, vérifier que** :
+
+### Code Quality
+
+- [ ] Code respecte conventions nommage (voir CLAUDE.md)
+- [ ] Pas de console.log / debugger laissés
+- [ ] Pas de code commenté inutile
+- [ ] ESLint passe : \`npm run lint\`
+- [ ] TypeScript compile sans erreur
+
+### Tests
+
+- [ ] Tests unitaires ajoutés/modifiés
+- [ ] Tous tests passent
+- [ ] **Console errors = 0** (Playwright check)
+
+### Database (si applicable)
+
+- [ ] Migration nommée correctement : \`YYYYMMDD_NNN_description.sql\`
+- [ ] Migration testée en local
+- [ ] Rollback migration documenté
+- [ ] RLS policies vérifiées
+- [ ] Anti-hallucination check (voir docs/database/best-practices.md)
+
+### Securité
+
+- [ ] Pas de secrets en dur (API keys, passwords)
+- [ ] Validation inputs (Zod) si API/form
+- [ ] RLS policies à jour si nouvelle table
+
+### Performance
+
+- [ ] Pas de requêtes N+1
+- [ ] Indexes DB ajoutés si nécessaire
+- [ ] Images optimisées si applicable
+
+### Documentation
+
+- [ ] README à jour si nécessaire
+- [ ] Commentaires code si logique complexe
+- [ ] Protected files respectés (voir PROTECTED_FILES.json)
 
 ---
 
-**🤖 Template Pull Request Vérone Back Office - Version 2025 (Mise à jour 8 octobre 2025)**
+## 👥 Reviewers
 
-<!--
-Ce template guide la création de PR complètes et professionnelles.
-Supprimez les sections non applicables, mais gardez les checklists importantes!
+<!-- Mentionner reviewers suggérés -->
 
-Guide complet: docs/guides/GITHUB-WORKFLOW-POST-PRODUCTION.md
--->
+**Reviewers recommandés** :
+- @owner (si fichiers protégés modifiés)
+- @tech-lead (si database modifiée)
+
+---
+
+## 📎 Informations complémentaires
+
+<!-- Tout contexte additionnel utile -->
+
+**Liens utiles** :
+- Issue : #
+- Documentation :
+- Référence externe :
+
+**Notes** :
+
+
+---
+
+**🚀 Vérone Back Office 2025 - Professional Development**

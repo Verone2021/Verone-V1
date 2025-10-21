@@ -86,3 +86,6 @@ git-status-*.txt
 *-old.tsx
 *-backup.ts
 *-backup.tsx
+
+*storybook.log
+storybook-static

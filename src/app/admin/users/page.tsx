@@ -126,21 +126,21 @@ export default async function AdminUsersPage() {
   return (
     <div className="space-y-6">
       {/* Header de la page */}
-      <div className="border-b border-black pb-4">
+      <div className="border-b border-neutral-200 pb-4">
         <div className="flex items-center justify-between">
           <div className="flex items-center space-x-3">
-            <Users className="h-8 w-8 text-black" />
+            <Users className="h-5 w-5 text-neutral-900" />
             <div>
-              <h1 className="text-2xl font-bold text-black">Administration des Utilisateurs</h1>
-              <p className="text-black opacity-70">
+              <h1 className="text-lg font-bold text-neutral-900">Administration des Utilisateurs</h1>
+              <p className="text-xs text-neutral-600">
                 Gérer les utilisateurs et leurs permissions dans Vérone
               </p>
             </div>
           </div>
 
           <CreateUserDialog>
-            <button className="inline-flex items-center justify-center gap-2 font-medium rounded-[10px] transition-all duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 hover:scale-[1.02] active:scale-[0.98] bg-black text-white border-none px-6 py-3 h-11 text-[15px] shadow-sm hover:shadow-md">
-              <Plus className="h-[18px] w-[18px]" strokeWidth={2} />
+            <button className="inline-flex items-center justify-center gap-2 px-4 py-2 bg-primary-500 text-white rounded-lg hover:bg-primary-600 transition-colors shadow-sm font-medium">
+              <Plus className="h-4 w-4" />
               Nouvel Utilisateur
             </button>
           </CreateUserDialog>
@@ -149,61 +149,61 @@ export default async function AdminUsersPage() {
 
       {/* Statistiques rapides */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-        <div className="bg-white border border-black">
-          <div className="flex flex-row items-center justify-between space-y-0 p-4 pb-2">
-            <div className="text-sm font-medium text-gray-600">Total Utilisateurs</div>
-            <Users className="h-4 w-4 text-black" />
+        <div className="bg-white rounded-lg border border-neutral-200 shadow-sm">
+          <div className="flex flex-row items-center justify-between space-y-0 p-3 pb-1.5">
+            <div className="text-sm font-medium text-neutral-600">Total Utilisateurs</div>
+            <Users className="h-3.5 w-3.5 text-neutral-900" />
           </div>
-          <div className="px-4 pb-4">
-            <div className="text-2xl font-bold text-black">{users.length}</div>
-            <p className="text-xs text-gray-600">Tous rôles confondus</p>
+          <div className="px-3 pb-3">
+            <div className="text-xl font-bold text-neutral-900">{users.length}</div>
+            <p className="text-xs text-neutral-600">Tous rôles confondus</p>
           </div>
         </div>
 
-        <div className="bg-white border border-black">
-          <div className="flex flex-row items-center justify-between space-y-0 p-4 pb-2">
-            <div className="text-sm font-medium text-gray-600">Owners</div>
-            <Shield className="h-4 w-4 text-purple-600" />
+        <div className="bg-white rounded-lg border border-neutral-200 shadow-sm">
+          <div className="flex flex-row items-center justify-between space-y-0 p-3 pb-1.5">
+            <div className="text-sm font-medium text-neutral-600">Owners</div>
+            <Shield className="h-3.5 w-3.5 text-accent-500" />
           </div>
-          <div className="px-4 pb-4">
-            <div className="text-2xl font-bold text-black">
+          <div className="px-3 pb-3">
+            <div className="text-xl font-bold text-neutral-900">
               {users.filter(u => u.profile?.role === 'owner').length}
             </div>
-            <p className="text-xs text-gray-600">Administrateurs système</p>
+            <p className="text-xs text-neutral-600">Administrateurs système</p>
           </div>
         </div>
 
-        <div className="bg-white border border-black">
-          <div className="flex flex-row items-center justify-between space-y-0 p-4 pb-2">
-            <div className="text-sm font-medium text-gray-600">Admins</div>
-            <Shield className="h-4 w-4 text-blue-600" />
+        <div className="bg-white rounded-lg border border-neutral-200 shadow-sm">
+          <div className="flex flex-row items-center justify-between space-y-0 p-3 pb-1.5">
+            <div className="text-sm font-medium text-neutral-600">Admins</div>
+            <Shield className="h-3.5 w-3.5 text-primary-500" />
           </div>
-          <div className="px-4 pb-4">
-            <div className="text-2xl font-bold text-black">
+          <div className="px-3 pb-3">
+            <div className="text-xl font-bold text-neutral-900">
               {users.filter(u => u.profile?.role === 'admin').length}
             </div>
-            <p className="text-xs text-gray-600">Gestionnaires</p>
+            <p className="text-xs text-neutral-600">Gestionnaires</p>
           </div>
         </div>
 
-        <div className="bg-white border border-black">
-          <div className="flex flex-row items-center justify-between space-y-0 p-4 pb-2">
-            <div className="text-sm font-medium text-gray-600">Catalog Managers</div>
-            <Shield className="h-4 w-4 text-green-600" />
+        <div className="bg-white rounded-lg border border-neutral-200 shadow-sm">
+          <div className="flex flex-row items-center justify-between space-y-0 p-3 pb-1.5">
+            <div className="text-sm font-medium text-neutral-600">Catalog Managers</div>
+            <Shield className="h-3.5 w-3.5 text-success-500" />
           </div>
-          <div className="px-4 pb-4">
-            <div className="text-2xl font-bold text-black">
+          <div className="px-3 pb-3">
+            <div className="text-xl font-bold text-neutral-900">
               {users.filter(u => u.profile?.role === 'catalog_manager').length}
             </div>
-            <p className="text-xs text-gray-600">Gestionnaires catalogue</p>
+            <p className="text-xs text-neutral-600">Gestionnaires catalogue</p>
           </div>
         </div>
       </div>
 
       {/* Tableau de gestion des utilisateurs */}
-      <div className="bg-white border border-black">
-        <div className="p-6">
-          <h2 className="text-lg font-semibold text-black mb-4">Liste des Utilisateurs</h2>
+      <div className="bg-white rounded-lg border border-neutral-200 shadow-sm">
+        <div className="p-4">
+          <h2 className="text-sm font-semibold text-neutral-900 mb-3">Liste des Utilisateurs</h2>
           <UserManagementTable users={users} />
         </div>
       </div>

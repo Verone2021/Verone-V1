@@ -8,7 +8,7 @@ import { featureFlags, getModuleDeploymentStatus } from "@/lib/feature-flags"
 import { InactiveModuleWrapper, PhaseIndicator } from "@/components/ui/phase-indicator"
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible"
 import { Tooltip, TooltipContent, TooltipTrigger, TooltipProvider } from "@/components/ui/tooltip"
-import { SidebarProvider, SidebarTrigger, SidebarInput, useSidebar } from "@/components/ui/sidebar"
+import { SidebarProvider, SidebarTrigger, useSidebar } from "@/components/ui/sidebar"
 import { Badge } from "@/components/ui/badge"
 import { useStockAlertsCount } from "@/hooks/use-stock-alerts-count"
 import {
@@ -30,15 +30,11 @@ import {
   Grid3x3,
   Tags,
   Layers,
-  Search,
   CheckCircle,
   MessageCircle,
   FileText,
   Banknote,
   RefreshCw,
-  X,
-  Moon,
-  Sun,
 } from "lucide-react"
 
 // Interface pour les éléments de navigation
@@ -52,8 +48,19 @@ interface NavItem {
   children?: NavItem[]
 }
 
-// SIDEBAR VIDE - Navigation sera reconstruite module par module
-const getNavItems = (stockAlertsCount: number): NavItem[] => []
+// Navigation principale - Dashboard + Modules
+const getNavItems = (stockAlertsCount: number): NavItem[] => [
+  {
+    title: 'Dashboard',
+    href: '/dashboard',
+    icon: Home
+  },
+  {
+    title: 'Organisations & Contacts',
+    href: '/organisation',
+    icon: Building2
+  }
+]
 
 function SidebarContent() {
   const pathname = usePathname()
@@ -62,9 +69,6 @@ function SidebarContent() {
 
   // Hook pour récupérer le nombre d'alertes stock
   const { count: stockAlertsCount } = useStockAlertsCount()
-
-  // Search functionality
-  const [searchQuery, setSearchQuery] = useState("")
 
   // State persistence avec localStorage
   const [expandedItems, setExpandedItems] = useState<string[]>(() => {
@@ -75,23 +79,12 @@ function SidebarContent() {
     return ['Administration'] // Administration section expanded by default
   })
 
-  // Theme toggle
-  const [theme, setTheme] = useState<'light' | 'dark'>(() => {
-    if (typeof window !== 'undefined') {
-      return (localStorage.getItem('verone-theme') as 'light' | 'dark') || 'light'
-    }
-    return 'light'
-  })
+  // Theme toggle supprimé (Phase 1 - pas nécessaire)
 
   // Sauvegarder l'état dans localStorage
   useEffect(() => {
     localStorage.setItem('verone-sidebar-expanded', JSON.stringify(expandedItems))
   }, [expandedItems])
-
-  useEffect(() => {
-    localStorage.setItem('verone-theme', theme)
-    document.documentElement.classList.toggle('dark', theme === 'dark')
-  }, [theme])
 
   const toggleExpanded = (title: string) => {
     setExpandedItems(prev =>
@@ -125,21 +118,10 @@ function SidebarContent() {
     return moduleMap[title] || title.toLowerCase()
   }
 
-  // Filter items based on search (avec count dynamique)
-  const filteredItems = useMemo(() => {
-    const navItems = getNavItems(stockAlertsCount)
-    if (!searchQuery.trim()) return navItems
-
-    return navItems.filter(item => {
-      const matchTitle = item.title.toLowerCase().includes(searchQuery.toLowerCase())
-      const matchDesc = item.description?.toLowerCase().includes(searchQuery.toLowerCase())
-      const matchChildren = item.children?.some(child =>
-        child.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        child.description?.toLowerCase().includes(searchQuery.toLowerCase())
-      )
-      return matchTitle || matchDesc || matchChildren
-    })
-  }, [searchQuery, stockAlertsCount])
+  // Nav items (avec count dynamique pour badges)
+  const navItems = useMemo(() => {
+    return getNavItems(stockAlertsCount)
+  }, [stockAlertsCount])
 
   // Fonction récursive pour rendre les enfants (support multi-niveaux)
   const renderChildNavItem = (child: NavItem, idx: number, isParentExpanded: boolean): React.ReactNode => {
@@ -161,25 +143,19 @@ function SidebarContent() {
               <Link
                 href={child.href!}
                 className={cn(
-                  "nav-item flex flex-1 items-center gap-3 px-3 py-2 text-sm transition-all duration-150 ease-out rounded-l relative",
-                  "text-black hover:opacity-70",
-                  isChildActive && "bg-black text-white"
+                  "nav-item flex flex-1 items-center gap-2 px-3 py-2 text-sm rounded-l relative",
+                  "transition-all duration-150 ease-out",
+                  "text-black/70 hover:text-black hover:bg-black/5 hover:scale-[1.02]",
+                  isChildActive && "bg-black text-white shadow-sm"
                 )}
               >
                 <child.icon className="h-4 w-4 flex-shrink-0" />
-                <div className="flex flex-col flex-1">
-                  <span className="font-medium">{child.title}</span>
-                  {child.description && (
-                    <span className={cn("text-xs opacity-70", isChildActive ? "text-white" : "text-black")}>
-                      {child.description}
-                    </span>
-                  )}
-                </div>
+                <span className="font-medium">{child.title}</span>
               </Link>
               <CollapsibleTrigger
                 className={cn(
-                  "px-3 py-2 transition-all duration-200 rounded-r",
-                  isChildActive ? "bg-black text-white" : "text-black hover:bg-black/5"
+                  "px-3 py-2 transition-all duration-150 ease-out rounded-r",
+                  isChildActive ? "bg-black text-white shadow-sm" : "text-black/70 hover:text-black hover:bg-black/5"
                 )}
               >
                 <ChevronRight
@@ -212,20 +188,14 @@ function SidebarContent() {
         <Link
           href={child.href!}
           className={cn(
-            "nav-item flex items-center gap-3 px-3 py-2 text-sm transition-all duration-150 ease-out rounded-md relative",
-            "text-black hover:opacity-70",
-            isChildActive && "bg-black text-white"
+            "nav-item flex items-center gap-2 px-3 py-2 text-sm rounded-md relative",
+            "transition-all duration-150 ease-out",
+            "text-black/70 hover:text-black hover:bg-black/5 hover:scale-[1.02]",
+            isChildActive && "bg-black text-white shadow-sm"
           )}
         >
           <child.icon className="h-4 w-4 flex-shrink-0" />
-          <div className="flex flex-col flex-1">
-            <span className="font-medium">{child.title}</span>
-            {child.description && (
-              <span className={cn("text-xs opacity-70", isChildActive ? "text-white" : "text-black")}>
-                {child.description}
-              </span>
-            )}
-          </div>
+          <span className="font-medium">{child.title}</span>
           {child.badge && (
             <Badge variant={child.badgeVariant === "urgent" ? "destructive" : "default"} className="ml-auto">
               {child.badge}
@@ -251,51 +221,42 @@ function SidebarContent() {
                 href={moduleStatus === 'active' ? item.href! : '#'}
                 onClick={(e) => moduleStatus !== 'active' && e.preventDefault()}
                 className={cn(
-                  "nav-item flex flex-1 items-center gap-3 px-3 py-2.5 text-sm transition-all duration-150 ease-out rounded-l relative",
-                  "text-black hover:opacity-70",
-                  isActiveItem && "bg-black text-white",
-                  moduleStatus !== 'active' && "opacity-60 cursor-not-allowed",
+                  "nav-item flex flex-1 items-center gap-2 px-3 py-2 text-sm rounded-l relative",
+                  "transition-all duration-150 ease-out",
+                  "text-black/70 hover:text-black hover:bg-black/5 hover:scale-[1.02]",
+                  isActiveItem && "bg-black text-white shadow-sm",
+                  moduleStatus !== 'active' && "opacity-60 cursor-not-allowed hover:scale-100 hover:bg-transparent",
                   isCollapsed && "justify-center px-2"
                 )}
               >
-                <item.icon className="h-5 w-5 flex-shrink-0" />
+                <item.icon className="h-4 w-4 flex-shrink-0" />
                 {!isCollapsed && (
-                  <div className="flex flex-col flex-1">
-                    <div className="flex items-center justify-between">
-                      <span className="font-medium">{item.title}</span>
-                      {moduleStatus !== 'active' && (
-                        <PhaseIndicator
-                          moduleName={moduleName}
-                          variant="badge"
-                          className="ml-2 scale-75"
-                        />
-                      )}
-                    </div>
-                    {item.description && (
-                      <span className={cn(
-                        "text-xs opacity-70",
-                        isActiveItem ? "text-white" : "text-black"
-                      )}>
-                        {item.description}
-                      </span>
+                  <>
+                    <span className="font-medium">{item.title}</span>
+                    {moduleStatus !== 'active' && (
+                      <PhaseIndicator
+                        moduleName={moduleName}
+                        variant="badge"
+                        className="ml-auto scale-75"
+                      />
                     )}
-                  </div>
-                )}
-                {item.badge && !isCollapsed && (
-                  <Badge
-                    variant={item.badgeVariant === "urgent" ? "destructive" : "default"}
-                    className="ml-auto"
-                  >
-                    {item.badge}
-                  </Badge>
+                    {item.badge && (
+                      <Badge
+                        variant={item.badgeVariant === "urgent" ? "destructive" : "default"}
+                        className="ml-auto"
+                      >
+                        {item.badge}
+                      </Badge>
+                    )}
+                  </>
                 )}
               </Link>
 
               {moduleStatus === 'active' && !isCollapsed && (
                 <CollapsibleTrigger
                   className={cn(
-                    "px-3 py-2.5 transition-all duration-200 rounded-r",
-                    isActiveItem ? "bg-black text-white" : "text-black hover:bg-black/5"
+                    "px-3 py-2 transition-all duration-150 ease-out rounded-r",
+                    isActiveItem ? "bg-black text-white shadow-sm" : "text-black/70 hover:text-black hover:bg-black/5"
                   )}
                 >
                   <ChevronDown
@@ -323,43 +284,34 @@ function SidebarContent() {
             href={moduleStatus === 'active' ? item.href! : '#'}
             onClick={(e) => moduleStatus !== 'active' && e.preventDefault()}
             className={cn(
-              "nav-item flex items-center gap-3 px-3 py-2.5 text-sm transition-all duration-150 ease-out rounded-md relative",
-              "text-black hover:opacity-70",
-              isActiveItem && "bg-black text-white",
-              moduleStatus !== 'active' && "opacity-60 cursor-not-allowed",
+              "nav-item flex items-center gap-2 px-3 py-2 text-sm rounded-md relative",
+              "transition-all duration-150 ease-out",
+              "text-black/70 hover:text-black hover:bg-black/5 hover:scale-[1.02]",
+              isActiveItem && "bg-black text-white shadow-sm",
+              moduleStatus !== 'active' && "opacity-60 cursor-not-allowed hover:scale-100 hover:bg-transparent",
               isCollapsed && "justify-center px-2"
             )}
           >
-            <item.icon className="h-5 w-5 flex-shrink-0" />
+            <item.icon className="h-4 w-4 flex-shrink-0" />
             {!isCollapsed && (
-              <div className="flex flex-col flex-1">
-                <div className="flex items-center justify-between">
-                  <span className="font-medium">{item.title}</span>
-                  {moduleStatus !== 'active' && (
-                    <PhaseIndicator
-                      moduleName={moduleName}
-                      variant="badge"
-                      className="ml-2 scale-75"
-                    />
-                  )}
-                </div>
-                {item.description && (
-                  <span className={cn(
-                    "text-xs opacity-70",
-                    isActiveItem ? "text-white" : "text-black"
-                  )}>
-                    {item.description}
-                  </span>
+              <>
+                <span className="font-medium">{item.title}</span>
+                {moduleStatus !== 'active' && (
+                  <PhaseIndicator
+                    moduleName={moduleName}
+                    variant="badge"
+                    className="ml-auto scale-75"
+                  />
                 )}
-              </div>
-            )}
-            {item.badge && !isCollapsed && (
-              <Badge
-                variant={item.badgeVariant === "urgent" ? "destructive" : "default"}
-                className="ml-auto"
-              >
-                {item.badge}
-              </Badge>
+                {item.badge && (
+                  <Badge
+                    variant={item.badgeVariant === "urgent" ? "destructive" : "default"}
+                    className="ml-auto"
+                  >
+                    {item.badge}
+                  </Badge>
+                )}
+              </>
             )}
           </Link>
         )}
@@ -386,7 +338,7 @@ function SidebarContent() {
 
   return (
     <aside className={cn(
-      "flex h-full flex-col border-r border-black bg-white transition-all duration-300",
+      "flex h-screen flex-col border-r border-black bg-white transition-all duration-300",
       isCollapsed ? "w-16" : "w-64"
     )}>
       {/* Logo Vérone + Toggle */}
@@ -404,50 +356,15 @@ function SidebarContent() {
         <SidebarTrigger />
       </div>
 
-      {/* Search Bar */}
-      {!isCollapsed && (
-        <div className="p-4 border-b border-black/10">
-          <div className="relative">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-black/50" />
-            <SidebarInput
-              type="text"
-              placeholder="Rechercher..."
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              className="pl-9 pr-8"
-            />
-            {searchQuery && (
-              <button
-                onClick={() => setSearchQuery("")}
-                className="absolute right-3 top-1/2 -translate-y-1/2 text-black/50 hover:text-black"
-              >
-                <X className="h-4 w-4" />
-              </button>
-            )}
-          </div>
-        </div>
-      )}
-
       {/* Navigation principale */}
-      <nav className="flex-1 p-4 overflow-auto">
+      <nav className="flex-1 p-4 overflow-y-auto">
         <ul className="space-y-2">
-          {filteredItems.map((item) => renderNavItem(item))}
+          {navItems.map((item) => renderNavItem(item))}
         </ul>
       </nav>
 
-      {/* Zone utilisateur + Theme toggle */}
+      {/* Zone déconnexion */}
       <div className="border-t border-black p-4">
-        {!isCollapsed && (
-          <div className="flex items-center justify-end mb-3">
-            <button
-              onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}
-              className="p-2 rounded-md hover:bg-black/5 transition-colors"
-            >
-              {theme === 'dark' ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
-            </button>
-          </div>
-        )}
-
         <button
           onClick={() => {
             document.cookie = 'verone-auth=; path=/; max-age=0'

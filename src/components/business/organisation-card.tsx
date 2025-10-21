@@ -1,260 +1,254 @@
 'use client'
 
-import { useState } from 'react'
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
+import { Card, CardContent } from '@/components/ui/card'
 import { ButtonV2 } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from '@/components/ui/dropdown-menu'
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-} from '@/components/ui/alert-dialog'
-import {
-  Building2,
-  Mail,
   MapPin,
-  MoreVertical,
-  Edit,
+  Archive,
+  ArchiveRestore,
   Trash2,
-  Eye,
-  Package,
-  Power,
-  PowerOff
+  ExternalLink,
+  Package
 } from 'lucide-react'
 import Link from 'next/link'
-
-interface Organisation {
-  id: string
-  name: string
-  slug: string
-  type: 'supplier' | 'customer' | 'partner' | 'internal'
-  email: string | null
-  country: string | null
-  is_active: boolean
-  created_at: string
-  updated_at: string
-  _count?: {
-    products: number
-  }
-}
+import { OrganisationLogo } from './organisation-logo'
+import { SupplierSegmentBadge, SupplierSegmentType } from './supplier-segment-badge'
+import { SupplierCategoryBadge } from './supplier-category-badge'
+import { spacing, colors } from '@/lib/design-system'
 
 interface OrganisationCardProps {
-  organisation: Organisation
-  onEdit?: (organisation: Organisation) => void
-  onDelete?: (organisation: Organisation) => void
-  onToggleStatus?: (organisation: Organisation) => void
-  showActions?: boolean
+  organisation: {
+    id: string
+    name: string
+    type: 'customer' | 'supplier' | 'partner'
+    email?: string | null
+    country?: string | null
+    city?: string | null
+    postal_code?: string | null
+    is_active: boolean
+    archived_at?: string | null
+    website?: string | null
+    logo_url?: string | null
+    customer_type?: 'professional' | 'individual' | null
+    supplier_segment?: SupplierSegmentType | null
+    supplier_category?: string | null
+    _count?: {
+      products?: number
+    }
+  }
+  activeTab: 'active' | 'archived'
+  onArchive: () => void
+  onDelete?: () => void
 }
 
-const typeLabels = {
-  supplier: 'Fournisseur',
-  customer: 'Client',
-  partner: 'Partenaire',
-  internal: 'Interne'
-}
+/**
+ * Formatte le code pays en version courte (FR au lieu de France)
+ */
+function formatCountryCode(country: string | null): string {
+  if (!country) return ''
 
-const typeColors = {
-  supplier: 'bg-blue-100 text-blue-800',
-  customer: 'bg-green-100 text-green-800',
-  partner: 'bg-purple-100 text-purple-800',
-  internal: 'bg-gray-100 text-gray-800'
-}
-
-export function OrganisationCard({
-  organisation,
-  onEdit,
-  onDelete,
-  onToggleStatus,
-  showActions = true
-}: OrganisationCardProps) {
-  const [showDeleteDialog, setShowDeleteDialog] = useState(false)
-
-  const handleDelete = () => {
-    onDelete?.(organisation)
-    setShowDeleteDialog(false)
+  const countryMap: Record<string, string> = {
+    'France': 'FR',
+    'Belgium': 'BE',
+    'Switzerland': 'CH',
+    'Italy': 'IT',
+    'Spain': 'ES',
+    'Germany': 'DE',
+    'United Kingdom': 'UK',
+    'Netherlands': 'NL'
   }
 
-  const getCatalogueLink = () => {
-    switch (organisation.type) {
-      case 'supplier':
-        return `/catalogue?supplier=${organisation.id}`
-      default:
-        return '/catalogue'
+  return countryMap[country] || country.substring(0, 2).toUpperCase()
+}
+
+/**
+ * Retourne les informations de badge selon le type d'organisation
+ */
+function getOrganisationTypeInfo(type: string, customerType?: string | null) {
+  if (type === 'customer') {
+    return {
+      label: customerType === 'professional' ? 'B2B Pro' : 'B2C',
+      colorClass: customerType === 'professional'
+        ? 'bg-blue-50 text-blue-700 border-blue-200'
+        : 'bg-purple-50 text-purple-700 border-purple-200'
     }
   }
 
+  if (type === 'supplier') {
+    return {
+      label: 'Fournisseur',
+      colorClass: 'bg-green-50 text-green-700 border-green-200'
+    }
+  }
+
+  return {
+    label: 'Partenaire',
+    colorClass: 'bg-orange-50 text-orange-700 border-orange-200'
+  }
+}
+
+/**
+ * Carte organisation ultra-compacte (Standards 2025)
+ * - Height: ~140-150px (vs 220px avant = -36%)
+ * - Padding: 8px (p-2)
+ * - Spacing: 4px (space-y-1)
+ * - Typography: 10-14px
+ */
+export function OrganisationCard({
+  organisation,
+  activeTab,
+  onArchive,
+  onDelete
+}: OrganisationCardProps) {
+  const typeInfo = getOrganisationTypeInfo(organisation.type, organisation.customer_type)
+  const countryCode = formatCountryCode(organisation.country)
+  const baseUrl = organisation.type === 'customer'
+    ? '/contacts-organisations/customers'
+    : organisation.type === 'supplier'
+    ? '/contacts-organisations/suppliers'
+    : '/contacts-organisations/partners'
+
   return (
-    <>
-      <Card className="hover:shadow-lg transition-shadow">
-        <CardHeader>
-          <div className="flex justify-between items-start">
-            <div className="flex-1">
-              <CardTitle className="text-lg text-black flex items-center gap-2">
-                <Building2 className="h-5 w-5" />
-                {organisation.name}
-              </CardTitle>
-              <CardDescription className="text-sm">
-                ID: {organisation.slug}
-              </CardDescription>
-            </div>
-            <div className="flex items-center gap-2">
-              <Badge className={typeColors[organisation.type]}>
-                {typeLabels[organisation.type]}
-              </Badge>
-              <Badge
-                variant={organisation.is_active ? 'default' : 'secondary'}
-                className={organisation.is_active ? 'bg-green-100 text-green-800' : ''}
+    <Card className="hover:shadow-md transition-shadow">
+      <CardContent className="p-2 space-y-1">
+        {/* Ligne 1: Logo + Nom + Badge Archivé */}
+        <div className="flex justify-between items-start gap-2">
+          <div className="flex items-center gap-1.5 flex-1 min-w-0">
+            <OrganisationLogo
+              logoUrl={organisation.logo_url}
+              organisationName={organisation.name}
+              size="xs"
+              fallback="initials"
+              className="flex-shrink-0"
+            />
+            {organisation.website ? (
+              <a
+                href={organisation.website}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="hover:underline truncate flex items-center gap-1 text-sm font-medium leading-tight"
+                style={{ color: colors.text.DEFAULT }}
               >
-                {organisation.is_active ? 'Actif' : 'Inactif'}
-              </Badge>
-              {showActions && (
-                <DropdownMenu>
-                  <DropdownMenuTrigger asChild>
-                    <ButtonV2 variant="ghost" size="sm">
-                      <MoreVertical className="h-4 w-4" />
-                    </ButtonV2>
-                  </DropdownMenuTrigger>
-                  <DropdownMenuContent align="end">
-                    <DropdownMenuItem asChild>
-                      <Link href={getCatalogueLink()}>
-                        <Eye className="h-4 w-4 mr-2" />
-                        Voir les produits
-                      </Link>
-                    </DropdownMenuItem>
-                    <DropdownMenuSeparator />
-                    {onEdit && (
-                      <DropdownMenuItem onClick={() => onEdit(organisation)}>
-                        <Edit className="h-4 w-4 mr-2" />
-                        Modifier
-                      </DropdownMenuItem>
-                    )}
-                    {onToggleStatus && (
-                      <DropdownMenuItem onClick={() => onToggleStatus(organisation)}>
-                        {organisation.is_active ? (
-                          <>
-                            <PowerOff className="h-4 w-4 mr-2" />
-                            Désactiver
-                          </>
-                        ) : (
-                          <>
-                            <Power className="h-4 w-4 mr-2" />
-                            Activer
-                          </>
-                        )}
-                      </DropdownMenuItem>
-                    )}
-                    {onDelete && (
-                      <>
-                        <DropdownMenuSeparator />
-                        <DropdownMenuItem
-                          onClick={() => setShowDeleteDialog(true)}
-                          className="text-red-600"
-                        >
-                          <Trash2 className="h-4 w-4 mr-2" />
-                          Supprimer
-                        </DropdownMenuItem>
-                      </>
-                    )}
-                  </DropdownMenuContent>
-                </DropdownMenu>
-              )}
-            </div>
-          </div>
-        </CardHeader>
-
-        <CardContent className="space-y-4">
-          {/* Contact Info */}
-          <div className="space-y-2">
-            {organisation.email && (
-              <div className="flex items-center gap-2 text-sm text-gray-600">
-                <Mail className="h-4 w-4" />
-                <a
-                  href={`mailto:${organisation.email}`}
-                  className="hover:text-black"
-                >
-                  {organisation.email}
-                </a>
-              </div>
-            )}
-
-            {organisation.country && (
-              <div className="flex items-center gap-2 text-sm text-gray-600">
-                <MapPin className="h-4 w-4" />
-                {organisation.country}
-              </div>
-            )}
-          </div>
-
-          {/* Stats */}
-          {organisation.type === 'supplier' && (
-            <div className="border-t pt-4">
-              <div className="flex items-center justify-between text-sm">
-                <div className="flex items-center gap-2 text-gray-600">
-                  <Package className="h-4 w-4" />
-                  <span>Produits liés:</span>
-                </div>
-                <span className="font-medium text-black">
-                  {organisation._count?.products || 0}
-                </span>
-              </div>
-            </div>
-          )}
-
-          {/* Actions */}
-          <div className="border-t pt-4">
-            <div className="flex justify-between items-center">
-              <span className="text-xs text-gray-500">
-                Créé le {new Date(organisation.created_at).toLocaleDateString('fr-FR')}
+                <span className="truncate">{organisation.name}</span>
+                <ExternalLink className="h-3 w-3 flex-shrink-0 opacity-60" />
+              </a>
+            ) : (
+              <span className="truncate text-sm font-medium leading-tight" style={{ color: colors.text.DEFAULT }}>
+                {organisation.name}
               </span>
-              <ButtonV2 variant="ghost" size="sm" asChild>
-                <Link href={getCatalogueLink()}>
-                  Voir détails
-                </Link>
-              </ButtonV2>
-            </div>
+            )}
           </div>
-        </CardContent>
-      </Card>
-
-      {/* Delete Confirmation Dialog */}
-      <AlertDialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>Supprimer l'organisation</AlertDialogTitle>
-            <AlertDialogDescription>
-              Êtes-vous sûr de vouloir supprimer "{organisation.name}" ?
-              {organisation._count?.products && organisation._count.products > 0 && (
-                <span className="block mt-2 text-red-600 font-medium">
-                  Attention: Cette organisation est liée à {organisation._count.products} produit(s).
-                  La suppression peut affecter ces données.
-                </span>
-              )}
-              Cette action est irréversible.
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel>Annuler</AlertDialogCancel>
-            <AlertDialogAction
-              onClick={handleDelete}
-              className="bg-red-600 hover:bg-red-700"
+          {organisation.archived_at && (
+            <Badge
+              variant="destructive"
+              className="text-[10px] px-1.5 py-0.5 flex-shrink-0 leading-tight"
+              style={{ backgroundColor: colors.danger[100], color: colors.danger[700] }}
             >
-              Supprimer
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
-    </>
+              Archivé
+            </Badge>
+          )}
+        </div>
+
+        {/* Ligne 2: Badge Type / Segment Supplier */}
+        {organisation.type === 'supplier' && organisation.supplier_segment ? (
+          <div className="flex flex-wrap items-center gap-1">
+            <SupplierSegmentBadge segment={organisation.supplier_segment} size="xs" showIcon={true} />
+            {organisation.supplier_category && (
+              <SupplierCategoryBadge
+                category={organisation.supplier_category}
+                size="xs"
+                showIcon={false}
+                mode="single"
+              />
+            )}
+          </div>
+        ) : (
+          <Badge
+            variant="outline"
+            className={`text-[10px] px-1.5 py-0.5 w-fit leading-tight ${typeInfo.colorClass}`}
+          >
+            {typeInfo.label}
+          </Badge>
+        )}
+
+        {/* Ligne 3-4: Localisation (2 lignes compactes) */}
+        {(countryCode || organisation.city) && (
+          <div className="space-y-0.5">
+            {countryCode && (
+              <Badge variant="outline" className="text-[10px] px-1.5 py-0.5 leading-tight border-gray-300">
+                🌍 {countryCode}
+              </Badge>
+            )}
+            {organisation.city && (
+              <div className="flex items-center gap-1 text-xs text-gray-500 leading-tight">
+                <MapPin className="h-3 w-3 flex-shrink-0" />
+                <span className="truncate">
+                  {organisation.city}{organisation.postal_code ? `, ${organisation.postal_code}` : ''}
+                </span>
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* Ligne Produits (uniquement pour suppliers) */}
+        {organisation.type === 'supplier' && organisation._count !== undefined && (
+          <div className="flex items-center justify-between text-xs pt-1 border-t" style={{ borderColor: colors.border.DEFAULT }}>
+            <div className="flex items-center gap-1 text-gray-500">
+              <Package className="h-3 w-3" />
+              <span>Produits:</span>
+            </div>
+            <span className="font-medium" style={{ color: colors.text.DEFAULT }}>
+              {organisation._count.products || 0}
+            </span>
+          </div>
+        )}
+
+        {/* Ligne 5: Actions compactes */}
+        <div className="flex items-center gap-1 pt-1 border-t" style={{ borderColor: colors.border.DEFAULT }}>
+          {activeTab === 'active' ? (
+            <>
+              <Link href={`${baseUrl}/${organisation.id}`} className="flex-1">
+                <ButtonV2 variant="ghost" size="sm" className="w-full text-[11px] h-7 leading-tight">
+                  Détails
+                </ButtonV2>
+              </Link>
+              <ButtonV2
+                variant="ghost"
+                size="sm"
+                onClick={onArchive}
+                icon={Archive}
+                className="px-2 text-[11px] h-7"
+                aria-label="Archiver"
+              />
+            </>
+          ) : (
+            <>
+              <ButtonV2
+                variant="secondary"
+                size="sm"
+                onClick={onArchive}
+                icon={ArchiveRestore}
+                className="px-2 text-[11px] h-7"
+                aria-label="Restaurer"
+              />
+              <ButtonV2
+                variant="danger"
+                size="sm"
+                onClick={onDelete}
+                icon={Trash2}
+                className="px-2 text-[11px] h-7"
+                aria-label="Supprimer"
+              />
+              <Link href={`${baseUrl}/${organisation.id}`} className="flex-1">
+                <ButtonV2 variant="ghost" size="sm" className="w-full text-[11px] h-7 leading-tight">
+                  Détails
+                </ButtonV2>
+              </Link>
+            </>
+          )}
+        </div>
+      </CardContent>
+    </Card>
   )
 }

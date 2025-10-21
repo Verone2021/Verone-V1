@@ -2,7 +2,7 @@
 
 ⚠️ **RÈGLE ABSOLUE** : Consulter CE fichier AVANT toute modification database
 
-**Dernière mise à jour** : 19 octobre 2025
+**Dernière mise à jour** : 21 octobre 2025
 **Database** : PostgreSQL via Supabase
 **Projet** : aorroydfjsrygmosnzrl
 
@@ -12,11 +12,11 @@
 
 | Élément | Nombre | Documentation |
 |---------|--------|---------------|
-| **Tables** | 78 | Ce fichier |
-| **Colonnes** | 1365 | Ce fichier |
-| **Triggers** | 158 | [triggers.md](./triggers.md) |
-| **RLS Policies** | 239 | [rls-policies.md](./rls-policies.md) |
-| **Fonctions RPC** | 254 | [functions-rpc.md](./functions-rpc.md) |
+| **Tables** | 77 | Ce fichier |
+| **Colonnes** | 1339 | Ce fichier |
+| **Triggers** | 161 | [triggers.md](./triggers.md) |
+| **RLS Policies** | 226 | [rls-policies.md](./rls-policies.md) |
+| **Fonctions RPC** | 259 | [functions-rpc.md](./functions-rpc.md) |
 | **Foreign Keys** | 143 | [foreign-keys.md](./foreign-keys.md) |
 | **Enums** | 34 | [enums.md](./enums.md) |
 
@@ -64,7 +64,9 @@
 
 ---
 
-## 📋 TABLES PAR MODULE (78 Total)
+## 📋 TABLES PAR MODULE (77 Total)
+
+⚠️ **Note** : La table `product_drafts` a été supprimée le 17 octobre 2025 (migration 20251017_006). Workflow actuel : création directe dans `products` + modification via page détail.
 
 ### Module Facturation & Abby API (7 tables)
 
@@ -114,7 +116,7 @@ Transactions bancaires (Qonto, Revolut)
 
 ### Module Catalogue (18 tables)
 
-#### 9. **products** ⭐ TABLE CENTRALE (43 colonnes)
+#### 9. **products** ⭐ TABLE CENTRALE (44 colonnes)
 Produits catalogue principal
 - **Colonnes clés** : id, sku, name, slug, status, supplier_id, category_id, stock_quantity, stock_real
 - **Triggers** : 8 (dont trigger_calculate_automatic_product_status)
@@ -123,168 +125,163 @@ Produits catalogue principal
 - **❌ INTERDIT** : Ajouter cost_price, price_ht, ou base_price (utiliser price_list_items)
 - **⚠️ NOTE PRIX** : La table products ne contient AUCUN champ prix. Tous les prix sont dans price_list_items (cost_price, price_ht, suggested_retail_price). Voir [pricing-architecture.md](./pricing-architecture.md) pour détails architecture multi-canal
 
-#### 10. **product_drafts** (34 colonnes)
-Brouillons produits en création
-- **Colonnes clés** : id, name, slug, supplier_id, category_id, family_id
-- **Relations** : → organisations (supplier), categories, families
-
-#### 11. **product_images** (15 colonnes)
+#### 10. **product_images** (15 colonnes)
 Images produits (plusieurs par produit)
 - **Colonnes clés** : id, product_id, public_url, is_primary, display_order
 - **Relations** : → products
 - **Triggers** : 1 (ensure_single_primary_image)
 
-#### 12. **product_colors** (6 colonnes)
+#### 11. **product_colors** (6 colonnes)
 Couleurs produits standardisées
 - **Colonnes clés** : id, name, hex_code, is_predefined
 
-#### 13. **product_packages** (14 colonnes)
+#### 12. **product_packages** (14 colonnes)
 Conditionnements produits (lot, carton, palette)
 - **Colonnes clés** : id, product_id, type, base_quantity, discount_rate
 - **Relations** : → products
 
-#### 14. **product_groups** (9 colonnes)
+#### 13. **product_groups** (9 colonnes)
 Groupes produits (variantes)
 - **Colonnes clés** : id, name, item_group_id, group_type, primary_product_id
 
-#### 15. **product_group_members** (6 colonnes)
+#### 14. **product_group_members** (6 colonnes)
 Membres groupes produits
 - **Relations** : → products, product_groups
 
-#### 16. **product_status_changes** (6 colonnes)
+#### 15. **product_status_changes** (6 colonnes)
 Historique changements statut produits
 - **Relations** : → products
 
-#### 17. **categories** (13 colonnes)
+#### 16. **categories** (13 colonnes)
 Catégories produits (arbre hiérarchique)
 - **Colonnes clés** : id, name, slug, level, family_id
 - **Relations** : → families
 - **RLS** : 10 policies
 
-#### 18. **category_translations** (6 colonnes)
+#### 17. **category_translations** (6 colonnes)
 Traductions catégories multilingues
 - **Relations** : → categories
 
-#### 19. **subcategories** (12 colonnes)
+#### 18. **subcategories** (12 colonnes)
 Sous-catégories
 - **Relations** : → categories
 
-#### 20. **families** (12 colonnes)
+#### 19. **families** (12 colonnes)
 Familles produits (niveau supérieur)
 - **Colonnes clés** : id, name, slug, is_active
 
-#### 21. **variant_groups** (20 colonnes)
+#### 20. **variant_groups** (20 colonnes)
 Groupes variantes produits
 - **Relations** : → subcategories, organisations (supplier)
 
-#### 22. **collections** (22 colonnes)
+#### 21. **collections** (22 colonnes)
 Collections marketing
 - **Colonnes clés** : id, name, description, is_featured
 - **RLS** : 5 policies
 
-#### 23. **collection_products** (6 colonnes)
+#### 22. **collection_products** (6 colonnes)
 Produits dans collections
 - **Relations** : → collections, products
 
-#### 24. **collection_images** (15 colonnes)
+#### 23. **collection_images** (15 colonnes)
 Images collections
 - **Relations** : → collections
 
-#### 25. **collection_shares** (6 colonnes)
+#### 24. **collection_shares** (6 colonnes)
 Partages collections
 - **Relations** : → collections
 
-#### 26. **collection_translations** (6 colonnes)
+#### 25. **collection_translations** (6 colonnes)
 Traductions collections
 - **Relations** : → collections
 
 ### Module Pricing (9 tables)
 
-#### 27. **sales_channels** (13 colonnes)
+#### 26. **sales_channels** (13 colonnes)
 Canaux de vente (B2B, B2C, Marketplace)
 - **Colonnes clés** : id, code, name, default_discount_rate
 
-#### 28. **price_lists** (18 colonnes)
+#### 27. **price_lists** (18 colonnes)
 Listes de prix
 - **Colonnes clés** : id, code, name, list_type, currency
 
-#### 29. **price_list_items** (21 colonnes)
+#### 28. **price_list_items** (21 colonnes)
 Items listes prix (prix par produit)
 - **Colonnes clés** : id, price_list_id, product_id, price_ht
 - **Relations** : → price_lists, products
 
-#### 30. **price_list_history** (15 colonnes)
+#### 29. **price_list_history** (15 colonnes)
 Historique modifications prix
 - **Relations** : → price_list_items
 
-#### 31. **channel_price_lists** (17 colonnes)
+#### 30. **channel_price_lists** (17 colonnes)
 Association canaux ↔ listes prix
 - **Relations** : → sales_channels, price_lists
 
-#### 32. **channel_pricing** (14 colonnes)
+#### 31. **channel_pricing** (14 colonnes)
 Pricing custom par canal
 - **Relations** : → products, sales_channels
 
-#### 33. **customer_price_lists** (16 colonnes)
+#### 32. **customer_price_lists** (16 colonnes)
 Listes prix clients spécifiques
 - **Relations** : → organisations / individual_customers, price_lists
 
-#### 34. **customer_pricing** (18 colonnes)
+#### 33. **customer_pricing** (18 colonnes)
 Pricing custom par client
 - **Relations** : → products, organisations / individual_customers
 
-#### 35. **group_price_lists** (9 colonnes)
+#### 34. **group_price_lists** (9 colonnes)
 Listes prix groupes clients
 - **Relations** : → customer_groups, price_lists
 
 ### Module Clients & Contacts (7 tables)
 
-#### 36. **organisations** ⭐ TABLE CENTRALE (50 colonnes)
+#### 35. **organisations** ⭐ TABLE CENTRALE (50 colonnes)
 Organisations (fournisseurs, clients B2B, partenaires)
 - **Colonnes clés** : id, name, type (enum), email, country, is_active
 - **Type enum** : 'supplier', 'manufacturer', 'customer', 'partner'
 - **❌ INTERDIT** : Créer tables suppliers/customers séparées
 - **Utiliser** : WHERE type='supplier' OU type='customer'
 
-#### 37. **individual_customers** (27 colonnes)
+#### 36. **individual_customers** (27 colonnes)
 Clients particuliers B2C
 - **Colonnes clés** : id, first_name, last_name, email, phone, address_line1
 
-#### 38. **contacts** (25 colonnes)
+#### 37. **contacts** (25 colonnes)
 Contacts au sein organisations
 - **Colonnes clés** : id, organisation_id, first_name, last_name, email
 - **Relations** : → organisations
 
-#### 39. **customer_groups** (13 colonnes)
+#### 38. **customer_groups** (13 colonnes)
 Groupes clients (segmentation)
 - **Colonnes clés** : id, code, name, group_type, auto_assignment_rules
 
-#### 40. **customer_group_members** (10 colonnes)
+#### 39. **customer_group_members** (10 colonnes)
 Membres groupes clients
 - **Relations** : → customer_groups, organisations / individual_customers
 
-#### 41. **client_consultations** (18 colonnes)
+#### 40. **client_consultations** (18 colonnes)
 Consultations clients (demandes projet)
 - **Colonnes clés** : id, organisation_name, client_email, status, assigned_to
 
-#### 42. **consultation_products** (11 colonnes)
+#### 41. **consultation_products** (11 colonnes)
 Produits proposés consultations
 - **Relations** : → client_consultations, products
 
-#### 43. **consultation_images** (15 colonnes)
+#### 42. **consultation_images** (15 colonnes)
 Images consultations
 - **Relations** : → client_consultations
 
 ### Module Commandes Vente (5 tables)
 
-#### 44. **sales_orders** (35 colonnes)
+#### 43. **sales_orders** (35 colonnes)
 Commandes vente clients
 - **Colonnes clés** : id, order_number, customer_id, status, total_ht, total_ttc
 - **Triggers** : 8+ (gestion stock automatique)
 - **Relations** : → organisations / individual_customers
 - **❌ ATTENTION** : Triggers stock complexes
 
-#### 45. **sales_order_items** (13 colonnes)
+#### 44. **sales_order_items** (13 colonnes)
 Lignes commandes vente
 - **Colonnes clés** : id, sales_order_id, product_id, quantity, unit_price_ht
 - **📦 Gestion Expéditions** : `quantity_shipped` INTEGER NOT NULL DEFAULT 0 - Quantité expédiée (expéditions partielles)
@@ -293,11 +290,11 @@ Lignes commandes vente
   - **Trigger** : Déclenche `handle_sales_order_stock()` lors UPDATE
 - **Relations** : → sales_orders, products
 
-#### 46. **order_discounts** (21 colonnes)
+#### 45. **order_discounts** (21 colonnes)
 Remises applicables commandes
 - **Colonnes clés** : id, code, name, discount_type, discount_value
 
-#### 47. **shipments** (32 colonnes)
+#### 46. **shipments** (32 colonnes)
 Expéditions commandes clients - Multi-transporteur (Packlink, Mondial Relay, Chronotruck)
 
 **Colonnes principales** :
@@ -375,24 +372,24 @@ Expéditions commandes clients - Multi-transporteur (Packlink, Mondial Relay, Ch
 
 **⚠️ IMPORTANT** : Pas de table `shipment_items` - Traçabilité via `sales_order_items.quantity_shipped` directement
 
-#### 48. **shipping_parcels** (10 colonnes)
+#### 47. **shipping_parcels** (10 colonnes)
 Colis expéditions
 - **Colonnes clés** : id, shipment_id, parcel_number, weight_kg
 - **Relations** : → shipments
 
-#### 49. **parcel_items** (5 colonnes)
+#### 48. **parcel_items** (5 colonnes)
 Items colis
 - **Relations** : → shipping_parcels, sales_order_items
 
 ### Module Commandes Achat (5 tables)
 
-#### 50. **purchase_orders** (22 colonnes)
+#### 49. **purchase_orders** (22 colonnes)
 Commandes achat fournisseurs
 - **Colonnes clés** : id, po_number, supplier_id, status, total_ht
 - **Relations** : → organisations (supplier)
 - **Triggers** : Gestion forecast stock
 
-#### 51. **purchase_order_items** (12 colonnes)
+#### 50. **purchase_order_items** (12 colonnes)
 Lignes commandes achat
 - **Colonnes clés** : id, purchase_order_id, product_id, quantity, unit_price_ht
 - **📦 Gestion Réceptions** : `quantity_received` INTEGER NOT NULL DEFAULT 0 - Quantité reçue (réceptions partielles)
@@ -403,120 +400,120 @@ Lignes commandes achat
   - **Algorithme Idempotent** : Compare avec SUM mouvements stock déjà créés (évite duplications)
 - **Relations** : → purchase_orders, products
 
-#### 52. **purchase_order_receptions** (10 colonnes)
+#### 51. **purchase_order_receptions** (10 colonnes)
 Réceptions marchandises
 - **Relations** : → purchase_orders, products
 
-#### 53. **sample_orders** (17 colonnes)
+#### 52. **sample_orders** (17 colonnes)
 Commandes échantillons fournisseurs
 - **Colonnes clés** : id, order_number, supplier_id, status
 - **Relations** : → organisations (supplier)
 
-#### 54. **sample_order_items** (12 colonnes)
+#### 53. **sample_order_items** (12 colonnes)
 Items commandes échantillons
 - **Relations** : → sample_orders
 
 ### Module Stocks (2 tables)
 
-#### 55. **stock_movements** (18 colonnes)
+#### 54. **stock_movements** (18 colonnes)
 Mouvements stock (entrées/sorties)
 - **Colonnes clés** : id, product_id, movement_type, quantity_change, reference_type
 - **Relations** : → products
 - **Triggers** : 12+ triggers interdépendants ⚠️
 - **❌ CRITIQUE** : NE PAS modifier sans lire triggers.md
 
-#### 56. **stock_reservations** (13 colonnes)
+#### 55. **stock_reservations** (13 colonnes)
 Réservations stock temporaires
 - **Relations** : → products
 
 ### Module Google Merchant & Feeds (3 tables)
 
-#### 57. **feed_configs** (16 colonnes)
+#### 56. **feed_configs** (16 colonnes)
 Configurations feeds export
 - **Colonnes clés** : id, name, platform (Google/Facebook), schedule_frequency
 
-#### 58. **feed_exports** (15 colonnes)
+#### 57. **feed_exports** (15 colonnes)
 Historique exports feeds
 - **Relations** : → feed_configs
 
-#### 59. **feed_performance_metrics** (13 colonnes)
+#### 58. **feed_performance_metrics** (13 colonnes)
 Métriques performance feeds
 - **Relations** : → feed_configs
 
 ### Module Utilisateurs & Activité (5 tables)
 
-#### 60. **user_profiles** (13 colonnes)
+#### 59. **user_profiles** (13 colonnes)
 Profils utilisateurs (liés auth.users Supabase)
 - **Colonnes clés** : user_id, role, user_type, scopes, partner_id
 
-#### 61. **user_sessions** (15 colonnes)
+#### 60. **user_sessions** (15 colonnes)
 Sessions utilisateurs tracking
 - **Relations** : → user_profiles, organisations
 
-#### 62. **user_activity_logs** (15 colonnes)
+#### 61. **user_activity_logs** (15 colonnes)
 Logs activité utilisateurs
 - **Relations** : → user_profiles, organisations
 
-#### 63. **audit_logs** (11 colonnes)
+#### 62. **audit_logs** (11 colonnes)
 Logs audit système
 - **Colonnes clés** : id, user_id, action, table_name, record_id
 
-#### 64. **notifications** (11 colonnes)
+#### 63. **notifications** (11 colonnes)
 Notifications utilisateurs
 - **Colonnes clés** : id, type, severity, title, message, user_id
 
-#### 65. **notifications_backup_20251014** (11 colonnes)
+#### 64. **notifications_backup_20251014** (11 colonnes)
 Backup notifications (obsolète, peut être supprimée)
 
 ### Module Tests & QA (5 tables)
 
-#### 66. **manual_tests_progress** (14 colonnes)
+#### 65. **manual_tests_progress** (14 colonnes)
 Progression tests manuels
 
-#### 67. **test_sections_lock** (16 colonnes)
+#### 66. **test_sections_lock** (16 colonnes)
 Verrouillage sections tests
 
-#### 68. **test_validation_state** (14 colonnes)
+#### 67. **test_validation_state** (14 colonnes)
 État validation tests
 
-#### 69. **test_error_reports** (14 colonnes)
+#### 68. **test_error_reports** (14 colonnes)
 Rapports erreurs tests
 
-#### 70. **bug_reports** (20 colonnes)
+#### 69. **bug_reports** (20 colonnes)
 Rapports bugs utilisateurs
 
 ### Module Errors & MCP (4 tables)
 
-#### 71. **error_reports_v2** (32 colonnes)
+#### 70. **error_reports_v2** (32 colonnes)
 Rapports erreurs système V2
 - **Colonnes clés** : id, error_type, severity, module, message, stack_trace
 
-#### 72. **error_notifications_queue** (11 colonnes)
+#### 71. **error_notifications_queue** (11 colonnes)
 Queue notifications erreurs
 - **Relations** : → error_reports_v2
 
-#### 73. **error_resolution_history** (11 colonnes)
+#### 72. **error_resolution_history** (11 colonnes)
 Historique résolutions erreurs
 - **Relations** : → error_reports_v2
 
-#### 74. **mcp_resolution_queue** (16 colonnes)
+#### 73. **mcp_resolution_queue** (16 colonnes)
 Queue résolutions MCP automatiques
 - **Relations** : → error_reports_v2
 
-#### 75. **mcp_resolution_strategies** (11 colonnes)
+#### 74. **mcp_resolution_strategies** (11 colonnes)
 Stratégies résolution MCP
 
 ### Module Divers (3 tables)
 
-#### 76. **expense_categories** (10 colonnes)
+#### 75. **expense_categories** (10 colonnes)
 Catégories dépenses comptabilité
 - **Colonnes clés** : id, name, account_code, parent_category_id
 
-#### 77. **supplier_categories** (10 colonnes)
+#### 76. **supplier_categories** (10 colonnes)
 Catégories fournisseurs (taxonomie)
 - **Colonnes clés** : id, code, label_fr, label_en
 
-#### 78. **audit_log_summary** (Vue matérialisée)
+#### 77. **audit_log_summary** (Vue matérialisée)
 Vue synthèse logs audit
 
 ---

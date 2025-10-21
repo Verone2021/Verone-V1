@@ -15,6 +15,7 @@ import {
 } from 'lucide-react'
 import { useEffect, useState } from 'react'
 import { createClient } from '@/lib/supabase/client'
+import { ButtonV2 } from '@/components/ui/button'
 
 interface UserActivityStats {
   user_id: string
@@ -163,21 +164,21 @@ export default function ActiviteUtilisateursPage() {
     return (
       <div className="space-y-6">
         {/* Header */}
-        <div className="border-b border-gray-200 pb-4">
+        <div className="border-b border-neutral-200 pb-4">
           <div className="flex items-center space-x-3">
-            <Activity className="h-8 w-8 text-black" />
+            <Activity className="h-6 w-6 text-neutral-900" />
             <div>
-              <h1 className="text-2xl font-bold text-black">Activité Utilisateurs</h1>
-              <p className="text-gray-600">Monitoring temps réel de l'équipe</p>
+              <h1 className="text-xl font-bold text-neutral-900">Activité Utilisateurs</h1>
+              <p className="text-sm text-neutral-600">Monitoring temps réel de l'équipe</p>
             </div>
           </div>
         </div>
 
         {/* Loading skeleton */}
-        <div className="bg-white rounded-lg border border-gray-200 p-6">
+        <div className="bg-white rounded-lg border border-neutral-200 shadow-sm p-6">
           <div className="animate-pulse space-y-4">
             {Array.from({ length: 5 }).map((_, i) => (
-              <div key={i} className="h-16 bg-gray-200 rounded" />
+              <div key={i} className="h-16 bg-neutral-200 rounded" />
             ))}
           </div>
         </div>
@@ -188,28 +189,31 @@ export default function ActiviteUtilisateursPage() {
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className="border-b border-gray-200 pb-4">
+      <div className="border-b border-neutral-200 pb-4">
         <div className="flex items-center justify-between">
           <div className="flex items-center space-x-3">
-            <Activity className="h-8 w-8 text-black" />
+            <Activity className="h-6 w-6 text-neutral-900" />
             <div>
-              <h1 className="text-2xl font-bold text-black">Activité Utilisateurs</h1>
-              <p className="text-gray-600">Monitoring temps réel de l'équipe</p>
+              <h1 className="text-xl font-bold text-neutral-900">Activité Utilisateurs</h1>
+              <p className="text-sm text-neutral-600">Monitoring temps réel de l'équipe</p>
             </div>
           </div>
 
           <div className="flex items-center space-x-4">
-            <div className="text-sm text-gray-500">
+            <div className="text-sm text-neutral-500">
               Dernière mise à jour: {lastRefresh.toLocaleTimeString('fr-FR')}
             </div>
-            <button
+            <ButtonV2
               onClick={fetchUsers}
               disabled={isLoading}
-              className="flex items-center space-x-2 px-4 py-2 bg-black text-white rounded-lg hover:bg-gray-800 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+              variant="secondary"
+              size="sm"
+              icon={RefreshCw}
+              iconPosition="left"
+              className={isLoading ? '[&_svg]:animate-spin' : ''}
             >
-              <RefreshCw className={`h-4 w-4 ${isLoading ? 'animate-spin' : ''}`} />
-              <span>Actualiser</span>
-            </button>
+              Actualiser
+            </ButtonV2>
           </div>
         </div>
       </div>
@@ -229,91 +233,91 @@ export default function ActiviteUtilisateursPage() {
 
       {/* Stats summary */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <div className="bg-white rounded-lg border border-gray-200">
+        <div className="bg-white rounded-lg border border-neutral-200 shadow-sm">
           <div className="flex flex-row items-center justify-between space-y-0 p-4 pb-2">
-            <div className="text-sm font-medium text-gray-600">Utilisateurs Actifs</div>
-            <CheckCircle className="h-4 w-4 text-green-600" />
+            <div className="text-sm font-medium text-neutral-600">Utilisateurs Actifs</div>
+            <CheckCircle className="h-4 w-4 text-success-500" />
           </div>
           <div className="px-4 pb-4">
-            <div className="text-2xl font-bold text-black">
+            <div className="text-2xl font-bold text-neutral-900">
               {users.filter(u => u.is_active_now).length}
             </div>
-            <p className="text-xs text-gray-600">En ligne maintenant</p>
+            <p className="text-xs text-neutral-600">En ligne maintenant</p>
           </div>
         </div>
 
-        <div className="bg-white rounded-lg border border-gray-200">
+        <div className="bg-white rounded-lg border border-neutral-200 shadow-sm">
           <div className="flex flex-row items-center justify-between space-y-0 p-4 pb-2">
-            <div className="text-sm font-medium text-gray-600">Total Utilisateurs</div>
-            <User className="h-4 w-4 text-blue-600" />
+            <div className="text-sm font-medium text-neutral-600">Total Utilisateurs</div>
+            <User className="h-4 w-4 text-primary-500" />
           </div>
           <div className="px-4 pb-4">
-            <div className="text-2xl font-bold text-black">{users.length}</div>
-            <p className="text-xs text-gray-600">Équipe complète</p>
+            <div className="text-2xl font-bold text-neutral-900">{users.length}</div>
+            <p className="text-xs text-neutral-600">Équipe complète</p>
           </div>
         </div>
 
-        <div className="bg-white rounded-lg border border-gray-200">
+        <div className="bg-white rounded-lg border border-neutral-200 shadow-sm">
           <div className="flex flex-row items-center justify-between space-y-0 p-4 pb-2">
-            <div className="text-sm font-medium text-gray-600">Engagement Moyen</div>
-            <TrendingUp className="h-4 w-4 text-purple-600" />
+            <div className="text-sm font-medium text-neutral-600">Engagement Moyen</div>
+            <TrendingUp className="h-4 w-4 text-accent-500" />
           </div>
           <div className="px-4 pb-4">
-            <div className="text-2xl font-bold text-black">
+            <div className="text-2xl font-bold text-neutral-900">
               {users.length > 0
                 ? Math.round(users.reduce((sum, u) => sum + u.engagement_score, 0) / users.length)
                 : 0}
             </div>
-            <p className="text-xs text-gray-600">Score sur 100</p>
+            <p className="text-xs text-neutral-600">Score sur 100</p>
           </div>
         </div>
       </div>
 
       {/* Users table */}
-      <div className="bg-white rounded-lg border border-gray-200 overflow-hidden">
+      <div className="bg-white rounded-lg border border-neutral-200 shadow-sm overflow-hidden">
         <div className="overflow-x-auto">
-          <table className="min-w-full divide-y divide-gray-200">
-            <thead className="bg-gray-50">
+          <table className="min-w-full divide-y divide-neutral-200">
+            <thead className="bg-neutral-50">
               <tr>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <th className="px-6 py-3 text-left text-xs font-medium text-neutral-500 uppercase tracking-wider">
                   Utilisateur
                 </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <th className="px-6 py-3 text-left text-xs font-medium text-neutral-500 uppercase tracking-wider">
                   Rôle
                 </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <th className="px-6 py-3 text-left text-xs font-medium text-neutral-500 uppercase tracking-wider">
                   Dernière Activité
                 </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <th className="px-6 py-3 text-left text-xs font-medium text-neutral-500 uppercase tracking-wider">
                   Sessions (30j)
                 </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <th className="px-6 py-3 text-left text-xs font-medium text-neutral-500 uppercase tracking-wider">
                   Actions (30j)
                 </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <th className="px-6 py-3 text-left text-xs font-medium text-neutral-500 uppercase tracking-wider">
                   Module Préféré
                 </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <th className="px-6 py-3 text-left text-xs font-medium text-neutral-500 uppercase tracking-wider">
                   Engagement
                 </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <th className="px-6 py-3 text-left text-xs font-medium text-neutral-500 uppercase tracking-wider">
                   Actions
                 </th>
               </tr>
             </thead>
-            <tbody className="bg-white divide-y divide-gray-200">
+            <tbody className="bg-white divide-y divide-neutral-200">
               {users.map((user) => (
-                <tr key={user.user_id} className="hover:bg-gray-50 transition-colors">
+                <tr key={user.user_id} className="hover:bg-neutral-50 transition-colors">
                   <td className="px-6 py-4 whitespace-nowrap">
                     <div className="flex items-center">
-                      <div className="flex-shrink-0 h-10 w-10 bg-gray-200 rounded-full flex items-center justify-center">
-                        <User className="h-5 w-5 text-gray-600" />
+                      <div className="flex-shrink-0 h-10 w-10 bg-neutral-200 rounded-full flex items-center justify-center">
+                        <User className="h-5 w-5 text-neutral-600" />
                       </div>
                       <div className="ml-4">
-                        <div className="text-sm font-medium text-black">
+                        <div className="text-sm font-medium text-neutral-900">
                           {user.full_name || 'Sans nom'}
                         </div>
-                        <div className="text-sm text-gray-500">{user.email}</div>
+                        <div className="text-sm text-neutral-500">{user.email}</div>
                       </div>
                     </div>
                   </td>
@@ -331,20 +335,20 @@ export default function ActiviteUtilisateursPage() {
                         </span>
                       )}
                       <div>
-                        <div className="text-sm text-black">{formatLastActivity(user.last_activity)}</div>
+                        <div className="text-sm text-neutral-900">{formatLastActivity(user.last_activity)}</div>
                         {user.is_active_now && (
-                          <div className="text-xs text-green-600 font-medium">En ligne</div>
+                          <div className="text-xs text-success-600 font-medium">En ligne</div>
                         )}
                       </div>
                     </div>
                   </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                  <td className="px-6 py-4 whitespace-nowrap text-sm text-neutral-900">
                     {user.total_sessions}
                   </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                  <td className="px-6 py-4 whitespace-nowrap text-sm text-neutral-900">
                     {user.total_actions}
                   </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                  <td className="px-6 py-4 whitespace-nowrap text-sm text-neutral-900">
                     <div className="flex items-center">
                       <span className="mr-2">{getModuleIcon(user.most_used_module)}</span>
                       <span className="capitalize">{user.most_used_module || '—'}</span>
@@ -355,13 +359,13 @@ export default function ActiviteUtilisateursPage() {
                       <span className={`text-sm font-medium ${getEngagementColor(user.engagement_score)}`}>
                         {user.engagement_score}
                       </span>
-                      <span className="text-xs text-gray-500 ml-1">/100</span>
+                      <span className="text-xs text-neutral-500 ml-1">/100</span>
                     </div>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                     <Link
                       href={`/admin/users/${user.user_id}`}
-                      className="text-black hover:text-gray-700 inline-flex items-center group"
+                      className="text-neutral-900 hover:text-neutral-700 inline-flex items-center group"
                     >
                       <span>Voir détails</span>
                       <ArrowRight className="h-4 w-4 ml-1 group-hover:translate-x-1 transition-transform" />
@@ -374,9 +378,9 @@ export default function ActiviteUtilisateursPage() {
 
           {users.length === 0 && !isLoading && (
             <div className="text-center py-12">
-              <User className="mx-auto h-12 w-12 text-gray-400" />
-              <h3 className="mt-2 text-sm font-medium text-gray-900">Aucun utilisateur</h3>
-              <p className="mt-1 text-sm text-gray-500">Aucun utilisateur trouvé dans le système.</p>
+              <User className="mx-auto h-12 w-12 text-neutral-400" />
+              <h3 className="mt-2 text-sm font-medium text-neutral-900">Aucun utilisateur</h3>
+              <p className="mt-1 text-sm text-neutral-500">Aucun utilisateur trouvé dans le système.</p>
             </div>
           )}
         </div>

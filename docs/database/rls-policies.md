@@ -509,22 +509,6 @@ EXISTS (
 ##### 3.40-3.43. product_colors policies
 - Pattern standard CRUD admin + SELECT authenticated
 
-#### Table: `product_drafts` (1 policy)
-
-##### 3.44. product_drafts_owner_only
-- **Commande** : ALL
-- **Rôles** : `authenticated`
-- **Type** : PERMISSIVE
-- **Condition USING** :
-```sql
-created_by = auth.uid() OR get_user_role() IN ('owner', 'admin')
-```
-- **WITH CHECK** :
-```sql
-created_by = auth.uid() OR get_user_role() IN ('owner', 'admin')
-```
-- **Description** : Créateur ou Owner/Admin accèdent drafts
-
 #### Table: `product_groups` (3 policies)
 
 ##### 3.45-3.47. product_groups policies

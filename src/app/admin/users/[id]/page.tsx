@@ -214,17 +214,17 @@ export default async function UserDetailPage({ params }: UserDetailPageProps) {
   }
 
   return (
-    <div className="space-y-6 max-w-7xl mx-auto">
+    <div className="space-y-4">
       {/* Navigation */}
       <div className="flex items-center space-x-4">
         <Link href="/admin/users">
-          <button className="inline-flex items-center justify-center gap-2 font-medium rounded-[10px] transition-all duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 hover:scale-[1.02] active:scale-[0.98] bg-transparent text-black border-none px-4 py-2 h-9 text-[14px] hover:bg-neutral-100">
+          <button className="inline-flex items-center justify-center gap-2 font-medium rounded-[10px] transition-all duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 hover:scale-[1.02] active:scale-[0.98] bg-transparent text-neutral-900 border-none px-4 py-2 h-9 text-[14px] hover:bg-neutral-100">
             <ArrowLeft className="h-[16px] w-[16px]" strokeWidth={2} />
             Retour aux utilisateurs
           </button>
         </Link>
 
-        <div className="text-sm text-black opacity-60">
+        <div className="text-sm text-neutral-500">
           Administration › Utilisateurs › {formatUserName(userDetailData.email, userDetailData.user_metadata)}
         </div>
       </div>
@@ -236,27 +236,27 @@ export default async function UserDetailPage({ params }: UserDetailPageProps) {
       <UserStatsCards user={userDetailData} />
 
       {/* Onglets détaillés */}
-      <div className="bg-white border border-black">
+      <div className="bg-white border border-neutral-200 rounded-lg">
         <Tabs defaultValue="profile" className="w-full">
-          <div className="border-b border-black px-6 py-4">
-            <TabsList className="grid w-full grid-cols-3 bg-gray-50">
+          <div className="border-b border-neutral-200 px-4 py-3">
+            <TabsList className="grid w-full grid-cols-3 bg-neutral-50">
               <TabsTrigger
                 value="profile"
-                className="flex items-center space-x-2 data-[state=active]:bg-white data-[state=active]:text-black"
+                className="flex items-center space-x-2 data-[state=active]:bg-white data-[state=active]:text-neutral-900"
               >
                 <User className="h-4 w-4" />
                 <span>Profil</span>
               </TabsTrigger>
               <TabsTrigger
                 value="activity"
-                className="flex items-center space-x-2 data-[state=active]:bg-white data-[state=active]:text-black"
+                className="flex items-center space-x-2 data-[state=active]:bg-white data-[state=active]:text-neutral-900"
               >
                 <Activity className="h-4 w-4" />
                 <span>Activité</span>
               </TabsTrigger>
               <TabsTrigger
                 value="security"
-                className="flex items-center space-x-2 data-[state=active]:bg-white data-[state=active]:text-black"
+                className="flex items-center space-x-2 data-[state=active]:bg-white data-[state=active]:text-neutral-900"
               >
                 <Shield className="h-4 w-4" />
                 <span>Sécurité</span>
@@ -264,7 +264,7 @@ export default async function UserDetailPage({ params }: UserDetailPageProps) {
             </TabsList>
           </div>
 
-          <div className="p-6">
+          <div className="p-4">
             <TabsContent value="profile" className="mt-0">
               <UserProfileTab user={userDetailData} />
             </TabsContent>

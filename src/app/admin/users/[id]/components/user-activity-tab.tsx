@@ -179,49 +179,49 @@ export function UserActivityTab({ user }: UserActivityTabProps) {
     : '0.0'
 
   return (
-    <div className="space-y-8">
+    <div className="space-y-2">
       {/* Métriques d'engagement */}
-      <div className="space-y-4">
-        <h3 className="text-lg font-semibold text-black flex items-center space-x-2">
-          <Target className="h-5 w-5" />
+      <div className="space-y-2">
+        <h3 className="text-sm font-semibold text-black flex items-center space-x-2">
+          <Target className="h-3.5 w-3.5" />
           <span>Métriques d'engagement</span>
         </h3>
 
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
           {/* Score d'engagement */}
-          <div className={`p-4 border border-gray-200 rounded ${engagement.bgColor}`}>
-            <div className="text-center space-y-2">
-              <div className={`text-3xl font-bold ${engagement.color}`}>
+          <div className={`p-3 border border-gray-200 rounded ${engagement.bgColor}`}>
+            <div className="text-center space-y-1.5">
+              <div className={`text-2xl font-bold ${engagement.color}`}>
                 {stats.engagement_score}%
               </div>
-              <div className="text-sm text-black opacity-70">Score d'engagement</div>
-              <div className={`text-xs font-medium ${engagement.color}`}>
+              <div className="text-xs text-black opacity-70">Score d'engagement</div>
+              <div className={`text-[11px] font-medium ${engagement.color}`}>
                 {engagement.level}
               </div>
             </div>
           </div>
 
           {/* Sessions totales */}
-          <div className="p-4 bg-gray-50 border border-gray-200 rounded">
-            <div className="text-center space-y-2">
-              <div className="text-3xl font-bold text-black">
+          <div className="p-3 bg-gray-50 border border-gray-200 rounded">
+            <div className="text-center space-y-1.5">
+              <div className="text-2xl font-bold text-black">
                 {stats.total_sessions}
               </div>
-              <div className="text-sm text-black opacity-70">Sessions totales</div>
-              <div className="text-xs text-black opacity-50">
+              <div className="text-xs text-black opacity-70">Sessions totales</div>
+              <div className="text-[11px] text-black opacity-50">
                 30 derniers jours
               </div>
             </div>
           </div>
 
           {/* Fréquence moyenne */}
-          <div className="p-4 bg-gray-50 border border-gray-200 rounded">
-            <div className="text-center space-y-2">
-              <div className="text-3xl font-bold text-black">
+          <div className="p-3 bg-gray-50 border border-gray-200 rounded">
+            <div className="text-center space-y-1.5">
+              <div className="text-2xl font-bold text-black">
                 {sessionsPerWeek}
               </div>
-              <div className="text-sm text-black opacity-70">Sessions/semaine</div>
-              <div className="text-xs text-black opacity-50">
+              <div className="text-xs text-black opacity-70">Sessions/semaine</div>
+              <div className="text-[11px] text-black opacity-50">
                 Rythme moyen d'utilisation
               </div>
             </div>
@@ -230,63 +230,63 @@ export function UserActivityTab({ user }: UserActivityTabProps) {
       </div>
 
       {/* Activité détaillée */}
-      <div className="space-y-4">
-        <h3 className="text-lg font-semibold text-black flex items-center space-x-2">
-          <BarChart3 className="h-5 w-5" />
+      <div className="space-y-2">
+        <h3 className="text-sm font-semibold text-black flex items-center space-x-2">
+          <BarChart3 className="h-3.5 w-3.5" />
           <span>Statistiques détaillées</span>
         </h3>
 
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-          <div className="p-4 bg-white border border-gray-200 rounded">
-            <div className="flex items-center space-x-2 mb-2">
-              <MousePointer className="h-4 w-4 text-black opacity-60" />
-              <span className="text-sm font-medium text-black">Actions totales</span>
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-3">
+          <div className="p-3 bg-white border border-gray-200 rounded">
+            <div className="flex items-center space-x-2 mb-1.5">
+              <MousePointer className="h-3.5 w-3.5 text-black opacity-60" />
+              <span className="text-xs font-medium text-black">Actions totales</span>
             </div>
-            <div className="text-2xl font-bold text-black">{stats.total_actions}</div>
-            <div className="text-xs text-black opacity-50">
+            <div className="text-xl font-bold text-black">{stats.total_actions}</div>
+            <div className="text-[11px] text-black opacity-50">
               {stats.total_sessions > 0
                 ? `${Math.round(stats.total_actions / stats.total_sessions)} par session`
                 : 'Aucune session'}
             </div>
           </div>
 
-          <div className="p-4 bg-white border border-gray-200 rounded">
-            <div className="flex items-center space-x-2 mb-2">
-              <Clock className="h-4 w-4 text-black opacity-60" />
-              <span className="text-sm font-medium text-black">Durée moyenne</span>
+          <div className="p-3 bg-white border border-gray-200 rounded">
+            <div className="flex items-center space-x-2 mb-1.5">
+              <Clock className="h-3.5 w-3.5 text-black opacity-60" />
+              <span className="text-xs font-medium text-black">Durée moyenne</span>
             </div>
-            <div className="text-2xl font-bold text-black">
+            <div className="text-xl font-bold text-black">
               {formatDuration(stats.avg_session_duration)}
             </div>
-            <div className="text-xs text-black opacity-50">
+            <div className="text-[11px] text-black opacity-50">
               Par session
             </div>
           </div>
 
-          <div className="p-4 bg-white border border-gray-200 rounded">
-            <div className="flex items-center space-x-2 mb-2">
-              <Monitor className="h-4 w-4 text-black opacity-60" />
-              <span className="text-sm font-medium text-black">Module préféré</span>
+          <div className="p-3 bg-white border border-gray-200 rounded">
+            <div className="flex items-center space-x-2 mb-1.5">
+              <Monitor className="h-3.5 w-3.5 text-black opacity-60" />
+              <span className="text-xs font-medium text-black">Module préféré</span>
             </div>
-            <div className="text-lg font-bold text-black">
+            <div className="text-base font-bold text-black">
               {getModuleLabel(stats.most_used_module)}
             </div>
-            <div className="text-xs text-black opacity-50">
+            <div className="text-[11px] text-black opacity-50">
               Le plus utilisé
             </div>
           </div>
 
-          <div className="p-4 bg-white border border-gray-200 rounded">
-            <div className="flex items-center space-x-2 mb-2">
-              <Activity className="h-4 w-4 text-black opacity-60" />
-              <span className="text-sm font-medium text-black">Dernière activité</span>
+          <div className="p-3 bg-white border border-gray-200 rounded">
+            <div className="flex items-center space-x-2 mb-1.5">
+              <Activity className="h-3.5 w-3.5 text-black opacity-60" />
+              <span className="text-xs font-medium text-black">Dernière activité</span>
             </div>
             <div className="text-sm font-bold text-black">
               {stats.last_activity
                 ? formatRelativeTime(stats.last_activity)
                 : 'Jamais'}
             </div>
-            <div className="text-xs text-black opacity-50">
+            <div className="text-[11px] text-black opacity-50">
               {stats.last_activity
                 ? new Date(stats.last_activity).toLocaleString('fr-FR')
                 : 'Aucune activité enregistrée'}
@@ -296,19 +296,19 @@ export function UserActivityTab({ user }: UserActivityTabProps) {
       </div>
 
       {/* Dashboard modules avec barres de progression */}
-      <div className="space-y-4">
+      <div className="space-y-2">
         <UserModuleActivityDashboard userId={user.id} days={30} />
       </div>
 
       {/* Sessions actives */}
       {activityData.active_sessions.length > 0 && (
-        <div className="space-y-4">
-          <h3 className="text-lg font-semibold text-black flex items-center space-x-2">
-            <Zap className="h-5 w-5" />
+        <div className="space-y-2">
+          <h3 className="text-sm font-semibold text-black flex items-center space-x-2">
+            <Zap className="h-3.5 w-3.5" />
             <span>Sessions actives</span>
           </h3>
 
-          <div className="bg-green-50 border border-green-200 rounded-lg p-4">
+          <div className="bg-green-50 border border-green-200 rounded-lg p-3">
             <div className="flex items-center space-x-2">
               <div className="flex h-2 w-2">
                 <span className="animate-ping absolute inline-flex h-2 w-2 rounded-full bg-green-400 opacity-75"></span>

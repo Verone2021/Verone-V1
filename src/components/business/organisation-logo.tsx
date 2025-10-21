@@ -9,12 +9,13 @@ import { colors } from '@/lib/design-system'
 interface OrganisationLogoProps {
   logoUrl?: string | null
   organisationName: string
-  size?: 'sm' | 'md' | 'lg' | 'xl'
+  size?: 'xs' | 'sm' | 'md' | 'lg' | 'xl'
   fallback?: 'initials' | 'icon'
   className?: string
 }
 
 const SIZE_CONFIG = {
+  xs: { container: 'h-6 w-6', icon: 'h-3 w-3', text: 'text-[10px]', transform: 'width=48&height=48' },
   sm: { container: 'h-8 w-8', icon: 'h-4 w-4', text: 'text-xs', transform: 'width=64&height=64' },
   md: { container: 'h-12 w-12', icon: 'h-6 w-6', text: 'text-sm', transform: 'width=96&height=96' },
   lg: { container: 'h-16 w-16', icon: 'h-8 w-8', text: 'text-base', transform: 'width=128&height=128' },

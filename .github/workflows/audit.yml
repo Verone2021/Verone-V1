@@ -1,0 +1,107 @@
+name: Code Audit & Quality Checks
+
+on:
+  pull_request:
+    branches: [main, develop]
+    paths:
+      - 'src/**'
+      - 'packages/**'
+      - 'docs/**'
+      - 'package.json'
+      - 'package-lock.json'
+  workflow_dispatch: # Permet exécution manuelle
+
+jobs:
+  audit:
+    name: Audit Code Quality
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0 # Nécessaire pour certains audits (git history)
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci --legacy-peer-deps
+
+      - name: Run ESLint
+        run: npm run lint
+        continue-on-error: false # Bloquer si lint échoue
+
+      - name: Run TypeScript Check
+        run: npm run type-check
+        continue-on-error: false # Bloquer si types invalides
+
+      - name: Audit - Code Duplication
+        run: npm run audit:duplicates
+        continue-on-error: true # Warning uniquement
+        id: duplicates
+
+      - name: Audit - Circular Dependencies
+        run: npm run audit:cycles
+        continue-on-error: false # BLOQUER si cycles détectés (strict)
+
+      - name: Audit - Dead Code
+        run: npm run audit:deadcode
+        continue-on-error: true # Warning uniquement
+
+      - name: Audit - Spelling
+        run: npm run audit:spelling
+        continue-on-error: true # Warning uniquement
+
+      - name: Generate Audit Summary
+        if: always()
+        run: |
+          echo "## 📊 Code Audit Summary" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### ✅ Checks Passed" >> $GITHUB_STEP_SUMMARY
+          echo "- ESLint: ${{ steps.lint.outcome == 'success' && '✅' || '❌' }}" >> $GITHUB_STEP_SUMMARY
+          echo "- TypeScript: ${{ steps.type-check.outcome == 'success' && '✅' || '❌' }}" >> $GITHUB_STEP_SUMMARY
+          echo "- Circular Dependencies: ${{ steps.cycles.outcome == 'success' && '✅ No cycles' || '❌ Cycles detected' }}" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### ⚠️ Warnings (non-blocking)" >> $GITHUB_STEP_SUMMARY
+          echo "- Code Duplication: See logs" >> $GITHUB_STEP_SUMMARY
+          echo "- Dead Code: See logs" >> $GITHUB_STEP_SUMMARY
+          echo "- Spelling: See logs" >> $GITHUB_STEP_SUMMARY
+
+      - name: Comment PR (if failed)
+        if: failure()
+        uses: actions/github-script@v7
+        with:
+          script: |
+            github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.name,
+              body: `## ❌ Code Audit Failed
+
+              Some quality checks failed. Please review the workflow logs and fix the issues.
+
+              **Critical failures** (must be fixed):
+              - ESLint errors
+              - TypeScript compilation errors
+              - Circular dependencies
+
+              **Warnings** (should be addressed):
+              - Code duplication
+              - Dead code
+              - Spelling errors
+
+              See [workflow run](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}) for details.
+              `
+            })
+
+# Note: Ce workflow peut être étendu avec:
+# - Tests unitaires (Vitest)
+# - Tests E2E (Playwright) sur PR critiques
+# - Security scan (npm audit, Snyk)
+# - Performance benchmarks
+# - Bundle size check

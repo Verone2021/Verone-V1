@@ -600,22 +600,6 @@ FOR EACH ROW
 EXECUTE FUNCTION update_updated_at()
 ```
 
-#### Table: `product_drafts` (1 trigger)
-
-##### 3.30. product_drafts_updated_at
-- **Timing** : BEFORE UPDATE
-- **Événement** : UPDATE
-- **Condition** : Aucune
-- **Fonction** : `update_updated_at()`
-- **Description** : Met à jour timestamp updated_at
-- **Définition SQL** :
-```sql
-CREATE TRIGGER product_drafts_updated_at
-BEFORE UPDATE ON public.product_drafts
-FOR EACH ROW
-EXECUTE FUNCTION update_updated_at()
-```
-
 #### Table: `product_groups` (1 trigger)
 
 ##### 3.31. product_groups_updated_at
