@@ -9,6 +9,7 @@ interface Tab {
   icon?: React.ReactNode
   badge?: string | number
   disabled?: boolean
+  disabledBadge?: string  // Badge affiché quand onglet disabled (ex: "Phase 2", "Bientôt")
 }
 
 interface TabsNavigationProps {
@@ -52,7 +53,9 @@ export function TabsNavigation({
           >
             {tab.icon}
             <span>{tab.label}</span>
-            {tab.badge && (
+
+            {/* Badge normal (compteur) - Seulement si onglet actif */}
+            {tab.badge && !tab.disabled && (
               <span className={cn(
                 "ml-2 inline-flex items-center justify-center px-2 py-1 text-xs font-medium rounded-full",
                 activeTab === tab.id
@@ -60,6 +63,13 @@ export function TabsNavigation({
                   : "bg-gray-100 text-gray-600"
               )}>
                 {tab.badge}
+              </span>
+            )}
+
+            {/* Badge disabled (Phase X, Bientôt) - Style amber */}
+            {tab.disabled && tab.disabledBadge && (
+              <span className="ml-2 inline-flex items-center justify-center px-2 py-1 text-xs font-medium rounded-full bg-amber-100 text-amber-700 border border-amber-200">
+                {tab.disabledBadge}
               </span>
             )}
           </button>

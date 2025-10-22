@@ -121,18 +121,43 @@ export function useInlineEdit(options: UseInlineEditOptions) {
         // Mise à jour organisation/fournisseur
         console.log('🔄 Updating organisation with data:', sectionState.editedData)
 
+        // Nettoyer les données avant la mise à jour
+        const cleanedData = { ...sectionState.editedData }
+
+        // 🔧 FIX BUG #2 : Exclure les champs legacy pour éviter écrasement des données
+        // Les champs legacy (address_line1, etc.) sont obsolètes, on utilise maintenant billing_* et shipping_*
+        const LEGACY_ADDRESS_FIELDS = ['address_line1', 'address_line2', 'postal_code', 'city', 'region', 'country']
+        LEGACY_ADDRESS_FIELDS.forEach(field => {
+          delete cleanedData[field]
+        })
+
+        // Convertir les chaînes vides en null pour les champs optionnels
+        Object.keys(cleanedData).forEach(key => {
+          if (cleanedData[key] === '') {
+            cleanedData[key] = null
+          }
+        })
+
+        console.log('🧹 Cleaned data for organisation update (sans legacy):', cleanedData)
+
         const { error, data } = await supabase
           .from('organisations')
-          .update(sectionState.editedData)
+          .update(cleanedData)
           .eq('id', organisationId)
           .select()
 
         success = !error
         if (error) {
-          console.error('❌ Supabase update error:', error)
-          throw error
+          console.error('❌ Supabase organisation update error:', error)
+          console.error('❌ Error details:', {
+            message: error.message,
+            details: error.details,
+            hint: error.hint,
+            code: error.code
+          })
+          throw new Error(error.message || error.details || 'Erreur de mise à jour organisation')
         } else {
-          console.log('✅ Update successful:', data)
+          console.log('✅ Organisation update successful:', data)
         }
       } else if (contactId) {
         // Mise à jour contact

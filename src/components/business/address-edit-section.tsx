@@ -103,6 +103,25 @@ export function AddressEditSection({ organisation, onUpdate, className }: Addres
   }
 
   const handleSave = async () => {
+    // Nettoyer les données avant sauvegarde (trim des espaces)
+    const cleanedData = Object.fromEntries(
+      Object.entries(editData || {}).map(([key, val]) => {
+        if (typeof val === 'string') {
+          const trimmed = val.trim()
+          // Convertir les chaînes vides en null pour les champs optionnels
+          return [key, trimmed === '' ? null : trimmed]
+        }
+        return [key, val]
+      })
+    )
+
+    // Mettre à jour avec les données nettoyées
+    // Note: Le filtrage des legacy fields est fait dans use-inline-edit.ts
+    updateEditedData(section, cleanedData)
+
+    // Attendre un tick pour que l'état soit mis à jour
+    await new Promise(resolve => setTimeout(resolve, 0))
+
     const success = await saveChanges(section)
     if (success) {
       console.log('✅ Adresse mise à jour avec succès')
@@ -113,8 +132,28 @@ export function AddressEditSection({ organisation, onUpdate, className }: Addres
     cancelEdit(section)
   }
 
+  const copyAddressToClipboard = async (addressData: any, title: string) => {
+    const lines = [
+      addressData.line1,
+      addressData.line2,
+      addressData.postal_code && addressData.city ? `${addressData.postal_code} ${addressData.city}` : (addressData.city || addressData.postal_code),
+      addressData.region,
+      addressData.country && addressData.country !== 'FR' ? countries.find(c => c.code === addressData.country)?.name : null
+    ].filter(Boolean)
+
+    const text = lines.join('\n')
+
+    try {
+      await navigator.clipboard.writeText(text)
+      console.log(`✅ ${title} copiée dans le presse-papiers`)
+      // TODO: Ajouter un toast si disponible
+    } catch (err) {
+      console.error('❌ Erreur lors de la copie:', err)
+    }
+  }
+
   const handleFieldChange = (field: string, value: string) => {
-    let processedValue = value.trim()
+    let processedValue = value // Pas de trim ici, seulement à la sauvegarde
 
     // Formatage automatique du code postal français
     if ((field.includes('postal_code') || field === 'postal_code') && processedValue.length <= 5) {
@@ -151,8 +190,8 @@ export function AddressEditSection({ organisation, onUpdate, className }: Addres
     return (
       <div className={cn("card-verone p-4", className)}>
         <div className="flex items-center justify-between mb-3">
-          <h3 className="text-lg font-medium text-black flex items-center">
-            <MapPin className="h-5 w-5 mr-2" />
+          <h3 className="text-base font-medium text-black flex items-center">
+            <MapPin className="h-4 w-4 mr-2" />
             Adresse
           </h3>
           <div className="flex space-x-2">
@@ -322,32 +361,10 @@ export function AddressEditSection({ organisation, onUpdate, className }: Addres
           {/* Adresse de livraison (conditionnelle) */}
           {editData?.has_different_shipping_address && (
             <div className="space-y-4 border-t pt-4">
-              <div className="flex items-center justify-between">
-                <h4 className="text-md font-semibold text-black flex items-center gap-2">
-                  <Home className="h-4 w-4" />
-                  Adresse de livraison
-                </h4>
-                <ButtonV2
-                  type="button"
-                  variant="outline"
-                  size="sm"
-                  onClick={() => {
-                    // Copier l'adresse de facturation vers livraison
-                    updateEditedData(section, {
-                      shipping_address_line1: editData?.billing_address_line1 || '',
-                      shipping_address_line2: editData?.billing_address_line2 || '',
-                      shipping_postal_code: editData?.billing_postal_code || '',
-                      shipping_city: editData?.billing_city || '',
-                      shipping_region: editData?.billing_region || '',
-                      shipping_country: editData?.billing_country || 'FR'
-                    })
-                  }}
-                  className="flex items-center gap-2"
-                >
-                  <Copy className="h-3 w-3" />
-                  Copier vers livraison
-                </ButtonV2>
-              </div>
+              <h4 className="text-md font-semibold text-black flex items-center gap-2">
+                <Home className="h-4 w-4" />
+                Adresse de livraison
+              </h4>
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div className="md:col-span-2">
@@ -475,31 +492,41 @@ export function AddressEditSection({ organisation, onUpdate, className }: Addres
 
     return (
       <div className="bg-gray-50 p-3 rounded-lg">
-        <div className="flex items-start space-x-2">
-          {icon}
-          <div className="flex-1">
-            <div className="text-xs font-medium text-gray-600 uppercase mb-1">{title}</div>
-            {addressData.line1 && (
-              <div className="text-sm text-black">{addressData.line1}</div>
-            )}
-            {addressData.line2 && (
-              <div className="text-sm text-black opacity-80">{addressData.line2}</div>
-            )}
-            {(addressData.postal_code || addressData.city) && (
-              <div className="text-sm text-black mt-1">
-                {addressData.postal_code && `${addressData.postal_code} `}
-                {addressData.city}
-              </div>
-            )}
-            {addressData.region && (
-              <div className="text-sm text-black opacity-80">{addressData.region}</div>
-            )}
-            {addressData.country && addressData.country !== 'FR' && (
-              <div className="text-sm text-black font-medium mt-1">
-                {countries.find(c => c.code === addressData.country)?.name || addressData.country}
-              </div>
-            )}
+        <div className="flex items-center justify-between mb-2">
+          <div className="flex items-center space-x-2">
+            {icon}
+            <div className="text-xs font-medium text-gray-600 uppercase">{title}</div>
           </div>
+          <ButtonV2
+            variant="outline"
+            size="md"
+            onClick={() => copyAddressToClipboard(addressData, title)}
+            title={`Copier ${title}`}
+          >
+            <Copy className="h-4 w-4" />
+          </ButtonV2>
+        </div>
+        <div className="flex-1 pl-6">
+          {addressData.line1 && (
+            <div className="text-sm text-black">{addressData.line1}</div>
+          )}
+          {addressData.line2 && (
+            <div className="text-sm text-black opacity-80">{addressData.line2}</div>
+          )}
+          {(addressData.postal_code || addressData.city) && (
+            <div className="text-sm text-black mt-1">
+              {addressData.postal_code && `${addressData.postal_code} `}
+              {addressData.city}
+            </div>
+          )}
+          {addressData.region && (
+            <div className="text-sm text-black opacity-80">{addressData.region}</div>
+          )}
+          {addressData.country && addressData.country !== 'FR' && (
+            <div className="text-sm text-black font-medium mt-1">
+              {countries.find(c => c.code === addressData.country)?.name || addressData.country}
+            </div>
+          )}
         </div>
       </div>
     )

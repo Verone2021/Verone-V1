@@ -18,6 +18,7 @@ import {
 } from 'lucide-react'
 import { useOrganisation, useSuppliers, getOrganisationDisplayName } from '@/hooks/use-organisations'
 import { useOrganisationTabs } from '@/hooks/use-organisation-tabs'
+import { LegalIdentityEditSection } from '@/components/business/legal-identity-edit-section'
 import { ContactEditSection } from '@/components/business/contact-edit-section'
 import { AddressEditSection } from '@/components/business/address-edit-section'
 import { CommercialEditSection } from '@/components/business/commercial-edit-section'
@@ -28,6 +29,7 @@ import { OrganisationStatsCard } from '@/components/business/organisation-stats-
 import { OrganisationPurchaseOrdersSection } from '@/components/business/organisation-purchase-orders-section'
 import { OrganisationProductsSection } from '@/components/business/organisation-products-section'
 import { TabsNavigation, TabContent } from '@/components/ui/tabs-navigation'
+import { isModuleDeployed, getModulePhase } from '@/lib/deployed-modules'
 import type { Organisation } from '@/hooks/use-organisations'
 
 export default function SupplierDetailPage() {
@@ -55,31 +57,37 @@ export default function SupplierDetailPage() {
     refreshCounts()
   }
 
-  // Configuration des onglets avec compteurs du hook
+  // Configuration des onglets avec compteurs du hook + modules déployés
   const tabs = [
     {
       id: 'contacts',
       label: 'Contacts',
       icon: <Phone className="h-4 w-4" />,
-      badge: counts.contacts.toString()
+      badge: counts.contacts.toString(),
+      disabled: !isModuleDeployed('contacts')
     },
     {
       id: 'orders',
       label: 'Commandes',
       icon: <ShoppingCart className="h-4 w-4" />,
-      badge: counts.orders.toString()
+      badge: counts.orders.toString(),
+      disabled: !isModuleDeployed('purchase_orders'),
+      disabledBadge: getModulePhase('purchase_orders')
     },
     {
       id: 'invoices',
       label: 'Factures',
       icon: <FileText className="h-4 w-4" />,
-      disabled: true // Module en développement
+      disabled: !isModuleDeployed('invoices'),
+      disabledBadge: getModulePhase('invoices')
     },
     {
       id: 'products',
       label: 'Produits',
       icon: <Package className="h-4 w-4" />,
-      badge: counts.products.toString()
+      badge: counts.products.toString(),
+      disabled: !isModuleDeployed('products'),
+      disabledBadge: getModulePhase('products')
     }
   ]
 
@@ -155,8 +163,8 @@ export default function SupplierDetailPage() {
             </Link>
           </div>
           <div className="flex items-center gap-3 mb-2">
-            <Building2 className="h-6 w-6 text-black" />
-            <h1 className="text-2xl font-semibold text-black">{getOrganisationDisplayName(supplier)}</h1>
+            <Building2 className="h-5 w-5 text-black" />
+            <h1 className="text-lg font-semibold text-black">{getOrganisationDisplayName(supplier)}</h1>
             <div className="flex gap-2">
               <Badge
                 variant={supplier.is_active ? 'default' : 'secondary'}
@@ -202,6 +210,12 @@ export default function SupplierDetailPage() {
       <div className="grid grid-cols-1 xl:grid-cols-3 gap-4">
         {/* Colonne principale - Informations éditables */}
         <div className="xl:col-span-2 space-y-4">
+          {/* Identité Légale */}
+          <LegalIdentityEditSection
+            organisation={supplier}
+            onUpdate={handleSupplierUpdate}
+          />
+
           {/* Informations de Contact */}
           <ContactEditSection
             organisation={supplier}
@@ -236,6 +250,7 @@ export default function SupplierDetailPage() {
           <PerformanceEditSection
             organisation={supplier}
             onUpdate={handleSupplierUpdate}
+            organisationType="supplier"
           />
 
           {/* Statistiques - Composant réutilisable */}
@@ -243,37 +258,6 @@ export default function SupplierDetailPage() {
             organisation={supplier}
             organisationType="supplier"
           />
-
-          {/* Identité Légale */}
-          <Card>
-            <CardContent className="p-6">
-              <h3 className="text-sm font-semibold text-gray-700 mb-4">Identité Légale</h3>
-              <div className="space-y-3 text-sm">
-                <div>
-                  <span className="text-gray-500 block mb-1">Dénomination sociale</span>
-                  <p className="font-medium text-black">{supplier.legal_name}</p>
-                </div>
-                {supplier.has_different_trade_name && supplier.trade_name && (
-                  <div>
-                    <span className="text-gray-500 block mb-1">Nom commercial</span>
-                    <p className="font-medium text-black">{supplier.trade_name}</p>
-                  </div>
-                )}
-                {supplier.siren && (
-                  <div>
-                    <span className="text-gray-500 block mb-1">SIREN</span>
-                    <p className="font-medium font-mono text-black">{supplier.siren}</p>
-                  </div>
-                )}
-                {supplier.siret && (
-                  <div>
-                    <span className="text-gray-500 block mb-1">SIRET</span>
-                    <p className="font-medium font-mono text-black">{supplier.siret}</p>
-                  </div>
-                )}
-              </div>
-            </CardContent>
-          </Card>
         </div>
       </div>
 
