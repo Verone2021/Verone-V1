@@ -1,0 +1,97 @@
+# KPI: Total Fournisseurs
+# Nombre total de fournisseurs actifs
+
+id: kpi-org-total-suppliers
+name: Total Fournisseurs
+description: |
+  Nombre total d'organisations de type 'supplier' (fournisseurs).
+  Utilisé pour affichage page accueil Organisations et page liste Fournisseurs.
+
+module: Organisations
+category: Compteurs
+subcategory: Fournisseurs
+owner: Romeo Dos Santos
+
+formula: |
+  total_suppliers = COUNT(organisations WHERE type = 'supplier' AND archived_at IS NULL)
+
+  Filtrage : organisations.filter(o => o.type === 'supplier').length
+
+inputs:
+  - name: organisations
+    type: array
+    description: Liste organisations depuis table organisations
+    source: useOrganisations hook
+
+output:
+  type: number
+  unit: count
+  format: integer
+  description: Nombre total de fournisseurs actifs
+
+source:
+  table: organisations
+  hook: useOrganisations
+  file: src/app/contacts-organisations/page.tsx
+  query: |
+    SELECT COUNT(*) as total
+    FROM organisations
+    WHERE type = 'supplier'
+    AND archived_at IS NULL
+  calculation_line: 29
+
+displayed_in:
+  - component: src/app/contacts-organisations/page.tsx
+    location: "Card 'Fournisseurs' (ligne ~130-155)"
+    description: "Deuxième carte statistiques page accueil"
+    screenshot: contacts-organisations-page.png
+  - component: src/app/contacts-organisations/suppliers/page.tsx
+    location: "Stats header 'Total' (ligne ~247)"
+    description: "Header statistiques page liste fournisseurs"
+
+thresholds:
+  excellent: "> 50"
+  good: "20-50"
+  warning: "5-20"
+  critical: "< 5"
+  interpretation: |
+    - > 50 : Large réseau fournisseurs
+    - 20-50 : Portefeuille diversifié
+    - 5-20 : Réseau en construction
+    - < 5 : Dépendance forte (risque)
+
+tests:
+  - scenario: "Réseau standard"
+    inputs:
+      suppliers_count: 11
+    expected_output: 11
+    threshold_expected: "warning"
+
+  - scenario: "Large réseau"
+    inputs:
+      suppliers_count: 75
+    expected_output: 75
+    threshold_expected: "excellent"
+
+metadata:
+  created_at: 2025-10-22
+  last_updated: 2025-10-22
+  validated_by: Romeo Dos Santos
+  version: 2.0.0
+  status: active
+  priority: high
+
+business_notes: |
+  **Contexte Vérone** :
+  - KPI critique réseau approvisionnement
+  - Type enum 'supplier' dans organisations.type
+  - Exclut fournisseurs archivés
+  - Affiché sur 2 pages (accueil + liste fournisseurs)
+
+  **Valeur actuelle production** : 11 fournisseurs (2025-10-22)
+
+references:
+  - docs/database/SCHEMA-REFERENCE.md (table organisations, enum organisation_type)
+  - src/hooks/use-organisations.ts
+  - Screenshot: tools/reports/2025-10-22/contacts-organisations-page.png
+  - Screenshot: tools/reports/2025-10-22/suppliers-list-page.png

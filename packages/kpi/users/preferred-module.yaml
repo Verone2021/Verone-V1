@@ -1,0 +1,31 @@
+# KPI: Module Préféré
+
+id: kpi-user-preferred-module
+name: Module Préféré
+description: Module le plus utilisé par l'utilisateur.
+
+module: Profil et rôles
+category: Activité
+owner: Romeo Dos Santos
+
+formula: MAX(time_spent_minutes) GROUP BY module_name
+
+source:
+  file: user-activity-tab.tsx
+  lines: 293-309
+
+displayed_in:
+  - location: "Statistiques détaillées"
+
+output:
+  type: string
+  format: "Nom module avec icône"
+
+metadata:
+  created_at: 2025-10-22
+  version: 2.0.0
+  status: active
+  priority: medium
+
+business_notes: |
+  **Romeo** : "other" (module préféré).

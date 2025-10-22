@@ -1,0 +1,56 @@
+# KPI: Clients - Archivés
+# Clients archivés (archived_at NOT NULL)
+
+id: kpi-org-customers-archived
+name: Clients - Archivés
+description: |
+  Nombre de clients archivés (archived_at NOT NULL).
+  Clients avec lesquels collaboration commerciale terminée définitivement.
+
+module: Organisations
+category: Compteurs
+subcategory: Clients - Stats Header
+owner: Romeo Dos Santos
+
+formula: |
+  customers_archived = COUNT(organisations
+    WHERE type = 'customer'
+    AND archived_at IS NOT NULL)
+
+inputs:
+  - name: archivedCustomers
+    type: array
+    source: useOrganisations hook avec archived=true
+
+output:
+  type: number
+  unit: count
+  format: integer
+
+source:
+  table: organisations
+  file: src/app/contacts-organisations/customers/page.tsx
+  calculation_line: 154
+
+displayed_in:
+  - component: src/app/contacts-organisations/customers/page.tsx
+    location: "Stats header - Badge 'Archivés'"
+
+thresholds:
+  excellent: "< 10%"
+  good: "10-20%"
+  warning: "20-40%"
+  critical: "> 40%"
+  interpretation: "Pourcentage archivés / total clients (taux attrition)"
+
+metadata:
+  created_at: 2025-10-22
+  last_updated: 2025-10-22
+  validated_by: Romeo Dos Santos
+  version: 2.0.0
+  status: active
+  priority: medium
+
+business_notes: |
+  KPI santé portefeuille clients (taux attrition/churn).
+  Soft delete pattern (données conservées).

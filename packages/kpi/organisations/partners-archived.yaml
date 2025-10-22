@@ -1,0 +1,35 @@
+# KPI: Prestataires - Archivés
+
+id: kpi-org-partners-archived
+name: Prestataires - Archivés
+description: Nombre de prestataires archivés (archived_at NOT NULL).
+
+module: Organisations
+category: Compteurs
+subcategory: Prestataires - Stats Header
+owner: Romeo Dos Santos
+
+formula: |
+  partners_archived = COUNT(organisations
+    WHERE type = 'partner' AND archived_at IS NOT NULL)
+
+source:
+  table: organisations
+  file: src/app/contacts-organisations/partners/page.tsx
+  calculation_line: 226
+
+displayed_in:
+  - component: src/app/contacts-organisations/partners/page.tsx
+    location: "Stats header - Badge 'Archivés'"
+
+thresholds:
+  excellent: "< 15%"
+  good: "15-30%"
+  warning: "30-50%"
+  critical: "> 50%"
+
+metadata:
+  created_at: 2025-10-22
+  version: 2.0.0
+  status: active
+  priority: medium

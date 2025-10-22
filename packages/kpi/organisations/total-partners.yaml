@@ -1,0 +1,94 @@
+# KPI: Total Prestataires
+# Nombre d'organisations type='partner'
+
+id: kpi-org-total-partners
+name: Total Prestataires
+description: |
+  Nombre total d'organisations de type 'partner' (prestataires).
+  Prestataires de services externes (transport, maintenance, etc.).
+
+module: Organisations
+category: Compteurs
+subcategory: Prestataires
+owner: Romeo Dos Santos
+
+formula: |
+  total_partners = COUNT(organisations WHERE type = 'partner' AND archived_at IS NULL)
+
+  Filtrage : organisations.filter(o => o.type === 'partner').length
+
+inputs:
+  - name: organisations
+    type: array
+    description: Liste organisations depuis table organisations
+    source: useOrganisations hook
+
+output:
+  type: number
+  unit: count
+  format: integer
+  description: Nombre total prestataires actifs
+
+source:
+  table: organisations
+  hook: useOrganisations
+  file: src/app/contacts-organisations/page.tsx
+  query: |
+    SELECT COUNT(*) as total
+    FROM organisations
+    WHERE type = 'partner'
+    AND archived_at IS NULL
+  calculation_line: 33
+
+displayed_in:
+  - component: src/app/contacts-organisations/page.tsx
+    location: "Card 'Prestataires' (ligne ~190-215)"
+    description: "Quatrième carte statistiques page accueil"
+    screenshot: contacts-organisations-page.png
+
+thresholds:
+  excellent: "> 20"
+  good: "10-20"
+  warning: "3-10"
+  critical: "< 3"
+  interpretation: |
+    - > 20 : Réseau prestataires diversifié
+    - 10-20 : Couverture services correcte
+    - 3-10 : Réseau basique
+    - < 3 : Dépendance forte (risque)
+
+tests:
+  - scenario: "Réseau minimal"
+    inputs:
+      partners_count: 1
+    expected_output: 1
+    threshold_expected: "critical"
+
+  - scenario: "Réseau standard"
+    inputs:
+      partners_count: 15
+    expected_output: 15
+    threshold_expected: "good"
+
+metadata:
+  created_at: 2025-10-22
+  last_updated: 2025-10-22
+  validated_by: Romeo Dos Santos
+  version: 2.0.0
+  status: active
+  priority: medium
+
+business_notes: |
+  **Contexte Vérone** :
+  - Prestataires services (transport, maintenance, etc.)
+  - Type enum 'partner' dans organisations.type
+  - Moins critique que fournisseurs/clients
+  - Priority medium vs high pour autres compteurs
+
+  **Valeur actuelle production** : 1 prestataire (2025-10-22)
+  → Indique réseau prestataires à développer
+
+references:
+  - docs/database/SCHEMA-REFERENCE.md (table organisations, enum organisation_type)
+  - src/hooks/use-organisations.ts
+  - Screenshot: tools/reports/2025-10-22/contacts-organisations-page.png

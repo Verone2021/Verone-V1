@@ -1,0 +1,42 @@
+# KPI: Durée Moyenne Session
+
+id: kpi-user-avg-session-duration
+name: Durée Moyenne Session (Utilisateur)
+description: Durée moyenne des sessions utilisateur (en minutes).
+
+module: Profil et rôles
+category: Engagement
+subcategory: Usage
+owner: Romeo Dos Santos
+
+formula: |
+  avg_session_duration = AVG(session_duration_minutes) FROM user_activity_tracking WHERE user_id = :user_id
+
+source:
+  rpc: get_user_activity_stats (analytics.avg_session_duration)
+  file: src/app/admin/users/[id]/page.tsx
+  line: 48
+
+displayed_in:
+  - component: user-stats-cards.tsx
+    location: "Card 'Durée moy. session'"
+
+output:
+  type: number
+  unit: minutes
+  format: "Xmin"
+
+thresholds:
+  excellent: "> 30min"
+  good: "15-30min"
+  warning: "5-15min"
+  critical: "< 5min"
+
+metadata:
+  created_at: 2025-10-22
+  version: 2.0.0
+  status: active
+  priority: medium
+
+business_notes: |
+  **Valeur production Romeo** : 0min (tracking début récent).

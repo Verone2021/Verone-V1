@@ -1,0 +1,31 @@
+# KPI: Sessions Actives
+
+id: kpi-user-active-sessions-count
+name: Sessions Actives
+description: Nombre de sessions actives utilisateur (connexions parallèles).
+
+module: Profil et rôles
+category: Activité
+owner: Romeo Dos Santos
+
+formula: COUNT(active_sessions)
+
+source:
+  file: user-activity-tab.tsx
+  lines: 407-432
+
+displayed_in:
+  - location: "Section Sessions actives"
+
+output:
+  type: number
+  unit: sessions
+
+metadata:
+  created_at: 2025-10-22
+  version: 2.0.0
+  status: active
+  priority: low
+
+business_notes: |
+  **Romeo** : 5 sessions actives.

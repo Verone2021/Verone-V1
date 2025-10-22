@@ -1,0 +1,38 @@
+# KPI: Contacts Actifs
+
+id: kpi-contacts-active-contacts
+name: Contacts Actifs
+description: Contacts actifs (is_active=true).
+
+module: Contacts
+category: Compteurs
+subcategory: Statut
+owner: Romeo Dos Santos
+
+formula: |
+  active_contacts = COUNT(contacts WHERE is_active = true)
+
+source:
+  table: contacts
+  file: src/app/contacts-organisations/contacts/page.tsx
+  calculation_line: 80
+
+displayed_in:
+  - component: src/app/contacts-organisations/contacts/page.tsx
+    location: "Card 'Contacts actifs'"
+
+thresholds:
+  excellent: "> 80% contacts actifs"
+  good: "60-80%"
+  warning: "40-60%"
+  critical: "< 40%"
+
+metadata:
+  created_at: 2025-10-22
+  version: 2.0.0
+  status: active
+  priority: medium
+
+business_notes: |
+  Contact actif = Contact valide et à jour dans le système.
+  Contact inactif = Contact obsolète ou non vérifié.

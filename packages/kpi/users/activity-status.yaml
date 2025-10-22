@@ -1,0 +1,33 @@
+# KPI: Statut Activité
+
+id: kpi-user-activity-status
+name: Statut Activité (Utilisateur)
+description: Statut activité (Actif/Inactif) basé sur dernière connexion.
+
+module: Profil et rôles
+category: Indicateurs
+owner: Romeo Dos Santos
+
+formula: |
+  status = last_activity < 7 jours ? 'Actif' : 'Inactif'
+
+source:
+  rpc: get_user_activity_stats (analytics.last_activity)
+  file: src/app/admin/users/[id]/page.tsx
+
+displayed_in:
+  - component: user-stats-cards.tsx
+    location: "Card 'Statut'"
+
+output:
+  type: enum
+  values: ["Actif", "Inactif"]
+
+metadata:
+  created_at: 2025-10-22
+  version: 2.0.0
+  status: active
+  priority: medium
+
+business_notes: |
+  **Valeur Romeo** : Actif.

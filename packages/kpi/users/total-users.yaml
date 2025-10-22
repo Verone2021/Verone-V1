@@ -1,0 +1,70 @@
+# KPI: Total Utilisateurs
+# Nombre total utilisateurs enregistrés
+
+id: kpi-users-total-users
+name: Total Utilisateurs
+description: |
+  Nombre total d'utilisateurs enregistrés dans le système.
+  Inclut tous rôles (owners, admins, catalog_managers, viewers).
+
+module: Profil et rôles
+category: Compteurs
+subcategory: Vue globale
+owner: Romeo Dos Santos
+
+formula: |
+  total_users = users.length
+
+inputs:
+  - name: users
+    type: array
+    source: getUsersWithProfiles() server action
+
+output:
+  type: number
+  unit: count
+  format: integer
+
+source:
+  table: user_profiles
+  file: src/app/admin/users/page.tsx
+  query: |
+    SELECT COUNT(*) as total
+    FROM user_profiles
+    WHERE archived_at IS NULL
+  calculation_line: 162
+
+displayed_in:
+  - component: src/app/admin/users/page.tsx
+    location: "Card 'Utilisateurs' (ligne ~155-170)"
+    description: "Première card statistiques"
+    screenshot: admin-users-list-page.png
+
+thresholds:
+  excellent: "> 50"
+  good: "20-50"
+  warning: "5-20"
+  critical: "< 5"
+
+tests:
+  - scenario: "Production actuelle"
+    inputs:
+      users_count: 3
+    expected_output: 3
+    threshold_expected: "critical"
+
+metadata:
+  created_at: 2025-10-22
+  version: 2.0.0
+  status: active
+  priority: high
+
+business_notes: |
+  **Contexte Vérone** :
+  - KPI principal admin utilisateurs
+  - **Valeur production** : 3 utilisateurs (2025-10-22)
+  - Phase démarrage (équipe réduite)
+
+references:
+  - docs/auth/roles-permissions.md
+  - Screenshot: tools/reports/2025-10-22/admin-users-list-page.png

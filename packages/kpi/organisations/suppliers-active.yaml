@@ -1,0 +1,96 @@
+# KPI: Fournisseurs - Actifs
+# Fournisseurs avec is_active=true
+
+id: kpi-org-suppliers-active
+name: Fournisseurs - Actifs
+description: |
+  Nombre de fournisseurs actifs (is_active=true).
+  Indique fournisseurs avec lesquels collaboration active en cours.
+
+module: Organisations
+category: Compteurs
+subcategory: Fournisseurs - Stats Header
+owner: Romeo Dos Santos
+
+formula: |
+  suppliers_active = COUNT(suppliers WHERE is_active = true)
+
+  Filtrage : suppliers.filter(s => s.is_active).length
+
+inputs:
+  - name: suppliers
+    type: array
+    description: Liste fournisseurs depuis organisations type='supplier'
+    source: useOrganisations hook
+
+output:
+  type: number
+  unit: count
+  format: integer
+  description: Nombre fournisseurs actifs
+
+source:
+  table: organisations
+  hook: useOrganisations
+  file: src/app/contacts-organisations/suppliers/page.tsx
+  query: |
+    SELECT COUNT(*) as active
+    FROM organisations
+    WHERE type = 'supplier'
+    AND is_active = true
+    AND archived_at IS NULL
+  calculation_line: 248
+
+displayed_in:
+  - component: src/app/contacts-organisations/suppliers/page.tsx
+    location: "Stats header - Badge 'Actifs' (ligne ~297-312)"
+    description: "Deuxième badge row statistiques avec couleur verte"
+    screenshot: suppliers-list-page.png
+
+thresholds:
+  excellent: "> 40"
+  good: "15-40"
+  warning: "5-15"
+  critical: "< 5"
+  interpretation: |
+    - > 40 : Réseau fournisseurs très actif
+    - 15-40 : Collaborations saines
+    - 5-15 : Réseau actif limité
+    - < 5 : Risque dépendance
+
+tests:
+  - scenario: "Production actuelle"
+    inputs:
+      suppliers_active_count: 11
+    expected_output: 11
+    threshold_expected: "warning"
+
+  - scenario: "Tous actifs"
+    inputs:
+      total: 11
+      active: 11
+    expected_output: 11
+    rate: "100%"
+
+metadata:
+  created_at: 2025-10-22
+  last_updated: 2025-10-22
+  validated_by: Romeo Dos Santos
+  version: 2.0.0
+  status: active
+  priority: high
+
+business_notes: |
+  **Contexte Vérone** :
+  - is_active=true → fournisseur collaboration active
+  - is_active=false → fournisseur inactif temporaire (pas archivé)
+  - **Valeur production** : 11/11 actifs (100% - 2025-10-22)
+
+  **Métrique santé** : % actifs / total
+  - 100% = Excellent (tous fournisseurs actifs)
+  - 80-100% = Bon
+  - < 80% = À surveiller (fournisseurs inactifs à nettoyer)
+
+references:
+  - docs/database/SCHEMA-REFERENCE.md (organisations.is_active)
+  - Screenshot: tools/reports/2025-10-22/suppliers-list-page.png
