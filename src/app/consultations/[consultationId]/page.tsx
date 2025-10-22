@@ -402,7 +402,7 @@ export default function ConsultationDetailPage() {
               {/* Bouton Valider (si pas encore validée) */}
               {!consultation.validated_at && !consultation.archived_at && (
                 <ButtonV2
-                  variant="default"
+                  variant="primary"
                   onClick={handleValidateConsultation}
                   className="bg-green-600 hover:bg-green-700 text-white"
                 >
@@ -443,7 +443,7 @@ export default function ConsultationDetailPage() {
               {/* Bouton Supprimer (seulement si archivée) */}
               {consultation.archived_at && (
                 <ButtonV2
-                  variant="destructive"
+                  variant="danger"
                   onClick={handleDeleteConsultation}
                   className="bg-red-600 hover:bg-red-700 text-white"
                 >

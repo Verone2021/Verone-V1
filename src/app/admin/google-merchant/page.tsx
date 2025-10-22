@@ -223,12 +223,12 @@ export default function GoogleMerchantAdminPage() {
                 <div className="flex items-center justify-between p-4 border rounded-lg">
                   <span className="font-medium">Authentification</span>
                   {connectionStatus.authentication ? (
-                    <Badge variant="default" className="bg-green-100 text-green-800">
+                    <Badge variant="primary" className="bg-green-100 text-green-800">
                       <CheckCircle className="h-3 w-3 mr-1" />
                       Connecté
                     </Badge>
                   ) : (
-                    <Badge variant="destructive">
+                    <Badge variant="danger">
                       <XCircle className="h-3 w-3 mr-1" />
                       Échec
                     </Badge>
@@ -238,12 +238,12 @@ export default function GoogleMerchantAdminPage() {
                 <div className="flex items-center justify-between p-4 border rounded-lg">
                   <span className="font-medium">API Connection</span>
                   {connectionStatus.apiConnection ? (
-                    <Badge variant="default" className="bg-green-100 text-green-800">
+                    <Badge variant="primary" className="bg-green-100 text-green-800">
                       <CheckCircle className="h-3 w-3 mr-1" />
                       Active
                     </Badge>
                   ) : (
-                    <Badge variant="destructive">
+                    <Badge variant="danger">
                       <XCircle className="h-3 w-3 mr-1" />
                       Inactive
                     </Badge>

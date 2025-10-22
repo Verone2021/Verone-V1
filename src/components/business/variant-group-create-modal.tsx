@@ -351,7 +351,7 @@ export function VariantGroupCreateModal({
           </div>
 
           <DialogFooter>
-            <Button
+            <ButtonV2
               type="button"
               variant="outline"
               onClick={onClose}
@@ -359,7 +359,7 @@ export function VariantGroupCreateModal({
             >
               Annuler
             </ButtonV2>
-            <Button
+            <ButtonV2
               type="submit"
               disabled={!name.trim() || !baseSku.trim() || !subcategoryId || isSubmitting}
               className="bg-black text-white hover:bg-gray-800"

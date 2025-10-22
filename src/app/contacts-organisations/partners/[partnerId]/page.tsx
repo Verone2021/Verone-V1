@@ -152,7 +152,7 @@ export default function PartnerDetailPage() {
                 {partner.is_active ? 'Actif' : 'Inactif'}
               </Badge>
               {partner.archived_at && (
-                <Badge variant="destructive" className="bg-red-100 text-red-800">
+                <Badge variant="danger" className="bg-red-100 text-red-800">
                   Archivé
                 </Badge>
               )}

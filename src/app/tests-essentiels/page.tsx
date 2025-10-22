@@ -154,7 +154,7 @@ export default function TestsEssentielsPage() {
               onClick={() => runConsoleErrorCheck()}
               disabled={isRunning}
               className="w-full"
-              variant="destructive"
+              variant="danger"
             >
               <AlertTriangle className="h-4 w-4 mr-2" />
               Check Console Errors

@@ -1,7 +1,11 @@
 "use client"
 
+import { useState } from 'react'
 import { useOrganisations } from '@/hooks/use-organisations'
 import { UnifiedOrganisationForm, OrganisationFormData, Organisation } from './unified-organisation-form'
+import { ConfirmSubmitModal } from './confirm-submit-modal'
+import { toast } from 'sonner'
+import { Building2, Mail, Phone, MapPin, Globe, CreditCard } from 'lucide-react'
 
 interface CustomerFormModalProps {
   isOpen: boolean
@@ -26,20 +30,40 @@ export function CustomerFormModal({
 }: CustomerFormModalProps) {
   const { createOrganisation, updateOrganisation } = useOrganisations()
 
+  // États pour modal de confirmation
+  const [confirmOpen, setConfirmOpen] = useState(false)
+  const [pendingFormData, setPendingFormData] = useState<OrganisationFormData | null>(null)
+  const [isSubmitting, setIsSubmitting] = useState(false)
+
+  // Étape 1 : Préparer les données et ouvrir modal confirmation
   const handleSubmit = async (data: OrganisationFormData, organisationId?: string) => {
-    const customerData = {
-      ...data,
-      type: 'customer' as const,
-      customer_type: 'professional' as const // Toujours professionnel pour ce modal
-    }
+    setPendingFormData(data)
+    setConfirmOpen(true)
+  }
 
-    let result
+  // Étape 2 : Confirmation et sauvegarde réelle
+  const handleConfirmSubmit = async () => {
+    if (!pendingFormData) return
 
-    if (mode === 'edit' && customer) {
+    setIsSubmitting(true)
+
+    try {
+      const data = pendingFormData
+      const customerData = {
+        ...data,
+        type: 'customer' as const,
+        customer_type: 'professional' as const // Toujours professionnel pour ce modal
+      }
+
+      let result
+
+      if (mode === 'edit' && customer) {
       // Mise à jour
       result = await updateOrganisation({
         id: customer.id,
-        name: customerData.name,
+        legal_name: customerData.legal_name,
+        trade_name: customerData.trade_name || null,
+        has_different_trade_name: customerData.has_different_trade_name || false,
         email: customerData.email || null,
         country: customerData.country,
         phone: customerData.phone || null,
@@ -47,15 +71,9 @@ export function CustomerFormModal({
         is_active: customerData.is_active,
         notes: customerData.notes || null,
 
-        // Adresse principale
-        address_line1: customerData.address_line1 || null,
-        address_line2: customerData.address_line2 || null,
-        postal_code: customerData.postal_code || null,
-        city: customerData.city || null,
-        region: customerData.region || null,
-
         // Légal
         legal_form: customerData.legal_form || null,
+        siren: customerData.siren || null,
         siret: customerData.siret || null,
         vat_number: customerData.vat_number || null,
         industry_sector: customerData.industry_sector || null,
@@ -90,7 +108,9 @@ export function CustomerFormModal({
     } else {
       // Création
       result = await createOrganisation({
-        name: customerData.name,
+        legal_name: customerData.legal_name,
+        trade_name: customerData.trade_name || null,
+        has_different_trade_name: customerData.has_different_trade_name || false,
         type: 'customer',
         email: customerData.email || null,
         country: customerData.country,
@@ -99,15 +119,9 @@ export function CustomerFormModal({
         is_active: customerData.is_active,
         notes: customerData.notes || null,
 
-        // Adresse principale
-        address_line1: customerData.address_line1 || null,
-        address_line2: customerData.address_line2 || null,
-        postal_code: customerData.postal_code || null,
-        city: customerData.city || null,
-        region: customerData.region || null,
-
         // Légal
         legal_form: customerData.legal_form || null,
+        siren: customerData.siren || null,
         siret: customerData.siret || null,
         vat_number: customerData.vat_number || null,
         industry_sector: customerData.industry_sector || null,
@@ -136,37 +150,107 @@ export function CustomerFormModal({
         customer_type: 'professional'
       })
 
-      if (result && onCustomerCreated) {
-        onCustomerCreated(result as Organisation)
+        if (result && onCustomerCreated) {
+          onCustomerCreated(result as Organisation)
+        }
       }
-    }
 
-    if (result) {
-      onClose()
-    } else {
-      console.error('❌ Erreur lors de l\'opération sur le client')
+      if (result) {
+        toast.success(mode === 'edit' ? 'Client modifié avec succès !' : 'Client créé avec succès !')
+        setConfirmOpen(false)
+        onClose()
+      } else {
+        toast.error('Erreur lors de la sauvegarde. Veuillez réessayer.')
+      }
+    } catch (error) {
+      toast.error('Une erreur est survenue lors de la sauvegarde.')
+      console.error('Erreur sauvegarde client:', error)
+    } finally {
+      setIsSubmitting(false)
     }
   }
 
+  // Préparer les données de récapitulatif pour le modal
+  const getSummaryData = () => {
+    if (!pendingFormData) return []
+
+    const items = [
+      {
+        label: 'Nom du client',
+        value: pendingFormData.legal_name,
+        icon: <Building2 className="h-4 w-4 text-gray-500" />,
+        isImportant: true
+      },
+      {
+        label: 'Email',
+        value: pendingFormData.email,
+        icon: <Mail className="h-4 w-4 text-gray-500" />
+      },
+      {
+        label: 'Téléphone',
+        value: pendingFormData.phone,
+        icon: <Phone className="h-4 w-4 text-gray-500" />
+      },
+      {
+        label: 'Adresse',
+        value: pendingFormData.billing_address_line1
+          ? `${pendingFormData.billing_address_line1}${pendingFormData.billing_address_line2 ? ', ' + pendingFormData.billing_address_line2 : ''}`
+          : null,
+        icon: <MapPin className="h-4 w-4 text-gray-500" />
+      },
+      {
+        label: 'Ville',
+        value: pendingFormData.billing_city
+          ? `${pendingFormData.billing_postal_code || ''} ${pendingFormData.billing_city}`.trim()
+          : null,
+        icon: <MapPin className="h-4 w-4 text-gray-500" />
+      },
+      {
+        label: 'Pays',
+        value: pendingFormData.country === 'FR' ? 'France' : pendingFormData.country
+      }
+    ]
+
+    return items
+  }
+
   return (
-    <UnifiedOrganisationForm
-      isOpen={isOpen}
-      onClose={onClose}
-      onSubmit={handleSubmit}
-      onSuccess={(org) => {
-        if (mode === 'edit' && onCustomerUpdated) {
-          onCustomerUpdated(org)
-        } else if (mode === 'create' && onCustomerCreated) {
-          onCustomerCreated(org)
+    <>
+      <UnifiedOrganisationForm
+        isOpen={isOpen}
+        onClose={onClose}
+        onSubmit={handleSubmit}
+        onSuccess={(org) => {
+          if (mode === 'edit' && onCustomerUpdated) {
+            onCustomerUpdated(org)
+          } else if (mode === 'create' && onCustomerCreated) {
+            onCustomerCreated(org)
+          }
+        }}
+        organisationType="customer"
+        organisation={customer}
+        mode={mode}
+        title={mode === 'edit' ? 'Modifier le client professionnel' : 'Nouveau client professionnel'}
+        onLogoUploadSuccess={() => {
+          // TODO: Refetch customer data if needed
+        }}
+      />
+
+      {/* Modal de confirmation avant sauvegarde */}
+      <ConfirmSubmitModal
+        open={confirmOpen}
+        onOpenChange={setConfirmOpen}
+        title={mode === 'edit' ? 'Confirmer la modification' : 'Confirmer la création'}
+        description={
+          mode === 'edit'
+            ? 'Veuillez vérifier les informations modifiées ci-dessous avant de sauvegarder.'
+            : 'Veuillez vérifier les informations du nouveau client ci-dessous avant de créer.'
         }
-      }}
-      organisationType="customer"
-      organisation={customer}
-      mode={mode}
-      title={mode === 'edit' ? 'Modifier le client professionnel' : 'Nouveau client professionnel'}
-      onLogoUploadSuccess={() => {
-        // TODO: Refetch customer data if needed
-      }}
-    />
+        summaryData={getSummaryData()}
+        onConfirm={handleConfirmSubmit}
+        confirmLabel={mode === 'edit' ? 'Modifier le client' : 'Créer le client'}
+        isSubmitting={isSubmitting}
+      />
+    </>
   )
 }

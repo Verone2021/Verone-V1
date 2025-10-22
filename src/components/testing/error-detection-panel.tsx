@@ -293,7 +293,7 @@ export function ErrorDetectionPanel({
               </CardDescription>
             </div>
             <div className="flex gap-2">
-              <Button
+              <ButtonV2
                 onClick={handleForceSyncErrorCheck}
                 disabled={isScanning}
                 className="bg-black hover:bg-gray-800 text-white"
@@ -310,7 +310,7 @@ export function ErrorDetectionPanel({
                   </>
                 )}
               </ButtonV2>
-              <Button
+              <ButtonV2
                 onClick={handleGenerateReport}
                 variant="outline"
                 disabled={errors.length === 0}
@@ -561,7 +561,7 @@ function ErrorItem({ error, onResolve, isResolving, resolutionResult }: ErrorIte
             {error.context.url} • {error.estimated_fix_time} • {error.context.timestamp.toLocaleString()}
           </p>
         </div>
-        <Button
+        <ButtonV2
           onClick={onResolve}
           disabled={isResolving}
           size="sm"

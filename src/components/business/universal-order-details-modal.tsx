@@ -174,10 +174,10 @@ export function UniversalOrderDetailsModal({
           if (order.supplier_id) {
             const { data: supplier } = await supabase
               .from('organisations')
-              .select('name')
+              .select('legal_name')
               .eq('id', order.supplier_id)
               .single()
-            supplierName = supplier?.name || 'Fournisseur inconnu'
+            supplierName = supplier?.legal_name || 'Fournisseur inconnu'
           }
 
           setOrderDetails({

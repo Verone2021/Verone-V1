@@ -239,7 +239,7 @@ export function ProductSelectorModal({
         </div>
 
         {/* Action button */}
-        <Button
+        <ButtonV2
           size="sm"
           variant={isSelected ? "default" : "outline"}
           className={cn(
@@ -318,7 +318,7 @@ export function ProductSelectorModal({
             <span className="text-sm font-medium text-gray-700">
               {selectedProductIds.length} produit{selectedProductIds.length !== 1 ? 's' : ''} sélectionné{selectedProductIds.length !== 1 ? 's' : ''}
             </span>
-            <Button
+            <ButtonV2
               variant="ghost"
               size="sm"
               onClick={() => setSelectedProductIds([])}
@@ -370,14 +370,14 @@ export function ProductSelectorModal({
 
         {/* Footer actions */}
         <div className="flex-shrink-0 flex items-center justify-end space-x-3 pt-4 border-t border-gray-200">
-          <Button
+          <ButtonV2
             variant="outline"
             onClick={onClose}
             disabled={submitting}
           >
             Annuler
           </ButtonV2>
-          <Button
+          <ButtonV2
             type="button"
             onClick={handleSubmit}
             disabled={selectedProductIds.length === 0 || submitting || loading}

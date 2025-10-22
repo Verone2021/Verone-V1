@@ -252,7 +252,7 @@ export function CollectionFormModal({
                 }}
                 placeholder="Ex: Eco-responsable, Petit espace..."
               />
-              <Button
+              <ButtonV2
                 type="button"
                 variant="outline"
                 onClick={handleAddTag}
@@ -321,7 +321,7 @@ export function CollectionFormModal({
           </div>
 
           <DialogFooter>
-            <Button
+            <ButtonV2
               type="button"
               variant="outline"
               onClick={onClose}
@@ -329,7 +329,7 @@ export function CollectionFormModal({
             >
               Annuler
             </ButtonV2>
-            <Button
+            <ButtonV2
               type="submit"
               disabled={!name.trim() || isSubmitting}
               className="bg-black text-white hover:bg-gray-800"

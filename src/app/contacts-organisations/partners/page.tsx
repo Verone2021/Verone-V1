@@ -6,6 +6,22 @@ import { ButtonV2 } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Badge } from '@/components/ui/badge'
 import {
+  Pagination,
+  PaginationContent,
+  PaginationItem,
+  PaginationLink,
+  PaginationNext,
+  PaginationPrevious,
+} from '@/components/ui/pagination'
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from '@/components/ui/table'
+import {
   UserCheck,
   Building,
   Calendar,
@@ -23,12 +39,17 @@ import {
   Award,
   ExternalLink,
   Building2,
-  Eye
+  Eye,
+  LayoutGrid,
+  List
 } from 'lucide-react'
 import Link from 'next/link'
 import { useOrganisations, getOrganisationDisplayName } from '@/hooks/use-organisations'
 import { PartnerFormModal } from '@/components/business/partner-form-modal'
 import { OrganisationLogo } from '@/components/business/organisation-logo'
+import { HeartBadge } from '@/components/business/heart-badge'
+import { FavoriteToggleButton } from '@/components/business/favorite-toggle-button'
+import { ConfirmDeleteOrganisationModal } from '@/components/business/confirm-delete-organisation-modal'
 import { spacing, colors } from '@/lib/design-system'
 import { createClient } from '@/lib/supabase/client'
 import { cn } from '@/lib/utils'
@@ -51,15 +72,34 @@ interface Partner {
   archived_at: string | null
   website: string | null
   logo_url: string | null
+  preferred_supplier: boolean | null
 }
 
 export default function PartnersPage() {
   const [searchQuery, setSearchQuery] = useState('')
-  const [activeTab, setActiveTab] = useState<'active' | 'archived'>('active')
+  const [activeTab, setActiveTab] = useState<'active' | 'archived' | 'preferred'>('active')
   const [archivedPartners, setArchivedPartners] = useState<Partner[]>([])
   const [archivedLoading, setArchivedLoading] = useState(false)
   const [isModalOpen, setIsModalOpen] = useState(false)
   const [selectedPartner, setSelectedPartner] = useState<Partner | null>(null)
+  const [currentPage, setCurrentPage] = useState(1)
+  const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid')
+  const [deleteModalPartner, setDeleteModalPartner] = useState<Partner | null>(null)
+  const [isDeleting, setIsDeleting] = useState(false)
+  const itemsPerPage = 12 // 3 lignes × 4 colonnes
+
+  // localStorage persistence pour viewMode
+  useEffect(() => {
+    const saved = localStorage.getItem('partners-view-mode')
+    if (saved === 'list' || saved === 'grid') {
+      setViewMode(saved)
+    }
+  }, [])
+
+  const handleViewModeChange = (mode: 'grid' | 'list') => {
+    setViewMode(mode)
+    localStorage.setItem('partners-view-mode', mode)
+  }
 
   // Utiliser useMemo pour stabiliser l'objet filters et éviter la boucle infinie
   const filters = useMemo(() => ({
@@ -99,16 +139,22 @@ export default function PartnersPage() {
     }
   }
 
-  const handleDelete = async (partner: Partner) => {
-    const confirmed = confirm(
-      `Êtes-vous sûr de vouloir supprimer définitivement "${getOrganisationDisplayName(partner)}" ?\n\nCette action est irréversible !`
-    )
+  const handleDelete = (partner: Partner) => {
+    setDeleteModalPartner(partner)
+  }
 
-    if (confirmed) {
-      const success = await hardDeleteOrganisation(partner.id)
+  const handleConfirmDelete = async () => {
+    if (!deleteModalPartner) return
+
+    setIsDeleting(true)
+    try {
+      const success = await hardDeleteOrganisation(deleteModalPartner.id)
       if (success) {
         await loadArchivedPartnersData()
+        setDeleteModalPartner(null) // Fermer le modal
       }
+    } finally {
+      setIsDeleting(false)
     }
   }
 
@@ -153,8 +199,42 @@ export default function PartnersPage() {
     }
   }, [activeTab])
 
-  const displayedPartners = activeTab === 'active' ? partners : archivedPartners
-  const isLoading = activeTab === 'active' ? loading : archivedLoading
+  // Filtrage selon l'onglet actif
+  const displayedPartners = useMemo(() => {
+    if (activeTab === 'active') {
+      return partners
+    } else if (activeTab === 'archived') {
+      return archivedPartners
+    } else if (activeTab === 'preferred') {
+      return partners.filter(p => p.preferred_supplier === true)
+    }
+    return partners
+  }, [activeTab, partners, archivedPartners])
+
+  // Pagination
+  const paginatedPartners = useMemo(() => {
+    const startIndex = (currentPage - 1) * itemsPerPage
+    return displayedPartners.slice(startIndex, startIndex + itemsPerPage)
+  }, [displayedPartners, currentPage, itemsPerPage])
+
+  const totalPages = Math.ceil(displayedPartners.length / itemsPerPage)
+
+  // Calcul des statistiques
+  const stats = useMemo(() => {
+    const total = partners.length
+    const active = partners.filter(p => p.is_active).length
+    const archived = archivedPartners.length
+    const favorites = partners.filter(p => p.preferred_supplier === true).length
+
+    return { total, active, archived, favorites }
+  }, [partners, archivedPartners])
+
+  // Reset page quand recherche ou tab change
+  useEffect(() => {
+    setCurrentPage(1)
+  }, [searchQuery, activeTab])
+
+  const isLoading = (activeTab === 'active' || activeTab === 'preferred') ? loading : archivedLoading
 
   return (
     <div className="container mx-auto p-6 space-y-6">
@@ -185,11 +265,11 @@ export default function PartnersPage() {
       </div>
 
       {/* Stats */}
-      <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
+      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
         <Card>
           <CardContent style={{ padding: spacing[4] }}>
             <div className="text-2xl font-bold" style={{ color: colors.text.DEFAULT }}>
-              {partners.length}
+              {stats.total}
             </div>
             <p className="text-sm" style={{ color: colors.text.subtle }}>
               Total partenaires
@@ -199,7 +279,7 @@ export default function PartnersPage() {
         <Card>
           <CardContent style={{ padding: spacing[4] }}>
             <div className="text-2xl font-bold" style={{ color: colors.success[500] }}>
-              {partners.filter(p => p.is_active).length}
+              {stats.active}
             </div>
             <p className="text-sm" style={{ color: colors.text.subtle }}>
               Actifs
@@ -208,38 +288,28 @@ export default function PartnersPage() {
         </Card>
         <Card>
           <CardContent style={{ padding: spacing[4] }}>
-            <div className="text-2xl font-bold" style={{ color: colors.accent[500] }}>
-              {partners.filter(p => p.email || p.phone).length}
-            </div>
-            <p className="text-sm" style={{ color: colors.text.subtle }}>
-              Avec contact
-            </p>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardContent style={{ padding: spacing[4] }}>
-            <div className="text-2xl font-bold" style={{ color: colors.primary[500] }}>
-              {partners.filter(p => p.country).length}
-            </div>
-            <p className="text-sm" style={{ color: colors.text.subtle }}>
-              Internationaux
-            </p>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardContent style={{ padding: spacing[4] }}>
             <div className="text-2xl font-bold" style={{ color: colors.text.DEFAULT }}>
-              {archivedPartners.length}
+              {stats.archived}
             </div>
             <p className="text-sm" style={{ color: colors.text.subtle }}>
               Archivés
             </p>
           </CardContent>
         </Card>
+        <Card>
+          <CardContent style={{ padding: spacing[4] }}>
+            <div className="text-2xl font-bold" style={{ color: colors.accent[500] }}>
+              {stats.favorites}
+            </div>
+            <p className="text-sm" style={{ color: colors.text.subtle }}>
+              Favoris
+            </p>
+          </CardContent>
+        </Card>
       </div>
 
-      {/* Tabs Actifs/Archivés */}
-      <div className="flex items-center gap-2" style={{ marginBottom: spacing[4] }}>
+      {/* Filtres et Recherche */}
+      <div className="flex items-center gap-3">
         <button
           onClick={() => setActiveTab('active')}
           className={cn(
@@ -265,30 +335,60 @@ export default function PartnersPage() {
           Archivés
           <span className="ml-2 opacity-70">({archivedPartners.length})</span>
         </button>
+
+        <button
+          onClick={() => setActiveTab('preferred')}
+          className={cn(
+            'px-4 py-2 rounded-lg text-sm font-medium transition-all',
+            activeTab === 'preferred'
+              ? 'bg-black text-white'
+              : 'bg-neutral-100 text-neutral-700 hover:bg-neutral-200'
+          )}
+        >
+          Favoris
+          <span className="ml-2 opacity-70">({partners.filter(p => p.preferred_supplier === true).length})</span>
+        </button>
+
+        {/* Barre de recherche alignée */}
+        <div className="relative w-64">
+          <Search
+            className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4"
+            style={{ color: colors.text.muted }}
+          />
+          <Input
+            placeholder="Rechercher par nom..."
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            className="pl-10 h-10 rounded-lg"
+            style={{ borderColor: colors.border.DEFAULT, color: colors.text.DEFAULT }}
+          />
+        </div>
+
+        {/* Toggle Grid/List View */}
+        <div className="flex gap-1 ml-auto">
+          <ButtonV2
+            variant={viewMode === 'grid' ? 'primary' : 'ghost'}
+            size="sm"
+            onClick={() => handleViewModeChange('grid')}
+            icon={LayoutGrid}
+            className="h-10 px-3"
+            aria-label="Vue grille"
+          />
+          <ButtonV2
+            variant={viewMode === 'list' ? 'primary' : 'ghost'}
+            size="sm"
+            onClick={() => handleViewModeChange('list')}
+            icon={List}
+            className="h-10 px-3"
+            aria-label="Vue liste"
+          />
+        </div>
       </div>
 
-      {/* Search */}
-      <Card>
-        <CardContent style={{ padding: spacing[4] }}>
-          <div className="relative">
-            <Search
-              className="absolute left-3 top-3 h-4 w-4"
-              style={{ color: colors.text.muted }}
-            />
-            <Input
-              placeholder="Rechercher par nom..."
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              className="pl-10"
-              style={{ borderColor: colors.border.DEFAULT, color: colors.text.DEFAULT }}
-            />
-          </div>
-        </CardContent>
-      </Card>
-
-      {/* Partners Grid - 4-5 par ligne, cartes compactes */}
-      <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-3">
-        {isLoading ? (
+      {/* Partners Grid OU List View */}
+      {viewMode === 'grid' ? (
+        <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-4 gap-3">
+          {isLoading ? (
           Array.from({ length: 10 }).map((_, i) => (
             <Card key={i} className="animate-pulse">
               <CardHeader style={{ padding: spacing[2] }}>
@@ -301,25 +401,26 @@ export default function PartnersPage() {
             </Card>
           ))
         ) : (
-          displayedPartners.map((partner) => (
+          paginatedPartners.map((partner) => (
             <Card key={partner.id} className="hover:shadow-lg transition-all duration-200" data-testid="partner-card">
-              <CardContent style={{ padding: spacing[4] }}>
+              <CardContent className="flex flex-col h-full" style={{ padding: spacing[3] }}>
                 {/* Layout Horizontal Spacieux - Logo GAUCHE + Infos DROITE */}
                 <div className="flex gap-4">
                   {/* Logo GAUCHE - MD (48px) */}
-                  <OrganisationLogo
-                    logoUrl={partner.logo_url}
-                    organisationName={getOrganisationDisplayName(partner)}
-                    size="md"
-                    fallback="initials"
-                    className="flex-shrink-0"
-                  />
+                  <div className="flex flex-col items-center gap-1 flex-shrink-0">
+                    <OrganisationLogo
+                      logoUrl={partner.logo_url}
+                      organisationName={getOrganisationDisplayName(partner)}
+                      size="md"
+                      fallback="initials"
+                    />
+                  </div>
 
-                  {/* Contenu DROITE - Stack vertical spacieux */}
-                  <div className="flex-1 min-w-0 space-y-2">
-                    {/* Ligne 1: Nom + Badge Archivé */}
+                  {/* Contenu DROITE - Stack vertical avec hauteurs fixes */}
+                  <div className="flex-1 min-w-0 flex flex-col">
+                    {/* Ligne 1: Nom (toujours 2 lignes réservées) + Badge Archivé */}
                     <div className="flex items-start justify-between gap-3">
-                      <CardTitle className="text-sm font-semibold line-clamp-2 flex-1">
+                      <CardTitle className="text-sm font-semibold line-clamp-2 min-h-[2.5rem] flex-1">
                         {partner.website ? (
                           <a
                             href={partner.website}
@@ -338,9 +439,10 @@ export default function PartnersPage() {
                         )}
                       </CardTitle>
 
+                      {/* Badge Archivé seulement */}
                       {partner.archived_at && (
                         <Badge
-                          variant="destructive"
+                          variant="danger"
                           className="text-xs flex-shrink-0"
                           style={{ backgroundColor: colors.danger[100], color: colors.danger[700] }}
                         >
@@ -349,41 +451,53 @@ export default function PartnersPage() {
                       )}
                     </div>
 
-                    {/* Adresse de facturation complète - Polices plus petites */}
-                    {(partner.billing_address_line1 || partner.billing_city || partner.billing_country) && (
-                      <div className="space-y-0.5">
-                        {partner.billing_address_line1 && (
-                          <div className="flex items-center gap-1.5 text-xs" style={{ color: colors.text.subtle }}>
-                            <MapPin className="h-3 w-3 flex-shrink-0" />
-                            <span className="truncate">{partner.billing_address_line1}</span>
-                          </div>
-                        )}
-                        {(partner.billing_postal_code || partner.billing_city) && (
-                          <div className="text-xs pl-[18px]" style={{ color: colors.text.subtle }}>
-                            <span className="truncate">
-                              {partner.billing_postal_code && `${partner.billing_postal_code}, `}
-                              {partner.billing_city}
-                            </span>
-                          </div>
-                        )}
-                        {partner.billing_country && (
-                          <div className="text-xs pl-[18px]" style={{ color: colors.text.subtle }}>
-                            <span className="truncate">{partner.billing_country}</span>
-                          </div>
-                        )}
-                      </div>
-                    )}
+                    {/* Adresse de facturation - Espace réservé même si vide */}
+                    <div className="mt-3 min-h-[2.5rem] space-y-0.5">
+                      {partner.billing_address_line1 && (
+                        <div className="flex items-center gap-1.5 text-xs" style={{ color: colors.text.subtle }}>
+                          <MapPin className="h-3 w-3 flex-shrink-0" />
+                          <span className="truncate line-clamp-1">{partner.billing_address_line1}</span>
+                        </div>
+                      )}
+                      {(partner.billing_postal_code || partner.billing_city) && (
+                        <div className="text-xs pl-[18px]" style={{ color: colors.text.subtle }}>
+                          <span className="truncate line-clamp-1">
+                            {partner.billing_postal_code && `${partner.billing_postal_code}, `}
+                            {partner.billing_city}
+                          </span>
+                        </div>
+                      )}
+                      {partner.billing_country && (
+                        <div className="text-xs pl-[18px]" style={{ color: colors.text.subtle }}>
+                          <span className="truncate line-clamp-1">{partner.billing_country}</span>
+                        </div>
+                      )}
+                    </div>
 
-                    {/* Séparateur + Boutons minimalistes */}
-                    <div>
-                      <div className="border-t my-2" style={{ borderColor: colors.border.DEFAULT }} />
+                    {/* Boutons - Toujours en bas avec mt-auto */}
+                    <div className="mt-auto pt-4 border-t" style={{ borderColor: colors.border.DEFAULT }}>
                       <div className="flex items-center gap-2">
-                        {activeTab === 'active' ? (
+                        {(activeTab === 'active' || activeTab === 'preferred') ? (
                           <>
+                            <FavoriteToggleButton
+                              organisationId={partner.id}
+                              isFavorite={partner.preferred_supplier === true}
+                              organisationType="partner"
+                              disabled={!partner.is_active}
+                              onToggleComplete={() => {
+                                refetch()
+                                loadArchivedPartnersData()
+                              }}
+                              className="h-7 px-2"
+                            />
                             <Link href={`/contacts-organisations/partners/${partner.id}`}>
-                              <ButtonV2 variant="ghost" size="sm" className="text-xs h-7 px-3" icon={Eye}>
-                                Voir
-                              </ButtonV2>
+                              <ButtonV2
+                                variant="ghost"
+                                size="sm"
+                                icon={Eye}
+                                className="h-7 px-2"
+                                aria-label="Voir"
+                              />
                             </Link>
                             <ButtonV2
                               variant="ghost"
@@ -396,6 +510,17 @@ export default function PartnersPage() {
                           </>
                         ) : (
                           <>
+                            <FavoriteToggleButton
+                              organisationId={partner.id}
+                              isFavorite={partner.preferred_supplier === true}
+                              organisationType="partner"
+                              disabled={!partner.is_active}
+                              onToggleComplete={() => {
+                                refetch()
+                                loadArchivedPartnersData()
+                              }}
+                              className="h-7 px-2"
+                            />
                             <ButtonV2
                               variant="secondary"
                               size="sm"
@@ -413,9 +538,13 @@ export default function PartnersPage() {
                               aria-label="Supprimer"
                             />
                             <Link href={`/contacts-organisations/partners/${partner.id}`}>
-                              <ButtonV2 variant="ghost" size="sm" className="text-xs h-7 px-3" icon={Eye}>
-                                Voir
-                              </ButtonV2>
+                              <ButtonV2
+                                variant="ghost"
+                                size="sm"
+                                icon={Eye}
+                                className="h-7 px-2"
+                                aria-label="Voir"
+                              />
                             </Link>
                           </>
                         )}
@@ -427,7 +556,216 @@ export default function PartnersPage() {
             </Card>
           ))
         )}
-      </div>
+        </div>
+      ) : (
+        /* Vue Liste */
+        <div className="rounded-lg border" style={{ borderColor: colors.border.DEFAULT }}>
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead className="w-[50%]" style={{ color: colors.text.DEFAULT }}>Partenaire</TableHead>
+                <TableHead style={{ color: colors.text.DEFAULT }}>Adresse</TableHead>
+                <TableHead className="w-[150px] text-right" style={{ color: colors.text.DEFAULT }}>Actions</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {isLoading ? (
+                Array.from({ length: 5 }).map((_, i) => (
+                  <TableRow key={i} className="animate-pulse">
+                    <TableCell><div className="h-4 bg-gray-200 rounded w-3/4"></div></TableCell>
+                    <TableCell><div className="h-4 bg-gray-200 rounded w-2/3"></div></TableCell>
+                    <TableCell><div className="h-4 bg-gray-200 rounded w-full"></div></TableCell>
+                  </TableRow>
+                ))
+              ) : (
+                paginatedPartners.map((partner) => (
+                  <TableRow key={partner.id} className="hover:bg-muted/50">
+                    {/* Logo + Nom avec lien site web */}
+                    <TableCell>
+                      <div className="flex items-center gap-3">
+                        <OrganisationLogo
+                          logoUrl={partner.logo_url}
+                          organisationName={getOrganisationDisplayName(partner)}
+                          size="sm"
+                          fallback="initials"
+                        />
+                        <div>
+                          {partner.website ? (
+                            <a
+                              href={partner.website}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="font-medium hover:underline flex items-center gap-1"
+                              style={{ color: colors.text.DEFAULT }}
+                            >
+                              {getOrganisationDisplayName(partner)}
+                              <ExternalLink className="h-3 w-3" style={{ color: colors.text.muted }} />
+                            </a>
+                          ) : (
+                            <span className="font-medium" style={{ color: colors.text.DEFAULT }}>
+                              {getOrganisationDisplayName(partner)}
+                            </span>
+                          )}
+                          {partner.archived_at && (
+                            <Badge
+                              variant="danger"
+                              className="text-xs ml-2"
+                              style={{ backgroundColor: colors.danger[100], color: colors.danger[700] }}
+                            >
+                              Archivé
+                            </Badge>
+                          )}
+                        </div>
+                      </div>
+                    </TableCell>
+
+                    {/* Adresse complète */}
+                    <TableCell>
+                      <div className="text-sm" style={{ color: colors.text.subtle }}>
+                        {partner.billing_address_line1 && (
+                          <div>{partner.billing_address_line1}</div>
+                        )}
+                        {(partner.billing_postal_code || partner.billing_city) && (
+                          <div>
+                            {partner.billing_postal_code && `${partner.billing_postal_code}, `}
+                            {partner.billing_city}
+                          </div>
+                        )}
+                        {partner.billing_country && (
+                          <div>{partner.billing_country}</div>
+                        )}
+                      </div>
+                    </TableCell>
+
+                    {/* Actions */}
+                    <TableCell className="text-right">
+                      <div className="flex justify-end items-center gap-2">
+                        {(activeTab === 'active' || activeTab === 'preferred') ? (
+                          <>
+                            <FavoriteToggleButton
+                              organisationId={partner.id}
+                              isFavorite={partner.preferred_supplier === true}
+                              organisationType="partner"
+                              disabled={!partner.is_active}
+                              onToggleComplete={() => {
+                                refetch()
+                                loadArchivedPartnersData()
+                              }}
+                              className="h-7 px-2"
+                            />
+                            <Link href={`/contacts-organisations/partners/${partner.id}`}>
+                              <ButtonV2
+                                variant="ghost"
+                                size="sm"
+                                icon={Eye}
+                                className="h-7 px-2"
+                                aria-label="Voir"
+                              />
+                            </Link>
+                            <ButtonV2
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => handleArchive(partner)}
+                              icon={Archive}
+                              className="h-7 px-2"
+                              aria-label="Archiver"
+                            />
+                          </>
+                        ) : (
+                          <>
+                            <FavoriteToggleButton
+                              organisationId={partner.id}
+                              isFavorite={partner.preferred_supplier === true}
+                              organisationType="partner"
+                              disabled={!partner.is_active}
+                              onToggleComplete={() => {
+                                refetch()
+                                loadArchivedPartnersData()
+                              }}
+                              className="h-7 px-2"
+                            />
+                            <ButtonV2
+                              variant="secondary"
+                              size="sm"
+                              onClick={() => handleArchive(partner)}
+                              icon={ArchiveRestore}
+                              className="h-7 px-2"
+                              aria-label="Restaurer"
+                            />
+                            <ButtonV2
+                              variant="danger"
+                              size="sm"
+                              onClick={() => handleDelete(partner)}
+                              icon={Trash2}
+                              className="h-7 px-2"
+                              aria-label="Supprimer"
+                            />
+                            <Link href={`/contacts-organisations/partners/${partner.id}`}>
+                              <ButtonV2
+                                variant="ghost"
+                                size="sm"
+                                icon={Eye}
+                                className="h-7 px-2"
+                                aria-label="Voir"
+                              />
+                            </Link>
+                          </>
+                        )}
+                      </div>
+                    </TableCell>
+                  </TableRow>
+                ))
+              )}
+            </TableBody>
+          </Table>
+        </div>
+      )}
+
+      {/* Pagination */}
+      {totalPages > 1 && !isLoading && paginatedPartners.length > 0 && (
+        <Pagination className="mt-6">
+          <PaginationContent>
+            <PaginationItem>
+              <PaginationPrevious
+                onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
+                className={currentPage === 1 ? 'pointer-events-none opacity-50' : 'cursor-pointer'}
+              />
+            </PaginationItem>
+
+            {Array.from({ length: Math.min(totalPages, 7) }, (_, i) => {
+              let pageNum: number
+              if (totalPages <= 7) {
+                pageNum = i + 1
+              } else if (currentPage <= 4) {
+                pageNum = i + 1
+              } else if (currentPage >= totalPages - 3) {
+                pageNum = totalPages - 6 + i
+              } else {
+                pageNum = currentPage - 3 + i
+              }
+
+              return (
+                <PaginationItem key={pageNum}>
+                  <PaginationLink
+                    onClick={() => setCurrentPage(pageNum)}
+                    isActive={currentPage === pageNum}
+                    className="cursor-pointer"
+                  >
+                    {pageNum}
+                  </PaginationLink>
+                </PaginationItem>
+              )
+            })}
+
+            <PaginationItem>
+              <PaginationNext
+                onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
+                className={currentPage === totalPages ? 'pointer-events-none opacity-50' : 'cursor-pointer'}
+              />
+            </PaginationItem>
+          </PaginationContent>
+        </Pagination>
+      )}
 
       {displayedPartners.length === 0 && !isLoading && (
         <Card>
@@ -462,6 +800,15 @@ export default function PartnersPage() {
         onClose={handleCloseModal}
         partner={selectedPartner}
         onSuccess={handlePartnerSuccess}
+      />
+
+      <ConfirmDeleteOrganisationModal
+        open={!!deleteModalPartner}
+        onOpenChange={(open) => !open && setDeleteModalPartner(null)}
+        organisation={deleteModalPartner as any}
+        organisationType="partner"
+        onConfirm={handleConfirmDelete}
+        isDeleting={isDeleting}
       />
     </div>
   )

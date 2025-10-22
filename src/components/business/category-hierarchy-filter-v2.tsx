@@ -254,7 +254,7 @@ export function CategoryHierarchyFilterV2({
             {activeFilters.map((filter) => (
               <Badge
                 key={filter.subcategoryId}
-                variant="default"
+                variant="primary"
                 className="bg-black text-white border-black cursor-pointer hover:bg-gray-800 transition-colors"
                 onClick={() => handleRemoveFilter(filter.subcategoryId)}
               >

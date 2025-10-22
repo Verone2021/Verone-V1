@@ -180,7 +180,7 @@ export function ConsultationProductAssociation({
             )}
 
             {errors.product && (
-              <Alert variant="destructive">
+              <Alert variant="danger">
                 <AlertDescription>{errors.product}</AlertDescription>
               </Alert>
             )}
@@ -254,7 +254,7 @@ export function ConsultationProductAssociation({
             {/* Actions */}
             <div className="flex gap-3 pt-4 border-t">
               {onCancel && (
-                <Button
+                <ButtonV2
                   type="button"
                   variant="outline"
                   onClick={onCancel}
@@ -266,7 +266,7 @@ export function ConsultationProductAssociation({
                 </ButtonV2>
               )}
 
-              <Button
+              <ButtonV2
                 onClick={handleCreateAssociation}
                 disabled={loading || !selectedProduct}
                 className="flex-1 bg-black hover:bg-gray-800 text-white"

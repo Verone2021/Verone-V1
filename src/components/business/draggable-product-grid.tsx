@@ -242,13 +242,13 @@ export function DraggableProductGrid({
             )}
 
             {saveStatus === 'error' && (
-              <Badge variant="destructive" className="bg-red-100 text-red-800 border-red-300">
+              <Badge variant="danger" className="bg-red-100 text-red-800 border-red-300">
                 <AlertCircle className="h-3 w-3 mr-1" />
                 Erreur
               </Badge>
             )}
 
-            <Button
+            <ButtonV2
               variant="outline"
               size="sm"
               onClick={resetOrder}
@@ -258,7 +258,7 @@ export function DraggableProductGrid({
               Annuler
             </ButtonV2>
 
-            <Button
+            <ButtonV2
               size="sm"
               onClick={saveChanges}
               disabled={saving || !hasChanges}

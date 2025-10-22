@@ -67,7 +67,7 @@ export function ContactRolesEditSection({ contact, onUpdate, className }: Contac
 
     if (contactData?.is_primary_contact) {
       badges.push(
-        <Badge key="primary" variant="default" className="bg-gray-100 text-gray-900 border-gray-200">
+        <Badge key="primary" variant="primary" className="bg-gray-100 text-gray-900 border-gray-200">
           <Star className="h-3 w-3 mr-1" />
           Principal
         </Badge>
@@ -120,7 +120,7 @@ export function ContactRolesEditSection({ contact, onUpdate, className }: Contac
               Annuler
             </ButtonV2>
             <ButtonV2
-              variant="default"
+              variant="primary"
               size="sm"
               onClick={handleSave}
               disabled={!hasChanges(section) || isSaving(section)}

@@ -83,7 +83,7 @@ export function AppHeader({ className }: AppHeaderProps) {
         {/* Menu Profil utilisateur */}
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
-            <ButtonV2 variant="ghost" size="icon">
+            <ButtonV2 variant="ghost" size="sm">
               <User className="h-5 w-5" />
               <span className="sr-only">Menu profil</span>
             </ButtonV2>

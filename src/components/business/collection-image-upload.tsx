@@ -150,7 +150,7 @@ export function CollectionImageUpload({
     <div className={cn("space-y-4", className)}>
       {/* Erreur */}
       {error && (
-        <Alert variant="destructive">
+        <Alert variant="danger">
           <AlertCircle className="h-4 w-4" />
           <AlertDescription>{error}</AlertDescription>
         </Alert>
@@ -171,7 +171,7 @@ export function CollectionImageUpload({
             {/* Overlay suppression */}
             <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
               <ButtonV2
-                variant="destructive"
+                variant="danger"
                 size="sm"
                 onClick={handleRemoveImage}
                 disabled={disabled}

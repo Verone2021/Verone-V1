@@ -575,7 +575,7 @@ export default function CompleteProductForm({ onSuccess, onCancel }: CompletePro
 
         {/* Actions */}
         <div className="p-6 border-t bg-gray-50 flex justify-between items-center">
-          <Button
+          <ButtonV2
             type="button"
             variant="outline"
             onClick={onCancel}
@@ -583,7 +583,7 @@ export default function CompleteProductForm({ onSuccess, onCancel }: CompletePro
           >
             Annuler
           </ButtonV2>
-          <Button
+          <ButtonV2
             type="submit"
             disabled={isSubmitting}
             className="bg-black hover:bg-gray-800"

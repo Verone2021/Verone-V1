@@ -227,7 +227,7 @@ export default function PriceListsAdminPage() {
                       <TableCell>
                         <div className="flex gap-2">
                           <ButtonV2
-                            variant="default"
+                            variant="primary"
                             size="sm"
                             onClick={() => router.push(`/admin/pricing/lists/${list.id}`)}
                             title="Gérer les items et paliers"

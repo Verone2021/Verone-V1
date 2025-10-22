@@ -208,7 +208,7 @@ export function CollectionEditModal({
           </div>
 
           <DialogFooter>
-            <Button
+            <ButtonV2
               type="button"
               variant="outline"
               onClick={onClose}
@@ -216,7 +216,7 @@ export function CollectionEditModal({
             >
               Annuler
             </ButtonV2>
-            <Button
+            <ButtonV2
               type="submit"
               disabled={loading || !formData.name}
               className="bg-black text-white hover:bg-gray-800"

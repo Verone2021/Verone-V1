@@ -274,7 +274,7 @@ export function InvoicesList() {
       {/* Pagination */}
       {totalPages > 1 && (
         <div className="flex items-center justify-center gap-2">
-          <Button
+          <ButtonV2
             variant="outline"
             size="sm"
             onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
@@ -287,7 +287,7 @@ export function InvoicesList() {
             Page {currentPage} sur {totalPages}
           </span>
 
-          <Button
+          <ButtonV2
             variant="outline"
             size="sm"
             onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}

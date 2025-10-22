@@ -413,9 +413,9 @@ export function DefinitiveProductForm({
                           alt={`Preview ${index + 1}`}
                           className="w-full h-32 object-cover rounded-lg border"
                         />
-                        <Button
+                        <ButtonV2
                           type="button"
-                          variant="destructive"
+                          variant="danger"
                           size="sm"
                           onClick={() => {
                             setSelectedFiles(selectedFiles.filter((_, i) => i !== index))
@@ -441,7 +441,7 @@ export function DefinitiveProductForm({
           {/* Actions */}
           <div className="flex justify-end gap-3 pt-6 border-t">
             {onCancel && (
-              <Button
+              <ButtonV2
                 type="button"
                 variant="outline"
                 onClick={onCancel}
@@ -450,7 +450,7 @@ export function DefinitiveProductForm({
                 Annuler
               </ButtonV2>
             )}
-            <Button
+            <ButtonV2
               type="submit"
               disabled={isSubmitting}
               className="bg-black text-white hover:bg-gray-800"

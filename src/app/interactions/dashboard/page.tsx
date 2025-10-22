@@ -135,7 +135,7 @@ export default function InteractionsDashboardPage() {
   const getPriorityBadge = (priority: string) => {
     switch (priority) {
       case 'high':
-        return <Badge variant="destructive" className="text-xs">Urgent</Badge>
+        return <Badge variant="danger" className="text-xs">Urgent</Badge>
       case 'medium':
         return <Badge variant="outline" className="border-gray-300 text-black text-xs">Moyen</Badge>
       case 'low':

@@ -211,7 +211,7 @@ export function SupplierCategorySelect({
 
       <div ref={dropdownRef}>
         {/* Trigger button avec badges */}
-        <Button
+        <ButtonV2
           type="button"
           variant="outline"
           onClick={() => !disabled && setIsOpen(!isOpen)}
@@ -277,7 +277,7 @@ export function SupplierCategorySelect({
                 className="w-full px-3 py-2 text-sm border border-neutral-200 rounded-md focus:outline-none focus:ring-2 focus:ring-primary-500"
               />
               {selectedCategories.length > 0 && (
-                <Button
+                <ButtonV2
                   type="button"
                   variant="ghost"
                   size="sm"

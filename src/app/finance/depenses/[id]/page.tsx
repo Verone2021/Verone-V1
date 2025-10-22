@@ -151,7 +151,7 @@ export default function ExpenseDetailPage(props: PageProps) {
     return (
       <div className="flex flex-col gap-6 p-6">
         <div className="flex items-center gap-4">
-          <ButtonV2 variant="ghost" size="icon" asChild>
+          <ButtonV2 variant="ghost" size="sm" asChild>
             <Link href="/finance/depenses">
               <ArrowLeft className="h-4 w-4" />
             </Link>
@@ -195,7 +195,7 @@ export default function ExpenseDetailPage(props: PageProps) {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-4">
-          <ButtonV2 variant="ghost" size="icon" asChild>
+          <ButtonV2 variant="ghost" size="sm" asChild>
             <Link href="/finance/depenses">
               <ArrowLeft className="h-4 w-4" />
             </Link>

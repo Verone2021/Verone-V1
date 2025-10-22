@@ -275,9 +275,9 @@ export function ImageUpload({
               </div>
             )}
           </div>
-          <Button
+          <ButtonV2
             type="button"
-            variant="destructive"
+            variant="danger"
             size="sm"
             className="absolute -top-2 -right-2 w-6 h-6 p-0 rounded-full"
             onClick={handleRemoveImage}
@@ -346,7 +346,7 @@ export function ImageUpload({
 
       {/* Bouton pour remplacer l'image existante */}
       {currentImageUrl && !isUploading && (
-        <Button
+        <ButtonV2
           type="button"
           variant="outline"
           size="sm"

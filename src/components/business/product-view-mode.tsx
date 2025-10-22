@@ -145,7 +145,7 @@ export function ProductViewMode({ product, onSwitchToEdit, className }: ProductV
 
             {/* Bouton administration (seulement en mode admin) */}
             <div className="pt-4 border-t border-gray-200">
-              <Button
+              <ButtonV2
                 onClick={onSwitchToEdit}
                 className="w-full bg-black hover:bg-gray-800 text-white"
                 size="lg"

@@ -74,12 +74,12 @@ export function AuthWrapper({ children }: AuthWrapperProps) {
   // Layout authentifié avec sidebar/header
   return (
     <TooltipProvider>
-      <SidebarProvider defaultOpen={true}>
+      <SidebarProvider defaultOpen={true} className="h-screen overflow-hidden">
         {/* Sidebar fixe */}
         <AppSidebar />
 
-        {/* Contenu principal */}
-        <div className="flex flex-1 flex-col">
+        {/* Contenu principal avec scroll localisé */}
+        <div className="flex flex-1 flex-col min-h-0">
           <AppHeader />
           <main className="flex-1 overflow-auto p-6">
             {children}

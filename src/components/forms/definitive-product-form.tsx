@@ -493,7 +493,7 @@ export function DefinitiveProductForm({
               <Info className="h-4 w-4 mr-2" />
               Informations générales
               {(errors.name || errors.description || errors.subcategory) && (
-                <Badge variant="destructive" className="ml-2 h-5 w-5 p-0 rounded-full">!</Badge>
+                <Badge variant="danger" className="ml-2 h-5 w-5 p-0 rounded-full">!</Badge>
               )}
             </TabsTrigger>
 
@@ -504,7 +504,7 @@ export function DefinitiveProductForm({
               <Euro className="h-4 w-4 mr-2" />
               Prix d'achat
               {errors.cost_price && (
-                <Badge variant="destructive" className="ml-2 h-5 w-5 p-0 rounded-full">!</Badge>
+                <Badge variant="danger" className="ml-2 h-5 w-5 p-0 rounded-full">!</Badge>
               )}
             </TabsTrigger>
 
@@ -1306,7 +1306,7 @@ export function DefinitiveProductForm({
 
             <div className="flex space-x-3">
               {onCancel && (
-                <Button
+                <ButtonV2
                   type="button"
                   variant="outline"
                   onClick={onCancel}
@@ -1317,7 +1317,7 @@ export function DefinitiveProductForm({
                 </ButtonV2>
               )}
 
-              <Button
+              <ButtonV2
                 type="submit"
                 disabled={isSubmitting}
                 onClick={handleSubmit}

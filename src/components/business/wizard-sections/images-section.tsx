@@ -242,7 +242,7 @@ export function ImagesSection({
                       )}
                       <Button
                         size="sm"
-                        variant="destructive"
+                        variant="danger"
                         onClick={() => removeImage(index)}
                       >
                         <X className="h-3 w-3" />

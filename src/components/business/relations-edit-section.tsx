@@ -184,7 +184,7 @@ export function RelationsEditSection({ product, onUpdate, className }: Relations
             Relations
           </h3>
           <div className="flex space-x-2">
-            <Button
+            <ButtonV2
               variant="outline"
               size="sm"
               onClick={handleCancel}
@@ -193,8 +193,8 @@ export function RelationsEditSection({ product, onUpdate, className }: Relations
               <X className="h-3 w-3 mr-1" />
               Annuler
             </ButtonV2>
-            <Button
-              variant="default"
+            <ButtonV2
+              variant="primary"
               size="sm"
               onClick={handleSave}
               disabled={!hasChanges(section) || isSaving(section)}
@@ -354,7 +354,7 @@ export function RelationsEditSection({ product, onUpdate, className }: Relations
 
         {/* Actions */}
         <div className="pt-2">
-          <Button
+          <ButtonV2
             variant="outline"
             size="sm"
             className="w-full text-xs h-7"

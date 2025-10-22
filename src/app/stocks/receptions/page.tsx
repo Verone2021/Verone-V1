@@ -268,7 +268,7 @@ export default function ReceptionsPage() {
                         <TableCell className="font-medium">
                           {order.po_number}
                           {isOverdue && (
-                            <Badge variant="destructive" className="ml-2 text-xs">
+                            <Badge variant="danger" className="ml-2 text-xs">
                               En retard
                             </Badge>
                           )}

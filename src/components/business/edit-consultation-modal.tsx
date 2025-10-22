@@ -126,7 +126,7 @@ export function EditConsultationModal({
               <Building className="h-3 w-3" />
               Modifier la consultation
             </DialogTitle>
-            <ButtonV2 variant="ghost" size="icon" onClick={onClose}>
+            <ButtonV2 variant="ghost" size="sm" onClick={onClose}>
               <X className="h-3 w-3" />
             </ButtonV2>
           </div>

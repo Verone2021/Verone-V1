@@ -1,6 +1,7 @@
 import "./globals.css"
 import { Inter } from "next/font/google"
 import { Analytics } from '@vercel/analytics/react'
+import { Toaster } from 'sonner'
 import { AuthWrapper } from "../components/layout/auth-wrapper"
 import { ClientOnlyActivityTracker } from "../components/providers/client-only-activity-tracker"
 import { ReactQueryProvider } from "../components/providers/react-query-provider"
@@ -45,6 +46,8 @@ export default function RootLayout({
             </ClientOnlyActivityTracker>
           </AuthWrapper>
         </ReactQueryProvider>
+        {/* Toast notifications */}
+        <Toaster position="top-right" richColors />
         {/* Vercel Analytics - uniquement en production (détection automatique) */}
         {process.env.VERCEL_ENV === 'production' && <Analytics />}
       </body>

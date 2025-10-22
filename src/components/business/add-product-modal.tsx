@@ -186,7 +186,7 @@ export function AddProductModal({
               <Plus className="h-6 w-6" />
               Ajouter un produit
             </DialogTitle>
-            <ButtonV2 variant="ghost" size="icon" onClick={onClose}>
+            <ButtonV2 variant="ghost" size="sm" onClick={onClose}>
               <X className="h-5 w-5" />
             </ButtonV2>
           </div>

@@ -83,7 +83,7 @@ export function ProductStatusSelector({
         </div>
 
         {isInconsistent && (
-          <Button
+          <ButtonV2
             variant="outline"
             size="sm"
             onClick={handleForceRecalculation}

@@ -161,7 +161,7 @@ export function AIInsightsPanel({ className, refreshInterval = 30000 }: AIInsigh
               </div>
             </div>
             <div className="flex gap-2">
-              <Button
+              <ButtonV2
                 onClick={handleFullRefresh}
                 disabled={isRefreshing}
                 size="sm"
@@ -179,7 +179,7 @@ export function AIInsightsPanel({ className, refreshInterval = 30000 }: AIInsigh
                   </>
                 )}
               </ButtonV2>
-              <Button
+              <ButtonV2
                 variant="outline"
                 size="sm"
                 onClick={() => {/* Export logic */}}
@@ -324,7 +324,7 @@ export function AIInsightsPanel({ className, refreshInterval = 30000 }: AIInsigh
             <h3 className="text-lg font-medium">Prédictions Business IA</h3>
             <div className="flex gap-2">
               {['all', 'performance', 'stability', 'revenue'].map(type => (
-                <Button
+                <ButtonV2
                   key={type}
                   variant={selectedPredictionType === type ? 'default' : 'outline'}
                   size="sm"
@@ -348,7 +348,7 @@ export function AIInsightsPanel({ className, refreshInterval = 30000 }: AIInsigh
                 <Card className="p-8 text-center">
                   <TrendingUp className="w-12 h-12 mx-auto text-gray-400 mb-4" />
                   <p className="text-gray-500">Aucune prédiction disponible</p>
-                  <Button
+                  <ButtonV2
                     onClick={bpGeneratePredictions}
                     className="mt-4"
                     disabled={bpGenerating}
@@ -365,7 +365,7 @@ export function AIInsightsPanel({ className, refreshInterval = 30000 }: AIInsigh
         <TabsContent value="insights" className="space-y-4">
           <div className="flex items-center justify-between">
             <h3 className="text-lg font-medium">Insights Business Actionables</h3>
-            <Button
+            <ButtonV2
               onClick={generateInsights}
               disabled={bpGenerating}
               size="sm"
@@ -385,7 +385,7 @@ export function AIInsightsPanel({ className, refreshInterval = 30000 }: AIInsigh
               <Card className="p-8 text-center">
                 <Lightbulb className="w-12 h-12 mx-auto text-gray-400 mb-4" />
                 <p className="text-gray-500">Aucun insight disponible</p>
-                <Button
+                <ButtonV2
                   onClick={generateInsights}
                   className="mt-4"
                   disabled={bpGenerating}
@@ -405,7 +405,7 @@ export function AIInsightsPanel({ className, refreshInterval = 30000 }: AIInsigh
               <Badge variant="secondary">
                 {patterns.length} patterns actifs
               </Badge>
-              <Button
+              <ButtonV2
                 onClick={clearAllPatterns}
                 variant="outline"
                 size="sm"
@@ -786,14 +786,14 @@ function SystemAIPanel({
         </CardHeader>
         <CardContent>
           <div className="space-y-3">
-            <Button
+            <ButtonV2
               onClick={onClearHistory}
               variant="outline"
               className="w-full text-black hover:text-gray-800"
             >
               Clear Analysis History
             </ButtonV2>
-            <Button
+            <ButtonV2
               onClick={onClearPatterns}
               variant="outline"
               className="w-full text-red-600 hover:text-red-700"

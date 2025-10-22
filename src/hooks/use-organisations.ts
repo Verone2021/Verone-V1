@@ -204,7 +204,7 @@ export function useOrganisations(filters?: OrganisationFilters) {
 
       return data
     } catch (error) {
-      console.error('Erreur lors de la récupération de l\'organisation:', error)
+      // Gestion silencieuse - return null suffit
       return null
     }
   }

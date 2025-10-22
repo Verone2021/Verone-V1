@@ -116,7 +116,7 @@ export function ProductDescriptionsEditSection({
               Annuler
             </ButtonV2>
             <ButtonV2
-              variant="default"
+              variant="primary"
               size="xs"
               onClick={handleSave}
               disabled={!hasChanges(section) || isSaving(section)}

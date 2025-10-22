@@ -141,7 +141,7 @@ export function OrganisationCard({
           </div>
           {organisation.archived_at && (
             <Badge
-              variant="destructive"
+              variant="danger"
               className="text-[10px] px-1.5 py-0.5 flex-shrink-0 leading-tight"
               style={{ backgroundColor: colors.danger[100], color: colors.danger[700] }}
             >

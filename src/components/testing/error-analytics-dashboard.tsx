@@ -320,7 +320,7 @@ export function ErrorAnalyticsDashboard({
               <BarChart3 className="h-5 w-5" />
               Erreurs par Module
             </div>
-            <Button
+            <ButtonV2
               variant="outline"
               size="sm"
               onClick={() => getDashboardSummary()}
@@ -339,7 +339,7 @@ export function ErrorAnalyticsDashboard({
                     <Badge variant="secondary">{stat.module.toUpperCase()}</Badge>
                     <span className="text-sm">{stat.error_count} erreurs</span>
                     {stat.critical_count > 0 && (
-                      <Badge variant="destructive" className="text-xs">
+                      <Badge variant="danger" className="text-xs">
                         {stat.critical_count} critiques
                       </Badge>
                     )}
@@ -369,7 +369,7 @@ export function ErrorAnalyticsDashboard({
         </CardHeader>
         <CardContent>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-            <Button
+            <ButtonV2
               variant="outline"
               className="justify-start"
               onClick={() => supabaseErrorConnector.searchErrors({ auto_fixable: true })}
@@ -377,7 +377,7 @@ export function ErrorAnalyticsDashboard({
               <Brain className="h-4 w-4 mr-2" />
               Erreurs Auto-Fixables
             </ButtonV2>
-            <Button
+            <ButtonV2
               variant="outline"
               className="justify-start"
               onClick={() => supabaseErrorConnector.getPendingNotifications()}
@@ -385,7 +385,7 @@ export function ErrorAnalyticsDashboard({
               <Clock className="h-4 w-4 mr-2" />
               Notifications Pending
             </ButtonV2>
-            <Button
+            <ButtonV2
               variant="outline"
               className="justify-start"
               onClick={() => window.open('/documentation/tests-manuels', '_blank')}

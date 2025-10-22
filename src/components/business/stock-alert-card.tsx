@@ -105,7 +105,7 @@ export function StockAlertCard({ alert, onActionClick }: StockAlertCardProps) {
         )}
 
         <div className="flex gap-2">
-          <Button
+          <ButtonV2
             size="sm"
             variant="outline"
             onClick={() => onActionClick?.(alert)}

@@ -391,9 +391,9 @@ export function QuickVariantForm({
                     alt="Preview"
                     className="w-full h-32 object-cover rounded-lg"
                   />
-                  <Button
+                  <ButtonV2
                     type="button"
-                    variant="destructive"
+                    variant="danger"
                     size="sm"
                     className="absolute top-2 right-2"
                     onClick={handleRemoveImage}
@@ -440,7 +440,7 @@ export function QuickVariantForm({
 
           {/* Actions */}
           <div className="flex justify-end space-x-4 pt-4">
-            <Button
+            <ButtonV2
               type="button"
               variant="outline"
               onClick={onClose}
@@ -448,7 +448,7 @@ export function QuickVariantForm({
             >
               Annuler
             </ButtonV2>
-            <Button
+            <ButtonV2
               type="submit"
               disabled={loading || uploadingImage}
               className="bg-black hover:bg-gray-800 text-white"

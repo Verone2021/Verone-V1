@@ -283,7 +283,7 @@ export function SimpleProductForm({ onSuccess, onCancel }: SimpleProductFormProp
         {/* Actions */}
         <div className="flex justify-end space-x-3 pt-4">
           {onCancel && (
-            <Button
+            <ButtonV2
               type="button"
               variant="outline"
               onClick={onCancel}
@@ -293,7 +293,7 @@ export function SimpleProductForm({ onSuccess, onCancel }: SimpleProductFormProp
             </ButtonV2>
           )}
 
-          <Button
+          <ButtonV2
             type="submit"
             disabled={loading}
             className="bg-black text-white hover:bg-gray-800"

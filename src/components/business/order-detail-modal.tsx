@@ -110,7 +110,7 @@ export function OrderDetailModal({ order, open, onClose, onUpdate }: OrderDetail
               <DialogTitle className="text-2xl">
                 Commande {order.order_number}
               </DialogTitle>
-              <ButtonV2 variant="ghost" size="icon" onClick={onClose}>
+              <ButtonV2 variant="ghost" size="sm" onClick={onClose}>
                 <X className="h-5 w-5" />
               </ButtonV2>
             </div>

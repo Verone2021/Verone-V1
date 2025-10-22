@@ -269,7 +269,7 @@ export function VariantSiblings({
 
       {/* Action globale */}
       <div className="mt-4 pt-3 border-t border-gray-200">
-        <Button
+        <ButtonV2
           variant="outline"
           size="sm"
           className="w-full text-xs"

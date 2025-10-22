@@ -268,7 +268,7 @@ export default function ExpeditionsPage() {
                         <TableCell className="font-medium">
                           {order.order_number}
                           {isOverdue && (
-                            <Badge variant="destructive" className="ml-2 text-xs">
+                            <Badge variant="danger" className="ml-2 text-xs">
                               En retard
                             </Badge>
                           )}

@@ -151,10 +151,10 @@ export const Loading: Story = {
 export const AllVariants: Story = {
   render: () => (
     <div className="grid grid-cols-3 gap-4">
-      <ComponentName variant="default">Default</ComponentName>
+      <ComponentName variant="primary">Default</ComponentName>
       <ComponentName variant="primary">Primary</ComponentName>
       <ComponentName variant="secondary">Secondary</ComponentName>
-      <ComponentName variant="destructive">Destructive</ComponentName>
+      <ComponentName variant="danger">Destructive</ComponentName>
       <ComponentName variant="outline">Outline</ComponentName>
       <ComponentName variant="ghost">Ghost</ComponentName>
     </div>

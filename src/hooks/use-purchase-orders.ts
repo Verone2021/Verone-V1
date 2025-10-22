@@ -165,7 +165,7 @@ export function usePurchaseOrders() {
           updated_at,
           organisations (
             id,
-            name,
+            legal_name,
             email,
             phone,
             payment_terms
@@ -277,7 +277,7 @@ export function usePurchaseOrders() {
           updated_at,
           organisations (
             id,
-            name,
+            legal_name,
             email,
             phone,
             payment_terms

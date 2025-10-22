@@ -6,6 +6,22 @@ import { ButtonV2 } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Badge } from '@/components/ui/badge'
 import {
+  Pagination,
+  PaginationContent,
+  PaginationItem,
+  PaginationLink,
+  PaginationNext,
+  PaginationPrevious,
+} from '@/components/ui/pagination'
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from '@/components/ui/table'
+import {
   Search,
   Plus,
   Building2,
@@ -17,7 +33,9 @@ import {
   Trash2,
   ExternalLink,
   Eye,
-  Package
+  Package,
+  LayoutGrid,
+  List
 } from 'lucide-react'
 import Link from 'next/link'
 import { useSuppliers, getOrganisationDisplayName } from '@/hooks/use-organisations'
@@ -25,6 +43,9 @@ import { SupplierFormModal } from '@/components/business/supplier-form-modal'
 import { OrganisationLogo } from '@/components/business/organisation-logo'
 import { SupplierSegmentBadge, SupplierSegmentType } from '@/components/business/supplier-segment-badge'
 import { SupplierCategoryBadge, SupplierCategoryCode } from '@/components/business/supplier-category-badge'
+import { HeartBadge } from '@/components/business/heart-badge'
+import { FavoriteToggleButton } from '@/components/business/favorite-toggle-button'
+import { ConfirmDeleteOrganisationModal } from '@/components/business/confirm-delete-organisation-modal'
 import { spacing, colors } from '@/lib/design-system'
 import { createClient } from '@/lib/supabase/client'
 import { cn } from '@/lib/utils'
@@ -48,6 +69,7 @@ interface Supplier {
   logo_url: string | null
   supplier_segment: SupplierSegmentType | null
   supplier_category: string | null
+  preferred_supplier: boolean | null
   _count?: {
     products: number
   }
@@ -55,11 +77,29 @@ interface Supplier {
 
 export default function SuppliersPage() {
   const [searchQuery, setSearchQuery] = useState('')
-  const [activeTab, setActiveTab] = useState<'active' | 'archived'>('active')
+  const [activeTab, setActiveTab] = useState<'active' | 'archived' | 'preferred'>('active')
   const [archivedSuppliers, setArchivedSuppliers] = useState<Supplier[]>([])
   const [archivedLoading, setArchivedLoading] = useState(false)
   const [isModalOpen, setIsModalOpen] = useState(false)
   const [selectedSupplier, setSelectedSupplier] = useState<Supplier | null>(null)
+  const [deleteModalSupplier, setDeleteModalSupplier] = useState<Supplier | null>(null)
+  const [isDeleting, setIsDeleting] = useState(false)
+  const [currentPage, setCurrentPage] = useState(1)
+  const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid')
+  const itemsPerPage = 12 // 3 lignes × 4 colonnes
+
+  // localStorage persistence pour viewMode
+  useEffect(() => {
+    const saved = localStorage.getItem('suppliers-view-mode')
+    if (saved === 'list' || saved === 'grid') {
+      setViewMode(saved)
+    }
+  }, [])
+
+  const handleViewModeChange = (mode: 'grid' | 'list') => {
+    setViewMode(mode)
+    localStorage.setItem('suppliers-view-mode', mode)
+  }
 
   const filters = useMemo(() => ({
     is_active: true,
@@ -96,26 +136,40 @@ export default function SuppliersPage() {
       const supabase = createClient()
       const { data, error } = await supabase
         .from('organisations')
-        .select(`
-          *,
-          products:products(count)
-        `)
+        .select('*')
         .eq('type', 'supplier')
         .not('archived_at', 'is', null)
         .order('archived_at', { ascending: false })
 
       if (error) throw error
 
-      // Transform data
-      const organisationsWithCounts = (data || []).map((org: any) => {
-        const { products, ...rest } = org
-        return {
-          ...rest,
+      // Comptage des produits pour chaque fournisseur (même approche que useOrganisations)
+      let organisationsWithCounts = data || []
+
+      if ((data || []).length > 0) {
+        const supplierIds = data.map(s => s.id)
+
+        // Requête groupée pour compter les produits par supplier_id
+        const { data: productCounts } = await supabase
+          .from('products')
+          .select('supplier_id')
+          .in('supplier_id', supplierIds)
+
+        // Créer un Map de comptage
+        const countsMap = new Map<string, number>()
+        productCounts?.forEach(p => {
+          const count = countsMap.get(p.supplier_id) || 0
+          countsMap.set(p.supplier_id, count + 1)
+        })
+
+        // Merger les comptes avec les organisations
+        organisationsWithCounts = (data || []).map(org => ({
+          ...org,
           _count: {
-            products: products?.[0]?.count || 0
+            products: countsMap.get(org.id) || 0
           }
-        }
-      })
+        }))
+      }
 
       setArchivedSuppliers(organisationsWithCounts as Supplier[])
     } catch (err) {
@@ -149,21 +203,61 @@ export default function SuppliersPage() {
     }
   }
 
-  const handleDelete = async (supplier: Supplier) => {
-    const confirmed = confirm(
-      `Êtes-vous sûr de vouloir supprimer définitivement "${getOrganisationDisplayName(supplier)}" ?\n\nCette action est irréversible !`
-    )
+  const handleDelete = (supplier: Supplier) => {
+    setDeleteModalSupplier(supplier)
+  }
 
-    if (confirmed) {
-      const success = await hardDeleteOrganisation(supplier.id)
+  const handleConfirmDelete = async () => {
+    if (!deleteModalSupplier) return
+
+    setIsDeleting(true)
+    try {
+      const success = await hardDeleteOrganisation(deleteModalSupplier.id)
       if (success) {
         await loadArchivedSuppliersData()
+        setDeleteModalSupplier(null) // Fermer le modal
       }
+    } finally {
+      setIsDeleting(false)
     }
   }
 
-  const displayedSuppliers = activeTab === 'active' ? suppliers : archivedSuppliers
-  const isLoading = activeTab === 'active' ? loading : archivedLoading
+  // Filtrage selon l'onglet actif
+  const displayedSuppliers = useMemo(() => {
+    if (activeTab === 'active') {
+      return suppliers
+    } else if (activeTab === 'archived') {
+      return archivedSuppliers
+    } else if (activeTab === 'preferred') {
+      return suppliers.filter(s => s.preferred_supplier === true)
+    }
+    return suppliers
+  }, [activeTab, suppliers, archivedSuppliers])
+
+  // Pagination
+  const paginatedSuppliers = useMemo(() => {
+    const startIndex = (currentPage - 1) * itemsPerPage
+    return displayedSuppliers.slice(startIndex, startIndex + itemsPerPage)
+  }, [displayedSuppliers, currentPage, itemsPerPage])
+
+  const totalPages = Math.ceil(displayedSuppliers.length / itemsPerPage)
+
+  // Calcul des statistiques
+  const stats = useMemo(() => {
+    const total = suppliers.length
+    const active = suppliers.filter(s => s.is_active).length
+    const archived = archivedSuppliers.length
+    const favorites = suppliers.filter(s => s.preferred_supplier === true).length
+
+    return { total, active, archived, favorites }
+  }, [suppliers, archivedSuppliers])
+
+  // Reset page quand recherche ou tab change
+  useEffect(() => {
+    setCurrentPage(1)
+  }, [searchQuery, activeTab])
+
+  const isLoading = (activeTab === 'active' || activeTab === 'preferred') ? loading : archivedLoading
 
   return (
     <div className="container mx-auto p-6 space-y-6">
@@ -190,11 +284,11 @@ export default function SuppliersPage() {
       </div>
 
       {/* Stats */}
-      <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
+      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
         <Card>
           <CardContent style={{ padding: spacing[4] }}>
             <div className="text-2xl font-bold" style={{ color: colors.text.DEFAULT }}>
-              {suppliers.length}
+              {stats.total}
             </div>
             <p className="text-sm" style={{ color: colors.text.subtle }}>
               Total fournisseurs
@@ -204,7 +298,7 @@ export default function SuppliersPage() {
         <Card>
           <CardContent style={{ padding: spacing[4] }}>
             <div className="text-2xl font-bold" style={{ color: colors.success[500] }}>
-              {suppliers.filter(s => s.is_active).length}
+              {stats.active}
             </div>
             <p className="text-sm" style={{ color: colors.text.subtle }}>
               Actifs
@@ -213,38 +307,28 @@ export default function SuppliersPage() {
         </Card>
         <Card>
           <CardContent style={{ padding: spacing[4] }}>
-            <div className="text-2xl font-bold" style={{ color: colors.accent[500] }}>
-              {suppliers.reduce((sum, s) => sum + (s._count?.products || 0), 0)}
-            </div>
-            <p className="text-sm" style={{ color: colors.text.subtle }}>
-              Produits individuels
-            </p>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardContent style={{ padding: spacing[4] }}>
             <div className="text-2xl font-bold" style={{ color: colors.text.DEFAULT }}>
-              {suppliers.filter(s => s.email || s.website).length}
-            </div>
-            <p className="text-sm" style={{ color: colors.text.subtle }}>
-              Avec contact
-            </p>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardContent style={{ padding: spacing[4] }}>
-            <div className="text-2xl font-bold" style={{ color: colors.text.DEFAULT }}>
-              {archivedSuppliers.length}
+              {stats.archived}
             </div>
             <p className="text-sm" style={{ color: colors.text.subtle }}>
               Archivés
             </p>
           </CardContent>
         </Card>
+        <Card>
+          <CardContent style={{ padding: spacing[4] }}>
+            <div className="text-2xl font-bold" style={{ color: colors.accent[500] }}>
+              {stats.favorites}
+            </div>
+            <p className="text-sm" style={{ color: colors.text.subtle }}>
+              Favoris
+            </p>
+          </CardContent>
+        </Card>
       </div>
 
-      {/* Tabs Actifs/Archivés */}
-      <div className="flex items-center gap-2" style={{ marginBottom: spacing[4] }}>
+      {/* Filtres et Recherche */}
+      <div className="flex items-center gap-3">
         <button
           onClick={() => setActiveTab('active')}
           className={cn(
@@ -270,30 +354,60 @@ export default function SuppliersPage() {
           Archivés
           <span className="ml-2 opacity-70">({archivedSuppliers.length})</span>
         </button>
+
+        <button
+          onClick={() => setActiveTab('preferred')}
+          className={cn(
+            'px-4 py-2 rounded-lg text-sm font-medium transition-all',
+            activeTab === 'preferred'
+              ? 'bg-black text-white'
+              : 'bg-neutral-100 text-neutral-700 hover:bg-neutral-200'
+          )}
+        >
+          Favoris
+          <span className="ml-2 opacity-70">({suppliers.filter(s => s.preferred_supplier === true).length})</span>
+        </button>
+
+        {/* Barre de recherche alignée */}
+        <div className="relative w-64">
+          <Search
+            className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4"
+            style={{ color: colors.text.muted }}
+          />
+          <Input
+            placeholder="Rechercher par nom..."
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            className="pl-10 h-10 rounded-lg"
+            style={{ borderColor: colors.border.DEFAULT, color: colors.text.DEFAULT }}
+          />
+        </div>
+
+        {/* Toggle Grid/List View */}
+        <div className="flex gap-1 ml-auto">
+          <ButtonV2
+            variant={viewMode === 'grid' ? 'primary' : 'ghost'}
+            size="sm"
+            onClick={() => handleViewModeChange('grid')}
+            icon={LayoutGrid}
+            className="h-10 px-3"
+            aria-label="Vue grille"
+          />
+          <ButtonV2
+            variant={viewMode === 'list' ? 'primary' : 'ghost'}
+            size="sm"
+            onClick={() => handleViewModeChange('list')}
+            icon={List}
+            className="h-10 px-3"
+            aria-label="Vue liste"
+          />
+        </div>
       </div>
 
-      {/* Search */}
-      <Card>
-        <CardContent style={{ padding: spacing[4] }}>
-          <div className="relative">
-            <Search
-              className="absolute left-3 top-3 h-4 w-4"
-              style={{ color: colors.text.muted }}
-            />
-            <Input
-              placeholder="Rechercher par nom..."
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              className="pl-10"
-              style={{ borderColor: colors.border.DEFAULT, color: colors.text.DEFAULT }}
-            />
-          </div>
-        </CardContent>
-      </Card>
-
-      {/* Suppliers Grid - 4-5 par ligne, cartes compactes */}
-      <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-3">
-        {isLoading ? (
+      {/* Suppliers Grid OU List View */}
+      {viewMode === 'grid' ? (
+        <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-4 gap-3">
+          {isLoading ? (
           Array.from({ length: 10 }).map((_, i) => (
             <Card key={i} className="animate-pulse">
               <CardHeader style={{ padding: spacing[2] }}>
@@ -306,25 +420,26 @@ export default function SuppliersPage() {
             </Card>
           ))
         ) : (
-          displayedSuppliers.map((supplier) => (
+          paginatedSuppliers.map((supplier) => (
             <Card key={supplier.id} className="hover:shadow-lg transition-all duration-200" data-testid="supplier-card">
-              <CardContent style={{ padding: spacing[4] }}>
+              <CardContent className="flex flex-col h-full" style={{ padding: spacing[3] }}>
                 {/* Layout Horizontal Spacieux - Logo GAUCHE + Infos DROITE */}
                 <div className="flex gap-4">
                   {/* Logo GAUCHE - MD (48px) */}
-                  <OrganisationLogo
-                    logoUrl={supplier.logo_url}
-                    organisationName={getOrganisationDisplayName(supplier)}
-                    size="md"
-                    fallback="initials"
-                    className="flex-shrink-0"
-                  />
+                  <div className="flex flex-col items-center gap-1 flex-shrink-0">
+                    <OrganisationLogo
+                      logoUrl={supplier.logo_url}
+                      organisationName={getOrganisationDisplayName(supplier)}
+                      size="md"
+                      fallback="initials"
+                    />
+                  </div>
 
-                  {/* Contenu DROITE - Stack vertical spacieux */}
-                  <div className="flex-1 min-w-0 space-y-2">
-                    {/* Ligne 1: Nom + Badge Archivé */}
+                  {/* Contenu DROITE - Stack vertical avec hauteurs fixes */}
+                  <div className="flex-1 min-w-0 flex flex-col">
+                    {/* Ligne 1: Nom (toujours 2 lignes réservées) + Badge Archivé */}
                     <div className="flex items-start justify-between gap-3">
-                      <CardTitle className="text-sm font-semibold line-clamp-2 flex-1">
+                      <CardTitle className="text-sm font-semibold line-clamp-2 min-h-[2.5rem] flex-1">
                         {supplier.website ? (
                           <a
                             href={supplier.website}
@@ -343,9 +458,10 @@ export default function SuppliersPage() {
                         )}
                       </CardTitle>
 
+                      {/* Badge Archivé seulement */}
                       {supplier.archived_at && (
                         <Badge
-                          variant="destructive"
+                          variant="danger"
                           className="text-xs flex-shrink-0"
                           style={{ backgroundColor: colors.danger[100], color: colors.danger[700] }}
                         >
@@ -354,45 +470,53 @@ export default function SuppliersPage() {
                       )}
                     </div>
 
-                    {/* Adresse de facturation complète - Polices plus petites */}
-                    {(supplier.billing_address_line1 || supplier.billing_city || supplier.billing_country) && (
-                      <div className="space-y-0.5">
-                        {supplier.billing_address_line1 && (
-                          <div className="flex items-center gap-1.5 text-xs" style={{ color: colors.text.subtle }}>
-                            <MapPin className="h-3 w-3 flex-shrink-0" />
-                            <span className="truncate">{supplier.billing_address_line1}</span>
-                          </div>
-                        )}
-                        {(supplier.billing_postal_code || supplier.billing_city) && (
-                          <div className="text-xs pl-[18px]" style={{ color: colors.text.subtle }}>
-                            <span className="truncate">
-                              {supplier.billing_postal_code && `${supplier.billing_postal_code}, `}
-                              {supplier.billing_city}
-                            </span>
-                          </div>
-                        )}
-                        {supplier.billing_country && (
-                          <div className="text-xs pl-[18px]" style={{ color: colors.text.subtle }}>
-                            <span className="truncate">{supplier.billing_country}</span>
-                          </div>
-                        )}
-                      </div>
-                    )}
+                    {/* Adresse de facturation - Espace réservé même si vide */}
+                    <div className="mt-3 min-h-[2.5rem] space-y-0.5">
+                      {supplier.billing_address_line1 && (
+                        <div className="flex items-center gap-1.5 text-xs" style={{ color: colors.text.subtle }}>
+                          <MapPin className="h-3 w-3 flex-shrink-0" />
+                          <span className="truncate line-clamp-1">{supplier.billing_address_line1}</span>
+                        </div>
+                      )}
+                      {(supplier.billing_postal_code || supplier.billing_city) && (
+                        <div className="text-xs pl-[18px]" style={{ color: colors.text.subtle }}>
+                          <span className="truncate line-clamp-1">
+                            {supplier.billing_postal_code && `${supplier.billing_postal_code}, `}
+                            {supplier.billing_city}
+                          </span>
+                        </div>
+                      )}
+                      {supplier.billing_country && (
+                        <div className="text-xs pl-[18px]" style={{ color: colors.text.subtle }}>
+                          <span className="truncate line-clamp-1">{supplier.billing_country}</span>
+                        </div>
+                      )}
+                    </div>
 
                     {/* COMPTEUR PRODUITS - SPÉCIFIQUE SUPPLIERS */}
                     {supplier._count?.products !== undefined && (
-                      <div className="flex items-center gap-1.5 text-xs" style={{ color: colors.text.muted }}>
+                      <div className="flex items-center gap-1.5 text-xs mb-2" style={{ color: colors.text.muted }}>
                         <Package className="h-3 w-3 flex-shrink-0" />
                         <span>{supplier._count.products} produit(s)</span>
                       </div>
                     )}
 
-                    {/* Séparateur + Boutons minimalistes */}
-                    <div>
-                      <div className="border-t my-2" style={{ borderColor: colors.border.DEFAULT }} />
+                    {/* Boutons - Toujours en bas avec mt-auto */}
+                    <div className="mt-auto pt-4 border-t" style={{ borderColor: colors.border.DEFAULT }}>
                       <div className="flex items-center gap-2">
-                        {activeTab === 'active' ? (
+                        {(activeTab === 'active' || activeTab === 'preferred') ? (
                           <>
+                            <FavoriteToggleButton
+                              organisationId={supplier.id}
+                              isFavorite={supplier.preferred_supplier === true}
+                              organisationType="supplier"
+                              disabled={!supplier.is_active}
+                              onToggleComplete={() => {
+                                refetch()
+                                loadArchivedSuppliersData()
+                              }}
+                              className="h-7 px-2"
+                            />
                             <Link href={`/contacts-organisations/suppliers/${supplier.id}`}>
                               <ButtonV2 variant="ghost" size="sm" className="text-xs h-7 px-3" icon={Eye}>
                                 Voir
@@ -409,6 +533,17 @@ export default function SuppliersPage() {
                           </>
                         ) : (
                           <>
+                            <FavoriteToggleButton
+                              organisationId={supplier.id}
+                              isFavorite={supplier.preferred_supplier === true}
+                              organisationType="supplier"
+                              disabled={!supplier.is_active}
+                              onToggleComplete={() => {
+                                refetch()
+                                loadArchivedSuppliersData()
+                              }}
+                              className="h-7 px-2"
+                            />
                             <ButtonV2
                               variant="secondary"
                               size="sm"
@@ -440,7 +575,228 @@ export default function SuppliersPage() {
             </Card>
           ))
         )}
-      </div>
+        </div>
+      ) : (
+        /* Vue Liste */
+        <div className="rounded-lg border" style={{ borderColor: colors.border.DEFAULT }}>
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead className="w-[40%]" style={{ color: colors.text.DEFAULT }}>Fournisseur</TableHead>
+                <TableHead style={{ color: colors.text.DEFAULT }}>Adresse</TableHead>
+                <TableHead className="w-[120px] text-center" style={{ color: colors.text.DEFAULT }}>Produits</TableHead>
+                <TableHead className="w-[150px] text-right" style={{ color: colors.text.DEFAULT }}>Actions</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {isLoading ? (
+                Array.from({ length: 5 }).map((_, i) => (
+                  <TableRow key={i} className="animate-pulse">
+                    <TableCell><div className="h-4 bg-gray-200 rounded w-3/4"></div></TableCell>
+                    <TableCell><div className="h-4 bg-gray-200 rounded w-2/3"></div></TableCell>
+                    <TableCell><div className="h-4 bg-gray-200 rounded w-1/2"></div></TableCell>
+                    <TableCell><div className="h-4 bg-gray-200 rounded w-full"></div></TableCell>
+                  </TableRow>
+                ))
+              ) : (
+                paginatedSuppliers.map((supplier) => (
+                  <TableRow key={supplier.id} className="hover:bg-muted/50">
+                    {/* Logo + Nom avec lien site web */}
+                    <TableCell>
+                      <div className="flex items-center gap-3">
+                        <OrganisationLogo
+                          logoUrl={supplier.logo_url}
+                          organisationName={getOrganisationDisplayName(supplier)}
+                          size="sm"
+                          fallback="initials"
+                        />
+                        <div>
+                          {supplier.website ? (
+                            <a
+                              href={supplier.website}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="font-medium hover:underline flex items-center gap-1"
+                              style={{ color: colors.text.DEFAULT }}
+                            >
+                              {getOrganisationDisplayName(supplier)}
+                              <ExternalLink className="h-3 w-3" style={{ color: colors.text.muted }} />
+                            </a>
+                          ) : (
+                            <span className="font-medium" style={{ color: colors.text.DEFAULT }}>
+                              {getOrganisationDisplayName(supplier)}
+                            </span>
+                          )}
+                          {supplier.archived_at && (
+                            <Badge
+                              variant="danger"
+                              className="text-xs ml-2"
+                              style={{ backgroundColor: colors.danger[100], color: colors.danger[700] }}
+                            >
+                              Archivé
+                            </Badge>
+                          )}
+                        </div>
+                      </div>
+                    </TableCell>
+
+                    {/* Adresse complète */}
+                    <TableCell>
+                      <div className="text-sm" style={{ color: colors.text.subtle }}>
+                        {supplier.billing_address_line1 && (
+                          <div>{supplier.billing_address_line1}</div>
+                        )}
+                        {(supplier.billing_postal_code || supplier.billing_city) && (
+                          <div>
+                            {supplier.billing_postal_code && `${supplier.billing_postal_code}, `}
+                            {supplier.billing_city}
+                          </div>
+                        )}
+                        {supplier.billing_country && (
+                          <div>{supplier.billing_country}</div>
+                        )}
+                      </div>
+                    </TableCell>
+
+                    {/* Compteur Produits */}
+                    <TableCell className="text-center">
+                      {supplier._count?.products !== undefined && (
+                        <div className="flex items-center justify-center gap-1.5 text-sm" style={{ color: colors.text.muted }}>
+                          <Package className="h-4 w-4" />
+                          <span>{supplier._count.products}</span>
+                        </div>
+                      )}
+                    </TableCell>
+
+                    {/* Actions */}
+                    <TableCell className="text-right">
+                      <div className="flex justify-end items-center gap-2">
+                        {(activeTab === 'active' || activeTab === 'preferred') ? (
+                          <>
+                            <FavoriteToggleButton
+                              organisationId={supplier.id}
+                              isFavorite={supplier.preferred_supplier === true}
+                              organisationType="supplier"
+                              disabled={!supplier.is_active}
+                              onToggleComplete={() => {
+                                refetch()
+                                loadArchivedSuppliersData()
+                              }}
+                              className="h-7 px-2"
+                            />
+                            <Link href={`/contacts-organisations/suppliers/${supplier.id}`}>
+                              <ButtonV2
+                                variant="ghost"
+                                size="sm"
+                                icon={Eye}
+                                className="h-7 px-2"
+                                aria-label="Voir"
+                              />
+                            </Link>
+                            <ButtonV2
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => handleArchive(supplier)}
+                              icon={Archive}
+                              className="h-7 px-2"
+                              aria-label="Archiver"
+                            />
+                          </>
+                        ) : (
+                          <>
+                            <FavoriteToggleButton
+                              organisationId={supplier.id}
+                              isFavorite={supplier.preferred_supplier === true}
+                              organisationType="supplier"
+                              disabled={!supplier.is_active}
+                              onToggleComplete={() => {
+                                refetch()
+                                loadArchivedSuppliersData()
+                              }}
+                              className="h-7 px-2"
+                            />
+                            <ButtonV2
+                              variant="secondary"
+                              size="sm"
+                              onClick={() => handleArchive(supplier)}
+                              icon={ArchiveRestore}
+                              className="h-7 px-2"
+                              aria-label="Restaurer"
+                            />
+                            <ButtonV2
+                              variant="danger"
+                              size="sm"
+                              onClick={() => handleDelete(supplier)}
+                              icon={Trash2}
+                              className="h-7 px-2"
+                              aria-label="Supprimer"
+                            />
+                            <Link href={`/contacts-organisations/suppliers/${supplier.id}`}>
+                              <ButtonV2
+                                variant="ghost"
+                                size="sm"
+                                icon={Eye}
+                                className="h-7 px-2"
+                                aria-label="Voir"
+                              />
+                            </Link>
+                          </>
+                        )}
+                      </div>
+                    </TableCell>
+                  </TableRow>
+                ))
+              )}
+            </TableBody>
+          </Table>
+        </div>
+      )}
+
+      {/* Pagination */}
+      {totalPages > 1 && !isLoading && paginatedSuppliers.length > 0 && (
+        <Pagination className="mt-6">
+          <PaginationContent>
+            <PaginationItem>
+              <PaginationPrevious
+                onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
+                className={currentPage === 1 ? 'pointer-events-none opacity-50' : 'cursor-pointer'}
+              />
+            </PaginationItem>
+
+            {Array.from({ length: Math.min(totalPages, 7) }, (_, i) => {
+              let pageNum: number
+              if (totalPages <= 7) {
+                pageNum = i + 1
+              } else if (currentPage <= 4) {
+                pageNum = i + 1
+              } else if (currentPage >= totalPages - 3) {
+                pageNum = totalPages - 6 + i
+              } else {
+                pageNum = currentPage - 3 + i
+              }
+
+              return (
+                <PaginationItem key={pageNum}>
+                  <PaginationLink
+                    onClick={() => setCurrentPage(pageNum)}
+                    isActive={currentPage === pageNum}
+                    className="cursor-pointer"
+                  >
+                    {pageNum}
+                  </PaginationLink>
+                </PaginationItem>
+              )
+            })}
+
+            <PaginationItem>
+              <PaginationNext
+                onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
+                className={currentPage === totalPages ? 'pointer-events-none opacity-50' : 'cursor-pointer'}
+              />
+            </PaginationItem>
+          </PaginationContent>
+        </Pagination>
+      )}
 
       {displayedSuppliers.length === 0 && !isLoading && (
         <Card>
@@ -471,6 +827,15 @@ export default function SuppliersPage() {
         onClose={handleCloseModal}
         supplier={selectedSupplier as any}
         onSuccess={handleSupplierSuccess}
+      />
+
+      <ConfirmDeleteOrganisationModal
+        open={!!deleteModalSupplier}
+        onOpenChange={(open) => !open && setDeleteModalSupplier(null)}
+        organisation={deleteModalSupplier as any}
+        organisationType="supplier"
+        onConfirm={handleConfirmDelete}
+        isDeleting={isDeleting}
       />
     </div>
   )

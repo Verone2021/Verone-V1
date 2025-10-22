@@ -92,7 +92,7 @@ export function SourcingProductModal({
               <Sparkles className="h-6 w-6 text-purple-600" />
               Sourcer un nouveau produit
             </DialogTitle>
-            <ButtonV2 variant="ghost" size="icon" onClick={onClose}>
+            <ButtonV2 variant="ghost" size="sm" onClick={onClose}>
               <X className="h-5 w-5" />
             </ButtonV2>
           </div>

@@ -67,7 +67,7 @@ export function StockViewSection({ product, className }: StockViewSectionProps) 
           <Badge variant="outline" className="text-xs text-gray-600">
             Lecture seule
           </Badge>
-          <Button
+          <ButtonV2
             variant="outline"
             size="sm"
             onClick={handleNavigateToStock}

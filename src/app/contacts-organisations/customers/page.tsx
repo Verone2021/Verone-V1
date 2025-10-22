@@ -20,15 +20,37 @@ import {
   Archive,
   ArchiveRestore,
   Trash2,
-  ExternalLink
+  ExternalLink,
+  LayoutGrid,
+  List
 } from 'lucide-react'
 import Link from 'next/link'
 import { useOrganisations, getOrganisationDisplayName } from '@/hooks/use-organisations'
 import { CustomerFormModal } from '@/components/business/customer-form-modal'
 import { OrganisationLogo } from '@/components/business/organisation-logo'
+import { HeartBadge } from '@/components/business/heart-badge'
+import { FavoriteToggleButton } from '@/components/business/favorite-toggle-button'
+import { ConfirmDeleteOrganisationModal } from '@/components/business/confirm-delete-organisation-modal'
 import { spacing, colors } from '@/lib/design-system'
 import { createClient } from '@/lib/supabase/client'
 import { cn } from '@/lib/utils'
+import {
+  Pagination,
+  PaginationContent,
+  PaginationEllipsis,
+  PaginationItem,
+  PaginationLink,
+  PaginationNext,
+  PaginationPrevious,
+} from '@/components/ui/pagination'
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from '@/components/ui/table'
 
 interface Customer {
   id: string
@@ -49,6 +71,7 @@ interface Customer {
   logo_url: string | null
   archived_at: string | null
   website: string | null
+  preferred_supplier: boolean | null
   _count?: {
     orders: number
   }
@@ -59,11 +82,29 @@ export default function CustomersPage() {
   const urlType = searchParams.get('type') as 'professional' | 'individual' | null
 
   const [searchQuery, setSearchQuery] = useState('')
-  const [activeTab, setActiveTab] = useState<'active' | 'archived'>('active')
+  const [activeTab, setActiveTab] = useState<'active' | 'archived' | 'preferred'>('active')
   const [archivedCustomers, setArchivedCustomers] = useState<Customer[]>([])
   const [archivedLoading, setArchivedLoading] = useState(false)
   const [isModalOpen, setIsModalOpen] = useState(false)
   const [selectedCustomer, setSelectedCustomer] = useState<Customer | null>(null)
+  const [currentPage, setCurrentPage] = useState(1)
+  const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid')
+  const [deleteModalCustomer, setDeleteModalCustomer] = useState<Customer | null>(null)
+  const [isDeleting, setIsDeleting] = useState(false)
+  const itemsPerPage = 12 // 3 lignes × 4 colonnes
+
+  // localStorage persistence pour viewMode
+  useEffect(() => {
+    const saved = localStorage.getItem('customers-view-mode')
+    if (saved === 'list' || saved === 'grid') {
+      setViewMode(saved)
+    }
+  }, [])
+
+  const handleViewModeChange = (mode: 'grid' | 'list') => {
+    setViewMode(mode)
+    localStorage.setItem('customers-view-mode', mode)
+  }
 
   const typeInfo = useMemo(() => {
     if (urlType === 'professional') {
@@ -110,10 +151,9 @@ export default function CustomersPage() {
   const stats = useMemo(() => {
     const total = filteredCustomers.length
     const active = filteredCustomers.filter(c => c.is_active).length
-    const professional = filteredCustomers.filter(c => c.customer_type === 'professional').length
-    const individual = filteredCustomers.filter(c => c.customer_type === 'individual').length
+    const favorites = filteredCustomers.filter(c => c.preferred_supplier === true).length
 
-    return { total, active, professional, individual }
+    return { total, active, favorites }
   }, [filteredCustomers])
 
   const handleCreateCustomer = () => {
@@ -175,21 +215,51 @@ export default function CustomersPage() {
     }
   }
 
-  const handleDelete = async (customer: Customer) => {
-    const confirmed = confirm(
-      `Êtes-vous sûr de vouloir supprimer définitivement "${getOrganisationDisplayName(customer)}" ?\n\nCette action est irréversible !`
-    )
+  const handleDelete = (customer: Customer) => {
+    setDeleteModalCustomer(customer)
+  }
 
-    if (confirmed) {
-      const success = await hardDeleteOrganisation(customer.id)
+  const handleConfirmDelete = async () => {
+    if (!deleteModalCustomer) return
+
+    setIsDeleting(true)
+    try {
+      const success = await hardDeleteOrganisation(deleteModalCustomer.id)
       if (success) {
         await loadArchivedCustomersData()
+        setDeleteModalCustomer(null) // Fermer le modal
       }
+    } finally {
+      setIsDeleting(false)
     }
   }
 
-  const displayedCustomers = activeTab === 'active' ? filteredCustomers : archivedCustomers
-  const isLoading = activeTab === 'active' ? loading : archivedLoading
+  // Filtrage selon l'onglet actif
+  const displayedCustomers = useMemo(() => {
+    if (activeTab === 'active') {
+      return filteredCustomers
+    } else if (activeTab === 'archived') {
+      return archivedCustomers
+    } else if (activeTab === 'preferred') {
+      return filteredCustomers.filter(c => c.preferred_supplier === true)
+    }
+    return filteredCustomers
+  }, [activeTab, filteredCustomers, archivedCustomers])
+
+  // Pagination
+  const paginatedCustomers = useMemo(() => {
+    const startIndex = (currentPage - 1) * itemsPerPage
+    return displayedCustomers.slice(startIndex, startIndex + itemsPerPage)
+  }, [displayedCustomers, currentPage, itemsPerPage])
+
+  const totalPages = Math.ceil(displayedCustomers.length / itemsPerPage)
+
+  // Reset page quand recherche ou tab change
+  useEffect(() => {
+    setCurrentPage(1)
+  }, [searchQuery, activeTab])
+
+  const isLoading = (activeTab === 'active' || activeTab === 'preferred') ? loading : archivedLoading
 
   return (
     <div className="container mx-auto p-6 space-y-6">
@@ -223,7 +293,7 @@ export default function CustomersPage() {
       </div>
 
       {/* Stats */}
-      <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
+      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
         <Card>
           <CardContent style={{ padding: spacing[4] }}>
             <div className="text-2xl font-bold" style={{ color: colors.text.DEFAULT }}>
@@ -246,26 +316,6 @@ export default function CustomersPage() {
         </Card>
         <Card>
           <CardContent style={{ padding: spacing[4] }}>
-            <div className="text-2xl font-bold" style={{ color: colors.primary[500] }}>
-              {stats.professional}
-            </div>
-            <p className="text-sm" style={{ color: colors.text.subtle }}>
-              Professionnels
-            </p>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardContent style={{ padding: spacing[4] }}>
-            <div className="text-2xl font-bold" style={{ color: colors.accent[500] }}>
-              {stats.individual}
-            </div>
-            <p className="text-sm" style={{ color: colors.text.subtle }}>
-              Particuliers
-            </p>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardContent style={{ padding: spacing[4] }}>
             <div className="text-2xl font-bold" style={{ color: colors.text.DEFAULT }}>
               {archivedCustomers.length}
             </div>
@@ -274,10 +324,20 @@ export default function CustomersPage() {
             </p>
           </CardContent>
         </Card>
+        <Card>
+          <CardContent style={{ padding: spacing[4] }}>
+            <div className="text-2xl font-bold" style={{ color: colors.accent[500] }}>
+              {stats.favorites}
+            </div>
+            <p className="text-sm" style={{ color: colors.text.subtle }}>
+              Favoris
+            </p>
+          </CardContent>
+        </Card>
       </div>
 
-      {/* Tabs Actifs/Archivés */}
-      <div className="flex items-center gap-2" style={{ marginBottom: spacing[4] }}>
+      {/* Filtres et Recherche */}
+      <div className="flex items-center gap-3">
         <button
           onClick={() => setActiveTab('active')}
           className={cn(
@@ -303,30 +363,60 @@ export default function CustomersPage() {
           Archivés
           <span className="ml-2 opacity-70">({archivedCustomers.length})</span>
         </button>
+
+        <button
+          onClick={() => setActiveTab('preferred')}
+          className={cn(
+            'px-4 py-2 rounded-lg text-sm font-medium transition-all',
+            activeTab === 'preferred'
+              ? 'bg-black text-white'
+              : 'bg-neutral-100 text-neutral-700 hover:bg-neutral-200'
+          )}
+        >
+          Favoris
+          <span className="ml-2 opacity-70">({filteredCustomers.filter(c => c.preferred_supplier === true).length})</span>
+        </button>
+
+        {/* Barre de recherche alignée */}
+        <div className="relative w-64">
+          <Search
+            className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4"
+            style={{ color: colors.text.muted }}
+          />
+          <Input
+            placeholder="Rechercher par nom..."
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            className="pl-10 h-10 rounded-lg"
+            style={{ borderColor: colors.border.DEFAULT, color: colors.text.DEFAULT }}
+          />
+        </div>
+
+        {/* Toggle Grid/List View */}
+        <div className="flex gap-1 ml-auto">
+          <ButtonV2
+            variant={viewMode === 'grid' ? 'primary' : 'ghost'}
+            size="sm"
+            onClick={() => handleViewModeChange('grid')}
+            icon={LayoutGrid}
+            className="h-10 px-3"
+            aria-label="Vue grille"
+          />
+          <ButtonV2
+            variant={viewMode === 'list' ? 'primary' : 'ghost'}
+            size="sm"
+            onClick={() => handleViewModeChange('list')}
+            icon={List}
+            className="h-10 px-3"
+            aria-label="Vue liste"
+          />
+        </div>
       </div>
 
-      {/* Search */}
-      <Card>
-        <CardContent style={{ padding: spacing[4] }}>
-          <div className="relative">
-            <Search
-              className="absolute left-3 top-3 h-4 w-4"
-              style={{ color: colors.text.muted }}
-            />
-            <Input
-              placeholder="Rechercher par nom..."
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              className="pl-10"
-              style={{ borderColor: colors.border.DEFAULT, color: colors.text.DEFAULT }}
-            />
-          </div>
-        </CardContent>
-      </Card>
-
-      {/* Customers Grid - 4-5 par ligne, cartes compactes */}
-      <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-3">
-        {isLoading ? (
+      {/* Customers Grid OU List View */}
+      {viewMode === 'grid' ? (
+        <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-4 gap-3">
+          {isLoading ? (
           Array.from({ length: 10 }).map((_, i) => (
             <Card key={i} className="animate-pulse">
               <CardHeader style={{ padding: spacing[2] }}>
@@ -339,25 +429,26 @@ export default function CustomersPage() {
             </Card>
           ))
         ) : (
-          displayedCustomers.map((customer) => (
+          paginatedCustomers.map((customer) => (
             <Card key={customer.id} className="hover:shadow-lg transition-all duration-200" data-testid="customer-card">
-              <CardContent style={{ padding: spacing[4] }}>
+              <CardContent className="flex flex-col h-full" style={{ padding: spacing[3] }}>
                 {/* Layout Horizontal Spacieux - Logo GAUCHE + Infos DROITE */}
                 <div className="flex gap-4">
                   {/* Logo GAUCHE - MD (48px) */}
-                  <OrganisationLogo
-                    logoUrl={customer.logo_url}
-                    organisationName={getOrganisationDisplayName(customer)}
-                    size="md"
-                    fallback="initials"
-                    className="flex-shrink-0"
-                  />
+                  <div className="flex flex-col items-center gap-1 flex-shrink-0">
+                    <OrganisationLogo
+                      logoUrl={customer.logo_url}
+                      organisationName={getOrganisationDisplayName(customer)}
+                      size="md"
+                      fallback="initials"
+                    />
+                  </div>
 
-                  {/* Contenu DROITE - Stack vertical spacieux */}
-                  <div className="flex-1 min-w-0 space-y-2">
-                    {/* Ligne 1: Nom + Badge Archivé */}
+                  {/* Contenu DROITE - Stack vertical avec hauteurs fixes */}
+                  <div className="flex-1 min-w-0 flex flex-col">
+                    {/* Ligne 1: Nom (toujours 2 lignes réservées) + Badge Archivé */}
                     <div className="flex items-start justify-between gap-3">
-                      <CardTitle className="text-sm font-semibold line-clamp-2 flex-1">
+                      <CardTitle className="text-sm font-semibold line-clamp-2 min-h-[2.5rem] flex-1">
                         {customer.website ? (
                           <a
                             href={customer.website}
@@ -376,9 +467,10 @@ export default function CustomersPage() {
                         )}
                       </CardTitle>
 
+                      {/* Badge Archivé seulement */}
                       {customer.archived_at && (
                         <Badge
-                          variant="destructive"
+                          variant="danger"
                           className="text-xs flex-shrink-0"
                           style={{ backgroundColor: colors.danger[100], color: colors.danger[700] }}
                         >
@@ -387,37 +479,45 @@ export default function CustomersPage() {
                       )}
                     </div>
 
-                    {/* Adresse de facturation complète - Polices plus petites */}
-                    {(customer.billing_address_line1 || customer.billing_city || customer.billing_country) && (
-                      <div className="space-y-0.5">
-                        {customer.billing_address_line1 && (
-                          <div className="flex items-center gap-1.5 text-xs" style={{ color: colors.text.subtle }}>
-                            <MapPin className="h-3 w-3 flex-shrink-0" />
-                            <span className="truncate">{customer.billing_address_line1}</span>
-                          </div>
-                        )}
-                        {(customer.billing_postal_code || customer.billing_city) && (
-                          <div className="text-xs pl-[18px]" style={{ color: colors.text.subtle }}>
-                            <span className="truncate">
-                              {customer.billing_postal_code && `${customer.billing_postal_code}, `}
-                              {customer.billing_city}
-                            </span>
-                          </div>
-                        )}
-                        {customer.billing_country && (
-                          <div className="text-xs pl-[18px]" style={{ color: colors.text.subtle }}>
-                            <span className="truncate">{customer.billing_country}</span>
-                          </div>
-                        )}
-                      </div>
-                    )}
+                    {/* Adresse de facturation - Espace réservé même si vide */}
+                    <div className="mt-3 min-h-[2.5rem] space-y-0.5">
+                      {customer.billing_address_line1 && (
+                        <div className="flex items-center gap-1.5 text-xs" style={{ color: colors.text.subtle }}>
+                          <MapPin className="h-3 w-3 flex-shrink-0" />
+                          <span className="truncate line-clamp-1">{customer.billing_address_line1}</span>
+                        </div>
+                      )}
+                      {(customer.billing_postal_code || customer.billing_city) && (
+                        <div className="text-xs pl-[18px]" style={{ color: colors.text.subtle }}>
+                          <span className="truncate line-clamp-1">
+                            {customer.billing_postal_code && `${customer.billing_postal_code}, `}
+                            {customer.billing_city}
+                          </span>
+                        </div>
+                      )}
+                      {customer.billing_country && (
+                        <div className="text-xs pl-[18px]" style={{ color: colors.text.subtle }}>
+                          <span className="truncate line-clamp-1">{customer.billing_country}</span>
+                        </div>
+                      )}
+                    </div>
 
-                    {/* Séparateur + Boutons minimalistes */}
-                    <div>
-                      <div className="border-t my-2" style={{ borderColor: colors.border.DEFAULT }} />
+                    {/* Boutons - Toujours en bas avec mt-auto */}
+                    <div className="mt-auto pt-4 border-t" style={{ borderColor: colors.border.DEFAULT }}>
                       <div className="flex items-center gap-2">
-                        {activeTab === 'active' ? (
+                        {(activeTab === 'active' || activeTab === 'preferred') ? (
                           <>
+                            <FavoriteToggleButton
+                              organisationId={customer.id}
+                              isFavorite={customer.preferred_supplier === true}
+                              organisationType="customer"
+                              disabled={!customer.is_active}
+                              onToggleComplete={() => {
+                                refetch()
+                                loadArchivedCustomersData()
+                              }}
+                              className="h-7 px-2"
+                            />
                             <Link href={`/contacts-organisations/customers/${customer.id}`}>
                               <ButtonV2 variant="ghost" size="sm" className="text-xs h-7 px-3" icon={Eye}>
                                 Voir
@@ -434,6 +534,17 @@ export default function CustomersPage() {
                           </>
                         ) : (
                           <>
+                            <FavoriteToggleButton
+                              organisationId={customer.id}
+                              isFavorite={customer.preferred_supplier === true}
+                              organisationType="customer"
+                              disabled={!customer.is_active}
+                              onToggleComplete={() => {
+                                refetch()
+                                loadArchivedCustomersData()
+                              }}
+                              className="h-7 px-2"
+                            />
                             <ButtonV2
                               variant="secondary"
                               size="sm"
@@ -465,7 +576,216 @@ export default function CustomersPage() {
             </Card>
           ))
         )}
-      </div>
+        </div>
+      ) : (
+        /* Vue Liste */
+        <div className="rounded-lg border" style={{ borderColor: colors.border.DEFAULT }}>
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead className="w-[50%]" style={{ color: colors.text.DEFAULT }}>Client</TableHead>
+                <TableHead style={{ color: colors.text.DEFAULT }}>Adresse</TableHead>
+                <TableHead className="w-[150px] text-right" style={{ color: colors.text.DEFAULT }}>Actions</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {isLoading ? (
+                Array.from({ length: 5 }).map((_, i) => (
+                  <TableRow key={i} className="animate-pulse">
+                    <TableCell><div className="h-4 bg-gray-200 rounded w-3/4"></div></TableCell>
+                    <TableCell><div className="h-4 bg-gray-200 rounded w-2/3"></div></TableCell>
+                    <TableCell><div className="h-4 bg-gray-200 rounded w-full"></div></TableCell>
+                  </TableRow>
+                ))
+              ) : (
+                paginatedCustomers.map((customer) => (
+                  <TableRow key={customer.id} className="hover:bg-muted/50">
+                    {/* Logo + Nom avec lien site web */}
+                    <TableCell>
+                      <div className="flex items-center gap-3">
+                        <OrganisationLogo
+                          logoUrl={customer.logo_url}
+                          organisationName={getOrganisationDisplayName(customer)}
+                          size="sm"
+                          fallback="initials"
+                        />
+                        <div>
+                          {customer.website ? (
+                            <a
+                              href={customer.website}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="font-medium hover:underline flex items-center gap-1"
+                              style={{ color: colors.text.DEFAULT }}
+                            >
+                              {getOrganisationDisplayName(customer)}
+                              <ExternalLink className="h-3 w-3" style={{ color: colors.text.muted }} />
+                            </a>
+                          ) : (
+                            <span className="font-medium" style={{ color: colors.text.DEFAULT }}>
+                              {getOrganisationDisplayName(customer)}
+                            </span>
+                          )}
+                          {customer.archived_at && (
+                            <Badge
+                              variant="danger"
+                              className="text-xs ml-2"
+                              style={{ backgroundColor: colors.danger[100], color: colors.danger[700] }}
+                            >
+                              Archivé
+                            </Badge>
+                          )}
+                        </div>
+                      </div>
+                    </TableCell>
+
+                    {/* Adresse complète */}
+                    <TableCell>
+                      <div className="text-sm" style={{ color: colors.text.subtle }}>
+                        {customer.billing_address_line1 && (
+                          <div>{customer.billing_address_line1}</div>
+                        )}
+                        {(customer.billing_postal_code || customer.billing_city) && (
+                          <div>
+                            {customer.billing_postal_code && `${customer.billing_postal_code}, `}
+                            {customer.billing_city}
+                          </div>
+                        )}
+                        {customer.billing_country && (
+                          <div>{customer.billing_country}</div>
+                        )}
+                      </div>
+                    </TableCell>
+
+                    {/* Actions */}
+                    <TableCell className="text-right">
+                      <div className="flex justify-end items-center gap-2">
+                        {(activeTab === 'active' || activeTab === 'preferred') ? (
+                          <>
+                            <FavoriteToggleButton
+                              organisationId={customer.id}
+                              isFavorite={customer.preferred_supplier === true}
+                              organisationType="customer"
+                              disabled={!customer.is_active}
+                              onToggleComplete={() => {
+                                refetch()
+                                loadArchivedCustomersData()
+                              }}
+                              className="h-7 px-2"
+                            />
+                            <Link href={`/contacts-organisations/customers/${customer.id}`}>
+                              <ButtonV2
+                                variant="ghost"
+                                size="sm"
+                                icon={Eye}
+                                className="h-7 px-2"
+                                aria-label="Voir"
+                              />
+                            </Link>
+                            <ButtonV2
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => handleArchive(customer)}
+                              icon={Archive}
+                              className="h-7 px-2"
+                              aria-label="Archiver"
+                            />
+                          </>
+                        ) : (
+                          <>
+                            <FavoriteToggleButton
+                              organisationId={customer.id}
+                              isFavorite={customer.preferred_supplier === true}
+                              organisationType="customer"
+                              disabled={!customer.is_active}
+                              onToggleComplete={() => {
+                                refetch()
+                                loadArchivedCustomersData()
+                              }}
+                              className="h-7 px-2"
+                            />
+                            <ButtonV2
+                              variant="secondary"
+                              size="sm"
+                              onClick={() => handleArchive(customer)}
+                              icon={ArchiveRestore}
+                              className="h-7 px-2"
+                              aria-label="Restaurer"
+                            />
+                            <ButtonV2
+                              variant="danger"
+                              size="sm"
+                              onClick={() => handleDelete(customer)}
+                              icon={Trash2}
+                              className="h-7 px-2"
+                              aria-label="Supprimer"
+                            />
+                            <Link href={`/contacts-organisations/customers/${customer.id}`}>
+                              <ButtonV2
+                                variant="ghost"
+                                size="sm"
+                                icon={Eye}
+                                className="h-7 px-2"
+                                aria-label="Voir"
+                              />
+                            </Link>
+                          </>
+                        )}
+                      </div>
+                    </TableCell>
+                  </TableRow>
+                ))
+              )}
+            </TableBody>
+          </Table>
+        </div>
+      )}
+
+      {/* Pagination */}
+      {totalPages > 1 && !isLoading && paginatedCustomers.length > 0 && (
+        <Pagination className="mt-6">
+          <PaginationContent>
+            <PaginationItem>
+              <PaginationPrevious
+                onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
+                className={currentPage === 1 ? 'pointer-events-none opacity-50' : 'cursor-pointer'}
+              />
+            </PaginationItem>
+
+            {Array.from({ length: Math.min(totalPages, 7) }, (_, i) => {
+              let pageNum: number
+              if (totalPages <= 7) {
+                pageNum = i + 1
+              } else if (currentPage <= 4) {
+                pageNum = i + 1
+              } else if (currentPage >= totalPages - 3) {
+                pageNum = totalPages - 6 + i
+              } else {
+                pageNum = currentPage - 3 + i
+              }
+
+              return (
+                <PaginationItem key={pageNum}>
+                  <PaginationLink
+                    onClick={() => setCurrentPage(pageNum)}
+                    isActive={currentPage === pageNum}
+                    className="cursor-pointer"
+                  >
+                    {pageNum}
+                  </PaginationLink>
+                </PaginationItem>
+              )
+            })}
+
+            <PaginationItem>
+              <PaginationNext
+                onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
+                className={currentPage === totalPages ? 'pointer-events-none opacity-50' : 'cursor-pointer'}
+              />
+            </PaginationItem>
+          </PaginationContent>
+        </Pagination>
+      )}
 
       {displayedCustomers.length === 0 && !isLoading && (
         <Card>
@@ -498,6 +818,15 @@ export default function CustomersPage() {
         onCustomerUpdated={handleCustomerSuccess}
         customer={selectedCustomer as any}
         mode={selectedCustomer ? 'edit' : 'create'}
+      />
+
+      <ConfirmDeleteOrganisationModal
+        open={!!deleteModalCustomer}
+        onOpenChange={(open) => !open && setDeleteModalCustomer(null)}
+        organisation={deleteModalCustomer as any}
+        organisationType="customer"
+        onConfirm={handleConfirmDelete}
+        isDeleting={isDeleting}
       />
     </div>
   )

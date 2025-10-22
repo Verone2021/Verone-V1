@@ -106,7 +106,7 @@ export default function PriceListDetailPage() {
       <div className="flex items-center gap-4">
         <ButtonV2
           variant="outline"
-          size="icon"
+          size="sm"
           onClick={() => router.push('/admin/pricing/lists')}
         >
           <ArrowLeft className="h-4 w-4" />

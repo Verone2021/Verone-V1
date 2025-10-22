@@ -255,7 +255,7 @@ export const StocksErrorIntegration: React.FC = () => {
             totalMovements={performance.total_movements_tracked}
             failedMovements={performance.failed_movements}
           />
-          <Button
+          <ButtonV2
             onClick={simulateStockMovements}
             disabled={isSimulating}
             variant="outline"
@@ -268,7 +268,7 @@ export const StocksErrorIntegration: React.FC = () => {
             )}
             Simuler Mouvements
           </ButtonV2>
-          <Button
+          <ButtonV2
             onClick={handleGlobalDetection}
             disabled={isSimulating}
             size="sm"
@@ -497,7 +497,7 @@ const StocksStatusBadge: React.FC<{
 
   if (criticalErrors > 0 || failedMovements > 0) {
     return (
-      <Badge variant="destructive" className="flex items-center gap-1">
+      <Badge variant="danger" className="flex items-center gap-1">
         <AlertTriangle className="w-3 h-3" />
         {criticalErrors + failedMovements} Erreur{criticalErrors + failedMovements > 1 ? 's' : ''}
       </Badge>
@@ -505,7 +505,7 @@ const StocksStatusBadge: React.FC<{
   }
 
   return (
-    <Badge variant="default" className="flex items-center gap-1 bg-purple-600">
+    <Badge variant="primary" className="flex items-center gap-1 bg-purple-600">
       <CheckCircle className="w-3 h-3" />
       {totalMovements} Mouvements OK
     </Badge>
@@ -587,7 +587,7 @@ const StocksIntegrationGuide: React.FC = () => {
             <p className="text-sm text-gray-600">
               Patterns d'intégration pour le module Stocks temps réel
             </p>
-            <Button
+            <ButtonV2
               onClick={() => setShowGuide(!showGuide)}
               variant="outline"
               size="sm"

@@ -159,7 +159,7 @@ export function ContactsManagementSection({
 
     if (contact.is_primary_contact) {
       badges.push(
-        <Badge key="primary" variant="default" className="bg-gray-100 text-gray-900 border-gray-200">
+        <Badge key="primary" variant="primary" className="bg-gray-100 text-gray-900 border-gray-200">
           <Star className="h-3 w-3 mr-1" />
           Principal
         </Badge>

@@ -302,9 +302,9 @@ export function NotificationBell({ className }: { className?: string }) {
   return (
     <DropdownMenu open={open} onOpenChange={setOpen}>
       <DropdownMenuTrigger asChild>
-        <Button
+        <ButtonV2
           variant="ghost"
-          size="icon"
+          size="sm"
           className={cn("relative", className)}
         >
           <Bell className="w-4 h-4" />
@@ -320,7 +320,7 @@ export function NotificationBell({ className }: { className?: string }) {
         <DropdownMenuLabel className="flex items-center justify-between">
           <span>Notifications</span>
           <div className="flex items-center gap-2">
-            <Button
+            <ButtonV2
               variant="ghost"
               size="sm"
               onClick={() => setFilter(filter === 'all' ? 'unread' : filter === 'unread' ? 'critical' : 'all')}
@@ -329,7 +329,7 @@ export function NotificationBell({ className }: { className?: string }) {
               {filter === 'all' ? 'Toutes' : filter === 'unread' ? 'Non lues' : 'Critiques'}
             </ButtonV2>
             {unreadCount > 0 && (
-              <Button
+              <ButtonV2
                 variant="ghost"
                 size="sm"
                 onClick={markAllAsRead}
@@ -488,7 +488,7 @@ function NotificationItem({
           </div>
           <div className="flex items-center gap-1">
             {getPriorityBadge(notification.priority)}
-            <Button
+            <ButtonV2
               variant="ghost"
               size="sm"
               className="w-6 h-6 p-0"
@@ -506,7 +506,7 @@ function NotificationItem({
         {notification.actions && notification.actions.length > 0 && (
           <div className="flex gap-2 flex-wrap">
             {notification.actions.map((action) => (
-              <Button
+              <ButtonV2
                 key={action.id}
                 size="sm"
                 variant={action.variant || 'outline'}

@@ -104,7 +104,7 @@ export const DashboardErrorIntegration: React.FC = () => {
 
         <div className="flex items-center gap-3">
           <SystemStatusBadge isActive={isActive} criticalErrors={criticalErrorsCount} />
-          <Button
+          <ButtonV2
             onClick={handleManualDetection}
             disabled={isDetecting}
             variant="outline"
@@ -249,7 +249,7 @@ const SystemStatusBadge: React.FC<{
 
   if (criticalErrors > 0) {
     return (
-      <Badge variant="destructive" className="flex items-center gap-1">
+      <Badge variant="danger" className="flex items-center gap-1">
         <AlertTriangle className="w-3 h-3" />
         {criticalErrors} Critique{criticalErrors > 1 ? 's' : ''}
       </Badge>
@@ -257,7 +257,7 @@ const SystemStatusBadge: React.FC<{
   }
 
   return (
-    <Badge variant="default" className="flex items-center gap-1 bg-green-600">
+    <Badge variant="primary" className="flex items-center gap-1 bg-green-600">
       <div className="w-2 h-2 bg-green-200 rounded-full animate-pulse" />
       Actif
     </Badge>
@@ -360,7 +360,7 @@ export function MyDashboardComponent() {
             <p className="text-sm text-gray-600">
               Code d'exemple pour l'intégration Dashboard
             </p>
-            <Button
+            <ButtonV2
               onClick={() => setShowCode(!showCode)}
               variant="outline"
               size="sm"

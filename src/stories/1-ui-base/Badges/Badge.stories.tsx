@@ -205,14 +205,14 @@ export const Sizes: Story = {
 export const AllVariants: Story = {
   render: () => (
     <div className="flex flex-wrap gap-2">
-      <Badge variant="default">Default</Badge>
+      <Badge variant="primary">Default</Badge>
       <Badge variant="secondary">Secondary</Badge>
       <Badge variant="success">Success</Badge>
       <Badge variant="warning">Warning</Badge>
       <Badge variant="danger">Danger</Badge>
       <Badge variant="info">Info</Badge>
       <Badge variant="outline">Outline</Badge>
-      <Badge variant="destructive">Destructive</Badge>
+      <Badge variant="danger">Destructive</Badge>
     </div>
   ),
 };
@@ -242,7 +242,7 @@ export const OrderStatuses: Story = {
       <Badge variant="info" icon={<Clock className="w-3 h-3" />}>En attente</Badge>
       <Badge variant="warning" icon={<AlertTriangle className="w-3 h-3" />}>À valider</Badge>
       <Badge variant="success" icon={<Check className="w-3 h-3" />}>Confirmé</Badge>
-      <Badge variant="destructive" icon={<X className="w-3 h-3" />}>Annulé</Badge>
+      <Badge variant="danger" icon={<X className="w-3 h-3" />}>Annulé</Badge>
     </div>
   ),
 };

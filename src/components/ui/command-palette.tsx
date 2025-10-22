@@ -476,7 +476,7 @@ export function CommandPalette({
   return (
     <>
       {/* Trigger Button */}
-      <Button
+      <ButtonV2
         variant="outline"
         className={cn(
           "relative w-full justify-start text-sm text-muted-foreground",
@@ -571,7 +571,7 @@ export function CommandPalette({
                           </CommandShortcut>
                         )}
 
-                        <Button
+                        <ButtonV2
                           variant="ghost"
                           size="sm"
                           className="w-6 h-6 p-0 opacity-50 hover:opacity-100"

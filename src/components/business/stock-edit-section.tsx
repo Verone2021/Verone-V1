@@ -119,7 +119,7 @@ export function StockEditSection({ product, onUpdate, className }: StockEditSect
               Annuler
             </ButtonV2>
             <ButtonV2
-              variant="default"
+              variant="primary"
               size="sm"
               onClick={handleSave}
               disabled={!hasChanges(section) || isSaving(section)}

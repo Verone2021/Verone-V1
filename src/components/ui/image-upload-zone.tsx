@@ -293,7 +293,7 @@ export function ImageUploadZone({
               <ButtonV2
                 type="button"
                 variant="ghost"
-                size="icon"
+                size="sm"
                 onClick={handleRemoveFile}
                 className="h-8 w-8"
               >

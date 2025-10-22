@@ -118,7 +118,7 @@ export default function StocksDashboardPage() {
                   <AlertTriangle className="h-4 w-4 mr-2" />
                   <span className="text-xs">Alertes</span>
                   {totalAlerts > 0 && (
-                    <Badge variant="destructive" className="ml-2 h-5 px-1.5 text-xs">
+                    <Badge variant="danger" className="ml-2 h-5 px-1.5 text-xs">
                       {totalAlerts}
                     </Badge>
                   )}

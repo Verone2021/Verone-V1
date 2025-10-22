@@ -232,7 +232,7 @@ export function ProductSelector({
                             <span>Prix: {product.price_ht}€ HT</span>
                           </div>
                         </div>
-                        <Button
+                        <ButtonV2
                           variant={isSelected ? "default" : "outline"}
                           size="sm"
                           className={isSelected ? "bg-blue-600 hover:bg-blue-700" : "border-gray-300"}
@@ -268,14 +268,14 @@ export function ProductSelector({
             {availableProducts.length} produit(s) disponible(s)
           </p>
           <div className="flex space-x-3">
-            <Button
+            <ButtonV2
               variant="outline"
               onClick={onClose}
               className="border-gray-300 hover:bg-gray-50"
             >
               Annuler
             </ButtonV2>
-            <Button
+            <ButtonV2
               onClick={handleAddProducts}
               disabled={loading || selectedProducts.size === 0}
               className="bg-black hover:bg-gray-800 text-white"
