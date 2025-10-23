@@ -1,12 +1,14 @@
 /**
  * Hook centralisé pour gérer les compteurs des onglets organisation
- * Utilisé dans pages détail fournisseur/client/prestataire
+ * Phase 1: Contacts uniquement
+ * Phase 2+: Orders + Products désactivés
  */
 
 import { useState, useEffect } from 'react'
 import { useContacts } from './use-contacts'
-import { usePurchaseOrders } from './use-purchase-orders'
-import { useProducts } from './use-products'
+// Phase 1: Hooks Phase 2+ désactivés
+// import { usePurchaseOrders } from './use-purchase-orders'
+// import { useProducts } from './use-products'
 
 export interface OrganisationTabCounts {
   contacts: number
@@ -32,20 +34,22 @@ export function useOrganisationTabs({ organisationId, organisationType }: UseOrg
 
   // Hooks pour récupérer les données
   const { contacts, fetchOrganisationContacts } = useContacts()
-  const { orders, fetchOrders } = usePurchaseOrders()
-  const { products, refetch: refetchProducts } = useProducts()
+  // Phase 1: Hooks Phase 2+ désactivés (retour valeurs par défaut)
+  // const { orders, fetchOrders } = usePurchaseOrders()
+  // const { products, refetch: refetchProducts } = useProducts()
 
   // Charger et compter les contacts
   useEffect(() => {
     if (organisationId) {
       fetchOrganisationContacts(organisationId).then(() => {
         const orgContacts = contacts.filter(c => c.organisation_id === organisationId)
-        setCounts(prev => ({ ...prev, contacts: orgContacts.length }))
+        setCounts(prev => ({ ...prev, contacts: orgContacts.length, loading: false }))
       })
     }
   }, [organisationId, contacts.length])
 
-  // Charger et compter les commandes (si fournisseur)
+  // Phase 2+ : Commandes désactivées
+  /*
   useEffect(() => {
     if (organisationId && organisationType === 'supplier') {
       fetchOrders({ supplier_id: organisationId }).then(() => {
@@ -54,8 +58,10 @@ export function useOrganisationTabs({ organisationId, organisationType }: UseOrg
       })
     }
   }, [organisationId, organisationType, orders.length])
+  */
 
-  // Charger et compter les produits (si fournisseur)
+  // Phase 2+ : Produits désactivés
+  /*
   useEffect(() => {
     if (organisationId && organisationType === 'supplier') {
       refetchProducts().then(() => {
@@ -64,24 +70,25 @@ export function useOrganisationTabs({ organisationId, organisationType }: UseOrg
       })
     }
   }, [organisationId, organisationType, products.length])
+  */
 
   // Rafraîchir tous les compteurs
   const refreshCounts = async () => {
     setCounts(prev => ({ ...prev, loading: true }))
 
     if (organisationId) {
-      // Contacts
+      // Phase 1: Contacts uniquement
       await fetchOrganisationContacts(organisationId)
 
-      // Commandes (fournisseurs)
-      if (organisationType === 'supplier') {
-        await fetchOrders({ supplier_id: organisationId })
-      }
+      // Phase 2+ : Commandes désactivées
+      // if (organisationType === 'supplier') {
+      //   await fetchOrders({ supplier_id: organisationId })
+      // }
 
-      // Produits (fournisseurs)
-      if (organisationType === 'supplier') {
-        await refetchProducts()
-      }
+      // Phase 2+ : Produits désactivés
+      // if (organisationType === 'supplier') {
+      //   await refetchProducts()
+      // }
 
       setCounts(prev => ({ ...prev, loading: false }))
     }
