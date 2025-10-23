@@ -1,9 +1,7 @@
 "use client"
 
-import * as Sentry from "@sentry/nextjs"
-import { globalSentryDetector } from "../error-detection/sentry-auto-detection"
-
 // 🚀 MCP Playwright Integration - Version Allégée
+// Note: Sentry imports supprimés (Phase 1 - Sentry désactivé)
 export interface MCPTestContext {
   testId: string
   testTitle: string
@@ -41,17 +39,11 @@ export class MCPPlaywrightIntegration {
       this.isInitialized = true
       console.log('✅ [MCP Playwright] Système initialisé')
 
-      Sentry.addBreadcrumb({
-        message: 'MCP Playwright Integration initialisée (version allégée)',
-        category: 'mcp.init',
-        level: 'info'
-      })
+      // Note: Sentry breadcrumb supprimé (Phase 1 - Sentry désactivé)
 
     } catch (error) {
       console.error('❌ [MCP Playwright] Erreur initialisation:', error)
-      Sentry.captureException(error, {
-        tags: { component: 'mcp_playwright', phase: 'initialization' }
-      })
+      // Note: Sentry.captureException supprimé (Phase 1)
       throw error
     }
   }
@@ -67,77 +59,69 @@ export class MCPPlaywrightIntegration {
     const startTime = Date.now()
     console.log(`🚀 [MCP] Exécution test: ${context.testTitle}`)
 
-    return await Sentry.startSpan({
-      name: `MCP Test: ${context.testTitle}`,
-      op: 'test.mcp.execution'
-    }, async () => {
-      try {
-        // Test simplifié focus sur erreurs console
-        const consoleErrors = await this.getConsoleErrors()
-        const performance = { loadTime: Date.now() - startTime }
+    // Note: Sentry.startSpan supprimé - exécution directe sans tracing
+    try {
+      // Test simplifié focus sur erreurs console
+      const consoleErrors = await this.getConsoleErrors()
+      const performance = { loadTime: Date.now() - startTime }
 
-        const result: MCPTestResult = {
-          success: consoleErrors.length === 0,
-          duration: Date.now() - startTime,
-          errors: consoleErrors.length > 0 ? [`${consoleErrors.length} erreurs console détectées`] : [],
-          consoleErrors: consoleErrors.slice(0, 5),
-          performance,
-          sentryEventId: undefined
-        }
-
-        if (!result.success) {
-          result.sentryEventId = Sentry.captureMessage(`Test échoué: ${context.testTitle}`, {
-            level: 'warning',
-            tags: {
-              test_type: context.moduleType,
-              test_id: context.testId
-            },
-            extra: {
-              consoleErrors,
-              performance
-            }
-          })
-        } else {
-          // Success feedback in Sentry
-          Sentry.addBreadcrumb({
-            message: `✅ Test réussi: ${context.testTitle}`,
-            category: 'test.success',
-            level: 'info',
-            data: { testId: context.testId, duration: result.duration }
-          })
-        }
-
-        return result
-
-      } catch (error) {
-        const errorResult: MCPTestResult = {
-          success: false,
-          duration: Date.now() - startTime,
-          errors: [`Erreur critique: ${error instanceof Error ? error.message : String(error)}`],
-          consoleErrors: [],
-          performance: { loadTime: Date.now() - startTime }
-        }
-
-        errorResult.sentryEventId = Sentry.captureException(error, {
-          tags: {
-            test_type: context.moduleType,
-            test_id: context.testId,
-            mcp_integration: 'true'
-          }
-        })
-
-        return errorResult
+      const result: MCPTestResult = {
+        success: consoleErrors.length === 0,
+        duration: Date.now() - startTime,
+        errors: consoleErrors.length > 0 ? [`${consoleErrors.length} erreurs console détectées`] : [],
+        consoleErrors: consoleErrors.slice(0, 5),
+        performance,
+        sentryEventId: undefined
       }
-    })
+
+      if (!result.success) {
+        // Note: Sentry.captureMessage supprimé (Phase 1)
+        console.warn(`⚠️ [MCP] Test échoué: ${context.testTitle}`, {
+          test_type: context.moduleType,
+          test_id: context.testId,
+          consoleErrors,
+          performance
+        })
+      } else {
+        // Success feedback in console
+        console.log(`✅ [MCP] Test réussi: ${context.testTitle}`, {
+          testId: context.testId,
+          duration: result.duration
+        })
+      }
+
+      return result
+
+    } catch (error) {
+      const errorResult: MCPTestResult = {
+        success: false,
+        duration: Date.now() - startTime,
+        errors: [`Erreur critique: ${error instanceof Error ? error.message : String(error)}`],
+        consoleErrors: [],
+        performance: { loadTime: Date.now() - startTime }
+      }
+
+      // Note: Sentry.captureException supprimé (Phase 1)
+      console.error(`❌ [MCP] Erreur test: ${context.testTitle}`, {
+        test_type: context.moduleType,
+        test_id: context.testId,
+        error
+      })
+
+      return errorResult
+    }
   }
 
   /**
-   * 🔍 Récupération erreurs console via Sentry auto-detection
+   * 🔍 Récupération erreurs console
+   * Note: Version allégée sans Sentry - utiliser MCP Playwright browser_console_messages
    */
   private async getConsoleErrors(): Promise<string[]> {
     try {
-      const errorStats = globalSentryDetector.getErrorStats()
-      return errorStats.recentErrors.map(e => e.source).slice(0, 5)
+      // Note: globalSentryDetector supprimé (Phase 1)
+      // Pour détecter erreurs console, utiliser mcp__playwright__browser_console_messages
+      console.log('[MCP] getConsoleErrors: Utiliser browser_console_messages pour détection erreurs')
+      return []
     } catch (error) {
       console.warn('[MCP] Impossible de récupérer les erreurs console:', error)
       return []
