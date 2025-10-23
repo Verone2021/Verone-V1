@@ -1,0 +1,29 @@
+# Dependencies
+node_modules/
+
+# Build outputs
+.next/
+out/
+
+# Vercel
+.vercel/
+
+# Git
+.git/
+
+# Testing
+.playwright-mcp/
+coverage/
+
+# Environment
+.env*.local
+
+# Logs
+*.log
+
+# Archives
+archive/
+MEMORY-BANK/
+
+# Docs
+docs/
