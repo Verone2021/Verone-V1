@@ -136,6 +136,7 @@ export default function SuppliersPage() {
         // Créer un Map de comptage
         const countsMap = new Map<string, number>()
         productCounts?.forEach(p => {
+          if (!p.supplier_id) return
           const count = countsMap.get(p.supplier_id) || 0
           countsMap.set(p.supplier_id, count + 1)
         })
@@ -149,7 +150,7 @@ export default function SuppliersPage() {
         }))
       }
 
-      setArchivedSuppliers(organisationsWithCounts as Organisation[])
+      setArchivedSuppliers(organisationsWithCounts as unknown as Organisation[])
     } catch (err) {
       console.error('Erreur chargement fournisseurs archivés:', err)
     } finally {

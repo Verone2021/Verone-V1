@@ -161,7 +161,7 @@ export default function CustomersPage() {
         .order('archived_at', { ascending: false })
 
       if (error) throw error
-      setArchivedCustomers((data || []) as Organisation[])
+      setArchivedCustomers((data || []) as unknown as Organisation[])
     } catch (err) {
       console.error('Erreur chargement clients archivés:', err)
     } finally {

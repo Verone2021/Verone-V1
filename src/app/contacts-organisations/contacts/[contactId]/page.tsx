@@ -22,6 +22,7 @@ import {
   Wrench
 } from 'lucide-react'
 import { useContacts, type Contact } from '@/hooks/use-contacts'
+import { getOrganisationDisplayName } from '@/hooks/use-organisations'
 import { ContactPersonalEditSection } from '@/components/business/contact-personal-edit-section'
 import { ContactDetailsEditSection } from '@/components/business/contact-details-edit-section'
 import { ContactRolesEditSection } from '@/components/business/contact-roles-edit-section'
@@ -95,7 +96,7 @@ export default function ContactDetailPage() {
 
     if (contact.is_primary_contact) {
       badges.push(
-        <Badge key="primary" variant="primary" className="bg-gray-100 text-gray-900 border-gray-200">
+        <Badge key="primary" variant="default" className="bg-gray-100 text-gray-900 border-gray-200">
           <Star className="h-3 w-3 mr-1" />
           Principal
         </Badge>
@@ -200,7 +201,7 @@ export default function ContactDetailPage() {
           <div className="flex items-center gap-2 text-gray-600">
             <Building2 className="h-4 w-4" />
             <span>
-              {currentContact.organisation?.name} • {getOrganisationTypeLabel(currentContact.organisation?.type || '')}
+              {currentContact.organisation && getOrganisationDisplayName(currentContact.organisation)} • {getOrganisationTypeLabel(currentContact.organisation?.type || '')}
             </span>
             {currentContact.title && (
               <>
@@ -282,7 +283,7 @@ export default function ContactDetailPage() {
                       href={`/contacts-organisations/${currentContact.organisation.type === 'supplier' ? 'suppliers' : 'customers'}/${currentContact.organisation_id}`}
                       className="hover:underline hover:text-blue-600"
                     >
-                      {currentContact.organisation.name}
+                      {getOrganisationDisplayName(currentContact.organisation)}
                     </Link>
                   </div>
                 </div>

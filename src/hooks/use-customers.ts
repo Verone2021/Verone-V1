@@ -194,9 +194,9 @@ export function useCustomers(filters?: CustomerFilters) {
         return {
           id: data.id,
           type: 'professional',
-          displayName: data.name,
+          displayName: data.trade_name || data.legal_name || 'Organisation sans nom',
           email: data.email,
-          name: data.name,
+          name: data.trade_name || data.legal_name,
           siret: data.siret,
           vat_number: data.vat_number,
           billing_address_line1: data.billing_address_line1,

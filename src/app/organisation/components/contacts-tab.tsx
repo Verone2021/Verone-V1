@@ -19,6 +19,7 @@ import {
   Eye
 } from 'lucide-react'
 import { useContacts } from '@/hooks/use-contacts'
+import { getOrganisationDisplayName } from '@/hooks/use-organisations'
 
 interface ContactStats {
   totalContacts: number
@@ -48,7 +49,7 @@ export function ContactsTab() {
     const matchesSearch = contact.first_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
                          contact.last_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
                          contact.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         contact.organisation?.name.toLowerCase().includes(searchTerm.toLowerCase())
+                         (contact.organisation && getOrganisationDisplayName(contact.organisation).toLowerCase().includes(searchTerm.toLowerCase()))
 
     const matchesType = filterType === 'all' ||
                        (filterType === 'supplier' && contact.organisation?.type === 'supplier') ||
@@ -204,21 +205,21 @@ export function ContactsTab() {
             <div className="flex flex-col sm:flex-row gap-4">
               <div className="flex gap-2">
                 <ButtonV2
-                  variant={filterType === 'all' ? 'default' : 'outline'}
+                  variant={filterType === 'all' ? 'secondary' : 'outline'}
                   size="sm"
                   onClick={() => setFilterType('all')}
                 >
                   Tous
                 </ButtonV2>
                 <ButtonV2
-                  variant={filterType === 'supplier' ? 'default' : 'outline'}
+                  variant={filterType === 'supplier' ? 'secondary' : 'outline'}
                   size="sm"
                   onClick={() => setFilterType('supplier')}
                 >
                   Fournisseurs
                 </ButtonV2>
                 <ButtonV2
-                  variant={filterType === 'customer' ? 'default' : 'outline'}
+                  variant={filterType === 'customer' ? 'secondary' : 'outline'}
                   size="sm"
                   onClick={() => setFilterType('customer')}
                 >
@@ -227,28 +228,28 @@ export function ContactsTab() {
               </div>
               <div className="flex gap-2">
                 <ButtonV2
-                  variant={filterRole === 'all' ? 'default' : 'outline'}
+                  variant={filterRole === 'all' ? 'secondary' : 'outline'}
                   size="sm"
                   onClick={() => setFilterRole('all')}
                 >
                   Tous rôles
                 </ButtonV2>
                 <ButtonV2
-                  variant={filterRole === 'primary' ? 'default' : 'outline'}
+                  variant={filterRole === 'primary' ? 'secondary' : 'outline'}
                   size="sm"
                   onClick={() => setFilterRole('primary')}
                 >
                   Principaux
                 </ButtonV2>
                 <ButtonV2
-                  variant={filterRole === 'commercial' ? 'default' : 'outline'}
+                  variant={filterRole === 'commercial' ? 'secondary' : 'outline'}
                   size="sm"
                   onClick={() => setFilterRole('commercial')}
                 >
                   Commercial
                 </ButtonV2>
                 <ButtonV2
-                  variant={filterRole === 'technical' ? 'default' : 'outline'}
+                  variant={filterRole === 'technical' ? 'secondary' : 'outline'}
                   size="sm"
                   onClick={() => setFilterRole('technical')}
                 >
@@ -324,7 +325,7 @@ export function ContactsTab() {
                         <td className="py-3 px-4">
                           <div className="space-y-1">
                             <span className="font-medium text-black">
-                              {contact.organisation?.name}
+                              {contact.organisation && getOrganisationDisplayName(contact.organisation)}
                             </span>
                             <Badge variant="outline" className={orgTypeInfo.color}>
                               <div className="flex items-center gap-1">

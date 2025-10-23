@@ -220,7 +220,7 @@ export default function PartnerDetailPage() {
           <OrganisationLogoCard
             organisationId={partner.id}
             organisationName={partner.legal_name}
-            organisationType="partner"
+            organisationType="provider"
             currentLogoUrl={partner.logo_url}
             onUploadSuccess={() => refetch()}
           />
@@ -228,7 +228,7 @@ export default function PartnerDetailPage() {
           {/* Statistiques - Composant réutilisable */}
           <OrganisationStatsCard
             organisation={partner}
-            organisationType="partner"
+            organisationType="provider"
           />
         </div>
       </div>
@@ -245,7 +245,7 @@ export default function PartnerDetailPage() {
           <ContactsManagementSection
             organisationId={partner.id}
             organisationName={getOrganisationDisplayName(partner)}
-            organisationType="partner"
+            organisationType="provider"
             onUpdate={() => handlePartnerUpdate({})}
           />
         </TabContent>

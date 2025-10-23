@@ -16,9 +16,9 @@ import { useCompleteDashboardMetrics } from '@/hooks/use-complete-dashboard-metr
 
 export default function DashboardV2Page() {
   const router = useRouter()
-  const { metrics, loading, error } = useCompleteDashboardMetrics()
+  const { metrics, isLoading, error } = useCompleteDashboardMetrics()
 
-  if (loading) {
+  if (isLoading) {
     return (
       <div className="min-h-screen bg-slate-50 flex items-center justify-center">
         <div className="text-center">

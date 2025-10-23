@@ -280,7 +280,7 @@ export default function CustomerDetailPage() {
         <TabContent activeTab={activeTab} tabId="contacts">
           <ContactsManagementSection
             organisationId={customer.id}
-            organisationName={customer.name}
+            organisationName={getOrganisationDisplayName(customer)}
             organisationType="customer"
             onUpdate={() => handleCustomerUpdate({})}
           />

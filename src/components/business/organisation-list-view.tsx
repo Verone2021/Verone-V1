@@ -19,7 +19,8 @@ import { SupplierSegmentBadge, SupplierSegmentType } from './supplier-segment-ba
 interface OrganisationListViewProps {
   organisations: Array<{
     id: string
-    name: string
+    legal_name: string
+    trade_name?: string | null
     type: 'customer' | 'supplier' | 'partner'
     email?: string | null
     phone?: string | null
@@ -132,14 +133,14 @@ export function OrganisationListView({
                   <div className="flex items-center gap-2">
                     <OrganisationLogo
                       logoUrl={org.logo_url}
-                      organisationName={org.name}
+                      organisationName={org.trade_name || org.legal_name}
                       size="xs"
                       fallback="initials"
                       className="flex-shrink-0"
                     />
                     <div className="min-w-0">
                       <p className="font-medium text-black truncate leading-tight">
-                        {org.name}
+                        {org.trade_name || org.legal_name}
                       </p>
                       {org.archived_at && (
                         <Badge
@@ -158,7 +159,7 @@ export function OrganisationListView({
                   {org.type === 'supplier' && org.supplier_segment ? (
                     <SupplierSegmentBadge
                       segment={org.supplier_segment}
-                      size="xs"
+                      size="sm"
                       showIcon={false}
                     />
                   ) : (

@@ -20,7 +20,8 @@ import { spacing, colors } from '@/lib/design-system'
 interface OrganisationCardProps {
   organisation: {
     id: string
-    name: string
+    legal_name: string
+    trade_name?: string | null
     type: 'customer' | 'supplier' | 'partner'
     email?: string | null
     country?: string | null
@@ -117,7 +118,7 @@ export function OrganisationCard({
           <div className="flex items-center gap-1.5 flex-1 min-w-0">
             <OrganisationLogo
               logoUrl={organisation.logo_url}
-              organisationName={organisation.name}
+              organisationName={organisation.trade_name || organisation.legal_name}
               size="xs"
               fallback="initials"
               className="flex-shrink-0"
@@ -130,12 +131,12 @@ export function OrganisationCard({
                 className="hover:underline truncate flex items-center gap-1 text-sm font-medium leading-tight"
                 style={{ color: colors.text.DEFAULT }}
               >
-                <span className="truncate">{organisation.name}</span>
+                <span className="truncate">{organisation.trade_name || organisation.legal_name}</span>
                 <ExternalLink className="h-3 w-3 flex-shrink-0 opacity-60" />
               </a>
             ) : (
               <span className="truncate text-sm font-medium leading-tight" style={{ color: colors.text.DEFAULT }}>
-                {organisation.name}
+                {organisation.trade_name || organisation.legal_name}
               </span>
             )}
           </div>
@@ -153,11 +154,11 @@ export function OrganisationCard({
         {/* Ligne 2: Badge Type / Segment Supplier */}
         {organisation.type === 'supplier' && organisation.supplier_segment ? (
           <div className="flex flex-wrap items-center gap-1">
-            <SupplierSegmentBadge segment={organisation.supplier_segment} size="xs" showIcon={true} />
+            <SupplierSegmentBadge segment={organisation.supplier_segment} size="sm" showIcon={true} />
             {organisation.supplier_category && (
               <SupplierCategoryBadge
                 category={organisation.supplier_category}
-                size="xs"
+                size="sm"
                 showIcon={false}
                 mode="single"
               />
