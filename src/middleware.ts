@@ -1,9 +1,11 @@
 /**
- * 🚧 Middleware Protection Routes - Déploiement Phase 1
+ * 🔐 Middleware Authentification + Protection Routes - Phase 1
  *
- * Bloque l'accès aux modules désactivés en redirigeant vers page "Module non déployé".
+ * Combine deux fonctionnalités :
+ * 1. Authentification Supabase : Protection routes nécessitant connexion
+ * 2. Feature Flags Phase 1 : Blocage modules Phase 2+ non déployés
  *
- * ✅ Modules autorisés (Phase 1) :
+ * ✅ Modules accessibles (Phase 1) :
  * - /dashboard
  * - /profile
  * - /organisation, /contacts-organisations
@@ -22,11 +24,11 @@
  * - /notifications
  * - /tests-essentiels
  *
- * Dernière mise à jour : 2025-10-23 (Stabilisation Phase 1)
+ * Dernière mise à jour : 2025-10-23 (Restauration authentification)
  */
 
-import { NextResponse } from 'next/server'
-import type { NextRequest } from 'next/server'
+import { NextRequest, NextResponse } from 'next/server'
+import { createServerClient } from '@supabase/ssr'
 
 // Routes modules désactivés (Phase 2+)
 const INACTIVE_ROUTES = [
@@ -44,54 +46,120 @@ const INACTIVE_ROUTES = [
   '/tests-essentiels'
 ]
 
-// Routes toujours autorisées (Phase 1 + routes système)
-const ALWAYS_ALLOWED = [
-  '/api',           // API Routes toujours accessibles
-  '/login',         // Authentification
-  '/dashboard',     // Dashboard Phase 1
-  '/profile',       // Profil utilisateur Phase 1
-  '/organisation',  // Organisations Phase 1
-  '/contacts-organisations',  // Organisations Phase 1 (alias)
-  '/admin',         // Administration Phase 1
-  '/parametres',    // Paramètres Phase 1
-  '/_next',         // Next.js static assets
-  '/favicon.ico',   // Favicon
-  '/module-inactive' // Page module désactivé (ne pas bloquer)
+// Routes protégées nécessitant authentification
+const PROTECTED_ROUTES = [
+  '/dashboard',
+  '/profile',
+  '/organisation',
+  '/contacts-organisations',
+  '/admin',
+  '/parametres'
 ]
 
-export function middleware(request: NextRequest) {
-  const { pathname } = request.nextUrl
+// Routes publiques (pas d'authentification requise)
+const PUBLIC_ROUTES = [
+  '/login',
+  '/',
+  '/module-inactive'
+]
 
-  // 1. Vérifier si route toujours autorisée (Phase 1 ou système)
-  const isAllowed = ALWAYS_ALLOWED.some(route => pathname.startsWith(route))
-  if (isAllowed) {
+export async function middleware(request: NextRequest) {
+  const pathname = request.nextUrl.pathname
+
+  // 0. Autoriser assets statiques et API routes
+  if (pathname.startsWith('/_next') || pathname.startsWith('/api') || pathname === '/favicon.ico') {
     return NextResponse.next()
   }
 
-  // 2. Vérifier si route désactivée (Phase 2+)
-  const isInactive = INACTIVE_ROUTES.some(route => pathname.startsWith(route))
-  if (isInactive) {
-    // Extraire nom module pour affichage
-    const moduleName = pathname.split('/')[1] || 'inconnu'
+  // 1. Créer le client Supabase pour vérifier l'authentification
+  let supabaseResponse = NextResponse.next({
+    request,
+  })
 
-    // Rediriger vers page "Module non déployé"
+  const supabase = createServerClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+    {
+      cookies: {
+        get(name: string) {
+          return request.cookies.get(name)?.value
+        },
+        set(name: string, value: string, options: any) {
+          request.cookies.set({
+            name,
+            value,
+            ...options,
+          })
+          supabaseResponse = NextResponse.next({
+            request: {
+              headers: request.headers,
+            },
+          })
+          supabaseResponse.cookies.set({
+            name,
+            value,
+            ...options,
+          })
+        },
+        remove(name: string, options: any) {
+          request.cookies.set({
+            name,
+            value: '',
+            ...options,
+          })
+          supabaseResponse = NextResponse.next({
+            request: {
+              headers: request.headers,
+            },
+          })
+          supabaseResponse.cookies.set({
+            name,
+            value: '',
+            ...options,
+          })
+        },
+      },
+    }
+  )
+
+  // IMPORTANT: Vérifier l'authentification
+  const { data: { user }, error } = await supabase.auth.getUser()
+  const isAuthenticated = !error && !!user
+
+  // 2. Bloquer modules Phase 2+ (redirige vers page "Module non déployé")
+  const isInactiveModule = INACTIVE_ROUTES.some(route => pathname.startsWith(route))
+  if (isInactiveModule) {
+    const moduleName = pathname.split('/')[1] || 'inconnu'
     const url = request.nextUrl.clone()
     url.pathname = '/module-inactive'
     url.searchParams.set('module', moduleName)
     url.searchParams.set('path', pathname)
-
     return NextResponse.redirect(url)
   }
 
-  // 3. Route racine "/" → rediriger vers dashboard
+  // 3. Protection authentification : routes protégées nécessitent connexion
+  const isProtectedRoute = PROTECTED_ROUTES.some(route => pathname.startsWith(route))
+  if (isProtectedRoute && !isAuthenticated) {
+    const loginUrl = new URL('/login', request.url)
+    loginUrl.searchParams.set('redirect', pathname)
+    return NextResponse.redirect(loginUrl)
+  }
+
+  // 4. Si déjà authentifié sur page login → redirection dashboard
+  if (pathname === '/login' && isAuthenticated) {
+    const redirectUrl = request.nextUrl.searchParams.get('redirect') || '/dashboard'
+    return NextResponse.redirect(new URL(redirectUrl, request.url))
+  }
+
+  // 5. Route racine "/" → rediriger vers login (pas dashboard!)
   if (pathname === '/') {
     const url = request.nextUrl.clone()
-    url.pathname = '/dashboard'
+    url.pathname = '/login'
     return NextResponse.redirect(url)
   }
 
-  // 4. Toutes autres routes → autoriser (ex: pages spécifiques inconnues)
-  return NextResponse.next()
+  // IMPORTANT: Retourner supabaseResponse pour conserver les cookies
+  return supabaseResponse
 }
 
 // Configuration matcher pour appliquer middleware
@@ -103,6 +171,6 @@ export const config = {
      * - Static assets
      * - Metadata files (favicon, etc.)
      */
-    '/((?!_next/static|_next/image|favicon.ico).*)',
+    '/((?!_next/static|_next/image|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)',
   ],
 }
