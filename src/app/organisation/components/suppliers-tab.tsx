@@ -18,7 +18,7 @@ import {
   List
 } from 'lucide-react'
 import Link from 'next/link'
-import { useSuppliers } from '@/hooks/use-organisations'
+import { useSuppliers, type Organisation } from '@/hooks/use-organisations'
 import { SupplierFormModal } from '@/components/business/supplier-form-modal'
 import { OrganisationLogo } from '@/components/business/organisation-logo'
 import { OrganisationCard } from '@/components/business/organisation-card'
@@ -29,33 +29,14 @@ import { spacing, colors } from '@/lib/design-system'
 import { createClient } from '@/lib/supabase/client'
 import { cn } from '@/lib/utils'
 
-interface Supplier {
-  id: string
-  name: string
-  email: string | null
-  phone: string | null
-  city: string | null
-  postal_code: string | null
-  country: string | null
-  is_active: boolean
-  archived_at: string | null
-  website: string | null
-  logo_url: string | null
-  supplier_segment: SupplierSegmentType | null
-  supplier_category: string | null
-  _count?: {
-    products: number
-  }
-}
-
 export function SuppliersTab() {
   const [searchQuery, setSearchQuery] = useState('')
   const [activeTab, setActiveTab] = useState<'active' | 'archived'>('active')
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid')
-  const [archivedSuppliers, setArchivedSuppliers] = useState<Supplier[]>([])
+  const [archivedSuppliers, setArchivedSuppliers] = useState<Organisation[]>([])
   const [archivedLoading, setArchivedLoading] = useState(false)
   const [isModalOpen, setIsModalOpen] = useState(false)
-  const [selectedSupplier, setSelectedSupplier] = useState<Supplier | null>(null)
+  const [selectedSupplier, setSelectedSupplier] = useState<Organisation | null>(null)
 
   const filters = useMemo(() => ({
     is_active: true,
@@ -97,7 +78,7 @@ export function SuppliersTab() {
         }
       })
 
-      setArchivedSuppliers(organisationsWithCounts as Supplier[])
+      setArchivedSuppliers(organisationsWithCounts as Organisation[])
     } catch (err) {
       console.error('Erreur chargement fournisseurs archivés:', err)
     } finally {
@@ -111,7 +92,7 @@ export function SuppliersTab() {
     }
   }, [activeTab])
 
-  const handleArchive = async (supplier: Supplier) => {
+  const handleArchive = async (supplier: Organisation) => {
     if (!supplier.archived_at) {
       const success = await archiveOrganisation(supplier.id)
       if (success) {
@@ -129,9 +110,9 @@ export function SuppliersTab() {
     }
   }
 
-  const handleDelete = async (supplier: Supplier) => {
+  const handleDelete = async (supplier: Organisation) => {
     const confirmed = confirm(
-      `Êtes-vous sûr de vouloir supprimer définitivement "${supplier.name}" ?\n\nCette action est irréversible !`
+      `Êtes-vous sûr de vouloir supprimer définitivement "${supplier.trade_name || supplier.legal_name}" ?\n\nCette action est irréversible !`
     )
 
     if (confirmed) {
@@ -274,7 +255,7 @@ export function SuppliersTab() {
               organisation={{
                 ...supplier,
                 type: 'supplier'
-              }}
+              } as any}
               activeTab={activeTab}
               onArchive={() => handleArchive(supplier)}
               onDelete={() => handleDelete(supplier)}
@@ -288,7 +269,7 @@ export function SuppliersTab() {
               organisations={displayedSuppliers.map(s => ({
                 ...s,
                 type: 'supplier' as const
-              }))}
+              })) as any}
               activeTab={activeTab}
               onArchive={(id) => {
                 const supplier = displayedSuppliers.find(s => s.id === id)

@@ -44,7 +44,7 @@ interface OrganisationListViewProps {
 /**
  * Formatte le code pays en version courte (FR au lieu de France)
  */
-function formatCountryCode(country: string | null): string {
+function formatCountryCode(country: string | null | undefined): string {
   if (!country) return ''
 
   const countryMap: Record<string, string> = {

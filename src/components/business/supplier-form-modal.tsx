@@ -75,72 +75,72 @@ export function SupplierFormModal({
         result = await updateOrganisation({
           id: supplier.id,
           legal_name: supplierData.legal_name,
-          trade_name: supplierData.trade_name || null,
+          trade_name: supplierData.trade_name || undefined,
           has_different_trade_name: supplierData.has_different_trade_name || false,
-          email: supplierData.email || null,
+          email: supplierData.email || undefined,
           country: supplierData.country,
-          phone: supplierData.phone || null,
-          website: supplierData.website || null,
+          phone: supplierData.phone || undefined,
+          website: supplierData.website || undefined,
           is_active: supplierData.is_active,
-          notes: supplierData.notes || null,
+          notes: supplierData.notes || undefined,
 
           // Adresse de facturation
-          billing_address_line1: supplierData.billing_address_line1 || null,
-          billing_address_line2: supplierData.billing_address_line2 || null,
-          billing_postal_code: supplierData.billing_postal_code || null,
-          billing_city: supplierData.billing_city || null,
-          billing_region: supplierData.billing_region || null,
+          billing_address_line1: supplierData.billing_address_line1 || undefined,
+          billing_address_line2: supplierData.billing_address_line2 || undefined,
+          billing_postal_code: supplierData.billing_postal_code || undefined,
+          billing_city: supplierData.billing_city || undefined,
+          billing_region: supplierData.billing_region || undefined,
           billing_country: supplierData.billing_country || 'FR',
 
           // Légal
-          legal_form: supplierData.legal_form || null,
-          siren: supplierData.siren || null,
-          siret: supplierData.siret || null,
-          vat_number: supplierData.vat_number || null,
-          industry_sector: supplierData.industry_sector || null,
+          legal_form: supplierData.legal_form || undefined,
+          siren: supplierData.siren || undefined,
+          siret: supplierData.siret || undefined,
+          vat_number: supplierData.vat_number || undefined,
+          industry_sector: supplierData.industry_sector || undefined,
 
           // Commercial
           currency: supplierData.currency || 'EUR',
-          payment_terms: supplierData.payment_terms || null,
+          payment_terms: supplierData.payment_terms || undefined,
 
           // Taxonomie fournisseur
-          supplier_segment: supplierData.supplier_segment || null
+          supplier_segment: supplierData.supplier_segment || undefined
         })
       } else {
         // Création
         result = await createOrganisation({
           legal_name: supplierData.legal_name,
-          trade_name: supplierData.trade_name || null,
+          trade_name: supplierData.trade_name || undefined,
           has_different_trade_name: supplierData.has_different_trade_name || false,
           type: 'supplier',
-          email: supplierData.email || null,
+          email: supplierData.email || undefined,
           country: supplierData.country,
-          phone: supplierData.phone || null,
-          website: supplierData.website || null,
+          phone: supplierData.phone || undefined,
+          website: supplierData.website || undefined,
           is_active: supplierData.is_active,
-          notes: supplierData.notes || null,
+          notes: supplierData.notes || undefined,
 
           // Adresse de facturation
-          billing_address_line1: supplierData.billing_address_line1 || null,
-          billing_address_line2: supplierData.billing_address_line2 || null,
-          billing_postal_code: supplierData.billing_postal_code || null,
-          billing_city: supplierData.billing_city || null,
-          billing_region: supplierData.billing_region || null,
+          billing_address_line1: supplierData.billing_address_line1 || undefined,
+          billing_address_line2: supplierData.billing_address_line2 || undefined,
+          billing_postal_code: supplierData.billing_postal_code || undefined,
+          billing_city: supplierData.billing_city || undefined,
+          billing_region: supplierData.billing_region || undefined,
           billing_country: supplierData.billing_country || 'FR',
 
           // Légal
-          legal_form: supplierData.legal_form || null,
-          siren: supplierData.siren || null,
-          siret: supplierData.siret || null,
-          vat_number: supplierData.vat_number || null,
-          industry_sector: supplierData.industry_sector || null,
+          legal_form: supplierData.legal_form || undefined,
+          siren: supplierData.siren || undefined,
+          siret: supplierData.siret || undefined,
+          vat_number: supplierData.vat_number || undefined,
+          industry_sector: supplierData.industry_sector || undefined,
 
           // Commercial
           currency: supplierData.currency || 'EUR',
-          payment_terms: supplierData.payment_terms || null,
+          payment_terms: supplierData.payment_terms || undefined,
 
           // Taxonomie fournisseur
-          supplier_segment: supplierData.supplier_segment || null
+          supplier_segment: supplierData.supplier_segment || undefined
         })
       }
 

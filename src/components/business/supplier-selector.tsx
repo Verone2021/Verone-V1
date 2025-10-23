@@ -79,7 +79,7 @@ export function SupplierSelector({
           {suppliers.map((supplier) => (
             <SelectItem key={supplier.id} value={supplier.id}>
               <div className="flex items-center">
-                <span className="font-medium">{supplier.name}</span>
+                <span className="font-medium">{supplier.trade_name || supplier.legal_name}</span>
                 <span className="text-xs text-gray-500 ml-2">({supplier.type})</span>
               </div>
             </SelectItem>
@@ -95,7 +95,7 @@ export function SupplierSelector({
 
       {selectedSupplier && (
         <div className="text-xs text-gray-600 mt-1">
-          Sélectionné: {selectedSupplier.name}
+          Sélectionné: {selectedSupplier.trade_name || selectedSupplier.legal_name}
         </div>
       )}
 

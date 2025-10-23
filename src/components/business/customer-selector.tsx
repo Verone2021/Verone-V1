@@ -112,7 +112,7 @@ export function CustomerSelector({ selectedCustomer, onCustomerChange, disabled 
         setCustomers((organisations || []).map(org => ({
           ...org,
           type: 'professional' as const
-        })))
+        })) as UnifiedCustomer[])
 
       } else {
         // Charger les clients particuliers (B2C)
@@ -163,7 +163,7 @@ export function CustomerSelector({ selectedCustomer, onCustomerChange, disabled 
           billing_region_individual: ind.billing_region_individual,
           billing_country_individual: ind.billing_country_individual,
           has_different_billing_address: ind.has_different_billing_address
-        })))
+        })) as UnifiedCustomer[])
       }
 
     } catch (err) {

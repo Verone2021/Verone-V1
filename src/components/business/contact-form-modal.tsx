@@ -69,7 +69,7 @@ export function ContactFormModal({
   const isEditing = !!contact
 
   const form = useForm<ContactFormData>({
-    resolver: zodResolver(contactSchema),
+    resolver: zodResolver(contactSchema) as any,
     defaultValues: {
       first_name: contact?.first_name || '',
       last_name: contact?.last_name || '',
@@ -178,7 +178,7 @@ export function ContactFormModal({
           </DialogTitle>
         </DialogHeader>
 
-        <form onSubmit={form.handleSubmit(handleSubmit)}>
+        <form onSubmit={form.handleSubmit(handleSubmit as any)}>
           <div style={{ display: 'flex', flexDirection: 'column', gap: spacing[6] }}>
 
             {/* Section 1: Identité */}

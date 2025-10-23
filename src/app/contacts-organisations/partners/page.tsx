@@ -63,7 +63,7 @@ export default function PartnersPage() {
   const [archivedPartners, setArchivedPartners] = useState<Organisation[]>([])
   const [archivedLoading, setArchivedLoading] = useState(false)
   const [isModalOpen, setIsModalOpen] = useState(false)
-  const [selectedPartner, setSelectedPartner] = useState<Organisation | null>(null)
+  const [selectedPartner, setSelectedPartner] = useState<Organisation | null | undefined>(null)
   const [currentPage, setCurrentPage] = useState(1)
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid')
   const [deleteModalPartner, setDeleteModalPartner] = useState<Organisation | null>(null)
@@ -780,7 +780,7 @@ export default function PartnersPage() {
       <PartnerFormModal
         isOpen={isModalOpen}
         onClose={handleCloseModal}
-        partner={selectedPartner}
+        partner={selectedPartner as any}
         onSuccess={handlePartnerSuccess}
       />
 

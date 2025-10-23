@@ -257,7 +257,7 @@ export function CustomersTab() {
               organisation={{
                 ...customer,
                 type: 'customer'
-              }}
+              } as any}
               activeTab={activeTab}
               onArchive={() => handleArchive(customer)}
               onDelete={() => handleDelete(customer)}
@@ -271,7 +271,7 @@ export function CustomersTab() {
               organisations={displayedCustomers.map(c => ({
                 ...c,
                 type: 'customer' as const
-              }))}
+              })) as any}
               activeTab={activeTab}
               onArchive={(id) => {
                 const customer = displayedCustomers.find(c => c.id === id)

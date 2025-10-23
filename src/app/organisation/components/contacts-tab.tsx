@@ -19,7 +19,7 @@ import {
   Eye
 } from 'lucide-react'
 import { useContacts } from '@/hooks/use-contacts'
-import { getOrganisationDisplayName } from '@/hooks/use-organisations'
+import { getOrganisationDisplayName, type Organisation } from '@/hooks/use-organisations'
 
 interface ContactStats {
   totalContacts: number
@@ -49,7 +49,7 @@ export function ContactsTab() {
     const matchesSearch = contact.first_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
                          contact.last_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
                          contact.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         (contact.organisation && getOrganisationDisplayName(contact.organisation).toLowerCase().includes(searchTerm.toLowerCase()))
+                         (contact.organisation && getOrganisationDisplayName(contact.organisation as Organisation).toLowerCase().includes(searchTerm.toLowerCase()))
 
     const matchesType = filterType === 'all' ||
                        (filterType === 'supplier' && contact.organisation?.type === 'supplier') ||
@@ -325,7 +325,7 @@ export function ContactsTab() {
                         <td className="py-3 px-4">
                           <div className="space-y-1">
                             <span className="font-medium text-black">
-                              {contact.organisation && getOrganisationDisplayName(contact.organisation)}
+                              {contact.organisation && getOrganisationDisplayName(contact.organisation as Organisation)}
                             </span>
                             <Badge variant="outline" className={orgTypeInfo.color}>
                               <div className="flex items-center gap-1">
