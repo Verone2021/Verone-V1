@@ -33,6 +33,8 @@ jobs:
 
       - name: 🔧 TypeScript validation
         run: npm run type-check
+        env:
+          NODE_OPTIONS: --max-old-space-size=4096
 
       - name: 🎨 ESLint validation
         run: npm run lint
