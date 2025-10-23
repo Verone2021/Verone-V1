@@ -67,7 +67,7 @@ export function OrganisationLogo({
 
   // Extraire initiales du nom (ex: "DSA Menuiserie" → "DM")
   const getInitials = (name: string): string => {
-    const words = name.trim().split(/\s+/)
+    const words = (name || '').trim().split(/\s+/)
     if (words.length === 1) {
       return words[0].substring(0, 2).toUpperCase()
     }
