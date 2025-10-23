@@ -26,8 +26,9 @@ import { PerformanceEditSection } from '@/components/business/performance-edit-s
 import { ContactsManagementSection } from '@/components/business/contacts-management-section'
 import { OrganisationLogoCard } from '@/components/business/organisation-logo-card'
 import { OrganisationStatsCard } from '@/components/business/organisation-stats-card'
-import { OrganisationPurchaseOrdersSection } from '@/components/business/organisation-purchase-orders-section'
-import { OrganisationProductsSection } from '@/components/business/organisation-products-section'
+// Phase 1: Sections produits/commandes désactivées (Phase 2+)
+// import { OrganisationPurchaseOrdersSection } from '@/components/business/organisation-purchase-orders-section'
+// import { OrganisationProductsSection } from '@/components/business/organisation-products-section'
 import { TabsNavigation, TabContent } from '@/components/ui/tabs-navigation'
 import { isModuleDeployed, getModulePhase } from '@/lib/deployed-modules'
 import type { Organisation } from '@/hooks/use-organisations'
@@ -279,12 +280,12 @@ export default function SupplierDetailPage() {
         </TabContent>
 
         <TabContent activeTab={activeTab} tabId="orders">
-          <OrganisationPurchaseOrdersSection
-            organisationId={supplier.id}
-            organisationName={getOrganisationDisplayName(supplier)}
-            organisationType="supplier"
-            onUpdate={() => handleSupplierUpdate({})}
-          />
+          {/* Phase 1: Onglet Commandes désactivé (Phase 2+) */}
+          <div className="p-6 text-center">
+            <p className="text-muted-foreground">
+              🛒 Gestion des commandes fournisseurs disponible en <strong>Phase 2</strong>
+            </p>
+          </div>
         </TabContent>
 
         <TabContent activeTab={activeTab} tabId="invoices">
@@ -300,12 +301,12 @@ export default function SupplierDetailPage() {
         </TabContent>
 
         <TabContent activeTab={activeTab} tabId="products">
-          <OrganisationProductsSection
-            organisationId={supplier.id}
-            organisationName={getOrganisationDisplayName(supplier)}
-            organisationType="supplier"
-            onUpdate={() => handleSupplierUpdate({})}
-          />
+          {/* Phase 1: Onglet Produits désactivé (Phase 2+) */}
+          <div className="p-6 text-center">
+            <p className="text-muted-foreground">
+              📦 Gestion des produits fournisseurs disponible en <strong>Phase 2</strong>
+            </p>
+          </div>
         </TabContent>
       </div>
 

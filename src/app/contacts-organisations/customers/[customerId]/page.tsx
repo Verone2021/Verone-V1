@@ -26,7 +26,8 @@ import { PerformanceEditSection } from '@/components/business/performance-edit-s
 import { ContactsManagementSection } from '@/components/business/contacts-management-section'
 import { OrganisationLogoCard } from '@/components/business/organisation-logo-card'
 import { OrganisationStatsCard } from '@/components/business/organisation-stats-card'
-import { OrganisationProductsSection } from '@/components/business/organisation-products-section'
+// Phase 1: organisation-products-section désactivé (Phase 2+)
+// import { OrganisationProductsSection } from '@/components/business/organisation-products-section'
 import { TabsNavigation, TabContent } from '@/components/ui/tabs-navigation'
 import { isModuleDeployed, getModulePhase } from '@/lib/deployed-modules'
 import type { Organisation } from '@/hooks/use-organisations'
@@ -310,12 +311,12 @@ export default function CustomerDetailPage() {
         </TabContent>
 
         <TabContent activeTab={activeTab} tabId="products">
-          <OrganisationProductsSection
-            organisationId={customer.id}
-            organisationName={customer.name}
-            organisationType="customer"
-            onUpdate={() => handleCustomerUpdate({})}
-          />
+          {/* Phase 1: Onglet Produits désactivé (Phase 2+) */}
+          <div className="p-6 text-center">
+            <p className="text-muted-foreground">
+              📦 Gestion des produits disponible en <strong>Phase 2</strong>
+            </p>
+          </div>
         </TabContent>
       </div>
 
