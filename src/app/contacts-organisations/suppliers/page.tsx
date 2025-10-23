@@ -38,7 +38,7 @@ import {
   List
 } from 'lucide-react'
 import Link from 'next/link'
-import { useSuppliers, getOrganisationDisplayName } from '@/hooks/use-organisations'
+import { useSuppliers, getOrganisationDisplayName, type Organisation } from '@/hooks/use-organisations'
 import { SupplierFormModal } from '@/components/business/supplier-form-modal'
 import { OrganisationLogo } from '@/components/business/organisation-logo'
 import { SupplierSegmentBadge, SupplierSegmentType } from '@/components/business/supplier-segment-badge'
@@ -50,39 +50,17 @@ import { spacing, colors } from '@/lib/design-system'
 import { createClient } from '@/lib/supabase/client'
 import { cn } from '@/lib/utils'
 
-interface Supplier {
-  id: string
-  legal_name: string // Dénomination sociale
-  trade_name: string | null // Nom commercial (si différent)
-  has_different_trade_name: boolean | null
-  email: string | null
-  city: string | null
-  country: string | null
-  billing_address_line1: string | null
-  billing_address_line2: string | null
-  billing_city: string | null
-  billing_country: string | null
-  billing_postal_code: string | null
-  is_active: boolean
-  archived_at: string | null
-  website: string | null
-  logo_url: string | null
-  supplier_segment: SupplierSegmentType | null
-  supplier_category: string | null
-  preferred_supplier: boolean | null
-  _count?: {
-    products: number
-  }
-}
+// ✅ FIX TypeScript: Utiliser type Organisation (pas de Supplier local)
+// Interface Organisation définie dans use-organisations.ts
 
 export default function SuppliersPage() {
   const [searchQuery, setSearchQuery] = useState('')
   const [activeTab, setActiveTab] = useState<'active' | 'archived' | 'preferred'>('active')
-  const [archivedSuppliers, setArchivedSuppliers] = useState<Supplier[]>([])
+  const [archivedSuppliers, setArchivedSuppliers] = useState<Organisation[]>([])
   const [archivedLoading, setArchivedLoading] = useState(false)
   const [isModalOpen, setIsModalOpen] = useState(false)
-  const [selectedSupplier, setSelectedSupplier] = useState<Supplier | null>(null)
-  const [deleteModalSupplier, setDeleteModalSupplier] = useState<Supplier | null>(null)
+  const [selectedSupplier, setSelectedSupplier] = useState<Organisation | null>(null)
+  const [deleteModalSupplier, setDeleteModalSupplier] = useState<Organisation | null>(null)
   const [isDeleting, setIsDeleting] = useState(false)
   const [currentPage, setCurrentPage] = useState(1)
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid')
@@ -171,7 +149,7 @@ export default function SuppliersPage() {
         }))
       }
 
-      setArchivedSuppliers(organisationsWithCounts as Supplier[])
+      setArchivedSuppliers(organisationsWithCounts as Organisation[])
     } catch (err) {
       console.error('Erreur chargement fournisseurs archivés:', err)
     } finally {
@@ -185,7 +163,7 @@ export default function SuppliersPage() {
     }
   }, [activeTab])
 
-  const handleArchive = async (supplier: Supplier) => {
+  const handleArchive = async (supplier: Organisation) => {
     if (!supplier.archived_at) {
       const success = await archiveOrganisation(supplier.id)
       if (success) {
@@ -203,7 +181,7 @@ export default function SuppliersPage() {
     }
   }
 
-  const handleDelete = (supplier: Supplier) => {
+  const handleDelete = (supplier: Organisation) => {
     setDeleteModalSupplier(supplier)
   }
 
