@@ -37,17 +37,37 @@ Ce fichier est le **guide principal** pour Claude Code sur le projet Vérone Bac
 - ✅ **Scalabilité** : Structure monorepo préparée, composants Storybook, KPI centralisés
 - ✅ **Collaboration** : PR atomiques, documentation vivante, CODEOWNERS
 
-### Phase actuelle : Phase 1 - Stabilisation
+### Phase actuelle : Phase 1 - Déploiement Stabilisé ✅
 
-- Finalisation modules core (auth, catalogue, commandes, stock)
-- Audit composants + design system
-- Préparation infrastructure monorepo (sans migration)
-- Documentation KPI et formules métier
+**Date stabilisation** : 2025-10-23
+**État** : Production-ready avec modules core validés
+
+#### ✅ Modules ACTIFS (Déployés)
+- **Authentification** : Login, Logout, Profils utilisateurs (`/login`, `/profile`)
+- **Dashboard** : Vue d'ensemble, KPIs business (`/dashboard`)
+- **Organisations & Contacts** : Fournisseurs, Clients B2B, Prestataires (`/contacts-organisations`)
+- **Administration** : Gestion utilisateurs, rôles, permissions (`/admin`)
+- **Paramètres** : Configuration application (`/parametres`)
+
+#### ❌ Modules DÉSACTIVÉS (Phase 2+)
+- **Produits & Catalogue** : `/produits` → Middleware bloque accès
+- **Stocks & Inventaire** : `/stocks` → Middleware bloque accès
+- **Commandes** : `/commandes` → Middleware bloque accès
+- **Finance & Trésorerie** : `/finance`, `/factures`, `/tresorerie` → Middleware bloque accès
+- **Canaux de Vente** : `/canaux-vente`, `/ventes` → Middleware bloque accès
+- **Interactions** : `/interactions`, `/consultations` → Middleware bloque accès
+- **Notifications** : `/notifications` → Middleware bloque accès
+
+#### 🛡️ Protection Routes
+- **Middleware** : `src/middleware.ts` bloque accès modules désactivés
+- **Page dédiée** : `/module-inactive` avec message phase déploiement
+- **Feature flags** : `src/lib/feature-flags.ts` configuration centralisée
 
 ### Prochaines phases
 
-- **Phase 2** : Migration monorepo (apps/api NestJS + apps/web Next.js)
-- **Phase 3** : Modules avancés (facturation, analytics, feeds)
+- **Phase 2 (Q4 2025)** : Produits, Catalogue, Stocks, Commandes
+- **Phase 3 (Q1 2026)** : Finance, Trésorerie, Canaux vente, Interactions
+- **Phase 4 (Q2 2026)** : Migration monorepo (apps/api NestJS + apps/web Next.js)
 
 ---
 

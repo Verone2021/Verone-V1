@@ -46,21 +46,29 @@ export interface FeatureFlags {
 }
 
 /**
- * Configuration des feature flags - PHASE 1 DÉPLOIEMENT: Auth + Profil uniquement
+ * Configuration des feature flags - PHASE 1 DÉPLOIEMENT STABILISÉ
  *
- * ✅ ACTIVÉ Phase 1:
- * - Auth (login/logout)
- * - Profil utilisateur
- * - Admin (gestion users)
- * - Dashboard (vue basique)
+ * ✅ MODULES ACTIFS (Phase 1 - Déployés) :
+ * - Auth (login/logout) : /login
+ * - Dashboard : /dashboard
+ * - Profil utilisateur : /profile
+ * - Organisations & Contacts : /organisation + /contacts-organisations
+ * - Administration : /admin (gestion users, rôles)
+ * - Paramètres : /parametres
  *
- * 🚧 DÉSACTIVÉ Phase 2+:
- * - Produits (catalogue, sourcing)
- * - Consultations
- * - Commandes (clients, fournisseurs)
- * - Stocks
- * - Finance
- * - Canaux vente
+ * ❌ MODULES DÉSACTIVÉS (Phase 2+ - Code préservé, accès bloqué) :
+ * - Produits & Catalogue : /produits/catalogue, /produits/sourcing
+ * - Stocks & Inventaire : /stocks
+ * - Commandes : /commandes (achats/ventes)
+ * - Finance & Trésorerie : /finance, /factures, /tresorerie
+ * - Canaux de Vente : /canaux-vente, /ventes
+ * - Interactions & Consultations : /interactions, /consultations
+ * - Notifications : /notifications
+ *
+ * ⚠️ IMPORTANT : Les modules désactivés restent dans le code mais sont bloqués via middleware.
+ * Activation future via modification de ce fichier uniquement.
+ *
+ * Dernière mise à jour : 2025-10-23 (Audit stabilisation Phase 1)
  */
 export const featureFlags: FeatureFlags = {
   // Phases - PHASE 1 SEULEMENT
@@ -68,36 +76,36 @@ export const featureFlags: FeatureFlags = {
   phase2Enabled: false,  // Stocks + Commandes (désactivé)
   phase3Enabled: false,  // Interactions + Canaux (désactivé)
 
-  // Phase 1 - Dashboard basique + Profil
-  dashboardEnabled: true,      // Dashboard basique (sans dépendances produits/stock)
-  profilesEnabled: true,       // ✅ Profil utilisateur
-  catalogueEnabled: false,     // 🚧 Produits désactivés Phase 1
-  sourcingEnabled: false,      // 🚧 Sourcing désactivé Phase 1
+  // Phase 1 - Modules Core ACTIFS
+  dashboardEnabled: true,      // ✅ Dashboard (vue d'ensemble, KPIs)
+  profilesEnabled: true,       // ✅ Profil utilisateur (préférences, activité)
+  catalogueEnabled: false,     // ❌ Produits désactivés (Phase 2)
+  sourcingEnabled: false,      // ❌ Sourcing désactivé (Phase 2)
 
   // Phase 2 - DÉSACTIVÉ
   stocksEnabled: false,        // 🚧 Stocks désactivés
   commandesEnabled: false,     // 🚧 Commandes désactivées
 
   // Phase 3 - DÉSACTIVÉ
-  interactionsEnabled: false,  // 🚧 Consultations désactivées
-  canauxVenteEnabled: false,   // 🚧 Canaux vente désactivés
-  contactsEnabled: true,       // ✅ Contacts activés
+  interactionsEnabled: false,  // ❌ Interactions/Consultations désactivées
+  canauxVenteEnabled: false,   // ❌ Canaux vente désactivés
+  contactsEnabled: true,       // ✅ Organisations & Contacts ACTIFS (fournisseurs, clients, prestataires)
 
-  // Modules spéciaux - Admin + Paramètres actifs
-  adminEnabled: true,          // ✅ Gestion users/rôles
-  parametresEnabled: true,     // ✅ Paramètres application
-  testsManuelsEnabled: false,  // 🚧 Tests manuels désactivés
+  // Modules spéciaux - Toujours accessibles (authentification requise)
+  adminEnabled: true,          // ✅ Administration (gestion utilisateurs, rôles, permissions)
+  parametresEnabled: true,     // ✅ Paramètres (configuration application)
+  testsManuelsEnabled: false,  // ❌ Tests manuels désactivés (environnement dev uniquement)
 
   // Features spécifiques - TOUT DÉSACTIVÉ Phase 1
-  photoUploadWorkflowEnabled: false,     // 🚧 Upload photos désactivé
-  googleMerchantSyncEnabled: false,      // 🚧 Google Merchant désactivé
-  mcpMonitoringEnabled: false,           // 🚧 Monitoring désactivé
+  photoUploadWorkflowEnabled: false,     // ❌ Upload photos désactivé (dépend module Produits)
+  googleMerchantSyncEnabled: false,      // ❌ Google Merchant désactivé (dépend module Catalogue)
+  mcpMonitoringEnabled: false,           // ❌ Monitoring MCP désactivé (Phase 3)
 
-  // Modules Finance - TOUT DÉSACTIVÉ Phase 1
-  financeEnabled: false,
-  facturationEnabled: false,
-  tresorerieEnabled: false,
-  rapprochementEnabled: false
+  // Modules Finance - TOUT DÉSACTIVÉ Phase 1 (Phase 3 prévu)
+  financeEnabled: false,         // ❌ Module Finance global
+  facturationEnabled: false,     // ❌ Facturation (dépend Finance)
+  tresorerieEnabled: false,      // ❌ Trésorerie (dépend Finance)
+  rapprochementEnabled: false    // ❌ Rapprochement bancaire (dépend Finance)
 }
 
 /**
