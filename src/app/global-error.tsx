@@ -1,6 +1,5 @@
 'use client'
 
-// import * as Sentry from '@sentry/nextjs'
 import { useEffect } from 'react'
 import { AlertCircle, RotateCcw } from 'lucide-react'
 
@@ -12,28 +11,10 @@ export default function GlobalError({
   reset: () => void
 }) {
   useEffect(() => {
-    // Report to Sentry with Vérone business context - TEMPORARILY DISABLED
-    // Sentry.captureException(error, {
-    //   tags: {
-    //     application: 'verone-back-office',
-    //     source: 'global-error-boundary',
-    //     environment: process.env.NODE_ENV || 'development',
-    //   },
-    //   extra: {
-    //     digest: error.digest,
-    //     timestamp: new Date().toISOString(),
-    //     userAgent: typeof window !== 'undefined' ? window.navigator.userAgent : 'unknown',
-    //     url: typeof window !== 'undefined' ? window.location.href : 'unknown',
-    //   },
-    //   level: 'fatal',
-    // })
-
-    // Console log for development debugging
-    if (process.env.NODE_ENV === 'development') {
-      console.error('🚨 Global Error Boundary triggered:', error)
-      console.error('🔍 Error digest:', error.digest)
-      console.error('📍 Stack trace:', error.stack)
-    }
+    // Console log for development and production debugging
+    console.error('🚨 Global Error Boundary triggered:', error)
+    console.error('🔍 Error digest:', error.digest)
+    console.error('📍 Stack trace:', error.stack)
   }, [error])
 
   // WORKAROUND Next.js 15 Build Issue (2025-10-17)
@@ -56,7 +37,7 @@ export default function GlobalError({
         {/* Message utilisateur */}
         <p className="text-gray-600 text-center mb-6">
           Une erreur inattendue s'est produite dans l'application.
-          L'équipe technique a été automatiquement notifiée via Sentry.
+          Veuillez réessayer ou contacter l'équipe technique.
         </p>
 
         {/* Détails techniques en mode développement */}
@@ -92,10 +73,10 @@ export default function GlobalError({
           </button>
         </div>
 
-        {/* Footer Sentry info */}
+        {/* Footer */}
         <div className="mt-6 pt-4 border-t border-gray-200">
           <p className="text-xs text-gray-500 text-center">
-            Erreur automatiquement rapportée • Vérone Back Office
+            Vérone Back Office • Phase 1
           </p>
         </div>
       </div>
