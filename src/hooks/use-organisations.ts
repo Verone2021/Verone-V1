@@ -58,7 +58,7 @@ export interface Organisation {
   // Classification business
   industry_sector: string | null
   supplier_segment: string | null
-  supplier_category: string | null
+  // supplier_category: SUPPRIMÉ (migration 20251023_001 - colonne inexistante)
 
   // Informations commerciales
   payment_terms: string | null
@@ -148,7 +148,7 @@ export interface CreateOrganisationData {
   // Classification
   industry_sector?: string
   supplier_segment?: string
-  supplier_category?: string
+  // supplier_category?: SUPPRIMÉ (migration 20251023_001)
 
   // Commercial
   payment_terms?: string
@@ -626,7 +626,6 @@ export function useOrganisation(id: string) {
             legal_form,
             industry_sector,
             supplier_segment,
-            supplier_category,
             payment_terms,
             delivery_time_days,
             minimum_order_amount,
