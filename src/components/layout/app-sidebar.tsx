@@ -10,7 +10,8 @@ import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/component
 import { Tooltip, TooltipContent, TooltipTrigger, TooltipProvider } from "@/components/ui/tooltip"
 import { SidebarProvider, SidebarTrigger, useSidebar } from "@/components/ui/sidebar"
 import { Badge } from "@/components/ui/badge"
-import { useStockAlertsCount } from "@/hooks/use-stock-alerts-count"
+// Phase 1: use-stock-alerts-count hook désactivé (Phase 2+)
+// import { useStockAlertsCount } from "@/hooks/use-stock-alerts-count"
 import {
   Home,
   Users,
@@ -67,8 +68,8 @@ function SidebarContent() {
   const { state } = useSidebar()
   const isCollapsed = state === "collapsed"
 
-  // Hook pour récupérer le nombre d'alertes stock
-  const { count: stockAlertsCount } = useStockAlertsCount()
+  // Phase 1 : Alertes stock désactivées (Phase 2+)
+  const stockAlertsCount = 0 // Anciennement : useStockAlertsCount()
 
   // State persistence avec localStorage
   const [expandedItems, setExpandedItems] = useState<string[]>(() => {
