@@ -5,6 +5,7 @@ import { usePathname } from "next/navigation"
 import { useState, useEffect, useMemo } from "react"
 import { cn } from "@/lib/utils"
 import { featureFlags, getModuleDeploymentStatus } from "@/lib/feature-flags"
+import { createClient } from "@/lib/supabase/client"
 import { InactiveModuleWrapper, PhaseIndicator } from "@/components/ui/phase-indicator"
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible"
 import { Tooltip, TooltipContent, TooltipTrigger, TooltipProvider } from "@/components/ui/tooltip"
@@ -367,9 +368,10 @@ function SidebarContent() {
       {/* Zone déconnexion */}
       <div className="border-t border-black p-4">
         <button
-          onClick={() => {
-            document.cookie = 'verone-auth=; path=/; max-age=0'
-            window.location.href = '/'
+          onClick={async () => {
+            const supabase = createClient()
+            await supabase.auth.signOut()
+            window.location.href = '/login'
           }}
           className={cn(
             "flex w-full items-center space-x-2 px-3 py-2 text-sm text-black opacity-70 hover:opacity-100 hover:bg-black hover:bg-opacity-5 transition-all duration-150 rounded-md",
