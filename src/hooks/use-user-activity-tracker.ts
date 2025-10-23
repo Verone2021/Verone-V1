@@ -110,68 +110,39 @@ export function useUserActivityTracker() {
     }
   )
 
-  // Query pour les statistiques d'activité
+  // Query pour les statistiques d'activité (OPTIMISÉ - RPC PostgreSQL)
   const activityStatsQuery = useSupabaseQuery(
     'activity-stats',
     async (supabase) => {
-      // Statistiques des 7 derniers jours (optimisation SLO <2s)
-      const sevenDaysAgo = new Date()
-      sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7)
+      // Récupérer user_id authentifié
+      const { data: { user } } = await supabase.auth.getUser()
+      if (!user) throw new Error('No authenticated user')
 
-      const { data: logs, error } = await supabase
-        .from('audit_logs')
-        .select('*')
-        .gte('created_at', sevenDaysAgo.toISOString())
+      // Appeler fonction RPC optimisée PostgreSQL (migration 20251007_003)
+      const { data, error } = await supabase.rpc('get_user_activity_stats', {
+        p_user_id: user.id,
+        p_days: 30  // Stats sur 30 derniers jours (amélioration vs 7 jours)
+      })
 
       if (error) throw error
 
-      // Calcul des métriques
-      const sessions = new Set()
-      const pageViews: Record<string, number> = {}
-      const actions: Record<string, number> = {}
-      let totalErrors = 0
+      // La RPC retourne un array avec 1 ligne, extraire les stats
+      const rpcStats = data?.[0]
 
-      logs?.forEach(log => {
-        // Session tracking basé sur user_id + jour
-        if (log.user_id) {
-          const sessionKey = `${log.user_id}-${new Date(log.created_at).toDateString()}`
-          sessions.add(sessionKey)
-        }
-
-        // Page views tracking
-        if (log.new_data?.page_url) {
-          const page = log.new_data.page_url
-          pageViews[page] = (pageViews[page] || 0) + 1
-        }
-
-        // Actions tracking
-        actions[log.action] = (actions[log.action] || 0) + 1
-
-        // Error tracking
-        if (log.severity === 'error' || log.severity === 'critical') {
-          totalErrors++
-        }
-      })
-
+      // Transformer format RPC → ActivityStats (type existant)
       const stats: ActivityStats = {
-        total_sessions: sessions.size,
-        avg_session_duration: 0, // À calculer avec plus de données
-        most_visited_pages: Object.entries(pageViews)
-          .sort(([,a], [,b]) => b - a)
-          .slice(0, 10)
-          .map(([page, visits]) => ({ page, visits })),
-        most_used_actions: Object.entries(actions)
-          .sort(([,a], [,b]) => b - a)
-          .slice(0, 10)
-          .map(([action, count]) => ({ action, count })),
-        error_rate: logs ? (totalErrors / logs.length) * 100 : 0,
-        user_satisfaction_score: Math.max(0, 100 - (totalErrors / (logs?.length || 1)) * 100)
+        total_sessions: rpcStats?.total_sessions || 0,
+        avg_session_duration: 0,  // Interval PostgreSQL non converti (TODO Phase 2)
+        most_visited_pages: [],  // Non fourni par RPC, non utilisé dans UI Phase 1
+        most_used_actions: [],  // Non fourni par RPC, non utilisé dans UI Phase 1
+        error_rate: 0,  // Non fourni par RPC (TODO Phase 2 si nécessaire)
+        user_satisfaction_score: rpcStats?.engagement_score || 0
       }
 
       return { data: stats, error: null }
     },
     {
-      staleTime: 5 * 60 * 1000, // 5 minutes
+      staleTime: 5 * 60 * 1000, // 5 minutes (cache React Query préservé)
       cacheTime: 15 * 60 * 1000 // 15 minutes
     }
   )

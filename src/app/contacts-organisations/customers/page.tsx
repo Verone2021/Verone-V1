@@ -52,30 +52,8 @@ import {
   TableRow,
 } from '@/components/ui/table'
 
-interface Customer {
-  id: string
-  legal_name: string // Dénomination sociale
-  trade_name: string | null // Nom commercial (si différent)
-  has_different_trade_name: boolean | null
-  email: string | null
-  phone: string | null
-  city: string | null
-  country: string | null
-  billing_address_line1: string | null
-  billing_address_line2: string | null
-  billing_city: string | null
-  billing_country: string | null
-  billing_postal_code: string | null
-  is_active: boolean
-  customer_type: 'professional' | 'individual' | null
-  logo_url: string | null
-  archived_at: string | null
-  website: string | null
-  preferred_supplier: boolean | null
-  _count?: {
-    orders: number
-  }
-}
+// ✅ FIX TypeScript: Utiliser type Organisation (pas de Customer local)
+// Interface Organisation définie dans use-organisations.ts
 
 export default function CustomersPage() {
   const searchParams = useSearchParams()
@@ -83,13 +61,13 @@ export default function CustomersPage() {
 
   const [searchQuery, setSearchQuery] = useState('')
   const [activeTab, setActiveTab] = useState<'active' | 'archived' | 'preferred'>('active')
-  const [archivedCustomers, setArchivedCustomers] = useState<Customer[]>([])
+  const [archivedCustomers, setArchivedCustomers] = useState<Organisation[]>([])
   const [archivedLoading, setArchivedLoading] = useState(false)
   const [isModalOpen, setIsModalOpen] = useState(false)
-  const [selectedCustomer, setSelectedCustomer] = useState<Customer | null>(null)
+  const [selectedCustomer, setSelectedCustomer] = useState<Organisation | null>(null)
   const [currentPage, setCurrentPage] = useState(1)
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid')
-  const [deleteModalCustomer, setDeleteModalCustomer] = useState<Customer | null>(null)
+  const [deleteModalCustomer, setDeleteModalCustomer] = useState<Organisation | null>(null)
   const [isDeleting, setIsDeleting] = useState(false)
   const itemsPerPage = 12 // 3 lignes × 4 colonnes
 
@@ -183,7 +161,7 @@ export default function CustomersPage() {
         .order('archived_at', { ascending: false })
 
       if (error) throw error
-      setArchivedCustomers((data || []) as Customer[])
+      setArchivedCustomers((data || []) as Organisation[])
     } catch (err) {
       console.error('Erreur chargement clients archivés:', err)
     } finally {
@@ -197,7 +175,7 @@ export default function CustomersPage() {
     }
   }, [activeTab])
 
-  const handleArchive = async (customer: Customer) => {
+  const handleArchive = async (customer: Organisation) => {
     if (!customer.archived_at) {
       const success = await archiveOrganisation(customer.id)
       if (success) {
@@ -215,7 +193,7 @@ export default function CustomersPage() {
     }
   }
 
-  const handleDelete = (customer: Customer) => {
+  const handleDelete = (customer: Organisation) => {
     setDeleteModalCustomer(customer)
   }
 

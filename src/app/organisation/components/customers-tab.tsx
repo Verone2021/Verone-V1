@@ -27,29 +27,18 @@ import { spacing, colors } from '@/lib/design-system'
 import { createClient } from '@/lib/supabase/client'
 import { cn } from '@/lib/utils'
 
-interface Customer {
-  id: string
-  name: string
-  email: string | null
-  phone: string | null
-  city: string | null
-  postal_code: string | null
-  country: string | null
-  is_active: boolean
-  customer_type: 'professional' | 'individual' | null
-  logo_url: string | null
-  archived_at: string | null
-  website: string | null
-}
+// ✅ FIX TypeScript: Utiliser type Organisation (pas de Customer local)
+// IMPORTANT: Organisation utilise "legal_name" (pas "name")
+// Interface Organisation définie dans use-organisations.ts
 
 export function CustomersTab() {
   const [searchQuery, setSearchQuery] = useState('')
   const [activeTab, setActiveTab] = useState<'active' | 'archived'>('active')
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid')
-  const [archivedCustomers, setArchivedCustomers] = useState<Customer[]>([])
+  const [archivedCustomers, setArchivedCustomers] = useState<Organisation[]>([])
   const [archivedLoading, setArchivedLoading] = useState(false)
   const [isModalOpen, setIsModalOpen] = useState(false)
-  const [selectedCustomer, setSelectedCustomer] = useState<Customer | null>(null)
+  const [selectedCustomer, setSelectedCustomer] = useState<Organisation | null>(null)
 
   const filters = useMemo(() => ({
     is_active: true,
@@ -91,7 +80,7 @@ export function CustomersTab() {
         .order('archived_at', { ascending: false })
 
       if (error) throw error
-      setArchivedCustomers((data || []) as Customer[])
+      setArchivedCustomers((data || []) as Organisation[])
     } catch (err) {
       console.error('Erreur chargement clients archivés:', err)
     } finally {
@@ -105,7 +94,7 @@ export function CustomersTab() {
     }
   }, [activeTab])
 
-  const handleArchive = async (customer: Customer) => {
+  const handleArchive = async (customer: Organisation) => {
     if (!customer.archived_at) {
       const success = await archiveOrganisation(customer.id)
       if (success) {
@@ -123,9 +112,9 @@ export function CustomersTab() {
     }
   }
 
-  const handleDelete = async (customer: Customer) => {
+  const handleDelete = async (customer: Organisation) => {
     const confirmed = confirm(
-      `Êtes-vous sûr de vouloir supprimer définitivement "${customer.name}" ?\n\nCette action est irréversible !`
+      `Êtes-vous sûr de vouloir supprimer définitivement "${getOrganisationDisplayName(customer)}" ?\n\nCette action est irréversible !`
     )
 
     if (confirmed) {

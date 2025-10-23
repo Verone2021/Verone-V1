@@ -54,37 +54,19 @@ import { spacing, colors } from '@/lib/design-system'
 import { createClient } from '@/lib/supabase/client'
 import { cn } from '@/lib/utils'
 
-interface Partner {
-  id: string
-  legal_name: string // Dénomination sociale
-  trade_name: string | null // Nom commercial (si différent)
-  has_different_trade_name: boolean | null
-  email: string | null
-  phone: string | null
-  city: string | null
-  country: string | null
-  billing_address_line1: string | null
-  billing_address_line2: string | null
-  billing_city: string | null
-  billing_country: string | null
-  billing_postal_code: string | null
-  is_active: boolean
-  archived_at: string | null
-  website: string | null
-  logo_url: string | null
-  preferred_supplier: boolean | null
-}
+// ✅ FIX TypeScript: Utiliser type Organisation (pas de Partner local)
+// Interface Organisation définie dans use-organisations.ts
 
 export default function PartnersPage() {
   const [searchQuery, setSearchQuery] = useState('')
   const [activeTab, setActiveTab] = useState<'active' | 'archived' | 'preferred'>('active')
-  const [archivedPartners, setArchivedPartners] = useState<Partner[]>([])
+  const [archivedPartners, setArchivedPartners] = useState<Organisation[]>([])
   const [archivedLoading, setArchivedLoading] = useState(false)
   const [isModalOpen, setIsModalOpen] = useState(false)
-  const [selectedPartner, setSelectedPartner] = useState<Partner | null>(null)
+  const [selectedPartner, setSelectedPartner] = useState<Organisation | null>(null)
   const [currentPage, setCurrentPage] = useState(1)
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid')
-  const [deleteModalPartner, setDeleteModalPartner] = useState<Partner | null>(null)
+  const [deleteModalPartner, setDeleteModalPartner] = useState<Organisation | null>(null)
   const [isDeleting, setIsDeleting] = useState(false)
   const itemsPerPage = 12 // 3 lignes × 4 colonnes
 
@@ -119,7 +101,7 @@ export default function PartnersPage() {
     refetch
   } = useOrganisations(filters)
 
-  const handleArchive = async (partner: Partner) => {
+  const handleArchive = async (partner: Organisation) => {
     if (!partner.archived_at) {
       // Archiver
       const success = await archiveOrganisation(partner.id)
@@ -139,7 +121,7 @@ export default function PartnersPage() {
     }
   }
 
-  const handleDelete = (partner: Partner) => {
+  const handleDelete = (partner: Organisation) => {
     setDeleteModalPartner(partner)
   }
 
@@ -185,7 +167,7 @@ export default function PartnersPage() {
         .order('archived_at', { ascending: false })
 
       if (error) throw error
-      setArchivedPartners((data || []) as Partner[])
+      setArchivedPartners((data || []) as Organisation[])
     } catch (err) {
       console.error('Erreur chargement partenaires archivés:', err)
     } finally {

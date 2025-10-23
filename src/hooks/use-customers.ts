@@ -95,9 +95,9 @@ export function useCustomers(filters?: CustomerFilters) {
         const professionalCustomers: UnifiedCustomer[] = (orgData || []).map(org => ({
           id: org.id,
           type: 'professional' as CustomerType,
-          displayName: org.name,
+          displayName: org.trade_name || org.legal_name || 'Organisation sans nom', // ✅ FIX: legal_name (pas name)
           email: org.email,
-          name: org.name,
+          name: org.trade_name || org.legal_name, // ✅ FIX: legal_name (pas name)
           siret: org.siret,
           vat_number: org.vat_number,
           billing_address_line1: org.billing_address_line1,
