@@ -1,0 +1,202 @@
+{
+  "$schema": "https://json.schemastore.org/eslintrc",
+  "extends": ["./.eslintrc.json"],
+  "rules": {
+    // =========================================================================
+    // TYPESCRIPT STRICT MODE (Best Practices 2025)
+    // =========================================================================
+
+    // Typage Strict
+    "@typescript-eslint/explicit-function-return-type": [
+      "warn",
+      {
+        "allowExpressions": true,
+        "allowTypedFunctionExpressions": true,
+        "allowHigherOrderFunctions": true
+      }
+    ],
+    "@typescript-eslint/no-explicit-any": "error",
+    "@typescript-eslint/no-unsafe-argument": "error",
+    "@typescript-eslint/no-unsafe-assignment": "warn",
+    "@typescript-eslint/no-unsafe-call": "warn",
+    "@typescript-eslint/no-unsafe-member-access": "warn",
+    "@typescript-eslint/no-unsafe-return": "warn",
+
+    // Imports & Types
+    "@typescript-eslint/consistent-type-imports": [
+      "error",
+      {
+        "prefer": "type-imports",
+        "disallowTypeAnnotations": false
+      }
+    ],
+    "@typescript-eslint/consistent-type-exports": [
+      "error",
+      {
+        "fixMixedExportsWithInlineTypeSpecifier": true
+      }
+    ],
+
+    // Naming Conventions
+    "@typescript-eslint/naming-convention": [
+      "error",
+      {
+        "selector": "variable",
+        "format": ["camelCase", "UPPER_CASE", "PascalCase"],
+        "leadingUnderscore": "allow",
+        "trailingUnderscore": "forbid"
+      },
+      {
+        "selector": "function",
+        "format": ["camelCase", "PascalCase"]
+      },
+      {
+        "selector": "typeLike",
+        "format": ["PascalCase"]
+      },
+      {
+        "selector": "interface",
+        "format": ["PascalCase"],
+        "prefix": ["I"],
+        "custom": {
+          "regex": "^I[A-Z]",
+          "match": false
+        }
+      }
+    ],
+
+    // Code Quality
+    "@typescript-eslint/no-floating-promises": "error",
+    "@typescript-eslint/no-misused-promises": "error",
+    "@typescript-eslint/await-thenable": "error",
+    "@typescript-eslint/no-unnecessary-type-assertion": "warn",
+    "@typescript-eslint/prefer-nullish-coalescing": "warn",
+    "@typescript-eslint/prefer-optional-chain": "warn",
+
+    // =========================================================================
+    // REACT & NEXT.JS BEST PRACTICES
+    // =========================================================================
+
+    // Hooks Rules
+    "react-hooks/rules-of-hooks": "error",
+    "react-hooks/exhaustive-deps": "warn",
+
+    // React Best Practices
+    "react/jsx-no-target-blank": ["error", { "allowReferrer": true }],
+    "react/self-closing-comp": "error",
+    "react/jsx-boolean-value": ["error", "never"],
+
+    // =========================================================================
+    // CODE CONSISTENCY
+    // =========================================================================
+
+    // Imports Organization
+    "import/order": [
+      "warn",
+      {
+        "groups": [
+          "builtin",
+          "external",
+          "internal",
+          ["parent", "sibling"],
+          "index"
+        ],
+        "pathGroups": [
+          {
+            "pattern": "react",
+            "group": "external",
+            "position": "before"
+          },
+          {
+            "pattern": "next/**",
+            "group": "external",
+            "position": "before"
+          },
+          {
+            "pattern": "@/**",
+            "group": "internal"
+          }
+        ],
+        "pathGroupsExcludedImportTypes": ["react"],
+        "newlines-between": "always",
+        "alphabetize": {
+          "order": "asc",
+          "caseInsensitive": true
+        }
+      }
+    ],
+
+    // No Unused Vars (avec exceptions)
+    "@typescript-eslint/no-unused-vars": [
+      "warn",
+      {
+        "argsIgnorePattern": "^_",
+        "varsIgnorePattern": "^_",
+        "caughtErrorsIgnorePattern": "^_"
+      }
+    ],
+
+    // Console Statements (warning only)
+    "no-console": [
+      "warn",
+      {
+        "allow": ["warn", "error"]
+      }
+    ],
+
+    // Debugger Statements
+    "no-debugger": "error",
+
+    // =========================================================================
+    // PERFORMANCE & SECURITY
+    // =========================================================================
+
+    // No Dangerous Patterns
+    "no-eval": "error",
+    "no-implied-eval": "error",
+    "no-new-func": "error",
+
+    // Async Best Practices
+    "no-async-promise-executor": "error",
+    "require-await": "warn",
+
+    // =========================================================================
+    // VÉRONE-SPECIFIC RULES
+    // =========================================================================
+
+    // Next.js Image Optimization
+    "@next/next/no-img-element": "error",
+
+    // Supabase Best Practices (custom rules à implémenter)
+    // TODO: Add custom ESLint rule for Supabase type usage
+    // TODO: Add custom ESLint rule for RLS policy checks
+  },
+
+  "overrides": [
+    {
+      // Relaxed rules for test files
+      "files": ["**/*.test.ts", "**/*.test.tsx", "**/*.spec.ts", "**/*.spec.tsx"],
+      "rules": {
+        "@typescript-eslint/no-explicit-any": "off",
+        "@typescript-eslint/no-unsafe-assignment": "off",
+        "no-console": "off"
+      }
+    },
+    {
+      // Relaxed rules for config files
+      "files": ["*.config.ts", "*.config.js", "*.config.mjs"],
+      "rules": {
+        "@typescript-eslint/no-var-requires": "off",
+        "import/no-anonymous-default-export": "off"
+      }
+    },
+    {
+      // Relaxed rules for migration scripts
+      "files": ["scripts/**/*.ts", "scripts/**/*.mjs"],
+      "rules": {
+        "no-console": "off",
+        "@typescript-eslint/no-explicit-any": "warn"
+      }
+    }
+  ]
+}

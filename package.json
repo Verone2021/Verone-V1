@@ -31,7 +31,14 @@
     "audit:deadcode": "knip",
     "audit:unused": "ts-prune",
     "audit:spelling": "cspell 'src/**/*.{ts,tsx,md}' 'docs/**/*.md' 'CLAUDE.md' 'packages/**/*.md'",
-    "audit:all": "npm run audit:duplicates && npm run audit:cycles && npm run audit:deadcode && npm run audit:spelling"
+    "audit:all": "npm run audit:duplicates && npm run audit:cycles && npm run audit:deadcode && npm run audit:spelling",
+    "lint:strict": "eslint . --config .eslintrc.strict.json",
+    "lint:strict:fix": "eslint . --config .eslintrc.strict.json --fix",
+    "validate:types": "node scripts/validation/check-db-type-alignment.ts",
+    "validate:hooks": "node scripts/validation/check-duplicate-hooks.ts",
+    "validate:naming": "node scripts/validation/check-naming-consistency.ts",
+    "validate:all": "npm run type-check && npm run validate:types && npm run validate:hooks && npm run validate:naming",
+    "prepare": "husky"
   },
   "dependencies": {
     "@google-cloud/storage": "^7.17.1",
@@ -107,8 +114,10 @@
     "eslint": "^8.56.0",
     "eslint-config-next": "^15.0.3",
     "eslint-plugin-storybook": "^9.1.13",
+    "husky": "^9.1.7",
     "jscpd": "^4.0.5",
     "knip": "^5.66.2",
+    "lint-staged": "^16.2.6",
     "madge": "^8.0.0",
     "playwright": "^1.55.0",
     "postcss": "^8.4.35",
