@@ -54,43 +54,43 @@ async function getUsersWithProfiles(): Promise<UserWithProfile[]> {
     return []
   }
 
-  // Pour chaque profil, récupérer les données utilisateur via une requête auth
+  // ✅ FIX PERFORMANCE: Récupérer TOUS les utilisateurs UNE SEULE FOIS (au lieu de N fois)
+  const { data: { users }, error: usersError } = await adminClient.auth.admin.listUsers({
+    page: 1,
+    perPage: 1000 // Limite élevée pour récupérer tous les utilisateurs
+  })
+
+  if (usersError) {
+    console.error('Erreur Admin API:', usersError)
+    return []
+  }
+
+  // ✅ FIX PERFORMANCE: Créer Map pour lookup O(1) au lieu de find() O(n)
+  const userMap = new Map(users.map(u => [u.id, u]))
+
+  // Construire la liste des utilisateurs avec leurs profils
   const usersWithProfiles: UserWithProfile[] = []
 
   for (const profile of profiles) {
-    try {
-      // Récupérer les détails de l'utilisateur via l'Admin API
-      const { data: { users }, error: usersError } = await adminClient.auth.admin.listUsers({
-        page: 1,
-        perPage: 1000 // Limite élevée pour récupérer tous les utilisateurs
+    // ✅ Lookup O(1) dans la Map au lieu d'appel API
+    const user = userMap.get(profile.user_id)
+
+    if (user) {
+      usersWithProfiles.push({
+        id: user.id,
+        email: user.email || '',
+        email_confirmed_at: user.email_confirmed_at || null,
+        created_at: user.created_at,
+        user_metadata: user.user_metadata || {},
+        profile: {
+          role: profile.role,
+          user_type: profile.user_type,
+          created_at: profile.created_at,
+          updated_at: profile.updated_at
+        }
       })
-
-      if (usersError) {
-        console.error('Erreur Admin API:', usersError)
-        continue
-      }
-
-      // Trouver l'utilisateur correspondant
-      const user = users?.find(u => u.id === profile.user_id)
-
-      if (user) {
-        usersWithProfiles.push({
-          id: user.id,
-          email: user.email || '',
-          email_confirmed_at: user.email_confirmed_at || null,
-          created_at: user.created_at,
-          user_metadata: user.user_metadata || {},
-          profile: {
-            role: profile.role,
-            user_type: profile.user_type,
-            created_at: profile.created_at,
-            updated_at: profile.updated_at
-          }
-        })
-      }
-    } catch (error) {
-      console.error('Erreur lors de la récupération de l\'utilisateur:', error)
-      continue
+    } else {
+      console.warn(`User not found for profile user_id: ${profile.user_id}`)
     }
   }
 

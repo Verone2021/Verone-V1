@@ -116,7 +116,21 @@ export function useUserActivityTracker() {
     async (supabase) => {
       // Récupérer user_id authentifié
       const { data: { user } } = await supabase.auth.getUser()
-      if (!user) throw new Error('No authenticated user')
+
+      // ✅ FIX: Retourner stats vides au lieu de throw si pas d'utilisateur
+      if (!user) {
+        return {
+          data: {
+            total_sessions: 0,
+            avg_session_duration: 0,
+            most_visited_pages: [],
+            most_used_actions: [],
+            error_rate: 0,
+            user_satisfaction_score: 0
+          } as ActivityStats,
+          error: null
+        }
+      }
 
       // Appeler fonction RPC optimisée PostgreSQL (migration 20251007_003)
       const { data, error } = await supabase.rpc('get_user_activity_stats', {
@@ -142,6 +156,7 @@ export function useUserActivityTracker() {
       return { data: stats, error: null }
     },
     {
+      enabled: typeof window !== 'undefined', // ✅ Désactiver côté serveur (SSR)
       staleTime: 5 * 60 * 1000, // 5 minutes (cache React Query préservé)
       cacheTime: 15 * 60 * 1000 // 15 minutes
     }
