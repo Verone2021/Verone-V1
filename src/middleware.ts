@@ -30,22 +30,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createServerClient } from '@supabase/ssr'
 
-// Routes modules désactivés (Phase 2+)
-const INACTIVE_ROUTES = [
-  '/produits',
-  '/stocks',
-  '/commandes',
-  '/ventes',
-  '/interactions',
-  '/consultations',
-  '/canaux-vente',
-  '/finance',
-  '/factures',
-  '/tresorerie',
-  '/notifications',
-  '/tests-essentiels'
-]
-
 // Routes protégées nécessitant authentification
 const PROTECTED_ROUTES = [
   '/dashboard',
@@ -53,7 +37,17 @@ const PROTECTED_ROUTES = [
   '/organisation',
   '/contacts-organisations',
   '/admin',
-  '/parametres'
+  '/parametres',
+  // Phase 2+ modules (restaurés depuis d4b6e37)
+  '/produits',
+  '/stocks',
+  '/commandes',
+  '/ventes',
+  '/consultations',
+  '/canaux-vente',
+  '/finance',
+  '/factures',
+  '/tresorerie'
 ]
 
 // Routes publiques (pas d'authentification requise)
@@ -126,18 +120,7 @@ export async function middleware(request: NextRequest) {
   const { data: { user }, error } = await supabase.auth.getUser()
   const isAuthenticated = !error && !!user
 
-  // 2. Bloquer modules Phase 2+ (redirige vers page "Module non déployé")
-  const isInactiveModule = INACTIVE_ROUTES.some(route => pathname.startsWith(route))
-  if (isInactiveModule) {
-    const moduleName = pathname.split('/')[1] || 'inconnu'
-    const url = request.nextUrl.clone()
-    url.pathname = '/module-inactive'
-    url.searchParams.set('module', moduleName)
-    url.searchParams.set('path', pathname)
-    return NextResponse.redirect(url)
-  }
-
-  // 3. Protection authentification : routes protégées nécessitent connexion
+  // 2. Protection authentification : routes protégées nécessitent connexion
   const isProtectedRoute = PROTECTED_ROUTES.some(route => pathname.startsWith(route))
   if (isProtectedRoute && !isAuthenticated) {
     const loginUrl = new URL('/login', request.url)

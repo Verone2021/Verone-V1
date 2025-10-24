@@ -61,6 +61,137 @@ const getNavItems = (stockAlertsCount: number): NavItem[] => [
     title: 'Organisations & Contacts',
     href: '/organisation',
     icon: Building2
+  },
+  // ============ PHASE 2+ MODULES ============
+  {
+    title: 'Produits',
+    href: '/produits',
+    icon: Package,
+    children: [
+      {
+        title: 'Catalogue',
+        href: '/produits/catalogue',
+        icon: BookOpen
+      },
+      {
+        title: 'Sourcing',
+        href: '/produits/sourcing',
+        icon: Target
+      },
+      {
+        title: 'Collections',
+        href: '/produits/collections',
+        icon: Layers
+      },
+      {
+        title: 'Catégories',
+        href: '/produits/catalogue/categories',
+        icon: Tags
+      },
+      {
+        title: 'Variantes',
+        href: '/produits/variantes',
+        icon: Grid3x3
+      }
+    ]
+  },
+  {
+    title: 'Stocks',
+    href: '/stocks',
+    icon: Layers,
+    children: [
+      {
+        title: 'Alertes',
+        href: '/stocks/alertes',
+        icon: Activity
+      },
+      {
+        title: 'Ajustements',
+        href: '/stocks/ajustements',
+        icon: RefreshCw
+      },
+      {
+        title: 'Entrées',
+        href: '/stocks/entrees',
+        icon: CheckCircle
+      },
+      {
+        title: 'Sorties',
+        href: '/stocks/sorties',
+        icon: LogOut
+      }
+    ]
+  },
+  {
+    title: 'Commandes',
+    href: '/commandes',
+    icon: ShoppingBag,
+    children: [
+      {
+        title: 'Clients',
+        href: '/commandes/clients',
+        icon: Users
+      },
+      {
+        title: 'Fournisseurs',
+        href: '/commandes/fournisseurs',
+        icon: Building2
+      },
+      {
+        title: 'Expéditions',
+        href: '/commandes/expeditions',
+        icon: Truck
+      }
+    ]
+  },
+  {
+    title: 'Ventes',
+    href: '/ventes',
+    icon: Target
+  },
+  {
+    title: 'Consultations',
+    href: '/consultations',
+    icon: MessageCircle
+  },
+  {
+    title: 'Canaux Vente',
+    href: '/canaux-vente',
+    icon: Grid3x3,
+    children: [
+      {
+        title: 'Google Merchant',
+        href: '/canaux-vente/google-merchant',
+        icon: ShoppingBag
+      }
+    ]
+  },
+  {
+    title: 'Finance',
+    href: '/finance',
+    icon: Wallet,
+    children: [
+      {
+        title: 'Dépenses',
+        href: '/finance/depenses',
+        icon: Banknote
+      },
+      {
+        title: 'Rapprochement',
+        href: '/finance/rapprochement',
+        icon: CheckCircle
+      }
+    ]
+  },
+  {
+    title: 'Factures',
+    href: '/factures',
+    icon: FileText
+  },
+  {
+    title: 'Trésorerie',
+    href: '/tresorerie',
+    icon: Banknote
   }
 ]
 
