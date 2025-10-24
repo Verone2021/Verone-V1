@@ -2,9 +2,9 @@ name: 🚀 Production Deployment - Vérone Back Office
 
 on:
   push:
-    branches: [main]
+    branches: [main, production-stable]
   pull_request:
-    branches: [main]
+    branches: [main, production-stable]
 
 env:
   NODE_VERSION: '20'
