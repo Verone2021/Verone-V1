@@ -104,7 +104,7 @@ export function IdentifiersEditSection({ product, onUpdate, className }: Identif
             Identifiants & Références
           </h3>
           <div className="flex space-x-2">
-            <ButtonV2
+            <Button
               variant="outline"
               size="sm"
               onClick={handleCancel}
@@ -113,8 +113,8 @@ export function IdentifiersEditSection({ product, onUpdate, className }: Identif
               <X className="h-3 w-3 mr-1" />
               Annuler
             </ButtonV2>
-            <ButtonV2
-              variant="primary"
+            <Button
+              variant="default"
               size="sm"
               onClick={handleSave}
               disabled={!hasChanges(section) || isSaving(section)}
@@ -132,7 +132,7 @@ export function IdentifiersEditSection({ product, onUpdate, className }: Identif
               <label className="block text-sm font-medium text-black">
                 SKU (Stock Keeping Unit) *
               </label>
-              <ButtonV2
+              <Button
                 type="button"
                 variant="outline"
                 size="sm"
@@ -162,7 +162,7 @@ export function IdentifiersEditSection({ product, onUpdate, className }: Identif
               <label className="block text-sm font-medium text-black">
                 URL Slug *
               </label>
-              <ButtonV2
+              <Button
                 type="button"
                 variant="outline"
                 size="sm"

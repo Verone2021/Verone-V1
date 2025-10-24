@@ -80,7 +80,7 @@ export function ContactPersonalEditSection({ contact, onUpdate, className }: Con
               Annuler
             </ButtonV2>
             <ButtonV2
-              variant="primary"
+              variant="default"
               size="sm"
               onClick={handleSave}
               disabled={!hasChanges(section) || isSaving(section)}

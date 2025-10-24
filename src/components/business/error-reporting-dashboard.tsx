@@ -722,7 +722,7 @@ const QueueManagement: React.FC<{
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <h2 className="text-2xl font-bold text-black">Gestion de la Queue</h2>
-        <ButtonV2
+        <Button
           onClick={() => {
             // Créer une erreur de test
             const testError: VeroneError = {

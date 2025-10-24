@@ -25,7 +25,7 @@ import { ContactFormModal } from './contact-form-modal'
 interface ContactsManagementSectionProps {
   organisationId: string
   organisationName: string
-  organisationType: 'supplier' | 'customer' | 'provider'
+  organisationType: 'supplier' | 'customer'
   onUpdate?: () => void
 }
 
@@ -36,7 +36,7 @@ export function ContactsManagementSection({
   onUpdate
 }: ContactsManagementSectionProps) {
   const [isModalOpen, setIsModalOpen] = useState(false)
-  const [editingContact, setEditingContact] = useState<Contact | null | undefined>(null)
+  const [editingContact, setEditingContact] = useState<Contact | null>(null)
 
   const {
     loading,
@@ -109,7 +109,7 @@ export function ContactsManagementSection({
       console.error('❌ ERREUR SAUVEGARDE CONTACT - ContactsManagementSection:')
       console.error('Error object:', error)
       console.error('Error string:', String(error))
-      console.error('Error message:', error && typeof error === 'object' && 'message' in error ? error.message : 'Unknown error')
+      console.error('Error message:', error?.message)
       console.error('OrganisationId:', organisationId)
       console.error('ContactData received:', contactData)
 
@@ -353,9 +353,10 @@ export function ContactsManagementSection({
           setIsModalOpen(false)
           setEditingContact(null)
         }}
-        onSuccess={() => handleContactSaved(null)}
-        contact={editingContact as any}
+        onSave={handleContactSaved}
+        contact={editingContact}
         organisationId={organisationId}
+        organisationName={organisationName}
       />
     </>
   )

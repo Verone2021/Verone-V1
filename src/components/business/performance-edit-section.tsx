@@ -17,11 +17,10 @@ interface Organisation {
 interface PerformanceEditSectionProps {
   organisation: Organisation
   onUpdate: (updatedOrganisation: Partial<Organisation>) => void
-  organisationType: 'supplier' | 'customer' | 'partner'
   className?: string
 }
 
-export function PerformanceEditSection({ organisation, onUpdate, organisationType, className }: PerformanceEditSectionProps) {
+export function PerformanceEditSection({ organisation, onUpdate, className }: PerformanceEditSectionProps) {
   const {
     isEditing,
     isSaving,
@@ -45,31 +44,6 @@ export function PerformanceEditSection({ organisation, onUpdate, organisationTyp
   const section: EditableSection = 'performance'
   const editData = getEditedData(section)
   const error = getError(section)
-
-  // Labels dynamiques selon le type d'organisation
-  const labels = {
-    supplier: {
-      ratingHint: 'Cliquez sur les étoiles pour évaluer ce fournisseur',
-      preferredTitle: 'Fournisseur préféré',
-      preferredSubtitle: 'Marquer comme fournisseur de confiance',
-      notesPlaceholder: 'Notes sur la qualité, fiabilité, points d\'attention...',
-      notesHint: 'Notes privées pour l\'équipe Vérone (non visibles du fournisseur)'
-    },
-    customer: {
-      ratingHint: 'Cliquez sur les étoiles pour évaluer ce client',
-      preferredTitle: 'Client préféré',
-      preferredSubtitle: 'Marquer comme client de confiance',
-      notesPlaceholder: 'Notes sur la fidélité, ponctualité de paiement, points d\'attention...',
-      notesHint: 'Notes privées pour l\'équipe Vérone (non visibles du client)'
-    },
-    partner: {
-      ratingHint: 'Cliquez sur les étoiles pour évaluer ce partenaire',
-      preferredTitle: 'Partenaire préféré',
-      preferredSubtitle: 'Marquer comme partenaire de confiance',
-      notesPlaceholder: 'Notes sur la collaboration, fiabilité, points d\'attention...',
-      notesHint: 'Notes privées pour l\'équipe Vérone (non visibles du partenaire)'
-    }
-  }[organisationType]
 
   const handleStartEdit = () => {
     startEdit(section, {
@@ -143,8 +117,8 @@ export function PerformanceEditSection({ organisation, onUpdate, organisationTyp
     return (
       <div className={cn("card-verone p-4", className)}>
         <div className="flex items-center justify-between mb-3">
-          <h3 className="text-base font-medium text-black flex items-center">
-            <TrendingUp className="h-4 w-4 mr-2" />
+          <h3 className="text-lg font-medium text-black flex items-center">
+            <TrendingUp className="h-5 w-5 mr-2" />
             Performance & Qualité
           </h3>
           <div className="flex space-x-2">
@@ -158,7 +132,7 @@ export function PerformanceEditSection({ organisation, onUpdate, organisationTyp
               Annuler
             </ButtonV2>
             <ButtonV2
-              variant="primary"
+              variant="default"
               size="sm"
               onClick={handleSave}
               disabled={!hasChanges(section) || isSaving(section)}
@@ -184,17 +158,17 @@ export function PerformanceEditSection({ organisation, onUpdate, organisationTyp
               </span>
             </div>
             <div className="text-xs text-gray-500 mt-1">
-              {labels.ratingHint}
+              Cliquez sur les étoiles pour évaluer ce fournisseur
             </div>
           </div>
 
-          {/* Organisation préférée */}
+          {/* Fournisseur préféré */}
           <div className="flex items-center justify-between p-3 bg-pink-50 rounded-lg border border-pink-200">
             <div className="flex items-center space-x-2">
               <Heart className="h-5 w-5 text-pink-600" />
               <div>
-                <div className="text-sm font-medium text-pink-800">{labels.preferredTitle}</div>
-                <div className="text-xs text-pink-600">{labels.preferredSubtitle}</div>
+                <div className="text-sm font-medium text-pink-800">Fournisseur préféré</div>
+                <div className="text-xs text-pink-600">Marquer comme fournisseur de confiance</div>
               </div>
             </div>
             <label className="relative inline-flex items-center cursor-pointer">
@@ -208,47 +182,45 @@ export function PerformanceEditSection({ organisation, onUpdate, organisationTyp
             </label>
           </div>
 
-          {/* Certifications - Uniquement pour fournisseurs */}
-          {organisationType === 'supplier' && (
-            <div>
-              <label className="block text-sm font-medium text-black mb-1">
-                Certifications & Labels qualité
-              </label>
-              <textarea
-                value={editData?.certification_labels?.join(', ') || ''}
-                onChange={(e) => handleCertificationChange(e.target.value)}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-black focus:border-black"
-                placeholder="ISO 9001, FSC, CE..."
-                rows={2}
-              />
-              <div className="text-xs text-gray-500 mt-1">
-                Séparez les certifications par des virgules
-              </div>
+          {/* Certifications */}
+          <div>
+            <label className="block text-sm font-medium text-black mb-1">
+              Certifications & Labels qualité
+            </label>
+            <textarea
+              value={editData?.certification_labels?.join(', ') || ''}
+              onChange={(e) => handleCertificationChange(e.target.value)}
+              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-black focus:border-black"
+              placeholder="ISO 9001, FSC, CE..."
+              rows={2}
+            />
+            <div className="text-xs text-gray-500 mt-1">
+              Séparez les certifications par des virgules
+            </div>
 
-              {/* Suggestions de certifications */}
-              <div className="mt-2">
-                <div className="text-xs text-gray-600 mb-2">Certifications courantes :</div>
-                <div className="flex flex-wrap gap-1">
-                  {commonCertifications.map(cert => (
-                    <button
-                      key={cert}
-                      type="button"
-                      onClick={() => {
-                        const currentCerts = editData?.certification_labels || []
-                        if (!currentCerts.includes(cert)) {
-                          const newCerts = [...currentCerts, cert]
-                          updateEditedData(section, { certification_labels: newCerts })
-                        }
-                      }}
-                      className="px-2 py-1 text-xs bg-gray-100 hover:bg-gray-200 rounded border text-gray-700"
-                    >
-                      + {cert}
-                    </button>
-                  ))}
-                </div>
+            {/* Suggestions de certifications */}
+            <div className="mt-2">
+              <div className="text-xs text-gray-600 mb-2">Certifications courantes :</div>
+              <div className="flex flex-wrap gap-1">
+                {commonCertifications.map(cert => (
+                  <button
+                    key={cert}
+                    type="button"
+                    onClick={() => {
+                      const currentCerts = editData?.certification_labels || []
+                      if (!currentCerts.includes(cert)) {
+                        const newCerts = [...currentCerts, cert]
+                        updateEditedData(section, { certification_labels: newCerts })
+                      }
+                    }}
+                    className="px-2 py-1 text-xs bg-gray-100 hover:bg-gray-200 rounded border text-gray-700"
+                  >
+                    + {cert}
+                  </button>
+                ))}
               </div>
             </div>
-          )}
+          </div>
 
           {/* Notes internes */}
           <div>
@@ -259,11 +231,11 @@ export function PerformanceEditSection({ organisation, onUpdate, organisationTyp
               value={editData?.notes || ''}
               onChange={(e) => updateEditedData(section, { notes: e.target.value })}
               className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-black focus:border-black"
-              placeholder={labels.notesPlaceholder}
+              placeholder="Notes sur la qualité, fiabilité, points d'attention..."
               rows={4}
             />
             <div className="text-xs text-gray-500 mt-1">
-              {labels.notesHint}
+              Notes privées pour l'équipe Vérone (non visibles du fournisseur)
             </div>
           </div>
 
@@ -355,7 +327,7 @@ export function PerformanceEditSection({ organisation, onUpdate, organisationTyp
               </div>
             )}
 
-            {/* Organisation préférée */}
+            {/* Fournisseur préféré */}
             {organisation.preferred_supplier && (
               <div className="bg-pink-50 p-3 rounded-lg">
                 <div className="text-xs text-pink-600 font-medium mb-1 flex items-center">
@@ -364,13 +336,13 @@ export function PerformanceEditSection({ organisation, onUpdate, organisationTyp
                 </div>
                 <div className="text-sm font-semibold text-pink-800 flex items-center">
                   <Heart className="h-4 w-4 mr-1 fill-pink-600" />
-                  {labels.preferredTitle}
+                  Fournisseur préféré
                 </div>
               </div>
             )}
 
-            {/* Certifications - Uniquement pour fournisseurs */}
-            {organisationType === 'supplier' && organisation.certification_labels && organisation.certification_labels.length > 0 && (
+            {/* Certifications */}
+            {organisation.certification_labels && organisation.certification_labels.length > 0 && (
               <div className="bg-green-50 p-3 rounded-lg">
                 <div className="text-xs text-green-600 font-medium mb-2 flex items-center">
                   <Award className="h-3 w-3 mr-1" />

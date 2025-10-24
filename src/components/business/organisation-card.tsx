@@ -20,8 +20,7 @@ import { spacing, colors } from '@/lib/design-system'
 interface OrganisationCardProps {
   organisation: {
     id: string
-    legal_name: string
-    trade_name?: string | null
+    name: string
     type: 'customer' | 'supplier' | 'partner'
     email?: string | null
     country?: string | null
@@ -46,7 +45,7 @@ interface OrganisationCardProps {
 /**
  * Formatte le code pays en version courte (FR au lieu de France)
  */
-function formatCountryCode(country: string | null | undefined): string {
+function formatCountryCode(country: string | null): string {
   if (!country) return ''
 
   const countryMap: Record<string, string> = {
@@ -118,7 +117,7 @@ export function OrganisationCard({
           <div className="flex items-center gap-1.5 flex-1 min-w-0">
             <OrganisationLogo
               logoUrl={organisation.logo_url}
-              organisationName={organisation.trade_name || organisation.legal_name}
+              organisationName={organisation.name}
               size="xs"
               fallback="initials"
               className="flex-shrink-0"
@@ -131,18 +130,18 @@ export function OrganisationCard({
                 className="hover:underline truncate flex items-center gap-1 text-sm font-medium leading-tight"
                 style={{ color: colors.text.DEFAULT }}
               >
-                <span className="truncate">{organisation.trade_name || organisation.legal_name}</span>
+                <span className="truncate">{organisation.name}</span>
                 <ExternalLink className="h-3 w-3 flex-shrink-0 opacity-60" />
               </a>
             ) : (
               <span className="truncate text-sm font-medium leading-tight" style={{ color: colors.text.DEFAULT }}>
-                {organisation.trade_name || organisation.legal_name}
+                {organisation.name}
               </span>
             )}
           </div>
           {organisation.archived_at && (
             <Badge
-              variant="danger"
+              variant="destructive"
               className="text-[10px] px-1.5 py-0.5 flex-shrink-0 leading-tight"
               style={{ backgroundColor: colors.danger[100], color: colors.danger[700] }}
             >
@@ -154,11 +153,11 @@ export function OrganisationCard({
         {/* Ligne 2: Badge Type / Segment Supplier */}
         {organisation.type === 'supplier' && organisation.supplier_segment ? (
           <div className="flex flex-wrap items-center gap-1">
-            <SupplierSegmentBadge segment={organisation.supplier_segment} size="sm" showIcon={true} />
+            <SupplierSegmentBadge segment={organisation.supplier_segment} size="xs" showIcon={true} />
             {organisation.supplier_category && (
               <SupplierCategoryBadge
                 category={organisation.supplier_category}
-                size="sm"
+                size="xs"
                 showIcon={false}
                 mode="single"
               />

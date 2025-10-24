@@ -264,7 +264,7 @@ export function QuickActionModal({
                 </CardDescription>
               )}
             </div>
-            <ButtonV2
+            <Button
               variant="ghost"
               size="sm"
               onClick={onClose}
@@ -286,7 +286,7 @@ export function QuickActionModal({
 
             {/* Actions */}
             <div className="flex justify-end space-x-3 pt-4 border-t">
-              <ButtonV2
+              <Button
                 type="button"
                 variant="outline"
                 onClick={onClose}
@@ -296,7 +296,7 @@ export function QuickActionModal({
                 {cancelText}
               </ButtonV2>
 
-              <ButtonV2
+              <Button
                 type="submit"
                 variant={destructive ? 'destructive' : 'default'}
                 disabled={isSubmitting || loading}

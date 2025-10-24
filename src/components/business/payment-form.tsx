@@ -316,7 +316,7 @@ export function PaymentForm({
 
             {/* Submit */}
             <div className="flex justify-end gap-2">
-              <ButtonV2
+              <Button
                 type="button"
                 variant="outline"
                 onClick={() => form.reset()}

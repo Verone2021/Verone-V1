@@ -170,9 +170,9 @@ export function PrimaryImageUpload({
           </div>
 
           {/* Bouton suppression */}
-          <ButtonV2
+          <Button
             type="button"
-            variant="danger"
+            variant="destructive"
             size="sm"
             className="absolute -top-2 -right-2 w-6 h-6 p-0 rounded-full"
             onClick={handleRemoveImage}
@@ -254,11 +254,11 @@ export function PrimaryImageUpload({
 
       {/* Erreurs */}
       {error && (
-        <Alert variant="danger">
+        <Alert variant="destructive">
           <AlertCircle className="h-4 w-4" />
           <AlertDescription className="flex items-center justify-between">
             <span>{error}</span>
-            <ButtonV2
+            <Button
               variant="outline"
               size="sm"
               onClick={() => fileInputRef.current?.click()}
@@ -272,7 +272,7 @@ export function PrimaryImageUpload({
 
       {/* Bouton pour remplacer l'image existante */}
       {displayImageUrl && !uploading && productId && (
-        <ButtonV2
+        <Button
           type="button"
           variant="outline"
           size="sm"

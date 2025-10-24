@@ -5,7 +5,7 @@ import { MapPin, Copy } from 'lucide-react'
 import { ButtonV2 } from '@/components/ui/button'
 import { Label } from '@/components/ui/label'
 import { Textarea } from '@/components/ui/textarea'
-import { Organisation, getOrganisationDisplayName } from '@/hooks/use-organisations'
+import { Organisation } from '@/hooks/use-organisations'
 import { UnifiedCustomer } from './customer-selector'
 
 interface AddressInputProps {
@@ -81,7 +81,7 @@ export function AddressInput({
   // Formatter l'adresse de l'organisation
   const formatOrganisationAddress = (org: Organisation): string => {
     const parts = [
-      getOrganisationDisplayName(org),
+      org.name,
       org.address_line1,
       org.address_line2,
       [org.postal_code, org.city].filter(Boolean).join(' '),

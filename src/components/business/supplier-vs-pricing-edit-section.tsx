@@ -151,7 +151,7 @@ export function SupplierVsPricingEditSection({
               Annuler
             </ButtonV2>
             <ButtonV2
-              variant="primary"
+              variant="default"
               size="xs"
               onClick={handleSave}
               disabled={!hasChanges(section) || isSaving(section)}

@@ -79,7 +79,7 @@ export function ColorSelector({
   return (
     <div className={cn("relative", className)}>
       {/* Bouton sélecteur */}
-      <ButtonV2
+      <Button
         type="button"
         variant="outline"
         role="combobox"
@@ -161,7 +161,7 @@ export function MaterialSelector({
   return (
     <div className={cn("relative", className)}>
       {/* Bouton sélecteur */}
-      <ButtonV2
+      <Button
         type="button"
         variant="outline"
         role="combobox"

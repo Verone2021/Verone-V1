@@ -95,9 +95,9 @@ export function useCustomers(filters?: CustomerFilters) {
         const professionalCustomers: UnifiedCustomer[] = (orgData || []).map(org => ({
           id: org.id,
           type: 'professional' as CustomerType,
-          displayName: org.trade_name || org.legal_name || 'Organisation sans nom', // ✅ FIX: legal_name (pas name)
+          displayName: org.name,
           email: org.email,
-          name: org.trade_name || org.legal_name, // ✅ FIX: legal_name (pas name)
+          name: org.name,
           siret: org.siret,
           vat_number: org.vat_number,
           billing_address_line1: org.billing_address_line1,
@@ -194,9 +194,9 @@ export function useCustomers(filters?: CustomerFilters) {
         return {
           id: data.id,
           type: 'professional',
-          displayName: data.trade_name || data.legal_name || 'Organisation sans nom',
+          displayName: data.name,
           email: data.email,
-          name: data.trade_name || data.legal_name,
+          name: data.name,
           siret: data.siret,
           vat_number: data.vat_number,
           billing_address_line1: data.billing_address_line1,

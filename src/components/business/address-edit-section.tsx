@@ -205,7 +205,7 @@ export function AddressEditSection({ organisation, onUpdate, className }: Addres
               Annuler
             </ButtonV2>
             <ButtonV2
-              variant="primary"
+              variant="default"
               size="sm"
               onClick={handleSave}
               disabled={!hasChanges(section) || isSaving(section)}

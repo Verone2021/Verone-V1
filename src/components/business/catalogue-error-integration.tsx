@@ -232,7 +232,7 @@ export const CatalogueErrorIntegration: React.FC = () => {
             criticalErrors={criticalErrorsCount}
             totalProducts={performance.total_products_scanned}
           />
-          <ButtonV2
+          <Button
             onClick={simulateCatalogueScan}
             disabled={isScanning}
             variant="outline"
@@ -245,7 +245,7 @@ export const CatalogueErrorIntegration: React.FC = () => {
             )}
             Scan Catalogue
           </ButtonV2>
-          <ButtonV2
+          <Button
             onClick={handleGlobalDetection}
             disabled={isScanning}
             size="sm"
@@ -416,7 +416,7 @@ const CatalogueStatusBadge: React.FC<{
 
   if (criticalErrors > 0) {
     return (
-      <Badge variant="danger" className="flex items-center gap-1">
+      <Badge variant="destructive" className="flex items-center gap-1">
         <AlertTriangle className="w-3 h-3" />
         {criticalErrors} Erreur{criticalErrors > 1 ? 's' : ''} Critique{criticalErrors > 1 ? 's' : ''}
       </Badge>
@@ -424,7 +424,7 @@ const CatalogueStatusBadge: React.FC<{
   }
 
   return (
-    <Badge variant="primary" className="flex items-center gap-1 bg-green-600">
+    <Badge variant="default" className="flex items-center gap-1 bg-green-600">
       <CheckCircle className="w-3 h-3" />
       {totalProducts} Produits Surveillés
     </Badge>
@@ -502,7 +502,7 @@ const CatalogueIntegrationGuide: React.FC = () => {
             <p className="text-sm text-gray-600">
               Patterns d'intégration pour le module Catalogue
             </p>
-            <ButtonV2
+            <Button
               onClick={() => setShowGuide(!showGuide)}
               variant="outline"
               size="sm"

@@ -69,11 +69,6 @@ const baseOrganisationSchema = z.object({
   is_active: z.boolean().default(true),
   notes: z.string().optional().or(z.literal('')),
 
-  // Contact
-  email: z.string().optional().or(z.literal('')),
-  phone: z.string().optional().or(z.literal('')),
-  website: z.string().optional().or(z.literal('')),
-
   // Adresse de facturation
   billing_address_line1: z.string().optional().or(z.literal('')),
   billing_address_line2: z.string().optional().or(z.literal('')),
@@ -111,7 +106,6 @@ const baseOrganisationSchema = z.object({
   // Commercial
   currency: z.string().default('EUR'),
   payment_terms: z.string().optional().or(z.literal('')),
-  prepayment_required: z.boolean().default(false),
 
   // Supplier specific
   supplier_segment: z.string().optional().or(z.literal('')),

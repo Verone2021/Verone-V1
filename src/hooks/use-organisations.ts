@@ -58,7 +58,7 @@ export interface Organisation {
   // Classification business
   industry_sector: string | null
   supplier_segment: string | null
-  // supplier_category: SUPPRIMÉ (migration 20251023_001 - colonne inexistante)
+  supplier_category: string | null
 
   // Informations commerciales
   payment_terms: string | null
@@ -148,7 +148,7 @@ export interface CreateOrganisationData {
   // Classification
   industry_sector?: string
   supplier_segment?: string
-  // supplier_category?: SUPPRIMÉ (migration 20251023_001)
+  supplier_category?: string
 
   // Commercial
   payment_terms?: string
@@ -204,7 +204,7 @@ export function useOrganisations(filters?: OrganisationFilters) {
 
       return data
     } catch (error) {
-      // Gestion silencieuse - return null suffit
+      console.error('Erreur lors de la récupération de l\'organisation:', error)
       return null
     }
   }
@@ -626,6 +626,7 @@ export function useOrganisation(id: string) {
             legal_form,
             industry_sector,
             supplier_segment,
+            supplier_category,
             payment_terms,
             delivery_time_days,
             minimum_order_amount,

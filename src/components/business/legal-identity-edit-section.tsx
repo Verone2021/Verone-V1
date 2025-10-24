@@ -150,7 +150,7 @@ export function LegalIdentityEditSection({ organisation, onUpdate, className }: 
               Annuler
             </ButtonV2>
             <ButtonV2
-              variant="primary"
+              variant="default"
               size="sm"
               onClick={handleSave}
               disabled={!hasChanges(section) || isSaving(section)}

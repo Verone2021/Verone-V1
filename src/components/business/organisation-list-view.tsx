@@ -19,8 +19,7 @@ import { SupplierSegmentBadge, SupplierSegmentType } from './supplier-segment-ba
 interface OrganisationListViewProps {
   organisations: Array<{
     id: string
-    legal_name: string
-    trade_name?: string | null
+    name: string
     type: 'customer' | 'supplier' | 'partner'
     email?: string | null
     phone?: string | null
@@ -44,7 +43,7 @@ interface OrganisationListViewProps {
 /**
  * Formatte le code pays en version courte (FR au lieu de France)
  */
-function formatCountryCode(country: string | null | undefined): string {
+function formatCountryCode(country: string | null): string {
   if (!country) return ''
 
   const countryMap: Record<string, string> = {
@@ -133,18 +132,18 @@ export function OrganisationListView({
                   <div className="flex items-center gap-2">
                     <OrganisationLogo
                       logoUrl={org.logo_url}
-                      organisationName={org.trade_name || org.legal_name}
+                      organisationName={org.name}
                       size="xs"
                       fallback="initials"
                       className="flex-shrink-0"
                     />
                     <div className="min-w-0">
                       <p className="font-medium text-black truncate leading-tight">
-                        {org.trade_name || org.legal_name}
+                        {org.name}
                       </p>
                       {org.archived_at && (
                         <Badge
-                          variant="danger"
+                          variant="destructive"
                           className="text-[10px] px-1 py-0 mt-0.5"
                         >
                           Archivé
@@ -159,7 +158,7 @@ export function OrganisationListView({
                   {org.type === 'supplier' && org.supplier_segment ? (
                     <SupplierSegmentBadge
                       segment={org.supplier_segment}
-                      size="sm"
+                      size="xs"
                       showIcon={false}
                     />
                   ) : (

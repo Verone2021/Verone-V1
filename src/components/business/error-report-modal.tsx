@@ -465,7 +465,7 @@ export function ErrorReportModal({
                 <div className="flex items-center justify-between">
                   <Label>Screenshots et captures</Label>
                   <div className="flex gap-2">
-                    <ButtonV2
+                    <Button
                       type="button"
                       variant="outline"
                       size="sm"
@@ -474,7 +474,7 @@ export function ErrorReportModal({
                       <Camera className="h-4 w-4 mr-2" />
                       Capture écran
                     </ButtonV2>
-                    <ButtonV2
+                    <Button
                       type="button"
                       variant="outline"
                       size="sm"
@@ -524,9 +524,9 @@ export function ErrorReportModal({
                             alt={`Screenshot ${index + 1}`}
                             className="w-full h-32 object-cover rounded"
                           />
-                          <ButtonV2
+                          <Button
                             type="button"
-                            variant="danger"
+                            variant="destructive"
                             size="sm"
                             className="absolute top-1 right-1 h-6 w-6 p-0"
                             onClick={() => removeScreenshot(index)}
@@ -602,7 +602,7 @@ export function ErrorReportModal({
               <div className="space-y-4">
                 <div className="flex items-center justify-between">
                   <Label>Étapes de reproduction</Label>
-                  <ButtonV2
+                  <Button
                     type="button"
                     variant="outline"
                     size="sm"
@@ -627,7 +627,7 @@ export function ErrorReportModal({
                             className="min-h-[60px]"
                           />
                         </div>
-                        <ButtonV2
+                        <Button
                           type="button"
                           variant="ghost"
                           size="sm"
@@ -657,7 +657,7 @@ export function ErrorReportModal({
             </div>
 
             <div className="flex gap-2">
-              <ButtonV2
+              <Button
                 type="button"
                 variant="outline"
                 onClick={onClose}
@@ -666,7 +666,7 @@ export function ErrorReportModal({
                 Annuler
               </ButtonV2>
 
-              <ButtonV2
+              <Button
                 type="submit"
                 disabled={isSubmitting || !formData.title || !formData.description}
                 className="bg-black text-white hover:bg-gray-800"
@@ -712,7 +712,7 @@ export function QuickErrorReport({
   const [isOpen, setIsOpen] = useState(false)
 
   const trigger = variant === 'icon' ? (
-    <ButtonV2
+    <Button
       variant="ghost"
       size="sm"
       className={cn("h-8 w-8 p-0", className)}
@@ -721,7 +721,7 @@ export function QuickErrorReport({
       <AlertTriangle className="h-4 w-4 text-black" />
     </ButtonV2>
   ) : (
-    <ButtonV2
+    <Button
       variant="outline"
       size={size}
       className={cn("text-black border-gray-300 hover:bg-gray-50", className)}

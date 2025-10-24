@@ -134,9 +134,9 @@ export function ImageUpload({
               sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
             />
             {!disabled && (
-              <ButtonV2
+              <Button
                 type="button"
-                variant="danger"
+                variant="destructive"
                 size="sm"
                 onClick={handleRemove}
                 className="absolute -top-2 -right-2 h-6 w-6 p-0 rounded-full"

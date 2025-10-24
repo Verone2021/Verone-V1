@@ -129,7 +129,7 @@ export function NotificationWidget({
                       {notification.type}
                     </Badge>
                   </div>
-                  <ButtonV2
+                  <Button
                     variant="ghost"
                     size="sm"
                     onClick={() => onDismiss(notification.id)}
@@ -150,7 +150,7 @@ export function NotificationWidget({
                   </span>
 
                   {notification.action && (
-                    <ButtonV2
+                    <Button
                       variant="outline"
                       size="sm"
                       onClick={notification.action.handler}
@@ -264,7 +264,7 @@ export function NotificationToast({
           {message}
         </p>
       </div>
-      <ButtonV2
+      <Button
         variant="ghost"
         size="sm"
         onClick={onClose}

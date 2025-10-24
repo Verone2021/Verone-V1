@@ -111,7 +111,7 @@ export function UnifiedDescriptionEditSection({
             Description Complète
           </h3>
           <div className="flex space-x-1">
-            <ButtonV2
+            <Button
               variant="outline"
               size="sm"
               onClick={handleCancel}
@@ -121,8 +121,8 @@ export function UnifiedDescriptionEditSection({
               <X className="h-3 w-3 mr-1" />
               Annuler
             </ButtonV2>
-            <ButtonV2
-              variant="primary"
+            <Button
+              variant="default"
               size="sm"
               onClick={handleSave}
               disabled={!hasChanges(section) || isSaving(section)}
@@ -163,7 +163,7 @@ export function UnifiedDescriptionEditSection({
                     className="flex-1 text-sm border-gray-300 focus:border-black focus:ring-black"
                     placeholder="Point de vente attractif..."
                   />
-                  <ButtonV2
+                  <Button
                     variant="outline"
                     size="sm"
                     onClick={() => removeSellingPoint(index)}
@@ -173,7 +173,7 @@ export function UnifiedDescriptionEditSection({
                   </ButtonV2>
                 </div>
               ))}
-              <ButtonV2
+              <Button
                 variant="outline"
                 size="sm"
                 onClick={addSellingPoint}

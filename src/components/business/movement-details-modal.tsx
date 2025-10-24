@@ -49,7 +49,7 @@ export function MovementDetailsModal({ movement, isOpen, onClose }: MovementDeta
       case 'IN':
         return <Badge className="bg-green-100 text-green-800">Entrée de Stock</Badge>
       case 'OUT':
-        return <Badge variant="danger">Sortie de Stock</Badge>
+        return <Badge variant="destructive">Sortie de Stock</Badge>
       case 'ADJUST':
         return <Badge className="bg-blue-100 text-blue-800">Ajustement</Badge>
       case 'TRANSFER':

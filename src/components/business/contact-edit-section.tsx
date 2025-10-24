@@ -8,7 +8,7 @@ import { useInlineEdit, type EditableSection } from '../../hooks/use-inline-edit
 
 interface Organisation {
   id: string
-  legal_name: string
+  name: string
   email?: string | null
   phone?: string | null
   secondary_email?: string | null
@@ -48,6 +48,7 @@ export function ContactEditSection({ organisation, onUpdate, className }: Contac
 
   const handleStartEdit = () => {
     startEdit(section, {
+      name: organisation.name,
       email: organisation.email || '',
       phone: organisation.phone || '',
       secondary_email: organisation.secondary_email || '',
@@ -56,24 +57,6 @@ export function ContactEditSection({ organisation, onUpdate, className }: Contac
   }
 
   const handleSave = async () => {
-    // Nettoyer les données avant sauvegarde (trim des espaces)
-    const cleanedData = Object.fromEntries(
-      Object.entries(editData || {}).map(([key, val]) => {
-        if (typeof val === 'string') {
-          const trimmed = val.trim()
-          // Convertir les chaînes vides en null pour les champs optionnels
-          return [key, trimmed === '' ? null : trimmed]
-        }
-        return [key, val]
-      })
-    )
-
-    // Mettre à jour avec les données nettoyées
-    updateEditedData(section, cleanedData)
-
-    // Attendre un tick pour que l'état soit mis à jour
-    await new Promise(resolve => setTimeout(resolve, 0))
-
     const success = await saveChanges(section)
     if (success) {
       console.log('✅ Informations contact mises à jour avec succès')
@@ -85,8 +68,8 @@ export function ContactEditSection({ organisation, onUpdate, className }: Contac
   }
 
   const handleFieldChange = (field: string, value: string) => {
-    // Nettoyage automatique des emails et URLs (trim appliqué seulement à la sauvegarde)
-    let processedValue = value
+    // Nettoyage automatique des emails et URLs
+    let processedValue = value.trim()
 
     if (field === 'email' || field === 'secondary_email') {
       processedValue = processedValue.toLowerCase()
@@ -103,8 +86,8 @@ export function ContactEditSection({ organisation, onUpdate, className }: Contac
     return (
       <div className={cn("card-verone p-4", className)}>
         <div className="flex items-center justify-between mb-3">
-          <h3 className="text-base font-medium text-black flex items-center">
-            <User className="h-4 w-4 mr-2" />
+          <h3 className="text-lg font-medium text-black flex items-center">
+            <User className="h-5 w-5 mr-2" />
             Informations Contact
           </h3>
           <div className="flex space-x-2">
@@ -118,7 +101,7 @@ export function ContactEditSection({ organisation, onUpdate, className }: Contac
               Annuler
             </ButtonV2>
             <ButtonV2
-              variant="primary"
+              variant="default"
               size="sm"
               onClick={handleSave}
               disabled={!hasChanges(section) || isSaving(section)}
@@ -130,6 +113,21 @@ export function ContactEditSection({ organisation, onUpdate, className }: Contac
         </div>
 
         <div className="space-y-4">
+          {/* Nom du fournisseur */}
+          <div>
+            <label className="block text-sm font-medium text-black mb-1">
+              Nom du fournisseur *
+            </label>
+            <input
+              type="text"
+              value={editData?.name || ''}
+              onChange={(e) => handleFieldChange('name', e.target.value)}
+              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-black focus:border-black"
+              placeholder="Nom du fournisseur"
+              required
+            />
+          </div>
+
           {/* Email principal */}
           <div>
             <label className="block text-sm font-medium text-black mb-1">
@@ -188,7 +186,7 @@ export function ContactEditSection({ organisation, onUpdate, className }: Contac
               placeholder="www.fournisseur.com"
             />
             <div className="text-xs text-gray-500 mt-1">
-              Site web de l'organisation (https:// sera ajouté automatiquement)
+              Site web du fournisseur (https:// sera ajouté automatiquement)
             </div>
           </div>
         </div>
@@ -218,6 +216,11 @@ export function ContactEditSection({ organisation, onUpdate, className }: Contac
       </div>
 
       <div className="space-y-3">
+        <div>
+          <span className="text-sm text-black opacity-70">Nom:</span>
+          <div className="text-lg font-semibold text-black">{organisation.name}</div>
+        </div>
+
         {organisation.email && (
           <div>
             <span className="text-sm text-black opacity-70 flex items-center">

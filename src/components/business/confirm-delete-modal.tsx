@@ -39,7 +39,7 @@ export function ConfirmDeleteModal({
           <h2 className="text-lg font-medium text-black">{title}</h2>
           <p className="text-sm text-gray-600">{message}</p>
         </div>
-        <ButtonV2
+        <Button
           variant="ghost"
           size="sm"
           onClick={onCancel}
@@ -80,15 +80,15 @@ export function ConfirmDeleteModal({
 
       {/* Actions */}
       <div className="flex items-center justify-end space-x-3">
-        <ButtonV2
+        <Button
           variant="outline"
           onClick={onCancel}
           disabled={loading}
         >
           Annuler
         </ButtonV2>
-        <ButtonV2
-          variant="danger"
+        <Button
+          variant="destructive"
           onClick={onConfirm}
           disabled={loading}
           className="bg-red-600 hover:bg-red-700 min-w-[120px]"

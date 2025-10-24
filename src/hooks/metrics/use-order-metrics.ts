@@ -100,10 +100,10 @@ export function useOrderMetrics() {
             if (order.customer_type === 'organization' && order.customer_id) {
               const { data: org } = await supabase
                 .from('organisations')
-                .select('legal_name')
+                .select('name')
                 .eq('id', order.customer_id)
                 .single();
-              customerName = org?.legal_name || 'Organisation inconnue';
+              customerName = org?.name || 'Organisation inconnue';
             } else if (order.customer_type === 'individual' && order.customer_id) {
               const { data: individual } = await supabase
                 .from('individual_customers')
