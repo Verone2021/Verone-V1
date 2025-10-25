@@ -10,7 +10,7 @@
 import { useEffect, useState } from 'react'
 import { useParams, useRouter } from 'next/navigation'
 import { ArrowLeft, Plus, Edit, Trash2, FolderOpen, Package } from 'lucide-react'
-import { Button } from '@/components/ui/button'
+import { ButtonV2 } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { useFamilies } from '@/hooks/use-families'
@@ -85,14 +85,14 @@ export default function FamilyDetailPage() {
       <div className="min-h-screen bg-white p-6">
         <div className="max-w-6xl mx-auto text-center">
           <h1 className="text-2xl font-bold text-black mb-4">Famille non trouvée</h1>
-          <Button
+          <ButtonV2
             onClick={() => router.push('/produits/catalogue/categories')}
             variant="outline"
             className="border-black text-black hover:bg-black hover:text-white"
           >
             <ArrowLeft className="w-4 h-4 mr-2" />
             Retour au catalogue
-          </Button>
+          </ButtonV2>
         </div>
       </div>
     )
@@ -182,7 +182,7 @@ export default function FamilyDetailPage() {
         {/* Header */}
         <div className="flex items-center justify-between mb-8">
           <div className="flex items-center space-x-4">
-            <Button
+            <ButtonV2
               onClick={() => router.push('/produits/catalogue/categories')}
               variant="outline"
               size="sm"
@@ -190,7 +190,7 @@ export default function FamilyDetailPage() {
             >
               <ArrowLeft className="w-4 h-4 mr-2" />
               Retour
-            </Button>
+            </ButtonV2>
             <div>
               <h1 className="text-3xl font-bold text-black">{family.name}</h1>
               <p className="text-gray-600 mt-1">
@@ -200,7 +200,7 @@ export default function FamilyDetailPage() {
           </div>
 
           <div className="flex items-center space-x-3">
-            <Button
+            <ButtonV2
               variant="outline"
               size="sm"
               className="border-black text-black hover:bg-black hover:text-white"
@@ -208,8 +208,8 @@ export default function FamilyDetailPage() {
             >
               <Edit className="w-4 h-4 mr-2" />
               Modifier
-            </Button>
-            <Button
+            </ButtonV2>
+            <ButtonV2
               variant="outline"
               size="sm"
               className="border-black text-black hover:bg-black hover:text-white"
@@ -217,7 +217,7 @@ export default function FamilyDetailPage() {
             >
               <Plus className="w-4 h-4 mr-2" />
               Nouvelle catégorie
-            </Button>
+            </ButtonV2>
           </div>
         </div>
 
@@ -277,14 +277,14 @@ export default function FamilyDetailPage() {
             <Card>
               <CardContent className="pt-6 text-center">
                 <p className="text-gray-500 mb-4">Aucune catégorie dans cette famille</p>
-                <Button
+                <ButtonV2
                   variant="outline"
                   className="border-black text-black hover:bg-black hover:text-white"
                   onClick={handleNewCategory}
                 >
                   <Plus className="w-4 h-4 mr-2" />
                   Créer la première catégorie
-                </Button>
+                </ButtonV2>
               </CardContent>
             </Card>
           ) : (

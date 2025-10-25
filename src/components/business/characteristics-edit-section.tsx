@@ -155,7 +155,7 @@ export function CharacteristicsEditSection({
             Caractéristiques
           </h3>
           <div className="flex space-x-1">
-            <Button
+            <ButtonV2
               variant="outline"
               size="sm"
               onClick={handleCancel}
@@ -165,7 +165,7 @@ export function CharacteristicsEditSection({
               <X className="h-3 w-3 mr-1" />
               Annuler
             </ButtonV2>
-            <Button
+            <ButtonV2
               variant="default"
               size="sm"
               onClick={handleSave}
@@ -188,7 +188,7 @@ export function CharacteristicsEditSection({
                   <Badge key={key} variant="secondary" className="flex items-center gap-1">
                     <span className="font-medium">{key}:</span>
                     <span>{value as string}</span>
-                    <Button
+                    <ButtonV2
                       variant="ghost"
                       size="sm"
                       className="h-auto p-0 ml-1"
@@ -219,7 +219,7 @@ export function CharacteristicsEditSection({
                 className="flex-1 border-gray-300 focus:border-black focus:ring-black"
                 onKeyPress={(e) => e.key === 'Enter' && addVariantAttribute()}
               />
-              <Button
+              <ButtonV2
                 type="button"
                 variant="outline"
                 onClick={addVariantAttribute}
@@ -241,7 +241,7 @@ export function CharacteristicsEditSection({
                 { key: 'Style', placeholder: 'Moderne, Classique, Vintage...' },
                 { key: 'Taille', placeholder: 'S, M, L, XL...' }
               ].map(({ key, placeholder }) => (
-                <Button
+                <ButtonV2
                   key={key}
                   variant="ghost"
                   size="sm"
@@ -276,7 +276,7 @@ export function CharacteristicsEditSection({
                     <Badge key={key} variant="secondary" className="flex items-center gap-1">
                       <span className="font-medium">{key}:</span>
                       <span>{value as string}</span>
-                      <Button
+                      <ButtonV2
                         variant="ghost"
                         size="sm"
                         className="h-auto p-0 ml-1"
@@ -312,7 +312,7 @@ export function CharacteristicsEditSection({
                     {newDimensionKey.toLowerCase().includes('poids') ? 'kg' : 'cm'}
                   </span>
                 </div>
-                <Button
+                <ButtonV2
                   type="button"
                   variant="outline"
                   onClick={addDimension}
@@ -333,7 +333,7 @@ export function CharacteristicsEditSection({
                 {[
                   'Longueur', 'Largeur', 'Hauteur', 'Profondeur', 'Diamètre', 'Épaisseur', 'Poids'
                 ].map((dimension) => (
-                  <Button
+                  <ButtonV2
                     key={dimension}
                     variant="ghost"
                     size="sm"

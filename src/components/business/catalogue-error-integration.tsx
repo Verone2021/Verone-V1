@@ -232,7 +232,7 @@ export const CatalogueErrorIntegration: React.FC = () => {
             criticalErrors={criticalErrorsCount}
             totalProducts={performance.total_products_scanned}
           />
-          <Button
+          <ButtonV2
             onClick={simulateCatalogueScan}
             disabled={isScanning}
             variant="outline"
@@ -245,7 +245,7 @@ export const CatalogueErrorIntegration: React.FC = () => {
             )}
             Scan Catalogue
           </ButtonV2>
-          <Button
+          <ButtonV2
             onClick={handleGlobalDetection}
             disabled={isScanning}
             size="sm"
@@ -502,7 +502,7 @@ const CatalogueIntegrationGuide: React.FC = () => {
             <p className="text-sm text-gray-600">
               Patterns d'intégration pour le module Catalogue
             </p>
-            <Button
+            <ButtonV2
               onClick={() => setShowGuide(!showGuide)}
               variant="outline"
               size="sm"

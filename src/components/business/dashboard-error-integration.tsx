@@ -104,7 +104,7 @@ export const DashboardErrorIntegration: React.FC = () => {
 
         <div className="flex items-center gap-3">
           <SystemStatusBadge isActive={isActive} criticalErrors={criticalErrorsCount} />
-          <Button
+          <ButtonV2
             onClick={handleManualDetection}
             disabled={isDetecting}
             variant="outline"
@@ -360,7 +360,7 @@ export function MyDashboardComponent() {
             <p className="text-sm text-gray-600">
               Code d'exemple pour l'intégration Dashboard
             </p>
-            <Button
+            <ButtonV2
               onClick={() => setShowCode(!showCode)}
               variant="outline"
               size="sm"

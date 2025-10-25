@@ -1,7 +1,7 @@
 import Link from 'next/link'
 import { ArrowLeft, Package, RotateCcw, Trash2 } from 'lucide-react'
 import { Badge } from '@/components/ui/badge'
-import { Button } from '@/components/ui/button'
+import { ButtonV2 } from '@/components/ui/button'
 
 export default function ArchivedProductsPage() {
   // Données mockées pour l'interface
@@ -110,23 +110,23 @@ export default function ArchivedProductsPage() {
                 </div>
 
                 <div className="flex gap-2 ml-4">
-                  <Button
+                  <ButtonV2
                     variant="outline"
                     size="sm"
                     className="text-xs"
                   >
                     <RotateCcw className="h-4 w-4 mr-1" />
                     Restaurer
-                  </Button>
+                  </ButtonV2>
 
-                  <Button
+                  <ButtonV2
                     variant="outline"
                     size="sm"
                     className="text-xs text-red-600 border-red-300 hover:bg-red-50"
                   >
                     <Trash2 className="h-4 w-4 mr-1" />
                     Supprimer
-                  </Button>
+                  </ButtonV2>
                 </div>
               </div>
             </div>

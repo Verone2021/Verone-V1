@@ -50,7 +50,8 @@ export interface SalesOrder {
   // Relations jointes (polymorphiques selon customer_type)
   organisations?: {
     id: string
-    name: string
+    legal_name: string
+    trade_name: string | null
     email?: string
     phone?: string
     address_line1?: string
@@ -233,7 +234,7 @@ export function useSalesOrders() {
           if (order.customer_type === 'organization' && order.customer_id) {
             const { data: org } = await supabase
               .from('organisations')
-              .select('id, name, email, phone, address_line1, address_line2, postal_code, city')
+              .select('id, legal_name, trade_name, email, phone, address_line1, address_line2, postal_code, city')
               .eq('id', order.customer_id)
               .single()
             customerData = { organisations: org }
@@ -315,7 +316,7 @@ export function useSalesOrders() {
       if (orderData.customer_type === 'organization' && orderData.customer_id) {
         const { data: org } = await supabase
           .from('organisations')
-          .select('id, name, email, phone, address_line1, address_line2, postal_code, city')
+          .select('id, legal_name, trade_name, email, phone, address_line1, address_line2, postal_code, city')
           .eq('id', orderData.customer_id)
           .single()
         customerData = { organisations: org }

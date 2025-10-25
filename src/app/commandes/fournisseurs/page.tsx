@@ -138,7 +138,7 @@ export default function PurchaseOrdersPage() {
   const filteredOrders = orders.filter(order => {
     const matchesSearch = searchTerm === '' ||
       order.po_number.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      order.organisations?.name.toLowerCase().includes(searchTerm.toLowerCase())
+      (order.organisations?.trade_name || order.organisations?.legal_name || '').toLowerCase().includes(searchTerm.toLowerCase())
 
     return matchesSearch
   })
@@ -316,7 +316,7 @@ export default function PurchaseOrdersPage() {
                         {order.po_number}
                       </TableCell>
                       <TableCell>
-                        {order.organisations?.name || 'Non défini'}
+                        {order.organisations?.trade_name || order.organisations?.legal_name || 'Non défini'}
                       </TableCell>
                       <TableCell>
                         <Badge className={statusColors[order.status]}>
@@ -409,7 +409,7 @@ export default function PurchaseOrdersPage() {
                     <h3 className="font-semibold">Informations générales</h3>
                     <div className="text-sm space-y-1">
                       <p><span className="font-medium">Numéro:</span> {selectedOrder.po_number}</p>
-                      <p><span className="font-medium">Fournisseur:</span> {selectedOrder.organisations?.name}</p>
+                      <p><span className="font-medium">Fournisseur:</span> {selectedOrder.organisations?.trade_name || selectedOrder.organisations?.legal_name}</p>
                       <div className="flex items-center gap-2">
                         <span className="font-medium text-sm">Statut:</span>
                         <Badge className={statusColors[selectedOrder.status]}>

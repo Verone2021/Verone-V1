@@ -98,7 +98,7 @@ export function ProductDualMode({
 
               {/* Toggle visuel - Compact sur mobile */}
               <div className="flex items-center bg-gray-100 rounded-lg p-0.5 md:p-1">
-                <Button
+                <ButtonV2
                   variant={currentMode === 'view' ? 'default' : 'ghost'}
                   size="sm"
                   onClick={() => handleModeSwitch('view')}
@@ -114,7 +114,7 @@ export function ProductDualMode({
                   <span className="hidden sm:inline">Présentation</span>
                 </ButtonV2>
 
-                <Button
+                <ButtonV2
                   variant={currentMode === 'edit' ? 'default' : 'ghost'}
                   size="sm"
                   onClick={() => handleModeSwitch('edit')}

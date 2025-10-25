@@ -23,8 +23,8 @@ import { ButtonV2 } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { Progress } from '@/components/ui/progress'
 
-// Configuration des canaux de vente disponibles
-const SALES_CHANNELS = [
+// Configuration des canaux de vente actifs
+const ACTIVE_CHANNELS = [
   {
     id: 'google_merchant',
     name: 'Google Merchant Center',
@@ -40,34 +40,6 @@ const SALES_CHANNELS = [
     path: '/canaux-vente/google-merchant'
   },
   {
-    id: 'instagram_shopping',
-    name: 'Instagram Shopping',
-    description: 'Catalogue produits sur Instagram',
-    icon: Smartphone,
-    status: 'setup_required',
-    products_synced: 0,
-    last_sync: null,
-    sync_status: 'pending',
-    revenue_this_month: 0,
-    orders_this_month: 0,
-    api: false,
-    path: '/canaux-vente/instagram-shopping'
-  },
-  {
-    id: 'facebook_marketplace',
-    name: 'Facebook Marketplace',
-    description: 'Vente sur Facebook Marketplace',
-    icon: Store,
-    status: 'inactive',
-    products_synced: 0,
-    last_sync: null,
-    sync_status: 'pending',
-    revenue_this_month: 0,
-    orders_this_month: 0,
-    api: true,
-    path: '/canaux-vente/facebook-marketplace'
-  },
-  {
     id: 'boutique_en_ligne',
     name: 'Boutique en ligne',
     description: 'Site e-commerce Vérone',
@@ -80,6 +52,22 @@ const SALES_CHANNELS = [
     orders_this_month: 89,
     api: false,
     path: '/canaux-vente/boutique'
+  }
+]
+
+// Canaux Phase 2 (à venir)
+const UPCOMING_CHANNELS = [
+  {
+    id: 'instagram_shopping',
+    name: 'Instagram Shopping',
+    description: 'Catalogue produits sur Instagram - Disponible en Phase 2',
+    icon: Smartphone
+  },
+  {
+    id: 'facebook_marketplace',
+    name: 'Facebook Marketplace',
+    description: 'Vente sur Facebook Marketplace - Disponible en Phase 2',
+    icon: Store
   }
 ]
 
@@ -130,11 +118,11 @@ export default function CanauxVentePage() {
 
   // Calcul des statistiques globales
   const stats = {
-    totalChannels: SALES_CHANNELS.length,
-    activeChannels: SALES_CHANNELS.filter(c => c.status === 'active').length,
-    totalProducts: SALES_CHANNELS.reduce((sum, c) => sum + c.products_synced, 0),
-    totalRevenue: SALES_CHANNELS.reduce((sum, c) => sum + c.revenue_this_month, 0),
-    totalOrders: SALES_CHANNELS.reduce((sum, c) => sum + c.orders_this_month, 0)
+    totalChannels: ACTIVE_CHANNELS.length,
+    activeChannels: ACTIVE_CHANNELS.filter(c => c.status === 'active').length,
+    totalProducts: ACTIVE_CHANNELS.reduce((sum, c) => sum + c.products_synced, 0),
+    totalRevenue: ACTIVE_CHANNELS.reduce((sum, c) => sum + c.revenue_this_month, 0),
+    totalOrders: ACTIVE_CHANNELS.reduce((sum, c) => sum + c.orders_this_month, 0)
   }
 
   return (
@@ -234,15 +222,15 @@ export default function CanauxVentePage() {
           </Card>
         </div>
 
-        {/* Liste des canaux de vente */}
-        <Card className="border-black">
+        {/* Liste des canaux de vente actifs */}
+        <Card className="border-black mb-6">
           <CardHeader>
-            <CardTitle className="text-black">Canaux de Distribution</CardTitle>
+            <CardTitle className="text-black">Canaux de Distribution Actifs</CardTitle>
             <CardDescription>Gérez et synchronisez vos produits sur différentes plateformes</CardDescription>
           </CardHeader>
           <CardContent>
             <div className="space-y-4">
-              {SALES_CHANNELS.map((channel) => {
+              {ACTIVE_CHANNELS.map((channel) => {
                 const Icon = channel.icon
                 return (
                   <div
@@ -313,6 +301,45 @@ export default function CanauxVentePage() {
                       </div>
 
                       <ChevronRight className="h-5 w-5 text-gray-400 ml-4" />
+                    </div>
+                  </div>
+                )
+              })}
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Canaux à venir (Phase 2) */}
+        <Card className="border-gray-300 bg-gray-50">
+          <CardHeader>
+            <CardTitle className="text-gray-700 flex items-center">
+              <Clock className="h-5 w-5 mr-2" />
+              Canaux à Venir - Phase 2
+            </CardTitle>
+            <CardDescription>Ces canaux seront disponibles prochainement</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-3">
+              {UPCOMING_CHANNELS.map((channel) => {
+                const Icon = channel.icon
+                return (
+                  <div
+                    key={channel.id}
+                    className="border border-gray-300 rounded-lg p-5 bg-white opacity-70"
+                  >
+                    <div className="flex items-start space-x-4">
+                      <div className="p-3 bg-gray-100 rounded-lg">
+                        <Icon className="h-6 w-6 text-gray-500" />
+                      </div>
+                      <div className="flex-1">
+                        <div className="flex items-center space-x-2 mb-1">
+                          <h3 className="font-semibold text-gray-700">{channel.name}</h3>
+                          <Badge variant="outline" className="border-gray-400 text-gray-600">
+                            Bientôt disponible
+                          </Badge>
+                        </div>
+                        <p className="text-gray-500 text-sm">{channel.description}</p>
+                      </div>
                     </div>
                   </div>
                 )

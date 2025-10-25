@@ -216,7 +216,7 @@ export const CollectionGrid: React.FC<CollectionGridProps> = ({
 
           {/* Reset filtres */}
           {(selectedCategories.length > 0 || selectedStatuses.length > 0 || searchQuery) && (
-            <Button
+            <ButtonV2
               variant="ghost"
               onClick={resetFilters}
               className="w-full text-left justify-start"
@@ -229,14 +229,14 @@ export const CollectionGrid: React.FC<CollectionGridProps> = ({
           <div className="space-y-3 pt-6 border-t border-gray-200">
             <h4 className="text-sm font-medium text-black">Affichage</h4>
             <div className="flex gap-2">
-              <Button
+              <ButtonV2
                 variant={viewMode === 'grid' ? 'default' : 'secondary'}
                 size="sm"
                 onClick={() => setViewMode('grid')}
               >
                 Grille
               </ButtonV2>
-              <Button
+              <ButtonV2
                 variant={viewMode === 'list' ? 'default' : 'secondary'}
                 size="sm"
                 onClick={() => setViewMode('list')}

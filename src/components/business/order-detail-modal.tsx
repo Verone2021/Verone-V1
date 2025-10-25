@@ -77,7 +77,7 @@ export function OrderDetailModal({ order, open, onClose, onUpdate }: OrderDetail
 
   const getCustomerName = () => {
     if (order.customer_type === 'organization' && order.organisations) {
-      return order.organisations.name
+      return order.organisations.trade_name || order.organisations.legal_name
     } else if (order.customer_type === 'individual' && order.individual_customers) {
       const customer = order.individual_customers
       return `${customer.first_name} ${customer.last_name}`

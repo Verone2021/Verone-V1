@@ -123,7 +123,7 @@ export default function SalesOrdersPage() {
 
         const term = normalizeString(searchTerm)
         const matchesOrderNumber = normalizeString(order.order_number).includes(term)
-        const matchesOrgName = normalizeString(order.organisations?.name).includes(term)
+        const matchesOrgName = normalizeString(order.organisations?.trade_name || order.organisations?.legal_name || '').includes(term)
         const matchesIndividualName =
           normalizeString(order.individual_customers?.first_name).includes(term) ||
           normalizeString(order.individual_customers?.last_name).includes(term)
@@ -147,10 +147,10 @@ export default function SalesOrdersPage() {
             break
           case 'client':
             const nameA = a.customer_type === 'organization'
-              ? a.organisations?.name || ''
+              ? a.organisations?.trade_name || a.organisations?.legal_name || ''
               : `${a.individual_customers?.first_name} ${a.individual_customers?.last_name}`
             const nameB = b.customer_type === 'organization'
-              ? b.organisations?.name || ''
+              ? b.organisations?.trade_name || b.organisations?.legal_name || ''
               : `${b.individual_customers?.first_name} ${b.individual_customers?.last_name}`
             comparison = nameA.localeCompare(nameB)
             break
@@ -572,7 +572,7 @@ export default function SalesOrdersPage() {
                 <TableBody>
                   {filteredOrders.map((order) => {
                     const customerName = order.customer_type === 'organization'
-                      ? order.organisations?.name
+                      ? order.organisations?.trade_name || order.organisations?.legal_name
                       : `${order.individual_customers?.first_name} ${order.individual_customers?.last_name}`
 
                     const canDelete = order.status === 'draft' || order.status === 'cancelled'

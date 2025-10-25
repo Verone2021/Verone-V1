@@ -402,7 +402,8 @@ export function useProduct(id: string) {
             updated_at,
             supplier:organisations!supplier_id (
               id,
-              name,
+              legal_name,
+              trade_name,
               type
             ),
             product_images!left (

@@ -2,7 +2,7 @@
 
 import React, { useState } from 'react'
 import { Check, ChevronsUpDown, X, LucideIcon } from 'lucide-react'
-import { Button } from '@/components/ui/button'
+import { ButtonV2 } from '@/components/ui/button'
 import {
   Popover,
   PopoverContent,
@@ -138,21 +138,21 @@ export function FilterCombobox({
           {label}
         </h3>
         {selectedValues.length > 0 && (
-          <Button
+          <ButtonV2
             variant="ghost"
             size="sm"
             onClick={clearAll}
             className="h-auto p-0 text-xs text-neutral-500 hover:text-black"
           >
             Réinitialiser
-          </Button>
+          </ButtonV2>
         )}
       </div>
 
       {/* Popover trigger */}
       <Popover open={open} onOpenChange={setOpen}>
         <PopoverTrigger asChild>
-          <Button
+          <ButtonV2
             variant="outline"
             role="combobox"
             aria-expanded={open}
@@ -167,7 +167,7 @@ export function FilterCombobox({
                 : `${selectedValues.length} sélectionné${selectedValues.length > 1 ? 's' : ''}`}
             </span>
             <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
-          </Button>
+          </ButtonV2>
         </PopoverTrigger>
 
         <PopoverContent className="w-[300px] p-0" align="start">

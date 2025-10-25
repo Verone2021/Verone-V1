@@ -128,7 +128,7 @@ export function PurchaseOrderReceptionForm({
             Réception Marchandise
           </h3>
           <p className="text-sm text-muted-foreground mt-1">
-            Commande {purchaseOrder.po_number} • {purchaseOrder.organisations?.name}
+            Commande {purchaseOrder.po_number} • {purchaseOrder.organisations?.trade_name || purchaseOrder.organisations?.legal_name}
           </p>
         </div>
         <div className="flex gap-2">

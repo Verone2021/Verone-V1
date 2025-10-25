@@ -450,7 +450,7 @@ export default function CataloguePage() {
                             ...product,
                             supplier: product.supplier ? {
                               ...product.supplier,
-                              slug: product.supplier.name.toLowerCase().replace(/\s+/g, '-'),
+                              slug: (product.supplier.trade_name || product.supplier.legal_name).toLowerCase().replace(/\s+/g, '-'),
                               is_active: true
                             } : undefined
                           } as any}

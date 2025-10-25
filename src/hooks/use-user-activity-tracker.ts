@@ -120,8 +120,10 @@ export function useUserActivityTracker() {
 
       const { data: logs, error } = await supabase
         .from('audit_logs')
-        .select('*')
+        .select('user_id, action, severity, created_at, new_data')
         .gte('created_at', sevenDaysAgo.toISOString())
+        .order('created_at', { ascending: false })
+        .limit(5000)
 
       if (error) throw error
 
@@ -171,8 +173,8 @@ export function useUserActivityTracker() {
       return { data: stats, error: null }
     },
     {
-      staleTime: 5 * 60 * 1000, // 5 minutes
-      cacheTime: 15 * 60 * 1000 // 15 minutes
+      staleTime: 15 * 60 * 1000, // 15 minutes (stats changent peu)
+      cacheTime: 30 * 60 * 1000 // 30 minutes
     }
   )
 

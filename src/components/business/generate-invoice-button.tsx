@@ -126,7 +126,7 @@ export function GenerateInvoiceButton({
   };
 
   return (
-    <Button
+    <ButtonV2
       onClick={handleGenerateInvoice}
       disabled={disabled || isLoading}
       variant={variant}

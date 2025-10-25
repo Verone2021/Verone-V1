@@ -84,13 +84,15 @@ export function useSourcingProducts(filters?: SourcingFilters) {
           updated_at,
           supplier:organisations!products_supplier_id_fkey(
             id,
-            name,
+            legal_name,
+            trade_name,
             type,
             website
           ),
           assigned_client:organisations!products_assigned_client_id_fkey(
             id,
-            name,
+            legal_name,
+            trade_name,
             type
           ),
           product_images!left(

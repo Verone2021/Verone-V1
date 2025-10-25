@@ -133,7 +133,7 @@ export function ProductEditMode({ product, onSwitchToView, onUpdate, className }
           <div className="bg-white border border-black p-2">
             <h3 className="font-medium mb-2 text-[10px]">Actions</h3>
             <div className="space-y-1">
-              <Button
+              <ButtonV2
                 variant="outline"
                 size="sm"
                 className="w-full justify-start text-[9px] h-5"
@@ -258,7 +258,7 @@ export function ProductEditMode({ product, onSwitchToView, onUpdate, className }
                 <FolderTree className="h-3 w-3 mr-1" />
                 Catégorisation
               </h3>
-              <Button
+              <ButtonV2
                 variant="outline"
                 size="sm"
                 onClick={() => setShowCategorizeModal(true)}
@@ -369,7 +369,7 @@ export function ProductEditMode({ product, onSwitchToView, onUpdate, className }
           <div className="bg-white border border-black p-2">
             <div className="flex items-center justify-between mb-2">
               <h3 className="font-medium text-[10px]">Description</h3>
-              <Button
+              <ButtonV2
                 variant="ghost"
                 size="sm"
                 onClick={() => setShowDescriptionsModal(true)}
@@ -388,7 +388,7 @@ export function ProductEditMode({ product, onSwitchToView, onUpdate, className }
           <div className="bg-white border border-black p-2">
             <div className="flex items-center justify-between mb-2">
               <h3 className="font-medium text-[10px]">Caractéristiques</h3>
-              <Button
+              <ButtonV2
                 variant="ghost"
                 size="sm"
                 onClick={() => setShowCharacteristicsModal(true)}

@@ -248,7 +248,7 @@ export function DraggableProductGrid({
               </Badge>
             )}
 
-            <Button
+            <ButtonV2
               variant="outline"
               size="sm"
               onClick={resetOrder}
@@ -258,7 +258,7 @@ export function DraggableProductGrid({
               Annuler
             </ButtonV2>
 
-            <Button
+            <ButtonV2
               size="sm"
               onClick={saveChanges}
               disabled={saving || !hasChanges}

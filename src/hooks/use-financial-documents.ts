@@ -133,7 +133,7 @@ export function useFinancialDocuments(filters?: FinancialDocumentFilters) {
         .from('financial_documents')
         .select(`
           *,
-          partner:organisations!partner_id(id, name, type),
+          partner:organisations!partner_id(id, legal_name, trade_name, type),
           expense_category:expense_categories(id, name, account_code)
         `)
         .is('deleted_at', null)

@@ -1287,23 +1287,16 @@ export function useVariantGroup(groupId: string) {
             *,
             subcategory:subcategories (
               id,
-              name,
-              category:categories (
-                id,
-                name,
-                family:families (
-                  id,
-                  name
-                )
-              )
-            ),
-            supplier:organisations (
-              id,
               name
+            ),
+            supplier:organisations!variant_groups_supplier_id_fkey (
+              id,
+              legal_name,
+              trade_name
             )
           `)
           .eq('id', groupId)
-          .single()
+          .maybeSingle()
 
         if (fetchError) {
           setLoading(false)
@@ -1327,7 +1320,8 @@ export function useVariantGroup(groupId: string) {
             variant_attributes,
             supplier:organisations!products_supplier_id_fkey (
               id,
-              name
+              legal_name,
+              trade_name
             )
           `)
           .eq('variant_group_id', groupId)

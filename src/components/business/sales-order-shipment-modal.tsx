@@ -52,7 +52,7 @@ export function SalesOrderShipmentModal({
               </DialogTitle>
               <p className="text-sm text-gray-600 mt-1">
                 Commande {order.order_number}
-                {enrichedOrder?.organisations && ` • ${enrichedOrder.organisations.name}`}
+                {enrichedOrder?.organisations && ` • ${enrichedOrder.organisations.trade_name || enrichedOrder.organisations.legal_name}`}
               </p>
             </div>
             <ButtonV2 variant="ghost" size="icon" onClick={onClose}>

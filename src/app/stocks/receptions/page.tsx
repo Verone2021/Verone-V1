@@ -279,7 +279,7 @@ export default function ReceptionsPage() {
                           )}
                         </TableCell>
                         <TableCell>
-                          {order.organisations?.name || 'Non défini'}
+                          {order.organisations?.trade_name || order.organisations?.legal_name || 'Non défini'}
                         </TableCell>
                         <TableCell>
                           <Badge className={order.status === 'confirmed' ? 'bg-gray-100 text-gray-900' : 'bg-verone-warning text-white'}>

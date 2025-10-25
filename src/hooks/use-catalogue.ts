@@ -49,7 +49,8 @@ interface Product {
   supplier_id?: string;
   supplier?: {
     id: string;
-    name: string;
+    legal_name: string;
+    trade_name: string | null;
   };
   subcategories?: {
     id: string;
@@ -169,7 +170,7 @@ export const useCatalogue = () => {
         status, condition,
         subcategory_id, supplier_id, brand,
         archived_at, created_at, updated_at,
-        supplier:organisations!supplier_id(id, name),
+        supplier:organisations!supplier_id(id, legal_name, trade_name),
         subcategories!subcategory_id(id, name),
         product_images!left(public_url, is_primary)
       `);
@@ -224,7 +225,7 @@ export const useCatalogue = () => {
         status, condition,
         subcategory_id, supplier_id, brand,
         archived_at, created_at, updated_at,
-        supplier:organisations!supplier_id(id, name),
+        supplier:organisations!supplier_id(id, legal_name, trade_name),
         subcategories!subcategory_id(id, name),
         product_images!left(public_url, is_primary)
       `);

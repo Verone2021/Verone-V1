@@ -522,11 +522,11 @@ export function useSalesShipments() {
       if (orgIds.length > 0) {
         const { data: orgs } = await supabase
           .from('organisations')
-          .select('id, name')
+          .select('id, legal_name, trade_name')
           .in('id', orgIds)
 
         if (orgs) {
-          orgs.forEach((org: any) => organisationsMap.set(org.id, org.name))
+          orgs.forEach((org: any) => organisationsMap.set(org.id, org.trade_name || org.legal_name))
         }
       }
 

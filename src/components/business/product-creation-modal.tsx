@@ -213,7 +213,7 @@ export function ProductCreationModal({ isOpen, onClose, onSuccess }: ProductCrea
                 className={errors.sku ? 'border-red-500' : ''}
                 required
               />
-              <Button
+              <ButtonV2
                 type="button"
                 variant="outline"
                 size="sm"
@@ -305,7 +305,7 @@ export function ProductCreationModal({ isOpen, onClose, onSuccess }: ProductCrea
 
           {/* Actions */}
           <div className="flex gap-3 pt-4">
-            <Button
+            <ButtonV2
               type="button"
               variant="outline"
               onClick={handleClose}
@@ -313,7 +313,7 @@ export function ProductCreationModal({ isOpen, onClose, onSuccess }: ProductCrea
             >
               Annuler
             </ButtonV2>
-            <Button
+            <ButtonV2
               type="submit"
               disabled={loading}
               className="flex-1"

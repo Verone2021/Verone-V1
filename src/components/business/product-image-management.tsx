@@ -180,7 +180,7 @@ export function ProductImageManagement({
             {primaryImage && ' • Image principale définie'}
           </p>
         </div>
-        <Button
+        <ButtonV2
           variant="outline"
           size="sm"
           onClick={() => fetchImages()}
@@ -311,7 +311,7 @@ export function ProductImageManagement({
 
                     {/* Bouton définir comme principale */}
                     {allowPrimaryChange && !image.is_primary && (
-                      <Button
+                      <ButtonV2
                         size="sm"
                         variant="secondary"
                         onClick={() => handleSetPrimary(image.id)}
@@ -328,7 +328,7 @@ export function ProductImageManagement({
                     )}
 
                     {/* Bouton suppression */}
-                    <Button
+                    <ButtonV2
                       size="sm"
                       variant="destructive"
                       onClick={() => handleDeleteImage(image.id, image.is_primary)}

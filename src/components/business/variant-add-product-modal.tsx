@@ -240,7 +240,7 @@ export function VariantAddProductModal({
           </div>
 
           <DialogFooter>
-            <Button
+            <ButtonV2
               type="button"
               variant="outline"
               onClick={onClose}
@@ -248,7 +248,7 @@ export function VariantAddProductModal({
             >
               Annuler
             </ButtonV2>
-            <Button
+            <ButtonV2
               type="submit"
               disabled={!selectedProductId || (!color && !material) || isSubmitting}
               className="bg-black text-white hover:bg-gray-800"

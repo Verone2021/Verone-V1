@@ -108,7 +108,7 @@ export function SalesOrderFormModal({
         ? {
             id: order.customer_id,
             type: 'professional' as const,
-            name: order.organisations?.name || '',
+            name: order.organisations?.trade_name || order.organisations?.legal_name || '',
             email: order.organisations?.email,
             phone: order.organisations?.phone,
             address: [

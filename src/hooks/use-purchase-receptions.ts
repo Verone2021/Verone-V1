@@ -79,7 +79,8 @@ export function usePurchaseReceptions() {
           received_by,
           organisations (
             id,
-            name
+            legal_name,
+            trade_name
           ),
           purchase_order_items (
             id,
@@ -336,7 +337,8 @@ export function usePurchaseReceptions() {
           received_at,
           organisations (
             id,
-            name
+            legal_name,
+            trade_name
           ),
           purchase_order_items (
             quantity,
@@ -352,7 +354,7 @@ export function usePurchaseReceptions() {
       }
 
       if (filters?.search) {
-        query = query.or(`po_number.ilike.%${filters.search}%,organisations.name.ilike.%${filters.search}%`)
+        query = query.or(`po_number.ilike.%${filters.search}%,organisations.trade_name.ilike.%${filters.search}%,organisations.legal_name.ilike.%${filters.search}%`)
       }
 
       const { data, error: fetchError } = await query

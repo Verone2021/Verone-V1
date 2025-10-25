@@ -180,7 +180,7 @@ export function CollectionProductsManagerModal({
                 {products.length} produit{products.length !== 1 ? 's' : ''}
               </span>
             </div>
-            <Button
+            <ButtonV2
               onClick={() => setShowProductSelector(true)}
               className="bg-black text-white hover:bg-gray-800"
             >
@@ -220,7 +220,7 @@ export function CollectionProductsManagerModal({
                 <p className="text-gray-600 mb-4">
                   Commencez par ajouter des produits à votre collection
                 </p>
-                <Button
+                <ButtonV2
                   onClick={() => setShowProductSelector(true)}
                   className="bg-black text-white hover:bg-gray-800"
                 >

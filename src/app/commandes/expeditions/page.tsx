@@ -43,7 +43,7 @@ export default function ShipmentsPage() {
     const searchLower = searchTerm.toLowerCase()
     return (
       order.order_number.toLowerCase().includes(searchLower) ||
-      order.organisations?.name.toLowerCase().includes(searchLower) ||
+      (order.organisations?.trade_name || order.organisations?.legal_name || '').toLowerCase().includes(searchLower) ||
       order.individual_customers?.first_name.toLowerCase().includes(searchLower) ||
       order.individual_customers?.last_name.toLowerCase().includes(searchLower)
     )
@@ -74,7 +74,7 @@ export default function ShipmentsPage() {
 
   const getCustomerName = (order: SalesOrder) => {
     if (order.customer_type === 'organization' && order.organisations) {
-      return order.organisations.name
+      return order.organisations.trade_name || order.organisations.legal_name
     } else if (order.customer_type === 'individual' && order.individual_customers) {
       const customer = order.individual_customers
       return `${customer.first_name} ${customer.last_name}`

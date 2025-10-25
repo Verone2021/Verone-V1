@@ -255,7 +255,7 @@ export const StocksErrorIntegration: React.FC = () => {
             totalMovements={performance.total_movements_tracked}
             failedMovements={performance.failed_movements}
           />
-          <Button
+          <ButtonV2
             onClick={simulateStockMovements}
             disabled={isSimulating}
             variant="outline"
@@ -268,7 +268,7 @@ export const StocksErrorIntegration: React.FC = () => {
             )}
             Simuler Mouvements
           </ButtonV2>
-          <Button
+          <ButtonV2
             onClick={handleGlobalDetection}
             disabled={isSimulating}
             size="sm"
@@ -587,7 +587,7 @@ const StocksIntegrationGuide: React.FC = () => {
             <p className="text-sm text-gray-600">
               Patterns d'intégration pour le module Stocks temps réel
             </p>
-            <Button
+            <ButtonV2
               onClick={() => setShowGuide(!showGuide)}
               variant="outline"
               size="sm"

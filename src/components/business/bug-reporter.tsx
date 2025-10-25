@@ -254,7 +254,7 @@ export function BugReporter({ trigger, onSubmitSuccess }: BugReporterProps) {
   }, [formData, screenshot, consoleErrors, uploadScreenshotMutation, createBugReportMutation, trackEvent, onSubmitSuccess])
 
   const DefaultTrigger = (
-    <Button
+    <ButtonV2
       variant="outline"
       size="sm"
       className="fixed bottom-4 right-4 z-50 border-red-200 text-red-600 hover:bg-red-50"
@@ -402,7 +402,7 @@ export function BugReporter({ trigger, onSubmitSuccess }: BugReporterProps) {
             </CardHeader>
             <CardContent className="space-y-3">
               {!screenshot ? (
-                <Button
+                <ButtonV2
                   type="button"
                   variant="outline"
                   onClick={takeScreenshot}
@@ -428,7 +428,7 @@ export function BugReporter({ trigger, onSubmitSuccess }: BugReporterProps) {
                       <ImageIcon className="h-4 w-4 text-green-600" />
                       <span className="text-sm text-green-600">Capture d'écran ajoutée</span>
                     </div>
-                    <Button
+                    <ButtonV2
                       type="button"
                       variant="ghost"
                       size="sm"
@@ -473,14 +473,14 @@ export function BugReporter({ trigger, onSubmitSuccess }: BugReporterProps) {
 
           {/* Actions */}
           <div className="flex justify-end gap-3">
-            <Button
+            <ButtonV2
               type="button"
               variant="outline"
               onClick={() => setIsOpen(false)}
             >
               Annuler
             </ButtonV2>
-            <Button
+            <ButtonV2
               type="submit"
               disabled={
                 !formData.title ||

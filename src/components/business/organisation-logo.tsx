@@ -8,7 +8,7 @@ import { colors } from '@/lib/design-system'
 
 interface OrganisationLogoProps {
   logoUrl?: string | null
-  organisationName: string
+  organisationName: string | null | undefined
   size?: 'xs' | 'sm' | 'md' | 'lg' | 'xl'
   fallback?: 'initials' | 'icon'
   className?: string
@@ -66,7 +66,8 @@ export function OrganisationLogo({
     : null
 
   // Extraire initiales du nom (ex: "DSA Menuiserie" → "DM")
-  const getInitials = (name: string): string => {
+  const getInitials = (name: string | null | undefined): string => {
+    if (!name || name.trim() === '') return '??'
     const words = name.trim().split(/\s+/)
     if (words.length === 1) {
       return words[0].substring(0, 2).toUpperCase()

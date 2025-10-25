@@ -10,7 +10,7 @@
 import { useEffect, useState } from 'react'
 import { useParams, useRouter } from 'next/navigation'
 import { ArrowLeft, Plus, Edit, Trash2, Package, Grid3X3, Tag, Clock } from 'lucide-react'
-import { Button } from '@/components/ui/button'
+import { ButtonV2 } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { useFamilies } from '@/hooks/use-families'
@@ -88,14 +88,14 @@ export default function SubcategoryDetailPage() {
       <div className="min-h-screen bg-white p-6">
         <div className="max-w-6xl mx-auto text-center">
           <h1 className="text-2xl font-bold text-black mb-4">Sous-catégorie non trouvée</h1>
-          <Button
+          <ButtonV2
             onClick={() => router.push('/produits/catalogue/categories')}
             variant="outline"
             className="border-black text-black hover:bg-black hover:text-white"
           >
             <ArrowLeft className="w-4 h-4 mr-2" />
             Retour au catalogue
-          </Button>
+          </ButtonV2>
         </div>
       </div>
     )
@@ -119,7 +119,7 @@ export default function SubcategoryDetailPage() {
         {/* Header */}
         <div className="flex items-center justify-between mb-8">
           <div className="flex items-center space-x-4">
-            <Button
+            <ButtonV2
               onClick={handleBackToCategory}
               variant="outline"
               size="sm"
@@ -127,7 +127,7 @@ export default function SubcategoryDetailPage() {
             >
               <ArrowLeft className="w-4 h-4 mr-2" />
               Retour
-            </Button>
+            </ButtonV2>
             <div>
               {/* Breadcrumb */}
               <div className="flex items-center space-x-2 text-sm text-gray-600 mb-2">
@@ -175,22 +175,22 @@ export default function SubcategoryDetailPage() {
           </div>
 
           <div className="flex items-center space-x-3">
-            <Button
+            <ButtonV2
               variant="outline"
               size="sm"
               className="border-black text-black hover:bg-black hover:text-white"
             >
               <Edit className="w-4 h-4 mr-2" />
               Modifier
-            </Button>
-            <Button
+            </ButtonV2>
+            <ButtonV2
               variant="outline"
               size="sm"
               className="border-black text-black hover:bg-black hover:text-white"
             >
               <Plus className="w-4 h-4 mr-2" />
               Nouveau produit
-            </Button>
+            </ButtonV2>
           </div>
         </div>
 
@@ -263,14 +263,14 @@ export default function SubcategoryDetailPage() {
           <div className="flex items-center justify-between">
             <h2 className="text-xl font-semibold text-black">Produits</h2>
             <div className="flex items-center space-x-2">
-              <Button
+              <ButtonV2
                 variant="outline"
                 size="sm"
                 className="border-black text-black hover:bg-black hover:text-white"
               >
                 <Grid3X3 className="w-4 h-4 mr-2" />
                 Vue grille
-              </Button>
+              </ButtonV2>
             </div>
           </div>
 
@@ -279,13 +279,13 @@ export default function SubcategoryDetailPage() {
               <CardContent className="pt-6 text-center">
                 <Package className="w-16 h-16 text-gray-400 mx-auto mb-4" />
                 <p className="text-gray-500 mb-4">Aucun produit dans cette sous-catégorie</p>
-                <Button
+                <ButtonV2
                   variant="outline"
                   className="border-black text-black hover:bg-black hover:text-white"
                 >
                   <Plus className="w-4 h-4 mr-2" />
                   Créer le premier produit
-                </Button>
+                </ButtonV2>
               </CardContent>
             </Card>
           ) : (

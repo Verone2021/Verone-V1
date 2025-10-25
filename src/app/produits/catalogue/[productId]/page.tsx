@@ -168,7 +168,8 @@ export default function ProductDetailPage() {
           *,
           supplier:organisations!products_supplier_id_fkey(
             id,
-            name,
+            legal_name,
+            trade_name,
             email,
             phone,
             is_active

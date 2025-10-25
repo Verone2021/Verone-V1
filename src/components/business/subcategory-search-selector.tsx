@@ -148,7 +148,7 @@ export function SubcategorySearchSelector({
 
       {/* Bouton pour changer la sélection */}
       {selectedSubcategory && !isOpen && (
-        <Button
+        <ButtonV2
           type="button"
           variant="outline"
           size="sm"

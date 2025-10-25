@@ -252,7 +252,7 @@ export default function CatalogueStocksPage() {
             title="Alertes stock faible"
             value={summary.low_stock_count}
             icon={AlertTriangle}
-            color="amber"
+            color="orange"
           />
           <StockSummaryCard
             title="Ruptures prévues"

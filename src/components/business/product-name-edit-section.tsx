@@ -90,7 +90,7 @@ export function ProductNameEditSection({ product, onUpdate, className }: Product
             </div>
           </div>
           <div className="flex space-x-1 ml-4">
-            <Button
+            <ButtonV2
               variant="outline"
               size="sm"
               onClick={handleCancel}
@@ -100,7 +100,7 @@ export function ProductNameEditSection({ product, onUpdate, className }: Product
               <X className="h-3 w-3 mr-1" />
               Annuler
             </ButtonV2>
-            <Button
+            <ButtonV2
               variant="default"
               size="sm"
               onClick={handleSave}

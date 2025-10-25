@@ -204,7 +204,7 @@ export function SalesOrderShipmentForm({
             Expédition Commande
           </h3>
           <p className="text-sm text-muted-foreground mt-1">
-            Commande {salesOrder.so_number} • {salesOrder.organisations?.name}
+            Commande {salesOrder.so_number} • {salesOrder.organisations?.trade_name || salesOrder.organisations?.legal_name}
           </p>
         </div>
         <div className="flex gap-2">

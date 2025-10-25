@@ -24,7 +24,7 @@ async function getProductWithRelations(supabase: any, productId: string) {
     .from('products')
     .select(`
       *,
-      supplier:organisations(id, name),
+      supplier:organisations(id, legal_name, trade_name),
       subcategory:subcategories(id, name),
       images:product_images(
         public_url,

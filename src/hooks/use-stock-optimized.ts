@@ -101,7 +101,7 @@ export function useStockOptimized(filters: StockFilters = {}) {
             stock_real,
             min_stock,
             reorder_point,
-            organisations!supplier_id(name)
+            organisations!supplier_id(legal_name, trade_name)
           `)
           .eq('stock_real', 0)
           .is('archived_at', null)
@@ -113,7 +113,7 @@ export function useStockOptimized(filters: StockFilters = {}) {
         return {
           data: (fallbackData || []).map(product => ({
             ...product,
-            supplier_name: product.organisations?.name
+            supplier_name: product.organisations?.trade_name || product.organisations?.legal_name
           })),
           error: null
         }

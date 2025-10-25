@@ -296,7 +296,7 @@ export function ProductConsultationManager({
             </div>
           </div>
 
-          <Button
+          <ButtonV2
             onClick={handleCreateLink}
             disabled={loading || !selectedConsultation || !selectedProduct}
             className="w-full"
@@ -366,7 +366,7 @@ export function ProductConsultationManager({
             </div>
 
             <div className="flex items-end">
-              <Button
+              <ButtonV2
                 variant="outline"
                 onClick={() => {
                   setSearchTerm('')
@@ -474,7 +474,7 @@ function ConsultationProductsView({
                     {cp.is_primary_proposal && (
                       <Badge>Principale</Badge>
                     )}
-                    <Button
+                    <ButtonV2
                       variant="outline"
                       size="sm"
                       onClick={() => onRemoveLink(cp.id)}

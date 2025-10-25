@@ -210,7 +210,7 @@ interface StockSummaryCardProps {
   change?: number
   changeType?: 'increase' | 'decrease'
   icon: React.ElementType
-  color?: 'blue' | 'green' | 'red' | 'amber'
+  color?: 'blue' | 'green' | 'red' | 'orange'
 }
 
 export function StockSummaryCard({
@@ -225,7 +225,7 @@ export function StockSummaryCard({
     blue: 'text-blue-600 bg-blue-50 border-blue-200',
     green: 'text-green-600 bg-green-50 border-green-200',
     red: 'text-red-600 bg-red-50 border-red-200',
-    gray: 'text-gray-900 bg-gray-100 border-gray-300'
+    orange: 'text-orange-600 bg-orange-50 border-orange-200'
   }
 
   return (

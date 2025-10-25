@@ -217,7 +217,7 @@ export function SmartSuggestionsPanel({
                       </div>
 
                       {!isAlreadySelected && !isApplied && (
-                        <Button
+                        <ButtonV2
                           variant="ghost"
                           size="sm"
                           className="opacity-0 group-hover:opacity-100 transition-opacity h-8 w-8 p-0 ml-2"
