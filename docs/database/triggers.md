@@ -2173,6 +2173,69 @@ v_qty_diff := v_item.quantity_received - v_already_received;
 
 **📖 Code SQL complet** : Voir rapport MEMORY-BANK (30 KB) avec toutes les définitions
 
+### 🆕 Ristourne (Commission B2B) - Ajouté 2025-10-25
+
+#### Trigger: `trg_calculate_retrocession`
+
+**Table** : `sales_order_items`
+**Événement** : BEFORE INSERT OR UPDATE OF `total_ht`, `retrocession_rate`
+**Fonction** : `calculate_retrocession_amount()`
+**Criticité** : 🟢 Simple (calcul arithmétique)
+
+**Objectif** : Calcule automatiquement le montant de commission (`retrocession_amount`) pour chaque ligne de commande basé sur le taux de ristourne configuré.
+
+**Business Logic** :
+```sql
+-- Formule appliquée automatiquement:
+retrocession_amount = total_ht × (retrocession_rate / 100)
+
+-- Exemple:
+-- total_ht = 1000€, retrocession_rate = 5% → retrocession_amount = 50€
+```
+
+**Code SQL** :
+```sql
+CREATE OR REPLACE FUNCTION calculate_retrocession_amount()
+RETURNS TRIGGER AS $$
+BEGIN
+  IF NEW.retrocession_rate IS NOT NULL AND NEW.retrocession_rate > 0 THEN
+    NEW.retrocession_amount := ROUND(
+      NEW.total_ht * (NEW.retrocession_rate / 100),
+      2
+    );
+  ELSE
+    NEW.retrocession_amount := 0.00;
+  END IF;
+  RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
+CREATE TRIGGER trg_calculate_retrocession
+  BEFORE INSERT OR UPDATE OF total_ht, retrocession_rate
+  ON public.sales_order_items
+  FOR EACH ROW
+  EXECUTE FUNCTION calculate_retrocession_amount();
+```
+
+**Cas d'usage** :
+- Commission revendeur B2B (5-10% selon produit)
+- Programme fidélité (taux évolutif)
+- Marketplace (commission plateforme)
+
+**Règles de calcul** :
+1. ✅ Si `retrocession_rate` NULL ou 0 → `retrocession_amount` = 0.00
+2. ✅ Arrondi à 2 décimales (montant en EUR)
+3. ✅ Recalcul automatique si `total_ht` ou `retrocession_rate` change
+4. ✅ Snapshot taux au moment commande (traçabilité)
+
+**Performance** : O(1) - Calcul arithmétique simple par ligne
+
+**Migration** : `supabase/migrations/20251025_002_add_retrocession_system.sql`
+
+**Fonction RPC associée** : `get_order_total_retrocession(order_id)` pour obtenir commission totale commande
+
+---
+
 ### ⚠️ Points d'Attention
 
 1. **Duplication trigger réception** :
@@ -2211,8 +2274,9 @@ Fichiers documentation database à créer :
 
 ---
 
-**✅ Documentation Triggers Complète - 17 Octobre 2025**
+**✅ Documentation Triggers Complète - 25 Octobre 2025**
 
-*158 triggers documentés sur 59 tables*
+*159 triggers documentés sur 60 tables*
 *Source de vérité pour modifications database*
+*Dernière ajout: trg_calculate_retrocession (ristourne B2B)*
 *Consultation OBLIGATOIRE avant toute modification*

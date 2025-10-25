@@ -1,9 +1,9 @@
 # ⚙️ FUNCTIONS & RPC - Documentation Complète
 
 **Date création** : 17 octobre 2025
-**Dernière mise à jour** : 22 octobre 2025
+**Dernière mise à jour** : 25 octobre 2025 (Ajout get_order_total_retrocession)
 **Database** : Supabase PostgreSQL (aorroydfjsrygmosnzrl)
-**Total** : 255 fonctions PostgreSQL
+**Total** : 256 fonctions PostgreSQL
 **Statut** : ✅ Production Active
 
 ---
@@ -541,6 +541,9 @@ $function$
 - `calculate_order_line_price(order_item_id uuid)` - Prix ligne
 - `cancel_order_forecast_movements(order_id uuid)` - Annule prévisions
 
+**RPC Ristourne** ⭐ NOUVEAU (2025-10-25):
+- `get_order_total_retrocession(order_id uuid)` - Commission totale commande
+
 **Autres RPC orders** : 7 fonctions
 
 #### 2.3. Finance & Invoicing (12 fonctions)
@@ -865,6 +868,57 @@ console.log('Final price:', data.final_price)
 console.log('Discount:', data.discount_percentage)
 ```
 
+#### Exemple: get_order_total_retrocession() ⭐ NOUVEAU
+
+```typescript
+// Calculate total retrocession (commission) for an order
+const { data: totalCommission, error } = await supabase
+  .rpc('get_order_total_retrocession', {
+    p_order_id: 'f47ac10b-58cc-4372-a567-0e02b2c3d479'
+  })
+
+if (error) {
+  console.error('RPC error:', error)
+  return
+}
+
+console.log(`Commission totale: ${totalCommission}€`)
+// Output: Commission totale: 125.50€
+// (SUM of all line-level retrocession_amount in the order)
+
+// Use case: Display commission on order summary page
+const orderSummary = {
+  total_ht: 2500.00,
+  total_ttc: 3000.00,
+  commission: totalCommission,  // 125.50€
+  commission_rate: (totalCommission / 2500 * 100).toFixed(2) + '%'  // 5.02%
+}
+```
+
+**Function Details**:
+- **Parameters**: `p_order_id` (UUID) - Sales order ID
+- **Returns**: `NUMERIC(10,2)` - Total commission in EUR
+- **Logic**: `SUM(retrocession_amount)` from all `sales_order_items` for the order
+- **Performance**: O(n) where n = number of order lines (typically <50)
+- **Added**: 2025-10-25 (Migration `20251025_002_add_retrocession_system.sql`)
+
+**SQL Implementation**:
+```sql
+CREATE OR REPLACE FUNCTION get_order_total_retrocession(p_order_id UUID)
+RETURNS NUMERIC AS $$
+DECLARE
+  v_total_retrocession NUMERIC(10,2);
+BEGIN
+  SELECT COALESCE(SUM(retrocession_amount), 0.00)
+  INTO v_total_retrocession
+  FROM sales_order_items
+  WHERE sales_order_id = p_order_id;
+
+  RETURN v_total_retrocession;
+END;
+$$ LANGUAGE plpgsql;
+```
+
 ### Avant Modification Function
 
 ```bash
@@ -930,8 +984,9 @@ PGPASSWORD="..." psql -c "SELECT pg_get_functiondef(oid) FROM pg_proc WHERE pron
 
 ---
 
-**✅ Documentation Functions & RPC Complète - 17 Octobre 2025**
+**✅ Documentation Functions & RPC Complète - 25 Octobre 2025**
 
-*254 fonctions documentées (89 triggers, 72 RPC, 45 helpers, 48 autres)*
+*256 fonctions documentées (89 triggers, 73 RPC, 45 helpers, 49 autres)*
 *Source de vérité pour logique métier database*
+*Dernière ajout : get_order_total_retrocession() - Commission B2B*
 *Consultation OBLIGATOIRE avant appel RPC ou modification*

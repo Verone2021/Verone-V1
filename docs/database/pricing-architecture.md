@@ -1,6 +1,6 @@
 # Architecture Pricing Multi-Canal - Vérone CRM/ERP
 
-**Dernière mise à jour** : 2025-10-17
+**Dernière mise à jour** : 2025-10-25 (Ajout système ristourne)
 **Pattern** : Pricing centralisé dans price_list_items (séparé de products)
 **Canaux supportés** : 5 canaux actifs (B2B, E-Commerce, Wholesale, Retail, Base Catalog)
 
@@ -262,6 +262,122 @@ INSERT INTO price_list_items (
 2. Si aucun prix trouvé → Retourne NULL (pas d'erreur)
 3. Frontend affiche "Prix non disponible" ou "Nous consulter"
 4. Log warning dans monitoring (Sentry) pour tracking
+
+### Règle 6 : Ristourne (Commission per-line) ⭐ NOUVEAU
+
+**Pattern** : Commission % calculée par LIGNE de commande (pas par commande totale)
+
+**Tables impliquées** :
+- `customer_pricing.retrocession_rate` (configuration: 0-100%)
+- `sales_order_items.retrocession_rate` (snapshot au moment commande)
+- `sales_order_items.retrocession_amount` (montant calculé automatiquement)
+
+**Business Logic** :
+```sql
+-- 1. Configuration ristourne au niveau client/produit
+INSERT INTO customer_pricing (
+  customer_id,
+  product_id,
+  custom_price_ht,
+  retrocession_rate  -- ⭐ NOUVEAU : Taux de commission %
+) VALUES (
+  'client-uuid',
+  'product-uuid',
+  120.00,
+  5.00  -- 5% de commission sur chaque ligne
+);
+
+-- 2. Lors de la création d'une ligne de commande:
+-- Le trigger calculate_retrocession_amount() calcule automatiquement:
+-- retrocession_amount = total_ht × (retrocession_rate / 100)
+
+-- Exemple: Ligne à 1000€ HT avec 5% ristourne
+-- → retrocession_amount = 1000 × 0.05 = 50.00€
+```
+
+**Calcul Automatique** :
+```sql
+-- Trigger: trg_calculate_retrocession (BEFORE INSERT/UPDATE)
+-- Fonction: calculate_retrocession_amount()
+-- Sur table: sales_order_items
+
+-- Formule appliquée:
+NEW.retrocession_amount := ROUND(
+  NEW.total_ht * (NEW.retrocession_rate / 100),
+  2
+);
+
+-- Si retrocession_rate NULL ou 0 → retrocession_amount = 0.00
+```
+
+**Commission Totale Commande** :
+```sql
+-- Fonction RPC: get_order_total_retrocession(order_id)
+SELECT get_order_total_retrocession('uuid-commande');
+-- Retourne: SUM(retrocession_amount) de toutes les lignes
+
+-- Exemple commande avec 3 lignes:
+-- Ligne 1: 1000€ HT × 5% = 50€
+-- Ligne 2: 500€ HT × 5% = 25€
+-- Ligne 3: 800€ HT × 3% = 24€
+-- Commission totale = 99€
+```
+
+**Exemple Usage TypeScript** :
+```typescript
+// 1. Récupérer taux ristourne client/produit
+const { data: pricing } = await supabase
+  .from('customer_pricing')
+  .select('retrocession_rate')
+  .eq('customer_id', customerId)
+  .eq('product_id', productId)
+  .single();
+
+// 2. Créer ligne commande (trigger calcule automatiquement)
+const { data: orderLine } = await supabase
+  .from('sales_order_items')
+  .insert({
+    sales_order_id: orderId,
+    product_id: productId,
+    quantity: 10,
+    unit_price_ht: 120.00,
+    total_ht: 1200.00,
+    retrocession_rate: pricing.retrocession_rate || 0  // 5.00%
+    // retrocession_amount sera calculé automatiquement = 60.00€
+  })
+  .select()
+  .single();
+
+// 3. Obtenir commission totale commande
+const { data: totalCommission } = await supabase
+  .rpc('get_order_total_retrocession', {
+    p_order_id: orderId
+  });
+
+console.log(`Commission totale: ${totalCommission}€`);
+```
+
+**Contraintes Business** :
+- ✅ Taux ristourne : 0-100% (contrainte CHECK)
+- ✅ Montant ristourne : ≥ 0 (contrainte CHECK)
+- ✅ Calcul automatique (trigger BEFORE INSERT/UPDATE)
+- ✅ Commission par ligne (pas globale)
+- ✅ Snapshot taux au moment commande (traçabilité)
+
+**Migration Supabase** :
+```sql
+-- Ajoutée: 2025-10-25
+-- Fichier: supabase/migrations/20251025_002_add_retrocession_system.sql
+-- Colonnes: 3 nouvelles (1 customer_pricing + 2 sales_order_items)
+-- Triggers: 1 nouveau (calculate_retrocession_amount)
+-- Fonctions: 1 nouvelle RPC (get_order_total_retrocession)
+```
+
+**Cas d'usage B2B** :
+1. **Revendeur avec commission fixe** : 5% sur tous produits
+2. **Partenaire avec taux variable** : 3-10% selon produit
+3. **Programme fidélité** : Taux évolutif selon volume
+4. **Marketplace** : Commission plateforme par transaction
 
 ---
 
@@ -679,8 +795,8 @@ Priorité calcul (calculate_product_price_v2):
 ---
 
 **Document créé** : 2025-10-17
+**Dernière révision** : 2025-10-25 (v1.1 - Système ristourne)
 **Auteur** : verone-database-architect agent
-**Révision** : v1.0
 **Status** : ✅ Complet et validé
 
 *Vérone Back Office - Architecture Pricing Multi-Canal 2025*
