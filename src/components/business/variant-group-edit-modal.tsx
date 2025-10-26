@@ -495,7 +495,7 @@ export function VariantGroupEditModal({
                   <SelectContent>
                     {suppliers.map((supplier) => (
                       <SelectItem key={supplier.id} value={supplier.id}>
-                        {supplier.name}
+                        {supplier.legal_name || supplier.trade_name || 'Sans nom'}
                       </SelectItem>
                     ))}
                   </SelectContent>

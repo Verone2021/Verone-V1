@@ -1287,7 +1287,15 @@ export function useVariantGroup(groupId: string) {
             *,
             subcategory:subcategories (
               id,
-              name
+              name,
+              category:categories!inner (
+                id,
+                name,
+                family:families!inner (
+                  id,
+                  name
+                )
+              )
             ),
             supplier:organisations!variant_groups_supplier_id_fkey (
               id,
