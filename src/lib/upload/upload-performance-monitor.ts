@@ -457,7 +457,7 @@ export class UploadPerformanceMonitor {
         actual: metrics.timing.totalTime,
         message: `Upload trop lent: ${Math.round(metrics.timing.totalTime)}ms`,
         escalationRequired: true,
-        mcpAction: 'sentry_escalation'
+        mcpAction: 'console_escalation'
       })
     }
 
@@ -469,7 +469,7 @@ export class UploadPerformanceMonitor {
         actual: metrics.quality.successRate,
         message: `Taux succès faible: ${metrics.quality.successRate}%`,
         escalationRequired: true,
-        mcpAction: 'sentry_escalation'
+        mcpAction: 'console_escalation'
       })
     }
 
@@ -615,9 +615,8 @@ export class UploadPerformanceMonitor {
     const criticalAlerts = alerts.filter(alert => alert.escalationRequired)
 
     criticalAlerts.forEach(alert => {
-      if (alert.mcpAction === 'sentry_escalation') {
-        // TODO: Intégrer avec Sentry MCP
-        console.log(`🚨 Escalade Sentry: ${alert.message}`)
+      if (alert.mcpAction === 'console_escalation') {
+        console.log(`🚨 Escalade alerte critique: ${alert.message}`)
       }
     })
   }
@@ -628,7 +627,6 @@ export class UploadPerformanceMonitor {
   private escalateCriticalError(uploadId: string, error: any): void {
     console.error(`💥 Erreur critique upload ${uploadId}:`, error)
 
-    // TODO: Intégrer avec Sentry MCP pour escalade immédiate
     // TODO: Notification temps réel si configuré
   }
 
