@@ -12,18 +12,10 @@ import { useSubcategories } from '../../hooks/use-subcategories'
 import { useOrganisations } from '../../hooks/use-organisations'
 import { normalizeForSKU } from '../../lib/sku-generator'
 import type { VariantGroup, UpdateVariantGroupData } from '../../types/variant-groups'
+import { DECORATIVE_STYLES } from '../../types/variant-groups'
+import { ROOM_TYPES } from '../../types/collections'
 import { cn } from '../../lib/utils'
 import { ExternalLink } from 'lucide-react'
-import {
-  ComponentInstanceIcon,
-  DesktopIcon,
-  RocketIcon,
-  FrameIcon,
-  GearIcon,
-  ReaderIcon,
-  SewingPinIcon,
-  DrawingPinIcon
-} from '@radix-ui/react-icons'
 
 interface VariantGroupEditModalProps {
   isOpen: boolean
@@ -37,50 +29,6 @@ const DIMENSION_UNITS = [
   { value: 'm', label: 'Mètres (m)' },
   { value: 'mm', label: 'Millimètres (mm)' },
   { value: 'in', label: 'Pouces (in)' },
-] as const
-
-const DECORATIVE_STYLES = [
-  { value: 'minimaliste', label: 'Minimaliste', description: 'Épuré et fonctionnel', icon: ComponentInstanceIcon },
-  { value: 'contemporain', label: 'Contemporain', description: 'Moderne et actuel', icon: DesktopIcon },
-  { value: 'moderne', label: 'Moderne', description: 'Design avant-gardiste', icon: RocketIcon },
-  { value: 'scandinave', label: 'Scandinave', description: 'Chaleureux et lumineux', icon: FrameIcon },
-  { value: 'industriel', label: 'Industriel', description: 'Brut et authentique', icon: GearIcon },
-  { value: 'classique', label: 'Classique', description: 'Intemporel et élégant', icon: ReaderIcon },
-  { value: 'boheme', label: 'Bohème', description: 'Libre et éclectique', icon: SewingPinIcon },
-  { value: 'art_deco', label: 'Art Déco', description: 'Raffiné et géométrique', icon: DrawingPinIcon },
-] as const
-
-const ROOM_TYPES = [
-  { value: 'atelier', label: 'Atelier' },
-  { value: 'balcon', label: 'Balcon' },
-  { value: 'bibliotheque', label: 'Bibliothèque' },
-  { value: 'buanderie', label: 'Buanderie' },
-  { value: 'bureau', label: 'Bureau' },
-  { value: 'cave', label: 'Cave' },
-  { value: 'cellier', label: 'Cellier' },
-  { value: 'chambre', label: 'Chambre' },
-  { value: 'couloir', label: 'Couloir' },
-  { value: 'cour', label: 'Cour' },
-  { value: 'cuisine', label: 'Cuisine' },
-  { value: 'dressing', label: 'Dressing' },
-  { value: 'garage', label: 'Garage' },
-  { value: 'grenier', label: 'Grenier' },
-  { value: 'hall_entree', label: "Hall d'entrée" },
-  { value: 'jardin', label: 'Jardin' },
-  { value: 'loggia', label: 'Loggia' },
-  { value: 'mezzanine', label: 'Mezzanine' },
-  { value: 'patio', label: 'Patio' },
-  { value: 'salle_a_manger', label: 'Salle à manger' },
-  { value: 'salle_de_bain', label: 'Salle de bain' },
-  { value: 'salle_de_jeux', label: 'Salle de jeux' },
-  { value: 'salle_de_sport', label: 'Salle de sport' },
-  { value: 'salon', label: 'Salon' },
-  { value: 'salon_sejour', label: 'Salon/Séjour' },
-  { value: 'sous_sol', label: 'Sous-sol' },
-  { value: 'terrasse', label: 'Terrasse' },
-  { value: 'toilettes', label: 'Toilettes' },
-  { value: 'veranda', label: 'Véranda' },
-  { value: 'wc', label: 'WC' },
 ] as const
 
 export function VariantGroupEditModal({

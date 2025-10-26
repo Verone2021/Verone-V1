@@ -243,6 +243,198 @@ supabase gen types typescript --local > src/types/supabase.ts
 
 ---
 
-**Version** : 3.0.0 (Architecture Modulaire 2025)
-**Dernière mise à jour** : 2025-10-23
+## 📋 BUSINESS RULES - STRUCTURE COMPLÈTE
+
+**Nouvelle organisation modulaire** : `docs/business-rules/`
+
+### Organisation
+
+Structure complète **93 dossiers** correspondant aux **19 modules applicatifs** + aspects transverses.
+
+```
+docs/business-rules/
+├── 01-authentification/          # /login, /profile
+├── 02-dashboard/                 # /dashboard
+├── 03-organisations-contacts/    # /contacts-organisations
+│   ├── organisations/
+│   ├── contacts/
+│   ├── customers/
+│   ├── suppliers/
+│   └── partners/
+├── 04-produits/                  # /produits
+│   ├── catalogue/
+│   │   ├── categories/
+│   │   ├── families/
+│   │   ├── collections/
+│   │   ├── products/
+│   │   ├── variants/
+│   │   ├── packages/
+│   │   └── images/
+│   └── sourcing/
+├── 05-pricing-tarification/      # Pricing multi-canaux
+├── 06-stocks/                    # /stocks
+│   ├── movements/
+│   ├── inventaire/
+│   ├── alertes/
+│   ├── receptions/
+│   ├── expeditions/
+│   ├── entrees/
+│   ├── sorties/
+│   └── backorders/
+├── 07-commandes/                 # /commandes
+│   ├── clients/
+│   ├── fournisseurs/
+│   └── expeditions/
+├── 08-consultations/             # /consultations
+├── 09-ventes/                    # /ventes
+├── 10-finance/                   # /finance
+│   ├── depenses/
+│   ├── rapprochement/
+│   └── accounting/
+├── 11-factures/                  # /factures
+├── 12-tresorerie/                # /tresorerie
+├── 13-canaux-vente/              # /canaux-vente
+│   ├── google-merchant/
+│   ├── prix-clients/
+│   └── integrations/
+├── 14-admin/                     # /admin
+│   ├── users/
+│   └── activite-utilisateurs/
+├── 15-notifications/             # /notifications
+├── 16-parametres/                # /parametres
+├── 17-organisation/              # /organisation
+├── 98-ux-ui/                     # Design patterns transverses
+└── 99-transverses/               # Aspects cross-module
+    ├── workflows/
+    ├── integrations/
+    ├── data-quality/
+    └── compliance/
+```
+
+### Règles de Classification Automatique
+
+**Pour ajouter une nouvelle business rule** :
+
+1. **Identifier le module** : Quel route dans `src/app/` ?
+2. **Placer dans dossier numéroté** : 01-17 selon module
+3. **Si multi-module** : `99-transverses/workflows/`
+4. **Si UX/Design** : `98-ux-ui/`
+
+**Exemples** :
+```typescript
+// Règle remises clients → Pricing
+"docs/business-rules/05-pricing-tarification/discount-rules.md"
+
+// Workflow commande→expédition → Transverse
+"docs/business-rules/99-transverses/workflows/order-to-shipment.md"
+
+// Pattern modal → UX
+"docs/business-rules/98-ux-ui/modal-pattern.md"
+
+// Règle stock minimum → Stocks/Alertes
+"docs/business-rules/06-stocks/alertes/minimum-stock-rules.md"
+```
+
+**Ressource complète** : `docs/business-rules/README.md` (index exhaustif avec statistiques)
+
+---
+
+## 📊 CLASSIFICATION AUTOMATIQUE RAPPORTS
+
+**Système organisé pour tous types de rapports**
+
+### Rapports d'Audit
+
+**Structure** : `docs/audits/`
+
+```typescript
+// Audits par phase
+docs/audits/phases/
+├── phase-a-baseline/    // Audit initial baseline
+├── phase-b-testing/     // Tests exhaustifs
+├── phase-c-security/    // Audits sécurité
+└── phase-d-final/       // Audit final pré-production
+
+// Rapports mensuels
+docs/audits/YYYY-MM/
+├── RAPPORT-AUDIT-COMPLET-2025-10-25.md
+├── RAPPORT-ERREURS-TYPESCRIPT-2025-10-25.md
+└── RAPPORT-FIXES-PHASE-1-2-2025-10-25.md
+```
+
+**Règles de placement** :
+
+1. **Rapports d'audit phase** → `docs/audits/phases/phase-{x}-{nom}/`
+2. **Rapports finaux** → `docs/audits/YYYY-MM/RAPPORT-{TYPE}-{DATE}.md`
+3. **Fichiers temporaires** → Supprimer après consolidation
+
+### Rapports Techniques
+
+**Structure** : `docs/workflows/` ou dossier spécifique
+
+```typescript
+// Rapports performance
+docs/metrics/performance-reports/
+└── perf-report-2025-10-26.md
+
+// Rapports sécurité
+docs/security/security-audits/
+└── security-scan-2025-10-26.md
+
+// Rapports database
+docs/database/schema-reports/
+└── schema-analysis-2025-10-26.md
+```
+
+### Workflow Automatique Claude
+
+**Quand vous générez un rapport** :
+
+```typescript
+// 1. Identifier le type
+const reportType = detectReportType(content)
+
+// 2. Classification automatique
+switch (reportType) {
+  case "audit-phase":
+    path = `docs/audits/phases/phase-${phase}-${name}/`
+    break
+  case "audit-monthly":
+    path = `docs/audits/${YYYY-MM}/RAPPORT-${TYPE}-${DATE}.md`
+    break
+  case "performance":
+    path = `docs/metrics/performance-reports/`
+    break
+  case "security":
+    path = `docs/security/security-audits/`
+    break
+  case "database":
+    path = `docs/database/schema-reports/`
+    break
+  case "business-rule":
+    path = `docs/business-rules/${module}/`
+    break
+}
+
+// 3. Créer fichier au bon endroit
+await createReport(path, content)
+
+// 4. Nettoyer racine projet
+await cleanupProjectRoot()
+```
+
+**Convention naming** :
+- **Dates** : `YYYY-MM-DD` (ISO 8601)
+- **Format** : `{TYPE}-{DESCRIPTION}-{DATE}.md`
+- **Exemples** :
+  - `RAPPORT-AUDIT-COMPLET-2025-10-26.md`
+  - `perf-analysis-dashboard-2025-10-26.md`
+  - `security-scan-pre-deploy-2025-10-26.md`
+
+**RÈGLE ABSOLUE** : **Aucun fichier .md à la racine projet** (sauf CLAUDE.md, README.md, CHANGELOG.md)
+
+---
+
+**Version** : 3.1.0 (Organisation Documentation Complète 2025)
+**Dernière mise à jour** : 2025-10-26
 **Mainteneur** : Romeo Dos Santos

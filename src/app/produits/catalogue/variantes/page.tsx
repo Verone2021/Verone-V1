@@ -26,7 +26,8 @@ import { Badge } from '@/components/ui/badge'
 import { cn } from '@/lib/utils'
 import { PageHeader } from '@/components/layout/page-header'
 import { useVariantGroups } from '@/hooks/use-variant-groups'
-import { VariantGroupForm } from '@/components/forms/VariantGroupForm'
+import { VariantGroupCreationWizard } from '@/components/business/variant-group-creation-wizard'
+import { VariantGroupEditModal } from '@/components/business/variant-group-edit-modal'
 import { AddProductsToGroupModal } from '@/components/forms/AddProductsToGroupModal'
 import { useToast } from '@/hooks/use-toast'
 import { ElegantKpiCard } from '@/components/ui/elegant-kpi-card'
@@ -576,16 +577,34 @@ export default function VariantesPage() {
         )}
       </div>
 
-      {/* Modal de création/édition de groupe */}
-      {showEditModal && (
-        <VariantGroupForm
+      {/* Modal de création (Wizard 3 étapes) */}
+      {showEditModal && !editingGroup && (
+        <VariantGroupCreationWizard
           isOpen={showEditModal}
           onClose={() => setShowEditModal(false)}
-          onSubmit={(data) => {
-            console.log('Groupe soumis:', data)
+          onSuccess={(groupId) => {
+            console.log('Groupe créé:', groupId)
             refetch()
+            setShowEditModal(false)
           }}
-          editingGroup={editingGroup}
+        />
+      )}
+
+      {/* Modal d'édition */}
+      {showEditModal && editingGroup && (
+        <VariantGroupEditModal
+          isOpen={showEditModal}
+          onClose={() => {
+            setShowEditModal(false)
+            setEditingGroup(null)
+          }}
+          onSubmit={async (groupId, data) => {
+            await updateVariantGroup(groupId, data)
+            refetch()
+            setShowEditModal(false)
+            setEditingGroup(null)
+          }}
+          group={editingGroup}
         />
       )}
 

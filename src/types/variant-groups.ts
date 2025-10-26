@@ -1,9 +1,22 @@
 // Types simplifiés pour le système de variantes minimaliste
 
+import type { LucideIcon } from 'lucide-react'
+
 // Types de variante supportés (Google Merchant Center 2024)
 // Note: size retiré car les dimensions sont gérées au niveau du groupe
 // Note: pattern retiré car considéré comme moins pertinent que couleur/matériau
 export type VariantType = 'color' | 'material'
+
+// Styles décoratifs disponibles
+export type DecorativeStyle =
+  | 'minimaliste'
+  | 'contemporain'
+  | 'moderne'
+  | 'scandinave'
+  | 'industriel'
+  | 'classique'
+  | 'boheme'
+  | 'art_deco'
 
 // Dimensions produit standardisées (JSONB)
 export interface ProductDimensions {
@@ -175,17 +188,88 @@ export interface EditableProductFields {
   // Identité
   name: string
   sku: string
-  
+
   // Prix
   cost_price: number
-  
+
   // Attributs physiques
   dimensions?: ProductDimensions | null
   weight?: number | null
-  
+
   // Variante
   variant_attributes?: Record<string, string>
-  
+
   // Statut
   status: string
 }
+
+// =====================================================================
+// CONSTANTES - Styles décoratifs avec icônes Lucide React
+// =====================================================================
+
+import {
+  Minimize,
+  Building2,
+  Rocket,
+  TreePine,
+  Factory,
+  Crown,
+  Sparkles,
+  Gem
+} from 'lucide-react'
+
+export const DECORATIVE_STYLES: Array<{
+  value: DecorativeStyle
+  label: string
+  description: string
+  icon: LucideIcon
+}> = [
+  {
+    value: 'minimaliste',
+    label: 'Minimaliste',
+    description: 'Épuré et fonctionnel',
+    icon: Minimize
+  },
+  {
+    value: 'contemporain',
+    label: 'Contemporain',
+    description: 'Moderne et actuel',
+    icon: Building2
+  },
+  {
+    value: 'moderne',
+    label: 'Moderne',
+    description: 'Design avant-gardiste',
+    icon: Rocket
+  },
+  {
+    value: 'scandinave',
+    label: 'Scandinave',
+    description: 'Chaleureux et naturel',
+    icon: TreePine
+  },
+  {
+    value: 'industriel',
+    label: 'Industriel',
+    description: 'Brut et authentique',
+    icon: Factory
+  },
+  {
+    value: 'classique',
+    label: 'Classique',
+    description: 'Intemporel et raffiné',
+    icon: Crown
+  },
+  {
+    value: 'boheme',
+    label: 'Bohème',
+    description: 'Libre et coloré',
+    icon: Sparkles
+  },
+  {
+    value: 'art_deco',
+    label: 'Art Déco',
+    description: 'Luxueux et géométrique',
+    icon: Gem
+  }
+] as const
