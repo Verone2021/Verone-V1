@@ -43,6 +43,7 @@ import { format } from 'date-fns'
 import { fr } from 'date-fns/locale'
 import Link from 'next/link'
 import type { FinancialDocument, DocumentStatus } from '@/hooks/use-financial-documents'
+import { getOrganisationDisplayName } from '@/lib/utils/organisation-helpers'
 
 // =====================================================================
 // TYPES
@@ -151,7 +152,7 @@ export default function ExpenseDetailPage(props: PageProps) {
     return (
       <div className="flex flex-col gap-6 p-6">
         <div className="flex items-center gap-4">
-          <ButtonV2 variant="ghost" size="icon" asChild>
+          <ButtonV2 variant="ghost" size="sm" asChild className="h-9 w-9 p-0">
             <Link href="/finance/depenses">
               <ArrowLeft className="h-4 w-4" />
             </Link>
@@ -195,7 +196,7 @@ export default function ExpenseDetailPage(props: PageProps) {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-4">
-          <ButtonV2 variant="ghost" size="icon" asChild>
+          <ButtonV2 variant="ghost" size="sm" asChild className="h-9 w-9 p-0">
             <Link href="/finance/depenses">
               <ArrowLeft className="h-4 w-4" />
             </Link>
@@ -257,7 +258,7 @@ export default function ExpenseDetailPage(props: PageProps) {
           <CardContent>
             <div className="flex items-center gap-2">
               <Building2 className="h-5 w-5 text-gray-400" />
-              <span className="font-medium">{document.partner?.name || 'N/A'}</span>
+              <span className="font-medium">{document.partner ? getOrganisationDisplayName(document.partner) : 'N/A'}</span>
             </div>
           </CardContent>
         </Card>

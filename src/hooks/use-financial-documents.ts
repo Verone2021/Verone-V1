@@ -75,8 +75,9 @@ export interface FinancialDocument {
   // Relations chargées (avec expand)
   partner?: {
     id: string
-    name: string
-    type: string
+    legal_name: string
+    trade_name: string | null
+    type: 'supplier' | 'customer' | 'partner' | 'internal' | null
   }
   expense_category?: {
     id: string

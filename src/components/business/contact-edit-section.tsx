@@ -4,11 +4,13 @@ import { useState } from 'react'
 import { User, Save, X, Edit, Mail, Phone, Globe } from 'lucide-react'
 import { ButtonV2 } from '@/components/ui/button'
 import { cn } from '../../lib/utils'
+import { getOrganisationDisplayName } from '../../lib/utils/organisation-helpers'
 import { useInlineEdit, type EditableSection } from '../../hooks/use-inline-edit'
 
 interface Organisation {
   id: string
-  name: string
+  legal_name: string
+  trade_name?: string | null
   email?: string | null
   phone?: string | null
   secondary_email?: string | null
@@ -48,7 +50,8 @@ export function ContactEditSection({ organisation, onUpdate, className }: Contac
 
   const handleStartEdit = () => {
     startEdit(section, {
-      name: organisation.name,
+      legal_name: organisation.legal_name,
+      trade_name: organisation.trade_name || '',
       email: organisation.email || '',
       phone: organisation.phone || '',
       secondary_email: organisation.secondary_email || '',
@@ -218,7 +221,7 @@ export function ContactEditSection({ organisation, onUpdate, className }: Contac
       <div className="space-y-3">
         <div>
           <span className="text-sm text-black opacity-70">Nom:</span>
-          <div className="text-lg font-semibold text-black">{organisation.name}</div>
+          <div className="text-lg font-semibold text-black">{getOrganisationDisplayName(organisation)}</div>
         </div>
 
         {organisation.email && (

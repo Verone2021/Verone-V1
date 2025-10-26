@@ -347,7 +347,7 @@ export default function ConsultationDetailPage() {
           <CardContent>
             <div className="flex items-center space-x-2">
               <ButtonV2
-                variant={consultation.status === 'en_attente' ? 'default' : 'outline'}
+                variant={consultation.status === 'en_attente' ? 'primary' : 'outline'}
                 onClick={() => handleStatusChange('en_attente')}
                 disabled={consultation.status === 'en_attente'}
               >
@@ -355,7 +355,7 @@ export default function ConsultationDetailPage() {
                 En attente
               </ButtonV2>
               <ButtonV2
-                variant={consultation.status === 'en_cours' ? 'default' : 'outline'}
+                variant={consultation.status === 'en_cours' ? 'primary' : 'outline'}
                 onClick={() => handleStatusChange('en_cours')}
                 disabled={consultation.status === 'en_cours'}
               >
@@ -363,7 +363,7 @@ export default function ConsultationDetailPage() {
                 En cours
               </ButtonV2>
               <ButtonV2
-                variant={consultation.status === 'terminee' ? 'default' : 'outline'}
+                variant={consultation.status === 'terminee' ? 'primary' : 'outline'}
                 onClick={() => handleStatusChange('terminee')}
                 disabled={consultation.status === 'terminee'}
                 className="bg-green-600 hover:bg-green-700 text-white"
@@ -372,7 +372,7 @@ export default function ConsultationDetailPage() {
                 Terminée
               </ButtonV2>
               <ButtonV2
-                variant={consultation.status === 'annulee' ? 'default' : 'outline'}
+                variant={consultation.status === 'annulee' ? 'primary' : 'outline'}
                 onClick={() => handleStatusChange('annulee')}
                 disabled={consultation.status === 'annulee'}
                 className="bg-red-600 hover:bg-red-700 text-white"
@@ -402,9 +402,8 @@ export default function ConsultationDetailPage() {
               {/* Bouton Valider (si pas encore validée) */}
               {!consultation.validated_at && !consultation.archived_at && (
                 <ButtonV2
-                  variant="default"
+                  variant="success"
                   onClick={handleValidateConsultation}
-                  className="bg-green-600 hover:bg-green-700 text-white"
                 >
                   <CheckCircle className="h-3 w-3 mr-2" />
                   Valider la consultation
@@ -443,9 +442,8 @@ export default function ConsultationDetailPage() {
               {/* Bouton Supprimer (seulement si archivée) */}
               {consultation.archived_at && (
                 <ButtonV2
-                  variant="destructive"
+                  variant="danger"
                   onClick={handleDeleteConsultation}
-                  className="bg-red-600 hover:bg-red-700 text-white"
                 >
                   <XCircle className="h-3 w-3 mr-2" />
                   Supprimer définitivement

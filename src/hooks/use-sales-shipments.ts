@@ -22,6 +22,7 @@
 
 import { useState, useCallback } from 'react'
 import { createClient } from '@/lib/supabase/client'
+import { getOrganisationDisplayName } from '@/lib/utils/organisation-helpers'
 import type {
   ShipmentItem,
   ValidateShipmentPayload,
@@ -128,12 +129,12 @@ export function useSalesShipments() {
       if (data.customer_type === 'organization') {
         const { data: org } = await supabase
           .from('organisations')
-          .select('name')
+          .select('legal_name, trade_name')
           .eq('id', data.customer_id)
           .single()
 
         if (org) {
-          customerName = org.name
+          customerName = getOrganisationDisplayName(org)
         }
       } else if (data.customer_type === 'individual_customer') {
         const { data: indiv } = await supabase

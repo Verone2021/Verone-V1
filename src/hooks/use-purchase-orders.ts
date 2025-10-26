@@ -42,7 +42,8 @@ export interface PurchaseOrder {
   // Relations jointes
   organisations?: {
     id: string
-    name: string
+    legal_name: string
+    trade_name: string | null
     email?: string
     phone?: string
     payment_terms?: string

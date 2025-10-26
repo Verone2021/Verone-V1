@@ -12,6 +12,7 @@ import {
   Package
 } from 'lucide-react'
 import Link from 'next/link'
+import { getOrganisationDisplayName } from '@/lib/utils/organisation-helpers'
 import { OrganisationLogo } from './organisation-logo'
 import { SupplierSegmentBadge, SupplierSegmentType } from './supplier-segment-badge'
 import { SupplierCategoryBadge } from './supplier-category-badge'
@@ -20,7 +21,8 @@ import { spacing, colors } from '@/lib/design-system'
 interface OrganisationCardProps {
   organisation: {
     id: string
-    name: string
+    legal_name: string
+    trade_name?: string | null
     type: 'customer' | 'supplier' | 'partner'
     email?: string | null
     country?: string | null
@@ -117,7 +119,7 @@ export function OrganisationCard({
           <div className="flex items-center gap-1.5 flex-1 min-w-0">
             <OrganisationLogo
               logoUrl={organisation.logo_url}
-              organisationName={organisation.name}
+              organisationName={getOrganisationDisplayName(organisation)}
               size="xs"
               fallback="initials"
               className="flex-shrink-0"
@@ -130,12 +132,12 @@ export function OrganisationCard({
                 className="hover:underline truncate flex items-center gap-1 text-sm font-medium leading-tight"
                 style={{ color: colors.text.DEFAULT }}
               >
-                <span className="truncate">{organisation.name}</span>
+                <span className="truncate">{getOrganisationDisplayName(organisation)}</span>
                 <ExternalLink className="h-3 w-3 flex-shrink-0 opacity-60" />
               </a>
             ) : (
               <span className="truncate text-sm font-medium leading-tight" style={{ color: colors.text.DEFAULT }}>
-                {organisation.name}
+                {getOrganisationDisplayName(organisation)}
               </span>
             )}
           </div>

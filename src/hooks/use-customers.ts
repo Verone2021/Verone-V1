@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import { createClient } from '@/lib/supabase/client'
+import { getOrganisationDisplayName } from '@/lib/utils/organisation-helpers'
 
 export type CustomerType = 'professional' | 'individual'
 
@@ -77,11 +78,11 @@ export function useCustomers(filters?: CustomerFilters) {
           .eq('type', 'customer')
           .eq('is_active', filters?.is_active ?? true)
           .is('archived_at', null)
-          .order('name', { ascending: true })
+          .order('legal_name', { ascending: true })
 
-        // Filtre de recherche pour organisations
+        // Filtre de recherche pour organisations (legal_name + trade_name + email)
         if (filters?.search) {
-          orgQuery = orgQuery.or(`name.ilike.%${filters.search}%,email.ilike.%${filters.search}%`)
+          orgQuery = orgQuery.or(`legal_name.ilike.%${filters.search}%,trade_name.ilike.%${filters.search}%,email.ilike.%${filters.search}%`)
         }
 
         const { data: orgData, error: orgError } = await orgQuery
@@ -95,9 +96,9 @@ export function useCustomers(filters?: CustomerFilters) {
         const professionalCustomers: UnifiedCustomer[] = (orgData || []).map(org => ({
           id: org.id,
           type: 'professional' as CustomerType,
-          displayName: org.name,
+          displayName: getOrganisationDisplayName(org),
           email: org.email,
-          name: org.name,
+          name: getOrganisationDisplayName(org),
           siret: org.siret,
           vat_number: org.vat_number,
           billing_address_line1: org.billing_address_line1,
@@ -194,9 +195,9 @@ export function useCustomers(filters?: CustomerFilters) {
         return {
           id: data.id,
           type: 'professional',
-          displayName: data.name,
+          displayName: getOrganisationDisplayName(data),
           email: data.email,
-          name: data.name,
+          name: getOrganisationDisplayName(data),
           siret: data.siret,
           vat_number: data.vat_number,
           billing_address_line1: data.billing_address_line1,

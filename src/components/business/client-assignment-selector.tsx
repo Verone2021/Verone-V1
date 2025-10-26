@@ -6,6 +6,7 @@ import { ButtonV2 } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { cn } from '../../lib/utils'
+import { getOrganisationDisplayName } from '../../lib/utils/organisation-helpers'
 import { useOrganisations } from '../../hooks/use-organisations'
 
 interface Client {
@@ -49,7 +50,7 @@ export function ClientAssignmentSelector({
       .filter(org => org.type === 'customer')
       .map(org => ({
         id: org.id,
-        name: org.name,
+        name: getOrganisationDisplayName(org),
         type: org.type,
         email: org.email || undefined,
         city: org.city || undefined

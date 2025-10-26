@@ -105,7 +105,7 @@ const GroupHeader = ({ label, count }: GroupHeaderProps) => (
         className="text-sm font-medium px-2 py-0.5 rounded-md"
         style={{
           backgroundColor: colors.neutral[100],
-          color: colors.text.secondary,
+          color: colors.text.subtle,
         }}
       >
         {count}
@@ -187,7 +187,7 @@ const NotificationCard = ({ notification, onMarkAsRead, onDelete }: Notification
           {/* Timestamp */}
           <p
             className="text-xs mb-2"
-            style={{ color: colors.text.tertiary }}
+            style={{ color: colors.text.muted }}
           >
             {timeAgo}
           </p>
@@ -195,7 +195,7 @@ const NotificationCard = ({ notification, onMarkAsRead, onDelete }: Notification
           {/* Message */}
           <p
             className="text-sm leading-relaxed mb-3"
-            style={{ color: colors.text.secondary }}
+            style={{ color: colors.text.subtle }}
           >
             {notification.message}
           </p>
@@ -329,7 +329,7 @@ export default function NotificationsPage() {
             className="animate-spin rounded-full h-12 w-12 border-b-2 mx-auto mb-4"
             style={{ borderColor: colors.primary[500] }}
           />
-          <p className="text-sm" style={{ color: colors.text.secondary }}>
+          <p className="text-sm" style={{ color: colors.text.subtle }}>
             Chargement des notifications...
           </p>
         </div>
@@ -357,7 +357,7 @@ export default function NotificationsPage() {
               >
                 Notifications
               </h1>
-              <p className="text-sm" style={{ color: colors.text.secondary }}>
+              <p className="text-sm" style={{ color: colors.text.subtle }}>
                 {unreadCount > 0
                   ? `${unreadCount} notification${unreadCount > 1 ? 's' : ''} non ${unreadCount > 1 ? 'lues' : 'lue'}`
                   : 'Toutes vos notifications sont lues'}
@@ -448,7 +448,7 @@ export default function NotificationsPage() {
             <div className="relative">
               <Search
                 className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4"
-                style={{ color: colors.text.tertiary }}
+                style={{ color: colors.text.muted }}
               />
               <input
                 type="text"
@@ -466,7 +466,7 @@ export default function NotificationsPage() {
                   onClick={() => setSearchQuery('')}
                   className="absolute right-3 top-1/2 -translate-y-1/2"
                 >
-                  <X className="h-4 w-4" style={{ color: colors.text.tertiary }} />
+                  <X className="h-4 w-4" style={{ color: colors.text.muted }} />
                 </button>
               )}
             </div>
@@ -505,7 +505,7 @@ export default function NotificationsPage() {
               className="w-16 h-16 mx-auto mb-4 rounded-full flex items-center justify-center"
               style={{ backgroundColor: colors.neutral[100] }}
             >
-              <Bell className="h-8 w-8" style={{ color: colors.text.tertiary }} />
+              <Bell className="h-8 w-8" style={{ color: colors.text.muted }} />
             </div>
             <p
               className="text-sm font-medium mb-1"
@@ -513,7 +513,7 @@ export default function NotificationsPage() {
             >
               Aucune notification
             </p>
-            <p className="text-xs" style={{ color: colors.text.tertiary }}>
+            <p className="text-xs" style={{ color: colors.text.muted }}>
               {searchQuery
                 ? 'Aucun résultat pour votre recherche'
                 : 'Vous êtes à jour !'}

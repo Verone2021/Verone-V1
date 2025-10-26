@@ -823,6 +823,80 @@ export type Database = {
           },
         ]
       }
+      customer_pricing: {
+        Row: {
+          id: string
+          customer_id: string
+          customer_type: string
+          product_id: string
+          custom_price_ht: number | null
+          discount_rate: number | null
+          contract_reference: string | null
+          min_quantity: number | null
+          valid_from: string
+          valid_until: string | null
+          is_active: boolean | null
+          notes: string | null
+          approval_status: string | null
+          approved_by: string | null
+          approved_at: string | null
+          created_at: string | null
+          updated_at: string | null
+          created_by: string | null
+          retrocession_rate: number | null
+        }
+        Insert: {
+          id?: string
+          customer_id: string
+          customer_type: string
+          product_id: string
+          custom_price_ht?: number | null
+          discount_rate?: number | null
+          contract_reference?: string | null
+          min_quantity?: number | null
+          valid_from: string
+          valid_until?: string | null
+          is_active?: boolean | null
+          notes?: string | null
+          approval_status?: string | null
+          approved_by?: string | null
+          approved_at?: string | null
+          created_at?: string | null
+          updated_at?: string | null
+          created_by?: string | null
+          retrocession_rate?: number | null
+        }
+        Update: {
+          id?: string
+          customer_id?: string
+          customer_type?: string
+          product_id?: string
+          custom_price_ht?: number | null
+          discount_rate?: number | null
+          contract_reference?: string | null
+          min_quantity?: number | null
+          valid_from?: string
+          valid_until?: string | null
+          is_active?: boolean | null
+          notes?: string | null
+          approval_status?: string | null
+          approved_by?: string | null
+          approved_at?: string | null
+          created_at?: string | null
+          updated_at?: string | null
+          created_by?: string | null
+          retrocession_rate?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "customer_pricing_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "products"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       error_notifications_queue: {
         Row: {
           created_at: string
@@ -1262,6 +1336,130 @@ export type Database = {
           },
         ]
       }
+      financial_documents: {
+        Row: {
+          id: string
+          document_type: Database["public"]["Enums"]["document_type"]
+          document_direction: Database["public"]["Enums"]["document_direction"]
+          partner_id: string
+          partner_type: string
+          document_number: string
+          document_date: string
+          due_date: string | null
+          total_ht: number
+          total_ttc: number
+          tva_amount: number
+          amount_paid: number
+          status: Database["public"]["Enums"]["document_status"]
+          abby_invoice_id: string | null
+          abby_invoice_number: string | null
+          abby_pdf_url: string | null
+          abby_public_url: string | null
+          synced_to_abby_at: string | null
+          last_synced_from_abby_at: string | null
+          sync_errors: Json | null
+          uploaded_file_url: string | null
+          uploaded_file_name: string | null
+          sales_order_id: string | null
+          purchase_order_id: string | null
+          expense_category_id: string | null
+          description: string | null
+          notes: string | null
+          created_at: string
+          updated_at: string
+          created_by: string
+          deleted_at: string | null
+        }
+        Insert: {
+          id?: string
+          document_type: Database["public"]["Enums"]["document_type"]
+          document_direction: Database["public"]["Enums"]["document_direction"]
+          partner_id: string
+          partner_type: string
+          document_number: string
+          document_date: string
+          due_date?: string | null
+          total_ht: number
+          total_ttc: number
+          tva_amount: number
+          amount_paid?: number
+          status?: Database["public"]["Enums"]["document_status"]
+          abby_invoice_id?: string | null
+          abby_invoice_number?: string | null
+          abby_pdf_url?: string | null
+          abby_public_url?: string | null
+          synced_to_abby_at?: string | null
+          last_synced_from_abby_at?: string | null
+          sync_errors?: Json | null
+          uploaded_file_url?: string | null
+          uploaded_file_name?: string | null
+          sales_order_id?: string | null
+          purchase_order_id?: string | null
+          expense_category_id?: string | null
+          description?: string | null
+          notes?: string | null
+          created_at?: string
+          updated_at?: string
+          created_by: string
+          deleted_at?: string | null
+        }
+        Update: {
+          id?: string
+          document_type?: Database["public"]["Enums"]["document_type"]
+          document_direction?: Database["public"]["Enums"]["document_direction"]
+          partner_id?: string
+          partner_type?: string
+          document_number?: string
+          document_date?: string
+          due_date?: string | null
+          total_ht?: number
+          total_ttc?: number
+          tva_amount?: number
+          amount_paid?: number
+          status?: Database["public"]["Enums"]["document_status"]
+          abby_invoice_id?: string | null
+          abby_invoice_number?: string | null
+          abby_pdf_url?: string | null
+          abby_public_url?: string | null
+          synced_to_abby_at?: string | null
+          last_synced_from_abby_at?: string | null
+          sync_errors?: Json | null
+          uploaded_file_url?: string | null
+          uploaded_file_name?: string | null
+          sales_order_id?: string | null
+          purchase_order_id?: string | null
+          expense_category_id?: string | null
+          description?: string | null
+          notes?: string | null
+          created_at?: string
+          updated_at?: string
+          created_by?: string
+          deleted_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "financial_documents_partner_id_fkey"
+            columns: ["partner_id"]
+            isOneToOne: false
+            referencedRelation: "organisations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "financial_documents_sales_order_id_fkey"
+            columns: ["sales_order_id"]
+            isOneToOne: false
+            referencedRelation: "sales_orders"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "financial_documents_purchase_order_id_fkey"
+            columns: ["purchase_order_id"]
+            isOneToOne: false
+            referencedRelation: "purchase_orders"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       individual_customers: {
         Row: {
           accepts_marketing: boolean | null
@@ -1574,10 +1772,11 @@ export type Database = {
           industry_sector: string | null
           is_active: boolean | null
           legal_form: string | null
+          legal_name: string
           minimum_order_amount: number | null
-          name: string
           notes: string | null
           payment_terms: string | null
+          trade_name: string | null
           phone: string | null
           postal_code: string | null
           preferred_supplier: boolean | null
@@ -1623,10 +1822,11 @@ export type Database = {
           industry_sector?: string | null
           is_active?: boolean | null
           legal_form?: string | null
+          legal_name: string
           minimum_order_amount?: number | null
-          name: string
           notes?: string | null
           payment_terms?: string | null
+          trade_name?: string | null
           phone?: string | null
           postal_code?: string | null
           preferred_supplier?: boolean | null
@@ -1672,10 +1872,11 @@ export type Database = {
           industry_sector?: string | null
           is_active?: boolean | null
           legal_form?: string | null
+          legal_name?: string
           minimum_order_amount?: number | null
-          name?: string
           notes?: string | null
           payment_terms?: string | null
+          trade_name?: string | null
           phone?: string | null
           postal_code?: string | null
           preferred_supplier?: boolean | null
@@ -4773,6 +4974,22 @@ export type Database = {
         | "preorder"
         | "coming_soon"
         | "discontinued"
+      document_direction: "inbound" | "outbound"
+      document_status:
+        | "draft"
+        | "sent"
+        | "received"
+        | "paid"
+        | "partially_paid"
+        | "overdue"
+        | "cancelled"
+        | "refunded"
+      document_type:
+        | "customer_invoice"
+        | "customer_credit_note"
+        | "supplier_invoice"
+        | "supplier_credit_note"
+        | "expense"
       error_severity_enum: "critical" | "high" | "medium" | "low"
       error_status_enum: "open" | "in_progress" | "resolved" | "closed"
       error_type_enum:
@@ -5048,6 +5265,22 @@ export const Constants = {
         "console_error",
         "data_validation",
         "functional_bug",
+      ],
+      document_direction: ["inbound", "outbound"],
+      document_status: [
+        "draft",
+        "sent",
+        "paid",
+        "overdue",
+        "cancelled",
+        "partially_paid",
+      ],
+      document_type: [
+        "customer_invoice",
+        "customer_credit_note",
+        "supplier_invoice",
+        "supplier_credit_note",
+        "expense",
       ],
       feed_export_status_type: [
         "pending",

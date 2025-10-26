@@ -14,6 +14,7 @@ import { CreateOrganisationModal } from '../../../components/business/create-org
 import { useConsultations } from '../../../hooks/use-consultations'
 import { useOrganisations } from '../../../hooks/use-organisations'
 import { useToast } from '../../../hooks/use-toast'
+import { getOrganisationDisplayName } from '../../../lib/utils/organisation-helpers'
 import type { CreateConsultationData } from '../../../hooks/use-consultations'
 
 export default function CreateConsultationPage() {
@@ -43,7 +44,7 @@ export default function CreateConsultationPage() {
   // Options pour le Combobox
   const organisationOptions = organisations.map(org => ({
     value: org.id,
-    label: org.name
+    label: getOrganisationDisplayName(org)
   }))
 
   const handleInputChange = (field: keyof CreateConsultationData, value: any) => {
@@ -139,9 +140,12 @@ export default function CreateConsultationPage() {
       const newConsultation = await createConsultation(dataToSubmit)
 
       if (newConsultation) {
+        const selectedOrg = organisations.find(o => o.id === formData.organisation_id)
+        const orgName = selectedOrg ? getOrganisationDisplayName(selectedOrg) : 'Client'
+
         toast({
           title: "Consultation créée",
-          description: `Nouvelle consultation pour ${dataToSubmit.organisation_name}`
+          description: `Nouvelle consultation pour ${orgName}`
         })
         router.push('/consultations')
       }
