@@ -212,7 +212,7 @@ export default function GoogleMerchantPage() {
             <div className="flex items-center space-x-4">
               <ButtonV2
                 variant="outline"
-                size="icon"
+                size="sm"
                 onClick={() => router.push('/canaux-vente')}
                 className="border-black text-black hover:bg-black hover:text-white"
               >

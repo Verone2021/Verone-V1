@@ -57,9 +57,10 @@ interface Payment {
 // METADATA
 // =====================================================================
 
-export async function generateMetadata({ params }: { params: { id: string } }) {
+export async function generateMetadata({ params }: { params: Promise<{ id: string }> }) {
+  const { id } = await params;
   return {
-    title: `Facture ${params.id} | Vérone Back Office`,
+    title: `Facture ${id} | Vérone Back Office`,
     description: 'Détail et historique de la facture',
   };
 }
@@ -68,7 +69,10 @@ export async function generateMetadata({ params }: { params: { id: string } }) {
 // PAGE COMPONENT
 // =====================================================================
 
-export default async function InvoiceDetailPage({ params }: { params: { id: string } }) {
+export default async function InvoiceDetailPage({ params }: { params: Promise<{ id: string }> }) {
+  // Await params pour Next.js 15
+  const { id } = await params;
+
   // FEATURE FLAG: Finance module disabled for Phase 1
   const { featureFlags } = await import('@/lib/feature-flags');
   
