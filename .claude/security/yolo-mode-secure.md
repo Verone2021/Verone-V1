@@ -290,11 +290,13 @@ class YoloSecurityMonitor {
   }
 
   private async notifyAdministrators(alert: SecurityAlert) {
-    // Future: Integration with Sentry MCP
-    // await mcp__sentry__create_issue({
-    //   title: `YOLO Security Alert: ${alert.type}`,
-    //   description: JSON.stringify(alert, null, 2)
-    // });
+    // Future: Enhanced console-error-tracker with alert escalation
+    console.error('[VÉRONE:SECURITY]', {
+      level: 'critical',
+      title: `YOLO Security Alert: ${alert.type}`,
+      alert: JSON.stringify(alert, null, 2),
+      timestamp: new Date().toISOString()
+    });
   }
 }
 ```

@@ -286,15 +286,20 @@ console.log('User created:', {
   created_at: user.created_at
 })
 
-// Sentry : Scrub sensitive data
-Sentry.init({
-  beforeSend(event) {
-    // Remove sensitive fields
-    delete event.user?.email
-    delete event.extra?.password
-    return event
-  }
-})
+// Console Error Tracker : Scrub sensitive data
+const sanitizeErrorData = (data: any) => {
+  const sanitized = { ...data }
+  // Remove sensitive fields
+  delete sanitized.email
+  delete sanitized.password
+  delete sanitized.token
+  return sanitized
+}
+
+console.error('[VÉRONE:ERROR]', sanitizeErrorData({
+  error: error.message,
+  context: userData  // Already sanitized
+}))
 ```
 
 ## SECURITY AUDIT REPORT

@@ -170,14 +170,15 @@ mcp__github__push_files
 
 ### **📊 PHASE 6: MONITOR (Production & Maintenance)**
 
-#### **Primary Agent: Sentry MCP (if available)**
+#### **Primary Agent: Vercel Observability + Console Error Tracker**
 ```typescript
-// Production monitoring temps réel
+// Production monitoring via Vercel Dashboard + console-error-tracker.ts
+mcp__playwright__browser_console_messages  // Validation temps réel
 ```
 **Usage Pattern:**
-- Erreurs production detection
-- Performance monitoring
-- Automatic issue escalation
+- Vercel Dashboard : Error tracking natif, performance monitoring
+- console-error-tracker.ts : Logs structurés (JSON)
+- Playwright Browser : Validation console errors en temps réel
 
 #### **Secondary Agent: Supabase (Health Monitoring)**
 ```typescript
@@ -223,8 +224,8 @@ mcp__supabase__get_advisors
 3. Context7 → Research optimization patterns
 4. Sequential Thinking → Plan optimization strategy
 5. Serena → Implement optimizations
-6. Playwright → Validate improvements
-7. Sentry → Monitor production impact
+6. Playwright → Validate improvements (console clean)
+7. Vercel Observability → Monitor production impact
 ```
 
 ### **Pattern 4: Architecture Refactoring**
@@ -266,7 +267,7 @@ mcp__supabase__get_advisors
 
 ### **🚀 Deployment & Automation**
 - **GitHub** → `create_pull_request`, `push_files`
-- **Sentry** → `get_recent_issues` for monitoring
+- **Vercel Observability** → Production error tracking & performance monitoring
 
 ---
 
