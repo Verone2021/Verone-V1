@@ -30,6 +30,7 @@ import { ButtonV2 } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { Input } from '@/components/ui/input'
 import { debounce } from '@/lib/utils'
+import { QuickSourcingModal } from '@/components/business/quick-sourcing-modal'
 import {
   Select,
   SelectContent,
@@ -54,6 +55,7 @@ export default function SourcingProduitsPage() {
   const [sourcingTypeFilter, setSourcingTypeFilter] = useState('all')
   const [supplierFilter, setSupplierFilter] = useState('all') // 🆕 Filtre fournisseur
   const [clientFilter, setClientFilter] = useState('all') // 🆕 Filtre client
+  const [isQuickSourcingModalOpen, setIsQuickSourcingModalOpen] = useState(false) // 🆕 Modal sourcing rapide
 
   // ✅ FIX 3.5: Fonction debounce mémorisée
   const debouncedSearch = useMemo(
@@ -68,7 +70,7 @@ export default function SourcingProduitsPage() {
   const { organisations: customers } = useCustomers()
 
   // Hook Supabase pour les produits sourcing
-  const { products: sourcingProducts, loading, error, validateSourcing, orderSample } = useSourcingProducts({
+  const { products: sourcingProducts, loading, error, validateSourcing, orderSample, refetch } = useSourcingProducts({
     search: debouncedSearchTerm || undefined,  // ✅ Utiliser debouncedSearchTerm
     status: statusFilter === 'all' ? undefined : statusFilter,
     sourcing_type: sourcingTypeFilter === 'all' ? undefined : (sourcingTypeFilter as 'interne' | 'client'),
@@ -155,7 +157,7 @@ export default function SourcingProduitsPage() {
                 Client Professionnel
               </ButtonV2>
               <ButtonV2
-                onClick={() => router.push('/produits/catalogue/create')}
+                onClick={() => setIsQuickSourcingModalOpen(true)}
                 className="bg-black hover:bg-gray-800 text-white"
               >
                 <Plus className="h-4 w-4 mr-2" />
@@ -465,6 +467,16 @@ export default function SourcingProduitsPage() {
           </CardContent>
         </Card>
       </div>
+
+      {/* Modal sourcing rapide */}
+      <QuickSourcingModal
+        open={isQuickSourcingModalOpen}
+        onClose={() => setIsQuickSourcingModalOpen(false)}
+        onSuccess={() => {
+          refetch()
+          setIsQuickSourcingModalOpen(false)
+        }}
+      />
     </div>
   )
 }
