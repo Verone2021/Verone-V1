@@ -398,7 +398,7 @@ export default function CollectionsPage() {
               <ButtonV2
                 size="sm"
                 variant="outline"
-                onClick={() => router.push(`/catalogue/collections/${collection.id}`)}
+                onClick={() => router.push(`/produits/catalogue/collections/${collection.id}`)}
                 className="text-[10px] h-6 w-full px-1"
                 title="Voir les détails"
               >
@@ -431,7 +431,7 @@ export default function CollectionsPage() {
               <ButtonV2
                 size="sm"
                 variant="outline"
-                onClick={() => router.push(`/catalogue/collections/${collection.id}`)}
+                onClick={() => router.push(`/produits/catalogue/collections/${collection.id}`)}
                 className="text-[10px] h-6 w-full px-1"
                 title="Voir les détails"
               >

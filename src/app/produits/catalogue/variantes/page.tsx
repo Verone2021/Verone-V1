@@ -328,7 +328,7 @@ export default function VariantesPage() {
               <ButtonV2
                 size="sm"
                 variant="outline"
-                onClick={() => router.push(`/catalogue/variantes/${group.id}`)}
+                onClick={() => router.push(`/produits/catalogue/variantes/${group.id}`)}
                 className="text-[10px] h-6 w-full px-1"
                 title="Voir les détails"
               >
@@ -360,7 +360,7 @@ export default function VariantesPage() {
               <ButtonV2
                 size="sm"
                 variant="outline"
-                onClick={() => router.push(`/catalogue/variantes/${group.id}`)}
+                onClick={() => router.push(`/produits/catalogue/variantes/${group.id}`)}
                 className="text-[10px] h-6 w-full px-1"
                 title="Voir les détails"
               >

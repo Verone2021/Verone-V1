@@ -80,7 +80,7 @@ const getNavItems = (stockAlertsCount: number): NavItem[] => [
       },
       {
         title: 'Collections',
-        href: '/produits/collections',
+        href: '/produits/catalogue/collections',
         icon: Layers
       },
       {
@@ -90,7 +90,7 @@ const getNavItems = (stockAlertsCount: number): NavItem[] => [
       },
       {
         title: 'Variantes',
-        href: '/produits/variantes',
+        href: '/produits/catalogue/variantes',
         icon: Grid3x3
       }
     ]
