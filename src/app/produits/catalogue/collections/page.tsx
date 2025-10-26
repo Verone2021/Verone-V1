@@ -2,7 +2,7 @@
 
 import { useState, useMemo, useCallback, useEffect } from "react"
 import { useRouter } from "next/navigation"
-import { Search, Plus, Edit3, Trash2, ExternalLink, Package, Archive, ArchiveRestore } from "lucide-react"
+import { Search, Plus, Edit3, Trash2, ExternalLink, Package, Archive, ArchiveRestore, Layers, Eye } from "lucide-react"
 import { ButtonV2 } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { cn } from "@/lib/utils"
@@ -11,6 +11,7 @@ import { CollectionCreationWizard, CreateCollectionInput } from "@/components/bu
 import { CollectionProductsModal } from "@/components/business/collection-products-modal"
 import { useToast } from "@/hooks/use-toast"
 import { getRoomLabel, type RoomType } from "@/types/room-types"
+import { ElegantKpiCard } from "@/components/ui/elegant-kpi-card"
 
 // Interface filtres collections
 interface LocalCollectionFilters {
@@ -492,8 +493,27 @@ export default function CollectionsPage() {
         </div>
       </div>
 
+      {/* KPI Cards */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 px-6 pt-6">
+        <ElegantKpiCard
+          label="Collections totales"
+          value={loading ? '...' : stats.total}
+          icon={Layers}
+        />
+        <ElegantKpiCard
+          label="Collections actives"
+          value={loading ? '...' : stats.active}
+          icon={Eye}
+        />
+        <ElegantKpiCard
+          label="Collections archivées"
+          value={archivedLoading ? '...' : stats.archived}
+          icon={Archive}
+        />
+      </div>
+
       {/* Onglets collections actives/archivées */}
-      <div className="flex border-b border-gray-200">
+      <div className="flex border-b border-gray-200 px-6">
         <button
           onClick={() => setActiveTab('active')}
           className={`px-6 py-3 font-medium transition-colors ${
@@ -517,7 +537,7 @@ export default function CollectionsPage() {
       </div>
 
       {/* Barre de recherche et filtres */}
-      <div className="flex flex-col space-y-4 sm:flex-row sm:space-y-0 sm:space-x-4">
+      <div className="flex flex-col space-y-4 sm:flex-row sm:space-y-0 sm:space-x-4 px-6">
         <div className="flex-1 relative">
           <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
           <input
@@ -555,7 +575,7 @@ export default function CollectionsPage() {
 
       {/* Actions groupées */}
       {selectedCollections.length > 0 && (
-        <div className="flex items-center space-x-2 p-4 bg-blue-50 rounded-md">
+        <div className="flex items-center space-x-2 p-4 bg-blue-50 rounded-md mx-6">
           <span className="text-sm text-gray-700">
             {selectedCollections.length} collection{selectedCollections.length !== 1 ? 's' : ''} sélectionnée{selectedCollections.length !== 1 ? 's' : ''}
           </span>
@@ -586,7 +606,7 @@ export default function CollectionsPage() {
       )}
 
       {/* Grille des collections - hauteur uniforme */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 auto-rows-fr">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 auto-rows-fr px-6">
         {((activeTab === 'active' && loading) || (activeTab === 'archived' && archivedLoading)) ? (
           Array.from({ length: 6 }).map((_, i) => (
             <div key={i} className="bg-white rounded-lg border border-gray-200 animate-pulse">
@@ -622,28 +642,6 @@ export default function CollectionsPage() {
             )
           })()
         )}
-      </div>
-
-      {/* Statistiques */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-        <div className="bg-white p-4 rounded-lg border border-gray-200">
-          <div className="text-2xl font-light text-black">
-            {loading ? '...' : stats.total}
-          </div>
-          <div className="text-sm text-gray-600">Collections totales</div>
-        </div>
-        <div className="bg-white p-4 rounded-lg border border-gray-200">
-          <div className="text-2xl font-light text-black">
-            {loading ? '...' : stats.active}
-          </div>
-          <div className="text-sm text-gray-600">Collections actives</div>
-        </div>
-        <div className="bg-white p-4 rounded-lg border border-gray-200">
-          <div className="text-2xl font-light text-black">
-            {archivedLoading ? '...' : stats.archived}
-          </div>
-          <div className="text-sm text-gray-600">Collections archivées</div>
-        </div>
       </div>
 
       {/* Modal de création de collection avec wizard complet */}

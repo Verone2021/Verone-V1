@@ -44,7 +44,6 @@ jobs:
         env:
           NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
           NEXT_PUBLIC_SUPABASE_ANON_KEY: ${{ secrets.NEXT_PUBLIC_SUPABASE_ANON_KEY }}
-          NEXT_PUBLIC_SENTRY_DSN: ${{ secrets.NEXT_PUBLIC_SENTRY_DSN }}
 
       - name: 🧪 Unit Tests
         run: npm run test:unit
@@ -82,14 +81,12 @@ jobs:
         env:
           NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
           NEXT_PUBLIC_SUPABASE_ANON_KEY: ${{ secrets.NEXT_PUBLIC_SUPABASE_ANON_KEY }}
-          NEXT_PUBLIC_SENTRY_DSN: ${{ secrets.NEXT_PUBLIC_SENTRY_DSN }}
 
       - name: 🚀 Start application
         run: npm start &
         env:
           NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
           NEXT_PUBLIC_SUPABASE_ANON_KEY: ${{ secrets.NEXT_PUBLIC_SUPABASE_ANON_KEY }}
-          NEXT_PUBLIC_SENTRY_DSN: ${{ secrets.NEXT_PUBLIC_SENTRY_DSN }}
 
       - name: ⏳ Wait for application
         run: npx wait-on http://localhost:3000 --timeout 60000
@@ -244,20 +241,6 @@ jobs:
       - name: 📊 Performance validation
         run: npm run test:lighthouse -- --url=${{ steps.production-deploy.outputs.deployment-url }}
         continue-on-error: true
-
-      - name: 🔔 Sentry deployment notification
-        run: |
-          curl -X POST https://sentry.io/api/0/organizations/${{ secrets.SENTRY_ORG }}/releases/ \
-            -H "Authorization: Bearer ${{ secrets.SENTRY_AUTH_TOKEN }}" \
-            -H "Content-Type: application/json" \
-            -d '{
-              "version": "${{ github.sha }}",
-              "refs": [{
-                "repository": "${{ github.repository }}",
-                "commit": "${{ github.sha }}"
-              }],
-              "projects": ["verone-back-office"]
-            }'
 
       - name: 📈 HubSpot deployment tracking
         run: |

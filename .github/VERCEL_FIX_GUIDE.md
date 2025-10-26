@@ -54,7 +54,6 @@ NEXT_PUBLIC_SUPABASE_URL=https://aorroydfjsrygmosnzrl.supabase.co
 NEXT_PUBLIC_SUPABASE_ANON_KEY=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImFvcnJveWRmanNyeWdtb3NuenJsIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTc3Mjc0NzAsImV4cCI6MjA3MzMwMzQ3MH0.fRi7svC8bAr3wihH76pfQnaq7tjuBMypAEi6q-rHCTA
 
 # Sentry (optionnel)
-NEXT_PUBLIC_SENTRY_DSN=https://25698064b38f249e069e5dcf9b8a6314@o4510076285943808.ingest.de.sentry.io/4510095142289488
 ```
 
 ### **Étape 4 : Déployer**

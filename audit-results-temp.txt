@@ -1,0 +1,55 @@
+AUDIT PAGES VÉRONE - 25 OCT 2025
+=====================================
+
+PAGES TESTÉES:
+
+1. /canaux-vente/prix-clients - OK (0 errors) - Boutons: 2 placeholders, 1 fonctionnel
+2. /login - OK (redirect /dashboard)
+3. /dashboard - OK avec WARNING (bouton "Voir tout" -> crash UUID error)
+4. /profile - OK (0 errors)
+5. /organisation - OK (redirect to /contacts-organisations) - 2 warnings SLO query >2000ms
+6. /contacts-organisations - OK (0 errors, 2 warnings SLO) - Hub avec stats OK
+7. /contacts-organisations/suppliers - OK (0 errors) - 12 fournisseurs affichés
+8. /contacts-organisations/customers - OK (0 errors)
+9. /contacts-organisations/partners - OK (0 errors) - 1 partenaire affiché
+10. /admin/users - OK (0 errors) - 3 utilisateurs affichés
+11. /admin/activite-utilisateurs - OK (0 errors)
+12. /parametres - OK (0 errors)
+13. /produits - OK (0 errors) - Hub avec 4 KPI cards
+14. /produits/catalogue - OK (0 errors) - 20 produits affichés
+15. /produits/catalogue/dashboard - OK (0 errors) - 4 KPI cards
+16. /produits/catalogue/stocks - ❌ ERROR - TypeError: Cannot read properties of undefined (reading 'split') - stock-display.tsx:236
+17. /produits/catalogue/categories - OK (0 errors) - 7 familles affichées
+18. /produits/catalogue/archived - OK (0 errors) - 0 produits archivés
+19. /produits/catalogue/collections - OK (0 errors) - 2 collections affichées
+20. /produits/catalogue/variantes - OK (0 errors) - 1 groupe variantes (16 produits)
+21. /stocks - OK (0 errors) - Hub avec KPI cards stock
+22. /stocks/mouvements - OK (0 errors) - 0 mouvements affichés
+23. /commandes - OK (0 errors) - Hub avec KPI cards, 0 commandes
+24. /commandes/clients - OK (0 errors, 2 warnings SLO) - 5 KPI cards, 0 commandes
+25. /commandes/fournisseurs - OK (0 errors) - 5 KPI cards, 0 commandes
+26. /commandes/expeditions - OK (0 errors) - 4 KPI cards, 0 commandes à expédier
+27. /consultations - OK (0 errors) - 4 KPI cards, 1 consultation affichée
+28. /consultations/create - OK (0 errors) - Formulaire création consultation complet
+29. /canaux-vente - OK (0 errors) - 5 KPI cards, 2 canaux actifs (Google Merchant + Boutique)
+30. /canaux-vente/google-merchant - OK (0 errors) - 6 KPI cards, 3 produits synchronisés
+31. /finance/rapprochement - OK (0 errors) - Page vide (contenu à implémenter)
+32. /factures - OK (0 errors) - Page vide (contenu à implémenter)
+33. /tresorerie - OK (0 errors) - Page vide (contenu à implémenter)
+34. /ventes - OK (0 errors) - 4 KPI cards, 1 consultation récente affichée
+35. /notifications - OK (0 errors) - 1 notification affichée
+36. /organisation/all - ❌ ERROR - TypeError: Cannot read properties of undefined (reading 'trim') - organisation-logo.tsx:85
+37. /organisation/contacts - OK (0 errors) - 4 KPI cards, 3 contacts affichés
+38. /produits/sourcing - OK (0 errors) - 4 KPI cards, dashboard avec actions rapides
+39. /produits/sourcing/produits - OK (0 errors, 2 warnings SLO) - 4 KPI cards, 0 produits
+40. /produits/sourcing/echantillons - OK (0 errors) - 4 KPI cards, 4 échantillons affichés
+41. /produits/sourcing/validation - OK (0 errors) - 4 KPI cards, workflow validation complet
+42. /stocks/alertes - ⚠️ ERRORS (6x HTTP 400 - RPC get_low_stock_products) - Page fonctionne avec fallback - 21 alertes affichées
+43. /stocks/ajustements/create - OK (0 errors) - Formulaire création ajustement complet
+44. /stocks/entrees - OK (0 errors) - Redirect vers /stocks/mouvements?tab=in - 4 KPI cards, onglets Entrées Réelles/Prévisionnelles
+45. /stocks/expeditions - OK (0 errors) - 5 KPI cards, gestion expéditions clients, 0 commandes
+46. /stocks/inventaire - OK (0 errors) - 4 KPI cards, inventaire consolidé, 0 mouvements affichés
+47. /stocks/produits - OK (0 errors) - 4 KPI cards, inventaire détaillé, tableau produits vide
+48. /stocks/receptions - OK (0 errors, 2 warnings SLO) - 5 KPI cards, réceptions fournisseurs, 0 commandes
+49. /stocks/sorties - OK (0 errors) - Redirect vers /stocks/mouvements?tab=out - 4 KPI cards, onglets Sorties Réelles/Prévisionnelles
+50. /contacts-organisations/contacts - OK (0 errors) - 5 KPI cards, 3 contacts affichés avec détails

@@ -1,6 +1,4 @@
 const { getSecurityHeaders } = require('./src/lib/security/headers.js');
-// Sentry temporairement désactivé (ligne 185)
-// const { withSentryConfig } = require('@sentry/nextjs');
 
 /** @type {import('next').NextConfig} */
 const nextConfig = {
@@ -146,41 +144,4 @@ const nextConfig = {
   },
 };
 
-// Configuration Sentry pour Next.js selon documentation officielle 2024
-const sentryWebpackPluginOptions = {
-  // Configuration organisationnelle
-  org: process.env.SENTRY_ORG,
-  project: process.env.SENTRY_PROJECT_ID,
-
-  // Token d'authentification
-  authToken: process.env.SENTRY_AUTH_TOKEN,
-
-  // Contrôle verbosité (silent en dev, verbose en prod pour debug)
-  silent: process.env.NODE_ENV === 'development',
-  debug: process.env.NODE_ENV === 'development',
-
-  // Source maps et sécurité
-  hideSourceMaps: process.env.NODE_ENV === 'production',
-  widenClientFileUpload: true,
-
-  // Optimisations automatiques
-  automaticVercelMonitors: false, // Désactivé car pas sur Vercel
-
-  // Transpilation et bundle analyzer
-  transpileClientSDK: true,
-  tunnelRoute: "/monitoring",
-
-  // Release tracking
-  release: {
-    name: process.env.SENTRY_RELEASE,
-    finalize: false, // Allow manual finalization
-  },
-
-  // For all available options, see:
-  // https://github.com/getsentry/sentry-webpack-plugin#options.
-};
-
-// Export SANS Sentry temporairement pour débloquer build production
-// Sentry sera réactivé après résolution Next.js 15 App Router compatibility
-// module.exports = withSentryConfig(nextConfig, sentryWebpackPluginOptions);
 module.exports = nextConfig;

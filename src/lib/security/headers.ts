@@ -35,7 +35,6 @@ const securityHeaders = {
         "https://aorroydfjsrygmosnzrl.supabase.co/auth/v1/*",
         "https://aorroydfjsrygmosnzrl.supabase.co/rest/v1/*",
         "wss://aorroydfjsrygmosnzrl.supabase.co",
-        "https://o4508758519349248.ingest.us.sentry.io",
         "https://vitals.vercel-insights.com" // Vercel Analytics
       ],
       mediaSrc: ["'self'", "https://aorroydfjsrygmosnzrl.supabase.co"],

@@ -173,8 +173,6 @@ mcp__github__push_files
 #### **Primary Agent: Sentry MCP (if available)**
 ```typescript
 // Production monitoring temps réel
-mcp__sentry__get_recent_issues
-mcp__sentry__create_issue
 ```
 **Usage Pattern:**
 - Erreurs production detection

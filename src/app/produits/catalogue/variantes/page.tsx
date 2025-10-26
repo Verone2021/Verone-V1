@@ -26,21 +26,18 @@ import { Badge } from '@/components/ui/badge'
 import { cn } from '@/lib/utils'
 import { PageHeader } from '@/components/layout/page-header'
 import { useVariantGroups } from '@/hooks/use-variant-groups'
-import { useFamilies } from '@/hooks/use-families'
-import { useCategories } from '@/hooks/use-categories'
-import { useSubcategories } from '@/hooks/use-subcategories'
 import { VariantGroupForm } from '@/components/forms/VariantGroupForm'
 import { AddProductsToGroupModal } from '@/components/forms/AddProductsToGroupModal'
 import { useToast } from '@/hooks/use-toast'
+import { ElegantKpiCard } from '@/components/ui/elegant-kpi-card'
+import { CategoryFilterCombobox } from '@/components/business/category-filter-combobox'
 
 // Interface filtres variantes
 interface LocalVariantFilters {
   search: string
   status: 'all' | 'active' | 'inactive'
   type: 'all' | 'color' | 'material'
-  familyId: string
-  categoryId: string
-  subcategoryId: string
+  subcategoryId?: string
 }
 
 // Helper pour formater le type de variante
@@ -62,9 +59,7 @@ export default function VariantesPage() {
     search: "",
     status: 'all',
     type: 'all',
-    familyId: 'all',
-    categoryId: 'all',
-    subcategoryId: 'all'
+    subcategoryId: undefined
   })
   const [selectedGroups, setSelectedGroups] = useState<string[]>([])
   const [editingGroup, setEditingGroup] = useState<any>(null)
@@ -97,22 +92,7 @@ export default function VariantesPage() {
     loadArchivedVariantGroups
   } = useVariantGroups(stableFilters)
 
-  // Hooks pour l'arborescence hiérarchique
-  const { families, loading: familiesLoading } = useFamilies()
-  const { allCategories, getCategoriesByFamily } = useCategories()
-  const { getSubcategoriesByCategory } = useSubcategories()
-
-  // Filtres calculés
-  const filteredCategories = useMemo(() => {
-    if (filters.familyId === 'all') return []
-    return getCategoriesByFamily(filters.familyId)
-  }, [filters.familyId, getCategoriesByFamily])
-
-  const filteredSubcategories = useMemo(() => {
-    if (filters.categoryId === 'all') return []
-    // Note: getSubcategoriesByCategory est async, on pourrait améliorer ça
-    return []
-  }, [filters.categoryId])
+  // Plus besoin de hooks familles/catégories/subcatégories (géré par CategoryFilterCombobox)
 
   // Fonctions utilitaires
   const toggleGroupSelection = (groupId: string) => {
@@ -392,12 +372,24 @@ export default function VariantesPage() {
     )
   }
 
-  // Statistiques
+  // Filtrage côté client par subcategory
+  const filteredVariantGroups = useMemo(() => {
+    if (!filters.subcategoryId) {
+      return variantGroups
+    }
+
+    // Filtrer par subcategory_id du groupe (relation directe)
+    return variantGroups.filter((group: any) =>
+      group.subcategory_id === filters.subcategoryId
+    )
+  }, [variantGroups, filters.subcategoryId])
+
+  // Statistiques (basées sur groupes filtrés)
   const stats = useMemo(() => ({
-    total: variantGroups.length,
-    totalProducts: variantGroups.reduce((sum, g) => sum + (g.product_count || 0), 0),
-    types: new Set(variantGroups.map(g => g.variant_type)).size,
-  }), [variantGroups])
+    total: filteredVariantGroups.length,
+    totalProducts: filteredVariantGroups.reduce((sum, g) => sum + (g.product_count || 0), 0),
+    types: new Set(filteredVariantGroups.map(g => g.variant_type)).size,
+  }), [filteredVariantGroups])
 
   return (
     <div className="min-h-screen bg-slate-50">
@@ -405,12 +397,7 @@ export default function VariantesPage() {
         title="Gestion des Variantes"
         description="Organisation des variantes de produits (couleurs, tailles, matériaux)"
         icon={Palette}
-      />
-
-      <div className="p-6 space-y-4">
-        {/* Actions */}
-        <div className="flex justify-between items-center">
-          <p className="text-sm text-blue-600">Compatible Google Merchant Center 2024</p>
+        action={
           <ButtonV2
             variant="primary"
             icon={Plus}
@@ -418,6 +405,27 @@ export default function VariantesPage() {
           >
             Nouveau groupe
           </ButtonV2>
+        }
+      />
+
+      <div className="p-6 space-y-4">
+        {/* KPI Cards */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <ElegantKpiCard
+            label="Groupes totaux"
+            value={loading ? '...' : stats.total}
+            icon={Layers}
+          />
+          <ElegantKpiCard
+            label="Produits totaux"
+            value={loading ? '...' : stats.totalProducts}
+            icon={Package}
+          />
+          <ElegantKpiCard
+            label="Types différents"
+            value={loading ? '...' : stats.types}
+            icon={Tags}
+          />
         </div>
 
       {/* Barre de recherche et filtres */}
@@ -445,99 +453,53 @@ export default function VariantesPage() {
         </button>
       </div>
 
-      <div className="space-y-4">
-        <div className="flex flex-col space-y-4 sm:flex-row sm:space-y-0 sm:space-x-4">
-          <div className="flex-1 relative">
+      {/* Recherche et filtres - ligne unique compacte */}
+      <div className="bg-white rounded-lg border border-gray-200 p-4">
+        <div className="flex items-center gap-3 flex-wrap">
+          {/* Barre de recherche - réduite */}
+          <div className="flex-1 min-w-[200px] max-w-xs relative">
             <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
             <input
               type="text"
-              placeholder="Rechercher un groupe..."
+              placeholder="Rechercher..."
               value={filters.search}
               onChange={(e) => setFilters(prev => ({ ...prev, search: e.target.value }))}
               className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-black focus:border-transparent"
             />
           </div>
 
-          <div className="flex space-x-2">
-            <select
-              value={filters.status}
-              onChange={(e) => setFilters(prev => ({ ...prev, status: e.target.value as any }))}
-              className="border border-gray-300 rounded-md px-3 py-2"
-            >
-              <option value="all">Tous les statuts</option>
-              <option value="active">Actifs</option>
-              <option value="inactive">Inactifs</option>
-            </select>
-
-            <select
-              value={filters.type}
-              onChange={(e) => setFilters(prev => ({ ...prev, type: e.target.value as any }))}
-              className="border border-gray-300 rounded-md px-3 py-2"
-            >
-              <option value="all">Tous les types</option>
-              <option value="color">Couleur</option>
-              <option value="material">Matériau</option>
-            </select>
-          </div>
-        </div>
-
-        {/* Filtres hiérarchiques */}
-        <div className="border-t border-gray-200 pt-4">
-          <h4 className="text-sm font-medium text-gray-700 mb-3 flex items-center">
-            <TreePine className="h-4 w-4 mr-2" />
-            Filtrer par catégorisation des produits
-          </h4>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <select
-              value={filters.familyId}
-              onChange={(e) => {
-                setFilters(prev => ({
-                  ...prev,
-                  familyId: e.target.value,
-                  categoryId: 'all',
-                  subcategoryId: 'all'
-                }))
-              }}
-              className="border border-gray-300 rounded-md px-3 py-2"
-            >
-              <option value="all">Toutes les familles</option>
-              {families.map((family) => (
-                <option key={family.id} value={family.id}>
-                  {family.name}
-                </option>
-              ))}
-            </select>
-
-            <select
-              value={filters.categoryId}
-              onChange={(e) => {
-                setFilters(prev => ({
-                  ...prev,
-                  categoryId: e.target.value,
-                  subcategoryId: 'all'
-                }))
-              }}
-              disabled={filters.familyId === 'all'}
-              className="border border-gray-300 rounded-md px-3 py-2 disabled:bg-gray-100"
-            >
-              <option value="all">Toutes les catégories</option>
-              {filteredCategories.map((category) => (
-                <option key={category.id} value={category.id}>
-                  {category.name}
-                </option>
-              ))}
-            </select>
-
-            <select
+          {/* Filtre catégorie hiérarchique - Combobox moderne */}
+          <div className="w-72">
+            <CategoryFilterCombobox
               value={filters.subcategoryId}
-              onChange={(e) => setFilters(prev => ({ ...prev, subcategoryId: e.target.value }))}
-              disabled={filters.categoryId === 'all'}
-              className="border border-gray-300 rounded-md px-3 py-2 disabled:bg-gray-100"
-            >
-              <option value="all">Toutes les sous-catégories</option>
-              {/* Les sous-catégories seront chargées dynamiquement */}
-            </select>
+              onValueChange={(subcategoryId) =>
+                setFilters(prev => ({ ...prev, subcategoryId }))
+              }
+              entityType="variant_groups"
+              placeholder="Filtrer par catégorie..."
+            />
           </div>
+
+          {/* Filtres status et type */}
+          <select
+            value={filters.status}
+            onChange={(e) => setFilters(prev => ({ ...prev, status: e.target.value as any }))}
+            className="border border-gray-300 rounded-md px-3 py-2"
+          >
+            <option value="all">Tous les statuts</option>
+            <option value="active">Actifs</option>
+            <option value="inactive">Inactifs</option>
+          </select>
+
+          <select
+            value={filters.type}
+            onChange={(e) => setFilters(prev => ({ ...prev, type: e.target.value as any }))}
+            className="border border-gray-300 rounded-md px-3 py-2"
+          >
+            <option value="all">Tous les types</option>
+            <option value="color">Couleur</option>
+            <option value="material">Matériau</option>
+          </select>
         </div>
       </div>
 
@@ -579,8 +541,8 @@ export default function VariantesPage() {
             <div className="col-span-full p-8 text-center text-red-500 bg-white rounded-lg border border-red-200">
               Erreur lors du chargement des groupes: {error instanceof Error ? error.message : String(error)}
             </div>
-          ) : variantGroups.length > 0 ? (
-            variantGroups.map(group => (
+          ) : filteredVariantGroups.length > 0 ? (
+            filteredVariantGroups.map(group => (
               <div key={group.id}>{renderGroupCard(group, false)}</div>
             ))
           ) : (
@@ -612,28 +574,6 @@ export default function VariantesPage() {
             </div>
           )
         )}
-      </div>
-
-      {/* Statistiques */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
-        <div className="bg-white p-3 rounded-lg border border-gray-200">
-          <div className="text-xl font-light text-black">
-            {loading ? '...' : stats.total}
-          </div>
-          <div className="text-xs text-gray-600">Groupes totaux</div>
-        </div>
-        <div className="bg-white p-3 rounded-lg border border-gray-200">
-          <div className="text-xl font-light text-black">
-            {loading ? '...' : stats.totalProducts}
-          </div>
-          <div className="text-xs text-gray-600">Produits totaux</div>
-        </div>
-        <div className="bg-white p-3 rounded-lg border border-gray-200">
-          <div className="text-xl font-light text-black">
-            {loading ? '...' : stats.types}
-          </div>
-          <div className="text-xs text-gray-600">Types différents</div>
-        </div>
       </div>
 
       {/* Modal de création/édition de groupe */}

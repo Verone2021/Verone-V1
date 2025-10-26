@@ -25,6 +25,8 @@ export interface PageHeaderProps {
   backButtonHref?: string
   /** Callback personnalisé pour le bouton retour */
   onBackClick?: () => void
+  /** Action(s) à afficher à droite du header (bouton, etc.) */
+  action?: React.ReactNode
 }
 
 export function PageHeader({
@@ -34,6 +36,7 @@ export function PageHeader({
   showBackButton = false,
   backButtonHref,
   onBackClick,
+  action,
 }: PageHeaderProps) {
   const router = useRouter()
 
@@ -72,6 +75,13 @@ export function PageHeader({
             <p className="text-sm text-slate-600">{description}</p>
           )}
         </div>
+
+        {/* Action(s) à droite */}
+        {action && (
+          <div>
+            {action}
+          </div>
+        )}
       </div>
     </div>
   )

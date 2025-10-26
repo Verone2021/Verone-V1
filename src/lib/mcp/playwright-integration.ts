@@ -1,7 +1,6 @@
 "use client"
 
 // 🚀 MCP Playwright Integration - Version Allégée
-// Note: Sentry imports supprimés (Phase 1 - Sentry désactivé)
 export interface MCPTestContext {
   testId: string
   testTitle: string
@@ -17,7 +16,6 @@ export interface MCPTestResult {
   performance: {
     loadTime: number
   }
-  sentryEventId?: string
 }
 
 /**
@@ -70,12 +68,10 @@ export class MCPPlaywrightIntegration {
         duration: Date.now() - startTime,
         errors: consoleErrors.length > 0 ? [`${consoleErrors.length} erreurs console détectées`] : [],
         consoleErrors: consoleErrors.slice(0, 5),
-        performance,
-        sentryEventId: undefined
+        performance
       }
 
       if (!result.success) {
-        // Note: Sentry.captureMessage supprimé (Phase 1)
         console.warn(`⚠️ [MCP] Test échoué: ${context.testTitle}`, {
           test_type: context.moduleType,
           test_id: context.testId,
