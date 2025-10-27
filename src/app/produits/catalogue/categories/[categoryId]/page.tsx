@@ -15,7 +15,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Badge } from '@/components/ui/badge'
 import { useFamilies } from '@/hooks/use-families'
 import { useCategories } from '@/hooks/use-categories'
-import { useSubcategories } from '@/hooks/use-subcategories'
+import { useSubcategories, type SubcategoryWithDetails } from '@/hooks/use-subcategories'
 import { FamilyCrudForm } from '@/components/forms/FamilyCrudForm'
 import { SubcategoryForm } from '@/components/forms/SubcategoryForm'
 import { VéroneCard } from '@/components/ui/verone-card'
@@ -23,7 +23,6 @@ import type { Database } from '@/lib/supabase/types'
 
 type Family = Database['public']['Tables']['families']['Row']
 type Category = Database['public']['Tables']['categories']['Row']
-type Subcategory = Database['public']['Tables']['subcategories']['Row']
 
 export default function CategoryDetailPage() {
   const params = useParams()
@@ -42,12 +41,12 @@ export default function CategoryDetailPage() {
 
   const [category, setCategory] = useState<Category | null>(null)
   const [family, setFamily] = useState<Family | null>(null)
-  const [categorySubcategories, setCategorySubcategories] = useState<Subcategory[]>([])
+  const [categorySubcategories, setCategorySubcategories] = useState<SubcategoryWithDetails[]>([])
 
   // État des dialogues
   const [isEditCategoryOpen, setIsEditCategoryOpen] = useState(false)
   const [isNewSubcategoryOpen, setIsNewSubcategoryOpen] = useState(false)
-  const [editingSubcategory, setEditingSubcategory] = useState<Subcategory | null>(null)
+  const [editingSubcategory, setEditingSubcategory] = useState<SubcategoryWithDetails | null>(null)
   const [isEditSubcategoryOpen, setIsEditSubcategoryOpen] = useState(false)
 
   useEffect(() => {
@@ -162,7 +161,7 @@ export default function CategoryDetailPage() {
     }
   }
 
-  const handleEditSubcategory = (subcategory: Subcategory) => {
+  const handleEditSubcategory = (subcategory: SubcategoryWithDetails) => {
     setEditingSubcategory(subcategory)
     setIsEditSubcategoryOpen(true)
   }
