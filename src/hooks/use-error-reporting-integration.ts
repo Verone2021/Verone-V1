@@ -110,7 +110,7 @@ export function useErrorReportingIntegration(moduleName: string): ErrorReporting
       const detectedErrors = await veroneErrorDetector.detectAllErrors()
 
       // 🎯 Filtrer pour le module ciblé
-      const moduleSpecificErrors = detectedErrors.filter(error =>
+      const moduleSpecificErrors = detectedErrors.filter((error: VeroneError) =>
         error.module === targetModule ||
         error.context.url?.includes(`/${targetModule}`) ||
         error.message.toLowerCase().includes(targetModule.toLowerCase())

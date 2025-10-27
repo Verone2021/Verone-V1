@@ -78,7 +78,7 @@ export function useArchivedProducts() {
       // Enrichir les données avec les URLs publiques des images
       const enrichedProducts = (data || []).map(product => ({
         ...product,
-        images: (product.images || []).map(img => ({
+        images: (product.images || []).map((img: { id: string; storage_path: string; is_primary: boolean; public_url?: string }) => ({
           ...img,
           public_url: img.storage_path ?
             supabase.storage.from('product-images').getPublicUrl(img.storage_path).data.publicUrl

@@ -89,7 +89,7 @@ export function useSmartSuggestions() {
 
         // Analyse des tags
         if (collection.theme_tags && collection.theme_tags.length > 0) {
-          collection.theme_tags.forEach(tag => {
+          collection.theme_tags.forEach((tag: string) => {
             if (!tagFrequency[tag]) {
               tagFrequency[tag] = { count: 0, styles: new Set(), rooms: new Set() }
             }

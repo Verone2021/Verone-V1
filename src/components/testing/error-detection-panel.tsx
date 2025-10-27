@@ -262,19 +262,19 @@ export function ErrorDetectionPanel({
 
   // Grouper les erreurs par sévérité
   const errorsBySeverity = {
-    critical: errors.filter((e: any) => e.severity === ErrorSeverity.CRITICAL),
-    high: errors.filter(e => e.severity === ErrorSeverity.HIGH),
-    medium: errors.filter(e => e.severity === ErrorSeverity.MEDIUM),
-    low: errors.filter(e => e.severity === ErrorSeverity.LOW)
+    critical: errors.filter((e: VeroneError) => e.severity === ErrorSeverity.CRITICAL),
+    high: errors.filter((e: VeroneError) => e.severity === ErrorSeverity.HIGH),
+    medium: errors.filter((e: VeroneError) => e.severity === ErrorSeverity.MEDIUM),
+    low: errors.filter((e: VeroneError) => e.severity === ErrorSeverity.LOW)
   }
 
   // Grouper les erreurs par type
   const errorsByType = {
-    console: errors.filter(e => e.type === ErrorType.CONSOLE),
-    network: errors.filter(e => e.type === ErrorType.NETWORK),
-    supabase: errors.filter(e => e.type === ErrorType.SUPABASE),
-    typescript: errors.filter(e => e.type === ErrorType.TYPESCRIPT),
-    performance: errors.filter(e => e.type === ErrorType.PERFORMANCE)
+    console: errors.filter((e: VeroneError) => e.type === ErrorType.CONSOLE),
+    network: errors.filter((e: VeroneError) => e.type === ErrorType.NETWORK),
+    supabase: errors.filter((e: VeroneError) => e.type === ErrorType.SUPABASE),
+    typescript: errors.filter((e: VeroneError) => e.type === ErrorType.TYPESCRIPT),
+    performance: errors.filter((e: VeroneError) => e.type === ErrorType.PERFORMANCE)
   }
 
   return (
@@ -598,7 +598,7 @@ function ErrorItem({ error, onResolve, isResolving, resolutionResult }: ErrorIte
             <div className="mt-2">
               <div className="font-medium">Suggestions:</div>
               <ul className="list-disc list-inside">
-                {resolutionResult.suggestions.map((suggestion, index) => (
+                {resolutionResult.suggestions.map((suggestion: string, index: number) => (
                   <li key={index}>{suggestion}</li>
                 ))}
               </ul>
@@ -662,7 +662,7 @@ function ResolutionMetricsPanel() {
           </CardHeader>
           <CardContent>
             <div className="space-y-2">
-              {metrics.resolution_history.map((entry, index) => (
+              {metrics.resolution_history.map((entry: { error: VeroneError; result: ResolutionResult }, index: number) => (
                 <div key={index} className="flex items-center justify-between text-sm">
                   <span>{entry.error.message.substring(0, 50)}...</span>
                   <Badge variant={entry.result.success ? 'default' : 'secondary'}>
