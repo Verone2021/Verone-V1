@@ -56,6 +56,13 @@ interface Product {
     id: string;
     name: string;
   };
+  
+  // ✅ STOCK - Propriétés manquantes alignées avec DB
+  stock_real?: number;        // Stock réel physique
+  min_stock?: number;         // Stock minimum
+  stock_quantity?: number;    // Stock quantity (legacy)
+  stock_forecasted_in?: number;
+  stock_forecasted_out?: number;
 }
 
 interface Category {

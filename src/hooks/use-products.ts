@@ -36,10 +36,17 @@ export interface Product {
   video_url?: string
   supplier_reference?: string
   gtin?: string
-  stock_quantity?: number
-  min_stock?: number
+  
+  // ✅ STOCK - Propriétés DB existantes
+  stock_quantity?: number        // Stock quantity (legacy)
+  stock_real?: number            // Stock réel physique
+  stock_forecasted_in?: number   // Prévisions d'entrée
+  stock_forecasted_out?: number  // Prévisions de sortie
+  min_stock?: number             // Stock minimum
+  
   supplier_page_url?: string
   supplier_id?: string
+  
   // Champs descriptions ajoutés lors de la migration
   description?: string
   technical_description?: string
@@ -58,6 +65,19 @@ export interface Product {
     name: string
     type: string
   }
+
+  // ✅ Images produit (relation many-to-one via product_images)
+  product_images?: Array<{
+    id: string
+    product_id: string
+    image_url: string
+    display_order: number | null
+    alt_text: string | null
+    is_primary: boolean | null
+  }>
+
+  // ✅ COMPUTED: Nom du fournisseur (calculé côté client depuis supplier.name)
+  supplier_name?: string
 
   // CALCULÉ: Prix minimum de vente (prix d'achat + marge)
   minimumSellingPrice?: number
@@ -87,21 +107,34 @@ export interface CreateProductData {
   creation_mode?: 'sourcing' | 'complete' // Mode de création
   supplier_page_url?: string // URL fournisseur (obligatoire en mode SOURCING)
 
+  // 🔥 FIX: cost_price RESTAURÉ (migration 20251017_007)
+  cost_price?: number // Prix d'achat HT fournisseur
+
+  // 🔥 FIX: Champs de completion et status (pour wizard workflow)
+  status?: string // Statut de disponibilité (enum availability_status_type)
+  completion_status?: string // 'draft' ou 'active'
+  completion_percentage?: number // Pourcentage de complétion (0-100)
+
   // Champs automatiques (générés par la DB)
   // sku: généré automatiquement
-  // status: calculé automatiquement depuis le stock
 
   // Champs business rules
   availability_type?: string // normal, preorder, coming_soon, discontinued
   technical_description?: string // Description technique interne
   selling_points?: string[] // Points de vente
+  requires_sample?: boolean // Nécessite échantillon
 
-  // Champs de marge et pricing - NOUVELLE LOGIQUE
-  margin_percentage?: number // Marge minimum en pourcentage (ex: 50 = 50%)
-  // minimumSellingPrice sera calculé automatiquement: cost_price × (1 + margin_percentage/100)
+  // Champs de marge et pricing
+  margin_percentage?: number // Marge en pourcentage (ex: 50 = 50%)
+  target_margin_percentage?: number // Marge cible pour calcul prix minimum
 
-  // Legacy (supprimé - Migration 20251017_003)
-  // cost_price: SUPPRIMÉ
+  // Champs de stock
+  stock_quantity?: number
+  stock_real?: number
+  stock_forecasted_in?: number
+  stock_forecasted_out?: number
+  min_stock?: number
+  reorder_point?: number
 
   // Champs optionnels existants
   slug?: string
@@ -229,6 +262,7 @@ export function useProducts(filters?: ProductFilters, page: number = 0) {
   // 📝 Méthodes CRUD avec invalidation cache SWR
   const createProduct = async (productData: CreateProductData): Promise<Product | null> => {
     try {
+      // ✅ FIX: Inline object literal pour inférence TypeScript Supabase (pattern commit b09a8a4)
       const { data: newProduct, error } = await supabase
         .from('products')
         .insert([{
@@ -253,7 +287,18 @@ export function useProducts(filters?: ProductFilters, page: number = 0) {
           supplier_reference: productData.supplier_reference,
           gtin: productData.gtin,
           supplier_id: productData.supplier_id,
-          brand: productData.brand
+          brand: productData.brand,
+          target_margin_percentage: productData.target_margin_percentage,
+          status: productData.status,
+          completion_status: productData.completion_status,
+          completion_percentage: productData.completion_percentage,
+          requires_sample: productData.requires_sample,
+          stock_quantity: productData.stock_quantity,
+          stock_real: productData.stock_real,
+          stock_forecasted_in: productData.stock_forecasted_in,
+          stock_forecasted_out: productData.stock_forecasted_out,
+          min_stock: productData.min_stock,
+          reorder_point: productData.reorder_point
         }])
         .select()
         .single()
