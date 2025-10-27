@@ -297,11 +297,11 @@ export function useStockDashboard() {
         if (po.supplier_id) {
           const { data: supplier } = await supabase
             .from('organisations')
-            .select('name')
+            .select('legal_name, trade_name')
             .eq('id', po.supplier_id)
             .single()
 
-          supplierName = supplier?.name || 'Fournisseur inconnu'
+          supplierName = (supplier?.trade_name || supplier?.legal_name) || 'Fournisseur inconnu'
         }
 
         incomingOrders.push({
@@ -323,11 +323,11 @@ export function useStockDashboard() {
         if (so.customer_type === 'organization' && so.customer_id) {
           const { data: org } = await supabase
             .from('organisations')
-            .select('name')
+            .select('legal_name, trade_name')
             .eq('id', so.customer_id)
             .single()
 
-          customerName = org?.name || 'Organisation inconnue'
+          customerName = (org?.trade_name || org?.legal_name) || 'Organisation inconnue'
         } else if (so.customer_type === 'individual' && so.customer_id) {
           const { data: individual } = await supabase
             .from('individual_customers')

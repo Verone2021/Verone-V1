@@ -146,10 +146,10 @@ export function useBankReconciliation() {
           if (invoice.partner_type === 'organisation') {
             const { data: org } = await supabase
               .from('organisations')
-              .select('name')
+              .select('legal_name, trade_name')
               .eq('id', invoice.partner_id)
               .single();
-            customerName = org?.name || 'N/A';
+            customerName = (org?.trade_name || org?.legal_name) || 'N/A';
           } else {
             const { data: individual } = await supabase
               .from('individual_customers')
