@@ -49,6 +49,15 @@ export interface SalesOrderForShipment {
   // Shipping address (pré-remplir formulaire)
   shipping_address?: any
 
+  // Relations jointes (polymorphiques)
+  organisations?: {
+    id: string
+    legal_name: string
+    trade_name: string | null
+    email?: string
+    phone?: string
+  }
+
   // Items enrichis pour expédition
   sales_order_items: Array<{
     id: string
@@ -125,16 +134,18 @@ export function useSalesShipments() {
 
       // Charger nom client selon customer_type (relation polymorphique)
       let customerName = 'Client inconnu'
+      let organisationData = null
 
       if (data.customer_type === 'organization') {
         const { data: org } = await supabase
           .from('organisations')
-          .select('legal_name, trade_name')
+          .select('id, legal_name, trade_name, email, phone')
           .eq('id', data.customer_id)
           .single()
 
         if (org) {
           customerName = getOrganisationDisplayName(org)
+          organisationData = org
         }
       } else if (data.customer_type === 'individual_customer') {
         const { data: indiv } = await supabase
@@ -150,7 +161,8 @@ export function useSalesShipments() {
 
       return {
         ...data,
-        customer_name: customerName
+        customer_name: customerName,
+        organisations: organisationData
       } as SalesOrderForShipment
     } catch (err) {
       console.error('Exception chargement SO:', err)
