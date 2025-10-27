@@ -33,6 +33,15 @@ export interface Organisation {
   is_active: boolean
   notes: string | null
 
+  // Contact principal
+  email: string | null
+  phone: string | null
+  website: string | null
+
+  // Adresse principale (héritée - alias vers billing ou shipping selon contexte)
+  address_line1: string | null
+  address_line2: string | null
+
   // Adresse de facturation
   billing_address_line1: string | null
   billing_address_line2: string | null
@@ -68,6 +77,15 @@ const baseOrganisationSchema = z.object({
   country: z.string().min(1, 'Le pays est obligatoire'),
   is_active: z.boolean().default(true),
   notes: z.string().optional().or(z.literal('')),
+
+  // Contact principal
+  email: z.string().optional().or(z.literal('')),
+  phone: z.string().optional().or(z.literal('')),
+  website: z.string().optional().or(z.literal('')),
+
+  // Adresse principale
+  address_line1: z.string().optional().or(z.literal('')),
+  address_line2: z.string().optional().or(z.literal('')),
 
   // Adresse de facturation
   billing_address_line1: z.string().optional().or(z.literal('')),
