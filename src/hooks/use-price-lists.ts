@@ -272,7 +272,7 @@ export function usePriceListItems(priceListId: string | null) {
         })
 
         // Enrichir les produits avec primary_image_url (BR-TECH-002)
-        const enrichedItems = (data || []).map(item => ({
+        const enrichedItems = (data || []).map((item: any) => ({
           ...item,
           products: item.products ? {
             ...item.products,
