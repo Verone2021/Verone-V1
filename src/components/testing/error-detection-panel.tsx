@@ -124,7 +124,7 @@ export function ErrorDetectionPanel({
 
       // Auto-résolution des erreurs critiques
       if (totalErrors > 0) {
-        const criticalErrors = errors.filter(e => e.severity === ErrorSeverity.CRITICAL)
+        const criticalErrors = errors.filter((e: any) => e.severity === ErrorSeverity.CRITICAL)
         if (criticalErrors.length > 0) {
           console.log(`🚨 Auto-résolution ${criticalErrors.length} erreurs critiques...`)
           await handleBatchResolution(criticalErrors)
@@ -206,7 +206,7 @@ export function ErrorDetectionPanel({
     try {
       const results = await mcpErrorResolver.resolveBatchErrors(errorsToResolve)
 
-      results.forEach((result, index) => {
+      results.forEach((result: any, index: any) => {
         const error = errorsToResolve[index]
         setResolutionResults(prev => ({
           ...prev,
@@ -218,7 +218,7 @@ export function ErrorDetectionPanel({
         }
       })
 
-      const successCount = results.filter(r => r.success).length
+      const successCount = results.filter((r: any) => r.success).length
       console.log(`✅ Batch résolution: ${successCount}/${errorsToResolve.length} réussies`)
     } catch (error) {
       console.error('❌ Échec batch résolution:', error)
@@ -262,7 +262,7 @@ export function ErrorDetectionPanel({
 
   // Grouper les erreurs par sévérité
   const errorsBySeverity = {
-    critical: errors.filter(e => e.severity === ErrorSeverity.CRITICAL),
+    critical: errors.filter((e: any) => e.severity === ErrorSeverity.CRITICAL),
     high: errors.filter(e => e.severity === ErrorSeverity.HIGH),
     medium: errors.filter(e => e.severity === ErrorSeverity.MEDIUM),
     low: errors.filter(e => e.severity === ErrorSeverity.LOW)

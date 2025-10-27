@@ -557,7 +557,7 @@ const WorkersPoolDashboard: React.FC<{
                 <div>
                   <span className="block mb-1">Spécialisations:</span>
                   <div className="flex flex-wrap gap-1">
-                    {worker.specialization.map((spec, idx) => (
+                    {worker.specialization.map((spec: any, idx: any) => (
                       <Badge key={idx} variant="outline" className="text-xs">
                         {spec}
                       </Badge>
@@ -762,7 +762,7 @@ const QueueManagement: React.FC<{
           </CardHeader>
           <CardContent>
             <div className="space-y-2">
-              {snapshot?.pending.slice(0, 3).map((task) => (
+              {snapshot?.pending.slice(0, 3).map((task: any) => (
                 <div key={task.id} className="p-2 bg-gray-50 rounded text-sm">
                   <div className="font-medium truncate">
                     {task.error.message.substring(0, 40)}...
@@ -783,7 +783,7 @@ const QueueManagement: React.FC<{
           </CardHeader>
           <CardContent>
             <div className="space-y-2">
-              {snapshot?.processing.map((task) => (
+              {snapshot?.processing.map((task: any) => (
                 <div key={task.id} className="p-2 bg-blue-50 rounded text-sm">
                   <div className="font-medium truncate">
                     {task.error.message.substring(0, 40)}...
@@ -804,7 +804,7 @@ const QueueManagement: React.FC<{
           </CardHeader>
           <CardContent>
             <div className="space-y-2">
-              {snapshot?.recent_completed.slice(0, 3).map((task) => (
+              {snapshot?.recent_completed.slice(0, 3).map((task: any) => (
                 <div key={task.id} className="p-2 bg-green-50 rounded text-sm">
                   <div className="font-medium truncate">
                     {task.error.message.substring(0, 40)}...
