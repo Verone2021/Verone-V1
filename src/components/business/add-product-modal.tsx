@@ -48,9 +48,9 @@ export function AddProductModal({
 
   // Récupérer tous les produits non archivés
   const { products, loading: productsLoading } = useProducts({
-    search: searchTerm,
-    archived: false
+    search: searchTerm
     // Note: On ne filtre pas par status pour permettre tous les produits non archivés
+    // archived filter removed - not supported in ProductFilters
   })
 
   // Reset form when modal closes/opens

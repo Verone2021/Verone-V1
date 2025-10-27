@@ -60,8 +60,8 @@ export function ConsultationOrderInterface({
 
   // Récupérer tous les produits non archivés pour le modal
   const { products } = useProducts({
-    archived: false
     // Note: On ne filtre pas par status pour permettre tous les produits non archivés
+    // archived filter removed - not supported in ProductFilters
   })
 
   // Gérer le changement d'items

@@ -249,7 +249,7 @@ export function ErrorReportModal({
       // Utilisation de l'API Screen Capture si disponible
       if ('getDisplayMedia' in navigator.mediaDevices) {
         const stream = await navigator.mediaDevices.getDisplayMedia({
-          video: { mediaSource: 'screen' }
+          video: true
         })
 
         const video = document.createElement('video')
