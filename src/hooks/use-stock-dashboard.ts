@@ -208,7 +208,7 @@ export function useStockDashboard() {
 
       // Enrichir avec stock_forecasted_out depuis products
       const lowStockProducts: LowStockProduct[] = []
-      for (const alert of (alertsData || [])) {
+      for (const alert of ((alertsData || []) as any[])) {
         const product = products.find(p => p.id === alert.product_id)
         lowStockProducts.push({
           id: alert.product_id,

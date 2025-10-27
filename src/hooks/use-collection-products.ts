@@ -26,7 +26,7 @@ interface UseCollectionProductsReturn {
  * Résout le problème d'existingProductIds dans product-selector-modal
  */
 export function useCollectionProducts(collectionId: string): UseCollectionProductsReturn {
-  const [products, setProducts] = useState<CollectionProduct[]>([])
+  const [products, setProducts] = useState<CollectionProductWithMeta[]>([])
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
