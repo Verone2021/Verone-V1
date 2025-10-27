@@ -187,6 +187,7 @@ const productsFetcher = async (
       stock_quantity,
       margin_percentage,
       cost_price,
+      variant_attributes,
       created_at,
       subcategory_id,
       product_images (
