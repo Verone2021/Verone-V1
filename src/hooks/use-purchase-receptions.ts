@@ -33,7 +33,8 @@ export interface PurchaseOrderForReception {
   // Supplier
   organisations: {
     id: string
-    name: string
+    legal_name: string
+    trade_name: string | null
   } | null
 
   // Items enrichis pour réception
