@@ -265,7 +265,7 @@ export function useBankReconciliation() {
       }
 
       // 2. Créer paiement
-      const { data: payment, error: paymentError } = await supabase
+      const { data: payment, error: paymentError }: { data: { id: string; [key: string]: any } | null; error: any } = await supabase
         .from('payments')
         .insert({
           invoice_id: invoiceId,
