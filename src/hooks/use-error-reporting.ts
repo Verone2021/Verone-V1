@@ -314,7 +314,7 @@ export function useErrorReporting(options: UseErrorReportingOptions = {}) {
         severity: report.severity,
         status: report.status,
         screenshots: [], // Les fichiers originaux ne sont pas disponibles
-        screenshotUrls: report.screenshot_urls || [],
+        screenshotUrls: report.screenshot_url ? [report.screenshot_url] : [],
         codeSnippet: report.code_snippet,
         browserInfo: report.browser_info,
         steps: report.reproduction_steps || [],

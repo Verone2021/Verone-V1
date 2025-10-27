@@ -709,7 +709,7 @@ export class BusinessPredictor {
     const mean = values.reduce((sum, v) => sum + v, 0) / values.length
     const stdDev = Math.sqrt(values.reduce((sum, v) => sum + Math.pow(v - mean, 2), 0) / values.length)
 
-    const anomalies = []
+    const anomalies: Array<{ date: Date, severity: number, description: string }> = []
     data.forEach(point => {
       const zScore = Math.abs(point.value - mean) / stdDev
       if (zScore > 2) {

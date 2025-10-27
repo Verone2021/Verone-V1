@@ -312,7 +312,7 @@ export function CommandPalette({
 
   // Vérifier si un raccourci correspond
   const isShortcutMatch = (e: KeyboardEvent, shortcut: string[]): boolean => {
-    const pressedKeys = []
+    const pressedKeys: string[] = []
     if (e.ctrlKey) pressedKeys.push('ctrl')
     if (e.metaKey) pressedKeys.push('cmd', 'meta')
     if (e.shiftKey) pressedKeys.push('shift')
