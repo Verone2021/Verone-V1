@@ -14,13 +14,12 @@ import { ButtonV2 } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { useFamilies } from '@/hooks/use-families'
-import { useCategories } from '@/hooks/use-categories'
+import { useCategories, type CategoryWithCount } from '@/hooks/use-categories'
 import { FamilyCrudForm } from '@/components/forms/FamilyCrudForm'
 import { VéroneCard } from '@/components/ui/verone-card'
 import type { Database } from '@/lib/supabase/types'
 
 type Family = Database['public']['Tables']['families']['Row']
-type Category = Database['public']['Tables']['categories']['Row']
 
 export default function FamilyDetailPage() {
   const params = useParams()
@@ -38,12 +37,12 @@ export default function FamilyDetailPage() {
   } = useCategories()
 
   const [family, setFamily] = useState<Family | null>(null)
-  const [familyCategories, setFamilyCategories] = useState<Category[]>([])
+  const [familyCategories, setFamilyCategories] = useState<CategoryWithCount[]>([])
 
   // État des dialogues
   const [isEditFamilyOpen, setIsEditFamilyOpen] = useState(false)
   const [isNewCategoryOpen, setIsNewCategoryOpen] = useState(false)
-  const [editingCategory, setEditingCategory] = useState<Category | null>(null)
+  const [editingCategory, setEditingCategory] = useState<CategoryWithCount | null>(null)
   const [isEditCategoryOpen, setIsEditCategoryOpen] = useState(false)
 
   useEffect(() => {

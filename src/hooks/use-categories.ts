@@ -13,9 +13,14 @@ export interface CategoryWithChildren extends Category {
   level: number
 }
 
+// Type pour catégories avec compteur de sous-catégories (computed field)
+export interface CategoryWithCount extends Category {
+  subcategory_count?: number
+}
+
 export function useCategories() {
   const [categories, setCategories] = useState<CategoryWithChildren[]>([])
-  const [allCategories, setAllCategories] = useState<Category[]>([]) // Liste plate pour accès par family_id
+  const [allCategories, setAllCategories] = useState<CategoryWithCount[]>([]) // Liste plate avec count
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const supabase = createClient()
@@ -195,7 +200,7 @@ export function useCategories() {
     fetchCategories()
   }, [])
 
-  const getCategoriesByFamily = (familyId: string): Category[] => {
+  const getCategoriesByFamily = (familyId: string): CategoryWithCount[] => {
     return allCategories.filter(category => category.family_id === familyId)
   }
 
