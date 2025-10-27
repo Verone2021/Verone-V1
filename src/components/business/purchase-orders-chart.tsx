@@ -27,14 +27,15 @@ interface PurchaseOrdersChartProps {
 }
 
 // Custom Tooltip avec formatage €
-const CustomTooltip = ({ active, payload }: TooltipProps<number, string>) => {
+const CustomTooltip = ({ active, payload }: any) => {
   if (!active || !payload || !payload.length) return null
 
   const amount = payload[0].value || 0
+  const dataPoint = payload[0].payload as PurchaseOrderDataPoint
 
   return (
     <div className="bg-white border border-gray-200 rounded-lg shadow-lg p-3">
-      <p className="text-sm text-gray-600 mb-1">{payload[0].payload.week}</p>
+      <p className="text-sm text-gray-600 mb-1">{dataPoint.week}</p>
       <p className="text-base font-semibold text-black">
         {new Intl.NumberFormat('fr-FR', {
           style: 'currency',

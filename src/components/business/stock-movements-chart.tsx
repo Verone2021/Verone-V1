@@ -28,15 +28,16 @@ interface StockMovementsChartProps {
 }
 
 // Custom Tooltip
-const CustomTooltip = ({ active, payload }: TooltipProps<number, string>) => {
+const CustomTooltip = ({ active, payload }: any) => {
   if (!active || !payload || !payload.length) return null
 
   const entrees = payload[0]?.value || 0
   const sorties = payload[1]?.value || 0
+  const dataPoint = payload[0]?.payload as StockMovementDataPoint
 
   return (
     <div className="bg-white border border-gray-200 rounded-lg shadow-lg p-3">
-      <p className="text-sm text-gray-600 mb-2">{payload[0]?.payload.date}</p>
+      <p className="text-sm text-gray-600 mb-2">{dataPoint.date}</p>
       <div className="space-y-1">
         <div className="flex items-center justify-between gap-4">
           <span className="text-xs text-black font-medium">Entrées</span>
