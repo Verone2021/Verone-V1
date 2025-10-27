@@ -133,6 +133,7 @@ export default function DashboardProduitsPage() {
           gradient: 'from-purple-500 to-purple-600',
           iconBg: 'bg-purple-100',
           iconColor: 'text-purple-600',
+          badge: undefined,
         },
         {
           id: 'variantes',
@@ -143,6 +144,7 @@ export default function DashboardProduitsPage() {
           gradient: 'from-orange-500 to-orange-600',
           iconBg: 'bg-orange-100',
           iconColor: 'text-orange-600',
+          badge: undefined,
         },
         {
           id: 'collections',
@@ -153,6 +155,7 @@ export default function DashboardProduitsPage() {
           gradient: 'from-pink-500 to-pink-600',
           iconBg: 'bg-pink-100',
           iconColor: 'text-pink-600',
+          badge: undefined,
         },
         {
           id: 'categories',
@@ -163,6 +166,7 @@ export default function DashboardProduitsPage() {
           gradient: 'from-teal-500 to-teal-600',
           iconBg: 'bg-teal-100',
           iconColor: 'text-teal-600',
+          badge: undefined,
         },
       ]
     },
@@ -179,6 +183,7 @@ export default function DashboardProduitsPage() {
           gradient: 'from-indigo-500 to-indigo-600',
           iconBg: 'bg-indigo-100',
           iconColor: 'text-indigo-600',
+          badge: undefined,
         },
       ]
     },
