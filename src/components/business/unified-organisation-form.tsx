@@ -41,6 +41,9 @@ export interface Organisation {
   // Adresse principale (héritée - alias vers billing ou shipping selon contexte)
   address_line1: string | null
   address_line2: string | null
+  postal_code: string | null
+  city: string | null
+  region: string | null
 
   // Adresse de facturation
   billing_address_line1: string | null
@@ -86,6 +89,9 @@ const baseOrganisationSchema = z.object({
   // Adresse principale
   address_line1: z.string().optional().or(z.literal('')),
   address_line2: z.string().optional().or(z.literal('')),
+  postal_code: z.string().optional().or(z.literal('')),
+  city: z.string().optional().or(z.literal('')),
+  region: z.string().optional().or(z.literal('')),
 
   // Adresse de facturation
   billing_address_line1: z.string().optional().or(z.literal('')),
