@@ -137,10 +137,7 @@ export default function GoogleMerchantPage() {
         })
       },
       onError: (error) => {
-        logger.error('[Google Merchant Page] Sync failed', {
-          message: error.message,
-          stack: error.stack
-        })
+        logger.error(`[Google Merchant Page] Sync failed: ${error}`)
       },
       onProgress: ({ synced, total }) => {
         logger.info('[Google Merchant Page] Sync progress', {
