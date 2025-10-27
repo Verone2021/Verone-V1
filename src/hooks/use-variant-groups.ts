@@ -130,7 +130,7 @@ export function useVariantGroups(filters?: VariantGroupFilters) {
   }, [fetchVariantGroups])
 
   // Créer un nouveau groupe de variantes
-  const createVariantGroup = async (data: CreateVariantGroupData): Promise<boolean> => {
+  const createVariantGroup = async (data: CreateVariantGroupData): Promise<VariantGroup | null> => {
     try {
       const { data: newGroup, error: createError} = await supabase
         .from('variant_groups')
@@ -157,13 +157,13 @@ export function useVariantGroups(filters?: VariantGroupFilters) {
         .select()
         .single()
 
-      if (createError) {
+      if (createError || !newGroup) {
         toast({
           title: "Erreur",
-          description: createError.message,
+          description: createError?.message || "Erreur lors de la création",
           variant: "destructive"
         })
-        return false
+        return null
       }
 
       toast({
@@ -172,7 +172,7 @@ export function useVariantGroups(filters?: VariantGroupFilters) {
       })
 
       await fetchVariantGroups()
-      return true
+      return newGroup as VariantGroup
     } catch (err) {
       logger.error('Erreur création groupe', err as Error, {
         operation: 'create_variant_group_failed'
@@ -182,7 +182,7 @@ export function useVariantGroups(filters?: VariantGroupFilters) {
         description: "Impossible de créer le groupe",
         variant: "destructive"
       })
-      return false
+      return null
     }
   }
 
