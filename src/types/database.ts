@@ -4958,6 +4958,10 @@ export type Database = {
           stock_real: number
         }[]
       }
+      set_current_user_id: {
+        Args: { user_id: string }
+        Returns: undefined
+      }
     }
     Enums: {
       availability_status_type:

@@ -80,7 +80,7 @@ export interface ConsultationItem {
 }
 
 export interface CreateConsultationData {
-  organisation_id: string  // Relation vers table organisations (clients professionnels uniquement)
+  organisation_name: string  // Nom de l'organisation cliente
   client_email: string
   client_phone?: string
   descriptif: string

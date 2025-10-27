@@ -7,6 +7,7 @@ import { useState, useCallback } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import { useToast } from '@/hooks/use-toast'
 import { useStockMovements } from './use-stock-movements'
+import { updatePurchaseOrderStatus as updatePurchaseOrderStatusAction } from '@/app/actions/purchase-orders'
 
 // Types pour les commandes fournisseurs
 export type PurchaseOrderStatus = 'draft' | 'sent' | 'confirmed' | 'partially_received' | 'received' | 'cancelled'
@@ -458,6 +459,7 @@ export function usePurchaseOrders() {
       })
 
       await fetchOrders()
+      await fetchStats()  // ✅ FIX Bug #6: Rafraîchir les stats après création
       return order
     } catch (error: any) {
       console.error('Erreur lors de la création de la commande:', error)
@@ -470,7 +472,7 @@ export function usePurchaseOrders() {
     } finally {
       setLoading(false)
     }
-  }, [supabase, toast, fetchOrders])
+  }, [supabase, toast, fetchOrders, fetchStats])
 
   // Mettre à jour une commande
   const updateOrder = useCallback(async (orderId: string, data: UpdatePurchaseOrderData) => {
@@ -489,6 +491,7 @@ export function usePurchaseOrders() {
       })
 
       await fetchOrders()
+      await fetchStats()  // ✅ FIX Bug #6: Rafraîchir les stats après mise à jour
       if (currentOrder?.id === orderId) {
         await fetchOrder(orderId)
       }
@@ -503,40 +506,24 @@ export function usePurchaseOrders() {
     } finally {
       setLoading(false)
     }
-  }, [supabase, toast, fetchOrders, currentOrder, fetchOrder])
+  }, [supabase, toast, fetchOrders, fetchStats, currentOrder, fetchOrder])
 
-  // Changer le statut d'une commande
+  // Changer le statut d'une commande (utilise Server Action pour bypasser RLS)
   const updateStatus = useCallback(async (orderId: string, newStatus: PurchaseOrderStatus) => {
     setLoading(true)
     try {
-      const userId = (await supabase.auth.getUser()).data.user?.id
-      const updateData: any = { status: newStatus }
-
-      // Mettre à jour les timestamps selon le statut
-      switch (newStatus) {
-        case 'sent':
-          updateData.sent_at = new Date().toISOString()
-          updateData.sent_by = userId
-          break
-        case 'confirmed':
-          updateData.validated_at = new Date().toISOString()
-          updateData.validated_by = userId
-          break
-        case 'received':
-          updateData.received_at = new Date().toISOString()
-          updateData.received_by = userId
-          break
-        case 'cancelled':
-          updateData.cancelled_at = new Date().toISOString()
-          break
+      // Récupérer l'utilisateur courant
+      const { data: { user } } = await supabase.auth.getUser()
+      if (!user?.id) {
+        throw new Error('Utilisateur non authentifié')
       }
 
-      const { error } = await supabase
-        .from('purchase_orders')
-        .update(updateData)
-        .eq('id', orderId)
+      // Appeler la Server Action qui bypass RLS
+      const result = await updatePurchaseOrderStatusAction(orderId, newStatus, user.id)
 
-      if (error) throw error
+      if (!result.success) {
+        throw new Error(result.error || 'Erreur lors de la mise à jour')
+      }
 
       toast({
         title: "Succès",
@@ -544,6 +531,7 @@ export function usePurchaseOrders() {
       })
 
       await fetchOrders()
+      await fetchStats()  // ✅ FIX Bug #6: Rafraîchir les stats après changement de statut
       if (currentOrder?.id === orderId) {
         await fetchOrder(orderId)
       }
@@ -558,7 +546,7 @@ export function usePurchaseOrders() {
     } finally {
       setLoading(false)
     }
-  }, [supabase, toast, fetchOrders, currentOrder, fetchOrder])
+  }, [supabase, toast, fetchOrders, fetchStats, currentOrder, fetchOrder])
 
   // Réceptionner des items (totalement ou partiellement)
   const receiveItems = useCallback(async (orderId: string, itemsToReceive: ReceiveItemData[]) => {
@@ -663,6 +651,7 @@ export function usePurchaseOrders() {
       })
 
       await fetchOrders()
+      await fetchStats()  // ✅ FIX Bug #6: Rafraîchir les stats après suppression
       if (currentOrder?.id === orderId) {
         setCurrentOrder(null)
       }
@@ -677,7 +666,7 @@ export function usePurchaseOrders() {
     } finally {
       setLoading(false)
     }
-  }, [supabase, toast, fetchOrders, currentOrder])
+  }, [supabase, toast, fetchOrders, fetchStats, currentOrder])
 
   // Obtenir le stock avec prévisionnel pour les commandes fournisseurs
   const getStockWithForecasted = useCallback(async (productId: string) => {

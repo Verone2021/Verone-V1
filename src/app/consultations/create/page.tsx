@@ -16,10 +16,25 @@ import { useOrganisations } from '../../../hooks/use-organisations'
 import { useToast } from '../../../hooks/use-toast'
 import { getOrganisationDisplayName } from '../../../lib/utils/organisation-helpers'
 import type { CreateConsultationData } from '../../../hooks/use-consultations'
+import { createConsultation as createConsultationAction } from '../../actions/consultations'
+import { createClient } from '../../../lib/supabase/client'
+
+// Interface pour le formulaire (utilise organisation_id pour le sélecteur)
+interface ConsultationFormData {
+  organisation_id: string
+  client_email: string
+  client_phone?: string
+  descriptif: string
+  image_url?: string
+  tarif_maximum?: number
+  priority_level: number
+  source_channel: 'website' | 'email' | 'phone' | 'other'
+  estimated_response_date?: string
+}
 
 export default function CreateConsultationPage() {
   const router = useRouter()
-  const { createConsultation } = useConsultations()
+  const supabase = createClient()
   const { organisations, loading: loadingOrgs, refetch } = useOrganisations({
     type: 'customer',
     is_active: true
@@ -27,7 +42,7 @@ export default function CreateConsultationPage() {
   const { toast } = useToast()
 
   const [loading, setLoading] = useState(false)
-  const [formData, setFormData] = useState<CreateConsultationData>({
+  const [formData, setFormData] = useState<ConsultationFormData>({
     organisation_id: '',
     client_email: '',
     client_phone: '',
@@ -47,7 +62,7 @@ export default function CreateConsultationPage() {
     label: getOrganisationDisplayName(org)
   }))
 
-  const handleInputChange = (field: keyof CreateConsultationData, value: any) => {
+  const handleInputChange = (field: keyof ConsultationFormData, value: any) => {
     setFormData(prev => ({ ...prev, [field]: value }))
 
     // Clear error when user starts typing
@@ -111,9 +126,22 @@ export default function CreateConsultationPage() {
     setLoading(true)
 
     try {
+      // Récupérer l'utilisateur courant
+      const { data: { user } } = await supabase.auth.getUser()
+      if (!user?.id) {
+        throw new Error('Utilisateur non authentifié')
+      }
+
+      // Récupérer le nom de l'organisation sélectionnée
+      const selectedOrg = organisations.find(o => o.id === formData.organisation_id)
+      if (!selectedOrg) {
+        throw new Error('Organisation non trouvée')
+      }
+      const orgName = getOrganisationDisplayName(selectedOrg)
+
       // Préparer les données en supprimant les champs vides optionnels
       const dataToSubmit: CreateConsultationData = {
-        organisation_id: formData.organisation_id.trim(),
+        organisation_name: orgName,  // ✅ FIX Bug #9: Utiliser organisation_name au lieu de organisation_id
         client_email: formData.client_email.trim(),
         descriptif: formData.descriptif.trim(),
         priority_level: formData.priority_level || 2,
@@ -137,23 +165,23 @@ export default function CreateConsultationPage() {
         dataToSubmit.estimated_response_date = formData.estimated_response_date
       }
 
-      const newConsultation = await createConsultation(dataToSubmit)
+      // Appeler la Server Action qui bypass RLS
+      const result = await createConsultationAction(dataToSubmit, user.id)
 
-      if (newConsultation) {
-        const selectedOrg = organisations.find(o => o.id === formData.organisation_id)
-        const orgName = selectedOrg ? getOrganisationDisplayName(selectedOrg) : 'Client'
-
-        toast({
-          title: "Consultation créée",
-          description: `Nouvelle consultation pour ${orgName}`
-        })
-        router.push('/consultations')
+      if (!result.success) {
+        throw new Error(result.error || 'Erreur lors de la création')
       }
+
+      toast({
+        title: "Consultation créée",
+        description: `Nouvelle consultation pour ${orgName}`
+      })
+      router.push('/consultations')
     } catch (error) {
       console.error('Erreur lors de la création:', error)
       toast({
         title: "Erreur",
-        description: "Impossible de créer la consultation",
+        description: error instanceof Error ? error.message : "Impossible de créer la consultation",
         variant: "destructive"
       })
     } finally {

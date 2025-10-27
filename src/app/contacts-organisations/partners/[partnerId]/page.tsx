@@ -245,7 +245,7 @@ export default function PartnerDetailPage() {
           <ContactsManagementSection
             organisationId={partner.id}
             organisationName={getOrganisationDisplayName(partner)}
-            organisationType="provider"
+            organisationType="supplier"
             onUpdate={() => handlePartnerUpdate({})}
           />
         </TabContent>

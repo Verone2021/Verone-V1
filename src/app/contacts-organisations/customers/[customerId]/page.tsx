@@ -257,7 +257,6 @@ export default function CustomerDetailPage() {
             <PerformanceEditSection
               organisation={customer}
               onUpdate={handleCustomerUpdate}
-              organisationType="customer"
             />
           )}
 

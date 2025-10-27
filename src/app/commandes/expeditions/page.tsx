@@ -25,8 +25,8 @@ export default function ShipmentsPage() {
   // Filtrer uniquement les commandes prêtes à expédier
   useEffect(() => {
     fetchOrders({
-      status: 'confirmed',
-      payment_status: 'paid'
+      status: 'confirmed'
+      // payment_status non supporté dans SalesOrderFilters actuellement
     })
   }, [fetchOrders])
 
@@ -273,8 +273,8 @@ export default function ShipmentsPage() {
         onClose={() => setShowOrderDetail(false)}
         onUpdate={() => {
           fetchOrders({
-            status: 'confirmed',
-            payment_status: 'paid'
+            status: 'confirmed'
+            // payment_status non supporté dans SalesOrderFilters actuellement
           })
         }}
       />

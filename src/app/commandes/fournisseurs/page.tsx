@@ -344,7 +344,11 @@ export default function PurchaseOrdersPage() {
                           </ButtonV2>
                           {order.status === 'draft' && (
                             <>
-                              <ButtonV2 variant="outline" size="sm">
+                              <ButtonV2
+                                variant="outline"
+                                size="sm"
+                                onClick={() => openOrderDetail(order)}
+                              >
                                 <Edit className="h-4 w-4" />
                               </ButtonV2>
                               <ButtonV2
@@ -437,6 +441,28 @@ export default function PurchaseOrdersPage() {
                     <p className="text-sm text-gray-600">{selectedOrder.notes}</p>
                   </div>
                 )}
+
+                {/* Bouton de validation pour commandes draft */}
+                {selectedOrder.status === 'draft' && (
+                  <div className="pt-4 border-t">
+                    <div className="flex gap-2">
+                      <ButtonV2
+                        onClick={() => handleStatusChange(selectedOrder.id, 'confirmed')}
+                        className="w-full"
+                      >
+                        <CheckCircle className="h-4 w-4 mr-2" />
+                        Valider la commande
+                      </ButtonV2>
+                      <ButtonV2
+                        variant="outline"
+                        onClick={() => handleStatusChange(selectedOrder.id, 'cancelled')}
+                      >
+                        <XCircle className="h-4 w-4 mr-2" />
+                        Annuler
+                      </ButtonV2>
+                    </div>
+                  </div>
+                )}
               </TabsContent>
 
               <TabsContent value="items" className="space-y-4">
@@ -456,7 +482,7 @@ export default function PurchaseOrdersPage() {
                     <TableBody>
                       {selectedOrder.purchase_order_items?.map((item) => {
                         // ✅ BR-TECH-002: Récupérer image via product_images (colonne primary_image_url supprimée)
-                        const productImages = item.products?.product_images as ProductImage[] | undefined
+                        const productImages = (item.products as any)?.product_images as ProductImage[] | undefined
                         const primaryImageUrl = productImages?.find(img => img.is_primary)?.public_url ||
                                                productImages?.[0]?.public_url ||
                                                null
@@ -468,7 +494,7 @@ export default function PurchaseOrdersPage() {
                               {primaryImageUrl && (
                                 <img
                                   src={primaryImageUrl}
-                                  alt={item.products.name}
+                                  alt={item.products?.name || ''}
                                   className="w-10 h-10 object-cover rounded"
                                 />
                               )}

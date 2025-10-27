@@ -251,7 +251,6 @@ export default function SupplierDetailPage() {
           <PerformanceEditSection
             organisation={supplier}
             onUpdate={handleSupplierUpdate}
-            organisationType="supplier"
           />
 
           {/* Statistiques - Composant réutilisable */}
