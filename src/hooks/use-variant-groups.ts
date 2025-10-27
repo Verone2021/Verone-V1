@@ -427,6 +427,7 @@ export function useVariantGroups(filters?: VariantGroupFilters) {
         .from('products')
         .insert(newProduct)
         .select()
+        .single()
 
       if (createError) {
         logger.error('Erreur création produit', createError, {
@@ -743,6 +744,7 @@ export function useVariantGroups(filters?: VariantGroupFilters) {
         .update(updateData)
         .eq('id', groupId)
         .select()
+        .single()
 
       if (updateError) {
         logger.error('Supabase update error', new Error(updateError.message), {
