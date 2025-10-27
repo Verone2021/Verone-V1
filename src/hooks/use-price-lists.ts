@@ -309,7 +309,7 @@ export function useCreatePriceList() {
       try {
         const { data: user } = await supabase.auth.getUser()
 
-        const { data: priceList, error } = await supabase
+        const { data: priceList, error }: { data: PriceList | null; error: any } = await supabase
           .from('price_lists')
           .insert({
             code: data.code,
@@ -505,7 +505,7 @@ export function useCreatePriceListItem() {
   return useMutation({
     mutationFn: async (data: CreatePriceListItemData): Promise<PriceListItem> => {
       try {
-        const { data: item, error } = await supabase
+        const { data: item, error }: { data: PriceListItem | null; error: any } = await supabase
           .from('price_list_items')
           .insert({
             price_list_id: data.price_list_id,
