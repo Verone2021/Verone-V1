@@ -304,7 +304,7 @@ export function useErrorReporting(options: UseErrorReportingOptions = {}) {
 
       if (error) throw error
 
-      const formattedReports: ErrorReport[] = (data || []).map(report => ({
+      const formattedReports: ErrorReport[] = (data || []).map((report: any) => ({
         id: report.id,
         testId: report.test_id,
         testTitle: report.test_title,
