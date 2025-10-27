@@ -92,7 +92,7 @@ export function PriceListItemFormModal({
   // Load existing item in edit mode
   useEffect(() => {
     if (itemId && existingItems) {
-      const item = existingItems.find(i => i.id === itemId)
+      const item = existingItems.find((i: any) => i.id === itemId)
       if (item) {
         setSelectedProduct(item.products)
         setTiers([{
@@ -313,7 +313,7 @@ export function PriceListItemFormModal({
                           </TableRow>
                         </TableHeader>
                         <TableBody>
-                          {products.map((product) => (
+                          {products.map((product: any) => (
                             <TableRow key={product.id}>
                               <TableCell className="font-medium">{product.name}</TableCell>
                               <TableCell>

@@ -96,7 +96,7 @@ export function ErrorAnalyticsDashboard({
 
         if (dashboardData && dashboardData.length > 0) {
           // Transformer les données dashboard en métriques
-          const totalMetrics = dashboardData.reduce((acc, hour) => ({
+          const totalMetrics = dashboardData.reduce((acc: any, hour: any) => ({
             total_errors: acc.total_errors + (hour.total_errors || 0),
             critical_count: acc.critical_count + (hour.critical_count || 0),
             resolved_count: acc.resolved_count + (hour.resolved_count || 0),
@@ -139,8 +139,8 @@ export function ErrorAnalyticsDashboard({
         const errors = await supabaseErrorConnector.searchErrors({ module, limit: 100 })
 
         const totalErrors = errors.length
-        const criticalErrors = errors.filter(e => e.severity === 'critical').length
-        const resolvedErrors = errors.filter(e => e.resolution_status === 'resolved').length
+        const criticalErrors = errors.filter((e: any) => e.severity === 'critical').length
+        const resolvedErrors = errors.filter((e: any) => e.resolution_status === 'resolved').length
 
         return {
           module,

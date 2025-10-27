@@ -96,7 +96,7 @@ export function UnifiedDescriptionEditSection({
 
   const removeSellingPoint = (index: number) => {
     const currentPoints = editData?.selling_points || []
-    const newPoints = currentPoints.filter((_, i) => i !== index)
+    const newPoints = currentPoints.filter((_: any, i: any) => i !== index)
     updateEditedData(section, {
       selling_points: newPoints
     })

@@ -76,7 +76,7 @@ export const ChannelSelector = memo(function ChannelSelector({
           </SelectItem>
         )}
 
-        {channels?.map((channel) => (
+        {channels?.map((channel: any) => (
           <SelectItem key={channel.id} value={channel.id}>
             <div className="flex items-center gap-2">
               <span className="font-medium">{channel.name}</span>
