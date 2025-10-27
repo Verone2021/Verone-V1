@@ -50,6 +50,7 @@ export function ButtonV2({
       color: colors.text.inverse, // Blanc
       border: 'none',
       hoverBg: colors.primary[600],
+      hoverColor: undefined,
       shadow: componentShadows.button,
     },
     secondary: {
@@ -73,6 +74,7 @@ export function ButtonV2({
       color: colors.text.inverse,
       border: 'none',
       hoverBg: colors.success[600],
+      hoverColor: undefined,
       shadow: componentShadows.button,
     },
     danger: {
@@ -80,6 +82,7 @@ export function ButtonV2({
       color: colors.text.inverse,
       border: 'none',
       hoverBg: colors.danger[600],
+      hoverColor: undefined,
       shadow: componentShadows.button,
     },
     warning: {
@@ -87,6 +90,7 @@ export function ButtonV2({
       color: colors.text.inverse,
       border: 'none',
       hoverBg: colors.warning[600],
+      hoverColor: undefined,
       shadow: componentShadows.button,
     },
     ghost: {
@@ -94,6 +98,7 @@ export function ButtonV2({
       color: colors.text.DEFAULT,
       border: 'none',
       hoverBg: colors.neutral[100],
+      hoverColor: undefined,
       shadow: 'none',
     },
   }
