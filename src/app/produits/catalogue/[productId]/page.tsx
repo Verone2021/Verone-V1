@@ -107,7 +107,8 @@ interface Product {
   organisation_id: string
   supplier?: {
     id: string
-    name: string
+    legal_name: string
+    trade_name: string | null
     email: string | null
     phone: string | null
     is_active: boolean
@@ -159,6 +160,14 @@ export default function ProductDetailPage() {
     try {
       setLoading(true)
       setError(null)
+
+      // ✅ FIX: Valider format UUID avant requête
+      const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
+      if (!productId || !uuidRegex.test(productId)) {
+        // Si ce n'est pas un UUID valide (ex: "create"), rediriger vers catalogue
+        router.push('/produits/catalogue')
+        return
+      }
 
       const supabase = createClient()
 
@@ -574,9 +583,12 @@ export default function ProductDetailPage() {
             defaultOpen={false}
           >
             <SampleRequirementSection
+              productId={product.id}
               requiresSample={product.requires_sample || false}
               isProduct={true}
               productName={product.name}
+              supplierName={product.supplier?.legal_name || product.supplier?.trade_name}
+              costPrice={product.cost_price || undefined}
               disabled={product.stock_quantity >= 1}
               onRequirementChange={(requiresSample) => {
                 handleProductUpdate({ requires_sample: requiresSample })

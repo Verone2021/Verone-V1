@@ -137,7 +137,7 @@ export default function CataloguePage() {
   const availableStatuses = Array.from(new Set(products.map(p => p.status)))
   const availableSuppliers = Array.from(new Set(
     products
-      .map(p => p.supplier?.name)
+      .map(p => p.supplier?.trade_name || p.supplier?.legal_name)
       .filter(Boolean)
   ))
 
@@ -168,7 +168,7 @@ export default function CataloguePage() {
   })
 
   const supplierOptions: FilterOption[] = availableSuppliers.map((supplier) => {
-    const count = products.filter((p) => p.supplier?.name === supplier).length
+    const count = products.filter((p) => (p.supplier?.trade_name || p.supplier?.legal_name) === supplier).length
     return {
       value: supplier,
       label: supplier,
