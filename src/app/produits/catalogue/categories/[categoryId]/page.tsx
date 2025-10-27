@@ -394,7 +394,7 @@ export default function CategoryDetailPage() {
           handleSubmitNewSubcategory({
             name: subcategory.name,
             description: subcategory.description,
-            category_id: subcategory.parent_id,
+            category_id: subcategory.category_id,
             is_active: subcategory.is_active,
             display_order: subcategory.display_order,
             image_url: subcategory.image_url

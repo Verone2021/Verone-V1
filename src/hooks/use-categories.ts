@@ -93,8 +93,8 @@ export function useCategories() {
     categories.forEach(cat => {
       const category = categoryMap.get(cat.id)!
 
-      if (cat.parent_id) {
-        const parent = categoryMap.get(cat.parent_id)
+      if (cat.family_id) {
+        const parent = categoryMap.get(cat.family_id)
         if (parent) {
           parent.children = parent.children || []
           parent.children.push(category)
