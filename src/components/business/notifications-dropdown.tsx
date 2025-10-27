@@ -143,7 +143,7 @@ const NotificationItem = ({ notification, onMarkAsRead, onDelete }: Notification
           {/* Timestamp */}
           <p
             className="text-xs mb-2"
-            style={{ color: colors.text.tertiary }}
+            style={{ color: colors.text.muted }}
           >
             {timeAgo}
           </p>
@@ -151,7 +151,7 @@ const NotificationItem = ({ notification, onMarkAsRead, onDelete }: Notification
           {/* Message */}
           <p
             className="text-sm leading-relaxed mb-3"
-            style={{ color: colors.text.secondary }}
+            style={{ color: colors.text.subtle }}
           >
             {notification.message}
           </p>
@@ -263,7 +263,7 @@ export const NotificationsDropdown = () => {
             {unreadCount > 0 && (
               <span
                 className="text-xs font-normal"
-                style={{ color: colors.text.secondary }}
+                style={{ color: colors.text.subtle }}
               >
                 ({unreadCount} non {unreadCount > 1 ? 'lues' : 'lue'})
               </span>
@@ -286,7 +286,7 @@ export const NotificationsDropdown = () => {
         {loading ? (
           <div className="p-12 text-center">
             <div className="animate-spin rounded-full h-8 w-8 border-b-2 mx-auto mb-3" style={{ borderColor: colors.primary[500] }} />
-            <p className="text-sm" style={{ color: colors.text.secondary }}>
+            <p className="text-sm" style={{ color: colors.text.subtle }}>
               Chargement des notifications...
             </p>
           </div>
@@ -296,7 +296,7 @@ export const NotificationsDropdown = () => {
               className="w-16 h-16 mx-auto mb-4 rounded-full flex items-center justify-center"
               style={{ backgroundColor: colors.neutral[100] }}
             >
-              <Bell className="h-8 w-8" style={{ color: colors.text.tertiary }} />
+              <Bell className="h-8 w-8" style={{ color: colors.text.muted }} />
             </div>
             <p
               className="text-sm font-medium mb-1"
@@ -306,7 +306,7 @@ export const NotificationsDropdown = () => {
             </p>
             <p
               className="text-xs"
-              style={{ color: colors.text.tertiary }}
+              style={{ color: colors.text.muted }}
             >
               Vous êtes à jour ! 🎉
             </p>
