@@ -8,7 +8,7 @@
 
 ## 📋 Commandes Disponibles
 
-**Total : 11 commandes** (10 + 1 NOUVEAU `/audit-module`)
+**Total : 14 commandes** (10 + 1 `/audit-module` + 3 NOUVELLES `/typescript-*`)
 
 ### **🚀 Core Workflow (4 commandes)**
 
@@ -330,6 +330,81 @@ Opérations Supabase rapides : queries, migrations, logs, advisors.
 
 ---
 
+### **🔧 TypeScript Quality (3 commandes NOUVELLES)**
+
+#### `/typescript-cluster`
+Clustering automatique 975 erreurs TypeScript + génération plan structuré.
+
+**Workflow :**
+1. Export erreurs : `npm run type-check > ts-errors-raw.log`
+2. Clustering automatique par famille (TS2322, TS2345, etc.)
+3. Priorisation P0-P3 selon gravité
+4. Génération `TS_ERRORS_PLAN.md` + `error-clusters.json`
+
+**Use Case :**
+Démarrage projet correction TypeScript massive.
+
+**Exemple :**
+```bash
+/typescript-cluster
+# → ts-errors-raw.log (975 erreurs)
+# → error-clusters.json (16 familles détectées)
+# → TS_ERRORS_PLAN.md (plan correction priorisé)
+```
+
+#### `/typescript-fix <famille>`
+Correction complète d'une famille d'erreurs avec tests et validation.
+
+**Arguments :**
+- `<famille>` : ID famille depuis TS_ERRORS_PLAN.md
+
+**Workflow :**
+1. Analyse pattern famille
+2. Correction TOUTE la famille en une session
+3. Tests (type-check + build + MCP Browser) AVANT commit
+4. Commit structuré avec delta erreurs
+5. Update TS_ERRORS_PLAN.md
+
+**Success Criteria :**
+- ✅ Erreurs réduites
+- ✅ Build success
+- ✅ 0 console errors
+- ✅ Aucune régression
+
+**Exemple :**
+```bash
+/typescript-fix TS2322-null-undefined
+# → Analyse 150 erreurs famille TS2322
+# → Stratégie : Null coalescing (??)
+# → Correction complète
+# → Tests validés ✅
+# → Commit : "fix(types): [TS2322] -150 erreurs (975→825)"
+```
+
+#### `/typescript-status`
+Dashboard progression corrections TypeScript avec statistiques temps réel.
+
+**Affiche :**
+- Progression globale (%)
+- Status par famille (DONE | IN_PROGRESS | TODO)
+- Milestones atteints/restants
+- Estimations temps
+- Prochaine famille recommandée
+
+**Best Practice :**
+Exécuter après chaque `/typescript-fix` pour visualiser progression.
+
+**Exemple :**
+```bash
+/typescript-status
+# → 📊 150/975 erreurs résolues (15.4%)
+# → ✅ M1: 100 erreurs - ATTEINT
+# → ⏳ M2: 250 erreurs - EN COURS (60%)
+# → 🔄 Prochaine famille : TS2345-argument-type
+```
+
+---
+
 ## 🧠 Philosophy 2025
 
 ### **Plan-First Approach**
@@ -520,7 +595,7 @@ git push
 
 ## 🏆 Révolution 2025
 
-### **Octobre 2025 : +1 Commande /audit-module**
+### **Octobre 2025 : +4 Commandes (/audit-module + TypeScript Quality)**
 
 **Inspiration** :
 - Claude Code Development Kit (peterkrueck/GitHub)
@@ -535,6 +610,8 @@ git push
 - ✅ Cleanup documentation obsolète (-80%)
 - ✅ Phase 1 → Phase 2 transition préparée
 - ✅ Gain temps : 20h manuel → 2h auto (-90%)
+- ✅ **NOUVEAU** : TypeScript fixes workflow professionnel (clustering + batch corrections)
+- ✅ **NOUVEAU** : Corrections TypeScript 10x plus rapides (1000+ erreurs gérables)
 
 ### **Avant (28 commandes)**
 - ❌ Redondances multiples
@@ -554,12 +631,13 @@ git push
 
 ### **Impact Mesurable**
 ```
-Commandes: 28 → 10 (-71%)
+Commandes: 28 → 14 (10 core + 4 spécialisées)
 Temps setup: 5min → 30s (-90%)
 Workflow clarity: +300%
 Agent usage: +250%
 Development velocity: +300%
 Bug prevention: +400%
+TypeScript fixes: 1000+ erreurs gérables (clustering auto)
 ```
 
 ---

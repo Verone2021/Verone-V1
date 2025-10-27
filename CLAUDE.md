@@ -109,6 +109,78 @@ Vercel      // Auto-deploy
 
 ---
 
+## 🔧 TYPESCRIPT FIXES WORKFLOW - BEST PRACTICES 2025
+
+**Approche Professionnelle** : Clustering + Batch Corrections par Famille
+
+### Règles Absolues
+
+**❌ INTERDIT :**
+- Correction une par une sans plan
+- Commits sans tests préalables
+- Modifications sans classification famille
+
+**✅ OBLIGATOIRE :**
+- Export exhaustif erreurs : `npm run type-check 2>&1 > ts-errors-raw.log`
+- Clustering automatique par famille
+- Correction COMPLÈTE d'une famille avant passage suivante
+- Tests MCP Browser AVANT chaque commit
+- Fichier suivi : `TS_ERRORS_PLAN.md` à la racine
+
+### Workflow Standard
+
+```typescript
+1. Export erreurs → ts-errors-raw.log
+2. Clustering → error-clusters.json
+3. Priorisation → TS_ERRORS_PLAN.md
+4. Pour chaque famille :
+   - Identifier pattern
+   - Corriger TOUTE la famille
+   - Tests (type-check + build + MCP Browser)
+   - Commit structuré
+   - Push
+5. Répéter jusqu'à 0 erreurs
+```
+
+### Priorisation
+
+- **P0 - BLOCKING** : Bloque build (0 actuellement)
+- **P1 - CRITICAL** : Type safety critique (null/undefined, property missing core)
+- **P2 - HIGH** : Type incompatibilities non-critiques
+- **P3 - LOW** : Implicit any, warnings
+
+### Commit Format
+
+```
+fix(types): [CODE-PATTERN] Description - X erreurs résolues (avant→après)
+
+Famille : TS2322 - Null/Undefined incompatibility
+Fichiers : 15 modifiés
+Stratégie : Null coalescing operator (??)
+Tests : ✅ MCP Browser 0 errors
+Build : ✅ Success
+
+Avant : 975 erreurs
+Après : 825 erreurs
+Delta : -150 erreurs
+```
+
+### Fichiers Clés
+
+- `TS_ERRORS_PLAN.md` : Suivi progression par famille
+- `ts-errors-raw.log` : Export brut erreurs TypeScript
+- `error-clusters.json` : Clustering automatique
+- `scripts/cluster-ts-errors.js` : Script clustering
+- `TYPESCRIPT_FIXES_CHANGELOG.md` : Historique décisions
+
+### Commandes Slash
+
+- `/typescript-cluster` : Lance clustering erreurs
+- `/typescript-fix <famille>` : Démarre correction famille
+- `/typescript-status` : Affiche progression globale
+
+---
+
 ## 🤖 MCP AGENTS - USAGE PRIORITAIRE
 
 ### Serena - Code Intelligence
