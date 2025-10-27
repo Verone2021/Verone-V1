@@ -222,7 +222,7 @@ export function OrderDetailModal({ order, open, onClose, onUpdate }: OrderDetail
                   <div className="space-y-3">
                     {order.sales_order_items?.map((item) => {
                       // ✅ BR-TECH-002: Récupérer image via product_images (colonne primary_image_url supprimée)
-                      const productImages = item.products?.product_images as ProductImage[] | undefined
+                      const productImages = (item.products as any)?.product_images as ProductImage[] | undefined
                       const primaryImageUrl = productImages?.find(img => img.is_primary)?.public_url ||
                                              productImages?.[0]?.public_url ||
                                              null

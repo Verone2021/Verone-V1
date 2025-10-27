@@ -127,7 +127,7 @@ export function useStockReservations() {
       if (error) throw error
 
       // Enrichir les produits avec primary_image_url (BR-TECH-002)
-      const enrichedReservations = (data || []).map(reservation => ({
+      const enrichedReservations = (data || []).map((reservation: any) => ({
         ...reservation,
         products: reservation.products ? {
           ...reservation.products,
