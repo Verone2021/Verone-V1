@@ -104,7 +104,7 @@ export function FamilyForm({
         title: "✅ Image téléchargée",
         description: "L'image a été uploadée avec succès"
       })
-    } catch (error) {
+    } catch (error: any) {
       console.error('Erreur upload image famille:', error?.message || JSON.stringify(error))
       toast({
         title: "❌ Erreur upload",

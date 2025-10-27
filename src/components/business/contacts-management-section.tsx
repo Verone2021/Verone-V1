@@ -63,7 +63,7 @@ export function ContactsManagementSection({
   const loadContacts = async () => {
     try {
       await fetchOrganisationContacts(organisationId)
-    } catch (error) {
+    } catch (error: any) {
       console.error('Erreur lors du chargement des contacts:', error)
     }
   }
@@ -105,7 +105,7 @@ export function ContactsManagementSection({
       setEditingContact(null)
       await loadContacts()
       onUpdate?.()
-    } catch (error) {
+    } catch (error: any) {
       console.error('❌ ERREUR SAUVEGARDE CONTACT - ContactsManagementSection:')
       console.error('Error object:', error)
       console.error('Error string:', String(error))
@@ -131,7 +131,7 @@ export function ContactsManagementSection({
         await deactivateContact(contact.id)
         await loadContacts()
         onUpdate?.()
-      } catch (error) {
+      } catch (error: any) {
         console.error('Erreur lors de la suppression:', error)
       }
     }
@@ -142,7 +142,7 @@ export function ContactsManagementSection({
       await setPrimaryContact(contact.id)
       await loadContacts()
       onUpdate?.()
-    } catch (error) {
+    } catch (error: any) {
       console.error('Erreur lors de la définition du contact principal:', error)
     }
   }

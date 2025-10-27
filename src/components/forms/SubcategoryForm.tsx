@@ -110,7 +110,7 @@ export function SubcategoryForm({
       if (error) throw error
 
       setFormData(prev => ({ ...prev, family_id: data.family_id }))
-    } catch (error) {
+    } catch (error: any) {
       console.error('Erreur récupération family_id catégorie:', error?.message || JSON.stringify(error))
     }
   }
@@ -152,7 +152,7 @@ export function SubcategoryForm({
         title: "✅ Image téléchargée",
         description: "L'image a été uploadée avec succès"
       })
-    } catch (error) {
+    } catch (error: any) {
       console.error('Erreur upload image sous-catégorie:', error?.message || JSON.stringify(error))
       toast({
         title: "❌ Erreur upload",

@@ -121,7 +121,7 @@ export function ImageUpload({
 
       console.log('🎉 Upload terminé avec succès')
 
-    } catch (error) {
+    } catch (error: any) {
       console.error('💥 Erreur upload:', error)
 
       // Messages d'erreur utilisateur simplifiés

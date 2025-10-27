@@ -129,7 +129,7 @@ export function CategoryForm({
         title: "✅ Image téléchargée",
         description: "L'image a été uploadée avec succès"
       })
-    } catch (error) {
+    } catch (error: any) {
       console.error('Erreur upload image catégorie:', error?.message || JSON.stringify(error))
       toast({
         title: "❌ Erreur upload",
