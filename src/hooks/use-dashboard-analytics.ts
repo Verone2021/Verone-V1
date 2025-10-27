@@ -130,9 +130,9 @@ export function useDashboardAnalytics() {
           }
 
           if (mov.movement_type === 'in' || mov.movement_type === 'purchase_order') {
-            acc[date].entrees += Math.abs(mov.quantity)
+            acc[date].entrees += Math.abs(mov.quantity_change)
           } else if (mov.movement_type === 'out' || mov.movement_type === 'sales_order') {
-            acc[date].sorties += Math.abs(mov.quantity)
+            acc[date].sorties += Math.abs(mov.quantity_change)
           }
 
           return acc
