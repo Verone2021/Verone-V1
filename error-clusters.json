@@ -1,0 +1,2050 @@
+{
+  "totalErrors": 975,
+  "clusterCount": 72,
+  "clusters": [
+    {
+      "id": "TS7006-parameter-x-implicitly-has-an-",
+      "errorCode": "TS7006",
+      "count": 16,
+      "priority": "P0",
+      "pattern": "Parameter 'X' implicitly has an 'any' type.",
+      "strategy": "Explicit typing, remove implicit any",
+      "estimation": "1h",
+      "files": [
+        "src/components/testing/error-detection-panel.tsx",
+        "src/hooks/use-archived-products.ts",
+        "src/hooks/use-error-reporting-integration.ts",
+        "src/hooks/use-smart-suggestions.ts",
+        "src/lib/validation/form-security.ts"
+      ],
+      "fileCount": 5,
+      "status": "TODO",
+      "examples": [
+        {
+          "file": "src/components/testing/error-detection-panel.tsx",
+          "line": 266,
+          "message": "Parameter 'e' implicitly has an 'any' type."
+        },
+        {
+          "file": "src/components/testing/error-detection-panel.tsx",
+          "line": 267,
+          "message": "Parameter 'e' implicitly has an 'any' type."
+        },
+        {
+          "file": "src/components/testing/error-detection-panel.tsx",
+          "line": 268,
+          "message": "Parameter 'e' implicitly has an 'any' type."
+        },
+        {
+          "file": "src/components/testing/error-detection-panel.tsx",
+          "line": 273,
+          "message": "Parameter 'e' implicitly has an 'any' type."
+        },
+        {
+          "file": "src/components/testing/error-detection-panel.tsx",
+          "line": 274,
+          "message": "Parameter 'e' implicitly has an 'any' type."
+        }
+      ]
+    },
+    {
+      "id": "TS2339-property-x-does-not-exist-on-t",
+      "errorCode": "TS2339",
+      "count": 265,
+      "priority": "P1",
+      "pattern": "Property 'X' does not exist on type 'X'.",
+      "strategy": "Interface extension, optional properties",
+      "estimation": "22-25h",
+      "files": [
+        "src/app/produits/catalogue/[productId]/page.tsx",
+        "src/app/produits/catalogue/categories/[categoryId]/page.tsx",
+        "src/app/produits/catalogue/collections/[collectionId]/page.tsx",
+        "src/app/produits/catalogue/collections/page.tsx",
+        "src/app/produits/catalogue/dashboard/page.tsx",
+        "src/app/produits/catalogue/families/[familyId]/page.tsx",
+        "src/app/produits/catalogue/page.tsx",
+        "src/app/produits/catalogue/stocks/page.tsx",
+        "src/app/produits/catalogue/subcategories/[subcategoryId]/page.tsx",
+        "src/app/produits/catalogue/variantes/[groupId]/page.tsx"
+      ],
+      "fileCount": 71,
+      "status": "TODO",
+      "examples": [
+        {
+          "file": "src/app/produits/catalogue/[productId]/page.tsx",
+          "line": 589,
+          "message": "Property 'legal_name' does not exist on type '{ id: string; name: string; email: string | null; phone: string | null; is_active: boolean; }'."
+        },
+        {
+          "file": "src/app/produits/catalogue/[productId]/page.tsx",
+          "line": 589,
+          "message": "Property 'trade_name' does not exist on type '{ id: string; name: string; email: string | null; phone: string | null; is_active: boolean; }'."
+        },
+        {
+          "file": "src/app/produits/catalogue/categories/[categoryId]/page.tsx",
+          "line": 294,
+          "message": "Property 'products_count' does not exist on type '{ category_id: string; created_at: string | null; description: string | null; id: string; image_url: string | null; is_active: boolean | null; meta_description: string | null; meta_title: string | null; name: string; slug: string; display_order: number | null; updated_at: string | null; }'."
+        },
+        {
+          "file": "src/app/produits/catalogue/categories/[categoryId]/page.tsx",
+          "line": 352,
+          "message": "Property 'products_count' does not exist on type '{ category_id: string; created_at: string | null; description: string | null; id: string; image_url: string | null; is_active: boolean | null; meta_description: string | null; meta_title: string | null; name: string; slug: string; display_order: number | null; updated_at: string | null; }'."
+        },
+        {
+          "file": "src/app/produits/catalogue/categories/[categoryId]/page.tsx",
+          "line": 397,
+          "message": "Property 'parent_id' does not exist on type 'Subcategory'."
+        }
+      ]
+    },
+    {
+      "id": "TS2322-type-x-is-not-assignable-to-ty",
+      "errorCode": "TS2322",
+      "count": 242,
+      "priority": "P1",
+      "pattern": "Type 'X' is not assignable to type 'X'.",
+      "strategy": "Null coalescing (??), optional chaining (?.)",
+      "estimation": "12-15h",
+      "files": [
+        "src/app/canaux-vente/prix-clients/page.tsx",
+        "src/app/consultations/page.tsx",
+        "src/app/produits/catalogue/[productId]/page.tsx",
+        "src/app/produits/catalogue/categories/[categoryId]/page.tsx",
+        "src/app/produits/catalogue/collections/[collectionId]/page.tsx",
+        "src/app/produits/catalogue/families/[familyId]/page.tsx",
+        "src/app/produits/catalogue/stocks/page.tsx",
+        "src/app/produits/catalogue/variantes/[groupId]/page.tsx",
+        "src/app/produits/sourcing/produits/[id]/page.tsx",
+        "src/app/produits/sourcing/validation/page.tsx"
+      ],
+      "fileCount": 110,
+      "status": "TODO",
+      "examples": [
+        {
+          "file": "src/app/canaux-vente/prix-clients/page.tsx",
+          "line": 118,
+          "message": "Type '{ customer_name: string; product_name: string; id: string; customer_id: string; customer_type: string; product_id: string; custom_price_ht: number | null; discount_rate: number | null; ... 12 more ...; retrocession_rate: number | null; }[]' is not assignable to type 'CustomerPricing[]'."
+        },
+        {
+          "file": "src/app/consultations/page.tsx",
+          "line": 169,
+          "message": "Type 'import(\"/Users/romeodossantos/verone-back-office-V1/src/hooks/use-consultation-images\").ConsultationImage[]' is not assignable to type 'ConsultationImage[]'."
+        },
+        {
+          "file": "src/app/produits/catalogue/[productId]/page.tsx",
+          "line": 418,
+          "message": "Type '(updatedData: Partial<Product>) => Promise<void>' is not assignable to type '(updates: Partial<{ id: string; name: string; sku?: string | null | undefined; cost_price?: number | null | undefined; status?: string | null | undefined; supplier_id?: string | null | undefined; subcategory_id?: string | ... 1 more ... | undefined; variant_group_id?: string | ... 1 more ... | undefined; }>) => Prom...'."
+        },
+        {
+          "file": "src/app/produits/catalogue/[productId]/page.tsx",
+          "line": 434,
+          "message": "Type 'string | null' is not assignable to type 'string[] | null | undefined'."
+        },
+        {
+          "file": "src/app/produits/catalogue/[productId]/page.tsx",
+          "line": 436,
+          "message": "Type '(updatedData: Partial<Product>) => Promise<void>' is not assignable to type '(updatedProduct: Partial<Product>) => void'."
+        }
+      ]
+    },
+    {
+      "id": "TS2345-argument-of-type-x-is-not-assi",
+      "errorCode": "TS2345",
+      "count": 152,
+      "priority": "P1",
+      "pattern": "Argument of type 'X' is not assignable to parameter of type 'X'.",
+      "strategy": "Type assertions, generic constraints",
+      "estimation": "10-13h",
+      "files": [
+        "src/app/produits/catalogue/[productId]/page.tsx",
+        "src/app/produits/catalogue/categories/[categoryId]/page.tsx",
+        "src/app/produits/catalogue/collections/[collectionId]/page.tsx",
+        "src/app/produits/catalogue/dashboard/page.tsx",
+        "src/app/produits/catalogue/families/[familyId]/page.tsx",
+        "src/app/produits/catalogue/page.tsx",
+        "src/app/produits/catalogue/variantes/[groupId]/page.tsx",
+        "src/app/profile/page.tsx",
+        "src/app/stocks/inventaire/page.tsx",
+        "src/app/stocks/produits/page.tsx"
+      ],
+      "fileCount": 90,
+      "status": "TODO",
+      "examples": [
+        {
+          "file": "src/app/produits/catalogue/[productId]/page.tsx",
+          "line": 222,
+          "message": "Argument of type '{ archived_at: string | null; assigned_client_id: string | null; availability_type: \"preorder\" | \"coming_soon\" | \"discontinued\" | \"normal\" | null; brand: string | null; completion_percentage: number | null; ... 40 more ...; variant_group: { ...; } | null; }' is not assignable to parameter of type 'SetStateAction<Product | null>'."
+        },
+        {
+          "file": "src/app/produits/catalogue/[productId]/page.tsx",
+          "line": 243,
+          "message": "Argument of type '{ updated_at: string; id?: string | undefined; name?: string | undefined; sku?: string | null | undefined; description?: string | null | undefined; technical_description?: string | null | undefined; ... 27 more ...; variant_group?: { id: string; name: string; dimensions_length: number | null; dimensions_width: numbe...' is not assignable to parameter of type '{ archived_at?: string | null | undefined; assigned_client_id?: string | null | undefined; availability_type?: \"preorder\" | \"coming_soon\" | \"discontinued\" | \"normal\" | null | undefined; ... 39 more ...; weight?: number | ... 1 more ... | undefined; }'."
+        },
+        {
+          "file": "src/app/produits/catalogue/[productId]/page.tsx",
+          "line": 257,
+          "message": "Argument of type '{ archived_at: string | null; assigned_client_id: string | null; availability_type: Database[\"public\"][\"Enums\"][\"availability_type_enum\"] | null; ... 48 more ...; variant_group?: { id: string; name: string; dimensions_length: number | null; dimensions_width: number | null; dimensions_height: number | null; dimension...' is not assignable to parameter of type 'SetStateAction<Product | null>'."
+        },
+        {
+          "file": "src/app/produits/catalogue/categories/[categoryId]/page.tsx",
+          "line": 151,
+          "message": "Argument of type '{ name: any; description: any; category_id: string; is_active: any; display_order: any; image_url: any; }' is not assignable to parameter of type 'Omit<{ category_id: string; created_at?: string | null | undefined; description?: string | null | undefined; id?: string | undefined; image_url?: string | null | undefined; is_active?: boolean | null | undefined; ... 5 more ...; updated_at?: string | ... 1 more ... | undefined; }, \"id\" | ... 1 more ... | \"updated_at\">'."
+        },
+        {
+          "file": "src/app/produits/catalogue/collections/[collectionId]/page.tsx",
+          "line": 236,
+          "message": "Argument of type 'string | null' is not assignable to parameter of type 'SetStateAction<CollectionStyle | null>'."
+        }
+      ]
+    },
+    {
+      "id": "TS2339-property-x-does-not-exist-on-t",
+      "errorCode": "TS2339",
+      "count": 17,
+      "priority": "P1",
+      "pattern": "Property 'X' does not exist on type 'X'room_category' does not exist on 'collections'.\">'.",
+      "strategy": "Interface extension, optional properties",
+      "estimation": "1-3h",
+      "files": [
+        "src/hooks/use-smart-suggestions.ts"
+      ],
+      "fileCount": 1,
+      "status": "TODO",
+      "examples": [
+        {
+          "file": "src/hooks/use-smart-suggestions.ts",
+          "line": 75,
+          "message": "Property 'style' does not exist on type 'SelectQueryError<\"column 'room_category' does not exist on 'collections'.\">'."
+        },
+        {
+          "file": "src/hooks/use-smart-suggestions.ts",
+          "line": 76,
+          "message": "Property 'style' does not exist on type 'SelectQueryError<\"column 'room_category' does not exist on 'collections'.\">'."
+        },
+        {
+          "file": "src/hooks/use-smart-suggestions.ts",
+          "line": 76,
+          "message": "Property 'style' does not exist on type 'SelectQueryError<\"column 'room_category' does not exist on 'collections'.\">'."
+        },
+        {
+          "file": "src/hooks/use-smart-suggestions.ts",
+          "line": 80,
+          "message": "Property 'room_category' does not exist on type 'SelectQueryError<\"column 'room_category' does not exist on 'collections'.\">'."
+        },
+        {
+          "file": "src/hooks/use-smart-suggestions.ts",
+          "line": 81,
+          "message": "Property 'room_category' does not exist on type 'SelectQueryError<\"column 'room_category' does not exist on 'collections'.\">'."
+        }
+      ]
+    },
+    {
+      "id": "TS2339-property-x-does-not-exist-on-t",
+      "errorCode": "TS2339",
+      "count": 13,
+      "priority": "P1",
+      "pattern": "Property 'X' does not exist on type 'X'id' does not exist on 'families'.\"> | SelectQueryError<\"column 'id' does not exist on 'categories'.\"> | ... 51 more ... | SelectQueryError<...>'.",
+      "strategy": "Interface extension, optional properties",
+      "estimation": "1-3h",
+      "files": [
+        "src/hooks/use-sales-shipments.ts"
+      ],
+      "fileCount": 1,
+      "status": "TODO",
+      "examples": [
+        {
+          "file": "src/hooks/use-sales-shipments.ts",
+          "line": 366,
+          "message": "Property 'id' does not exist on type 'SelectQueryError<\"column 'id' does not exist on 'families'.\"> | SelectQueryError<\"column 'id' does not exist on 'categories'.\"> | ... 51 more ... | SelectQueryError<...>'."
+        },
+        {
+          "file": "src/hooks/use-sales-shipments.ts",
+          "line": 367,
+          "message": "Property 'shipped_at' does not exist on type 'SelectQueryError<\"column 'id' does not exist on 'families'.\"> | SelectQueryError<\"column 'id' does not exist on 'categories'.\"> | ... 51 more ... | SelectQueryError<...>'."
+        },
+        {
+          "file": "src/hooks/use-sales-shipments.ts",
+          "line": 368,
+          "message": "Property 'delivered_at' does not exist on type 'SelectQueryError<\"column 'id' does not exist on 'families'.\"> | SelectQueryError<\"column 'id' does not exist on 'categories'.\"> | ... 51 more ... | SelectQueryError<...>'."
+        },
+        {
+          "file": "src/hooks/use-sales-shipments.ts",
+          "line": 369,
+          "message": "Property 'carrier_name' does not exist on type 'SelectQueryError<\"column 'id' does not exist on 'families'.\"> | SelectQueryError<\"column 'id' does not exist on 'categories'.\"> | ... 51 more ... | SelectQueryError<...>'."
+        },
+        {
+          "file": "src/hooks/use-sales-shipments.ts",
+          "line": 369,
+          "message": "Property 'carrier_type' does not exist on type 'SelectQueryError<\"column 'id' does not exist on 'families'.\"> | SelectQueryError<\"column 'id' does not exist on 'categories'.\"> | ... 51 more ... | SelectQueryError<...>'."
+        }
+      ]
+    },
+    {
+      "id": "TS2339-property-x-does-not-exist-on-t",
+      "errorCode": "TS2339",
+      "count": 7,
+      "priority": "P1",
+      "pattern": "Property 'X' does not exist on type 'X'name' does not exist on 'organisations'.\">'.",
+      "strategy": "Interface extension, optional properties",
+      "estimation": "1h",
+      "files": [
+        "src/components/business/universal-order-details-modal.tsx",
+        "src/hooks/metrics/use-order-metrics.ts",
+        "src/hooks/use-bank-reconciliation.ts",
+        "src/hooks/use-sales-dashboard.ts",
+        "src/hooks/use-stock-dashboard.ts"
+      ],
+      "fileCount": 5,
+      "status": "TODO",
+      "examples": [
+        {
+          "file": "src/components/business/universal-order-details-modal.tsx",
+          "line": 120,
+          "message": "Property 'name' does not exist on type 'SelectQueryError<\"column 'name' does not exist on 'organisations'.\">'."
+        },
+        {
+          "file": "src/components/business/universal-order-details-modal.tsx",
+          "line": 180,
+          "message": "Property 'name' does not exist on type 'SelectQueryError<\"column 'name' does not exist on 'organisations'.\">'."
+        },
+        {
+          "file": "src/hooks/metrics/use-order-metrics.ts",
+          "line": 106,
+          "message": "Property 'name' does not exist on type 'SelectQueryError<\"column 'name' does not exist on 'organisations'.\">'."
+        },
+        {
+          "file": "src/hooks/use-bank-reconciliation.ts",
+          "line": 152,
+          "message": "Property 'name' does not exist on type 'SelectQueryError<\"column 'name' does not exist on 'organisations'.\">'."
+        },
+        {
+          "file": "src/hooks/use-sales-dashboard.ts",
+          "line": 106,
+          "message": "Property 'name' does not exist on type 'SelectQueryError<\"column 'name' does not exist on 'organisations'.\">'."
+        }
+      ]
+    },
+    {
+      "id": "TS2339-property-x-does-not-exist-on-t",
+      "errorCode": "TS2339",
+      "count": 6,
+      "priority": "P1",
+      "pattern": "Property 'X' does not exist on type 'X'product_id' does not exist on 'families'.\"> | SelectQueryError<\"column 'product_id' does not exist on 'categories'.\"> | ... 51 more ... | SelectQueryError<...>'.",
+      "strategy": "Interface extension, optional properties",
+      "estimation": "1h",
+      "files": [
+        "src/hooks/use-stock-dashboard.ts"
+      ],
+      "fileCount": 1,
+      "status": "TODO",
+      "examples": [
+        {
+          "file": "src/hooks/use-stock-dashboard.ts",
+          "line": 212,
+          "message": "Property 'product_id' does not exist on type 'SelectQueryError<\"column 'product_id' does not exist on 'families'.\"> | SelectQueryError<\"column 'product_id' does not exist on 'categories'.\"> | ... 51 more ... | SelectQueryError<...>'."
+        },
+        {
+          "file": "src/hooks/use-stock-dashboard.ts",
+          "line": 214,
+          "message": "Property 'product_id' does not exist on type 'SelectQueryError<\"column 'product_id' does not exist on 'families'.\"> | SelectQueryError<\"column 'product_id' does not exist on 'categories'.\"> | ... 51 more ... | SelectQueryError<...>'."
+        },
+        {
+          "file": "src/hooks/use-stock-dashboard.ts",
+          "line": 215,
+          "message": "Property 'product_name' does not exist on type 'SelectQueryError<\"column 'product_id' does not exist on 'families'.\"> | SelectQueryError<\"column 'product_id' does not exist on 'categories'.\"> | ... 51 more ... | SelectQueryError<...>'."
+        },
+        {
+          "file": "src/hooks/use-stock-dashboard.ts",
+          "line": 216,
+          "message": "Property 'sku' does not exist on type 'SelectQueryError<\"column 'product_id' does not exist on 'families'.\"> | SelectQueryError<\"column 'product_id' does not exist on 'categories'.\"> | ... 51 more ... | SelectQueryError<...>'."
+        },
+        {
+          "file": "src/hooks/use-stock-dashboard.ts",
+          "line": 217,
+          "message": "Property 'stock_quantity' does not exist on type 'SelectQueryError<\"column 'product_id' does not exist on 'families'.\"> | SelectQueryError<\"column 'product_id' does not exist on 'categories'.\"> | ... 51 more ... | SelectQueryError<...>'."
+        }
+      ]
+    },
+    {
+      "id": "TS2339-property-x-does-not-exist-on-t",
+      "errorCode": "TS2339",
+      "count": 3,
+      "priority": "P1",
+      "pattern": "Property 'X' does not exist on type 'X'has_different_trade_name' does not exist on 'organisations'.\">'.",
+      "strategy": "Interface extension, optional properties",
+      "estimation": "1h",
+      "files": [
+        "src/hooks/use-organisations.ts"
+      ],
+      "fileCount": 1,
+      "status": "TODO",
+      "examples": [
+        {
+          "file": "src/hooks/use-organisations.ts",
+          "line": 650,
+          "message": "Property 'type' does not exist on type 'SelectQueryError<\"column 'has_different_trade_name' does not exist on 'organisations'.\">'."
+        },
+        {
+          "file": "src/hooks/use-organisations.ts",
+          "line": 655,
+          "message": "Property 'id' does not exist on type 'SelectQueryError<\"column 'has_different_trade_name' does not exist on 'organisations'.\">'."
+        },
+        {
+          "file": "src/hooks/use-organisations.ts",
+          "line": 657,
+          "message": "Property '_count' does not exist on type 'SelectQueryError<\"column 'has_different_trade_name' does not exist on 'organisations'.\">'."
+        }
+      ]
+    },
+    {
+      "id": "TS2339-property-x-does-not-exist-on-t",
+      "errorCode": "TS2339",
+      "count": 2,
+      "priority": "P1",
+      "pattern": "Property 'X' does not exist on type 'X'amount_paid' does not exist on 'families'.\"> | SelectQueryError<\"column 'amount_paid' does not exist on 'categories'.\"> | ... 51 more ... | SelectQueryError<...>'.",
+      "strategy": "Interface extension, optional properties",
+      "estimation": "1h",
+      "files": [
+        "src/components/business/payment-form.tsx"
+      ],
+      "fileCount": 1,
+      "status": "TODO",
+      "examples": [
+        {
+          "file": "src/components/business/payment-form.tsx",
+          "line": 137,
+          "message": "Property 'amount_paid' does not exist on type 'SelectQueryError<\"column 'amount_paid' does not exist on 'families'.\"> | SelectQueryError<\"column 'amount_paid' does not exist on 'categories'.\"> | ... 51 more ... | SelectQueryError<...>'."
+        },
+        {
+          "file": "src/components/business/payment-form.tsx",
+          "line": 139,
+          "message": "Property 'total_ttc' does not exist on type 'SelectQueryError<\"column 'amount_paid' does not exist on 'families'.\"> | SelectQueryError<\"column 'amount_paid' does not exist on 'categories'.\"> | ... 51 more ... | SelectQueryError<...>'."
+        }
+      ]
+    },
+    {
+      "id": "TS2339-property-x-does-not-exist-on-t",
+      "errorCode": "TS2339",
+      "count": 2,
+      "priority": "P1",
+      "pattern": "Property 'X' does not exist on type 'X'alert_status' does not exist on 'families'.\"> | SelectQueryError<\"column 'alert_status' does not exist on 'categories'.\"> | ... 51 more ... | SelectQueryError<...>'.",
+      "strategy": "Interface extension, optional properties",
+      "estimation": "1h",
+      "files": [
+        "src/hooks/use-stock-dashboard.ts"
+      ],
+      "fileCount": 1,
+      "status": "TODO",
+      "examples": [
+        {
+          "file": "src/hooks/use-stock-dashboard.ts",
+          "line": 150,
+          "message": "Property 'alert_status' does not exist on type 'SelectQueryError<\"column 'alert_status' does not exist on 'families'.\"> | SelectQueryError<\"column 'alert_status' does not exist on 'categories'.\"> | ... 51 more ... | SelectQueryError<...>'."
+        },
+        {
+          "file": "src/hooks/use-stock-dashboard.ts",
+          "line": 151,
+          "message": "Property 'alert_status' does not exist on type 'SelectQueryError<\"column 'alert_status' does not exist on 'families'.\"> | SelectQueryError<\"column 'alert_status' does not exist on 'categories'.\"> | ... 51 more ... | SelectQueryError<...>'."
+        }
+      ]
+    },
+    {
+      "id": "TS2339-property-x-does-not-exist-on-t",
+      "errorCode": "TS2339",
+      "count": 1,
+      "priority": "P1",
+      "pattern": "Property 'X' does not exist on type 'X'price_ttc' does not exist on 'products'.\">'.",
+      "strategy": "Interface extension, optional properties",
+      "estimation": "1h",
+      "files": [
+        "src/hooks/use-archived-products.ts"
+      ],
+      "fileCount": 1,
+      "status": "TODO",
+      "examples": [
+        {
+          "file": "src/hooks/use-archived-products.ts",
+          "line": 81,
+          "message": "Property 'images' does not exist on type 'SelectQueryError<\"column 'price_ttc' does not exist on 'products'.\">'."
+        }
+      ]
+    },
+    {
+      "id": "TS2769-no-overload-matches-this-call-",
+      "errorCode": "TS2769",
+      "count": 84,
+      "priority": "P2",
+      "pattern": "No overload matches this call.",
+      "strategy": "Manual review and fix",
+      "estimation": "6-9h",
+      "files": [
+        "src/app/produits/catalogue/dashboard/page.tsx",
+        "src/app/produits/catalogue/subcategories/[subcategoryId]/page.tsx",
+        "src/app/profile/page.tsx",
+        "src/components/business/create-individual-customer-modal.tsx",
+        "src/components/business/invoices-list.tsx",
+        "src/components/business/payment-form.tsx",
+        "src/components/forms/expense-form.tsx",
+        "src/components/forms/QuickVariantForm.tsx",
+        "src/components/forms/simple-product-form.tsx",
+        "src/components/testing/ai-insights-panel.tsx"
+      ],
+      "fileCount": 36,
+      "status": "TODO",
+      "examples": [
+        {
+          "file": "src/app/produits/catalogue/dashboard/page.tsx",
+          "line": 88,
+          "message": "No overload matches this call."
+        },
+        {
+          "file": "src/app/produits/catalogue/subcategories/[subcategoryId]/page.tsx",
+          "line": 252,
+          "message": "No overload matches this call."
+        },
+        {
+          "file": "src/app/profile/page.tsx",
+          "line": 153,
+          "message": "No overload matches this call."
+        },
+        {
+          "file": "src/components/business/create-individual-customer-modal.tsx",
+          "line": 95,
+          "message": "No overload matches this call."
+        },
+        {
+          "file": "src/components/business/invoices-list.tsx",
+          "line": 92,
+          "message": "No overload matches this call."
+        }
+      ]
+    },
+    {
+      "id": "TS2307-cannot-find-module-x-or-its-co",
+      "errorCode": "TS2307",
+      "count": 20,
+      "priority": "P2",
+      "pattern": "Cannot find module 'X' or its corresponding type declarations.",
+      "strategy": "Manual review and fix",
+      "estimation": "1-3h",
+      "files": [
+        "src/components/business/error-reporting-dashboard.tsx",
+        "src/components/testing/error-analytics-dashboard.tsx",
+        "src/components/testing/error-detection-panel.tsx",
+        "src/hooks/use-error-reporting-integration.ts",
+        "src/hooks/use-section-locking.ts",
+        "src/lib/ai/business-predictions.ts",
+        "src/lib/ai/error-pattern-learner.ts",
+        "src/lib/ai/sequential-thinking-processor.ts",
+        "src/lib/excel-utils.ts",
+        "src/stories/_templates/basic-story.template.tsx"
+      ],
+      "fileCount": 12,
+      "status": "TODO",
+      "examples": [
+        {
+          "file": "src/components/business/error-reporting-dashboard.tsx",
+          "line": 36,
+          "message": "Cannot find module '@/lib/error-detection/error-processing-queue' or its corresponding type declarations."
+        },
+        {
+          "file": "src/components/business/error-reporting-dashboard.tsx",
+          "line": 37,
+          "message": "Cannot find module '@/lib/error-detection/error-processing-queue' or its corresponding type declarations."
+        },
+        {
+          "file": "src/components/business/error-reporting-dashboard.tsx",
+          "line": 38,
+          "message": "Cannot find module '@/lib/error-detection/verone-error-system' or its corresponding type declarations."
+        },
+        {
+          "file": "src/components/testing/error-analytics-dashboard.tsx",
+          "line": 29,
+          "message": "Cannot find module '@/lib/error-detection/verone-error-system' or its corresponding type declarations."
+        },
+        {
+          "file": "src/components/testing/error-analytics-dashboard.tsx",
+          "line": 30,
+          "message": "Cannot find module '@/lib/error-detection/supabase-error-connector' or its corresponding type declarations."
+        }
+      ]
+    },
+    {
+      "id": "TS2783--success-is-specified-more-tha",
+      "errorCode": "TS2783",
+      "count": 1,
+      "priority": "P2",
+      "pattern": "'success' is specified more than once, so this usage will be overwritten.",
+      "strategy": "Manual review and fix",
+      "estimation": "1h",
+      "files": [
+        "src/hooks/use-test-persistence.ts"
+      ],
+      "fileCount": 1,
+      "status": "TODO",
+      "examples": [
+        {
+          "file": "src/hooks/use-test-persistence.ts",
+          "line": 241,
+          "message": "'success' is specified more than once, so this usage will be overwritten."
+        }
+      ]
+    },
+    {
+      "id": "TS18046--error-is-of-type-x-",
+      "errorCode": "TS18046",
+      "count": 1,
+      "priority": "P2",
+      "pattern": "'error' is of type 'X'.",
+      "strategy": "Manual review and fix",
+      "estimation": "1h",
+      "files": [
+        "src/lib/ai/sequential-thinking-processor.ts"
+      ],
+      "fileCount": 1,
+      "status": "TODO",
+      "examples": [
+        {
+          "file": "src/lib/ai/sequential-thinking-processor.ts",
+          "line": 134,
+          "message": "'error' is of type 'unknown'."
+        }
+      ]
+    },
+    {
+      "id": "TS2353-object-literal-may-only-specif",
+      "errorCode": "TS2353",
+      "count": 33,
+      "priority": "P3",
+      "pattern": "Object literal may only specify known properties, and 'operation' does not exist in type 'X'.",
+      "strategy": "Manual review and fix",
+      "estimation": "2-4h",
+      "files": [
+        "src/hooks/use-price-lists.ts",
+        "src/hooks/use-pricing.ts",
+        "src/lib/google-merchant/product-mapper.ts",
+        "src/lib/google-merchant/sync-client.ts"
+      ],
+      "fileCount": 4,
+      "status": "TODO",
+      "examples": [
+        {
+          "file": "src/hooks/use-price-lists.ts",
+          "line": 154,
+          "message": "Object literal may only specify known properties, and 'operation' does not exist in type 'Error'."
+        },
+        {
+          "file": "src/hooks/use-price-lists.ts",
+          "line": 169,
+          "message": "Object literal may only specify known properties, and 'operation' does not exist in type 'Error'."
+        },
+        {
+          "file": "src/hooks/use-price-lists.ts",
+          "line": 201,
+          "message": "Object literal may only specify known properties, and 'operation' does not exist in type 'Error'."
+        },
+        {
+          "file": "src/hooks/use-price-lists.ts",
+          "line": 211,
+          "message": "Object literal may only specify known properties, and 'operation' does not exist in type 'Error'."
+        },
+        {
+          "file": "src/hooks/use-price-lists.ts",
+          "line": 261,
+          "message": "Object literal may only specify known properties, and 'operation' does not exist in type 'Error'."
+        }
+      ]
+    },
+    {
+      "id": "TS2352-conversion-of-type-x-to-type-x",
+      "errorCode": "TS2352",
+      "count": 18,
+      "priority": "P3",
+      "pattern": "Conversion of type 'X' to type 'X' may be a mistake because neither type sufficiently overlaps with the other. If this was intentional, convert the expression to 'unknown' first.",
+      "strategy": "Manual review and fix",
+      "estimation": "1-3h",
+      "files": [
+        "src/app/finance/depenses/[id]/page.tsx",
+        "src/components/forms/CategoryForm.tsx",
+        "src/components/forms/FamilyForm.tsx",
+        "src/hooks/use-financial-documents.ts",
+        "src/hooks/use-financial-payments.ts",
+        "src/hooks/use-pricing.ts",
+        "src/hooks/use-purchase-receptions.ts",
+        "src/hooks/use-user-activity-tracker.ts",
+        "src/lib/abby/sync-processor.ts",
+        "src/lib/excel-utils.ts"
+      ],
+      "fileCount": 11,
+      "status": "TODO",
+      "examples": [
+        {
+          "file": "src/app/finance/depenses/[id]/page.tsx",
+          "line": 97,
+          "message": "Conversion of type '{ id: string; document_type: \"customer_invoice\" | \"customer_credit_note\" | \"supplier_invoice\" | \"supplier_credit_note\" | \"expense\"; document_direction: \"inbound\" | \"outbound\"; ... 29 more ...; expense_category: SelectQueryError<...>; }' to type 'FinancialDocument' may be a mistake because neither type sufficiently overlaps with the other. If this was intentional, convert the expression to 'unknown' first."
+        },
+        {
+          "file": "src/components/forms/CategoryForm.tsx",
+          "line": 219,
+          "message": "Conversion of type '{ created_at: string | null; description: string | null; display_order: number | null; facebook_category: string | null; family_id: string | null; google_category_id: number | null; ... 6 more ...; updated_at: string | null; }' to type 'Category' may be a mistake because neither type sufficiently overlaps with the other. If this was intentional, convert the expression to 'unknown' first."
+        },
+        {
+          "file": "src/components/forms/FamilyForm.tsx",
+          "line": 184,
+          "message": "Conversion of type '{ created_at: string | null; created_by: string | null; description: string | null; id: string; image_url: string | null; is_active: boolean | null; meta_description: string | null; ... 4 more ...; updated_at: string | null; }' to type 'Family' may be a mistake because neither type sufficiently overlaps with the other. If this was intentional, convert the expression to 'unknown' first."
+        },
+        {
+          "file": "src/hooks/use-financial-documents.ts",
+          "line": 188,
+          "message": "Conversion of type '{ id: string; document_type: \"customer_invoice\" | \"customer_credit_note\" | \"supplier_invoice\" | \"supplier_credit_note\" | \"expense\"; document_direction: \"inbound\" | \"outbound\"; ... 29 more ...; expense_category: SelectQueryError<...>; }[]' to type 'FinancialDocument[]' may be a mistake because neither type sufficiently overlaps with the other. If this was intentional, convert the expression to 'unknown' first."
+        },
+        {
+          "file": "src/hooks/use-financial-documents.ts",
+          "line": 211,
+          "message": "Conversion of type 'undefined' to type 'FinancialDocument' may be a mistake because neither type sufficiently overlaps with the other. If this was intentional, convert the expression to 'unknown' first."
+        }
+      ]
+    },
+    {
+      "id": "TS2554-expected-0-arguments-but-got-1",
+      "errorCode": "TS2554",
+      "count": 6,
+      "priority": "P3",
+      "pattern": "Expected 0 arguments, but got 1.",
+      "strategy": "Manual review and fix",
+      "estimation": "1h",
+      "files": [
+        "src/components/forms/CategoryForm.tsx",
+        "src/components/forms/FamilyForm.tsx",
+        "src/components/forms/SubcategoryForm.tsx",
+        "src/hooks/use-categories.ts",
+        "src/hooks/use-families.ts",
+        "src/hooks/use-subcategories.ts"
+      ],
+      "fileCount": 6,
+      "status": "TODO",
+      "examples": [
+        {
+          "file": "src/components/forms/CategoryForm.tsx",
+          "line": 104,
+          "message": "Expected 0 arguments, but got 1."
+        },
+        {
+          "file": "src/components/forms/FamilyForm.tsx",
+          "line": 79,
+          "message": "Expected 0 arguments, but got 1."
+        },
+        {
+          "file": "src/components/forms/SubcategoryForm.tsx",
+          "line": 127,
+          "message": "Expected 0 arguments, but got 1."
+        },
+        {
+          "file": "src/hooks/use-categories.ts",
+          "line": 191,
+          "message": "Expected 0 arguments, but got 1."
+        },
+        {
+          "file": "src/hooks/use-families.ts",
+          "line": 216,
+          "message": "Expected 0 arguments, but got 1."
+        }
+      ]
+    },
+    {
+      "id": "TS2304-cannot-find-name-x-",
+      "errorCode": "TS2304",
+      "count": 5,
+      "priority": "P3",
+      "pattern": "Cannot find name 'X'.",
+      "strategy": "Manual review and fix",
+      "estimation": "1h",
+      "files": [
+        "src/components/business/error-reporting-dashboard.tsx",
+        "src/components/business/product-creation-wizard.tsx",
+        "src/components/business/sample-order-validation.tsx",
+        "src/hooks/use-image-upload.ts",
+        "src/lib/design-system/utils/index.ts"
+      ],
+      "fileCount": 5,
+      "status": "TODO",
+      "examples": [
+        {
+          "file": "src/components/business/error-reporting-dashboard.tsx",
+          "line": 717,
+          "message": "Cannot find name 'getQueueSnapshot'."
+        },
+        {
+          "file": "src/components/business/product-creation-wizard.tsx",
+          "line": 221,
+          "message": "Cannot find name 'CompleteProductWizard'."
+        },
+        {
+          "file": "src/components/business/sample-order-validation.tsx",
+          "line": 98,
+          "message": "Cannot find name 'useDrafts'."
+        },
+        {
+          "file": "src/hooks/use-image-upload.ts",
+          "line": 317,
+          "message": "Cannot find name 'meta'."
+        },
+        {
+          "file": "src/lib/design-system/utils/index.ts",
+          "line": 11,
+          "message": "Cannot find name 'cn'."
+        }
+      ]
+    },
+    {
+      "id": "TS7053-element-implicitly-has-an-any-",
+      "errorCode": "TS7053",
+      "count": 5,
+      "priority": "P3",
+      "pattern": "Element implicitly has an 'any' type because expression of type 'X' can't be used to index type 'X'.",
+      "strategy": "Manual review and fix",
+      "estimation": "1h",
+      "files": [
+        "src/hooks/use-error-reporting-integration.ts",
+        "src/hooks/use-treasury-stats.ts",
+        "src/lib/ai/sequential-thinking-processor.ts",
+        "src/lib/design-system/tokens/spacing.ts"
+      ],
+      "fileCount": 4,
+      "status": "TODO",
+      "examples": [
+        {
+          "file": "src/hooks/use-error-reporting-integration.ts",
+          "line": 392,
+          "message": "Element implicitly has an 'any' type because expression of type 'string' can't be used to index type '{ catalogue: number; stocks: number; commandes: number; dashboard: number; }'."
+        },
+        {
+          "file": "src/hooks/use-treasury-stats.ts",
+          "line": 122,
+          "message": "Element implicitly has an 'any' type because expression of type '0' can't be used to index type 'string | number | true | { [key: string]: Json | undefined; } | Json[] | { message: string; status: string; success: boolean; }[] | { message: string; order_id: string; success: boolean; }[] | ... 15 more ... | { ...; }[]'."
+        },
+        {
+          "file": "src/lib/ai/sequential-thinking-processor.ts",
+          "line": 256,
+          "message": "Element implicitly has an 'any' type because expression of type 'any' can't be used to index type '{ catalogue: { risk: string; urgency: number; }; orders: { risk: string; urgency: number; }; billing: { risk: string; urgency: number; }; stock: { risk: string; urgency: number; }; crm: { risk: string; urgency: number; }; default: { ...; }; }'."
+        },
+        {
+          "file": "src/lib/design-system/tokens/spacing.ts",
+          "line": 64,
+          "message": "Element implicitly has an 'any' type because expression of type '15' can't be used to index type '{ readonly 0: \"0\"; readonly px: \"1px\"; readonly 0.5: \"0.125rem\"; readonly 1: \"0.25rem\"; readonly 1.5: \"0.375rem\"; readonly 2: \"0.5rem\"; readonly 2.5: \"0.625rem\"; readonly 3: \"0.75rem\"; readonly 3.5: \"0.875rem\"; ... 25 more ...; readonly 96: \"24rem\"; }'."
+        },
+        {
+          "file": "src/lib/design-system/tokens/spacing.ts",
+          "line": 65,
+          "message": "Element implicitly has an 'any' type because expression of type '15' can't be used to index type '{ readonly 0: \"0\"; readonly px: \"1px\"; readonly 0.5: \"0.125rem\"; readonly 1: \"0.25rem\"; readonly 1.5: \"0.375rem\"; readonly 2: \"0.5rem\"; readonly 2.5: \"0.625rem\"; readonly 3: \"0.75rem\"; readonly 3.5: \"0.875rem\"; ... 25 more ...; readonly 96: \"24rem\"; }'."
+        }
+      ]
+    },
+    {
+      "id": "TS2698-spread-types-may-only-be-creat",
+      "errorCode": "TS2698",
+      "count": 4,
+      "priority": "P3",
+      "pattern": "Spread types may only be created from object types.",
+      "strategy": "Manual review and fix",
+      "estimation": "1h",
+      "files": [
+        "src/hooks/use-archived-products.ts",
+        "src/hooks/use-automation-triggers.ts",
+        "src/hooks/use-stock-reservations.ts",
+        "src/hooks/use-variant-groups.ts"
+      ],
+      "fileCount": 4,
+      "status": "TODO",
+      "examples": [
+        {
+          "file": "src/hooks/use-archived-products.ts",
+          "line": 80,
+          "message": "Spread types may only be created from object types."
+        },
+        {
+          "file": "src/hooks/use-automation-triggers.ts",
+          "line": 247,
+          "message": "Spread types may only be created from object types."
+        },
+        {
+          "file": "src/hooks/use-stock-reservations.ts",
+          "line": 133,
+          "message": "Spread types may only be created from object types."
+        },
+        {
+          "file": "src/hooks/use-variant-groups.ts",
+          "line": 1197,
+          "message": "Spread types may only be created from object types."
+        }
+      ]
+    },
+    {
+      "id": "TS2358-the-left-hand-side-of-an-insta",
+      "errorCode": "TS2358",
+      "count": 3,
+      "priority": "P3",
+      "pattern": "The left-hand side of an 'instanceof' expression must be of type 'X', an object type or a type parameter.",
+      "strategy": "Manual review and fix",
+      "estimation": "1h",
+      "files": [
+        "src/app/produits/catalogue/collections/page.tsx",
+        "src/app/produits/catalogue/variantes/page.tsx",
+        "src/app/produits/sourcing/produits/page.tsx"
+      ],
+      "fileCount": 3,
+      "status": "TODO",
+      "examples": [
+        {
+          "file": "src/app/produits/catalogue/collections/page.tsx",
+          "line": 625,
+          "message": "The left-hand side of an 'instanceof' expression must be of type 'any', an object type or a type parameter."
+        },
+        {
+          "file": "src/app/produits/catalogue/variantes/page.tsx",
+          "line": 543,
+          "message": "The left-hand side of an 'instanceof' expression must be of type 'any', an object type or a type parameter."
+        },
+        {
+          "file": "src/app/produits/sourcing/produits/page.tsx",
+          "line": 303,
+          "message": "The left-hand side of an 'instanceof' expression must be of type 'any', an object type or a type parameter."
+        }
+      ]
+    },
+    {
+      "id": "TS18048--variant-variant-details-is-po",
+      "errorCode": "TS18048",
+      "count": 3,
+      "priority": "P3",
+      "pattern": "'variant.variant_details' is possibly 'undefined'.",
+      "strategy": "Manual review and fix",
+      "estimation": "1h",
+      "files": [
+        "src/components/business/product-variants-section.tsx"
+      ],
+      "fileCount": 1,
+      "status": "TODO",
+      "examples": [
+        {
+          "file": "src/components/business/product-variants-section.tsx",
+          "line": 317,
+          "message": "'variant.variant_details' is possibly 'undefined'."
+        },
+        {
+          "file": "src/components/business/product-variants-section.tsx",
+          "line": 317,
+          "message": "'variant.variant_details' is possibly 'undefined'."
+        },
+        {
+          "file": "src/components/business/product-variants-section.tsx",
+          "line": 323,
+          "message": "'variant.variant_details' is possibly 'undefined'."
+        }
+      ]
+    },
+    {
+      "id": "TS18048--variant-variant-details-image",
+      "errorCode": "TS18048",
+      "count": 3,
+      "priority": "P3",
+      "pattern": "'variant.variant_details.images' is possibly 'undefined'.",
+      "strategy": "Manual review and fix",
+      "estimation": "1h",
+      "files": [
+        "src/components/business/product-variants-section.tsx"
+      ],
+      "fileCount": 1,
+      "status": "TODO",
+      "examples": [
+        {
+          "file": "src/components/business/product-variants-section.tsx",
+          "line": 317,
+          "message": "'variant.variant_details.images' is possibly 'undefined'."
+        },
+        {
+          "file": "src/components/business/product-variants-section.tsx",
+          "line": 317,
+          "message": "'variant.variant_details.images' is possibly 'undefined'."
+        },
+        {
+          "file": "src/components/business/product-variants-section.tsx",
+          "line": 323,
+          "message": "'variant.variant_details.images' is possibly 'undefined'."
+        }
+      ]
+    },
+    {
+      "id": "TS2589-type-instantiation-is-excessiv",
+      "errorCode": "TS2589",
+      "count": 3,
+      "priority": "P3",
+      "pattern": "Type instantiation is excessively deep and possibly infinite.",
+      "strategy": "Manual review and fix",
+      "estimation": "1h",
+      "files": [
+        "src/hooks/use-financial-payments.ts",
+        "src/hooks/use-price-lists.ts",
+        "src/hooks/use-pricing.ts"
+      ],
+      "fileCount": 3,
+      "status": "TODO",
+      "examples": [
+        {
+          "file": "src/hooks/use-financial-payments.ts",
+          "line": 80,
+          "message": "Type instantiation is excessively deep and possibly infinite."
+        },
+        {
+          "file": "src/hooks/use-price-lists.ts",
+          "line": 236,
+          "message": "Type instantiation is excessively deep and possibly infinite."
+        },
+        {
+          "file": "src/hooks/use-pricing.ts",
+          "line": 316,
+          "message": "Type instantiation is excessively deep and possibly infinite."
+        }
+      ]
+    },
+    {
+      "id": "TS2740-type-x-is-missing-the-followin",
+      "errorCode": "TS2740",
+      "count": 3,
+      "priority": "P3",
+      "pattern": "Type 'X' is missing the following properties from type 'X': has_different_trade_name, logo_url, siren, first_name, and 6 more.",
+      "strategy": "Manual review and fix",
+      "estimation": "1h",
+      "files": [
+        "src/hooks/use-organisations.ts"
+      ],
+      "fileCount": 1,
+      "status": "TODO",
+      "examples": [
+        {
+          "file": "src/hooks/use-organisations.ts",
+          "line": 205,
+          "message": "Type '{ address_line1: string | null; address_line2: string | null; archived_at: string | null; billing_address_line1: string | null; billing_address_line2: string | null; billing_city: string | null; ... 41 more ...; website: string | null; }' is missing the following properties from type 'Organisation': has_different_trade_name, logo_url, siren, first_name, and 6 more."
+        },
+        {
+          "file": "src/hooks/use-organisations.ts",
+          "line": 366,
+          "message": "Type '{ address_line1: string | null; address_line2: string | null; archived_at: string | null; billing_address_line1: string | null; billing_address_line2: string | null; billing_city: string | null; ... 41 more ...; website: string | null; }' is missing the following properties from type 'Organisation': has_different_trade_name, logo_url, siren, first_name, and 6 more."
+        },
+        {
+          "file": "src/hooks/use-organisations.ts",
+          "line": 413,
+          "message": "Type '{ address_line1: string | null; address_line2: string | null; archived_at: string | null; billing_address_line1: string | null; billing_address_line2: string | null; billing_city: string | null; ... 41 more ...; website: string | null; }' is missing the following properties from type 'Organisation': has_different_trade_name, logo_url, siren, first_name, and 6 more."
+        }
+      ]
+    },
+    {
+      "id": "TS2678-type-x-is-not-comparable-to-ty",
+      "errorCode": "TS2678",
+      "count": 3,
+      "priority": "P3",
+      "pattern": "Type 'X' is not comparable to type 'X'.",
+      "strategy": "Manual review and fix",
+      "estimation": "1h",
+      "files": [
+        "src/hooks/use-stock.ts"
+      ],
+      "fileCount": 1,
+      "status": "TODO",
+      "examples": [
+        {
+          "file": "src/hooks/use-stock.ts",
+          "line": 200,
+          "message": "Type '\"IN\"' is not comparable to type '\"add\" | \"remove\" | \"adjust\"'."
+        },
+        {
+          "file": "src/hooks/use-stock.ts",
+          "line": 206,
+          "message": "Type '\"OUT\"' is not comparable to type '\"add\" | \"remove\" | \"adjust\"'."
+        },
+        {
+          "file": "src/hooks/use-stock.ts",
+          "line": 215,
+          "message": "Type '\"ADJUST\"' is not comparable to type '\"add\" | \"remove\" | \"adjust\"'."
+        }
+      ]
+    },
+    {
+      "id": "TS2719-type-x-is-not-assignable-to-ty",
+      "errorCode": "TS2719",
+      "count": 2,
+      "priority": "P3",
+      "pattern": "Type 'X' is not assignable to type 'X'. Two different types with this name exist, but they are unrelated.",
+      "strategy": "Manual review and fix",
+      "estimation": "1h",
+      "files": [
+        "src/app/produits/catalogue/[productId]/page.tsx"
+      ],
+      "fileCount": 1,
+      "status": "TODO",
+      "examples": [
+        {
+          "file": "src/app/produits/catalogue/[productId]/page.tsx",
+          "line": 474,
+          "message": "Type 'Product' is not assignable to type 'Product'. Two different types with this name exist, but they are unrelated."
+        },
+        {
+          "file": "src/app/produits/catalogue/[productId]/page.tsx",
+          "line": 546,
+          "message": "Type 'Product' is not assignable to type 'Product'. Two different types with this name exist, but they are unrelated."
+        }
+      ]
+    },
+    {
+      "id": "TS18047--image-display-order-is-possib",
+      "errorCode": "TS18047",
+      "count": 2,
+      "priority": "P3",
+      "pattern": "'image.display_order' is possibly 'null'.",
+      "strategy": "Manual review and fix",
+      "estimation": "1h",
+      "files": [
+        "src/components/business/product-image-management.tsx"
+      ],
+      "fileCount": 1,
+      "status": "TODO",
+      "examples": [
+        {
+          "file": "src/components/business/product-image-management.tsx",
+          "line": 286,
+          "message": "'image.display_order' is possibly 'null'."
+        },
+        {
+          "file": "src/components/business/product-image-management.tsx",
+          "line": 351,
+          "message": "'image.display_order' is possibly 'null'."
+        }
+      ]
+    },
+    {
+      "id": "TS2353-object-literal-may-only-specif",
+      "errorCode": "TS2353",
+      "count": 2,
+      "priority": "P3",
+      "pattern": "Object literal may only specify known properties, and 'productType' does not exist in type 'X'.",
+      "strategy": "Manual review and fix",
+      "estimation": "1h",
+      "files": [
+        "src/components/business/primary-image-upload.tsx",
+        "src/components/business/product-image-management.tsx"
+      ],
+      "fileCount": 2,
+      "status": "TODO",
+      "examples": [
+        {
+          "file": "src/components/business/primary-image-upload.tsx",
+          "line": 53,
+          "message": "Object literal may only specify known properties, and 'productType' does not exist in type 'UseProductImagesOptions'."
+        },
+        {
+          "file": "src/components/business/product-image-management.tsx",
+          "line": 53,
+          "message": "Object literal may only specify known properties, and 'productType' does not exist in type 'UseProductImagesOptions'."
+        }
+      ]
+    },
+    {
+      "id": "TS2353-object-literal-may-only-specif",
+      "errorCode": "TS2353",
+      "count": 2,
+      "priority": "P3",
+      "pattern": "Object literal may only specify known properties, and 'archived_at' does not exist in type 'X'.",
+      "strategy": "Manual review and fix",
+      "estimation": "1h",
+      "files": [
+        "src/hooks/use-consultations.ts"
+      ],
+      "fileCount": 1,
+      "status": "TODO",
+      "examples": [
+        {
+          "file": "src/hooks/use-consultations.ts",
+          "line": 333,
+          "message": "Object literal may only specify known properties, and 'archived_at' does not exist in type '{ assigned_to?: string | null | undefined; client_email?: string | undefined; client_phone?: string | null | undefined; created_at?: string | null | undefined; created_by?: string | null | undefined; ... 12 more ...; updated_at?: string | ... 1 more ... | undefined; }'."
+        },
+        {
+          "file": "src/hooks/use-consultations.ts",
+          "line": 372,
+          "message": "Object literal may only specify known properties, and 'archived_at' does not exist in type '{ assigned_to?: string | null | undefined; client_email?: string | undefined; client_phone?: string | null | undefined; created_at?: string | null | undefined; created_by?: string | null | undefined; ... 12 more ...; updated_at?: string | ... 1 more ... | undefined; }'."
+        }
+      ]
+    },
+    {
+      "id": "TS2353-object-literal-may-only-specif",
+      "errorCode": "TS2353",
+      "count": 2,
+      "priority": "P3",
+      "pattern": "Object literal may only specify known properties, and 'logo_url' does not exist in type 'X'.",
+      "strategy": "Manual review and fix",
+      "estimation": "1h",
+      "files": [
+        "src/hooks/use-logo-upload.ts"
+      ],
+      "fileCount": 1,
+      "status": "TODO",
+      "examples": [
+        {
+          "file": "src/hooks/use-logo-upload.ts",
+          "line": 105,
+          "message": "Object literal may only specify known properties, and 'logo_url' does not exist in type '{ address_line1?: string | null | undefined; address_line2?: string | null | undefined; archived_at?: string | null | undefined; billing_address_line1?: string | null | undefined; ... 43 more ...; website?: string | ... 1 more ... | undefined; }'."
+        },
+        {
+          "file": "src/hooks/use-logo-upload.ts",
+          "line": 171,
+          "message": "Object literal may only specify known properties, and 'logo_url' does not exist in type '{ address_line1?: string | null | undefined; address_line2?: string | null | undefined; archived_at?: string | null | undefined; billing_address_line1?: string | null | undefined; ... 43 more ...; website?: string | ... 1 more ... | undefined; }'."
+        }
+      ]
+    },
+    {
+      "id": "TS18048--result-is-possibly-undefined-",
+      "errorCode": "TS18048",
+      "count": 2,
+      "priority": "P3",
+      "pattern": "'result' is possibly 'undefined'.",
+      "strategy": "Manual review and fix",
+      "estimation": "1h",
+      "files": [
+        "src/components/forms/ImageUploadV2.tsx"
+      ],
+      "fileCount": 1,
+      "status": "TODO",
+      "examples": [
+        {
+          "file": "src/components/forms/ImageUploadV2.tsx",
+          "line": 65,
+          "message": "'result' is possibly 'undefined'."
+        },
+        {
+          "file": "src/components/forms/ImageUploadV2.tsx",
+          "line": 66,
+          "message": "'result' is possibly 'undefined'."
+        }
+      ]
+    },
+    {
+      "id": "TS2349-this-expression-is-not-callabl",
+      "errorCode": "TS2349",
+      "count": 2,
+      "priority": "P3",
+      "pattern": "This expression is not callable.",
+      "strategy": "Manual review and fix",
+      "estimation": "1h",
+      "files": [
+        "src/components/ui/calendar.tsx"
+      ],
+      "fileCount": 1,
+      "status": "TODO",
+      "examples": [
+        {
+          "file": "src/components/ui/calendar.tsx",
+          "line": 55,
+          "message": "This expression is not callable."
+        },
+        {
+          "file": "src/components/ui/calendar.tsx",
+          "line": 60,
+          "message": "This expression is not callable."
+        }
+      ]
+    },
+    {
+      "id": "TS7016-could-not-find-a-declaration-f",
+      "errorCode": "TS7016",
+      "count": 2,
+      "priority": "P3",
+      "pattern": "Could not find a declaration file for module 'react-dom'. '/Users/romeodossantos/verone-back-office-V1/node_modules/react-dom/index.js' implicitly has an 'any' type.",
+      "strategy": "Manual review and fix",
+      "estimation": "1h",
+      "files": [
+        "src/components/ui/command-palette.tsx",
+        "src/components/ui/notification-system.tsx"
+      ],
+      "fileCount": 2,
+      "status": "TODO",
+      "examples": [
+        {
+          "file": "src/components/ui/command-palette.tsx",
+          "line": 10,
+          "message": "Could not find a declaration file for module 'react-dom'. '/Users/romeodossantos/verone-back-office-V1/node_modules/react-dom/index.js' implicitly has an 'any' type."
+        },
+        {
+          "file": "src/components/ui/notification-system.tsx",
+          "line": 10,
+          "message": "Could not find a declaration file for module 'react-dom'. '/Users/romeodossantos/verone-back-office-V1/node_modules/react-dom/index.js' implicitly has an 'any' type."
+        }
+      ]
+    },
+    {
+      "id": "TS2538-type-x-cannot-be-used-as-an-in",
+      "errorCode": "TS2538",
+      "count": 2,
+      "priority": "P3",
+      "pattern": "Type 'X' cannot be used as an index type.",
+      "strategy": "Manual review and fix",
+      "estimation": "1h",
+      "files": [
+        "src/hooks/use-movements-history.ts"
+      ],
+      "fileCount": 1,
+      "status": "TODO",
+      "examples": [
+        {
+          "file": "src/hooks/use-movements-history.ts",
+          "line": 292,
+          "message": "Type 'null' cannot be used as an index type."
+        },
+        {
+          "file": "src/hooks/use-movements-history.ts",
+          "line": 292,
+          "message": "Type 'null' cannot be used as an index type."
+        }
+      ]
+    },
+    {
+      "id": "TS2300-duplicate-identifier-margin-pe",
+      "errorCode": "TS2300",
+      "count": 2,
+      "priority": "P3",
+      "pattern": "Duplicate identifier 'margin_percentage'.",
+      "strategy": "Manual review and fix",
+      "estimation": "1h",
+      "files": [
+        "src/hooks/use-sourcing-products.ts"
+      ],
+      "fileCount": 1,
+      "status": "TODO",
+      "examples": [
+        {
+          "file": "src/hooks/use-sourcing-products.ts",
+          "line": 15,
+          "message": "Duplicate identifier 'margin_percentage'."
+        },
+        {
+          "file": "src/hooks/use-sourcing-products.ts",
+          "line": 38,
+          "message": "Duplicate identifier 'margin_percentage'."
+        }
+      ]
+    },
+    {
+      "id": "TS2352-conversion-of-type-x-is-cover-",
+      "errorCode": "TS2352",
+      "count": 1,
+      "priority": "P3",
+      "pattern": "Conversion of type 'X'is_cover' does not exist on 'collection_images'.\">[]' to type 'X' may be a mistake because neither type sufficiently overlaps with the other. If this was intentional, convert the expression to 'unknown' first.",
+      "strategy": "Manual review and fix",
+      "estimation": "1h",
+      "files": [
+        "src/hooks/use-collection-images.ts"
+      ],
+      "fileCount": 1,
+      "status": "TODO",
+      "examples": [
+        {
+          "file": "src/hooks/use-collection-images.ts",
+          "line": 81,
+          "message": "Conversion of type 'SelectQueryError<\"column 'is_cover' does not exist on 'collection_images'.\">[]' to type 'CollectionImage[]' may be a mistake because neither type sufficiently overlaps with the other. If this was intentional, convert the expression to 'unknown' first."
+        }
+      ]
+    },
+    {
+      "id": "TS18047--product-stock-quantity-is-pos",
+      "errorCode": "TS18047",
+      "count": 1,
+      "priority": "P3",
+      "pattern": "'product.stock_quantity' is possibly 'null'.",
+      "strategy": "Manual review and fix",
+      "estimation": "1h",
+      "files": [
+        "src/app/produits/catalogue/[productId]/page.tsx"
+      ],
+      "fileCount": 1,
+      "status": "TODO",
+      "examples": [
+        {
+          "file": "src/app/produits/catalogue/[productId]/page.tsx",
+          "line": 591,
+          "message": "'product.stock_quantity' is possibly 'null'."
+        }
+      ]
+    },
+    {
+      "id": "TS2353-object-literal-may-only-specif",
+      "errorCode": "TS2353",
+      "count": 1,
+      "priority": "P3",
+      "pattern": "Object literal may only specify known properties, and 'meta_title' does not exist in type 'X'.",
+      "strategy": "Manual review and fix",
+      "estimation": "1h",
+      "files": [
+        "src/app/produits/catalogue/collections/[collectionId]/page.tsx"
+      ],
+      "fileCount": 1,
+      "status": "TODO",
+      "examples": [
+        {
+          "file": "src/app/produits/catalogue/collections/[collectionId]/page.tsx",
+          "line": 328,
+          "message": "Object literal may only specify known properties, and 'meta_title' does not exist in type 'UpdateCollectionData'."
+        }
+      ]
+    },
+    {
+      "id": "TS2353-object-literal-may-only-specif",
+      "errorCode": "TS2353",
+      "count": 1,
+      "priority": "P3",
+      "pattern": "Object literal may only specify known properties, and 'variant_attributes' does not exist in type 'X'.",
+      "strategy": "Manual review and fix",
+      "estimation": "1h",
+      "files": [
+        "src/components/business/variant-add-product-modal.tsx"
+      ],
+      "fileCount": 1,
+      "status": "TODO",
+      "examples": [
+        {
+          "file": "src/components/business/variant-add-product-modal.tsx",
+          "line": 73,
+          "message": "Object literal may only specify known properties, and 'variant_attributes' does not exist in type 'AddProductToGroupData'."
+        }
+      ]
+    },
+    {
+      "id": "TS2353-object-literal-may-only-specif",
+      "errorCode": "TS2353",
+      "count": 1,
+      "priority": "P3",
+      "pattern": "Object literal may only specify known properties, and 'deleted_at' does not exist in type 'X'.",
+      "strategy": "Manual review and fix",
+      "estimation": "1h",
+      "files": [
+        "src/hooks/use-consultations.ts"
+      ],
+      "fileCount": 1,
+      "status": "TODO",
+      "examples": [
+        {
+          "file": "src/hooks/use-consultations.ts",
+          "line": 415,
+          "message": "Object literal may only specify known properties, and 'deleted_at' does not exist in type '{ assigned_to?: string | null | undefined; client_email?: string | undefined; client_phone?: string | null | undefined; created_at?: string | null | undefined; created_by?: string | null | undefined; ... 12 more ...; updated_at?: string | ... 1 more ... | undefined; }'."
+        }
+      ]
+    },
+    {
+      "id": "TS2353-object-literal-may-only-specif",
+      "errorCode": "TS2353",
+      "count": 1,
+      "priority": "P3",
+      "pattern": "Object literal may only specify known properties, and 'last_contact_date' does not exist in type 'X'.",
+      "strategy": "Manual review and fix",
+      "estimation": "1h",
+      "files": [
+        "src/hooks/use-contacts.ts"
+      ],
+      "fileCount": 1,
+      "status": "TODO",
+      "examples": [
+        {
+          "file": "src/hooks/use-contacts.ts",
+          "line": 416,
+          "message": "Object literal may only specify known properties, and 'last_contact_date' does not exist in type 'UpdateContactData'."
+        }
+      ]
+    },
+    {
+      "id": "TS2353-object-literal-may-only-specif",
+      "errorCode": "TS2353",
+      "count": 1,
+      "priority": "P3",
+      "pattern": "Object literal may only specify known properties, and 'mediaSource' does not exist in type 'X'.",
+      "strategy": "Manual review and fix",
+      "estimation": "1h",
+      "files": [
+        "src/hooks/use-error-reporting.ts"
+      ],
+      "fileCount": 1,
+      "status": "TODO",
+      "examples": [
+        {
+          "file": "src/hooks/use-error-reporting.ts",
+          "line": 372,
+          "message": "Object literal may only specify known properties, and 'mediaSource' does not exist in type 'MediaTrackConstraints'."
+        }
+      ]
+    },
+    {
+      "id": "TS2353-object-literal-may-only-specif",
+      "errorCode": "TS2353",
+      "count": 1,
+      "priority": "P3",
+      "pattern": "Object literal may only specify known properties, and 'action' does not exist in type 'X'.",
+      "strategy": "Manual review and fix",
+      "estimation": "1h",
+      "files": [
+        "src/hooks/use-google-merchant-sync.ts"
+      ],
+      "fileCount": 1,
+      "status": "TODO",
+      "examples": [
+        {
+          "file": "src/hooks/use-google-merchant-sync.ts",
+          "line": 173,
+          "message": "Object literal may only specify known properties, and 'action' does not exist in type 'Error'."
+        }
+      ]
+    },
+    {
+      "id": "TS2561-object-literal-may-only-specif",
+      "errorCode": "TS2561",
+      "count": 1,
+      "priority": "P3",
+      "pattern": "Object literal may only specify known properties, but 'meta_description' does not exist in type 'X'. Did you mean to write 'description'?",
+      "strategy": "Manual review and fix",
+      "estimation": "1h",
+      "files": [
+        "src/app/produits/catalogue/collections/[collectionId]/page.tsx"
+      ],
+      "fileCount": 1,
+      "status": "TODO",
+      "examples": [
+        {
+          "file": "src/app/produits/catalogue/collections/[collectionId]/page.tsx",
+          "line": 352,
+          "message": "Object literal may only specify known properties, but 'meta_description' does not exist in type 'UpdateCollectionData'. Did you mean to write 'description'?"
+        }
+      ]
+    },
+    {
+      "id": "TS2554-expected-1-arguments-but-got-2",
+      "errorCode": "TS2554",
+      "count": 1,
+      "priority": "P3",
+      "pattern": "Expected 1 arguments, but got 2.",
+      "strategy": "Manual review and fix",
+      "estimation": "1h",
+      "files": [
+        "src/app/produits/catalogue/collections/page.tsx"
+      ],
+      "fileCount": 1,
+      "status": "TODO",
+      "examples": [
+        {
+          "file": "src/app/produits/catalogue/collections/page.tsx",
+          "line": 191,
+          "message": "Expected 1 arguments, but got 2."
+        }
+      ]
+    },
+    {
+      "id": "TS2724--hooks-use-collections-has-no-",
+      "errorCode": "TS2724",
+      "count": 1,
+      "priority": "P3",
+      "pattern": "'\"../../hooks/use-collections\"' has no exported member named 'CollectionStyle'. Did you mean 'Collection'?",
+      "strategy": "Manual review and fix",
+      "estimation": "1h",
+      "files": [
+        "src/components/business/collection-form-modal.tsx"
+      ],
+      "fileCount": 1,
+      "status": "TODO",
+      "examples": [
+        {
+          "file": "src/components/business/collection-form-modal.tsx",
+          "line": 12,
+          "message": "'\"../../hooks/use-collections\"' has no exported member named 'CollectionStyle'. Did you mean 'Collection'?"
+        }
+      ]
+    },
+    {
+      "id": "TS2724--product-card-has-no-exported-",
+      "errorCode": "TS2724",
+      "count": 1,
+      "priority": "P3",
+      "pattern": "'\"./product-card\"' has no exported member named 'ProductCardProps'. Did you mean 'ProductCard'?",
+      "strategy": "Manual review and fix",
+      "estimation": "1h",
+      "files": [
+        "src/components/business/index.ts"
+      ],
+      "fileCount": 1,
+      "status": "TODO",
+      "examples": [
+        {
+          "file": "src/components/business/index.ts",
+          "line": 12,
+          "message": "'\"./product-card\"' has no exported member named 'ProductCardProps'. Did you mean 'ProductCard'?"
+        }
+      ]
+    },
+    {
+      "id": "TS2724--collection-grid-has-no-export",
+      "errorCode": "TS2724",
+      "count": 1,
+      "priority": "P3",
+      "pattern": "'\"./collection-grid\"' has no exported member named 'CollectionGridProps'. Did you mean 'CollectionGrid'?",
+      "strategy": "Manual review and fix",
+      "estimation": "1h",
+      "files": [
+        "src/components/business/index.ts"
+      ],
+      "fileCount": 1,
+      "status": "TODO",
+      "examples": [
+        {
+          "file": "src/components/business/index.ts",
+          "line": 17,
+          "message": "'\"./collection-grid\"' has no exported member named 'CollectionGridProps'. Did you mean 'CollectionGrid'?"
+        }
+      ]
+    },
+    {
+      "id": "TS2305-module-hooks-use-collections-h",
+      "errorCode": "TS2305",
+      "count": 1,
+      "priority": "P3",
+      "pattern": "Module '\"../../hooks/use-collections\"' has no exported member 'RoomCategory'.",
+      "strategy": "Manual review and fix",
+      "estimation": "1h",
+      "files": [
+        "src/components/business/collection-form-modal.tsx"
+      ],
+      "fileCount": 1,
+      "status": "TODO",
+      "examples": [
+        {
+          "file": "src/components/business/collection-form-modal.tsx",
+          "line": 12,
+          "message": "Module '\"../../hooks/use-collections\"' has no exported member 'RoomCategory'."
+        }
+      ]
+    },
+    {
+      "id": "TS2722-cannot-invoke-an-object-which-",
+      "errorCode": "TS2722",
+      "count": 1,
+      "priority": "P3",
+      "pattern": "Cannot invoke an object which is possibly 'undefined'.",
+      "strategy": "Manual review and fix",
+      "estimation": "1h",
+      "files": [
+        "src/components/business/financial-payment-form.tsx"
+      ],
+      "fileCount": 1,
+      "status": "TODO",
+      "examples": [
+        {
+          "file": "src/components/business/financial-payment-form.tsx",
+          "line": 112,
+          "message": "Cannot invoke an object which is possibly 'undefined'."
+        }
+      ]
+    },
+    {
+      "id": "TS18048--item-products-is-possibly-und",
+      "errorCode": "TS18048",
+      "count": 1,
+      "priority": "P3",
+      "pattern": "'item.products' is possibly 'undefined'.",
+      "strategy": "Manual review and fix",
+      "estimation": "1h",
+      "files": [
+        "src/components/business/order-detail-modal.tsx"
+      ],
+      "fileCount": 1,
+      "status": "TODO",
+      "examples": [
+        {
+          "file": "src/components/business/order-detail-modal.tsx",
+          "line": 237,
+          "message": "'item.products' is possibly 'undefined'."
+        }
+      ]
+    },
+    {
+      "id": "TS18048--organisation-certification-la",
+      "errorCode": "TS18048",
+      "count": 1,
+      "priority": "P3",
+      "pattern": "'organisation.certification_labels.length' is possibly 'undefined'.",
+      "strategy": "Manual review and fix",
+      "estimation": "1h",
+      "files": [
+        "src/components/business/performance-edit-section.tsx"
+      ],
+      "fileCount": 1,
+      "status": "TODO",
+      "examples": [
+        {
+          "file": "src/components/business/performance-edit-section.tsx",
+          "line": 294,
+          "message": "'organisation.certification_labels.length' is possibly 'undefined'."
+        }
+      ]
+    },
+    {
+      "id": "TS18048--product-cost-price-is-possibl",
+      "errorCode": "TS18048",
+      "count": 1,
+      "priority": "P3",
+      "pattern": "'product.cost_price' is possibly 'undefined'.",
+      "strategy": "Manual review and fix",
+      "estimation": "1h",
+      "files": [
+        "src/components/business/product-info-section.tsx"
+      ],
+      "fileCount": 1,
+      "status": "TODO",
+      "examples": [
+        {
+          "file": "src/components/business/product-info-section.tsx",
+          "line": 31,
+          "message": "'product.cost_price' is possibly 'undefined'."
+        }
+      ]
+    },
+    {
+      "id": "TS18048--variant-variant-details-image",
+      "errorCode": "TS18048",
+      "count": 1,
+      "priority": "P3",
+      "pattern": "'variant.variant_details.images.length' is possibly 'undefined'.",
+      "strategy": "Manual review and fix",
+      "estimation": "1h",
+      "files": [
+        "src/components/business/product-variants-section.tsx"
+      ],
+      "fileCount": 1,
+      "status": "TODO",
+      "examples": [
+        {
+          "file": "src/components/business/product-variants-section.tsx",
+          "line": 313,
+          "message": "'variant.variant_details.images.length' is possibly 'undefined'."
+        }
+      ]
+    },
+    {
+      "id": "TS2367-this-comparison-appears-to-be-",
+      "errorCode": "TS2367",
+      "count": 1,
+      "priority": "P3",
+      "pattern": "This comparison appears to be unintentional because the types '\"add\" | \"adjust\"' and '\"OUT\"' have no overlap.",
+      "strategy": "Manual review and fix",
+      "estimation": "1h",
+      "files": [
+        "src/components/business/stock-movement-modal.tsx"
+      ],
+      "fileCount": 1,
+      "status": "TODO",
+      "examples": [
+        {
+          "file": "src/components/business/stock-movement-modal.tsx",
+          "line": 303,
+          "message": "This comparison appears to be unintentional because the types '\"add\" | \"adjust\"' and '\"OUT\"' have no overlap."
+        }
+      ]
+    },
+    {
+      "id": "TS2367-this-comparison-appears-to-be-",
+      "errorCode": "TS2367",
+      "count": 1,
+      "priority": "P3",
+      "pattern": "This comparison appears to be unintentional because the types 'number' and 'string' have no overlap.",
+      "strategy": "Manual review and fix",
+      "estimation": "1h",
+      "files": [
+        "src/hooks/use-consultations.ts"
+      ],
+      "fileCount": 1,
+      "status": "TODO",
+      "examples": [
+        {
+          "file": "src/hooks/use-consultations.ts",
+          "line": 158,
+          "message": "This comparison appears to be unintentional because the types 'number' and 'string' have no overlap."
+        }
+      ]
+    },
+    {
+      "id": "TS2367-this-comparison-appears-to-be-",
+      "errorCode": "TS2367",
+      "count": 1,
+      "priority": "P3",
+      "pattern": "This comparison appears to be unintentional because the types '\"IN\" | \"OUT\" | \"ADJUST\" | \"TRANSFER\"' and '\"in\"' have no overlap.",
+      "strategy": "Manual review and fix",
+      "estimation": "1h",
+      "files": [
+        "src/hooks/use-dashboard-analytics.ts"
+      ],
+      "fileCount": 1,
+      "status": "TODO",
+      "examples": [
+        {
+          "file": "src/hooks/use-dashboard-analytics.ts",
+          "line": 132,
+          "message": "This comparison appears to be unintentional because the types '\"IN\" | \"OUT\" | \"ADJUST\" | \"TRANSFER\"' and '\"in\"' have no overlap."
+        }
+      ]
+    },
+    {
+      "id": "TS2367-this-comparison-appears-to-be-",
+      "errorCode": "TS2367",
+      "count": 1,
+      "priority": "P3",
+      "pattern": "This comparison appears to be unintentional because the types '\"IN\" | \"OUT\" | \"ADJUST\" | \"TRANSFER\"' and '\"purchase_order\"' have no overlap.",
+      "strategy": "Manual review and fix",
+      "estimation": "1h",
+      "files": [
+        "src/hooks/use-dashboard-analytics.ts"
+      ],
+      "fileCount": 1,
+      "status": "TODO",
+      "examples": [
+        {
+          "file": "src/hooks/use-dashboard-analytics.ts",
+          "line": 132,
+          "message": "This comparison appears to be unintentional because the types '\"IN\" | \"OUT\" | \"ADJUST\" | \"TRANSFER\"' and '\"purchase_order\"' have no overlap."
+        }
+      ]
+    },
+    {
+      "id": "TS2367-this-comparison-appears-to-be-",
+      "errorCode": "TS2367",
+      "count": 1,
+      "priority": "P3",
+      "pattern": "This comparison appears to be unintentional because the types '\"IN\" | \"OUT\" | \"ADJUST\" | \"TRANSFER\"' and '\"out\"' have no overlap.",
+      "strategy": "Manual review and fix",
+      "estimation": "1h",
+      "files": [
+        "src/hooks/use-dashboard-analytics.ts"
+      ],
+      "fileCount": 1,
+      "status": "TODO",
+      "examples": [
+        {
+          "file": "src/hooks/use-dashboard-analytics.ts",
+          "line": 134,
+          "message": "This comparison appears to be unintentional because the types '\"IN\" | \"OUT\" | \"ADJUST\" | \"TRANSFER\"' and '\"out\"' have no overlap."
+        }
+      ]
+    },
+    {
+      "id": "TS2367-this-comparison-appears-to-be-",
+      "errorCode": "TS2367",
+      "count": 1,
+      "priority": "P3",
+      "pattern": "This comparison appears to be unintentional because the types '\"IN\" | \"OUT\" | \"ADJUST\" | \"TRANSFER\"' and '\"sales_order\"' have no overlap.",
+      "strategy": "Manual review and fix",
+      "estimation": "1h",
+      "files": [
+        "src/hooks/use-dashboard-analytics.ts"
+      ],
+      "fileCount": 1,
+      "status": "TODO",
+      "examples": [
+        {
+          "file": "src/hooks/use-dashboard-analytics.ts",
+          "line": 134,
+          "message": "This comparison appears to be unintentional because the types '\"IN\" | \"OUT\" | \"ADJUST\" | \"TRANSFER\"' and '\"sales_order\"' have no overlap."
+        }
+      ]
+    },
+    {
+      "id": "TS2367-this-comparison-appears-to-be-",
+      "errorCode": "TS2367",
+      "count": 1,
+      "priority": "P3",
+      "pattern": "This comparison appears to be unintentional because the types '\"draft\" | \"cancelled\" | \"confirmed\" | \"partially_shipped\" | \"shipped\" | \"delivered\"' and '\"validated\"' have no overlap.",
+      "strategy": "Manual review and fix",
+      "estimation": "1h",
+      "files": [
+        "src/hooks/use-sales-orders.ts"
+      ],
+      "fileCount": 1,
+      "status": "TODO",
+      "examples": [
+        {
+          "file": "src/hooks/use-sales-orders.ts",
+          "line": 677,
+          "message": "This comparison appears to be unintentional because the types '\"draft\" | \"cancelled\" | \"confirmed\" | \"partially_shipped\" | \"shipped\" | \"delivered\"' and '\"validated\"' have no overlap."
+        }
+      ]
+    },
+    {
+      "id": "TS2367-this-comparison-appears-to-be-",
+      "errorCode": "TS2367",
+      "count": 1,
+      "priority": "P3",
+      "pattern": "This comparison appears to be unintentional because the types '\"remove\" | \"adjust\"' and '\"IN\"' have no overlap.",
+      "strategy": "Manual review and fix",
+      "estimation": "1h",
+      "files": [
+        "src/hooks/use-stock.ts"
+      ],
+      "fileCount": 1,
+      "status": "TODO",
+      "examples": [
+        {
+          "file": "src/hooks/use-stock.ts",
+          "line": 226,
+          "message": "This comparison appears to be unintentional because the types '\"remove\" | \"adjust\"' and '\"IN\"' have no overlap."
+        }
+      ]
+    },
+    {
+      "id": "TS2367-this-comparison-appears-to-be-",
+      "errorCode": "TS2367",
+      "count": 1,
+      "priority": "P3",
+      "pattern": "This comparison appears to be unintentional because the types '\"adjust\"' and '\"OUT\"' have no overlap.",
+      "strategy": "Manual review and fix",
+      "estimation": "1h",
+      "files": [
+        "src/hooks/use-stock.ts"
+      ],
+      "fileCount": 1,
+      "status": "TODO",
+      "examples": [
+        {
+          "file": "src/hooks/use-stock.ts",
+          "line": 227,
+          "message": "This comparison appears to be unintentional because the types '\"adjust\"' and '\"OUT\"' have no overlap."
+        }
+      ]
+    },
+    {
+      "id": "TS2741-property-x-is-missing-in-type-",
+      "errorCode": "TS2741",
+      "count": 1,
+      "priority": "P3",
+      "pattern": "Property 'X' is missing in type 'X' but required in type 'X'.",
+      "strategy": "Manual review and fix",
+      "estimation": "1h",
+      "files": [
+        "src/hooks/use-error-reporting-integration.ts"
+      ],
+      "fileCount": 1,
+      "status": "TODO",
+      "examples": [
+        {
+          "file": "src/hooks/use-error-reporting-integration.ts",
+          "line": 321,
+          "message": "Property 'session_id' is missing in type '{ last_action: string; timestamp: Date; }' but required in type '{ user_id?: string | undefined; session_id: string; last_action: string; timestamp: Date; }'."
+        }
+      ]
+    },
+    {
+      "id": "TS2365-operator-cannot-be-applied-to-",
+      "errorCode": "TS2365",
+      "count": 1,
+      "priority": "P3",
+      "pattern": "Operator '>=' cannot be applied to types '{ stock_available: number; stock_forecasted_in: number; stock_forecasted_out: number; stock_real: number; stock_total_forecasted: number; }' and 'number'.",
+      "strategy": "Manual review and fix",
+      "estimation": "1h",
+      "files": [
+        "src/hooks/use-sales-orders.ts"
+      ],
+      "fileCount": 1,
+      "status": "TODO",
+      "examples": [
+        {
+          "file": "src/hooks/use-sales-orders.ts",
+          "line": 463,
+          "message": "Operator '>=' cannot be applied to types '{ stock_available: number; stock_forecasted_in: number; stock_forecasted_out: number; stock_real: number; stock_total_forecasted: number; }' and 'number'."
+        }
+      ]
+    },
+    {
+      "id": "TS2820-type-x-is-not-assignable-to-ty",
+      "errorCode": "TS2820",
+      "count": 1,
+      "priority": "P3",
+      "pattern": "Type 'X' is not assignable to type 'X'. Did you mean '\"echantillon_a_commander\"'?",
+      "strategy": "Manual review and fix",
+      "estimation": "1h",
+      "files": [
+        "src/hooks/use-sourcing-products.ts"
+      ],
+      "fileCount": 1,
+      "status": "TODO",
+      "examples": [
+        {
+          "file": "src/hooks/use-sourcing-products.ts",
+          "line": 463,
+          "message": "Type '\"echantillon_commande\"' is not assignable to type '\"in_stock\" | \"out_of_stock\" | \"preorder\" | \"coming_soon\" | \"discontinued\" | \"sourcing\" | \"pret_a_commander\" | \"echantillon_a_commander\" | null | undefined'. Did you mean '\"echantillon_a_commander\"'?"
+        }
+      ]
+    },
+    {
+      "id": "TS2484-export-declaration-conflicts-w",
+      "errorCode": "TS2484",
+      "count": 1,
+      "priority": "P3",
+      "pattern": "Export declaration conflicts with exported declaration of 'LogEntry'.",
+      "strategy": "Manual review and fix",
+      "estimation": "1h",
+      "files": [
+        "src/lib/logger.ts"
+      ],
+      "fileCount": 1,
+      "status": "TODO",
+      "examples": [
+        {
+          "file": "src/lib/logger.ts",
+          "line": 282,
+          "message": "Export declaration conflicts with exported declaration of 'LogEntry'."
+        }
+      ]
+    },
+    {
+      "id": "TS2484-export-declaration-conflicts-w",
+      "errorCode": "TS2484",
+      "count": 1,
+      "priority": "P3",
+      "pattern": "Export declaration conflicts with exported declaration of 'LogContext'.",
+      "strategy": "Manual review and fix",
+      "estimation": "1h",
+      "files": [
+        "src/lib/logger.ts"
+      ],
+      "fileCount": 1,
+      "status": "TODO",
+      "examples": [
+        {
+          "file": "src/lib/logger.ts",
+          "line": 282,
+          "message": "Export declaration conflicts with exported declaration of 'LogContext'."
+        }
+      ]
+    },
+    {
+      "id": "TS2484-export-declaration-conflicts-w",
+      "errorCode": "TS2484",
+      "count": 1,
+      "priority": "P3",
+      "pattern": "Export declaration conflicts with exported declaration of 'LogLevel'.",
+      "strategy": "Manual review and fix",
+      "estimation": "1h",
+      "files": [
+        "src/lib/logger.ts"
+      ],
+      "fileCount": 1,
+      "status": "TODO",
+      "examples": [
+        {
+          "file": "src/lib/logger.ts",
+          "line": 282,
+          "message": "Export declaration conflicts with exported declaration of 'LogLevel'."
+        }
+      ]
+    }
+  ],
+  "generatedAt": "2025-10-27T06:10:07.417Z"
+}
