@@ -83,8 +83,8 @@ export default function StockAlertesPage() {
     const alertList: StockAlert[] = []
 
     // Alertes critiques - Ruptures de stock
-    const outOfStockProducts = lowStockProducts.filter(p => p.stock_real === 0)
-    outOfStockProducts.forEach(product => {
+    const outOfStockProducts = lowStockProducts.filter((p: any) => p.stock_real === 0)
+    outOfStockProducts.forEach((product: any) => {
       alertList.push({
         id: `out-of-stock-${product.id}`,
         severity: 'critical',
@@ -108,8 +108,8 @@ export default function StockAlertesPage() {
     })
 
     // Alertes d'avertissement - Stock faible
-    const lowStockAlerts = lowStockProducts.filter(p => p.stock_real > 0 && p.stock_real <= p.min_stock)
-    lowStockAlerts.forEach(product => {
+    const lowStockAlerts = lowStockProducts.filter((p: any) => p.stock_real > 0 && p.stock_real <= p.min_stock)
+    lowStockAlerts.forEach((product: any) => {
       alertList.push({
         id: `low-stock-${product.id}`,
         severity: 'warning',
@@ -165,8 +165,8 @@ export default function StockAlertesPage() {
     }
 
     // Alertes de prévision - Stock disponible négatif simulé
-    const productsWithForecast = lowStockProducts.filter(p => p.stock_real > 0 && p.stock_real < 5)
-    productsWithForecast.forEach(product => {
+    const productsWithForecast = lowStockProducts.filter((p: any) => p.stock_real > 0 && p.stock_real < 5)
+    productsWithForecast.forEach((product: any) => {
       if (product.stock_real < 3) {
         alertList.push({
           id: `forecast-${product.id}`,

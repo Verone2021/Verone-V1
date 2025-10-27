@@ -5,7 +5,7 @@ import { ButtonV2 } from '@/components/ui/button'
 
 export default function ArchivedProductsPage() {
   // Données mockées pour l'interface
-  const archivedProducts = []
+  const archivedProducts: any[] = []
 
   const statusConfig = {
     archived: { label: "📦 Archivé", className: "bg-gray-600 text-white" },

@@ -329,7 +329,7 @@ export default function SourcingValidationPage() {
           </Card>
         ) : (
           /* Onglet Échantillons Groupés */
-          <SampleOrderValidation />
+          <SampleValidationSimple />
         )}
 
         {/* Produits prêts pour le catalogue */}
