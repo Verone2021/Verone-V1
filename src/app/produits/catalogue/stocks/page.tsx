@@ -394,7 +394,7 @@ export default function CatalogueStocksPage() {
                             <div>
                               <div className="font-medium">{product.name}</div>
                               <div className="text-sm text-gray-600">
-                                {formatPrice(product.price_ht)}
+                                {formatPrice(product.minimumSellingPrice)}
                               </div>
                             </div>
                           </div>

@@ -342,10 +342,10 @@ export function SalesOrderFormModal({
       // Pas de client sélectionné, utiliser prix catalogue de base
       const product = products.find(p => p.id === productId)
       return {
-        unit_price_ht: product?.price_ht || 0,
+        unit_price_ht: product?.minimumSellingPrice || 0,
         discount_percentage: 0,
         pricing_source: 'base_catalog' as const,
-        original_price_ht: product?.price_ht || 0,
+        original_price_ht: product?.minimumSellingPrice || 0,
         auto_calculated: false
       }
     }
@@ -366,10 +366,10 @@ export function SalesOrderFormModal({
         // Fallback sur prix catalogue
         const product = products.find(p => p.id === productId)
         return {
-          unit_price_ht: product?.price_ht || 0,
+          unit_price_ht: product?.minimumSellingPrice || 0,
           discount_percentage: 0,
           pricing_source: 'base_catalog' as const,
-          original_price_ht: product?.price_ht || 0,
+          original_price_ht: product?.minimumSellingPrice || 0,
           auto_calculated: false
         }
       }
@@ -388,20 +388,20 @@ export function SalesOrderFormModal({
       // Fallback
       const product = products.find(p => p.id === productId)
       return {
-        unit_price_ht: product?.price_ht || 0,
+        unit_price_ht: product?.minimumSellingPrice || 0,
         discount_percentage: 0,
         pricing_source: 'base_catalog' as const,
-        original_price_ht: product?.price_ht || 0,
+        original_price_ht: product?.minimumSellingPrice || 0,
         auto_calculated: false
       }
     } catch (err) {
       console.error('Exception calcul pricing:', err)
       const product = products.find(p => p.id === productId)
       return {
-        unit_price_ht: product?.price_ht || 0,
+        unit_price_ht: product?.minimumSellingPrice || 0,
         discount_percentage: 0,
         pricing_source: 'base_catalog' as const,
-        original_price_ht: product?.price_ht || 0,
+        original_price_ht: product?.minimumSellingPrice || 0,
         auto_calculated: false
       }
     }
@@ -958,7 +958,7 @@ export function SalesOrderFormModal({
                           </div>
                         </TableCell>
                         <TableCell>{product.sku}</TableCell>
-                        <TableCell>{formatCurrency(product.price_ht)}</TableCell>
+                        <TableCell>{formatCurrency(product.minimumSellingPrice)}</TableCell>
                         <TableCell>
                           {(() => {
                             const availableStock = productsAvailableStock.get(product.id)
