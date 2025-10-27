@@ -679,19 +679,22 @@ export function useOrganisation(id: string) {
           return
         }
 
+        // ✅ Cast data pour contourner type SelectQueryError incorrect
+        const orgData = data as any
+
         // ✅ Ajouter le champ 'name' calculé
         const orgWithName = {
-          ...data,
-          name: data.trade_name || data.legal_name
+          ...orgData,
+          name: orgData.trade_name || orgData.legal_name
         }
 
         // Add product counts if supplier
-        if (data.type === 'supplier') {
+        if (orgData.type === 'supplier') {
           // Compter les produits individuels directement par supplier_id
           const { count: productsCount } = await supabase
             .from('products')
             .select('*', { count: 'exact', head: true })
-            .eq('supplier_id', data.id)
+            .eq('supplier_id', orgData.id)
 
           orgWithName._count = {
             products: productsCount || 0

@@ -232,7 +232,7 @@ const productsFetcher = async (
   if (error) throw error
 
   // Enrichir avec prix minimum de vente + images + supplier (BR-TECH-002)
-  const enriched = (data || []).map(product => {
+  const enriched = (data || []).map((product: any) => {
     const { organisations, ...productWithoutOrgs } = product
 
     return {

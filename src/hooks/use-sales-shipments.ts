@@ -374,7 +374,7 @@ export function useSalesShipments() {
         return []
       }
 
-      return (shipments || []).map(shipment => ({
+      return (shipments || []).map((shipment: any) => ({
         shipment_id: shipment.id,
         shipped_at: shipment.shipped_at,
         delivered_at: shipment.delivered_at || undefined,
