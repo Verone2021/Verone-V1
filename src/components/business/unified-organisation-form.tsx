@@ -130,6 +130,14 @@ const baseOrganisationSchema = z.object({
   // Commercial
   currency: z.string().default('EUR'),
   payment_terms: z.string().optional().or(z.literal('')),
+  prepayment_required: z.boolean().default(false),
+
+  // Contact secondaire
+  secondary_email: z.string().optional().or(z.literal('')),
+
+  // Intégrations externes
+  abby_customer_id: z.string().optional().or(z.literal('')),
+  default_channel_id: z.string().optional().or(z.literal('')),
 
   // Supplier specific
   supplier_segment: z.string().optional().or(z.literal('')),
