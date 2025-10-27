@@ -55,7 +55,7 @@ export function SupplierFormModal({
       // Mise à jour
       result = await updateOrganisation({
         id: supplier.id,
-        name: supplierData.name,
+        legal_name: supplierData.legal_name,
         email: supplierData.email || null,
         country: supplierData.country,
         phone: supplierData.phone || null,
@@ -86,7 +86,7 @@ export function SupplierFormModal({
     } else {
       // Création
       result = await createOrganisation({
-        name: supplierData.name,
+        legal_name: supplierData.legal_name,
         type: 'supplier',
         email: supplierData.email || null,
         country: supplierData.country,

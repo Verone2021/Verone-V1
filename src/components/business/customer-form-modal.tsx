@@ -39,7 +39,7 @@ export function CustomerFormModal({
       // Mise à jour
       result = await updateOrganisation({
         id: customer.id,
-        name: customerData.name,
+        legal_name: customerData.legal_name,
         email: customerData.email || null,
         country: customerData.country,
         phone: customerData.phone || null,
@@ -90,7 +90,7 @@ export function CustomerFormModal({
     } else {
       // Création
       result = await createOrganisation({
-        name: customerData.name,
+        legal_name: customerData.legal_name,
         type: 'customer',
         email: customerData.email || null,
         country: customerData.country,

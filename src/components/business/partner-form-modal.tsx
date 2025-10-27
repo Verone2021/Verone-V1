@@ -36,7 +36,7 @@ export function PartnerFormModal({
       // Mise à jour
       result = await updateOrganisation({
         id: partner.id,
-        name: partnerData.name,
+        legal_name: partnerData.legal_name,
         email: partnerData.email || null,
         secondary_email: partnerData.secondary_email || null,
         country: partnerData.country,
@@ -69,7 +69,7 @@ export function PartnerFormModal({
     } else {
       // Création
       result = await createOrganisation({
-        name: partnerData.name,
+        legal_name: partnerData.legal_name,
         type: 'partner',
         email: partnerData.email || null,
         secondary_email: partnerData.secondary_email || null,
