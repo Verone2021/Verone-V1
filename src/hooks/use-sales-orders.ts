@@ -284,7 +284,7 @@ export function useSalesOrders() {
   }, [supabase, toast])
 
   // Récupérer une commande spécifique
-  const fetchOrder = useCallback(async (orderId: string) => {
+  const fetchOrder = useCallback(async (orderId: string): Promise<SalesOrder | null> => {
     setLoading(true)
     try {
       const { data: orderData, error } = await supabase
