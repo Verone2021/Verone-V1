@@ -176,23 +176,31 @@ const productsFetcher = async (
 ) => {
   const supabase = createClient()
 
-  // 🎯 SELECT optimisé - colonnes essentielles + stock + images (BR-TECH-002)
+  // 🎯 SELECT optimisé - colonnes essentielles + stock + images + supplier (BR-TECH-002)
   let query = supabase
     .from('products')
     .select(`
       id,
       name,
       sku,
+      slug,
       status,
+      condition,
       stock_quantity,
       margin_percentage,
       cost_price,
       variant_attributes,
       created_at,
+      updated_at,
       subcategory_id,
+      supplier_id,
       product_images (
         public_url,
         is_primary
+      ),
+      organisations!products_supplier_id_fkey (
+        id,
+        name
       )
     `, { count: 'exact' })
     .order('created_at', { ascending: false })
@@ -223,14 +231,24 @@ const productsFetcher = async (
 
   if (error) throw error
 
-  // Enrichir avec prix minimum de vente + images (BR-TECH-002)
-  const enriched = (data || []).map(product => ({
-    ...product,
-    primary_image_url: product.product_images?.[0]?.public_url || null,
-    minimumSellingPrice: product.cost_price && product.margin_percentage
-      ? calculateMinimumSellingPrice(product.cost_price, product.margin_percentage)
-      : 0
-  }))
+  // Enrichir avec prix minimum de vente + images + supplier (BR-TECH-002)
+  const enriched = (data || []).map(product => {
+    const { organisations, ...productWithoutOrgs } = product
+
+    return {
+      ...productWithoutOrgs,
+      primary_image_url: product.product_images?.[0]?.public_url || null,
+      supplier_name: organisations?.name || undefined,
+      supplier: organisations ? {
+        id: organisations.id,
+        name: organisations.name,
+        type: 'supplier' // Type par défaut pour la compatibilité interface
+      } : undefined,
+      minimumSellingPrice: product.cost_price && product.margin_percentage
+        ? calculateMinimumSellingPrice(product.cost_price, product.margin_percentage)
+        : 0
+    }
+  })
 
   return { products: enriched, totalCount: count || 0 }
 }
