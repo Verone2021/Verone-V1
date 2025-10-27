@@ -53,7 +53,7 @@ export function useSmartSuggestions() {
       // 1. Récupérer toutes les collections existantes
       const { data: collections, error: collectionsError } = await supabase
         .from('collections')
-        .select('style, room_category, theme_tags, name, description, product_count')
+        .select('style, suitable_rooms, theme_tags, name, description, product_count')
         .eq('is_active', true)
 
       if (collectionsError) throw collectionsError
@@ -76,16 +76,9 @@ export function useSmartSuggestions() {
           stylePopularity[collection.style] = (stylePopularity[collection.style] || 0) + 1
         }
 
-        // Popularité des pièces
-        if (collection.room_category) {
-          roomPopularity[collection.room_category] = (roomPopularity[collection.room_category] || 0) + 1
-        }
-
-        // Corrélations style-pièce
-        if (collection.style && collection.room_category) {
-          const pair = `${collection.style}:${collection.room_category}`
-          styleRoomPairs[pair] = (styleRoomPairs[pair] || 0) + 1
-        }
+        // Note: room_category a été remplacé par suitable_rooms (array)
+        // La logique de popularité des pièces a été désactivée temporairement
+        // TODO: Adapter pour suitable_rooms (multi-select)
 
         // Analyse des tags
         if (collection.theme_tags && collection.theme_tags.length > 0) {
@@ -95,7 +88,7 @@ export function useSmartSuggestions() {
             }
             tagFrequency[tag].count++
             if (collection.style) tagFrequency[tag].styles.add(collection.style as CollectionStyle)
-            if (collection.room_category) tagFrequency[tag].rooms.add(collection.room_category as RoomCategory)
+            // Note: room_category removed - TODO: adapt for suitable_rooms (array)
           })
         }
       })
@@ -222,55 +215,10 @@ export function useSmartSuggestions() {
 
     const suggestions: CollectionSuggestion[] = []
 
-    // 1. Suggestions de style basées sur la pièce
-    if (context.room_category && !context.style) {
-      const roomStyleCorrelations = Object.entries(analytics.style_room_correlations)
-        .filter(([pair]) => pair.endsWith(`:${context.room_category}`))
-        .map(([pair, count]) => ({
-          style: pair.split(':')[0] as CollectionStyle,
-          confidence: count / 10 // Normaliser
-        }))
-        .sort((a, b) => b.confidence - a.confidence)
-        .slice(0, 3)
-
-      roomStyleCorrelations.forEach(({ style, confidence }) => {
-        const styleOption = COLLECTION_STYLE_OPTIONS.find(s => s.value === style)
-        if (styleOption) {
-          suggestions.push({
-            type: 'style',
-            value: style,
-            label: styleOption.label,
-            confidence: Math.min(confidence, 0.9),
-            reason: `Très populaire pour les ${ROOM_CATEGORY_OPTIONS.find(r => r.value === context.room_category)?.label?.toLowerCase()}`
-          })
-        }
-      })
-    }
-
-    // 2. Suggestions de pièce basées sur le style
-    if (context.style && !context.room_category) {
-      const styleRoomCorrelations = Object.entries(analytics.style_room_correlations)
-        .filter(([pair]) => pair.startsWith(`${context.style}:`))
-        .map(([pair, count]) => ({
-          room: pair.split(':')[1] as RoomCategory,
-          confidence: count / 10
-        }))
-        .sort((a, b) => b.confidence - a.confidence)
-        .slice(0, 3)
-
-      styleRoomCorrelations.forEach(({ room, confidence }) => {
-        const roomOption = ROOM_CATEGORY_OPTIONS.find(r => r.value === room)
-        if (roomOption) {
-          suggestions.push({
-            type: 'room',
-            value: room,
-            label: roomOption.label,
-            confidence: Math.min(confidence, 0.9),
-            reason: `Le style ${COLLECTION_STYLE_OPTIONS.find(s => s.value === context.style)?.label?.toLowerCase()} fonctionne très bien ici`
-          })
-        }
-      })
-    }
+    // Note: Suggestions basées sur room_category désactivées
+    // TODO: Adapter pour suitable_rooms (array multi-select)
+    // 1. Suggestions de style basées sur la pièce - DISABLED
+    // 2. Suggestions de pièce basées sur le style - DISABLED
 
     // 3. Suggestions de tags basées sur le style
     if (context.style) {
@@ -290,24 +238,8 @@ export function useSmartSuggestions() {
       })
     }
 
-    // 4. Suggestions de tags basées sur la pièce
-    if (context.room_category) {
-      const roomTags = analytics.room_tag_associations[context.room_category] || []
-      const filteredTags = roomTags.filter(tag =>
-        !context.existing_tags?.includes(tag) &&
-        !suggestions.some(s => s.value === tag)
-      ).slice(0, 3)
-
-      filteredTags.forEach(tag => {
-        suggestions.push({
-          type: 'tag',
-          value: tag,
-          label: tag,
-          confidence: 0.7,
-          reason: `Tag adapté aux ${ROOM_CATEGORY_OPTIONS.find(r => r.value === context.room_category)?.label?.toLowerCase()}`
-        })
-      })
-    }
+    // 4. Suggestions de tags basées sur la pièce - DISABLED
+    // Note: room_category removed, TODO: adapt for suitable_rooms
 
     // 5. Suggestions de tags populaires génériques
     if (suggestions.filter(s => s.type === 'tag').length < 3) {

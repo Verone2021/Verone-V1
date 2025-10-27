@@ -53,7 +53,6 @@ export function CollectionEditModal({
     visibility: collection?.visibility || 'private',
     is_active: collection?.is_active ?? true,
     style: collection?.style || null,
-    room_category: collection?.room_category || null,
     suitable_rooms: collection?.suitable_rooms || [],
   })
 
@@ -144,27 +143,6 @@ export function CollectionEditModal({
                   {COLLECTION_STYLE_OPTIONS.map((option) => (
                     <SelectItem key={option.value} value={option.value}>
                       {option.label}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="room_category">Catégorie de pièce</Label>
-              <Select
-                value={formData.room_category || ''}
-                onValueChange={(value: RoomCategory) =>
-                  setFormData({ ...formData, room_category: value })
-                }
-              >
-                <SelectTrigger id="room_category">
-                  <SelectValue placeholder="Sélectionner une catégorie" />
-                </SelectTrigger>
-                <SelectContent>
-                  {ROOM_CATEGORY_OPTIONS.map((option) => (
-                    <SelectItem key={option.value} value={option.value}>
-                      {option.icon} {option.label}
                     </SelectItem>
                   ))}
                 </SelectContent>

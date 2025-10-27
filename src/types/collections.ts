@@ -49,7 +49,6 @@ export interface CollectionBase {
   shared_count: number
   last_shared: string | null
   style: CollectionStyle | null
-  room_category: RoomCategory | null
   suitable_rooms: string[] | null // Aligné avec products.suitable_rooms (40 pièces)
   theme_tags: string[]
   display_order: number

@@ -291,11 +291,6 @@ export default function CollectionsPage() {
                   {formatCollectionStyle(collection.style)}
                 </Badge>
               )}
-              {collection.room_category && (
-                <Badge variant="outline" className="bg-blue-50 text-blue-700 border-blue-200 text-[10px] px-1.5 py-0.5 flex-shrink-0">
-                  {formatRoomCategory(collection.room_category)}
-                </Badge>
-              )}
             </div>
 
             {/* Ligne 2: Suitable Rooms + Theme Tags */}
