@@ -23,6 +23,7 @@ export interface BaseHookState<T> {
 }
 
 export interface BaseHookActions {
+  setData: <T>(data: T) => void
   setLoading: (loading: boolean) => void
   setError: (error: string | null) => void
   handleError: (error: unknown, defaultMessage?: string) => void
@@ -52,6 +53,7 @@ export function useBaseHook<T>(initialData: T): BaseHookState<T> & BaseHookActio
 
   return {
     data,
+    setData,
     loading,
     error,
     setLoading,
