@@ -42,6 +42,10 @@ export interface VariantGroup {
   dimensions_height?: number | null
   dimensions_unit?: 'cm' | 'm' | 'mm' | 'in'
 
+  // Dimensions et poids communs (JSONB et numeric)
+  common_dimensions?: { length?: number; width?: number; height?: number; unit?: string } | null
+  common_weight?: number | null
+
   // Attributs de catégorisation (alignés avec collections)
   style?: string | null // Style décoratif (minimaliste, contemporain, etc.)
   suitable_rooms?: string[] | null // Pièces compatibles (40 room types)
