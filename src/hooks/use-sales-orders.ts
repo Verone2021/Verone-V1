@@ -50,6 +50,7 @@ export interface SalesOrder {
   // Relations jointes (polymorphiques selon customer_type)
   organisations?: {
     id: string
+    name?: string // ✅ AJOUTÉ - Nom d'affichage (calculé côté client)
     legal_name: string
     trade_name: string | null
     email?: string
@@ -1000,10 +1001,16 @@ export function useSalesOrders() {
   const updateStatus = useCallback(async (orderId: string, newStatus: SalesOrderStatus) => {
     setLoading(true)
     try {
+      // Récupérer l'utilisateur courant pour le passer au trigger stock_movements
+      const { data: { user } } = await supabase.auth.getUser()
+      if (!user?.id) {
+        throw new Error('Utilisateur non authentifié')
+      }
+
       // Utiliser Server Action pour bypass du problème RLS 403
       const { updateSalesOrderStatus } = await import('@/app/actions/sales-orders')
 
-      const result = await updateSalesOrderStatus(orderId, newStatus)
+      const result = await updateSalesOrderStatus(orderId, newStatus, user.id)
 
       if (!result.success) {
         throw new Error(result.error || 'Erreur lors de la mise à jour du statut')
