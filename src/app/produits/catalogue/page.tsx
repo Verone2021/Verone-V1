@@ -76,7 +76,7 @@ export default function CataloguePage() {
       setCatalogueFilters({
         search: searchTerm,
         statuses: newFilters.status,
-        categories: newFilters.category
+        subcategories: newFilters.category
       })
     }, 300),
     [filters, setCatalogueFilters]

@@ -181,7 +181,7 @@ export const StocksErrorIntegration: React.FC = () => {
               timestamp: new Date(),
               browser: navigator.userAgent,
               session_id: `stocks_sim_${Date.now()}`,
-              movement_context: movementData
+              movement_context: movement
             },
             fix_priority: 8, // Stocks = priorité élevée
             estimated_fix_time: '30min',

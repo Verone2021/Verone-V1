@@ -400,7 +400,7 @@ export default function StockMovementsPage() {
               onValueChange={(value) => {
                 applyFilters({
                   ...filters,
-                  movement_type: 'IN',
+                  movementTypes: ['IN'],
                   affects_forecast: value === 'forecast',
                   forecast_type: value === 'forecast' ? 'in' : undefined,
                   offset: 0
@@ -439,7 +439,7 @@ export default function StockMovementsPage() {
               onValueChange={(value) => {
                 applyFilters({
                   ...filters,
-                  movement_type: 'OUT',
+                  movementTypes: ['OUT'],
                   affects_forecast: value === 'forecast',
                   forecast_type: value === 'forecast' ? 'out' : undefined,
                   offset: 0
@@ -478,7 +478,7 @@ export default function StockMovementsPage() {
               onValueChange={(value) => {
                 applyFilters({
                   ...filters,
-                  movement_type: undefined,
+                  movementTypes: undefined,
                   affects_forecast: value === 'forecast',
                   forecast_type: undefined,
                   offset: 0
