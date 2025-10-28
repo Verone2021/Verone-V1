@@ -36,7 +36,7 @@ export function SupplierFormModal({
   useState(() => {
     if (isEditing && supplier) {
       setTaxonomyData({
-        supplier_segment: (supplier.supplier_segment as SupplierSegmentType) || null
+        supplier_segment: (supplier.supplier_segment as SupplierSegmentType) || undefined
       })
     }
   })
@@ -56,64 +56,64 @@ export function SupplierFormModal({
       result = await updateOrganisation({
         id: supplier.id,
         legal_name: supplierData.legal_name,
-        email: supplierData.email || null,
+        email: supplierData.email || undefined,
         country: supplierData.country,
-        phone: supplierData.phone || null,
-        website: supplierData.website || null,
+        phone: supplierData.phone || undefined,
+        website: supplierData.website || undefined,
         is_active: supplierData.is_active,
-        notes: supplierData.notes || null,
+        notes: supplierData.notes || undefined,
 
         // Adresse principale
-        address_line1: supplierData.address_line1 || null,
-        address_line2: supplierData.address_line2 || null,
-        postal_code: supplierData.postal_code || null,
-        city: supplierData.city || null,
-        region: supplierData.region || null,
+        address_line1: supplierData.address_line1 || undefined,
+        address_line2: supplierData.address_line2 || undefined,
+        postal_code: supplierData.postal_code || undefined,
+        city: supplierData.city || undefined,
+        region: supplierData.region || undefined,
 
         // Légal
-        legal_form: supplierData.legal_form || null,
-        siret: supplierData.siret || null,
-        vat_number: supplierData.vat_number || null,
-        industry_sector: supplierData.industry_sector || null,
+        legal_form: supplierData.legal_form || undefined,
+        siret: supplierData.siret || undefined,
+        vat_number: supplierData.vat_number || undefined,
+        industry_sector: supplierData.industry_sector || undefined,
 
         // Commercial
         currency: supplierData.currency || 'EUR',
-        payment_terms: supplierData.payment_terms || null,
+        payment_terms: supplierData.payment_terms || undefined,
 
         // Taxonomie fournisseur
-        supplier_segment: supplierData.supplier_segment || null
+        supplier_segment: supplierData.supplier_segment || undefined
       })
     } else {
       // Création
       result = await createOrganisation({
         legal_name: supplierData.legal_name,
         type: 'supplier',
-        email: supplierData.email || null,
+        email: supplierData.email || undefined,
         country: supplierData.country,
-        phone: supplierData.phone || null,
-        website: supplierData.website || null,
+        phone: supplierData.phone || undefined,
+        website: supplierData.website || undefined,
         is_active: supplierData.is_active,
-        notes: supplierData.notes || null,
+        notes: supplierData.notes || undefined,
 
         // Adresse principale
-        address_line1: supplierData.address_line1 || null,
-        address_line2: supplierData.address_line2 || null,
-        postal_code: supplierData.postal_code || null,
-        city: supplierData.city || null,
-        region: supplierData.region || null,
+        address_line1: supplierData.address_line1 || undefined,
+        address_line2: supplierData.address_line2 || undefined,
+        postal_code: supplierData.postal_code || undefined,
+        city: supplierData.city || undefined,
+        region: supplierData.region || undefined,
 
         // Légal
-        legal_form: supplierData.legal_form || null,
-        siret: supplierData.siret || null,
-        vat_number: supplierData.vat_number || null,
-        industry_sector: supplierData.industry_sector || null,
+        legal_form: supplierData.legal_form || undefined,
+        siret: supplierData.siret || undefined,
+        vat_number: supplierData.vat_number || undefined,
+        industry_sector: supplierData.industry_sector || undefined,
 
         // Commercial
         currency: supplierData.currency || 'EUR',
-        payment_terms: supplierData.payment_terms || null,
+        payment_terms: supplierData.payment_terms || undefined,
 
         // Taxonomie fournisseur
-        supplier_segment: supplierData.supplier_segment || null
+        supplier_segment: supplierData.supplier_segment || undefined
       })
     }
 

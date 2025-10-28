@@ -37,68 +37,68 @@ export function PartnerFormModal({
       result = await updateOrganisation({
         id: partner.id,
         legal_name: partnerData.legal_name,
-        email: partnerData.email || null,
-        secondary_email: partnerData.secondary_email || null,
+        email: partnerData.email || undefined,
+        secondary_email: partnerData.secondary_email || undefined,
         country: partnerData.country,
-        phone: partnerData.phone || null,
-        website: partnerData.website || null,
+        phone: partnerData.phone || undefined,
+        website: partnerData.website || undefined,
         is_active: partnerData.is_active,
-        notes: partnerData.notes || null,
+        notes: partnerData.notes || undefined,
 
         // Adresse principale
-        address_line1: partnerData.address_line1 || null,
-        address_line2: partnerData.address_line2 || null,
-        postal_code: partnerData.postal_code || null,
-        city: partnerData.city || null,
-        region: partnerData.region || null,
+        address_line1: partnerData.address_line1 || undefined,
+        address_line2: partnerData.address_line2 || undefined,
+        postal_code: partnerData.postal_code || undefined,
+        city: partnerData.city || undefined,
+        region: partnerData.region || undefined,
 
         // Légal
-        legal_form: partnerData.legal_form || null,
-        siret: partnerData.siret || null,
-        vat_number: partnerData.vat_number || null,
-        industry_sector: partnerData.industry_sector || null,
+        legal_form: partnerData.legal_form || undefined,
+        siret: partnerData.siret || undefined,
+        vat_number: partnerData.vat_number || undefined,
+        industry_sector: partnerData.industry_sector || undefined,
 
         // Commercial
         currency: partnerData.currency || 'EUR',
-        payment_terms: partnerData.payment_terms || null,
+        payment_terms: partnerData.payment_terms || undefined,
 
         // Champs techniques
-        abby_customer_id: partnerData.abby_customer_id || null,
-        default_channel_id: partnerData.default_channel_id || null,
+        abby_customer_id: partnerData.abby_customer_id || undefined,
+        default_channel_id: partnerData.default_channel_id || undefined,
       })
     } else {
       // Création
       result = await createOrganisation({
         legal_name: partnerData.legal_name,
         type: 'partner',
-        email: partnerData.email || null,
-        secondary_email: partnerData.secondary_email || null,
+        email: partnerData.email || undefined,
+        secondary_email: partnerData.secondary_email || undefined,
         country: partnerData.country,
-        phone: partnerData.phone || null,
-        website: partnerData.website || null,
+        phone: partnerData.phone || undefined,
+        website: partnerData.website || undefined,
         is_active: partnerData.is_active,
-        notes: partnerData.notes || null,
+        notes: partnerData.notes || undefined,
 
         // Adresse principale
-        address_line1: partnerData.address_line1 || null,
-        address_line2: partnerData.address_line2 || null,
-        postal_code: partnerData.postal_code || null,
-        city: partnerData.city || null,
-        region: partnerData.region || null,
+        address_line1: partnerData.address_line1 || undefined,
+        address_line2: partnerData.address_line2 || undefined,
+        postal_code: partnerData.postal_code || undefined,
+        city: partnerData.city || undefined,
+        region: partnerData.region || undefined,
 
         // Légal
-        legal_form: partnerData.legal_form || null,
-        siret: partnerData.siret || null,
-        vat_number: partnerData.vat_number || null,
-        industry_sector: partnerData.industry_sector || null,
+        legal_form: partnerData.legal_form || undefined,
+        siret: partnerData.siret || undefined,
+        vat_number: partnerData.vat_number || undefined,
+        industry_sector: partnerData.industry_sector || undefined,
 
         // Commercial
         currency: partnerData.currency || 'EUR',
-        payment_terms: partnerData.payment_terms || null,
+        payment_terms: partnerData.payment_terms || undefined,
 
         // Champs techniques
-        abby_customer_id: partnerData.abby_customer_id || null,
-        default_channel_id: partnerData.default_channel_id || null,
+        abby_customer_id: partnerData.abby_customer_id || undefined,
+        default_channel_id: partnerData.default_channel_id || undefined,
       })
     }
 
