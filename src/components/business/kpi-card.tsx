@@ -22,6 +22,7 @@ export interface KPICardProps {
 
 const variantStyles = {
   default: 'border-black',
+  secondary: 'border-black', // Alias pour default
   success: 'border-green-300 bg-green-50',
   warning: 'border-gray-300 bg-gray-50',
   danger: 'border-red-300 bg-red-50',

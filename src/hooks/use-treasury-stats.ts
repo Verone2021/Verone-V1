@@ -118,8 +118,8 @@ export function useTreasuryStats(
 
       if (statsError) throw statsError
 
-      if (statsData && statsData.length > 0) {
-        const row = statsData[0]
+      if (statsData && (statsData as any).length > 0) {
+        const row = (statsData as any)[0]
         setStats({
           total_invoiced_ar: row.total_invoiced_ar || 0,
           total_paid_ar: row.total_paid_ar || 0,

@@ -49,6 +49,7 @@ const TEST_STATUS_CONFIG = {
     icon: Clock,
     colors: {
       default: 'bg-gray-200 text-gray-800 border-gray-300',
+      secondary: 'bg-gray-200 text-gray-800 border-gray-300',
       outline: 'border-gray-300 text-gray-600 bg-transparent',
       minimal: 'text-gray-600'
     }
@@ -58,6 +59,7 @@ const TEST_STATUS_CONFIG = {
     icon: CheckCircle,
     colors: {
       default: 'bg-black text-white border-black',
+      secondary: 'bg-black text-white border-black',
       outline: 'border-black text-black bg-transparent',
       minimal: 'text-black'
     }
@@ -67,6 +69,7 @@ const TEST_STATUS_CONFIG = {
     icon: XCircle,
     colors: {
       default: 'bg-gray-600 text-white border-gray-600',
+      secondary: 'bg-gray-600 text-white border-gray-600',
       outline: 'border-gray-600 text-gray-600 bg-transparent',
       minimal: 'text-gray-600'
     }
@@ -76,6 +79,7 @@ const TEST_STATUS_CONFIG = {
     icon: AlertTriangle,
     colors: {
       default: 'bg-gray-400 text-white border-gray-400',
+      secondary: 'bg-gray-400 text-white border-gray-400',
       outline: 'border-gray-400 text-gray-600 bg-transparent',
       minimal: 'text-gray-600'
     }
