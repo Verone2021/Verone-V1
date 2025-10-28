@@ -1,9 +1,33 @@
 # 📊 Plan de Correction TypeScript - Vérone Back Office
 
-**Date mise à jour**: 2025-10-28 16:30 (Post-BATCH 60)
-**État actuel**: **92 erreurs** (down from 313 initially)
+**Date mise à jour**: 2025-10-28 20:00 (Post-SESSION 3)
+**État actuel**: **199 erreurs** (discordance vs BATCH 60: 92 erreurs)
 **Méthodologie**: Clustering professionnel + Batch corrections (CLAUDE.md)
-**Progression**: **70.6% amélioration** (313 → 92)
+**Progression**: **36.4% amélioration depuis baseline** (313 → 199)
+
+---
+
+## ⚠️ UPDATE CRITIQUE POST-SESSION 3 (2025-10-28 20:00)
+
+**Situation** : Discordance détectée entre BATCH 60 (92 erreurs) et état actuel (199 erreurs)
+
+**Analyse** :
+- SESSION 2 : 274 → 211 erreurs (-63, 10 batches)
+- SESSION 3 : 211 → 199 erreurs (-12, 3 batches: BATCH 11, 12, 13)
+- **Total corrigé** : 274 → 199 erreurs (-75 depuis SESSION 2)
+
+**Hypothèses discordance** :
+1. ✅ **Rollback git** : Branches divergentes production-stable vs autre branche
+2. ✅ **Nouvelles erreurs** : Ajouts code entre BATCH 60 et SESSION 3
+3. ❌ Type-check obsolète au moment BATCH 60
+
+**Décision** : **Reprendre depuis 199 erreurs actuelles confirmées**
+
+**Documentation complète** :
+- `docs/audits/2025-10/ANALYSE-199-ERREURS-TYPESCRIPT.md` (analyse exhaustive)
+- `docs/audits/2025-10/QUICK-WINS-LISTE.md` (78 erreurs faciles détaillées)
+
+**Nouveau plan** : Séquence BATCH 61-68 pour atteindre 0 erreur (7h)
 
 ---
 
@@ -407,6 +431,238 @@ Co-Authored-By: Claude <noreply@anthropic.com>
 ---
 
 **Plan créé**: 2025-10-28 14:15
+**Dernière mise à jour**: 2025-10-28 20:00 (POST-SESSION 3)
 **Auteur**: Claude Code (Sonnet 4.5)
 **Méthodologie**: CLAUDE.md - Section "TypeScript Fixes Workflow"
-**Prochaine action**: Exécuter BATCH 58 (Module Not Found)
+
+---
+
+## 🎯 PLAN RECOMMANDÉ POST-SESSION 3 (199 → 0 erreurs)
+
+**Date**: 2025-10-28 20:00
+**État départ**: 199 erreurs
+**Objectif**: 0 erreur
+**Durée totale estimée**: 7h (2 jours @ 4h/jour)
+**Approche**: Corrections atomiques progressives (Option A)
+
+**Documentation détaillée**:
+- Analyse complète : `docs/audits/2025-10/ANALYSE-199-ERREURS-TYPESCRIPT.md`
+- Quick Wins : `docs/audits/2025-10/QUICK-WINS-LISTE.md`
+
+---
+
+### 📅 JOUR 1 : Quick Wins (4h) - 199 → ~100 erreurs
+
+#### BATCH 61 : Module Cleanup (15 min)
+**Target**: 199 → 179 (-20 erreurs)
+**Stratégie**: Commenter imports `error-detection` supprimés
+**Priorité**: P1
+**Fichiers concernés**: À identifier via `grep -r "error-detection" src/`
+
+---
+
+#### BATCH 62 : Type Unification 🔴 CRITIQUE (60 min)
+**Target**: 179 → 164 (-15 erreurs)
+**Stratégie**: Créer `src/types/canonical/` avec types unifiés
+**Priorité**: P0 BLOCKING (débloque 15+ erreurs TS2322)
+
+**Actions**:
+1. Créer `src/types/canonical/contact.ts`
+2. Créer `src/types/canonical/product-image.ts`
+3. Créer `src/types/canonical/consultation-image.ts`
+4. Importer depuis canonical dans tous fichiers concernés
+5. Supprimer définitions locales dupliquées
+
+**Fichiers impactés**:
+- `contact-form-modal.tsx`
+- `contacts-management-section.tsx`
+- `collection-products-modal.tsx`
+- `consultation-image-gallery.tsx`
+- `consultations/page.tsx`
+- 10+ autres fichiers
+
+**Impact**: Débloque 15 erreurs + prévient futures duplications
+
+---
+
+#### BATCH 63 : TS2352 + TS2353 (1h)
+**Target**: 164 → 137 (-27 erreurs)
+**Stratégie**: Unsafe conversions + Unknown properties
+
+**TS2352 (11 erreurs)** - Unsafe conversions:
+```typescript
+// Pattern fix
+const data = result as unknown as TargetType
+```
+
+**TS2353 (16 erreurs)** - Unknown properties:
+- Retirer propriétés inutilisées
+- Ou ajouter à interface si nécessaires
+
+**Fichiers**:
+- `finance/depenses/[id]/page.tsx`
+- `excel-utils.ts`
+- `theme-v2.ts`
+- `abby/sync-processor.ts` (2×)
+- `complete-product-wizard.tsx` (4×)
+- 15+ autres
+
+---
+
+#### BATCH 64 : TS2304 + TS2740 (40 min)
+**Target**: 137 → 130 (-7 erreurs)
+**Stratégie**: Imports manquants + Missing properties
+
+**TS2304 (4 erreurs)** - Cannot find name:
+- Ajouter imports manquants
+- Corriger typos variables
+
+**TS2740 (3 erreurs)** - Missing properties:
+- Compléter propriétés manquantes selon interfaces
+
+---
+
+#### BATCH 65 : Null/Undefined Alignment (30 min)
+**Target**: 130 → 120 (-10 erreurs)
+**Stratégie**: Aligner `?? null` vs `?? undefined` selon interfaces
+
+**Fichiers**:
+- `consultations/page.tsx` (3)
+- `canaux-vente/prix-clients/page.tsx` (2)
+- `collections/[collectionId]/page.tsx` (2)
+- 3 autres fichiers
+
+**Pattern fix**:
+```typescript
+// Interface attend | null
+const data = {
+  field: value ?? null  // Pas ?? undefined
+}
+```
+
+**Checkpoint Jour 1**: ~120 erreurs ✅ (réduction 40%)
+
+---
+
+### 📅 JOUR 2 : Finitions (3h) - 120 → 0 erreurs
+
+#### BATCH 66 : Storybook Stories (10 min)
+**Target**: 120 → 114 (-6 erreurs)
+**Stratégie**: Ajouter `args: {}` manquants
+
+**Fichiers**:
+- `VeroneCard.stories.tsx` (2)
+- Autres Stories (4)
+
+**Pattern fix**:
+```typescript
+export const MyStory: Story = {
+  args: {},  // Ajouter
+  render: () => <Component />
+}
+```
+
+**Risque**: ZÉRO (Storybook uniquement)
+
+---
+
+#### BATCH 67 : Supabase Overloads (90 min)
+**Target**: 114 → 95 (-19 erreurs)
+**Stratégie**: Type assertions temporaires pour incompatibilités Supabase
+
+**Catégorie A: use-base-hook.ts** (9 erreurs) 🔴 CRITIQUE:
+```typescript
+// Pattern fix
+const { data } = await (supabase as any)
+  .from(tableName)
+  .select(query)
+```
+
+**Catégorie B: RPC & Insert/Update** (10 erreurs):
+```typescript
+await (supabase as any).from('table').insert(data as any)
+```
+
+**Fichiers**:
+- `hooks/use-base-hook.ts` (9 - PRIORITÉ)
+- `abby/sync-processor.ts` (7)
+- `use-stock-movements.ts`
+- `use-variant-groups.ts`
+- 6 autres hooks
+
+**Note**: Solution temporaire, refactoring complet Phase 2
+
+---
+
+#### BATCH 68 : Final Cleanup (60 min)
+**Target**: 95 → 0 (-95 erreurs) ✅
+**Stratégie**: TS2322 complexes + TS2339 + erreurs diverses
+
+**TS2322 complexes restants** (~50 erreurs):
+- Type assertions sur nested types
+- Aligner types Product dupliqués (TS2719)
+- Fixes dimensions, consultations, etc.
+
+**TS2339 restants** (~10 erreurs):
+- Propriétés calculées avec fallbacks
+- Optional chaining approprié
+
+**Erreurs diverses** (~35 erreurs):
+- TS2345 (argument mismatch)
+- TS2769 (overload mismatch restants)
+- Cas isolés spécifiques
+
+---
+
+### 🎯 Résumé Progression
+
+| Jour | Batches | Durée | Erreurs Départ | Erreurs Fin | Delta |
+|------|---------|-------|----------------|-------------|-------|
+| **Jour 1** | BATCH 61-65 | 4h | 199 | ~120 | -79 |
+| **Jour 2** | BATCH 66-68 | 3h | 120 | **0** | -120 |
+| **TOTAL** | 8 batches | **7h** | **199** | **0** | **-199** ✅ |
+
+---
+
+### ✅ Critères de Succès
+
+- [ ] 0 erreur TypeScript (`npm run type-check`)
+- [ ] Build production SUCCESS (`npm run build`)
+- [ ] Tous commits atomiques (1 famille = 1 commit)
+- [ ] Rollback possible à chaque étape
+- [ ] MCP Browser: 0 console errors
+- [ ] Documentation synchronisée
+
+---
+
+### 📌 Modules à NE PAS Refactorer
+
+**Phase 2+ (désactivés)** :
+- ❌ Produits/Catalogue (50 erreurs) - Corrections atomiques suffisent
+- ❌ Finance/Trésorerie (25 erreurs) - Type assertions temporaires
+- ❌ Abby Integration (7 erreurs) - Commenter maintenant
+
+**Raison**: 74% erreurs dans modules Phase 2+ désactivés. Refactoring lors activation Phase 2.
+
+---
+
+### 🚀 PROCHAINE ACTION
+
+**Démarrer BATCH 61** : Module Cleanup (15 min, -20 erreurs)
+
+**Commande**:
+```bash
+# 1. Identifier imports error-detection
+grep -r "error-detection" src/ --include="*.ts" --include="*.tsx"
+
+# 2. Commenter + type-check
+npm run type-check 2>&1 | grep -c "error TS"
+
+# 3. Commit
+git add -A && git commit -m "fix(types): BATCH 61..."
+```
+
+---
+
+**Plan validé**: 2025-10-28 20:00
+**Prochaine révision**: Checkpoint Jour 1 (~120 erreurs)

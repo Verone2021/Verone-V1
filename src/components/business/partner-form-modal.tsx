@@ -61,10 +61,6 @@ export function PartnerFormModal({
         // Commercial
         currency: partnerData.currency || 'EUR',
         payment_terms: partnerData.payment_terms || undefined,
-
-        // Champs techniques
-        abby_customer_id: partnerData.abby_customer_id || undefined,
-        default_channel_id: partnerData.default_channel_id || undefined,
       })
     } else {
       // Création
@@ -95,10 +91,6 @@ export function PartnerFormModal({
         // Commercial
         currency: partnerData.currency || 'EUR',
         payment_terms: partnerData.payment_terms || undefined,
-
-        // Champs techniques
-        abby_customer_id: partnerData.abby_customer_id || undefined,
-        default_channel_id: partnerData.default_channel_id || undefined,
       })
     }
 

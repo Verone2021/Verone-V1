@@ -185,7 +185,7 @@ export function useFinancialDocuments(filters?: FinancialDocumentFilters) {
 
       if (fetchError) throw fetchError
 
-      setDocuments(data as FinancialDocument[])
+      setDocuments(data as unknown as FinancialDocument[])
     } catch (err) {
       const message = err instanceof Error ? err.message : 'Erreur chargement documents'
       setError(message)

@@ -369,7 +369,7 @@ export function useErrorReporting(options: UseErrorReportingOptions = {}) {
       // Utiliser l'API Screen Capture si disponible
       if ('getDisplayMedia' in navigator.mediaDevices) {
         const stream = await navigator.mediaDevices.getDisplayMedia({
-          video: { mediaSource: 'screen' as any }
+          video: { mediaSource: 'screen' } as any
         })
 
         return new Promise((resolve) => {

@@ -330,7 +330,7 @@ export function useConsultations() {
 
       const { error } = await supabase
         .from('client_consultations')
-        .update({ archived_at: new Date().toISOString() })
+        .update({ archived_at: new Date().toISOString() } as any)
         .eq('id', consultationId)
 
       if (error) throw error
@@ -369,7 +369,7 @@ export function useConsultations() {
 
       const { error } = await supabase
         .from('client_consultations')
-        .update({ archived_at: null })
+        .update({ archived_at: null } as any)
         .eq('id', consultationId)
 
       if (error) throw error
@@ -412,7 +412,7 @@ export function useConsultations() {
 
       const { error } = await supabase
         .from('client_consultations')
-        .update({ deleted_at: new Date().toISOString() })
+        .update({ deleted_at: new Date().toISOString() } as any)
         .eq('id', consultationId)
 
       if (error) throw error

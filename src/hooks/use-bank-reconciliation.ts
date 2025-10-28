@@ -220,8 +220,10 @@ export function useBankReconciliation() {
         suggestions.push({
           invoice_id: invoice.id,
           invoice_number: invoice.invoice_number,
-          confidence_score: Math.min(confidenceScore, 100),
-          reason: confidenceScore >= 90
+          customer_name: invoice.customer_name,
+          invoice_amount: invoice.amount_remaining,
+          confidence: Math.min(confidenceScore, 100),
+          match_reason: confidenceScore >= 90
             ? 'Correspondance exacte (montant + référence)'
             : confidenceScore >= 60
             ? 'Correspondance probable (montant similaire)'
@@ -230,7 +232,7 @@ export function useBankReconciliation() {
       }
     })
 
-    return suggestions.sort((a, b) => b.confidence_score - a.confidence_score)
+    return suggestions.sort((a, b) => b.confidence - a.confidence)
   }, [])
 
   // Load data on mount

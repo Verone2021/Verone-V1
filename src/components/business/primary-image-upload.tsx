@@ -49,8 +49,7 @@ export function PrimaryImageUpload({
     hasImages,
     fetchImages
   } = useProductImages({
-    productId,
-    productType
+    productId
   })
 
   // 🔄 Synchronisation avec useProductImages

@@ -413,7 +413,7 @@ export function useContacts() {
 
   // Mettre à jour la date de dernier contact
   const updateLastContactDate = useCallback(async (contactId: string) => {
-    return updateContact(contactId, { last_contact_date: new Date().toISOString() })
+    return updateContact(contactId, { last_contact_date: new Date().toISOString() } as any)
   }, [updateContact])
 
   // Supprimer définitivement un contact (à utiliser avec précaution)

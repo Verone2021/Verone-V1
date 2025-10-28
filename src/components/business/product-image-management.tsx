@@ -49,8 +49,7 @@ export function ProductImageManagement({
     reorderImages,
     fetchImages
   } = useProductImages({
-    productId,
-    productType
+    productId
   })
 
   // États locaux pour UI

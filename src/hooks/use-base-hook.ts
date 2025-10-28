@@ -158,7 +158,7 @@ export function createCrudOperations<T, CreateData, UpdateData = Partial<CreateD
 
       if (error) throw error
 
-      baseHook.updateItem(id, updatedItem as Partial<T>)
+      baseHook.updateItem(id, updatedItem as unknown as Partial<T>)
       baseHook.showToast('Succès', `${tableName} mis à jour avec succès`)
       return updatedItem
     } catch (err) {

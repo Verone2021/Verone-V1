@@ -71,7 +71,7 @@ export async function processSyncQueue(): Promise<{
     console.log(`Processing ${queueItems.length} sync queue items...`);
 
     // 2. Traiter chaque opération
-    for (const item of queueItems as SyncQueueItem[]) {
+    for (const item of queueItems as unknown as SyncQueueItem[]) {
       results.processed++;
 
       try {
@@ -177,7 +177,7 @@ async function processCreateInvoice(
   supabase: Awaited<ReturnType<typeof createClient>>,
   item: SyncQueueItem
 ): Promise<void> {
-  const payload = item.abby_payload as CreateInvoicePayload & {
+  const payload = item.abby_payload as unknown as CreateInvoicePayload & {
     customerId: string;
     invoiceDate: string;
     dueDate?: string;

@@ -122,7 +122,7 @@ export function useUserActivityTracker() {
       if (error) throw error
 
       // Type assertion pour compatibilité ActivityStats interface
-      return { data: data as ActivityStats, error: null }
+      return { data: data as unknown as ActivityStats, error: null }
     },
     {
       staleTime: 15 * 60 * 1000, // 15 minutes (stats changent peu)

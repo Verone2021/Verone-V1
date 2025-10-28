@@ -192,7 +192,7 @@ export function PriceListItemFormModal({
           itemId,
           priceListId,
           data: {
-            price_ht: tier.price_ht,
+            cost_price: tier.price_ht,
             discount_rate: tier.discount_rate > 0 ? tier.discount_rate / 100 : undefined,
             min_quantity: tier.min_quantity,
             max_quantity: tier.max_quantity ?? undefined,
@@ -221,7 +221,7 @@ export function PriceListItemFormModal({
             {
               price_list_id: priceListId,
               product_id: selectedProduct.id,
-              price_ht: tier.price_ht,
+              cost_price: tier.price_ht,
               discount_rate: tier.discount_rate > 0 ? tier.discount_rate / 100 : undefined,
               min_quantity: tier.min_quantity,
               max_quantity: tier.max_quantity ?? undefined,

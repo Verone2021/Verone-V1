@@ -195,5 +195,5 @@ export async function generateSalesOrdersExcel(
   sheet2.getColumn(2).width = 20
 
   // Générer buffer
-  return await workbook.xlsx.writeBuffer() as Buffer
+  return await workbook.xlsx.writeBuffer() as unknown as Buffer
 }

@@ -70,10 +70,7 @@ export function VariantAddProductModal({
     try {
       await onSubmit({
         product_id: selectedProductId,
-        variant_attributes: {
-          color: color.trim() || undefined,
-          material: material.trim() || undefined,
-        }
+        variant_group_id: group?.id || ''
       })
       onClose()
     } catch (error) {

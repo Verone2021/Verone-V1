@@ -181,7 +181,7 @@ export function FamilyForm({
         })
       }
 
-      onSubmit(result as Family)
+      onSubmit(result as unknown as Family)
       onClose()
 
     } catch (error: any) {

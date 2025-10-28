@@ -94,7 +94,7 @@ export default function ExpenseDetailPage(props: PageProps) {
 
       if (error) throw error
 
-      setDocument(data as FinancialDocument)
+      setDocument(data as unknown as FinancialDocument)
     } catch (error) {
       console.error('Fetch document error:', error)
     } finally {

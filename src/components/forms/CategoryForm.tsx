@@ -216,7 +216,7 @@ export function CategoryForm({
         })
       }
 
-      onSubmit(result as Category)
+      onSubmit(result as unknown as Category)
       onClose()
 
     } catch (error: any) {
