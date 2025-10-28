@@ -1196,7 +1196,7 @@ export function useProductVariantEditing() {
 
       // Mettre à jour l'attribut spécifique
       const updatedAttributes = {
-        ...(product?.variant_attributes || {}),
+        ...((product?.variant_attributes || {}) as any),
         [attributeKey]: value
       }
 

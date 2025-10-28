@@ -88,14 +88,15 @@ interface SampleOrderValidationProps {
 export function SampleOrderValidation({ className }: SampleOrderValidationProps) {
   const router = useRouter()
   const { toast } = useToast()
-  const {
-    approveSampleOrder,
-    markSampleOrderDelivered,
-    validateSamples,
-    transferToProductCatalog,
-    getSampleOrdersForSupplier,
-    getSourcingWorkflowMetrics
-  } = useDrafts()
+  // TODO: Hook useDrafts n'existe pas - Code legacy à refactorer
+  // const {
+  //   approveSampleOrder,
+  //   markSampleOrderDelivered,
+  //   validateSamples,
+  //   transferToProductCatalog,
+  //   getSampleOrdersForSupplier,
+  //   getSourcingWorkflowMetrics
+  // } = useDrafts()
 
   const [sampleOrders, setSampleOrders] = useState<SampleOrder[]>([])
   const [selectedOrder, setSelectedOrder] = useState<SampleOrder | null>(null)

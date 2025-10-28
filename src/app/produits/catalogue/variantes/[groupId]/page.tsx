@@ -680,7 +680,7 @@ export default function VariantGroupDetailPage({ params }: VariantGroupDetailPag
               <VariantProductCard
                 key={product.id}
                 product={product}
-                variantType={variantGroup.variant_type}
+                variantType={variantGroup.variant_type || ''}
                 hasCommonSupplier={variantGroup.has_common_supplier || false}
                 groupDimensions={variantGroup.dimensions_length ? {
                   length: variantGroup.dimensions_length,

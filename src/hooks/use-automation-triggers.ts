@@ -244,7 +244,7 @@ export function useAutomationTriggers() {
           timeoutPromise
         ])
 
-        results.push({ action: action.type, ...result })
+        results.push({ action: action.type, ...(result as any) })
 
       } catch (error) {
         console.error(`Erreur exécution action ${action.type}:`, error)

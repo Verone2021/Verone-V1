@@ -349,7 +349,7 @@ export default function CollectionDetailPage({ params }: CollectionDetailPagePro
   const handleSaveMetaDescription = useCallback(async () => {
     setSavingMetaDescription(true)
 
-    const success = await updateCollection({ id: collectionId, description: editedMetaDescription || null })
+    const success = await updateCollection({ id: collectionId, description: editedMetaDescription || undefined })
 
     if (success) {
       toast({ title: "Meta description modifiée", description: "La description SEO a été mise à jour" })
