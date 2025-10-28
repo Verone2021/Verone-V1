@@ -251,7 +251,7 @@ export function useErrorReporting(options: UseErrorReportingOptions = {}) {
 
       // Sauvegarder dans Supabase
       const { error: insertError } = await supabase
-        .from('test_error_reports')
+        .from('test_error_reports' as any)
         .insert({
           id: reportId,
           test_id: report.testId,
@@ -292,7 +292,7 @@ export function useErrorReporting(options: UseErrorReportingOptions = {}) {
   const loadReports = useCallback(async (testId?: string): Promise<ErrorReport[]> => {
     try {
       let query = supabase
-        .from('test_error_reports')
+        .from('test_error_reports' as any)
         .select('*')
         .order('created_at', { ascending: false })
 
@@ -341,7 +341,7 @@ export function useErrorReporting(options: UseErrorReportingOptions = {}) {
   const updateReport = useCallback(async (reportId: string, updates: Partial<ErrorReport>): Promise<boolean> => {
     try {
       const { error } = await supabase
-        .from('test_error_reports')
+        .from('test_error_reports' as any)
         .update({
           ...updates,
           updated_at: new Date().toISOString(),

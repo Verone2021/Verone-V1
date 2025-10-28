@@ -266,7 +266,7 @@ export function useSectionLocking(
     // Sauvegarder dans Supabase
     try {
       await supabase
-        .from('test_sections_lock_events')
+        .from('test_sections_lock_events' as any)
         .insert({
           id: lockEvent.id,
           section_id: lockEvent.sectionId,
@@ -318,7 +318,7 @@ export function useSectionLocking(
     try {
       // Mettre à jour dans Supabase
       const { error } = await supabase
-        .from('test_sections_lock')
+        .from('test_sections_lock' as any)
         .upsert({
           section_id: sectionId,
           locked: true,
@@ -376,7 +376,7 @@ export function useSectionLocking(
     try {
       // Mettre à jour dans Supabase
       const { error } = await supabase
-        .from('test_sections_lock')
+        .from('test_sections_lock' as any)
         .upsert({
           section_id: sectionId,
           locked: false,
