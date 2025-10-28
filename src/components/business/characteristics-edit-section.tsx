@@ -74,7 +74,7 @@ export function CharacteristicsEditSection({
     }
   })
 
-  const section: EditableSection = 'characteristics'
+  const section = 'characteristics' as EditableSection
   const editData = getEditedData(section)
   const error = getError(section)
 

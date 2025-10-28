@@ -325,7 +325,7 @@ export default function CollectionDetailPage({ params }: CollectionDetailPagePro
   const handleSaveMetaTitle = useCallback(async () => {
     setSavingMetaTitle(true)
 
-    const success = await updateCollection({ id: collectionId, meta_title: editedMetaTitle || null })
+    const success = await updateCollection({ id: collectionId, description: editedMetaTitle || null })
 
     if (success) {
       toast({ title: "Meta title modifié", description: "Le titre SEO a été mis à jour" })
@@ -985,7 +985,7 @@ export default function CollectionDetailPage({ params }: CollectionDetailPagePro
               <CollectionProductCard
                 key={product.id}
                 product={product}
-                position={product.position}
+                position={(product as any).position || 0}
                 onRemove={handleRemoveProduct}
                 router={router}
               />

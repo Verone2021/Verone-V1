@@ -472,8 +472,8 @@ export default function StocksDashboardPage() {
             <ForecastSummaryWidget
               incomingOrders={incomingOrders}
               outgoingOrders={outgoingOrders}
-              totalIn={overview.total_forecasted_in || 0}
-              totalOut={Math.abs(overview.total_forecasted_out || 0)}
+              totalIn={(overview as any).total_forecasted_in || 0}
+              totalOut={Math.abs((overview as any).total_forecasted_out || 0)}
               onOrderClick={handleOrderClick}
             />
           </CardContent>

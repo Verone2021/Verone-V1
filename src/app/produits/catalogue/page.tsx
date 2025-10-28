@@ -76,7 +76,7 @@ export default function CataloguePage() {
       setCatalogueFilters({
         search: searchTerm,
         statuses: newFilters.status,
-        subcategories: newFilters.category
+        subcategories: newFilters.subcategories
       })
     }, 300),
     [filters, setCatalogueFilters]
@@ -170,8 +170,8 @@ export default function CataloguePage() {
   const supplierOptions: FilterOption[] = availableSuppliers.map((supplier) => {
     const count = products.filter((p) => (p.supplier?.trade_name || p.supplier?.legal_name) === supplier).length
     return {
-      value: supplier,
-      label: supplier,
+      value: supplier || '',
+      label: supplier || '',
       count,
     }
   })

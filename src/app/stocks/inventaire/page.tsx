@@ -288,7 +288,7 @@ function ProductHistoryModal({ product, isOpen, onClose }: ProductHistoryModalPr
                 <span>Stock actuel: <strong className="text-black">{product?.stock_quantity || 0}</strong></span>
               </div>
               <span className="text-gray-500">
-                Dernier mouvement: {new Date(movements[0]?.performed_at).toLocaleDateString('fr-FR')}
+                Dernier mouvement: {movements[0] ? new Date((movements[0] as any).performed_at).toLocaleDateString('fr-FR') : 'Aucun'}
               </span>
             </div>
           </div>

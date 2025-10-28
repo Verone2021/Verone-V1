@@ -525,8 +525,6 @@ export default function VariantGroupDetailPage({ params }: VariantGroupDetailPag
             </label>
             {variantGroup.subcategory ? (
               <p className="text-sm text-gray-900">
-                <span className="font-medium">{variantGroup.subcategory.category?.family?.name}</span>
-                {' → '}
                 <span className="font-medium">{variantGroup.subcategory.category?.name}</span>
                 {' → '}
                 <span className="font-medium">{variantGroup.subcategory.name}</span>
