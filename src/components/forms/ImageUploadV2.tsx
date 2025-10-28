@@ -62,11 +62,11 @@ export function ImageUploadV2({
     bucket,
     autoUpload,
     onUploadSuccess: (result) => {
-      console.log('🎉 Upload terminé:', result.publicUrl)
-      onImageUpload(result.publicUrl)
+      console.log('🎉 Upload terminé:', result?.publicUrl)
+      onImageUpload(result?.publicUrl ?? '')
     },
     onUploadError: (error) => {
-      console.error('❌ Erreur upload:', error.message)
+      console.error('❌ Erreur upload:', error?.message)
     }
   })
 

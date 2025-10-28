@@ -310,17 +310,17 @@ export function ProductVariantsSection({
                 )}
 
                 {/* Primary Image */}
-                {variant.variant_details?.images?.length > 0 && (
+                {variant.variant_details?.images?.length && variant.variant_details.images.length > 0 && (
                   <div className="flex items-center space-x-1">
                     <div className="w-8 h-8 bg-gray-200 rounded overflow-hidden">
                       <img
-                        src={variant.variant_details.images.find(img => img.is_primary)?.public_url || variant.variant_details.images[0]?.public_url}
+                        src={variant.variant_details?.images?.find(img => img.is_primary)?.public_url || variant.variant_details?.images?.[0]?.public_url}
                         alt={variant.variant_name}
                         className="w-full h-full object-cover"
                       />
                     </div>
                     <span className="text-xs text-gray-500">
-                      {variant.variant_details.images.length} image(s)
+                      {variant.variant_details?.images?.length ?? 0} image(s)
                     </span>
                   </div>
                 )}

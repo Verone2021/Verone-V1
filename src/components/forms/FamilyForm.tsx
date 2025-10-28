@@ -76,7 +76,7 @@ export function FamilyForm({
       .replace(/[^a-z0-9 -]/g, "")
       .replace(/\s+/g, "-")
       .replace(/-+/g, "-")
-      .trim("-")
+      .replace(/^-+|-+$/g, '')
   }
 
   // Upload d'image vers Supabase Storage

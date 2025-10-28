@@ -57,7 +57,7 @@ export function ProductInfoSection({
   const [isSaving, setIsSaving] = React.useState(false)
 
   const completion = calculateCompletion(product)
-  const price = product.cost_price  // Prix d'achat HT
+  const price = product?.cost_price  // Prix d'achat HT
   const isNameEditable = !product.variant_group_id // Nom non éditable si dans groupe variantes
 
   const handleSaveName = async () => {

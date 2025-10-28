@@ -2,7 +2,18 @@
 
 import { useState, useCallback, useEffect, useMemo } from "react"
 import { createClient } from "@/lib/supabase/client"
-import { TestSection, TestMetrics } from "./use-manual-tests"
+// FIXME: Module './use-manual-tests' does not exist - TS2307
+// import { TestSection, TestMetrics } from "./use-manual-tests"
+
+// Temporary types until use-manual-tests is available
+export interface TestSection {
+  id: string
+  isLocked: boolean
+}
+
+export interface TestMetrics {
+  progressPercent: number
+}
 
 // Types pour le système de verrouillage
 export type LockStatus = 'unlocked' | 'pending_lock' | 'locked' | 'force_locked'

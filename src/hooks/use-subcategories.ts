@@ -278,7 +278,7 @@ export function useSubcategories(categoryId?: string) {
       .replace(/[^a-z0-9 -]/g, "")
       .replace(/\s+/g, "-")
       .replace(/-+/g, "-")
-      .trim("-")
+      .replace(/^-+|-+$/g, '')
   }
 
   // Charger les sous-catégories au montage du hook

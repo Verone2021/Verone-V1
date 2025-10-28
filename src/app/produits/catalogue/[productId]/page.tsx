@@ -589,7 +589,7 @@ export default function ProductDetailPage() {
               productName={product.name}
               supplierName={(product.supplier?.legal_name || product.supplier?.trade_name) ?? undefined}
               costPrice={product.cost_price || undefined}
-              disabled={product.stock_quantity >= 1}
+              disabled={(product.stock_quantity ?? 0) >= 1}
               onRequirementChange={(requiresSample) => {
                 handleProductUpdate({ requires_sample: requiresSample })
               }}

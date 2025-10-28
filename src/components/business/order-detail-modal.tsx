@@ -234,7 +234,7 @@ export function OrderDetailModal({ order, open, onClose, onUpdate }: OrderDetail
                           {primaryImageUrl ? (
                             <img
                               src={primaryImageUrl}
-                              alt={item.products.name}
+                              alt={item?.products?.name ?? 'Produit'}
                               className="w-24 h-24 object-cover rounded border"
                             />
                           ) : (

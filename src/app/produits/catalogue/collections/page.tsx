@@ -188,7 +188,7 @@ export default function CollectionsPage() {
   const handleSaveCollection = useCallback(async (data: CreateCollectionInput) => {
     if (editingCollection) {
       // Mode édition
-      const result = await updateCollection(editingCollection.id, data)
+      const result = await updateCollection({ id: editingCollection.id, ...data })
       if (result) {
         toast({
           title: "Collection modifiée",

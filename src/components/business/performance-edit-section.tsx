@@ -291,7 +291,7 @@ export function PerformanceEditSection({ organisation, onUpdate, className }: Pe
   }
 
   // Mode affichage
-  const hasPerformanceData = organisation.rating || organisation.preferred_supplier || organisation.certification_labels?.length > 0 || organisation.notes
+  const hasPerformanceData = organisation.rating || organisation.preferred_supplier || (organisation.certification_labels?.length ?? 0) > 0 || organisation.notes
 
   return (
     <div className={cn("card-verone p-4", className)}>
