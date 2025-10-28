@@ -333,7 +333,7 @@ export default function CategoriesPage() {
               >
                 {family.name}
               </span>
-              <Badge variant={family.is_active ? "default" : "secondary"}>
+              <Badge variant={family.is_active ? "secondary" : "secondary"}>
                 {family.is_active ? "Actif" : "Inactif"}
               </Badge>
               <span className="text-sm text-gray-500">
@@ -443,7 +443,7 @@ export default function CategoriesPage() {
               >
                 {category.name}
               </span>
-              <Badge variant={category.is_active ? "default" : "secondary"}>
+              <Badge variant={category.is_active ? "secondary" : "secondary"}>
                 {category.is_active ? "Actif" : "Inactif"}
               </Badge>
               <span className="text-sm text-gray-500">
@@ -527,7 +527,7 @@ export default function CategoriesPage() {
                   >
                     {subcategory.name}
                   </span>
-                  <Badge variant={subcategory.is_active ? "default" : "secondary"}>
+                  <Badge variant={subcategory.is_active ? "secondary" : "secondary"}>
                     {subcategory.is_active ? "Actif" : "Inactif"}
                   </Badge>
                 </div>

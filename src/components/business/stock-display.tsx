@@ -75,7 +75,7 @@ export function StockDisplay({
       borderColor: 'border-green-200',
       icon: Package,
       label: 'Normal',
-      badgeVariant: 'default' as const
+      badgeVariant: 'secondary' as const
     }
   }
 

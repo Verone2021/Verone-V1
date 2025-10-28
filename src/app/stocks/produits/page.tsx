@@ -222,7 +222,7 @@ function ProductHistoryModal({ product, isOpen, onClose }: { product: any, isOpe
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-2">
                       <Badge
-                        variant={movement.movement_type === 'IN' ? 'default' :
+                        variant={movement.movement_type === 'IN' ? 'secondary' :
                                 movement.movement_type === 'OUT' ? 'destructive' : 'secondary'}
                       >
                         {movement.movement_type}

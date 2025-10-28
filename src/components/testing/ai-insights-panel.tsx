@@ -326,7 +326,7 @@ export function AIInsightsPanel({ className, refreshInterval = 30000 }: AIInsigh
               {['all', 'performance', 'stability', 'revenue'].map(type => (
                 <ButtonV2
                   key={type}
-                  variant={selectedPredictionType === type ? 'default' : 'outline'}
+                  variant={selectedPredictionType === type ? 'secondary' : 'outline'}
                   size="sm"
                   onClick={() => setSelectedPredictionType(type)}
                 >
@@ -606,7 +606,7 @@ function InsightCard({ insight }: InsightCardProps) {
             <Badge variant="secondary">
               Priorité {insight.priority_level}/10
             </Badge>
-            <Badge variant={insight.implementation_effort === 'low' ? 'default' :
+            <Badge variant={insight.implementation_effort === 'low' ? 'secondary' :
                           insight.implementation_effort === 'medium' ? 'secondary' : 'destructive'}>
               {insight.implementation_effort} effort
             </Badge>
@@ -649,7 +649,7 @@ function PatternCard({ pattern }: PatternCardProps) {
             </CardDescription>
           </div>
           <div className="flex gap-2">
-            <Badge variant={pattern.learning_confidence > 0.8 ? 'default' : 'secondary'}>
+            <Badge variant={pattern.learning_confidence > 0.8 ? 'secondary' : 'secondary'}>
               {Math.round(pattern.learning_confidence * 100)}% confiance
             </Badge>
             <Badge variant="outline">
@@ -764,7 +764,7 @@ function SystemAIPanel({
           <div className="space-y-4">
             <div className="flex items-center justify-between">
               <span>Status:</span>
-              <Badge variant={isProcessing ? 'default' : 'secondary'}>
+              <Badge variant={isProcessing ? 'secondary' : 'secondary'}>
                 {isProcessing ? 'Processing' : 'Idle'}
               </Badge>
             </div>

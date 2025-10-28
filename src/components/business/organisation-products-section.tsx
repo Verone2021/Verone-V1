@@ -180,7 +180,7 @@ export function OrganisationProductsSection({
                   </div>
 
                   <Badge
-                    variant={(product.stock_quantity || 0) > 0 ? 'default' : 'destructive'}
+                    variant={(product.stock_quantity || 0) > 0 ? 'secondary' : 'destructive'}
                     className={(product.stock_quantity || 0) > 0 ? 'bg-green-100 text-green-800' : ''}
                   >
                     <Box className="h-3 w-3 mr-1" />

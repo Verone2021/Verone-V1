@@ -241,7 +241,7 @@ export function ProductSelectorModal({
         {/* Action button */}
         <ButtonV2
           size="sm"
-          variant={isSelected ? "default" : "outline"}
+          variant={isSelected ? "secondary" : "outline"}
           className={cn(
             "ml-3 flex-shrink-0",
             isSelected

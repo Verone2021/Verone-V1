@@ -73,13 +73,13 @@ export function QuickActionModal({
       case 'create':
         return {
           confirmText: confirmText || 'Créer',
-          variant: 'default' as const,
+          variant: 'secondary' as const,
           icon: null
         }
       case 'update':
         return {
           confirmText: confirmText || 'Mettre à jour',
-          variant: 'default' as const,
+          variant: 'secondary' as const,
           icon: null
         }
       case 'delete':
@@ -91,13 +91,13 @@ export function QuickActionModal({
       case 'confirm':
         return {
           confirmText: confirmText || 'Confirmer',
-          variant: 'default' as const,
+          variant: 'secondary' as const,
           icon: <CheckCircle className="h-4 w-4" />
         }
       default:
         return {
           confirmText: confirmText || 'Valider',
-          variant: 'default' as const,
+          variant: 'secondary' as const,
           icon: null
         }
     }
@@ -298,7 +298,7 @@ export function QuickActionModal({
 
               <ButtonV2
                 type="submit"
-                variant={destructive ? 'destructive' : 'default'}
+                variant={destructive ? 'destructive' : 'secondary'}
                 disabled={isSubmitting || loading}
                 className={destructive ? '' : 'bg-black hover:bg-gray-800 text-white'}
               >

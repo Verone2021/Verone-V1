@@ -168,7 +168,7 @@ export default function SupplierDetailPage() {
             <h1 className="text-lg font-semibold text-black">{getOrganisationDisplayName(supplier)}</h1>
             <div className="flex gap-2">
               <Badge
-                variant={supplier.is_active ? 'default' : 'secondary'}
+                variant={supplier.is_active ? 'secondary' : 'secondary'}
                 className={supplier.is_active ? 'bg-green-100 text-green-800' : ''}
               >
                 {supplier.is_active ? 'Actif' : 'Inactif'}

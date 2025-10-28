@@ -335,7 +335,7 @@ export function GeneralStockMovementModal({ isOpen, onClose, onSuccess }: Genera
             <div className="grid grid-cols-3 gap-2">
               <ButtonV2
                 type="button"
-                variant={movementType === 'add' ? 'default' : 'outline'}
+                variant={movementType === 'add' ? 'secondary' : 'outline'}
                 onClick={() => setMovementType('add')}
                 className="justify-start"
               >
@@ -343,7 +343,7 @@ export function GeneralStockMovementModal({ isOpen, onClose, onSuccess }: Genera
               </ButtonV2>
               <ButtonV2
                 type="button"
-                variant={movementType === 'remove' ? 'default' : 'outline'}
+                variant={movementType === 'remove' ? 'secondary' : 'outline'}
                 onClick={() => setMovementType('remove')}
                 className="justify-start"
               >
@@ -351,7 +351,7 @@ export function GeneralStockMovementModal({ isOpen, onClose, onSuccess }: Genera
               </ButtonV2>
               <ButtonV2
                 type="button"
-                variant={movementType === 'adjust' ? 'default' : 'outline'}
+                variant={movementType === 'adjust' ? 'secondary' : 'outline'}
                 onClick={() => setMovementType('adjust')}
                 className="justify-start"
               >
@@ -395,7 +395,7 @@ export function GeneralStockMovementModal({ isOpen, onClose, onSuccess }: Genera
                   <ButtonV2
                     key={reason.code}
                     type="button"
-                    variant={reasonCode === reason.code ? 'default' : 'outline'}
+                    variant={reasonCode === reason.code ? 'secondary' : 'outline'}
                     size="sm"
                     onClick={() => setReasonCode(reason.code)}
                     className="justify-start text-left h-auto py-2"

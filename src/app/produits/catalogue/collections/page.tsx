@@ -280,7 +280,7 @@ export default function CollectionsPage() {
           <div className="space-y-1.5">
             {/* Ligne 1: Status, Visibilité, Style, Room Category */}
             <div className="flex items-center gap-1.5 overflow-x-auto scrollbar-hide">
-              <Badge variant={collection.is_active ? "default" : "secondary"} className="text-[10px] px-1.5 py-0.5 flex-shrink-0">
+              <Badge variant={collection.is_active ? "secondary" : "secondary"} className="text-[10px] px-1.5 py-0.5 flex-shrink-0">
                 {collection.is_active ? "Actif" : "Inactif"}
               </Badge>
               <Badge variant={collection.visibility === 'public' ? "outline" : "secondary"} className="text-[10px] px-1.5 py-0.5 flex-shrink-0">

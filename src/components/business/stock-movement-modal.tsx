@@ -291,7 +291,7 @@ export function StockMovementModal({ product: initialProduct, isOpen, onClose, o
               {(!initialMovementType || initialMovementType === 'add') && (
                 <ButtonV2
                   type="button"
-                  variant={movementType === 'add' ? 'default' : 'outline'}
+                  variant={movementType === 'add' ? 'secondary' : 'outline'}
                   onClick={() => setMovementType('add')}
                   className="justify-start"
                 >
@@ -303,7 +303,7 @@ export function StockMovementModal({ product: initialProduct, isOpen, onClose, o
               {(!initialMovementType || initialMovementType === 'remove' || initialMovementType === 'OUT') && (
                 <ButtonV2
                   type="button"
-                  variant={movementType === 'remove' ? 'default' : 'outline'}
+                  variant={movementType === 'remove' ? 'secondary' : 'outline'}
                   onClick={() => setMovementType('remove')}
                   className="justify-start"
                 >
@@ -314,7 +314,7 @@ export function StockMovementModal({ product: initialProduct, isOpen, onClose, o
               {/* Ajuster - Toujours visible (correction inventaire) */}
               <ButtonV2
                 type="button"
-                variant={movementType === 'adjust' ? 'default' : 'outline'}
+                variant={movementType === 'adjust' ? 'secondary' : 'outline'}
                 onClick={() => setMovementType('adjust')}
                 className="justify-start"
               >
@@ -374,7 +374,7 @@ export function StockMovementModal({ product: initialProduct, isOpen, onClose, o
                   <ButtonV2
                     key={reason.code}
                     type="button"
-                    variant={reasonCode === reason.code ? 'default' : 'outline'}
+                    variant={reasonCode === reason.code ? 'secondary' : 'outline'}
                     size="sm"
                     onClick={() => setReasonCode(reason.code)}
                     className="justify-start text-left h-auto py-2"

@@ -441,7 +441,7 @@ export function VariantGroupCreationWizard({
                     return (
                       <Badge
                         key={room.value}
-                        variant={isSelected ? 'default' : 'outline'}
+                        variant={isSelected ? 'secondary' : 'outline'}
                         className={cn(
                           'cursor-pointer transition-colors',
                           isSelected && 'bg-black hover:bg-black/90'

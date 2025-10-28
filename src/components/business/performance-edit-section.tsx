@@ -132,7 +132,7 @@ export function PerformanceEditSection({ organisation, onUpdate, className }: Pe
               Annuler
             </ButtonV2>
             <ButtonV2
-              variant="default"
+              variant="secondary"
               size="sm"
               onClick={handleSave}
               disabled={!hasChanges(section) || isSaving(section)}

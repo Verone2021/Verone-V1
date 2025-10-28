@@ -57,7 +57,7 @@ type Story = StoryObj<typeof meta>;
  */
 export const Default: Story = {
   args: {
-    variant: 'default',
+    variant: 'secondary',
     children: 'Default Button',
   },
 };

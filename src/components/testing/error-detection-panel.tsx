@@ -665,7 +665,7 @@ function ResolutionMetricsPanel() {
               {metrics.resolution_history.map((entry: { error: VeroneError; result: ResolutionResult }, index: number) => (
                 <div key={index} className="flex items-center justify-between text-sm">
                   <span>{entry.error.message.substring(0, 50)}...</span>
-                  <Badge variant={entry.result.success ? 'default' : 'secondary'}>
+                  <Badge variant={entry.result.success ? 'secondary' : 'secondary'}>
                     {entry.result.method}
                   </Badge>
                 </div>

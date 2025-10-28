@@ -110,8 +110,8 @@ export default function ExpenseDetailPage(props: PageProps) {
   const getStatusBadge = (status: DocumentStatus) => {
     const variants: Record<DocumentStatus, { variant: any; icon: any; label: string }> = {
       draft: { variant: 'secondary', icon: FileText, label: 'Brouillon' },
-      sent: { variant: 'default', icon: FileText, label: 'Envoyée' },
-      received: { variant: 'default', icon: CheckCircle2, label: 'Reçue' },
+      sent: { variant: 'secondary', icon: FileText, label: 'Envoyée' },
+      received: { variant: 'secondary', icon: CheckCircle2, label: 'Reçue' },
       paid: { variant: 'success', icon: CheckCircle2, label: 'Payée' },
       partially_paid: { variant: 'warning', icon: Clock, label: 'Partiel' },
       overdue: { variant: 'destructive', icon: AlertCircle, label: 'En retard' },

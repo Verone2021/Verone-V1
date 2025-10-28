@@ -16,7 +16,7 @@ export interface KPICardProps {
     label: string
     direction: 'up' | 'down' | 'stable'
   }
-  variant?: 'default' | 'success' | 'warning' | 'danger' | 'info'
+  variant?: 'secondary' | 'success' | 'warning' | 'danger' | 'info'
   className?: string
 }
 
@@ -44,7 +44,7 @@ export function KPICard({
   icon: Icon,
   iconColor = 'gray',
   trend,
-  variant = 'default',
+  variant = 'secondary',
   className
 }: KPICardProps) {
   const getTrendColor = () => {
@@ -122,7 +122,7 @@ export function StockKPICard({
     ? currentValue >= targetValue ? 'success'
     : currentValue >= targetValue * 0.8 ? 'warning'
     : 'danger'
-    : 'default'
+    : 'secondary'
 
   return (
     <KPICard
@@ -150,7 +150,7 @@ export function PerformanceKPICard({
     ? value <= threshold ? 'success'
     : value <= threshold * 1.5 ? 'warning'
     : 'danger'
-    : 'default'
+    : 'secondary'
 
   const performance = threshold ? `${value <= threshold ? 'Excellent' : value <= threshold * 1.5 ? 'Acceptable' : 'Critique'}` : ''
 

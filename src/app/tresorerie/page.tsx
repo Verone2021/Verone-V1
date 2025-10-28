@@ -69,7 +69,7 @@ function BankAccountCard({ account }: { account: BankAccount }) {
       <CardHeader>
         <div className="flex items-center justify-between">
           <CardTitle className="text-sm font-medium">{account.name || 'Compte principal'}</CardTitle>
-          <Badge variant={account.status === 'active' ? 'default' : 'secondary'}>
+          <Badge variant={account.status === 'active' ? 'secondary' : 'secondary'}>
             {account.status === 'active' ? 'Actif' : 'Fermé'}
           </Badge>
         </div>
@@ -157,7 +157,7 @@ function TransactionRow({ transaction }: { transaction: Transaction }) {
         <Badge
           variant={
             transaction.status === 'completed'
-              ? 'default'
+              ? 'secondary'
               : transaction.status === 'pending'
               ? 'secondary'
               : 'destructive'

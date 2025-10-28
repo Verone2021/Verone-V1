@@ -22,7 +22,7 @@ export type PriorityLevel = 'low' | 'medium' | 'high' | 'urgent'
 interface TestStatusBadgeProps {
   status: TestStatus
   size?: 'sm' | 'md' | 'lg'
-  variant?: 'default' | 'outline' | 'minimal'
+  variant?: 'secondary' | 'outline' | 'minimal'
   showIcon?: boolean
   showText?: boolean
   count?: number
@@ -32,7 +32,7 @@ interface TestStatusBadgeProps {
 interface SectionStatusBadgeProps {
   status: SectionStatus
   size?: 'sm' | 'md' | 'lg'
-  variant?: 'default' | 'outline' | 'minimal'
+  variant?: 'secondary' | 'outline' | 'minimal'
   className?: string
 }
 
@@ -146,7 +146,7 @@ const SIZE_CONFIG = {
 export function TestStatusBadge({
   status,
   size = 'md',
-  variant = 'default',
+  variant = 'secondary',
   showIcon = true,
   showText = true,
   count,
@@ -182,7 +182,7 @@ export function TestStatusBadge({
 export function SectionStatusBadge({
   status,
   size = 'md',
-  variant = 'default',
+  variant = 'secondary',
   className
 }: SectionStatusBadgeProps) {
   const config = SECTION_STATUS_CONFIG[status]

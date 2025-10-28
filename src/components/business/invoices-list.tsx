@@ -55,9 +55,9 @@ const STATUS_LABELS: Record<Invoice['status'], string> = {
 
 const STATUS_VARIANTS: Record<Invoice['status'], 'default' | 'secondary' | 'destructive'> = {
   draft: 'secondary',
-  sent: 'default',
-  paid: 'default',
-  partially_paid: 'default',
+  sent: 'secondary',
+  paid: 'secondary',
+  partially_paid: 'secondary',
   overdue: 'destructive',
   cancelled: 'secondary',
   refunded: 'secondary',

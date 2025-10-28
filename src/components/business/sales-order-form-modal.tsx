@@ -834,7 +834,7 @@ export function SalesOrderFormModal({
                             )}
                             <TableCell>{formatCurrency(itemTotal)}</TableCell>
                             <TableCell>
-                              <Badge variant={stockStatus ? 'default' : 'destructive'}>
+                              <Badge variant={stockStatus ? 'secondary' : 'destructive'}>
                                 {item.availableStock || 0} dispo
                               </Badge>
                             </TableCell>
@@ -967,7 +967,7 @@ export function SalesOrderFormModal({
                               return <Badge variant="secondary">...</Badge>
                             }
                             return (
-                              <Badge variant={availableStock > 0 ? 'default' : 'secondary'}>
+                              <Badge variant={availableStock > 0 ? 'secondary' : 'secondary'}>
                                 {availableStock}
                               </Badge>
                             )

@@ -233,7 +233,7 @@ export function ProductSelector({
                           </div>
                         </div>
                         <ButtonV2
-                          variant={isSelected ? "default" : "outline"}
+                          variant={isSelected ? "secondary" : "outline"}
                           size="sm"
                           className={isSelected ? "bg-blue-600 hover:bg-blue-700" : "border-gray-300"}
                           onClick={(e) => {

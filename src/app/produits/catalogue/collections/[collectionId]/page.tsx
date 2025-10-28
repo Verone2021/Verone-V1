@@ -427,10 +427,10 @@ export default function CollectionDetailPage({ params }: CollectionDetailPagePro
           </div>
         </div>
         <div className="flex items-center space-x-2">
-          <Badge variant={collection.is_active ? 'default' : 'secondary'}>
+          <Badge variant={collection.is_active ? 'secondary' : 'secondary'}>
             {collection.is_active ? 'Active' : 'Inactive'}
           </Badge>
-          <Badge variant={collection.visibility === 'public' ? 'default' : 'outline'}>
+          <Badge variant={collection.visibility === 'public' ? 'secondary' : 'outline'}>
             {collection.visibility === 'public' ? 'Publique' : 'Privée'}
           </Badge>
           {collection.style && (
@@ -900,7 +900,7 @@ export default function CollectionDetailPage({ params }: CollectionDetailPagePro
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4 p-4 bg-gray-50 rounded-lg">
             <div>
               <div className="text-xs font-medium text-gray-500 mb-1">Visibilité actuelle</div>
-              <Badge variant={collection.visibility === 'public' ? 'default' : 'outline'} className="mt-1">
+              <Badge variant={collection.visibility === 'public' ? 'secondary' : 'outline'} className="mt-1">
                 {collection.visibility === 'public' ? 'Publique' : 'Privée'}
               </Badge>
             </div>

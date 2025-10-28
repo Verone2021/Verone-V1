@@ -89,7 +89,7 @@ export function ContactDetailsEditSection({ contact, onUpdate, className }: Cont
               Annuler
             </ButtonV2>
             <ButtonV2
-              variant="default"
+              variant="secondary"
               size="sm"
               onClick={handleSave}
               disabled={!hasChanges(section) || isSaving(section)}

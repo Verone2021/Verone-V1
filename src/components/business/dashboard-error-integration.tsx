@@ -185,7 +185,7 @@ export const DashboardErrorIntegration: React.FC = () => {
                   Surveillance continue toutes les 30s
                 </div>
               </div>
-              <Badge variant={isActive ? 'default' : 'secondary'}>
+              <Badge variant={isActive ? 'secondary' : 'secondary'}>
                 {isActive ? 'ACTIVE' : 'INACTIVE'}
               </Badge>
             </div>
@@ -257,7 +257,7 @@ const SystemStatusBadge: React.FC<{
   }
 
   return (
-    <Badge variant="default" className="flex items-center gap-1 bg-green-600">
+    <Badge variant="secondary" className="flex items-center gap-1 bg-green-600">
       <div className="w-2 h-2 bg-green-200 rounded-full animate-pulse" />
       Actif
     </Badge>

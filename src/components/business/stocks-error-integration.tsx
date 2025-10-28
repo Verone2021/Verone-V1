@@ -505,7 +505,7 @@ const StocksStatusBadge: React.FC<{
   }
 
   return (
-    <Badge variant="default" className="flex items-center gap-1 bg-purple-600">
+    <Badge variant="secondary" className="flex items-center gap-1 bg-purple-600">
       <CheckCircle className="w-3 h-3" />
       {totalMovements} Mouvements OK
     </Badge>

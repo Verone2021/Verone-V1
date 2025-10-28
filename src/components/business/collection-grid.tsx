@@ -230,14 +230,14 @@ export const CollectionGrid: React.FC<CollectionGridProps> = ({
             <h4 className="text-sm font-medium text-black">Affichage</h4>
             <div className="flex gap-2">
               <ButtonV2
-                variant={viewMode === 'grid' ? 'default' : 'secondary'}
+                variant={viewMode === 'grid' ? 'secondary' : 'outline'}
                 size="sm"
                 onClick={() => setViewMode('grid')}
               >
                 Grille
               </ButtonV2>
               <ButtonV2
-                variant={viewMode === 'list' ? 'default' : 'secondary'}
+                variant={viewMode === 'list' ? 'secondary' : 'outline'}
                 size="sm"
                 onClick={() => setViewMode('list')}
               >

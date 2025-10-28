@@ -538,7 +538,7 @@ const WorkersPoolDashboard: React.FC<{
               <div className="flex items-center justify-between mb-3">
                 <h3 className="font-medium text-black">{worker.id}</h3>
                 <Badge
-                  variant={worker.status === 'busy' ? 'default' : 'secondary'}
+                  variant={worker.status === 'busy' ? 'secondary' : 'secondary'}
                   className="text-xs"
                 >
                   {worker.status}

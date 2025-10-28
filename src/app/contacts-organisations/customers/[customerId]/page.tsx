@@ -166,7 +166,7 @@ export default function CustomerDetailPage() {
             <h1 className="text-lg font-semibold text-black">{getOrganisationDisplayName(customer)}</h1>
             <div className="flex gap-2">
               <Badge
-                variant={customer.is_active ? 'default' : 'secondary'}
+                variant={customer.is_active ? 'secondary' : 'secondary'}
                 className={customer.is_active ? 'bg-green-100 text-green-800' : ''}
               >
                 {customer.is_active ? 'Actif' : 'Inactif'}

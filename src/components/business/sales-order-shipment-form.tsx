@@ -228,7 +228,7 @@ export function SalesOrderShipmentForm({
         </Card>
         <Card className="p-4">
           <div className="text-sm font-medium text-muted-foreground">Statut</div>
-          <Badge className="mt-1" variant={totals.allFullyShipped ? "default" : "secondary"}>
+          <Badge className="mt-1" variant={totals.allFullyShipped ? "secondary" : "secondary"}>
             {totals.allFullyShipped ? "Complète" : "Partielle"}
           </Badge>
           {totals.hasStockIssues && (
@@ -281,7 +281,7 @@ export function SalesOrderShipmentForm({
                         <span className="font-medium">{item.quantity_remaining}</span>
                       </TableCell>
                       <TableCell className="text-center">
-                        <Badge variant={item.stock_available >= item.quantity_remaining ? "default" : "destructive"}>
+                        <Badge variant={item.stock_available >= item.quantity_remaining ? "secondary" : "destructive"}>
                           {item.stock_available}
                         </Badge>
                       </TableCell>

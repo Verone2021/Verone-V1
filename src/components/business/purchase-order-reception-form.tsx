@@ -152,7 +152,7 @@ export function PurchaseOrderReceptionForm({
         </Card>
         <Card className="p-4">
           <div className="text-sm font-medium text-muted-foreground">Statut</div>
-          <Badge className="mt-1" variant={totals.allFullyReceived ? "default" : "secondary"}>
+          <Badge className="mt-1" variant={totals.allFullyReceived ? "secondary" : "secondary"}>
             {totals.allFullyReceived ? "Complète" : "Partielle"}
           </Badge>
         </Card>

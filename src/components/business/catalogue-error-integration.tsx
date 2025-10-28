@@ -424,7 +424,7 @@ const CatalogueStatusBadge: React.FC<{
   }
 
   return (
-    <Badge variant="default" className="flex items-center gap-1 bg-green-600">
+    <Badge variant="secondary" className="flex items-center gap-1 bg-green-600">
       <CheckCircle className="w-3 h-3" />
       {totalProducts} Produits Surveillés
     </Badge>

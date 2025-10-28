@@ -73,7 +73,7 @@ export function ProductDualMode({
               </div>
 
               <Badge
-                variant={currentMode === 'view' ? 'default' : 'secondary'}
+                variant={currentMode === 'view' ? 'secondary' : 'secondary'}
                 className={cn(
                   "transition-colors duration-200 text-xs px-2 py-1",
                   currentMode === 'view' ? 'bg-blue-100 text-blue-800' : 'bg-gray-100 text-gray-800'
@@ -99,7 +99,7 @@ export function ProductDualMode({
               {/* Toggle visuel - Compact sur mobile */}
               <div className="flex items-center bg-gray-100 rounded-lg p-0.5 md:p-1">
                 <ButtonV2
-                  variant={currentMode === 'view' ? 'default' : 'ghost'}
+                  variant={currentMode === 'view' ? 'secondary' : 'ghost'}
                   size="sm"
                   onClick={() => handleModeSwitch('view')}
                   className={cn(
@@ -115,7 +115,7 @@ export function ProductDualMode({
                 </ButtonV2>
 
                 <ButtonV2
-                  variant={currentMode === 'edit' ? 'default' : 'ghost'}
+                  variant={currentMode === 'edit' ? 'secondary' : 'ghost'}
                   size="sm"
                   onClick={() => handleModeSwitch('edit')}
                   className={cn(

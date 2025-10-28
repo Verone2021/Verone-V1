@@ -113,7 +113,7 @@ export function MovementsStatsCards({ stats, loading }: MovementsStatsCardsProps
         <CardContent>
           <div className="flex items-center justify-around gap-4">
             <div className="flex items-center gap-2">
-              <Badge variant="default" className="bg-green-100 text-green-800 hover:bg-green-100">
+              <Badge variant="secondary" className="bg-green-100 text-green-800 hover:bg-green-100">
                 Entrées
               </Badge>
               <span className="font-medium text-black">{formatNumber(stats.byType.IN)}</span>
@@ -125,13 +125,13 @@ export function MovementsStatsCards({ stats, loading }: MovementsStatsCardsProps
               <span className="font-medium text-black">{formatNumber(stats.byType.OUT)}</span>
             </div>
             <div className="flex items-center gap-2">
-              <Badge variant="default" className="bg-blue-100 text-blue-800 hover:bg-blue-100">
+              <Badge variant="secondary" className="bg-blue-100 text-blue-800 hover:bg-blue-100">
                 Ajustements
               </Badge>
               <span className="font-medium text-black">{formatNumber(stats.byType.ADJUST)}</span>
             </div>
             <div className="flex items-center gap-2">
-              <Badge variant="default" className="bg-purple-100 text-purple-800 hover:bg-purple-100">
+              <Badge variant="secondary" className="bg-purple-100 text-purple-800 hover:bg-purple-100">
                 Transferts
               </Badge>
               <span className="font-medium text-black">{formatNumber(stats.byType.TRANSFER)}</span>

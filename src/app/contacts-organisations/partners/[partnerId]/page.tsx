@@ -146,7 +146,7 @@ export default function PartnerDetailPage() {
             <h1 className="text-lg font-semibold text-black">{getOrganisationDisplayName(partner)}</h1>
             <div className="flex gap-2">
               <Badge
-                variant={partner.is_active ? 'default' : 'secondary'}
+                variant={partner.is_active ? 'secondary' : 'secondary'}
                 className={partner.is_active ? 'bg-green-100 text-green-800' : ''}
               >
                 {partner.is_active ? 'Actif' : 'Inactif'}

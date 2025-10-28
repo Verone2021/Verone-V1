@@ -161,7 +161,7 @@ export default function VentesDashboardPage() {
                         <div className="text-sm opacity-70">Demandes clients et devis</div>
                       </div>
                       {stats.consultationsActives > 0 && (
-                        <Badge variant="default" className="bg-blue-600">
+                        <Badge variant="secondary" className="bg-blue-600">
                           {stats.consultationsActives}
                         </Badge>
                       )}
@@ -183,7 +183,7 @@ export default function VentesDashboardPage() {
                         <div className="text-sm opacity-70">Ventes et suivi livraisons</div>
                       </div>
                       {stats.commandesEnCours > 0 && (
-                        <Badge variant="default" className="bg-green-600">
+                        <Badge variant="secondary" className="bg-green-600">
                           {stats.commandesEnCours}
                         </Badge>
                       )}
