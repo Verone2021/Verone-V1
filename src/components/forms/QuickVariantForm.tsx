@@ -231,7 +231,7 @@ export function QuickVariantForm({
             image_url: formData.image_url,
             is_primary: true,
             display_order: 1
-          }])
+          }] as any)
       }
 
       toast({

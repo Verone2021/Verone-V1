@@ -111,7 +111,7 @@ export function SimpleProductForm({ onSuccess, onCancel }: SimpleProductFormProp
 
       const { data: newProduct, error: productError } = await supabase
         .from('products')
-        .insert(productData)
+        .insert(productData as any)
         .select()
         .single()
 

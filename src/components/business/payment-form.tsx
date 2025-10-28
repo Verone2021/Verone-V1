@@ -54,7 +54,7 @@ const paymentFormSchema = z.object({
     }),
   paymentDate: z.string().min(1, 'Date de paiement requise'),
   paymentMethod: z.enum(['bank_transfer', 'check', 'cash', 'card', 'other'], {
-    required_error: 'Méthode de paiement requise',
+    message: 'Méthode de paiement requise',
   }),
   reference: z.string().optional(),
   notes: z.string().optional(),
@@ -110,7 +110,7 @@ export function PaymentForm({
         .from('payments')
         .insert({
           invoice_id: values.invoiceId,
-          amount: parseFloat(values.amount),
+          amount_paid: parseFloat(values.amount),
           payment_date: values.paymentDate,
           payment_method: values.paymentMethod,
           reference: values.reference || null,

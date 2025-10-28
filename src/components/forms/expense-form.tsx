@@ -244,7 +244,7 @@ export function ExpenseForm({ onSuccess, onCancel }: ExpenseFormProps) {
           description: formData.description,
           notes: formData.notes,
           uploaded_file_url: formData.uploaded_file_url
-        })
+        } as any)
 
       if (insertError) throw insertError
 
