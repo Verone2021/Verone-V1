@@ -3,6 +3,15 @@
 import { useState } from 'react'
 import { createClient } from '../lib/supabase/client'
 import { useToast } from './use-toast'
+import { Database } from '@/types/database'
+
+/**
+ * 🎯 Type Helpers pour Generic Table Names Pattern
+ */
+type TableName = keyof Database['public']['Tables']
+type TableRow<T extends TableName> = Database['public']['Tables'][T]['Row']
+type TableInsert<T extends TableName> = Database['public']['Tables'][T]['Insert']
+type TableUpdate<T extends TableName> = Database['public']['Tables'][T]['Update']
 
 /**
  * 🔄 Hook de base pour éliminer la duplication de code
@@ -107,37 +116,58 @@ export function useBaseListHook<T>(initialData: T[] = []): BaseHookState<T[]> & 
 /**
  * Pattern CRUD standard réutilisable
  */
-export interface CrudOperations<T, CreateData, UpdateData = Partial<CreateData>> {
-  create: (data: CreateData) => Promise<T | null>
-  update: (id: string, data: UpdateData) => Promise<T | null>
+export interface CrudOperations<TRow, TInsert, TUpdate = Partial<TInsert>> {
+  create: (data: TInsert) => Promise<TRow | null>
+  update: (id: string, data: TUpdate) => Promise<TRow | null>
   delete: (id: string) => Promise<boolean>
   fetch: () => Promise<void>
 }
 
 /**
- * Générateur de fonctions CRUD standard pour éliminer duplication
+ * 🎯 Générateur de fonctions CRUD avec typage strict Supabase
+ *
+ * Pattern Generic Table Names pour inférence TypeScript complète.
+ * TypeScript connaît exactement les types Row/Insert/Update de chaque table.
+ *
+ * @template TTable - Nom de la table Supabase (ex: 'categories', 'products')
+ * @param tableName - Nom de la table (autocomplete disponible)
+ * @param baseHook - Hook de base avec state management
+ * @param selectFields - Champs à sélectionner (défaut: '*')
+ *
+ * @example
+ * ```typescript
+ * const baseHook = useBaseListHook<TableRow<'categories'>>([])
+ * const crud = createCrudOperations('categories', baseHook)
+ * // crud.create() est maintenant typé avec CategoryInsert
+ * // crud.update() est maintenant typé avec CategoryUpdate
+ * ```
  */
-export function createCrudOperations<T, CreateData, UpdateData = Partial<CreateData>>(
-  tableName: string,
-  baseHook: ReturnType<typeof useBaseListHook<T>>,
+export function createCrudOperations<
+  TTable extends TableName,
+  TRow extends TableRow<TTable> = TableRow<TTable>,
+  TInsert extends TableInsert<TTable> = TableInsert<TTable>,
+  TUpdate = Partial<TInsert>
+>(
+  tableName: TTable,
+  baseHook: ReturnType<typeof useBaseListHook<TRow>>,
   selectFields?: string
-): CrudOperations<T, CreateData, UpdateData> {
+): CrudOperations<TRow, TInsert, TUpdate> {
 
-  const create = async (data: CreateData): Promise<T | null> => {
+  const create = async (data: TInsert): Promise<TRow | null> => {
     try {
       baseHook.setError(null)
 
       const { data: newItem, error } = await baseHook.supabase
         .from(tableName)
-        .insert([data])
+        .insert([data as any])
         .select(selectFields || '*')
         .single()
 
       if (error) throw error
 
-      baseHook.addItem(newItem as T)
+      baseHook.addItem(newItem as unknown as TRow)
       baseHook.showToast('Succès', `${tableName} créé avec succès`)
-      return newItem as T
+      return newItem as unknown as TRow
     } catch (err) {
       baseHook.handleError(err, `Erreur lors de la création de ${tableName}`)
       baseHook.showToast('Erreur', `Impossible de créer ${tableName}`, 'destructive')
@@ -145,22 +175,22 @@ export function createCrudOperations<T, CreateData, UpdateData = Partial<CreateD
     }
   }
 
-  const update = async (id: string, data: UpdateData): Promise<T | null> => {
+  const update = async (id: string, data: TUpdate): Promise<TRow | null> => {
     try {
       baseHook.setError(null)
 
       const { data: updatedItem, error } = await baseHook.supabase
         .from(tableName)
         .update(data as any)
-        .eq('id', id)
+        .eq('id' as any, id)
         .select(selectFields || '*')
         .single()
 
       if (error) throw error
 
-      baseHook.updateItem(id, updatedItem as unknown as Partial<T>)
+      baseHook.updateItem(id, updatedItem as unknown as Partial<TRow>)
       baseHook.showToast('Succès', `${tableName} mis à jour avec succès`)
-      return updatedItem
+      return updatedItem as unknown as TRow
     } catch (err) {
       baseHook.handleError(err, `Erreur lors de la mise à jour de ${tableName}`)
       baseHook.showToast('Erreur', `Impossible de mettre à jour ${tableName}`, 'destructive')
@@ -175,7 +205,7 @@ export function createCrudOperations<T, CreateData, UpdateData = Partial<CreateD
       const { error } = await baseHook.supabase
         .from(tableName)
         .delete()
-        .eq('id', id)
+        .eq('id' as any, id)
 
       if (error) throw error
 
