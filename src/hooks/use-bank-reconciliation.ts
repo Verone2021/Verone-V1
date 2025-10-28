@@ -269,7 +269,7 @@ export function useBankReconciliation() {
         .from('payments')
         .insert({
           invoice_id: invoiceId,
-          amount: transaction.amount,
+          amount: (transaction as any).amount,
           payment_date: transaction.settled_at || transaction.emitted_at,
           payment_method: 'bank_transfer',
           reference: transaction.transaction_id,
@@ -296,7 +296,7 @@ export function useBankReconciliation() {
       if (txUpdateError) throw txUpdateError;
 
       // 4. Update invoice (financial_documents)
-      const newAmountPaid = (invoice.amount_paid || 0) + transaction.amount;
+      const newAmountPaid = (invoice.amount_paid || 0) + (transaction as any).amount;
       const newStatus = newAmountPaid >= invoice.total_ttc ? 'paid' : invoice.status;
 
       const { error: invoiceUpdateError } = await supabase

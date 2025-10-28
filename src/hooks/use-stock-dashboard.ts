@@ -147,8 +147,8 @@ export function useStockDashboard() {
       if (recentError) throw recentError
 
       const alertsCount = {
-        out_of_stock: (allAlerts || []).filter(a => a.alert_status === 'out_of_stock').length,
-        low_stock: (allAlerts || []).filter(a => a.alert_status === 'low_stock').length
+        out_of_stock: (allAlerts || []).filter((a: any) => a.alert_status === 'out_of_stock').length,
+        low_stock: (allAlerts || []).filter((a: any) => a.alert_status === 'low_stock').length
       }
 
       // Calculs agrégés en JS (plus rapide que COUNT() multiples)

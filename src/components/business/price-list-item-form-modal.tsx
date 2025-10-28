@@ -226,7 +226,7 @@ export function PriceListItemFormModal({
               min_quantity: tier.min_quantity,
               max_quantity: tier.max_quantity,
               margin_rate: tier.margin_rate > 0 ? tier.margin_rate / 100 : undefined,
-              currency: priceList?.currency,
+              currency: (priceList as any)?.currency,
               valid_from: tier.valid_from || undefined,
               valid_until: tier.valid_until || undefined,
               is_active: tier.is_active,
@@ -442,7 +442,7 @@ export function PriceListItemFormModal({
                         {/* Prix et Remises */}
                         <div className="space-y-2">
                           <Label htmlFor={`price_${index}`}>
-                            Prix HT ({priceList?.currency}) <span className="text-red-600">*</span>
+                            Prix HT ({(priceList as any)?.currency}) <span className="text-red-600">*</span>
                           </Label>
                           <Input
                             id={`price_${index}`}
