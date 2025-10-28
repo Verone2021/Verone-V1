@@ -96,14 +96,14 @@ export function ShippingManagerModal({ order, open, onClose, onSuccess }: Shippi
       let result
 
       if (selectedCarrier === 'packlink') {
-        result = await createPacklinkShipment(request)
+        result = await createPacklinkShipment(request as any)
         if (result.success && result.labelUrl) {
           window.open(result.labelUrl, '_blank')
         }
       } else {
         // Mondial Relay, Chronotruck, Manual utilisent createManualShipment
         // TODO: Créer createMondialRelayShipment et createChronotruckShipment spécifiques
-        result = await createManualShipment(request)
+        result = await createManualShipment(request as any)
       }
 
       if (result.success) {

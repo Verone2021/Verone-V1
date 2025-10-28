@@ -114,7 +114,7 @@ export function InvoicesList() {
           throw error;
         }
 
-        setInvoices(data || []);
+        setInvoices(data as any || []);
         setTotalCount(count || 0);
       } catch (error) {
         console.error('Erreur chargement factures:', error);

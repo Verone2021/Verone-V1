@@ -65,8 +65,8 @@ export function VariantSiblings({
       if (error) throw error
 
       // Appliquer les règles de tri R020
-      const sortedSiblings = sortVariantSiblings(data || [], currentProductId)
-      setSiblings(sortedSiblings)
+      const sortedSiblings = sortVariantSiblings(data as any || [], currentProductId)
+      setSiblings(sortedSiblings as any)
 
     } catch (err) {
       console.error('❌ Erreur chargement variantes sœurs:', err)

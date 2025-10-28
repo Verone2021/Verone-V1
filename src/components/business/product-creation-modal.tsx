@@ -98,7 +98,7 @@ export function ProductCreationModal({ isOpen, onClose, onSuccess }: ProductCrea
 
       console.log('Création produit:', productData)
 
-      await createProduct(productData)
+      await createProduct(productData as any)
 
       // Réinitialiser le formulaire
       resetForm()

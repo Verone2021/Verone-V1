@@ -330,7 +330,7 @@ export function MovementsFilters({ filters, onFiltersChange, onReset, hasFilters
                           from: range.from,
                           to: range.from
                         }
-                      }))
+                      }) as any)
                     }
                   }}
                   numberOfMonths={2}

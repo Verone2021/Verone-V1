@@ -398,7 +398,7 @@ export function ProductPhotosModal({
                         <ButtonV2
                           size="sm"
                           variant="destructive"
-                          onClick={() => handleDeleteImage(image.id, image.is_primary)}
+                          onClick={() => handleDeleteImage(image.id, image.is_primary || false)}
                           disabled={deletingImageId === image.id}
                           className="h-9 px-3 bg-red-500/90 hover:bg-red-600 text-white border-0 relative z-40"
                           title="Supprimer la photo"

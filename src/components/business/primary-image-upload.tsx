@@ -63,7 +63,7 @@ export function PrimaryImageUpload({
   // 🎯 Callback après upload réussi
   useEffect(() => {
     if (primaryImage && onImageUpload) {
-      onImageUpload(primaryImage.id, primaryImage.public_url)
+      onImageUpload(primaryImage.id, primaryImage.public_url || '')
     }
   }, [primaryImage, onImageUpload])
 

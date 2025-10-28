@@ -366,7 +366,7 @@ export function UnifiedOrganisationForm({
           </DialogTitle>
         </DialogHeader>
 
-        <form onSubmit={form.handleSubmit(handleSubmit)}>
+        <form onSubmit={form.handleSubmit(handleSubmit as any)}>
           <div style={{ display: 'flex', flexDirection: 'column', gap: spacing[8] }}>
 
             {/* Logo Upload Section */}

@@ -114,7 +114,7 @@ export function CustomerSelector({ selectedCustomer, onCustomerChange, disabled 
           ...org,
           name: org.trade_name || org.legal_name,
           type: 'professional' as const
-        })))
+        })) as any)
 
       } else {
         // Charger les clients particuliers (B2C)
@@ -165,7 +165,7 @@ export function CustomerSelector({ selectedCustomer, onCustomerChange, disabled 
           billing_region_individual: ind.billing_region_individual,
           billing_country_individual: ind.billing_country_individual,
           has_different_billing_address: ind.has_different_billing_address
-        })))
+        })) as any)
       }
 
     } catch (err) {

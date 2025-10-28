@@ -134,7 +134,7 @@ export function SampleOrderValidation({ className }: SampleOrderValidationProps)
 
       if (error) throw error
 
-      setSampleOrders(orders || [])
+      setSampleOrders(orders as any || [])
 
       // Charger les métriques du workflow
       try {

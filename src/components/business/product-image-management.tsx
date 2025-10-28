@@ -331,7 +331,7 @@ export function ProductImageManagement({
                     <ButtonV2
                       size="sm"
                       variant="destructive"
-                      onClick={() => handleDeleteImage(image.id, image.is_primary)}
+                      onClick={() => handleDeleteImage(image.id, image.is_primary || false)}
                       disabled={deletingImageId === image.id}
                       className="h-8 w-8 p-0"
                       title={image.is_primary ? "Supprimer l'image principale" : "Supprimer l'image"}

@@ -352,7 +352,7 @@ export function SalesOrderFormModal({
 
     try {
       // Appel Supabase RPC calculate_product_price_v2
-      const { data, error } = await supabase.rpc('calculate_product_price_v2', {
+      const { data, error } = await supabase.rpc('calculate_product_price_v2' as any, {
         p_product_id: productId,
         p_quantity: quantity,
         p_channel_id: null, // TODO: Ajouter sélecteur canal si besoin

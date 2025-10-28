@@ -109,7 +109,7 @@ export function SubcategoryForm({
 
       if (error) throw error
 
-      setFormData(prev => ({ ...prev, family_id: data.family_id }))
+      setFormData(prev => ({ ...prev, family_id: data.family_id }) as any)
     } catch (error: any) {
       console.error('Erreur récupération family_id catégorie:', error?.message || JSON.stringify(error))
     }

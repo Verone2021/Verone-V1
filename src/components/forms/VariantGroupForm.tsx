@@ -161,7 +161,7 @@ export function VariantGroupForm({
           common_width: dimensions.width?.toString() || '',
           common_height: dimensions.height?.toString() || '',
           common_dimensions_unit: dimensions.unit || 'cm'
-        })
+        } as any)
       } else {
         // Mode création
         setFormData({
@@ -175,7 +175,7 @@ export function VariantGroupForm({
           common_width: '',
           common_height: '',
           common_dimensions_unit: 'cm'
-        })
+        } as any)
         setFilters({
           familyId: '',
           categoryId: ''
@@ -253,7 +253,7 @@ export function VariantGroupForm({
         }
       } else {
         // Mode création
-        success = await createVariantGroup(groupData)
+        success = await createVariantGroup(groupData as any)
         if (success) {
           toast({
             title: "Succès",

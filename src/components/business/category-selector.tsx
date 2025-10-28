@@ -87,7 +87,7 @@ export function CategorySelector({
 
       if (error) throw error
 
-      setFamilies(data || [])
+      setFamilies(data as any || [])
     } catch (err) {
       setError('Erreur de chargement')
     } finally {
@@ -105,7 +105,7 @@ export function CategorySelector({
 
       if (error) throw error
 
-      setCategories(data || [])
+      setCategories(data as any || [])
       setSubcategories([]) // Reset sous-catégories
       setSelectedCategory(null)
       setSelectedSubcategory(null)
@@ -124,7 +124,7 @@ export function CategorySelector({
 
       if (error) throw error
 
-      setSubcategories(data || [])
+      setSubcategories(data as any || [])
       setSelectedSubcategory(null)
     } catch (err) {
       setError('Erreur de chargement')
@@ -174,7 +174,7 @@ export function CategorySelector({
 
         setSelectedFamily(family)
         setSelectedCategory(category)
-        setSelectedSubcategory(subcategory)
+        setSelectedSubcategory(subcategory as any)
 
         // Charger les listes dépendantes
         await loadCategories(family.id)

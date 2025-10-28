@@ -64,7 +64,7 @@ export function CollectionEditModal({
       await onSave({
         id: collection?.id,
         ...formData,
-      })
+      } as any)
       onClose()
     } catch (error) {
       console.error('Erreur lors de la sauvegarde:', error)

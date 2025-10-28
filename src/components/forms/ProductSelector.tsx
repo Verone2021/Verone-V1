@@ -54,7 +54,7 @@ export function ProductSelector({
     setSearching(true)
     try {
       const products = await getAvailableProductsForVariantGroup(search, 50)
-      setAvailableProducts(products)
+      setAvailableProducts(products as any)
     } catch (error) {
       console.error('Error searching products:', error)
     } finally {

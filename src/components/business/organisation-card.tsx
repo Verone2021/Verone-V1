@@ -104,7 +104,7 @@ export function OrganisationCard({
   onDelete
 }: OrganisationCardProps) {
   const typeInfo = getOrganisationTypeInfo(organisation.type, organisation.customer_type)
-  const countryCode = formatCountryCode(organisation.country)
+  const countryCode = formatCountryCode(organisation.country || null)
   const baseUrl = organisation.type === 'customer'
     ? '/contacts-organisations/customers'
     : organisation.type === 'supplier'
@@ -119,7 +119,7 @@ export function OrganisationCard({
           <div className="flex items-center gap-1.5 flex-1 min-w-0">
             <OrganisationLogo
               logoUrl={organisation.logo_url}
-              organisationName={getOrganisationDisplayName(organisation)}
+              organisationName={getOrganisationDisplayName(organisation as any)}
               size="xs"
               fallback="initials"
               className="flex-shrink-0"
@@ -132,12 +132,12 @@ export function OrganisationCard({
                 className="hover:underline truncate flex items-center gap-1 text-sm font-medium leading-tight"
                 style={{ color: colors.text.DEFAULT }}
               >
-                <span className="truncate">{getOrganisationDisplayName(organisation)}</span>
+                <span className="truncate">{getOrganisationDisplayName(organisation as any)}</span>
                 <ExternalLink className="h-3 w-3 flex-shrink-0 opacity-60" />
               </a>
             ) : (
               <span className="truncate text-sm font-medium leading-tight" style={{ color: colors.text.DEFAULT }}>
-                {getOrganisationDisplayName(organisation)}
+                {getOrganisationDisplayName(organisation as any)}
               </span>
             )}
           </div>

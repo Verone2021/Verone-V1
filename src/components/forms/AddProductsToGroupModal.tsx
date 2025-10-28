@@ -115,7 +115,7 @@ export function AddProductsToGroupModal({
           })
         )
 
-        setProducts(productsWithImages)
+        setProducts(productsWithImages as any)
       } catch (err) {
         console.error('Erreur:', err)
       } finally {

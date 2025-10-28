@@ -221,7 +221,7 @@ export function ContactEditSection({ organisation, onUpdate, className }: Contac
       <div className="space-y-3">
         <div>
           <span className="text-sm text-black opacity-70">Nom:</span>
-          <div className="text-lg font-semibold text-black">{getOrganisationDisplayName(organisation)}</div>
+          <div className="text-lg font-semibold text-black">{getOrganisationDisplayName(organisation as any)}</div>
         </div>
 
         {organisation.email && (

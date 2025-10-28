@@ -79,7 +79,7 @@ export function ProductSelectorModal({
             is_primary
           )
         `)
-        .in('status', statusFilters)
+        .in('status', statusFilters as any)
         .eq('creation_mode', 'complete')
         .order('name', { ascending: true })
 

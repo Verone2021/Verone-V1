@@ -123,7 +123,7 @@ export function CollectionProductsModal({
       const availableProductsList = transformedProducts
         .filter(p => !inCollectionIds.includes(p.id))
 
-      setAvailableProducts(availableProductsList)
+      setAvailableProducts(availableProductsList as any)
       setCollectionProducts(inCollectionProducts)
 
     } catch (error) {

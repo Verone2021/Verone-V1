@@ -175,7 +175,7 @@ export function StockReportsModal({ isOpen, onClose }: StockReportsModalProps) {
       dateFrom: thirtyDaysAgo.toISOString().split('T')[0],
       dateTo: today.toISOString().split('T')[0],
       format: 'pdf'
-    })
+    } as any)
   }
 
   const handleGenerateReport = () => {

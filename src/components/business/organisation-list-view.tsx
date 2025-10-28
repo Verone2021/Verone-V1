@@ -124,7 +124,7 @@ export function OrganisationListView({
         </thead>
         <tbody className="divide-y divide-gray-100">
           {organisations.map((org) => {
-            const countryCode = formatCountryCode(org.country)
+            const countryCode = formatCountryCode(org.country || null)
             const baseUrl = getBaseUrl(org.type)
 
             return (
@@ -134,14 +134,14 @@ export function OrganisationListView({
                   <div className="flex items-center gap-2">
                     <OrganisationLogo
                       logoUrl={org.logo_url}
-                      organisationName={getOrganisationDisplayName(org)}
+                      organisationName={getOrganisationDisplayName(org as any)}
                       size="xs"
                       fallback="initials"
                       className="flex-shrink-0"
                     />
                     <div className="min-w-0">
                       <p className="font-medium text-black truncate leading-tight">
-                        {getOrganisationDisplayName(org)}
+                        {getOrganisationDisplayName(org as any)}
                       </p>
                       {org.archived_at && (
                         <Badge

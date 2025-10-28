@@ -178,7 +178,7 @@ export function ContactFormModal({
           </DialogTitle>
         </DialogHeader>
 
-        <form onSubmit={form.handleSubmit(handleSubmit)}>
+        <form onSubmit={form.handleSubmit(handleSubmit as any)}>
           <div style={{ display: 'flex', flexDirection: 'column', gap: spacing[6] }}>
 
             {/* Section 1: Identité */}
