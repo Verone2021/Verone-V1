@@ -233,7 +233,7 @@ export default function CollectionDetailPage({ params }: CollectionDetailPagePro
 
   // Handlers édition inline - Style
   const handleStartEditStyle = useCallback(() => {
-    setEditedStyle(collection?.style || null)
+    setEditedStyle((collection?.style || null) as any)
     setEditingStyle(true)
   }, [collection?.style])
 

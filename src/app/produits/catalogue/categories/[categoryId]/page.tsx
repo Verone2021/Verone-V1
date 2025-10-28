@@ -154,7 +154,7 @@ export default function CategoryDetailPage() {
         is_active: formData.is_active,
         display_order: formData.display_order,
         image_url: formData.image_url
-      })
+      } as any)
       setIsNewSubcategoryOpen(false)
     } catch (error) {
       console.error('Erreur lors de la création de la sous-catégorie:', error)

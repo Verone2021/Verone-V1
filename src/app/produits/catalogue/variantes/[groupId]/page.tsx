@@ -397,7 +397,7 @@ export default function VariantGroupDetailPage({ params }: VariantGroupDetailPag
           </ButtonV2>
           <div>
             <div className="flex items-center gap-3">
-              {getVariantTypeIcon(variantGroup.variant_type)}
+              {getVariantTypeIcon(variantGroup.variant_type || '')}
               {editingName ? (
                 <div className="flex items-center gap-2">
                   <Input
@@ -480,7 +480,7 @@ export default function VariantGroupDetailPage({ params }: VariantGroupDetailPag
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Type</CardTitle>
-            {getVariantTypeIcon(variantGroup.variant_type)}
+            {getVariantTypeIcon(variantGroup.variant_type || '')}
           </CardHeader>
           <CardContent>
             <div className="text-sm font-medium">
@@ -572,7 +572,7 @@ export default function VariantGroupDetailPage({ params }: VariantGroupDetailPag
               </div>
             ) : (
               <div className="flex items-center gap-2 group">
-                {getVariantTypeIcon(variantGroup.variant_type)}
+                {getVariantTypeIcon(variantGroup.variant_type || '')}
                 <span className="text-sm text-gray-900 font-medium">
                   {formatVariantType(variantGroup.variant_type)}
                 </span>
@@ -655,7 +655,7 @@ export default function VariantGroupDetailPage({ params }: VariantGroupDetailPag
               <div className="flex items-center gap-2">
                 <Link href={`/contacts-organisations/suppliers/${variantGroup.supplier.id}`}>
                   <Badge variant="outline" className="bg-blue-50 text-blue-700 border-blue-200 hover:bg-blue-100 cursor-pointer transition-colors flex items-center gap-1.5">
-                    🏢 {getOrganisationDisplayName(variantGroup.supplier)}
+                    🏢 {getOrganisationDisplayName(variantGroup.supplier as any)}
                     <ExternalLink className="h-3 w-3 opacity-60" />
                   </Badge>
                 </Link>

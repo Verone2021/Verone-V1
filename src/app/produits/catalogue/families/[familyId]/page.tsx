@@ -135,7 +135,7 @@ export default function FamilyDetailPage() {
         is_active: formData.is_active,
         display_order: formData.display_order,
         image_url: formData.image_url
-      })
+      } as any)
       setIsNewCategoryOpen(false)
     } catch (error) {
       console.error('Erreur lors de la création de la catégorie:', error)

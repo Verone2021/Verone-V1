@@ -220,7 +220,7 @@ export default function ProductDetailPage() {
         throw new Error('Produit non trouvé')
       }
 
-      setProduct(data)
+      setProduct(data as any)
 
     } catch (err) {
       console.error('Erreur lors du chargement du produit:', err)
@@ -244,7 +244,7 @@ export default function ProductDetailPage() {
         .update({
           ...updatedData,
           updated_at: new Date().toISOString()
-        })
+        } as any)
         .eq('id', product.id)
         .select()
         .single()
@@ -255,7 +255,7 @@ export default function ProductDetailPage() {
       }
 
       // Mettre à jour l'état local avec les données retournées de la base
-      setProduct({ ...product, ...data })
+      setProduct({ ...product, ...data } as any)
       console.log('✅ Produit mis à jour avec succès:', data)
     } catch (error) {
       console.error('❌ Erreur lors de la mise à jour:', error)

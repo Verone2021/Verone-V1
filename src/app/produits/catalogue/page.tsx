@@ -87,7 +87,7 @@ export default function CataloguePage() {
     setArchivedLoading(true)
     try {
       const result = await loadArchivedProducts(filters)
-      setArchivedProducts(result.products)
+      setArchivedProducts(result.products as any)
     } catch (error) {
       console.error('Erreur chargement produits archivés:', error)
     } finally {

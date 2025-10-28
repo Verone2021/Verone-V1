@@ -56,7 +56,7 @@ function ProductHistoryModal({ product, isOpen, onClose }: ProductHistoryModalPr
     setLoading(true)
     try {
       const history = await getProductHistory(product.id)
-      setMovements(history)
+      setMovements(history as any)
     } catch (error) {
       // Erreur gérée dans le hook
     } finally {
