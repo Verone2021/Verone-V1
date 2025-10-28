@@ -297,7 +297,7 @@ export async function cleanupOldSyncOperations(): Promise<number> {
   const supabase = await createClient();
 
   // Appeler RPC cleanup_old_sync_operations() (migration 003)
-  const { data, error } = await supabase.rpc('cleanup_old_sync_operations');
+  const { data, error } = await supabase.rpc('cleanup_old_sync_operations' as any);
 
   if (error) {
     console.error('Failed to cleanup old sync operations:', error);

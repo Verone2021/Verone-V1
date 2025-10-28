@@ -55,12 +55,12 @@ const metricsFetcher = async () => {
 
   // Produits actifs: disponibles à la vente
   const activeProducts = products?.filter(p =>
-    ['in_stock', 'preorder', 'coming_soon', 'pret_a_commander'].includes(p.status)
+    (['in_stock', 'preorder', 'coming_soon', 'pret_a_commander'] as any).includes(p.status)
   )?.length || 0
 
   // Produits publiés: tous sauf sourcing
   const publishedProducts = products?.filter(p =>
-    !['sourcing', 'echantillon_a_commander'].includes(p.status)
+    !(['sourcing', 'echantillon_a_commander'] as any).includes(p.status)
   )?.length || 0
 
   // Produits archivés

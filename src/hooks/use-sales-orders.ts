@@ -268,7 +268,7 @@ export function useSalesOrders() {
       )
 
       console.log('✅ [FETCH] Mise à jour state avec', ordersWithCustomers.length, 'commandes')
-      setOrders(ordersWithCustomers)
+      setOrders(ordersWithCustomers as any)
       console.log('🎉 [FETCH] fetchOrders terminé avec succès')
     } catch (error: any) {
       console.error('❌ [FETCH] Erreur lors de la récupération des commandes:', error?.message || 'Erreur inconnue', error)
@@ -347,7 +347,7 @@ export function useSalesOrders() {
         ...customerData
       }
 
-      setCurrentOrder(orderWithCustomer)
+      setCurrentOrder(orderWithCustomer as any)
       return orderWithCustomer
     } catch (error) {
       console.error('Erreur lors de la récupération de la commande:', error)

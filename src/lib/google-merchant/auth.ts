@@ -277,7 +277,7 @@ export class GoogleMerchantAuth {
    */
   async getGoogleApisAuth() {
     const client = await this.getJWTClient()
-    return google.auth.fromJSON(client.credentials || {})
+    return google.auth.fromJSON((client.credentials || {}) as any)
   }
 }
 

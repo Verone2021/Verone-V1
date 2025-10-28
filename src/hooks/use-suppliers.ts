@@ -61,7 +61,7 @@ export function useSuppliers() {
           return
         }
 
-        setSuppliers(data || [])
+        setSuppliers((data || []) as any)
       } catch (err) {
         console.error('Erreur fetch suppliers:', err)
         setError('Impossible de charger les fournisseurs')

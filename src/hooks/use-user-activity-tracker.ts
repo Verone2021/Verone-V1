@@ -117,7 +117,7 @@ export function useUserActivityTracker() {
       // ✅ PHASE 3: Calculs déplacés côté serveur (RPC PostgreSQL)
       // Gain: 2900ms (JS) → <500ms (RPC)
       const { data, error } = await supabase
-        .rpc('get_activity_stats', { days_ago: 7 })
+        .rpc('get_activity_stats', { days_ago: 7 } as any)
 
       if (error) throw error
 

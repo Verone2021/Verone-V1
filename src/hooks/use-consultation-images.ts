@@ -95,7 +95,7 @@ export function useConsultationImages({
           .getPublicUrl(image.storage_path).data.publicUrl
       }))
 
-      updateDerivedState(imagesWithUrls)
+      updateDerivedState(imagesWithUrls as any)
 
     } catch (err) {
       console.error('❌ Erreur récupération images consultation:', err)
@@ -165,7 +165,7 @@ export function useConsultationImages({
 
       // 6. Mettre à jour le state local
       const updatedImages = [...state.images, imageWithUrl]
-      updateDerivedState(updatedImages)
+      updateDerivedState(updatedImages as any)
 
       console.log('✅ Image consultation uploadée:', fileName)
       return imageWithUrl

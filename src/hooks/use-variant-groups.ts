@@ -114,7 +114,7 @@ export function useVariantGroups(filters?: VariantGroupFilters) {
         product_count: productsWithImages.filter(p => p.variant_group_id === group.id).length
       }))
 
-      setVariantGroups(groupsWithProducts)
+      setVariantGroups(groupsWithProducts as any)
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Erreur inconnue')
       logger.error('Erreur chargement variant groups', err as Error, {
@@ -524,7 +524,7 @@ export function useVariantGroups(filters?: VariantGroupFilters) {
         .update({
           ...finalUpdates,
           updated_at: new Date().toISOString()
-        })
+        } as any)
         .eq('id', productId)
 
       if (updateError) {
@@ -1366,7 +1366,7 @@ export function useVariantGroup(groupId: string) {
           product_count: productsWithImages.length
         }
 
-        setVariantGroup(groupWithProducts)
+        setVariantGroup(groupWithProducts as any)
         setLoading(false)
         setError(null)
 

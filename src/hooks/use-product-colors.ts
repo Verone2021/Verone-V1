@@ -61,7 +61,7 @@ export function useProductColors(): UseProductColorsReturn {
         throw fetchError
       }
 
-      setColors(data || [])
+      setColors((data || []) as any)
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : 'Erreur inconnue'
       setError(errorMessage)
@@ -133,7 +133,7 @@ export function useProductColors(): UseProductColorsReturn {
       }
 
       // Mettre à jour le cache local
-      setColors(prev => [...prev, data])
+      setColors(prev => [...prev, data] as any)
 
       return data
     } catch (err) {

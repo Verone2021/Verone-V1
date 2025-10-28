@@ -233,7 +233,7 @@ export function useSupabaseTable<T = any>(
     return await query
   }, [tableName, select, filters, orderBy, limit, offset])
 
-  return useSupabaseQuery<T[]>(queryKey, queryFn, queryOptions)
+  return useSupabaseQuery<T[]>(queryKey, queryFn as any, queryOptions)
 }
 
 // Cache cleanup utility

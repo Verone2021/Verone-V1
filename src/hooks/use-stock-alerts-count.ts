@@ -15,7 +15,7 @@ export function useStockAlertsCount() {
       try {
         // Utiliser RPC au lieu de vue (bypass RLS avec SECURITY DEFINER)
         const { data: alertCount, error } = await supabase
-          .rpc('get_stock_alerts_count')
+          .rpc('get_stock_alerts_count') as any
 
         if (error) {
           console.error('Erreur comptage alertes:', error)

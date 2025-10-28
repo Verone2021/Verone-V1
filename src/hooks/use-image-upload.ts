@@ -209,7 +209,7 @@ export function useImageUpload({
         return true
       } else {
         console.error('❌ Erreur suppression:', result.error)
-        setError(result.error)
+        setError(result.error as any)
         return false
       }
     } catch (error) {

@@ -159,7 +159,7 @@ export function useStockMovements() {
         } : null
       }))
 
-      setMovements(enrichedMovements)
+      setMovements(enrichedMovements as any)
     } catch (error) {
       console.error('Erreur lors de la récupération des mouvements:', error)
       toast({

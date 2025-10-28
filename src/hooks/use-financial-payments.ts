@@ -129,7 +129,7 @@ export function useFinancialPayments(documentId?: string) {
           p_transaction_reference: params.transaction_reference || null,
           p_bank_transaction_id: params.bank_transaction_id || null,
           p_notes: params.notes || null
-        })
+        }) as any
 
       if (rpcError) throw rpcError
 

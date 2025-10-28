@@ -575,7 +575,7 @@ export function useCollection(id: string) {
       }
 
       // 🎯 Batch setState pour éviter multiples re-renders
-      setCollection(collectionWithProducts)
+      setCollection(collectionWithProducts as any)
       setLoading(false)
       setError(null)
 

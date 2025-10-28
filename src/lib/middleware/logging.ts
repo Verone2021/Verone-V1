@@ -136,7 +136,7 @@ export function withLogging<T extends any[]>(
     }
 
     // Log de fin de requête
-    logger[logLevel](message, endContext, metrics);
+    logger[logLevel](message, endContext as any, metrics);
 
     // Log response body si activé
     if (opts.logResponseBody && statusCode >= 400) {

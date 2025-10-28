@@ -57,7 +57,7 @@ export function useProductVariants(productId: string) {
           setProduct({
             ...productData,
             siblings: []
-          })
+          } as any)
           setSiblings([])
           setLoading(false)
           return
@@ -132,7 +132,7 @@ export function useProductVariants(productId: string) {
         }
 
         setProduct(fullProduct)
-        setSiblings(siblingsWithImages)
+        setSiblings(siblingsWithImages as any)
       } catch (err) {
         console.error('Erreur fetch variantes:', err)
         setError(err instanceof Error ? err.message : 'Erreur inconnue')

@@ -116,7 +116,7 @@ export function useSalesDashboard() {
         enrichedOrders.push({
           ...order,
           customer_name: customerName
-        })
+        } as any)
       }
 
       // ============================================

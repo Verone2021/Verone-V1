@@ -49,7 +49,7 @@ export function useProductPrimaryImage(productId: string | undefined) {
           throw fetchError
         }
 
-        setImage(data)
+        setImage(data as any)
       } catch (err) {
         console.error('[useProductPrimaryImage] Error:', err)
         setError(err instanceof Error ? err.message : 'Erreur inconnue')

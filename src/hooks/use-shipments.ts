@@ -377,7 +377,7 @@ export function useShipments() {
 
       if (error) throw error
 
-      setShipments(data || [])
+      setShipments((data || []) as any)
       return data || []
 
     } catch (error) {

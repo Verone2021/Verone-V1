@@ -212,7 +212,7 @@ const productsFetcher = async (
   }
 
   if (filters?.status) {
-    query = query.eq('status', filters.status)
+    query = query.eq('status', filters.status as any)
   }
 
   if (filters?.supplier_id) {
@@ -266,7 +266,7 @@ export function useProducts(filters?: ProductFilters, page: number = 0) {
   // 🚀 Utiliser SWR avec cache et revalidation automatique
   const { data, error, isLoading, mutate } = useSWR(
     swrKey,
-    ([_, filtersJson]) => productsFetcher('products', JSON.parse(filtersJson), page),
+    ([_, filtersJson]) => productsFetcher('products', JSON.parse(filtersJson), page as any),
     {
       revalidateOnFocus: false,
       revalidateOnReconnect: true,
@@ -348,7 +348,7 @@ export function useProducts(filters?: ProductFilters, page: number = 0) {
     try {
       const { data: updatedProduct, error } = await supabase
         .from('products')
-        .update(productData)
+        .update(productData as any)
         .eq('id', id)
         .select()
         .single()
@@ -501,7 +501,7 @@ export function useProduct(id: string) {
             ...data,
             primary_image_url: primaryImageUrl,
             minimumSellingPrice
-          })
+          } as any)
         }
       } catch (err) {
         setError(err instanceof Error ? err.message : 'Erreur inconnue')

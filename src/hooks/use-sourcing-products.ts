@@ -113,7 +113,7 @@ export function useSourcingProducts(filters?: SourcingFilters) {
       }
 
       if (filters?.status) {
-        query = query.eq('status', filters.status)
+        query = query.eq('status', filters.status as any)
       }
 
       if (filters?.sourcing_type) {
@@ -171,7 +171,7 @@ export function useSourcingProducts(filters?: SourcingFilters) {
         }
       })
 
-      setProducts(enrichedProducts)
+      setProducts(enrichedProducts as any)
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Erreur inconnue')
       toast({

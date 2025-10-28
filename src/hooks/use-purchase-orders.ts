@@ -236,7 +236,7 @@ export function usePurchaseOrders() {
         }))
       }))
 
-      setOrders(enrichedOrders)
+      setOrders(enrichedOrders as any)
     } catch (error) {
       console.error('Erreur lors de la récupération des commandes:', error)
       toast({
@@ -333,7 +333,7 @@ export function usePurchaseOrders() {
         purchase_order_items: enrichedItems
       }
 
-      setCurrentOrder(enrichedOrder)
+      setCurrentOrder(enrichedOrder as any)
       return enrichedOrder
     } catch (error) {
       console.error('Erreur lors de la récupération de la commande:', error)

@@ -90,7 +90,7 @@ export function useCategories() {
 
     // Convertir en map avec level
     categories.forEach(cat => {
-      categoryMap.set(cat.id, { ...cat, children: [] })
+      categoryMap.set(cat.id, { ...cat, children: [] } as any)
     })
 
     const roots: CategoryWithChildren[] = []

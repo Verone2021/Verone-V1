@@ -174,7 +174,7 @@ export function useConsultations() {
 
       if (error) throw error
 
-      setConsultations(data || [])
+      setConsultations((data || []) as any)
     } catch (err) {
       const message = err instanceof Error ? err.message : 'Erreur lors du chargement des consultations'
       setError(message)
@@ -202,7 +202,7 @@ export function useConsultations() {
       if (error) throw error
 
       // Ajouter à la liste locale
-      setConsultations(prev => [newConsultation, ...prev])
+      setConsultations(prev => [newConsultation, ...prev] as any)
 
       toast({
         title: "Consultation créée",

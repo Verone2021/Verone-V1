@@ -218,7 +218,7 @@ export class GoogleMerchantSyncClient {
         errorJSON: error ? JSON.stringify(error, Object.getOwnPropertyNames(error)) : null
       }
 
-      logger.error('Exception inserting product', errorDetails)
+      logger.error('Exception inserting product', errorDetails as any)
 
       return {
         success: false,

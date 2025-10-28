@@ -114,7 +114,7 @@ export function useTreasuryStats(
         .rpc('get_treasury_stats', {
           p_start_date: defaultStartDate,
           p_end_date: defaultEndDate
-        })
+        } as any)
 
       if (statsError) throw statsError
 

@@ -83,7 +83,7 @@ export function useStockOptimized(filters: StockFilters = {}) {
   // Query pour les produits en stock faible
   const lowStockQuery = useSupabaseQuery(
     'low-stock-products',
-    async (supabase) => {
+    (async (supabase) => {
       // Requête corrigée : utiliser RPC pour comparaison inter-colonnes
       const { data, error } = await supabase
         .rpc('get_low_stock_products', { limit_count: 50 })
@@ -120,7 +120,7 @@ export function useStockOptimized(filters: StockFilters = {}) {
       }
 
       return { data: data || [], error: null }
-    },
+    }) as any,
     {
       staleTime: 2 * 60 * 1000,  // 2 minutes
       cacheTime: 5 * 60 * 1000  // 5 minutes
@@ -145,11 +145,11 @@ export function useStockOptimized(filters: StockFilters = {}) {
       }
 
       if (filters.movementTypes && filters.movementTypes.length > 0) {
-        query = query.in('movement_type', filters.movementTypes)
+        query = query.in('movement_type', filters.movementTypes as any)
       }
 
       if (filters.reasonCodes && filters.reasonCodes.length > 0) {
-        query = query.in('reason_code', filters.reasonCodes)
+        query = query.in('reason_code', filters.reasonCodes as any)
       }
 
       if (filters.performedBy) {
@@ -196,7 +196,7 @@ export function useStockOptimized(filters: StockFilters = {}) {
 
   // Mutations pour les mouvements de stock
   const createMovementMutation = useSupabaseMutation<StockMovement>(
-    async (supabase, movementData: {
+    (async (supabase, movementData: {
       product_id: string
       movement_type: 'IN' | 'OUT' | 'ADJUST' | 'TRANSFER'
       quantity_change: number
@@ -250,7 +250,7 @@ export function useStockOptimized(filters: StockFilters = {}) {
       if (updateError) throw updateError
 
       return { data, error: null }
-    }
+    }) as any
   )
 
   const adjustStockMutation = useSupabaseMutation<boolean>(

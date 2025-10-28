@@ -351,7 +351,7 @@ export function usePurchaseReceptions() {
 
       // Filtres
       if (filters?.status) {
-        query = query.eq('status', filters.status)
+        query = query.eq('status', filters.status as any)
       }
 
       if (filters?.search) {

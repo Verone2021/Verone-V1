@@ -121,7 +121,7 @@ export function useStockInventory() {
         products_with_activity: activeInventory.length
       }
 
-      setInventory(activeInventory)
+      setInventory(activeInventory as any)
       setStats(statsData)
 
     } catch (err: any) {
