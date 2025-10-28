@@ -253,7 +253,7 @@ export function validateFormWithCSRF<T>(
     if (error instanceof z.ZodError) {
       return {
         success: false,
-        errors: error.errors.map((e: z.ZodIssue) => `${e.path.join('.')}: ${e.message}`)
+        errors: error.issues.map((e: z.ZodIssue) => `${e.path.join('.')}: ${e.message}`)
       }
     }
 
