@@ -180,7 +180,7 @@ export function ConsultationProductAssociation({
             )}
 
             {errors.product && (
-              <Alert variant="destructive">
+              <Alert variant="danger">
                 <AlertDescription>{errors.product}</AlertDescription>
               </Alert>
             )}

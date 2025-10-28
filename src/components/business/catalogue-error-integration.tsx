@@ -416,7 +416,7 @@ const CatalogueStatusBadge: React.FC<{
 
   if (criticalErrors > 0) {
     return (
-      <Badge variant="destructive" className="flex items-center gap-1">
+      <Badge variant="danger" className="flex items-center gap-1">
         <AlertTriangle className="w-3 h-3" />
         {criticalErrors} Erreur{criticalErrors > 1 ? 's' : ''} Critique{criticalErrors > 1 ? 's' : ''}
       </Badge>

@@ -232,7 +232,7 @@ export function SalesOrderShipmentForm({
             {totals.allFullyShipped ? "Complète" : "Partielle"}
           </Badge>
           {totals.hasStockIssues && (
-            <Badge variant="destructive" className="mt-1 ml-2">Stock insuffisant</Badge>
+            <Badge variant="danger" className="mt-1 ml-2">Stock insuffisant</Badge>
           )}
         </Card>
       </div>

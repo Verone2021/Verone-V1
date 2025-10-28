@@ -342,7 +342,7 @@ export default function CatalogueStocksPage() {
                 </Select>
                 <ButtonV2
                   variant="outline"
-                  size="icon"
+                  size="sm"
                   onClick={() => setFilters({ ...filters, sortOrder: filters.sortOrder === 'asc' ? 'desc' : 'asc' })}
                 >
                   <ArrowUpDown className="h-4 w-4" />

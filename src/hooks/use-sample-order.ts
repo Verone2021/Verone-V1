@@ -46,11 +46,13 @@ export function useSampleOrder() {
         throw new Error('Le prix HT du produit doit être défini')
       }
 
-      // 2. Vérifier si le produit a déjà été commandé (historique)
+      // 2. Vérifier si le produit a déjà été commandé (hors échantillons)
+      // Business Rule: Échantillon autorisé UNIQUEMENT si jamais commandé
       const { data: existingItems, error: itemsError } = await supabase
         .from('purchase_order_items')
-        .select('id, purchase_order_id')
+        .select('id')
         .eq('product_id', productId)
+        .or('notes.not.eq.Échantillon pour validation,notes.is.null')
         .limit(1)
 
       if (itemsError) {
@@ -59,8 +61,8 @@ export function useSampleOrder() {
 
       if (existingItems && existingItems.length > 0) {
         toast({
-          title: "Produit déjà commandé",
-          description: "Ce produit a déjà fait l'objet d'une commande auparavant.",
+          title: "Échantillon non autorisé",
+          description: "Ce produit a déjà été commandé. Les échantillons ne sont disponibles que pour les produits jamais commandés.",
           variant: "destructive"
         })
         return {
@@ -73,7 +75,7 @@ export function useSampleOrder() {
       // 3. Chercher une commande draft existante pour ce fournisseur
       const { data: draftOrders, error: draftError } = await supabase
         .from('purchase_orders')
-        .select('id, po_number, total_ht')
+        .select('*')
         .eq('supplier_id', product.supplier_id)
         .eq('status', 'draft')
         .order('created_at', { ascending: false })
@@ -93,15 +95,14 @@ export function useSampleOrder() {
         // Ajouter l'item à la commande existante
         const { error: insertItemError } = await supabase
           .from('purchase_order_items')
-          .insert({
+          .insert([{
             purchase_order_id: purchaseOrderId,
             product_id: productId,
             quantity: 1,
             unit_price_ht: product.cost_price,
             discount_percentage: 0,
-            is_sample: true,
             notes: `Échantillon pour validation qualité - ${product.name}`
-          })
+          }])
 
         if (insertItemError) {
           throw new Error('Erreur lors de l\'ajout du produit à la commande')
@@ -126,12 +127,14 @@ export function useSampleOrder() {
           throw new Error('Utilisateur non authentifié')
         }
 
-        // Générer un numéro de commande temporaire
+        // Générer un ID et numéro de commande
+        const newOrderId = crypto.randomUUID()
         const poNumber = `PO-ECH-${Date.now()}`
 
-        const { data: newOrder, error: orderError } = await supabase
+        const { error: orderError } = await supabase
           .from('purchase_orders')
-          .insert({
+          .insert([{
+            id: newOrderId,
             po_number: poNumber,
             supplier_id: product.supplier_id,
             status: 'draft',
@@ -141,29 +144,26 @@ export function useSampleOrder() {
             total_ttc: product.cost_price * 1.2,
             created_by: userData.user.id,
             notes: 'Commande d\'échantillons pour validation qualité'
-          })
-          .select('id')
-          .single()
+          }])
 
-        if (orderError || !newOrder) {
+        if (orderError) {
           throw new Error('Erreur lors de la création de la commande')
         }
 
-        purchaseOrderId = newOrder.id
+        purchaseOrderId = newOrderId
         isNewOrder = true
 
         // Ajouter l'item
         const { error: insertItemError } = await supabase
           .from('purchase_order_items')
-          .insert({
+          .insert([{
             purchase_order_id: purchaseOrderId,
             product_id: productId,
             quantity: 1,
             unit_price_ht: product.cost_price,
             discount_percentage: 0,
-            is_sample: true,
             notes: `Échantillon pour validation qualité - ${product.name}`
-          })
+          }])
 
         if (insertItemError) {
           // Rollback : supprimer la commande créée

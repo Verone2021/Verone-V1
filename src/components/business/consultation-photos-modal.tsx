@@ -283,7 +283,7 @@ export function ConsultationPhotosModal({
 
           {/* Messages d'erreur */}
           {error && (
-            <Alert variant="destructive">
+            <Alert variant="danger">
               <AlertCircle className="h-3 w-3" />
               <AlertDescription>{error}</AlertDescription>
             </Alert>
@@ -335,7 +335,7 @@ export function ConsultationPhotosModal({
                       )}
                       <ButtonV2
                         size="sm"
-                        variant="destructive"
+                        variant="danger"
                         onClick={() => handleDeleteImage(image.id, image.is_primary)}
                         disabled={deletingImageId === image.id}
                       >

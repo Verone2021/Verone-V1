@@ -82,7 +82,8 @@ export function CustomerSelector({ selectedCustomer, onCustomerChange, disabled 
           .from('organisations')
           .select(`
             id,
-            name,
+            legal_name,
+            trade_name,
             payment_terms,
             prepayment_required,
             billing_address_line1,
@@ -101,7 +102,7 @@ export function CustomerSelector({ selectedCustomer, onCustomerChange, disabled 
           `)
           .eq('type', 'customer')
           .eq('is_active', true)
-          .order('name')
+          .order('legal_name')
 
         if (orgError) {
           console.error('❌ [CustomerSelector] Erreur Supabase organisations:', orgError)
@@ -111,6 +112,7 @@ export function CustomerSelector({ selectedCustomer, onCustomerChange, disabled 
         console.log('✅ [CustomerSelector] Organisations chargées:', organisations?.length || 0)
         setCustomers((organisations || []).map(org => ({
           ...org,
+          name: org.trade_name || org.legal_name,
           type: 'professional' as const
         })))
 

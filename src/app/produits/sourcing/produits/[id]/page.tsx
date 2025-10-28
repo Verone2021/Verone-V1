@@ -297,35 +297,40 @@ export default function SourcingProductDetailPage() {
           <CardContent>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               {/* Commander échantillon */}
-              <Card className="border-gray-200">
-                <CardContent className="p-6">
-                  <div className="flex items-center mb-3">
-                    <Package className="h-6 w-6 text-black mr-2" />
-                    <h4 className="font-semibold text-black">Demander un échantillon</h4>
+              <Card className="border-gray-200 h-full">
+                <CardContent className="p-6 flex flex-col justify-between h-full">
+                  <div>
+                    <div className="flex items-center mb-3">
+                      <Package className="h-6 w-6 text-black mr-2" />
+                      <h4 className="font-semibold text-black">Demander un échantillon</h4>
+                    </div>
+                    <p className="text-sm text-gray-600 mb-4">
+                      Marquer ce produit comme nécessitant un échantillon et créer une demande de commande.
+                    </p>
                   </div>
-                  <p className="text-sm text-gray-600 mb-4">
-                    Marquer ce produit comme nécessitant un échantillon et créer une demande de commande.
-                  </p>
                   <ButtonV2
                     onClick={handleOrderSample}
-                    className="w-full bg-gray-100 hover:bg-gray-800 text-white"
+                    disabled={!product.supplier_id}
+                    className="w-full bg-gray-800 hover:bg-gray-900 text-white disabled:bg-gray-300 disabled:cursor-not-allowed disabled:text-gray-500"
                   >
                     <Package className="h-4 w-4 mr-2" />
-                    Commander échantillon
+                    {product.supplier_id ? 'Commander échantillon' : 'Fournisseur requis'}
                   </ButtonV2>
                 </CardContent>
               </Card>
 
               {/* Valider vers catalogue */}
-              <Card className="border-green-200">
-                <CardContent className="p-6">
-                  <div className="flex items-center mb-3">
-                    <CheckCircle className="h-6 w-6 text-green-600 mr-2" />
-                    <h4 className="font-semibold text-black">Valider le sourcing</h4>
+              <Card className="border-green-200 h-full">
+                <CardContent className="p-6 flex flex-col justify-between h-full">
+                  <div>
+                    <div className="flex items-center mb-3">
+                      <CheckCircle className="h-6 w-6 text-green-600 mr-2" />
+                      <h4 className="font-semibold text-black">Valider le sourcing</h4>
+                    </div>
+                    <p className="text-sm text-gray-600 mb-4">
+                      Valider ce produit sourcing et l'ajouter au catalogue principal.
+                    </p>
                   </div>
-                  <p className="text-sm text-gray-600 mb-4">
-                    Valider ce produit sourcing et l'ajouter au catalogue principal.
-                  </p>
                   <ButtonV2
                     onClick={handleValidateSourcing}
                     disabled={!product.supplier_id}

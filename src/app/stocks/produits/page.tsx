@@ -554,7 +554,7 @@ export default function StockInventairePage() {
 
             <ButtonV2
               variant="outline"
-              size="icon"
+              size="sm"
               onClick={() => setFilters(prev => ({
                 ...prev,
                 sortOrder: prev.sortOrder === 'asc' ? 'desc' : 'asc'
@@ -567,7 +567,7 @@ export default function StockInventairePage() {
             {(filters.search || filters.status !== 'all') && (
               <ButtonV2
                 variant="outline"
-                size="icon"
+                size="sm"
                 onClick={() => setFilters({
                   search: '',
                   status: 'all',

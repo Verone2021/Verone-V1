@@ -132,7 +132,7 @@ export function ConsultationOrderInterface({
 
   if (error) {
     return (
-      <Alert variant="destructive">
+      <Alert variant="danger">
         <AlertDescription>{error}</AlertDescription>
       </Alert>
     )

@@ -16,7 +16,7 @@ export default function CreateStockAdjustmentPage() {
     <div className="flex flex-col gap-6 p-6">
       {/* Header */}
       <div className="flex items-center gap-4">
-        <ButtonV2 variant="ghost" size="icon" asChild>
+        <ButtonV2 variant="ghost" size="sm" asChild>
           <Link href="/stocks/ajustements">
             <ArrowLeft className="h-4 w-4" />
           </Link>

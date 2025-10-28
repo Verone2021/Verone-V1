@@ -8,8 +8,8 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Badge } from '@/components/ui/badge'
 import { cn } from '../../lib/utils'
 
-// Lazy loading du composant formulaire produit complet
-const CompleteProductWizard = lazy(() => import('./complete-product-wizard').then(module => ({ default: module.CompleteProductWizard })))
+// Le formulaire complet sera intégré directement plus tard
+// Pour l'instant, on redirige vers le composant SourcingQuickForm pour les deux types
 
 interface ProductCreationWizardProps {
   onSuccess?: (productId: string) => void

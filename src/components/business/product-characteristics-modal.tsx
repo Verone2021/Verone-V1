@@ -245,7 +245,7 @@ export function ProductCharacteristicsModal({
 
           {/* Messages d'état */}
           {error && (
-            <Alert variant="destructive">
+            <Alert variant="danger">
               <AlertCircle className="h-4 w-4" />
               <AlertDescription>{error}</AlertDescription>
             </Alert>

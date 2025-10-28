@@ -119,7 +119,7 @@ export function MovementsStatsCards({ stats, loading }: MovementsStatsCardsProps
               <span className="font-medium text-black">{formatNumber(stats.byType.IN)}</span>
             </div>
             <div className="flex items-center gap-2">
-              <Badge variant="destructive">
+              <Badge variant="danger">
                 Sorties
               </Badge>
               <span className="font-medium text-black">{formatNumber(stats.byType.OUT)}</span>

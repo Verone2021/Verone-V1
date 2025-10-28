@@ -136,7 +136,7 @@ export function ImageUpload({
             {!disabled && (
               <ButtonV2
                 type="button"
-                variant="destructive"
+                variant="danger"
                 size="sm"
                 onClick={handleRemove}
                 className="absolute -top-2 -right-2 h-6 w-6 p-0 rounded-full"

@@ -172,7 +172,7 @@ export function PrimaryImageUpload({
           {/* Bouton suppression */}
           <ButtonV2
             type="button"
-            variant="destructive"
+            variant="danger"
             size="sm"
             className="absolute -top-2 -right-2 w-6 h-6 p-0 rounded-full"
             onClick={handleRemoveImage}
@@ -254,7 +254,7 @@ export function PrimaryImageUpload({
 
       {/* Erreurs */}
       {error && (
-        <Alert variant="destructive">
+        <Alert variant="danger">
           <AlertCircle className="h-4 w-4" />
           <AlertDescription className="flex items-center justify-between">
             <span>{error}</span>

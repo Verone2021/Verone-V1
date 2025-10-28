@@ -309,7 +309,7 @@ export function ProductPhotosModal({
 
           {/* Messages d'état */}
           {error && (
-            <Alert variant="destructive">
+            <Alert variant="danger">
               <AlertCircle className="h-4 w-4" />
               <AlertDescription>{error}</AlertDescription>
             </Alert>
@@ -397,7 +397,7 @@ export function ProductPhotosModal({
                         {/* Bouton suppression */}
                         <ButtonV2
                           size="sm"
-                          variant="destructive"
+                          variant="danger"
                           onClick={() => handleDeleteImage(image.id, image.is_primary)}
                           disabled={deletingImageId === image.id}
                           className="h-9 px-3 bg-red-500/90 hover:bg-red-600 text-white border-0 relative z-40"

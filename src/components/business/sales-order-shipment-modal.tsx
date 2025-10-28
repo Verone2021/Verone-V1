@@ -55,7 +55,7 @@ export function SalesOrderShipmentModal({
                 {enrichedOrder?.organisations && ` • ${enrichedOrder.organisations.trade_name || enrichedOrder.organisations.legal_name}`}
               </p>
             </div>
-            <ButtonV2 variant="ghost" size="icon" onClick={onClose}>
+            <ButtonV2 variant="ghost" size="sm" onClick={onClose}>
               <X className="h-5 w-5" />
             </ButtonV2>
           </div>
