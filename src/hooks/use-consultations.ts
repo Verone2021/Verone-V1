@@ -122,7 +122,7 @@ export interface UpdateConsultationItemData {
 export interface ConsultationFilters {
   status?: string
   assigned_to?: string
-  priority_level?: number
+  priority_level?: number | 'all'
   organisation_name?: string
   source_channel?: string
   date_range?: {

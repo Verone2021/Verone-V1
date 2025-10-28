@@ -38,7 +38,6 @@ export interface SourcingProduct {
   updated_at: string
   // Calculs
   estimated_selling_price?: number
-  margin_percentage?: number
   // Images
   main_image_url?: string
 }
@@ -463,7 +462,7 @@ export function useSourcingProducts(filters?: SourcingFilters) {
       const { error: updateError } = await supabase
         .from('products')
         .update({
-          status: 'echantillon_commande', // Passage à "commandé" car ajouté à commande
+          status: 'echantillon_a_commander', // Passage à "à commander" car ajouté à commande
           requires_sample: true
         })
         .eq('id', productId)

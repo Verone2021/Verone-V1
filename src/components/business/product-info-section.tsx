@@ -28,7 +28,7 @@ function calculateCompletion(product: ProductInfoSectionProps['product']): numbe
   const fields = [
     product.name,
     product.sku,
-    product.cost_price !== null && product.cost_price > 0,  // Prix d'achat HT
+    product.cost_price != null && product.cost_price > 0,  // Prix d'achat HT
     product.status,
     product.supplier_id,      // Fournisseur obligatoire
     product.subcategory_id,   // Catégorisation obligatoire

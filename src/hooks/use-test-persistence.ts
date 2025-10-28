@@ -238,7 +238,6 @@ export function useTestPersistence() {
       await updateTestStatus(testId, finalStatus, result)
 
       return {
-        success: result.success,
         locked: result.success, // Verrouillage automatique si validé
         ...result
       }

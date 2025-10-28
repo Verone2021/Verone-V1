@@ -197,13 +197,11 @@ export function useStock() {
       // Calculer le mouvement selon le type
       switch (movementData.movement_type) {
         case 'add':
-        case 'IN':
           quantityChange = Math.abs(movementData.quantity)
           newQuantity = currentStock + quantityChange
           break
 
         case 'remove':
-        case 'OUT':
           quantityChange = -Math.abs(movementData.quantity) // Negative value for OUT movements
           newQuantity = currentStock + quantityChange
           if (newQuantity < 0) {
@@ -212,7 +210,6 @@ export function useStock() {
           break
 
         case 'adjust':
-        case 'ADJUST':
           newQuantity = Math.abs(movementData.quantity)
           quantityChange = newQuantity - currentStock
           break
