@@ -416,7 +416,7 @@ export default function ProductDetailPage() {
                 subcategory_id: product.subcategory_id,
                 variant_group_id: product.variant_group_id,
               }}
-              onUpdate={handleProductUpdate}
+              onUpdate={handleProductUpdate as any}
             />
           </ProductDetailAccordion>
 
@@ -432,9 +432,9 @@ export default function ProductDetailPage() {
                 id: product.id,
                 description: product.description,
                 technical_description: product.technical_description,
-                selling_points: product.selling_points,
+                selling_points: product.selling_points as any,
               }}
-              onUpdate={handleProductUpdate}
+              onUpdate={handleProductUpdate as any}
             />
           </ProductDetailAccordion>
 
@@ -473,8 +473,8 @@ export default function ProductDetailPage() {
           >
             <SupplierEditSection
               product={product}
-              variantGroup={product.variant_group || undefined}
-              onUpdate={handleProductUpdate}
+              variantGroup={(product.variant_group || undefined) as any}
+              onUpdate={handleProductUpdate as any}
             />
           </ProductDetailAccordion>
 
@@ -503,10 +503,10 @@ export default function ProductDetailPage() {
                 id: product.id,
                 status: product.status,
                 condition: product.condition,
-                stock_quantity: product.stock_quantity,
-                min_stock: product.min_stock
+                stock_quantity: product.stock_quantity ?? undefined,
+                min_stock: product.min_stock ?? undefined
               }}
-              onUpdate={handleProductUpdate}
+              onUpdate={handleProductUpdate as any}
             />
           </ProductDetailAccordion>
 
@@ -519,11 +519,11 @@ export default function ProductDetailPage() {
             <SupplierVsPricingEditSection
               product={{
                 id: product.id,
-                cost_price: product.cost_price,
-                margin_percentage: product.margin_percentage,
-                selling_price: product.selling_price
+                cost_price: product.cost_price ?? undefined,
+                margin_percentage: product.margin_percentage ?? undefined,
+                selling_price: product.selling_price ?? undefined
               }}
-              onUpdate={handleProductUpdate}
+              onUpdate={handleProductUpdate as any}
             />
           </ProductDetailAccordion>
 
@@ -567,12 +567,12 @@ export default function ProductDetailPage() {
             <IdentifiersCompleteEditSection
               product={{
                 id: product.id,
-                sku: product.sku,
-                brand: product.brand,
-                gtin: product.gtin,
+                sku: product.sku ?? '',
+                brand: product.brand ?? undefined,
+                gtin: product.gtin ?? undefined,
                 condition: product.condition
               }}
-              onUpdate={handleProductUpdate}
+              onUpdate={handleProductUpdate as any}
             />
           </ProductDetailAccordion>
 
@@ -587,7 +587,7 @@ export default function ProductDetailPage() {
               requiresSample={product.requires_sample || false}
               isProduct={true}
               productName={product.name}
-              supplierName={product.supplier?.legal_name || product.supplier?.trade_name}
+              supplierName={(product.supplier?.legal_name || product.supplier?.trade_name) ?? undefined}
               costPrice={product.cost_price || undefined}
               disabled={product.stock_quantity >= 1}
               onRequirementChange={(requiresSample) => {
@@ -649,9 +649,9 @@ export default function ProductDetailPage() {
         productId={product.id}
         productName={product.name}
         initialData={{
-          variant_attributes: product.variant_attributes,
-          dimensions: product.dimensions,
-          weight: product.weight
+          variant_attributes: product.variant_attributes ?? undefined,
+          dimensions: product.dimensions ?? undefined,
+          weight: product.weight ?? undefined
         }}
         onUpdate={handleProductUpdate}
       />
@@ -663,9 +663,9 @@ export default function ProductDetailPage() {
         productId={product.id}
         productName={product.name}
         initialData={{
-          description: product.description,
-          technical_description: product.technical_description,
-          selling_points: product.selling_points
+          description: product.description ?? undefined,
+          technical_description: product.technical_description ?? undefined,
+          selling_points: product.selling_points ?? undefined
         }}
         onUpdate={handleProductUpdate}
       />
