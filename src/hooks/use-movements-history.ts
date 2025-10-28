@@ -192,7 +192,7 @@ export function useMovementsHistory() {
       const products = productsResult.data || []
 
       // Enrichir les mouvements avec les données jointes
-      const enrichedMovements: MovementWithDetails[] = data.map(movement => {
+      const enrichedMovements = data.map(movement => {
         const userProfile = userProfiles.find(profile => profile.user_id === movement.performed_by)
         const product = products.find(prod => prod.id === movement.product_id)
 
@@ -207,7 +207,7 @@ export function useMovementsHistory() {
           user_name: userName,
           user_first_name: userProfile?.first_name,
           user_last_name: userProfile?.last_name,
-          reason_description: movement.reason_code ? getReasonDescription(movement.reason_code) : undefined
+          reason_description: movement.reason_code ? getReasonDescription(movement.reason_code as any) : undefined
         }
       })
 
@@ -474,7 +474,7 @@ export function useMovementsHistory() {
           'Stock Avant': movement.quantity_before,
           'Stock Après': movement.quantity_after,
           'Coût Unitaire': movement.unit_cost || '',
-          'Motif': movement.reason_code ? getReasonDescription(movement.reason_code) : '',
+          'Motif': movement.reason_code ? getReasonDescription(movement.reason_code as any) : '',
           'Utilisateur': userName,
           'Notes': movement.notes || '',
           'Référence': movement.reference_type || '',

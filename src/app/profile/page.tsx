@@ -153,7 +153,7 @@ export default function ProfilePage() {
           .insert({
             user_id: user.id,
             ...sanitizedData
-          })
+          } as any)
 
         if (createError) {
           console.error('❌ Erreur création profil:', {

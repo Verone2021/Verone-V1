@@ -249,7 +249,7 @@ export default function SubcategoryDetailPage() {
                 <Clock className="w-8 h-8 text-black" />
                 <div>
                   <p className="text-sm font-bold text-black">
-                    {new Date(subcategory.created_at).toLocaleDateString('fr-FR')}
+                    {subcategory.created_at ? new Date(subcategory.created_at).toLocaleDateString('fr-FR') : 'N/A'}
                   </p>
                   <p className="text-gray-600">Créée le</p>
                 </div>

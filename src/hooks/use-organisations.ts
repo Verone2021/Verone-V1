@@ -208,7 +208,7 @@ export function useOrganisations(filters?: OrganisationFilters) {
         return {
           ...data,
           name: data.trade_name || data.legal_name
-        } as Organisation
+        } as unknown as Organisation
       }
 
       return data
@@ -384,7 +384,7 @@ export function useOrganisations(filters?: OrganisationFilters) {
         return {
           ...newOrg,
           name: newOrg.trade_name || newOrg.legal_name
-        } as Organisation
+        } as unknown as Organisation
       }
 
       return newOrg
@@ -440,7 +440,7 @@ export function useOrganisations(filters?: OrganisationFilters) {
         return {
           ...updatedOrg,
           name: updatedOrg.trade_name || updatedOrg.legal_name
-        } as Organisation
+        } as unknown as Organisation
       }
 
       return updatedOrg

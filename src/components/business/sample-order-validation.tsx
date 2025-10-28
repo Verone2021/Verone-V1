@@ -107,6 +107,40 @@ export function SampleOrderValidation({ className }: SampleOrderValidationProps)
 
   const supabase = createClient()
 
+  // TODO: Implement these functions properly
+  const getSourcingWorkflowMetrics = async () => {
+    return { total: 0, pending: 0, approved: 0, rejected: 0 }
+  }
+
+  const approveSampleOrder = async (orderId: string, notes?: string) => {
+    const { error } = await supabase
+      .from('sample_orders')
+      .update({ status: 'approved', notes })
+      .eq('id', orderId)
+    if (error) throw error
+  }
+
+  const markSampleOrderDelivered = async (orderId: string) => {
+    const { error } = await supabase
+      .from('sample_orders')
+      .update({ status: 'delivered', delivered_at: new Date().toISOString() })
+      .eq('id', orderId)
+    if (error) throw error
+  }
+
+  const validateSamples = async (draftIds: string[], result: 'approved' | 'rejected', notes?: string) => {
+    const { error } = await supabase
+      .from('product_drafts')
+      .update({ status: result, validation_notes: notes })
+      .in('id', draftIds)
+    if (error) throw error
+  }
+
+  const transferToProductCatalog = async (draftId: string) => {
+    // Implement transfer logic here
+    throw new Error('transferToProductCatalog not yet implemented')
+  }
+
   // Charger toutes les commandes d'échantillons
   const loadSampleOrders = async () => {
     try {

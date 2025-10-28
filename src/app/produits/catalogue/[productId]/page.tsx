@@ -472,7 +472,7 @@ export default function ProductDetailPage() {
             badge={missingFields.fournisseur > 0 ? missingFields.fournisseur : undefined}
           >
             <SupplierEditSection
-              product={product}
+              product={product as any}
               variantGroup={(product.variant_group || undefined) as any}
               onUpdate={handleProductUpdate as any}
             />
@@ -544,7 +544,7 @@ export default function ProductDetailPage() {
                 </a>
               </div>
             )}
-            <ProductFixedCharacteristics product={product} />
+            <ProductFixedCharacteristics product={product as any} />
 
             <div className="mt-4">
               <ButtonV2
@@ -650,7 +650,7 @@ export default function ProductDetailPage() {
         productName={product.name}
         initialData={{
           variant_attributes: product.variant_attributes ?? undefined,
-          dimensions: product.dimensions ?? undefined,
+          dimensions: (product.dimensions ?? undefined) as Record<string, any> | undefined,
           weight: product.weight ?? undefined
         }}
         onUpdate={handleProductUpdate}
@@ -665,7 +665,7 @@ export default function ProductDetailPage() {
         initialData={{
           description: product.description ?? undefined,
           technical_description: product.technical_description ?? undefined,
-          selling_points: product.selling_points ?? undefined
+          selling_points: (product.selling_points ?? undefined) as string[] | undefined
         }}
         onUpdate={handleProductUpdate}
       />

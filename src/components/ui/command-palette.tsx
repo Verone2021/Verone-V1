@@ -7,7 +7,6 @@
  */
 
 import React, { useState, useEffect, useRef, useMemo, useCallback } from 'react'
-import { createPortal } from 'react-dom'
 import { ButtonV2 } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { Input } from '@/components/ui/input'
@@ -92,7 +91,7 @@ const defaultCommands: CommandAction[] = [
     shortcut: ['g', 'd'],
     category: 'navigation',
     keywords: ['dashboard', 'accueil', 'tableau', 'bord'],
-    handler: () => window.location.href = '/dashboard'
+    handler: () => { window.location.href = '/dashboard' }
   },
   {
     id: 'nav-catalogue',
@@ -102,7 +101,7 @@ const defaultCommands: CommandAction[] = [
     shortcut: ['g', 'c'],
     category: 'navigation',
     keywords: ['catalogue', 'produits', 'collections'],
-    handler: () => window.location.href = '/catalogue'
+    handler: () => { window.location.href = '/catalogue' }
   },
   {
     id: 'nav-consultations',
@@ -112,7 +111,7 @@ const defaultCommands: CommandAction[] = [
     shortcut: ['g', 'o'],
     category: 'navigation',
     keywords: ['consultations', 'clients', 'projets'],
-    handler: () => window.location.href = '/consultations'
+    handler: () => { window.location.href = '/consultations' }
   },
   {
     id: 'nav-stocks',
@@ -122,7 +121,7 @@ const defaultCommands: CommandAction[] = [
     shortcut: ['g', 's'],
     category: 'navigation',
     keywords: ['stocks', 'inventaire', 'mouvements'],
-    handler: () => window.location.href = '/stocks'
+    handler: () => { window.location.href = '/stocks' }
   },
 
   // Actions principales
@@ -244,7 +243,7 @@ const defaultCommands: CommandAction[] = [
     shortcut: ['f1'],
     category: 'system',
     keywords: ['aide', 'help', 'support', 'documentation'],
-    handler: () => window.open('/help', '_blank')
+    handler: () => { window.open('/help', '_blank') }
   }
 ]
 

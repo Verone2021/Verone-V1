@@ -267,7 +267,7 @@ export function useProducts(filters?: ProductFilters, page: number = 0) {
   // 🚀 Utiliser SWR avec cache et revalidation automatique
   const { data, error, isLoading, mutate } = useSWR(
     swrKey,
-    ([_, filtersJson]) => productsFetcher('products', JSON.parse(filtersJson), page as any),
+    ([_, filtersJson]) => productsFetcher('products' as any, JSON.parse(filtersJson), page as any),
     {
       revalidateOnFocus: false,
       revalidateOnReconnect: true,
@@ -333,7 +333,7 @@ export function useProducts(filters?: ProductFilters, page: number = 0) {
         title: "Succès",
         description: "Produit créé avec succès"
       })
-      return newProduct
+      return newProduct as Product
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : 'Erreur lors de la création'
       toast({
@@ -363,7 +363,7 @@ export function useProducts(filters?: ProductFilters, page: number = 0) {
         title: "Succès",
         description: "Produit mis à jour avec succès"
       })
-      return updatedProduct
+      return updatedProduct as Product
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : 'Erreur lors de la mise à jour'
       toast({
