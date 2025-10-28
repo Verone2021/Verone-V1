@@ -289,7 +289,9 @@ export function useMovementsHistory() {
         .not('reason_code', 'is', null)
 
       const reasonCounts = reasonStats?.reduce((acc, item) => {
-        acc[item.reason_code] = (acc[item.reason_code] || 0) + 1
+        if (item.reason_code) {
+          acc[item.reason_code] = (acc[item.reason_code] || 0) + 1
+        }
         return acc
       }, {} as Record<string, number>) || {}
 

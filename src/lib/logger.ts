@@ -278,9 +278,6 @@ class VeroneLogger {
 // Instance singleton
 export const logger = new VeroneLogger();
 
-// Types utilitaires pour l'export
-export type { LogEntry, LogContext, LogLevel };
-
 // Helper functions
 export const createBusinessMetrics = (
   catalogueViews?: number,
