@@ -25,6 +25,8 @@ export interface CreateShipmentRequest {
   costCharged: number
   carrierName?: string
   tracking?: string
+  notes?: string
+  metadata?: any
 }
 
 export interface Shipment {

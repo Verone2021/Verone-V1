@@ -48,7 +48,7 @@ interface RecentMovement {
   product_id: string
   product_name: string
   product_sku: string
-  movement_type: 'IN' | 'OUT' | 'ADJUST'
+  movement_type: 'IN' | 'OUT' | 'ADJUST' | 'TRANSFER'
   quantity_change: number
   quantity_before: number
   quantity_after: number

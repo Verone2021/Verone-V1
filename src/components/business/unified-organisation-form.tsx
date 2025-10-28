@@ -231,6 +231,7 @@ const getDefaultValues = (organisation?: Organisation | null): OrganisationFormD
       industry_sector: '',
       currency: 'EUR',
       payment_terms: '',
+      prepayment_required: false,
       supplier_segment: '',
     }
   }
@@ -264,6 +265,7 @@ const getDefaultValues = (organisation?: Organisation | null): OrganisationFormD
     industry_sector: organisation.industry_sector || '',
     currency: organisation.currency || 'EUR',
     payment_terms: organisation.payment_terms || '',
+    prepayment_required: organisation.prepayment_required || false,
     supplier_segment: organisation.supplier_segment || '',
   }
 }

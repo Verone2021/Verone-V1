@@ -566,7 +566,7 @@ export function useConsultationItems(consultationId?: string) {
         quantity: item.quantity || 1,
         unit_price: item.proposed_price || item.product?.cost_price,
         is_free: item.is_free || false,
-        notes: item.notes,
+        notes: item.notes ?? undefined,
         created_at: item.created_at,
         created_by: item.created_by,
         product: item.product ? {
