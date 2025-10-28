@@ -325,7 +325,7 @@ export default function CollectionDetailPage({ params }: CollectionDetailPagePro
   const handleSaveMetaTitle = useCallback(async () => {
     setSavingMetaTitle(true)
 
-    const success = await updateCollection({ id: collectionId, description: editedMetaTitle || null })
+    const success = await updateCollection({ id: collectionId, description: editedMetaTitle || undefined })
 
     if (success) {
       toast({ title: "Meta title modifié", description: "Le titre SEO a été mis à jour" })

@@ -50,7 +50,7 @@ export function ProductSelector({
 
       const { data, error } = await supabase
         .rpc('get_consultation_eligible_products', {
-          target_consultation_id: consultationId || null
+          target_consultation_id: consultationId || undefined
         })
 
       if (error) throw error

@@ -126,9 +126,9 @@ export function useFinancialPayments(documentId?: string) {
           p_amount_paid: params.amount_paid,
           p_payment_date: params.payment_date,
           p_payment_method: params.payment_method,
-          p_transaction_reference: params.transaction_reference || null,
-          p_bank_transaction_id: params.bank_transaction_id || null,
-          p_notes: params.notes || null
+          p_transaction_reference: params.transaction_reference || undefined,
+          p_bank_transaction_id: params.bank_transaction_id || undefined,
+          p_notes: params.notes || undefined
         }) as any
 
       if (rpcError) throw rpcError

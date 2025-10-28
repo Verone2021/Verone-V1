@@ -353,7 +353,7 @@ export default function FamilyDetailPage() {
           description: editingCategory.description || '',
           is_active: editingCategory.is_active ?? true,
           display_order: editingCategory.display_order || 1,
-          parent_id: editingCategory.family_id,
+          parent_id: editingCategory.family_id ?? undefined,
           image_url: editingCategory.image_url || undefined
         } : undefined}
         parentOptions={families?.map(f => ({ id: f.id, name: f.name })) || []}

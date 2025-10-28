@@ -136,7 +136,7 @@ export function VariantGroupEditModal({
       updateData.style = style || undefined
 
       // Pièces compatibles
-      updateData.suitable_rooms = suitableRooms.length > 0 ? suitableRooms : null
+      updateData.suitable_rooms = suitableRooms.length > 0 ? suitableRooms : undefined
 
       await onSubmit(group.id, updateData)
       onClose()

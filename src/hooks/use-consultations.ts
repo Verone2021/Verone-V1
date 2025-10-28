@@ -597,7 +597,7 @@ export function useConsultationItems(consultationId?: string) {
 
       const { data, error } = await supabase
         .rpc('get_consultation_eligible_products', {
-          target_consultation_id: targetConsultationId || null
+          target_consultation_id: targetConsultationId || undefined
         })
 
       if (error) throw error

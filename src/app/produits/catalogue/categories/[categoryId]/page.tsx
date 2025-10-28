@@ -375,7 +375,7 @@ export default function CategoryDetailPage() {
           description: category.description || '',
           is_active: category.is_active ?? true,
           display_order: category.display_order || 1,
-          parent_id: category.family_id,
+          parent_id: category.family_id ?? undefined,
           image_url: category.image_url || undefined
         } : undefined}
         parentOptions={families?.map(f => ({ id: f.id, name: f.name })) || []}
