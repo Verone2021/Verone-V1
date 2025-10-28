@@ -300,7 +300,7 @@ export function StockMovementModal({ product: initialProduct, isOpen, onClose, o
               )}
 
               {/* Retirer - Visible uniquement si contexte sortie ou inventaire */}
-              {(!initialMovementType || initialMovementType === 'remove' || initialMovementType === 'OUT') && (
+              {(!initialMovementType || initialMovementType === 'remove') && (
                 <ButtonV2
                   type="button"
                   variant={movementType === 'remove' ? 'secondary' : 'outline'}

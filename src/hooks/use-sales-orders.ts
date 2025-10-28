@@ -673,11 +673,11 @@ export function useSalesOrders() {
       // - Validée (validated): Impact stock_forecasted_out pour TOUS les produits
       // - Expédiée/Livrée: Impact stock_real (géré par workflows séparés)
 
-      // On met à jour stock_forecasted_out UNIQUEMENT si la commande est créée directement en statut 'validated'
-      // Sinon, la mise à jour se fera lors de la validation (transition draft → validated)
+      // On met à jour stock_forecasted_out UNIQUEMENT si la commande est créée directement en statut 'confirmed'
+      // Sinon, la mise à jour se fera lors de la validation (transition draft → confirmed)
       const initialStatus = order.status || 'draft' // Par défaut: brouillon
 
-      if (initialStatus === 'validated') {
+      if (initialStatus === 'confirmed') {
         // Commande validée → Impact stock prévisionnel pour TOUS les produits
         for (const item of data.items) {
           // Récupérer les valeurs actuelles

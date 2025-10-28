@@ -223,8 +223,8 @@ export function useStock() {
 
       // Normaliser le type de mouvement pour la base de données
       const dbMovementType =
-        (movementData.movement_type === 'add' || movementData.movement_type === 'IN') ? 'IN' :
-        (movementData.movement_type === 'remove' || movementData.movement_type === 'OUT') ? 'OUT' : 'ADJUST'
+        movementData.movement_type === 'add' ? 'IN' :
+        movementData.movement_type === 'remove' ? 'OUT' : 'ADJUST'
 
       console.log('Création mouvement:', {
         product_id: movementData.product_id,

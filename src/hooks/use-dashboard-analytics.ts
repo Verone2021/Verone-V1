@@ -129,9 +129,9 @@ export function useDashboardAnalytics() {
             acc[date] = { entrees: 0, sorties: 0 }
           }
 
-          if (mov.movement_type === 'in' || mov.movement_type === 'purchase_order') {
+          if (mov.movement_type === 'IN') {
             acc[date].entrees += Math.abs(mov.quantity_change)
-          } else if (mov.movement_type === 'out' || mov.movement_type === 'sales_order') {
+          } else if (mov.movement_type === 'OUT') {
             acc[date].sorties += Math.abs(mov.quantity_change)
           }
 
