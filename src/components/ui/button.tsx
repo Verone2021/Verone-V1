@@ -7,7 +7,7 @@ import { colors, spacing, componentShadows } from '@/lib/design-system'
 import { cn } from '@/lib/utils'
 
 export interface ButtonV2Props extends React.ButtonHTMLAttributes<HTMLButtonElement> {
-  variant?: 'primary' | 'secondary' | 'outline' | 'success' | 'danger' | 'warning' | 'ghost'
+  variant?: 'primary' | 'secondary' | 'outline' | 'success' | 'destructive' | 'warning' | 'ghost'
   size?: 'xs' | 'sm' | 'md' | 'lg' | 'xl'
   icon?: LucideIcon
   iconPosition?: 'left' | 'right'
@@ -77,7 +77,7 @@ export function ButtonV2({
       hoverColor: undefined,
       shadow: componentShadows.button,
     },
-    danger: {
+    destructive: {
       backgroundColor: colors.danger[500],
       color: colors.text.inverse,
       border: 'none',
