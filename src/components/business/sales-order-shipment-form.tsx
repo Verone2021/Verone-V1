@@ -182,7 +182,7 @@ export function SalesOrderShipmentForm({
       items: itemsToShip,
       shipped_at: shippedAt + 'T' + new Date().toTimeString().split(' ')[0],
       carrier_info: carrierInfo,
-      shipping_address: shippingAddress,
+      shipping_address: shippingAddress as any,
       notes: notes || undefined,
       shipped_by: user.id
     })
@@ -204,7 +204,7 @@ export function SalesOrderShipmentForm({
             Expédition Commande
           </h3>
           <p className="text-sm text-muted-foreground mt-1">
-            Commande {salesOrder.so_number} • {salesOrder.organisations?.trade_name || salesOrder.organisations?.legal_name}
+            Commande {(salesOrder as any).so_number || salesOrder.order_number} • {salesOrder.organisations?.trade_name || salesOrder.organisations?.legal_name}
           </p>
         </div>
         <div className="flex gap-2">

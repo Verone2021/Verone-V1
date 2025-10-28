@@ -81,7 +81,7 @@ export function PriceListItemFormModal({
   ])
 
   // Hooks
-  const { data: products } = useProducts({ search: productSearchTerm })
+  const { products } = useProducts({ search: productSearchTerm }) as any
   const { data: priceList } = usePriceList(priceListId)
   const { data: existingItems } = usePriceListItems(priceListId)
   const { mutate: createItem, isPending: isCreating } = useCreatePriceListItem()
@@ -98,7 +98,7 @@ export function PriceListItemFormModal({
         setTiers([{
           min_quantity: item.min_quantity,
           max_quantity: item.max_quantity,
-          price_ht: item.price_ht,
+          price_ht: (item as any).price_ht,
           discount_rate: (item.discount_rate || 0) * 100, // Convert to percentage
           margin_rate: (item.margin_rate || 0) * 100,
           valid_from: item.valid_from || '',

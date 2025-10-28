@@ -109,7 +109,7 @@ export function SalesOrderFormModal({
             id: order.customer_id,
             type: 'professional' as const,
             name: order.organisations?.trade_name || order.organisations?.legal_name || '',
-            email: order.organisations?.email,
+            email: order.organisations?.email as any,
             phone: order.organisations?.phone,
             address: [
               order.organisations?.address_line1,
@@ -157,7 +157,7 @@ export function SalesOrderFormModal({
       setNotes(order.notes || '')
 
       // Transformer les items de la commande en OrderItem[]
-      const loadedItems: OrderItem[] = await Promise.all(
+      const loadedItems = await Promise.all(
         (order.sales_order_items || []).map(async (item) => {
           const stockData = await getAvailableStock(item.product_id)
 

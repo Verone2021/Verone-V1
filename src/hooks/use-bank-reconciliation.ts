@@ -105,7 +105,7 @@ export function useBankReconciliation() {
             name
           )
         `)
-        .in('status', ['draft', 'pending', 'partially_paid'])
+        .in('status', ['draft', 'partially_paid'] as any)
         .order('created_at', { ascending: false })
 
       // ⚠️ Si financial_documents est vide (tables pas encore créées en test)
@@ -128,7 +128,7 @@ export function useBankReconciliation() {
       }
 
       // Transform invoices to UnpaidInvoice format
-      const unpaidInvoicesData: UnpaidInvoice[] = invoices.map((inv: any) => ({
+      const unpaidInvoicesData = invoices.map((inv: any) => ({
         id: inv.id,
         invoice_number: inv.invoice_number || inv.document_number || 'N/A',
         amount: inv.amount_ttc || 0,
@@ -144,7 +144,7 @@ export function useBankReconciliation() {
       const totalAmountPending = unpaidInvoicesData.reduce((sum, inv) => sum + inv.amount_remaining, 0)
 
       setUnmatchedTransactions(transactions as any)
-      setUnpaidInvoices(unpaidInvoicesData)
+      setUnpaidInvoices(unpaidInvoicesData as any)
       setStats({
         total_unmatched: totalUnmatched,
         total_amount_pending: totalAmountPending,

@@ -134,9 +134,9 @@ export function PaymentForm({
         throw fetchError;
       }
 
-      const newAmountPaid = (currentInvoice.amount_paid || 0) + parseFloat(values.amount);
+      const newAmountPaid = ((currentInvoice as any).amount_paid || 0) + parseFloat(values.amount);
       const newStatus =
-        newAmountPaid >= currentInvoice.total_ttc
+        newAmountPaid >= (currentInvoice as any).total_ttc
           ? 'paid'
           : newAmountPaid > 0
             ? 'partially_paid'

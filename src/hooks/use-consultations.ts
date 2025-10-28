@@ -209,7 +209,7 @@ export function useConsultations() {
         description: `Nouvelle consultation pour ${data.organisation_name}`
       })
 
-      return newConsultation
+      return newConsultation as any
     } catch (err) {
       const message = err instanceof Error ? err.message : 'Erreur lors de la création de la consultation'
       setError(message)
@@ -559,7 +559,7 @@ export function useConsultationItems(consultationId?: string) {
       if (error) throw error
 
       // Transform to ConsultationItem format
-      const items: ConsultationItem[] = (data || []).map(item => ({
+      const items = (data || []).map(item => ({
         id: item.id,
         consultation_id: item.consultation_id,
         product_id: item.product_id,
@@ -579,7 +579,7 @@ export function useConsultationItems(consultationId?: string) {
         } : undefined
       }))
 
-      setConsultationItems(items)
+      setConsultationItems(items as any)
     } catch (err) {
       const message = err instanceof Error ? err.message : 'Erreur lors du chargement des items'
       setError(message)

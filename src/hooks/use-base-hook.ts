@@ -62,7 +62,7 @@ export function useBaseHook<T>(initialData: T): BaseHookState<T> & BaseHookActio
 
   return {
     data,
-    setData,
+    setData: setData as any,
     loading,
     error,
     setLoading,
@@ -106,7 +106,7 @@ export function useBaseListHook<T>(initialData: T[] = []): BaseHookState<T[]> & 
 
   return {
     ...base,
-    setData,
+    setData: setData as any,
     addItem,
     updateItem,
     removeItem

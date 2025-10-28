@@ -207,7 +207,7 @@ export function ProductImageManagement({
             input.type = 'file'
             input.multiple = true
             input.accept = 'image/*'
-            input.onchange = handleInputChange
+            input.onchange = handleInputChange as any
             input.click()
           }}
         >
@@ -347,7 +347,7 @@ export function ProductImageManagement({
                 {/* Informations image */}
                 <div className="absolute bottom-0 left-0 right-0 bg-black bg-opacity-70 text-white p-2">
                   <p className="text-xs truncate">
-                    {image.file_name || `Image ${(image.display_order ?? 0) + 1}`}
+                    {(image as any).file_name || `Image ${(image.display_order ?? 0) + 1}`}
                   </p>
                   {image.file_size && (
                     <p className="text-xs text-gray-300">

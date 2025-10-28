@@ -51,7 +51,7 @@ export function useSubcategories(categoryId?: string) {
       if (error) throw error
 
       // Obtenir les comptages pour chaque sous-catégorie
-      const subcategoriesWithDetails: SubcategoryWithDetails[] = await Promise.all(
+      const subcategoriesWithDetails = await Promise.all(
         (subcategoriesData || []).map(async (sub) => {
           // FIX CORS: Utiliser select sans head:true pour éviter requêtes HEAD directes
           let productCount = 0
@@ -83,7 +83,7 @@ export function useSubcategories(categoryId?: string) {
         })
       )
 
-      setSubcategories(subcategoriesWithDetails)
+      setSubcategories(subcategoriesWithDetails as any)
     } catch (err) {
       console.error('❌ Erreur lors du chargement des sous-catégories:', err)
       setError(err instanceof Error ? err.message : 'Erreur inconnue')
@@ -263,7 +263,7 @@ export function useSubcategories(categoryId?: string) {
           name: sub.categories.name,
           family_id: sub.categories.family_id
         } : undefined
-      }))
+      })) as any
     } catch (err) {
       console.error('❌ Erreur lors du chargement des sous-catégories par catégorie:', err)
       throw err

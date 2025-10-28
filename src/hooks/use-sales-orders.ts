@@ -348,7 +348,7 @@ export function useSalesOrders() {
       }
 
       setCurrentOrder(orderWithCustomer as any)
-      return orderWithCustomer
+      return orderWithCustomer as any
     } catch (error) {
       console.error('Erreur lors de la récupération de la commande:', error)
       toast({
@@ -463,7 +463,7 @@ export function useSalesOrders() {
         product_id: item.product_id,
         requested_quantity: item.quantity,
         available_stock: availableStock,
-        is_available: availableStock >= item.quantity
+        is_available: (availableStock as unknown as number) >= (item.quantity as number)
       })
     }
 

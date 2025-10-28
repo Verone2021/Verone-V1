@@ -243,7 +243,7 @@ export function useCollections(filters?: CollectionFilters) {
       }
 
       await fetchCollections()
-      return newCollection
+      return newCollection as Collection
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Erreur lors de la création')
       return null
@@ -271,7 +271,7 @@ export function useCollections(filters?: CollectionFilters) {
       }
 
       await fetchCollections()
-      return updatedCollection
+      return updatedCollection as Collection
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Erreur lors de la mise à jour')
       return null
