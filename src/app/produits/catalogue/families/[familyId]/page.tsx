@@ -297,7 +297,7 @@ export default function FamilyDetailPage() {
                   slug={category.slug}
                   count={category.subcategory_count || 0}
                   countLabel="sous-catégorie"
-                  isActive={category.is_active}
+                  isActive={category.is_active ?? undefined}
                   iconPosition="top-right"
                   onClick={() => handleCategoryClick(category.id)}
                   onEdit={() => handleEditCategory(category)}

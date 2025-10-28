@@ -350,7 +350,7 @@ export default function CategoryDetailPage() {
                   slug={subcategory.slug}
                   count={subcategory.products_count || 0}
                   countLabel="produit"
-                  isActive={subcategory.is_active}
+                  isActive={subcategory.is_active ?? undefined}
                   iconPosition="top-right"
                   onClick={() => handleSubcategoryClick(subcategory.id)}
                   onEdit={() => handleEditSubcategory(subcategory)}

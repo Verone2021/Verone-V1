@@ -719,7 +719,7 @@ export default function VariantGroupDetailPage({ params }: VariantGroupDetailPag
         <VariantGroupEditModal
           isOpen={showEditModal}
           onClose={() => setShowEditModal(false)}
-          onSubmit={(groupId, data) => updateVariantGroup(groupId, data)}
+          onSubmit={async (groupId, data) => { await updateVariantGroup(groupId, data) }}
           group={variantGroup}
         />
       )}

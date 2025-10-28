@@ -216,7 +216,7 @@ export default function CollectionDetailPage({ params }: CollectionDetailPagePro
     }
 
     setSavingDescription(true)
-    const success = await updateCollection({ id: collectionId, description: editedDescription || null })
+    const success = await updateCollection({ id: collectionId, description: editedDescription || undefined })
 
     if (success) {
       toast({ title: "Description modifiée", description: "La description a été mise à jour" })
@@ -241,7 +241,7 @@ export default function CollectionDetailPage({ params }: CollectionDetailPagePro
     setEditedStyle(style)
     setSavingStyle(true)
 
-    const success = await updateCollection({ id: collectionId, style })
+    const success = await updateCollection({ id: collectionId, style: style ?? undefined })
 
     if (success) {
       toast({ title: "Style modifié", description: "Le style a été mis à jour" })

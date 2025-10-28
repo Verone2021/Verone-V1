@@ -160,7 +160,7 @@ export function OrganisationListView({
                   {org.type === 'supplier' && org.supplier_segment ? (
                     <SupplierSegmentBadge
                       segment={org.supplier_segment}
-                      size="xs"
+                      size="sm"
                       showIcon={false}
                     />
                   ) : (

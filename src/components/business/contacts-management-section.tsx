@@ -354,7 +354,7 @@ export function ContactsManagementSection({
           setEditingContact(null)
         }}
         onSave={handleContactSaved}
-        contact={editingContact}
+        contact={editingContact ?? undefined}
         organisationId={organisationId}
         organisationName={organisationName}
       />

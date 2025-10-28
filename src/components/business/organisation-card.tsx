@@ -155,11 +155,11 @@ export function OrganisationCard({
         {/* Ligne 2: Badge Type / Segment Supplier */}
         {organisation.type === 'supplier' && organisation.supplier_segment ? (
           <div className="flex flex-wrap items-center gap-1">
-            <SupplierSegmentBadge segment={organisation.supplier_segment} size="xs" showIcon={true} />
+            <SupplierSegmentBadge segment={organisation.supplier_segment} size="sm" showIcon={true} />
             {organisation.supplier_category && (
               <SupplierCategoryBadge
                 category={organisation.supplier_category}
-                size="xs"
+                size="sm"
                 showIcon={false}
                 mode="single"
               />

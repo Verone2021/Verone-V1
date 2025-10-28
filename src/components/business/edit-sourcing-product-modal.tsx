@@ -108,10 +108,10 @@ export function EditSourcingProductModal({
     try {
       const success = await onUpdate(product.id, {
         name: formData.name,
-        supplier_page_url: formData.supplier_page_url || null,
+        supplier_page_url: formData.supplier_page_url || undefined,
         cost_price: formData.cost_price,
         margin_percentage: formData.margin_percentage,
-        supplier_id: formData.supplier_id || null
+        supplier_id: formData.supplier_id || undefined
       })
 
       if (success) {

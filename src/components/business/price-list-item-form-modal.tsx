@@ -193,10 +193,10 @@ export function PriceListItemFormModal({
           priceListId,
           data: {
             price_ht: tier.price_ht,
-            discount_rate: tier.discount_rate > 0 ? tier.discount_rate / 100 : null,
+            discount_rate: tier.discount_rate > 0 ? tier.discount_rate / 100 : undefined,
             min_quantity: tier.min_quantity,
             max_quantity: tier.max_quantity,
-            margin_rate: tier.margin_rate > 0 ? tier.margin_rate / 100 : null,
+            margin_rate: tier.margin_rate > 0 ? tier.margin_rate / 100 : undefined,
             valid_from: tier.valid_from || undefined,
             valid_until: tier.valid_until || undefined,
             is_active: tier.is_active,

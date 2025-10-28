@@ -83,7 +83,7 @@ export function useStockOptimized(filters: StockFilters = {}) {
   // Query pour les produits en stock faible
   const lowStockQuery = useSupabaseQuery(
     'low-stock-products',
-    (async (supabase) => {
+    (async (supabase: ReturnType<typeof createClient>) => {
       // Requête corrigée : utiliser RPC pour comparaison inter-colonnes
       const { data, error } = await supabase
         .rpc('get_low_stock_products', { limit_count: 50 })
@@ -111,7 +111,7 @@ export function useStockOptimized(filters: StockFilters = {}) {
         if (fallbackError) throw fallbackError
 
         return {
-          data: (fallbackData || []).map(product => ({
+          data: (fallbackData || []).map((product: any) => ({
             ...product,
             supplier_name: product.organisations?.trade_name || product.organisations?.legal_name
           })),
@@ -196,7 +196,7 @@ export function useStockOptimized(filters: StockFilters = {}) {
 
   // Mutations pour les mouvements de stock
   const createMovementMutation = useSupabaseMutation<StockMovement>(
-    (async (supabase, movementData: {
+    (async (supabase: ReturnType<typeof createClient>, movementData: {
       product_id: string
       movement_type: 'IN' | 'OUT' | 'ADJUST' | 'TRANSFER'
       quantity_change: number
