@@ -166,7 +166,7 @@ export default function SourcingValidationPage() {
         {/* Onglets de navigation */}
         <div className="flex space-x-1 mb-6">
           <ButtonV2
-            variant={activeTab === 'validation' ? 'default' : 'outline'}
+            variant={activeTab === 'validation' ? 'secondary' : 'outline'}
             onClick={() => setActiveTab('validation')}
             className={activeTab === 'validation' ? 'bg-black text-white' : ''}
           >
@@ -174,7 +174,7 @@ export default function SourcingValidationPage() {
             Validation Sourcing ({productsToValidate.length})
           </ButtonV2>
           <ButtonV2
-            variant={activeTab === 'samples' ? 'default' : 'outline'}
+            variant={activeTab === 'samples' ? 'secondary' : 'outline'}
             onClick={() => setActiveTab('samples')}
             className={activeTab === 'samples' ? 'bg-black text-white' : ''}
           >
@@ -279,7 +279,7 @@ export default function SourcingValidationPage() {
                         <div>
                           <span className="text-gray-600">URL fournisseur:</span>
                           <a
-                            href={product.supplier_page_url}
+                            href={product.supplier_page_url || undefined}
                             target="_blank"
                             rel="noopener noreferrer"
                             className="text-blue-600 hover:underline block truncate"
