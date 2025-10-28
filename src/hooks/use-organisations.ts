@@ -293,8 +293,8 @@ export function useOrganisations(filters?: OrganisationFilters) {
         // Créer un Map de comptage
         const countsMap = new Map<string, number>()
         productCounts?.forEach(p => {
-          const count = countsMap.get(p.supplier_id) || 0
-          countsMap.set(p.supplier_id, count + 1)
+          const count = countsMap.get(p.supplier_id as any) || 0
+          countsMap.set(p.supplier_id as any, count + 1)
         })
 
         // Merger les comptes avec les organisations
@@ -311,7 +311,7 @@ export function useOrganisations(filters?: OrganisationFilters) {
         })
       }
 
-      setOrganisations(organisationsWithCounts)
+      setOrganisations(organisationsWithCounts as any)
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Erreur inconnue')
     } finally {

@@ -137,7 +137,7 @@ export const useCatalogue = () => {
       setState(prev => ({
         ...prev,
         categories: categoriesResult,
-        products: productsResult.products,
+        products: productsResult.products as any,
         total: productsResult.total,
         loading: false
       }));
@@ -191,7 +191,7 @@ export const useCatalogue = () => {
     }
 
     if (filters.statuses && filters.statuses.length > 0) {
-      query = query.in('status', filters.statuses);
+      query = query.in('status', filters.statuses as any);
     }
 
     if (filters.subcategories && filters.subcategories.length > 0) {
@@ -246,7 +246,7 @@ export const useCatalogue = () => {
     }
 
     if (filters.statuses && filters.statuses.length > 0) {
-      query = query.in('status', filters.statuses);
+      query = query.in('status', filters.statuses as any);
     }
 
     if (filters.subcategories && filters.subcategories.length > 0) {

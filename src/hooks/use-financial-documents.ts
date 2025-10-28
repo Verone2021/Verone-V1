@@ -198,7 +198,7 @@ export function useFinancialDocuments(filters?: FinancialDocumentFilters) {
   // Créer facture client depuis commande
   const createCustomerInvoice = async (salesOrderId: string) => {
     try {
-      const { data, error: rpcError } = await supabase
+      const { data, error: rpcError } = await (supabase as any)
         .rpc('create_customer_invoice_from_order', {
           p_sales_order_id: salesOrderId
         })
@@ -230,7 +230,7 @@ export function useFinancialDocuments(filters?: FinancialDocumentFilters) {
     notes?: string
   }) => {
     try {
-      const { data, error: rpcError } = await supabase
+      const { data, error: rpcError } = await (supabase as any)
         .rpc('create_supplier_invoice', {
           p_supplier_id: params.supplier_id,
           p_purchase_order_id: params.purchase_order_id,
@@ -270,7 +270,7 @@ export function useFinancialDocuments(filters?: FinancialDocumentFilters) {
     notes?: string
   }) => {
     try {
-      const { data, error: rpcError } = await supabase
+      const { data, error: rpcError } = await (supabase as any)
         .rpc('create_expense', {
           p_supplier_id: params.supplier_id,
           p_expense_category_id: params.expense_category_id,

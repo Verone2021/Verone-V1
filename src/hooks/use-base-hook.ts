@@ -135,9 +135,9 @@ export function createCrudOperations<T, CreateData, UpdateData = Partial<CreateD
 
       if (error) throw error
 
-      baseHook.addItem(newItem)
+      baseHook.addItem(newItem as T)
       baseHook.showToast('Succès', `${tableName} créé avec succès`)
-      return newItem
+      return newItem as T
     } catch (err) {
       baseHook.handleError(err, `Erreur lors de la création de ${tableName}`)
       baseHook.showToast('Erreur', `Impossible de créer ${tableName}`, 'destructive')
@@ -151,14 +151,14 @@ export function createCrudOperations<T, CreateData, UpdateData = Partial<CreateD
 
       const { data: updatedItem, error } = await baseHook.supabase
         .from(tableName)
-        .update(data)
+        .update(data as any)
         .eq('id', id)
         .select(selectFields || '*')
         .single()
 
       if (error) throw error
 
-      baseHook.updateItem(id, updatedItem)
+      baseHook.updateItem(id, updatedItem as Partial<T>)
       baseHook.showToast('Succès', `${tableName} mis à jour avec succès`)
       return updatedItem
     } catch (err) {

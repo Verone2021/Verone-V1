@@ -110,12 +110,12 @@ export function useMovementsHistory() {
 
       // Filtres par type de mouvement
       if (appliedFilters.movementTypes && appliedFilters.movementTypes.length > 0) {
-        query = query.in('movement_type', appliedFilters.movementTypes)
+        query = query.in('movement_type', appliedFilters.movementTypes as any)
       }
 
       // Filtres par motifs
       if (appliedFilters.reasonCodes && appliedFilters.reasonCodes.length > 0) {
-        query = query.in('reason_code', appliedFilters.reasonCodes)
+        query = query.in('reason_code', appliedFilters.reasonCodes as any)
       }
 
       // Filtres par utilisateurs
@@ -298,7 +298,7 @@ export function useMovementsHistory() {
         .slice(0, 5)
         .map(([code, count]) => ({
           code,
-          description: getReasonDescription(code),
+          description: getReasonDescription(code as any),
           count
         }))
 
@@ -394,11 +394,11 @@ export function useMovementsHistory() {
       }
 
       if (exportFilters.movementTypes && exportFilters.movementTypes.length > 0) {
-        query = query.in('movement_type', exportFilters.movementTypes)
+        query = query.in('movement_type', exportFilters.movementTypes as any)
       }
 
       if (exportFilters.reasonCodes && exportFilters.reasonCodes.length > 0) {
-        query = query.in('reason_code', exportFilters.reasonCodes)
+        query = query.in('reason_code', exportFilters.reasonCodes as any)
       }
 
       if (exportFilters.userIds && exportFilters.userIds.length > 0) {
