@@ -294,7 +294,7 @@ export function mapProductsBatch(products: ProductWithRelations[]): {
         error: error instanceof Error ? error.message : String(error)
       })
 
-      logger.error('Failed to map product', {
+      logger.error('Failed to map product', undefined, {
         operation: 'product_mapping_batch',
         productId: productData.product.id,
         sku: productData.product.sku,

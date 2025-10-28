@@ -89,7 +89,7 @@ export function useProductPrice(params: PricingParams) {
         })
 
         if (error) {
-          logger.error('Failed to calculate product price', {
+          logger.error('Failed to calculate product price', undefined, {
             operation: 'useProductPrice',
             error: error.message,
             params
@@ -122,7 +122,7 @@ export function useProductPrice(params: PricingParams) {
 
         return result
       } catch (error) {
-        logger.error('Exception in useProductPrice', {
+        logger.error('Exception in useProductPrice', undefined, {
           operation: 'useProductPrice',
           error: error instanceof Error ? error.message : String(error),
           params
@@ -215,7 +215,7 @@ export function useBatchPricing() {
 
         return results
       } catch (error) {
-        logger.error('Exception in useBatchPricing', {
+        logger.error('Exception in useBatchPricing', undefined, {
           operation: 'useBatchPricing',
           error: error instanceof Error ? error.message : String(error)
         })
@@ -262,7 +262,7 @@ export function useSalesChannels() {
           .order('display_order', { ascending: true })
 
         if (error) {
-          logger.error('Failed to fetch sales channels', {
+          logger.error('Failed to fetch sales channels', undefined, {
             operation: 'useSalesChannels',
             error: error.message
           })
@@ -276,7 +276,7 @@ export function useSalesChannels() {
 
         return data || []
       } catch (error) {
-        logger.error('Exception in useSalesChannels', {
+        logger.error('Exception in useSalesChannels', undefined, {
           operation: 'useSalesChannels',
           error: error instanceof Error ? error.message : String(error)
         })
@@ -324,7 +324,7 @@ export function useChannelPricing(productId: string) {
           .order('min_quantity', { ascending: true })
 
         if (error) {
-          logger.error('Failed to fetch channel pricing', {
+          logger.error('Failed to fetch channel pricing', undefined, {
             operation: 'useChannelPricing',
             productId,
             error: error.message
@@ -340,7 +340,7 @@ export function useChannelPricing(productId: string) {
 
         return data || []
       } catch (error) {
-        logger.error('Exception in useChannelPricing', {
+        logger.error('Exception in useChannelPricing', undefined, {
           operation: 'useChannelPricing',
           error: error instanceof Error ? error.message : String(error)
         })
@@ -390,7 +390,7 @@ export function useCustomerPricing(customerId: string, customerType: 'organizati
           .order('valid_from', { ascending: false })
 
         if (error) {
-          logger.error('Failed to fetch customer pricing', {
+          logger.error('Failed to fetch customer pricing', undefined, {
             operation: 'useCustomerPricing',
             customerId,
             customerType,
@@ -407,7 +407,7 @@ export function useCustomerPricing(customerId: string, customerType: 'organizati
 
         return data || []
       } catch (error) {
-        logger.error('Exception in useCustomerPricing', {
+        logger.error('Exception in useCustomerPricing', undefined, {
           operation: 'useCustomerPricing',
           error: error instanceof Error ? error.message : String(error)
         })
@@ -524,7 +524,7 @@ export function useQuantityBreaks(params: QuantityBreaksParams) {
         })
 
         if (error) {
-          logger.error('Failed to fetch quantity breaks', {
+          logger.error('Failed to fetch quantity breaks', undefined, {
             operation: 'useQuantityBreaks',
             error: error.message,
             params
@@ -544,7 +544,7 @@ export function useQuantityBreaks(params: QuantityBreaksParams) {
 
         return data as QuantityBreak[]
       } catch (error) {
-        logger.error('Exception in useQuantityBreaks', {
+        logger.error('Exception in useQuantityBreaks', undefined, {
           operation: 'useQuantityBreaks',
           error: error instanceof Error ? error.message : String(error),
           params

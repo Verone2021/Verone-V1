@@ -150,7 +150,7 @@ export function usePriceLists(filters?: {
         const { data, error } = await query
 
         if (error) {
-          logger.error('Failed to fetch price lists', {
+          logger.error('Failed to fetch price lists', undefined, {
             operation: 'usePriceLists',
             error: error.message,
             filters
@@ -165,7 +165,7 @@ export function usePriceLists(filters?: {
 
         return data || []
       } catch (error) {
-        logger.error('Exception in usePriceLists', {
+        logger.error('Exception in usePriceLists', undefined, {
           operation: 'usePriceLists',
           error: error instanceof Error ? error.message : String(error)
         })
@@ -197,7 +197,7 @@ export function usePriceList(priceListId: string | null) {
           .single()
 
         if (error) {
-          logger.error('Failed to fetch price list', {
+          logger.error('Failed to fetch price list', undefined, {
             operation: 'usePriceList',
             priceListId,
             error: error.message
@@ -207,7 +207,7 @@ export function usePriceList(priceListId: string | null) {
 
         return data
       } catch (error) {
-        logger.error('Exception in usePriceList', {
+        logger.error('Exception in usePriceList', undefined, {
           operation: 'usePriceList',
           error: error instanceof Error ? error.message : String(error)
         })
@@ -257,7 +257,7 @@ export function usePriceListItems(priceListId: string | null) {
           .order('min_quantity', { ascending: true })
 
         if (error) {
-          logger.error('Failed to fetch price list items', {
+          logger.error('Failed to fetch price list items', undefined, {
             operation: 'usePriceListItems',
             priceListId,
             error: error.message
@@ -282,7 +282,7 @@ export function usePriceListItems(priceListId: string | null) {
 
         return enrichedItems
       } catch (error) {
-        logger.error('Exception in usePriceListItems', {
+        logger.error('Exception in usePriceListItems', undefined, {
           operation: 'usePriceListItems',
           error: error instanceof Error ? error.message : String(error)
         })
@@ -327,7 +327,7 @@ export function useCreatePriceList() {
           .single()
 
         if (error) {
-          logger.error('Failed to create price list', {
+          logger.error('Failed to create price list', undefined, {
             operation: 'createPriceList',
             error: error.message,
             data
@@ -342,7 +342,7 @@ export function useCreatePriceList() {
 
         return priceList
       } catch (error) {
-        logger.error('Exception in createPriceList', {
+        logger.error('Exception in createPriceList', undefined, {
           operation: 'createPriceList',
           error: error instanceof Error ? error.message : String(error)
         })
@@ -398,7 +398,7 @@ export function useUpdatePriceList() {
           .single()
 
         if (error) {
-          logger.error('Failed to update price list', {
+          logger.error('Failed to update price list', undefined, {
             operation: 'updatePriceList',
             priceListId,
             error: error.message
@@ -413,7 +413,7 @@ export function useUpdatePriceList() {
 
         return priceList
       } catch (error) {
-        logger.error('Exception in updatePriceList', {
+        logger.error('Exception in updatePriceList', undefined, {
           operation: 'updatePriceList',
           error: error instanceof Error ? error.message : String(error)
         })
@@ -456,7 +456,7 @@ export function useDeletePriceList() {
           .eq('id', priceListId)
 
         if (error) {
-          logger.error('Failed to delete price list', {
+          logger.error('Failed to delete price list', undefined, {
             operation: 'deletePriceList',
             priceListId,
             error: error.message
@@ -469,7 +469,7 @@ export function useDeletePriceList() {
           priceListId
         })
       } catch (error) {
-        logger.error('Exception in deletePriceList', {
+        logger.error('Exception in deletePriceList', undefined, {
           operation: 'deletePriceList',
           error: error instanceof Error ? error.message : String(error)
         })
@@ -525,7 +525,7 @@ export function useCreatePriceListItem() {
           .single()
 
         if (error) {
-          logger.error('Failed to create price list item', {
+          logger.error('Failed to create price list item', undefined, {
             operation: 'createPriceListItem',
             error: error.message,
             data
@@ -540,7 +540,7 @@ export function useCreatePriceListItem() {
 
         return item
       } catch (error) {
-        logger.error('Exception in createPriceListItem', {
+        logger.error('Exception in createPriceListItem', undefined, {
           operation: 'createPriceListItem',
           error: error instanceof Error ? error.message : String(error)
         })
@@ -596,7 +596,7 @@ export function useUpdatePriceListItem() {
           .single()
 
         if (error) {
-          logger.error('Failed to update price list item', {
+          logger.error('Failed to update price list item', undefined, {
             operation: 'updatePriceListItem',
             itemId,
             error: error.message
@@ -611,7 +611,7 @@ export function useUpdatePriceListItem() {
 
         return item
       } catch (error) {
-        logger.error('Exception in updatePriceListItem', {
+        logger.error('Exception in updatePriceListItem', undefined, {
           operation: 'updatePriceListItem',
           error: error instanceof Error ? error.message : String(error)
         })
@@ -660,7 +660,7 @@ export function useDeletePriceListItem() {
           .eq('id', itemId)
 
         if (error) {
-          logger.error('Failed to delete price list item', {
+          logger.error('Failed to delete price list item', undefined, {
             operation: 'deletePriceListItem',
             itemId,
             error: error.message
@@ -673,7 +673,7 @@ export function useDeletePriceListItem() {
           itemId
         })
       } catch (error) {
-        logger.error('Exception in deletePriceListItem', {
+        logger.error('Exception in deletePriceListItem', undefined, {
           operation: 'deletePriceListItem',
           error: error instanceof Error ? error.message : String(error)
         })
