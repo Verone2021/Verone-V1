@@ -134,7 +134,7 @@ export function usePriceLists(filters?: {
     queryKey: ['price-lists', filters],
     queryFn: async (): Promise<PriceList[]> => {
       try {
-        let query = supabase
+        let query = (supabase as any)
           .from('price_lists')
           .select('*')
           .order('priority', { ascending: true })
@@ -163,7 +163,7 @@ export function usePriceLists(filters?: {
           count: data?.length || 0
         })
 
-        return data || []
+        return (data as unknown as PriceList[]) || []
       } catch (error) {
         logger.error('Exception in usePriceLists', undefined, {
           operation: 'usePriceLists',
@@ -173,7 +173,7 @@ export function usePriceLists(filters?: {
       }
     },
     staleTime: 5 * 60 * 1000,  // 5 minutes
-    cacheTime: 10 * 60 * 1000
+    gcTime: 10 * 60 * 1000
   })
 }
 
@@ -190,7 +190,7 @@ export function usePriceList(priceListId: string | null) {
       if (!priceListId) return null
 
       try {
-        const { data, error } = await supabase
+        const { data, error } = await (supabase as any)
           .from('price_lists')
           .select('*')
           .eq('id', priceListId)
@@ -205,7 +205,7 @@ export function usePriceList(priceListId: string | null) {
           throw error
         }
 
-        return data
+        return data as unknown as PriceList
       } catch (error) {
         logger.error('Exception in usePriceList', undefined, {
           operation: 'usePriceList',
@@ -216,7 +216,7 @@ export function usePriceList(priceListId: string | null) {
     },
     enabled: !!priceListId,
     staleTime: 5 * 60 * 1000,
-    cacheTime: 10 * 60 * 1000
+    gcTime: 10 * 60 * 1000
   })
 }
 
@@ -233,7 +233,7 @@ export function usePriceListItems(priceListId: string | null) {
       if (!priceListId) return []
 
       try {
-        const { data, error } = await supabase
+        const { data, error } = await (supabase as any)
           .from('price_list_items')
           .select(`
             *,
@@ -280,7 +280,7 @@ export function usePriceListItems(priceListId: string | null) {
           } : null
         }))
 
-        return enrichedItems
+        return enrichedItems as unknown as PriceListItem[]
       } catch (error) {
         logger.error('Exception in usePriceListItems', undefined, {
           operation: 'usePriceListItems',
@@ -291,7 +291,7 @@ export function usePriceListItems(priceListId: string | null) {
     },
     enabled: !!priceListId,
     staleTime: 5 * 60 * 1000,
-    cacheTime: 10 * 60 * 1000
+    gcTime: 10 * 60 * 1000
   })
 }
 
@@ -309,7 +309,7 @@ export function useCreatePriceList() {
       try {
         const { data: user } = await supabase.auth.getUser()
 
-        const { data: priceList, error }: { data: PriceList | null; error: any } = await supabase
+        const { data: priceList, error } = await (supabase as any)
           .from('price_lists')
           .insert({
             code: data.code,
@@ -335,12 +335,16 @@ export function useCreatePriceList() {
           throw error
         }
 
+        if (!priceList) {
+          throw new Error('Price list creation returned null')
+        }
+
         logger.info('Price list created successfully', {
           operation: 'createPriceList',
-          priceListId: priceList.id
+          priceListId: (priceList as any).id
         })
 
-        return priceList
+        return priceList as unknown as PriceList
       } catch (error) {
         logger.error('Exception in createPriceList', undefined, {
           operation: 'createPriceList',
@@ -386,7 +390,7 @@ export function useUpdatePriceList() {
       try {
         const { data: user } = await supabase.auth.getUser()
 
-        const { data: priceList, error } = await supabase
+        const { data: priceList, error } = await (supabase as any)
           .from('price_lists')
           .update({
             ...data,
@@ -411,7 +415,7 @@ export function useUpdatePriceList() {
           priceListId
         })
 
-        return priceList
+        return priceList as unknown as PriceList
       } catch (error) {
         logger.error('Exception in updatePriceList', undefined, {
           operation: 'updatePriceList',
@@ -450,7 +454,7 @@ export function useDeletePriceList() {
   return useMutation({
     mutationFn: async (priceListId: string): Promise<void> => {
       try {
-        const { error } = await supabase
+        const { error } = await (supabase as any)
           .from('price_lists')
           .delete()
           .eq('id', priceListId)
@@ -505,7 +509,7 @@ export function useCreatePriceListItem() {
   return useMutation({
     mutationFn: async (data: CreatePriceListItemData): Promise<PriceListItem> => {
       try {
-        const { data: item, error }: { data: PriceListItem | null; error: any } = await supabase
+        const { data: item, error } = await (supabase as any)
           .from('price_list_items')
           .insert({
             price_list_id: data.price_list_id,
@@ -533,12 +537,16 @@ export function useCreatePriceListItem() {
           throw error
         }
 
+        if (!item) {
+          throw new Error('Price list item creation returned null')
+        }
+
         logger.info('Price list item created successfully', {
           operation: 'createPriceListItem',
-          itemId: item.id
+          itemId: (item as any).id
         })
 
-        return item
+        return item as unknown as PriceListItem
       } catch (error) {
         logger.error('Exception in createPriceListItem', undefined, {
           operation: 'createPriceListItem',
@@ -577,15 +585,14 @@ export function useUpdatePriceListItem() {
   return useMutation({
     mutationFn: async ({
       itemId,
-      priceListId,
       data
     }: {
       itemId: string
-      priceListId: string
+      priceListId: string  // Garde pour compatibilité interface mais non utilisé
       data: UpdatePriceListItemData
     }): Promise<PriceListItem> => {
       try {
-        const { data: item, error } = await supabase
+        const { data: item, error } = await (supabase as any)
           .from('price_list_items')
           .update({
             ...data,
@@ -609,7 +616,7 @@ export function useUpdatePriceListItem() {
           itemId
         })
 
-        return item
+        return item as unknown as PriceListItem
       } catch (error) {
         logger.error('Exception in updatePriceListItem', undefined, {
           operation: 'updatePriceListItem',
@@ -647,14 +654,13 @@ export function useDeletePriceListItem() {
 
   return useMutation({
     mutationFn: async ({
-      itemId,
-      priceListId
+      itemId
     }: {
       itemId: string
-      priceListId: string
+      priceListId: string  // Garde pour compatibilité interface mais non utilisé
     }): Promise<void> => {
       try {
-        const { error } = await supabase
+        const { error } = await (supabase as any)
           .from('price_list_items')
           .delete()
           .eq('id', itemId)
