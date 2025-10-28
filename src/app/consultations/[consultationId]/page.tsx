@@ -442,7 +442,7 @@ export default function ConsultationDetailPage() {
               {/* Bouton Supprimer (seulement si archivée) */}
               {consultation.archived_at && (
                 <ButtonV2
-                  variant="danger"
+                  variant="destructive"
                   onClick={handleDeleteConsultation}
                 >
                   <XCircle className="h-3 w-3 mr-2" />

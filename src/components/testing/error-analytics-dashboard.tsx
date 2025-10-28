@@ -339,7 +339,7 @@ export function ErrorAnalyticsDashboard({
                     <Badge variant="secondary">{stat.module.toUpperCase()}</Badge>
                     <span className="text-sm">{stat.error_count} erreurs</span>
                     {stat.critical_count > 0 && (
-                      <Badge variant="danger" className="text-xs">
+                      <Badge variant="destructive" className="text-xs">
                         {stat.critical_count} critiques
                       </Badge>
                     )}

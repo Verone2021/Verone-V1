@@ -373,7 +373,7 @@ export function SubcategoryForm({
                   />
                   <ButtonV2
                     type="button"
-                    variant="danger"
+                    variant="destructive"
                     size="sm"
                     className="absolute top-2 right-2"
                     onClick={handleRemoveImage}

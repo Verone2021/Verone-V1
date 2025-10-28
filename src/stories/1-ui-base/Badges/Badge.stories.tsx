@@ -209,10 +209,10 @@ export const AllVariants: Story = {
       <Badge variant="secondary">Secondary</Badge>
       <Badge variant="success">Success</Badge>
       <Badge variant="warning">Warning</Badge>
-      <Badge variant="danger">Danger</Badge>
+      <Badge variant="destructive">Danger</Badge>
       <Badge variant="info">Info</Badge>
       <Badge variant="outline">Outline</Badge>
-      <Badge variant="danger">Destructive</Badge>
+      <Badge variant="destructive">Destructive</Badge>
     </div>
   ),
 };
@@ -225,7 +225,7 @@ export const ProductStatuses: Story = {
     <div className="flex flex-wrap gap-2">
       <Badge variant="success" dot>En stock</Badge>
       <Badge variant="warning" dot dotColor="#ff9b3e">Stock faible</Badge>
-      <Badge variant="danger" dot>Rupture</Badge>
+      <Badge variant="destructive" dot>Rupture</Badge>
       <Badge variant="info" dot>Commande en cours</Badge>
       <Badge variant="secondary" dot dotColor="#6c7293">Archivé</Badge>
     </div>
@@ -242,7 +242,7 @@ export const OrderStatuses: Story = {
       <Badge variant="info" icon={<Clock className="w-3 h-3" />}>En attente</Badge>
       <Badge variant="warning" icon={<AlertTriangle className="w-3 h-3" />}>À valider</Badge>
       <Badge variant="success" icon={<Check className="w-3 h-3" />}>Confirmé</Badge>
-      <Badge variant="danger" icon={<X className="w-3 h-3" />}>Annulé</Badge>
+      <Badge variant="destructive" icon={<X className="w-3 h-3" />}>Annulé</Badge>
     </div>
   ),
 };

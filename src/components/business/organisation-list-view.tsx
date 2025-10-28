@@ -145,7 +145,7 @@ export function OrganisationListView({
                       </p>
                       {org.archived_at && (
                         <Badge
-                          variant="danger"
+                          variant="destructive"
                           className="text-[10px] px-1 py-0 mt-0.5"
                         >
                           Archivé

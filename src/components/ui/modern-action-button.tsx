@@ -55,7 +55,7 @@ const ACTION_CONFIGS: Record<ActionType, ActionConfig> = {
     defaultLabel: 'Archiver',
   },
   delete: {
-    variant: 'danger',
+    variant: 'destructive',
     icon: Trash2,
     defaultLabel: 'Supprimer',
   },
@@ -85,7 +85,7 @@ const ACTION_CONFIGS: Record<ActionType, ActionConfig> = {
     defaultLabel: 'Approuver',
   },
   reject: {
-    variant: 'danger',
+    variant: 'destructive',
     icon: X,
     defaultLabel: 'Rejeter',
   },

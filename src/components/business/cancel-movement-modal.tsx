@@ -184,7 +184,7 @@ export function CancelMovementModal({ movement, isOpen, onClose, onSuccess }: Ca
             Annuler
           </ButtonV2>
           <ButtonV2
-            variant="danger"
+            variant="destructive"
             onClick={handleCancel}
             disabled={cancelling}
             className="bg-red-600 hover:bg-red-700"

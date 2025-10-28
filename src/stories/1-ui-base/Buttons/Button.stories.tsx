@@ -117,7 +117,7 @@ export const Success: Story = {
  */
 export const Danger: Story = {
   args: {
-    variant: 'danger',
+    variant: 'destructive',
     children: 'Delete',
     icon: Trash2,
   },
@@ -214,7 +214,7 @@ export const AllVariants: Story = {
       <ButtonV2 variant="secondary">Secondary</ButtonV2>
       <ButtonV2 variant="outline">Outline</ButtonV2>
       <ButtonV2 variant="success" icon={Save}>Success</ButtonV2>
-      <ButtonV2 variant="danger" icon={Trash2}>Danger</ButtonV2>
+      <ButtonV2 variant="destructive" icon={Trash2}>Danger</ButtonV2>
       <ButtonV2 variant="warning">Warning</ButtonV2>
       <ButtonV2 variant="ghost">Ghost</ButtonV2>
     </div>
@@ -240,7 +240,7 @@ export const RealWorldExamples: Story = {
       <div className="space-y-2">
         <h3 className="text-sm font-medium text-gray-700">Actions Destructives</h3>
         <div className="flex gap-2">
-          <ButtonV2 variant="danger" icon={Trash2} size="sm">Supprimer</ButtonV2>
+          <ButtonV2 variant="destructive" icon={Trash2} size="sm">Supprimer</ButtonV2>
           <ButtonV2 variant="outline" size="sm">Conserver</ButtonV2>
         </div>
       </div>
@@ -261,7 +261,7 @@ export const RealWorldExamples: Story = {
         <div className="flex gap-2">
           <ButtonV2 variant="primary" loading>Chargement...</ButtonV2>
           <ButtonV2 variant="success" loading>Validation...</ButtonV2>
-          <ButtonV2 variant="danger" loading>Suppression...</ButtonV2>
+          <ButtonV2 variant="destructive" loading>Suppression...</ButtonV2>
         </div>
       </div>
     </div>

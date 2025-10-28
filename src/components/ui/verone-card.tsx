@@ -162,7 +162,7 @@ export function VéroneCard({
                 )}
                 {onDelete && (
                   <ButtonV2
-                    variant="danger"
+                    variant="destructive"
                     size="sm"
                     className="w-8 h-8 p-0"
                     onClick={(e) => {

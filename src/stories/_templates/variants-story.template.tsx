@@ -154,7 +154,7 @@ export const AllVariants: Story = {
       <ComponentName variant="primary">Default</ComponentName>
       <ComponentName variant="primary">Primary</ComponentName>
       <ComponentName variant="secondary">Secondary</ComponentName>
-      <ComponentName variant="danger">Destructive</ComponentName>
+      <ComponentName variant="destructive">Destructive</ComponentName>
       <ComponentName variant="outline">Outline</ComponentName>
       <ComponentName variant="ghost">Ghost</ComponentName>
     </div>

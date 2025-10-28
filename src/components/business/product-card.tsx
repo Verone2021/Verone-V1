@@ -270,7 +270,7 @@ export const ProductCard = memo(function ProductCard({
               {/* Supprimer */}
               {onDelete && (
                 <ButtonV2
-                  variant="danger"
+                  variant="destructive"
                   size="sm"
                   onClick={handleDeleteClick}
                   className="flex-1 min-w-0 h-6 text-[10px] px-1.5"

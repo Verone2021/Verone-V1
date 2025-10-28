@@ -440,7 +440,7 @@ export default function SuppliersPage() {
                       {/* Badge Archivé seulement */}
                       {supplier.archived_at && (
                         <Badge
-                          variant="danger"
+                          variant="destructive"
                           className="text-xs flex-shrink-0"
                           style={{ backgroundColor: colors.danger[100], color: colors.danger[700] }}
                         >
@@ -535,7 +535,7 @@ export default function SuppliersPage() {
                               aria-label="Restaurer"
                             />
                             <ButtonV2
-                              variant="danger"
+                              variant="destructive"
                               size="sm"
                               onClick={() => handleDelete(supplier)}
                               icon={Trash2}
@@ -611,7 +611,7 @@ export default function SuppliersPage() {
                           )}
                           {supplier.archived_at && (
                             <Badge
-                              variant="danger"
+                              variant="destructive"
                               className="text-xs ml-2"
                               style={{ backgroundColor: colors.danger[100], color: colors.danger[700] }}
                             >
@@ -706,7 +706,7 @@ export default function SuppliersPage() {
                               aria-label="Restaurer"
                             />
                             <ButtonV2
-                              variant="danger"
+                              variant="destructive"
                               size="sm"
                               onClick={() => handleDelete(supplier)}
                               icon={Trash2}

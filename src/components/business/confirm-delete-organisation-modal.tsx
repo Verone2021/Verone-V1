@@ -138,7 +138,7 @@ export function ConfirmDeleteOrganisationModal({
             Annuler
           </ButtonV2>
           <ButtonV2
-            variant="danger"
+            variant="destructive"
             onClick={handleConfirm}
             disabled={isDeleting}
           >

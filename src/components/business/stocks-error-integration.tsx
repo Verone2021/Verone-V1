@@ -497,7 +497,7 @@ const StocksStatusBadge: React.FC<{
 
   if (criticalErrors > 0 || failedMovements > 0) {
     return (
-      <Badge variant="danger" className="flex items-center gap-1">
+      <Badge variant="destructive" className="flex items-center gap-1">
         <AlertTriangle className="w-3 h-3" />
         {criticalErrors + failedMovements} Erreur{criticalErrors + failedMovements > 1 ? 's' : ''}
       </Badge>

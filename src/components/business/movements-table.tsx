@@ -67,7 +67,7 @@ export function MovementsTable({ movements, loading, onMovementClick, onCancelCl
       case 'IN':
         return <Badge variant="secondary" className="bg-green-100 text-green-800 hover:bg-green-100">Entrée</Badge>
       case 'OUT':
-        return <Badge variant="danger">Sortie</Badge>
+        return <Badge variant="destructive">Sortie</Badge>
       case 'ADJUST':
         return <Badge variant="secondary" className="bg-blue-100 text-blue-800 hover:bg-blue-100">Ajustement</Badge>
       case 'TRANSFER':

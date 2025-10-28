@@ -360,7 +360,7 @@ export default function VariantesPage() {
               </ButtonV2>
               <ButtonV2
                 size="sm"
-                variant="danger"
+                variant="destructive"
                 onClick={() => handleDeleteGroup(group.id)}
                 className="text-[10px] h-6 w-full px-1"
                 title="Supprimer le groupe"
@@ -511,7 +511,7 @@ export default function VariantesPage() {
             {selectedGroups.length} groupe{selectedGroups.length !== 1 ? 's' : ''} sélectionné{selectedGroups.length !== 1 ? 's' : ''}
           </span>
           <ButtonV2
-            variant="danger"
+            variant="destructive"
             size="sm"
             onClick={() => {
               // TODO: Implémenter actions en lot

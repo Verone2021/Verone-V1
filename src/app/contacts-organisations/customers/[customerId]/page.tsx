@@ -172,7 +172,7 @@ export default function CustomerDetailPage() {
                 {customer.is_active ? 'Actif' : 'Inactif'}
               </Badge>
               {customer.archived_at && (
-                <Badge variant="danger" className="bg-red-100 text-red-800">
+                <Badge variant="destructive" className="bg-red-100 text-red-800">
                   Archivé
                 </Badge>
               )}

@@ -424,7 +424,7 @@ export default function PartnersPage() {
                       {/* Badge Archivé seulement */}
                       {partner.archived_at && (
                         <Badge
-                          variant="danger"
+                          variant="destructive"
                           className="text-xs flex-shrink-0"
                           style={{ backgroundColor: colors.danger[100], color: colors.danger[700] }}
                         >
@@ -512,7 +512,7 @@ export default function PartnersPage() {
                               aria-label="Restaurer"
                             />
                             <ButtonV2
-                              variant="danger"
+                              variant="destructive"
                               size="sm"
                               onClick={() => handleDelete(partner)}
                               icon={Trash2}
@@ -590,7 +590,7 @@ export default function PartnersPage() {
                           )}
                           {partner.archived_at && (
                             <Badge
-                              variant="danger"
+                              variant="destructive"
                               className="text-xs ml-2"
                               style={{ backgroundColor: colors.danger[100], color: colors.danger[700] }}
                             >
@@ -675,7 +675,7 @@ export default function PartnersPage() {
                               aria-label="Restaurer"
                             />
                             <ButtonV2
-                              variant="danger"
+                              variant="destructive"
                               size="sm"
                               onClick={() => handleDelete(partner)}
                               icon={Trash2}

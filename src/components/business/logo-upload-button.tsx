@@ -253,7 +253,7 @@ export function LogoUploadButton({
           </ButtonV2>
 
           <ButtonV2
-            variant="danger"
+            variant="destructive"
             size="sm"
             onClick={handleDelete}
             disabled={isLoading}
