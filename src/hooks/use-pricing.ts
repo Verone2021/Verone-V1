@@ -79,7 +79,7 @@ export function useProductPrice(params: PricingParams) {
     queryFn: async (): Promise<PricingResult> => {
       try {
         // IMPORTANT: Utiliser calculate_product_price_v2 (nouvelle architecture Price Lists)
-        const { data, error } = await supabase.rpc('calculate_product_price_v2', {
+        const { data, error } = await (supabase as any).rpc('calculate_product_price_v2', {
           p_product_id: params.productId,
           p_quantity: params.quantity || 1,
           p_channel_id: params.channelId || null,
@@ -97,12 +97,12 @@ export function useProductPrice(params: PricingParams) {
           throw new Error(`Pricing calculation failed: ${error.message}`)
         }
 
-        if (!data || data.length === 0) {
+        if (!data || (data as any[]).length === 0) {
           throw new Error('No pricing data returned')
         }
 
         // Fonction RPC retourne un array avec 1 élément (PricingResultV2)
-        const resultV2 = data[0] as PricingResultV2
+        const resultV2 = (data as any[])[0] as PricingResultV2
 
         // Mapper vers format legacy pour compatibilité
         const result: PricingResult = {
@@ -132,7 +132,7 @@ export function useProductPrice(params: PricingParams) {
     },
     enabled: (params.enabled !== false) && !!params.productId,  // Respect external enabled + internal validation
     staleTime: 5 * 60 * 1000,  // 5 minutes cache
-    cacheTime: 10 * 60 * 1000  // 10 minutes retention
+    gcTime: 10 * 60 * 1000  // 10 minutes retention
   })
 }
 
@@ -157,7 +157,7 @@ export function useBatchPricing() {
           request.items.map(async (params): Promise<BatchPricingResult> => {
             try {
               // IMPORTANT: Utiliser calculate_product_price_v2
-              const { data, error } = await supabase.rpc('calculate_product_price_v2', {
+              const { data, error } = await (supabase as any).rpc('calculate_product_price_v2', {
                 p_product_id: params.productId,
                 p_quantity: params.quantity || 1,
                 p_channel_id: params.channelId || null,
@@ -175,7 +175,7 @@ export function useBatchPricing() {
               }
 
               // Mapper résultat V2 vers legacy
-              const resultV2 = data?.[0] as PricingResultV2
+              const resultV2 = ((data as any[])?.[0] || null) as PricingResultV2 | null
               if (resultV2) {
                 const pricing: PricingResult = {
                   final_cost_price: resultV2.cost_price,
@@ -255,7 +255,7 @@ export function useSalesChannels() {
     queryKey: ['sales-channels'],
     queryFn: async (): Promise<SalesChannel[]> => {
       try {
-        const { data, error } = await supabase
+        const { data, error } = await (supabase as any)
           .from('sales_channels')
           .select('*')
           .eq('is_active', true)
@@ -274,7 +274,7 @@ export function useSalesChannels() {
           count: data?.length || 0
         })
 
-        return data || []
+        return (data as unknown as SalesChannel[]) || []
       } catch (error) {
         logger.error('Exception in useSalesChannels', undefined, {
           operation: 'useSalesChannels',
@@ -284,7 +284,7 @@ export function useSalesChannels() {
       }
     },
     staleTime: 10 * 60 * 1000,  // 10 minutes (canaux changent rarement)
-    cacheTime: 30 * 60 * 1000   // 30 minutes retention
+    gcTime: 30 * 60 * 1000   // 30 minutes retention
   })
 }
 
@@ -313,7 +313,7 @@ export function useChannelPricing(productId: string) {
     queryKey: ['channel-pricing', productId],
     queryFn: async (): Promise<ChannelPricing[]> => {
       try {
-        const { data, error } = await supabase
+        const { data, error } = await (supabase as any)
           .from('channel_pricing')
           .select(`
             *,
@@ -338,7 +338,7 @@ export function useChannelPricing(productId: string) {
           count: data?.length || 0
         })
 
-        return data || []
+        return (data as unknown as ChannelPricing[]) || []
       } catch (error) {
         logger.error('Exception in useChannelPricing', undefined, {
           operation: 'useChannelPricing',
@@ -349,7 +349,7 @@ export function useChannelPricing(productId: string) {
     },
     enabled: !!productId,
     staleTime: 5 * 60 * 1000,
-    cacheTime: 10 * 60 * 1000
+    gcTime: 10 * 60 * 1000
   })
 }
 
@@ -405,7 +405,7 @@ export function useCustomerPricing(customerId: string, customerType: 'organizati
           count: data?.length || 0
         })
 
-        return data || []
+        return (data as unknown as CustomerPricing[]) || []
       } catch (error) {
         logger.error('Exception in useCustomerPricing', undefined, {
           operation: 'useCustomerPricing',
@@ -416,7 +416,7 @@ export function useCustomerPricing(customerId: string, customerType: 'organizati
     },
     enabled: !!customerId,
     staleTime: 5 * 60 * 1000,
-    cacheTime: 10 * 60 * 1000
+    gcTime: 10 * 60 * 1000
   })
 }
 
@@ -515,7 +515,7 @@ export function useQuantityBreaks(params: QuantityBreaksParams) {
     queryKey: ['quantity-breaks', params],
     queryFn: async (): Promise<QuantityBreak[]> => {
       try {
-        const { data, error } = await supabase.rpc('get_quantity_breaks', {
+        const { data, error } = await (supabase as any).rpc('get_quantity_breaks', {
           p_product_id: params.productId,
           p_channel_id: params.channelId || null,
           p_customer_id: params.customerId || null,
@@ -539,10 +539,10 @@ export function useQuantityBreaks(params: QuantityBreaksParams) {
         logger.info('Quantity breaks fetched successfully', {
           operation: 'useQuantityBreaks',
           productId: params.productId,
-          breaksCount: data.length
+          breaksCount: (data as any[]).length
         })
 
-        return data as QuantityBreak[]
+        return (data as unknown as QuantityBreak[])
       } catch (error) {
         logger.error('Exception in useQuantityBreaks', undefined, {
           operation: 'useQuantityBreaks',
@@ -554,6 +554,6 @@ export function useQuantityBreaks(params: QuantityBreaksParams) {
     },
     enabled: (params.enabled !== false) && !!params.productId,  // Respect external enabled + internal validation
     staleTime: 10 * 60 * 1000,  // 10 minutes (paliers changent rarement)
-    cacheTime: 30 * 60 * 1000   // 30 minutes retention
+    gcTime: 30 * 60 * 1000   // 30 minutes retention
   })
 }
