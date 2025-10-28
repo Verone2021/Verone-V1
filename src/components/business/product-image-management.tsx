@@ -240,7 +240,7 @@ export function ProductImageManagement({
 
       {/* Messages d'état */}
       {error && (
-        <Alert variant="danger">
+        <Alert variant="destructive">
           <AlertCircle className="h-4 w-4" />
           <AlertDescription>
             {error}
@@ -330,7 +330,7 @@ export function ProductImageManagement({
                     {/* Bouton suppression */}
                     <ButtonV2
                       size="sm"
-                      variant="danger"
+                      variant="destructive"
                       onClick={() => handleDeleteImage(image.id, image.is_primary)}
                       disabled={deletingImageId === image.id}
                       className="h-8 w-8 p-0"

@@ -593,7 +593,7 @@ export function SalesOrderFormModal({
         <form onSubmit={handleSubmit} className="space-y-6">
           {/* Alertes de stock */}
           {stockWarnings.length > 0 && (
-            <Alert variant="danger">
+            <Alert variant="destructive">
               <AlertTriangle className="h-4 w-4" />
               <AlertDescription>
                 <div className="space-y-1">
