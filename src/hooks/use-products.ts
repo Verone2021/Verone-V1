@@ -200,7 +200,8 @@ const productsFetcher = async (
       ),
       organisations!products_supplier_id_fkey (
         id,
-        name
+        legal_name,
+        trade_name
       )
     `, { count: 'exact' })
     .order('created_at', { ascending: false })
@@ -238,10 +239,10 @@ const productsFetcher = async (
     return {
       ...productWithoutOrgs,
       primary_image_url: product.product_images?.[0]?.public_url || null,
-      supplier_name: organisations?.name || undefined,
+      supplier_name: organisations?.trade_name || organisations?.legal_name || undefined,
       supplier: organisations ? {
         id: organisations.id,
-        name: organisations.name,
+        name: organisations.trade_name || organisations.legal_name || '',
         type: 'supplier' // Type par défaut pour la compatibilité interface
       } : undefined,
       minimumSellingPrice: product.cost_price && product.margin_percentage
