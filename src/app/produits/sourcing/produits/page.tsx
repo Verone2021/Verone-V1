@@ -407,7 +407,7 @@ export default function SourcingProduitsPage() {
                           variant="outline"
                           size="sm"
                           className="border-gray-300"
-                          onClick={() => router.push(`/sourcing/produits/${product.id}`)}
+                          onClick={() => router.push(`/produits/sourcing/produits/${product.id}`)}
                         >
                           <Eye className="h-4 w-4" />
                         </ButtonV2>
@@ -427,7 +427,7 @@ export default function SourcingProduitsPage() {
                           </DropdownMenuTrigger>
                           <DropdownMenuContent align="end">
                             <DropdownMenuLabel>Actions</DropdownMenuLabel>
-                            <DropdownMenuItem onClick={() => router.push(`/sourcing/produits/${product.id}`)}>
+                            <DropdownMenuItem onClick={() => router.push(`/produits/sourcing/produits/${product.id}`)}>
                               <Eye className="h-4 w-4 mr-2" />
                               Voir détails
                             </DropdownMenuItem>

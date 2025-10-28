@@ -278,7 +278,7 @@ export default function DashboardV2Page() {
                       {metrics.sourcing.samplesWaiting} échantillons en attente
                     </p>
                     <button
-                      onClick={() => router.push('/catalogue/sourcing')}
+                      onClick={() => router.push('/produits/sourcing')}
                       className="text-xs text-blue-600 hover:text-blue-700 underline mt-0.5"
                     >
                       Voir échantillons
