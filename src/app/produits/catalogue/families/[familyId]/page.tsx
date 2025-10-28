@@ -20,6 +20,7 @@ import { VéroneCard } from '@/components/ui/verone-card'
 import type { Database } from '@/lib/supabase/types'
 
 type Family = Database['public']['Tables']['families']['Row']
+type Category = Database['public']['Tables']['categories']['Row']
 
 export default function FamilyDetailPage() {
   const params = useParams()

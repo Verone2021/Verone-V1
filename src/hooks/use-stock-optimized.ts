@@ -3,6 +3,7 @@
 import { useMemo, useCallback } from 'react'
 import { useSupabaseQuery, useSupabaseMutation, clearQueryCache } from './use-supabase-query'
 import { useToast } from './use-toast'
+import { createClient } from '@/lib/supabase/client'
 
 export interface StockMovement {
   id: string

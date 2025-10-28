@@ -228,6 +228,14 @@ export function useImageUpload({
     clearError()
     setState('validating')
 
+    // Définir meta ici pour accessibilité dans try/catch
+    const meta: UploadMeta = {
+      bucket,
+      originalName: file.name,
+      size: file.size,
+      type: file.type
+    }
+
     try {
       // 1. Validation préalable
       console.log('🛡️ Validation fichier...')
@@ -250,13 +258,6 @@ export function useImageUpload({
 
       // 3. Génération du nom de fichier sécurisé
       const filePath = generateSecureFileName(file.name)
-
-      const meta: UploadMeta = {
-        bucket,
-        originalName: file.name,
-        size: file.size,
-        type: file.type
-      }
 
       // Stocker pour cleanup éventuel
       currentUploadRef.current = { filePath, meta }

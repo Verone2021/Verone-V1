@@ -5,7 +5,7 @@
 // STATUS: DÉSACTIVÉ Phase 1 (returns mocks uniquement)
 // =====================================================================
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { createClient } from '@/lib/supabase/client';
 import type { BankTransaction } from '@/lib/qonto/types';
 import { featureFlags } from '@/lib/feature-flags';
