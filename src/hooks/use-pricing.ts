@@ -362,8 +362,9 @@ export interface CustomerPricing {
   customer_id: string
   customer_type: 'organization' | 'individual'
   product_id: string
-  custom_cost_price: number | null
+  custom_price_ht: number | null
   discount_rate: number | null
+  retrocession_rate: number | null
   contract_reference: string | null
   min_quantity: number
   valid_from: string
@@ -371,6 +372,9 @@ export interface CustomerPricing {
   is_active: boolean
   approval_status: 'pending' | 'approved' | 'rejected'
   notes: string | null
+  // Relations optionnelles (populated via joins)
+  customer_name?: string
+  product_name?: string
 }
 
 export function useCustomerPricing(customerId: string, customerType: 'organization' | 'individual') {

@@ -125,7 +125,10 @@ export function useProductColors(): UseProductColorsReturn {
             .single()
 
           if (existingColor) {
-            return existingColor
+            return {
+              ...existingColor,
+              is_predefined: existingColor.is_predefined ?? false
+            } as ProductColor
           }
         }
 
@@ -133,9 +136,13 @@ export function useProductColors(): UseProductColorsReturn {
       }
 
       // Mettre à jour le cache local
-      setColors(prev => [...prev, data] as any)
+      const colorToAdd = {
+        ...data,
+        is_predefined: data.is_predefined ?? false
+      } as ProductColor
+      setColors(prev => [...prev, colorToAdd])
 
-      return data
+      return colorToAdd
     } catch (err) {
       console.error('❌ Erreur création couleur:', err)
       return null

@@ -373,7 +373,7 @@ export default function CategoryDetailPage() {
           id: category.id,
           name: category.name,
           description: category.description || '',
-          is_active: category.is_active,
+          is_active: category.is_active ?? true,
           display_order: category.display_order || 1,
           parent_id: category.family_id,
           image_url: category.image_url || undefined
@@ -418,7 +418,7 @@ export default function CategoryDetailPage() {
           description: editingSubcategory.description || '',
           image_url: editingSubcategory.image_url || '',
           display_order: editingSubcategory.display_order || 1,
-          is_active: editingSubcategory.is_active,
+          is_active: editingSubcategory.is_active ?? true,
           level: 2 as const
         } : null}
         categories={allCategories?.map(c => ({ id: c.id, name: c.name, family_name: family?.name || '' })) || []}

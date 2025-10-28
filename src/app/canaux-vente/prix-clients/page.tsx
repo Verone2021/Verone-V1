@@ -21,27 +21,7 @@ import { Input } from '@/components/ui/input'
 import { Badge } from '@/components/ui/badge'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { createClient } from '@/lib/supabase/client'
-
-// Types pour customer_pricing
-interface CustomerPricing {
-  id: string
-  customer_id: string
-  customer_type: 'B2B' | 'B2C' | 'Distributor' | 'Retailer'
-  product_id: string
-  custom_price_ht: number
-  discount_rate: number
-  retrocession_rate: number // Nouveau champ ristourne
-  min_quantity: number
-  contract_reference: string | null
-  valid_from: string | null
-  valid_until: string | null
-  is_active: boolean
-  approval_status: 'pending' | 'approved' | 'rejected'
-
-  // Relations
-  customer_name?: string
-  product_name?: string
-}
+import { CustomerPricing } from '@/hooks/use-pricing'
 
 // Stats interface
 interface Stats {
@@ -123,7 +103,7 @@ export default function PrixClientsPage() {
           ...item,
           customer_name: org?.trade_name || org?.legal_name || `Client ${item.customer_id?.slice(0, 8)}`,
           product_name: product?.name || `Produit ${item.product_id?.slice(0, 8)}`
-        }
+        } as CustomerPricing
       })
 
       setPricingRules(transformedData)
@@ -326,10 +306,8 @@ export default function PrixClientsPage() {
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="all">Tous les types</SelectItem>
-                  <SelectItem value="B2B">B2B</SelectItem>
-                  <SelectItem value="B2C">B2C</SelectItem>
-                  <SelectItem value="Distributor">Distributeur</SelectItem>
-                  <SelectItem value="Retailer">Revendeur</SelectItem>
+                  <SelectItem value="organization">Organisation</SelectItem>
+                  <SelectItem value="individual">Individuel</SelectItem>
                 </SelectContent>
               </Select>
 
@@ -450,7 +428,7 @@ export default function PrixClientsPage() {
                           </Badge>
                         </td>
                         <td className="px-4 py-3 text-sm text-right font-medium text-gray-900">
-                          {formatPrice(rule.custom_price_ht)}
+                          {rule.custom_price_ht ? formatPrice(rule.custom_price_ht) : '-'}
                         </td>
                         <td className="px-4 py-3 text-sm text-right text-purple-600 font-medium">
                           {rule.discount_rate ? `${rule.discount_rate.toFixed(1)}%` : '-'}
