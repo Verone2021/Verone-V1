@@ -430,7 +430,7 @@ export function useSourcingProducts(filters?: SourcingFilters) {
             total_ttc: totalTTC,
             notes: 'Commande échantillon automatique',
             created_by: user?.id
-          }])
+          }] as any)
           .select('id')
           .single()
 
@@ -641,7 +641,7 @@ export function useSourcingProducts(filters?: SourcingFilters) {
           creation_mode: 'sourcing',
           sourcing_type: data.assigned_client_id ? 'client' : 'interne',
           status: 'sourcing' // Statut initial pour produit en sourcing
-        }])
+        }] as any)
         .select()
         .single()
 
@@ -684,7 +684,7 @@ export function useSourcingProducts(filters?: SourcingFilters) {
                 storage_path: filePath,
                 is_primary: true,
                 image_type: 'product'
-              }])
+              }] as any)
           }
         } catch (imgError) {
           console.error('Erreur gestion image:', imgError)

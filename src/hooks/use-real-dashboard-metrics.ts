@@ -70,7 +70,7 @@ const metricsFetcher = async () => {
   const weekAgo = new Date()
   weekAgo.setDate(weekAgo.getDate() - 7)
   const recentProducts = products?.filter(p =>
-    new Date(p.created_at) >= weekAgo
+    new Date(p.created_at || new Date().toISOString()) >= weekAgo
   )?.length || 0
   const trend = totalProducts > 0 ? Math.round((recentProducts / totalProducts) * 100) : 0
 

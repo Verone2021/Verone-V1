@@ -320,7 +320,7 @@ export function useProducts(filters?: ProductFilters, page: number = 0) {
           stock_forecasted_out: productData.stock_forecasted_out,
           min_stock: productData.min_stock,
           reorder_point: productData.reorder_point
-        }])
+        }] as any)
         .select()
         .single()
 
@@ -495,7 +495,7 @@ export function useProduct(id: string) {
             : 0
 
           // Extraire image primaire depuis product_images (BR-TECH-002)
-          const primaryImage = data.product_images?.find((img: ProductImage) => img.is_primary)
+          const primaryImage = data.product_images?.find((img: any) => img.is_primary)
           const primaryImageUrl = primaryImage?.public_url || data.product_images?.[0]?.public_url || null
 
           setProduct({

@@ -420,7 +420,7 @@ export function usePurchaseOrders() {
       // 3. Créer la commande
       const { data: order, error: orderError } = await supabase
         .from('purchase_orders')
-        .insert({
+        .insert([{
           po_number: poNumber,
           supplier_id: data.supplier_id,
           expected_delivery_date: data.expected_delivery_date,
@@ -430,7 +430,7 @@ export function usePurchaseOrders() {
           total_ht: totalHT,
           total_ttc: totalTTC,
           created_by: (await supabase.auth.getUser()).data.user?.id
-        })
+        }] as any)
         .select()
         .single()
 

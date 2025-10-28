@@ -99,7 +99,7 @@ export function useDashboardAnalytics() {
 
         // Grouper par semaine
         const productsByWeek = (products || []).reduce((acc: Record<string, number>, product) => {
-          const date = new Date(product.created_at)
+          const date = new Date(product.created_at || new Date().toISOString())
           const weekStart = new Date(date)
           weekStart.setDate(date.getDate() - date.getDay())
           const weekKey = weekStart.toISOString().split('T')[0]

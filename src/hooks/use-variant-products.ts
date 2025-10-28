@@ -282,7 +282,7 @@ export function useVariantProducts() {
             image_url: data.image_url,
             is_primary: true,
             display_order: 1
-          }])
+          }] as any)
       }
 
       toast({

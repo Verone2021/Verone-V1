@@ -221,7 +221,7 @@ export function useStockReservations() {
       // 2. Créer la réservation
       const { data: reservation, error: reservationError } = await supabase
         .from('stock_reservations')
-        .insert({
+        .insert([{
           product_id: data.product_id,
           reserved_quantity: data.reserved_quantity,
           reference_type: data.reference_type,
@@ -229,7 +229,7 @@ export function useStockReservations() {
           expires_at: data.expires_at,
           notes: data.notes,
           reserved_by: (await supabase.auth.getUser()).data.user?.id
-        })
+        }] as any)
         .select()
         .single()
 

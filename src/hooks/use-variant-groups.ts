@@ -134,7 +134,7 @@ export function useVariantGroups(filters?: VariantGroupFilters) {
     try {
       const { data: newGroup, error: createError} = await supabase
         .from('variant_groups')
-        .insert({
+        .insert([{
           name: data.name,
           base_sku: data.base_sku, // SKU de base pour génération automatique
           subcategory_id: data.subcategory_id,
@@ -153,7 +153,7 @@ export function useVariantGroups(filters?: VariantGroupFilters) {
           supplier_id: data.supplier_id || null, // Fournisseur commun (si has_common_supplier = true)
           has_common_supplier: data.has_common_supplier || false, // Flag fournisseur commun
           product_count: 0
-        })
+        }] as any)
         .select()
         .single()
 

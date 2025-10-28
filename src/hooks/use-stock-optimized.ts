@@ -233,7 +233,7 @@ export function useStockOptimized(filters: StockFilters = {}) {
           quantity_before: currentStock,
           quantity_after: newStock,
           performed_at: new Date().toISOString()
-        }])
+        }] as any)
         .select()
         .single()
 
@@ -289,7 +289,7 @@ export function useStockOptimized(filters: StockFilters = {}) {
           reason_code: reason,
           notes: notes,
           performed_at: new Date().toISOString()
-        }])
+        }] as any)
 
       if (movementError) throw movementError
 

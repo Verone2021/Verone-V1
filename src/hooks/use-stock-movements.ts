@@ -296,7 +296,7 @@ export function useStockMovements() {
       // 3. Créer le mouvement de stock avec nouvelles colonnes
       const { data: movement, error: movementError } = await supabase
         .from('stock_movements')
-        .insert({
+        .insert([{
           product_id: data.product_id,
           movement_type: data.movement_type,
           quantity_change: quantityChange,
@@ -310,7 +310,7 @@ export function useStockMovements() {
           affects_forecast: data.affects_forecast || false,
           forecast_type: data.forecast_type,
           performed_by: (await supabase.auth.getUser()).data.user?.id
-        })
+        }] as any)
         .select()
         .single()
 

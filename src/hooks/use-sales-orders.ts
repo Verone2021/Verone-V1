@@ -632,7 +632,7 @@ export function useSalesOrders() {
       // 4. Créer la commande
       const { data: order, error: orderError } = await supabase
         .from('sales_orders')
-        .insert({
+        .insert([{
           order_number: soNumber,
           customer_id: data.customer_id,
           customer_type: data.customer_type,
@@ -644,7 +644,7 @@ export function useSalesOrders() {
           total_ht: totalHT,
           total_ttc: totalTTC,
           created_by: (await supabase.auth.getUser()).data.user?.id
-        })
+        }] as any)
         .select()
         .single()
 
@@ -730,14 +730,14 @@ export function useSalesOrders() {
             if (stockInfo && stockInfo.is_available) {
               await supabase
                 .from('stock_reservations')
-                .insert({
+                .insert([{
                   product_id: item.product_id,
                   reserved_quantity: item.quantity,
                   reference_type: 'sales_order',
                   reference_id: order.id,
                   reserved_by: userId,
                   expires_at: data.expected_delivery_date ? new Date(new Date(data.expected_delivery_date).getTime() + 7 * 24 * 60 * 60 * 1000).toISOString() : null // 7 jours après la livraison prévue
-                })
+                }] as any)
             }
           }
         } catch (reservationError) {

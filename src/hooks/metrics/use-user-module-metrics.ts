@@ -125,7 +125,7 @@ export function useUserModuleMetrics(userId: string, days: number = 30): UserMod
             moduleStats[module] = {
               page_views: 0,
               actions: 0,
-              last_visited: new Date(activity.created_at),
+              last_visited: new Date(activity.created_at || new Date().toISOString()),
               time_spent: 0
             }
           }
@@ -139,7 +139,7 @@ export function useUserModuleMetrics(userId: string, days: number = 30): UserMod
           }
 
           // Last visited (date la plus récente)
-          const activityDate = new Date(activity.created_at)
+          const activityDate = new Date(activity.created_at || new Date().toISOString())
           if (activityDate > moduleStats[module].last_visited) {
             moduleStats[module].last_visited = activityDate
           }
@@ -149,7 +149,7 @@ export function useUserModuleMetrics(userId: string, days: number = 30): UserMod
           // Sinon, estimer 2 minutes par action (moyenne)
           if (index < activities.length - 1) {
             const nextActivity = activities[index + 1]
-            const timeDiff = new Date(activity.created_at).getTime() - new Date(nextActivity.created_at).getTime()
+            const timeDiff = new Date(activity.created_at || new Date().toISOString()).getTime() - new Date(nextActivity.created_at || new Date().toISOString()).getTime()
 
             // Limiter à 30 minutes max entre 2 actions (sinon session terminée)
             if (timeDiff > 0 && timeDiff < 30 * 60 * 1000) {

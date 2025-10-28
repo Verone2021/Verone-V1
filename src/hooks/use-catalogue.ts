@@ -284,7 +284,7 @@ export const useCatalogue = () => {
     try {
       const { data, error } = await supabase
         .from('products')
-        .insert([productData])
+        .insert([productData] as any)
         .select()
         .single();
 

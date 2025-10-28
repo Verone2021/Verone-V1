@@ -204,7 +204,7 @@ export function useSupabaseTable<T = any>(
   const queryKey = `table:${tableName}:${JSON.stringify({ filters, select, orderBy, limit, offset })}`
 
   const queryFn = useCallback(async (supabase: ReturnType<typeof createClient>) => {
-    let query = supabase.from(tableName).select(select)
+    let query = supabase.from(tableName as any).select(select) as any
 
     // Apply filters
     Object.entries(filters).forEach(([key, value]) => {
