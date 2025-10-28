@@ -1,0 +1,285 @@
+{
+  "summary": {
+    "total_errors": 459,
+    "total_families": 33,
+    "p0_errors": 0,
+    "p1_errors": 296,
+    "p2_errors": 124,
+    "p3_errors": 39
+  },
+  "execution_order": [
+    {
+      "batch": 1,
+      "code": "TS2345",
+      "priority": "P1",
+      "count": 141,
+      "complexity": "medium"
+    },
+    {
+      "batch": 2,
+      "code": "TS2322",
+      "priority": "P1",
+      "count": 93,
+      "complexity": "medium"
+    },
+    {
+      "batch": 3,
+      "code": "TS2339",
+      "priority": "P1",
+      "count": 31,
+      "complexity": "medium"
+    },
+    {
+      "batch": 4,
+      "code": "TS2352",
+      "priority": "P1",
+      "count": 15,
+      "complexity": "medium"
+    },
+    {
+      "batch": 5,
+      "code": "TS18048",
+      "priority": "P1",
+      "count": 12,
+      "complexity": "simple"
+    },
+    {
+      "batch": 6,
+      "code": "TS18047",
+      "priority": "P1",
+      "count": 4,
+      "complexity": "simple"
+    },
+    {
+      "batch": 7,
+      "code": "TS2769",
+      "priority": "P2",
+      "count": 63,
+      "complexity": "medium"
+    },
+    {
+      "batch": 8,
+      "code": "TS2307",
+      "priority": "P2",
+      "count": 20,
+      "complexity": "simple"
+    },
+    {
+      "batch": 9,
+      "code": "TS2353",
+      "priority": "P2",
+      "count": 14,
+      "complexity": "simple"
+    },
+    {
+      "batch": 10,
+      "code": "TS2367",
+      "priority": "P2",
+      "count": 9,
+      "complexity": "complex"
+    },
+    {
+      "batch": 11,
+      "code": "TS2554",
+      "priority": "P2",
+      "count": 7,
+      "complexity": "complex"
+    },
+    {
+      "batch": 12,
+      "code": "TS2358",
+      "priority": "P2",
+      "count": 3,
+      "complexity": "complex"
+    },
+    {
+      "batch": 13,
+      "code": "TS2740",
+      "priority": "P2",
+      "count": 3,
+      "complexity": "complex"
+    },
+    {
+      "batch": 14,
+      "code": "TS2678",
+      "priority": "P2",
+      "count": 3,
+      "complexity": "complex"
+    },
+    {
+      "batch": 15,
+      "code": "TS2719",
+      "priority": "P2",
+      "count": 2,
+      "complexity": "complex"
+    },
+    {
+      "batch": 16,
+      "code": "TS7053",
+      "priority": "P3",
+      "count": 7,
+      "complexity": "simple"
+    },
+    {
+      "batch": 17,
+      "code": "TS2304",
+      "priority": "P3",
+      "count": 6,
+      "complexity": "complex"
+    },
+    {
+      "batch": 18,
+      "code": "TS2724",
+      "priority": "P3",
+      "count": 3,
+      "complexity": "complex"
+    },
+    {
+      "batch": 19,
+      "code": "TS2698",
+      "priority": "P3",
+      "count": 3,
+      "complexity": "complex"
+    },
+    {
+      "batch": 20,
+      "code": "TS2484",
+      "priority": "P3",
+      "count": 3,
+      "complexity": "complex"
+    },
+    {
+      "batch": 21,
+      "code": "TS2349",
+      "priority": "P3",
+      "count": 2,
+      "complexity": "complex"
+    },
+    {
+      "batch": 22,
+      "code": "TS7016",
+      "priority": "P3",
+      "count": 2,
+      "complexity": "complex"
+    },
+    {
+      "batch": 23,
+      "code": "TS2538",
+      "priority": "P3",
+      "count": 2,
+      "complexity": "complex"
+    },
+    {
+      "batch": 24,
+      "code": "TS2300",
+      "priority": "P3",
+      "count": 2,
+      "complexity": "complex"
+    },
+    {
+      "batch": 25,
+      "code": "TS2561",
+      "priority": "P3",
+      "count": 1,
+      "complexity": "complex"
+    },
+    {
+      "batch": 26,
+      "code": "TS2305",
+      "priority": "P3",
+      "count": 1,
+      "complexity": "complex"
+    },
+    {
+      "batch": 27,
+      "code": "TS2722",
+      "priority": "P3",
+      "count": 1,
+      "complexity": "complex"
+    },
+    {
+      "batch": 28,
+      "code": "TS2741",
+      "priority": "P3",
+      "count": 1,
+      "complexity": "complex"
+    },
+    {
+      "batch": 29,
+      "code": "TS2589",
+      "priority": "P3",
+      "count": 1,
+      "complexity": "complex"
+    },
+    {
+      "batch": 30,
+      "code": "TS2365",
+      "priority": "P3",
+      "count": 1,
+      "complexity": "complex"
+    },
+    {
+      "batch": 31,
+      "code": "TS2820",
+      "priority": "P3",
+      "count": 1,
+      "complexity": "complex"
+    },
+    {
+      "batch": 32,
+      "code": "TS2783",
+      "priority": "P3",
+      "count": 1,
+      "complexity": "complex"
+    },
+    {
+      "batch": 33,
+      "code": "TS18046",
+      "priority": "P3",
+      "count": 1,
+      "complexity": "complex"
+    }
+  ],
+  "priority_groups": {
+    "P0": [],
+    "P1": [
+      "TS2345",
+      "TS2322",
+      "TS2339",
+      "TS2352",
+      "TS18048",
+      "TS18047"
+    ],
+    "P2": [
+      "TS2769",
+      "TS2307",
+      "TS2353",
+      "TS2367",
+      "TS2554",
+      "TS2358",
+      "TS2740",
+      "TS2678",
+      "TS2719"
+    ],
+    "P3": [
+      "TS7053",
+      "TS2304",
+      "TS2724",
+      "TS2698",
+      "TS2484",
+      "TS2349",
+      "TS7016",
+      "TS2538",
+      "TS2300",
+      "TS2561",
+      "TS2305",
+      "TS2722",
+      "TS2741",
+      "TS2589",
+      "TS2365",
+      "TS2820",
+      "TS2783",
+      "TS18046"
+    ]
+  }
+}

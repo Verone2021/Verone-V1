@@ -1,1715 +1,542 @@
-# 🎯 TypeScript Errors - Plan de Correction
+# Plan de Correction TypeScript - Approche par Famille
 
-**Date** : 27/10/2025
-**Total erreurs initial** : 975
-**Total erreurs actuel** : 959 (-16)
-**Familles** : 72 (1 DONE)
+**Date**: 2025-10-28  
+**État Initial**: 459 erreurs TypeScript  
+**État Cible**: 0 erreurs  
+**Approche**: Clustering par famille + Batch corrections  
+**Workflow**: 1 famille = 1 commit = 1 test MCP Browser
 
-**📈 Progression** : 16/975 erreurs résolues (1.6%)
-
----
-
-## 📊 Vue d'ensemble
-
-| Priorité | Familles | Erreurs Initiales | Erreurs Restantes |
-|----------|----------|-------------------|-------------------|
-| P0 (Blocking) | 1 | 16 | 0 ✅ |
-| P1 (Critical) | 11 | 710 | 710 |
-| P2 (High) | 4 | 106 | 106 |
-| P3 (Low) | 56 | 143 | 143 |
-
----
-
-## 🏆 Milestones
-
-- [ ] **M1** : 100 erreurs résolues (975→875) - Progression : 16/100 (16%)
-- [ ] **M2** : 250 erreurs résolues (975→725)
-- [ ] **M3** : 500 erreurs résolues (975→475)
-- [x] **M4-P0** : Toutes P0 résolues ✅ (16/16)
-- [ ] **M4** : Toutes P0+P1 résolues
-- [ ] **M5** : 0 erreurs TypeScript
-
----
-
-## P0 - Blocking (1 familles)
-
-### ✅ TS7006-parameter-x-implicitly-has-an-
-
-**Code** : TS7006
-**Count** : 16 erreurs
-**Files** : 5 fichiers
-**Estimation** : 1h
-**Status** : DONE
-
-**Pattern** :
-```
-Parameter 'X' implicitly has an 'any' type.
-```
-
-**Stratégie** : Explicit typing, remove implicit any
-
-**Exemples** :
-- `src/components/testing/error-detection-panel.tsx:266` - Parameter 'e' implicitly has an 'any' type....
-- `src/components/testing/error-detection-panel.tsx:267` - Parameter 'e' implicitly has an 'any' type....
-- `src/components/testing/error-detection-panel.tsx:268` - Parameter 'e' implicitly has an 'any' type....
-
-**Commande** : `/typescript-fix TS7006-parameter-x-implicitly-has-an-`
-
----
-
-## P1 - Critical (11 familles)
-
-### 📋 TS2339-property-x-does-not-exist-on-t
-
-**Code** : TS2339
-**Count** : 265 erreurs
-**Files** : 71 fichiers
-**Estimation** : 22-25h
-**Status** : TODO
-
-**Pattern** :
-```
-Property 'X' does not exist on type 'X'.
-```
-
-**Stratégie** : Interface extension, optional properties
-
-**Exemples** :
-- `src/app/produits/catalogue/[productId]/page.tsx:589` - Property 'legal_name' does not exist on type '{ id: string; name: string; email:...
-- `src/app/produits/catalogue/[productId]/page.tsx:589` - Property 'trade_name' does not exist on type '{ id: string; name: string; email:...
-- `src/app/produits/catalogue/categories/[categoryId]/page.tsx:294` - Property 'products_count' does not exist on type '{ category_id: string; created...
-
-**Commande** : `/typescript-fix TS2339-property-x-does-not-exist-on-t`
-
----
-
-### 📋 TS2322-type-x-is-not-assignable-to-ty
-
-**Code** : TS2322
-**Count** : 242 erreurs
-**Files** : 110 fichiers
-**Estimation** : 12-15h
-**Status** : TODO
-
-**Pattern** :
-```
-Type 'X' is not assignable to type 'X'.
-```
-
-**Stratégie** : Null coalescing (??), optional chaining (?.)
-
-**Exemples** :
-- `src/app/canaux-vente/prix-clients/page.tsx:118` - Type '{ customer_name: string; product_name: string; id: string; customer_id: st...
-- `src/app/consultations/page.tsx:169` - Type 'import("/Users/romeodossantos/verone-back-office-V1/src/hooks/use-consulta...
-- `src/app/produits/catalogue/[productId]/page.tsx:418` - Type '(updatedData: Partial<Product>) => Promise<void>' is not assignable to typ...
-
-**Commande** : `/typescript-fix TS2322-type-x-is-not-assignable-to-ty`
-
----
-
-### 📋 TS2345-argument-of-type-x-is-not-assi
-
-**Code** : TS2345
-**Count** : 152 erreurs
-**Files** : 90 fichiers
-**Estimation** : 10-13h
-**Status** : TODO
-
-**Pattern** :
-```
-Argument of type 'X' is not assignable to parameter of type 'X'.
-```
-
-**Stratégie** : Type assertions, generic constraints
-
-**Exemples** :
-- `src/app/produits/catalogue/[productId]/page.tsx:222` - Argument of type '{ archived_at: string | null; assigned_client_id: string | nul...
-- `src/app/produits/catalogue/[productId]/page.tsx:243` - Argument of type '{ updated_at: string; id?: string | undefined; name?: string |...
-- `src/app/produits/catalogue/[productId]/page.tsx:257` - Argument of type '{ archived_at: string | null; assigned_client_id: string | nul...
-
-**Commande** : `/typescript-fix TS2345-argument-of-type-x-is-not-assi`
-
----
-
-### 📋 TS2339-property-x-does-not-exist-on-t
-
-**Code** : TS2339
-**Count** : 17 erreurs
-**Files** : 1 fichiers
-**Estimation** : 1-3h
-**Status** : TODO
-
-**Pattern** :
-```
-Property 'X' does not exist on type 'X'room_category' does not exist on 'collections'.">'.
-```
-
-**Stratégie** : Interface extension, optional properties
-
-**Exemples** :
-- `src/hooks/use-smart-suggestions.ts:75` - Property 'style' does not exist on type 'SelectQueryError<"column 'room_category...
-- `src/hooks/use-smart-suggestions.ts:76` - Property 'style' does not exist on type 'SelectQueryError<"column 'room_category...
-- `src/hooks/use-smart-suggestions.ts:76` - Property 'style' does not exist on type 'SelectQueryError<"column 'room_category...
-
-**Commande** : `/typescript-fix TS2339-property-x-does-not-exist-on-t`
-
----
-
-### 📋 TS2339-property-x-does-not-exist-on-t
-
-**Code** : TS2339
-**Count** : 13 erreurs
-**Files** : 1 fichiers
-**Estimation** : 1-3h
-**Status** : TODO
-
-**Pattern** :
-```
-Property 'X' does not exist on type 'X'id' does not exist on 'families'."> | SelectQueryError<"column 'id' does not exist on 'categories'."> | ... 51 more ... | SelectQueryError<...>'.
-```
-
-**Stratégie** : Interface extension, optional properties
-
-**Exemples** :
-- `src/hooks/use-sales-shipments.ts:366` - Property 'id' does not exist on type 'SelectQueryError<"column 'id' does not exi...
-- `src/hooks/use-sales-shipments.ts:367` - Property 'shipped_at' does not exist on type 'SelectQueryError<"column 'id' does...
-- `src/hooks/use-sales-shipments.ts:368` - Property 'delivered_at' does not exist on type 'SelectQueryError<"column 'id' do...
-
-**Commande** : `/typescript-fix TS2339-property-x-does-not-exist-on-t`
-
----
-
-### 📋 TS2339-property-x-does-not-exist-on-t
-
-**Code** : TS2339
-**Count** : 7 erreurs
-**Files** : 5 fichiers
-**Estimation** : 1h
-**Status** : TODO
-
-**Pattern** :
-```
-Property 'X' does not exist on type 'X'name' does not exist on 'organisations'.">'.
-```
-
-**Stratégie** : Interface extension, optional properties
-
-**Exemples** :
-- `src/components/business/universal-order-details-modal.tsx:120` - Property 'name' does not exist on type 'SelectQueryError<"column 'name' does not...
-- `src/components/business/universal-order-details-modal.tsx:180` - Property 'name' does not exist on type 'SelectQueryError<"column 'name' does not...
-- `src/hooks/metrics/use-order-metrics.ts:106` - Property 'name' does not exist on type 'SelectQueryError<"column 'name' does not...
-
-**Commande** : `/typescript-fix TS2339-property-x-does-not-exist-on-t`
-
----
-
-### 📋 TS2339-property-x-does-not-exist-on-t
-
-**Code** : TS2339
-**Count** : 6 erreurs
-**Files** : 1 fichiers
-**Estimation** : 1h
-**Status** : TODO
-
-**Pattern** :
-```
-Property 'X' does not exist on type 'X'product_id' does not exist on 'families'."> | SelectQueryError<"column 'product_id' does not exist on 'categories'."> | ... 51 more ... | SelectQueryError<...>'.
-```
-
-**Stratégie** : Interface extension, optional properties
-
-**Exemples** :
-- `src/hooks/use-stock-dashboard.ts:212` - Property 'product_id' does not exist on type 'SelectQueryError<"column 'product_...
-- `src/hooks/use-stock-dashboard.ts:214` - Property 'product_id' does not exist on type 'SelectQueryError<"column 'product_...
-- `src/hooks/use-stock-dashboard.ts:215` - Property 'product_name' does not exist on type 'SelectQueryError<"column 'produc...
-
-**Commande** : `/typescript-fix TS2339-property-x-does-not-exist-on-t`
-
----
-
-### 📋 TS2339-property-x-does-not-exist-on-t
-
-**Code** : TS2339
-**Count** : 3 erreurs
-**Files** : 1 fichiers
-**Estimation** : 1h
-**Status** : TODO
-
-**Pattern** :
-```
-Property 'X' does not exist on type 'X'has_different_trade_name' does not exist on 'organisations'.">'.
-```
-
-**Stratégie** : Interface extension, optional properties
-
-**Exemples** :
-- `src/hooks/use-organisations.ts:650` - Property 'type' does not exist on type 'SelectQueryError<"column 'has_different_...
-- `src/hooks/use-organisations.ts:655` - Property 'id' does not exist on type 'SelectQueryError<"column 'has_different_tr...
-- `src/hooks/use-organisations.ts:657` - Property '_count' does not exist on type 'SelectQueryError<"column 'has_differen...
-
-**Commande** : `/typescript-fix TS2339-property-x-does-not-exist-on-t`
-
----
-
-### 📋 TS2339-property-x-does-not-exist-on-t
-
-**Code** : TS2339
-**Count** : 2 erreurs
-**Files** : 1 fichiers
-**Estimation** : 1h
-**Status** : TODO
-
-**Pattern** :
-```
-Property 'X' does not exist on type 'X'amount_paid' does not exist on 'families'."> | SelectQueryError<"column 'amount_paid' does not exist on 'categories'."> | ... 51 more ... | SelectQueryError<...>'.
-```
-
-**Stratégie** : Interface extension, optional properties
-
-**Exemples** :
-- `src/components/business/payment-form.tsx:137` - Property 'amount_paid' does not exist on type 'SelectQueryError<"column 'amount_...
-- `src/components/business/payment-form.tsx:139` - Property 'total_ttc' does not exist on type 'SelectQueryError<"column 'amount_pa...
-
-**Commande** : `/typescript-fix TS2339-property-x-does-not-exist-on-t`
-
----
-
-### 📋 TS2339-property-x-does-not-exist-on-t
-
-**Code** : TS2339
-**Count** : 2 erreurs
-**Files** : 1 fichiers
-**Estimation** : 1h
-**Status** : TODO
-
-**Pattern** :
-```
-Property 'X' does not exist on type 'X'alert_status' does not exist on 'families'."> | SelectQueryError<"column 'alert_status' does not exist on 'categories'."> | ... 51 more ... | SelectQueryError<...>'.
-```
-
-**Stratégie** : Interface extension, optional properties
-
-**Exemples** :
-- `src/hooks/use-stock-dashboard.ts:150` - Property 'alert_status' does not exist on type 'SelectQueryError<"column 'alert_...
-- `src/hooks/use-stock-dashboard.ts:151` - Property 'alert_status' does not exist on type 'SelectQueryError<"column 'alert_...
-
-**Commande** : `/typescript-fix TS2339-property-x-does-not-exist-on-t`
-
----
-
-### 📋 TS2339-property-x-does-not-exist-on-t
-
-**Code** : TS2339
-**Count** : 1 erreurs
-**Files** : 1 fichiers
-**Estimation** : 1h
-**Status** : TODO
-
-**Pattern** :
-```
-Property 'X' does not exist on type 'X'price_ttc' does not exist on 'products'.">'.
-```
-
-**Stratégie** : Interface extension, optional properties
-
-**Exemples** :
-- `src/hooks/use-archived-products.ts:81` - Property 'images' does not exist on type 'SelectQueryError<"column 'price_ttc' d...
-
-**Commande** : `/typescript-fix TS2339-property-x-does-not-exist-on-t`
-
----
-
-## P2 - High (4 familles)
-
-### 📋 TS2769-no-overload-matches-this-call-
-
-**Code** : TS2769
-**Count** : 84 erreurs
-**Files** : 36 fichiers
-**Estimation** : 6-9h
-**Status** : TODO
-
-**Pattern** :
-```
-No overload matches this call.
-```
-
-**Stratégie** : Manual review and fix
-
-**Exemples** :
-- `src/app/produits/catalogue/dashboard/page.tsx:88` - No overload matches this call....
-- `src/app/produits/catalogue/subcategories/[subcategoryId]/page.tsx:252` - No overload matches this call....
-- `src/app/profile/page.tsx:153` - No overload matches this call....
-
-**Commande** : `/typescript-fix TS2769-no-overload-matches-this-call-`
-
----
-
-### 📋 TS2307-cannot-find-module-x-or-its-co
-
-**Code** : TS2307
-**Count** : 20 erreurs
-**Files** : 12 fichiers
-**Estimation** : 1-3h
-**Status** : TODO
-
-**Pattern** :
-```
-Cannot find module 'X' or its corresponding type declarations.
-```
-
-**Stratégie** : Manual review and fix
-
-**Exemples** :
-- `src/components/business/error-reporting-dashboard.tsx:36` - Cannot find module '@/lib/error-detection/error-processing-queue' or its corresp...
-- `src/components/business/error-reporting-dashboard.tsx:37` - Cannot find module '@/lib/error-detection/error-processing-queue' or its corresp...
-- `src/components/business/error-reporting-dashboard.tsx:38` - Cannot find module '@/lib/error-detection/verone-error-system' or its correspond...
-
-**Commande** : `/typescript-fix TS2307-cannot-find-module-x-or-its-co`
-
----
-
-### 📋 TS2783--success-is-specified-more-tha
-
-**Code** : TS2783
-**Count** : 1 erreurs
-**Files** : 1 fichiers
-**Estimation** : 1h
-**Status** : TODO
-
-**Pattern** :
-```
-'success' is specified more than once, so this usage will be overwritten.
-```
-
-**Stratégie** : Manual review and fix
-
-**Exemples** :
-- `src/hooks/use-test-persistence.ts:241` - 'success' is specified more than once, so this usage will be overwritten....
-
-**Commande** : `/typescript-fix TS2783--success-is-specified-more-tha`
-
----
-
-### 📋 TS18046--error-is-of-type-x-
-
-**Code** : TS18046
-**Count** : 1 erreurs
-**Files** : 1 fichiers
-**Estimation** : 1h
-**Status** : TODO
-
-**Pattern** :
-```
-'error' is of type 'X'.
-```
-
-**Stratégie** : Manual review and fix
-
-**Exemples** :
-- `src/lib/ai/sequential-thinking-processor.ts:134` - 'error' is of type 'unknown'....
-
-**Commande** : `/typescript-fix TS18046--error-is-of-type-x-`
-
----
-
-## P3 - Low (56 familles)
-
-### 📋 TS2353-object-literal-may-only-specif
-
-**Code** : TS2353
-**Count** : 33 erreurs
-**Files** : 4 fichiers
-**Estimation** : 2-4h
-**Status** : TODO
-
-**Pattern** :
-```
-Object literal may only specify known properties, and 'operation' does not exist in type 'X'.
-```
-
-**Stratégie** : Manual review and fix
-
-**Exemples** :
-- `src/hooks/use-price-lists.ts:154` - Object literal may only specify known properties, and 'operation' does not exist...
-- `src/hooks/use-price-lists.ts:169` - Object literal may only specify known properties, and 'operation' does not exist...
-- `src/hooks/use-price-lists.ts:201` - Object literal may only specify known properties, and 'operation' does not exist...
-
-**Commande** : `/typescript-fix TS2353-object-literal-may-only-specif`
-
----
-
-### 📋 TS2352-conversion-of-type-x-to-type-x
-
-**Code** : TS2352
-**Count** : 18 erreurs
-**Files** : 11 fichiers
-**Estimation** : 1-3h
-**Status** : TODO
-
-**Pattern** :
-```
-Conversion of type 'X' to type 'X' may be a mistake because neither type sufficiently overlaps with the other. If this was intentional, convert the expression to 'unknown' first.
-```
-
-**Stratégie** : Manual review and fix
-
-**Exemples** :
-- `src/app/finance/depenses/[id]/page.tsx:97` - Conversion of type '{ id: string; document_type: "customer_invoice" | "customer_...
-- `src/components/forms/CategoryForm.tsx:219` - Conversion of type '{ created_at: string | null; description: string | null; dis...
-- `src/components/forms/FamilyForm.tsx:184` - Conversion of type '{ created_at: string | null; created_by: string | null; desc...
-
-**Commande** : `/typescript-fix TS2352-conversion-of-type-x-to-type-x`
-
----
-
-### 📋 TS2554-expected-0-arguments-but-got-1
-
-**Code** : TS2554
-**Count** : 6 erreurs
-**Files** : 6 fichiers
-**Estimation** : 1h
-**Status** : TODO
-
-**Pattern** :
-```
-Expected 0 arguments, but got 1.
-```
-
-**Stratégie** : Manual review and fix
-
-**Exemples** :
-- `src/components/forms/CategoryForm.tsx:104` - Expected 0 arguments, but got 1....
-- `src/components/forms/FamilyForm.tsx:79` - Expected 0 arguments, but got 1....
-- `src/components/forms/SubcategoryForm.tsx:127` - Expected 0 arguments, but got 1....
-
-**Commande** : `/typescript-fix TS2554-expected-0-arguments-but-got-1`
-
----
-
-### 📋 TS2304-cannot-find-name-x-
-
-**Code** : TS2304
-**Count** : 5 erreurs
-**Files** : 5 fichiers
-**Estimation** : 1h
-**Status** : TODO
-
-**Pattern** :
-```
-Cannot find name 'X'.
-```
-
-**Stratégie** : Manual review and fix
-
-**Exemples** :
-- `src/components/business/error-reporting-dashboard.tsx:717` - Cannot find name 'getQueueSnapshot'....
-- `src/components/business/product-creation-wizard.tsx:221` - Cannot find name 'CompleteProductWizard'....
-- `src/components/business/sample-order-validation.tsx:98` - Cannot find name 'useDrafts'....
-
-**Commande** : `/typescript-fix TS2304-cannot-find-name-x-`
-
----
-
-### 📋 TS7053-element-implicitly-has-an-any-
-
-**Code** : TS7053
-**Count** : 5 erreurs
-**Files** : 4 fichiers
-**Estimation** : 1h
-**Status** : TODO
-
-**Pattern** :
-```
-Element implicitly has an 'any' type because expression of type 'X' can't be used to index type 'X'.
-```
-
-**Stratégie** : Manual review and fix
-
-**Exemples** :
-- `src/hooks/use-error-reporting-integration.ts:392` - Element implicitly has an 'any' type because expression of type 'string' can't b...
-- `src/hooks/use-treasury-stats.ts:122` - Element implicitly has an 'any' type because expression of type '0' can't be use...
-- `src/lib/ai/sequential-thinking-processor.ts:256` - Element implicitly has an 'any' type because expression of type 'any' can't be u...
-
-**Commande** : `/typescript-fix TS7053-element-implicitly-has-an-any-`
-
----
-
-### 📋 TS2698-spread-types-may-only-be-creat
-
-**Code** : TS2698
-**Count** : 4 erreurs
-**Files** : 4 fichiers
-**Estimation** : 1h
-**Status** : TODO
-
-**Pattern** :
-```
-Spread types may only be created from object types.
-```
-
-**Stratégie** : Manual review and fix
-
-**Exemples** :
-- `src/hooks/use-archived-products.ts:80` - Spread types may only be created from object types....
-- `src/hooks/use-automation-triggers.ts:247` - Spread types may only be created from object types....
-- `src/hooks/use-stock-reservations.ts:133` - Spread types may only be created from object types....
-
-**Commande** : `/typescript-fix TS2698-spread-types-may-only-be-creat`
-
----
-
-### 📋 TS2358-the-left-hand-side-of-an-insta
-
-**Code** : TS2358
-**Count** : 3 erreurs
-**Files** : 3 fichiers
-**Estimation** : 1h
-**Status** : TODO
-
-**Pattern** :
-```
-The left-hand side of an 'instanceof' expression must be of type 'X', an object type or a type parameter.
-```
-
-**Stratégie** : Manual review and fix
-
-**Exemples** :
-- `src/app/produits/catalogue/collections/page.tsx:625` - The left-hand side of an 'instanceof' expression must be of type 'any', an objec...
-- `src/app/produits/catalogue/variantes/page.tsx:543` - The left-hand side of an 'instanceof' expression must be of type 'any', an objec...
-- `src/app/produits/sourcing/produits/page.tsx:303` - The left-hand side of an 'instanceof' expression must be of type 'any', an objec...
-
-**Commande** : `/typescript-fix TS2358-the-left-hand-side-of-an-insta`
-
----
-
-### 📋 TS18048--variant-variant-details-is-po
-
-**Code** : TS18048
-**Count** : 3 erreurs
-**Files** : 1 fichiers
-**Estimation** : 1h
-**Status** : TODO
-
-**Pattern** :
-```
-'variant.variant_details' is possibly 'undefined'.
-```
-
-**Stratégie** : Manual review and fix
-
-**Exemples** :
-- `src/components/business/product-variants-section.tsx:317` - 'variant.variant_details' is possibly 'undefined'....
-- `src/components/business/product-variants-section.tsx:317` - 'variant.variant_details' is possibly 'undefined'....
-- `src/components/business/product-variants-section.tsx:323` - 'variant.variant_details' is possibly 'undefined'....
-
-**Commande** : `/typescript-fix TS18048--variant-variant-details-is-po`
-
----
-
-### 📋 TS18048--variant-variant-details-image
-
-**Code** : TS18048
-**Count** : 3 erreurs
-**Files** : 1 fichiers
-**Estimation** : 1h
-**Status** : TODO
-
-**Pattern** :
-```
-'variant.variant_details.images' is possibly 'undefined'.
-```
-
-**Stratégie** : Manual review and fix
-
-**Exemples** :
-- `src/components/business/product-variants-section.tsx:317` - 'variant.variant_details.images' is possibly 'undefined'....
-- `src/components/business/product-variants-section.tsx:317` - 'variant.variant_details.images' is possibly 'undefined'....
-- `src/components/business/product-variants-section.tsx:323` - 'variant.variant_details.images' is possibly 'undefined'....
-
-**Commande** : `/typescript-fix TS18048--variant-variant-details-image`
-
----
-
-### 📋 TS2589-type-instantiation-is-excessiv
-
-**Code** : TS2589
-**Count** : 3 erreurs
-**Files** : 3 fichiers
-**Estimation** : 1h
-**Status** : TODO
-
-**Pattern** :
-```
-Type instantiation is excessively deep and possibly infinite.
-```
-
-**Stratégie** : Manual review and fix
-
-**Exemples** :
-- `src/hooks/use-financial-payments.ts:80` - Type instantiation is excessively deep and possibly infinite....
-- `src/hooks/use-price-lists.ts:236` - Type instantiation is excessively deep and possibly infinite....
-- `src/hooks/use-pricing.ts:316` - Type instantiation is excessively deep and possibly infinite....
-
-**Commande** : `/typescript-fix TS2589-type-instantiation-is-excessiv`
-
----
-
-### 📋 TS2740-type-x-is-missing-the-followin
-
-**Code** : TS2740
-**Count** : 3 erreurs
-**Files** : 1 fichiers
-**Estimation** : 1h
-**Status** : TODO
-
-**Pattern** :
-```
-Type 'X' is missing the following properties from type 'X': has_different_trade_name, logo_url, siren, first_name, and 6 more.
-```
-
-**Stratégie** : Manual review and fix
-
-**Exemples** :
-- `src/hooks/use-organisations.ts:205` - Type '{ address_line1: string | null; address_line2: string | null; archived_at:...
-- `src/hooks/use-organisations.ts:366` - Type '{ address_line1: string | null; address_line2: string | null; archived_at:...
-- `src/hooks/use-organisations.ts:413` - Type '{ address_line1: string | null; address_line2: string | null; archived_at:...
-
-**Commande** : `/typescript-fix TS2740-type-x-is-missing-the-followin`
-
----
-
-### 📋 TS2678-type-x-is-not-comparable-to-ty
-
-**Code** : TS2678
-**Count** : 3 erreurs
-**Files** : 1 fichiers
-**Estimation** : 1h
-**Status** : TODO
-
-**Pattern** :
-```
-Type 'X' is not comparable to type 'X'.
-```
-
-**Stratégie** : Manual review and fix
-
-**Exemples** :
-- `src/hooks/use-stock.ts:200` - Type '"IN"' is not comparable to type '"add" | "remove" | "adjust"'....
-- `src/hooks/use-stock.ts:206` - Type '"OUT"' is not comparable to type '"add" | "remove" | "adjust"'....
-- `src/hooks/use-stock.ts:215` - Type '"ADJUST"' is not comparable to type '"add" | "remove" | "adjust"'....
-
-**Commande** : `/typescript-fix TS2678-type-x-is-not-comparable-to-ty`
-
----
-
-### 📋 TS2719-type-x-is-not-assignable-to-ty
-
-**Code** : TS2719
-**Count** : 2 erreurs
-**Files** : 1 fichiers
-**Estimation** : 1h
-**Status** : TODO
-
-**Pattern** :
-```
-Type 'X' is not assignable to type 'X'. Two different types with this name exist, but they are unrelated.
-```
-
-**Stratégie** : Manual review and fix
-
-**Exemples** :
-- `src/app/produits/catalogue/[productId]/page.tsx:474` - Type 'Product' is not assignable to type 'Product'. Two different types with thi...
-- `src/app/produits/catalogue/[productId]/page.tsx:546` - Type 'Product' is not assignable to type 'Product'. Two different types with thi...
-
-**Commande** : `/typescript-fix TS2719-type-x-is-not-assignable-to-ty`
-
----
-
-### 📋 TS18047--image-display-order-is-possib
-
-**Code** : TS18047
-**Count** : 2 erreurs
-**Files** : 1 fichiers
-**Estimation** : 1h
-**Status** : TODO
-
-**Pattern** :
-```
-'image.display_order' is possibly 'null'.
-```
-
-**Stratégie** : Manual review and fix
-
-**Exemples** :
-- `src/components/business/product-image-management.tsx:286` - 'image.display_order' is possibly 'null'....
-- `src/components/business/product-image-management.tsx:351` - 'image.display_order' is possibly 'null'....
-
-**Commande** : `/typescript-fix TS18047--image-display-order-is-possib`
-
----
-
-### 📋 TS2353-object-literal-may-only-specif
-
-**Code** : TS2353
-**Count** : 2 erreurs
-**Files** : 2 fichiers
-**Estimation** : 1h
-**Status** : TODO
-
-**Pattern** :
-```
-Object literal may only specify known properties, and 'productType' does not exist in type 'X'.
-```
-
-**Stratégie** : Manual review and fix
-
-**Exemples** :
-- `src/components/business/primary-image-upload.tsx:53` - Object literal may only specify known properties, and 'productType' does not exi...
-- `src/components/business/product-image-management.tsx:53` - Object literal may only specify known properties, and 'productType' does not exi...
-
-**Commande** : `/typescript-fix TS2353-object-literal-may-only-specif`
-
----
-
-### 📋 TS2353-object-literal-may-only-specif
-
-**Code** : TS2353
-**Count** : 2 erreurs
-**Files** : 1 fichiers
-**Estimation** : 1h
-**Status** : TODO
-
-**Pattern** :
-```
-Object literal may only specify known properties, and 'archived_at' does not exist in type 'X'.
-```
-
-**Stratégie** : Manual review and fix
-
-**Exemples** :
-- `src/hooks/use-consultations.ts:333` - Object literal may only specify known properties, and 'archived_at' does not exi...
-- `src/hooks/use-consultations.ts:372` - Object literal may only specify known properties, and 'archived_at' does not exi...
-
-**Commande** : `/typescript-fix TS2353-object-literal-may-only-specif`
-
----
-
-### 📋 TS2353-object-literal-may-only-specif
-
-**Code** : TS2353
-**Count** : 2 erreurs
-**Files** : 1 fichiers
-**Estimation** : 1h
-**Status** : TODO
-
-**Pattern** :
-```
-Object literal may only specify known properties, and 'logo_url' does not exist in type 'X'.
-```
-
-**Stratégie** : Manual review and fix
-
-**Exemples** :
-- `src/hooks/use-logo-upload.ts:105` - Object literal may only specify known properties, and 'logo_url' does not exist ...
-- `src/hooks/use-logo-upload.ts:171` - Object literal may only specify known properties, and 'logo_url' does not exist ...
-
-**Commande** : `/typescript-fix TS2353-object-literal-may-only-specif`
-
----
-
-### 📋 TS18048--result-is-possibly-undefined-
-
-**Code** : TS18048
-**Count** : 2 erreurs
-**Files** : 1 fichiers
-**Estimation** : 1h
-**Status** : TODO
-
-**Pattern** :
-```
-'result' is possibly 'undefined'.
-```
-
-**Stratégie** : Manual review and fix
-
-**Exemples** :
-- `src/components/forms/ImageUploadV2.tsx:65` - 'result' is possibly 'undefined'....
-- `src/components/forms/ImageUploadV2.tsx:66` - 'result' is possibly 'undefined'....
-
-**Commande** : `/typescript-fix TS18048--result-is-possibly-undefined-`
-
----
-
-### 📋 TS2349-this-expression-is-not-callabl
-
-**Code** : TS2349
-**Count** : 2 erreurs
-**Files** : 1 fichiers
-**Estimation** : 1h
-**Status** : TODO
-
-**Pattern** :
-```
-This expression is not callable.
-```
-
-**Stratégie** : Manual review and fix
-
-**Exemples** :
-- `src/components/ui/calendar.tsx:55` - This expression is not callable....
-- `src/components/ui/calendar.tsx:60` - This expression is not callable....
-
-**Commande** : `/typescript-fix TS2349-this-expression-is-not-callabl`
-
----
-
-### 📋 TS7016-could-not-find-a-declaration-f
-
-**Code** : TS7016
-**Count** : 2 erreurs
-**Files** : 2 fichiers
-**Estimation** : 1h
-**Status** : TODO
-
-**Pattern** :
-```
-Could not find a declaration file for module 'react-dom'. '/Users/romeodossantos/verone-back-office-V1/node_modules/react-dom/index.js' implicitly has an 'any' type.
-```
-
-**Stratégie** : Manual review and fix
-
-**Exemples** :
-- `src/components/ui/command-palette.tsx:10` - Could not find a declaration file for module 'react-dom'. '/Users/romeodossantos...
-- `src/components/ui/notification-system.tsx:10` - Could not find a declaration file for module 'react-dom'. '/Users/romeodossantos...
-
-**Commande** : `/typescript-fix TS7016-could-not-find-a-declaration-f`
-
----
-
-### 📋 TS2538-type-x-cannot-be-used-as-an-in
-
-**Code** : TS2538
-**Count** : 2 erreurs
-**Files** : 1 fichiers
-**Estimation** : 1h
-**Status** : TODO
-
-**Pattern** :
-```
-Type 'X' cannot be used as an index type.
-```
-
-**Stratégie** : Manual review and fix
-
-**Exemples** :
-- `src/hooks/use-movements-history.ts:292` - Type 'null' cannot be used as an index type....
-- `src/hooks/use-movements-history.ts:292` - Type 'null' cannot be used as an index type....
-
-**Commande** : `/typescript-fix TS2538-type-x-cannot-be-used-as-an-in`
-
----
-
-### 📋 TS2300-duplicate-identifier-margin-pe
-
-**Code** : TS2300
-**Count** : 2 erreurs
-**Files** : 1 fichiers
-**Estimation** : 1h
-**Status** : TODO
-
-**Pattern** :
-```
-Duplicate identifier 'margin_percentage'.
-```
-
-**Stratégie** : Manual review and fix
-
-**Exemples** :
-- `src/hooks/use-sourcing-products.ts:15` - Duplicate identifier 'margin_percentage'....
-- `src/hooks/use-sourcing-products.ts:38` - Duplicate identifier 'margin_percentage'....
-
-**Commande** : `/typescript-fix TS2300-duplicate-identifier-margin-pe`
-
----
-
-### 📋 TS2352-conversion-of-type-x-is-cover-
-
-**Code** : TS2352
-**Count** : 1 erreurs
-**Files** : 1 fichiers
-**Estimation** : 1h
-**Status** : TODO
-
-**Pattern** :
-```
-Conversion of type 'X'is_cover' does not exist on 'collection_images'.">[]' to type 'X' may be a mistake because neither type sufficiently overlaps with the other. If this was intentional, convert the expression to 'unknown' first.
-```
-
-**Stratégie** : Manual review and fix
-
-**Exemples** :
-- `src/hooks/use-collection-images.ts:81` - Conversion of type 'SelectQueryError<"column 'is_cover' does not exist on 'colle...
-
-**Commande** : `/typescript-fix TS2352-conversion-of-type-x-is-cover-`
-
----
-
-### 📋 TS18047--product-stock-quantity-is-pos
-
-**Code** : TS18047
-**Count** : 1 erreurs
-**Files** : 1 fichiers
-**Estimation** : 1h
-**Status** : TODO
-
-**Pattern** :
-```
-'product.stock_quantity' is possibly 'null'.
-```
-
-**Stratégie** : Manual review and fix
-
-**Exemples** :
-- `src/app/produits/catalogue/[productId]/page.tsx:591` - 'product.stock_quantity' is possibly 'null'....
-
-**Commande** : `/typescript-fix TS18047--product-stock-quantity-is-pos`
-
----
-
-### 📋 TS2353-object-literal-may-only-specif
-
-**Code** : TS2353
-**Count** : 1 erreurs
-**Files** : 1 fichiers
-**Estimation** : 1h
-**Status** : TODO
-
-**Pattern** :
-```
-Object literal may only specify known properties, and 'meta_title' does not exist in type 'X'.
-```
-
-**Stratégie** : Manual review and fix
-
-**Exemples** :
-- `src/app/produits/catalogue/collections/[collectionId]/page.tsx:328` - Object literal may only specify known properties, and 'meta_title' does not exis...
-
-**Commande** : `/typescript-fix TS2353-object-literal-may-only-specif`
-
----
-
-### 📋 TS2353-object-literal-may-only-specif
-
-**Code** : TS2353
-**Count** : 1 erreurs
-**Files** : 1 fichiers
-**Estimation** : 1h
-**Status** : TODO
-
-**Pattern** :
-```
-Object literal may only specify known properties, and 'variant_attributes' does not exist in type 'X'.
-```
-
-**Stratégie** : Manual review and fix
-
-**Exemples** :
-- `src/components/business/variant-add-product-modal.tsx:73` - Object literal may only specify known properties, and 'variant_attributes' does ...
-
-**Commande** : `/typescript-fix TS2353-object-literal-may-only-specif`
-
----
-
-### 📋 TS2353-object-literal-may-only-specif
-
-**Code** : TS2353
-**Count** : 1 erreurs
-**Files** : 1 fichiers
-**Estimation** : 1h
-**Status** : TODO
-
-**Pattern** :
-```
-Object literal may only specify known properties, and 'deleted_at' does not exist in type 'X'.
-```
-
-**Stratégie** : Manual review and fix
-
-**Exemples** :
-- `src/hooks/use-consultations.ts:415` - Object literal may only specify known properties, and 'deleted_at' does not exis...
-
-**Commande** : `/typescript-fix TS2353-object-literal-may-only-specif`
-
----
-
-### 📋 TS2353-object-literal-may-only-specif
-
-**Code** : TS2353
-**Count** : 1 erreurs
-**Files** : 1 fichiers
-**Estimation** : 1h
-**Status** : TODO
-
-**Pattern** :
-```
-Object literal may only specify known properties, and 'last_contact_date' does not exist in type 'X'.
-```
-
-**Stratégie** : Manual review and fix
-
-**Exemples** :
-- `src/hooks/use-contacts.ts:416` - Object literal may only specify known properties, and 'last_contact_date' does n...
-
-**Commande** : `/typescript-fix TS2353-object-literal-may-only-specif`
-
----
-
-### 📋 TS2353-object-literal-may-only-specif
-
-**Code** : TS2353
-**Count** : 1 erreurs
-**Files** : 1 fichiers
-**Estimation** : 1h
-**Status** : TODO
-
-**Pattern** :
-```
-Object literal may only specify known properties, and 'mediaSource' does not exist in type 'X'.
-```
-
-**Stratégie** : Manual review and fix
-
-**Exemples** :
-- `src/hooks/use-error-reporting.ts:372` - Object literal may only specify known properties, and 'mediaSource' does not exi...
-
-**Commande** : `/typescript-fix TS2353-object-literal-may-only-specif`
-
 ---
-
-### 📋 TS2353-object-literal-may-only-specif
 
-**Code** : TS2353
-**Count** : 1 erreurs
-**Files** : 1 fichiers
-**Estimation** : 1h
-**Status** : TODO
-
-**Pattern** :
-```
-Object literal may only specify known properties, and 'action' does not exist in type 'X'.
-```
+## 📊 Résumé Exécutif
 
-**Stratégie** : Manual review and fix
+**Audit complet réalisé** avec clustering automatique des 459 erreurs TypeScript restantes après correction des hooks `use-price-lists.ts` (21 erreurs) et `use-pricing.ts` (17 erreurs).
 
-**Exemples** :
-- `src/hooks/use-google-merchant-sync.ts:173` - Object literal may only specify known properties, and 'action' does not exist in...
+**Statut console errors /contacts-organisations**:  
+✅ **PRÉ-EXISTANTES** - Hook `useStockOrdersMetrics` NON utilisé dans ce module. Les 5 erreurs console sont antérieures aux corrections pricing et doivent être traitées séparément.
 
-**Commande** : `/typescript-fix TS2353-object-literal-may-only-specif`
+**Statistiques Clustering**:
+- **Total erreurs**: 459
+- **Familles identifiées**: 33 codes TS distincts
+- **Fichiers impactés**: 175 fichiers
+- **Priorité P0 (BLOCKING)**: 0 erreurs
+- **Priorité P1 (CRITICAL)**: 296 erreurs (6 familles)
+- **Priorité P2 (HIGH)**: 124 erreurs (9 familles)  
+- **Priorité P3 (LOW)**: 39 erreurs (18 familles)
 
 ---
-
-### 📋 TS2561-object-literal-may-only-specif
-
-**Code** : TS2561
-**Count** : 1 erreurs
-**Files** : 1 fichiers
-**Estimation** : 1h
-**Status** : TODO
-
-**Pattern** :
-```
-Object literal may only specify known properties, but 'meta_description' does not exist in type 'X'. Did you mean to write 'description'?
-```
 
-**Stratégie** : Manual review and fix
+## 🎯 Top 10 Fichiers Impactés
 
-**Exemples** :
-- `src/app/produits/catalogue/collections/[collectionId]/page.tsx:352` - Object literal may only specify known properties, but 'meta_description' does no...
+| Rang | Fichier | Erreurs |
+|------|---------|---------|
+| 1 | `use-bank-reconciliation.ts` | 13 |
+| 2 | `use-base-hook.ts` | 12 |
+| 3 | `use-consultations.ts` | 9 |
+| 4 | `sync-processor.ts` | 9 |
+| 5 | `page.tsx` (produits/catalogue/[productId]) | 8 |
+| 6 | `page.tsx` (autre instance) | 8 |
+| 7 | `use-movements-history.ts` | 8 |
+| 8 | `use-products.ts` | 8 |
+| 9 | `use-sourcing-products.ts` | 8 |
+| 10 | `payment-form.tsx` | 7 |
 
-**Commande** : `/typescript-fix TS2561-object-literal-may-only-specif`
-
 ---
-
-### 📋 TS2554-expected-1-arguments-but-got-2
-
-**Code** : TS2554
-**Count** : 1 erreurs
-**Files** : 1 fichiers
-**Estimation** : 1h
-**Status** : TODO
-
-**Pattern** :
-```
-Expected 1 arguments, but got 2.
-```
 
-**Stratégie** : Manual review and fix
+## 🔥 Familles d'Erreurs - Plan d'Exécution Ordonné
 
-**Exemples** :
-- `src/app/produits/catalogue/collections/page.tsx:191` - Expected 1 arguments, but got 2....
+### PRIORITÉ P1 - CRITICAL (296 erreurs, 6 familles)
 
-**Commande** : `/typescript-fix TS2554-expected-1-arguments-but-got-2`
+Type safety critique. **Correction OBLIGATOIRE avant déploiement.**
 
 ---
 
-### 📋 TS2724--hooks-use-collections-has-no-
+#### **FAMILLE 1: TS2345 - Argument Type Mismatch**
 
-**Code** : TS2724
-**Count** : 1 erreurs
-**Files** : 1 fichiers
-**Estimation** : 1h
-**Status** : TODO
+- **Priorité**: P1 (CRITICAL)
+- **Occurrences**: 141 erreurs
+- **Fichiers impactés**: 84 fichiers
+- **Pattern technique**: Type d'argument incompatible avec paramètre attendu
+- **Stratégie correction**: 
+  - Adapter types des arguments (casting `as Type`)
+  - Créer fonctions wrapper pour normaliser types Supabase
+  - Utiliser types génériques pour fonctions flexibles
+- **Estimation**: 3-4 heures (complexité medium)
+- **Ordre exécution**: #1
 
-**Pattern** :
-```
-'"../../hooks/use-collections"' has no exported member named 'CollectionStyle'. Did you mean 'Collection'?
-```
-
-**Stratégie** : Manual review and fix
-
-**Exemples** :
-- `src/components/business/collection-form-modal.tsx:12` - '"../../hooks/use-collections"' has no exported member named 'CollectionStyle'. ...
-
-**Commande** : `/typescript-fix TS2724--hooks-use-collections-has-no-`
-
----
-
-### 📋 TS2724--product-card-has-no-exported-
+**Exemple typique**:
+```typescript
+// Avant
+setState(supabaseData) // TS2345: Type mismatch
 
-**Code** : TS2724
-**Count** : 1 erreurs
-**Files** : 1 fichiers
-**Estimation** : 1h
-**Status** : TODO
-
-**Pattern** :
-```
-'"./product-card"' has no exported member named 'ProductCardProps'. Did you mean 'ProductCard'?
+// Après
+setState(supabaseData as ExpectedType)
+// OU
+const normalized = normalizeSupabaseData(supabaseData)
+setState(normalized)
 ```
-
-**Stratégie** : Manual review and fix
-
-**Exemples** :
-- `src/components/business/index.ts:12` - '"./product-card"' has no exported member named 'ProductCardProps'. Did you mean...
 
-**Commande** : `/typescript-fix TS2724--product-card-has-no-exported-`
+**Commit prévu**: `fix(types): FAMILLE-1 TS2345 - Argument type mismatches - 141 erreurs`
 
 ---
-
-### 📋 TS2724--collection-grid-has-no-export
-
-**Code** : TS2724
-**Count** : 1 erreurs
-**Files** : 1 fichiers
-**Estimation** : 1h
-**Status** : TODO
-
-**Pattern** :
-```
-'"./collection-grid"' has no exported member named 'CollectionGridProps'. Did you mean 'CollectionGrid'?
-```
-
-**Stratégie** : Manual review and fix
-
-**Exemples** :
-- `src/components/business/index.ts:17` - '"./collection-grid"' has no exported member named 'CollectionGridProps'. Did yo...
-
-**Commande** : `/typescript-fix TS2724--collection-grid-has-no-export`
 
----
+#### **FAMILLE 2: TS2322 - Type Assignment Mismatch**
 
-### 📋 TS2305-module-hooks-use-collections-h
+- **Priorité**: P1 (CRITICAL)
+- **Occurrences**: 93 erreurs
+- **Fichiers impactés**: 60 fichiers
+- **Pattern technique**: Assignation de type incompatible (null vs undefined, string vs enum)
+- **Stratégie correction**:
+  - Type casting explicite (`as Type`)
+  - Adapter schéma Supabase (nullable vs optional)
+  - Null coalescing (`value ?? defaultValue`)
+- **Estimation**: 2-3 heures (complexité medium)
+- **Ordre exécution**: #2
 
-**Code** : TS2305
-**Count** : 1 erreurs
-**Files** : 1 fichiers
-**Estimation** : 1h
-**Status** : TODO
+**Exemple typique**:
+```typescript
+// Avant
+const data: CustomerPricing[] = result // TS2322: string not assignable to enum
 
-**Pattern** :
-```
-Module '"../../hooks/use-collections"' has no exported member 'RoomCategory'.
+// Après
+const data: CustomerPricing[] = result.map(item => ({
+  ...item,
+  customer_type: item.customer_type as CustomerType
+}))
 ```
-
-**Stratégie** : Manual review and fix
-
-**Exemples** :
-- `src/components/business/collection-form-modal.tsx:12` - Module '"../../hooks/use-collections"' has no exported member 'RoomCategory'....
 
-**Commande** : `/typescript-fix TS2305-module-hooks-use-collections-h`
+**Commit prévu**: `fix(types): FAMILLE-2 TS2322 - Type assignment mismatches - 93 erreurs`
 
 ---
-
-### 📋 TS2722-cannot-invoke-an-object-which-
-
-**Code** : TS2722
-**Count** : 1 erreurs
-**Files** : 1 fichiers
-**Estimation** : 1h
-**Status** : TODO
-
-**Pattern** :
-```
-Cannot invoke an object which is possibly 'undefined'.
-```
-
-**Stratégie** : Manual review and fix
-
-**Exemples** :
-- `src/components/business/financial-payment-form.tsx:112` - Cannot invoke an object which is possibly 'undefined'....
-
-**Commande** : `/typescript-fix TS2722-cannot-invoke-an-object-which-`
 
----
+#### **FAMILLE 3: TS2339 - Property Does Not Exist**
 
-### 📋 TS18048--item-products-is-possibly-und
+- **Priorité**: P1 (CRITICAL)
+- **Occurrences**: 31 erreurs
+- **Fichiers impactés**: 22 fichiers
+- **Pattern technique**: Accès propriété inexistante sur type
+- **Stratégie correction**:
+  - Étendre interfaces/types existants
+  - Utiliser index signature pour types dynamiques
+  - Corriger queries Supabase (select manquants)
+- **Estimation**: 1-2 heures (complexité medium)
+- **Ordre exécution**: #3
 
-**Code** : TS18048
-**Count** : 1 erreurs
-**Files** : 1 fichiers
-**Estimation** : 1h
-**Status** : TODO
+**Exemple typique**:
+```typescript
+// Avant
+item.position // TS2339: Property 'position' does not exist
 
-**Pattern** :
-```
-'item.products' is possibly 'undefined'.
+// Après
+interface ItemWithPosition extends Item {
+  position: number
+}
+// OU
+const position = (item as any).position // Fallback temporaire
 ```
-
-**Stratégie** : Manual review and fix
-
-**Exemples** :
-- `src/components/business/order-detail-modal.tsx:237` - 'item.products' is possibly 'undefined'....
 
-**Commande** : `/typescript-fix TS18048--item-products-is-possibly-und`
+**Commit prévu**: `fix(types): FAMILLE-3 TS2339 - Missing properties - 31 erreurs`
 
 ---
-
-### 📋 TS18048--organisation-certification-la
-
-**Code** : TS18048
-**Count** : 1 erreurs
-**Files** : 1 fichiers
-**Estimation** : 1h
-**Status** : TODO
-
-**Pattern** :
-```
-'organisation.certification_labels.length' is possibly 'undefined'.
-```
-
-**Stratégie** : Manual review and fix
-
-**Exemples** :
-- `src/components/business/performance-edit-section.tsx:294` - 'organisation.certification_labels.length' is possibly 'undefined'....
-
-**Commande** : `/typescript-fix TS18048--organisation-certification-la`
 
----
+#### **FAMILLE 4: TS2352 - Unsafe Type Conversion**
 
-### 📋 TS18048--product-cost-price-is-possibl
+- **Priorité**: P1 (CRITICAL)
+- **Occurrences**: 15 erreurs
+- **Fichiers impactés**: 10 fichiers
+- **Pattern technique**: Conversion de type dangereuse sans overlap
+- **Stratégie correction**:
+  - Type assertion sécurisée (`as unknown as TargetType`)
+  - Refactoriser types pour avoir overlap
+  - Validation runtime avant cast
+- **Estimation**: 1 heure (complexité medium)
+- **Ordre exécution**: #4
 
-**Code** : TS18048
-**Count** : 1 erreurs
-**Files** : 1 fichiers
-**Estimation** : 1h
-**Status** : TODO
+**Exemple typique**:
+```typescript
+// Avant
+const doc = rawData as FinancialDocument // TS2352: Unsafe conversion
 
-**Pattern** :
-```
-'product.cost_price' is possibly 'undefined'.
+// Après
+const doc = rawData as unknown as FinancialDocument
+// OU mieux: validation runtime
+const doc = validateAndCast(rawData)
 ```
-
-**Stratégie** : Manual review and fix
-
-**Exemples** :
-- `src/components/business/product-info-section.tsx:31` - 'product.cost_price' is possibly 'undefined'....
 
-**Commande** : `/typescript-fix TS18048--product-cost-price-is-possibl`
+**Commit prévu**: `fix(types): FAMILLE-4 TS2352 - Unsafe conversions - 15 erreurs`
 
 ---
 
-### 📋 TS18048--variant-variant-details-image
+#### **FAMILLE 5: TS18048 - Possibly Undefined Access**
 
-**Code** : TS18048
-**Count** : 1 erreurs
-**Files** : 1 fichiers
-**Estimation** : 1h
-**Status** : TODO
+- **Priorité**: P1 (CRITICAL)
+- **Occurrences**: 12 erreurs
+- **Fichiers impactés**: 5 fichiers
+- **Pattern technique**: Accès propriété potentiellement undefined sans guard
+- **Stratégie correction**:
+  - Null coalescing operator (`value ?? defaultValue`)
+  - Optional chaining (`object?.property`)
+  - Type assertion non-null (`value!`)
+- **Estimation**: 30 minutes (complexité simple)
+- **Ordre exécution**: #5
 
-**Pattern** :
-```
-'variant.variant_details.images.length' is possibly 'undefined'.
-```
-
-**Stratégie** : Manual review and fix
-
-**Exemples** :
-- `src/components/business/product-variants-section.tsx:313` - 'variant.variant_details.images.length' is possibly 'undefined'....
-
-**Commande** : `/typescript-fix TS18048--variant-variant-details-image`
-
----
-
-### 📋 TS2367-this-comparison-appears-to-be-
+**Exemple typique**:
+```typescript
+// Avant
+const price = product.cost_price // TS18048: Possibly undefined
 
-**Code** : TS2367
-**Count** : 1 erreurs
-**Files** : 1 fichiers
-**Estimation** : 1h
-**Status** : TODO
-
-**Pattern** :
-```
-This comparison appears to be unintentional because the types '"add" | "adjust"' and '"OUT"' have no overlap.
+// Après
+const price = product.cost_price ?? 0
+// OU
+const price = product.cost_price!
 ```
-
-**Stratégie** : Manual review and fix
-
-**Exemples** :
-- `src/components/business/stock-movement-modal.tsx:303` - This comparison appears to be unintentional because the types '"add" | "adjust"'...
 
-**Commande** : `/typescript-fix TS2367-this-comparison-appears-to-be-`
+**Commit prévu**: `fix(types): FAMILLE-5 TS18048 - Undefined guards - 12 erreurs`
 
 ---
-
-### 📋 TS2367-this-comparison-appears-to-be-
-
-**Code** : TS2367
-**Count** : 1 erreurs
-**Files** : 1 fichiers
-**Estimation** : 1h
-**Status** : TODO
-
-**Pattern** :
-```
-This comparison appears to be unintentional because the types 'number' and 'string' have no overlap.
-```
-
-**Stratégie** : Manual review and fix
-
-**Exemples** :
-- `src/hooks/use-consultations.ts:158` - This comparison appears to be unintentional because the types 'number' and 'stri...
-
-**Commande** : `/typescript-fix TS2367-this-comparison-appears-to-be-`
 
----
+#### **FAMILLE 6: TS18047 - Possibly Null Access**
 
-### 📋 TS2367-this-comparison-appears-to-be-
+- **Priorité**: P1 (CRITICAL)
+- **Occurrences**: 4 erreurs
+- **Fichiers impactés**: 3 fichiers
+- **Pattern technique**: Accès propriété potentiellement null sans guard
+- **Stratégie correction**:
+  - Null coalescing (`value ?? defaultValue`)
+  - Optional chaining (`object?.property`)
+  - Guard conditionnelle (`if (value !== null)`)
+- **Estimation**: 15 minutes (complexité simple)
+- **Ordre exécution**: #6
 
-**Code** : TS2367
-**Count** : 1 erreurs
-**Files** : 1 fichiers
-**Estimation** : 1h
-**Status** : TODO
+**Exemple typique**:
+```typescript
+// Avant
+const qty = product.stock_quantity // TS18047: Possibly null
 
-**Pattern** :
-```
-This comparison appears to be unintentional because the types '"IN" | "OUT" | "ADJUST" | "TRANSFER"' and '"in"' have no overlap.
+// Après
+const qty = product.stock_quantity ?? 0
+// OU
+if (product.stock_quantity !== null) {
+  const qty = product.stock_quantity
+}
 ```
-
-**Stratégie** : Manual review and fix
-
-**Exemples** :
-- `src/hooks/use-dashboard-analytics.ts:132` - This comparison appears to be unintentional because the types '"IN" | "OUT" | "A...
 
-**Commande** : `/typescript-fix TS2367-this-comparison-appears-to-be-`
+**Commit prévu**: `fix(types): FAMILLE-6 TS18047 - Null guards - 4 erreurs`
 
 ---
 
-### 📋 TS2367-this-comparison-appears-to-be-
+### PRIORITÉ P2 - HIGH (124 erreurs, 9 familles)
 
-**Code** : TS2367
-**Count** : 1 erreurs
-**Files** : 1 fichiers
-**Estimation** : 1h
-**Status** : TODO
+Incompatibilités types non-critiques. **Correction recommandée pour stabilité.**
 
-**Pattern** :
-```
-This comparison appears to be unintentional because the types '"IN" | "OUT" | "ADJUST" | "TRANSFER"' and '"purchase_order"' have no overlap.
-```
-
-**Stratégie** : Manual review and fix
-
-**Exemples** :
-- `src/hooks/use-dashboard-analytics.ts:132` - This comparison appears to be unintentional because the types '"IN" | "OUT" | "A...
-
-**Commande** : `/typescript-fix TS2367-this-comparison-appears-to-be-`
-
 ---
-
-### 📋 TS2367-this-comparison-appears-to-be-
-
-**Code** : TS2367
-**Count** : 1 erreurs
-**Files** : 1 fichiers
-**Estimation** : 1h
-**Status** : TODO
 
-**Pattern** :
-```
-This comparison appears to be unintentional because the types '"IN" | "OUT" | "ADJUST" | "TRANSFER"' and '"out"' have no overlap.
-```
-
-**Stratégie** : Manual review and fix
-
-**Exemples** :
-- `src/hooks/use-dashboard-analytics.ts:134` - This comparison appears to be unintentional because the types '"IN" | "OUT" | "A...
+#### **FAMILLE 7: TS2769 - No Overload Matches Call**
 
-**Commande** : `/typescript-fix TS2367-this-comparison-appears-to-be-`
+- **Priorité**: P2 (HIGH)
+- **Occurrences**: 63 erreurs
+- **Fichiers impactés**: 33 fichiers
+- **Pattern technique**: Aucune signature fonction ne correspond aux arguments fournis
+- **Stratégie correction**:
+  - Corriger arguments pour matcher overload existant
+  - Ajouter nouveaux overloads si nécessaire
+  - Adapter types paramètres (nullable → optional)
+- **Estimation**: 2-3 heures (complexité medium)
+- **Ordre exécution**: #7
 
----
-
-### 📋 TS2367-this-comparison-appears-to-be-
+**Exemple typique**:
+```typescript
+// Avant
+new Date(nullable_string) // TS2769: null not assignable
 
-**Code** : TS2367
-**Count** : 1 erreurs
-**Files** : 1 fichiers
-**Estimation** : 1h
-**Status** : TODO
-
-**Pattern** :
-```
-This comparison appears to be unintentional because the types '"IN" | "OUT" | "ADJUST" | "TRANSFER"' and '"sales_order"' have no overlap.
+// Après
+new Date(nullable_string ?? new Date())
+// OU
+const date = nullable_string ? new Date(nullable_string) : new Date()
 ```
 
-**Stratégie** : Manual review and fix
+**Commit prévu**: `fix(types): FAMILLE-7 TS2769 - Function overloads - 63 erreurs`
 
-**Exemples** :
-- `src/hooks/use-dashboard-analytics.ts:134` - This comparison appears to be unintentional because the types '"IN" | "OUT" | "A...
-
-**Commande** : `/typescript-fix TS2367-this-comparison-appears-to-be-`
-
 ---
-
-### 📋 TS2367-this-comparison-appears-to-be-
-
-**Code** : TS2367
-**Count** : 1 erreurs
-**Files** : 1 fichiers
-**Estimation** : 1h
-**Status** : TODO
-
-**Pattern** :
-```
-This comparison appears to be unintentional because the types '"draft" | "cancelled" | "confirmed" | "partially_shipped" | "shipped" | "delivered"' and '"validated"' have no overlap.
-```
-
-**Stratégie** : Manual review and fix
 
-**Exemples** :
-- `src/hooks/use-sales-orders.ts:677` - This comparison appears to be unintentional because the types '"draft" | "cancel...
+#### **FAMILLE 8: TS2307 - Cannot Find Module**
 
-**Commande** : `/typescript-fix TS2367-this-comparison-appears-to-be-`
+- **Priorité**: P2 (HIGH)
+- **Occurrences**: 20 erreurs
+- **Fichiers impactés**: 12 fichiers
+- **Pattern technique**: Import module inexistant
+- **Stratégie correction**:
+  - Créer fichiers manquants (error-detection system)
+  - Corriger chemins imports
+  - Supprimer imports obsolètes
+- **Estimation**: 1 heure (complexité simple)
+- **Ordre exécution**: #8
 
----
-
-### 📋 TS2367-this-comparison-appears-to-be-
+**Exemple typique**:
+```typescript
+// Avant
+import { ErrorQueue } from '@/lib/error-detection/error-processing-queue'
+// TS2307: Cannot find module
 
-**Code** : TS2367
-**Count** : 1 erreurs
-**Files** : 1 fichiers
-**Estimation** : 1h
-**Status** : TODO
-
-**Pattern** :
-```
-This comparison appears to be unintentional because the types '"remove" | "adjust"' and '"IN"' have no overlap.
+// Après
+// Créer fichier manquant OU
+// Supprimer import si feature désactivée
 ```
 
-**Stratégie** : Manual review and fix
+**Commit prévu**: `fix(types): FAMILLE-8 TS2307 - Missing modules - 20 erreurs`
 
-**Exemples** :
-- `src/hooks/use-stock.ts:226` - This comparison appears to be unintentional because the types '"remove" | "adjus...
-
-**Commande** : `/typescript-fix TS2367-this-comparison-appears-to-be-`
-
 ---
-
-### 📋 TS2367-this-comparison-appears-to-be-
-
-**Code** : TS2367
-**Count** : 1 erreurs
-**Files** : 1 fichiers
-**Estimation** : 1h
-**Status** : TODO
 
-**Pattern** :
-```
-This comparison appears to be unintentional because the types '"adjust"' and '"OUT"' have no overlap.
-```
-
-**Stratégie** : Manual review and fix
-
-**Exemples** :
-- `src/hooks/use-stock.ts:227` - This comparison appears to be unintentional because the types '"adjust"' and '"O...
+#### **FAMILLE 9: TS2353 - Unknown Property in Object**
 
-**Commande** : `/typescript-fix TS2367-this-comparison-appears-to-be-`
+- **Priorité**: P2 (HIGH)
+- **Occurrences**: 14 erreurs
+- **Fichiers impactés**: 10 fichiers
+- **Pattern technique**: Propriété inconnue dans object literal
+- **Stratégie correction**:
+  - Retirer propriété inconnue
+  - Étendre type cible pour accepter propriété
+  - Utiliser type partial pour flexibilité
+- **Estimation**: 45 minutes (complexité simple)
+- **Ordre exécution**: #9
 
----
-
-### 📋 TS2741-property-x-is-missing-in-type-
+**Exemple typique**:
+```typescript
+// Avant
+const data = { meta_title: "..." } // TS2353: meta_title unknown
 
-**Code** : TS2741
-**Count** : 1 erreurs
-**Files** : 1 fichiers
-**Estimation** : 1h
-**Status** : TODO
-
-**Pattern** :
-```
-Property 'X' is missing in type 'X' but required in type 'X'.
+// Après
+const data = { title: "..." } // Propriété correcte
+// OU étendre type
+interface Extended { meta_title?: string }
 ```
 
-**Stratégie** : Manual review and fix
+**Commit prévu**: `fix(types): FAMILLE-9 TS2353 - Unknown properties - 14 erreurs`
 
-**Exemples** :
-- `src/hooks/use-error-reporting-integration.ts:321` - Property 'session_id' is missing in type '{ last_action: string; timestamp: Date...
-
-**Commande** : `/typescript-fix TS2741-property-x-is-missing-in-type-`
-
 ---
-
-### 📋 TS2365-operator-cannot-be-applied-to-
-
-**Code** : TS2365
-**Count** : 1 erreurs
-**Files** : 1 fichiers
-**Estimation** : 1h
-**Status** : TODO
 
-**Pattern** :
-```
-Operator '>=' cannot be applied to types '{ stock_available: number; stock_forecasted_in: number; stock_forecasted_out: number; stock_real: number; stock_total_forecasted: number; }' and 'number'.
-```
+#### **FAMILLE 10-15: Autres Familles P2**
 
-**Stratégie** : Manual review and fix
+Erreurs P2 restantes (37 erreurs, 6 familles):
+- **TS2367**: Comparaisons type incompatibles (9 erreurs)
+- **TS2554**: Nombre arguments incorrect (7 erreurs)
+- **TS2358**: instanceof invalide (3 erreurs)
+- **TS2740**: Propriétés manquantes (3 erreurs)
+- **TS2678**: Types non comparables (3 erreurs)
+- **TS2719**: Noms types dupliqués (2 erreurs)
 
-**Exemples** :
-- `src/hooks/use-sales-orders.ts:463` - Operator '>=' cannot be applied to types '{ stock_available: number; stock_forec...
+**Stratégie**: Review manuelle cas par cas (complexité complex)  
+**Estimation**: 2-3 heures total  
+**Commits prévus**: 1 commit par famille (6 commits)
 
-**Commande** : `/typescript-fix TS2365-operator-cannot-be-applied-to-`
-
 ---
-
-### 📋 TS2820-type-x-is-not-assignable-to-ty
 
-**Code** : TS2820
-**Count** : 1 erreurs
-**Files** : 1 fichiers
-**Estimation** : 1h
-**Status** : TODO
+### PRIORITÉ P3 - LOW (39 erreurs, 18 familles)
 
-**Pattern** :
-```
-Type 'X' is not assignable to type 'X'. Did you mean '"echantillon_a_commander"'?
-```
-
-**Stratégie** : Manual review and fix
-
-**Exemples** :
-- `src/hooks/use-sourcing-products.ts:463` - Type '"echantillon_commande"' is not assignable to type '"in_stock" | "out_of_st...
+Warnings, implicit any, conflits exports. **Correction optionnelle (nice-to-have).**
 
-**Commande** : `/typescript-fix TS2820-type-x-is-not-assignable-to-ty`
-
 ---
-
-### 📋 TS2484-export-declaration-conflicts-w
-
-**Code** : TS2484
-**Count** : 1 erreurs
-**Files** : 1 fichiers
-**Estimation** : 1h
-**Status** : TODO
-
-**Pattern** :
-```
-Export declaration conflicts with exported declaration of 'LogEntry'.
-```
-
-**Stratégie** : Manual review and fix
-
-**Exemples** :
-- `src/lib/logger.ts:282` - Export declaration conflicts with exported declaration of 'LogEntry'....
 
-**Commande** : `/typescript-fix TS2484-export-declaration-conflicts-w`
+#### **FAMILLE 16: TS7053 - Index Signature Implicit Any**
 
----
-
-### 📋 TS2484-export-declaration-conflicts-w
+- **Priorité**: P3 (LOW)
+- **Occurrences**: 7 erreurs
+- **Fichiers impactés**: 6 fichiers
+- **Pattern technique**: Index signature avec type any implicite
+- **Stratégie correction**:
+  - Ajouter index signature explicite au type
+  - Utiliser Record<string, Type> pour objets dynamiques
+- **Estimation**: 30 minutes (complexité simple)
+- **Ordre exécution**: #16
 
-**Code** : TS2484
-**Count** : 1 erreurs
-**Files** : 1 fichiers
-**Estimation** : 1h
-**Status** : TODO
+**Exemple typique**:
+```typescript
+// Avant
+interface Config {}
+const value = config[key] // TS7053: Implicit any
 
-**Pattern** :
+// Après
+interface Config {
+  [key: string]: any
+}
+// OU
+const config: Record<string, string> = {}
 ```
-Export declaration conflicts with exported declaration of 'LogContext'.
-```
-
-**Stratégie** : Manual review and fix
 
-**Exemples** :
-- `src/lib/logger.ts:282` - Export declaration conflicts with exported declaration of 'LogContext'....
+**Commit prévu**: `fix(types): FAMILLE-16 TS7053 - Index signatures - 7 erreurs`
 
-**Commande** : `/typescript-fix TS2484-export-declaration-conflicts-w`
-
 ---
-
-### 📋 TS2484-export-declaration-conflicts-w
-
-**Code** : TS2484
-**Count** : 1 erreurs
-**Files** : 1 fichiers
-**Estimation** : 1h
-**Status** : TODO
-
-**Pattern** :
-```
-Export declaration conflicts with exported declaration of 'LogLevel'.
-```
 
-**Stratégie** : Manual review and fix
+#### **FAMILLES 17-33: Autres Familles P3**
 
-**Exemples** :
-- `src/lib/logger.ts:282` - Export declaration conflicts with exported declaration of 'LogLevel'....
-
-**Commande** : `/typescript-fix TS2484-export-declaration-conflicts-w`
-
----
+Erreurs P3 restantes (32 erreurs, 17 familles):
+- Résolutions noms/exports (TS2304, TS2724, TS2305)
+- Conflits exports (TS2484, TS2783)
+- Types callables (TS2349, TS2722)
+- Récursion types (TS2589)
+- Autres warnings mineurs (14 codes TS différents)
 
-## 📝 Workflow
-
-1. **Sélectionner famille prioritaire** (ordre P0 → P1 → P2 → P3)
-2. **Analyser pattern** : Lire exemples, comprendre cause racine
-3. **Corriger TOUTE la famille** : Une session complète
-4. **Tests AVANT commit** :
-   - `npm run type-check` : Erreurs réduites
-   - `npm run build` : Success
-   - `/error-check` : 0 console errors
-5. **Commit structuré** :
-   ```
-   fix(types): [CODE-PATTERN] Description - X erreurs (avant→après)
-   ```
-6. **Update ce fichier** : Marquer famille DONE
-7. **Répéter** jusqu'à 0 erreurs
+**Stratégie**: Review manuelle optionnelle, non-bloquant  
+**Estimation**: 3-4 heures total  
+**Commits prévus**: Grouper par catégorie (3-4 commits)
 
 ---
 
-## 🎯 Prochaine Action
+## 📅 Workflow d'Exécution Recommandé
 
-Famille recommandée : **TS7006-parameter-x-implicitly-has-an-**
-- 16 erreurs
-- Priorité P0
-- Estimation 1h
+### Phase 1: P1 Critical (296 erreurs → ~8 heures)
 
 ```bash
-/typescript-fix TS7006-parameter-x-implicitly-has-an-
+# FAMILLE 1: TS2345 (141 erreurs)
+1. Corriger batch 1: hooks (30-40 erreurs)
+2. Tests: npm run type-check + MCP Browser
+3. Commit: fix(types): FAMILLE-1 TS2345 Batch 1 - Hooks
+4. Corriger batch 2: pages (30-40 erreurs)
+5. Tests + Commit
+6. Corriger batch 3: composants (30-40 erreurs)
+7. Tests + Commit
+8. Corriger batch 4: reste (30-40 erreurs)
+9. Tests + Commit final
+
+# FAMILLE 2-6: TS2322, TS2339, TS2352, TS18048, TS18047
+10. Répéter workflow ci-dessus pour chaque famille
+11. 1 famille = 1-4 commits selon taille
+```
+
+### Phase 2: P2 High (124 erreurs → ~6 heures)
+
+```bash
+# Correction famille par famille
+FAMILLE 7: TS2769 (63 erreurs) → 2-3 heures
+FAMILLE 8: TS2307 (20 erreurs) → 1 heure
+FAMILLE 9: TS2353 (14 erreurs) → 45 min
+FAMILLES 10-15: Reste P2 (37 erreurs) → 2-3 heures
+```
+
+### Phase 3: P3 Low (39 erreurs → ~4 heures)
+
+```bash
+# Correction optionnelle par catégorie
+FAMILLE 16: TS7053 (7 erreurs) → 30 min
+FAMILLES 17-33: Warnings (32 erreurs) → 3-4 heures
 ```
 
 ---
 
-**Généré automatiquement** : 2025-10-27T06:10:07.453Z
+## 🎯 Commits Prévus Structure
+
+### Format Standard
+
+```
+fix(types): FAMILLE-X [CODE-TS] - Description pattern - N erreurs résolues
+
+Famille: [CODE-TS] - [Catégorie]
+Fichiers: X modifiés
+Stratégie: [Stratégie de correction]
+Tests: ✅ type-check + MCP Browser 0 errors
+Build: ✅ Success
+
+Avant: XXX erreurs
+Après: YYY erreurs
+Delta: -ZZ erreurs
+```
+
+### Exemples Commits Prévus
+
+```bash
+# Phase 1 - P1 Critical
+fix(types): FAMILLE-1 TS2345 Batch 1 - Argument mismatches hooks - 35 erreurs
+fix(types): FAMILLE-1 TS2345 Batch 2 - Argument mismatches pages - 38 erreurs
+fix(types): FAMILLE-1 TS2345 Batch 3 - Argument mismatches components - 40 erreurs
+fix(types): FAMILLE-1 TS2345 Batch 4 - Argument mismatches final - 28 erreurs
+fix(types): FAMILLE-2 TS2322 - Type assignment mismatches - 93 erreurs
+fix(types): FAMILLE-3 TS2339 - Missing properties - 31 erreurs
+fix(types): FAMILLE-4 TS2352 - Unsafe conversions - 15 erreurs
+fix(types): FAMILLE-5 TS18048 - Undefined guards - 12 erreurs
+fix(types): FAMILLE-6 TS18047 - Null guards - 4 erreurs
+
+# Phase 2 - P2 High
+fix(types): FAMILLE-7 TS2769 - Function overloads - 63 erreurs
+fix(types): FAMILLE-8 TS2307 - Missing modules - 20 erreurs
+fix(types): FAMILLE-9 TS2353 - Unknown properties - 14 erreurs
+fix(types): FAMILLE-10-15 P2 - Comparisons & args - 37 erreurs
+
+# Phase 3 - P3 Low
+fix(types): FAMILLE-16 TS7053 - Index signatures - 7 erreurs
+fix(types): FAMILLE-17-33 P3 - Warnings & exports - 32 erreurs
+```
+
+---
+
+## 📊 Métriques de Progression
+
+### Objectif Final
+
+```
+État Initial:  459 erreurs TypeScript
+État Cible:    0 erreurs TypeScript
+Commits prévus: ~15-20 commits
+Durée estimée: 18-20 heures (3-4 jours @ 5h/jour)
+```
+
+### Checkpoints Intermédiaires
+
+- ✅ **Checkpoint 1**: P1 terminé → 163 erreurs restantes (-296)
+- ✅ **Checkpoint 2**: P2 terminé → 39 erreurs restantes (-124)
+- ✅ **Checkpoint 3**: P3 terminé → 0 erreurs restantes (-39)
+
+### SLA Tests par Commit
+
+```typescript
+// Tests OBLIGATOIRES avant chaque commit
+1. npm run type-check → Vérifier delta erreurs
+2. npm run build → Doit réussir
+3. MCP Browser localhost:3000/dashboard → 0 console errors
+4. MCP Browser localhost:3000/contacts-organisations → Pas de régression
+5. MCP Browser localhost:3000/produits/sourcing → Pas de régression
+```
+
+---
+
+## 🚨 Notes Console Errors /contacts-organisations
+
+**Statut**: ❌ **PRÉ-EXISTANTES** (Non causées par corrections pricing)
+
+**Analyse**:
+- Hook `useStockOrdersMetrics` NON utilisé dans module contacts-organisations
+- Corrections `use-pricing.ts` et `use-price-lists.ts` sans impact sur ce module
+- Les 5 erreurs console sont antérieures (baseline avant corrections)
+
+**Action recommandée**:
+- Traiter séparément après correction erreurs TypeScript
+- Créer ticket dédié: "Fix console errors useStockOrdersMetrics"
+- Investiguer route API `/api/dashboard/stock-orders-metrics`
+
+---
+
+## 📚 Fichiers de Référence
+
+- `ts-errors-current.log`: Export brut erreurs TypeScript (459 erreurs)
+- `error-clusters.json`: Clustering automatique par famille
+- `execution-plan.json`: Plan d'exécution détaillé JSON
+- `TS_ERRORS_PLAN.md`: Ce document (plan consolidé)
+
+---
+
+## ✅ Prochaines Étapes
+
+1. **Valider ce plan** avec l'utilisateur
+2. **Demander autorisation** avant commencer corrections
+3. **Workflow strict**: 
+   - Corriger FAMILLE 1 (TS2345) batch par batch
+   - Tests MCP Browser après chaque batch
+   - Commit si tests OK, sinon rollback
+   - Passer famille suivante seulement si famille actuelle = 0 erreurs
+4. **Suivi progression** dans ce document (update checkpoints)
+
+---
+
+**Version**: 1.0.0  
+**Auteur**: Claude Code Assistant  
+**Date**: 2025-10-28  
+**Dernière mise à jour**: 2025-10-28 14:30 UTC
