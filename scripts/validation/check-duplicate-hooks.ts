@@ -347,8 +347,8 @@ function main() {
   }
 }
 
-// Run
-if (require.main === module) {
+// Run if this file is executed directly (ES module compatible)
+if (import.meta.url === `file://${process.argv[1]}`) {
   main();
 }
 

@@ -3668,6 +3668,7 @@ export type Database = {
           purchase_order_id: string
           quantity: number
           quantity_received: number
+          sample_type: string | null
           total_ht: number | null
           unit_price_ht: number
           updated_at: string
@@ -3682,6 +3683,7 @@ export type Database = {
           purchase_order_id: string
           quantity: number
           quantity_received?: number
+          sample_type?: string | null
           total_ht?: number | null
           unit_price_ht: number
           updated_at?: string
@@ -3696,6 +3698,7 @@ export type Database = {
           purchase_order_id?: string
           quantity?: number
           quantity_received?: number
+          sample_type?: string | null
           total_ht?: number | null
           unit_price_ht?: number
           updated_at?: string

@@ -23,7 +23,10 @@ export function useSampleOrder() {
    * 4. Si trouvée, ajouter le produit à cette commande
    * 5. Sinon, créer une nouvelle commande draft
    */
-  async function requestSample(productId: string): Promise<SampleOrderResult> {
+  async function requestSample(
+    productId: string,
+    sampleType?: 'internal' | 'customer'
+  ): Promise<SampleOrderResult> {
     setIsLoading(true)
 
     try {
@@ -52,7 +55,7 @@ export function useSampleOrder() {
         .from('purchase_order_items')
         .select('id')
         .eq('product_id', productId)
-        .or('notes.not.eq.Échantillon pour validation,notes.is.null')
+        .is('sample_type', null)
         .limit(1)
 
       if (itemsError) {
@@ -101,6 +104,7 @@ export function useSampleOrder() {
             quantity: 1,
             unit_price_ht: product.cost_price,
             discount_percentage: 0,
+            sample_type: sampleType || 'internal',
             notes: `Échantillon pour validation qualité - ${product.name}`
           }])
 
@@ -162,6 +166,7 @@ export function useSampleOrder() {
             quantity: 1,
             unit_price_ht: product.cost_price,
             discount_percentage: 0,
+            sample_type: sampleType || 'internal',
             notes: `Échantillon pour validation qualité - ${product.name}`
           }])
 
