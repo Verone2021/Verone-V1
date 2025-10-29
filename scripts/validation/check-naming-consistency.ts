@@ -27,6 +27,7 @@
 import fs from 'fs';
 import path from 'path';
 import { execSync } from 'child_process';
+import { fileURLToPath } from 'node:url';
 
 // ============================================================================
 // CONFIGURATION
@@ -49,7 +50,8 @@ const NAMING_RULES = {
     directory: 'src/components/',
   },
   pages: {
-    pattern: /^(page|layout|loading|error|not-found)\.tsx$|^\[[\w-]+\]$|^[a-z][a-z0-9]*(-[a-z0-9]+)*$/,
+    pattern:
+      /^(page|layout|loading|error|not-found)\.tsx$|^\[[\w-]+\]$|^[a-z][a-z0-9]*(-[a-z0-9]+)*$/,
     message: 'Pages Next.js: page.tsx, layout.tsx, [id], ou kebab-case',
     examples: ['page.tsx', '[productId]', 'google-merchant'],
     directory: 'src/app/',
@@ -75,7 +77,8 @@ const CODE_PATTERNS = {
   },
   constNaming: {
     pattern: /const\s+([a-z]+_[a-z_]+)\s*=/g,
-    message: 'Variables const doivent être camelCase ou UPPER_CASE, pas snake_case',
+    message:
+      'Variables const doivent être camelCase ou UPPER_CASE, pas snake_case',
     examples: ['const productPrice =', 'const MAX_RETRIES ='],
   },
 };
@@ -105,9 +108,12 @@ interface NamingIssue {
 function getFilesToCheck(stagedOnly: boolean = false): string[] {
   if (stagedOnly) {
     try {
-      const output = execSync('git diff --cached --name-only --diff-filter=ACMR', {
-        encoding: 'utf-8',
-      });
+      const output = execSync(
+        'git diff --cached --name-only --diff-filter=ACMR',
+        {
+          encoding: 'utf-8',
+        }
+      );
       return output
         .split('\n')
         .filter(file => file.startsWith('src/'))
@@ -133,7 +139,11 @@ function getAllFiles(dir: string): string[] {
     for (const entry of entries) {
       const fullPath = path.join(directory, entry.name);
 
-      if (entry.isDirectory() && !entry.name.startsWith('.') && entry.name !== 'node_modules') {
+      if (
+        entry.isDirectory() &&
+        !entry.name.startsWith('.') &&
+        entry.name !== 'node_modules'
+      ) {
         scan(fullPath);
       } else if (entry.isFile()) {
         files.push(fullPath);
@@ -159,7 +169,11 @@ function checkFilenameConventions(filePath: string): NamingIssue[] {
     if (!rule.pattern.test(fileName)) {
       // Vérifier si c'est une exception légitime
       const exceptions = ['use-toast.ts', 'use-base-hook.ts'];
-      if (!exceptions.includes(fileName) && fileName.startsWith('use-') && fileName.endsWith('.ts')) {
+      if (
+        !exceptions.includes(fileName) &&
+        fileName.startsWith('use-') &&
+        fileName.endsWith('.ts')
+      ) {
         issues.push({
           file: relativePath,
           type: 'filename',
@@ -200,8 +214,15 @@ function checkFilenameConventions(filePath: string): NamingIssue[] {
     if (!rule.pattern.test(fileName) && !rule.pattern.test(dirName)) {
       // Exceptions Next.js
       const exceptions = [
-        'page.tsx', 'layout.tsx', 'loading.tsx', 'error.tsx', 'not-found.tsx',
-        'template.tsx', 'default.tsx', 'route.ts', 'middleware.ts'
+        'page.tsx',
+        'layout.tsx',
+        'loading.tsx',
+        'error.tsx',
+        'not-found.tsx',
+        'template.tsx',
+        'default.tsx',
+        'route.ts',
+        'middleware.ts',
       ];
       if (!exceptions.includes(fileName)) {
         // Vérifier si c'est un dossier dynamic route [param]
@@ -329,7 +350,13 @@ function toCamelCase(str: string): string {
   if (str.includes('_')) {
     // snake_case → camelCase
     const parts = str.split('_');
-    return parts[0] + parts.slice(1).map(word => word.charAt(0).toUpperCase() + word.slice(1)).join('');
+    return (
+      parts[0] +
+      parts
+        .slice(1)
+        .map(word => word.charAt(0).toUpperCase() + word.slice(1))
+        .join('')
+    );
   } else {
     // PascalCase → camelCase
     return str.charAt(0).toLowerCase() + str.slice(1);
@@ -401,7 +428,8 @@ function formatReport(issues: NamingIssue[]): string {
   report += '   - Components: {name}.tsx (product-card.tsx)\n';
   report += '   - Types/Interfaces: PascalCase (Product, OrderItem)\n';
   report += '   - Functions: camelCase (calculatePrice, getUserRole)\n';
-  report += '   - Variables: camelCase ou UPPER_CASE (orderTotal, MAX_RETRIES)\n';
+  report +=
+    '   - Variables: camelCase ou UPPER_CASE (orderTotal, MAX_RETRIES)\n';
   report += '   - Database Tables: snake_case (products, sales_orders)\n';
   report += '═'.repeat(80) + '\n';
 
@@ -449,8 +477,8 @@ function main() {
   }
 }
 
-// Run
-if (require.main === module) {
+// Run (ES module pattern)
+if (process.argv[1] === fileURLToPath(import.meta.url)) {
   main();
 }
 

@@ -23,6 +23,7 @@
 import fs from 'fs';
 import path from 'path';
 import { execSync } from 'child_process';
+import { fileURLToPath } from 'node:url';
 
 // ============================================================================
 // CONFIGURATION
@@ -30,15 +31,35 @@ import { execSync } from 'child_process';
 
 const SRC_DIR = path.join(process.cwd(), 'src');
 const SUPABASE_TYPES_FILE = path.join(SRC_DIR, 'types', 'supabase.ts');
-const SCHEMA_REFERENCE = path.join(process.cwd(), 'docs', 'database', 'SCHEMA-REFERENCE.md');
+const SCHEMA_REFERENCE = path.join(
+  process.cwd(),
+  'docs',
+  'database',
+  'SCHEMA-REFERENCE.md'
+);
 
 // Tables principales Vérone (78 tables)
 const KNOWN_TABLES = [
-  'products', 'organisations', 'contacts', 'users', 'user_profiles',
-  'categories', 'subcategories', 'collections', 'product_images',
-  'price_lists', 'price_list_items', 'sales_orders', 'sales_order_items',
-  'purchase_orders', 'purchase_order_items', 'stock_movements',
-  'invoices', 'invoice_items', 'payments', 'consultations',
+  'products',
+  'organisations',
+  'contacts',
+  'users',
+  'user_profiles',
+  'categories',
+  'subcategories',
+  'collections',
+  'product_images',
+  'price_lists',
+  'price_list_items',
+  'sales_orders',
+  'sales_order_items',
+  'purchase_orders',
+  'purchase_order_items',
+  'stock_movements',
+  'invoices',
+  'invoice_items',
+  'payments',
+  'consultations',
   // Ajoutez d'autres tables au besoin
 ];
 
@@ -46,17 +67,20 @@ const KNOWN_TABLES = [
 const ANTI_PATTERNS = [
   {
     pattern: /type\s+(\w+)\s*=\s*\{[^}]*id:\s*string/g,
-    message: 'Type manuel détecté. Utiliser Database["public"]["Tables"]["..."]["Row"]',
+    message:
+      'Type manuel détecté. Utiliser Database["public"]["Tables"]["..."]["Row"]',
     severity: 'error',
   },
   {
     pattern: /interface\s+(\w+)\s*\{[^}]*id:\s*string/g,
-    message: 'Interface manuelle détectée. Utiliser Database["public"]["Tables"]["..."]["Row"]',
+    message:
+      'Interface manuelle détectée. Utiliser Database["public"]["Tables"]["..."]["Row"]',
     severity: 'error',
   },
   {
     pattern: /\.from\(['"](\w+)['"]\)(?!.*<)/g,
-    message: 'Query Supabase sans type. Ajouter: .from<Database["public"]["Tables"]["..."]["Row"]>(...)',
+    message:
+      'Query Supabase sans type. Ajouter: .from<Database["public"]["Tables"]["..."]["Row"]>(...)',
     severity: 'warning',
   },
 ];
@@ -84,9 +108,12 @@ interface Issue {
 function getFilesToCheck(stagedOnly: boolean = false): string[] {
   if (stagedOnly) {
     try {
-      const output = execSync('git diff --cached --name-only --diff-filter=ACMR', {
-        encoding: 'utf-8',
-      });
+      const output = execSync(
+        'git diff --cached --name-only --diff-filter=ACMR',
+        {
+          encoding: 'utf-8',
+        }
+      );
       return output
         .split('\n')
         .filter(file => file.match(/\.(ts|tsx)$/))
@@ -113,7 +140,11 @@ function getAllTypeScriptFiles(dir: string): string[] {
     for (const entry of entries) {
       const fullPath = path.join(directory, entry.name);
 
-      if (entry.isDirectory() && !entry.name.startsWith('.') && entry.name !== 'node_modules') {
+      if (
+        entry.isDirectory() &&
+        !entry.name.startsWith('.') &&
+        entry.name !== 'node_modules'
+      ) {
         scan(fullPath);
       } else if (entry.isFile() && entry.name.match(/\.(ts|tsx)$/)) {
         files.push(fullPath);
@@ -158,8 +189,12 @@ function analyzeFile(filePath: string): Issue[] {
  */
 function checkSupabaseTypesExist(): boolean {
   if (!fs.existsSync(SUPABASE_TYPES_FILE)) {
-    console.error(`❌ ERREUR: Fichier types Supabase non trouvé: ${SUPABASE_TYPES_FILE}`);
-    console.error('   Générer avec: supabase gen types typescript --local > src/types/supabase.ts');
+    console.error(
+      `❌ ERREUR: Fichier types Supabase non trouvé: ${SUPABASE_TYPES_FILE}`
+    );
+    console.error(
+      '   Générer avec: supabase gen types typescript --local > src/types/supabase.ts'
+    );
     return false;
   }
   return true;
@@ -216,10 +251,14 @@ function formatReport(issues: Issue[]): string {
 
   report += '═'.repeat(80) + '\n';
   report += '💡 RECOMMANDATIONS:\n';
-  report += '   1. Toujours importer: import { Database } from "@/types/supabase"\n';
-  report += '   2. Typer avec: Database["public"]["Tables"]["products"]["Row"]\n';
-  report += '   3. Queries typées: .from<Database["public"]["Tables"]["..."]["Row"]>("table")\n';
-  report += '   4. Pas de types manuels dupliqués (source vérité = supabase.ts)\n';
+  report +=
+    '   1. Toujours importer: import { Database } from "@/types/supabase"\n';
+  report +=
+    '   2. Typer avec: Database["public"]["Tables"]["products"]["Row"]\n';
+  report +=
+    '   3. Queries typées: .from<Database["public"]["Tables"]["..."]["Row"]>("table")\n';
+  report +=
+    '   4. Pas de types manuels dupliqués (source vérité = supabase.ts)\n';
   report += '═'.repeat(80) + '\n';
 
   return report;
@@ -275,8 +314,8 @@ function main() {
   }
 }
 
-// Run
-if (require.main === module) {
+// Run (ES module pattern)
+if (process.argv[1] === fileURLToPath(import.meta.url)) {
   main();
 }
 
