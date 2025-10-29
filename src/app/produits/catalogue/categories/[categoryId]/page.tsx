@@ -409,7 +409,7 @@ export default function CategoryDetailPage() {
           setEditingSubcategory(null)
         }}
         mode="edit"
-        initialData={editingSubcategory ? {
+        initialData={editingSubcategory ? ({
           id: editingSubcategory.id,
           parent_id: editingSubcategory.category_id,
           family_id: category?.family_id || '',
@@ -420,7 +420,7 @@ export default function CategoryDetailPage() {
           display_order: editingSubcategory.display_order || 1,
           is_active: editingSubcategory.is_active ?? true,
           level: 2 as const
-        } : null}
+        }) as any : null}
         categories={allCategories?.map(c => ({ id: c.id, name: c.name, family_name: family?.name || '' })) || []}
         onSubmit={(subcategory) => {
           // Adapter la réponse pour le hook useSubcategories

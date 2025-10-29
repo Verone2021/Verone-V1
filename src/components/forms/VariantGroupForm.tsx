@@ -253,7 +253,7 @@ export function VariantGroupForm({
         }
       } else {
         // Mode création
-        success = await createVariantGroup(groupData as any)
+        success = !!(await createVariantGroup(groupData as any))
         if (success) {
           toast({
             title: "Succès",

@@ -129,9 +129,9 @@ export function SampleOrderValidation({ className }: SampleOrderValidationProps)
   }
 
   const validateSamples = async (draftIds: string[], result: 'approved' | 'rejected', notes?: string) => {
-    const { error } = await supabase
+    const { error } = await (supabase as any)
       .from('product_drafts')
-      .update({ status: result, validation_notes: notes })
+      .update({ status: result, validation_notes: notes } as any)
       .in('id', draftIds)
     if (error) throw error
   }

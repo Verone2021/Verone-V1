@@ -46,7 +46,7 @@ export function ProductDescriptionsEditSection({
     }
   })
 
-  const section: EditableSection = 'descriptions'
+  const section = 'descriptions' as EditableSection
   const editData = getEditedData(section)
   const error = getError(section)
 

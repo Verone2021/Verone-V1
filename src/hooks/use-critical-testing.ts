@@ -196,7 +196,7 @@ export function useCriticalTesting(options: UseCriticalTestingOptions = {}) {
 
     try {
       // PRODUCTION: Utiliser Playwright MCP pour vrai checking
-      const consoleMessages = await window.mcp?.playwright?.browser_console_messages?.() || []
+      const consoleMessages = await (window as any).mcp?.playwright?.browser_console_messages?.() || []
 
       // Filtrer uniquement les erreurs (pas warnings/logs)
       const consoleErrors = consoleMessages.filter((msg: any) =>

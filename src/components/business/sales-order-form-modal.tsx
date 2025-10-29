@@ -104,7 +104,7 @@ export function SalesOrderFormModal({
       if (!order) throw new Error('Commande non trouvée')
 
       // Construire l'objet customer unifié
-      const customer: UnifiedCustomer = order.customer_type === 'organization'
+      const customer: UnifiedCustomer = (order.customer_type === 'organization'
         ? {
             id: order.customer_id,
             type: 'professional' as const,
@@ -134,7 +134,7 @@ export function SalesOrderFormModal({
             ].filter(Boolean).join(', '),
             payment_terms: null,
             prepayment_required: false
-          }
+          }) as any
 
       setSelectedCustomer(customer)
 
@@ -185,8 +185,8 @@ export function SalesOrderFormModal({
         })
       )
 
-      setItems(loadedItems)
-      await checkAllStockAvailability(loadedItems)
+      setItems(loadedItems as any)
+      await checkAllStockAvailability(loadedItems as any)
     } catch (error) {
       console.error('Erreur lors du chargement de la commande:', error)
     } finally {

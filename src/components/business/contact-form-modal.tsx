@@ -69,7 +69,7 @@ export function ContactFormModal({
   const isEditing = !!contact
 
   const form = useForm<ContactFormData>({
-    resolver: zodResolver(contactSchema),
+    resolver: zodResolver(contactSchema) as any,
     defaultValues: {
       first_name: contact?.first_name || '',
       last_name: contact?.last_name || '',

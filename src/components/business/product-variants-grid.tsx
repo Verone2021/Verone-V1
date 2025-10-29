@@ -142,7 +142,7 @@ export function ProductVariantsGrid({
               name: variant.name,
               sku: variant.sku,
               selling_price: null, // Pas dans le hook actuel
-              price_ht: variant.cost_price, // Utiliser cost_price comme fallback
+              price_ht: (typeof variant.cost_price === 'number' ? variant.cost_price : null) as any, // Utiliser cost_price comme fallback
               status: variant.status,
               primary_image_url: variant.image_url || null,
               variant_attributes: null, // Pas dans le hook actuel

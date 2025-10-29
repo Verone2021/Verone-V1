@@ -387,7 +387,7 @@ export default function SourcingProductDetailPage() {
         <EditSourcingProductModal
           isOpen={isEditModalOpen}
           onClose={() => setIsEditModalOpen(false)}
-          product={product}
+          product={product as any}
           onUpdate={updateSourcingProduct}
         />
       )}

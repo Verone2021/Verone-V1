@@ -30,7 +30,7 @@ export function OrganisationProductsSection({
   onUpdate,
   className
 }: OrganisationProductsSectionProps) {
-  const { products, loading, fetchProducts } = useProducts()
+  const { products, loading, refetch: fetchProducts } = useProducts()
   const [organisationProducts, setOrganisationProducts] = useState<any[]>([])
 
   // Charger les produits

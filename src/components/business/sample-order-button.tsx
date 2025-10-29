@@ -56,7 +56,7 @@ export function SampleOrderButton({
     <>
       <ButtonV2
         variant={variant}
-        size={size}
+        size={size as any}
         onClick={() => setShowConfirmDialog(true)}
         disabled={isLoading}
         className={cn(

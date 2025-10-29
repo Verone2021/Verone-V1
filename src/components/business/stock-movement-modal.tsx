@@ -171,7 +171,7 @@ export function StockMovementModal({ product: initialProduct, isOpen, onClose, o
     try {
       await createManualMovement({
         product_id: selectedProduct.id,
-        movement_type: dbMovementType,
+        movement_type: dbMovementType as any,
         quantity: parseInt(quantity),
         reason_code: reasonCode,
         notes: notes.trim() || undefined,

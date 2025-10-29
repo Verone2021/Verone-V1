@@ -154,7 +154,7 @@ export async function withApiSecurity(
 
   // Check rate limit
   if (rateLimit) {
-    const identifier = request.ip || request.headers.get('x-forwarded-for') || 'unknown'
+    const identifier = (request as any).ip || request.headers.get('x-forwarded-for') || 'unknown'
 
     if (!checkRateLimit(identifier)) {
       return new NextResponse(

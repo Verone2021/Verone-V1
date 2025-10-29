@@ -109,7 +109,7 @@ export function FinancialPaymentForm({
     try {
       setIsSubmitting(true)
 
-      await recordPayment({
+      await recordPayment?.({
         document_id: documentId,
         amount_paid: values.amount_paid,
         payment_date: format(values.payment_date, 'yyyy-MM-dd'),

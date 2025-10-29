@@ -182,7 +182,7 @@ export function CommandPaletteSearch({
     <CommandDialog
       open={open}
       onOpenChange={onOpenChange}
-      className={cn('top-[10%]', className)}
+      {...({ className: cn('top-[10%]', className) } as any)}
     >
       {/* Accessibilité : Titre et description cachés visuellement */}
       <VisuallyHidden>

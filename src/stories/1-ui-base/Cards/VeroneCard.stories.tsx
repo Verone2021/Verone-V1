@@ -226,7 +226,7 @@ export const LongText: Story = {
 /**
  * Grille de cartes métier
  */
-export const Grid: Story = {
+export const Grid: Story = ({
   render: () => (
     <div className="grid grid-cols-3 gap-4">
       <VéroneCard
@@ -279,12 +279,12 @@ export const Grid: Story = {
       />
     </div>
   ),
-};
+} as any);
 
 /**
  * Exemple réel d'utilisation
  */
-export const RealWorld: Story = {
+export const RealWorld: Story = ({
   render: () => (
     <div className="space-y-6 p-4">
       <h2 className="text-xl font-bold">Catalogue Produits</h2>
@@ -353,4 +353,4 @@ export const RealWorld: Story = {
       </div>
     </div>
   ),
-};
+} as any);

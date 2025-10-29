@@ -211,7 +211,7 @@ export function useMovementsHistory() {
         }
       })
 
-      setMovements(enrichedMovements)
+      setMovements(enrichedMovements as any)
       setTotal(count || 0)
 
     } catch (error) {

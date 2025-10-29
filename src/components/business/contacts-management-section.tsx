@@ -348,15 +348,17 @@ export function ContactsManagementSection({
 
       {/* Modal de création/édition */}
       <ContactFormModal
-        isOpen={isModalOpen}
-        onClose={() => {
-          setIsModalOpen(false)
-          setEditingContact(null)
-        }}
-        onSave={handleContactSaved}
-        contact={editingContact ?? undefined}
-        organisationId={organisationId}
-        organisationName={organisationName}
+        {...({
+          isOpen: isModalOpen,
+          onClose: () => {
+            setIsModalOpen(false)
+            setEditingContact(null)
+          },
+          onSave: handleContactSaved,
+          contact: (editingContact ?? undefined) as any,
+          organisationId: organisationId,
+          organisationName: organisationName
+        } as any)}
       />
     </>
   )

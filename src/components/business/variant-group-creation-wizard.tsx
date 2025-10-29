@@ -115,7 +115,7 @@ export function VariantGroupCreationWizard({
   // Fournisseurs actifs uniquement
   const suppliers = React.useMemo(() => {
     return (organisations || []).filter(
-      org => org.organisation_type === 'supplier' && !org.archived_at
+      org => (org as any).organisation_type === 'supplier' && !org.archived_at
     )
   }, [organisations])
 

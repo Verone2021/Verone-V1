@@ -334,7 +334,7 @@ export function useQuickActionModal() {
   const Modal = ({ children, ...props }: Partial<QuickActionModalProps> & { children?: React.ReactNode }) => (
     <QuickActionModal
       {...config}
-      {...props}
+      {...(props as any)}
       isOpen={isOpen}
       onClose={closeModal}
     >

@@ -176,7 +176,7 @@ export function useSupabaseMutation<T = any>(
       console.error('Erreur mutation:', error)
       setState({
         loading: false,
-        error: error instanceof Error ? error.message : 'Erreur inconnue'
+        error: (error instanceof Error ? error.message : 'Erreur inconnue') as any
       })
       return null
     }

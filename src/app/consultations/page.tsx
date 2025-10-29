@@ -166,7 +166,7 @@ function ConsultationPhotoModal({ consultationId, consultationTitle, isOpen, onC
     <ConsultationImageViewerModal
       isOpen={isOpen}
       onClose={onClose}
-      images={images}
+      images={images as any}
       initialImageIndex={selectedImageIndex}
       consultationTitle={consultationTitle}
       allowEdit={false}

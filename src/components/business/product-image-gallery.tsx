@@ -216,11 +216,13 @@ export function ProductImageGallery({
       {/* Product Image Viewer Modal */}
       {showImageViewer && displayImage && (
         <ProductImageViewerModal
-          isOpen={showImageViewer}
-          onClose={() => setShowImageViewer(false)}
-          images={images}
-          initialIndex={selectedImageIndex}
-          productName={productName}
+          {...({
+            isOpen: showImageViewer,
+            onClose: () => setShowImageViewer(false),
+            images: images as any,
+            initialIndex: selectedImageIndex,
+            productName: productName
+          } as any)}
         />
       )}
     </div>

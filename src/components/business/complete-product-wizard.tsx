@@ -199,6 +199,8 @@ export function CompleteProductWizard({
           condition: draft.condition || 'new',
           availability_type: draft.availability_type || 'normal',
           video_url: draft.video_url || '',
+          family_id: '',
+          category_id: '',
           subcategory_id: draft.subcategory_id || '',
           supplier_id: draft.supplier_id || '',
           supplier_page_url: draft.supplier_page_url || '',

@@ -245,7 +245,7 @@ export function SourcingQuickForm({
                   </p>
                   <ButtonV2
                     type="button"
-                    variant="link"
+                    variant="ghost"
                     onClick={() => fileInputRef.current?.click()}
                     className="text-black hover:underline p-0 h-auto font-normal"
                   >

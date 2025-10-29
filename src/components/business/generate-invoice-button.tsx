@@ -130,7 +130,7 @@ export function GenerateInvoiceButton({
       onClick={handleGenerateInvoice}
       disabled={disabled || isLoading}
       variant={variant}
-      size={size}
+      size={size as any}
     >
       {isLoading ? (
         <>

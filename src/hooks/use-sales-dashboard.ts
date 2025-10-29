@@ -138,7 +138,7 @@ export function useSalesDashboard() {
           chiffreAffaireMois,
           tauxConversion
         },
-        recentConsultations: (consultations || []).slice(0, 3), // Top 3
+        recentConsultations: ((consultations || []) as any).slice(0, 3), // Top 3
         recentOrders: enrichedOrders.slice(0, 3) // Top 3
       })
 

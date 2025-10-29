@@ -168,7 +168,7 @@ export function useConsultationImages({
       updateDerivedState(updatedImages as any)
 
       console.log('✅ Image consultation uploadée:', fileName)
-      return imageWithUrl
+      return imageWithUrl as any
 
     } catch (err) {
       console.error('❌ Erreur upload image consultation:', err)

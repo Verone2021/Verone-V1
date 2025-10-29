@@ -303,8 +303,8 @@ export class ImageOptimizer {
         const resizedDimensions = this.calculateResizedDimensions(
           originalDimensions.width,
           originalDimensions.height,
-          targetDimensions.width,
-          targetDimensions.height
+          (targetDimensions as any).width,
+          (targetDimensions as any).height
         )
 
         // Générer variantes pour chaque format

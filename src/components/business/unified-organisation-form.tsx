@@ -265,7 +265,7 @@ const getDefaultValues = (organisation?: Organisation | null): OrganisationFormD
     industry_sector: organisation.industry_sector || '',
     currency: organisation.currency || 'EUR',
     payment_terms: organisation.payment_terms || '',
-    prepayment_required: organisation.prepayment_required || false,
+    prepayment_required: (organisation as any).prepayment_required || false,
     supplier_segment: organisation.supplier_segment || '',
   }
 }
@@ -314,7 +314,7 @@ export function UnifiedOrganisationForm({
   const isCustomer = organisationType === 'customer'
 
   const form = useForm<OrganisationFormData>({
-    resolver: zodResolver(baseOrganisationSchema),
+    resolver: zodResolver(baseOrganisationSchema) as any,
     defaultValues: getDefaultValues(organisation),
   })
 

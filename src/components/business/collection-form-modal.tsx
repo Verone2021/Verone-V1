@@ -78,7 +78,7 @@ export function CollectionFormModal({
     if (collection && mode === 'edit') {
       setName(collection.name)
       setDescription(collection.description || '')
-      setStyle(collection.style)
+      setStyle(collection.style as any)
       setSuitableRooms((collection.suitable_rooms || []) as RoomType[])
       setTags(collection.theme_tags || [])
       setVisibility(collection.visibility)

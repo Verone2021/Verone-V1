@@ -166,7 +166,7 @@ export const useCatalogue = () => {
       .order('display_order', { ascending: true });
 
     if (error) throw error;
-    return data || [];
+    return (data || []) as any;
   };
 
   const loadProducts = async (filters: CatalogueFilters = {}) => {

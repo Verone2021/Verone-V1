@@ -267,7 +267,7 @@ export function useProducts(filters?: ProductFilters, page: number = 0) {
   // 🚀 Utiliser SWR avec cache et revalidation automatique
   const { data, error, isLoading, mutate } = useSWR(
     swrKey,
-    ([_, filtersJson]) => productsFetcher('products' as any, JSON.parse(filtersJson), page as any),
+    ([_, filtersJson]) => productsFetcher('products' as string, JSON.parse(filtersJson as string), page as any),
     {
       revalidateOnFocus: false,
       revalidateOnReconnect: true,

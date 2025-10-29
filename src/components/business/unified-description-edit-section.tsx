@@ -50,7 +50,7 @@ export function UnifiedDescriptionEditSection({
     }
   })
 
-  const section: EditableSection = 'description'
+  const section = 'description' as EditableSection
   const editData = getEditedData(section)
   const error = getError(section)
 

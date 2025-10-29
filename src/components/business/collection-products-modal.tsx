@@ -426,7 +426,7 @@ function ProductImageViewerWrapper({
     <ProductImageViewerModal
       isOpen={isOpen}
       onClose={onClose}
-      images={images}
+      images={images as any}
       initialImageIndex={0}
       productName={productName}
     />

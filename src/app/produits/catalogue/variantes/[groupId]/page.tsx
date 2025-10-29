@@ -680,12 +680,12 @@ export default function VariantGroupDetailPage({ params }: VariantGroupDetailPag
                 product={product}
                 variantType={variantGroup.variant_type || ''}
                 hasCommonSupplier={variantGroup.has_common_supplier || false}
-                groupDimensions={variantGroup.dimensions_length ? {
+                groupDimensions={variantGroup.dimensions_length ? ({
                   length: variantGroup.dimensions_length,
-                  width: variantGroup.dimensions_width,
-                  height: variantGroup.dimensions_height,
-                  unit: variantGroup.dimensions_unit
-                } : null}
+                  width: variantGroup.dimensions_width ?? null,
+                  height: variantGroup.dimensions_height ?? null,
+                  unit: variantGroup.dimensions_unit ?? null
+                } as any) : null}
                 onRemove={handleRemoveProduct}
                 onEdit={handleEditProduct}
                 router={router}
