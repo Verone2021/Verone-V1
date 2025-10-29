@@ -11,6 +11,7 @@
 ## 📊 Vue d'Ensemble Exécutive
 
 ### Statistiques Générales
+
 - **Total erreurs** : 167
 - **Familles distinctes** : 12
 - **Fichiers impactés** : ~80 fichiers (hooks, composants, pages, lib)
@@ -19,15 +20,15 @@
 
 ### Répartition par Famille
 
-| Code   | Erreurs | % Total | Priorité | Impact Business          | Estimation |
-|--------|---------|---------|----------|-------------------------|------------|
-| TS2322 | 75      | 44.9%   | P1-P2    | Pricing + Catalogue     | 6-10h      |
-| TS2769 | 56      | 33.5%   | **P1**   | **Architecture CRUD**   | 6-8h       |
-| TS2339 | 16      | 9.6%    | P3       | Schema vs Types         | 4-6h       |
-| TS2345 | 6       | 3.6%    | **P1**   | **RPC Functions**       | 2-3h       |
-| TS2304 | 4       | 2.4%    | P2       | Workflow Sourcing       | 1-3h       |
-| Autres | 10      | 6.0%    | P3       | Divers                  | 2-3h       |
-| **TOTAL** | **167** | **100%** | - | - | **21-33h** |
+| Code      | Erreurs | % Total  | Priorité | Impact Business       | Estimation |
+| --------- | ------- | -------- | -------- | --------------------- | ---------- |
+| TS2322    | 75      | 44.9%    | P1-P2    | Pricing + Catalogue   | 6-10h      |
+| TS2769    | 56      | 33.5%    | **P1**   | **Architecture CRUD** | 6-8h       |
+| TS2339    | 16      | 9.6%     | P3       | Schema vs Types       | 4-6h       |
+| TS2345    | 6       | 3.6%     | **P1**   | **RPC Functions**     | 2-3h       |
+| TS2304    | 4       | 2.4%     | P2       | Workflow Sourcing     | 1-3h       |
+| Autres    | 10      | 6.0%     | P3       | Divers                | 2-3h       |
+| **TOTAL** | **167** | **100%** | -        | -                     | **21-33h** |
 
 ---
 
@@ -40,12 +41,14 @@
 ### 📍 Localisation & Impact
 
 #### Pattern A : customer_type string vs literal union (12+ erreurs)
+
 - **Module** : **Pricing Multi-canaux** (`/canaux-vente/prix-clients`)
 - **Feature** : Système tarification B2B/B2C/Distributor/Retailer
 - **Type de code** : Hook `use-pricing.ts` + Page pricing
 - **Règle métier** : Types clients distincts pour pricing différencié
 
 #### Pattern B : boolean | null → boolean (8 erreurs)
+
 - **Modules** : **Catalogue** (`/produits/catalogue/categories`, `/families`, `/subcategories`)
 - **Feature** : Formulaires CRUD catégories/familles
 - **Type de code** : Composants formulaires + Pages édition
@@ -60,37 +63,40 @@
 ```typescript
 // Interface LOCALE (ligne 26-41)
 interface CustomerPricing {
-  id: string
-  customer_id: string
-  customer_type: 'B2B' | 'B2C' | 'Distributor' | 'Retailer'  // ❌ Version 1
-  product_id: string
-  custom_price_ht: number
-  discount_rate: number
-  retrocession_rate: number // Nouveau champ ristourne
+  id: string;
+  customer_id: string;
+  customer_type: 'B2B' | 'B2C' | 'Distributor' | 'Retailer'; // ❌ Version 1
+  product_id: string;
+  custom_price_ht: number;
+  discount_rate: number;
+  retrocession_rate: number; // Nouveau champ ristourne
   // ...
 }
 
 // Query Supabase (ligne 84-105)
 const { data: pricingData } = await supabase
   .from('customer_pricing')
-  .select('*')
+  .select('*');
 
 const { data: orgsData } = await supabase
   .from('organisations')
-  .select('id, trade_name, legal_name')  // ❌ PAS de customer_type !
-  .in('id', customerIds)
+  .select('id, trade_name, legal_name') // ❌ PAS de customer_type !
+  .in('id', customerIds);
 
 // ❌ TS2322 - Type incompatibility (ligne 118)
 const transformedData: CustomerPricing[] = pricingData.map(item => {
   // Supabase retourne customer_type: string (générique)
   // Interface attend 'B2B' | 'B2C' | 'Distributor' | 'Retailer'
-  const org = orgsMap.get(item.customer_id)
+  const org = orgsMap.get(item.customer_id);
   return {
     ...item,
-    customer_name: org?.trade_name || org?.legal_name || `Client ${item.customer_id?.slice(0, 8)}`,
-    product_name: product?.name || `Produit ${item.product_id?.slice(0, 8)}`
-  }
-})
+    customer_name:
+      org?.trade_name ||
+      org?.legal_name ||
+      `Client ${item.customer_id?.slice(0, 8)}`,
+    product_name: product?.name || `Produit ${item.product_id?.slice(0, 8)}`,
+  };
+});
 ```
 
 **Fichier** : `src/hooks/use-pricing.ts` (ligne 360-374)
@@ -98,12 +104,12 @@ const transformedData: CustomerPricing[] = pricingData.map(item => {
 ```typescript
 // Interface HOOK (CONFLICTUELLE)
 export interface CustomerPricing {
-  id: string
-  customer_id: string
-  customer_type: 'organization' | 'individual'  // ❌ Version 2 (DIFFÉRENTE!)
-  product_id: string
-  custom_cost_price: number | null
-  discount_rate: number | null
+  id: string;
+  customer_id: string;
+  customer_type: 'organization' | 'individual'; // ❌ Version 2 (DIFFÉRENTE!)
+  product_id: string;
+  custom_cost_price: number | null;
+  discount_rate: number | null;
   // ...
 }
 ```
@@ -129,6 +135,7 @@ WHERE customer_type = 'individual'
 ```
 
 **Résultat recherche** :
+
 - ❌ Aucun `CREATE TYPE customer_type` trouvé dans migrations
 - ✅ Valeurs utilisées : `'organization'` | `'individual'` (selon migration 20250916_013)
 - ❌ Conflit avec interface page : `'B2B'` | `'B2C'` | `'Distributor'` | `'Retailer'`
@@ -140,11 +147,13 @@ WHERE customer_type = 'individual'
 > **Contexte** : Deux définitions incompatibles du même type `CustomerPricing`
 >
 > **Situation actuelle** :
+>
 > - **Migration 20250916_013** utilise : `'organization'` | `'individual'`
 > - **Page pricing** attend : `'B2B'` | `'B2C'` | `'Distributor'` | `'Retailer'`
 > - **Query** ne récupère MÊME PAS `customer_type` depuis organisations (ligne 104)
 >
 > **Requête SQL nécessaire** :
+>
 > ```sql
 > -- Exécuter en production
 > SELECT DISTINCT customer_type
@@ -157,11 +166,13 @@ WHERE customer_type = 'individual'
 > **Actions selon résultat** :
 >
 > **Si résultat = `'organization', 'individual'` (Option A)** :
+>
 > 1. Interface page pricing est INCORRECTE
 > 2. Remplacer par valeurs réelles
 > 3. OU créer migration pour changer valeurs base
 >
 > **Si résultat = `'B2B', 'B2C', 'Distributor', 'Retailer'` (Option B)** :
+>
 > 1. Migration 20250916_013 est OBSOLÈTE
 > 2. Supprimer interface dans `use-pricing.ts`
 > 3. Garder interface page comme référence
@@ -171,6 +182,7 @@ WHERE customer_type = 'individual'
 > **QUESTION 2 : Interface CustomerPricing - Centralisation**
 >
 > **Problème** : Deux définitions incompatibles existent simultanément
+>
 > - `src/app/canaux-vente/prix-clients/page.tsx` ligne 26
 > - `src/hooks/use-pricing.ts` ligne 360
 >
@@ -179,6 +191,7 @@ WHERE customer_type = 'individual'
 > **Recommandation** : Créer type unique centralisé
 >
 > **Action requise** :
+>
 > 1. Quelle interface est la VERSION CORRECTE à garder ?
 > 2. Faut-il créer `src/types/pricing.ts` comme source unique de vérité ?
 > 3. Supprimer définitions locales après centralisation ?
@@ -192,11 +205,12 @@ WHERE customer_type = 'individual'
 > ```typescript
 > const { data: orgsData } = await supabase
 >   .from('organisations')
->   .select('id, trade_name, legal_name')  // ❌ customer_type ABSENT
->   .in('id', customerIds)
+>   .select('id, trade_name, legal_name') // ❌ customer_type ABSENT
+>   .in('id', customerIds);
 > ```
 >
 > **Problème** :
+>
 > - `customer_type` jamais récupéré depuis base
 > - Impossible d'être dans les données retournées
 > - Interface locale attend cette propriété
@@ -236,6 +250,7 @@ WHERE customer_type = 'individual'
 ```
 
 **Fichiers impactés** (8 erreurs) :
+
 - `produits/catalogue/categories/[categoryId]/page.tsx` (ligne 372, 414)
 - `produits/catalogue/families/[familyId]/page.tsx` (ligne 350)
 - Tous formulaires CRUD catalogue avec `is_active`
@@ -245,6 +260,7 @@ WHERE customer_type = 'individual'
 **Recherche migrations** : Aucun `CHECK CONSTRAINT` ou `DEFAULT` trouvé pour `is_active`
 
 **Conclusion** :
+
 - Tables `categories`, `families`, `subcategories` ont colonne `is_active BOOLEAN` **nullable**
 - Pas de contrainte business empêchant NULL
 - Question sémantique ouverte
@@ -256,11 +272,13 @@ WHERE customer_type = 'individual'
 > **Contexte** : Tables `categories`, `families`, `subcategories` ont colonne `is_active BOOLEAN` nullable
 >
 > **Valeurs possibles actuellement** :
+>
 > - `true` : Entité active (visible, utilisable)
 > - `false` : Entité désactivée (cachée, non-utilisable)
 > - `null` : ??? (statut indéterminé ? jamais initialisé ?)
 >
 > **Impact business** :
+>
 > - Filtres catalogue : `WHERE is_active = true` exclut NULL
 > - Affichage frontend : Comportement avec NULL ?
 > - Workflows : NULL a un sens métier distinct ?
@@ -268,6 +286,7 @@ WHERE customer_type = 'individual'
 > **Options de correction** :
 >
 > **Option A : NULL a une sémantique business distincte**
+>
 > - Exemple : NULL = "en attente validation", false = "rejeté", true = "validé"
 > - **Correction code** : Adapter formulaires pour accepter optionnel
 >   ```typescript
@@ -276,7 +295,9 @@ WHERE customer_type = 'individual'
 > - **Impact** : Logique business doit gérer 3 états
 >
 > **Option B : NULL = valeur technique à éviter (DEFAULT manquant)**
+>
 > - **Correction database** :
+>
 >   ```sql
 >   ALTER TABLE categories
 >   ALTER COLUMN is_active SET DEFAULT true;
@@ -286,9 +307,10 @@ WHERE customer_type = 'individual'
 >
 >   UPDATE categories SET is_active = true WHERE is_active IS NULL;
 >   ```
+>
 > - **Correction code** : Null coalescing
 >   ```typescript
->   is_active: category.is_active ?? true  // Fallback sur true
+>   is_active: category.is_active ?? true; // Fallback sur true
 >   ```
 > - **Impact** : Migration base + correction 8 fichiers
 >
@@ -316,124 +338,136 @@ WHERE customer_type = 'individual'
 /**
  * Générateur de fonctions CRUD standard pour éliminer duplication
  */
-export function createCrudOperations<T, CreateData, UpdateData = Partial<CreateData>>(
-  tableName: string,  // ❌ Type générique "string" perd l'inférence Supabase
+export function createCrudOperations<
+  T,
+  CreateData,
+  UpdateData = Partial<CreateData>,
+>(
+  tableName: string, // ❌ Type générique "string" perd l'inférence Supabase
   baseHook: ReturnType<typeof useBaseListHook<T>>,
   selectFields?: string
 ): CrudOperations<T, CreateData, UpdateData> {
-
   // ❌ TS2769 - No overload matches (ligne 131-132)
   const create = async (data: CreateData): Promise<T | null> => {
     try {
-      baseHook.setError(null)
+      baseHook.setError(null);
 
       const { data: newItem, error } = await baseHook.supabase
-        .from(tableName)  // ❌ Supabase attend string LITERAL 'products', pas variable
-        .insert([data])   // TypeScript ne peut résoudre quel overload utiliser
+        .from(tableName) // ❌ Supabase attend string LITERAL 'products', pas variable
+        .insert([data]) // TypeScript ne peut résoudre quel overload utiliser
         .select(selectFields || '*')
-        .single()
+        .single();
 
-      if (error) throw error
+      if (error) throw error;
 
-      baseHook.addItem(newItem as T)
-      baseHook.showToast('Succès', `${tableName} créé avec succès`)
-      return newItem as T
+      baseHook.addItem(newItem as T);
+      baseHook.showToast('Succès', `${tableName} créé avec succès`);
+      return newItem as T;
     } catch (err) {
-      baseHook.handleError(err, `Erreur lors de la création de ${tableName}`)
-      return null
+      baseHook.handleError(err, `Erreur lors de la création de ${tableName}`);
+      return null;
     }
-  }
+  };
 
   // ❌ TS2769 - No overload matches (ligne 153-154)
   const update = async (id: string, data: UpdateData): Promise<T | null> => {
     try {
       const { data: updatedItem, error } = await baseHook.supabase
-        .from(tableName)  // ❌ Même problème
+        .from(tableName) // ❌ Même problème
         .update(data as any)
         .eq('id', id)
         .select(selectFields || '*')
-        .single()
+        .single();
 
-      if (error) throw error
+      if (error) throw error;
 
-      baseHook.updateItem(id, updatedItem as unknown as Partial<T>)
-      return updatedItem
+      baseHook.updateItem(id, updatedItem as unknown as Partial<T>);
+      return updatedItem;
     } catch (err) {
-      baseHook.handleError(err, `Erreur lors de la mise à jour de ${tableName}`)
-      return null
+      baseHook.handleError(
+        err,
+        `Erreur lors de la mise à jour de ${tableName}`
+      );
+      return null;
     }
-  }
+  };
 
   // ❌ TS2769 - No overload matches (ligne 176-178)
   const deleteItem = async (id: string): Promise<boolean> => {
     try {
       const { error } = await baseHook.supabase
-        .from(tableName)  // ❌ Même problème
+        .from(tableName) // ❌ Même problème
         .delete()
-        .eq('id', id)
+        .eq('id', id);
 
-      if (error) throw error
+      if (error) throw error;
 
-      baseHook.removeItem(id)
-      return true
+      baseHook.removeItem(id);
+      return true;
     } catch (err) {
-      baseHook.handleError(err, `Erreur lors de la suppression de ${tableName}`)
-      return false
+      baseHook.handleError(
+        err,
+        `Erreur lors de la suppression de ${tableName}`
+      );
+      return false;
     }
-  }
+  };
 
   // ❌ TS2769 - No overload matches (ligne 198-199)
   const fetch = async (): Promise<void> => {
     try {
-      baseHook.setLoading(true)
-      baseHook.setError(null)
+      baseHook.setLoading(true);
+      baseHook.setError(null);
 
       const { data, error } = await baseHook.supabase
-        .from(tableName)  // ❌ Même problème
-        .select(selectFields || '*')
+        .from(tableName) // ❌ Même problème
+        .select(selectFields || '*');
 
-      if (error) throw error
+      if (error) throw error;
 
-      baseHook.setData(data || [])
+      baseHook.setData(data || []);
     } catch (err) {
-      baseHook.handleError(err, `Erreur lors du chargement de ${tableName}`)
+      baseHook.handleError(err, `Erreur lors du chargement de ${tableName}`);
     } finally {
-      baseHook.setLoading(false)
+      baseHook.setLoading(false);
     }
-  }
+  };
 
   return {
     create,
     update,
     delete: deleteItem,
-    fetch
-  }
+    fetch,
+  };
 }
 ```
 
 #### Cause Technique TypeScript
 
 **Problème** :
+
 - Supabase client est **fortement typé** avec overloads distincts pour chaque table
 - `.from('products')` → TypeScript inféré row type de `products` table
 - `.from(tableName)` où `tableName: string` → **Perte complète d'inférence**
 - TypeScript ne peut matcher AUCUN overload → Erreur TS2769
 
 **Exemple simplifié** :
+
 ```typescript
 // ✅ Fonctionne - string literal
-const { data } = await supabase.from('products').select('*')
+const { data } = await supabase.from('products').select('*');
 // Type inféré: Product[]
 
 // ❌ Échoue - variable string
-const table = 'products'
-const { data } = await supabase.from(table).select('*')
+const table = 'products';
+const { data } = await supabase.from(table).select('*');
 // TS2769: No overload matches this call
 ```
 
 #### Impact Réel
 
 **Hooks utilisant `createCrudOperations()`** (20+ hooks affectés) :
+
 - `use-financial-payments.ts` (2 erreurs - lignes 81, 151)
 - `use-products.ts` (2 erreurs - lignes 289, 498)
 - `use-sales-orders.ts` (2 erreurs - lignes 635, 733)
@@ -450,11 +484,13 @@ const { data } = await supabase.from(table).select('*')
 > **QUESTION 5 : Stratégie Refactoring Architecture CRUD**
 >
 > **Contexte** :
+>
 > - Pattern `createCrudOperations()` utilisé par 20+ hooks
 > - Fonction centrale dans architecture data layer
 > - 56 erreurs (33.5% du total)
 >
 > **Contraintes** :
+>
 > - Code en production
 > - Hooks utilisés dans modules ACTIFS (Dashboard, Organisations, Admin)
 > - Toute modification risque régression
@@ -466,20 +502,22 @@ const { data } = await supabase.from(table).select('*')
 > **Option A : Type Assertions (Quick Fix)** ⚡
 >
 > **Approche** :
+>
 > ```typescript
-> const { data, error } = await (baseHook.supabase
->   .from(tableName) as any)
+> const { data, error } = await (baseHook.supabase.from(tableName) as any)
 >   .insert([data])
 >   .select(selectFields)
->   .single()
+>   .single();
 > ```
 >
 > **Avantages** :
+>
 > - ✅ Fix rapide (1-2h pour 56 erreurs)
 > - ✅ Aucun changement architectural
 > - ✅ Risque régression minimal
 >
 > **Inconvénients** :
+>
 > - ❌ Perd type safety Supabase (retour `any`)
 > - ❌ Erreurs runtime possibles si mauvais types
 > - ❌ Pas de IntelliSense sur résultats queries
@@ -491,31 +529,34 @@ const { data } = await supabase.from(table).select('*')
 > **Option B : Generic Table Names (Architecture Propre)** 🏗️
 >
 > **Approche** :
+>
 > ```typescript
 > export function createCrudOperations<
 >   T,
 >   TableName extends keyof Database['public']['Tables'],
 >   CreateData = Database['public']['Tables'][TableName]['Insert'],
->   UpdateData = Database['public']['Tables'][TableName]['Update']
+>   UpdateData = Database['public']['Tables'][TableName]['Update'],
 > >(
->   tableName: TableName,  // Type literal, pas string
+>   tableName: TableName, // Type literal, pas string
 >   baseHook: ReturnType<typeof useBaseListHook<T>>,
 >   selectFields?: string
 > ): CrudOperations<T, CreateData, UpdateData> {
 >   const { data } = await baseHook.supabase
->     .from(tableName)  // ✅ TypeScript peut inférer type
+>     .from(tableName) // ✅ TypeScript peut inférer type
 >     .insert([data])
->     .select(selectFields)
+>     .select(selectFields);
 > }
 > ```
 >
 > **Avantages** :
+>
 > - ✅ Garde type safety complète
 > - ✅ IntelliSense fonctionnel
 > - ✅ Détection erreurs compile-time
 > - ✅ Architecture maintenable long-terme
 >
 > **Inconvénients** :
+>
 > - ❌ Refactoring profond (6-8h)
 > - ❌ Modifier 20+ hooks individuellement
 > - ❌ Risque régression si mal testé
@@ -530,10 +571,12 @@ const { data } = await supabase.from(table).select('*')
 > **Approche** : Réécrire hooks individuellement sans abstraction
 >
 > **Avantages** :
+>
 > - ✅ Type safety parfaite
 > - ✅ Flexibilité maximale par hook
 >
 > **Inconvénients** :
+>
 > - ❌ Code duplication massive
 > - ❌ Maintenance difficile
 > - ❌ Temps développement excessif (10-15h)
@@ -545,11 +588,13 @@ const { data } = await supabase.from(table).select('*')
 > **Recommandation Claude** :
 >
 > **Court-terme (Phase 1)** : Option A (Type Assertions)
+>
 > - Débloque 56 erreurs rapidement
 > - Permet continuer corrections autres familles
 > - Acceptable pour modules Phase 2+ désactivés
 >
 > **Long-terme (Phase 2)** : Option B (Generic Table Names)
+>
 > - Planifier refactoring lors activation modules
 > - Améliore architecture globalement
 >
@@ -576,15 +621,17 @@ const { data } = await supabase.from(table).select('*')
 
 ```typescript
 // ❌ TS2339
-const priceTTC = product.price_ttc  // Property 'price_ttc' does not exist
+const priceTTC = product.price_ttc; // Property 'price_ttc' does not exist
 ```
 
 **Analyse** :
+
 - Migration archive trouvée : `selling_price_ttc_cents` dans `20250114_006_catalogue_complete_schema.sql` (ligne 209)
 - Schema actuel a probablement renommé ou supprimé cette colonne
 - Impact : Page stocks ne peut afficher prix TTC produits
 
 **Action requise** :
+
 1. Vérifier colonne réelle dans table `products` en production
 2. Si `selling_price_ttc_cents` existe : Renommer propriété dans code
 3. Si absente : Calculer TTC runtime ou créer migration
@@ -599,18 +646,20 @@ const priceTTC = product.price_ttc  // Property 'price_ttc' does not exist
 
 ```typescript
 // ❌ TS2339
-const familyId = product.family_id  // Property does not exist on Product type
+const familyId = product.family_id; // Property does not exist on Product type
 ```
 
 **Analyse** :
+
 - Table `products` n'a PAS de FK directe `family_id` (selon schema catalogue)
 - Relation hiérarchique : `products` → `subcategories` → `categories` → `families`
 - Code utilise propriété inexistante
 
 **Action requise** :
+
 1. Utiliser navigation relationnelle :
    ```typescript
-   const familyId = product.subcategory?.category?.family_id
+   const familyId = product.subcategory?.category?.family_id;
    ```
 2. Ou ajouter `.select('*, subcategories(*, categories(*, families(*)))')` dans query
 
@@ -624,38 +673,40 @@ const familyId = product.family_id  // Property does not exist on Product type
 
 ```typescript
 // ❌ TS2339
-await products.fetchProducts()  // Method does not exist on hook return
+await products.fetchProducts(); // Method does not exist on hook return
 ```
 
 **Analyse** :
+
 - Hook `use-products` ne retourne PAS de méthode `fetchProducts`
 - Méthode disponible : `refetch()` (naming différent)
 - Incohérence naming conventions
 
 **Action requise** : Renommer appel
+
 ```typescript
-await products.refetch()  // ✅ Méthode existante
+await products.refetch(); // ✅ Méthode existante
 ```
 
 ---
 
 #### 4-16. Autres Propriétés Manquantes (Tableau Complet)
 
-| # | Propriété | Fichier | Ligne | Module | Impact | Action |
-|---|-----------|---------|-------|--------|--------|--------|
-| 4 | `amount_paid` | `payment-form.tsx` | 137 | Finance | Paiements | Vérifier colonne invoices |
-| 5 | `total_ttc` | `payment-form.tsx` | 139 | Finance | Paiements | Vérifier colonne invoices |
-| 6 | `data` | `price-list-item-form-modal.tsx` | 84 | Pricing | Listes prix | Renommer `products` |
-| 7 | `price_ht` | `price-list-item-form-modal.tsx` | 101 | Pricing | Prix HT | Vérifier interface PriceListItem |
-| 8 | `file_name` | `product-image-management.tsx` | 350 | Catalogue | Images | Propriété Supabase absente |
-| 9 | `so_number` | `sales-order-shipment-form.tsx` | 207 | Commandes | Expéditions | Vérifier SalesOrderForShipment |
-| 10 | `prepayment_required` | `unified-organisation-form.tsx` | 268 | CRM | Formulaires | Ajouter à Organisation |
-| 11 | `organisation_type` | `variant-group-creation-wizard.tsx` | 118 | Catalogue | Variantes | Utiliser `type` |
-| 12 | `images` | `use-archived-products.ts` | 81 | Catalogue | Produits archivés | Query avec join images |
-| 13 | `mcp` | `use-critical-testing.ts` | 199 | Testing | Tests E2E | Extend Window interface |
-| 14 | `ip` | `api-security.ts` | 157 | Middleware | Sécurité | NextRequest.headers.get('x-forwarded-for') |
-| 15 | `width` | `image-optimization.ts` | 306 | Upload | Images | Type union discriminated |
-| 16 | `height` | `image-optimization.ts` | 307 | Upload | Images | Type union discriminated |
+| #   | Propriété             | Fichier                             | Ligne | Module     | Impact            | Action                                     |
+| --- | --------------------- | ----------------------------------- | ----- | ---------- | ----------------- | ------------------------------------------ |
+| 4   | `amount_paid`         | `payment-form.tsx`                  | 137   | Finance    | Paiements         | Vérifier colonne invoices                  |
+| 5   | `total_ttc`           | `payment-form.tsx`                  | 139   | Finance    | Paiements         | Vérifier colonne invoices                  |
+| 6   | `data`                | `price-list-item-form-modal.tsx`    | 84    | Pricing    | Listes prix       | Renommer `products`                        |
+| 7   | `price_ht`            | `price-list-item-form-modal.tsx`    | 101   | Pricing    | Prix HT           | Vérifier interface PriceListItem           |
+| 8   | `file_name`           | `product-image-management.tsx`      | 350   | Catalogue  | Images            | Propriété Supabase absente                 |
+| 9   | `so_number`           | `sales-order-shipment-form.tsx`     | 207   | Commandes  | Expéditions       | Vérifier SalesOrderForShipment             |
+| 10  | `prepayment_required` | `unified-organisation-form.tsx`     | 268   | CRM        | Formulaires       | Ajouter à Organisation                     |
+| 11  | `organisation_type`   | `variant-group-creation-wizard.tsx` | 118   | Catalogue  | Variantes         | Utiliser `type`                            |
+| 12  | `images`              | `use-archived-products.ts`          | 81    | Catalogue  | Produits archivés | Query avec join images                     |
+| 13  | `mcp`                 | `use-critical-testing.ts`           | 199   | Testing    | Tests E2E         | Extend Window interface                    |
+| 14  | `ip`                  | `api-security.ts`                   | 157   | Middleware | Sécurité          | NextRequest.headers.get('x-forwarded-for') |
+| 15  | `width`               | `image-optimization.ts`             | 306   | Upload     | Images            | Type union discriminated                   |
+| 16  | `height`              | `image-optimization.ts`             | 307   | Upload     | Images            | Type union discriminated                   |
 
 ### Questions Utilisateur
 
@@ -664,6 +715,7 @@ await products.refetch()  // ✅ Méthode existante
 > **Symptôme** : 16 propriétés manquantes suggèrent types générés obsolètes
 >
 > **Hypothèses** :
+>
 > 1. Migrations database appliquées mais types pas régénérés
 > 2. Types générés depuis environnement local différent de prod
 > 3. Schema évolution non synchronisée avec codebase
@@ -671,29 +723,34 @@ await products.refetch()  // ✅ Méthode existante
 > **Actions requises** :
 >
 > **Étape 1 : Vérification migrations**
+>
 > ```bash
 > # Vérifier migrations appliquées en production
 > supabase db status --remote
 > ```
 >
 > **Étape 2 : Régénération types**
+>
 > ```bash
 > # Générer types depuis production
 > supabase gen types typescript --db-url $DATABASE_URL > src/types/database.ts
 > ```
 >
 > **Étape 3 : Comparaison**
+>
 > ```bash
 > # Comparer avant/après
 > git diff src/types/database.ts
 > ```
 >
 > **Étape 4 : Vérification breaking changes**
+>
 > - Propriétés renommées ?
 > - Colonnes supprimées ?
 > - Types changés (string → enum) ?
 >
 > **Question** :
+>
 > 1. Dernière génération types Supabase effectuée quand ?
 > 2. Environnement utilisé : `--local` ou `--remote` ?
 > 3. Migrations prod synchronisées avec local ?
@@ -719,26 +776,28 @@ await products.refetch()  // ✅ Méthode existante
 
 ```typescript
 // ❌ TS2345 - Argument type '\"record_payment\"' is not assignable
-const { data, error: rpcError } = await supabase
-  .rpc('record_payment', {  // ❌ 'record_payment' not in RPC union type
-    p_document_id: params.document_id,
-    p_amount_paid: params.amount_paid,
-    p_payment_date: params.payment_date,
-    p_payment_method: params.payment_method,
-    p_transaction_reference: params.transaction_reference || null,
-    p_bank_transaction_id: params.bank_transaction_id || null,
-    p_notes: params.notes || null
-  }) as any
+const { data, error: rpcError } = (await supabase.rpc('record_payment', {
+  // ❌ 'record_payment' not in RPC union type
+  p_document_id: params.document_id,
+  p_amount_paid: params.amount_paid,
+  p_payment_date: params.payment_date,
+  p_payment_method: params.payment_method,
+  p_transaction_reference: params.transaction_reference || null,
+  p_bank_transaction_id: params.bank_transaction_id || null,
+  p_notes: params.notes || null,
+})) as any;
 ```
 
 **Analyse migrations** : ❌ **NON TROUVÉE** dans `supabase/migrations/`
 
 **Impact business** :
+
 - **BLOQUANT** : Enregistrement paiements impossible
 - Feature : Rapprochement bancaire, trésorerie
 - Utilisateurs affectés : Comptables, admins
 
 **Action requise** :
+
 1. Vérifier si fonction existe en base production :
    ```sql
    SELECT proname, prosrc
@@ -758,7 +817,7 @@ const { data, error: rpcError } = await supabase
 
 ```typescript
 // ❌ TS2345
-const { data } = await supabase.rpc('get_stock_alerts_count')
+const { data } = await supabase.rpc('get_stock_alerts_count');
 ```
 
 **Migration** : ✅ **TROUVÉE** `20251019_006_fix_rls_stock_alerts_view.sql` (ligne 11-40)
@@ -802,12 +861,13 @@ GRANT EXECUTE ON FUNCTION get_stock_alerts_count() TO authenticated;
 
 ```typescript
 // ❌ TS2345
-const { data } = await supabase.rpc('get_treasury_stats')
+const { data } = await supabase.rpc('get_treasury_stats');
 ```
 
 **Migration** : ❌ **NON TROUVÉE**
 
 **Impact business** :
+
 - Dashboard trésorerie cassé
 - Feature : Suivi encaissements/décaissements
 - Utilisateurs : Direction, comptables
@@ -824,7 +884,7 @@ const { data } = await supabase.rpc('get_treasury_stats')
 
 ```typescript
 // ❌ TS2345
-const { data } = await supabase.rpc('get_activity_stats', { days_ago: 7 })
+const { data } = await supabase.rpc('get_activity_stats', { days_ago: 7 });
 ```
 
 **Migration** : ✅ **TROUVÉE** `20251025_004_rpc_activity_stats.sql` (ligne 9-75)
@@ -867,7 +927,7 @@ COMMENT ON FUNCTION get_activity_stats(INTEGER) IS
 
 ```typescript
 // ❌ TS2345 - Argument type 'string | undefined' not assignable
-setValue('style', collection?.style)
+setValue('style', collection?.style);
 // SetStateAction<CollectionStyle | undefined> attend literal union
 ```
 
@@ -879,7 +939,7 @@ setValue('style', collection?.style)
 
 ```typescript
 // ❌ TS2345 - Argument type 'string | number' not assignable to 'string'
-const sku = generateSKU(someValue)  // someValue: string | number
+const sku = generateSKU(someValue); // someValue: string | number
 ```
 
 **Action** : Convert to string : `String(someValue)`
@@ -892,12 +952,12 @@ const sku = generateSKU(someValue)  // someValue: string | number
 >
 > **Résumé état actuel** :
 >
-> | Fonction | Migration | Status | Priorité |
-> |----------|-----------|--------|----------|
-> | `get_stock_alerts_count` | ✅ 20251019_006 | Existe | P2 |
-> | `get_activity_stats` | ✅ 20251025_004 | Existe | P3 |
-> | `record_payment` | ❌ NON TROUVÉE | **Manquante** | **P1 CRITIQUE** |
-> | `get_treasury_stats` | ❌ NON TROUVÉE | **Manquante** | **P1 CRITIQUE** |
+> | Fonction                 | Migration       | Status        | Priorité        |
+> | ------------------------ | --------------- | ------------- | --------------- |
+> | `get_stock_alerts_count` | ✅ 20251019_006 | Existe        | P2              |
+> | `get_activity_stats`     | ✅ 20251025_004 | Existe        | P3              |
+> | `record_payment`         | ❌ NON TROUVÉE  | **Manquante** | **P1 CRITIQUE** |
+> | `get_treasury_stats`     | ❌ NON TROUVÉE  | **Manquante** | **P1 CRITIQUE** |
 >
 > **Actions requises par priorité** :
 >
@@ -906,6 +966,7 @@ const sku = generateSKU(someValue)  // someValue: string | number
 > **1. `record_payment`** (Finance - BLOQUANT)
 >
 > **Vérification production** :
+>
 > ```sql
 > SELECT
 >   p.proname,
@@ -928,15 +989,17 @@ const sku = generateSKU(someValue)  // someValue: string | number
 > **P2 HAUTE - Régénération types**
 >
 > **Pour fonctions existantes** :
+>
 > ```bash
 > supabase gen types typescript --db-url $DATABASE_URL > src/types/database.ts
 > ```
 >
 > **Validation** :
+>
 > ```typescript
 > // Vérifier présence dans types générés
-> import { Database } from '@/types/database'
-> type RpcFunctions = Database['public']['Functions']
+> import { Database } from '@/types/database';
+> type RpcFunctions = Database['public']['Functions'];
 > // Doit contenir get_stock_alerts_count, get_activity_stats
 > ```
 >
@@ -965,20 +1028,20 @@ const sku = generateSKU(someValue)  // someValue: string | number
 // ❌ TS2304 - Cannot find name 'approveSampleOrder'
 const handleApproveOrder = async (orderId: string, notes?: string) => {
   try {
-    await approveSampleOrder(orderId, notes)  // ❌ Fonction non importée
+    await approveSampleOrder(orderId, notes); // ❌ Fonction non importée
 
     toast({
-      title: "Commande approuvée",
-      description: "La commande d'échantillons a été approuvée"
-    })
+      title: 'Commande approuvée',
+      description: "La commande d'échantillons a été approuvée",
+    });
 
-    await loadSampleOrders()
-    setSelectedOrder(null)
+    await loadSampleOrders();
+    setSelectedOrder(null);
   } catch (error) {
-    console.error('Erreur approbation commande:', error)
+    console.error('Erreur approbation commande:', error);
     // ...
   }
-}
+};
 ```
 
 **Feature** : Approbation commande échantillons fournisseur
@@ -992,18 +1055,18 @@ const handleApproveOrder = async (orderId: string, notes?: string) => {
 // ❌ TS2304 - Cannot find name 'markSampleOrderDelivered'
 const handleMarkDelivered = async (orderId: string) => {
   try {
-    await markSampleOrderDelivered(orderId)  // ❌ Fonction non importée
+    await markSampleOrderDelivered(orderId); // ❌ Fonction non importée
 
     toast({
-      title: "Livraison confirmée",
-      description: "La commande a été marquée comme livrée"
-    })
+      title: 'Livraison confirmée',
+      description: 'La commande a été marquée comme livrée',
+    });
 
-    await loadSampleOrders()
+    await loadSampleOrders();
   } catch (error) {
     // ...
   }
-}
+};
 ```
 
 **Feature** : Marquer échantillons reçus
@@ -1021,18 +1084,18 @@ const handleValidateSamples = async (
   notes?: string
 ) => {
   try {
-    await validateSamples(draftIds, result, notes)  // ❌ Fonction non importée
+    await validateSamples(draftIds, result, notes); // ❌ Fonction non importée
 
     toast({
       title: `Échantillons ${result === 'approved' ? 'validés' : 'rejetés'}`,
-      description: `${draftIds.length} échantillon(s) ${result === 'approved' ? 'approuvé(s)' : 'rejeté(s)'}`
-    })
+      description: `${draftIds.length} échantillon(s) ${result === 'approved' ? 'approuvé(s)' : 'rejeté(s)'}`,
+    });
 
-    await loadSampleOrders()
+    await loadSampleOrders();
   } catch (error) {
     // ...
   }
-}
+};
 ```
 
 **Feature** : Validation qualité échantillons
@@ -1047,22 +1110,22 @@ const handleValidateSamples = async (
 const handleTransferToCatalog = async (draftIds: string[]) => {
   try {
     const transfers = await Promise.allSettled(
-      draftIds.map(draftId => transferToProductCatalog(draftId))  // ❌ Fonction non importée
-    )
+      draftIds.map(draftId => transferToProductCatalog(draftId)) // ❌ Fonction non importée
+    );
 
-    const successful = transfers.filter(t => t.status === 'fulfilled').length
-    const failed = transfers.filter(t => t.status === 'rejected').length
+    const successful = transfers.filter(t => t.status === 'fulfilled').length;
+    const failed = transfers.filter(t => t.status === 'rejected').length;
 
     if (successful > 0) {
       toast({
-        title: "Transfert réussi",
-        description: `${successful} produit(s) ajouté(s) au catalogue${failed > 0 ? ` (${failed} échec(s))` : ''}`
-      })
+        title: 'Transfert réussi',
+        description: `${successful} produit(s) ajouté(s) au catalogue${failed > 0 ? ` (${failed} échec(s))` : ''}`,
+      });
     }
   } catch (error) {
     // ...
   }
-}
+};
 ```
 
 **Feature** : Transfert échantillons validés vers catalogue produits
@@ -1074,7 +1137,7 @@ const handleTransferToCatalog = async (draftIds: string[]) => {
 
 ```typescript
 // ❌ TS2552 - Cannot find name 'getSourcingWorkflowMetrics'
-const metrics = await getSourcingWorkflowMetrics()
+const metrics = await getSourcingWorkflowMetrics();
 ```
 
 **Feature** : Métriques workflow sourcing (dashboard)
@@ -1088,6 +1151,7 @@ const metrics = await getSourcingWorkflowMetrics()
 > **Contexte** : Composant `sample-order-validation.tsx` utilise 5 fonctions non importées
 >
 > **Fonctions manquantes** :
+>
 > 1. `approveSampleOrder(orderId, notes)`
 > 2. `markSampleOrderDelivered(orderId)`
 > 3. `validateSamples(draftIds, result, notes)`
@@ -1101,19 +1165,21 @@ const metrics = await getSourcingWorkflowMetrics()
 > **Option A : Hook use-sample-orders existe mais import oublié**
 >
 > **Vérification** :
+>
 > ```bash
 > find src/hooks -name "*sample*" -type f
 > ```
 >
 > **Si trouvé** : Ajouter import
+>
 > ```typescript
 > import {
 >   approveSampleOrder,
 >   markSampleOrderDelivered,
 >   validateSamples,
 >   transferToProductCatalog,
->   getSourcingWorkflowMetrics
-> } from '@/hooks/use-sample-orders'
+>   getSourcingWorkflowMetrics,
+> } from '@/hooks/use-sample-orders';
 > ```
 >
 > **Action** : Import simple (5 min)
@@ -1123,6 +1189,7 @@ const metrics = await getSourcingWorkflowMetrics()
 > **Option B : Fonctions implémentées dans lib/workflows/**
 >
 > **Vérification** :
+>
 > ```bash
 > grep -r "approveSampleOrder\|markSampleOrderDelivered" src/lib/
 > ```
@@ -1142,6 +1209,7 @@ const metrics = await getSourcingWorkflowMetrics()
 > **1. Créer `src/hooks/use-sample-orders.ts`**
 >
 > **2. Implémenter `approveSampleOrder`** :
+>
 > ```typescript
 > export async function approveSampleOrder(orderId: string, notes?: string) {
 >   const { data, error } = await supabase
@@ -1150,36 +1218,38 @@ const metrics = await getSourcingWorkflowMetrics()
 >       status: 'approved',
 >       approved_at: new Date().toISOString(),
 >       approved_by: currentUser.id,
->       approval_notes: notes
+>       approval_notes: notes,
 >     })
 >     .eq('id', orderId)
 >     .select()
->     .single()
+>     .single();
 >
->   if (error) throw error
->   return data
+>   if (error) throw error;
+>   return data;
 > }
 > ```
 >
 > **3. Implémenter `markSampleOrderDelivered`** :
+>
 > ```typescript
 > export async function markSampleOrderDelivered(orderId: string) {
 >   const { data, error } = await supabase
 >     .from('sample_orders')
 >     .update({
 >       status: 'delivered',
->       delivered_at: new Date().toISOString()
+>       delivered_at: new Date().toISOString(),
 >     })
 >     .eq('id', orderId)
 >     .select()
->     .single()
+>     .single();
 >
->   if (error) throw error
->   return data
+>   if (error) throw error;
+>   return data;
 > }
 > ```
 >
 > **4. Implémenter `validateSamples`** :
+>
 > ```typescript
 > export async function validateSamples(
 >   draftIds: string[],
@@ -1192,17 +1262,18 @@ const metrics = await getSourcingWorkflowMetrics()
 >       validation_status: result,
 >       validated_at: new Date().toISOString(),
 >       validated_by: currentUser.id,
->       validation_notes: notes
+>       validation_notes: notes,
 >     })
 >     .in('id', draftIds)
->     .select()
+>     .select();
 >
->   if (error) throw error
->   return data
+>   if (error) throw error;
+>   return data;
 > }
 > ```
 >
 > **5. Implémenter `transferToProductCatalog`** :
+>
 > ```typescript
 > export async function transferToProductCatalog(draftId: string) {
 >   // 1. Récupérer sourcing_product
@@ -1210,7 +1281,7 @@ const metrics = await getSourcingWorkflowMetrics()
 >     .from('sourcing_products')
 >     .select('*')
 >     .eq('id', draftId)
->     .single()
+>     .single();
 >
 >   // 2. Créer product dans catalogue
 >   const { data: product, error } = await supabase
@@ -1223,12 +1294,12 @@ const metrics = await getSourcingWorkflowMetrics()
 >       selling_price_ht: draft.target_price,
 >       supplier_id: draft.supplier_id,
 >       // ... autres champs
->       status: 'draft'
+>       status: 'draft',
 >     })
 >     .select()
->     .single()
+>     .single();
 >
->   if (error) throw error
+>   if (error) throw error;
 >
 >   // 3. Marquer sourcing_product comme transféré
 >   await supabase
@@ -1236,21 +1307,22 @@ const metrics = await getSourcingWorkflowMetrics()
 >     .update({
 >       transferred_to_catalog: true,
 >       catalog_product_id: product.id,
->       transferred_at: new Date().toISOString()
+>       transferred_at: new Date().toISOString(),
 >     })
->     .eq('id', draftId)
+>     .eq('id', draftId);
 >
->   return product
+>   return product;
 > }
 > ```
 >
 > **6. Implémenter `getSourcingWorkflowMetrics`** :
+>
 > ```typescript
 > export async function getSourcingWorkflowMetrics() {
->   const { data, error } = await supabase.rpc('get_sourcing_workflow_metrics')
+>   const { data, error } = await supabase.rpc('get_sourcing_workflow_metrics');
 >
->   if (error) throw error
->   return data
+>   if (error) throw error;
+>   return data;
 > }
 > ```
 >
@@ -1268,26 +1340,28 @@ const metrics = await getSourcingWorkflowMetrics()
 
 ### Synthèse Priorisation
 
-| Priorité | Famille | Erreurs | Bloquant ? | Effort | ROI |
-|----------|---------|---------|------------|--------|-----|
-| **P1** | TS2769 | 56 | ✅ OUI | 6-8h | ⭐⭐⭐⭐⭐ |
-| **P1** | TS2345 | 6 | ✅ OUI | 2-3h | ⭐⭐⭐⭐⭐ |
-| **P2** | TS2322-A | 12+ | ❌ NON | 2-4h | ⭐⭐⭐⭐ |
-| **P2** | TS2304 | 4 | ❌ NON | 1-3h | ⭐⭐⭐⭐ |
-| **P3** | TS2339 | 16 | ❌ NON | 4-6h | ⭐⭐⭐ |
-| **P3** | TS2322-B | 8 | ❌ NON | 1-2h | ⭐⭐⭐ |
+| Priorité | Famille  | Erreurs | Bloquant ? | Effort | ROI        |
+| -------- | -------- | ------- | ---------- | ------ | ---------- |
+| **P1**   | TS2769   | 56      | ✅ OUI     | 6-8h   | ⭐⭐⭐⭐⭐ |
+| **P1**   | TS2345   | 6       | ✅ OUI     | 2-3h   | ⭐⭐⭐⭐⭐ |
+| **P2**   | TS2322-A | 12+     | ❌ NON     | 2-4h   | ⭐⭐⭐⭐   |
+| **P2**   | TS2304   | 4       | ❌ NON     | 1-3h   | ⭐⭐⭐⭐   |
+| **P3**   | TS2339   | 16      | ❌ NON     | 4-6h   | ⭐⭐⭐     |
+| **P3**   | TS2322-B | 8       | ❌ NON     | 1-2h   | ⭐⭐⭐     |
 
 ### Séquence Recommandée
 
 #### 📅 JOUR 1 : Déblocage Architecture (8-11h)
 
 **BATCH 1 : TS2345 RPC Functions (2-3h)** ⚡
+
 - Vérifier existence `record_payment` + `get_treasury_stats` en prod
 - Créer migrations manquantes SI nécessaire
 - Régénérer types Supabase
 - **Impact** : Débloque Finance + Trésorerie + Analytics
 
 **BATCH 2 : TS2769 Architecture CRUD (6-8h)** 🏗️
+
 - Décision Option A (quick) ou B (propre) selon Question 5
 - Appliquer fix sur `use-base-hook.ts`
 - Valider 20+ hooks impactés
@@ -1300,6 +1374,7 @@ const metrics = await getSourcingWorkflowMetrics()
 #### 📅 JOUR 2 : Features Business (7-10h)
 
 **BATCH 3 : TS2322 Pattern A - customer_type (2-4h)** 💰
+
 - Répondre Questions 1-3
 - Centraliser interface CustomerPricing
 - Créer ENUM database si nécessaire
@@ -1307,12 +1382,14 @@ const metrics = await getSourcingWorkflowMetrics()
 - **Impact** : Débloque Pricing Multi-canaux
 
 **BATCH 4 : TS2304 Workflow Sourcing (1-3h)** 📦
+
 - Répondre Question 8
 - Implémenter OU importer fonctions manquantes
 - Tester workflow complet
 - **Impact** : Débloque Sourcing échantillons → Catalogue
 
 **BATCH 5 : TS2339 Propriétés Manquantes (4-6h)** 🔍
+
 - Régénérer types Supabase (si pas fait Batch 1)
 - Corriger 16 propriétés une par une
 - Vérifier schema vs code
@@ -1325,12 +1402,14 @@ const metrics = await getSourcingWorkflowMetrics()
 #### 📅 JOUR 3 : Polish Final (3-4h)
 
 **BATCH 6 : TS2322 Pattern B - is_active (1-2h)** 🎨
+
 - Répondre Question 4
 - Migration database OU Null coalescing selon choix
 - Corriger 8 formulaires Catalogue
 - **Impact** : Fix formulaires
 
 **BATCH 7 : Erreurs Diverses (2-3h)** 🧹
+
 - TS2719 (2 erreurs - Product type conflicts)
 - TS2349 (2 erreurs - Calendar expressions)
 - TS7016 (2 erreurs - react-dom declarations)
@@ -1343,14 +1422,15 @@ const metrics = await getSourcingWorkflowMetrics()
 
 ### Estimation Globale
 
-| Phase | Erreurs | Effort | Cumul |
-|-------|---------|--------|-------|
-| Jour 1 - Déblocage | 62 | 8-11h | 8-11h |
-| Jour 2 - Features | 32 | 7-10h | 15-21h |
-| Jour 3 - Polish | 73 | 3-4h | 18-25h |
-| **TOTAL** | **167** | **18-25h** | **~3 jours** |
+| Phase              | Erreurs | Effort     | Cumul        |
+| ------------------ | ------- | ---------- | ------------ |
+| Jour 1 - Déblocage | 62      | 8-11h      | 8-11h        |
+| Jour 2 - Features  | 32      | 7-10h      | 15-21h       |
+| Jour 3 - Polish    | 73      | 3-4h       | 18-25h       |
+| **TOTAL**          | **167** | **18-25h** | **~3 jours** |
 
 **Stratégie Optimale** (Réduction 30%) :
+
 1. Répondre TOUTES questions utilisateur (1-2h)
 2. Régénérer types Supabase UNE fois (30 min) → Résout ~20 erreurs auto
 3. Corrections batch par priorité → **~2.5 jours réels**
@@ -1361,26 +1441,26 @@ const metrics = await getSourcingWorkflowMetrics()
 
 ### 🚨 URGENT (Bloquant P1 - Réponse immédiate)
 
-| # | Question | Impact | Module |
-|---|----------|--------|--------|
-| **5** | Architecture CRUD - Type assertions OU Refactoring ? | 56 erreurs | TOUS |
-| **7** | RPC `record_payment` + `get_treasury_stats` existent ? | 4 erreurs | Finance |
+| #     | Question                                               | Impact     | Module  |
+| ----- | ------------------------------------------------------ | ---------- | ------- |
+| **5** | Architecture CRUD - Type assertions OU Refactoring ?   | 56 erreurs | TOUS    |
+| **7** | RPC `record_payment` + `get_treasury_stats` existent ? | 4 erreurs  | Finance |
 
 ### ⚠️ HAUTE PRIORITÉ (P2 - Réponse rapide)
 
-| # | Question | Impact | Module |
-|---|----------|--------|--------|
-| **1** | `customer_type` - Valeurs réelles en base ? | 12+ erreurs | Pricing |
-| **2** | Interface CustomerPricing - Quelle version ? | 12+ erreurs | Pricing |
-| **3** | Query organisations - Ajouter `customer_type` ? | 12+ erreurs | Pricing |
-| **8** | Hook `use-sample-orders` - Existe ou à créer ? | 4 erreurs | Sourcing |
+| #     | Question                                        | Impact      | Module   |
+| ----- | ----------------------------------------------- | ----------- | -------- |
+| **1** | `customer_type` - Valeurs réelles en base ?     | 12+ erreurs | Pricing  |
+| **2** | Interface CustomerPricing - Quelle version ?    | 12+ erreurs | Pricing  |
+| **3** | Query organisations - Ajouter `customer_type` ? | 12+ erreurs | Pricing  |
+| **8** | Hook `use-sample-orders` - Existe ou à créer ?  | 4 erreurs   | Sourcing |
 
 ### 📊 MOYENNE PRIORITÉ (P3 - Planning)
 
-| # | Question | Impact | Module |
-|---|----------|--------|--------|
-| **4** | `is_active = NULL` - Sémantique business ? | 8 erreurs | Catalogue |
-| **6** | Types Supabase - Dernière génération ? | 16+ erreurs | TOUS |
+| #     | Question                                   | Impact      | Module    |
+| ----- | ------------------------------------------ | ----------- | --------- |
+| **4** | `is_active = NULL` - Sémantique business ? | 8 erreurs   | Catalogue |
+| **6** | Types Supabase - Dernière génération ?     | 16+ erreurs | TOUS      |
 
 ---
 
@@ -1420,22 +1500,26 @@ psql $DATABASE_URL -c "
 ## 📋 Prochaines Étapes Recommandées
 
 ### Étape 1 : Clarifications (30 min)
+
 - Lire ce rapport complet
 - Répondre aux 8 questions par priorité
 - Valider stratégie corrections (Options A/B/C)
 
 ### Étape 2 : Vérifications Database (30 min)
+
 - Exécuter commandes SQL fournies
 - Vérifier RPC functions existantes
 - Confirmer valeurs `customer_type` réelles
 - Vérifier sémantique `is_active = NULL`
 
 ### Étape 3 : Préparation Techniques (30 min)
+
 - Régénérer types Supabase depuis production
 - Créer branch `fix/typescript-167-errors`
 - Backup database si migrations prévues
 
 ### Étape 4 : Corrections Batch (18-25h sur 3 jours)
+
 - Suivre séquence Jour 1 → Jour 2 → Jour 3
 - Commit atomique par batch
 - Tests MCP Browser AVANT chaque commit

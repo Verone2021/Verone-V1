@@ -40,33 +40,37 @@ Ces problèmes créent des **dépendances en cascade** : corriger une erreur en 
 Les interfaces canoniques définies dans les hooks (`use-contacts.ts`, `use-consultation-images.ts`, `use-products.ts`) ne sont **pas alignées** avec les types générés depuis la base Supabase (`src/types/database.ts`).
 
 **Problème concret** :
+
 ```typescript
 // ❌ use-contacts.ts (interface canonique)
 export interface Contact {
-  title?: string          // Optional avec undefined
-  phone?: string
-  department?: string
+  title?: string; // Optional avec undefined
+  phone?: string;
+  department?: string;
 }
 
 // ✅ database.ts (type Supabase réel)
 export type Contact = {
-  title: string | null    // Nullable, pas optional
-  phone: string | null
-  department: string | null
-}
+  title: string | null; // Nullable, pas optional
+  phone: string | null;
+  department: string | null;
+};
 ```
 
 **Impact** :
+
 - **10+ erreurs TS2322** (Type incompatibility) dans components utilisant Contact
 - **Propagation en cascade** : contact-form-modal, contacts-management-section, unified-organisation-form
 - **Bloque** corrections des erreurs UI (impossible de fixer sans résoudre source)
 
 **Pourquoi ça existe** :
+
 - Interfaces créées **avant** migration Supabase
 - Types générés avec `supabase gen types` mais interfaces manuelles **pas mises à jour**
 - Convention `?:` (optional) utilisée au lieu de `| null` (nullable)
 
 **Fichiers affectés** :
+
 - `src/hooks/use-contacts.ts` (Contact interface)
 - `src/hooks/use-consultation-images.ts` (ConsultationImage interface)
 - `src/hooks/use-products.ts` (Product, ProductImage interfaces)
@@ -85,28 +89,31 @@ Plusieurs entités critiques ont **2 à 8 définitions différentes** à travers
 **Inventaire des duplications** :
 
 #### Contact (3 définitions)
+
 1. `src/hooks/use-contacts.ts` - Interface canonique (19 propriétés)
 2. `src/components/business/contact-form-modal.tsx` - Interface locale (14 propriétés)
 3. `src/components/business/organisation-contacts-manager.tsx` - Type inline
 
 **Conflit** :
+
 ```typescript
 // use-contacts.ts
 export interface Contact {
-  title: string | undefined       // Optional
-  is_primary_contact: boolean    // Required
+  title: string | undefined; // Optional
+  is_primary_contact: boolean; // Required
 }
 
 // contact-form-modal.tsx
 interface Contact {
-  title: string | null            // Nullable (différent!)
-  is_primary_contact?: boolean   // Optional (différent!)
+  title: string | null; // Nullable (différent!)
+  is_primary_contact?: boolean; // Optional (différent!)
 }
 ```
 
 **Résultat** : TS2322 dans `contacts-management-section.tsx` ligne 357 car type passé (`use-contacts.Contact`) incompatible avec type attendu (`contact-form-modal.Contact`)
 
 #### ProductImage (8+ définitions)
+
 1. `src/hooks/use-product-images.ts` - Canonique (public_url: string)
 2. `src/hooks/use-collection-images.ts` - Variante (public_url: string | null)
 3. `src/components/business/product-image-gallery.tsx` - Locale
@@ -117,15 +124,18 @@ interface Contact {
 8. `src/types/catalogue.ts` - Type central (conflit avec hooks)
 
 **Impact** :
+
 - **5+ erreurs TS2322 directes** (type incompatibility)
 - **15+ erreurs bloquées** (impossibles à corriger sans résoudre duplicates)
 - **Code duplication** : 500+ lignes de définitions répétées
 
 #### ConsultationImage (2 définitions)
+
 1. `src/hooks/use-consultation-images.ts` - Canonique
 2. `src/components/business/consultation-image-gallery.tsx` - Locale
 
 **Pourquoi ça existe** :
+
 - **Développement rapide** : Développeurs créent types locaux au lieu d'importer
 - **Manque de documentation** : Types canoniques pas identifiés clairement
 - **Évolution séparée** : Chaque définition évolue indépendamment, créant divergence
@@ -141,6 +151,7 @@ interface Contact {
 Un système de détection d'erreurs basé sur MCP (`@/lib/error-detection/*`) a été **supprimé** du codebase, mais **20+ imports** vers ce système restent actifs, générant 20 erreurs TS2307 (Module Not Found).
 
 **Modules supprimés** :
+
 ```
 @/lib/error-detection/
 ├── verone-error-system.ts        (supprimé)
@@ -151,6 +162,7 @@ Un système de détection d'erreurs basé sur MCP (`@/lib/error-detection/*`) a 
 ```
 
 **Fichiers avec imports orphelins** :
+
 1. `src/hooks/use-error-reporting.ts` (3 imports)
 2. `src/hooks/use-error-reporting-integration.ts` (4 imports)
 3. `src/hooks/use-manual-tests.ts` (1 import)
@@ -164,11 +176,13 @@ Un système de détection d'erreurs basé sur MCP (`@/lib/error-detection/*`) a 
 11. `src/lib/excel-utils.ts` (1 import)
 
 **Impact** :
+
 - **20 erreurs TS2307** (21.7% du total)
 - **Compilation warnings** constants
 - **Code mort** : Hooks et composants inutilisables car dépendances manquantes
 
 **Pourquoi ça existe** :
+
 - **Suppression incomplète** : Modules supprimés mais imports pas nettoyés
 - **BATCH 58 a échoué** : Tentative de correction a créé 228 erreurs (rollback total)
 - **Complexité perçue** : Vu comme "trop complexe" alors que c'est un **Quick Win**
@@ -181,33 +195,38 @@ Un système de détection d'erreurs basé sur MCP (`@/lib/error-detection/*`) a 
 
 **Description** :
 Le hook générique `use-base-hook.ts` utilise des contraintes de types (`extends Database['public']['Tables'][TableName]`) qui sont **incompatibles** avec :
+
 1. Les types Supabase générés
 2. Les tables de test non présentes dans `database.ts`
 3. Les operations d'insertion/update qui nécessitent types partiels
 
 **Problème concret** :
+
 ```typescript
 // use-base-hook.ts ligne 131
 const { data, error } = await supabase
-  .from(tableName)  // ❌ TS2769: Type 'string' not assignable to table names union
-  .insert(createData)  // ❌ TS2769: createData type mismatch
+  .from(tableName) // ❌ TS2769: Type 'string' not assignable to table names union
+  .insert(createData); // ❌ TS2769: createData type mismatch
 
 // Le generic T extends Database['public']['Tables'][TableName]['Row']
 // mais createData est de type Insert<T> qui est différent de Row
 ```
 
 **Impact** :
+
 - **19 erreurs TS2769** (No overload matches)
 - **3 erreurs TS2740** (Type lacks required properties)
 - **use-base-hook.ts** utilisé par **15+ hooks** → propagation
 - **Bloque** utilisation du pattern DRY pour les CRUD operations
 
 **Pourquoi ça existe** :
+
 - **Over-engineering** : Tentative de créer un hook ultra-générique
 - **Types Supabase complexes** : Relations entre Row/Insert/Update pas bien comprises
 - **Test tables** : Tables `test_error_reports`, `test_results` absentes de `database.ts`
 
 **Fichiers affectés** :
+
 - `src/hooks/use-base-hook.ts` (source, 6 erreurs)
 - `src/hooks/use-error-reporting.ts` (2 erreurs, utilise test_error_reports)
 - Tous les hooks utilisant `createGenericHook<T>()` (13 erreurs propagées)
@@ -220,23 +239,23 @@ const { data, error } = await supabase
 
 Distribution des 92 erreurs par **problème structurel** (pas juste par code TS) :
 
-| # | Catégorie | Erreurs | Blocking | Impact | Stratégie |
-|---|-----------|---------|----------|--------|-----------|
-| 1 | **Deleted Module Imports** | 20 | Non | Quick Win | Comment out imports |
-| 2 | **Database Type Misalignment** | 10 | Oui | Haut | Align avec database.ts |
-| 3 | **Supabase Generic Overloads** | 19 | Non | Moyen | Simplifier use-base-hook |
-| 4 | **Duplicate Type Definitions** | 5 | Oui | Haut | Type Unification |
-| 5 | **Null vs Undefined Mismatch** | 8 | Non | Moyen | `?? null` consistency |
-| 6 | **Missing Interface Properties** | 6 | Non | Faible | Add missing props |
-| 7 | **Enum Type Conversions** | 3 | Non | Faible | Add type assertions |
-| 8 | **UI Component Props** | 4 | Non | Faible | Fix shadcn/ui props |
-| 9 | **Storybook Template Imports** | 6 | Non | Nul | Clean templates |
-| 10 | **Implicit Any Index** | 3 | Non | Faible | Add index signatures |
-| 11 | **Spread Type Issues** | 1 | Non | Faible | Explicit object construction |
-| 12 | **Type Instantiation Depth** | 1 | Non | Faible | Simplify nested generics |
-| 13 | **Form Library Resolvers** | 3 | Non | Moyen | Align form types |
-| 14 | **Property Does Not Exist** | 3 | Non | Moyen | Remove invalid accesses |
-| **TOTAL** | **92** | **2 blocking** | - | **8 batches** |
+| #         | Catégorie                        | Erreurs        | Blocking | Impact        | Stratégie                    |
+| --------- | -------------------------------- | -------------- | -------- | ------------- | ---------------------------- |
+| 1         | **Deleted Module Imports**       | 20             | Non      | Quick Win     | Comment out imports          |
+| 2         | **Database Type Misalignment**   | 10             | Oui      | Haut          | Align avec database.ts       |
+| 3         | **Supabase Generic Overloads**   | 19             | Non      | Moyen         | Simplifier use-base-hook     |
+| 4         | **Duplicate Type Definitions**   | 5              | Oui      | Haut          | Type Unification             |
+| 5         | **Null vs Undefined Mismatch**   | 8              | Non      | Moyen         | `?? null` consistency        |
+| 6         | **Missing Interface Properties** | 6              | Non      | Faible        | Add missing props            |
+| 7         | **Enum Type Conversions**        | 3              | Non      | Faible        | Add type assertions          |
+| 8         | **UI Component Props**           | 4              | Non      | Faible        | Fix shadcn/ui props          |
+| 9         | **Storybook Template Imports**   | 6              | Non      | Nul           | Clean templates              |
+| 10        | **Implicit Any Index**           | 3              | Non      | Faible        | Add index signatures         |
+| 11        | **Spread Type Issues**           | 1              | Non      | Faible        | Explicit object construction |
+| 12        | **Type Instantiation Depth**     | 1              | Non      | Faible        | Simplify nested generics     |
+| 13        | **Form Library Resolvers**       | 3              | Non      | Moyen         | Align form types             |
+| 14        | **Property Does Not Exist**      | 3              | Non      | Moyen         | Remove invalid accesses      |
+| **TOTAL** | **92**                           | **2 blocking** | -        | **8 batches** |
 
 ---
 
@@ -259,6 +278,7 @@ BATCH 67: Supabase Overloads (-19)
 ```
 
 **Légende** :
+
 - **Indépendant** : Peut être fait en parallèle
 - **[DÉBLOQUE]** : Débloque autres corrections
 - **Complexe** : Haut risque, faire après les autres
@@ -276,10 +296,11 @@ BATCH 67: Supabase Overloads (-19)
 **Stratégie** : Commenter tous les imports vers `@/lib/error-detection/*`
 
 **Exemple** :
+
 ```typescript
 // ❌ AVANT (use-error-reporting-integration.ts)
-import { ErrorProcessingQueue } from '@/lib/error-detection/error-processing-queue'
-import { VeroneErrorSystem } from '@/lib/error-detection/verone-error-system'
+import { ErrorProcessingQueue } from '@/lib/error-detection/error-processing-queue';
+import { VeroneErrorSystem } from '@/lib/error-detection/verone-error-system';
 
 // ✅ APRÈS
 // import { ErrorProcessingQueue } from '@/lib/error-detection/error-processing-queue'
@@ -288,6 +309,7 @@ import { VeroneErrorSystem } from '@/lib/error-detection/verone-error-system'
 ```
 
 **Fichiers à modifier** (11 fichiers) :
+
 1. `src/hooks/use-error-reporting.ts` - 3 imports
 2. `src/hooks/use-error-reporting-integration.ts` - 4 imports
 3. `src/hooks/use-manual-tests.ts` - 1 import
@@ -301,6 +323,7 @@ import { VeroneErrorSystem } from '@/lib/error-detection/verone-error-system'
 11. `src/lib/excel-utils.ts` - 1 import
 
 **Tests** :
+
 ```bash
 npm run type-check  # Doit montrer 92 → 72 erreurs
 npm run build       # Doit réussir
@@ -320,25 +343,28 @@ npm run build       # Doit réussir
 
 ```typescript
 // src/types/canonical/contact.ts
-import { Database } from '@/types/database'
+import { Database } from '@/types/database';
 
 // ✅ Type de référence aligné avec Supabase
-export type Contact = Database['public']['Tables']['contacts']['Row']
+export type Contact = Database['public']['Tables']['contacts']['Row'];
 
 // Extension si propriétés calculées nécessaires
 export interface ContactWithOrganisation extends Contact {
-  organisation_name?: string  // Enriched field
+  organisation_name?: string; // Enriched field
 }
 ```
 
 ```typescript
 // src/types/canonical/images.ts
-import { Database } from '@/types/database'
+import { Database } from '@/types/database';
 
 // ✅ Types canoniques pour images
-export type ProductImage = Database['public']['Tables']['product_images']['Row']
-export type ConsultationImage = Database['public']['Tables']['consultation_images']['Row']
-export type CollectionImage = Database['public']['Tables']['collection_images']['Row']
+export type ProductImage =
+  Database['public']['Tables']['product_images']['Row'];
+export type ConsultationImage =
+  Database['public']['Tables']['consultation_images']['Row'];
+export type CollectionImage =
+  Database['public']['Tables']['collection_images']['Row'];
 
 // ✅ Convention: public_url est string | null dans database.ts
 ```
@@ -348,19 +374,20 @@ export type CollectionImage = Database['public']['Tables']['collection_images'][
 ```typescript
 // ❌ AVANT (contact-form-modal.tsx)
 interface Contact {
-  id: string
-  organisation_id: string
-  first_name: string
-  title: string | null
+  id: string;
+  organisation_id: string;
+  first_name: string;
+  title: string | null;
   // ... 14 propriétés
 }
 
 // ✅ APRÈS
-import { Contact } from '@/types/canonical/contact'
+import { Contact } from '@/types/canonical/contact';
 // Supprimer définition locale, importer type canonique
 ```
 
 **Fichiers à modifier** :
+
 - **Contact** : Supprimer 2 définitions locales, garder seulement canonical
   - `src/components/business/contact-form-modal.tsx` (supprimer ligne 36-51)
   - `src/components/business/organisation-contacts-manager.tsx` (remplacer inline type)
@@ -377,16 +404,17 @@ import { Contact } from '@/types/canonical/contact'
 ```typescript
 // ❌ AVANT (use-contacts.ts)
 export interface Contact {
-  title?: string  // Optional = string | undefined
+  title?: string; // Optional = string | undefined
 }
 
 // ✅ APRÈS
 export interface Contact {
-  title: string | null  // Nullable comme dans database.ts
+  title: string | null; // Nullable comme dans database.ts
 }
 ```
 
 **Tests** :
+
 ```bash
 npm run type-check  # 72 → 62-67 erreurs (delta -5 à -10)
 # Vérifier aucune nouvelle erreur dans components utilisant Contact
@@ -401,18 +429,19 @@ npm run type-check  # 72 → 62-67 erreurs (delta -5 à -10)
 **Stratégie** : Remplacer `?? undefined` par `?? null` dans composants
 
 **Pattern** :
+
 ```typescript
 // ❌ AVANT
 const item = {
   tarif_maximum: data.tarif_maximum ?? undefined,
-  approved_at: data.approved_at ?? undefined
-}
+  approved_at: data.approved_at ?? undefined,
+};
 
 // ✅ APRÈS
 const item = {
   tarif_maximum: data.tarif_maximum ?? null,
-  approved_at: data.approved_at ?? null
-}
+  approved_at: data.approved_at ?? null,
+};
 ```
 
 **Fichiers** : 6 fichiers avec mismatches détectés
@@ -461,20 +490,21 @@ const item = {
 
 ## 📈 PLAN D'EXÉCUTION OPTIMISÉ (8 Batches)
 
-| Batch | Nom | Durée | Risque | Erreurs | Cumulatif |
-|-------|-----|-------|--------|---------|-----------|
-| 61 | Module Cleanup | 15 min | LOW | -20 | 72 |
-| 62 | Type Unification | 60 min | MED | -8 | 64 |
-| 63 | Null/Undefined | 30 min | LOW | -8 | 56 |
-| 64 | Missing Props | 20 min | LOW | -6 | 50 |
-| 65 | Enum & UI | 20 min | LOW | -9 | 41 |
-| 66 | Storybook | 10 min | NONE | -6 | 35 |
-| 68 | Final Cleanup | 60 min | MED | -16 | 19 |
-| 67 | Supabase Overloads | 90 min | HIGH | -19 | **0** ✅ |
+| Batch | Nom                | Durée  | Risque | Erreurs | Cumulatif |
+| ----- | ------------------ | ------ | ------ | ------- | --------- |
+| 61    | Module Cleanup     | 15 min | LOW    | -20     | 72        |
+| 62    | Type Unification   | 60 min | MED    | -8      | 64        |
+| 63    | Null/Undefined     | 30 min | LOW    | -8      | 56        |
+| 64    | Missing Props      | 20 min | LOW    | -6      | 50        |
+| 65    | Enum & UI          | 20 min | LOW    | -9      | 41        |
+| 66    | Storybook          | 10 min | NONE   | -6      | 35        |
+| 68    | Final Cleanup      | 60 min | MED    | -16     | 19        |
+| 67    | Supabase Overloads | 90 min | HIGH   | -19     | **0** ✅  |
 
 **Total** : ~5h 45min pour atteindre **0 erreur**
 
 **Jalons de validation** :
+
 - Après BATCH 62 : Type-check + MCP Browser console (0 errors)
 - Après BATCH 66 : Build success + E2E tests
 - Après BATCH 67 : Final validation complète
@@ -485,14 +515,14 @@ const item = {
 
 ### Avant/Après
 
-| Métrique | Avant | Après | Cible |
-|----------|-------|-------|-------|
-| Erreurs TypeScript | 92 | 0 | ✅ 0 |
-| Type Safety | ~73% | 100% | ✅ 100% |
-| Duplicate Types | 18+ | 0 | ✅ 0 |
-| Orphan Imports | 20 | 0 | ✅ 0 |
-| Build Time | ~25s | <20s | ✅ <20s |
-| MCP Browser Errors | Unknown | 0 | ✅ 0 |
+| Métrique           | Avant   | Après | Cible   |
+| ------------------ | ------- | ----- | ------- |
+| Erreurs TypeScript | 92      | 0     | ✅ 0    |
+| Type Safety        | ~73%    | 100%  | ✅ 100% |
+| Duplicate Types    | 18+     | 0     | ✅ 0    |
+| Orphan Imports     | 20      | 0     | ✅ 0    |
+| Build Time         | ~25s    | <20s  | ✅ <20s |
+| MCP Browser Errors | Unknown | 0     | ✅ 0    |
 
 ### Indicateurs de Qualité
 
@@ -508,6 +538,7 @@ const item = {
 ### Court Terme (Après atteinte 0 erreur)
 
 1. **Ajouter ESLint rules** pour prévenir régressions :
+
    ```json
    "@typescript-eslint/no-duplicate-imports": "error",
    "@typescript-eslint/consistent-type-imports": "error"

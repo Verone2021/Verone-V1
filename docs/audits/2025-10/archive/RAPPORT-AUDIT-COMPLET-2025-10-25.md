@@ -1,4 +1,5 @@
 # 📊 RAPPORT D'AUDIT COMPLET - VÉRONE BACK OFFICE
+
 **Date**: 25 octobre 2025
 **Testeur**: Claude Code (MCP Playwright Browser)
 **Environnement**: localhost:3000 (npm run dev)
@@ -10,14 +11,14 @@
 
 ### Statistiques Globales
 
-| Métrique | Valeur | Statut |
-|----------|--------|--------|
-| **Pages testées** | 50/50 | ✅ 100% |
-| **Pages OK** | 47/50 | ✅ 94% |
-| **Erreurs critiques** | 2 | ❌ BLOQUANT |
-| **Warnings SLO** | 8 occurrences | ⚠️ Performance |
-| **Errors HTTP 400** | 1 page (6 requêtes) | ⚠️ Fallback actif |
-| **Taux de succès** | 94% | 🟡 Acceptable |
+| Métrique              | Valeur              | Statut            |
+| --------------------- | ------------------- | ----------------- |
+| **Pages testées**     | 50/50               | ✅ 100%           |
+| **Pages OK**          | 47/50               | ✅ 94%            |
+| **Erreurs critiques** | 2                   | ❌ BLOQUANT       |
+| **Warnings SLO**      | 8 occurrences       | ⚠️ Performance    |
+| **Errors HTTP 400**   | 1 page (6 requêtes) | ⚠️ Fallback actif |
+| **Taux de succès**    | 94%                 | 🟡 Acceptable     |
 
 ### Verdict Global: 🟡 **BON AVEC RÉSERVES**
 
@@ -34,6 +35,7 @@ L'application fonctionne correctement dans **94% des cas**, mais **2 erreurs cri
 **Utilisateurs affectés**: Tous les utilisateurs accédant à la vue stocks du catalogue
 
 **Détails techniques**:
+
 ```
 TypeError: Cannot read properties of undefined (reading 'split')
 Fichier: src/components/business/stock-display.tsx:236
@@ -42,6 +44,7 @@ Ligne de code: const colorClasses[color].split(' ')[0]
 
 **Cause racine**: `colorClasses[color]` est `undefined`
 **Solution recommandée**:
+
 ```typescript
 // AVANT (ligne 236)
 <p className={`text-2xl font-bold ${colorClasses[color].split(' ')[0]}`}>
@@ -61,6 +64,7 @@ Ligne de code: const colorClasses[color].split(' ')[0]
 **Utilisateurs affectés**: Tous les utilisateurs voulant voir la liste complète des organisations
 
 **Détails techniques**:
+
 ```
 TypeError: Cannot read properties of undefined (reading 'trim')
 Fichier: src/components/business/organisation-logo.tsx:85
@@ -70,6 +74,7 @@ Code: const words = name.trim().split(/\s+/)
 
 **Cause racine**: Le paramètre `name` est `undefined` lors de l'appel
 **Solution recommandée**:
+
 ```typescript
 // AVANT (ligne 85)
 const getInitials = (name: string): string => {
@@ -92,16 +97,17 @@ const getInitials = (name: string | null | undefined): string => {
 **Seuil SLO**: 2000ms
 **Impact**: Performance dégradée, expérience utilisateur ralentie
 
-| Page | Type Warning | Temps mesuré | Écart |
-|------|--------------|--------------|-------|
-| `/organisation` | activity-stats query | >2000ms | Léger dépassement |
-| `/contacts-organisations` | activity-stats query | >2000ms | Léger dépassement |
-| `/commandes/clients` | activity-stats query | >2000ms | Léger dépassement |
-| `/produits/sourcing/produits` | activity-stats query | >2000ms | Léger dépassement |
-| `/stocks/receptions` | activity-stats query | 3582ms | +77% dépassement |
-| `/stocks/receptions` | activity-stats query | 4752ms | +138% dépassement |
+| Page                          | Type Warning         | Temps mesuré | Écart             |
+| ----------------------------- | -------------------- | ------------ | ----------------- |
+| `/organisation`               | activity-stats query | >2000ms      | Léger dépassement |
+| `/contacts-organisations`     | activity-stats query | >2000ms      | Léger dépassement |
+| `/commandes/clients`          | activity-stats query | >2000ms      | Léger dépassement |
+| `/produits/sourcing/produits` | activity-stats query | >2000ms      | Léger dépassement |
+| `/stocks/receptions`          | activity-stats query | 3582ms       | +77% dépassement  |
+| `/stocks/receptions`          | activity-stats query | 4752ms       | +138% dépassement |
 
 **Recommandation**: Optimiser les requêtes `activity-stats` avec:
+
 - Index database sur `user_id` + `performed_at`
 - Pagination côté serveur
 - Cache Redis pour les stats agrégées
@@ -112,6 +118,7 @@ const getInitials = (name: string | null | undefined): string => {
 **Impact**: ⚠️ Faible - Fallback fonctionnel en place
 **Statut**: Page affiche 21 alertes via méthode alternative
 **Message console**:
+
 ```
 Failed to load resource: the server responded with a status of 400 ()
 @ https://aorroydfjsrygmosnzrl.supabase.co/rest/v1/rpc/get_low_stock_products
@@ -314,6 +321,7 @@ WARNING: Fonction get_low_stock_products non disponible, utilisation requête al
 L'application Vérone Back Office présente une architecture solide avec **94% de pages fonctionnelles**, mais **2 erreurs critiques bloquent l'accès** à des fonctionnalités clés (gestion stocks catalogue et liste organisations).
 
 **Recommandation finale**:
+
 - ✅ **Autoriser passage en staging** après correction des 2 erreurs P0
 - ⚠️ **Bloquer production** tant que les 2 erreurs critiques persistent
 - 🎯 **Sprint urgent de 2h** suffit pour débloquer la situation

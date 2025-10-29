@@ -9,14 +9,14 @@
 
 ## 📊 RÉSUMÉ EXÉCUTIF (30 secondes)
 
-| Métrique | Valeur | Status |
-|----------|--------|--------|
-| **Erreurs TypeScript actuelles** | **313** | 🔴 CRITIQUE |
-| **Erreurs avant rollback** | 92 | ✅ (BATCH 60) |
-| **Erreurs perdues** | **221** | ❌ CATASTROPHIQUE |
-| **Progression perdue** | **70.6%** | 💔 Journée complète |
-| **Temps récupération estimé** | **12h** | ⏱️ 3 sessions |
-| **Régressions détectées** | **0** | ✅ Aucune (retour baseline) |
+| Métrique                         | Valeur    | Status                      |
+| -------------------------------- | --------- | --------------------------- |
+| **Erreurs TypeScript actuelles** | **313**   | 🔴 CRITIQUE                 |
+| **Erreurs avant rollback**       | 92        | ✅ (BATCH 60)               |
+| **Erreurs perdues**              | **221**   | ❌ CATASTROPHIQUE           |
+| **Progression perdue**           | **70.6%** | 💔 Journée complète         |
+| **Temps récupération estimé**    | **12h**   | ⏱️ 3 sessions               |
+| **Régressions détectées**        | **0**     | ✅ Aucune (retour baseline) |
 
 **VERDICT** : Rollback complet vers baseline pré-corrections. Pas de régression fonctionnelle, mais perte totale du travail BATCH 52-60.
 
@@ -26,36 +26,36 @@
 
 ### Distribution par Code d'Erreur
 
-| Code | Type | Erreurs | % Total | Priorité | Difficulté |
-|------|------|---------|---------|----------|------------|
-| **TS2322** | Type incompatibility | **93** | 30% | P1 | ⭐⭐⭐ |
-| **TS2769** | Overload mismatch | **56** | 18% | P2 | ⭐⭐ |
-| **TS2339** | Property not exist | **26** | 8% | P2 | ⭐⭐ |
-| **TS2307** | Module not found | **20** | 6% | P3 | ⭐ |
-| **TS2353** | Unknown properties | **15** | 5% | P2 | ⭐ |
-| **TS18048** | Possibly undefined | **12** | 4% | P1 | ⭐ |
-| **TS2352** | Conversion mistake | **11** | 4% | P2 | ⭐⭐ |
-| **TS2367** | Condition always true/false | **9** | 3% | P3 | ⭐ |
-| **TS2304** | Cannot find name | **9** | 3% | P2 | ⭐ |
-| **TS7053** | Implicit any index | **7** | 2% | P3 | ⭐ |
-| **TS2554** | Expected arguments | **7** | 2% | P2 | ⭐⭐ |
-| **Autres** | Divers | **48** | 15% | P2-P3 | ⭐-⭐⭐ |
-| **TOTAL** | - | **313** | 100% | - | - |
+| Code        | Type                        | Erreurs | % Total | Priorité | Difficulté |
+| ----------- | --------------------------- | ------- | ------- | -------- | ---------- |
+| **TS2322**  | Type incompatibility        | **93**  | 30%     | P1       | ⭐⭐⭐     |
+| **TS2769**  | Overload mismatch           | **56**  | 18%     | P2       | ⭐⭐       |
+| **TS2339**  | Property not exist          | **26**  | 8%      | P2       | ⭐⭐       |
+| **TS2307**  | Module not found            | **20**  | 6%      | P3       | ⭐         |
+| **TS2353**  | Unknown properties          | **15**  | 5%      | P2       | ⭐         |
+| **TS18048** | Possibly undefined          | **12**  | 4%      | P1       | ⭐         |
+| **TS2352**  | Conversion mistake          | **11**  | 4%      | P2       | ⭐⭐       |
+| **TS2367**  | Condition always true/false | **9**   | 3%      | P3       | ⭐         |
+| **TS2304**  | Cannot find name            | **9**   | 3%      | P2       | ⭐         |
+| **TS7053**  | Implicit any index          | **7**   | 2%      | P3       | ⭐         |
+| **TS2554**  | Expected arguments          | **7**   | 2%      | P2       | ⭐⭐       |
+| **Autres**  | Divers                      | **48**  | 15%     | P2-P3    | ⭐-⭐⭐    |
+| **TOTAL**   | -                           | **313** | 100%    | -        | -          |
 
 ### Top 10 Fichiers les Plus Affectés
 
-| Fichier | Erreurs | Types Principaux |
-|---------|---------|------------------|
-| `payment-form.tsx` | 5 | TS2769 (Supabase overload) |
-| `use-user-module-metrics.ts` | 4 | TS2769 (RPC calls) |
-| `error-reporting-dashboard.tsx` | 4 | TS2307 (Module missing) |
-| `complete-product-wizard.tsx` | 4 | TS2322, TS2339 |
-| `collection-products-modal.tsx` | 3 | TS2322 (Type mismatch) |
-| `use-base-hook.ts` | 2 | TS2769 (Generic overload) |
-| `collections/[collectionId]/page.tsx` | 4 | TS2322, TS2353, TS2339 |
-| `variantes/[groupId]/page.tsx` | 4 | TS2322, TS2339 |
-| `categories/[categoryId]/page.tsx` | 3 | TS2322, TS2769 |
-| `[productId]/page.tsx` | 5 | TS2322, TS18047, TS2719 |
+| Fichier                               | Erreurs | Types Principaux           |
+| ------------------------------------- | ------- | -------------------------- |
+| `payment-form.tsx`                    | 5       | TS2769 (Supabase overload) |
+| `use-user-module-metrics.ts`          | 4       | TS2769 (RPC calls)         |
+| `error-reporting-dashboard.tsx`       | 4       | TS2307 (Module missing)    |
+| `complete-product-wizard.tsx`         | 4       | TS2322, TS2339             |
+| `collection-products-modal.tsx`       | 3       | TS2322 (Type mismatch)     |
+| `use-base-hook.ts`                    | 2       | TS2769 (Generic overload)  |
+| `collections/[collectionId]/page.tsx` | 4       | TS2322, TS2353, TS2339     |
+| `variantes/[groupId]/page.tsx`        | 4       | TS2322, TS2339             |
+| `categories/[categoryId]/page.tsx`    | 3       | TS2322, TS2769             |
+| `[productId]/page.tsx`                | 5       | TS2322, TS18047, TS2719    |
 
 ---
 
@@ -66,6 +66,7 @@
 **Pattern dominant** : Null/undefined incompatibility, duplicate type definitions
 
 **Sous-clusters** :
+
 1. **Null → Undefined conversions** (≈35 erreurs)
    - Pattern : `Type 'null' is not assignable to 'undefined'`
    - Fichiers : use-collections.ts, use-products.ts, use-consultation-images.ts
@@ -96,6 +97,7 @@
 **Pattern dominant** : Supabase RPC calls, .insert() signatures, date constructors
 
 **Sous-clusters** :
+
 1. **Supabase RPC Calls** (≈30 erreurs)
    - Pattern : Parameter type mismatch with RPC function signature
    - Fichiers : use-user-module-metrics.ts, use-error-reporting.ts
@@ -126,6 +128,7 @@
 **Pattern dominant** : Missing properties on interfaces, nested property access
 
 **Sous-clusters** :
+
 1. **Missing Interface Properties** (≈15 erreurs)
    - Propriétés : category, minimumSellingPrice, family, total_forecasted_in, fetchProducts
    - Fichiers : catalogue/page.tsx, stocks/page.tsx, variantes/[groupId]/page.tsx
@@ -151,6 +154,7 @@
 **Pattern dominant** : Error-detection system supprimé, templates Storybook
 
 **Modules manquants** :
+
 - `@/lib/error-detection/verone-error-system` (5 imports)
 - `@/lib/error-detection/error-processing-queue` (4 imports)
 - `@/lib/error-detection/supabase-error-connector` (2 imports)
@@ -161,13 +165,15 @@
 - `./use-manual-tests` (1 import)
 
 **Fichiers affectés** :
+
 - error-reporting-dashboard.tsx (4 erreurs)
 - use-error-reporting.ts (3 erreurs)
-- ai/*.ts (4 erreurs)
+- ai/\*.ts (4 erreurs)
 - Stories templates (3 erreurs)
 - Divers (6 erreurs)
 
 **Stratégie** :
+
 1. Commenter tous imports error-detection system (13 occurrences)
 2. Supprimer imports templates Storybook inutilisés (3 occurrences)
 3. Créer stub @/types/sales-order.ts si nécessaire
@@ -183,12 +189,14 @@
 **Pattern** : Object literal avec propriétés non-définies dans type target
 
 **Propriétés invalides identifiées** :
+
 - `abby_customer_id` (2 occurrences - partner-form-modal.tsx)
 - `meta_title` (1 occurrence - collections/[collectionId]/page.tsx)
 - `meta_description` (1 occurrence - collections/[collectionId]/page.tsx)
 - Autres propriétés à identifier dans 11 erreurs restantes
 
 **Stratégie** :
+
 1. Vérifier schema database si propriété devrait exister
 2. Si oui : Ajouter dans interface UpdateOrganisationData/UpdateCollectionData
 3. Si non : Supprimer ligne ou renommer propriété
@@ -203,11 +211,13 @@
 **Pattern** : Access property/method on possibly undefined object
 
 **Exemples** :
+
 - `product.stock_quantity` is possibly 'null'
 - `item.products` is possibly 'undefined'
 - Array access without length check
 
 **Stratégie** :
+
 - Optional chaining : `product.stock_quantity?.toFixed()`
 - Null coalescing : `product.stock_quantity ?? 0`
 - Guards : `if (item.products) { ... }`
@@ -220,6 +230,7 @@
 ### CLUSTERS 7-10 : Erreurs Diverses (≈101 erreurs)
 
 **Répartition** :
+
 - TS2352 (Conversion mistake) : 11 erreurs
 - TS2367 (Condition always) : 9 erreurs
 - TS2304 (Cannot find name) : 9 erreurs
@@ -242,6 +253,7 @@
 ### Comparaison avec Commits Perdus
 
 **Commits analysés** :
+
 - `cff2a0d` : BATCH 3B - TS2345 elimination (58 fixes)
 - `9f83d3e` : BATCH 3A - TS2345 fixes (48 fixes)
 - `975f05b` : BATCH 2 - TS2345 pages (15 fixes)
@@ -250,6 +262,7 @@
 **Erreurs TS2345 actuelles** : 5 (vs 148 résolues dans batches perdus)
 
 **CONSTAT** :
+
 - ✅ Aucune régression détectée (état = baseline pré-corrections)
 - ❌ Travail BATCH 52-60 complètement perdu (221 erreurs)
 - ℹ️ Erreurs TS2345 résolues étaient des symptômes d'autres problèmes structurels
@@ -257,6 +270,7 @@
 ### Patterns Réutilisables des Batches Perdus
 
 **Stratégies validées** (à réappliquer) :
+
 1. ✅ Null coalescing : `value ?? fallback`
 2. ✅ Optional chaining : `object?.property`
 3. ✅ Type assertions after validation : `value as TargetType`
@@ -264,6 +278,7 @@
 5. ✅ gcTime parameter : Remplacer cacheTime deprecated
 
 **Anti-patterns identifiés** :
+
 - ❌ Spread operator avec données Supabase → ajoute propriétés non-définies
 - ❌ Mixing null/undefined sans conversion explicite
 - ❌ Types dupliqués sans type guards
@@ -274,12 +289,12 @@
 
 ### Objectifs par Session
 
-| Session | Durée | Erreurs Avant | Erreurs Après | Delta | % Progrès |
-|---------|-------|---------------|---------------|-------|-----------|
-| **SESSION 1** (Aujourd'hui) | 3h | 313 | 230 | **-83** | 26% |
-| **SESSION 2** (J+1) | 4h | 230 | 145 | **-85** | 27% |
-| **SESSION 3** (J+2) | 5h | 145 | 0 | **-145** | 47% |
-| **TOTAL** | **12h** | 313 | 0 | **-313** | 100% |
+| Session                     | Durée   | Erreurs Avant | Erreurs Après | Delta    | % Progrès |
+| --------------------------- | ------- | ------------- | ------------- | -------- | --------- |
+| **SESSION 1** (Aujourd'hui) | 3h      | 313           | 230           | **-83**  | 26%       |
+| **SESSION 2** (J+1)         | 4h      | 230           | 145           | **-85**  | 27%       |
+| **SESSION 3** (J+2)         | 5h      | 145           | 0             | **-145** | 47%       |
+| **TOTAL**                   | **12h** | 313           | 0             | **-313** | 100%      |
 
 ---
 
@@ -292,13 +307,16 @@
 **Difficulté** : FACILE
 
 **Actions** :
+
 1. ✅ Commenter imports `@/lib/error-detection/*` (13 occurrences)
+
    ```typescript
    // import { veroneErrorSystem } from '@/lib/error-detection/verone-error-system'
    // import { errorProcessingQueue } from '@/lib/error-detection/error-processing-queue'
    ```
 
 2. ✅ Supprimer imports templates Storybook (3 occurrences)
+
    ```typescript
    // Supprimer lignes avec @/components/path/to/component-name
    ```
@@ -314,11 +332,13 @@
    ```
 
 **Validation** :
+
 - ✅ `npm run type-check` : 313 → 293 erreurs
 - ✅ `npm run build` : Success
 - ✅ MCP Browser `/dashboard` : 0 console errors
 
 **Commit** :
+
 ```
 fix(types): BATCH 1 - Comment error-detection imports - 20 errors fixed
 
@@ -348,11 +368,13 @@ Co-Authored-By: Claude <noreply@anthropic.com>
 **Difficulté** : FACILE
 
 **Fichiers** :
+
 1. `partner-form-modal.tsx` (2 erreurs - abby_customer_id)
 2. `collections/[collectionId]/page.tsx` (2 erreurs - meta_title, meta_description)
 3. Autres 11 erreurs à identifier
 
 **Stratégie** :
+
 ```typescript
 // AVANT
 updateData: {
@@ -375,11 +397,13 @@ interface UpdateOrganisationData {
 ```
 
 **Validation** :
+
 - ✅ `npm run type-check` : 293 → 278 erreurs
 - ✅ `npm run build` : Success
 - ✅ MCP Browser `/organisations`, `/produits/catalogue/collections` : 0 console errors
 
 **Commit** :
+
 ```
 fix(types): BATCH 2 - Remove invalid object properties - 15 errors fixed
 
@@ -409,6 +433,7 @@ Co-Authored-By: Claude <noreply@anthropic.com>
 **Difficulté** : MOYEN
 
 **Erreurs ciblées** :
+
 1. `catalogue/page.tsx` - `filters.category` not exist (1 erreur)
 2. `catalogue/page.tsx` - FilterOption value undefined (1 erreur)
 3. `stocks/page.tsx` - `minimumSellingPrice` not exist (1 erreur)
@@ -420,29 +445,32 @@ Co-Authored-By: Claude <noreply@anthropic.com>
 9. Autres ciblées (4 erreurs)
 
 **Stratégie** :
+
 ```typescript
 // Pattern 1 : Optional chaining
-filters.category  // ❌ Error
-filters.category ?? []  // ✅ Fix
+filters.category; // ❌ Error
+filters.category ?? []; // ✅ Fix
 
 // Pattern 2 : Add to interface
 interface StockOverview {
   // ... existing
-  total_forecasted_in?: number;  // ✅ Add
+  total_forecasted_in?: number; // ✅ Add
   total_forecasted_out?: number;
 }
 
 // Pattern 3 : Nested optional chaining
-subcategory.family  // ❌ Error
-subcategory?.family  // ✅ Fix
+subcategory.family; // ❌ Error
+subcategory?.family; // ✅ Fix
 ```
 
 **Validation** :
+
 - ✅ `npm run type-check` : 278 → 265 erreurs
 - ✅ `npm run build` : Success
 - ✅ MCP Browser `/produits/catalogue`, `/stocks`, `/stocks/inventaire` : 0 console errors
 
 **Commit** :
+
 ```
 fix(types): BATCH 3 - Fix missing properties with optional chaining - 13 errors fixed
 
@@ -468,6 +496,7 @@ Co-Authored-By: Claude <noreply@anthropic.com>
 #### CHECKPOINT SESSION 1
 
 **Résultats** :
+
 - ✅ Erreurs : 313 → 265 (-48 erreurs, 15.3%)
 - ✅ Build : Success maintenu
 - ✅ Console : 0 errors MCP Browser
@@ -487,6 +516,7 @@ Co-Authored-By: Claude <noreply@anthropic.com>
 **Difficulté** : COMPLEXE
 
 **Sous-groupes** :
+
 1. **Simple null→undefined** (25 erreurs, 40 min)
    - Pattern : `value ?? undefined`
    - Fichiers : use-collections.ts, use-categories.ts, etc.
@@ -500,19 +530,23 @@ Co-Authored-By: Claude <noreply@anthropic.com>
    - Fichiers : use-product-colors.ts, consultation-image-gallery.tsx
 
 **Stratégie validée** (BATCH 60) :
+
 ```typescript
 // ✅ Pattern qui fonctionne
 return {
   field1: obj.field1,
-  field2: obj.field2 ?? null,  // Interface attend | null
-  nested: obj.nested ? {
-    ...obj.nested,
-    prop: obj.nested.prop ?? undefined
-  } : undefined
-} as TargetInterface
+  field2: obj.field2 ?? null, // Interface attend | null
+  nested: obj.nested
+    ? {
+        ...obj.nested,
+        prop: obj.nested.prop ?? undefined,
+      }
+    : undefined,
+} as TargetInterface;
 ```
 
 **Validation** :
+
 - ✅ type-check : 265 → 215 erreurs
 - ✅ build : Success
 - ✅ MCP Browser pages affectées : 0 console errors
@@ -526,6 +560,7 @@ return {
 **Difficulté** : MOYEN
 
 **Fichiers prioritaires** :
+
 - payment-form.tsx (5 erreurs)
 - use-user-module-metrics.ts (4 erreurs)
 - create-individual-customer-modal.tsx (2 erreurs)
@@ -533,12 +568,15 @@ return {
 - Autres (22 erreurs)
 
 **Stratégie** :
+
 1. Régénérer types Supabase si nécessaire :
+
    ```bash
    supabase gen types typescript --local > src/types/database.ts
    ```
 
 2. Ajuster RPC calls :
+
    ```typescript
    // Fix parameter types selon generated types
    .rpc('function_name', { param: value as ExpectedType })
@@ -550,6 +588,7 @@ return {
    ```
 
 **Validation** :
+
 - ✅ type-check : 215 → 180 erreurs
 - ✅ build : Success
 - ✅ MCP Browser `/finance/depenses` : 0 console errors
@@ -559,6 +598,7 @@ return {
 #### CHECKPOINT SESSION 2
 
 **Résultats** :
+
 - ✅ Erreurs : 265 → 180 (-85 erreurs, 32%)
 - ✅ Commits : 2 commits atomiques
 - ✅ Temps : 4h réelles
@@ -570,6 +610,7 @@ return {
 #### BATCH 5 : Supabase Overloads Part 2 (90 min, -21 erreurs)
 
 **Fichiers restants** :
+
 - use-base-hook.ts (2 erreurs)
 - invoices-list.tsx (1 erreur)
 - profile/page.tsx (1 erreur)
@@ -585,12 +626,14 @@ return {
 **Difficulté** : COMPLEXE
 
 **Types à unifier** :
+
 - Contact (2 définitions)
 - ProductImage (2 définitions)
 - ConsultationImage (2 définitions)
 - SourcingProduct (2 définitions)
 
 **Stratégie** :
+
 1. Créer `src/types/canonical/index.ts` avec types de référence
 2. Aligner avec `src/types/database.ts` (Supabase source of truth)
 3. Remplacer toutes définitions locales
@@ -609,6 +652,7 @@ return {
 #### CHECKPOINT SESSION 3
 
 **Résultats FINAUX** :
+
 - ✅ Erreurs : 180 → 0 (-180 erreurs, 100%)
 - ✅ Build : Success (<20s)
 - ✅ Type Safety : 100%
@@ -693,13 +737,13 @@ return {
 
 ### Objectifs SLOs
 
-| Métrique | Objectif | Actuel | Status | Target J+3 |
-|----------|----------|--------|--------|------------|
-| Erreurs TypeScript | 0 | 313 | 🔴 CRITIQUE | 0 ✅ |
-| Type Safety | 100% | 65% | 🔴 FAIBLE | 100% ✅ |
-| Build Time | <20s | ~25s | ⚠️ OK | <20s ✅ |
-| Dashboard Load | <2s | <2s | ✅ OK | <2s ✅ |
-| Console Errors | 0 | 0 | ✅ OK | 0 ✅ |
+| Métrique           | Objectif | Actuel | Status      | Target J+3 |
+| ------------------ | -------- | ------ | ----------- | ---------- |
+| Erreurs TypeScript | 0        | 313    | 🔴 CRITIQUE | 0 ✅       |
+| Type Safety        | 100%     | 65%    | 🔴 FAIBLE   | 100% ✅    |
+| Build Time         | <20s     | ~25s   | ⚠️ OK       | <20s ✅    |
+| Dashboard Load     | <2s      | <2s    | ✅ OK       | <2s ✅     |
+| Console Errors     | 0        | 0      | ✅ OK       | 0 ✅       |
 
 ### Impact Business
 
@@ -713,11 +757,13 @@ return {
 ## 📁 FICHIERS GÉNÉRÉS
 
 **Logs & Exports** :
+
 - ✅ `ts-errors-current.log` (export complet 313 erreurs)
 - ✅ `AUDIT-POST-ROLLBACK-2025-10-28.md` (ce rapport)
 - 📋 `TS_ERRORS_PLAN.md` (à mettre à jour)
 
 **À créer SESSION 1** :
+
 - `ts-errors-clustering-detailed.json` (clustering automatique)
 - `BATCH-01-MODULE-NOT-FOUND.md` (rapport batch 1)
 - `BATCH-02-UNKNOWN-PROPERTIES.md` (rapport batch 2)

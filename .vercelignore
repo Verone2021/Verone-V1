@@ -15,6 +15,9 @@ out/
 .playwright-mcp/
 coverage/
 
+# MCP Tools Cache
+.serena/
+
 # Environment
 .env*.local
 

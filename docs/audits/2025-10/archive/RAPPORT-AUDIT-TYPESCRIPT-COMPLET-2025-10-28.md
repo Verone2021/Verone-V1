@@ -22,12 +22,12 @@ Durée estimée totale:   18-20 heures (3-4 jours @ 5h/jour)
 
 ### Répartition par Priorité
 
-| Priorité | Erreurs | Familles | Durée Estimée | Statut |
-|----------|---------|----------|---------------|--------|
-| **P0 - BLOCKING** | 0 | 0 | 0h | ✅ Aucune erreur bloquante |
-| **P1 - CRITICAL** | 296 | 6 | ~8h | ⚠️ Correction obligatoire |
-| **P2 - HIGH** | 124 | 9 | ~6h | ⚡ Correction recommandée |
-| **P3 - LOW** | 39 | 18 | ~4h | 💡 Correction optionnelle |
+| Priorité          | Erreurs | Familles | Durée Estimée | Statut                     |
+| ----------------- | ------- | -------- | ------------- | -------------------------- |
+| **P0 - BLOCKING** | 0       | 0        | 0h            | ✅ Aucune erreur bloquante |
+| **P1 - CRITICAL** | 296     | 6        | ~8h           | ⚠️ Correction obligatoire  |
+| **P2 - HIGH**     | 124     | 9        | ~6h           | ⚡ Correction recommandée  |
+| **P3 - LOW**      | 39      | 18       | ~4h           | 💡 Correction optionnelle  |
 
 ---
 
@@ -36,11 +36,13 @@ Durée estimée totale:   18-20 heures (3-4 jours @ 5h/jour)
 ### Tests MCP Browser Effectués
 
 **Page 1: /dashboard**
+
 - **Console**: 0 erreurs ✅
 - **État**: Chargement normal
 - **Verdict**: PASS
 
 **Page 2: /contacts-organisations**
+
 - **Console**: 5 ERREURS détectées ❌
   - `Erreur useStockOrdersMetrics: TypeError: Failed to fetch` (4×)
   - `TypeError: Failed to fetch` (1×)
@@ -48,6 +50,7 @@ Durée estimée totale:   18-20 heures (3-4 jours @ 5h/jour)
 - **Verdict**: FAIL selon règle zero tolerance
 
 **Page 3: /produits/sourcing**
+
 - **Console**: 0 erreurs ✅ (logs activity tracking normaux)
 - **État**: Chargement complet
 - **Verdict**: PASS
@@ -57,6 +60,7 @@ Durée estimée totale:   18-20 heures (3-4 jours @ 5h/jour)
 **CONCLUSION CRITIQUE**: Les erreurs console sur `/contacts-organisations` sont **PRÉ-EXISTANTES**.
 
 **Preuves**:
+
 1. Hook `useStockOrdersMetrics` **NON utilisé** dans module `/contacts-organisations`
 2. Corrections `use-pricing.ts` et `use-price-lists.ts` touchent uniquement système pricing
 3. Aucun lien technique entre pricing hooks et stock metrics
@@ -71,6 +75,7 @@ Durée estimée totale:   18-20 heures (3-4 jours @ 5h/jour)
 ### FAMILLE 1: TS2345 - Argument Type Mismatch
 
 **Statistiques**:
+
 - **Occurrences**: 141 erreurs
 - **Fichiers impactés**: 84 fichiers
 - **Priorité**: P1 (CRITICAL)
@@ -78,19 +83,23 @@ Durée estimée totale:   18-20 heures (3-4 jours @ 5h/jour)
 - **Durée estimée**: 3-4 heures
 
 **Pattern Technique**:
+
 ```typescript
 // ❌ AVANT (Erreur TS2345)
-const result = await supabase.from('products').select('*')
+const result = await supabase.from('products').select('*');
 // Type inféré: PostgrestSingleResponse<Database['public']['Tables']>
 // Attendu: PostgrestSingleResponse<Product[]>
 
 // ✅ APRÈS (Correction)
-const result = await supabase.from('products').select('*') as unknown as PostgrestSingleResponse<Product[]>
+const result = (await supabase
+  .from('products')
+  .select('*')) as unknown as PostgrestSingleResponse<Product[]>;
 // Ou
-const result = await (supabase as any).from('products').select('*')
+const result = await (supabase as any).from('products').select('*');
 ```
 
 **Stratégie de Correction**:
+
 1. **Batch 1**: Hooks (30-40 erreurs) - Fichiers `src/hooks/use-*.ts`
 2. **Batch 2**: Pages (30-40 erreurs) - Fichiers `src/app/**/page.tsx`
 3. **Batch 3**: Components (30-40 erreurs) - Fichiers `src/components/**/*.tsx`
@@ -99,6 +108,7 @@ const result = await (supabase as any).from('products').select('*')
 **Commits Prévus**: 4 commits avec tests MCP Browser après chacun
 
 **Fichiers Top Impactés**:
+
 ```
 src/hooks/use-base-hook.ts                    (12 erreurs)
 src/hooks/use-consultations.ts                 (9 erreurs)
@@ -112,6 +122,7 @@ src/app/produits/[productId]/page.tsx          (8 erreurs)
 ### FAMILLE 2: TS2322 - Type Assignment Mismatch
 
 **Statistiques**:
+
 - **Occurrences**: 93 erreurs
 - **Fichiers impactés**: 60 fichiers
 - **Priorité**: P1 (CRITICAL)
@@ -119,19 +130,23 @@ src/app/produits/[productId]/page.tsx          (8 erreurs)
 - **Durée estimée**: 2-3 heures
 
 **Pattern Technique**:
+
 ```typescript
 // ❌ AVANT (Erreur TS2322)
-const data: Product[] = await fetchProducts()
+const data: Product[] = await fetchProducts();
 // Type retourné: (Product | null)[]
 // Type attendu: Product[]
 
 // ✅ APRÈS (Correction)
-const data: Product[] = (await fetchProducts()).filter((p): p is Product => p !== null)
+const data: Product[] = (await fetchProducts()).filter(
+  (p): p is Product => p !== null
+);
 // Ou avec casting sécurisé
-const data: Product[] = (await fetchProducts() as unknown as Product[]) || []
+const data: Product[] = ((await fetchProducts()) as unknown as Product[]) || [];
 ```
 
 **Stratégie de Correction**:
+
 - Type casting avec `as unknown as Type`
 - Null coalescing operator `??`
 - Type guards pour filtrage
@@ -143,6 +158,7 @@ const data: Product[] = (await fetchProducts() as unknown as Product[]) || []
 ### FAMILLE 3: TS2339 - Property Does Not Exist
 
 **Statistiques**:
+
 - **Occurrences**: 31 erreurs
 - **Fichiers impactés**: 22 fichiers
 - **Priorité**: P1 (CRITICAL)
@@ -150,23 +166,25 @@ const data: Product[] = (await fetchProducts() as unknown as Product[]) || []
 - **Durée estimée**: 1-2 heures
 
 **Pattern Technique**:
+
 ```typescript
 // ❌ AVANT (Erreur TS2339)
-const name = product.display_name
+const name = product.display_name;
 // Type: Product n'a pas de propriété 'display_name'
 
 // ✅ APRÈS (Correction Option 1: Étendre type)
 interface ProductExtended extends Product {
-  display_name?: string
+  display_name?: string;
 }
 
 // ✅ APRÈS (Correction Option 2: Index signature)
-const name = (product as any).display_name
+const name = (product as any).display_name;
 // Ou avec type guard
-const name = 'display_name' in product ? product.display_name : product.name
+const name = 'display_name' in product ? product.display_name : product.name;
 ```
 
 **Stratégie de Correction**:
+
 - Étendre types Database avec propriétés manquantes
 - Index signatures pour propriétés dynamiques
 - Type guards pour accès conditionnel
@@ -176,6 +194,7 @@ const name = 'display_name' in product ? product.display_name : product.name
 ### FAMILLE 4: TS2352 - Unsafe Type Conversion
 
 **Statistiques**:
+
 - **Occurrences**: 15 erreurs
 - **Fichiers impactés**: 10 fichiers
 - **Priorité**: P1 (CRITICAL)
@@ -183,13 +202,14 @@ const name = 'display_name' in product ? product.display_name : product.name
 - **Durée estimée**: 1 heure
 
 **Pattern Technique**:
+
 ```typescript
 // ❌ AVANT (Erreur TS2352)
-const data = result as Product[]
+const data = result as Product[];
 // Conversion directe jugée unsafe
 
 // ✅ APRÈS (Correction)
-const data = result as unknown as Product[]
+const data = result as unknown as Product[];
 // Double assertion via 'unknown' (pattern sécurisé)
 ```
 
@@ -200,6 +220,7 @@ const data = result as unknown as Product[]
 ### FAMILLE 5: TS18048 - Possibly Undefined Access
 
 **Statistiques**:
+
 - **Occurrences**: 12 erreurs
 - **Fichiers impactés**: 5 fichiers
 - **Priorité**: P1 (CRITICAL)
@@ -207,13 +228,14 @@ const data = result as unknown as Product[]
 - **Durée estimée**: 30 minutes
 
 **Pattern Technique**:
+
 ```typescript
 // ❌ AVANT (Erreur TS18048)
-const total = items.reduce((sum, item) => sum + item.price, 0)
+const total = items.reduce((sum, item) => sum + item.price, 0);
 // item.price possiblement undefined
 
 // ✅ APRÈS (Correction)
-const total = items.reduce((sum, item) => sum + (item.price ?? 0), 0)
+const total = items.reduce((sum, item) => sum + (item.price ?? 0), 0);
 // Null coalescing operator
 ```
 
@@ -224,6 +246,7 @@ const total = items.reduce((sum, item) => sum + (item.price ?? 0), 0)
 ### FAMILLE 6: TS18047 - Possibly Null Access
 
 **Statistiques**:
+
 - **Occurrences**: 4 erreurs
 - **Fichiers impactés**: 3 fichiers
 - **Priorité**: P1 (CRITICAL)
@@ -231,13 +254,14 @@ const total = items.reduce((sum, item) => sum + (item.price ?? 0), 0)
 - **Durée estimée**: 15 minutes
 
 **Pattern Technique**:
+
 ```typescript
 // ❌ AVANT (Erreur TS18047)
-const name = user.profile.name
+const name = user.profile.name;
 // user.profile possiblement null
 
 // ✅ APRÈS (Correction)
-const name = user.profile?.name ?? 'Unknown'
+const name = user.profile?.name ?? 'Unknown';
 // Optional chaining + fallback
 ```
 
@@ -248,6 +272,7 @@ const name = user.profile?.name ?? 'Unknown'
 ### FAMILLE 7: TS2769 - No Overload Matches Call
 
 **Statistiques**:
+
 - **Occurrences**: 63 erreurs
 - **Fichiers impactés**: 33 fichiers
 - **Priorité**: P2 (HIGH)
@@ -260,6 +285,7 @@ const name = user.profile?.name ?? 'Unknown'
 ### FAMILLE 8: TS2307 - Cannot Find Module
 
 **Statistiques**:
+
 - **Occurrences**: 20 erreurs
 - **Fichiers impactés**: 12 fichiers
 - **Priorité**: P2 (HIGH)
@@ -272,6 +298,7 @@ const name = user.profile?.name ?? 'Unknown'
 ### FAMILLE 9: TS2353 - Unknown Property in Object
 
 **Statistiques**:
+
 - **Occurrences**: 14 erreurs
 - **Fichiers impactés**: 10 fichiers
 - **Priorité**: P2 (HIGH)
@@ -283,18 +310,18 @@ const name = user.profile?.name ?? 'Unknown'
 
 ## 📁 TOP 10 FICHIERS IMPACTÉS
 
-| Rang | Fichier | Erreurs | Catégorie | Priorité |
-|------|---------|---------|-----------|----------|
-| 1 | `src/hooks/use-bank-reconciliation.ts` | 13 | Hooks Finance | P1 |
-| 2 | `src/hooks/use-base-hook.ts` | 12 | Hooks Core | P1 |
-| 3 | `src/hooks/use-consultations.ts` | 9 | Hooks Consultations | P1 |
-| 4 | `src/lib/google-merchant/sync-processor.ts` | 9 | Lib Sync | P1 |
-| 5 | `src/app/produits/[productId]/page.tsx` | 8 | Pages Produits | P1 |
-| 6 | `src/app/.../page.tsx` (autre) | 8 | Pages | P1 |
-| 7 | `src/hooks/use-movements-history.ts` | 8 | Hooks Stocks | P1 |
-| 8 | `src/hooks/use-products.ts` | 8 | Hooks Produits | P1 |
-| 9 | `src/hooks/use-sourcing-products.ts` | 8 | Hooks Sourcing | P1 |
-| 10 | `src/components/finance/payment-form.tsx` | 7 | Forms Finance | P1 |
+| Rang | Fichier                                     | Erreurs | Catégorie           | Priorité |
+| ---- | ------------------------------------------- | ------- | ------------------- | -------- |
+| 1    | `src/hooks/use-bank-reconciliation.ts`      | 13      | Hooks Finance       | P1       |
+| 2    | `src/hooks/use-base-hook.ts`                | 12      | Hooks Core          | P1       |
+| 3    | `src/hooks/use-consultations.ts`            | 9       | Hooks Consultations | P1       |
+| 4    | `src/lib/google-merchant/sync-processor.ts` | 9       | Lib Sync            | P1       |
+| 5    | `src/app/produits/[productId]/page.tsx`     | 8       | Pages Produits      | P1       |
+| 6    | `src/app/.../page.tsx` (autre)              | 8       | Pages               | P1       |
+| 7    | `src/hooks/use-movements-history.ts`        | 8       | Hooks Stocks        | P1       |
+| 8    | `src/hooks/use-products.ts`                 | 8       | Hooks Produits      | P1       |
+| 9    | `src/hooks/use-sourcing-products.ts`        | 8       | Hooks Sourcing      | P1       |
+| 10   | `src/components/finance/payment-form.tsx`   | 7       | Forms Finance       | P1       |
 
 **Total erreurs Top 10**: 90 erreurs (19.6% du total)
 
@@ -341,6 +368,7 @@ FAMILLE 2 (TS2322 - 93 erreurs)
 ```
 
 **Checkpoints Intermédiaires Phase 1**:
+
 ```
 ├─ Après Batch 1:     424 erreurs (Delta: -35)
 ├─ Après Batch 2:     389 erreurs (Delta: -35)
@@ -360,11 +388,13 @@ FAMILLE 2 (TS2322 - 93 erreurs)
 **Objectif**: Stabiliser incompatibilités type non-critiques
 
 **Workflow**:
+
 - 1 famille = 1 commit
 - Tests identiques Phase 1
 - 4 commits prévus (top 3 familles + regroupement petites familles)
 
 **Checkpoints Phase 2**:
+
 ```
 ├─ Après Famille 7 (TS2769):    100 erreurs (Delta: -63)
 ├─ Après Famille 8 (TS2307):     80 erreurs (Delta: -20)
@@ -378,11 +408,13 @@ FAMILLE 2 (TS2322 - 93 erreurs)
 **Objectif**: Éliminer warnings et implicit any
 
 **Workflow**:
+
 - Grouper 18 petites familles par catégorie
 - 3-4 commits maximum
 - Tests allégés (type-check + build uniquement)
 
 **Checkpoint Final**:
+
 ```
 └─ Après Phase 3:      0 erreurs (Delta: -39) ✅
 ```
@@ -446,6 +478,7 @@ Delta: -N erreurs
 ### Exemples Réels
 
 **Exemple 1 - Batch**:
+
 ```
 fix(types): FAMILLE-1 TS2345 Batch 1 - Argument mismatches hooks - 35 erreurs
 
@@ -460,6 +493,7 @@ Delta: -35 erreurs
 ```
 
 **Exemple 2 - Famille Complète**:
+
 ```
 fix(types): FAMILLE-2 TS2322 - Type assignment mismatches - 93 erreurs
 
@@ -479,24 +513,24 @@ Delta: -93 erreurs
 
 ### Tracking Détaillé
 
-| Phase | Famille | Code | Erreurs | Fichiers | Durée | Status |
-|-------|---------|------|---------|----------|-------|--------|
-| **Phase 1** | | | | | | |
-| 1.1 | Famille 1 Batch 1 | TS2345 | 35 | 12 | 1h | ⏳ En attente |
-| 1.2 | Famille 1 Batch 2 | TS2345 | 35 | 12 | 1h | ⏳ En attente |
-| 1.3 | Famille 1 Batch 3 | TS2345 | 35 | 12 | 1h | ⏳ En attente |
-| 1.4 | Famille 1 Batch 4 | TS2345 | 36 | 12 | 1h | ⏳ En attente |
-| 1.5 | Famille 2 | TS2322 | 93 | 60 | 2h | ⏳ En attente |
-| 1.6 | Famille 3 | TS2339 | 31 | 22 | 1h | ⏳ En attente |
-| 1.7 | Famille 4 | TS2352 | 15 | 10 | 1h | ⏳ En attente |
-| 1.8 | Famille 5 | TS18048 | 12 | 5 | 0.5h | ⏳ En attente |
-| 1.9 | Famille 6 | TS18047 | 4 | 3 | 0.25h | ⏳ En attente |
-| **Phase 2** | | | | | | |
-| 2.1 | Famille 7 | TS2769 | 63 | 33 | 2h | ⏳ En attente |
-| 2.2 | Famille 8 | TS2307 | 20 | 12 | 1h | ⏳ En attente |
-| 2.3 | Familles 9-12 | Divers | 41 | 30 | 3h | ⏳ En attente |
-| **Phase 3** | | | | | | |
-| 3.1 | Familles 13-33 | Divers | 39 | 50 | 4h | ⏳ En attente |
+| Phase       | Famille           | Code    | Erreurs | Fichiers | Durée | Status        |
+| ----------- | ----------------- | ------- | ------- | -------- | ----- | ------------- |
+| **Phase 1** |                   |         |         |          |       |               |
+| 1.1         | Famille 1 Batch 1 | TS2345  | 35      | 12       | 1h    | ⏳ En attente |
+| 1.2         | Famille 1 Batch 2 | TS2345  | 35      | 12       | 1h    | ⏳ En attente |
+| 1.3         | Famille 1 Batch 3 | TS2345  | 35      | 12       | 1h    | ⏳ En attente |
+| 1.4         | Famille 1 Batch 4 | TS2345  | 36      | 12       | 1h    | ⏳ En attente |
+| 1.5         | Famille 2         | TS2322  | 93      | 60       | 2h    | ⏳ En attente |
+| 1.6         | Famille 3         | TS2339  | 31      | 22       | 1h    | ⏳ En attente |
+| 1.7         | Famille 4         | TS2352  | 15      | 10       | 1h    | ⏳ En attente |
+| 1.8         | Famille 5         | TS18048 | 12      | 5        | 0.5h  | ⏳ En attente |
+| 1.9         | Famille 6         | TS18047 | 4       | 3        | 0.25h | ⏳ En attente |
+| **Phase 2** |                   |         |         |          |       |               |
+| 2.1         | Famille 7         | TS2769  | 63      | 33       | 2h    | ⏳ En attente |
+| 2.2         | Famille 8         | TS2307  | 20      | 12       | 1h    | ⏳ En attente |
+| 2.3         | Familles 9-12     | Divers  | 41      | 30       | 3h    | ⏳ En attente |
+| **Phase 3** |                   |         |         |          |       |               |
+| 3.1         | Familles 13-33    | Divers  | 39      | 50       | 4h    | ⏳ En attente |
 
 **Total Commits Prévus**: ~15 commits
 
@@ -509,6 +543,7 @@ Tous les fichiers sont créés à la racine du projet:
 ### 1. `TS_ERRORS_PLAN.md` ⭐ **DOCUMENT PRINCIPAL**
 
 **Contenu**:
+
 - Résumé exécutif complet
 - Détail exhaustif des 33 familles d'erreurs
 - Exemples code avant/après pour chaque famille
@@ -533,6 +568,7 @@ Tous les fichiers sont créés à la racine du projet:
 
 **Contenu**: Clustering automatique par code d'erreur
 **Format**: JSON structuré
+
 ```json
 {
   "TS2345": {
@@ -543,6 +579,7 @@ Tous les fichiers sont créés à la racine du projet:
   ...
 }
 ```
+
 **Usage**: Machine-readable pour scripts automation
 
 ---
@@ -564,6 +601,7 @@ Tous les fichiers sont créés à la racine du projet:
 **Pattern**: Tables `price_lists` et `price_list_items` absentes des types générés
 
 **Corrections Appliquées**:
+
 1. Type assertions: `(supabase as any).from('price_lists')`
 2. Return type assertions: `return (data as unknown as PriceList[]) || []`
 3. Null checks explicites: `if (!priceList) throw new Error()`
@@ -580,6 +618,7 @@ Tous les fichiers sont créés à la racine du projet:
 **Pattern**: RPC functions `calculate_product_price_v2` et `get_quantity_breaks` non typées
 
 **Corrections Appliquées**:
+
 1. RPC assertions: `(supabase as any).rpc('calculate_product_price_v2')`
 2. Array type assertions: `(data as any[]).length`
 3. Return assertions: `as unknown as SalesChannel[]`
@@ -587,6 +626,7 @@ Tous les fichiers sont créés à la racine du projet:
 5. React Query v5: `cacheTime → gcTime` (5 occurrences)
 
 **Tests Retroactifs**:
+
 - ✅ Dashboard PASS
 - ❌ Organisations FAIL (5 erreurs PRÉ-EXISTANTES useStockOrdersMetrics)
 - ✅ Sourcing PASS
@@ -653,6 +693,7 @@ Total:     ~18 heures  (4-5 jours @ 4h/jour)
 ### Suivi Progression
 
 **Fichier à mettre à jour après chaque commit**:
+
 - `TS_ERRORS_PLAN.md` → Section "Métriques Progression"
 - Changer status de "⏳ En attente" à "✅ Complété"
 - Ajouter durée réelle vs estimée

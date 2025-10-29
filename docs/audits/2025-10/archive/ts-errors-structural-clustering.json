@@ -68,12 +68,7 @@
         "cat_04_missing_properties",
         "cat_14_property_not_exist"
       ],
-      "unlocks": [
-        "cat_03",
-        "cat_04",
-        "cat_06",
-        "cat_14"
-      ],
+      "unlocks": ["cat_03", "cat_04", "cat_06", "cat_14"],
       "batch_assignment": "BATCH 62"
     },
     {
@@ -279,9 +274,7 @@
       "estimated_time_min": 10,
       "risk_level": "low",
       "solution_strategy": "Add index signature [key: string]: number to interface or use type assertion metrics[module_name as keyof typeof metrics].",
-      "files_affected": [
-        "src/hooks/use-error-reporting-integration.ts"
-      ],
+      "files_affected": ["src/hooks/use-error-reporting-integration.ts"],
       "dependencies": [],
       "blocks": [],
       "unlocks": [],
@@ -300,9 +293,7 @@
       "estimated_time_min": 5,
       "risk_level": "low",
       "solution_strategy": "Use explicit object construction instead of spread operator (pattern validated in BATCH 60).",
-      "files_affected": [
-        "src/hooks/use-archived-products.ts"
-      ],
+      "files_affected": ["src/hooks/use-archived-products.ts"],
       "dependencies": [],
       "blocks": [],
       "unlocks": [],
@@ -321,9 +312,7 @@
       "estimated_time_min": 20,
       "risk_level": "medium",
       "solution_strategy": "Simplify nested generics by creating intermediate type aliases. Break down complex type into smaller pieces.",
-      "files_affected": [
-        "src/hooks/use-error-reporting.ts"
-      ],
+      "files_affected": ["src/hooks/use-error-reporting.ts"],
       "dependencies": [],
       "blocks": [],
       "unlocks": [],
@@ -378,27 +367,32 @@
   ],
   "dependency_graph": {
     "nodes": [
-      {"id": "cat_01", "label": "Module Cleanup", "independent": true},
-      {"id": "cat_02", "label": "Type Unification", "critical": true},
-      {"id": "cat_03", "label": "Null/Undefined"},
-      {"id": "cat_04", "label": "Duplicates"},
-      {"id": "cat_05", "label": "Supabase Overloads", "independent": true, "high_risk": true},
-      {"id": "cat_06", "label": "Missing Props"},
-      {"id": "cat_07", "label": "Enums"},
-      {"id": "cat_08", "label": "UI Props"},
-      {"id": "cat_09", "label": "Storybook", "independent": true},
-      {"id": "cat_10", "label": "Index Access"},
-      {"id": "cat_11", "label": "Spread"},
-      {"id": "cat_12", "label": "Type Depth"},
-      {"id": "cat_13", "label": "Resolvers"},
-      {"id": "cat_14", "label": "Property Exists"}
+      { "id": "cat_01", "label": "Module Cleanup", "independent": true },
+      { "id": "cat_02", "label": "Type Unification", "critical": true },
+      { "id": "cat_03", "label": "Null/Undefined" },
+      { "id": "cat_04", "label": "Duplicates" },
+      {
+        "id": "cat_05",
+        "label": "Supabase Overloads",
+        "independent": true,
+        "high_risk": true
+      },
+      { "id": "cat_06", "label": "Missing Props" },
+      { "id": "cat_07", "label": "Enums" },
+      { "id": "cat_08", "label": "UI Props" },
+      { "id": "cat_09", "label": "Storybook", "independent": true },
+      { "id": "cat_10", "label": "Index Access" },
+      { "id": "cat_11", "label": "Spread" },
+      { "id": "cat_12", "label": "Type Depth" },
+      { "id": "cat_13", "label": "Resolvers" },
+      { "id": "cat_14", "label": "Property Exists" }
     ],
     "edges": [
-      {"from": "cat_02", "to": "cat_03", "type": "unlocks"},
-      {"from": "cat_02", "to": "cat_04", "type": "unlocks"},
-      {"from": "cat_02", "to": "cat_06", "type": "unlocks"},
-      {"from": "cat_02", "to": "cat_14", "type": "unlocks"},
-      {"from": "cat_04", "to": "cat_13", "type": "unlocks"}
+      { "from": "cat_02", "to": "cat_03", "type": "unlocks" },
+      { "from": "cat_02", "to": "cat_04", "type": "unlocks" },
+      { "from": "cat_02", "to": "cat_06", "type": "unlocks" },
+      { "from": "cat_02", "to": "cat_14", "type": "unlocks" },
+      { "from": "cat_04", "to": "cat_13", "type": "unlocks" }
     ]
   },
   "batch_summary": {
@@ -500,14 +494,11 @@
       "BATCH_68",
       "BATCH_67"
     ],
-    "parallel_possible": [
-      ["BATCH_63", "BATCH_64", "BATCH_65"],
-      ["BATCH_66"]
-    ],
+    "parallel_possible": [["BATCH_63", "BATCH_64", "BATCH_65"], ["BATCH_66"]],
     "validation_checkpoints": [
-      {"after": "BATCH_62", "tests": ["type-check", "mcp-browser-console"]},
-      {"after": "BATCH_66", "tests": ["build", "e2e-tests"]},
-      {"after": "BATCH_67", "tests": ["full-validation", "performance"]}
+      { "after": "BATCH_62", "tests": ["type-check", "mcp-browser-console"] },
+      { "after": "BATCH_66", "tests": ["build", "e2e-tests"] },
+      { "after": "BATCH_67", "tests": ["full-validation", "performance"] }
     ]
   }
 }
