@@ -108,7 +108,7 @@ export function AddProductModal({
 
     try {
       let endpoint = ''
-      let body: any = {
+      const body: any = {
         product_id: selectedProduct.id,
         quantity,
         notes: notes.trim() || undefined

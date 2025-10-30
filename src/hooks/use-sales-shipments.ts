@@ -531,7 +531,7 @@ export function useSalesShipments() {
         .map((o: any) => o.customer_id)
 
       // Query organisations si nécessaire
-      let organisationsMap = new Map()
+      const organisationsMap = new Map()
       if (orgIds.length > 0) {
         const { data: orgs } = await supabase
           .from('organisations')
@@ -544,7 +544,7 @@ export function useSalesShipments() {
       }
 
       // Query individual_customers si nécessaire
-      let individualsMap = new Map()
+      const individualsMap = new Map()
       if (indivIds.length > 0) {
         const { data: indivs } = await supabase
           .from('individual_customers')

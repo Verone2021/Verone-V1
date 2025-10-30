@@ -189,7 +189,7 @@ export function StockReportsModal({ isOpen, onClose }: StockReportsModalProps) {
 
   const handlePresetChange = (preset: string) => {
     const today = new Date()
-    let dateFrom = new Date()
+    const dateFrom = new Date()
 
     if (preset === 'custom') {
       // Pour période personnalisée, on met à jour le preset mais garde les dates actuelles

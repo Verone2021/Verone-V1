@@ -119,10 +119,10 @@ export function useUserModuleMetrics(userId: string, days: number = 30): UserMod
 
         activities.forEach((activity, index) => {
           // Extraire le module depuis page_url (ex: '/dashboard' → 'dashboard')
-          const module = extractModuleFromUrl(activity.page_url) || 'autres'
+          const moduleName = extractModuleFromUrl(activity.page_url) || 'autres'
 
-          if (!moduleStats[module]) {
-            moduleStats[module] = {
+          if (!moduleStats[moduleName]) {
+            moduleStats[moduleName] = {
               page_views: 0,
               actions: 0,
               last_visited: new Date(activity.created_at || new Date().toISOString()),
@@ -131,17 +131,17 @@ export function useUserModuleMetrics(userId: string, days: number = 30): UserMod
           }
 
           // Comptage actions
-          moduleStats[module].actions++
+          moduleStats[moduleName].actions++
 
           // Page views (on compte si action = 'page_view' ou 'navigation')
           if (activity.action === 'page_view' || activity.action === 'navigation' || activity.action === 'view') {
-            moduleStats[module].page_views++
+            moduleStats[moduleName].page_views++
           }
 
           // Last visited (date la plus récente)
           const activityDate = new Date(activity.created_at || new Date().toISOString())
-          if (activityDate > moduleStats[module].last_visited) {
-            moduleStats[module].last_visited = activityDate
+          if (activityDate > moduleStats[moduleName].last_visited) {
+            moduleStats[moduleName].last_visited = activityDate
           }
 
           // Estimation temps passé:
@@ -153,12 +153,12 @@ export function useUserModuleMetrics(userId: string, days: number = 30): UserMod
 
             // Limiter à 30 minutes max entre 2 actions (sinon session terminée)
             if (timeDiff > 0 && timeDiff < 30 * 60 * 1000) {
-              moduleStats[module].time_spent += timeDiff / 1000 / 60 // Convertir en minutes
+              moduleStats[moduleName].time_spent += timeDiff / 1000 / 60 // Convertir en minutes
             } else {
-              moduleStats[module].time_spent += 2 // Estimation 2 min par action
+              moduleStats[moduleName].time_spent += 2 // Estimation 2 min par action
             }
           } else {
-            moduleStats[module].time_spent += 2 // Dernière action: estimer 2 min
+            moduleStats[moduleName].time_spent += 2 // Dernière action: estimer 2 min
           }
         })
 

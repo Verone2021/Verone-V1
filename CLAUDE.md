@@ -43,46 +43,284 @@ Deploy    : Vercel (auto-deploy main)
 
 ---
 
-## 🧠 WORKFLOW 2025
+## 🚀 WORKFLOW UNIVERSEL 2025
 
-**Plan-First → Agent Orchestration → Console Clean → Deploy**
+**Philosophy Core** : Think → Test → Code → Re-test
 
-### Phase 1 : PLAN-FIRST
+**Applicable à** : Formulaires, Pages, Composants, Boutons, Hooks, Business Logic, Database, API
+
+---
+
+### 🧠 PHASE 1 : THINK (Analyse & Planification)
+
+**Durée** : 5-15 minutes | **Objectif** : Comprendre COMPLÈTEMENT avant de coder
+
+**Actions Obligatoires** :
 
 ```typescript
-// Tâches complexes (>3 étapes)
+// 1. Sequential Thinking (si tâche >3 étapes)
 mcp__sequential-thinking__sequentialthinking
 
-// Clarifications
-AskUserQuestion({ questions: [...] })
+// 2. Analyse Code Existant (Serena - MANDATORY)
+mcp__serena__read_memory("context-previous")
+mcp__serena__get_symbols_overview(targetFile)     // TOUJOURS en premier
+mcp__serena__find_referencing_symbols(symbol)     // Impact analysis
 
-// Todo List
-TodoWrite({ todos: [...] })
+// 3. Documentation Officielle (Context7)
+mcp__context7__get-library-docs({ library: "next.js", topic: "..." })
+
+// 4. Database Schema (si modification data)
+Read("docs/database/SCHEMA-REFERENCE.md")
+
+// 5. Business Rules (si logique métier)
+Read("docs/business-rules/[module]/")
 ```
 
-### Phase 2 : AGENT ORCHESTRATION
+**Checklist** :
+- [ ] Sequential Thinking exécuté (si >3 étapes)
+- [ ] Serena `get_symbols_overview` sur fichiers impactés
+- [ ] Context7 consulté pour patterns framework
+- [ ] Documentation database lue (si applicable)
+- [ ] Business rules vérifiées (si applicable)
+- [ ] Edge cases identifiés (minimum 3)
+- [ ] Plan technique rédigé
+
+---
+
+### 🧪 PHASE 2 : TEST (Validation Hypothèses)
+
+**Durée** : 5-10 minutes | **Objectif** : Tester environnement actuel AVANT modifier
+
+**Actions Obligatoires** :
 
 ```typescript
-Context7    // Docs officielles frameworks
-Serena      // Code analysis, symbolic editing
-Playwright  // Browser testing, console errors
-Supabase    // Database queries, advisors
-GitHub      // PR automatisées
-Vercel      // Auto-deploy
+// 1. Console Error Checking (RÈGLE SACRÉE)
+mcp__playwright__browser_navigate("http://localhost:3000/page")
+mcp__playwright__browser_console_messages()
+// Si erreurs → STOP complet
+
+// 2. Test Fonctionnel Existant
+mcp__playwright__browser_click("[data-testid='button']")
+mcp__playwright__browser_take_screenshot("before-changes.png")
+
+// 3. Database Validation (si applicable)
+mcp__supabase__execute_sql("SELECT * FROM table LIMIT 1")
+mcp__supabase__get_advisors("security")
+
+// 4. Build Validation
+npm run build  // Doit passer SANS erreurs
 ```
 
-### Phase 3 : CONSOLE ERROR CHECKING (RÈGLE SACRÉE)
+**Checklist** :
+- [ ] Console = 0 errors sur page cible
+- [ ] Feature existante fonctionne (si modification)
+- [ ] Build passe sans erreurs
+- [ ] Screenshot "before" capturé
+- [ ] Performance baseline mesurée
+
+---
+
+### ⚙️ PHASE 3 : CODE (Implémentation)
+
+**Durée** : 20-40 minutes | **Objectif** : Code MINIMAL avec Serena
+
+**Actions Obligatoires** :
 
 ```typescript
-// 🚫 INTERDIT : Scripts test
-// ✅ OBLIGATOIRE : MCP Playwright Browser direct
+// 1. Édition Symbolique Précise (Serena - MANDATORY)
+mcp__serena__replace_symbol_body({
+  symbol_name: "MyComponent",
+  new_body: `// Implementation`
+})
 
-1. mcp__playwright__browser_navigate(url)
-2. mcp__playwright__browser_console_messages()
-3. Si erreurs → STOP → Fix ALL → Re-test
-4. Screenshot comme preuve
-5. Zero tolerance : 1 erreur = échec complet
+// 2. Database Migration (si applicable)
+// Fichier: supabase/migrations/YYYYMMDD_NNN_description.sql
+CREATE TABLE IF NOT EXISTS new_table (...);  // Idempotent
+
+// 3. TypeScript Types Update
+mcp__supabase__generate_typescript_types()
 ```
+
+**Checklist** :
+- [ ] Code minimal fonctionnel
+- [ ] Serena utilisé pour toutes modifications
+- [ ] Types TypeScript stricts (pas de `any`)
+- [ ] Migration SQL idempotente (si DB)
+- [ ] Commentaires business logic ajoutés
+- [ ] Pas de secrets/credentials
+
+---
+
+### 🔄 PHASE 4 : RE-TEST (Validation Finale)
+
+**Durée** : 10-20 minutes | **Objectif** : Validation COMPLÈTE sans régression
+
+**Actions Obligatoires (ORDRE STRICT)** :
+
+```typescript
+// 1. Type Check
+npm run type-check  // = 0 erreurs
+
+// 2. Build Validation
+npm run build  // Doit passer
+
+// 3. Console Error Checking (RÈGLE SACRÉE)
+// RÈGLE ABSOLUE: 1 erreur = ÉCHEC COMPLET
+mcp__playwright__browser_navigate("/feature-modifiée")
+mcp__playwright__browser_console_messages()
+
+// 4. Test Fonctionnel Workflow Complet
+mcp__playwright__browser_click("[data-testid='submit']")
+mcp__playwright__browser_take_screenshot("after-changes.png")
+
+// 5. Database Validation (si applicable)
+mcp__supabase__execute_sql("SELECT * FROM new_table")
+mcp__supabase__get_advisors("performance")
+```
+
+**Checklist** :
+- [ ] Type check = 0 erreurs
+- [ ] Build successful
+- [ ] Console = 0 errors (TOUTES pages impactées)
+- [ ] Feature fonctionne (workflow complet)
+- [ ] Screenshot "after" capturé
+- [ ] Database constraints validées (si applicable)
+- [ ] Performance SLO respectés (<2s dashboard, <3s pages)
+- [ ] Aucune régression détectée
+
+**Si Erreur Détectée** → STOP IMMÉDIAT → Retour PHASE 3 → Fix ALL → Re-test
+
+---
+
+### 📝 PHASE 5 : DOCUMENT (Préservation Context)
+
+**Durée** : 5 minutes | **Objectif** : Sauvegarder décisions pour sessions futures
+
+**Actions Obligatoires** :
+
+```typescript
+// 1. Serena Memory
+mcp__serena__write_memory({
+  key: "feature-[nom]",
+  content: `
+    ## Décisions Architecturales
+    - [décision 1]
+
+    ## Edge Cases Résolus
+    - [edge case 1]
+
+    ## Learnings
+    - [learning 1]
+  `
+})
+
+// 2. Update Documentation (si applicable)
+Write("docs/business-rules/[module]/[feature].md")
+Update("docs/database/SCHEMA-REFERENCE.md")
+```
+
+**Checklist** :
+- [ ] Serena memory écrite avec décisions clés
+- [ ] Documentation business rules mise à jour (si applicable)
+- [ ] SCHEMA-REFERENCE.md mis à jour (si DB modifiée)
+
+---
+
+### 🚀 PHASE 6 : COMMIT & DEPLOY (Autorisation Obligatoire)
+
+**Durée** : 2 minutes | **RÈGLE ABSOLUE** : JAMAIS sans autorisation EXPLICITE
+
+**Workflow Obligatoire** :
+
+```typescript
+// 1. ✅ Préparation
+git status && git diff
+
+// 2. ⏸️ STOP - DEMANDER AUTORISATION
+"Voulez-vous que je commit et push maintenant ?"
+// ATTENDRE réponse EXPLICITE
+
+// 3. ✅ Si "OUI" → Commit structuré
+git add [files]
+git commit -m "$(cat <<'EOF'
+feat(module): Description concise
+
+- Detail 1
+- Detail 2
+
+🤖 Generated with Claude Code
+Co-Authored-By: Claude <noreply@anthropic.com>
+EOF
+)"
+
+// 4. ✅ Push
+git push origin [branch]
+```
+
+**Checklist** :
+- [ ] Autorisation utilisateur obtenue EXPLICITEMENT
+- [ ] Commit message structuré avec émoji
+- [ ] Tests passés (console = 0 errors)
+- [ ] Build successful
+
+---
+
+## 🚨 RÈGLES D'OR (À MÉMORISER)
+
+1. **Documentation First** : TOUJOURS consulter documentation AVANT toute modification
+2. **Console Zero Tolerance** : 1 erreur console = ÉCHEC COMPLET, retour PHASE 3
+3. **Serena Before Code** : TOUJOURS `get_symbols_overview` AVANT modifier fichier
+4. **Test Before Code** : TOUJOURS valider que existant fonctionne AVANT modifier
+5. **Build Always** : TOUJOURS vérifier build passe AVANT et APRÈS modifications
+6. **Authorization Always** : JAMAIS commit sans autorisation EXPLICITE utilisateur
+
+---
+
+## 📋 CHECKLIST UNIVERSELLE (Pour TOUT type de feature)
+
+### AVANT DE COMMENCER
+- [ ] Objective clairement défini
+- [ ] Complexité évaluée (simple/moyen/complexe)
+- [ ] Durée estimée (<1h / 1-3h / >3h)
+
+### PHASE 1: THINK ✅
+- [ ] Sequential Thinking (si >3 étapes)
+- [ ] Serena get_symbols_overview
+- [ ] Context7 documentation
+- [ ] Edge cases identifiés (min 3)
+- [ ] Plan technique rédigé
+
+### PHASE 2: TEST ✅
+- [ ] Console = 0 errors
+- [ ] Build passe
+- [ ] Screenshot "before"
+
+### PHASE 3: CODE ✅
+- [ ] Serena symbolic editing
+- [ ] Types TypeScript stricts
+- [ ] Code minimal
+
+### PHASE 4: RE-TEST ✅
+- [ ] Type check = 0 errors
+- [ ] Build successful
+- [ ] Console = 0 errors (TOUTES pages)
+- [ ] Feature fonctionne
+- [ ] Screenshot "after"
+- [ ] Aucune régression
+
+### PHASE 5: DOCUMENT ✅
+- [ ] Serena memory écrite
+- [ ] Documentation à jour
+
+### PHASE 6: COMMIT ✅
+- [ ] Autorisation obtenue EXPLICITEMENT
+- [ ] Commit structuré
+- [ ] Push effectué
+
+---
+
+**Exemples détaillés** : Voir `.claude/workflows/universal-workflow-examples.md`
+**Checklist rapide** : Voir `.claude/workflows/universal-workflow-checklist.md`
 
 ---
 

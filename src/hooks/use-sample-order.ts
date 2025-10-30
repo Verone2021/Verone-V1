@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import { useToast } from './use-toast'
+import { useUnifiedSampleEligibility } from './use-unified-sample-eligibility'
 
 interface SampleOrderResult {
   success: boolean
@@ -13,6 +14,7 @@ export function useSampleOrder() {
   const [isLoading, setIsLoading] = useState(false)
   const { toast } = useToast()
   const supabase = createClient()
+  const { checkEligibility } = useUnifiedSampleEligibility()
 
   /**
    * Créer une commande d'échantillon pour un produit
@@ -49,29 +51,21 @@ export function useSampleOrder() {
         throw new Error('Le prix HT du produit doit être défini')
       }
 
-      // 2. Vérifier si le produit a déjà été commandé (hors échantillons)
-      // Business Rule: Échantillon autorisé UNIQUEMENT si jamais commandé
-      const { data: existingItems, error: itemsError } = await supabase
-        .from('purchase_order_items')
-        .select('id')
-        .eq('product_id', productId)
-        .is('sample_type', null)
-        .limit(1)
+      // 2. Vérifier éligibilité échantillon avec règle UNIFIÉE
+      // ✅ Vérifie BOTH purchase_order_items ET stock_movements
+      // @see src/hooks/use-unified-sample-eligibility.ts
+      const eligibility = await checkEligibility(productId)
 
-      if (itemsError) {
-        throw new Error('Erreur lors de la vérification de l\'historique')
-      }
-
-      if (existingItems && existingItems.length > 0) {
+      if (!eligibility.isEligible) {
         toast({
           title: "Échantillon non autorisé",
-          description: "Ce produit a déjà été commandé. Les échantillons ne sont disponibles que pour les produits jamais commandés.",
+          description: eligibility.message,
           variant: "destructive"
         })
         return {
           success: false,
           isNewOrder: false,
-          error: 'already_ordered'
+          error: 'not_eligible'
         }
       }
 

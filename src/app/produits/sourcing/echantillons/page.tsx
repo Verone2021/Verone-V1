@@ -1,7 +1,8 @@
 "use client"
 
-import { useState } from 'react'
+import { useState, useMemo } from 'react'
 import { useRouter } from 'next/navigation'
+import { useSupabaseQuery } from '@/hooks/base/use-supabase-query'
 import {
   Eye,
   Package,
@@ -19,7 +20,7 @@ import {
   MoreHorizontal
 } from 'lucide-react'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
-import { ButtonV2 } from '@/components/ui/button'
+import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { Input } from '@/components/ui/input'
 import {
@@ -29,78 +30,111 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select'
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog'
+import { Label } from '@/components/ui/label'
+import { Textarea } from '@/components/ui/textarea'
+import { CustomerSelector, UnifiedCustomer } from '@/components/business/customer-selector'
+import { SampleProductSelectorModal, Product } from '@/components/business/sample-product-selector-modal'
+import { createClient } from '@/lib/supabase/client'
+import { useToast } from '@/hooks/use-toast'
 
 export default function SourcingEchantillonsPage() {
   const router = useRouter()
   const [searchTerm, setSearchTerm] = useState('')
   const [statusFilter, setStatusFilter] = useState('all')
 
-  // Données mock pour les commandes d'échantillons
-  const sampleOrders = [
-    {
-      id: 1,
-      order_number: 'ECH-2025-001',
-      product_title: 'Canapé 3 places tissu',
-      supplier: 'Mobilier Design Pro',
-      client: 'Sophie Durand',
-      status: 'ordered',
-      order_date: '2025-01-15',
-      expected_delivery: '2025-01-25',
-      samples: [
-        { id: 1, type: 'Tissu principal', color: 'Beige chiné', size: '20x20cm' },
-        { id: 2, type: 'Tissu coussins', color: 'Gris anthracite', size: '20x20cm' }
-      ],
-      budget: '45€',
-      notes: 'Échantillons pour validation couleur'
-    },
-    {
-      id: 2,
-      order_number: 'ECH-2025-002',
-      product_title: 'Table en chêne massif',
-      supplier: 'Bois & Traditions',
-      client: 'Pierre Martin',
-      status: 'delivered',
-      order_date: '2025-01-10',
-      delivery_date: '2025-01-18',
-      samples: [
-        { id: 3, type: 'Essence bois', color: 'Chêne naturel', size: '15x10x2cm' },
-        { id: 4, type: 'Finition', color: 'Vernis mat', size: '15x10x2cm' }
-      ],
-      budget: '35€',
-      notes: 'Client validé - passage commande possible'
-    },
-    {
-      id: 3,
-      order_number: 'ECH-2025-003',
-      product_title: 'Suspension design moderne',
-      supplier: 'Éclairage Innovation',
-      client: 'Interne - Catalogue',
-      status: 'pending',
-      order_date: '2025-01-16',
-      expected_delivery: '2025-01-30',
-      samples: [
-        { id: 5, type: 'Matériau principal', color: 'Métal brossé', size: 'Ø 15cm' }
-      ],
-      budget: '25€',
-      notes: 'Pour validation gamme premium'
-    },
-    {
-      id: 4,
-      order_number: 'ECH-2025-004',
-      product_title: 'Chaise vintage scandinave',
-      supplier: 'Nordic Furniture',
-      client: 'Marie Leclerc',
-      status: 'in_transit',
-      order_date: '2025-01-12',
-      expected_delivery: '2025-01-22',
-      samples: [
-        { id: 6, type: 'Bois siège', color: 'Hêtre naturel', size: '10x10x5cm' },
-        { id: 7, type: 'Tissu coussin', color: 'Lin beige', size: '20x20cm' }
-      ],
-      budget: '40€',
-      notes: 'Livraison en cours - Colissimo'
-    }
-  ]
+  // États formulaire échantillon client
+  const [showSampleForm, setShowSampleForm] = useState(false)
+  const [selectedCustomer, setSelectedCustomer] = useState<UnifiedCustomer | null>(null)
+  const [selectedProduct, setSelectedProduct] = useState<Product | null>(null)
+  const [selectedProductId, setSelectedProductId] = useState('')
+  const [showProductModal, setShowProductModal] = useState(false)
+  const [quantity, setQuantity] = useState(1)
+  const [deliveryAddress, setDeliveryAddress] = useState('')
+  const [notes, setNotes] = useState('')
+  const [submitting, setSubmitting] = useState(false)
+  const supabase = createClient()
+  const { toast } = useToast()
+
+  // ✅ Données RÉELLES depuis Supabase (purchase_order_items avec sample_type)
+  const { data: rawSampleItems, loading, error } = useSupabaseQuery<any>({
+    tableName: 'purchase_order_items',
+    select: `
+      id,
+      quantity,
+      unit_price_ht,
+      sample_type,
+      notes,
+      created_at,
+      purchase_orders!purchase_order_id(
+        id,
+        po_number,
+        status,
+        expected_delivery_date,
+        supplier_id
+      ),
+      products!product_id(id, name, sku, cost_price)
+    `,
+    filters: (query) => query
+      .not('sample_type', 'is', null) // Seulement échantillons (internal ou customer)
+      .order('created_at', { ascending: false }),
+    autoFetch: true
+  })
+
+  // Transform backend data → UI format
+  const sampleOrders = useMemo(() => {
+    if (!rawSampleItems || rawSampleItems.length === 0) return []
+
+    return rawSampleItems.map((item: any) => {
+      const purchaseOrder = item.purchase_orders
+      const product = item.products
+
+      // Map purchase order status → sample status
+      const mapStatus = (poStatus: string) => {
+        switch (poStatus) {
+          case 'draft': return 'pending'
+          case 'sent': return 'ordered'
+          case 'partially_received': return 'in_transit'
+          case 'completed': return 'delivered'
+          default: return 'pending'
+        }
+      }
+
+      return {
+        id: item.id,
+        order_number: purchaseOrder.po_number || `ECH-${item.id.slice(0, 8)}`,
+        product_title: product.name,
+        supplier: 'Fournisseur (TODO: join organisations)',
+        client: item.sample_type === 'internal'
+          ? 'Interne - Catalogue'
+          : 'Client (TODO: relation customer)',
+        status: mapStatus(purchaseOrder.status),
+        order_date: new Date(item.created_at).toLocaleDateString('fr-FR'),
+        expected_delivery: purchaseOrder.expected_delivery_date
+          ? new Date(purchaseOrder.expected_delivery_date).toLocaleDateString('fr-FR')
+          : 'Non définie',
+        delivery_date: purchaseOrder.status === 'completed' && purchaseOrder.expected_delivery_date
+          ? new Date(purchaseOrder.expected_delivery_date).toLocaleDateString('fr-FR')
+          : undefined,
+        samples: [
+          {
+            id: item.id,
+            type: product.name,
+            color: 'Standard',
+            size: `Qté: ${item.quantity}`
+          }
+        ],
+        budget: `${(item.unit_price_ht * item.quantity).toFixed(2)}€`,
+        notes: item.notes || 'Aucune note'
+      }
+    })
+  }, [rawSampleItems])
 
   const getStatusBadge = (status: string) => {
     switch (status) {
@@ -143,6 +177,163 @@ export default function SourcingEchantillonsPage() {
     return matchesSearch && matchesStatus
   })
 
+  // Handler pour le changement de client
+  const handleCustomerChange = (customer: UnifiedCustomer | null) => {
+    setSelectedCustomer(customer)
+
+    // Auto-remplir l'adresse de livraison
+    if (customer) {
+      if (customer.type === 'professional') {
+        // B2B : Utiliser shipping_address ou billing_address
+        const address = [
+          customer.name,
+          customer.shipping_address_line1 || customer.billing_address_line1,
+          customer.shipping_city || customer.billing_city,
+          customer.shipping_postal_code || customer.billing_postal_code
+        ].filter(Boolean).join(', ')
+        setDeliveryAddress(address)
+      } else {
+        // B2C : Utiliser adresse principale
+        const address = [
+          customer.name,
+          customer.address_line1,
+          customer.city,
+          customer.postal_code
+        ].filter(Boolean).join(', ')
+        setDeliveryAddress(address)
+      }
+    } else {
+      setDeliveryAddress('')
+    }
+  }
+
+  // Handler pour la sélection de produit
+  const handleProductSelect = (product: Product) => {
+    setSelectedProduct(product)
+    setSelectedProductId(product.id)
+  }
+
+  // Handler pour la soumission du formulaire
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault()
+    if (!selectedCustomer || !selectedProductId) {
+      toast({ title: 'Erreur', description: 'Client et produit requis', variant: 'destructive' })
+      return
+    }
+
+    setSubmitting(true)
+    try {
+      // Récupérer l'utilisateur connecté
+      const { data: { user } } = await supabase.auth.getUser()
+      if (!user) {
+        toast({ title: 'Erreur', description: 'Utilisateur non connecté', variant: 'destructive' })
+        setSubmitting(false)
+        return
+      }
+
+      // Récupérer infos produit pour le prix et le fournisseur
+      const { data: product, error: productError } = await supabase
+        .from('products')
+        .select('cost_price, supplier_id')
+        .eq('id', selectedProductId)
+        .single()
+
+      if (productError || !product?.supplier_id) {
+        toast({
+          title: 'Erreur',
+          description: 'Produit invalide ou fournisseur manquant',
+          variant: 'destructive'
+        })
+        setSubmitting(false)
+        return
+      }
+
+      // Créer une purchase order pour l'échantillon
+      const { data: newPO, error: poError } = await supabase
+        .from('purchase_orders')
+        .insert({
+          po_number: `SAMPLE-${Date.now()}`,
+          status: 'draft',
+          notes: `Échantillon client: ${selectedCustomer.name}`,
+          created_by: user.id,
+          supplier_id: product.supplier_id
+        })
+        .select('id')
+        .single()
+
+      if (poError) throw poError
+
+      // Créer le purchase_order_item
+      const { error: itemError } = await supabase
+        .from('purchase_order_items')
+        .insert({
+          purchase_order_id: newPO.id,
+          product_id: selectedProductId,
+          quantity,
+          unit_price_ht: product?.cost_price || 0.01, // Minimum 0.01 pour respecter contrainte CHECK
+          sample_type: 'customer',
+          customer_organisation_id: selectedCustomer.type === 'professional' ? selectedCustomer.id : null,
+          customer_individual_id: selectedCustomer.type === 'individual' ? selectedCustomer.id : null,
+          notes: `Livraison: ${deliveryAddress}\n\nNotes: ${notes}`
+        })
+
+      if (itemError) throw itemError
+
+      toast({ title: 'Demande créée', description: 'Demande d\'échantillon enregistrée avec succès' })
+      setShowSampleForm(false)
+      // Reset form
+      setSelectedCustomer(null)
+      setSelectedProductId('')
+      setQuantity(1)
+      setDeliveryAddress('')
+      setNotes('')
+      // Rafraîchir la liste
+      window.location.reload()
+    } catch (error) {
+      console.error('Erreur création échantillon:', error)
+      toast({ title: 'Erreur', description: 'Impossible de créer la demande', variant: 'destructive' })
+    } finally {
+      setSubmitting(false)
+    }
+  }
+
+  // Loading state
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-black mx-auto mb-4"></div>
+          <p className="text-gray-600">Chargement des échantillons...</p>
+        </div>
+      </div>
+    )
+  }
+
+  // Error state
+  if (error) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <Card className="max-w-md border-red-300">
+          <CardHeader>
+            <CardTitle className="text-red-600 flex items-center">
+              <AlertTriangle className="h-5 w-5 mr-2" />
+              Erreur de chargement
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <p className="text-gray-600 mb-4">{error}</p>
+            <Button
+              onClick={() => window.location.reload()}
+              className="bg-black hover:bg-gray-800 text-white"
+            >
+              Réessayer
+            </Button>
+          </CardContent>
+        </Card>
+      </div>
+    )
+  }
+
   return (
     <div className="min-h-screen bg-gray-50">
       {/* Header */}
@@ -154,19 +345,20 @@ export default function SourcingEchantillonsPage() {
               <p className="text-gray-600 mt-1">Commandes et suivi des échantillons produits</p>
             </div>
             <div className="flex items-center space-x-3">
-              <ButtonV2
+              <Button
                 variant="outline"
                 onClick={() => router.push('/produits/sourcing')}
                 className="border-black text-black hover:bg-black hover:text-white"
               >
                 Retour Dashboard
-              </ButtonV2>
-              <ButtonV2
+              </Button>
+              <Button
+                onClick={() => setShowSampleForm(true)}
                 className="bg-black hover:bg-gray-800 text-white"
               >
                 <Plus className="h-4 w-4 mr-2" />
                 Nouveau Échantillon
-              </ButtonV2>
+              </Button>
             </div>
           </div>
         </div>
@@ -254,13 +446,13 @@ export default function SourcingEchantillonsPage() {
                 </SelectContent>
               </Select>
 
-              <ButtonV2
+              <Button
                 variant="outline"
                 className="border-black text-black hover:bg-black hover:text-white"
               >
                 <Filter className="h-4 w-4 mr-2" />
                 Exporter
-              </ButtonV2>
+              </Button>
             </div>
           </CardContent>
         </Card>
@@ -286,9 +478,9 @@ export default function SourcingEchantillonsPage() {
                     </div>
                     <div className="flex items-center space-x-3">
                       {getStatusBadge(order.status)}
-                      <ButtonV2 variant="outline" size="sm" className="border-gray-300">
+                      <Button variant="outline" size="sm" className="border-gray-300">
                         <MoreHorizontal className="h-4 w-4" />
-                      </ButtonV2>
+                      </Button>
                     </div>
                   </div>
 
@@ -363,21 +555,21 @@ export default function SourcingEchantillonsPage() {
                       {order.samples.length} échantillon{order.samples.length > 1 ? 's' : ''}
                     </div>
                     <div className="flex space-x-2">
-                      <ButtonV2 variant="outline" size="sm" className="border-gray-300">
+                      <Button variant="outline" size="sm" className="border-gray-300">
                         <Eye className="h-4 w-4 mr-2" />
                         Voir détails
-                      </ButtonV2>
+                      </Button>
                       {order.status === 'delivered' && (
-                        <ButtonV2 size="sm" className="bg-green-600 hover:bg-green-700 text-white">
+                        <Button size="sm" className="bg-green-600 hover:bg-green-700 text-white">
                           <CheckCircle className="h-4 w-4 mr-2" />
                           Valider échantillons
-                        </ButtonV2>
+                        </Button>
                       )}
                       {order.status === 'in_transit' && (
-                        <ButtonV2 variant="outline" size="sm" className="border-blue-300 text-blue-600">
+                        <Button variant="outline" size="sm" className="border-blue-300 text-blue-600">
                           <Truck className="h-4 w-4 mr-2" />
                           Suivre livraison
-                        </ButtonV2>
+                        </Button>
                       )}
                     </div>
                   </div>
@@ -395,6 +587,171 @@ export default function SourcingEchantillonsPage() {
           </CardContent>
         </Card>
       </div>
+
+      {/* Dialog Formulaire Échantillon Client */}
+      <Dialog open={showSampleForm} onOpenChange={setShowSampleForm}>
+        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>Nouvelle Demande d'Échantillon Client</DialogTitle>
+            <DialogDescription>
+              Créer une demande d'échantillon pour un client professionnel (B2B) ou particulier (B2C)
+            </DialogDescription>
+          </DialogHeader>
+
+          <form onSubmit={handleSubmit} className="space-y-6">
+            {/* 1. Sélection Client (B2B ou B2C) */}
+            <div>
+              <Label className="text-base font-semibold mb-4 block">Sélectionner le client *</Label>
+              <CustomerSelector
+                selectedCustomer={selectedCustomer}
+                onCustomerChange={handleCustomerChange}
+                disabled={submitting}
+              />
+            </div>
+
+            {/* 2. Affichage informations client */}
+            {selectedCustomer && (
+              <Card className="bg-green-50 border-green-200">
+                <CardContent className="pt-4">
+                  <div className="flex items-start gap-2">
+                    <CheckCircle className="h-5 w-5 text-green-600 mt-0.5" />
+                    <div>
+                      <p className="font-medium text-green-900">
+                        Client sélectionné : {selectedCustomer.name}
+                      </p>
+                      <p className="text-sm text-green-700">
+                        Type : {selectedCustomer.type === 'professional' ? 'Professionnel (B2B)' : 'Particulier (B2C)'}
+                      </p>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            )}
+
+            {/* 3. Sélection Produit */}
+            <div>
+              <Label>Produit *</Label>
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => setShowProductModal(true)}
+                disabled={submitting}
+                className="w-full justify-start text-left font-normal"
+              >
+                <Package className="h-4 w-4 mr-2" />
+                {selectedProduct ? selectedProduct.name : 'Sélectionner un produit...'}
+              </Button>
+
+              {/* Affichage produit sélectionné */}
+              {selectedProduct && (
+                <Card className="mt-3 bg-green-50 border-green-200">
+                  <CardContent className="pt-4">
+                    <div className="flex items-start gap-3">
+                      {selectedProduct.product_images && selectedProduct.product_images.length > 0 ? (
+                        <img
+                          src={selectedProduct.product_images.find((img: { is_primary: boolean; public_url: string }) => img.is_primary)?.public_url || selectedProduct.product_images[0].public_url}
+                          alt={selectedProduct.name}
+                          className="h-12 w-12 object-cover rounded"
+                        />
+                      ) : (
+                        <div className="h-12 w-12 bg-gray-200 rounded flex items-center justify-center">
+                          <Package className="h-6 w-6 text-gray-400" />
+                        </div>
+                      )}
+                      <div className="flex-1">
+                        <p className="font-medium text-green-900">{selectedProduct.name}</p>
+                        {selectedProduct.sku && (
+                          <p className="text-sm text-green-700">SKU: {selectedProduct.sku}</p>
+                        )}
+                        <div className="flex items-center gap-2 mt-1">
+                          <Badge variant="outline" className="text-xs">
+                            {selectedProduct.creation_mode === 'complete' ? 'Catalogue' : 'Sourcing'}
+                          </Badge>
+                          {selectedProduct.organisations && (
+                            <span className="text-xs text-green-700">
+                              Fournisseur: {selectedProduct.organisations.legal_name}
+                            </span>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+              )}
+            </div>
+
+            {/* 4. Quantité */}
+            <div>
+              <Label htmlFor="quantity">Quantité</Label>
+              <Input
+                id="quantity"
+                type="number"
+                min="1"
+                max="10"
+                value={quantity}
+                onChange={(e) => setQuantity(parseInt(e.target.value) || 1)}
+                disabled={submitting}
+              />
+              <p className="text-sm text-gray-500 mt-1">Maximum 10 échantillons par demande</p>
+            </div>
+
+            {/* 5. Adresse de livraison */}
+            <div>
+              <Label htmlFor="delivery">Adresse de livraison</Label>
+              <Textarea
+                id="delivery"
+                value={deliveryAddress}
+                onChange={(e) => setDeliveryAddress(e.target.value)}
+                placeholder="Auto-remplie depuis la fiche client..."
+                rows={3}
+                disabled={submitting}
+              />
+              <p className="text-sm text-gray-500 mt-1">Modifiable si nécessaire</p>
+            </div>
+
+            {/* 6. Notes */}
+            <div>
+              <Label htmlFor="notes">Notes</Label>
+              <Textarea
+                id="notes"
+                value={notes}
+                onChange={(e) => setNotes(e.target.value)}
+                placeholder="Contexte, usage prévu, remarques particulières..."
+                rows={3}
+                disabled={submitting}
+              />
+            </div>
+
+            {/* Actions */}
+            <div className="flex justify-end gap-4 pt-4 border-t">
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => setShowSampleForm(false)}
+                disabled={submitting}
+              >
+                Annuler
+              </Button>
+              <Button
+                type="submit"
+                disabled={!selectedCustomer || !selectedProductId || submitting}
+                className="bg-black hover:bg-gray-800"
+              >
+                {submitting ? 'Création...' : 'Créer la demande'}
+              </Button>
+            </div>
+          </form>
+        </DialogContent>
+      </Dialog>
+
+      {/* Modal Sélection Produit */}
+      <SampleProductSelectorModal
+        isOpen={showProductModal}
+        onClose={() => setShowProductModal(false)}
+        onProductSelect={handleProductSelect}
+        allowCatalog={true}
+        allowSourcing={true}
+      />
     </div>
   )
 }

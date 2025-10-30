@@ -483,7 +483,7 @@ export function useVariantGroups(filters?: VariantGroupFilters) {
   ): Promise<boolean> => {
     try {
       // Si les variant_attributes changent, on doit régénérer le nom et le SKU
-      let finalUpdates = { ...updates }
+      const finalUpdates = { ...updates }
 
       if (updates.variant_attributes) {
         // Récupérer le produit et son groupe pour régénérer nom/SKU
