@@ -1,7 +1,7 @@
 'use client'
 
 import React, { useState, useEffect } from 'react'
-import { useRouter } from 'next/navigation'
+import { useRouter, useSearchParams } from 'next/navigation'
 import Image from 'next/image'
 import Link from 'next/link'
 import {
@@ -300,6 +300,7 @@ function ProductHistoryModal({ product, isOpen, onClose }: ProductHistoryModalPr
 
 export default function InventairePage() {
   const router = useRouter()
+  const searchParams = useSearchParams()
   const [filters, setFilters] = useState({
     search: '',
     dateFrom: '',
@@ -314,6 +315,18 @@ export default function InventairePage() {
   useEffect(() => {
     fetchInventory()
   }, [fetchInventory])
+
+  // Ouvrir automatiquement le modal si query param ?id= présent (venant des notifications)
+  useEffect(() => {
+    const productId = searchParams.get('id')
+    if (productId && inventory.length > 0 && !isHistoryModalOpen) {
+      const product = inventory.find(p => p.id === productId)
+      if (product) {
+        setSelectedProduct(product)
+        setIsHistoryModalOpen(true)
+      }
+    }
+  }, [searchParams, inventory, isHistoryModalOpen])
 
   const handleRefresh = () => {
     fetchInventory(filters)

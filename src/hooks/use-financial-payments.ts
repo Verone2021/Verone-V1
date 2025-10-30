@@ -89,7 +89,7 @@ export function useFinancialPayments(documentId?: string) {
 
         if (fetchError) throw fetchError
 
-        setPayments(data || [])
+        setPayments((data as any) || [])
       } catch (err: any) {
         console.error('Error fetching financial payments:', err)
         setError(err.message || 'Erreur chargement paiements')

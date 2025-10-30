@@ -286,11 +286,11 @@ export function useProducts(filters?: ProductFilters, page: number = 0) {
       // ✅ FIX: Inline object literal pour inférence TypeScript Supabase (pattern commit b09a8a4)
       const { data: newProduct, error } = await supabase
         .from('products')
-        .insert([{
+        .insert({
           name: productData.name,
           slug: productData.slug || productData.name.toLowerCase().replace(/[^a-z0-9]/g, '-').replace(/-+/g, '-'),
-          cost_price: productData.cost_price || 0,
-          margin_percentage: productData.margin_percentage || 0,
+          cost_price: productData.cost_price,
+          margin_percentage: productData.margin_percentage,
           availability_type: productData.availability_type || 'normal',
           description: productData.description,
           subcategory_id: productData.subcategory_id,
@@ -320,8 +320,8 @@ export function useProducts(filters?: ProductFilters, page: number = 0) {
           stock_forecasted_out: productData.stock_forecasted_out,
           min_stock: productData.min_stock,
           reorder_point: productData.reorder_point
-        }] as any)
-        .select()
+        } as any)
+        .select('*')
         .single()
 
       if (error) throw error

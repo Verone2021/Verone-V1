@@ -279,9 +279,10 @@ export function CompleteProductWizard({
         supplier_reference: formData.supplier_reference || undefined,
 
         // Tarification (conversion string → number avec valeurs par défaut)
-        cost_price: formData.cost_price ? parseFloat(formData.cost_price) : 0,
+        // 🔥 FIX: cost_price et margin_percentage doivent être NULL si non renseignés (contrainte CHECK > 0)
+        cost_price: formData.cost_price ? parseFloat(formData.cost_price) : undefined,
         target_margin_percentage: formData.target_margin_percentage ? parseFloat(formData.target_margin_percentage) : undefined,
-        margin_percentage: formData.margin_percentage ? parseFloat(formData.margin_percentage) : 0,
+        margin_percentage: formData.margin_percentage ? parseFloat(formData.margin_percentage) : undefined,
 
         // Caractéristiques techniques
         brand: formData.brand || undefined,

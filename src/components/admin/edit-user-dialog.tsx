@@ -68,9 +68,9 @@ export function EditUserDialog({
       // Extraire nom temporaire depuis l'email (en attendant les colonnes DB)
       const tempName = user.email.split('@')[0].split('.') || ['', '']
       setFormData({
-        first_name: tempName[0] || '',
-        last_name: tempName[1] || '',
-        job_title: '', // TODO: Récupérer depuis DB quand colonne ajoutée
+        first_name: user.profile?.first_name || tempName[0] || '',
+        last_name: user.profile?.last_name || tempName[1] || '',
+        job_title: user.profile?.job_title || '',
         role: user.profile?.role || 'catalog_manager'
       })
     }

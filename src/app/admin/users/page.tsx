@@ -27,6 +27,10 @@ export interface UserWithProfile {
   profile: {
     role: string
     user_type: string
+    first_name: string | null
+    last_name: string | null
+    phone: string | null
+    job_title: string | null
     created_at: string
     updated_at: string
   } | null
@@ -44,6 +48,10 @@ async function getUsersWithProfiles(): Promise<UserWithProfile[]> {
       user_id,
       role,
       user_type,
+      first_name,
+      last_name,
+      phone,
+      job_title,
       created_at,
       updated_at
     `)
@@ -85,6 +93,10 @@ async function getUsersWithProfiles(): Promise<UserWithProfile[]> {
         profile: {
           role: profile.role,
           user_type: profile.user_type,
+          first_name: profile.first_name,
+          last_name: profile.last_name,
+          phone: profile.phone,
+          job_title: profile.job_title,
           created_at: profile.created_at,
           updated_at: profile.updated_at
         }

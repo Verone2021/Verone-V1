@@ -405,8 +405,18 @@ export async function updateUserProfile(userId: string, updateData: UpdateUserPr
       profileUpdates.role = updateData.role
     }
 
-    // Note: Les colonnes first_name, last_name, job_title seront ajoutées plus tard
-    // En attendant, on met à jour les user_metadata
+    // ✅ Support des nouveaux champs (migration 20251030_001)
+    if (updateData.first_name !== undefined) {
+      profileUpdates.first_name = updateData.first_name?.trim() || null
+    }
+
+    if (updateData.last_name !== undefined) {
+      profileUpdates.last_name = updateData.last_name?.trim() || null
+    }
+
+    if (updateData.job_title !== undefined) {
+      profileUpdates.job_title = updateData.job_title?.trim() || null
+    }
 
     // Mettre à jour le profil
     if (Object.keys(profileUpdates).length > 1) { // Plus que juste updated_at

@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useEffect, useMemo } from 'react'
+import { useSearchParams } from 'next/navigation'
 import { Plus, Search, Eye, Edit, Trash2, CheckCircle, XCircle, RotateCcw, Ban, ArrowUpDown, ArrowUp, ArrowDown, FileText, FileSpreadsheet } from 'lucide-react'
 import { ButtonV2 } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -48,6 +49,7 @@ export default function SalesOrdersPage() {
   } = useSalesOrders()
 
   const { toast } = useToast()
+  const searchParams = useSearchParams()
 
   // États filtres
   const [searchTerm, setSearchTerm] = useState('')
@@ -69,6 +71,18 @@ export default function SalesOrdersPage() {
     fetchOrders()
     fetchStats()
   }, [fetchOrders, fetchStats])
+
+  // Ouvrir automatiquement le modal si query param ?id= présent (venant des notifications)
+  useEffect(() => {
+    const orderId = searchParams.get('id')
+    if (orderId && orders.length > 0 && !showOrderDetail) {
+      const order = orders.find(o => o.id === orderId)
+      if (order) {
+        setSelectedOrder(order)
+        setShowOrderDetail(true)
+      }
+    }
+  }, [searchParams, orders, showOrderDetail])
 
   // Filtrage des commandes
   const filteredOrders = useMemo(() => {

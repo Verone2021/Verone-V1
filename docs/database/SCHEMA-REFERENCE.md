@@ -2,7 +2,7 @@
 
 ⚠️ **RÈGLE ABSOLUE** : Consulter CE fichier AVANT toute modification database
 
-**Dernière mise à jour** : 25 octobre 2025
+**Dernière mise à jour** : 30 octobre 2025
 **Database** : PostgreSQL via Supabase
 **Projet** : aorroydfjsrygmosnzrl
 
@@ -471,9 +471,14 @@ Métriques performance feeds
 
 ### Module Utilisateurs & Activité (5 tables)
 
-#### 59. **user_profiles** (13 colonnes)
+#### 59. **user_profiles** (17 colonnes)
 Profils utilisateurs (liés auth.users Supabase)
-- **Colonnes clés** : user_id, role, user_type, scopes, partner_id
+- **Colonnes clés** : user_id, role, user_type, scopes, partner_id, first_name, last_name, phone, job_title
+- **Nouveautés 2025-10-30** (migration 20251030_001) :
+  - `first_name` (TEXT, null) - Prénom utilisateur (max 50 chars)
+  - `last_name` (TEXT, null) - Nom de famille (max 50 chars)
+  - `phone` (TEXT, null) - Téléphone français validé
+  - `job_title` (TEXT, null) - Poste/Fonction (max 100 chars)
 
 #### 60. **user_sessions** (15 colonnes)
 Sessions utilisateurs tracking

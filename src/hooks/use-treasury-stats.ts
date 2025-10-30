@@ -349,6 +349,22 @@ export function useTreasuryStats(
     }
   }
 
+  // ===================================================================
+  // FETCH BANK BALANCE (via API Qonto)
+  // ===================================================================
+
+  const fetchBankBalance = async () => {
+    try {
+      const response = await fetch('/api/qonto/balance')
+      if (response.ok) {
+        const data = await response.json()
+        setBankBalance(data.balance || null)
+      }
+    } catch (err) {
+      console.warn('Failed to fetch bank balance:', err)
+    }
+  }
+
   return {
     // Stats
     stats,

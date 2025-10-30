@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
+import { useSearchParams } from 'next/navigation'
 import { Plus, Filter, Search, Eye, Edit, Trash2, Package, Truck, CheckCircle, XCircle } from 'lucide-react'
 import { ButtonV2 } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -118,6 +119,7 @@ export default function PurchaseOrdersPage() {
   } = usePurchaseOrders()
 
   const { organisations: suppliers } = useOrganisations({ type: 'supplier' })
+  const searchParams = useSearchParams()
 
   const [searchTerm, setSearchTerm] = useState('')
   const [statusFilter, setStatusFilter] = useState<PurchaseOrderStatus | 'all'>('all')
@@ -135,6 +137,18 @@ export default function PurchaseOrdersPage() {
     fetchOrders(filters)
     fetchStats(filters)
   }, [fetchOrders, fetchStats, statusFilter, supplierFilter, searchTerm])
+
+  // ✅ Auto-open modal from notification URL (?id=xxx)
+  useEffect(() => {
+    const orderId = searchParams.get('id')
+    if (orderId && orders.length > 0 && !showOrderDetail) {
+      const order = orders.find(o => o.id === orderId)
+      if (order) {
+        setSelectedOrder(order)
+        setShowOrderDetail(true)
+      }
+    }
+  }, [searchParams, orders, showOrderDetail])
 
   const filteredOrders = orders.filter(order => {
     const matchesSearch = searchTerm === '' ||

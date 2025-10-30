@@ -151,19 +151,19 @@ export function useFinancialDocuments(filters?: FinancialDocumentFilters) {
           query = query.eq('partner_id', filters.partner_id)
         }
 
-        if (filters?.start_date) {
-          query = query.gte('document_date', filters.start_date)
+        if (filters?.date_from) {
+          query = query.gte('document_date', filters.date_from)
         }
 
-        if (filters?.end_date) {
-          query = query.lte('document_date', filters.end_date)
+        if (filters?.date_to) {
+          query = query.lte('document_date', filters.date_to)
         }
 
         const { data, error: fetchError } = await query
 
         if (fetchError) throw fetchError
 
-        setDocuments(data || [])
+        setDocuments((data as any) || [])
       } catch (err: any) {
         console.error('Error fetching financial documents:', err)
         setError(err.message || 'Erreur chargement documents')
