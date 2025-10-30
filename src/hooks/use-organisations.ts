@@ -5,6 +5,7 @@ import { createClient } from '@/lib/supabase/client'
 
 export interface Organisation {
   id: string
+  name: string // Nom d'affichage (trade_name si défini, sinon legal_name)
   legal_name: string // Dénomination sociale officielle (ex-name)
   trade_name: string | null // Nom commercial (si différent)
   has_different_trade_name: boolean | null // Indicateur nom commercial
@@ -58,7 +59,7 @@ export interface Organisation {
   // Classification business
   industry_sector: string | null
   supplier_segment: string | null
-  // supplier_category: SUPPRIMÉ (migration 20251023_001 - colonne inexistante)
+  supplier_category: string | null
 
   // Informations commerciales
   payment_terms: string | null
@@ -148,7 +149,7 @@ export interface CreateOrganisationData {
   // Classification
   industry_sector?: string
   supplier_segment?: string
-  // supplier_category?: SUPPRIMÉ (migration 20251023_001)
+  supplier_category?: string
 
   // Commercial
   payment_terms?: string
@@ -202,9 +203,17 @@ export function useOrganisations(filters?: OrganisationFilters) {
         throw error
       }
 
+      // ✅ Ajouter le champ 'name' calculé
+      if (data) {
+        return {
+          ...data,
+          name: data.trade_name || data.legal_name
+        } as unknown as Organisation
+      }
+
       return data
     } catch (error) {
-      // Gestion silencieuse - return null suffit
+      console.error('Erreur lors de la récupération de l\'organisation:', error)
       return null
     }
   }
@@ -261,11 +270,17 @@ export function useOrganisations(filters?: OrganisationFilters) {
         return
       }
 
+      // ✅ Ajouter le champ 'name' calculé pour chaque organisation
+      const organisationsWithName = (data || []).map(org => ({
+        ...org,
+        name: org.trade_name || org.legal_name
+      }))
+
       // Add product counts for suppliers (optimized - single query)
-      let organisationsWithCounts = data || []
+      let organisationsWithCounts = organisationsWithName
 
       // Si on a des fournisseurs, on compte tous les produits en une seule requête groupée
-      const suppliers = (data || []).filter(org => org.type === 'supplier')
+      const suppliers = organisationsWithName.filter(org => org.type === 'supplier')
       if (suppliers.length > 0) {
         const supplierIds = suppliers.map(s => s.id)
 
@@ -278,12 +293,12 @@ export function useOrganisations(filters?: OrganisationFilters) {
         // Créer un Map de comptage
         const countsMap = new Map<string, number>()
         productCounts?.forEach(p => {
-          const count = countsMap.get(p.supplier_id) || 0
-          countsMap.set(p.supplier_id, count + 1)
+          const count = countsMap.get(p.supplier_id as any) || 0
+          countsMap.set(p.supplier_id as any, count + 1)
         })
 
         // Merger les comptes avec les organisations
-        organisationsWithCounts = (data || []).map(org => {
+        organisationsWithCounts = organisationsWithName.map(org => {
           if (org.type === 'supplier') {
             return {
               ...org,
@@ -296,7 +311,7 @@ export function useOrganisations(filters?: OrganisationFilters) {
         })
       }
 
-      setOrganisations(organisationsWithCounts)
+      setOrganisations(organisationsWithCounts as any)
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Erreur inconnue')
     } finally {
@@ -363,6 +378,15 @@ export function useOrganisations(filters?: OrganisationFilters) {
       }
 
       await fetchOrganisations()
+
+      // ✅ Ajouter le champ 'name' calculé
+      if (newOrg) {
+        return {
+          ...newOrg,
+          name: newOrg.trade_name || newOrg.legal_name
+        } as unknown as Organisation
+      }
+
       return newOrg
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Erreur lors de la création')
@@ -410,6 +434,15 @@ export function useOrganisations(filters?: OrganisationFilters) {
       }
 
       await fetchOrganisations()
+
+      // ✅ Ajouter le champ 'name' calculé
+      if (updatedOrg) {
+        return {
+          ...updatedOrg,
+          name: updatedOrg.trade_name || updatedOrg.legal_name
+        } as unknown as Organisation
+      }
+
       return updatedOrg
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Erreur lors de la mise à jour')
@@ -626,6 +659,7 @@ export function useOrganisation(id: string) {
             legal_form,
             industry_sector,
             supplier_segment,
+            supplier_category,
             payment_terms,
             delivery_time_days,
             minimum_order_amount,
@@ -645,20 +679,29 @@ export function useOrganisation(id: string) {
           return
         }
 
+        // ✅ Cast data pour contourner type SelectQueryError incorrect
+        const orgData = data as any
+
+        // ✅ Ajouter le champ 'name' calculé
+        const orgWithName = {
+          ...orgData,
+          name: orgData.trade_name || orgData.legal_name
+        }
+
         // Add product counts if supplier
-        if (data.type === 'supplier') {
+        if (orgData.type === 'supplier') {
           // Compter les produits individuels directement par supplier_id
           const { count: productsCount } = await supabase
             .from('products')
             .select('*', { count: 'exact', head: true })
-            .eq('supplier_id', data.id)
+            .eq('supplier_id', orgData.id)
 
-          data._count = {
+          orgWithName._count = {
             products: productsCount || 0
           }
         }
 
-        setOrganisation(data)
+        setOrganisation(orgWithName)
       } catch (err) {
         setError(err instanceof Error ? err.message : 'Erreur inconnue')
       } finally {

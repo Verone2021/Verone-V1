@@ -60,7 +60,7 @@ export function OrganisationContactsManager({
         .order('created_at', { ascending: true })
 
       if (error) throw error
-      setContacts((data || []) as Contact[])
+      setContacts(data as any || [])
     } catch (err) {
       console.error('Erreur chargement contacts:', err)
     } finally {

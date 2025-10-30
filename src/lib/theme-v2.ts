@@ -146,7 +146,7 @@ export const getColor = (color: ThemeColor, shade: number | 'DEFAULT' | 'light' 
   if (typeof colorObj === 'object' && shade in colorObj) {
     return colorObj[shade as keyof typeof colorObj]
   }
-  return colorObj as string
+  return colorObj as unknown as string
 }
 
 // Utility: Generate gradient

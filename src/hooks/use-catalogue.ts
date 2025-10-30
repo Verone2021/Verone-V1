@@ -49,12 +49,20 @@ interface Product {
   supplier_id?: string;
   supplier?: {
     id: string;
-    name: string;
+    legal_name: string;
+    trade_name: string | null;
   };
   subcategories?: {
     id: string;
     name: string;
   };
+  
+  // ✅ STOCK - Propriétés manquantes alignées avec DB
+  stock_real?: number;        // Stock réel physique
+  min_stock?: number;         // Stock minimum
+  stock_quantity?: number;    // Stock quantity (legacy)
+  stock_forecasted_in?: number;
+  stock_forecasted_out?: number;
 }
 
 interface Category {
@@ -129,7 +137,7 @@ export const useCatalogue = () => {
       setState(prev => ({
         ...prev,
         categories: categoriesResult,
-        products: productsResult.products,
+        products: productsResult.products as any,
         total: productsResult.total,
         loading: false
       }));
@@ -158,7 +166,7 @@ export const useCatalogue = () => {
       .order('display_order', { ascending: true });
 
     if (error) throw error;
-    return data || [];
+    return (data || []) as any;
   };
 
   const loadProducts = async (filters: CatalogueFilters = {}) => {
@@ -169,7 +177,7 @@ export const useCatalogue = () => {
         status, condition,
         subcategory_id, supplier_id, brand,
         archived_at, created_at, updated_at,
-        supplier:organisations!supplier_id(id, name),
+        supplier:organisations!supplier_id(id, legal_name, trade_name),
         subcategories!subcategory_id(id, name),
         product_images!left(public_url, is_primary)
       `);
@@ -183,7 +191,7 @@ export const useCatalogue = () => {
     }
 
     if (filters.statuses && filters.statuses.length > 0) {
-      query = query.in('status', filters.statuses);
+      query = query.in('status', filters.statuses as any);
     }
 
     if (filters.subcategories && filters.subcategories.length > 0) {
@@ -224,7 +232,7 @@ export const useCatalogue = () => {
         status, condition,
         subcategory_id, supplier_id, brand,
         archived_at, created_at, updated_at,
-        supplier:organisations!supplier_id(id, name),
+        supplier:organisations!supplier_id(id, legal_name, trade_name),
         subcategories!subcategory_id(id, name),
         product_images!left(public_url, is_primary)
       `);
@@ -238,7 +246,7 @@ export const useCatalogue = () => {
     }
 
     if (filters.statuses && filters.statuses.length > 0) {
-      query = query.in('status', filters.statuses);
+      query = query.in('status', filters.statuses as any);
     }
 
     if (filters.subcategories && filters.subcategories.length > 0) {
@@ -276,7 +284,7 @@ export const useCatalogue = () => {
     try {
       const { data, error } = await supabase
         .from('products')
-        .insert([productData])
+        .insert([productData] as any)
         .select()
         .single();
 

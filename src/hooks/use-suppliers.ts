@@ -50,7 +50,7 @@ export function useSuppliers() {
 
       try {
         const { data, error: fetchError } = await supabase
-          .from('suppliers')
+          .from('suppliers' as any)
           .select('id, name, contact_info, payment_terms, delivery_time_days, is_active')
           .eq('is_active', true)
           .order('name', { ascending: true })
@@ -61,7 +61,7 @@ export function useSuppliers() {
           return
         }
 
-        setSuppliers(data || [])
+        setSuppliers((data || []) as any)
       } catch (err) {
         console.error('Erreur fetch suppliers:', err)
         setError('Impossible de charger les fournisseurs')

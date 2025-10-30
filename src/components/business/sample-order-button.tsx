@@ -22,8 +22,8 @@ interface SampleOrderButtonProps {
   supplierName?: string
   costPrice?: number
   className?: string
-  variant?: 'default' | 'outline' | 'ghost'
-  size?: 'default' | 'sm' | 'lg'
+  variant?: 'secondary' | 'outline' | 'ghost'
+  size?: 'secondary' | 'sm' | 'lg'
 }
 
 export function SampleOrderButton({
@@ -33,7 +33,7 @@ export function SampleOrderButton({
   costPrice,
   className,
   variant = 'outline',
-  size = 'default'
+  size = 'secondary'
 }: SampleOrderButtonProps) {
   const router = useRouter()
   const { requestSample, isLoading } = useSampleOrder()
@@ -56,7 +56,7 @@ export function SampleOrderButton({
     <>
       <ButtonV2
         variant={variant}
-        size={size}
+        size={size as any}
         onClick={() => setShowConfirmDialog(true)}
         disabled={isLoading}
         className={cn(

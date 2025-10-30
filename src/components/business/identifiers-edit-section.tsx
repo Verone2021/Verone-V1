@@ -114,7 +114,7 @@ export function IdentifiersEditSection({ product, onUpdate, className }: Identif
               Annuler
             </ButtonV2>
             <ButtonV2
-              variant="primary"
+              variant="secondary"
               size="sm"
               onClick={handleSave}
               disabled={!hasChanges(section) || isSaving(section)}

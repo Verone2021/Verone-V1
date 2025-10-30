@@ -74,8 +74,77 @@ export function useTreasuryStats(
   const [forecasts, setForecasts] = useState<TreasuryForecast[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
+  const [bankBalance, setBankBalance] = useState<number | null>(null)
 
   const supabase = createClient()
+
+  // Dates par défaut : 30 derniers jours
+  const defaultStartDate = startDate || new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0]
+  const defaultEndDate = endDate || new Date().toISOString().split('T')[0]
+
+  // ===================================================================
+  // HOOKS: useEffect placés AVANT early return (React Rules)
+  // ===================================================================
+
+  // Auto-fetch stats when dates change
+  useEffect(() => {
+    if (!featureFlags.financeEnabled) return
+    // fetchStats() will be defined below
+    const fetchData = async () => {
+      try {
+        setLoading(true)
+        setError(null)
+
+        const { data: statsData, error: statsError } = await supabase
+          .rpc('get_treasury_stats', {
+            p_start_date: defaultStartDate,
+            p_end_date: defaultEndDate
+          } as any)
+
+        if (statsError) throw statsError
+
+        if (statsData && (statsData as any).length > 0) {
+          const row = (statsData as any)[0]
+          setStats({
+            total_invoiced_ar: row.total_invoiced_ar || 0,
+            total_paid_ar: row.total_paid_ar || 0,
+            unpaid_count_ar: row.unpaid_count_ar || 0,
+            overdue_ar: (row.total_invoiced_ar || 0) - (row.total_paid_ar || 0),
+            total_invoiced_ap: row.total_invoiced_ap || 0,
+            total_paid_ap: row.total_paid_ap || 0,
+            unpaid_count_ap: row.unpaid_count_ap || 0,
+            overdue_ap: (row.total_invoiced_ap || 0) - (row.total_paid_ap || 0),
+            net_balance: row.net_balance || 0,
+            net_cash_flow: (row.total_paid_ar || 0) - (row.total_paid_ap || 0)
+          })
+        }
+      } catch (err: any) {
+        console.error('Error fetching treasury stats:', err)
+        setError(err.message || 'Erreur chargement statistiques')
+        toast.error(err.message || 'Erreur chargement')
+      } finally {
+        setLoading(false)
+      }
+    }
+    fetchData()
+  }, [defaultStartDate, defaultEndDate, supabase])
+
+  // Auto-fetch bank balance on mount
+  useEffect(() => {
+    if (!featureFlags.financeEnabled) return
+    const fetchBalance = async () => {
+      try {
+        const response = await fetch('/api/qonto/balance')
+        if (response.ok) {
+          const data = await response.json()
+          setBankBalance(data.balance || null)
+        }
+      } catch (err) {
+        console.warn('Failed to fetch bank balance:', err)
+      }
+    }
+    fetchBalance()
+  }, [])
 
   // ===================================================================
   // FEATURE FLAG: FINANCE MODULE DISABLED (Phase 1)
@@ -96,10 +165,6 @@ export function useTreasuryStats(
     }
   }
 
-  // Dates par défaut : 30 derniers jours
-  const defaultStartDate = startDate || new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0]
-  const defaultEndDate = endDate || new Date().toISOString().split('T')[0]
-
   // ===================================================================
   // FETCH STATS (via RPC get_treasury_stats)
   // ===================================================================
@@ -114,12 +179,12 @@ export function useTreasuryStats(
         .rpc('get_treasury_stats', {
           p_start_date: defaultStartDate,
           p_end_date: defaultEndDate
-        })
+        } as any)
 
       if (statsError) throw statsError
 
-      if (statsData && statsData.length > 0) {
-        const row = statsData[0]
+      if (statsData && (statsData as any).length > 0) {
+        const row = (statsData as any)[0]
         setStats({
           total_invoiced_ar: row.total_invoiced_ar || 0,
           total_paid_ar: row.total_paid_ar || 0,
@@ -283,33 +348,6 @@ export function useTreasuryStats(
       setLoading(false)
     }
   }
-
-  useEffect(() => {
-    fetchStats()
-  }, [defaultStartDate, defaultEndDate])
-
-  // ===================================================================
-  // HELPER: Get Current Bank Balance (Qonto API - si disponible)
-  // ===================================================================
-
-  const [bankBalance, setBankBalance] = useState<number | null>(null)
-
-  const fetchBankBalance = async () => {
-    try {
-      // Appeler API Qonto pour récupérer solde actuel
-      const response = await fetch('/api/qonto/balance')
-      if (response.ok) {
-        const data = await response.json()
-        setBankBalance(data.balance || null)
-      }
-    } catch (err) {
-      console.warn('Failed to fetch bank balance:', err)
-    }
-  }
-
-  useEffect(() => {
-    fetchBankBalance()
-  }, [])
 
   return {
     // Stats

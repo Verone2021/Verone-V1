@@ -12,6 +12,7 @@ import {
   Package
 } from 'lucide-react'
 import Link from 'next/link'
+import { getOrganisationDisplayName } from '@/lib/utils/organisation-helpers'
 import { OrganisationLogo } from './organisation-logo'
 import { SupplierSegmentBadge, SupplierSegmentType } from './supplier-segment-badge'
 import { SupplierCategoryBadge } from './supplier-category-badge'
@@ -46,7 +47,7 @@ interface OrganisationCardProps {
 /**
  * Formatte le code pays en version courte (FR au lieu de France)
  */
-function formatCountryCode(country: string | null | undefined): string {
+function formatCountryCode(country: string | null): string {
   if (!country) return ''
 
   const countryMap: Record<string, string> = {
@@ -103,7 +104,7 @@ export function OrganisationCard({
   onDelete
 }: OrganisationCardProps) {
   const typeInfo = getOrganisationTypeInfo(organisation.type, organisation.customer_type)
-  const countryCode = formatCountryCode(organisation.country)
+  const countryCode = formatCountryCode(organisation.country || null)
   const baseUrl = organisation.type === 'customer'
     ? '/contacts-organisations/customers'
     : organisation.type === 'supplier'
@@ -118,7 +119,7 @@ export function OrganisationCard({
           <div className="flex items-center gap-1.5 flex-1 min-w-0">
             <OrganisationLogo
               logoUrl={organisation.logo_url}
-              organisationName={organisation.trade_name || organisation.legal_name}
+              organisationName={getOrganisationDisplayName(organisation as any)}
               size="xs"
               fallback="initials"
               className="flex-shrink-0"
@@ -131,18 +132,18 @@ export function OrganisationCard({
                 className="hover:underline truncate flex items-center gap-1 text-sm font-medium leading-tight"
                 style={{ color: colors.text.DEFAULT }}
               >
-                <span className="truncate">{organisation.trade_name || organisation.legal_name}</span>
+                <span className="truncate">{getOrganisationDisplayName(organisation as any)}</span>
                 <ExternalLink className="h-3 w-3 flex-shrink-0 opacity-60" />
               </a>
             ) : (
               <span className="truncate text-sm font-medium leading-tight" style={{ color: colors.text.DEFAULT }}>
-                {organisation.trade_name || organisation.legal_name}
+                {getOrganisationDisplayName(organisation as any)}
               </span>
             )}
           </div>
           {organisation.archived_at && (
             <Badge
-              variant="danger"
+              variant="destructive"
               className="text-[10px] px-1.5 py-0.5 flex-shrink-0 leading-tight"
               style={{ backgroundColor: colors.danger[100], color: colors.danger[700] }}
             >
@@ -234,7 +235,7 @@ export function OrganisationCard({
                 aria-label="Restaurer"
               />
               <ButtonV2
-                variant="danger"
+                variant="destructive"
                 size="sm"
                 onClick={onDelete}
                 icon={Trash2}

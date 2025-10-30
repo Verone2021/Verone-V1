@@ -115,7 +115,7 @@ export function AddProductsToGroupModal({
           })
         )
 
-        setProducts(productsWithImages)
+        setProducts(productsWithImages as any)
       } catch (err) {
         console.error('Erreur:', err)
       } finally {
@@ -186,12 +186,12 @@ export function AddProductsToGroupModal({
           <DialogTitle className="text-xl font-light">Ajouter des produits au groupe</DialogTitle>
           <DialogDescription>
             Groupe: <span className="font-medium">{variantGroup.name}</span>
-            {variantGroup.variant_type && (
-              <Badge variant="outline" className="ml-2">
-                Type: {variantGroup.variant_type}
-              </Badge>
-            )}
           </DialogDescription>
+          {variantGroup.variant_type && (
+            <Badge variant="outline" className="w-fit">
+              Type: {variantGroup.variant_type}
+            </Badge>
+          )}
         </DialogHeader>
 
         {/* Filtres et recherche */}

@@ -141,8 +141,8 @@ export function BFAReportModal() {
   };
 
   // Déterminer badge variant selon taux
-  const getRateBadgeVariant = (rate: number): 'default' | 'secondary' | 'outline' => {
-    if (rate >= 7) return 'default';
+  const getRateBadgeVariant = (rate: number): 'secondary' | 'secondary' | 'outline' => {
+    if (rate >= 7) return 'secondary';
     if (rate >= 3) return 'secondary';
     return 'outline';
   };

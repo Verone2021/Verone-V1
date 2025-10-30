@@ -176,7 +176,7 @@ export class GoogleMerchantSyncClient {
       const data = await response.json()
 
       if (!response.ok) {
-        logger.error('Failed to insert product', {
+        logger.error('Failed to insert product', undefined, {
           operation: 'product_insert',
           offerId: productInput.offerId,
           status: response.status,
@@ -218,7 +218,7 @@ export class GoogleMerchantSyncClient {
         errorJSON: error ? JSON.stringify(error, Object.getOwnPropertyNames(error)) : null
       }
 
-      logger.error('Exception inserting product', errorDetails)
+      logger.error('Exception inserting product', errorDetails as any)
 
       return {
         success: false,
@@ -275,7 +275,7 @@ export class GoogleMerchantSyncClient {
       if (!response.ok) {
         const data = await response.json()
 
-        logger.error('Failed to delete product', {
+        logger.error('Failed to delete product', undefined, {
           operation: 'product_delete',
           offerId,
           status: response.status,
@@ -303,7 +303,7 @@ export class GoogleMerchantSyncClient {
         operation: 'delete'
       }
     } catch (error) {
-      logger.error('Exception deleting product', {
+      logger.error('Exception deleting product', undefined, {
         operation: 'product_delete',
         offerId,
         error: error instanceof Error ? error.message : String(error)

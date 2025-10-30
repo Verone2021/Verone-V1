@@ -7,6 +7,7 @@
  */
 
 import React, { useState, useEffect, useRef, useCallback, createContext, useContext } from 'react'
+// @ts-ignore
 import { createPortal } from 'react-dom'
 import { ButtonV2 } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'

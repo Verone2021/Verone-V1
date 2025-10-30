@@ -49,7 +49,7 @@ export function useProductPrimaryImage(productId: string | undefined) {
           throw fetchError
         }
 
-        setImage(data)
+        setImage(data as any)
       } catch (err) {
         console.error('[useProductPrimaryImage] Error:', err)
         setError(err instanceof Error ? err.message : 'Erreur inconnue')
@@ -98,7 +98,7 @@ export function useProductPrimaryImages(productIds: string[]) {
         // Transformer en objet indexé par product_id
         const imageMap: Record<string, ProductPrimaryImage> = {}
         data?.forEach(img => {
-          imageMap[img.product_id] = img
+          imageMap[img.product_id] = img as any
         })
 
         setImages(imageMap)

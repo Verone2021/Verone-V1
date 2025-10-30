@@ -249,7 +249,7 @@ export function ErrorReportModal({
       // Utilisation de l'API Screen Capture si disponible
       if ('getDisplayMedia' in navigator.mediaDevices) {
         const stream = await navigator.mediaDevices.getDisplayMedia({
-          video: { mediaSource: 'screen' }
+          video: true
         })
 
         const video = document.createElement('video')
@@ -526,7 +526,7 @@ export function ErrorReportModal({
                           />
                           <ButtonV2
                             type="button"
-                            variant="danger"
+                            variant="destructive"
                             size="sm"
                             className="absolute top-1 right-1 h-6 w-6 p-0"
                             onClick={() => removeScreenshot(index)}

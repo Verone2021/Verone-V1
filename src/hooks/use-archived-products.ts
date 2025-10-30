@@ -70,15 +70,16 @@ export function useArchivedProducts() {
             is_primary
           )
         `, { count: 'exact' })
-        .in('status', ['archived', 'discontinued', 'end_of_life'])
+        .eq('status', 'discontinued')
+        .not('archived_at', 'is', null)
         .order('archived_at', { ascending: false })
 
       if (error) throw error
 
       // Enrichir les données avec les URLs publiques des images
       const enrichedProducts = (data || []).map(product => ({
-        ...product,
-        images: (product.images || []).map(img => ({
+        ...(product as any),
+        images: ((product as any).images || []).map((img: { id: string; storage_path: string; is_primary: boolean; public_url?: string }) => ({
           ...img,
           public_url: img.storage_path ?
             supabase.storage.from('product-images').getPublicUrl(img.storage_path).data.publicUrl
@@ -109,7 +110,7 @@ export function useArchivedProducts() {
       const { error } = await supabase
         .from('products')
         .update({
-          status: 'archived',
+          status: 'discontinued',
           archived_reason: reason,
           archived_at: new Date().toISOString(),
           updated_at: new Date().toISOString()

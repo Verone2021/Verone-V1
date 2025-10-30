@@ -19,8 +19,11 @@ export interface SourcingProduct {
   supplier_id: string | null
   supplier?: {
     id: string
+    legal_name: string
+    trade_name: string | null
     name: string
     type: string
+    website: string | null
   }
   creation_mode: string
   sourcing_type?: string
@@ -35,7 +38,6 @@ export interface SourcingProduct {
   updated_at: string
   // Calculs
   estimated_selling_price?: number
-  margin_percentage?: number
   // Images
   main_image_url?: string
 }
@@ -84,13 +86,15 @@ export function useSourcingProducts(filters?: SourcingFilters) {
           updated_at,
           supplier:organisations!products_supplier_id_fkey(
             id,
-            name,
+            legal_name,
+            trade_name,
             type,
             website
           ),
           assigned_client:organisations!products_assigned_client_id_fkey(
             id,
-            name,
+            legal_name,
+            trade_name,
             type
           ),
           product_images!left(
@@ -108,7 +112,7 @@ export function useSourcingProducts(filters?: SourcingFilters) {
       }
 
       if (filters?.status) {
-        query = query.eq('status', filters.status)
+        query = query.eq('status', filters.status as any)
       }
 
       if (filters?.sourcing_type) {
@@ -166,7 +170,7 @@ export function useSourcingProducts(filters?: SourcingFilters) {
         }
       })
 
-      setProducts(enrichedProducts)
+      setProducts(enrichedProducts as any)
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Erreur inconnue')
       toast({
@@ -265,6 +269,40 @@ export function useSourcingProducts(filters?: SourcingFilters) {
     }
   }
 
+  /**
+   * Vérifie si un produit a déjà été commandé (hors échantillons)
+   *
+   * Business Rule : Un produit peut demander un échantillon UNIQUEMENT s'il n'a jamais été commandé.
+   * - Produits en sourcing : Toujours autorisés (nouveaux produits)
+   * - Produits au catalogue : Autorisés seulement si jamais commandés avant
+   *
+   * @param productId - UUID du produit à vérifier
+   * @returns true si déjà commandé (échantillon interdit), false sinon (échantillon autorisé)
+   */
+  const hasProductBeenOrdered = async (productId: string): Promise<boolean> => {
+    try {
+      // Chercher dans purchase_order_items si le produit a déjà été commandé
+      // On exclut les items avec notes = 'Échantillon pour validation'
+      const { data, error } = await supabase
+        .from('purchase_order_items')
+        .select('id')
+        .eq('product_id', productId)
+        .or('notes.not.eq.Échantillon pour validation,notes.is.null')
+        .limit(1)
+
+      if (error) {
+        console.error('Erreur vérification commandes produit:', error)
+        return false // En cas d'erreur, autoriser échantillon par sécurité
+      }
+
+      // Si au moins 1 item trouvé → produit déjà commandé
+      return (data && data.length > 0)
+    } catch (err) {
+      console.error('Erreur hasProductBeenOrdered:', err)
+      return false // En cas d'erreur, autoriser échantillon par sécurité
+    }
+  }
+
   // Commander un échantillon - Logique métier complète
   const orderSample = async (productId: string) => {
     try {
@@ -297,10 +335,21 @@ export function useSourcingProducts(filters?: SourcingFilters) {
         return false
       }
 
+      // Vérification "jamais commandé" - Business Rule
+      const alreadyOrdered = await hasProductBeenOrdered(productId)
+      if (alreadyOrdered) {
+        toast({
+          title: "Échantillon non autorisé",
+          description: "Ce produit a déjà été commandé. Les échantillons ne sont disponibles que pour les produits jamais commandés.",
+          variant: "destructive"
+        })
+        return false
+      }
+
       // 2. Vérifier s'il existe une commande fournisseur en "draft" pour ce fournisseur
       const { data: existingDraftOrders, error: ordersError } = await supabase
         .from('purchase_orders')
-        .select('id, po_number')
+        .select('*')
         .eq('supplier_id', product.supplier_id)
         .eq('status', 'draft')
         .order('created_at', { ascending: false })
@@ -317,14 +366,14 @@ export function useSourcingProducts(filters?: SourcingFilters) {
         // Ajouter un item à la commande existante
         const { error: itemError } = await supabase
           .from('purchase_order_items')
-          .insert({
+          .insert([{
             purchase_order_id: purchaseOrderId,
             product_id: productId,
             quantity: 1, // Échantillon = quantité 1
             unit_price_ht: product.cost_price,
             discount_percentage: 0,
             notes: 'Échantillon pour validation'
-          })
+          }])
 
         if (itemError) throw itemError
 
@@ -371,17 +420,17 @@ export function useSourcingProducts(filters?: SourcingFilters) {
         // Créer la commande
         const { data: newOrder, error: orderError } = await supabase
           .from('purchase_orders')
-          .insert({
+          .insert([{
             po_number: poNumber,
             supplier_id: product.supplier_id,
             status: 'draft',
             currency: 'EUR',
-            tax_rate: 20,
+            tax_rate: 0.20,
             total_ht: totalHT,
             total_ttc: totalTTC,
             notes: 'Commande échantillon automatique',
             created_by: user?.id
-          })
+          }] as any)
           .select('id')
           .single()
 
@@ -392,14 +441,14 @@ export function useSourcingProducts(filters?: SourcingFilters) {
         // Créer l'item échantillon
         const { error: itemError } = await supabase
           .from('purchase_order_items')
-          .insert({
+          .insert([{
             purchase_order_id: purchaseOrderId,
             product_id: productId,
             quantity: 1,
             unit_price_ht: product.cost_price,
             discount_percentage: 0,
             notes: 'Échantillon pour validation'
-          })
+          }])
 
         if (itemError) throw itemError
 
@@ -413,7 +462,7 @@ export function useSourcingProducts(filters?: SourcingFilters) {
       const { error: updateError } = await supabase
         .from('products')
         .update({
-          status: 'echantillon_commande', // Passage à "commandé" car ajouté à commande
+          status: 'echantillon_a_commander', // Passage à "à commander" car ajouté à commande
           requires_sample: true
         })
         .eq('id', productId)
@@ -592,7 +641,7 @@ export function useSourcingProducts(filters?: SourcingFilters) {
           creation_mode: 'sourcing',
           sourcing_type: data.assigned_client_id ? 'client' : 'interne',
           status: 'sourcing' // Statut initial pour produit en sourcing
-        }])
+        }] as any)
         .select()
         .single()
 
@@ -635,7 +684,7 @@ export function useSourcingProducts(filters?: SourcingFilters) {
                 storage_path: filePath,
                 is_primary: true,
                 image_type: 'product'
-              }])
+              }] as any)
           }
         } catch (imgError) {
           console.error('Erreur gestion image:', imgError)

@@ -96,7 +96,7 @@ export default function ContactDetailPage() {
 
     if (contact.is_primary_contact) {
       badges.push(
-        <Badge key="primary" variant="default" className="bg-gray-100 text-gray-900 border-gray-200">
+        <Badge key="primary" variant="secondary" className="bg-gray-100 text-gray-900 border-gray-200">
           <Star className="h-3 w-3 mr-1" />
           Principal
         </Badge>
@@ -326,7 +326,7 @@ export default function ContactDetailPage() {
               )}
               <div className="flex justify-between">
                 <span className="text-gray-600">Statut:</span>
-                <Badge variant={currentContact.is_active ? 'default' : 'secondary'} className={currentContact.is_active ? 'bg-green-100 text-green-800' : ''}>
+                <Badge variant={currentContact.is_active ? 'secondary' : 'secondary'} className={currentContact.is_active ? 'bg-green-100 text-green-800' : ''}>
                   {currentContact.is_active ? 'Actif' : 'Inactif'}
                 </Badge>
               </div>

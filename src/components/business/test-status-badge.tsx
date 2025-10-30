@@ -22,7 +22,7 @@ export type PriorityLevel = 'low' | 'medium' | 'high' | 'urgent'
 interface TestStatusBadgeProps {
   status: TestStatus
   size?: 'sm' | 'md' | 'lg'
-  variant?: 'default' | 'outline' | 'minimal'
+  variant?: 'secondary' | 'outline' | 'minimal'
   showIcon?: boolean
   showText?: boolean
   count?: number
@@ -32,7 +32,7 @@ interface TestStatusBadgeProps {
 interface SectionStatusBadgeProps {
   status: SectionStatus
   size?: 'sm' | 'md' | 'lg'
-  variant?: 'default' | 'outline' | 'minimal'
+  variant?: 'secondary' | 'outline' | 'minimal'
   className?: string
 }
 
@@ -49,6 +49,7 @@ const TEST_STATUS_CONFIG = {
     icon: Clock,
     colors: {
       default: 'bg-gray-200 text-gray-800 border-gray-300',
+      secondary: 'bg-gray-200 text-gray-800 border-gray-300',
       outline: 'border-gray-300 text-gray-600 bg-transparent',
       minimal: 'text-gray-600'
     }
@@ -58,6 +59,7 @@ const TEST_STATUS_CONFIG = {
     icon: CheckCircle,
     colors: {
       default: 'bg-black text-white border-black',
+      secondary: 'bg-black text-white border-black',
       outline: 'border-black text-black bg-transparent',
       minimal: 'text-black'
     }
@@ -67,6 +69,7 @@ const TEST_STATUS_CONFIG = {
     icon: XCircle,
     colors: {
       default: 'bg-gray-600 text-white border-gray-600',
+      secondary: 'bg-gray-600 text-white border-gray-600',
       outline: 'border-gray-600 text-gray-600 bg-transparent',
       minimal: 'text-gray-600'
     }
@@ -76,6 +79,7 @@ const TEST_STATUS_CONFIG = {
     icon: AlertTriangle,
     colors: {
       default: 'bg-gray-400 text-white border-gray-400',
+      secondary: 'bg-gray-400 text-white border-gray-400',
       outline: 'border-gray-400 text-gray-600 bg-transparent',
       minimal: 'text-gray-600'
     }
@@ -146,7 +150,7 @@ const SIZE_CONFIG = {
 export function TestStatusBadge({
   status,
   size = 'md',
-  variant = 'default',
+  variant = 'secondary',
   showIcon = true,
   showText = true,
   count,
@@ -182,7 +186,7 @@ export function TestStatusBadge({
 export function SectionStatusBadge({
   status,
   size = 'md',
-  variant = 'default',
+  variant = 'secondary',
   className
 }: SectionStatusBadgeProps) {
   const config = SECTION_STATUS_CONFIG[status]

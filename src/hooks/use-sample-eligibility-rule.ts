@@ -1,4 +1,13 @@
 /**
+ * ⚠️ DEPRECATED : Use useUnifiedSampleEligibility instead
+ *
+ * @deprecated Ce hook vérifie uniquement stock_movements, ce qui crée une contradiction
+ * avec use-sample-order.ts qui vérifie purchase_order_items. Utilisez plutôt
+ * useUnifiedSampleEligibility qui vérifie LES DEUX conditions.
+ *
+ * @see src/hooks/use-unified-sample-eligibility.ts
+ * @see docs/audits/2025-10/RAPPORT-AUDIT-ECHANTILLONS-MVP-2025-10-29.md
+ *
  * Hook pour la règle business d'éligibilité aux échantillons
  *
  * RÈGLE BUSINESS PRINCIPALE :

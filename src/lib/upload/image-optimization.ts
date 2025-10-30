@@ -44,7 +44,6 @@ export interface ImageOptimizationConfig {
     enabled: boolean
     trackConversion: boolean
     trackUploadSpeed: boolean
-    sentryIntegration: boolean
   }
 }
 
@@ -130,8 +129,7 @@ export const DEFAULT_IMAGE_OPTIMIZATION_CONFIG: ImageOptimizationConfig = {
   monitoring: {
     enabled: true,
     trackConversion: true,
-    trackUploadSpeed: true,
-    sentryIntegration: true
+    trackUploadSpeed: true
   }
 }
 
@@ -305,8 +303,8 @@ export class ImageOptimizer {
         const resizedDimensions = this.calculateResizedDimensions(
           originalDimensions.width,
           originalDimensions.height,
-          targetDimensions.width,
-          targetDimensions.height
+          (targetDimensions as any).width,
+          (targetDimensions as any).height
         )
 
         // Générer variantes pour chaque format
@@ -337,12 +335,6 @@ export class ImageOptimizer {
 
           } catch (error) {
             console.warn(`⚠️ Échec optimisation ${sizeName}-${format}:`, error)
-
-            // Tracking erreur si monitoring activé
-            if (this.config.monitoring.sentryIntegration) {
-              // TODO: Intégrer avec Sentry MCP
-              console.log('📤 Erreur rapportée à Sentry')
-            }
           }
         }
       }
@@ -399,11 +391,7 @@ export class ImageOptimizer {
     } catch (error) {
       const processingTime = performance.now() - startTime
 
-      // Erreur critique, rapporter
-      if (this.config.monitoring.sentryIntegration) {
-        console.error('🚨 Erreur critique optimisation image:', error)
-        // TODO: Escalader vers Sentry MCP
-      }
+      console.error('🚨 Erreur critique optimisation image:', error)
 
       throw new Error(`Erreur optimisation image: ${error instanceof Error ? error.message : 'Erreur inconnue'}`)
     }

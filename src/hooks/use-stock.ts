@@ -197,13 +197,11 @@ export function useStock() {
       // Calculer le mouvement selon le type
       switch (movementData.movement_type) {
         case 'add':
-        case 'IN':
           quantityChange = Math.abs(movementData.quantity)
           newQuantity = currentStock + quantityChange
           break
 
         case 'remove':
-        case 'OUT':
           quantityChange = -Math.abs(movementData.quantity) // Negative value for OUT movements
           newQuantity = currentStock + quantityChange
           if (newQuantity < 0) {
@@ -212,7 +210,6 @@ export function useStock() {
           break
 
         case 'adjust':
-        case 'ADJUST':
           newQuantity = Math.abs(movementData.quantity)
           quantityChange = newQuantity - currentStock
           break
@@ -223,8 +220,8 @@ export function useStock() {
 
       // Normaliser le type de mouvement pour la base de données
       const dbMovementType =
-        (movementData.movement_type === 'add' || movementData.movement_type === 'IN') ? 'IN' :
-        (movementData.movement_type === 'remove' || movementData.movement_type === 'OUT') ? 'OUT' : 'ADJUST'
+        movementData.movement_type === 'add' ? 'IN' :
+        movementData.movement_type === 'remove' ? 'OUT' : 'ADJUST'
 
       console.log('Création mouvement:', {
         product_id: movementData.product_id,

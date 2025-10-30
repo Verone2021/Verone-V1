@@ -1,0 +1,86 @@
+# CODEOWNERS - Vérone Back Office
+# Documentation: https://docs.github.com/en/repositories/managing-your-repositorys-settings-and-features/customizing-your-repository/about-code-owners
+
+# ==============================================================================
+# PHASE 1 - CODE VALIDÉ (PROTECTION MAXIMALE)
+# ==============================================================================
+
+# Dashboard (Production Ready)
+/src/app/dashboard/** @owner @tech-lead
+/docs/modules/dashboard/** @owner
+
+# Organisations & Contacts (Production Ready)
+/src/app/contacts-organisations/** @owner @tech-lead
+/src/hooks/use-organisations.ts @owner @tech-lead
+/src/hooks/use-contacts.ts @owner @tech-lead
+/src/hooks/use-customers.ts @owner @tech-lead
+/src/hooks/use-toggle-favorite.ts @owner @tech-lead
+/src/components/business/organisation-*.tsx @owner @tech-lead
+/src/components/business/customer-*.tsx @owner @tech-lead
+/src/components/business/contact-*.tsx @owner @tech-lead
+
+# Profile & Admin (Production Ready)
+/src/app/profile/** @owner @tech-lead
+/src/app/admin/** @owner @tech-lead
+
+# ==============================================================================
+# DOCUMENTATION CRITIQUE
+# ==============================================================================
+
+# Database (Source de vérité)
+/docs/database/** @owner
+/supabase/migrations/** @owner
+
+# Auth & Security
+/docs/auth/** @owner
+/docs/security/** @owner
+
+# Metrics & KPI
+/docs/metrics/** @owner
+/packages/kpi/** @owner
+
+# Configuration Projet
+/CLAUDE.md @owner
+/PROTECTED_FILES.json @owner
+/.github/CODEOWNERS @owner
+
+# ==============================================================================
+# HOOKS & COMPOSANTS CRITIQUES
+# ==============================================================================
+
+# Tous les hooks nécessitent review tech-lead
+/src/hooks/use-*.ts @tech-lead
+
+# API Routes
+/src/app/api/** @tech-lead
+
+# Components UI Core
+/src/components/ui/** @tech-lead
+/src/components/ui-v2/** @tech-lead
+
+# Design System
+/src/lib/design-system/** @tech-lead
+
+# ==============================================================================
+# CI/CD & WORKFLOWS
+# ==============================================================================
+
+/.github/workflows/** @owner
+
+# ==============================================================================
+# CONFIGURATION
+# ==============================================================================
+
+/package.json @owner
+/next.config.js @owner
+/tailwind.config.ts @owner
+/.env.local @owner
+/.env.production @owner
+
+# ==============================================================================
+# SCRIPTS VALIDATION
+# ==============================================================================
+
+/scripts/validation/** @tech-lead
+/.husky/** @tech-lead
+/.eslintrc.strict.json @tech-lead

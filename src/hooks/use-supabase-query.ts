@@ -176,7 +176,7 @@ export function useSupabaseMutation<T = any>(
       console.error('Erreur mutation:', error)
       setState({
         loading: false,
-        error: error instanceof Error ? error.message : 'Erreur inconnue'
+        error: (error instanceof Error ? error.message : 'Erreur inconnue') as any
       })
       return null
     }
@@ -204,7 +204,7 @@ export function useSupabaseTable<T = any>(
   const queryKey = `table:${tableName}:${JSON.stringify({ filters, select, orderBy, limit, offset })}`
 
   const queryFn = useCallback(async (supabase: ReturnType<typeof createClient>) => {
-    let query = supabase.from(tableName).select(select)
+    let query = supabase.from(tableName as any).select(select) as any
 
     // Apply filters
     Object.entries(filters).forEach(([key, value]) => {
@@ -233,7 +233,7 @@ export function useSupabaseTable<T = any>(
     return await query
   }, [tableName, select, filters, orderBy, limit, offset])
 
-  return useSupabaseQuery<T[]>(queryKey, queryFn, queryOptions)
+  return useSupabaseQuery<T[]>(queryKey, queryFn as any, queryOptions)
 }
 
 // Cache cleanup utility

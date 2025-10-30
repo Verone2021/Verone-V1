@@ -80,7 +80,7 @@ export const useNotifications = () => {
         notifications,
         unreadCount,
         loading: false
-      }));
+      }) as any);
 
     } catch (error) {
       // En développement, ignorer les erreurs si la table n'existe pas encore
@@ -212,7 +212,7 @@ export const useNotifications = () => {
           ...prev,
           notifications: [newNotification, ...prev.notifications],
           unreadCount: prev.unreadCount + 1
-        }));
+        }) as any);
       }
 
       return newNotification;

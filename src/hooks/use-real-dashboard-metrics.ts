@@ -55,12 +55,12 @@ const metricsFetcher = async () => {
 
   // Produits actifs: disponibles à la vente
   const activeProducts = products?.filter(p =>
-    ['in_stock', 'preorder', 'coming_soon', 'pret_a_commander'].includes(p.status)
+    (['in_stock', 'preorder', 'coming_soon', 'pret_a_commander'] as any).includes(p.status)
   )?.length || 0
 
   // Produits publiés: tous sauf sourcing
   const publishedProducts = products?.filter(p =>
-    !['sourcing', 'echantillon_a_commander'].includes(p.status)
+    !(['sourcing', 'echantillon_a_commander'] as any).includes(p.status)
   )?.length || 0
 
   // Produits archivés
@@ -70,7 +70,7 @@ const metricsFetcher = async () => {
   const weekAgo = new Date()
   weekAgo.setDate(weekAgo.getDate() - 7)
   const recentProducts = products?.filter(p =>
-    new Date(p.created_at) >= weekAgo
+    new Date(p.created_at || new Date().toISOString()) >= weekAgo
   )?.length || 0
   const trend = totalProducts > 0 ? Math.round((recentProducts / totalProducts) * 100) : 0
 

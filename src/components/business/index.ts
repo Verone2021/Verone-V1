@@ -6,17 +6,6 @@
 export { ProductCard } from './product-card';
 export { CollectionGrid } from './collection-grid';
 
-// Types réutilisables
-export type {
-  // Types ProductCard
-  ProductCardProps
-} from './product-card';
-
-export type {
-  // Types CollectionGrid
-  CollectionGridProps
-} from './collection-grid';
-
 // Interfaces business communes
 export interface VéroneProduct {
   id: string;

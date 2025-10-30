@@ -114,10 +114,10 @@ export function UniversalOrderDetailsModal({
           if (order.customer_type === 'organization' && order.customer_id) {
             const { data: org } = await supabase
               .from('organisations')
-              .select('name')
+              .select('legal_name, trade_name')
               .eq('id', order.customer_id)
               .single()
-            customerName = org?.name || 'Organisation inconnue'
+            customerName = (org?.trade_name || org?.legal_name) || 'Organisation inconnue'
           } else if (order.customer_type === 'individual' && order.customer_id) {
             const { data: individual } = await supabase
               .from('individual_customers')
@@ -174,10 +174,10 @@ export function UniversalOrderDetailsModal({
           if (order.supplier_id) {
             const { data: supplier } = await supabase
               .from('organisations')
-              .select('legal_name')
+              .select('legal_name, trade_name')
               .eq('id', order.supplier_id)
               .single()
-            supplierName = supplier?.legal_name || 'Fournisseur inconnu'
+            supplierName = (supplier?.trade_name || supplier?.legal_name) || 'Fournisseur inconnu'
           }
 
           setOrderDetails({

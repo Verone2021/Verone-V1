@@ -332,7 +332,7 @@ export function useMCPResolution() {
       completed_at: result.success ? new Date() : undefined
     }
 
-    setResolutionQueue(prev => prev.map(t => t.id === task.id ? updatedTask : t))
+    setResolutionQueue(prev => prev.map(t => t.id === task.id ? updatedTask : t) as any)
 
     // Mettre à jour les stats
     if (result.success) {

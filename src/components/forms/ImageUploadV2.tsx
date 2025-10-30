@@ -62,11 +62,11 @@ export function ImageUploadV2({
     bucket,
     autoUpload,
     onUploadSuccess: (result) => {
-      console.log('🎉 Upload terminé:', result.publicUrl)
-      onImageUpload(result.publicUrl)
+      console.log('🎉 Upload terminé:', result?.publicUrl)
+      onImageUpload(result?.publicUrl ?? '')
     },
     onUploadError: (error) => {
-      console.error('❌ Erreur upload:', error.message)
+      console.error('❌ Erreur upload:', error?.message)
     }
   })
 
@@ -215,7 +215,7 @@ export function ImageUploadV2({
     if (!errorMessage) return null
 
     return (
-      <Alert variant="danger" className="mt-4">
+      <Alert variant="destructive" className="mt-4">
         <AlertCircle className="h-4 w-4" />
         <AlertDescription className="flex items-center justify-between">
           <span>{errorMessage}</span>
@@ -253,7 +253,7 @@ export function ImageUploadV2({
           </div>
           <ButtonV2
             type="button"
-            variant="danger"
+            variant="destructive"
             size="sm"
             className="absolute -top-2 -right-2 w-6 h-6 p-0 rounded-full"
             onClick={handleRemoveImage}

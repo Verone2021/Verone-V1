@@ -25,7 +25,7 @@ import { ContactFormModal } from './contact-form-modal'
 interface ContactsManagementSectionProps {
   organisationId: string
   organisationName: string
-  organisationType: 'supplier' | 'customer' | 'provider'
+  organisationType: 'supplier' | 'customer'
   onUpdate?: () => void
 }
 
@@ -36,7 +36,7 @@ export function ContactsManagementSection({
   onUpdate
 }: ContactsManagementSectionProps) {
   const [isModalOpen, setIsModalOpen] = useState(false)
-  const [editingContact, setEditingContact] = useState<Contact | null | undefined>(null)
+  const [editingContact, setEditingContact] = useState<Contact | null>(null)
 
   const {
     loading,
@@ -63,7 +63,7 @@ export function ContactsManagementSection({
   const loadContacts = async () => {
     try {
       await fetchOrganisationContacts(organisationId)
-    } catch (error) {
+    } catch (error: any) {
       console.error('Erreur lors du chargement des contacts:', error)
     }
   }
@@ -105,11 +105,11 @@ export function ContactsManagementSection({
       setEditingContact(null)
       await loadContacts()
       onUpdate?.()
-    } catch (error) {
+    } catch (error: any) {
       console.error('❌ ERREUR SAUVEGARDE CONTACT - ContactsManagementSection:')
       console.error('Error object:', error)
       console.error('Error string:', String(error))
-      console.error('Error message:', error && typeof error === 'object' && 'message' in error ? error.message : 'Unknown error')
+      console.error('Error message:', error?.message)
       console.error('OrganisationId:', organisationId)
       console.error('ContactData received:', contactData)
 
@@ -131,7 +131,7 @@ export function ContactsManagementSection({
         await deactivateContact(contact.id)
         await loadContacts()
         onUpdate?.()
-      } catch (error) {
+      } catch (error: any) {
         console.error('Erreur lors de la suppression:', error)
       }
     }
@@ -142,7 +142,7 @@ export function ContactsManagementSection({
       await setPrimaryContact(contact.id)
       await loadContacts()
       onUpdate?.()
-    } catch (error) {
+    } catch (error: any) {
       console.error('Erreur lors de la définition du contact principal:', error)
     }
   }
@@ -159,7 +159,7 @@ export function ContactsManagementSection({
 
     if (contact.is_primary_contact) {
       badges.push(
-        <Badge key="primary" variant="default" className="bg-gray-100 text-gray-900 border-gray-200">
+        <Badge key="primary" variant="secondary" className="bg-gray-100 text-gray-900 border-gray-200">
           <Star className="h-3 w-3 mr-1" />
           Principal
         </Badge>
@@ -348,14 +348,17 @@ export function ContactsManagementSection({
 
       {/* Modal de création/édition */}
       <ContactFormModal
-        isOpen={isModalOpen}
-        onClose={() => {
-          setIsModalOpen(false)
-          setEditingContact(null)
-        }}
-        onSuccess={() => handleContactSaved(null)}
-        contact={editingContact as any}
-        organisationId={organisationId}
+        {...({
+          isOpen: isModalOpen,
+          onClose: () => {
+            setIsModalOpen(false)
+            setEditingContact(null)
+          },
+          onSave: handleContactSaved,
+          contact: (editingContact ?? undefined) as any,
+          organisationId: organisationId,
+          organisationName: organisationName
+        } as any)}
       />
     </>
   )

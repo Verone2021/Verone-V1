@@ -209,7 +209,7 @@ export function useImageUpload({
         return true
       } else {
         console.error('❌ Erreur suppression:', result.error)
-        setError(result.error)
+        setError(result.error as any)
         return false
       }
     } catch (error) {
@@ -227,6 +227,14 @@ export function useImageUpload({
     // Reset des états précédents
     clearError()
     setState('validating')
+
+    // Définir meta ici pour accessibilité dans try/catch
+    const meta: UploadMeta = {
+      bucket,
+      originalName: file.name,
+      size: file.size,
+      type: file.type
+    }
 
     try {
       // 1. Validation préalable
@@ -250,13 +258,6 @@ export function useImageUpload({
 
       // 3. Génération du nom de fichier sécurisé
       const filePath = generateSecureFileName(file.name)
-
-      const meta: UploadMeta = {
-        bucket,
-        originalName: file.name,
-        size: file.size,
-        type: file.type
-      }
 
       // Stocker pour cleanup éventuel
       currentUploadRef.current = { filePath, meta }

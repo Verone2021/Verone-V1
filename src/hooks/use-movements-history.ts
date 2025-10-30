@@ -110,12 +110,12 @@ export function useMovementsHistory() {
 
       // Filtres par type de mouvement
       if (appliedFilters.movementTypes && appliedFilters.movementTypes.length > 0) {
-        query = query.in('movement_type', appliedFilters.movementTypes)
+        query = query.in('movement_type', appliedFilters.movementTypes as any)
       }
 
       // Filtres par motifs
       if (appliedFilters.reasonCodes && appliedFilters.reasonCodes.length > 0) {
-        query = query.in('reason_code', appliedFilters.reasonCodes)
+        query = query.in('reason_code', appliedFilters.reasonCodes as any)
       }
 
       // Filtres par utilisateurs
@@ -192,7 +192,7 @@ export function useMovementsHistory() {
       const products = productsResult.data || []
 
       // Enrichir les mouvements avec les données jointes
-      const enrichedMovements: MovementWithDetails[] = data.map(movement => {
+      const enrichedMovements = data.map(movement => {
         const userProfile = userProfiles.find(profile => profile.user_id === movement.performed_by)
         const product = products.find(prod => prod.id === movement.product_id)
 
@@ -207,11 +207,11 @@ export function useMovementsHistory() {
           user_name: userName,
           user_first_name: userProfile?.first_name,
           user_last_name: userProfile?.last_name,
-          reason_description: movement.reason_code ? getReasonDescription(movement.reason_code) : undefined
+          reason_description: movement.reason_code ? getReasonDescription(movement.reason_code as any) : undefined
         }
       })
 
-      setMovements(enrichedMovements)
+      setMovements(enrichedMovements as any)
       setTotal(count || 0)
 
     } catch (error) {
@@ -289,7 +289,9 @@ export function useMovementsHistory() {
         .not('reason_code', 'is', null)
 
       const reasonCounts = reasonStats?.reduce((acc, item) => {
-        acc[item.reason_code] = (acc[item.reason_code] || 0) + 1
+        if (item.reason_code) {
+          acc[item.reason_code] = (acc[item.reason_code] || 0) + 1
+        }
         return acc
       }, {} as Record<string, number>) || {}
 
@@ -298,7 +300,7 @@ export function useMovementsHistory() {
         .slice(0, 5)
         .map(([code, count]) => ({
           code,
-          description: getReasonDescription(code),
+          description: getReasonDescription(code as any),
           count
         }))
 
@@ -394,11 +396,11 @@ export function useMovementsHistory() {
       }
 
       if (exportFilters.movementTypes && exportFilters.movementTypes.length > 0) {
-        query = query.in('movement_type', exportFilters.movementTypes)
+        query = query.in('movement_type', exportFilters.movementTypes as any)
       }
 
       if (exportFilters.reasonCodes && exportFilters.reasonCodes.length > 0) {
-        query = query.in('reason_code', exportFilters.reasonCodes)
+        query = query.in('reason_code', exportFilters.reasonCodes as any)
       }
 
       if (exportFilters.userIds && exportFilters.userIds.length > 0) {
@@ -472,7 +474,7 @@ export function useMovementsHistory() {
           'Stock Avant': movement.quantity_before,
           'Stock Après': movement.quantity_after,
           'Coût Unitaire': movement.unit_cost || '',
-          'Motif': movement.reason_code ? getReasonDescription(movement.reason_code) : '',
+          'Motif': movement.reason_code ? getReasonDescription(movement.reason_code as any) : '',
           'Utilisateur': userName,
           'Notes': movement.notes || '',
           'Référence': movement.reference_type || '',

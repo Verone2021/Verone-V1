@@ -56,7 +56,7 @@ export function CreateOrganisationModal({
     e.preventDefault()
 
     // Validation champs obligatoires
-    if (!formData.name || !formData.type) {
+    if (!formData.legal_name || !formData.type) {
       toast({
         title: "Erreur de validation",
         description: "Le nom et le type sont obligatoires.",
@@ -70,7 +70,7 @@ export function CreateOrganisationModal({
 
       toast({
         title: "✅ Organisation créée",
-        description: `${formData.name} a été créée avec succès.`
+        description: `${formData.legal_name} a été créée avec succès.`
       })
 
       // Callback avec l'ID et le nom de l'organisation
@@ -158,8 +158,8 @@ export function CreateOrganisationModal({
                     </Label>
                     <Input
                       id="name"
-                      value={formData.name || ''}
-                      onChange={(e) => handleInputChange('name', e.target.value)}
+                      value={formData.legal_name || ''}
+                      onChange={(e) => handleInputChange('legal_name', e.target.value)}
                       placeholder="Entreprise SARL"
                       className="border-black"
                       required

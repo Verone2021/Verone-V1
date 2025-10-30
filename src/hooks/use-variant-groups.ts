@@ -114,7 +114,7 @@ export function useVariantGroups(filters?: VariantGroupFilters) {
         product_count: productsWithImages.filter(p => p.variant_group_id === group.id).length
       }))
 
-      setVariantGroups(groupsWithProducts)
+      setVariantGroups(groupsWithProducts as any)
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Erreur inconnue')
       logger.error('Erreur chargement variant groups', err as Error, {
@@ -130,11 +130,11 @@ export function useVariantGroups(filters?: VariantGroupFilters) {
   }, [fetchVariantGroups])
 
   // Créer un nouveau groupe de variantes
-  const createVariantGroup = async (data: CreateVariantGroupData): Promise<boolean> => {
+  const createVariantGroup = async (data: CreateVariantGroupData): Promise<VariantGroup | null> => {
     try {
       const { data: newGroup, error: createError} = await supabase
         .from('variant_groups')
-        .insert({
+        .insert([{
           name: data.name,
           base_sku: data.base_sku, // SKU de base pour génération automatique
           subcategory_id: data.subcategory_id,
@@ -153,17 +153,17 @@ export function useVariantGroups(filters?: VariantGroupFilters) {
           supplier_id: data.supplier_id || null, // Fournisseur commun (si has_common_supplier = true)
           has_common_supplier: data.has_common_supplier || false, // Flag fournisseur commun
           product_count: 0
-        })
+        }] as any)
         .select()
         .single()
 
-      if (createError) {
+      if (createError || !newGroup) {
         toast({
           title: "Erreur",
-          description: createError.message,
+          description: createError?.message || "Erreur lors de la création",
           variant: "destructive"
         })
-        return false
+        return null
       }
 
       toast({
@@ -172,7 +172,7 @@ export function useVariantGroups(filters?: VariantGroupFilters) {
       })
 
       await fetchVariantGroups()
-      return true
+      return newGroup as VariantGroup
     } catch (err) {
       logger.error('Erreur création groupe', err as Error, {
         operation: 'create_variant_group_failed'
@@ -182,7 +182,7 @@ export function useVariantGroups(filters?: VariantGroupFilters) {
         description: "Impossible de créer le groupe",
         variant: "destructive"
       })
-      return false
+      return null
     }
   }
 
@@ -427,6 +427,7 @@ export function useVariantGroups(filters?: VariantGroupFilters) {
         .from('products')
         .insert(newProduct)
         .select()
+        .single()
 
       if (createError) {
         logger.error('Erreur création produit', createError, {
@@ -482,7 +483,7 @@ export function useVariantGroups(filters?: VariantGroupFilters) {
   ): Promise<boolean> => {
     try {
       // Si les variant_attributes changent, on doit régénérer le nom et le SKU
-      let finalUpdates = { ...updates }
+      const finalUpdates = { ...updates }
 
       if (updates.variant_attributes) {
         // Récupérer le produit et son groupe pour régénérer nom/SKU
@@ -523,7 +524,7 @@ export function useVariantGroups(filters?: VariantGroupFilters) {
         .update({
           ...finalUpdates,
           updated_at: new Date().toISOString()
-        })
+        } as any)
         .eq('id', productId)
 
       if (updateError) {
@@ -743,6 +744,7 @@ export function useVariantGroups(filters?: VariantGroupFilters) {
         .update(updateData)
         .eq('id', groupId)
         .select()
+        .single()
 
       if (updateError) {
         logger.error('Supabase update error', new Error(updateError.message), {
@@ -1194,7 +1196,7 @@ export function useProductVariantEditing() {
 
       // Mettre à jour l'attribut spécifique
       const updatedAttributes = {
-        ...(product?.variant_attributes || {}),
+        ...((product?.variant_attributes || {}) as any),
         [attributeKey]: value
       }
 
@@ -1288,22 +1290,23 @@ export function useVariantGroup(groupId: string) {
             subcategory:subcategories (
               id,
               name,
-              category:categories (
+              category:categories!inner (
                 id,
                 name,
-                family:families (
+                family:families!inner (
                   id,
                   name
                 )
               )
             ),
-            supplier:organisations (
+            supplier:organisations!variant_groups_supplier_id_fkey (
               id,
-              name
+              legal_name,
+              trade_name
             )
           `)
           .eq('id', groupId)
-          .single()
+          .maybeSingle()
 
         if (fetchError) {
           setLoading(false)
@@ -1327,7 +1330,8 @@ export function useVariantGroup(groupId: string) {
             variant_attributes,
             supplier:organisations!products_supplier_id_fkey (
               id,
-              name
+              legal_name,
+              trade_name
             )
           `)
           .eq('variant_group_id', groupId)
@@ -1362,7 +1366,7 @@ export function useVariantGroup(groupId: string) {
           product_count: productsWithImages.length
         }
 
-        setVariantGroup(groupWithProducts)
+        setVariantGroup(groupWithProducts as any)
         setLoading(false)
         setError(null)
 

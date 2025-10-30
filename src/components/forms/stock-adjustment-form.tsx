@@ -120,7 +120,7 @@ export function StockAdjustmentForm({
 
         if (error) throw error
 
-        setProducts(data || [])
+        setProducts(data as any || [])
       } catch (err) {
         console.error('Erreur chargement produits:', err)
         setError('Impossible de charger la liste des produits')

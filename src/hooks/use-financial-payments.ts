@@ -56,6 +56,53 @@ export function useFinancialPayments(documentId?: string) {
   const supabase = createClient()
 
   // ===================================================================
+  // HOOKS: useEffect placés AVANT early return (React Rules)
+  // ===================================================================
+
+  // Auto-fetch au mount et quand documentId change
+  useEffect(() => {
+    if (!featureFlags.financeEnabled) return
+
+    const fetchData = async () => {
+      try {
+        setLoading(true)
+        setError(null)
+
+        let query = supabase
+          .from('financial_payments')
+          .select(`
+            *,
+            document:financial_documents!document_id(
+              id,
+              document_type,
+              document_number,
+              partner_id
+            )
+          `)
+          .order('payment_date', { ascending: false })
+
+        if (documentId) {
+          query = query.eq('document_id', documentId)
+        }
+
+        const { data, error: fetchError } = await query
+
+        if (fetchError) throw fetchError
+
+        setPayments(data || [])
+      } catch (err: any) {
+        console.error('Error fetching financial payments:', err)
+        setError(err.message || 'Erreur chargement paiements')
+        toast.error(err.message || 'Erreur chargement')
+      } finally {
+        setLoading(false)
+      }
+    }
+
+    fetchData()
+  }, [documentId, supabase])
+
+  // ===================================================================
   // FEATURE FLAG: FINANCE MODULE DISABLED (Phase 1)
   // ===================================================================
 
@@ -126,10 +173,10 @@ export function useFinancialPayments(documentId?: string) {
           p_amount_paid: params.amount_paid,
           p_payment_date: params.payment_date,
           p_payment_method: params.payment_method,
-          p_transaction_reference: params.transaction_reference || null,
-          p_bank_transaction_id: params.bank_transaction_id || null,
-          p_notes: params.notes || null
-        })
+          p_transaction_reference: params.transaction_reference || undefined,
+          p_bank_transaction_id: params.bank_transaction_id || undefined,
+          p_notes: params.notes || undefined
+        }) as any
 
       if (rpcError) throw rpcError
 
@@ -175,11 +222,6 @@ export function useFinancialPayments(documentId?: string) {
       }, {} as Record<string, number>)
     }
   }
-
-  // Auto-fetch au mount
-  useEffect(() => {
-    fetchPayments()
-  }, [documentId])
 
   return {
     payments,

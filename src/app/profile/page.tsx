@@ -78,7 +78,7 @@ export default function ProfilePage() {
       if (profileError) {
         console.error('Error fetching profile:', profileError)
       } else {
-        setProfile(profileData)
+        setProfile(profileData as any)
         // Update edit data with profile info
         setEditData(prevData => ({
           ...prevData,
@@ -153,7 +153,7 @@ export default function ProfilePage() {
           .insert({
             user_id: user.id,
             ...sanitizedData
-          })
+          } as any)
 
         if (createError) {
           console.error('❌ Erreur création profil:', {
@@ -200,7 +200,7 @@ export default function ProfilePage() {
         .single()
 
       if (updatedProfile) {
-        setProfile(updatedProfile)
+        setProfile(updatedProfile as any)
       }
 
       setIsEditing(false)

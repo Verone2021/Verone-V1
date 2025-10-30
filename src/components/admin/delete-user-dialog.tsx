@@ -153,7 +153,7 @@ export function DeleteUserDialog({
           </ButtonV2>
           <ButtonV2
             type="button"
-            variant="danger"
+            variant="destructive"
             icon={Trash2}
             onClick={handleDelete}
             loading={isDeleting}

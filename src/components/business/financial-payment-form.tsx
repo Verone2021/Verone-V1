@@ -52,11 +52,11 @@ const paymentFormSchema = z.object({
     .max(999999, 'Montant trop élevé'),
 
   payment_date: z.date({
-    required_error: 'La date de paiement est requise'
+    message: 'La date de paiement est requise'
   }),
 
   payment_method: z.enum(['virement', 'carte', 'cheque', 'especes', 'prelevement', 'other'], {
-    required_error: 'La méthode de paiement est requise'
+    message: 'La méthode de paiement est requise'
   }),
 
   transaction_reference: z.string().optional(),
@@ -109,7 +109,7 @@ export function FinancialPaymentForm({
     try {
       setIsSubmitting(true)
 
-      await recordPayment({
+      await recordPayment?.({
         document_id: documentId,
         amount_paid: values.amount_paid,
         payment_date: format(values.payment_date, 'yyyy-MM-dd'),

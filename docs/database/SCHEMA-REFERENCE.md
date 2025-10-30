@@ -2,7 +2,7 @@
 
 ⚠️ **RÈGLE ABSOLUE** : Consulter CE fichier AVANT toute modification database
 
-**Dernière mise à jour** : 21 octobre 2025
+**Dernière mise à jour** : 25 octobre 2025
 **Database** : PostgreSQL via Supabase
 **Projet** : aorroydfjsrygmosnzrl
 
@@ -13,10 +13,10 @@
 | Élément | Nombre | Documentation |
 |---------|--------|---------------|
 | **Tables** | 77 | Ce fichier |
-| **Colonnes** | 1339 | Ce fichier |
-| **Triggers** | 161 | [triggers.md](./triggers.md) |
+| **Colonnes** | 1342 | Ce fichier |
+| **Triggers** | 159 | [triggers.md](./triggers.md) |
 | **RLS Policies** | 226 | [rls-policies.md](./rls-policies.md) |
-| **Fonctions RPC** | 259 | [functions-rpc.md](./functions-rpc.md) |
+| **Fonctions RPC** | 256 | [functions-rpc.md](./functions-rpc.md) |
 | **Foreign Keys** | 143 | [foreign-keys.md](./foreign-keys.md) |
 | **Enums** | 34 | [enums.md](./enums.md) |
 
@@ -226,8 +226,10 @@ Pricing custom par canal
 Listes prix clients spécifiques
 - **Relations** : → organisations / individual_customers, price_lists
 
-#### 33. **customer_pricing** (18 colonnes)
+#### 33. **customer_pricing** (19 colonnes)
 Pricing custom par client
+- **Colonnes clés** : id, customer_id, product_id, price_ht, retrocession_rate
+- **🆕 Ristourne B2B** (2025-10-25) : `retrocession_rate` NUMERIC(5,2) - Taux commission % (0-100)
 - **Relations** : → products, organisations / individual_customers
 
 #### 34. **group_price_lists** (9 colonnes)
@@ -303,13 +305,18 @@ Commandes vente clients
 - **Relations** : → organisations / individual_customers
 - **❌ ATTENTION** : Triggers stock complexes
 
-#### 44. **sales_order_items** (13 colonnes)
+#### 44. **sales_order_items** (15 colonnes)
 Lignes commandes vente
-- **Colonnes clés** : id, sales_order_id, product_id, quantity, unit_price_ht
+- **Colonnes clés** : id, sales_order_id, product_id, quantity, unit_price_ht, retrocession_rate, retrocession_amount
 - **📦 Gestion Expéditions** : `quantity_shipped` INTEGER NOT NULL DEFAULT 0 - Quantité expédiée (expéditions partielles)
   - **Calcul différentiel** : `quantity_remaining = quantity - quantity_shipped`
   - **Workflow** : Incrémentation lors création shipments (voir table `shipments`)
   - **Trigger** : Déclenche `handle_sales_order_stock()` lors UPDATE
+- **🆕 Ristourne B2B** (2025-10-25) :
+  - `retrocession_rate` NUMERIC(5,2) - Taux commission % (snapshot depuis customer_pricing)
+  - `retrocession_amount` NUMERIC(10,2) - Montant commission EUR (calculé auto via trigger)
+  - **Trigger** : `trg_calculate_retrocession` - Calcule retrocession_amount = total_ht × (rate / 100)
+  - **RPC** : `get_order_total_retrocession(order_id)` - Commission totale commande
 - **Relations** : → sales_orders, products
 
 #### 45. **order_discounts** (21 colonnes)

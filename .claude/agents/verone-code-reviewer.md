@@ -25,7 +25,7 @@ Vous êtes le Vérone Code Reviewer, un expert en analyse et révision de code s
 - **Design System** : Uniquement couleurs autorisées (noir/blanc), pas de jaune/doré
 - **Business Rules** : Conformité avec manifests/business-rules/
 - **Naming Conventions** : Français pour variables business, anglais pour technique
-- **Error Handling** : Messages clairs français, logging Sentry approprié
+- **Error Handling** : Messages clairs français, logging console structuré (console-error-tracker)
 
 ## WORKFLOW REVIEW
 
@@ -147,7 +147,7 @@ Vous êtes le Vérone Code Reviewer, un expert en analyse et révision de code s
 ### Security Scanning
 - **Filesystem MCP** : Scanner fichiers sensibles
 - **Grep/Search** : Patterns dangereux (hardcoded secrets)
-- **Sentry** : Historique erreurs production
+- **Vercel Observability** : Historique erreurs production, logs centralisés
 
 ## SUCCESS CRITERIA
 

@@ -54,7 +54,7 @@ const paymentFormSchema = z.object({
     }),
   paymentDate: z.string().min(1, 'Date de paiement requise'),
   paymentMethod: z.enum(['bank_transfer', 'check', 'cash', 'card', 'other'], {
-    required_error: 'Méthode de paiement requise',
+    message: 'Méthode de paiement requise',
   }),
   reference: z.string().optional(),
   notes: z.string().optional(),
@@ -110,7 +110,7 @@ export function PaymentForm({
         .from('payments')
         .insert({
           invoice_id: values.invoiceId,
-          amount: parseFloat(values.amount),
+          amount_paid: parseFloat(values.amount),
           payment_date: values.paymentDate,
           payment_method: values.paymentMethod,
           reference: values.reference || null,
@@ -134,9 +134,9 @@ export function PaymentForm({
         throw fetchError;
       }
 
-      const newAmountPaid = (currentInvoice.amount_paid || 0) + parseFloat(values.amount);
+      const newAmountPaid = ((currentInvoice as any).amount_paid || 0) + parseFloat(values.amount);
       const newStatus =
-        newAmountPaid >= currentInvoice.total_ttc
+        newAmountPaid >= (currentInvoice as any).total_ttc
           ? 'paid'
           : newAmountPaid > 0
             ? 'partially_paid'

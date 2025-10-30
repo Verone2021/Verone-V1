@@ -155,7 +155,7 @@ export class GoogleMerchantAuth {
 
       this.auth = new GoogleAuth({
         credentials,
-        scopes: GOOGLE_MERCHANT_CONFIG.scopes
+        scopes: GOOGLE_MERCHANT_CONFIG.scopes as any
       })
 
       // Log de configuration (sans les clés sensibles)
@@ -277,7 +277,7 @@ export class GoogleMerchantAuth {
    */
   async getGoogleApisAuth() {
     const client = await this.getJWTClient()
-    return google.auth.fromJSON(client.credentials || {})
+    return google.auth.fromJSON((client.credentials || {}) as any)
   }
 }
 

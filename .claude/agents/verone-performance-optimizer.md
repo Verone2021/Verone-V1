@@ -312,9 +312,11 @@ export function measurePerformance(name: string, fn: Function) {
   const result = fn()
   const duration = performance.now() - start
 
-  // Send to Sentry
-  Sentry.metrics.set('performance.timing', duration, {
-    tags: { operation: name }
+  // Log structured performance metrics (console + Vercel Analytics)
+  console.log('[VÉRONE:PERF]', {
+    operation: name,
+    duration_ms: duration,
+    timestamp: new Date().toISOString()
   })
 
   // Alert si SLO dépassé
@@ -373,7 +375,7 @@ export function measurePerformance(name: string, fn: Function) {
 ## Monitoring
 - [ ] Vercel Analytics configured
 - [ ] Performance budget alerts active
-- [ ] Sentry metrics tracking
+- [ ] Console performance logs (structured JSON)
 ```
 
 ## MCP TOOLS USAGE

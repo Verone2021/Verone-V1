@@ -79,7 +79,7 @@ export function useProductPrice(params: PricingParams) {
     queryFn: async (): Promise<PricingResult> => {
       try {
         // IMPORTANT: Utiliser calculate_product_price_v2 (nouvelle architecture Price Lists)
-        const { data, error } = await supabase.rpc('calculate_product_price_v2', {
+        const { data, error } = await (supabase as any).rpc('calculate_product_price_v2', {
           p_product_id: params.productId,
           p_quantity: params.quantity || 1,
           p_channel_id: params.channelId || null,
@@ -89,7 +89,7 @@ export function useProductPrice(params: PricingParams) {
         })
 
         if (error) {
-          logger.error('Failed to calculate product price', {
+          logger.error('Failed to calculate product price', undefined, {
             operation: 'useProductPrice',
             error: error.message,
             params
@@ -97,12 +97,12 @@ export function useProductPrice(params: PricingParams) {
           throw new Error(`Pricing calculation failed: ${error.message}`)
         }
 
-        if (!data || data.length === 0) {
+        if (!data || (data as any[]).length === 0) {
           throw new Error('No pricing data returned')
         }
 
         // Fonction RPC retourne un array avec 1 élément (PricingResultV2)
-        const resultV2 = data[0] as PricingResultV2
+        const resultV2 = (data as any[])[0] as PricingResultV2
 
         // Mapper vers format legacy pour compatibilité
         const result: PricingResult = {
@@ -122,7 +122,7 @@ export function useProductPrice(params: PricingParams) {
 
         return result
       } catch (error) {
-        logger.error('Exception in useProductPrice', {
+        logger.error('Exception in useProductPrice', undefined, {
           operation: 'useProductPrice',
           error: error instanceof Error ? error.message : String(error),
           params
@@ -132,7 +132,7 @@ export function useProductPrice(params: PricingParams) {
     },
     enabled: (params.enabled !== false) && !!params.productId,  // Respect external enabled + internal validation
     staleTime: 5 * 60 * 1000,  // 5 minutes cache
-    cacheTime: 10 * 60 * 1000  // 10 minutes retention
+    gcTime: 10 * 60 * 1000  // 10 minutes retention
   })
 }
 
@@ -157,7 +157,7 @@ export function useBatchPricing() {
           request.items.map(async (params): Promise<BatchPricingResult> => {
             try {
               // IMPORTANT: Utiliser calculate_product_price_v2
-              const { data, error } = await supabase.rpc('calculate_product_price_v2', {
+              const { data, error } = await (supabase as any).rpc('calculate_product_price_v2', {
                 p_product_id: params.productId,
                 p_quantity: params.quantity || 1,
                 p_channel_id: params.channelId || null,
@@ -175,7 +175,7 @@ export function useBatchPricing() {
               }
 
               // Mapper résultat V2 vers legacy
-              const resultV2 = data?.[0] as PricingResultV2
+              const resultV2 = ((data as any[])?.[0] || null) as PricingResultV2 | null
               if (resultV2) {
                 const pricing: PricingResult = {
                   final_cost_price: resultV2.cost_price,
@@ -215,7 +215,7 @@ export function useBatchPricing() {
 
         return results
       } catch (error) {
-        logger.error('Exception in useBatchPricing', {
+        logger.error('Exception in useBatchPricing', undefined, {
           operation: 'useBatchPricing',
           error: error instanceof Error ? error.message : String(error)
         })
@@ -255,14 +255,14 @@ export function useSalesChannels() {
     queryKey: ['sales-channels'],
     queryFn: async (): Promise<SalesChannel[]> => {
       try {
-        const { data, error } = await supabase
+        const { data, error } = await (supabase as any)
           .from('sales_channels')
           .select('*')
           .eq('is_active', true)
           .order('display_order', { ascending: true })
 
         if (error) {
-          logger.error('Failed to fetch sales channels', {
+          logger.error('Failed to fetch sales channels', undefined, {
             operation: 'useSalesChannels',
             error: error.message
           })
@@ -274,9 +274,9 @@ export function useSalesChannels() {
           count: data?.length || 0
         })
 
-        return data || []
+        return (data as unknown as SalesChannel[]) || []
       } catch (error) {
-        logger.error('Exception in useSalesChannels', {
+        logger.error('Exception in useSalesChannels', undefined, {
           operation: 'useSalesChannels',
           error: error instanceof Error ? error.message : String(error)
         })
@@ -284,7 +284,7 @@ export function useSalesChannels() {
       }
     },
     staleTime: 10 * 60 * 1000,  // 10 minutes (canaux changent rarement)
-    cacheTime: 30 * 60 * 1000   // 30 minutes retention
+    gcTime: 30 * 60 * 1000   // 30 minutes retention
   })
 }
 
@@ -313,7 +313,7 @@ export function useChannelPricing(productId: string) {
     queryKey: ['channel-pricing', productId],
     queryFn: async (): Promise<ChannelPricing[]> => {
       try {
-        const { data, error } = await supabase
+        const { data, error } = await (supabase as any)
           .from('channel_pricing')
           .select(`
             *,
@@ -324,7 +324,7 @@ export function useChannelPricing(productId: string) {
           .order('min_quantity', { ascending: true })
 
         if (error) {
-          logger.error('Failed to fetch channel pricing', {
+          logger.error('Failed to fetch channel pricing', undefined, {
             operation: 'useChannelPricing',
             productId,
             error: error.message
@@ -338,9 +338,9 @@ export function useChannelPricing(productId: string) {
           count: data?.length || 0
         })
 
-        return data || []
+        return (data as unknown as ChannelPricing[]) || []
       } catch (error) {
-        logger.error('Exception in useChannelPricing', {
+        logger.error('Exception in useChannelPricing', undefined, {
           operation: 'useChannelPricing',
           error: error instanceof Error ? error.message : String(error)
         })
@@ -349,7 +349,7 @@ export function useChannelPricing(productId: string) {
     },
     enabled: !!productId,
     staleTime: 5 * 60 * 1000,
-    cacheTime: 10 * 60 * 1000
+    gcTime: 10 * 60 * 1000
   })
 }
 
@@ -362,8 +362,9 @@ export interface CustomerPricing {
   customer_id: string
   customer_type: 'organization' | 'individual'
   product_id: string
-  custom_cost_price: number | null
+  custom_price_ht: number | null
   discount_rate: number | null
+  retrocession_rate: number | null
   contract_reference: string | null
   min_quantity: number
   valid_from: string
@@ -371,6 +372,9 @@ export interface CustomerPricing {
   is_active: boolean
   approval_status: 'pending' | 'approved' | 'rejected'
   notes: string | null
+  // Relations optionnelles (populated via joins)
+  customer_name?: string
+  product_name?: string
 }
 
 export function useCustomerPricing(customerId: string, customerType: 'organization' | 'individual') {
@@ -390,7 +394,7 @@ export function useCustomerPricing(customerId: string, customerType: 'organizati
           .order('valid_from', { ascending: false })
 
         if (error) {
-          logger.error('Failed to fetch customer pricing', {
+          logger.error('Failed to fetch customer pricing', undefined, {
             operation: 'useCustomerPricing',
             customerId,
             customerType,
@@ -405,9 +409,9 @@ export function useCustomerPricing(customerId: string, customerType: 'organizati
           count: data?.length || 0
         })
 
-        return data || []
+        return (data as unknown as CustomerPricing[]) || []
       } catch (error) {
-        logger.error('Exception in useCustomerPricing', {
+        logger.error('Exception in useCustomerPricing', undefined, {
           operation: 'useCustomerPricing',
           error: error instanceof Error ? error.message : String(error)
         })
@@ -416,7 +420,7 @@ export function useCustomerPricing(customerId: string, customerType: 'organizati
     },
     enabled: !!customerId,
     staleTime: 5 * 60 * 1000,
-    cacheTime: 10 * 60 * 1000
+    gcTime: 10 * 60 * 1000
   })
 }
 
@@ -515,7 +519,7 @@ export function useQuantityBreaks(params: QuantityBreaksParams) {
     queryKey: ['quantity-breaks', params],
     queryFn: async (): Promise<QuantityBreak[]> => {
       try {
-        const { data, error } = await supabase.rpc('get_quantity_breaks', {
+        const { data, error } = await (supabase as any).rpc('get_quantity_breaks', {
           p_product_id: params.productId,
           p_channel_id: params.channelId || null,
           p_customer_id: params.customerId || null,
@@ -524,7 +528,7 @@ export function useQuantityBreaks(params: QuantityBreaksParams) {
         })
 
         if (error) {
-          logger.error('Failed to fetch quantity breaks', {
+          logger.error('Failed to fetch quantity breaks', undefined, {
             operation: 'useQuantityBreaks',
             error: error.message,
             params
@@ -539,12 +543,12 @@ export function useQuantityBreaks(params: QuantityBreaksParams) {
         logger.info('Quantity breaks fetched successfully', {
           operation: 'useQuantityBreaks',
           productId: params.productId,
-          breaksCount: data.length
+          breaksCount: (data as any[]).length
         })
 
-        return data as QuantityBreak[]
+        return (data as unknown as QuantityBreak[])
       } catch (error) {
-        logger.error('Exception in useQuantityBreaks', {
+        logger.error('Exception in useQuantityBreaks', undefined, {
           operation: 'useQuantityBreaks',
           error: error instanceof Error ? error.message : String(error),
           params
@@ -554,6 +558,6 @@ export function useQuantityBreaks(params: QuantityBreaksParams) {
     },
     enabled: (params.enabled !== false) && !!params.productId,  // Respect external enabled + internal validation
     staleTime: 10 * 60 * 1000,  // 10 minutes (paliers changent rarement)
-    cacheTime: 30 * 60 * 1000   // 30 minutes retention
+    gcTime: 30 * 60 * 1000   // 30 minutes retention
   })
 }

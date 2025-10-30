@@ -158,7 +158,7 @@ BEGIN
         p.sku,
         p.status,
         p.requires_sample,
-        o.name as supplier_name,
+        COALESCE(o.trade_name, o.legal_name) as supplier_name,
         p.creation_mode,
         COALESCE(
             (SELECT pd.sourcing_type FROM product_drafts pd WHERE pd.id = p.id),

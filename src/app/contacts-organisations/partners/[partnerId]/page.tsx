@@ -146,13 +146,13 @@ export default function PartnerDetailPage() {
             <h1 className="text-lg font-semibold text-black">{getOrganisationDisplayName(partner)}</h1>
             <div className="flex gap-2">
               <Badge
-                variant={partner.is_active ? 'default' : 'secondary'}
+                variant={partner.is_active ? 'secondary' : 'secondary'}
                 className={partner.is_active ? 'bg-green-100 text-green-800' : ''}
               >
                 {partner.is_active ? 'Actif' : 'Inactif'}
               </Badge>
               {partner.archived_at && (
-                <Badge variant="danger" className="bg-red-100 text-red-800">
+                <Badge variant="destructive" className="bg-red-100 text-red-800">
                   Archivé
                 </Badge>
               )}
@@ -245,7 +245,7 @@ export default function PartnerDetailPage() {
           <ContactsManagementSection
             organisationId={partner.id}
             organisationName={getOrganisationDisplayName(partner)}
-            organisationType="provider"
+            organisationType="supplier"
             onUpdate={() => handlePartnerUpdate({})}
           />
         </TabContent>

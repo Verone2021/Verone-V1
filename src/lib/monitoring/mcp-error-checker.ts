@@ -158,7 +158,7 @@ export function filterErrors(
   }
 
   if (filters.url) {
-    filtered = filtered.filter(e => e.url.includes(filters.url))
+    filtered = filtered.filter(e => e.url.includes(filters.url!))
   }
 
   if (filters.since) {

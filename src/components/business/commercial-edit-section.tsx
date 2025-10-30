@@ -112,8 +112,8 @@ export function CommercialEditSection({ organisation, onUpdate, className }: Com
     return (
       <div className={cn("card-verone p-4", className)}>
         <div className="flex items-center justify-between mb-3">
-          <h3 className="text-base font-medium text-black flex items-center">
-            <CreditCard className="h-4 w-4 mr-2" />
+          <h3 className="text-lg font-medium text-black flex items-center">
+            <CreditCard className="h-5 w-5 mr-2" />
             Conditions Commerciales
           </h3>
           <div className="flex space-x-2">
@@ -127,7 +127,7 @@ export function CommercialEditSection({ organisation, onUpdate, className }: Com
               Annuler
             </ButtonV2>
             <ButtonV2
-              variant="primary"
+              variant="secondary"
               size="sm"
               onClick={handleSave}
               disabled={!hasChanges(section) || isSaving(section)}

@@ -48,7 +48,7 @@ src/stories/
 ### Format exports
 ```typescript
 import type { Meta, StoryObj } from '@storybook/react';
-import { Button } from '@/components/ui/button';
+import { ButtonV2 } from '@/components/ui-v2/button';
 
 const meta = {
   title: '1-UI-Base/Buttons/Button',

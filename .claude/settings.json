@@ -30,7 +30,6 @@
       "mcp__filesystem__*",
       "mcp__memory__*",
       "mcp__ide__*",
-      "mcp__sentry__*",
       "Read",
       "Read(*)",
       "Write",

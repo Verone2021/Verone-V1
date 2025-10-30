@@ -7,7 +7,7 @@ import { colors, spacing, componentShadows } from '@/lib/design-system'
 import { cn } from '@/lib/utils'
 
 export interface ButtonV2Props extends React.ButtonHTMLAttributes<HTMLButtonElement> {
-  variant?: 'primary' | 'secondary' | 'outline' | 'success' | 'danger' | 'warning' | 'ghost'
+  variant?: 'primary' | 'secondary' | 'outline' | 'success' | 'destructive' | 'warning' | 'ghost'
   size?: 'xs' | 'sm' | 'md' | 'lg' | 'xl'
   icon?: LucideIcon
   iconPosition?: 'left' | 'right'
@@ -50,6 +50,7 @@ export function ButtonV2({
       color: colors.text.inverse, // Blanc
       border: 'none',
       hoverBg: colors.primary[600],
+      hoverColor: undefined,
       shadow: componentShadows.button,
     },
     secondary: {
@@ -73,13 +74,15 @@ export function ButtonV2({
       color: colors.text.inverse,
       border: 'none',
       hoverBg: colors.success[600],
+      hoverColor: undefined,
       shadow: componentShadows.button,
     },
-    danger: {
+    destructive: {
       backgroundColor: colors.danger[500],
       color: colors.text.inverse,
       border: 'none',
       hoverBg: colors.danger[600],
+      hoverColor: undefined,
       shadow: componentShadows.button,
     },
     warning: {
@@ -87,6 +90,7 @@ export function ButtonV2({
       color: colors.text.inverse,
       border: 'none',
       hoverBg: colors.warning[600],
+      hoverColor: undefined,
       shadow: componentShadows.button,
     },
     ghost: {
@@ -94,6 +98,7 @@ export function ButtonV2({
       color: colors.text.DEFAULT,
       border: 'none',
       hoverBg: colors.neutral[100],
+      hoverColor: undefined,
       shadow: 'none',
     },
   }

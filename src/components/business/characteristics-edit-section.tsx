@@ -74,7 +74,7 @@ export function CharacteristicsEditSection({
     }
   })
 
-  const section: EditableSection = 'characteristics'
+  const section = 'characteristics' as EditableSection
   const editData = getEditedData(section)
   const error = getError(section)
 
@@ -166,7 +166,7 @@ export function CharacteristicsEditSection({
               Annuler
             </ButtonV2>
             <ButtonV2
-              variant="primary"
+              variant="secondary"
               size="sm"
               onClick={handleSave}
               disabled={!hasChanges(section) || isSaving(section)}

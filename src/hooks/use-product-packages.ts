@@ -49,7 +49,7 @@ export function useProductPackages({
       if (error) throw error
 
       console.log(`✅ ${data?.length || 0} packages chargés pour produit ${productId}`)
-      setPackages(data || [])
+      setPackages((data || []) as any)
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : 'Erreur chargement packages'
       console.error('❌ Erreur chargement packages:', errorMessage)

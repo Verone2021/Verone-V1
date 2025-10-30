@@ -172,7 +172,7 @@ export function useGoogleMerchantSync() {
       logger.error('[useGoogleMerchantSync] Sync failed', {
         action,
         error: errorMessage
-      })
+      } as any)
 
       const errorState: SyncState = {
         isLoading: false,

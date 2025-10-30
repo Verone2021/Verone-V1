@@ -118,7 +118,7 @@ export function ExpenseForm({ onSuccess, onCancel }: ExpenseFormProps) {
           .order('name')
 
         if (categoriesError) throw categoriesError
-        setCategories(categoriesData || [])
+        setCategories(categoriesData as any || [])
 
         // Fournisseurs (organisations type supplier)
         const { data: suppliersData, error: suppliersError } = await supabase
@@ -128,7 +128,7 @@ export function ExpenseForm({ onSuccess, onCancel }: ExpenseFormProps) {
           .order('name')
 
         if (suppliersError) throw suppliersError
-        setSuppliers(suppliersData || [])
+        setSuppliers(suppliersData as any || [])
       } catch (err) {
         console.error('Erreur chargement données:', err)
         setError('Impossible de charger les catégories et fournisseurs')
@@ -244,7 +244,7 @@ export function ExpenseForm({ onSuccess, onCancel }: ExpenseFormProps) {
           description: formData.description,
           notes: formData.notes,
           uploaded_file_url: formData.uploaded_file_url
-        })
+        } as any)
 
       if (insertError) throw insertError
 

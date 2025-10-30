@@ -1,4 +1,4 @@
-import type { Meta, StoryObj } from '@storybook/react';
+import type { Meta, StoryObj } from '@storybook/nextjs';
 import { VéroneCard } from '@/components/ui/verone-card';
 
 const meta = {
@@ -40,12 +40,12 @@ const meta = {
     entityType: {
       control: 'select',
       options: ['family', 'category', 'subcategory', 'product'],
-      description: 'Type d\'entité Vérone',
+      description: "Type d'entité Vérone",
     },
     iconPosition: {
       control: 'radio',
       options: ['top-left', 'top-right'],
-      description: 'Position de l\'icône dans la carte',
+      description: "Position de l'icône dans la carte",
     },
     isActive: {
       control: 'boolean',
@@ -185,7 +185,7 @@ export const IconTopLeft: Story = {
 export const IconTopRight: Story = {
   args: {
     title: 'Luminaires',
-    description: 'Éclairage d\'ambiance',
+    description: "Éclairage d'ambiance",
     entityType: 'category',
     slug: 'luminaires',
     count: 67,
@@ -214,7 +214,8 @@ export const NoCount: Story = {
 export const LongText: Story = {
   args: {
     title: 'Collection Exclusive Printemps-Été 2025',
-    description: 'Cette collection exclusive propose une gamme complète de meubles design contemporain inspirés des tendances scandinaves et méditerranéennes, avec des matériaux nobles et durables.',
+    description:
+      'Cette collection exclusive propose une gamme complète de meubles design contemporain inspirés des tendances scandinaves et méditerranéennes, avec des matériaux nobles et durables.',
     entityType: 'family',
     slug: 'exclusive-pe-2025',
     count: 156,
@@ -279,7 +280,7 @@ export const Grid: Story = {
       />
     </div>
   ),
-};
+} as any;
 
 /**
  * Exemple réel d'utilisation
@@ -320,7 +321,9 @@ export const RealWorld: Story = {
 
       {/* Section Catégories */}
       <div>
-        <h3 className="text-sm font-medium text-gray-700 mb-3">Catégories Populaires</h3>
+        <h3 className="text-sm font-medium text-gray-700 mb-3">
+          Catégories Populaires
+        </h3>
         <div className="grid grid-cols-3 gap-3">
           <VéroneCard
             title="Fauteuils"
@@ -353,4 +356,4 @@ export const RealWorld: Story = {
       </div>
     </div>
   ),
-};
+} as any;

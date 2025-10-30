@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
+import { getOrganisationDisplayName } from '@/lib/utils/organisation-helpers'
 
 // SECURITY FIX 2025-10-20: Externalize API key to environment variable
 // DISABLED 2025-10-20: API Packlink désactivée pour éviter échec build
@@ -56,7 +57,7 @@ export async function POST(request: NextRequest) {
       .select(`
         *,
         organisations (
-          id, name, email, phone,
+          id, legal_name, trade_name, email, phone,
           address_line1, address_line2, postal_code, city
         ),
         individual_customers (
@@ -82,7 +83,7 @@ export async function POST(request: NextRequest) {
 
     if (order.customer_type === 'organization' && (order as any).organisations) {
       const org = (order as any).organisations
-      recipientName = org.name
+      recipientName = getOrganisationDisplayName(org)
       recipientEmail = org.email || ''
       recipientPhone = org.phone || ''
       recipientAddress = {

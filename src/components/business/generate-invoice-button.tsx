@@ -20,8 +20,8 @@ interface GenerateInvoiceButtonProps {
   orderNumber: string;
   onSuccess?: (invoiceId: string) => void;
   disabled?: boolean;
-  variant?: 'default' | 'outline' | 'ghost';
-  size?: 'default' | 'sm' | 'lg';
+  variant?: 'secondary' | 'outline' | 'ghost';
+  size?: 'secondary' | 'sm' | 'lg';
 }
 
 // =====================================================================
@@ -50,8 +50,8 @@ export function GenerateInvoiceButton({
   orderNumber,
   onSuccess,
   disabled = false,
-  variant = 'default',
-  size = 'default',
+  variant = 'secondary',
+  size = 'secondary',
 }: GenerateInvoiceButtonProps) {
   const [isLoading, setIsLoading] = useState(false);
   const { toast } = useToast();
@@ -130,7 +130,7 @@ export function GenerateInvoiceButton({
       onClick={handleGenerateInvoice}
       disabled={disabled || isLoading}
       variant={variant}
-      size={size}
+      size={size as any}
     >
       {isLoading ? (
         <>

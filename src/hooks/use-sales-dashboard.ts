@@ -100,10 +100,10 @@ export function useSalesDashboard() {
         if (order.customer_type === 'organization' && order.customer_id) {
           const { data: org } = await supabase
             .from('organisations')
-            .select('name')
+            .select('legal_name, trade_name')
             .eq('id', order.customer_id)
             .single()
-          customerName = org?.name || 'Organisation inconnue'
+          customerName = (org?.trade_name || org?.legal_name) || 'Organisation inconnue'
         } else if (order.customer_type === 'individual' && order.customer_id) {
           const { data: individual } = await supabase
             .from('individual_customers')
@@ -116,7 +116,7 @@ export function useSalesDashboard() {
         enrichedOrders.push({
           ...order,
           customer_name: customerName
-        })
+        } as any)
       }
 
       // ============================================
@@ -138,7 +138,7 @@ export function useSalesDashboard() {
           chiffreAffaireMois,
           tauxConversion
         },
-        recentConsultations: (consultations || []).slice(0, 3), // Top 3
+        recentConsultations: ((consultations || []) as any).slice(0, 3), // Top 3
         recentOrders: enrichedOrders.slice(0, 3) // Top 3
       })
 

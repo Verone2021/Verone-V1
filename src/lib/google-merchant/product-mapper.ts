@@ -6,7 +6,7 @@
  */
 
 import { logger } from '@/lib/logger'
-import type { Database } from '@/types/supabase'
+import type { Database } from '@/types/database'
 
 // Types Supabase
 type Product = Database['public']['Tables']['products']['Row']
@@ -294,7 +294,7 @@ export function mapProductsBatch(products: ProductWithRelations[]): {
         error: error instanceof Error ? error.message : String(error)
       })
 
-      logger.error('Failed to map product', {
+      logger.error('Failed to map product', undefined, {
         operation: 'product_mapping_batch',
         productId: productData.product.id,
         sku: productData.product.sku,

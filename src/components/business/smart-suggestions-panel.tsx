@@ -46,7 +46,7 @@ export function SmartSuggestionsPanel({
   }, [context, loading, analytics, generateSuggestions])
 
   const handleApplySuggestion = (suggestion: CollectionSuggestion) => {
-    onApplySuggestion(suggestion.type, suggestion.value)
+    onApplySuggestion(suggestion.type as any, suggestion.value)
     setAppliedSuggestions(prev => new Set([...prev, suggestion.value]))
   }
 

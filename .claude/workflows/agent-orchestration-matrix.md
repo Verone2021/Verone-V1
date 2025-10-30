@@ -170,16 +170,15 @@ mcp__github__push_files
 
 ### **📊 PHASE 6: MONITOR (Production & Maintenance)**
 
-#### **Primary Agent: Sentry MCP (if available)**
+#### **Primary Agent: Vercel Observability + Console Error Tracker**
 ```typescript
-// Production monitoring temps réel
-mcp__sentry__get_recent_issues
-mcp__sentry__create_issue
+// Production monitoring via Vercel Dashboard + console-error-tracker.ts
+mcp__playwright__browser_console_messages  // Validation temps réel
 ```
 **Usage Pattern:**
-- Erreurs production detection
-- Performance monitoring
-- Automatic issue escalation
+- Vercel Dashboard : Error tracking natif, performance monitoring
+- console-error-tracker.ts : Logs structurés (JSON)
+- Playwright Browser : Validation console errors en temps réel
 
 #### **Secondary Agent: Supabase (Health Monitoring)**
 ```typescript
@@ -225,8 +224,8 @@ mcp__supabase__get_advisors
 3. Context7 → Research optimization patterns
 4. Sequential Thinking → Plan optimization strategy
 5. Serena → Implement optimizations
-6. Playwright → Validate improvements
-7. Sentry → Monitor production impact
+6. Playwright → Validate improvements (console clean)
+7. Vercel Observability → Monitor production impact
 ```
 
 ### **Pattern 4: Architecture Refactoring**
@@ -268,7 +267,7 @@ mcp__supabase__get_advisors
 
 ### **🚀 Deployment & Automation**
 - **GitHub** → `create_pull_request`, `push_files`
-- **Sentry** → `get_recent_issues` for monitoring
+- **Vercel Observability** → Production error tracking & performance monitoring
 
 ---
 
@@ -327,6 +326,86 @@ mcp__serena__write_memory
 - ✅ **Zero breaking changes** (proper impact analysis)
 - ✅ **Documentation always current** (auto-updates)
 - ✅ **Context preserved** between sessions
+
+---
+
+## 🔗 VOIR AUSSI - Workflow Universel 2025
+
+### **Relation avec le Workflow Universel**
+
+**Agent Orchestration Matrix** (ce document) et **Workflow Universel 2025** (CLAUDE.md) sont **complémentaires** :
+
+- **Agent Orchestration** = **COMMENT** utiliser les agents MCP (outils)
+- **Workflow Universel** = **QUAND** et **POURQUOI** utiliser ces outils (méthodologie)
+
+**Analogie** :
+```typescript
+Agent Orchestration Matrix = "La boîte à outils" (marteau, tournevis, scie)
+Workflow Universel       = "Le manuel de construction" (6 phases systématiques)
+```
+
+### **Utilisation Conjointe**
+
+**Pour chaque feature développée** :
+
+1. **Suivre** : Workflow Universel 2025 (6 phases : THINK → TEST → CODE → RE-TEST → DOCUMENT → COMMIT)
+2. **Utiliser** : Agent Orchestration Matrix (sélectionner agents appropriés par phase)
+
+**Exemple Concret** :
+```markdown
+📋 PHASE 1: THINK (Workflow Universel)
+├─ mcp__sequential-thinking (Agent Orchestration: THINK)
+├─ mcp__serena__get_symbols_overview (Agent Orchestration: RESEARCH)
+└─ mcp__context7__get-library-docs (Agent Orchestration: RESEARCH)
+
+🧪 PHASE 2: TEST (Workflow Universel)
+├─ mcp__playwright__browser_navigate (Agent Orchestration: TEST)
+├─ mcp__playwright__browser_console_messages (Agent Orchestration: TEST)
+└─ mcp__supabase__get_advisors (Agent Orchestration: TEST)
+
+⚙️ PHASE 3: CODE (Workflow Universel)
+├─ mcp__serena__replace_symbol_body (Agent Orchestration: IMPLEMENT)
+├─ mcp__supabase__apply_migration (Agent Orchestration: IMPLEMENT)
+└─ mcp__supabase__generate_typescript_types (Agent Orchestration: IMPLEMENT)
+
+🔄 PHASE 4: RE-TEST (Workflow Universel)
+├─ mcp__playwright__browser_console_messages (Agent Orchestration: TEST)
+├─ mcp__playwright__browser_snapshot (Agent Orchestration: TEST)
+└─ mcp__supabase__get_logs (Agent Orchestration: TEST)
+
+📝 PHASE 5: DOCUMENT (Workflow Universel)
+└─ mcp__serena__write_memory (Agent Orchestration: IMPLEMENT)
+
+🚀 PHASE 6: COMMIT (Workflow Universel)
+└─ mcp__github__create_pull_request (Agent Orchestration: DEPLOY)
+```
+
+### **Documentation Complémentaire**
+
+#### **📚 Workflow Universel 2025 (Méthodologie)**
+- **CLAUDE.md** (section "WORKFLOW UNIVERSEL 2025") - Méthodologie complète 6 phases
+- **`.claude/workflows/universal-workflow-examples.md`** - 5 exemples détaillés (formulaire, composant, hook, DB, page)
+- **`.claude/workflows/universal-workflow-checklist.md`** - Référence rapide 1 page (checklist)
+
+#### **🤖 Agent Orchestration (Outils)**
+- **Ce document** - Matrice agents MCP par phase
+- **CLAUDE.md** (section "MCP AGENTS") - Usage prioritaire agents spécifiques
+
+### **Quand Utiliser Quoi ?**
+
+| Situation | Document à Consulter |
+|-----------|---------------------|
+| "Comment développer une nouvelle feature ?" | Workflow Universel → CLAUDE.md + examples.md |
+| "Quelle checklist suivre pour un formulaire ?" | Workflow Universel → universal-workflow-checklist.md |
+| "Quel agent MCP utiliser pour analyser code ?" | Agent Orchestration → Ce document (Quick Reference) |
+| "Comment orchestrer agents pour bug fix ?" | Agent Orchestration → Pattern 2: Bug Investigation |
+| "Exemple complet de migration database ?" | Workflow Universel → examples.md (Example 4) |
+
+### **Principe Clé : Les Deux Ensemble**
+
+**❌ INCOMPLET** : Utiliser agents MCP sans suivre workflow structuré
+**❌ INCOMPLET** : Suivre workflow sans connaître agents appropriés
+**✅ COMPLET** : Workflow Universel 6 phases + Agent Orchestration intelligente
 
 ---
 

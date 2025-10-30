@@ -78,7 +78,7 @@ export function useCollectionImages({
         collectionId,
         imagesCount: data?.length || 0
       })
-      setImages((data || []) as CollectionImage[])
+      setImages((data || []) as unknown as CollectionImage[])
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : 'Erreur chargement images'
       logger.error('Erreur chargement images collection', err as Error, {

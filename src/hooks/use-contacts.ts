@@ -166,7 +166,7 @@ export function useContacts() {
 
       if (error) throw error
 
-      setContacts(data || [])
+      setContacts((data as any) || [])
     } catch (error) {
       logger.error('Erreur récupération contacts', error instanceof Error ? error : new Error(String(error)), {
         operation: 'fetch_contacts',
@@ -203,8 +203,8 @@ export function useContacts() {
 
       if (error) throw error
 
-      setCurrentContact(data)
-      return data
+      setCurrentContact(data as any)
+      return data as any
     } catch (error) {
       logger.error('Erreur récupération contact', error instanceof Error ? error : new Error(String(error)), {
         operation: 'fetch_contact',
@@ -376,9 +376,9 @@ export function useContacts() {
 
       await fetchContacts()
       if (currentContact?.id === contactId) {
-        setCurrentContact(contact)
+        setCurrentContact(contact as any)
       }
-      return contact
+      return contact as any
     } catch (error: any) {
       logger.error('Erreur mise à jour contact', error instanceof Error ? error : new Error(String(error)), {
         operation: 'update_contact',
@@ -413,7 +413,7 @@ export function useContacts() {
 
   // Mettre à jour la date de dernier contact
   const updateLastContactDate = useCallback(async (contactId: string) => {
-    return updateContact(contactId, { last_contact_date: new Date().toISOString() })
+    return updateContact(contactId, { last_contact_date: new Date().toISOString() } as any)
   }, [updateContact])
 
   // Supprimer définitivement un contact (à utiliser avec précaution)

@@ -102,7 +102,7 @@ export function useLogoUpload({
       // Update DB avec nouveau path
       const { error: updateError } = await supabase
         .from('organisations')
-        .update({ logo_url: filePath })
+        .update({ logo_url: filePath } as any)
         .eq('id', organisationId)
 
       if (updateError) {
@@ -168,7 +168,7 @@ export function useLogoUpload({
       // Update DB (logo_url = null)
       const { error: updateError } = await supabase
         .from('organisations')
-        .update({ logo_url: null })
+        .update({ logo_url: null } as any)
         .eq('id', organisationId)
 
       if (updateError) {

@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import { useToast } from './use-toast'
+import { useUnifiedSampleEligibility } from './use-unified-sample-eligibility'
 
 interface SampleOrderResult {
   success: boolean
@@ -13,6 +14,7 @@ export function useSampleOrder() {
   const [isLoading, setIsLoading] = useState(false)
   const { toast } = useToast()
   const supabase = createClient()
+  const { checkEligibility } = useUnifiedSampleEligibility()
 
   /**
    * Créer une commande d'échantillon pour un produit
@@ -23,7 +25,10 @@ export function useSampleOrder() {
    * 4. Si trouvée, ajouter le produit à cette commande
    * 5. Sinon, créer une nouvelle commande draft
    */
-  async function requestSample(productId: string): Promise<SampleOrderResult> {
+  async function requestSample(
+    productId: string,
+    sampleType?: 'internal' | 'customer'
+  ): Promise<SampleOrderResult> {
     setIsLoading(true)
 
     try {
@@ -46,34 +51,28 @@ export function useSampleOrder() {
         throw new Error('Le prix HT du produit doit être défini')
       }
 
-      // 2. Vérifier si le produit a déjà été commandé (historique)
-      const { data: existingItems, error: itemsError } = await supabase
-        .from('purchase_order_items')
-        .select('id, purchase_order_id')
-        .eq('product_id', productId)
-        .limit(1)
+      // 2. Vérifier éligibilité échantillon avec règle UNIFIÉE
+      // ✅ Vérifie BOTH purchase_order_items ET stock_movements
+      // @see src/hooks/use-unified-sample-eligibility.ts
+      const eligibility = await checkEligibility(productId)
 
-      if (itemsError) {
-        throw new Error('Erreur lors de la vérification de l\'historique')
-      }
-
-      if (existingItems && existingItems.length > 0) {
+      if (!eligibility.isEligible) {
         toast({
-          title: "Produit déjà commandé",
-          description: "Ce produit a déjà fait l'objet d'une commande auparavant.",
+          title: "Échantillon non autorisé",
+          description: eligibility.message,
           variant: "destructive"
         })
         return {
           success: false,
           isNewOrder: false,
-          error: 'already_ordered'
+          error: 'not_eligible'
         }
       }
 
       // 3. Chercher une commande draft existante pour ce fournisseur
       const { data: draftOrders, error: draftError } = await supabase
         .from('purchase_orders')
-        .select('id, po_number, total_ht')
+        .select('*')
         .eq('supplier_id', product.supplier_id)
         .eq('status', 'draft')
         .order('created_at', { ascending: false })
@@ -93,15 +92,15 @@ export function useSampleOrder() {
         // Ajouter l'item à la commande existante
         const { error: insertItemError } = await supabase
           .from('purchase_order_items')
-          .insert({
+          .insert([{
             purchase_order_id: purchaseOrderId,
             product_id: productId,
             quantity: 1,
             unit_price_ht: product.cost_price,
             discount_percentage: 0,
-            is_sample: true,
+            sample_type: sampleType || 'internal',
             notes: `Échantillon pour validation qualité - ${product.name}`
-          })
+          }])
 
         if (insertItemError) {
           throw new Error('Erreur lors de l\'ajout du produit à la commande')
@@ -126,12 +125,14 @@ export function useSampleOrder() {
           throw new Error('Utilisateur non authentifié')
         }
 
-        // Générer un numéro de commande temporaire
+        // Générer un ID et numéro de commande
+        const newOrderId = crypto.randomUUID()
         const poNumber = `PO-ECH-${Date.now()}`
 
-        const { data: newOrder, error: orderError } = await supabase
+        const { error: orderError } = await supabase
           .from('purchase_orders')
-          .insert({
+          .insert([{
+            id: newOrderId,
             po_number: poNumber,
             supplier_id: product.supplier_id,
             status: 'draft',
@@ -141,29 +142,27 @@ export function useSampleOrder() {
             total_ttc: product.cost_price * 1.2,
             created_by: userData.user.id,
             notes: 'Commande d\'échantillons pour validation qualité'
-          })
-          .select('id')
-          .single()
+          }])
 
-        if (orderError || !newOrder) {
+        if (orderError) {
           throw new Error('Erreur lors de la création de la commande')
         }
 
-        purchaseOrderId = newOrder.id
+        purchaseOrderId = newOrderId
         isNewOrder = true
 
         // Ajouter l'item
         const { error: insertItemError } = await supabase
           .from('purchase_order_items')
-          .insert({
+          .insert([{
             purchase_order_id: purchaseOrderId,
             product_id: productId,
             quantity: 1,
             unit_price_ht: product.cost_price,
             discount_percentage: 0,
-            is_sample: true,
+            sample_type: sampleType || 'internal',
             notes: `Échantillon pour validation qualité - ${product.name}`
-          })
+          }])
 
         if (insertItemError) {
           // Rollback : supprimer la commande créée

@@ -1,5 +1,18 @@
 import ExcelJS from 'exceljs'
-import type { SalesOrder } from '@/types/sales-order'
+// FIXME: Module '@/types/sales-order' does not exist - TS2307
+// import type { SalesOrder } from '@/types/sales-order'
+
+// Temporary type until sales-order type is available
+interface SalesOrder {
+  order_number: string
+  customer_type: 'organization' | 'individual'
+  organisations?: { name: string }
+  individual_customers?: { first_name: string; last_name: string }
+  created_at: string
+  total_ht: number | null
+  total_ttc: number | null
+  status: string
+}
 
 interface SalesOrderStats {
   total_orders: number
@@ -182,5 +195,5 @@ export async function generateSalesOrdersExcel(
   sheet2.getColumn(2).width = 20
 
   // Générer buffer
-  return await workbook.xlsx.writeBuffer() as Buffer
+  return await workbook.xlsx.writeBuffer() as unknown as Buffer
 }

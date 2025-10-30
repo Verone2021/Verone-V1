@@ -109,8 +109,8 @@ export function SubcategoryForm({
 
       if (error) throw error
 
-      setFormData(prev => ({ ...prev, family_id: data.family_id }))
-    } catch (error) {
+      setFormData(prev => ({ ...prev, family_id: data.family_id }) as any)
+    } catch (error: any) {
       console.error('Erreur récupération family_id catégorie:', error?.message || JSON.stringify(error))
     }
   }
@@ -124,7 +124,7 @@ export function SubcategoryForm({
       .replace(/[^a-z0-9 -]/g, "")
       .replace(/\s+/g, "-")
       .replace(/-+/g, "-")
-      .trim("-")
+      .replace(/^-+|-+$/g, '')
   }
 
   // Upload d'image vers Supabase Storage
@@ -152,7 +152,7 @@ export function SubcategoryForm({
         title: "✅ Image téléchargée",
         description: "L'image a été uploadée avec succès"
       })
-    } catch (error) {
+    } catch (error: any) {
       console.error('Erreur upload image sous-catégorie:', error?.message || JSON.stringify(error))
       toast({
         title: "❌ Erreur upload",
@@ -373,7 +373,7 @@ export function SubcategoryForm({
                   />
                   <ButtonV2
                     type="button"
-                    variant="danger"
+                    variant="destructive"
                     size="sm"
                     className="absolute top-2 right-2"
                     onClick={handleRemoveImage}

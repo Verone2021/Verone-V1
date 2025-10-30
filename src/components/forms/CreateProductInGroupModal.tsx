@@ -89,10 +89,10 @@ export function CreateProductInGroupModal({
           </DialogTitle>
           <DialogDescription>
             Groupe: <span className="font-medium">{variantGroup.name}</span>
-            <Badge variant="outline" className="ml-2">
-              {typeInfo.emoji} {typeInfo.singular}
-            </Badge>
           </DialogDescription>
+          <Badge variant="outline" className="w-fit">
+            {typeInfo.emoji} {typeInfo.singular}
+          </Badge>
         </DialogHeader>
 
         <form onSubmit={handleSubmit} className="space-y-6 pt-4">

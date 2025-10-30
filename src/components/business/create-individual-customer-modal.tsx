@@ -92,7 +92,7 @@ export function CreateIndividualCustomerModal({
     try {
       const { data, error } = await supabase
         .from('individual_customers')
-        .insert([formData])
+        .insert([formData] as any)
         .select()
         .single()
 

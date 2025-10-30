@@ -49,7 +49,6 @@ export interface CollectionBase {
   shared_count: number
   last_shared: string | null
   style: CollectionStyle | null
-  room_category: RoomCategory | null
   suitable_rooms: string[] | null // Aligné avec products.suitable_rooms (40 pièces)
   theme_tags: string[]
   display_order: number
@@ -89,8 +88,8 @@ export interface CollectionProduct {
   added_at: string
   // ✅ CORRECTION : Relation images normalisée
   product_images: ProductImage[]
-  // ✅ HELPER : Image primaire calculée
-  primary_image_url?: string
+  // ✅ HELPER : Image primaire calculée (accepte null depuis getPrimaryImageUrl)
+  primary_image_url?: string | null
 }
 
 /**
@@ -460,6 +459,43 @@ export const DEFAULT_COLLECTION_FILTERS: CollectionFilters = {
   limit: 20,
   offset: 0
 }
+
+// =====================================================================
+// CONSTANTES - Types de pièces (partagé avec variant_groups)
+// =====================================================================
+
+export const ROOM_TYPES = [
+  { value: 'atelier', label: 'Atelier', emoji: '🛠️' },
+  { value: 'balcon', label: 'Balcon', emoji: '🌿' },
+  { value: 'bibliotheque', label: 'Bibliothèque', emoji: '📚' },
+  { value: 'buanderie', label: 'Buanderie', emoji: '🧺' },
+  { value: 'bureau', label: 'Bureau', emoji: '💼' },
+  { value: 'cave', label: 'Cave', emoji: '🍷' },
+  { value: 'cellier', label: 'Cellier', emoji: '🏺' },
+  { value: 'chambre', label: 'Chambre', emoji: '🛏️' },
+  { value: 'couloir', label: 'Couloir', emoji: '🚪' },
+  { value: 'cour', label: 'Cour', emoji: '🌳' },
+  { value: 'cuisine', label: 'Cuisine', emoji: '🍳' },
+  { value: 'dressing', label: 'Dressing', emoji: '👔' },
+  { value: 'garage', label: 'Garage', emoji: '🚗' },
+  { value: 'grenier', label: 'Grenier', emoji: '📦' },
+  { value: 'hall_entree', label: "Hall d'entrée", emoji: '🏛️' },
+  { value: 'jardin', label: 'Jardin', emoji: '🌸' },
+  { value: 'loggia', label: 'Loggia', emoji: '🏞️' },
+  { value: 'mezzanine', label: 'Mezzanine', emoji: '📐' },
+  { value: 'patio', label: 'Patio', emoji: '☀️' },
+  { value: 'salle_a_manger', label: 'Salle à manger', emoji: '🍽️' },
+  { value: 'salle_de_bain', label: 'Salle de bain', emoji: '🛁' },
+  { value: 'salle_de_jeux', label: 'Salle de jeux', emoji: '🎮' },
+  { value: 'salle_de_sport', label: 'Salle de sport', emoji: '🏋️' },
+  { value: 'salon', label: 'Salon', emoji: '🛋️' },
+  { value: 'salon_sejour', label: 'Salon/Séjour', emoji: '🏠' },
+  { value: 'sous_sol', label: 'Sous-sol', emoji: '⬇️' },
+  { value: 'terrasse', label: 'Terrasse', emoji: '🌅' },
+  { value: 'toilettes', label: 'Toilettes', emoji: '🚽' },
+  { value: 'veranda', label: 'Véranda', emoji: '🪟' },
+  { value: 'wc', label: 'WC', emoji: '🚻' },
+] as const
 
 // ===== HELPER FUNCTIONS (Utilities) =====
 

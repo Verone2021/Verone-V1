@@ -231,7 +231,7 @@ export function QuickVariantForm({
             image_url: formData.image_url,
             is_primary: true,
             display_order: 1
-          }])
+          }] as any)
       }
 
       toast({
@@ -393,7 +393,7 @@ export function QuickVariantForm({
                   />
                   <ButtonV2
                     type="button"
-                    variant="danger"
+                    variant="destructive"
                     size="sm"
                     className="absolute top-2 right-2"
                     onClick={handleRemoveImage}

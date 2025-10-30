@@ -352,7 +352,7 @@ export function ConsultationImageGallery({
       <ConsultationImageViewerModal
         isOpen={showImageViewer}
         onClose={() => setShowImageViewer(false)}
-        images={images}
+        images={images as any}
         initialImageIndex={selectedImageIndex}
         consultationTitle={consultationTitle}
         allowEdit={allowEdit}

@@ -75,8 +75,9 @@ export interface FinancialDocument {
   // Relations chargées (avec expand)
   partner?: {
     id: string
-    name: string
-    type: string
+    legal_name: string
+    trade_name: string | null
+    type: 'supplier' | 'customer' | 'partner' | 'internal' | null
   }
   expense_category?: {
     id: string
@@ -107,6 +108,75 @@ export function useFinancialDocuments(filters?: FinancialDocumentFilters) {
   const supabase = createClient()
 
   // ===================================================================
+  // HOOKS: useEffect placés AVANT early return (React Rules)
+  // ===================================================================
+
+  // Auto-fetch au mount et quand filtres changent
+  useEffect(() => {
+    if (!featureFlags.financeEnabled) return
+
+    const fetchData = async () => {
+      try {
+        setLoading(true)
+        setError(null)
+
+        let query = supabase
+          .from('financial_documents')
+          .select(`
+            *,
+            partner:organisations!partner_id(id, legal_name, trade_name, type),
+            expense_category:expense_categories(id, name, account_code)
+          `)
+          .is('deleted_at', null)
+          .order('document_date', { ascending: false })
+
+        // Appliquer filtres
+        if (filters?.document_type) {
+          if (Array.isArray(filters.document_type)) {
+            query = query.in('document_type', filters.document_type)
+          } else {
+            query = query.eq('document_type', filters.document_type)
+          }
+        }
+
+        if (filters?.status) {
+          if (Array.isArray(filters.status)) {
+            query = query.in('status', filters.status)
+          } else {
+            query = query.eq('status', filters.status)
+          }
+        }
+
+        if (filters?.partner_id) {
+          query = query.eq('partner_id', filters.partner_id)
+        }
+
+        if (filters?.start_date) {
+          query = query.gte('document_date', filters.start_date)
+        }
+
+        if (filters?.end_date) {
+          query = query.lte('document_date', filters.end_date)
+        }
+
+        const { data, error: fetchError } = await query
+
+        if (fetchError) throw fetchError
+
+        setDocuments(data || [])
+      } catch (err: any) {
+        console.error('Error fetching financial documents:', err)
+        setError(err.message || 'Erreur chargement documents')
+        toast.error(err.message || 'Erreur chargement')
+      } finally {
+        setLoading(false)
+      }
+    }
+
+    fetchData()
+  }, [JSON.stringify(filters), supabase])
+
+  // ===================================================================
   // FEATURE FLAG: FINANCE MODULE DISABLED (Phase 1)
   // ===================================================================
 
@@ -133,7 +203,7 @@ export function useFinancialDocuments(filters?: FinancialDocumentFilters) {
         .from('financial_documents')
         .select(`
           *,
-          partner:organisations!partner_id(id, name, type),
+          partner:organisations!partner_id(id, legal_name, trade_name, type),
           expense_category:expense_categories(id, name, account_code)
         `)
         .is('deleted_at', null)
@@ -184,7 +254,7 @@ export function useFinancialDocuments(filters?: FinancialDocumentFilters) {
 
       if (fetchError) throw fetchError
 
-      setDocuments(data as FinancialDocument[])
+      setDocuments(data as unknown as FinancialDocument[])
     } catch (err) {
       const message = err instanceof Error ? err.message : 'Erreur chargement documents'
       setError(message)
@@ -197,7 +267,7 @@ export function useFinancialDocuments(filters?: FinancialDocumentFilters) {
   // Créer facture client depuis commande
   const createCustomerInvoice = async (salesOrderId: string) => {
     try {
-      const { data, error: rpcError } = await supabase
+      const { data, error: rpcError } = await (supabase as any)
         .rpc('create_customer_invoice_from_order', {
           p_sales_order_id: salesOrderId
         })
@@ -229,7 +299,7 @@ export function useFinancialDocuments(filters?: FinancialDocumentFilters) {
     notes?: string
   }) => {
     try {
-      const { data, error: rpcError } = await supabase
+      const { data, error: rpcError } = await (supabase as any)
         .rpc('create_supplier_invoice', {
           p_supplier_id: params.supplier_id,
           p_purchase_order_id: params.purchase_order_id,
@@ -269,7 +339,7 @@ export function useFinancialDocuments(filters?: FinancialDocumentFilters) {
     notes?: string
   }) => {
     try {
-      const { data, error: rpcError } = await supabase
+      const { data, error: rpcError } = await (supabase as any)
         .rpc('create_expense', {
           p_supplier_id: params.supplier_id,
           p_expense_category_id: params.expense_category_id,
@@ -359,11 +429,6 @@ export function useFinancialDocuments(filters?: FinancialDocumentFilters) {
                      outbound.reduce((sum, d) => sum + d.amount_paid, 0)
     }
   }
-
-  // Auto-fetch au mount
-  useEffect(() => {
-    fetchDocuments()
-  }, [JSON.stringify(filters)]) // Re-fetch si filtres changent
 
   return {
     documents,

@@ -99,7 +99,7 @@ export function useDashboardAnalytics() {
 
         // Grouper par semaine
         const productsByWeek = (products || []).reduce((acc: Record<string, number>, product) => {
-          const date = new Date(product.created_at)
+          const date = new Date(product.created_at || new Date().toISOString())
           const weekStart = new Date(date)
           weekStart.setDate(date.getDate() - date.getDay())
           const weekKey = weekStart.toISOString().split('T')[0]
@@ -129,10 +129,10 @@ export function useDashboardAnalytics() {
             acc[date] = { entrees: 0, sorties: 0 }
           }
 
-          if (mov.movement_type === 'in' || mov.movement_type === 'purchase_order') {
-            acc[date].entrees += Math.abs(mov.quantity)
-          } else if (mov.movement_type === 'out' || mov.movement_type === 'sales_order') {
-            acc[date].sorties += Math.abs(mov.quantity)
+          if (mov.movement_type === 'IN') {
+            acc[date].entrees += Math.abs(mov.quantity_change)
+          } else if (mov.movement_type === 'OUT') {
+            acc[date].sorties += Math.abs(mov.quantity_change)
           }
 
           return acc

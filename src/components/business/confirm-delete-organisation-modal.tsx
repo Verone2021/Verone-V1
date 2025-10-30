@@ -4,6 +4,7 @@ import { useState } from 'react'
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog'
 import { ButtonV2 } from '@/components/ui/button'
 import { AlertTriangle, Loader2, Trash2, Building2 } from 'lucide-react'
+import { getOrganisationDisplayName } from '@/lib/utils/organisation-helpers'
 import { Organisation } from './unified-organisation-form'
 
 interface ConfirmDeleteOrganisationModalProps {
@@ -63,9 +64,7 @@ export function ConfirmDeleteOrganisationModal({
   }
 
   const getDisplayName = () => {
-    if (organisation.trade_name) return organisation.trade_name
-    if (organisation.legal_name) return organisation.legal_name
-    return organisation.name
+    return getOrganisationDisplayName(organisation)
   }
 
   return (
@@ -139,7 +138,7 @@ export function ConfirmDeleteOrganisationModal({
             Annuler
           </ButtonV2>
           <ButtonV2
-            variant="danger"
+            variant="destructive"
             onClick={handleConfirm}
             disabled={isDeleting}
           >

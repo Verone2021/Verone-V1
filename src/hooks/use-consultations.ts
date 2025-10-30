@@ -80,7 +80,7 @@ export interface ConsultationItem {
 }
 
 export interface CreateConsultationData {
-  organisation_id: string  // Relation vers table organisations (clients professionnels uniquement)
+  organisation_name: string  // Nom de l'organisation cliente
   client_email: string
   client_phone?: string
   descriptif: string
@@ -122,7 +122,7 @@ export interface UpdateConsultationItemData {
 export interface ConsultationFilters {
   status?: string
   assigned_to?: string
-  priority_level?: number
+  priority_level?: number | 'all'
   organisation_name?: string
   source_channel?: string
   date_range?: {
@@ -174,7 +174,7 @@ export function useConsultations() {
 
       if (error) throw error
 
-      setConsultations(data || [])
+      setConsultations((data || []) as any)
     } catch (err) {
       const message = err instanceof Error ? err.message : 'Erreur lors du chargement des consultations'
       setError(message)
@@ -202,14 +202,14 @@ export function useConsultations() {
       if (error) throw error
 
       // Ajouter à la liste locale
-      setConsultations(prev => [newConsultation, ...prev])
+      setConsultations(prev => [newConsultation, ...prev] as any)
 
       toast({
         title: "Consultation créée",
         description: `Nouvelle consultation pour ${data.organisation_name}`
       })
 
-      return newConsultation
+      return newConsultation as any
     } catch (err) {
       const message = err instanceof Error ? err.message : 'Erreur lors de la création de la consultation'
       setError(message)
@@ -330,7 +330,7 @@ export function useConsultations() {
 
       const { error } = await supabase
         .from('client_consultations')
-        .update({ archived_at: new Date().toISOString() })
+        .update({ archived_at: new Date().toISOString() } as any)
         .eq('id', consultationId)
 
       if (error) throw error
@@ -369,7 +369,7 @@ export function useConsultations() {
 
       const { error } = await supabase
         .from('client_consultations')
-        .update({ archived_at: null })
+        .update({ archived_at: null } as any)
         .eq('id', consultationId)
 
       if (error) throw error
@@ -412,7 +412,7 @@ export function useConsultations() {
 
       const { error } = await supabase
         .from('client_consultations')
-        .update({ deleted_at: new Date().toISOString() })
+        .update({ deleted_at: new Date().toISOString() } as any)
         .eq('id', consultationId)
 
       if (error) throw error
@@ -559,14 +559,14 @@ export function useConsultationItems(consultationId?: string) {
       if (error) throw error
 
       // Transform to ConsultationItem format
-      const items: ConsultationItem[] = (data || []).map(item => ({
+      const items = (data || []).map(item => ({
         id: item.id,
         consultation_id: item.consultation_id,
         product_id: item.product_id,
         quantity: item.quantity || 1,
         unit_price: item.proposed_price || item.product?.cost_price,
         is_free: item.is_free || false,
-        notes: item.notes,
+        notes: item.notes ?? undefined,
         created_at: item.created_at,
         created_by: item.created_by,
         product: item.product ? {
@@ -579,7 +579,7 @@ export function useConsultationItems(consultationId?: string) {
         } : undefined
       }))
 
-      setConsultationItems(items)
+      setConsultationItems(items as any)
     } catch (err) {
       const message = err instanceof Error ? err.message : 'Erreur lors du chargement des items'
       setError(message)
@@ -597,7 +597,7 @@ export function useConsultationItems(consultationId?: string) {
 
       const { data, error } = await supabase
         .rpc('get_consultation_eligible_products', {
-          target_consultation_id: targetConsultationId || null
+          target_consultation_id: targetConsultationId || undefined
         })
 
       if (error) throw error

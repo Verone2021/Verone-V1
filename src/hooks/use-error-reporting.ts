@@ -251,7 +251,7 @@ export function useErrorReporting(options: UseErrorReportingOptions = {}) {
 
       // Sauvegarder dans Supabase
       const { error: insertError } = await supabase
-        .from('test_error_reports')
+        .from('test_error_reports' as any)
         .insert({
           id: reportId,
           test_id: report.testId,
@@ -292,7 +292,7 @@ export function useErrorReporting(options: UseErrorReportingOptions = {}) {
   const loadReports = useCallback(async (testId?: string): Promise<ErrorReport[]> => {
     try {
       let query = supabase
-        .from('test_error_reports')
+        .from('test_error_reports' as any)
         .select('*')
         .order('created_at', { ascending: false })
 
@@ -304,7 +304,7 @@ export function useErrorReporting(options: UseErrorReportingOptions = {}) {
 
       if (error) throw error
 
-      const formattedReports: ErrorReport[] = (data || []).map(report => ({
+      const formattedReports: ErrorReport[] = (data || []).map((report: any) => ({
         id: report.id,
         testId: report.test_id,
         testTitle: report.test_title,
@@ -314,7 +314,7 @@ export function useErrorReporting(options: UseErrorReportingOptions = {}) {
         severity: report.severity,
         status: report.status,
         screenshots: [], // Les fichiers originaux ne sont pas disponibles
-        screenshotUrls: report.screenshot_urls || [],
+        screenshotUrls: report.screenshot_url ? [report.screenshot_url] : [],
         codeSnippet: report.code_snippet,
         browserInfo: report.browser_info,
         steps: report.reproduction_steps || [],
@@ -341,7 +341,7 @@ export function useErrorReporting(options: UseErrorReportingOptions = {}) {
   const updateReport = useCallback(async (reportId: string, updates: Partial<ErrorReport>): Promise<boolean> => {
     try {
       const { error } = await supabase
-        .from('test_error_reports')
+        .from('test_error_reports' as any)
         .update({
           ...updates,
           updated_at: new Date().toISOString(),
@@ -369,7 +369,7 @@ export function useErrorReporting(options: UseErrorReportingOptions = {}) {
       // Utiliser l'API Screen Capture si disponible
       if ('getDisplayMedia' in navigator.mediaDevices) {
         const stream = await navigator.mediaDevices.getDisplayMedia({
-          video: { mediaSource: 'screen' as any }
+          video: { mediaSource: 'screen' } as any
         })
 
         return new Promise((resolve) => {

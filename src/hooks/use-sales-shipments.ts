@@ -22,6 +22,7 @@
 
 import { useState, useCallback } from 'react'
 import { createClient } from '@/lib/supabase/client'
+import { getOrganisationDisplayName } from '@/lib/utils/organisation-helpers'
 import type {
   ShipmentItem,
   ValidateShipmentPayload,
@@ -47,6 +48,15 @@ export interface SalesOrderForShipment {
 
   // Shipping address (pré-remplir formulaire)
   shipping_address?: any
+
+  // Relations jointes (polymorphiques)
+  organisations?: {
+    id: string
+    legal_name: string
+    trade_name: string | null
+    email?: string
+    phone?: string
+  }
 
   // Items enrichis pour expédition
   sales_order_items: Array<{
@@ -124,16 +134,18 @@ export function useSalesShipments() {
 
       // Charger nom client selon customer_type (relation polymorphique)
       let customerName = 'Client inconnu'
+      let organisationData = null
 
       if (data.customer_type === 'organization') {
         const { data: org } = await supabase
           .from('organisations')
-          .select('name')
+          .select('id, legal_name, trade_name, email, phone')
           .eq('id', data.customer_id)
           .single()
 
         if (org) {
-          customerName = org.name
+          customerName = getOrganisationDisplayName(org)
+          organisationData = org
         }
       } else if (data.customer_type === 'individual_customer') {
         const { data: indiv } = await supabase
@@ -149,7 +161,8 @@ export function useSalesShipments() {
 
       return {
         ...data,
-        customer_name: customerName
+        customer_name: customerName,
+        organisations: organisationData
       } as SalesOrderForShipment
     } catch (err) {
       console.error('Exception chargement SO:', err)
@@ -361,7 +374,7 @@ export function useSalesShipments() {
         return []
       }
 
-      return (shipments || []).map(shipment => ({
+      return (shipments || []).map((shipment: any) => ({
         shipment_id: shipment.id,
         shipped_at: shipment.shipped_at,
         delivered_at: shipment.delivered_at || undefined,
@@ -488,7 +501,7 @@ export function useSalesShipments() {
 
       // Filtres
       if (filters?.status) {
-        query = query.eq('status', filters.status)
+        query = query.eq('status', filters.status as any)
       }
 
       if (filters?.search) {
@@ -518,20 +531,20 @@ export function useSalesShipments() {
         .map((o: any) => o.customer_id)
 
       // Query organisations si nécessaire
-      let organisationsMap = new Map()
+      const organisationsMap = new Map()
       if (orgIds.length > 0) {
         const { data: orgs } = await supabase
           .from('organisations')
-          .select('id, name')
+          .select('id, legal_name, trade_name')
           .in('id', orgIds)
 
         if (orgs) {
-          orgs.forEach((org: any) => organisationsMap.set(org.id, org.name))
+          orgs.forEach((org: any) => organisationsMap.set(org.id, org.trade_name || org.legal_name))
         }
       }
 
       // Query individual_customers si nécessaire
-      let individualsMap = new Map()
+      const individualsMap = new Map()
       if (indivIds.length > 0) {
         const { data: indivs } = await supabase
           .from('individual_customers')

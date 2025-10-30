@@ -88,7 +88,7 @@ export function ConfirmDeleteModal({
           Annuler
         </ButtonV2>
         <ButtonV2
-          variant="danger"
+          variant="destructive"
           onClick={onConfirm}
           disabled={loading}
           className="bg-red-600 hover:bg-red-700 min-w-[120px]"

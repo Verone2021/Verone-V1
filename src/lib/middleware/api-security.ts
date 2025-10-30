@@ -55,7 +55,7 @@ export async function verifyAuth(request: NextRequest) {
 
     return { authenticated: true, user }
   } catch (error) {
-    logger.error('Auth verification failed:', error)
+    logger.error('Auth verification failed:', error as any)
     return { authenticated: false, user: null }
   }
 }
@@ -154,7 +154,7 @@ export async function withApiSecurity(
 
   // Check rate limit
   if (rateLimit) {
-    const identifier = request.ip || request.headers.get('x-forwarded-for') || 'unknown'
+    const identifier = (request as any).ip || request.headers.get('x-forwarded-for') || 'unknown'
 
     if (!checkRateLimit(identifier)) {
       return new NextResponse(
@@ -181,7 +181,7 @@ export async function withApiSecurity(
 
     return response
   } catch (error) {
-    logger.error('API handler error:', error)
+    logger.error('API handler error:', error as any)
 
     return new NextResponse(
       JSON.stringify({ error: 'Internal Server Error' }),

@@ -235,7 +235,7 @@ export function SampleValidationSimple() {
               Annuler
             </ButtonV2>
             <ButtonV2
-              variant="danger"
+              variant="destructive"
               onClick={handleReject}
               className="bg-red-600 hover:bg-red-700 text-white"
             >

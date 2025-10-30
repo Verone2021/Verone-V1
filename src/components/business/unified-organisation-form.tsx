@@ -33,6 +33,18 @@ export interface Organisation {
   is_active: boolean
   notes: string | null
 
+  // Contact principal
+  email: string | null
+  phone: string | null
+  website: string | null
+
+  // Adresse principale (héritée - alias vers billing ou shipping selon contexte)
+  address_line1: string | null
+  address_line2: string | null
+  postal_code: string | null
+  city: string | null
+  region: string | null
+
   // Adresse de facturation
   billing_address_line1: string | null
   billing_address_line2: string | null
@@ -69,10 +81,17 @@ const baseOrganisationSchema = z.object({
   is_active: z.boolean().default(true),
   notes: z.string().optional().or(z.literal('')),
 
-  // Contact
+  // Contact principal
   email: z.string().optional().or(z.literal('')),
   phone: z.string().optional().or(z.literal('')),
   website: z.string().optional().or(z.literal('')),
+
+  // Adresse principale
+  address_line1: z.string().optional().or(z.literal('')),
+  address_line2: z.string().optional().or(z.literal('')),
+  postal_code: z.string().optional().or(z.literal('')),
+  city: z.string().optional().or(z.literal('')),
+  region: z.string().optional().or(z.literal('')),
 
   // Adresse de facturation
   billing_address_line1: z.string().optional().or(z.literal('')),
@@ -112,6 +131,13 @@ const baseOrganisationSchema = z.object({
   currency: z.string().default('EUR'),
   payment_terms: z.string().optional().or(z.literal('')),
   prepayment_required: z.boolean().default(false),
+
+  // Contact secondaire
+  secondary_email: z.string().optional().or(z.literal('')),
+
+  // Intégrations externes
+  abby_customer_id: z.string().optional().or(z.literal('')),
+  default_channel_id: z.string().optional().or(z.literal('')),
 
   // Supplier specific
   supplier_segment: z.string().optional().or(z.literal('')),
@@ -205,6 +231,7 @@ const getDefaultValues = (organisation?: Organisation | null): OrganisationFormD
       industry_sector: '',
       currency: 'EUR',
       payment_terms: '',
+      prepayment_required: false,
       supplier_segment: '',
     }
   }
@@ -238,6 +265,7 @@ const getDefaultValues = (organisation?: Organisation | null): OrganisationFormD
     industry_sector: organisation.industry_sector || '',
     currency: organisation.currency || 'EUR',
     payment_terms: organisation.payment_terms || '',
+    prepayment_required: (organisation as any).prepayment_required || false,
     supplier_segment: organisation.supplier_segment || '',
   }
 }
@@ -286,7 +314,7 @@ export function UnifiedOrganisationForm({
   const isCustomer = organisationType === 'customer'
 
   const form = useForm<OrganisationFormData>({
-    resolver: zodResolver(baseOrganisationSchema),
+    resolver: zodResolver(baseOrganisationSchema) as any,
     defaultValues: getDefaultValues(organisation),
   })
 
@@ -338,7 +366,7 @@ export function UnifiedOrganisationForm({
           </DialogTitle>
         </DialogHeader>
 
-        <form onSubmit={form.handleSubmit(handleSubmit)}>
+        <form onSubmit={form.handleSubmit(handleSubmit as any)}>
           <div style={{ display: 'flex', flexDirection: 'column', gap: spacing[8] }}>
 
             {/* Logo Upload Section */}

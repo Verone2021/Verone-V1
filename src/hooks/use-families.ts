@@ -213,7 +213,7 @@ export function useFamilies() {
       .replace(/[^a-z0-9 -]/g, "")
       .replace(/\s+/g, "-")
       .replace(/-+/g, "-")
-      .trim("-")
+      .replace(/^-+|-+$/g, '')
   }
 
   // Charger les familles au montage du hook

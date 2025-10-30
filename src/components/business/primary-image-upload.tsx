@@ -49,8 +49,7 @@ export function PrimaryImageUpload({
     hasImages,
     fetchImages
   } = useProductImages({
-    productId,
-    productType
+    productId
   })
 
   // 🔄 Synchronisation avec useProductImages
@@ -63,7 +62,7 @@ export function PrimaryImageUpload({
   // 🎯 Callback après upload réussi
   useEffect(() => {
     if (primaryImage && onImageUpload) {
-      onImageUpload(primaryImage.id, primaryImage.public_url)
+      onImageUpload(primaryImage.id, primaryImage.public_url || '')
     }
   }, [primaryImage, onImageUpload])
 
@@ -172,7 +171,7 @@ export function PrimaryImageUpload({
           {/* Bouton suppression */}
           <ButtonV2
             type="button"
-            variant="danger"
+            variant="destructive"
             size="sm"
             className="absolute -top-2 -right-2 w-6 h-6 p-0 rounded-full"
             onClick={handleRemoveImage}
@@ -254,7 +253,7 @@ export function PrimaryImageUpload({
 
       {/* Erreurs */}
       {error && (
-        <Alert variant="danger">
+        <Alert variant="destructive">
           <AlertCircle className="h-4 w-4" />
           <AlertDescription className="flex items-center justify-between">
             <span>{error}</span>

@@ -121,7 +121,7 @@ export function ImageUpload({
 
       console.log('🎉 Upload terminé avec succès')
 
-    } catch (error) {
+    } catch (error: any) {
       console.error('💥 Erreur upload:', error)
 
       // Messages d'erreur utilisateur simplifiés
@@ -277,7 +277,7 @@ export function ImageUpload({
           </div>
           <ButtonV2
             type="button"
-            variant="danger"
+            variant="destructive"
             size="sm"
             className="absolute -top-2 -right-2 w-6 h-6 p-0 rounded-full"
             onClick={handleRemoveImage}

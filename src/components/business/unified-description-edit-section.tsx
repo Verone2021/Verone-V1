@@ -50,7 +50,7 @@ export function UnifiedDescriptionEditSection({
     }
   })
 
-  const section: EditableSection = 'description'
+  const section = 'description' as EditableSection
   const editData = getEditedData(section)
   const error = getError(section)
 
@@ -96,7 +96,7 @@ export function UnifiedDescriptionEditSection({
 
   const removeSellingPoint = (index: number) => {
     const currentPoints = editData?.selling_points || []
-    const newPoints = currentPoints.filter((_, i) => i !== index)
+    const newPoints = currentPoints.filter((_: any, i: any) => i !== index)
     updateEditedData(section, {
       selling_points: newPoints
     })
@@ -122,7 +122,7 @@ export function UnifiedDescriptionEditSection({
               Annuler
             </ButtonV2>
             <ButtonV2
-              variant="primary"
+              variant="secondary"
               size="sm"
               onClick={handleSave}
               disabled={!hasChanges(section) || isSaving(section)}

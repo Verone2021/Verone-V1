@@ -1,8 +1,11 @@
 "use client"
 
 import { useState, useMemo, useEffect, useCallback } from 'react'
-import { X, Plus } from 'lucide-react'
+import { X, Plus, ExternalLink } from 'lucide-react'
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog'
+import { Checkbox } from '@/components/ui/checkbox'
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
+import Link from 'next/link'
 import { ButtonV2 } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
@@ -11,6 +14,7 @@ import { useCategories } from '@/hooks/use-categories'
 import { useSubcategories } from '@/hooks/use-subcategories'
 import { useVariantGroups } from '@/hooks/use-variant-groups'
 import { useToast } from '@/hooks/use-toast'
+import { useOrganisations } from '@/hooks/use-organisations'
 import { RoomMultiSelect } from '@/components/ui/room-multi-select'
 import { COLLECTION_STYLE_OPTIONS } from '@/types/collections'
 import { normalizeForSKU } from '@/lib/sku-generator'
@@ -38,6 +42,9 @@ interface FormData {
   common_width: string
   common_height: string
   common_dimensions_unit: 'cm' | 'm'
+  // Fournisseur commun
+  has_common_supplier: boolean
+  supplier_id: string
 }
 
 const DECORATIVE_STYLES = [
@@ -71,7 +78,9 @@ export function VariantGroupForm({
     common_length: '',
     common_width: '',
     common_height: '',
-    common_dimensions_unit: 'cm'
+    common_dimensions_unit: 'cm',
+    has_common_supplier: false,
+    supplier_id: ''
   })
   const [filters, setFilters] = useState({
     familyId: '',
@@ -84,6 +93,10 @@ export function VariantGroupForm({
   const { families } = useFamilies()
   const { getCategoriesByFamily } = useCategories()
   const { getSubcategoriesByCategory } = useSubcategories()
+  const { organisations: suppliers, loading: suppliersLoading } = useOrganisations({
+    type: 'supplier',
+    is_active: true
+  })
 
   // Catégories et sous-catégories filtrées
   const filteredCategories = useMemo(() => {
@@ -148,7 +161,7 @@ export function VariantGroupForm({
           common_width: dimensions.width?.toString() || '',
           common_height: dimensions.height?.toString() || '',
           common_dimensions_unit: dimensions.unit || 'cm'
-        })
+        } as any)
       } else {
         // Mode création
         setFormData({
@@ -162,7 +175,7 @@ export function VariantGroupForm({
           common_width: '',
           common_height: '',
           common_dimensions_unit: 'cm'
-        })
+        } as any)
         setFilters({
           familyId: '',
           categoryId: ''
@@ -222,7 +235,9 @@ export function VariantGroupForm({
         variant_type: formData.variant_type,
         style: formData.style || null,
         suitable_rooms: formData.suitable_rooms.length > 0 ? formData.suitable_rooms : null,
-        common_dimensions
+        common_dimensions,
+        has_common_supplier: formData.has_common_supplier,
+        supplier_id: formData.has_common_supplier ? (formData.supplier_id || null) : null
       }
 
       let success = false
@@ -238,7 +253,7 @@ export function VariantGroupForm({
         }
       } else {
         // Mode création
-        success = await createVariantGroup(groupData)
+        success = !!(await createVariantGroup(groupData as any))
         if (success) {
           toast({
             title: "Succès",
@@ -468,6 +483,67 @@ export function VariantGroupForm({
               <p className="text-xs text-gray-600">
                 {formData.suitable_rooms.length} pièce{formData.suitable_rooms.length > 1 ? 's' : ''} sélectionnée{formData.suitable_rooms.length > 1 ? 's' : ''}
               </p>
+            )}
+          </div>
+
+          {/* Fournisseur commun */}
+          <div className="space-y-4 pt-4 border-t">
+            <div className="flex items-center space-x-2">
+              <Checkbox
+                id="has-common-supplier"
+                checked={formData.has_common_supplier}
+                onCheckedChange={(checked) => {
+                  setFormData(prev => ({ ...prev, has_common_supplier: checked as boolean }))
+                  if (!checked) setFormData(prev => ({ ...prev, supplier_id: '' }))
+                }}
+              />
+              <Label
+                htmlFor="has-common-supplier"
+                className="text-sm font-medium cursor-pointer"
+              >
+                🏢 Même fournisseur pour tous les produits
+              </Label>
+            </div>
+            <p className="text-xs text-gray-600 ml-6">
+              Si cochée, tous les produits du groupe hériteront automatiquement du fournisseur sélectionné
+            </p>
+
+            {formData.has_common_supplier && (
+              <div className="ml-6 space-y-2">
+                <Label htmlFor="supplier" className="text-sm font-medium">
+                  Fournisseur commun <span className="text-red-500">*</span>
+                </Label>
+                <Select
+                  value={formData.supplier_id}
+                  onValueChange={(value) => setFormData(prev => ({ ...prev, supplier_id: value }))}
+                  disabled={suppliersLoading}
+                >
+                  <SelectTrigger className="w-full">
+                    <SelectValue placeholder="Sélectionner un fournisseur" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {suppliers.map((supplier) => (
+                      <SelectItem key={supplier.id} value={supplier.id}>
+                        {supplier.legal_name || supplier.trade_name || 'Sans nom'}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                {formData.supplier_id && (
+                  <Link
+                    href={`/contacts-organisations/suppliers/${formData.supplier_id}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="inline-flex items-center gap-1.5 text-xs text-blue-600 hover:text-blue-800 hover:underline"
+                  >
+                    <ExternalLink className="w-3 h-3" />
+                    Voir la fiche détail du fournisseur
+                  </Link>
+                )}
+                <p className="text-xs text-blue-700 bg-blue-50 p-2 rounded border border-blue-200">
+                  💡 Ce fournisseur sera appliqué automatiquement à tous les produits du groupe
+                </p>
+              </div>
             )}
           </div>
 

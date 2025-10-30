@@ -61,7 +61,7 @@ export function useProductImages({
         productId,
         imagesCount: data?.length || 0
       })
-      setImages(data || [])
+      setImages((data || []) as any)
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : 'Erreur chargement images'
       logger.error('Erreur chargement images', err as Error, {

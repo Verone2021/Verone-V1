@@ -1,15 +1,13 @@
 /**
  * Hook unifié pour Dashboard CRM/ERP 2025
- * Phase 1: Données organisations uniquement
- * Phase 2+: Catalogue, Stock, Commandes (désactivés)
+ * Combine données réelles Phase 1 + données réelles Phase 2 (Stock/Commandes)
  */
 
 import { useEffect, useState } from 'react'
 import { createClient } from '@/lib/supabase/client'
-// Phase 1: Hooks Phase 2+ désactivés
-// import { useRealDashboardMetrics } from './use-real-dashboard-metrics'
+import { useRealDashboardMetrics } from './use-real-dashboard-metrics'
 import { useOrganisations } from './use-organisations'
-// import { useStockOrdersMetrics } from './use-stock-orders-metrics'
+import { useStockOrdersMetrics } from './use-stock-orders-metrics'
 
 export interface CompleteDashboardMetrics {
   // Phase 1 - Données RÉELLES
@@ -63,25 +61,29 @@ export interface CompleteDashboardMetrics {
 }
 
 export function useCompleteDashboardMetrics() {
-  // Phase 1 - Données organisations (ACTIF)
+  // Phase 1 - Données réelles
+  const {
+    metrics: catalogueMetrics,
+    isLoading: catalogueLoading,
+    error: catalogueError
+  } = useRealDashboardMetrics()
+
   const {
     organisations,
     loading: organisationsLoading
   } = useOrganisations()
 
-  // Phase 2+ - Données désactivées (retour valeurs par défaut)
-  const catalogueMetrics = null
-  const catalogueLoading = false
-  const catalogueError = null
-  const stockOrdersMetrics = null
-  const stockOrdersLoading = false
+  // Phase 2 - Données réelles Stock/Commandes/Sourcing
+  const {
+    metrics: stockOrdersMetrics,
+    isLoading: stockOrdersLoading
+  } = useStockOrdersMetrics()
 
-  // Phase 1: Sales orders désactivés
-  const salesOrdersCount = 0
-  const salesOrdersLoading = false
+  // État pour salesOrders
+  const [salesOrdersCount, setSalesOrdersCount] = useState<number>(0)
+  const [salesOrdersLoading, setSalesOrdersLoading] = useState(true)
 
-  // Phase 2+ : Query sales_orders désactivée
-  /*
+  // Charger le comptage des commandes de vente
   useEffect(() => {
     const fetchSalesOrders = async () => {
       try {
@@ -106,7 +108,6 @@ export function useCompleteDashboardMetrics() {
 
     fetchSalesOrders()
   }, [])
-  */
 
   // Calcul statistiques organisations (excluant particuliers)
   const organisationsOnly = organisations.filter(o =>

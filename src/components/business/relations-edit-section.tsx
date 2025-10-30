@@ -124,7 +124,7 @@ export function RelationsEditSection({ product, onUpdate, className }: Relations
         .limit(50)
 
       if (error) throw error
-      setProductGroups(data || [])
+      setProductGroups(data as any || [])
     } catch (err) {
       console.error('❌ Erreur chargement groupes produits:', err)
     } finally {
@@ -194,7 +194,7 @@ export function RelationsEditSection({ product, onUpdate, className }: Relations
               Annuler
             </ButtonV2>
             <ButtonV2
-              variant="primary"
+              variant="secondary"
               size="sm"
               onClick={handleSave}
               disabled={!hasChanges(section) || isSaving(section)}
