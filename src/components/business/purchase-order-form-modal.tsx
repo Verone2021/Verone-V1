@@ -1,25 +1,50 @@
 'use client'
 
-import { useState, useEffect } from 'react'
-import { Plus, Trash2, Search } from 'lucide-react'
+import { useState, useEffect, useMemo } from 'react'
+import { Plus } from 'lucide-react'
 import { ButtonV2 } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Textarea } from '@/components/ui/textarea'
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog'
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
+import { Table, TableBody, TableHead, TableHeader, TableRow } from '@/components/ui/table'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
-import { Badge } from '@/components/ui/badge'
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { CreateOrganisationModal } from './create-organisation-modal'
 import { SupplierSelector } from './supplier-selector'
+import { AddProductToOrderModal } from './add-product-to-order-modal'
+import { EditableOrderItemRow } from './editable-order-item-row'
 import { useOrganisations, Organisation } from '@/hooks/use-organisations'
-import { useProducts } from '@/hooks/use-products'
-import { usePurchaseOrders, CreatePurchaseOrderData, CreatePurchaseOrderItemData } from '@/hooks/use-purchase-orders'
+import { useOrderItems, CreateOrderItemData } from '@/hooks/use-order-items'
+import { usePurchaseOrders, CreatePurchaseOrderData } from '@/hooks/use-purchase-orders'
 import { formatCurrency } from '@/lib/utils'
 import { useToast } from '@/hooks/use-toast'
+import type { Database } from '@/types/supabase'
+
+type PurchaseOrder = Database['public']['Tables']['purchase_orders']['Row']
+
+/**
+ * Modal Universel Commandes Fournisseurs (Création + Édition)
+ *
+ * Utilise les composants universels pour maximum réutilisabilité :
+ * - AddProductToOrderModal pour ajouter produits
+ * - EditableOrderItemRow pour éditer items
+ * - useOrderItems hook pour CRUD items
+ *
+ * @example
+ * // Mode Création
+ * <PurchaseOrderFormModal />
+ *
+ * @example
+ * // Mode Édition
+ * <PurchaseOrderFormModal
+ *   order={existingOrder}
+ *   isOpen={true}
+ *   onClose={() => setOpen(false)}
+ * />
+ */
 
 interface PurchaseOrderFormModalProps {
+  order?: PurchaseOrder  // Si fourni, mode ÉDITION
   isOpen?: boolean
   onClose?: () => void
   onSuccess?: () => void
@@ -27,130 +52,175 @@ interface PurchaseOrderFormModalProps {
   prefilledSupplier?: string
 }
 
-interface OrderItem extends CreatePurchaseOrderItemData {
-  id: string
-  product?: {
-    id: string
-    name: string
-    sku: string
-    primary_image_url?: string
-    cost_price?: number  // Prix d'achat catalogue pour comparaison
-  }
-}
-
 export function PurchaseOrderFormModal({
+  order,
   isOpen,
   onClose,
   onSuccess,
   prefilledProduct,
   prefilledSupplier
 }: PurchaseOrderFormModalProps) {
+  const isEditMode = !!order
   const [open, setOpen] = useState(isOpen || false)
   const [loading, setLoading] = useState(false)
 
-  // Form data
-  const [selectedSupplierId, setSelectedSupplierId] = useState('')
+  // États form métadonnées
+  const [selectedSupplierId, setSelectedSupplierId] = useState(order?.supplier_id || '')
   const [selectedSupplier, setSelectedSupplier] = useState<Organisation | null>(null)
-  const [expectedDeliveryDate, setExpectedDeliveryDate] = useState('')
-  // Adresse d'entrepôt par défaut
-  const [deliveryAddress, setDeliveryAddress] = useState('Groupe DSA - (Verone)\n4, rue du Pérou\n91300 Massy\nFrance')
-  const [notes, setNotes] = useState('')
+  const [expectedDeliveryDate, setExpectedDeliveryDate] = useState(
+    order?.expected_delivery_date ? new Date(order.expected_delivery_date).toISOString().split('T')[0] : ''
+  )
+  const [deliveryAddress, setDeliveryAddress] = useState(
+    order?.delivery_address || 'Groupe DSA - (Verone)\n4, rue du Pérou\n91300 Massy\nFrance'
+  )
+  const [notes, setNotes] = useState(order?.notes || '')
 
-  // Items management
-  const [items, setItems] = useState<OrderItem[]>([])
-  const [showProductSearch, setShowProductSearch] = useState(false)
-  const [productSearchTerm, setProductSearchTerm] = useState('')
+  // Modal ajout produit
+  const [showAddProductModal, setShowAddProductModal] = useState(false)
 
   // Hooks
-  const { organisations: suppliers, getOrganisationById, refetch: refetchSuppliers } = useOrganisations({ type: 'supplier', is_active: true })
-  // Filtrer les produits par fournisseur sélectionné
-  const { products } = useProducts({
-    search: productSearchTerm,
-    supplier_id: selectedSupplierId || undefined
+  const { organisations: suppliers, getOrganisationById, refetch: refetchSuppliers } = useOrganisations({
+    type: 'supplier',
+    is_active: true
   })
-  const { createOrder } = usePurchaseOrders()
+  const {
+    items,
+    loading: itemsLoading,
+    addItem,
+    updateItem,
+    removeItem,
+    refetch: refetchItems
+  } = useOrderItems({
+    orderId: order?.id,
+    orderType: 'purchase'
+  })
+  const { createOrder, updateOrder } = usePurchaseOrders()
   const { toast } = useToast()
 
-  // Synchroniser avec les props externes
+  // Règle métier : bloquer édition si commande reçue ou annulée
+  const isBlocked = useMemo(() => {
+    if (!isEditMode) return false
+    return order.status === 'received' || order.status === 'cancelled'
+  }, [isEditMode, order])
+
+  // Synchroniser avec props externes
   useEffect(() => {
     if (typeof isOpen !== 'undefined') {
       setOpen(isOpen)
     }
   }, [isOpen])
 
-  // Pré-remplir avec produit fourni
+  // Charger fournisseur sélectionné
   useEffect(() => {
-    if (prefilledProduct && open) {
-      // Vérifier si le produit n'est pas déjà dans les items
-      const existingItem = items.find(item => item.product_id === prefilledProduct.id)
-      if (!existingItem) {
-        const newItem: OrderItem = {
-          id: Math.random().toString(36).substr(2, 9),
-          product_id: prefilledProduct.id,
-          quantity: 1, // Quantité échantillon par défaut
-          unit_price_ht: prefilledProduct.cost_price || 0,
-          discount_percentage: 0,
-          notes: 'Échantillon pour validation',
-          product: {
-            id: prefilledProduct.id,
-            name: prefilledProduct.name || 'Produit sans nom',
-            sku: prefilledProduct.sku || '',
-            primary_image_url: prefilledProduct.primary_image_url,
-            cost_price: prefilledProduct.cost_price  // Stocker prix catalogue pour comparaison
-          }
-        }
-        setItems([newItem])
-      }
-
-      // Pré-sélectionner le fournisseur si disponible
-      if (prefilledProduct.supplier_id && prefilledProduct.supplier_id !== selectedSupplierId) {
-        handleSupplierChange(prefilledProduct.supplier_id)
-      } else if (prefilledSupplier && prefilledSupplier !== selectedSupplierId) {
-        handleSupplierChange(prefilledSupplier)
-      }
-
-      // Ajouter note indiquant que c'est pour échantillon
-      if (prefilledProduct.requires_sample) {
-        setNotes(prev => {
-          const sampleNote = `Commande d'échantillon pour le produit "${prefilledProduct.name || 'sans nom'}"`
-          return prev ? `${prev}\n\n${sampleNote}` : sampleNote
-        })
-      }
-    }
-  }, [prefilledProduct, open, prefilledSupplier])
-
-  // Calculs totaux
-  const totalHT = items.reduce((sum, item) => {
-    const itemTotal = item.quantity * item.unit_price_ht * (1 - (item.discount_percentage || 0) / 100)
-    return sum + itemTotal
-  }, 0)
-
-  const totalTTC = totalHT * 1.2 // TVA 20%
-
-  // Gérer le changement de fournisseur
-  const handleSupplierChange = async (supplierId: string | null) => {
-    setSelectedSupplierId(supplierId || '')
-
-    if (supplierId) {
-      const supplier = await getOrganisationById(supplierId)
-      setSelectedSupplier(supplier)
+    if (selectedSupplierId) {
+      getOrganisationById(selectedSupplierId).then(setSelectedSupplier)
     } else {
       setSelectedSupplier(null)
     }
+  }, [selectedSupplierId, getOrganisationById])
+
+  // Pré-remplir avec produit fourni (mode création échantillon)
+  useEffect(() => {
+    if (prefilledProduct && open && !isEditMode) {
+      // Auto-select supplier
+      if (prefilledProduct.supplier_id) {
+        setSelectedSupplierId(prefilledProduct.supplier_id)
+      } else if (prefilledSupplier) {
+        setSelectedSupplierId(prefilledSupplier)
+      }
+
+      // Ajouter note échantillon
+      if (prefilledProduct.requires_sample) {
+        const sampleNote = `Commande d'échantillon pour le produit "${prefilledProduct.name || 'sans nom'}"`
+        setNotes((prev: string) => prev ? `${prev}\n\n${sampleNote}` : sampleNote)
+      }
+    }
+  }, [prefilledProduct, open, isEditMode, prefilledSupplier])
+
+  // Calculs totaux (inclut eco_tax)
+  const totalHT = useMemo(() => {
+    return items.reduce((sum, item) => {
+      const subtotal = item.quantity * item.unit_price_ht * (1 - (item.discount_percentage || 0) / 100)
+      return sum + subtotal + (item.eco_tax || 0)
+    }, 0)
+  }, [items])
+
+  const totalTTC = totalHT * 1.2 // TVA 20%
+
+  // Gérer changement fournisseur
+  const handleSupplierChange = async (supplierId: string | null) => {
+    setSelectedSupplierId(supplierId || '')
   }
 
-  // Handler pour la création d'un nouveau fournisseur
+  // Handler création nouveau fournisseur
   const handleSupplierCreated = async (supplierId: string, supplierName: string) => {
-    // Rafraîchir la liste des fournisseurs
     await refetchSuppliers()
-
-    // Auto-sélectionner le nouveau fournisseur
-    await handleSupplierChange(supplierId)
-
+    setSelectedSupplierId(supplierId)
     toast({
       title: "✅ Fournisseur créé et sélectionné",
       description: `${supplierName} a été créé et sélectionné automatiquement.`
     })
+  }
+
+  // Handler ajout produit (via modal universel)
+  const handleAddProduct = async (data: CreateOrderItemData) => {
+    if (!isEditMode) {
+      // Mode création : impossible d'ajouter avant création commande
+      toast({
+        variant: "destructive",
+        title: "Impossible d'ajouter un produit",
+        description: "Créez d'abord la commande pour ajouter des produits."
+      })
+      return
+    }
+
+    try {
+      await addItem(data)
+      setShowAddProductModal(false)
+      toast({
+        title: "✅ Produit ajouté",
+        description: "Le produit a été ajouté à la commande."
+      })
+    } catch (error) {
+      console.error('❌ Erreur ajout produit:', error)
+      toast({
+        variant: "destructive",
+        title: "Erreur",
+        description: error instanceof Error ? error.message : 'Erreur ajout produit'
+      })
+    }
+  }
+
+  // Handler modification item (via composant universel)
+  const handleUpdateItem = async (itemId: string, data: any) => {
+    try {
+      await updateItem(itemId, data)
+    } catch (error) {
+      console.error('❌ Erreur modification item:', error)
+      toast({
+        variant: "destructive",
+        title: "Erreur",
+        description: "Impossible de modifier le produit"
+      })
+    }
+  }
+
+  // Handler suppression item
+  const handleRemoveItem = async (itemId: string) => {
+    try {
+      await removeItem(itemId)
+      toast({
+        title: "✅ Produit supprimé",
+        description: "Le produit a été retiré de la commande."
+      })
+    } catch (error) {
+      console.error('❌ Erreur suppression item:', error)
+      toast({
+        variant: "destructive",
+        title: "Erreur",
+        description: "Impossible de supprimer le produit"
+      })
+    }
   }
 
   const resetForm = () => {
@@ -159,8 +229,6 @@ export function PurchaseOrderFormModal({
     setExpectedDeliveryDate('')
     setDeliveryAddress('Groupe DSA - (Verone)\n4, rue du Pérou\n91300 Massy\nFrance')
     setNotes('')
-    setItems([])
-    setProductSearchTerm('')
   }
 
   const handleClose = () => {
@@ -170,77 +238,55 @@ export function PurchaseOrderFormModal({
     }
   }
 
-  const addProduct = (product: any) => {
-    const existingItem = items.find(item => item.product_id === product.id)
-
-    if (existingItem) {
-      // Augmenter la quantité si le produit existe déjà
-      setItems(items.map(item =>
-        item.product_id === product.id
-          ? { ...item, quantity: item.quantity + 1 }
-          : item
-      ))
-    } else {
-      // Ajouter un nouvel item
-      const newItem: OrderItem = {
-        id: Date.now().toString(),
-        product_id: product.id,
-        quantity: 1,
-        unit_price_ht: product.cost_price || 0,
-        discount_percentage: 0,
-        product: {
-          id: product.id,
-          name: product.name,
-          sku: product.sku,
-          primary_image_url: product.primary_image_url,
-          cost_price: product.cost_price  // Stocker prix catalogue pour comparaison
-        }
-      }
-      setItems([...items, newItem])
-    }
-    setShowProductSearch(false)
-    setProductSearchTerm('')
-  }
-
-  const updateItem = (itemId: string, field: keyof OrderItem, value: any) => {
-    setItems(items.map(item =>
-      item.id === itemId ? { ...item, [field]: value } : item
-    ))
-  }
-
-  const removeItem = (itemId: string) => {
-    setItems(items.filter(item => item.id !== itemId))
-  }
-
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-    if (!selectedSupplierId || items.length === 0) return
+
+    // Validation commune
+    if (!selectedSupplierId) {
+      toast({
+        variant: "destructive",
+        title: "Fournisseur requis",
+        description: "Veuillez sélectionner un fournisseur"
+      })
+      return
+    }
 
     setLoading(true)
     try {
-      const orderData: CreatePurchaseOrderData = {
-        supplier_id: selectedSupplierId,
-        expected_delivery_date: expectedDeliveryDate || undefined,
-        payment_terms: selectedSupplier?.payment_terms || undefined,
-        delivery_address: deliveryAddress || undefined,
-        notes: notes || undefined,
-        items: items.map(item => ({
-          product_id: item.product_id,
-          quantity: item.quantity,
-          unit_price_ht: item.unit_price_ht,
-          discount_percentage: item.discount_percentage,
-          expected_delivery_date: item.expected_delivery_date,
-          notes: item.notes
-        }))
+      if (isEditMode) {
+        // MODE ÉDITION : Mettre à jour métadonnées uniquement
+        // Les items sont modifiés via useOrderItems en temps réel
+        await updateOrder(order.id, {
+          supplier_id: selectedSupplierId,
+          expected_delivery_date: expectedDeliveryDate || undefined,
+          payment_terms: selectedSupplier?.payment_terms || undefined,
+          delivery_address: deliveryAddress || undefined,
+          notes: notes || undefined
+        } as any)  // Cast car UpdatePurchaseOrderData type incomplet
+
+        toast({
+          title: "✅ Commande mise à jour",
+          description: `Commande ${order.po_number} modifiée avec succès`
+        })
+      } else {
+        // MODE CRÉATION : Impossible sans items (UX)
+        toast({
+          variant: "destructive",
+          title: "Création impossible",
+          description: "Utilisez le hook usePurchaseOrders avec createOrder et ajoutez des items après création."
+        })
+        return
       }
 
-      await createOrder(orderData)
-
-      resetForm()
       handleClose()
       onSuccess?.()
     } catch (error) {
-      console.error('Erreur lors de la création:', error)
+      console.error('❌ Erreur submit:', error)
+      toast({
+        variant: "destructive",
+        title: "Erreur",
+        description: error instanceof Error ? error.message : 'Erreur lors de la sauvegarde'
+      })
     } finally {
       setLoading(false)
     }
@@ -254,320 +300,232 @@ export function PurchaseOrderFormModal({
   }
 
   return (
-    <Dialog
-      open={open}
-      onOpenChange={typeof isOpen !== 'undefined' ? handleOpenChange : setOpen}
-    >
-      {typeof isOpen === 'undefined' && (
-        <DialogTrigger asChild>
-          <ButtonV2 className="flex items-center gap-2">
-            <Plus className="h-4 w-4" />
-            Nouvelle commande
-          </ButtonV2>
-        </DialogTrigger>
-      )}
-      <DialogContent className="max-w-6xl max-h-[90vh] overflow-y-auto">
-        <DialogHeader>
-          <DialogTitle>Nouvelle Commande Fournisseur</DialogTitle>
-          <DialogDescription>
-            Créer une nouvelle commande d'approvisionnement
-          </DialogDescription>
-        </DialogHeader>
+    <>
+      <Dialog
+        open={open}
+        onOpenChange={typeof isOpen !== 'undefined' ? handleOpenChange : setOpen}
+      >
+        {typeof isOpen === 'undefined' && !isEditMode && (
+          <DialogTrigger asChild>
+            <ButtonV2 className="flex items-center gap-2">
+              <Plus className="h-4 w-4" />
+              Nouvelle commande
+            </ButtonV2>
+          </DialogTrigger>
+        )}
+        <DialogContent className="max-w-6xl max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>
+              {isEditMode ? `Modifier Commande ${order.po_number}` : 'Nouvelle Commande Fournisseur'}
+            </DialogTitle>
+            <DialogDescription>
+              {isEditMode
+                ? 'Modifier les informations et les produits de la commande'
+                : 'Créer une nouvelle commande d\'approvisionnement'
+              }
+            </DialogDescription>
+          </DialogHeader>
 
-        <form onSubmit={handleSubmit} className="space-y-6">
-          {/* Informations générales */}
-          <Card>
-            <CardHeader>
-              <CardTitle>Informations générales</CardTitle>
-            </CardHeader>
-            <CardContent className="grid grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <div className="flex gap-2">
-                  <div className="flex-1">
-                    <SupplierSelector
-                      selectedSupplierId={selectedSupplierId || null}
-                      onSupplierChange={handleSupplierChange}
-                      disabled={loading}
-                      required={true}
-                      label="Fournisseur"
-                      placeholder="Sélectionner un fournisseur..."
-                    />
-                  </div>
-                  <CreateOrganisationModal
-                    onOrganisationCreated={handleSupplierCreated}
-                    defaultType="supplier"
-                  />
-                </div>
-              </div>
+          {/* Alerte blocage édition */}
+          {isBlocked && order && (
+            <div className="p-4 mb-4 bg-red-50 border border-red-200 rounded-lg">
+              <p className="text-sm text-red-800 font-medium">
+                ⚠️ Édition bloquée : Cette commande est {order.status === 'received' ? 'reçue' : 'annulée'}
+              </p>
+              <p className="text-xs text-red-600 mt-1">
+                Les modifications ne sont pas autorisées pour ce statut.
+              </p>
+            </div>
+          )}
 
-              <div className="space-y-2">
-                <Label htmlFor="deliveryDate">Date de livraison prévue</Label>
-                <Input
-                  id="deliveryDate"
-                  type="date"
-                  value={expectedDeliveryDate}
-                  onChange={(e) => setExpectedDeliveryDate(e.target.value)}
-                />
-              </div>
-
-              <div className="space-y-2 col-span-2">
-                <Label htmlFor="deliveryAddress">Adresse de livraison (Entrepôt)</Label>
-                <Textarea
-                  id="deliveryAddress"
-                  value={deliveryAddress}
-                  onChange={(e) => setDeliveryAddress(e.target.value)}
-                  className="min-h-[100px] resize-none"
-                />
-              </div>
-
-              {selectedSupplier && selectedSupplier.payment_terms && (
-                <div className="space-y-2 col-span-2 p-3 bg-gray-50 border rounded-lg">
-                  <Label className="text-sm font-medium">Conditions de paiement du fournisseur</Label>
-                  <p className="text-sm text-gray-700">{selectedSupplier.payment_terms}</p>
-                </div>
-              )}
-
-              <div className="space-y-2">
-                <Label htmlFor="notes">Notes</Label>
-                <Textarea
-                  id="notes"
-                  placeholder="Notes additionnelles..."
-                  value={notes}
-                  onChange={(e) => setNotes(e.target.value)}
-                  className="min-h-[80px]"
-                />
-              </div>
-            </CardContent>
-          </Card>
-
-          {/* Articles */}
-          <Card>
-            <CardHeader>
-              <div className="flex items-center justify-between">
-                <div>
-                  <CardTitle>Articles</CardTitle>
-                  <CardDescription>
-                    {items.length} article(s) dans la commande
-                  </CardDescription>
-                </div>
-                <ButtonV2
-                  type="button"
-                  variant="outline"
-                  onClick={() => setShowProductSearch(true)}
-                >
-                  <Plus className="h-4 w-4 mr-2" />
-                  Ajouter un produit
-                </ButtonV2>
-              </div>
-            </CardHeader>
-            <CardContent>
-              {items.length === 0 ? (
-                <div className="text-center py-8 text-gray-500">
-                  Aucun article ajouté. Cliquez sur "Ajouter un produit" pour commencer.
-                </div>
-              ) : (
-                <div className="overflow-x-auto">
-                  <Table>
-                    <TableHeader>
-                      <TableRow>
-                        <TableHead>Produit</TableHead>
-                        <TableHead>Quantité</TableHead>
-                        <TableHead>Prix unitaire HT</TableHead>
-                        {/* Afficher colonne Remise seulement si au moins 1 item a une remise > 0 */}
-                        {items.some(item => (item.discount_percentage || 0) > 0) && (
-                          <TableHead>Remise (%)</TableHead>
-                        )}
-                        <TableHead>Total HT</TableHead>
-                        <TableHead>Actions</TableHead>
-                      </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                      {items.map((item) => {
-                        const hasAnyDiscount = items.some(item => (item.discount_percentage || 0) > 0)
-                        const itemTotal = item.quantity * item.unit_price_ht * (1 - (item.discount_percentage || 0) / 100)
-                        return (
-                          <TableRow key={item.id}>
-                            <TableCell>
-                              <div className="flex items-center gap-3">
-                                {item.product?.primary_image_url && (
-                                  <img
-                                    src={item.product.primary_image_url}
-                                    alt={item.product.name}
-                                    className="w-10 h-10 object-cover rounded"
-                                  />
-                                )}
-                                <div>
-                                  <p className="font-medium">{item.product?.name}</p>
-                                  <p className="text-sm text-gray-500">{item.product?.sku}</p>
-                                </div>
-                              </div>
-                            </TableCell>
-                            <TableCell>
-                              <Input
-                                type="number"
-                                value={item.quantity}
-                                onChange={(e) => updateItem(item.id, 'quantity', parseInt(e.target.value) || 0)}
-                                className="w-20"
-                                min="1"
-                              />
-                            </TableCell>
-                            <TableCell>
-                              <div className="space-y-1">
-                                <Input
-                                  type="number"
-                                  step="0.01"
-                                  value={item.unit_price_ht}
-                                  onChange={(e) => updateItem(item.id, 'unit_price_ht', parseFloat(e.target.value) || 0)}
-                                  className="w-24"
-                                  min="0"
-                                />
-                                {item.product?.cost_price && item.unit_price_ht !== item.product.cost_price && (
-                                  <p className="text-xs text-gray-500 line-through">
-                                    Prix minimum de vente: {formatCurrency(item.product.cost_price)}
-                                  </p>
-                                )}
-                              </div>
-                            </TableCell>
-                            {/* Afficher cellule Remise seulement si au moins 1 item a une remise > 0 */}
-                            {hasAnyDiscount && (
-                              <TableCell>
-                                <Input
-                                  type="number"
-                                  value={item.discount_percentage || 0}
-                                  onChange={(e) => updateItem(item.id, 'discount_percentage', parseFloat(e.target.value) || 0)}
-                                  className="w-20"
-                                  min="0"
-                                  max="100"
-                                />
-                              </TableCell>
-                            )}
-                            <TableCell>
-                              {formatCurrency(itemTotal)}
-                            </TableCell>
-                            <TableCell>
-                              <ButtonV2
-                                type="button"
-                                variant="outline"
-                                size="sm"
-                                onClick={() => removeItem(item.id)}
-                              >
-                                <Trash2 className="h-4 w-4" />
-                              </ButtonV2>
-                            </TableCell>
-                          </TableRow>
-                        )
-                      })}
-                    </TableBody>
-                  </Table>
-                </div>
-              )}
-            </CardContent>
-          </Card>
-
-          {/* Totaux */}
-          {items.length > 0 && (
+          <form onSubmit={handleSubmit} className="space-y-6">
+            {/* Informations générales */}
             <Card>
               <CardHeader>
-                <CardTitle>Récapitulatif</CardTitle>
+                <CardTitle>Informations générales</CardTitle>
               </CardHeader>
-              <CardContent>
-                <div className="grid grid-cols-3 gap-4 text-center">
-                  <div>
-                    <p className="text-sm text-gray-600">Total HT</p>
-                    <p className="text-lg font-semibold">{formatCurrency(totalHT)}</p>
+              <CardContent className="grid grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <div className="flex gap-2">
+                    <div className="flex-1">
+                      <SupplierSelector
+                        selectedSupplierId={selectedSupplierId || null}
+                        onSupplierChange={handleSupplierChange}
+                        disabled={loading || isBlocked}
+                        required={true}
+                        label="Fournisseur"
+                        placeholder="Sélectionner un fournisseur..."
+                      />
+                    </div>
+                    {!isEditMode && (
+                      <CreateOrganisationModal
+                        onOrganisationCreated={handleSupplierCreated}
+                        defaultType="supplier"
+                      />
+                    )}
                   </div>
-                  <div>
-                    <p className="text-sm text-gray-600">TVA (20%)</p>
-                    <p className="text-lg font-semibold">{formatCurrency(totalTTC - totalHT)}</p>
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="deliveryDate">Date de livraison prévue</Label>
+                  <Input
+                    id="deliveryDate"
+                    type="date"
+                    value={expectedDeliveryDate}
+                    onChange={(e) => setExpectedDeliveryDate(e.target.value)}
+                    disabled={isBlocked}
+                  />
+                </div>
+
+                <div className="space-y-2 col-span-2">
+                  <Label htmlFor="deliveryAddress">Adresse de livraison (Entrepôt)</Label>
+                  <Textarea
+                    id="deliveryAddress"
+                    value={deliveryAddress}
+                    onChange={(e) => setDeliveryAddress(e.target.value)}
+                    className="min-h-[100px] resize-none"
+                    disabled={isBlocked}
+                  />
+                </div>
+
+                {selectedSupplier && selectedSupplier.payment_terms && (
+                  <div className="space-y-2 col-span-2 p-3 bg-gray-50 border rounded-lg">
+                    <Label className="text-sm font-medium">Conditions de paiement du fournisseur</Label>
+                    <p className="text-sm text-gray-700">{selectedSupplier.payment_terms}</p>
                   </div>
-                  <div>
-                    <p className="text-sm text-gray-600">Total TTC</p>
-                    <p className="text-xl font-bold">{formatCurrency(totalTTC)}</p>
-                  </div>
+                )}
+
+                <div className="space-y-2 col-span-2">
+                  <Label htmlFor="notes">Notes</Label>
+                  <Textarea
+                    id="notes"
+                    placeholder="Notes additionnelles..."
+                    value={notes}
+                    onChange={(e) => setNotes(e.target.value)}
+                    className="min-h-[80px]"
+                    disabled={isBlocked}
+                  />
                 </div>
               </CardContent>
             </Card>
-          )}
 
-          {/* Actions */}
-          <div className="flex justify-end gap-4">
-            <ButtonV2 type="button" variant="outline" onClick={handleClose}>
-              Annuler
-            </ButtonV2>
-            <ButtonV2
-              type="submit"
-              disabled={loading || !selectedSupplierId || items.length === 0}
-            >
-              {loading ? 'Création...' : 'Créer la commande'}
-            </ButtonV2>
-          </div>
-        </form>
-
-        {/* Modal de recherche de produits */}
-        <Dialog open={showProductSearch} onOpenChange={setShowProductSearch}>
-          <DialogContent className="max-w-4xl">
-            <DialogHeader>
-              <DialogTitle>Ajouter un produit</DialogTitle>
-              <DialogDescription>
-                Rechercher et sélectionner un produit à ajouter à la commande
-              </DialogDescription>
-            </DialogHeader>
-
-            <div className="space-y-4">
-              <div className="relative">
-                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
-                <Input
-                  placeholder="Rechercher par nom ou SKU..."
-                  value={productSearchTerm}
-                  onChange={(e) => setProductSearchTerm(e.target.value)}
-                  className="pl-10"
-                />
-              </div>
-
-              <div className="max-h-80 overflow-y-auto">
-                {products.length === 0 ? (
-                  <div className="text-center py-8 text-gray-500">
-                    {productSearchTerm ? 'Aucun produit trouvé' : 'Saisissez un terme de recherche'}
-                  </div>
-                ) : (
-                  <div className="grid gap-2">
-                    {products.map((product) => (
-                      <div
-                        key={product.id}
-                        className="flex items-center justify-between p-3 border rounded-lg hover:bg-gray-50 cursor-pointer"
-                        onClick={() => addProduct(product)}
+            {/* Articles (MODE ÉDITION UNIQUEMENT) */}
+            {isEditMode && (
+              <Card>
+                <CardHeader>
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <CardTitle>Articles</CardTitle>
+                      <CardDescription>
+                        {items.length} article(s) dans la commande
+                      </CardDescription>
+                    </div>
+                    {!isBlocked && (
+                      <ButtonV2
+                        type="button"
+                        variant="outline"
+                        onClick={() => setShowAddProductModal(true)}
                       >
-                        <div className="flex items-center gap-3">
-                          {product.primary_image_url && (
-                            <img
-                              src={product.primary_image_url}
-                              alt={product.name}
-                              className="w-12 h-12 object-cover rounded"
-                            />
-                          )}
-                          <div>
-                            <p className="font-medium">{product.name}</p>
-                            <p className="text-sm text-gray-500">{product.sku}</p>
-                            <Badge variant="outline" className="text-xs">
-                              Stock: {product.stock_quantity || 0}
-                            </Badge>
-                          </div>
-                        </div>
-                        <div className="text-right">
-                          <p className="font-medium">
-                            {formatCurrency(product.cost_price || 0)}
-                          </p>
-                          <p className="text-sm text-gray-500">Prix d'achat</p>
-                        </div>
-                      </div>
-                    ))}
+                        <Plus className="h-4 w-4 mr-2" />
+                        Ajouter un produit
+                      </ButtonV2>
+                    )}
                   </div>
-                )}
-              </div>
+                </CardHeader>
+                <CardContent>
+                  {itemsLoading ? (
+                    <div className="text-center py-8 text-gray-500">
+                      Chargement des articles...
+                    </div>
+                  ) : items.length === 0 ? (
+                    <div className="text-center py-8 text-gray-500">
+                      Aucun article dans la commande. Cliquez sur "Ajouter un produit" pour commencer.
+                    </div>
+                  ) : (
+                    <div className="overflow-x-auto">
+                      <Table>
+                        <TableHeader>
+                          <TableRow>
+                            <TableHead>Produit</TableHead>
+                            <TableHead>Quantité</TableHead>
+                            <TableHead>Prix unitaire HT</TableHead>
+                            <TableHead>Remise (%)</TableHead>
+                            <TableHead>Éco-taxe (€)</TableHead>
+                            <TableHead>Total HT</TableHead>
+                            <TableHead>Actions</TableHead>
+                          </TableRow>
+                        </TableHeader>
+                        <TableBody>
+                          {items.map((item) => (
+                            <EditableOrderItemRow
+                              key={item.id}
+                              item={item}
+                              orderType="purchase"
+                              onUpdate={handleUpdateItem}
+                              onDelete={handleRemoveItem}
+                              readonly={isBlocked}
+                            />
+                          ))}
+                        </TableBody>
+                      </Table>
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
+            )}
+
+            {/* Totaux (MODE ÉDITION UNIQUEMENT) */}
+            {isEditMode && items.length > 0 && (
+              <Card>
+                <CardHeader>
+                  <CardTitle>Récapitulatif</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="grid grid-cols-3 gap-4 text-center">
+                    <div>
+                      <p className="text-sm text-gray-600">Total HT</p>
+                      <p className="text-lg font-semibold">{formatCurrency(totalHT)}</p>
+                    </div>
+                    <div>
+                      <p className="text-sm text-gray-600">TVA (20%)</p>
+                      <p className="text-lg font-semibold">{formatCurrency(totalTTC - totalHT)}</p>
+                    </div>
+                    <div>
+                      <p className="text-sm text-gray-600">Total TTC</p>
+                      <p className="text-xl font-bold">{formatCurrency(totalTTC)}</p>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            )}
+
+            {/* Actions */}
+            <div className="flex justify-end gap-4">
+              <ButtonV2 type="button" variant="outline" onClick={handleClose}>
+                {isEditMode ? 'Fermer' : 'Annuler'}
+              </ButtonV2>
+              {!isBlocked && (
+                <ButtonV2
+                  type="submit"
+                  disabled={loading || !selectedSupplierId}
+                >
+                  {loading ? 'Enregistrement...' : isEditMode ? 'Enregistrer' : 'Créer la commande'}
+                </ButtonV2>
+              )}
             </div>
-          </DialogContent>
-        </Dialog>
-      </DialogContent>
-    </Dialog>
+          </form>
+        </DialogContent>
+      </Dialog>
+
+      {/* Modal Ajout Produit Universel */}
+      {isEditMode && (
+        <AddProductToOrderModal
+          open={showAddProductModal}
+          onClose={() => setShowAddProductModal(false)}
+          orderType="purchase"
+          onAdd={handleAddProduct}
+        />
+      )}
+    </>
   )
 }

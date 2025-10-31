@@ -28,6 +28,7 @@ interface OrderItem {
   unit_price_ht: number
   tax_rate: number          // Taux de TVA par ligne (0.20 = 20%)
   discount_percentage: number
+  eco_tax: number           // Éco-taxe par ligne (€)
   expected_delivery_date?: string
   notes?: string
   product?: {
@@ -36,6 +37,7 @@ interface OrderItem {
     sku: string
     primary_image_url?: string
     stock_quantity?: number
+    eco_tax_default?: number  // Éco-taxe indicative du produit
   }
   availableStock?: number
   // Pricing V2 metadata
@@ -168,6 +170,7 @@ export function SalesOrderFormModal({
             unit_price_ht: item.unit_price_ht,
             tax_rate: item.tax_rate || 0.20,    // Charger TVA ou 20% par défaut
             discount_percentage: item.discount_percentage,
+            eco_tax: (item as any).eco_tax || 0,         // Charger éco-taxe (cast car types Supabase non à jour)
             expected_delivery_date: item.expected_delivery_date,
             notes: item.notes,
             product: item.products ? {
@@ -175,7 +178,8 @@ export function SalesOrderFormModal({
               name: item.products.name,
               sku: item.products.sku,
               primary_image_url: null,
-              stock_quantity: item.products.stock_quantity
+              stock_quantity: item.products.stock_quantity,
+              eco_tax_default: (item.products as any).eco_tax_default || 0  // Cast car types Supabase non à jour
             } : undefined,
             availableStock: stockData?.stock_available || 0,
             pricing_source: 'base_catalog' as const,
@@ -227,10 +231,10 @@ export function SalesOrderFormModal({
     }
   }, [showProductSearch, products, getAvailableStock])
 
-  // Calculs totaux (RFA supprimé - Migration 003)
+  // Calculs totaux (inclut eco_tax - Migration eco_tax 2025-10-31)
   const totalHT = items.reduce((sum, item) => {
-    const itemTotal = item.quantity * item.unit_price_ht * (1 - (item.discount_percentage || 0) / 100)
-    return sum + itemTotal
+    const itemSubtotal = item.quantity * item.unit_price_ht * (1 - (item.discount_percentage || 0) / 100)
+    return sum + itemSubtotal + (item.eco_tax || 0)
   }, 0)
 
   // TVA calculée dynamiquement par ligne avec taux spécifique
@@ -462,12 +466,14 @@ export function SalesOrderFormModal({
         unit_price_ht: finalPrice,
         tax_rate: 0.20,         // TVA 20% par défaut
         discount_percentage: pricing.discount_percentage,
+        eco_tax: (product as any).eco_tax_default || 0,  // Éco-taxe depuis produit (cast car types non à jour)
         product: {
           id: product.id,
           name: product.name,
           sku: product.sku,
           primary_image_url: product.primary_image_url,
-          stock_quantity: product.stock_quantity
+          stock_quantity: product.stock_quantity,
+          eco_tax_default: (product as any).eco_tax_default || 0  // Cast car types Supabase non à jour
         },
         availableStock: stockData?.stock_available || 0,
         pricing_source: pricing.pricing_source,
@@ -522,6 +528,7 @@ export function SalesOrderFormModal({
         unit_price_ht: item.unit_price_ht,
         tax_rate: item.tax_rate,              // TVA personnalisée par ligne
         discount_percentage: item.discount_percentage,
+        eco_tax: item.eco_tax || 0,           // Éco-taxe par ligne
         expected_delivery_date: item.expected_delivery_date,
         notes: item.notes
       }))
@@ -724,7 +731,8 @@ export function SalesOrderFormModal({
                         <TableHead>SKU</TableHead>
                         <TableHead>Quantité</TableHead>
                         <TableHead>Prix unitaire HT</TableHead>
-                        <TableHead>TVA</TableHead>
+                        <TableHead>TVA (%)</TableHead>
+                        <TableHead>Éco-taxe (€)</TableHead>
                         {/* Afficher colonne Remise seulement si au moins 1 item a une remise > 0 */}
                         {items.some(item => (item.discount_percentage || 0) > 0) && (
                           <TableHead>Remise (%)</TableHead>
@@ -738,7 +746,8 @@ export function SalesOrderFormModal({
                     <TableBody>
                       {items.map((item) => {
                         const hasAnyDiscount = items.some(item => (item.discount_percentage || 0) > 0)
-                        const itemTotal = item.quantity * item.unit_price_ht * (1 - (item.discount_percentage || 0) / 100)
+                        const itemSubtotal = item.quantity * item.unit_price_ht * (1 - (item.discount_percentage || 0) / 100)
+                        const itemTotal = itemSubtotal + (item.eco_tax || 0)  // Inclure éco-taxe
                         const stockStatus = (item.availableStock || 0) >= item.quantity
 
                         // Labels et couleurs pour source pricing
@@ -816,6 +825,17 @@ export function SalesOrderFormModal({
                                   {((item.tax_rate || 0.20) * 100).toFixed(2)}%
                                 </p>
                               </div>
+                            </TableCell>
+                            <TableCell>
+                              <Input
+                                type="number"
+                                step="0.01"
+                                min="0"
+                                value={(item.eco_tax || 0).toFixed(2)}
+                                onChange={(e) => updateItem(item.id, 'eco_tax', parseFloat(e.target.value) || 0)}
+                                className="w-24"
+                                disabled={loading}
+                              />
                             </TableCell>
                             {/* Afficher cellule Remise seulement si au moins 1 item a une remise > 0 */}
                             {hasAnyDiscount && (

@@ -76,6 +76,8 @@ export default function PurchaseOrdersPage() {
   const [selectedOrder, setSelectedOrder] = useState<PurchaseOrder | null>(null)
   const [showOrderDetail, setShowOrderDetail] = useState(false)
   const [showReceptionModal, setShowReceptionModal] = useState(false)
+  const [showEditModal, setShowEditModal] = useState(false)
+  const [orderToEdit, setOrderToEdit] = useState<PurchaseOrder | null>(null)
 
   useEffect(() => {
     fetchOrders()
@@ -263,6 +265,11 @@ export default function PurchaseOrdersPage() {
   const openOrderDetail = (order: PurchaseOrder) => {
     setSelectedOrder(order)
     setShowOrderDetail(true)
+  }
+
+  const openEditModal = (order: PurchaseOrder) => {
+    setOrderToEdit(order)
+    setShowEditModal(true)
   }
 
   const openReceptionModal = (order: PurchaseOrder) => {
@@ -476,8 +483,8 @@ export default function PurchaseOrdersPage() {
                               <ButtonV2
                                 variant="outline"
                                 size="sm"
-                                onClick={() => openOrderDetail(order)}
-                                title="Éditer"
+                                onClick={() => openEditModal(order)}
+                                title="Éditer la commande"
                               >
                                 <Edit className="h-4 w-4" />
                               </ButtonV2>
@@ -634,6 +641,23 @@ export default function PurchaseOrdersPage() {
             fetchOrders()
             setShowReceptionModal(false)
             setSelectedOrder(null)
+          }}
+        />
+      )}
+
+      {/* ✅ Modal Édition Commande (nouveau - mode edit) */}
+      {orderToEdit && (
+        <PurchaseOrderFormModal
+          order={orderToEdit}
+          isOpen={showEditModal}
+          onClose={() => {
+            setShowEditModal(false)
+            setOrderToEdit(null)
+          }}
+          onSuccess={() => {
+            fetchOrders()
+            setShowEditModal(false)
+            setOrderToEdit(null)
           }}
         />
       )}
