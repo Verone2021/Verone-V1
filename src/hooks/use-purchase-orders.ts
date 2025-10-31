@@ -633,7 +633,7 @@ export function usePurchaseOrders() {
     }
   }, [supabase, toast, createMovement, updateStatus])
 
-  // Supprimer une commande (draft seulement)
+  // Supprimer une commande (draft ou cancelled seulement)
   const deleteOrder = useCallback(async (orderId: string) => {
     setLoading(true)
     try {
@@ -641,7 +641,7 @@ export function usePurchaseOrders() {
         .from('purchase_orders')
         .delete()
         .eq('id', orderId)
-        .eq('status', 'draft') // Sécurité : seules les commandes draft peuvent être supprimées
+        .in('status', ['draft', 'cancelled']) // Sécurité : seules les commandes draft ou cancelled peuvent être supprimées
 
       if (error) throw error
 

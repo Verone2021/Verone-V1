@@ -1,22 +1,20 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useMemo } from 'react'
 import { useSearchParams } from 'next/navigation'
-import { Plus, Filter, Search, Eye, Edit, Trash2, Package, Truck, CheckCircle, XCircle } from 'lucide-react'
+import { Plus, Filter, Search, Eye, Edit, Trash2, Ban, Package, Truck, CheckCircle, XCircle, ArrowUpDown, ArrowUp, ArrowDown } from 'lucide-react'
 import { ButtonV2 } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog'
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
+import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { usePurchaseOrders, PurchaseOrder, PurchaseOrderStatus } from '@/hooks/use-purchase-orders'
 import { useOrganisations } from '@/hooks/use-organisations'
-import { usePurchaseReceptions } from '@/hooks/use-purchase-receptions'
 import { PurchaseOrderFormModal } from '@/components/business/purchase-order-form-modal'
 import { PurchaseOrderReceptionModal } from '@/components/business/purchase-order-reception-modal'
-import { PurchaseOrderReceptionForm } from '@/components/business/purchase-order-reception-form'
+import { PurchaseOrderDetailModal } from '@/components/business/purchase-order-detail-modal'
 import { formatCurrency, formatDate } from '@/lib/utils'
 import { Separator } from '@/components/ui/separator'
 import { getOrganisationDisplayName } from '@/lib/utils/organisation-helpers'
@@ -47,65 +45,8 @@ const statusColors: Record<PurchaseOrderStatus, string> = {
   cancelled: 'bg-red-100 text-red-800'
 }
 
-// Composant pour l'onglet Réception
-function ReceptionTabContent({
-  order,
-  onSuccess,
-  onCancel
-}: {
-  order: PurchaseOrder
-  onSuccess: () => void
-  onCancel: () => void
-}) {
-  const { loadPurchaseOrderForReception } = usePurchaseReceptions()
-  const [enrichedOrder, setEnrichedOrder] = useState<any>(null)
-  const [loading, setLoading] = useState(true)
-
-  useEffect(() => {
-    if (order?.id) {
-      setLoading(true)
-      loadPurchaseOrderForReception(order.id).then(data => {
-        setEnrichedOrder(data)
-        setLoading(false)
-      })
-    }
-  }, [order?.id, loadPurchaseOrderForReception])
-
-  // Vérifier si la commande peut être réceptionnée
-  if (!['confirmed', 'partially_received'].includes(order.status)) {
-    return (
-      <div className="text-center py-8">
-        <Truck className="mx-auto h-12 w-12 text-gray-400 mb-4" />
-        <p className="text-gray-500">Cette commande doit être confirmée avant d'être réceptionnée</p>
-        <p className="text-sm text-gray-400 mt-2">Statut actuel : {statusLabels[order.status]}</p>
-      </div>
-    )
-  }
-
-  if (loading) {
-    return (
-      <div className="flex justify-center items-center py-12">
-        <div className="text-muted-foreground">Chargement des données de réception...</div>
-      </div>
-    )
-  }
-
-  if (!enrichedOrder) {
-    return (
-      <div className="text-center py-8 text-red-600">
-        Erreur lors du chargement de la commande
-      </div>
-    )
-  }
-
-  return (
-    <PurchaseOrderReceptionForm
-      purchaseOrder={enrichedOrder}
-      onSuccess={onSuccess}
-      onCancel={onCancel}
-    />
-  )
-}
+type SortColumn = 'date' | 'supplier' | 'amount' | null
+type SortDirection = 'asc' | 'desc'
 
 export default function PurchaseOrdersPage() {
   const {
@@ -121,22 +62,25 @@ export default function PurchaseOrdersPage() {
   const { organisations: suppliers } = useOrganisations({ type: 'supplier' })
   const searchParams = useSearchParams()
 
+  // États filtres
   const [searchTerm, setSearchTerm] = useState('')
-  const [statusFilter, setStatusFilter] = useState<PurchaseOrderStatus | 'all'>('all')
+  const [activeTab, setActiveTab] = useState<PurchaseOrderStatus | 'all'>('all')
   const [supplierFilter, setSuppliersFilter] = useState<string>('all')
+  const [periodFilter, setPeriodFilter] = useState<'all' | 'month' | 'quarter' | 'year'>('all')
+
+  // États tri
+  const [sortColumn, setSortColumn] = useState<SortColumn>(null)
+  const [sortDirection, setSortDirection] = useState<SortDirection>('desc')
+
+  // États modals
   const [selectedOrder, setSelectedOrder] = useState<PurchaseOrder | null>(null)
   const [showOrderDetail, setShowOrderDetail] = useState(false)
   const [showReceptionModal, setShowReceptionModal] = useState(false)
 
   useEffect(() => {
-    const filters = {
-      ...(statusFilter !== 'all' && { status: statusFilter }),
-      ...(supplierFilter !== 'all' && { supplier_id: supplierFilter }),
-      ...(searchTerm && { po_number: searchTerm })
-    }
-    fetchOrders(filters)
-    fetchStats(filters)
-  }, [fetchOrders, fetchStats, statusFilter, supplierFilter, searchTerm])
+    fetchOrders()
+    fetchStats()
+  }, [fetchOrders, fetchStats])
 
   // ✅ Auto-open modal from notification URL (?id=xxx)
   useEffect(() => {
@@ -150,13 +94,143 @@ export default function PurchaseOrdersPage() {
     }
   }, [searchParams, orders, showOrderDetail])
 
-  const filteredOrders = orders.filter(order => {
-    const matchesSearch = searchTerm === '' ||
-      order.po_number.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      (order.organisations ? getOrganisationDisplayName(order.organisations) : '').toLowerCase().includes(searchTerm.toLowerCase())
+  // ✅ Compteurs onglets
+  const tabCounts = useMemo(() => {
+    return {
+      all: orders.length,
+      draft: orders.filter(o => o.status === 'draft').length,
+      sent: orders.filter(o => o.status === 'sent').length,
+      confirmed: orders.filter(o => o.status === 'confirmed').length,
+      partially_received: orders.filter(o => o.status === 'partially_received').length,
+      received: orders.filter(o => o.status === 'received').length,
+      cancelled: orders.filter(o => o.status === 'cancelled').length
+    }
+  }, [orders])
 
-    return matchesSearch
-  })
+  // ✅ Filtrage + Tri
+  const filteredOrders = useMemo(() => {
+    let filtered = orders.filter(order => {
+      // Filtre onglet
+      if (activeTab !== 'all' && order.status !== activeTab) return false
+
+      // Filtre recherche
+      const matchesSearch = searchTerm === '' ||
+        order.po_number.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        (order.organisations ? getOrganisationDisplayName(order.organisations) : '').toLowerCase().includes(searchTerm.toLowerCase())
+      if (!matchesSearch) return false
+
+      // Filtre fournisseur
+      if (supplierFilter !== 'all' && order.supplier_id !== supplierFilter) return false
+
+      // Filtre période
+      if (periodFilter !== 'all') {
+        const orderDate = new Date(order.created_at)
+        const now = new Date()
+
+        switch (periodFilter) {
+          case 'month':
+            // Ce mois
+            if (orderDate.getMonth() !== now.getMonth() || orderDate.getFullYear() !== now.getFullYear()) {
+              return false
+            }
+            break
+          case 'quarter':
+            // Ce trimestre
+            const currentQuarter = Math.floor(now.getMonth() / 3)
+            const orderQuarter = Math.floor(orderDate.getMonth() / 3)
+            if (orderQuarter !== currentQuarter || orderDate.getFullYear() !== now.getFullYear()) {
+              return false
+            }
+            break
+          case 'year':
+            // Cette année
+            if (orderDate.getFullYear() !== now.getFullYear()) {
+              return false
+            }
+            break
+        }
+      }
+
+      return true
+    })
+
+    // Tri
+    if (sortColumn) {
+      filtered.sort((a, b) => {
+        let comparison = 0
+        switch (sortColumn) {
+          case 'date':
+            comparison = new Date(a.created_at).getTime() - new Date(b.created_at).getTime()
+            break
+          case 'supplier':
+            const nameA = a.organisations ? getOrganisationDisplayName(a.organisations) : ''
+            const nameB = b.organisations ? getOrganisationDisplayName(b.organisations) : ''
+            comparison = nameA.localeCompare(nameB)
+            break
+          case 'amount':
+            comparison = (a.total_ttc || 0) - (b.total_ttc || 0)
+            break
+        }
+        return sortDirection === 'asc' ? comparison : -comparison
+      })
+    }
+
+    return filtered
+  }, [orders, activeTab, searchTerm, supplierFilter, periodFilter, sortColumn, sortDirection])
+
+  // ✅ KPI dynamiques sur commandes filtrées
+  const filteredStats = useMemo(() => {
+    const stats = filteredOrders.reduce((acc, order) => {
+      acc.total_orders++
+      acc.total_ht += order.total_ht || 0
+      acc.total_ttc += order.total_ttc || 0
+
+      if (['draft', 'sent', 'confirmed', 'partially_received'].includes(order.status)) {
+        acc.pending_orders++
+      }
+      if (order.status === 'received') {
+        acc.received_orders++
+      }
+      if (order.status === 'cancelled') {
+        acc.cancelled_orders++
+      }
+
+      return acc
+    }, {
+      total_orders: 0,
+      total_ht: 0,
+      total_ttc: 0,
+      total_tva: 0,
+      pending_orders: 0,
+      received_orders: 0,
+      cancelled_orders: 0
+    })
+
+    // Calculer TVA (identique ventes)
+    stats.total_tva = stats.total_ttc - stats.total_ht
+
+    return stats
+  }, [filteredOrders])
+
+  // ✅ Fonction tri
+  const handleSort = (column: SortColumn) => {
+    if (sortColumn === column) {
+      setSortDirection(sortDirection === 'asc' ? 'desc' : 'asc')
+    } else {
+      setSortColumn(column)
+      setSortDirection('desc')
+    }
+  }
+
+  // ✅ Icône tri
+  const renderSortIcon = (column: SortColumn) => {
+    if (sortColumn !== column) {
+      return <ArrowUpDown className="h-4 w-4 ml-2 inline opacity-30" />
+    }
+    return sortDirection === 'asc'
+      ? <ArrowUp className="h-4 w-4 ml-2 inline" />
+      : <ArrowDown className="h-4 w-4 ml-2 inline" />
+  }
 
   const handleStatusChange = async (orderId: string, newStatus: PurchaseOrderStatus) => {
     try {
@@ -172,6 +246,16 @@ export default function PurchaseOrdersPage() {
         await deleteOrder(orderId)
       } catch (error) {
         console.error('Erreur lors de la suppression:', error)
+      }
+    }
+  }
+
+  const handleCancel = async (orderId: string) => {
+    if (confirm('Êtes-vous sûr de vouloir annuler cette commande ?')) {
+      try {
+        await handleStatusChange(orderId, 'cancelled')
+      } catch (error) {
+        console.error('Erreur lors de l\'annulation:', error)
       }
     }
   }
@@ -197,58 +281,74 @@ export default function PurchaseOrdersPage() {
         <PurchaseOrderFormModal onSuccess={() => fetchOrders()} />
       </div>
 
-      {/* Statistiques */}
-      {stats && (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
-          <Card>
-            <CardHeader className="pb-2">
-              <CardTitle className="text-sm font-medium text-gray-600">Total commandes</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">{stats.total_orders}</div>
-            </CardContent>
-          </Card>
-          <Card>
-            <CardHeader className="pb-2">
-              <CardTitle className="text-sm font-medium text-gray-600">Valeur totale</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">{formatCurrency(stats.total_value)}</div>
-            </CardContent>
-          </Card>
-          <Card>
-            <CardHeader className="pb-2">
-              <CardTitle className="text-sm font-medium text-gray-600">En cours</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold text-gray-700">{stats.pending_orders}</div>
-            </CardContent>
-          </Card>
-          <Card>
-            <CardHeader className="pb-2">
-              <CardTitle className="text-sm font-medium text-gray-600">Reçues</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold text-green-600">{stats.received_orders}</div>
-            </CardContent>
-          </Card>
-          <Card>
-            <CardHeader className="pb-2">
-              <CardTitle className="text-sm font-medium text-gray-600">Annulées</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold text-red-600">{stats.cancelled_orders}</div>
-            </CardContent>
-          </Card>
-        </div>
-      )}
+      {/* ✅ KPI Dynamiques */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
+        <Card>
+          <CardHeader className="pb-2">
+            <CardTitle className="text-sm font-medium text-gray-600">Total commandes</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">{filteredStats.total_orders}</div>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardHeader className="pb-2">
+            <CardTitle className="text-sm font-medium text-gray-600">Chiffre d'affaires</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">{formatCurrency(filteredStats.total_ttc)}</div>
+            <div className="text-xs text-gray-500 mt-1">
+              <div>HT: {formatCurrency(filteredStats.total_ht)}</div>
+              <div>TVA: {formatCurrency(filteredStats.total_tva)}</div>
+            </div>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardHeader className="pb-2">
+            <CardTitle className="text-sm font-medium text-gray-600">En cours</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold text-gray-700">{filteredStats.pending_orders}</div>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardHeader className="pb-2">
+            <CardTitle className="text-sm font-medium text-gray-600">Reçues</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold text-green-600">{filteredStats.received_orders}</div>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardHeader className="pb-2">
+            <CardTitle className="text-sm font-medium text-gray-600">Annulées</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold text-red-600">{filteredStats.cancelled_orders}</div>
+          </CardContent>
+        </Card>
+      </div>
 
-      {/* Filtres */}
+      {/* Onglets Statuts + Filtres (groupés dans une Card unique) */}
       <Card>
         <CardHeader>
           <CardTitle>Filtres</CardTitle>
         </CardHeader>
-        <CardContent>
+        <CardContent className="space-y-4">
+          {/* Onglets Statuts */}
+          <Tabs value={activeTab} onValueChange={(value) => setActiveTab(value as PurchaseOrderStatus | 'all')}>
+            <TabsList className="grid w-full grid-cols-7">
+              <TabsTrigger value="all">Toutes ({tabCounts.all})</TabsTrigger>
+              <TabsTrigger value="draft">Brouillon ({tabCounts.draft})</TabsTrigger>
+              <TabsTrigger value="sent">Envoyée ({tabCounts.sent})</TabsTrigger>
+              <TabsTrigger value="confirmed">Confirmée ({tabCounts.confirmed})</TabsTrigger>
+              <TabsTrigger value="partially_received">Part. reçue ({tabCounts.partially_received})</TabsTrigger>
+              <TabsTrigger value="received">Reçue ({tabCounts.received})</TabsTrigger>
+              <TabsTrigger value="cancelled">Annulée ({tabCounts.cancelled})</TabsTrigger>
+            </TabsList>
+          </Tabs>
+
+          {/* Filtres complémentaires */}
           <div className="flex flex-col lg:flex-row gap-4">
             <div className="flex-1">
               <div className="relative">
@@ -261,20 +361,6 @@ export default function PurchaseOrdersPage() {
                 />
               </div>
             </div>
-            <Select value={statusFilter} onValueChange={(value) => setStatusFilter(value as PurchaseOrderStatus | 'all')}>
-              <SelectTrigger className="w-full lg:w-48">
-                <SelectValue placeholder="Statut" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">Tous les statuts</SelectItem>
-                <SelectItem value="draft">Brouillon</SelectItem>
-                <SelectItem value="sent">Envoyée</SelectItem>
-                <SelectItem value="confirmed">Confirmée</SelectItem>
-                <SelectItem value="partially_received">Partiellement reçue</SelectItem>
-                <SelectItem value="received">Reçue</SelectItem>
-                <SelectItem value="cancelled">Annulée</SelectItem>
-              </SelectContent>
-            </Select>
             <Select value={supplierFilter} onValueChange={setSuppliersFilter}>
               <SelectTrigger className="w-full lg:w-48">
                 <SelectValue placeholder="Fournisseur" />
@@ -286,6 +372,17 @@ export default function PurchaseOrdersPage() {
                     {getOrganisationDisplayName(supplier)}
                   </SelectItem>
                 ))}
+              </SelectContent>
+            </Select>
+            <Select value={periodFilter} onValueChange={(value: 'all' | 'month' | 'quarter' | 'year') => setPeriodFilter(value)}>
+              <SelectTrigger className="w-full lg:w-48">
+                <SelectValue placeholder="Période" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">Toute période</SelectItem>
+                <SelectItem value="month">Ce mois</SelectItem>
+                <SelectItem value="quarter">Ce trimestre</SelectItem>
+                <SelectItem value="year">Cette année</SelectItem>
               </SelectContent>
             </Select>
           </div>
@@ -316,11 +413,26 @@ export default function PurchaseOrdersPage() {
                 <TableHeader>
                   <TableRow>
                     <TableHead>N° Commande</TableHead>
-                    <TableHead>Fournisseur</TableHead>
+                    <TableHead
+                      className="cursor-pointer hover:bg-gray-50"
+                      onClick={() => handleSort('supplier')}
+                    >
+                      Fournisseur {renderSortIcon('supplier')}
+                    </TableHead>
                     <TableHead>Statut</TableHead>
-                    <TableHead>Date création</TableHead>
+                    <TableHead
+                      className="cursor-pointer hover:bg-gray-50"
+                      onClick={() => handleSort('date')}
+                    >
+                      Date création {renderSortIcon('date')}
+                    </TableHead>
                     <TableHead>Date livraison</TableHead>
-                    <TableHead>Montant HT</TableHead>
+                    <TableHead
+                      className="cursor-pointer hover:bg-gray-50"
+                      onClick={() => handleSort('amount')}
+                    >
+                      Montant TTC {renderSortIcon('amount')}
+                    </TableHead>
                     <TableHead>Actions</TableHead>
                   </TableRow>
                 </TableHeader>
@@ -345,7 +457,7 @@ export default function PurchaseOrdersPage() {
                         {order.expected_delivery_date ? formatDate(order.expected_delivery_date) : 'Non définie'}
                       </TableCell>
                       <TableCell>
-                        {formatCurrency(order.total_ht)}
+                        {formatCurrency(order.total_ttc)}
                       </TableCell>
                       <TableCell>
                         <div className="flex items-center gap-2">
@@ -353,44 +465,136 @@ export default function PurchaseOrdersPage() {
                             variant="outline"
                             size="sm"
                             onClick={() => openOrderDetail(order)}
+                            title="Voir les détails"
                           >
                             <Eye className="h-4 w-4" />
                           </ButtonV2>
+
+                          {/* DRAFT : Éditer + Annuler + Supprimer */}
                           {order.status === 'draft' && (
                             <>
                               <ButtonV2
                                 variant="outline"
                                 size="sm"
                                 onClick={() => openOrderDetail(order)}
+                                title="Éditer"
                               >
                                 <Edit className="h-4 w-4" />
                               </ButtonV2>
                               <ButtonV2
                                 variant="outline"
                                 size="sm"
+                                onClick={() => handleCancel(order.id)}
+                                title="Annuler la commande"
+                                className="text-red-600 hover:text-red-700"
+                              >
+                                <Ban className="h-4 w-4" />
+                              </ButtonV2>
+                              <ButtonV2
+                                variant="outline"
+                                size="sm"
                                 onClick={() => handleDelete(order.id)}
+                                title="Supprimer"
+                                className="text-red-600 hover:text-red-700"
                               >
                                 <Trash2 className="h-4 w-4" />
                               </ButtonV2>
                             </>
                           )}
+
+                          {/* SENT : Confirmer + Annuler */}
                           {order.status === 'sent' && (
+                            <>
+                              <ButtonV2
+                                variant="outline"
+                                size="sm"
+                                onClick={() => handleStatusChange(order.id, 'confirmed')}
+                                title="Confirmer la commande"
+                                className="text-green-600 hover:text-green-700"
+                              >
+                                <CheckCircle className="h-4 w-4" />
+                              </ButtonV2>
+                              <ButtonV2
+                                variant="outline"
+                                size="sm"
+                                onClick={() => handleCancel(order.id)}
+                                title="Annuler la commande"
+                                className="text-red-600 hover:text-red-700"
+                              >
+                                <Ban className="h-4 w-4" />
+                              </ButtonV2>
+                            </>
+                          )}
+
+                          {/* CONFIRMED : Réceptionner + Annuler */}
+                          {order.status === 'confirmed' && (
+                            <>
+                              <ButtonV2
+                                variant="outline"
+                                size="sm"
+                                onClick={() => openReceptionModal(order)}
+                                title="Réceptionner la commande"
+                              >
+                                <Truck className="h-4 w-4" />
+                              </ButtonV2>
+                              <ButtonV2
+                                variant="outline"
+                                size="sm"
+                                onClick={() => handleCancel(order.id)}
+                                title="Annuler la commande"
+                                className="text-red-600 hover:text-red-700"
+                              >
+                                <Ban className="h-4 w-4" />
+                              </ButtonV2>
+                            </>
+                          )}
+
+                          {/* PARTIALLY_RECEIVED : Réceptionner + Annuler DISABLED */}
+                          {order.status === 'partially_received' && (
+                            <>
+                              <ButtonV2
+                                variant="outline"
+                                size="sm"
+                                onClick={() => openReceptionModal(order)}
+                                title="Réceptionner la commande"
+                              >
+                                <Truck className="h-4 w-4" />
+                              </ButtonV2>
+                              <ButtonV2
+                                variant="outline"
+                                size="sm"
+                                disabled
+                                title="Impossible d'annuler : réception en cours"
+                                className="opacity-50"
+                              >
+                                <Ban className="h-4 w-4" />
+                              </ButtonV2>
+                            </>
+                          )}
+
+                          {/* RECEIVED : Annuler DISABLED */}
+                          {order.status === 'received' && (
                             <ButtonV2
                               variant="outline"
                               size="sm"
-                              onClick={() => handleStatusChange(order.id, 'confirmed')}
+                              disabled
+                              title="Impossible d'annuler : commande déjà reçue"
+                              className="opacity-50"
                             >
-                              <CheckCircle className="h-4 w-4" />
+                              <Ban className="h-4 w-4" />
                             </ButtonV2>
                           )}
-                          {(order.status === 'confirmed' || order.status === 'partially_received') && (
+
+                          {/* CANCELLED : Supprimer */}
+                          {order.status === 'cancelled' && (
                             <ButtonV2
                               variant="outline"
                               size="sm"
-                              onClick={() => openReceptionModal(order)}
-                              title="Réceptionner la commande"
+                              onClick={() => handleDelete(order.id)}
+                              title="Supprimer"
+                              className="text-red-600 hover:text-red-700"
                             >
-                              <Truck className="h-4 w-4" />
+                              <Trash2 className="h-4 w-4" />
                             </ButtonV2>
                           )}
                         </div>
@@ -404,151 +608,18 @@ export default function PurchaseOrdersPage() {
         </CardContent>
       </Card>
 
-      {/* Modal Détail Commande */}
-      <Dialog open={showOrderDetail} onOpenChange={setShowOrderDetail}>
-        <DialogContent className="max-w-4xl max-h-[80vh] overflow-y-auto">
-          <DialogHeader>
-            <DialogTitle>Détail Commande {selectedOrder?.po_number}</DialogTitle>
-            <DialogDescription>
-              Informations détaillées et gestion de la réception
-            </DialogDescription>
-          </DialogHeader>
-
-          {selectedOrder && (
-            <Tabs defaultValue="general" className="w-full">
-              <TabsList className="grid w-full grid-cols-3">
-                <TabsTrigger value="general">Informations</TabsTrigger>
-                <TabsTrigger value="items">Articles</TabsTrigger>
-                <TabsTrigger value="reception">Réception</TabsTrigger>
-              </TabsList>
-
-              <TabsContent value="general" className="space-y-4">
-                <div className="grid grid-cols-2 gap-4">
-                  <div className="space-y-2">
-                    <h3 className="font-semibold">Informations générales</h3>
-                    <div className="text-sm space-y-1">
-                      <p><span className="font-medium">Numéro:</span> {selectedOrder.po_number}</p>
-                      <p><span className="font-medium">Fournisseur:</span> {selectedOrder.organisations ? getOrganisationDisplayName(selectedOrder.organisations) : 'Non défini'}</p>
-                      <div className="flex items-center gap-2">
-                        <span className="font-medium text-sm">Statut:</span>
-                        <Badge className={statusColors[selectedOrder.status]}>
-                          {statusLabels[selectedOrder.status]}
-                        </Badge>
-                      </div>
-                      <p><span className="font-medium">Date création:</span> {formatDate(selectedOrder.created_at)}</p>
-                      <p><span className="font-medium">Date livraison prévue:</span> {selectedOrder.expected_delivery_date ? formatDate(selectedOrder.expected_delivery_date) : 'Non définie'}</p>
-                    </div>
-                  </div>
-                  <div className="space-y-2">
-                    <h3 className="font-semibold">Montants</h3>
-                    <div className="text-sm space-y-1">
-                      <p><span className="font-medium">Total HT:</span> {formatCurrency(selectedOrder.total_ht)}</p>
-                      <p><span className="font-medium">TVA ({(selectedOrder.tax_rate * 100).toFixed(1)}%):</span> {formatCurrency((selectedOrder.total_ttc || 0) - selectedOrder.total_ht)}</p>
-                      <p><span className="font-medium">Total TTC:</span> {formatCurrency(selectedOrder.total_ttc || 0)}</p>
-                      <p><span className="font-medium">Devise:</span> {selectedOrder.currency}</p>
-                    </div>
-                  </div>
-                </div>
-                {selectedOrder.notes && (
-                  <div className="space-y-2">
-                    <h3 className="font-semibold">Notes</h3>
-                    <p className="text-sm text-gray-600">{selectedOrder.notes}</p>
-                  </div>
-                )}
-
-                {/* Bouton de validation pour commandes draft */}
-                {selectedOrder.status === 'draft' && (
-                  <div className="pt-4 border-t">
-                    <div className="flex gap-2">
-                      <ButtonV2
-                        onClick={() => handleStatusChange(selectedOrder.id, 'confirmed')}
-                        className="w-full"
-                      >
-                        <CheckCircle className="h-4 w-4 mr-2" />
-                        Valider la commande
-                      </ButtonV2>
-                      <ButtonV2
-                        variant="outline"
-                        onClick={() => handleStatusChange(selectedOrder.id, 'cancelled')}
-                      >
-                        <XCircle className="h-4 w-4 mr-2" />
-                        Annuler
-                      </ButtonV2>
-                    </div>
-                  </div>
-                )}
-              </TabsContent>
-
-              <TabsContent value="items" className="space-y-4">
-                <div className="overflow-x-auto">
-                  <Table>
-                    <TableHeader>
-                      <TableRow>
-                        <TableHead>Produit</TableHead>
-                        <TableHead>SKU</TableHead>
-                        <TableHead>Quantité</TableHead>
-                        <TableHead>Prix unitaire</TableHead>
-                        <TableHead>Remise</TableHead>
-                        <TableHead>Total HT</TableHead>
-                        <TableHead>Reçu</TableHead>
-                      </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                      {selectedOrder.purchase_order_items?.map((item) => {
-                        // ✅ BR-TECH-002: Récupérer image via product_images (colonne primary_image_url supprimée)
-                        const productImages = (item.products as any)?.product_images as ProductImage[] | undefined
-                        const primaryImageUrl = productImages?.find(img => img.is_primary)?.public_url ||
-                                               productImages?.[0]?.public_url ||
-                                               null
-
-                        return (
-                        <TableRow key={item.id}>
-                          <TableCell>
-                            <div className="flex items-center gap-3">
-                              {primaryImageUrl && (
-                                <img
-                                  src={primaryImageUrl}
-                                  alt={item.products?.name || ''}
-                                  className="w-10 h-10 object-cover rounded"
-                                />
-                              )}
-                              <div>
-                                <p className="font-medium">{item.products?.name}</p>
-                              </div>
-                            </div>
-                          </TableCell>
-                          <TableCell>{item.products?.sku}</TableCell>
-                          <TableCell>{item.quantity}</TableCell>
-                          <TableCell>{formatCurrency(item.unit_price_ht)}</TableCell>
-                          <TableCell>{item.discount_percentage}%</TableCell>
-                          <TableCell>{formatCurrency(item.total_ht)}</TableCell>
-                          <TableCell>
-                            <span className={item.quantity_received >= item.quantity ? 'text-green-600' : 'text-black'}>
-                              {item.quantity_received}/{item.quantity}
-                            </span>
-                          </TableCell>
-                        </TableRow>
-                        )
-                      })}
-                    </TableBody>
-                  </Table>
-                </div>
-              </TabsContent>
-
-              <TabsContent value="reception" className="space-y-4">
-                <ReceptionTabContent
-                  order={selectedOrder}
-                  onSuccess={() => {
-                    fetchOrders()
-                    setShowOrderDetail(false)
-                  }}
-                  onCancel={() => setShowOrderDetail(false)}
-                />
-              </TabsContent>
-            </Tabs>
-          )}
-        </DialogContent>
-      </Dialog>
+      {/* ✅ Modal Détail Commande - NOUVEAU FORMAT 2 COLONNES (aligné avec ventes) */}
+      <PurchaseOrderDetailModal
+        order={selectedOrder}
+        open={showOrderDetail}
+        onClose={() => {
+          setShowOrderDetail(false)
+          setSelectedOrder(null)
+        }}
+        onUpdate={() => {
+          fetchOrders()
+        }}
+      />
 
       {/* Modal de réception */}
       {selectedOrder && (

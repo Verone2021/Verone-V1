@@ -87,6 +87,15 @@ export async function updatePurchaseOrderStatus(
         updateFields.received_by = userId
       }
     } else if (newStatus === 'cancelled') {
+      // ✅ Contrainte valid_workflow_timestamps: cancelled nécessite validated_at + sent_at
+      if (!existingOrder.sent_at) {
+        updateFields.sent_at = new Date().toISOString()
+        updateFields.sent_by = userId
+      }
+      if (!existingOrder.validated_at) {
+        updateFields.validated_at = new Date().toISOString()
+        updateFields.validated_by = userId
+      }
       updateFields.cancelled_at = new Date().toISOString()
     }
 
