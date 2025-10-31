@@ -1,10 +1,13 @@
 import { useState, useCallback, useEffect } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import { useToast } from '@/hooks/use-toast'
+import { useStockUI } from '@/hooks/use-stock-ui'
 
 // =============================================
 // DASHBOARD STOCK - MÉTRIQUES PROFESSIONNELLES ERP
 // Inspiré de Odoo, ERPNext, SAP
+// 🔄 Phase 3.2 - Migration use-stock-ui (Vague 2)
+// @since 2025-10-31
 // =============================================
 
 interface StockOverview {
@@ -85,43 +88,62 @@ export function useStockDashboard() {
   const { toast } = useToast()
   const supabase = createClient()
 
+  // 🆕 Phase 3.2: Utilisation use-stock-ui pour réutiliser cache
+  const stock = useStockUI({ autoLoad: true })
+
   const fetchDashboardMetrics = useCallback(async () => {
     setLoading(true)
     setError(null)
 
     try {
       // ============================================
-      // PERFORMANCE FIX #2: Parallélisation des queries (+400ms)
-      // Exécuter toutes les queries en parallèle au lieu de séquentiel
+      // MIGRATION use-stock-ui (Vague 2)
+      // Queries 1, 3, 5 remplacées par use-stock-ui
+      // Queries 2, 4 gardées (stock_alerts_view spécialisé)
       // ============================================
-      const [
-        { data: products, error: productsError },
-        { data: allAlerts, error: allAlertsError },
-        { data: movements7d, error: movements7dError },
-        { data: alertsData, error: alertsError },
-        { data: recentMovs, error: recentError }
-      ] = await Promise.all([
-        // QUERY 1: Vue d'ensemble stock
-        supabase
-          .from('products')
-          .select('id, name, sku, stock_quantity, stock_real, stock_forecasted_in, stock_forecasted_out, min_stock, cost_price')
-          .is('archived_at', null),
 
+      // 🆕 QUERY 1: Vue d'ensemble stock (via use-stock-ui)
+      let products = stock.stockItems
+      if (products.length === 0) {
+        // Forcer chargement si cache vide
+        products = await stock.getStockItems({ archived: false })
+      }
+
+      // Mapper vers format attendu (compatibilité)
+      const productsWithLegacyFields = products.map(p => ({
+        id: p.id,
+        name: p.name,
+        sku: p.sku,
+        stock_quantity: p.stock_real, // Alias legacy
+        stock_real: p.stock_real,
+        stock_forecasted_in: p.stock_forecasted_in,
+        stock_forecasted_out: p.stock_forecasted_out,
+        min_stock: p.stock_threshold,
+        cost_price: 0 // TODO: Ajouter cost_price dans use-stock-core
+      }))
+
+      // 🆕 QUERY 3: Mouvements 7 derniers jours (via use-stock-ui)
+      const sevenDaysAgo = new Date()
+      sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7)
+
+      const movements7d = await stock.getMovements({
+        affects_forecast: false,
+        date_from: sevenDaysAgo.toISOString(),
+        limit: 500 // Limiter pour performance
+      })
+
+      // 🆕 QUERY 5: 5 derniers mouvements (cache use-stock-ui)
+      const recentMovs = stock.movements.slice(0, 5) // Cache déjà chargé
+
+      // QUERY 2 & 4: Garder queries stock_alerts_view (vue spécialisée)
+      const [
+        { data: allAlerts, error: allAlertsError },
+        { data: alertsData, error: alertsError }
+      ] = await Promise.all([
         // QUERY 2: Toutes les alertes
         supabase
           .from('stock_alerts_view')
           .select('alert_status, alert_priority'),
-
-        // QUERY 3: Mouvements 7 derniers jours
-        supabase
-          .from('stock_movements')
-          .select('movement_type, quantity_change, performed_at')
-          .eq('affects_forecast', false)
-          .gte('performed_at', (() => {
-            const sevenDaysAgo = new Date()
-            sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7)
-            return sevenDaysAgo.toISOString()
-          })()),
 
         // QUERY 4: Top 5 produits stock faible
         supabase
@@ -129,22 +151,11 @@ export function useStockDashboard() {
           .select('product_id, product_name, sku, stock_quantity, min_stock, alert_status, alert_priority')
           .order('alert_priority', { ascending: false })
           .order('stock_quantity', { ascending: true })
-          .limit(5),
-
-        // QUERY 5: 5 derniers mouvements
-        supabase
-          .from('stock_movements')
-          .select('id, product_id, movement_type, quantity_change, quantity_before, quantity_after, reason_code, notes, performed_at, performed_by')
-          .eq('affects_forecast', false)
-          .order('performed_at', { ascending: false })
           .limit(5)
       ])
 
-      if (productsError) throw productsError
       if (allAlertsError) throw allAlertsError
-      if (movements7dError) throw movements7dError
       if (alertsError) throw alertsError
-      if (recentError) throw recentError
 
       const alertsCount = {
         out_of_stock: (allAlerts || []).filter((a: any) => a.alert_status === 'out_of_stock').length,
@@ -153,16 +164,16 @@ export function useStockDashboard() {
 
       // Calculs agrégés en JS (plus rapide que COUNT() multiples)
       const overview: StockOverview = {
-        total_products: products.length,
-        total_quantity: products.reduce((sum, p) => sum + (p.stock_real || p.stock_quantity || 0), 0),
-        total_value: products.reduce((sum, p) => sum + ((p.stock_real || p.stock_quantity || 0) * (p.cost_price || 0)), 0),
-        products_in_stock: products.filter(p => (p.stock_real || p.stock_quantity || 0) > 0).length,
+        total_products: productsWithLegacyFields.length,
+        total_quantity: productsWithLegacyFields.reduce((sum, p) => sum + (p.stock_real || p.stock_quantity || 0), 0),
+        total_value: productsWithLegacyFields.reduce((sum, p) => sum + ((p.stock_real || p.stock_quantity || 0) * (p.cost_price || 0)), 0),
+        products_in_stock: productsWithLegacyFields.filter(p => (p.stock_real || p.stock_quantity || 0) > 0).length,
         products_out_of_stock: alertsCount.out_of_stock,  // Seulement produits commandés en rupture
         products_below_min: alertsCount.low_stock,  // Seulement produits commandés sous seuil
         // NOUVEAUX CALCULS PRÉVISIONNELS
-        total_forecasted_in: products.reduce((sum, p) => sum + (p.stock_forecasted_in || 0), 0),
-        total_forecasted_out: products.reduce((sum, p) => sum + (p.stock_forecasted_out || 0), 0),
-        total_available: products.reduce((sum, p) => sum + Math.max((p.stock_real || 0) - (p.stock_forecasted_out || 0), 0), 0)
+        total_forecasted_in: productsWithLegacyFields.reduce((sum, p) => sum + (p.stock_forecasted_in || 0), 0),
+        total_forecasted_out: productsWithLegacyFields.reduce((sum, p) => sum + (p.stock_forecasted_out || 0), 0),
+        total_available: productsWithLegacyFields.reduce((sum, p) => sum + Math.max((p.stock_real || 0) - (p.stock_forecasted_out || 0), 0), 0)
       }
 
       // ============================================
@@ -206,10 +217,10 @@ export function useStockDashboard() {
       // (Déjà chargés dans alertsData depuis Promise.all)
       // ============================================
 
-      // Enrichir avec stock_forecasted_out depuis products
+      // Enrichir avec stock_forecasted_out depuis productsWithLegacyFields
       const lowStockProducts: LowStockProduct[] = []
       for (const alert of ((alertsData || []) as any[])) {
-        const product = products.find(p => p.id === alert.product_id)
+        const product = productsWithLegacyFields.find(p => p.id === alert.product_id)
         lowStockProducts.push({
           id: alert.product_id,
           name: alert.product_name,
@@ -227,7 +238,7 @@ export function useStockDashboard() {
       // ============================================
 
       // Créer Map pour lookup O(1) des produits
-      const productsMap = new Map(products.map(p => [p.id, { name: p.name, sku: p.sku }]))
+      const productsMap = new Map(productsWithLegacyFields.map(p => [p.id, { name: p.name, sku: p.sku }]))
 
       // Enrichir mouvements avec noms produits (0 query supplémentaire!)
       const recentMovements: RecentMovement[] = (recentMovs || []).map(mov => {
@@ -372,7 +383,7 @@ export function useStockDashboard() {
     } finally {
       setLoading(false)
     }
-  }, [supabase, toast])
+  }, [supabase, toast, stock])
 
   // Chargement automatique au montage
   useEffect(() => {
