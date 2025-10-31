@@ -16,12 +16,12 @@ export interface OrganisationTabCounts {
   loading: boolean
 }
 
-interface UseOrganisationTabsProps {
+interface UseOrganisationTabCountsProps {
   organisationId: string
   organisationType: 'supplier' | 'customer' | 'provider'
 }
 
-export function useOrganisationTabs({ organisationId, organisationType }: UseOrganisationTabsProps) {
+export function useOrganisationTabCounts({ organisationId, organisationType }: UseOrganisationTabCountsProps) {
   const [counts, setCounts] = useState<OrganisationTabCounts>({
     contacts: 0,
     orders: 0,

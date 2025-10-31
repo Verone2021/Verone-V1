@@ -15,7 +15,7 @@ import {
   FileText
 } from 'lucide-react'
 import { useOrganisation, useOrganisations, getOrganisationDisplayName } from '@/hooks/use-organisations'
-import { useOrganisationTabs } from '@/hooks/use-organisation-tabs'
+import { useOrganisationTabCounts } from '@/hooks/use-organisation-tab-counts'
 import { LegalIdentityEditSection } from '@/components/business/legal-identity-edit-section'
 import { ContactEditSection } from '@/components/business/contact-edit-section'
 import { AddressEditSection } from '@/components/business/address-edit-section'
@@ -39,7 +39,7 @@ export default function PartnerDetailPage() {
   } = useOrganisations({ type: 'partner' })
 
   // Hook centralisé pour les compteurs d'onglets
-  const { counts, refreshCounts } = useOrganisationTabs({
+  const { counts, refreshCounts } = useOrganisationTabCounts({
     organisationId: partnerId as string,
     organisationType: 'provider'
   })
