@@ -29,6 +29,7 @@ export interface SalesOrder {
   billing_address?: any
   payment_terms?: string
   notes?: string
+  channel_id?: string | null  // 🆕 Canal vente (b2b, ecommerce, retail, wholesale) - Pour traçabilité stock
 
   // Workflow users et timestamps
   created_by: string
@@ -107,6 +108,7 @@ export interface SalesOrderItem {
 export interface CreateSalesOrderData {
   customer_id: string
   customer_type: 'organization' | 'individual'
+  channel_id?: string | null  // 🆕 Canal vente (optional - si null, pas de traçabilité stock)
   expected_delivery_date?: string
   shipping_address?: any
   billing_address?: any
@@ -166,6 +168,56 @@ interface SalesOrderStats {
     delivered: number
     cancelled: number
   }
+}
+
+// ============================================================================
+// FSM - Finite State Machine pour validation transitions status
+// ============================================================================
+
+/**
+ * Machine à états finis (FSM) - Transitions autorisées
+ * Workflow: draft → confirmed → partially_shipped → shipped → delivered
+ * Annulation possible à tout moment (sauf delivered)
+ */
+const STATUS_TRANSITIONS: Record<SalesOrderStatus, SalesOrderStatus[]> = {
+  draft: ['confirmed', 'cancelled'],
+  confirmed: ['partially_shipped', 'shipped', 'delivered', 'cancelled'],
+  partially_shipped: ['shipped', 'delivered', 'cancelled'],
+  shipped: ['delivered', 'cancelled'], // Retour partiel possible
+  delivered: [], // État final - Pas de retour arrière direct (SAV séparé)
+  cancelled: []  // État final
+}
+
+/**
+ * Valider transition status selon FSM
+ * @throws Error si transition invalide
+ */
+function validateStatusTransition(
+  currentStatus: SalesOrderStatus,
+  newStatus: SalesOrderStatus
+): void {
+  const allowedTransitions = STATUS_TRANSITIONS[currentStatus]
+
+  if (!allowedTransitions.includes(newStatus)) {
+    throw new Error(
+      `Transition invalide: ${currentStatus} → ${newStatus}. ` +
+      `Transitions autorisées: ${allowedTransitions.join(', ') || 'aucune'}`
+    )
+  }
+}
+
+/**
+ * Vérifier si status est final (pas de transition possible)
+ */
+function isFinalStatus(status: SalesOrderStatus): boolean {
+  return STATUS_TRANSITIONS[status].length === 0
+}
+
+/**
+ * Obtenir transitions autorisées depuis un status
+ */
+function getAllowedTransitions(status: SalesOrderStatus): SalesOrderStatus[] {
+  return STATUS_TRANSITIONS[status]
 }
 
 export function useSalesOrders() {
@@ -636,6 +688,7 @@ export function useSalesOrders() {
           order_number: soNumber,
           customer_id: data.customer_id,
           customer_type: data.customer_type,
+          channel_id: data.channel_id || null,  // 🆕 Canal vente pour traçabilité stock
           expected_delivery_date: data.expected_delivery_date,
           shipping_address: data.shipping_address,
           billing_address: data.billing_address,
@@ -1000,6 +1053,7 @@ export function useSalesOrders() {
 
   // Changer le statut d'une commande
   // 🔧 FIX RLS 403: Utilise Server Action pour transmission JWT correcte au contexte PostgreSQL RLS
+  // 🆕 INTÉGRATION FSM: Validation transitions avant update
   const updateStatus = useCallback(async (orderId: string, newStatus: SalesOrderStatus) => {
     setLoading(true)
     try {
@@ -1008,6 +1062,22 @@ export function useSalesOrders() {
       if (!user?.id) {
         throw new Error('Utilisateur non authentifié')
       }
+
+      // 🔑 FSM VALIDATION: Récupérer status actuel et valider transition
+      const { data: currentOrderData, error: fetchError } = await supabase
+        .from('sales_orders')
+        .select('status')
+        .eq('id', orderId)
+        .single()
+
+      if (fetchError) throw fetchError
+      if (!currentOrderData) throw new Error('Commande introuvable')
+
+      const currentStatus = currentOrderData.status
+
+      // Valider transition FSM (throws Error si invalide)
+      validateStatusTransition(currentStatus, newStatus)
+      console.log(`✅ [FSM] Transition validée: ${currentStatus} → ${newStatus}`)
 
       // Utiliser Server Action pour bypass du problème RLS 403
       const { updateSalesOrderStatus } = await import('@/app/actions/sales-orders')
@@ -1259,6 +1329,16 @@ export function useSalesOrders() {
     // Utilitaires
     checkStockAvailability,
     getStockWithForecasted,
-    setCurrentOrder
+    setCurrentOrder,
+
+    // 🆕 FSM Helpers (pour UI)
+    getAllowedTransitions,
+    isFinalStatus
   }
 }
+
+// ============================================================================
+// EXPORTS FSM pour composants UI
+// ============================================================================
+
+export { getAllowedTransitions, isFinalStatus, validateStatusTransition }
