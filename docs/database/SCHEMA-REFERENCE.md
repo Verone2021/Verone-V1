@@ -444,12 +444,18 @@ Items commandes échantillons
 
 ### Module Stocks (2 tables)
 
-#### 54. **stock_movements** (18 colonnes)
+#### 54. **stock_movements** (19 colonnes)
 Mouvements stock (entrées/sorties)
-- **Colonnes clés** : id, product_id, movement_type, quantity_change, reference_type
-- **Relations** : → products
+- **Colonnes clés** : id, product_id, movement_type, quantity_change, reference_type, channel_id
+- **🆕 Traçabilité Canal** (2025-10-31) : `channel_id UUID NULL` - Canal vente (b2b, ecommerce, retail, wholesale)
+  - **Scope** : UNIQUEMENT mouvements OUT ventes clients (sales_orders)
+  - **NULL pour** : IN (réceptions), ADJUST (ajustements), TRANSFER (transferts), achats fournisseurs
+  - **Usage** : Analytics/filtres uniquement - Stock reste GLOBAL (pas séparé par canal)
+  - **Propagation** : Automatique via trigger `handle_sales_order_stock()` depuis `sales_orders.channel_id`
+- **Relations** : → products, sales_channels (channel_id)
 - **Triggers** : 12+ triggers interdépendants ⚠️
 - **❌ CRITIQUE** : NE PAS modifier sans lire triggers.md
+- **Documentation** : `docs/database/migrations/20251031_channel_tracking_stocks.md`
 
 #### 55. **stock_reservations** (13 colonnes)
 Réservations stock temporaires
