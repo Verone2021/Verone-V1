@@ -1,4 +1,4 @@
-'use client'
+'use client';
 
 /**
  * 🎨 Modal Édition Produit Variante - Vérone Back Office
@@ -15,26 +15,44 @@
  * ✅ Poids modifiable par produit
  */
 
-import { useState, useEffect } from 'react'
-import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog'
-import { ButtonV2 } from '@/components/ui/button'
-import { Label } from '@/components/ui/label'
-import { Input } from '@/components/ui/input'
-import { Textarea } from '@/components/ui/textarea'
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
-import { AlertCircle, Save, X } from 'lucide-react'
-import { createClient } from '@/lib/supabase/client'
-import { useToast } from '@/hooks/use-toast'
-import type { VariantProduct, VariantGroup } from '@/types/variant-groups'
-import { COLLECTION_STYLE_OPTIONS } from '@/types/collections'
-import { COLOR_OPTIONS, MATERIAL_OPTIONS, type ProductColor, type ProductMaterial } from '@/types/variant-attributes-types'
+import { useState, useEffect } from 'react';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog';
+import { ButtonV2 } from '@/components/ui/button';
+import { Label } from '@/components/ui/label';
+import { Input } from '@/components/ui/input';
+import { Textarea } from '@/components/ui/textarea';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
+import { AlertCircle, Save, X } from 'lucide-react';
+import { createClient } from '@/lib/supabase/client';
+import { useToast } from '@/hooks/use-toast';
+import type { VariantProduct, VariantGroup } from '@/types/variant-groups';
+import { COLLECTION_STYLE_OPTIONS } from '@/types/collections';
+import {
+  COLOR_OPTIONS,
+  MATERIAL_OPTIONS,
+  type ProductColor,
+  type ProductMaterial,
+} from '@/types/variant-attributes-types';
 
 interface EditProductVariantModalProps {
-  isOpen: boolean
-  onClose: () => void
-  product: VariantProduct
-  variantGroup: VariantGroup
-  onSuccess: () => void
+  isOpen: boolean;
+  onClose: () => void;
+  product: VariantProduct;
+  variantGroup: VariantGroup;
+  onSuccess: () => void;
 }
 
 export function EditProductVariantModal({
@@ -42,59 +60,64 @@ export function EditProductVariantModal({
   onClose,
   product,
   variantGroup,
-  onSuccess
+  onSuccess,
 }: EditProductVariantModalProps) {
   // États formulaire (SEULEMENT les champs modifiables du produit)
-  const [variantValue, setVariantValue] = useState<string>('')
-  const [costPrice, setCostPrice] = useState(0.01)
-  const [weight, setWeight] = useState<number | null>(null)
+  const [variantValue, setVariantValue] = useState<string>('');
+  const [costPrice, setCostPrice] = useState(0.01);
+  const [weight, setWeight] = useState<number | null>(null);
 
-  const [isSubmitting, setIsSubmitting] = useState(false)
-  const [error, setError] = useState<string | null>(null)
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
-  const supabase = createClient()
-  const { toast } = useToast()
+  const supabase = createClient();
+  const { toast } = useToast();
 
   // Récupérer variant_type du groupe
-  const variantType = variantGroup.variant_type || 'color'
-  const variantTypeLabel = variantType === 'color' ? 'Couleur' : 'Matériau'
+  const variantType = variantGroup.variant_type || 'color';
+  const variantTypeLabel = variantType === 'color' ? 'Couleur' : 'Matériau';
 
   // Options selon le type de variante
-  const variantOptions = variantType === 'color' ? COLOR_OPTIONS : MATERIAL_OPTIONS
+  const variantOptions =
+    variantType === 'color' ? COLOR_OPTIONS : MATERIAL_OPTIONS;
 
   // Initialiser les valeurs depuis le produit
   useEffect(() => {
     if (isOpen) {
-      setVariantValue(product.variant_attributes?.[variantType] || '')
-      setCostPrice(typeof product.cost_price === 'string' ? parseFloat(product.cost_price) : (product.cost_price || 0.01))
-      setWeight(product.weight || null)
-      setError(null)
+      setVariantValue(product.variant_attributes?.[variantType] || '');
+      setCostPrice(
+        typeof product.cost_price === 'string'
+          ? parseFloat(product.cost_price)
+          : product.cost_price || 0.01
+      );
+      setWeight(product.weight || null);
+      setError(null);
     }
-  }, [isOpen, product, variantType])
+  }, [isOpen, product, variantType]);
 
   // Formater le style pour affichage
   const formatStyle = (style?: string): string => {
-    if (!style) return ''
-    const styleOption = COLLECTION_STYLE_OPTIONS.find(s => s.value === style)
-    return styleOption?.label || style
-  }
+    if (!style) return '';
+    const styleOption = COLLECTION_STYLE_OPTIONS.find(s => s.value === style);
+    return styleOption?.label || style;
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault()
-    setError(null)
+    e.preventDefault();
+    setError(null);
 
     // Validation locale
     if (!variantValue.trim()) {
-      setError(`L'attribut de variante (${variantTypeLabel}) est requis`)
-      return
+      setError(`L'attribut de variante (${variantTypeLabel}) est requis`);
+      return;
     }
 
     if (!costPrice || costPrice <= 0) {
-      setError('Le prix coûtant doit être supérieur à 0')
-      return
+      setError('Le prix coûtant doit être supérieur à 0');
+      return;
     }
 
-    setIsSubmitting(true)
+    setIsSubmitting(true);
 
     try {
       // 1. Validation unicité : vérifier qu'aucun autre produit du groupe n'a cet attribut
@@ -102,35 +125,45 @@ export function EditProductVariantModal({
         .from('products')
         .select('id, variant_attributes')
         .eq('variant_group_id', variantGroup.id)
-        .neq('id', product.id) // Exclure le produit en cours d'édition
+        .neq('id', product.id); // Exclure le produit en cours d'édition
 
       if (checkError) {
-        throw new Error('Erreur lors de la validation : ' + checkError.message)
+        throw new Error('Erreur lors de la validation : ' + checkError.message);
       }
 
       // Vérifier l'unicité selon le variant_type du groupe
       if (existingProducts && existingProducts.length > 0) {
         for (const existing of existingProducts) {
-          const existingAttrs = existing.variant_attributes as Record<string, any>
+          const existingAttrs = existing.variant_attributes as Record<
+            string,
+            any
+          >;
 
-          if (variantType === 'color' && existingAttrs?.color === variantValue) {
-            setError(`Un produit avec la couleur "${variantValue}" existe déjà dans ce groupe. Chaque produit doit avoir une couleur unique.`)
-            setIsSubmitting(false)
-            return
-          }
-          else if (variantType === 'material' && existingAttrs?.material === variantValue) {
-            setError(`Un produit avec le matériau "${variantValue}" existe déjà dans ce groupe. Chaque produit doit avoir un matériau unique.`)
-            setIsSubmitting(false)
-            return
+          if (
+            variantType === 'color' &&
+            existingAttrs?.color === variantValue
+          ) {
+            setError(
+              `Un produit avec la couleur "${variantValue}" existe déjà dans ce groupe. Chaque produit doit avoir une couleur unique.`
+            );
+            setIsSubmitting(false);
+            return;
+          } else if (
+            variantType === 'material' &&
+            existingAttrs?.material === variantValue
+          ) {
+            setError(
+              `Un produit avec le matériau "${variantValue}" existe déjà dans ce groupe. Chaque produit doit avoir un matériau unique.`
+            );
+            setIsSubmitting(false);
+            return;
           }
         }
       }
 
       // 2. Construire le nouveau nom du produit : "{groupe.name} - {variant_value}"
-      // Récupérer le label d'affichage pour le nom
-      const selectedOption = variantOptions.find(opt => opt.value === variantValue)
-      const displayLabel = selectedOption?.label || variantValue
-      const newProductName = `${variantGroup.name} - ${displayLabel}`
+      // Utiliser directement la valeur saisie par l'utilisateur
+      const newProductName = `${variantGroup.name} - ${variantValue}`;
 
       // 3. Update en base : SEULEMENT les champs du produit
       const { error: updateError } = await supabase
@@ -140,14 +173,14 @@ export function EditProductVariantModal({
           variant_attributes: { [variantType]: variantValue }, // Valeur normalisée lowercase
           cost_price: costPrice,
           weight: weight,
-          updated_at: new Date().toISOString()
+          updated_at: new Date().toISOString(),
           // ❌ PAS de dimensions, style, suitable_rooms, description
           // → Ces champs sont HÉRITÉS du groupe ou gérés dans la page détail produit
         })
-        .eq('id', product.id)
+        .eq('id', product.id);
 
       if (updateError) {
-        throw new Error(updateError.message)
+        throw new Error(updateError.message);
       }
 
       // ✅ SOLUTION DÉFINITIVE: Modal ne fait QUE fermer
@@ -155,29 +188,29 @@ export function EditProductVariantModal({
       // Pas de toast dans le modal = pas d'erreur React
 
       // 1. Fermer le modal d'abord (démontage propre)
-      onClose()
+      onClose();
 
       // 2. Notifier le parent (qui fera refetch + toast)
-      await onSuccess()
+      await onSuccess();
     } catch (err) {
-      console.error('Erreur mise à jour produit:', err)
-      setError(err instanceof Error ? err.message : 'Erreur lors de la sauvegarde')
+      console.error('Erreur mise à jour produit:', err);
+      setError(
+        err instanceof Error ? err.message : 'Erreur lors de la sauvegarde'
+      );
     } finally {
-      setIsSubmitting(false)
+      setIsSubmitting(false);
     }
-  }
+  };
 
   const handleCancel = () => {
-    setError(null)
-    onClose()
-  }
+    setError(null);
+    onClose();
+  };
 
   // Calculer le nom du produit en temps réel pour preview
-  const selectedOption = variantOptions.find(opt => opt.value === variantValue)
-  const displayLabel = selectedOption?.label || variantValue
   const previewProductName = variantValue.trim()
-    ? `${variantGroup.name} - ${displayLabel}`
-    : product.name
+    ? `${variantGroup.name} - ${variantValue}`
+    : product.name;
 
   return (
     <Dialog open={isOpen} onOpenChange={handleCancel}>
@@ -209,7 +242,9 @@ export function EditProductVariantModal({
           <div className="bg-gray-50 p-4 rounded-lg border border-gray-200 space-y-3">
             <h3 className="text-sm font-semibold text-gray-900 flex items-center">
               ℹ️ Informations Héritées du Groupe
-              <span className="ml-2 text-xs font-normal text-gray-600">(Non Modifiables)</span>
+              <span className="ml-2 text-xs font-normal text-gray-600">
+                (Non Modifiables)
+              </span>
             </h3>
 
             <div className="grid grid-cols-1 gap-2 text-sm">
@@ -222,33 +257,43 @@ export function EditProductVariantModal({
 
               <div className="flex justify-between items-start">
                 <span className="text-gray-600">🏷️ SKU :</span>
-                <span className="font-mono text-xs text-gray-700">{product.sku}</span>
+                <span className="font-mono text-xs text-gray-700">
+                  {product.sku}
+                </span>
               </div>
 
-              {variantGroup.common_dimensions?.length && variantGroup.common_dimensions?.width && variantGroup.common_dimensions?.height && (
-                <div className="flex justify-between">
-                  <span className="text-gray-600">📐 Dimensions :</span>
-                  <span className="text-gray-900">
-                    {variantGroup.common_dimensions.length} × {variantGroup.common_dimensions.width} × {variantGroup.common_dimensions.height} {variantGroup.common_dimensions.unit || 'cm'}
-                  </span>
-                </div>
-              )}
+              {variantGroup.common_dimensions?.length &&
+                variantGroup.common_dimensions?.width &&
+                variantGroup.common_dimensions?.height && (
+                  <div className="flex justify-between">
+                    <span className="text-gray-600">📐 Dimensions :</span>
+                    <span className="text-gray-900">
+                      {variantGroup.common_dimensions.length} ×{' '}
+                      {variantGroup.common_dimensions.width} ×{' '}
+                      {variantGroup.common_dimensions.height}{' '}
+                      {variantGroup.common_dimensions.unit || 'cm'}
+                    </span>
+                  </div>
+                )}
 
               {variantGroup.style && (
                 <div className="flex justify-between">
                   <span className="text-gray-600">🎨 Style :</span>
-                  <span className="text-gray-900">{formatStyle(variantGroup.style)}</span>
-                </div>
-              )}
-
-              {variantGroup.suitable_rooms && variantGroup.suitable_rooms.length > 0 && (
-                <div className="flex justify-between items-start">
-                  <span className="text-gray-600">🏠 Pièces :</span>
-                  <span className="text-gray-900 text-right">
-                    {variantGroup.suitable_rooms.join(', ')}
+                  <span className="text-gray-900">
+                    {formatStyle(variantGroup.style)}
                   </span>
                 </div>
               )}
+
+              {variantGroup.suitable_rooms &&
+                variantGroup.suitable_rooms.length > 0 && (
+                  <div className="flex justify-between items-start">
+                    <span className="text-gray-600">🏠 Pièces :</span>
+                    <span className="text-gray-900 text-right">
+                      {variantGroup.suitable_rooms.join(', ')}
+                    </span>
+                  </div>
+                )}
 
               {variantGroup.has_common_supplier && variantGroup.supplier && (
                 <div className="flex justify-between items-start">
@@ -261,7 +306,8 @@ export function EditProductVariantModal({
             </div>
 
             <p className="text-xs text-blue-700 bg-blue-50 p-2 rounded border border-blue-200">
-              💡 Pour modifier ces attributs, éditez le groupe depuis le bouton "Modifier les informations"
+              💡 Pour modifier ces attributs, éditez le groupe depuis le bouton
+              "Modifier les informations"
             </p>
           </div>
 
@@ -277,20 +323,22 @@ export function EditProductVariantModal({
                 {variantType === 'color' ? '🎨' : '🧵'} {variantTypeLabel}
                 <span className="text-red-500 ml-1">*</span>
               </Label>
-              <Select value={variantValue} onValueChange={setVariantValue} required>
-                <SelectTrigger className="w-full">
-                  <SelectValue placeholder={`Sélectionner une ${variantTypeLabel.toLowerCase()}`} />
-                </SelectTrigger>
-                <SelectContent>
-                  {variantOptions.map((option) => (
-                    <SelectItem key={option.value} value={option.value}>
-                      {option.label}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+              <Input
+                id="variant_value"
+                type="text"
+                value={variantValue}
+                onChange={e => setVariantValue(e.target.value)}
+                placeholder={`ex: ${variantType === 'color' ? 'Noir, Blanc Cassé, Gris Anthracite' : 'Chêne Massif, Métal Laqué, Tissu Velours'}`}
+                required
+                className="w-full"
+              />
+              <p className="text-xs text-purple-600">
+                ✨ Vous pouvez créer une nouvelle{' '}
+                {variantTypeLabel.toLowerCase()} en tapant directement
+              </p>
               <p className="text-xs text-gray-600">
-                ⚠️ Changer cette valeur met à jour automatiquement le nom du produit
+                ⚠️ Changer cette valeur met à jour automatiquement le nom du
+                produit
               </p>
             </div>
 
@@ -305,7 +353,7 @@ export function EditProductVariantModal({
                 step="0.01"
                 min="0.01"
                 value={costPrice}
-                onChange={(e) => setCostPrice(parseFloat(e.target.value))}
+                onChange={e => setCostPrice(parseFloat(e.target.value))}
                 className="text-sm w-32"
                 required
               />
@@ -322,7 +370,9 @@ export function EditProductVariantModal({
                 step="0.01"
                 min="0"
                 value={weight || ''}
-                onChange={(e) => setWeight(e.target.value ? parseFloat(e.target.value) : null)}
+                onChange={e =>
+                  setWeight(e.target.value ? parseFloat(e.target.value) : null)
+                }
                 placeholder="Ex: 2.5"
                 className="text-sm w-32"
               />
@@ -330,7 +380,6 @@ export function EditProductVariantModal({
                 Peut varier selon le matériau/couleur (ex: bois vs plastique)
               </p>
             </div>
-
           </div>
 
           {/* Actions */}
@@ -366,5 +415,5 @@ export function EditProductVariantModal({
         </form>
       </DialogContent>
     </Dialog>
-  )
+  );
 }

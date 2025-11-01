@@ -1,73 +1,98 @@
-'use client'
+'use client';
 
-import { use, useState, useCallback, useEffect, useRef } from 'react'
-import { useRouter } from 'next/navigation'
-import Link from 'next/link'
-import { ChevronLeft, Package, Calendar, Edit3, Plus, X, Eye, Palette, Ruler, Layers, Settings, Home, ExternalLink } from 'lucide-react'
-import { getOrganisationDisplayName } from '@/lib/utils/organisation-helpers'
-import { ButtonV2 } from '@/components/ui/button'
-import { Badge } from '@/components/ui/badge'
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
-import { Input } from '@/components/ui/input'
-import { useVariantGroup, useProductVariantEditing } from '@/hooks/use-variant-groups'
-import { useVariantGroups } from '@/hooks/use-variant-groups'
-import { useToast } from '@/hooks/use-toast'
-import Image from 'next/image'
-import { VariantGroupEditModal } from '@/components/business/variant-group-edit-modal'
-import { AddProductsToGroupModal } from '@/components/forms/AddProductsToGroupModal'
-import { CreateProductInGroupModal } from '@/components/forms/CreateProductInGroupModal'
-import { EditProductVariantModal } from '@/components/business/edit-product-variant-modal'
-import type { VariantProduct } from '@/types/variant-groups'
-import { formatAttributesForDisplay, type VariantAttributes } from '@/types/variant-attributes-types'
-import { COLLECTION_STYLE_OPTIONS } from '@/types/collections'
+import { use, useState, useCallback, useEffect, useRef } from 'react';
+import { useRouter } from 'next/navigation';
+import Link from 'next/link';
+import {
+  ChevronLeft,
+  Package,
+  Calendar,
+  Edit3,
+  Plus,
+  X,
+  Eye,
+  Palette,
+  Ruler,
+  Layers,
+  Settings,
+  Home,
+  ExternalLink,
+} from 'lucide-react';
+import { getOrganisationDisplayName } from '@/lib/utils/organisation-helpers';
+import { ButtonV2 } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Input } from '@/components/ui/input';
+import {
+  useVariantGroup,
+  useProductVariantEditing,
+} from '@/hooks/use-variant-groups';
+import { useVariantGroups } from '@/hooks/use-variant-groups';
+import { useToast } from '@/hooks/use-toast';
+import Image from 'next/image';
+import { VariantGroupEditModal } from '@/components/business/variant-group-edit-modal';
+import { AddProductsToGroupModal } from '@/components/forms/AddProductsToGroupModal';
+import { CreateProductInGroupModal } from '@/components/forms/create-product-in-group-modal';
+import { EditProductVariantModal } from '@/components/business/edit-product-variant-modal';
+import type { VariantProduct } from '@/types/variant-groups';
+import {
+  formatAttributesForDisplay,
+  type VariantAttributes,
+} from '@/types/variant-attributes-types';
+import { COLLECTION_STYLE_OPTIONS } from '@/types/collections';
 
 interface VariantGroupDetailPageProps {
   params: Promise<{
-    groupId: string
-  }>
+    groupId: string;
+  }>;
 }
 
 const formatVariantType = (type?: string): string => {
-  if (!type) return ''
+  if (!type) return '';
   const typeMap: Record<string, string> = {
-    'color': 'Couleur',
-    'size': 'Taille',
-    'material': 'Matériau',
-    'pattern': 'Motif'
-  }
-  return typeMap[type] || type
-}
+    color: 'Couleur',
+    size: 'Taille',
+    material: 'Matériau',
+    pattern: 'Motif',
+  };
+  return typeMap[type] || type;
+};
 
 const getVariantTypeIcon = (type: string) => {
   switch (type) {
     case 'color':
-      return <Palette className="h-5 w-5 text-purple-600" />
+      return <Palette className="h-5 w-5 text-purple-600" />;
     case 'size':
-      return <Ruler className="h-5 w-5 text-blue-600" />
+      return <Ruler className="h-5 w-5 text-blue-600" />;
     case 'material':
-      return <Layers className="h-5 w-5 text-green-600" />
+      return <Layers className="h-5 w-5 text-green-600" />;
     case 'pattern':
-      return <Layers className="h-5 w-5 text-black" />
+      return <Layers className="h-5 w-5 text-black" />;
     default:
-      return <Package className="h-5 w-5 text-gray-600" />
+      return <Package className="h-5 w-5 text-gray-600" />;
   }
-}
+};
 
 const formatStyle = (style?: string): string => {
-  if (!style) return ''
-  const styleOption = COLLECTION_STYLE_OPTIONS.find(s => s.value === style)
-  return styleOption?.label || style
-}
+  if (!style) return '';
+  const styleOption = COLLECTION_STYLE_OPTIONS.find(s => s.value === style);
+  return styleOption?.label || style;
+};
 
 // Composant pour carte produit COMPACTE (style catalogue)
 interface VariantProductCardProps {
-  product: any
-  variantType: string
-  hasCommonSupplier: boolean
-  groupDimensions: { length: number | null, width: number | null, height: number | null, unit: string } | null
-  onRemove: (id: string, name: string) => void
-  onEdit: (product: any) => void
-  router: any
+  product: any;
+  variantType: string;
+  hasCommonSupplier: boolean;
+  groupDimensions: {
+    length: number | null;
+    width: number | null;
+    height: number | null;
+    unit: string;
+  } | null;
+  onRemove: (id: string, name: string) => void;
+  onEdit: (product: any) => void;
+  router: any;
 }
 
 function VariantProductCard({
@@ -77,10 +102,12 @@ function VariantProductCard({
   groupDimensions,
   onRemove,
   onEdit,
-  router
+  router,
 }: VariantProductCardProps) {
   // Formater les attributs pour affichage
-  const attributesDisplay = formatAttributesForDisplay(product.variant_attributes as VariantAttributes)
+  const attributesDisplay = formatAttributesForDisplay(
+    product.variant_attributes as VariantAttributes
+  );
 
   return (
     <div className="bg-white rounded-lg border border-gray-200 overflow-hidden hover:shadow-md transition-shadow flex flex-col h-full">
@@ -138,23 +165,37 @@ function VariantProductCard({
         <div className="flex-1 mb-2">
           <div className="flex flex-wrap gap-1">
             {attributesDisplay.map((attr, idx) => (
-              <Badge key={idx} variant="secondary" className="text-[10px] px-1.5 py-0.5">
+              <Badge
+                key={idx}
+                variant="secondary"
+                className="text-[10px] px-1.5 py-0.5"
+              >
                 {attr.value}
               </Badge>
             ))}
             {product.weight && (
-              <Badge variant="outline" className="text-[10px] px-1.5 py-0.5 bg-gray-50 text-gray-900 border-gray-300">
+              <Badge
+                variant="outline"
+                className="text-[10px] px-1.5 py-0.5 bg-gray-50 text-gray-900 border-gray-300"
+              >
                 ⚖️ {product.weight}kg
               </Badge>
             )}
             {!hasCommonSupplier && product.supplier && (
-              <Badge variant="outline" className="text-[10px] px-1.5 py-0.5 bg-blue-50 text-blue-700 border-blue-200">
+              <Badge
+                variant="outline"
+                className="text-[10px] px-1.5 py-0.5 bg-blue-50 text-blue-700 border-blue-200"
+              >
                 🏢 {product.supplier.name}
               </Badge>
             )}
             {groupDimensions && groupDimensions.length && (
-              <Badge variant="outline" className="text-[10px] px-1.5 py-0.5 bg-green-50 text-green-700 border-green-200">
-                📐 {groupDimensions.length}×{groupDimensions.width}×{groupDimensions.height}
+              <Badge
+                variant="outline"
+                className="text-[10px] px-1.5 py-0.5 bg-green-50 text-green-700 border-green-200"
+              >
+                📐 {groupDimensions.length}×{groupDimensions.width}×
+                {groupDimensions.height}
               </Badge>
             )}
           </div>
@@ -183,146 +224,179 @@ function VariantProductCard({
         </div>
       </div>
     </div>
-  )
+  );
 }
 
-export default function VariantGroupDetailPage({ params }: VariantGroupDetailPageProps) {
-  const router = useRouter()
-  const { toast } = useToast()
-  const { groupId } = use(params)
-  const { variantGroup, loading, error } = useVariantGroup(groupId)
-  const { removeProductFromGroup, updateVariantGroup, createProductInGroup, updateProductInGroup, refetch } = useVariantGroups()
-  const { updateProductVariantAttribute } = useProductVariantEditing()
+export default function VariantGroupDetailPage({
+  params,
+}: VariantGroupDetailPageProps) {
+  const router = useRouter();
+  const { toast } = useToast();
+  const { groupId } = use(params);
+  const { variantGroup, loading, error } = useVariantGroup(groupId);
+  const {
+    removeProductFromGroup,
+    updateVariantGroup,
+    createProductInGroup,
+    updateProductInGroup,
+    refetch,
+  } = useVariantGroups();
+  const { updateProductVariantAttribute } = useProductVariantEditing();
 
   // États pour modals
-  const [showEditModal, setShowEditModal] = useState(false)
-  const [showAddProductsModal, setShowAddProductsModal] = useState(false)
-  const [showCreateProductModal, setShowCreateProductModal] = useState(false)
-  const [showEditProductModal, setShowEditProductModal] = useState(false)
-  const [selectedProductForEdit, setSelectedProductForEdit] = useState<VariantProduct | null>(null)
+  const [showEditModal, setShowEditModal] = useState(false);
+  const [showAddProductsModal, setShowAddProductsModal] = useState(false);
+  const [showCreateProductModal, setShowCreateProductModal] = useState(false);
+  const [showEditProductModal, setShowEditProductModal] = useState(false);
+  const [selectedProductForEdit, setSelectedProductForEdit] =
+    useState<VariantProduct | null>(null);
 
   // États pour édition inline
-  const [editingName, setEditingName] = useState(false)
-  const [editedName, setEditedName] = useState('')
-  const [savingName, setSavingName] = useState(false)
+  const [editingName, setEditingName] = useState(false);
+  const [editedName, setEditedName] = useState('');
+  const [savingName, setSavingName] = useState(false);
 
-  const [editingType, setEditingType] = useState(false)
-  const [editedType, setEditedType] = useState<'color' | 'size' | 'material' | 'pattern'>('color')
-  const [savingType, setSavingType] = useState(false)
+  const [editingType, setEditingType] = useState(false);
+  const [editedType, setEditedType] = useState<
+    'color' | 'size' | 'material' | 'pattern'
+  >('color');
+  const [savingType, setSavingType] = useState(false);
 
   // 🔧 SOLUTION DÉFINITIVE: Ref pour tracker si on doit afficher le toast
-  const pendingToastRef = useRef(false)
+  const pendingToastRef = useRef(false);
 
   // 🔧 useEffect pour afficher le toast APRÈS le refetch complet
   useEffect(() => {
     if (pendingToastRef.current && variantGroup && !loading) {
-      pendingToastRef.current = false
+      pendingToastRef.current = false;
       toast({
-        title: "Produit mis à jour",
-        description: "Les modifications ont été enregistrées avec succès"
-      })
+        title: 'Produit mis à jour',
+        description: 'Les modifications ont été enregistrées avec succès',
+      });
     }
-  }, [variantGroup, loading, toast])
+  }, [variantGroup, loading, toast]);
 
   const handleEditGroup = useCallback(() => {
-    setShowEditModal(true)
-  }, [])
+    setShowEditModal(true);
+  }, []);
 
   const handleAddProducts = useCallback(() => {
-    setShowAddProductsModal(true)
-  }, [])
+    setShowAddProductsModal(true);
+  }, []);
 
   const handleCreateProduct = useCallback(() => {
-    setShowCreateProductModal(true)
-  }, [])
+    setShowCreateProductModal(true);
+  }, []);
 
-  const handleCreateProductSubmit = useCallback(async (variantValue: string) => {
-    if (!variantGroup) return false
-    return await createProductInGroup(groupId, variantValue, variantGroup.variant_type || 'color')
-  }, [groupId, variantGroup, createProductInGroup])
+  const handleCreateProductSubmit = useCallback(
+    async (variantValue: string) => {
+      if (!variantGroup) return false;
+      return await createProductInGroup(
+        groupId,
+        variantValue,
+        variantGroup.variant_type || 'color'
+      );
+    },
+    [groupId, variantGroup, createProductInGroup]
+  );
 
-  const handleRemoveProduct = useCallback(async (productId: string, productName: string) => {
-    if (!confirm(`Êtes-vous sûr de vouloir retirer "${productName}" de ce groupe ?`)) return
+  const handleRemoveProduct = useCallback(
+    async (productId: string, productName: string) => {
+      if (
+        !confirm(
+          `Êtes-vous sûr de vouloir retirer "${productName}" de ce groupe ?`
+        )
+      )
+        return;
 
-    const result = await removeProductFromGroup(productId)
-    if (result) {
-      toast({
-        title: "Produit retiré",
-        description: `"${productName}" a été retiré du groupe`
-      })
-      // Recharger la page pour actualiser les données
-      window.location.reload()
-    }
-  }, [removeProductFromGroup, toast])
+      const result = await removeProductFromGroup(productId);
+      if (result) {
+        toast({
+          title: 'Produit retiré',
+          description: `"${productName}" a été retiré du groupe`,
+        });
+        // Recharger la page pour actualiser les données
+        window.location.reload();
+      }
+    },
+    [removeProductFromGroup, toast]
+  );
 
   const handleModalSubmit = () => {
-    setShowEditModal(false)
-    setShowAddProductsModal(false)
+    setShowEditModal(false);
+    setShowAddProductsModal(false);
     // Recharger la page pour actualiser les données
-    window.location.reload()
-  }
+    window.location.reload();
+  };
 
   // Édition inline du nom
   const handleStartEditName = useCallback(() => {
-    setEditedName(variantGroup?.name || '')
-    setEditingName(true)
-  }, [variantGroup?.name])
+    setEditedName(variantGroup?.name || '');
+    setEditingName(true);
+  }, [variantGroup?.name]);
 
   const handleSaveName = useCallback(async () => {
     if (!editedName.trim() || editedName === variantGroup?.name) {
-      setEditingName(false)
-      return
+      setEditingName(false);
+      return;
     }
 
-    setSavingName(true)
-    const success = await updateVariantGroup(groupId, { name: editedName.trim() })
+    setSavingName(true);
+    const success = await updateVariantGroup(groupId, {
+      name: editedName.trim(),
+    });
 
     if (success) {
-      window.location.reload()
+      window.location.reload();
     }
-    setSavingName(false)
-  }, [editedName, groupId, variantGroup?.name, updateVariantGroup])
+    setSavingName(false);
+  }, [editedName, groupId, variantGroup?.name, updateVariantGroup]);
 
   const handleCancelEditName = useCallback(() => {
-    setEditingName(false)
-    setEditedName('')
-  }, [])
+    setEditingName(false);
+    setEditedName('');
+  }, []);
 
   // Édition inline du type
   const handleStartEditType = useCallback(() => {
-    setEditedType(variantGroup?.variant_type || 'color')
-    setEditingType(true)
-  }, [variantGroup?.variant_type])
+    setEditedType(variantGroup?.variant_type || 'color');
+    setEditingType(true);
+  }, [variantGroup?.variant_type]);
 
-  const handleSaveType = useCallback(async (newType: 'color' | 'size' | 'material' | 'pattern') => {
-    if (newType === variantGroup?.variant_type) {
-      setEditingType(false)
-      return
-    }
+  const handleSaveType = useCallback(
+    async (newType: 'color' | 'size' | 'material' | 'pattern') => {
+      if (newType === variantGroup?.variant_type) {
+        setEditingType(false);
+        return;
+      }
 
-    setSavingType(true)
-    const success = await updateVariantGroup(groupId, { variant_type: newType })
+      setSavingType(true);
+      const success = await updateVariantGroup(groupId, {
+        variant_type: newType,
+      });
 
-    if (success) {
-      window.location.reload()
-    }
-    setSavingType(false)
-  }, [groupId, variantGroup?.variant_type, updateVariantGroup])
+      if (success) {
+        window.location.reload();
+      }
+      setSavingType(false);
+    },
+    [groupId, variantGroup?.variant_type, updateVariantGroup]
+  );
 
   const handleCancelEditType = useCallback(() => {
-    setEditingType(false)
-  }, [])
+    setEditingType(false);
+  }, []);
 
   // Édition du produit (modal unifié)
   const handleEditProduct = useCallback((product: VariantProduct) => {
-    setSelectedProductForEdit(product)
-    setShowEditProductModal(true)
-  }, [])
+    setSelectedProductForEdit(product);
+    setShowEditProductModal(true);
+  }, []);
 
   const handleCloseEditProductModal = useCallback(() => {
-    setShowEditProductModal(false)
-    setSelectedProductForEdit(null)
-  }, [])
+    setShowEditProductModal(false);
+    setSelectedProductForEdit(null);
+  }, []);
 
   const handleProductUpdated = useCallback(async () => {
     // 🎯 SOLUTION DÉFINITIVE React-Safe:
@@ -334,11 +408,11 @@ export default function VariantGroupDetailPage({ params }: VariantGroupDetailPag
     // 6. Le toast s'affiche APRÈS que React ait terminé tous les rendus
 
     // Activer le flag AVANT le refetch
-    pendingToastRef.current = true
+    pendingToastRef.current = true;
 
     // Refetch les données (va déclencher le useEffect)
-    await refetch()
-  }, [refetch])
+    await refetch();
+  }, [refetch]);
 
   if (loading) {
     return (
@@ -355,7 +429,7 @@ export default function VariantGroupDetailPage({ params }: VariantGroupDetailPag
           </div>
         </div>
       </div>
-    )
+    );
   }
 
   if (error || !variantGroup) {
@@ -379,7 +453,7 @@ export default function VariantGroupDetailPage({ params }: VariantGroupDetailPag
           </p>
         </div>
       </div>
-    )
+    );
   }
 
   return (
@@ -403,11 +477,11 @@ export default function VariantGroupDetailPage({ params }: VariantGroupDetailPag
                   <Input
                     type="text"
                     value={editedName}
-                    onChange={(e) => setEditedName(e.target.value)}
+                    onChange={e => setEditedName(e.target.value)}
                     onBlur={handleSaveName}
-                    onKeyDown={(e) => {
-                      if (e.key === 'Enter') handleSaveName()
-                      if (e.key === 'Escape') handleCancelEditName()
+                    onKeyDown={e => {
+                      if (e.key === 'Enter') handleSaveName();
+                      if (e.key === 'Escape') handleCancelEditName();
                     }}
                     disabled={savingName}
                     className="text-2xl font-bold h-10"
@@ -419,7 +493,9 @@ export default function VariantGroupDetailPage({ params }: VariantGroupDetailPag
                 </div>
               ) : (
                 <div className="flex items-center gap-2 group">
-                  <h1 className="text-2xl font-bold text-gray-900">{variantGroup.name}</h1>
+                  <h1 className="text-2xl font-bold text-gray-900">
+                    {variantGroup.name}
+                  </h1>
                   <button
                     onClick={handleStartEditName}
                     className="opacity-0 group-hover:opacity-100 transition-opacity p-1 hover:bg-gray-100 rounded"
@@ -473,7 +549,9 @@ export default function VariantGroupDetailPage({ params }: VariantGroupDetailPag
             <Package className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{variantGroup.product_count || 0}</div>
+            <div className="text-2xl font-bold">
+              {variantGroup.product_count || 0}
+            </div>
           </CardContent>
         </Card>
 
@@ -525,9 +603,13 @@ export default function VariantGroupDetailPage({ params }: VariantGroupDetailPag
             </label>
             {variantGroup.subcategory ? (
               <p className="text-sm text-gray-900">
-                <span className="font-medium">{variantGroup.subcategory.category?.name}</span>
+                <span className="font-medium">
+                  {variantGroup.subcategory.category?.name}
+                </span>
                 {' → '}
-                <span className="font-medium">{variantGroup.subcategory.name}</span>
+                <span className="font-medium">
+                  {variantGroup.subcategory.name}
+                </span>
               </p>
             ) : (
               <p className="text-sm text-gray-500">Non définie</p>
@@ -543,10 +625,14 @@ export default function VariantGroupDetailPage({ params }: VariantGroupDetailPag
               <div className="flex items-center gap-2">
                 <select
                   value={editedType}
-                  onChange={(e) => {
-                    const newType = e.target.value as 'color' | 'size' | 'material' | 'pattern'
-                    setEditedType(newType)
-                    handleSaveType(newType)
+                  onChange={e => {
+                    const newType = e.target.value as
+                      | 'color'
+                      | 'size'
+                      | 'material'
+                      | 'pattern';
+                    setEditedType(newType);
+                    handleSaveType(newType);
                   }}
                   disabled={savingType}
                   className="border border-gray-300 rounded-md px-3 py-1 text-sm"
@@ -590,12 +676,17 @@ export default function VariantGroupDetailPage({ params }: VariantGroupDetailPag
             <div>
               <label className="text-sm font-medium text-gray-700 block mb-2 flex items-center gap-2">
                 📐 Dimensions communes
-                <Badge variant="outline" className="text-xs bg-blue-50 text-blue-700 border-blue-200">
+                <Badge
+                  variant="outline"
+                  className="text-xs bg-blue-50 text-blue-700 border-blue-200"
+                >
                   Héritées par tous les produits
                 </Badge>
               </label>
               <p className="text-sm text-gray-900 font-medium">
-                L: {variantGroup.dimensions_length} × l: {variantGroup.dimensions_width} × H: {variantGroup.dimensions_height} {variantGroup.dimensions_unit}
+                L: {variantGroup.dimensions_length} × l:{' '}
+                {variantGroup.dimensions_width} × H:{' '}
+                {variantGroup.dimensions_height} {variantGroup.dimensions_unit}
               </p>
             </div>
           )}
@@ -605,7 +696,10 @@ export default function VariantGroupDetailPage({ params }: VariantGroupDetailPag
             <div>
               <label className="text-sm font-medium text-gray-700 block mb-2 flex items-center gap-2">
                 ⚖️ Poids commun
-                <Badge variant="outline" className="text-xs bg-gray-50 text-gray-900 border-gray-300">
+                <Badge
+                  variant="outline"
+                  className="text-xs bg-gray-50 text-gray-900 border-gray-300"
+                >
                   Hérité par tous les produits
                 </Badge>
               </label>
@@ -621,28 +715,36 @@ export default function VariantGroupDetailPage({ params }: VariantGroupDetailPag
               <label className="text-sm font-medium text-gray-700 block mb-2">
                 Style décoratif
               </label>
-              <Badge variant="outline" className="bg-pink-50 text-pink-700 border-pink-200">
+              <Badge
+                variant="outline"
+                className="bg-pink-50 text-pink-700 border-pink-200"
+              >
                 🎨 {formatStyle(variantGroup.style)}
               </Badge>
             </div>
           )}
 
           {/* Pièces compatibles */}
-          {variantGroup.suitable_rooms && variantGroup.suitable_rooms.length > 0 && (
-            <div className="md:col-span-2">
-              <label className="text-sm font-medium text-gray-700 block mb-2">
-                Pièces compatibles
-              </label>
-              <div className="flex flex-wrap gap-2">
-                {variantGroup.suitable_rooms.map((room, index) => (
-                  <Badge key={index} variant="outline" className="bg-gray-50 text-gray-900 border-gray-300">
-                    <Home className="h-3 w-3 mr-1" />
-                    {room}
-                  </Badge>
-                ))}
+          {variantGroup.suitable_rooms &&
+            variantGroup.suitable_rooms.length > 0 && (
+              <div className="md:col-span-2">
+                <label className="text-sm font-medium text-gray-700 block mb-2">
+                  Pièces compatibles
+                </label>
+                <div className="flex flex-wrap gap-2">
+                  {variantGroup.suitable_rooms.map((room, index) => (
+                    <Badge
+                      key={index}
+                      variant="outline"
+                      className="bg-gray-50 text-gray-900 border-gray-300"
+                    >
+                      <Home className="h-3 w-3 mr-1" />
+                      {room}
+                    </Badge>
+                  ))}
+                </div>
               </div>
-            </div>
-          )}
+            )}
 
           {/* Fournisseur commun */}
           {variantGroup.has_common_supplier && variantGroup.supplier && (
@@ -651,9 +753,15 @@ export default function VariantGroupDetailPage({ params }: VariantGroupDetailPag
                 Fournisseur commun
               </label>
               <div className="flex items-center gap-2">
-                <Link href={`/contacts-organisations/suppliers/${variantGroup.supplier.id}`}>
-                  <Badge variant="outline" className="bg-blue-50 text-blue-700 border-blue-200 hover:bg-blue-100 cursor-pointer transition-colors flex items-center gap-1.5">
-                    🏢 {getOrganisationDisplayName(variantGroup.supplier as any)}
+                <Link
+                  href={`/contacts-organisations/suppliers/${variantGroup.supplier.id}`}
+                >
+                  <Badge
+                    variant="outline"
+                    className="bg-blue-50 text-blue-700 border-blue-200 hover:bg-blue-100 cursor-pointer transition-colors flex items-center gap-1.5"
+                  >
+                    🏢{' '}
+                    {getOrganisationDisplayName(variantGroup.supplier as any)}
                     <ExternalLink className="h-3 w-3 opacity-60" />
                   </Badge>
                 </Link>
@@ -674,18 +782,22 @@ export default function VariantGroupDetailPage({ params }: VariantGroupDetailPag
 
         {variantGroup.products && variantGroup.products.length > 0 ? (
           <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-6 gap-4 auto-rows-fr">
-            {variantGroup.products.map((product) => (
+            {variantGroup.products.map(product => (
               <VariantProductCard
                 key={product.id}
                 product={product}
                 variantType={variantGroup.variant_type || ''}
                 hasCommonSupplier={variantGroup.has_common_supplier || false}
-                groupDimensions={variantGroup.dimensions_length ? ({
-                  length: variantGroup.dimensions_length,
-                  width: variantGroup.dimensions_width ?? null,
-                  height: variantGroup.dimensions_height ?? null,
-                  unit: variantGroup.dimensions_unit ?? null
-                } as any) : null}
+                groupDimensions={
+                  variantGroup.dimensions_length
+                    ? ({
+                        length: variantGroup.dimensions_length,
+                        width: variantGroup.dimensions_width ?? null,
+                        height: variantGroup.dimensions_height ?? null,
+                        unit: variantGroup.dimensions_unit ?? null,
+                      } as any)
+                    : null
+                }
                 onRemove={handleRemoveProduct}
                 onEdit={handleEditProduct}
                 router={router}
@@ -717,7 +829,9 @@ export default function VariantGroupDetailPage({ params }: VariantGroupDetailPag
         <VariantGroupEditModal
           isOpen={showEditModal}
           onClose={() => setShowEditModal(false)}
-          onSubmit={async (groupId, data) => { await updateVariantGroup(groupId, data) }}
+          onSubmit={async (groupId, data) => {
+            await updateVariantGroup(groupId, data);
+          }}
           group={variantGroup}
         />
       )}
@@ -754,5 +868,5 @@ export default function VariantGroupDetailPage({ params }: VariantGroupDetailPag
         />
       )}
     </div>
-  )
+  );
 }
