@@ -16,14 +16,14 @@
  */
 
 import { NextRequest, NextResponse } from 'next/server'
-import { createClient } from '@/lib/supabase/server'
+import { createServerClient } from '@/lib/supabase/server'
 import type { ValidateReceptionPayload } from '@/types/reception-shipment'
 
 export const dynamic = 'force-dynamic'
 
 export async function POST(request: NextRequest) {
   try {
-    const supabase = await createClient()
+    const supabase = await createServerClient()
     const payload: ValidateReceptionPayload = await request.json()
 
     // Validation payload
@@ -129,11 +129,10 @@ export async function POST(request: NextRequest) {
       status: newStatus
     }
 
-    // Si c'était la première réception, set received_at et received_by
-    if (purchaseOrder.status === 'confirmed') {
-      updateData.received_at = payload.received_at || new Date().toISOString()
-      updateData.received_by = payload.received_by
-    }
+    // ✅ FIX: TOUJOURS mettre à jour received_at/received_by pour activer les triggers
+    // Le trigger handle_purchase_order_forecast() nécessite ces champs pour créer les mouvements réels
+    updateData.received_at = payload.received_at || new Date().toISOString()
+    updateData.received_by = payload.received_by
 
     const { error: updatePOError } = await supabase
       .from('purchase_orders')

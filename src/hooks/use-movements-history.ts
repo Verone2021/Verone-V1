@@ -22,6 +22,7 @@ export interface MovementHistoryFilters {
   productSearch?: string
   affects_forecast?: boolean
   forecast_type?: 'in' | 'out'
+  channelId?: string | null  // Filtre par canal de vente (accepte null et undefined)
   limit?: number
   offset?: number
 }
@@ -51,6 +52,11 @@ export interface MovementWithDetails {
   user_first_name?: string
   user_last_name?: string
   reason_description?: string
+
+  // Données canal de vente (pour mouvements liés aux commandes clients)
+  channel_id?: string | null
+  channel_name?: string | null
+  channel_code?: string | null
 }
 
 export interface MovementsStats {
@@ -274,7 +280,7 @@ export function useMovementsHistory() {
       const { count: realCount } = await supabase
         .from('stock_movements')
         .select('*', { count: 'exact', head: true })
-        .eq('affects_forecast', false)
+        .or('affects_forecast.is.null,affects_forecast.is.false')
 
       const { count: forecastCount } = await supabase
         .from('stock_movements')
