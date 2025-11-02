@@ -38,6 +38,8 @@ import {
 import { AlertCircle, Save, X } from 'lucide-react';
 import { createClient } from '@/lib/supabase/client';
 import { useToast } from '@/hooks/use-toast';
+import { useOrganisations } from '@/hooks/use-organisations';
+import { SupplierSelector } from '@/components/business/supplier-selector';
 import type { VariantProduct, VariantGroup } from '@/types/variant-groups';
 import { COLLECTION_STYLE_OPTIONS } from '@/types/collections';
 import {
@@ -66,12 +68,19 @@ export function EditProductVariantModal({
   const [variantValue, setVariantValue] = useState<string>('');
   const [costPrice, setCostPrice] = useState(0.01);
   const [weight, setWeight] = useState<number | null>(null);
+  const [supplierId, setSupplierId] = useState<string | null>(null);
 
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   const supabase = createClient();
   const { toast } = useToast();
+
+  // Hook pour charger la liste des fournisseurs
+  const { organisations: suppliers } = useOrganisations({
+    type: 'supplier',
+    is_active: true,
+  });
 
   // Récupérer variant_type du groupe
   const variantType = variantGroup.variant_type || 'color';
@@ -91,6 +100,7 @@ export function EditProductVariantModal({
           : product.cost_price || 0.01
       );
       setWeight(product.weight || null);
+      setSupplierId(product.supplier_id ?? null);
       setError(null);
     }
   }, [isOpen, product, variantType]);
@@ -173,6 +183,7 @@ export function EditProductVariantModal({
           variant_attributes: { [variantType]: variantValue }, // Valeur normalisée lowercase
           cost_price: costPrice,
           weight: weight,
+          supplier_id: supplierId || null,
           updated_at: new Date().toISOString(),
           // ❌ PAS de dimensions, style, suitable_rooms, description
           // → Ces champs sont HÉRITÉS du groupe ou gérés dans la page détail produit
@@ -303,6 +314,25 @@ export function EditProductVariantModal({
                   </span>
                 </div>
               )}
+
+              {variantGroup.has_common_weight && variantGroup.common_weight && (
+                <div className="flex justify-between items-start">
+                  <span className="text-gray-600">⚖️ Poids :</span>
+                  <span className="text-gray-900 text-right font-medium">
+                    {variantGroup.common_weight} kg
+                  </span>
+                </div>
+              )}
+
+              {variantGroup.has_common_cost_price &&
+                variantGroup.common_cost_price && (
+                  <div className="flex justify-between items-start">
+                    <span className="text-gray-600">💰 Prix d'achat :</span>
+                    <span className="text-gray-900 text-right font-medium">
+                      {variantGroup.common_cost_price} €
+                    </span>
+                  </div>
+                )}
             </div>
 
             <p className="text-xs text-blue-700 bg-blue-50 p-2 rounded border border-blue-200">
@@ -342,44 +372,70 @@ export function EditProductVariantModal({
               </p>
             </div>
 
-            {/* Prix coûtant */}
-            <div className="space-y-2">
-              <Label htmlFor="cost_price" className="text-sm font-medium">
-                💰 Prix Coûtant (€) <span className="text-red-500">*</span>
-              </Label>
-              <Input
-                id="cost_price"
-                type="number"
-                step="0.01"
-                min="0.01"
-                value={costPrice}
-                onChange={e => setCostPrice(parseFloat(e.target.value))}
-                className="text-sm w-32"
-                required
-              />
-            </div>
+            {/* Prix coûtant - Éditable SEULEMENT si pas géré par le groupe */}
+            {!variantGroup.has_common_cost_price && (
+              <div className="space-y-2">
+                <Label htmlFor="cost_price" className="text-sm font-medium">
+                  💰 Prix Coûtant (€) <span className="text-red-500">*</span>
+                </Label>
+                <Input
+                  id="cost_price"
+                  type="number"
+                  step="0.01"
+                  min="0.01"
+                  value={costPrice}
+                  onChange={e => setCostPrice(parseFloat(e.target.value))}
+                  className="text-sm w-32"
+                  required
+                />
+              </div>
+            )}
 
-            {/* Poids - NOUVEAU champ éditable */}
-            <div className="space-y-2">
-              <Label htmlFor="weight" className="text-sm font-medium">
-                ⚖️ Poids (kg) <span className="text-gray-500">(optionnel)</span>
-              </Label>
-              <Input
-                id="weight"
-                type="number"
-                step="0.01"
-                min="0"
-                value={weight || ''}
-                onChange={e =>
-                  setWeight(e.target.value ? parseFloat(e.target.value) : null)
-                }
-                placeholder="Ex: 2.5"
-                className="text-sm w-32"
-              />
-              <p className="text-xs text-gray-600">
-                Peut varier selon le matériau/couleur (ex: bois vs plastique)
-              </p>
-            </div>
+            {/* Poids - Éditable SEULEMENT si pas géré par le groupe */}
+            {!variantGroup.has_common_weight && (
+              <div className="space-y-2">
+                <Label htmlFor="weight" className="text-sm font-medium">
+                  ⚖️ Poids (kg){' '}
+                  <span className="text-gray-500">(optionnel)</span>
+                </Label>
+                <Input
+                  id="weight"
+                  type="number"
+                  step="0.01"
+                  min="0"
+                  value={weight || ''}
+                  onChange={e =>
+                    setWeight(
+                      e.target.value ? parseFloat(e.target.value) : null
+                    )
+                  }
+                  placeholder="Ex: 2.5"
+                  className="text-sm w-32"
+                />
+                <p className="text-xs text-gray-600">
+                  Peut varier selon le matériau/couleur (ex: bois vs plastique)
+                </p>
+              </div>
+            )}
+
+            {/* Fournisseur - Éditable SEULEMENT si pas géré par le groupe */}
+            {!variantGroup.has_common_supplier && (
+              <div className="space-y-2">
+                <Label htmlFor="supplier" className="text-sm font-medium">
+                  🏢 Fournisseur{' '}
+                  <span className="text-gray-500">(optionnel)</span>
+                </Label>
+                <SupplierSelector
+                  selectedSupplierId={supplierId}
+                  onSupplierChange={setSupplierId}
+                  required={false}
+                />
+                <p className="text-xs text-gray-600">
+                  Peut varier selon la couleur/matériau (ex: différents
+                  fournisseurs)
+                </p>
+              </div>
+            )}
           </div>
 
           {/* Actions */}
