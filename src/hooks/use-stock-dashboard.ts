@@ -44,6 +44,7 @@ interface LowStockProduct {
   min_stock: number
   cost_price: number
   stock_forecasted_out: number
+  product_image_url?: string | null  // ✅ NOUVEAU - URL image principale produit
 }
 
 interface RecentMovement {
@@ -59,6 +60,7 @@ interface RecentMovement {
   notes: string | null
   performed_at: string
   performer_name: string | null
+  channel_id: string | null
 }
 
 interface ForecastedOrder {
@@ -118,8 +120,9 @@ export function useStockDashboard() {
         stock_real: p.stock_real,
         stock_forecasted_in: p.stock_forecasted_in,
         stock_forecasted_out: p.stock_forecasted_out,
-        min_stock: p.stock_threshold,
-        cost_price: 0 // TODO: Ajouter cost_price dans use-stock-core
+        min_stock: p.min_stock,
+        cost_price: 0, // TODO: Ajouter cost_price dans use-stock-core
+        product_image_url: (p as any).product_image_url || null  // ✅ NOUVEAU - Image produit
       }))
 
       // 🆕 QUERY 3: Mouvements 7 derniers jours (via use-stock-ui)
@@ -217,7 +220,7 @@ export function useStockDashboard() {
       // (Déjà chargés dans alertsData depuis Promise.all)
       // ============================================
 
-      // Enrichir avec stock_forecasted_out depuis productsWithLegacyFields
+      // Enrichir avec stock_forecasted_out + product_image_url depuis productsWithLegacyFields
       const lowStockProducts: LowStockProduct[] = []
       for (const alert of ((alertsData || []) as any[])) {
         const product = productsWithLegacyFields.find(p => p.id === alert.product_id)
@@ -228,7 +231,8 @@ export function useStockDashboard() {
           stock_quantity: alert.stock_quantity,
           min_stock: alert.min_stock,
           cost_price: 0, // Pas besoin ici
-          stock_forecasted_out: product?.stock_forecasted_out || 0
+          stock_forecasted_out: product?.stock_forecasted_out || 0,
+          product_image_url: product?.product_image_url || null  // ✅ NOUVEAU - Image produit
         })
       }
 
@@ -256,7 +260,8 @@ export function useStockDashboard() {
           reason_code: mov.reason_code || '',
           notes: mov.notes,
           performed_at: mov.performed_at,
-          performer_name: 'Admin' // TODO: Récupérer depuis auth.users ou profiles quand disponible
+          performer_name: 'Admin', // TODO: Récupérer depuis auth.users ou profiles quand disponible
+          channel_id: mov.channel_id
         }
       })
 
@@ -383,12 +388,13 @@ export function useStockDashboard() {
     } finally {
       setLoading(false)
     }
-  }, [supabase, toast, stock])
+  }, [supabase, toast]) // ✅ FIX: Retirer `stock` pour éviter boucle infinie
 
-  // Chargement automatique au montage
+  // ✅ FIX: Chargement unique au montage (pas de re-trigger en boucle)
   useEffect(() => {
     fetchDashboardMetrics()
-  }, [fetchDashboardMetrics])
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []) // Charge une seule fois au montage
 
   return {
     metrics,

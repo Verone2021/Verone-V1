@@ -2,6 +2,7 @@
 
 import React from 'react'
 import Link from 'next/link'
+import Image from 'next/image'
 import { Clock, Package, TrendingUp, TrendingDown, RotateCcw, FileText, ExternalLink, X } from 'lucide-react'
 import { Badge } from '@/components/ui/badge'
 import { ButtonV2 } from '@/components/ui/button'
@@ -211,15 +212,30 @@ export function MovementsTable({ movements, loading, onMovementClick, onCancelCl
                 <Link
                   href={`/catalogue/${movement.product_id}`}
                   onClick={(e) => e.stopPropagation()}
-                  className="flex items-center gap-2 hover:text-black transition-colors group"
+                  className="flex items-center gap-3 hover:text-black transition-colors group"
                 >
-                  <Package className="h-4 w-4 text-gray-400 group-hover:text-black transition-colors" />
-                  <div>
+                  {/* Image Produit */}
+                  {movement.product_image_url ? (
+                    <Image
+                      src={movement.product_image_url}
+                      alt={movement.product_name || 'Produit'}
+                      width={40}
+                      height={40}
+                      className="rounded-lg object-cover border border-gray-200 flex-shrink-0"
+                    />
+                  ) : (
+                    <div className="h-10 w-10 bg-gray-100 rounded-lg flex items-center justify-center flex-shrink-0">
+                      <Package className="h-5 w-5 text-gray-400" />
+                    </div>
+                  )}
+
+                  {/* Info Produit */}
+                  <div className="flex-1 min-w-0">
                     <div className="font-medium text-sm group-hover:underline">
                       {movement.product_name || 'Produit supprimé'}
                     </div>
                   </div>
-                  <ExternalLink className="h-3 w-3 text-gray-400 opacity-0 group-hover:opacity-100 transition-opacity" />
+                  <ExternalLink className="h-3 w-3 text-gray-400 opacity-0 group-hover:opacity-100 transition-opacity flex-shrink-0" />
                 </Link>
               </TableCell>
 

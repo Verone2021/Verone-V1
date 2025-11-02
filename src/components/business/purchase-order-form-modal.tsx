@@ -70,8 +70,8 @@ export function PurchaseOrderFormModal({
   const [expectedDeliveryDate, setExpectedDeliveryDate] = useState(
     order?.expected_delivery_date ? new Date(order.expected_delivery_date).toISOString().split('T')[0] : ''
   )
-  const [deliveryAddress, setDeliveryAddress] = useState(
-    order?.delivery_address || 'Groupe DSA - (Verone)\n4, rue du Pérou\n91300 Massy\nFrance'
+  const [deliveryAddress, setDeliveryAddress] = useState<string>(
+    (typeof order?.delivery_address === 'string' ? order.delivery_address : null) || 'Groupe DSA - (Verone)\n4, rue du Pérou\n91300 Massy\nFrance'
   )
   const [notes, setNotes] = useState(order?.notes || '')
 

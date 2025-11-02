@@ -18,6 +18,9 @@ import { PurchaseOrderDetailModal } from '@/components/business/purchase-order-d
 import { formatCurrency, formatDate } from '@/lib/utils'
 import { Separator } from '@/components/ui/separator'
 import { getOrganisationDisplayName } from '@/lib/utils/organisation-helpers'
+import type { Database } from '@/types/supabase'
+
+type PurchaseOrderRow = Database['public']['Tables']['purchase_orders']['Row']
 
 // ✅ Type Safety: Interface ProductImage stricte
 interface ProductImage {
@@ -77,7 +80,7 @@ export default function PurchaseOrdersPage() {
   const [showOrderDetail, setShowOrderDetail] = useState(false)
   const [showReceptionModal, setShowReceptionModal] = useState(false)
   const [showEditModal, setShowEditModal] = useState(false)
-  const [orderToEdit, setOrderToEdit] = useState<PurchaseOrder | null>(null)
+  const [orderToEdit, setOrderToEdit] = useState<PurchaseOrderRow | null>(null)
 
   useEffect(() => {
     fetchOrders()
@@ -268,7 +271,7 @@ export default function PurchaseOrdersPage() {
   }
 
   const openEditModal = (order: PurchaseOrder) => {
-    setOrderToEdit(order)
+    setOrderToEdit(order as PurchaseOrderRow)
     setShowEditModal(true)
   }
 

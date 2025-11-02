@@ -48,6 +48,7 @@ export interface MovementWithDetails {
   // Données enrichies
   product_name?: string
   product_sku?: string
+  product_image_url?: string | null  // ✅ NOUVEAU - URL image principale produit
   user_name?: string
   user_first_name?: string
   user_last_name?: string
@@ -93,7 +94,11 @@ export function useMovementsHistory() {
   const [movements, setMovements] = useState<MovementWithDetails[]>([])
   const [stats, setStats] = useState<MovementsStats | null>(null)
   const [total, setTotal] = useState(0)
-  const [filters, setFilters] = useState<MovementHistoryFilters>({})
+  // ✅ Phase 3.6 : INITIALISATION par défaut affects_forecast = false (mouvements RÉELS uniquement)
+  const [filters, setFilters] = useState<MovementHistoryFilters>({
+    affects_forecast: false,  // ✅ Par défaut = mouvements réels uniquement
+    forecast_type: undefined
+  })
   const { toast } = useToast()
   const { getReasonDescription } = useStockMovements()
 
@@ -190,7 +195,9 @@ export function useMovementsHistory() {
           .in('user_id', userIds),
         supabase
           .from('products')
-          .select('id, name, sku')
+          .select('id, name, sku, product_images!left(public_url)')
+          .eq('product_images.is_primary', true)
+          .limit(1, { foreignTable: 'product_images' })
           .in('id', productIds)
       ])
 
@@ -210,6 +217,7 @@ export function useMovementsHistory() {
           ...movement,
           product_name: product?.name || 'Produit supprimé',
           product_sku: product?.sku || 'SKU inconnu',
+          product_image_url: (product as any)?.product_images?.[0]?.public_url || null,  // ✅ NOUVEAU - Image produit
           user_name: userName,
           user_first_name: userProfile?.first_name,
           user_last_name: userProfile?.last_name,

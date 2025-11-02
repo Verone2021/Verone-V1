@@ -48,6 +48,7 @@ export interface LowStockProduct {
   reorder_point: number
   supplier_name?: string
   last_movement_date?: string
+  product_image_url?: string | null  // ✅ NOUVEAU - URL image principale produit
 }
 
 export interface StockFilters {
@@ -102,8 +103,11 @@ export function useStockOptimized(filters: StockFilters = {}) {
             stock_real,
             min_stock,
             reorder_point,
-            organisations!supplier_id(legal_name, trade_name)
+            organisations!supplier_id(legal_name, trade_name),
+            product_images!left(public_url)
           `)
+          .eq('product_images.is_primary', true)
+          .limit(1, { foreignTable: 'product_images' })
           .eq('stock_real', 0)
           .is('archived_at', null)
           .order('stock_real', { ascending: true })
@@ -114,7 +118,9 @@ export function useStockOptimized(filters: StockFilters = {}) {
         return {
           data: (fallbackData || []).map((product: any) => ({
             ...product,
-            supplier_name: product.organisations?.trade_name || product.organisations?.legal_name
+            supplier_name: product.organisations?.trade_name || product.organisations?.legal_name,
+            product_image_url: product.product_images?.[0]?.public_url || null,  // ✅ NOUVEAU - Image produit
+            product_images: undefined  // Supprimer la propriété temporaire
           })),
           error: null
         }

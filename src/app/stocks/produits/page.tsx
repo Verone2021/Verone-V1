@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect, useMemo } from 'react'
 import { useRouter } from 'next/navigation'
+import Image from 'next/image'
 import {
   Package,
   Search,
@@ -621,9 +622,19 @@ export default function StockInventairePage() {
                       <tr key={product.id} className="hover:bg-gray-50">
                         <td className="py-3 px-4">
                           <div className="flex items-center">
-                            <div className="h-10 w-10 bg-gray-100 rounded-lg flex items-center justify-center mr-3">
-                              <Package className="h-5 w-5 text-gray-400" />
-                            </div>
+                            {product.product_image_url ? (
+                              <Image
+                                src={product.product_image_url}
+                                alt={product.name}
+                                width={40}
+                                height={40}
+                                className="rounded-lg object-cover border border-gray-200 mr-3"
+                              />
+                            ) : (
+                              <div className="h-10 w-10 bg-gray-100 rounded-lg flex items-center justify-center mr-3">
+                                <Package className="h-5 w-5 text-gray-400" />
+                              </div>
+                            )}
                             <div>
                               <span className="font-medium text-black">{product.name}</span>
                               {product.stock_quantity === 0 && (

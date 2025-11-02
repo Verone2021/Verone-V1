@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useMemo } from 'react'
 import { useRouter } from 'next/navigation'
+import Image from 'next/image'
 import {
   AlertTriangle,
   ArrowLeft,
@@ -42,6 +43,7 @@ interface StockAlert {
   productId?: string
   productName?: string
   productSku?: string
+  productImageUrl?: string | null  // ✅ NOUVEAU - URL image principale produit
   currentStock?: number
   minStock?: number
   reorderPoint?: number
@@ -94,6 +96,7 @@ export default function StockAlertesPage() {
         productId: product.id,
         productName: product.name,
         productSku: product.sku,
+        productImageUrl: product.product_image_url || null,  // ✅ NOUVEAU - Image produit
         currentStock: product.stock_real,
         minStock: product.min_stock,
         timestamp: new Date().toISOString(),
@@ -119,6 +122,7 @@ export default function StockAlertesPage() {
         productId: product.id,
         productName: product.name,
         productSku: product.sku,
+        productImageUrl: product.product_image_url || null,  // ✅ NOUVEAU - Image produit
         currentStock: product.stock_real,
         minStock: product.min_stock,
         reorderPoint: product.reorder_point,
@@ -514,24 +518,41 @@ export default function StockAlertesPage() {
                     }`}
                   >
                     <div className="flex items-start justify-between">
-                      <div className="flex-1">
-                        <div className="flex items-center space-x-3 mb-2">
-                          {getSeverityIcon(alert.severity)}
-                          <h3 className="font-medium text-black">
-                            {alert.title}
-                          </h3>
-                          {alert.productSku && (
-                            <Badge variant="outline" className="text-xs">
-                              {alert.productSku}
+                      <div className="flex gap-4 flex-1">
+                        {/* Image Produit (si alerte produit) */}
+                        {alert.productImageUrl ? (
+                          <Image
+                            src={alert.productImageUrl}
+                            alt={alert.productName || 'Produit'}
+                            width={64}
+                            height={64}
+                            className="rounded-lg object-cover border border-gray-200 flex-shrink-0"
+                          />
+                        ) : alert.category === 'stock' ? (
+                          <div className="h-16 w-16 bg-gray-100 rounded-lg flex items-center justify-center flex-shrink-0">
+                            <Package className="h-8 w-8 text-gray-400" />
+                          </div>
+                        ) : null}
+
+                        {/* Contenu alerte */}
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-center space-x-3 mb-2 flex-wrap">
+                            {getSeverityIcon(alert.severity)}
+                            <h3 className="font-medium text-black">
+                              {alert.title}
+                            </h3>
+                            {alert.productSku && (
+                              <Badge variant="outline" className="text-xs">
+                                {alert.productSku}
+                              </Badge>
+                            )}
+                            <Badge variant="outline" className={getSeverityColor(alert.severity)}>
+                              {alert.severity}
                             </Badge>
-                          )}
-                          <Badge variant="outline" className={getSeverityColor(alert.severity)}>
-                            {alert.severity}
-                          </Badge>
-                          <Badge variant="outline" className="border-gray-300 text-gray-600">
-                            {alert.category}
-                          </Badge>
-                        </div>
+                            <Badge variant="outline" className="border-gray-300 text-gray-600">
+                              {alert.category}
+                            </Badge>
+                          </div>
 
                         <p className="text-gray-700 mb-3">{alert.message}</p>
 
@@ -558,6 +579,7 @@ export default function StockAlertesPage() {
                         <p className="text-xs text-gray-500">
                           {new Date(alert.timestamp).toLocaleString('fr-FR')}
                         </p>
+                      </div>
                       </div>
 
                       <div className="flex items-center space-x-2 ml-4">

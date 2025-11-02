@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
-import { ArrowUpDown, Download, RefreshCw, ChevronLeft, ChevronRight, Eye, ArrowLeft, Plus, Filter, ChevronDown } from 'lucide-react'
+import { ArrowUpDown, Download, RefreshCw, ChevronLeft, ChevronRight, Eye, ArrowLeft, Plus, Filter, ChevronDown, LayoutGrid, Table } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { ButtonV2 } from '@/components/ui/button'
 import {
@@ -24,6 +24,8 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { MovementsTable } from '@/components/business/movements-table'
 import { MovementsFilters } from '@/components/business/movements-filters'
 import { MovementsStatsCards } from '@/components/business/movements-stats'
+import { ChannelFilter } from '@/components/ui-v2/stock'
+import { MovementsListView } from './components/MovementsListView'
 import { MovementDetailsModal } from '@/components/business/movement-details-modal'
 import { CancelMovementModal } from '@/components/business/cancel-movement-modal'
 import { QuickStockMovementModal } from '@/components/business/quick-stock-movement-modal'
@@ -48,6 +50,12 @@ export default function StockMovementsPage() {
     pagination
   } = useMovementsHistory()
 
+  // 🆕 Phase 3.4.2: État canal de vente pour filtrage mouvements
+  const [selectedChannelId, setSelectedChannelId] = useState<string | null>(null)
+
+  // 🆕 Phase 3.4.5: État vue Table vs Cards
+  const [viewMode, setViewMode] = useState<'table' | 'cards'>('table')
+
   const [selectedMovement, setSelectedMovement] = useState<MovementWithDetails | null>(null)
   const [showMovementDetails, setShowMovementDetails] = useState(false)
   const [movementToCancel, setMovementToCancel] = useState<MovementWithDetails | null>(null)
@@ -71,6 +79,15 @@ export default function StockMovementsPage() {
     }).length
     setActiveFiltersCount(count)
   }, [filters])
+
+  // 🆕 Phase 3.4.3: Auto-refetch quand canal change
+  useEffect(() => {
+    applyFilters({
+      ...filters,
+      channelId: selectedChannelId
+    })
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [selectedChannelId]) // Seulement selectedChannelId pour éviter boucle infinie
 
   // Modal commandes universelle
   const [selectedOrderId, setSelectedOrderId] = useState<string | null>(null)
@@ -129,6 +146,21 @@ export default function StockMovementsPage() {
     <>
       {/* Statistiques */}
       <MovementsStatsCards stats={stats} loading={loading} />
+
+      {/* 🆕 Phase 3.4.2: Filtre canal vente mouvements */}
+      <Card className="border-gray-300 rounded-[10px] shadow-sm">
+        <CardContent className="pt-5 pb-4">
+          <div className="flex items-center gap-3">
+            <span className="text-sm font-medium text-gray-700">Filtre canal :</span>
+            <ChannelFilter
+              selectedChannel={selectedChannelId}
+              onChannelChange={setSelectedChannelId}
+              showAllOption={true}
+              placeholder="Tous les canaux"
+            />
+          </div>
+        </CardContent>
+      </Card>
 
       {/* Layout principal avec filtres collapsible */}
       <div className="relative">
@@ -208,6 +240,36 @@ export default function StockMovementsPage() {
 
                 {/* Pagination et taille de page */}
                 <div className="flex items-center gap-4">
+                  {/* 🆕 Phase 3.4.5: Toggle Table/Cards */}
+                  <div className="flex items-center border border-black rounded-md">
+                    <ButtonV2
+                      variant={viewMode === 'table' ? 'primary' : 'ghost'}
+                      size="sm"
+                      onClick={() => setViewMode('table')}
+                      className={cn(
+                        "rounded-r-none",
+                        viewMode === 'table'
+                          ? 'bg-black text-white hover:bg-black/90'
+                          : 'text-black hover:bg-gray-100'
+                      )}
+                    >
+                      <Table className="h-4 w-4" />
+                    </ButtonV2>
+                    <ButtonV2
+                      variant={viewMode === 'cards' ? 'primary' : 'ghost'}
+                      size="sm"
+                      onClick={() => setViewMode('cards')}
+                      className={cn(
+                        "rounded-l-none",
+                        viewMode === 'cards'
+                          ? 'bg-black text-white hover:bg-black/90'
+                          : 'text-black hover:bg-gray-100'
+                      )}
+                    >
+                      <LayoutGrid className="h-4 w-4" />
+                    </ButtonV2>
+                  </div>
+
                   <div className="flex items-center gap-2">
                     <span className="text-sm text-gray-600">Afficher:</span>
                     <Select
@@ -256,14 +318,23 @@ export default function StockMovementsPage() {
               </div>
             </CardHeader>
 
+            {/* 🆕 Phase 3.4.5: Rendering conditionnel Table vs Cards */}
             <CardContent className="p-0">
-              <MovementsTable
-                movements={movements}
-                loading={loading}
-                onMovementClick={handleMovementClick}
-                onCancelClick={handleCancelClick}
-                onOrderClick={handleOrderClick}
-              />
+              {viewMode === 'table' ? (
+                <MovementsTable
+                  movements={movements}
+                  loading={loading}
+                  onMovementClick={handleMovementClick}
+                  onCancelClick={handleCancelClick}
+                  onOrderClick={handleOrderClick}
+                />
+              ) : (
+                <MovementsListView
+                  movements={movements}
+                  loading={loading}
+                  selectedChannel={selectedChannelId}
+                />
+              )}
             </CardContent>
           </Card>
 
@@ -378,6 +449,16 @@ export default function StockMovementsPage() {
             const url = new URL(window.location.href)
             url.searchParams.set('tab', value)
             window.history.pushState({}, '', url)
+
+            // ✅ INJECTION AUTOMATIQUE : affects_forecast = false (mouvements RÉELS uniquement)
+            // ✅ Filtre selon direction (IN / OUT / ALL)
+            applyFilters({
+              ...filters,
+              movementTypes: value === 'in' ? ['IN'] : value === 'out' ? ['OUT'] : undefined,
+              affects_forecast: false,  // ✅ TOUJOURS false = mouvements réels uniquement
+              forecast_type: undefined,  // ✅ TOUJOURS undefined (pas de prévisionnel)
+              offset: 0
+            })
           }}
           className="w-full"
         >
@@ -393,121 +474,49 @@ export default function StockMovementsPage() {
             </TabsTrigger>
           </TabsList>
 
-          {/* ===== TAB ENTRÉES ===== */}
+          {/* ===== TAB ENTRÉES (RÉEL UNIQUEMENT) ===== */}
           <TabsContent value="in" className="space-y-6">
-            <Tabs
-              defaultValue="real"
-              onValueChange={(value) => {
-                applyFilters({
-                  ...filters,
-                  movementTypes: ['IN'],
-                  affects_forecast: value === 'forecast',
-                  forecast_type: value === 'forecast' ? 'in' : undefined,
-                  offset: 0
-                })
-              }}
-            >
-              <TabsList className="grid w-full max-w-md mx-auto grid-cols-2 mb-6">
-                <TabsTrigger value="real" className="text-sm font-medium">
-                  Entrées Réelles
-                </TabsTrigger>
-                <TabsTrigger value="forecast" className="text-sm font-medium">
-                  Entrées Prévisionnelles
-                </TabsTrigger>
-              </TabsList>
+            {/* Badge explicite : Mouvements Réels Uniquement */}
+            <div className="flex justify-center mb-4">
+              <Badge className="bg-green-600 text-white px-4 py-2 text-sm">
+                ✓ Historique Mouvements Effectués - Stock Réel Uniquement
+              </Badge>
+            </div>
 
-              <TabsContent value="real" className="space-y-6">
-                <MovementsContent
-                  title="Entrées Réelles"
-                  emptyMessage="Aucune entrée de stock réelle"
-                />
-              </TabsContent>
-
-              <TabsContent value="forecast" className="space-y-6">
-                <MovementsContent
-                  title="Entrées Prévisionnelles"
-                  emptyMessage="Aucune entrée prévisionnelle (commandes fournisseurs)"
-                />
-              </TabsContent>
-            </Tabs>
+            <MovementsContent
+              title="Entrées de Stock Réelles"
+              emptyMessage="Aucune entrée de stock réelle"
+            />
           </TabsContent>
 
-          {/* ===== TAB SORTIES ===== */}
+          {/* ===== TAB SORTIES (RÉEL UNIQUEMENT) ===== */}
           <TabsContent value="out" className="space-y-6">
-            <Tabs
-              defaultValue="real"
-              onValueChange={(value) => {
-                applyFilters({
-                  ...filters,
-                  movementTypes: ['OUT'],
-                  affects_forecast: value === 'forecast',
-                  forecast_type: value === 'forecast' ? 'out' : undefined,
-                  offset: 0
-                })
-              }}
-            >
-              <TabsList className="grid w-full max-w-md mx-auto grid-cols-2 mb-6">
-                <TabsTrigger value="real" className="text-sm font-medium">
-                  Sorties Réelles
-                </TabsTrigger>
-                <TabsTrigger value="forecast" className="text-sm font-medium">
-                  Sorties Prévisionnelles
-                </TabsTrigger>
-              </TabsList>
+            {/* Badge explicite : Mouvements Réels Uniquement */}
+            <div className="flex justify-center mb-4">
+              <Badge className="bg-green-600 text-white px-4 py-2 text-sm">
+                ✓ Historique Mouvements Effectués - Stock Réel Uniquement
+              </Badge>
+            </div>
 
-              <TabsContent value="real" className="space-y-6">
-                <MovementsContent
-                  title="Sorties Réelles"
-                  emptyMessage="Aucune sortie de stock réelle"
-                />
-              </TabsContent>
-
-              <TabsContent value="forecast" className="space-y-6">
-                <MovementsContent
-                  title="Sorties Prévisionnelles"
-                  emptyMessage="Aucune sortie prévisionnelle (commandes clients)"
-                />
-              </TabsContent>
-            </Tabs>
+            <MovementsContent
+              title="Sorties de Stock Réelles"
+              emptyMessage="Aucune sortie de stock réelle"
+            />
           </TabsContent>
 
-          {/* ===== TAB TOUS ===== */}
+          {/* ===== TAB TOUS (RÉEL UNIQUEMENT) ===== */}
           <TabsContent value="all" className="space-y-6">
-            <Tabs
-              defaultValue="real"
-              onValueChange={(value) => {
-                applyFilters({
-                  ...filters,
-                  movementTypes: undefined,
-                  affects_forecast: value === 'forecast',
-                  forecast_type: undefined,
-                  offset: 0
-                })
-              }}
-            >
-              <TabsList className="grid w-full max-w-md mx-auto grid-cols-2 mb-6">
-                <TabsTrigger value="real" className="text-sm font-medium">
-                  Mouvements Réels
-                </TabsTrigger>
-                <TabsTrigger value="forecast" className="text-sm font-medium">
-                  Mouvements Prévisionnels
-                </TabsTrigger>
-              </TabsList>
+            {/* Badge explicite : Mouvements Réels Uniquement */}
+            <div className="flex justify-center mb-4">
+              <Badge className="bg-green-600 text-white px-4 py-2 text-sm">
+                ✓ Historique Mouvements Effectués - Stock Réel Uniquement
+              </Badge>
+            </div>
 
-              <TabsContent value="real" className="space-y-6">
-                <MovementsContent
-                  title="Tous les Mouvements Réels"
-                  emptyMessage="Aucun mouvement de stock réel"
-                />
-              </TabsContent>
-
-              <TabsContent value="forecast" className="space-y-6">
-                <MovementsContent
-                  title="Tous les Mouvements Prévisionnels"
-                  emptyMessage="Aucun mouvement prévisionnel"
-                />
-              </TabsContent>
-            </Tabs>
+            <MovementsContent
+              title="Tous les Mouvements de Stock Réels"
+              emptyMessage="Aucun mouvement de stock réel"
+            />
           </TabsContent>
         </Tabs>
 
