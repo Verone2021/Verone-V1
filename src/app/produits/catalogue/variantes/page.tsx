@@ -1,7 +1,7 @@
-"use client"
+'use client';
 
-import { useState, useMemo, useCallback, useEffect } from 'react'
-import { useRouter } from 'next/navigation'
+import { useState, useMemo, useCallback, useEffect } from 'react';
+import { useRouter } from 'next/navigation';
 import {
   Search,
   Plus,
@@ -19,64 +19,69 @@ import {
   Tags,
   X,
   Archive,
-  ArchiveRestore
-} from 'lucide-react'
-import { ButtonV2 } from '@/components/ui/button'
-import { Badge } from '@/components/ui/badge'
-import { cn } from '@/lib/utils'
-import { PageHeader } from '@/components/layout/page-header'
-import { useVariantGroups } from '@/hooks/use-variant-groups'
-import { VariantGroupCreationWizard } from '@/components/business/variant-group-creation-wizard'
-import { VariantGroupEditModal } from '@/components/business/variant-group-edit-modal'
-import { AddProductsToGroupModal } from '@/components/forms/AddProductsToGroupModal'
-import { useToast } from '@/hooks/use-toast'
-import { ElegantKpiCard } from '@/components/ui/elegant-kpi-card'
-import { CategoryFilterCombobox } from '@/components/business/category-filter-combobox'
+  ArchiveRestore,
+} from 'lucide-react';
+import { ButtonV2 } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
+import { cn } from '@/lib/utils';
+import { PageHeader } from '@/components/layout/page-header';
+import { useVariantGroups } from '@/hooks/use-variant-groups';
+import { VariantGroupCreationWizard } from '@/components/business/variant-group-creation-wizard';
+import { VariantGroupEditModal } from '@/components/business/variant-group-edit-modal';
+import { AddProductsToGroupModal } from '@/components/forms/AddProductsToGroupModal';
+import { useToast } from '@/hooks/use-toast';
+import { ElegantKpiCard } from '@/components/ui/elegant-kpi-card';
+import { CategoryFilterCombobox } from '@/components/business/category-filter-combobox';
 
 // Interface filtres variantes
 interface LocalVariantFilters {
-  search: string
-  status: 'all' | 'active' | 'inactive'
-  type: 'all' | 'color' | 'material'
-  subcategoryId?: string
+  search: string;
+  status: 'all' | 'active' | 'inactive';
+  type: 'all' | 'color' | 'material';
+  subcategoryId?: string;
 }
 
 // Helper pour formater le type de variante
 const formatVariantType = (type?: string): string => {
-  if (!type) return ''
+  if (!type) return '';
   const typeMap: Record<string, string> = {
-    'color': 'Couleur',
-    'material': 'Matériau'
-  }
-  return typeMap[type] || type
-}
+    color: 'Couleur',
+    material: 'Matériau',
+  };
+  return typeMap[type] || type;
+};
 
 export default function VariantesPage() {
-  const { toast } = useToast()
-  const router = useRouter()
+  const { toast } = useToast();
+  const router = useRouter();
 
   // États pour la gestion des filtres et de l'interface
   const [filters, setFilters] = useState<LocalVariantFilters>({
-    search: "",
+    search: '',
     status: 'all',
     type: 'all',
-    subcategoryId: undefined
-  })
-  const [selectedGroups, setSelectedGroups] = useState<string[]>([])
-  const [editingGroup, setEditingGroup] = useState<any>(null)
-  const [showEditModal, setShowEditModal] = useState(false)
-  const [showAddProductsModal, setShowAddProductsModal] = useState(false)
-  const [selectedGroupForProducts, setSelectedGroupForProducts] = useState<any>(null)
-  const [activeTab, setActiveTab] = useState<'active' | 'archived'>('active')
-  const [archivedVariantGroups, setArchivedVariantGroups] = useState<any[]>([])
-  const [archivedLoading, setArchivedLoading] = useState(false)
+    subcategoryId: undefined,
+  });
+  const [selectedGroups, setSelectedGroups] = useState<string[]>([]);
+  const [editingGroup, setEditingGroup] = useState<any>(null);
+  const [showEditModal, setShowEditModal] = useState(false);
+  const [showAddProductsModal, setShowAddProductsModal] = useState(false);
+  const [selectedGroupForProducts, setSelectedGroupForProducts] =
+    useState<any>(null);
+  const [activeTab, setActiveTab] = useState<'active' | 'archived'>('active');
+  const [archivedVariantGroups, setArchivedVariantGroups] = useState<any[]>([]);
+  const [archivedLoading, setArchivedLoading] = useState(false);
 
   // Stabiliser les filtres avec useMemo pour éviter boucle infinie
-  const stableFilters = useMemo(() => ({
-    search: filters.search || undefined,
-    variant_type: filters.type === 'all' ? undefined : filters.type as any,
-    is_active: filters.status === 'all' ? undefined : filters.status === 'active'
-  }), [filters.search, filters.type, filters.status])
+  const stableFilters = useMemo(
+    () => ({
+      search: filters.search || undefined,
+      variant_type: filters.type === 'all' ? undefined : (filters.type as any),
+      is_active:
+        filters.status === 'all' ? undefined : filters.status === 'active',
+    }),
+    [filters.search, filters.type, filters.status]
+  );
 
   // Hooks pour les données
   const {
@@ -90,8 +95,8 @@ export default function VariantesPage() {
     removeProductFromGroup,
     archiveVariantGroup,
     unarchiveVariantGroup,
-    loadArchivedVariantGroups
-  } = useVariantGroups(stableFilters)
+    loadArchivedVariantGroups,
+  } = useVariantGroups(stableFilters);
 
   // Plus besoin de hooks familles/catégories/subcatégories (géré par CategoryFilterCombobox)
 
@@ -101,109 +106,128 @@ export default function VariantesPage() {
       prev.includes(groupId)
         ? prev.filter(id => id !== groupId)
         : [...prev, groupId]
-    )
-  }
+    );
+  };
 
   const formatDate = (dateString: string) => {
     return new Date(dateString).toLocaleDateString('fr-FR', {
       day: '2-digit',
       month: '2-digit',
-      year: 'numeric'
-    })
-  }
+      year: 'numeric',
+    });
+  };
 
   const handleEditGroup = useCallback((group: any) => {
-    setEditingGroup(group)
-    setShowEditModal(true)
-  }, [])
+    setEditingGroup(group);
+    setShowEditModal(true);
+  }, []);
 
   const handleCreateGroup = useCallback(() => {
-    setEditingGroup(null)
-    setShowEditModal(true)
-  }, [])
+    setEditingGroup(null);
+    setShowEditModal(true);
+  }, []);
 
-  const handleDeleteGroup = useCallback(async (groupId: string) => {
-    if (!confirm('Êtes-vous sûr de vouloir supprimer ce groupe de variantes ?')) return
+  const handleDeleteGroup = useCallback(
+    async (groupId: string) => {
+      if (
+        !confirm('Êtes-vous sûr de vouloir supprimer ce groupe de variantes ?')
+      )
+        return;
 
-    const result = await deleteVariantGroup(groupId)
-    if (result) {
-      toast({
-        title: "Groupe supprimé",
-        description: "Le groupe de variantes a été supprimé avec succès",
-      })
-    }
-  }, [deleteVariantGroup, toast])
-
-  const handleArchiveGroup = useCallback(async (groupId: string, isArchived: boolean) => {
-    const result = isArchived
-      ? await unarchiveVariantGroup(groupId)
-      : await archiveVariantGroup(groupId)
-
-    if (result) {
-      refetch()
-      if (activeTab === 'archived') {
-        await handleLoadArchivedGroups()
+      const result = await deleteVariantGroup(groupId);
+      if (result) {
+        toast({
+          title: 'Groupe supprimé',
+          description: 'Le groupe de variantes a été supprimé avec succès',
+        });
       }
-    }
-  }, [archiveVariantGroup, unarchiveVariantGroup, refetch, activeTab])
+    },
+    [deleteVariantGroup, toast]
+  );
+
+  const handleArchiveGroup = useCallback(
+    async (groupId: string, isArchived: boolean) => {
+      const result = isArchived
+        ? await unarchiveVariantGroup(groupId)
+        : await archiveVariantGroup(groupId);
+
+      if (result) {
+        refetch();
+        if (activeTab === 'archived') {
+          await handleLoadArchivedGroups();
+        }
+      }
+    },
+    [archiveVariantGroup, unarchiveVariantGroup, refetch, activeTab]
+  );
 
   const handleLoadArchivedGroups = useCallback(async () => {
-    setArchivedLoading(true)
-    const archivedGroups = await loadArchivedVariantGroups()
-    setArchivedVariantGroups(archivedGroups)
-    setArchivedLoading(false)
-  }, [loadArchivedVariantGroups])
+    setArchivedLoading(true);
+    const archivedGroups = await loadArchivedVariantGroups();
+    setArchivedVariantGroups(archivedGroups);
+    setArchivedLoading(false);
+  }, [loadArchivedVariantGroups]);
 
   const handleAddProducts = useCallback((group: any) => {
-    setSelectedGroupForProducts(group)
-    setShowAddProductsModal(true)
-  }, [])
+    setSelectedGroupForProducts(group);
+    setShowAddProductsModal(true);
+  }, []);
 
-  const handleRemoveProduct = useCallback(async (productId: string, productName: string) => {
-    if (!confirm(`Êtes-vous sûr de vouloir retirer "${productName}" de ce groupe ?`)) return
+  const handleRemoveProduct = useCallback(
+    async (productId: string, productName: string) => {
+      if (
+        !confirm(
+          `Êtes-vous sûr de vouloir retirer "${productName}" de ce groupe ?`
+        )
+      )
+        return;
 
-    const result = await removeProductFromGroup(productId)
-    if (result) {
-      toast({
-        title: "Produit retiré",
-        description: `"${productName}" a été retiré du groupe`,
-      })
-      refetch()
-    }
-  }, [removeProductFromGroup, toast, refetch])
+      const result = await removeProductFromGroup(productId);
+      if (result) {
+        toast({
+          title: 'Produit retiré',
+          description: `"${productName}" a été retiré du groupe`,
+        });
+        refetch();
+      }
+    },
+    [removeProductFromGroup, toast, refetch]
+  );
 
   // Charger les groupes archivés quand on change d'onglet
   useEffect(() => {
     if (activeTab === 'archived' && archivedVariantGroups.length === 0) {
-      handleLoadArchivedGroups()
+      handleLoadArchivedGroups();
     }
-  }, [activeTab, archivedVariantGroups.length, handleLoadArchivedGroups])
+  }, [activeTab, archivedVariantGroups.length, handleLoadArchivedGroups]);
 
   // Obtenir l'icône du type de variante
   const getVariantTypeIcon = (type: string) => {
     switch (type) {
       case 'color':
-        return <Palette className="h-4 w-4 text-purple-600" />
+        return <Palette className="h-4 w-4 text-purple-600" />;
       case 'size':
-        return <Ruler className="h-4 w-4 text-blue-600" />
+        return <Ruler className="h-4 w-4 text-blue-600" />;
       case 'material':
-        return <Layers className="h-4 w-4 text-green-600" />
+        return <Layers className="h-4 w-4 text-green-600" />;
       case 'pattern':
-        return <Layers className="h-4 w-4 text-black" />
+        return <Layers className="h-4 w-4 text-black" />;
       default:
-        return <Package className="h-4 w-4 text-gray-600" />
+        return <Package className="h-4 w-4 text-gray-600" />;
     }
-  }
+  };
 
   // Composant Groupe Card
   const renderGroupCard = (group: any, isArchived: boolean) => {
-    const isSelected = selectedGroups.includes(group.id)
+    const isSelected = selectedGroups.includes(group.id);
 
     return (
-      <div className={cn(
-        "bg-white rounded-lg border border-gray-200 overflow-hidden hover:shadow-md transition-shadow flex flex-col h-full",
-        isSelected && "ring-2 ring-black"
-      )}>
+      <div
+        className={cn(
+          'bg-white rounded-lg border border-gray-200 overflow-hidden hover:shadow-md transition-shadow flex flex-col h-full',
+          isSelected && 'ring-2 ring-black'
+        )}
+      >
         {/* En-tête avec sélection - HAUTEUR FIXE */}
         <div className="p-3 border-b border-gray-200 flex-none">
           <div className="flex items-start justify-between mb-2">
@@ -223,7 +247,8 @@ export default function VariantesPage() {
                 </div>
                 {group.subcategory && (
                   <p className="text-xs text-gray-500 truncate">
-                    {group.subcategory.category?.name} → {group.subcategory.name}
+                    {group.subcategory.category?.name} →{' '}
+                    {group.subcategory.name}
                   </p>
                 )}
               </div>
@@ -232,7 +257,10 @@ export default function VariantesPage() {
 
           {/* Badge type de variante uniquement (ce qui varie) */}
           <div className="flex items-center gap-1.5">
-            <Badge variant="outline" className="bg-purple-50 text-purple-700 border-purple-200 text-[10px] px-1.5 py-0.5 flex-shrink-0">
+            <Badge
+              variant="outline"
+              className="bg-purple-50 text-purple-700 border-purple-200 text-[10px] px-1.5 py-0.5 flex-shrink-0"
+            >
               {formatVariantType(group.variant_type)}
             </Badge>
           </div>
@@ -241,7 +269,10 @@ export default function VariantesPage() {
         {/* Aperçu des produits - HAUTEUR FLEXIBLE */}
         <div className="p-3 flex-1 flex flex-col">
           <div className="flex items-center justify-between text-xs text-gray-600 mb-3">
-            <span className="font-medium">{group.product_count || 0} produit{(group.product_count || 0) !== 1 ? 's' : ''}</span>
+            <span className="font-medium">
+              {group.product_count || 0} produit
+              {(group.product_count || 0) !== 1 ? 's' : ''}
+            </span>
             <span className="text-[10px] text-gray-400">
               Créé le {formatDate(group.created_at)}
             </span>
@@ -252,7 +283,10 @@ export default function VariantesPage() {
             {group.products && group.products.length > 0 ? (
               <div className="flex space-x-1.5 overflow-x-auto h-full scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-transparent">
                 {group.products.slice(0, 5).map((product: any) => (
-                  <div key={product.id} className="relative flex-shrink-0 w-14 h-14 rounded bg-gray-100 overflow-hidden group/product">
+                  <div
+                    key={product.id}
+                    className="relative flex-shrink-0 w-14 h-14 rounded bg-gray-100 overflow-hidden group/product"
+                  >
                     {product.image_url ? (
                       <img
                         src={product.image_url}
@@ -266,9 +300,9 @@ export default function VariantesPage() {
                     )}
                     {/* Bouton retirer en hover */}
                     <button
-                      onClick={(e) => {
-                        e.stopPropagation()
-                        handleRemoveProduct(product.id, product.name)
+                      onClick={e => {
+                        e.stopPropagation();
+                        handleRemoveProduct(product.id, product.name);
                       }}
                       className="absolute top-0.5 right-0.5 bg-red-500 text-white rounded-full p-0.5 opacity-0 group-hover/product:opacity-100 transition-opacity hover:bg-red-600"
                       title={`Retirer ${product.name}`}
@@ -300,39 +334,41 @@ export default function VariantesPage() {
                 size="sm"
                 variant="outline"
                 onClick={() => handleAddProducts(group)}
-                className="text-[10px] h-6 w-full px-1"
+                icon={Plus}
+                className="w-full"
                 title="Ajouter des produits"
               >
-                <Plus className="h-2.5 w-2.5 mr-0.5" />
                 Ajouter
               </ButtonV2>
               <ButtonV2
                 size="sm"
                 variant="outline"
-                onClick={() => router.push(`/produits/catalogue/variantes/${group.id}`)}
-                className="text-[10px] h-6 w-full px-1"
+                onClick={() =>
+                  router.push(`/produits/catalogue/variantes/${group.id}`)
+                }
+                icon={ExternalLink}
+                className="w-full"
                 title="Voir les détails"
               >
-                <ExternalLink className="h-2.5 w-2.5 mr-0.5" />
                 Détails
               </ButtonV2>
               <ButtonV2
                 size="sm"
                 variant="ghost"
                 onClick={() => handleEditGroup(group)}
-                className="text-[10px] h-6 w-full px-1"
+                icon={Edit3}
+                className="w-full"
                 title="Modifier le groupe"
               >
-                <Edit3 className="h-2.5 w-2.5 mr-0.5" />
                 Modifier
               </ButtonV2>
               <ButtonV2
                 size="sm"
                 variant="ghost"
                 onClick={() => handleArchiveGroup(group.id, false)}
-                className="text-[10px] h-6 w-full px-1"
-                title="Archiver le groupe"
                 icon={Archive}
+                className="w-full"
+                title="Archiver le groupe"
               />
             </div>
           ) : (
@@ -341,20 +377,22 @@ export default function VariantesPage() {
               <ButtonV2
                 size="sm"
                 variant="outline"
-                onClick={() => router.push(`/produits/catalogue/variantes/${group.id}`)}
-                className="text-[10px] h-6 w-full px-1"
+                onClick={() =>
+                  router.push(`/produits/catalogue/variantes/${group.id}`)
+                }
+                icon={ExternalLink}
+                className="w-full"
                 title="Voir les détails"
               >
-                <ExternalLink className="h-2.5 w-2.5 mr-0.5" />
                 Détails
               </ButtonV2>
               <ButtonV2
                 size="sm"
                 variant="secondary"
                 onClick={() => handleArchiveGroup(group.id, true)}
-                className="text-[10px] h-6 w-full px-1"
-                title="Restaurer le groupe"
                 icon={ArchiveRestore}
+                className="w-full"
+                title="Restaurer le groupe"
               >
                 Restaurer
               </ButtonV2>
@@ -362,35 +400,41 @@ export default function VariantesPage() {
                 size="sm"
                 variant="destructive"
                 onClick={() => handleDeleteGroup(group.id)}
-                className="text-[10px] h-6 w-full px-1"
-                title="Supprimer le groupe"
                 icon={Trash2}
+                className="w-full"
+                title="Supprimer le groupe"
               />
             </div>
           )}
         </div>
       </div>
-    )
-  }
+    );
+  };
 
   // Filtrage côté client par subcategory
   const filteredVariantGroups = useMemo(() => {
     if (!filters.subcategoryId) {
-      return variantGroups
+      return variantGroups;
     }
 
     // Filtrer par subcategory_id du groupe (relation directe)
-    return variantGroups.filter((group: any) =>
-      group.subcategory_id === filters.subcategoryId
-    )
-  }, [variantGroups, filters.subcategoryId])
+    return variantGroups.filter(
+      (group: any) => group.subcategory_id === filters.subcategoryId
+    );
+  }, [variantGroups, filters.subcategoryId]);
 
   // Statistiques (basées sur groupes filtrés)
-  const stats = useMemo(() => ({
-    total: filteredVariantGroups.length,
-    totalProducts: filteredVariantGroups.reduce((sum, g) => sum + (g.product_count || 0), 0),
-    types: new Set(filteredVariantGroups.map(g => g.variant_type)).size,
-  }), [filteredVariantGroups])
+  const stats = useMemo(
+    () => ({
+      total: filteredVariantGroups.length,
+      totalProducts: filteredVariantGroups.reduce(
+        (sum, g) => sum + (g.product_count || 0),
+        0
+      ),
+      types: new Set(filteredVariantGroups.map(g => g.variant_type)).size,
+    }),
+    [filteredVariantGroups]
+  );
 
   return (
     <div className="min-h-screen bg-slate-50">
@@ -399,11 +443,7 @@ export default function VariantesPage() {
         description="Organisation des variantes de produits (couleurs, tailles, matériaux)"
         icon={Palette}
         action={
-          <ButtonV2
-            variant="primary"
-            icon={Plus}
-            onClick={handleCreateGroup}
-          >
+          <ButtonV2 variant="primary" icon={Plus} onClick={handleCreateGroup}>
             Nouveau groupe
           </ButtonV2>
         }
@@ -429,132 +469,145 @@ export default function VariantesPage() {
           />
         </div>
 
-      {/* Barre de recherche et filtres */}
-      {/* Onglets variantes actives/archivées */}
-      <div className="flex border-b border-gray-200">
-        <button
-          onClick={() => setActiveTab('active')}
-          className={`px-6 py-3 font-medium transition-colors ${
-            activeTab === 'active'
-              ? 'border-b-2 border-black text-black'
-              : 'text-gray-600 hover:text-gray-800'
-          }`}
-        >
-          Variantes Actives ({variantGroups.length})
-        </button>
-        <button
-          onClick={() => setActiveTab('archived')}
-          className={`px-6 py-3 font-medium transition-colors ${
-            activeTab === 'archived'
-              ? 'border-b-2 border-black text-black'
-              : 'text-gray-600 hover:text-gray-800'
-          }`}
-        >
-          Variantes Archivées ({archivedVariantGroups.length})
-        </button>
-      </div>
+        {/* Barre de recherche et filtres */}
+        {/* Onglets variantes actives/archivées */}
+        <div className="flex border-b border-gray-200">
+          <button
+            onClick={() => setActiveTab('active')}
+            className={`px-6 py-3 font-medium transition-colors ${
+              activeTab === 'active'
+                ? 'border-b-2 border-black text-black'
+                : 'text-gray-600 hover:text-gray-800'
+            }`}
+          >
+            Variantes Actives ({variantGroups.length})
+          </button>
+          <button
+            onClick={() => setActiveTab('archived')}
+            className={`px-6 py-3 font-medium transition-colors ${
+              activeTab === 'archived'
+                ? 'border-b-2 border-black text-black'
+                : 'text-gray-600 hover:text-gray-800'
+            }`}
+          >
+            Variantes Archivées ({archivedVariantGroups.length})
+          </button>
+        </div>
 
-      {/* Recherche et filtres - ligne unique compacte */}
-      <div className="bg-white rounded-lg border border-gray-200 p-4">
-        <div className="flex items-center gap-3 flex-wrap">
-          {/* Barre de recherche - réduite */}
-          <div className="flex-1 min-w-[200px] max-w-xs relative">
-            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
-            <input
-              type="text"
-              placeholder="Rechercher..."
-              value={filters.search}
-              onChange={(e) => setFilters(prev => ({ ...prev, search: e.target.value }))}
-              className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-black focus:border-transparent"
-            />
-          </div>
+        {/* Recherche et filtres - ligne unique compacte */}
+        <div className="bg-white rounded-lg border border-gray-200 p-4">
+          <div className="flex items-center gap-3 flex-wrap">
+            {/* Barre de recherche - réduite */}
+            <div className="flex-1 min-w-[200px] max-w-xs relative">
+              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
+              <input
+                type="text"
+                placeholder="Rechercher..."
+                value={filters.search}
+                onChange={e =>
+                  setFilters(prev => ({ ...prev, search: e.target.value }))
+                }
+                className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-black focus:border-transparent"
+              />
+            </div>
 
-          {/* Filtre catégorie hiérarchique - Combobox moderne */}
-          <div className="w-72">
-            <CategoryFilterCombobox
-              value={filters.subcategoryId}
-              onValueChange={(subcategoryId) =>
-                setFilters(prev => ({ ...prev, subcategoryId }))
+            {/* Filtre catégorie hiérarchique - Combobox moderne */}
+            <div className="w-72">
+              <CategoryFilterCombobox
+                value={filters.subcategoryId}
+                onValueChange={subcategoryId =>
+                  setFilters(prev => ({ ...prev, subcategoryId }))
+                }
+                entityType="variant_groups"
+                placeholder="Filtrer par catégorie..."
+              />
+            </div>
+
+            {/* Filtres status et type */}
+            <select
+              value={filters.status}
+              onChange={e =>
+                setFilters(prev => ({ ...prev, status: e.target.value as any }))
               }
-              entityType="variant_groups"
-              placeholder="Filtrer par catégorie..."
-            />
+              className="border border-gray-300 rounded-md px-3 py-2"
+            >
+              <option value="all">Tous les statuts</option>
+              <option value="active">Actifs</option>
+              <option value="inactive">Inactifs</option>
+            </select>
+
+            <select
+              value={filters.type}
+              onChange={e =>
+                setFilters(prev => ({ ...prev, type: e.target.value as any }))
+              }
+              className="border border-gray-300 rounded-md px-3 py-2"
+            >
+              <option value="all">Tous les types</option>
+              <option value="color">Couleur</option>
+              <option value="material">Matériau</option>
+            </select>
           </div>
-
-          {/* Filtres status et type */}
-          <select
-            value={filters.status}
-            onChange={(e) => setFilters(prev => ({ ...prev, status: e.target.value as any }))}
-            className="border border-gray-300 rounded-md px-3 py-2"
-          >
-            <option value="all">Tous les statuts</option>
-            <option value="active">Actifs</option>
-            <option value="inactive">Inactifs</option>
-          </select>
-
-          <select
-            value={filters.type}
-            onChange={(e) => setFilters(prev => ({ ...prev, type: e.target.value as any }))}
-            className="border border-gray-300 rounded-md px-3 py-2"
-          >
-            <option value="all">Tous les types</option>
-            <option value="color">Couleur</option>
-            <option value="material">Matériau</option>
-          </select>
         </div>
-      </div>
 
-      {/* Actions groupées */}
-      {selectedGroups.length > 0 && (
-        <div className="flex items-center space-x-2 p-3 bg-blue-50 rounded-md">
-          <span className="text-sm text-gray-700">
-            {selectedGroups.length} groupe{selectedGroups.length !== 1 ? 's' : ''} sélectionné{selectedGroups.length !== 1 ? 's' : ''}
-          </span>
-          <ButtonV2
-            variant="destructive"
-            size="sm"
-            onClick={() => {
-              // TODO: Implémenter actions en lot
-            }}
-          >
-            Supprimer
-          </ButtonV2>
-        </div>
-      )}
+        {/* Actions groupées */}
+        {selectedGroups.length > 0 && (
+          <div className="flex items-center space-x-2 p-3 bg-blue-50 rounded-md">
+            <span className="text-sm text-gray-700">
+              {selectedGroups.length} groupe
+              {selectedGroups.length !== 1 ? 's' : ''} sélectionné
+              {selectedGroups.length !== 1 ? 's' : ''}
+            </span>
+            <ButtonV2
+              variant="destructive"
+              size="sm"
+              onClick={() => {
+                // TODO: Implémenter actions en lot
+              }}
+            >
+              Supprimer
+            </ButtonV2>
+          </div>
+        )}
 
-      {/* Grille des groupes - hauteur uniforme */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 auto-rows-fr">
-        {activeTab === 'active' ? (
-          loading ? (
-            Array.from({ length: 6 }).map((_, i) => (
-              <div key={i} className="bg-white rounded-lg border border-gray-200 animate-pulse">
-                <div className="p-4 border-b border-gray-200">
-                  <div className="h-6 bg-gray-200 rounded w-3/4 mb-2"></div>
-                  <div className="h-4 bg-gray-200 rounded w-1/2"></div>
+        {/* Grille des groupes - hauteur uniforme */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 auto-rows-fr">
+          {activeTab === 'active' ? (
+            loading ? (
+              Array.from({ length: 6 }).map((_, i) => (
+                <div
+                  key={i}
+                  className="bg-white rounded-lg border border-gray-200 animate-pulse"
+                >
+                  <div className="p-4 border-b border-gray-200">
+                    <div className="h-6 bg-gray-200 rounded w-3/4 mb-2"></div>
+                    <div className="h-4 bg-gray-200 rounded w-1/2"></div>
+                  </div>
+                  <div className="p-4">
+                    <div className="h-4 bg-gray-200 rounded w-full mb-2"></div>
+                    <div className="h-20 bg-gray-200 rounded"></div>
+                  </div>
                 </div>
-                <div className="p-4">
-                  <div className="h-4 bg-gray-200 rounded w-full mb-2"></div>
-                  <div className="h-20 bg-gray-200 rounded"></div>
-                </div>
+              ))
+            ) : error ? (
+              <div className="col-span-full p-8 text-center text-red-500 bg-white rounded-lg border border-red-200">
+                Erreur lors du chargement des groupes: {error}
               </div>
-            ))
-          ) : error ? (
-            <div className="col-span-full p-8 text-center text-red-500 bg-white rounded-lg border border-red-200">
-              Erreur lors du chargement des groupes: {error}
-            </div>
-          ) : filteredVariantGroups.length > 0 ? (
-            filteredVariantGroups.map(group => (
-              <div key={group.id}>{renderGroupCard(group, false)}</div>
-            ))
-          ) : (
-            <div className="col-span-full p-8 text-center text-gray-500 bg-white rounded-lg border border-gray-200">
-              Aucun groupe de variantes trouvé pour les critères sélectionnés
-            </div>
-          )
-        ) : (
-          archivedLoading ? (
+            ) : filteredVariantGroups.length > 0 ? (
+              filteredVariantGroups.map(group => (
+                <div key={group.id}>{renderGroupCard(group, false)}</div>
+              ))
+            ) : (
+              <div className="col-span-full p-8 text-center text-gray-500 bg-white rounded-lg border border-gray-200">
+                Aucun groupe de variantes trouvé pour les critères sélectionnés
+              </div>
+            )
+          ) : archivedLoading ? (
             Array.from({ length: 6 }).map((_, i) => (
-              <div key={i} className="bg-white rounded-lg border border-gray-200 animate-pulse">
+              <div
+                key={i}
+                className="bg-white rounded-lg border border-gray-200 animate-pulse"
+              >
                 <div className="p-4 border-b border-gray-200">
                   <div className="h-6 bg-gray-200 rounded w-3/4 mb-2"></div>
                   <div className="h-4 bg-gray-200 rounded w-1/2"></div>
@@ -573,60 +626,60 @@ export default function VariantesPage() {
             <div className="col-span-full p-8 text-center text-gray-500 bg-white rounded-lg border border-gray-200">
               Aucun groupe de variantes archivé
             </div>
-          )
+          )}
+        </div>
+
+        {/* Modal de création (Wizard 3 étapes) */}
+        {showEditModal && !editingGroup && (
+          <VariantGroupCreationWizard
+            isOpen={showEditModal}
+            onClose={() => setShowEditModal(false)}
+            onSuccess={groupId => {
+              console.log('Groupe créé:', groupId);
+              refetch();
+              setShowEditModal(false);
+            }}
+          />
+        )}
+
+        {/* Modal d'édition */}
+        {showEditModal && editingGroup && (
+          <VariantGroupEditModal
+            isOpen={showEditModal}
+            onClose={() => {
+              setShowEditModal(false);
+              setEditingGroup(null);
+            }}
+            onSubmit={async (groupId, data) => {
+              await updateVariantGroup(groupId, data);
+              refetch();
+              setShowEditModal(false);
+              setEditingGroup(null);
+            }}
+            group={editingGroup}
+          />
+        )}
+
+        {/* Modal ajout produits */}
+        {showAddProductsModal && selectedGroupForProducts && (
+          <AddProductsToGroupModal
+            isOpen={showAddProductsModal}
+            onClose={() => {
+              setShowAddProductsModal(false);
+              setSelectedGroupForProducts(null);
+            }}
+            variantGroup={selectedGroupForProducts}
+            onProductsAdded={() => {
+              refetch();
+              toast({
+                title: 'Produits ajoutés',
+                description:
+                  'Les produits ont été ajoutés au groupe avec succès',
+              });
+            }}
+          />
         )}
       </div>
-
-      {/* Modal de création (Wizard 3 étapes) */}
-      {showEditModal && !editingGroup && (
-        <VariantGroupCreationWizard
-          isOpen={showEditModal}
-          onClose={() => setShowEditModal(false)}
-          onSuccess={(groupId) => {
-            console.log('Groupe créé:', groupId)
-            refetch()
-            setShowEditModal(false)
-          }}
-        />
-      )}
-
-      {/* Modal d'édition */}
-      {showEditModal && editingGroup && (
-        <VariantGroupEditModal
-          isOpen={showEditModal}
-          onClose={() => {
-            setShowEditModal(false)
-            setEditingGroup(null)
-          }}
-          onSubmit={async (groupId, data) => {
-            await updateVariantGroup(groupId, data)
-            refetch()
-            setShowEditModal(false)
-            setEditingGroup(null)
-          }}
-          group={editingGroup}
-        />
-      )}
-
-      {/* Modal ajout produits */}
-      {showAddProductsModal && selectedGroupForProducts && (
-        <AddProductsToGroupModal
-          isOpen={showAddProductsModal}
-          onClose={() => {
-            setShowAddProductsModal(false)
-            setSelectedGroupForProducts(null)
-          }}
-          variantGroup={selectedGroupForProducts}
-          onProductsAdded={() => {
-            refetch()
-            toast({
-              title: "Produits ajoutés",
-              description: "Les produits ont été ajoutés au groupe avec succès"
-            })
-          }}
-        />
-      )}
-      </div>
     </div>
-  )
+  );
 }
