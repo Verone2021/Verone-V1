@@ -1,9 +1,9 @@
-"use client"
+'use client';
 
-import { useState, useEffect } from 'react'
-import { useRouter } from 'next/navigation'
-import Link from 'next/link'
-import Image from 'next/image'
+import { useState, useEffect } from 'react';
+import { useRouter } from 'next/navigation';
+import Link from 'next/link';
+import Image from 'next/image';
 import {
   Package,
   BarChart3,
@@ -18,22 +18,27 @@ import {
   Clock,
   CheckCircle,
   Eye,
-} from 'lucide-react'
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
-import { ButtonV2 } from '@/components/ui/button'
-import { Badge } from '@/components/ui/badge'
-import { useStockDashboard } from '@/hooks/use-stock-dashboard'
-import { ForecastSummaryWidget } from '@/components/business/forecast-summary-widget'
-import { formatPrice } from '@/lib/utils'
-import { StockKPICard } from '@/components/ui-v2/stock/StockKPICard'
-import { StockMovementCard } from '@/components/ui-v2/stock/StockMovementCard'
-import { ChannelFilter } from '@/components/ui-v2/stock'
-import { mapRecentMovementsToCards } from '@/lib/stock/movement-mappers'
+} from 'lucide-react';
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from '@/components/ui/card';
+import { ButtonV2 } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
+import { useStockDashboard } from '@/hooks/use-stock-dashboard';
+import { formatPrice } from '@/lib/utils';
+import { StockKPICard } from '@/components/ui-v2/stock/StockKPICard';
+import { ChannelFilter } from '@/components/ui-v2/stock';
 
 export default function StocksDashboardPage() {
-  const router = useRouter()
-  const { metrics, loading, error, refetch } = useStockDashboard()
-  const [selectedChannelId, setSelectedChannelId] = useState<string | null>(null)
+  const router = useRouter();
+  const { metrics, loading, error, refetch } = useStockDashboard();
+  const [selectedChannelId, setSelectedChannelId] = useState<string | null>(
+    null
+  );
 
   // Extraction des métriques avec fallbacks
   const overview = metrics?.overview || {
@@ -44,36 +49,44 @@ export default function StocksDashboardPage() {
     total_products: 0,
     total_quantity: 0,
     total_available: 0,
-  }
+  };
 
   const movements = metrics?.movements || {
-    last_7_days: { entries: { count: 0, quantity: 0 }, exits: { count: 0, quantity: 0 }, adjustments: { count: 0, quantity: 0 } },
+    last_7_days: {
+      entries: { count: 0, quantity: 0 },
+      exits: { count: 0, quantity: 0 },
+      adjustments: { count: 0, quantity: 0 },
+    },
     today: { entries: 0, exits: 0, adjustments: 0 },
-    total_movements: 0
-  }
+    total_movements: 0,
+  };
 
-  const lowStockProducts = metrics?.low_stock_products || []
-  const recentMovements = metrics?.recent_movements || []
-  const incomingOrders = metrics?.incoming_orders || []
-  const outgoingOrders = metrics?.outgoing_orders || []
+  const lowStockProducts = metrics?.low_stock_products || [];
+  const recentMovements = metrics?.recent_movements || [];
+  const incomingOrders = metrics?.incoming_orders || [];
+  const outgoingOrders = metrics?.outgoing_orders || [];
 
-  const totalAlerts = overview.products_out_of_stock + overview.products_below_min
+  const totalAlerts =
+    overview.products_out_of_stock + overview.products_below_min;
 
   // Auto-refetch mouvements au changement canal
   useEffect(() => {
     if (!loading && selectedChannelId !== null) {
-      refetch()
+      refetch();
     }
-  }, [selectedChannelId])
+  }, [selectedChannelId]);
 
   // Handler pour ouvrir les détails de commande (modal)
-  const handleOrderClick = (orderId: string, orderType: 'purchase' | 'sales') => {
+  const handleOrderClick = (
+    orderId: string,
+    orderType: 'purchase' | 'sales'
+  ) => {
     if (orderType === 'purchase') {
-      router.push(`/commandes/fournisseurs/${orderId}`)
+      router.push(`/commandes/fournisseurs/${orderId}`);
     } else {
-      router.push(`/commandes/clients/${orderId}`)
+      router.push(`/commandes/clients/${orderId}`);
     }
-  }
+  };
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -89,7 +102,9 @@ export default function StocksDashboardPage() {
               disabled={loading}
               className="border-black text-black hover:bg-black hover:text-white transition-all duration-200"
             >
-              <RefreshCw className={`h-3 w-3 mr-1.5 ${loading ? 'animate-spin' : ''}`} />
+              <RefreshCw
+                className={`h-3 w-3 mr-1.5 ${loading ? 'animate-spin' : ''}`}
+              />
               <span className="text-xs">Actualiser</span>
             </ButtonV2>
           </div>
@@ -102,7 +117,9 @@ export default function StocksDashboardPage() {
           <CardContent className="pt-5 pb-4 space-y-4">
             {/* Section Pages Stock */}
             <div>
-              <p className="text-xs font-medium text-gray-500 uppercase tracking-wide mb-2">Pages Stock</p>
+              <p className="text-xs font-medium text-gray-500 uppercase tracking-wide mb-2">
+                Pages Stock
+              </p>
               <div className="flex gap-2 flex-wrap">
                 <ButtonV2
                   variant="outline"
@@ -133,7 +150,10 @@ export default function StocksDashboardPage() {
                   <AlertTriangle className="h-4 w-4 mr-2" />
                   <span className="text-xs">Alertes</span>
                   {totalAlerts > 0 && (
-                    <Badge variant="destructive" className="ml-2 h-5 px-1.5 text-xs">
+                    <Badge
+                      variant="destructive"
+                      className="ml-2 h-5 px-1.5 text-xs"
+                    >
                       {totalAlerts}
                     </Badge>
                   )}
@@ -158,12 +178,30 @@ export default function StocksDashboardPage() {
                   <ArrowUpFromLine className="h-4 w-4 mr-2" />
                   <span className="text-xs">Sorties</span>
                 </ButtonV2>
+
+                <ButtonV2
+                  variant="outline"
+                  size="sm"
+                  className="border-blue-500 text-blue-600 hover:bg-blue-500 hover:text-white transition-colors"
+                  onClick={() => router.push('/stocks/previsionnel')}
+                >
+                  <TrendingUp className="h-4 w-4 mr-2" />
+                  <span className="text-xs">Prévisionnels</span>
+                  <Badge
+                    variant="outline"
+                    className="ml-2 h-5 px-1.5 text-[10px] border-blue-400 text-blue-600"
+                  >
+                    NEW
+                  </Badge>
+                </ButtonV2>
               </div>
             </div>
 
             {/* Section Pages Connexes */}
             <div>
-              <p className="text-xs font-medium text-gray-500 uppercase tracking-wide mb-2">Pages Connexes</p>
+              <p className="text-xs font-medium text-gray-500 uppercase tracking-wide mb-2">
+                Pages Connexes
+              </p>
               <div className="flex gap-4 flex-wrap items-center text-sm">
                 <Link
                   href="/produits/catalogue"
@@ -197,7 +235,9 @@ export default function StocksDashboardPage() {
         <Card className="border-gray-300 rounded-[10px] shadow-sm">
           <CardContent className="pt-5 pb-4">
             <div className="flex items-center gap-3">
-              <span className="text-sm font-medium text-gray-700">Filtre canal :</span>
+              <span className="text-sm font-medium text-gray-700">
+                Filtre canal :
+              </span>
               <ChannelFilter
                 selectedChannel={selectedChannelId}
                 onChannelChange={setSelectedChannelId}
@@ -233,8 +273,18 @@ export default function StocksDashboardPage() {
             title="Alertes"
             value={totalAlerts}
             icon={AlertTriangle}
-            variant={totalAlerts > 5 ? 'danger' : totalAlerts > 0 ? 'warning' : 'success'}
-            subtitle={totalAlerts > 0 ? `${totalAlerts} actions requises` : 'Aucune alerte'}
+            variant={
+              totalAlerts > 5
+                ? 'danger'
+                : totalAlerts > 0
+                  ? 'warning'
+                  : 'success'
+            }
+            subtitle={
+              totalAlerts > 0
+                ? `${totalAlerts} actions requises`
+                : 'Aucune alerte'
+            }
           />
 
           {/* KPI 4: Valeur Stock */}
@@ -243,7 +293,7 @@ export default function StocksDashboardPage() {
             value={new Intl.NumberFormat('fr-FR', {
               style: 'currency',
               currency: 'EUR',
-              maximumFractionDigits: 0
+              maximumFractionDigits: 0,
             }).format(overview.total_value || 0)}
             icon={BarChart3}
             variant="default"
@@ -266,94 +316,32 @@ export default function StocksDashboardPage() {
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
-            {/* Widget 1: Mouvements 7 Jours */}
+            {/* Widget: Alertes Stock Faible */}
             <Card className="border-gray-200 rounded-[10px]">
               <CardHeader className="pb-3">
-                <CardTitle className="text-black text-base">Mouvements 7 Derniers Jours</CardTitle>
-                <CardDescription className="text-xs">Activité récente confirmée</CardDescription>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-3">
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center space-x-2">
-                      <div className="p-2 bg-green-50 rounded-md">
-                        <ArrowDownToLine className="h-4 w-4 text-green-600" />
-                      </div>
-                      <span className="text-sm text-gray-700">Entrées</span>
-                    </div>
-                    <div className="flex items-center space-x-2">
-                      <span className="font-medium text-black text-sm">{movements.last_7_days.entries.count} mvts</span>
-                      <Badge variant="outline" className="border-green-300 text-green-600 text-xs">
-                        <TrendingUp className="h-3 w-3 mr-1" />
-                        +{movements.last_7_days.entries.quantity} unités
-                      </Badge>
-                    </div>
-                  </div>
-
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center space-x-2">
-                      <div className="p-2 bg-red-50 rounded-md">
-                        <ArrowUpFromLine className="h-4 w-4 text-red-600" />
-                      </div>
-                      <span className="text-sm text-gray-700">Sorties</span>
-                    </div>
-                    <div className="flex items-center space-x-2">
-                      <span className="font-medium text-black text-sm">{movements.last_7_days.exits.count} mvts</span>
-                      <Badge variant="outline" className="border-red-300 text-red-600 text-xs">
-                        <TrendingDown className="h-3 w-3 mr-1" />
-                        -{movements.last_7_days.exits.quantity} unités
-                      </Badge>
-                    </div>
-                  </div>
-
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center space-x-2">
-                      <div className="p-2 bg-blue-50 rounded-md">
-                        <BarChart3 className="h-4 w-4 text-blue-600" />
-                      </div>
-                      <span className="text-sm text-gray-700">Ajustements</span>
-                    </div>
-                    <div className="flex items-center space-x-2">
-                      <span className="font-medium text-black text-sm">{movements.last_7_days.adjustments.count} corrections</span>
-                      <Badge variant="outline" className="border-blue-300 text-blue-600 text-xs">
-                        {movements.last_7_days.adjustments.quantity >= 0 ? '+' : ''}{movements.last_7_days.adjustments.quantity}
-                      </Badge>
-                    </div>
-                  </div>
-
-                  <div className="pt-2 border-t border-gray-200">
-                    <div className="flex items-center justify-between">
-                      <span className="text-sm font-medium text-gray-700">Activité aujourd'hui</span>
-                      <div className="flex items-center space-x-3 text-xs">
-                        <span className="text-green-600 font-medium">{movements.today.entries} IN</span>
-                        <span className="text-gray-300">·</span>
-                        <span className="text-red-600 font-medium">{movements.today.exits} OUT</span>
-                        <span className="text-gray-300">·</span>
-                        <span className="text-blue-600 font-medium">{movements.today.adjustments} ADJ</span>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-
-            {/* Widget 2: Alertes Stock Faible */}
-            <Card className="border-gray-200 rounded-[10px]">
-              <CardHeader className="pb-3">
-                <CardTitle className="text-black text-base">Alertes Stock Faible</CardTitle>
-                <CardDescription className="text-xs">Produits nécessitant réapprovisionnement</CardDescription>
+                <CardTitle className="text-black text-base">
+                  Alertes Stock Faible
+                </CardTitle>
+                <CardDescription className="text-xs">
+                  Produits nécessitant réapprovisionnement
+                </CardDescription>
               </CardHeader>
               <CardContent>
                 <div className="space-y-3">
                   {lowStockProducts.length === 0 ? (
                     <div className="text-center py-6">
                       <Package className="h-10 w-10 text-gray-300 mx-auto mb-2" />
-                      <p className="text-sm text-gray-500">Aucune alerte stock actuellement</p>
+                      <p className="text-sm text-gray-500">
+                        Aucune alerte stock actuellement
+                      </p>
                     </div>
                   ) : (
                     <>
-                      {lowStockProducts.slice(0, 3).map((product) => (
-                        <div key={product.id} className="flex items-start justify-between border-b border-gray-100 pb-2 last:border-0">
+                      {lowStockProducts.slice(0, 3).map(product => (
+                        <div
+                          key={product.id}
+                          className="flex items-start justify-between border-b border-gray-100 pb-2 last:border-0"
+                        >
                           <div className="flex items-start gap-3 flex-1">
                             {/* Image Produit */}
                             {product.product_image_url ? (
@@ -377,15 +365,24 @@ export default function StocksDashboardPage() {
                               >
                                 {product.name}
                               </Link>
-                              <p className="text-xs text-gray-500 mt-0.5">{product.sku}</p>
+                              <p className="text-xs text-gray-500 mt-0.5">
+                                {product.sku}
+                              </p>
                             </div>
                           </div>
                           <div className="text-right flex items-center gap-2 ml-4 flex-shrink-0">
-                            <Badge variant="outline" className="border-orange-300 text-orange-600 text-xs">
+                            <Badge
+                              variant="outline"
+                              className="border-orange-300 text-orange-600 text-xs"
+                            >
                               {product.stock_quantity} réel
                             </Badge>
-                            {Math.abs(product.stock_forecasted_out || 0) > 0 && (
-                              <Badge variant="outline" className="border-red-300 text-red-600 text-xs">
+                            {Math.abs(product.stock_forecasted_out || 0) >
+                              0 && (
+                              <Badge
+                                variant="outline"
+                                className="border-red-300 text-red-600 text-xs"
+                              >
                                 {Math.abs(product.stock_forecasted_out)} réservé
                               </Badge>
                             )}
@@ -406,78 +403,9 @@ export default function StocksDashboardPage() {
                 </div>
               </CardContent>
             </Card>
-
-            {/* Widget 3: Derniers Mouvements */}
-            <Card className="border-gray-200 rounded-[10px]">
-              <CardHeader className="pb-3">
-                <CardTitle className="text-black text-base">Derniers Mouvements</CardTitle>
-                <CardDescription className="text-xs">5 mouvements les plus récents</CardDescription>
-              </CardHeader>
-              <CardContent>
-                {(() => {
-                  // Filtrage par canal si selectedChannelId défini
-                  const filteredMovements = selectedChannelId
-                    ? recentMovements.filter(m => m.channel_id === selectedChannelId)
-                    : recentMovements
-
-                  return filteredMovements.length === 0 ? (
-                    <div className="text-center py-6">
-                      <Clock className="h-10 w-10 text-gray-300 mx-auto mb-2" />
-                      <p className="text-sm text-gray-500">
-                        {selectedChannelId ? 'Aucun mouvement pour ce canal' : 'Aucun mouvement récent'}
-                      </p>
-                    </div>
-                  ) : (
-                    <div className="space-y-3">
-                      {mapRecentMovementsToCards(filteredMovements).map((cardProps) => (
-                      <StockMovementCard
-                        key={cardProps.movement.id}
-                        {...cardProps}
-                      />
-                    ))}
-                    <ButtonV2
-                      variant="outline"
-                      size="sm"
-                      onClick={() => router.push('/stocks/mouvements')}
-                      className="w-full border-black text-black hover:bg-black hover:text-white mt-2 text-xs transition-colors"
-                    >
-                      <Eye className="h-3 w-3 mr-2" />
-                      Voir tous les mouvements
-                    </ButtonV2>
-                  </div>
-                  )
-                })()}
-              </CardContent>
-            </Card>
           </CardContent>
         </Card>
-
-        {/* Section STOCK PRÉVISIONNEL - Border Accent Bleu Gauche + Background Bleu Subtil + Espacement */}
-        <Card className="border-l-4 border-blue-500 bg-blue-50 rounded-[10px] shadow-md mt-8">
-          <CardHeader>
-            <div className="flex items-center gap-2">
-              <Badge className="bg-blue-100 text-blue-700 border-blue-300">
-                <Clock className="h-3 w-3 mr-1" />
-                Commandes En Cours
-              </Badge>
-              <CardTitle className="text-xl text-black">⏱ STOCK PRÉVISIONNEL</CardTitle>
-            </div>
-            <CardDescription className="text-gray-700 font-medium">
-              Impact futur des commandes confirmées • INFORMATIF uniquement
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <ForecastSummaryWidget
-              incomingOrders={incomingOrders}
-              outgoingOrders={outgoingOrders}
-              totalIn={(overview as any).total_forecasted_in || 0}
-              totalOut={Math.abs((overview as any).total_forecasted_out || 0)}
-              onOrderClick={handleOrderClick}
-            />
-          </CardContent>
-        </Card>
-
       </div>
     </div>
-  )
+  );
 }

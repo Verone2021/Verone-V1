@@ -1,41 +1,57 @@
-'use client'
+'use client';
 
-import React, { useState, useEffect } from 'react'
-import { useRouter, useSearchParams } from 'next/navigation'
-import { ArrowUpDown, Download, RefreshCw, ChevronLeft, ChevronRight, Eye, ArrowLeft, Plus, Filter, ChevronDown, LayoutGrid, Table } from 'lucide-react'
-import { cn } from '@/lib/utils'
-import { ButtonV2 } from '@/components/ui/button'
+import React, { useState, useEffect } from 'react';
+import { useRouter, useSearchParams } from 'next/navigation';
+import {
+  ArrowUpDown,
+  Download,
+  RefreshCw,
+  ChevronLeft,
+  ChevronRight,
+  Eye,
+  ArrowLeft,
+  Plus,
+  Filter,
+  ChevronDown,
+  LayoutGrid,
+  Table,
+} from 'lucide-react';
+import { cn } from '@/lib/utils';
+import { ButtonV2 } from '@/components/ui/button';
 import {
   Card,
   CardContent,
   CardDescription,
   CardHeader,
   CardTitle,
-} from '@/components/ui/card'
+} from '@/components/ui/card';
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from '@/components/ui/select'
-import { Badge } from '@/components/ui/badge'
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
-import { MovementsTable } from '@/components/business/movements-table'
-import { MovementsFilters } from '@/components/business/movements-filters'
-import { MovementsStatsCards } from '@/components/business/movements-stats'
-import { ChannelFilter } from '@/components/ui-v2/stock'
-import { MovementsListView } from './components/MovementsListView'
-import { MovementDetailsModal } from '@/components/business/movement-details-modal'
-import { CancelMovementModal } from '@/components/business/cancel-movement-modal'
-import { QuickStockMovementModal } from '@/components/business/quick-stock-movement-modal'
-import { UniversalOrderDetailsModal } from '@/components/business/universal-order-details-modal'
-import { useMovementsHistory, MovementWithDetails } from '@/hooks/use-movements-history'
+} from '@/components/ui/select';
+import { Badge } from '@/components/ui/badge';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { MovementsTable } from '@/components/business/movements-table';
+import { MovementsFilters } from '@/components/business/movements-filters';
+import { MovementsStatsCards } from '@/components/business/movements-stats';
+import { ChannelFilter } from '@/components/ui-v2/stock';
+import { MovementsListView } from './components/MovementsListView';
+import { MovementDetailsModal } from '@/components/business/movement-details-modal';
+import { CancelMovementModal } from '@/components/business/cancel-movement-modal';
+import { PurchaseOrderFormModal } from '@/components/business/purchase-order-form-modal';
+import { UniversalOrderDetailsModal } from '@/components/business/universal-order-details-modal';
+import {
+  useMovementsHistory,
+  MovementWithDetails,
+} from '@/hooks/use-movements-history';
 
 export default function StockMovementsPage() {
-  const router = useRouter()
-  const searchParams = useSearchParams()
-  const initialTab = searchParams?.get('tab') || 'all' // Support ?tab=in|out|all
+  const router = useRouter();
+  const searchParams = useSearchParams();
+  const initialTab = searchParams?.get('tab') || 'all'; // Support ?tab=in|out|all
 
   const {
     loading,
@@ -47,101 +63,110 @@ export default function StockMovementsPage() {
     resetFilters,
     exportMovements,
     hasFilters,
-    pagination
-  } = useMovementsHistory()
+    pagination,
+  } = useMovementsHistory();
 
   // 🆕 Phase 3.4.2: État canal de vente pour filtrage mouvements
-  const [selectedChannelId, setSelectedChannelId] = useState<string | null>(null)
+  const [selectedChannelId, setSelectedChannelId] = useState<string | null>(
+    null
+  );
 
   // 🆕 Phase 3.4.5: État vue Table vs Cards
-  const [viewMode, setViewMode] = useState<'table' | 'cards'>('table')
+  const [viewMode, setViewMode] = useState<'table' | 'cards'>('table');
 
-  const [selectedMovement, setSelectedMovement] = useState<MovementWithDetails | null>(null)
-  const [showMovementDetails, setShowMovementDetails] = useState(false)
-  const [movementToCancel, setMovementToCancel] = useState<MovementWithDetails | null>(null)
-  const [showCancelModal, setShowCancelModal] = useState(false)
-  const [showQuickMovementModal, setShowQuickMovementModal] = useState(false)
+  const [selectedMovement, setSelectedMovement] =
+    useState<MovementWithDetails | null>(null);
+  const [showMovementDetails, setShowMovementDetails] = useState(false);
+  const [movementToCancel, setMovementToCancel] =
+    useState<MovementWithDetails | null>(null);
+  const [showCancelModal, setShowCancelModal] = useState(false);
+  const [showPurchaseOrderModal, setShowPurchaseOrderModal] = useState(false);
 
   // États pour filtres sidebar collapsible
-  const [filtersOpen, setFiltersOpen] = useState(false)
-  const [activeFiltersCount, setActiveFiltersCount] = useState(0)
+  const [filtersOpen, setFiltersOpen] = useState(false);
+  const [activeFiltersCount, setActiveFiltersCount] = useState(0);
 
   // Compter filtres actifs
   useEffect(() => {
     const count = Object.keys(filters).filter(key => {
-      const value = filters[key as keyof typeof filters]
+      const value = filters[key as keyof typeof filters];
       return (
         value !== undefined &&
         value !== null &&
         key !== 'limit' &&
         key !== 'offset'
-      )
-    }).length
-    setActiveFiltersCount(count)
-  }, [filters])
+      );
+    }).length;
+    setActiveFiltersCount(count);
+  }, [filters]);
 
   // 🆕 Phase 3.4.3: Auto-refetch quand canal change
   useEffect(() => {
     applyFilters({
       ...filters,
-      channelId: selectedChannelId
-    })
+      channelId: selectedChannelId,
+    });
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [selectedChannelId]) // Seulement selectedChannelId pour éviter boucle infinie
+  }, [selectedChannelId]); // Seulement selectedChannelId pour éviter boucle infinie
 
   // Modal commandes universelle
-  const [selectedOrderId, setSelectedOrderId] = useState<string | null>(null)
-  const [selectedOrderType, setSelectedOrderType] = useState<'sales' | 'purchase' | null>(null)
-  const [showOrderModal, setShowOrderModal] = useState(false)
+  const [selectedOrderId, setSelectedOrderId] = useState<string | null>(null);
+  const [selectedOrderType, setSelectedOrderType] = useState<
+    'sales' | 'purchase' | null
+  >(null);
+  const [showOrderModal, setShowOrderModal] = useState(false);
 
   // Pagination
   const handlePageChange = (newPage: number) => {
-    const newOffset = (newPage - 1) * pagination.pageSize
+    const newOffset = (newPage - 1) * pagination.pageSize;
     applyFilters({
       ...filters,
-      offset: newOffset
-    })
-  }
+      offset: newOffset,
+    });
+  };
 
   const handlePageSizeChange = (newSize: string) => {
     applyFilters({
       ...filters,
       limit: parseInt(newSize),
-      offset: 0
-    })
-  }
+      offset: 0,
+    });
+  };
 
   // Voir détails mouvement
   const handleMovementClick = (movement: MovementWithDetails) => {
-    setSelectedMovement(movement)
-    setShowMovementDetails(true)
-  }
+    setSelectedMovement(movement);
+    setShowMovementDetails(true);
+  };
 
   // Annuler mouvement
   const handleCancelClick = (movement: MovementWithDetails) => {
-    setMovementToCancel(movement)
-    setShowCancelModal(true)
-  }
+    setMovementToCancel(movement);
+    setShowCancelModal(true);
+  };
 
   // Succès annulation
   const handleCancelSuccess = () => {
-    window.location.reload()
-  }
+    window.location.reload();
+  };
 
   // Clic sur commande liée
-  const handleOrderClick = (orderId: string, orderType: 'sales' | 'purchase') => {
-    setSelectedOrderId(orderId)
-    setSelectedOrderType(orderType)
-    setShowOrderModal(true)
-  }
+  const handleOrderClick = (
+    orderId: string,
+    orderType: 'sales' | 'purchase'
+  ) => {
+    setSelectedOrderId(orderId);
+    setSelectedOrderType(orderType);
+    setShowOrderModal(true);
+  };
 
   // Composant réutilisable pour le contenu de chaque tab
   const MovementsContent = ({
     title,
-    emptyMessage
+    emptyMessage,
   }: {
-    title: string
-    emptyMessage: string
+    title: string;
+    emptyMessage: string;
   }) => (
     <>
       {/* Statistiques */}
@@ -151,7 +176,9 @@ export default function StockMovementsPage() {
       <Card className="border-gray-300 rounded-[10px] shadow-sm">
         <CardContent className="pt-5 pb-4">
           <div className="flex items-center gap-3">
-            <span className="text-sm font-medium text-gray-700">Filtre canal :</span>
+            <span className="text-sm font-medium text-gray-700">
+              Filtre canal :
+            </span>
             <ChannelFilter
               selectedChannel={selectedChannelId}
               onChannelChange={setSelectedChannelId}
@@ -179,10 +206,12 @@ export default function StockMovementsPage() {
                 {activeFiltersCount}
               </Badge>
             )}
-            <ChevronDown className={cn(
-              "h-4 w-4 ml-2 transition-transform duration-300",
-              filtersOpen && "rotate-180"
-            )} />
+            <ChevronDown
+              className={cn(
+                'h-4 w-4 ml-2 transition-transform duration-300',
+                filtersOpen && 'rotate-180'
+              )}
+            />
           </ButtonV2>
         </div>
 
@@ -191,8 +220,8 @@ export default function StockMovementsPage() {
           {/* Sidebar Filters (Collapsible) */}
           <div
             className={cn(
-              "transition-all duration-300 ease-in-out overflow-hidden",
-              filtersOpen ? "w-[280px]" : "w-0"
+              'transition-all duration-300 ease-in-out overflow-hidden',
+              filtersOpen ? 'w-[280px]' : 'w-0'
             )}
           >
             {filtersOpen && (
@@ -209,177 +238,198 @@ export default function StockMovementsPage() {
 
           {/* Contenu Principal (Tableau) */}
           <div className="flex-1 space-y-4">
-          {/* En-tête table avec stats et pagination */}
-          <Card className="border-black rounded-[10px] shadow-md">
-            <CardHeader className="pb-4">
-              <div className="flex items-center justify-between">
-                <div>
-                  <CardTitle className="flex items-center gap-2 text-black">
-                    {title}
-                    {hasFilters && (
-                      <Badge variant="outline" className="border-black text-black">Filtré</Badge>
-                    )}
-                  </CardTitle>
-                  <CardDescription>
-                    {loading ? (
-                      'Chargement...'
-                    ) : (
-                      <>
-                        {total === 0 ? (
-                          'Aucun mouvement trouvé'
-                        ) : (
-                          <>
-                            {((pagination.currentPage - 1) * pagination.pageSize) + 1}-
-                            {Math.min(pagination.currentPage * pagination.pageSize, total)} sur {total} mouvements
-                          </>
+            {/* En-tête table avec stats et pagination */}
+            <Card className="border-black rounded-[10px] shadow-md">
+              <CardHeader className="pb-4">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <CardTitle className="flex items-center gap-2 text-black">
+                      {title}
+                      {hasFilters && (
+                        <Badge
+                          variant="outline"
+                          className="border-black text-black"
+                        >
+                          Filtré
+                        </Badge>
+                      )}
+                    </CardTitle>
+                    <CardDescription>
+                      {loading ? (
+                        'Chargement...'
+                      ) : (
+                        <>
+                          {total === 0 ? (
+                            'Aucun mouvement trouvé'
+                          ) : (
+                            <>
+                              {(pagination.currentPage - 1) *
+                                pagination.pageSize +
+                                1}
+                              -
+                              {Math.min(
+                                pagination.currentPage * pagination.pageSize,
+                                total
+                              )}{' '}
+                              sur {total} mouvements
+                            </>
+                          )}
+                        </>
+                      )}
+                    </CardDescription>
+                  </div>
+
+                  {/* Pagination et taille de page */}
+                  <div className="flex items-center gap-4">
+                    {/* 🆕 Phase 3.4.5: Toggle Table/Cards */}
+                    <div className="flex items-center border border-black rounded-md">
+                      <ButtonV2
+                        variant={viewMode === 'table' ? 'primary' : 'ghost'}
+                        size="sm"
+                        onClick={() => setViewMode('table')}
+                        className={cn(
+                          'rounded-r-none',
+                          viewMode === 'table'
+                            ? 'bg-black text-white hover:bg-black/90'
+                            : 'text-black hover:bg-gray-100'
                         )}
-                      </>
-                    )}
-                  </CardDescription>
-                </div>
-
-                {/* Pagination et taille de page */}
-                <div className="flex items-center gap-4">
-                  {/* 🆕 Phase 3.4.5: Toggle Table/Cards */}
-                  <div className="flex items-center border border-black rounded-md">
-                    <ButtonV2
-                      variant={viewMode === 'table' ? 'primary' : 'ghost'}
-                      size="sm"
-                      onClick={() => setViewMode('table')}
-                      className={cn(
-                        "rounded-r-none",
-                        viewMode === 'table'
-                          ? 'bg-black text-white hover:bg-black/90'
-                          : 'text-black hover:bg-gray-100'
-                      )}
-                    >
-                      <Table className="h-4 w-4" />
-                    </ButtonV2>
-                    <ButtonV2
-                      variant={viewMode === 'cards' ? 'primary' : 'ghost'}
-                      size="sm"
-                      onClick={() => setViewMode('cards')}
-                      className={cn(
-                        "rounded-l-none",
-                        viewMode === 'cards'
-                          ? 'bg-black text-white hover:bg-black/90'
-                          : 'text-black hover:bg-gray-100'
-                      )}
-                    >
-                      <LayoutGrid className="h-4 w-4" />
-                    </ButtonV2>
-                  </div>
-
-                  <div className="flex items-center gap-2">
-                    <span className="text-sm text-gray-600">Afficher:</span>
-                    <Select
-                      value={pagination.pageSize.toString()}
-                      onValueChange={handlePageSizeChange}
-                    >
-                      <SelectTrigger className="w-20">
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="25">25</SelectItem>
-                        <SelectItem value="50">50</SelectItem>
-                        <SelectItem value="100">100</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
-
-                  {pagination.totalPages > 1 && (
-                    <div className="flex items-center gap-2">
-                      <ButtonV2
-                        variant="outline"
-                        size="sm"
-                        onClick={() => handlePageChange(pagination.currentPage - 1)}
-                        disabled={pagination.currentPage === 1 || loading}
-                        className="border-black text-black hover:bg-black hover:text-white"
                       >
-                        <ChevronLeft className="h-4 w-4" />
+                        <Table className="h-4 w-4" />
                       </ButtonV2>
-
-                      <span className="text-sm text-gray-600">
-                        Page {pagination.currentPage} sur {pagination.totalPages}
-                      </span>
-
                       <ButtonV2
-                        variant="outline"
+                        variant={viewMode === 'cards' ? 'primary' : 'ghost'}
                         size="sm"
-                        onClick={() => handlePageChange(pagination.currentPage + 1)}
-                        disabled={pagination.currentPage === pagination.totalPages || loading}
-                        className="border-black text-black hover:bg-black hover:text-white"
+                        onClick={() => setViewMode('cards')}
+                        className={cn(
+                          'rounded-l-none',
+                          viewMode === 'cards'
+                            ? 'bg-black text-white hover:bg-black/90'
+                            : 'text-black hover:bg-gray-100'
+                        )}
                       >
-                        <ChevronRight className="h-4 w-4" />
+                        <LayoutGrid className="h-4 w-4" />
                       </ButtonV2>
                     </div>
-                  )}
+
+                    <div className="flex items-center gap-2">
+                      <span className="text-sm text-gray-600">Afficher:</span>
+                      <Select
+                        value={pagination.pageSize.toString()}
+                        onValueChange={handlePageSizeChange}
+                      >
+                        <SelectTrigger className="w-20">
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="25">25</SelectItem>
+                          <SelectItem value="50">50</SelectItem>
+                          <SelectItem value="100">100</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+
+                    {pagination.totalPages > 1 && (
+                      <div className="flex items-center gap-2">
+                        <ButtonV2
+                          variant="outline"
+                          size="sm"
+                          onClick={() =>
+                            handlePageChange(pagination.currentPage - 1)
+                          }
+                          disabled={pagination.currentPage === 1 || loading}
+                          className="border-black text-black hover:bg-black hover:text-white"
+                        >
+                          <ChevronLeft className="h-4 w-4" />
+                        </ButtonV2>
+
+                        <span className="text-sm text-gray-600">
+                          Page {pagination.currentPage} sur{' '}
+                          {pagination.totalPages}
+                        </span>
+
+                        <ButtonV2
+                          variant="outline"
+                          size="sm"
+                          onClick={() =>
+                            handlePageChange(pagination.currentPage + 1)
+                          }
+                          disabled={
+                            pagination.currentPage === pagination.totalPages ||
+                            loading
+                          }
+                          className="border-black text-black hover:bg-black hover:text-white"
+                        >
+                          <ChevronRight className="h-4 w-4" />
+                        </ButtonV2>
+                      </div>
+                    )}
+                  </div>
                 </div>
-              </div>
-            </CardHeader>
+              </CardHeader>
 
-            {/* 🆕 Phase 3.4.5: Rendering conditionnel Table vs Cards */}
-            <CardContent className="p-0">
-              {viewMode === 'table' ? (
-                <MovementsTable
-                  movements={movements}
-                  loading={loading}
-                  onMovementClick={handleMovementClick}
-                  onCancelClick={handleCancelClick}
-                  onOrderClick={handleOrderClick}
-                />
-              ) : (
-                <MovementsListView
-                  movements={movements}
-                  loading={loading}
-                  selectedChannel={selectedChannelId}
-                />
-              )}
-            </CardContent>
-          </Card>
-
-          {/* Message d'aide si aucun résultat */}
-          {!loading && movements.length === 0 && hasFilters && (
-            <Card className="p-8 border-black rounded-[10px] shadow-md">
-              <div className="text-center">
-                <Eye className="h-12 w-12 text-gray-300 mx-auto mb-3" />
-                <h3 className="text-lg font-medium text-black mb-2">
-                  Aucun mouvement trouvé
-                </h3>
-                <p className="text-gray-500 mb-4">
-                  Aucun mouvement ne correspond aux critères de recherche sélectionnés.
-                </p>
-                <ButtonV2
-                  variant="outline"
-                  onClick={resetFilters}
-                  className="border-black text-black hover:bg-black hover:text-white"
-                >
-                  <RefreshCw className="h-4 w-4 mr-2" />
-                  Réinitialiser les filtres
-                </ButtonV2>
-              </div>
+              {/* 🆕 Phase 3.4.5: Rendering conditionnel Table vs Cards */}
+              <CardContent className="p-0">
+                {viewMode === 'table' ? (
+                  <MovementsTable
+                    movements={movements}
+                    loading={loading}
+                    onMovementClick={handleMovementClick}
+                    onCancelClick={handleCancelClick}
+                    onOrderClick={handleOrderClick}
+                  />
+                ) : (
+                  <MovementsListView
+                    movements={movements}
+                    loading={loading}
+                    selectedChannel={selectedChannelId}
+                  />
+                )}
+              </CardContent>
             </Card>
-          )}
 
-          {/* Message d'aide si base vide */}
-          {!loading && movements.length === 0 && !hasFilters && (
-            <Card className="p-8 border-black rounded-[10px] shadow-md">
-              <div className="text-center">
-                <ArrowUpDown className="h-12 w-12 text-gray-300 mx-auto mb-3" />
-                <h3 className="text-lg font-medium text-black mb-2">
-                  {emptyMessage}
-                </h3>
-                <p className="text-gray-500">
-                  Les mouvements apparaîtront ici dès qu'ils seront créés.
-                </p>
-              </div>
-            </Card>
-          )}
+            {/* Message d'aide si aucun résultat */}
+            {!loading && movements.length === 0 && hasFilters && (
+              <Card className="p-8 border-black rounded-[10px] shadow-md">
+                <div className="text-center">
+                  <Eye className="h-12 w-12 text-gray-300 mx-auto mb-3" />
+                  <h3 className="text-lg font-medium text-black mb-2">
+                    Aucun mouvement trouvé
+                  </h3>
+                  <p className="text-gray-500 mb-4">
+                    Aucun mouvement ne correspond aux critères de recherche
+                    sélectionnés.
+                  </p>
+                  <ButtonV2
+                    variant="outline"
+                    onClick={resetFilters}
+                    className="border-black text-black hover:bg-black hover:text-white"
+                  >
+                    <RefreshCw className="h-4 w-4 mr-2" />
+                    Réinitialiser les filtres
+                  </ButtonV2>
+                </div>
+              </Card>
+            )}
+
+            {/* Message d'aide si base vide */}
+            {!loading && movements.length === 0 && !hasFilters && (
+              <Card className="p-8 border-black rounded-[10px] shadow-md">
+                <div className="text-center">
+                  <ArrowUpDown className="h-12 w-12 text-gray-300 mx-auto mb-3" />
+                  <h3 className="text-lg font-medium text-black mb-2">
+                    {emptyMessage}
+                  </h3>
+                  <p className="text-gray-500">
+                    Les mouvements apparaîtront ici dès qu'ils seront créés.
+                  </p>
+                </div>
+              </Card>
+            )}
           </div>
         </div>
       </div>
     </>
-  )
+  );
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -402,18 +452,19 @@ export default function StockMovementsPage() {
                   Mouvements de Stock
                 </h1>
                 <p className="text-gray-600 mt-1">
-                  Visualisez et analysez tous les mouvements de stock avec des filtres avancés
+                  Visualisez et analysez tous les mouvements de stock avec des
+                  filtres avancés
                 </p>
               </div>
             </div>
 
             <div className="flex items-center gap-3">
               <ButtonV2
-                onClick={() => setShowQuickMovementModal(true)}
+                onClick={() => setShowPurchaseOrderModal(true)}
                 className="bg-black text-white hover:bg-gray-800"
               >
                 <Plus className="h-4 w-4 mr-2" />
-                Nouveau Mouvement
+                Commander Fournisseur
               </ButtonV2>
 
               <ButtonV2
@@ -422,7 +473,9 @@ export default function StockMovementsPage() {
                 disabled={loading}
                 className="border-black text-black hover:bg-black hover:text-white"
               >
-                <RefreshCw className={`h-4 w-4 mr-2 ${loading ? 'animate-spin' : ''}`} />
+                <RefreshCw
+                  className={`h-4 w-4 mr-2 ${loading ? 'animate-spin' : ''}`}
+                />
                 Actualiser
               </ButtonV2>
 
@@ -444,21 +497,22 @@ export default function StockMovementsPage() {
         {/* TABS NIVEAU 1 : Direction (Entrées / Sorties / Tous) */}
         <Tabs
           defaultValue={initialTab}
-          onValueChange={(value) => {
+          onValueChange={value => {
             // Mise à jour de l'URL pour refléter le tab actif
-            const url = new URL(window.location.href)
-            url.searchParams.set('tab', value)
-            window.history.pushState({}, '', url)
+            const url = new URL(window.location.href);
+            url.searchParams.set('tab', value);
+            window.history.pushState({}, '', url);
 
             // ✅ INJECTION AUTOMATIQUE : affects_forecast = false (mouvements RÉELS uniquement)
             // ✅ Filtre selon direction (IN / OUT / ALL)
             applyFilters({
               ...filters,
-              movementTypes: value === 'in' ? ['IN'] : value === 'out' ? ['OUT'] : undefined,
-              affects_forecast: false,  // ✅ TOUJOURS false = mouvements réels uniquement
-              forecast_type: undefined,  // ✅ TOUJOURS undefined (pas de prévisionnel)
-              offset: 0
-            })
+              movementTypes:
+                value === 'in' ? ['IN'] : value === 'out' ? ['OUT'] : undefined,
+              affects_forecast: false, // ✅ TOUJOURS false = mouvements réels uniquement
+              forecast_type: undefined, // ✅ TOUJOURS undefined (pas de prévisionnel)
+              offset: 0,
+            });
           }}
           className="w-full"
         >
@@ -525,8 +579,8 @@ export default function StockMovementsPage() {
           movement={selectedMovement}
           isOpen={showMovementDetails}
           onClose={() => {
-            setShowMovementDetails(false)
-            setSelectedMovement(null)
+            setShowMovementDetails(false);
+            setSelectedMovement(null);
           }}
         />
 
@@ -535,16 +589,16 @@ export default function StockMovementsPage() {
           movement={movementToCancel}
           isOpen={showCancelModal}
           onClose={() => {
-            setShowCancelModal(false)
-            setMovementToCancel(null)
+            setShowCancelModal(false);
+            setMovementToCancel(null);
           }}
           onSuccess={handleCancelSuccess}
         />
 
-        {/* Modal nouveau mouvement rapide */}
-        <QuickStockMovementModal
-          isOpen={showQuickMovementModal}
-          onClose={() => setShowQuickMovementModal(false)}
+        {/* Modal commande fournisseur (hook réutilisé) */}
+        <PurchaseOrderFormModal
+          isOpen={showPurchaseOrderModal}
+          onClose={() => setShowPurchaseOrderModal(false)}
           onSuccess={() => window.location.reload()}
         />
 
@@ -554,12 +608,12 @@ export default function StockMovementsPage() {
           orderType={selectedOrderType}
           open={showOrderModal}
           onClose={() => {
-            setShowOrderModal(false)
-            setSelectedOrderId(null)
-            setSelectedOrderType(null)
+            setShowOrderModal(false);
+            setSelectedOrderId(null);
+            setSelectedOrderType(null);
           }}
         />
       </div>
     </div>
-  )
+  );
 }
