@@ -93,14 +93,31 @@ const nextConfig = {
   // Environment variables for client-side
   env: {
     BUILD_TIME: new Date().toISOString(),
+    // ✅ FIX: Supprimer warning "Using edge runtime" (message informatif)
+    NEXT_HIDE_MIDDLEWARE_MESSAGE: '1',
   },
 
   // Webpack optimizations for large files performance
   webpack: (config, { isServer, dev }) => {
+    // ✅ FIX: Supprimer warnings Supabase Edge Runtime (ZERO WARNING policy)
+    config.ignoreWarnings = [
+      // Warnings Supabase realtime-js et supabase-js avec process.versions/process.version en Edge Runtime
+      /A Node\.js API is used \(process\.(versions?|version) at line: \d+\) which is not supported in the Edge Runtime/,
+      // Warning serialization big strings (déjà géré avec memory cache mais on filtre le message)
+      /Serializing big strings \(\d+kiB\) impacts deserialization performance/,
+    ];
+
     // Optimize performance for large files (like use-manual-tests.ts)
     if (!dev) {
+      // ✅ FIX: Utiliser memory cache en production aussi pour éviter warning "Serializing big strings"
+      config.cache = Object.freeze({
+        type: 'memory',
+      });
+
       config.optimization.splitChunks = {
         ...config.optimization.splitChunks,
+        chunks: 'all',
+        maxSize: 200000, // ✅ FIX: Augmenter maxSize pour éviter big strings warnings
         cacheGroups: {
           ...config.optimization.splitChunks.cacheGroups,
           // Separate large hooks/utils into their own chunks

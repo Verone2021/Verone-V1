@@ -78,7 +78,7 @@ export interface StockMovement {
   quantity_change: number           // Négatif pour OUT, positif pour IN
   quantity_before: number
   quantity_after: number
-  reason_code: ReasonCode
+  reason_code: string               // ✅ FIX: string pour stock_reason_code PostgreSQL (25 valeurs)
   reference_type: ReferenceType | null
   reference_id: string | null
   notes: string | null
@@ -112,8 +112,7 @@ export interface StockItem {
   stock_quantity: number            // Alias stock_real (legacy)
   stock_forecasted_in: number       // Entrées prévisionnelles (commandes fournisseurs)
   stock_forecasted_out: number      // Sorties prévisionnelles (commandes clients confirmées)
-  stock_available: number           // = stock_real - stock_forecasted_out
-  stock_threshold: number | null    // Seuil alerte stock minimum
+  min_stock: number | null          // Seuil alerte stock minimum
   archived_at: string | null
 }
 
@@ -124,7 +123,7 @@ export interface CreateMovementParams {
   product_id: string
   movement_type: MovementType
   quantity_change: number           // Déjà signé (négatif pour OUT, positif pour IN)
-  reason_code: ReasonCode
+  reason_code: string               // ✅ FIX: Accepter string pour stock_reason_code PostgreSQL (25 valeurs)
   reference_type?: ReferenceType | null
   reference_id?: string | null
   notes?: string | null
@@ -223,8 +222,7 @@ export function useStockCore({
           stock_quantity,
           stock_forecasted_in,
           stock_forecasted_out,
-          stock_available,
-          stock_threshold,
+          min_stock,
           archived_at
         `)
 
@@ -271,8 +269,7 @@ export function useStockCore({
           stock_quantity,
           stock_forecasted_in,
           stock_forecasted_out,
-          stock_available,
-          stock_threshold,
+          min_stock,
           archived_at
         `)
         .eq('id', productId)

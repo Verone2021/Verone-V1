@@ -86,7 +86,7 @@ export function useAgingReport() {
         .from('stock_movements')
         .select('product_id, performed_at')
         .in('product_id', productIds)
-        .eq('affects_forecast', false)
+        .or('affects_forecast.is.null,affects_forecast.is.false')  // ✅ BEST PRACTICE: is pour boolean et null
         .order('performed_at', { ascending: false })
 
       if (movementsError) throw movementsError

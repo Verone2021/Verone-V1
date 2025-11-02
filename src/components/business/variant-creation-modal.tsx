@@ -5,6 +5,7 @@ import { X, Save, AlertCircle, Copy, Palette, Layers } from 'lucide-react'
 import { ButtonV2 } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { cn } from '@/lib/utils'
+import { createClient } from '@/lib/supabase/client'
 
 interface ProductData {
   id: string
@@ -66,6 +67,38 @@ export function VariantCreationModal({
     if (!color && !material) {
       setError('Veuillez renseigner au moins la couleur ou la matière')
       return
+    }
+
+    // ✅ VALIDATION ANTI-DOUBLON - Vérifier unicité couleur/matière dans le groupe
+    if (productData.variant_group_id) {
+      const supabase = createClient()
+
+      const { data: existingProducts, error: checkError } = await supabase
+        .from('products')
+        .select('id, variant_attributes')
+        .eq('variant_group_id', productData.variant_group_id)
+
+      if (checkError) {
+        setError('Erreur lors de la validation : ' + checkError.message)
+        return
+      }
+
+      // Vérifier si la couleur ou matière existe déjà
+      if (existingProducts && existingProducts.length > 0) {
+        for (const existing of existingProducts) {
+          const existingAttrs = existing.variant_attributes as Record<string, any>
+
+          if (color && existingAttrs?.color === color.toLowerCase()) {
+            setError(`Un produit avec la couleur "${color}" existe déjà dans ce groupe. Chaque produit doit avoir une couleur unique.`)
+            return
+          }
+
+          if (material && existingAttrs?.material === material.toLowerCase()) {
+            setError(`Un produit avec le matériau "${material}" existe déjà dans ce groupe. Chaque produit doit avoir un matériau unique.`)
+            return
+          }
+        }
+      }
     }
 
     setIsCreating(true)

@@ -463,8 +463,11 @@ export function useStock() {
           min_stock,
           cost_price,
           updated_at,
-          status
+          status,
+          product_images!left(public_url)
         `)
+        .eq('product_images.is_primary', true)
+        .limit(1, { foreignTable: 'product_images' })
         .gt('stock_quantity', 0)
         .is('archived_at', null)
 
@@ -497,8 +500,11 @@ export function useStock() {
             min_stock,
             cost_price,
             updated_at,
-            status
+            status,
+            product_images!left(public_url)
           `)
+          .eq('product_images.is_primary', true)
+          .limit(1, { foreignTable: 'product_images' })
           .in('id', productIdsToFetch)
           .is('archived_at', null)
 
@@ -517,7 +523,14 @@ export function useStock() {
         new Date(b.updated_at).getTime() - new Date(a.updated_at).getTime()
       )
 
-      return allInventoryProducts
+      // Normaliser les données: extraire product_image_url de product_images
+      const normalizedProducts = allInventoryProducts.map((p: any) => ({
+        ...p,
+        product_image_url: p.product_images?.[0]?.public_url || null,
+        product_images: undefined // Supprimer la propriété temporaire
+      }))
+
+      return normalizedProducts
 
     } catch (error) {
       console.error('❌ Erreur chargement inventaire:', error)

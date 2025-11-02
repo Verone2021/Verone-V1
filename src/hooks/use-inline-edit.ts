@@ -6,7 +6,7 @@ import { createClient } from '@/lib/supabase/client'
 // Types des sections éditables
 export type EditableSection =
   // Sections produits
-  | 'general' | 'pricing' | 'supplier' | 'relations' | 'identifiers' | 'stock'
+  | 'general' | 'pricing' | 'supplier' | 'weight' | 'relations' | 'identifiers' | 'stock'
   // Sections organisations/contacts
   | 'contact' | 'address' | 'legal' | 'commercial' | 'performance' | 'personal' | 'roles' | 'preferences'
 

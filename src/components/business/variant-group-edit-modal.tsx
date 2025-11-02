@@ -52,6 +52,9 @@ export function VariantGroupEditModal({
   const [dimensionsHeight, setDimensionsHeight] = useState<number | undefined>()
   const [dimensionsUnit, setDimensionsUnit] = useState<'cm' | 'm' | 'mm' | 'in'>('cm')
   const [commonWeight, setCommonWeight] = useState<number | undefined>()
+  const [hasCommonWeight, setHasCommonWeight] = useState(false)
+  const [commonCostPrice, setCommonCostPrice] = useState<number | undefined>()
+  const [hasCommonCostPrice, setHasCommonCostPrice] = useState(false)
   const [style, setStyle] = useState<string>('')
   const [suitableRooms, setSuitableRooms] = useState<string[]>([])
   const [hasCommonSupplier, setHasCommonSupplier] = useState(false)
@@ -74,6 +77,11 @@ export function VariantGroupEditModal({
 
       // Poids commun
       setCommonWeight(group.common_weight || undefined)
+      setHasCommonWeight(group.has_common_weight || false)
+
+      // Prix d'achat commun
+      setCommonCostPrice(group.common_cost_price || undefined)
+      setHasCommonCostPrice(group.has_common_cost_price || false)
 
       // Style décoratif
       setStyle(group.style || '')
@@ -105,6 +113,18 @@ export function VariantGroupEditModal({
       return
     }
 
+    // Validation: si poids commun coché, un poids doit être saisi
+    if (hasCommonWeight && !commonWeight) {
+      alert('Veuillez saisir un poids ou décocher la case "Même poids pour tous les produits"')
+      return
+    }
+
+    // Validation: si prix d'achat commun coché, un prix doit être saisi
+    if (hasCommonCostPrice && !commonCostPrice) {
+      alert('Veuillez saisir un prix d\'achat ou décocher la case "Même prix d\'achat pour tous les produits"')
+      return
+    }
+
     setIsSubmitting(true)
     try {
       // Préparer les données
@@ -130,7 +150,12 @@ export function VariantGroupEditModal({
       }
 
       // Poids commun
-      updateData.common_weight = commonWeight || null
+      updateData.common_weight = hasCommonWeight ? (commonWeight || null) : null
+      updateData.has_common_weight = hasCommonWeight
+
+      // Prix d'achat commun
+      updateData.common_cost_price = hasCommonCostPrice ? (commonCostPrice || null) : null
+      updateData.has_common_cost_price = hasCommonCostPrice
 
       // Style décoratif
       updateData.style = style || undefined
@@ -311,24 +336,96 @@ export function VariantGroupEditModal({
             </div>
           </div>
 
-          <div className="space-y-3 pt-4 border-t">
-            <Label className="text-sm font-medium">Poids commun (optionnel)</Label>
-            <p className="text-xs text-gray-600">
-              Si tous les produits du groupe ont le même poids
-            </p>
-            <div className="flex items-end space-x-2">
-              <Input
-                id="common_weight"
-                type="number"
-                step="0.01"
-                min="0"
-                value={commonWeight || ''}
-                onChange={(e) => setCommonWeight(e.target.value ? parseFloat(e.target.value) : undefined)}
-                placeholder="0.00"
-                className="flex-1"
+          <div className="space-y-4 pt-4 border-t">
+            <div className="flex items-center space-x-2">
+              <Checkbox
+                id="has-common-weight"
+                checked={hasCommonWeight}
+                onCheckedChange={(checked) => {
+                  setHasCommonWeight(checked as boolean)
+                  if (!checked) setCommonWeight(undefined)
+                }}
               />
-              <span className="text-sm text-gray-600 mb-2 min-w-[30px]">kg</span>
+              <Label
+                htmlFor="has-common-weight"
+                className="text-sm font-medium cursor-pointer"
+              >
+                ⚖️ Même poids pour tous les produits
+              </Label>
             </div>
+            <p className="text-xs text-gray-600 ml-6">
+              Si cochée, tous les produits du groupe hériteront automatiquement du poids saisi
+            </p>
+
+            {hasCommonWeight && (
+              <div className="ml-6 space-y-2">
+                <Label htmlFor="common_weight" className="text-sm font-medium">
+                  Poids commun <span className="text-red-500">*</span>
+                </Label>
+                <div className="flex items-end space-x-2">
+                  <Input
+                    id="common_weight"
+                    type="number"
+                    step="0.01"
+                    min="0"
+                    value={commonWeight || ''}
+                    onChange={(e) => setCommonWeight(e.target.value ? parseFloat(e.target.value) : undefined)}
+                    placeholder="0.00"
+                    className="flex-1"
+                  />
+                  <span className="text-sm text-gray-600 mb-2 min-w-[30px]">kg</span>
+                </div>
+                <p className="text-xs text-blue-700 bg-blue-50 p-2 rounded border border-blue-200">
+                  💡 Ce poids sera appliqué automatiquement à tous les produits du groupe et ne pourra pas être modifié individuellement
+                </p>
+              </div>
+            )}
+          </div>
+
+          <div className="space-y-3 pt-4 border-t">
+            <div className="flex items-center space-x-2">
+              <Checkbox
+                id="has-common-cost-price"
+                checked={hasCommonCostPrice}
+                onCheckedChange={(checked) => {
+                  setHasCommonCostPrice(checked as boolean)
+                  if (!checked) setCommonCostPrice(undefined)
+                }}
+              />
+              <Label
+                htmlFor="has-common-cost-price"
+                className="text-sm font-medium cursor-pointer"
+              >
+                💰 Même prix d'achat pour tous les produits
+              </Label>
+            </div>
+            <p className="text-xs text-gray-600 ml-6">
+              Si cochée, tous les produits du groupe hériteront automatiquement du prix d'achat saisi
+            </p>
+
+            {hasCommonCostPrice && (
+              <div className="ml-6 space-y-2">
+                <Label htmlFor="common_cost_price" className="text-sm font-medium">
+                  Prix d'achat commun <span className="text-red-500">*</span>
+                </Label>
+                <div className="flex items-end space-x-2">
+                  <Input
+                    id="common_cost_price"
+                    type="number"
+                    step="0.01"
+                    min="0.01"
+                    value={commonCostPrice || ''}
+                    onChange={(e) => setCommonCostPrice(e.target.value ? parseFloat(e.target.value) : undefined)}
+                    placeholder="0.00"
+                    className="flex-1"
+                  />
+                  <span className="text-sm text-gray-600 mb-2 min-w-[30px]">€</span>
+                </div>
+                <p className="text-xs text-blue-700 bg-blue-50 p-2 rounded border border-blue-200">
+                  💡 Ce prix d'achat sera appliqué automatiquement à tous les produits du groupe et ne pourra pas être modifié individuellement
+                </p>
+              </div>
+            )}
           </div>
 
           <div className="space-y-3 pt-4 border-t">

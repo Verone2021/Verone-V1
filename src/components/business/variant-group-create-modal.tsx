@@ -47,6 +47,7 @@ export function VariantGroupCreateModal({
   const [dimensionsHeight, setDimensionsHeight] = useState<number | undefined>()
   const [dimensionsUnit, setDimensionsUnit] = useState<'cm' | 'm' | 'mm' | 'in'>('cm')
   const [commonWeight, setCommonWeight] = useState<number | undefined>()
+  const [hasCommonWeight, setHasCommonWeight] = useState(false)
   const [hasCommonSupplier, setHasCommonSupplier] = useState(false)
   const [supplierId, setSupplierId] = useState<string | undefined>()
   const [isSubmitting, setIsSubmitting] = useState(false)
@@ -70,6 +71,7 @@ export function VariantGroupCreateModal({
       setDimensionsHeight(undefined)
       setDimensionsUnit('cm')
       setCommonWeight(undefined)
+      setHasCommonWeight(false)
       setHasCommonSupplier(false)
       setSupplierId(undefined)
     }
@@ -85,6 +87,12 @@ export function VariantGroupCreateModal({
       return
     }
 
+    // Validation: si poids commun coché, un poids doit être saisi
+    if (hasCommonWeight && !commonWeight) {
+      alert('Veuillez saisir un poids ou décocher la case "Même poids pour tous les produits"')
+      return
+    }
+
     setIsSubmitting(true)
     try {
       await onSubmit({
@@ -96,7 +104,8 @@ export function VariantGroupCreateModal({
         dimensions_width: dimensionsWidth,
         dimensions_height: dimensionsHeight,
         dimensions_unit: dimensionsUnit,
-        common_weight: commonWeight,
+        common_weight: hasCommonWeight ? commonWeight : null,
+        has_common_weight: hasCommonWeight,
         has_common_supplier: hasCommonSupplier,
         supplier_id: hasCommonSupplier ? supplierId : null,
       })
@@ -270,24 +279,50 @@ export function VariantGroupCreateModal({
             </div>
           </div>
 
-          <div className="space-y-3 pt-4 border-t">
-            <Label className="text-sm font-medium">Poids commun (optionnel)</Label>
-            <p className="text-xs text-gray-600">
-              Si tous les produits du groupe ont le même poids
-            </p>
-            <div className="flex items-end space-x-2">
-              <Input
-                id="common_weight"
-                type="number"
-                step="0.01"
-                min="0"
-                value={commonWeight || ''}
-                onChange={(e) => setCommonWeight(e.target.value ? parseFloat(e.target.value) : undefined)}
-                placeholder="0.00"
-                className="flex-1"
+          <div className="space-y-4 pt-4 border-t">
+            <div className="flex items-center space-x-2">
+              <Checkbox
+                id="has-common-weight"
+                checked={hasCommonWeight}
+                onCheckedChange={(checked) => {
+                  setHasCommonWeight(checked as boolean)
+                  if (!checked) setCommonWeight(undefined)
+                }}
               />
-              <span className="text-sm text-gray-600 mb-2 min-w-[30px]">kg</span>
+              <Label
+                htmlFor="has-common-weight"
+                className="text-sm font-medium cursor-pointer"
+              >
+                ⚖️ Même poids pour tous les produits
+              </Label>
             </div>
+            <p className="text-xs text-gray-600 ml-6">
+              Si cochée, tous les produits du groupe hériteront automatiquement du poids saisi
+            </p>
+
+            {hasCommonWeight && (
+              <div className="ml-6 space-y-2">
+                <Label htmlFor="common_weight" className="text-sm font-medium">
+                  Poids commun <span className="text-red-500">*</span>
+                </Label>
+                <div className="flex items-end space-x-2">
+                  <Input
+                    id="common_weight"
+                    type="number"
+                    step="0.01"
+                    min="0"
+                    value={commonWeight || ''}
+                    onChange={(e) => setCommonWeight(e.target.value ? parseFloat(e.target.value) : undefined)}
+                    placeholder="0.00"
+                    className="flex-1"
+                  />
+                  <span className="text-sm text-gray-600 mb-2 min-w-[30px]">kg</span>
+                </div>
+                <p className="text-xs text-blue-700 bg-blue-50 p-2 rounded border border-blue-200">
+                  💡 Ce poids sera appliqué automatiquement à tous les produits du groupe et ne pourra pas être modifié individuellement
+                </p>
+              </div>
+            )}
           </div>
 
           <div className="space-y-4 pt-4 border-t">

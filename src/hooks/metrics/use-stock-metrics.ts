@@ -36,7 +36,7 @@ export function useStockMetrics() {
 
       items.forEach(product => {
         const stockQty = product.stock_real || 0;
-        const threshold = product.stock_threshold || 5; // Seuil par défaut
+        const threshold = product.min_stock || 5; // Seuil par défaut
 
         // Compteurs
         if (stockQty === 0) {

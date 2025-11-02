@@ -7,8 +7,11 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { ButtonV2 } from '@/components/ui/button'
 import { Separator } from '@/components/ui/separator'
+import { Table, TableBody, TableHead, TableHeader, TableRow } from '@/components/ui/table'
 import { createClient } from '@/lib/supabase/client'
 import { formatCurrency } from '@/lib/utils'
+import { useOrderItems } from '@/hooks/use-order-items'
+import { EditableOrderItemRow } from '@/components/business/editable-order-item-row'
 
 interface UniversalOrderDetailsModalProps {
   orderId: string | null
@@ -17,22 +20,15 @@ interface UniversalOrderDetailsModalProps {
   onClose: () => void
 }
 
-interface OrderDetails {
+interface OrderHeader {
   id: string
   order_number: string
   status: string
   created_at: string
   expected_delivery_date: string | null
-  total_amount: number
+  total_ttc: number
   customer_name?: string
   supplier_name?: string
-  items: {
-    id: string
-    product_name: string
-    quantity: number
-    unit_price: number
-    total_price: number
-  }[]
 }
 
 const statusLabels: Record<string, string> = {
@@ -65,17 +61,28 @@ export function UniversalOrderDetailsModal({
   open,
   onClose
 }: UniversalOrderDetailsModalProps) {
-  const [orderDetails, setOrderDetails] = useState<OrderDetails | null>(null)
+  const [orderHeader, setOrderHeader] = useState<OrderHeader | null>(null)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
+  // 🎯 Hook réutilisable pour charger les items avec images et métriques complètes
+  const {
+    items,
+    loading: itemsLoading,
+    error: itemsError
+  } = useOrderItems({
+    orderId: orderId || '',
+    orderType: orderType || 'purchase'
+  })
+
+  // Charger uniquement l'en-tête de commande (items gérés par useOrderItems)
   useEffect(() => {
     if (!orderId || !orderType || !open) {
-      setOrderDetails(null)
+      setOrderHeader(null)
       return
     }
 
-    const fetchOrderDetails = async () => {
+    const fetchOrderHeader = async () => {
       setLoading(true)
       setError(null)
 
@@ -83,26 +90,10 @@ export function UniversalOrderDetailsModal({
         const supabase = createClient()
 
         if (orderType === 'sales') {
-          // Récupérer Sales Order avec items
+          // Récupérer Sales Order SANS items
           const { data: order, error: orderError } = await supabase
             .from('sales_orders')
-            .select(`
-              id,
-              order_number,
-              status,
-              created_at,
-              expected_delivery_date,
-              total_ttc,
-              customer_id,
-              customer_type,
-              sales_order_items(
-                id,
-                quantity,
-                unit_price_ht,
-                total_ht,
-                products(name)
-              )
-            `)
+            .select('id, order_number, status, created_at, expected_delivery_date, total_ttc, customer_id, customer_type')
             .eq('id', orderId)
             .single()
 
@@ -127,42 +118,20 @@ export function UniversalOrderDetailsModal({
             customerName = individual ? `${individual.first_name} ${individual.last_name}` : 'Particulier inconnu'
           }
 
-          setOrderDetails({
+          setOrderHeader({
             id: order.id,
             order_number: order.order_number,
             status: order.status,
             created_at: order.created_at,
             expected_delivery_date: order.expected_delivery_date,
-            total_amount: order.total_ttc,
-            customer_name: customerName,
-            items: order.sales_order_items.map((item: any) => ({
-              id: item.id,
-              product_name: item.products?.name || 'Produit inconnu',
-              quantity: item.quantity,
-              unit_price: item.unit_price_ht,
-              total_price: item.total_ht
-            }))
+            total_ttc: order.total_ttc,
+            customer_name: customerName
           })
         } else if (orderType === 'purchase') {
-          // Récupérer Purchase Order avec items
+          // Récupérer Purchase Order SANS items
           const { data: order, error: orderError } = await supabase
             .from('purchase_orders')
-            .select(`
-              id,
-              po_number,
-              status,
-              created_at,
-              expected_delivery_date,
-              total_ttc,
-              supplier_id,
-              purchase_order_items(
-                id,
-                quantity,
-                unit_price_ht,
-                total_ht,
-                products(name)
-              )
-            `)
+            .select('id, po_number, status, created_at, expected_delivery_date, total_ttc, supplier_id')
             .eq('id', orderId)
             .single()
 
@@ -180,26 +149,18 @@ export function UniversalOrderDetailsModal({
             supplierName = (supplier?.trade_name || supplier?.legal_name) || 'Fournisseur inconnu'
           }
 
-          setOrderDetails({
+          setOrderHeader({
             id: order.id,
             order_number: order.po_number,
             status: order.status,
             created_at: order.created_at,
             expected_delivery_date: order.expected_delivery_date,
-            total_amount: order.total_ttc,
-            supplier_name: supplierName,
-            items: order.purchase_order_items.map((item: any) => ({
-              id: item.id,
-              product_name: item.products?.name || 'Produit inconnu',
-              quantity: item.quantity,
-              unit_price: item.unit_price_ht,
-              total_price: item.total_ht
-            }))
+            total_ttc: order.total_ttc,
+            supplier_name: supplierName
           })
         }
       } catch (err: any) {
-        // Logs détaillés pour debugging Supabase errors
-        console.error('[UniversalOrderDetailsModal] Erreur chargement commande:', {
+        console.error('[UniversalOrderDetailsModal] Erreur chargement en-tête commande:', {
           orderId,
           orderType,
           errorMessage: err?.message,
@@ -209,7 +170,6 @@ export function UniversalOrderDetailsModal({
           fullError: err
         })
 
-        // Message utilisateur clair
         const errorMessage = err?.message ||
           `Impossible de charger la commande ${orderType === 'sales' ? 'client' : 'fournisseur'}`
 
@@ -219,7 +179,7 @@ export function UniversalOrderDetailsModal({
       }
     }
 
-    fetchOrderDetails()
+    fetchOrderHeader()
   }, [orderId, orderType, open])
 
   const formatDate = (date: string | null) => {
@@ -230,6 +190,18 @@ export function UniversalOrderDetailsModal({
       year: 'numeric'
     })
   }
+
+  // Calculer total à partir des items du hook
+  const calculateTotal = () => {
+    return items.reduce((sum, item) => {
+      const subtotal = item.quantity * item.unit_price_ht * (1 - (item.discount_percentage || 0) / 100)
+      return sum + subtotal + (item.eco_tax || 0)
+    }, 0)
+  }
+
+  // Loading combiné (header + items)
+  const isLoading = loading || itemsLoading
+  const hasError = error || itemsError
 
   return (
     <Dialog open={open} onOpenChange={onClose}>
@@ -249,54 +221,54 @@ export function UniversalOrderDetailsModal({
           </div>
         </DialogHeader>
 
-        {loading && (
+        {isLoading && (
           <div className="flex items-center justify-center py-12">
             <Loader2 className="h-8 w-8 animate-spin text-gray-400" />
             <span className="ml-3 text-gray-600">Chargement...</span>
           </div>
         )}
 
-        {error && (
+        {hasError && (
           <div className="bg-red-50 border border-red-200 rounded-lg p-4">
             <p className="text-red-800 font-medium">Erreur</p>
-            <p className="text-red-600 text-sm mt-1">{error}</p>
+            <p className="text-red-600 text-sm mt-1">{hasError}</p>
           </div>
         )}
 
-        {!loading && !error && orderDetails && (
+        {!isLoading && !hasError && orderHeader && (
           <div className="space-y-6">
             {/* En-tête commande */}
             <Card>
               <CardHeader>
                 <div className="flex items-center justify-between">
                   <div>
-                    <CardTitle className="text-xl">{orderDetails.order_number}</CardTitle>
+                    <CardTitle className="text-xl">{orderHeader.order_number}</CardTitle>
                     <p className="text-sm text-gray-600 mt-1">
-                      Créée le {formatDate(orderDetails.created_at)}
+                      Créée le {formatDate(orderHeader.created_at)}
                     </p>
                   </div>
-                  <Badge className={statusColors[orderDetails.status] || 'bg-gray-100 text-gray-800'}>
-                    {statusLabels[orderDetails.status] || orderDetails.status}
+                  <Badge className={statusColors[orderHeader.status] || 'bg-gray-100 text-gray-800'}>
+                    {statusLabels[orderHeader.status] || orderHeader.status}
                   </Badge>
                 </div>
               </CardHeader>
               <CardContent className="space-y-4">
                 <div className="grid grid-cols-2 gap-4">
-                  {orderDetails.customer_name && (
+                  {orderHeader.customer_name && (
                     <div className="flex items-start gap-3">
                       <User className="h-5 w-5 text-gray-400 mt-0.5" />
                       <div>
                         <p className="text-sm font-medium text-gray-700">Client</p>
-                        <p className="text-sm text-gray-900">{orderDetails.customer_name}</p>
+                        <p className="text-sm text-gray-900">{orderHeader.customer_name}</p>
                       </div>
                     </div>
                   )}
-                  {orderDetails.supplier_name && (
+                  {orderHeader.supplier_name && (
                     <div className="flex items-start gap-3">
                       <TruckIcon className="h-5 w-5 text-gray-400 mt-0.5" />
                       <div>
                         <p className="text-sm font-medium text-gray-700">Fournisseur</p>
-                        <p className="text-sm text-gray-900">{orderDetails.supplier_name}</p>
+                        <p className="text-sm text-gray-900">{orderHeader.supplier_name}</p>
                       </div>
                     </div>
                   )}
@@ -304,43 +276,52 @@ export function UniversalOrderDetailsModal({
                     <Calendar className="h-5 w-5 text-gray-400 mt-0.5" />
                     <div>
                       <p className="text-sm font-medium text-gray-700">Livraison prévue</p>
-                      <p className="text-sm text-gray-900">{formatDate(orderDetails.expected_delivery_date)}</p>
+                      <p className="text-sm text-gray-900">{formatDate(orderHeader.expected_delivery_date)}</p>
                     </div>
                   </div>
                 </div>
               </CardContent>
             </Card>
 
-            {/* Articles */}
+            {/* Articles avec composant réutilisable */}
             <Card>
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
                   <Package className="h-5 w-5" />
-                  Articles ({orderDetails.items.length})
+                  Articles ({items.length})
                 </CardTitle>
               </CardHeader>
               <CardContent>
-                <div className="space-y-3">
-                  {orderDetails.items.map((item) => (
-                    <div key={item.id} className="flex items-center justify-between border-b pb-3 last:border-0">
-                      <div className="flex-1">
-                        <p className="font-medium">{item.product_name}</p>
-                        <p className="text-sm text-gray-600">
-                          Quantité: {item.quantity} × {formatCurrency(item.unit_price)}
-                        </p>
-                      </div>
-                      <div className="text-right">
-                        <p className="font-semibold">{formatCurrency(item.total_price)}</p>
-                      </div>
-                    </div>
-                  ))}
-                </div>
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>Produit</TableHead>
+                      <TableHead>Qté</TableHead>
+                      <TableHead>Prix HT</TableHead>
+                      <TableHead>Remise</TableHead>
+                      <TableHead>Éco-taxe</TableHead>
+                      {orderType === 'sales' && <TableHead>TVA</TableHead>}
+                      <TableHead>Total HT</TableHead>
+                      <TableHead></TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {items.map((item) => (
+                      <EditableOrderItemRow
+                        key={item.id}
+                        item={item}
+                        orderType={orderType || 'purchase'}
+                        readonly={true}
+                      />
+                    ))}
+                  </TableBody>
+                </Table>
 
                 <Separator className="my-4" />
 
                 <div className="flex items-center justify-between">
-                  <span className="text-lg font-bold">Total</span>
-                  <span className="text-2xl font-bold">{formatCurrency(orderDetails.total_amount)}</span>
+                  <span className="text-lg font-bold">Total HT</span>
+                  <span className="text-2xl font-bold">{formatCurrency(calculateTotal())}</span>
                 </div>
               </CardContent>
             </Card>

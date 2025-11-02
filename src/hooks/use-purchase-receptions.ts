@@ -203,7 +203,7 @@ export function usePurchaseReceptions() {
         `)
         .eq('reference_type', 'purchase_order')
         .eq('reference_id', poId)
-        .eq('affects_forecast', false)
+        .or('affects_forecast.is.null,affects_forecast.is.false')
         .eq('movement_type', 'IN')
         .order('performed_at', { ascending: false })
 

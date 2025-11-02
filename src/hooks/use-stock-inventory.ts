@@ -65,6 +65,7 @@ export function useStockInventory() {
           .from('stock_movements')
           .select('quantity_change, performed_at, movement_type')
           .eq('product_id', product.id)
+          .or('affects_forecast.is.null,affects_forecast.is.false')
           .order('performed_at', { ascending: false })
 
         // Filtres de période

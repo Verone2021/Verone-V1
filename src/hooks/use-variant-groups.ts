@@ -146,6 +146,7 @@ export function useVariantGroups(filters?: VariantGroupFilters) {
           dimensions_unit: data.dimensions_unit || 'cm',
           // Poids commun
           common_weight: data.common_weight || null,
+          has_common_weight: data.has_common_weight || false,
           // Catégorisation
           style: data.style || null,
           suitable_rooms: data.suitable_rooms || null,
@@ -731,6 +732,17 @@ export function useVariantGroups(filters?: VariantGroupFilters) {
       if (data.common_weight !== undefined) {
         updateData.common_weight = data.common_weight
       }
+      if (data.has_common_weight !== undefined) {
+        updateData.has_common_weight = data.has_common_weight
+      }
+
+      // Gestion du prix d'achat commun
+      if (data.common_cost_price !== undefined) {
+        updateData.common_cost_price = data.common_cost_price
+      }
+      if (data.has_common_cost_price !== undefined) {
+        updateData.has_common_cost_price = data.has_common_cost_price
+      }
 
       logger.info('Mise à jour variant group', {
         operation: 'update_variant_group',
@@ -795,6 +807,74 @@ export function useVariantGroups(filters?: VariantGroupFilters) {
           }
         }
         // Si has_common_supplier est désactivé ou supplier_id null, les produits gardent leur supplier_id actuel
+      }
+
+      // Propager le poids aux produits si has_common_weight est activé
+      if (data.has_common_weight !== undefined || data.common_weight !== undefined) {
+        if (data.has_common_weight && data.common_weight) {
+          // Si poids commun activé ET common_weight valide, propager à tous les produits
+          logger.info('Propagation poids aux produits', {
+            operation: 'propagate_weight_to_products',
+            groupId,
+            weight: data.common_weight
+          })
+
+          const { error: weightPropagationError } = await supabase
+            .from('products')
+            .update({ weight: data.common_weight })
+            .eq('variant_group_id', groupId)
+
+          if (weightPropagationError) {
+            logger.error('Erreur propagation poids', weightPropagationError, {
+              operation: 'propagate_weight_failed'
+            })
+          } else {
+            logger.info('Poids propagé avec succès', {
+              operation: 'propagate_weight_success'
+            })
+          }
+        } else if (data.has_common_weight === false) {
+          // Si has_common_weight est désactivé, logger mais ne pas modifier les produits
+          logger.info('Désactivation poids commun', {
+            operation: 'disable_common_weight',
+            groupId
+          })
+          // Les produits gardent leur poids actuel - pas de propagation null
+        }
+      }
+
+      // Propager le prix d'achat aux produits si has_common_cost_price est activé
+      if (data.has_common_cost_price !== undefined || data.common_cost_price !== undefined) {
+        if (data.has_common_cost_price && data.common_cost_price) {
+          // Si prix d'achat commun activé ET common_cost_price valide, propager à tous les produits
+          logger.info('Propagation prix d\'achat aux produits', {
+            operation: 'propagate_cost_price_to_products',
+            groupId,
+            costPrice: data.common_cost_price
+          })
+
+          const { error: costPricePropagationError } = await supabase
+            .from('products')
+            .update({ cost_price: data.common_cost_price })
+            .eq('variant_group_id', groupId)
+
+          if (costPricePropagationError) {
+            logger.error('Erreur propagation prix d\'achat', costPricePropagationError, {
+              operation: 'propagate_cost_price_failed'
+            })
+          } else {
+            logger.info('Prix d\'achat propagé avec succès', {
+              operation: 'propagate_cost_price_success'
+            })
+          }
+        } else if (data.has_common_cost_price === false) {
+          // Si has_common_cost_price est désactivé, logger mais ne pas modifier les produits
+          logger.info('Désactivation prix d\'achat commun', {
+            operation: 'disable_common_cost_price',
+            groupId
+          })
+          // Les produits gardent leur prix d'achat actuel - pas de propagation null
+        }
       }
 
       // Si des attributs ont été modifiés, propager aux produits du groupe

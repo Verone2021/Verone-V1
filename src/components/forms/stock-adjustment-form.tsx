@@ -226,8 +226,8 @@ export function StockAdjustmentForm({
           quantity_change: quantityChange,
           quantity_before: quantityBefore,
           quantity_after: quantityAfter,
-          reference_type: 'adjustment',
-          reference_id: null, // Pas de référence externe pour ajustements
+          reference_type: 'manual_adjustment',
+          reference_id: crypto.randomUUID(), // UUID unique pour traçabilité
           notes: `${formData.reason}: ${formData.notes}`,
           performed_by: user.id,
           performed_at: new Date(formData.adjustment_date).toISOString()

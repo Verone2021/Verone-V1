@@ -8,6 +8,7 @@ import { useInlineEdit, type EditableSection } from '../../hooks/use-inline-edit
 
 interface Product {
   id: string
+  variant_group_id?: string    // ID du groupe de variantes (si produit fait partie d'un groupe)
   // Tarification simplifiée 2025
   cost_price?: number          // Prix d'achat fournisseur HT (euros)
   margin_percentage?: number   // Taux de marge en pourcentage (ex: 25 pour 25%)
@@ -17,17 +18,31 @@ interface Product {
   selling_price?: number      // Prix minimum de vente calculé
 }
 
+interface VariantGroup {
+  id: string
+  name: string
+  has_common_cost_price?: boolean | null
+  common_cost_price?: number | null
+}
+
 interface SupplierVsPricingEditSectionProps {
   product: Product
+  variantGroup?: VariantGroup | null
   onUpdate: (updatedProduct: Partial<Product>) => void
   className?: string
 }
 
 export function SupplierVsPricingEditSection({
   product,
+  variantGroup,
   onUpdate,
   className
 }: SupplierVsPricingEditSectionProps) {
+  // Verrouillage si cost_price géré par le groupe de variantes
+  const isCostPriceManagedByGroup = !!(
+    variantGroup?.has_common_cost_price &&
+    product.variant_group_id
+  )
   const {
     isEditing,
     isSaving,
@@ -53,7 +68,10 @@ export function SupplierVsPricingEditSection({
   const error = getError(section)
 
   // Récupération des données de tarification simplifiée
-  const currentCostPrice = product.cost_price || 0
+  // Si cost_price géré par le groupe, utiliser common_cost_price
+  const currentCostPrice = isCostPriceManagedByGroup
+    ? (variantGroup?.common_cost_price || 0)
+    : (product.cost_price || 0)
   const currentMarginPercentage = product.margin_percentage || 25 // Défaut 25%
 
   // Calcul automatique du prix de vente minimum
@@ -177,11 +195,15 @@ export function SupplierVsPricingEditSection({
                 type="number"
                 value={editData?.cost_price || ''}
                 onChange={(e) => handlePriceChange('cost_price', e.target.value)}
-                className="w-full px-3 py-2 border border-red-300 rounded-md focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-red-500"
+                className={cn(
+                  "w-full px-3 py-2 border border-red-300 rounded-md focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-red-500",
+                  isCostPriceManagedByGroup && "bg-gray-100 cursor-not-allowed"
+                )}
                 step="0.01"
                 min="0"
                 placeholder="Prix d'achat chez le fournisseur"
-                required
+                disabled={isCostPriceManagedByGroup}
+                required={!isCostPriceManagedByGroup}
               />
               {editData?.cost_price && (
                 <div className="text-xs text-red-600 mt-1">
@@ -274,6 +296,19 @@ export function SupplierVsPricingEditSection({
           Modifier
         </ButtonV2>
       </div>
+
+      {/* Banner informatif si cost_price géré par groupe */}
+      {isCostPriceManagedByGroup && (
+        <div className="mb-3 p-2 bg-blue-50 border border-blue-200 rounded text-xs text-blue-800">
+          ℹ️ Le prix d'achat est commun à toutes les variantes du groupe "{variantGroup?.name}".{' '}
+          <a
+            href={`/produits/catalogue/variantes/${variantGroup?.id}`}
+            className="underline font-medium hover:text-blue-900"
+          >
+            Modifier depuis la page du groupe
+          </a>
+        </div>
+      )}
 
       <div className="space-y-4">
         {/* Prix d'achat */}

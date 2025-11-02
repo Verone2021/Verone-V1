@@ -3,7 +3,7 @@
 import React from 'react'
 import Link from 'next/link'
 import Image from 'next/image'
-import { Clock, Package, TrendingUp, TrendingDown, RotateCcw, FileText, ExternalLink, X } from 'lucide-react'
+import { Clock, Package, TrendingUp, TrendingDown, RotateCcw, FileText, ExternalLink, Trash2 } from 'lucide-react'
 import { Badge } from '@/components/ui/badge'
 import { ButtonV2 } from '@/components/ui/button'
 import {
@@ -293,13 +293,14 @@ export function MovementsTable({ movements, loading, onMovementClick, onCancelCl
               {onCancelClick && (
                 <TableCell className="text-center">
                   <ButtonV2
-                    variant="ghost"
+                    variant="outline"
                     size="sm"
+                    icon={Trash2}
                     onClick={(e) => {
                       e.stopPropagation()
                       onCancelClick(movement)
                     }}
-                    className="text-red-600 hover:text-red-700 hover:bg-red-50"
+                    className="text-red-600 border-red-300 hover:bg-red-50"
                     disabled={
                       movement.affects_forecast ||
                       (movement.reference_type !== 'manual_adjustment' &&
@@ -313,11 +314,9 @@ export function MovementsTable({ movements, loading, onMovementClick, onCancelCl
                            movement.reference_type !== 'manual_entry' &&
                            !!movement.reference_type)
                         ? "Impossible d'annuler un mouvement lié à une commande"
-                        : "Annuler ce mouvement manuel"
+                        : "Supprimer ce mouvement manuel"
                     }
-                  >
-                    <X className="h-4 w-4" />
-                  </ButtonV2>
+                  />
                 </TableCell>
               )}
             </TableRow>

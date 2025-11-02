@@ -10,7 +10,6 @@
  * @route /stocks/previsionnel
  */
 
-import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import {
   ArrowLeft,
@@ -19,6 +18,8 @@ import {
   TrendingDown,
   Package,
   AlertCircle,
+  ShoppingCart,
+  Truck,
 } from 'lucide-react';
 import {
   Card,
@@ -29,21 +30,20 @@ import {
 } from '@/components/ui/card';
 import { ButtonV2 } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import {
+  Accordion,
+  AccordionContent,
+  AccordionItem,
+  AccordionTrigger,
+} from '@/components/ui/accordion';
 import { useStockDashboard } from '@/hooks/use-stock-dashboard';
-import { ForecastSummaryWidget } from '@/components/business/forecast-summary-widget';
-import { UniversalOrderDetailsModal } from '@/components/business/universal-order-details-modal';
+import { OrderItemsTable } from '@/components/business/order-items-table';
 import { StockKPICard } from '@/components/ui-v2/stock/StockKPICard';
-import { formatPrice } from '@/lib/utils';
 
 export default function StockPrevisionnelPage() {
   const router = useRouter();
   const { metrics, loading, error, refetch } = useStockDashboard();
-
-  // États pour modal commande universelle
-  const [selectedOrderId, setSelectedOrderId] = useState<string | null>(null);
-  const [selectedOrderType, setSelectedOrderType] = useState<
-    'sales' | 'purchase' | null
-  >(null);
 
   if (loading) {
     return (
@@ -101,14 +101,6 @@ export default function StockPrevisionnelPage() {
   // Compter commandes en attente
   const nbCommandesFournisseurs = incomingOrders.length;
   const nbCommandesClients = outgoingOrders.length;
-
-  const handleOrderClick = (
-    orderId: string,
-    orderType: 'sales' | 'purchase'
-  ) => {
-    setSelectedOrderId(orderId);
-    setSelectedOrderType(orderType);
-  };
 
   return (
     <div className="min-h-screen bg-white">
@@ -179,25 +171,117 @@ export default function StockPrevisionnelPage() {
           />
         </div>
 
-        {/* Widget Forecast Summary (réutilisé) */}
+        {/* Cartes Expansibles Commandes */}
         <Card className="border-l-4 border-blue-500 bg-blue-50 rounded-[10px] shadow-md">
           <CardHeader>
             <CardTitle className="text-xl text-black">
               📊 Détail des Commandes
             </CardTitle>
             <CardDescription className="text-gray-700">
-              TOP 5 commandes fournisseurs et clients impactant les stocks
-              futurs
+              Cliquez sur une commande pour voir les produits concernés
             </CardDescription>
           </CardHeader>
           <CardContent>
-            <ForecastSummaryWidget
-              incomingOrders={incomingOrders || []}
-              outgoingOrders={outgoingOrders || []}
-              totalIn={forecastIn}
-              totalOut={forecastOut}
-              onOrderClick={handleOrderClick}
-            />
+            <Tabs defaultValue="in" className="w-full">
+              <TabsList className="grid w-full grid-cols-2 mb-4">
+                <TabsTrigger value="in" className="flex items-center gap-2">
+                  <Truck className="h-4 w-4" />
+                  Entrées Prévues ({nbCommandesFournisseurs})
+                </TabsTrigger>
+                <TabsTrigger value="out" className="flex items-center gap-2">
+                  <ShoppingCart className="h-4 w-4" />
+                  Sorties Prévues ({nbCommandesClients})
+                </TabsTrigger>
+              </TabsList>
+
+              {/* Tab Entrées Prévues (Commandes Fournisseurs) */}
+              <TabsContent value="in" className="mt-4">
+                {incomingOrders.length === 0 ? (
+                  <div className="text-center py-8 text-gray-500">
+                    <Truck className="h-12 w-12 mx-auto mb-2 text-gray-300" />
+                    <p>Aucune commande fournisseur en cours</p>
+                  </div>
+                ) : (
+                  <Accordion type="single" collapsible className="space-y-2">
+                    {incomingOrders.map(order => (
+                      <AccordionItem
+                        key={order.id}
+                        value={order.id}
+                        className="border border-gray-200 rounded-lg px-4 bg-white"
+                      >
+                        <AccordionTrigger className="hover:no-underline">
+                          <div className="flex items-center justify-between w-full pr-4">
+                            <div className="flex items-center gap-3">
+                              <Truck className="h-5 w-5 text-green-600" />
+                              <div className="text-left">
+                                <p className="font-semibold text-black">
+                                  {order.order_number || `Commande #${order.id.slice(0, 8)}`}
+                                </p>
+                                <p className="text-xs text-gray-500">
+                                  {order.supplier_name || 'Fournisseur'}
+                                </p>
+                              </div>
+                            </div>
+                            <div className="flex items-center gap-2">
+                              <Badge className="bg-green-100 text-green-700 border-green-300">
+                                +{order.total_quantity} unités
+                              </Badge>
+                            </div>
+                          </div>
+                        </AccordionTrigger>
+                        <AccordionContent className="pt-4">
+                          <OrderItemsTable orderId={order.id} orderType="purchase" />
+                        </AccordionContent>
+                      </AccordionItem>
+                    ))}
+                  </Accordion>
+                )}
+              </TabsContent>
+
+              {/* Tab Sorties Prévues (Commandes Clients) */}
+              <TabsContent value="out" className="mt-4">
+                {outgoingOrders.length === 0 ? (
+                  <div className="text-center py-8 text-gray-500">
+                    <ShoppingCart className="h-12 w-12 mx-auto mb-2 text-gray-300" />
+                    <p>Aucune commande client en cours</p>
+                  </div>
+                ) : (
+                  <Accordion type="single" collapsible className="space-y-2">
+                    {outgoingOrders.map(order => (
+                      <AccordionItem
+                        key={order.id}
+                        value={order.id}
+                        className="border border-gray-200 rounded-lg px-4 bg-white"
+                      >
+                        <AccordionTrigger className="hover:no-underline">
+                          <div className="flex items-center justify-between w-full pr-4">
+                            <div className="flex items-center gap-3">
+                              <ShoppingCart className="h-5 w-5 text-red-600" />
+                              <div className="text-left">
+                                <p className="font-semibold text-black">
+                                  {order.order_number || `Commande #${order.id.slice(0, 8)}`}
+                                </p>
+                                <p className="text-xs text-gray-500">
+                                  {order.client_name || 'Client'}
+                                </p>
+                              </div>
+                            </div>
+                            <div className="flex items-center gap-2">
+                              <Badge className="bg-red-100 text-red-700 border-red-300">
+                                -{order.total_quantity} unités
+                              </Badge>
+                            </div>
+                          </div>
+                        </AccordionTrigger>
+                        <AccordionContent className="pt-4">
+                          <OrderItemsTable orderId={order.id} orderType="sales" />
+                        </AccordionContent>
+                      </AccordionItem>
+                    ))}
+                  </Accordion>
+                )}
+              </TabsContent>
+            </Tabs>
           </CardContent>
         </Card>
 
@@ -237,17 +321,6 @@ export default function StockPrevisionnelPage() {
           </CardContent>
         </Card>
       </div>
-
-      {/* Modal détails commande universelle */}
-      <UniversalOrderDetailsModal
-        orderId={selectedOrderId}
-        orderType={selectedOrderType}
-        open={!!selectedOrderId}
-        onClose={() => {
-          setSelectedOrderId(null);
-          setSelectedOrderType(null);
-        }}
-      />
     </div>
   );
 }

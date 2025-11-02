@@ -18,6 +18,7 @@ import { SupplierVsPricingEditSection } from "@/components/business/supplier-vs-
 import { StockEditSection } from "@/components/business/stock-edit-section"
 import { ProductFixedCharacteristics } from "@/components/business/product-fixed-characteristics"
 import { SupplierEditSection } from "@/components/business/supplier-edit-section"
+import { WeightEditSection } from "@/components/business/weight-edit-section"
 import { IdentifiersCompleteEditSection } from "@/components/business/identifiers-complete-edit-section"
 import { ProductDescriptionsEditSection } from "@/components/business/product-descriptions-edit-section"
 import { cn, checkSLOCompliance } from "@/lib/utils"
@@ -135,6 +136,12 @@ interface Product {
     dimensions_width: number | null
     dimensions_height: number | null
     dimensions_unit: string | null
+    common_weight: number | null
+    has_common_weight: boolean | null
+    common_cost_price: number | null
+    has_common_cost_price: boolean | null
+    style: string | null
+    suitable_rooms: string[] | null
     has_common_supplier: boolean | null
     supplier_id: string | null
   } | null
@@ -205,6 +212,12 @@ export default function ProductDetailPage() {
             dimensions_width,
             dimensions_height,
             dimensions_unit,
+            common_weight,
+            has_common_weight,
+            common_cost_price,
+            has_common_cost_price,
+            style,
+            suitable_rooms,
             has_common_supplier,
             supplier_id
           )
@@ -446,6 +459,19 @@ export default function ProductDetailPage() {
             badge={missingFields.categorisation > 0 ? missingFields.categorisation : undefined}
           >
             <div className="space-y-3">
+              {/* Message informatif si catégorisation gérée par le groupe */}
+              {product.variant_group_id && product.variant_group && (
+                <div className="mb-3 p-2 bg-blue-50 border border-blue-200 rounded text-xs text-blue-800">
+                  ℹ️ La catégorisation est héritée du groupe de variantes "{product.variant_group.name}".{' '}
+                  <a
+                    href={`/produits/catalogue/variantes/${product.variant_group.id}`}
+                    className="underline font-medium hover:text-blue-900"
+                  >
+                    Modifier depuis la page du groupe
+                  </a>
+                </div>
+              )}
+
               {/* Hiérarchie actuelle */}
               {breadcrumbParts.length > 1 && (
                 <div className="bg-neutral-50 rounded-md p-3 text-sm">
@@ -458,6 +484,7 @@ export default function ProductDetailPage() {
                 variant="outline"
                 size="sm"
                 onClick={() => setIsCategorizeModalOpen(true)}
+                disabled={!!product.variant_group_id}
               >
                 Modifier la catégorisation
               </ButtonV2>
@@ -475,6 +502,12 @@ export default function ProductDetailPage() {
               product={product as any}
               variantGroup={(product.variant_group || undefined) as any}
               onUpdate={handleProductUpdate as any}
+            />
+            <WeightEditSection
+              product={product as any}
+              variantGroup={(product.variant_group || undefined) as any}
+              onUpdate={handleProductUpdate as any}
+              className="mt-4"
             />
           </ProductDetailAccordion>
 
@@ -521,8 +554,10 @@ export default function ProductDetailPage() {
                 id: product.id,
                 cost_price: product.cost_price ?? undefined,
                 margin_percentage: product.margin_percentage ?? undefined,
-                selling_price: product.selling_price ?? undefined
+                selling_price: product.selling_price ?? undefined,
+                variant_group_id: product.variant_group_id ?? undefined
               }}
+              variantGroup={product.variant_group ?? null}
               onUpdate={handleProductUpdate as any}
             />
           </ProductDetailAccordion>

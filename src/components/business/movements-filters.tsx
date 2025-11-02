@@ -206,8 +206,7 @@ export function MovementsFilters({ filters, onFiltersChange, onReset, hasFilters
     localFilters.reasonCodes?.length,
     localFilters.userIds?.length,
     localFilters.productSearch,
-    localFilters.affects_forecast !== undefined,
-    localFilters.forecast_type
+    localFilters.affects_forecast !== undefined
   ].filter(Boolean).length
 
   return (
@@ -245,34 +244,6 @@ export function MovementsFilters({ filters, onFiltersChange, onReset, hasFilters
             onKeyDown={(e) => e.key === 'Enter' && applyFilters()}
           />
         </div>
-
-        {/* FILTRE DÉSACTIVÉ - Remplacé par Tabs au niveau de la page */}
-        {/* Type mouvement (Réel vs Prévisionnel) désormais géré par Tabs visuels */}
-
-        {/* Filtre forecast_type (si prévisionnel sélectionné) */}
-        {localFilters.affects_forecast === true && (
-          <div className="space-y-2">
-            <Label className="text-xs font-medium text-gray-700">Direction Prévisionnel</Label>
-            <Select
-              value={localFilters.forecast_type || 'all'}
-              onValueChange={(value) => {
-                setLocalFilters(prev => ({
-                  ...prev,
-                  forecast_type: value === 'all' ? undefined : value as 'in' | 'out'
-                }))
-              }}
-            >
-              <SelectTrigger className="border-black">
-                <SelectValue placeholder="Toutes directions" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">Toutes directions</SelectItem>
-                <SelectItem value="in">Entrées Prévues</SelectItem>
-                <SelectItem value="out">Sorties Prévues</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
-        )}
 
         {/* Période */}
         <div className="space-y-3">

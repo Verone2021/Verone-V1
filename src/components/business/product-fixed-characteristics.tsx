@@ -2,7 +2,19 @@
 
 import { Package, Edit2 } from 'lucide-react'
 import { ButtonV2 } from '@/components/ui/button'
+import { Badge } from '@/components/ui/badge'
+import { COLLECTION_STYLE_OPTIONS } from '@/types/collections'
 import { cn } from '../../lib/utils'
+
+/**
+ * Formatte le style décoratif pour affichage
+ * @param style - Valeur du style (enum)
+ * @returns Label formatté du style
+ */
+function formatStyle(style: string): string {
+  const styleOption = COLLECTION_STYLE_OPTIONS.find(s => s.value === style)
+  return styleOption?.label || style
+}
 
 interface Product {
   id: string
@@ -25,10 +37,14 @@ interface Product {
 
   // Données héritées du Variant Group (lecture seule)
   variant_group?: {
+    id?: string
     dimensions_length?: number | null
     dimensions_width?: number | null
     dimensions_height?: number | null
     dimensions_unit?: string
+    common_weight?: number | null
+    style?: string | null
+    suitable_rooms?: string[] | null
   }
 }
 
@@ -41,12 +57,20 @@ interface ProductFixedCharacteristicsProps {
 /**
  * Détermine les pièces de maison compatibles selon le type de produit
  * Règles métier :
- * - chaise → toutes les pièces
- * - lavabo → "wc salle de bains"
- * - lit → "chambre"
- * - meuble général → pièces appropriées selon usage
+ * - Si le produit appartient à un groupe de variantes avec pièces définies → utiliser ces pièces (héritage)
+ * - Sinon, calcul automatique selon type de produit :
+ *   - chaise → toutes les pièces
+ *   - lavabo → "wc salle de bains"
+ *   - lit → "chambre"
+ *   - meuble général → pièces appropriées selon usage
  */
 function getCompatibleRooms(product: Product): string[] {
+  // Priorité 1 : Si le groupe a défini des pièces compatibles, les utiliser (héritage)
+  if (product.variant_group?.suitable_rooms && product.variant_group.suitable_rooms.length > 0) {
+    return product.variant_group.suitable_rooms
+  }
+
+  // Priorité 2 : Calcul automatique selon type de produit
   const productName = product.name?.toLowerCase() || ''
   const subcategoryName = product.subcategory?.name?.toLowerCase() || ''
   const categoryName = product.subcategory?.category?.name?.toLowerCase() || ''
@@ -224,10 +248,16 @@ export function ProductFixedCharacteristics({
 
         {/* Pièces compatibles (automatique selon type produit) */}
         <div>
-          <h4 className="text-sm font-medium text-black mb-2 opacity-70">
-            Pièces de maison compatibles
+          <h4 className="text-sm font-medium text-black mb-2 opacity-70 flex items-center gap-2">
+            {product.variant_group?.suitable_rooms && product.variant_group.suitable_rooms.length > 0
+              ? '🏠 Pièces compatibles (héritées du groupe)'
+              : 'Pièces de maison compatibles'
+            }
+            {product.variant_group?.suitable_rooms && product.variant_group.suitable_rooms.length > 0 && product.variant_group_id && (
+              <span className="text-xs bg-green-100 text-green-700 px-2 py-0.5 rounded">🔒 Non modifiable ici</span>
+            )}
           </h4>
-          <div className="bg-green-50 p-3 rounded">
+          <div className="bg-green-50 p-3 rounded border border-green-200">
             <div className="flex flex-wrap gap-2">
               {compatibleRooms.map((room, index) => (
                 <span
@@ -238,8 +268,22 @@ export function ProductFixedCharacteristics({
                 </span>
               ))}
             </div>
-            <div className="text-xs text-green-600 mt-2">
-              🏠 Pièces déterminées automatiquement selon le type de produit
+            <div className="text-xs text-green-600 mt-2 flex items-center gap-1">
+              {product.variant_group?.suitable_rooms && product.variant_group.suitable_rooms.length > 0 ? (
+                <>
+                  🏠 Pièces communes à toutes les variantes du groupe
+                  {product.variant_group_id && (
+                    <a
+                      href={`/catalogue/variantes/${product.variant_group_id}`}
+                      className="underline font-medium hover:text-green-800 ml-1"
+                    >
+                      (modifier dans le groupe)
+                    </a>
+                  )}
+                </>
+              ) : (
+                '🏠 Pièces déterminées automatiquement selon le type de produit'
+              )}
             </div>
           </div>
         </div>
@@ -261,6 +305,58 @@ export function ProductFixedCharacteristics({
                   <a
                     href={`/catalogue/variantes/${product.variant_group_id}`}
                     className="underline font-medium hover:text-green-800 ml-1"
+                  >
+                    (modifier dans le groupe)
+                  </a>
+                )}
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Poids commun (hérité du Variant Group) */}
+        {product.variant_group?.common_weight && product.variant_group_id && (
+          <div>
+            <h4 className="text-sm font-medium text-black mb-2 opacity-70 flex items-center gap-2">
+              ⚖️ Poids (hérité du groupe)
+              <span className="text-xs bg-blue-100 text-blue-700 px-2 py-0.5 rounded">🔒 Non modifiable ici</span>
+            </h4>
+            <div className="bg-blue-50 p-3 rounded border border-blue-200">
+              <div className="text-sm font-medium text-black">
+                {product.variant_group.common_weight} kg
+              </div>
+              <div className="text-xs text-blue-600 mt-2 flex items-center gap-1">
+                ⚖️ Poids commun à toutes les variantes du groupe
+                {product.variant_group_id && (
+                  <a
+                    href={`/catalogue/variantes/${product.variant_group_id}`}
+                    className="underline font-medium hover:text-blue-800 ml-1"
+                  >
+                    (modifier dans le groupe)
+                  </a>
+                )}
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Style décoratif (hérité du Variant Group) */}
+        {product.variant_group?.style && product.variant_group_id && (
+          <div>
+            <h4 className="text-sm font-medium text-black mb-2 opacity-70 flex items-center gap-2">
+              🎨 Style décoratif (hérité du groupe)
+              <span className="text-xs bg-purple-100 text-purple-700 px-2 py-0.5 rounded">🔒 Non modifiable ici</span>
+            </h4>
+            <div className="bg-purple-50 p-3 rounded border border-purple-200">
+              <Badge variant="outline" className="bg-white">
+                {formatStyle(product.variant_group.style)}
+              </Badge>
+              <div className="text-xs text-purple-600 mt-2 flex items-center gap-1">
+                🎨 Style commun à toutes les variantes du groupe
+                {product.variant_group_id && (
+                  <a
+                    href={`/catalogue/variantes/${product.variant_group_id}`}
+                    className="underline font-medium hover:text-purple-800 ml-1"
                   >
                     (modifier dans le groupe)
                   </a>

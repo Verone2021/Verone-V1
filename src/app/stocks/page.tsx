@@ -29,16 +29,23 @@ import {
 import { ButtonV2 } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { useStockDashboard } from '@/hooks/use-stock-dashboard';
+import { useStockAlerts } from '@/hooks/use-stock-alerts';
+import { useMovementsHistory } from '@/hooks/use-movements-history';
 import { formatPrice } from '@/lib/utils';
 import { StockKPICard } from '@/components/ui-v2/stock/StockKPICard';
-import { ChannelFilter } from '@/components/ui-v2/stock';
 
 export default function StocksDashboardPage() {
   const router = useRouter();
   const { metrics, loading, error, refetch } = useStockDashboard();
-  const [selectedChannelId, setSelectedChannelId] = useState<string | null>(
-    null
-  );
+
+  // 🆕 Phase 3.6: Hooks widgets minimalistes
+  const { alerts, criticalAlerts, loading: alertsLoading } = useStockAlerts();
+  const { movements: lastMovements, loading: movementsLoading, fetchMovements } = useMovementsHistory();
+
+  // Charger derniers mouvements réels au montage
+  useEffect(() => {
+    fetchMovements({ affects_forecast: false, limit: 5 });
+  }, [fetchMovements]);
 
   // Extraction des métriques avec fallbacks
   const overview = metrics?.overview || {
@@ -68,13 +75,6 @@ export default function StocksDashboardPage() {
 
   const totalAlerts =
     overview.products_out_of_stock + overview.products_below_min;
-
-  // Auto-refetch mouvements au changement canal
-  useEffect(() => {
-    if (!loading && selectedChannelId !== null) {
-      refetch();
-    }
-  }, [selectedChannelId]);
 
   // Handler pour ouvrir les détails de commande (modal)
   const handleOrderClick = (
@@ -231,23 +231,6 @@ export default function StocksDashboardPage() {
           </CardContent>
         </Card>
 
-        {/* Filtre Canal Vente */}
-        <Card className="border-gray-300 rounded-[10px] shadow-sm">
-          <CardContent className="pt-5 pb-4">
-            <div className="flex items-center gap-3">
-              <span className="text-sm font-medium text-gray-700">
-                Filtre canal :
-              </span>
-              <ChannelFilter
-                selectedChannel={selectedChannelId}
-                onChannelChange={setSelectedChannelId}
-                showAllOption={true}
-                placeholder="Tous les canaux"
-              />
-            </div>
-          </CardContent>
-        </Card>
-
         {/* KPIs Compacts - 4 Cards Design System V2 (Height 80px) */}
         <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
           {/* KPI 1: Stock Réel */}
@@ -316,74 +299,64 @@ export default function StocksDashboardPage() {
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
-            {/* Widget: Alertes Stock Faible */}
+            {/* 🆕 Widget: Alertes Stock Critiques */}
             <Card className="border-gray-200 rounded-[10px]">
               <CardHeader className="pb-3">
-                <CardTitle className="text-black text-base">
-                  Alertes Stock Faible
+                <CardTitle className="text-black text-base flex items-center gap-2">
+                  <AlertTriangle className="h-4 w-4 text-red-500" />
+                  Alertes Stock Critiques
                 </CardTitle>
                 <CardDescription className="text-xs">
-                  Produits nécessitant réapprovisionnement
+                  Top 3 alertes nécessitant action immédiate
                 </CardDescription>
               </CardHeader>
               <CardContent>
                 <div className="space-y-3">
-                  {lowStockProducts.length === 0 ? (
+                  {alertsLoading ? (
                     <div className="text-center py-6">
-                      <Package className="h-10 w-10 text-gray-300 mx-auto mb-2" />
+                      <RefreshCw className="h-6 w-6 text-gray-300 mx-auto mb-2 animate-spin" />
                       <p className="text-sm text-gray-500">
-                        Aucune alerte stock actuellement
+                        Chargement alertes...
+                      </p>
+                    </div>
+                  ) : criticalAlerts.length === 0 ? (
+                    <div className="text-center py-6">
+                      <CheckCircle className="h-10 w-10 text-green-500 mx-auto mb-2" />
+                      <p className="text-sm text-gray-500">
+                        Aucune alerte critique actuellement
                       </p>
                     </div>
                   ) : (
                     <>
-                      {lowStockProducts.slice(0, 3).map(product => (
+                      {criticalAlerts.slice(0, 3).map(alert => (
                         <div
-                          key={product.id}
+                          key={alert.id}
                           className="flex items-start justify-between border-b border-gray-100 pb-2 last:border-0"
                         >
-                          <div className="flex items-start gap-3 flex-1">
-                            {/* Image Produit */}
-                            {product.product_image_url ? (
-                              <Image
-                                src={product.product_image_url}
-                                alt={product.name}
-                                width={48}
-                                height={48}
-                                className="rounded-lg object-cover border border-gray-200 flex-shrink-0"
-                              />
-                            ) : (
-                              <div className="h-12 w-12 bg-gray-100 rounded-lg flex items-center justify-center flex-shrink-0">
-                                <Package className="h-6 w-6 text-gray-400" />
-                              </div>
-                            )}
-                            {/* Info Produit */}
-                            <div className="flex-1 min-w-0">
-                              <Link
-                                href={`/produits/catalogue/${product.id}`}
-                                className="text-sm font-medium text-black hover:text-blue-600 hover:underline transition-colors block truncate"
-                              >
-                                {product.name}
-                              </Link>
-                              <p className="text-xs text-gray-500 mt-0.5">
-                                {product.sku}
-                              </p>
-                            </div>
+                          <div className="flex-1 min-w-0">
+                            <Link
+                              href={`/produits/catalogue/${alert.product_id}`}
+                              className="text-sm font-medium text-black hover:text-blue-600 hover:underline transition-colors block truncate"
+                            >
+                              {alert.product_name}
+                            </Link>
+                            <p className="text-xs text-gray-500 mt-0.5">
+                              {alert.sku}
+                            </p>
                           </div>
                           <div className="text-right flex items-center gap-2 ml-4 flex-shrink-0">
                             <Badge
                               variant="outline"
-                              className="border-orange-300 text-orange-600 text-xs"
+                              className="border-red-300 text-red-600 text-xs"
                             >
-                              {product.stock_quantity} réel
+                              {alert.stock_real} réel
                             </Badge>
-                            {Math.abs(product.stock_forecasted_out || 0) >
-                              0 && (
+                            {alert.min_stock && (
                               <Badge
                                 variant="outline"
-                                className="border-red-300 text-red-600 text-xs"
+                                className="border-orange-300 text-orange-600 text-xs"
                               >
-                                {Math.abs(product.stock_forecasted_out)} réservé
+                                Min: {alert.min_stock}
                               </Badge>
                             )}
                           </div>
@@ -396,7 +369,89 @@ export default function StocksDashboardPage() {
                         className="w-full border-orange-200 text-orange-600 hover:bg-orange-50 transition-colors text-xs mt-2"
                       >
                         <AlertTriangle className="h-3 w-3 mr-2" />
-                        Voir toutes les alertes ({totalAlerts})
+                        Voir toutes les alertes ({alerts.length})
+                      </ButtonV2>
+                    </>
+                  )}
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* 🆕 Widget: Derniers Mouvements */}
+            <Card className="border-gray-200 rounded-[10px]">
+              <CardHeader className="pb-3">
+                <CardTitle className="text-black text-base flex items-center gap-2">
+                  <ArrowUpDown className="h-4 w-4 text-blue-500" />
+                  Derniers Mouvements
+                </CardTitle>
+                <CardDescription className="text-xs">
+                  5 derniers mouvements de stock réels
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-3">
+                  {movementsLoading ? (
+                    <div className="text-center py-6">
+                      <RefreshCw className="h-6 w-6 text-gray-300 mx-auto mb-2 animate-spin" />
+                      <p className="text-sm text-gray-500">
+                        Chargement mouvements...
+                      </p>
+                    </div>
+                  ) : lastMovements.length === 0 ? (
+                    <div className="text-center py-6">
+                      <Package className="h-10 w-10 text-gray-300 mx-auto mb-2" />
+                      <p className="text-sm text-gray-500">
+                        Aucun mouvement récent
+                      </p>
+                    </div>
+                  ) : (
+                    <>
+                      {lastMovements.slice(0, 5).map(movement => (
+                        <div
+                          key={movement.id}
+                          className="flex items-center justify-between border-b border-gray-100 pb-2 last:border-0"
+                        >
+                          <div className="flex items-center gap-2 flex-1 min-w-0">
+                            {movement.movement_type === 'IN' ? (
+                              <ArrowDownToLine className="h-4 w-4 text-green-500 flex-shrink-0" />
+                            ) : (
+                              <ArrowUpFromLine className="h-4 w-4 text-red-500 flex-shrink-0" />
+                            )}
+                            <div className="flex-1 min-w-0">
+                              <p className="text-sm font-medium text-black truncate">
+                                {movement.product_name || 'Produit inconnu'}
+                              </p>
+                              <p className="text-xs text-gray-500">
+                                {new Date(movement.performed_at).toLocaleString('fr-FR', {
+                                  day: 'numeric',
+                                  month: 'short',
+                                  hour: '2-digit',
+                                  minute: '2-digit'
+                                })}
+                              </p>
+                            </div>
+                          </div>
+                          <Badge
+                            variant="outline"
+                            className={
+                              movement.quantity_change > 0
+                                ? 'border-green-300 text-green-600 text-xs'
+                                : 'border-red-300 text-red-600 text-xs'
+                            }
+                          >
+                            {movement.quantity_change > 0 ? '+' : ''}
+                            {movement.quantity_change}
+                          </Badge>
+                        </div>
+                      ))}
+                      <ButtonV2
+                        variant="outline"
+                        size="sm"
+                        onClick={() => router.push('/stocks/mouvements')}
+                        className="w-full border-blue-200 text-blue-600 hover:bg-blue-50 transition-colors text-xs mt-2"
+                      >
+                        <Eye className="h-3 w-3 mr-2" />
+                        Voir l'historique complet
                       </ButtonV2>
                     </>
                   )}

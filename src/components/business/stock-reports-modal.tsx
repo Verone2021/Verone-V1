@@ -28,6 +28,7 @@ import {
 } from '@/components/ui/select'
 import { useToast } from '@/hooks/use-toast'
 import { AgingReportView } from '@/components/business/aging-report-view'
+import { ABCAnalysisView } from '@/components/business/abc-analysis-view'
 import {
   Dialog,
   DialogContent,
@@ -140,7 +141,7 @@ const AVAILABLE_REPORTS = [
     description: 'Matrice valeur × variabilité pour stratégie stock',
     icon: FileText,
     priority: 'medium',
-    status: 'coming_soon',
+    status: 'available',
     metrics: ['% valeur cumulée', 'Coefficient variation', 'Classe ABC'],
     visualizations: ['Matrice 9 cases', 'Courbe Pareto'],
     filters: ['Période analyse'],
@@ -463,10 +464,17 @@ export function StockReportsModal({ isOpen, onClose }: StockReportsModalProps) {
               </div>
             </div>
 
-            {/* Affichage du rapport (si généré et aging) */}
+            {/* Affichage du rapport aging */}
             {showReport && selectedReport === 'aging' && (
               <div className="mt-4">
                 <AgingReportView dateFrom={config.dateFrom} dateTo={config.dateTo} />
+              </div>
+            )}
+
+            {/* Affichage du rapport ABC */}
+            {showReport && selectedReport === 'abc-xyz' && (
+              <div className="mt-4">
+                <ABCAnalysisView />
               </div>
             )}
           </div>
