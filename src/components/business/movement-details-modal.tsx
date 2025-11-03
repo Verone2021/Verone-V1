@@ -2,6 +2,7 @@
 
 import React from 'react'
 import Link from 'next/link'
+import Image from 'next/image'
 import { X, Package, Clock, User, TrendingUp, TrendingDown, RotateCcw, FileText, Euro, MessageSquare, Settings, ShoppingCart } from 'lucide-react'
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 import { Badge } from '@/components/ui/badge'
@@ -128,7 +129,24 @@ export function MovementDetailsModal({ movement, isOpen, onClose }: MovementDeta
               href={`/catalogue/${movement.product_id}`}
               className="flex items-center gap-3 p-3 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors"
             >
-              <Package className="h-5 w-5 text-gray-400" />
+              {/* Image produit */}
+              {movement.product_image_url ? (
+                <div className="relative w-16 h-16 flex-shrink-0 rounded-lg overflow-hidden border border-gray-200 bg-gray-50">
+                  <Image
+                    src={movement.product_image_url}
+                    alt={movement.product_name || 'Produit'}
+                    fill
+                    className="object-cover"
+                    sizes="64px"
+                  />
+                </div>
+              ) : (
+                <div className="w-16 h-16 flex-shrink-0 rounded-lg border border-gray-200 bg-gray-100 flex items-center justify-center">
+                  <Package className="h-8 w-8 text-gray-400" />
+                </div>
+              )}
+
+              {/* Nom + SKU */}
               <div>
                 <div className="font-medium">{movement.product_name || 'Produit supprimé'}</div>
                 <div className="text-sm text-gray-500">SKU: {movement.product_sku || 'Inconnu'}</div>

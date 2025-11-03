@@ -255,7 +255,7 @@ export function MovementsTable({ movements, loading, onMovementClick, onCancelCl
                     />
                   ) : (
                     <div className="h-10 w-10 bg-gray-100 rounded-lg flex items-center justify-center flex-shrink-0">
-                      <Package className="h-5 w-5 text-gray-400" />
+                      <Package className="h-4 w-4 text-gray-400" />
                     </div>
                   )}
 

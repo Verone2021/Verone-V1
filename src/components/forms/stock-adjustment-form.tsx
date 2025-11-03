@@ -218,6 +218,7 @@ export function StockAdjustmentForm({
       if (!user) throw new Error('Non authentifié')
 
       // Insérer stock_movement
+      // ✅ FIX Phase 3.6: Définir explicitement affects_forecast et forecast_type
       const { error: insertError } = await supabase
         .from('stock_movements')
         .insert({
@@ -226,6 +227,8 @@ export function StockAdjustmentForm({
           quantity_change: quantityChange,
           quantity_before: quantityBefore,
           quantity_after: quantityAfter,
+          affects_forecast: false,  // ✅ EXPLICITE: Ajustements manuels = mouvements réels
+          forecast_type: null,      // ✅ EXPLICITE: Pas de direction prévisionnel pour ajustements
           reference_type: 'manual_adjustment',
           reference_id: crypto.randomUUID(), // UUID unique pour traçabilité
           notes: `${formData.reason}: ${formData.notes}`,

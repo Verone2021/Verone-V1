@@ -1,15 +1,17 @@
 /**
  * 🆕 Phase 3.5.1: Extraction ProductHistoryModal
+ * ✅ Phase 3.6: Ajout filtres date + type + statistiques
  *
  * Composant modal affichant l'historique complet des mouvements d'un produit
  * Réutilisable par /stocks/inventaire, /produits/catalogue/[id], etc.
  *
  * @since Phase 3.5.1 - 2025-11-01
+ * @updated Phase 3.6 - 2025-11-03 - Filtres date + type + stats
  */
 
 'use client'
 
-import React, { useState, useEffect } from 'react'
+import React, { useState, useEffect, useMemo } from 'react'
 import Link from 'next/link'
 import {
   Package,
@@ -19,9 +21,15 @@ import {
   Clock,
   User,
   FileText,
-  ExternalLink
+  ExternalLink,
+  Filter,
+  RotateCcw,
+  TrendingUp,
+  TrendingDown,
+  BarChart3
 } from 'lucide-react'
 import { Badge } from '@/components/ui/badge'
+import { ButtonV2 } from '@/components/ui/button'
 import {
   Dialog,
   DialogContent,
@@ -29,6 +37,8 @@ import {
   DialogTitle,
   DialogDescription,
 } from '@/components/ui/dialog'
+import { Checkbox } from '@/components/ui/checkbox'
+import { Label } from '@/components/ui/label'
 import { useStockMovements } from '@/hooks/use-stock-movements'
 
 interface ProductHistoryModalProps {
@@ -37,9 +47,18 @@ interface ProductHistoryModalProps {
   onClose: () => void
 }
 
+interface HistoryFilters {
+  dateRange: 'all' | 'today' | '7days' | '30days'
+  movementTypes: string[]
+}
+
 export function ProductHistoryModal({ product, isOpen, onClose }: ProductHistoryModalProps) {
   const [movements, setMovements] = useState([])
   const [loading, setLoading] = useState(false)
+  const [filters, setFilters] = useState<HistoryFilters>({
+    dateRange: 'all',
+    movementTypes: []
+  })
   const { getProductHistory, getReasonDescription } = useStockMovements()
 
   useEffect(() => {
@@ -59,6 +78,84 @@ export function ProductHistoryModal({ product, isOpen, onClose }: ProductHistory
       setLoading(false)
     }
   }
+
+  // ✅ Phase 3.6: Filtrer mouvements selon critères
+  const filteredMovements = useMemo(() => {
+    let filtered = [...movements]
+
+    // Filtre par période
+    if (filters.dateRange !== 'all') {
+      const now = new Date()
+      let startDate: Date
+
+      switch (filters.dateRange) {
+        case 'today':
+          startDate = new Date(now.getFullYear(), now.getMonth(), now.getDate())
+          break
+        case '7days':
+          startDate = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000)
+          break
+        case '30days':
+          startDate = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000)
+          break
+        default:
+          startDate = new Date(0)
+      }
+
+      filtered = filtered.filter((m: any) => new Date(m.performed_at) >= startDate)
+    }
+
+    // Filtre par type de mouvement
+    if (filters.movementTypes.length > 0) {
+      filtered = filtered.filter((m: any) => filters.movementTypes.includes(m.movement_type))
+    }
+
+    return filtered
+  }, [movements, filters])
+
+  // ✅ Phase 3.6: Statistiques filtrées
+  const stats = useMemo(() => {
+    const totalIn = filteredMovements
+      .filter((m: any) => m.movement_type === 'IN')
+      .reduce((sum, m: any) => sum + m.quantity_change, 0)
+
+    const totalOut = filteredMovements
+      .filter((m: any) => m.movement_type === 'OUT')
+      .reduce((sum, m: any) => sum + Math.abs(m.quantity_change), 0)
+
+    const totalAdjust = filteredMovements
+      .filter((m: any) => m.movement_type === 'ADJUST')
+      .reduce((sum, m: any) => sum + m.quantity_change, 0)
+
+    return {
+      total: filteredMovements.length,
+      totalIn,
+      totalOut,
+      totalAdjust,
+      netChange: totalIn - totalOut + totalAdjust
+    }
+  }, [filteredMovements])
+
+  // Toggle type de mouvement
+  const toggleMovementType = (type: string) => {
+    setFilters(prev => ({
+      ...prev,
+      movementTypes: prev.movementTypes.includes(type)
+        ? prev.movementTypes.filter(t => t !== type)
+        : [...prev.movementTypes, type]
+    }))
+  }
+
+  // Reset filtres
+  const resetFilters = () => {
+    setFilters({
+      dateRange: 'all',
+      movementTypes: []
+    })
+  }
+
+  // Vérifier si des filtres sont actifs
+  const hasActiveFilters = filters.dateRange !== 'all' || filters.movementTypes.length > 0
 
   const getMovementTypeLabel = (type: string) => {
     const labels: Record<string, string> = {
@@ -136,7 +233,140 @@ export function ProductHistoryModal({ product, isOpen, onClose }: ProductHistory
           </DialogDescription>
         </DialogHeader>
 
-        <div className="overflow-y-auto pr-2" style={{ maxHeight: 'calc(85vh - 100px)' }}>
+        {/* ✅ Phase 3.6: Statistiques filtrées */}
+        {movements.length > 0 && (
+          <div className="grid grid-cols-4 gap-3 p-4 bg-gray-50 border-b border-gray-200">
+            <div className="flex flex-col">
+              <div className="flex items-center gap-2 text-xs text-gray-600 mb-1">
+                <BarChart3 className="h-3 w-3" />
+                Total Mouvements
+              </div>
+              <div className="text-2xl font-bold text-black">{stats.total}</div>
+            </div>
+            <div className="flex flex-col">
+              <div className="flex items-center gap-2 text-xs text-gray-600 mb-1">
+                <TrendingUp className="h-3 w-3" />
+                Entrées
+              </div>
+              <div className="text-2xl font-bold text-black">+{stats.totalIn}</div>
+            </div>
+            <div className="flex flex-col">
+              <div className="flex items-center gap-2 text-xs text-gray-600 mb-1">
+                <TrendingDown className="h-3 w-3" />
+                Sorties
+              </div>
+              <div className="text-2xl font-bold text-gray-700">-{stats.totalOut}</div>
+            </div>
+            <div className="flex flex-col">
+              <div className="flex items-center gap-2 text-xs text-gray-600 mb-1">
+                <Package className="h-3 w-3" />
+                Variation Nette
+              </div>
+              <div className={`text-2xl font-bold ${stats.netChange >= 0 ? 'text-black' : 'text-red-600'}`}>
+                {stats.netChange >= 0 ? '+' : ''}{stats.netChange}
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* ✅ Phase 3.6: Filtres date + type */}
+        {movements.length > 0 && (
+          <div className="p-4 space-y-4 border-b border-gray-200 bg-white">
+            {/* Filtres de période */}
+            <div className="space-y-2">
+              <Label className="flex items-center gap-2 text-sm font-medium">
+                <Calendar className="h-4 w-4" />
+                Période
+              </Label>
+              <div className="flex flex-wrap gap-2">
+                <ButtonV2
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setFilters(prev => ({ ...prev, dateRange: 'all' }))}
+                  className={`h-8 text-xs ${filters.dateRange === 'all' ? 'bg-black text-white hover:bg-gray-800' : 'border-gray-300'}`}
+                >
+                  Tout afficher
+                </ButtonV2>
+                <ButtonV2
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setFilters(prev => ({ ...prev, dateRange: 'today' }))}
+                  className={`h-8 text-xs ${filters.dateRange === 'today' ? 'bg-black text-white hover:bg-gray-800' : 'border-gray-300'}`}
+                >
+                  Aujourd'hui
+                </ButtonV2>
+                <ButtonV2
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setFilters(prev => ({ ...prev, dateRange: '7days' }))}
+                  className={`h-8 text-xs ${filters.dateRange === '7days' ? 'bg-black text-white hover:bg-gray-800' : 'border-gray-300'}`}
+                >
+                  7 derniers jours
+                </ButtonV2>
+                <ButtonV2
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setFilters(prev => ({ ...prev, dateRange: '30days' }))}
+                  className={`h-8 text-xs ${filters.dateRange === '30days' ? 'bg-black text-white hover:bg-gray-800' : 'border-gray-300'}`}
+                >
+                  30 derniers jours
+                </ButtonV2>
+                {hasActiveFilters && (
+                  <ButtonV2
+                    variant="outline"
+                    size="sm"
+                    onClick={resetFilters}
+                    className="h-8 text-xs border-red-300 text-red-600 hover:bg-red-50"
+                  >
+                    <RotateCcw className="h-3 w-3 mr-1.5" />
+                    Reset
+                  </ButtonV2>
+                )}
+              </div>
+            </div>
+
+            {/* Filtres de type de mouvement */}
+            <div className="space-y-2">
+              <Label className="flex items-center gap-2 text-sm font-medium">
+                <Filter className="h-4 w-4" />
+                Types de mouvement
+                {filters.movementTypes.length > 0 && (
+                  <Badge variant="secondary" className="ml-2 text-xs">
+                    {filters.movementTypes.length} sélectionné{filters.movementTypes.length > 1 ? 's' : ''}
+                  </Badge>
+                )}
+              </Label>
+              <div className="grid grid-cols-4 gap-2">
+                {[
+                  { value: 'IN', label: 'Entrées', icon: TrendingUp },
+                  { value: 'OUT', label: 'Sorties', icon: TrendingDown },
+                  { value: 'ADJUST', label: 'Ajustements', icon: Package },
+                  { value: 'TRANSFER', label: 'Transferts', icon: Package }
+                ].map((type) => {
+                  const Icon = type.icon
+                  return (
+                    <div key={type.value} className="flex items-center space-x-2">
+                      <Checkbox
+                        id={`modal-type-${type.value}`}
+                        checked={filters.movementTypes.includes(type.value)}
+                        onCheckedChange={() => toggleMovementType(type.value)}
+                      />
+                      <Label
+                        htmlFor={`modal-type-${type.value}`}
+                        className="text-xs cursor-pointer flex items-center gap-1.5 font-normal"
+                      >
+                        <Icon className="h-3 w-3" />
+                        {type.label}
+                      </Label>
+                    </div>
+                  )
+                })}
+              </div>
+            </div>
+          </div>
+        )}
+
+        <div className="overflow-y-auto pr-2" style={{ maxHeight: 'calc(85vh - 350px)' }}>
           {loading ? (
             <div className="flex justify-center py-12">
               <RefreshCw className="h-8 w-8 animate-spin text-gray-400" />
@@ -148,6 +378,23 @@ export function ProductHistoryModal({ product, isOpen, onClose }: ProductHistory
               <p className="text-sm text-gray-400 mt-1">
                 Ce produit n'a pas encore d'historique de mouvements
               </p>
+            </div>
+          ) : filteredMovements.length === 0 ? (
+            <div className="text-center py-12">
+              <Filter className="h-12 w-12 text-gray-300 mx-auto mb-4" />
+              <p className="text-gray-500 font-medium">Aucun mouvement pour ces filtres</p>
+              <p className="text-sm text-gray-400 mt-1">
+                Modifiez les critères ou réinitialisez les filtres
+              </p>
+              <ButtonV2
+                variant="outline"
+                size="sm"
+                onClick={resetFilters}
+                className="mt-4"
+              >
+                <RotateCcw className="h-3 w-3 mr-2" />
+                Réinitialiser les filtres
+              </ButtonV2>
             </div>
           ) : (
             <div className="space-y-0">
@@ -167,7 +414,7 @@ export function ProductHistoryModal({ product, isOpen, onClose }: ProductHistory
                 {/* Ligne verticale timeline */}
                 <div className="absolute left-[16.666%] top-0 bottom-0 w-px bg-gray-200" />
 
-                {movements.map((movement: any, index: number) => {
+                {filteredMovements.map((movement: any, index: number) => {
                   const sourceInfo = getSourceInfo(movement)
                   const performerName = getPerformerName(movement)
                   const reasonLabel = movement.reason_code
@@ -276,15 +523,22 @@ export function ProductHistoryModal({ product, isOpen, onClose }: ProductHistory
           )}
         </div>
 
-        {/* Footer stats */}
+        {/* Footer stats - ✅ Phase 3.6: Afficher stats filtrées */}
         {movements.length > 0 && (
           <div className="border-t border-gray-200 pt-3 mt-2">
             <div className="flex items-center justify-between text-xs text-gray-600">
               <div className="flex items-center gap-4">
                 <span className="font-medium text-black">
-                  {movements.length} mouvement{movements.length > 1 ? 's' : ''}
+                  {hasActiveFilters && `${stats.total} / `}{movements.length} mouvement{movements.length > 1 ? 's' : ''}
+                  {hasActiveFilters && ' total'}
                 </span>
                 <span>Stock actuel: <strong className="text-black">{product?.stock_quantity || 0}</strong></span>
+                {hasActiveFilters && (
+                  <Badge variant="secondary" className="text-xs">
+                    <Filter className="h-3 w-3 mr-1" />
+                    Filtres actifs
+                  </Badge>
+                )}
               </div>
               <span className="text-gray-500">
                 Dernier mouvement: {movements[0] ? new Date((movements[0] as any).performed_at).toLocaleDateString('fr-FR') : 'Aucun'}

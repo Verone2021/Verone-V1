@@ -135,8 +135,15 @@ export function useMovementsHistory() {
       }
 
       // Filtre par type de mouvement (réel vs prévisionnel)
+      // ✅ FIX Phase 3.6: .eq() exclut NULL, utiliser .or() pour inclure données historiques
       if (appliedFilters.affects_forecast !== undefined) {
-        query = query.eq('affects_forecast', appliedFilters.affects_forecast)
+        if (appliedFilters.affects_forecast === false) {
+          // Mouvements RÉELS : NULL ou false (inclut données historiques)
+          query = query.or('affects_forecast.is.null,affects_forecast.eq.false')
+        } else {
+          // Mouvements PRÉVISIONNELS : strictement true
+          query = query.eq('affects_forecast', true)
+        }
       }
 
       // Filtre par direction prévisionnel
@@ -249,37 +256,42 @@ export function useMovementsHistory() {
       const monthStart = new Date(now.getFullYear(), now.getMonth(), 1)
 
       // Compter tous les mouvements RÉELS uniquement
+      // ✅ FIX Phase 3.6: .or() inclut NULL (données historiques)
       const { count: totalCount } = await supabase
         .from('stock_movements')
         .select('*', { count: 'exact', head: true })
-        .eq('affects_forecast', false)
+        .or('affects_forecast.is.null,affects_forecast.eq.false')
 
       // Mouvements du jour (RÉELS uniquement)
+      // ✅ FIX Phase 3.6: .or() inclut NULL (données historiques)
       const { count: todayCount } = await supabase
         .from('stock_movements')
         .select('*', { count: 'exact', head: true })
-        .eq('affects_forecast', false)
+        .or('affects_forecast.is.null,affects_forecast.eq.false')
         .gte('performed_at', today.toISOString())
 
       // Mouvements de la semaine (RÉELS uniquement)
+      // ✅ FIX Phase 3.6: .or() inclut NULL (données historiques)
       const { count: weekCount } = await supabase
         .from('stock_movements')
         .select('*', { count: 'exact', head: true })
-        .eq('affects_forecast', false)
+        .or('affects_forecast.is.null,affects_forecast.eq.false')
         .gte('performed_at', weekStart.toISOString())
 
       // Mouvements du mois (RÉELS uniquement)
+      // ✅ FIX Phase 3.6: .or() inclut NULL (données historiques)
       const { count: monthCount } = await supabase
         .from('stock_movements')
         .select('*', { count: 'exact', head: true })
-        .eq('affects_forecast', false)
+        .or('affects_forecast.is.null,affects_forecast.eq.false')
         .gte('performed_at', monthStart.toISOString())
 
       // Répartition par type (RÉELS uniquement)
+      // ✅ FIX Phase 3.6: .or() inclut NULL (données historiques)
       const { data: typeStats } = await supabase
         .from('stock_movements')
         .select('movement_type')
-        .eq('affects_forecast', false)
+        .or('affects_forecast.is.null,affects_forecast.eq.false')
         .gte('performed_at', monthStart.toISOString())
 
       const byType = {
@@ -301,10 +313,11 @@ export function useMovementsHistory() {
         .eq('affects_forecast', true)
 
       // Top motifs du mois (RÉELS uniquement)
+      // ✅ FIX Phase 3.6: .or() inclut NULL (données historiques)
       const { data: reasonStats } = await supabase
         .from('stock_movements')
         .select('reason_code')
-        .eq('affects_forecast', false)
+        .or('affects_forecast.is.null,affects_forecast.eq.false')
         .gte('performed_at', monthStart.toISOString())
         .not('reason_code', 'is', null)
 
@@ -325,10 +338,11 @@ export function useMovementsHistory() {
         }))
 
       // Top utilisateurs du mois (RÉELS uniquement)
+      // ✅ FIX Phase 3.6: .or() inclut NULL (données historiques)
       const { data: userStats } = await supabase
         .from('stock_movements')
         .select('performed_by')
-        .eq('affects_forecast', false)
+        .or('affects_forecast.is.null,affects_forecast.eq.false')
         .gte('performed_at', monthStart.toISOString())
 
       // Récupérer les utilisateurs uniques
@@ -428,8 +442,15 @@ export function useMovementsHistory() {
         query = query.in('performed_by', exportFilters.userIds)
       }
 
+      // ✅ FIX Phase 3.6: .eq() exclut NULL, utiliser .or() pour inclure données historiques
       if (exportFilters.affects_forecast !== undefined) {
-        query = query.eq('affects_forecast', exportFilters.affects_forecast)
+        if (exportFilters.affects_forecast === false) {
+          // Mouvements RÉELS : NULL ou false (inclut données historiques)
+          query = query.or('affects_forecast.is.null,affects_forecast.eq.false')
+        } else {
+          // Mouvements PRÉVISIONNELS : strictement true
+          query = query.eq('affects_forecast', true)
+        }
       }
 
       if (exportFilters.forecast_type) {

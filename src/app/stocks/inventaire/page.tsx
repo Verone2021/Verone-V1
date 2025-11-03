@@ -251,6 +251,7 @@ export default function InventairePage() {
                 <table className="w-full">
                   <thead className="bg-gray-50 border-b border-gray-200">
                     <tr>
+                      <th className="text-center py-2 px-3 font-medium text-gray-900 text-xs w-16"></th>
                       <th className="text-left py-2 px-3 font-medium text-gray-900 text-xs">Produit</th>
                       <th className="text-left py-2 px-3 font-medium text-gray-900 text-xs">SKU</th>
                       <th className="text-right py-2 px-3 font-medium text-gray-900 text-xs">Entrées</th>
@@ -263,38 +264,46 @@ export default function InventairePage() {
                   </thead>
                   <tbody className="divide-y divide-gray-100">
                     {inventory.map((item) => (
-                      <tr key={item.id} className="hover:bg-gray-50 transition-colors">
+                      <tr
+                        key={item.id}
+                        onClick={() => openHistoryModal(item)}
+                        className="hover:bg-gray-50 transition-colors cursor-pointer"
+                      >
+                        <td className="py-2 px-3 text-center">
+                          {item.product_image_url ? (
+                            <Image
+                              src={item.product_image_url}
+                              alt={item.name}
+                              width={48}
+                              height={48}
+                              className="rounded object-cover border border-gray-200 mx-auto"
+                            />
+                          ) : (
+                            <div className="w-12 h-12 bg-gray-100 rounded border border-gray-200 flex items-center justify-center mx-auto">
+                              <span className="text-gray-400 text-xs">N/A</span>
+                            </div>
+                          )}
+                        </td>
                         <td className="py-2 px-3">
-                          <div className="flex items-center gap-2">
-                            {item.product_image_url && (
-                              <Image
-                                src={item.product_image_url}
-                                alt={item.name}
-                                width={32}
-                                height={32}
-                                className="rounded object-cover border border-gray-200"
-                              />
-                            )}
-                            <Link
-                              href={`/catalogue/${item.id}`}
-                              className="font-medium text-black hover:text-gray-700 hover:underline transition-colors text-sm"
-                            >
-                              {item.name}
-                            </Link>
-                          </div>
+                          <Link
+                            href={`/catalogue/${item.id}`}
+                            className="font-medium text-black hover:text-gray-700 hover:underline transition-colors text-sm"
+                          >
+                            {item.name}
+                          </Link>
                         </td>
                         <td className="py-2 px-3">
                           <span className="text-gray-500 font-mono text-xs">{item.sku}</span>
                         </td>
                         <td className="py-2 px-3 text-right">
                           <div className="flex items-center justify-end gap-1">
-                            <TrendingUp className="h-3 w-3 text-black" />
+                            <TrendingUp className="h-4 w-4 text-black" />
                             <span className="font-medium text-black text-sm">+{item.total_in}</span>
                           </div>
                         </td>
                         <td className="py-2 px-3 text-right">
                           <div className="flex items-center justify-end gap-1">
-                            <TrendingDown className="h-3 w-3 text-gray-600" />
+                            <TrendingDown className="h-4 w-4 text-gray-600" />
                             <span className="font-medium text-gray-700 text-sm">-{item.total_out}</span>
                           </div>
                         </td>
@@ -303,9 +312,9 @@ export default function InventairePage() {
                             {item.total_adjustments !== 0 ? (
                               <>
                                 {item.total_adjustments > 0 ? (
-                                  <TrendingUp className="h-3 w-3 text-gray-500" />
+                                  <TrendingUp className="h-4 w-4 text-gray-500" />
                                 ) : (
-                                  <TrendingDown className="h-3 w-3 text-gray-500" />
+                                  <TrendingDown className="h-4 w-4 text-gray-500" />
                                 )}
                                 <span className="font-medium text-gray-700 text-sm">
                                   {item.total_adjustments > 0 ? '+' : ''}{item.total_adjustments}
@@ -336,7 +345,10 @@ export default function InventairePage() {
                             <ButtonV2
                               variant="ghost"
                               size="sm"
-                              onClick={() => openAdjustmentModal(item)}
+                              onClick={(e) => {
+                                e.stopPropagation()
+                                openAdjustmentModal(item)
+                              }}
                               title="Ajuster le stock"
                               className="h-7 w-7 p-0 hover:bg-green-600 hover:text-white transition-colors"
                             >
@@ -345,7 +357,10 @@ export default function InventairePage() {
                             <ButtonV2
                               variant="ghost"
                               size="sm"
-                              onClick={() => openHistoryModal(item)}
+                              onClick={(e) => {
+                                e.stopPropagation()
+                                openHistoryModal(item)
+                              }}
                               title="Voir historique détaillé"
                               className="h-7 w-7 p-0 hover:bg-black hover:text-white transition-colors"
                             >

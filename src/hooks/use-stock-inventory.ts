@@ -45,9 +45,20 @@ export function useStockInventory() {
 
     try {
       // Query pour récupérer l'inventaire consolidé avec mouvements
+      // ✅ Phase 2: Ajout image produit (LEFT JOIN product_images)
       let query = supabase
         .from('products')
-        .select('id, name, sku, stock_quantity, stock_real, cost_price')
+        .select(`
+          id,
+          name,
+          sku,
+          stock_quantity,
+          stock_real,
+          cost_price,
+          product_images!left(public_url)
+        `)
+        .eq('product_images.is_primary', true)
+        .limit(1, { foreignTable: 'product_images' })
         .is('archived_at', null)
 
       // Filtres de recherche
@@ -98,7 +109,7 @@ export function useStockInventory() {
           id: product.id,
           name: product.name,
           sku: product.sku,
-          product_image_url: null, // TODO: Charger images séparément
+          product_image_url: (product as any).product_images?.[0]?.public_url || null, // ✅ Phase 2: Image principale produit
           stock_quantity: product.stock_quantity || 0,
           total_in,
           total_out,

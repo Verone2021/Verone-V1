@@ -372,10 +372,12 @@ export function useStockMovements() {
     setLoading(true)
     try {
       // Première requête : récupérer les mouvements de stock
+      // ✅ FIX Phase 3.7: Filtrer UNIQUEMENT mouvements réels (affects_forecast = false OU NULL)
       const { data: movements, error: movementsError } = await supabase
         .from('stock_movements')
         .select('*')
         .eq('product_id', productId)
+        .or('affects_forecast.is.null,affects_forecast.eq.false') // Exclut mouvements prévisionnels
         .order('performed_at', { ascending: false })
 
       if (movementsError) throw movementsError

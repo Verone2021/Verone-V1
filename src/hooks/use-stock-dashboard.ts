@@ -167,20 +167,31 @@ export function useStockDashboard() {
 
       // Calculs agrégés en JS (plus rapide que COUNT() multiples)
 
-      // ✅ FIX: Compter uniquement produits ACTIFS (avec mouvements récents)
-      const productsInMovements = new Set((movements7d || []).map(m => m.product_id))
+      // ✅ FIX Phase 3.6: Filtrer produits fantômes (stock > 0 mais 0 mouvements)
+      // Créer Set des produits ayant eu des mouvements RÉELS (non forecast)
+      const productsWithRealMovements = new Set(
+        (movements7d || [])
+          .filter(m => !m.affects_forecast)  // Uniquement mouvements réels
+          .map(m => m.product_id)
+      )
+
+      // Filtrer pour garder UNIQUEMENT les produits avec mouvements réels
+      // Cela exclut les "fantômes" (produits avec stock > 0 mais jamais de mouvements)
+      const realProducts = productsWithLegacyFields.filter(p =>
+        productsWithRealMovements.has(p.id)
+      )
 
       const overview: StockOverview = {
-        total_products: productsWithLegacyFields.length,
-        total_quantity: productsWithLegacyFields.reduce((sum, p) => sum + (p.stock_real || p.stock_quantity || 0), 0),
-        total_value: productsWithLegacyFields.reduce((sum, p) => sum + ((p.stock_real || p.stock_quantity || 0) * (p.cost_price || 0)), 0),
-        products_in_stock: productsInMovements.size,  // ✅ FIX: Uniquement produits avec mouvements 7j (ignore stocks dormants)
-        products_out_of_stock: alertsCount.out_of_stock,  // Seulement produits commandés en rupture
-        products_below_min: alertsCount.low_stock,  // Seulement produits commandés sous seuil
-        // NOUVEAUX CALCULS PRÉVISIONNELS
-        total_forecasted_in: productsWithLegacyFields.reduce((sum, p) => sum + (p.stock_forecasted_in || 0), 0),
-        total_forecasted_out: productsWithLegacyFields.reduce((sum, p) => sum + (p.stock_forecasted_out || 0), 0),
-        total_available: productsWithLegacyFields.reduce((sum, p) => sum + Math.max((p.stock_real || 0) - (p.stock_forecasted_out || 0), 0), 0)
+        total_products: realProducts.length,  // ✅ FIX: Uniquement produits avec mouvements
+        total_quantity: realProducts.reduce((sum, p) => sum + (p.stock_real || p.stock_quantity || 0), 0),
+        total_value: realProducts.reduce((sum, p) => sum + ((p.stock_real || p.stock_quantity || 0) * (p.cost_price || 0)), 0),
+        products_in_stock: realProducts.filter(p => p.stock_real > 0).length,  // ✅ FIX: Produits réels avec stock > 0
+        products_out_of_stock: realProducts.filter(p => p.stock_real <= 0).length,  // ✅ FIX: Produits réels avec stock <= 0
+        products_below_min: realProducts.filter(p => p.stock_real > 0 && p.min_stock != null && p.min_stock > 0 && p.stock_real <= p.min_stock).length,  // ✅ FIX: Alertes sur produits réels
+        // NOUVEAUX CALCULS PRÉVISIONNELS (sur produits réels uniquement)
+        total_forecasted_in: realProducts.reduce((sum, p) => sum + (p.stock_forecasted_in || 0), 0),
+        total_forecasted_out: realProducts.reduce((sum, p) => sum + (p.stock_forecasted_out || 0), 0),
+        total_available: realProducts.reduce((sum, p) => sum + Math.max((p.stock_real || 0) - (p.stock_forecasted_out || 0), 0), 0)
       }
 
       // ============================================
