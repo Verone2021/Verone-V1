@@ -1,184 +1,216 @@
 'use client'
 
+/**
+ * 📦 Page Expéditions Clients (Commandes)
+ *
+ * Vue d'ensemble et gestion des expéditions
+ * - Dashboard stats (pending, partial, overdue, urgent)
+ * - Liste commandes confirmées/partiellement expédiées
+ * - Filtres intelligents (urgent, en retard)
+ * - Expédition inline via modal complète
+ * - Support expéditions partielles
+ * - Workflow transporteurs (Packlink, Mondial Relay, Chronotruck, Manuel)
+ *
+ * @since Phase 3.7 - Unification expéditions (2025-11-04)
+ */
+
 import { useState, useEffect } from 'react'
-import { Package, Truck, Calendar, AlertTriangle, Eye, Search } from 'lucide-react'
+import { Package, Truck, AlertTriangle, Clock, Filter, Search, TrendingUp, CheckCircle } from 'lucide-react'
 import { ButtonV2 } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
-import { useSalesOrders, SalesOrder } from '@/hooks/use-sales-orders'
-import { OrderDetailModal } from '@/components/business/order-detail-modal'
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
+import { useSalesShipments } from '@/hooks/use-sales-shipments'
+import { SalesOrderShipmentModal } from '@/components/business/sales-order-shipment-modal'
 import { formatCurrency, formatDate } from '@/lib/utils'
 
-export default function ShipmentsPage() {
+export default function ExpeditionsPage() {
   const {
     loading,
-    orders,
-    fetchOrders
-  } = useSalesOrders()
+    error,
+    loadShipmentStats,
+    loadSalesOrdersReadyForShipment
+  } = useSalesShipments()
+
+  const [stats, setStats] = useState<any>(null)
+  const [orders, setOrders] = useState<any[]>([])
+  const [selectedOrder, setSelectedOrder] = useState<any>(null)
+  const [showShipmentModal, setShowShipmentModal] = useState(false)
 
   const [searchTerm, setSearchTerm] = useState('')
-  const [selectedOrder, setSelectedOrder] = useState<SalesOrder | null>(null)
-  const [showOrderDetail, setShowOrderDetail] = useState(false)
+  const [statusFilter, setStatusFilter] = useState<string>('all')
+  const [urgencyFilter, setUrgencyFilter] = useState<string>('all')
 
-  // Filtrer uniquement les commandes prêtes à expédier
+  // Charger stats
   useEffect(() => {
-    fetchOrders({
-      status: 'confirmed'
-      // payment_status non supporté dans SalesOrderFilters actuellement
-    })
-  }, [fetchOrders])
+    loadShipmentStats().then(setStats)
+  }, [loadShipmentStats])
 
-  // Filtrer les commandes non encore expédiées
-  const readyToShipOrders = orders.filter(order =>
-    order.status === 'confirmed' &&
-    order.payment_status === 'paid' &&
-    !order.shipped_at
-  )
+  // Charger liste commandes
+  useEffect(() => {
+    const filters: any = {}
 
-  // Filtrer selon la recherche
-  const filteredOrders = readyToShipOrders.filter(order => {
-    if (!searchTerm) return true
-    const searchLower = searchTerm.toLowerCase()
-    return (
-      order.order_number.toLowerCase().includes(searchLower) ||
-      (order.organisations?.trade_name || order.organisations?.legal_name || '').toLowerCase().includes(searchLower) ||
-      order.individual_customers?.first_name.toLowerCase().includes(searchLower) ||
-      order.individual_customers?.last_name.toLowerCase().includes(searchLower)
-    )
-  })
+    if (statusFilter !== 'all') {
+      filters.status = statusFilter
+    }
 
-  // Statistiques
-  const today = new Date()
-  today.setHours(0, 0, 0, 0)
+    if (searchTerm) {
+      filters.search = searchTerm
+    }
 
-  const overdueOrders = filteredOrders.filter(order => {
-    if (!order.expected_delivery_date) return false
-    const deliveryDate = new Date(order.expected_delivery_date)
-    return deliveryDate < today
-  })
+    if (urgencyFilter === 'urgent') {
+      filters.urgent_only = true
+    } else if (urgencyFilter === 'overdue') {
+      filters.overdue_only = true
+    }
 
-  const urgentOrders = filteredOrders.filter(order => {
-    if (!order.expected_delivery_date) return false
-    const deliveryDate = new Date(order.expected_delivery_date)
-    const threeDaysFromNow = new Date()
-    threeDaysFromNow.setDate(today.getDate() + 3)
-    return deliveryDate <= threeDaysFromNow && deliveryDate >= today
-  })
+    loadSalesOrdersReadyForShipment(filters).then(setOrders)
+  }, [loadSalesOrdersReadyForShipment, statusFilter, searchTerm, urgencyFilter])
 
-  const openOrderDetail = (order: SalesOrder) => {
+  const handleOpenShipment = (order: any) => {
     setSelectedOrder(order)
-    setShowOrderDetail(true)
+    setShowShipmentModal(true)
   }
 
-  const getCustomerName = (order: SalesOrder) => {
-    if (order.customer_type === 'organization' && order.organisations) {
-      return order.organisations.trade_name || order.organisations.legal_name
-    } else if (order.customer_type === 'individual' && order.individual_customers) {
-      const customer = order.individual_customers
-      return `${customer.first_name} ${customer.last_name}`
-    }
-    return 'Client inconnu'
-  }
-
-  const getDeliveryUrgency = (order: SalesOrder) => {
-    if (!order.expected_delivery_date) return null
-    const deliveryDate = new Date(order.expected_delivery_date)
-
-    if (deliveryDate < today) {
-      return { label: 'En retard', color: 'bg-red-100 text-red-800' }
-    }
-
-    const threeDaysFromNow = new Date()
-    threeDaysFromNow.setDate(today.getDate() + 3)
-
-    if (deliveryDate <= threeDaysFromNow) {
-      return { label: 'Urgent', color: 'bg-orange-100 text-orange-800' }
-    }
-
-    return null
+  const handleShipmentSuccess = () => {
+    // Recharger stats et liste
+    loadShipmentStats().then(setStats)
+    loadSalesOrdersReadyForShipment().then(setOrders)
+    setShowShipmentModal(false)
+    setSelectedOrder(null)
   }
 
   return (
     <div className="space-y-6 p-6">
-      {/* En-tête */}
-      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-        <div>
-          <h1 className="text-3xl font-bold text-gray-900">Expéditions & Livraisons</h1>
-          <p className="text-gray-600 mt-1">Gérer les commandes prêtes à être expédiées</p>
+      {/* Header */}
+      <div>
+        <h1 className="text-3xl font-bold text-gray-900">Expéditions Clients</h1>
+        <p className="text-gray-600 mt-1">Gestion complète des expéditions commandes clients</p>
+      </div>
+
+      {/* Stats Dashboard */}
+      {stats && (
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
+          <Card>
+            <CardHeader className="pb-2">
+              <div className="flex items-center justify-between">
+                <CardTitle className="text-sm font-medium text-gray-600">En attente</CardTitle>
+                <Package className="h-4 w-4 text-gray-400" />
+              </div>
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold text-gray-900">{stats.total_pending}</div>
+              <p className="text-xs text-gray-500 mt-1">Commandes confirmées</p>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader className="pb-2">
+              <div className="flex items-center justify-between">
+                <CardTitle className="text-sm font-medium text-gray-600">Partielles</CardTitle>
+                <TrendingUp className="h-4 w-4 text-verone-warning" />
+              </div>
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold text-verone-warning">{stats.total_partial}</div>
+              <p className="text-xs text-gray-500 mt-1">Expéditions incomplètes</p>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader className="pb-2">
+              <div className="flex items-center justify-between">
+                <CardTitle className="text-sm font-medium text-gray-600">Aujourd'hui</CardTitle>
+                <CheckCircle className="h-4 w-4 text-verone-success" />
+              </div>
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold text-verone-success">{stats.total_completed_today}</div>
+              <p className="text-xs text-gray-500 mt-1">Expéditions complètes</p>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader className="pb-2">
+              <div className="flex items-center justify-between">
+                <CardTitle className="text-sm font-medium text-gray-600">En retard</CardTitle>
+                <AlertTriangle className="h-4 w-4 text-verone-danger" />
+              </div>
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold text-verone-danger">{stats.total_overdue}</div>
+              <p className="text-xs text-gray-500 mt-1">Date dépassée</p>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader className="pb-2">
+              <div className="flex items-center justify-between">
+                <CardTitle className="text-sm font-medium text-gray-600">Urgent</CardTitle>
+                <Clock className="h-4 w-4 text-verone-warning" />
+              </div>
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold text-verone-warning">{stats.total_urgent}</div>
+              <p className="text-xs text-gray-500 mt-1">Sous 3 jours</p>
+            </CardContent>
+          </Card>
         </div>
-      </div>
+      )}
 
-      {/* Statistiques */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-        <Card>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium text-gray-600">En attente d'expédition</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{filteredOrders.length}</div>
-            <p className="text-xs text-gray-500 mt-1">Validées et payées</p>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium text-gray-600">Urgentes</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold text-orange-600">{urgentOrders.length}</div>
-            <p className="text-xs text-gray-500 mt-1">Livraison ≤ 3 jours</p>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium text-gray-600">En retard</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold text-red-600">{overdueOrders.length}</div>
-            <p className="text-xs text-gray-500 mt-1">Date dépassée</p>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium text-gray-600">Valeur totale</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">
-              {formatCurrency(filteredOrders.reduce((sum, order) => sum + (order.total_ttc || 0), 0))}
-            </div>
-            <p className="text-xs text-gray-500 mt-1">À expédier</p>
-          </CardContent>
-        </Card>
-      </div>
-
-      {/* Barre de recherche */}
+      {/* Filtres */}
       <Card>
         <CardHeader>
-          <CardTitle>Filtres</CardTitle>
+          <CardTitle className="flex items-center gap-2">
+            <Filter className="h-5 w-5" />
+            Filtres
+          </CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="relative">
-            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
-            <Input
-              placeholder="Rechercher par numéro de commande ou client..."
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              className="pl-10"
-            />
+          <div className="flex flex-col lg:flex-row gap-4">
+            <div className="flex-1">
+              <div className="relative">
+                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
+                <Input
+                  placeholder="Rechercher par numéro de commande ou client..."
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                  className="pl-10"
+                />
+              </div>
+            </div>
+            <Select value={statusFilter} onValueChange={setStatusFilter}>
+              <SelectTrigger className="w-full lg:w-48">
+                <SelectValue placeholder="Statut" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">Tous les statuts</SelectItem>
+                <SelectItem value="confirmed">Confirmée</SelectItem>
+                <SelectItem value="partially_shipped">Partielle</SelectItem>
+              </SelectContent>
+            </Select>
+            <Select value={urgencyFilter} onValueChange={setUrgencyFilter}>
+              <SelectTrigger className="w-full lg:w-48">
+                <SelectValue placeholder="Urgence" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">Toutes</SelectItem>
+                <SelectItem value="urgent">Urgent (&lt; 3j)</SelectItem>
+                <SelectItem value="overdue">En retard</SelectItem>
+              </SelectContent>
+            </Select>
           </div>
         </CardContent>
       </Card>
 
-      {/* Liste des commandes à expédier */}
+      {/* Liste des commandes */}
       <Card>
         <CardHeader>
-          <CardTitle>Commandes à Expédier</CardTitle>
+          <CardTitle>Commandes à expédier</CardTitle>
           <CardDescription>
-            {filteredOrders.length} commande(s) prête(s) pour expédition
+            {orders.length} commande(s) trouvée(s)
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -186,13 +218,14 @@ export default function ShipmentsPage() {
             <div className="flex justify-center py-8">
               <div className="text-gray-500">Chargement...</div>
             </div>
-          ) : filteredOrders.length === 0 ? (
+          ) : error ? (
+            <div className="text-center py-8 text-red-600">
+              Erreur: {error}
+            </div>
+          ) : orders.length === 0 ? (
             <div className="text-center py-8">
               <Package className="mx-auto h-12 w-12 text-gray-400 mb-4" />
-              <p className="text-gray-500">Aucune commande en attente d'expédition</p>
-              <p className="text-sm text-gray-400 mt-2">
-                Les commandes validées et payées apparaîtront ici
-              </p>
+              <p className="text-gray-500">Aucune commande à expédier</p>
             </div>
           ) : (
             <div className="overflow-x-auto">
@@ -201,56 +234,83 @@ export default function ShipmentsPage() {
                   <TableRow>
                     <TableHead>N° Commande</TableHead>
                     <TableHead>Client</TableHead>
-                    <TableHead>Date création</TableHead>
-                    <TableHead>Livraison prévue</TableHead>
-                    <TableHead>Montant TTC</TableHead>
-                    <TableHead>Urgence</TableHead>
+                    <TableHead>Statut</TableHead>
+                    <TableHead>Date livraison</TableHead>
+                    <TableHead>Progression</TableHead>
                     <TableHead>Actions</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {filteredOrders.map((order) => {
-                    const urgency = getDeliveryUrgency(order)
+                  {orders.map((order) => {
+                    // Calculer progression
+                    const totalItems = order.sales_order_items?.reduce(
+                      (sum: number, item: any) => sum + item.quantity,
+                      0
+                    ) || 0
+                    const shippedItems = order.sales_order_items?.reduce(
+                      (sum: number, item: any) => sum + (item.quantity_shipped || 0),
+                      0
+                    ) || 0
+                    const progressPercent = totalItems > 0
+                      ? Math.round((shippedItems / totalItems) * 100)
+                      : 0
+
+                    // Urgence
+                    const deliveryDate = order.expected_delivery_date
+                      ? new Date(order.expected_delivery_date)
+                      : null
+                    const today = new Date()
+                    today.setHours(0, 0, 0, 0)
+                    const isOverdue = deliveryDate && deliveryDate < today
+                    const daysUntil = deliveryDate
+                      ? Math.ceil((deliveryDate.getTime() - today.getTime()) / (1000 * 60 * 60 * 24))
+                      : null
+                    const isUrgent = daysUntil !== null && daysUntil <= 3 && daysUntil >= 0
 
                     return (
-                      <TableRow key={order.id} className={urgency?.label === 'En retard' ? 'bg-red-50' : ''}>
+                      <TableRow key={order.id}>
                         <TableCell className="font-medium">
                           {order.order_number}
+                          {isOverdue && (
+                            <Badge variant="destructive" className="ml-2 text-xs">
+                              En retard
+                            </Badge>
+                          )}
+                          {isUrgent && !isOverdue && (
+                            <Badge className="ml-2 text-xs bg-verone-warning">
+                              Urgent
+                            </Badge>
+                          )}
                         </TableCell>
                         <TableCell>
-                          <div>
-                            <div className="font-medium">{getCustomerName(order)}</div>
-                            <div className="text-xs text-gray-500">
-                              {order.customer_type === 'organization' ? 'Professionnel' : 'Particulier'}
-                            </div>
-                          </div>
+                          {order.customer_name || 'Client inconnu'}
                         </TableCell>
                         <TableCell>
-                          {formatDate(order.created_at)}
+                          <Badge className={order.status === 'confirmed' ? 'bg-gray-100 text-gray-900' : 'bg-verone-warning text-white'}>
+                            {order.status === 'confirmed' ? 'Confirmée' : 'Partielle'}
+                          </Badge>
+                        </TableCell>
+                        <TableCell>
+                          {order.expected_delivery_date ? formatDate(order.expected_delivery_date) : 'Non définie'}
                         </TableCell>
                         <TableCell>
                           <div className="flex items-center gap-2">
-                            <Calendar className="h-4 w-4 text-gray-400" />
-                            {order.expected_delivery_date ? formatDate(order.expected_delivery_date) : 'Non définie'}
+                            <div className="flex-1 bg-gray-200 rounded-full h-2">
+                              <div
+                                className="bg-verone-success h-2 rounded-full transition-all"
+                                style={{ width: `${progressPercent}%` }}
+                              />
+                            </div>
+                            <span className="text-sm text-gray-600 w-12 text-right">
+                              {progressPercent}%
+                            </span>
                           </div>
-                        </TableCell>
-                        <TableCell>
-                          <div className="font-medium">{formatCurrency(order.total_ttc || order.total_ht)}</div>
-                        </TableCell>
-                        <TableCell>
-                          {urgency && (
-                            <Badge className={urgency.color}>
-                              {urgency.label === 'En retard' && <AlertTriangle className="h-3 w-3 mr-1" />}
-                              {urgency.label}
-                            </Badge>
-                          )}
                         </TableCell>
                         <TableCell>
                           <ButtonV2
                             variant="outline"
                             size="sm"
-                            onClick={() => openOrderDetail(order)}
-                            title="Gérer l'expédition"
+                            onClick={() => handleOpenShipment(order)}
                           >
                             <Truck className="h-4 w-4 mr-2" />
                             Expédier
@@ -266,18 +326,18 @@ export default function ShipmentsPage() {
         </CardContent>
       </Card>
 
-      {/* Modal Détail Commande avec gestion expédition */}
-      <OrderDetailModal
-        order={selectedOrder}
-        open={showOrderDetail}
-        onClose={() => setShowOrderDetail(false)}
-        onUpdate={() => {
-          fetchOrders({
-            status: 'confirmed'
-            // payment_status non supporté dans SalesOrderFilters actuellement
-          })
-        }}
-      />
+      {/* Modal d'expédition */}
+      {selectedOrder && (
+        <SalesOrderShipmentModal
+          order={selectedOrder}
+          open={showShipmentModal}
+          onClose={() => {
+            setShowShipmentModal(false)
+            setSelectedOrder(null)
+          }}
+          onSuccess={handleShipmentSuccess}
+        />
+      )}
     </div>
   )
 }

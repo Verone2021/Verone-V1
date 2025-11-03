@@ -575,27 +575,11 @@ export function usePurchaseOrders() {
 
         if (updateError) throw updateError
 
-        // 2. Créer un mouvement de stock pour chaque item reçu
-        const { data: orderItem, error: itemError } = await supabase
-          .from('purchase_order_items')
-          .select('product_id')
-          .eq('id', item.item_id)
-          .single()
-
-        if (itemError) throw itemError
-
-        await createMovement({
-          product_id: orderItem.product_id,
-          movement_type: 'IN',
-          quantity_change: item.quantity_received,
-          unit_cost: item.unit_cost,
-          reference_type: 'purchase_order',
-          reference_id: orderId,
-          notes: item.notes
-        })
+        // Note: Le mouvement de stock est créé automatiquement par le trigger
+        // handle_purchase_order_forecast() qui détecte le changement de quantity_received
       }
 
-      // 3. Vérifier si la commande est entièrement reçue
+      // 2. Vérifier si la commande est entièrement reçue
       const { data: orderItems, error: checkError } = await supabase
         .from('purchase_order_items')
         .select('quantity, quantity_received')

@@ -342,27 +342,32 @@ export function useSalesShipments() {
     soId: string
   ): Promise<ShipmentHistory[]> => {
     try {
-      // Récupérer shipments pour ce SO
+      // Récupérer shipments pour ce SO avec structure correcte
       const { data: shipments, error: shipmentsError } = await supabase
         .from('shipments')
         .select(`
           id,
           shipped_at,
           delivered_at,
-          carrier_type,
+          shipping_method,
           carrier_name,
           service_name,
           tracking_number,
           tracking_url,
           cost_paid_eur,
           cost_charged_eur,
-          delivery_status,
-          shipment_items (
-            quantity_shipped,
-            product_id,
-            products (
-              name,
-              sku
+          shipping_parcels (
+            id,
+            parcel_number,
+            parcel_items (
+              quantity_shipped,
+              sales_order_items (
+                product_id,
+                products (
+                  name,
+                  sku
+                )
+              )
             )
           )
         `)
@@ -374,26 +379,43 @@ export function useSalesShipments() {
         return []
       }
 
+      // Helper pour mapper shipping_method vers label lisible
+      const getCarrierLabel = (method: string): string => {
+        const labels: Record<string, string> = {
+          'packlink': 'Packlink',
+          'mondial_relay': 'Mondial Relay',
+          'chronotruck': 'Chronotruck',
+          'manual': 'Manuel'
+        }
+        return labels[method] || method
+      }
+
       return (shipments || []).map((shipment: any) => ({
         shipment_id: shipment.id,
         shipped_at: shipment.shipped_at,
         delivered_at: shipment.delivered_at || undefined,
-        carrier_name: shipment.carrier_name || shipment.carrier_type,
+        carrier_name: shipment.carrier_name || getCarrierLabel(shipment.shipping_method),
         service_name: shipment.service_name || undefined,
         tracking_number: shipment.tracking_number || undefined,
         tracking_url: shipment.tracking_url || undefined,
-        items: (shipment.shipment_items || []).map((item: any) => ({
-          product_name: item.products?.name || 'Produit inconnu',
-          product_sku: item.products?.sku || '',
-          quantity_shipped: item.quantity_shipped
-        })),
-        total_quantity: (shipment.shipment_items || []).reduce(
-          (sum: number, item: any) => sum + item.quantity_shipped,
+        items: (shipment.shipping_parcels || []).flatMap((parcel: any) =>
+          (parcel.parcel_items || []).map((item: any) => ({
+            product_name: item.sales_order_items?.products?.name || 'Produit inconnu',
+            product_sku: item.sales_order_items?.products?.sku || '',
+            quantity_shipped: item.quantity_shipped
+          }))
+        ),
+        total_quantity: (shipment.shipping_parcels || []).reduce(
+          (sum: number, parcel: any) =>
+            sum + (parcel.parcel_items || []).reduce(
+              (s: number, item: any) => s + (item.quantity_shipped || 0),
+              0
+            ),
           0
         ),
         cost_paid_eur: shipment.cost_paid_eur || undefined,
         cost_charged_eur: shipment.cost_charged_eur || undefined,
-        delivery_status: shipment.delivery_status || 'in_transit'
+        delivery_status: 'in_transit' // Default car colonne n'existe pas en DB
       }))
     } catch (err) {
       console.error('Exception historique expéditions:', err)

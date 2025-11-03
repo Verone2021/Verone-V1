@@ -1151,40 +1151,11 @@ export function useSalesOrders() {
 
         if (updateError) throw updateError
 
-        // 2. Créer un mouvement de stock sortant pour chaque item expédié
-        const { data: orderItem, error: itemError } = await supabase
-          .from('sales_order_items')
-          .select('product_id')
-          .eq('id', item.item_id)
-          .single()
-
-        if (itemError) throw itemError
-
-        await createMovement({
-          product_id: orderItem.product_id,
-          movement_type: 'OUT',
-          quantity_change: item.quantity_shipped,
-          reference_type: 'sales_order',
-          reference_id: orderId,
-          notes: item.notes
-        })
-
-        // 3. Libérer les réservations correspondantes
-        const userId = (await supabase.auth.getUser()).data.user?.id
-        await supabase
-          .from('stock_reservations')
-          .update({
-            released_at: new Date().toISOString(),
-            released_by: userId
-          })
-          .eq('reference_type', 'sales_order')
-          .eq('reference_id', orderId)
-          .eq('product_id', orderItem.product_id)
-          .is('released_at', null)
-          .limit(1) // Libérer une réservation à la fois
+        // Note: Le mouvement de stock est créé automatiquement par le trigger
+        // handle_sales_order_stock() qui détecte le changement de quantity_shipped
       }
 
-      // 4. Vérifier si la commande est entièrement expédiée
+      // 2. Vérifier si la commande est entièrement expédiée
       const { data: orderItems, error: checkError } = await supabase
         .from('sales_order_items')
         .select('quantity, quantity_shipped')
