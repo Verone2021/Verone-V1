@@ -113,6 +113,7 @@ export interface StockItem {
   stock_forecasted_in: number       // Entrées prévisionnelles (commandes fournisseurs)
   stock_forecasted_out: number      // Sorties prévisionnelles (commandes clients confirmées)
   min_stock: number | null          // Seuil alerte stock minimum
+  cost_price: number | null         // Prix de revient unitaire
   archived_at: string | null
 }
 
@@ -223,6 +224,7 @@ export function useStockCore({
           stock_forecasted_in,
           stock_forecasted_out,
           min_stock,
+          cost_price,
           archived_at
         `)
 

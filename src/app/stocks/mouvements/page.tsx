@@ -3,6 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import {
+  ArrowLeft,
   ArrowUpDown,
   RefreshCw,
   ChevronLeft,
@@ -191,9 +192,20 @@ export default function StockMovementsPage() {
       <div className="bg-white border-b border-gray-200">
         <div className="container mx-auto px-4 py-3">
           <div className="flex items-center justify-between">
-            <h1 className="text-xl font-semibold text-black">
-              Mouvements de Stock
-            </h1>
+            <div className="flex items-center space-x-4">
+              <ButtonV2
+                variant="ghost"
+                size="sm"
+                onClick={() => router.push('/stocks')}
+                className="flex items-center text-gray-600 hover:text-black h-8 px-2"
+              >
+                <ArrowLeft className="h-3 w-3 mr-1.5" />
+                Retour
+              </ButtonV2>
+              <h1 className="text-xl font-semibold text-black">
+                Mouvements de Stock
+              </h1>
+            </div>
 
             <div className="flex items-center gap-3">
               {/* Badge info compact */}

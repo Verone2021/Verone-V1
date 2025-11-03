@@ -121,7 +121,7 @@ export function useStockDashboard() {
         stock_forecasted_in: p.stock_forecasted_in,
         stock_forecasted_out: p.stock_forecasted_out,
         min_stock: p.min_stock,
-        cost_price: 0, // TODO: Ajouter cost_price dans use-stock-core
+        cost_price: p.cost_price || 0, // ✅ FIXED: Utilisation du cost_price réel
         product_image_url: (p as any).product_image_url || null  // ✅ NOUVEAU - Image produit
       }))
 
@@ -166,11 +166,20 @@ export function useStockDashboard() {
       }
 
       // Calculs agrégés en JS (plus rapide que COUNT() multiples)
+
+      // ✅ FIX: Compter uniquement produits avec mouvements OU stock > 0
+      const productsInMovements = new Set((movements7d || []).map(m => m.product_id))
+      const productsWithStock = productsWithLegacyFields.filter(p => (p.stock_real || 0) > 0)
+      const uniqueProductIds = new Set([
+        ...productsInMovements,
+        ...productsWithStock.map(p => p.id)
+      ])
+
       const overview: StockOverview = {
         total_products: productsWithLegacyFields.length,
         total_quantity: productsWithLegacyFields.reduce((sum, p) => sum + (p.stock_real || p.stock_quantity || 0), 0),
         total_value: productsWithLegacyFields.reduce((sum, p) => sum + ((p.stock_real || p.stock_quantity || 0) * (p.cost_price || 0)), 0),
-        products_in_stock: productsWithLegacyFields.filter(p => (p.stock_real || p.stock_quantity || 0) > 0).length,
+        products_in_stock: uniqueProductIds.size,  // ✅ FIX: Compte produits distincts avec mouvements OU stock
         products_out_of_stock: alertsCount.out_of_stock,  // Seulement produits commandés en rupture
         products_below_min: alertsCount.low_stock,  // Seulement produits commandés sous seuil
         // NOUVEAUX CALCULS PRÉVISIONNELS

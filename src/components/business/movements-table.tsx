@@ -1,6 +1,6 @@
 'use client'
 
-import React from 'react'
+import React, { useMemo } from 'react'
 import Link from 'next/link'
 import Image from 'next/image'
 import { Clock, Package, TrendingUp, TrendingDown, RotateCcw, FileText, ExternalLink, Trash2 } from 'lucide-react'
@@ -25,6 +25,30 @@ interface MovementsTableProps {
 }
 
 export function MovementsTable({ movements, loading, onMovementClick, onCancelClick, onOrderClick }: MovementsTableProps) {
+  // ✅ Recalcul dynamique des quantités basé sur l'ordre chronologique des mouvements affichés
+  const movementsWithRecalculatedQuantities = useMemo(() => {
+    // Trier par date (du plus ancien au plus récent)
+    const sorted = [...movements].sort((a, b) =>
+      new Date(a.performed_at).getTime() - new Date(b.performed_at).getTime()
+    )
+
+    // Recalculer les quantités cumulatives par produit
+    const productRunningTotals = new Map<string, number>()
+
+    return sorted.map(movement => {
+      const currentTotal = productRunningTotals.get(movement.product_id) || 0
+      const newTotal = currentTotal + movement.quantity_change
+
+      productRunningTotals.set(movement.product_id, newTotal)
+
+      return {
+        ...movement,
+        recalculated_quantity_before: currentTotal,
+        recalculated_quantity_after: newTotal
+      }
+    })
+  }, [movements])
+
   const formatDate = (dateString: string) => {
     const date = new Date(dateString)
     const now = new Date()
@@ -78,30 +102,36 @@ export function MovementsTable({ movements, loading, onMovementClick, onCancelCl
     }
   }
 
-  const getQuantityChangeDisplay = (movement: MovementWithDetails) => {
-    const { movement_type, quantity_change, quantity_before, quantity_after } = movement
+  const getQuantityChangeDisplay = (movement: MovementWithDetails & {
+    recalculated_quantity_before?: number
+    recalculated_quantity_after?: number
+  }) => {
+    const { movement_type, quantity_change } = movement
+    // ✅ Utiliser quantités recalculées si disponibles, sinon fallback sur DB
+    const quantityBefore = movement.recalculated_quantity_before ?? movement.quantity_before
+    const quantityAfter = movement.recalculated_quantity_after ?? movement.quantity_after
 
     switch (movement_type) {
       case 'IN':
         return (
           <div className="text-green-600 font-medium">
             +{Math.abs(quantity_change)} unités
-            <div className="text-xs text-gray-500">{quantity_before} → {quantity_after}</div>
+            <div className="text-xs text-gray-500">{quantityBefore} → {quantityAfter}</div>
           </div>
         )
       case 'OUT':
         return (
           <div className="text-red-600 font-medium">
             -{Math.abs(quantity_change)} unités
-            <div className="text-xs text-gray-500">{quantity_before} → {quantity_after}</div>
+            <div className="text-xs text-gray-500">{quantityBefore} → {quantityAfter}</div>
           </div>
         )
       case 'ADJUST':
         return (
           <div className="text-blue-600 font-medium">
-            = {quantity_after} unités
+            = {quantityAfter} unités
             <div className="text-xs text-gray-500">
-              {quantity_change > 0 ? '+' : ''}{quantity_change} ({quantity_before} → {quantity_after})
+              {quantity_change > 0 ? '+' : ''}{quantity_change} ({quantityBefore} → {quantityAfter})
             </div>
           </div>
         )
@@ -109,7 +139,7 @@ export function MovementsTable({ movements, loading, onMovementClick, onCancelCl
         return (
           <div className="font-medium">
             {quantity_change > 0 ? '+' : ''}{quantity_change} unités
-            <div className="text-xs text-gray-500">{quantity_before} → {quantity_after}</div>
+            <div className="text-xs text-gray-500">{quantityBefore} → {quantityAfter}</div>
           </div>
         )
     }
@@ -189,7 +219,7 @@ export function MovementsTable({ movements, loading, onMovementClick, onCancelCl
           </TableRow>
         </TableHeader>
         <TableBody>
-          {movements.map((movement) => (
+          {movementsWithRecalculatedQuantities.map((movement) => (
             <TableRow
               key={movement.id}
               className={onMovementClick ? "cursor-pointer hover:bg-gray-50 transition-colors" : ""}
