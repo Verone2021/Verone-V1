@@ -248,33 +248,38 @@ export function useMovementsHistory() {
       const weekStart = new Date(today.getTime() - (today.getDay() * 24 * 60 * 60 * 1000))
       const monthStart = new Date(now.getFullYear(), now.getMonth(), 1)
 
-      // Compter tous les mouvements
+      // Compter tous les mouvements RÉELS uniquement
       const { count: totalCount } = await supabase
         .from('stock_movements')
         .select('*', { count: 'exact', head: true })
+        .eq('affects_forecast', false)
 
-      // Mouvements du jour
+      // Mouvements du jour (RÉELS uniquement)
       const { count: todayCount } = await supabase
         .from('stock_movements')
         .select('*', { count: 'exact', head: true })
+        .eq('affects_forecast', false)
         .gte('performed_at', today.toISOString())
 
-      // Mouvements de la semaine
+      // Mouvements de la semaine (RÉELS uniquement)
       const { count: weekCount } = await supabase
         .from('stock_movements')
         .select('*', { count: 'exact', head: true })
+        .eq('affects_forecast', false)
         .gte('performed_at', weekStart.toISOString())
 
-      // Mouvements du mois
+      // Mouvements du mois (RÉELS uniquement)
       const { count: monthCount } = await supabase
         .from('stock_movements')
         .select('*', { count: 'exact', head: true })
+        .eq('affects_forecast', false)
         .gte('performed_at', monthStart.toISOString())
 
-      // Répartition par type
+      // Répartition par type (RÉELS uniquement)
       const { data: typeStats } = await supabase
         .from('stock_movements')
         .select('movement_type')
+        .eq('affects_forecast', false)
         .gte('performed_at', monthStart.toISOString())
 
       const byType = {
@@ -295,10 +300,11 @@ export function useMovementsHistory() {
         .select('*', { count: 'exact', head: true })
         .eq('affects_forecast', true)
 
-      // Top motifs du mois
+      // Top motifs du mois (RÉELS uniquement)
       const { data: reasonStats } = await supabase
         .from('stock_movements')
         .select('reason_code')
+        .eq('affects_forecast', false)
         .gte('performed_at', monthStart.toISOString())
         .not('reason_code', 'is', null)
 
@@ -318,10 +324,11 @@ export function useMovementsHistory() {
           count
         }))
 
-      // Top utilisateurs du mois
+      // Top utilisateurs du mois (RÉELS uniquement)
       const { data: userStats } = await supabase
         .from('stock_movements')
         .select('performed_by')
+        .eq('affects_forecast', false)
         .gte('performed_at', monthStart.toISOString())
 
       // Récupérer les utilisateurs uniques
