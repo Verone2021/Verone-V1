@@ -1,8 +1,8 @@
-"use client"
+'use client';
 
-import { useState, useEffect, useMemo } from 'react'
-import { useRouter } from 'next/navigation'
-import Image from 'next/image'
+import { useState, useEffect, useMemo } from 'react';
+import { useRouter } from 'next/navigation';
+import Image from 'next/image';
 import {
   AlertTriangle,
   ArrowLeft,
@@ -20,55 +20,74 @@ import {
   XCircle,
   CheckCircle,
   Zap,
-  BarChart3
-} from 'lucide-react'
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../../../components/ui/card'
-import { ButtonV2 } from '../../../components/ui/button'
-import { Badge } from '../../../components/ui/badge'
-import { Input } from '../../../components/ui/input'
-import { Label } from '../../../components/ui/label'
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../../../components/ui/select'
-import { useStockOptimized } from '../../../hooks/use-stock-optimized'
-import { useToast } from '../../../hooks/use-toast'
+  BarChart3,
+} from 'lucide-react';
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from '../../../components/ui/card';
+import { ButtonV2 } from '../../../components/ui/button';
+import { Badge } from '../../../components/ui/badge';
+import { Input } from '../../../components/ui/input';
+import { Label } from '../../../components/ui/label';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '../../../components/ui/select';
+import { useStockOptimized } from '../../../hooks/use-stock-optimized';
+import { useToast } from '../../../hooks/use-toast';
+import { QuickPurchaseOrderModal } from '../../../components/business/quick-purchase-order-modal';
 
-type AlertSeverity = 'critical' | 'warning' | 'info'
-type AlertCategory = 'stock' | 'movement' | 'forecast' | 'system'
+type AlertSeverity = 'critical' | 'warning' | 'info';
+type AlertCategory = 'stock' | 'movement' | 'forecast' | 'system';
 
 interface StockAlert {
-  id: string
-  severity: AlertSeverity
-  category: AlertCategory
-  title: string
-  message: string
-  productId?: string
-  productName?: string
-  productSku?: string
-  productImageUrl?: string | null  // ✅ NOUVEAU - URL image principale produit
-  currentStock?: number
-  minStock?: number
-  reorderPoint?: number
-  timestamp: string
-  acknowledged: boolean
+  id: string;
+  severity: AlertSeverity;
+  category: AlertCategory;
+  title: string;
+  message: string;
+  productId?: string;
+  productName?: string;
+  productSku?: string;
+  productImageUrl?: string | null; // ✅ NOUVEAU - URL image principale produit
+  currentStock?: number;
+  minStock?: number;
+  reorderPoint?: number;
+  timestamp: string;
+  acknowledged: boolean;
   action?: {
-    label: string
-    handler: () => void
-  }
+    label: string;
+    handler: () => void;
+  };
 }
 
 export default function StockAlertesPage() {
-  const router = useRouter()
-  const { toast } = useToast()
+  const router = useRouter();
+  const { toast } = useToast();
 
   const [filters, setFilters] = useState({
     severity: '',
     category: '',
     acknowledged: false,
-    limit: 100
-  })
+    limit: 100,
+  });
 
-  const [searchTerm, setSearchTerm] = useState('')
-  const [showFilters, setShowFilters] = useState(false)
-  const [acknowledgedAlerts, setAcknowledgedAlerts] = useState<Set<string>>(new Set())
+  const [searchTerm, setSearchTerm] = useState('');
+  const [showFilters, setShowFilters] = useState(false);
+  const [acknowledgedAlerts, setAcknowledgedAlerts] = useState<Set<string>>(
+    new Set()
+  );
+  const [showQuickPurchaseModal, setShowQuickPurchaseModal] = useState(false);
+  const [selectedProductForOrder, setSelectedProductForOrder] = useState<
+    string | null
+  >(null);
 
   const {
     stockSummary,
@@ -77,15 +96,17 @@ export default function StockAlertesPage() {
     loading,
     error,
     stats,
-    refetch
-  } = useStockOptimized({ limit: 50 })
+    refetch,
+  } = useStockOptimized({ limit: 50 });
 
   // Générer les alertes à partir des données
   const alerts = useMemo<StockAlert[]>(() => {
-    const alertList: StockAlert[] = []
+    const alertList: StockAlert[] = [];
 
     // Alertes critiques - Ruptures de stock
-    const outOfStockProducts = lowStockProducts.filter((p: any) => p.stock_real === 0)
+    const outOfStockProducts = lowStockProducts.filter(
+      (p: any) => p.stock_real === 0
+    );
     outOfStockProducts.forEach((product: any) => {
       alertList.push({
         id: `out-of-stock-${product.id}`,
@@ -96,7 +117,7 @@ export default function StockAlertesPage() {
         productId: product.id,
         productName: product.name,
         productSku: product.sku,
-        productImageUrl: product.product_image_url || null,  // ✅ NOUVEAU - Image produit
+        productImageUrl: product.product_image_url || null, // ✅ NOUVEAU - Image produit
         currentStock: product.stock_real,
         minStock: product.min_stock,
         timestamp: new Date().toISOString(),
@@ -104,14 +125,17 @@ export default function StockAlertesPage() {
         action: {
           label: 'Commander',
           handler: () => {
-            router.push(`/commandes/fournisseurs?product=${product.id}`)
-          }
-        }
-      })
-    })
+            setSelectedProductForOrder(product.id);
+            setShowQuickPurchaseModal(true);
+          },
+        },
+      });
+    });
 
     // Alertes d'avertissement - Stock faible
-    const lowStockAlerts = lowStockProducts.filter((p: any) => p.stock_real > 0 && p.stock_real <= p.min_stock)
+    const lowStockAlerts = lowStockProducts.filter(
+      (p: any) => p.stock_real > 0 && p.stock_real <= p.min_stock
+    );
     lowStockAlerts.forEach((product: any) => {
       alertList.push({
         id: `low-stock-${product.id}`,
@@ -122,7 +146,7 @@ export default function StockAlertesPage() {
         productId: product.id,
         productName: product.name,
         productSku: product.sku,
-        productImageUrl: product.product_image_url || null,  // ✅ NOUVEAU - Image produit
+        productImageUrl: product.product_image_url || null, // ✅ NOUVEAU - Image produit
         currentStock: product.stock_real,
         minStock: product.min_stock,
         reorderPoint: product.reorder_point,
@@ -131,16 +155,17 @@ export default function StockAlertesPage() {
         action: {
           label: 'Réapprovisionner',
           handler: () => {
-            router.push(`/commandes/fournisseurs?product=${product.id}`)
-          }
-        }
-      })
-    })
+            setSelectedProductForOrder(product.id);
+            setShowQuickPurchaseModal(true);
+          },
+        },
+      });
+    });
 
     // Alertes de mouvement - Mouvements inhabituels
-    const todayMovements = movements.filter(m =>
-      new Date(m.performed_at).toDateString() === new Date().toDateString()
-    )
+    const todayMovements = movements.filter(
+      m => new Date(m.performed_at).toDateString() === new Date().toDateString()
+    );
 
     if (todayMovements.length > 20) {
       alertList.push({
@@ -150,12 +175,12 @@ export default function StockAlertesPage() {
         title: 'Activité élevée',
         message: `${todayMovements.length} mouvements de stock aujourd'hui`,
         timestamp: new Date().toISOString(),
-        acknowledged: acknowledgedAlerts.has('high-activity')
-      })
+        acknowledged: acknowledgedAlerts.has('high-activity'),
+      });
     }
 
     // Alertes système - Performance
-    const avgMovementTime = 2.1 // Simulé - pourrait venir d'une vraie métrique
+    const avgMovementTime = 2.1; // Simulé - pourrait venir d'une vraie métrique
     if (avgMovementTime > 2) {
       alertList.push({
         id: 'performance-warning',
@@ -164,12 +189,14 @@ export default function StockAlertesPage() {
         title: 'Performance dégradée',
         message: `Temps de traitement moyen: ${avgMovementTime}s (>2s SLO)`,
         timestamp: new Date().toISOString(),
-        acknowledged: acknowledgedAlerts.has('performance-warning')
-      })
+        acknowledged: acknowledgedAlerts.has('performance-warning'),
+      });
     }
 
     // Alertes de prévision - Stock disponible négatif simulé
-    const productsWithForecast = lowStockProducts.filter((p: any) => p.stock_real > 0 && p.stock_real < 5)
+    const productsWithForecast = lowStockProducts.filter(
+      (p: any) => p.stock_real > 0 && p.stock_real < 5
+    );
     productsWithForecast.forEach((product: any) => {
       if (product.stock_real < 3) {
         alertList.push({
@@ -183,93 +210,99 @@ export default function StockAlertesPage() {
           productSku: product.sku,
           currentStock: product.stock_real,
           timestamp: new Date().toISOString(),
-          acknowledged: acknowledgedAlerts.has(`forecast-${product.id}`)
-        })
+          acknowledged: acknowledgedAlerts.has(`forecast-${product.id}`),
+        });
       }
-    })
+    });
 
     return alertList.sort((a, b) => {
       // Tri par sévérité puis par date
-      const severityOrder = { critical: 0, warning: 1, info: 2 }
+      const severityOrder = { critical: 0, warning: 1, info: 2 };
       if (severityOrder[a.severity] !== severityOrder[b.severity]) {
-        return severityOrder[a.severity] - severityOrder[b.severity]
+        return severityOrder[a.severity] - severityOrder[b.severity];
       }
-      return new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime()
-    })
-  }, [lowStockProducts, movements, acknowledgedAlerts, router])
+      return new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime();
+    });
+  }, [lowStockProducts, movements, acknowledgedAlerts, router]);
 
   // Statistiques des alertes
   const alertStats = useMemo(() => {
-    const unacknowledged = alerts.filter(a => !a.acknowledged)
+    const unacknowledged = alerts.filter(a => !a.acknowledged);
     return {
       total: alerts.length,
       unacknowledged: unacknowledged.length,
       critical: unacknowledged.filter(a => a.severity === 'critical').length,
       warning: unacknowledged.filter(a => a.severity === 'warning').length,
-      info: unacknowledged.filter(a => a.severity === 'info').length
-    }
-  }, [alerts])
+      info: unacknowledged.filter(a => a.severity === 'info').length,
+    };
+  }, [alerts]);
 
   // Gestionnaire d'acquittement
   const handleAcknowledge = (alertId: string) => {
-    setAcknowledgedAlerts(prev => new Set([...prev, alertId]))
+    setAcknowledgedAlerts(prev => new Set([...prev, alertId]));
     toast({
-      title: "Alerte acquittée",
-      description: "L'alerte a été marquée comme vue"
-    })
-  }
+      title: 'Alerte acquittée',
+      description: "L'alerte a été marquée comme vue",
+    });
+  };
 
   // Acquitter toutes les alertes
   const acknowledgeAll = () => {
-    const allAlertIds = alerts.map(a => a.id)
-    setAcknowledgedAlerts(new Set(allAlertIds))
+    const allAlertIds = alerts.map(a => a.id);
+    setAcknowledgedAlerts(new Set(allAlertIds));
     toast({
-      title: "Toutes les alertes acquittées",
-      description: `${alerts.length} alertes marquées comme vues`
-    })
-  }
+      title: 'Toutes les alertes acquittées',
+      description: `${alerts.length} alertes marquées comme vues`,
+    });
+  };
 
   // Filtres appliqués
   const filteredAlerts = alerts.filter(alert => {
-    if (filters.severity && alert.severity !== filters.severity) return false
-    if (filters.category && alert.category !== filters.category) return false
-    if (filters.acknowledged && !alert.acknowledged) return false
+    if (filters.severity && alert.severity !== filters.severity) return false;
+    if (filters.category && alert.category !== filters.category) return false;
+    if (filters.acknowledged && !alert.acknowledged) return false;
     if (searchTerm) {
-      const search = searchTerm.toLowerCase()
+      const search = searchTerm.toLowerCase();
       return (
         alert.title.toLowerCase().includes(search) ||
         alert.message.toLowerCase().includes(search) ||
         alert.productName?.toLowerCase().includes(search) ||
         alert.productSku?.toLowerCase().includes(search)
-      )
+      );
     }
-    return true
-  })
+    return true;
+  });
 
   // Auto-refresh
   useEffect(() => {
     const interval = setInterval(() => {
-      refetch()
-    }, 30000) // Rafraîchir toutes les 30 secondes
+      refetch();
+    }, 30000); // Rafraîchir toutes les 30 secondes
 
-    return () => clearInterval(interval)
-  }, [refetch])
+    return () => clearInterval(interval);
+  }, [refetch]);
 
   const getSeverityIcon = (severity: AlertSeverity) => {
     switch (severity) {
-      case 'critical': return <XCircle className="h-4 w-4 text-red-600" />
-      case 'warning': return <AlertTriangle className="h-4 w-4 text-black" />
-      case 'info': return <Info className="h-4 w-4 text-blue-600" />
+      case 'critical':
+        return <XCircle className="h-4 w-4 text-red-600" />;
+      case 'warning':
+        return <AlertTriangle className="h-4 w-4 text-black" />;
+      case 'info':
+        return <Info className="h-4 w-4 text-blue-600" />;
     }
-  }
+  };
 
   const getSeverityColor = (severity: AlertSeverity) => {
     switch (severity) {
-      case 'critical': return 'border-red-300 text-red-600 bg-red-50'
-      case 'warning': return 'border-gray-300 text-black bg-gray-50'
-      case 'info': return 'border-blue-300 text-blue-600 bg-blue-50'
+      case 'critical':
+        return 'border-red-300 text-red-600 bg-red-50';
+      case 'warning':
+        return 'border-gray-300 text-black bg-gray-50';
+      case 'info':
+        return 'border-blue-300 text-blue-600 bg-blue-50';
     }
-  }
+  };
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -300,7 +333,9 @@ export default function StockAlertesPage() {
                 disabled={loading}
                 className="border-black text-black hover:bg-black hover:text-white"
               >
-                <RefreshCw className={`h-4 w-4 mr-2 ${loading ? 'animate-spin' : ''}`} />
+                <RefreshCw
+                  className={`h-4 w-4 mr-2 ${loading ? 'animate-spin' : ''}`}
+                />
                 Actualiser
               </ButtonV2>
               <ButtonV2
@@ -321,11 +356,15 @@ export default function StockAlertesPage() {
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
           <Card className="border-black">
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium text-gray-600">Alertes Actives</CardTitle>
+              <CardTitle className="text-sm font-medium text-gray-600">
+                Alertes Actives
+              </CardTitle>
               <Bell className="h-4 w-4 text-gray-600" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold text-black">{alertStats.unacknowledged}</div>
+              <div className="text-2xl font-bold text-black">
+                {alertStats.unacknowledged}
+              </div>
               <p className="text-xs text-gray-600">
                 sur {alertStats.total} total
               </p>
@@ -334,40 +373,46 @@ export default function StockAlertesPage() {
 
           <Card className="border-black">
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium text-gray-600">Critique</CardTitle>
+              <CardTitle className="text-sm font-medium text-gray-600">
+                Critique
+              </CardTitle>
               <XCircle className="h-4 w-4 text-red-600" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold text-red-600">{alertStats.critical}</div>
-              <p className="text-xs text-gray-600">
-                action immédiate requise
-              </p>
+              <div className="text-2xl font-bold text-red-600">
+                {alertStats.critical}
+              </div>
+              <p className="text-xs text-gray-600">action immédiate requise</p>
             </CardContent>
           </Card>
 
           <Card className="border-black">
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium text-gray-600">Avertissement</CardTitle>
+              <CardTitle className="text-sm font-medium text-gray-600">
+                Avertissement
+              </CardTitle>
               <AlertTriangle className="h-4 w-4 text-black" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold text-black">{alertStats.warning}</div>
-              <p className="text-xs text-gray-600">
-                surveillance requise
-              </p>
+              <div className="text-2xl font-bold text-black">
+                {alertStats.warning}
+              </div>
+              <p className="text-xs text-gray-600">surveillance requise</p>
             </CardContent>
           </Card>
 
           <Card className="border-black">
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium text-gray-600">Information</CardTitle>
+              <CardTitle className="text-sm font-medium text-gray-600">
+                Information
+              </CardTitle>
               <Info className="h-4 w-4 text-blue-600" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold text-blue-600">{alertStats.info}</div>
-              <p className="text-xs text-gray-600">
-                informations système
-              </p>
+              <div className="text-2xl font-bold text-blue-600">
+                {alertStats.info}
+              </div>
+              <p className="text-xs text-gray-600">informations système</p>
             </CardContent>
           </Card>
         </div>
@@ -399,7 +444,7 @@ export default function StockAlertesPage() {
                   <Input
                     placeholder="Rechercher alertes, produits, SKU..."
                     value={searchTerm}
-                    onChange={(e) => setSearchTerm(e.target.value)}
+                    onChange={e => setSearchTerm(e.target.value)}
                     className="pl-10 border-black"
                   />
                 </div>
@@ -411,7 +456,11 @@ export default function StockAlertesPage() {
               <div className="grid grid-cols-1 md:grid-cols-4 gap-4 pt-4 border-t">
                 <div className="space-y-2">
                   <Label>Sévérité</Label>
-                  <Select onValueChange={(value) => setFilters(prev => ({ ...prev, severity: value }))}>
+                  <Select
+                    onValueChange={value =>
+                      setFilters(prev => ({ ...prev, severity: value }))
+                    }
+                  >
                     <SelectTrigger className="border-black">
                       <SelectValue placeholder="Toutes les sévérités" />
                     </SelectTrigger>
@@ -425,7 +474,11 @@ export default function StockAlertesPage() {
                 </div>
                 <div className="space-y-2">
                   <Label>Catégorie</Label>
-                  <Select onValueChange={(value) => setFilters(prev => ({ ...prev, category: value }))}>
+                  <Select
+                    onValueChange={value =>
+                      setFilters(prev => ({ ...prev, category: value }))
+                    }
+                  >
                     <SelectTrigger className="border-black">
                       <SelectValue placeholder="Toutes les catégories" />
                     </SelectTrigger>
@@ -440,7 +493,14 @@ export default function StockAlertesPage() {
                 </div>
                 <div className="space-y-2">
                   <Label>État</Label>
-                  <Select onValueChange={(value) => setFilters(prev => ({ ...prev, acknowledged: value === 'true' }))}>
+                  <Select
+                    onValueChange={value =>
+                      setFilters(prev => ({
+                        ...prev,
+                        acknowledged: value === 'true',
+                      }))
+                    }
+                  >
                     <SelectTrigger className="border-black">
                       <SelectValue placeholder="Toutes les alertes" />
                     </SelectTrigger>
@@ -459,9 +519,9 @@ export default function StockAlertesPage() {
                         severity: '',
                         category: '',
                         acknowledged: false,
-                        limit: 100
-                      })
-                      setSearchTerm('')
+                        limit: 100,
+                      });
+                      setSearchTerm('');
                     }}
                     className="w-full border-black text-black hover:bg-black hover:text-white"
                   >
@@ -479,7 +539,10 @@ export default function StockAlertesPage() {
             <CardTitle className="flex items-center justify-between">
               <span>Alertes ({filteredAlerts.length})</span>
               {loading && (
-                <Badge variant="outline" className="border-blue-300 text-blue-600">
+                <Badge
+                  variant="outline"
+                  className="border-blue-300 text-blue-600"
+                >
                   Actualisation...
                 </Badge>
               )}
@@ -508,7 +571,7 @@ export default function StockAlertesPage() {
               </div>
             ) : (
               <div className="space-y-4">
-                {filteredAlerts.map((alert) => (
+                {filteredAlerts.map(alert => (
                   <div
                     key={alert.id}
                     className={`border rounded-lg p-4 transition-all ${
@@ -521,13 +584,14 @@ export default function StockAlertesPage() {
                       <div className="flex gap-4 flex-1">
                         {/* Image Produit (si alerte produit) */}
                         {alert.productImageUrl ? (
-                          <Image
-                            src={alert.productImageUrl}
-                            alt={alert.productName || 'Produit'}
-                            width={64}
-                            height={64}
-                            className="rounded-lg object-cover border border-gray-200 flex-shrink-0"
-                          />
+                          <div className="relative w-16 h-16 flex-shrink-0 bg-gray-100 rounded-lg border border-gray-200 overflow-hidden">
+                            <Image
+                              src={alert.productImageUrl}
+                              alt={alert.productName || 'Produit'}
+                              fill
+                              className="object-cover"
+                            />
+                          </div>
                         ) : alert.category === 'stock' ? (
                           <div className="h-16 w-16 bg-gray-100 rounded-lg flex items-center justify-center flex-shrink-0">
                             <Package className="h-8 w-8 text-gray-400" />
@@ -546,40 +610,56 @@ export default function StockAlertesPage() {
                                 {alert.productSku}
                               </Badge>
                             )}
-                            <Badge variant="outline" className={getSeverityColor(alert.severity)}>
+                            <Badge
+                              variant="outline"
+                              className={getSeverityColor(alert.severity)}
+                            >
                               {alert.severity}
                             </Badge>
-                            <Badge variant="outline" className="border-gray-300 text-gray-600">
+                            <Badge
+                              variant="outline"
+                              className="border-gray-300 text-gray-600"
+                            >
                               {alert.category}
                             </Badge>
                           </div>
 
-                        <p className="text-gray-700 mb-3">{alert.message}</p>
+                          <p className="text-gray-700 mb-3">{alert.message}</p>
 
-                        {(alert.currentStock !== undefined || alert.minStock !== undefined) && (
-                          <div className="grid grid-cols-2 md:grid-cols-3 gap-4 text-sm text-gray-600 mb-3">
-                            {alert.currentStock !== undefined && (
-                              <div>
-                                <span className="font-medium">Stock actuel:</span> {alert.currentStock}
-                              </div>
-                            )}
-                            {alert.minStock !== undefined && (
-                              <div>
-                                <span className="font-medium">Stock minimum:</span> {alert.minStock}
-                              </div>
-                            )}
-                            {alert.reorderPoint !== undefined && (
-                              <div>
-                                <span className="font-medium">Point commande:</span> {alert.reorderPoint}
-                              </div>
-                            )}
-                          </div>
-                        )}
+                          {(alert.currentStock !== undefined ||
+                            alert.minStock !== undefined) && (
+                            <div className="grid grid-cols-2 md:grid-cols-3 gap-4 text-sm text-gray-600 mb-3">
+                              {alert.currentStock !== undefined && (
+                                <div>
+                                  <span className="font-medium">
+                                    Stock actuel:
+                                  </span>{' '}
+                                  {alert.currentStock}
+                                </div>
+                              )}
+                              {alert.minStock !== undefined && (
+                                <div>
+                                  <span className="font-medium">
+                                    Stock minimum:
+                                  </span>{' '}
+                                  {alert.minStock}
+                                </div>
+                              )}
+                              {alert.reorderPoint !== undefined && (
+                                <div>
+                                  <span className="font-medium">
+                                    Point commande:
+                                  </span>{' '}
+                                  {alert.reorderPoint}
+                                </div>
+                              )}
+                            </div>
+                          )}
 
-                        <p className="text-xs text-gray-500">
-                          {new Date(alert.timestamp).toLocaleString('fr-FR')}
-                        </p>
-                      </div>
+                          <p className="text-xs text-gray-500">
+                            {new Date(alert.timestamp).toLocaleString('fr-FR')}
+                          </p>
+                        </div>
                       </div>
 
                       <div className="flex items-center space-x-2 ml-4">
@@ -604,7 +684,10 @@ export default function StockAlertesPage() {
                           </ButtonV2>
                         )}
                         {alert.acknowledged && (
-                          <Badge variant="outline" className="border-green-300 text-green-600">
+                          <Badge
+                            variant="outline"
+                            className="border-green-300 text-green-600"
+                          >
                             Acquittée
                           </Badge>
                         )}
@@ -617,6 +700,21 @@ export default function StockAlertesPage() {
           </CardContent>
         </Card>
       </div>
+
+      {/* Modal commande rapide */}
+      {selectedProductForOrder && (
+        <QuickPurchaseOrderModal
+          open={showQuickPurchaseModal}
+          onClose={() => {
+            setShowQuickPurchaseModal(false);
+            setSelectedProductForOrder(null);
+          }}
+          productId={selectedProductForOrder}
+          onSuccess={() => {
+            refetch(); // Rafraîchir les alertes
+          }}
+        />
+      )}
     </div>
-  )
+  );
 }
