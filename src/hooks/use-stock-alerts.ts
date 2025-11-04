@@ -16,6 +16,17 @@ export interface StockAlert {
   stock_forecasted_out: number
   min_stock: number
   shortage_quantity: number
+
+  // Tracking commandes brouillon
+  quantity_in_draft: number | null
+  draft_order_id: string | null
+  draft_order_number: string | null
+  is_in_draft: boolean
+
+  // Validation
+  validated: boolean
+  validated_at: string | null
+
   related_orders?: {
     order_number: string
     quantity: number
@@ -31,88 +42,81 @@ export function useStockAlerts() {
   const fetchAlerts = useCallback(async (type?: StockAlertType) => {
     setLoading(true)
     try {
-      // Récupérer tous les produits avec leurs stocks
-      const { data: products, error: productsError } = await supabase
-        .from('products')
-        .select('id, name, sku, stock_real, stock_forecasted_in, stock_forecasted_out, min_stock')
-        .is('archived_at', null)
+      // Query stock_alert_tracking avec jointures
+      let query = supabase
+        .from('stock_alert_tracking')
+        .select(`
+          id,
+          product_id,
+          alert_type,
+          alert_priority,
+          stock_real,
+          stock_forecasted_out,
+          min_stock,
+          shortage_quantity,
+          quantity_in_draft,
+          draft_order_id,
+          validated,
+          validated_at,
+          products (
+            name,
+            sku
+          ),
+          purchase_orders:draft_order_id (
+            po_number
+          )
+        `)
+        .eq('validated', false) // Seulement alertes non validées
+        .order('alert_priority', { ascending: false })
+        .order('stock_real', { ascending: true })
 
-      if (productsError) throw productsError
-
-      const alertsList: StockAlert[] = []
-
-      for (const product of products || []) {
-        const stockReal = product.stock_real || 0
-        const forecastedOut = product.stock_forecasted_out || 0
-        const minStock = product.min_stock || 0
-
-        // Alerte 1 : Stock faible (< min_stock)
-        if (stockReal > 0 && stockReal < minStock && (!type || type === 'low_stock')) {
-          alertsList.push({
-            id: `low_${product.id}`,
-            product_id: product.id,
-            product_name: product.name,
-            sku: product.sku,
-            alert_type: 'low_stock',
-            severity: 'warning',
-            stock_real: stockReal,
-            stock_forecasted_out: forecastedOut,
-            min_stock: minStock,
-            shortage_quantity: minStock - stockReal
-          })
-        }
-
-        // Alerte 2 : Rupture stock (stock_real <= 0)
-        if (stockReal <= 0 && forecastedOut === 0 && (!type || type === 'out_of_stock')) {
-          alertsList.push({
-            id: `out_${product.id}`,
-            product_id: product.id,
-            product_name: product.name,
-            sku: product.sku,
-            alert_type: 'out_of_stock',
-            severity: 'critical',
-            stock_real: stockReal,
-            stock_forecasted_out: forecastedOut,
-            min_stock: minStock,
-            shortage_quantity: minStock
-          })
-        }
-
-        // Alerte 3 : Commandé sans stock (CRITIQUE)
-        if (stockReal <= 0 && forecastedOut > 0 && (!type || type === 'no_stock_but_ordered')) {
-          // Récupérer commandes liées
-          const { data: orders } = await supabase
-            .from('sales_orders')
-            .select('order_number, sales_order_items!inner(quantity)')
-            .eq('status', 'confirmed')
-            .eq('sales_order_items.product_id', product.id)
-
-          alertsList.push({
-            id: `ordered_${product.id}`,
-            product_id: product.id,
-            product_name: product.name,
-            sku: product.sku,
-            alert_type: 'no_stock_but_ordered',
-            severity: 'critical',
-            stock_real: stockReal,
-            stock_forecasted_out: forecastedOut,
-            min_stock: minStock,
-            shortage_quantity: forecastedOut,
-            related_orders: orders?.map(o => ({
-              order_number: o.order_number,
-              quantity: o.sales_order_items[0]?.quantity || 0
-            }))
-          })
-        }
+      // Filtrer par type si spécifié
+      if (type) {
+        query = query.eq('alert_type', type)
       }
+
+      const { data, error } = await query
+
+      if (error) throw error
+
+      // Transformer en StockAlert[]
+      const alertsList: StockAlert[] = (data || []).map((alert: any) => {
+        // Récupérer commandes liées pour type no_stock_but_ordered
+        const relatedOrders: { order_number: string; quantity: number }[] = []
+
+        return {
+          id: alert.id,
+          product_id: alert.product_id,
+          product_name: alert.products?.name || 'Produit inconnu',
+          sku: alert.products?.sku || 'N/A',
+          alert_type: alert.alert_type as StockAlertType,
+          severity:
+            alert.alert_priority === 3
+              ? 'critical'
+              : alert.alert_priority === 2
+                ? 'warning'
+                : 'info',
+          stock_real: alert.stock_real,
+          stock_forecasted_out: alert.stock_forecasted_out,
+          min_stock: alert.min_stock,
+          shortage_quantity: alert.shortage_quantity,
+          quantity_in_draft: alert.quantity_in_draft,
+          draft_order_id: alert.draft_order_id,
+          draft_order_number: alert.purchase_orders?.po_number || null,
+          is_in_draft: alert.draft_order_id !== null,
+          validated: alert.validated,
+          validated_at: alert.validated_at,
+          related_orders: relatedOrders.length > 0 ? relatedOrders : undefined
+        }
+      })
 
       setAlerts(alertsList)
     } catch (error: any) {
       console.error('Erreur chargement alertes:', error)
       toast({
-        title: "Erreur",
-        description: "Impossible de charger les alertes stock",
-        variant: "destructive"
+        title: 'Erreur',
+        description: 'Impossible de charger les alertes stock',
+        variant: 'destructive'
       })
     } finally {
       setLoading(false)
@@ -127,9 +131,19 @@ export function useStockAlerts() {
     loading,
     alerts,
     fetchAlerts,
-    // Helpers
+    // Helpers existants
     criticalAlerts: alerts.filter(a => a.severity === 'critical'),
     warningAlerts: alerts.filter(a => a.severity === 'warning'),
-    getAlertsByType: (type: StockAlertType) => alerts.filter(a => a.alert_type === type)
+    getAlertsByType: (type: StockAlertType) => alerts.filter(a => a.alert_type === type),
+    // Nouveaux helpers pour tracking brouillon
+    alertsInDraft: alerts.filter(a => a.is_in_draft),
+    alertsNotInDraft: alerts.filter(a => !a.is_in_draft),
+    alertsValidated: alerts.filter(a => a.validated),
+    // Helper pour vérifier si produit dans brouillon
+    isProductInDraft: (productId: string) =>
+      alerts.some(a => a.product_id === productId && a.is_in_draft),
+    // Helper pour récupérer quantité commandée
+    getQuantityInDraft: (productId: string) =>
+      alerts.find(a => a.product_id === productId)?.quantity_in_draft || 0
   }
 }
