@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback, useMemo } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import {
   ArrowLeft,
@@ -192,8 +192,8 @@ export default function ProductDetailPage() {
 
   const startTime = Date.now();
 
-  // Charger le produit
-  const fetchProduct = async () => {
+  // Charger le produit (✅ Optimisé avec useCallback)
+  const fetchProduct = useCallback(async () => {
     try {
       setLoading(true);
       setError(null);
@@ -278,38 +278,21 @@ export default function ProductDetailPage() {
       setLoading(false);
       checkSLOCompliance(startTime, 'dashboard');
     }
-  };
+  }, [productId, router]);
 
-  // Handler pour mettre à jour le produit avec persistance en base
-  const handleProductUpdate = async (updatedData: Partial<Product>) => {
-    if (!product) return;
+  // Handler pour mettre à jour le produit (✅ Optimisé avec optimistic update)
+  // Note: Le DB update est déjà fait par use-inline-edit, pas besoin de double call
+  const handleProductUpdate = useCallback(
+    async (updatedData: Partial<Product>) => {
+      // ✅ Optimistic UI update (instantané - pas d'attente DB)
+      setProduct(prev => (prev ? ({ ...prev, ...updatedData } as any) : null));
 
-    try {
-      const supabase = createClient();
-
-      // Mettre à jour en base de données
-      const { data, error } = await supabase
-        .from('products')
-        .update({
-          ...updatedData,
-          updated_at: new Date().toISOString(),
-        } as any)
-        .eq('id', product.id)
-        .select()
-        .single();
-
-      if (error) {
-        console.error('❌ Erreur lors de la mise à jour du produit:', error);
-        throw error;
-      }
-
-      // Mettre à jour l'état local avec les données retournées de la base
-      setProduct({ ...product, ...data } as any);
-      console.log('✅ Produit mis à jour avec succès:', data);
-    } catch (error) {
-      console.error('❌ Erreur lors de la mise à jour:', error);
-    }
-  };
+      // Le hook use-inline-edit gère déjà le UPDATE Supabase
+      // Pas de second UPDATE ici pour éviter double call DB
+      console.log('✅ Produit mis à jour (optimistic):', updatedData);
+    },
+    []
+  ); // ✅ FIX: Dépendances vides car setProduct utilise forme fonctionnelle
 
   // Handler pour naviguer vers la page de partage
   const handleShare = () => {
@@ -322,6 +305,44 @@ export default function ProductDetailPage() {
   useEffect(() => {
     fetchProduct();
   }, [productId]);
+
+  // ✅ HOOKS DÉPLACÉS AVANT RETURNS CONDITIONNELS (React Rules of Hooks)
+  // Breadcrumb (✅ Optimisé avec useMemo)
+  const breadcrumbParts = useMemo(() => {
+    if (!product) return [];
+    const parts: string[] = [];
+    if (product.subcategory?.category?.family) {
+      parts.push(product.subcategory.category.family.name);
+    }
+    if (product.subcategory?.category) {
+      parts.push(product.subcategory.category.name);
+    }
+    if (product.subcategory) {
+      parts.push(product.subcategory.name);
+    }
+    parts.push(product.name);
+    return parts;
+  }, [
+    product?.subcategory?.category?.family?.name,
+    product?.subcategory?.category?.name,
+    product?.subcategory?.name,
+    product?.name,
+  ]);
+
+  // Calcul complétude accordéons (✅ Optimisé avec useMemo)
+  const missingFields = useMemo(
+    () => calculateMissingFields(product),
+    [
+      product?.name,
+      product?.sku,
+      product?.cost_price,
+      product?.supplier_id,
+      product?.subcategory_id,
+      product?.description,
+      product?.product_status,
+      product?.stock_status,
+    ]
+  );
 
   // État de chargement
   if (loading) {
@@ -355,22 +376,6 @@ export default function ProductDetailPage() {
       </div>
     );
   }
-
-  // Breadcrumb
-  const breadcrumbParts: string[] = [];
-  if (product.subcategory?.category?.family) {
-    breadcrumbParts.push(product.subcategory.category.family.name);
-  }
-  if (product.subcategory?.category) {
-    breadcrumbParts.push(product.subcategory.category.name);
-  }
-  if (product.subcategory) {
-    breadcrumbParts.push(product.subcategory.name);
-  }
-  breadcrumbParts.push(product.name);
-
-  // Calcul complétude accordéons
-  const missingFields = calculateMissingFields(product);
 
   return (
     <div className="min-h-screen bg-neutral-50 pb-20">
