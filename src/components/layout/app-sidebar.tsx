@@ -141,6 +141,11 @@ const getNavItems = (stockAlertsCount: number): NavItem[] => [
         href: '/stocks/receptions',
         icon: Truck,
       },
+      {
+        title: 'Expéditions',
+        href: '/stocks/expeditions',
+        icon: Truck,
+      },
     ],
   },
   {
@@ -157,11 +162,6 @@ const getNavItems = (stockAlertsCount: number): NavItem[] => [
         title: 'Fournisseurs',
         href: '/commandes/fournisseurs',
         icon: Building2,
-      },
-      {
-        title: 'Expéditions',
-        href: '/commandes/expeditions',
-        icon: Truck,
       },
     ],
   },

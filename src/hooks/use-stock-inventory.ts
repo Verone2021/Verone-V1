@@ -125,9 +125,10 @@ export function useStockInventory() {
       const activeInventory = inventoryData.filter(item => item.movement_count > 0)
 
       // Calculer les statistiques
+      // ✅ Valeur stock = stock_real (physique) * cost_price (prix indicatif d'achat)
       const statsData = {
         total_products: products.length,
-        total_stock_value: products.reduce((sum, p) => sum + ((p.stock_quantity || 0) * (p.cost_price || 0)), 0),
+        total_stock_value: products.reduce((sum, p) => sum + ((p.stock_real || 0) * (p.cost_price || 0)), 0),
         total_movements: activeInventory.reduce((sum, item) => sum + item.movement_count, 0),
         products_with_activity: activeInventory.length
       }
