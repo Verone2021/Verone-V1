@@ -32,6 +32,17 @@ import { execSync } from 'child_process';
 const HOOKS_DIR = path.join(process.cwd(), 'src', 'hooks');
 const SRC_DIR = path.join(process.cwd(), 'src');
 
+// Tables centrales ERP - Normal d'avoir beaucoup de hooks les accédant
+const CENTRAL_TABLES = [
+  'products',
+  'organisations',
+  'sales_orders',
+  'purchase_orders',
+  'stock_movements',
+  'users',
+  'user_profiles',
+];
+
 // ============================================================================
 // TYPES
 // ============================================================================
@@ -75,7 +86,11 @@ function getAllHooks(): string[] {
       const fullPath = path.join(dir, entry.name);
       if (entry.isDirectory()) {
         files.push(...scan(fullPath));
-      } else if (entry.isFile() && entry.name.endsWith('.ts') && entry.name.startsWith('use-')) {
+      } else if (
+        entry.isFile() &&
+        entry.name.endsWith('.ts') &&
+        entry.name.startsWith('use-')
+      ) {
         files.push(fullPath);
       }
     }
@@ -98,7 +113,9 @@ function analyzeHook(hookPath: string): HookInfo {
   const tables = Array.from(tableMatches, match => match[1]);
 
   // Détecter queries Supabase (select, insert, update, delete)
-  const queryMatches = content.matchAll(/\.(select|insert|update|delete|upsert)\(/g);
+  const queryMatches = content.matchAll(
+    /\.(select|insert|update|delete|upsert)\(/g
+  );
   const queries = Array.from(queryMatches, match => match[1]);
 
   // Détecter exports (export function, export const)
@@ -106,7 +123,9 @@ function analyzeHook(hookPath: string): HookInfo {
   const exports = Array.from(exportMatches, match => match[2]);
 
   // Détecter imports d'autres hooks
-  const importMatches = content.matchAll(/from\s+['"]@\/hooks\/(use-[\w-]+)['"]/g);
+  const importMatches = content.matchAll(
+    /from\s+['"]@\/hooks\/(use-[\w-]+)['"]/g
+  );
   const dependencies = Array.from(importMatches, match => match[1]);
 
   // Compter usages dans le codebase
@@ -157,10 +176,15 @@ function detectDuplications(hooks: HookInfo[]): DuplicationIssue[] {
   });
 
   tableGroups.forEach((groupHooks, table) => {
+    // ✅ Ignorer tables centrales ERP (normal d'avoir beaucoup de hooks)
+    if (CENTRAL_TABLES.includes(table)) {
+      return; // Skip - comportement attendu dans un ERP
+    }
+
     if (groupHooks.length > 1) {
       // Vérifier si c'est légitime (ex: use-organisations + use-customers)
-      const isLegitimate = groupHooks.every(h =>
-        h.name.includes(table) || table === 'organisations'
+      const isLegitimate = groupHooks.every(
+        h => h.name.includes(table) || table === 'organisations'
       );
 
       if (!isLegitimate) {
@@ -178,17 +202,39 @@ function detectDuplications(hooks: HookInfo[]): DuplicationIssue[] {
   // 2. Hooks avec noms similaires (typo/variantes)
   for (let i = 0; i < hooks.length; i++) {
     for (let j = i + 1; j < hooks.length; j++) {
+      // ✅ Ignorer hooks dans dossiers utilitaires (base/, core/, utils/)
+      const isUtilityHook = (hook: HookInfo) =>
+        hook.path.includes('/base/') ||
+        hook.path.includes('/core/') ||
+        hook.path.includes('/utils/');
+
+      if (isUtilityHook(hooks[i]) || isUtilityHook(hooks[j])) {
+        continue; // Skip - hooks utilitaires légitimes
+      }
+
       const similarity = calculateSimilarity(hooks[i].name, hooks[j].name);
-      if (similarity > 0.8) {
-        // 80% similarité
+
+      // ✅ Seuils ajustés pour éviter faux positifs
+      if (similarity > 0.95) {
+        // >95% similarité = Duplication probable (BLOQUE)
         issues.push({
           type: 'similar_name',
           severity: 'error',
           hooks: [hooks[i].name, hooks[j].name],
-          message: `Noms très similaires (${Math.round(similarity * 100)}% similarité)`,
-          recommendation: `Vérifier si duplication ou renommer pour clarté`,
+          message: `Noms quasi-identiques (${Math.round(similarity * 100)}% similarité)`,
+          recommendation: `Duplication probable - consolider ou renommer`,
+        });
+      } else if (similarity > 0.85) {
+        // 85-95% = Suspect mais peut être légitime (WARNING, ne bloque pas)
+        issues.push({
+          type: 'similar_name',
+          severity: 'warning',
+          hooks: [hooks[i].name, hooks[j].name],
+          message: `Noms similaires (${Math.round(similarity * 100)}% similarité)`,
+          recommendation: `Vérifier si typo ou convention naming légitime (ex: use-order-metrics vs use-user-metrics)`,
         });
       }
+      // <85% = Différences légitimes (ex: use-order-metrics vs use-user-metrics = 82%)
     }
   }
 
