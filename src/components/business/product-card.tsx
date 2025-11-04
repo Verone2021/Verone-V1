@@ -190,10 +190,22 @@ export const ProductCard = memo(function ProductCard({
           </div>
         )}
 
-        {/* Badge statut - MINI */}
+        {/* Badge statut manuel (product_status) - MINI */}
         <div className="absolute top-1 right-1">
-          <Badge className={cn('text-[10px] px-1.5 py-0.5', status.className)}>
-            {status.label}
+          <Badge
+            className={cn(
+              'text-[10px] px-1.5 py-0.5',
+              product.product_status === 'active' && 'bg-green-600 text-white',
+              product.product_status === 'preorder' && 'bg-blue-600 text-white',
+              product.product_status === 'discontinued' &&
+                'bg-gray-600 text-white',
+              product.product_status === 'draft' && 'bg-yellow-600 text-white'
+            )}
+          >
+            {product.product_status === 'active' && '✓ Actif'}
+            {product.product_status === 'preorder' && '📅 Précommande'}
+            {product.product_status === 'discontinued' && '⚠ Arrêté'}
+            {product.product_status === 'draft' && '📝 Brouillon'}
           </Badge>
         </div>
 

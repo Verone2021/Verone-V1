@@ -154,13 +154,21 @@ export const ProductCardV2 = memo(function ProductCardV2({
 
         {/* Badges - Optimisés 2025: text-[10px]→[9px], padding réduit */}
         <div className="absolute top-1.5 right-1.5 flex flex-col gap-1.5">
+          {/* Badge statut manuel (product_status) */}
           <Badge
             className={cn(
               'text-[9px] font-medium px-1 py-0.5',
-              status.className
+              product.product_status === 'active' && 'bg-green-600 text-white',
+              product.product_status === 'preorder' && 'bg-blue-600 text-white',
+              product.product_status === 'discontinued' &&
+                'bg-gray-600 text-white',
+              product.product_status === 'draft' && 'bg-yellow-600 text-white'
             )}
           >
-            {status.label}
+            {product.product_status === 'active' && '✓ Actif'}
+            {product.product_status === 'preorder' && '📅 Précommande'}
+            {product.product_status === 'discontinued' && '⚠ Arrêté'}
+            {product.product_status === 'draft' && '📝 Brouillon'}
           </Badge>
 
           {product.condition !== 'new' && (
