@@ -136,6 +136,11 @@ const getNavItems = (stockAlertsCount: number): NavItem[] => [
         href: '/stocks/sorties',
         icon: LogOut,
       },
+      {
+        title: 'Réceptions',
+        href: '/stocks/receptions',
+        icon: Truck,
+      },
     ],
   },
   {
