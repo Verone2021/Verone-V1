@@ -24,6 +24,7 @@ interface QuickPurchaseOrderModalProps {
   open: boolean;
   onClose: () => void;
   productId: string;
+  shortageQuantity?: number; // Quantité minimale à commander (écart stock)
   onSuccess?: () => void;
 }
 
@@ -50,6 +51,7 @@ export function QuickPurchaseOrderModal({
   open,
   onClose,
   productId,
+  shortageQuantity,
   onSuccess,
 }: QuickPurchaseOrderModalProps) {
   const supabase = createClient();
@@ -155,13 +157,24 @@ export function QuickPurchaseOrderModal({
     loadData();
   }, [open, productId, supabase]);
 
+  // Pré-remplir quantité avec shortage_quantity
+  useEffect(() => {
+    if (shortageQuantity && shortageQuantity > 0) {
+      setQuantity(shortageQuantity);
+    }
+  }, [shortageQuantity]);
+
   // Validation + soumission
   async function handleSubmit() {
     if (!product) return;
 
-    // Validation quantité
-    if (quantity <= 0) {
-      setError('La quantité doit être supérieure à 0');
+    const minQuantity = shortageQuantity || 1;
+
+    // Validation quantité >= shortage_quantity
+    if (quantity < minQuantity) {
+      setError(
+        `La quantité doit être >= ${minQuantity} (stock minimum requis)`
+      );
       return;
     }
 

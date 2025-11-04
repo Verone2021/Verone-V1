@@ -40,9 +40,10 @@ import {
   SelectTrigger,
   SelectValue,
 } from '../../../components/ui/select';
-import { useStockOptimized } from '../../../hooks/use-stock-optimized';
+import { useStockAlerts } from '../../../hooks/use-stock-alerts';
 import { useToast } from '../../../hooks/use-toast';
 import { QuickPurchaseOrderModal } from '../../../components/business/quick-purchase-order-modal';
+import { StockAlertCard } from '../../../components/business/stock-alert-card';
 
 type AlertSeverity = 'critical' | 'warning' | 'info';
 type AlertCategory = 'stock' | 'movement' | 'forecast' | 'system';
@@ -62,6 +63,10 @@ interface StockAlert {
   reorderPoint?: number;
   timestamp: string;
   acknowledged: boolean;
+  // Tracking commandes brouillon
+  is_in_draft: boolean;
+  quantity_in_draft: number | null;
+  draft_order_number: string | null;
   action?: {
     label: string;
     handler: () => void;
@@ -85,157 +90,80 @@ export default function StockAlertesPage() {
     new Set()
   );
   const [showQuickPurchaseModal, setShowQuickPurchaseModal] = useState(false);
-  const [selectedProductForOrder, setSelectedProductForOrder] = useState<
-    string | null
-  >(null);
+  const [selectedProductForOrder, setSelectedProductForOrder] = useState<{
+    productId: string;
+    shortageQuantity: number;
+  } | null>(null);
 
   const {
-    stockSummary,
-    lowStockProducts,
-    movements,
     loading,
-    error,
-    stats,
-    refetch,
-  } = useStockOptimized({ limit: 50 });
+    alerts,
+    fetchAlerts,
+    criticalAlerts,
+    warningAlerts,
+    alertsInDraft,
+    alertsNotInDraft,
+    isProductInDraft,
+    getQuantityInDraft,
+  } = useStockAlerts();
 
-  // Générer les alertes à partir des données
-  const alerts = useMemo<StockAlert[]>(() => {
-    const alertList: StockAlert[] = [];
-
-    // Alertes critiques - Ruptures de stock
-    const outOfStockProducts = lowStockProducts.filter(
-      (p: any) => p.stock_real === 0
-    );
-    outOfStockProducts.forEach((product: any) => {
-      alertList.push({
-        id: `out-of-stock-${product.id}`,
-        severity: 'critical',
-        category: 'stock',
-        title: 'Rupture de stock',
-        message: `${product.name} est en rupture de stock`,
-        productId: product.id,
-        productName: product.name,
-        productSku: product.sku,
-        productImageUrl: product.product_image_url || null, // ✅ NOUVEAU - Image produit
-        currentStock: product.stock_real,
-        minStock: product.min_stock,
-        timestamp: new Date().toISOString(),
-        acknowledged: acknowledgedAlerts.has(`out-of-stock-${product.id}`),
-        action: {
-          label: 'Commander',
-          handler: () => {
-            setSelectedProductForOrder(product.id);
-            setShowQuickPurchaseModal(true);
-          },
-        },
-      });
-    });
-
-    // Alertes d'avertissement - Stock faible
-    const lowStockAlerts = lowStockProducts.filter(
-      (p: any) => p.stock_real > 0 && p.stock_real <= p.min_stock
-    );
-    lowStockAlerts.forEach((product: any) => {
-      alertList.push({
-        id: `low-stock-${product.id}`,
-        severity: 'warning',
-        category: 'stock',
-        title: 'Stock faible',
-        message: `${product.name} approche du seuil minimum (${product.stock_real}/${product.min_stock})`,
-        productId: product.id,
-        productName: product.name,
-        productSku: product.sku,
-        productImageUrl: product.product_image_url || null, // ✅ NOUVEAU - Image produit
-        currentStock: product.stock_real,
-        minStock: product.min_stock,
-        reorderPoint: product.reorder_point,
-        timestamp: new Date().toISOString(),
-        acknowledged: acknowledgedAlerts.has(`low-stock-${product.id}`),
-        action: {
-          label: 'Réapprovisionner',
-          handler: () => {
-            setSelectedProductForOrder(product.id);
-            setShowQuickPurchaseModal(true);
-          },
-        },
-      });
-    });
-
-    // Alertes de mouvement - Mouvements inhabituels
-    const todayMovements = movements.filter(
-      m => new Date(m.performed_at).toDateString() === new Date().toDateString()
-    );
-
-    if (todayMovements.length > 20) {
-      alertList.push({
-        id: 'high-activity',
-        severity: 'info',
-        category: 'movement',
-        title: 'Activité élevée',
-        message: `${todayMovements.length} mouvements de stock aujourd'hui`,
-        timestamp: new Date().toISOString(),
-        acknowledged: acknowledgedAlerts.has('high-activity'),
-      });
-    }
-
-    // Alertes système - Performance
-    const avgMovementTime = 2.1; // Simulé - pourrait venir d'une vraie métrique
-    if (avgMovementTime > 2) {
-      alertList.push({
-        id: 'performance-warning',
-        severity: 'warning',
-        category: 'system',
-        title: 'Performance dégradée',
-        message: `Temps de traitement moyen: ${avgMovementTime}s (>2s SLO)`,
-        timestamp: new Date().toISOString(),
-        acknowledged: acknowledgedAlerts.has('performance-warning'),
-      });
-    }
-
-    // Alertes de prévision - Stock disponible négatif simulé
-    const productsWithForecast = lowStockProducts.filter(
-      (p: any) => p.stock_real > 0 && p.stock_real < 5
-    );
-    productsWithForecast.forEach((product: any) => {
-      if (product.stock_real < 3) {
-        alertList.push({
-          id: `forecast-${product.id}`,
-          severity: 'warning',
-          category: 'forecast',
-          title: 'Prévision stock critique',
-          message: `${product.name} risque de rupture prochainement`,
-          productId: product.id,
-          productName: product.name,
-          productSku: product.sku,
-          currentStock: product.stock_real,
-          timestamp: new Date().toISOString(),
-          acknowledged: acknowledgedAlerts.has(`forecast-${product.id}`),
-        });
-      }
-    });
-
-    return alertList.sort((a, b) => {
-      // Tri par sévérité puis par date
-      const severityOrder = { critical: 0, warning: 1, info: 2 };
-      if (severityOrder[a.severity] !== severityOrder[b.severity]) {
-        return severityOrder[a.severity] - severityOrder[b.severity];
-      }
-      return new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime();
-    });
-  }, [lowStockProducts, movements, acknowledgedAlerts, router]);
+  // Mapper les alertes du hook vers l'interface locale
+  const mappedAlerts = useMemo<StockAlert[]>(() => {
+    return alerts.map(alert => ({
+      id: alert.id,
+      severity: alert.severity,
+      category: 'stock' as AlertCategory,
+      title:
+        alert.alert_type === 'out_of_stock'
+          ? 'Rupture de stock'
+          : alert.alert_type === 'low_stock'
+            ? 'Stock faible'
+            : 'Stock commandé sans disponibilité',
+      message:
+        alert.alert_type === 'out_of_stock'
+          ? `${alert.product_name} est en rupture de stock`
+          : alert.alert_type === 'low_stock'
+            ? `${alert.product_name} approche du seuil minimum (${alert.stock_real}/${alert.min_stock})`
+            : `${alert.product_name} : commandes clients sans stock (${alert.stock_forecasted_out} unités)`,
+      productId: alert.product_id,
+      productName: alert.product_name,
+      productSku: alert.sku,
+      productImageUrl: null,
+      currentStock: alert.stock_real,
+      minStock: alert.min_stock,
+      timestamp: new Date().toISOString(),
+      acknowledged: acknowledgedAlerts.has(alert.id),
+      // Champs tracking brouillon pour StockAlertCard
+      is_in_draft: alert.is_in_draft,
+      quantity_in_draft: alert.quantity_in_draft,
+      draft_order_number: alert.draft_order_number,
+      action: !alert.is_in_draft
+        ? {
+            label: 'Commander',
+            handler: () => {
+              setSelectedProductForOrder({
+                productId: alert.product_id,
+                shortageQuantity: alert.shortage_quantity,
+              });
+              setShowQuickPurchaseModal(true);
+            },
+          }
+        : undefined,
+    }));
+  }, [alerts, acknowledgedAlerts]);
 
   // Statistiques des alertes
   const alertStats = useMemo(() => {
-    const unacknowledged = alerts.filter(a => !a.acknowledged);
+    const unacknowledged = mappedAlerts.filter(a => !a.acknowledged);
     return {
-      total: alerts.length,
+      total: mappedAlerts.length,
       unacknowledged: unacknowledged.length,
-      critical: unacknowledged.filter(a => a.severity === 'critical').length,
-      warning: unacknowledged.filter(a => a.severity === 'warning').length,
-      info: unacknowledged.filter(a => a.severity === 'info').length,
+      critical: criticalAlerts.length,
+      warning: warningAlerts.length,
+      info: 0,
+      inDraft: alertsInDraft.length,
     };
-  }, [alerts]);
+  }, [mappedAlerts, criticalAlerts, warningAlerts, alertsInDraft]);
 
   // Gestionnaire d'acquittement
   const handleAcknowledge = (alertId: string) => {
@@ -248,16 +176,16 @@ export default function StockAlertesPage() {
 
   // Acquitter toutes les alertes
   const acknowledgeAll = () => {
-    const allAlertIds = alerts.map(a => a.id);
+    const allAlertIds = mappedAlerts.map(a => a.id);
     setAcknowledgedAlerts(new Set(allAlertIds));
     toast({
       title: 'Toutes les alertes acquittées',
-      description: `${alerts.length} alertes marquées comme vues`,
+      description: `${mappedAlerts.length} alertes marquées comme vues`,
     });
   };
 
   // Filtres appliqués
-  const filteredAlerts = alerts.filter(alert => {
+  const filteredAlerts = mappedAlerts.filter(alert => {
     if (filters.severity && alert.severity !== filters.severity) return false;
     if (filters.category && alert.category !== filters.category) return false;
     if (filters.acknowledged && !alert.acknowledged) return false;
@@ -276,11 +204,11 @@ export default function StockAlertesPage() {
   // Auto-refresh
   useEffect(() => {
     const interval = setInterval(() => {
-      refetch();
+      fetchAlerts();
     }, 30000); // Rafraîchir toutes les 30 secondes
 
     return () => clearInterval(interval);
-  }, [refetch]);
+  }, [fetchAlerts]);
 
   const getSeverityIcon = (severity: AlertSeverity) => {
     switch (severity) {
@@ -329,7 +257,7 @@ export default function StockAlertesPage() {
             <div className="flex items-center space-x-3">
               <ButtonV2
                 variant="outline"
-                onClick={() => refetch()}
+                onClick={() => fetchAlerts()}
                 disabled={loading}
                 className="border-black text-black hover:bg-black hover:text-white"
               >
@@ -552,14 +480,7 @@ export default function StockAlertesPage() {
             </CardDescription>
           </CardHeader>
           <CardContent>
-            {error ? (
-              <div className="text-center py-8">
-                <p className="text-red-600 mb-4">{error}</p>
-                <ButtonV2 variant="outline" onClick={() => refetch()}>
-                  Réessayer
-                </ButtonV2>
-              </div>
-            ) : filteredAlerts.length === 0 ? (
+            {filteredAlerts.length === 0 ? (
               <div className="text-center py-8">
                 <CheckCircle className="h-12 w-12 text-green-500 mx-auto mb-4" />
                 <p className="text-gray-500 mb-4">Aucune alerte trouvée</p>
@@ -572,128 +493,33 @@ export default function StockAlertesPage() {
             ) : (
               <div className="space-y-4">
                 {filteredAlerts.map(alert => (
-                  <div
+                  <StockAlertCard
                     key={alert.id}
-                    className={`border rounded-lg p-4 transition-all ${
-                      alert.acknowledged
-                        ? 'border-gray-200 bg-gray-50 opacity-75'
-                        : `border-l-4 ${getSeverityColor(alert.severity)}`
-                    }`}
-                  >
-                    <div className="flex items-start justify-between">
-                      <div className="flex gap-4 flex-1">
-                        {/* Image Produit (si alerte produit) */}
-                        {alert.productImageUrl ? (
-                          <div className="relative w-16 h-16 flex-shrink-0 bg-gray-100 rounded-lg border border-gray-200 overflow-hidden">
-                            <Image
-                              src={alert.productImageUrl}
-                              alt={alert.productName || 'Produit'}
-                              fill
-                              className="object-cover"
-                            />
-                          </div>
-                        ) : alert.category === 'stock' ? (
-                          <div className="h-16 w-16 bg-gray-100 rounded-lg flex items-center justify-center flex-shrink-0">
-                            <Package className="h-8 w-8 text-gray-400" />
-                          </div>
-                        ) : null}
-
-                        {/* Contenu alerte */}
-                        <div className="flex-1 min-w-0">
-                          <div className="flex items-center space-x-3 mb-2 flex-wrap">
-                            {getSeverityIcon(alert.severity)}
-                            <h3 className="font-medium text-black">
-                              {alert.title}
-                            </h3>
-                            {alert.productSku && (
-                              <Badge variant="outline" className="text-xs">
-                                {alert.productSku}
-                              </Badge>
-                            )}
-                            <Badge
-                              variant="outline"
-                              className={getSeverityColor(alert.severity)}
-                            >
-                              {alert.severity}
-                            </Badge>
-                            <Badge
-                              variant="outline"
-                              className="border-gray-300 text-gray-600"
-                            >
-                              {alert.category}
-                            </Badge>
-                          </div>
-
-                          <p className="text-gray-700 mb-3">{alert.message}</p>
-
-                          {(alert.currentStock !== undefined ||
-                            alert.minStock !== undefined) && (
-                            <div className="grid grid-cols-2 md:grid-cols-3 gap-4 text-sm text-gray-600 mb-3">
-                              {alert.currentStock !== undefined && (
-                                <div>
-                                  <span className="font-medium">
-                                    Stock actuel:
-                                  </span>{' '}
-                                  {alert.currentStock}
-                                </div>
-                              )}
-                              {alert.minStock !== undefined && (
-                                <div>
-                                  <span className="font-medium">
-                                    Stock minimum:
-                                  </span>{' '}
-                                  {alert.minStock}
-                                </div>
-                              )}
-                              {alert.reorderPoint !== undefined && (
-                                <div>
-                                  <span className="font-medium">
-                                    Point commande:
-                                  </span>{' '}
-                                  {alert.reorderPoint}
-                                </div>
-                              )}
-                            </div>
-                          )}
-
-                          <p className="text-xs text-gray-500">
-                            {new Date(alert.timestamp).toLocaleString('fr-FR')}
-                          </p>
-                        </div>
-                      </div>
-
-                      <div className="flex items-center space-x-2 ml-4">
-                        {alert.action && !alert.acknowledged && (
-                          <ButtonV2
-                            variant="outline"
-                            size="sm"
-                            onClick={alert.action.handler}
-                            className="border-black text-black hover:bg-black hover:text-white"
-                          >
-                            {alert.action.label}
-                          </ButtonV2>
-                        )}
-                        {!alert.acknowledged && (
-                          <ButtonV2
-                            variant="ghost"
-                            size="sm"
-                            onClick={() => handleAcknowledge(alert.id)}
-                            className="text-gray-500 hover:text-black"
-                          >
-                            <CheckCircle className="h-4 w-4" />
-                          </ButtonV2>
-                        )}
-                        {alert.acknowledged && (
-                          <Badge
-                            variant="outline"
-                            className="border-green-300 text-green-600"
-                          >
-                            Acquittée
-                          </Badge>
-                        )}
-                      </div>
-                    </div>
-                  </div>
+                    alert={{
+                      id: alert.id,
+                      product_id: alert.productId || '',
+                      product_name: alert.productName || '',
+                      sku: alert.productSku || '',
+                      stock_real: alert.currentStock || 0,
+                      stock_forecasted_out: 0,
+                      min_stock: alert.minStock || 0,
+                      alert_type:
+                        alert.title === 'Rupture de stock'
+                          ? 'out_of_stock'
+                          : alert.title === 'Stock faible'
+                            ? 'low_stock'
+                            : 'no_stock_but_ordered',
+                      severity: alert.severity,
+                      is_in_draft: alert.is_in_draft,
+                      quantity_in_draft: alert.quantity_in_draft,
+                      draft_order_number: alert.draft_order_number,
+                    }}
+                    onActionClick={() => {
+                      if (alert.action) {
+                        alert.action.handler();
+                      }
+                    }}
+                  />
                 ))}
               </div>
             )}
@@ -709,9 +535,10 @@ export default function StockAlertesPage() {
             setShowQuickPurchaseModal(false);
             setSelectedProductForOrder(null);
           }}
-          productId={selectedProductForOrder}
+          productId={selectedProductForOrder.productId}
+          shortageQuantity={selectedProductForOrder.shortageQuantity}
           onSuccess={() => {
-            refetch(); // Rafraîchir les alertes
+            fetchAlerts(); // Rafraîchir les alertes
           }}
         />
       )}

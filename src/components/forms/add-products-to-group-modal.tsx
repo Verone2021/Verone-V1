@@ -1,130 +1,137 @@
-"use client"
+'use client';
 
-import { useState, useEffect, useMemo } from 'react'
-import { X, Search, Plus, Check, Package } from 'lucide-react'
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog'
-import { ButtonV2 } from '@/components/ui/button'
-import { Input } from '@/components/ui/input'
-import { Badge } from '@/components/ui/badge'
-import { Checkbox } from '@/components/ui/checkbox'
-import { createClient } from '@/lib/supabase/client'
-import { useFamilies } from '@/hooks/use-families'
-import { useCategories } from '@/hooks/use-categories'
-import { useSubcategories } from '@/hooks/use-subcategories'
-import { useVariantGroups } from '@/hooks/use-variant-groups'
-import { useToast } from '@/hooks/use-toast'
-import type { VariantGroup } from '@/types/variant-groups'
+import { useState, useEffect, useMemo } from 'react';
+import { X, Search, Plus, Check, Package } from 'lucide-react';
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+} from '@/components/ui/dialog';
+import { ButtonV2 } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Badge } from '@/components/ui/badge';
+import { Checkbox } from '@/components/ui/checkbox';
+import { createClient } from '@/lib/supabase/client';
+import { useFamilies } from '@/hooks/use-families';
+import { useCategories } from '@/hooks/use-categories';
+import { useSubcategories } from '@/hooks/use-subcategories';
+import { useVariantGroups } from '@/hooks/use-variant-groups';
+import { useToast } from '@/hooks/use-toast';
+import type { VariantGroup } from '@/types/variant-groups';
 
 interface AddProductsToGroupModalProps {
-  isOpen: boolean
-  onClose: () => void
-  variantGroup: VariantGroup
-  onProductsAdded: () => void
+  isOpen: boolean;
+  onClose: () => void;
+  variantGroup: VariantGroup;
+  onProductsAdded: () => void;
 }
 
 interface Product {
-  id: string
-  name: string
-  sku: string
-  status: string
-  subcategory_id: string
-  image_url?: string
+  id: string;
+  name: string;
+  sku: string;
+  status: string;
+  subcategory_id: string;
+  image_url?: string;
 }
 
 export function AddProductsToGroupModal({
   isOpen,
   onClose,
   variantGroup,
-  onProductsAdded
+  onProductsAdded,
 }: AddProductsToGroupModalProps) {
-  const supabase = createClient()
-  const { toast } = useToast()
-  const { addProductsToGroup } = useVariantGroups()
+  const supabase = createClient();
+  const { toast } = useToast();
+  const { addProductsToGroup } = useVariantGroups();
 
   // États
-  const [products, setProducts] = useState<Product[]>([])
-  const [selectedProductIds, setSelectedProductIds] = useState<string[]>([])
-  const [loading, setLoading] = useState(false)
-  const [search, setSearch] = useState('')
+  const [products, setProducts] = useState<Product[]>([]);
+  const [selectedProductIds, setSelectedProductIds] = useState<string[]>([]);
+  const [loading, setLoading] = useState(false);
+  const [search, setSearch] = useState('');
   const [filters, setFilters] = useState({
     familyId: 'all',
     categoryId: 'all',
-    subcategoryId: 'all'
-  })
+    subcategoryId: 'all',
+  });
 
   // Hooks hiérarchie
-  const { families } = useFamilies()
-  const { getCategoriesByFamily } = useCategories()
-  const { getSubcategoriesByCategory } = useSubcategories()
+  const { families } = useFamilies();
+  const { getCategoriesByFamily } = useCategories();
+  const { getSubcategoriesByCategory } = useSubcategories();
 
   // Filtres calculés
   const filteredCategories = useMemo(() => {
-    if (filters.familyId === 'all') return []
-    return getCategoriesByFamily(filters.familyId)
-  }, [filters.familyId, getCategoriesByFamily])
+    if (filters.familyId === 'all') return [];
+    return getCategoriesByFamily(filters.familyId);
+  }, [filters.familyId, getCategoriesByFamily]);
 
   const filteredSubcategories = useMemo(() => {
-    if (filters.categoryId === 'all') return []
-    return []
-  }, [filters.categoryId])
+    if (filters.categoryId === 'all') return [];
+    return [];
+  }, [filters.categoryId]);
 
   // Récupérer produits disponibles
   useEffect(() => {
-    if (!isOpen) return
+    if (!isOpen) return;
 
     const fetchProducts = async () => {
-      setLoading(true)
+      setLoading(true);
       try {
         let query = supabase
           .from('products')
-          .select('id, name, sku, status, subcategory_id')
+          .select('id, name, sku, stock_status, product_status, subcategory_id')
           .is('variant_group_id', null)
-          .in('status', ['in_stock', 'preorder', 'coming_soon', 'pret_a_commander'])
+          .in('stock_status', ['in_stock', 'coming_soon'])
+          .in('product_status', ['active', 'preorder'])
           .eq('creation_mode', 'complete')
-          .order('name', { ascending: true })
+          .order('name', { ascending: true });
 
         if (filters.subcategoryId !== 'all') {
-          query = query.eq('subcategory_id', filters.subcategoryId)
+          query = query.eq('subcategory_id', filters.subcategoryId);
         }
 
         if (search) {
-          query = query.or(`name.ilike.%${search}%,sku.ilike.%${search}%`)
+          query = query.or(`name.ilike.%${search}%,sku.ilike.%${search}%`);
         }
 
-        const { data, error } = await query
+        const { data, error } = await query;
 
         if (error) {
-          console.error('Erreur fetch produits:', error)
-          return
+          console.error('Erreur fetch produits:', error);
+          return;
         }
 
         // Récupérer images
         const productsWithImages = await Promise.all(
-          (data || []).map(async (product) => {
+          (data || []).map(async product => {
             const { data: images } = await supabase
               .from('product_images')
               .select('public_url')
               .eq('product_id', product.id)
               .order('display_order', { ascending: true })
-              .limit(1)
+              .limit(1);
 
             return {
               ...product,
-              image_url: images?.[0]?.public_url
-            }
+              image_url: images?.[0]?.public_url,
+            };
           })
-        )
+        );
 
-        setProducts(productsWithImages as any)
+        setProducts(productsWithImages as any);
       } catch (err) {
-        console.error('Erreur:', err)
+        console.error('Erreur:', err);
       } finally {
-        setLoading(false)
+        setLoading(false);
       }
-    }
+    };
 
-    fetchProducts()
-  }, [isOpen, filters, search, supabase])
+    fetchProducts();
+  }, [isOpen, filters, search, supabase]);
 
   // Toggle sélection produit
   const toggleProduct = (productId: string) => {
@@ -132,58 +139,61 @@ export function AddProductsToGroupModal({
       prev.includes(productId)
         ? prev.filter(id => id !== productId)
         : [...prev, productId]
-    )
-  }
+    );
+  };
 
   // Ajouter produits au groupe en utilisant la fonction du hook
   const handleSubmit = async () => {
     if (selectedProductIds.length === 0) {
       toast({
-        title: "Aucun produit sélectionné",
-        description: "Veuillez sélectionner au moins un produit",
-        variant: "destructive"
-      })
-      return
+        title: 'Aucun produit sélectionné',
+        description: 'Veuillez sélectionner au moins un produit',
+        variant: 'destructive',
+      });
+      return;
     }
 
-    setLoading(true)
+    setLoading(true);
 
     try {
       // Utiliser la fonction du hook qui implémente TOUTE la logique métier
       const success = await addProductsToGroup({
         variant_group_id: variantGroup.id,
-        product_ids: selectedProductIds
-      })
+        product_ids: selectedProductIds,
+      });
 
       if (success) {
         toast({
-          title: "Produits ajoutés",
-          description: `${selectedProductIds.length} produit(s) ajouté(s) au groupe avec succès`
-        })
+          title: 'Produits ajoutés',
+          description: `${selectedProductIds.length} produit(s) ajouté(s) au groupe avec succès`,
+        });
 
-        onProductsAdded()
-        onClose()
+        onProductsAdded();
+        onClose();
 
         // Réinitialiser la sélection
-        setSelectedProductIds([])
+        setSelectedProductIds([]);
       }
     } catch (error: any) {
-      console.error('Erreur ajout produits:', error)
+      console.error('Erreur ajout produits:', error);
       toast({
-        title: "Erreur",
-        description: error.message || "Impossible d'ajouter les produits au groupe",
-        variant: "destructive"
-      })
+        title: 'Erreur',
+        description:
+          error.message || "Impossible d'ajouter les produits au groupe",
+        variant: 'destructive',
+      });
     } finally {
-      setLoading(false)
+      setLoading(false);
     }
-  }
+  };
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="max-w-4xl max-h-[80vh] overflow-hidden flex flex-col">
         <DialogHeader>
-          <DialogTitle className="text-xl font-light">Ajouter des produits au groupe</DialogTitle>
+          <DialogTitle className="text-xl font-light">
+            Ajouter des produits au groupe
+          </DialogTitle>
           <DialogDescription>
             Groupe: <span className="font-medium">{variantGroup.name}</span>
           </DialogDescription>
@@ -202,7 +212,7 @@ export function AddProductsToGroupModal({
               type="text"
               placeholder="Rechercher par nom ou SKU..."
               value={search}
-              onChange={(e) => setSearch(e.target.value)}
+              onChange={e => setSearch(e.target.value)}
               className="pl-10"
             />
           </div>
@@ -210,30 +220,48 @@ export function AddProductsToGroupModal({
           <div className="grid grid-cols-3 gap-2">
             <select
               value={filters.familyId}
-              onChange={(e) => setFilters({ familyId: e.target.value, categoryId: 'all', subcategoryId: 'all' })}
+              onChange={e =>
+                setFilters({
+                  familyId: e.target.value,
+                  categoryId: 'all',
+                  subcategoryId: 'all',
+                })
+              }
               className="border border-gray-300 rounded-md px-3 py-2 text-sm"
             >
               <option value="all">Toutes les familles</option>
-              {families.map((family) => (
-                <option key={family.id} value={family.id}>{family.name}</option>
+              {families.map(family => (
+                <option key={family.id} value={family.id}>
+                  {family.name}
+                </option>
               ))}
             </select>
 
             <select
               value={filters.categoryId}
-              onChange={(e) => setFilters(prev => ({ ...prev, categoryId: e.target.value, subcategoryId: 'all' }))}
+              onChange={e =>
+                setFilters(prev => ({
+                  ...prev,
+                  categoryId: e.target.value,
+                  subcategoryId: 'all',
+                }))
+              }
               disabled={filters.familyId === 'all'}
               className="border border-gray-300 rounded-md px-3 py-2 text-sm disabled:bg-gray-100"
             >
               <option value="all">Toutes les catégories</option>
-              {filteredCategories.map((category) => (
-                <option key={category.id} value={category.id}>{category.name}</option>
+              {filteredCategories.map(category => (
+                <option key={category.id} value={category.id}>
+                  {category.name}
+                </option>
               ))}
             </select>
 
             <select
               value={filters.subcategoryId}
-              onChange={(e) => setFilters(prev => ({ ...prev, subcategoryId: e.target.value }))}
+              onChange={e =>
+                setFilters(prev => ({ ...prev, subcategoryId: e.target.value }))
+              }
               disabled={filters.categoryId === 'all'}
               className="border border-gray-300 rounded-md px-3 py-2 text-sm disabled:bg-gray-100"
             >
@@ -256,13 +284,15 @@ export function AddProductsToGroupModal({
             </div>
           ) : (
             <div className="grid grid-cols-1 gap-3 p-2">
-              {products.map((product) => {
-                const isSelected = selectedProductIds.includes(product.id)
+              {products.map(product => {
+                const isSelected = selectedProductIds.includes(product.id);
                 return (
                   <div
                     key={product.id}
                     className={`border rounded-lg p-3 cursor-pointer transition-all ${
-                      isSelected ? 'border-black bg-gray-50' : 'border-gray-200 hover:border-gray-300'
+                      isSelected
+                        ? 'border-black bg-gray-50'
+                        : 'border-gray-200 hover:border-gray-300'
                     }`}
                     onClick={() => toggleProduct(product.id)}
                   >
@@ -282,12 +312,16 @@ export function AddProductsToGroupModal({
                       )}
 
                       <div className="flex-1 min-w-0">
-                        <h4 className="font-medium text-sm truncate">{product.name}</h4>
-                        <p className="text-xs text-gray-600 mt-1">SKU: {product.sku}</p>
+                        <h4 className="font-medium text-sm truncate">
+                          {product.name}
+                        </h4>
+                        <p className="text-xs text-gray-600 mt-1">
+                          SKU: {product.sku}
+                        </p>
                       </div>
                     </div>
                   </div>
-                )
+                );
               })}
             </div>
           )}
@@ -296,7 +330,9 @@ export function AddProductsToGroupModal({
         {/* Footer */}
         <div className="border-t pt-4 flex items-center justify-between">
           <div className="text-sm text-gray-600">
-            {selectedProductIds.length} produit{selectedProductIds.length !== 1 ? 's' : ''} sélectionné{selectedProductIds.length !== 1 ? 's' : ''}
+            {selectedProductIds.length} produit
+            {selectedProductIds.length !== 1 ? 's' : ''} sélectionné
+            {selectedProductIds.length !== 1 ? 's' : ''}
           </div>
           <div className="flex space-x-2">
             <ButtonV2 variant="outline" onClick={onClose}>
@@ -315,7 +351,9 @@ export function AddProductsToGroupModal({
               ) : (
                 <>
                   <Plus className="h-4 w-4 mr-2" />
-                  Ajouter {selectedProductIds.length > 0 && `(${selectedProductIds.length})`}
+                  Ajouter{' '}
+                  {selectedProductIds.length > 0 &&
+                    `(${selectedProductIds.length})`}
                 </>
               )}
             </ButtonV2>
@@ -323,5 +361,5 @@ export function AddProductsToGroupModal({
         </div>
       </DialogContent>
     </Dialog>
-  )
+  );
 }

@@ -13,17 +13,26 @@ SECURITY DEFINER
 AS $$
 DECLARE
   v_supplier_id uuid;
+  v_product_status text;
   v_alert_type TEXT;
   v_alert_priority INTEGER;
   v_shortage INTEGER;
 BEGIN
-  -- Récupérer supplier_id du produit
-  SELECT supplier_id INTO v_supplier_id
+  -- Récupérer supplier_id + product_status du produit
+  SELECT supplier_id, product_status
+  INTO v_supplier_id, v_product_status
   FROM products
   WHERE id = NEW.id;
 
   -- Si pas de fournisseur, ignorer
   IF v_supplier_id IS NULL THEN
+    RETURN NEW;
+  END IF;
+
+  -- ✅ FILTRAGE PAR product_status : Alertes UNIQUEMENT pour produits actifs
+  -- Si produit n'est PAS 'active' (preorder/discontinued/draft) → Supprimer alerte
+  IF v_product_status IS DISTINCT FROM 'active' THEN
+    DELETE FROM stock_alert_tracking WHERE product_id = NEW.id;
     RETURN NEW;
   END IF;
 
@@ -85,14 +94,15 @@ END;
 $$;
 
 CREATE TRIGGER trigger_sync_stock_alert_tracking
-  AFTER INSERT OR UPDATE OF stock_real, stock_forecasted_out, min_stock
+  AFTER INSERT OR UPDATE OF stock_real, stock_forecasted_out, min_stock, product_status
   ON products
   FOR EACH ROW
   EXECUTE FUNCTION sync_stock_alert_tracking();
 
 COMMENT ON FUNCTION sync_stock_alert_tracking() IS
 'Trigger 1: Maintient stock_alert_tracking synchronisé avec products.
-Déclenché sur INSERT/UPDATE de stock_real, stock_forecasted_out, min_stock.
+Déclenché sur INSERT/UPDATE de stock_real, stock_forecasted_out, min_stock, product_status.
+Filtre UNIQUEMENT produits avec product_status = ''active''.
 Calcule automatiquement type alerte et priorité selon règles métier.';
 
 -- =============================================

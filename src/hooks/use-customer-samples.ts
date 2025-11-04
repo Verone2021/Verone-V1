@@ -15,77 +15,82 @@
  * - Réinsertion cherche PO draft existant ou crée nouveau
  */
 
-'use client'
+'use client';
 
-import { useState, useEffect } from 'react'
-import { createClient } from '@/lib/supabase/client'
-import { toast } from 'react-hot-toast'
+import { useState, useEffect } from 'react';
+import { createClient } from '@/lib/supabase/client';
+import { toast } from 'react-hot-toast';
 
 // =====================================================================
 // TYPES
 // =====================================================================
 
-export type SampleType = 'internal' | 'customer'
-export type SampleStatus = 'draft' | 'ordered' | 'received' | 'archived' | 'unknown'
+export type SampleType = 'internal' | 'customer';
+export type SampleStatus =
+  | 'draft'
+  | 'ordered'
+  | 'received'
+  | 'archived'
+  | 'unknown';
 
 export interface CustomerSample {
   // IDs
-  sample_id: string
-  purchase_order_id: string
-  product_id: string
+  sample_id: string;
+  purchase_order_id: string;
+  product_id: string;
 
   // Sample info
-  sample_type: SampleType
-  quantity: number
-  unit_price_ht: number
-  sample_notes: string | null
-  archived_at: string | null
-  sample_created_at: string
-  sample_updated_at: string
+  sample_type: SampleType;
+  quantity: number;
+  unit_price_ht: number;
+  sample_notes: string | null;
+  archived_at: string | null;
+  sample_created_at: string;
+  sample_updated_at: string;
 
   // Status dérivé
-  sample_status: SampleStatus
+  sample_status: SampleStatus;
 
   // Product
-  product_sku: string
-  product_name: string
-  product_description: string | null
-  product_image: string | null
+  product_sku: string;
+  product_name: string;
+  product_description: string | null;
+  product_image: string | null;
 
   // Purchase Order
-  po_number: string
-  po_status: string
-  supplier_id: string
-  expected_delivery_date: string | null
-  po_created_at: string
+  po_number: string;
+  po_status: string;
+  supplier_id: string;
+  expected_delivery_date: string | null;
+  po_created_at: string;
 
   // Supplier
-  supplier_name: string
-  supplier_trade_name: string | null
+  supplier_name: string;
+  supplier_trade_name: string | null;
 
   // Customer (B2B)
-  customer_org_id: string | null
-  customer_org_legal_name: string | null
-  customer_org_trade_name: string | null
+  customer_org_id: string | null;
+  customer_org_legal_name: string | null;
+  customer_org_trade_name: string | null;
 
   // Customer (B2C)
-  customer_ind_id: string | null
-  customer_ind_first_name: string | null
-  customer_ind_last_name: string | null
-  customer_ind_email: string | null
+  customer_ind_id: string | null;
+  customer_ind_first_name: string | null;
+  customer_ind_last_name: string | null;
+  customer_ind_email: string | null;
 
   // Helpers
-  customer_display_name: string
-  customer_type: 'B2B' | 'B2C' | null
+  customer_display_name: string;
+  customer_type: 'B2B' | 'B2C' | null;
 }
 
 export interface SampleFilters {
-  sample_type?: SampleType
-  archived?: boolean
-  customer_org_id?: string
-  customer_ind_id?: string
-  supplier_id?: string
-  po_status?: string
+  sample_type?: SampleType;
+  archived?: boolean;
+  customer_org_id?: string;
+  customer_ind_id?: string;
+  supplier_id?: string;
+  po_status?: string;
 }
 
 // =====================================================================
@@ -93,11 +98,11 @@ export interface SampleFilters {
 // =====================================================================
 
 export function useCustomerSamples(filters?: SampleFilters) {
-  const [samples, setSamples] = useState<CustomerSample[]>([])
-  const [loading, setLoading] = useState(true)
-  const [error, setError] = useState<string | null>(null)
+  const [samples, setSamples] = useState<CustomerSample[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
-  const supabase = createClient()
+  const supabase = createClient();
 
   // ===================================================================
   // FETCH SAMPLES (via View customer_samples_view)
@@ -105,63 +110,63 @@ export function useCustomerSamples(filters?: SampleFilters) {
 
   const fetchSamples = async () => {
     try {
-      setLoading(true)
-      setError(null)
+      setLoading(true);
+      setError(null);
 
       // @ts-ignore - View customer_samples_view not yet in generated types
       let query = supabase
         // @ts-ignore - View customer_samples_view type missing
         .from('customer_samples_view')
         .select('*')
-        .order('sample_created_at', { ascending: false })
+        .order('sample_created_at', { ascending: false });
 
       // Appliquer filtres
       if (filters?.sample_type) {
-        query = query.eq('sample_type', filters.sample_type)
+        query = query.eq('sample_type', filters.sample_type);
       }
 
       if (filters?.archived !== undefined) {
         if (filters.archived) {
-          query = query.not('archived_at', 'is', null)
+          query = query.not('archived_at', 'is', null);
         } else {
-          query = query.is('archived_at', null)
+          query = query.is('archived_at', null);
         }
       }
 
       if (filters?.customer_org_id) {
-        query = query.eq('customer_org_id', filters.customer_org_id)
+        query = query.eq('customer_org_id', filters.customer_org_id);
       }
 
       if (filters?.customer_ind_id) {
-        query = query.eq('customer_ind_id', filters.customer_ind_id)
+        query = query.eq('customer_ind_id', filters.customer_ind_id);
       }
 
       if (filters?.supplier_id) {
-        query = query.eq('supplier_id', filters.supplier_id)
+        query = query.eq('supplier_id', filters.supplier_id);
       }
 
       if (filters?.po_status) {
-        query = query.eq('po_status', filters.po_status)
+        query = query.eq('po_status', filters.po_status as any);
       }
 
-      const { data, error: fetchError } = await query
+      const { data, error: fetchError } = await query;
 
-      if (fetchError) throw fetchError
+      if (fetchError) throw fetchError;
 
-      setSamples((data as any) || [])
+      setSamples((data as any) || []);
     } catch (err: any) {
-      console.error('Error fetching samples:', err)
-      setError(err.message || 'Erreur chargement échantillons')
-      toast.error(err.message || 'Erreur chargement')
+      console.error('Error fetching samples:', err);
+      setError(err.message || 'Erreur chargement échantillons');
+      toast.error(err.message || 'Erreur chargement');
     } finally {
-      setLoading(false)
+      setLoading(false);
     }
-  }
+  };
 
   // Auto-fetch au mount et quand filtres changent
   useEffect(() => {
-    fetchSamples()
-  }, [JSON.stringify(filters)])
+    fetchSamples();
+  }, [JSON.stringify(filters)]);
 
   // ===================================================================
   // ARCHIVE SAMPLE (retire du PO si draft)
@@ -174,26 +179,28 @@ export function useCustomerSamples(filters?: SampleFilters) {
         .from('purchase_order_items')
         // @ts-ignore - archived_at column not yet in generated types
         .update({ archived_at: new Date().toISOString() })
-        .eq('id', sampleId)
+        .eq('id', sampleId);
 
       if (updateError) {
         // Si trigger bloque (PO déjà envoyée), message explicatif
         if (updateError.message.includes('déjà validée')) {
-          toast.error('Impossible d\'archiver : commande déjà envoyée au fournisseur')
+          toast.error(
+            "Impossible d'archiver : commande déjà envoyée au fournisseur"
+          );
         } else {
-          throw updateError
+          throw updateError;
         }
-        return
+        return;
       }
 
-      toast.success('Échantillon archivé avec succès')
-      await fetchSamples() // Refresh liste
+      toast.success('Échantillon archivé avec succès');
+      await fetchSamples(); // Refresh liste
     } catch (err: any) {
-      console.error('Error archiving sample:', err)
-      toast.error(err.message || 'Erreur archivage échantillon')
-      throw err
+      console.error('Error archiving sample:', err);
+      toast.error(err.message || 'Erreur archivage échantillon');
+      throw err;
     }
-  }
+  };
 
   // ===================================================================
   // REACTIVATE SAMPLE (archived_at → NULL)
@@ -205,18 +212,18 @@ export function useCustomerSamples(filters?: SampleFilters) {
         .from('purchase_order_items')
         // @ts-ignore - archived_at column not yet in generated types
         .update({ archived_at: null })
-        .eq('id', sampleId)
+        .eq('id', sampleId);
 
-      if (updateError) throw updateError
+      if (updateError) throw updateError;
 
-      toast.success('Échantillon réactivé avec succès')
-      await fetchSamples()
+      toast.success('Échantillon réactivé avec succès');
+      await fetchSamples();
     } catch (err: any) {
-      console.error('Error reactivating sample:', err)
-      toast.error(err.message || 'Erreur réactivation échantillon')
-      throw err
+      console.error('Error reactivating sample:', err);
+      toast.error(err.message || 'Erreur réactivation échantillon');
+      throw err;
     }
-  }
+  };
 
   // ===================================================================
   // INSERT SAMPLE IN PO (regroupement ou création)
@@ -227,7 +234,8 @@ export function useCustomerSamples(filters?: SampleFilters) {
       // 1. Récupérer infos échantillon
       const { data: sampleData, error: sampleError } = await supabase
         .from('purchase_order_items')
-        .select(`
+        .select(
+          `
           product_id,
           quantity,
           unit_price_ht,
@@ -236,14 +244,15 @@ export function useCustomerSamples(filters?: SampleFilters) {
           customer_organisation_id,
           customer_individual_id,
           purchase_orders!inner(supplier_id)
-        `)
+        `
+        )
         .eq('id', sampleId)
-        .single()
+        .single();
 
-      if (sampleError) throw sampleError
+      if (sampleError) throw sampleError;
 
       // @ts-ignore - Nested relation type inference
-      const supplierId = (sampleData.purchase_orders as any).supplier_id
+      const supplierId = (sampleData.purchase_orders as any).supplier_id;
 
       // 2. Chercher PO draft existant pour ce fournisseur
       const { data: existingPO, error: poError } = await supabase
@@ -253,16 +262,16 @@ export function useCustomerSamples(filters?: SampleFilters) {
         .eq('status', 'draft')
         .order('created_at', { ascending: false })
         .limit(1)
-        .maybeSingle()
+        .maybeSingle();
 
-      if (poError) throw poError
+      if (poError) throw poError;
 
-      let targetPOId: string
+      let targetPOId: string;
 
       if (existingPO) {
         // PO draft existant trouvé
-        targetPOId = existingPO.id
-        toast.success('Ajout à la commande brouillon existante')
+        targetPOId = existingPO.id;
+        toast.success('Ajout à la commande brouillon existante');
       } else {
         // Créer nouveau PO draft
         const { data: newPO, error: createPOError } = await supabase
@@ -272,15 +281,15 @@ export function useCustomerSamples(filters?: SampleFilters) {
             supplier_id: supplierId,
             status: 'draft',
             total_ht: 0,
-            total_ttc: 0
+            total_ttc: 0,
           })
           .select('id')
-          .single()
+          .single();
 
-        if (createPOError) throw createPOError
+        if (createPOError) throw createPOError;
 
-        targetPOId = newPO.id
-        toast.success('Nouvelle commande brouillon créée')
+        targetPOId = newPO.id;
+        toast.success('Nouvelle commande brouillon créée');
       }
 
       // 3. Mettre à jour l'échantillon avec le nouveau PO
@@ -289,22 +298,22 @@ export function useCustomerSamples(filters?: SampleFilters) {
         .from('purchase_order_items')
         .update({
           purchase_order_id: targetPOId,
-          archived_at: null // S'assurer qu'il n'est plus archivé
+          archived_at: null, // S'assurer qu'il n'est plus archivé
         })
-        .eq('id', sampleId)
+        .eq('id', sampleId);
 
-      if (updateError) throw updateError
+      if (updateError) throw updateError;
 
       // 4. Recalculer totaux PO (trigger handle_purchase_order_forecast s'en charge)
 
-      toast.success('Échantillon inséré dans la commande')
-      await fetchSamples()
+      toast.success('Échantillon inséré dans la commande');
+      await fetchSamples();
     } catch (err: any) {
-      console.error('Error inserting sample in PO:', err)
-      toast.error(err.message || 'Erreur insertion échantillon')
-      throw err
+      console.error('Error inserting sample in PO:', err);
+      toast.error(err.message || 'Erreur insertion échantillon');
+      throw err;
     }
-  }
+  };
 
   // ===================================================================
   // DELETE SAMPLE (suppression définitive)
@@ -315,28 +324,28 @@ export function useCustomerSamples(filters?: SampleFilters) {
       const { error: deleteError } = await supabase
         .from('purchase_order_items')
         .delete()
-        .eq('id', sampleId)
+        .eq('id', sampleId);
 
-      if (deleteError) throw deleteError
+      if (deleteError) throw deleteError;
 
-      toast.success('Échantillon supprimé définitivement')
-      await fetchSamples()
+      toast.success('Échantillon supprimé définitivement');
+      await fetchSamples();
     } catch (err: any) {
-      console.error('Error deleting sample:', err)
-      toast.error(err.message || 'Erreur suppression échantillon')
-      throw err
+      console.error('Error deleting sample:', err);
+      toast.error(err.message || 'Erreur suppression échantillon');
+      throw err;
     }
-  }
+  };
 
   // ===================================================================
   // STATS
   // ===================================================================
 
   const getStats = () => {
-    const actives = samples.filter(s => !s.archived_at)
-    const archives = samples.filter(s => s.archived_at)
-    const internal = samples.filter(s => s.sample_type === 'internal')
-    const customer = samples.filter(s => s.sample_type === 'customer')
+    const actives = samples.filter(s => !s.archived_at);
+    const archives = samples.filter(s => s.archived_at);
+    const internal = samples.filter(s => s.sample_type === 'internal');
+    const customer = samples.filter(s => s.sample_type === 'customer');
 
     return {
       total: samples.length,
@@ -344,12 +353,15 @@ export function useCustomerSamples(filters?: SampleFilters) {
       archived: archives.length,
       internal: internal.length,
       customer: customer.length,
-      by_status: samples.reduce((acc, s) => {
-        acc[s.sample_status] = (acc[s.sample_status] || 0) + 1
-        return acc
-      }, {} as Record<string, number>)
-    }
-  }
+      by_status: samples.reduce(
+        (acc, s) => {
+          acc[s.sample_status] = (acc[s.sample_status] || 0) + 1;
+          return acc;
+        },
+        {} as Record<string, number>
+      ),
+    };
+  };
 
   return {
     // Data
@@ -363,6 +375,6 @@ export function useCustomerSamples(filters?: SampleFilters) {
     archiveSample,
     reactivateSample,
     insertSampleInPO,
-    deleteSample
-  }
+    deleteSample,
+  };
 }

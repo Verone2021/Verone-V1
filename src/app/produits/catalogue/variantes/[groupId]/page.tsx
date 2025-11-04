@@ -31,7 +31,7 @@ import { useVariantGroups } from '@/hooks/use-variant-groups';
 import { useToast } from '@/hooks/use-toast';
 import Image from 'next/image';
 import { VariantGroupEditModal } from '@/components/business/variant-group-edit-modal';
-import { AddProductsToGroupModal } from '@/components/forms/AddProductsToGroupModal';
+import { AddProductsToGroupModal } from '@/components/forms/add-products-to-group-modal';
 import { CreateProductInGroupModal } from '@/components/forms/create-product-in-group-modal';
 import { EditProductVariantModal } from '@/components/business/edit-product-variant-modal';
 import type { VariantProduct } from '@/types/variant-groups';

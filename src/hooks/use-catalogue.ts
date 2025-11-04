@@ -30,7 +30,8 @@ interface Product {
   slug: string;
   cost_price: number; // Prix en centimes
   tax_rate: number;
-  status: 'in_stock' | 'out_of_stock' | 'preorder' | 'coming_soon' | 'discontinued';
+  stock_status: 'in_stock' | 'out_of_stock' | 'coming_soon';
+  product_status: 'active' | 'preorder' | 'discontinued' | 'draft';
   condition: 'new' | 'refurbished' | 'used';
   variant_attributes: Record<string, any>;
   dimensions?: Record<string, any>;
@@ -56,11 +57,11 @@ interface Product {
     id: string;
     name: string;
   };
-  
+
   // ✅ STOCK - Propriétés manquantes alignées avec DB
-  stock_real?: number;        // Stock réel physique
-  min_stock?: number;         // Stock minimum
-  stock_quantity?: number;    // Stock quantity (legacy)
+  stock_real?: number; // Stock réel physique
+  min_stock?: number; // Stock minimum
+  stock_quantity?: number; // Stock quantity (legacy)
   stock_forecasted_in?: number;
   stock_forecasted_out?: number;
 }
@@ -110,7 +111,7 @@ export const useCatalogue = () => {
     categories: [],
     loading: true,
     error: null,
-    total: 0
+    total: 0,
   });
 
   const supabase = useMemo(() => createClient(), []);
@@ -126,12 +127,14 @@ export const useCatalogue = () => {
       // Chargement parallèle pour optimiser performance
       const [categoriesResult, productsResult] = await Promise.all([
         loadCategories(),
-        loadProducts(filters)
+        loadProducts(filters),
       ]);
 
       const loadTime = performance.now() - startTime;
       if (loadTime > 2000) {
-        console.warn(`⚠️ SLO dashboard dépassé: ${Math.round(loadTime)}ms > 2000ms`);
+        console.warn(
+          `⚠️ SLO dashboard dépassé: ${Math.round(loadTime)}ms > 2000ms`
+        );
       }
 
       setState(prev => ({
@@ -139,18 +142,17 @@ export const useCatalogue = () => {
         categories: categoriesResult,
         products: productsResult.products as any,
         total: productsResult.total,
-        loading: false
+        loading: false,
       }));
-
     } catch (error) {
       console.error('Erreur chargement catalogue:', error);
       setState(prev => ({
         ...prev,
         error: error instanceof Error ? error.message : 'Erreur inconnue',
-        loading: false
+        loading: false,
       }));
     }
-  }, [filters]);  // ✅ FIX P0-2: Dependency sur filters séparé (pas de circular)
+  }, [filters]); // ✅ FIX P0-2: Dependency sur filters séparé (pas de circular)
 
   // ✅ FIX P0-2: useEffect trigger sur filters change
   useEffect(() => {
@@ -170,11 +172,9 @@ export const useCatalogue = () => {
   };
 
   const loadProducts = async (filters: CatalogueFilters = {}) => {
-    let query = supabase
-      .from('products')
-      .select(`
+    let query = supabase.from('products').select(`
         id, sku, name, slug,
-        status, condition,
+        stock_status, product_status, condition,
         subcategory_id, supplier_id, brand,
         archived_at, created_at, updated_at,
         supplier:organisations!supplier_id(id, legal_name, trade_name),
@@ -187,11 +187,13 @@ export const useCatalogue = () => {
 
     // Filtres selon business rules
     if (filters.search) {
-      query = query.or(`name.ilike.%${filters.search}%,sku.ilike.%${filters.search}%`);
+      query = query.or(
+        `name.ilike.%${filters.search}%,sku.ilike.%${filters.search}%`
+      );
     }
 
     if (filters.statuses && filters.statuses.length > 0) {
-      query = query.in('status', filters.statuses as any);
+      query = query.in('product_status', filters.statuses as any);
     }
 
     if (filters.subcategories && filters.subcategories.length > 0) {
@@ -213,23 +215,23 @@ export const useCatalogue = () => {
     // ✅ BR-TECH-002: Enrichir avec primary_image_url depuis product_images
     const enrichedProducts = (data || []).map(product => ({
       ...product,
-      primary_image_url: product.product_images?.find((img: any) => img.is_primary)?.public_url ||
-                         product.product_images?.[0]?.public_url ||
-                         null
+      primary_image_url:
+        product.product_images?.find((img: any) => img.is_primary)
+          ?.public_url ||
+        product.product_images?.[0]?.public_url ||
+        null,
     }));
 
     return {
       products: enrichedProducts,
-      total: enrichedProducts.length // Utiliser length au lieu de count exact
+      total: enrichedProducts.length, // Utiliser length au lieu de count exact
     };
-  };;;
-  
+  };
+
   const loadArchivedProducts = async (filters: CatalogueFilters = {}) => {
-    let query = supabase
-      .from('products')
-      .select(`
+    let query = supabase.from('products').select(`
         id, sku, name, slug,
-        status, condition,
+        stock_status, product_status, condition,
         subcategory_id, supplier_id, brand,
         archived_at, created_at, updated_at,
         supplier:organisations!supplier_id(id, legal_name, trade_name),
@@ -242,11 +244,13 @@ export const useCatalogue = () => {
 
     // Filtres selon business rules
     if (filters.search) {
-      query = query.or(`name.ilike.%${filters.search}%,sku.ilike.%${filters.search}%`);
+      query = query.or(
+        `name.ilike.%${filters.search}%,sku.ilike.%${filters.search}%`
+      );
     }
 
     if (filters.statuses && filters.statuses.length > 0) {
-      query = query.in('status', filters.statuses as any);
+      query = query.in('product_status', filters.statuses as any);
     }
 
     if (filters.subcategories && filters.subcategories.length > 0) {
@@ -268,14 +272,16 @@ export const useCatalogue = () => {
     // ✅ BR-TECH-002: Enrichir avec primary_image_url depuis product_images
     const enrichedProducts = (data || []).map(product => ({
       ...product,
-      primary_image_url: product.product_images?.find((img: any) => img.is_primary)?.public_url ||
-                         product.product_images?.[0]?.public_url ||
-                         null
+      primary_image_url:
+        product.product_images?.find((img: any) => img.is_primary)
+          ?.public_url ||
+        product.product_images?.[0]?.public_url ||
+        null,
     }));
 
     return {
       products: enrichedProducts,
-      total: enrichedProducts.length
+      total: enrichedProducts.length,
     };
   };
 
@@ -293,7 +299,6 @@ export const useCatalogue = () => {
       // Rafraîchir la liste
       loadCatalogueData();
       return data;
-
     } catch (error) {
       console.error('Erreur création produit:', error);
       throw error;
@@ -316,11 +321,10 @@ export const useCatalogue = () => {
         ...prev,
         products: prev.products.map(p =>
           p.id === id ? { ...p, ...updates } : p
-        )
+        ),
       }));
 
       return data;
-
     } catch (error) {
       console.error('Erreur mise à jour produit:', error);
       throw error;
@@ -333,7 +337,7 @@ export const useCatalogue = () => {
         .from('products')
         .update({
           status: 'discontinued',
-          archived_at: new Date().toISOString()
+          archived_at: new Date().toISOString(),
         })
         .eq('id', id);
 
@@ -343,11 +347,10 @@ export const useCatalogue = () => {
       setState(prev => ({
         ...prev,
         products: prev.products.filter(p => p.id !== id),
-        total: prev.total - 1
+        total: prev.total - 1,
       }));
 
       return true;
-
     } catch (error) {
       console.error('❌ Erreur archivage produit:', error);
       throw error;
@@ -359,7 +362,7 @@ export const useCatalogue = () => {
       const { error } = await supabase
         .from('products')
         .update({
-          archived_at: null
+          archived_at: null,
         })
         .eq('id', id);
 
@@ -369,7 +372,6 @@ export const useCatalogue = () => {
       await loadCatalogueData();
 
       return true;
-
     } catch (error) {
       console.error('Erreur restauration produit:', error);
       throw error;
@@ -388,7 +390,7 @@ export const useCatalogue = () => {
           message: error.message,
           details: error.details,
           hint: error.hint,
-          code: error.code
+          code: error.code,
         });
         throw error;
       }
@@ -397,12 +399,11 @@ export const useCatalogue = () => {
       setState(prev => ({
         ...prev,
         products: prev.products.filter(p => p.id !== id),
-        total: prev.total - 1
+        total: prev.total - 1,
       }));
 
       console.log('✅ Produit supprimé avec succès:', id);
       return true;
-
     } catch (error) {
       console.error('❌ Erreur suppression produit:', error);
       // Log plus détaillé de l'erreur
@@ -445,18 +446,31 @@ export const useCatalogue = () => {
     getProductsBySubcategory: (subcategoryId: string) =>
       state.products.filter(p => p.subcategory_id === subcategoryId),
 
-    getCategoryById: (id: string) =>
-      state.categories.find(c => c.id === id),
+    getCategoryById: (id: string) => state.categories.find(c => c.id === id),
 
     // ✅ FIX 3.3: Stats utiles - MÉMORISÉES pour éviter recalcul à chaque render
-    stats: useMemo(() => ({
-      totalProducts: state.products.length,
-      inStock: state.products.filter(p => p.status === 'in_stock').length,
-      outOfStock: state.products.filter(p => p.status === 'out_of_stock').length,
-      preorder: state.products.filter(p => p.status === 'preorder').length,
-      comingSoon: state.products.filter(p => p.status === 'coming_soon').length
-    }), [state.products])  // ✅ Recalculer seulement quand products change
+    stats: useMemo(
+      () => ({
+        totalProducts: state.products.length,
+        inStock: state.products.filter(p => p.stock_status === 'in_stock')
+          .length,
+        outOfStock: state.products.filter(
+          p => p.stock_status === 'out_of_stock'
+        ).length,
+        preorder: state.products.filter(p => p.product_status === 'preorder')
+          .length,
+        comingSoon: state.products.filter(p => p.stock_status === 'coming_soon')
+          .length,
+      }),
+      [state.products]
+    ), // ✅ Recalculer seulement quand products change
   };
-};;
+};
 
-export type { Product, ProductGroup, Category, CatalogueFilters, CatalogueState };
+export type {
+  Product,
+  ProductGroup,
+  Category,
+  CatalogueFilters,
+  CatalogueState,
+};

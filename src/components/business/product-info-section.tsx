@@ -1,50 +1,58 @@
-"use client"
+'use client';
 
-import * as React from "react"
-import { Badge } from "@/components/ui/badge"
-import { Label } from "@/components/ui/label"
-import { ButtonV2 } from "@/components/ui/button"
-import { Edit2, Check, X } from "lucide-react"
-import { cn } from "@/lib/utils"
-import { formatStatusForDisplay, type ProductStatus } from "@/lib/product-status-utils"
+import * as React from 'react';
+import { Badge } from '@/components/ui/badge';
+import { Label } from '@/components/ui/label';
+import { ButtonV2 } from '@/components/ui/button';
+import { Edit2, Check, X } from 'lucide-react';
+import { cn } from '@/lib/utils';
+import {
+  formatStatusForDisplay,
+  type ProductStatus,
+} from '@/lib/product-status-utils';
 
 interface ProductInfoSectionProps {
   product: {
-    id: string
-    name: string
-    sku?: string | null
-    cost_price?: number | null
-    status?: string | null
-    supplier_id?: string | null
-    subcategory_id?: string | null
-    variant_group_id?: string | null
-  }
-  onUpdate?: (updates: Partial<ProductInfoSectionProps['product']>) => Promise<void>
-  className?: string
+    id: string;
+    name: string;
+    sku?: string | null;
+    cost_price?: number | null;
+    stock_status?: 'in_stock' | 'out_of_stock' | 'coming_soon';
+    product_status?: 'active' | 'preorder' | 'discontinued' | 'draft';
+    supplier_id?: string | null;
+    subcategory_id?: string | null;
+    variant_group_id?: string | null;
+  };
+  onUpdate?: (
+    updates: Partial<ProductInfoSectionProps['product']>
+  ) => Promise<void>;
+  className?: string;
 }
 
 // Helper: Calculer pourcentage complétude produit
-function calculateCompletion(product: ProductInfoSectionProps['product']): number {
+function calculateCompletion(
+  product: ProductInfoSectionProps['product']
+): number {
   const fields = [
     product.name,
     product.sku,
-    product.cost_price != null && product.cost_price > 0,  // Prix d'achat HT
-    product.status,
-    product.supplier_id,      // Fournisseur obligatoire
-    product.subcategory_id,   // Catégorisation obligatoire
-  ]
-  const completed = fields.filter(Boolean).length
-  return Math.round((completed / fields.length) * 100)
+    product.cost_price != null && product.cost_price > 0, // Prix d'achat HT
+    product.product_status, // Statut commercial (NOT NULL donc toujours présent)
+    product.supplier_id, // Fournisseur obligatoire
+    product.subcategory_id, // Catégorisation obligatoire
+  ];
+  const completed = fields.filter(Boolean).length;
+  return Math.round((completed / fields.length) * 100);
 }
 
 // Helper: Formater prix
 function formatPrice(price: number | null | undefined): string {
-  if (price === null || price === undefined) return "Non défini"
+  if (price === null || price === undefined) return 'Non défini';
   return new Intl.NumberFormat('fr-FR', {
     style: 'currency',
     currency: 'EUR',
     minimumFractionDigits: 2,
-  }).format(price)
+  }).format(price);
 }
 
 export function ProductInfoSection({
@@ -52,64 +60,66 @@ export function ProductInfoSection({
   onUpdate,
   className,
 }: ProductInfoSectionProps) {
-  const [isEditingName, setIsEditingName] = React.useState(false)
-  const [editedName, setEditedName] = React.useState(product.name)
-  const [isSaving, setIsSaving] = React.useState(false)
+  const [isEditingName, setIsEditingName] = React.useState(false);
+  const [editedName, setEditedName] = React.useState(product.name);
+  const [isSaving, setIsSaving] = React.useState(false);
 
-  const completion = calculateCompletion(product)
-  const price = product?.cost_price  // Prix d'achat HT
-  const isNameEditable = !product.variant_group_id // Nom non éditable si dans groupe variantes
+  const completion = calculateCompletion(product);
+  const price = product?.cost_price; // Prix d'achat HT
+  const isNameEditable = !product.variant_group_id; // Nom non éditable si dans groupe variantes
 
   const handleSaveName = async () => {
     if (!onUpdate || editedName === product.name) {
-      setIsEditingName(false)
-      return
+      setIsEditingName(false);
+      return;
     }
 
-    setIsSaving(true)
+    setIsSaving(true);
     try {
-      await onUpdate({ name: editedName })
-      setIsEditingName(false)
+      await onUpdate({ name: editedName });
+      setIsEditingName(false);
     } catch (error) {
-      console.error("Erreur sauvegarde nom:", error)
-      setEditedName(product.name) // Rollback
+      console.error('Erreur sauvegarde nom:', error);
+      setEditedName(product.name); // Rollback
     } finally {
-      setIsSaving(false)
+      setIsSaving(false);
     }
-  }
+  };
 
   const handleCancelEdit = () => {
-    setEditedName(product.name)
-    setIsEditingName(false)
-  }
+    setEditedName(product.name);
+    setIsEditingName(false);
+  };
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
-    if (e.key === "Enter") {
-      handleSaveName()
-    } else if (e.key === "Escape") {
-      handleCancelEdit()
+    if (e.key === 'Enter') {
+      handleSaveName();
+    } else if (e.key === 'Escape') {
+      handleCancelEdit();
     }
-  }
+  };
 
   return (
-    <div className={cn("space-y-3", className)}>
+    <div className={cn('space-y-3', className)}>
       {/* Row 1: Nom + SKU */}
       <div className="grid grid-cols-2 gap-3">
         <div>
-          <Label className="text-xs text-neutral-600 mb-1">Nom du produit</Label>
+          <Label className="text-xs text-neutral-600 mb-1">
+            Nom du produit
+          </Label>
           {isEditingName ? (
             <div className="flex items-center gap-1">
               <input
                 type="text"
                 value={editedName}
-                onChange={(e) => setEditedName(e.target.value)}
+                onChange={e => setEditedName(e.target.value)}
                 onKeyDown={handleKeyDown}
                 onBlur={handleSaveName}
                 autoFocus
                 className={cn(
-                  "flex-1 px-2 py-1.5 text-sm border border-primary-500 rounded-md",
-                  "focus:outline-none focus:ring-2 focus:ring-primary-500",
-                  "transition-all duration-150"
+                  'flex-1 px-2 py-1.5 text-sm border border-primary-500 rounded-md',
+                  'focus:outline-none focus:ring-2 focus:ring-primary-500',
+                  'transition-all duration-150'
                 )}
                 disabled={isSaving}
               />
@@ -135,7 +145,7 @@ export function ProductInfoSection({
           ) : (
             <div className="flex items-center gap-2">
               <p className="text-sm font-medium text-neutral-900 flex-1 truncate">
-                {product.name || "Sans nom"}
+                {product.name || 'Sans nom'}
               </p>
               {isNameEditable && onUpdate && (
                 <ButtonV2
@@ -159,7 +169,7 @@ export function ProductInfoSection({
         <div>
           <Label className="text-xs text-neutral-600 mb-1">SKU</Label>
           <p className="text-sm font-mono text-neutral-700 truncate">
-            {product.sku || "Non défini"}
+            {product.sku || 'Non défini'}
           </p>
         </div>
       </div>
@@ -167,11 +177,15 @@ export function ProductInfoSection({
       {/* Row 2: Prix + Statut */}
       <div className="grid grid-cols-2 gap-3">
         <div>
-          <Label className="text-xs text-neutral-600 mb-1">Prix d'achat HT</Label>
-          <p className={cn(
-            "text-lg font-semibold",
-            price ? "text-primary-600" : "text-neutral-400"
-          )}>
+          <Label className="text-xs text-neutral-600 mb-1">
+            Prix d'achat HT
+          </Label>
+          <p
+            className={cn(
+              'text-lg font-semibold',
+              price ? 'text-primary-600' : 'text-neutral-400'
+            )}
+          >
             {formatPrice(price)}
           </p>
         </div>
@@ -180,9 +194,12 @@ export function ProductInfoSection({
           <Label className="text-xs text-neutral-600 mb-1">Statut</Label>
           <div className="flex items-center">
             {(() => {
-              if (!product.status) return <Badge variant="secondary">Non défini</Badge>
-              const { label, variant } = formatStatusForDisplay(product.status as ProductStatus)
-              return <Badge variant={variant}>{label}</Badge>
+              if (!product.product_status)
+                return <Badge variant="secondary">Non défini</Badge>;
+              const { label, variant } = formatStatusForDisplay(
+                product.product_status as ProductStatus
+              );
+              return <Badge variant={variant}>{label}</Badge>;
             })()}
           </div>
         </div>
@@ -192,15 +209,17 @@ export function ProductInfoSection({
       <div>
         <div className="flex items-center justify-between mb-1">
           <Label className="text-xs text-neutral-600">Complétude</Label>
-          <span className="text-xs font-medium text-neutral-700">{completion}%</span>
+          <span className="text-xs font-medium text-neutral-700">
+            {completion}%
+          </span>
         </div>
         <div className="w-full bg-neutral-100 rounded-full h-2 overflow-hidden">
           <div
             className={cn(
-              "h-full transition-all duration-300 rounded-full",
-              completion >= 80 && "bg-green-500",
-              completion >= 50 && completion < 80 && "bg-orange-500",
-              completion < 50 && "bg-red-500"
+              'h-full transition-all duration-300 rounded-full',
+              completion >= 80 && 'bg-green-500',
+              completion >= 50 && completion < 80 && 'bg-orange-500',
+              completion < 50 && 'bg-red-500'
             )}
             style={{ width: `${completion}%` }}
             role="progressbar"
@@ -211,5 +230,5 @@ export function ProductInfoSection({
         </div>
       </div>
     </div>
-  )
+  );
 }

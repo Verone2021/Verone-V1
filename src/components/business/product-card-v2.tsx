@@ -1,50 +1,50 @@
-"use client"
+'use client';
 
-import { memo, useCallback, useState } from "react"
-import Image from "next/image"
-import { useRouter } from "next/navigation"
-import { Badge } from "@/components/ui/badge"
-import { ButtonV2 } from "@/components/ui/button"
-import { cn } from "@/lib/utils"
-import { Package, Archive, Trash2, ArchiveRestore, Eye } from "lucide-react"
-import { useProductImages } from "@/hooks/use-product-images"
-import type { Product } from "@/hooks/use-catalogue"
+import { memo, useCallback, useState } from 'react';
+import Image from 'next/image';
+import { useRouter } from 'next/navigation';
+import { Badge } from '@/components/ui/badge';
+import { ButtonV2 } from '@/components/ui/button';
+import { cn } from '@/lib/utils';
+import { Package, Archive, Trash2, ArchiveRestore, Eye } from 'lucide-react';
+import { useProductImages } from '@/hooks/use-product-images';
+import type { Product } from '@/hooks/use-catalogue';
 
 interface ProductCardProps {
-  product: Product
-  className?: string
-  showActions?: boolean
-  priority?: boolean
-  index?: number  // Priority dynamique LCP (6 premiers produits)
-  onClick?: (product: Product) => void
-  onArchive?: (product: Product) => void
-  onDelete?: (product: Product) => void
-  archived?: boolean
+  product: Product;
+  className?: string;
+  showActions?: boolean;
+  priority?: boolean;
+  index?: number; // Priority dynamique LCP (6 premiers produits)
+  onClick?: (product: Product) => void;
+  onArchive?: (product: Product) => void;
+  onDelete?: (product: Product) => void;
+  archived?: boolean;
 }
 
 // Configuration statuts avec couleurs Design System V2
 const statusConfig = {
   in_stock: {
-    label: "En stock",
-    className: "bg-green-600 text-white",
+    label: 'En stock',
+    className: 'bg-green-600 text-white',
   },
   out_of_stock: {
-    label: "Rupture",
-    className: "bg-red-600 text-white",
+    label: 'Rupture',
+    className: 'bg-red-600 text-white',
   },
   preorder: {
-    label: "Précommande",
-    className: "bg-blue-600 text-white",
+    label: 'Précommande',
+    className: 'bg-blue-600 text-white',
   },
   coming_soon: {
-    label: "Bientôt",
-    className: "bg-blue-600 text-white", // ✅ Bleu au lieu de noir
+    label: 'Bientôt',
+    className: 'bg-blue-600 text-white', // ✅ Bleu au lieu de noir
   },
   discontinued: {
-    label: "Arrêté",
-    className: "bg-gray-600 text-white",
-  }
-}
+    label: 'Arrêté',
+    className: 'bg-gray-600 text-white',
+  },
+};
 
 export const ProductCardV2 = memo(function ProductCardV2({
   product,
@@ -55,57 +55,66 @@ export const ProductCardV2 = memo(function ProductCardV2({
   onClick,
   onArchive,
   onDelete,
-  archived = false
+  archived = false,
 }: ProductCardProps) {
-  const router = useRouter()
-  const [isHovered, setIsHovered] = useState(false)
+  const router = useRouter();
+  const [isHovered, setIsHovered] = useState(false);
 
-  const status = statusConfig[product.status] || {
-    label: product.status || "Statut inconnu",
-    className: "bg-gray-600 text-white"
-  }
+  const status = statusConfig[product.stock_status] || {
+    label: product.stock_status || 'Statut inconnu',
+    className: 'bg-gray-600 text-white',
+  };
 
   const { primaryImage, loading: imageLoading } = useProductImages({
     productId: product.id,
-    autoFetch: true
-  })
+    autoFetch: true,
+  });
 
   const handleClick = useCallback(() => {
     if (onClick) {
-      onClick(product)
+      onClick(product);
     } else {
-      router.push(`/catalogue/${product.id}`)
+      router.push(`/catalogue/${product.id}`);
     }
-  }, [product, onClick, router])
+  }, [product, onClick, router]);
 
-  const handleDetailsClick = useCallback((e: React.MouseEvent) => {
-    e.stopPropagation()
-    router.push(`/catalogue/${product.id}`)
-  }, [product.id, router])
+  const handleDetailsClick = useCallback(
+    (e: React.MouseEvent) => {
+      e.stopPropagation();
+      router.push(`/catalogue/${product.id}`);
+    },
+    [product.id, router]
+  );
 
-  const handleArchiveClick = useCallback((e: React.MouseEvent) => {
-    e.stopPropagation()
-    if (onArchive) {
-      onArchive(product)
-    }
-  }, [product, onArchive])
+  const handleArchiveClick = useCallback(
+    (e: React.MouseEvent) => {
+      e.stopPropagation();
+      if (onArchive) {
+        onArchive(product);
+      }
+    },
+    [product, onArchive]
+  );
 
-  const handleDeleteClick = useCallback((e: React.MouseEvent) => {
-    e.stopPropagation()
-    if (onDelete) {
-      onDelete(product)
-    }
-  }, [product, onDelete])
+  const handleDeleteClick = useCallback(
+    (e: React.MouseEvent) => {
+      e.stopPropagation();
+      if (onDelete) {
+        onDelete(product);
+      }
+    },
+    [product, onDelete]
+  );
 
   return (
     <div
       className={cn(
         // Base card avec rounded corners 2025 - FOND BLANC PUR
-        "relative overflow-hidden rounded-xl border border-gray-300 bg-white",
-        "cursor-pointer transition-all duration-200 ease-out",
+        'relative overflow-hidden rounded-xl border border-gray-300 bg-white',
+        'cursor-pointer transition-all duration-200 ease-out',
         // Shadow elevation progressive ⭐ KEY FEATURE
-        !isHovered && "shadow-sm",
-        isHovered && "shadow-xl -translate-y-1",
+        !isHovered && 'shadow-sm',
+        isHovered && 'shadow-xl -translate-y-1',
         className
       )}
       onClick={handleClick}
@@ -120,10 +129,14 @@ export const ProductCardV2 = memo(function ProductCardV2({
             alt={primaryImage.alt_text || product.name}
             fill
             priority={priority || (index !== undefined && index < 6)}
-            loading={priority || (index !== undefined && index < 6) ? undefined : "lazy"}
+            loading={
+              priority || (index !== undefined && index < 6)
+                ? undefined
+                : 'lazy'
+            }
             className={cn(
-              "object-contain transition-transform duration-300",
-              isHovered && "scale-110"
+              'object-contain transition-transform duration-300',
+              isHovered && 'scale-110'
             )}
             sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 25vw"
           />
@@ -141,23 +154,33 @@ export const ProductCardV2 = memo(function ProductCardV2({
 
         {/* Badges - Optimisés 2025: text-[10px]→[9px], padding réduit */}
         <div className="absolute top-1.5 right-1.5 flex flex-col gap-1.5">
-          <Badge className={cn("text-[9px] font-medium px-1 py-0.5", status.className)}>
+          <Badge
+            className={cn(
+              'text-[9px] font-medium px-1 py-0.5',
+              status.className
+            )}
+          >
             {status.label}
           </Badge>
 
           {product.condition !== 'new' && (
-            <Badge variant="outline" className="bg-white/90 backdrop-blur-sm text-black text-[9px] px-1 py-0.5">
-              {product.condition === 'refurbished' ? 'Reconditionné' : 'Occasion'}
+            <Badge
+              variant="outline"
+              className="bg-white/90 backdrop-blur-sm text-black text-[9px] px-1 py-0.5"
+            >
+              {product.condition === 'refurbished'
+                ? 'Reconditionné'
+                : 'Occasion'}
             </Badge>
           )}
         </div>
 
         {/* Badge "nouveau" - Optimisé 2025 */}
         {(() => {
-          const createdAt = new Date(product.created_at)
-          const thirtyDaysAgo = new Date()
-          thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30)
-          return createdAt > thirtyDaysAgo
+          const createdAt = new Date(product.created_at);
+          const thirtyDaysAgo = new Date();
+          thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+          return createdAt > thirtyDaysAgo;
         })() && (
           <div className="absolute top-1.5 left-1.5">
             <Badge className="bg-green-500 text-white text-[9px] font-medium px-1 py-0.5">
@@ -184,10 +207,14 @@ export const ProductCardV2 = memo(function ProductCardV2({
           {product.stock_quantity !== undefined && (
             <div className="flex items-center gap-2">
               <span className="text-[10px] text-gray-600">Stock:</span>
-              <span className={cn(
-                "text-xs font-semibold",
-                product.stock_quantity > 10 ? "text-green-600" : "text-orange-600"
-              )}>
+              <span
+                className={cn(
+                  'text-xs font-semibold',
+                  product.stock_quantity > 10
+                    ? 'text-green-600'
+                    : 'text-orange-600'
+                )}
+              >
                 {product.stock_quantity}
               </span>
             </div>
@@ -195,10 +222,14 @@ export const ProductCardV2 = memo(function ProductCardV2({
 
           {product.cost_price && (
             <div className="space-y-0.5">
-              <span className="text-[10px] text-gray-600">Prix d'achat indicatif</span>
+              <span className="text-[10px] text-gray-600">
+                Prix d'achat indicatif
+              </span>
               <div className="text-lg font-bold text-gray-900">
                 {product.cost_price.toFixed(2)} €
-                <span className="text-xs font-normal text-gray-500 ml-1">HT</span>
+                <span className="text-xs font-normal text-gray-500 ml-1">
+                  HT
+                </span>
               </div>
             </div>
           )}
@@ -226,9 +257,15 @@ export const ProductCardV2 = memo(function ProductCardV2({
                 onClick={handleArchiveClick}
                 className="w-7 h-7 p-0 flex items-center justify-center border-orange-500 text-orange-600 hover:border-orange-600 hover:bg-orange-50"
                 style={{ padding: 0 }}
-                aria-label={archived ? "Restaurer le produit" : "Archiver le produit"}
+                aria-label={
+                  archived ? 'Restaurer le produit' : 'Archiver le produit'
+                }
               >
-                {archived ? <ArchiveRestore className="h-4 w-4" /> : <Archive className="h-4 w-4" />}
+                {archived ? (
+                  <ArchiveRestore className="h-4 w-4" />
+                ) : (
+                  <Archive className="h-4 w-4" />
+                )}
               </ButtonV2>
             )}
 
@@ -252,11 +289,11 @@ export const ProductCardV2 = memo(function ProductCardV2({
       {/* Hover overlay subtil */}
       <div
         className={cn(
-          "absolute inset-0 bg-gradient-to-t from-black/5 to-transparent pointer-events-none",
-          "transition-opacity duration-200",
-          isHovered ? "opacity-100" : "opacity-0"
+          'absolute inset-0 bg-gradient-to-t from-black/5 to-transparent pointer-events-none',
+          'transition-opacity duration-200',
+          isHovered ? 'opacity-100' : 'opacity-0'
         )}
       />
     </div>
-  )
-})
+  );
+});

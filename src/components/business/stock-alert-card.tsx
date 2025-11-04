@@ -1,66 +1,78 @@
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
-import { ButtonV2 } from '@/components/ui/button'
-import { Badge } from '@/components/ui/badge'
-import { AlertTriangle, XCircle, Package, ExternalLink } from 'lucide-react'
-import Link from 'next/link'
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { ButtonV2 } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
+import { AlertTriangle, XCircle, Package, ExternalLink } from 'lucide-react';
+import Link from 'next/link';
 
 // Type définition pour StockAlert
 export interface StockAlert {
-  id: string
-  product_id: string
-  product_name: string
-  sku: string
-  stock_real: number
-  stock_forecasted_out: number
-  min_stock: number
-  alert_type: 'low_stock' | 'out_of_stock' | 'no_stock_but_ordered'
-  severity: 'info' | 'warning' | 'critical'
+  id: string;
+  product_id: string;
+  product_name: string;
+  sku: string;
+  stock_real: number;
+  stock_forecasted_out: number;
+  min_stock: number;
+  alert_type: 'low_stock' | 'out_of_stock' | 'no_stock_but_ordered';
+  severity: 'info' | 'warning' | 'critical';
+
+  // Tracking commandes brouillon
+  is_in_draft: boolean;
+  quantity_in_draft: number | null;
+  draft_order_number: string | null;
+
   related_orders?: Array<{
-    order_number: string
-    quantity: number
-  }>
+    order_number: string;
+    quantity: number;
+  }>;
 }
 
 interface StockAlertCardProps {
-  alert: StockAlert
-  onActionClick?: (alert: StockAlert) => void
+  alert: StockAlert;
+  onActionClick?: (alert: StockAlert) => void;
 }
 
 export function StockAlertCard({ alert, onActionClick }: StockAlertCardProps) {
   const getSeverityIcon = () => {
     switch (alert.severity) {
       case 'critical':
-        return <XCircle className="h-5 w-5 text-red-600" />
+        return <XCircle className="h-5 w-5 text-red-600" />;
       case 'warning':
-        return <AlertTriangle className="h-5 w-5 text-orange-600" />
+        return <AlertTriangle className="h-5 w-5 text-orange-600" />;
       default:
-        return <Package className="h-5 w-5 text-blue-600" />
+        return <Package className="h-5 w-5 text-blue-600" />;
     }
-  }
+  };
 
   const getSeverityColor = () => {
+    // Si produit dans brouillon → VERT
+    if (alert.is_in_draft) {
+      return 'border-green-600 bg-green-50';
+    }
+
+    // Sinon couleurs selon sévérité
     switch (alert.severity) {
       case 'critical':
-        return 'border-red-600 bg-red-50'
+        return 'border-red-600 bg-red-50';
       case 'warning':
-        return 'border-orange-600 bg-orange-50'
+        return 'border-orange-600 bg-orange-50';
       default:
-        return 'border-blue-600 bg-blue-50'
+        return 'border-blue-600 bg-blue-50';
     }
-  }
+  };
 
   const getAlertTypeLabel = () => {
     switch (alert.alert_type) {
       case 'low_stock':
-        return 'Stock Faible'
+        return 'Stock Faible';
       case 'out_of_stock':
-        return 'Rupture de Stock'
+        return 'Rupture de Stock';
       case 'no_stock_but_ordered':
-        return 'Commandé Sans Stock'
+        return 'Commandé Sans Stock';
       default:
-        return 'Alerte'
+        return 'Alerte';
     }
-  }
+  };
 
   return (
     <Card className={`border-2 ${getSeverityColor()}`}>
@@ -83,35 +95,62 @@ export function StockAlertCard({ alert, onActionClick }: StockAlertCardProps) {
             <ExternalLink className="h-3 w-3" />
           </Link>
           <div className="flex items-center gap-2 mt-1 text-xs text-gray-600">
-            <span>Stock Réel: <strong>{alert.stock_real}</strong></span>
+            <span>
+              Stock Réel: <strong>{alert.stock_real}</strong>
+            </span>
             {alert.stock_forecasted_out > 0 && (
-              <span>· Réservé: <strong className="text-red-600">{alert.stock_forecasted_out}</strong></span>
+              <span>
+                · Réservé:{' '}
+                <strong className="text-red-600">
+                  {alert.stock_forecasted_out}
+                </strong>
+              </span>
             )}
-            <span>· Seuil: <strong>{alert.min_stock}</strong></span>
+            <span>
+              · Seuil: <strong>{alert.min_stock}</strong>
+            </span>
+            {alert.is_in_draft && alert.quantity_in_draft && (
+              <span className="text-green-600 font-medium">
+                · Commandé: <strong>{alert.quantity_in_draft}</strong>
+              </span>
+            )}
           </div>
         </div>
 
-        {alert.alert_type === 'no_stock_but_ordered' && alert.related_orders && (
-          <div className="bg-white p-2 rounded border border-red-200">
-            <p className="text-xs font-medium text-red-600 mb-1">
-              ⚠️ {alert.related_orders.length} commande(s) client(s) en attente
-            </p>
-            {alert.related_orders.slice(0, 2).map((order, idx) => (
-              <div key={idx} className="text-xs text-gray-600">
-                • {order.order_number}: {order.quantity} unité(s)
-              </div>
-            ))}
-          </div>
+        {alert.is_in_draft && alert.draft_order_number && (
+          <Badge variant="outline" className="border-green-300 text-green-600">
+            Dans {alert.draft_order_number}
+          </Badge>
         )}
+
+        {alert.alert_type === 'no_stock_but_ordered' &&
+          alert.related_orders && (
+            <div className="bg-white p-2 rounded border border-red-200">
+              <p className="text-xs font-medium text-red-600 mb-1">
+                ⚠️ {alert.related_orders.length} commande(s) client(s) en
+                attente
+              </p>
+              {alert.related_orders.slice(0, 2).map((order, idx) => (
+                <div key={idx} className="text-xs text-gray-600">
+                  • {order.order_number}: {order.quantity} unité(s)
+                </div>
+              ))}
+            </div>
+          )}
 
         <div className="flex gap-2">
           <ButtonV2
             size="sm"
-            variant="outline"
+            variant={alert.is_in_draft ? 'outline' : 'primary'}
             onClick={() => onActionClick?.(alert)}
-            className="text-xs"
+            disabled={alert.is_in_draft}
+            className={`text-xs ${alert.is_in_draft ? 'opacity-50 cursor-not-allowed' : ''}`}
           >
-            {alert.alert_type === 'no_stock_but_ordered' ? 'Voir Commandes' : 'Commander Fournisseur'}
+            {alert.is_in_draft
+              ? 'Déjà commandé'
+              : alert.alert_type === 'no_stock_but_ordered'
+                ? 'Voir Commandes'
+                : 'Commander Fournisseur'}
           </ButtonV2>
           <Link href={`/catalogue/${alert.product_id}`}>
             <ButtonV2 size="sm" variant="ghost" className="text-xs">
@@ -121,5 +160,5 @@ export function StockAlertCard({ alert, onActionClick }: StockAlertCardProps) {
         </div>
       </CardContent>
     </Card>
-  )
+  );
 }

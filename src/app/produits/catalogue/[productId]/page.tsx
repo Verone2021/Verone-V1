@@ -1,28 +1,49 @@
-"use client"
+'use client';
 
-import { useState, useEffect } from "react"
-import { useParams, useRouter } from "next/navigation"
-import { ArrowLeft, Share2, ImageIcon, Package, Tag, Truck, Boxes, DollarSign, Settings, Hash, Beaker, Clock, Info } from "lucide-react"
-import { ButtonV2 } from "@/components/ui/button"
-import { ProductImageGallery } from "@/components/business/product-image-gallery"
-import { ProductPhotosModal } from "@/components/business/product-photos-modal"
-import { ProductCharacteristicsModal } from "@/components/business/product-characteristics-modal"
-import { ProductDescriptionsModal } from "@/components/business/product-descriptions-modal"
-import { CategoryHierarchySelector } from "@/components/business/category-hierarchy-selector"
-import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog"
-import { ProductDetailAccordion } from "@/components/business/product-detail-accordion"
-import { ProductInfoSection } from "@/components/business/product-info-section"
-import { ProductVariantsGrid } from "@/components/business/product-variants-grid"
-import { SampleRequirementSection } from "@/components/business/sample-requirement-section"
-import { SupplierVsPricingEditSection } from "@/components/business/supplier-vs-pricing-edit-section"
-import { StockEditSection } from "@/components/business/stock-edit-section"
-import { ProductFixedCharacteristics } from "@/components/business/product-fixed-characteristics"
-import { SupplierEditSection } from "@/components/business/supplier-edit-section"
-import { WeightEditSection } from "@/components/business/weight-edit-section"
-import { IdentifiersCompleteEditSection } from "@/components/business/identifiers-complete-edit-section"
-import { ProductDescriptionsEditSection } from "@/components/business/product-descriptions-edit-section"
-import { cn, checkSLOCompliance } from "@/lib/utils"
-import { createClient } from "@/lib/supabase/client"
+import { useState, useEffect } from 'react';
+import { useParams, useRouter } from 'next/navigation';
+import {
+  ArrowLeft,
+  Share2,
+  ImageIcon,
+  Package,
+  Tag,
+  Truck,
+  Boxes,
+  DollarSign,
+  Settings,
+  Hash,
+  Beaker,
+  Clock,
+  Info,
+} from 'lucide-react';
+import { ButtonV2 } from '@/components/ui/button';
+import { ProductImageGallery } from '@/components/business/product-image-gallery';
+import { ProductPhotosModal } from '@/components/business/product-photos-modal';
+import { ProductCharacteristicsModal } from '@/components/business/product-characteristics-modal';
+import { ProductDescriptionsModal } from '@/components/business/product-descriptions-modal';
+import { CategoryHierarchySelector } from '@/components/business/category-hierarchy-selector';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog';
+import { ProductDetailAccordion } from '@/components/business/product-detail-accordion';
+import { ProductInfoSection } from '@/components/business/product-info-section';
+import { ProductVariantsGrid } from '@/components/business/product-variants-grid';
+import { SampleRequirementSection } from '@/components/business/sample-requirement-section';
+import { SupplierVsPricingEditSection } from '@/components/business/supplier-vs-pricing-edit-section';
+import { StockEditSection } from '@/components/business/stock-edit-section';
+import { ProductFixedCharacteristics } from '@/components/business/product-fixed-characteristics';
+import { SupplierEditSection } from '@/components/business/supplier-edit-section';
+import { WeightEditSection } from '@/components/business/weight-edit-section';
+import { IdentifiersCompleteEditSection } from '@/components/business/identifiers-complete-edit-section';
+import { ProductDescriptionsEditSection } from '@/components/business/product-descriptions-edit-section';
+import { cn, checkSLOCompliance } from '@/lib/utils';
+import { createClient } from '@/lib/supabase/client';
 
 // Champs obligatoires pour un produit complet
 const REQUIRED_PRODUCT_FIELDS = [
@@ -31,8 +52,8 @@ const REQUIRED_PRODUCT_FIELDS = [
   'supplier_id',
   'subcategory_id',
   'cost_price',
-  'description'
-] as const
+  'description',
+] as const;
 
 // Mapping des champs avec leurs libellés
 const PRODUCT_FIELD_LABELS: Record<string, string> = {
@@ -40,27 +61,34 @@ const PRODUCT_FIELD_LABELS: Record<string, string> = {
   sku: 'Référence SKU',
   supplier_id: 'Fournisseur',
   subcategory_id: 'Sous-catégorie',
-  cost_price: 'Prix d\'achat HT',
-  description: 'Description'
-}
+  cost_price: "Prix d'achat HT",
+  description: 'Description',
+};
 
 /**
  * Calcule champs obligatoires manquants par section
  * Basé sur REQUIRED_PRODUCT_FIELDS
  */
 function calculateMissingFields(product: any | null) {
-  if (!product) return { infosGenerales: 0, descriptions: 0, categorisation: 0, fournisseur: 0, identifiants: 0 }
+  if (!product)
+    return {
+      infosGenerales: 0,
+      descriptions: 0,
+      categorisation: 0,
+      fournisseur: 0,
+      identifiants: 0,
+    };
 
   return {
-    // Informations Générales : name, cost_price, status
+    // Informations Générales : name, cost_price (stock_status et product_status sont NOT NULL)
     infosGenerales: [
       !product.name || product.name.trim() === '',
       !product.cost_price || product.cost_price <= 0,
-      !product.status
     ].filter(Boolean).length,
 
     // Descriptions : description (obligatoire seulement)
-    descriptions: !product.description || product.description.trim() === '' ? 1 : 0,
+    descriptions:
+      !product.description || product.description.trim() === '' ? 1 : 0,
 
     // Catégorisation : subcategory_id (hiérarchie complète)
     categorisation: !product.subcategory_id ? 1 : 0,
@@ -69,118 +97,122 @@ function calculateMissingFields(product: any | null) {
     fournisseur: !product.supplier_id ? 1 : 0,
 
     // Identifiants : sku
-    identifiants: !product.sku || product.sku.trim() === '' ? 1 : 0
-  }
+    identifiants: !product.sku || product.sku.trim() === '' ? 1 : 0,
+  };
 }
 
 // Interface pour un produit
 interface Product {
-  id: string
-  name: string
-  sku: string | null
-  description: string | null
-  technical_description: string | null
-  selling_points: string | null
-  price_ht: number | null
-  cost_price: number | null
-  tax_rate: number | null
-  selling_price: number | null
-  margin_percentage: number | null
-  brand: string | null
-  status: 'in_stock' | 'out_of_stock' | 'preorder' | 'coming_soon' | 'discontinued'
-  condition: 'new' | 'used' | 'refurbished'
-  stock_quantity: number | null
-  min_stock: number | null
-  supplier_id: string | null
-  supplier_reference: string | null
-  subcategory_id: string | null
-  family_id: string | null
-  dimensions: string | null
-  weight: number | null
-  variant_attributes: Record<string, any> | null
-  variant_group_id: string | null
-  gtin: string | null
-  slug: string | null
-  images: any[]
-  requires_sample: boolean | null
-  created_at: string
-  updated_at: string
-  organisation_id: string
+  id: string;
+  name: string;
+  sku: string | null;
+  description: string | null;
+  technical_description: string | null;
+  selling_points: string | null;
+  price_ht: number | null;
+  cost_price: number | null;
+  tax_rate: number | null;
+  selling_price: number | null;
+  margin_percentage: number | null;
+  brand: string | null;
+  stock_status: 'in_stock' | 'out_of_stock' | 'coming_soon';
+  product_status: 'active' | 'preorder' | 'discontinued' | 'draft';
+  condition: 'new' | 'used' | 'refurbished';
+  stock_quantity: number | null;
+  min_stock: number | null;
+  supplier_id: string | null;
+  supplier_reference: string | null;
+  subcategory_id: string | null;
+  family_id: string | null;
+  dimensions: string | null;
+  weight: number | null;
+  variant_attributes: Record<string, any> | null;
+  variant_group_id: string | null;
+  gtin: string | null;
+  slug: string | null;
+  images: any[];
+  requires_sample: boolean | null;
+  created_at: string;
+  updated_at: string;
+  organisation_id: string;
   supplier?: {
-    id: string
-    legal_name: string
-    trade_name: string | null
-    email: string | null
-    phone: string | null
-    is_active: boolean
-  } | null
+    id: string;
+    legal_name: string;
+    trade_name: string | null;
+    email: string | null;
+    phone: string | null;
+    is_active: boolean;
+  } | null;
   subcategory?: {
-    id: string
-    name: string
-    slug: string
+    id: string;
+    name: string;
+    slug: string;
     category?: {
-      id: string
-      name: string
-      slug: string
+      id: string;
+      name: string;
+      slug: string;
       family?: {
-        id: string
-        name: string
-        slug: string
-      }
-    }
-  } | null
+        id: string;
+        name: string;
+        slug: string;
+      };
+    };
+  } | null;
   variant_group?: {
-    id: string
-    name: string
-    dimensions_length: number | null
-    dimensions_width: number | null
-    dimensions_height: number | null
-    dimensions_unit: string | null
-    common_weight: number | null
-    has_common_weight: boolean | null
-    common_cost_price: number | null
-    has_common_cost_price: boolean | null
-    style: string | null
-    suitable_rooms: string[] | null
-    has_common_supplier: boolean | null
-    supplier_id: string | null
-  } | null
+    id: string;
+    name: string;
+    dimensions_length: number | null;
+    dimensions_width: number | null;
+    dimensions_height: number | null;
+    dimensions_unit: string | null;
+    common_weight: number | null;
+    has_common_weight: boolean | null;
+    common_cost_price: number | null;
+    has_common_cost_price: boolean | null;
+    style: string | null;
+    suitable_rooms: string[] | null;
+    has_common_supplier: boolean | null;
+    supplier_id: string | null;
+  } | null;
 }
 
 export default function ProductDetailPage() {
-  const params = useParams()
-  const router = useRouter()
-  const productId = params.productId as string
+  const params = useParams();
+  const router = useRouter();
+  const productId = params.productId as string;
 
-  const [product, setProduct] = useState<Product | null>(null)
-  const [loading, setLoading] = useState(true)
-  const [error, setError] = useState<string | null>(null)
-  const [showPhotosModal, setShowPhotosModal] = useState(false)
-  const [showCharacteristicsModal, setShowCharacteristicsModal] = useState(false)
-  const [showDescriptionsModal, setShowDescriptionsModal] = useState(false)
-  const [isCategorizeModalOpen, setIsCategorizeModalOpen] = useState(false)
+  const [product, setProduct] = useState<Product | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [showPhotosModal, setShowPhotosModal] = useState(false);
+  const [showCharacteristicsModal, setShowCharacteristicsModal] =
+    useState(false);
+  const [showDescriptionsModal, setShowDescriptionsModal] = useState(false);
+  const [isCategorizeModalOpen, setIsCategorizeModalOpen] = useState(false);
 
-  const startTime = Date.now()
+  const startTime = Date.now();
 
   // Charger le produit
   const fetchProduct = async () => {
     try {
-      setLoading(true)
-      setError(null)
+      setLoading(true);
+      setError(null);
 
       // ✅ FIX: Valider format UUID avant requête
-      const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
+      const uuidRegex =
+        /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
       if (!productId || !uuidRegex.test(productId)) {
         // Si ce n'est pas un UUID valide (ex: "create"), rediriger vers catalogue
-        router.push('/produits/catalogue')
-        return
+        router.push('/produits/catalogue');
+        return;
       }
 
-      const supabase = createClient()
+      const supabase = createClient();
 
       const { data, error } = await supabase
         .from('products')
-        .select(`
+        .select(
+          `
           *,
           supplier:organisations!products_supplier_id_fkey(
             id,
@@ -221,71 +253,75 @@ export default function ProductDetailPage() {
             has_common_supplier,
             supplier_id
           )
-        `)
+        `
+        )
         .eq('id', productId)
-        .single()
+        .single();
 
       if (error) {
-        throw new Error(error.message)
+        throw new Error(error.message);
       }
 
       if (!data) {
-        throw new Error('Produit non trouvé')
+        throw new Error('Produit non trouvé');
       }
 
-      setProduct(data as any)
-
+      setProduct(data as any);
     } catch (err) {
-      console.error('Erreur lors du chargement du produit:', err)
-      setError(err instanceof Error ? err.message : 'Erreur lors du chargement du produit')
+      console.error('Erreur lors du chargement du produit:', err);
+      setError(
+        err instanceof Error
+          ? err.message
+          : 'Erreur lors du chargement du produit'
+      );
     } finally {
-      setLoading(false)
-      checkSLOCompliance(startTime, 'dashboard')
+      setLoading(false);
+      checkSLOCompliance(startTime, 'dashboard');
     }
-  }
+  };
 
   // Handler pour mettre à jour le produit avec persistance en base
   const handleProductUpdate = async (updatedData: Partial<Product>) => {
-    if (!product) return
+    if (!product) return;
 
     try {
-      const supabase = createClient()
+      const supabase = createClient();
 
       // Mettre à jour en base de données
       const { data, error } = await supabase
         .from('products')
         .update({
           ...updatedData,
-          updated_at: new Date().toISOString()
+          updated_at: new Date().toISOString(),
         } as any)
         .eq('id', product.id)
         .select()
-        .single()
+        .single();
 
       if (error) {
-        console.error('❌ Erreur lors de la mise à jour du produit:', error)
-        throw error
+        console.error('❌ Erreur lors de la mise à jour du produit:', error);
+        throw error;
       }
 
       // Mettre à jour l'état local avec les données retournées de la base
-      setProduct({ ...product, ...data } as any)
-      console.log('✅ Produit mis à jour avec succès:', data)
+      setProduct({ ...product, ...data } as any);
+      console.log('✅ Produit mis à jour avec succès:', data);
     } catch (error) {
-      console.error('❌ Erreur lors de la mise à jour:', error)
+      console.error('❌ Erreur lors de la mise à jour:', error);
     }
-  }
+  };
 
   // Handler pour naviguer vers la page de partage
   const handleShare = () => {
     if (product?.slug) {
-      const shareUrl = `/share/product/${product.slug}`
-      router.push(shareUrl)
+      const shareUrl = `/share/product/${product.slug}`;
+      router.push(shareUrl);
     }
-  }
+  };
 
   useEffect(() => {
-    fetchProduct()
-  }, [productId])
+    fetchProduct();
+  }, [productId]);
 
   // État de chargement
   if (loading) {
@@ -298,7 +334,7 @@ export default function ProductDetailPage() {
           </div>
         </div>
       </div>
-    )
+    );
   }
 
   // État d'erreur
@@ -317,24 +353,24 @@ export default function ProductDetailPage() {
           </ButtonV2>
         </div>
       </div>
-    )
+    );
   }
 
   // Breadcrumb
-  const breadcrumbParts: string[] = []
+  const breadcrumbParts: string[] = [];
   if (product.subcategory?.category?.family) {
-    breadcrumbParts.push(product.subcategory.category.family.name)
+    breadcrumbParts.push(product.subcategory.category.family.name);
   }
   if (product.subcategory?.category) {
-    breadcrumbParts.push(product.subcategory.category.name)
+    breadcrumbParts.push(product.subcategory.category.name);
   }
   if (product.subcategory) {
-    breadcrumbParts.push(product.subcategory.name)
+    breadcrumbParts.push(product.subcategory.name);
   }
-  breadcrumbParts.push(product.name)
+  breadcrumbParts.push(product.name);
 
   // Calcul complétude accordéons
-  const missingFields = calculateMissingFields(product)
+  const missingFields = calculateMissingFields(product);
 
   return (
     <div className="min-h-screen bg-neutral-50 pb-20">
@@ -372,7 +408,6 @@ export default function ProductDetailPage() {
 
       {/* Layout Grid 2 colonnes */}
       <div className="max-w-[1800px] mx-auto grid grid-cols-1 lg:grid-cols-[320px_1fr] gap-4 p-4">
-
         {/* SIDEBAR FIXE - Galerie Images */}
         <aside className="lg:sticky lg:top-20 lg:h-[calc(100vh-6rem)] space-y-3">
           {/* Galerie principale */}
@@ -380,7 +415,7 @@ export default function ProductDetailPage() {
             <ProductImageGallery
               productId={product.id}
               productName={product.name}
-              productStatus={product.status}
+              productStatus={product.product_status as any}
               compact={false}
             />
           </div>
@@ -410,13 +445,16 @@ export default function ProductDetailPage() {
 
         {/* CONTENT AREA - Accordions scrollables */}
         <main className="space-y-3 max-w-6xl">
-
           {/* Accordion 1: Informations Générales */}
           <ProductDetailAccordion
             title="Informations Générales"
             icon={Info}
             defaultOpen={true}
-            badge={missingFields.infosGenerales > 0 ? missingFields.infosGenerales : undefined}
+            badge={
+              missingFields.infosGenerales > 0
+                ? missingFields.infosGenerales
+                : undefined
+            }
           >
             <ProductInfoSection
               product={{
@@ -424,7 +462,8 @@ export default function ProductDetailPage() {
                 name: product.name,
                 sku: product.sku,
                 cost_price: product.cost_price,
-                status: product.status,
+                stock_status: product.stock_status,
+                product_status: product.product_status,
                 supplier_id: product.supplier_id,
                 subcategory_id: product.subcategory_id,
                 variant_group_id: product.variant_group_id,
@@ -438,7 +477,11 @@ export default function ProductDetailPage() {
             title="Descriptions"
             icon={Beaker}
             defaultOpen={false}
-            badge={missingFields.descriptions > 0 ? missingFields.descriptions : undefined}
+            badge={
+              missingFields.descriptions > 0
+                ? missingFields.descriptions
+                : undefined
+            }
           >
             <ProductDescriptionsEditSection
               product={{
@@ -456,13 +499,18 @@ export default function ProductDetailPage() {
             title="Catégorisation"
             icon={Tag}
             defaultOpen={false}
-            badge={missingFields.categorisation > 0 ? missingFields.categorisation : undefined}
+            badge={
+              missingFields.categorisation > 0
+                ? missingFields.categorisation
+                : undefined
+            }
           >
             <div className="space-y-3">
               {/* Message informatif si catégorisation gérée par le groupe */}
               {product.variant_group_id && product.variant_group && (
                 <div className="mb-3 p-2 bg-blue-50 border border-blue-200 rounded text-xs text-blue-800">
-                  ℹ️ La catégorisation est héritée du groupe de variantes "{product.variant_group.name}".{' '}
+                  ℹ️ La catégorisation est héritée du groupe de variantes "
+                  {product.variant_group.name}".{' '}
                   <a
                     href={`/produits/catalogue/variantes/${product.variant_group.id}`}
                     className="underline font-medium hover:text-blue-900"
@@ -475,8 +523,12 @@ export default function ProductDetailPage() {
               {/* Hiérarchie actuelle */}
               {breadcrumbParts.length > 1 && (
                 <div className="bg-neutral-50 rounded-md p-3 text-sm">
-                  <p className="text-neutral-600 mb-1">Classification actuelle:</p>
-                  <p className="font-medium text-neutral-900">{breadcrumbParts.slice(0, -1).join(' › ')}</p>
+                  <p className="text-neutral-600 mb-1">
+                    Classification actuelle:
+                  </p>
+                  <p className="font-medium text-neutral-900">
+                    {breadcrumbParts.slice(0, -1).join(' › ')}
+                  </p>
                 </div>
               )}
 
@@ -496,7 +548,11 @@ export default function ProductDetailPage() {
             title="Fournisseur & Références"
             icon={Truck}
             defaultOpen={false}
-            badge={missingFields.fournisseur > 0 ? missingFields.fournisseur : undefined}
+            badge={
+              missingFields.fournisseur > 0
+                ? missingFields.fournisseur
+                : undefined
+            }
           >
             <SupplierEditSection
               product={product as any}
@@ -534,10 +590,11 @@ export default function ProductDetailPage() {
             <StockEditSection
               product={{
                 id: product.id,
-                status: product.status,
+                stock_status: product.stock_status,
+                product_status: product.product_status,
                 condition: product.condition,
                 stock_quantity: product.stock_quantity ?? undefined,
-                min_stock: product.min_stock ?? undefined
+                min_stock: product.min_stock ?? undefined,
               }}
               onUpdate={handleProductUpdate as any}
             />
@@ -555,7 +612,7 @@ export default function ProductDetailPage() {
                 cost_price: product.cost_price ?? undefined,
                 margin_percentage: product.margin_percentage ?? undefined,
                 selling_price: product.selling_price ?? undefined,
-                variant_group_id: product.variant_group_id ?? undefined
+                variant_group_id: product.variant_group_id ?? undefined,
               }}
               variantGroup={product.variant_group ?? null}
               onUpdate={handleProductUpdate as any}
@@ -570,7 +627,8 @@ export default function ProductDetailPage() {
           >
             {product.variant_group_id && (
               <div className="mb-3 p-2 bg-blue-50 border border-blue-200 rounded text-xs text-blue-800">
-                ℹ️ Les caractéristiques sont gérées au niveau du groupe de variantes.{' '}
+                ℹ️ Les caractéristiques sont gérées au niveau du groupe de
+                variantes.{' '}
                 <a
                   href={`/produits/catalogue/variantes/${product.variant_group_id}`}
                   className="underline font-medium hover:text-blue-900"
@@ -597,7 +655,11 @@ export default function ProductDetailPage() {
             title="Identifiants"
             icon={Hash}
             defaultOpen={false}
-            badge={missingFields.identifiants > 0 ? missingFields.identifiants : undefined}
+            badge={
+              missingFields.identifiants > 0
+                ? missingFields.identifiants
+                : undefined
+            }
           >
             <IdentifiersCompleteEditSection
               product={{
@@ -605,7 +667,7 @@ export default function ProductDetailPage() {
                 sku: product.sku ?? '',
                 brand: product.brand ?? undefined,
                 gtin: product.gtin ?? undefined,
-                condition: product.condition
+                condition: product.condition,
               }}
               onUpdate={handleProductUpdate as any}
             />
@@ -622,11 +684,15 @@ export default function ProductDetailPage() {
               requiresSample={product.requires_sample || false}
               isProduct={true}
               productName={product.name}
-              supplierName={(product.supplier?.legal_name || product.supplier?.trade_name) ?? undefined}
+              supplierName={
+                (product.supplier?.legal_name ||
+                  product.supplier?.trade_name) ??
+                undefined
+              }
               costPrice={product.cost_price || undefined}
               disabled={(product.stock_quantity ?? 0) >= 1}
-              onRequirementChange={(requiresSample) => {
-                handleProductUpdate({ requires_sample: requiresSample })
+              onRequirementChange={requiresSample => {
+                handleProductUpdate({ requires_sample: requiresSample });
               }}
             />
           </ProductDetailAccordion>
@@ -640,7 +706,9 @@ export default function ProductDetailPage() {
             <div className="space-y-2 text-sm">
               <div className="flex justify-between py-2 border-b border-neutral-100">
                 <span className="text-neutral-600">ID:</span>
-                <span className="font-mono text-neutral-900">{product.id.slice(0, 8)}...</span>
+                <span className="font-mono text-neutral-900">
+                  {product.id.slice(0, 8)}...
+                </span>
               </div>
               <div className="flex justify-between py-2 border-b border-neutral-100">
                 <span className="text-neutral-600">Créé le:</span>
@@ -657,12 +725,13 @@ export default function ProductDetailPage() {
               <div className="flex justify-between py-2">
                 <span className="text-neutral-600">Organisation ID:</span>
                 <span className="font-mono text-neutral-900">
-                  {product.organisation_id ? product.organisation_id.slice(0, 8) + '...' : 'N/A'}
+                  {product.organisation_id
+                    ? product.organisation_id.slice(0, 8) + '...'
+                    : 'N/A'}
                 </span>
               </div>
             </div>
           </ProductDetailAccordion>
-
         </main>
       </div>
 
@@ -685,8 +754,10 @@ export default function ProductDetailPage() {
         productName={product.name}
         initialData={{
           variant_attributes: product.variant_attributes ?? undefined,
-          dimensions: (product.dimensions ?? undefined) as Record<string, any> | undefined,
-          weight: product.weight ?? undefined
+          dimensions: (product.dimensions ?? undefined) as
+            | Record<string, any>
+            | undefined,
+          weight: product.weight ?? undefined,
         }}
         onUpdate={handleProductUpdate}
       />
@@ -700,13 +771,18 @@ export default function ProductDetailPage() {
         initialData={{
           description: product.description ?? undefined,
           technical_description: product.technical_description ?? undefined,
-          selling_points: (product.selling_points ?? undefined) as string[] | undefined
+          selling_points: (product.selling_points ?? undefined) as
+            | string[]
+            | undefined,
         }}
         onUpdate={handleProductUpdate}
       />
 
       {/* Modal de modification de la catégorisation */}
-      <Dialog open={isCategorizeModalOpen} onOpenChange={setIsCategorizeModalOpen}>
+      <Dialog
+        open={isCategorizeModalOpen}
+        onOpenChange={setIsCategorizeModalOpen}
+      >
         <DialogContent className="max-w-md">
           <DialogHeader>
             <DialogTitle className="flex items-center">
@@ -714,7 +790,8 @@ export default function ProductDetailPage() {
               Modifier la catégorisation
             </DialogTitle>
             <DialogDescription>
-              Sélectionnez une nouvelle sous-catégorie pour ce produit. La famille et la catégorie seront automatiquement mises à jour.
+              Sélectionnez une nouvelle sous-catégorie pour ce produit. La
+              famille et la catégorie seront automatiquement mises à jour.
             </DialogDescription>
           </DialogHeader>
 
@@ -724,9 +801,9 @@ export default function ProductDetailPage() {
               onChange={(subcategoryId, hierarchyInfo) => {
                 if (subcategoryId && hierarchyInfo) {
                   handleProductUpdate({
-                    subcategory_id: subcategoryId
-                  })
-                  setIsCategorizeModalOpen(false)
+                    subcategory_id: subcategoryId,
+                  });
+                  setIsCategorizeModalOpen(false);
                 }
               }}
               placeholder="Sélectionner une sous-catégorie"
@@ -745,5 +822,5 @@ export default function ProductDetailPage() {
         </DialogContent>
       </Dialog>
     </div>
-  )
+  );
 }

@@ -1,62 +1,62 @@
-"use client"
+'use client';
 
-import { memo, useCallback } from "react"
-import Image from "next/image"
-import { useRouter } from "next/navigation"
-import { Badge } from "@/components/ui/badge"
-import { ButtonV2 } from "@/components/ui/button"
-import { cn } from "../../lib/utils"
-import { Package, Archive, Trash2, ArchiveRestore } from "lucide-react"
-import { useProductImages } from "../../hooks/use-product-images"
+import { memo, useCallback } from 'react';
+import Image from 'next/image';
+import { useRouter } from 'next/navigation';
+import { Badge } from '@/components/ui/badge';
+import { ButtonV2 } from '@/components/ui/button';
+import { cn } from '../../lib/utils';
+import { Package, Archive, Trash2, ArchiveRestore } from 'lucide-react';
+import { useProductImages } from '../../hooks/use-product-images';
 // 🚀 OPTIMISATION: Imports packages/pricing désactivés temporairement
 // import { useProductPackages } from "../../hooks/use-product-packages"
 // import { useProductPrice, useQuantityBreaks, formatPrice } from "../../hooks/use-pricing"
 // import { QuantityBreaksDisplay } from "./quantity-breaks-display"
-import type { Product } from "../../hooks/use-catalogue"
+import type { Product } from '../../hooks/use-catalogue';
 
 interface ProductCardProps {
-  product: Product
-  className?: string
-  showActions?: boolean
-  showPackages?: boolean // Nouvelle option pour afficher les packages
-  showPricing?: boolean // Nouvelle option pour afficher les prix par canal
-  showQuantityBreaks?: boolean // Nouvelle option pour afficher les paliers quantités
-  channelId?: string | null // Canal de vente sélectionné (null = prix base)
-  priority?: boolean // Nouvelle option pour optimiser LCP (première image)
-  onClick?: (product: Product) => void
-  onArchive?: (product: Product) => void
-  onDelete?: (product: Product) => void
-  archived?: boolean
+  product: Product;
+  className?: string;
+  showActions?: boolean;
+  showPackages?: boolean; // Nouvelle option pour afficher les packages
+  showPricing?: boolean; // Nouvelle option pour afficher les prix par canal
+  showQuantityBreaks?: boolean; // Nouvelle option pour afficher les paliers quantités
+  channelId?: string | null; // Canal de vente sélectionné (null = prix base)
+  priority?: boolean; // Nouvelle option pour optimiser LCP (première image)
+  onClick?: (product: Product) => void;
+  onArchive?: (product: Product) => void;
+  onDelete?: (product: Product) => void;
+  archived?: boolean;
 }
 
 // Configuration statuts selon system colors
 const statusConfig = {
   in_stock: {
-    label: "En stock",
-    variant: "default" as const,
-    className: "bg-green-600 text-white"
+    label: 'En stock',
+    variant: 'default' as const,
+    className: 'bg-green-600 text-white',
   },
   out_of_stock: {
-    label: "Rupture",
-    variant: "destructive" as const,
-    className: "bg-red-600 text-white"
+    label: 'Rupture',
+    variant: 'destructive' as const,
+    className: 'bg-red-600 text-white',
   },
   preorder: {
-    label: "Précommande",
-    variant: "secondary" as const,
-    className: "bg-blue-600 text-white"
+    label: 'Précommande',
+    variant: 'secondary' as const,
+    className: 'bg-blue-600 text-white',
   },
   coming_soon: {
-    label: "Bientôt",
-    variant: "outline" as const,
-    className: "bg-black text-white"
+    label: 'Bientôt',
+    variant: 'outline' as const,
+    className: 'bg-black text-white',
   },
   discontinued: {
-    label: "Arrêté",
-    variant: "outline" as const,
-    className: "bg-gray-600 text-white"
-  }
-}
+    label: 'Arrêté',
+    variant: 'outline' as const,
+    className: 'bg-gray-600 text-white',
+  },
+};
 
 export const ProductCard = memo(function ProductCard({
   product,
@@ -70,20 +70,20 @@ export const ProductCard = memo(function ProductCard({
   onClick,
   onArchive,
   onDelete,
-  archived = false
+  archived = false,
 }: ProductCardProps) {
-  const router = useRouter()
-  const status = statusConfig[product.status] || {
-    label: product.status || "Statut inconnu",
-    variant: "outline" as const,
-    className: "bg-gray-600 text-white"
-  }
+  const router = useRouter();
+  const status = statusConfig[product.stock_status] || {
+    label: product.stock_status || 'Statut inconnu',
+    variant: 'outline' as const,
+    className: 'bg-gray-600 text-white',
+  };
 
   // ✨ Hook optimisé - images uniquement
   const { primaryImage, loading: imageLoading } = useProductImages({
     productId: product.id,
-    autoFetch: true
-  })
+    autoFetch: true,
+  });
 
   // 🚀 OPTIMISATION PERFORMANCE - Hooks packages/pricing désactivés temporairement
   // const {
@@ -116,37 +116,46 @@ export const ProductCard = memo(function ProductCard({
 
   const handleClick = useCallback(() => {
     if (onClick) {
-      onClick(product)
+      onClick(product);
     } else {
       // Navigation par défaut vers la page détail
-      router.push(`/catalogue/${product.id}`)
+      router.push(`/catalogue/${product.id}`);
     }
-  }, [product, onClick, router])
+  }, [product, onClick, router]);
 
-  const handleDetailsClick = useCallback((e: React.MouseEvent) => {
-    e.stopPropagation()
-    router.push(`/catalogue/${product.id}`)
-  }, [product.id, router])
+  const handleDetailsClick = useCallback(
+    (e: React.MouseEvent) => {
+      e.stopPropagation();
+      router.push(`/catalogue/${product.id}`);
+    },
+    [product.id, router]
+  );
 
-  const handleArchiveClick = useCallback((e: React.MouseEvent) => {
-    e.stopPropagation()
-    if (onArchive) {
-      onArchive(product)
-    }
-  }, [product, onArchive])
+  const handleArchiveClick = useCallback(
+    (e: React.MouseEvent) => {
+      e.stopPropagation();
+      if (onArchive) {
+        onArchive(product);
+      }
+    },
+    [product, onArchive]
+  );
 
-  const handleDeleteClick = useCallback((e: React.MouseEvent) => {
-    e.stopPropagation()
-    if (onDelete) {
-      onDelete(product)
-    }
-  }, [product, onDelete])
+  const handleDeleteClick = useCallback(
+    (e: React.MouseEvent) => {
+      e.stopPropagation();
+      if (onDelete) {
+        onDelete(product);
+      }
+    },
+    [product, onDelete]
+  );
 
   return (
     <div
       className={cn(
         // Card base Vérone
-        "card-verone group cursor-pointer transition-all duration-150 ease-out hover:shadow-lg",
+        'card-verone group cursor-pointer transition-all duration-150 ease-out hover:shadow-lg',
         className
       )}
       onClick={handleClick}
@@ -163,7 +172,9 @@ export const ProductCard = memo(function ProductCard({
             sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 25vw"
             onError={() => {
               // En cas d'erreur de chargement, afficher le placeholder
-              console.warn(`Erreur chargement image: ${primaryImage.public_url}`)
+              console.warn(
+                `Erreur chargement image: ${primaryImage.public_url}`
+              );
             }}
           />
         ) : (
@@ -181,7 +192,7 @@ export const ProductCard = memo(function ProductCard({
 
         {/* Badge statut - MINI */}
         <div className="absolute top-1 right-1">
-          <Badge className={cn("text-[10px] px-1.5 py-0.5", status.className)}>
+          <Badge className={cn('text-[10px] px-1.5 py-0.5', status.className)}>
             {status.label}
           </Badge>
         </div>
@@ -189,21 +200,29 @@ export const ProductCard = memo(function ProductCard({
         {/* Badge condition si pas neuf - MINI */}
         {product.condition !== 'new' && (
           <div className="absolute top-1 left-1">
-            <Badge variant="outline" className="bg-white text-black text-[10px] px-1.5 py-0.5">
-              {product.condition === 'refurbished' ? 'Reconditionné' : 'Occasion'}
+            <Badge
+              variant="outline"
+              className="bg-white text-black text-[10px] px-1.5 py-0.5"
+            >
+              {product.condition === 'refurbished'
+                ? 'Reconditionné'
+                : 'Occasion'}
             </Badge>
           </div>
         )}
 
         {/* Badge "nouveau" pour les produits créés dans les 30 derniers jours - MINI */}
         {(() => {
-          const createdAt = new Date(product.created_at)
-          const thirtyDaysAgo = new Date()
-          thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30)
-          return createdAt > thirtyDaysAgo
+          const createdAt = new Date(product.created_at);
+          const thirtyDaysAgo = new Date();
+          thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+          return createdAt > thirtyDaysAgo;
         })() && (
           <div className="absolute bottom-1 left-1">
-            <Badge variant="secondary" className="bg-green-100 text-green-800 border-green-300 text-[10px] px-1.5 py-0.5">
+            <Badge
+              variant="secondary"
+              className="bg-green-100 text-green-800 border-green-300 text-[10px] px-1.5 py-0.5"
+            >
               nouveau
             </Badge>
           </div>
@@ -239,7 +258,6 @@ export const ProductCard = memo(function ProductCard({
           )}
         </div>
 
-
         {/* Actions - ULTRA COMPACT */}
         {showActions && (
           <div className="space-y-1 pt-1">
@@ -251,7 +269,7 @@ export const ProductCard = memo(function ProductCard({
                   variant="secondary"
                   size="sm"
                   onClick={handleArchiveClick}
-                  className={`flex-1 min-w-0 h-6 text-[10px] px-1.5 ${archived ? "text-blue-600 border-blue-200 hover:bg-blue-50" : "text-black border-gray-200 hover:bg-gray-50"}`}
+                  className={`flex-1 min-w-0 h-6 text-[10px] px-1.5 ${archived ? 'text-blue-600 border-blue-200 hover:bg-blue-50' : 'text-black border-gray-200 hover:bg-gray-50'}`}
                 >
                   {archived ? (
                     <>
@@ -294,5 +312,5 @@ export const ProductCard = memo(function ProductCard({
         )}
       </div>
     </div>
-  )
-})
+  );
+});

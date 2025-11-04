@@ -2,40 +2,41 @@
  * Modal de gestion des produits dans une collection - Vérone Back Office
  */
 
-'use client'
+'use client';
 
-import { useState, useEffect } from 'react'
-import { Package, Plus, Trash2, Search, Eye, X } from 'lucide-react'
+import { useState, useEffect } from 'react';
+import { Package, Plus, Trash2, Search, Eye, X } from 'lucide-react';
 import {
   Dialog,
   DialogContent,
   DialogHeader,
   DialogTitle,
-} from '@/components/ui/dialog'
-import { ButtonV2 } from '@/components/ui/button'
-import { Input } from '@/components/ui/input'
-import { Badge } from '@/components/ui/badge'
+} from '@/components/ui/dialog';
+import { ButtonV2 } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Badge } from '@/components/ui/badge';
 // import { ScrollArea } from '@/components/ui/scroll-area' // Temporairement désactivé
-import { createClient } from '@/lib/supabase/client'
-import { Collection } from '@/hooks/use-collections'
-import { useToast } from '@/hooks/use-toast'
-import { ProductImageViewerModal } from './product-image-viewer-modal'
-import { useProductImages } from '@/hooks/use-product-images'
+import { createClient } from '@/lib/supabase/client';
+import { Collection } from '@/hooks/use-collections';
+import { useToast } from '@/hooks/use-toast';
+import { ProductImageViewerModal } from './product-image-viewer-modal';
+import { useProductImages } from '@/hooks/use-product-images';
 
 interface CollectionProductsModalProps {
-  collection: Collection | null
-  isOpen: boolean
-  onClose: () => void
-  onUpdate: () => void
+  collection: Collection | null;
+  isOpen: boolean;
+  onClose: () => void;
+  onUpdate: () => void;
 }
 
 interface Product {
-  id: string
-  name: string
-  sku: string
-  image_url?: string
-  subcategory_name?: string
-  status: string
+  id: string;
+  name: string;
+  sku: string;
+  image_url?: string;
+  subcategory_name?: string;
+  stock_status: string;
+  product_status: string;
 }
 
 export function CollectionProductsModal({
@@ -44,182 +45,196 @@ export function CollectionProductsModal({
   onClose,
   onUpdate,
 }: CollectionProductsModalProps) {
-  const [availableProducts, setAvailableProducts] = useState<Product[]>([])
-  const [collectionProducts, setCollectionProducts] = useState<Product[]>([])
-  const [searchQuery, setSearchQuery] = useState('')
-  const [loading, setLoading] = useState(false)
-  const [viewerProductId, setViewerProductId] = useState<string | null>(null)
-  const [viewerProductName, setViewerProductName] = useState<string>('')
-  const { toast } = useToast()
-  const supabase = createClient()
+  const [availableProducts, setAvailableProducts] = useState<Product[]>([]);
+  const [collectionProducts, setCollectionProducts] = useState<Product[]>([]);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [loading, setLoading] = useState(false);
+  const [viewerProductId, setViewerProductId] = useState<string | null>(null);
+  const [viewerProductName, setViewerProductName] = useState<string>('');
+  const { toast } = useToast();
+  const supabase = createClient();
 
   // Charger les produits disponibles et ceux de la collection
   useEffect(() => {
-    if (!collection || !isOpen) return
-    loadProducts()
-  }, [collection, isOpen])
+    if (!collection || !isOpen) return;
+    loadProducts();
+  }, [collection, isOpen]);
 
   const loadProducts = async () => {
-    if (!collection) return
-    setLoading(true)
+    if (!collection) return;
+    setLoading(true);
 
     try {
       // Récupérer tous les produits validés du catalogue (creation_mode = 'complete')
       const { data: allProducts, error: productsError } = await supabase
         .from('products')
-        .select(`
-          id, name, sku, status, creation_mode,
+        .select(
+          `
+          id, name, sku, stock_status, product_status, creation_mode,
           product_images (
             public_url,
             is_primary
           )
-        `)
+        `
+        )
         .eq('creation_mode', 'complete')
-        .order('name')
+        .order('name');
 
-      if (productsError) throw productsError
+      if (productsError) throw productsError;
 
       // Récupérer les produits déjà dans la collection
-      const { data: collectionProductsData, error: collectionError } = await supabase
-        .from('collection_products')
-        .select(`
+      const { data: collectionProductsData, error: collectionError } =
+        await supabase
+          .from('collection_products')
+          .select(
+            `
           products:product_id (
-            id, name, sku, status,
+            id, name, sku, stock_status, product_status,
             product_images (
               public_url,
               is_primary
             )
           )
-        `)
-        .eq('collection_id', collection.id)
+        `
+          )
+          .eq('collection_id', collection.id);
 
-      if (collectionError) throw collectionError
+      if (collectionError) throw collectionError;
 
       // Transformer les données
       const transformedProducts = (allProducts || []).map(p => ({
         id: p.id,
         name: p.name,
         sku: p.sku,
-        image_url: p.product_images?.find(img => img.is_primary)?.public_url,
+        image_url: p.product_images?.find((img: any) => img.is_primary)
+          ?.public_url,
         subcategory_name: undefined,
-        status: p.status
-      }))
+        stock_status: p.stock_status,
+        product_status: p.product_status,
+      }));
 
-      const inCollectionIds = collectionProductsData
-        ?.map(cp => cp.products?.id)
-        .filter(Boolean) || []
+      const inCollectionIds =
+        collectionProductsData?.map(cp => cp.products?.id).filter(Boolean) ||
+        [];
 
-      const inCollectionProducts = collectionProductsData
-        ?.map(cp => cp.products ? {
-          id: cp.products.id,
-          name: cp.products.name,
-          sku: cp.products.sku,
-          image_url: cp.products.product_images?.find(img => img.is_primary)?.public_url,
-          subcategory_name: undefined,
-          status: cp.products.status
-        } : null)
-        .filter(Boolean) as Product[] || []
+      const inCollectionProducts =
+        (collectionProductsData
+          ?.map(cp =>
+            cp.products
+              ? {
+                  id: cp.products.id,
+                  name: cp.products.name,
+                  sku: cp.products.sku,
+                  image_url: cp.products.product_images?.find(
+                    (img: any) => img.is_primary
+                  )?.public_url,
+                  subcategory_name: undefined,
+                  stock_status: cp.products.stock_status,
+                  product_status: cp.products.product_status,
+                }
+              : null
+          )
+          .filter(Boolean) as Product[]) || [];
 
-      const availableProductsList = transformedProducts
-        .filter(p => !inCollectionIds.includes(p.id))
+      const availableProductsList = transformedProducts.filter(
+        p => !inCollectionIds.includes(p.id)
+      );
 
-      setAvailableProducts(availableProductsList as any)
-      setCollectionProducts(inCollectionProducts)
-
+      setAvailableProducts(availableProductsList as any);
+      setCollectionProducts(inCollectionProducts);
     } catch (error) {
-      console.error('Erreur chargement produits:', error)
+      console.error('Erreur chargement produits:', error);
       toast({
-        title: "Erreur",
-        description: "Impossible de charger les produits",
-        variant: "destructive"
-      })
+        title: 'Erreur',
+        description: 'Impossible de charger les produits',
+        variant: 'destructive',
+      });
     } finally {
-      setLoading(false)
+      setLoading(false);
     }
-  }
+  };
 
   const addProductToCollection = async (product: Product) => {
-    if (!collection) return
+    if (!collection) return;
 
     try {
-      const { error } = await supabase
-        .from('collection_products')
-        .insert({
-          collection_id: collection.id,
-          product_id: product.id,
-          position: collectionProducts.length
-        })
+      const { error } = await supabase.from('collection_products').insert({
+        collection_id: collection.id,
+        product_id: product.id,
+        position: collectionProducts.length,
+      });
 
-      if (error) throw error
+      if (error) throw error;
 
       // Mettre à jour les listes localement
-      setAvailableProducts(prev => prev.filter(p => p.id !== product.id))
-      setCollectionProducts(prev => [...prev, product])
+      setAvailableProducts(prev => prev.filter(p => p.id !== product.id));
+      setCollectionProducts(prev => [...prev, product]);
 
       toast({
-        title: "Produit ajouté",
+        title: 'Produit ajouté',
         description: `${product.name} a été ajouté à la collection`,
-      })
+      });
 
-      onUpdate()
+      onUpdate();
     } catch (error) {
-      console.error('Erreur ajout produit:', error)
+      console.error('Erreur ajout produit:', error);
       toast({
-        title: "Erreur",
+        title: 'Erreur',
         description: "Impossible d'ajouter le produit",
-        variant: "destructive"
-      })
+        variant: 'destructive',
+      });
     }
-  }
+  };
 
   const removeProductFromCollection = async (product: Product) => {
-    if (!collection) return
+    if (!collection) return;
 
     try {
       const { error } = await supabase
         .from('collection_products')
         .delete()
         .eq('collection_id', collection.id)
-        .eq('product_id', product.id)
+        .eq('product_id', product.id);
 
-      if (error) throw error
+      if (error) throw error;
 
       // Mettre à jour les listes localement
-      setCollectionProducts(prev => prev.filter(p => p.id !== product.id))
-      setAvailableProducts(prev => [...prev, product].sort((a, b) =>
-        a.name.localeCompare(b.name)
-      ))
+      setCollectionProducts(prev => prev.filter(p => p.id !== product.id));
+      setAvailableProducts(prev =>
+        [...prev, product].sort((a, b) => a.name.localeCompare(b.name))
+      );
 
       toast({
-        title: "Produit retiré",
+        title: 'Produit retiré',
         description: `${product.name} a été retiré de la collection`,
-      })
+      });
 
-      onUpdate()
+      onUpdate();
     } catch (error) {
-      console.error('Erreur retrait produit:', error)
+      console.error('Erreur retrait produit:', error);
       toast({
-        title: "Erreur",
-        description: "Impossible de retirer le produit",
-        variant: "destructive"
-      })
+        title: 'Erreur',
+        description: 'Impossible de retirer le produit',
+        variant: 'destructive',
+      });
     }
-  }
+  };
 
-  const filteredAvailable = availableProducts.filter(p =>
-    p.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    p.sku.toLowerCase().includes(searchQuery.toLowerCase())
-  )
+  const filteredAvailable = availableProducts.filter(
+    p =>
+      p.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      p.sku.toLowerCase().includes(searchQuery.toLowerCase())
+  );
 
   const openImageViewer = (productId: string, productName: string) => {
-    setViewerProductId(productId)
-    setViewerProductName(productName)
-  }
+    setViewerProductId(productId);
+    setViewerProductName(productName);
+  };
 
   const closeImageViewer = () => {
-    setViewerProductId(null)
-    setViewerProductName('')
-  }
+    setViewerProductId(null);
+    setViewerProductName('');
+  };
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
@@ -241,7 +256,7 @@ export function CollectionProductsModal({
                 <Input
                   placeholder="Rechercher un produit..."
                   value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
+                  onChange={e => setSearchQuery(e.target.value)}
                   className="pl-10"
                 />
               </div>
@@ -282,7 +297,9 @@ export function CollectionProductsModal({
                         <ButtonV2
                           size="sm"
                           variant="ghost"
-                          onClick={() => openImageViewer(product.id, product.name)}
+                          onClick={() =>
+                            openImageViewer(product.id, product.name)
+                          }
                           title="Voir les images"
                         >
                           <Eye className="h-4 w-4" />
@@ -334,7 +351,9 @@ export function CollectionProductsModal({
                             />
                             {/* Bouton X overlay sur l'image */}
                             <button
-                              onClick={() => removeProductFromCollection(product)}
+                              onClick={() =>
+                                removeProductFromCollection(product)
+                              }
                               className="absolute -top-1 -right-1 bg-red-500 text-white rounded-full w-5 h-5 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity hover:bg-red-600 shadow-md"
                               title={`Retirer ${product.name}`}
                             >
@@ -357,7 +376,9 @@ export function CollectionProductsModal({
                         <ButtonV2
                           size="sm"
                           variant="ghost"
-                          onClick={() => openImageViewer(product.id, product.name)}
+                          onClick={() =>
+                            openImageViewer(product.id, product.name)
+                          }
                           title="Voir les images"
                         >
                           <Eye className="h-4 w-4" />
@@ -382,11 +403,10 @@ export function CollectionProductsModal({
 
         <div className="flex justify-between items-center pt-4 border-t">
           <div className="text-sm text-gray-600">
-            {collectionProducts.length} produit{collectionProducts.length !== 1 ? 's' : ''} dans la collection
+            {collectionProducts.length} produit
+            {collectionProducts.length !== 1 ? 's' : ''} dans la collection
           </div>
-          <ButtonV2 onClick={onClose}>
-            Fermer
-          </ButtonV2>
+          <ButtonV2 onClick={onClose}>Fermer</ButtonV2>
         </div>
       </DialogContent>
 
@@ -400,7 +420,7 @@ export function CollectionProductsModal({
         />
       )}
     </Dialog>
-  )
+  );
 }
 
 /**
@@ -410,17 +430,17 @@ function ProductImageViewerWrapper({
   productId,
   productName,
   isOpen,
-  onClose
+  onClose,
 }: {
-  productId: string
-  productName: string
-  isOpen: boolean
-  onClose: () => void
+  productId: string;
+  productName: string;
+  isOpen: boolean;
+  onClose: () => void;
 }) {
   const { images } = useProductImages({
     productId,
-    autoFetch: isOpen
-  })
+    autoFetch: isOpen,
+  });
 
   return (
     <ProductImageViewerModal
@@ -430,5 +450,5 @@ function ProductImageViewerWrapper({
       initialImageIndex={0}
       productName={productName}
     />
-  )
+  );
 }
