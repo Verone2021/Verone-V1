@@ -86,9 +86,6 @@ export default function StockAlertesPage() {
 
   const [searchTerm, setSearchTerm] = useState('');
   const [showFilters, setShowFilters] = useState(false);
-  const [acknowledgedAlerts, setAcknowledgedAlerts] = useState<Set<string>>(
-    new Set()
-  );
   const [showQuickPurchaseModal, setShowQuickPurchaseModal] = useState(false);
   const [selectedProductForOrder, setSelectedProductForOrder] = useState<{
     productId: string;
@@ -132,7 +129,7 @@ export default function StockAlertesPage() {
       currentStock: alert.stock_real,
       minStock: alert.min_stock,
       timestamp: new Date().toISOString(),
-      acknowledged: acknowledgedAlerts.has(alert.id),
+      acknowledged: false,
       // Champs tracking brouillon pour StockAlertCard
       is_in_draft: alert.is_in_draft,
       quantity_in_draft: alert.quantity_in_draft,
@@ -150,7 +147,7 @@ export default function StockAlertesPage() {
           }
         : undefined,
     }));
-  }, [alerts, acknowledgedAlerts]);
+  }, [alerts]);
 
   // Statistiques des alertes
   const alertStats = useMemo(() => {
@@ -164,25 +161,6 @@ export default function StockAlertesPage() {
       inDraft: alertsInDraft.length,
     };
   }, [mappedAlerts, criticalAlerts, warningAlerts, alertsInDraft]);
-
-  // Gestionnaire d'acquittement
-  const handleAcknowledge = (alertId: string) => {
-    setAcknowledgedAlerts(prev => new Set([...prev, alertId]));
-    toast({
-      title: 'Alerte acquittée',
-      description: "L'alerte a été marquée comme vue",
-    });
-  };
-
-  // Acquitter toutes les alertes
-  const acknowledgeAll = () => {
-    const allAlertIds = mappedAlerts.map(a => a.id);
-    setAcknowledgedAlerts(new Set(allAlertIds));
-    toast({
-      title: 'Toutes les alertes acquittées',
-      description: `${mappedAlerts.length} alertes marquées comme vues`,
-    });
-  };
 
   // Filtres appliqués
   const filteredAlerts = mappedAlerts.filter(alert => {
@@ -265,14 +243,6 @@ export default function StockAlertesPage() {
                   className={`h-4 w-4 mr-2 ${loading ? 'animate-spin' : ''}`}
                 />
                 Actualiser
-              </ButtonV2>
-              <ButtonV2
-                onClick={acknowledgeAll}
-                disabled={alertStats.unacknowledged === 0}
-                className="bg-black hover:bg-gray-800 text-white"
-              >
-                <CheckCircle className="h-4 w-4 mr-2" />
-                Acquitter tout
               </ButtonV2>
             </div>
           </div>
