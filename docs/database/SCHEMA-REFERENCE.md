@@ -140,20 +140,15 @@ Transactions bancaires (Qonto, Revolut)
 
 Produits catalogue principal
 
-- **Colonnes clés** : id, sku, name, slug, **stock_status** (automatique), **product_status** (manuel), supplier_id, category_id, stock_real, stock_forecasted_in
-- **Nouveau système dual status (2025-11-04)** :
-  - `stock_status` (ENUM): Calculé automatiquement par trigger selon stock_real et stock_forecasted_in
-    - Valeurs: 'in_stock', 'out_of_stock', 'coming_soon'
-  - `product_status` (ENUM): Modifiable manuellement (statut commercial)
+- **Colonnes clés** : id, sku, name, slug, **product_status** (manuel), supplier_id, category_id, stock_real, stock_forecasted_in, stock_forecasted_out
+- **Statut produit (product_status)** :
+  - `product_status` (ENUM): Modifiable manuellement - statut commercial du produit
     - Valeurs: 'active', 'preorder', 'discontinued', 'draft'
   - **Ancien champ**: `status` renommé en `status_deprecated` (conservation pour rollback)
-- **Triggers** : 1 consolidé (`trg_calculate_stock_status`) - remplace 3 anciens triggers (+30% performance)
 - **RLS** : 12 policies
 - **Relations** : → organisations (supplier), categories, families
 - **❌ INTERDIT** : Ajouter cost_price, price_ht, ou base_price (utiliser price_list_items)
-- **❌ INTERDIT** : Modifier stock_status manuellement (calculé automatiquement par trigger)
 - **⚠️ NOTE PRIX** : La table products ne contient AUCUN champ prix. Tous les prix sont dans price_list_items (cost_price, price_ht, suggested_retail_price). Voir [pricing-architecture.md](./pricing-architecture.md) pour détails architecture multi-canal
-- **📚 Documentation** : Voir [status-dual-system.md](../business-rules/04-produits/catalogue/products/status-dual-system.md) pour business rules complètes
 
 #### 10. **product_images** (15 colonnes)
 

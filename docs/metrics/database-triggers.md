@@ -36,6 +36,7 @@ Dashboard KPIs (hooks React récupèrent données)
 ```
 
 **Principes** :
+
 - **SECURITY DEFINER** : Triggers s'exécutent avec privilèges élevés
 - **Non-bloquant** : Erreurs loggées mais n'interrompent pas transaction principale
 - **Indexé** : Toutes tables loggées ont indexes sur colonnes fréquentes
@@ -56,6 +57,7 @@ Ces triggers loggent automatiquement les actions business importantes dans `user
 **Fonction** : `log_product_created()`
 
 **Metadata Loggées** :
+
 ```json
 new_data: {
   product_name: "Lampe Design",
@@ -69,11 +71,13 @@ metadata: {
 ```
 
 **Business Logic** :
+
 - Enregistre chaque création produit pour tracking catalogue
 - Severity: `info` (toujours)
 - Organisation ID récupéré depuis `NEW.organisation_id`
 
 **Exemple Déclenchement** :
+
 ```sql
 INSERT INTO products (name, sku, category, stock_quantity, price_ht, organisation_id)
 VALUES ('Lampe Design', 'SKU-1234', 'lighting', 10, 120.50, '{org_id}');
@@ -90,12 +94,14 @@ VALUES ('Lampe Design', 'SKU-1234', 'lighting', 10, 120.50, '{org_id}');
 **Fonction** : `log_product_updated()`
 
 **Conditions Trigger** : Seulement si changements significatifs :
+
 - `name` modifié
 - `stock_quantity` modifié
 - `price_ht` modifié
 - `status` modifié
 
 **Metadata Loggées** :
+
 ```json
 old_data: { product_name: "Lampe", stock: 10, price: 120.50, status: "draft" }
 new_data: { product_name: "Lampe Design", stock: 8, price: 125.00, status: "in_stock" }
@@ -105,6 +111,7 @@ metadata: {
 ```
 
 **Business Logic** :
+
 ```sql
 IF (OLD.name != NEW.name)
    OR (OLD.stock_quantity != NEW.stock_quantity)
@@ -125,6 +132,7 @@ THEN
 **Fonction** : `log_sales_order_created()`
 
 **Metadata Loggées** :
+
 ```json
 new_data: {
   order_number: "SO-2025-001",
@@ -139,6 +147,7 @@ metadata: {
 **Organisation** : Utilise `NEW.created_by` comme organisation_id (mapping user → org)
 
 **Exemple** :
+
 ```sql
 INSERT INTO sales_orders (order_number, status, total_ht, customer_id, created_by)
 VALUES ('SO-2025-001', 'draft', 1500.00, '{cust_id}', '{user_id}');
@@ -155,6 +164,7 @@ VALUES ('SO-2025-001', 'draft', 1500.00, '{cust_id}', '{user_id}');
 **Fonction** : `log_purchase_order_created()`
 
 **Metadata Loggées** :
+
 ```json
 new_data: {
   po_number: "PO-2025-042",
@@ -179,6 +189,7 @@ metadata: {
 **Conditions** : `OLD.status != NEW.status`
 
 **Metadata Loggées** :
+
 ```json
 old_data: { status: "draft" }
 new_data: { status: "confirmed" }
@@ -189,6 +200,7 @@ metadata: {
 ```
 
 **Severity Dynamique** :
+
 ```sql
 severity = CASE
   WHEN NEW.status = 'cancelled' THEN 'warning'
@@ -210,58 +222,11 @@ END
 **Similaire** : `log_sales_order_status_changed` mais pour PO
 
 **Severity** :
+
 ```
 'cancelled' → warning
 'received' → info (réception marchandise)
 default → info
-```
-
----
-
-### 7. log_stock_movement
-
-**Event** : `AFTER UPDATE ON products WHEN (OLD.stock_real IS DISTINCT FROM NEW.stock_real)`
-
-**Fonction** : `log_stock_movement()`
-
-**Conditions Trigger** : Seulement si `ABS(quantity_change) >= 5` (ignore petits changements)
-
-**Metadata Loggées** :
-```json
-old_data: { stock: 100 }
-new_data: { stock: 85 }
-severity: "info" | "warning" | "critical"
-metadata: {
-  product_name: "Lampe Design",
-  quantity_change: -15,
-  movement_type: "stock_out"
-}
-```
-
-**Business Logic** :
-```sql
-v_quantity_change := NEW.stock_real - OLD.stock_real
-
-IF ABS(v_quantity_change) < 5 THEN
-  RETURN NEW  -- Ignore
-END IF
-
-v_movement_type := CASE
-  WHEN v_quantity_change > 0 THEN 'stock_in'
-  ELSE 'stock_out'
-END
-
-severity := CASE
-  WHEN NEW.stock_real < 5 THEN 'critical'
-  WHEN NEW.stock_real < 10 THEN 'warning'
-  ELSE 'info'
-END
-```
-
-**Récupération Nom Produit** :
-```sql
-SELECT name INTO v_product_name
-FROM products WHERE id = NEW.id
 ```
 
 ---
@@ -307,12 +272,14 @@ ON CONFLICT (session_id) DO UPDATE SET
 ```
 
 **Metadata Agrégées** :
+
 - `pages_visited` : Incrémenté si action='page_view'
 - `actions_count` : Incrémenté pour toute action
 - `time_per_module` : JSONB `{"dashboard": 120, "catalogue": 300, ...}` (temps en secondes)
 - `last_activity` : Timestamp dernière action
 
 **Exemple Déclenchement** :
+
 ```typescript
 // use-user-activity-tracker insère event
 INSERT INTO user_activity_logs (user_id, session_id, action, page_url, ...)
@@ -331,6 +298,7 @@ VALUES ('{user_id}', '{session_uuid}', 'page_view', '/dashboard', ...)
 **Fonction** : `update_updated_at_column()`
 
 **Business Logic** :
+
 ```sql
 NEW.updated_at = now()
 RETURN NEW
@@ -351,6 +319,7 @@ Ces triggers créent des notifications temps réel pour événements critiques.
 **Utilité** : Créer notification pour tous les users avec `role='owner'`
 
 **Signature** :
+
 ```sql
 create_notification_for_owners(
   p_type TEXT,           -- 'business' | 'operations' | 'system'
@@ -364,6 +333,7 @@ RETURNS INT  -- Nombre notifications créées
 ```
 
 **Implémentation** :
+
 ```sql
 FOR v_owner_record IN
   SELECT user_id FROM user_profiles WHERE role = 'owner'
@@ -385,6 +355,7 @@ RETURN v_notification_count;
 **Fonction** : `notify_stock_alert()`
 
 **Conditions** :
+
 ```sql
 IF NEW.stock_quantity IS NOT NULL
    AND NEW.min_stock IS NOT NULL
@@ -395,6 +366,7 @@ THEN
 ```
 
 **Notification Créée** :
+
 ```
 Type: 'business'
 Severity: 'urgent'
@@ -407,6 +379,7 @@ Action Label: 'Réapprovisionner'
 **Business Logic** : Alerte quand stock **passe sous** min_stock (évite spam si déjà bas)
 
 **Exemple Déclenchement** :
+
 ```sql
 UPDATE products SET stock_quantity = 3 WHERE id = '{prod_id}';
 -- (OLD.stock_quantity = 12, NEW.stock_quantity = 3, min_stock = 10)
@@ -426,6 +399,7 @@ UPDATE products SET stock_quantity = 3 WHERE id = '{prod_id}';
 **Conditions** : `NEW.status = 'confirmed' AND OLD.status = 'draft'`
 
 **Notification** :
+
 ```
 Type: 'business'
 Severity: 'important'
@@ -448,6 +422,7 @@ Action Label: 'Voir Détails'
 **Conditions** : `NEW.payment_status = 'paid' AND (OLD.payment_status IS NULL OR OLD.payment_status <> 'paid')`
 
 **Notification** :
+
 ```
 Type: 'operations'
 Severity: 'important'
@@ -488,6 +463,7 @@ Ces fonctions sont appelées par hooks React pour analytics.
 **Signature** : `calculate_engagement_score(p_user_id uuid, p_days int DEFAULT 30) RETURNS int`
 
 **Formule** :
+
 ```sql
 v_score := (v_sessions_count * 10) + (v_actions_count * 2) + (v_modules_variety * 5)
 
@@ -496,6 +472,7 @@ RETURN LEAST(v_score, 100)
 ```
 
 **Variables** :
+
 - `v_sessions_count` : COUNT(user_sessions WHERE user_id=p_user_id AND session_start >= NOW()-p_days)
 - `v_actions_count` : COUNT(user_activity_logs WHERE user_id=p_user_id AND created_at >= NOW()-p_days)
 - `v_modules_variety` : COUNT(DISTINCT module_key) depuis `time_per_module` JSONB
@@ -509,6 +486,7 @@ RETURN LEAST(v_score, 100)
 **Signature** : `get_user_recent_actions(p_user_id uuid, p_limit int DEFAULT 50)`
 
 **Retourne** :
+
 ```sql
 SELECT action, page_url, table_name, record_id, severity, created_at
 FROM user_activity_logs
@@ -526,6 +504,7 @@ LIMIT p_limit
 **Signature** : `get_user_activity_stats(p_user_id uuid, p_days int DEFAULT 30)`
 
 **Retourne** :
+
 ```sql
 {
   total_sessions: int,
@@ -538,6 +517,7 @@ LIMIT p_limit
 ```
 
 **Calculs** :
+
 ```sql
 most_used_module = (
   SELECT module FROM (
@@ -558,6 +538,7 @@ most_used_module = (
 ### Index Critiques
 
 **user_activity_logs** :
+
 ```sql
 CREATE INDEX idx_activity_logs_user_date ON user_activity_logs(user_id, created_at DESC);
 CREATE INDEX idx_activity_logs_organisation ON user_activity_logs(organisation_id, created_at DESC);
@@ -566,6 +547,7 @@ CREATE INDEX idx_activity_logs_severity ON user_activity_logs(severity, created_
 ```
 
 **user_sessions** :
+
 ```sql
 CREATE INDEX idx_sessions_user_date ON user_sessions(user_id, session_start DESC);
 CREATE INDEX idx_sessions_active ON user_sessions(user_id, last_activity DESC) WHERE session_end IS NULL;
@@ -573,26 +555,28 @@ CREATE INDEX idx_sessions_session_id ON user_sessions(session_id);
 ```
 
 **notifications** :
+
 ```sql
 CREATE INDEX idx_notifications_user_unread ON notifications(user_id, created_at DESC) WHERE read = false;
 ```
 
 ### Impact Performance Triggers
 
-| Trigger | Tables Affectées | Inserts Déclenchées | Impact Latence |
-|---------|------------------|---------------------|----------------|
-| log_product_created | products → user_activity_logs | 1 | <5ms |
-| log_product_updated | products → user_activity_logs | 0-1 (conditionnel) | <3ms |
-| log_sales_order_created | sales_orders → user_activity_logs | 1 | <5ms |
-| update_user_session | user_activity_logs → user_sessions | 1 (upsert) | <10ms |
-| notify_stock_alert | products → notifications | N (1 par owner) | <50ms |
-| notify_order_confirmed | sales_orders → notifications | N | <50ms |
+| Trigger                 | Tables Affectées                   | Inserts Déclenchées | Impact Latence |
+| ----------------------- | ---------------------------------- | ------------------- | -------------- |
+| log_product_created     | products → user_activity_logs      | 1                   | <5ms           |
+| log_product_updated     | products → user_activity_logs      | 0-1 (conditionnel)  | <3ms           |
+| log_sales_order_created | sales_orders → user_activity_logs  | 1                   | <5ms           |
+| update_user_session     | user_activity_logs → user_sessions | 1 (upsert)          | <10ms          |
+| notify_stock_alert      | products → notifications           | N (1 par owner)     | <50ms          |
+| notify_order_confirmed  | sales_orders → notifications       | N                   | <50ms          |
 
 **Total Overhead** : <100ms max pour workflow complexe (commande + paiement + notification)
 
 ### Optimisations
 
 **Batching Notifications** :
+
 ```sql
 -- Au lieu de 1 INSERT par owner, grouper:
 INSERT INTO notifications (...)
@@ -600,10 +584,12 @@ SELECT ... FROM user_profiles WHERE role = 'owner'
 ```
 
 **Async Notifications** (future) :
+
 - Queue système (pg_notify)
 - Workers background processing
 
 **Conditional Triggers** :
+
 - Filtrage WHEN clause (évite exécution inutile)
 - Seuils (stock movements ≥5 unités)
 

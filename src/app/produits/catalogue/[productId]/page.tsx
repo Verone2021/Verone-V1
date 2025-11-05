@@ -37,6 +37,9 @@ import { ProductVariantsGrid } from '@/components/business/product-variants-grid
 import { SampleRequirementSection } from '@/components/business/sample-requirement-section';
 import { SupplierVsPricingEditSection } from '@/components/business/supplier-vs-pricing-edit-section';
 import { StockEditSection } from '@/components/business/stock-edit-section';
+import { StockStatusCompact } from '@/components/business/stock-status-compact';
+import { ProductStatusCompact } from '@/components/business/product-status-compact';
+import { CompletionStatusCompact } from '@/components/business/completion-status-compact';
 import { ProductFixedCharacteristics } from '@/components/business/product-fixed-characteristics';
 import { SupplierEditSection } from '@/components/business/supplier-edit-section';
 import { WeightEditSection } from '@/components/business/weight-edit-section';
@@ -119,6 +122,9 @@ interface Product {
   product_status: 'active' | 'preorder' | 'discontinued' | 'draft';
   condition: 'new' | 'used' | 'refurbished';
   stock_quantity: number | null;
+  stock_real: number | null;
+  stock_forecasted_in: number | null;
+  completion_percentage: number | null;
   min_stock: number | null;
   supplier_id: string | null;
   supplier_reference: string | null;
@@ -445,6 +451,33 @@ export default function ProductDetailPage() {
               <Share2 className="h-4 w-4" />
               Partager
             </ButtonV2>
+          </div>
+
+          {/* Sections statuts compactes */}
+          <div className="space-y-2">
+            <StockStatusCompact
+              product={{
+                id: product.id,
+                stock_real: product.stock_real ?? 0,
+                stock_forecasted_in: product.stock_forecasted_in ?? 0,
+              }}
+            />
+
+            <ProductStatusCompact
+              product={{
+                id: product.id,
+                product_status: product.product_status,
+              }}
+              onUpdate={handleProductUpdate as any}
+            />
+
+            <CompletionStatusCompact
+              product={{
+                id: product.id,
+                completion_percentage: product.completion_percentage ?? 0,
+              }}
+              missingFields={missingFields}
+            />
           </div>
         </aside>
 

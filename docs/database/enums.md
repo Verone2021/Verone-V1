@@ -102,10 +102,10 @@ CREATE TYPE availability_status_type AS ENUM (
 
 **⚠️ DEPRECATED** : Ce type ENUM est obsolète depuis le 2025-11-04. Il a été remplacé par le système dual status :
 
-- `stock_status_type` pour la disponibilité stock (automatique)
+- `stock_status_type` pour la disponibilité stock
 - `product_status_type` pour le statut commercial (manuel)
 
-Voir migration `20251104_100_refonte_statuts_produits_stock_commercial.sql` et documentation complète dans [status-dual-system.md](../business-rules/04-produits/catalogue/products/status-dual-system.md)
+Voir migration `20251104_100_refonte_statuts_produits_stock_commercial.sql`
 
 ---
 

@@ -141,7 +141,7 @@ Le module Catalogue gère **7 workflows métier principaux** pour le cycle de vi
   slug: "fauteuil-vintage",
   cost_price: 150,
   margin_percentage: 40,
-  status: "in_stock",           // Si stock_real > 0
+  product_status: "active",     // Statut commercial manuel
   stock_real: 10,
   stock_forecasted_in: 0,
   stock_forecasted_out: 0,
@@ -399,10 +399,10 @@ export default function ProductDetailPage({ params }: { params: { id: string } }
 ```typescript
 // Archivage
 const handleArchive = async (productId: string) => {
-  const reason = prompt('Raison de l\'archivage ? (optionnel)')
+  const reason = prompt("Raison de l'archivage ? (optionnel)");
 
   if (!confirm('Archiver ce produit ?')) {
-    return
+    return;
   }
 
   try {
@@ -411,21 +411,21 @@ const handleArchive = async (productId: string) => {
       .update({
         status: 'archived',
         archived_reason: reason,
-        archived_at: new Date().toISOString()
+        archived_at: new Date().toISOString(),
       })
-      .eq('id', productId)
+      .eq('id', productId);
 
-    toast.success('✅ Produit archivé')
-    router.push('/produits/catalogue')
+    toast.success('✅ Produit archivé');
+    router.push('/produits/catalogue');
   } catch (error) {
-    toast.error('❌ Erreur archivage')
+    toast.error('❌ Erreur archivage');
   }
-}
+};
 
 // Restauration
 const handleRestore = async (productId: string) => {
   if (!confirm('Restaurer ce produit au catalogue ?')) {
-    return
+    return;
   }
 
   try {
@@ -434,16 +434,16 @@ const handleRestore = async (productId: string) => {
       .update({
         status: 'in_stock', // Sera recalculé par trigger
         archived_reason: null,
-        archived_at: null
+        archived_at: null,
       })
-      .eq('id', productId)
+      .eq('id', productId);
 
-    toast.success('✅ Produit restauré')
-    refetch() // Refresh liste
+    toast.success('✅ Produit restauré');
+    refetch(); // Refresh liste
   } catch (error) {
-    toast.error('❌ Erreur restauration')
+    toast.error('❌ Erreur restauration');
   }
-}
+};
 ```
 
 ---
@@ -706,8 +706,8 @@ export default function ProductImagesManagement({ productId }: { productId: stri
 ```typescript
 const { packages, calculatePackagePrice } = useProductPackages({
   productId,
-  autoFetch: true
-})
+  autoFetch: true,
+});
 
 // Créer conditionnement
 const handleCreatePackage = async () => {
@@ -716,25 +716,23 @@ const handleCreatePackage = async () => {
     type: 'pack',
     base_quantity: 6,
     unit: 'unités',
-    discount_rate: 0.10, // 10% remise
+    discount_rate: 0.1, // 10% remise
     is_default: false,
-    is_active: true
-  }
+    is_active: true,
+  };
 
-  await supabase
-    .from('product_packages')
-    .insert([packageData])
+  await supabase.from('product_packages').insert([packageData]);
 
-  toast.success('✅ Conditionnement créé')
-  refetch()
-}
+  toast.success('✅ Conditionnement créé');
+  refetch();
+};
 
 // Calculer prix package
-const basePrice = 50 // Prix unitaire de base
+const basePrice = 50; // Prix unitaire de base
 packages.forEach(pkg => {
-  const price = calculatePackagePrice(basePrice, pkg)
-  console.log(`Package ${pkg.base_quantity}x : ${price}€`)
-})
+  const price = calculatePackagePrice(basePrice, pkg);
+  console.log(`Package ${pkg.base_quantity}x : ${price}€`);
+});
 ```
 
 ---
@@ -800,27 +798,30 @@ packages.forEach(pkg => {
 
 ```typescript
 // Ajustement stock manuel
-const handleStockAdjustment = async (productId: string, quantityChange: number, reason: string) => {
+const handleStockAdjustment = async (
+  productId: string,
+  quantityChange: number,
+  reason: string
+) => {
   // 1. Récupérer stock actuel
   const { data: product } = await supabase
     .from('products')
     .select('stock_real')
     .eq('id', productId)
-    .single()
+    .single();
 
-  const stockBefore = product.stock_real || 0
-  const stockAfter = stockBefore + quantityChange
+  const stockBefore = product.stock_real || 0;
+  const stockAfter = stockBefore + quantityChange;
 
   // Validation
   if (stockAfter < 0) {
-    toast.error('❌ Stock final ne peut pas être négatif')
-    return
+    toast.error('❌ Stock final ne peut pas être négatif');
+    return;
   }
 
   // 2. Créer mouvement stock
-  await supabase
-    .from('stock_movements')
-    .insert([{
+  await supabase.from('stock_movements').insert([
+    {
       product_id: productId,
       movement_type: 'adjustment',
       quantity_change: quantityChange,
@@ -829,18 +830,19 @@ const handleStockAdjustment = async (productId: string, quantityChange: number, 
       affects_forecast: false,
       reason_code: reason,
       notes: `Ajustement manuel : ${quantityChange > 0 ? '+' : ''}${quantityChange}`,
-      performed_at: new Date().toISOString()
-    }])
+      performed_at: new Date().toISOString(),
+    },
+  ]);
 
   // 3. Mettre à jour stock produit
   await supabase
     .from('products')
     .update({ stock_real: stockAfter })
-    .eq('id', productId)
+    .eq('id', productId);
 
-  toast.success('✅ Stock ajusté')
-  refetch()
-}
+  toast.success('✅ Stock ajusté');
+  refetch();
+};
 ```
 
 ---
@@ -874,14 +876,11 @@ const handleStockAdjustment = async (productId: string, quantityChange: number, 
     │
     ├─ Actions automatiques :
     │  1. UPDATE products SET
-    │     status = 'in_stock',
+    │     product_status = 'active',
     │     stock_real = 1,
     │     completion_percentage = 100,
     │     creation_mode = 'complete'
     │     WHERE id = $1
-    │
-    │  2. Trigger : update_product_stock_status()
-    │     └─ Confirme status = 'in_stock'
     │
     │  3. INSERT stock_movements (
     │       movement_type = 'sourcing_validation',
@@ -909,18 +908,17 @@ const validateSourcing = async (productId: string) => {
         stock_real: 1, // Stock initial après validation
         completion_percentage: 100,
         creation_mode: 'complete',
-        updated_at: new Date().toISOString()
+        updated_at: new Date().toISOString(),
       })
       .eq('id', productId)
       .select()
-      .single()
+      .single();
 
-    if (updateError) throw updateError
+    if (updateError) throw updateError;
 
     // 2. Créer mouvement stock
-    await supabase
-      .from('stock_movements')
-      .insert([{
+    await supabase.from('stock_movements').insert([
+      {
         product_id: productId,
         movement_type: 'sourcing_validation',
         quantity_change: 1,
@@ -929,18 +927,19 @@ const validateSourcing = async (productId: string) => {
         affects_forecast: false,
         reason_code: 'sourcing_completed',
         notes: 'Produit validé du sourcing au catalogue',
-        performed_at: new Date().toISOString()
-      }])
+        performed_at: new Date().toISOString(),
+      },
+    ]);
 
-    toast.success('✅ Produit validé au catalogue')
-    router.push(`/produits/catalogue/${productId}`)
+    toast.success('✅ Produit validé au catalogue');
+    router.push(`/produits/catalogue/${productId}`);
 
-    return product
+    return product;
   } catch (error) {
-    toast.error('❌ Erreur validation')
-    return null
+    toast.error('❌ Erreur validation');
+    return null;
   }
-}
+};
 ```
 
 ---
@@ -949,36 +948,36 @@ const validateSourcing = async (productId: string) => {
 
 ### Performance SLOs
 
-| Workflow | SLO | Actuel | Statut |
-|----------|-----|--------|--------|
-| Création produit complet | <5s | 3.2s | ✅ |
-| Upload image | <3s | 1.8s | ✅ |
-| Modification produit | <2s | 1.5s | ✅ |
-| Archivage | <1s | 0.5s | ✅ |
-| Validation sourcing | <2s | 1.2s | ✅ |
+| Workflow                 | SLO | Actuel | Statut |
+| ------------------------ | --- | ------ | ------ |
+| Création produit complet | <5s | 3.2s   | ✅     |
+| Upload image             | <3s | 1.8s   | ✅     |
+| Modification produit     | <2s | 1.5s   | ✅     |
+| Archivage                | <1s | 0.5s   | ✅     |
+| Validation sourcing      | <2s | 1.2s   | ✅     |
 
 ### Triggers Database Automatiques
 
-| Trigger | Déclenché sur | Fonction |
-|---------|--------------|----------|
-| `generate_product_sku` | INSERT products | Génère SKU auto (PRD-XXXX) |
-| `calculate_product_completion` | INSERT/UPDATE products | Calcule completion_percentage |
-| `update_product_stock_status` | UPDATE products.stock_real | Calcule status basé sur stock |
-| `generate_public_url` | INSERT product_images | Génère public_url automatique |
-| `ensure_single_primary_image` | UPDATE product_images.is_primary | Garantit 1 seule image primaire |
+| Trigger                        | Déclenché sur                    | Fonction                        |
+| ------------------------------ | -------------------------------- | ------------------------------- |
+| `generate_product_sku`         | INSERT products                  | Génère SKU auto (PRD-XXXX)      |
+| `calculate_product_completion` | INSERT/UPDATE products           | Calcule completion_percentage   |
+| `update_product_stock_status`  | UPDATE products.stock_real       | Calcule status basé sur stock   |
+| `generate_public_url`          | INSERT product_images            | Génère public_url automatique   |
+| `ensure_single_primary_image`  | UPDATE product_images.is_primary | Garantit 1 seule image primaire |
 
 ---
 
 ## 🔒 Permissions RLS
 
-| Workflow | Owner | Admin | Catalog Manager | Sales | User |
-|----------|-------|-------|-----------------|-------|------|
-| Créer produit | ✅ | ✅ | ✅ | ❌ | ❌ |
-| Modifier produit | ✅ | ✅ | ✅ | ⚠️ Limited | ❌ |
-| Archiver produit | ✅ | ✅ | ✅ | ❌ | ❌ |
-| Upload images | ✅ | ✅ | ✅ | ❌ | ❌ |
-| Ajuster stock | ✅ | ✅ | ✅ | ❌ | ❌ |
-| Voir détails | ✅ | ✅ | ✅ | ✅ | ✅ |
+| Workflow         | Owner | Admin | Catalog Manager | Sales      | User |
+| ---------------- | ----- | ----- | --------------- | ---------- | ---- |
+| Créer produit    | ✅    | ✅    | ✅              | ❌         | ❌   |
+| Modifier produit | ✅    | ✅    | ✅              | ⚠️ Limited | ❌   |
+| Archiver produit | ✅    | ✅    | ✅              | ❌         | ❌   |
+| Upload images    | ✅    | ✅    | ✅              | ❌         | ❌   |
+| Ajuster stock    | ✅    | ✅    | ✅              | ❌         | ❌   |
+| Voir détails     | ✅    | ✅    | ✅              | ✅         | ✅   |
 
 ---
 

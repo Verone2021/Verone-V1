@@ -9,12 +9,14 @@
 ## 📊 Vue d'Ensemble
 
 Le **Catalogue** est le cœur du module Produits. Il gère l'ensemble du cycle de vie des produits :
+
 - Création (wizard 4 étapes : Info, Images, Prix, Stock)
 - Édition complète
 - Archivage/Restauration
 - Stock réel + prévis
 
 ionnel (in/out)
+
 - Statuts automatiques via triggers
 - Conditionnements flexibles (packages)
 
@@ -23,6 +25,7 @@ ionnel (in/out)
 ## ✅ Features Validées
 
 ### CRUD Produits
+
 - ✅ **Création via wizard** : 4 étapes (Informations, Images, Prix, Stock)
 - ✅ **Création rapide** : Formulaire simplifié 3 champs minimum
 - ✅ **Modification** : Page détail avec tous les champs
@@ -31,25 +34,22 @@ ionnel (in/out)
 - ✅ **Duplication** : Cloner produit existant (TODO Phase 2)
 
 ### Système Stock
+
 - ✅ **Stock réel** : stock_real (quantité physique)
 - ✅ **Stock prévisionnel entrée** : stock_forecasted_in (achats en cours)
 - ✅ **Stock prévisionnel sortie** : stock_forecasted_out (ventes en cours)
 - ✅ **Seuils** : min_stock, reorder_point
 - ✅ **Calcul automatique** : stock_quantity (calculé via trigger)
 
-### Statuts Automatiques
-- ✅ **draft** : Produit incomplet (completion < 100%)
-- ✅ **in_stock** : stock_real > 0
-- ✅ **out_of_stock** : stock_real = 0
-- ✅ **discontinued** : Produit archivé/discontinué
-
 ### Images
+
 - ✅ **Multi-images** : Galerie illimitée
 - ✅ **Image primaire** : Détection automatique (is_primary)
 - ✅ **Upload** : Supabase Storage (product-images bucket)
 - ✅ **Optimisation** : Compression automatique
 
 ### UI/UX
+
 - ✅ **Vue grille** : Cards responsive
 - ✅ **Vue liste** : Tableau détaillé
 - ✅ **Filtres** : Statut, Fournisseur, Catégorie, Recherche
@@ -65,12 +65,14 @@ ionnel (in/out)
 **Fichier** : `src/app/produits/catalogue/page.tsx`
 
 **Features** :
+
 - Grille 4×3 cards produits
 - Filtres : Statut, Fournisseur, Recherche
 - Statistiques : Total, En stock, Rupture, Archivés
 - Actions : Nouveau produit, Export CSV (TODO)
 
 **Composants** :
+
 - `ProductCard` : Card produit avec image, nom, prix, stock
 - `ProductFilters` : Barre filtres
 - `ProductStats` : Cartes statistiques
@@ -82,6 +84,7 @@ ionnel (in/out)
 **Fichier** : `src/app/produits/catalogue/[productId]/page.tsx`
 
 **Sections** :
+
 1. **Informations générales** : Nom, SKU, Description, Catégorie
 2. **Images** : Galerie + Sélection primaire
 3. **Fournisseur** : Supplier, Référence, URL page produit
@@ -92,6 +95,7 @@ ionnel (in/out)
 8. **Métadonnées** : SKU, Dates création/modification
 
 **Actions** :
+
 - Modifier (tous champs)
 - Archiver
 - Dupliquer (TODO Phase 2)
@@ -105,6 +109,7 @@ ionnel (in/out)
 **Wizard 4 Étapes** :
 
 #### Étape 1 : Informations Générales
+
 - Nom produit (REQUIRED)
 - Fournisseur (SupplierSelector)
 - Catégorie (CategorySelector)
@@ -114,28 +119,33 @@ ionnel (in/out)
 - Points de vente (selling_points)
 
 #### Étape 2 : Images
+
 - Upload multiple images
 - Sélection image primaire
 - Drag & drop
 - Aperçu galerie
 
 #### Étape 3 : Prix
+
 - Prix achat HT (cost_price)
 - Marge % (margin_percentage)
 - Prix vente estimé (calculé auto)
 
 #### Étape 4 : Stock
+
 - Stock réel initial (stock_real)
 - Stock minimum (min_stock)
 - Point de réapprovisionnement (reorder_point)
 
 **Validation** :
+
 - Étape 1 : Nom obligatoire
 - Étape 2 : Au moins 1 image recommandée
 - Étape 3 : Prix HT > 0 (recommandé)
 - Étape 4 : Stock initial ≥ 0
 
 **Soumission** :
+
 - Création produit avec completion_percentage calculé
 - Upload images vers Supabase Storage
 - Redirection vers `/produits/catalogue/[productId]`
@@ -147,6 +157,7 @@ ionnel (in/out)
 **Fichier** : `src/app/produits/catalogue/archived/page.tsx`
 
 **Features** :
+
 - Liste produits archivés (WHERE archived_at IS NOT NULL)
 - Action : Restaurer produit
 - Filtres : Date archivage, Raison archivage
@@ -158,6 +169,7 @@ ionnel (in/out)
 **Fichier** : `src/app/produits/catalogue/stocks/page.tsx`
 
 **Features** :
+
 - Vue centralisée tous stocks
 - Alertes : Stock < min_stock
 - Filtres : Rupture, Stock faible, Réapprovisionnement
@@ -170,6 +182,7 @@ ionnel (in/out)
 **Fichier** : `src/app/produits/catalogue/dashboard/page.tsx`
 
 **KPIs** :
+
 - Total produits catalogue
 - % En stock vs Rupture
 - Valeur stock (cost_price × stock_real)
@@ -177,6 +190,7 @@ ionnel (in/out)
 - Alertes stock faible
 
 **Graphiques** :
+
 - Évolution stock mensuel
 - Répartition par catégorie
 - Répartition par fournisseur
@@ -188,6 +202,7 @@ ionnel (in/out)
 Voir [hooks.md](./hooks.md) pour documentation complète.
 
 **Principaux** :
+
 - `useProducts()` : CRUD principal
 - `useProduct(id)` : Détail produit
 - `useArchivedProducts()` : Produits archivés
@@ -201,6 +216,7 @@ Voir [hooks.md](./hooks.md) pour documentation complète.
 Voir [components.md](./components.md) pour documentation complète.
 
 **Principaux** :
+
 - `ProductCreationWizard` : Wizard 4 étapes
 - `ProductCard` : Card grille
 - `ProductForm` : Formulaire édition
@@ -214,6 +230,7 @@ Voir [components.md](./components.md) pour documentation complète.
 Voir [workflows.md](./workflows.md) pour workflows détaillés.
 
 **Principaux** :
+
 1. **Création Produit** : Wizard → Upload images → Validation → Catalogue
 2. **Modification Produit** : Détail → Édition → Save → Refresh
 3. **Archivage** : Action → Confirmation → archived_at timestamp
@@ -226,6 +243,7 @@ Voir [workflows.md](./workflows.md) pour workflows détaillés.
 **Table principale** : `products` (44 colonnes)
 
 **Colonnes clés catalogue** :
+
 - `id`, `sku`, `name`, `slug`
 - `status` (availability_status_type)
 - `stock_real`, `stock_forecasted_in`, `stock_forecasted_out`
@@ -236,11 +254,12 @@ Voir [workflows.md](./workflows.md) pour workflows détaillés.
 - `archived_at` (NULL si actif)
 
 **Triggers** :
-- `update_product_stock_status()` : Calcul statut auto
+
 - `calculate_product_completion()` : % complétude
 - `generate_product_sku()` : SKU auto (PRD-XXXX)
 
 **RLS Policies** :
+
 - Owner : CRUD complet
 - Admin : CRUD complet
 - Catalog Manager : CRUD complet
@@ -285,12 +304,14 @@ test('Modifier produit existant', async ({ page, productId }) => {
 ## 📊 Performance
 
 **SLOs** :
+
 - ✅ Page liste catalogue : <2s (SLO respecté)
 - ✅ Page détail produit : <1.5s
 - ✅ Upload image : <3s
 - ✅ Recherche (debounced) : <500ms
 
 **Optimisations** :
+
 - Pagination (20 produits/page)
 - Images lazy loading
 - Debounce recherche (300ms)

@@ -11,6 +11,7 @@
 Le module Catalogue utilise **6 hooks principaux** pour gérer le CRUD des produits, les images, les conditionnements et l'archivage. Tous les hooks utilisent le pattern **SWR** pour le cache et la revalidation automatique.
 
 **Hooks Disponibles** :
+
 1. `useProducts()` - CRUD principal + pagination + filtres
 2. `useProduct(id)` - Détail produit unique avec enrichissement
 3. `useProductImages()` - Gestion images (upload, delete, reorder)
@@ -30,23 +31,26 @@ function useProducts(
   page?: number
 ): {
   // Data
-  products: Product[]
-  totalCount: number
-  totalPages: number
-  page: number
-  hasNextPage: boolean
-  hasPreviousPage: boolean
+  products: Product[];
+  totalCount: number;
+  totalPages: number;
+  page: number;
+  hasNextPage: boolean;
+  hasPreviousPage: boolean;
 
   // State
-  loading: boolean
-  error: string | null
+  loading: boolean;
+  error: string | null;
 
   // Actions CRUD
-  createProduct: (data: CreateProductData) => Promise<Product | null>
-  updateProduct: (id: string, data: Partial<CreateProductData>) => Promise<Product | null>
-  deleteProduct: (id: string) => Promise<boolean>
-  refetch: () => void
-}
+  createProduct: (data: CreateProductData) => Promise<Product | null>;
+  updateProduct: (
+    id: string,
+    data: Partial<CreateProductData>
+  ) => Promise<Product | null>;
+  deleteProduct: (id: string) => Promise<boolean>;
+  refetch: () => void;
+};
 ```
 
 ### Paramètres
@@ -57,13 +61,13 @@ Objet de filtres optionnel pour filtrer les produits.
 
 ```typescript
 interface ProductFilters {
-  status?: 'in_stock' | 'out_of_stock' | 'draft' | 'sourcing' | 'discontinued'
-  supplierId?: string
-  subcategoryId?: string
-  search?: string // Recherche par nom ou SKU
-  availabilityType?: 'normal' | 'special_order' | 'pre_order'
-  productType?: 'standard' | 'variant' | 'configurable'
-  creationMode?: 'complete' | 'sourcing' | 'quick'
+  productStatus?: 'active' | 'preorder' | 'discontinued' | 'draft';
+  supplierId?: string;
+  subcategoryId?: string;
+  search?: string; // Recherche par nom ou SKU
+  availabilityType?: 'normal' | 'special_order' | 'pre_order';
+  productType?: 'standard' | 'variant' | 'configurable';
+  creationMode?: 'complete' | 'sourcing' | 'quick';
 }
 ```
 
@@ -72,6 +76,7 @@ interface ProductFilters {
 Numéro de page (0-indexed). Par défaut : `0`
 
 **Pagination** :
+
 - 20 produits par page (`PRODUCTS_PER_PAGE = 20`)
 - Cache SWR : 5 minutes (`CACHE_REVALIDATION_TIME = 300000`)
 
@@ -201,15 +206,16 @@ export default function ProductsPage() {
 
 ```typescript
 function useProduct(id: string): {
-  product: Product | null
-  loading: boolean
-  error: string | null
-}
+  product: Product | null;
+  loading: boolean;
+  error: string | null;
+};
 ```
 
 ### Enrichissement Automatique
 
 Le hook enrichit automatiquement le produit avec :
+
 1. **Prix minimum de vente** calculé (`minimumSellingPrice`)
 2. **Image primaire** extraite (`primary_image_url`)
 3. **Données fournisseur** via JOIN
@@ -283,56 +289,68 @@ export default function ProductDetailPage({ params }: { params: { id: string } }
 
 ```typescript
 function useProductImages(options: {
-  productId: string
-  bucketName?: string
-  autoFetch?: boolean
+  productId: string;
+  bucketName?: string;
+  autoFetch?: boolean;
 }): {
   // Data
-  images: ProductImage[]
-  primaryImage: ProductImage | null
-  galleryImages: ProductImage[]
-  technicalImages: ProductImage[]
-  totalImages: number
-  hasImages: boolean
+  images: ProductImage[];
+  primaryImage: ProductImage | null;
+  galleryImages: ProductImage[];
+  technicalImages: ProductImage[];
+  totalImages: number;
+  hasImages: boolean;
 
   // State
-  loading: boolean
-  uploading: boolean
-  error: string | null
+  loading: boolean;
+  uploading: boolean;
+  error: string | null;
 
   // Actions
-  fetchImages: () => Promise<void>
-  uploadImage: (file: File, options?: UploadOptions) => Promise<ProductImage>
-  uploadMultipleImages: (files: File[], options?: MultiUploadOptions) => Promise<ProductImage[]>
-  deleteImage: (imageId: string) => Promise<void>
-  reorderImages: (imageIds: string[]) => Promise<void>
-  setPrimaryImage: (imageId: string) => Promise<void>
-  updateImageMetadata: (imageId: string, metadata: ImageMetadata) => Promise<void>
+  fetchImages: () => Promise<void>;
+  uploadImage: (file: File, options?: UploadOptions) => Promise<ProductImage>;
+  uploadMultipleImages: (
+    files: File[],
+    options?: MultiUploadOptions
+  ) => Promise<ProductImage[]>;
+  deleteImage: (imageId: string) => Promise<void>;
+  reorderImages: (imageIds: string[]) => Promise<void>;
+  setPrimaryImage: (imageId: string) => Promise<void>;
+  updateImageMetadata: (
+    imageId: string,
+    metadata: ImageMetadata
+  ) => Promise<void>;
 
   // Helpers
-  getImagesByType: (type: ImageType) => ProductImage[]
-}
+  getImagesByType: (type: ImageType) => ProductImage[];
+};
 
 // Types
-type ImageType = 'gallery' | 'technical' | 'detail' | 'lifestyle' | 'dimension' | 'other'
+type ImageType =
+  | 'gallery'
+  | 'technical'
+  | 'detail'
+  | 'lifestyle'
+  | 'dimension'
+  | 'other';
 
 interface UploadOptions {
-  isPrimary?: boolean
-  imageType?: ImageType
-  altText?: string
+  isPrimary?: boolean;
+  imageType?: ImageType;
+  altText?: string;
 }
 
 interface MultiUploadOptions {
-  imageType?: ImageType
-  altTextPrefix?: string
-  firstImagePrimary?: boolean
+  imageType?: ImageType;
+  altTextPrefix?: string;
+  firstImagePrimary?: boolean;
 }
 
 interface ImageMetadata {
-  alt_text?: string
-  image_type?: ImageType
-  width?: number
-  height?: number
+  alt_text?: string;
+  image_type?: ImageType;
+  width?: number;
+  height?: number;
 }
 ```
 
@@ -351,6 +369,7 @@ width, height, created_at, updated_at
 ### Triggers Automatiques
 
 Le hook s'appuie sur des **triggers automatiques** pour :
+
 - ✅ Générer `public_url` automatiquement (trigger `generate_public_url`)
 - ✅ Gérer "single primary image" (trigger `ensure_single_primary_image`)
 - ✅ Mettre à jour `updated_at` automatiquement
@@ -467,45 +486,48 @@ export default function ProductImagesSection({ productId }: { productId: string 
 ### Best Practices
 
 1. **Validation côté client** :
+
 ```typescript
 const validateImage = (file: File) => {
-  const maxSize = 5 * 1024 * 1024 // 5MB
-  const allowedTypes = ['image/jpeg', 'image/png', 'image/webp']
+  const maxSize = 5 * 1024 * 1024; // 5MB
+  const allowedTypes = ['image/jpeg', 'image/png', 'image/webp'];
 
   if (file.size > maxSize) {
-    throw new Error('Image trop volumineuse (max 5MB)')
+    throw new Error('Image trop volumineuse (max 5MB)');
   }
 
   if (!allowedTypes.includes(file.type)) {
-    throw new Error('Format non supporté (JPEG, PNG, WebP uniquement)')
+    throw new Error('Format non supporté (JPEG, PNG, WebP uniquement)');
   }
-}
+};
 ```
 
 2. **Optimisation avant upload** :
+
 ```typescript
-import imageCompression from 'browser-image-compression'
+import imageCompression from 'browser-image-compression';
 
 const compressImage = async (file: File) => {
   return await imageCompression(file, {
     maxSizeMB: 1,
     maxWidthOrHeight: 1920,
-    useWebWorker: true
-  })
-}
+    useWebWorker: true,
+  });
+};
 ```
 
 3. **Gestion erreurs** :
+
 ```typescript
 try {
-  await uploadImage(file)
+  await uploadImage(file);
 } catch (error) {
   if (error.message.includes('storage')) {
-    toast.error('Erreur upload Storage')
+    toast.error('Erreur upload Storage');
   } else if (error.message.includes('database')) {
-    toast.error('Erreur enregistrement base de données')
+    toast.error('Erreur enregistrement base de données');
   } else {
-    toast.error('Erreur inconnue')
+    toast.error('Erreur inconnue');
   }
 }
 ```
@@ -518,49 +540,49 @@ try {
 
 ```typescript
 function useProductPackages(options: {
-  productId: string
-  autoFetch?: boolean
+  productId: string;
+  autoFetch?: boolean;
 }): {
   // Data
-  packages: ProductPackage[]
-  defaultPackage: ProductPackage | null
-  singlePackage: ProductPackage | null
-  totalPackages: number
-  hasMultiplePackages: boolean
-  hasDiscounts: boolean
-  maxDiscount: number
-  isValidPackageSystem: boolean
+  packages: ProductPackage[];
+  defaultPackage: ProductPackage | null;
+  singlePackage: ProductPackage | null;
+  totalPackages: number;
+  hasMultiplePackages: boolean;
+  hasDiscounts: boolean;
+  maxDiscount: number;
+  isValidPackageSystem: boolean;
 
   // State
-  loading: boolean
-  error: string | null
+  loading: boolean;
+  error: string | null;
 
   // Actions
-  fetchPackages: () => Promise<void>
-  calculatePackagePrice: (basePrice: number, package: ProductPackage) => number
+  fetchPackages: () => Promise<void>;
+  calculatePackagePrice: (basePrice: number, package: ProductPackage) => number;
 
   // Helpers Business
-  getPackagesByType: (type: PackageType) => ProductPackage[]
-  getPackPackages: () => ProductPackage[]
-  getBulkPackages: () => ProductPackage[]
-  getBestValuePackage: (basePrice: number) => ProductPackage | null
-  getDiscountLabel: (package: ProductPackage) => string | null
-}
+  getPackagesByType: (type: PackageType) => ProductPackage[];
+  getPackPackages: () => ProductPackage[];
+  getBulkPackages: () => ProductPackage[];
+  getBestValuePackage: (basePrice: number) => ProductPackage | null;
+  getDiscountLabel: (package: ProductPackage) => string | null;
+};
 
 // Types
-type PackageType = 'single' | 'pack' | 'bulk' | 'custom'
+type PackageType = 'single' | 'pack' | 'bulk' | 'custom';
 
 interface ProductPackage {
-  id: string
-  product_id: string
-  type: PackageType
-  base_quantity: number
-  unit: string
-  unit_price_ht?: number
-  discount_rate?: number
-  is_default: boolean
-  display_order: number
-  is_active: boolean
+  id: string;
+  product_id: string;
+  type: PackageType;
+  base_quantity: number;
+  unit: string;
+  unit_price_ht?: number;
+  discount_rate?: number;
+  is_default: boolean;
+  display_order: number;
+  is_active: boolean;
 }
 ```
 
@@ -682,15 +704,17 @@ Retourne le package avec le **meilleur prix unitaire**.
 
 ```typescript
 // Calcul automatique
-const bestValue = getBestValuePackage(150)
+const bestValue = getBestValuePackage(150);
 
 // Algorithme
 packages.reduce((best, current) => {
-  const currentPricePerUnit = calculatePackagePrice(basePrice, current) / current.base_quantity
-  const bestPricePerUnit = calculatePackagePrice(basePrice, best) / best.base_quantity
+  const currentPricePerUnit =
+    calculatePackagePrice(basePrice, current) / current.base_quantity;
+  const bestPricePerUnit =
+    calculatePackagePrice(basePrice, best) / best.base_quantity;
 
-  return currentPricePerUnit < bestPricePerUnit ? current : best
-})
+  return currentPricePerUnit < bestPricePerUnit ? current : best;
+});
 ```
 
 #### `getDiscountLabel(package)`
@@ -698,7 +722,7 @@ packages.reduce((best, current) => {
 Génère un label UX pour la remise.
 
 ```typescript
-getDiscountLabel(package)
+getDiscountLabel(package);
 // discount_rate = 0.15 → "Jusqu'à -15%"
 // discount_rate = 0 → null
 ```
@@ -712,37 +736,37 @@ getDiscountLabel(package)
 ```typescript
 function useArchivedProducts(): {
   // Data
-  products: ArchivedProduct[]
-  total: number
+  products: ArchivedProduct[];
+  total: number;
 
   // State
-  loading: boolean
-  error: string | null
+  loading: boolean;
+  error: string | null;
 
   // Actions
-  loadArchivedProducts: () => Promise<void>
-  archiveProduct: (id: string, reason?: string) => Promise<boolean>
-  restoreProduct: (id: string) => Promise<boolean>
-  permanentlyDeleteProduct: (id: string) => Promise<boolean>
+  loadArchivedProducts: () => Promise<void>;
+  archiveProduct: (id: string, reason?: string) => Promise<boolean>;
+  restoreProduct: (id: string) => Promise<boolean>;
+  permanentlyDeleteProduct: (id: string) => Promise<boolean>;
 
   // Stats
   stats: {
-    total: number
-    archived: number
-    discontinued: number
-    endOfLife: number
-    recentlyArchived: number
-  }
-}
+    total: number;
+    archived: number;
+    discontinued: number;
+    endOfLife: number;
+    recentlyArchived: number;
+  };
+};
 
 interface ArchivedProduct {
-  id: string
-  name: string
-  sku: string
-  status: 'archived' | 'discontinued' | 'end_of_life'
-  archived_reason: string | null
-  archived_at: string
-  images: ProductImage[]
+  id: string;
+  name: string;
+  sku: string;
+  status: 'archived' | 'discontinued' | 'end_of_life';
+  archived_reason: string | null;
+  archived_at: string;
+  images: ProductImage[];
 }
 ```
 
@@ -874,11 +898,11 @@ export default function ArchivedProductsPage() {
 ### Statistiques Calculées
 
 ```typescript
-stats.total              // Nombre total produits archivés
-stats.archived           // status = 'archived'
-stats.discontinued       // status = 'discontinued'
-stats.endOfLife          // status = 'end_of_life'
-stats.recentlyArchived   // Archivés il y a moins de 7 jours
+stats.total; // Nombre total produits archivés
+stats.archived; // status = 'archived'
+stats.discontinued; // status = 'discontinued'
+stats.endOfLife; // status = 'end_of_life'
+stats.recentlyArchived; // Archivés il y a moins de 7 jours
 ```
 
 ---
@@ -890,12 +914,12 @@ stats.recentlyArchived   // Archivés il y a moins de 7 jours
 Récupère **uniquement l'image primaire** d'un produit.
 
 ```typescript
-const { primaryImage, loading } = useProductPrimaryImage(productId)
+const { primaryImage, loading } = useProductPrimaryImage(productId);
 
 // Retourne
 {
-  primaryImage: ProductImage | null
-  loading: boolean
+  primaryImage: ProductImage | null;
+  loading: boolean;
 }
 ```
 
@@ -904,27 +928,24 @@ const { primaryImage, loading } = useProductPrimaryImage(productId)
 Gestion des couleurs pour les variantes.
 
 ```typescript
-const {
-  colors,
-  addColor,
-  removeColor,
-  updateColor
-} = useProductColors(productId)
+const { colors, addColor, removeColor, updateColor } =
+  useProductColors(productId);
 ```
 
 ---
 
 ## 📊 Comparaison Performance
 
-| Hook | Table(s) | Requêtes | Cache | Optimisé |
-|------|---------|----------|-------|----------|
-| `useProducts` | products | 1 SELECT + pagination | SWR 5min | ✅ |
-| `useProduct` | products + organisations + images | 1 SELECT (JOIN) | useEffect | ⚠️ |
-| `useProductImages` | product_images | 1 SELECT + actions | useCallback | ✅ |
-| `useProductPackages` | product_packages | 1 SELECT + calculations | useCallback | ✅ |
-| `useArchivedProducts` | products + images | 1 SELECT (JOIN) | useEffect | ⚠️ |
+| Hook                  | Table(s)                          | Requêtes                | Cache       | Optimisé |
+| --------------------- | --------------------------------- | ----------------------- | ----------- | -------- |
+| `useProducts`         | products                          | 1 SELECT + pagination   | SWR 5min    | ✅       |
+| `useProduct`          | products + organisations + images | 1 SELECT (JOIN)         | useEffect   | ⚠️       |
+| `useProductImages`    | product_images                    | 1 SELECT + actions      | useCallback | ✅       |
+| `useProductPackages`  | product_packages                  | 1 SELECT + calculations | useCallback | ✅       |
+| `useArchivedProducts` | products + images                 | 1 SELECT (JOIN)         | useEffect   | ⚠️       |
 
 **Recommandations** :
+
 - ✅ `useProducts` : Excellent cache SWR, usage optimal
 - ⚠️ `useProduct` : Migrer vers SWR pour cache automatique (TODO Phase 2)
 - ⚠️ `useArchivedProducts` : Migrer vers SWR (TODO Phase 2)
@@ -936,28 +957,28 @@ const {
 ### Pattern 1 : Mutation + Revalidation (useProducts)
 
 ```typescript
-const { mutate } = useSWR(swrKey, fetcher)
+const { mutate } = useSWR(swrKey, fetcher);
 
-const createProduct = async (data) => {
-  const newProduct = await supabase.from('products').insert([data])
-  await mutate() // ✅ Invalide cache + refetch automatique
-  return newProduct
-}
+const createProduct = async data => {
+  const newProduct = await supabase.from('products').insert([data]);
+  await mutate(); // ✅ Invalide cache + refetch automatique
+  return newProduct;
+};
 ```
 
 ### Pattern 2 : Optimistic Update
 
 ```typescript
-const restoreProduct = async (id) => {
+const restoreProduct = async id => {
   // Update UI immédiatement
   setState(prev => ({
     ...prev,
-    products: prev.products.filter(p => p.id !== id)
-  }))
+    products: prev.products.filter(p => p.id !== id),
+  }));
 
   // Puis update backend
-  await supabase.from('products').update({ status: 'in_stock' }).eq('id', id)
-}
+  await supabase.from('products').update({ status: 'in_stock' }).eq('id', id);
+};
 ```
 
 ---
@@ -967,34 +988,34 @@ const restoreProduct = async (id) => {
 ### Test Hook `useProducts`
 
 ```typescript
-import { renderHook, waitFor } from '@testing-library/react'
-import { useProducts } from '@/hooks/use-products'
+import { renderHook, waitFor } from '@testing-library/react';
+import { useProducts } from '@/hooks/use-products';
 
 describe('useProducts', () => {
   it('devrait charger les produits avec pagination', async () => {
-    const { result } = renderHook(() => useProducts({}, 0))
+    const { result } = renderHook(() => useProducts({}, 0));
 
     await waitFor(() => {
-      expect(result.current.loading).toBe(false)
-    })
+      expect(result.current.loading).toBe(false);
+    });
 
-    expect(result.current.products).toHaveLength(20) // PRODUCTS_PER_PAGE
-    expect(result.current.totalPages).toBeGreaterThan(0)
-  })
+    expect(result.current.products).toHaveLength(20); // PRODUCTS_PER_PAGE
+    expect(result.current.totalPages).toBeGreaterThan(0);
+  });
 
   it('devrait créer un produit', async () => {
-    const { result } = renderHook(() => useProducts())
+    const { result } = renderHook(() => useProducts());
 
     const newProduct = await result.current.createProduct({
       name: 'Test Product',
       cost_price: 100,
-      margin_percentage: 30
-    })
+      margin_percentage: 30,
+    });
 
-    expect(newProduct).not.toBeNull()
-    expect(newProduct.name).toBe('Test Product')
-  })
-})
+    expect(newProduct).not.toBeNull();
+    expect(newProduct.name).toBe('Test Product');
+  });
+});
 ```
 
 ---

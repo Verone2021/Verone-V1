@@ -1,26 +1,48 @@
-'use client'
+'use client';
 
-import { useState, useEffect, useMemo } from 'react'
-import { Plus } from 'lucide-react'
-import { ButtonV2 } from '@/components/ui/button'
-import { Input } from '@/components/ui/input'
-import { Label } from '@/components/ui/label'
-import { Textarea } from '@/components/ui/textarea'
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog'
-import { Table, TableBody, TableHead, TableHeader, TableRow } from '@/components/ui/table'
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
-import { CreateOrganisationModal } from './create-organisation-modal'
-import { SupplierSelector } from './supplier-selector'
-import { AddProductToOrderModal } from './add-product-to-order-modal'
-import { EditableOrderItemRow } from './editable-order-item-row'
-import { useOrganisations, Organisation } from '@/hooks/use-organisations'
-import { useOrderItems, CreateOrderItemData } from '@/hooks/use-order-items'
-import { usePurchaseOrders, CreatePurchaseOrderData } from '@/hooks/use-purchase-orders'
-import { formatCurrency } from '@/lib/utils'
-import { useToast } from '@/hooks/use-toast'
-import type { Database } from '@/types/supabase'
+import { useState, useEffect, useMemo } from 'react';
+import { Plus } from 'lucide-react';
+import { ButtonV2 } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Textarea } from '@/components/ui/textarea';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from '@/components/ui/dialog';
+import {
+  Table,
+  TableBody,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from '@/components/ui/table';
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from '@/components/ui/card';
+import { CreateOrganisationModal } from './create-organisation-modal';
+import { SupplierSelector } from './supplier-selector';
+import { AddProductToOrderModal } from './add-product-to-order-modal';
+import { EditableOrderItemRow } from './editable-order-item-row';
+import { useOrganisations, Organisation } from '@/hooks/use-organisations';
+import { useOrderItems, CreateOrderItemData } from '@/hooks/use-order-items';
+import {
+  usePurchaseOrders,
+  CreatePurchaseOrderData,
+} from '@/hooks/use-purchase-orders';
+import { formatCurrency } from '@/lib/utils';
+import { useToast } from '@/hooks/use-toast';
+import type { Database } from '@/types/database';
 
-type PurchaseOrder = Database['public']['Tables']['purchase_orders']['Row']
+type PurchaseOrder = Database['public']['Tables']['purchase_orders']['Row'];
 
 /**
  * Modal Universel Commandes Fournisseurs (Création + Édition)
@@ -44,12 +66,12 @@ type PurchaseOrder = Database['public']['Tables']['purchase_orders']['Row']
  */
 
 interface PurchaseOrderFormModalProps {
-  order?: PurchaseOrder  // Si fourni, mode ÉDITION
-  isOpen?: boolean
-  onClose?: () => void
-  onSuccess?: () => void
-  prefilledProduct?: any
-  prefilledSupplier?: string
+  order?: PurchaseOrder; // Si fourni, mode ÉDITION
+  isOpen?: boolean;
+  onClose?: () => void;
+  onSuccess?: () => void;
+  prefilledProduct?: any;
+  prefilledSupplier?: string;
 }
 
 export function PurchaseOrderFormModal({
@@ -58,200 +80,223 @@ export function PurchaseOrderFormModal({
   onClose,
   onSuccess,
   prefilledProduct,
-  prefilledSupplier
+  prefilledSupplier,
 }: PurchaseOrderFormModalProps) {
-  const isEditMode = !!order
-  const [open, setOpen] = useState(isOpen || false)
-  const [loading, setLoading] = useState(false)
+  const isEditMode = !!order;
+  const [open, setOpen] = useState(isOpen || false);
+  const [loading, setLoading] = useState(false);
 
   // États form métadonnées
-  const [selectedSupplierId, setSelectedSupplierId] = useState(order?.supplier_id || '')
-  const [selectedSupplier, setSelectedSupplier] = useState<Organisation | null>(null)
+  const [selectedSupplierId, setSelectedSupplierId] = useState(
+    order?.supplier_id || ''
+  );
+  const [selectedSupplier, setSelectedSupplier] = useState<Organisation | null>(
+    null
+  );
   const [expectedDeliveryDate, setExpectedDeliveryDate] = useState(
-    order?.expected_delivery_date ? new Date(order.expected_delivery_date).toISOString().split('T')[0] : ''
-  )
+    order?.expected_delivery_date
+      ? new Date(order.expected_delivery_date).toISOString().split('T')[0]
+      : ''
+  );
   const [deliveryAddress, setDeliveryAddress] = useState<string>(
-    (typeof order?.delivery_address === 'string' ? order.delivery_address : null) || 'Groupe DSA - (Verone)\n4, rue du Pérou\n91300 Massy\nFrance'
-  )
-  const [notes, setNotes] = useState(order?.notes || '')
+    (typeof order?.delivery_address === 'string'
+      ? order.delivery_address
+      : null) || 'Groupe DSA - (Verone)\n4, rue du Pérou\n91300 Massy\nFrance'
+  );
+  const [notes, setNotes] = useState(order?.notes || '');
 
   // Modal ajout produit
-  const [showAddProductModal, setShowAddProductModal] = useState(false)
+  const [showAddProductModal, setShowAddProductModal] = useState(false);
 
   // Hooks
-  const { organisations: suppliers, getOrganisationById, refetch: refetchSuppliers } = useOrganisations({
+  const {
+    organisations: suppliers,
+    getOrganisationById,
+    refetch: refetchSuppliers,
+  } = useOrganisations({
     type: 'supplier',
-    is_active: true
-  })
+    is_active: true,
+  });
   const {
     items,
     loading: itemsLoading,
     addItem,
     updateItem,
     removeItem,
-    refetch: refetchItems
+    refetch: refetchItems,
   } = useOrderItems({
     orderId: order?.id,
-    orderType: 'purchase'
-  })
-  const { createOrder, updateOrder } = usePurchaseOrders()
-  const { toast } = useToast()
+    orderType: 'purchase',
+  });
+  const { createOrder, updateOrder } = usePurchaseOrders();
+  const { toast } = useToast();
 
   // Règle métier : bloquer édition si commande reçue ou annulée
   const isBlocked = useMemo(() => {
-    if (!isEditMode) return false
-    return order.status === 'received' || order.status === 'cancelled'
-  }, [isEditMode, order])
+    if (!isEditMode) return false;
+    return order.status === 'received' || order.status === 'cancelled';
+  }, [isEditMode, order]);
 
   // Synchroniser avec props externes
   useEffect(() => {
     if (typeof isOpen !== 'undefined') {
-      setOpen(isOpen)
+      setOpen(isOpen);
     }
-  }, [isOpen])
+  }, [isOpen]);
 
   // Charger fournisseur sélectionné
   useEffect(() => {
     if (selectedSupplierId) {
-      getOrganisationById(selectedSupplierId).then(setSelectedSupplier)
+      getOrganisationById(selectedSupplierId).then(setSelectedSupplier);
     } else {
-      setSelectedSupplier(null)
+      setSelectedSupplier(null);
     }
-  }, [selectedSupplierId, getOrganisationById])
+  }, [selectedSupplierId, getOrganisationById]);
 
   // Pré-remplir avec produit fourni (mode création échantillon)
   useEffect(() => {
     if (prefilledProduct && open && !isEditMode) {
       // Auto-select supplier
       if (prefilledProduct.supplier_id) {
-        setSelectedSupplierId(prefilledProduct.supplier_id)
+        setSelectedSupplierId(prefilledProduct.supplier_id);
       } else if (prefilledSupplier) {
-        setSelectedSupplierId(prefilledSupplier)
+        setSelectedSupplierId(prefilledSupplier);
       }
 
       // Ajouter note échantillon
       if (prefilledProduct.requires_sample) {
-        const sampleNote = `Commande d'échantillon pour le produit "${prefilledProduct.name || 'sans nom'}"`
-        setNotes((prev: string) => prev ? `${prev}\n\n${sampleNote}` : sampleNote)
+        const sampleNote = `Commande d'échantillon pour le produit "${prefilledProduct.name || 'sans nom'}"`;
+        setNotes((prev: string) =>
+          prev ? `${prev}\n\n${sampleNote}` : sampleNote
+        );
       }
     }
-  }, [prefilledProduct, open, isEditMode, prefilledSupplier])
+  }, [prefilledProduct, open, isEditMode, prefilledSupplier]);
 
   // Calculs totaux (inclut eco_tax)
   const totalHT = useMemo(() => {
     return items.reduce((sum, item) => {
-      const subtotal = item.quantity * item.unit_price_ht * (1 - (item.discount_percentage || 0) / 100)
-      return sum + subtotal + (item.eco_tax || 0)
-    }, 0)
-  }, [items])
+      const subtotal =
+        item.quantity *
+        item.unit_price_ht *
+        (1 - (item.discount_percentage || 0) / 100);
+      return sum + subtotal + (item.eco_tax || 0);
+    }, 0);
+  }, [items]);
 
-  const totalTTC = totalHT * 1.2 // TVA 20%
+  const totalTTC = totalHT * 1.2; // TVA 20%
 
   // Gérer changement fournisseur
   const handleSupplierChange = async (supplierId: string | null) => {
-    setSelectedSupplierId(supplierId || '')
-  }
+    setSelectedSupplierId(supplierId || '');
+  };
 
   // Handler création nouveau fournisseur
-  const handleSupplierCreated = async (supplierId: string, supplierName: string) => {
-    await refetchSuppliers()
-    setSelectedSupplierId(supplierId)
+  const handleSupplierCreated = async (
+    supplierId: string,
+    supplierName: string
+  ) => {
+    await refetchSuppliers();
+    setSelectedSupplierId(supplierId);
     toast({
-      title: "✅ Fournisseur créé et sélectionné",
-      description: `${supplierName} a été créé et sélectionné automatiquement.`
-    })
-  }
+      title: '✅ Fournisseur créé et sélectionné',
+      description: `${supplierName} a été créé et sélectionné automatiquement.`,
+    });
+  };
 
   // Handler ajout produit (via modal universel)
   const handleAddProduct = async (data: CreateOrderItemData) => {
     if (!isEditMode) {
       // Mode création : impossible d'ajouter avant création commande
       toast({
-        variant: "destructive",
+        variant: 'destructive',
         title: "Impossible d'ajouter un produit",
-        description: "Créez d'abord la commande pour ajouter des produits."
-      })
-      return
+        description: "Créez d'abord la commande pour ajouter des produits.",
+      });
+      return;
     }
 
     try {
-      await addItem(data)
-      setShowAddProductModal(false)
+      await addItem(data);
+      setShowAddProductModal(false);
       toast({
-        title: "✅ Produit ajouté",
-        description: "Le produit a été ajouté à la commande."
-      })
+        title: '✅ Produit ajouté',
+        description: 'Le produit a été ajouté à la commande.',
+      });
     } catch (error) {
-      console.error('❌ Erreur ajout produit:', error)
+      console.error('❌ Erreur ajout produit:', error);
       toast({
-        variant: "destructive",
-        title: "Erreur",
-        description: error instanceof Error ? error.message : 'Erreur ajout produit'
-      })
+        variant: 'destructive',
+        title: 'Erreur',
+        description:
+          error instanceof Error ? error.message : 'Erreur ajout produit',
+      });
     }
-  }
+  };
 
   // Handler modification item (via composant universel)
   const handleUpdateItem = async (itemId: string, data: any) => {
     try {
-      await updateItem(itemId, data)
+      await updateItem(itemId, data);
     } catch (error) {
-      console.error('❌ Erreur modification item:', error)
+      console.error('❌ Erreur modification item:', error);
       toast({
-        variant: "destructive",
-        title: "Erreur",
-        description: "Impossible de modifier le produit"
-      })
+        variant: 'destructive',
+        title: 'Erreur',
+        description: 'Impossible de modifier le produit',
+      });
     }
-  }
+  };
 
   // Handler suppression item
   const handleRemoveItem = async (itemId: string) => {
     try {
-      await removeItem(itemId)
+      await removeItem(itemId);
       toast({
-        title: "✅ Produit supprimé",
-        description: "Le produit a été retiré de la commande."
-      })
+        title: '✅ Produit supprimé',
+        description: 'Le produit a été retiré de la commande.',
+      });
     } catch (error) {
-      console.error('❌ Erreur suppression item:', error)
+      console.error('❌ Erreur suppression item:', error);
       toast({
-        variant: "destructive",
-        title: "Erreur",
-        description: "Impossible de supprimer le produit"
-      })
+        variant: 'destructive',
+        title: 'Erreur',
+        description: 'Impossible de supprimer le produit',
+      });
     }
-  }
+  };
 
   const resetForm = () => {
-    setSelectedSupplierId('')
-    setSelectedSupplier(null)
-    setExpectedDeliveryDate('')
-    setDeliveryAddress('Groupe DSA - (Verone)\n4, rue du Pérou\n91300 Massy\nFrance')
-    setNotes('')
-  }
+    setSelectedSupplierId('');
+    setSelectedSupplier(null);
+    setExpectedDeliveryDate('');
+    setDeliveryAddress(
+      'Groupe DSA - (Verone)\n4, rue du Pérou\n91300 Massy\nFrance'
+    );
+    setNotes('');
+  };
 
   const handleClose = () => {
-    setOpen(false)
+    setOpen(false);
     if (onClose) {
-      onClose()
+      onClose();
     }
-  }
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault()
+    e.preventDefault();
 
     // Validation commune
     if (!selectedSupplierId) {
       toast({
-        variant: "destructive",
-        title: "Fournisseur requis",
-        description: "Veuillez sélectionner un fournisseur"
-      })
-      return
+        variant: 'destructive',
+        title: 'Fournisseur requis',
+        description: 'Veuillez sélectionner un fournisseur',
+      });
+      return;
     }
 
-    setLoading(true)
+    setLoading(true);
     try {
       if (isEditMode) {
         // MODE ÉDITION : Mettre à jour métadonnées uniquement
@@ -261,49 +306,55 @@ export function PurchaseOrderFormModal({
           expected_delivery_date: expectedDeliveryDate || undefined,
           payment_terms: selectedSupplier?.payment_terms || undefined,
           delivery_address: deliveryAddress || undefined,
-          notes: notes || undefined
-        } as any)  // Cast car UpdatePurchaseOrderData type incomplet
+          notes: notes || undefined,
+        } as any); // Cast car UpdatePurchaseOrderData type incomplet
 
         toast({
-          title: "✅ Commande mise à jour",
-          description: `Commande ${order.po_number} modifiée avec succès`
-        })
+          title: '✅ Commande mise à jour',
+          description: `Commande ${order.po_number} modifiée avec succès`,
+        });
       } else {
         // MODE CRÉATION : Impossible sans items (UX)
         toast({
-          variant: "destructive",
-          title: "Création impossible",
-          description: "Utilisez le hook usePurchaseOrders avec createOrder et ajoutez des items après création."
-        })
-        return
+          variant: 'destructive',
+          title: 'Création impossible',
+          description:
+            'Utilisez le hook usePurchaseOrders avec createOrder et ajoutez des items après création.',
+        });
+        return;
       }
 
-      handleClose()
-      onSuccess?.()
+      handleClose();
+      onSuccess?.();
     } catch (error) {
-      console.error('❌ Erreur submit:', error)
+      console.error('❌ Erreur submit:', error);
       toast({
-        variant: "destructive",
-        title: "Erreur",
-        description: error instanceof Error ? error.message : 'Erreur lors de la sauvegarde'
-      })
+        variant: 'destructive',
+        title: 'Erreur',
+        description:
+          error instanceof Error
+            ? error.message
+            : 'Erreur lors de la sauvegarde',
+      });
     } finally {
-      setLoading(false)
+      setLoading(false);
     }
-  }
+  };
 
   const handleOpenChange = (newOpen: boolean) => {
-    setOpen(newOpen)
+    setOpen(newOpen);
     if (!newOpen && onClose) {
-      onClose()
+      onClose();
     }
-  }
+  };
 
   return (
     <>
       <Dialog
         open={open}
-        onOpenChange={typeof isOpen !== 'undefined' ? handleOpenChange : setOpen}
+        onOpenChange={
+          typeof isOpen !== 'undefined' ? handleOpenChange : setOpen
+        }
       >
         {typeof isOpen === 'undefined' && !isEditMode && (
           <DialogTrigger asChild>
@@ -316,13 +367,14 @@ export function PurchaseOrderFormModal({
         <DialogContent className="max-w-6xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>
-              {isEditMode ? `Modifier Commande ${order.po_number}` : 'Nouvelle Commande Fournisseur'}
+              {isEditMode
+                ? `Modifier Commande ${order.po_number}`
+                : 'Nouvelle Commande Fournisseur'}
             </DialogTitle>
             <DialogDescription>
               {isEditMode
                 ? 'Modifier les informations et les produits de la commande'
-                : 'Créer une nouvelle commande d\'approvisionnement'
-              }
+                : "Créer une nouvelle commande d'approvisionnement"}
             </DialogDescription>
           </DialogHeader>
 
@@ -330,7 +382,8 @@ export function PurchaseOrderFormModal({
           {isBlocked && order && (
             <div className="p-4 mb-4 bg-red-50 border border-red-200 rounded-lg">
               <p className="text-sm text-red-800 font-medium">
-                ⚠️ Édition bloquée : Cette commande est {order.status === 'received' ? 'reçue' : 'annulée'}
+                ⚠️ Édition bloquée : Cette commande est{' '}
+                {order.status === 'received' ? 'reçue' : 'annulée'}
               </p>
               <p className="text-xs text-red-600 mt-1">
                 Les modifications ne sont pas autorisées pour ce statut.
@@ -372,17 +425,19 @@ export function PurchaseOrderFormModal({
                     id="deliveryDate"
                     type="date"
                     value={expectedDeliveryDate}
-                    onChange={(e) => setExpectedDeliveryDate(e.target.value)}
+                    onChange={e => setExpectedDeliveryDate(e.target.value)}
                     disabled={isBlocked}
                   />
                 </div>
 
                 <div className="space-y-2 col-span-2">
-                  <Label htmlFor="deliveryAddress">Adresse de livraison (Entrepôt)</Label>
+                  <Label htmlFor="deliveryAddress">
+                    Adresse de livraison (Entrepôt)
+                  </Label>
                   <Textarea
                     id="deliveryAddress"
                     value={deliveryAddress}
-                    onChange={(e) => setDeliveryAddress(e.target.value)}
+                    onChange={e => setDeliveryAddress(e.target.value)}
                     className="min-h-[100px] resize-none"
                     disabled={isBlocked}
                   />
@@ -390,8 +445,12 @@ export function PurchaseOrderFormModal({
 
                 {selectedSupplier && selectedSupplier.payment_terms && (
                   <div className="space-y-2 col-span-2 p-3 bg-gray-50 border rounded-lg">
-                    <Label className="text-sm font-medium">Conditions de paiement du fournisseur</Label>
-                    <p className="text-sm text-gray-700">{selectedSupplier.payment_terms}</p>
+                    <Label className="text-sm font-medium">
+                      Conditions de paiement du fournisseur
+                    </Label>
+                    <p className="text-sm text-gray-700">
+                      {selectedSupplier.payment_terms}
+                    </p>
                   </div>
                 )}
 
@@ -401,7 +460,7 @@ export function PurchaseOrderFormModal({
                     id="notes"
                     placeholder="Notes additionnelles..."
                     value={notes}
-                    onChange={(e) => setNotes(e.target.value)}
+                    onChange={e => setNotes(e.target.value)}
                     className="min-h-[80px]"
                     disabled={isBlocked}
                   />
@@ -439,7 +498,8 @@ export function PurchaseOrderFormModal({
                     </div>
                   ) : items.length === 0 ? (
                     <div className="text-center py-8 text-gray-500">
-                      Aucun article dans la commande. Cliquez sur "Ajouter un produit" pour commencer.
+                      Aucun article dans la commande. Cliquez sur "Ajouter un
+                      produit" pour commencer.
                     </div>
                   ) : (
                     <div className="overflow-x-auto">
@@ -456,7 +516,7 @@ export function PurchaseOrderFormModal({
                           </TableRow>
                         </TableHeader>
                         <TableBody>
-                          {items.map((item) => (
+                          {items.map(item => (
                             <EditableOrderItemRow
                               key={item.id}
                               item={item}
@@ -484,15 +544,21 @@ export function PurchaseOrderFormModal({
                   <div className="grid grid-cols-3 gap-4 text-center">
                     <div>
                       <p className="text-sm text-gray-600">Total HT</p>
-                      <p className="text-lg font-semibold">{formatCurrency(totalHT)}</p>
+                      <p className="text-lg font-semibold">
+                        {formatCurrency(totalHT)}
+                      </p>
                     </div>
                     <div>
                       <p className="text-sm text-gray-600">TVA (20%)</p>
-                      <p className="text-lg font-semibold">{formatCurrency(totalTTC - totalHT)}</p>
+                      <p className="text-lg font-semibold">
+                        {formatCurrency(totalTTC - totalHT)}
+                      </p>
                     </div>
                     <div>
                       <p className="text-sm text-gray-600">Total TTC</p>
-                      <p className="text-xl font-bold">{formatCurrency(totalTTC)}</p>
+                      <p className="text-xl font-bold">
+                        {formatCurrency(totalTTC)}
+                      </p>
                     </div>
                   </div>
                 </CardContent>
@@ -509,7 +575,11 @@ export function PurchaseOrderFormModal({
                   type="submit"
                   disabled={loading || !selectedSupplierId}
                 >
-                  {loading ? 'Enregistrement...' : isEditMode ? 'Enregistrer' : 'Créer la commande'}
+                  {loading
+                    ? 'Enregistrement...'
+                    : isEditMode
+                      ? 'Enregistrer'
+                      : 'Créer la commande'}
                 </ButtonV2>
               )}
             </div>
@@ -527,5 +597,5 @@ export function PurchaseOrderFormModal({
         />
       )}
     </>
-  )
+  );
 }
