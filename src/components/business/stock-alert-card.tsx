@@ -53,19 +53,22 @@ export function StockAlertCard({ alert, onActionClick }: StockAlertCardProps) {
   };
 
   const getSeverityColor = () => {
-    // Si produit dans brouillon → VERT
+    // ✅ FIX: Brouillon reste ROUGE (alerte active, pas validée)
+    // Workflow: Brouillon ROUGE → Validation VERTE → Réception DISPARAÎT
+    // Note: Le badge VERT "Commandé" + bouton disabled indiquent l'action en cours
+    // Note: !bg-red-50 force override du bg-white du composant Card
     if (alert.is_in_draft) {
-      return 'border-green-600 bg-green-50';
+      return 'border-red-600 !bg-red-50'; // ✅ Rouge car alerte reste active
     }
 
-    // Sinon couleurs selon sévérité
+    // Couleurs selon sévérité (pour alertes sans commande)
     switch (alert.severity) {
       case 'critical':
-        return 'border-red-600 bg-red-50';
+        return 'border-red-600 !bg-red-50';
       case 'warning':
-        return 'border-orange-600 bg-orange-50';
+        return 'border-orange-600 !bg-orange-50';
       default:
-        return 'border-blue-600 bg-blue-50';
+        return 'border-blue-600 !bg-blue-50';
     }
   };
 
