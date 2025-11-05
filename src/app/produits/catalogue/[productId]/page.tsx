@@ -619,19 +619,16 @@ export default function ProductDetailPage() {
             </ProductDetailAccordion>
           )}
 
-          {/* Accordion 5: Stock & Disponibilité */}
+          {/* Accordion 5: Stock */}
           <ProductDetailAccordion
-            title="Stock & Disponibilité"
+            title="Stock"
             icon={Boxes}
             defaultOpen={false}
           >
             <StockEditSection
               product={{
                 id: product.id,
-                stock_status: product.stock_status,
-                product_status: product.product_status,
                 condition: product.condition,
-                stock_quantity: product.stock_quantity ?? undefined,
                 min_stock: product.min_stock ?? undefined,
               }}
               onUpdate={handleProductUpdate as any}
