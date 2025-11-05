@@ -72,9 +72,6 @@ const GOOGLE_MERCHANT_CONFIG = {
 };
 
 /**
- * Mapping Vérone availability_status_type → Google Merchant availability (Content API v2.1)
- */
-/**
  * Mapping stock_status → Google Merchant availability
  * Phase 3.4 - Dual Status System (2025-11-04)
  */

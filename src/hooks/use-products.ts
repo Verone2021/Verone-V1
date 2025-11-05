@@ -113,7 +113,7 @@ export interface CreateProductData {
   cost_price?: number; // Prix d'achat HT fournisseur
 
   // 🔥 FIX: Champs de completion et status (pour wizard workflow)
-  status?: string; // Statut de disponibilité (enum availability_status_type)
+  status?: string; // Statut de disponibilité (DEPRECATED - utiliser product_status + stock_status)
   completion_status?: string; // 'draft' ou 'active'
   completion_percentage?: number; // Pourcentage de complétion (0-100)
 
@@ -121,7 +121,7 @@ export interface CreateProductData {
   // sku: généré automatiquement
 
   // Champs business rules
-  availability_type?: string; // normal, preorder, coming_soon, discontinued
+  availability_type?: string; // DEPRECATED - Remplacé par dual status system (product_status + stock_status)
   technical_description?: string; // Description technique interne
   selling_points?: string[]; // Points de vente
   requires_sample?: boolean; // Nécessite échantillon
