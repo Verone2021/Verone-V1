@@ -73,7 +73,7 @@ export const StockEditSection = React.memo(
     const handleStartEdit = () => {
       startEdit(section, {
         condition: product.condition,
-        min_stock: product.min_stock || 5,
+        min_stock: product.min_stock ?? 0,
       });
     };
 
@@ -207,7 +207,7 @@ export const StockEditSection = React.memo(
         <div className="space-y-3">
           <div className="flex justify-between items-center">
             <span className="text-black opacity-70">Seuil minimum:</span>
-            <span className="text-black">{product.min_stock || 5} unités</span>
+            <span className="text-black">{product.min_stock ?? 0} unités</span>
           </div>
           <div className="flex justify-between items-center">
             <span className="text-black opacity-70">Condition:</span>
