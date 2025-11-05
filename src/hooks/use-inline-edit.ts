@@ -22,13 +22,18 @@ export type EditableSection =
   | 'performance'
   | 'personal'
   | 'roles'
-  | 'preferences';
+  | 'preferences'
+  // Sections commandes
+  | 'order_header'
+  | 'order_items';
 
 // Interface pour les options du hook
 export interface UseInlineEditOptions {
   productId?: string; // Pour les produits
   organisationId?: string; // Pour les organisations/fournisseurs
   contactId?: string; // Pour les contacts
+  salesOrderId?: string; // Pour les commandes clients
+  purchaseOrderId?: string; // Pour les commandes fournisseurs
   onUpdate: (updatedData: any) => void;
   onError?: (error: string) => void;
 }
@@ -47,7 +52,15 @@ interface SectionEditState {
  * Compatible avec l'interface attendue par les composants EditSection
  */
 export function useInlineEdit(options: UseInlineEditOptions) {
-  const { productId, organisationId, contactId, onUpdate, onError } = options;
+  const {
+    productId,
+    organisationId,
+    contactId,
+    salesOrderId,
+    purchaseOrderId,
+    onUpdate,
+    onError,
+  } = options;
   const [sections, setSections] = useState<
     Record<EditableSection, SectionEditState>
   >({} as any);
@@ -286,6 +299,79 @@ export function useInlineEdit(options: UseInlineEditOptions) {
           } else {
             console.log('✅ Contact update successful:', data);
           }
+        } else if (salesOrderId) {
+          // Mise à jour commande client
+          console.log(
+            '🔄 Updating sales order with data:',
+            sectionState.editedData
+          );
+
+          const cleanedData = { ...sectionState.editedData };
+
+          // Convertir les chaînes vides en null pour les champs optionnels
+          Object.keys(cleanedData).forEach(key => {
+            if (cleanedData[key] === '') {
+              cleanedData[key] = null;
+            }
+          });
+
+          console.log('🧹 Cleaned data for sales order update:', cleanedData);
+
+          const { error, data } = await supabase
+            .from('sales_orders')
+            .update(cleanedData)
+            .eq('id', salesOrderId)
+            .select();
+
+          success = !error;
+          if (error) {
+            console.error('❌ Supabase sales order update error:', error);
+            throw new Error(
+              error.message ||
+                error.details ||
+                'Erreur de mise à jour commande client'
+            );
+          } else {
+            console.log('✅ Sales order update successful:', data);
+          }
+        } else if (purchaseOrderId) {
+          // Mise à jour commande fournisseur
+          console.log(
+            '🔄 Updating purchase order with data:',
+            sectionState.editedData
+          );
+
+          const cleanedData = { ...sectionState.editedData };
+
+          // Convertir les chaînes vides en null pour les champs optionnels
+          Object.keys(cleanedData).forEach(key => {
+            if (cleanedData[key] === '') {
+              cleanedData[key] = null;
+            }
+          });
+
+          console.log(
+            '🧹 Cleaned data for purchase order update:',
+            cleanedData
+          );
+
+          const { error, data } = await supabase
+            .from('purchase_orders')
+            .update(cleanedData)
+            .eq('id', purchaseOrderId)
+            .select();
+
+          success = !error;
+          if (error) {
+            console.error('❌ Supabase purchase order update error:', error);
+            throw new Error(
+              error.message ||
+                error.details ||
+                'Erreur de mise à jour commande fournisseur'
+            );
+          } else {
+            console.log('✅ Purchase order update successful:', data);
+          }
         }
 
         if (success) {
@@ -323,6 +409,8 @@ export function useInlineEdit(options: UseInlineEditOptions) {
       productId,
       organisationId,
       contactId,
+      salesOrderId,
+      purchaseOrderId,
       onUpdate,
       onError,
       supabase,
