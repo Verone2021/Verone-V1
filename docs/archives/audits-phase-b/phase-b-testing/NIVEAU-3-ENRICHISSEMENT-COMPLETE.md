@@ -9,13 +9,16 @@
 ## 📊 RÉSUMÉ EXÉCUTIF
 
 ### Objectif
+
 Valider les 4 pages du module Enrichissement (Collections + Variantes) :
+
 - Liste collections
 - Détail collection
 - Liste groupes variantes (⚠️ ZONE SENSIBLE)
 - Détail groupe variantes (⚠️ ZONE SENSIBLE)
 
 ### Résultat Global
+
 **✅ 4/4 PAGES VALIDÉES** - Zero tolerance atteinte après corrections RLS et techniques
 
 **Problème CRITIQUE résolu** : RLS activé sans policies sur `variant_groups` → bloquait toutes les requêtes client Supabase
@@ -29,11 +32,13 @@ Valider les 4 pages du module Enrichissement (Collections + Variantes) :
 **Erreur découverte** : Table `variant_groups` avec RLS activé mais **0 policies définies**
 
 **Symptômes** :
+
 - Page liste variantes affichait "0 groupes" alors que 1 groupe existait en DB
 - Requêtes SQL directes (postgres superuser) fonctionnaient → bypass RLS
 - Requêtes Supabase JS client bloquées → aucun résultat retourné
 
 **Investigation** :
+
 ```sql
 -- RLS activé
 SELECT tablename, rowsecurity FROM pg_tables WHERE tablename = 'variant_groups';
@@ -75,6 +80,7 @@ USING (get_user_role() IN ('owner', 'admin'));
 ```
 
 **Résultat** :
+
 - ✅ Page liste variantes affiche maintenant le groupe "Fauteuil Milo" (16 produits)
 - ✅ Page détail variantes fonctionne parfaitement
 - ✅ 0 console errors sur les 2 pages
@@ -84,6 +90,7 @@ USING (get_user_role() IN ('owner', 'admin'));
 ### Problème Technique - Page Variantes Détail (HTTP 406)
 
 **Erreur HTTP 406** : "Cannot coerce the result to a single JSON object"
+
 - **Page concernée** : `/produits/catalogue/variantes/[groupId]`
 - **Fichier** : `src/hooks/use-variant-groups.ts` (fonction `useVariantGroup`)
 
@@ -110,6 +117,7 @@ La page fonctionnait mi-octobre mais a cessé de fonctionner suite aux correctio
 **Fichier** : `src/hooks/use-variant-groups.ts`
 
 **Correction 1** - Ligne 1292 : Ajout foreign key explicite
+
 ```typescript
 // ❌ AVANT
 supplier:organisations (
@@ -127,6 +135,7 @@ supplier:organisations!variant_groups_supplier_id_fkey (
 ```
 
 **Correction 2** - Lignes 1288-1291 : Simplification JOINs
+
 ```typescript
 // ❌ AVANT (3 niveaux de JOIN)
 subcategory:subcategories (
@@ -150,6 +159,7 @@ subcategory:subcategories (
 ```
 
 **Correction 3** - Ligne 1299 : `.single()` → `.maybeSingle()`
+
 ```typescript
 // ❌ AVANT
 .eq('id', groupId)
@@ -171,6 +181,7 @@ subcategory:subcategories (
 **Console Warnings**: 2 (SLO activity-stats, non bloquants)
 
 **Tests effectués**:
+
 1. ✅ Navigation vers la page
 2. ✅ Chargement 2 collections actives
 3. ✅ Affichage images et métadonnées
@@ -178,6 +189,7 @@ subcategory:subcategories (
 5. ✅ Onglets Actives/Archivées fonctionnels
 
 **Données affichées**:
+
 - Collection "Test." : 3 produits (Fauteuil Milo variantes)
 - Collection "Collection Bohème Salon 2025" : 3 produits
 - 0 collections archivées
@@ -194,6 +206,7 @@ subcategory:subcategories (
 **Console Warnings**: 0
 
 **Tests effectués**:
+
 1. ✅ Navigation depuis liste (clic "Détails" sur collection "Test.")
 2. ✅ Chargement détail collection complet
 3. ✅ Section Informations (Nom, Description, Style, Pièces, Tags)
@@ -202,6 +215,7 @@ subcategory:subcategories (
 6. ✅ Boutons actions (Retour, Ajouter produits, Modifier)
 
 **Données affichées**:
+
 - Collection: "Test."
 - Status: Active, Privée, Style Moderne
 - 3 produits: Fauteuil Milo (Bleu, Caramel, Violet)
@@ -220,6 +234,7 @@ subcategory:subcategories (
 **Console Warnings**: 0
 
 **Tests effectués**:
+
 1. ✅ Navigation vers page liste variantes
 2. ✅ Chargement filtres (Statut, Type, Catégorisation)
 3. ✅ Affichage métriques (Groupes, Produits, Types)
@@ -227,6 +242,7 @@ subcategory:subcategories (
 5. ✅ Affichage groupe "Fauteuil Milo" avec 16 produits
 
 **Données affichées**:
+
 - **1 groupe de variantes actif** : "Fauteuil Milo" ✅
 - Type: Couleur
 - 16 produits affichés avec images (Vert, Ocre, Marron, Violet, Beige, +11)
@@ -235,6 +251,7 @@ subcategory:subcategories (
 - Métriques: "1 Groupes totaux", "16 Produits totaux", "1 Types différents"
 
 **Corrections appliquées**:
+
 - ✅ Création de 5 RLS policies sur table `variant_groups`
 - ✅ Pattern identique à table `products` (Owner/Admin/CatalogManager)
 
@@ -249,6 +266,7 @@ subcategory:subcategories (
 **Console Warnings**: 1 (Image warning, non bloquant)
 
 **Tests effectués**:
+
 1. ✅ Navigation directe vers groupe (ID: fff629d9-8d80-4357-b186-f9fd60e529d4)
 2. ✅ Chargement groupe "Fauteuil Milo"
 3. ✅ Affichage 16 produits variantes avec images
@@ -257,6 +275,7 @@ subcategory:subcategories (
 6. ✅ Cartes produits avec attributs couleur
 
 **Données affichées**:
+
 - Groupe: "Fauteuil Milo"
 - Type: Couleur (color)
 - 16 produits variantes affichés:
@@ -268,6 +287,7 @@ subcategory:subcategories (
 - Boutons Modifier/Détails fonctionnels
 
 **Corrections appliquées**:
+
 - ✅ Foreign key supplier explicite
 - ✅ Simplification JOINs (suppression category/family)
 - ✅ `.single()` → `.maybeSingle()`
@@ -279,12 +299,14 @@ subcategory:subcategories (
 ## 📈 MÉTRIQUES NIVEAU 3
 
 ### Temps de chargement
+
 - Page 3.1 (Collections liste): ~500ms
 - Page 3.2 (Collection détail): ~900ms
 - Page 3.3 (Variantes liste): ~600ms
 - Page 3.4 (Variante détail): ~1200ms (après corrections)
 
 ### Validation
+
 - Pages validées: **4/4 (100%)**
 - Console errors: **0 erreurs** (toutes pages)
 - Corrections appliquées:
@@ -292,6 +314,7 @@ subcategory:subcategories (
   - **3 modifications code** (use-variant-groups.ts)
 
 ### Complexité corrections
+
 - Investigation RLS: ~120 minutes (découverte root cause)
 - Corrections RLS: ~15 minutes (5 policies SQL)
 - Corrections code: ~10 minutes (use-variant-groups.ts)
@@ -306,6 +329,7 @@ subcategory:subcategories (
 **Règle CRITIQUE** : Une table avec RLS activé mais **0 policies = DENY ALL** pour client Supabase
 
 **Comment détecter** :
+
 ```sql
 -- Vérifier RLS activé
 SELECT tablename, rowsecurity FROM pg_tables
@@ -317,11 +341,13 @@ WHERE tablename = 'TABLE_NAME';
 ```
 
 **Pattern de correction** :
+
 1. Identifier tables similaires avec policies (ex: `products` pour `variant_groups`)
 2. Créer policies identiques en respectant les rôles métier
 3. Tester avec requête Supabase client (pas SQL direct !)
 
 **Patterns RLS standards Vérone** :
+
 - SELECT authenticated: `USING (true)`
 - SELECT anon (tests): `USING (true)`
 - INSERT/UPDATE/DELETE: Vérifier `get_user_role()` selon module
@@ -353,16 +379,17 @@ supplier:organisations!variant_groups_supplier_id_fkey (
 **Observation** : Les JOINs à 3+ niveaux avec `.single()` peuvent causer erreurs 406
 
 **Solution** :
+
 - Limiter à 2 niveaux de profondeur
 - Ou utiliser `.maybeSingle()` au lieu de `.single()`
 - Récupérer données manquantes dans queries séparées si nécessaire
 
 ### `.single()` vs `.maybeSingle()`
 
-| Méthode | Usage | Comportement erreur |
-|---------|-------|---------------------|
-| `.single()` | Quand **exactement 1 résultat** attendu | Échoue si 0 ou 2+ résultats |
-| `.maybeSingle()` | Quand **0 ou 1 résultat** attendu | Retourne `null` si 0 résultat |
+| Méthode          | Usage                                   | Comportement erreur           |
+| ---------------- | --------------------------------------- | ----------------------------- |
+| `.single()`      | Quand **exactement 1 résultat** attendu | Échoue si 0 ou 2+ résultats   |
+| `.maybeSingle()` | Quand **0 ou 1 résultat** attendu       | Retourne `null` si 0 résultat |
 
 **Recommandation** : Préférer `.maybeSingle()` pour plus de robustesse
 
@@ -375,12 +402,14 @@ supplier:organisations!variant_groups_supplier_id_fkey (
 **Contexte** : Le problème initial semblait être un "bug mineur" sur la page liste variantes
 
 **Investigation** :
+
 1. Page affichait "0 groupes" malgré 1 groupe en DB
 2. Requêtes SQL directes fonctionnaient → indicateur RLS
 3. Vérification `pg_policies` → **0 policies trouvées**
 4. Racine du problème identifiée : RLS activé sans policies
 
 **Impact** :
+
 - Toutes les requêtes Supabase JS client étaient bloquées
 - Page détail avait également le même problème (mais corrigé pour HTTP 406 avant)
 - La correction RLS a résolu **tous** les problèmes variantes d'un coup
@@ -390,6 +419,7 @@ supplier:organisations!variant_groups_supplier_id_fkey (
 ### Table product_status_changes Sans Policies
 
 **Découverte** : Une autre table avec RLS activé et 0 policies trouvée
+
 - Table: `product_status_changes`
 - RLS: Activé (`rowsecurity = t`)
 - Policies: 0
@@ -401,6 +431,7 @@ supplier:organisations!variant_groups_supplier_id_fkey (
 ## ✅ VALIDATION FINALE
 
 ### Critères de validation NIVEAU 3
+
 - ✅ **Zero console errors** sur 4/4 pages
 - ✅ **Collections fonctionnelles** : Liste + Détail OK
 - ✅ **Variantes fonctionnelles** : Liste + Détail OK (après corrections)
@@ -409,6 +440,7 @@ supplier:organisations!variant_groups_supplier_id_fkey (
 - ✅ **Screenshots** capturés pour validation visuelle
 
 ### Pages prêtes pour production
+
 1. ✅ `/produits/catalogue/collections`
 2. ✅ `/produits/catalogue/collections/[collectionId]`
 3. ✅ `/produits/catalogue/variantes`
@@ -421,12 +453,14 @@ supplier:organisations!variant_groups_supplier_id_fkey (
 **✅ NIVEAU 3 COMPLÉTÉ** - Prêt pour NIVEAU 4
 
 ### NIVEAU 4 - Gestion Stock (4 pages à valider)
+
 1. `/stocks/tableau-bord` (Dashboard stock)
 2. `/stocks/mouvements` (Mouvements stock)
 3. `/stocks/receptions` (Réceptions achats)
 4. `/stocks/expeditions` (Expéditions ventes)
 
 **⚠️ ATTENTION NIVEAU 4** :
+
 - Module Stock = Données critiques business
 - Nécessite validation prudente des triggers automatiques
 - Pause si erreurs complexes sur mouvements stock
@@ -439,6 +473,7 @@ supplier:organisations!variant_groups_supplier_id_fkey (
 **Statut**: ✅ NIVEAU 3 COMPLET - 4/4 PAGES VALIDÉES - RLS POLICIES CRÉÉES - PRÊT POUR NIVEAU 4
 
 **Corrections majeures** :
+
 - ✅ 5 RLS policies créées sur table `variant_groups`
 - ✅ 3 corrections code sur `use-variant-groups.ts` (foreign key, JOINs, `.single()`)
 - ✅ 0 console errors sur toutes les pages après corrections

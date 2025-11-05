@@ -10,17 +10,21 @@
 ## 📊 SYNTHÈSE EXÉCUTIVE
 
 ### Problème Actuel
+
 - **10 pages stocks fragmentées**: Navigation confuse (3-4 clics pour actions courantes)
 - **Complexité excessive**: Séparation artificielle Entrées/Sorties/Ajustements en pages distinctes
 - **UX dépassée**: Trop de sidebars, manque de filtres inline, pas de vue d'ensemble
 
 ### Solution Proposée
+
 **3 pages minimalistes** avec navigation 2 niveaux maximum:
+
 1. **`/stocks`** - Dashboard Vue d'Ensemble (health check quotidien 30s)
 2. **`/stocks/mouvements`** - Historique Filtrable (analyse activité)
 3. **`/stocks/inventaire`** - État Stock Actuel (planification réappro)
 
 ### Gains UX
+
 - ✅ **-70% pages**: 10 → 3 (navigation simplifiée)
 - ✅ **-50% clics**: Actions rapides via tabs + filtres inline
 - ✅ **+100% efficacité**: Vue d'ensemble immédiate
@@ -33,61 +37,73 @@
 ### Sources Analysées
 
 #### 1. Linear Design Principles
+
 **Tendance dominante 2025 pour SaaS B2B**
 
 > "Linear design emphasizes simplicity with minimalist interfaces that eliminate unnecessary elements, consistency through uniform design patterns, and guidance via clear, step-by-step instructions."
 
 **Caractéristiques clés**:
+
 - **Direction claire**: Un seul chemin principal, pas de choix multiples confusants
 - **Scan vertical**: Layout linéaire, facilite parcours visuel
 - **Keyboard-first**: Shortcuts visibles, command palette (⌘K)
 
 **Application Vérone**:
+
 - Tabs horizontaux pour types mouvements (pas pages séparées)
 - Filtres inline collapsibles (pas sidebar permanente)
 - Actions principales visibles immédiatement
 
 #### 2. Odoo 17 Inventory
+
 **Améliorations UI/UX documentées**
 
 > "Odoo 17 comes with a revamped dashboard and navigation pages, offering a more user-friendly and attractive interface"
 
 **Innovations notables**:
+
 - **Operations menu redesigné**: Menu séparé pour chaque type opération (accessible via dropdown unique)
 - **Filtres améliorés**: Search bar avec dropdown filters/groups/favorites
 - **Drag-to-resize**: Wizards redimensionnables pour efficacité
 
 **Application Vérone**:
+
 - Filtres inline avec collapsible areas
 - Search autocomplete pour produits
 - Dropdown multi-fonctions (filtres + groupes + favoris)
 
 #### 3. NetSuite Redwood Experience
+
 **Interface moderne ERP enterprise**
 
 > "Dashboard View Filter allows users to customize portlet settings, with interactive charts where you can click on a segment to see details and filter data on the fly"
 
 **Patterns clés**:
+
 - **Interactive charts**: Click segment → filtre data instantané
 - **Dashboard View Filter**: Personnalisation portlets par utilisateur
 - **Collapsible filters**: Position top avec animation smooth
 
 **Application Vérone**:
+
 - Charts cliquables pour drill-down rapide
 - Filtres top position (pas sidebar)
 - Personnalisation future via preferences utilisateur
 
 #### 4. Minimalism 2025
+
 **Évolution du minimalisme**
 
 > "Minimalism in 2025 is anything but basic—while clean lines and uncluttered layouts remain central, designers are adding playful, unexpected elements like asymmetry instead of rigid grids"
 
 **Tendances**:
+
 - **Clean + Personality**: Espaces blancs généreux + micro-détails ludiques
 - **Asymétrie subtile**: Éviter grilles trop rigides
 - **Micro-interactions élégantes**: Hover scale 1.02-1.05, shadows douces
 
 **Application Vérone**:
+
 - Layout cards avec rounded corners variables (8px-12px)
 - Hover states subtils (scale, shadow elevation)
 - Badges avec point indicateur coloré
@@ -118,12 +134,32 @@ ANCIEN (10 pages)                    NOUVEAU (3 pages)
 ```typescript
 // next.config.js
 const redirects = [
-  { source: '/stocks/entrees', destination: '/stocks/mouvements?tab=entrees', permanent: false },
-  { source: '/stocks/sorties', destination: '/stocks/mouvements?tab=sorties', permanent: false },
-  { source: '/stocks/ajustements', destination: '/stocks/mouvements?tab=ajustements', permanent: false },
-  { source: '/stocks/alertes', destination: '/stocks#alertes', permanent: false },
-  { source: '/stocks/produits', destination: '/stocks/inventaire', permanent: false },
-]
+  {
+    source: '/stocks/entrees',
+    destination: '/stocks/mouvements?tab=entrees',
+    permanent: false,
+  },
+  {
+    source: '/stocks/sorties',
+    destination: '/stocks/mouvements?tab=sorties',
+    permanent: false,
+  },
+  {
+    source: '/stocks/ajustements',
+    destination: '/stocks/mouvements?tab=ajustements',
+    permanent: false,
+  },
+  {
+    source: '/stocks/alertes',
+    destination: '/stocks#alertes',
+    permanent: false,
+  },
+  {
+    source: '/stocks/produits',
+    destination: '/stocks/inventaire',
+    permanent: false,
+  },
+];
 ```
 
 ---
@@ -389,14 +425,14 @@ LÉGENDE STATUS:
 
 ### Colonnes Table
 
-| Colonne | Description | Type | Tri |
-|---------|-------------|------|-----|
-| **Produit** | Image + Nom + SKU + Badge status | Component | ✅ Nom |
-| **Réel** | Stock physique actuel | Number | ✅ |
-| **Dispo** | Réel - Réservé (disponible vente) | Calculated | ✅ |
-| **Réservé** | Quantité commandes clients confirmées | Number | ✅ |
-| **Attente** | Quantité commandes fournisseurs en cours | Number | ✅ |
-| **Valeur** | Prix achat × Stock réel (HT) | Currency | ✅ |
+| Colonne     | Description                              | Type       | Tri    |
+| ----------- | ---------------------------------------- | ---------- | ------ |
+| **Produit** | Image + Nom + SKU + Badge status         | Component  | ✅ Nom |
+| **Réel**    | Stock physique actuel                    | Number     | ✅     |
+| **Dispo**   | Réel - Réservé (disponible vente)        | Calculated | ✅     |
+| **Réservé** | Quantité commandes clients confirmées    | Number     | ✅     |
+| **Attente** | Quantité commandes fournisseurs en cours | Number     | ✅     |
+| **Valeur**  | Prix achat × Stock réel (HT)             | Currency   | ✅     |
 
 ---
 
@@ -420,56 +456,59 @@ export interface ChannelBadgeProps {
   /**
    * Code canal de vente
    */
-  channel: 'b2b' | 'ecommerce' | 'retail' | 'wholesale'
+  channel: 'b2b' | 'ecommerce' | 'retail' | 'wholesale';
 
   /**
    * Variante visuelle du badge
    * @default 'pill'
    */
-  variant?: 'pill' | 'square'
+  variant?: 'pill' | 'square';
 
   /**
    * Taille du badge
    * @default 'md'
    */
-  size?: 'sm' | 'md' | 'lg'
+  size?: 'sm' | 'md' | 'lg';
 
   /**
    * Afficher point indicateur coloré à gauche
    * @default true
    */
-  showDot?: boolean
+  showDot?: boolean;
 
   /**
    * Classe CSS additionnelle
    */
-  className?: string
+  className?: string;
 }
 
-export const ChannelBadge: React.FC<ChannelBadgeProps>
+export const ChannelBadge: React.FC<ChannelBadgeProps>;
 ```
 
 #### Design Specs
 
 **Palette Couleurs Canaux** (alignée Design System V2):
 
-| Canal | Couleur | Background | Text | Border | Dot |
-|-------|---------|------------|------|--------|-----|
-| **B2B** | #3b86d1 (Primary) | `bg-blue-100` | `text-blue-800` | `border-blue-200` | `bg-blue-600` |
-| **E-commerce** | #844fc1 (Accent) | `bg-purple-100` | `text-purple-800` | `border-purple-200` | `bg-purple-600` |
-| **Retail** | #ff9b3e (Warning) | `bg-orange-100` | `text-orange-800` | `border-orange-200` | `bg-orange-600` |
-| **Wholesale** | #38ce3c (Success) | `bg-green-100` | `text-green-800` | `border-green-200` | `bg-green-600` |
+| Canal          | Couleur           | Background      | Text              | Border              | Dot             |
+| -------------- | ----------------- | --------------- | ----------------- | ------------------- | --------------- |
+| **B2B**        | #3b86d1 (Primary) | `bg-blue-100`   | `text-blue-800`   | `border-blue-200`   | `bg-blue-600`   |
+| **E-commerce** | #844fc1 (Accent)  | `bg-purple-100` | `text-purple-800` | `border-purple-200` | `bg-purple-600` |
+| **Retail**     | #ff9b3e (Warning) | `bg-orange-100` | `text-orange-800` | `border-orange-200` | `bg-orange-600` |
+| **Wholesale**  | #38ce3c (Success) | `bg-green-100`  | `text-green-800`  | `border-green-200`  | `bg-green-600`  |
 
 **Sizes**:
+
 - `sm`: `px-2 py-0.5 text-xs` (height 20px)
 - `md`: `px-2.5 py-0.5 text-sm` (height 24px)
 - `lg`: `px-3 py-1 text-base` (height 32px)
 
 **Variants**:
+
 - `pill`: `rounded-full` (border-radius 9999px)
 - `square`: `rounded-md` (border-radius 6px)
 
 **Micro-interactions**:
+
 ```css
 .channel-badge {
   transition: all 150ms cubic-bezier(0.4, 0, 0.2, 1);
@@ -524,37 +563,40 @@ export interface ChannelFilterProps {
   /**
    * Canaux actuellement sélectionnés
    */
-  selected: Array<'b2b' | 'ecommerce' | 'retail' | 'wholesale'>
+  selected: Array<'b2b' | 'ecommerce' | 'retail' | 'wholesale'>;
 
   /**
    * Callback quand sélection change
    */
-  onChange: (channels: Array<'b2b' | 'ecommerce' | 'retail' | 'wholesale'>) => void
+  onChange: (
+    channels: Array<'b2b' | 'ecommerce' | 'retail' | 'wholesale'>
+  ) => void;
 
   /**
    * Texte label du filtre
    * @default 'Canal de vente'
    */
-  label?: string
+  label?: string;
 
   /**
    * Afficher bouton "Effacer tout"
    * @default true
    */
-  showClearAll?: boolean
+  showClearAll?: boolean;
 
   /**
    * Classe CSS additionnelle
    */
-  className?: string
+  className?: string;
 }
 
-export const ChannelFilter: React.FC<ChannelFilterProps>
+export const ChannelFilter: React.FC<ChannelFilterProps>;
 ```
 
 #### Design Specs
 
 **Layout Trigger Button**:
+
 ```
 ┌─────────────────────────────────────┐
 │ Canal: [●B2B] [●E-commerce]  (2) ˅ │
@@ -562,6 +604,7 @@ export const ChannelFilter: React.FC<ChannelFilterProps>
 ```
 
 **Layout Popover Content**:
+
 ```
 ┌─────────────────────────────────────┐
 │ Canaux de vente                     │
@@ -576,11 +619,13 @@ export const ChannelFilter: React.FC<ChannelFilterProps>
 ```
 
 **Components shadcn/ui utilisés**:
+
 - `Popover` + `PopoverTrigger` + `PopoverContent`
 - `Checkbox` pour chaque canal
 - `ChannelBadge` pour preview
 
 **Micro-interactions**:
+
 - Popover animation: `scale-95 opacity-0 → scale-100 opacity-100` (200ms)
 - Checkbox toggle: Ripple effect + badge fade in/out (150ms)
 - Clear all: Badges fade out simultanément puis count reset (300ms total)
@@ -588,7 +633,7 @@ export const ChannelFilter: React.FC<ChannelFilterProps>
 #### Usage Example
 
 ```tsx
-const [selectedChannels, setSelectedChannels] = useState<Channel[]>(['b2b'])
+const [selectedChannels, setSelectedChannels] = useState<Channel[]>(['b2b']);
 
 return (
   <div className="space-y-4">
@@ -601,12 +646,17 @@ return (
     {/* Results */}
     <div>
       {movements
-        .filter(m => selectedChannels.length === 0 || selectedChannels.includes(m.channel))
-        .map(movement => <MovementCard key={movement.id} {...movement} />)
-      }
+        .filter(
+          m =>
+            selectedChannels.length === 0 ||
+            selectedChannels.includes(m.channel)
+        )
+        .map(movement => (
+          <MovementCard key={movement.id} {...movement} />
+        ))}
     </div>
   </div>
-)
+);
 ```
 
 ---
@@ -635,75 +685,75 @@ export interface StockMovementCardProps {
   /**
    * Type de mouvement
    */
-  type: 'IN' | 'OUT' | 'ADJUST'
+  type: 'IN' | 'OUT' | 'ADJUST';
 
   /**
    * Nom du produit
    */
-  productName: string
+  productName: string;
 
   /**
    * SKU du produit
    */
-  productSku: string
+  productSku: string;
 
   /**
    * Changement quantité (positif ou négatif)
    */
-  quantityChange: number
+  quantityChange: number;
 
   /**
    * Quantité avant mouvement
    */
-  quantityBefore: number
+  quantityBefore: number;
 
   /**
    * Quantité après mouvement
    */
-  quantityAfter: number
+  quantityAfter: number;
 
   /**
    * Date/heure du mouvement
    */
-  performedAt: Date
+  performedAt: Date;
 
   /**
    * Canal de vente (pour type OUT uniquement)
    */
-  channel?: 'b2b' | 'ecommerce' | 'retail' | 'wholesale'
+  channel?: 'b2b' | 'ecommerce' | 'retail' | 'wholesale';
 
   /**
    * Référence commande/document (PO-XXX, SO-XXX)
    */
-  reference?: string
+  reference?: string;
 
   /**
    * Raison ajustement (pour type ADJUST uniquement)
    */
-  adjustmentReason?: string
+  adjustmentReason?: string;
 
   /**
    * Utilisateur ayant effectué le mouvement
    */
-  performedBy?: string
+  performedBy?: string;
 
   /**
    * Callback click "Voir détails"
    */
-  onDetailsClick?: () => void
+  onDetailsClick?: () => void;
 
   /**
    * État expanded (pour détails inline)
    */
-  isExpanded?: boolean
+  isExpanded?: boolean;
 
   /**
    * Classe CSS additionnelle
    */
-  className?: string
+  className?: string;
 }
 
-export const StockMovementCard: React.FC<StockMovementCardProps>
+export const StockMovementCard: React.FC<StockMovementCardProps>;
 ```
 
 #### Design Specs
@@ -738,18 +788,20 @@ EXPANDED:
 
 **Badge Type Mouvement**:
 
-| Type | Icon | Color | Background | Text |
-|------|------|-------|------------|------|
-| **IN** | ↓ | Success | `bg-green-50` | `text-green-600` |
-| **OUT** | ↑ | Danger | `bg-red-50` | `text-red-600` |
-| **ADJUST** | ⚙ | Primary | `bg-blue-50` | `text-blue-600` |
+| Type       | Icon | Color   | Background    | Text             |
+| ---------- | ---- | ------- | ------------- | ---------------- |
+| **IN**     | ↓    | Success | `bg-green-50` | `text-green-600` |
+| **OUT**    | ↑    | Danger  | `bg-red-50`   | `text-red-600`   |
+| **ADJUST** | ⚙   | Primary | `bg-blue-50`  | `text-blue-600`  |
 
 **Responsive**:
+
 - Desktop (>1024px): Grid 3 colonnes `grid-cols-[auto_1fr_auto]`
 - Tablet (768-1024px): Grid 2 colonnes `grid-cols-[auto_1fr]`, actions en bas
 - Mobile (<768px): Stack vertical `flex flex-col`, icône en haut
 
 **Micro-interactions**:
+
 ```css
 .movement-card {
   transition: all 200ms cubic-bezier(0.4, 0, 0.2, 1);
@@ -776,8 +828,10 @@ EXPANDED:
 #### Usage Example
 
 ```tsx
-const movements: StockMovement[] = [/* ... */]
-const [expandedId, setExpandedId] = useState<string | null>(null)
+const movements: StockMovement[] = [
+  /* ... */
+];
+const [expandedId, setExpandedId] = useState<string | null>(null);
 
 return (
   <div className="space-y-3">
@@ -794,13 +848,13 @@ return (
         channel={movement.channel}
         reference={movement.reference}
         isExpanded={expandedId === movement.id}
-        onDetailsClick={() => setExpandedId(
-          expandedId === movement.id ? null : movement.id
-        )}
+        onDetailsClick={() =>
+          setExpandedId(expandedId === movement.id ? null : movement.id)
+        }
       />
     ))}
   </div>
-)
+);
 ```
 
 ---
@@ -810,12 +864,14 @@ return (
 ### Principes Généraux
 
 **Performance Targets**:
+
 - **Hover/Focus**: <150ms (perceptible instantané)
 - **Transitions simples**: 200-300ms (naturel, pas robotique)
 - **Modals/Overlays**: 300-400ms (anticipation + feedback)
 - **Animations complexes**: <600ms max (jamais frustrant)
 
 **Easing Functions**:
+
 ```css
 /* Standard transitions (hover, focus) */
 cubic-bezier(0.4, 0, 0.2, 1) /* ease-in-out custom */
@@ -832,6 +888,7 @@ cubic-bezier(0.4, 0, 1, 1) /* ease-in */
 #### 1. Hover States
 
 **KPI Cards**:
+
 ```css
 .kpi-card {
   transition: all 200ms cubic-bezier(0.4, 0, 0.2, 1);
@@ -844,6 +901,7 @@ cubic-bezier(0.4, 0, 1, 1) /* ease-in */
 ```
 
 **Buttons**:
+
 ```css
 .button {
   transition: all 150ms cubic-bezier(0.4, 0, 0.2, 1);
@@ -861,6 +919,7 @@ cubic-bezier(0.4, 0, 1, 1) /* ease-in */
 ```
 
 **Badges**:
+
 ```css
 .badge {
   transition: all 150ms cubic-bezier(0.4, 0, 0.2, 1);
@@ -874,6 +933,7 @@ cubic-bezier(0.4, 0, 1, 1) /* ease-in */
 #### 2. Loading States
 
 **Skeleton Loaders** (pas spinners):
+
 ```tsx
 // Préférer skeleton au lieu de spinner
 <div className="space-y-3">
@@ -887,6 +947,7 @@ cubic-bezier(0.4, 0, 1, 1) /* ease-in */
 ```
 
 **Progress Indicators**:
+
 ```tsx
 // Pour actions longues (>2s)
 <Progress value={uploadProgress} className="h-2" />
@@ -903,35 +964,32 @@ cubic-bezier(0.4, 0, 1, 1) /* ease-in */
 **Principe**: Instant feedback avant API response, rollback si erreur.
 
 ```tsx
-const [movements, setMovements] = useState<Movement[]>([])
+const [movements, setMovements] = useState<Movement[]>([]);
 
 const addMovement = async (movement: NewMovement) => {
   // 1. Optimistic update IMMÉDIAT
-  const tempId = `temp-${Date.now()}`
-  const optimisticMovement = { ...movement, id: tempId, status: 'pending' }
-  setMovements(prev => [optimisticMovement, ...prev])
+  const tempId = `temp-${Date.now()}`;
+  const optimisticMovement = { ...movement, id: tempId, status: 'pending' };
+  setMovements(prev => [optimisticMovement, ...prev]);
 
   // 2. Toast instant feedback
-  toast.success('Mouvement enregistré...', { duration: 1000 })
+  toast.success('Mouvement enregistré...', { duration: 1000 });
 
   try {
     // 3. API call background
-    const saved = await api.movements.create(movement)
+    const saved = await api.movements.create(movement);
 
     // 4. Replace temp par réel
-    setMovements(prev => prev.map(m =>
-      m.id === tempId ? saved : m
-    ))
+    setMovements(prev => prev.map(m => (m.id === tempId ? saved : m)));
 
     // 5. Confirmation finale
-    toast.success('Mouvement validé ✅', { duration: 2000 })
-
+    toast.success('Mouvement validé ✅', { duration: 2000 });
   } catch (error) {
     // 6. Rollback si erreur
-    setMovements(prev => prev.filter(m => m.id !== tempId))
-    toast.error('Erreur: mouvement annulé', { duration: 4000 })
+    setMovements(prev => prev.filter(m => m.id !== tempId));
+    toast.error('Erreur: mouvement annulé', { duration: 4000 });
   }
-}
+};
 ```
 
 #### 4. Toast Notifications
@@ -939,13 +997,13 @@ const addMovement = async (movement: NewMovement) => {
 **Position**: Bottom-right (non-intrusif, ne masque pas contenu principal)
 
 ```tsx
-import { toast } from 'sonner'
+import { toast } from 'sonner';
 
 // Success (green)
 toast.success('Stock mis à jour', {
   description: '+50 unités Chaise Bar Velours',
   duration: 3000,
-})
+});
 
 // Error (red)
 toast.error('Erreur mise à jour stock', {
@@ -955,7 +1013,7 @@ toast.error('Erreur mise à jour stock', {
     label: 'Voir détails',
     onClick: () => openErrorModal(),
   },
-})
+});
 
 // Warning (orange)
 toast.warning('Stock faible détecté', {
@@ -965,33 +1023,33 @@ toast.warning('Stock faible détecté', {
     label: 'Voir alertes',
     onClick: () => router.push('/stocks#alertes'),
   },
-})
+});
 
 // Info (blue)
 toast.info('Export CSV en cours...', {
   duration: 2000,
-})
+});
 ```
 
 #### 5. Smooth Scrolling
 
 **Scroll vers section après click**:
+
 ```tsx
 const scrollToAlerts = () => {
   document.getElementById('alertes')?.scrollIntoView({
     behavior: 'smooth',
     block: 'start',
-  })
-}
+  });
+};
 
-<button onClick={scrollToAlerts}>
-  Voir alertes
-</button>
+<button onClick={scrollToAlerts}>Voir alertes</button>;
 ```
 
 #### 6. Collapsible Sections
 
 **Filtres + Détails cards**:
+
 ```tsx
 const [filtersOpen, setFiltersOpen] = useState(true)
 
@@ -1013,6 +1071,7 @@ const [filtersOpen, setFiltersOpen] = useState(true)
 #### 7. Keyboard Shortcuts
 
 **Command Palette** (future):
+
 ```tsx
 // ⌘K pour ouvrir command palette
 useEffect(() => {
@@ -1048,13 +1107,13 @@ useEffect(() => {
 
 ### Breakpoints Tailwind
 
-| Breakpoint | Min Width | Layout | Colonnes Grid |
-|------------|-----------|--------|---------------|
-| **sm** | 640px | Mobile large | 1 col |
-| **md** | 768px | Tablet portrait | 2 cols |
-| **lg** | 1024px | Tablet landscape | 3 cols |
-| **xl** | 1280px | Desktop | 4 cols |
-| **2xl** | 1536px | Large desktop | 4+ cols |
+| Breakpoint | Min Width | Layout           | Colonnes Grid |
+| ---------- | --------- | ---------------- | ------------- |
+| **sm**     | 640px     | Mobile large     | 1 col         |
+| **md**     | 768px     | Tablet portrait  | 2 cols        |
+| **lg**     | 1024px    | Tablet landscape | 3 cols        |
+| **xl**     | 1280px    | Desktop          | 4 cols        |
+| **2xl**    | 1536px    | Large desktop    | 4+ cols       |
 
 ### Patterns Responsive
 
@@ -1080,22 +1139,18 @@ useEffect(() => {
 // Desktop: Filtres inline collapsibles
 // Mobile: Drawer latéral full-screen
 
-const [filtersOpen, setFiltersOpen] = useState(false)
+const [filtersOpen, setFiltersOpen] = useState(false);
 
 return (
   <>
     {/* Desktop: Inline */}
     <Card className="hidden md:block">
-      <Collapsible open={filtersOpen}>
-        {/* Filtres content */}
-      </Collapsible>
+      <Collapsible open={filtersOpen}>{/* Filtres content */}</Collapsible>
     </Card>
 
     {/* Mobile: Drawer */}
     <div className="md:hidden">
-      <Button onClick={() => setFiltersOpen(true)}>
-        🔍 Filtres
-      </Button>
+      <Button onClick={() => setFiltersOpen(true)}>🔍 Filtres</Button>
 
       <Sheet open={filtersOpen} onOpenChange={setFiltersOpen}>
         <SheetContent side="left" className="w-full sm:w-80">
@@ -1107,7 +1162,7 @@ return (
       </Sheet>
     </div>
   </>
-)
+);
 ```
 
 #### 3. Table → Cards Mobile
@@ -1203,16 +1258,16 @@ return (
 
 **Vérification Design System V2**:
 
-| Élément | Foreground | Background | Ratio | Status |
-|---------|-----------|------------|-------|--------|
-| Badge B2B | `text-blue-800` | `bg-blue-100` | 7.2:1 | ✅ Pass |
+| Élément          | Foreground        | Background      | Ratio | Status  |
+| ---------------- | ----------------- | --------------- | ----- | ------- |
+| Badge B2B        | `text-blue-800`   | `bg-blue-100`   | 7.2:1 | ✅ Pass |
 | Badge E-commerce | `text-purple-800` | `bg-purple-100` | 6.8:1 | ✅ Pass |
-| Badge Retail | `text-orange-800` | `bg-orange-100` | 5.1:1 | ✅ Pass |
-| Badge Wholesale | `text-green-800` | `bg-green-100` | 6.5:1 | ✅ Pass |
-| Badge IN | `text-green-600` | `bg-green-50` | 4.9:1 | ✅ Pass |
-| Badge OUT | `text-red-600` | `bg-red-50` | 5.2:1 | ✅ Pass |
-| Text Primary | `text-black` | `bg-white` | 21:1 | ✅ Pass |
-| Text Secondary | `text-gray-600` | `bg-white` | 6.8:1 | ✅ Pass |
+| Badge Retail     | `text-orange-800` | `bg-orange-100` | 5.1:1 | ✅ Pass |
+| Badge Wholesale  | `text-green-800`  | `bg-green-100`  | 6.5:1 | ✅ Pass |
+| Badge IN         | `text-green-600`  | `bg-green-50`   | 4.9:1 | ✅ Pass |
+| Badge OUT        | `text-red-600`    | `bg-red-50`     | 5.2:1 | ✅ Pass |
+| Text Primary     | `text-black`      | `bg-white`      | 21:1  | ✅ Pass |
+| Text Secondary   | `text-gray-600`   | `bg-white`      | 6.8:1 | ✅ Pass |
 
 **Outil vérification**: [WebAIM Contrast Checker](https://webaim.org/resources/contrastchecker/)
 
@@ -1238,6 +1293,7 @@ return (
 ```
 
 **Focus visible obligatoire**:
+
 ```css
 /* Tous éléments focusables */
 *:focus-visible {
@@ -1253,6 +1309,7 @@ return (
 ```
 
 **Shortcuts clavier standards**:
+
 - `Tab`: Focus suivant
 - `Shift + Tab`: Focus précédent
 - `Enter` / `Space`: Activer élément
@@ -1349,6 +1406,7 @@ return (
 #### 5. Screen Reader Support
 
 **Visually hidden labels**:
+
 ```tsx
 // Classe Tailwind pour masquer visuellement mais garder pour SR
 <span className="sr-only">
@@ -1371,25 +1429,25 @@ return (
 ```
 
 **Live regions pour updates dynamiques**:
+
 ```tsx
 // Announce stock updates
 <div role="status" aria-live="polite" aria-atomic="true">
   {updateMessage && <p>{updateMessage}</p>}
-</div>
+</div>;
 
 // Usage
-setUpdateMessage('Stock mis à jour: +50 unités Chaise Bar Velours')
-setTimeout(() => setUpdateMessage(''), 3000)
+setUpdateMessage('Stock mis à jour: +50 unités Chaise Bar Velours');
+setTimeout(() => setUpdateMessage(''), 3000);
 ```
 
 #### 6. Forms Accessibility
 
 **Labels + Error messages**:
+
 ```tsx
 <div>
-  <Label htmlFor="product-search">
-    Rechercher produit
-  </Label>
+  <Label htmlFor="product-search">Rechercher produit</Label>
   <Input
     id="product-search"
     type="search"
@@ -1414,6 +1472,7 @@ setTimeout(() => setUpdateMessage(''), 3000)
 **Objectif**: Créer composants universels réutilisables.
 
 **Tâches**:
+
 1. ✅ Créer `ChannelBadge.tsx` avec variants + tests
 2. ✅ Créer `ChannelFilter.tsx` avec multi-select + tests
 3. ✅ Créer `StockMovementCard.tsx` avec expand + tests
@@ -1423,6 +1482,7 @@ setTimeout(() => setUpdateMessage(''), 3000)
 **Livrable**: 3 composants production-ready + Storybook documentation
 
 **Tests validation**:
+
 ```bash
 npm run test:components  # Vitest unit tests
 npm run test:a11y        # axe-core accessibility tests
@@ -1436,6 +1496,7 @@ npm run storybook        # Visual regression tests
 **Objectif**: Améliorer `/stocks/mouvements` avec tabs + filtres inline.
 
 **Tâches**:
+
 1. ✅ Ajouter shadcn/ui Tabs component (Tous | Entrées | Sorties | Ajustements)
 2. ✅ Implémenter filtres inline collapsibles (Période, Canal, Produit, Type)
 3. ✅ Remplacer liste actuelle par `StockMovementCard` components
@@ -1445,12 +1506,14 @@ npm run storybook        # Visual regression tests
 **Livrable**: `/stocks/mouvements` optimisé avec filtres + tabs
 
 **Tests validation**:
+
 ```bash
 npm run test:e2e -- stocks/mouvements  # Playwright
 npm run lighthouse -- /stocks/mouvements  # Performance
 ```
 
 **Redirects à ajouter** (next.config.js):
+
 ```javascript
 {
   source: '/stocks/entrees',
@@ -1471,6 +1534,7 @@ npm run lighthouse -- /stocks/mouvements  # Performance
 **Objectif**: Améliorer `/stocks/inventaire` avec filtres + export CSV.
 
 **Tâches**:
+
 1. ✅ Ajouter filtres inline (Catégorie, Fournisseur, Statut, Search)
 2. ✅ Améliorer table avec sorting colonnes (shadcn/ui Table + TanStack Table)
 3. ✅ Implémenter export CSV avec progress indicator
@@ -1480,12 +1544,14 @@ npm run lighthouse -- /stocks/mouvements  # Performance
 **Livrable**: `/stocks/inventaire` optimisé avec filtres + export
 
 **Tests validation**:
+
 ```bash
 npm run test:e2e -- stocks/inventaire
 npm run test:csv-export  # Validation format CSV
 ```
 
 **Redirect à ajouter**:
+
 ```javascript
 {
   source: '/stocks/produits',
@@ -1501,6 +1567,7 @@ npm run test:csv-export  # Validation format CSV
 **Objectif**: Optimiser `/stocks` avec navigation améliorée.
 
 **Tâches**:
+
 1. ✅ Optimiser layout navigation (déjà bien, refinements mineurs)
 2. ✅ Fusionner widget Alertes (enlever page séparée)
 3. ✅ Améliorer micro-interactions KPI cards
@@ -1510,12 +1577,14 @@ npm run test:csv-export  # Validation format CSV
 **Livrable**: `/stocks` optimisé avec navigation fluide
 
 **Tests validation**:
+
 ```bash
 npm run lighthouse -- /stocks  # Target: Performance >90, A11y 100
 npm run test:e2e -- stocks/dashboard
 ```
 
 **Redirect à ajouter**:
+
 ```javascript
 {
   source: '/stocks/alertes',
@@ -1531,6 +1600,7 @@ npm run test:e2e -- stocks/dashboard
 **Objectif**: Supprimer ancien code, documenter nouveau système.
 
 **Tâches**:
+
 1. ✅ Supprimer pages obsolètes (`/stocks/entrees`, `/sorties`, etc.)
 2. ✅ Cleanup hooks inutilisés
 3. ✅ Créer documentation utilisateur (screenshots + workflows)
@@ -1540,6 +1610,7 @@ npm run test:e2e -- stocks/dashboard
 **Livrable**: Codebase nettoyé + documentation complète
 
 **Documentation à créer**:
+
 - `docs/user-guides/stocks-module-guide.md` (screenshots + GIFs)
 - `docs/developer/stocks-components-api.md` (props + examples)
 - Vidéo démo 5min (Loom): Workflows clés nouveau système
@@ -1550,32 +1621,32 @@ npm run test:e2e -- stocks/dashboard
 
 ### KPIs UX
 
-| Métrique | Avant | Objectif | Mesure |
-|----------|-------|----------|--------|
-| **Pages module** | 10 | 3 | -70% |
-| **Clics pour action courante** | 3-4 | 1-2 | -50% |
-| **Temps health check** | 2-3min | <30s | -80% |
-| **Satisfaction utilisateurs** | N/A | >4/5 | Survey post-migration |
+| Métrique                       | Avant  | Objectif | Mesure                |
+| ------------------------------ | ------ | -------- | --------------------- |
+| **Pages module**               | 10     | 3        | -70%                  |
+| **Clics pour action courante** | 3-4    | 1-2      | -50%                  |
+| **Temps health check**         | 2-3min | <30s     | -80%                  |
+| **Satisfaction utilisateurs**  | N/A    | >4/5     | Survey post-migration |
 
 ### KPIs Performance
 
-| Métrique | Target | Mesure |
-|----------|--------|--------|
-| **Lighthouse Performance** | >90 | CI/CD |
-| **Lighthouse Accessibility** | 100 | CI/CD |
-| **First Contentful Paint** | <1.5s | Vercel Analytics |
-| **Largest Contentful Paint** | <2.5s | Vercel Analytics |
-| **Cumulative Layout Shift** | <0.1 | Vercel Analytics |
-| **Time to Interactive** | <3s | Vercel Analytics |
+| Métrique                     | Target | Mesure           |
+| ---------------------------- | ------ | ---------------- |
+| **Lighthouse Performance**   | >90    | CI/CD            |
+| **Lighthouse Accessibility** | 100    | CI/CD            |
+| **First Contentful Paint**   | <1.5s  | Vercel Analytics |
+| **Largest Contentful Paint** | <2.5s  | Vercel Analytics |
+| **Cumulative Layout Shift**  | <0.1   | Vercel Analytics |
+| **Time to Interactive**      | <3s    | Vercel Analytics |
 
 ### KPIs Accessibilité
 
-| Métrique | Target | Outil |
-|----------|--------|-------|
-| **WCAG AA Conformité** | 100% | axe DevTools |
-| **Keyboard Navigation** | 100% fonctionnel | Tests manuels |
+| Métrique                  | Target           | Outil           |
+| ------------------------- | ---------------- | --------------- |
+| **WCAG AA Conformité**    | 100%             | axe DevTools    |
+| **Keyboard Navigation**   | 100% fonctionnel | Tests manuels   |
 | **Screen Reader Support** | 100% fonctionnel | NVDA/JAWS tests |
-| **Color Contrast Ratio** | >4.5:1 | WebAIM Checker |
+| **Color Contrast Ratio**  | >4.5:1           | WebAIM Checker  |
 
 ---
 
@@ -1592,6 +1663,7 @@ npm run test:e2e -- stocks/dashboard
 ### Spacing System
 
 **Base 4px** (Tailwind default):
+
 - `gap-1` (4px): Elements très proches (icône + texte)
 - `gap-2` (8px): Badges adjacents, buttons groups
 - `gap-3` (12px): Cards list items
@@ -1601,6 +1673,7 @@ npm run test:e2e -- stocks/dashboard
 ### Typography Scale
 
 **Headings**:
+
 - `text-xs` (12px): Labels, metadata
 - `text-sm` (14px): Body text, descriptions
 - `text-base` (16px): Card titles, buttons
@@ -1609,6 +1682,7 @@ npm run test:e2e -- stocks/dashboard
 - `text-2xl` (24px): Hero titles
 
 **Font Weights**:
+
 - `font-medium` (500): Labels, secondary emphasis
 - `font-semibold` (600): Headings, primary emphasis
 - `font-bold` (700): Stats, KPIs
@@ -1616,6 +1690,7 @@ npm run test:e2e -- stocks/dashboard
 ### Shadow System
 
 **Elevation hierarchy**:
+
 ```css
 /* Level 1: Subtle (cards at rest) */
 shadow-sm: 0 1px 2px rgba(0,0,0,0.05)
@@ -1633,6 +1708,7 @@ shadow-xl: 0 20px 25px rgba(0,0,0,0.1), 0 10px 10px rgba(0,0,0,0.04)
 ### Border Radius
 
 **Rounded corners 2025**:
+
 - `rounded-md` (6px): Inputs, small buttons
 - `rounded-lg` (8px): Cards standard
 - `rounded-[10px]` (10px): Featured cards (KPIs)
@@ -1642,6 +1718,7 @@ shadow-xl: 0 20px 25px rgba(0,0,0,0.1), 0 10px 10px rgba(0,0,0,0.04)
 ### Color Usage Guidelines
 
 **Semantic Colors** (Design System V2):
+
 - **Primary (#3b86d1)**: Actions principales, liens, focus states
 - **Success (#38ce3c)**: Validations, statuts positifs, entrées stock
 - **Warning (#ff9b3e)**: Alertes non-critiques, attention requise
@@ -1650,6 +1727,7 @@ shadow-xl: 0 20px 25px rgba(0,0,0,0.1), 0 10px 10px rgba(0,0,0,0.04)
 - **Neutral (#6c7293)**: Texte secondaire, borders, backgrounds
 
 **Usage rules**:
+
 - ❌ JAMAIS utiliser couleur pure (red-500) directement
 - ✅ TOUJOURS utiliser variants sémantiques (bg-red-50, text-red-600)
 - ✅ TOUJOURS vérifier contraste WCAG AA

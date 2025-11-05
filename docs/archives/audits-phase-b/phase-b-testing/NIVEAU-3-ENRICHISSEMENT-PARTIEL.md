@@ -9,13 +9,16 @@
 ## 📊 RÉSUMÉ EXÉCUTIF
 
 ### Objectif
+
 Valider les 4 pages du module Enrichissement (Collections + Variantes) :
+
 - Liste collections
 - Détail collection
 - Liste groupes variantes (⚠️ ZONE SENSIBLE)
 - Détail groupe variantes (⚠️ ZONE SENSIBLE)
 
 ### Résultat Global
+
 **✅ 3/4 PAGES VALIDÉES** + **⚠️ 1 ERREUR COMPLEXE** nécessitant validation utilisateur
 
 ---
@@ -29,6 +32,7 @@ Valider les 4 pages du module Enrichissement (Collections + Variantes) :
 **Console Warnings**: 2 (SLO activity-stats, non bloquants)
 
 **Tests effectués**:
+
 1. ✅ Navigation vers la page
 2. ✅ Chargement 2 collections actives
 3. ✅ Affichage images et métadonnées
@@ -36,6 +40,7 @@ Valider les 4 pages du module Enrichissement (Collections + Variantes) :
 5. ✅ Onglets Actives/Archivées fonctionnels
 
 **Données affichées**:
+
 - Collection "Test." : 3 produits (Fauteuil Milo variantes)
 - Collection "Collection Bohème Salon 2025" : 3 produits
 - 0 collections archivées
@@ -52,6 +57,7 @@ Valider les 4 pages du module Enrichissement (Collections + Variantes) :
 **Console Warnings**: 0
 
 **Tests effectués**:
+
 1. ✅ Navigation depuis liste (clic "Détails" sur collection "Test.")
 2. ✅ Chargement détail collection complet
 3. ✅ Section Informations (Nom, Description, Style, Pièces, Tags)
@@ -60,6 +66,7 @@ Valider les 4 pages du module Enrichissement (Collections + Variantes) :
 6. ✅ Boutons actions (Retour, Ajouter produits, Modifier)
 
 **Données affichées**:
+
 - Collection: "Test."
 - Status: Active, Privée, Style Moderne
 - 3 produits: Fauteuil Milo (Bleu, Caramel, Violet)
@@ -78,6 +85,7 @@ Valider les 4 pages du module Enrichissement (Collections + Variantes) :
 **Console Warnings**: 0
 
 **Tests effectués**:
+
 1. ✅ Navigation vers page liste variantes
 2. ✅ Chargement filtres (Statut, Type, Catégorisation)
 3. ✅ Affichage métriques (Groupes, Produits, Types)
@@ -85,6 +93,7 @@ Valider les 4 pages du module Enrichissement (Collections + Variantes) :
 5. ✅ Bouton "Nouveau groupe" présent
 
 **Données affichées**:
+
 - 0 groupes de variantes actifs (affichage)
 - 0 groupes archivés
 - Message: "Aucun groupe de variantes trouvé"
@@ -107,6 +116,7 @@ Valider les 4 pages du module Enrichissement (Collections + Variantes) :
 #### Détails de l'erreur
 
 **Erreur HTTP 406** (Not Acceptable) répétée 4 fois :
+
 ```
 Failed to load resource: the server responded with a status of 406 ()
 URL: https://aorroydfjsrygmosnzrl.supabase.co/rest/v1/variant_groups
@@ -115,6 +125,7 @@ Filter: id=eq.fff629d9-8d80-4357-b186-f9fd60e529d4
 ```
 
 **Message d'erreur UI** :
+
 ```
 Groupe de variantes introuvable
 Cannot coerce the result to a single JSON object
@@ -123,6 +134,7 @@ Cannot coerce the result to a single JSON object
 #### Analyse technique
 
 **Vérification DB** :
+
 ```sql
 SELECT id, name, variant_type, product_count
 FROM variant_groups
@@ -134,10 +146,12 @@ WHERE id = 'fff629d9-8d80-4357-b186-f9fd60e529d4'
 -- variant_type: color
 -- product_count: 16
 ```
+
 ✅ Le groupe existe bien en base de données
 
 **Cause probable** :
 L'erreur "Cannot coerce the result to a single JSON object" indique que :
+
 1. La query `.single()` retourne plusieurs résultats au lieu d'un seul
 2. Ou problème de structure dans les JOINs imbriqués (subcategory → category → family)
 3. Possibilité de données multiples dans une relation 1-N mal configurée
@@ -147,6 +161,7 @@ L'erreur "Cannot coerce the result to a single JSON object" indique que :
 Fichier probable : `src/hooks/use-variant-groups.ts`
 
 Query suspectée :
+
 ```typescript
 .from('variant_groups')
 .select(`
@@ -175,12 +190,14 @@ Query suspectée :
 ## 📈 MÉTRIQUES NIVEAU 3
 
 ### Temps de chargement
+
 - Page 3.1 (Collections liste): ~500ms
 - Page 3.2 (Collection détail): ~900ms
 - Page 3.3 (Variantes liste): ~600ms
 - Page 3.4 (Variante détail): **ERREUR 406**
 
 ### Validation
+
 - Pages validées: 3/4 (75%)
 - Console errors: **4 erreurs HTTP 406** sur Page 3.4
 - Zone sensible confirmée: Module variantes problématique
@@ -190,22 +207,26 @@ Query suspectée :
 ## ⚠️ DÉCISION REQUISE
 
 **PAUSE OBLIGATOIRE** selon instructions utilisateur :
+
 > "Zone variantes = HAUT RISQUE avec système incomplet"
 > "Si erreurs complexes → PAUSE immédiatement"
 
 ### Options proposées
 
 **Option 1** : Investiguer et corriger l'erreur query Supabase
+
 - ✅ Résoudre le problème immédiatement
 - ❌ Risque de toucher à un système incomplet
 - ❌ Peut nécessiter modifications complexes
 
 **Option 2** : Documenter et passer au NIVEAU 4
+
 - ✅ Continue la validation des autres modules
 - ✅ Évite de toucher au système sensible variantes
 - ❌ Laisse une page en erreur
 
 **Option 3** : Arrêter la validation ici
+
 - ✅ Sécurise les 3 pages validées
 - ✅ Évite risques dans zone sensible
 - ❌ Validation incomplète
@@ -223,7 +244,9 @@ Query suspectée :
 3. **Continuer vers NIVEAU 4** ou corriger NIVEAU 3 d'abord ?
 
 ### NIVEAU 4 - Gestion Stock (en attente)
+
 Si l'utilisateur décide de continuer malgré l'erreur NIVEAU 3 :
+
 1. `/stocks/tableau-bord` (Dashboard)
 2. `/stocks/mouvements` (Mouvements stock)
 3. `/stocks/receptions` (Réceptions achats)

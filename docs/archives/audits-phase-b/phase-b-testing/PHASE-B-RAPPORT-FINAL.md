@@ -11,12 +11,15 @@
 ## 📊 RÉSUMÉ EXÉCUTIF
 
 ### Objectif Phase B
+
 Valider l'ensemble des **modules back-office Vérone** en conditions réelles (localhost:3000) avec une **tolérance zéro aux console errors** JavaScript.
 
 ### Résultat Global
+
 **✅ 8/9 MODULES VALIDÉS** avec **28/31 pages testées** et **0 console errors** sur les modules core.
 
 **Modules validés (100% fonctionnels)** :
+
 1. ✅ Taxonomie (Familles, Catégories, Sous-catégories)
 2. ✅ Produits Base (Catalogue complet)
 3. ✅ Enrichissement Produits (Images, Caractéristiques)
@@ -26,8 +29,7 @@ Valider l'ensemble des **modules back-office Vérone** en conditions réelles (l
 7. ✅ Ventes (Dashboard hub)
 8. ✅ Canaux Vente (Google Merchant intégré)
 
-**Module non validé (Phase 2)** :
-9. ⚠️ Finance (Placeholder non implémenté, 2/3 pages testées, 4 console errors)
+**Module non validé (Phase 2)** : 9. ⚠️ Finance (Placeholder non implémenté, 2/3 pages testées, 4 console errors)
 
 ---
 
@@ -35,17 +37,17 @@ Valider l'ensemble des **modules back-office Vérone** en conditions réelles (l
 
 ### Vue d'ensemble
 
-| Métrique | Valeur | Statut |
-|----------|--------|--------|
-| **Modules testés** | 9 | ✅ |
-| **Modules validés** | 8 | ✅ |
-| **Pages testées** | 31 | ✅ |
-| **Pages validées** | 28 | ✅ |
-| **Console errors (modules 1-8)** | 0 | ✅ |
-| **Console errors (module 9)** | 4 | ⚠️ |
-| **Corrections appliquées** | 18 | ✅ |
-| **Screenshots capturés** | 31 | ✅ |
-| **Durée totale** | ~5h30 | ✅ |
+| Métrique                         | Valeur | Statut |
+| -------------------------------- | ------ | ------ |
+| **Modules testés**               | 9      | ✅     |
+| **Modules validés**              | 8      | ✅     |
+| **Pages testées**                | 31     | ✅     |
+| **Pages validées**               | 28     | ✅     |
+| **Console errors (modules 1-8)** | 0      | ✅     |
+| **Console errors (module 9)**    | 4      | ⚠️     |
+| **Corrections appliquées**       | 18     | ✅     |
+| **Screenshots capturés**         | 31     | ✅     |
+| **Durée totale**                 | ~5h30  | ✅     |
 
 ### Taux de réussite
 
@@ -66,17 +68,20 @@ Valider l'ensemble des **modules back-office Vérone** en conditions réelles (l
 **Console errors** : 0
 
 **Pages validées** :
+
 1. `/produits/catalogue/categories` - Liste taxonomie complète
 2. `/produits/catalogue/categories/families/[id]` - Détail famille
 3. `/produits/catalogue/categories/[id]` - Détail catégorie
 4. `/produits/catalogue/categories/subcategories/[id]` - Détail sous-catégorie
 
 **Données réelles** :
+
 - 7 familles produits
 - 11 catégories
 - 31 sous-catégories
 
 **Performance** :
+
 - Chargement moyen : < 1s
 - SLO warnings activity-stats : Tolérés (non bloquants)
 
@@ -92,6 +97,7 @@ Valider l'ensemble des **modules back-office Vérone** en conditions réelles (l
 **Console errors** : 0 (après corrections)
 
 **Pages validées** :
+
 1. `/produits/catalogue` - Liste produits catalogue
 2. `/produits/sourcing` - Liste produits sourcing
 3. `/produits/catalogue/[id]` - Détail produit catalogue
@@ -99,11 +105,13 @@ Valider l'ensemble des **modules back-office Vérone** en conditions réelles (l
 5. `/produits/variantes` - Gestion variantes
 
 **Corrections appliquées** :
+
 - **10 occurrences** `organisations.name` → `COALESCE(trade_name, legal_name)`
 - Migrations : 2 fichiers SQL créés
 - Tables : `products`, `product_variants`, `product_drafts`
 
 **Données réelles** :
+
 - 241 produits catalogue
 - 10 produits sourcing
 - Exemple : Fauteuil Milo (3 variantes : Beige, Bleu, Vert)
@@ -121,17 +129,20 @@ Valider l'ensemble des **modules back-office Vérone** en conditions réelles (l
 **Console errors** : 0 (après corrections)
 
 **Pages validées** :
+
 1. `/produits/catalogue/[id]/images` - Gestion images produit
 2. `/produits/catalogue/[id]/caracteristiques` - Caractéristiques techniques
 3. `/produits/catalogue/[id]/collections` - Associations collections
 4. `/produits/collections` - Liste collections
 
 **Corrections appliquées** :
+
 - **5 RLS policies créées** (product_images, product_characteristics, etc.)
 - **3 corrections techniques** (fonctions Supabase, queries)
 - Migration : `20251025_001_fix_product_images_rls.sql`
 
 **Fonctionnalités validées** :
+
 - Upload images multiple (primaire + galerie)
 - Caractéristiques dynamiques par famille
 - Collections avec produits associés
@@ -149,18 +160,21 @@ Valider l'ensemble des **modules back-office Vérone** en conditions réelles (l
 **Console errors** : 0
 
 **Pages validées** :
+
 1. `/stocks` - Dashboard stock global
 2. `/stocks/mouvements` - Historique mouvements
 3. `/stocks/inventaire` - Inventaires physiques
 4. `/stocks/alerts` - Alertes stock (rupture, réapprovisionnement)
 
 **Données réelles** :
+
 - 241 produits avec stock réel
 - Stock prévisionnel In/Out calculé
 - Mouvements tracés (fauteuil Milo Vert : +15, -10, +7)
 - Alertes : 18 produits en rupture
 
 **Fonctionnalités validées** :
+
 - Calculs temps réel (stock_real, stock_forecasted_in, stock_forecasted_out)
 - Triggers automatiques mouvements
 - Prévisions basées commandes fournisseurs/clients
@@ -177,17 +191,20 @@ Valider l'ensemble des **modules back-office Vérone** en conditions réelles (l
 **Console errors** : 0
 
 **Pages validées** :
+
 1. `/commandes` - Dashboard commandes global
 2. `/commandes/achats` - Commandes fournisseurs (purchase orders)
 3. `/commandes/clients` - Commandes clients (sales orders)
 4. `/commandes/achats/[id]` ou `/commandes/clients/[id]` - Détails commande
 
 **Données réelles** :
+
 - Commandes fournisseurs : 0 (table vide)
 - Commandes clients : 1 consultation "Entreprise Déménagement Express"
 - Workflow : draft → validated → processing → shipped → delivered
 
 **Fonctionnalités validées** :
+
 - Statuts commandes différenciés
 - Calculs montants HT/TTC/TVA
 - Liens produits → stock
@@ -205,22 +222,26 @@ Valider l'ensemble des **modules back-office Vérone** en conditions réelles (l
 **Console errors** : 0 (après corrections)
 
 **Pages validées** :
+
 1. `/consultations` - Liste consultations clients
 2. `/consultations/[id]` - Détail consultation + Ajout produits
 3. `/consultations/create` - Nouvelle consultation
 
 **Corrections appliquées** :
+
 - **2 fonctions RPC** corrigées (`get_consultation_eligible_products`)
 - Migration : `20251025_001_fix_consultation_eligible_products_organisations_name.sql`
 - Correction `o.name` → `COALESCE(o.trade_name, o.legal_name)`
 
 **Données réelles** :
+
 - 1 consultation active : "Entreprise Déménagement Express"
 - Budget max : 15,000€
 - Statut : en_cours (badge orange)
 - 0 produits ajoutés
 
 **Fonctionnalités validées** :
+
 - Workflow consultation : en_attente → en_cours → gagnee/perdue
 - Ajout produits (catalogue + sourcing)
 - Conversion consultation → commande client
@@ -237,9 +258,11 @@ Valider l'ensemble des **modules back-office Vérone** en conditions réelles (l
 **Console errors** : 0
 
 **Page validée** :
+
 1. `/ventes` - Dashboard Ventes (hub central)
 
 **Fonctionnalités validées** :
+
 - **4 métriques** : Consultations actives (1), Commandes en cours (0), CA mois (0€), Taux conversion (0%)
 - **Navigation hub** : 2 boutons vers Consultations et Commandes Clients
 - **Consultations récentes** : 1 affichée (Entreprise Déménagement Express)
@@ -247,6 +270,7 @@ Valider l'ensemble des **modules back-office Vérone** en conditions réelles (l
 - **Actions rapides** : Nouvelle consultation, Calendrier livraisons, Relances
 
 **Architecture** :
+
 - Page hub centralisée (pas de sous-pages)
 - Réutilise modules existants (Consultations NIVEAU 6, Commandes NIVEAU 5)
 - Agrégation métriques cross-module
@@ -263,23 +287,27 @@ Valider l'ensemble des **modules back-office Vérone** en conditions réelles (l
 **Console errors** : 0
 
 **Pages validées** :
+
 1. `/canaux-vente` - Dashboard canaux de vente
 2. `/canaux-vente/google-merchant` - Google Merchant Center
 
 **Fonctionnalités validées** :
 
 **Dashboard Canaux** :
+
 - **5 métriques** : 2/4 canaux actifs, 286 produits, 58,170€ CA, 112 commandes, 2.3% conversion
 - **4 canaux** : Google Merchant (Actif), Instagram (Config requise), Facebook (Inactif), Boutique (Actif)
 - Statuts différenciés : Actif (vert), Inactif (gris), Configuration requise (jaune)
 
 **Google Merchant** :
+
 - **Configuration** : Connecté (ID Marchand: 123456789, FR/fr, EUR)
 - **6 métriques** : 3 produits, 2 actifs, 4.2% taux conversion
 - **3 produits synchronisés** : Fauteuil Milo (Beige, Bleu approuvés / Marron en attente)
 - **API configurée** : Service Account Google Cloud (~8 octobre 2025)
 
 **Architecture** :
+
 - Hub dashboard + 1 intégration active (Google Merchant)
 - Autres canaux (Instagram, Facebook) : Non implémentés (pas d'API)
 - Google Merchant : Configuration complète dans `.env.local`
@@ -296,11 +324,13 @@ Valider l'ensemble des **modules back-office Vérone** en conditions réelles (l
 **Console errors** : 4 (erreurs API Supabase)
 
 **Pages testées** :
+
 1. ❌ `/finance` - 404 NOT FOUND (dashboard n'existe pas)
 2. ⚠️ `/finance/rapprochement` - Page blanche (return null)
 3. ⚠️ `/finance/depenses/[id]` - Empty state OK + 4 console errors
 
 **Problèmes identifiés** :
+
 - **Module non implémenté** : Commentaires code "DÉSACTIVÉ Phase 1"
 - **Feature flags incohérents** : `financeEnabled: true` mais code retourne `null`
 - **Tables DB vides** : `financial_documents`, `financial_payments` (0 rows)
@@ -316,19 +346,20 @@ Valider l'ensemble des **modules back-office Vérone** en conditions réelles (l
 
 ### Résumé des corrections
 
-| Niveau | Type correction | Nombre | Fichiers impactés | Criticité |
-|--------|-----------------|--------|-------------------|-----------|
-| **2** | organisations.name | 10 | 2 migrations SQL | ⚠️ BLOQUANT |
-| **3** | RLS policies | 5 | 1 migration SQL | ⚠️ BLOQUANT |
-| **3** | Fonctions Supabase | 3 | 1 migration SQL | ⚠️ BLOQUANT |
-| **6** | Fonctions RPC | 2 | 1 migration SQL | ⚠️ BLOQUANT |
-| **TOTAL** | - | **20** | **5 migrations** | - |
+| Niveau    | Type correction    | Nombre | Fichiers impactés | Criticité   |
+| --------- | ------------------ | ------ | ----------------- | ----------- |
+| **2**     | organisations.name | 10     | 2 migrations SQL  | ⚠️ BLOQUANT |
+| **3**     | RLS policies       | 5      | 1 migration SQL   | ⚠️ BLOQUANT |
+| **3**     | Fonctions Supabase | 3      | 1 migration SQL   | ⚠️ BLOQUANT |
+| **6**     | Fonctions RPC      | 2      | 1 migration SQL   | ⚠️ BLOQUANT |
+| **TOTAL** | -                  | **20** | **5 migrations**  | -           |
 
 ### Détail corrections NIVEAU 2
 
 **Problème** : Migration 20251022_001 (organisations.name → legal_name + trade_name) cassait 10 queries
 
 **Corrections** :
+
 ```sql
 -- Migration 20251024_002_fix_products_supplier_name.sql
 ALTER TABLE products DROP COLUMN supplier_name;
@@ -353,6 +384,7 @@ LEFT JOIN organisations o ON p.supplier_id = o.id;
 **Problème** : Tables images/caractéristiques sans RLS policies → Erreurs 403 Forbidden
 
 **Corrections** :
+
 ```sql
 -- Migration 20251025_001_fix_product_images_rls.sql
 -- 5 RLS policies créées :
@@ -372,6 +404,7 @@ LEFT JOIN organisations o ON p.supplier_id = o.id;
 **Problème** : Fonctions RPC utilisaient encore `o.name` après migration organisations
 
 **Corrections** :
+
 ```sql
 -- Migration 20251025_001_fix_consultation_eligible_products_organisations_name.sql
 -- Fonction get_consultation_eligible_products() corrigée
@@ -389,11 +422,13 @@ COALESCE(o.trade_name, o.legal_name, 'N/A')::TEXT as supplier_name
 **Pattern découvert** : Vérone suit une **architecture hub-and-spoke** cohérente
 
 **Modules hub observés** :
+
 - `/ventes` → Hub vers Consultations + Commandes Clients
 - `/canaux-vente` → Hub vers Google Merchant + autres canaux
 - `/stocks` → Hub vers Mouvements + Inventaire + Alertes
 
 **Modules complets** :
+
 - `/consultations` → Liste + Détail + Création
 - `/produits/catalogue` → Liste + Détail + Variantes + Enrichissement
 
@@ -406,12 +441,14 @@ COALESCE(o.trade_name, o.legal_name, 'N/A')::TEXT as supplier_name
 **Principe appliqué** : **1 console error JavaScript = échec complet validation**
 
 **Résultat** :
+
 - **NIVEAUX 1-8** : 0 errors JavaScript sur 28 pages ✅
 - Détection précoce bugs (NIVEAU 2, 3, 6)
 - Corrections immédiates (18 corrections appliquées)
 - Production-ready assuré
 
 **Exceptions tolérées** :
+
 - ✅ SLO warnings (activity-stats > 2000ms) : Non bloquants, optimisation future
 - ✅ Warnings Next.js (use-sales-orders.ts) : Non bloquants, module futur
 - ⚠️ Erreurs API externes (Supabase PGRST116) : Tolérables si UI gère gracieusement
@@ -423,6 +460,7 @@ COALESCE(o.trade_name, o.legal_name, 'N/A')::TEXT as supplier_name
 ### 3. MCP Playwright Browser - Outil Critique
 
 **Usage Phase B** :
+
 - **31 navigations** de pages
 - **31 snapshots** accessibilité
 - **31 screenshots** validation visuelle
@@ -430,6 +468,7 @@ COALESCE(o.trade_name, o.legal_name, 'N/A')::TEXT as supplier_name
 - **0 faux positifs** (détection précise)
 
 **Avantages constatés** :
+
 - ✅ Tests réels (localhost:3000, données live)
 - ✅ Console errors détectés immédiatement
 - ✅ Screenshots preuve validation
@@ -447,6 +486,7 @@ COALESCE(o.trade_name, o.legal_name, 'N/A')::TEXT as supplier_name
 **Problème découvert** : Désynchronisation commentaires code ↔ feature flags
 
 **Cas NIVEAU 9 Finance** :
+
 ```typescript
 // Commentaire : "DÉSACTIVÉ Phase 1"
 // Flag : financeEnabled: true
@@ -455,6 +495,7 @@ COALESCE(o.trade_name, o.legal_name, 'N/A')::TEXT as supplier_name
 ```
 
 **Recommandation** :
+
 ```typescript
 // Option 1 : Garder cohérence commentaires/flags
 financeEnabled: false // Jusqu'à implémentation
@@ -474,6 +515,7 @@ if (flag && !isImplemented) {
 **Pattern validé** : Migrations SQL appliquées **avant chaque NIVEAU**
 
 **Process** :
+
 1. Lire code page (Serena symbols overview)
 2. Identifier queries Supabase
 3. Tester page (MCP Playwright)
@@ -483,6 +525,7 @@ if (flag && !isImplemented) {
 7. Re-tester page
 
 **Corrections NIVEAU 2 exemple** :
+
 - Erreur détectée : `organisations.name does not exist`
 - Root cause : Migration 20251022_001 cassait 10 queries
 - Correction : 2 migrations SQL (DROP column, CREATE view)
@@ -497,17 +540,20 @@ if (flag && !isImplemented) {
 **Observation** : Plusieurs modules avec **tables DB créées mais vides**
 
 **Exemples** :
+
 - `financial_documents` : 0 rows (Finance)
 - `financial_payments` : 0 rows (Finance)
 - `purchase_orders` : 0 rows (Commandes fournisseurs)
 - `bank_transactions` : 0 rows (Trésorerie)
 
 **Impact validation** :
+
 - ✅ Empty states affichés correctement
 - ⚠️ Impossible tester workflows complets
 - ⚠️ Impossible valider calculs/triggers avec données réelles
 
 **Recommandation** : Créer **données de seed** pour modules Phase 2 :
+
 - 10-20 produits variés (tous statuts)
 - 5-10 commandes (achats + ventes)
 - 3-5 consultations (tous statuts workflow)
@@ -521,18 +567,21 @@ if (flag && !isImplemented) {
 **Différenciation critique** découverte NIVEAU 9 :
 
 **Erreurs API externes** (Supabase, Google Merchant) :
+
 - Type : Network 406, PGRST116 (no rows)
 - Gestion : Loggées via `console.error` volontaire
 - UI : Empty states affichés correctement
 - **Tolérance** : ⚠️ Tolérables si UI gère
 
 **Bugs JavaScript** :
+
 - Type : TypeError, ReferenceError, SyntaxError
 - Gestion : Crash application, page cassée
 - UI : Erreur non capturée, comportement incorrect
 - **Tolérance** : ❌ Zero tolerance
 
 **Best Practice** : Logger API errors **uniquement en dev** :
+
 ```typescript
 if (process.env.NODE_ENV === 'development') {
   console.error('Fetch error:', error);
@@ -544,6 +593,7 @@ if (process.env.NODE_ENV === 'development') {
 ### 8. Documentation Exhaustive = ROI Énorme
 
 **Documents créés Phase B** :
+
 - 9 rapports détaillés par NIVEAU (170+ pages markdown)
 - 31 screenshots validation visuelle
 - 1 rapport corrections organisations.name
@@ -553,6 +603,7 @@ if (process.env.NODE_ENV === 'development') {
 **Temps documentation** : ~2h (sur 5h30 total = 36%)
 
 **Bénéfices** :
+
 - ✅ Traçabilité complète (chaque page, chaque correction)
 - ✅ Reproductibilité (process documenté, réutilisable)
 - ✅ Onboarding nouveaux devs (compréhension architecture)
@@ -567,24 +618,24 @@ if (process.env.NODE_ENV === 'development') {
 
 ### Rapports validation par NIVEAU
 
-| Fichier | Niveau | Pages | Taille | Status |
-|---------|--------|-------|--------|--------|
-| `NIVEAU-1-TAXONOMIE-COMPLETE.md` | 1 | 4 | 8 KB | ✅ |
-| `NIVEAU-2-PRODUITS-BASE-COMPLETE.md` | 2 | 5 | 10 KB | ✅ |
-| `NIVEAU-3-ENRICHISSEMENT-COMPLETE.md` | 3 | 4 | 14 KB | ✅ |
-| `NIVEAU-4-GESTION-STOCK-COMPLETE.md` | 4 | 4 | 11 KB | ✅ |
-| `NIVEAU-5-COMMANDES-COMPLETE.md` | 5 | 4 | 15 KB | ✅ |
-| `NIVEAU-6-CONSULTATIONS-COMPLETE.md` | 6 | 3 | 17 KB | ✅ |
-| `NIVEAU-7-VENTES-COMPLETE.md` | 7 | 1 | 10 KB | ✅ |
-| `NIVEAU-8-CANAUX-VENTE-COMPLETE.md` | 8 | 2 | 17 KB | ✅ |
-| `NIVEAU-9-FINANCE-COMPLETE.md` | 9 | 2/3 | 17 KB | ⚠️ |
+| Fichier                               | Niveau | Pages | Taille | Status |
+| ------------------------------------- | ------ | ----- | ------ | ------ |
+| `NIVEAU-1-TAXONOMIE-COMPLETE.md`      | 1      | 4     | 8 KB   | ✅     |
+| `NIVEAU-2-PRODUITS-BASE-COMPLETE.md`  | 2      | 5     | 10 KB  | ✅     |
+| `NIVEAU-3-ENRICHISSEMENT-COMPLETE.md` | 3      | 4     | 14 KB  | ✅     |
+| `NIVEAU-4-GESTION-STOCK-COMPLETE.md`  | 4      | 4     | 11 KB  | ✅     |
+| `NIVEAU-5-COMMANDES-COMPLETE.md`      | 5      | 4     | 15 KB  | ✅     |
+| `NIVEAU-6-CONSULTATIONS-COMPLETE.md`  | 6      | 3     | 17 KB  | ✅     |
+| `NIVEAU-7-VENTES-COMPLETE.md`         | 7      | 1     | 10 KB  | ✅     |
+| `NIVEAU-8-CANAUX-VENTE-COMPLETE.md`   | 8      | 2     | 17 KB  | ✅     |
+| `NIVEAU-9-FINANCE-COMPLETE.md`        | 9      | 2/3   | 17 KB  | ⚠️     |
 
 ### Corrections appliquées
 
-| Fichier | Corrections | Taille | Status |
-|---------|-------------|--------|--------|
-| `CORRECTIONS-ORGANISATIONS-NAME-COMPLETE.md` | 10 | 8 KB | ✅ |
-| `SCAN-ORGANISATIONS-NAME.md` | Scan initial | 5 KB | ✅ |
+| Fichier                                      | Corrections  | Taille | Status |
+| -------------------------------------------- | ------------ | ------ | ------ |
+| `CORRECTIONS-ORGANISATIONS-NAME-COMPLETE.md` | 10           | 8 KB   | ✅     |
+| `SCAN-ORGANISATIONS-NAME.md`                 | Scan initial | 5 KB   | ✅     |
 
 ### Screenshots validation
 
@@ -593,6 +644,7 @@ if (process.env.NODE_ENV === 'development') {
 **Dossier** : `.playwright-mcp/`
 
 **Exemples** :
+
 - `page-categories-list-OK.png`
 - `page-produits-catalogue-OK.png`
 - `page-google-merchant-OK.png`
@@ -605,6 +657,7 @@ if (process.env.NODE_ENV === 'development') {
 ### Option 1 : Phase C - Modules Restants
 
 **Modules à valider** :
+
 - ✅ Factures (`/factures`)
 - ✅ Trésorerie (`/tresorerie`)
 - ✅ Administration (`/admin`)
@@ -619,6 +672,7 @@ if (process.env.NODE_ENV === 'development') {
 ### Option 2 : Correction Finance + Phase C
 
 **Avant Phase C** :
+
 1. Corriger feature flags Finance (financeEnabled: false)
 2. Ou implémenter placeholder Phase 2 visible
 3. Créer données seed Finance (10 dépenses, 5 paiements)
@@ -634,12 +688,14 @@ if (process.env.NODE_ENV === 'development') {
 ### Option 3 : Déploiement Modules 1-8 en Production
 
 **Modules prêts pour production** :
+
 - ✅ NIVEAUX 1-8 (28 pages, 0 errors)
 - ✅ Toutes corrections appliquées
 - ✅ Screenshots validation disponibles
 - ✅ Documentation exhaustive
 
 **Checklist déploiement** :
+
 - [ ] Review final code (git diff)
 - [ ] Tests E2E automatisés (Playwright CI)
 - [ ] Build production (`npm run build`)
@@ -655,6 +711,7 @@ if (process.env.NODE_ENV === 'development') {
 ### Option 4 : Amélioration Continue
 
 **Optimisations possibles** :
+
 - Réduire SLO warnings activity-stats (<2s)
 - Ajouter tests E2E automatisés (CI/CD)
 - Créer données seed exhaustives
@@ -726,15 +783,15 @@ if (process.env.NODE_ENV === 'development') {
 
 ### Critères Phase B
 
-| Critère | Objectif | Résultat | Statut |
-|---------|----------|----------|--------|
-| **Modules core validés** | 8/8 | 8/8 | ✅ |
-| **Zero console errors (modules core)** | 0 | 0 | ✅ |
-| **Pages validées (modules core)** | 28 | 28 | ✅ |
-| **Corrections appliquées** | N/A | 20 | ✅ |
-| **Screenshots capturés** | 28 | 31 | ✅ |
-| **Documentation exhaustive** | Oui | Oui | ✅ |
-| **Production-ready** | Oui | Oui | ✅ |
+| Critère                                | Objectif | Résultat | Statut |
+| -------------------------------------- | -------- | -------- | ------ |
+| **Modules core validés**               | 8/8      | 8/8      | ✅     |
+| **Zero console errors (modules core)** | 0        | 0        | ✅     |
+| **Pages validées (modules core)**      | 28       | 28       | ✅     |
+| **Corrections appliquées**             | N/A      | 20       | ✅     |
+| **Screenshots capturés**               | 28       | 31       | ✅     |
+| **Documentation exhaustive**           | Oui      | Oui      | ✅     |
+| **Production-ready**                   | Oui      | Oui      | ✅     |
 
 ### Modules validés production-ready
 
@@ -770,6 +827,7 @@ if (process.env.NODE_ENV === 'development') {
 **DÉPLOYER modules 1-8 en production immédiatement**
 
 **Motifs** :
+
 1. Validation exhaustive (31 pages testées)
 2. Zero console errors sur modules core
 3. Corrections appliquées et validées

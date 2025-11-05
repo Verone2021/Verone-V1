@@ -9,7 +9,9 @@
 ## 📊 RÉSUMÉ EXÉCUTIF
 
 ### Objectif
+
 Valider les 5 pages du module Produits Base :
+
 - Liste catalogue produits
 - Détail produit (zone sensible variantes)
 - Dashboard sourcing
@@ -17,6 +19,7 @@ Valider les 5 pages du module Produits Base :
 - Validation échantillons sourcing
 
 ### Résultat Global
+
 **✅ 5/5 PAGES VALIDÉES** - Zero tolerance atteinte après correction de 10 occurrences `organisations.name`
 
 ---
@@ -24,6 +27,7 @@ Valider les 5 pages du module Produits Base :
 ## 🔧 CORRECTIONS CRITIQUES
 
 ### Problème Détecté
+
 Migration DB 20251022_001 : `organisations.name` → `legal_name` + `trade_name`
 
 **Erreur PostgreSQL** : `column organisations_1.name does not exist`
@@ -33,6 +37,7 @@ Migration DB 20251022_001 : `organisations.name` → `legal_name` + `trade_name`
 #### Hooks (9 occurrences)
 
 **1. `src/hooks/use-products.ts:403`**
+
 ```typescript
 // AVANT
 supplier:organisations!supplier_id (
@@ -49,30 +54,27 @@ supplier:organisations!supplier_id (
   type
 )
 ```
+
 **Impact**: Hook `useProduct` - Chargement produit avec fournisseur
 
 ---
 
 **2-3. `src/hooks/use-variant-groups.ts:1300 & 1329`**
+
 ```typescript
 // AVANT (ligne 1300)
-supplier:organisations (
-  id,
-  name
-)
+supplier: organisations(id, name);
 
 // APRÈS
-supplier:organisations (
-  id,
-  legal_name,
-  trade_name
-)
+supplier: organisations(id, legal_name, trade_name);
 ```
+
 **Impact**: Queries groupes variantes et produits du groupe
 
 ---
 
 **4-5. `src/hooks/use-sourcing-products.ts:85 & 92`**
+
 ```typescript
 // AVANT (ligne 85)
 supplier:organisations!products_supplier_id_fkey(
@@ -106,50 +108,35 @@ assigned_client:organisations!products_assigned_client_id_fkey(
   type
 )
 ```
+
 **Impact**: Hook sourcing - Affichage fournisseur et client assigné
 
 ---
 
 **6-7. `src/hooks/use-purchase-orders.ts:166 & 278`**
+
 ```typescript
 // AVANT
-organisations (
-  id,
-  name,
-  email,
-  phone,
-  payment_terms
-)
+organisations(id, name, email, phone, payment_terms);
 
 // APRÈS
-organisations (
-  id,
-  legal_name,
-  trade_name,
-  email,
-  phone,
-  payment_terms
-)
+organisations(id, legal_name, trade_name, email, phone, payment_terms);
 ```
+
 **Impact**: Hook commandes fournisseurs (2 queries)
 
 ---
 
 **8-9. `src/hooks/use-purchase-receptions.ts:80 & 338`**
+
 ```typescript
 // AVANT
-organisations (
-  id,
-  name
-)
+organisations(id, name);
 
 // APRÈS
-organisations (
-  id,
-  legal_name,
-  trade_name
-)
+organisations(id, legal_name, trade_name);
 ```
+
 **Impact**: Hook réceptions fournisseurs (2 queries)
 
 ---
@@ -157,6 +144,7 @@ organisations (
 #### Pages (1 occurrence)
 
 **10. `src/app/produits/catalogue/[productId]/page.tsx:169`**
+
 ```typescript
 // AVANT
 supplier:organisations!products_supplier_id_fkey(
@@ -177,6 +165,7 @@ supplier:organisations!products_supplier_id_fkey(
   is_active
 )
 ```
+
 **Impact**: Page détail produit - Query principale
 
 ---
@@ -190,6 +179,7 @@ supplier:organisations!products_supplier_id_fkey(
 **Console Warnings**: 2 (SLO activity-stats, non bloquants)
 
 **Tests effectués**:
+
 1. ✅ Navigation vers la page
 2. ✅ Chargement 20 produits en grille
 3. ✅ Boutons actions (Sourcing Rapide, Nouveau Produit)
@@ -197,16 +187,19 @@ supplier:organisations!products_supplier_id_fkey(
 5. ✅ Onglets Actifs/Archivés
 
 **Données affichées**:
+
 - 20 produits actifs (Fauteuil Milo variantes)
 - 0 produits archivés
 - Toutes les images chargées
 - Badges statut (Rupture, Nouveau)
 
 **Warnings détectés** (non bloquants):
+
 ```
 ⚠️ SLO dashboard dépassé: 2082ms > 2000ms
 ⚠️ SLO query dépassé: activity-stats 3204ms > 2000ms
 ```
+
 - Origine: `use-user-activity-tracker.ts`
 - Impact: Tracking utilisateur uniquement
 
@@ -221,6 +214,7 @@ supplier:organisations!products_supplier_id_fkey(
 **Console Warnings**: 0
 
 **Tests effectués**:
+
 1. ✅ Navigation depuis catalogue (clic "Voir détail" Fauteuil Milo - Orange)
 2. ✅ Chargement détail produit complet
 3. ✅ Breadcrumb complet (Maison et décoration › Mobilier › Fauteuil › Fauteuil Milo - Orange)
@@ -229,6 +223,7 @@ supplier:organisations!products_supplier_id_fkey(
 6. ✅ Toutes les sections accordéon présentes
 
 **Données affichées**:
+
 - Produit: Fauteuil Milo - Orange
 - SKU: FMIL-ORANG-10
 - Statut: Rupture de stock
@@ -238,6 +233,7 @@ supplier:organisations!products_supplier_id_fkey(
 - Breadcrumb fonctionnel
 
 **Erreurs résolues**:
+
 - ❌ AVANT: `column organisations_1.name does not exist`
 - ✅ APRÈS: Page chargée sans erreur
 
@@ -252,6 +248,7 @@ supplier:organisations!products_supplier_id_fkey(
 **Console Warnings**: 0
 
 **Tests effectués**:
+
 1. ✅ Navigation vers dashboard sourcing
 2. ✅ Chargement des 4 cartes métriques
 3. ✅ Section Actions Rapides (3 boutons)
@@ -259,6 +256,7 @@ supplier:organisations!products_supplier_id_fkey(
 5. ✅ Section Prochaines Actions (3 indicateurs)
 
 **Données affichées**:
+
 - Brouillons Actifs: 0 produits
 - En Validation: 0 produits
 - Échantillons: 0 commandes
@@ -266,6 +264,7 @@ supplier:organisations!products_supplier_id_fkey(
 - Actions rapides fonctionnelles (Nouveau Sourcing, Échantillons, Validation)
 
 **Performance**:
+
 - Chargement instantané
 - Aucune erreur console
 
@@ -280,6 +279,7 @@ supplier:organisations!products_supplier_id_fkey(
 **Console Warnings**: 0
 
 **Tests effectués**:
+
 1. ✅ Navigation vers liste produits sourcing
 2. ✅ Chargement filtres et recherche
 3. ✅ Affichage 4 cartes statistiques
@@ -287,6 +287,7 @@ supplier:organisations!products_supplier_id_fkey(
 5. ✅ État vide correctement géré
 
 **Données affichées**:
+
 - Total: 0 produits
 - En cours: 0
 - Échantillons: 0
@@ -294,6 +295,7 @@ supplier:organisations!products_supplier_id_fkey(
 - Message: "Aucun produit trouvé - Essayez de modifier vos filtres"
 
 **Performance**:
+
 - Chargement rapide
 - Filtres opérationnels
 
@@ -308,6 +310,7 @@ supplier:organisations!products_supplier_id_fkey(
 **Console Warnings**: 0
 
 **Tests effectués**:
+
 1. ✅ Navigation vers validation sourcing
 2. ✅ Chargement 2 onglets (Validation Sourcing, Échantillons Groupés)
 3. ✅ Affichage 4 cartes métriques
@@ -315,6 +318,7 @@ supplier:organisations!products_supplier_id_fkey(
 5. ✅ État vide correctement géré
 
 **Données affichées**:
+
 - À Valider: 0 produits sourcing
 - Échantillons: 0 nécessitent validation
 - Prêts Catalogue: 0 transfert possible
@@ -322,6 +326,7 @@ supplier:organisations!products_supplier_id_fkey(
 - Message: "Aucun produit en attente de validation - Tous les produits sourcés ont été traités"
 
 **Performance**:
+
 - Chargement instantané
 - Interface claire
 
@@ -332,6 +337,7 @@ supplier:organisations!products_supplier_id_fkey(
 ## 📈 MÉTRIQUES DE PERFORMANCE
 
 ### Temps de chargement
+
 - Page 2.1 (Catalogue): ~1.5s (compilation initiale)
 - Page 2.2 (Détail): ~900ms (après corrections)
 - Page 2.3 (Sourcing Dashboard): <500ms
@@ -339,6 +345,7 @@ supplier:organisations!products_supplier_id_fkey(
 - Page 2.5 (Validation): <500ms
 
 ### Corrections appliquées
+
 - Fichiers modifiés: 6
 - Hooks corrigés: 5 fichiers, 9 occurrences
 - Pages corrigées: 1 fichier, 1 occurrence
@@ -349,12 +356,15 @@ supplier:organisations!products_supplier_id_fkey(
 ## ⚠️ NOTES IMPORTANTES
 
 ### Warnings SLO Non Bloquants
+
 **2 warnings** détectés sur Page 2.1 uniquement:
+
 - `activity-stats` query: 2082ms-3204ms (SLO: 2000ms)
 - Non bloquant pour validation NIVEAU 2
 - Impact limité au tracking utilisateur (analytics)
 
 ### Points de Vigilance
+
 1. **Page détail produit** : Zone sensible avec variantes
    - ✅ Validation réussie sans toucher à la logique variantes
    - ✅ Corrections limitées aux queries organisations
@@ -367,6 +377,7 @@ supplier:organisations!products_supplier_id_fkey(
 ## ✅ VALIDATION FINALE
 
 ### Critères de validation
+
 - ✅ **Zero console errors** sur 5/5 pages
 - ✅ **Corrections organisations.name** : 10/10 appliquées
 - ✅ **Navigation fluide** entre toutes les pages
@@ -375,6 +386,7 @@ supplier:organisations!products_supplier_id_fkey(
 - ✅ **Screenshots** capturés pour validation visuelle
 
 ### Pages prêtes pour production
+
 1. ✅ `/produits/catalogue`
 2. ✅ `/produits/catalogue/[productId]`
 3. ✅ `/produits/sourcing`
@@ -388,12 +400,14 @@ supplier:organisations!products_supplier_id_fkey(
 **⏸️ PAUSE REQUISE** - Validation utilisateur avant NIVEAU 3
 
 ### NIVEAU 3 - Enrichissement (4 pages à valider)
+
 1. `/produits/catalogue/collections` (liste collections)
 2. `/produits/catalogue/collections/[collectionId]` (détail collection)
 3. `/produits/catalogue/variantes` (liste groupes variantes)
 4. `/produits/catalogue/variantes/[groupId]` (détail groupe variantes)
 
 **⚠️ ATTENTION NIVEAU 3** :
+
 - Module Variantes = Zone à haut risque
 - Système incomplet selon notes utilisateur
 - Nécessite validation prudente avec pause si erreurs complexes

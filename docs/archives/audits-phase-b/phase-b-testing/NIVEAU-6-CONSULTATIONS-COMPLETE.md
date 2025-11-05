@@ -9,12 +9,15 @@
 ## 📊 RÉSUMÉ EXÉCUTIF
 
 ### Objectif
+
 Valider les 3 pages du module Consultations Clients :
+
 - Liste consultations
 - Créer consultation
 - Détail consultation
 
 ### Résultat Global
+
 **✅ 3/3 PAGES VALIDÉES** - Zero tolerance atteinte après correction fonction RPC
 
 **Problème CRITIQUE résolu** : Fonction RPC `get_consultation_eligible_products()` utilisait encore `o.name` (migration 20251022_001 non appliquée)
@@ -28,12 +31,14 @@ Valider les 3 pages du module Consultations Clients :
 **Erreur découverte** : Fonction RPC `get_consultation_eligible_products(target_consultation_id)` avec **colonne obsolète `o.name`**
 
 **Symptômes** :
+
 - Page détail consultation affichait **4 console ERRORS** (HTTP 400)
 - Erreur PostgreSQL 42703 : `column o.name does not exist`
 - Message UI : "Erreur lors du chargement des produits éligibles"
 - Section produits consultation vide malgré 4 produits en base
 
 **Investigation** :
+
 ```sql
 -- Erreur console
 [ERROR] Erreur fetchEligibleProducts: {
@@ -45,6 +50,7 @@ Valider les 3 pages du module Consultations Clients :
 ```
 
 **Découverte** : **2 versions** de la fonction RPC existent
+
 ```sql
 -- Version 1 (sans paramètre) - ✅ Déjà corrigée dans 20250923_001
 CREATE FUNCTION get_consultation_eligible_products()
@@ -67,11 +73,13 @@ COALESCE(o.trade_name, o.legal_name, 'N/A')::TEXT as supplier_name
 ```
 
 **Fichiers modifiés** :
+
 1. ✅ `supabase/migrations/20250923_001_client_consultations_system.sql` (ligne 161)
 2. ✅ Migration créée : `20251025_001_fix_consultation_eligible_products_organisations_name.sql`
 3. ✅ Fonction RPC appliquée directement sur base PostgreSQL
 
 **Résultat** :
+
 - ✅ Page détail consultation affiche maintenant les **4 produits** (Fauteuil Milo variantes)
 - ✅ **0 console errors** sur toutes les pages
 - ✅ Alert erreur disparue, section produits fonctionnelle
@@ -87,6 +95,7 @@ COALESCE(o.trade_name, o.legal_name, 'N/A')::TEXT as supplier_name
 **Console Warnings**: 2 (SLO activity-stats 3453ms, 3736ms, non bloquants)
 
 **Tests effectués**:
+
 1. ✅ Navigation vers la page
 2. ✅ Chargement 4 cartes métriques
 3. ✅ Section Filtres (Recherche, Statut, Priorité)
@@ -94,6 +103,7 @@ COALESCE(o.trade_name, o.legal_name, 'N/A')::TEXT as supplier_name
 5. ✅ Boutons actions (Nouvelle consultation, Voir détails)
 
 **Données affichées**:
+
 - **Total consultations**: 1
 - **En attente**: 0
 - **En cours**: 1 (en traitement)
@@ -107,6 +117,7 @@ COALESCE(o.trade_name, o.legal_name, 'N/A')::TEXT as supplier_name
   - Photo consultation visible
 
 **Sections UI**:
+
 - Titre: "Consultations Clients"
 - Sous-titre: "Gestion des consultations et associations produits"
 - 4 cartes métriques avec icônes et valeurs
@@ -115,6 +126,7 @@ COALESCE(o.trade_name, o.legal_name, 'N/A')::TEXT as supplier_name
 - Bouton "Nouvelle consultation" en haut à droite
 
 **Performance**:
+
 - Chargement: ~600ms
 - Warnings SLO tolérés (activity-stats)
 
@@ -129,6 +141,7 @@ COALESCE(o.trade_name, o.legal_name, 'N/A')::TEXT as supplier_name
 **Console Warnings**: 2 (SLO activity-stats, non bloquants)
 
 **Tests effectués**:
+
 1. ✅ Navigation vers page création
 2. ✅ Chargement formulaire complet
 3. ✅ 3 sections accordéon présentes
@@ -138,29 +151,34 @@ COALESCE(o.trade_name, o.legal_name, 'N/A')::TEXT as supplier_name
 **Formulaire affiché**:
 
 **Section 1 - Informations Client**:
-- Client Professionnel * (dropdown + bouton "Nouveau client")
-- Email client * (text input)
+
+- Client Professionnel \* (dropdown + bouton "Nouveau client")
+- Email client \* (text input)
 - Téléphone client (text input)
 
 **Section 2 - Description du Projet**:
-- Description détaillée * (textarea)
+
+- Description détaillée \* (textarea)
 - URL d'image (optionnel) (text input)
 
 **Section 3 - Paramètres**:
+
 - Budget maximum (€) (number input)
 - Priorité (dropdown: Normale par défaut)
 - Canal d'origine (dropdown: Site web par défaut)
 - Date de réponse estimée (date picker)
 
 **Sections UI**:
+
 - Titre: "Nouvelle Consultation"
 - Sous-titre: "Créer une nouvelle consultation client"
 - Bouton "Retour" en haut à gauche
 - 3 sections accordéon avec icônes
-- Champs requis marqués avec astérisque rouge *
+- Champs requis marqués avec astérisque rouge \*
 - Boutons: "Annuler" (gris) + "Créer la consultation" (bleu avec icône)
 
 **Performance**:
+
 - Chargement: ~500ms
 - Formulaire réactif
 
@@ -175,6 +193,7 @@ COALESCE(o.trade_name, o.legal_name, 'N/A')::TEXT as supplier_name
 **Console Warnings**: 0
 
 **Tests effectués**:
+
 1. ✅ Navigation depuis liste (clic "Voir détails")
 2. ✅ Chargement détail consultation complet
 3. ✅ Section Photos consultation (1 photo principale)
@@ -186,18 +205,21 @@ COALESCE(o.trade_name, o.legal_name, 'N/A')::TEXT as supplier_name
 **Données affichées**:
 
 **En-tête**:
+
 - Titre: "Détail Consultation"
 - Organisation: Entreprise Déménagement Express
 - Statut: En cours (badge bleu)
 - Priorité: Normal
 
 **Section Photos**:
+
 - 1 photo principale (carton déménagement)
 - Badges: "🔄 En cours" + "★ Principale"
 - Boutons: Voir, Ajouter, Gérer les photos, Actualiser
 - Compteur: "1 photo • 1 principale • 0 galerie"
 
 **Section Informations**:
+
 - Organisation: Entreprise Déménagement Express
 - Email: contact@demenagement-express.fr (avec icône)
 - Téléphone: +33 1 42 85 96 14 (avec icône)
@@ -209,6 +231,7 @@ COALESCE(o.trade_name, o.legal_name, 'N/A')::TEXT as supplier_name
 - Bouton "Modifier" en haut à droite
 
 **Section Actions rapides**:
+
 - Titre: "Actions rapides"
 - Sous-titre: "Modifier le statut de la consultation"
 - 4 boutons statut:
@@ -218,11 +241,13 @@ COALESCE(o.trade_name, o.legal_name, 'N/A')::TEXT as supplier_name
   - Annulée (clickable)
 
 **Section Gestion**:
+
 - Titre: "Gestion de la consultation"
 - Sous-titre: "Validation, archivage et suppression"
 - Boutons: "Valider la consultation" (bleu) + "📦 Archiver"
 
 **Section Produits de la consultation** ✅ **CORRIGÉE**:
+
 - Titre: "Produits de la consultation"
 - Sous-titre: "4 articles • Total: 709.00€ HT"
 - Boutons: "Ajouter un produit" + "Sourcer un produit"
@@ -235,12 +260,14 @@ COALESCE(o.trade_name, o.legal_name, 'N/A')::TEXT as supplier_name
 - Footer: "4 articles • 0 gratuit • Total HT: 709.00€"
 
 **Erreurs résolues**:
+
 - ❌ AVANT: 4 console ERRORS (HTTP 400, PostgreSQL 42703)
 - ❌ AVANT: Section produits vide + alert erreur visible
 - ✅ APRÈS: 0 console errors
 - ✅ APRÈS: 4 produits affichés correctement avec calculs totaux
 
 **Performance**:
+
 - Chargement: ~1000ms (après correction)
 - Interface complète et réactive
 
@@ -251,11 +278,13 @@ COALESCE(o.trade_name, o.legal_name, 'N/A')::TEXT as supplier_name
 ## 📈 MÉTRIQUES NIVEAU 6
 
 ### Temps de chargement
+
 - Page 6.1 (Liste consultations): ~600ms
 - Page 6.2 (Créer consultation): ~500ms
 - Page 6.3 (Détail consultation): ~1000ms (après correction)
 
 ### Validation
+
 - Pages validées: **3/3 (100%)**
 - Console errors: **0 erreurs** (toutes pages après correction)
 - Console warnings: **2 warnings SLO non bloquants** (Pages 6.1 et 6.2)
@@ -264,6 +293,7 @@ COALESCE(o.trade_name, o.legal_name, 'N/A')::TEXT as supplier_name
   - **1 migration créée** (20251025_001)
 
 ### Complexité corrections
+
 - Investigation fonction RPC: ~10 minutes (découverte 2 versions)
 - Correction SQL: ~5 minutes (apply direct PostgreSQL)
 - Création migration: ~5 minutes (documentation)
@@ -278,6 +308,7 @@ COALESCE(o.trade_name, o.legal_name, 'N/A')::TEXT as supplier_name
 **Règle CRITIQUE** : PostgreSQL supporte la surcharge de fonctions (même nom, paramètres différents)
 
 **Comment détecter** :
+
 ```sql
 -- Lister TOUTES les versions d'une fonction
 SELECT pg_get_functiondef(oid)
@@ -288,6 +319,7 @@ WHERE proname = 'nom_fonction';
 ```
 
 **Pattern observé NIVEAU 6** :
+
 ```sql
 -- Version 1: Sans paramètre
 CREATE FUNCTION get_consultation_eligible_products()
@@ -301,6 +333,7 @@ RETURNS TABLE (...) AS $$ ... $$;
 **Problème** : Si on corrige seulement une version, l'autre reste incorrecte !
 
 **Solution** :
+
 1. Toujours lister TOUTES les versions avec `pg_proc`
 2. Corriger TOUTES les versions simultanément
 3. Documenter quelle version est appelée par le code frontend
@@ -311,20 +344,21 @@ RETURNS TABLE (...) AS $$ ... $$;
 
 **Occurrences corrigées à travers les NIVEAUX** :
 
-| Niveau | Fichier | Occurrences | Type |
-|--------|---------|-------------|------|
-| NIVEAU 2 | `use-products.ts` | 1 | Hook |
-| NIVEAU 2 | `use-variant-groups.ts` | 2 | Hook |
-| NIVEAU 2 | `use-sourcing-products.ts` | 2 | Hook |
-| NIVEAU 2 | `use-purchase-orders.ts` | 2 | Hook |
-| NIVEAU 2 | `use-purchase-receptions.ts` | 2 | Hook |
-| NIVEAU 2 | `[productId]/page.tsx` | 1 | Page |
-| **NIVEAU 6** | **`20250923_001` migration** | **1** | **SQL Function** |
-| **NIVEAU 6** | **Fonction RPC (overload)** | **1** | **SQL Function** |
+| Niveau       | Fichier                      | Occurrences | Type             |
+| ------------ | ---------------------------- | ----------- | ---------------- |
+| NIVEAU 2     | `use-products.ts`            | 1           | Hook             |
+| NIVEAU 2     | `use-variant-groups.ts`      | 2           | Hook             |
+| NIVEAU 2     | `use-sourcing-products.ts`   | 2           | Hook             |
+| NIVEAU 2     | `use-purchase-orders.ts`     | 2           | Hook             |
+| NIVEAU 2     | `use-purchase-receptions.ts` | 2           | Hook             |
+| NIVEAU 2     | `[productId]/page.tsx`       | 1           | Page             |
+| **NIVEAU 6** | **`20250923_001` migration** | **1**       | **SQL Function** |
+| **NIVEAU 6** | **Fonction RPC (overload)**  | **1**       | **SQL Function** |
 
 **Total corrections** : **12 occurrences** à travers 8 fichiers + 2 fonctions SQL
 
 **Pattern de correction uniforme** :
+
 ```sql
 -- ❌ AVANT
 o.name
@@ -343,16 +377,17 @@ COALESCE(o.trade_name, o.legal_name, 'N/A')
 
 **Différences clés** :
 
-| Aspect | Consultations | Commandes |
-|--------|---------------|-----------|
-| **Nature** | Demande pré-vente | Transaction validée |
-| **Statuts** | En attente → En cours → Terminée/Annulée | Brouillon → Validée → Expédiée/Livrée |
-| **Produits** | Association flexible (peut changer) | Ligne commande figée |
-| **Workflow** | Sourcing + Conseil client | Achat/Vente réel |
-| **Impact stock** | Aucun | Mouvements prévisionnels/réels |
-| **Finalité** | **Peut générer une commande** | Transaction finale |
+| Aspect           | Consultations                            | Commandes                             |
+| ---------------- | ---------------------------------------- | ------------------------------------- |
+| **Nature**       | Demande pré-vente                        | Transaction validée                   |
+| **Statuts**      | En attente → En cours → Terminée/Annulée | Brouillon → Validée → Expédiée/Livrée |
+| **Produits**     | Association flexible (peut changer)      | Ligne commande figée                  |
+| **Workflow**     | Sourcing + Conseil client                | Achat/Vente réel                      |
+| **Impact stock** | Aucun                                    | Mouvements prévisionnels/réels        |
+| **Finalité**     | **Peut générer une commande**            | Transaction finale                    |
 
 **Architecture découverte** :
+
 ```
 Consultation (pré-vente)
     ↓ (si validation client)
@@ -362,6 +397,7 @@ Expédition (logistique)
 ```
 
 **Tables impliquées** :
+
 - `consultations` (module séparé)
 - `consultation_items` (produits associés)
 - ❌ **PAS** dans `sales_orders` ou `purchase_orders`
@@ -373,12 +409,14 @@ Expédition (logistique)
 **Pattern UI découvert** : Gestion produits dans consultation différente des commandes
 
 **Fonctionnalités spécifiques** :
+
 - Checkbox "Gratuit" par produit (offre commerciale)
 - Bouton "Sourcer un produit" (lien vers module Sourcing)
 - Quantités ajustables directement dans le tableau
 - Possibilité d'ajouter produits catalogue OU sourcing
 
 **Fonction RPC critique** : `get_consultation_eligible_products()`
+
 - Retourne produits **catalogue** ET **sourcing**
 - Filtrage par `creation_mode` et `status`
 - Tri: Produits sourcing en premier
@@ -392,12 +430,14 @@ Expédition (logistique)
 **Contexte** : Module Consultation = Workflow avant-vente (pas de commandes)
 
 **Particularité NIVEAU 6** :
+
 - ✅ 1 consultation réelle en base ("Entreprise Déménagement Express")
 - ✅ 4 produits associés (Fauteuil Milo variantes)
 - ✅ Photos consultation fonctionnelles
 - ✅ Workflow complet : Création → En cours → Validation → (Génération commande)
 
 **Workflow métier validé** :
+
 ```
 1. Client contacte → Création consultation
 2. Commercial sélectionne produits (catalogue ou sourcing)
@@ -407,6 +447,7 @@ Expédition (logistique)
 ```
 
 **À vérifier en production** :
+
 - Workflow génération commande depuis consultation
 - Emails automatiques client (confirmation, suivi)
 - Intégration avec module Ventes (si conversion)
@@ -419,10 +460,12 @@ Expédition (logistique)
 **Inspection effectuée** : Découverte de 2 versions surchargées de la fonction
 
 **Résultat** :
+
 - ✅ Version 1 (sans paramètre) : Déjà corrigée dans migration 20250923_001
 - ❌ Version 2 (avec paramètre) : **TOUJOURS INCORRECTE** → Cause des 4 console errors
 
 **Code vérifié** :
+
 ```sql
 -- Version 2 (ligne 26 - AVANT correction)
 COALESCE(o.name, 'N/A')::TEXT as supplier_name
@@ -432,6 +475,7 @@ COALESCE(o.trade_name, o.legal_name, 'N/A')::TEXT as supplier_name
 ```
 
 **Pattern surcharge PostgreSQL** :
+
 ```sql
 -- Deux fonctions DIFFÉRENTES coexistent
 function(no_params) → Version A
@@ -443,6 +487,7 @@ function(with_params) → Version B
 ## ✅ VALIDATION FINALE
 
 ### Critères de validation NIVEAU 6
+
 - ✅ **Zero console errors** sur 3/3 pages (après correction)
 - ✅ **Fonction RPC corrigée** (2 versions)
 - ✅ **Navigation fluide** entre toutes les pages
@@ -453,6 +498,7 @@ function(with_params) → Version B
 - ✅ **Migration créée** pour documenter correction
 
 ### Pages prêtes pour production
+
 1. ✅ `/consultations` (Liste consultations)
 2. ✅ `/consultations/create` (Créer consultation)
 3. ✅ `/consultations/[consultationId]` (Détail consultation)
@@ -466,6 +512,7 @@ function(with_params) → Version B
 ### Récapitulatif Validation Phase B
 
 **Modules validés** :
+
 - ✅ NIVEAU 1 : Catalogue Base (5 pages) - 2025-10-24
 - ✅ NIVEAU 2 : Produits Base (5 pages) - 2025-10-24
 - ✅ NIVEAU 3 : Enrichissement (4 pages) - 2025-10-25
@@ -476,6 +523,7 @@ function(with_params) → Version B
 **Total pages validées** : **25/25 pages (100%)**
 
 **Corrections appliquées** :
+
 - NIVEAU 2 : 10 occurrences `organisations.name` (9 hooks + 1 page)
 - NIVEAU 3 : 5 RLS policies créées (`variant_groups` table)
 - NIVEAU 3 : 3 corrections techniques (`use-variant-groups.ts`)
@@ -491,6 +539,7 @@ function(with_params) → Version B
 **Phase B - Modules restants** :
 
 ### NIVEAU 7 - Ventes (3-4 pages estimées)
+
 1. `/ventes` (Dashboard ventes)
 2. `/ventes/commandes` (Commandes clients - possible doublon NIVEAU 5 ?)
 3. `/ventes/devis` (Si existant)
@@ -499,6 +548,7 @@ function(with_params) → Version B
 **⚠️ ATTENTION** : Vérifier si doublons avec NIVEAU 5 `/commandes/clients`
 
 ### NIVEAU 8 - Canaux Vente (4-5 pages estimées)
+
 1. `/canaux-vente` (Dashboard canaux)
 2. `/canaux-vente/google-merchant` (Feed Google)
 3. `/canaux-vente/facebook` (Catalogue Facebook)
@@ -506,6 +556,7 @@ function(with_params) → Version B
 5. `/canaux-vente/marketplaces` (Amazon, etc.)
 
 ### NIVEAU 9 - Finance (4-5 pages estimées)
+
 1. `/finance` (Dashboard finance)
 2. `/finance/factures` (Factures)
 3. `/finance/paiements` (Paiements)
@@ -522,6 +573,7 @@ function(with_params) → Version B
 **Statut**: ✅ NIVEAU 6 COMPLET - 3/3 PAGES VALIDÉES - 0 CONSOLE ERRORS - FONCTION RPC CORRIGÉE
 
 **Points forts** :
+
 - ✅ Validation rapide (25 min vs 45 min NIVEAU 2)
 - ✅ Découverte pattern surcharge fonctions PostgreSQL
 - ✅ Correction 2 versions fonction RPC simultanément

@@ -93,3 +93,5 @@ git-status-*.txt
 
 *storybook.log
 storybook-static
+.vercel-deploy-trigger-*
+.claude/DIAGNOSTIC-*.md
