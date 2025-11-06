@@ -75,6 +75,7 @@ export default function PurchaseOrdersPage() {
   // États modals
   const [selectedOrder, setSelectedOrder] = useState<PurchaseOrder | null>(null)
   const [showOrderDetail, setShowOrderDetail] = useState(false)
+  const [orderDetailEditMode, setOrderDetailEditMode] = useState(false) // Mode lecture/édition du modal
   const [showReceptionModal, setShowReceptionModal] = useState(false)
 
   useEffect(() => {
@@ -260,8 +261,17 @@ export default function PurchaseOrdersPage() {
     }
   }
 
-  const openOrderDetail = (order: PurchaseOrder) => {
+  // Mode LECTURE (bouton Œil)
+  const openOrderView = (order: PurchaseOrder) => {
     setSelectedOrder(order)
+    setOrderDetailEditMode(false) // Mode lecture seule
+    setShowOrderDetail(true)
+  }
+
+  // Mode ÉDITION (bouton Modifier)
+  const openOrderEdit = (order: PurchaseOrder) => {
+    setSelectedOrder(order)
+    setOrderDetailEditMode(true) // Mode édition
     setShowOrderDetail(true)
   }
 

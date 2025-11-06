@@ -14,7 +14,7 @@ import { useSubcategories } from '@/hooks/use-subcategories'
 import { ProductImageGallery } from '@/shared/modules/products/components/images'
 import { SampleRequirementSection } from './sample-requirement-section'
 import { CategoryHierarchyModal } from './categorize-modal'
-import { ProductCharacteristicsModal } from './product-characteristics-modal'
+import { ProductCharacteristicsModal } from '@/shared/modules/products/components/forms'
 import { ProductDescriptionsModal } from './product-descriptions-modal'
 import { ProductImagesModal } from './product-images-modal'
 
