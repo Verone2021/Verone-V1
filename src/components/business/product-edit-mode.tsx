@@ -11,7 +11,7 @@ import { cn } from '../../lib/utils'
 import { createClient } from '@/lib/supabase/client'
 import { useSubcategories } from '@/hooks/use-subcategories'
 
-import { ProductImageGallery } from './product-image-gallery'
+import { ProductImageGallery } from '@/shared/modules/products/components/images'
 import { SampleRequirementSection } from './sample-requirement-section'
 import { CategoryHierarchyModal } from './categorize-modal'
 import { ProductCharacteristicsModal } from './product-characteristics-modal'

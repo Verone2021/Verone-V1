@@ -3,7 +3,7 @@
 import { Badge, TreePine, FolderOpen, Tags, ExternalLink, Package, Heart, Star, Eye, Calendar, Truck, ShieldCheck, ImageIcon, CheckCircle, AlertCircle, Clock, Settings, ChevronRight } from 'lucide-react'
 import { ButtonV2 } from '@/components/ui/button'
 import { cn } from '../../lib/utils'
-import { ProductImageGallery } from './product-image-gallery'
+import { ProductImageGallery } from '@/shared/modules/products/components/images'
 import { ProductFixedCharacteristics } from './product-fixed-characteristics'
 
 interface ProductViewProps {

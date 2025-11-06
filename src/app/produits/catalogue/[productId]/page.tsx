@@ -18,7 +18,7 @@ import {
   Info,
 } from 'lucide-react';
 import { ButtonV2 } from '@/components/ui/button';
-import { ProductImageGallery } from '@/components/business/product-image-gallery';
+import { ProductImageGallery } from '@/shared/modules/products/components/images';
 import { ProductPhotosModal } from '@/components/business/product-photos-modal';
 import { ProductCharacteristicsModal } from '@/components/business/product-characteristics-modal';
 import { ProductDescriptionsModal } from '@/components/business/product-descriptions-modal';
