@@ -471,8 +471,8 @@ export default function PurchaseOrdersPage() {
                             <Eye className="h-4 w-4" />
                           </ButtonV2>
 
-                          {/* Modifier (draft ou confirmed) */}
-                          {(order.status === 'draft' || order.status === 'confirmed') && (
+                          {/* Modifier (draft uniquement) */}
+                          {order.status === 'draft' && (
                             <ButtonV2
                               variant="outline"
                               size="sm"
@@ -480,6 +480,19 @@ export default function PurchaseOrdersPage() {
                               title="Modifier"
                             >
                               <Edit className="h-4 w-4" />
+                            </ButtonV2>
+                          )}
+
+                          {/* Dévalider (confirmed uniquement) */}
+                          {order.status === 'confirmed' && (
+                            <ButtonV2
+                              variant="outline"
+                              size="sm"
+                              onClick={() => handleStatusChange(order.id, 'draft')}
+                              title="Dévalider pour modifier"
+                              className="text-orange-600 border-orange-300 hover:bg-orange-50"
+                            >
+                              <RotateCcw className="h-4 w-4" />
                             </ButtonV2>
                           )}
 
