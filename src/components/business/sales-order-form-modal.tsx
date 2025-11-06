@@ -19,6 +19,7 @@ import { useStockMovements } from '@/hooks/use-stock-movements'
 import { useProductPrice, formatPrice } from '@/hooks/use-pricing'
 import { formatCurrency } from '@/lib/utils'
 import { AddressInput } from './address-input'
+import { EcoTaxVatInput } from '@/components/forms/eco-tax-vat-input'
 import { createClient } from '@/lib/supabase/client'
 
 interface OrderItem {
@@ -82,6 +83,7 @@ export function SalesOrderFormModal({
   const [shippingAddress, setShippingAddress] = useState('')
   const [billingAddress, setBillingAddress] = useState('')
   const [notes, setNotes] = useState('')
+  const [ecoTaxVatRate, setEcoTaxVatRate] = useState<number | null>(null)
   // RFA supprimé - Migration 003
 
   // Items management
@@ -157,6 +159,7 @@ export function SalesOrderFormModal({
           : ''
       )
       setNotes(order.notes || '')
+      setEcoTaxVatRate(order.eco_tax_vat_rate ?? null)
 
       // Transformer les items de la commande en OrderItem[]
       const loadedItems = await Promise.all(
@@ -699,6 +702,15 @@ export function SalesOrderFormModal({
                   value={notes}
                   onChange={(e) => setNotes(e.target.value)}
                   placeholder="Notes sur la commande"
+                  disabled={loading}
+                />
+              </div>
+
+              <div>
+                <EcoTaxVatInput
+                  value={ecoTaxVatRate}
+                  onChange={setEcoTaxVatRate}
+                  defaultTaxRate={20}
                   disabled={loading}
                 />
               </div>

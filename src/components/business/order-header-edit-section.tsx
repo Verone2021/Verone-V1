@@ -5,6 +5,7 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
+import { EcoTaxVatInput } from '@/components/forms/eco-tax-vat-input';
 
 interface OrderHeaderEditSectionProps {
   orderType: 'sales' | 'purchase';
@@ -14,10 +15,12 @@ interface OrderHeaderEditSectionProps {
     delivery_address?: string | null;
     expected_delivery_date?: string | null;
     payment_terms?: string | null;
+    eco_tax_vat_rate?: number | null;
+    tax_rate?: number;
   };
   customerName?: string;
   supplierName?: string;
-  onChange: (field: string, value: string | null) => void;
+  onChange: (field: string, value: string | number | null) => void;
   readonly?: boolean;
 }
 
@@ -170,6 +173,16 @@ export function OrderHeaderEditSection({
             )}
           </div>
         )}
+
+        {/* TVA Éco-taxe */}
+        <div>
+          <EcoTaxVatInput
+            value={data.eco_tax_vat_rate ?? null}
+            onChange={(value) => onChange('eco_tax_vat_rate', value)}
+            defaultTaxRate={data.tax_rate ? data.tax_rate * 100 : 20}
+            disabled={readonly}
+          />
+        </div>
 
         {/* Conditions de paiement */}
         <div>

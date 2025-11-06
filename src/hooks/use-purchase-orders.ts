@@ -353,7 +353,7 @@ export function usePurchaseOrders() {
     try {
       let query = supabase
         .from('purchase_orders')
-        .select('status, total_ht')
+        .select('status, total_ht, eco_tax_total, total_ttc')
 
       if (filters?.date_from) {
         query = query.gte('created_at', filters.date_from)
@@ -369,6 +369,8 @@ export function usePurchaseOrders() {
       const statsData = data?.reduce((acc, order) => {
         acc.total_orders++
         acc.total_value += order.total_ht || 0
+        acc.eco_tax_total += order.eco_tax_total || 0
+        acc.total_ttc += order.total_ttc || 0
 
         switch (order.status) {
           case 'draft':
@@ -388,6 +390,8 @@ export function usePurchaseOrders() {
       }, {
         total_orders: 0,
         total_value: 0,
+        eco_tax_total: 0,
+        total_ttc: 0,
         pending_orders: 0,
         received_orders: 0,
         cancelled_orders: 0

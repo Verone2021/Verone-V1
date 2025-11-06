@@ -60,6 +60,8 @@ interface OrderHeader {
   shipping_address?: string | null;
   delivery_address?: string | null;
   payment_terms?: string | null;
+  tax_rate?: number;
+  eco_tax_vat_rate?: number | null;
 }
 
 const statusLabels: Record<string, string> = {
@@ -143,6 +145,8 @@ export function UniversalOrderDetailsModal({
         delivery_address: orderHeader.delivery_address,
         expected_delivery_date: orderHeader.expected_delivery_date,
         payment_terms: orderHeader.payment_terms,
+        tax_rate: orderHeader.tax_rate,
+        eco_tax_vat_rate: orderHeader.eco_tax_vat_rate,
       });
     } else {
       // Annuler édition
@@ -160,7 +164,7 @@ export function UniversalOrderDetailsModal({
   };
 
   // Handler modification champ header
-  const handleHeaderChange = (field: string, value: string | null) => {
+  const handleHeaderChange = (field: string, value: string | number | null) => {
     inlineEdit.updateEditedData('order_header', { [field]: value });
   };
 
@@ -223,7 +227,7 @@ export function UniversalOrderDetailsModal({
           const { data: order, error: orderError } = await supabase
             .from('sales_orders')
             .select(
-              'id, order_number, status, created_at, expected_delivery_date, total_ttc, customer_id, customer_type, billing_address, shipping_address, payment_terms'
+              'id, order_number, status, created_at, expected_delivery_date, total_ttc, customer_id, customer_type, billing_address, shipping_address, payment_terms, tax_rate, eco_tax_vat_rate'
             )
             .eq('id', orderId)
             .single();
@@ -270,13 +274,15 @@ export function UniversalOrderDetailsModal({
               ? JSON.stringify(order.shipping_address)
               : null,
             payment_terms: order.payment_terms,
+            tax_rate: order.tax_rate,
+            eco_tax_vat_rate: order.eco_tax_vat_rate,
           });
         } else if (orderType === 'purchase') {
           // Récupérer Purchase Order SANS items
           const { data: order, error: orderError } = await supabase
             .from('purchase_orders')
             .select(
-              'id, po_number, status, created_at, expected_delivery_date, total_ttc, supplier_id, delivery_address, payment_terms'
+              'id, po_number, status, created_at, expected_delivery_date, total_ttc, supplier_id, delivery_address, payment_terms, tax_rate, eco_tax_vat_rate'
             )
             .eq('id', orderId)
             .single();
@@ -310,6 +316,8 @@ export function UniversalOrderDetailsModal({
               ? JSON.stringify(order.delivery_address)
               : null,
             payment_terms: order.payment_terms,
+            tax_rate: order.tax_rate,
+            eco_tax_vat_rate: order.eco_tax_vat_rate,
           });
         }
       } catch (err: any) {
@@ -421,6 +429,8 @@ export function UniversalOrderDetailsModal({
                     delivery_address: orderHeader.delivery_address,
                     expected_delivery_date: orderHeader.expected_delivery_date,
                     payment_terms: orderHeader.payment_terms,
+                    tax_rate: orderHeader.tax_rate,
+                    eco_tax_vat_rate: orderHeader.eco_tax_vat_rate,
                   }
                 }
                 customerName={orderHeader.customer_name}

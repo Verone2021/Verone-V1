@@ -419,7 +419,7 @@ export function useSalesOrders() {
     try {
       let query = supabase
         .from('sales_orders')
-        .select('status, total_ht, total_ttc')
+        .select('status, total_ht, eco_tax_total, total_ttc')
 
       if (filters?.date_from) {
         query = query.gte('created_at', filters.date_from)
@@ -435,6 +435,7 @@ export function useSalesOrders() {
       const statsData = data?.reduce((acc, order) => {
         acc.total_orders++
         acc.total_ht += order.total_ht || 0
+        acc.eco_tax_total += order.eco_tax_total || 0
         acc.total_ttc += order.total_ttc || 0
 
         // Compteurs par statut
@@ -468,6 +469,7 @@ export function useSalesOrders() {
       }, {
         total_orders: 0,
         total_ht: 0,
+        eco_tax_total: 0,
         total_ttc: 0,
         total_tva: 0, // Calculé après
         total_value: 0, // Calculé après (alias total_ttc)

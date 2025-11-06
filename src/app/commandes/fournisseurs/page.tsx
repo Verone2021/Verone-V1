@@ -261,6 +261,7 @@ export default function PurchaseOrdersPage() {
       (acc, order) => {
         acc.total_orders++;
         acc.total_ht += order.total_ht || 0;
+        acc.eco_tax_total += order.eco_tax_total || 0;
         acc.total_ttc += order.total_ttc || 0;
 
         if (
@@ -282,6 +283,7 @@ export default function PurchaseOrdersPage() {
       {
         total_orders: 0,
         total_ht: 0,
+        eco_tax_total: 0,
         total_ttc: 0,
         total_tva: 0,
         pending_orders: 0,
@@ -403,8 +405,11 @@ export default function PurchaseOrdersPage() {
             <div className="text-2xl font-bold">
               {formatCurrency(filteredStats.total_ttc)}
             </div>
-            <div className="text-xs text-gray-500 mt-1">
+            <div className="text-xs text-gray-500 mt-1 space-y-0.5">
               <div>HT: {formatCurrency(filteredStats.total_ht)}</div>
+              {filteredStats.eco_tax_total > 0 && (
+                <div className="text-amber-600">Éco-taxe HT: {formatCurrency(filteredStats.eco_tax_total)}</div>
+              )}
               <div>TVA: {formatCurrency(filteredStats.total_tva)}</div>
             </div>
           </CardContent>

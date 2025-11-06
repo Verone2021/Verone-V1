@@ -32,6 +32,7 @@ import { CreateOrganisationModal } from './create-organisation-modal';
 import { SupplierSelector } from './supplier-selector';
 import { AddProductToOrderModal } from './add-product-to-order-modal';
 import { EditableOrderItemRow } from './editable-order-item-row';
+import { EcoTaxVatInput } from '@/components/forms/eco-tax-vat-input';
 import { useOrganisations, Organisation } from '@/hooks/use-organisations';
 import { useOrderItems, CreateOrderItemData } from '@/hooks/use-order-items';
 import {
@@ -104,6 +105,9 @@ export function PurchaseOrderFormModal({
       : null) || 'Groupe DSA - (Verone)\n4, rue du Pérou\n91300 Massy\nFrance'
   );
   const [notes, setNotes] = useState(order?.notes || '');
+  const [ecoTaxVatRate, setEcoTaxVatRate] = useState<number | null>(
+    order?.eco_tax_vat_rate ?? null
+  );
 
   // Modal ajout produit
   const [showAddProductModal, setShowAddProductModal] = useState(false);
@@ -274,6 +278,7 @@ export function PurchaseOrderFormModal({
       'Groupe DSA - (Verone)\n4, rue du Pérou\n91300 Massy\nFrance'
     );
     setNotes('');
+    setEcoTaxVatRate(null);
   };
 
   const handleClose = () => {
@@ -307,6 +312,7 @@ export function PurchaseOrderFormModal({
           payment_terms: selectedSupplier?.payment_terms || undefined,
           delivery_address: deliveryAddress || undefined,
           notes: notes || undefined,
+          eco_tax_vat_rate: ecoTaxVatRate,
         } as any); // Cast car UpdatePurchaseOrderData type incomplet
 
         toast({
@@ -439,6 +445,15 @@ export function PurchaseOrderFormModal({
                     value={deliveryAddress}
                     onChange={e => setDeliveryAddress(e.target.value)}
                     className="min-h-[100px] resize-none"
+                    disabled={isBlocked}
+                  />
+                </div>
+
+                <div className="col-span-2">
+                  <EcoTaxVatInput
+                    value={ecoTaxVatRate}
+                    onChange={setEcoTaxVatRate}
+                    defaultTaxRate={20}
                     disabled={isBlocked}
                   />
                 </div>

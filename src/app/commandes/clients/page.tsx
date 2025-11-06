@@ -430,8 +430,11 @@ export default function SalesOrdersPage() {
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">{formatCurrency(filteredStats.total_ttc)}</div>
-            <div className="text-xs text-gray-500 mt-1">
+            <div className="text-xs text-gray-500 mt-1 space-y-0.5">
               <div>HT: {formatCurrency(filteredStats.total_ht)}</div>
+              {filteredStats.eco_tax_total > 0 && (
+                <div className="text-amber-600">Éco-taxe HT: {formatCurrency(filteredStats.eco_tax_total)}</div>
+              )}
               <div>TVA: {formatCurrency(filteredStats.total_tva)}</div>
             </div>
           </CardContent>
