@@ -13,7 +13,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/u
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
-import { useToast } from '@/hooks/use-toast'
+import { useToast } from '@/shared/modules/common/hooks'
 import { Upload, X, Save, Loader2, Palette, Ruler, Layers, Euro } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
 import { DynamicColorSelector } from '@/components/business/DynamicColorSelector'

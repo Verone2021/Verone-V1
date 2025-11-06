@@ -15,8 +15,8 @@
 import { useState } from 'react'
 import { Weight, Save, X, Edit, AlertCircle } from 'lucide-react'
 import { ButtonV2 } from '@/components/ui/button'
-import { cn } from '../../lib/utils'
-import { useInlineEdit, type EditableSection } from '../../hooks/use-inline-edit'
+import { cn } from '@/lib/utils'
+import { useInlineEdit, type EditableSection } from '@/shared/modules/common/hooks'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 

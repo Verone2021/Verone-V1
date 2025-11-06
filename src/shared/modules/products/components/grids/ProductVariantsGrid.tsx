@@ -4,7 +4,7 @@ import * as React from "react"
 import { useRouter } from "next/navigation"
 import { ButtonV2 } from "@/components/ui/button"
 import { ProductVariantGridCard } from "./product-variant-grid-card"
-import { useProductVariants } from "@/hooks/use-product-variants"
+import { useProductVariants } from '@/shared/modules/products/hooks'
 import { Package2, Plus, Loader2 } from "lucide-react"
 import { cn } from "@/lib/utils"
 

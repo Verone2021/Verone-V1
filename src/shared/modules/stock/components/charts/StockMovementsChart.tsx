@@ -20,7 +20,7 @@ import {
   ResponsiveContainer,
   TooltipProps
 } from 'recharts'
-import type { StockMovementDataPoint } from '@/hooks/use-dashboard-analytics'
+import type { StockMovementDataPoint } from '@/shared/modules/dashboard/hooks'
 
 interface StockMovementsChartProps {
   data: StockMovementDataPoint[]

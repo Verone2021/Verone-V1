@@ -25,8 +25,8 @@ import {
   ArrowLeft
 } from 'lucide-react'
 import Link from 'next/link'
-import { useContacts } from '@/hooks/use-contacts'
-import { getOrganisationDisplayName, type Organisation } from '@/hooks/use-organisations'
+import { useContacts } from '@/shared/modules/organisations/hooks'
+import { getOrganisationDisplayName, type Organisation } from '@/shared/modules/organisations/hooks'
 
 interface ContactStats {
   totalContacts: number

@@ -25,8 +25,8 @@ import { ButtonV2 } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Badge } from '@/components/ui/badge'
 import { Card, CardContent } from '@/components/ui/card'
-import { useStockInventory } from '@/hooks/use-stock-inventory'
-import { useStockMovements } from '@/hooks/use-stock-movements'
+import { useStockInventory } from '@/shared/modules/stock/hooks'
+import { useStockMovements } from '@/shared/modules/stock/hooks'
 import { formatPrice } from '@/lib/utils'
 import {
   Dialog,

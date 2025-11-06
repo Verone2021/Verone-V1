@@ -5,7 +5,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/u
 import { ButtonV2 } from '@/components/ui/button'
 import { X, Sparkles } from 'lucide-react'
 import { SourcingQuickForm } from './sourcing-quick-form'
-import { useToast } from '@/hooks/use-toast'
+import { useToast } from '@/shared/modules/common/hooks'
 
 interface SourcingProductModalProps {
   open: boolean

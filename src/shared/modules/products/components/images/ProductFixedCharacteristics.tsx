@@ -4,7 +4,7 @@ import { Package, Edit2 } from 'lucide-react'
 import { ButtonV2 } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { COLLECTION_STYLE_OPTIONS } from '@/types/collections'
-import { cn } from '../../lib/utils'
+import { cn } from '@/lib/utils'
 
 /**
  * Formatte le style décoratif pour affichage

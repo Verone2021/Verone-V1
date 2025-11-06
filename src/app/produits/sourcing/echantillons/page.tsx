@@ -89,9 +89,9 @@ import { CustomerBadge } from '@/components/business/customer-badge';
 import {
   useCustomerSamples,
   CustomerSample,
-} from '@/hooks/use-customer-samples';
+} from '@/shared/modules/customers/hooks';
 import { createClient } from '@/lib/supabase/client';
-import { useToast } from '@/hooks/use-toast';
+import { useToast } from '@/shared/modules/common/hooks';
 
 export default function SourcingEchantillonsPage() {
   const router = useRouter();

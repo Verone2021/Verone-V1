@@ -23,7 +23,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
-import { useCollection, useCollections } from '@/hooks/use-collections';
+import { useCollection, useCollections } from '@/shared/modules/collections/hooks';
 import Image from 'next/image';
 import {
   COLLECTION_STYLE_OPTIONS,
@@ -35,7 +35,7 @@ import {
 } from '@/components/business/universal-product-selector-v2';
 import { RoomMultiSelect } from '@/components/ui/room-multi-select';
 import type { RoomType } from '@/types/room-types';
-import { useToast } from '@/hooks/use-toast';
+import { useToast } from '@/shared/modules/common/hooks';
 import { cn } from '@/lib/utils';
 
 interface CollectionDetailPageProps {

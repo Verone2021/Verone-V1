@@ -21,7 +21,7 @@
 
 import { useState, useRef, useEffect } from 'react'
 import { Check, Plus, Search, Loader2 } from 'lucide-react'
-import { useColorSelection } from '@/hooks/use-product-colors'
+import { useColorSelection } from '@/shared/modules/products/hooks'
 import { cn } from '@/lib/utils'
 
 interface DynamicColorSelectorProps {

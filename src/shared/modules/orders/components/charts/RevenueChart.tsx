@@ -19,7 +19,7 @@ import {
   ResponsiveContainer,
   TooltipProps
 } from 'recharts'
-import type { RevenueDataPoint } from '@/hooks/use-dashboard-analytics'
+import type { RevenueDataPoint } from '@/shared/modules/dashboard/hooks'
 
 interface RevenueChartProps {
   data: RevenueDataPoint[]

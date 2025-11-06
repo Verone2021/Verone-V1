@@ -6,7 +6,7 @@ import { ArrowLeft, Package, Zap, Settings, CheckCircle, Circle, ArrowRight } fr
 import { ButtonV2 } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
-import { cn } from '../../lib/utils'
+import { cn } from '@/lib/utils'
 import { CompleteProductWizard } from './complete-product-wizard'
 
 // Le formulaire complet sera intégré directement plus tard

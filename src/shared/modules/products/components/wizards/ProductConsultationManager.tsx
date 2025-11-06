@@ -9,9 +9,9 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Badge } from '@/components/ui/badge'
 import { Alert, AlertDescription } from '@/components/ui/alert'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
-import { useConsultations, useConsultationProducts } from '../../hooks/use-consultations'
-import { useToast } from '../../hooks/use-toast'
-import { cn } from '../../lib/utils'
+import { useConsultations, useConsultationProducts } from '@/shared/modules/common/hooks'
+import { useToast } from '@/shared/modules/common/hooks'
+import { cn } from '@/lib/utils'
 
 interface ProductConsultationManagerProps {
   productId?: string // Si fourni, focus sur ce produit

@@ -39,7 +39,7 @@ import {
 } from '@/components/ui/dialog'
 import { Checkbox } from '@/components/ui/checkbox'
 import { Label } from '@/components/ui/label'
-import { useStockMovements } from '@/hooks/use-stock-movements'
+import { useStockMovements } from '@/shared/modules/stock/hooks'
 
 interface ProductHistoryModalProps {
   product: any

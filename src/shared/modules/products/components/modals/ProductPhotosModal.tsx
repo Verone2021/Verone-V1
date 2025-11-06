@@ -27,9 +27,9 @@ import {
   Camera,
   Move
 } from 'lucide-react'
-import { cn } from '../../lib/utils'
+import { cn } from '@/lib/utils'
 import Image from 'next/image'
-import { useProductImages } from '@/hooks/use-product-images'
+import { useProductImages } from '@/shared/modules/products/hooks'
 
 interface ProductPhotosModalProps {
   isOpen: boolean

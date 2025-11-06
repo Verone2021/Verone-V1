@@ -3,7 +3,7 @@
 import React from 'react'
 import { TrendingUp, Activity, Clock, BarChart3 } from 'lucide-react'
 import { StockKPICard } from '@/components/ui-v2/stock/StockKPICard'
-import { MovementsStats } from '@/hooks/use-movements-history'
+import { MovementsStats } from '@/shared/modules/stock/hooks'
 
 interface MovementsStatsCardsProps {
   stats: MovementsStats | null

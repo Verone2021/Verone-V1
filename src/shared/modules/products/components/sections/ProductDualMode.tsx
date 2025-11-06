@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react'
 import { Eye, Settings, ToggleLeft, ToggleRight } from 'lucide-react'
 import { ButtonV2 } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
-import { cn } from '../../lib/utils'
+import { cn } from '@/lib/utils'
 
 import { ProductViewMode } from './product-view-mode'
 import { ProductEditMode } from './product-edit-mode'

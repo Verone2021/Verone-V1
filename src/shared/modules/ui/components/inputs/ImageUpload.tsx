@@ -4,8 +4,8 @@ import { useCallback, useState } from 'react'
 import Image from 'next/image'
 import { Upload, X, AlertCircle, Camera, Loader2 } from 'lucide-react'
 import { ButtonV2 } from '@/components/ui/button'
-import { useSimpleImageUpload } from '../../hooks/use-simple-image-upload'
-import { cn } from '../../lib/utils'
+import { useSimpleImageUpload } from '@/shared/modules/common/hooks'
+import { cn } from '@/lib/utils'
 
 interface ImageUploadProps {
   value?: string

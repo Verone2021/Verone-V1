@@ -3,8 +3,8 @@
 import { useState } from 'react'
 import { DollarSign, Save, X, Edit, AlertCircle, TrendingUp } from 'lucide-react'
 import { ButtonV2 } from '@/components/ui/button'
-import { cn, formatPrice } from '../../lib/utils'
-import { useInlineEdit, type EditableSection } from '../../hooks/use-inline-edit'
+import { cn, formatPrice } from '@/lib/utils'
+import { useInlineEdit, type EditableSection } from '@/shared/modules/common/hooks'
 
 interface Product {
   id: string

@@ -14,9 +14,9 @@ import { Upload, X, Star, Trash2, Edit3, Plus, AlertCircle, CheckCircle, Loader2
 import { ButtonV2 } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { Alert, AlertDescription } from '@/components/ui/alert'
-import { cn } from '../../lib/utils'
+import { cn } from '@/lib/utils'
 import Image from 'next/image'
-import { useProductImages } from '@/hooks/use-product-images'
+import { useProductImages } from '@/shared/modules/products/hooks'
 
 interface ProductImageManagementProps {
   productId: string

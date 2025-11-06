@@ -26,8 +26,8 @@ import {
   DialogTitle,
   DialogTrigger,
 } from '@/components/ui/dialog'
-import { useSourcingProducts } from '@/hooks/use-sourcing-products'
-import { useToast } from '@/hooks/use-toast'
+import { useSourcingProducts } from '@/shared/modules/products/hooks'
+import { useToast } from '@/shared/modules/common/hooks'
 
 export function SampleValidationSimple() {
   const router = useRouter()

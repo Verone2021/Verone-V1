@@ -27,8 +27,8 @@ import {
 import { Calendar } from '@/components/ui/calendar'
 import { Checkbox } from '@/components/ui/checkbox'
 import { Badge } from '@/components/ui/badge'
-import { MovementHistoryFilters } from '@/hooks/use-movements-history'
-import { useStockMovements } from '@/hooks/use-stock-movements'
+import { MovementHistoryFilters } from '@/shared/modules/stock/hooks'
+import { useStockMovements } from '@/shared/modules/stock/hooks'
 import { createClient } from '@/lib/supabase/client'
 
 interface MovementsFiltersProps {

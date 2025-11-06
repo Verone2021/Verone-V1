@@ -5,8 +5,8 @@ import { X, AlertTriangle, TrendingUp, TrendingDown, RotateCcw } from 'lucide-re
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog'
 import { ButtonV2 } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
-import { MovementWithDetails } from '@/hooks/use-movements-history'
-import { useToast } from '@/hooks/use-toast'
+import { MovementWithDetails } from '@/shared/modules/stock/hooks'
+import { useToast } from '@/shared/modules/common/hooks'
 
 interface CancelMovementModalProps {
   movement: MovementWithDetails | null

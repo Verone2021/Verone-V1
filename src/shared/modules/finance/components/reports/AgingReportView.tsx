@@ -7,9 +7,9 @@ import { ButtonV2 } from '@/components/ui/button'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
 import { Skeleton } from '@/components/ui/skeleton'
 import { AlertCircle, Package, TrendingUp, Clock, Euro, FileText, Download } from 'lucide-react'
-import { useAgingReport, AGING_BUCKETS, type AgingReportData } from '@/hooks/use-aging-report'
+import { useAgingReport, AGING_BUCKETS, type AgingReportData } from '@/shared/modules/finance/hooks'
 import { exportAgingReportToPDF, exportAgingReportToExcel, exportAgingReportToCSV } from '@/lib/reports/export-aging-report'
-import { useToast } from '@/hooks/use-toast'
+import { useToast } from '@/shared/modules/common/hooks'
 
 interface AgingReportViewProps {
   dateFrom?: string

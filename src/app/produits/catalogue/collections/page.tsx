@@ -22,7 +22,7 @@ import {
   Collection,
   CollectionFilters,
   CreateCollectionData,
-} from '@/hooks/use-collections';
+} from '@/shared/modules/collections/hooks';
 import {
   CollectionCreationWizard,
   CreateCollectionInput,
@@ -31,7 +31,7 @@ import {
   UniversalProductSelectorV2,
   SelectedProduct,
 } from '@/components/business/universal-product-selector-v2';
-import { useToast } from '@/hooks/use-toast';
+import { useToast } from '@/shared/modules/common/hooks';
 import { getRoomLabel, type RoomType } from '@/types/room-types';
 import { ElegantKpiCard } from '@/components/ui/elegant-kpi-card';
 

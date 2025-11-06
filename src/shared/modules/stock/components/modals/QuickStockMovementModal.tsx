@@ -15,8 +15,8 @@ import {
   SelectValue,
 } from '@/components/ui/select'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
-import { useStockMovements } from '@/hooks/use-stock-movements'
-import { useToast } from '@/hooks/use-toast'
+import { useStockMovements } from '@/shared/modules/stock/hooks'
+import { useToast } from '@/shared/modules/common/hooks'
 
 interface QuickStockMovementModalProps {
   isOpen: boolean

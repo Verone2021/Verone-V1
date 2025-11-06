@@ -40,7 +40,7 @@
 
 import { useEffect, useState } from 'react'
 import { createClient } from '@/lib/supabase/client'
-import { useToast } from '@/hooks/use-toast'
+import { useToast } from '@/shared/modules/common/hooks'
 import {
   useStockCore,
   type UseStockCoreReturn,

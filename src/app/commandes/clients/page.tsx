@@ -10,11 +10,11 @@ import { Badge } from '@/components/ui/badge'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs'
-import { useSalesOrders, SalesOrder, SalesOrderStatus } from '@/hooks/use-sales-orders'
+import { useSalesOrders, SalesOrder, SalesOrderStatus } from '@/shared/modules/orders/hooks'
 import { SalesOrderFormModal } from '@/shared/modules/orders/components/modals/SalesOrderFormModal'
 import { OrderDetailModal } from '@/shared/modules/orders/components/modals/OrderDetailModal'
 import { formatCurrency, formatDate } from '@/lib/utils'
-import { useToast } from '@/hooks/use-toast'
+import { useToast } from '@/shared/modules/common/hooks'
 
 const statusLabels: Record<SalesOrderStatus, string> = {
   draft: 'Brouillon',

@@ -2,7 +2,7 @@
 
 import { Trash2, X, AlertTriangle } from 'lucide-react'
 import { ButtonV2 } from '@/components/ui/button'
-import { cn } from '../../lib/utils'
+import { cn } from '@/lib/utils'
 
 interface ConfirmDeleteModalProps {
   title: string

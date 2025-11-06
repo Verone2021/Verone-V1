@@ -3,8 +3,8 @@
 import { useState, useEffect } from 'react'
 import { ChevronDown, Folder, FolderOpen } from 'lucide-react'
 import { ButtonV2 } from '@/components/ui/button'
-import { cn } from '../../lib/utils'
-import { createClient } from '../../lib/supabase/client'
+import { cn } from '@/lib/utils'
+import { createClient } from '@/lib/supabase/client'
 
 // Types hiérarchie selon business rules
 interface Family {

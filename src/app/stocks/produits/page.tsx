@@ -41,10 +41,10 @@ import {
   DialogTitle,
   DialogTrigger,
 } from '@/components/ui/dialog'
-import { useToast } from '@/hooks/use-toast'
-import { useStock } from '@/hooks/use-stock'
-import { useStockMovements } from '@/hooks/use-stock-movements'
-import { useStockReservations } from '@/hooks/use-stock-reservations'
+import { useToast } from '@/shared/modules/common/hooks'
+import { useStock } from '@/shared/modules/stock/hooks'
+import { useStockMovements } from '@/shared/modules/stock/hooks'
+import { useStockReservations } from '@/shared/modules/stock/hooks'
 import { formatPrice } from '@/lib/utils'
 
 interface StockFilters {

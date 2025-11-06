@@ -4,7 +4,7 @@ import { Badge } from '@/components/ui/badge';
 import { AlertTriangle, XCircle, Package, ExternalLink } from 'lucide-react';
 import Link from 'next/link';
 import Image from 'next/image';
-import { useProductImages } from '@/hooks/use-product-images';
+import { useProductImages } from '@/shared/modules/products/hooks';
 
 // Type définition pour StockAlert
 export interface StockAlert {

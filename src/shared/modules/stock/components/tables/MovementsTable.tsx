@@ -14,7 +14,7 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table'
-import { MovementWithDetails } from '@/hooks/use-movements-history'
+import { MovementWithDetails } from '@/shared/modules/stock/hooks'
 
 interface MovementsTableProps {
   movements: MovementWithDetails[]

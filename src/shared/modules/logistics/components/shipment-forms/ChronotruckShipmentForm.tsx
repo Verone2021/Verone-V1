@@ -5,7 +5,7 @@ import { ButtonV2 } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Truck, ExternalLink, AlertCircle } from 'lucide-react'
-import { SalesOrder } from '@/hooks/use-sales-orders'
+import { SalesOrder } from '@/shared/modules/orders/hooks'
 import { ShipmentRecapData } from './shipment-recap-modal'
 
 interface ChronotruckShipmentFormProps {

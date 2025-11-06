@@ -18,8 +18,8 @@ import {
 import { ButtonV2 } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
-import { useSalesOrders } from '@/hooks/use-sales-orders'
-import { usePurchaseOrders } from '@/hooks/use-purchase-orders'
+import { useSalesOrders } from '@/shared/modules/orders/hooks'
+import { usePurchaseOrders } from '@/shared/modules/orders/hooks'
 import { formatCurrency } from '@/lib/utils'
 
 export default function CommandesOverviewPage() {

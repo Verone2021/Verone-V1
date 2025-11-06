@@ -21,7 +21,7 @@ import { Input } from '@/components/ui/input'
 import { Badge } from '@/components/ui/badge'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { createClient } from '@/lib/supabase/client'
-import { CustomerPricing } from '@/hooks/use-pricing'
+import { CustomerPricing } from '@/shared/modules/finance/hooks'
 
 // Stats interface
 interface Stats {

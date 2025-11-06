@@ -18,11 +18,11 @@ import { ProductCardV2 as ProductCard } from '@/components/business/product-card
 import { Badge } from '@/components/ui/badge';
 import { cn } from '@/lib/utils';
 import { checkSLOCompliance, debounce } from '@/lib/utils';
-import { useCatalogue, Product, Category } from '@/hooks/use-catalogue';
-import { useProductImages } from '@/hooks/use-product-images';
-import { useFamilies } from '@/hooks/use-families';
-import { useCategories } from '@/hooks/use-categories';
-import { useSubcategories } from '@/hooks/use-subcategories';
+import { useCatalogue, Product, Category } from '@/shared/modules/categories/hooks';
+import { useProductImages } from '@/shared/modules/products/hooks';
+import { useFamilies } from '@/shared/modules/categories/hooks';
+import { useCategories } from '@/shared/modules/categories/hooks';
+import { useSubcategories } from '@/shared/modules/categories/hooks';
 import { CategoryHierarchyFilterV2 } from '@/components/business/category-hierarchy-filter-v2';
 // Nouveaux composants UX/UI 2025
 import { ModernActionButton } from '@/components/ui/modern-action-button';

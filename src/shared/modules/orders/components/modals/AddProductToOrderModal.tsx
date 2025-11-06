@@ -11,7 +11,7 @@ import { Card } from '@/components/ui/card'
 import { Separator } from '@/components/ui/separator'
 import { UniversalProductSelectorV2, SelectedProduct } from '@/components/business/universal-product-selector-v2'
 import { formatCurrency } from '@/lib/utils'
-import type { OrderType, CreateOrderItemData } from '@/hooks/use-order-items'
+import type { OrderType, CreateOrderItemData } from '@/shared/modules/orders/hooks'
 
 /**
  * Modal Universel Ajout Produit à Commande

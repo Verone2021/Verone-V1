@@ -9,8 +9,8 @@ import {
   PopoverTrigger,
 } from "@/components/ui/popover"
 import { Package, TrendingDown, Info } from "lucide-react"
-import { cn } from "../../lib/utils"
-import { formatPrice } from "../../hooks/use-pricing"
+import { cn } from '@/lib/utils'
+import { formatPrice } from '@/shared/modules/finance/hooks'
 
 interface QuantityBreak {
   min_quantity: number

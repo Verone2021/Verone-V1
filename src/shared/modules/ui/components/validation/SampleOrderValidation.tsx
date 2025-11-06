@@ -41,9 +41,9 @@ import {
   DialogTitle,
   DialogTrigger,
 } from '@/components/ui/dialog'
-import { useSourcingProducts } from '../../hooks/use-sourcing-products'
-import { useToast } from '../../hooks/use-toast'
-import { createClient } from '../../lib/supabase/client'
+import { useSourcingProducts } from '@/shared/modules/products/hooks'
+import { useToast } from '@/shared/modules/common/hooks'
+import { createClient } from '@/lib/supabase/client'
 
 interface SampleOrder {
   id: string

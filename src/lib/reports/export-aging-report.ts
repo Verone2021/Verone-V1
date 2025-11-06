@@ -1,6 +1,6 @@
 import jsPDF from 'jspdf'
 import autoTable from 'jspdf-autotable'
-import type { AgingReportData } from '@/hooks/use-aging-report'
+import type { AgingReportData } from '@/shared/modules/finance/hooks'
 
 // =============================================
 // EXPORT PDF - Template Professionnel Vérone

@@ -14,7 +14,7 @@ import { Progress } from "@/components/ui/progress"
 import { Alert, AlertDescription } from "@/components/ui/alert"
 import { cn } from "../../lib/utils"
 import Image from "next/image"
-import { useImageUpload, type UseImageUploadProps } from '@/hooks/use-image-upload'
+import { useImageUpload, type UseImageUploadProps } from '@/shared/modules/common/hooks'
 import type { BucketType } from '@/lib/upload/validation'
 
 interface ImageUploadV2Props extends Omit<UseImageUploadProps, 'onUploadSuccess' | 'onUploadError'> {

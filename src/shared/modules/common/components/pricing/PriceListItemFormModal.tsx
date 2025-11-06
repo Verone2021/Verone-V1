@@ -24,13 +24,13 @@ import {
 import { Switch } from '@/components/ui/switch'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
-import { useProducts } from '@/hooks/use-products'
+import { useProducts } from '@/shared/modules/products/hooks'
 import {
   useCreatePriceListItem,
   useUpdatePriceListItem,
   usePriceListItems,
   usePriceList
-} from '@/hooks/use-price-lists'
+} from '@/shared/modules/finance/hooks'
 import { formatCurrency } from '@/lib/utils'
 
 interface PriceListItemFormModalProps {

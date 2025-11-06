@@ -1,6 +1,6 @@
 "use client"
 
-import { useOrganisations } from '@/hooks/use-organisations'
+import { useOrganisations } from '@/shared/modules/organisations/hooks'
 import { UnifiedOrganisationForm, OrganisationFormData, Organisation } from './unified-organisation-form'
 
 interface PartnerFormModalProps {

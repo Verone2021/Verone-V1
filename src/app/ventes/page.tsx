@@ -17,7 +17,7 @@ import {
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { ButtonV2 } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
-import { useSalesDashboard } from '@/hooks/use-sales-dashboard'
+import { useSalesDashboard } from '@/shared/modules/orders/hooks'
 
 export default function VentesDashboardPage() {
   const router = useRouter()

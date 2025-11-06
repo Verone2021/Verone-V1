@@ -41,7 +41,7 @@ import { UniversalOrderDetailsModal } from '@/components/business/universal-orde
 import {
   useMovementsHistory,
   MovementWithDetails,
-} from '@/hooks/use-movements-history';
+} from '@/shared/modules/stock/hooks';
 
 export default function StockMovementsPage() {
   const router = useRouter();

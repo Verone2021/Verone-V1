@@ -55,7 +55,7 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { useSalesShipments } from '@/hooks/use-sales-shipments';
+import { useSalesShipments } from '@/shared/modules/orders/hooks';
 import { SalesOrderShipmentModal } from '@/components/business/sales-order-shipment-modal';
 import { formatCurrency, formatDate } from '@/lib/utils';
 

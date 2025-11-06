@@ -32,11 +32,11 @@ import {
 } from '@/components/ui/table';
 import { createClient } from '@/lib/supabase/client';
 import { formatCurrency } from '@/lib/utils';
-import { useOrderItems } from '@/hooks/use-order-items';
+import { useOrderItems } from '@/shared/modules/orders/hooks';
 import { EditableOrderItemRow } from '@/components/business/editable-order-item-row';
 import { AddProductToOrderModal } from '@/components/business/add-product-to-order-modal';
 import { OrderHeaderEditSection } from '@/components/business/order-header-edit-section';
-import { useInlineEdit } from '@/hooks/use-inline-edit';
+import { useInlineEdit } from '@/shared/modules/common/hooks';
 
 interface UniversalOrderDetailsModalProps {
   orderId: string | null;

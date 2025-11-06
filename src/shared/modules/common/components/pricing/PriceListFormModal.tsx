@@ -27,7 +27,7 @@ import {
   type PriceListType,
   type CreatePriceListData,
   type UpdatePriceListData
-} from '@/hooks/use-price-lists'
+} from '@/shared/modules/finance/hooks'
 
 interface PriceListFormModalProps {
   open: boolean

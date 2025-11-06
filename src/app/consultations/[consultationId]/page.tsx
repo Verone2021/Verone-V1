@@ -22,11 +22,11 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../..
 import { Badge } from '../../../components/ui/badge'
 import { Alert, AlertDescription } from '../../../components/ui/alert'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '../../../components/ui/tabs'
-import { ConsultationOrderInterface } from '../../../components/business/consultation-order-interface'
-import { ConsultationImageGallery } from '../../../components/business/consultation-image-gallery'
-import { EditConsultationModal } from '../../../components/business/edit-consultation-modal'
-import { useConsultations, ClientConsultation } from '../../../hooks/use-consultations'
-import { useToast } from '../../../hooks/use-toast'
+import { ConsultationOrderInterface } from '@/shared/modules/consultations/components/interfaces/ConsultationOrderInterface'
+import { ConsultationImageGallery } from '@/shared/modules/consultations/components/images/ConsultationImageGallery'
+import { EditConsultationModal } from '@/shared/modules/consultations/components/modals/EditConsultationModal'
+import { useConsultations, ClientConsultation } from '@/shared/modules/consultations/hooks'
+import { useToast } from '@/shared/modules/common/hooks'
 
 export default function ConsultationDetailPage() {
   const router = useRouter()

@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation'
 import { Building2, Truck, Settings, Phone, TrendingUp } from 'lucide-react'
 import { ElegantKpiCard } from '@/components/ui/elegant-kpi-card'
 import { ButtonV2 } from '@/components/ui/button'
-import { useOrganisations } from '@/hooks/use-organisations'
+import { useOrganisations } from '@/shared/modules/organisations/hooks'
 
 interface OrganisationStats {
   totalOrganisations: number

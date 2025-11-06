@@ -10,7 +10,7 @@ import { ShoppingCart, Plus, Eye, Package, Calendar, Euro } from 'lucide-react'
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card'
 import { ButtonV2 } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
-import { usePurchaseOrders, type PurchaseOrder } from '@/hooks/use-purchase-orders'
+import { usePurchaseOrders, type PurchaseOrder } from '@/shared/modules/orders/hooks'
 import Link from 'next/link'
 import { formatCurrency, formatDate } from '@/lib/utils'
 

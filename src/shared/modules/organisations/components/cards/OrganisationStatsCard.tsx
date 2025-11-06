@@ -7,7 +7,7 @@
 
 import { Package, TrendingUp, Calendar } from 'lucide-react'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
-import type { Organisation } from '@/hooks/use-organisations'
+import type { Organisation } from '@/shared/modules/organisations/hooks'
 
 interface OrganisationStatsCardProps {
   organisation: Organisation

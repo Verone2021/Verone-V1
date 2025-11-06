@@ -37,8 +37,8 @@ import {
 } from '@/components/ui/select';
 import { AlertCircle, Save, X } from 'lucide-react';
 import { createClient } from '@/lib/supabase/client';
-import { useToast } from '@/hooks/use-toast';
-import { useOrganisations } from '@/hooks/use-organisations';
+import { useToast } from '@/shared/modules/common/hooks';
+import { useOrganisations } from '@/shared/modules/organisations/hooks';
 import { SupplierSelector } from '@/components/business/supplier-selector';
 import type { VariantProduct, VariantGroup } from '@/types/variant-groups';
 import { COLLECTION_STYLE_OPTIONS } from '@/types/collections';

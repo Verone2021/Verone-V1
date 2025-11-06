@@ -7,7 +7,7 @@ import { Label } from '../../ui/label'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../../ui/card'
 import { Badge } from '../../ui/badge'
 import { Alert, AlertDescription } from '../../ui/alert'
-import { useToast } from '../../../hooks/use-toast'
+import { useToast } from '@/shared/modules/common/hooks'
 import { WizardFormData } from '../complete-product-wizard'
 import { cn } from '../../../lib/utils'
 

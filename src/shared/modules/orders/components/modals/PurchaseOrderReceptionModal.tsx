@@ -2,8 +2,8 @@
 
 import { useState, useEffect } from 'react'
 import { Dialog, DialogContent } from '@/components/ui/dialog'
-import { PurchaseOrder } from '@/hooks/use-purchase-orders'
-import { usePurchaseReceptions } from '@/hooks/use-purchase-receptions'
+import { PurchaseOrder } from '@/shared/modules/orders/hooks'
+import { usePurchaseReceptions } from '@/shared/modules/orders/hooks'
 import { PurchaseOrderReceptionForm } from '@/components/business/purchase-order-reception-form'
 
 interface PurchaseOrderReceptionModalProps {

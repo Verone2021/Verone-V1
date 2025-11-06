@@ -4,14 +4,14 @@ import { useState, useEffect } from 'react'
 import { X } from 'lucide-react'
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 import { ButtonV2 } from '@/components/ui/button'
-import { SalesOrder } from '@/hooks/use-sales-orders'
+import { SalesOrder } from '@/shared/modules/orders/hooks'
 import { CarrierSelector } from './carrier-selector'
 import { ShipmentRecapModal, type ShipmentRecapData, type ShippingMethod } from './shipment-recap-modal'
 import { PacklinkShipmentForm } from './packlink-shipment-form'
 import { MondialRelayShipmentForm } from './mondial-relay-shipment-form'
 import { ChronotruckShipmentForm } from './chronotruck-shipment-form'
 import { ManualShipmentForm } from './manual-shipment-form'
-import { useShipments } from '@/hooks/use-shipments'
+import { useShipments } from '@/shared/modules/orders/hooks'
 
 interface ShippingManagerModalProps {
   order: SalesOrder

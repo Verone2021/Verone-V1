@@ -16,12 +16,12 @@
 import { useState, useMemo } from 'react';
 import { Bell, Search, CheckCheck, Trash2, Filter, X } from 'lucide-react';
 import { ButtonV2 } from '@/components/ui/button';
-import { useNotifications } from '@/hooks/use-notifications';
+import { useNotifications } from '@/shared/modules/notifications/hooks';
 import { cn } from '@/lib/utils';
 import { spacing, colors } from '@/lib/design-system';
 import { formatDistanceToNow, isToday, isYesterday, isThisWeek, startOfWeek } from 'date-fns';
 import { fr } from 'date-fns/locale';
-import type { Notification } from '@/hooks/use-notifications';
+import type { Notification } from '@/shared/modules/notifications/hooks';
 
 // Types pour les filtres
 type FilterTab = 'all' | 'unread' | 'urgent' | 'by-type';

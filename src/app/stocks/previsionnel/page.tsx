@@ -37,7 +37,7 @@ import {
   AccordionItem,
   AccordionTrigger,
 } from '@/components/ui/accordion';
-import { useStockDashboard } from '@/hooks/use-stock-dashboard';
+import { useStockDashboard } from '@/shared/modules/stock/hooks';
 import { OrderItemsTable } from '@/components/business/order-items-table';
 import { StockKPICard } from '@/components/ui-v2/stock/StockKPICard';
 

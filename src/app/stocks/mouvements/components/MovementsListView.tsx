@@ -9,7 +9,7 @@
 'use client'
 
 import { StockMovementCard } from '@/components/ui-v2/stock'
-import type { MovementWithDetails } from '@/hooks/use-movements-history'
+import type { MovementWithDetails } from '@/shared/modules/stock/hooks'
 import type { StockMovementCardProps } from '@/components/ui-v2/stock/StockMovementCard'
 import { Clock } from 'lucide-react'
 

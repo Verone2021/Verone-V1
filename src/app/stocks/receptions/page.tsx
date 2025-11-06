@@ -55,7 +55,7 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { usePurchaseReceptions } from '@/hooks/use-purchase-receptions';
+import { usePurchaseReceptions } from '@/shared/modules/orders/hooks';
 import { PurchaseOrderReceptionModal } from '@/components/business/purchase-order-reception-modal';
 import { formatCurrency, formatDate } from '@/lib/utils';
 

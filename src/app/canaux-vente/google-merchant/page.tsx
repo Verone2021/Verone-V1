@@ -47,12 +47,12 @@ import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { GoogleMerchantConfigModal } from '@/components/business/google-merchant-config-modal';
 import { GoogleMerchantProductManager } from '@/components/business/google-merchant-product-manager';
 import { GoogleMerchantProductCard } from '@/components/business/google-merchant-product-card';
-import { useGoogleMerchantSync } from '@/hooks/use-google-merchant-sync';
+import { useGoogleMerchantSync } from '@/shared/modules/channels/hooks';
 import {
   useGoogleMerchantProducts,
   useGoogleMerchantStats,
-} from '@/hooks/use-google-merchant-products';
-import { useProducts } from '@/hooks/use-products';
+} from '@/shared/modules/channels/hooks';
+import { useProducts } from '@/shared/modules/products/hooks';
 import { logger } from '@/lib/logger';
 
 export default function GoogleMerchantPage() {

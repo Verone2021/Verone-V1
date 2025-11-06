@@ -10,8 +10,8 @@ import { X } from 'lucide-react'
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 import { ButtonV2 } from '@/components/ui/button'
 import { SalesOrderShipmentForm } from './sales-order-shipment-form'
-import { useSalesShipments, type SalesOrderForShipment } from '@/hooks/use-sales-shipments'
-import type { SalesOrder } from '@/hooks/use-sales-orders'
+import { useSalesShipments, type SalesOrderForShipment } from '@/shared/modules/orders/hooks'
+import type { SalesOrder } from '@/shared/modules/orders/hooks'
 
 interface SalesOrderShipmentModalProps {
   order: SalesOrder

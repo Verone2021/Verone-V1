@@ -18,7 +18,7 @@ import {
   List
 } from 'lucide-react'
 import Link from 'next/link'
-import { useOrganisations, getOrganisationDisplayName, type Organisation } from '@/hooks/use-organisations'
+import { useOrganisations, getOrganisationDisplayName, type Organisation } from '@/shared/modules/organisations/hooks'
 import { CustomerFormModal } from '@/components/business/customer-form-modal'
 import { OrganisationLogo } from '@/components/business/organisation-logo'
 import { OrganisationCard } from '@/components/business/organisation-card'

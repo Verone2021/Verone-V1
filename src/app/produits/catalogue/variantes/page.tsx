@@ -25,11 +25,11 @@ import { ButtonV2 } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { cn } from '@/lib/utils';
 import { PageHeader } from '@/components/layout/page-header';
-import { useVariantGroups } from '@/hooks/use-variant-groups';
+import { useVariantGroups } from '@/shared/modules/products/hooks';
 import { VariantGroupCreationWizard } from '@/components/business/variant-group-creation-wizard';
 import { VariantGroupEditModal } from '@/shared/modules/products/components/modals/VariantGroupEditModal';
 import { VariantAddProductModal } from '@/shared/modules/products/components/modals/VariantAddProductModal';
-import { useToast } from '@/hooks/use-toast';
+import { useToast } from '@/shared/modules/common/hooks';
 import { ElegantKpiCard } from '@/components/ui/elegant-kpi-card';
 import { CategoryFilterCombobox } from '@/components/business/category-filter-combobox';
 

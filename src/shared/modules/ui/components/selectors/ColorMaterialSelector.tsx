@@ -3,7 +3,7 @@
 import { useState } from 'react'
 import { Check, ChevronDown } from 'lucide-react'
 import { ButtonV2 } from '@/components/ui/button'
-import { cn } from '../../lib/utils'
+import { cn } from '@/lib/utils'
 
 // Couleurs prédéfinies selon business rules
 const PREDEFINED_COLORS = [

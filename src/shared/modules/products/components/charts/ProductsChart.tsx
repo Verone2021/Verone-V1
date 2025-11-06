@@ -19,7 +19,7 @@ import {
   ResponsiveContainer,
   TooltipProps
 } from 'recharts'
-import type { ProductsDataPoint } from '@/hooks/use-dashboard-analytics'
+import type { ProductsDataPoint } from '@/shared/modules/dashboard/hooks'
 
 interface ProductsChartProps {
   data: ProductsDataPoint[]

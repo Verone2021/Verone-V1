@@ -18,7 +18,7 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table'
-import { useStockMovements } from '@/hooks/use-stock-movements'
+import { useStockMovements } from '@/shared/modules/stock/hooks'
 import { formatPrice } from '@/lib/utils'
 
 interface ProductStockHistoryModalProps {

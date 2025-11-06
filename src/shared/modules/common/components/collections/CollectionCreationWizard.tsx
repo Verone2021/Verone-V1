@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react'
 import { X, ArrowLeft, ArrowRight, Check, Upload, Palette, Settings, Info } from 'lucide-react'
 import { ButtonV2 } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
-import { cn } from '../../lib/utils'
+import { cn } from '@/lib/utils'
 import {
   CollectionFormState,
   CollectionFormErrors,
@@ -12,7 +12,7 @@ import {
   CollectionStyle,
   CollectionVisibility,
   COLLECTION_STYLE_OPTIONS
-} from '../../types/collections'
+} from '@/types/collections'
 
 // ✅ Export pour utilisation externe
 export type { CreateCollectionInput }

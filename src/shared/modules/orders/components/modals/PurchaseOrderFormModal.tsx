@@ -33,14 +33,14 @@ import { SupplierSelector } from './supplier-selector';
 import { AddProductToOrderModal } from './add-product-to-order-modal';
 import { EditableOrderItemRow } from './editable-order-item-row';
 import { EcoTaxVatInput } from '@/components/forms/eco-tax-vat-input';
-import { useOrganisations, Organisation } from '@/hooks/use-organisations';
-import { useOrderItems, CreateOrderItemData } from '@/hooks/use-order-items';
+import { useOrganisations, Organisation } from '@/shared/modules/organisations/hooks';
+import { useOrderItems, CreateOrderItemData } from '@/shared/modules/orders/hooks';
 import {
   usePurchaseOrders,
   CreatePurchaseOrderData,
-} from '@/hooks/use-purchase-orders';
+} from '@/shared/modules/orders/hooks';
 import { formatCurrency } from '@/lib/utils';
-import { useToast } from '@/hooks/use-toast';
+import { useToast } from '@/shared/modules/common/hooks';
 import type { Database } from '@/types/database';
 
 type PurchaseOrder = Database['public']['Tables']['purchase_orders']['Row'];

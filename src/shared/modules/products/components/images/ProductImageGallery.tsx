@@ -5,8 +5,8 @@ import Image from 'next/image';
 import { Edit, Upload, Trash2, RotateCw, Eye } from 'lucide-react';
 import { ButtonV2 } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { cn } from '../../lib/utils';
-import { useProductImages } from '../../hooks/use-product-images';
+import { cn } from '@/lib/utils';
+import { useProductImages } from '@/shared/modules/common/hooks';
 import { ProductImageViewerModal } from './product-image-viewer-modal';
 
 interface ProductImageGalleryProps {

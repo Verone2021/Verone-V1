@@ -25,7 +25,7 @@ import {
   Plus,
 } from 'lucide-react'
 import { ElegantKpiCard } from '@/components/ui/elegant-kpi-card'
-import { useProducts } from '@/hooks/use-products'
+import { useProducts } from '@/shared/modules/products/hooks'
 import { Badge } from '@/components/ui/badge'
 
 // Champs obligatoires pour calculer le taux de complétion

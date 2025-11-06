@@ -7,8 +7,8 @@ import { ButtonV2 } from '@/components/ui/button'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
 import { Skeleton } from '@/components/ui/skeleton'
 import { AlertCircle, TrendingUp, BarChart3, Euro, FileText, Download, Package } from 'lucide-react'
-import { useABCAnalysis, ABC_CLASSES, type ABCReportData } from '@/hooks/use-abc-analysis'
-import { useToast } from '@/hooks/use-toast'
+import { useABCAnalysis, ABC_CLASSES, type ABCReportData } from '@/shared/modules/finance/hooks'
+import { useToast } from '@/shared/modules/common/hooks'
 
 interface ABCAnalysisViewProps {
   // Future : dateFrom, dateTo si on veut filtrer par période

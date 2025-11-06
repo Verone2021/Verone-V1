@@ -1,7 +1,7 @@
 import { useState, useCallback, useEffect } from 'react'
 import { createClient } from '@/lib/supabase/client'
-import { useToast } from '@/hooks/use-toast'
-import { useStockUI } from '@/hooks/use-stock-ui'
+import { useToast } from '@/shared/modules/common/hooks'
+import { useStockUI } from '@/shared/modules/stock/hooks'
 
 // =============================================
 // DASHBOARD STOCK - MÉTRIQUES PROFESSIONNELLES ERP

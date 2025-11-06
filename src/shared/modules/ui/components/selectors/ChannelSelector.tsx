@@ -8,9 +8,9 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select"
-import { useSalesChannels } from "../../hooks/use-pricing"
+import { useSalesChannels } from '@/shared/modules/finance/hooks'
 import { Loader2 } from "lucide-react"
-import { cn } from "../../lib/utils"
+import { cn } from '@/lib/utils'
 
 interface ChannelSelectorProps {
   value: string | null

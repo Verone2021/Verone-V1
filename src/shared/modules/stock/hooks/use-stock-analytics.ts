@@ -1,6 +1,6 @@
 import { useState, useCallback } from 'react'
 import { createClient } from '@/lib/supabase/client'
-import { useToast } from '@/hooks/use-toast'
+import { useToast } from '@/shared/modules/common/hooks'
 
 // =============================================
 // STOCK ANALYTICS - MÉTRIQUES AVANCÉES ERP

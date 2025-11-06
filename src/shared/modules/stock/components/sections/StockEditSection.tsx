@@ -4,11 +4,11 @@ import React from 'react';
 import { Truck, Save, X } from 'lucide-react';
 import { ButtonV2 } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { cn } from '../../lib/utils';
+import { cn } from '@/lib/utils';
 import {
   useInlineEdit,
   type EditableSection,
-} from '../../hooks/use-inline-edit';
+} from '@/shared/modules/common/hooks';
 
 interface Product {
   id: string;

@@ -7,7 +7,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { ButtonV2 } from '@/components/ui/button'
 import { Separator } from '@/components/ui/separator'
-import { SalesOrder, useSalesOrders } from '@/hooks/use-sales-orders'
+import { SalesOrder, useSalesOrders } from '@/shared/modules/orders/hooks'
 import { formatCurrency } from '@/lib/utils'
 import { SalesOrderShipmentModal } from './sales-order-shipment-modal'
 

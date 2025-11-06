@@ -46,9 +46,9 @@ import {
   CardTitle,
 } from '@/components/ui/card'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
-import { useToast } from '@/hooks/use-toast'
-import { useCatalogue } from '@/hooks/use-catalogue'
-import { useStock } from '@/hooks/use-stock'
+import { useToast } from '@/shared/modules/common/hooks'
+import { useCatalogue } from '@/shared/modules/categories/hooks'
+import { useStock } from '@/shared/modules/stock/hooks'
 import { StockMovementModal } from '@/components/business/stock-movement-modal'
 import { GeneralStockMovementModal } from '@/components/business/general-stock-movement-modal'
 import { ProductStockHistoryModal } from '@/components/business/product-stock-history-modal'

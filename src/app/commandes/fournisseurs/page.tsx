@@ -48,8 +48,8 @@ import {
   usePurchaseOrders,
   PurchaseOrder,
   PurchaseOrderStatus,
-} from '@/hooks/use-purchase-orders';
-import { useOrganisations } from '@/hooks/use-organisations';
+} from '@/shared/modules/orders/hooks';
+import { useOrganisations } from '@/shared/modules/organisations/hooks';
 import { PurchaseOrderFormModal } from '@/shared/modules/orders/components/modals/PurchaseOrderFormModal';
 import { PurchaseOrderReceptionModal } from '@/shared/modules/orders/components/modals/PurchaseOrderReceptionModal';
 import { PurchaseOrderDetailModal } from '@/shared/modules/orders/components/modals/PurchaseOrderDetailModal';

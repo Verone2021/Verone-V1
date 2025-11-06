@@ -1,6 +1,6 @@
 import { useState, useCallback } from 'react'
 import { createClient } from '@/lib/supabase/client'
-import { useToast } from '@/hooks/use-toast'
+import { useToast } from '@/shared/modules/common/hooks'
 
 // =============================================
 // ABC ANALYSIS - CLASSIFICATION PARETO

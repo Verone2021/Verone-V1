@@ -22,8 +22,8 @@ import { Badge } from '@/components/ui/badge'
 import { Progress } from '@/components/ui/progress'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { Alert, AlertDescription } from '@/components/ui/alert'
-import { useToast } from '../../hooks/use-toast'
-import { useProducts } from '../../hooks/use-products'
+import { useToast } from '@/shared/modules/common/hooks'
+import { useProducts } from '@/shared/modules/common/hooks'
 
 // Sections du wizard
 import { GeneralInfoSection } from './wizard-sections/general-info-section'

@@ -30,10 +30,10 @@ import {
   CollapsibleContent,
   CollapsibleTrigger,
 } from '@/components/ui/collapsible'
-import { useToast } from '@/hooks/use-toast'
-import { useStock } from '@/hooks/use-stock'
-import { useCatalogue } from '@/hooks/use-catalogue'
-import { useStockMovements, type StockReasonCode } from '@/hooks/use-stock-movements'
+import { useToast } from '@/shared/modules/common/hooks'
+import { useStock } from '@/shared/modules/stock/hooks'
+import { useCatalogue } from '@/shared/modules/categories/hooks'
+import { useStockMovements, type StockReasonCode } from '@/shared/modules/stock/hooks'
 import { Badge } from '@/components/ui/badge'
 import { StockDisplay } from './stock-display'
 

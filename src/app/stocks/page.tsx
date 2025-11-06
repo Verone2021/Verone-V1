@@ -28,9 +28,9 @@ import {
 } from '@/components/ui/card';
 import { ButtonV2 } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { useStockDashboard } from '@/hooks/use-stock-dashboard';
-import { useStockAlerts } from '@/hooks/use-stock-alerts';
-import { useMovementsHistory } from '@/hooks/use-movements-history';
+import { useStockDashboard } from '@/shared/modules/stock/hooks';
+import { useStockAlerts } from '@/shared/modules/stock/hooks';
+import { useMovementsHistory } from '@/shared/modules/stock/hooks';
 import { formatPrice } from '@/lib/utils';
 import { StockKPICard } from '@/components/ui-v2/stock/StockKPICard';
 

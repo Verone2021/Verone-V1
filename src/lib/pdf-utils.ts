@@ -9,7 +9,7 @@
 
 import jsPDF from 'jspdf'
 import autoTable from 'jspdf-autotable'
-import type { SalesOrder, SalesOrderItem } from '@/hooks/use-sales-orders'
+import type { SalesOrder, SalesOrderItem } from '@/shared/modules/orders/hooks'
 
 // Formattage montants
 const formatCurrency = (amount: number): string => {

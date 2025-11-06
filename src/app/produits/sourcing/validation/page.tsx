@@ -44,8 +44,8 @@ import {
   DialogTitle,
   DialogTrigger,
 } from '@/components/ui/dialog'
-import { useSourcingProducts, SourcingProduct } from '@/hooks/use-sourcing-products'
-import { useToast } from '@/hooks/use-toast'
+import { useSourcingProducts, SourcingProduct } from '@/shared/modules/products/hooks'
+import { useToast } from '@/shared/modules/common/hooks'
 import { SampleValidationSimple } from '@/components/business/sample-validation-simple'
 
 export default function SourcingValidationPage() {

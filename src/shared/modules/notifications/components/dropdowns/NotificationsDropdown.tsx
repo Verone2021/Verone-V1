@@ -23,7 +23,7 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Badge } from '@/components/ui/badge';
-import { useNotifications, type Notification } from '@/hooks/use-notifications';
+import { useNotifications, type Notification } from '@/shared/modules/notifications/hooks';
 import { formatDistanceToNow } from 'date-fns';
 import { fr } from 'date-fns/locale';
 import { cn } from '@/lib/utils';

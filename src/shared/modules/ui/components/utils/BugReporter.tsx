@@ -11,8 +11,8 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Alert, AlertDescription } from '@/components/ui/alert'
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog'
-import { useSupabaseMutation } from '../../hooks/use-supabase-query'
-import { useUserActivityTracker } from '../../hooks/use-user-activity-tracker'
+import { useSupabaseMutation } from '@/shared/modules/common/hooks'
+import { useUserActivityTracker } from '@/shared/modules/notifications/hooks'
 import html2canvas from 'html2canvas'
 
 interface BugReport {

@@ -6,8 +6,8 @@ import { Label } from '@/components/ui/label'
 import { ButtonV2 } from '@/components/ui/button'
 import { StandardModifyButton } from '@/components/ui/standard-modify-button'
 import { Save, X } from 'lucide-react'
-import { cn, formatPrice } from '../../lib/utils'
-import { useInlineEdit, type EditableSection } from '../../hooks/use-inline-edit'
+import { cn, formatPrice } from '@/lib/utils'
+import { useInlineEdit, type EditableSection } from '@/shared/modules/common/hooks'
 
 interface Product {
   id: string

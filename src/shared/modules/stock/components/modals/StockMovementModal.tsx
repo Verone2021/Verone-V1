@@ -25,9 +25,9 @@ import {
   CollapsibleContent,
   CollapsibleTrigger,
 } from '@/components/ui/collapsible'
-import { useToast } from '@/hooks/use-toast'
-import { useStock } from '@/hooks/use-stock'
-import { useStockMovements, type StockReasonCode } from '@/hooks/use-stock-movements'
+import { useToast } from '@/shared/modules/common/hooks'
+import { useStock } from '@/shared/modules/stock/hooks'
+import { useStockMovements, type StockReasonCode } from '@/shared/modules/stock/hooks'
 
 interface StockMovementModalProps {
   product?: {

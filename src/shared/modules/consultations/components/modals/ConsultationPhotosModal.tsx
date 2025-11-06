@@ -27,7 +27,7 @@ import {
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import Image from 'next/image'
-import { useConsultationImages } from '@/hooks/use-consultation-images'
+import { useConsultationImages } from '@/shared/modules/consultations/hooks'
 
 interface ConsultationPhotosModalProps {
   isOpen: boolean

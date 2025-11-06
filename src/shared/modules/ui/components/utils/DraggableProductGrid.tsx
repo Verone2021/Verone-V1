@@ -5,8 +5,8 @@ import { GripVertical, Save, RotateCcw, Check, AlertCircle } from 'lucide-react'
 import { ProductCard } from './product-card'
 import { ButtonV2 } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
-import { cn } from '../../lib/utils'
-import { CollectionProduct, ReorderCollectionProductsInput } from '../../types/collections'
+import { cn } from '@/lib/utils'
+import { CollectionProduct, ReorderCollectionProductsInput } from '@/types/collections'
 
 interface DraggableProductGridProps {
   products: CollectionProduct[]

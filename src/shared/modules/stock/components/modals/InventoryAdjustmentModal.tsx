@@ -32,10 +32,10 @@ import {
   SelectValue,
 } from '@/components/ui/select'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
-import { useStockUI, type ReasonCode } from '@/hooks/use-stock-ui'
-import { useStockMovements, type StockReasonCode } from '@/hooks/use-stock-movements'
+import { useStockUI, type ReasonCode } from '@/shared/modules/stock/hooks'
+import { useStockMovements, type StockReasonCode } from '@/shared/modules/stock/hooks'
 import { createClient } from '@/lib/supabase/client'
-import { useToast } from '@/hooks/use-toast'
+import { useToast } from '@/shared/modules/common/hooks'
 
 // =====================================================================
 // TYPES & INTERFACES

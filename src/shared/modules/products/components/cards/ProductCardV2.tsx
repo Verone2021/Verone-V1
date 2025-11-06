@@ -7,8 +7,8 @@ import { Badge } from '@/components/ui/badge';
 import { ButtonV2 } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 import { Package, Archive, Trash2, ArchiveRestore, Eye } from 'lucide-react';
-import { useProductImages } from '@/hooks/use-product-images';
-import type { Product } from '@/hooks/use-catalogue';
+import { useProductImages } from '@/shared/modules/products/hooks';
+import type { Product } from '@/shared/modules/categories/hooks';
 
 interface ProductCardProps {
   product: Product;

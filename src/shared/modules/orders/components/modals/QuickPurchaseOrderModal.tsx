@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react';
 import Image from 'next/image';
 import { createClient } from '@/lib/supabase/client';
-import { useDraftPurchaseOrder } from '@/hooks/use-draft-purchase-order';
+import { useDraftPurchaseOrder } from '@/shared/modules/orders/hooks';
 import {
   Dialog,
   DialogContent,

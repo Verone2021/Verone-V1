@@ -12,7 +12,7 @@ import {
 } from 'lucide-react'
 import { ElegantKpiCard } from '@/components/ui/elegant-kpi-card'
 import { ActivityTimeline, type TimelineItem } from '@/components/ui/activity-timeline'
-import { useCompleteDashboardMetrics } from '@/hooks/use-complete-dashboard-metrics'
+import { useCompleteDashboardMetrics } from '@/shared/modules/dashboard/hooks'
 
 export default function DashboardV2Page() {
   const router = useRouter()

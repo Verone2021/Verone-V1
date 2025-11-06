@@ -3,8 +3,8 @@
 import { useState } from 'react'
 import { Truck, Save, X, Edit, ExternalLink, AlertCircle } from 'lucide-react'
 import { ButtonV2 } from '@/components/ui/button'
-import { cn } from '../../lib/utils'
-import { useInlineEdit, type EditableSection } from '../../hooks/use-inline-edit'
+import { cn } from '@/lib/utils'
+import { useInlineEdit, type EditableSection } from '@/shared/modules/common/hooks'
 import { SupplierSelector } from './supplier-selector'
 
 interface Product {

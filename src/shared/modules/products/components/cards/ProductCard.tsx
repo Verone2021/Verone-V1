@@ -5,14 +5,14 @@ import Image from 'next/image';
 import { useRouter } from 'next/navigation';
 import { Badge } from '@/components/ui/badge';
 import { ButtonV2 } from '@/components/ui/button';
-import { cn } from '../../lib/utils';
+import { cn } from '@/lib/utils';
 import { Package, Archive, Trash2, ArchiveRestore } from 'lucide-react';
-import { useProductImages } from '../../hooks/use-product-images';
+import { useProductImages } from '@/shared/modules/common/hooks';
 // 🚀 OPTIMISATION: Imports packages/pricing désactivés temporairement
-// import { useProductPackages } from "../../hooks/use-product-packages"
-// import { useProductPrice, useQuantityBreaks, formatPrice } from "../../hooks/use-pricing"
+// import { useProductPackages } from '@/shared/modules/common/hooks'
+// import { useProductPrice, useQuantityBreaks, formatPrice } from '@/shared/modules/finance/hooks'
 // import { QuantityBreaksDisplay } from "./quantity-breaks-display"
-import type { Product } from '../../hooks/use-catalogue';
+import type { Product } from '@/shared/modules/common/hooks';
 
 interface ProductCardProps {
   product: Product;

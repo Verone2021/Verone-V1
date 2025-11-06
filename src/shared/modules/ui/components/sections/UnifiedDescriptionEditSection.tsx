@@ -8,8 +8,8 @@ import { Textarea } from '@/components/ui/textarea'
 import { Badge } from '@/components/ui/badge'
 import { StandardModifyButton } from '@/components/ui/standard-modify-button'
 import { Save, X, FileText, Package, Star } from 'lucide-react'
-import { cn } from '../../lib/utils'
-import { useInlineEdit, type EditableSection } from '../../hooks/use-inline-edit'
+import { cn } from '@/lib/utils'
+import { useInlineEdit, type EditableSection } from '@/shared/modules/common/hooks'
 
 interface Product {
   id: string

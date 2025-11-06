@@ -30,7 +30,7 @@ import { ButtonV2 } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert'
 import { Card, CardContent } from '@/components/ui/card'
-import { useGoogleMerchantConfig } from '@/hooks/use-google-merchant-config'
+import { useGoogleMerchantConfig } from '@/shared/modules/channels/hooks'
 
 interface GoogleMerchantConfigModalProps {
   open: boolean

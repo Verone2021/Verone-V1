@@ -19,7 +19,7 @@ import {
   ExternalLink,
   Eye
 } from 'lucide-react'
-import { useContacts, type Contact } from '@/hooks/use-contacts'
+import { useContacts, type Contact } from '@/shared/modules/organisations/hooks'
 import { ContactFormModal } from './contact-form-modal'
 
 interface ContactsManagementSectionProps {

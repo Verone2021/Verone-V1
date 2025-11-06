@@ -21,8 +21,8 @@ import {
   Calculator,
   Wrench
 } from 'lucide-react'
-import { useContacts, type Contact } from '@/hooks/use-contacts'
-import { getOrganisationDisplayName, type Organisation } from '@/hooks/use-organisations'
+import { useContacts, type Contact } from '@/shared/modules/organisations/hooks'
+import { getOrganisationDisplayName, type Organisation } from '@/shared/modules/organisations/hooks'
 import { ContactPersonalEditSection } from '@/components/business/contact-personal-edit-section'
 import { ContactDetailsEditSection } from '@/components/business/contact-details-edit-section'
 import { ContactRolesEditSection } from '@/components/business/contact-roles-edit-section'

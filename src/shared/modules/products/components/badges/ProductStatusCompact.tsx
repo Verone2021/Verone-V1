@@ -8,7 +8,7 @@ import {
   useProductStatus,
   PRODUCT_STATUS_OPTIONS,
   type ProductStatus,
-} from '@/hooks/use-product-status';
+} from '@/shared/modules/products/hooks';
 
 interface ProductStatusCompactProps {
   product: {

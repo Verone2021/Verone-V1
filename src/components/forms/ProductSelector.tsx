@@ -12,9 +12,9 @@ import { ButtonV2 } from '@/components/ui/button'
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 import { Input } from '@/components/ui/input'
 import { Badge } from '@/components/ui/badge'
-import { useToast } from '@/hooks/use-toast'
+import { useToast } from '@/shared/modules/common/hooks'
 import { Search, Package, Plus, Loader2, Check } from 'lucide-react'
-import { useVariantProducts } from '@/hooks/use-variant-products'
+import { useVariantProducts } from '@/shared/modules/products/hooks'
 
 interface Product {
   id: string

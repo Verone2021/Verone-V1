@@ -33,7 +33,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { useToast } from '@/hooks/use-toast';
+import { useToast } from '@/shared/modules/common/hooks';
 import { FileText, Loader2, Download, TrendingUp } from 'lucide-react';
 
 // =====================================================================

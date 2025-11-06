@@ -16,8 +16,8 @@ import {
   ShoppingCart,
   FileText
 } from 'lucide-react'
-import { useOrganisation, useSuppliers, getOrganisationDisplayName } from '@/hooks/use-organisations'
-import { useOrganisationTabCounts } from '@/hooks/use-organisation-tab-counts'
+import { useOrganisation, useSuppliers, getOrganisationDisplayName } from '@/shared/modules/organisations/hooks'
+import { useOrganisationTabCounts } from '@/shared/modules/organisations/hooks'
 import { LegalIdentityEditSection } from '@/components/business/legal-identity-edit-section'
 import { ContactEditSection } from '@/components/business/contact-edit-section'
 import { AddressEditSection } from '@/components/business/address-edit-section'
@@ -31,7 +31,7 @@ import { OrganisationStatsCard } from '@/components/business/organisation-stats-
 // import { OrganisationProductsSection } from '@/components/business/organisation-products-section'
 import { TabsNavigation, TabContent } from '@/components/ui/tabs-navigation'
 import { isModuleDeployed, getModulePhase } from '@/lib/deployed-modules'
-import type { Organisation } from '@/hooks/use-organisations'
+import type { Organisation } from '@/shared/modules/organisations/hooks'
 
 export default function SupplierDetailPage() {
   const { supplierId } = useParams()

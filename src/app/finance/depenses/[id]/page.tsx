@@ -9,7 +9,7 @@
 import { useEffect, useState } from 'react'
 import { use } from 'react'
 import { createClient } from '@/lib/supabase/client'
-import { useFinancialPayments } from '@/hooks/use-financial-payments'
+import { useFinancialPayments } from '@/shared/modules/finance/hooks'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { ButtonV2 } from '@/components/ui/button'
@@ -42,7 +42,7 @@ import {
 import { format } from 'date-fns'
 import { fr } from 'date-fns/locale'
 import Link from 'next/link'
-import type { FinancialDocument, DocumentStatus } from '@/hooks/use-financial-documents'
+import type { FinancialDocument, DocumentStatus } from '@/shared/modules/finance/hooks'
 import { getOrganisationDisplayName } from '@/lib/utils/organisation-helpers'
 
 // =====================================================================

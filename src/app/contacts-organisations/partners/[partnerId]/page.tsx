@@ -14,8 +14,8 @@ import {
   Phone,
   FileText
 } from 'lucide-react'
-import { useOrganisation, useOrganisations, getOrganisationDisplayName } from '@/hooks/use-organisations'
-import { useOrganisationTabCounts } from '@/hooks/use-organisation-tab-counts'
+import { useOrganisation, useOrganisations, getOrganisationDisplayName } from '@/shared/modules/organisations/hooks'
+import { useOrganisationTabCounts } from '@/shared/modules/organisations/hooks'
 import { LegalIdentityEditSection } from '@/components/business/legal-identity-edit-section'
 import { ContactEditSection } from '@/components/business/contact-edit-section'
 import { AddressEditSection } from '@/components/business/address-edit-section'
@@ -25,7 +25,7 @@ import { OrganisationLogoCard } from '@/components/business/organisation-logo-ca
 import { OrganisationStatsCard } from '@/components/business/organisation-stats-card'
 import { TabsNavigation, TabContent } from '@/components/ui/tabs-navigation'
 import { isModuleDeployed, getModulePhase } from '@/lib/deployed-modules'
-import type { Organisation } from '@/hooks/use-organisations'
+import type { Organisation } from '@/shared/modules/organisations/hooks'
 
 export default function PartnerDetailPage() {
   const { partnerId } = useParams()

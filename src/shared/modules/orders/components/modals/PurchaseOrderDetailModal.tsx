@@ -7,7 +7,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { ButtonV2 } from '@/components/ui/button'
 import { Separator } from '@/components/ui/separator'
-import { PurchaseOrder, usePurchaseOrders } from '@/hooks/use-purchase-orders'
+import { PurchaseOrder, usePurchaseOrders } from '@/shared/modules/orders/hooks'
 import { formatCurrency } from '@/lib/utils'
 
 // ✅ Type Safety: Interface ProductImage stricte (IDENTIQUE à OrderDetailModal)

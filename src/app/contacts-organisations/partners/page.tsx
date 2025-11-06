@@ -44,7 +44,7 @@ import {
   List
 } from 'lucide-react'
 import Link from 'next/link'
-import { useOrganisations, getOrganisationDisplayName, type Organisation } from '@/hooks/use-organisations'
+import { useOrganisations, getOrganisationDisplayName, type Organisation } from '@/shared/modules/organisations/hooks'
 import { PartnerFormModal } from '@/components/business/partner-form-modal'
 import { OrganisationLogo } from '@/components/business/organisation-logo'
 import { HeartBadge } from '@/components/business/heart-badge'

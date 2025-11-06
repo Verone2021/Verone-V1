@@ -38,7 +38,7 @@ import {
   List
 } from 'lucide-react'
 import Link from 'next/link'
-import { useSuppliers, getOrganisationDisplayName, type Organisation } from '@/hooks/use-organisations'
+import { useSuppliers, getOrganisationDisplayName, type Organisation } from '@/shared/modules/organisations/hooks'
 import { SupplierFormModal } from '@/components/business/supplier-form-modal'
 import { OrganisationLogo } from '@/components/business/organisation-logo'
 import { SupplierSegmentBadge, SupplierSegmentType } from '@/components/business/supplier-segment-badge'

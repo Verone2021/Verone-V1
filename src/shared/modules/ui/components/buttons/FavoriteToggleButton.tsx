@@ -9,7 +9,7 @@
 
 import { Heart, Loader2 } from 'lucide-react'
 import { useState } from 'react'
-import { useToggleFavorite } from '@/hooks/use-toggle-favorite'
+import { useToggleFavorite } from '@/shared/modules/common/hooks'
 import { cn } from '@/lib/utils'
 
 interface FavoriteToggleButtonProps {

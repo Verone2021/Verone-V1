@@ -24,8 +24,8 @@ import {
 } from '@/components/ui/select'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { Card, CardContent } from '@/components/ui/card'
-import { useOrganisations, type CreateOrganisationData } from '@/hooks/use-organisations'
-import { useToast } from '@/hooks/use-toast'
+import { useOrganisations, type CreateOrganisationData } from '@/shared/modules/organisations/hooks'
+import { useToast } from '@/shared/modules/common/hooks'
 
 interface CreateOrganisationModalProps {
   onOrganisationCreated?: (organisationId: string, organisationName: string) => void

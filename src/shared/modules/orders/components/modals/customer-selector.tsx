@@ -7,7 +7,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { CreateOrganisationModal } from './create-organisation-modal'
 import { CreateIndividualCustomerModal } from './create-individual-customer-modal'
 import { createClient } from '@/lib/supabase/client'
-import { useToast } from '@/hooks/use-toast'
+import { useToast } from '@/shared/modules/common/hooks'
 
 export type CustomerType = 'professional' | 'individual'
 

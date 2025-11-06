@@ -23,7 +23,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select'
-import { Collection } from '@/hooks/use-collections'
+import { Collection } from '@/shared/modules/collections/hooks'
 import {
   COLLECTION_STYLE_OPTIONS,
   ROOM_CATEGORY_OPTIONS,

@@ -6,8 +6,8 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { ButtonV2 } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { Alert, AlertDescription } from '@/components/ui/alert'
-import { useConsultations } from '../../hooks/use-consultations'
-import { useToast } from '../../hooks/use-toast'
+import { useConsultations } from '@/shared/modules/common/hooks'
+import { useToast } from '@/shared/modules/common/hooks'
 
 interface ConsultationSuggestionsProps {
   clientId?: string

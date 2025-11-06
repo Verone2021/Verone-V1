@@ -4,15 +4,15 @@ import { useEffect, useState } from 'react'
 import { Lightbulb, Sparkles, TrendingUp, Target, Brain, ChevronRight } from 'lucide-react'
 import { Badge } from '@/components/ui/badge'
 import { ButtonV2 } from '@/components/ui/button'
-import { cn } from '../../lib/utils'
-import { useSmartSuggestions } from '../../hooks/use-smart-suggestions'
+import { cn } from '@/lib/utils'
+import { useSmartSuggestions } from '@/shared/modules/common/hooks'
 import {
   CollectionSuggestion,
   CollectionStyle,
   RoomCategory,
   COLLECTION_STYLE_OPTIONS,
   ROOM_CATEGORY_OPTIONS
-} from '../../types/collections'
+} from '@/types/collections'
 
 interface SmartSuggestionsPanelProps {
   context: {

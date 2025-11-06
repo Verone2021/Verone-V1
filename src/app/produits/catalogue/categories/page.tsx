@@ -12,14 +12,14 @@ import { CategoryForm } from "@/components/forms/CategoryForm"
 import { SubcategoryForm } from "@/components/forms/SubcategoryForm"
 
 // 🔗 HOOKS SUPABASE - Connexion aux vraies données
-import { useFamilies } from "@/hooks/use-families"
-import { useCategories } from "@/hooks/use-categories"
-import { useSubcategories } from "@/hooks/use-subcategories"
+import { useFamilies } from '@/shared/modules/categories/hooks'
+import { useCategories } from '@/shared/modules/categories/hooks'
+import { useSubcategories } from '@/shared/modules/categories/hooks'
 
 // 📋 TYPES - Importés depuis les hooks
-import type { FamilyWithStats } from "@/hooks/use-families"
-import type { CategoryWithChildren } from "@/hooks/use-categories"
-import type { SubcategoryWithDetails } from "@/hooks/use-subcategories"
+import type { FamilyWithStats } from '@/shared/modules/categories/hooks'
+import type { CategoryWithChildren } from '@/shared/modules/categories/hooks'
+import type { SubcategoryWithDetails } from '@/shared/modules/categories/hooks'
 
 // Interface filtres pour la hiérarchie complète
 interface HierarchyFilters {

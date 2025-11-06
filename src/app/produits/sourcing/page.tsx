@@ -18,7 +18,7 @@ import {
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { ButtonV2 } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
-import { useSourcingProducts } from '@/hooks/use-sourcing-products'
+import { useSourcingProducts } from '@/shared/modules/products/hooks'
 
 export default function SourcingDashboardPage() {
   const router = useRouter()

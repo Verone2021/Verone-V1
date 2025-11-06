@@ -30,9 +30,9 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '../../components/ui/ta
 import { Alert, AlertDescription } from '../../components/ui/alert'
 import { ConsultationOrderInterface } from '../../components/business/consultation-order-interface'
 import { ConsultationImageViewerModal } from '../../components/business/consultation-image-viewer-modal'
-import { useConsultations } from '../../hooks/use-consultations'
-import { useConsultationImages } from '../../hooks/use-consultation-images'
-import { useToast } from '../../hooks/use-toast'
+import { useConsultations } from '@/shared/modules/consultations/hooks'
+import { useConsultationImages } from '@/shared/modules/consultations/hooks'
+import { useToast } from '@/shared/modules/common/hooks'
 
 // Composant pour afficher une ligne de consultation avec miniature photo
 interface ConsultationRowProps {

@@ -13,7 +13,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog'
-import { useSampleOrder } from '@/hooks/use-sample-order'
+import { useSampleOrder } from '@/shared/modules/orders/hooks'
 import { cn } from '@/lib/utils'
 
 interface SampleOrderButtonProps {

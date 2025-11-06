@@ -2,9 +2,9 @@
 
 import { User, Save, X, Edit } from 'lucide-react'
 import { ButtonV2 } from '@/components/ui/button'
-import { cn } from '../../lib/utils'
-import { useInlineEdit, type EditableSection } from '../../hooks/use-inline-edit'
-import type { Contact } from '../../hooks/use-contacts'
+import { cn } from '@/lib/utils'
+import { useInlineEdit, type EditableSection } from '@/shared/modules/common/hooks'
+import type { Contact } from '@/shared/modules/common/hooks'
 
 interface ContactPersonalEditSectionProps {
   contact: Contact

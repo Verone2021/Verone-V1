@@ -3,8 +3,8 @@
 import { useState } from 'react'
 import { MapPin, Save, X, Edit, Home, Building, Copy } from 'lucide-react'
 import { ButtonV2 } from '@/components/ui/button'
-import { cn } from '../../lib/utils'
-import { useInlineEdit, type EditableSection } from '../../hooks/use-inline-edit'
+import { cn } from '@/lib/utils'
+import { useInlineEdit, type EditableSection } from '@/shared/modules/common/hooks'
 import { Checkbox } from '@/components/ui/checkbox'
 
 interface Organisation {

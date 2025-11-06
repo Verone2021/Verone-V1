@@ -16,7 +16,7 @@ import {
   AlertCircle,
   DollarSign
 } from 'lucide-react'
-import type { TreasuryStats } from '@/hooks/use-treasury-stats'
+import type { TreasuryStats } from '@/shared/modules/finance/hooks'
 
 // =====================================================================
 // TYPES

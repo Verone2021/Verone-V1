@@ -1,7 +1,7 @@
 "use client"
 
 import { useState } from 'react'
-import { useSuppliers } from '@/hooks/use-organisations'
+import { useSuppliers } from '@/shared/modules/organisations/hooks'
 import { UnifiedOrganisationForm, OrganisationFormData, Organisation } from './unified-organisation-form'
 import { SupplierSegmentSelect } from './supplier-segment-select'
 import { SupplierSegmentType } from './supplier-segment-badge'

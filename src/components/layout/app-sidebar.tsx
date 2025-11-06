@@ -28,7 +28,7 @@ import {
 } from '@/components/ui/sidebar';
 import { Badge } from '@/components/ui/badge';
 // Phase 1: use-stock-alerts-count hook désactivé (Phase 2+)
-// import { useStockAlertsCount } from "@/hooks/use-stock-alerts-count"
+// import { useStockAlertsCount } from '@/shared/modules/stock/hooks'
 import {
   Home,
   Users,

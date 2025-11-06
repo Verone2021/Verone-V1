@@ -11,9 +11,9 @@ import { Upload, X, Image as ImageIcon, Loader2, CheckCircle, AlertCircle } from
 import { ButtonV2 } from "@/components/ui/button"
 import { Alert, AlertDescription } from "@/components/ui/alert"
 import { Badge } from "@/components/ui/badge"
-import { cn } from "../../lib/utils"
+import { cn } from '@/lib/utils'
 import Image from "next/image"
-import { useCollectionImages } from '@/hooks/use-collection-images'
+import { useCollectionImages } from '@/shared/modules/collections/hooks'
 
 interface CollectionImageUploadProps {
   collectionId: string

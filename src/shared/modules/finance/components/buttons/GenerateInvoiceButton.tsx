@@ -8,7 +8,7 @@
 
 import { useState } from 'react';
 import { ButtonV2 } from '@/components/ui/button';
-import { useToast } from '@/hooks/use-toast';
+import { useToast } from '@/shared/modules/common/hooks';
 import { FileText, Loader2 } from 'lucide-react';
 
 // =====================================================================

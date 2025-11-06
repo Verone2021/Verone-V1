@@ -6,7 +6,7 @@ import { Input } from '@/components/ui/input'
 import { ButtonV2 } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { formatCurrency } from '@/lib/utils'
-import type { OrderItem, OrderType } from '@/hooks/use-order-items'
+import type { OrderItem, OrderType } from '@/shared/modules/orders/hooks'
 
 /**
  * Composant Universel Ligne Item Éditable

@@ -2,10 +2,10 @@
 
 import { useState, useEffect } from 'react'
 import { ChevronDown, Tag, Check } from 'lucide-react'
-import { cn } from '../../lib/utils'
-import { useFamilies } from '../../hooks/use-families'
-import { useCategories } from '../../hooks/use-categories'
-import { useSubcategories } from '../../hooks/use-subcategories'
+import { cn } from '@/lib/utils'
+import { useFamilies } from '@/shared/modules/common/hooks'
+import { useCategories } from '@/shared/modules/common/hooks'
+import { useSubcategories } from '@/shared/modules/common/hooks'
 
 interface CategoryHierarchySelectorProps {
   value?: string // subcategory_id

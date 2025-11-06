@@ -1,6 +1,6 @@
 import { useState, useCallback, useEffect } from 'react'
 import { createClient } from '@/lib/supabase/client'
-import { useToast } from '@/hooks/use-toast'
+import { useToast } from '@/shared/modules/common/hooks'
 
 // Types d'alertes stock
 export type StockAlertType = 'low_stock' | 'out_of_stock' | 'no_stock_but_ordered'

@@ -36,7 +36,7 @@ import {
   CardHeader,
   CardTitle,
 } from '@/components/ui/card';
-import { useToast } from '@/hooks/use-toast';
+import { useToast } from '@/shared/modules/common/hooks';
 import { DollarSign, Loader2 } from 'lucide-react';
 import { createClient } from '@/lib/supabase/client';
 

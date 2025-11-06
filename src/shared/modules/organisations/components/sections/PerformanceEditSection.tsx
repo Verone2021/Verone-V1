@@ -3,8 +3,8 @@
 import { useState } from 'react'
 import { TrendingUp, Save, X, Edit, Star, Award, Heart, FileText } from 'lucide-react'
 import { ButtonV2 } from '@/components/ui/button'
-import { cn } from '../../lib/utils'
-import { useInlineEdit, type EditableSection } from '../../hooks/use-inline-edit'
+import { cn } from '@/lib/utils'
+import { useInlineEdit, type EditableSection } from '@/shared/modules/common/hooks'
 
 interface Organisation {
   id: string

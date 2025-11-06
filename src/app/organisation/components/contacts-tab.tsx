@@ -18,8 +18,8 @@ import {
   ArchiveRestore,
   Eye
 } from 'lucide-react'
-import { useContacts } from '@/hooks/use-contacts'
-import { getOrganisationDisplayName, type Organisation } from '@/hooks/use-organisations'
+import { useContacts } from '@/shared/modules/organisations/hooks'
+import { getOrganisationDisplayName, type Organisation } from '@/shared/modules/organisations/hooks'
 
 interface ContactStats {
   totalContacts: number

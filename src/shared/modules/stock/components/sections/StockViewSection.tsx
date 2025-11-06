@@ -3,7 +3,7 @@
 import { ExternalLink, Truck } from 'lucide-react'
 import { ButtonV2 } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
-import { cn } from '../../lib/utils'
+import { cn } from '@/lib/utils'
 import { useRouter } from 'next/navigation'
 
 interface Product {

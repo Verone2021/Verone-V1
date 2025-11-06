@@ -8,7 +8,7 @@
 
 'use client';
 
-import { useStockUI } from '@/hooks/use-stock-ui';
+import { useStockUI } from '@/shared/modules/stock/hooks';
 
 interface StockAlert {
   id: string;

@@ -26,9 +26,9 @@ import { Input } from '@/components/ui/input';
 import {
   useVariantGroup,
   useProductVariantEditing,
-} from '@/hooks/use-variant-groups';
-import { useVariantGroups } from '@/hooks/use-variant-groups';
-import { useToast } from '@/hooks/use-toast';
+} from '@/shared/modules/products/hooks';
+import { useVariantGroups } from '@/shared/modules/products/hooks';
+import { useToast } from '@/shared/modules/common/hooks';
 import Image from 'next/image';
 import { VariantGroupEditModal } from '@/shared/modules/products/components/modals/VariantGroupEditModal';
 import { VariantAddProductModal } from '@/shared/modules/products/components/modals/VariantAddProductModal';

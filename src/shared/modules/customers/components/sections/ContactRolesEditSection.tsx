@@ -3,9 +3,9 @@
 import { UserCheck, Save, X, Edit, Star, Users, Calculator, Wrench } from 'lucide-react'
 import { ButtonV2 } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
-import { cn } from '../../lib/utils'
-import { useInlineEdit, type EditableSection } from '../../hooks/use-inline-edit'
-import type { Contact } from '../../hooks/use-contacts'
+import { cn } from '@/lib/utils'
+import { useInlineEdit, type EditableSection } from '@/shared/modules/common/hooks'
+import type { Contact } from '@/shared/modules/common/hooks'
 
 interface ContactRolesEditSectionProps {
   contact: Contact

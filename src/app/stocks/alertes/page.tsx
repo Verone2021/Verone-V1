@@ -40,8 +40,8 @@ import {
   SelectTrigger,
   SelectValue,
 } from '../../../components/ui/select';
-import { useStockAlerts } from '../../../hooks/use-stock-alerts';
-import { useToast } from '../../../hooks/use-toast';
+import { useStockAlerts } from '@/shared/modules/stock/hooks';
+import { useToast } from '@/shared/modules/common/hooks';
 import { QuickPurchaseOrderModal } from '../../../components/business/quick-purchase-order-modal';
 import { StockAlertCard } from '../../../components/business/stock-alert-card';
 

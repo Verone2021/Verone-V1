@@ -21,7 +21,7 @@ import {
   BarChart3,
   RefreshCw
 } from 'lucide-react'
-import { useStockAnalytics } from '@/hooks/use-stock-analytics'
+import { useStockAnalytics } from '@/shared/modules/stock/hooks'
 import { StockKPICard } from '@/components/ui-v2/stock'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
@@ -34,7 +34,7 @@ import {
   TableRow,
 } from '@/components/ui/table'
 import { Badge } from '@/components/ui/badge'
-import { ABC_CLASSES, XYZ_CLASSES } from '@/hooks/use-stock-analytics'
+import { ABC_CLASSES, XYZ_CLASSES } from '@/shared/modules/stock/hooks'
 
 export default function StockAnalyticsPage() {
   const { report, loading, error, generateReport } = useStockAnalytics()

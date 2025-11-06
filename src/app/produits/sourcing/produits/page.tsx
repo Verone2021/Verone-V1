@@ -23,8 +23,8 @@ import {
   AlertCircle,
   Globe
 } from 'lucide-react'
-import { useSourcingProducts } from '@/hooks/use-sourcing-products'
-import { useSuppliers, useCustomers } from '@/hooks/use-organisations'
+import { useSourcingProducts } from '@/shared/modules/products/hooks'
+import { useSuppliers, useCustomers } from '@/shared/modules/organisations/hooks'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { ButtonV2 } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'

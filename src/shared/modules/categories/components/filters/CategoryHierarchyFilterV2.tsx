@@ -14,7 +14,7 @@
 
 import { useState, useEffect, useMemo } from 'react'
 import { ChevronRight, ChevronDown, Folder, FolderOpen, Tag, X } from 'lucide-react'
-import { cn } from '../../lib/utils'
+import { cn } from '@/lib/utils'
 import { Badge } from '@/components/ui/badge'
 import { ButtonV2 } from '@/components/ui/button'
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible'

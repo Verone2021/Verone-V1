@@ -7,7 +7,7 @@ import { cn } from '@/lib/utils';
 import {
   useCompletionStatus,
   type CompletionStatusData,
-} from '@/hooks/use-completion-status';
+} from '@/shared/modules/products/hooks';
 
 interface CompletionStatusSectionProps {
   product: CompletionStatusData & { id: string; name?: string };

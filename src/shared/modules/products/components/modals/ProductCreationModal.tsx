@@ -12,8 +12,8 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog'
-import { useToast } from '@/hooks/use-toast'
-import { useCatalogue } from '@/hooks/use-catalogue'
+import { useToast } from '@/shared/modules/common/hooks'
+import { useCatalogue } from '@/shared/modules/categories/hooks'
 import { formatPrice } from '@/lib/utils'
 
 interface ProductCreationModalProps {

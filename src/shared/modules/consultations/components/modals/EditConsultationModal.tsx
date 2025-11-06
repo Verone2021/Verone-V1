@@ -9,7 +9,7 @@ import { Label } from '@/components/ui/label'
 import { Textarea } from '@/components/ui/textarea'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Alert, AlertDescription } from '@/components/ui/alert'
-import { ClientConsultation } from '@/hooks/use-consultations'
+import { ClientConsultation } from '@/shared/modules/consultations/hooks'
 import { cn } from '@/lib/utils'
 
 interface EditConsultationModalProps {

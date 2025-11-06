@@ -6,7 +6,7 @@ import Image from 'next/image'
 import { X, Package, Clock, User, TrendingUp, TrendingDown, RotateCcw, FileText, Euro, MessageSquare, Settings, ShoppingCart } from 'lucide-react'
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 import { Badge } from '@/components/ui/badge'
-import { MovementWithDetails } from '@/hooks/use-movements-history'
+import { MovementWithDetails } from '@/shared/modules/stock/hooks'
 import { formatPrice } from '@/lib/utils'
 
 interface MovementDetailsModalProps {

@@ -29,14 +29,14 @@ import { Alert, AlertDescription } from '@/components/ui/alert';
 import {
   useConsultationItems,
   ConsultationItem,
-} from '../../hooks/use-consultations';
-import { useToast } from '../../hooks/use-toast';
+} from '@/shared/modules/common/hooks';
+import { useToast } from '@/shared/modules/common/hooks';
 import {
   UniversalProductSelectorV2,
   SelectedProduct,
 } from './universal-product-selector-v2';
 import { SourcingProductModal } from './sourcing-product-modal';
-import { useProducts } from '@/hooks/use-products';
+import { useProducts } from '@/shared/modules/products/hooks';
 
 interface ConsultationOrderInterfaceProps {
   consultationId: string;

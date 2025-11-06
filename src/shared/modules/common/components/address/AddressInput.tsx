@@ -6,7 +6,7 @@ import { ButtonV2 } from '@/components/ui/button'
 import { Label } from '@/components/ui/label'
 import { Textarea } from '@/components/ui/textarea'
 import { getOrganisationDisplayName } from '@/lib/utils/organisation-helpers'
-import { Organisation } from '@/hooks/use-organisations'
+import { Organisation } from '@/shared/modules/organisations/hooks'
 import { UnifiedCustomer } from './customer-selector'
 
 interface AddressInputProps {

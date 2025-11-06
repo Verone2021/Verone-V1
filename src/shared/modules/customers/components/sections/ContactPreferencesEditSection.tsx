@@ -3,9 +3,9 @@
 import { Settings, Save, X, Edit, Phone, Mail, Globe2, MessageCircle, Bell } from 'lucide-react'
 import { ButtonV2 } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
-import { cn } from '../../lib/utils'
-import { useInlineEdit, type EditableSection } from '../../hooks/use-inline-edit'
-import type { Contact } from '../../hooks/use-contacts'
+import { cn } from '@/lib/utils'
+import { useInlineEdit, type EditableSection } from '@/shared/modules/common/hooks'
+import type { Contact } from '@/shared/modules/common/hooks'
 
 interface ContactPreferencesEditSectionProps {
   contact: Contact

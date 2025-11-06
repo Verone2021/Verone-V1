@@ -9,7 +9,7 @@
 
 import { useEffect, useState } from 'react'
 import { usePathname } from 'next/navigation'
-import { useUserActivityTracker } from '@/hooks/use-user-activity-tracker'
+import { useUserActivityTracker } from '@/shared/modules/notifications/hooks'
 import { createClient } from '@/lib/supabase/client'
 import type { User } from '@supabase/supabase-js'
 

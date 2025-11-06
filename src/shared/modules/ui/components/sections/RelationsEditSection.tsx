@@ -4,9 +4,9 @@ import { useState, useEffect } from 'react'
 import { Layers, Save, X, Search, ExternalLink, AlertCircle } from 'lucide-react'
 import { ButtonV2 } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
-import { cn } from '../../lib/utils'
-import { useInlineEdit, type EditableSection } from '../../hooks/use-inline-edit'
-import { createClient } from '../../lib/supabase/client'
+import { cn } from '@/lib/utils'
+import { useInlineEdit, type EditableSection } from '@/shared/modules/common/hooks'
+import { createClient } from '@/lib/supabase/client'
 
 interface Product {
   id: string
