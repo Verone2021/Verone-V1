@@ -628,12 +628,16 @@ export default function SalesOrdersPage() {
         orderId={selectedOrder?.id || ''}
         orderType="sales"
         open={showOrderDetail}
-        onClose={() => setShowOrderDetail(false)}
+        onClose={() => {
+          setShowOrderDetail(false)
+          setSelectedOrder(null)
+          setOrderDetailEditMode(false) // Reset mode
+        }}
         onUpdate={() => {
           fetchOrders()
           fetchStats()
         }}
-        initialEditMode={false}
+        initialEditMode={orderDetailEditMode} // Dynamique selon bouton cliqué
       />
 
       {/* Modal Édition Commande */}

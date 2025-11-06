@@ -13,7 +13,7 @@ import { ButtonV2 } from "@/components/ui/button"
 import { Progress } from "@/components/ui/progress"
 import { Alert, AlertDescription } from "@/components/ui/alert"
 import { Badge } from "@/components/ui/badge"
-import { cn } from "../../lib/utils"
+import { cn } from "@/lib/utils"
 import Image from "next/image"
 import { useProductImages } from '@/hooks/use-product-images'
 
