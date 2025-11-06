@@ -1,0 +1,1 @@
+export { FinancialPaymentForm } from './FinancialPaymentForm';
