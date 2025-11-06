@@ -471,22 +471,22 @@ export default function PurchaseOrdersPage() {
                       </TableCell>
                       <TableCell>
                         <div className="flex items-center gap-2">
-                          {/* Voir */}
+                          {/* Voir - Mode LECTURE */}
                           <ButtonV2
                             variant="outline"
                             size="sm"
-                            onClick={() => openOrderDetail(order)}
+                            onClick={() => openOrderView(order)}
                             title="Voir détails"
                           >
                             <Eye className="h-4 w-4" />
                           </ButtonV2>
 
-                          {/* Modifier (draft uniquement) */}
+                          {/* Modifier - Mode ÉDITION (draft uniquement) */}
                           {order.status === 'draft' && (
                             <ButtonV2
                               variant="outline"
                               size="sm"
-                              onClick={() => openOrderDetail(order)}
+                              onClick={() => openOrderEdit(order)}
                               title="Modifier"
                             >
                               <Edit className="h-4 w-4" />
@@ -568,7 +568,7 @@ export default function PurchaseOrdersPage() {
         </CardContent>
       </Card>
 
-      {/* ✅ Modal Détail Commande - NOUVEAU FORMAT 2 COLONNES (aligné avec ventes) */}
+      {/* ✅ Modal Détail Commande - Mode lecture/édition dynamique */}
       <UniversalOrderDetailsModal
         orderId={selectedOrder?.id || ''}
         orderType="purchase"
@@ -576,11 +576,12 @@ export default function PurchaseOrdersPage() {
         onClose={() => {
           setShowOrderDetail(false)
           setSelectedOrder(null)
+          setOrderDetailEditMode(false) // Reset mode
         }}
         onUpdate={() => {
           fetchOrders()
         }}
-        initialEditMode={false}
+        initialEditMode={orderDetailEditMode} // Dynamique selon bouton cliqué
       />
 
       {/* Modal de réception */}

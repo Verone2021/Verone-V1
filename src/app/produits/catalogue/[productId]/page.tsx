@@ -21,7 +21,7 @@ import { ButtonV2 } from '@/components/ui/button';
 import { ProductImageGallery } from '@/shared/modules/products/components/images';
 import { ProductPhotosModal } from '@/components/business/product-photos-modal';
 import { ProductCharacteristicsModal } from '@/shared/modules/products/components/forms';
-import { ProductDescriptionsModal } from '@/components/business/product-descriptions-modal';
+import { ProductDescriptionsModal } from '@/shared/modules/products/components/forms';
 import { CategoryHierarchySelector } from '@/components/business/category-hierarchy-selector';
 import {
   Dialog,
