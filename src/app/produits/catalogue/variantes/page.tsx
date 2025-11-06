@@ -27,8 +27,8 @@ import { cn } from '@/lib/utils';
 import { PageHeader } from '@/components/layout/page-header';
 import { useVariantGroups } from '@/hooks/use-variant-groups';
 import { VariantGroupCreationWizard } from '@/components/business/variant-group-creation-wizard';
-import { VariantGroupEditModal } from '@/components/business/variant-group-edit-modal';
-import { AddProductsToGroupModal } from '@/components/forms/add-products-to-group-modal';
+import { VariantGroupEditModal } from '@/shared/modules/products/components/modals/VariantGroupEditModal';
+import { VariantAddProductModal } from '@/shared/modules/products/components/modals/VariantAddProductModal';
 import { useToast } from '@/hooks/use-toast';
 import { ElegantKpiCard } from '@/components/ui/elegant-kpi-card';
 import { CategoryFilterCombobox } from '@/components/business/category-filter-combobox';
@@ -662,14 +662,15 @@ export default function VariantesPage() {
 
         {/* Modal ajout produits */}
         {showAddProductsModal && selectedGroupForProducts && (
-          <AddProductsToGroupModal
+          <VariantAddProductModal
             isOpen={showAddProductsModal}
             onClose={() => {
               setShowAddProductsModal(false);
               setSelectedGroupForProducts(null);
             }}
-            variantGroup={selectedGroupForProducts}
-            onProductsAdded={() => {
+            group={selectedGroupForProducts}
+            onSubmit={async (data) => {
+              // L'ajout du produit au groupe est géré par le modal
               refetch();
               toast({
                 title: 'Produits ajoutés',
