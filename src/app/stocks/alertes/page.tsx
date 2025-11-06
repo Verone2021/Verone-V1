@@ -43,7 +43,7 @@ import {
 import { useStockAlerts } from '../../../hooks/use-stock-alerts';
 import { useToast } from '../../../hooks/use-toast';
 import { QuickPurchaseOrderModal } from '../../../components/business/quick-purchase-order-modal';
-import { StockAlertCard } from '../../../components/business/stock-alert-card';
+import { StockAlertCard } from '@/shared/modules/stock/components/alerts';
 
 type AlertSeverity = 'critical' | 'warning' | 'info';
 type AlertCategory = 'stock' | 'movement' | 'forecast' | 'system';
