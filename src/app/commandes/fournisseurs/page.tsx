@@ -50,9 +50,9 @@ import {
   PurchaseOrderStatus,
 } from '@/hooks/use-purchase-orders';
 import { useOrganisations } from '@/hooks/use-organisations';
-import { PurchaseOrderFormModal } from '@/components/business/purchase-order-form-modal';
-import { PurchaseOrderReceptionModal } from '@/components/business/purchase-order-reception-modal';
-import { PurchaseOrderDetailModal } from '@/components/business/purchase-order-detail-modal';
+import { PurchaseOrderFormModal } from '@/shared/modules/orders/components/modals/PurchaseOrderFormModal';
+import { PurchaseOrderReceptionModal } from '@/shared/modules/orders/components/modals/PurchaseOrderReceptionModal';
+import { PurchaseOrderDetailModal } from '@/shared/modules/orders/components/modals/PurchaseOrderDetailModal';
 import { formatCurrency, formatDate } from '@/lib/utils';
 import { Separator } from '@/components/ui/separator';
 import { getOrganisationDisplayName } from '@/lib/utils/organisation-helpers';
