@@ -7,7 +7,7 @@ import { ButtonV2 } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { cn } from '../../lib/utils';
 import { useProductImages } from '../../hooks/use-product-images';
-import { ProductImageViewerModal } from './product-image-viewer-modal';
+import { ProductImageViewerModal } from './ProductImageViewer';
 
 interface ProductImageGalleryProps {
   productId: string;
