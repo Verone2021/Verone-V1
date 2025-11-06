@@ -37,7 +37,7 @@ import { ProductVariantsGrid } from '@/shared/modules/products/components/displa
 import { SampleRequirementSection } from '@/components/business/sample-requirement-section';
 import { SupplierVsPricingEditSection } from '@/components/business/supplier-vs-pricing-edit-section';
 import { StockEditSection } from '@/components/business/stock-edit-section';
-import { StockStatusCompact } from '@/components/business/stock-status-compact';
+import { StockStatusCompact } from '@/shared/modules/stock/components/badges';
 import { ProductStatusCompact } from '@/shared/modules/products/components/display';
 import { CompletionStatusCompact } from '@/components/business/completion-status-compact';
 import { ProductFixedCharacteristics } from '@/components/business/product-fixed-characteristics';

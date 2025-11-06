@@ -1,0 +1,1 @@
+export { StockStatusCompact } from './StockStatusCompact';
