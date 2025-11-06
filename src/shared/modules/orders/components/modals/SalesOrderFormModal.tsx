@@ -12,6 +12,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Alert, AlertDescription } from '@/components/ui/alert'
 import { Badge } from '@/components/ui/badge'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
+import { CustomerSelector, UnifiedCustomer } from './customer-selector'
 import { useProducts } from '@/hooks/use-products'
 import { useSalesOrders, CreateSalesOrderData } from '@/hooks/use-sales-orders'
 import { useStockMovements } from '@/hooks/use-stock-movements'

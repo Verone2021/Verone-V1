@@ -13,7 +13,7 @@ import {
 import { createClient } from '@/lib/supabase/client';
 import { useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
-import { NotificationsDropdown } from '../business/notifications-dropdown';
+import { NotificationsDropdown } from '@/shared/modules/notifications/components/dropdowns/NotificationsDropdown';
 
 interface AppHeaderProps {
   className?: string;
