@@ -7,3 +7,12 @@ export { ProductDescriptionsEditSection } from './ProductDescriptionsEditSection
 export { WeightEditSection } from './WeightEditSection';
 export { SupplierEditSection } from './SupplierEditSection';
 export { SampleRequirementSection } from './SampleRequirementSection';
+export { ProductDetailAccordion } from './ProductDetailAccordion';
+export { ProductDualMode } from './ProductDualMode';
+export { ProductEditMode } from './ProductEditMode';
+export { ProductInfoSection } from './ProductInfoSection';
+export { ProductNameEditSection } from './ProductNameEditSection';
+export { ProductStatusEditSection } from './ProductStatusEditSection';
+export { ProductViewMode } from './ProductViewMode';
+export { ProductVariantsSection } from './ProductVariantsSection';
+export { VariantSiblings } from './VariantSiblings';
