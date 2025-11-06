@@ -6,7 +6,10 @@ import { Card, CardContent } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Truck, ExternalLink, AlertCircle } from 'lucide-react'
 import { SalesOrder } from '@/shared/modules/orders/hooks'
-import { ShipmentRecapData } from './shipment-recap-modal'
+// import { ShipmentRecapData } from './shipment-recap-modal'
+
+// Temporary type until shipment-recap-modal is implemented
+type ShipmentRecapData = any
 
 interface ChronotruckShipmentFormProps {
   order: SalesOrder

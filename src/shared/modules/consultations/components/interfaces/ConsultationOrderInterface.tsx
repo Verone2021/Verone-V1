@@ -34,8 +34,8 @@ import { useToast } from '@/shared/modules/common/hooks';
 import {
   UniversalProductSelectorV2,
   SelectedProduct,
-} from './universal-product-selector-v2';
-import { SourcingProductModal } from './sourcing-product-modal';
+} from '@/components/business/universal-product-selector-v2';
+import { SourcingProductModal } from '@/components/business/edit-sourcing-product-modal';
 import { useProducts } from '@/shared/modules/products/hooks';
 
 interface ConsultationOrderInterfaceProps {

@@ -1,11 +1,11 @@
 export { useDraftPurchaseOrder } from './use-draft-purchase-order';
-export { useOrderItems } from './use-order-items';
+export { useOrderItems, type OrderType, type CreateOrderItemData } from './use-order-items';
 export { useOrdersStatus } from './use-orders-status';
-export { usePurchaseOrders } from './use-purchase-orders';
-export { usePurchaseReceptions } from './use-purchase-receptions';
+export { usePurchaseOrders, type PurchaseOrder, type PurchaseOrderStatus } from './use-purchase-orders';
+export { usePurchaseReceptions, type PurchaseOrderForReception } from './use-purchase-receptions';
 export { useSalesDashboard } from './use-sales-dashboard';
-export { useSalesOrders } from './use-sales-orders';
-export { useSalesShipments } from './use-sales-shipments';
+export { useSalesOrders, type SalesOrder, type SalesOrderStatus, type SalesOrderItem } from './use-sales-orders';
+export { useSalesShipments, type SalesShipment, type SalesShipmentFilters } from './use-sales-shipments';
 export { useSampleEligibilityRule } from './use-sample-eligibility-rule';
 export { useSampleOrder } from './use-sample-order';
 export { useShipments } from './use-shipments';

@@ -3,7 +3,7 @@
 import { useState, useRef } from 'react'
 import { useRouter } from 'next/navigation'
 import { Upload, Link, Package, ArrowRight, Loader2, Euro } from 'lucide-react'
-import { ButtonV2 } from '@/components/ui/button'
+import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { cn } from '@/lib/utils'
@@ -224,7 +224,7 @@ export function SourcingQuickForm({
                 <div className="text-sm text-gray-600">
                   {selectedImage?.name}
                 </div>
-                <ButtonV2
+                <Button
                   type="button"
                   variant="outline"
                   size="sm"
@@ -234,7 +234,7 @@ export function SourcingQuickForm({
                   }}
                 >
                   Changer d'image
-                </ButtonV2>
+                </Button>
               </div>
             ) : (
               <div className="space-y-3">
@@ -243,14 +243,14 @@ export function SourcingQuickForm({
                   <p className="text-gray-600">
                     Glissez-déposez une image ou
                   </p>
-                  <ButtonV2
+                  <Button
                     type="button"
                     variant="ghost"
                     onClick={() => fileInputRef.current?.click()}
                     className="text-black hover:underline p-0 h-auto font-normal"
                   >
                     cliquez pour sélectionner
-                  </ButtonV2>
+                  </Button>
                   <input
                     ref={fileInputRef}
                     type="file"
@@ -414,17 +414,17 @@ export function SourcingQuickForm({
 
           <div className="flex items-center space-x-3">
             {onCancel && (
-              <ButtonV2
+              <Button
                 type="button"
                 variant="ghost"
                 onClick={onCancel}
                 disabled={isSubmitting}
               >
                 Annuler
-              </ButtonV2>
+              </Button>
             )}
 
-            <ButtonV2
+            <Button
               type="submit"
               disabled={isSubmitting}
               className="bg-black hover:bg-gray-800 text-white"
@@ -440,7 +440,7 @@ export function SourcingQuickForm({
                   <ArrowRight className="h-4 w-4 ml-2" />
                 </>
               )}
-            </ButtonV2>
+            </Button>
           </div>
         </div>
       </form>

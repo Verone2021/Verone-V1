@@ -2,13 +2,13 @@
 
 import { useState } from 'react'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
-import { ButtonV2 } from '@/components/ui/button'
+import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { Switch } from '@/components/ui/switch'
 import { Label } from '@/components/ui/label'
 import { Textarea } from '@/components/ui/textarea'
 import { Separator } from '@/components/ui/separator'
-import { SampleOrderButton } from './sample-order-button'
+import { SampleOrderButton } from '@/shared/modules/ui/components/buttons/SampleOrderButton'
 import {
   CheckCircle,
   AlertCircle,
@@ -204,14 +204,14 @@ export function SampleRequirementSection({
 
             <div className="flex items-center justify-between">
               <Label className="text-sm font-medium">Notes sur l'échantillonnage</Label>
-              <ButtonV2
+              <Button
                 variant="ghost"
                 size="sm"
                 onClick={() => setShowNotes(!showNotes)}
               >
                 <Settings className="h-4 w-4" />
                 {showNotes ? 'Masquer' : 'Ajouter des notes'}
-              </ButtonV2>
+              </Button>
             </div>
 
             {showNotes && (

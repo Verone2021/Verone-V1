@@ -1,8 +1,8 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { createClient } from '../lib/supabase/client'
-import { useToast } from './use-toast'
+import { createClient } from '@/lib/supabase/client'
+import { useToast } from '@/shared/modules/common/hooks'
 
 const supabase = createClient()
 

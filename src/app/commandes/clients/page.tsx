@@ -188,6 +188,7 @@ export default function SalesOrdersPage() {
         total_ht: 0,
         total_tva: 0,
         total_ttc: 0,
+        eco_tax_total: 0,
         average_basket: 0,
         pending_orders: 0,
         shipped_orders: 0
@@ -198,6 +199,7 @@ export default function SalesOrdersPage() {
       acc.total_orders++
       acc.total_ht += order.total_ht || 0
       acc.total_ttc += order.total_ttc || 0
+      acc.eco_tax_total += order.eco_tax_total || 0
 
       if (order.status === 'draft' || order.status === 'confirmed') {
         acc.pending_orders++
@@ -211,6 +213,7 @@ export default function SalesOrdersPage() {
       total_ht: 0,
       total_ttc: 0,
       total_tva: 0,
+      eco_tax_total: 0,
       average_basket: 0,
       pending_orders: 0,
       shipped_orders: 0

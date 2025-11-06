@@ -1,1 +1,1 @@
-export { MovementsStats } from './MovementsStats';
+export { MovementsStatsCards } from './MovementsStats';

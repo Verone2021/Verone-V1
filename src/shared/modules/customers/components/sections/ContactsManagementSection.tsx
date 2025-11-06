@@ -20,7 +20,7 @@ import {
   Eye
 } from 'lucide-react'
 import { useContacts, type Contact } from '@/shared/modules/organisations/hooks'
-import { ContactFormModal } from './contact-form-modal'
+import { ContactFormModal } from '../modals/contact-form-modal'
 
 interface ContactsManagementSectionProps {
   organisationId: string

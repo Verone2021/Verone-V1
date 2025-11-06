@@ -76,6 +76,15 @@ export interface SalesOrderForShipment {
   }>
 }
 
+// Backward compatibility aliases
+export type SalesShipment = SalesOrderForShipment;
+export interface SalesShipmentFilters {
+  status?: string;
+  customer_id?: string;
+  date_from?: string;
+  date_to?: string;
+}
+
 export function useSalesShipments() {
   const supabase = createClient()
   const [loading, setLoading] = useState(false)

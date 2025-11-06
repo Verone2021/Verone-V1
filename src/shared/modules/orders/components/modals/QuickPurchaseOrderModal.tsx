@@ -20,7 +20,7 @@ import { Separator } from '@/components/ui/separator';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Loader2, Info, Package } from 'lucide-react';
 
-interface QuickPurchaseOrderModalProps {
+export interface QuickPurchaseOrderModalProps {
   open: boolean;
   onClose: () => void;
   productId: string;

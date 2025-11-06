@@ -7,7 +7,7 @@
 'use client';
 
 import { useState, useEffect, useMemo, useCallback } from 'react';
-import { createClient } from '../lib/supabase/client';
+import { createClient } from '@/lib/supabase/client';
 
 // Types selon ERD-CATALOGUE-V1.md
 interface ProductGroup {
@@ -23,7 +23,7 @@ interface ProductGroup {
   created_by?: string;
 }
 
-interface Product {
+export interface Product {
   id: string;
   sku: string;
   name: string;
@@ -66,7 +66,7 @@ interface Product {
   stock_forecasted_out?: number;
 }
 
-interface Category {
+export interface Category {
   id: string;
   parent_id?: string;
   name: string;
@@ -467,10 +467,9 @@ export const useCatalogue = () => {
   };
 };
 
+// Export types already exported via export interface above
 export type {
-  Product,
   ProductGroup,
-  Category,
   CatalogueFilters,
   CatalogueState,
 };

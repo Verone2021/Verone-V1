@@ -4,7 +4,7 @@ import { useState } from 'react'
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 import { ButtonV2 } from '@/components/ui/button'
 import { X, Sparkles } from 'lucide-react'
-import { SourcingQuickForm } from './sourcing-quick-form'
+import { SourcingQuickForm } from './SourcingQuickForm'
 import { useToast } from '@/shared/modules/common/hooks'
 
 interface SourcingProductModalProps {

@@ -17,7 +17,7 @@ import { cn } from '@/lib/utils'
 import { ButtonV2 } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { Label } from '@/components/ui/label'
-import { SupplierCategoryCode, getCategoryLabel } from './supplier-category-badge'
+import { SupplierCategoryCode, getCategoryLabel } from '@/components/business/supplier-category-badge'
 import {
   Sofa,
   TreeDeciduous,

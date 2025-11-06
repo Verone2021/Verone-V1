@@ -6,8 +6,8 @@
 import { useEffect, useState } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import { useRealDashboardMetrics } from './use-real-dashboard-metrics'
-import { useOrganisations } from './use-organisations'
-import { useStockOrdersMetrics } from './use-stock-orders-metrics'
+import { useOrganisations } from '@/hooks/use-organisations'
+import { useStockOrdersMetrics } from '@/hooks/use-stock-orders-metrics'
 
 export interface CompleteDashboardMetrics {
   // Phase 1 - Données RÉELLES

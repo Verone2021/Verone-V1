@@ -9,10 +9,10 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog'
-import { ButtonV2 } from '@/components/ui/button'
+import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
-import { SupplierSelector } from './supplier-selector'
+import { SupplierSelector } from '@/components/business/supplier-selector'
 import { cn } from '@/lib/utils'
 
 interface SourcingProduct {
@@ -276,7 +276,7 @@ export function EditSourcingProductModal({
 
           {/* Actions */}
           <div className="flex items-center justify-end space-x-3 pt-4 border-t border-gray-200">
-            <ButtonV2
+            <Button
               type="button"
               variant="ghost"
               onClick={onClose}
@@ -284,9 +284,9 @@ export function EditSourcingProductModal({
             >
               <X className="h-4 w-4 mr-2" />
               Annuler
-            </ButtonV2>
+            </Button>
 
-            <ButtonV2
+            <Button
               type="submit"
               disabled={isSubmitting}
               className="bg-black hover:bg-gray-800 text-white"
@@ -302,7 +302,7 @@ export function EditSourcingProductModal({
                   Enregistrer
                 </>
               )}
-            </ButtonV2>
+            </Button>
           </div>
         </form>
       </DialogContent>

@@ -2,8 +2,8 @@
 
 import * as React from "react"
 import { useRouter } from "next/navigation"
-import { ButtonV2 } from "@/components/ui/button"
-import { ProductVariantGridCard } from "./product-variant-grid-card"
+import { Button } from "@/components/ui/button"
+import { ProductVariantGridCard } from '@/shared/modules/products/components/cards/ProductVariantGridCard'
 import { useProductVariants } from '@/shared/modules/products/hooks'
 import { Package2, Plus, Loader2 } from "lucide-react"
 import { cn } from "@/lib/utils"
@@ -80,14 +80,14 @@ export function ProductVariantsGrid({
           Ce produit n'a pas d'autres variantes dans son groupe.
         </p>
         {product?.variant_group_id && (
-          <ButtonV2
+          <Button
             size="sm"
             onClick={handleAddVariant}
             className="inline-flex items-center gap-2"
           >
             <Plus className="h-4 w-4" />
             Créer une variante
-          </ButtonV2>
+          </Button>
         )}
       </div>
     )
@@ -111,7 +111,7 @@ export function ProductVariantsGrid({
           )}
         </div>
         {product?.variant_group_id && (
-          <ButtonV2
+          <Button
             size="sm"
             variant="outline"
             onClick={handleAddVariant}
@@ -119,7 +119,7 @@ export function ProductVariantsGrid({
           >
             <Plus className="h-3.5 w-3.5" />
             Ajouter
-          </ButtonV2>
+          </Button>
         )}
       </div>
 
@@ -157,14 +157,14 @@ export function ProductVariantsGrid({
       {/* Load More button */}
       {hasMore && (
         <div className="flex justify-center pt-2">
-          <ButtonV2
+          <Button
             variant="outline"
             size="sm"
             onClick={handleLoadMore}
             className="min-w-[200px]"
           >
             Charger {Math.min(ITEMS_PER_PAGE, totalVariants - displayedCount)} variantes supplémentaires
-          </ButtonV2>
+          </Button>
         </div>
       )}
 

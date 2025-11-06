@@ -7,8 +7,8 @@ import { ButtonV2 } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { cn } from '@/lib/utils'
 import { useConsultationImages } from '@/shared/modules/common/hooks'
-import { ConsultationImageViewerModal } from './consultation-image-viewer-modal'
-import { ConsultationPhotosModal } from './consultation-photos-modal'
+import { ConsultationImageViewerModal } from '@/components/business/consultation-image-viewer-modal'
+import { ConsultationPhotosModal } from '@/components/business/consultation-photos-modal'
 
 interface ConsultationImageGalleryProps {
   consultationId: string

@@ -6,7 +6,10 @@ import { Card, CardContent } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Plus, Trash2, Package } from 'lucide-react'
 import { SalesOrder } from '@/shared/modules/orders/hooks'
-import { ShipmentRecapData } from './shipment-recap-modal'
+// import { ShipmentRecapData } from './shipment-recap-modal'
+
+// Temporary type until shipment-recap-modal is implemented
+type ShipmentRecapData = any
 
 interface PacklinkShipmentFormProps {
   order: SalesOrder

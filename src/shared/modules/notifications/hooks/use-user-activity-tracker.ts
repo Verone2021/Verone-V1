@@ -1,7 +1,7 @@
 'use client'
 
 import { useCallback, useEffect, useRef } from 'react'
-import { useSupabaseQuery, useSupabaseMutation } from './use-supabase-query'
+import { useSupabaseQuery, useSupabaseMutation } from '@/shared/modules/common/hooks/use-supabase-query'
 
 export interface ActivityEvent {
   action: string

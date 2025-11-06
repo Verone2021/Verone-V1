@@ -6,7 +6,7 @@
 import { useState, useCallback } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import { useToast } from '@/shared/modules/common/hooks'
-import { useStockMovements } from './use-stock-movements'
+import { useStockMovements } from '@/shared/modules/stock/hooks/use-stock-movements'
 import { updatePurchaseOrderStatus as updatePurchaseOrderStatusAction } from '@/app/actions/purchase-orders'
 
 // Types pour les commandes fournisseurs
@@ -21,6 +21,7 @@ export interface PurchaseOrder {
   tax_rate: number
   total_ht: number
   total_ttc: number
+  eco_tax_total?: number
   expected_delivery_date?: string
   delivery_address?: any
   payment_terms?: string

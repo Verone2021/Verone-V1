@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect, useCallback, useMemo } from 'react'
-import { createClient } from '../lib/supabase/client'
+import { createClient } from '@/lib/supabase/client'
 import type { PostgrestFilterBuilder } from '@supabase/postgrest-js'
 
 interface QueryOptions {

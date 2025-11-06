@@ -9,7 +9,7 @@ import { ButtonV2 } from '@/components/ui/button'
 import { Separator } from '@/components/ui/separator'
 import { SalesOrder, useSalesOrders } from '@/shared/modules/orders/hooks'
 import { formatCurrency } from '@/lib/utils'
-import { SalesOrderShipmentModal } from './sales-order-shipment-modal'
+import { SalesOrderShipmentModal } from '@/components/business/sales-order-shipment-modal'
 
 // ✅ Type Safety: Interface ProductImage stricte
 interface ProductImage {

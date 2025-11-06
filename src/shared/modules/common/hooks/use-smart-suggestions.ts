@@ -18,7 +18,7 @@ import {
   RoomCategory,
   COLLECTION_STYLE_OPTIONS,
   ROOM_CATEGORY_OPTIONS
-} from '../types/collections'
+} from '@/types/collections'
 
 interface AnalyticsData {
   style_popularity: Record<CollectionStyle, number>

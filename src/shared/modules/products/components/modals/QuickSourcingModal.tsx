@@ -1,9 +1,9 @@
 'use client'
 
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog'
-import { ButtonV2 } from '@/components/ui/button'
+import { Button } from '@/components/ui/button'
 import { X, Sparkles } from 'lucide-react'
-import { SourcingQuickForm } from './sourcing-quick-form'
+import { SourcingQuickForm } from '@/components/business/sourcing-quick-form'
 
 interface QuickSourcingModalProps {
   open: boolean
@@ -42,9 +42,9 @@ export function QuickSourcingModal({
               <Sparkles className="h-6 w-6 text-purple-600" />
               Sourcer un nouveau produit
             </DialogTitle>
-            <ButtonV2 variant="ghost" size="sm" onClick={onClose}>
+            <Button variant="ghost" size="sm" onClick={onClose}>
               <X className="h-5 w-5" />
-            </ButtonV2>
+            </Button>
           </div>
         </DialogHeader>
 

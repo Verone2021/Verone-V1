@@ -5,8 +5,8 @@
 
 import { useState, useEffect } from 'react'
 import { useContacts } from './use-contacts'
-import { usePurchaseOrders } from './use-purchase-orders'
-import { useProducts } from './use-products'
+import { usePurchaseOrders } from '@/shared/modules/orders/hooks/use-purchase-orders'
+import { useProducts } from '@/shared/modules/products/hooks/use-products'
 
 export interface OrganisationTabCounts {
   contacts: number

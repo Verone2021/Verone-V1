@@ -3,8 +3,9 @@
  * Export centralisé pour faciliter les imports
  */
 
-export { ProductCard } from './product-card';
-export { CollectionGrid } from './collection-grid';
+// Modules temporairement commentés (fichiers manquants)
+// export { ProductCard } from './product-card';
+// export { CollectionGrid } from './collection-grid';
 
 // Interfaces business communes
 export interface VéroneProduct {

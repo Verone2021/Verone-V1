@@ -3,16 +3,16 @@
 import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog'
-import { ButtonV2 } from '@/components/ui/button'
+import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Checkbox } from '@/components/ui/checkbox'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { useSubcategories } from '@/shared/modules/common/hooks'
 import { useOrganisations } from '@/shared/modules/common/hooks'
-import { normalizeForSKU } from '../../lib/sku-generator'
-import type { VariantGroup, UpdateVariantGroupData } from '../../types/variant-groups'
-import { DECORATIVE_STYLES } from '../../types/variant-groups'
+import { normalizeForSKU } from '@/lib/sku-generator'
+import type { VariantGroup, UpdateVariantGroupData } from '@/types/variant-groups'
+import { DECORATIVE_STYLES } from '@/types/variant-groups'
 import { ROOM_TYPES } from '@/types/collections'
 import { cn } from '@/lib/utils'
 import { ExternalLink } from 'lucide-react'
@@ -564,21 +564,21 @@ export function VariantGroupEditModal({
           </div>
 
           <DialogFooter>
-            <ButtonV2
+            <Button
               type="button"
               variant="outline"
               onClick={onClose}
               disabled={isSubmitting}
             >
               Annuler
-            </ButtonV2>
-            <ButtonV2
+            </Button>
+            <Button
               type="submit"
               disabled={!name.trim() || !baseSku.trim() || !subcategoryId || isSubmitting}
               className="bg-black text-white hover:bg-gray-800"
             >
               {isSubmitting ? 'Modification...' : 'Enregistrer les modifications'}
-            </ButtonV2>
+            </Button>
           </DialogFooter>
         </form>
       </DialogContent>

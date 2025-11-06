@@ -1,8 +1,8 @@
 'use client'
 
 import { useMemo, useCallback } from 'react'
-import { useSupabaseQuery, useSupabaseMutation, clearQueryCache } from './use-supabase-query'
-import { useToast } from './use-toast'
+import { useSupabaseQuery, useSupabaseMutation, clearQueryCache } from '@/shared/modules/common/hooks/use-supabase-query'
+import { useToast } from '@/shared/modules/common/hooks'
 import { createClient } from '@/lib/supabase/client'
 
 export interface StockMovement {

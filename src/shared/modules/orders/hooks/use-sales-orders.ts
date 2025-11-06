@@ -6,7 +6,7 @@
 import { useState, useCallback } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import { useToast } from '@/shared/modules/common/hooks'
-import { useStockMovements } from './use-stock-movements'
+import { useStockMovements } from '@/shared/modules/stock/hooks/use-stock-movements'
 
 // Types pour les commandes clients
 export type SalesOrderStatus = 'draft' | 'confirmed' | 'partially_shipped' | 'shipped' | 'delivered' | 'cancelled'
@@ -23,6 +23,7 @@ export interface SalesOrder {
   tax_rate: number
   total_ht: number
   total_ttc: number
+  eco_tax_total?: number
   paid_amount?: number
   expected_delivery_date?: string
   shipping_address?: any

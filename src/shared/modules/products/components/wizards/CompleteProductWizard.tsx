@@ -16,7 +16,7 @@ import {
   AlertCircle,
   Loader2
 } from 'lucide-react'
-import { ButtonV2 } from '@/components/ui/button'
+import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Progress } from '@/components/ui/progress'
@@ -26,12 +26,12 @@ import { useToast } from '@/shared/modules/common/hooks'
 import { useProducts } from '@/shared/modules/common/hooks'
 
 // Sections du wizard
-import { GeneralInfoSection } from './wizard-sections/general-info-section'
-import { SupplierSection } from './wizard-sections/supplier-section'
-import { PricingSection } from './wizard-sections/pricing-section'
-import { TechnicalSection } from './wizard-sections/technical-section'
-import { ImagesSection } from './wizard-sections/images-section'
-import { StockSection } from './wizard-sections/stock-section'
+import { GeneralInfoSection } from '@/components/business/wizard-sections/general-info-section'
+import { SupplierSection } from '@/components/business/wizard-sections/supplier-section'
+import { PricingSection } from '@/components/business/wizard-sections/pricing-section'
+import { TechnicalSection } from '@/components/business/wizard-sections/technical-section'
+import { ImagesSection } from '@/components/business/wizard-sections/images-section'
+import { StockSection } from '@/components/business/wizard-sections/stock-section'
 
 interface CompleteProductWizardProps {
   onSuccess?: (productId: string) => void
@@ -537,27 +537,27 @@ export function CompleteProductWizard({
         <CardContent className="pt-6">
           <div className="flex items-center justify-between">
             <div className="flex items-center space-x-3">
-              <ButtonV2
+              <Button
                 variant="outline"
                 onClick={prevSection}
                 disabled={currentSection === 0}
               >
                 <ChevronLeft className="h-4 w-4 mr-2" />
                 Précédent
-              </ButtonV2>
+              </Button>
 
-              <ButtonV2
+              <Button
                 variant="outline"
                 onClick={nextSection}
                 disabled={currentSection === WIZARD_SECTIONS.length - 1}
               >
                 Suivant
                 <ChevronRight className="h-4 w-4 ml-2" />
-              </ButtonV2>
+              </Button>
             </div>
 
             <div className="flex items-center space-x-3">
-              <ButtonV2
+              <Button
                 variant="outline"
                 onClick={() => saveDraft()}
                 disabled={isSaving}
@@ -573,15 +573,15 @@ export function CompleteProductWizard({
                     Sauvegarder
                   </>
                 )}
-              </ButtonV2>
+              </Button>
 
               {onCancel && (
-                <ButtonV2 variant="ghost" onClick={onCancel}>
+                <Button variant="ghost" onClick={onCancel}>
                   Annuler
-                </ButtonV2>
+                </Button>
               )}
 
-              <ButtonV2
+              <Button
                 onClick={finalizeDraft}
                 disabled={isLoading || !draftIdState}
                 className="bg-black hover:bg-gray-800 text-white"
@@ -597,7 +597,7 @@ export function CompleteProductWizard({
                     Finaliser le produit
                   </>
                 )}
-              </ButtonV2>
+              </Button>
             </div>
           </div>
 

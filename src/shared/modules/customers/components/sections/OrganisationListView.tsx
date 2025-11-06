@@ -14,8 +14,8 @@ import {
 } from 'lucide-react'
 import Link from 'next/link'
 import { getOrganisationDisplayName } from '@/lib/utils/organisation-helpers'
-import { OrganisationLogo } from './organisation-logo'
-import { SupplierSegmentBadge, SupplierSegmentType } from './supplier-segment-badge'
+import { OrganisationLogo } from '@/shared/modules/organisations/components/display/OrganisationLogo'
+import { SupplierSegmentBadge, SupplierSegmentType } from '@/components/business/supplier-segment-badge'
 
 interface OrganisationListViewProps {
   organisations: Array<{

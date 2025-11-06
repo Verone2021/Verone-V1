@@ -18,7 +18,7 @@ import {
 export type { CreateCollectionInput }
 import { RoomMultiSelect } from '@/components/ui/room-multi-select'
 import type { RoomType } from '../../types/room-types'
-import { CollectionImageUpload } from './collection-image-upload'
+import { CollectionImageUpload } from '@/components/business/collection-image-upload'
 
 interface CollectionCreationWizardProps {
   isOpen: boolean

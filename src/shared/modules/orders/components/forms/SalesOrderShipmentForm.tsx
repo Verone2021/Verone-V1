@@ -16,7 +16,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Badge } from '@/components/ui/badge'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
-import { useSalesShipments, type SalesOrderForShipment } from '@/shared/modules/orders/hooks'
+import { useSalesShipments, type SalesOrderForShipment } from '@/hooks/use-sales-shipments'
 import type { ShipmentItem, ShipmentCarrierInfo, ShippingAddress } from '@/types/reception-shipment'
 import { formatDate, formatCurrency } from '@/lib/utils'
 import { createClient } from '@/lib/supabase/client'

@@ -4,7 +4,7 @@ import { useState } from 'react'
 import { useSuppliers } from '@/shared/modules/organisations/hooks'
 import { UnifiedOrganisationForm, OrganisationFormData, Organisation } from './unified-organisation-form'
 import { SupplierSegmentSelect } from './supplier-segment-select'
-import { SupplierSegmentType } from './supplier-segment-badge'
+import { SupplierSegmentType } from '@/components/business/supplier-segment-badge'
 
 interface SupplierFormModalProps {
   isOpen: boolean

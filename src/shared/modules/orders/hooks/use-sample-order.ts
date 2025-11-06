@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { createClient } from '@/lib/supabase/client'
-import { useToast } from './use-toast'
+import { useToast } from '@/shared/modules/common/hooks'
 import { useUnifiedSampleEligibility } from './use-unified-sample-eligibility'
 
 interface SampleOrderResult {

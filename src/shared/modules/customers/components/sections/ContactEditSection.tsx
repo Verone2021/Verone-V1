@@ -4,7 +4,7 @@ import { useState } from 'react'
 import { User, Save, X, Edit, Mail, Phone, Globe } from 'lucide-react'
 import { ButtonV2 } from '@/components/ui/button'
 import { cn } from '@/lib/utils'
-import { getOrganisationDisplayName } from '../../lib/utils/organisation-helpers'
+import { getOrganisationDisplayName } from '@/lib/utils/organisation-helpers'
 import { useInlineEdit, type EditableSection } from '@/shared/modules/common/hooks'
 
 interface Organisation {

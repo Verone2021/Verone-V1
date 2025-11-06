@@ -35,7 +35,7 @@ import { useStock } from '@/shared/modules/stock/hooks'
 import { useCatalogue } from '@/shared/modules/categories/hooks'
 import { useStockMovements, type StockReasonCode } from '@/shared/modules/stock/hooks'
 import { Badge } from '@/components/ui/badge'
-import { StockDisplay } from './stock-display'
+import { StockDisplay } from '@/components/business/stock-display'
 
 interface GeneralStockMovementModalProps {
   isOpen: boolean
