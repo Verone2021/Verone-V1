@@ -32,7 +32,7 @@ import {
   DialogTitle,
 } from '@/components/ui/dialog';
 import { ProductDetailAccordion } from '@/shared/modules/products/components/display';
-import { ProductInfoSection } from '@/components/business/product-info-section';
+import { ProductInfoSection } from '@/shared/modules/products/components/display';
 import { ProductVariantsGrid } from '@/components/business/product-variants-grid';
 import { SampleRequirementSection } from '@/components/business/sample-requirement-section';
 import { SupplierVsPricingEditSection } from '@/components/business/supplier-vs-pricing-edit-section';
