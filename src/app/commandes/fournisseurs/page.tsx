@@ -14,6 +14,7 @@ import { usePurchaseOrders, PurchaseOrder, PurchaseOrderStatus } from '@/hooks/u
 import { useOrganisations } from '@/hooks/use-organisations'
 import { PurchaseOrderFormModal } from '@/components/business/purchase-order-form-modal'
 import { PurchaseOrderReceptionModal } from '@/components/business/purchase-order-reception-modal'
+import { PurchaseOrderDetailModal } from '@/components/business/purchase-order-detail-modal'
 import { UniversalOrderDetailsModal } from '@/components/business/universal-order-details-modal'
 import { formatCurrency, formatDate } from '@/lib/utils'
 import { Separator } from '@/components/ui/separator'
@@ -74,8 +75,8 @@ export default function PurchaseOrdersPage() {
 
   // États modals
   const [selectedOrder, setSelectedOrder] = useState<PurchaseOrder | null>(null)
-  const [showOrderDetail, setShowOrderDetail] = useState(false)
-  const [orderDetailEditMode, setOrderDetailEditMode] = useState(false) // Mode lecture/édition du modal
+  const [showOrderDetailView, setShowOrderDetailView] = useState(false) // Modal LECTURE (PurchaseOrderDetailModal)
+  const [showOrderEdit, setShowOrderDetailEdit] = useState(false) // Modal ÉDITION (UniversalOrderDetailsModal)
   const [showReceptionModal, setShowReceptionModal] = useState(false)
 
   useEffect(() => {
@@ -86,14 +87,14 @@ export default function PurchaseOrdersPage() {
   // ✅ Auto-open modal from notification URL (?id=xxx)
   useEffect(() => {
     const orderId = searchParams.get('id')
-    if (orderId && orders.length > 0 && !showOrderDetail) {
+    if (orderId && orders.length > 0 && !showOrderDetailView) {
       const order = orders.find(o => o.id === orderId)
       if (order) {
         setSelectedOrder(order)
-        setShowOrderDetail(true)
+        setShowOrderDetailView(true)
       }
     }
-  }, [searchParams, orders, showOrderDetail])
+  }, [searchParams, orders, showOrderDetailView])
 
   // ✅ Compteurs onglets
   const tabCounts = useMemo(() => {
@@ -261,18 +262,16 @@ export default function PurchaseOrdersPage() {
     }
   }
 
-  // Mode LECTURE (bouton Œil)
+  // Mode LECTURE (bouton Œil) - Ancien modal 2 colonnes
   const openOrderView = (order: PurchaseOrder) => {
     setSelectedOrder(order)
-    setOrderDetailEditMode(false) // Mode lecture seule
-    setShowOrderDetail(true)
+    setShowOrderDetailView(true) // PurchaseOrderDetailModal
   }
 
-  // Mode ÉDITION (bouton Modifier)
+  // Mode ÉDITION (bouton Modifier) - Modal édition
   const openOrderEdit = (order: PurchaseOrder) => {
     setSelectedOrder(order)
-    setOrderDetailEditMode(true) // Mode édition
-    setShowOrderDetail(true)
+    setShowOrderDetailEdit(true) // UniversalOrderDetailsModal
   }
 
   const openReceptionModal = (order: PurchaseOrder) => {
@@ -568,20 +567,32 @@ export default function PurchaseOrdersPage() {
         </CardContent>
       </Card>
 
-      {/* ✅ Modal Détail Commande - Mode lecture/édition dynamique */}
-      <UniversalOrderDetailsModal
-        orderId={selectedOrder?.id || ''}
-        orderType="purchase"
-        open={showOrderDetail}
+      {/* Modal LECTURE (bouton Œil) - ANCIEN MODAL 2 COLONNES */}
+      <PurchaseOrderDetailModal
+        order={selectedOrder}
+        open={showOrderDetailView}
         onClose={() => {
-          setShowOrderDetail(false)
+          setShowOrderDetailView(false)
           setSelectedOrder(null)
-          setOrderDetailEditMode(false) // Reset mode
         }}
         onUpdate={() => {
           fetchOrders()
         }}
-        initialEditMode={orderDetailEditMode} // Dynamique selon bouton cliqué
+      />
+
+      {/* Modal ÉDITION (bouton Modifier) */}
+      <UniversalOrderDetailsModal
+        orderId={selectedOrder?.id || ''}
+        orderType="purchase"
+        open={showOrderEdit}
+        onClose={() => {
+          setShowOrderDetailEdit(false)
+          setSelectedOrder(null)
+        }}
+        onUpdate={() => {
+          fetchOrders()
+        }}
+        initialEditMode={true}
       />
 
       {/* Modal de réception */}

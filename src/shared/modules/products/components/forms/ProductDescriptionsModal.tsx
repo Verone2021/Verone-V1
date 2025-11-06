@@ -32,7 +32,7 @@ import {
   List,
   Edit
 } from 'lucide-react'
-import { cn } from '../../lib/utils'
+import { cn } from '@/lib/utils'
 import { createClient } from '@/lib/supabase/client'
 
 interface ProductDescriptionsModalProps {

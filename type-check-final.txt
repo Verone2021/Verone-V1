@@ -1,0 +1,9 @@
+
+> @verone/back-office@1.0.0 type-check
+> tsc --noEmit
+
+src/shared/modules/products/components/forms/ProductCharacteristicsModal.tsx(33,20): error TS2307: Cannot find module '../../lib/utils' or its corresponding type declarations.
+src/shared/modules/products/components/forms/ProductCreationWizard.tsx(9,20): error TS2307: Cannot find module '../../lib/utils' or its corresponding type declarations.
+src/shared/modules/products/components/forms/ProductCreationWizard.tsx(10,39): error TS2307: Cannot find module './complete-product-wizard' or its corresponding type declarations.
+src/shared/modules/products/components/forms/ProductDescriptionsModal.tsx(35,20): error TS2307: Cannot find module '../../lib/utils' or its corresponding type declarations.
+src/shared/modules/products/components/forms/ProductImagesModal.tsx(6,36): error TS2307: Cannot find module './product-photos-modal' or its corresponding type declarations.

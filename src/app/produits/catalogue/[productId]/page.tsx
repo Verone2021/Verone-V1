@@ -31,7 +31,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog';
-import { ProductDetailAccordion } from '@/components/business/product-detail-accordion';
+import { ProductDetailAccordion } from '@/shared/modules/products/components/display';
 import { ProductInfoSection } from '@/components/business/product-info-section';
 import { ProductVariantsGrid } from '@/components/business/product-variants-grid';
 import { SampleRequirementSection } from '@/components/business/sample-requirement-section';

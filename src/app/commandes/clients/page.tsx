@@ -12,6 +12,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs'
 import { useSalesOrders, SalesOrder, SalesOrderStatus } from '@/hooks/use-sales-orders'
 import { SalesOrderFormModal } from '@/components/business/sales-order-form-modal'
+import { OrderDetailModal } from '@/components/business/order-detail-modal'
 import { UniversalOrderDetailsModal } from '@/components/business/universal-order-details-modal'
 import { formatCurrency, formatDate } from '@/lib/utils'
 import { useToast } from '@/hooks/use-toast'
@@ -63,8 +64,8 @@ export default function SalesOrdersPage() {
 
   // États modals
   const [selectedOrder, setSelectedOrder] = useState<SalesOrder | null>(null)
-  const [showOrderDetail, setShowOrderDetail] = useState(false)
-  const [orderDetailEditMode, setOrderDetailEditMode] = useState(false) // Mode lecture/édition du modal
+  const [showOrderDetailView, setShowOrderDetailView] = useState(false) // Modal LECTURE (OrderDetailModal)
+  const [showOrderDetailEdit, setShowOrderDetailEdit] = useState(false) // Modal ÉDITION (UniversalOrderDetailsModal)
   const [editingOrderId, setEditingOrderId] = useState<string | null>(null)
   const [showEditModal, setShowEditModal] = useState(false)
 
@@ -76,14 +77,14 @@ export default function SalesOrdersPage() {
   // Ouvrir automatiquement le modal si query param ?id= présent (venant des notifications)
   useEffect(() => {
     const orderId = searchParams.get('id')
-    if (orderId && orders.length > 0 && !showOrderDetail) {
+    if (orderId && orders.length > 0 && !showOrderDetailView) {
       const order = orders.find(o => o.id === orderId)
       if (order) {
         setSelectedOrder(order)
-        setShowOrderDetail(true)
+        setShowOrderDetailView(true) // Ouvre modal lecture
       }
     }
-  }, [searchParams, orders, showOrderDetail])
+  }, [searchParams, orders, showOrderDetailView])
 
   // Filtrage des commandes
   const filteredOrders = useMemo(() => {
@@ -287,18 +288,16 @@ export default function SalesOrdersPage() {
   }
 
 
-  // Mode LECTURE (bouton Œil)
+  // Mode LECTURE (bouton Œil) - Ancien modal 2 colonnes
   const openOrderView = (order: SalesOrder) => {
     setSelectedOrder(order)
-    setOrderDetailEditMode(false) // Mode lecture seule
-    setShowOrderDetail(true)
+    setShowOrderDetailView(true) // OrderDetailModal
   }
 
-  // Mode ÉDITION (bouton Modifier)
+  // Mode ÉDITION (bouton Modifier) - Modal édition
   const openOrderEdit = (order: SalesOrder) => {
     setSelectedOrder(order)
-    setOrderDetailEditMode(true) // Mode édition
-    setShowOrderDetail(true)
+    setShowOrderDetailEdit(true) // UniversalOrderDetailsModal
   }
 
   const openEditOrder = (orderId: string) => {
@@ -623,21 +622,34 @@ export default function SalesOrdersPage() {
         </CardContent>
       </Card>
 
-      {/* Modal Détail Commande */}
-      <UniversalOrderDetailsModal
-        orderId={selectedOrder?.id || ''}
-        orderType="sales"
-        open={showOrderDetail}
+      {/* Modal LECTURE (bouton Œil) - ANCIEN MODAL 2 COLONNES */}
+      <OrderDetailModal
+        order={selectedOrder}
+        open={showOrderDetailView}
         onClose={() => {
-          setShowOrderDetail(false)
+          setShowOrderDetailView(false)
           setSelectedOrder(null)
-          setOrderDetailEditMode(false) // Reset mode
         }}
         onUpdate={() => {
           fetchOrders()
           fetchStats()
         }}
-        initialEditMode={orderDetailEditMode} // Dynamique selon bouton cliqué
+      />
+
+      {/* Modal ÉDITION (bouton Modifier) */}
+      <UniversalOrderDetailsModal
+        orderId={selectedOrder?.id || ''}
+        orderType="sales"
+        open={showOrderDetailEdit}
+        onClose={() => {
+          setShowOrderDetailEdit(false)
+          setSelectedOrder(null)
+        }}
+        onUpdate={() => {
+          fetchOrders()
+          fetchStats()
+        }}
+        initialEditMode={true}
       />
 
       {/* Modal Édition Commande */}

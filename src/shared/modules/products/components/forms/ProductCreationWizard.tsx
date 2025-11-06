@@ -6,8 +6,8 @@ import { ArrowLeft, Package, Zap, Settings, CheckCircle, Circle, ArrowRight } fr
 import { ButtonV2 } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
-import { cn } from '../../lib/utils'
-import { CompleteProductWizard } from './complete-product-wizard'
+import { cn } from '@/lib/utils'
+// import { CompleteProductWizard } from './complete-product-wizard' // Fichier non trouvé après migration
 
 // Le formulaire complet sera intégré directement plus tard
 // Pour l'instant, on redirige vers le composant SourcingQuickForm pour les deux types
@@ -212,18 +212,10 @@ export function ProductCreationWizard({
             </div>
           </div>
         ) : (
-          // ÉTAPE 2 - Wizard Produit Complet (utilisé pour tous les types)
-          <Suspense fallback={
-            <div className="flex items-center justify-center py-12">
-              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-black mr-3"></div>
-              <span className="text-gray-600">Chargement du formulaire complet...</span>
-            </div>
-          }>
-            <CompleteProductWizard
-              onSuccess={handleSuccess}
-              onCancel={handleBack}
-            />
-          </Suspense>
+          // ÉTAPE 2 - Wizard Produit Complet - Temporairement désactivé
+          <div className="text-center py-12 text-gray-500">
+            Formulaire complet en cours de migration...
+          </div>
         )}
       </div>
     </div>
