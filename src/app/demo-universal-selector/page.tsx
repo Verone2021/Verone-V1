@@ -2,9 +2,9 @@
 
 import { useState } from 'react';
 import {
-  UniversalProductSelectorV2,
+  ProductSelector,
   SelectedProduct,
-} from '@/components/business/universal-product-selector-v2';
+} from '@/shared/modules/products/components/selectors';
 import { ButtonV2 } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 
@@ -84,7 +84,7 @@ export default function DemoUniversalSelectorPage() {
       </div>
 
       {/* Modal universel V2 avec layout 2 colonnes */}
-      <UniversalProductSelectorV2
+      <ProductSelector
         open={showModal}
         onClose={() => setShowModal(false)}
         onSelect={handleSelect}

@@ -28,9 +28,9 @@ import {
   CreateCollectionInput,
 } from '@/components/business/collection-creation-wizard';
 import {
-  UniversalProductSelectorV2,
+  ProductSelector,
   SelectedProduct,
-} from '@/components/business/universal-product-selector-v2';
+} from '@/shared/modules/products/components/selectors';
 import { useToast } from '@/hooks/use-toast';
 import { getRoomLabel, type RoomType } from '@/types/room-types';
 import { ElegantKpiCard } from '@/components/ui/elegant-kpi-card';
@@ -743,7 +743,7 @@ export default function CollectionsPage() {
 
       {/* Modal de gestion des produits - V2 Universel */}
       {managingProductsCollection && (
-        <UniversalProductSelectorV2
+        <ProductSelector
           open={showProductsModal}
           onClose={() => setShowProductsModal(false)}
           onSelect={async (products: SelectedProduct[]) => {

@@ -539,7 +539,7 @@ function EmptyState({ type, searchQuery, onReset }: EmptyStateProps) {
 // COMPOSANT PRINCIPAL - UniversalProductSelectorV2
 // ============================================================================
 
-export function UniversalProductSelectorV2({
+export function ProductSelector({
   open,
   onClose,
   onSelect,

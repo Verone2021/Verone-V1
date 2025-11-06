@@ -32,9 +32,9 @@ import {
 } from '../../hooks/use-consultations';
 import { useToast } from '../../hooks/use-toast';
 import {
-  UniversalProductSelectorV2,
+  ProductSelector,
   SelectedProduct,
-} from './universal-product-selector-v2';
+} from '@/shared/modules/products/components/selectors';
 import { SourcingProductModal } from './sourcing-product-modal';
 import { useProducts } from '@/hooks/use-products';
 
@@ -409,7 +409,7 @@ export function ConsultationOrderInterface({
       </Card>
 
       {/* Modals */}
-      <UniversalProductSelectorV2
+      <ProductSelector
         open={showAddModal}
         onClose={() => setShowAddModal(false)}
         onSelect={async (products: SelectedProduct[]) => {

@@ -82,9 +82,9 @@ import {
   UnifiedCustomer,
 } from '@/components/business/customer-selector';
 import {
-  UniversalProductSelectorV2,
+  ProductSelector,
   SelectedProduct,
-} from '@/components/business/universal-product-selector-v2';
+} from '@/shared/modules/products/components/selectors';
 import { CustomerBadge } from '@/components/business/customer-badge';
 import {
   useCustomerSamples,
@@ -1117,7 +1117,7 @@ export default function SourcingEchantillonsPage() {
       </Dialog>
 
       {/* Modal Sélection Produit - V2 */}
-      <UniversalProductSelectorV2
+      <ProductSelector
         open={showProductModal}
         onClose={() => setShowProductModal(false)}
         onSelect={handleProductSelect}

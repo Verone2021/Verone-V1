@@ -30,9 +30,9 @@ import {
   type CollectionStyle,
 } from '@/types/collections';
 import {
-  UniversalProductSelectorV2,
+  ProductSelector,
   SelectedProduct,
-} from '@/components/business/universal-product-selector-v2';
+} from '@/shared/modules/products/components/selectors';
 import { RoomMultiSelect } from '@/components/ui/room-multi-select';
 import type { RoomType } from '@/types/room-types';
 import { useToast } from '@/hooks/use-toast';
@@ -1217,7 +1217,7 @@ export default function CollectionDetailPage({
 
       {/* Modal gestion produits - V2 Universel */}
       {showManageProductsModal && collection && (
-        <UniversalProductSelectorV2
+        <ProductSelector
           open={showManageProductsModal}
           onClose={() => {
             setShowManageProductsModal(false);
