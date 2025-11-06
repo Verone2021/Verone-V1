@@ -177,11 +177,12 @@ interface SalesOrderStats {
 /**
  * Machine à états finis (FSM) - Transitions autorisées
  * Workflow: draft → confirmed → partially_shipped → shipped → delivered
+ * Dévalidation: confirmed → draft (pour modification avant expédition)
  * Annulation possible à tout moment (sauf delivered)
  */
 const STATUS_TRANSITIONS: Record<SalesOrderStatus, SalesOrderStatus[]> = {
   draft: ['confirmed', 'cancelled'],
-  confirmed: ['partially_shipped', 'shipped', 'delivered', 'cancelled'],
+  confirmed: ['draft', 'partially_shipped', 'shipped', 'delivered', 'cancelled'], // Ajout 'draft' pour dévalidation
   partially_shipped: ['shipped', 'delivered', 'cancelled'],
   shipped: ['delivered', 'cancelled'], // Retour partiel possible
   delivered: [], // État final - Pas de retour arrière direct (SAV séparé)
