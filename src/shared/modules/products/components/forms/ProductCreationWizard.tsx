@@ -1,61 +1,75 @@
-"use client"
+'use client';
 
-import { useState, Suspense, lazy } from 'react'
-import { useRouter } from 'next/navigation'
-import { ArrowLeft, Package, Zap, Settings, CheckCircle, Circle, ArrowRight } from 'lucide-react'
-import { ButtonV2 } from '@/components/ui/button'
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
-import { Badge } from '@/components/ui/badge'
-import { cn } from '@/lib/utils'
-import { CompleteProductWizard } from '@/components/business/complete-product-wizard'
+import { useState, Suspense, lazy } from 'react';
+import { useRouter } from 'next/navigation';
+import {
+  ArrowLeft,
+  Package,
+  Zap,
+  Settings,
+  CheckCircle,
+  Circle,
+  ArrowRight,
+} from 'lucide-react';
+import { ButtonV2 } from '@/components/ui/button';
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from '@/components/ui/card';
+import { Badge } from '@/components/ui/badge';
+import { cn } from '@/lib/utils';
+// import { CompleteProductWizard } from './complete-product-wizard' // Fichier non trouvé après migration
 
 // Le formulaire complet sera intégré directement plus tard
 // Pour l'instant, on redirige vers le composant SourcingQuickForm pour les deux types
 
 interface ProductCreationWizardProps {
-  onSuccess?: (productId: string) => void
-  onCancel?: () => void
-  className?: string
+  onSuccess?: (productId: string) => void;
+  onCancel?: () => void;
+  className?: string;
 }
 
-export type CreationType = 'sourcing' | 'complete' | null
+export type CreationType = 'sourcing' | 'complete' | null;
 
 export function ProductCreationWizard({
   onSuccess,
   onCancel,
-  className
+  className,
 }: ProductCreationWizardProps) {
-  const router = useRouter()
-  const [selectedType, setSelectedType] = useState<CreationType>(null)
+  const router = useRouter();
+  const [selectedType, setSelectedType] = useState<CreationType>(null);
 
   // Gérer le retour en arrière
   const handleBack = () => {
     if (selectedType) {
-      setSelectedType(null)
+      setSelectedType(null);
     } else if (onCancel) {
-      onCancel()
+      onCancel();
     } else {
-      router.back()
+      router.back();
     }
-  }
+  };
 
   // Gérer le succès et rediriger selon le type
   const handleSuccess = (productId: string) => {
     if (selectedType === 'sourcing') {
       // Rediriger vers la page sourcing
-      router.push('/produits/sourcing/produits')
+      router.push('/produits/sourcing/produits');
     } else {
       // Rediriger vers la page produit créé
-      router.push(`/catalogue/${productId}`)
+      router.push(`/catalogue/${productId}`);
     }
 
     if (onSuccess) {
-      onSuccess(productId)
+      onSuccess(productId);
     }
-  }
+  };
 
   return (
-    <div className={cn("min-h-screen bg-gray-50", className)}>
+    <div className={cn('min-h-screen bg-gray-50', className)}>
       {/* Header avec navigation */}
       <div className="bg-white border-b">
         <div className="container mx-auto px-4 py-4">
@@ -103,7 +117,8 @@ export function ProductCreationWizard({
               </h1>
               <p className="text-lg text-gray-600 max-w-2xl mx-auto">
                 Choisissez le type de création qui correspond à vos besoins.
-                Vous pourrez toujours modifier et compléter les informations plus tard.
+                Vous pourrez toujours modifier et compléter les informations
+                plus tard.
               </p>
             </div>
 
@@ -119,7 +134,8 @@ export function ProductCreationWizard({
                   </div>
                   <CardTitle className="text-xl">Sourcing Rapide</CardTitle>
                   <CardDescription className="text-base">
-                    Ajout rapide d'un produit à sourcer avec les informations essentielles
+                    Ajout rapide d'un produit à sourcer avec les informations
+                    essentielles
                   </CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-4">
@@ -146,7 +162,10 @@ export function ProductCreationWizard({
                   </div>
 
                   <div className="pt-2">
-                    <Badge variant="outline" className="text-blue-600 border-blue-200">
+                    <Badge
+                      variant="outline"
+                      className="text-blue-600 border-blue-200"
+                    >
                       Temps estimé : 2-3 minutes
                     </Badge>
                   </div>
@@ -162,7 +181,9 @@ export function ProductCreationWizard({
                   <div className="mx-auto mb-4 p-3 bg-green-100 rounded-full w-fit">
                     <Settings className="h-8 w-8 text-green-600" />
                   </div>
-                  <CardTitle className="text-xl">Nouveau Produit Complet</CardTitle>
+                  <CardTitle className="text-xl">
+                    Nouveau Produit Complet
+                  </CardTitle>
                   <CardDescription className="text-base">
                     Création détaillée avec toutes les informations produit
                   </CardDescription>
@@ -187,14 +208,19 @@ export function ProductCreationWizard({
                       🔄 Avantages :
                     </div>
                     <ul className="text-sm text-gray-600 space-y-1">
-                      <li>• <strong>Aucun champ obligatoire</strong></li>
+                      <li>
+                        • <strong>Aucun champ obligatoire</strong>
+                      </li>
                       <li>• Sauvegarde progressive</li>
                       <li>• Finalisation quand vous voulez</li>
                     </ul>
                   </div>
 
                   <div className="pt-2">
-                    <Badge variant="outline" className="text-green-600 border-green-200">
+                    <Badge
+                      variant="outline"
+                      className="text-green-600 border-green-200"
+                    >
                       Temps estimé : 5-15 minutes
                     </Badge>
                   </div>
@@ -206,26 +232,19 @@ export function ProductCreationWizard({
             <div className="text-center text-sm text-gray-500 max-w-2xl mx-auto">
               <Package className="h-5 w-5 mx-auto mb-2" />
               <p>
-                <strong>Astuce :</strong> Vous pouvez commencer par un sourcing rapide
-                et le compléter plus tard avec toutes les informations détaillées.
+                <strong>Astuce :</strong> Vous pouvez commencer par un sourcing
+                rapide et le compléter plus tard avec toutes les informations
+                détaillées.
               </p>
             </div>
           </div>
         ) : (
-          // ÉTAPE 2 - Wizard Produit Complet (utilisé pour tous les types)
-          <Suspense fallback={
-            <div className="flex items-center justify-center py-12">
-              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-black mr-3"></div>
-              <span className="text-gray-600">Chargement du formulaire complet...</span>
-            </div>
-          }>
-            <CompleteProductWizard
-              onSuccess={handleSuccess}
-              onCancel={handleBack}
-            />
-          </Suspense>
+          // ÉTAPE 2 - Wizard Produit Complet - Temporairement désactivé
+          <div className="text-center py-12 text-gray-500">
+            Formulaire complet en cours de migration...
+          </div>
         )}
       </div>
     </div>
-  )
+  );
 }
