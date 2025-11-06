@@ -111,15 +111,15 @@ export function useGoogleMerchantSync() {
     try {
       const startTime = Date.now()
 
-      // Call API
-      const response = await fetch('/api/google-merchant/sync', {
+      // Call API batch-add
+      const response = await fetch('/api/google-merchant/products/batch-add', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json'
         },
         body: JSON.stringify({
           productIds,
-          action
+          merchantId: '5495521926' // ID Marchand Google Merchant
         })
       })
 
@@ -128,41 +128,41 @@ export function useGoogleMerchantSync() {
         throw new Error(errorData.error || `HTTP ${response.status}`)
       }
 
-      const data = await response.json()
+      const responseData = await response.json()
+      const duration = Date.now() - startTime
 
       const newState: SyncState = {
         isLoading: false,
-        isSuccess: data.success,
-        isError: !data.success,
-        total: data.total,
-        synced: data.synced,
-        failed: data.failed,
-        skipped: data.skipped,
-        duration: data.duration,
-        results: data.results,
-        error: data.success ? null : 'Some products failed to sync'
+        isSuccess: responseData.success,
+        isError: !responseData.success,
+        total: responseData.data?.totalProcessed || productIds.length,
+        synced: responseData.data?.successCount || 0,
+        failed: responseData.data?.errorCount || 0,
+        skipped: 0,
+        duration,
+        results: [], // API batch-add ne retourne pas de results détaillés
+        error: responseData.success ? null : (responseData.error || 'Some products failed to sync')
       }
 
       setState(newState)
 
       logger.info('[useGoogleMerchantSync] Sync completed', {
         action,
-        total: data.total,
-        synced: data.synced,
-        failed: data.failed,
-        skipped: data.skipped,
-        duration: data.duration
+        total: newState.total,
+        synced: newState.synced,
+        failed: newState.failed,
+        duration: newState.duration
       })
 
       // Callbacks
-      if (data.success && onSuccess) {
+      if (responseData.success && onSuccess) {
         onSuccess(newState)
-      } else if (!data.success && onError) {
-        onError('Some products failed to sync')
+      } else if (!responseData.success && onError) {
+        onError(newState.error || 'Some products failed to sync')
       }
 
       if (onProgress) {
-        onProgress({ synced: data.synced, total: data.total })
+        onProgress({ synced: newState.synced, total: newState.total })
       }
 
       return newState

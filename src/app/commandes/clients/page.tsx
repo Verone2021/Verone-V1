@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useMemo } from 'react'
 import { useSearchParams } from 'next/navigation'
-import { Plus, Search, Eye, Edit, Trash2, CheckCircle, XCircle, RotateCcw, Ban, ArrowUpDown, ArrowUp, ArrowDown, FileText, FileSpreadsheet } from 'lucide-react'
+import { Plus, Search, Eye, Edit, Trash2, CheckCircle, Ban, Truck, ArrowUpDown, ArrowUp, ArrowDown } from 'lucide-react'
 import { ButtonV2 } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
@@ -12,7 +12,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs'
 import { useSalesOrders, SalesOrder, SalesOrderStatus } from '@/hooks/use-sales-orders'
 import { SalesOrderFormModal } from '@/components/business/sales-order-form-modal'
-import { OrderDetailModal } from '@/components/business/order-detail-modal'
+import { UniversalOrderDetailsModal } from '@/components/business/universal-order-details-modal'
 import { formatCurrency, formatDate } from '@/lib/utils'
 import { useToast } from '@/hooks/use-toast'
 
@@ -285,98 +285,6 @@ export default function SalesOrdersPage() {
     }
   }
 
-  const handlePrintPDF = async (order: SalesOrder) => {
-    try {
-      toast({
-        title: "Génération PDF...",
-        description: `Préparation de la commande ${order.order_number}`
-      })
-
-      // Appel API pour générer le PDF
-      const response = await fetch(`/api/sales-orders/${order.id}/pdf`, {
-        method: 'GET',
-      })
-
-      if (!response.ok) {
-        throw new Error(`Erreur HTTP ${response.status}`)
-      }
-
-      // Récupérer le blob PDF
-      const blob = await response.blob()
-
-      // Créer URL temporaire et déclencher téléchargement
-      const url = window.URL.createObjectURL(blob)
-      const link = document.createElement('a')
-      link.href = url
-      link.download = `commande-${order.order_number}-${new Date().toISOString().split('T')[0]}.pdf`
-      document.body.appendChild(link)
-      link.click()
-
-      // Cleanup
-      document.body.removeChild(link)
-      window.URL.revokeObjectURL(url)
-
-      toast({
-        title: "PDF généré avec succès",
-        description: "Le téléchargement a démarré",
-        variant: "default"
-      })
-    } catch (error) {
-      console.error('Erreur génération PDF:', error)
-      toast({
-        title: "Erreur",
-        description: "Impossible de générer le PDF",
-        variant: "destructive"
-      })
-    }
-  }
-
-  const handleExportExcel = async () => {
-    try {
-      toast({
-        title: "Export en cours...",
-        description: "Génération du fichier Excel"
-      })
-
-      const response = await fetch('/api/sales-orders/export', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({
-          activeTab,
-          customerTypeFilter,
-          periodFilter,
-          searchTerm
-        })
-      })
-
-      if (!response.ok) throw new Error('Erreur export')
-
-      // Télécharger le fichier
-      const blob = await response.blob()
-      const url = window.URL.createObjectURL(blob)
-      const a = document.createElement('a')
-      a.href = url
-      a.download = `commandes-clients-${new Date().toISOString().split('T')[0]}.xlsx`
-      document.body.appendChild(a)
-      a.click()
-      window.URL.revokeObjectURL(url)
-      document.body.removeChild(a)
-
-      toast({
-        title: "Export réussi",
-        description: "Le fichier Excel a été téléchargé"
-      })
-    } catch (error) {
-      console.error('Erreur export Excel:', error)
-      toast({
-        title: "Erreur",
-        description: "Impossible d'exporter les commandes",
-        variant: "destructive"
-      })
-    }
-  }
 
   const openOrderDetail = (order: SalesOrder) => {
     setSelectedOrder(order)
@@ -396,20 +304,10 @@ export default function SalesOrdersPage() {
           <h1 className="text-3xl font-bold text-gray-900">Commandes Clients</h1>
           <p className="text-gray-600 mt-1">Gestion des commandes et expéditions clients</p>
         </div>
-        <div className="flex gap-2">
-          <ButtonV2
-            onClick={handleExportExcel}
-            variant="outline"
-            className="flex items-center gap-2"
-          >
-            <FileSpreadsheet className="h-4 w-4" />
-            Exporter Excel
-          </ButtonV2>
-          <SalesOrderFormModal onSuccess={() => {
-            fetchOrders()
-            fetchStats()
-          }} />
-        </div>
+        <SalesOrderFormModal onSuccess={() => {
+          fetchOrders()
+          fetchStats()
+        }} />
       </div>
 
       {/* Statistiques KPI (5 cartes - dynamiques filtrées) */}
@@ -627,12 +525,12 @@ export default function SalesOrdersPage() {
                               <Eye className="h-4 w-4" />
                             </ButtonV2>
 
-                            {/* Modifier (draft ou confirmed non payée) */}
+                            {/* Modifier (draft ou confirmed) */}
                             {(order.status === 'draft' || order.status === 'confirmed') && (
                               <ButtonV2
                                 variant="outline"
                                 size="sm"
-                                onClick={() => openEditOrder(order.id)}
+                                onClick={() => openOrderDetail(order)}
                                 title="Modifier"
                               >
                                 <Edit className="h-4 w-4" />
@@ -652,56 +550,27 @@ export default function SalesOrdersPage() {
                               </ButtonV2>
                             )}
 
-                            {/* Dévalider (confirmed uniquement) */}
+                            {/* Expédier (confirmed uniquement) */}
                             {order.status === 'confirmed' && (
                               <ButtonV2
                                 variant="outline"
                                 size="sm"
-                                onClick={() => handleStatusChange(order.id, 'draft')}
-                                title="Dévalider (retour brouillon)"
-                                className="text-orange-600 border-orange-300 hover:bg-orange-50"
+                                onClick={() => handleStatusChange(order.id, 'shipped')}
+                                title="Expédier la commande"
+                                className="text-blue-600 border-blue-300 hover:bg-blue-50"
                               >
-                                <RotateCcw className="h-4 w-4" />
+                                <Truck className="h-4 w-4" />
                               </ButtonV2>
                             )}
 
-                            {/* Annuler (UNIQUEMENT brouillon - Workflow: dévalidation obligatoire) */}
-                            {order.status === 'draft' && (
+                            {/* Annuler (draft ou confirmed) */}
+                            {(order.status === 'draft' || order.status === 'confirmed') && (
                               <ButtonV2
                                 variant="outline"
                                 size="sm"
                                 onClick={() => handleCancel(order.id)}
-                                title="Annuler la commande (brouillon uniquement)"
+                                title="Annuler la commande"
                                 className="text-red-600 border-red-300 hover:bg-red-50"
-                              >
-                                <Ban className="h-4 w-4" />
-                              </ButtonV2>
-                            )}
-
-                            {/* Annuler disabled pour confirmed - Doit dévalider d'abord */}
-                            {order.status === 'confirmed' && (
-                              <ButtonV2
-                                variant="outline"
-                                size="sm"
-                                disabled
-                                title="Impossible d'annuler directement une commande validée. Veuillez d'abord la dévalider (retour brouillon), puis l'annuler."
-                                className="text-gray-400 border-gray-200 cursor-not-allowed opacity-50"
-                              >
-                                <Ban className="h-4 w-4" />
-                              </ButtonV2>
-                            )}
-
-                            {/* Annuler disabled pour paid/delivered - Règle absolue */}
-                            {(order.payment_status === 'paid' || order.status === 'delivered') && order.status !== 'cancelled' && order.status !== 'draft' && order.status !== 'confirmed' && (
-                              <ButtonV2
-                                variant="outline"
-                                size="sm"
-                                disabled
-                                title={order.payment_status === 'paid'
-                                  ? "Impossible d'annuler : commande déjà payée. Contacter un administrateur pour remboursement."
-                                  : "Impossible d'annuler : commande déjà livrée. Créer un avoir."
-                                }
-                                className="text-gray-400 border-gray-200 cursor-not-allowed opacity-50"
                               >
                                 <Ban className="h-4 w-4" />
                               </ButtonV2>
@@ -719,16 +588,6 @@ export default function SalesOrdersPage() {
                                 <Trash2 className="h-4 w-4" />
                               </ButtonV2>
                             )}
-
-                            {/* Imprimer PDF */}
-                            <ButtonV2
-                              variant="outline"
-                              size="sm"
-                              onClick={() => handlePrintPDF(order)}
-                              title="Imprimer PDF"
-                            >
-                              <FileText className="h-4 w-4" />
-                            </ButtonV2>
                           </div>
                         </TableCell>
                       </TableRow>
@@ -742,14 +601,16 @@ export default function SalesOrdersPage() {
       </Card>
 
       {/* Modal Détail Commande */}
-      <OrderDetailModal
-        order={selectedOrder}
+      <UniversalOrderDetailsModal
+        orderId={selectedOrder?.id || ''}
+        orderType="sales"
         open={showOrderDetail}
         onClose={() => setShowOrderDetail(false)}
         onUpdate={() => {
           fetchOrders()
           fetchStats()
         }}
+        initialEditMode={false}
       />
 
       {/* Modal Édition Commande */}

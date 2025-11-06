@@ -412,7 +412,7 @@ Les corrections TypeScript utilisent principalement des type casts (`as any`, `a
 - Clustering par famille (TS2322, TS2345, etc.)
 - Correction complète d'une famille avant suivante
 - Tests + commit par batch
-- Fichier suivi `TS_ERRORS_PLAN.md`
+- Fichier suivi `docs/audits/2025-11/PLAN-CORRECTION-TS-ERRORS-DUAL-STATUS-2025-11-04.md`
 
 ### 2. Type Safety vs Pragmatisme
 
@@ -509,7 +509,7 @@ Le compromis `as any` permet de débloquer le build **sans régression fonctionn
 ### Fichiers Créés/Modifiés
 
 1. **Documentation** :
-   - ✅ `TS_ERRORS_PLAN.md` (suivi progression)
+   - ✅ `docs/audits/2025-11/PLAN-CORRECTION-TS-ERRORS-DUAL-STATUS-2025-11-04.md` (suivi progression)
    - ✅ `TYPESCRIPT_FIXES_CHANGELOG.md` (historique)
    - ✅ `docs/audits/2025-10/RAPPORT-FINAL-BATCH-74-COMPLETE.md` (ce rapport)
 

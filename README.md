@@ -88,63 +88,70 @@ supabase gen types typescript --local > src/types/supabase.ts
 
 ## 🎯 Project Status
 
-### ✅ Phase 1 : Stabilisation (Production)
+**Date** : 2025-11-06
+**État** : ✅ Production avec développement continu
 
-**Date** : 2025-10-23
-**État** : ✅ **Production-ready** avec données réelles
+### ✅ Modules Fonctionnels
 
-**Modules Actifs** :
+**Modules Actifs en Production** :
 
 - 🔐 **Authentification** (`/login`, `/profile`) - Auth Supabase + RLS policies
-- 📊 **Dashboard** (`/dashboard`) - KPIs, métriques, notifications
+- 📊 **Dashboard** (`/dashboard`) - KPIs, métriques, notifications temps réel
 - 🏢 **Organisations & Contacts** (`/contacts-organisations`)
-  - Customers (B2B + B2C)
-  - Suppliers
-  - Partners
+  - Customers (B2B + B2C), Suppliers, Partners
   - Contacts (liés organisations)
-- ⚙️ **Administration** (`/admin`)
-  - Users management (roles, permissions)
-  - Activity tracking (RGPD-compliant)
+- 📦 **Produits** (`/produits`) - Catalogue complet, sourcing, variantes, packages, images
+- 📊 **Stocks** (`/stocks`) - Mouvements, inventaire, alertes (finalisation ajustements)
+- ⚙️ **Administration** (`/admin`) - Users, roles, permissions, activity tracking
 
-**Chiffres Clés Phase 1** :
+### 🚧 En Développement Actif
 
-- 🗄️ **78 tables** database (schema stable)
+**Priorités Actuelles** :
+
+- 🛒 **Commandes** (travail en cours) - Clients + Fournisseurs + Workflow complet
+- 📋 **Consultations** (à développer) - Gestion consultations clients
+
+**Modules Partiels** (code présent, optimisation en cours) :
+
+- 💰 **Finance** - Rapprochement bancaire, trésorerie
+- 🧾 **Factures** - Clients, fournisseurs
+- 🌐 **Canaux Vente** - Google Merchant Center, prix clients
+- 🔔 **Notifications** - Centre notifications
+
+### 🎯 Objectif Court Terme (Q1 2026)
+
+**Migration Monorepo + Écosystème Multi-Apps** :
+
+1. **Finaliser** : Commandes + Consultations (2-3 semaines)
+2. **Nettoyer** : Composants, hooks, architecture réutilisable (2-3 semaines)
+3. **Migrer** : Structure monorepo Turborepo (3-4 semaines)
+4. **Créer** : Site ecommerce vitrine produits (2-3 semaines)
+
+**Architecture Cible** :
+
+```
+packages/
+├── apps/
+│   ├── backoffice/      # Gestion interne (actuel)
+│   ├── ecommerce/       # Site clients (vitrine produits)
+│   └── commissions/     # Interface affiliés (futur)
+└── shared/
+    └── modules/
+        ├── products/    # Composants + Hooks réutilisés 3 apps
+        ├── stock/       # Composants + Hooks réutilisés 3 apps
+        └── orders/      # Composants + Hooks réutilisés 3 apps
+```
+
+**Timeline Monorepo** : Q1-Q2 2026
+
+### 📊 Chiffres Clés
+
+- 🗄️ **78 tables** database
 - 🔧 **158 triggers** automatiques
 - 🛡️ **239 RLS policies** sécurité
-- 🎨 **270 composants** React
-- 🪝 **87 hooks** custom
+- 🎨 **270 composants** React (nettoyage en cours)
+- 🪝 **87 hooks** custom (optimisation en cours)
 - 📝 **157 migrations** SQL
-
-### 🚧 Phase 2 : Produits & Stocks (Q1 2026)
-
-**Modules en Développement** (code présent, middleware protégé) :
-
-- 📦 **Produits** - Catalogue, sourcing, variantes, packages, images
-- 📊 **Stocks** - Mouvements, inventaire, alertes, réceptions, expéditions
-- 🛒 **Commandes** - Clients, fournisseurs, expéditions
-- 🏷️ **Pricing** - Multi-canal (B2B, B2C, Wholesale, Export, Retail)
-
-**Timeline** : Q1 2026 (feature flags + validation staging)
-
-### 📅 Phase 3 : Finance & Canaux Vente (Q2 2026)
-
-**Modules Planifiés** :
-
-- 💰 **Finance** - Rapprochement bancaire, trésorerie, paiements
-- 🧾 **Factures** - Clients, fournisseurs, accounting
-- 🌐 **Canaux Vente** - Google Merchant, prix clients, intégrations
-- 🔔 **Notifications** - Centre notifications temps réel
-
-### 🏗️ Phase 4 : Monorepo & Site E-commerce (Q2-Q3 2026)
-
-**Architecture Évolutive** :
-
-- Migration [Turborepo](https://turbo.build/) monorepo
-- Création `apps/web` (back-office) + `apps/ecommerce` (site client)
-- Shared packages (`@verone/ui`, `@verone/types`, `@verone/utils`)
-- API Backend dédié (NestJS optionnel)
-
-**Documentation** : [`.claude/contexts/monorepo.md`](./.claude/contexts/monorepo.md)
 
 ---
 

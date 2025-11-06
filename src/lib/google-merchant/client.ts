@@ -214,15 +214,19 @@ export class GoogleMerchantClient {
   /**
    * Supprime un produit de Google Merchant Center
    */
-  async deleteProduct(sku: string): Promise<GoogleMerchantApiResponse> {
+  async deleteProduct(sku: string, dataSource?: string): Promise<GoogleMerchantApiResponse> {
     try {
+      // Format: DELETE /products/v1beta/{name=accounts/*/productInputs/*}?dataSource=accounts/*/dataSources/*
       const productInputName = `${getResourcePaths().productInputs}/${GOOGLE_MERCHANT_CONFIG.contentLanguage}~${GOOGLE_MERCHANT_CONFIG.feedLabel}~${sku}`;
+      const dataSourceToUse = dataSource || this.dataSourcePath;
+      const endpoint = `${productInputName}?dataSource=${encodeURIComponent(dataSourceToUse)}`;
 
-      const result = await this.makeRequest(productInputName, 'DELETE');
+      const result = await this.makeRequest(endpoint, 'DELETE');
 
       if (result.success) {
         console.log('[Google Merchant Client] Product deleted successfully:', {
           sku,
+          dataSource: dataSourceToUse,
         });
       }
 

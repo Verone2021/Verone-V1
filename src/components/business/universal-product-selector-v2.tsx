@@ -32,7 +32,7 @@ import {
   RotateCcw,
 } from 'lucide-react';
 import { createClient } from '@/lib/supabase/client';
-import { ProductThumbnail } from '@/components/business/product-thumbnail';
+import { ProductThumbnail } from '@/shared/modules/products/components/images';
 import {
   Dialog,
   DialogContent,

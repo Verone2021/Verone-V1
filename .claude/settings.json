@@ -158,16 +158,6 @@
         ]
       }
     ],
-    "Notification": [
-      {
-        "hooks": [
-          {
-            "type": "command",
-            "command": "$CLAUDE_PROJECT_DIR/.claude/scripts/validation-required.sh"
-          }
-        ]
-      }
-    ],
     "SubagentStop": [
       {
         "hooks": [

@@ -1,8 +1,0 @@
-Test de notification - Fichier temporaire
-Ce fichier déclenche une demande de validation pour tester :
-1. Le modal de Cursor
-2. Le hook "Notification"
-3. Le son Sosumi.aiff
-4. La notification macOS
-
-Si vous voyez ce fichier et entendez le son, la configuration fonctionne !
