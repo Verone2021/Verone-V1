@@ -1,4 +1,4 @@
-"use client"
+'use client';
 
 /**
  * Page: Échantillons (Sourcing)
@@ -12,8 +12,8 @@
  * - Modal création échantillon client
  */
 
-import { useState } from 'react'
-import { useRouter } from 'next/navigation'
+import { useState } from 'react';
+import { useRouter } from 'next/navigation';
 import {
   Archive,
   ArchiveRestore,
@@ -32,26 +32,32 @@ import {
   MoreHorizontal,
   RefreshCw,
   Eye,
-  Info
-} from 'lucide-react'
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
-import { Button } from '@/components/ui/button'
-import { Badge } from '@/components/ui/badge'
-import { Input } from '@/components/ui/input'
+  Info,
+} from 'lucide-react';
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
+import { Input } from '@/components/ui/input';
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from '@/components/ui/select'
+} from '@/components/ui/select';
 import {
   Dialog,
   DialogContent,
   DialogDescription,
   DialogHeader,
   DialogTitle,
-} from '@/components/ui/dialog'
+} from '@/components/ui/dialog';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -61,54 +67,65 @@ import {
   AlertDialogFooter,
   AlertDialogHeader,
   AlertDialogTitle,
-} from '@/components/ui/alert-dialog'
+} from '@/components/ui/alert-dialog';
 import {
   Tooltip,
   TooltipContent,
   TooltipProvider,
-  TooltipTrigger
-} from '@/components/ui/tooltip'
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
-import { Label } from '@/components/ui/label'
-import { Textarea } from '@/components/ui/textarea'
-import { CustomerSelector, UnifiedCustomer } from '@/components/business/customer-selector'
-import { SampleProductSelectorModal, Product } from '@/components/business/sample-product-selector-modal'
-import { CustomerBadge } from '@/components/business/customer-badge'
-import { useCustomerSamples, CustomerSample } from '@/hooks/use-customer-samples'
-import { createClient } from '@/lib/supabase/client'
-import { useToast } from '@/hooks/use-toast'
+  TooltipTrigger,
+} from '@/components/ui/tooltip';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Label } from '@/components/ui/label';
+import { Textarea } from '@/components/ui/textarea';
+import {
+  CustomerSelector,
+  UnifiedCustomer,
+} from '@/components/business/customer-selector';
+import {
+  UniversalProductSelectorV2,
+  SelectedProduct,
+} from '@/components/business/universal-product-selector-v2';
+import { CustomerBadge } from '@/components/business/customer-badge';
+import {
+  useCustomerSamples,
+  CustomerSample,
+} from '@/hooks/use-customer-samples';
+import { createClient } from '@/lib/supabase/client';
+import { useToast } from '@/hooks/use-toast';
 
 export default function SourcingEchantillonsPage() {
-  const router = useRouter()
-  const { toast } = useToast()
-  const supabase = createClient()
+  const router = useRouter();
+  const { toast } = useToast();
+  const supabase = createClient();
 
   // ===================================================================
   // ÉTATS
   // ===================================================================
 
   // Onglets Actifs/Archivés
-  const [activeTab, setActiveTab] = useState<'active' | 'archived'>('active')
+  const [activeTab, setActiveTab] = useState<'active' | 'archived'>('active');
 
   // Filtres
-  const [searchTerm, setSearchTerm] = useState('')
-  const [statusFilter, setStatusFilter] = useState('all')
-  const [typeFilter, setTypeFilter] = useState('all')
+  const [searchTerm, setSearchTerm] = useState('');
+  const [statusFilter, setStatusFilter] = useState('all');
+  const [typeFilter, setTypeFilter] = useState('all');
 
   // Modal création échantillon
-  const [showSampleForm, setShowSampleForm] = useState(false)
-  const [selectedCustomer, setSelectedCustomer] = useState<UnifiedCustomer | null>(null)
-  const [selectedProduct, setSelectedProduct] = useState<Product | null>(null)
-  const [selectedProductId, setSelectedProductId] = useState('')
-  const [showProductModal, setShowProductModal] = useState(false)
-  const [quantity, setQuantity] = useState(1)
-  const [deliveryAddress, setDeliveryAddress] = useState('')
-  const [notes, setNotes] = useState('')
-  const [submitting, setSubmitting] = useState(false)
+  const [showSampleForm, setShowSampleForm] = useState(false);
+  const [selectedCustomer, setSelectedCustomer] =
+    useState<UnifiedCustomer | null>(null);
+  const [selectedProduct, setSelectedProduct] =
+    useState<SelectedProduct | null>(null);
+  const [selectedProductId, setSelectedProductId] = useState('');
+  const [showProductModal, setShowProductModal] = useState(false);
+  const [quantity, setQuantity] = useState(1);
+  const [deliveryAddress, setDeliveryAddress] = useState('');
+  const [notes, setNotes] = useState('');
+  const [submitting, setSubmitting] = useState(false);
 
   // Modal confirmation suppression
-  const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false)
-  const [sampleToDelete, setSampleToDelete] = useState<string | null>(null)
+  const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
+  const [sampleToDelete, setSampleToDelete] = useState<string | null>(null);
 
   // ===================================================================
   // HOOK: Fetch échantillons avec filtres
@@ -123,10 +140,10 @@ export default function SourcingEchantillonsPage() {
     reactivateSample,
     insertSampleInPO,
     deleteSample,
-    refresh
+    refresh,
   } = useCustomerSamples({
-    archived: activeTab === 'archived'
-  })
+    archived: activeTab === 'archived',
+  });
 
   // ===================================================================
   // COMPUTED: Échantillons filtrés
@@ -136,14 +153,18 @@ export default function SourcingEchantillonsPage() {
     const matchesSearch =
       sample.product_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
       sample.product_sku.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      sample.customer_display_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      sample.po_number.toLowerCase().includes(searchTerm.toLowerCase())
+      sample.customer_display_name
+        .toLowerCase()
+        .includes(searchTerm.toLowerCase()) ||
+      sample.po_number.toLowerCase().includes(searchTerm.toLowerCase());
 
-    const matchesStatus = statusFilter === 'all' || sample.sample_status === statusFilter
-    const matchesType = typeFilter === 'all' || sample.sample_type === typeFilter
+    const matchesStatus =
+      statusFilter === 'all' || sample.sample_status === statusFilter;
+    const matchesType =
+      typeFilter === 'all' || sample.sample_type === typeFilter;
 
-    return matchesSearch && matchesStatus && matchesType
-  })
+    return matchesSearch && matchesStatus && matchesType;
+  });
 
   // ===================================================================
   // HANDLERS: Actions échantillons
@@ -151,52 +172,52 @@ export default function SourcingEchantillonsPage() {
 
   const handleArchive = async (sampleId: string) => {
     try {
-      await archiveSample(sampleId)
+      await archiveSample(sampleId);
     } catch (err) {
       // Error toast déjà affiché par le hook
-      console.error('Archive failed:', err)
+      console.error('Archive failed:', err);
     }
-  }
+  };
 
   const handleReactivate = async (sampleId: string) => {
     try {
-      await reactivateSample(sampleId)
+      await reactivateSample(sampleId);
     } catch (err) {
-      console.error('Reactivate failed:', err)
+      console.error('Reactivate failed:', err);
     }
-  }
+  };
 
   const handleReinsert = async (sampleId: string) => {
     try {
-      await insertSampleInPO(sampleId)
+      await insertSampleInPO(sampleId);
     } catch (err) {
-      console.error('Reinsert failed:', err)
+      console.error('Reinsert failed:', err);
     }
-  }
+  };
 
   const handleDeleteClick = (sampleId: string) => {
-    setSampleToDelete(sampleId)
-    setDeleteConfirmOpen(true)
-  }
+    setSampleToDelete(sampleId);
+    setDeleteConfirmOpen(true);
+  };
 
   const handleDeleteConfirm = async () => {
-    if (!sampleToDelete) return
+    if (!sampleToDelete) return;
 
     try {
-      await deleteSample(sampleToDelete)
-      setDeleteConfirmOpen(false)
-      setSampleToDelete(null)
+      await deleteSample(sampleToDelete);
+      setDeleteConfirmOpen(false);
+      setSampleToDelete(null);
     } catch (err) {
-      console.error('Delete failed:', err)
+      console.error('Delete failed:', err);
     }
-  }
+  };
 
   // ===================================================================
   // HANDLERS: Formulaire création échantillon client
   // ===================================================================
 
   const handleCustomerChange = (customer: UnifiedCustomer | null) => {
-    setSelectedCustomer(customer)
+    setSelectedCustomer(customer);
 
     if (customer) {
       if (customer.type === 'professional') {
@@ -204,58 +225,77 @@ export default function SourcingEchantillonsPage() {
           customer.name,
           customer.shipping_address_line1 || customer.billing_address_line1,
           customer.shipping_city || customer.billing_city,
-          customer.shipping_postal_code || customer.billing_postal_code
-        ].filter(Boolean).join(', ')
-        setDeliveryAddress(address)
+          customer.shipping_postal_code || customer.billing_postal_code,
+        ]
+          .filter(Boolean)
+          .join(', ');
+        setDeliveryAddress(address);
       } else {
         const address = [
           customer.name,
           customer.address_line1,
           customer.city,
-          customer.postal_code
-        ].filter(Boolean).join(', ')
-        setDeliveryAddress(address)
+          customer.postal_code,
+        ]
+          .filter(Boolean)
+          .join(', ');
+        setDeliveryAddress(address);
       }
     } else {
-      setDeliveryAddress('')
+      setDeliveryAddress('');
     }
-  }
+  };
 
-  const handleProductSelect = (product: Product) => {
-    setSelectedProduct(product)
-    setSelectedProductId(product.id)
-  }
+  const handleProductSelect = (products: SelectedProduct[]) => {
+    // V2 retourne un array, on prend le premier produit
+    if (products.length > 0) {
+      const product = products[0];
+      setSelectedProduct(product);
+      setSelectedProductId(product.id);
+    }
+    setShowProductModal(false);
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault()
+    e.preventDefault();
     if (!selectedCustomer || !selectedProductId) {
-      toast({ title: 'Erreur', description: 'Client et produit requis', variant: 'destructive' })
-      return
+      toast({
+        title: 'Erreur',
+        description: 'Client et produit requis',
+        variant: 'destructive',
+      });
+      return;
     }
 
-    setSubmitting(true)
+    setSubmitting(true);
     try {
-      const { data: { user } } = await supabase.auth.getUser()
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
       if (!user) {
-        toast({ title: 'Erreur', description: 'Utilisateur non connecté', variant: 'destructive' })
-        setSubmitting(false)
-        return
+        toast({
+          title: 'Erreur',
+          description: 'Utilisateur non connecté',
+          variant: 'destructive',
+        });
+        setSubmitting(false);
+        return;
       }
 
       const { data: product, error: productError } = await supabase
         .from('products')
         .select('cost_price, supplier_id')
         .eq('id', selectedProductId)
-        .single()
+        .single();
 
       if (productError || !product?.supplier_id) {
         toast({
           title: 'Erreur',
           description: 'Produit invalide ou fournisseur manquant',
-          variant: 'destructive'
-        })
-        setSubmitting(false)
-        return
+          variant: 'destructive',
+        });
+        setSubmitting(false);
+        return;
       }
 
       const { data: newPO, error: poError } = await supabase
@@ -265,12 +305,12 @@ export default function SourcingEchantillonsPage() {
           status: 'draft',
           notes: `Échantillon client: ${selectedCustomer.name}`,
           created_by: user.id,
-          supplier_id: product.supplier_id
+          supplier_id: product.supplier_id,
         })
         .select('id')
-        .single()
+        .single();
 
-      if (poError) throw poError
+      if (poError) throw poError;
 
       const { error: itemError } = await supabase
         .from('purchase_order_items')
@@ -280,29 +320,40 @@ export default function SourcingEchantillonsPage() {
           quantity,
           unit_price_ht: product?.cost_price || 0.01,
           sample_type: 'customer',
-          customer_organisation_id: selectedCustomer.type === 'professional' ? selectedCustomer.id : null,
-          customer_individual_id: selectedCustomer.type === 'individual' ? selectedCustomer.id : null,
-          notes: `Livraison: ${deliveryAddress}\n\nNotes: ${notes}`
-        })
+          customer_organisation_id:
+            selectedCustomer.type === 'professional'
+              ? selectedCustomer.id
+              : null,
+          customer_individual_id:
+            selectedCustomer.type === 'individual' ? selectedCustomer.id : null,
+          notes: `Livraison: ${deliveryAddress}\n\nNotes: ${notes}`,
+        });
 
-      if (itemError) throw itemError
+      if (itemError) throw itemError;
 
-      toast({ title: 'Demande créée', description: 'Demande d\'échantillon enregistrée avec succès' })
-      setShowSampleForm(false)
-      setSelectedCustomer(null)
-      setSelectedProductId('')
-      setSelectedProduct(null)
-      setQuantity(1)
-      setDeliveryAddress('')
-      setNotes('')
-      refresh()
+      toast({
+        title: 'Demande créée',
+        description: "Demande d'échantillon enregistrée avec succès",
+      });
+      setShowSampleForm(false);
+      setSelectedCustomer(null);
+      setSelectedProductId('');
+      setSelectedProduct(null);
+      setQuantity(1);
+      setDeliveryAddress('');
+      setNotes('');
+      refresh();
     } catch (error) {
-      console.error('Erreur création échantillon:', error)
-      toast({ title: 'Erreur', description: 'Impossible de créer la demande', variant: 'destructive' })
+      console.error('Erreur création échantillon:', error);
+      toast({
+        title: 'Erreur',
+        description: 'Impossible de créer la demande',
+        variant: 'destructive',
+      });
     } finally {
-      setSubmitting(false)
+      setSubmitting(false);
     }
-  }
+  };
 
   // ===================================================================
   // UI HELPERS
@@ -310,40 +361,70 @@ export default function SourcingEchantillonsPage() {
 
   const getSampleTypeBadge = (sampleType: 'internal' | 'customer') => {
     if (sampleType === 'internal') {
-      return <Badge variant="outline" className="border-amber-500 text-amber-700 bg-amber-50">Interne</Badge>
+      return (
+        <Badge
+          variant="outline"
+          className="border-amber-500 text-amber-700 bg-amber-50"
+        >
+          Interne
+        </Badge>
+      );
     }
-    return <Badge variant="outline" className="border-purple-500 text-purple-700 bg-purple-50">Client</Badge>
-  }
+    return (
+      <Badge
+        variant="outline"
+        className="border-purple-500 text-purple-700 bg-purple-50"
+      >
+        Client
+      </Badge>
+    );
+  };
 
   const getStatusBadge = (status: string) => {
     switch (status) {
       case 'draft':
-        return <Badge variant="outline" className="border-gray-300 text-gray-600">Brouillon</Badge>
+        return (
+          <Badge variant="outline" className="border-gray-300 text-gray-600">
+            Brouillon
+          </Badge>
+        );
       case 'ordered':
-        return <Badge variant="outline" className="border-blue-300 text-blue-600">Commandé</Badge>
+        return (
+          <Badge variant="outline" className="border-blue-300 text-blue-600">
+            Commandé
+          </Badge>
+        );
       case 'received':
-        return <Badge variant="outline" className="border-green-300 text-green-600">Reçu</Badge>
+        return (
+          <Badge variant="outline" className="border-green-300 text-green-600">
+            Reçu
+          </Badge>
+        );
       case 'archived':
-        return <Badge variant="outline" className="border-red-300 text-red-600">Archivé</Badge>
+        return (
+          <Badge variant="outline" className="border-red-300 text-red-600">
+            Archivé
+          </Badge>
+        );
       default:
-        return <Badge variant="outline">Inconnu</Badge>
+        return <Badge variant="outline">Inconnu</Badge>;
     }
-  }
+  };
 
   const getStatusIcon = (status: string) => {
     switch (status) {
       case 'draft':
-        return <Clock className="h-4 w-4 text-gray-600" />
+        return <Clock className="h-4 w-4 text-gray-600" />;
       case 'ordered':
-        return <Package className="h-4 w-4 text-blue-600" />
+        return <Package className="h-4 w-4 text-blue-600" />;
       case 'received':
-        return <CheckCircle className="h-4 w-4 text-green-600" />
+        return <CheckCircle className="h-4 w-4 text-green-600" />;
       case 'archived':
-        return <Archive className="h-4 w-4 text-red-600" />
+        return <Archive className="h-4 w-4 text-red-600" />;
       default:
-        return <AlertTriangle className="h-4 w-4 text-gray-600" />
+        return <AlertTriangle className="h-4 w-4 text-gray-600" />;
     }
-  }
+  };
 
   // ===================================================================
   // LOADING STATE
@@ -357,7 +438,7 @@ export default function SourcingEchantillonsPage() {
           <p className="text-gray-600">Chargement des échantillons...</p>
         </div>
       </div>
-    )
+    );
   }
 
   // ===================================================================
@@ -385,7 +466,7 @@ export default function SourcingEchantillonsPage() {
           </CardContent>
         </Card>
       </div>
-    )
+    );
   }
 
   // ===================================================================
@@ -400,7 +481,9 @@ export default function SourcingEchantillonsPage() {
           <div className="flex items-center justify-between">
             <div>
               <h1 className="text-3xl font-bold text-black">Échantillons</h1>
-              <p className="text-gray-600 mt-1">Gestion échantillons internes et clients</p>
+              <p className="text-gray-600 mt-1">
+                Gestion échantillons internes et clients
+              </p>
             </div>
             <div className="flex items-center space-x-3">
               <Button
@@ -427,44 +510,60 @@ export default function SourcingEchantillonsPage() {
         <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-6">
           <Card className="border-black">
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium text-gray-600">Total Actifs</CardTitle>
+              <CardTitle className="text-sm font-medium text-gray-600">
+                Total Actifs
+              </CardTitle>
               <Package className="h-4 w-4 text-black" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold text-black">{stats.active}</div>
+              <div className="text-2xl font-bold text-black">
+                {stats.active}
+              </div>
               <p className="text-xs text-gray-600">échantillons actifs</p>
             </CardContent>
           </Card>
 
           <Card className="border-black">
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium text-gray-600">Archivés</CardTitle>
+              <CardTitle className="text-sm font-medium text-gray-600">
+                Archivés
+              </CardTitle>
               <Archive className="h-4 w-4 text-red-600" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold text-black">{stats.archived}</div>
+              <div className="text-2xl font-bold text-black">
+                {stats.archived}
+              </div>
               <p className="text-xs text-gray-600">échantillons archivés</p>
             </CardContent>
           </Card>
 
           <Card className="border-black">
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium text-gray-600">Internes</CardTitle>
+              <CardTitle className="text-sm font-medium text-gray-600">
+                Internes
+              </CardTitle>
               <Building className="h-4 w-4 text-amber-600" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold text-black">{stats.internal}</div>
+              <div className="text-2xl font-bold text-black">
+                {stats.internal}
+              </div>
               <p className="text-xs text-gray-600">catalogue sourcing</p>
             </CardContent>
           </Card>
 
           <Card className="border-black">
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium text-gray-600">Clients</CardTitle>
+              <CardTitle className="text-sm font-medium text-gray-600">
+                Clients
+              </CardTitle>
               <User className="h-4 w-4 text-purple-600" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold text-black">{stats.customer}</div>
+              <div className="text-2xl font-bold text-black">
+                {stats.customer}
+              </div>
               <p className="text-xs text-gray-600">B2B + B2C</p>
             </CardContent>
           </Card>
@@ -482,7 +581,7 @@ export default function SourcingEchantillonsPage() {
                 <Input
                   placeholder="Rechercher..."
                   value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
+                  onChange={e => setSearchTerm(e.target.value)}
                   className="pl-10 border-black focus:ring-black"
                 />
               </div>
@@ -523,11 +622,12 @@ export default function SourcingEchantillonsPage() {
         </Card>
 
         {/* Tabs Actifs/Archivés */}
-        <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as 'active' | 'archived')}>
+        <Tabs
+          value={activeTab}
+          onValueChange={v => setActiveTab(v as 'active' | 'archived')}
+        >
           <TabsList className="grid w-full max-w-md grid-cols-2">
-            <TabsTrigger value="active">
-              Actifs ({stats.active})
-            </TabsTrigger>
+            <TabsTrigger value="active">Actifs ({stats.active})</TabsTrigger>
             <TabsTrigger value="archived">
               Archivés ({stats.archived})
             </TabsTrigger>
@@ -537,23 +637,34 @@ export default function SourcingEchantillonsPage() {
           <TabsContent value="active" className="mt-6">
             <Card className="border-black">
               <CardHeader>
-                <CardTitle className="text-black">Échantillons Actifs ({filteredSamples.length})</CardTitle>
-                <CardDescription>Échantillons en cours ou commandés</CardDescription>
+                <CardTitle className="text-black">
+                  Échantillons Actifs ({filteredSamples.length})
+                </CardTitle>
+                <CardDescription>
+                  Échantillons en cours ou commandés
+                </CardDescription>
               </CardHeader>
               <CardContent>
                 <div className="space-y-4">
-                  {filteredSamples.map((sample) => (
-                    <div key={sample.sample_id} className="border border-gray-200 rounded-lg p-6 hover:bg-gray-50 transition-colors">
+                  {filteredSamples.map(sample => (
+                    <div
+                      key={sample.sample_id}
+                      className="border border-gray-200 rounded-lg p-6 hover:bg-gray-50 transition-colors"
+                    >
                       {/* En-tête */}
                       <div className="flex items-center justify-between mb-4">
                         <div className="flex items-center space-x-3">
                           {getStatusIcon(sample.sample_status)}
                           <div>
                             <div className="flex items-center gap-2">
-                              <h3 className="font-semibold text-black">{sample.product_name}</h3>
+                              <h3 className="font-semibold text-black">
+                                {sample.product_name}
+                              </h3>
                               {getSampleTypeBadge(sample.sample_type)}
                             </div>
-                            <p className="text-sm text-gray-600">SKU: {sample.product_sku}</p>
+                            <p className="text-sm text-gray-600">
+                              SKU: {sample.product_sku}
+                            </p>
                           </div>
                         </div>
                         <div className="flex items-center space-x-3">
@@ -566,21 +677,31 @@ export default function SourcingEchantillonsPage() {
                         <div className="flex items-center space-x-2">
                           <Building className="h-4 w-4 text-gray-400" />
                           <span className="text-gray-600">Fournisseur:</span>
-                          <span className="font-medium text-black">{sample.supplier_name}</span>
+                          <span className="font-medium text-black">
+                            {sample.supplier_name}
+                          </span>
                         </div>
 
                         <div className="flex items-center space-x-2">
                           <User className="h-4 w-4 text-gray-400" />
                           <span className="text-gray-600">Client:</span>
                           {sample.sample_type === 'internal' ? (
-                            <Badge variant="outline" className="text-xs">Interne - Catalogue</Badge>
+                            <Badge variant="outline" className="text-xs">
+                              Interne - Catalogue
+                            </Badge>
                           ) : (
                             <CustomerBadge
                               organisationId={sample.customer_org_id}
-                              organisationLegalName={sample.customer_org_legal_name}
-                              organisationTradeName={sample.customer_org_trade_name}
+                              organisationLegalName={
+                                sample.customer_org_legal_name
+                              }
+                              organisationTradeName={
+                                sample.customer_org_trade_name
+                              }
                               individualId={sample.customer_ind_id}
-                              individualFirstName={sample.customer_ind_first_name}
+                              individualFirstName={
+                                sample.customer_ind_first_name
+                              }
                               individualLastName={sample.customer_ind_last_name}
                               individualEmail={sample.customer_ind_email}
                               compact
@@ -591,7 +712,9 @@ export default function SourcingEchantillonsPage() {
                         <div className="flex items-center space-x-2">
                           <Package className="h-4 w-4 text-gray-400" />
                           <span className="text-gray-600">Quantité:</span>
-                          <span className="font-medium text-black">{sample.quantity}</span>
+                          <span className="font-medium text-black">
+                            {sample.quantity}
+                          </span>
                         </div>
                       </div>
 
@@ -601,7 +724,9 @@ export default function SourcingEchantillonsPage() {
                           <Calendar className="h-4 w-4 text-gray-400" />
                           <span className="text-gray-600">Créé le:</span>
                           <span className="text-black">
-                            {new Date(sample.sample_created_at).toLocaleDateString('fr-FR')}
+                            {new Date(
+                              sample.sample_created_at
+                            ).toLocaleDateString('fr-FR')}
                           </span>
                         </div>
 
@@ -609,7 +734,9 @@ export default function SourcingEchantillonsPage() {
                           <Truck className="h-4 w-4 text-gray-400" />
                           <span className="text-gray-600">PO:</span>
                           <span className="text-black">{sample.po_number}</span>
-                          <Badge variant="outline" className="text-xs">{sample.po_status}</Badge>
+                          <Badge variant="outline" className="text-xs">
+                            {sample.po_status}
+                          </Badge>
                         </div>
                       </div>
 
@@ -624,7 +751,11 @@ export default function SourcingEchantillonsPage() {
 
                       {/* Actions */}
                       <div className="flex items-center justify-end pt-4 border-t border-gray-200 space-x-2">
-                        <Button variant="outline" size="sm" className="border-gray-300">
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          className="border-gray-300"
+                        >
                           <Eye className="h-4 w-4 mr-2" />
                           Voir détails
                         </Button>
@@ -655,7 +786,10 @@ export default function SourcingEchantillonsPage() {
                                 </Button>
                               </TooltipTrigger>
                               <TooltipContent>
-                                <p>Impossible d'archiver : commande déjà envoyée au fournisseur</p>
+                                <p>
+                                  Impossible d'archiver : commande déjà envoyée
+                                  au fournisseur
+                                </p>
                               </TooltipContent>
                             </Tooltip>
                           </TooltipProvider>
@@ -667,8 +801,12 @@ export default function SourcingEchantillonsPage() {
                   {filteredSamples.length === 0 && (
                     <div className="text-center py-8">
                       <Package className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-                      <p className="text-gray-600">Aucun échantillon actif trouvé</p>
-                      <p className="text-sm text-gray-500">Essayez de modifier vos filtres</p>
+                      <p className="text-gray-600">
+                        Aucun échantillon actif trouvé
+                      </p>
+                      <p className="text-sm text-gray-500">
+                        Essayez de modifier vos filtres
+                      </p>
                     </div>
                   )}
                 </div>
@@ -680,24 +818,40 @@ export default function SourcingEchantillonsPage() {
           <TabsContent value="archived" className="mt-6">
             <Card className="border-black">
               <CardHeader>
-                <CardTitle className="text-black">Échantillons Archivés ({filteredSamples.length})</CardTitle>
-                <CardDescription>Échantillons annulés ou retirés</CardDescription>
+                <CardTitle className="text-black">
+                  Échantillons Archivés ({filteredSamples.length})
+                </CardTitle>
+                <CardDescription>
+                  Échantillons annulés ou retirés
+                </CardDescription>
               </CardHeader>
               <CardContent>
                 <div className="space-y-4">
-                  {filteredSamples.map((sample) => (
-                    <div key={sample.sample_id} className="border border-gray-200 rounded-lg p-6 bg-gray-50">
+                  {filteredSamples.map(sample => (
+                    <div
+                      key={sample.sample_id}
+                      className="border border-gray-200 rounded-lg p-6 bg-gray-50"
+                    >
                       {/* En-tête */}
                       <div className="flex items-center justify-between mb-4">
                         <div className="flex items-center space-x-3">
                           <Archive className="h-4 w-4 text-red-600" />
                           <div>
                             <div className="flex items-center gap-2">
-                              <h3 className="font-semibold text-black">{sample.product_name}</h3>
+                              <h3 className="font-semibold text-black">
+                                {sample.product_name}
+                              </h3>
                               {getSampleTypeBadge(sample.sample_type)}
-                              <Badge variant="outline" className="border-red-300 text-red-600">Archivé</Badge>
+                              <Badge
+                                variant="outline"
+                                className="border-red-300 text-red-600"
+                              >
+                                Archivé
+                              </Badge>
                             </div>
-                            <p className="text-sm text-gray-600">SKU: {sample.product_sku}</p>
+                            <p className="text-sm text-gray-600">
+                              SKU: {sample.product_sku}
+                            </p>
                           </div>
                         </div>
                       </div>
@@ -707,21 +861,31 @@ export default function SourcingEchantillonsPage() {
                         <div className="flex items-center space-x-2">
                           <Building className="h-4 w-4 text-gray-400" />
                           <span className="text-gray-600">Fournisseur:</span>
-                          <span className="font-medium text-black">{sample.supplier_name}</span>
+                          <span className="font-medium text-black">
+                            {sample.supplier_name}
+                          </span>
                         </div>
 
                         <div className="flex items-center space-x-2">
                           <User className="h-4 w-4 text-gray-400" />
                           <span className="text-gray-600">Client:</span>
                           {sample.sample_type === 'internal' ? (
-                            <Badge variant="outline" className="text-xs">Interne - Catalogue</Badge>
+                            <Badge variant="outline" className="text-xs">
+                              Interne - Catalogue
+                            </Badge>
                           ) : (
                             <CustomerBadge
                               organisationId={sample.customer_org_id}
-                              organisationLegalName={sample.customer_org_legal_name}
-                              organisationTradeName={sample.customer_org_trade_name}
+                              organisationLegalName={
+                                sample.customer_org_legal_name
+                              }
+                              organisationTradeName={
+                                sample.customer_org_trade_name
+                              }
                               individualId={sample.customer_ind_id}
-                              individualFirstName={sample.customer_ind_first_name}
+                              individualFirstName={
+                                sample.customer_ind_first_name
+                              }
                               individualLastName={sample.customer_ind_last_name}
                               individualEmail={sample.customer_ind_email}
                               compact
@@ -733,7 +897,11 @@ export default function SourcingEchantillonsPage() {
                           <Calendar className="h-4 w-4 text-gray-400" />
                           <span className="text-gray-600">Archivé le:</span>
                           <span className="text-black">
-                            {sample.archived_at ? new Date(sample.archived_at).toLocaleDateString('fr-FR') : 'N/A'}
+                            {sample.archived_at
+                              ? new Date(sample.archived_at).toLocaleDateString(
+                                  'fr-FR'
+                                )
+                              : 'N/A'}
                           </span>
                         </div>
                       </div>
@@ -776,8 +944,12 @@ export default function SourcingEchantillonsPage() {
                   {filteredSamples.length === 0 && (
                     <div className="text-center py-8">
                       <Archive className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-                      <p className="text-gray-600">Aucun échantillon archivé trouvé</p>
-                      <p className="text-sm text-gray-500">Tous vos échantillons sont actifs</p>
+                      <p className="text-gray-600">
+                        Aucun échantillon archivé trouvé
+                      </p>
+                      <p className="text-sm text-gray-500">
+                        Tous vos échantillons sont actifs
+                      </p>
                     </div>
                   )}
                 </div>
@@ -793,13 +965,16 @@ export default function SourcingEchantillonsPage() {
           <DialogHeader>
             <DialogTitle>Nouvelle Demande d'Échantillon Client</DialogTitle>
             <DialogDescription>
-              Créer une demande d'échantillon pour un client professionnel (B2B) ou particulier (B2C)
+              Créer une demande d'échantillon pour un client professionnel (B2B)
+              ou particulier (B2C)
             </DialogDescription>
           </DialogHeader>
 
           <form onSubmit={handleSubmit} className="space-y-6">
             <div>
-              <Label className="text-base font-semibold mb-4 block">Sélectionner le client *</Label>
+              <Label className="text-base font-semibold mb-4 block">
+                Sélectionner le client *
+              </Label>
               <CustomerSelector
                 selectedCustomer={selectedCustomer}
                 onCustomerChange={handleCustomerChange}
@@ -817,7 +992,10 @@ export default function SourcingEchantillonsPage() {
                         Client sélectionné : {selectedCustomer.name}
                       </p>
                       <p className="text-sm text-green-700">
-                        Type : {selectedCustomer.type === 'professional' ? 'Professionnel (B2B)' : 'Particulier (B2C)'}
+                        Type :{' '}
+                        {selectedCustomer.type === 'professional'
+                          ? 'Professionnel (B2B)'
+                          : 'Particulier (B2C)'}
                       </p>
                     </div>
                   </div>
@@ -835,16 +1013,24 @@ export default function SourcingEchantillonsPage() {
                 className="w-full justify-start text-left font-normal"
               >
                 <Package className="h-4 w-4 mr-2" />
-                {selectedProduct ? selectedProduct.name : 'Sélectionner un produit...'}
+                {selectedProduct
+                  ? selectedProduct.name
+                  : 'Sélectionner un produit...'}
               </Button>
 
               {selectedProduct && (
                 <Card className="mt-3 bg-green-50 border-green-200">
                   <CardContent className="pt-4">
                     <div className="flex items-start gap-3">
-                      {selectedProduct.product_images && selectedProduct.product_images.length > 0 ? (
+                      {selectedProduct.product_images &&
+                      selectedProduct.product_images.length > 0 ? (
                         <img
-                          src={selectedProduct.product_images.find((img: any) => img.is_primary)?.public_url || selectedProduct.product_images[0].public_url}
+                          src={
+                            selectedProduct.product_images.find(
+                              (img: any) => img.is_primary
+                            )?.public_url ||
+                            selectedProduct.product_images[0].public_url
+                          }
                           alt={selectedProduct.name}
                           className="h-12 w-12 object-cover rounded"
                         />
@@ -854,9 +1040,13 @@ export default function SourcingEchantillonsPage() {
                         </div>
                       )}
                       <div className="flex-1">
-                        <p className="font-medium text-green-900">{selectedProduct.name}</p>
+                        <p className="font-medium text-green-900">
+                          {selectedProduct.name}
+                        </p>
                         {selectedProduct.sku && (
-                          <p className="text-sm text-green-700">SKU: {selectedProduct.sku}</p>
+                          <p className="text-sm text-green-700">
+                            SKU: {selectedProduct.sku}
+                          </p>
                         )}
                       </div>
                     </div>
@@ -873,10 +1063,12 @@ export default function SourcingEchantillonsPage() {
                 min="1"
                 max="10"
                 value={quantity}
-                onChange={(e) => setQuantity(parseInt(e.target.value) || 1)}
+                onChange={e => setQuantity(parseInt(e.target.value) || 1)}
                 disabled={submitting}
               />
-              <p className="text-sm text-gray-500 mt-1">Maximum 10 échantillons par demande</p>
+              <p className="text-sm text-gray-500 mt-1">
+                Maximum 10 échantillons par demande
+              </p>
             </div>
 
             <div>
@@ -884,7 +1076,7 @@ export default function SourcingEchantillonsPage() {
               <Textarea
                 id="delivery"
                 value={deliveryAddress}
-                onChange={(e) => setDeliveryAddress(e.target.value)}
+                onChange={e => setDeliveryAddress(e.target.value)}
                 placeholder="Auto-remplie depuis la fiche client..."
                 rows={3}
                 disabled={submitting}
@@ -896,7 +1088,7 @@ export default function SourcingEchantillonsPage() {
               <Textarea
                 id="notes"
                 value={notes}
-                onChange={(e) => setNotes(e.target.value)}
+                onChange={e => setNotes(e.target.value)}
                 placeholder="Contexte, usage prévu, remarques particulières..."
                 rows={3}
                 disabled={submitting}
@@ -924,13 +1116,16 @@ export default function SourcingEchantillonsPage() {
         </DialogContent>
       </Dialog>
 
-      {/* Modal Sélection Produit */}
-      <SampleProductSelectorModal
-        isOpen={showProductModal}
+      {/* Modal Sélection Produit - V2 */}
+      <UniversalProductSelectorV2
+        open={showProductModal}
         onClose={() => setShowProductModal(false)}
-        onProductSelect={handleProductSelect}
-        allowCatalog={true}
-        allowSourcing={true}
+        onSelect={handleProductSelect}
+        mode="single"
+        context="consultations"
+        selectedProducts={selectedProduct ? [selectedProduct] : []}
+        showQuantity={false}
+        showImages={true}
       />
 
       {/* AlertDialog Confirmation Suppression */}
@@ -939,8 +1134,8 @@ export default function SourcingEchantillonsPage() {
           <AlertDialogHeader>
             <AlertDialogTitle>Confirmer la suppression</AlertDialogTitle>
             <AlertDialogDescription>
-              Êtes-vous sûr de vouloir supprimer définitivement cet échantillon ?
-              Cette action est irréversible.
+              Êtes-vous sûr de vouloir supprimer définitivement cet échantillon
+              ? Cette action est irréversible.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
@@ -955,5 +1150,5 @@ export default function SourcingEchantillonsPage() {
         </AlertDialogContent>
       </AlertDialog>
     </div>
-  )
+  );
 }

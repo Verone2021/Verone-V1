@@ -27,7 +27,10 @@ import {
   CollectionCreationWizard,
   CreateCollectionInput,
 } from '@/components/business/collection-creation-wizard';
-import { CollectionProductsModal } from '@/components/business/collection-products-modal';
+import {
+  UniversalProductSelectorV2,
+  SelectedProduct,
+} from '@/components/business/universal-product-selector-v2';
 import { useToast } from '@/hooks/use-toast';
 import { getRoomLabel, type RoomType } from '@/types/room-types';
 import { ElegantKpiCard } from '@/components/ui/elegant-kpi-card';
@@ -738,13 +741,23 @@ export default function CollectionsPage() {
         editingCollection={editingCollection}
       />
 
-      {/* Modal de gestion des produits */}
-      <CollectionProductsModal
-        collection={managingProductsCollection}
-        isOpen={showProductsModal}
-        onClose={() => setShowProductsModal(false)}
-        onUpdate={refetch}
-      />
+      {/* Modal de gestion des produits - V2 Universel */}
+      {managingProductsCollection && (
+        <UniversalProductSelectorV2
+          open={showProductsModal}
+          onClose={() => setShowProductsModal(false)}
+          onSelect={async (products: SelectedProduct[]) => {
+            // TODO: Implémenter ajout/retrait produits dans collection
+            console.log('Produits sélectionnés:', products);
+            await refetch();
+          }}
+          mode="multi"
+          context="collections"
+          selectedProducts={[]}
+          showQuantity={false}
+          showImages={true}
+        />
+      )}
     </div>
   );
 }

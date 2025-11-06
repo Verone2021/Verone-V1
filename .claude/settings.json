@@ -158,6 +158,16 @@
         ]
       }
     ],
+    "Notification": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "$CLAUDE_PROJECT_DIR/.claude/scripts/validation-required.sh"
+          }
+        ]
+      }
+    ],
     "SubagentStop": [
       {
         "hooks": [
@@ -236,11 +246,7 @@
       "audit_trail": true,
       "performance_monitoring": true
     },
-    "external_apis": [
-      "brevo_webhooks",
-      "meta_feeds",
-      "google_feeds"
-    ],
+    "external_apis": ["brevo_webhooks", "meta_feeds", "google_feeds"],
     "monitoring": {
       "error_tracking": true,
       "performance_monitoring": true,

@@ -25,7 +25,6 @@ async function getProductWithRelations(supabase: any, productId: string) {
     .select(
       `
       *,
-      supplier:organisations(id, legal_name, trade_name),
       subcategory:subcategories(id, name),
       images:product_images(
         public_url,
@@ -37,6 +36,19 @@ async function getProductWithRelations(supabase: any, productId: string) {
     )
     .eq('id', productId)
     .single();
+
+  // Fetch supplier separately if needed
+  if (!productError && product && product.supplier_id) {
+    const { data: supplier } = await supabase
+      .from('organisations')
+      .select('id, legal_name, trade_name')
+      .eq('id', product.supplier_id)
+      .single();
+
+    if (supplier) {
+      product.supplier = supplier;
+    }
+  }
 
   if (productError) {
     throw new Error(`Erreur récupération produit: ${productError.message}`);
@@ -67,9 +79,8 @@ function validateProductForSync(product: any): {
     errors.push('Nom du produit manquant');
   }
 
-  if (!product.price_ht || product.price_ht <= 0) {
-    errors.push('Prix HT invalide');
-  }
+  // Prix: On skip la validation car prix est dans price_list_items
+  // La validation sera faite par le client Google Merchant
 
   if (!product.product_status) {
     errors.push('Statut produit manquant');
