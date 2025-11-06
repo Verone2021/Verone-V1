@@ -46,7 +46,7 @@ const statusConfig = {
   },
 };
 
-export const ProductCardV2 = memo(function ProductCardV2({
+export const ProductCard = memo(function ProductCard({
   product,
   className,
   showActions = true,

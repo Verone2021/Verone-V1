@@ -14,7 +14,7 @@ import {
   Zap,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { ProductCardV2 as ProductCard } from '@/components/business/product-card-v2';
+import { ProductCard } from '@/shared/modules/products/components/cards';
 import { Badge } from '@/components/ui/badge';
 import { cn } from '@/lib/utils';
 import { checkSLOCompliance, debounce } from '@/lib/utils';

@@ -2,7 +2,7 @@
 
 import { useState, useRef, useCallback } from 'react'
 import { GripVertical, Save, RotateCcw, Check, AlertCircle } from 'lucide-react'
-import { ProductCard } from './product-card'
+import { ProductCard } from '@/shared/modules/products/components/cards'
 import { ButtonV2 } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { cn } from '../../lib/utils'

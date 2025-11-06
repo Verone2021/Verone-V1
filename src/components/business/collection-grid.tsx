@@ -4,7 +4,7 @@
  */
 
 import React, { useState } from 'react';
-import { ProductCard } from './product-card';
+import { ProductCard } from '@/shared/modules/products/components/cards';
 import { ButtonV2 } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { cn } from '@/lib/utils';
