@@ -38,7 +38,7 @@ import { SampleRequirementSection } from '@/components/business/sample-requireme
 import { SupplierVsPricingEditSection } from '@/components/business/supplier-vs-pricing-edit-section';
 import { StockEditSection } from '@/components/business/stock-edit-section';
 import { StockStatusCompact } from '@/components/business/stock-status-compact';
-import { ProductStatusCompact } from '@/components/business/product-status-compact';
+import { ProductStatusCompact } from '@/shared/modules/products/components/display';
 import { CompletionStatusCompact } from '@/components/business/completion-status-compact';
 import { ProductFixedCharacteristics } from '@/components/business/product-fixed-characteristics';
 import { SupplierEditSection } from '@/components/business/supplier-edit-section';
