@@ -7,6 +7,7 @@ export { ProductHistoryModal } from './ProductHistoryModal';
 export { ProductImagesModal } from './ProductImagesModal';
 export { ProductPhotosModal } from './ProductPhotosModal';
 export { ProductStockHistoryModal } from './ProductStockHistoryModal';
+export { QuickSourcingModal } from './QuickSourcingModal';
 export { VariantAddProductModal } from './VariantAddProductModal';
 export { VariantCreationModal } from './VariantCreationModal';
 export { VariantGroupCreateModal } from './VariantGroupCreateModal';
