@@ -4,3 +4,6 @@ export { IdentifiersEditSection } from './IdentifiersEditSection';
 export { GeneralInfoEditSection } from './GeneralInfoEditSection';
 export { CommercialEditSection } from './CommercialEditSection';
 export { ProductDescriptionsEditSection } from './ProductDescriptionsEditSection';
+export { WeightEditSection } from './WeightEditSection';
+export { SupplierEditSection } from './SupplierEditSection';
+export { SampleRequirementSection } from './SampleRequirementSection';
