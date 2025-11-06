@@ -64,6 +64,7 @@ export default function SalesOrdersPage() {
   // États modals
   const [selectedOrder, setSelectedOrder] = useState<SalesOrder | null>(null)
   const [showOrderDetail, setShowOrderDetail] = useState(false)
+  const [orderDetailEditMode, setOrderDetailEditMode] = useState(false) // Mode lecture/édition du modal
   const [editingOrderId, setEditingOrderId] = useState<string | null>(null)
   const [showEditModal, setShowEditModal] = useState(false)
 
@@ -286,8 +287,17 @@ export default function SalesOrdersPage() {
   }
 
 
-  const openOrderDetail = (order: SalesOrder) => {
+  // Mode LECTURE (bouton Œil)
+  const openOrderView = (order: SalesOrder) => {
     setSelectedOrder(order)
+    setOrderDetailEditMode(false) // Mode lecture seule
+    setShowOrderDetail(true)
+  }
+
+  // Mode ÉDITION (bouton Modifier)
+  const openOrderEdit = (order: SalesOrder) => {
+    setSelectedOrder(order)
+    setOrderDetailEditMode(true) // Mode édition
     setShowOrderDetail(true)
   }
 
@@ -515,22 +525,22 @@ export default function SalesOrdersPage() {
                         </TableCell>
                         <TableCell>
                           <div className="flex items-center gap-2">
-                            {/* Voir */}
+                            {/* Voir - Mode LECTURE */}
                             <ButtonV2
                               variant="outline"
                               size="sm"
-                              onClick={() => openOrderDetail(order)}
+                              onClick={() => openOrderView(order)}
                               title="Voir détails"
                             >
                               <Eye className="h-4 w-4" />
                             </ButtonV2>
 
-                            {/* Modifier (draft uniquement) */}
+                            {/* Modifier - Mode ÉDITION (draft uniquement) */}
                             {order.status === 'draft' && (
                               <ButtonV2
                                 variant="outline"
                                 size="sm"
-                                onClick={() => openOrderDetail(order)}
+                                onClick={() => openOrderEdit(order)}
                                 title="Modifier"
                               >
                                 <Edit className="h-4 w-4" />

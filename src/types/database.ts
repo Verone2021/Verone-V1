@@ -550,6 +550,168 @@ export type Database = {
           },
         ]
       }
+      channel_product_metadata: {
+        Row: {
+          channel_id: string
+          created_at: string | null
+          created_by: string | null
+          custom_description: string | null
+          custom_title: string | null
+          id: string
+          metadata: Json | null
+          product_id: string
+          updated_at: string | null
+          updated_by: string | null
+        }
+        Insert: {
+          channel_id: string
+          created_at?: string | null
+          created_by?: string | null
+          custom_description?: string | null
+          custom_title?: string | null
+          id?: string
+          metadata?: Json | null
+          product_id: string
+          updated_at?: string | null
+          updated_by?: string | null
+        }
+        Update: {
+          channel_id?: string
+          created_at?: string | null
+          created_by?: string | null
+          custom_description?: string | null
+          custom_title?: string | null
+          id?: string
+          metadata?: Json | null
+          product_id?: string
+          updated_at?: string | null
+          updated_by?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "channel_product_metadata_channel_id_fkey"
+            columns: ["channel_id"]
+            isOneToOne: false
+            referencedRelation: "sales_channels"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "channel_product_metadata_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "product_prices_summary"
+            referencedColumns: ["product_id"]
+          },
+          {
+            foreignKeyName: "channel_product_metadata_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "products"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "channel_product_metadata_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "products_with_default_package"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "channel_product_metadata_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "stock_alerts_view"
+            referencedColumns: ["product_id"]
+          },
+          {
+            foreignKeyName: "channel_product_metadata_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "stock_health_monitor"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "channel_product_metadata_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "stock_overview"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      channel_product_pricing: {
+        Row: {
+          channel: string
+          created_at: string | null
+          id: string
+          price_ht_cents: number
+          product_id: string
+          tva_rate: number
+          updated_at: string | null
+        }
+        Insert: {
+          channel: string
+          created_at?: string | null
+          id?: string
+          price_ht_cents: number
+          product_id: string
+          tva_rate?: number
+          updated_at?: string | null
+        }
+        Update: {
+          channel?: string
+          created_at?: string | null
+          id?: string
+          price_ht_cents?: number
+          product_id?: string
+          tva_rate?: number
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "channel_product_pricing_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "product_prices_summary"
+            referencedColumns: ["product_id"]
+          },
+          {
+            foreignKeyName: "channel_product_pricing_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "products"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "channel_product_pricing_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "products_with_default_package"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "channel_product_pricing_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "stock_alerts_view"
+            referencedColumns: ["product_id"]
+          },
+          {
+            foreignKeyName: "channel_product_pricing_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "stock_health_monitor"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "channel_product_pricing_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "stock_overview"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       client_consultations: {
         Row: {
           archived_at: string | null
@@ -2049,6 +2211,112 @@ export type Database = {
           },
         ]
       }
+      google_merchant_syncs: {
+        Row: {
+          clicks: number | null
+          conversions: number | null
+          created_at: string | null
+          error_message: string | null
+          google_product_id: string
+          google_status: string | null
+          google_status_checked_at: string | null
+          google_status_detail: Json | null
+          id: string
+          impressions: number | null
+          merchant_id: string
+          product_id: string
+          response_data: Json | null
+          revenue_ht: number | null
+          sync_operation: string
+          sync_status: string
+          synced_at: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          clicks?: number | null
+          conversions?: number | null
+          created_at?: string | null
+          error_message?: string | null
+          google_product_id: string
+          google_status?: string | null
+          google_status_checked_at?: string | null
+          google_status_detail?: Json | null
+          id?: string
+          impressions?: number | null
+          merchant_id: string
+          product_id: string
+          response_data?: Json | null
+          revenue_ht?: number | null
+          sync_operation: string
+          sync_status: string
+          synced_at?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          clicks?: number | null
+          conversions?: number | null
+          created_at?: string | null
+          error_message?: string | null
+          google_product_id?: string
+          google_status?: string | null
+          google_status_checked_at?: string | null
+          google_status_detail?: Json | null
+          id?: string
+          impressions?: number | null
+          merchant_id?: string
+          product_id?: string
+          response_data?: Json | null
+          revenue_ht?: number | null
+          sync_operation?: string
+          sync_status?: string
+          synced_at?: string | null
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "google_merchant_syncs_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "product_prices_summary"
+            referencedColumns: ["product_id"]
+          },
+          {
+            foreignKeyName: "google_merchant_syncs_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "products"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "google_merchant_syncs_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "products_with_default_package"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "google_merchant_syncs_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "stock_alerts_view"
+            referencedColumns: ["product_id"]
+          },
+          {
+            foreignKeyName: "google_merchant_syncs_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "stock_health_monitor"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "google_merchant_syncs_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "stock_overview"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       group_price_lists: {
         Row: {
           created_at: string | null
@@ -3504,9 +3772,6 @@ export type Database = {
           sku: string
           slug: string | null
           sourcing_type: string | null
-          status_deprecated:
-            | Database["public"]["Enums"]["availability_status_type"]
-            | null
           stock_forecasted_in: number | null
           stock_forecasted_out: number | null
           stock_quantity: number | null
@@ -3558,9 +3823,6 @@ export type Database = {
           sku: string
           slug?: string | null
           sourcing_type?: string | null
-          status_deprecated?:
-            | Database["public"]["Enums"]["availability_status_type"]
-            | null
           stock_forecasted_in?: number | null
           stock_forecasted_out?: number | null
           stock_quantity?: number | null
@@ -3612,9 +3874,6 @@ export type Database = {
           sku?: string
           slug?: string | null
           sourcing_type?: string | null
-          status_deprecated?:
-            | Database["public"]["Enums"]["availability_status_type"]
-            | null
           stock_forecasted_in?: number | null
           stock_forecasted_out?: number | null
           stock_quantity?: number | null
@@ -5385,6 +5644,23 @@ export type Database = {
           },
         ]
       }
+      google_merchant_stats: {
+        Row: {
+          approved_products: number | null
+          conversion_rate: number | null
+          error_products: number | null
+          last_sync_at: string | null
+          pending_products: number | null
+          refreshed_at: string | null
+          rejected_products: number | null
+          total_clicks: number | null
+          total_conversions: number | null
+          total_impressions: number | null
+          total_products: number | null
+          total_revenue_ht: number | null
+        }
+        Relationships: []
+      }
       individual_customers_display: {
         Row: {
           city: string | null
@@ -5546,6 +5822,9 @@ export type Database = {
           margin_percentage: number | null
           min_stock: number | null
           name: string | null
+          product_status:
+            | Database["public"]["Enums"]["product_status_type"]
+            | null
           product_type: string | null
           projected_stock: number | null
           reorder_point: number | null
@@ -5554,11 +5833,11 @@ export type Database = {
           sku: string | null
           slug: string | null
           sourcing_type: string | null
-          status: Database["public"]["Enums"]["availability_status_type"] | null
           stock_forecasted_in: number | null
           stock_forecasted_out: number | null
           stock_quantity: number | null
           stock_real: number | null
+          stock_status: Database["public"]["Enums"]["stock_status_type"] | null
           subcategory_id: string | null
           supplier_id: string | null
           supplier_page_url: string | null
@@ -5588,6 +5867,9 @@ export type Database = {
           margin_percentage?: number | null
           min_stock?: number | null
           name?: string | null
+          product_status?:
+            | Database["public"]["Enums"]["product_status_type"]
+            | null
           product_type?: string | null
           projected_stock?: never
           reorder_point?: number | null
@@ -5596,13 +5878,11 @@ export type Database = {
           sku?: string | null
           slug?: string | null
           sourcing_type?: string | null
-          status?:
-            | Database["public"]["Enums"]["availability_status_type"]
-            | null
           stock_forecasted_in?: number | null
           stock_forecasted_out?: number | null
           stock_quantity?: number | null
           stock_real?: number | null
+          stock_status?: Database["public"]["Enums"]["stock_status_type"] | null
           subcategory_id?: string | null
           supplier_id?: string | null
           supplier_page_url?: string | null
@@ -5632,6 +5912,9 @@ export type Database = {
           margin_percentage?: number | null
           min_stock?: number | null
           name?: string | null
+          product_status?:
+            | Database["public"]["Enums"]["product_status_type"]
+            | null
           product_type?: string | null
           projected_stock?: never
           reorder_point?: number | null
@@ -5640,13 +5923,11 @@ export type Database = {
           sku?: string | null
           slug?: string | null
           sourcing_type?: string | null
-          status?:
-            | Database["public"]["Enums"]["availability_status_type"]
-            | null
           stock_forecasted_in?: number | null
           stock_forecasted_out?: number | null
           stock_quantity?: number | null
           stock_real?: number | null
+          stock_status?: Database["public"]["Enums"]["stock_status_type"] | null
           subcategory_id?: string | null
           supplier_id?: string | null
           supplier_page_url?: string | null
@@ -5750,41 +6031,46 @@ export type Database = {
           id: string | null
           min_stock: number | null
           name: string | null
+          product_status:
+            | Database["public"]["Enums"]["product_status_type"]
+            | null
           reorder_point: number | null
-          status: Database["public"]["Enums"]["availability_status_type"] | null
           stock_alert_level: string | null
           stock_forecasted_in: number | null
           stock_forecasted_out: number | null
           stock_quantity: number | null
           stock_real: number | null
+          stock_status: Database["public"]["Enums"]["stock_status_type"] | null
         }
         Insert: {
           id?: string | null
           min_stock?: number | null
           name?: string | null
-          reorder_point?: number | null
-          status?:
-            | Database["public"]["Enums"]["availability_status_type"]
+          product_status?:
+            | Database["public"]["Enums"]["product_status_type"]
             | null
+          reorder_point?: number | null
           stock_alert_level?: never
           stock_forecasted_in?: number | null
           stock_forecasted_out?: number | null
           stock_quantity?: number | null
           stock_real?: number | null
+          stock_status?: Database["public"]["Enums"]["stock_status_type"] | null
         }
         Update: {
           id?: string | null
           min_stock?: number | null
           name?: string | null
-          reorder_point?: number | null
-          status?:
-            | Database["public"]["Enums"]["availability_status_type"]
+          product_status?:
+            | Database["public"]["Enums"]["product_status_type"]
             | null
+          reorder_point?: number | null
           stock_alert_level?: never
           stock_forecasted_in?: number | null
           stock_forecasted_out?: number | null
           stock_quantity?: number | null
           stock_real?: number | null
+          stock_status?: Database["public"]["Enums"]["stock_status_type"] | null
         }
         Relationships: []
       }
@@ -5883,6 +6169,15 @@ export type Database = {
             }
             Returns: Json
           }
+      batch_add_google_merchant_products: {
+        Args: { merchant_id: string; product_ids: string[] }
+        Returns: {
+          error: string
+          google_product_id: string
+          product_id: string
+          success: boolean
+        }[]
+      }
       calculate_annual_revenue_bfa: {
         Args: { p_fiscal_year: number; p_organisation_id: string }
         Returns: {
@@ -5893,10 +6188,6 @@ export type Database = {
           organisation_name: string
           total_revenue_ht: number
         }[]
-      }
-      calculate_automatic_product_status: {
-        Args: { p_stock_forecasted_in: number; p_stock_real: number }
-        Returns: Database["public"]["Enums"]["availability_status_type"]
       }
       calculate_batch_prices_v2: {
         Args: {
@@ -5962,6 +6253,10 @@ export type Database = {
         Args: { price_ht_cents: number; tax_rate: number }
         Returns: number
       }
+      calculate_price_ttc_cents: {
+        Args: { price_ht_cents: number; tva_rate: number }
+        Returns: number
+      }
       calculate_product_price_old: {
         Args: {
           p_channel_id?: string
@@ -6001,13 +6296,9 @@ export type Database = {
           price_source: string
         }[]
       }
-      calculate_sourcing_product_status: {
-        Args: { p_product_id: string }
-        Returns: Database["public"]["Enums"]["availability_status_type"]
-      }
       calculate_stock_status: {
         Args: { p_stock_real: number }
-        Returns: Database["public"]["Enums"]["availability_status_type"]
+        Returns: Database["public"]["Enums"]["stock_status_type"]
       }
       cancel_order_forecast_movements: {
         Args: {
@@ -6425,31 +6716,6 @@ export type Database = {
         Args: { p_product_id: string }
         Returns: number
       }
-      get_catalogue_products: {
-        Args: {
-          p_archived?: boolean
-          p_limit?: number
-          p_offset?: number
-          p_status?: string
-        }
-        Returns: {
-          archived_at: string
-          brand: string
-          condition: string
-          created_at: string
-          id: string
-          name: string
-          sku: string
-          slug: string
-          status: Database["public"]["Enums"]["availability_status_type"]
-          stock_quantity: number
-          subcategory_id: string
-          subcategory_name: string
-          supplier_id: string
-          supplier_name: string
-          updated_at: string
-        }[]
-      }
       get_categories_with_real_counts: {
         Args: never
         Returns: {
@@ -6469,34 +6735,20 @@ export type Database = {
           updated_at: string
         }[]
       }
-      get_consultation_eligible_products:
-        | {
-            Args: { target_consultation_id?: string }
-            Returns: {
-              creation_mode: string
-              id: string
-              name: string
-              product_type: string
-              requires_sample: boolean
-              sku: string
-              sourcing_type: string
-              status: string
-              supplier_name: string
-            }[]
-          }
-        | {
-            Args: never
-            Returns: {
-              creation_mode: string
-              id: string
-              name: string
-              requires_sample: boolean
-              sku: string
-              sourcing_type: string
-              status: Database["public"]["Enums"]["availability_status_type"]
-              supplier_name: string
-            }[]
-          }
+      get_consultation_eligible_products: {
+        Args: { target_consultation_id?: string }
+        Returns: {
+          creation_mode: string
+          id: string
+          name: string
+          product_type: string
+          requires_sample: boolean
+          sku: string
+          sourcing_type: string
+          status: string
+          supplier_name: string
+        }[]
+      }
       get_daily_activity: {
         Args: never
         Returns: {
@@ -6529,6 +6781,74 @@ export type Database = {
           status_filter?: Database["public"]["Enums"]["error_status_enum"]
         }
         Returns: Json
+      }
+      get_google_merchant_eligible_products: {
+        Args: never
+        Returns: {
+          brand: string
+          description: string
+          gtin: string
+          id: string
+          image_url: string
+          name: string
+          price_ht_cents: number
+          price_ttc_cents: number
+          product_status: string
+          sku: string
+          stock_status: string
+          tva_rate: number
+        }[]
+      }
+      get_google_merchant_product_price: {
+        Args: { p_country_code?: string; p_product_id: string }
+        Returns: {
+          currency: string
+          price_ht: number
+          price_source: string
+          price_ttc: number
+          tva_rate: number
+        }[]
+      }
+      get_google_merchant_products: {
+        Args: never
+        Returns: {
+          clicks: number
+          conversions: number
+          error_message: string
+          google_product_id: string
+          google_status: string
+          google_status_checked_at: string
+          google_status_detail: Json
+          id: string
+          impressions: number
+          price_ht_cents: number
+          price_source: string
+          price_ttc_cents: number
+          product_id: string
+          product_name: string
+          revenue_ht: number
+          sku: string
+          sync_status: string
+          synced_at: string
+          tva_rate: number
+        }[]
+      }
+      get_google_merchant_stats: {
+        Args: never
+        Returns: {
+          approved_products: number
+          conversion_rate: number
+          error_products: number
+          last_sync_at: string
+          pending_products: number
+          refreshed_at: string
+          rejected_products: number
+          total_clicks: number
+          total_conversions: number
+          total_impressions: number
+          total_products: number
+          total_revenue_ht: number
+        }[]
       }
       get_invoice_status_summary: {
         Args: { p_end_date?: string; p_start_date?: string }
@@ -6658,20 +6978,6 @@ export type Database = {
           variant_attributes: Json
           variant_group_id: string
           variant_position: number
-        }[]
-      }
-      get_products_for_feed: {
-        Args: { config_id: string }
-        Returns: {
-          brand: string
-          category_name: string
-          name: string
-          price_ht: number
-          primary_image_url: string
-          product_group_id: string
-          product_id: string
-          sku: string
-          status: Database["public"]["Enums"]["availability_status_type"]
         }[]
       }
       get_products_status_metrics: { Args: never; Returns: Json }
@@ -6895,12 +7201,6 @@ export type Database = {
       has_scope: { Args: { required_scope: string }; Returns: boolean }
       initialize_dashboard_tests: { Args: never; Returns: undefined }
       is_admin: { Args: never; Returns: boolean }
-      is_manual_status: {
-        Args: {
-          p_status: Database["public"]["Enums"]["availability_status_type"]
-        }
-        Returns: boolean
-      }
       is_owner: { Args: never; Returns: boolean }
       is_tester_or_admin: { Args: never; Returns: boolean }
       lock_section_when_complete: {
@@ -6963,6 +7263,14 @@ export type Database = {
         Args: { max_length?: number; text_input: string }
         Returns: string
       }
+      poll_google_merchant_statuses: {
+        Args: { product_ids: string[]; statuses_data: Json }
+        Returns: {
+          error: string
+          success: boolean
+          updated_count: number
+        }[]
+      }
       process_shipment_stock: {
         Args: {
           p_performed_by_user_id?: string
@@ -7014,9 +7322,17 @@ export type Database = {
           isSetofReturn: false
         }
       }
+      refresh_google_merchant_stats: { Args: never; Returns: undefined }
       remove_collection_tag: {
         Args: { collection_id: string; tag: string }
         Returns: undefined
+      }
+      remove_from_google_merchant: {
+        Args: { p_product_id: string }
+        Returns: {
+          error: string
+          success: boolean
+        }[]
       }
       request_sample_order: {
         Args: {
@@ -7049,7 +7365,6 @@ export type Database = {
           sku: string
         }[]
       }
-      rollback_status_refonte: { Args: never; Returns: undefined }
       search_collections_by_tags: {
         Args: { search_tags: string[] }
         Returns: {
@@ -7111,6 +7426,13 @@ export type Database = {
           total_ttc: number
         }[]
       }
+      toggle_google_merchant_visibility: {
+        Args: { p_product_id: string; p_visible: boolean }
+        Returns: {
+          error: string
+          success: boolean
+        }[]
+      }
       transfer_to_product_catalog: {
         Args: { p_draft_id: string }
         Returns: {
@@ -7120,9 +7442,27 @@ export type Database = {
         }[]
       }
       unmatch_transaction: { Args: { p_transaction_id: string }; Returns: Json }
-      update_product_status_if_needed: {
-        Args: { p_force_recalculation?: boolean; p_product_id: string }
-        Returns: Database["public"]["Enums"]["availability_status_type"]
+      update_google_merchant_metadata: {
+        Args: {
+          p_custom_description: string
+          p_custom_title: string
+          p_product_id: string
+        }
+        Returns: {
+          error: string
+          success: boolean
+        }[]
+      }
+      update_google_merchant_price: {
+        Args: {
+          p_price_ht_cents: number
+          p_product_id: string
+          p_tva_rate?: number
+        }
+        Returns: {
+          error: string
+          success: boolean
+        }[]
       }
       update_test_status: {
         Args: {
@@ -7192,15 +7532,6 @@ export type Database = {
       }
     }
     Enums: {
-      availability_status_type:
-        | "in_stock"
-        | "out_of_stock"
-        | "preorder"
-        | "coming_soon"
-        | "discontinued"
-        | "sourcing"
-        | "pret_a_commander"
-        | "echantillon_a_commander"
       availability_type_enum:
         | "normal"
         | "preorder"
@@ -7490,16 +7821,6 @@ export type CompositeTypes<
 export const Constants = {
   public: {
     Enums: {
-      availability_status_type: [
-        "in_stock",
-        "out_of_stock",
-        "preorder",
-        "coming_soon",
-        "discontinued",
-        "sourcing",
-        "pret_a_commander",
-        "echantillon_a_commander",
-      ],
       availability_type_enum: [
         "normal",
         "preorder",

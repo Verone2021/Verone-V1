@@ -17,7 +17,7 @@ import {
   getStatusExplanation,
   isManualStatus,
   isAutomaticStatus
-} from '../../lib/product-status-utils'
+} from '@/lib/product-status-utils'
 
 interface ProductStatusSelectorProps {
   currentStatus: ProductStatus

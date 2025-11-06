@@ -2,7 +2,7 @@
 
 import { Package, Wrench, Info } from 'lucide-react'
 import { Label } from '@/components/ui/label'
-import { cn } from '../../lib/utils'
+import { cn } from '@/lib/utils'
 
 interface ProductTypeSelectorProps {
   value: 'standard' | 'custom'

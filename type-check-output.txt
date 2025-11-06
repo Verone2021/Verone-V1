@@ -1,0 +1,18 @@
+
+> @verone/back-office@1.0.0 type-check
+> tsc --noEmit
+
+src/app/api/google-merchant/delete-all/route.ts(80,13): error TS2769: No overload matches this call.
+  Overload 1 of 2, '(relation: "financial_documents" | "families" | "categories" | "sales_channels" | "price_lists" | "products" | "collections" | "client_consultations" | "organisations" | "customer_groups" | ... 58 more ... | "user_sessions"): PostgrestQueryBuilder<...>', gave the following error.
+    Argument of type '"google_merchant_syncs"' is not assignable to parameter of type '"financial_documents" | "families" | "categories" | "sales_channels" | "price_lists" | "products" | "collections" | "client_consultations" | "organisations" | "customer_groups" | ... 58 more ... | "user_sessions"'.
+  Overload 2 of 2, '(relation: "product_prices_summary" | "products_with_default_package" | "stock_alerts_view" | "stock_health_monitor" | "stock_overview" | "collection_primary_images" | "consultations_with_primary_image" | ... 6 more ... | "stock_snapshot"): PostgrestQueryBuilder<...>', gave the following error.
+    Argument of type '"google_merchant_syncs"' is not assignable to parameter of type '"product_prices_summary" | "products_with_default_package" | "stock_alerts_view" | "stock_health_monitor" | "stock_overview" | "collection_primary_images" | "consultations_with_primary_image" | ... 6 more ... | "stock_snapshot"'.
+src/shared/modules/products/components/images/index.ts(3,10): error TS2724: '"./ProductImageManager"' has no exported member named 'ProductImageManager'. Did you mean 'ProductImageManagement'?
+src/shared/modules/products/components/images/PrimaryImageUpload.tsx(16,20): error TS2307: Cannot find module '../../lib/utils' or its corresponding type declarations.
+src/shared/modules/products/components/images/ProductImageGallery.tsx(8,20): error TS2307: Cannot find module '../../lib/utils' or its corresponding type declarations.
+src/shared/modules/products/components/images/ProductImageGallery.tsx(9,34): error TS2307: Cannot find module '../../hooks/use-product-images' or its corresponding type declarations.
+src/shared/modules/products/components/images/ProductImageGallery.tsx(67,45): error TS7006: Parameter 'img' implicitly has an 'any' type.
+src/shared/modules/products/components/images/ProductImageGallery.tsx(214,26): error TS7006: Parameter 'i' implicitly has an 'any' type.
+src/shared/modules/products/components/images/ProductImageGallery.tsx(215,26): error TS7006: Parameter 'i' implicitly has an 'any' type.
+src/shared/modules/products/components/images/ProductImageManager.tsx(17,20): error TS2307: Cannot find module '../../lib/utils' or its corresponding type declarations.
+src/shared/modules/products/components/images/ProductImageViewer.tsx(27,20): error TS2307: Cannot find module '../../lib/utils' or its corresponding type declarations.

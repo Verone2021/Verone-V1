@@ -3,7 +3,7 @@
  * Export centralisé pour faciliter les imports
  */
 
-export { ProductCard } from './product-card';
+// export { ProductCard } from './product-card'; // Déplacé vers /src/shared/modules/products/components/
 export { CollectionGrid } from './collection-grid';
 
 // Interfaces business communes
