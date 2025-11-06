@@ -320,6 +320,7 @@ export function SalesOrderFormModal({
     setShippingAddress('')
     setBillingAddress('')
     setNotes('')
+    setEcoTaxVatRate(null)
     // RFA supprimé - Migration 003
     setItems([])
     setProductSearchTerm('')
@@ -543,7 +544,8 @@ export function SalesOrderFormModal({
           shipping_address: shippingAddress ? { address: shippingAddress } : undefined,
           billing_address: billingAddress ? { address: billingAddress } : undefined,
           payment_terms: autoPaymentTerms || undefined,
-          notes: notes || undefined
+          notes: notes || undefined,
+          eco_tax_vat_rate: ecoTaxVatRate
         }
 
         await updateOrderWithItems(orderId, updateData, itemsData)
@@ -557,6 +559,7 @@ export function SalesOrderFormModal({
           billing_address: billingAddress ? { address: billingAddress } : undefined,
           payment_terms: autoPaymentTerms || undefined,
           notes: notes || undefined,
+          eco_tax_vat_rate: ecoTaxVatRate,
           items: itemsData
         }
 
