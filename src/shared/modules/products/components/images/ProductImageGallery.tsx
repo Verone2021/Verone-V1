@@ -8,6 +8,9 @@ import { Badge } from '@/components/ui/badge';
 import { cn } from '@/lib/utils';
 import { useProductImages } from '@/hooks/use-product-images';
 import { ProductImageViewerModal } from './ProductImageViewer';
+import { Database } from '@/types/database';
+
+type ProductImage = Database['public']['Tables']['product_images']['Row'];
 
 interface ProductImageGalleryProps {
   productId: string;
@@ -64,7 +67,7 @@ export function ProductImageGallery({
   // ✨ Synchroniser l'index sélectionné avec l'image principale
   useEffect(() => {
     if (hasImages && images.length > 0) {
-      const primaryIndex = images.findIndex(img => img.is_primary);
+      const primaryIndex = images.findIndex((img: ProductImage) => img.is_primary);
       if (primaryIndex !== -1) {
         setSelectedImageIndex(primaryIndex);
       }
@@ -211,8 +214,8 @@ export function ProductImageGallery({
         </ButtonV2>
         <div className="text-[10px] text-gray-500">
           {images.length} image{images.length !== 1 ? 's' : ''} •
-          {images.filter(i => i.is_primary).length} principale •
-          {images.filter(i => !i.is_primary).length} galerie
+          {images.filter((i: ProductImage) => i.is_primary).length} principale •
+          {images.filter((i: ProductImage) => !i.is_primary).length} galerie
         </div>
       </div>
 

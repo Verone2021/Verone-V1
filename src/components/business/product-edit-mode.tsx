@@ -16,7 +16,7 @@ import { SampleRequirementSection } from './sample-requirement-section'
 import { CategoryHierarchyModal } from './categorize-modal'
 import { ProductCharacteristicsModal } from '@/shared/modules/products/components/forms'
 import { ProductDescriptionsModal } from '@/shared/modules/products/components/forms'
-import { ProductImagesModal } from './product-images-modal'
+import { ProductImagesModal } from '@/shared/modules/products/components/forms'
 
 interface ProductEditModeProps {
   product: any
