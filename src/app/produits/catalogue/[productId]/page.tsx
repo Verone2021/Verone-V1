@@ -33,7 +33,7 @@ import {
 } from '@/components/ui/dialog';
 import { ProductDetailAccordion } from '@/shared/modules/products/components/display';
 import { ProductInfoSection } from '@/shared/modules/products/components/display';
-import { ProductVariantsGrid } from '@/components/business/product-variants-grid';
+import { ProductVariantsGrid } from '@/shared/modules/products/components/display';
 import { SampleRequirementSection } from '@/components/business/sample-requirement-section';
 import { SupplierVsPricingEditSection } from '@/components/business/supplier-vs-pricing-edit-section';
 import { StockEditSection } from '@/components/business/stock-edit-section';
