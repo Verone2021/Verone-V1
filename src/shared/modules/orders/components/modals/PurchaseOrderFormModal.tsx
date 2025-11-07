@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect, useMemo, useCallback } from 'react';
 import { Plus } from 'lucide-react';
 import { ButtonV2 } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -33,6 +33,7 @@ import { SupplierSelector } from './supplier-selector';
 import { AddProductToOrderModal } from './add-product-to-order-modal';
 import { EditableOrderItemRow } from './editable-order-item-row';
 import { EcoTaxVatInput } from '@/components/forms/eco-tax-vat-input';
+import { UniversalProductSelectorV2, SelectedProduct } from '@/components/business/universal-product-selector-v2';
 import { useOrganisations, Organisation } from '@/shared/modules/organisations/hooks';
 import { useOrderItems, CreateOrderItemData } from '@/shared/modules/orders/hooks';
 import {
@@ -110,7 +111,7 @@ export function PurchaseOrderFormModal({
   );
 
   // Modal ajout produit
-  const [showAddProductModal, setShowAddProductModal] = useState(false);
+  const [showProductSelector, setShowProductSelector] = useState(false);
 
   // Hooks
   const {
@@ -190,6 +191,9 @@ export function PurchaseOrderFormModal({
 
   const totalTTC = totalHT * 1.2; // TVA 20%
 
+  // Memoize excludeProductIds pour éviter re-renders infinis
+  const excludeProductIds = useMemo(() => items.map(item => item.product_id), [items]);
+
   // Gérer changement fournisseur
   const handleSupplierChange = async (supplierId: string | null) => {
     setSelectedSupplierId(supplierId || '');
@@ -208,10 +212,9 @@ export function PurchaseOrderFormModal({
     });
   };
 
-  // Handler ajout produit (via modal universel)
-  const handleAddProduct = async (data: CreateOrderItemData) => {
+  // Handler sélection produits depuis UniversalProductSelectorV2
+  const handleProductsSelect = async (selectedProducts: SelectedProduct[]) => {
     if (!isEditMode) {
-      // Mode création : impossible d'ajouter avant création commande
       toast({
         variant: 'destructive',
         title: "Impossible d'ajouter un produit",
@@ -221,19 +224,33 @@ export function PurchaseOrderFormModal({
     }
 
     try {
-      await addItem(data);
-      setShowAddProductModal(false);
+      // Ajouter chaque produit sélectionné
+      for (const product of selectedProducts) {
+        const itemData: CreateOrderItemData = {
+          product_id: product.id,
+          quantity: product.quantity || 1,
+          unit_price_ht: product.unit_price || 0,
+          discount_percentage: product.discount_percentage || 0,
+          eco_tax: 0, // TODO: Récupérer eco_tax du produit
+          notes: product.notes || ''
+        };
+
+        await addItem(itemData);
+      }
+
+      setShowProductSelector(false);
+
       toast({
-        title: '✅ Produit ajouté',
-        description: 'Le produit a été ajouté à la commande.',
+        title: '✅ Produits ajoutés',
+        description: `${selectedProducts.length} produit(s) ajouté(s) à la commande.`,
       });
     } catch (error) {
-      console.error('❌ Erreur ajout produit:', error);
+      console.error('❌ Erreur ajout produits:', error);
       toast({
         variant: 'destructive',
         title: 'Erreur',
         description:
-          error instanceof Error ? error.message : 'Erreur ajout produit',
+          error instanceof Error ? error.message : 'Erreur ajout produits',
       });
     }
   };
@@ -498,10 +515,10 @@ export function PurchaseOrderFormModal({
                       <ButtonV2
                         type="button"
                         variant="outline"
-                        onClick={() => setShowAddProductModal(true)}
+                        onClick={() => setShowProductSelector(true)}
                       >
                         <Plus className="h-4 w-4 mr-2" />
-                        Ajouter un produit
+                        Ajouter des produits
                       </ButtonV2>
                     )}
                   </div>
@@ -602,13 +619,20 @@ export function PurchaseOrderFormModal({
         </DialogContent>
       </Dialog>
 
-      {/* Modal Ajout Produit Universel */}
-      {isEditMode && (
-        <AddProductToOrderModal
-          open={showAddProductModal}
-          onClose={() => setShowAddProductModal(false)}
-          orderType="purchase"
-          onAdd={handleAddProduct}
+      {/* Modal UniversalProductSelectorV2 */}
+      {isEditMode && showProductSelector && (
+        <UniversalProductSelectorV2
+          open={showProductSelector}
+          onClose={() => setShowProductSelector(false)}
+          onSelect={handleProductsSelect}
+          mode="multi"
+          context="orders"
+          title="Sélectionner des produits pour la commande"
+          description="Choisissez les produits à ajouter. Vous pourrez ajuster quantités et prix après sélection."
+          excludeProductIds={excludeProductIds}
+          showImages={true}
+          showQuantity={true}
+          showPricing={true}
         />
       )}
     </>

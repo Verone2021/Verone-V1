@@ -1,7 +1,7 @@
 'use client'
 
-import { useState, useEffect } from 'react'
-import { Plus, X, Search, AlertTriangle } from 'lucide-react'
+import { useState, useEffect, useMemo } from 'react'
+import { Plus, X, Search, AlertTriangle, Trash2 } from 'lucide-react'
 import { ButtonV2 } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
@@ -21,6 +21,8 @@ import { formatCurrency } from '@/lib/utils'
 import { AddressInput } from '@/shared/modules/common/components/address/AddressInput'
 import { EcoTaxVatInput } from '@/components/forms/eco-tax-vat-input'
 import { createClient } from '@/lib/supabase/client'
+import { UniversalProductSelectorV2, SelectedProduct } from '@/components/business/universal-product-selector-v2'
+import { useToast } from '@/shared/modules/common/hooks'
 
 interface OrderItem {
   id: string
@@ -88,17 +90,13 @@ export function SalesOrderFormModal({
 
   // Items management
   const [items, setItems] = useState<OrderItem[]>([])
-  const [showProductSearch, setShowProductSearch] = useState(false)
-  const [productSearchTerm, setProductSearchTerm] = useState('')
+  const [showProductSelector, setShowProductSelector] = useState(false)
   const [stockWarnings, setStockWarnings] = useState<string[]>([])
 
-  // Stock disponible par produit (pour la modal de sélection)
-  const [productsAvailableStock, setProductsAvailableStock] = useState<Map<string, number>>(new Map())
-
   // Hooks
-  const { products } = useProducts({ search: productSearchTerm })
   const { createOrder, updateOrderWithItems, fetchOrder } = useSalesOrders()
   const { getAvailableStock } = useStockMovements()
+  const { toast } = useToast()
 
   // Charger la commande existante en mode édition
   const loadExistingOrder = async (orderIdToLoad: string) => {
@@ -208,32 +206,6 @@ export function SalesOrderFormModal({
     }
   }, [open, mode, orderId])
 
-  // Effet : charger le stock disponible de chaque produit dans la modal de sélection
-  useEffect(() => {
-    if (showProductSearch && products.length > 0) {
-      const loadProductsStock = async () => {
-        const stockMap = new Map<string, number>()
-
-        // Charger le stock disponible pour chaque produit
-        await Promise.all(
-          products.map(async (product) => {
-            try {
-              const stockData = await getAvailableStock(product.id)
-              stockMap.set(product.id, stockData?.stock_available || 0)
-            } catch (error) {
-              console.error(`Erreur chargement stock pour ${product.sku}:`, error)
-              stockMap.set(product.id, 0)
-            }
-          })
-        )
-
-        setProductsAvailableStock(stockMap)
-      }
-
-      loadProductsStock()
-    }
-  }, [showProductSearch, products, getAvailableStock])
-
   // Calculs totaux (inclut eco_tax - Migration eco_tax 2025-10-31)
   const totalHT = items.reduce((sum, item) => {
     const itemSubtotal = item.quantity * item.unit_price_ht * (1 - (item.discount_percentage || 0) / 100)
@@ -248,6 +220,9 @@ export function SalesOrderFormModal({
   }, 0)
 
   const totalTTC = totalHT + totalTVA
+
+  // Memoize excludeProductIds pour éviter re-renders infinis
+  const excludeProductIds = useMemo(() => items.map(item => item.product_id), [items])
 
   // Gérer le changement de client
   const handleCustomerChange = (customer: UnifiedCustomer | null) => {
@@ -415,81 +390,80 @@ export function SalesOrderFormModal({
     }
   }
 
-  const addProduct = async (product: any) => {
-    const existingItem = items.find(item => item.product_id === product.id)
+  // Handler sélection produits depuis UniversalProductSelectorV2
+  const handleProductsSelect = async (selectedProducts: SelectedProduct[]) => {
+    try {
+      const newItems: OrderItem[] = []
 
-    if (existingItem) {
-      // Augmenter la quantité si le produit existe déjà
-      const newQuantity = existingItem.quantity + 1
+      for (const product of selectedProducts) {
+        // Vérifier si produit déjà dans la liste
+        const existingItem = items.find(item => item.product_id === product.id)
 
-      // Recalculer le prix avec la nouvelle quantité (paliers!)
-      const pricing = await calculateProductPrice(product.id, newQuantity)
+        if (existingItem) {
+          // Ignorer si déjà présent (UniversalProductSelectorV2 exclut déjà via excludeProductIds)
+          continue
+        }
 
-      // Utiliser minimumSellingPrice comme fallback si pricing.unit_price_ht est 0 ou null
-      const finalPrice = pricing.unit_price_ht > 0
-        ? pricing.unit_price_ht
-        : (product.minimumSellingPrice || 0)
+        // Charger stock disponible
+        const stockData = await getAvailableStock(product.id)
 
-      const finalOriginalPrice = pricing.original_price_ht > 0
-        ? pricing.original_price_ht
-        : (product.minimumSellingPrice || 0)
+        // Calculer pricing V2 avec quantité du modal
+        const quantity = product.quantity || 1
+        const pricing = await calculateProductPrice(product.id, quantity)
 
-      const updatedItems = items.map(item =>
-        item.product_id === product.id
-          ? {
-              ...item,
-              quantity: newQuantity,
-              unit_price_ht: finalPrice,
-              discount_percentage: pricing.discount_percentage,
-              pricing_source: pricing.pricing_source,
-              original_price_ht: finalOriginalPrice,
-              auto_calculated: pricing.auto_calculated || (finalPrice === product.minimumSellingPrice)
-            }
-          : item
-      )
-      setItems(updatedItems)
-      await checkAllStockAvailability(updatedItems)
-    } else {
-      // Ajouter un nouvel item avec pricing V2
-      const stockData = await getAvailableStock(product.id)
-      const pricing = await calculateProductPrice(product.id, 1)
+        // Fallback sur prix catalogue si pricing V2 échoue
+        const finalPrice = pricing.unit_price_ht > 0
+          ? pricing.unit_price_ht
+          : (product.unit_price || 0)
 
-      // Utiliser minimumSellingPrice comme fallback si pricing.unit_price_ht est 0 ou null
-      const finalPrice = pricing.unit_price_ht > 0
-        ? pricing.unit_price_ht
-        : (product.minimumSellingPrice || 0)
+        const finalOriginalPrice = pricing.original_price_ht > 0
+          ? pricing.original_price_ht
+          : (product.unit_price || 0)
 
-      const finalOriginalPrice = pricing.original_price_ht > 0
-        ? pricing.original_price_ht
-        : (product.minimumSellingPrice || 0)
-
-      const newItem: OrderItem = {
-        id: Date.now().toString(),
-        product_id: product.id,
-        quantity: 1,
-        unit_price_ht: finalPrice,
-        tax_rate: 0.20,         // TVA 20% par défaut
-        discount_percentage: pricing.discount_percentage,
-        eco_tax: (product as any).eco_tax_default || 0,  // Éco-taxe depuis produit (cast car types non à jour)
-        product: {
-          id: product.id,
-          name: product.name,
-          sku: product.sku,
-          primary_image_url: product.primary_image_url,
-          stock_quantity: product.stock_quantity,
-          eco_tax_default: (product as any).eco_tax_default || 0  // Cast car types Supabase non à jour
-        },
-        availableStock: stockData?.stock_available || 0,
-        pricing_source: pricing.pricing_source,
-        original_price_ht: finalOriginalPrice,
-        auto_calculated: pricing.auto_calculated || (finalPrice === product.minimumSellingPrice)
+        const newItem: OrderItem = {
+          id: `temp-${Date.now()}-${product.id}`,
+          product_id: product.id,
+          quantity: quantity,
+          unit_price_ht: finalPrice,
+          tax_rate: 0.20,
+          discount_percentage: product.discount_percentage || pricing.discount_percentage,
+          eco_tax: 0, // TODO: Récupérer eco_tax du produit
+          notes: product.notes || '',
+          product: {
+            id: product.id,
+            name: product.name,
+            sku: product.sku || '',
+            primary_image_url: product.product_images?.[0]?.public_url,
+            stock_quantity: product.stock_real,
+            eco_tax_default: 0
+          },
+          availableStock: stockData?.stock_available || 0,
+          pricing_source: pricing.pricing_source,
+          original_price_ht: finalOriginalPrice,
+          auto_calculated: pricing.auto_calculated || (finalPrice === (product.unit_price || 0))
+        }
+        newItems.push(newItem)
       }
-      const updatedItems = [...items, newItem]
+
+      // Ajouter tous les nouveaux items
+      const updatedItems = [...items, ...newItems]
       setItems(updatedItems)
       await checkAllStockAvailability(updatedItems)
+
+      setShowProductSelector(false)
+
+      toast({
+        title: 'Produits ajoutés',
+        description: `${newItems.length} produit(s) ajouté(s) à la commande`
+      })
+    } catch (error) {
+      console.error('Erreur ajout produits:', error)
+      toast({
+        title: 'Erreur',
+        description: 'Impossible d\'ajouter les produits',
+        variant: 'destructive'
+      })
     }
-    setShowProductSearch(false)
-    setProductSearchTerm('')
   }
 
   const updateItem = async (itemId: string, field: keyof OrderItem, value: any) => {
@@ -727,11 +701,11 @@ export function SalesOrderFormModal({
               <ButtonV2
                 type="button"
                 variant="outline"
-                onClick={() => setShowProductSearch(true)}
+                onClick={() => setShowProductSelector(true)}
                 disabled={loading}
               >
                 <Plus className="h-4 w-4 mr-2" />
-                Ajouter un produit
+                Ajouter des produits
               </ButtonV2>
             </CardHeader>
             <CardContent>
@@ -755,7 +729,7 @@ export function SalesOrderFormModal({
                         <TableHead>Total HT</TableHead>
                         <TableHead>Stock</TableHead>
                         <TableHead>Source</TableHead>
-                        <TableHead></TableHead>
+                        <TableHead>Actions</TableHead>
                       </TableRow>
                     </TableHeader>
                     <TableBody>
@@ -890,8 +864,10 @@ export function SalesOrderFormModal({
                                 size="sm"
                                 onClick={() => removeItem(item.id)}
                                 disabled={loading}
+                                title="Supprimer"
+                                className="text-red-600 hover:text-red-700"
                               >
-                                <X className="h-4 w-4" />
+                                <Trash2 className="h-4 w-4" />
                               </ButtonV2>
                             </TableCell>
                           </TableRow>
@@ -944,86 +920,22 @@ export function SalesOrderFormModal({
           </div>
         </form>
 
-        {/* Modal de recherche de produits */}
-        <Dialog open={showProductSearch} onOpenChange={setShowProductSearch}>
-          <DialogContent className="max-w-4xl max-h-[80vh] overflow-y-auto">
-            <DialogHeader>
-              <DialogTitle>Rechercher un produit</DialogTitle>
-            </DialogHeader>
-
-            <div className="space-y-4">
-              <div className="flex gap-2">
-                <div className="relative flex-1">
-                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
-                  <Input
-                    placeholder="Rechercher par nom ou SKU..."
-                    value={productSearchTerm}
-                    onChange={(e) => setProductSearchTerm(e.target.value)}
-                    className="pl-10"
-                  />
-                </div>
-              </div>
-
-              <div className="overflow-x-auto">
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead>Produit</TableHead>
-                      <TableHead>SKU</TableHead>
-                      <TableHead>Prix HT</TableHead>
-                      <TableHead>Stock</TableHead>
-                      <TableHead></TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {products.map((product) => (
-                      <TableRow key={product.id}>
-                        <TableCell>
-                          <div className="flex items-center gap-3">
-                            {product.primary_image_url && (
-                              <img
-                                src={product.primary_image_url}
-                                alt={product.name}
-                                className="w-10 h-10 object-cover rounded"
-                              />
-                            )}
-                            <div>
-                              <p className="font-medium">{product.name}</p>
-                            </div>
-                          </div>
-                        </TableCell>
-                        <TableCell>{product.sku}</TableCell>
-                        <TableCell>{formatCurrency(product.minimumSellingPrice)}</TableCell>
-                        <TableCell>
-                          {(() => {
-                            const availableStock = productsAvailableStock.get(product.id)
-                            if (availableStock === undefined) {
-                              // Stock en cours de chargement
-                              return <Badge variant="secondary">...</Badge>
-                            }
-                            return (
-                              <Badge variant={availableStock > 0 ? 'secondary' : 'secondary'}>
-                                {availableStock}
-                              </Badge>
-                            )
-                          })()}
-                        </TableCell>
-                        <TableCell>
-                          <ButtonV2
-                            size="sm"
-                            onClick={() => addProduct(product)}
-                          >
-                            Ajouter
-                          </ButtonV2>
-                        </TableCell>
-                      </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
-              </div>
-            </div>
-          </DialogContent>
-        </Dialog>
+        {/* Modal UniversalProductSelectorV2 */}
+        {showProductSelector && (
+          <UniversalProductSelectorV2
+            open={showProductSelector}
+            onClose={() => setShowProductSelector(false)}
+            onSelect={handleProductsSelect}
+            mode="multi"
+            context="orders"
+            title="Sélectionner des produits pour la commande"
+            description="Choisissez les produits à ajouter. Vous pourrez ajuster quantités et prix après sélection."
+            excludeProductIds={excludeProductIds}
+            showImages={true}
+            showQuantity={true}
+            showPricing={false}
+          />
+        )}
       </DialogContent>
     </Dialog>
   )
