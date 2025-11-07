@@ -1,26 +1,35 @@
-'use client'
+'use client';
 
-import React from 'react'
-import { LucideIcon } from 'lucide-react'
-import { ArrowUp, ArrowDown } from 'lucide-react'
-import { colors, componentShadows } from '@/lib/design-system'
-import { cn } from '@/lib/utils'
+import React from 'react';
+
+import type { LucideIcon } from 'lucide-react';
+import { ArrowUp, ArrowDown } from 'lucide-react';
+
+import { colors, componentShadows } from '@/lib/design-system';
+import { cn } from '@/lib/utils';
 
 export interface ElegantKpiCardProps {
-  label: string
-  value: string | number
-  icon: LucideIcon
+  label: string;
+  value: string | number;
+  icon: LucideIcon;
   trend?: {
-    value: number
-    isPositive: boolean
-  }
-  description?: string
-  onClick?: () => void
-  className?: string
+    value: number;
+    isPositive: boolean;
+  };
+  description?: string;
+  onClick?: () => void;
+  className?: string;
 }
 
 /**
+ * @deprecated Utilisez KPICardUnified variant="elegant" à la place
+ * @see src/components/ui/kpi-card-unified.tsx
+ * @see scripts/codemods/MIGRATION-GUIDE.md
+ *
  * ElegantKpiCard - KPI Card élégante (shadcn/ui inspired)
+ *
+ * ⚠️ DEPRECATED: Ce composant sera supprimé le 2025-11-21
+ * Migration: ElegantKpiCard → KPICardUnified variant="elegant"
  *
  * Améliorations vs MediumKpiCard :
  * - Plus grande : hauteur ~96px (vs 65px)
@@ -43,6 +52,13 @@ export function ElegantKpiCard({
   onClick,
   className,
 }: ElegantKpiCardProps) {
+  // Deprecation warning en développement
+  if (process.env.NODE_ENV === 'development') {
+    console.warn(
+      '⚠️ DEPRECATED: ElegantKpiCard sera supprimé le 2025-11-21. Utilisez KPICardUnified variant="elegant" à la place. Voir scripts/codemods/MIGRATION-GUIDE.md'
+    );
+  }
+
   return (
     <div
       onClick={onClick}
@@ -66,11 +82,7 @@ export function ElegantKpiCard({
         >
           {label}
         </span>
-        <Icon
-          size={18}
-          className="text-neutral-400"
-          strokeWidth={2}
-        />
+        <Icon size={18} className="text-neutral-400" strokeWidth={2} />
       </div>
 
       {/* Value + Trend */}
@@ -94,8 +106,12 @@ export function ElegantKpiCard({
                 : 'bg-danger-50 text-danger-700'
             )}
             style={{
-              backgroundColor: trend.isPositive ? colors.success[50] : colors.danger[50],
-              color: trend.isPositive ? colors.success[700] : colors.danger[700],
+              backgroundColor: trend.isPositive
+                ? colors.success[50]
+                : colors.danger[50],
+              color: trend.isPositive
+                ? colors.success[700]
+                : colors.danger[700],
             }}
           >
             {trend.isPositive ? (
@@ -118,5 +134,5 @@ export function ElegantKpiCard({
         </p>
       )}
     </div>
-  )
+  );
 }

@@ -1,13 +1,26 @@
-'use client'
+'use client';
 
-import React from 'react'
-import { LucideIcon } from 'lucide-react'
-import { cva, type VariantProps } from 'class-variance-authority'
-import { colors, componentSpacing, componentShadows } from '@/lib/design-system'
-import { cn } from '@/lib/utils'
+import React from 'react';
+
+import { cva, type VariantProps } from 'class-variance-authority';
+import type { LucideIcon } from 'lucide-react';
+
+import {
+  colors,
+  componentSpacing,
+  componentShadows,
+} from '@/lib/design-system';
+import { cn } from '@/lib/utils';
 
 /**
+ * @deprecated Utilisez ButtonUnified à la place
+ * @see src/components/ui/button-unified.tsx
+ * @see scripts/codemods/MIGRATION-GUIDE.md
+ *
  * ActionButton - Bouton d'action rapide optimisé (60x60px)
+ *
+ * ⚠️ DEPRECATED: Ce composant sera supprimé le 2025-11-21
+ * Migration: ActionButton → ButtonUnified
  *
  * Améliorations vs version précédente (80x80px) :
  * - Taille réduite : 60x60px par défaut (vs 80x80px)
@@ -56,14 +69,15 @@ const actionButtonVariants = cva(
       color: 'primary',
     },
   }
-)
+);
 
-export interface ActionButtonProps extends VariantProps<typeof actionButtonVariants> {
-  label: string
-  icon: LucideIcon
-  onClick?: () => void
-  disabled?: boolean
-  className?: string
+export interface ActionButtonProps
+  extends VariantProps<typeof actionButtonVariants> {
+  label: string;
+  icon: LucideIcon;
+  onClick?: () => void;
+  disabled?: boolean;
+  className?: string;
 }
 
 export function ActionButton({
@@ -76,6 +90,12 @@ export function ActionButton({
   disabled = false,
   className,
 }: ActionButtonProps) {
+  // Deprecation warning en développement
+  if (process.env.NODE_ENV === 'development') {
+    console.warn(
+      '⚠️ DEPRECATED: ActionButton sera supprimé le 2025-11-21. Utilisez ButtonUnified à la place. Voir scripts/codemods/MIGRATION-GUIDE.md'
+    );
+  }
   // Couleurs solides du design system (sans gradients)
   const colorMap = {
     primary: {
@@ -103,9 +123,9 @@ export function ActionButton({
       hover: colors.accent[600],
       active: colors.accent[700],
     },
-  }
+  };
 
-  const colorScheme = colorMap[color || 'primary']
+  const colorScheme = colorMap[color || 'primary'];
 
   // Tailles d'icônes selon variante et taille
   const iconSizeMap = {
@@ -119,9 +139,9 @@ export function ActionButton({
       md: 16,
       lg: 18,
     },
-  }
+  };
 
-  const iconSize = iconSizeMap[variant || 'square'][size || 'md']
+  const iconSize = iconSizeMap[variant || 'square'][size || 'md'];
 
   // Taille de texte selon variante
   const textSizeMap = {
@@ -135,9 +155,9 @@ export function ActionButton({
       md: 'text-sm',
       lg: 'text-base',
     },
-  }
+  };
 
-  const textSize = textSizeMap[variant || 'square'][size || 'md']
+  const textSize = textSizeMap[variant || 'square'][size || 'md'];
 
   return (
     <button
@@ -153,24 +173,24 @@ export function ActionButton({
         backgroundColor: disabled ? colors.neutral[400] : colorScheme.bg,
         boxShadow: disabled ? 'none' : componentShadows.button,
       }}
-      onMouseEnter={(e) => {
+      onMouseEnter={e => {
         if (!disabled) {
-          e.currentTarget.style.backgroundColor = colorScheme.hover
+          e.currentTarget.style.backgroundColor = colorScheme.hover;
         }
       }}
-      onMouseLeave={(e) => {
+      onMouseLeave={e => {
         if (!disabled) {
-          e.currentTarget.style.backgroundColor = colorScheme.bg
+          e.currentTarget.style.backgroundColor = colorScheme.bg;
         }
       }}
-      onMouseDown={(e) => {
+      onMouseDown={e => {
         if (!disabled) {
-          e.currentTarget.style.backgroundColor = colorScheme.active
+          e.currentTarget.style.backgroundColor = colorScheme.active;
         }
       }}
-      onMouseUp={(e) => {
+      onMouseUp={e => {
         if (!disabled) {
-          e.currentTarget.style.backgroundColor = colorScheme.hover
+          e.currentTarget.style.backgroundColor = colorScheme.hover;
         }
       }}
     >
@@ -191,5 +211,5 @@ export function ActionButton({
         {label}
       </span>
     </button>
-  )
+  );
 }

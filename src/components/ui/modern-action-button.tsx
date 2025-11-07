@@ -1,6 +1,8 @@
-'use client'
+'use client';
 
-import React from 'react'
+import React from 'react';
+
+import type { LucideIcon } from 'lucide-react';
 import {
   Edit,
   Archive,
@@ -11,33 +13,35 @@ import {
   Copy,
   Check,
   X,
-  LucideIcon,
   Loader2,
-} from 'lucide-react'
-import { ButtonV2, ButtonV2Props } from './button'
-import { cn } from '@/lib/utils'
+} from 'lucide-react';
+
+import { cn } from '@/lib/utils';
+
+import type { ButtonV2Props } from './button';
+import { ButtonV2 } from './button';
 
 /**
  * Type d'action prédéfinie pour ModernActionButton
  */
 export type ActionType =
-  | 'edit'      // Secondary (bordure noire) + Edit icon
-  | 'archive'   // Warning (orange #ff9b3e) + Archive icon
-  | 'delete'    // Danger (rouge #ff4d6b) + Trash2 icon
-  | 'view'      // Ghost + Eye icon
-  | 'download'  // Secondary + Download icon
-  | 'upload'    // Primary (noir) + Upload icon
-  | 'copy'      // Ghost + Copy icon
-  | 'approve'   // Success (vert #38ce3c) + Check icon
-  | 'reject'    // Danger (rouge) + X icon
+  | 'edit' // Secondary (bordure noire) + Edit icon
+  | 'archive' // Warning (orange #ff9b3e) + Archive icon
+  | 'delete' // Danger (rouge #ff4d6b) + Trash2 icon
+  | 'view' // Ghost + Eye icon
+  | 'download' // Secondary + Download icon
+  | 'upload' // Primary (noir) + Upload icon
+  | 'copy' // Ghost + Copy icon
+  | 'approve' // Success (vert #38ce3c) + Check icon
+  | 'reject'; // Danger (rouge) + X icon
 
 /**
  * Configuration d'une action (variant + icon + label)
  */
 interface ActionConfig {
-  variant: ButtonV2Props['variant']
-  icon: LucideIcon
-  defaultLabel: string
+  variant: ButtonV2Props['variant'];
+  icon: LucideIcon;
+  defaultLabel: string;
 }
 
 /**
@@ -89,30 +93,37 @@ const ACTION_CONFIGS: Record<ActionType, ActionConfig> = {
     icon: X,
     defaultLabel: 'Rejeter',
   },
-}
+};
 
 /**
  * Props pour ModernActionButton
  */
 export interface ModernActionButtonProps {
   /** Type d'action prédéfinie */
-  action: ActionType
+  action: ActionType;
   /** Callback au clic */
-  onClick?: () => void
+  onClick?: () => void;
   /** État désactivé */
-  disabled?: boolean
+  disabled?: boolean;
   /** État loading (affiche spinner) */
-  loading?: boolean
+  loading?: boolean;
   /** Taille du bouton */
-  size?: 'sm' | 'md' | 'lg'
+  size?: 'sm' | 'md' | 'lg';
   /** Classes CSS additionnelles */
-  className?: string
+  className?: string;
   /** Override du label par défaut */
-  children?: React.ReactNode
+  children?: React.ReactNode;
 }
 
 /**
+ * @deprecated Utilisez ButtonUnified à la place
+ * @see src/components/ui/button-unified.tsx
+ * @see scripts/codemods/MIGRATION-GUIDE.md
+ *
  * ModernActionButton - Bouton d'action réutilisable Design System V2
+ *
+ * ⚠️ DEPRECATED: Ce composant sera supprimé le 2025-11-21
+ * Migration: ModernActionButton → ButtonUnified
  *
  * 9 actions prédéfinies avec couleurs et icons cohérents :
  * - edit (secondary + Edit)
@@ -154,10 +165,17 @@ export function ModernActionButton({
   className,
   children,
 }: ModernActionButtonProps) {
-  const config = ACTION_CONFIGS[action]
+  // Deprecation warning en développement
+  if (process.env.NODE_ENV === 'development') {
+    console.warn(
+      '⚠️ DEPRECATED: ModernActionButton sera supprimé le 2025-11-21. Utilisez ButtonUnified à la place. Voir scripts/codemods/MIGRATION-GUIDE.md'
+    );
+  }
+
+  const config = ACTION_CONFIGS[action];
 
   // Label final : children override, sinon defaultLabel
-  const label = children || config.defaultLabel
+  const label = children || config.defaultLabel;
 
   return (
     <ButtonV2
@@ -178,10 +196,10 @@ export function ModernActionButton({
     >
       {label}
     </ButtonV2>
-  )
+  );
 }
 
 /**
  * Export default pour compatibilité
  */
-export default ModernActionButton
+export default ModernActionButton;
