@@ -1,6 +1,6 @@
 'use client';
 
-import { use, useState, useCallback, useEffect, useRef } from 'react';
+import { use, useState, useCallback, useEffect, useRef, useMemo } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import {
@@ -31,9 +31,13 @@ import { useVariantGroups } from '@/shared/modules/products/hooks';
 import { useToast } from '@/shared/modules/common/hooks';
 import Image from 'next/image';
 import { VariantGroupEditModal } from '@/shared/modules/products/components/modals/VariantGroupEditModal';
-import { VariantAddProductModal } from '@/shared/modules/products/components/modals/VariantAddProductModal';
 import { VariantCreationModal } from '@/shared/modules/products/components/modals/VariantCreationModal';
 import { EditProductVariantModal } from '@/shared/modules/products/components/modals/EditProductVariantModal';
+import { CreateProductInGroupModal } from '@/shared/modules/products/components/modals/CreateProductInGroupModal';
+import {
+  UniversalProductSelectorV2,
+  SelectedProduct,
+} from '@/components/business/universal-product-selector-v2';
 import type { VariantProduct } from '@/types/variant-groups';
 import {
   formatAttributesForDisplay,
@@ -239,6 +243,7 @@ export default function VariantGroupDetailPage({
     updateVariantGroup,
     createProductInGroup,
     updateProductInGroup,
+    addProductsToGroup,
     refetch,
   } = useVariantGroups();
   const { updateProductVariantAttribute } = useProductVariantEditing();
@@ -328,6 +333,53 @@ export default function VariantGroupDetailPage({
     // Recharger la page pour actualiser les données
     window.location.reload();
   };
+
+  // Handler pour ajout multiple produits
+  // Mémoiser excludeProductIds pour éviter re-renders
+  const excludeProductIds = useMemo(
+    () => variantGroup?.products?.map((p) => p.id) || [],
+    [variantGroup?.products]
+  );
+
+  const handleProductsSelect = useCallback(
+    async (products: SelectedProduct[]) => {
+      if (!variantGroup || products.length === 0) {
+        toast({
+          title: 'Aucun produit sélectionné',
+          description: 'Veuillez sélectionner au moins un produit',
+          variant: 'destructive',
+        });
+        return;
+      }
+
+      try {
+        const productIds = products.map(p => p.id);
+
+        const success = await addProductsToGroup({
+          variant_group_id: variantGroup.id,
+          product_ids: productIds,
+        });
+
+        if (success) {
+          toast({
+            title: 'Produits ajoutés',
+            description: `${products.length} produit(s) ajouté(s) au groupe "${variantGroup.name}"`,
+          });
+
+          await refetch();
+          setShowAddProductsModal(false);
+        }
+      } catch (error) {
+        console.error('Erreur ajout produits au groupe:', error);
+        toast({
+          title: 'Erreur',
+          description: "Erreur lors de l'ajout des produits",
+          variant: 'destructive',
+        });
+      }
+    },
+    [variantGroup?.id, variantGroup?.name, addProductsToGroup, refetch, toast]
+  );
 
   // Édition inline du nom
   const handleStartEditName = useCallback(() => {
@@ -836,13 +888,20 @@ export default function VariantGroupDetailPage({
         />
       )}
 
-      {/* Modal ajout produits existants */}
+      {/* Modal ajout produits existants - UniversalProductSelectorV2 */}
       {showAddProductsModal && variantGroup && (
-        <AddProductsToGroupModal
-          isOpen={showAddProductsModal}
+        <UniversalProductSelectorV2
+          open={showAddProductsModal}
           onClose={() => setShowAddProductsModal(false)}
-          variantGroup={variantGroup}
-          onProductsAdded={handleModalSubmit}
+          onSelect={handleProductsSelect}
+          mode="multi"
+          context="variants"
+          title={`Ajouter des produits au groupe "${variantGroup.name}"`}
+          description="Sélectionnez les produits à ajouter comme variantes de ce groupe"
+          excludeProductIds={excludeProductIds}
+          showImages={true}
+          showQuantity={false}
+          showPricing={false}
         />
       )}
 

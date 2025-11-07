@@ -600,7 +600,8 @@ export function UniversalProductSelectorV2({
       setSourcingFilter(null);
       setCreationModeFilter(null);
     }
-  }, [open, selectedProducts]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [open]);
 
   // ============================================================================
   // HANDLERS
