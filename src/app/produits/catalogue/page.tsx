@@ -1,8 +1,10 @@
 'use client';
 
 import { useState, useMemo, useEffect } from 'react';
-import { useRouter } from 'next/navigation';
+
 import Image from 'next/image';
+import { useRouter } from 'next/navigation';
+
 import {
   Search,
   Filter,
@@ -13,28 +15,25 @@ import {
   Package,
   Zap,
 } from 'lucide-react';
-import { Button } from '@/components/ui/button';
-import { ProductCardV2 as ProductCard } from '@/components/business/product-card-v2';
+
 import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import { ViewModeToggle } from '@/components/ui/view-mode-toggle';
 import { cn } from '@/lib/utils';
 import { checkSLOCompliance, debounce } from '@/lib/utils';
-import { useCatalogue, Product, Category } from '@/shared/modules/categories/hooks';
-import { useProductImages } from '@/shared/modules/products/hooks';
+import { CategoryHierarchyFilterV2 } from '@/shared/modules/categories/components/filters/CategoryHierarchyFilterV2';
+import type { Product } from '@/shared/modules/categories/hooks';
+import { useCatalogue, Category } from '@/shared/modules/categories/hooks';
 import { useFamilies } from '@/shared/modules/categories/hooks';
 import { useCategories } from '@/shared/modules/categories/hooks';
 import { useSubcategories } from '@/shared/modules/categories/hooks';
-import { CategoryHierarchyFilterV2 } from '@/components/business/category-hierarchy-filter-v2';
+import { ProductCardV2 as ProductCard } from '@/shared/modules/products/components/cards/ProductCardV2';
+import { useProductImages } from '@/shared/modules/products/hooks';
 // Nouveaux composants UX/UI 2025
-import { ModernActionButton } from '@/components/ui/modern-action-button';
-import {
-  CommandPaletteSearch,
-  SearchItem,
-} from '@/components/business/command-palette-search';
-import { ViewModeToggle } from '@/components/ui/view-mode-toggle';
-import {
-  FilterCombobox,
-  FilterOption,
-} from '@/components/business/filter-combobox';
+import type { FilterOption } from '@/shared/modules/ui/components/selectors/FilterCombobox';
+import { FilterCombobox } from '@/shared/modules/ui/components/selectors/FilterCombobox';
+import type { SearchItem } from '@/shared/modules/ui/components/utils/CommandPaletteSearch';
+import { CommandPaletteSearch } from '@/shared/modules/ui/components/utils/CommandPaletteSearch';
 // Interface Produit selon business rules - utilise maintenant celle du hook useCatalogue
 
 // Interface filtres - migration brand → supplier
