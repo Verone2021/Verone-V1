@@ -1,78 +1,107 @@
-'use client'
+'use client';
 
-import { useState, useEffect } from 'react'
-import { X } from 'lucide-react'
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog'
-import { ButtonV2 } from '@/components/ui/button'
-import { SalesOrder } from '@/shared/modules/orders/hooks'
-import { CarrierSelector } from './carrier-selector'
-import { ShipmentRecapModal, type ShipmentRecapData, type ShippingMethod } from './shipment-recap-modal'
-import { PacklinkShipmentForm } from './packlink-shipment-form'
-import { MondialRelayShipmentForm } from './mondial-relay-shipment-form'
-import { ChronotruckShipmentForm } from './chronotruck-shipment-form'
-import { ManualShipmentForm } from './manual-shipment-form'
-import { useShipments } from '@/shared/modules/orders/hooks'
+import { useState, useEffect } from 'react';
+
+import { X } from 'lucide-react';
+
+import { ButtonV2 } from '@/components/ui/button';
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog';
+import type { SalesOrder } from '@/shared/modules/orders/hooks';
+// TODO: Réactiver lors Phase 2+ (module logistics désactivé)
+// import { CarrierSelector } from './carrier-selector'
+// import { ShipmentRecapModal, type ShipmentRecapData, type ShippingMethod } from './shipment-recap-modal'
+// import { PacklinkShipmentForm } from './packlink-shipment-form'
+// import { MondialRelayShipmentForm } from './mondial-relay-shipment-form'
+// import { ChronotruckShipmentForm } from './chronotruck-shipment-form'
+// import { ManualShipmentForm } from './manual-shipment-form'
+type ShipmentRecapData = any;
+type ShippingMethod = string;
+const CarrierSelector = () => null;
+const ShipmentRecapModal: React.FC<{
+  open: boolean;
+  data: any;
+  onConfirm: () => Promise<void>;
+  onBack: () => void;
+  loading: boolean;
+}> = () => null;
+const PacklinkShipmentForm = () => null;
+const MondialRelayShipmentForm = () => null;
+const ChronotruckShipmentForm = () => null;
+const ManualShipmentForm = () => null;
+import { useShipments } from '@/shared/modules/orders/hooks';
 
 interface ShippingManagerModalProps {
-  order: SalesOrder
-  open: boolean
-  onClose: () => void
-  onSuccess?: () => void
+  order: SalesOrder;
+  open: boolean;
+  onClose: () => void;
+  onSuccess?: () => void;
 }
 
-type WorkflowStep = 'select' | 'form' | 'recap'
+type WorkflowStep = 'select' | 'form' | 'recap';
 
-export function ShippingManagerModal({ order, open, onClose, onSuccess }: ShippingManagerModalProps) {
+export function ShippingManagerModal({
+  order,
+  open,
+  onClose,
+  onSuccess,
+}: ShippingManagerModalProps) {
   // État workflow
-  const [step, setStep] = useState<WorkflowStep>('select')
-  const [selectedCarrier, setSelectedCarrier] = useState<ShippingMethod | null>(null)
-  const [recapData, setRecapData] = useState<ShipmentRecapData | null>(null)
+  const [step, setStep] = useState<WorkflowStep>('select');
+  const [selectedCarrier, setSelectedCarrier] = useState<ShippingMethod | null>(
+    null
+  );
+  const [recapData, setRecapData] = useState<ShipmentRecapData | null>(null);
 
   const {
     loading: shipmentsLoading,
     createPacklinkShipment,
-    createManualShipment
-  } = useShipments()
+    createManualShipment,
+  } = useShipments();
 
-  const [finalLoading, setFinalLoading] = useState(false)
+  const [finalLoading, setFinalLoading] = useState(false);
 
   // Reset tout à l'ouverture
   useEffect(() => {
     if (open) {
-      setStep('select')
-      setSelectedCarrier(null)
-      setRecapData(null)
+      setStep('select');
+      setSelectedCarrier(null);
+      setRecapData(null);
     }
-  }, [open])
+  }, [open]);
 
   // Sélection transporteur
   const handleCarrierSelect = (carrier: ShippingMethod) => {
-    setSelectedCarrier(carrier)
-    setStep('form')
-  }
+    setSelectedCarrier(carrier);
+    setStep('form');
+  };
 
   // Retour en arrière
   const handleBack = () => {
     if (step === 'recap') {
-      setStep('form')
-      setRecapData(null)
+      setStep('form');
+      setRecapData(null);
     } else if (step === 'form') {
-      setStep('select')
-      setSelectedCarrier(null)
+      setStep('select');
+      setSelectedCarrier(null);
     }
-  }
+  };
 
   // Passage au récapitulatif (callback depuis formulaires)
   const handleFormComplete = (data: ShipmentRecapData) => {
-    setRecapData(data)
-    setStep('recap')
-  }
+    setRecapData(data);
+    setStep('recap');
+  };
 
   // Validation finale et enregistrement
   const handleFinalConfirm = async () => {
-    if (!recapData || !selectedCarrier) return
+    if (!recapData || !selectedCarrier) return;
 
-    setFinalLoading(true)
+    setFinalLoading(true);
     try {
       // Préparer request générique
       const request = {
@@ -83,39 +112,39 @@ export function ShippingManagerModal({ order, open, onClose, onSuccess }: Shippi
           length_cm: p.length_cm || 0,
           width_cm: p.width_cm || 0,
           height_cm: p.height_cm || 0,
-          items: [] // TODO: affectation produits si besoin
+          items: [], // TODO: affectation produits si besoin
         })),
         costPaid: recapData.costPaid,
         costCharged: recapData.costCharged,
         carrierName: recapData.carrierName,
         tracking: recapData.trackingNumber,
         notes: recapData.notes,
-        metadata: recapData.metadata
-      }
+        metadata: recapData.metadata,
+      };
 
-      let result
+      let result;
 
       if (selectedCarrier === 'packlink') {
-        result = await createPacklinkShipment(request as any)
+        result = await createPacklinkShipment(request as any);
         if (result.success && result.labelUrl) {
-          window.open(result.labelUrl, '_blank')
+          window.open(result.labelUrl, '_blank');
         }
       } else {
         // Mondial Relay, Chronotruck, Manual utilisent createManualShipment
         // TODO: Créer createMondialRelayShipment et createChronotruckShipment spécifiques
-        result = await createManualShipment(request as any)
+        result = await createManualShipment(request as any);
       }
 
       if (result.success) {
-        onSuccess?.()
-        onClose()
+        onSuccess?.();
+        onClose();
       }
     } catch (error) {
-      console.error('Erreur création expédition:', error)
+      console.error('Erreur création expédition:', error);
     } finally {
-      setFinalLoading(false)
+      setFinalLoading(false);
     }
-  }
+  };
 
   // Rendu selon l'étape
   const renderContent = () => {
@@ -124,11 +153,13 @@ export function ShippingManagerModal({ order, open, onClose, onSuccess }: Shippi
       return (
         <div className="space-y-6">
           <CarrierSelector
-            selected={selectedCarrier}
-            onSelect={handleCarrierSelect}
+            {...({
+              selected: selectedCarrier,
+              onSelect: handleCarrierSelect,
+            } as any)}
           />
         </div>
-      )
+      );
     }
 
     // Étape 2: Formulaire spécifique transporteur
@@ -137,38 +168,46 @@ export function ShippingManagerModal({ order, open, onClose, onSuccess }: Shippi
         case 'packlink':
           return (
             <PacklinkShipmentForm
-              order={order}
-              onComplete={handleFormComplete}
-              onBack={handleBack}
+              {...({
+                order: order,
+                onComplete: handleFormComplete,
+                onBack: handleBack,
+              } as any)}
             />
-          )
+          );
 
         case 'mondial_relay':
           return (
             <MondialRelayShipmentForm
-              order={order}
-              onComplete={handleFormComplete}
-              onBack={handleBack}
+              {...({
+                order: order,
+                onComplete: handleFormComplete,
+                onBack: handleBack,
+              } as any)}
             />
-          )
+          );
 
         case 'chronotruck':
           return (
             <ChronotruckShipmentForm
-              order={order}
-              onComplete={handleFormComplete}
-              onBack={handleBack}
+              {...({
+                order: order,
+                onComplete: handleFormComplete,
+                onBack: handleBack,
+              } as any)}
             />
-          )
+          );
 
         case 'manual':
           return (
             <ManualShipmentForm
-              order={order}
-              onComplete={handleFormComplete}
-              onBack={handleBack}
+              {...({
+                order: order,
+                onComplete: handleFormComplete,
+                onBack: handleBack,
+              } as any)}
             />
-          )
+          );
 
         default:
           return (
@@ -177,27 +216,27 @@ export function ShippingManagerModal({ order, open, onClose, onSuccess }: Shippi
                 ❌ Transporteur non supporté : {selectedCarrier}
               </p>
             </div>
-          )
+          );
       }
     }
 
-    return null
-  }
+    return null;
+  };
 
   const getCarrierName = (): string => {
     switch (selectedCarrier) {
       case 'packlink':
-        return 'Packlink PRO'
+        return 'Packlink PRO';
       case 'mondial_relay':
-        return 'Mondial Relay'
+        return 'Mondial Relay';
       case 'chronotruck':
-        return 'Chronotruck'
+        return 'Chronotruck';
       case 'manual':
-        return 'Saisie manuelle'
+        return 'Saisie manuelle';
       default:
-        return ''
+        return '';
     }
-  }
+  };
 
   return (
     <>
@@ -225,9 +264,7 @@ export function ShippingManagerModal({ order, open, onClose, onSuccess }: Shippi
             </div>
           </DialogHeader>
 
-          <div className="mt-6">
-            {renderContent()}
-          </div>
+          <div className="mt-6">{renderContent()}</div>
         </DialogContent>
       </Dialog>
 
@@ -242,5 +279,5 @@ export function ShippingManagerModal({ order, open, onClose, onSuccess }: Shippi
         />
       )}
     </>
-  )
+  );
 }

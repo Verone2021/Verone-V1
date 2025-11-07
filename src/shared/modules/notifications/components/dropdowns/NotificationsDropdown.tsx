@@ -12,7 +12,20 @@
 
 'use client';
 
-import { Bell, Check, Trash2, CheckCheck, AlertCircle, CheckCircle, Info, ExternalLink } from 'lucide-react';
+import { formatDistanceToNow } from 'date-fns';
+import { fr } from 'date-fns/locale';
+import {
+  Bell,
+  Check,
+  Trash2,
+  CheckCheck,
+  AlertCircle,
+  CheckCircle,
+  Info,
+  ExternalLink,
+} from 'lucide-react';
+
+import { Badge } from '@/components/ui/badge';
 import { ButtonV2 } from '@/components/ui/button';
 import {
   DropdownMenu,
@@ -22,30 +35,34 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { Badge } from '@/components/ui/badge';
-import { useNotifications, type Notification } from '@/shared/modules/notifications/hooks';
-import { formatDistanceToNow } from 'date-fns';
-import { fr } from 'date-fns/locale';
-import { cn } from '@/lib/utils';
 import { spacing, colors } from '@/lib/design-system';
+import { cn } from '@/lib/utils';
+import {
+  useDatabaseNotifications,
+  type DatabaseNotification,
+} from '@/shared/modules/notifications/hooks';
 
 /**
  * Badge de sévérité - Style minimaliste Design System V2
  * Suppression des emojis, design professionnel
  */
-const SeverityBadge = ({ severity }: { severity: Notification['severity'] }) => {
+const SeverityBadge = ({
+  severity,
+}: {
+  severity: DatabaseNotification['severity'];
+}) => {
   const variants = {
     urgent: {
       className: 'bg-red-500/10 text-red-700 border border-red-200',
-      label: 'Urgent'
+      label: 'Urgent',
     },
     important: {
       className: 'bg-orange-500/10 text-orange-700 border border-orange-200',
-      label: 'Important'
+      label: 'Important',
     },
     info: {
       className: 'bg-blue-500/10 text-blue-700 border border-blue-200',
-      label: 'Info'
+      label: 'Info',
     },
   };
 
@@ -62,7 +79,13 @@ const SeverityBadge = ({ severity }: { severity: Notification['severity'] }) => 
  * Icône selon le type de notification - Lucide icons professionnels
  * Remplacement des emojis par des icônes React
  */
-const NotificationIcon = ({ type, severity }: { type: Notification['type']; severity: Notification['severity'] }) => {
+const NotificationIcon = ({
+  type,
+  severity,
+}: {
+  type: DatabaseNotification['type'];
+  severity: DatabaseNotification['severity'];
+}) => {
   // Couleur selon sévérité
   const colorClass = {
     urgent: 'text-red-600',
@@ -71,17 +94,24 @@ const NotificationIcon = ({ type, severity }: { type: Notification['type']; seve
   }[severity];
 
   // Icône selon type
-  const IconComponent = {
-    system: Info,
-    business: CheckCircle,
-    catalog: Info,
-    operations: Info,
-    performance: Info,
-    maintenance: AlertCircle,
-  }[type];
+  const IconComponent =
+    {
+      system: Info,
+      business: CheckCircle,
+      catalog: Info,
+      operations: Info,
+      performance: Info,
+      maintenance: AlertCircle,
+    }[type] || Info; // Fallback vers Info si type inconnu
 
   return (
-    <div className={cn('flex items-center justify-center w-8 h-8 rounded-lg', colorClass, 'bg-current/10')}>
+    <div
+      className={cn(
+        'flex items-center justify-center w-8 h-8 rounded-lg',
+        colorClass,
+        'bg-current/10'
+      )}
+    >
       <IconComponent className={cn('h-4 w-4', colorClass)} />
     </div>
   );
@@ -91,16 +121,23 @@ const NotificationIcon = ({ type, severity }: { type: Notification['type']; seve
  * Item notification individuel - Refonte Design System V2
  */
 interface NotificationItemProps {
-  notification: Notification;
+  notification: DatabaseNotification;
   onMarkAsRead: (id: string) => Promise<void>;
   onDelete: (id: string) => Promise<void>;
 }
 
-const NotificationItem = ({ notification, onMarkAsRead, onDelete }: NotificationItemProps) => {
-  const timeAgo = formatDistanceToNow(new Date(notification.created_at), {
-    addSuffix: true,
-    locale: fr,
-  });
+const NotificationItem = ({
+  notification,
+  onMarkAsRead,
+  onDelete,
+}: NotificationItemProps) => {
+  const timeAgo = formatDistanceToNow(
+    new Date(notification.created_at || new Date()),
+    {
+      addSuffix: true,
+      locale: fr,
+    }
+  );
 
   return (
     <div
@@ -125,7 +162,10 @@ const NotificationItem = ({ notification, onMarkAsRead, onDelete }: Notification
       {/* Layout principal */}
       <div className="flex items-start gap-3">
         {/* Icône */}
-        <NotificationIcon type={notification.type} severity={notification.severity} />
+        <NotificationIcon
+          type={notification.type}
+          severity={notification.severity}
+        />
 
         {/* Contenu */}
         <div className="flex-1 min-w-0">
@@ -141,10 +181,7 @@ const NotificationItem = ({ notification, onMarkAsRead, onDelete }: Notification
           </div>
 
           {/* Timestamp */}
-          <p
-            className="text-xs mb-2"
-            style={{ color: colors.text.muted }}
-          >
+          <p className="text-xs mb-2" style={{ color: colors.text.muted }}>
             {timeAgo}
           </p>
 
@@ -213,7 +250,7 @@ export const NotificationsDropdown = () => {
     markAsRead,
     markAllAsRead,
     deleteNotification,
-  } = useNotifications();
+  } = useDatabaseNotifications();
 
   return (
     <DropdownMenu>
@@ -226,7 +263,9 @@ export const NotificationsDropdown = () => {
             'hover:bg-neutral-100',
             'focus:outline-none focus:ring-2 focus:ring-neutral-200'
           )}
-          title={loading ? 'Chargement...' : `${unreadCount} notifications non lues`}
+          title={
+            loading ? 'Chargement...' : `${unreadCount} notifications non lues`
+          }
         >
           <Bell className="h-5 w-5" style={{ color: colors.text.DEFAULT }} />
           {!loading && unreadCount > 0 && (
@@ -285,7 +324,10 @@ export const NotificationsDropdown = () => {
         {/* Liste des notifications avec scroll */}
         {loading ? (
           <div className="p-12 text-center">
-            <div className="animate-spin rounded-full h-8 w-8 border-b-2 mx-auto mb-3" style={{ borderColor: colors.primary[500] }} />
+            <div
+              className="animate-spin rounded-full h-8 w-8 border-b-2 mx-auto mb-3"
+              style={{ borderColor: colors.primary[500] }}
+            />
             <p className="text-sm" style={{ color: colors.text.subtle }}>
               Chargement des notifications...
             </p>
@@ -304,16 +346,13 @@ export const NotificationsDropdown = () => {
             >
               Aucune notification
             </p>
-            <p
-              className="text-xs"
-              style={{ color: colors.text.muted }}
-            >
+            <p className="text-xs" style={{ color: colors.text.muted }}>
               Vous êtes à jour ! 🎉
             </p>
           </div>
         ) : (
           <ScrollArea className="h-[500px]">
-            {notifications.map((notification) => (
+            {notifications.map(notification => (
               <NotificationItem
                 key={notification.id}
                 notification={notification}

@@ -19,6 +19,7 @@
  */
 
 import { useState, useEffect, useMemo, useCallback, ReactNode } from 'react';
+
 import {
   Search,
   X,
@@ -31,8 +32,9 @@ import {
   Tag,
   RotateCcw,
 } from 'lucide-react';
-import { createClient } from '@/lib/supabase/client';
-import { ProductThumbnail } from '@/components/business/product-thumbnail';
+
+import { Badge } from '@/components/ui/badge';
+import { ButtonV2 } from '@/components/ui/button';
 import {
   Dialog,
   DialogContent,
@@ -41,12 +43,9 @@ import {
   DialogDescription,
   DialogFooter,
 } from '@/components/ui/dialog';
-import { ButtonV2 } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Badge } from '@/components/ui/badge';
-import { ScrollArea } from '@/components/ui/scroll-area';
 import { Label } from '@/components/ui/label';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { ScrollArea } from '@/components/ui/scroll-area';
 import {
   Select,
   SelectContent,
@@ -54,7 +53,10 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { createClient } from '@/lib/supabase/client';
 import { cn } from '@/lib/utils';
+import { ProductThumbnail } from '@/shared/modules/products/components/images/ProductThumbnail';
 
 // ============================================================================
 // TYPES
@@ -97,6 +99,14 @@ export interface ProductData {
         slug: string;
       } | null;
     } | null;
+  } | null;
+  variant_attributes?: {
+    color?: string;
+    color_name?: string;
+    material?: string;
+    size?: string;
+    pattern?: string;
+    [key: string]: any; // Autres attributs personnalisés
   } | null;
 }
 

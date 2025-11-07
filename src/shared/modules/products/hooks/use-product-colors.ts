@@ -1,314 +1,202 @@
-/**
- * 🎨 Hook use-product-colors - Gestion dynamique des couleurs produits
- *
- * Permet de :
- * - Lister toutes les couleurs disponibles
- * - Rechercher couleurs avec autocomplete
- * - Créer nouvelles couleurs à la volée
- * - Cache local + invalidation temps réel
- *
- * Utilisation :
- * ```tsx
- * const { colors, searchColors, createColor, loading } = useProductColors()
- * ```
- */
+'use client';
 
-'use client'
+import { useState, useEffect } from 'react';
 
-import { useState, useEffect, useCallback, useMemo } from 'react'
-import { createClient } from '@/lib/supabase/client'
-
-export interface ProductColor {
-  id: string
-  name: string
-  hex_code?: string | null
-  is_predefined: boolean
-  created_at: string
-}
-
-interface UseProductColorsReturn {
-  colors: ProductColor[]
-  loading: boolean
-  error: string | null
-  searchColors: (query: string) => ProductColor[]
-  createColor: (name: string, hexCode?: string) => Promise<ProductColor | null>
-  refetch: () => void
-}
+import { createBrowserClient } from '@supabase/ssr';
 
 /**
- * Hook principal pour gérer les couleurs produits
+ * Hook pour récupérer les couleurs/valeurs variantes déjà utilisées dans un groupe
+ * Utilisé pour éviter les doublons lors de la création de nouveaux produits
  */
-export function useProductColors(): UseProductColorsReturn {
-  const [colors, setColors] = useState<ProductColor[]>([])
-  const [loading, setLoading] = useState(true)
-  const [error, setError] = useState<string | null>(null)
+export function useGroupUsedColors(
+  groupId: string,
+  variantType: 'color' | 'material' | 'size' | 'pattern' = 'color'
+) {
+  const [usedColors, setUsedColors] = useState<string[]>([]);
+  const [loading, setLoading] = useState(true);
 
-  const supabase = useMemo(() => createClient(), [])
-
-  // Charger toutes les couleurs
-  const fetchColors = useCallback(async () => {
-    try {
-      setLoading(true)
-      setError(null)
-
-      const { data, error: fetchError } = await supabase
-        .from('product_colors')
-        .select('*')
-        .order('is_predefined', { ascending: false }) // Prédéfinies en premier
-        .order('name', { ascending: true })
-
-      if (fetchError) {
-        throw fetchError
-      }
-
-      setColors((data || []) as any)
-    } catch (err) {
-      const errorMessage = err instanceof Error ? err.message : 'Erreur inconnue'
-      setError(errorMessage)
-      console.error('❌ Erreur chargement couleurs:', err)
-
-      // Si la table n'existe pas, retourner couleurs par défaut
-      if (errorMessage.includes('relation "product_colors" does not exist')) {
-        console.warn('⚠️  Table product_colors inexistante, utilisation couleurs par défaut')
-        setColors(getDefaultColors())
-        setError(null)
-      }
-    } finally {
-      setLoading(false)
-    }
-  }, [supabase])
-
-  // Charger au montage
   useEffect(() => {
-    fetchColors()
-  }, [fetchColors])
+    async function fetchUsedColors() {
+      const supabase = createBrowserClient(
+        process.env.NEXT_PUBLIC_SUPABASE_URL!,
+        process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+      );
 
-  // Rechercher couleurs (filtrage local)
-  const searchColors = useCallback((query: string): ProductColor[] => {
-    if (!query.trim()) {
-      return colors
+      setLoading(true);
+
+      const { data, error } = await supabase
+        .from('products')
+        .select('variant_attributes')
+        .eq('variant_group_id', groupId);
+
+      if (error) {
+        console.error(
+          '[useGroupUsedColors] Error fetching used colors:',
+          error
+        );
+        setUsedColors([]);
+      } else {
+        // Extraire les valeurs de variantes selon le type
+        const colors = (data || [])
+          .map((product: any) => {
+            const attrs = product.variant_attributes || {};
+
+            // Extraire la valeur selon le type de variante
+            let value: string | null = null;
+
+            if (variantType === 'color') {
+              value = attrs.color_name || attrs.color || null;
+            } else if (variantType === 'material') {
+              value = attrs.material || null;
+            } else if (variantType === 'size') {
+              value = attrs.size || null;
+            } else if (variantType === 'pattern') {
+              value = attrs.pattern || null;
+            }
+
+            return value;
+          })
+          .filter((color): color is string => !!color)
+          .map((color: string) => color.trim().toLowerCase()); // Normaliser pour comparaison
+
+        setUsedColors([...new Set(colors)]); // Dédupliquer
+      }
+
+      setLoading(false);
     }
 
-    const lowerQuery = query.toLowerCase().trim()
+    if (groupId) {
+      fetchUsedColors();
+    } else {
+      setUsedColors([]);
+      setLoading(false);
+    }
+  }, [groupId, variantType]);
 
-    return colors.filter(color =>
-      color.name.toLowerCase().includes(lowerQuery)
-    )
-  }, [colors])
+  return { usedColors, loading };
+}
+
+/**
+ * Type pour une couleur produit
+ */
+export interface ProductColor {
+  id?: string;
+  name: string;
+  hex_code: string;
+  is_predefined?: boolean;
+  created_at?: string;
+}
+
+/**
+ * Hook pour récupérer et gérer les couleurs produits
+ * Utilisé par DynamicColorSelector pour affichage et création dynamique
+ *
+ * Fonctionnalités:
+ * - Charger couleurs depuis table product_colors
+ * - Créer nouvelle couleur à la volée
+ * - Fallback vers couleurs prédéfinies si table inexistante
+ */
+export function useProductColors() {
+  const [colors, setColors] = useState<ProductColor[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  // Couleurs prédéfinies par défaut (fallback)
+  const defaultColors: ProductColor[] = [
+    { name: 'Noir', hex_code: '#000000', is_predefined: true },
+    { name: 'Blanc', hex_code: '#FFFFFF', is_predefined: true },
+    { name: 'Gris', hex_code: '#808080', is_predefined: true },
+    { name: 'Beige', hex_code: '#F5F5DC', is_predefined: true },
+    { name: 'Marron', hex_code: '#8B4513', is_predefined: true },
+    { name: 'Bleu', hex_code: '#0000FF', is_predefined: true },
+    { name: 'Vert', hex_code: '#008000', is_predefined: true },
+    { name: 'Rouge', hex_code: '#FF0000', is_predefined: true },
+    { name: 'Jaune', hex_code: '#FFFF00', is_predefined: true },
+    { name: 'Orange', hex_code: '#FFA500', is_predefined: true },
+  ];
+
+  // Charger couleurs depuis DB
+  useEffect(() => {
+    async function fetchColors() {
+      const supabase = createBrowserClient(
+        process.env.NEXT_PUBLIC_SUPABASE_URL!,
+        process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+      );
+
+      setLoading(true);
+
+      const { data, error } = await supabase
+        .from('product_colors')
+        .select('id, name, hex_code, is_predefined, created_at')
+        .order('is_predefined', { ascending: false })
+        .order('name');
+
+      if (error) {
+        console.warn(
+          '[useProductColors] Table product_colors might not exist, using default colors:',
+          error.message
+        );
+        setColors(defaultColors);
+      } else {
+        setColors(data || defaultColors);
+      }
+
+      setLoading(false);
+    }
+
+    fetchColors();
+  }, []);
 
   // Créer nouvelle couleur
-  const createColor = useCallback(async (
+  const createColor = async (
     name: string,
-    hexCode?: string
+    hex_code: string
   ): Promise<ProductColor | null> => {
-    try {
-      // Capitaliser première lettre
-      const formattedName = name.charAt(0).toUpperCase() + name.slice(1).toLowerCase()
+    const supabase = createBrowserClient(
+      process.env.NEXT_PUBLIC_SUPABASE_URL!,
+      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+    );
 
-      const { data, error: insertError } = await supabase
+    // Normaliser nom couleur
+    const normalizedName =
+      name.charAt(0).toUpperCase() + name.slice(1).toLowerCase();
+
+    // Générer hex_code aléatoire si non fourni
+    const finalHexCode =
+      hex_code ||
+      `#${Math.floor(Math.random() * 16777215)
+        .toString(16)
+        .padStart(6, '0')}`;
+
+    try {
+      const { data, error } = await supabase
         .from('product_colors')
         .insert({
-          name: formattedName,
-          hex_code: hexCode || null,
-          is_predefined: false
+          name: normalizedName,
+          hex_code: finalHexCode,
+          is_predefined: false,
         })
         .select()
-        .single()
+        .single();
 
-      if (insertError) {
-        // Si couleur existe déjà, la retourner
-        if (insertError.code === '23505') { // Violation contrainte unique
-          const { data: existingColor } = await supabase
-            .from('product_colors')
-            .select('*')
-            .ilike('name', formattedName)
-            .single()
-
-          if (existingColor) {
-            return {
-              ...existingColor,
-              is_predefined: existingColor.is_predefined ?? false
-            } as ProductColor
-          }
-        }
-
-        throw insertError
+      if (error) {
+        console.error('[useProductColors] Error creating color:', error);
+        return null;
       }
 
-      // Mettre à jour le cache local
-      const colorToAdd = {
-        ...data,
-        is_predefined: data.is_predefined ?? false
-      } as ProductColor
-      setColors(prev => [...prev, colorToAdd])
+      // Ajouter à la liste locale
+      const newColor = data as ProductColor;
+      setColors(prev => [...prev, newColor]);
 
-      return colorToAdd
+      return newColor;
     } catch (err) {
-      console.error('❌ Erreur création couleur:', err)
-      return null
+      console.error('[useProductColors] Exception creating color:', err);
+      return null;
     }
-  }, [supabase])
-
-  // Forcer rechargement
-  const refetch = useCallback(() => {
-    fetchColors()
-  }, [fetchColors])
+  };
 
   return {
     colors,
     loading,
-    error,
-    searchColors,
     createColor,
-    refetch
-  }
-}
-
-/**
- * Couleurs par défaut (fallback si table inexistante)
- */
-function getDefaultColors(): ProductColor[] {
-  return [
-    { id: '1', name: 'Noir', hex_code: '#000000', is_predefined: true, created_at: new Date().toISOString() },
-    { id: '2', name: 'Blanc', hex_code: '#FFFFFF', is_predefined: true, created_at: new Date().toISOString() },
-    { id: '3', name: 'Gris', hex_code: '#6B7280', is_predefined: true, created_at: new Date().toISOString() },
-    { id: '4', name: 'Beige', hex_code: '#F5F5DC', is_predefined: true, created_at: new Date().toISOString() },
-    { id: '5', name: 'Taupe', hex_code: '#8B7D6B', is_predefined: true, created_at: new Date().toISOString() },
-    { id: '6', name: 'Bleu', hex_code: '#2563EB', is_predefined: true, created_at: new Date().toISOString() },
-    { id: '7', name: 'Vert', hex_code: '#16A34A', is_predefined: true, created_at: new Date().toISOString() },
-    { id: '8', name: 'Rouge', hex_code: '#DC2626', is_predefined: true, created_at: new Date().toISOString() },
-    { id: '9', name: 'Rose', hex_code: '#EC4899', is_predefined: true, created_at: new Date().toISOString() },
-    { id: '10', name: 'Jaune', hex_code: '#FACC15', is_predefined: true, created_at: new Date().toISOString() },
-    { id: '11', name: 'Marron', hex_code: '#92400E', is_predefined: true, created_at: new Date().toISOString() },
-    { id: '12', name: 'Or', hex_code: '#D97706', is_predefined: true, created_at: new Date().toISOString() },
-    { id: '13', name: 'Argent', hex_code: '#9CA3AF', is_predefined: true, created_at: new Date().toISOString() },
-    { id: '14', name: 'Bronze', hex_code: '#CD7F32', is_predefined: true, created_at: new Date().toISOString() },
-    { id: '15', name: 'Transparent', hex_code: '#F3F4F6', is_predefined: true, created_at: new Date().toISOString() }
-  ]
-}
-
-/**
- * Hook pour récupérer les couleurs déjà utilisées dans un groupe de variantes
- * Utile pour filtrer les options disponibles lors de la création d'un nouveau produit
- */
-export function useGroupUsedColors(groupId?: string, variantType: 'color' | 'material' = 'color') {
-  const [usedColors, setUsedColors] = useState<string[]>([])
-  const [loading, setLoading] = useState(false)
-
-  const supabase = useMemo(() => createClient(), [])
-
-  const fetchUsedColors = useCallback(async () => {
-    if (!groupId) {
-      setUsedColors([])
-      return
-    }
-
-    try {
-      setLoading(true)
-
-      // Récupérer tous les produits du groupe
-      const { data: products, error } = await supabase
-        .from('products')
-        .select('variant_attributes')
-        .eq('variant_group_id', groupId)
-
-      if (error) {
-        console.error('❌ Erreur récupération couleurs utilisées:', error)
-        return
-      }
-
-      // Extraire les valeurs de variante selon le type
-      const usedValues: string[] = []
-
-      if (products) {
-        for (const product of products) {
-          const attrs = product.variant_attributes as Record<string, any>
-          const value = attrs?.[variantType]
-
-          if (value && typeof value === 'string') {
-            usedValues.push(value)
-          }
-        }
-      }
-
-      setUsedColors(usedValues)
-    } catch (err) {
-      console.error('❌ Erreur lors de la récupération des couleurs utilisées:', err)
-    } finally {
-      setLoading(false)
-    }
-  }, [groupId, variantType, supabase])
-
-  useEffect(() => {
-    fetchUsedColors()
-  }, [fetchUsedColors])
-
-  return {
-    usedColors,
-    loading,
-    refetch: fetchUsedColors
-  }
-}
-
-/**
- * Hook simplifié pour sélection couleur dans formulaires
- * Inclut debounce de recherche et gestion état création
- */
-export function useColorSelection(initialValue?: string, excludeColors?: string[]) {
-  const { colors, searchColors, createColor, loading } = useProductColors()
-  const [selectedColor, setSelectedColor] = useState<string>(initialValue || '')
-  const [searchQuery, setSearchQuery] = useState('')
-  const [isCreating, setIsCreating] = useState(false)
-
-  // Couleurs filtrées (avec exclusion si nécessaire)
-  const filteredColors = useMemo(() => {
-    const allColors = searchColors(searchQuery)
-
-    // Filtrer les couleurs exclues
-    if (excludeColors && excludeColors.length > 0) {
-      return allColors.filter(color =>
-        !excludeColors.some(excluded =>
-          excluded.toLowerCase() === color.name.toLowerCase()
-        )
-      )
-    }
-
-    return allColors
-  }, [searchColors, searchQuery, excludeColors])
-
-  // Vérifier si couleur existe
-  const colorExists = useMemo(() => {
-    if (!searchQuery.trim()) return true
-    return colors.some(c => c.name.toLowerCase() === searchQuery.toLowerCase().trim())
-  }, [colors, searchQuery])
-
-  // Créer couleur et sélectionner
-  const handleCreateAndSelect = useCallback(async () => {
-    if (!searchQuery.trim() || colorExists) return
-
-    setIsCreating(true)
-
-    try {
-      const newColor = await createColor(searchQuery)
-
-      if (newColor) {
-        setSelectedColor(newColor.name)
-        setSearchQuery('')
-      }
-    } finally {
-      setIsCreating(false)
-    }
-  }, [searchQuery, colorExists, createColor])
-
-  return {
-    selectedColor,
-    setSelectedColor,
-    searchQuery,
-    setSearchQuery,
-    filteredColors,
-    colorExists,
-    handleCreateAndSelect,
-    isCreating,
-    loading
-  }
+  };
 }
