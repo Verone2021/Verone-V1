@@ -1,7 +1,9 @@
 'use client';
 
 import { useState, useMemo, useCallback, useEffect } from 'react';
+
 import { useRouter } from 'next/navigation';
+
 import {
   Search,
   Plus,
@@ -14,26 +16,23 @@ import {
   Layers,
   Eye,
 } from 'lucide-react';
-import { ButtonV2 } from '@/components/ui/button';
+
 import { Badge } from '@/components/ui/badge';
+import { ButtonV2 } from '@/components/ui/button';
+import { KPICardUnified } from '@/components/ui/kpi-card-unified';
 import { cn } from '@/lib/utils';
+import type { Collection } from '@/shared/modules/collections/hooks';
 import {
   useCollections,
-  Collection,
   CollectionFilters,
   CreateCollectionData,
 } from '@/shared/modules/collections/hooks';
-import {
-  CollectionCreationWizard,
-  CreateCollectionInput,
-} from '@/components/business/collection-creation-wizard';
-import {
-  UniversalProductSelectorV2,
-  SelectedProduct,
-} from '@/components/business/universal-product-selector-v2';
+import type { CreateCollectionInput } from '@/shared/modules/common/components/collections/CollectionCreationWizard';
+import { CollectionCreationWizard } from '@/shared/modules/common/components/collections/CollectionCreationWizard';
 import { useToast } from '@/shared/modules/common/hooks';
+import type { SelectedProduct } from '@/shared/modules/products/components/selectors/UniversalProductSelectorV2';
+import { UniversalProductSelectorV2 } from '@/shared/modules/products/components/selectors/UniversalProductSelectorV2';
 import { getRoomLabel, type RoomType } from '@/types/room-types';
-import { ElegantKpiCard } from '@/components/ui/elegant-kpi-card';
 
 // Interface filtres collections
 interface LocalCollectionFilters {
@@ -113,6 +112,7 @@ export default function CollectionsPage() {
     toggleCollectionStatus,
     archiveCollection,
     unarchiveCollection,
+    addProductsToCollection,
   } = useCollections({
     search: filters.search || undefined,
     status: filters.status,
@@ -566,18 +566,18 @@ export default function CollectionsPage() {
 
       {/* KPI Cards */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4 px-6 pt-6">
-        <ElegantKpiCard
-          label="Collections totales"
+        <KPICardUnified variant="elegant"
+          title="Collections totales"
           value={loading ? '...' : stats.total}
           icon={Layers}
         />
-        <ElegantKpiCard
-          label="Collections actives"
+        <KPICardUnified variant="elegant"
+          title="Collections actives"
           value={loading ? '...' : stats.active}
           icon={Eye}
         />
-        <ElegantKpiCard
-          label="Collections archivées"
+        <KPICardUnified variant="elegant"
+          title="Collections archivées"
           value={archivedLoading ? '...' : stats.archived}
           icon={Archive}
         />
@@ -696,12 +696,12 @@ export default function CollectionsPage() {
               className="bg-white rounded-lg border border-gray-200 animate-pulse"
             >
               <div className="p-4 border-b border-gray-200">
-                <div className="h-6 bg-gray-200 rounded w-3/4 mb-2"></div>
-                <div className="h-4 bg-gray-200 rounded w-1/2"></div>
+                <div className="h-6 bg-gray-200 rounded w-3/4 mb-2" />
+                <div className="h-4 bg-gray-200 rounded w-1/2" />
               </div>
               <div className="p-4">
-                <div className="h-4 bg-gray-200 rounded w-full mb-2"></div>
-                <div className="h-20 bg-gray-200 rounded"></div>
+                <div className="h-4 bg-gray-200 rounded w-full mb-2" />
+                <div className="h-20 bg-gray-200 rounded" />
               </div>
             </div>
           ))
@@ -747,15 +747,63 @@ export default function CollectionsPage() {
           open={showProductsModal}
           onClose={() => setShowProductsModal(false)}
           onSelect={async (products: SelectedProduct[]) => {
-            // TODO: Implémenter ajout/retrait produits dans collection
-            console.log('Produits sélectionnés:', products);
-            await refetch();
+            if (!managingProductsCollection) {
+              toast({
+                title: 'Erreur',
+                description: 'Aucune collection sélectionnée',
+                variant: 'destructive',
+              });
+              return;
+            }
+
+            try {
+              const productIds = products.map(p => p.id);
+
+              const success = await addProductsToCollection(
+                managingProductsCollection.id,
+                productIds
+              );
+
+              if (success) {
+                toast({
+                  title: 'Produits ajoutés',
+                  description: `${products.length} produit(s) ajouté(s) à "${managingProductsCollection.name}"`,
+                });
+
+                // Refetch collections pour mettre à jour compteurs
+                await refetch();
+              } else {
+                toast({
+                  title: 'Erreur',
+                  description: "Erreur lors de l'ajout des produits",
+                  variant: 'destructive',
+                });
+              }
+            } catch (error) {
+              console.error('[VÉRONE:ERROR]', {
+                component: 'CollectionsListPage',
+                action: 'addProductsToCollection',
+                error: error instanceof Error ? error.message : 'Unknown error',
+                context: {
+                  collectionId: managingProductsCollection.id,
+                  productCount: products.length,
+                },
+                timestamp: new Date().toISOString(),
+              });
+              toast({
+                title: 'Erreur',
+                description: "Erreur lors de l'ajout des produits",
+                variant: 'destructive',
+              });
+            } finally {
+              setShowProductsModal(false);
+            }
           }}
           mode="multi"
           context="collections"
           selectedProducts={[]}
           showQuantity={false}
-          showImages={true}
+          showImages
         />
       )}
     </div>

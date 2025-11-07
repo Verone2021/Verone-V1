@@ -1,7 +1,9 @@
-'use client'
+'use client';
 
-import React, { useEffect, useState } from 'react'
-import { useRouter } from 'next/navigation'
+import React, { useEffect, useState } from 'react';
+
+import { useRouter } from 'next/navigation';
+
 import {
   Package,
   Grid3x3,
@@ -14,14 +16,15 @@ import {
   Clock,
   TrendingUp,
   BarChart3,
-} from 'lucide-react'
-import { ElegantKpiCard } from '@/components/ui/elegant-kpi-card'
-import { useProductMetrics } from '@/hooks/metrics/use-product-metrics'
-import { colors } from '@/lib/design-system'
+} from 'lucide-react';
+
+import { KPICardUnified } from '@/components/ui/kpi-card-unified';
+import { colors } from '@/lib/design-system';
+import { useProductMetrics } from '@/shared/modules/dashboard/hooks/metrics';
 
 export default function ProduitsPage() {
-  const router = useRouter()
-  const { fetch: fetchProductMetrics } = useProductMetrics()
+  const router = useRouter();
+  const { fetch: fetchProductMetrics } = useProductMetrics();
 
   const [metrics, setMetrics] = useState({
     total: 0,
@@ -29,30 +32,32 @@ export default function ProduitsPage() {
     inactive: 0,
     draft: 0,
     trend: 0,
-  })
-  const [loading, setLoading] = useState(true)
-  const [error, setError] = useState<string | null>(null)
+  });
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     const loadMetrics = async () => {
       try {
-        const data = await fetchProductMetrics()
-        setMetrics(data)
-        setError(null) // Reset error on success
+        const data = await fetchProductMetrics();
+        setMetrics(data);
+        setError(null); // Reset error on success
       } catch (err) {
-        console.error('Erreur chargement métriques:', err)
-        setError('Impossible de charger les métriques produits. Veuillez réessayer.')
+        console.error('Erreur chargement métriques:', err);
+        setError(
+          'Impossible de charger les métriques produits. Veuillez réessayer.'
+        );
       } finally {
-        setLoading(false)
+        setLoading(false);
       }
-    }
-    loadMetrics()
-  }, [])
+    };
+    loadMetrics();
+  }, []);
 
   // Calcul métriques dérivées
-  const stockAlertsCount = Math.floor(metrics.total * 0.15) // Estimation 15% produits en alerte stock
-  const sourcingActiveCount = metrics.draft
-  const validationsPendingCount = Math.floor(metrics.draft * 0.4) // Estimation 40% drafts à valider
+  const stockAlertsCount = Math.floor(metrics.total * 0.15); // Estimation 15% produits en alerte stock
+  const sourcingActiveCount = metrics.draft;
+  const validationsPendingCount = Math.floor(metrics.draft * 0.4); // Estimation 40% drafts à valider
 
   const workflowCards = [
     {
@@ -125,7 +130,7 @@ export default function ProduitsPage() {
       iconBg: 'bg-indigo-100',
       iconColor: 'text-indigo-600',
     },
-  ]
+  ];
 
   return (
     <div className="min-h-screen bg-neutral-50">
@@ -159,7 +164,9 @@ export default function ProduitsPage() {
           <div className="bg-red-50 border border-red-200 rounded-lg p-4 flex items-start gap-3">
             <AlertTriangle className="w-5 h-5 text-red-600 flex-shrink-0 mt-0.5" />
             <div className="flex-1">
-              <p className="text-sm font-medium text-red-900 mb-1">Erreur de chargement</p>
+              <p className="text-sm font-medium text-red-900 mb-1">
+                Erreur de chargement
+              </p>
               <p className="text-sm text-red-700">{error}</p>
             </div>
             <button
@@ -177,8 +184,8 @@ export default function ProduitsPage() {
             Métriques Clés
           </h2>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-            <ElegantKpiCard
-              label="Total Produits"
+            <KPICardUnified variant="elegant"
+              title="Total Produits"
               value={loading ? '...' : metrics.total}
               icon={TrendingUp}
               trend={
@@ -193,24 +200,26 @@ export default function ProduitsPage() {
               onClick={() => router.push('/produits/catalogue')}
             />
 
-            <ElegantKpiCard
-              label="Alertes Stock"
+            <KPICardUnified variant="elegant"
+              title="Alertes Stock"
               value={loading ? '...' : stockAlertsCount}
               icon={AlertTriangle}
               description="Produits stock bas"
-              onClick={() => router.push('/produits/catalogue?filter=low_stock')}
+              onClick={() =>
+                router.push('/produits/catalogue?filter=low_stock')
+              }
             />
 
-            <ElegantKpiCard
-              label="Sourcing Actif"
+            <KPICardUnified variant="elegant"
+              title="Sourcing Actif"
               value={loading ? '...' : sourcingActiveCount}
               icon={Package}
               description="Produits en sourcing"
               onClick={() => router.push('/produits/sourcing')}
             />
 
-            <ElegantKpiCard
-              label="Validations"
+            <KPICardUnified variant="elegant"
+              title="Validations"
               value={loading ? '...' : validationsPendingCount}
               icon={Clock}
               description="En attente validation"
@@ -225,8 +234,8 @@ export default function ProduitsPage() {
             Workflows Produits
           </h2>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-            {workflowCards.map((card) => {
-              const Icon = card.icon
+            {workflowCards.map(card => {
+              const Icon = card.icon;
               return (
                 <button
                   key={card.id}
@@ -244,7 +253,10 @@ export default function ProduitsPage() {
                     <div
                       className={`flex-shrink-0 w-12 h-12 rounded-lg ${card.iconBg} flex items-center justify-center transition-transform duration-200 group-hover:scale-110`}
                     >
-                      <Icon className={`w-6 h-6 ${card.iconColor}`} strokeWidth={2} />
+                      <Icon
+                        className={`w-6 h-6 ${card.iconColor}`}
+                        strokeWidth={2}
+                      />
                     </div>
 
                     {/* Text */}
@@ -277,7 +289,7 @@ export default function ProduitsPage() {
                     </svg>
                   </div>
                 </button>
-              )
+              );
             })}
           </div>
         </div>
@@ -297,16 +309,17 @@ export default function ProduitsPage() {
                 Module Produits Vérone
               </h3>
               <p className="text-sm text-neutral-600 leading-relaxed">
-                Ce module centralise toutes les fonctionnalités liées à la gestion
-                des produits : du sourcing fournisseur jusqu'à la gestion des stocks,
-                en passant par la création du catalogue, l'organisation par catégories,
-                la gestion des variantes et des collections. Suivez le workflow complet
-                de vos produits depuis leur identification jusqu'à leur mise en ligne.
+                Ce module centralise toutes les fonctionnalités liées à la
+                gestion des produits : du sourcing fournisseur jusqu'à la
+                gestion des stocks, en passant par la création du catalogue,
+                l'organisation par catégories, la gestion des variantes et des
+                collections. Suivez le workflow complet de vos produits depuis
+                leur identification jusqu'à leur mise en ligne.
               </p>
             </div>
           </div>
         </div>
       </div>
     </div>
-  )
+  );
 }

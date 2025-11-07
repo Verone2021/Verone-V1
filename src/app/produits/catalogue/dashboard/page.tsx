@@ -7,10 +7,12 @@
  * - Speed to insight <5 secondes
  */
 
-"use client"
+'use client';
 
-import { useState, useEffect, useMemo } from 'react'
-import { useRouter } from 'next/navigation'
+import { useState, useEffect, useMemo } from 'react';
+
+import { useRouter } from 'next/navigation';
+
 import {
   Target,
   CheckCircle,
@@ -23,10 +25,11 @@ import {
   TrendingUp,
   AlertTriangle,
   Plus,
-} from 'lucide-react'
-import { ElegantKpiCard } from '@/components/ui/elegant-kpi-card'
-import { useProducts } from '@/shared/modules/products/hooks'
-import { Badge } from '@/components/ui/badge'
+} from 'lucide-react';
+
+import { Badge } from '@/components/ui/badge';
+import { KPICardUnified } from '@/components/ui/kpi-card-unified';
+import { useProducts } from '@/shared/modules/products/hooks';
 
 // Champs obligatoires pour calculer le taux de complétion
 const REQUIRED_PRODUCT_FIELDS = [
@@ -35,25 +38,27 @@ const REQUIRED_PRODUCT_FIELDS = [
   'supplier_id',
   'subcategory_id',
   'cost_price',
-  'description'
-] as const
+  'description',
+] as const;
 
 // Fonction pour calculer la complétion d'un produit
 function calculateProductCompletion(product: any): number {
   const filledFields = REQUIRED_PRODUCT_FIELDS.filter(field => {
-    const value = product[field]
+    const value = product[field];
     if (typeof value === 'string') {
-      return value.trim().length > 0
+      return value.trim().length > 0;
     }
-    return value !== null && value !== undefined && value !== 0
-  })
+    return value !== null && value !== undefined && value !== 0;
+  });
 
-  return Math.round((filledFields.length / REQUIRED_PRODUCT_FIELDS.length) * 100)
+  return Math.round(
+    (filledFields.length / REQUIRED_PRODUCT_FIELDS.length) * 100
+  );
 }
 
 export default function DashboardProduitsPage() {
-  const router = useRouter()
-  const { products, loading: productsLoading } = useProducts()
+  const router = useRouter();
+  const { products, loading: productsLoading } = useProducts();
 
   // 📊 Calcul des métriques KPIs
   const metrics = useMemo(() => {
@@ -63,131 +68,139 @@ export default function DashboardProduitsPage() {
         sourcingCount: 0,
         completionRate: 0,
         weekGrowth: 0,
-      }
+      };
     }
 
     // Produits Catalogue : actifs disponibles à la vente
     const catalogueCount = products.filter(p =>
-      ['in_stock', 'preorder', 'coming_soon', 'pret_a_commander'].includes(p.status)
-    ).length
+      ['in_stock', 'preorder', 'coming_soon', 'pret_a_commander'].includes(
+        p.status
+      )
+    ).length;
 
     // En Sourcing : produits en phase de sourcing
     const sourcingCount = products.filter(p =>
       ['sourcing', 'echantillon_a_commander'].includes(p.status)
-    ).length
+    ).length;
 
     // Taux Complétion : moyenne de complétion de tous les produits
-    const completionRates = products.map(p => calculateProductCompletion(p))
+    const completionRates = products.map(p => calculateProductCompletion(p));
     const completionRate = Math.round(
-      completionRates.reduce((sum, rate) => sum + rate, 0) / completionRates.length
-    )
+      completionRates.reduce((sum, rate) => sum + rate, 0) /
+        completionRates.length
+    );
 
     // Croissance Semaine : produits ajoutés dans les 7 derniers jours
-    const weekAgo = new Date()
-    weekAgo.setDate(weekAgo.getDate() - 7)
-    const weekGrowth = products.filter(p => new Date(p.created_at) >= weekAgo).length
+    const weekAgo = new Date();
+    weekAgo.setDate(weekAgo.getDate() - 7);
+    const weekGrowth = products.filter(
+      p => new Date(p.created_at) >= weekAgo
+    ).length;
 
-    return { catalogueCount, sourcingCount, completionRate, weekGrowth }
-  }, [products])
+    return { catalogueCount, sourcingCount, completionRate, weekGrowth };
+  }, [products]);
 
   // 🎯 Configuration des workflow cards avec compteurs dynamiques
-  const workflowSections = useMemo(() => [
-    {
-      title: 'Recherche Produit',
-      description: 'Sourcing et validation des nouveaux produits',
-      cards: [
-        {
-          id: 'sourcing',
-          title: 'Sourcing',
-          description: 'Nouveaux produits à sourcer',
-          icon: Target,
-          path: '/produits/sourcing/produits',
-          gradient: 'from-blue-500 to-blue-600',
-          iconBg: 'bg-blue-100',
-          iconColor: 'text-blue-600',
-          badge: metrics.sourcingCount,
-        },
-        {
-          id: 'validation',
-          title: 'Validation',
-          description: 'Valider produits sourcés',
-          icon: CheckCircle,
-          path: '/produits/sourcing/validation',
-          gradient: 'from-green-500 to-green-600',
-          iconBg: 'bg-green-100',
-          iconColor: 'text-green-600',
-          badge: Math.floor(metrics.sourcingCount * 0.4), // Estimation 40% prêts à valider
-        },
-      ]
-    },
-    {
-      title: 'Catalogue & Taxonomie',
-      description: 'Organisation et gestion du catalogue produits',
-      cards: [
-        {
-          id: 'catalogue',
-          title: 'Catalogue',
-          description: 'Vue complète des produits',
-          icon: Grid3x3,
-          path: '/produits/catalogue',
-          gradient: 'from-purple-500 to-purple-600',
-          iconBg: 'bg-purple-100',
-          iconColor: 'text-purple-600',
-          badge: undefined,
-        },
-        {
-          id: 'variantes',
-          title: 'Variantes',
-          description: 'Groupes de variantes',
-          icon: Boxes,
-          path: '/produits/catalogue/variantes',
-          gradient: 'from-orange-500 to-orange-600',
-          iconBg: 'bg-orange-100',
-          iconColor: 'text-orange-600',
-          badge: undefined,
-        },
-        {
-          id: 'collections',
-          title: 'Collections',
-          description: 'Collections thématiques',
-          icon: FolderKanban,
-          path: '/produits/catalogue/collections',
-          gradient: 'from-pink-500 to-pink-600',
-          iconBg: 'bg-pink-100',
-          iconColor: 'text-pink-600',
-          badge: undefined,
-        },
-        {
-          id: 'categories',
-          title: 'Catégories',
-          description: 'Taxonomie produits',
-          icon: Tags,
-          path: '/produits/catalogue/categories',
-          gradient: 'from-teal-500 to-teal-600',
-          iconBg: 'bg-teal-100',
-          iconColor: 'text-teal-600',
-          badge: undefined,
-        },
-      ]
-    },
-    {
-      title: 'Partenaires',
-      description: 'Gestion des fournisseurs produits',
-      cards: [
-        {
-          id: 'fournisseurs',
-          title: 'Fournisseurs',
-          description: 'Gérer les fournisseurs',
-          icon: Truck,
-          path: '/contacts-organisations/suppliers',
-          gradient: 'from-indigo-500 to-indigo-600',
-          iconBg: 'bg-indigo-100',
-          iconColor: 'text-indigo-600',
-          badge: undefined,
-        },
-      ]
-    },
-  ], [metrics])
+  const workflowSections = useMemo(
+    () => [
+      {
+        title: 'Recherche Produit',
+        description: 'Sourcing et validation des nouveaux produits',
+        cards: [
+          {
+            id: 'sourcing',
+            title: 'Sourcing',
+            description: 'Nouveaux produits à sourcer',
+            icon: Target,
+            path: '/produits/sourcing/produits',
+            gradient: 'from-blue-500 to-blue-600',
+            iconBg: 'bg-blue-100',
+            iconColor: 'text-blue-600',
+            badge: metrics.sourcingCount,
+          },
+          {
+            id: 'validation',
+            title: 'Validation',
+            description: 'Valider produits sourcés',
+            icon: CheckCircle,
+            path: '/produits/sourcing/validation',
+            gradient: 'from-green-500 to-green-600',
+            iconBg: 'bg-green-100',
+            iconColor: 'text-green-600',
+            badge: Math.floor(metrics.sourcingCount * 0.4), // Estimation 40% prêts à valider
+          },
+        ],
+      },
+      {
+        title: 'Catalogue & Taxonomie',
+        description: 'Organisation et gestion du catalogue produits',
+        cards: [
+          {
+            id: 'catalogue',
+            title: 'Catalogue',
+            description: 'Vue complète des produits',
+            icon: Grid3x3,
+            path: '/produits/catalogue',
+            gradient: 'from-purple-500 to-purple-600',
+            iconBg: 'bg-purple-100',
+            iconColor: 'text-purple-600',
+            badge: undefined,
+          },
+          {
+            id: 'variantes',
+            title: 'Variantes',
+            description: 'Groupes de variantes',
+            icon: Boxes,
+            path: '/produits/catalogue/variantes',
+            gradient: 'from-orange-500 to-orange-600',
+            iconBg: 'bg-orange-100',
+            iconColor: 'text-orange-600',
+            badge: undefined,
+          },
+          {
+            id: 'collections',
+            title: 'Collections',
+            description: 'Collections thématiques',
+            icon: FolderKanban,
+            path: '/produits/catalogue/collections',
+            gradient: 'from-pink-500 to-pink-600',
+            iconBg: 'bg-pink-100',
+            iconColor: 'text-pink-600',
+            badge: undefined,
+          },
+          {
+            id: 'categories',
+            title: 'Catégories',
+            description: 'Taxonomie produits',
+            icon: Tags,
+            path: '/produits/catalogue/categories',
+            gradient: 'from-teal-500 to-teal-600',
+            iconBg: 'bg-teal-100',
+            iconColor: 'text-teal-600',
+            badge: undefined,
+          },
+        ],
+      },
+      {
+        title: 'Partenaires',
+        description: 'Gestion des fournisseurs produits',
+        cards: [
+          {
+            id: 'fournisseurs',
+            title: 'Fournisseurs',
+            description: 'Gérer les fournisseurs',
+            icon: Truck,
+            path: '/contacts-organisations/suppliers',
+            gradient: 'from-indigo-500 to-indigo-600',
+            iconBg: 'bg-indigo-100',
+            iconColor: 'text-indigo-600',
+            badge: undefined,
+          },
+        ],
+      },
+    ],
+    [metrics]
+  );
 
   return (
     <div className="min-h-screen bg-neutral-50">
@@ -200,13 +213,14 @@ export default function DashboardProduitsPage() {
                 Dashboard Produits
               </h1>
               <p className="text-sm text-neutral-600">
-                Vue d'ensemble et workflows - Gestion complète des produits Vérone
+                Vue d'ensemble et workflows - Gestion complète des produits
+                Vérone
               </p>
             </div>
             <button
               onClick={() => router.push('/produits/catalogue/create')}
               className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-medium text-sm transition-colors shadow-sm flex items-center gap-2"
-              aria-label="Créer un nouveau produit"
+              aria-title="Créer un nouveau produit"
             >
               <Plus className="w-4 h-4" />
               Nouveau Produit
@@ -223,50 +237,54 @@ export default function DashboardProduitsPage() {
             Métriques Clés
           </h2>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-            <ElegantKpiCard
-              label="Produits Catalogue"
+            <KPICardUnified variant="elegant"
+              title="Produits Catalogue"
               value={productsLoading ? '...' : metrics.catalogueCount}
               icon={Package}
               description="Disponibles à la vente"
               onClick={() => router.push('/produits/catalogue')}
-              aria-label="Voir les produits du catalogue"
+              aria-title="Voir les produits du catalogue"
             />
 
-            <ElegantKpiCard
-              label="En Sourcing"
+            <KPICardUnified variant="elegant"
+              title="En Sourcing"
               value={productsLoading ? '...' : metrics.sourcingCount}
               icon={Target}
               description="Sourcing + Validation"
               onClick={() => router.push('/produits/sourcing')}
-              aria-label="Voir les produits en sourcing"
+              aria-title="Voir les produits en sourcing"
             />
 
-            <ElegantKpiCard
-              label="Taux Complétion"
+            <KPICardUnified variant="elegant"
+              title="Taux Complétion"
               value={productsLoading ? '...' : `${metrics.completionRate}%`}
               icon={TrendingUp}
               description="Données produits complètes"
               onClick={() => router.push('/produits/catalogue')}
-              aria-label="Voir le taux de complétion des produits"
+              aria-title="Voir le taux de complétion des produits"
             />
 
-            <ElegantKpiCard
-              label="Croissance Semaine"
+            <KPICardUnified variant="elegant"
+              title="Croissance Semaine"
               value={productsLoading ? '...' : `+${metrics.weekGrowth}`}
               icon={TrendingUp}
-              trend={metrics.weekGrowth > 0 ? {
-                value: metrics.weekGrowth,
-                isPositive: true,
-              } : undefined}
+              trend={
+                metrics.weekGrowth > 0
+                  ? {
+                      value: metrics.weekGrowth,
+                      isPositive: true,
+                    }
+                  : undefined
+              }
               description="Nouveaux produits 7j"
               onClick={() => router.push('/produits/catalogue')}
-              aria-label="Voir la croissance hebdomadaire"
+              aria-title="Voir la croissance hebdomadaire"
             />
           </div>
         </div>
 
         {/* Sections Workflows */}
-        {workflowSections.map((section) => (
+        {workflowSections.map(section => (
           <div key={section.title}>
             <div className="mb-4">
               <h2 className="text-lg font-semibold text-neutral-900">
@@ -278,14 +296,14 @@ export default function DashboardProduitsPage() {
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {section.cards.map((card) => {
-                const Icon = card.icon
+              {section.cards.map(card => {
+                const Icon = card.icon;
                 return (
                   <button
                     key={card.id}
                     onClick={() => router.push(card.path)}
                     className="group relative overflow-hidden rounded-xl bg-white border border-neutral-200 p-3 text-left transition-all duration-200 hover:shadow-lg hover:border-neutral-300 hover:-translate-y-1"
-                    aria-label={`Accéder à ${card.title}`}
+                    aria-title={`Accéder à ${card.title}`}
                   >
                     {/* Gradient Background (hover) */}
                     <div
@@ -299,7 +317,11 @@ export default function DashboardProduitsPage() {
                       <div
                         className={`flex-shrink-0 w-8 h-8 rounded-lg ${card.iconBg} flex items-center justify-center transition-transform duration-200 group-hover:scale-110`}
                       >
-                        <Icon className={`w-4 h-4 ${card.iconColor}`} strokeWidth={2} aria-hidden="true" />
+                        <Icon
+                          className={`w-4 h-4 ${card.iconColor}`}
+                          strokeWidth={2}
+                          aria-hidden="true"
+                        />
                       </div>
 
                       {/* Text */}
@@ -309,7 +331,10 @@ export default function DashboardProduitsPage() {
                             {card.title}
                           </h3>
                           {card.badge !== undefined && card.badge > 0 && (
-                            <Badge variant="secondary" className="text-xs px-2 py-0.5">
+                            <Badge
+                              variant="secondary"
+                              className="text-xs px-2 py-0.5"
+                            >
                               {card.badge}
                             </Badge>
                           )}
@@ -340,12 +365,12 @@ export default function DashboardProduitsPage() {
                       </svg>
                     </div>
                   </button>
-                )
+                );
               })}
             </div>
           </div>
         ))}
       </div>
     </div>
-  )
+  );
 }

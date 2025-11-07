@@ -1,7 +1,9 @@
 'use client';
 
 import { useState, useMemo, useCallback, useEffect } from 'react';
+
 import { useRouter } from 'next/navigation';
+
 import {
   Search,
   Plus,
@@ -21,17 +23,18 @@ import {
   Archive,
   ArchiveRestore,
 } from 'lucide-react';
-import { ButtonV2 } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
-import { cn } from '@/lib/utils';
+
 import { PageHeader } from '@/components/layout/page-header';
-import { useVariantGroups } from '@/shared/modules/products/hooks';
-import { VariantGroupCreationWizard } from '@/components/business/variant-group-creation-wizard';
-import { VariantGroupEditModal } from '@/shared/modules/products/components/modals/VariantGroupEditModal';
-import { VariantAddProductModal } from '@/shared/modules/products/components/modals/VariantAddProductModal';
+import { Badge } from '@/components/ui/badge';
+import { ButtonV2 } from '@/components/ui/button';
+import { KPICardUnified } from '@/components/ui/kpi-card-unified';
+import { cn } from '@/lib/utils';
+import { CategoryFilterCombobox } from '@/shared/modules/categories/components/filters/CategoryFilterCombobox';
 import { useToast } from '@/shared/modules/common/hooks';
-import { ElegantKpiCard } from '@/components/ui/elegant-kpi-card';
-import { CategoryFilterCombobox } from '@/components/business/category-filter-combobox';
+import { VariantAddProductModal } from '@/shared/modules/products/components/modals/VariantAddProductModal';
+import { VariantGroupEditModal } from '@/shared/modules/products/components/modals/VariantGroupEditModal';
+import { VariantGroupCreationWizard } from '@/shared/modules/products/components/wizards/VariantGroupCreationWizard';
+import { useVariantGroups } from '@/shared/modules/products/hooks';
 
 // Interface filtres variantes
 interface LocalVariantFilters {
@@ -452,18 +455,18 @@ export default function VariantesPage() {
       <div className="p-6 space-y-4">
         {/* KPI Cards */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          <ElegantKpiCard
-            label="Groupes totaux"
+          <KPICardUnified variant="elegant"
+            title="Groupes totaux"
             value={loading ? '...' : stats.total}
             icon={Layers}
           />
-          <ElegantKpiCard
-            label="Produits totaux"
+          <KPICardUnified variant="elegant"
+            title="Produits totaux"
             value={loading ? '...' : stats.totalProducts}
             icon={Package}
           />
-          <ElegantKpiCard
-            label="Types différents"
+          <KPICardUnified variant="elegant"
+            title="Types différents"
             value={loading ? '...' : stats.types}
             icon={Tags}
           />
@@ -580,12 +583,12 @@ export default function VariantesPage() {
                   className="bg-white rounded-lg border border-gray-200 animate-pulse"
                 >
                   <div className="p-4 border-b border-gray-200">
-                    <div className="h-6 bg-gray-200 rounded w-3/4 mb-2"></div>
-                    <div className="h-4 bg-gray-200 rounded w-1/2"></div>
+                    <div className="h-6 bg-gray-200 rounded w-3/4 mb-2" />
+                    <div className="h-4 bg-gray-200 rounded w-1/2" />
                   </div>
                   <div className="p-4">
-                    <div className="h-4 bg-gray-200 rounded w-full mb-2"></div>
-                    <div className="h-20 bg-gray-200 rounded"></div>
+                    <div className="h-4 bg-gray-200 rounded w-full mb-2" />
+                    <div className="h-20 bg-gray-200 rounded" />
                   </div>
                 </div>
               ))
@@ -609,12 +612,12 @@ export default function VariantesPage() {
                 className="bg-white rounded-lg border border-gray-200 animate-pulse"
               >
                 <div className="p-4 border-b border-gray-200">
-                  <div className="h-6 bg-gray-200 rounded w-3/4 mb-2"></div>
-                  <div className="h-4 bg-gray-200 rounded w-1/2"></div>
+                  <div className="h-6 bg-gray-200 rounded w-3/4 mb-2" />
+                  <div className="h-4 bg-gray-200 rounded w-1/2" />
                 </div>
                 <div className="p-4">
-                  <div className="h-4 bg-gray-200 rounded w-full mb-2"></div>
-                  <div className="h-20 bg-gray-200 rounded"></div>
+                  <div className="h-4 bg-gray-200 rounded w-full mb-2" />
+                  <div className="h-20 bg-gray-200 rounded" />
                 </div>
               </div>
             ))
@@ -669,7 +672,7 @@ export default function VariantesPage() {
               setSelectedGroupForProducts(null);
             }}
             group={selectedGroupForProducts}
-            onSubmit={async (data) => {
+            onSubmit={async data => {
               // L'ajout du produit au groupe est géré par le modal
               refetch();
               toast({
