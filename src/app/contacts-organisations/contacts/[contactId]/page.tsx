@@ -5,6 +5,9 @@ import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { useParams, useRouter } from 'next/navigation';
 
+import { Badge } from '@verone/ui';
+import { ButtonV2 } from '@verone/ui';
+import { Card, CardContent, CardHeader, CardTitle } from '@verone/ui';
 import {
   ArrowLeft,
   User,
@@ -21,21 +24,15 @@ import {
   Wrench,
 } from 'lucide-react';
 
-import { Badge } from '@/components/ui/badge';
-import { ButtonV2 } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { ContactDetailsEditSection } from '@/shared/modules/customers/components/sections/ContactDetailsEditSection';
-import { ContactPersonalEditSection } from '@/shared/modules/customers/components/sections/ContactPersonalEditSection';
-import { ContactPreferencesEditSection } from '@/shared/modules/customers/components/sections/ContactPreferencesEditSection';
-import { ContactRolesEditSection } from '@/shared/modules/customers/components/sections/ContactRolesEditSection';
-import {
-  useContacts,
-  type Contact,
-} from '@/shared/modules/organisations/hooks';
+import { ContactDetailsEditSection } from '@verone/customers';
+import { ContactPersonalEditSection } from '@verone/customers';
+import { ContactPreferencesEditSection } from '@verone/customers';
+import { ContactRolesEditSection } from '@verone/customers';
+import { useContacts, type Contact } from '@verone/organisations';
 import {
   getOrganisationDisplayName,
   type Organisation,
-} from '@/shared/modules/organisations/hooks';
+} from '@verone/organisations';
 
 export default function ContactDetailPage() {
   const { contactId } = useParams();
@@ -90,7 +87,8 @@ export default function ContactDetailPage() {
     }
   };
 
-  const formatDate = (dateString: string) => {
+  const formatDate = (dateString: string | null) => {
+    if (!dateString) return 'Non renseigné';
     return new Date(dateString).toLocaleDateString('fr-FR', {
       year: 'numeric',
       month: 'long',

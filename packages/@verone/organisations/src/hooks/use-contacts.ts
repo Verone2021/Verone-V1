@@ -1,3 +1,5 @@
+'use client';
+
 /**
  * Hook pour la gestion des contacts d'organisations
  * Spécialement pour fournisseurs et clients professionnels
@@ -5,53 +7,14 @@
 
 import { useState, useCallback } from 'react';
 
+import { useToast } from '@verone/common/hooks';
+import type { Contact as BaseContact } from '@verone/types';
+
 import logger from '@/lib/logger';
 import { createClient } from '@/lib/supabase/client';
-import { useToast } from '@verone/common/hooks';
 
-// Types pour les contacts
-export interface Contact {
-  id: string;
-  organisation_id: string;
-
-  // Informations personnelles
-  first_name: string;
-  last_name: string;
-  title?: string;
-  department?: string;
-
-  // Contact principal
-  email: string;
-  phone?: string;
-  mobile?: string;
-
-  // Contact secondaire
-  secondary_email?: string;
-  direct_line?: string;
-
-  // Préférences communication
-  is_primary_contact: boolean;
-  is_billing_contact: boolean;
-  is_technical_contact: boolean;
-  is_commercial_contact: boolean;
-
-  // Communication preferences
-  preferred_communication_method: 'email' | 'phone' | 'both';
-  accepts_marketing: boolean;
-  accepts_notifications: boolean;
-  language_preference: string;
-
-  // Métadonnées
-  notes?: string;
-  is_active: boolean;
-  last_contact_date?: string;
-
-  // Audit
-  created_by?: string;
-  created_at: string;
-  updated_at: string;
-
-  // Relations jointes
+// Contact étendu avec jointure organisation (retourné par les queries)
+export interface Contact extends BaseContact {
   organisation?: {
     id: string;
     legal_name: string;

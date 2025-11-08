@@ -3,10 +3,6 @@
 import { useState, useEffect } from 'react';
 
 import { zodResolver } from '@hookform/resolvers/zod';
-import { Loader2, Phone, Users } from 'lucide-react';
-import { useForm } from 'react-hook-form';
-import { z } from 'zod';
-
 import { Button } from '@verone/ui';
 import {
   Dialog,
@@ -26,6 +22,10 @@ import {
 } from '@verone/ui';
 import { Switch } from '@verone/ui';
 import { Textarea } from '@verone/ui';
+import { Loader2, Phone, Users } from 'lucide-react';
+import { useForm } from 'react-hook-form';
+import { z } from 'zod';
+
 import type { Contact } from '@verone/customers/hooks';
 
 // Schema de validation pour contact
@@ -112,23 +112,26 @@ export function ContactFormModal({
       form.reset({
         first_name: contact.first_name || '',
         last_name: contact.last_name || '',
-        title: contact.title || '',
-        department: contact.department || '',
+        title: contact.title || undefined,
+        department: contact.department || undefined,
         email: contact.email || '',
-        phone: contact.phone || '',
-        mobile: contact.mobile || '',
-        secondary_email: contact.secondary_email || '',
-        direct_line: contact.direct_line || '',
-        is_primary_contact: contact.is_primary_contact || false,
-        is_billing_contact: contact.is_billing_contact || false,
-        is_technical_contact: contact.is_technical_contact || false,
-        is_commercial_contact: contact.is_commercial_contact || true,
+        phone: contact.phone || undefined,
+        mobile: contact.mobile || undefined,
+        secondary_email: contact.secondary_email || undefined,
+        direct_line: contact.direct_line || undefined,
+        is_primary_contact: contact.is_primary_contact ?? false,
+        is_billing_contact: contact.is_billing_contact ?? false,
+        is_technical_contact: contact.is_technical_contact ?? false,
+        is_commercial_contact: contact.is_commercial_contact ?? true,
         preferred_communication_method:
-          contact.preferred_communication_method || 'email',
+          (contact.preferred_communication_method as
+            | 'email'
+            | 'phone'
+            | 'both') || 'email',
         accepts_marketing: contact.accepts_marketing ?? true,
         accepts_notifications: contact.accepts_notifications ?? true,
         language_preference: contact.language_preference || 'fr',
-        notes: contact.notes || '',
+        notes: contact.notes || undefined,
       });
     } else {
       // Réinitialiser pour nouveau contact
