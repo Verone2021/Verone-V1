@@ -1,7 +1,7 @@
 import type { Meta, StoryObj } from '@storybook/nextjs';
 import { Check, AlertTriangle, X, Star, Clock } from 'lucide-react';
 
-import { Badge } from '@verone/ui'
+import { Badge } from '@verone/ui';
 
 const meta = {
   title: '1-UI-Base/Badges/Badge',
@@ -22,6 +22,9 @@ const meta = {
 - \`info\` : Bleu (blue-100)
 - \`outline\` : Bordure grise
 - \`destructive\` : Rouge foncé (red-600)
+- \`customer\` : Violet (purple-100) - **Nouveau**
+- \`supplier\` : Doré (amber-100) - **Nouveau**
+- \`partner\` : Cyan (cyan-100) - **Nouveau**
 
 **Tailles** :
 - \`sm\` : 12px (xs text)
@@ -51,6 +54,9 @@ const meta = {
         'info',
         'outline',
         'destructive',
+        'customer',
+        'supplier',
+        'partner',
       ],
       description: 'Variante colorée du badge',
     },
@@ -225,10 +231,13 @@ export const AllVariants: Story = {
       <Badge variant="secondary">Secondary</Badge>
       <Badge variant="success">Success</Badge>
       <Badge variant="warning">Warning</Badge>
-      <Badge variant="destructive">Danger</Badge>
+      <Badge variant="danger">Danger</Badge>
       <Badge variant="info">Info</Badge>
       <Badge variant="outline">Outline</Badge>
       <Badge variant="destructive">Destructive</Badge>
+      <Badge variant="customer">Customer</Badge>
+      <Badge variant="supplier">Supplier</Badge>
+      <Badge variant="partner">Partner</Badge>
     </div>
   ),
 };
@@ -388,6 +397,57 @@ export const RealWorld: Story = {
           <Badge variant="success" dot>
             Actif
           </Badge>
+        </div>
+      </div>
+    </div>
+  ),
+};
+
+/**
+ * Types d'organisations (métier)
+ */
+export const OrganisationTypes: Story = {
+  render: () => (
+    <div className="space-y-4 p-4 w-[500px]">
+      <h3 className="font-semibold text-slate-900 mb-3">
+        Types d'organisations
+      </h3>
+
+      {/* Liste avec badges organisation */}
+      <div className="space-y-2">
+        <div className="border border-slate-200 rounded-lg p-3 flex items-center justify-between">
+          <span className="text-sm text-slate-700">Maison Dupont SARL</span>
+          <Badge variant="customer" dot>
+            Client
+          </Badge>
+        </div>
+
+        <div className="border border-slate-200 rounded-lg p-3 flex items-center justify-between">
+          <span className="text-sm text-slate-700">
+            Atelier Menuiserie Martin
+          </span>
+          <Badge variant="supplier" dot>
+            Fournisseur
+          </Badge>
+        </div>
+
+        <div className="border border-slate-200 rounded-lg p-3 flex items-center justify-between">
+          <span className="text-sm text-slate-700">Design Studio Paris</span>
+          <Badge variant="partner" dot>
+            Partenaire
+          </Badge>
+        </div>
+
+        <div className="border border-slate-200 rounded-lg p-3 flex items-center justify-between">
+          <span className="text-sm text-slate-700">Boutique Belle Vue</span>
+          <div className="flex gap-2">
+            <Badge variant="customer" size="sm">
+              Client
+            </Badge>
+            <Badge variant="partner" size="sm">
+              Partenaire
+            </Badge>
+          </div>
         </div>
       </div>
     </div>

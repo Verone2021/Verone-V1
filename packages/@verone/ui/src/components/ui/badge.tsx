@@ -21,6 +21,12 @@ const badgeVariants = cva(
         outline: 'border-slate-300 bg-white text-slate-900 hover:bg-slate-50',
         destructive:
           'border-transparent bg-red-600 text-white hover:bg-red-700',
+        customer:
+          'border-transparent bg-purple-100 text-purple-800 hover:bg-purple-200',
+        supplier:
+          'border-transparent bg-amber-100 text-amber-800 hover:bg-amber-200',
+        partner:
+          'border-transparent bg-cyan-100 text-cyan-800 hover:bg-cyan-200',
       },
       size: {
         sm: 'px-2 py-0.5 text-xs',
