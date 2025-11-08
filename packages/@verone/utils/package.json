@@ -1,0 +1,26 @@
+{
+  "name": "@verone/utils",
+  "version": "1.0.0",
+  "description": "Utilitaires et helpers partagés pour le monorepo Vérone",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "scripts": {
+    "build": "tsc",
+    "clean": "rm -rf dist",
+    "type-check": "tsc --noEmit"
+  },
+  "author": "Romeo Dos Santos",
+  "license": "MIT",
+  "keywords": [
+    "utils",
+    "helpers",
+    "verone"
+  ],
+  "dependencies": {
+    "clsx": "^2.1.0",
+    "tailwind-merge": "^2.2.1"
+  },
+  "devDependencies": {
+    "typescript": "^5.3.3"
+  }
+}

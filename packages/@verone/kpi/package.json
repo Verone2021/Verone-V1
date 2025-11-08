@@ -1,0 +1,23 @@
+{
+  "name": "@verone/kpi",
+  "version": "1.0.0",
+  "description": "Documentation KPI et configuration YAML pour le monorepo Vérone",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "scripts": {
+    "build": "tsc",
+    "clean": "rm -rf dist",
+    "type-check": "tsc --noEmit"
+  },
+  "author": "Romeo Dos Santos",
+  "license": "MIT",
+  "keywords": [
+    "kpi",
+    "metrics",
+    "yaml",
+    "verone"
+  ],
+  "devDependencies": {
+    "typescript": "^5.3.3"
+  }
+}

@@ -1,0 +1,33 @@
+{
+  "name": "@verone/types",
+  "version": "1.0.0",
+  "description": "Types TypeScript partagés pour le monorepo Vérone (Supabase + Business)",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js"
+    },
+    "./supabase": {
+      "types": "./dist/supabase.d.ts",
+      "default": "./dist/supabase.js"
+    }
+  },
+  "scripts": {
+    "build": "tsc",
+    "clean": "rm -rf dist",
+    "type-check": "tsc --noEmit"
+  },
+  "author": "Romeo Dos Santos",
+  "license": "MIT",
+  "keywords": [
+    "types",
+    "typescript",
+    "supabase",
+    "verone"
+  ],
+  "devDependencies": {
+    "typescript": "^5.3.3"
+  }
+}
