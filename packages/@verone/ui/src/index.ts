@@ -8,5 +8,8 @@ export * from './tokens';
 export * from './themes';
 export { cn } from './utils';
 
-// UI Components
+// UI Components - shadcn/ui base
+export * from './components/ui';
+
+// UI Components - Business specific
 export * from './components/stock';
