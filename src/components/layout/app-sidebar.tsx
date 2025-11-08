@@ -1,34 +1,10 @@
 'use client';
 
+import { useState, useEffect, useMemo } from 'react';
+
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { useState, useEffect, useMemo } from 'react';
-import { cn } from '@/lib/utils';
-import { featureFlags, getModuleDeploymentStatus } from '@/lib/feature-flags';
-import { createClient } from '@/lib/supabase/client';
-import {
-  InactiveModuleWrapper,
-  PhaseIndicator,
-} from '@/components/ui/phase-indicator';
-import {
-  Collapsible,
-  CollapsibleContent,
-  CollapsibleTrigger,
-} from '@/components/ui/collapsible';
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipTrigger,
-  TooltipProvider,
-} from '@/components/ui/tooltip';
-import {
-  SidebarProvider,
-  SidebarTrigger,
-  useSidebar,
-} from '@/components/ui/sidebar';
-import { Badge } from '@/components/ui/badge';
-// Phase 1: use-stock-alerts-count hook désactivé (Phase 2+)
-// import { useStockAlertsCount } from '@/shared/modules/stock/hooks'
+
 import {
   Home,
   Users,
@@ -54,6 +30,34 @@ import {
   Banknote,
   RefreshCw,
 } from 'lucide-react';
+
+import { Badge } from '@/components/ui/badge';
+import {
+  Collapsible,
+  CollapsibleContent,
+  CollapsibleTrigger,
+} from '@/components/ui/collapsible';
+import {
+  InactiveModuleWrapper,
+  PhaseIndicator,
+} from '@/components/ui/phase-indicator';
+import {
+  SidebarProvider,
+  SidebarTrigger,
+  useSidebar,
+} from '@/components/ui/sidebar';
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+  TooltipProvider,
+} from '@/components/ui/tooltip';
+import { featureFlags, getModuleDeploymentStatus } from '@/lib/feature-flags';
+import { createClient } from '@/lib/supabase/client';
+import { cn } from '@verone/utils';
+
+// Phase 1: use-stock-alerts-count hook désactivé (Phase 2+)
+// import { useStockAlertsCount } from '@/shared/modules/stock/hooks'
 
 // Interface pour les éléments de navigation
 interface NavItem {

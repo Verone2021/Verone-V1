@@ -1,35 +1,49 @@
-"use client"
+'use client';
 
-import { useState, useEffect } from "react"
-import { X, Save, Loader2 } from "lucide-react"
-import { ButtonV2 } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
-import { cn } from "../../lib/utils"
-import { ImageUploadV2 } from "./ImageUploadV2"
+import { useState, useEffect } from 'react';
+
+import { X, Save, Loader2 } from 'lucide-react';
+
+import { ButtonV2 } from '@/components/ui/button';
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
+
+import { ImageUploadV2 } from './ImageUploadV2';
+import { cn } from '../../lib/utils';
 
 // Types pour le formulaire adaptatif
-type ItemType = 'family' | 'category' | 'subcategory'
+type ItemType = 'family' | 'category' | 'subcategory';
 
 interface FormData {
-  name: string
-  description: string
-  is_active: boolean
-  display_order: number
-  parent_id?: string // Pour catégories et sous-catégories
-  image_url?: string
+  name: string;
+  description: string;
+  is_active: boolean;
+  display_order: number;
+  parent_id?: string; // Pour catégories et sous-catégories
+  image_url?: string;
 }
 
 interface FamilyCrudFormProps {
-  isOpen: boolean
-  onClose: () => void
-  type: ItemType
-  mode: 'create' | 'edit'
-  initialData?: FormData & { id?: string }
-  parentOptions?: Array<{ id: string; name: string }> // Options parent pour catégories/sous-catégories
-  onSubmit: (data: FormData & { id?: string }) => Promise<void>
+  isOpen: boolean;
+  onClose: () => void;
+  type: ItemType;
+  mode: 'create' | 'edit';
+  initialData?: FormData & { id?: string };
+  parentOptions?: Array<{ id: string; name: string }>; // Options parent pour catégories/sous-catégories
+  onSubmit: (data: FormData & { id?: string }) => Promise<void>;
 }
 
 const ITEM_LABELS = {
@@ -40,7 +54,7 @@ const ITEM_LABELS = {
     nameLabel: 'Nom de la famille',
     descriptionLabel: 'Description de la famille',
     namePlaceholder: 'Ex: Mobilier, Électroménager...',
-    descriptionPlaceholder: 'Description de cette famille de produits'
+    descriptionPlaceholder: 'Description de cette famille de produits',
   },
   category: {
     title: 'Catégorie',
@@ -49,7 +63,7 @@ const ITEM_LABELS = {
     nameLabel: 'Nom de la catégorie',
     descriptionLabel: 'Description de la catégorie',
     namePlaceholder: 'Ex: Chaises, Tables...',
-    descriptionPlaceholder: 'Description de cette catégorie'
+    descriptionPlaceholder: 'Description de cette catégorie',
   },
   subcategory: {
     title: 'Sous-catégorie',
@@ -58,9 +72,9 @@ const ITEM_LABELS = {
     nameLabel: 'Nom de la sous-catégorie',
     descriptionLabel: 'Description de la sous-catégorie',
     namePlaceholder: 'Ex: Chaise de bureau, Chaise de salle à manger...',
-    descriptionPlaceholder: 'Description de cette sous-catégorie'
-  }
-}
+    descriptionPlaceholder: 'Description de cette sous-catégorie',
+  },
+};
 
 export function FamilyCrudForm({
   isOpen,
@@ -69,7 +83,7 @@ export function FamilyCrudForm({
   mode,
   initialData,
   parentOptions = [],
-  onSubmit
+  onSubmit,
 }: FamilyCrudFormProps) {
   const [formData, setFormData] = useState<FormData>({
     name: '',
@@ -77,14 +91,16 @@ export function FamilyCrudForm({
     is_active: true,
     display_order: 1,
     parent_id: undefined,
-    image_url: undefined
-  })
+    image_url: undefined,
+  });
 
-  const [isSubmitting, setIsSubmitting] = useState(false)
-  const [errors, setErrors] = useState<Partial<Record<keyof FormData, string>>>({})
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [errors, setErrors] = useState<Partial<Record<keyof FormData, string>>>(
+    {}
+  );
 
-  const labels = ITEM_LABELS[type]
-  const title = mode === 'create' ? labels.titleCreate : labels.titleEdit
+  const labels = ITEM_LABELS[type];
+  const title = mode === 'create' ? labels.titleCreate : labels.titleEdit;
 
   // Initialiser le formulaire avec les données existantes
   useEffect(() => {
@@ -95,8 +111,8 @@ export function FamilyCrudForm({
         is_active: initialData.is_active ?? true,
         display_order: initialData.display_order || 1,
         parent_id: initialData.parent_id,
-        image_url: initialData.image_url
-      })
+        image_url: initialData.image_url,
+      });
     } else {
       setFormData({
         name: '',
@@ -104,94 +120,102 @@ export function FamilyCrudForm({
         is_active: true,
         display_order: 1,
         parent_id: undefined,
-        image_url: undefined
-      })
+        image_url: undefined,
+      });
     }
-    setErrors({})
-  }, [initialData, isOpen])
+    setErrors({});
+  }, [initialData, isOpen]);
 
   // Validation du formulaire
   const validateForm = (): boolean => {
-    const newErrors: Partial<Record<keyof FormData, string>> = {}
+    const newErrors: Partial<Record<keyof FormData, string>> = {};
 
     if (!formData.name.trim()) {
-      newErrors.name = 'Le nom est obligatoire'
+      newErrors.name = 'Le nom est obligatoire';
     }
 
     if (formData.name.length < 2) {
-      newErrors.name = 'Le nom doit contenir au moins 2 caractères'
+      newErrors.name = 'Le nom doit contenir au moins 2 caractères';
     }
 
-    if ((type === 'category' || type === 'subcategory') && !formData.parent_id) {
-      newErrors.parent_id = `Vous devez sélectionner une ${type === 'category' ? 'famille' : 'catégorie'} parent`
+    if (
+      (type === 'category' || type === 'subcategory') &&
+      !formData.parent_id
+    ) {
+      newErrors.parent_id = `Vous devez sélectionner une ${type === 'category' ? 'famille' : 'catégorie'} parent`;
     }
 
     if (formData.display_order < 1 || formData.display_order > 999) {
-      newErrors.display_order = 'L\'ordre doit être entre 1 et 999'
+      newErrors.display_order = "L'ordre doit être entre 1 et 999";
     }
 
-    setErrors(newErrors)
-    return Object.keys(newErrors).length === 0
-  }
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
+  };
 
   // Soumission du formulaire
   const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault()
+    e.preventDefault();
 
-    if (!validateForm()) return
+    if (!validateForm()) return;
 
-    setIsSubmitting(true)
+    setIsSubmitting(true);
     try {
       const submitData = {
         ...formData,
-        ...(mode === 'edit' && initialData?.id ? { id: initialData.id } : {})
-      }
+        ...(mode === 'edit' && initialData?.id ? { id: initialData.id } : {}),
+      };
 
-      await onSubmit(submitData)
-      onClose()
+      await onSubmit(submitData);
+      onClose();
     } catch (error) {
-      console.error('Erreur lors de la sauvegarde:', error)
+      console.error('Erreur lors de la sauvegarde:', error);
       // TODO: Afficher un message d'erreur à l'utilisateur
     } finally {
-      setIsSubmitting(false)
+      setIsSubmitting(false);
     }
-  }
+  };
 
   // Mise à jour des champs
-  const updateField = <K extends keyof FormData>(field: K, value: FormData[K]) => {
-    setFormData(prev => ({ ...prev, [field]: value }))
+  const updateField = <K extends keyof FormData>(
+    field: K,
+    value: FormData[K]
+  ) => {
+    setFormData(prev => ({ ...prev, [field]: value }));
     if (errors[field]) {
-      setErrors(prev => ({ ...prev, [field]: undefined }))
+      setErrors(prev => ({ ...prev, [field]: undefined }));
     }
-  }
+  };
 
   // Gestionnaires d'images
   const handleImageUpload = (url: string) => {
-    setFormData(prev => ({ ...prev, image_url: url }))
-  }
+    setFormData(prev => ({ ...prev, image_url: url }));
+  };
 
   const handleImageRemove = () => {
-    setFormData(prev => ({ ...prev, image_url: undefined }))
-  }
+    setFormData(prev => ({ ...prev, image_url: undefined }));
+  };
 
   // Déterminer le bucket selon le type
   const getImageBucket = () => {
     switch (type) {
       case 'family':
-        return 'family-images' as const
+        return 'family-images' as const;
       case 'category':
       case 'subcategory':
-        return 'category-images' as const
+        return 'category-images' as const;
       default:
-        return 'category-images' as const
+        return 'category-images' as const;
     }
-  }
+  };
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
-          <DialogTitle className="text-xl font-light text-black">{title}</DialogTitle>
+          <DialogTitle className="text-xl font-light text-black">
+            {title}
+          </DialogTitle>
         </DialogHeader>
 
         <form onSubmit={handleSubmit} className="space-y-6">
@@ -200,33 +224,41 @@ export function FamilyCrudForm({
             <div className="space-y-2">
               <Label htmlFor="parent">
                 {type === 'category' ? 'Famille parent' : 'Catégorie parent'}
-                {mode === 'create' && <span className="text-red-500 ml-1">*</span>}
+                {mode === 'create' && (
+                  <span className="text-red-500 ml-1">*</span>
+                )}
               </Label>
 
               {mode === 'edit' ? (
                 // Mode édition : affichage en lecture seule
                 <div className="space-y-2">
                   <div className="w-full px-3 py-2 border border-gray-200 rounded-md bg-gray-50 text-gray-700">
-                    {parentOptions.find(option => option.id === formData.parent_id)?.name || 'Parent non trouvé'}
+                    {parentOptions.find(
+                      option => option.id === formData.parent_id
+                    )?.name || 'Parent non trouvé'}
                   </div>
                   <p className="text-xs text-gray-500">
-                    La {type === 'category' ? 'famille' : 'catégorie'} parent ne peut pas être modifiée après création pour préserver la cohérence de l'arborescence.
+                    La {type === 'category' ? 'famille' : 'catégorie'} parent ne
+                    peut pas être modifiée après création pour préserver la
+                    cohérence de l'arborescence.
                   </p>
                 </div>
               ) : (
                 // Mode création : sélection normale
                 <>
                   <Select
-                    value={formData.parent_id || ""}
-                    onValueChange={(value) => updateField('parent_id', value)}
+                    value={formData.parent_id || ''}
+                    onValueChange={value => updateField('parent_id', value)}
                   >
-                    <SelectTrigger className={cn(errors.parent_id && "border-red-500")}>
+                    <SelectTrigger
+                      className={cn(errors.parent_id && 'border-red-500')}
+                    >
                       <SelectValue
                         placeholder={`Sélectionner une ${type === 'category' ? 'famille' : 'catégorie'}`}
                       />
                     </SelectTrigger>
                     <SelectContent>
-                      {parentOptions.map((option) => (
+                      {parentOptions.map(option => (
                         <SelectItem key={option.id} value={option.id}>
                           {option.name}
                         </SelectItem>
@@ -251,9 +283,9 @@ export function FamilyCrudForm({
               id="name"
               type="text"
               value={formData.name}
-              onChange={(e) => updateField('name', e.target.value)}
+              onChange={e => updateField('name', e.target.value)}
               placeholder={labels.namePlaceholder}
-              className={cn(errors.name && "border-red-500")}
+              className={cn(errors.name && 'border-red-500')}
             />
             {errors.name && (
               <p className="text-sm text-red-600">{errors.name}</p>
@@ -266,7 +298,7 @@ export function FamilyCrudForm({
             <textarea
               id="description"
               value={formData.description}
-              onChange={(e) => updateField('description', e.target.value)}
+              onChange={e => updateField('description', e.target.value)}
               placeholder={labels.descriptionPlaceholder}
               rows={3}
               className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-black focus:border-transparent resize-none"
@@ -275,13 +307,20 @@ export function FamilyCrudForm({
 
           {/* Image/Icône */}
           <div className="space-y-2">
-            <Label>Image {type === 'family' ? 'de la famille' : type === 'category' ? 'de la catégorie' : 'de la sous-catégorie'}</Label>
+            <Label>
+              Image{' '}
+              {type === 'family'
+                ? 'de la famille'
+                : type === 'category'
+                  ? 'de la catégorie'
+                  : 'de la sous-catégorie'}
+            </Label>
             <ImageUploadV2
               bucket={getImageBucket()}
               currentImageUrl={formData.image_url}
               onImageUpload={handleImageUpload}
               onImageRemove={handleImageRemove}
-              autoUpload={true}
+              autoUpload
             />
           </div>
 
@@ -294,8 +333,10 @@ export function FamilyCrudForm({
               min="1"
               max="999"
               value={formData.display_order}
-              onChange={(e) => updateField('display_order', parseInt(e.target.value) || 1)}
-              className={cn(errors.display_order && "border-red-500")}
+              onChange={e =>
+                updateField('display_order', parseInt(e.target.value) || 1)
+              }
+              className={cn(errors.display_order && 'border-red-500')}
             />
             {errors.display_order && (
               <p className="text-sm text-red-600">{errors.display_order}</p>
@@ -307,7 +348,9 @@ export function FamilyCrudForm({
             <Label htmlFor="is_active">Statut</Label>
             <Select
               value={formData.is_active.toString()}
-              onValueChange={(value) => updateField('is_active', value === 'true')}
+              onValueChange={value =>
+                updateField('is_active', value === 'true')
+              }
             >
               <SelectTrigger>
                 <SelectValue />
@@ -350,5 +393,5 @@ export function FamilyCrudForm({
         </form>
       </DialogContent>
     </Dialog>
-  )
+  );
 }

@@ -30,6 +30,7 @@ Dashboard Principal → 16 Hooks Métriques → Supabase (Tables + RPC + Trigger
 ```
 
 **Principes** :
+
 - **Performance First** : SLA <2s via RPC optimisées
 - **Real-time** : Données Supabase réelles (pas mock)
 - **Fallback** : Requêtes SQL si RPC indisponible
@@ -46,11 +47,13 @@ Dashboard Principal → 16 Hooks Métriques → Supabase (Tables + RPC + Trigger
 **Description** : Statistiques produits catalogue (total, actifs, inactifs, brouillons) avec tendance 7j.
 
 **Interface** :
+
 ```typescript
 { total, active, inactive, draft, trend: number }
 ```
 
 **Formule Trend** :
+
 ```
 trend = ((recent7d - previous7d) / previous7d) × 100
 - recent7d: COUNT(products WHERE created_at >= NOW() - 7d)
@@ -61,6 +64,7 @@ Edge case: previous7d = 0 ET recent7d > 0 → trend = 100%
 **Sources** : `products` (status, created_at)
 
 **Mapping Statuts** :
+
 - active: `status IN ('in_stock')`
 - inactive: `status IN ('out_of_stock', 'discontinued')`
 - draft: `status IN ('coming_soon', 'preorder')`
@@ -78,11 +82,13 @@ Edge case: previous7d = 0 ET recent7d > 0 → trend = 100%
 **Description** : Stats utilisateurs (actifs 30j, nouveaux 7j, par rôle).
 
 **Interface** :
+
 ```typescript
 { total, active, new, byRole: {admin, catalog_manager, sales, partner_manager}, trend }
 ```
 
 **Formule Trend** :
+
 ```
 trend = (new / total) × 100
 - new: COUNT(user_profiles WHERE created_at >= NOW() - 7d)
@@ -92,6 +98,7 @@ trend = (new / total) × 100
 **Sources** : `user_profiles` (role, created_at, last_sign_in_at)
 
 **Permissions** :
+
 - Owner : ✅ Toutes métriques + Export CSV/PDF
 - Admin : ✅ Agrégats seulement (pas détails utilisateurs)
 - Autres : ❌ Non autorisé
@@ -107,6 +114,7 @@ trend = (new / total) × 100
 **Description** : Métriques Phase 1 Catalogue réelles (produits, collections, variant groups).
 
 **Interface** :
+
 ```typescript
 {
   products: { total, active, published, trend },
@@ -116,6 +124,7 @@ trend = (new / total) × 100
 ```
 
 **Sources** :
+
 - `products` : id, status, is_published | Filtre: `archived_at IS NULL`
 - `collections` : id, is_active | Filtre: `deleted_at IS NULL`
 - `variant_groups` : id | Filtre: `deleted_at IS NULL`
@@ -135,11 +144,13 @@ trend = (new / total) × 100
 **Description** : Métriques inventaire (in/out/low/critical stock) + TOP 10 alertes.
 
 **Interface** :
+
 ```typescript
 { inStock, outOfStock, lowStock, critical, alerts: StockAlert[] }
 ```
 
 **Classification Stock** :
+
 ```
 FOR EACH product:
   stock = stock_real || stock_quantity
@@ -152,6 +163,7 @@ FOR EACH product:
 ```
 
 **Sources** :
+
 - `products` : stock_quantity, stock_real, min_stock
 - `stock_alerts_view` (vue matérialisée) : alert_status, alert_priority
 
@@ -170,6 +182,7 @@ FOR EACH product:
 **Description** : Dashboard ERP Stock professionnel (vue d'ensemble + mouvements + alertes + timeline).
 
 **Interface** :
+
 ```typescript
 {
   overview: StockOverview,  // Valeur stock, quantités, prévisionnels
@@ -184,17 +197,20 @@ FOR EACH product:
 **Formules Clés** :
 
 **Valeur Totale Stock** :
+
 ```
 total_value = SUM(stock_real × cost_price)
 Calculé en JS après requête
 ```
 
 **Stock Disponible Prévisionnel** :
+
 ```
 total_available = SUM(MAX(stock_real - stock_forecasted_out, 0))
 ```
 
 **Mouvements 7 Jours** :
+
 ```
 entries: COUNT(stock_movements WHERE movement_type = 'IN' AND affects_forecast = false)
 exits: COUNT(stock_movements WHERE movement_type = 'OUT')
@@ -202,6 +218,7 @@ adjustments: COUNT(stock_movements WHERE movement_type = 'ADJUST')
 ```
 
 **Sources** :
+
 - `products` : stock_real, cost_price, min_stock, stock_forecasted_in/out
 - `stock_alerts_view` : Comptage ruptures/alertes
 - `stock_movements` : movement_type, quantity_change, performed_at
@@ -219,18 +236,21 @@ adjustments: COUNT(stock_movements WHERE movement_type = 'ADJUST')
 **Description** : Système alertes stock intelligent 3 niveaux (low/out/ordered without stock).
 
 **Types Alertes** :
+
 ```typescript
-type StockAlertType = 'low_stock' | 'out_of_stock' | 'no_stock_but_ordered'
-severity: 'critical' | 'warning' | 'info'
+type StockAlertType = 'low_stock' | 'out_of_stock' | 'no_stock_but_ordered';
+severity: 'critical' | 'warning' | 'info';
 ```
 
 **Règles Business** :
+
 1. **NO_STOCK_BUT_ORDERED** (critical) : `stock_real ≤ 0 AND stock_forecasted_out > 0`
    - Récupère commandes liées depuis `sales_orders`
 2. **OUT_OF_STOCK** (critical) : `stock_real ≤ 0 AND stock_forecasted_out = 0`
 3. **LOW_STOCK** (warning) : `0 < stock_real < min_stock`
 
 **Formule Shortage** :
+
 ```
 shortage_quantity = CASE alert_type:
   'no_stock_but_ordered' → stock_forecasted_out
@@ -239,8 +259,9 @@ shortage_quantity = CASE alert_type:
 ```
 
 **Helpers** :
+
 ```typescript
-const { criticalAlerts, warningAlerts, getAlertsByType } = useStockAlerts()
+const { criticalAlerts, warningAlerts, getAlertsByType } = useStockAlerts();
 ```
 
 **SLA** : <1.5s (joins commandes)
@@ -256,6 +277,7 @@ const { criticalAlerts, warningAlerts, getAlertsByType } = useStockAlerts()
 **Description** : CA (today/month/year), tendance mensuelle, Average Order Value.
 
 **Interface** :
+
 ```typescript
 { today, month, year, trend, averageOrderValue: number }
 ```
@@ -263,12 +285,14 @@ const { criticalAlerts, warningAlerts, getAlertsByType } = useStockAlerts()
 **Formules** :
 
 **Revenue Trend** :
+
 ```
 trend = ((currentMonth - previousMonth) / previousMonth) × 100
 Statuts validés: 'confirmed', 'partially_shipped', 'shipped', 'delivered'
 ```
 
 **AOV (Panier Moyen)** :
+
 ```
 AOV = monthRevenue / monthOrdersCount
 Edge case: monthOrdersCount = 0 → AOV = 0
@@ -290,6 +314,7 @@ Arrondi: 2 décimales (centimes)
 **Description** : Stats commandes par statut + tendance 30j + 5 commandes récentes.
 
 **Interface** :
+
 ```typescript
 {
   pending, processing, completed, cancelled,
@@ -299,6 +324,7 @@ Arrondi: 2 décimales (centimes)
 ```
 
 **Mapping Statuts** :
+
 ```
 pending = COUNT WHERE status IN ('draft', 'confirmed')
 processing = COUNT WHERE status = 'partially_shipped'
@@ -307,6 +333,7 @@ cancelled = COUNT WHERE status = 'cancelled'
 ```
 
 **Formule Trend** :
+
 ```
 trend = ((current30d - previous30d) / previous30d) × 100
 current30d: COUNT WHERE created_at >= NOW() - 30d
@@ -314,6 +341,7 @@ previous30d: COUNT WHERE created_at BETWEEN NOW() - 60d AND NOW() - 30d
 ```
 
 **Enrichissement Clients** :
+
 ```
 IF customer_type = 'organization':
   customer = organisations.name
@@ -323,6 +351,7 @@ ELSE: 'Client inconnu'
 ```
 
 **Sources** :
+
 - `sales_orders` : order_number, status, total_ht, customer_type, customer_id
 - `organisations` : name
 - `individual_customers` : first_name, last_name
@@ -338,20 +367,22 @@ ELSE: 'Client inconnu'
 **Description** : Hook Phase 2 Stock/Sourcing (stock_value, PO count, revenue, sourcing).
 
 **Interface** :
+
 ```typescript
 {
-  stock_value, purchase_orders_count,
-  month_revenue, products_to_source
+  (stock_value, purchase_orders_count, month_revenue, products_to_source);
 }
 ```
 
 **Formules** :
+
 ```
 stock_value = SUM(stock_real × cost_price)  // Même formule use-stock-dashboard
 month_revenue = SUM(sales_orders.total_ht WHERE month & status validated)
 ```
 
 **Sources** :
+
 - `products` : stock_real, cost_price
 - `purchase_orders` : id
 - `sales_orders` : total_ht, created_at, status
@@ -369,6 +400,7 @@ month_revenue = SUM(sales_orders.total_ht WHERE month & status validated)
 **Description** : Activité système (produits/collections/users créés/modifiés) aujourd'hui vs hier + timeline.
 
 **Interface** :
+
 ```typescript
 {
   today, yesterday, trend,
@@ -377,6 +409,7 @@ month_revenue = SUM(sales_orders.total_ht WHERE month & status validated)
 ```
 
 **Formule Trend** :
+
 ```
 trend = ((today - yesterday) / yesterday) × 100
 today: COUNT(actions WHERE created_at >= START_OF_TODAY)
@@ -386,6 +419,7 @@ Actions = products created/updated + collections created/updated + users registe
 ```
 
 **Sources** :
+
 - `products` : created_at, updated_at
 - `collections` : created_at, updated_at
 - `user_profiles` : created_at
@@ -403,26 +437,32 @@ Actions = products created/updated + collections created/updated + users registe
 **Description** : Tracking comportemental avec batching (clics, navigation, recherches, erreurs JS).
 
 **Configuration** :
+
 ```
 BATCH_SIZE = 10
 BATCH_INTERVAL = 30000ms (30s)
 ```
 
 **Événements Trackés** :
+
 - Auto : `page_view`, `user_click` (throttle 1/s), `javascript_error`, `promise_rejection`
 - Manuel : `trackFormSubmit`, `trackSearch`, `trackFilterApplied`, `trackPerformanceMetric`
 
 **Session Tracking** :
+
 ```typescript
 {
-  start_time: Date.now(),
-  page_views, actions_count,
-  last_activity, current_page
+  start_time: (Date.now(),
+    page_views,
+    actions_count,
+    last_activity,
+    current_page);
 }
-sessionId = crypto.randomUUID()  // Unique par session
+sessionId = crypto.randomUUID(); // Unique par session
 ```
 
 **Metadata Auto-enrichies** :
+
 ```
 page_url, user_agent, session_duration, element_target, click_position, etc.
 ```
@@ -444,6 +484,7 @@ page_url, user_agent, session_duration, element_target, click_position, etc.
 **Description** : Timeline activité récente utilisateur pour dashboard (RPC `get_user_recent_actions`).
 
 **Interface** :
+
 ```typescript
 TimelineItem[] : {
   id, type: 'order'|'product'|'stock'|'customer'|'system',
@@ -452,6 +493,7 @@ TimelineItem[] : {
 ```
 
 **Mapping Actions → Timeline** :
+
 ```
 'create_product' → type='product', title='Nouveau produit créé'
 'update_order' → type='order', title='Commande mise à jour'
@@ -460,6 +502,7 @@ TimelineItem[] : {
 ```
 
 **RPC Function** :
+
 ```sql
 get_user_recent_actions(p_user_id uuid, p_limit int)
 SELECT action, page_url, table_name, record_id, severity, created_at
@@ -481,6 +524,7 @@ ORDER BY created_at DESC LIMIT p_limit
 **Description** : Orchestrateur Phase 1 + Phase 2 (catalogue + stock/orders/sourcing).
 
 **Composition** :
+
 ```
 useCompleteDashboardMetrics() {
   catalogueMetrics = useRealDashboardMetrics()
@@ -493,6 +537,7 @@ useCompleteDashboardMetrics() {
 ```
 
 **Interface Complète** :
+
 ```typescript
 {
   catalogue: { totalProducts, activeProducts, publishedProducts, collections, variantGroups, trend },
@@ -504,6 +549,7 @@ useCompleteDashboardMetrics() {
 ```
 
 **Calculs Organisations** :
+
 ```
 organisationsOnly = filter(o => type !== 'customer' OR customer_type !== 'individual')
 suppliers = COUNT WHERE type = 'supplier'
@@ -523,6 +569,7 @@ customersB2B = COUNT WHERE type = 'customer' AND customer_type = 'professional'
 **Description** : Données temporelles pour 4 graphiques Recharts (30 derniers jours).
 
 **Interface** :
+
 ```typescript
 {
   revenue: RevenueDataPoint[],  // CA par jour
@@ -535,6 +582,7 @@ customersB2B = COUNT WHERE type = 'customer' AND customer_type = 'professional'
 **Formules Agrégation** :
 
 **1. Revenue Chart** :
+
 ```
 revenueByDay = sales_orders.reduce((acc, order) => {
   date = order.created_at.split('T')[0]
@@ -544,6 +592,7 @@ revenueByDay = sales_orders.reduce((acc, order) => {
 ```
 
 **2. Products Chart** :
+
 ```
 productsByWeek = products.reduce((acc, p) => {
   weekStart = getWeekStart(p.created_at)
@@ -553,6 +602,7 @@ productsByWeek = products.reduce((acc, p) => {
 ```
 
 **3. Stock Movements Chart** :
+
 ```
 movementsByDay[date] = { entrees: 0, sorties: 0 }
 IF movement_type IN ('in', 'purchase_order'): entrees += ABS(quantity_change)
@@ -560,6 +610,7 @@ IF movement_type IN ('out', 'sales_order'): sorties += ABS(quantity_change)
 ```
 
 **4. Purchase Orders Chart** :
+
 ```
 purchaseByWeek = purchase_orders.reduce((acc, po) => {
   weekStart = getWeekStart(po.created_at)
@@ -568,6 +619,7 @@ purchaseByWeek = purchase_orders.reduce((acc, po) => {
 ```
 
 **Sources** :
+
 - `sales_orders` : created_at, total_ttc | Période: ≥NOW()-30d | Exclusion: status='cancelled'
 - `products` : created_at
 - `stock_movements` : created_at, quantity_change, movement_type
@@ -600,6 +652,7 @@ purchaseByWeek = purchase_orders.reduce((acc, po) => {
 **Description** : Notifications temps réel dashboard (nouveaux messages, alertes critiques).
 
 **Interface** :
+
 ```typescript
 {
   unreadCount, notifications: Notification[]
@@ -617,36 +670,39 @@ purchaseByWeek = purchase_orders.reduce((acc, po) => {
 ### Stratégie RPC vs SQL
 
 **Pattern** :
+
 ```typescript
 try {
-  const { data } = await supabase.rpc('optimized_function')
-  if (data) return data
+  const { data } = await supabase.rpc('optimized_function');
+  if (data) return data;
 } catch {
   // Fallback SQL
-  const results = await Promise.all([...parallelQueries])
-  return computeMetrics(results)
+  const results = await Promise.all([...parallelQueries]);
+  return computeMetrics(results);
 }
 ```
 
 **RPC Functions** :
+
 - `get_products_status_metrics`, `get_stock_metrics_optimized`
 - `get_user_recent_actions`, `calculate_engagement_score`
 
 ### SLA Performance
 
-| Hook | SLA Cible | Optimisations |
-|------|-----------|---------------|
-| Product Metrics | <500ms | RPC + COUNT head-only |
-| Stock Metrics | <1s | RPC + parallel queries |
-| Revenue Metrics | <1s | SUM agrégations simples |
-| Dashboard Analytics | <3s | 4 queries parallèles |
-| Stock Dashboard | <2s | Vue stock_alerts + agrégats JS |
+| Hook                | SLA Cible | Optimisations                  |
+| ------------------- | --------- | ------------------------------ |
+| Product Metrics     | <500ms    | RPC + COUNT head-only          |
+| Stock Metrics       | <1s       | RPC + parallel queries         |
+| Revenue Metrics     | <1s       | SUM agrégations simples        |
+| Dashboard Analytics | <3s       | 4 queries parallèles           |
+| Stock Dashboard     | <2s       | Vue stock_alerts + agrégats JS |
 
 ### Troubleshooting
 
 **Trend = undefined%** :
+
 ```typescript
-trend = Number.isFinite(trend) ? Math.round(trend * 10) / 10 : 0
+trend = Number.isFinite(trend) ? Math.round(trend * 10) / 10 : 0;
 ```
 
 **RPC not found** : Hook utilise fallback SQL automatiquement

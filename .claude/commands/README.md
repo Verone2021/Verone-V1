@@ -21,6 +21,7 @@
 **RÈGLE SACRÉE 2025** : Zero tolerance pour erreurs console.
 
 **Usage** :
+
 ```bash
 /error-check                                    # Page actuelle
 /error-check http://localhost:3000/dashboard    # Dashboard
@@ -28,17 +29,20 @@
 ```
 
 **Workflow** :
+
 1. Navigate page avec Playwright
 2. Vérifie console errors (MCP Browser)
 3. Screenshot si erreurs
 4. Rapport détaillé
 
 **Success Criteria** :
+
 - ✅ Zero console errors (obligatoire)
 - ✅ Zero critical warnings (obligatoire)
 - ✅ Page navigable sans erreurs
 
 **Failure Response** :
+
 - 🚨 STOP développement jusqu'à résolution
 - 🚨 FIX ALL ERRORS avant continuer
 - 🚨 RE-RUN après chaque correction
@@ -50,6 +54,7 @@
 Debug guidé avec orchestration multi-agents (Playwright + Serena + Supabase)
 
 **Auto-détection type erreur** :
+
 - JavaScript errors
 - API errors
 - Database errors
@@ -58,6 +63,7 @@ Debug guidé avec orchestration multi-agents (Playwright + Serena + Supabase)
 - Auth issues
 
 **Workflow** :
+
 1. Reproduit erreur (Playwright)
 2. Localise source (Serena)
 3. Fix suggéré/appliqué
@@ -65,6 +71,7 @@ Debug guidé avec orchestration multi-agents (Playwright + Serena + Supabase)
 5. Documentation fix
 
 **Exemples** :
+
 ```bash
 /fix "TypeError: Cannot read property 'name' of undefined in ProductCard"
 # → Fix appliqué automatiquement
@@ -80,6 +87,7 @@ Debug guidé avec orchestration multi-agents (Playwright + Serena + Supabase)
 Pre-commit quality check complet
 
 **Checklist** :
+
 - ✅ TypeScript strict types (no `any`)
 - ✅ Design System Vérone V2 compliance
 - ✅ Business Rules (docs/business-rules/)
@@ -89,6 +97,7 @@ Pre-commit quality check complet
 - ✅ Accessibility (ARIA)
 
 **Best Practice** :
+
 ```bash
 # Avant chaque commit
 git add .
@@ -106,11 +115,13 @@ git commit -m "..."
 Opérations Supabase rapides
 
 **1. Query rapide** :
+
 ```bash
 /db query "SELECT * FROM products LIMIT 10"
 ```
 
 **2. Logs analysis** :
+
 ```bash
 /db logs api 50         # 50 derniers logs API
 /db logs postgres       # Logs PostgreSQL
@@ -118,6 +129,7 @@ Opérations Supabase rapides
 ```
 
 **3. Migrations** :
+
 ```bash
 /db migrations list     # Toutes migrations
 /db migrations status   # Statut sync
@@ -125,6 +137,7 @@ Opérations Supabase rapides
 ```
 
 **4. Security & Performance advisors** :
+
 ```bash
 /db advisors security    # RLS policies check
 /db advisors performance # Indexes recommendations
@@ -132,30 +145,35 @@ Opérations Supabase rapides
 ```
 
 **5. Schema inspection** :
+
 ```bash
 /db schema              # Toutes tables
 /db schema products     # Table spécifique
 ```
 
 **6. Types generation** :
+
 ```bash
 /db types
 # → Génère src/types/supabase.ts depuis schema
 ```
 
 **7. RLS testing** :
+
 ```bash
 /db rls-test products anon
 # → Test SELECT/INSERT/UPDATE/DELETE avec role
 ```
 
 **8. Quick stats** :
+
 ```bash
 /db stats
 # → Rows count, storage, activity
 ```
 
 **Auto-Connection** :
+
 - Credentials `.env.local` automatiques
 - Session Pooler (5432) prioritaire
 
@@ -170,12 +188,14 @@ Opérations Supabase rapides
 **Utilisation** : UNE FOIS au début des corrections TypeScript
 
 **Workflow** :
+
 1. Export erreurs : `npm run type-check > ts-errors-raw.log`
 2. Clustering automatique par famille (TS2322, TS2345, etc.)
 3. Priorisation P0-P3 selon gravité
 4. Génération `TS_ERRORS_PLAN.md` + `error-clusters.json`
 
 **Exemple** :
+
 ```bash
 /typescript-cluster
 # → ts-errors-raw.log (975 erreurs exportées)
@@ -190,9 +210,11 @@ Opérations Supabase rapides
 ⭐ Correction complète d'une famille d'erreurs avec tests AVANT commit
 
 **Arguments** :
+
 - `<famille>` : ID famille depuis `TS_ERRORS_PLAN.md` (ex: `TS2322-null-undefined`)
 
 **Workflow** :
+
 1. Analyse pattern famille
 2. Correction TOUTE la famille en une session
 3. Tests (type-check + build + MCP Browser) AVANT commit
@@ -200,12 +222,14 @@ Opérations Supabase rapides
 5. Update `TS_ERRORS_PLAN.md`
 
 **Success Criteria** :
+
 - ✅ Erreurs réduites
 - ✅ Build success
 - ✅ 0 console errors (MCP Browser)
 - ✅ Aucune régression fonctionnelle
 
 **Exemple** :
+
 ```bash
 /typescript-fix TS2322-null-undefined
 # → Analyse 150 erreurs famille TS2322
@@ -222,6 +246,7 @@ Opérations Supabase rapides
 📊 Dashboard progression corrections TypeScript temps réel
 
 **Affiche** :
+
 - Progression globale (%)
 - Status par famille (DONE | IN_PROGRESS | TODO)
 - Milestones atteints/restants
@@ -232,6 +257,7 @@ Opérations Supabase rapides
 Exécuter après chaque `/typescript-fix` pour visualiser progression.
 
 **Exemple output** :
+
 ```bash
 /typescript-status
 #
@@ -337,12 +363,14 @@ git commit -m "..."
 ## 📊 Success Metrics
 
 ### **Development Velocity**
+
 - ✅ Bug detection: <30s (Console checking)
 - ✅ Debug guidé: <5 min (Multi-agents)
 - ✅ DB operations: <1 min
 - ✅ TypeScript fixes: Familles complètes (>150 erreurs/session)
 
 ### **Quality Assurance**
+
 - ✅ Console errors: 0 (Zero tolerance)
 - ✅ Regression bugs: 0 (Tests avant commits)
 - ✅ Performance SLOs: 100% respect
@@ -363,6 +391,7 @@ git commit -m "..."
 ### **Zero Tolerance Console Errors**
 
 **RÈGLE ABSOLUE** :
+
 ```typescript
 1. /error-check AVANT tout commit
 2. Si erreurs → STOP → Fix ALL
@@ -372,6 +401,7 @@ git commit -m "..."
 ### **Agent MCP Orchestration**
 
 Utilisation systématique agents selon expertise :
+
 - **Playwright** - Console checking + E2E
 - **Serena** - Code analysis symbolique
 - **Supabase** - Database operations
@@ -386,6 +416,7 @@ Utilisation systématique agents selon expertise :
 **Novembre** : **7 commandes** (simplicité novice)
 
 **Impact Simplification** :
+
 ```
 Commandes: 28 → 7 (-75% complexité)
 Temps apprentissage: 2h → 15min (-87%)
@@ -395,6 +426,7 @@ Adoption: 100% (toutes utilisées)
 ```
 
 **Inspiration** :
+
 - Best practices Anthropic
 - Reddit r/nextjs senior developers
 - GitHub Claude Code community
@@ -405,11 +437,13 @@ Adoption: 100% (toutes utilisées)
 ## 🔗 Ressources
 
 ### **Documentation Officielle**
+
 - [CLAUDE.md](../CLAUDE.md) - Instructions projet Vérone
 - [docs/](../docs/) - Documentation technique complète
 - [Claude Code Docs](https://docs.claude.com/en/docs/claude-code)
 
 ### **Vérone Specific**
+
 - [Business Rules](../docs/business-rules/) - 93 dossiers règles métier
 - [Database](../docs/database/) - 78 tables, 158 triggers
 - [Workflows](../docs/workflows/) - Business workflows
@@ -418,4 +452,4 @@ Adoption: 100% (toutes utilisées)
 
 **🚀 7 Commandes Essentielles - Développement Quotidien Simplifié**
 
-*Optimisé pour utilisateur novice - Novembre 2025*
+_Optimisé pour utilisateur novice - Novembre 2025_

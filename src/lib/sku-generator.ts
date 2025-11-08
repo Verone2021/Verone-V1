@@ -27,7 +27,7 @@ export function normalizeForSKU(text: string, maxLength: number = 20): string {
     .replace(/[^A-Z0-9]+/g, '-') // Remplace tout ce qui n'est pas alphanumérique par des tirets
     .replace(/^-+|-+$/g, '') // Supprime les tirets au début et à la fin
     .substring(0, maxLength) // Limite la longueur
-    .replace(/-+$/, '') // Supprime les tirets finaux après la coupe
+    .replace(/-+$/, ''); // Supprime les tirets finaux après la coupe
 }
 
 /**
@@ -47,13 +47,13 @@ export function generateProductSKU(
   variantValue: string
 ): string {
   // Normaliser le SKU de base (max 20 caractères pour laisser de la place à la variante)
-  const normalizedBase = normalizeForSKU(baseSKU, 20)
+  const normalizedBase = normalizeForSKU(baseSKU, 20);
 
   // Normaliser la valeur de variante (max 15 caractères)
-  const normalizedVariant = normalizeForSKU(variantValue, 15)
+  const normalizedVariant = normalizeForSKU(variantValue, 15);
 
   // Retourner le pattern complet
-  return `${normalizedBase}-${normalizedVariant}`
+  return `${normalizedBase}-${normalizedVariant}`;
 }
 
 /**
@@ -71,7 +71,7 @@ export function generateProductName(
   groupName: string,
   variantValue: string
 ): string {
-  return `${groupName} - ${variantValue}`
+  return `${groupName} - ${variantValue}`;
 }
 
 /**
@@ -89,7 +89,7 @@ export function extractVariantValue(
   variantAttributes: Record<string, any>,
   variantType: 'color' | 'size' | 'material' | 'pattern'
 ): string | null {
-  return variantAttributes?.[variantType] || null
+  return variantAttributes?.[variantType] || null;
 }
 
 /**
@@ -112,6 +112,6 @@ export function generateProductIdentifiers(
 ): { name: string; sku: string } {
   return {
     name: generateProductName(groupName, variantValue),
-    sku: generateProductSKU(baseSKU, variantValue)
-  }
+    sku: generateProductSKU(baseSKU, variantValue),
+  };
 }

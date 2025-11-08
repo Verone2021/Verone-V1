@@ -1,7 +1,10 @@
 'use client';
 
 import { use, useState, useCallback } from 'react';
+
+import Image from 'next/image';
 import { useRouter } from 'next/navigation';
+
 import {
   ChevronLeft,
   Eye,
@@ -17,26 +20,27 @@ import {
   Edit3,
   Tag,
 } from 'lucide-react';
-import { ButtonV2 } from '@/components/ui/button';
+
 import { Badge } from '@/components/ui/badge';
+import { ButtonV2 } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
-import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
-import { useCollection, useCollections } from '@/shared/modules/collections/hooks';
-import Image from 'next/image';
+import { RoomMultiSelect } from '@/components/ui/room-multi-select';
+import { Textarea } from '@/components/ui/textarea';
+import { cn } from '@verone/utils';
+import {
+  useCollection,
+  useCollections,
+} from '@/shared/modules/collections/hooks';
+import { useToast } from '@/shared/modules/common/hooks';
+import type { SelectedProduct } from '@/shared/modules/products/components/selectors/UniversalProductSelectorV2';
+import { UniversalProductSelectorV2 } from '@/shared/modules/products/components/selectors/UniversalProductSelectorV2';
 import {
   COLLECTION_STYLE_OPTIONS,
   type CollectionStyle,
-} from '@/types/collections';
-import {
-  UniversalProductSelectorV2,
-  SelectedProduct,
-} from '@/components/business/universal-product-selector-v2';
-import { RoomMultiSelect } from '@/components/ui/room-multi-select';
-import type { RoomType } from '@/types/room-types';
-import { useToast } from '@/shared/modules/common/hooks';
-import { cn } from '@/lib/utils';
+} from '@verone/types';
+import type { RoomType } from '@verone/types';
 
 interface CollectionDetailPageProps {
   params: Promise<{
@@ -134,7 +138,11 @@ export default function CollectionDetailPage({
   const { toast } = useToast();
   const { collectionId } = use(params);
   const { collection, loading, error, refetch } = useCollection(collectionId);
-  const { removeProductFromCollection, updateCollection } = useCollections();
+  const {
+    removeProductFromCollection,
+    updateCollection,
+    addProductsToCollection,
+  } = useCollections();
   const [showManageProductsModal, setShowManageProductsModal] = useState(false);
 
   // États édition inline - nom
@@ -457,12 +465,12 @@ export default function CollectionDetailPage({
     return (
       <div className="container mx-auto px-4 py-6">
         <div className="animate-pulse">
-          <div className="h-8 bg-gray-200 rounded w-1/4 mb-6"></div>
+          <div className="h-8 bg-gray-200 rounded w-1/4 mb-6" />
           <div className="space-y-4">
-            <div className="h-32 bg-gray-200 rounded"></div>
+            <div className="h-32 bg-gray-200 rounded" />
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
               {[...Array(6)].map((_, i) => (
-                <div key={i} className="h-48 bg-gray-200 rounded"></div>
+                <div key={i} className="h-48 bg-gray-200 rounded" />
               ))}
             </div>
           </div>
@@ -1224,15 +1232,63 @@ export default function CollectionDetailPage({
             refetch();
           }}
           onSelect={async (products: SelectedProduct[]) => {
-            // TODO: Implémenter ajout/retrait produits dans collection
-            console.log('Produits sélectionnés:', products);
-            await refetch();
+            if (!collection) {
+              toast({
+                title: 'Erreur',
+                description: 'Aucune collection sélectionnée',
+                variant: 'destructive',
+              });
+              return;
+            }
+
+            try {
+              const productIds = products.map(p => p.id);
+
+              const success = await addProductsToCollection(
+                collection.id,
+                productIds
+              );
+
+              if (success) {
+                toast({
+                  title: 'Produits ajoutés',
+                  description: `${products.length} produit(s) ajouté(s) à "${collection.name}"`,
+                });
+
+                // Refetch collection pour mettre à jour liste produits
+                await refetch();
+              } else {
+                toast({
+                  title: 'Erreur',
+                  description: "Erreur lors de l'ajout des produits",
+                  variant: 'destructive',
+                });
+              }
+            } catch (error) {
+              console.error('[VÉRONE:ERROR]', {
+                component: 'CollectionDetailPage',
+                action: 'addProductsToCollection',
+                error: error instanceof Error ? error.message : 'Unknown error',
+                context: {
+                  collectionId: collection.id,
+                  productCount: products.length,
+                },
+                timestamp: new Date().toISOString(),
+              });
+              toast({
+                title: 'Erreur',
+                description: "Erreur lors de l'ajout des produits",
+                variant: 'destructive',
+              });
+            } finally {
+              setShowManageProductsModal(false);
+            }
           }}
           mode="multi"
           context="collections"
           selectedProducts={[]}
           showQuantity={false}
-          showImages={true}
+          showImages
         />
       )}
     </div>

@@ -55,6 +55,7 @@ COMMENT ON COLUMN sales_order_items.tax_rate IS 'Taux de TVA appliqué (ex: 0.20
    - Onglet : SQL Editor
 
 2. **Vérifier état actuel**
+
    ```sql
    SELECT * FROM pg_catalog.pg_tables
    WHERE tablename = 'sales_order_items';
@@ -63,6 +64,7 @@ COMMENT ON COLUMN sales_order_items.tax_rate IS 'Taux de TVA appliqué (ex: 0.20
    ```
 
 3. **Exécuter rollback SQL**
+
    ```sql
    -- Copier script rollback depuis migration
    ALTER TABLE sales_order_items DROP COLUMN tax_rate;
@@ -93,6 +95,7 @@ supabase migration list
 ### Checklist rollback database
 
 Avant rollback :
+
 - [ ] **Backup database** effectué (mandatory !)
 - [ ] Script rollback testé en local/staging
 - [ ] Vérifier dépendances (foreign keys, triggers)
@@ -100,11 +103,13 @@ Avant rollback :
 - [ ] Communication équipe (Slack, email)
 
 Pendant rollback :
+
 - [ ] Exécuter script rollback
 - [ ] Vérifier résultat (queries test)
 - [ ] Logs erreurs (si échec)
 
 Après rollback :
+
 - [ ] Validation complète (queries test)
 - [ ] Tests E2E passent
 - [ ] Monitoring metrics (erreurs, latence)
@@ -182,15 +187,18 @@ git push origin main
 ### Checklist rollback code
 
 Avant rollback :
+
 - [ ] Identifier déploiement stable (noter ID/commit)
 - [ ] Vérifier pas de migration DB active (risque incohérence)
 - [ ] Communication équipe
 
 Pendant rollback :
+
 - [ ] Promouvoir ancien déploiement
 - [ ] Surveiller logs déploiement
 
 Après rollback :
+
 - [ ] Tests manuels critiques
 - [ ] Monitoring erreurs (Sentry, Vercel Analytics)
 - [ ] Vérifier metrics (latence, taux erreur)
@@ -242,15 +250,18 @@ npm run dev
 ### Checklist rollback feature flag
 
 Avant rollback :
+
 - [ ] Identifier feature flag concernée
 - [ ] Vérifier fallback fonctionne (ancien code existe)
 - [ ] Tests staging
 
 Pendant rollback :
+
 - [ ] Modifier variable environnement
 - [ ] Redéployer si nécessaire
 
 Après rollback :
+
 - [ ] Validation manuelle
 - [ ] Monitoring metrics
 - [ ] Communication utilisateurs (si visible)
@@ -364,16 +375,19 @@ Voir `docs/incidents/TEMPLATE-POSTMORTEM.md` (à créer)
 ## 📚 Ressources
 
 **Scripts** :
+
 - `tools/scripts/rollback/rollback-database.sh`
 - `tools/scripts/rollback/rollback-deployment.sh`
 - `tools/scripts/rollback/test-rollback-staging.sh`
 
 **Documentation** :
+
 - [Supabase Migrations](https://supabase.com/docs/guides/cli/managing-environments)
 - [Vercel Rollbacks](https://vercel.com/docs/deployments/rollbacks)
 - [Feature Flags Best Practices](https://martinfowler.com/articles/feature-toggles.html)
 
 **Contacts urgence** :
+
 - Romeo Dos Santos : [email/phone]
 - Supabase Support : support@supabase.com
 - Vercel Support : support@vercel.com

@@ -19,6 +19,7 @@
 Documentation de la structure des profils utilisateurs dans le système Vérone : champs, metadata, relations avec tenants et rôles.
 
 **À documenter** :
+
 - Schéma table `user_profiles`
 - Champs obligatoires vs optionnels
 - Metadata JSON structure

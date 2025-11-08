@@ -12,6 +12,7 @@
 Ce document définit le système complet de rapports de stock pour le bouton "Rapports" de la page inventaire, basé sur les meilleures pratiques des ERP leaders du marché (Odoo, ERPNext, SAP).
 
 ### Objectifs
+
 - Fournir des insights actionnables sur la santé de l'inventaire
 - Optimiser la gestion des stocks et réduire les coûts
 - Améliorer la prise de décision data-driven
@@ -22,7 +23,9 @@ Ce document définit le système complet de rapports de stock pour le bouton "Ra
 ## 📋 Benchmarking ERP Leaders
 
 ### Odoo (Leader Open-Source)
+
 **Points forts identifiés:**
+
 - Classification FSN (Fast/Slow/Non-moving) automatique
 - Classification XYZ (valeur de stock)
 - Rapports d'aging détaillés avec tranches temporelles
@@ -31,7 +34,9 @@ Ce document définit le système complet de rapports de stock pour le bouton "Ra
 - IA pour prédiction de ruptures (Odoo 18)
 
 ### ERPNext (Alternative Moderne)
+
 **Points forts identifiés:**
+
 - Stock Level Report avec métriques avancées (Actual/Planned/Requested/Ordered/Reserved)
 - Stock Aging Report pour optimisation espace entrepôt
 - Stock Ledger complet (inflow/outflow détaillé)
@@ -39,7 +44,9 @@ Ce document définit le système complet de rapports de stock pour le bouton "Ra
 - Intégration multi-sources (ERP/WMS/POS)
 
 ### SAP (Leader Entreprise)
+
 **Points forts identifiés:**
+
 - KPIs standardisés (Turnover Ratio, GMROI)
 - Supplier Quality Index
 - Rapports configurables avec filtres avancés
@@ -55,6 +62,7 @@ Ce document définit le système complet de rapports de stock pour le bouton "Ra
 **Objectif**: Vue financière complète de l'inventaire
 
 **Métriques clés:**
+
 - Valeur totale du stock (€)
 - Valeur par catégorie
 - Valeur par fournisseur
@@ -62,11 +70,13 @@ Ce document définit le système complet de rapports de stock pour le bouton "Ra
 - Méthode de valorisation utilisée (FIFO/AVCO/Standard)
 
 **Visualisations:**
+
 - Graphique en secteurs: Répartition valeur par catégorie
 - Graphique en barres: Top 10 produits par valeur
 - Tableau détaillé: SKU, quantité, coût unitaire, valeur totale
 
 **Filtres:**
+
 - Période (date snapshot)
 - Catégorie produit
 - Fournisseur
@@ -81,6 +91,7 @@ Ce document définit le système complet de rapports de stock pour le bouton "Ra
 **Objectif**: Identifier les stocks anciens et optimiser liquidité
 
 **Structure par tranches:**
+
 ```
 0-30 jours    | Quantité | Valeur | % du total
 31-60 jours   | Quantité | Valeur | % du total
@@ -90,22 +101,26 @@ Ce document définit le système complet de rapports de stock pour le bouton "Ra
 ```
 
 **Métriques clés:**
+
 - Age moyen du stock (jours)
 - % stock > 90 jours (indicateur santé)
 - Valeur immobilisée dans stock ancien
 - Top 20 articles les plus anciens
 
 **Visualisations:**
+
 - Histogramme empilé: Distribution aging par catégorie
 - Heatmap: Produits par âge et valeur
 - Ligne temporelle: Évolution aging sur 12 mois
 
 **Alertes automatiques:**
+
 - 🔴 Stock > 180 jours: Action urgente requise
 - 🟡 Stock 91-180 jours: Attention requise
 - 🟢 Stock < 90 jours: Rotation saine
 
 **Filtres:**
+
 - Catégorie produit
 - Fournisseur
 - Tranche d'âge spécifique
@@ -120,6 +135,7 @@ Ce document définit le système complet de rapports de stock pour le bouton "Ra
 **Objectif**: Mesurer efficacité de rotation et identifier slow-movers
 
 **Métriques clés:**
+
 - Taux de rotation global (ratio)
 - Taux de rotation par catégorie
 - Taux de rotation par produit
@@ -127,27 +143,32 @@ Ce document définit le système complet de rapports de stock pour le bouton "Ra
 - Classification FSN automatique
 
 **Formules de calcul:**
+
 ```
 Taux de Rotation = COGS (Coût des Ventes) / Stock Moyen
 DSI = (Stock Moyen / COGS) × 365
 ```
 
 **Classification FSN:**
+
 - 🟢 **Fast Moving**: Rotation > 8×/an (Benchmark retail)
 - 🟡 **Slow Moving**: Rotation 2-8×/an
 - 🔴 **Non Moving**: Rotation < 2×/an ou 0 ventes sur période
 
 **Visualisations:**
+
 - Graphique en barres: Turnover par catégorie vs benchmark industrie
 - Scatter plot: Valeur stock vs taux rotation (identifier problèmes)
 - Tableau dynamique: Produits classés FSN avec actions recommandées
 
 **Benchmarks industrie:**
+
 - Retail général: 8×/an
 - Manufacturing: 6×/an
 - Mobilier haut de gamme: 4-6×/an (cible Vérone)
 
 **Filtres:**
+
 - Période d'analyse (30/90/180/365 jours)
 - Catégorie
 - Classification FSN
@@ -162,6 +183,7 @@ DSI = (Stock Moyen / COGS) × 365
 **Objectif**: Tracer tous les flux entrants/sortants
 
 **Colonnes détaillées:**
+
 - Date transaction
 - Type mouvement (Entrée/Sortie/Transfert/Ajustement/Retour)
 - SKU + Description
@@ -173,6 +195,7 @@ DSI = (Stock Moyen / COGS) × 365
 - Valeur totale mouvement
 
 **Métriques agrégées:**
+
 - Total entrées période
 - Total sorties période
 - Stock net (entrées - sorties)
@@ -180,11 +203,13 @@ DSI = (Stock Moyen / COGS) × 365
 - Valeur totale mouvements
 
 **Visualisations:**
+
 - Ligne temporelle: Entrées vs Sorties sur période
 - Graphique en barres: Mouvements par type
 - Heatmap calendrier: Jours avec plus grande activité
 
 **Filtres:**
+
 - Période (date range)
 - Type de mouvement
 - Produit/Catégorie
@@ -201,6 +226,7 @@ DSI = (Stock Moyen / COGS) × 365
 **Objectif**: Vue instantanée des quantités disponibles
 
 **Métriques par produit:**
+
 - **Quantité En Main** (On Hand): Stock physique actuel
 - **Quantité Libre** (Free to Use): Disponible non réservé
 - **Quantité Entrante** (Incoming): Commandes fournisseurs en cours
@@ -211,17 +237,20 @@ DSI = (Stock Moyen / COGS) × 365
 - **Point de Réapprovisionnement**: Seuil déclenchement commande
 
 **Alertes intelligentes:**
+
 - 🔴 **Rupture de stock**: On Hand = 0
 - 🟡 **Stock faible**: On Hand ≤ Safety Stock
 - 🟢 **Stock optimal**: Entre Safety et Max
 - 🟠 **Surstock**: On Hand > Max recommandé
 
 **Visualisations:**
+
 - Tableau de bord: Indicateurs colorés par statut
 - Graphique en barres: Comparaison On Hand vs Safety Stock
 - Liste prioritaire: Actions requises par urgence
 
 **Filtres:**
+
 - Statut alerte
 - Catégorie
 - Fournisseur
@@ -237,6 +266,7 @@ DSI = (Stock Moyen / COGS) × 365
 **Objectif**: Identifier déséquilibres critiques
 
 **Section Out-of-Stock:**
+
 - Produits en rupture actuellement
 - Historique ruptures (nombre occurrences sur période)
 - Impact financier (ventes perdues estimées)
@@ -244,23 +274,27 @@ DSI = (Stock Moyen / COGS) × 365
 - Demande non satisfaite
 
 **Section Overstock:**
+
 - Produits avec stock excessif (> Max recommandé)
 - Excédent en quantité et valeur
 - Coût de stockage excédentaire
 - Suggestions liquidation/promotion
 
 **Métriques globales:**
+
 - Taux de service (% demande satisfaite)
 - % produits en rupture
 - % produits en surstock
 - Valeur immobilisée en surstock
 
 **Visualisations:**
+
 - Graphique double: Ruptures vs Surstock sur timeline
 - Tableau TOP 20: Produits problématiques
 - Indicateurs KPI: Taux service, coûts opportunité
 
 **Filtres:**
+
 - Période analyse
 - Catégorie
 - Seuil surstock (% over max)
@@ -275,6 +309,7 @@ DSI = (Stock Moyen / COGS) × 365
 **Objectif**: Évaluer fiabilité et qualité fournisseurs
 
 **Métriques par fournisseur:**
+
 - Nombre de commandes passées
 - Taux de livraison à temps (%)
 - Délai moyen de livraison (jours)
@@ -284,6 +319,7 @@ DSI = (Stock Moyen / COGS) × 365
 - **Supplier Quality Index** (score agrégé)
 
 **Calcul Supplier Quality Index:**
+
 ```
 SQI = (Qualité Matériel × 30%) +
       (Livraison à Temps × 25%) +
@@ -293,11 +329,13 @@ SQI = (Qualité Matériel × 30%) +
 ```
 
 **Visualisations:**
+
 - Classement fournisseurs: Score SQI
 - Scatter plot: Délai vs Conformité
 - Graphique en barres: Volume achats par fournisseur
 
 **Filtres:**
+
 - Période
 - Score SQI min
 - Catégorie produit
@@ -312,16 +350,19 @@ SQI = (Qualité Matériel × 30%) +
 **Objectif**: Prioriser gestion selon valeur et rotation
 
 **Classification ABC (par valeur):**
+
 - **Classe A**: 80% de la valeur du stock (20% des SKU)
 - **Classe B**: 15% de la valeur du stock (30% des SKU)
 - **Classe C**: 5% de la valeur du stock (50% des SKU)
 
 **Classification XYZ (par prévisibilité demande):**
+
 - **Classe X**: Demande stable, prévisible
 - **Classe Y**: Demande variable, saisonnalité
 - **Classe Z**: Demande irrégulière, imprévisible
 
 **Matrice combinée 9 segments:**
+
 ```
         X (Stable)    Y (Variable)   Z (Irrégulier)
 A (80%)   AX            AY              AZ
@@ -330,16 +371,19 @@ C (5%)    CX            CY              CZ
 ```
 
 **Stratégies recommandées par segment:**
+
 - **AX**: Surveillance continue, stock optimal
 - **AZ**: Stock de sécurité élevé, multiple sources
 - **CZ**: Stock minimal, commande à la demande
 
 **Visualisations:**
+
 - Matrice 9 cases: Distribution produits
 - Courbe Pareto: Cumul valeur par produit
 - Tableau stratégies: Actions par classe
 
 **Filtres:**
+
 - Période analyse
 - Classe ABC
 - Classe XYZ
@@ -352,34 +396,38 @@ C (5%)    CX            CY              CZ
 ## 📈 KPIs et Métriques Transversales
 
 ### Métriques Financières
-| Métrique | Formule | Cible Vérone | Benchmark |
-|----------|---------|--------------|-----------|
-| **Valeur Stock Total** | Sum(Quantité × Coût Unitaire) | - | - |
-| **GMROI** | Marge Brute / Stock Moyen | >3.0 | 2.5-4.0 |
-| **Coût de Possession** | (Stock Moyen × Taux %) / an | <20% | 15-25% |
-| **Stock Immobilisé** | Valeur stock > 90j | <15% | <20% |
+
+| Métrique               | Formule                       | Cible Vérone | Benchmark |
+| ---------------------- | ----------------------------- | ------------ | --------- |
+| **Valeur Stock Total** | Sum(Quantité × Coût Unitaire) | -            | -         |
+| **GMROI**              | Marge Brute / Stock Moyen     | >3.0         | 2.5-4.0   |
+| **Coût de Possession** | (Stock Moyen × Taux %) / an   | <20%         | 15-25%    |
+| **Stock Immobilisé**   | Valeur stock > 90j            | <15%         | <20%      |
 
 ### Métriques Opérationnelles
-| Métrique | Formule | Cible Vérone | Benchmark |
-|----------|---------|--------------|-----------|
-| **Taux de Rotation** | COGS / Stock Moyen | 5-6× | 4-8× (mobilier) |
-| **DSI (Days Sales Inventory)** | (Stock Moyen / COGS) × 365 | 60-73j | 45-90j |
-| **Taux de Service** | (Demandes satisfaites / Total demandes) × 100 | >95% | >90% |
-| **Taux de Rupture** | (SKU en rupture / Total SKU) × 100 | <5% | <8% |
+
+| Métrique                       | Formule                                       | Cible Vérone | Benchmark       |
+| ------------------------------ | --------------------------------------------- | ------------ | --------------- |
+| **Taux de Rotation**           | COGS / Stock Moyen                            | 5-6×         | 4-8× (mobilier) |
+| **DSI (Days Sales Inventory)** | (Stock Moyen / COGS) × 365                    | 60-73j       | 45-90j          |
+| **Taux de Service**            | (Demandes satisfaites / Total demandes) × 100 | >95%         | >90%            |
+| **Taux de Rupture**            | (SKU en rupture / Total SKU) × 100            | <5%          | <8%             |
 
 ### Métriques de Qualité
-| Métrique | Formule | Cible Vérone | Benchmark |
-|----------|---------|--------------|-----------|
-| **Précision Inventaire** | (Stock système = Stock physique) / Total | >98% | >95% |
-| **Taux Retour Fournisseur** | (Unités retournées / Unités reçues) × 100 | <2% | <3% |
-| **Taux Conformité Livraison** | (Livraisons OK / Total livraisons) × 100 | >95% | >90% |
+
+| Métrique                      | Formule                                   | Cible Vérone | Benchmark |
+| ----------------------------- | ----------------------------------------- | ------------ | --------- |
+| **Précision Inventaire**      | (Stock système = Stock physique) / Total  | >98%         | >95%      |
+| **Taux Retour Fournisseur**   | (Unités retournées / Unités reçues) × 100 | <2%          | <3%       |
+| **Taux Conformité Livraison** | (Livraisons OK / Total livraisons) × 100  | >95%         | >90%      |
 
 ### Métriques Prédictives (Évolution)
-| Métrique | Description | Utilité |
-|----------|-------------|---------|
-| **Prévision Rupture** | IA: Probabilité rupture 30j | Anticipation |
-| **Tendance Rotation** | Évolution turnover 3 mois | Ajustement stock |
-| **Saisonnalité** | Patterns récurrents demande | Planification |
+
+| Métrique              | Description                 | Utilité          |
+| --------------------- | --------------------------- | ---------------- |
+| **Prévision Rupture** | IA: Probabilité rupture 30j | Anticipation     |
+| **Tendance Rotation** | Évolution turnover 3 mois   | Ajustement stock |
+| **Saisonnalité**      | Patterns récurrents demande | Planification    |
 
 ---
 
@@ -392,6 +440,7 @@ C (5%)    CX            CY              CZ
 **Structure Modal (3 étapes):**
 
 #### Étape 1: Sélection Type de Rapport
+
 ```typescript
 <ReportSelectionModal>
   <Header>
@@ -449,6 +498,7 @@ C (5%)    CX            CY              CZ
 ```
 
 #### Étape 2: Configuration Filtres & Paramètres
+
 ```typescript
 <ReportConfigModal>
   <Header>
@@ -533,6 +583,7 @@ C (5%)    CX            CY              CZ
 ```
 
 #### Étape 3: Aperçu & Export
+
 ```typescript
 <ReportPreviewModal size="full">
   <Header>
@@ -643,26 +694,31 @@ C (5%)    CX            CY              CZ
 ### Principes UX Clés
 
 **1. Guidage Progressif**
+
 - Wizard en 3 étapes claires (Sélection → Configuration → Aperçu)
 - Possibilité de revenir en arrière à tout moment
 - Sauvegarde automatique configuration
 
 **2. Valeurs par Défaut Intelligentes**
+
 - Périodes pré-configurées (30/90/180/365 jours)
 - Filtres optionnels repliés par défaut
 - Vue "combinée" par défaut (graphiques + tableaux)
 
 **3. Feedback Visuel Constant**
+
 - Indicateurs de statut colorés (🔴🟡🟢)
 - Preview avant génération finale
 - Estimation nombre enregistrements avant génération
 
 **4. Performance**
+
 - Génération asynchrone avec progress bar
 - Export optimisé pour gros volumes (>10k lignes)
 - Pagination automatique dans aperçu
 
 **5. Accessibilité**
+
 - Navigation clavier complète
 - Labels ARIA sur tous éléments
 - Contraste couleurs WCAG AA minimum
@@ -740,6 +796,7 @@ src/
 ### Stack Technologique
 
 **Backend (API Routes Next.js)**
+
 ```typescript
 // Bibliothèques principales
 - PostgreSQL (via Supabase): Storage données
@@ -749,6 +806,7 @@ src/
 ```
 
 **Frontend (React/Next.js)**
+
 ```typescript
 // UI Components
 - shadcn/ui: Components base
@@ -1080,7 +1138,10 @@ export async function POST(request: NextRequest) {
     const supabase = createClient();
 
     // Authentification
-    const { data: { user }, error: authError } = await supabase.auth.getUser();
+    const {
+      data: { user },
+      error: authError,
+    } = await supabase.auth.getUser();
     if (authError || !user) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
@@ -1121,11 +1182,10 @@ export async function POST(request: NextRequest) {
       user_id: user.id,
       report_type: config.type,
       filters: config.filters,
-      generated_at: new Date().toISOString()
+      generated_at: new Date().toISOString(),
     });
 
     return NextResponse.json({ data: reportData }, { status: 200 });
-
   } catch (error) {
     console.error('Erreur génération rapport:', error);
     return NextResponse.json(
@@ -1146,7 +1206,6 @@ export async function generateAgingReport(
   supabase: SupabaseClient,
   config: ReportConfig
 ): Promise<AgingReportData> {
-
   // 1. Requête distribution par tranches
   const { data: distribution, error: distError } = await supabase.rpc(
     'get_aging_distribution',
@@ -1154,7 +1213,7 @@ export async function generateAgingReport(
       date_from: config.dateRange.from.toISOString(),
       date_to: config.dateRange.to.toISOString(),
       category_filter: config.filters?.categories || null,
-      supplier_filter: config.filters?.suppliers || null
+      supplier_filter: config.filters?.suppliers || null,
     }
   );
 
@@ -1178,7 +1237,7 @@ export async function generateAgingReport(
     averageAge: calculateWeightedAverageAge(distribution),
     totalValue,
     alertCount: topOldest.filter(item => item.age_days > 180).length,
-    percentOld: (oldValue / totalValue) * 100
+    percentOld: (oldValue / totalValue) * 100,
   };
 
   // 4. Tendances historiques (12 derniers mois)
@@ -1187,22 +1246,25 @@ export async function generateAgingReport(
   // 5. Recommandations automatiques
   const itemsWithRecommendations = topOldest.map(item => ({
     ...item,
-    recommendation: getRecommendation(item.age_days)
+    recommendation: getRecommendation(item.age_days),
   }));
 
   return {
     summary,
     distribution,
     topOldestItems: itemsWithRecommendations,
-    trends
+    trends,
   };
 }
 
 function calculateWeightedAverageAge(distribution: any[]): number {
-  const totalQuantity = distribution.reduce((sum, b) => sum + b.total_quantity, 0);
+  const totalQuantity = distribution.reduce(
+    (sum, b) => sum + b.total_quantity,
+    0
+  );
   const weightedSum = distribution.reduce((sum, b) => {
     const midpoint = getAgeMidpoint(b.age_bucket);
-    return sum + (midpoint * b.total_quantity);
+    return sum + midpoint * b.total_quantity;
   }, 0);
   return Math.round(weightedSum / totalQuantity);
 }
@@ -1213,12 +1275,14 @@ function getAgeMidpoint(bucket: string): number {
     '31-60': 45,
     '61-90': 75,
     '91-180': 135,
-    '180+': 270 // Estimation conservatrice
+    '180+': 270, // Estimation conservatrice
   };
   return map[bucket] || 0;
 }
 
-function getRecommendation(ageDays: number): 'urgent' | 'attention' | 'monitor' {
+function getRecommendation(
+  ageDays: number
+): 'urgent' | 'attention' | 'monitor' {
   if (ageDays > 180) return 'urgent';
   if (ageDays > 90) return 'attention';
   return 'monitor';
@@ -1243,7 +1307,7 @@ export function useGenerateReport() {
       const response = await fetch('/api/rapports/generate', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(config)
+        body: JSON.stringify(config),
       });
 
       if (!response.ok) {
@@ -1253,12 +1317,12 @@ export function useGenerateReport() {
 
       return response.json();
     },
-    onSuccess: (data) => {
+    onSuccess: data => {
       console.log('Rapport généré avec succès:', data);
     },
-    onError: (error) => {
+    onError: error => {
       console.error('Erreur génération:', error);
-    }
+    },
   });
 }
 
@@ -1266,16 +1330,19 @@ export function useExportReport() {
   return useMutation({
     mutationFn: async ({
       reportData,
-      exportConfig
+      exportConfig,
     }: {
       reportData: any;
       exportConfig: ExportConfig;
     }) => {
-      const response = await fetch(`/api/rapports/export/${exportConfig.format}`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ reportData, config: exportConfig })
-      });
+      const response = await fetch(
+        `/api/rapports/export/${exportConfig.format}`,
+        {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ reportData, config: exportConfig }),
+        }
+      );
 
       if (!response.ok) {
         throw new Error('Erreur export rapport');
@@ -1291,7 +1358,7 @@ export function useExportReport() {
       a.click();
       window.URL.revokeObjectURL(url);
       document.body.removeChild(a);
-    }
+    },
   });
 }
 ```
@@ -1305,6 +1372,7 @@ export function useExportReport() {
 **Bibliothèque**: jsPDF + jsPDF-AutoTable
 
 **Caractéristiques:**
+
 - Format A4 portrait/paysage selon contenu
 - Header: Logo Vérone + Titre rapport + Date génération
 - Footer: Pagination + Metadata (période, filtres)
@@ -1315,6 +1383,7 @@ export function useExportReport() {
 - Table des matières pour rapports longs
 
 **Structure PDF:**
+
 ```
 Page 1: Résumé Exécutif
   - KPIs principaux (cards visuelles)
@@ -1333,6 +1402,7 @@ Dernière Page: Annexes
 ```
 
 **Code exemple:**
+
 ```typescript
 // lib/rapports/exporters/pdf-exporter.ts
 import jsPDF from 'jspdf';
@@ -1346,7 +1416,7 @@ export async function exportAgingReportToPDF(
 
   // Header
   pdf.setFontSize(20);
-  pdf.text('Rapport d\'Aging Inventaire', 20, 20);
+  pdf.text("Rapport d'Aging Inventaire", 20, 20);
   pdf.setFontSize(10);
   pdf.text(`Généré le ${new Date().toLocaleDateString('fr-FR')}`, 20, 28);
 
@@ -1359,9 +1429,17 @@ export async function exportAgingReportToPDF(
   pdf.setFontSize(11);
   pdf.text(`Age Moyen: ${reportData.summary.averageAge} jours`, 20, yPos);
   yPos += 7;
-  pdf.text(`Stock > 90j: ${reportData.summary.percentOld.toFixed(1)}%`, 20, yPos);
+  pdf.text(
+    `Stock > 90j: ${reportData.summary.percentOld.toFixed(1)}%`,
+    20,
+    yPos
+  );
   yPos += 7;
-  pdf.text(`Valeur Totale: ${formatCurrency(reportData.summary.totalValue)}`, 20, yPos);
+  pdf.text(
+    `Valeur Totale: ${formatCurrency(reportData.summary.totalValue)}`,
+    20,
+    yPos
+  );
 
   // Table distribution
   yPos += 15;
@@ -1372,11 +1450,11 @@ export async function exportAgingReportToPDF(
       row.bucket,
       row.quantity,
       formatCurrency(row.value),
-      `${row.percentage.toFixed(1)}%`
+      `${row.percentage.toFixed(1)}%`,
     ]),
     theme: 'grid',
     headStyles: { fillColor: [0, 0, 0] },
-    styles: { fontSize: 9 }
+    styles: { fontSize: 9 },
   });
 
   // Nouvelle page pour top items
@@ -1393,22 +1471,23 @@ export async function exportAgingReportToPDF(
       item.age,
       item.quantity,
       formatCurrency(item.value),
-      getRecommendationLabel(item.recommendation)
+      getRecommendationLabel(item.recommendation),
     ]),
     theme: 'striped',
     headStyles: { fillColor: [0, 0, 0] },
     styles: { fontSize: 8 },
-    didParseCell: (data) => {
+    didParseCell: data => {
       // Colorier selon recommandation
       if (data.column.index === 5 && data.section === 'body') {
-        const recommendation = reportData.topOldestItems[data.row.index].recommendation;
+        const recommendation =
+          reportData.topOldestItems[data.row.index].recommendation;
         if (recommendation === 'urgent') {
           data.cell.styles.textColor = [220, 38, 38]; // red
         } else if (recommendation === 'attention') {
           data.cell.styles.textColor = [234, 179, 8]; // yellow
         }
       }
-    }
+    },
   });
 
   // Footer sur chaque page
@@ -1431,7 +1510,7 @@ export async function exportAgingReportToPDF(
 function formatCurrency(value: number): string {
   return new Intl.NumberFormat('fr-FR', {
     style: 'currency',
-    currency: 'EUR'
+    currency: 'EUR',
   }).format(value);
 }
 
@@ -1439,7 +1518,7 @@ function getRecommendationLabel(rec: string): string {
   const labels: Record<string, string> = {
     urgent: '🔴 Urgent',
     attention: '🟡 Attention',
-    monitor: '🟢 Surveiller'
+    monitor: '🟢 Surveiller',
   };
   return labels[rec] || rec;
 }
@@ -1450,6 +1529,7 @@ function getRecommendationLabel(rec: string): string {
 **Bibliothèque**: exceljs
 
 **Caractéristiques:**
+
 - Feuilles multiples par section (Summary, Distribution, Details, Trends)
 - Formatage cellules (couleurs, bordures, alignement)
 - Formules Excel natives pour calculs
@@ -1460,6 +1540,7 @@ function getRecommendationLabel(rec: string): string {
 - Mise en forme conditionnelle (alertes colorées)
 
 **Structure Excel:**
+
 ```
 Onglet "Résumé":
   - KPIs en haut (formatés comme cards)
@@ -1482,6 +1563,7 @@ Onglet "Tendances":
 ```
 
 **Code exemple:**
+
 ```typescript
 // lib/rapports/exporters/excel-exporter.ts
 import ExcelJS from 'exceljs';
@@ -1496,14 +1578,20 @@ export async function exportAgingReportToExcel(
   const summarySheet = workbook.addWorksheet('Résumé');
   summarySheet.columns = [
     { header: 'Métrique', key: 'metric', width: 30 },
-    { header: 'Valeur', key: 'value', width: 20 }
+    { header: 'Valeur', key: 'value', width: 20 },
   ];
 
   summarySheet.addRows([
-    { metric: 'Age Moyen Stock', value: `${reportData.summary.averageAge} jours` },
-    { metric: 'Stock > 90 jours', value: `${reportData.summary.percentOld.toFixed(1)}%` },
+    {
+      metric: 'Age Moyen Stock',
+      value: `${reportData.summary.averageAge} jours`,
+    },
+    {
+      metric: 'Stock > 90 jours',
+      value: `${reportData.summary.percentOld.toFixed(1)}%`,
+    },
     { metric: 'Valeur Totale', value: reportData.summary.totalValue },
-    { metric: 'Articles en Alerte', value: reportData.summary.alertCount }
+    { metric: 'Articles en Alerte', value: reportData.summary.alertCount },
   ]);
 
   // Formatage
@@ -1511,17 +1599,17 @@ export async function exportAgingReportToExcel(
   summarySheet.getRow(1).fill = {
     type: 'pattern',
     pattern: 'solid',
-    fgColor: { argb: 'FF000000' }
+    fgColor: { argb: 'FF000000' },
   };
   summarySheet.getRow(1).font = { color: { argb: 'FFFFFFFF' }, bold: true };
 
   // Onglet Distribution
   const distSheet = workbook.addWorksheet('Distribution');
   distSheet.columns = [
-    { header: 'Tranche d\'Age', key: 'bucket', width: 15 },
+    { header: "Tranche d'Age", key: 'bucket', width: 15 },
     { header: 'Quantité', key: 'quantity', width: 12 },
     { header: 'Valeur (€)', key: 'value', width: 15 },
-    { header: '% Total', key: 'percentage', width: 12 }
+    { header: '% Total', key: 'percentage', width: 12 },
   ];
 
   reportData.distribution.forEach(row => {
@@ -1529,7 +1617,7 @@ export async function exportAgingReportToExcel(
       bucket: row.bucket,
       quantity: row.quantity,
       value: row.value,
-      percentage: row.percentage / 100
+      percentage: row.percentage / 100,
     });
   });
 
@@ -1538,7 +1626,7 @@ export async function exportAgingReportToExcel(
   distSheet.getRow(1).fill = {
     type: 'pattern',
     pattern: 'solid',
-    fgColor: { argb: 'FF000000' }
+    fgColor: { argb: 'FF000000' },
   };
   distSheet.getRow(1).font = { color: { argb: 'FFFFFFFF' }, bold: true };
 
@@ -1558,7 +1646,7 @@ export async function exportAgingReportToExcel(
     { header: 'Age (jours)', key: 'age', width: 12 },
     { header: 'Quantité', key: 'quantity', width: 12 },
     { header: 'Valeur (€)', key: 'value', width: 15 },
-    { header: 'Recommandation', key: 'recommendation', width: 15 }
+    { header: 'Recommandation', key: 'recommendation', width: 15 },
   ];
 
   reportData.topOldestItems.forEach(item => {
@@ -1569,7 +1657,7 @@ export async function exportAgingReportToExcel(
       age: item.age,
       quantity: item.quantity,
       value: item.value,
-      recommendation: getRecommendationLabel(item.recommendation)
+      recommendation: getRecommendationLabel(item.recommendation),
     });
   });
 
@@ -1578,7 +1666,7 @@ export async function exportAgingReportToExcel(
   detailsSheet.getRow(1).fill = {
     type: 'pattern',
     pattern: 'solid',
-    fgColor: { argb: 'FF000000' }
+    fgColor: { argb: 'FF000000' },
   };
   detailsSheet.getRow(1).font = { color: { argb: 'FFFFFFFF' }, bold: true };
 
@@ -1587,9 +1675,15 @@ export async function exportAgingReportToExcel(
     if (rowNumber > 1) {
       const recommendation = row.getCell('recommendation').value as string;
       if (recommendation?.includes('🔴')) {
-        row.getCell('recommendation').font = { color: { argb: 'FFDC2626' }, bold: true };
+        row.getCell('recommendation').font = {
+          color: { argb: 'FFDC2626' },
+          bold: true,
+        };
       } else if (recommendation?.includes('🟡')) {
-        row.getCell('recommendation').font = { color: { argb: 'FFEAB308' }, bold: true };
+        row.getCell('recommendation').font = {
+          color: { argb: 'FFEAB308' },
+          bold: true,
+        };
       }
     }
   });
@@ -1600,7 +1694,7 @@ export async function exportAgingReportToExcel(
   // Auto-filtres
   detailsSheet.autoFilter = {
     from: 'A1',
-    to: 'G1'
+    to: 'G1',
   };
 
   // Génération buffer
@@ -1608,7 +1702,7 @@ export async function exportAgingReportToExcel(
 
   // Téléchargement
   const blob = new Blob([buffer], {
-    type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+    type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
   });
   const url = window.URL.createObjectURL(blob);
   const a = document.createElement('a');
@@ -1626,6 +1720,7 @@ export async function exportAgingReportToExcel(
 **Bibliothèque**: papaparse
 
 **Caractéristiques:**
+
 - Format UTF-8 avec BOM (compatibilité Excel français)
 - Séparateur point-virgule (;) pour Excel FR
 - Headers en français
@@ -1634,6 +1729,7 @@ export async function exportAgingReportToExcel(
 - Taille fichier minimale
 
 **Code exemple:**
+
 ```typescript
 // lib/rapports/exporters/csv-exporter.ts
 import Papa from 'papaparse';
@@ -1644,22 +1740,23 @@ export function exportAgingReportToCSV(
 ) {
   // Flatten data pour CSV
   const csvData = reportData.topOldestItems.map(item => ({
-    'SKU': item.sku,
-    'Produit': item.name,
-    'Catégorie': item.category,
+    SKU: item.sku,
+    Produit: item.name,
+    Catégorie: item.category,
     'Age (jours)': item.age,
-    'Quantité': item.quantity,
+    Quantité: item.quantity,
     'Valeur Unitaire': item.value / item.quantity,
     'Valeur Totale': item.value,
-    'Dernière Vente': item.lastSaleDate?.toLocaleDateString('fr-FR') || 'Jamais',
-    'Recommandation': item.recommendation
+    'Dernière Vente':
+      item.lastSaleDate?.toLocaleDateString('fr-FR') || 'Jamais',
+    Recommandation: item.recommendation,
   }));
 
   // Génération CSV avec papaparse
   const csv = Papa.unparse(csvData, {
     delimiter: ';', // Excel FR
     header: true,
-    quotes: true // Toujours encapsuler strings
+    quotes: true, // Toujours encapsuler strings
   });
 
   // Ajout BOM pour UTF-8 (Excel FR)
@@ -1688,6 +1785,7 @@ export function exportAgingReportToCSV(
 **Objectif**: Infrastructure de base + 1er rapport fonctionnel
 
 **Tâches:**
+
 1. ✅ Créer structure dossiers (`components/rapports`, `lib/rapports`, `app/api/rapports`)
 2. ✅ Définir types TypeScript complets (`lib/rapports/types.ts`)
 3. ✅ Créer composants UI base:
@@ -1704,6 +1802,7 @@ export function exportAgingReportToCSV(
 6. ✅ Tests manuels Rapport Aging
 
 **Livrables:**
+
 - ✅ Bouton "Rapports" fonctionnel sur page inventaire
 - ✅ Rapport Aging générable et exportable
 - ✅ Documentation technique complète
@@ -1715,6 +1814,7 @@ export function exportAgingReportToCSV(
 **Objectif**: Ajouter 3 rapports critiques
 
 **Tâches:**
+
 1. ✅ **Rapport Rotation de Stock (Turnover)**
    - Générateur avec classification FSN
    - Calculs turnover ratio + DSI
@@ -1734,6 +1834,7 @@ export function exportAgingReportToCSV(
    - Exports
 
 **Livrables:**
+
 - ✅ 4 rapports fonctionnels au total
 - ✅ Tests utilisateurs internes
 
@@ -1744,6 +1845,7 @@ export function exportAgingReportToCSV(
 **Objectif**: Compléter catalogue avec rapports avancés
 
 **Tâches:**
+
 1. ✅ **Rapport Mouvements de Stock**
    - Traçabilité complète (IN/OUT/TRANSFER/ADJUST)
    - Timeline interactive
@@ -1765,6 +1867,7 @@ export function exportAgingReportToCSV(
    - Stratégies automatiques par classe
 
 **Livrables:**
+
 - ✅ 8 rapports complets disponibles
 - ✅ Système complet opérationnel
 
@@ -1775,6 +1878,7 @@ export function exportAgingReportToCSV(
 **Objectif**: Performance + fonctionnalités intelligentes
 
 **Tâches:**
+
 1. ✅ **Optimisations Performance**
    - Caching rapports fréquents (Redis/Upstash)
    - Génération asynchrone avec queues (BullMQ)
@@ -1798,6 +1902,7 @@ export function exportAgingReportToCSV(
    - Sauvegarde historique rapports
 
 **Livrables:**
+
 - ✅ Système haute performance
 - ✅ Fonctionnalités prédictives actives
 - ✅ Automatisation complète
@@ -1960,7 +2065,11 @@ $$ LANGUAGE plpgsql;
 
 ```typescript
 // __tests__/lib/rapports/calculators/kpi-calculator.test.ts
-import { calculateTurnoverRatio, calculateDSI, classifyFSN } from '@/lib/rapports/calculators/kpi-calculator';
+import {
+  calculateTurnoverRatio,
+  calculateDSI,
+  classifyFSN,
+} from '@/lib/rapports/calculators/kpi-calculator';
 
 describe('KPI Calculator', () => {
   describe('calculateTurnoverRatio', () => {
@@ -2014,9 +2123,9 @@ describe('/api/rapports/generate', () => {
         type: 'aging',
         dateRange: {
           from: new Date('2024-01-01'),
-          to: new Date('2024-12-31')
-        }
-      }
+          to: new Date('2024-12-31'),
+        },
+      },
     });
 
     const response = await POST(req as any);
@@ -2034,9 +2143,9 @@ describe('/api/rapports/generate', () => {
       body: {
         dateRange: {
           from: new Date(),
-          to: new Date()
-        }
-      }
+          to: new Date(),
+        },
+      },
     });
 
     const response = await POST(req as any);
@@ -2067,19 +2176,19 @@ describe('/api/rapports/generate', () => {
 
 ## 🎓 Glossaire Métrique
 
-| Terme | Définition | Formule |
-|-------|------------|---------|
-| **COGS** | Cost of Goods Sold - Coût des marchandises vendues | Sum(Quantité vendue × Coût unitaire) |
-| **DSI** | Days Sales of Inventory - Jours de stock disponibles | (Stock Moyen / COGS) × 365 |
-| **GMROI** | Gross Margin Return On Investment - Retour sur investissement marge brute | Marge Brute / Stock Moyen |
-| **FSN** | Fast/Slow/Non-moving - Classification vitesse rotation | Based on turnover ratio |
-| **ABC** | Classification Pareto par valeur | A=80% valeur, B=15%, C=5% |
-| **XYZ** | Classification par prévisibilité demande | X=stable, Y=variable, Z=irrégulier |
-| **SQI** | Supplier Quality Index - Indice qualité fournisseur | Weighted average of quality metrics |
-| **Turnover Ratio** | Taux de rotation stock | COGS / Stock Moyen |
-| **Fill Rate** | Taux de service - % demandes satisfaites | (Demandes OK / Total demandes) × 100 |
-| **Stockout Rate** | Taux de rupture | (SKU en rupture / Total SKU) × 100 |
-| **Carrying Cost** | Coût de possession stock | Stock Moyen × Taux % annuel |
+| Terme              | Définition                                                                | Formule                              |
+| ------------------ | ------------------------------------------------------------------------- | ------------------------------------ |
+| **COGS**           | Cost of Goods Sold - Coût des marchandises vendues                        | Sum(Quantité vendue × Coût unitaire) |
+| **DSI**            | Days Sales of Inventory - Jours de stock disponibles                      | (Stock Moyen / COGS) × 365           |
+| **GMROI**          | Gross Margin Return On Investment - Retour sur investissement marge brute | Marge Brute / Stock Moyen            |
+| **FSN**            | Fast/Slow/Non-moving - Classification vitesse rotation                    | Based on turnover ratio              |
+| **ABC**            | Classification Pareto par valeur                                          | A=80% valeur, B=15%, C=5%            |
+| **XYZ**            | Classification par prévisibilité demande                                  | X=stable, Y=variable, Z=irrégulier   |
+| **SQI**            | Supplier Quality Index - Indice qualité fournisseur                       | Weighted average of quality metrics  |
+| **Turnover Ratio** | Taux de rotation stock                                                    | COGS / Stock Moyen                   |
+| **Fill Rate**      | Taux de service - % demandes satisfaites                                  | (Demandes OK / Total demandes) × 100 |
+| **Stockout Rate**  | Taux de rupture                                                           | (SKU en rupture / Total SKU) × 100   |
+| **Carrying Cost**  | Coût de possession stock                                                  | Stock Moyen × Taux % annuel          |
 
 ---
 
@@ -2106,17 +2215,20 @@ describe('/api/rapports/generate', () => {
 ## 📚 Ressources Complémentaires
 
 **Documentation ERP:**
+
 - [Odoo Inventory Reports](https://www.odoo.com/documentation/18.0/applications/inventory_and_mrp/inventory/warehouses_storage/reporting/)
 - [ERPNext Stock Reports](https://docs.erpnext.com/docs/user/manual/en/stock)
 - [SAP Inventory Management](https://help.sap.com/docs/SAP_S4HANA_ON-PREMISE/91b21005dded4984bcccf4a69ae1300c/5863bd534f22b44ce10000000a174cb4.html)
 
 **Bibliothèques Techniques:**
+
 - [Recharts Documentation](https://recharts.org/en-US/)
 - [jsPDF Documentation](https://github.com/parallax/jsPDF)
 - [ExcelJS Documentation](https://github.com/exceljs/exceljs)
 - [shadcn/ui Components](https://ui.shadcn.com/)
 
 **Articles Expertise:**
+
 - [NetSuite: Inventory KPIs](https://www.netsuite.com/portal/resource/articles/inventory-management/inventory-management-kpis-metrics.shtml)
 - [MRPeasy: Inventory Management KPIs](https://www.mrpeasy.com/blog/inventory-management-kpis/)
 
@@ -2127,6 +2239,7 @@ describe('/api/rapports/generate', () => {
 Ce système de rapports complet positionne Vérone Back Office au niveau des ERP leaders du marché (Odoo, ERPNext, SAP) en termes de capacités analytiques et de prise de décision data-driven.
 
 **Points forts du système:**
+
 - ✅ 8 rapports essentiels couvrant tous les besoins métier
 - ✅ KPIs standardisés alignés sur meilleures pratiques industrie
 - ✅ UI/UX moderne et intuitive (workflow 3 étapes guidé)
@@ -2135,12 +2248,14 @@ Ce système de rapports complet positionne Vérone Back Office au niveau des ERP
 - ✅ Extensible facilement (nouveaux rapports, IA prédictive)
 
 **Impact business attendu:**
+
 - Réduction 30% stock ancien (via Aging Report + actions)
 - Amélioration 20% rotation stock (via Turnover analytics)
 - Diminution 50% ruptures de stock (via Levels + alertes)
 - Économie 15% coûts stockage (via optimisation niveaux)
 
 **Prochaines étapes immédiates:**
+
 1. Valider spécifications avec équipe métier
 2. Lancer Phase 1 (Foundation + Rapport Aging)
 3. Itérer selon feedback utilisateurs

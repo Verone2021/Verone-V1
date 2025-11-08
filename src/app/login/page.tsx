@@ -1,8 +1,12 @@
 'use client';
 
 import { useState } from 'react';
+
+import Image from 'next/image';
 import { useRouter } from 'next/navigation';
+
 import { Eye, EyeOff, LogIn, Mail, Lock, Info } from 'lucide-react';
+
 import { ButtonV2 } from '@/components/ui/button';
 import { Card, CardContent, CardHeader } from '@/components/ui/card';
 import {
@@ -11,7 +15,6 @@ import {
   PopoverContent,
 } from '@/components/ui/popover';
 import { createClient } from '@/lib/supabase/client';
-import Image from 'next/image';
 
 export default function LoginPage() {
   const [email, setEmail] = useState('');
@@ -191,7 +194,7 @@ export default function LoginPage() {
               >
                 {isLoading ? (
                   <div className="flex items-center justify-center space-x-2">
-                    <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                    <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
                     <span>Connexion...</span>
                   </div>
                 ) : (

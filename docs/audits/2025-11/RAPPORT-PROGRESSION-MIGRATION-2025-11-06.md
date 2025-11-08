@@ -20,16 +20,19 @@
 ## 📊 MÉTRIQUES GLOBALES
 
 ### Avant cette session
+
 - **Composants business/ restants** : 111 fichiers
 - **Composants migrés** : 82 composants
 
 ### Après cette session
+
 - **Composants business/ restants** : 61 fichiers
 - **Composants migrés** : 119 composants (+37)
 - **Doublons supprimés** : 18 fichiers
 - **Commits** : 7 commits de refactor
 
 ### Progression
+
 - **Total composants initiaux** : ~193 composants
 - **Progression migration** : 61.7% (119/193)
 - **Restants à migrer** : 38.3% (61/193)
@@ -41,18 +44,21 @@
 ### Phase 1 : Audit & Classification (2h)
 
 #### 1.1 Détection doublons
+
 - **Doublon kpi-card.tsx** : Supprimé (commit `c66f067`)
 - **13 doublons customers/common/notifications** : Supprimés (commit `3d2c755`)
 - **4 doublons réapparus** : Nettoyés (commit `aa709a6`)
 - **Total doublons supprimés** : 18 fichiers
 
 #### 1.2 Inventaire & Classification
+
 - **Inventaire complet** : 111 fichiers analysés
 - **Classification par modules** : 98 composants classifiés
 - **Rapport doublons** : `RAPPORT-DOUBLONS-BUSINESS-2025-11-06.md`
 - **Rapport classification** : `CLASSIFICATION-MODULES-2025-11-06.md`
 
 #### 1.3 Roadmap batches
+
 - **10 batches planifiés** : Stock, Orders, Products (x5), Suppliers, Finance, UI, Testing
 - **Durée estimée** : 16h sur 4-5 jours
 - **Dépendances identifiées** : Stock→Orders→Products→Suppliers→UI
@@ -65,6 +71,7 @@
 **Commits** : 3 commits (`7df886b`, `aa0aa62`, `db07c5c`)
 
 #### Structure créée
+
 ```
 src/shared/modules/stock/components/
 ├── modals/         (7 composants)
@@ -78,7 +85,9 @@ src/shared/modules/stock/components/
 ```
 
 #### Composants
+
 **Modals (7)** :
+
 - CancelMovementModal
 - GeneralStockMovementModal
 - InventoryAdjustmentModal
@@ -88,17 +97,20 @@ src/shared/modules/stock/components/
 - StockReportsModal
 
 **Sections (4)** :
+
 - StockDisplay
 - StockEditSection
 - StockStatusSection
 - StockViewSection
 
 **Tables/Filters/Stats (3)** :
+
 - MovementsTable
 - MovementsFilters
 - MovementsStats
 
 **Badges/Cards/Charts (4)** :
+
 - StockStatusBadge
 - StockStatusCompact
 - StockAlertCard
@@ -114,6 +126,7 @@ src/shared/modules/stock/components/
 **Commits** : 2 commits (`c625a81`, `fe10d0d`)
 
 #### Structure créée
+
 ```
 src/shared/modules/orders/components/
 ├── modals/         (11 composants)
@@ -124,7 +137,9 @@ src/shared/modules/orders/components/
 ```
 
 #### Composants
+
 **Modals (11)** :
+
 - AddProductToOrderModal
 - OrderDetailModal
 - PurchaseOrderDetailModal
@@ -138,12 +153,14 @@ src/shared/modules/orders/components/
 - UniversalOrderDetailsModal
 
 **Sections/Tables (4)** :
+
 - OrderHeaderEditSection
 - OrganisationPurchaseOrdersSection
 - EditableOrderItemRow
 - OrderItemsTable
 
 **Forms/Charts (4)** :
+
 - PurchaseOrderReceptionForm
 - SalesOrderShipmentForm
 - PurchaseOrdersChart
@@ -155,21 +172,21 @@ src/shared/modules/orders/components/
 
 ## 📦 MODULES MIGRÉS (13 modules)
 
-| Module          | Composants | Status      | Commits       |
-|-----------------|-----------|-------------|---------------|
-| Categories      | 9         | ✅ Complet  | `f7db315`     |
-| Channels        | 4         | ✅ Complet  | `f655b61`     |
-| Common          | 14        | ✅ Complet  | `f68ae45`     |
-| Consultations   | 6         | ✅ Complet  | `c90a547`     |
-| Customers       | 20        | ✅ Complet  | `12a54b0`     |
-| Finance         | 6         | ✅ Complet  | `f93486e`     |
-| Logistics       | 4         | ✅ Complet  | `783dda2`     |
-| Notifications   | 3         | ✅ Complet  | `96cc636`     |
-| Orders          | 19        | ✅ Complet  | `c625a81`, `fe10d0d` |
-| Organisations   | 7         | ✅ Complet  | `4d8efa3`     |
-| Products        | 8         | ⏳ Partiel  | `8536ae6`     |
-| Stock           | 18        | ✅ Complet  | `7df886b`, `aa0aa62`, `db07c5c` |
-| UI              | 14        | ✅ Complet  | `2777582`     |
+| Module        | Composants | Status     | Commits                         |
+| ------------- | ---------- | ---------- | ------------------------------- |
+| Categories    | 9          | ✅ Complet | `f7db315`                       |
+| Channels      | 4          | ✅ Complet | `f655b61`                       |
+| Common        | 14         | ✅ Complet | `f68ae45`                       |
+| Consultations | 6          | ✅ Complet | `c90a547`                       |
+| Customers     | 20         | ✅ Complet | `12a54b0`                       |
+| Finance       | 6          | ✅ Complet | `f93486e`                       |
+| Logistics     | 4          | ✅ Complet | `783dda2`                       |
+| Notifications | 3          | ✅ Complet | `96cc636`                       |
+| Orders        | 19         | ✅ Complet | `c625a81`, `fe10d0d`            |
+| Organisations | 7          | ✅ Complet | `4d8efa3`                       |
+| Products      | 8          | ⏳ Partiel | `8536ae6`                       |
+| Stock         | 18         | ✅ Complet | `7df886b`, `aa0aa62`, `db07c5c` |
+| UI            | 14         | ✅ Complet | `2777582`                       |
 
 **Total** : 119 composants migrés
 
@@ -178,6 +195,7 @@ src/shared/modules/orders/components/
 ## 📋 RESTANTS À MIGRER (61 composants)
 
 ### Products (41 composants) - PRIORITÉ 1
+
 - Wizards (4)
 - Modals (10)
 - Sections (7)
@@ -189,25 +207,31 @@ src/shared/modules/orders/components/
 - Caractéristiques (1)
 
 ### Suppliers (4 composants) - PRIORITÉ 2
+
 - Badges & Selectors (4)
 
 ### Finance (2 composants) - PRIORITÉ 2
+
 - Forms (1)
 - KPIs (1)
 
 ### Consultations (1 composant) - PRIORITÉ 2
+
 - Interfaces (1)
 
 ### UI Common (9 composants) - PRIORITÉ 2
+
 - Badges (1)
 - Modals & Panels (2)
 - Sections & Forms (3)
 - Sample Validation (3)
 
 ### Testing (3 composants) - PRIORITÉ 3
+
 - Test components (à supprimer ?)
 
 ### Autres (1 composant)
+
 - quantity-breaks-display.tsx (à classifier)
 
 ---
@@ -215,6 +239,7 @@ src/shared/modules/orders/components/
 ## 🎯 PROCHAINES ÉTAPES
 
 ### JOUR 2 : BATCH 3-7 (Produits + Suppliers)
+
 - [ ] BATCH 3 : Products Wizards & Modals (14 composants)
 - [ ] BATCH 4 : Products Sections & Cards (13 composants)
 - [ ] BATCH 5 : Products Selectors & Images (10 composants)
@@ -224,6 +249,7 @@ src/shared/modules/orders/components/
 **Total JOUR 2** : 48 composants (41 Products + 7 Autres)
 
 ### JOUR 3 : BATCH 8-10 (UI + Testing + Hooks)
+
 - [ ] BATCH 8 : UI Common (9 composants)
 - [ ] BATCH 9 : Testing (3 composants - suppression ou Storybook)
 - [ ] BATCH 10 : quantity-breaks-display (1 composant)
@@ -232,6 +258,7 @@ src/shared/modules/orders/components/
 **Total JOUR 3** : 13 composants + 75 hooks
 
 ### JOUR 4-5 : Update Imports + Validation
+
 - [ ] Update imports (~250 fichiers)
 - [ ] Tests exhaustifs (Type-check, Build, MCP Browser)
 - [ ] Suppression src/components/business/
@@ -266,17 +293,20 @@ src/shared/modules/orders/components/
 ## 🔍 POINTS D'ATTENTION
 
 ### Doublons réapparus
+
 - **Symptôme** : 4 fichiers (address-input, create-organisation-modal, customer-selector, notifications-dropdown) réapparus après suppression
 - **Cause probable** : Merge automatique ou restauration fichiers
 - **Solution** : Nettoyage manuel (commit `aa709a6`)
 - **Action** : Surveiller lors prochains commits
 
 ### Imports non mis à jour
+
 - **Status** : ~250 imports pointent encore vers `@/components/business/`
 - **Impact** : Application cassée jusqu'à update imports
 - **Plan** : Update massif JOUR 4-5
 
 ### Hooks non migrés
+
 - **Status** : ~75 hooks dans `src/hooks/` à migrer
 - **Destination** : `src/shared/modules/{module}/hooks/`
 - **Plan** : Migration JOUR 3

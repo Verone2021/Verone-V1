@@ -5,12 +5,13 @@
  * Utilise l'authentification Service Account et les transformers
  */
 
-import { GoogleMerchantAuth, getGoogleMerchantAuth } from './auth';
+import type { GoogleMerchantAuth } from './auth';
+import { getGoogleMerchantAuth } from './auth';
+import { GOOGLE_MERCHANT_CONFIG, getResourcePaths } from './config';
 import {
   transformProductForGoogle,
   validateGoogleMerchantProduct,
 } from './transformer';
-import { GOOGLE_MERCHANT_CONFIG, getResourcePaths } from './config';
 
 // Types de réponse Google Merchant API
 interface GoogleMerchantApiResponse<T = any> {

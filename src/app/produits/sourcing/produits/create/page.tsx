@@ -1,29 +1,38 @@
-"use client"
+'use client';
 
-import { useState } from 'react'
-import { useRouter } from 'next/navigation'
-import { ArrowLeft, Zap, CheckCircle, Circle, ArrowRight } from 'lucide-react'
-import { Button } from '@/components/ui/button'
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
-import { Badge } from '@/components/ui/badge'
-import { SourcingQuickForm } from '@/components/business/sourcing-quick-form'
+import { useState } from 'react';
+
+import { useRouter } from 'next/navigation';
+
+import { ArrowLeft, Zap, CheckCircle, Circle, ArrowRight } from 'lucide-react';
+
+import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from '@/components/ui/card';
+import { SourcingQuickForm } from '@/shared/modules/products/components/sourcing/SourcingQuickForm';
 
 export default function NewSourcingPage() {
-  const router = useRouter()
-  const [showForm, setShowForm] = useState(false)
+  const router = useRouter();
+  const [showForm, setShowForm] = useState(false);
 
   const handleSuccess = (draftId: string) => {
     // Rediriger vers la page du produit sourcé
-    router.push(`/produits/sourcing/produits/${draftId}`)
-  }
+    router.push(`/produits/sourcing/produits/${draftId}`);
+  };
 
   const handleBack = () => {
     if (showForm) {
-      setShowForm(false)
+      setShowForm(false);
     } else {
-      router.push('/produits/sourcing/produits')
+      router.push('/produits/sourcing/produits');
     }
-  }
+  };
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -37,7 +46,9 @@ export default function NewSourcingPage() {
               className="flex items-center text-gray-600 hover:text-black"
             >
               <ArrowLeft className="h-4 w-4 mr-2" />
-              {showForm ? 'Retour à la présentation' : 'Retour aux produits sourcing'}
+              {showForm
+                ? 'Retour à la présentation'
+                : 'Retour aux produits sourcing'}
             </Button>
 
             {/* Indicateur d'étape */}
@@ -73,8 +84,9 @@ export default function NewSourcingPage() {
                 Sourcing Rapide
               </h1>
               <p className="text-lg text-gray-600 max-w-2xl mx-auto">
-                Ajout rapide d'un produit à sourcer avec les informations essentielles.
-                Parfait pour une demande client ou une opportunité fournisseur.
+                Ajout rapide d'un produit à sourcer avec les informations
+                essentielles. Parfait pour une demande client ou une opportunité
+                fournisseur.
               </p>
             </div>
 
@@ -90,7 +102,8 @@ export default function NewSourcingPage() {
                   </div>
                   <CardTitle className="text-xl">Sourcing Rapide</CardTitle>
                   <CardDescription className="text-base">
-                    Ajout rapide d'un produit à sourcer avec les informations essentielles
+                    Ajout rapide d'un produit à sourcer avec les informations
+                    essentielles
                   </CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-4">
@@ -99,9 +112,15 @@ export default function NewSourcingPage() {
                       ⚡ Champs requis (seulement 3) :
                     </div>
                     <ul className="text-sm text-gray-600 space-y-1">
-                      <li>• <strong>Image du produit</strong> (drag & drop)</li>
-                      <li>• <strong>Nom du produit</strong></li>
-                      <li>• <strong>URL de la page fournisseur</strong></li>
+                      <li>
+                        • <strong>Image du produit</strong> (drag & drop)
+                      </li>
+                      <li>
+                        • <strong>Nom du produit</strong>
+                      </li>
+                      <li>
+                        • <strong>URL de la page fournisseur</strong>
+                      </li>
                     </ul>
                   </div>
 
@@ -121,14 +140,19 @@ export default function NewSourcingPage() {
                       🎯 Avantages :
                     </div>
                     <ul className="text-sm text-gray-600 space-y-1">
-                      <li>• Création en <strong>moins de 2 minutes</strong></li>
+                      <li>
+                        • Création en <strong>moins de 2 minutes</strong>
+                      </li>
                       <li>• Produit enregistré en brouillon</li>
                       <li>• Complétez les détails plus tard</li>
                     </ul>
                   </div>
 
                   <div className="pt-2">
-                    <Badge variant="outline" className="text-blue-600 border-blue-200">
+                    <Badge
+                      variant="outline"
+                      className="text-blue-600 border-blue-200"
+                    >
                       Temps estimé : 1-2 minutes
                     </Badge>
                   </div>
@@ -151,11 +175,11 @@ export default function NewSourcingPage() {
             <SourcingQuickForm
               onSuccess={handleSuccess}
               onCancel={handleBack}
-              showHeader={true}
+              showHeader
             />
           </div>
         )}
       </div>
     </div>
-  )
+  );
 }

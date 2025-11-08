@@ -1,27 +1,36 @@
-"use client"
+'use client';
 
-import { useState } from 'react'
-import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog'
-import { ButtonV2 } from '@/components/ui/button'
-import { CheckCircle, Loader2, AlertCircle } from 'lucide-react'
-import { cn } from '@/lib/utils'
+import { useState } from 'react';
+
+import { CheckCircle, Loader2, AlertCircle } from 'lucide-react';
+
+import { ButtonV2 } from '@/components/ui/button';
+import {
+  Dialog,
+  DialogContent,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+} from '@/components/ui/dialog';
+import { cn } from '@verone/utils';
 
 interface SummaryItem {
-  label: string
-  value: string | null | undefined
-  icon?: React.ReactNode
-  isImportant?: boolean
+  label: string;
+  value: string | null | undefined;
+  icon?: React.ReactNode;
+  isImportant?: boolean;
 }
 
 interface ConfirmSubmitModalProps {
-  open: boolean
-  onOpenChange: (open: boolean) => void
-  title: string
-  description: string
-  summaryData: SummaryItem[]
-  onConfirm: () => Promise<void>
-  confirmLabel?: string
-  isSubmitting?: boolean
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+  title: string;
+  description: string;
+  summaryData: SummaryItem[];
+  onConfirm: () => Promise<void>;
+  confirmLabel?: string;
+  isSubmitting?: boolean;
 }
 
 /**
@@ -37,32 +46,37 @@ export function ConfirmSubmitModal({
   summaryData,
   onConfirm,
   confirmLabel = 'Confirmer',
-  isSubmitting = false
+  isSubmitting = false,
 }: ConfirmSubmitModalProps) {
-  const [error, setError] = useState<string | null>(null)
+  const [error, setError] = useState<string | null>(null);
 
   const handleConfirm = async () => {
     try {
-      setError(null)
-      await onConfirm()
+      setError(null);
+      await onConfirm();
       // Modal fermé par le parent après succès
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Une erreur est survenue')
+      setError(err instanceof Error ? err.message : 'Une erreur est survenue');
     }
-  }
+  };
 
   const handleCancel = () => {
     if (!isSubmitting) {
-      setError(null)
-      onOpenChange(false)
+      setError(null);
+      onOpenChange(false);
     }
-  }
+  };
 
   // Filtrer les données vides
   const visibleData = summaryData.filter(item => {
-    const value = item.value
-    return value !== null && value !== undefined && value !== '' && value !== 'Non renseigné'
-  })
+    const value = item.value;
+    return (
+      value !== null &&
+      value !== undefined &&
+      value !== '' &&
+      value !== 'Non renseigné'
+    );
+  });
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -89,20 +103,31 @@ export function ConfirmSubmitModal({
                 <div
                   key={index}
                   className={cn(
-                    "flex justify-between items-start py-2 border-b border-gray-200 last:border-0",
-                    item.isImportant && "bg-blue-50 px-3 py-2 rounded border-blue-200"
+                    'flex justify-between items-start py-2 border-b border-gray-200 last:border-0',
+                    item.isImportant &&
+                      'bg-blue-50 px-3 py-2 rounded border-blue-200'
                   )}
                 >
                   <div className="flex items-center space-x-2 text-sm text-gray-600">
-                    {item.icon && <span className="flex-shrink-0">{item.icon}</span>}
-                    <span className={cn(item.isImportant && "font-medium text-blue-800")}>
+                    {item.icon && (
+                      <span className="flex-shrink-0">{item.icon}</span>
+                    )}
+                    <span
+                      className={cn(
+                        item.isImportant && 'font-medium text-blue-800'
+                      )}
+                    >
                       {item.label}
                     </span>
                   </div>
-                  <div className={cn(
-                    "text-sm text-right max-w-md",
-                    item.isImportant ? "font-semibold text-blue-900" : "text-gray-900"
-                  )}>
+                  <div
+                    className={cn(
+                      'text-sm text-right max-w-md',
+                      item.isImportant
+                        ? 'font-semibold text-blue-900'
+                        : 'text-gray-900'
+                    )}
+                  >
                     {item.value}
                   </div>
                 </div>
@@ -120,7 +145,8 @@ export function ConfirmSubmitModal({
           <div className="flex items-start space-x-2">
             <CheckCircle className="h-4 w-4 text-blue-600 mt-0.5 flex-shrink-0" />
             <p className="text-xs text-blue-800">
-              Vérifiez attentivement les informations ci-dessus avant de confirmer. Vous pourrez les modifier ultérieurement.
+              Vérifiez attentivement les informations ci-dessus avant de
+              confirmer. Vous pourrez les modifier ultérieurement.
             </p>
           </div>
         </div>
@@ -163,5 +189,5 @@ export function ConfirmSubmitModal({
         </DialogFooter>
       </DialogContent>
     </Dialog>
-  )
+  );
 }

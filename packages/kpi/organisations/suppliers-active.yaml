@@ -44,14 +44,14 @@ source:
 displayed_in:
   - component: src/app/contacts-organisations/suppliers/page.tsx
     location: "Stats header - Badge 'Actifs' (ligne ~297-312)"
-    description: "Deuxième badge row statistiques avec couleur verte"
+    description: 'Deuxième badge row statistiques avec couleur verte'
     screenshot: suppliers-list-page.png
 
 thresholds:
-  excellent: "> 40"
-  good: "15-40"
-  warning: "5-15"
-  critical: "< 5"
+  excellent: '> 40'
+  good: '15-40'
+  warning: '5-15'
+  critical: '< 5'
   interpretation: |
     - > 40 : Réseau fournisseurs très actif
     - 15-40 : Collaborations saines
@@ -59,18 +59,18 @@ thresholds:
     - < 5 : Risque dépendance
 
 tests:
-  - scenario: "Production actuelle"
+  - scenario: 'Production actuelle'
     inputs:
       suppliers_active_count: 11
     expected_output: 11
-    threshold_expected: "warning"
+    threshold_expected: 'warning'
 
-  - scenario: "Tous actifs"
+  - scenario: 'Tous actifs'
     inputs:
       total: 11
       active: 11
     expected_output: 11
-    rate: "100%"
+    rate: '100%'
 
 metadata:
   created_at: 2025-10-22

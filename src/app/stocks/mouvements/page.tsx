@@ -1,7 +1,9 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
+
 import { useRouter, useSearchParams } from 'next/navigation';
+
 import {
   ArrowLeft,
   ArrowUpDown,
@@ -14,7 +16,8 @@ import {
   LayoutGrid,
   Table,
 } from 'lucide-react';
-import { cn } from '@/lib/utils';
+
+import { Badge } from '@/components/ui/badge';
 import { ButtonV2 } from '@/components/ui/button';
 import {
   Card,
@@ -30,23 +33,25 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { Badge } from '@/components/ui/badge';
-import { MovementsTable } from '@/components/business/movements-table';
-import { MovementsFilters } from '@/components/business/movements-filters';
-import { MovementsStatsCards } from '@/components/business/movements-stats';
+import { cn } from '@verone/utils';
+import { UniversalOrderDetailsModal } from '@/shared/modules/orders/components/modals/UniversalOrderDetailsModal';
+import { MovementsFilters } from '@/shared/modules/stock/components/filters/MovementsFilters';
+import { CancelMovementModal } from '@/shared/modules/stock/components/modals/CancelMovementModal';
+import { MovementDetailsModal } from '@/shared/modules/stock/components/modals/MovementDetailsModal';
+import { MovementsStatsCards } from '@/shared/modules/stock/components/stats';
+import { MovementsTable } from '@/shared/modules/stock/components/tables/MovementsTable';
+import type { MovementWithDetails } from '@/shared/modules/stock/hooks';
+import { useMovementsHistory } from '@/shared/modules/stock/hooks';
+
 import { MovementsListView } from './components/MovementsListView';
-import { MovementDetailsModal } from '@/components/business/movement-details-modal';
-import { CancelMovementModal } from '@/components/business/cancel-movement-modal';
-import { UniversalOrderDetailsModal } from '@/components/business/universal-order-details-modal';
-import {
-  useMovementsHistory,
-  MovementWithDetails,
-} from '@/shared/modules/stock/hooks';
 
 export default function StockMovementsPage() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const initialDirection = (searchParams?.get('tab') || 'all') as 'in' | 'out' | 'all';
+  const initialDirection = (searchParams?.get('tab') || 'all') as
+    | 'in'
+    | 'out'
+    | 'all';
 
   const {
     loading,
@@ -62,7 +67,9 @@ export default function StockMovementsPage() {
   } = useMovementsHistory();
 
   // État direction (remplace Tabs)
-  const [directionFilter, setDirectionFilter] = useState<'in' | 'out' | 'all'>(initialDirection);
+  const [directionFilter, setDirectionFilter] = useState<'in' | 'out' | 'all'>(
+    initialDirection
+  );
 
   // Phase 3.4.5: État vue Table vs Cards
   const [viewMode, setViewMode] = useState<'table' | 'cards'>('table');
@@ -446,8 +453,8 @@ export default function StockMovementsPage() {
                               handlePageChange(pagination.currentPage + 1)
                             }
                             disabled={
-                              pagination.currentPage === pagination.totalPages ||
-                              loading
+                              pagination.currentPage ===
+                                pagination.totalPages || loading
                             }
                             className="border-black text-black hover:bg-black hover:text-white"
                           >

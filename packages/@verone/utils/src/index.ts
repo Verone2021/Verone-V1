@@ -23,3 +23,6 @@ export {
   formatCurrency,
   formatDateShort,
 } from './cn';
+
+// Supabase client
+export { createClient } from './supabase';

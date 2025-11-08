@@ -1,46 +1,55 @@
-'use client'
+'use client';
 
-import { useState } from 'react'
-import { ButtonV2 } from '@/components/ui/button'
-import { Card, CardContent } from '@/components/ui/card'
-import { Badge } from '@/components/ui/badge'
-import { FileText, Package } from 'lucide-react'
-import { SalesOrder } from '@/shared/modules/orders/hooks'
-import { ShipmentRecapData, ShipmentType } from './shipment-recap-modal'
+import { useState } from 'react';
+
+import { FileText, Package } from 'lucide-react';
+
+import { Badge } from '@/components/ui/badge';
+import { ButtonV2 } from '@/components/ui/button';
+import { Card, CardContent } from '@/components/ui/card';
+import type { SalesOrder } from '@/shared/modules/orders/hooks';
+// TODO: Réactiver lors Phase 2+ (module logistics désactivé)
+// import { ShipmentRecapData, ShipmentType } from './shipment-recap-modal'
+type ShipmentRecapData = any;
+type ShipmentType = string;
 
 interface ManualShipmentFormProps {
-  order: SalesOrder
-  onComplete: (data: ShipmentRecapData) => void
-  onBack: () => void
+  order: SalesOrder;
+  onComplete: (data: ShipmentRecapData) => void;
+  onBack: () => void;
 }
 
-export function ManualShipmentForm({ order, onComplete, onBack }: ManualShipmentFormProps) {
+export function ManualShipmentForm({
+  order,
+  onComplete,
+  onBack,
+}: ManualShipmentFormProps) {
   // Type expédition
-  const [shipmentType, setShipmentType] = useState<ShipmentType>('parcel')
+  const [shipmentType, setShipmentType] = useState<ShipmentType>('parcel');
 
   // Transporteur
-  const [carrierName, setCarrierName] = useState('')
+  const [carrierName, setCarrierName] = useState('');
 
   // Dimensions selon type
-  const [weightKg, setWeightKg] = useState(0)
-  const [lengthCm, setLengthCm] = useState(0)
-  const [widthCm, setWidthCm] = useState(0)
-  const [heightCm, setHeightCm] = useState(0)
+  const [weightKg, setWeightKg] = useState(0);
+  const [lengthCm, setLengthCm] = useState(0);
+  const [widthCm, setWidthCm] = useState(0);
+  const [heightCm, setHeightCm] = useState(0);
 
   // Tracking
-  const [tracking, setTracking] = useState('')
+  const [tracking, setTracking] = useState('');
 
   // Coûts
-  const [costPaid, setCostPaid] = useState(0)
-  const [costCharged, setCostCharged] = useState(0)
-  const [notes, setNotes] = useState('')
+  const [costPaid, setCostPaid] = useState(0);
+  const [costCharged, setCostCharged] = useState(0);
+  const [notes, setNotes] = useState('');
 
   const canSubmit = (): boolean => {
-    return carrierName.trim() !== '' && weightKg > 0
-  }
+    return carrierName.trim() !== '' && weightKg > 0;
+  };
 
   const handleSubmit = () => {
-    if (!canSubmit()) return
+    if (!canSubmit()) return;
 
     const recapData: ShipmentRecapData = {
       orderId: order.id,
@@ -55,33 +64,33 @@ export function ManualShipmentForm({ order, onComplete, onBack }: ManualShipment
           weight_kg: weightKg,
           length_cm: lengthCm,
           width_cm: widthCm,
-          height_cm: heightCm
-        }
+          height_cm: heightCm,
+        },
       ],
       costPaid,
       costCharged,
       trackingNumber: tracking || undefined,
-      notes: notes || undefined
-    }
+      notes: notes || undefined,
+    };
 
-    onComplete(recapData)
-  }
+    onComplete(recapData);
+  };
 
   // Dimensions suggérées selon type
   const handleTypeChange = (type: ShipmentType) => {
-    setShipmentType(type)
+    setShipmentType(type);
 
     // Pré-remplir dimensions standards
     if (type === 'pallet') {
-      setLengthCm(120)
-      setWidthCm(80)
-      setHeightCm(150)
+      setLengthCm(120);
+      setWidthCm(80);
+      setHeightCm(150);
     } else {
-      setLengthCm(0)
-      setWidthCm(0)
-      setHeightCm(0)
+      setLengthCm(0);
+      setWidthCm(0);
+      setHeightCm(0);
     }
-  }
+  };
 
   return (
     <div className="space-y-6">
@@ -91,9 +100,12 @@ export function ManualShipmentForm({ order, onComplete, onBack }: ManualShipment
           <div className="flex items-center gap-3">
             <FileText className="h-5 w-5 text-gray-600" />
             <div>
-              <h3 className="font-semibold text-gray-900">Expédition Manuelle</h3>
+              <h3 className="font-semibold text-gray-900">
+                Expédition Manuelle
+              </h3>
               <p className="text-sm text-gray-700">
-                Saisie libre pour tout autre transporteur (Colissimo, UPS, Geodis, etc.)
+                Saisie libre pour tout autre transporteur (Colissimo, UPS,
+                Geodis, etc.)
               </p>
             </div>
           </div>
@@ -137,12 +149,14 @@ export function ManualShipmentForm({ order, onComplete, onBack }: ManualShipment
 
       {/* Transporteur */}
       <div>
-        <label className="block text-sm font-medium mb-2">Nom du transporteur *</label>
+        <label className="block text-sm font-medium mb-2">
+          Nom du transporteur *
+        </label>
         <input
           type="text"
           className="w-full px-3 py-2 border rounded-md"
           value={carrierName}
-          onChange={(e) => setCarrierName(e.target.value)}
+          onChange={e => setCarrierName(e.target.value)}
           placeholder="Ex: Colissimo, UPS, Geodis, TNT..."
         />
         <p className="text-xs text-gray-500 mt-1">
@@ -165,14 +179,16 @@ export function ManualShipmentForm({ order, onComplete, onBack }: ManualShipment
           <div className="space-y-4">
             {/* Poids */}
             <div>
-              <label className="block text-sm font-medium mb-2">Poids (kg) *</label>
+              <label className="block text-sm font-medium mb-2">
+                Poids (kg) *
+              </label>
               <input
                 type="number"
                 step="0.1"
                 min="0"
                 className="w-full px-3 py-2 border rounded-md"
                 value={weightKg || ''}
-                onChange={(e) => setWeightKg(parseFloat(e.target.value) || 0)}
+                onChange={e => setWeightKg(parseFloat(e.target.value) || 0)}
                 placeholder="Ex: 5.5"
               />
               <p className="text-xs text-gray-500 mt-1">
@@ -185,35 +201,41 @@ export function ManualShipmentForm({ order, onComplete, onBack }: ManualShipment
             {/* Dimensions */}
             <div className="grid grid-cols-3 gap-3">
               <div>
-                <label className="block text-sm font-medium mb-2">Longueur (cm)</label>
+                <label className="block text-sm font-medium mb-2">
+                  Longueur (cm)
+                </label>
                 <input
                   type="number"
                   min="0"
                   className="w-full px-3 py-2 border rounded-md"
                   value={lengthCm || ''}
-                  onChange={(e) => setLengthCm(parseInt(e.target.value) || 0)}
+                  onChange={e => setLengthCm(parseInt(e.target.value) || 0)}
                   placeholder={shipmentType === 'pallet' ? '120' : 'L'}
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium mb-2">Largeur (cm)</label>
+                <label className="block text-sm font-medium mb-2">
+                  Largeur (cm)
+                </label>
                 <input
                   type="number"
                   min="0"
                   className="w-full px-3 py-2 border rounded-md"
                   value={widthCm || ''}
-                  onChange={(e) => setWidthCm(parseInt(e.target.value) || 0)}
+                  onChange={e => setWidthCm(parseInt(e.target.value) || 0)}
                   placeholder={shipmentType === 'pallet' ? '80' : 'l'}
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium mb-2">Hauteur (cm)</label>
+                <label className="block text-sm font-medium mb-2">
+                  Hauteur (cm)
+                </label>
                 <input
                   type="number"
                   min="0"
                   className="w-full px-3 py-2 border rounded-md"
                   value={heightCm || ''}
-                  onChange={(e) => setHeightCm(parseInt(e.target.value) || 0)}
+                  onChange={e => setHeightCm(parseInt(e.target.value) || 0)}
                   placeholder={shipmentType === 'pallet' ? '150' : 'h'}
                 />
               </div>
@@ -229,12 +251,14 @@ export function ManualShipmentForm({ order, onComplete, onBack }: ManualShipment
 
       {/* Tracking */}
       <div>
-        <label className="block text-sm font-medium mb-2">Numéro de suivi</label>
+        <label className="block text-sm font-medium mb-2">
+          Numéro de suivi
+        </label>
         <input
           type="text"
           className="w-full px-3 py-2 border rounded-md font-mono"
           value={tracking}
-          onChange={(e) => setTracking(e.target.value)}
+          onChange={e => setTracking(e.target.value)}
           placeholder="Numéro de tracking (optionnel)"
         />
         <p className="text-xs text-gray-500 mt-1">
@@ -248,44 +272,54 @@ export function ManualShipmentForm({ order, onComplete, onBack }: ManualShipment
           <h3 className="font-semibold text-lg mb-4">Coûts de livraison</h3>
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <label className="block text-sm font-medium mb-2">Coût payé au transporteur (€)</label>
+              <label className="block text-sm font-medium mb-2">
+                Coût payé au transporteur (€)
+              </label>
               <input
                 type="number"
                 step="0.01"
                 min="0"
                 className="w-full px-3 py-2 border rounded-md"
                 value={costPaid || ''}
-                onChange={(e) => setCostPaid(parseFloat(e.target.value) || 0)}
+                onChange={e => setCostPaid(parseFloat(e.target.value) || 0)}
                 placeholder="0.00"
               />
-              <p className="text-xs text-gray-500 mt-1">Montant facturé par le transporteur</p>
+              <p className="text-xs text-gray-500 mt-1">
+                Montant facturé par le transporteur
+              </p>
             </div>
             <div>
-              <label className="block text-sm font-medium mb-2">Coût facturé au client (€)</label>
+              <label className="block text-sm font-medium mb-2">
+                Coût facturé au client (€)
+              </label>
               <input
                 type="number"
                 step="0.01"
                 min="0"
                 className="w-full px-3 py-2 border rounded-md"
                 value={costCharged || ''}
-                onChange={(e) => setCostCharged(parseFloat(e.target.value) || 0)}
+                onChange={e => setCostCharged(parseFloat(e.target.value) || 0)}
                 placeholder="0.00"
               />
-              <p className="text-xs text-gray-500 mt-1">Montant facturé au client (0 si inclus)</p>
+              <p className="text-xs text-gray-500 mt-1">
+                Montant facturé au client (0 si inclus)
+              </p>
             </div>
           </div>
 
           {/* Marge calculée */}
           {(costPaid > 0 || costCharged > 0) && (
             <div className="mt-4 p-3 bg-gray-50 rounded-lg flex justify-between items-center">
-              <span className="text-sm font-medium text-gray-700">Marge calculée</span>
+              <span className="text-sm font-medium text-gray-700">
+                Marge calculée
+              </span>
               <span
                 className={`font-semibold ${
                   costCharged - costPaid > 0
                     ? 'text-green-600'
                     : costCharged - costPaid < 0
-                    ? 'text-red-600'
-                    : 'text-gray-900'
+                      ? 'text-red-600'
+                      : 'text-gray-900'
                 }`}
               >
                 {costCharged - costPaid > 0 ? '+' : ''}
@@ -298,12 +332,14 @@ export function ManualShipmentForm({ order, onComplete, onBack }: ManualShipment
 
       {/* Notes */}
       <div>
-        <label className="block text-sm font-medium mb-2">Notes (optionnel)</label>
+        <label className="block text-sm font-medium mb-2">
+          Notes (optionnel)
+        </label>
         <textarea
           className="w-full px-3 py-2 border rounded-md"
           rows={3}
           value={notes}
-          onChange={(e) => setNotes(e.target.value)}
+          onChange={e => setNotes(e.target.value)}
           placeholder="Informations complémentaires sur l'expédition..."
         />
       </div>
@@ -324,5 +360,5 @@ export function ManualShipmentForm({ order, onComplete, onBack }: ManualShipment
         </p>
       )}
     </div>
-  )
+  );
 }

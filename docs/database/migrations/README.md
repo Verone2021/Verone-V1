@@ -21,6 +21,7 @@ Guide complet pour gérer les migrations de base de données Supabase dans le sy
 **Objectif** : Ajout système de commission (ristourne) calculée par ligne de commande
 
 **Modifications** :
+
 - `customer_pricing` : +1 colonne (`retrocession_rate`)
 - `sales_order_items` : +2 colonnes (`retrocession_rate`, `retrocession_amount`)
 - **Trigger** : `trg_calculate_retrocession` - Calcul automatique du montant
@@ -28,11 +29,13 @@ Guide complet pour gérer les migrations de base de données Supabase dans le sy
 - **RPC** : `get_order_total_retrocession(order_id)` - Commission totale commande
 
 **Impact** :
+
 - +3 colonnes database (total: 1342)
 - +1 trigger (total: 159)
 - +1 fonction RPC (total: 256)
 
 **Documentation** :
+
 - [pricing-architecture.md](../pricing-architecture.md) - Règle 6
 - [triggers.md](../triggers.md) - trg_calculate_retrocession
 - [functions-rpc.md](../functions-rpc.md) - get_order_total_retrocession()
@@ -44,6 +47,7 @@ Guide complet pour gérer les migrations de base de données Supabase dans le sy
 **Objectif** : Conformité factures avec obligation SIREN (loi juillet 2024)
 
 **Modifications** :
+
 - Ajout `legal_name`, `trade_name`, `has_different_trade_name`
 - Ajout `siren` (9 chiffres), `siret` (14 chiffres)
 - Migration données automatique : `legal_name` ← ancien `name`

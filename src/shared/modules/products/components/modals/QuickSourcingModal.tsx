@@ -1,14 +1,20 @@
-'use client'
+'use client';
 
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog'
-import { ButtonV2 } from '@/components/ui/button'
-import { X, Sparkles } from 'lucide-react'
-import { SourcingQuickForm } from './sourcing-quick-form'
+import { X, Sparkles } from 'lucide-react';
+
+import { Button } from '@/components/ui/button';
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog';
+import { SourcingQuickForm } from '@/shared/modules/products/components/sourcing/SourcingQuickForm';
 
 interface QuickSourcingModalProps {
-  open: boolean
-  onClose: () => void
-  onSuccess?: () => void
+  open: boolean;
+  onClose: () => void;
+  onSuccess?: () => void;
 }
 
 /**
@@ -23,15 +29,14 @@ interface QuickSourcingModalProps {
 export function QuickSourcingModal({
   open,
   onClose,
-  onSuccess
+  onSuccess,
 }: QuickSourcingModalProps) {
-
   const handleProductCreated = (productId: string) => {
     // Rafraîchir la liste en appelant onSuccess
-    onSuccess?.()
+    onSuccess?.();
     // Fermer la modal
-    onClose()
-  }
+    onClose();
+  };
 
   return (
     <Dialog open={open} onOpenChange={onClose}>
@@ -42,9 +47,9 @@ export function QuickSourcingModal({
               <Sparkles className="h-6 w-6 text-purple-600" />
               Sourcer un nouveau produit
             </DialogTitle>
-            <ButtonV2 variant="ghost" size="sm" onClick={onClose}>
+            <Button variant="ghost" size="sm" onClick={onClose}>
               <X className="h-5 w-5" />
-            </ButtonV2>
+            </Button>
           </div>
         </DialogHeader>
 
@@ -57,5 +62,5 @@ export function QuickSourcingModal({
         </div>
       </DialogContent>
     </Dialog>
-  )
+  );
 }

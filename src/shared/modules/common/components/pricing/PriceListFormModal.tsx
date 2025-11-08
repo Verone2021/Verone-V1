@@ -1,91 +1,98 @@
-'use client'
+'use client';
 
-import { useState, useEffect } from 'react'
-import { ButtonV2 } from '@/components/ui/button'
-import { Input } from '@/components/ui/input'
-import { Label } from '@/components/ui/label'
-import { Textarea } from '@/components/ui/textarea'
+import { useState, useEffect } from 'react';
+
+import { ButtonV2 } from '@/components/ui/button';
 import {
   Dialog,
   DialogContent,
   DialogDescription,
   DialogHeader,
   DialogTitle,
-} from '@/components/ui/dialog'
+} from '@/components/ui/dialog';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from '@/components/ui/select'
-import { Switch } from '@/components/ui/switch'
+} from '@/components/ui/select';
+import { Switch } from '@/components/ui/switch';
+import { Textarea } from '@/components/ui/textarea';
 import {
   useCreatePriceList,
   useUpdatePriceList,
   type PriceList,
   type PriceListType,
   type CreatePriceListData,
-  type UpdatePriceListData
-} from '@/shared/modules/finance/hooks'
+  type UpdatePriceListData,
+} from '@/shared/modules/finance/hooks';
 
 interface PriceListFormModalProps {
-  open: boolean
-  onClose: () => void
-  priceList?: PriceList | null
+  open: boolean;
+  onClose: () => void;
+  priceList?: PriceList | null;
 }
 
-export function PriceListFormModal({ open, onClose, priceList }: PriceListFormModalProps) {
-  const isEditMode = !!priceList
+export function PriceListFormModal({
+  open,
+  onClose,
+  priceList,
+}: PriceListFormModalProps) {
+  const isEditMode = !!priceList;
 
   // Form state
-  const [code, setCode] = useState('')
-  const [name, setName] = useState('')
-  const [description, setDescription] = useState('')
-  const [listType, setListType] = useState<PriceListType>('base')
-  const [priority, setPriority] = useState(100)
-  const [currency, setCurrency] = useState('EUR')
-  const [validFrom, setValidFrom] = useState('')
-  const [validUntil, setValidUntil] = useState('')
-  const [isActive, setIsActive] = useState(true)
+  const [code, setCode] = useState('');
+  const [name, setName] = useState('');
+  const [description, setDescription] = useState('');
+  const [listType, setListType] = useState<PriceListType>('base');
+  const [priority, setPriority] = useState(100);
+  const [currency, setCurrency] = useState('EUR');
+  const [validFrom, setValidFrom] = useState('');
+  const [validUntil, setValidUntil] = useState('');
+  const [isActive, setIsActive] = useState(true);
 
   // Mutations
-  const { mutate: createPriceList, isPending: isCreating } = useCreatePriceList()
-  const { mutate: updatePriceList, isPending: isUpdating } = useUpdatePriceList()
+  const { mutate: createPriceList, isPending: isCreating } =
+    useCreatePriceList();
+  const { mutate: updatePriceList, isPending: isUpdating } =
+    useUpdatePriceList();
 
-  const isLoading = isCreating || isUpdating
+  const isLoading = isCreating || isUpdating;
 
   // Charger les données en mode édition
   useEffect(() => {
     if (priceList) {
-      setCode(priceList.code)
-      setName(priceList.name)
-      setDescription(priceList.description || '')
-      setListType(priceList.list_type)
-      setPriority(priceList.priority)
-      setCurrency(priceList.currency)
-      setValidFrom(priceList.valid_from || '')
-      setValidUntil(priceList.valid_until || '')
-      setIsActive(priceList.is_active)
+      setCode(priceList.code);
+      setName(priceList.name);
+      setDescription(priceList.description || '');
+      setListType(priceList.list_type);
+      setPriority(priceList.priority);
+      setCurrency(priceList.currency);
+      setValidFrom(priceList.valid_from || '');
+      setValidUntil(priceList.valid_until || '');
+      setIsActive(priceList.is_active);
     } else {
-      resetForm()
+      resetForm();
     }
-  }, [priceList])
+  }, [priceList]);
 
   const resetForm = () => {
-    setCode('')
-    setName('')
-    setDescription('')
-    setListType('base')
-    setPriority(100)
-    setCurrency('EUR')
-    setValidFrom('')
-    setValidUntil('')
-    setIsActive(true)
-  }
+    setCode('');
+    setName('');
+    setDescription('');
+    setListType('base');
+    setPriority(100);
+    setCurrency('EUR');
+    setValidFrom('');
+    setValidUntil('');
+    setIsActive(true);
+  };
 
   const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault()
+    e.preventDefault();
 
     if (isEditMode && priceList) {
       const data: UpdatePriceListData = {
@@ -97,18 +104,18 @@ export function PriceListFormModal({ open, onClose, priceList }: PriceListFormMo
         currency,
         valid_from: validFrom || undefined,
         valid_until: validUntil || undefined,
-        is_active: isActive
-      }
+        is_active: isActive,
+      };
 
       updatePriceList(
         { priceListId: priceList.id, data },
         {
           onSuccess: () => {
-            onClose()
-            resetForm()
-          }
+            onClose();
+            resetForm();
+          },
         }
-      )
+      );
     } else {
       const data: CreatePriceListData = {
         code,
@@ -119,24 +126,26 @@ export function PriceListFormModal({ open, onClose, priceList }: PriceListFormMo
         currency,
         valid_from: validFrom || undefined,
         valid_until: validUntil || undefined,
-        is_active: isActive
-      }
+        is_active: isActive,
+      };
 
       createPriceList(data, {
         onSuccess: () => {
-          onClose()
-          resetForm()
-        }
-      })
+          onClose();
+          resetForm();
+        },
+      });
     }
-  }
+  };
 
   return (
     <Dialog open={open} onOpenChange={onClose}>
       <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>
-            {isEditMode ? 'Modifier la liste de prix' : 'Nouvelle liste de prix'}
+            {isEditMode
+              ? 'Modifier la liste de prix'
+              : 'Nouvelle liste de prix'}
           </DialogTitle>
           <DialogDescription>
             {isEditMode
@@ -156,7 +165,7 @@ export function PriceListFormModal({ open, onClose, priceList }: PriceListFormMo
                 <Input
                   id="code"
                   value={code}
-                  onChange={(e) => setCode(e.target.value.toUpperCase())}
+                  onChange={e => setCode(e.target.value.toUpperCase())}
                   placeholder="PL-2025-001"
                   required
                   disabled={isLoading}
@@ -167,13 +176,18 @@ export function PriceListFormModal({ open, onClose, priceList }: PriceListFormMo
                 <Label htmlFor="listType">
                   Type de liste <span className="text-red-600">*</span>
                 </Label>
-                <Select value={listType} onValueChange={(value) => setListType(value as PriceListType)}>
+                <Select
+                  value={listType}
+                  onValueChange={value => setListType(value as PriceListType)}
+                >
                   <SelectTrigger>
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="base">Base Catalogue</SelectItem>
-                    <SelectItem value="customer_group">Groupe Client</SelectItem>
+                    <SelectItem value="customer_group">
+                      Groupe Client
+                    </SelectItem>
                     <SelectItem value="channel">Canal de Vente</SelectItem>
                     <SelectItem value="promotional">Promotionnelle</SelectItem>
                     <SelectItem value="contract">Contrat Client</SelectItem>
@@ -189,7 +203,7 @@ export function PriceListFormModal({ open, onClose, priceList }: PriceListFormMo
               <Input
                 id="name"
                 value={name}
-                onChange={(e) => setName(e.target.value)}
+                onChange={e => setName(e.target.value)}
                 placeholder="Prix Wholesale 2025"
                 required
                 disabled={isLoading}
@@ -201,7 +215,7 @@ export function PriceListFormModal({ open, onClose, priceList }: PriceListFormMo
               <Textarea
                 id="description"
                 value={description}
-                onChange={(e) => setDescription(e.target.value)}
+                onChange={e => setDescription(e.target.value)}
                 placeholder="Description optionnelle de la liste de prix"
                 disabled={isLoading}
                 rows={3}
@@ -224,12 +238,13 @@ export function PriceListFormModal({ open, onClose, priceList }: PriceListFormMo
                   min="1"
                   max="1000"
                   value={priority}
-                  onChange={(e) => setPriority(parseInt(e.target.value) || 100)}
+                  onChange={e => setPriority(parseInt(e.target.value) || 100)}
                   required
                   disabled={isLoading}
                 />
                 <p className="text-xs text-gray-500">
-                  Plus le nombre est petit, plus la priorité est élevée (ex: 50 = priorité haute)
+                  Plus le nombre est petit, plus la priorité est élevée (ex: 50
+                  = priorité haute)
                 </p>
               </div>
 
@@ -257,7 +272,7 @@ export function PriceListFormModal({ open, onClose, priceList }: PriceListFormMo
                   id="validFrom"
                   type="date"
                   value={validFrom}
-                  onChange={(e) => setValidFrom(e.target.value)}
+                  onChange={e => setValidFrom(e.target.value)}
                   disabled={isLoading}
                 />
               </div>
@@ -268,7 +283,7 @@ export function PriceListFormModal({ open, onClose, priceList }: PriceListFormMo
                   id="validUntil"
                   type="date"
                   value={validUntil}
-                  onChange={(e) => setValidUntil(e.target.value)}
+                  onChange={e => setValidUntil(e.target.value)}
                   disabled={isLoading}
                 />
               </div>
@@ -278,7 +293,8 @@ export function PriceListFormModal({ open, onClose, priceList }: PriceListFormMo
               <div className="space-y-0.5">
                 <Label htmlFor="isActive">Liste active</Label>
                 <p className="text-sm text-gray-500">
-                  Les listes inactives ne sont pas utilisées dans les calculs de prix
+                  Les listes inactives ne sont pas utilisées dans les calculs de
+                  prix
                 </p>
               </div>
               <Switch
@@ -292,19 +308,24 @@ export function PriceListFormModal({ open, onClose, priceList }: PriceListFormMo
 
           {/* Actions */}
           <div className="flex justify-end gap-4 pt-4">
-            <ButtonV2 type="button" variant="outline" onClick={onClose} disabled={isLoading}>
+            <ButtonV2
+              type="button"
+              variant="outline"
+              onClick={onClose}
+              disabled={isLoading}
+            >
               Annuler
             </ButtonV2>
             <ButtonV2 type="submit" disabled={isLoading}>
               {isLoading
                 ? 'Enregistrement...'
                 : isEditMode
-                ? 'Mettre à jour'
-                : 'Créer la liste'}
+                  ? 'Mettre à jour'
+                  : 'Créer la liste'}
             </ButtonV2>
           </div>
         </form>
       </DialogContent>
     </Dialog>
-  )
+  );
 }

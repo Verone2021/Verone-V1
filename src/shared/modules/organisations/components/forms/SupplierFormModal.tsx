@@ -1,16 +1,20 @@
-"use client"
+'use client';
 
-import { useState } from 'react'
-import { useSuppliers } from '@/shared/modules/organisations/hooks'
-import { UnifiedOrganisationForm, OrganisationFormData, Organisation } from './unified-organisation-form'
-import { SupplierSegmentSelect } from './supplier-segment-select'
-import { SupplierSegmentType } from './supplier-segment-badge'
+import { useState } from 'react';
+
+import type { Organisation } from '@/shared/modules/organisations/hooks';
+import { useSuppliers } from '@/shared/modules/organisations/hooks';
+import type { SupplierSegmentType } from '@/shared/modules/suppliers/components/badges/SupplierSegmentBadge';
+
+import { SupplierSegmentSelect } from './supplier-segment-select';
+import type { OrganisationFormData } from './unified-organisation-form';
+import { UnifiedOrganisationForm } from './unified-organisation-form';
 
 interface SupplierFormModalProps {
-  isOpen: boolean
-  onClose: () => void
-  supplier?: Organisation | null // null = création, objet = édition
-  onSuccess?: (supplier: Organisation) => void
+  isOpen: boolean;
+  onClose: () => void;
+  supplier?: Organisation | null; // null = création, objet = édition
+  onSuccess?: (supplier: Organisation) => void;
 }
 
 /**
@@ -21,35 +25,39 @@ export function SupplierFormModal({
   isOpen,
   onClose,
   supplier = null,
-  onSuccess
+  onSuccess,
 }: SupplierFormModalProps) {
-  const { createOrganisation, updateOrganisation } = useSuppliers()
+  const { createOrganisation, updateOrganisation } = useSuppliers();
   const [taxonomyData, setTaxonomyData] = useState<{
-    supplier_segment: SupplierSegmentType | null
+    supplier_segment: SupplierSegmentType | null;
   }>({
-    supplier_segment: null
-  })
+    supplier_segment: null,
+  });
 
-  const isEditing = !!supplier
+  const isEditing = !!supplier;
 
   // Charger données taxonomie en mode édition
   useState(() => {
     if (isEditing && supplier) {
       setTaxonomyData({
-        supplier_segment: (supplier.supplier_segment as SupplierSegmentType) || undefined
-      })
+        supplier_segment:
+          (supplier.supplier_segment as SupplierSegmentType) || undefined,
+      });
     }
-  })
+  });
 
-  const handleSubmit = async (data: OrganisationFormData, organisationId?: string) => {
+  const handleSubmit = async (
+    data: OrganisationFormData,
+    organisationId?: string
+  ) => {
     const supplierData = {
       ...data,
       type: 'supplier' as const,
       // Ajouter données taxonomie
-      supplier_segment: taxonomyData.supplier_segment
-    }
+      supplier_segment: taxonomyData.supplier_segment,
+    };
 
-    let result
+    let result;
 
     if (isEditing && supplier) {
       // Mise à jour
@@ -81,12 +89,12 @@ export function SupplierFormModal({
         payment_terms: supplierData.payment_terms || undefined,
 
         // Taxonomie fournisseur
-        supplier_segment: supplierData.supplier_segment || undefined
-      })
+        supplier_segment: supplierData.supplier_segment || undefined,
+      });
     } else {
       // Création
       result = await createOrganisation({
-        legal_name: supplierData.legal_name,
+        legal_name: supplierData.legal_name || supplierData.name, // Fallback to name
         type: 'supplier',
         email: supplierData.email || undefined,
         country: supplierData.country,
@@ -113,19 +121,19 @@ export function SupplierFormModal({
         payment_terms: supplierData.payment_terms || undefined,
 
         // Taxonomie fournisseur
-        supplier_segment: supplierData.supplier_segment || undefined
-      })
+        supplier_segment: supplierData.supplier_segment || undefined,
+      });
     }
 
     if (result) {
-      console.log('✅ Fournisseur sauvegardé avec succès')
-      onSuccess?.(result as Organisation)
-      onClose()
+      console.log('✅ Fournisseur sauvegardé avec succès');
+      onSuccess?.(result as Organisation);
+      onClose();
     } else {
-      console.error('❌ Erreur lors de la sauvegarde')
-      alert('Erreur lors de la sauvegarde. Veuillez réessayer.')
+      console.error('❌ Erreur lors de la sauvegarde');
+      alert('Erreur lors de la sauvegarde. Veuillez réessayer.');
     }
-  }
+  };
 
   // Section taxonomie fournisseur (personnalisée)
   const taxonomySection = (
@@ -135,13 +143,15 @@ export function SupplierFormModal({
       {/* Segment stratégique */}
       <SupplierSegmentSelect
         value={taxonomyData.supplier_segment}
-        onChange={(segment) => setTaxonomyData(prev => ({ ...prev, supplier_segment: segment }))}
-        showLabel={true}
-        showTooltip={true}
+        onChange={segment =>
+          setTaxonomyData(prev => ({ ...prev, supplier_segment: segment }))
+        }
+        showLabel
+        showTooltip
         required={false}
       />
     </div>
-  )
+  );
 
   return (
     <UnifiedOrganisationForm
@@ -158,5 +168,5 @@ export function SupplierFormModal({
         // TODO: Refetch supplier data if needed
       }}
     />
-  )
+  );
 }

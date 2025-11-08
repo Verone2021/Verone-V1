@@ -16,11 +16,11 @@ class StructureAutoFixer {
 
   log(message, type = 'info') {
     const prefix = {
-      'error': '❌',
-      'warning': '⚠️',
-      'success': '✅',
-      'info': 'ℹ️',
-      'fix': '🔧'
+      error: '❌',
+      warning: '⚠️',
+      success: '✅',
+      info: 'ℹ️',
+      fix: '🔧',
     }[type];
 
     console.log(`${prefix} ${message}`);
@@ -49,7 +49,7 @@ class StructureAutoFixer {
       'docs/deployment',
       'docs/development',
       'docs/troubleshooting',
-      'docs/api'
+      'docs/api',
     ];
 
     requiredDirs.forEach(dir => {
@@ -66,7 +66,9 @@ class StructureAutoFixer {
 
     // Scripts debug à la racine
     const debugPatterns = ['test-*.js', 'debug-*.js', 'fix-*.js', 'apply-*.js'];
-    const rootFiles = fs.readdirSync('.').filter(file => fs.statSync(file).isFile());
+    const rootFiles = fs
+      .readdirSync('.')
+      .filter(file => fs.statSync(file).isFile());
 
     rootFiles.forEach(file => {
       // Scripts debug/test
@@ -76,7 +78,11 @@ class StructureAutoFixer {
         // Déterminer sous-dossier approprié
         if (file.includes('rls') || file.includes('policies')) {
           targetDir += 'rls-policies/';
-        } else if (file.includes('storage') || file.includes('upload') || file.includes('image')) {
+        } else if (
+          file.includes('storage') ||
+          file.includes('upload') ||
+          file.includes('image')
+        ) {
           targetDir += 'storage/';
         } else if (file.includes('form') || file.includes('family')) {
           targetDir += 'forms/';
@@ -107,7 +113,7 @@ class StructureAutoFixer {
       const allowedSqlInRoot = [
         'apply-all-migrations.sql',
         'apply-migrations.sql',
-        'create-owner-user.sql'
+        'create-owner-user.sql',
       ];
 
       if (file.endsWith('.sql') && !allowedSqlInRoot.includes(file)) {
@@ -166,7 +172,7 @@ Scripts pour tester les formulaires et composants UI.
 ## Usage
 \`\`\`bash
 node test-family-form-final.js
-\`\`\``
+\`\`\``,
     };
 
     Object.entries(readmes).forEach(([filePath, content]) => {
@@ -184,11 +190,14 @@ node test-family-form-final.js
       const pkg = JSON.parse(fs.readFileSync(packagePath, 'utf8'));
 
       if (!pkg.scripts['validate:structure']) {
-        pkg.scripts['validate:structure'] = 'node scripts/validate-repository-structure.js';
+        pkg.scripts['validate:structure'] =
+          'node scripts/validate-repository-structure.js';
         pkg.scripts['fix:structure'] = 'node scripts/auto-fix-structure.js';
 
         fs.writeFileSync(packagePath, JSON.stringify(pkg, null, 2));
-        this.addFix('Ajouté scripts validate:structure et fix:structure au package.json');
+        this.addFix(
+          'Ajouté scripts validate:structure et fix:structure au package.json'
+        );
       }
     }
   }
@@ -207,14 +216,19 @@ node test-family-form-final.js
     console.log('='.repeat(60));
 
     if (this.fixes.length === 0) {
-      this.log('Aucune correction nécessaire - Structure déjà conforme!', 'success');
+      this.log(
+        'Aucune correction nécessaire - Structure déjà conforme!',
+        'success'
+      );
     } else {
       this.log(`${this.fixes.length} correction(s) appliquée(s)`, 'success');
     }
 
     console.log('\n🎯 PROCHAINES ÉTAPES:');
     console.log('1. Exécuter: npm run validate:structure');
-    console.log('2. Commit des changements: git add . && git commit -m "fix: repository structure"');
+    console.log(
+      '2. Commit des changements: git add . && git commit -m "fix: repository structure"'
+    );
     console.log('3. Vérifier que tout fonctionne: npm run dev');
 
     console.log('\n📚 Référence: Section "RÈGLES STRICTES" dans CLAUDE.md');

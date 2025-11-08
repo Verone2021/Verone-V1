@@ -19,6 +19,7 @@
 Documentation complète des endpoints REST Next.js API Routes du système Vérone.
 
 **À documenter** :
+
 - GET /api/products (liste produits)
 - POST /api/orders (créer commande)
 - PUT /api/products/:id (modifier produit)

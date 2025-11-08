@@ -7,7 +7,7 @@
  * Date: 2025-10-14
  */
 
-'use client'
+'use client';
 
 import {
   BarChart,
@@ -18,22 +18,23 @@ import {
   Tooltip,
   Legend,
   ResponsiveContainer,
-  TooltipProps
-} from 'recharts'
-import type { StockMovementDataPoint } from '@/shared/modules/dashboard/hooks'
+  TooltipProps,
+} from 'recharts';
+
+import type { StockMovementDataPoint } from '@/shared/modules/dashboard/hooks';
 
 interface StockMovementsChartProps {
-  data: StockMovementDataPoint[]
-  isLoading?: boolean
+  data: StockMovementDataPoint[];
+  isLoading?: boolean;
 }
 
 // Custom Tooltip
 const CustomTooltip = ({ active, payload }: any) => {
-  if (!active || !payload || !payload.length) return null
+  if (!active || !payload?.length) return null;
 
-  const entrees = payload[0]?.value || 0
-  const sorties = payload[1]?.value || 0
-  const dataPoint = payload[0]?.payload as StockMovementDataPoint
+  const entrees = payload[0]?.value || 0;
+  const sorties = payload[1]?.value || 0;
+  const dataPoint = payload[0]?.payload as StockMovementDataPoint;
 
   return (
     <div className="bg-white border border-gray-200 rounded-lg shadow-lg p-3">
@@ -49,32 +50,35 @@ const CustomTooltip = ({ active, payload }: any) => {
         </div>
       </div>
     </div>
-  )
-}
+  );
+};
 
 // Custom Legend
 const CustomLegend = () => {
   return (
     <div className="flex items-center justify-center gap-4 mt-2">
       <div className="flex items-center gap-2">
-        <div className="w-3 h-3 bg-black rounded"></div>
+        <div className="w-3 h-3 bg-black rounded" />
         <span className="text-xs text-gray-600">Entrées</span>
       </div>
       <div className="flex items-center gap-2">
-        <div className="w-3 h-3 bg-gray-400 rounded"></div>
+        <div className="w-3 h-3 bg-gray-400 rounded" />
         <span className="text-xs text-gray-600">Sorties</span>
       </div>
     </div>
-  )
-}
+  );
+};
 
-export function StockMovementsChart({ data, isLoading = false }: StockMovementsChartProps) {
+export function StockMovementsChart({
+  data,
+  isLoading = false,
+}: StockMovementsChartProps) {
   if (isLoading) {
     return (
       <div className="w-full h-[300px] flex items-center justify-center bg-gray-50 rounded-lg animate-pulse">
         <div className="text-sm text-gray-400">Chargement des données...</div>
       </div>
-    )
+    );
   }
 
   if (!data || data.length === 0) {
@@ -82,7 +86,7 @@ export function StockMovementsChart({ data, isLoading = false }: StockMovementsC
       <div className="w-full h-[300px] flex items-center justify-center bg-gray-50 rounded-lg">
         <div className="text-sm text-gray-500">Aucune donnée disponible</div>
       </div>
-    )
+    );
   }
 
   return (
@@ -110,5 +114,5 @@ export function StockMovementsChart({ data, isLoading = false }: StockMovementsC
         </BarChart>
       </ResponsiveContainer>
     </div>
-  )
+  );
 }

@@ -12,12 +12,14 @@
 ### Statut Global : ⚠️ **IMPLÉMENTATION PARTIELLE (60%)**
 
 **Ce qui EXISTE** :
+
 - ✅ Backend database schema (migration + types)
 - ✅ Hooks métier (use-sample-order, use-sample-eligibility-rule)
 - ✅ UI échantillons **INTERNES** (product detail page)
 - ✅ Page dédiée échantillons avec tracking
 
 **Ce qui MANQUE** :
+
 - ❌ **Formulaire client échantillon** (0% implémenté)
 - ❌ **Intégration page sourcing** (partielle)
 - ⚠️ **Données réelles** (page échantillons = 100% mock)
@@ -34,6 +36,7 @@
 **Résultat** : ✅ **SUCCÈS**
 
 **Constatations** :
+
 - Section "Gestion Échantillons" présente et fonctionnelle
 - Toggle switch "Ce produit nécessite un échantillon" (OFF par défaut)
 - Badge de statut : "Aucun échantillon"
@@ -44,6 +47,7 @@
 **Screenshot** : `.playwright-mcp/test-section-gestion-echantillons-expanded.png`
 
 **Composant rendu** :
+
 ```typescript
 // src/components/business/sample-requirement-section.tsx
 <Card>
@@ -65,6 +69,7 @@
 **Résultat** : ✅ **SUCCÈS (navigation OK)**
 
 **Constatations** :
+
 - Dashboard sourcing affiche des **données réelles** :
   - Brouillons Actifs : **1 produit**
   - Échantillons : **0 commandes**
@@ -82,6 +87,7 @@
 ### Test 3 : Formulaire Client Échantillon ❌
 
 **Recherche effectuée** :
+
 - ✅ Navigation `/organisation/contacts` → Aucun formulaire échantillon
 - ✅ Recherche code source : `*sample*form*.tsx` → **0 fichier trouvé**
 - ✅ Recherche code source : `*echantillon*form*.tsx` → **0 fichier trouvé**
@@ -91,12 +97,14 @@
 **Résultat** : ❌ **ÉCHEC - FORMULAIRE N'EXISTE PAS**
 
 **Constatations** :
+
 - **Aucun composant UI** pour demandes échantillons clients
 - **Aucune route** dédiée aux échantillons clients
 - **Aucune page** dans `/organisation/` ou `/contacts/`
 - Seules références : Backend (migration SQL + hooks) + Documentation
 
 **Fichiers avec mentions "customer sample"** :
+
 1. `supabase/migrations/20251029_add_sample_type_to_purchase_order_items.sql` (schema)
 2. `src/hooks/use-sample-order.ts` (backend logic)
 3. `docs/business-rules/04-produits/sourcing/echantillons-internes-vs-clients.md` (doc)
@@ -112,6 +120,7 @@
 **Résultat** : ⚠️ **SUCCÈS AVEC RÉSERVE (données mock)**
 
 **Constatations** :
+
 - Page échantillons **existe** et affiche 4 commandes
 - UI complète avec :
   - Statistiques (Total: 4, En cours: 2, Livrés: 1, Budget: 145€)
@@ -124,6 +133,7 @@
 **Screenshot** : `.playwright-mcp/test-page-echantillons-complete.png`
 
 **⚠️ PROBLÈME CRITIQUE** : Ligne 38 du code source
+
 ```typescript
 // src/app/produits/sourcing/echantillons/page.tsx
 // Données mock pour les commandes d'échantillons
@@ -136,11 +146,12 @@ const sampleOrders = [
     client: 'Sophie Durand',
     status: 'ordered',
     // ... 102 lignes de données hardcodées
-  }
-]
+  },
+];
 ```
 
 **Analyse** :
+
 - ❌ **Aucune connexion Supabase** dans le composant
 - ❌ **Aucun import `createClient()`**
 - ❌ **Aucun hook `useSupabaseQuery` ou `useSampleOrder`**
@@ -158,6 +169,7 @@ const sampleOrders = [
 **Fichier** : `supabase/migrations/20251029_add_sample_type_to_purchase_order_items.sql`
 
 **Implémentation** :
+
 ```sql
 -- Ajout colonne sample_type
 ALTER TABLE purchase_order_items
@@ -181,6 +193,7 @@ WHERE (notes ILIKE '%échantillon%' OR notes ILIKE '%sample%')
 ```
 
 **Qualité** :
+
 - ✅ Backward compatible (colonne nullable avec migration)
 - ✅ Index performance WHERE clause optimisé
 - ✅ Types stricts ('internal' | 'customer')
@@ -197,15 +210,18 @@ WHERE (notes ILIKE '%échantillon%' OR notes ILIKE '%sample%')
 **Fichier** : `src/hooks/use-sample-order.ts` (216 lignes)
 
 **Fonction critique** :
+
 ```typescript
 async function requestSample(
   productId: string,
-  sampleType?: 'internal' | 'customer'  // 🆕 Paramètre ajouté
-): Promise<{ success: boolean; purchaseOrderId?: string }>
+  sampleType?: 'internal' | 'customer' // 🆕 Paramètre ajouté
+): Promise<{ success: boolean; purchaseOrderId?: string }>;
 ```
 
 **Logique** :
+
 1. **Vérification éligibilité** (⚠️ Règle #1) :
+
    ```typescript
    const { data: existingItems } = await supabase
      .from('purchase_order_items')
@@ -222,17 +238,20 @@ async function requestSample(
    ```typescript
    const { data: newItem } = await supabase
      .from('purchase_order_items')
-     .insert([{
-       purchase_order_id: draftOrder.id,
-       product_id: productId,
-       quantity: 1,
-       unit_price_cents: product.cost_price || 0,
-       sample_type: sampleType || 'internal', // 🆕 Type distinction
-       notes: `Échantillon ${sampleType === 'customer' ? 'client' : 'interne'}`
-     }])
+     .insert([
+       {
+         purchase_order_id: draftOrder.id,
+         product_id: productId,
+         quantity: 1,
+         unit_price_cents: product.cost_price || 0,
+         sample_type: sampleType || 'internal', // 🆕 Type distinction
+         notes: `Échantillon ${sampleType === 'customer' ? 'client' : 'interne'}`,
+       },
+     ]);
    ```
 
 **Qualité** :
+
 - ✅ Gestion transactions Supabase
 - ✅ Toast notifications (success/error)
 - ✅ Support 2 types d'échantillons (internal/customer)
@@ -247,6 +266,7 @@ async function requestSample(
 **Fichier** : `src/hooks/use-sample-eligibility-rule.ts` (203 lignes)
 
 **Fonction critique** :
+
 ```typescript
 const checkSampleEligibility = async (productId: string) => {
   // ⚠️ Règle #2 : Vérifie historique stock_movements
@@ -263,7 +283,7 @@ const checkSampleEligibility = async (productId: string) => {
     reason: hasStockHistory ? 'HAS_STOCK_HISTORY' : 'NEVER_IN_STOCK',
     message: hasStockHistory
       ? 'Ce produit a un historique de stock...'
-      : 'Produit éligible pour échantillon'
+      : 'Produit éligible pour échantillon',
   };
 };
 ```
@@ -281,6 +301,7 @@ const checkSampleEligibility = async (productId: string) => {
 **Fichier** : `src/components/business/sample-requirement-section.tsx` (240 lignes)
 
 **Rendu** :
+
 ```typescript
 <Card>
   {/* Toggle switch workflow échantillon */}
@@ -306,6 +327,7 @@ const checkSampleEligibility = async (productId: string) => {
 ```
 
 **Qualité** :
+
 - ✅ Design System V2 (shadcn/ui)
 - ✅ État local React (useState)
 - ✅ Intégration base de données (toggle persist)
@@ -321,6 +343,7 @@ const checkSampleEligibility = async (productId: string) => {
 **Fichier** : `src/components/business/sample-order-button.tsx` (160 lignes)
 
 **Implémentation** :
+
 ```typescript
 const handleOrderSample = async () => {
   try {
@@ -351,6 +374,7 @@ return (
 ```
 
 **Qualité** :
+
 - ✅ Modal confirmation (Dialog shadcn)
 - ✅ Hook métier use-sample-order
 - ✅ Gestion erreurs/loading
@@ -365,6 +389,7 @@ return (
 **Fichier** : `src/app/produits/sourcing/echantillons/page.tsx` (400 lignes)
 
 **Architecture** :
+
 ```typescript
 export default function SourcingEchantillonsPage() {
   // ❌ PROBLÈME : Données hardcodées
@@ -394,6 +419,7 @@ export default function SourcingEchantillonsPage() {
 ```
 
 **Ce qui EXISTE** :
+
 - ✅ Layout complet avec header + sidebar
 - ✅ 4 cards statistiques (Total, En cours, Livrés, Budget)
 - ✅ Filtres et recherche fonctionnels
@@ -406,6 +432,7 @@ export default function SourcingEchantillonsPage() {
   - Actions contextuelles (Voir détails, Valider, Suivre livraison)
 
 **Ce qui MANQUE** :
+
 - ❌ **Aucune connexion Supabase**
 - ❌ **Aucun hook `useSupabaseQuery`**
 - ❌ **Aucun `createClient()`**
@@ -413,9 +440,15 @@ export default function SourcingEchantillonsPage() {
 - ❌ Pas de refetch après actions
 
 **Solution requise** :
+
 ```typescript
 // Remplacer ligne 39-103 par :
-const { data: sampleOrders, loading, error, refetch } = useSupabaseQuery({
+const {
+  data: sampleOrders,
+  loading,
+  error,
+  refetch,
+} = useSupabaseQuery({
   tableName: 'purchase_order_items',
   select: `
     *,
@@ -423,10 +456,11 @@ const { data: sampleOrders, loading, error, refetch } = useSupabaseQuery({
     products!inner(id, name, sku, cost_price),
     organisations!purchase_orders.supplier_id(legal_name)
   `,
-  filters: (query) => query
-    .not('sample_type', 'is', null)
-    .order('created_at', { ascending: false }),
-  autoFetch: true
+  filters: query =>
+    query
+      .not('sample_type', 'is', null)
+      .order('created_at', { ascending: false }),
+  autoFetch: true,
 });
 ```
 
@@ -441,6 +475,7 @@ const { data: sampleOrders, loading, error, refetch } = useSupabaseQuery({
 **2 hooks différents** vérifient l'éligibilité échantillon avec **logiques opposées** :
 
 #### Règle #1 : use-sample-order.ts
+
 ```typescript
 // Vérifie : purchase_order_items avec sample_type IS NULL
 const { data: existingItems } = await supabase
@@ -460,6 +495,7 @@ if (existingItems && existingItems.length > 0) {
 ---
 
 #### Règle #2 : use-sample-eligibility-rule.ts
+
 ```typescript
 // Vérifie : stock_movements historique
 const { data: stockHistory } = await supabase
@@ -472,7 +508,7 @@ const { data: stockHistory } = await supabase
 const hasStockHistory = (stockHistory?.length ?? 0) > 0;
 return {
   isEligible: !hasStockHistory,
-  reason: hasStockHistory ? 'HAS_STOCK_HISTORY' : 'NEVER_IN_STOCK'
+  reason: hasStockHistory ? 'HAS_STOCK_HISTORY' : 'NEVER_IN_STOCK',
 };
 ```
 
@@ -484,12 +520,12 @@ return {
 
 **Ces 2 vérifications NE SONT PAS ÉQUIVALENTES** :
 
-| Scénario | purchase_order_items (Règle #1) | stock_movements (Règle #2) | Résultat |
-|----------|--------------------------------|---------------------------|----------|
-| Produit commandé mais jamais reçu | ✅ Bloque (purchase order existe) | ❌ Autorise (pas de stock movement) | **CONTRADICTOIRE** |
-| Produit avec ajustement stock manuel | ❌ Autorise (pas de purchase order) | ✅ Bloque (stock movement existe) | **CONTRADICTOIRE** |
-| Produit neuf jamais commandé | ❌ Autorise (pas de purchase order) | ❌ Autorise (pas de stock movement) | ✅ Cohérent |
-| Produit commandé et reçu | ✅ Bloque (purchase order existe) | ✅ Bloque (stock movement existe) | ✅ Cohérent |
+| Scénario                             | purchase_order_items (Règle #1)     | stock_movements (Règle #2)          | Résultat           |
+| ------------------------------------ | ----------------------------------- | ----------------------------------- | ------------------ |
+| Produit commandé mais jamais reçu    | ✅ Bloque (purchase order existe)   | ❌ Autorise (pas de stock movement) | **CONTRADICTOIRE** |
+| Produit avec ajustement stock manuel | ❌ Autorise (pas de purchase order) | ✅ Bloque (stock movement existe)   | **CONTRADICTOIRE** |
+| Produit neuf jamais commandé         | ❌ Autorise (pas de purchase order) | ❌ Autorise (pas de stock movement) | ✅ Cohérent        |
+| Produit commandé et reçu             | ✅ Bloque (purchase order existe)   | ✅ Bloque (stock movement existe)   | ✅ Cohérent        |
 
 **Problème** : **50% des scénarios sont contradictoires** !
 
@@ -498,6 +534,7 @@ return {
 ### Solutions Proposées
 
 #### Option 1 : Règle Unifiée Stricte (Recommandée) ✅
+
 ```typescript
 // Hook unifié : use-unified-sample-eligibility.ts
 const checkSampleEligibility = async (productId: string) => {
@@ -514,7 +551,7 @@ const checkSampleEligibility = async (productId: string) => {
       .from('stock_movements')
       .select('id')
       .eq('product_id', productId)
-      .limit(1)
+      .limit(1),
   ]);
 
   const hasPurchaseHistory = (purchaseOrders.data?.length ?? 0) > 0;
@@ -532,13 +569,14 @@ const checkSampleEligibility = async (productId: string) => {
         : 'NEVER_ORDERED',
     blockedBy: {
       purchaseOrders: hasPurchaseHistory,
-      stockMovements: hasStockHistory
-    }
+      stockMovements: hasStockHistory,
+    },
   };
 };
 ```
 
 **Avantages** :
+
 - ✅ Règle unique source of truth
 - ✅ Cohérence 100% garantie
 - ✅ Détection précise (2 vérifications parallèles)
@@ -547,6 +585,7 @@ const checkSampleEligibility = async (productId: string) => {
 ---
 
 #### Option 2 : Règle Métier Simplifiée
+
 ```typescript
 // Vérifie uniquement : purchase_order_items ALL (avec et sans sample_type)
 const { data: allPurchases } = await supabase
@@ -557,11 +596,12 @@ const { data: allPurchases } = await supabase
 // Produit éligible SI :
 // - Aucun purchase order existant OU
 // - Tous les purchase orders sont de type 'internal' ou 'customer' (échantillons)
-const isEligible = allPurchases.length === 0 ||
-  allPurchases.every(p => p.sample_type !== null);
+const isEligible =
+  allPurchases.length === 0 || allPurchases.every(p => p.sample_type !== null);
 ```
 
 **Avantages** :
+
 - ✅ Logique simple (1 seule table)
 - ✅ Permet échantillons multiples (internal puis customer)
 - ⚠️ Ne vérifie pas stock_movements (potentiel edge case)
@@ -569,6 +609,7 @@ const isEligible = allPurchases.length === 0 ||
 ---
 
 #### Option 3 : Configuration Business Rule
+
 ```typescript
 // Fichier config : src/config/sample-eligibility-rules.ts
 export const SAMPLE_ELIGIBILITY_CONFIG = {
@@ -576,22 +617,24 @@ export const SAMPLE_ELIGIBILITY_CONFIG = {
   strict: {
     checkPurchaseOrders: true,
     checkStockMovements: true,
-    allowMultipleSamples: false
+    allowMultipleSamples: false,
   },
 
   // Règle souple : Jamais commandé (ignore stock)
   relaxed: {
     checkPurchaseOrders: true,
     checkStockMovements: false,
-    allowMultipleSamples: true
-  }
+    allowMultipleSamples: true,
+  },
 } as const;
 
 // Usage dans hook
-const config = SAMPLE_ELIGIBILITY_CONFIG[product.requires_sample ? 'strict' : 'relaxed'];
+const config =
+  SAMPLE_ELIGIBILITY_CONFIG[product.requires_sample ? 'strict' : 'relaxed'];
 ```
 
 **Avantages** :
+
 - ✅ Règles configurables par produit
 - ✅ Flexibilité business
 - ⚠️ Complexité accrue
@@ -603,6 +646,7 @@ const config = SAMPLE_ELIGIBILITY_CONFIG[product.requires_sample ? 'strict' : 'r
 **Adopter Option 1 : Règle Unifiée Stricte** ✅
 
 **Raisons** :
+
 1. Élimine 100% des contradictions
 2. Source of truth unique
 3. Diagnostic précis pour debug
@@ -610,6 +654,7 @@ const config = SAMPLE_ELIGIBILITY_CONFIG[product.requires_sample ? 'strict' : 'r
 5. Cohérent avec business intent (échantillon = produit jamais commandé)
 
 **Implémentation** :
+
 1. Créer `src/hooks/use-unified-sample-eligibility.ts`
 2. Remplacer `use-sample-eligibility-rule.ts` (deprecated)
 3. Mettre à jour `use-sample-order.ts` pour utiliser hook unifié
@@ -623,6 +668,7 @@ const config = SAMPLE_ELIGIBILITY_CONFIG[product.requires_sample ? 'strict' : 'r
 ### 1. Formulaire Client Échantillon (0% implémenté) ❌
 
 **Ce qui manque** :
+
 - Page `/organisation/clients/[id]/echantillons/nouveau` ou similaire
 - Composant `CustomerSampleRequestForm.tsx`
 - Hook `use-customer-sample-request.ts`
@@ -635,6 +681,7 @@ const config = SAMPLE_ELIGIBILITY_CONFIG[product.requires_sample ? 'strict' : 'r
   - Validation et soumission
 
 **Table database requise** (⚠️ N'existe pas) :
+
 ```sql
 CREATE TABLE customer_sample_requests (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -659,9 +706,15 @@ CREATE TABLE customer_sample_requests (
 **Fichier** : `src/app/produits/sourcing/echantillons/page.tsx`
 
 **Modifications requises** :
+
 ```typescript
 // Remplacer lignes 38-103 (mock data) par :
-const { data: sampleOrders, loading, error, refetch } = useSupabaseQuery({
+const {
+  data: sampleOrders,
+  loading,
+  error,
+  refetch,
+} = useSupabaseQuery({
   tableName: 'purchase_order_items',
   select: `
     *,
@@ -675,10 +728,11 @@ const { data: sampleOrders, loading, error, refetch } = useSupabaseQuery({
     ),
     products!inner(id, name, sku, cost_price)
   `,
-  filters: (query) => query
-    .not('sample_type', 'is', null)
-    .order('created_at', { ascending: false }),
-  autoFetch: true
+  filters: query =>
+    query
+      .not('sample_type', 'is', null)
+      .order('created_at', { ascending: false }),
+  autoFetch: true,
 });
 
 // Ajouter transformation data
@@ -688,9 +742,10 @@ const transformedOrders = useMemo(() => {
     order_number: item.purchase_orders.po_number,
     product_title: item.products.name,
     supplier: item.purchase_orders.organisations.legal_name,
-    client: item.sample_type === 'internal'
-      ? 'Interne - Catalogue'
-      : 'Client (TODO: fetch from relation)',
+    client:
+      item.sample_type === 'internal'
+        ? 'Interne - Catalogue'
+        : 'Client (TODO: fetch from relation)',
     status: mapPurchaseOrderStatusToSampleStatus(item.purchase_orders.status),
     order_date: formatDate(item.created_at),
     expected_delivery: formatDate(item.purchase_orders.expected_delivery_date),
@@ -706,6 +761,7 @@ const transformedOrders = useMemo(() => {
 ### 3. Règle Éligibilité Unifiée (⚠️ Contradiction)
 
 **Action** :
+
 1. Créer `src/hooks/use-unified-sample-eligibility.ts` (voir Option 1 ci-dessus)
 2. Deprecated `use-sample-eligibility-rule.ts`
 3. Mettre à jour `use-sample-order.ts`
@@ -720,6 +776,7 @@ const transformedOrders = useMemo(() => {
 ### Phase 1 : Corrections Urgentes (Priorité P0) - 2-3 jours
 
 #### 1. Unifier règles d'éligibilité ✅
+
 - [ ] Créer `use-unified-sample-eligibility.ts`
 - [ ] Refactor `use-sample-order.ts`
 - [ ] Deprecated hook contradictoire
@@ -727,6 +784,7 @@ const transformedOrders = useMemo(() => {
 - [ ] Documentation business rules
 
 #### 2. Connecter page échantillons à Supabase ⚠️
+
 - [ ] Remplacer mock data par `useSupabaseQuery`
 - [ ] Transformer données purchase_order_items → UI format
 - [ ] Gérer loading/error states
@@ -740,18 +798,21 @@ const transformedOrders = useMemo(() => {
 ### Phase 2 : Formulaire Client Échantillon (Priorité P1) - 3-5 jours
 
 #### 1. Backend setup
+
 - [ ] Migration : Créer table `customer_sample_requests`
 - [ ] RLS policies (clients + admin)
 - [ ] Triggers + functions (si nécessaire)
 - [ ] Types TypeScript auto-generated
 
 #### 2. Hook métier
+
 - [ ] Créer `use-customer-sample-request.ts`
 - [ ] CRUD opérations
 - [ ] Validation Zod schema
 - [ ] Toast notifications
 
 #### 3. UI Components
+
 - [ ] Page `/organisation/clients/[id]/echantillons/nouveau`
 - [ ] Form composant `CustomerSampleRequestForm.tsx`
 - [ ] Product selector avec filtres
@@ -761,6 +822,7 @@ const transformedOrders = useMemo(() => {
 - [ ] Notes et instructions
 
 #### 4. Tests & validation
+
 - [ ] Tests unitaires hooks
 - [ ] Tests E2E (MCP Browser)
 - [ ] Validation formulaire (Zod)
@@ -774,17 +836,20 @@ const transformedOrders = useMemo(() => {
 ### Phase 3 : Polish & Documentation (Priorité P2) - 1-2 jours
 
 #### 1. Documentation
+
 - [ ] Mise à jour `docs/business-rules/04-produits/sourcing/`
 - [ ] Guide utilisateur échantillons
 - [ ] Screenshots et exemples
 - [ ] Workflows diagrammes
 
 #### 2. Monitoring & Analytics
+
 - [ ] Track échantillons commandés (metrics)
 - [ ] Dashboard analytics échantillons
 - [ ] Alerts stock échantillons bas
 
 #### 3. UX improvements
+
 - [ ] Feedback utilisateur (tooltips, help text)
 - [ ] Keyboard shortcuts
 - [ ] Bulk actions (validation multiple)
@@ -798,9 +863,11 @@ const transformedOrders = useMemo(() => {
 ## 📸 Screenshots de Référence
 
 ### Test 1 : Section Échantillon Interne (Product Detail)
+
 **Fichier** : `.playwright-mcp/test-section-gestion-echantillons-expanded.png`
 
 **Visible** :
+
 - Card "Gestion Échantillons"
 - Toggle switch "Ce produit nécessite un échantillon"
 - Badge "Aucun échantillon"
@@ -810,9 +877,11 @@ const transformedOrders = useMemo(() => {
 ---
 
 ### Test 2 : Dashboard Sourcing
+
 **Fichier** : `.playwright-mcp/test-dashboard-sourcing-data-reelles.png`
 
 **Visible** :
+
 - 4 cards statistiques (Brouillons: 1, En validation: 0, Échantillons: 0, Complétés: 0)
 - Section "Actions Rapides" avec bouton "Échantillons"
 - Activité récente : "Test Diagnostic Sourcing Claude"
@@ -821,9 +890,11 @@ const transformedOrders = useMemo(() => {
 ---
 
 ### Test 4 : Page Échantillons (Mock Data)
+
 **Fichier** : `.playwright-mcp/test-page-echantillons-complete.png`
 
 **Visible** :
+
 - Header "Échantillons" + bouton "Nouveau Échantillon"
 - 4 cards statistiques (Total: 4, En cours: 2, Livrés: 1, Budget: 145€)
 - Filtres et recherche
@@ -841,6 +912,7 @@ const transformedOrders = useMemo(() => {
 ## ✅ Checklist Validation MVP Complet
 
 ### Backend ✅
+
 - [x] Migration SQL `sample_type` column
 - [x] Types TypeScript Supabase auto-generated
 - [x] Hook `use-sample-order.ts` fonctionnel
@@ -848,12 +920,14 @@ const transformedOrders = useMemo(() => {
 - [ ] Table `customer_sample_requests` (❌ manquante)
 
 ### UI Échantillons Internes ✅
+
 - [x] Composant `sample-requirement-section.tsx`
 - [x] Composant `sample-order-button.tsx`
 - [x] Intégration product detail page
 - [x] Tests browser validés (0 console errors)
 
 ### UI Échantillons Clients ❌
+
 - [ ] Page formulaire client échantillon (0% implémenté)
 - [ ] Composant `CustomerSampleRequestForm.tsx`
 - [ ] Product selector
@@ -861,18 +935,21 @@ const transformedOrders = useMemo(() => {
 - [ ] Options échantillon (couleur, taille, etc.)
 
 ### Page Tracking Échantillons ⚠️
+
 - [x] UI complète et professionnelle
 - [x] Filtres et recherche fonctionnels
 - [ ] Connexion Supabase (❌ actuellement mock)
 - [ ] Données réelles depuis purchase_order_items
 
 ### Documentation ✅
+
 - [x] `docs/business-rules/04-produits/sourcing/echantillons-internes-vs-clients.md`
 - [x] Migration pattern documenté
 - [ ] Guide utilisateur complet
 - [ ] Workflows diagrammes
 
 ### Tests ✅
+
 - [x] MCP Browser tests internes (4/4 passed)
 - [ ] Tests unitaires hooks
 - [ ] Tests E2E formulaire client
@@ -887,6 +964,7 @@ const transformedOrders = useMemo(() => {
 **Implémentation actuelle : 60% MVP**
 
 **Points forts** ✅ :
+
 - Backend database schema production-ready
 - Hooks métier fonctionnels (use-sample-order)
 - UI échantillons **INTERNES** complète et testée
@@ -894,6 +972,7 @@ const transformedOrders = useMemo(() => {
 - Documentation exhaustive
 
 **Points faibles** ⚠️❌ :
+
 - **Formulaire client échantillon : 0% implémenté** (bloquant)
 - **Page échantillons : 100% mock data** (non connectée Supabase)
 - **Règles d'éligibilité contradictoires** (2 hooks opposés)

@@ -66,10 +66,12 @@ Exemple : "Cette section documente l'ensemble des métriques et KPIs utilisés d
 ### Par Thématique
 
 #### [Sous-Thème 1]
+
 - [Fichier associé 1](./fichier-1.md)
 - [Fichier associé 2](./fichier-2.md)
 
 #### [Sous-Thème 2]
+
 - [Fichier associé 3](./fichier-3.md)
 - [Fichier associé 4](./fichier-4.md)
 
@@ -112,9 +114,9 @@ Pour améliorer cette documentation :
 
 ## Historique des Modifications
 
-| Date | Version | Auteur | Description |
-|------|---------|--------|-------------|
-| 2025-10-16 | 1.0 | Vérone Team | Création initiale section |
+| Date       | Version | Auteur      | Description               |
+| ---------- | ------- | ----------- | ------------------------- |
+| 2025-10-16 | 1.0     | Vérone Team | Création initiale section |
 
 ---
 

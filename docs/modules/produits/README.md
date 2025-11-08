@@ -9,6 +9,7 @@
 ## 📊 Vue d'Ensemble
 
 Module central pour gérer **l'intégralité du catalogue produits** de Vérone :
+
 - **Catalogue** : Produits, catégories, familles, sous-catégories
 - **Sourcing** : Workflow sourcing → échantillon → validation → catalogue
 - **Collections** : Collections partageables clients
@@ -23,6 +24,7 @@ Module central pour gérer **l'intégralité du catalogue produits** de Vérone 
 ## ✅ Features Validées
 
 ### Catalogue Produits
+
 - ✅ Création produit (wizard 4 étapes : Info, Images, Prix, Stock)
 - ✅ Modification produit (page détail complète)
 - ✅ Archivage/Restauration produits
@@ -32,6 +34,7 @@ Module central pour gérer **l'intégralité du catalogue produits** de Vérone 
 - ✅ Statut automatique (draft, in_stock, out_of_stock, discontinued)
 
 ### Sourcing
+
 - ✅ Création sourcing rapide (modal 3 champs : nom, URL, prix HT)
 - ✅ Workflow complet : Sourcing → Échantillon → Validation
 - ✅ Types sourcing : Interne vs Client
@@ -40,6 +43,7 @@ Module central pour gérer **l'intégralité du catalogue produits** de Vérone 
 - ✅ Validation vers catalogue (stock initial)
 
 ### Collections
+
 - ✅ Création collections
 - ✅ Ajout/retrait produits dans collection
 - ✅ Images collections (primaire + galerie)
@@ -47,12 +51,14 @@ Module central pour gérer **l'intégralité du catalogue produits** de Vérone 
 - ✅ Traductions multilingues (collection_translations)
 
 ### Variantes
+
 - ✅ Groupes de variantes (variant_groups)
 - ✅ Membres variantes (product_groups)
 - ✅ Édition matricielle variantes
 - ✅ Positionnement variantes (variant_position)
 
 ### UI/UX
+
 - ✅ Vue grille produits responsive
 - ✅ Vue liste (tableau)
 - ✅ Pagination
@@ -131,28 +137,30 @@ src/components/business/
 
 ```typescript
 const {
-  products,              // Product[]
-  loading,               // boolean
-  error,                 // Error | null
-  createProduct,         // (data: CreateProductData) => Promise<Product>
-  updateProduct,         // (id: string, data: Partial<Product>) => Promise<Product>
-  deleteProduct,         // (id: string) => Promise<void>
-  archiveProduct,        // (id: string) => Promise<void>
-  restoreProduct,        // (id: string) => Promise<void>
-  useProduct,            // (id: string) => { product, loading, error }
+  products, // Product[]
+  loading, // boolean
+  error, // Error | null
+  createProduct, // (data: CreateProductData) => Promise<Product>
+  updateProduct, // (id: string, data: Partial<Product>) => Promise<Product>
+  deleteProduct, // (id: string) => Promise<void>
+  archiveProduct, // (id: string) => Promise<void>
+  restoreProduct, // (id: string) => Promise<void>
+  useProduct, // (id: string) => { product, loading, error }
 } = useProducts({
   status: 'in_stock',
   search: 'fauteuil',
-  supplier_id: 'uuid'
+  supplier_id: 'uuid',
 });
 ```
 
 **Tables Supabase** :
+
 - `products` (44 colonnes)
 - `product_images` (jointure LEFT)
 - `organisations` (supplier FK)
 
 **Fonctionnalités** :
+
 - Filtres multiples (status, supplier, search)
 - Pagination
 - Calcul automatique completion_percentage
@@ -166,32 +174,34 @@ const {
 
 ```typescript
 const {
-  products,                   // SourcingProduct[]
+  products, // SourcingProduct[]
   loading,
   error,
-  refetch,                    // () => void
-  createSourcingProduct,      // (data) => Promise<Product>
-  validateSourcing,           // (id) => Promise<boolean> - Vers catalogue
-  orderSample,                // (id) => Promise<boolean> - Commande PO draft
-  approveSample,              // (id) => Promise<boolean>
-  rejectSample,               // (id, reason) => Promise<boolean> - Auto-archive
-  updateSourcingProduct,      // (id, data) => Promise<boolean>
+  refetch, // () => void
+  createSourcingProduct, // (data) => Promise<Product>
+  validateSourcing, // (id) => Promise<boolean> - Vers catalogue
+  orderSample, // (id) => Promise<boolean> - Commande PO draft
+  approveSample, // (id) => Promise<boolean>
+  rejectSample, // (id, reason) => Promise<boolean> - Auto-archive
+  updateSourcingProduct, // (id, data) => Promise<boolean>
 } = useSourcingProducts({
   search: 'fauteuil',
   status: 'sourcing',
   sourcing_type: 'client',
   supplier_id: 'uuid',
-  assigned_client_id: 'uuid'
+  assigned_client_id: 'uuid',
 });
 ```
 
 **Tables Supabase** :
+
 - `products` (WHERE creation_mode='sourcing')
 - `purchase_orders` (création PO draft échantillon)
 - `purchase_order_items` (item échantillon)
 - `organisations` (supplier, assigned_client)
 
 **Business Rules** :
+
 - Statut initial : `sourcing`
 - Prix HT obligatoire (cost_price > 0)
 - Fournisseur obligatoire pour validation
@@ -206,20 +216,21 @@ const {
 
 ```typescript
 const {
-  collections,            // Collection[]
+  collections, // Collection[]
   loading,
   error,
-  createCollection,      // (data: CreateCollectionData) => Promise<Collection>
-  updateCollection,      // (id, data: UpdateCollectionData) => Promise<Collection>
-  deleteCollection,      // (id) => Promise<void>
-  useCollection,         // (id) => { collection, loading, error }
+  createCollection, // (data: CreateCollectionData) => Promise<Collection>
+  updateCollection, // (id, data: UpdateCollectionData) => Promise<Collection>
+  deleteCollection, // (id) => Promise<void>
+  useCollection, // (id) => { collection, loading, error }
 } = useCollections({
   search: 'mobilier',
-  is_public: true
+  is_public: true,
 });
 ```
 
 **Tables Supabase** :
+
 - `collections` (22 colonnes)
 - `collection_products` (produits dans collection)
 - `collection_images` (galerie images)
@@ -234,17 +245,18 @@ const {
 
 ```typescript
 const {
-  variantGroups,            // VariantGroup[]
+  variantGroups, // VariantGroup[]
   loading,
-  createVariantGroup,       // (data) => Promise<VariantGroup>
-  updateVariantGroup,       // (id, data) => Promise<VariantGroup>
-  deleteVariantGroup,       // (id) => Promise<void>
-  useVariantGroup,          // (id) => { group, products, loading }
+  createVariantGroup, // (data) => Promise<VariantGroup>
+  updateVariantGroup, // (id, data) => Promise<VariantGroup>
+  deleteVariantGroup, // (id) => Promise<void>
+  useVariantGroup, // (id) => { group, products, loading }
   useProductVariantEditing, // (groupId) => { updateVariant, addVariant }
 } = useVariantGroups();
 ```
 
 **Tables Supabase** :
+
 - `variant_groups` (20 colonnes)
 - `products` (WHERE variant_group_id = groupId)
 - `product_groups` (membres variantes)
@@ -254,17 +266,21 @@ const {
 ### Autres Hooks
 
 **Images** :
+
 - `use-product-images.ts` : Gestion multi-images
 - `use-product-primary-image.ts` : Image primaire automatique
 
 **Packages** :
+
 - `use-product-packages.ts` : Conditionnements flexibles
 
 **Métriques** :
+
 - `use-top-products.ts` : Top produits par ventes
 - `use-product-metrics.ts` : Métriques dashboard
 
 **Utilitaires** :
+
 - `use-archived-products.ts` : Produits archivés
 - `use-product-colors.ts` : Couleurs produits
 
@@ -274,29 +290,30 @@ const {
 
 ### Table `products` (44 colonnes - Cœur du système)
 
-| Colonne | Type | Description | Default |
-|---------|------|-------------|---------|
-| `id` | `uuid` | PK | gen_random_uuid() |
-| `sku` | `varchar` | SKU unique | (généré) |
-| `name` | `varchar` | Nom produit | REQUIRED |
-| `slug` | `varchar` | Slug URL | AUTO |
-| `status` | `availability_status_type` | Statut stock | 'in_stock' |
-| `stock_real` | `int4` | Stock réel | 0 |
-| `stock_forecasted_in` | `int4` | Stock prévu entrée | 0 |
-| `stock_forecasted_out` | `int4` | Stock prévu sortie | 0 |
-| `cost_price` | `numeric` | Prix achat HT | NULL |
-| `margin_percentage` | `numeric` | Marge % | NULL |
-| `supplier_id` | `uuid` | FK → organisations | NULL |
-| `variant_group_id` | `uuid` | FK → variant_groups | NULL |
-| `variant_position` | `int4` | Position dans groupe | NULL |
-| `creation_mode` | `varchar` | complete, sourcing, quick | 'complete' |
-| `sourcing_type` | `varchar` | interne, client | NULL |
-| `assigned_client_id` | `uuid` | FK → organisations (client) | NULL |
-| `requires_sample` | `bool` | Échantillon requis | false |
-| `completion_percentage` | `int4` | % complétude (0-100) | 0 |
-| `archived_at` | `timestamptz` | Date archivage | NULL |
+| Colonne                 | Type                       | Description                 | Default           |
+| ----------------------- | -------------------------- | --------------------------- | ----------------- |
+| `id`                    | `uuid`                     | PK                          | gen_random_uuid() |
+| `sku`                   | `varchar`                  | SKU unique                  | (généré)          |
+| `name`                  | `varchar`                  | Nom produit                 | REQUIRED          |
+| `slug`                  | `varchar`                  | Slug URL                    | AUTO              |
+| `status`                | `availability_status_type` | Statut stock                | 'in_stock'        |
+| `stock_real`            | `int4`                     | Stock réel                  | 0                 |
+| `stock_forecasted_in`   | `int4`                     | Stock prévu entrée          | 0                 |
+| `stock_forecasted_out`  | `int4`                     | Stock prévu sortie          | 0                 |
+| `cost_price`            | `numeric`                  | Prix achat HT               | NULL              |
+| `margin_percentage`     | `numeric`                  | Marge %                     | NULL              |
+| `supplier_id`           | `uuid`                     | FK → organisations          | NULL              |
+| `variant_group_id`      | `uuid`                     | FK → variant_groups         | NULL              |
+| `variant_position`      | `int4`                     | Position dans groupe        | NULL              |
+| `creation_mode`         | `varchar`                  | complete, sourcing, quick   | 'complete'        |
+| `sourcing_type`         | `varchar`                  | interne, client             | NULL              |
+| `assigned_client_id`    | `uuid`                     | FK → organisations (client) | NULL              |
+| `requires_sample`       | `bool`                     | Échantillon requis          | false             |
+| `completion_percentage` | `int4`                     | % complétude (0-100)        | 0                 |
+| `archived_at`           | `timestamptz`              | Date archivage              | NULL              |
 
 **Enums** :
+
 - `availability_status_type` : draft, in_stock, out_of_stock, discontinued, sourcing, echantillon_a_commander, echantillon_commande
 - `availability_type_enum` : normal, preorder, coming_soon, discontinued
 
@@ -306,25 +323,25 @@ const {
 
 ### Table `collections` (22 colonnes)
 
-| Colonne | Type | Description |
-|---------|------|-------------|
-| `id` | `uuid` | PK |
-| `name` | `varchar` | Nom collection |
-| `slug` | `varchar` | Slug URL |
-| `description` | `text` | Description |
-| `is_public` | `bool` | Collection publique |
-| `created_by` | `uuid` | FK → auth.users |
+| Colonne       | Type      | Description         |
+| ------------- | --------- | ------------------- |
+| `id`          | `uuid`    | PK                  |
+| `name`        | `varchar` | Nom collection      |
+| `slug`        | `varchar` | Slug URL            |
+| `description` | `text`    | Description         |
+| `is_public`   | `bool`    | Collection publique |
+| `created_by`  | `uuid`    | FK → auth.users     |
 
 ---
 
 ### Table `variant_groups` (20 colonnes)
 
-| Colonne | Type | Description |
-|---------|------|-------------|
-| `id` | `uuid` | PK |
-| `name` | `varchar` | Nom groupe |
+| Colonne        | Type      | Description                 |
+| -------------- | --------- | --------------------------- |
+| `id`           | `uuid`    | PK                          |
+| `name`         | `varchar` | Nom groupe                  |
 | `variant_type` | `varchar` | color, size, material, etc. |
-| `base_sku` | `varchar` | SKU de base |
+| `base_sku`     | `varchar` | SKU de base                 |
 
 ---
 
@@ -342,6 +359,7 @@ const {
 10. **category_translations** : Traductions catégories
 
 **Views** :
+
 - `products_with_default_package` : Produits + package défaut
 - `product_images_complete` : Images + métadata
 - `collection_primary_images` : Collections + image primaire
@@ -365,6 +383,7 @@ NEW.status := calculate_stock_status(COALESCE(NEW.stock_real, 0));
 ```
 
 **Business Rule** :
+
 - Produits sourcing gardent statut 'sourcing' jusqu'à validation manuelle
 - Autres produits : statut automatique selon stock_real
 
@@ -387,18 +406,21 @@ NEW.status := calculate_stock_status(COALESCE(NEW.stock_real, 0));
 ### E2E Tests (Playwright)
 
 ✅ **test-catalogue-products.spec.ts** :
+
 - Création produit via wizard (4 étapes)
 - Modification produit
 - Upload images
 - Archivage/Restauration
 
 ✅ **test-sourcing-modal.spec.ts** :
+
 - Ouverture modal QuickSourcing
 - Formulaire 3 champs (nom, URL, prix HT)
 - Création produit sourcing
 - Vérification statut 'sourcing' préservé
 
 ✅ **test-collections.spec.ts** :
+
 - Création collection
 - Ajout/retrait produits
 - Partage collection client
@@ -470,7 +492,7 @@ import { Database } from '@/types/supabase';
 type Product = Database['public']['Tables']['products']['Row'];
 
 // ❌ MAUVAIS
-type Product = { id: string, name: string }; // Type manuel incomplet
+type Product = { id: string; name: string }; // Type manuel incomplet
 ```
 
 ### 2. Respect Colonnes Database
@@ -522,6 +544,7 @@ END IF;
 **Ce module est CRITIQUE** pour le business Vérone.
 
 Toute modification requiert :
+
 1. Autorisation @owner ou @tech-lead
 2. PR avec review obligatoire
 3. Tests E2E validés
@@ -534,22 +557,26 @@ Toute modification requiert :
 ## 🚀 Next Steps (Phase 2)
 
 ### Catalogue
+
 - [ ] Export CSV produits
 - [ ] Import CSV produits
 - [ ] Duplication produits
 - [ ] Historique modifications
 
 ### Sourcing
+
 - [ ] Dashboard analytics sourcing
 - [ ] Alertes échantillons en retard
 - [ ] Workflow approbation multi-niveaux
 
 ### Collections
+
 - [ ] Collections dynamiques (filtres auto)
 - [ ] Templates collections
 - [ ] Export PDF collections
 
 ### Variantes
+
 - [ ] Éditeur matriciel avancé
 - [ ] Import variantes CSV
 - [ ] Génération automatique variantes
@@ -558,16 +585,16 @@ Toute modification requiert :
 
 ## 📊 Statistiques Module
 
-| Métrique | Valeur |
-|----------|--------|
-| **Tables database** | 18 |
-| **Colonnes totales** | 228 |
-| **Hooks** | 15 |
-| **Pages** | 20+ |
-| **Composants business** | 10+ |
-| **Triggers** | 12 |
-| **RLS Policies** | 35+ |
-| **Coverage tests** | 80% |
+| Métrique                | Valeur |
+| ----------------------- | ------ |
+| **Tables database**     | 18     |
+| **Colonnes totales**    | 228    |
+| **Hooks**               | 15     |
+| **Pages**               | 20+    |
+| **Composants business** | 10+    |
+| **Triggers**            | 12     |
+| **RLS Policies**        | 35+    |
+| **Coverage tests**      | 80%    |
 
 ---
 

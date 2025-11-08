@@ -30,6 +30,7 @@ Démarre la correction d'une famille d'erreurs TypeScript avec tests et validati
    - Documenter décisions CHANGELOG
 
 4. **Tests OBLIGATOIRES (AVANT commit)**
+
    ```bash
    # 1. TypeCheck
    npm run type-check | tee check-post-fix.log
@@ -44,6 +45,7 @@ Démarre la correction d'une famille d'erreurs TypeScript avec tests et validati
    ```
 
 5. **Commit structuré**
+
    ```
    fix(types): [FAMILLE] Description - X erreurs résolues (avant→après)
 
@@ -65,21 +67,25 @@ Démarre la correction d'une famille d'erreurs TypeScript avec tests et validati
 ## Stratégies par Type
 
 **TS2322 - Type incompatibility**
+
 - Null coalescing : `value ?? fallback`
 - Optional chaining : `object?.property`
 - Type narrowing : `if (value !== null)`
 
 **TS2345 - Argument type mismatch**
+
 - Type assertion : `value as TargetType`
 - Generic constraints : `<T extends Base>`
 - Interface updates
 
 **TS2339 - Property does not exist**
+
 - Interface extension
 - Optional properties : `property?: Type`
 - Type guards
 
 **TS7006 - Implicit any**
+
 - Explicit typing : `(param: Type) => {}`
 - Generic types : `<T>`
 

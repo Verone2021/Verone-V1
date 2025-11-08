@@ -1,27 +1,40 @@
-"use client"
+'use client';
 
-import { useState } from 'react'
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog'
-import { ButtonV2 } from '@/components/ui/button'
-import { CategoryHierarchySelector } from './category-hierarchy-selector'
+import { useState } from 'react';
+
+import { CategoryHierarchySelector } from '@/components/business/category-hierarchy-selector';
+import { ButtonV2 } from '@/components/ui/button';
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog';
 
 interface CategoryHierarchyModalProps {
-  isOpen: boolean
-  onClose: () => void
-  product: any
-  onUpdate: (updatedProduct: any) => void
+  isOpen: boolean;
+  onClose: () => void;
+  product: any;
+  onUpdate: (updatedProduct: any) => void;
 }
 
-export function CategoryHierarchyModal({ isOpen, onClose, product, onUpdate }: CategoryHierarchyModalProps) {
-  const [selectedSubcategoryId, setSelectedSubcategoryId] = useState<string | null>(product.subcategory_id)
+export function CategoryHierarchyModal({
+  isOpen,
+  onClose,
+  product,
+  onUpdate,
+}: CategoryHierarchyModalProps) {
+  const [selectedSubcategoryId, setSelectedSubcategoryId] = useState<
+    string | null
+  >(product.subcategory_id);
 
   const handleSave = () => {
     onUpdate({
       ...product,
-      subcategory_id: selectedSubcategoryId
-    })
-    onClose()
-  }
+      subcategory_id: selectedSubcategoryId,
+    });
+    onClose();
+  };
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
@@ -33,7 +46,7 @@ export function CategoryHierarchyModal({ isOpen, onClose, product, onUpdate }: C
         <div className="space-y-4">
           <CategoryHierarchySelector
             value={selectedSubcategoryId || undefined}
-            onChange={(subcategoryId) => setSelectedSubcategoryId(subcategoryId)}
+            onChange={subcategoryId => setSelectedSubcategoryId(subcategoryId)}
             placeholder="Sélectionner une sous-catégorie"
           />
 
@@ -41,12 +54,13 @@ export function CategoryHierarchyModal({ isOpen, onClose, product, onUpdate }: C
             <ButtonV2 variant="outline" onClick={onClose}>
               Annuler
             </ButtonV2>
-            <ButtonV2 onClick={handleSave}>
-              Sauvegarder
-            </ButtonV2>
+            <ButtonV2 onClick={handleSave}>Sauvegarder</ButtonV2>
           </div>
         </div>
       </DialogContent>
     </Dialog>
-  )
+  );
 }
+
+// Export alias for backward compatibility
+export { CategoryHierarchyModal as CategorizeModal };

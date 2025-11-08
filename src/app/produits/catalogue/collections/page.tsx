@@ -20,7 +20,7 @@ import {
 import { Badge } from '@/components/ui/badge';
 import { ButtonV2 } from '@/components/ui/button';
 import { KPICardUnified } from '@/components/ui/kpi-card-unified';
-import { cn } from '@/lib/utils';
+import { cn } from '@verone/utils';
 import type { Collection } from '@/shared/modules/collections/hooks';
 import {
   useCollections,
@@ -32,7 +32,7 @@ import { CollectionCreationWizard } from '@/shared/modules/common/components/col
 import { useToast } from '@/shared/modules/common/hooks';
 import type { SelectedProduct } from '@/shared/modules/products/components/selectors/UniversalProductSelectorV2';
 import { UniversalProductSelectorV2 } from '@/shared/modules/products/components/selectors/UniversalProductSelectorV2';
-import { getRoomLabel, type RoomType } from '@/types/room-types';
+import { getRoomLabel, type RoomType } from '@verone/types';
 
 // Interface filtres collections
 interface LocalCollectionFilters {

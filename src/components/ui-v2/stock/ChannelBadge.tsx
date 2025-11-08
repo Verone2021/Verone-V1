@@ -1,4 +1,4 @@
-'use client'
+'use client';
 
 /**
  * 🎨 ChannelBadge Component
@@ -13,28 +13,30 @@
  * ```
  */
 
-import * as React from 'react'
-import { cn } from '@/lib/utils'
-import { CHANNEL_CONFIG, type ChannelCode, SIZES } from './types'
+import * as React from 'react';
+
+import { cn } from '@verone/utils';
+
+import { CHANNEL_CONFIG, type ChannelCode, SIZES } from './types';
 
 export interface ChannelBadgeProps
   extends React.HTMLAttributes<HTMLDivElement> {
   /**
    * Code du canal de vente
    */
-  channelCode: ChannelCode
+  channelCode: ChannelCode;
 
   /**
    * Taille du badge
    * @default "md"
    */
-  size?: 'sm' | 'md' | 'lg'
+  size?: 'sm' | 'md' | 'lg';
 
   /**
    * Afficher l'icône du canal
    * @default true
    */
-  showIcon?: boolean
+  showIcon?: boolean;
 }
 
 /**
@@ -55,9 +57,9 @@ export function ChannelBadge({
   className,
   ...props
 }: ChannelBadgeProps) {
-  const config = CHANNEL_CONFIG[channelCode]
-  const sizeConfig = SIZES[size]
-  const Icon = config.icon
+  const config = CHANNEL_CONFIG[channelCode];
+  const sizeConfig = SIZES[size];
+  const Icon = config.icon;
 
   return (
     <div
@@ -95,10 +97,10 @@ export function ChannelBadge({
 
       <span className="leading-none">{config.label}</span>
     </div>
-  )
+  );
 }
 
 /**
  * Type export pour usage externe
  */
-ChannelBadge.displayName = 'ChannelBadge'
+ChannelBadge.displayName = 'ChannelBadge';

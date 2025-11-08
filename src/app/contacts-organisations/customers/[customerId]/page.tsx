@@ -1,11 +1,10 @@
-'use client'
+'use client';
 
-import { useState } from 'react'
-import { useParams } from 'next/navigation'
-import Link from 'next/link'
-import { Card, CardContent } from '@/components/ui/card'
-import { ButtonV2 } from '@/components/ui/button'
-import { Badge } from '@/components/ui/badge'
+import { useState } from 'react';
+
+import Link from 'next/link';
+import { useParams } from 'next/navigation';
+
 import {
   ArrowLeft,
   Building2,
@@ -14,48 +13,58 @@ import {
   Package,
   Phone,
   ShoppingCart,
-  FileText
-} from 'lucide-react'
-import { useOrganisation, useOrganisations, getOrganisationDisplayName } from '@/shared/modules/organisations/hooks'
-import { useOrganisationTabCounts } from '@/shared/modules/organisations/hooks'
-import { LegalIdentityEditSection } from '@/components/business/legal-identity-edit-section'
-import { ContactEditSection } from '@/components/business/contact-edit-section'
-import { AddressEditSection } from '@/components/business/address-edit-section'
-import { CommercialEditSection } from '@/components/business/commercial-edit-section'
-import { PerformanceEditSection } from '@/components/business/performance-edit-section'
-import { ContactsManagementSection } from '@/components/business/contacts-management-section'
-import { OrganisationLogoCard } from '@/components/business/organisation-logo-card'
-import { OrganisationStatsCard } from '@/components/business/organisation-stats-card'
+  FileText,
+  Euro,
+} from 'lucide-react';
+
+import { Badge } from '@/components/ui/badge';
+import { ButtonV2 } from '@/components/ui/button';
+import { Card, CardContent } from '@/components/ui/card';
+import { TabsNavigation, TabContent } from '@/components/ui/tabs-navigation';
+import { isModuleDeployed, getModulePhase } from '@/lib/deployed-modules';
+import { AddressEditSection } from '@/shared/modules/common/components/address/AddressEditSection';
+import { ContactEditSection } from '@/shared/modules/customers/components/sections/ContactEditSection';
+import { ContactsManagementSection } from '@/shared/modules/customers/components/sections/ContactsManagementSection';
+import { OrganisationLogoCard } from '@/shared/modules/organisations/components/cards/OrganisationLogoCard';
+import { OrganisationStatsCard } from '@/shared/modules/organisations/components/cards/OrganisationStatsCard';
+import { CommercialEditSection } from '@/shared/modules/organisations/components/sections/CommercialEditSection';
+import { LegalIdentityEditSection } from '@/shared/modules/organisations/components/sections/LegalIdentityEditSection';
+import { PerformanceEditSection } from '@/shared/modules/organisations/components/sections/PerformanceEditSection';
+import {
+  useOrganisation,
+  useOrganisations,
+  getOrganisationDisplayName,
+} from '@/shared/modules/organisations/hooks';
+import { useOrganisationTabCounts } from '@/shared/modules/organisations/hooks';
 // Phase 1: organisation-products-section désactivé (Phase 2+)
-// import { OrganisationProductsSection } from '@/components/business/organisation-products-section'
-import { TabsNavigation, TabContent } from '@/components/ui/tabs-navigation'
-import { isModuleDeployed, getModulePhase } from '@/lib/deployed-modules'
-import type { Organisation } from '@/shared/modules/organisations/hooks'
+// import { OrganisationProductsSection } from '@/shared/modules/organisations/components/sections/OrganisationProductsSection'
+import type { Organisation } from '@/shared/modules/organisations/hooks';
 
 export default function CustomerDetailPage() {
-  const { customerId } = useParams()
-  const [activeTab, setActiveTab] = useState('contacts')
+  const { customerId } = useParams();
+  const [activeTab, setActiveTab] = useState('contacts');
 
-  const { organisation: customer, loading, error } = useOrganisation(customerId as string)
   const {
-    archiveOrganisation,
-    unarchiveOrganisation,
-    refetch
-  } = useOrganisations({ type: 'customer' })
+    organisation: customer,
+    loading,
+    error,
+  } = useOrganisation(customerId as string);
+  const { archiveOrganisation, unarchiveOrganisation, refetch } =
+    useOrganisations({ type: 'customer' });
 
   // Hook centralisé pour les compteurs d'onglets
   const { counts, refreshCounts } = useOrganisationTabCounts({
     organisationId: customerId as string,
-    organisationType: 'customer'
-  })
+    organisationType: 'customer',
+  });
 
   // Gestionnaire de mise à jour des données client
   const handleCustomerUpdate = (updatedData: Partial<Organisation>) => {
     // Les données sont automatiquement mises à jour par le hook useInlineEdit
-    refetch()
+    refetch();
     // Rafraîchir les compteurs
-    refreshCounts()
-  }
+    refreshCounts();
+  };
 
   // Configuration des onglets avec compteurs du hook + modules déployés
   const tabs = [
@@ -64,46 +73,45 @@ export default function CustomerDetailPage() {
       label: 'Contacts',
       icon: <Phone className="h-4 w-4" />,
       badge: counts.contacts.toString(),
-      disabled: !isModuleDeployed('contacts')
+      disabled: !isModuleDeployed('contacts'),
+    },
+    {
+      id: 'pricing',
+      label: 'Tarification',
+      icon: <Euro className="h-4 w-4" />,
+      disabled: !isModuleDeployed('products'), // Nécessite products pour customer_pricing
+      disabledBadge: getModulePhase('products'),
     },
     {
       id: 'orders',
       label: 'Commandes',
       icon: <ShoppingCart className="h-4 w-4" />,
       disabled: !isModuleDeployed('sales_orders'),
-      disabledBadge: getModulePhase('sales_orders')
+      disabledBadge: getModulePhase('sales_orders'),
     },
     {
       id: 'invoices',
       label: 'Factures',
       icon: <FileText className="h-4 w-4" />,
       disabled: !isModuleDeployed('invoices'),
-      disabledBadge: getModulePhase('invoices')
+      disabledBadge: getModulePhase('invoices'),
     },
-    {
-      id: 'products',
-      label: 'Produits',
-      icon: <Package className="h-4 w-4" />,
-      badge: counts.products.toString(),
-      disabled: !isModuleDeployed('products'),
-      disabledBadge: getModulePhase('products')
-    }
-  ]
+  ];
 
   if (loading) {
     return (
       <div className="container mx-auto p-4 space-y-4">
         <div className="animate-pulse">
-          <div className="h-8 bg-gray-200 rounded w-1/3 mb-4"></div>
-          <div className="h-6 bg-gray-200 rounded w-1/2 mb-8"></div>
+          <div className="h-8 bg-gray-200 rounded w-1/3 mb-4" />
+          <div className="h-6 bg-gray-200 rounded w-1/2 mb-8" />
           <div className="space-y-4">
-            <div className="h-32 bg-gray-200 rounded"></div>
-            <div className="h-32 bg-gray-200 rounded"></div>
-            <div className="h-32 bg-gray-200 rounded"></div>
+            <div className="h-32 bg-gray-200 rounded" />
+            <div className="h-32 bg-gray-200 rounded" />
+            <div className="h-32 bg-gray-200 rounded" />
           </div>
         </div>
       </div>
-    )
+    );
   }
 
   if (error || !customer) {
@@ -116,7 +124,8 @@ export default function CustomerDetailPage() {
               Client introuvable
             </h3>
             <p className="text-gray-600 mb-4">
-              Ce client n'existe pas ou vous n'avez pas les droits pour le consulter.
+              Ce client n'existe pas ou vous n'avez pas les droits pour le
+              consulter.
             </p>
             <ButtonV2 asChild>
               <Link href="/contacts-organisations/customers">
@@ -127,26 +136,26 @@ export default function CustomerDetailPage() {
           </CardContent>
         </Card>
       </div>
-    )
+    );
   }
 
   const handleArchive = async () => {
     if (!customer.archived_at) {
       // Archiver
-      const success = await archiveOrganisation(customer.id)
+      const success = await archiveOrganisation(customer.id);
       if (success) {
-        console.log('✅ Client archivé avec succès')
-        refetch()
+        console.log('✅ Client archivé avec succès');
+        refetch();
       }
     } else {
       // Restaurer
-      const success = await unarchiveOrganisation(customer.id)
+      const success = await unarchiveOrganisation(customer.id);
       if (success) {
-        console.log('✅ Client restauré avec succès')
-        refetch()
+        console.log('✅ Client restauré avec succès');
+        refetch();
       }
     }
-  }
+  };
 
   return (
     <div className="container mx-auto p-4 space-y-4">
@@ -163,28 +172,42 @@ export default function CustomerDetailPage() {
           </div>
           <div className="flex items-center gap-3 mb-2">
             <Building2 className="h-5 w-5 text-black" />
-            <h1 className="text-lg font-semibold text-black">{getOrganisationDisplayName(customer)}</h1>
+            <h1 className="text-lg font-semibold text-black">
+              {getOrganisationDisplayName(customer)}
+            </h1>
             <div className="flex gap-2">
               <Badge
                 variant={customer.is_active ? 'secondary' : 'secondary'}
-                className={customer.is_active ? 'bg-green-100 text-green-800' : ''}
+                className={
+                  customer.is_active ? 'bg-green-100 text-green-800' : ''
+                }
               >
                 {customer.is_active ? 'Actif' : 'Inactif'}
               </Badge>
               {customer.archived_at && (
-                <Badge variant="destructive" className="bg-red-100 text-red-800">
+                <Badge
+                  variant="destructive"
+                  className="bg-red-100 text-red-800"
+                >
                   Archivé
                 </Badge>
               )}
               {customer.customer_type && (
-                <Badge variant="outline" className="bg-blue-50 text-blue-700 border-blue-200">
-                  {customer.customer_type === 'professional' ? 'Client Professionnel' : 'Client Particulier'}
+                <Badge
+                  variant="outline"
+                  className="bg-blue-50 text-blue-700 border-blue-200"
+                >
+                  {customer.customer_type === 'professional'
+                    ? 'Client Professionnel'
+                    : 'Client Particulier'}
                 </Badge>
               )}
             </div>
           </div>
           <p className="text-sm text-gray-600">
-            Entreprise • {customer.customer_type === 'professional' ? 'B2B' : 'B2C'} • ID: {customer.id.slice(0, 8)}
+            Entreprise •{' '}
+            {customer.customer_type === 'professional' ? 'B2B' : 'B2C'} • ID:{' '}
+            {customer.id.slice(0, 8)}
           </p>
         </div>
 
@@ -193,7 +216,11 @@ export default function CustomerDetailPage() {
           <ButtonV2
             variant="outline"
             onClick={handleArchive}
-            className={customer.archived_at ? "text-blue-600 border-blue-200 hover:bg-blue-50" : "text-black border-gray-200 hover:bg-gray-50"}
+            className={
+              customer.archived_at
+                ? 'text-blue-600 border-blue-200 hover:bg-blue-50'
+                : 'text-black border-gray-200 hover:bg-gray-50'
+            }
           >
             {customer.archived_at ? (
               <>
@@ -297,6 +324,21 @@ export default function CustomerDetailPage() {
           </div>
         </TabContent>
 
+        <TabContent activeTab={activeTab} tabId="pricing">
+          <div className="text-center py-12">
+            <Euro className="h-12 w-12 text-gray-400 mx-auto mb-4" />
+            <h3 className="text-lg font-medium text-black mb-2">
+              Tarification Client
+            </h3>
+            <p className="text-gray-600">
+              Produits avec prix spécifiques pour ce client (customer_pricing).
+            </p>
+            <p className="text-gray-500 text-sm mt-2">
+              Affichage des produits avec tarification personnalisée.
+            </p>
+          </div>
+        </TabContent>
+
         <TabContent activeTab={activeTab} tabId="invoices">
           <div className="text-center py-12">
             <FileText className="h-12 w-12 text-gray-400 mx-auto mb-4" />
@@ -308,17 +350,7 @@ export default function CustomerDetailPage() {
             </p>
           </div>
         </TabContent>
-
-        <TabContent activeTab={activeTab} tabId="products">
-          {/* Phase 1: Onglet Produits désactivé (Phase 2+) */}
-          <div className="p-6 text-center">
-            <p className="text-muted-foreground">
-              📦 Gestion des produits disponible en <strong>Phase 2</strong>
-            </p>
-          </div>
-        </TabContent>
       </div>
-
     </div>
-  )
+  );
 }

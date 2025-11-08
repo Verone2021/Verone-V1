@@ -1,0 +1,1 @@
+export { StockMovementsChart } from './StockMovementsChart';

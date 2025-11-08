@@ -1,19 +1,37 @@
-'use client'
+'use client';
 
-import { Settings, Save, X, Edit, Phone, Mail, Globe2, MessageCircle, Bell } from 'lucide-react'
-import { ButtonV2 } from '@/components/ui/button'
-import { Badge } from '@/components/ui/badge'
-import { cn } from '@/lib/utils'
-import { useInlineEdit, type EditableSection } from '@/shared/modules/common/hooks'
-import type { Contact } from '@/shared/modules/common/hooks'
+import {
+  Settings,
+  Save,
+  X,
+  Edit,
+  Phone,
+  Mail,
+  Globe2,
+  MessageCircle,
+  Bell,
+} from 'lucide-react';
+
+import { Badge } from '@/components/ui/badge';
+import { ButtonV2 } from '@/components/ui/button';
+import { cn } from '@verone/utils';
+import {
+  useInlineEdit,
+  type EditableSection,
+} from '@/shared/modules/common/hooks';
+import type { Contact } from '@/shared/modules/common/hooks';
 
 interface ContactPreferencesEditSectionProps {
-  contact: Contact
-  onUpdate: (updatedContact: Partial<Contact>) => void
-  className?: string
+  contact: Contact;
+  onUpdate: (updatedContact: Partial<Contact>) => void;
+  className?: string;
 }
 
-export function ContactPreferencesEditSection({ contact, onUpdate, className }: ContactPreferencesEditSectionProps) {
+export function ContactPreferencesEditSection({
+  contact,
+  onUpdate,
+  className,
+}: ContactPreferencesEditSectionProps) {
   const {
     isEditing,
     isSaving,
@@ -23,77 +41,92 @@ export function ContactPreferencesEditSection({ contact, onUpdate, className }: 
     cancelEdit,
     updateEditedData,
     saveChanges,
-    hasChanges
+    hasChanges,
   } = useInlineEdit({
     contactId: contact.id,
-    onUpdate: (updatedData) => {
-      onUpdate(updatedData)
+    onUpdate: updatedData => {
+      onUpdate(updatedData);
     },
-    onError: (error) => {
-      console.error('❌ Erreur mise à jour préférences:', error)
-    }
-  })
+    onError: error => {
+      console.error('❌ Erreur mise à jour préférences:', error);
+    },
+  });
 
-  const section: EditableSection = 'preferences'
-  const editData = getEditedData(section)
-  const error = getError(section)
+  const section: EditableSection = 'preferences';
+  const editData = getEditedData(section);
+  const error = getError(section);
 
   const handleStartEdit = () => {
     startEdit(section, {
-      preferred_communication_method: contact.preferred_communication_method || 'email',
+      preferred_communication_method:
+        contact.preferred_communication_method || 'email',
       accepts_marketing: contact.accepts_marketing || false,
       accepts_notifications: contact.accepts_notifications || false,
-      language_preference: contact.language_preference || 'fr'
-    })
-  }
+      language_preference: contact.language_preference || 'fr',
+    });
+  };
 
   const handleSave = async () => {
-    const success = await saveChanges(section)
+    const success = await saveChanges(section);
     if (success) {
-      console.log('✅ Préférences mises à jour avec succès')
+      console.log('✅ Préférences mises à jour avec succès');
     }
-  }
+  };
 
   const handleCancel = () => {
-    cancelEdit(section)
-  }
+    cancelEdit(section);
+  };
 
   const handleFieldChange = (field: string, value: any) => {
-    updateEditedData(section, { [field]: value })
-  }
+    updateEditedData(section, { [field]: value });
+  };
 
   const getCommunicationMethodLabel = (method: string) => {
     switch (method) {
-      case 'email': return 'Email'
-      case 'phone': return 'Téléphone'
-      case 'both': return 'Email + Téléphone'
-      default: return 'Email'
+      case 'email':
+        return 'Email';
+      case 'phone':
+        return 'Téléphone';
+      case 'both':
+        return 'Email + Téléphone';
+      default:
+        return 'Email';
     }
-  }
+  };
 
   const getCommunicationMethodIcon = (method: string) => {
     switch (method) {
-      case 'email': return <Mail className="h-4 w-4" />
-      case 'phone': return <Phone className="h-4 w-4" />
-      case 'both': return <MessageCircle className="h-4 w-4" />
-      default: return <Mail className="h-4 w-4" />
+      case 'email':
+        return <Mail className="h-4 w-4" />;
+      case 'phone':
+        return <Phone className="h-4 w-4" />;
+      case 'both':
+        return <MessageCircle className="h-4 w-4" />;
+      default:
+        return <Mail className="h-4 w-4" />;
     }
-  }
+  };
 
   const getLanguageLabel = (lang: string) => {
     switch (lang) {
-      case 'fr': return 'Français'
-      case 'en': return 'English'
-      case 'es': return 'Español'
-      case 'it': return 'Italiano'
-      case 'de': return 'Deutsch'
-      default: return 'Français'
+      case 'fr':
+        return 'Français';
+      case 'en':
+        return 'English';
+      case 'es':
+        return 'Español';
+      case 'it':
+        return 'Italiano';
+      case 'de':
+        return 'Deutsch';
+      default:
+        return 'Français';
     }
-  }
+  };
 
   if (isEditing(section)) {
     return (
-      <div className={cn("card-verone p-4", className)}>
+      <div className={cn('card-verone p-4', className)}>
         <div className="flex items-center justify-between mb-3">
           <h3 className="text-lg font-medium text-black flex items-center">
             <Settings className="h-5 w-5 mr-2" />
@@ -129,23 +162,47 @@ export function ContactPreferencesEditSection({ contact, onUpdate, className }: 
             </label>
             <div className="space-y-2">
               {[
-                { value: 'email', label: 'Email uniquement', icon: <Mail className="h-4 w-4" /> },
-                { value: 'phone', label: 'Téléphone uniquement', icon: <Phone className="h-4 w-4" /> },
-                { value: 'both', label: 'Email et téléphone', icon: <MessageCircle className="h-4 w-4" /> }
-              ].map((option) => (
+                {
+                  value: 'email',
+                  label: 'Email uniquement',
+                  icon: <Mail className="h-4 w-4" />,
+                },
+                {
+                  value: 'phone',
+                  label: 'Téléphone uniquement',
+                  icon: <Phone className="h-4 w-4" />,
+                },
+                {
+                  value: 'both',
+                  label: 'Email et téléphone',
+                  icon: <MessageCircle className="h-4 w-4" />,
+                },
+              ].map(option => (
                 <div key={option.value} className="flex items-center space-x-3">
                   <input
                     type="radio"
                     id={`comm_${option.value}`}
                     name="communication_method"
                     value={option.value}
-                    checked={editData?.preferred_communication_method === option.value}
-                    onChange={(e) => handleFieldChange('preferred_communication_method', e.target.value)}
+                    checked={
+                      editData?.preferred_communication_method === option.value
+                    }
+                    onChange={e =>
+                      handleFieldChange(
+                        'preferred_communication_method',
+                        e.target.value
+                      )
+                    }
                     className="h-4 w-4 text-black focus:ring-black border-gray-300"
                   />
-                  <label htmlFor={`comm_${option.value}`} className="flex items-center cursor-pointer">
+                  <label
+                    htmlFor={`comm_${option.value}`}
+                    className="flex items-center cursor-pointer"
+                  >
                     {option.icon}
-                    <span className="ml-2 text-sm text-black">{option.label}</span>
+                    <span className="ml-2 text-sm text-black">
+                      {option.label}
+                    </span>
                   </label>
                 </div>
               ))}
@@ -159,7 +216,9 @@ export function ContactPreferencesEditSection({ contact, onUpdate, className }: 
             </label>
             <select
               value={editData?.language_preference || 'fr'}
-              onChange={(e) => handleFieldChange('language_preference', e.target.value)}
+              onChange={e =>
+                handleFieldChange('language_preference', e.target.value)
+              }
               className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-black focus:border-black"
             >
               <option value="fr">Français</option>
@@ -177,11 +236,18 @@ export function ContactPreferencesEditSection({ contact, onUpdate, className }: 
                 type="checkbox"
                 id="accepts_marketing"
                 checked={editData?.accepts_marketing || false}
-                onChange={(e) => handleFieldChange('accepts_marketing', e.target.checked)}
+                onChange={e =>
+                  handleFieldChange('accepts_marketing', e.target.checked)
+                }
                 className="h-4 w-4 text-black focus:ring-black border-gray-300 rounded"
               />
-              <label htmlFor="accepts_marketing" className="flex-1 cursor-pointer">
-                <span className="font-medium text-black">Accepte le marketing</span>
+              <label
+                htmlFor="accepts_marketing"
+                className="flex-1 cursor-pointer"
+              >
+                <span className="font-medium text-black">
+                  Accepte le marketing
+                </span>
                 <div className="text-sm text-gray-600">
                   Recevoir des communications commerciales et promotionnelles
                 </div>
@@ -193,13 +259,21 @@ export function ContactPreferencesEditSection({ contact, onUpdate, className }: 
                 type="checkbox"
                 id="accepts_notifications"
                 checked={editData?.accepts_notifications || false}
-                onChange={(e) => handleFieldChange('accepts_notifications', e.target.checked)}
+                onChange={e =>
+                  handleFieldChange('accepts_notifications', e.target.checked)
+                }
                 className="h-4 w-4 text-black focus:ring-black border-gray-300 rounded"
               />
-              <label htmlFor="accepts_notifications" className="flex-1 cursor-pointer">
-                <span className="font-medium text-black">Accepte les notifications</span>
+              <label
+                htmlFor="accepts_notifications"
+                className="flex-1 cursor-pointer"
+              >
+                <span className="font-medium text-black">
+                  Accepte les notifications
+                </span>
                 <div className="text-sm text-gray-600">
-                  Recevoir des notifications pour les commandes, livraisons, etc.
+                  Recevoir des notifications pour les commandes, livraisons,
+                  etc.
                 </div>
               </label>
             </div>
@@ -213,12 +287,12 @@ export function ContactPreferencesEditSection({ contact, onUpdate, className }: 
           </div>
         )}
       </div>
-    )
+    );
   }
 
   // Mode affichage
   return (
-    <div className={cn("card-verone p-4", className)}>
+    <div className={cn('card-verone p-4', className)}>
       <div className="flex items-center justify-between mb-3">
         <h3 className="text-lg font-medium text-black flex items-center">
           <Settings className="h-5 w-5 mr-2" />
@@ -233,11 +307,15 @@ export function ContactPreferencesEditSection({ contact, onUpdate, className }: 
       <div className="space-y-3">
         {/* Méthode de communication */}
         <div>
-          <span className="text-sm text-black opacity-70">Communication préférée:</span>
+          <span className="text-sm text-black opacity-70">
+            Communication préférée:
+          </span>
           <div className="flex items-center mt-1">
             {getCommunicationMethodIcon(contact.preferred_communication_method)}
             <span className="ml-2 text-sm text-black font-medium">
-              {getCommunicationMethodLabel(contact.preferred_communication_method)}
+              {getCommunicationMethodLabel(
+                contact.preferred_communication_method
+              )}
             </span>
           </div>
         </div>
@@ -258,13 +336,19 @@ export function ContactPreferencesEditSection({ contact, onUpdate, className }: 
           <span className="text-sm text-black opacity-70">Préférences:</span>
           <div className="flex gap-2 flex-wrap mt-1">
             {contact.accepts_marketing && (
-              <Badge variant="outline" className="bg-blue-50 text-blue-700 border-blue-200">
+              <Badge
+                variant="outline"
+                className="bg-blue-50 text-blue-700 border-blue-200"
+              >
                 <MessageCircle className="h-3 w-3 mr-1" />
                 Marketing
               </Badge>
             )}
             {contact.accepts_notifications && (
-              <Badge variant="outline" className="bg-green-50 text-green-700 border-green-200">
+              <Badge
+                variant="outline"
+                className="bg-green-50 text-green-700 border-green-200"
+              >
                 <Bell className="h-3 w-3 mr-1" />
                 Notifications
               </Badge>
@@ -278,5 +362,5 @@ export function ContactPreferencesEditSection({ contact, onUpdate, className }: 
         </div>
       </div>
     </div>
-  )
+  );
 }

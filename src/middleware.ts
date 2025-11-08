@@ -27,8 +27,10 @@
  * Dernière mise à jour : 2025-10-23 (Restauration authentification)
  */
 
-import { NextRequest, NextResponse } from 'next/server'
-import { createServerClient } from '@supabase/ssr'
+import type { NextRequest } from 'next/server';
+import { NextResponse } from 'next/server';
+
+import { createServerClient } from '@supabase/ssr';
 
 // Routes protégées nécessitant authentification
 const PROTECTED_ROUTES = [
@@ -47,28 +49,28 @@ const PROTECTED_ROUTES = [
   '/canaux-vente',
   '/finance',
   '/factures',
-  '/tresorerie'
-]
+  '/tresorerie',
+];
 
 // Routes publiques (pas d'authentification requise)
-const PUBLIC_ROUTES = [
-  '/login',
-  '/',
-  '/module-inactive'
-]
+const PUBLIC_ROUTES = ['/login', '/', '/module-inactive'];
 
 export async function middleware(request: NextRequest) {
-  const pathname = request.nextUrl.pathname
+  const pathname = request.nextUrl.pathname;
 
   // 0. Autoriser assets statiques et API routes
-  if (pathname.startsWith('/_next') || pathname.startsWith('/api') || pathname === '/favicon.ico') {
-    return NextResponse.next()
+  if (
+    pathname.startsWith('/_next') ||
+    pathname.startsWith('/api') ||
+    pathname === '/favicon.ico'
+  ) {
+    return NextResponse.next();
   }
 
   // 1. Créer le client Supabase pour vérifier l'authentification
   let supabaseResponse = NextResponse.next({
     request,
-  })
+  });
 
   const supabase = createServerClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -76,73 +78,79 @@ export async function middleware(request: NextRequest) {
     {
       cookies: {
         get(name: string) {
-          return request.cookies.get(name)?.value
+          return request.cookies.get(name)?.value;
         },
         set(name: string, value: string, options: any) {
           request.cookies.set({
             name,
             value,
             ...options,
-          })
+          });
           supabaseResponse = NextResponse.next({
             request: {
               headers: request.headers,
             },
-          })
+          });
           supabaseResponse.cookies.set({
             name,
             value,
             ...options,
-          })
+          });
         },
         remove(name: string, options: any) {
           request.cookies.set({
             name,
             value: '',
             ...options,
-          })
+          });
           supabaseResponse = NextResponse.next({
             request: {
               headers: request.headers,
             },
-          })
+          });
           supabaseResponse.cookies.set({
             name,
             value: '',
             ...options,
-          })
+          });
         },
       },
     }
-  )
+  );
 
   // IMPORTANT: Vérifier l'authentification
-  const { data: { user }, error } = await supabase.auth.getUser()
-  const isAuthenticated = !error && !!user
+  const {
+    data: { user },
+    error,
+  } = await supabase.auth.getUser();
+  const isAuthenticated = !error && !!user;
 
   // 2. Protection authentification : routes protégées nécessitent connexion
-  const isProtectedRoute = PROTECTED_ROUTES.some(route => pathname.startsWith(route))
+  const isProtectedRoute = PROTECTED_ROUTES.some(route =>
+    pathname.startsWith(route)
+  );
   if (isProtectedRoute && !isAuthenticated) {
-    const loginUrl = new URL('/login', request.url)
-    loginUrl.searchParams.set('redirect', pathname)
-    return NextResponse.redirect(loginUrl)
+    const loginUrl = new URL('/login', request.url);
+    loginUrl.searchParams.set('redirect', pathname);
+    return NextResponse.redirect(loginUrl);
   }
 
   // 4. Si déjà authentifié sur page login → redirection dashboard
   if (pathname === '/login' && isAuthenticated) {
-    const redirectUrl = request.nextUrl.searchParams.get('redirect') || '/dashboard'
-    return NextResponse.redirect(new URL(redirectUrl, request.url))
+    const redirectUrl =
+      request.nextUrl.searchParams.get('redirect') || '/dashboard';
+    return NextResponse.redirect(new URL(redirectUrl, request.url));
   }
 
   // 5. Route racine "/" → rediriger vers login (pas dashboard!)
   if (pathname === '/') {
-    const url = request.nextUrl.clone()
-    url.pathname = '/login'
-    return NextResponse.redirect(url)
+    const url = request.nextUrl.clone();
+    url.pathname = '/login';
+    return NextResponse.redirect(url);
   }
 
   // IMPORTANT: Retourner supabaseResponse pour conserver les cookies
-  return supabaseResponse
+  return supabaseResponse;
 }
 
 // Configuration matcher pour appliquer middleware
@@ -156,4 +164,4 @@ export const config = {
      */
     '/((?!_next/static|_next/image|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)',
   ],
-}
+};

@@ -7,7 +7,9 @@
  * ⚠️ ROUTE TEMPORAIRE - À supprimer après installation
  */
 
-import { NextRequest, NextResponse } from 'next/server';
+import type { NextRequest } from 'next/server';
+import { NextResponse } from 'next/server';
+
 import { createClient } from '@supabase/supabase-js';
 
 export async function POST(request: NextRequest) {

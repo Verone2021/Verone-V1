@@ -70,13 +70,13 @@ Le système Vérone gère désormais les réceptions et expéditions partielles 
 
 ### Exemple Chiffré
 
-| Étape | Action | stock_real | forecasted_in | forecasted_out | stock_quantity |
-|-------|--------|-----------|---------------|----------------|----------------|
-| **Initial** | - | 50 | 0 | 0 | 50 |
-| **Confirmé PO** | +100 prévisionnel | 50 | 100 | 0 | 150 |
-| **Reçu 40** | Conversion partielle | 90 | 60 | 0 | 150 |
-| **Reçu 75 total** | +35 différentiel | 125 | 25 | 0 | 150 |
-| **Reçu 100 total** | +25 différentiel | 150 | 0 | 0 | 150 |
+| Étape              | Action               | stock_real | forecasted_in | forecasted_out | stock_quantity |
+| ------------------ | -------------------- | ---------- | ------------- | -------------- | -------------- |
+| **Initial**        | -                    | 50         | 0             | 0              | 50             |
+| **Confirmé PO**    | +100 prévisionnel    | 50         | 100           | 0              | 150            |
+| **Reçu 40**        | Conversion partielle | 90         | 60            | 0              | 150            |
+| **Reçu 75 total**  | +35 différentiel     | 125        | 25            | 0              | 150            |
+| **Reçu 100 total** | +25 différentiel     | 150        | 0             | 0              | 150            |
 
 ### Points Clés
 
@@ -141,13 +141,13 @@ Le système Vérone gère désormais les réceptions et expéditions partielles 
 
 ### Exemple Chiffré
 
-| Étape | Action | stock_real | forecasted_out | stock_quantity |
-|-------|--------|-----------|----------------|----------------|
-| **Initial** | - | 100 | 0 | 100 |
-| **Confirmé SO** | +50 réservé | 100 | 50 | 50 |
-| **Expédié 20** | Sortie partielle | 80 | 50 | 30 |
-| **Expédié 35 total** | +15 différentiel | 65 | 50 | 15 |
-| **Expédié 50 total** | +15 différentiel | 50 | 50 | 0 |
+| Étape                | Action           | stock_real | forecasted_out | stock_quantity |
+| -------------------- | ---------------- | ---------- | -------------- | -------------- |
+| **Initial**          | -                | 100        | 0              | 100            |
+| **Confirmé SO**      | +50 réservé      | 100        | 50             | 50             |
+| **Expédié 20**       | Sortie partielle | 80         | 50             | 30             |
+| **Expédié 35 total** | +15 différentiel | 65         | 50             | 15             |
+| **Expédié 50 total** | +15 différentiel | 50         | 50             | 0              |
 
 ### Points Clés
 
@@ -242,11 +242,13 @@ Le système Vérone gère désormais les réceptions et expéditions partielles 
 ### Problème: Stock ne se met pas à jour
 
 **Causes possibles** :
+
 1. Status PO/SO pas changé en `partially_received` ou `partially_shipped`
 2. Colonne `quantity_received` ou `quantity_shipped` pas remplie
 3. Trigger désactivé (vérifier `pg_trigger`)
 
 **Solution** :
+
 ```sql
 -- Vérifier triggers actifs
 SELECT tgname, tgenabled
@@ -264,14 +266,15 @@ LIMIT 10;
 
 **Cause** : Trigger exécuté plusieurs fois (UPDATE en boucle)
 
-**Solution** : Utiliser quantity_* EXACTE totale, pas incrémentale
+**Solution** : Utiliser quantity\_\* EXACTE totale, pas incrémentale
+
 ```typescript
 // ❌ INCORRECT
-quantity_received += 40  // Ne pas incrémenter
+quantity_received += 40; // Ne pas incrémenter
 
 // ✅ CORRECT
-quantity_received = 40   // 1ère réception
-quantity_received = 75   // 2ème réception (40+35)
+quantity_received = 40; // 1ère réception
+quantity_received = 75; // 2ème réception (40+35)
 ```
 
 ---

@@ -95,16 +95,16 @@ Taux_Conversion = (Commandes_Validées / Devis_Envoyés) × 100
 
 ### Tables Supabase
 
-| Table | Colonnes Utilisées | Filtres Appliqués |
-|-------|-------------------|-------------------|
-| `[table_name]` | `column1`, `column2` | `tenant_id`, `deleted_at IS NULL` |
-| `[table_name_2]` | `column3` | Jointure avec `[table_name]` |
+| Table            | Colonnes Utilisées   | Filtres Appliqués                 |
+| ---------------- | -------------------- | --------------------------------- |
+| `[table_name]`   | `column1`, `column2` | `tenant_id`, `deleted_at IS NULL` |
+| `[table_name_2]` | `column3`            | Jointure avec `[table_name]`      |
 
 ### Triggers Associés
 
-| Trigger | Table Cible | Action | Description |
-|---------|-------------|--------|-------------|
-| `[trigger_name]` | `[table]` | INSERT/UPDATE | [Description action] |
+| Trigger          | Table Cible | Action        | Description          |
+| ---------------- | ----------- | ------------- | -------------------- |
+| `[trigger_name]` | `[table]`   | INSERT/UPDATE | [Description action] |
 
 **Fichier** : `/Users/romeodossantos/verone-back-office-V1/supabase/migrations/[timestamp]_[trigger_name].sql`
 
@@ -135,10 +135,10 @@ Taux_Conversion = (Commandes_Validées / Devis_Envoyés) × 100
 
 ### Par Rôle
 
-| Rôle | Lecture | Modification | Export | Notes |
-|------|---------|--------------|--------|-------|
-| Owner | ✅ Complet | ✅ Indirect (via actions) | ✅ CSV/PDF | Accès total |
-| Admin | ✅ Complet | ❌ Lecture seule | ⚠️ Anonymisé | Restrictions RGPD |
+| Rôle  | Lecture    | Modification              | Export       | Notes             |
+| ----- | ---------- | ------------------------- | ------------ | ----------------- |
+| Owner | ✅ Complet | ✅ Indirect (via actions) | ✅ CSV/PDF   | Accès total       |
+| Admin | ✅ Complet | ❌ Lecture seule          | ⚠️ Anonymisé | Restrictions RGPD |
 
 ### RLS Policies
 
@@ -160,6 +160,7 @@ USING (tenant_id = auth.tenant_id());
 
 **Composant Recharts** : `[BarChart / LineChart / PieChart / AreaChart / etc.]`
 **Props Spécifiques** :
+
 ```typescript
 {
   dataKey: "[key_name]",
@@ -180,14 +181,14 @@ USING (tenant_id = auth.tenant_id());
 ```typescript
 // Exemple configuration
 const chartConfig = {
-  title: "[Titre Affiché]",
-  description: "[Description courte]",
-  color: "var(--verone-primary)",
-  icon: "[IconName]",
+  title: '[Titre Affiché]',
+  description: '[Description courte]',
+  color: 'var(--verone-primary)',
+  icon: '[IconName]',
   trend: {
     enabled: true,
-    comparison: "month-over-month" // ou "year-over-year"
-  }
+    comparison: 'month-over-month', // ou "year-over-year"
+  },
 };
 ```
 
@@ -197,10 +198,10 @@ const chartConfig = {
 
 ### Métriques Liées
 
-| Métrique Dépendante | Relation | Description |
-|--------------------|----------|-------------|
-| `[useAutreMetric1]` | Input | Utilisée dans le calcul |
-| `[useAutreMetric2]` | Output | Calculée à partir de cette métrique |
+| Métrique Dépendante | Relation | Description                         |
+| ------------------- | -------- | ----------------------------------- |
+| `[useAutreMetric1]` | Input    | Utilisée dans le calcul             |
+| `[useAutreMetric2]` | Output   | Calculée à partir de cette métrique |
 
 ### Modules Interconnectés
 
@@ -209,8 +210,8 @@ const chartConfig = {
 
 ### APIs Externes
 
-| Service | Endpoint | Usage |
-|---------|----------|-------|
+| Service        | Endpoint          | Usage         |
+| -------------- | ----------------- | ------------- |
 | [Service Name] | `[/api/endpoint]` | [Description] |
 
 ---
@@ -222,6 +223,7 @@ const chartConfig = {
 **Contexte** : [Description situation]
 
 **Données d'entrée** :
+
 ```json
 {
   "tenant_id": "uuid-example",
@@ -231,6 +233,7 @@ const chartConfig = {
 ```
 
 **Résultat attendu** :
+
 ```json
 {
   "metric_value": 1234,
@@ -258,6 +261,7 @@ const chartConfig = {
 **Symptôme** : [Description]
 **Cause probable** : [Raison]
 **Solution** :
+
 1. [Étape 1]
 2. [Étape 2]
 
@@ -266,18 +270,21 @@ const chartConfig = {
 **Symptôme** : [Description]
 **Cause probable** : [Raison]
 **Solution** :
+
 1. [Étape 1]
 
 ### Performance Issues
 
 **Seuil alerte** : Calcul > [X ms/s]
 **Optimisations appliquées** :
+
 - [Optimisation 1]
 - [Optimisation 2]
 
 ### Validation Données
 
 **Contraintes** :
+
 - [ ] Valeur >= 0 (pas de négatifs)
 - [ ] Type Number/BigInt
 - [ ] Précision décimale : [X chiffres]

@@ -5,7 +5,9 @@
  * Synchronise un produit individuel avec Google Merchant Center
  */
 
-import { NextRequest, NextResponse } from 'next/server';
+import type { NextRequest } from 'next/server';
+import { NextResponse } from 'next/server';
+
 import { getGoogleMerchantClient } from '@/lib/google-merchant/client';
 import { createServerClient } from '@/lib/supabase/server';
 
@@ -38,7 +40,7 @@ async function getProductWithRelations(supabase: any, productId: string) {
     .single();
 
   // Fetch supplier separately if needed
-  if (!productError && product && product.supplier_id) {
+  if (!productError && product?.supplier_id) {
     const { data: supplier } = await supabase
       .from('organisations')
       .select('id, legal_name, trade_name')

@@ -1,4 +1,4 @@
-'use client'
+'use client';
 
 /**
  * 🎯 VÉRONE - Composant Gestion Complète d'Images Produit
@@ -9,22 +9,35 @@
  * - Intégration complète avec useProductImages
  */
 
-import React, { useState } from 'react'
-import { Upload, X, Star, Trash2, Edit3, Plus, AlertCircle, CheckCircle, Loader2 } from 'lucide-react'
-import { ButtonV2 } from '@/components/ui/button'
-import { Badge } from '@/components/ui/badge'
-import { Alert, AlertDescription } from '@/components/ui/alert'
-import { cn } from '@/lib/utils'
-import Image from 'next/image'
-import { useProductImages } from '@/shared/modules/products/hooks'
+import React, { useState } from 'react';
+
+import Image from 'next/image';
+
+import {
+  Upload,
+  X,
+  Star,
+  Trash2,
+  Edit3,
+  Plus,
+  AlertCircle,
+  CheckCircle,
+  Loader2,
+} from 'lucide-react';
+
+import { Alert, AlertDescription } from '@/components/ui/alert';
+import { Badge } from '@/components/ui/badge';
+import { ButtonV2 } from '@/components/ui/button';
+import { cn } from '@verone/utils';
+import { useProductImages } from '@/shared/modules/products/hooks';
 
 interface ProductImageManagementProps {
-  productId: string
-  productType?: 'draft' | 'product'
-  productName?: string
-  className?: string
-  allowPrimaryChange?: boolean
-  maxImages?: number
+  productId: string;
+  productType?: 'draft' | 'product';
+  productName?: string;
+  className?: string;
+  allowPrimaryChange?: boolean;
+  maxImages?: number;
 }
 
 export function ProductImageManagement({
@@ -33,7 +46,7 @@ export function ProductImageManagement({
   productName = 'Produit',
   className,
   allowPrimaryChange = true,
-  maxImages = 20
+  maxImages = 20,
 }: ProductImageManagementProps) {
   // Hook principal pour gestion images
   const {
@@ -47,28 +60,30 @@ export function ProductImageManagement({
     deleteImage,
     setPrimaryImage,
     reorderImages,
-    fetchImages
+    fetchImages,
   } = useProductImages({
-    productId
-  })
+    productId,
+  });
 
   // États locaux pour UI
-  const [dragActive, setDragActive] = useState(false)
-  const [deletingImageId, setDeletingImageId] = useState<string | null>(null)
-  const [settingPrimaryId, setSettingPrimaryId] = useState<string | null>(null)
+  const [dragActive, setDragActive] = useState(false);
+  const [deletingImageId, setDeletingImageId] = useState<string | null>(null);
+  const [settingPrimaryId, setSettingPrimaryId] = useState<string | null>(null);
 
   /**
    * 📁 Gestion upload fichiers multiples
    */
   const handleFilesDrop = async (files: FileList) => {
-    if (!files || files.length === 0) return
+    if (!files || files.length === 0) return;
 
-    const fileArray = Array.from(files)
-    const remainingSlots = maxImages - images.length
+    const fileArray = Array.from(files);
+    const remainingSlots = maxImages - images.length;
 
     if (fileArray.length > remainingSlots) {
-      alert(`⚠️ Vous ne pouvez ajouter que ${remainingSlots} image(s) supplémentaire(s) (limite: ${maxImages})`)
-      return
+      alert(
+        `⚠️ Vous ne pouvez ajouter que ${remainingSlots} image(s) supplémentaire(s) (limite: ${maxImages})`
+      );
+      return;
     }
 
     try {
@@ -76,14 +91,14 @@ export function ProductImageManagement({
         await uploadImage(file, {
           imageType: 'gallery',
           altText: `${productName} - ${file.name}`,
-          isPrimary: !primaryImage && images.length === 0 // Première image = principale
-        })
+          isPrimary: !primaryImage && images.length === 0, // Première image = principale
+        });
       }
-      console.log('✅ Upload multiple terminé avec succès')
+      console.log('✅ Upload multiple terminé avec succès');
     } catch (error) {
-      console.error('❌ Erreur upload multiple:', error)
+      console.error('❌ Erreur upload multiple:', error);
     }
-  }
+  };
 
   /**
    * 🗑️ Gestion suppression avec protection image principale
@@ -92,90 +107,96 @@ export function ProductImageManagement({
     if (isPrimary && allowPrimaryChange) {
       const confirmDelete = confirm(
         '⚠️ Cette image est définie comme image principale. Êtes-vous sûr de vouloir la supprimer ?\n\nUne autre image sera automatiquement définie comme principale.'
-      )
-      if (!confirmDelete) return
+      );
+      if (!confirmDelete) return;
     } else if (isPrimary && !allowPrimaryChange) {
-      alert('❌ L\'image principale ne peut pas être supprimée. Définissez d\'abord une autre image comme principale.')
-      return
+      alert(
+        "❌ L'image principale ne peut pas être supprimée. Définissez d'abord une autre image comme principale."
+      );
+      return;
     }
 
-    setDeletingImageId(imageId)
+    setDeletingImageId(imageId);
     try {
-      await deleteImage(imageId)
-      console.log('✅ Image supprimée avec succès')
+      await deleteImage(imageId);
+      console.log('✅ Image supprimée avec succès');
     } catch (error) {
-      console.error('❌ Erreur suppression image:', error)
+      console.error('❌ Erreur suppression image:', error);
     } finally {
-      setDeletingImageId(null)
+      setDeletingImageId(null);
     }
-  }
+  };
 
   /**
    * ⭐ Gestion changement image principale
    */
   const handleSetPrimary = async (imageId: string) => {
     if (!allowPrimaryChange) {
-      alert('❌ Le changement d\'image principale n\'est pas autorisé dans ce contexte.')
-      return
+      alert(
+        "❌ Le changement d'image principale n'est pas autorisé dans ce contexte."
+      );
+      return;
     }
 
-    setSettingPrimaryId(imageId)
+    setSettingPrimaryId(imageId);
     try {
-      await setPrimaryImage(imageId)
-      console.log('✅ Image principale mise à jour')
+      await setPrimaryImage(imageId);
+      console.log('✅ Image principale mise à jour');
     } catch (error) {
-      console.error('❌ Erreur changement image principale:', error)
+      console.error('❌ Erreur changement image principale:', error);
     } finally {
-      setSettingPrimaryId(null)
+      setSettingPrimaryId(null);
     }
-  }
+  };
 
   /**
    * 🖱️ Gestionnaires drag & drop
    */
   const handleDrag = (e: React.DragEvent) => {
-    e.preventDefault()
-    e.stopPropagation()
-  }
+    e.preventDefault();
+    e.stopPropagation();
+  };
 
   const handleDragIn = (e: React.DragEvent) => {
-    e.preventDefault()
-    e.stopPropagation()
-    setDragActive(true)
-  }
+    e.preventDefault();
+    e.stopPropagation();
+    setDragActive(true);
+  };
 
   const handleDragOut = (e: React.DragEvent) => {
-    e.preventDefault()
-    e.stopPropagation()
-    setDragActive(false)
-  }
+    e.preventDefault();
+    e.stopPropagation();
+    setDragActive(false);
+  };
 
   const handleDrop = (e: React.DragEvent) => {
-    e.preventDefault()
-    e.stopPropagation()
-    setDragActive(false)
+    e.preventDefault();
+    e.stopPropagation();
+    setDragActive(false);
 
-    const files = e.dataTransfer.files
+    const files = e.dataTransfer.files;
     if (files) {
-      handleFilesDrop(files)
+      handleFilesDrop(files);
     }
-  }
+  };
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const files = e.target.files
+    const files = e.target.files;
     if (files) {
-      handleFilesDrop(files)
+      handleFilesDrop(files);
     }
-  }
+  };
 
   return (
-    <div className={cn("space-y-6", className)}>
+    <div className={cn('space-y-6', className)}>
       {/* En-tête section */}
       <div className="flex items-center justify-between">
         <div>
           <h3 className="text-lg font-medium text-black">Gestion des images</h3>
           <p className="text-sm text-gray-600">
-            {hasImages ? `${images.length}/${maxImages} images` : 'Aucune image'}
+            {hasImages
+              ? `${images.length}/${maxImages} images`
+              : 'Aucune image'}
             {primaryImage && ' • Image principale définie'}
           </p>
         </div>
@@ -194,21 +215,21 @@ export function ProductImageManagement({
       {images.length < maxImages && (
         <div
           className={cn(
-            "border-2 border-dashed border-gray-300 rounded-lg p-8 text-center transition-colors cursor-pointer hover:border-gray-400",
-            dragActive && "border-black bg-gray-50",
-            error && "border-red-500 bg-red-50"
+            'border-2 border-dashed border-gray-300 rounded-lg p-8 text-center transition-colors cursor-pointer hover:border-gray-400',
+            dragActive && 'border-black bg-gray-50',
+            error && 'border-red-500 bg-red-50'
           )}
           onDragEnter={handleDragIn}
           onDragLeave={handleDragOut}
           onDragOver={handleDrag}
           onDrop={handleDrop}
           onClick={() => {
-            const input = document.createElement('input')
-            input.type = 'file'
-            input.multiple = true
-            input.accept = 'image/*'
-            input.onchange = handleInputChange as any
-            input.click()
+            const input = document.createElement('input');
+            input.type = 'file';
+            input.multiple = true;
+            input.accept = 'image/*';
+            input.onchange = handleInputChange as any;
+            input.click();
           }}
         >
           <div className="flex flex-col items-center space-y-2">
@@ -229,8 +250,7 @@ export function ProductImageManagement({
               <p className="text-xs text-blue-600 mt-1">
                 {images.length === 0
                   ? '🌟 La première image sera automatiquement définie comme principale'
-                  : `Encore ${maxImages - images.length} image(s) possible(s)`
-                }
+                  : `Encore ${maxImages - images.length} image(s) possible(s)`}
               </p>
             </div>
           </div>
@@ -241,16 +261,16 @@ export function ProductImageManagement({
       {error && (
         <Alert variant="destructive">
           <AlertCircle className="h-4 w-4" />
-          <AlertDescription>
-            {error}
-          </AlertDescription>
+          <AlertDescription>{error}</AlertDescription>
         </Alert>
       )}
 
       {loading && !uploading && (
         <div className="flex items-center justify-center py-8">
           <Loader2 className="h-6 w-6 animate-spin text-gray-400 mr-2" />
-          <span className="text-sm text-gray-600">Chargement des images...</span>
+          <span className="text-sm text-gray-600">
+            Chargement des images...
+          </span>
         </div>
       )}
 
@@ -258,7 +278,9 @@ export function ProductImageManagement({
       {hasImages && !loading && (
         <div className="space-y-4">
           <div className="flex items-center justify-between">
-            <h4 className="text-md font-medium text-black">Images du produit</h4>
+            <h4 className="text-md font-medium text-black">
+              Images du produit
+            </h4>
             {allowPrimaryChange && (
               <p className="text-xs text-gray-500">
                 Cliquez sur l'étoile pour définir l'image principale
@@ -267,14 +289,14 @@ export function ProductImageManagement({
           </div>
 
           <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
-            {images.map((image) => (
+            {images.map(image => (
               <div
                 key={image.id}
                 className={cn(
-                  "relative group border-2 rounded-lg overflow-hidden transition-all",
+                  'relative group border-2 rounded-lg overflow-hidden transition-all',
                   image.is_primary
-                    ? "border-blue-500 shadow-lg ring-2 ring-blue-200"
-                    : "border-gray-200 hover:border-gray-300"
+                    ? 'border-blue-500 shadow-lg ring-2 ring-blue-200'
+                    : 'border-gray-200 hover:border-gray-300'
                 )}
               >
                 {/* Image */}
@@ -282,7 +304,10 @@ export function ProductImageManagement({
                   {image.public_url ? (
                     <Image
                       src={image.public_url}
-                      alt={image.alt_text || `Image ${(image.display_order ?? 0) + 1}`}
+                      alt={
+                        image.alt_text ||
+                        `Image ${(image.display_order ?? 0) + 1}`
+                      }
                       fill
                       className="object-cover"
                       sizes="(max-width: 768px) 50vw, (max-width: 1200px) 33vw, 25vw"
@@ -307,7 +332,6 @@ export function ProductImageManagement({
                 {/* Overlay avec contrôles */}
                 <div className="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-50 transition-all flex items-center justify-center">
                   <div className="opacity-0 group-hover:opacity-100 transition-opacity flex space-x-2">
-
                     {/* Bouton définir comme principale */}
                     {allowPrimaryChange && !image.is_primary && (
                       <ButtonV2
@@ -330,10 +354,16 @@ export function ProductImageManagement({
                     <ButtonV2
                       size="sm"
                       variant="destructive"
-                      onClick={() => handleDeleteImage(image.id, image.is_primary || false)}
+                      onClick={() =>
+                        handleDeleteImage(image.id, image.is_primary || false)
+                      }
                       disabled={deletingImageId === image.id}
                       className="h-8 w-8 p-0"
-                      title={image.is_primary ? "Supprimer l'image principale" : "Supprimer l'image"}
+                      title={
+                        image.is_primary
+                          ? "Supprimer l'image principale"
+                          : "Supprimer l'image"
+                      }
                     >
                       {deletingImageId === image.id ? (
                         <Loader2 className="h-4 w-4 animate-spin" />
@@ -347,7 +377,8 @@ export function ProductImageManagement({
                 {/* Informations image */}
                 <div className="absolute bottom-0 left-0 right-0 bg-black bg-opacity-70 text-white p-2">
                   <p className="text-xs truncate">
-                    {(image as any).file_name || `Image ${(image.display_order ?? 0) + 1}`}
+                    {(image as any).file_name ||
+                      `Image ${(image.display_order ?? 0) + 1}`}
                   </p>
                   {image.file_size && (
                     <p className="text-xs text-gray-300">
@@ -394,5 +425,5 @@ export function ProductImageManagement({
         </div>
       )}
     </div>
-  )
+  );
 }

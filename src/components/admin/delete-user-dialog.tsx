@@ -5,12 +5,14 @@
  * avec vérifications de sécurité appropriées.
  */
 
-"use client"
+'use client';
 
-import React, { useState } from 'react'
-import { AlertTriangle, Trash2, X } from 'lucide-react'
-import { ButtonV2 } from '@/components/ui/button'
-import { RoleBadge, type UserRole } from '@/components/ui/role-badge'
+import React, { useState } from 'react';
+
+import { AlertTriangle, Trash2, X } from 'lucide-react';
+
+import type { UserWithProfile } from '@/app/admin/users/page';
+import { ButtonV2 } from '@/components/ui/button';
 import {
   Dialog,
   DialogContent,
@@ -18,65 +20,64 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-} from '@/components/ui/dialog'
-import { deleteUser } from '@/lib/actions/user-management'
-import { UserWithProfile } from '@/app/admin/users/page'
-import { cn } from '@/lib/utils'
+} from '@/components/ui/dialog';
+import { RoleBadge, type UserRole } from '@/components/ui/role-badge';
+import { deleteUser } from '@/lib/actions/user-management';
+import { cn } from '@verone/utils';
 
 interface DeleteUserDialogProps {
-  open: boolean
-  onOpenChange: (open: boolean) => void
-  user: UserWithProfile | null
-  onUserDeleted?: () => void
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+  user: UserWithProfile | null;
+  onUserDeleted?: () => void;
 }
 
 export function DeleteUserDialog({
   open,
   onOpenChange,
   user,
-  onUserDeleted
+  onUserDeleted,
 }: DeleteUserDialogProps) {
-  const [isDeleting, setIsDeleting] = useState(false)
-  const [error, setError] = useState<string>('')
+  const [isDeleting, setIsDeleting] = useState(false);
+  const [error, setError] = useState<string>('');
 
-  if (!user) return null
+  if (!user) return null;
 
   const handleDelete = async () => {
     try {
-      setIsDeleting(true)
-      setError('')
+      setIsDeleting(true);
+      setError('');
 
-      const result = await deleteUser(user.id)
+      const result = await deleteUser(user.id);
 
       if (!result.success) {
-        setError(result.error || 'Erreur lors de la suppression')
-        return
+        setError(result.error || 'Erreur lors de la suppression');
+        return;
       }
 
       // Fermer le dialog et notifier le parent
-      onOpenChange(false)
-      onUserDeleted?.()
+      onOpenChange(false);
+      onUserDeleted?.();
 
       // Notification succès
       // TODO: Ajouter système de notifications toast
-      console.log('Utilisateur supprimé avec succès')
-
+      console.log('Utilisateur supprimé avec succès');
     } catch (error: any) {
-      console.error('Erreur suppression utilisateur:', error)
-      setError(error.message || 'Une erreur inattendue s\'est produite')
+      console.error('Erreur suppression utilisateur:', error);
+      setError(error.message || "Une erreur inattendue s'est produite");
     } finally {
-      setIsDeleting(false)
+      setIsDeleting(false);
     }
-  }
+  };
 
   const handleClose = () => {
     if (!isDeleting) {
-      setError('')
-      onOpenChange(false)
+      setError('');
+      onOpenChange(false);
     }
-  }
+  };
 
-  const isOwner = user.profile?.role === 'owner'
+  const isOwner = user.profile?.role === 'owner';
 
   return (
     <Dialog open={open} onOpenChange={handleClose}>
@@ -87,7 +88,8 @@ export function DeleteUserDialog({
             <span>Supprimer l'utilisateur</span>
           </DialogTitle>
           <DialogDescription>
-            Cette action est irréversible et supprimera définitivement cet utilisateur du système.
+            Cette action est irréversible et supprimera définitivement cet
+            utilisateur du système.
           </DialogDescription>
         </DialogHeader>
 
@@ -137,7 +139,8 @@ export function DeleteUserDialog({
           <div className="text-sm text-black opacity-70">
             <p>Confirmez-vous la suppression de cet utilisateur ?</p>
             <p className="mt-1 font-medium">
-              Cette action supprimera toutes ses données et ne peut pas être annulée.
+              Cette action supprimera toutes ses données et ne peut pas être
+              annulée.
             </p>
           </div>
         </div>
@@ -164,5 +167,5 @@ export function DeleteUserDialog({
         </DialogFooter>
       </DialogContent>
     </Dialog>
-  )
+  );
 }

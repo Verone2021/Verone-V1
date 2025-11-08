@@ -35,10 +35,10 @@ displayed_in:
     location: "Stats header - Badge 'Total'"
 
 thresholds:
-  excellent: "> 20"
-  good: "10-20"
-  warning: "3-10"
-  critical: "< 3"
+  excellent: '> 20'
+  good: '10-20'
+  warning: '3-10'
+  critical: '< 3'
 
 metadata:
   created_at: 2025-10-22

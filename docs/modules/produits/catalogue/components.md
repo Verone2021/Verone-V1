@@ -69,15 +69,15 @@ Composant Card produit optimisé avec **Next.js Image**, **lazy loading**, et **
 
 ```typescript
 interface ProductCardProps {
-  product: Product
-  className?: string
-  showActions?: boolean
-  priority?: boolean      // LCP optimization pour 6 premiers produits
-  index?: number         // Index pour priority dynamique
-  onClick?: (product: Product) => void
-  onArchive?: (product: Product) => void
-  onDelete?: (product: Product) => void
-  archived?: boolean
+  product: Product;
+  className?: string;
+  showActions?: boolean;
+  priority?: boolean; // LCP optimization pour 6 premiers produits
+  index?: number; // Index pour priority dynamique
+  onClick?: (product: Product) => void;
+  onArchive?: (product: Product) => void;
+  onDelete?: (product: Product) => void;
+  archived?: boolean;
 }
 ```
 
@@ -95,26 +95,26 @@ interface ProductCardProps {
 ```typescript
 const statusConfig = {
   in_stock: {
-    label: "En stock",
-    className: "bg-green-600 text-white"
+    label: 'En stock',
+    className: 'bg-green-600 text-white',
   },
   out_of_stock: {
-    label: "Rupture",
-    className: "bg-red-600 text-white"
+    label: 'Rupture',
+    className: 'bg-red-600 text-white',
   },
   preorder: {
-    label: "Précommande",
-    className: "bg-blue-600 text-white"
+    label: 'Précommande',
+    className: 'bg-blue-600 text-white',
   },
   coming_soon: {
-    label: "Bientôt",
-    className: "bg-blue-600 text-white"
+    label: 'Bientôt',
+    className: 'bg-blue-600 text-white',
   },
   discontinued: {
-    label: "Arrêté",
-    className: "bg-gray-600 text-white"
-  }
-}
+    label: 'Arrêté',
+    className: 'bg-gray-600 text-white',
+  },
+};
 ```
 
 #### Exemple d'Utilisation
@@ -150,21 +150,24 @@ export default function ProductsGrid({ products }: { products: Product[] }) {
 #### Best Practices
 
 1. **LCP Optimization** : Toujours passer `priority` pour les 6 premiers produits
+
 ```typescript
 priority={index < 6}
 ```
 
 2. **Memoization** : Le composant est déjà `memo()`, pas besoin de wrapper
+
 ```typescript
 export const ProductCardV2 = memo(function ProductCardV2({ ... }) { ... })
 ```
 
 3. **Image Loading** : Utiliser `useProductImages()` hook intégré
+
 ```typescript
 const { primaryImage, loading: imageLoading } = useProductImages({
   productId: product.id,
-  autoFetch: true
-})
+  autoFetch: true,
+});
 ```
 
 ---
@@ -174,6 +177,7 @@ const { primaryImage, loading: imageLoading } = useProductImages({
 **⚠️ Déprécié** : Utiliser `ProductCardV2` pour nouveaux développements.
 
 Différences vs V2 :
+
 - ❌ Pas de Next.js Image (IMG HTML classique)
 - ❌ Pas de LCP priority
 - ❌ Moins d'animations
@@ -187,9 +191,9 @@ Card spécialisée pour affichage **variantes dans grille**.
 
 ```typescript
 interface ProductVariantGridCardProps {
-  variant: ProductVariant
-  onSelect?: (variant: ProductVariant) => void
-  selected?: boolean
+  variant: ProductVariant;
+  onSelect?: (variant: ProductVariant) => void;
+  selected?: boolean;
 }
 ```
 
@@ -207,12 +211,12 @@ Wizard **2 modes** de création produit : Sourcing (rapide) ou Complet (4 étape
 
 ```typescript
 interface ProductCreationWizardProps {
-  onSuccess?: (productId: string) => void
-  onCancel?: () => void
-  className?: string
+  onSuccess?: (productId: string) => void;
+  onCancel?: () => void;
+  className?: string;
 }
 
-export type CreationType = 'sourcing' | 'complete' | null
+export type CreationType = 'sourcing' | 'complete' | null;
 ```
 
 #### Workflow
@@ -278,6 +282,7 @@ export default function CreateProductPage() {
 #### Mode Sourcing (Rapide)
 
 **3 champs obligatoires** :
+
 - Nom produit
 - URL page fournisseur
 - Prix achat HT
@@ -292,6 +297,7 @@ completion_percentage = 30 (calculé auto)
 #### Mode Complet (4 Étapes)
 
 **Étape 1 : Informations Générales**
+
 - Nom (REQUIRED)
 - Fournisseur
 - Catégorie
@@ -299,16 +305,19 @@ completion_percentage = 30 (calculé auto)
 - Points de vente
 
 **Étape 2 : Images**
+
 - Upload multiple
 - Drag & drop
 - Sélection primaire
 
 **Étape 3 : Prix**
+
 - Prix achat HT
 - Marge %
 - Prix vente estimé (calculé)
 
 **Étape 4 : Stock**
+
 - Stock réel initial
 - Stock minimum
 - Point réapprovisionnement
@@ -321,12 +330,13 @@ Formulaire **ultra-simplifié** avec uniquement les champs essentiels.
 
 ```typescript
 interface SimpleProductFormProps {
-  onSuccess?: (productId: string) => void
-  onCancel?: () => void
+  onSuccess?: (productId: string) => void;
+  onCancel?: () => void;
 }
 ```
 
 **Champs** :
+
 - Nom produit (REQUIRED)
 - Prix achat HT (REQUIRED)
 - Description courte
@@ -341,11 +351,11 @@ Composant **sélecteur produits** avec recherche, filtres et pagination.
 
 ```typescript
 interface ProductSelectorProps {
-  onSelect: (product: Product) => void
-  selectedProductId?: string
-  filters?: ProductFilters
-  multiSelect?: boolean
-  excludeIds?: string[]
+  onSelect: (product: Product) => void;
+  selectedProductId?: string;
+  filters?: ProductFilters;
+  multiSelect?: boolean;
+  excludeIds?: string[];
 }
 ```
 
@@ -403,11 +413,11 @@ Galerie **affichage images** avec navigation, zoom et modal fullscreen.
 
 ```typescript
 interface ProductImageGalleryProps {
-  productId: string
-  productName?: string
-  className?: string
-  showThumbnails?: boolean
-  maxHeight?: string
+  productId: string;
+  productName?: string;
+  className?: string;
+  showThumbnails?: boolean;
+  maxHeight?: string;
 }
 ```
 
@@ -447,12 +457,12 @@ Composant **gestion complète images** (upload, delete, reorder, primary).
 
 ```typescript
 interface ProductImageManagementProps {
-  productId: string
-  onImagesChange?: () => void
-  allowUpload?: boolean
-  allowDelete?: boolean
-  allowReorder?: boolean
-  maxImages?: number
+  productId: string;
+  onImagesChange?: () => void;
+  allowUpload?: boolean;
+  allowDelete?: boolean;
+  allowReorder?: boolean;
+  maxImages?: number;
 }
 ```
 
@@ -497,9 +507,9 @@ export default function ProductEditImages({ productId }: { productId: string }) 
 
 ```typescript
 // Validations automatiques intégrées
-const MAX_FILE_SIZE = 5 * 1024 * 1024  // 5MB
-const ALLOWED_TYPES = ['image/jpeg', 'image/png', 'image/webp']
-const MAX_IMAGES = 10
+const MAX_FILE_SIZE = 5 * 1024 * 1024; // 5MB
+const ALLOWED_TYPES = ['image/jpeg', 'image/png', 'image/webp'];
+const MAX_IMAGES = 10;
 ```
 
 ---
@@ -510,10 +520,10 @@ Modal **galerie images** fullscreen avec navigation.
 
 ```typescript
 interface ProductImagesModalProps {
-  open: boolean
-  onClose: () => void
-  productId: string
-  initialImageIndex?: number
+  open: boolean;
+  onClose: () => void;
+  productId: string;
+  initialImageIndex?: number;
 }
 ```
 
@@ -527,10 +537,10 @@ Composant **bascule View/Edit** avec animation transition et raccourcis clavier.
 
 ```typescript
 interface ProductDualModeProps {
-  product: any
-  onUpdate: (updatedProduct: any) => void
-  initialMode?: 'view' | 'edit'
-  className?: string
+  product: any;
+  onUpdate: (updatedProduct: any) => void;
+  initialMode?: 'view' | 'edit';
+  className?: string;
 }
 ```
 
@@ -576,6 +586,7 @@ export default function ProductDetailPage({ product }: { product: Product }) {
 #### Mode View (`ProductViewMode`)
 
 **Affichage lecture seule** avec :
+
 - Labels + Valeurs formatées
 - Badges pour statut/type
 - Bouton "Modifier" → Switch edit mode
@@ -583,6 +594,7 @@ export default function ProductDetailPage({ product }: { product: Product }) {
 #### Mode Edit (`ProductEditMode`)
 
 **Formulaire édition** avec :
+
 - Inputs pour tous champs
 - Validation temps réel
 - Boutons "Enregistrer" / "Annuler"
@@ -596,13 +608,14 @@ Section **informations générales** éditable (nom, description, catégorie, et
 
 ```typescript
 interface ProductInfoSectionProps {
-  product: Product
-  onUpdate: (data: Partial<Product>) => void
-  editable?: boolean
+  product: Product;
+  onUpdate: (data: Partial<Product>) => void;
+  editable?: boolean;
 }
 ```
 
 **Champs** :
+
 - Nom
 - SKU (read-only)
 - Description
@@ -619,12 +632,13 @@ Section **édition nom produit** avec validation.
 
 ```typescript
 interface ProductNameEditSectionProps {
-  product: Product
-  onUpdate: (name: string) => void
+  product: Product;
+  onUpdate: (name: string) => void;
 }
 ```
 
 **Validation** :
+
 - Min 3 caractères
 - Max 200 caractères
 - Pas de caractères spéciaux (sauf `-`, `_`, espaces)
@@ -637,12 +651,16 @@ Section **édition descriptions** (description + description technique).
 
 ```typescript
 interface ProductDescriptionsEditSectionProps {
-  product: Product
-  onUpdate: (data: { description?: string, technical_description?: string }) => void
+  product: Product;
+  onUpdate: (data: {
+    description?: string;
+    technical_description?: string;
+  }) => void;
 }
 ```
 
 **Features** :
+
 - Textarea auto-expand
 - Character count
 - Markdown preview (optionnel)
@@ -657,9 +675,9 @@ Sélecteur **statut produit** avec colors Design System V2.
 
 ```typescript
 interface ProductStatusSelectorProps {
-  value: ProductStatus
-  onChange: (status: ProductStatus) => void
-  disabled?: boolean
+  value: ProductStatus;
+  onChange: (status: ProductStatus) => void;
+  disabled?: boolean;
 }
 
 type ProductStatus =
@@ -669,7 +687,7 @@ type ProductStatus =
   | 'draft'
   | 'discontinued'
   | 'preorder'
-  | 'coming_soon'
+  | 'coming_soon';
 ```
 
 #### Exemple
@@ -706,13 +724,14 @@ Section complète **gestion variantes** avec grille, ajout, suppression.
 
 ```typescript
 interface ProductVariantsSectionProps {
-  productId: string
-  variantGroupId?: string
-  onUpdate?: () => void
+  productId: string;
+  variantGroupId?: string;
+  onUpdate?: () => void;
 }
 ```
 
 **Features** :
+
 - Grille variantes
 - Ajout variante
 - Édition caractéristiques
@@ -727,9 +746,9 @@ Grille **affichage variantes** avec filtres.
 
 ```typescript
 interface ProductVariantsGridProps {
-  variants: ProductVariant[]
-  onSelect?: (variant: ProductVariant) => void
-  filters?: VariantFilters
+  variants: ProductVariant[];
+  onSelect?: (variant: ProductVariant) => void;
+  filters?: VariantFilters;
 }
 ```
 
@@ -741,13 +760,14 @@ Affichage **caractéristiques fixes** (dimensions, poids, etc.).
 
 ```typescript
 interface ProductFixedCharacteristicsProps {
-  product: Product
-  editable?: boolean
-  onUpdate?: (data: Partial<Product>) => void
+  product: Product;
+  editable?: boolean;
+  onUpdate?: (data: Partial<Product>) => void;
 }
 ```
 
 **Caractéristiques** :
+
 - Dimensions (L × l × H)
 - Poids
 - Condition (new, used, refurbished)
@@ -763,13 +783,14 @@ Modal **historique mouvements stock** avec timeline.
 
 ```typescript
 interface ProductStockHistoryModalProps {
-  open: boolean
-  onClose: () => void
-  productId: string
+  open: boolean;
+  onClose: () => void;
+  productId: string;
 }
 ```
 
 **Features** :
+
 - Timeline mouvements
 - Filtres date
 - Export CSV
@@ -783,7 +804,7 @@ Gestionnaire **consultations produits** (demandes clients).
 
 ```typescript
 interface ProductConsultationManagerProps {
-  productId: string
+  productId: string;
 }
 ```
 
@@ -796,16 +817,16 @@ interface ProductConsultationManagerProps {
 ```typescript
 const handleDelete = async (product: Product) => {
   if (!confirm(`Supprimer "${product.name}" ?`)) {
-    return
+    return;
   }
 
   try {
-    await deleteProduct(product.id)
-    toast.success('✅ Produit supprimé')
+    await deleteProduct(product.id);
+    toast.success('✅ Produit supprimé');
   } catch (error) {
-    toast.error('❌ Erreur suppression')
+    toast.error('❌ Erreur suppression');
   }
-}
+};
 ```
 
 ### Pattern 2 : Optimistic Update
@@ -813,31 +834,31 @@ const handleDelete = async (product: Product) => {
 ```typescript
 const handleUpdate = async (productId: string, data: Partial<Product>) => {
   // Update UI immédiatement
-  setProduct(prev => ({ ...prev, ...data }))
+  setProduct(prev => ({ ...prev, ...data }));
 
   try {
     // Update backend
-    await updateProduct(productId, data)
-    toast.success('✅ Mis à jour')
+    await updateProduct(productId, data);
+    toast.success('✅ Mis à jour');
   } catch (error) {
     // Rollback si erreur
-    setProduct(originalProduct)
-    toast.error('❌ Erreur mise à jour')
+    setProduct(originalProduct);
+    toast.error('❌ Erreur mise à jour');
   }
-}
+};
 ```
 
 ### Pattern 3 : Debounced Search
 
 ```typescript
-const [searchTerm, setSearchTerm] = useState('')
-const debouncedSearch = useDebounce(searchTerm, 300)
+const [searchTerm, setSearchTerm] = useState('');
+const debouncedSearch = useDebounce(searchTerm, 300);
 
 useEffect(() => {
   if (debouncedSearch) {
-    fetchProducts({ search: debouncedSearch })
+    fetchProducts({ search: debouncedSearch });
   }
-}, [debouncedSearch])
+}, [debouncedSearch]);
 ```
 
 ---

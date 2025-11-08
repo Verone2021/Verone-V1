@@ -22,8 +22,8 @@ displayed_in:
     location: "Card 'Administrateurs'"
 
 thresholds:
-  optimal: "2-10 admins"
-  warning: "< 2 admins (risque couverture)"
+  optimal: '2-10 admins'
+  warning: '< 2 admins (risque couverture)'
 
 metadata:
   created_at: 2025-10-22

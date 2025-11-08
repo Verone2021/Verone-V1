@@ -18,9 +18,11 @@ Un **backorder** (commande en attente) se produit lorsqu'un produit est vendu al
 ## 📋 **RÈGLES MÉTIER**
 
 ### **1. Création Commandes**
+
 ✅ **Autorisée** même si `stock_real = 0` ou `stock_available < quantité_demandée`
 
 **Workflow**:
+
 ```
 1. Utilisateur ajoute produit (stock = 0)
 2. Alerte rouge affichée: "Stock insuffisant (Disponible: 0, Demandé: X)"
@@ -29,9 +31,11 @@ Un **backorder** (commande en attente) se produit lorsqu'un produit est vendu al
 ```
 
 ### **2. Validation Commande (draft → confirmed)**
+
 ✅ **Autorisée** même avec stock insuffisant
 
 **Impact Stock**:
+
 ```sql
 -- Trigger: handle_sales_order_stock()
 -- Action: Réservation stock prévisionnel OUT
@@ -39,14 +43,17 @@ stock_forecasted_out = stock_forecasted_out + quantité_commandée
 ```
 
 **Exemple**:
+
 - Stock réel: 5
 - Commande: 10 unités
 - Résultat: `stock_forecasted_out = 10` ✅ Autorisé
 
 ### **3. Sortie Entrepôt (warehouse_exit)**
+
 ✅ **Autorisée** même si stock réel devient négatif
 
 **Impact Stock**:
+
 ```sql
 -- Trigger: handle_sales_order_stock()
 -- Action: Déduction stock réel
@@ -55,14 +62,17 @@ stock_real = stock_real - quantité_expédiée
 ```
 
 **Exemple**:
+
 - Stock réel: 3
 - Expédition: 8 unités
 - Résultat: `stock_real = -5` ✅ **Backorder de 5 unités**
 
 ### **4. Annulation Commande**
+
 ✅ Restauration automatique des réservations
 
 **Impact Stock**:
+
 ```sql
 -- Si commande confirmée mais pas expédiée
 stock_forecasted_out = stock_forecasted_out - quantité_annulée
@@ -73,6 +83,7 @@ stock_forecasted_out = stock_forecasted_out - quantité_annulée
 ## 🔧 **IMPLÉMENTATION TECHNIQUE**
 
 ### **Base de Données**
+
 ```sql
 -- Colonnes products acceptant valeurs négatives
 stock_quantity       INTEGER  -- Peut être < 0
@@ -84,23 +95,28 @@ stock_forecasted_out INTEGER  -- Peut être < 0
 ```
 
 ### **Migrations Appliquées**
+
 - `20251014_005_allow_negative_stock.sql` ⭐ **Migration critique**
   - Suppression 4 contraintes CHECK
   - Documentation backorders dans commentaires colonnes
 
 ### **Triggers Concernés**
+
 1. `handle_sales_order_stock()`: Gestion réservations + déductions
 2. `maintain_stock_coherence()`: Cohérence stock_real
 3. `recalculate_forecasted_stock()`: Calcul prévisionnels
 
 ### **Frontend (React Hooks)**
+
 ```typescript
 // src/hooks/use-sales-orders.ts (ligne 817-820)
 // ✅ FIX 2025-10-14: Warning au lieu de throw Error
 if (unavailableItems.length > 0) {
   // BACKORDERS AUTORISÉS: Warning au lieu de throw (Politique 2025-10-14)
   // Stock négatif = backorder selon standards ERP 2025
-  console.warn(`⚠️ Stock insuffisant (backorder autorisé): ${itemNames.join(', ')}`)
+  console.warn(
+    `⚠️ Stock insuffisant (backorder autorisé): ${itemNames.join(', ')}`
+  );
   // ❌ AVANT: throw new Error() → Bloquant
   // ✅ APRÈS: console.warn() → Non bloquant
 }
@@ -113,25 +129,29 @@ if (unavailableItems.length > 0) {
 ### **Interface Utilisateur**
 
 #### **Création Commande**
+
 ```typescript
 // Alert destructive rouge (non bloquante)
-"Problèmes de stock détectés :"
-"• [Produit] : Stock insuffisant (Disponible: X, Demandé: Y)"
+'Problèmes de stock détectés :';
+'• [Produit] : Stock insuffisant (Disponible: X, Demandé: Y)';
 ```
 
 #### **Dashboard Stocks** (Recommandé - À implémenter)
+
 ```typescript
 // Badge "Backorder" si stock_real < 0
 Stock: -5  🔴 BACKORDER
 ```
 
 #### **Tableau Commandes**
+
 ```typescript
 // Indicateur visuel
 Status: En cours  ⚠️ Backorder
 ```
 
 ### **Alertes Automatiques** (Recommandé - À implémenter)
+
 1. Email admin si `stock_real < 0`
 2. Suggestion commande fournisseur automatique
 3. Email client: "Livraison différée 2-8 semaines"
@@ -141,6 +161,7 @@ Status: En cours  ⚠️ Backorder
 ## 🎯 **CAS D'USAGE**
 
 ### **Cas 1: Précommande Fournisseur**
+
 **Scénario**: Client commande produit non encore reçu du fournisseur
 
 ```
@@ -153,6 +174,7 @@ Status: En cours  ⚠️ Backorder
 ```
 
 ### **Cas 2: Commande Urgente**
+
 **Scénario**: Client VIP demande livraison rapide, stock insuffisant
 
 ```
@@ -168,6 +190,7 @@ Status: En cours  ⚠️ Backorder
 ```
 
 ### **Cas 3: Gestion Prévisionnelle**
+
 **Scénario**: Anticiper besoins réapprovisionnement
 
 ```
@@ -184,12 +207,14 @@ Status: En cours  ⚠️ Backorder
 ## 🌐 **CONFORMITÉ STANDARDS ERP 2025**
 
 ### **Références Professionnelles**
+
 - ✅ **NetSuite**: "Backorder policy allows negative inventory"
 - ✅ **Fishbowl**: "Negative stock = Units on backorder"
 - ✅ **Smart Software**: "Under backorder policy, speak of negative inventory"
 - ✅ **LeanDNA**: "Backorders enable continuous sales despite stock-outs"
 
 ### **Meilleures Pratiques**
+
 1. **Transparence Client**: Communiquer délais livraison
 2. **Priorisation**: Traiter backorders FIFO (First In, First Out)
 3. **Automatisation**: Réapprovisionnement suggéré si stock < seuil
@@ -227,18 +252,21 @@ graph TD
 ## ⚠️ **LIMITATIONS & PRÉCAUTIONS**
 
 ### **Limitations Connues**
+
 1. **Pas de limite négative**: Stock peut devenir très négatif (ex: -100)
    - Solution future: Alert si backorder > seuil critique
 2. **Pas de priorisation auto**: Backorders traités manuellement
    - Solution future: FIFO automatique
 
 ### **Bonnes Pratiques**
+
 ✅ Communiquer délais clients
 ✅ Suivre backorders dashboard
 ✅ Réapprovisionner rapidement
 ✅ Éviter overselling chronique
 
 ### **À NE PAS FAIRE**
+
 ❌ Ignorer alertes backorders
 ❌ Promettre livraison immédiate si backorder
 ❌ Cumuler backorders sans réapprovisionner
@@ -248,27 +276,31 @@ graph TD
 
 ## 📝 **HISTORIQUE MODIFICATIONS**
 
-| Date | Version | Modification | Auteur |
-|------|---------|--------------|--------|
-| 2025-10-14 | 1.0 | Création politique backorders | Claude Code |
-| 2025-10-14 | 1.0 | Migration 005 appliquée (database) | System |
-| 2025-10-14 | 1.1 | Fix frontend validation (use-sales-orders.ts ligne 817) | Claude Code |
+| Date       | Version | Modification                                            | Auteur      |
+| ---------- | ------- | ------------------------------------------------------- | ----------- |
+| 2025-10-14 | 1.0     | Création politique backorders                           | Claude Code |
+| 2025-10-14 | 1.0     | Migration 005 appliquée (database)                      | System      |
+| 2025-10-14 | 1.1     | Fix frontend validation (use-sales-orders.ts ligne 817) | Claude Code |
 
 ---
 
 ## 📎 **RÉFÉRENCES TECHNIQUES**
 
 ### **Migrations Database**
+
 - `supabase/migrations/20251014_005_allow_negative_stock.sql`
 
 ### **Code Frontend**
+
 - `src/hooks/use-sales-orders.ts` (ligne 817-820)
 
 ### **Documentation**
+
 - `MEMORY-BANK/sessions/RAPPORT-SESSION-BACKORDERS-2025-10-14.md` (Implémentation initiale)
 - `MEMORY-BANK/sessions/RAPPORT-FIX-FRONTEND-BACKORDERS-2025-10-14.md` (Fix validation frontend)
 
 ### **Tests & Screenshots**
+
 - `.playwright-mcp/test-backorders-success-stock-negatif.png` (Test initial)
 - `.playwright-mcp/test-backorders-fix-frontend-success.png` (Test fix frontend)
 - Commande test: SO-2025-00017 (Hotel Le Luxe, Fauteuil Milo Kaki)
@@ -279,4 +311,4 @@ graph TD
 **🎯 OBJECTIF**: Fluidité opérationnelle + Conformité ERP 2025
 **🏆 STATUT**: Implémentation complète et validée
 
-*Vérone Back Office - Professional Inventory Management*
+_Vérone Back Office - Professional Inventory Management_

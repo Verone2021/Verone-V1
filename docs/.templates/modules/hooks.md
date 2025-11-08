@@ -7,6 +7,7 @@
 ## 📚 Hooks Overview
 
 ### Available Hooks
+
 1. `use[Module]()` - Main CRUD hook
 2. `use[Module]Filters()` - Filtering & search
 3. `use[Module]Metrics()` - Analytics (if applicable)
@@ -19,6 +20,7 @@
 **File** : `src/hooks/use-[module].ts`
 
 ### Purpose
+
 Main hook for CRUD operations on [module] data.
 
 ### API
@@ -192,6 +194,7 @@ export function use[Module](options?: UseModuleOptions) {
 ```
 
 ### Performance Considerations
+
 - ✅ Uses React Query for caching
 - ✅ Automatic refetch on window focus
 - ✅ Optimistic updates for better UX
@@ -204,6 +207,7 @@ export function use[Module](options?: UseModuleOptions) {
 **File** : `src/hooks/use-[module]-filters.ts`
 
 ### Purpose
+
 Manage filtering and search state for [module] list.
 
 ### API
@@ -322,6 +326,7 @@ export function use[Module]Filters() {
 **File** : `src/hooks/metrics/use-[module]-metrics.ts`
 
 ### Purpose
+
 Fetch and compute analytics metrics for [module].
 
 ### API
@@ -374,6 +379,7 @@ function [Module]Dashboard() {
 **File** : `src/hooks/use-[module]-validation.ts`
 
 ### Purpose
+
 Form validation logic with Zod schemas.
 
 ### API
@@ -435,10 +441,12 @@ export function use[Module]Validation() {
 ## 🎯 Best Practices
 
 ### 1. Hook Naming
+
 ✅ **DO** : `use[Module]()`
 ❌ **DON'T** : `get[Module]Data()`, `fetch[Module]()`
 
 ### 2. Error Handling
+
 ```typescript
 // ✅ GOOD: Centralized error handling
 const { data, error } = use[Module]()
@@ -449,6 +457,7 @@ if (error) {
 ```
 
 ### 3. Loading States
+
 ```typescript
 // ✅ GOOD: Show loading state
 const { isLoading } = use[Module]()
@@ -459,20 +468,19 @@ if (isLoading) {
 ```
 
 ### 4. Memoization
+
 ```typescript
 // ✅ GOOD: Memoize expensive computations
-const filteredData = useMemo(
-  () => data?.filter(applyFilters),
-  [data, filters]
-)
+const filteredData = useMemo(() => data?.filter(applyFilters), [data, filters]);
 ```
 
 ### 5. Dependency Arrays
+
 ```typescript
 // ✅ GOOD: Include all dependencies
 useEffect(() => {
-  fetchData(id, filters)
-}, [id, filters, fetchData])
+  fetchData(id, filters);
+}, [id, filters, fetchData]);
 ```
 
 ---
@@ -482,23 +490,29 @@ useEffect(() => {
 ### Common Issues
 
 #### Issue 1: Stale Data
+
 **Problem** : Data doesn't update after mutation
 **Solution** : Invalidate query cache
+
 ```typescript
-queryClient.invalidateQueries(['[module]'])
+queryClient.invalidateQueries(['[module]']);
 ```
 
 #### Issue 2: Infinite Loops
+
 **Problem** : useEffect runs infinitely
 **Solution** : Fix dependency array or use useCallback
+
 ```typescript
 const handler = useCallback(() => { ... }, [dep])
 useEffect(() => { handler() }, [handler])
 ```
 
 #### Issue 3: Type Errors
+
 **Problem** : TypeScript errors on hook return
 **Solution** : Explicit return type annotation
+
 ```typescript
 function use[Module](): UseModuleReturn {
   // ...

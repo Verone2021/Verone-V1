@@ -50,14 +50,14 @@ source:
 displayed_in:
   - component: src/app/contacts-organisations/page.tsx
     location: "Card 'Clients Professionnels' (ligne ~160-185)"
-    description: "Troisième carte statistiques page accueil"
+    description: 'Troisième carte statistiques page accueil'
     screenshot: contacts-organisations-page.png
 
 thresholds:
-  excellent: "> 200"
-  good: "100-200"
-  warning: "50-100"
-  critical: "< 50"
+  excellent: '> 200'
+  good: '100-200'
+  warning: '50-100'
+  critical: '< 50'
   interpretation: |
     - > 200 : Base clients B2B solide
     - 100-200 : Portefeuille clients sain
@@ -65,17 +65,17 @@ thresholds:
     - < 50 : Phase acquisition
 
 tests:
-  - scenario: "Base clients standard"
+  - scenario: 'Base clients standard'
     inputs:
       customers_b2b_count: 144
     expected_output: 144
-    threshold_expected: "good"
+    threshold_expected: 'good'
 
-  - scenario: "Grande base clients"
+  - scenario: 'Grande base clients'
     inputs:
       customers_b2b_count: 250
     expected_output: 250
-    threshold_expected: "excellent"
+    threshold_expected: 'excellent'
 
 metadata:
   created_at: 2025-10-22

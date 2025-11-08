@@ -6,7 +6,7 @@
  */
 
 import { logger } from '@/lib/logger';
-import type { Database } from '@/types/database';
+import type { Database } from '@verone/types';
 
 // Types Supabase
 type Product = Database['public']['Tables']['products']['Row'];

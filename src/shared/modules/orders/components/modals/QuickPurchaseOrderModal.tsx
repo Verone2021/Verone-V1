@@ -1,9 +1,14 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+
 import Image from 'next/image';
-import { createClient } from '@/lib/supabase/client';
-import { useDraftPurchaseOrder } from '@/shared/modules/orders/hooks';
+
+import { Loader2, Info, Package } from 'lucide-react';
+
+import { Alert, AlertDescription } from '@/components/ui/alert';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent } from '@/components/ui/card';
 import {
   Dialog,
   DialogContent,
@@ -12,15 +17,13 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog';
-import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Card, CardContent } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
-import { Alert, AlertDescription } from '@/components/ui/alert';
-import { Loader2, Info, Package } from 'lucide-react';
+import { createClient } from '@/lib/supabase/client';
+import { useDraftPurchaseOrder } from '@/shared/modules/orders/hooks';
 
-interface QuickPurchaseOrderModalProps {
+export interface QuickPurchaseOrderModalProps {
   open: boolean;
   onClose: () => void;
   productId: string;

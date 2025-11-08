@@ -6,7 +6,9 @@
  * ⚠️ Recalcul stock automatique via trigger maintain_stock_totals()
  */
 
-import { NextRequest, NextResponse } from 'next/server';
+import type { NextRequest } from 'next/server';
+import { NextResponse } from 'next/server';
+
 import { createServerClient } from '@/lib/supabase/server';
 
 interface DeleteResponse {
@@ -52,7 +54,9 @@ export async function DELETE(
     // 3. Récupération du mouvement pour validation
     const { data: movement, error: fetchError } = await supabase
       .from('stock_movements')
-      .select('id, reference_type, affects_forecast, movement_type, quantity_change')
+      .select(
+        'id, reference_type, affects_forecast, movement_type, quantity_change'
+      )
       .eq('id', movementId)
       .single();
 
@@ -76,7 +80,8 @@ export async function DELETE(
           success: false,
           error: 'Impossible de supprimer un mouvement prévisionnel',
           details: {
-            reason: 'Les mouvements prévisionnels ne peuvent pas être supprimés manuellement',
+            reason:
+              'Les mouvements prévisionnels ne peuvent pas être supprimés manuellement',
           },
         },
         { status: 403 }
@@ -132,7 +137,8 @@ export async function DELETE(
     // 7. Réponse de succès
     return NextResponse.json({
       success: true,
-      message: 'Mouvement supprimé avec succès. Le stock a été recalculé automatiquement.',
+      message:
+        'Mouvement supprimé avec succès. Le stock a été recalculé automatiquement.',
     });
   } catch (error: any) {
     console.error('[API] Delete stock movement failed:', error);

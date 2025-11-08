@@ -1,8 +1,11 @@
 'use client';
 
 import { use, useState, useCallback, useEffect, useRef, useMemo } from 'react';
-import { useRouter } from 'next/navigation';
+
+import Image from 'next/image';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
+
 import {
   ChevronLeft,
   Package,
@@ -18,32 +21,30 @@ import {
   Home,
   ExternalLink,
 } from 'lucide-react';
-import { getOrganisationDisplayName } from '@/lib/utils/organisation-helpers';
-import { ButtonV2 } from '@/components/ui/button';
+
 import { Badge } from '@/components/ui/badge';
+import { ButtonV2 } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
+import { getOrganisationDisplayName } from '@/lib/utils/organisation-helpers';
+import { useToast } from '@/shared/modules/common/hooks';
+import { CreateProductInGroupModal } from '@/shared/modules/products/components/modals/CreateProductInGroupModal';
+import { EditProductVariantModal } from '@/shared/modules/products/components/modals/EditProductVariantModal';
+import { VariantCreationModal } from '@/shared/modules/products/components/modals/VariantCreationModal';
+import { VariantGroupEditModal } from '@/shared/modules/products/components/modals/VariantGroupEditModal';
+import type { SelectedProduct } from '@/shared/modules/products/components/selectors/UniversalProductSelectorV2';
+import { UniversalProductSelectorV2 } from '@/shared/modules/products/components/selectors/UniversalProductSelectorV2';
+import { useVariantGroups } from '@/shared/modules/products/hooks';
 import {
   useVariantGroup,
   useProductVariantEditing,
 } from '@/shared/modules/products/hooks';
-import { useVariantGroups } from '@/shared/modules/products/hooks';
-import { useToast } from '@/shared/modules/common/hooks';
-import Image from 'next/image';
-import { VariantGroupEditModal } from '@/shared/modules/products/components/modals/VariantGroupEditModal';
-import { VariantCreationModal } from '@/shared/modules/products/components/modals/VariantCreationModal';
-import { EditProductVariantModal } from '@/shared/modules/products/components/modals/EditProductVariantModal';
-import { CreateProductInGroupModal } from '@/shared/modules/products/components/modals/CreateProductInGroupModal';
-import {
-  UniversalProductSelectorV2,
-  SelectedProduct,
-} from '@/components/business/universal-product-selector-v2';
-import type { VariantProduct } from '@/types/variant-groups';
+import { COLLECTION_STYLE_OPTIONS } from '@verone/types';
 import {
   formatAttributesForDisplay,
   type VariantAttributes,
-} from '@/types/variant-attributes-types';
-import { COLLECTION_STYLE_OPTIONS } from '@/types/collections';
+} from '@verone/types';
+import type { VariantProduct } from '@verone/types';
 
 interface VariantGroupDetailPageProps {
   params: Promise<{
@@ -337,7 +338,7 @@ export default function VariantGroupDetailPage({
   // Handler pour ajout multiple produits
   // Mémoiser excludeProductIds pour éviter re-renders
   const excludeProductIds = useMemo(
-    () => variantGroup?.products?.map((p) => p.id) || [],
+    () => variantGroup?.products?.map(p => p.id) || [],
     [variantGroup?.products]
   );
 
@@ -470,12 +471,12 @@ export default function VariantGroupDetailPage({
     return (
       <div className="container mx-auto px-4 py-6">
         <div className="animate-pulse">
-          <div className="h-8 bg-gray-200 rounded w-1/4 mb-6"></div>
+          <div className="h-8 bg-gray-200 rounded w-1/4 mb-6" />
           <div className="space-y-4">
-            <div className="h-32 bg-gray-200 rounded"></div>
+            <div className="h-32 bg-gray-200 rounded" />
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
               {[...Array(6)].map((_, i) => (
-                <div key={i} className="h-48 bg-gray-200 rounded"></div>
+                <div key={i} className="h-48 bg-gray-200 rounded" />
               ))}
             </div>
           </div>
@@ -540,7 +541,7 @@ export default function VariantGroupDetailPage({
                     autoFocus
                   />
                   {savingName && (
-                    <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-black"></div>
+                    <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-black" />
                   )}
                 </div>
               ) : (
@@ -696,7 +697,7 @@ export default function VariantGroupDetailPage({
                   <option value="pattern">Motif</option>
                 </select>
                 {savingType && (
-                  <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-black"></div>
+                  <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-black" />
                 )}
                 <button
                   onClick={handleCancelEditType}
@@ -899,7 +900,7 @@ export default function VariantGroupDetailPage({
           title={`Ajouter des produits au groupe "${variantGroup.name}"`}
           description="Sélectionnez les produits à ajouter comme variantes de ce groupe"
           excludeProductIds={excludeProductIds}
-          showImages={true}
+          showImages
           showQuantity={false}
           showPricing={false}
         />

@@ -21,6 +21,7 @@ Documentation complète du système **Vérone Back Office**, CRM/ERP modulaire p
 Système de rôles (Owner/Admin), permissions, RLS policies, profils utilisateurs.
 
 **Fichiers clés** :
+
 - [Matrice Rôles & Permissions](./auth/roles-permissions-matrix.md)
 - [RLS Policies](./auth/rls-policies.md)
 - [Profils Utilisateurs](./auth/user-profiles.md)
@@ -33,6 +34,7 @@ Système de rôles (Owner/Admin), permissions, RLS policies, profils utilisateur
 Architecture database, schéma ERD, triggers, hooks, fonctions RPC, migrations.
 
 **Fichiers clés** :
+
 - [Schéma Overview](./database/schema-overview.md)
 - [Triggers & Hooks](./database/triggers-hooks.md)
 - [Fonctions RPC](./database/functions-rpc.md)
@@ -45,6 +47,7 @@ Architecture database, schéma ERD, triggers, hooks, fonctions RPC, migrations.
 16 hooks dashboard, 10 triggers database, 20+ formules calcul, composants Recharts.
 
 **Fichiers clés** :
+
 - [Dashboard KPIs](./metrics/dashboard-kpis.md)
 - [Métriques Business](./metrics/business-metrics.md)
 - [Métriques Techniques](./metrics/technical-metrics.md)
@@ -59,6 +62,7 @@ Architecture database, schéma ERD, triggers, hooks, fonctions RPC, migrations.
 Endpoints REST, fonctions RPC Supabase, webhooks, intégrations externes.
 
 **Fichiers clés** :
+
 - [REST Endpoints](./api/rest-endpoints.md)
 - [RPC Functions](./api/rpc-functions.md)
 - [Webhooks](./api/webhooks.md)
@@ -70,6 +74,7 @@ Endpoints REST, fonctions RPC Supabase, webhooks, intégrations externes.
 Quickstart, setup développement, tests, déploiement, workflows quotidiens.
 
 **Fichiers clés** :
+
 - [Quickstart](./guides/quickstart.md)
 - [Development Setup](./guides/development-setup.md)
 - [Testing Guide](./guides/testing-guide.md)
@@ -82,6 +87,7 @@ Quickstart, setup développement, tests, déploiement, workflows quotidiens.
 Tech stack, design system V2 2025, patterns architecture, sécurité.
 
 **Fichiers clés** :
+
 - [Tech Stack](./architecture/tech-stack.md)
 - [Design System V2](./architecture/design-system.md)
 - [Security Architecture](./architecture/security.md)
@@ -93,6 +99,7 @@ Tech stack, design system V2 2025, patterns architecture, sécurité.
 Workflows quotidiens Owner/Admin, lifecycle commandes, mouvements stock, validation sourcing.
 
 **Fichiers clés** :
+
 - [Owner Daily Workflow](./workflows/owner-daily-workflow.md)
 - [Admin Daily Workflow](./workflows/admin-daily-workflow.md)
 - [Orders Lifecycle](./workflows/orders-lifecycle.md)
@@ -106,6 +113,7 @@ Workflows quotidiens Owner/Admin, lifecycle commandes, mouvements stock, validat
 Erreurs courantes, debugging console, résolution problèmes.
 
 **Fichiers clés** :
+
 - [Common Errors](./troubleshooting/common-errors.md)
 - [Console Debugging](./troubleshooting/console-debugging.md)
 
@@ -175,10 +183,10 @@ Voir [CONVENTIONS.md](./CONVENTIONS.md) pour détails complets.
 
 ## Historique des Versions
 
-| Date | Version | Changements Majeurs |
-|------|---------|---------------------|
-| 2025-10-16 | 2.0 | Refonte complète structure - 8 sections principales |
-| 2024-09-26 | 1.0 | Création initiale documentation |
+| Date       | Version | Changements Majeurs                                 |
+| ---------- | ------- | --------------------------------------------------- |
+| 2025-10-16 | 2.0     | Refonte complète structure - 8 sections principales |
+| 2024-09-26 | 1.0     | Création initiale documentation                     |
 
 ---
 

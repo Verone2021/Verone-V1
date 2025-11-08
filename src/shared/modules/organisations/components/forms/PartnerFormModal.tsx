@@ -1,13 +1,16 @@
-"use client"
+'use client';
 
-import { useOrganisations } from '@/shared/modules/organisations/hooks'
-import { UnifiedOrganisationForm, OrganisationFormData, Organisation } from './unified-organisation-form'
+import type { Organisation } from '@/shared/modules/organisations/hooks';
+import { useOrganisations } from '@/shared/modules/organisations/hooks';
+
+import type { OrganisationFormData } from './unified-organisation-form';
+import { UnifiedOrganisationForm } from './unified-organisation-form';
 
 interface PartnerFormModalProps {
-  isOpen: boolean
-  onClose: () => void
-  partner?: Organisation | null // null = création, objet = édition
-  onSuccess?: (partner: Organisation) => void
+  isOpen: boolean;
+  onClose: () => void;
+  partner?: Organisation | null; // null = création, objet = édition
+  onSuccess?: (partner: Organisation) => void;
 }
 
 /**
@@ -18,19 +21,24 @@ export function PartnerFormModal({
   isOpen,
   onClose,
   partner = null,
-  onSuccess
+  onSuccess,
 }: PartnerFormModalProps) {
-  const { createOrganisation, updateOrganisation } = useOrganisations({ type: 'partner' })
+  const { createOrganisation, updateOrganisation } = useOrganisations({
+    type: 'partner',
+  });
 
-  const isEditing = !!partner
+  const isEditing = !!partner;
 
-  const handleSubmit = async (data: OrganisationFormData, organisationId?: string) => {
+  const handleSubmit = async (
+    data: OrganisationFormData,
+    organisationId?: string
+  ) => {
     const partnerData = {
       ...data,
       type: 'partner' as const,
-    }
+    };
 
-    let result
+    let result;
 
     if (isEditing && partner) {
       // Mise à jour
@@ -61,11 +69,11 @@ export function PartnerFormModal({
         // Commercial
         currency: partnerData.currency || 'EUR',
         payment_terms: partnerData.payment_terms || undefined,
-      })
+      });
     } else {
       // Création
       result = await createOrganisation({
-        legal_name: partnerData.legal_name,
+        legal_name: partnerData.legal_name || partnerData.name, // Fallback to name if legal_name empty
         type: 'partner',
         email: partnerData.email || undefined,
         secondary_email: partnerData.secondary_email || undefined,
@@ -91,18 +99,18 @@ export function PartnerFormModal({
         // Commercial
         currency: partnerData.currency || 'EUR',
         payment_terms: partnerData.payment_terms || undefined,
-      })
+      });
     }
 
     if (result) {
-      console.log('✅ Prestataire sauvegardé avec succès')
-      onSuccess?.(result as Organisation)
-      onClose()
+      console.log('✅ Prestataire sauvegardé avec succès');
+      onSuccess?.(result as Organisation);
+      onClose();
     } else {
-      console.error('❌ Erreur lors de la sauvegarde')
-      alert('Erreur lors de la sauvegarde. Veuillez réessayer.')
+      console.error('❌ Erreur lors de la sauvegarde');
+      alert('Erreur lors de la sauvegarde. Veuillez réessayer.');
     }
-  }
+  };
 
   return (
     <UnifiedOrganisationForm
@@ -118,5 +126,5 @@ export function PartnerFormModal({
         // TODO: Refetch partner data if needed
       }}
     />
-  )
+  );
 }

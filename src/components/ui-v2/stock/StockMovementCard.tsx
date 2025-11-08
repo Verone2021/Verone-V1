@@ -1,4 +1,4 @@
-'use client'
+'use client';
 
 /**
  * 🎨 StockMovementCard Component
@@ -24,47 +24,51 @@
  * ```
  */
 
-import * as React from 'react'
-import Image from 'next/image'
-import { Package } from 'lucide-react'
-import { format } from 'date-fns'
-import { fr } from 'date-fns/locale'
-import { Card } from '@/components/ui/card'
-import { cn } from '@/lib/utils'
-import { ChannelBadge } from './ChannelBadge'
-import { MOVEMENT_CONFIG, type MovementType, type ChannelCode } from './types'
+import * as React from 'react';
+
+import Image from 'next/image';
+
+import { format } from 'date-fns';
+import { fr } from 'date-fns/locale';
+import { Package } from 'lucide-react';
+
+import { Card } from '@/components/ui/card';
+import { cn } from '@verone/utils';
+
+import { ChannelBadge } from './ChannelBadge';
+import { MOVEMENT_CONFIG, type MovementType, type ChannelCode } from './types';
 
 export interface StockMovementCardProps {
   /**
    * Données du mouvement de stock
    */
   movement: {
-    id: string
-    movement_type: MovementType
-    quantity_change: number
-    reason_code: string
-    performed_at: string
-    channel_id?: string | null
+    id: string;
+    movement_type: MovementType;
+    quantity_change: number;
+    reason_code: string;
+    performed_at: string;
+    channel_id?: string | null;
     products?: {
-      name: string
-      sku: string
-      image_url?: string | null  // ✅ NOUVEAU - URL image produit
-    } | null
+      name: string;
+      sku: string;
+      image_url?: string | null; // ✅ NOUVEAU - URL image produit
+    } | null;
     sales_channels?: {
-      name: string
-      code: string
-    } | null
-  }
+      name: string;
+      code: string;
+    } | null;
+  };
 
   /**
    * Callback click sur la card
    */
-  onClick?: () => void
+  onClick?: () => void;
 
   /**
    * Classes CSS additionnelles
    */
-  className?: string
+  className?: string;
 }
 
 /**
@@ -86,35 +90,35 @@ export function StockMovementCard({
   onClick,
   className,
 }: StockMovementCardProps) {
-  const config = MOVEMENT_CONFIG[movement.movement_type]
-  const isClickable = !!onClick
+  const config = MOVEMENT_CONFIG[movement.movement_type];
+  const isClickable = !!onClick;
 
   /**
    * Normaliser code canal pour badge
    */
   const normalizeChannelCode = (code: string): ChannelCode => {
-    const lowerCode = code.toLowerCase()
+    const lowerCode = code.toLowerCase();
 
-    if (lowerCode.includes('b2b')) return 'b2b'
+    if (lowerCode.includes('b2b')) return 'b2b';
     if (lowerCode.includes('ecommerce') || lowerCode.includes('e-commerce'))
-      return 'ecommerce'
-    if (lowerCode.includes('retail')) return 'retail'
-    if (lowerCode.includes('wholesale')) return 'wholesale'
+      return 'ecommerce';
+    if (lowerCode.includes('retail')) return 'retail';
+    if (lowerCode.includes('wholesale')) return 'wholesale';
 
-    return 'ecommerce'
-  }
+    return 'ecommerce';
+  };
 
   /**
    * Formater la date
    */
   const formatDate = (dateStr: string): string => {
     try {
-      const date = new Date(dateStr)
-      return format(date, "dd MMM yyyy 'à' HH:mm", { locale: fr })
+      const date = new Date(dateStr);
+      return format(date, "dd MMM yyyy 'à' HH:mm", { locale: fr });
     } catch {
-      return dateStr
+      return dateStr;
     }
-  }
+  };
 
   return (
     <Card
@@ -124,10 +128,10 @@ export function StockMovementCard({
       onClick={onClick}
       onKeyDown={
         isClickable
-          ? (e) => {
+          ? e => {
               if (e.key === 'Enter' || e.key === ' ') {
-                e.preventDefault()
-                onClick?.()
+                e.preventDefault();
+                onClick?.();
               }
             }
           : undefined
@@ -202,16 +206,12 @@ export function StockMovementCard({
           <div className="flex items-center justify-start md:justify-center">
             {movement.sales_channels ? (
               <ChannelBadge
-                channelCode={normalizeChannelCode(
-                  movement.sales_channels.code
-                )}
+                channelCode={normalizeChannelCode(movement.sales_channels.code)}
                 size="md"
                 showIcon
               />
             ) : (
-              <span className="text-xs text-gray-400 italic">
-                Aucun canal
-              </span>
+              <span className="text-xs text-gray-400 italic">Aucun canal</span>
             )}
           </div>
 
@@ -220,15 +220,17 @@ export function StockMovementCard({
             <p className="text-xs text-gray-500">
               {formatDate(movement.performed_at)}
             </p>
-            <p className="text-xs text-gray-400 font-mono">#{movement.id.slice(0, 8)}</p>
+            <p className="text-xs text-gray-400 font-mono">
+              #{movement.id.slice(0, 8)}
+            </p>
           </div>
         </div>
       </div>
     </Card>
-  )
+  );
 }
 
 /**
  * Type export pour usage externe
  */
-StockMovementCard.displayName = 'StockMovementCard'
+StockMovementCard.displayName = 'StockMovementCard';

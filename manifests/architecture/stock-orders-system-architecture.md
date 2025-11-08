@@ -1,4 +1,5 @@
 # 🏗️ Architecture Système Stock et Commandes
+
 **Date Création** : 16 septembre 2025
 **Version** : 1.0
 **Status** : ✅ IMPLÉMENTÉ
@@ -6,6 +7,7 @@
 ## 📋 Vue d'Ensemble
 
 Le système Stock et Commandes de Vérone Back Office suit les meilleures pratiques ERP (inspiré ERPNext) avec une architecture moderne TypeScript/Supabase garantissant :
+
 - **Traçabilité complète** des mouvements de stock
 - **Prévention survente** via système de réservations
 - **Workflows stricts** pour commandes fournisseurs et clients
@@ -16,6 +18,7 @@ Le système Stock et Commandes de Vérone Back Office suit les meilleures pratiq
 ### **Tables Principales**
 
 #### 1. **stock_movements**
+
 ```sql
 CREATE TABLE stock_movements (
   id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -30,9 +33,11 @@ CREATE TABLE stock_movements (
   created_at timestamptz DEFAULT now()
 );
 ```
+
 **Rôle** : Traçabilité exhaustive tous mouvements stock
 
 #### 2. **stock_reservations**
+
 ```sql
 CREATE TABLE stock_reservations (
   id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -45,9 +50,11 @@ CREATE TABLE stock_reservations (
   created_at timestamptz DEFAULT now()
 );
 ```
+
 **Rôle** : Prévention survente avec réservations temporaires
 
 #### 3. **purchase_orders**
+
 ```sql
 CREATE TABLE purchase_orders (
   id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -78,9 +85,11 @@ CREATE TABLE purchase_orders (
   updated_at timestamptz DEFAULT now()
 );
 ```
+
 **Rôle** : Gestion commandes fournisseurs avec workflow complet
 
 #### 4. **purchase_order_items**
+
 ```sql
 CREATE TABLE purchase_order_items (
   id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -97,14 +106,17 @@ CREATE TABLE purchase_order_items (
   updated_at timestamptz DEFAULT now()
 );
 ```
+
 **Rôle** : Détail items commandes fournisseurs avec réceptions partielles
 
 #### 5. **sales_orders** + **sales_order_items**
+
 Structure similaire aux purchase_orders avec adaptations pour gestion client et intégration stock.
 
 ### **Fonctions Business Logic**
 
 #### **generate_po_number()**
+
 ```sql
 CREATE OR REPLACE FUNCTION generate_po_number()
 RETURNS text AS $$
@@ -125,6 +137,7 @@ $$ LANGUAGE plpgsql;
 ```
 
 #### **get_available_stock(product_id)**
+
 ```sql
 CREATE OR REPLACE FUNCTION get_available_stock(p_product_id uuid)
 RETURNS decimal AS $$
@@ -147,6 +160,7 @@ $$ LANGUAGE plpgsql;
 ```
 
 #### **update_product_stock() TRIGGER**
+
 ```sql
 CREATE OR REPLACE FUNCTION update_product_stock()
 RETURNS trigger AS $$
@@ -171,6 +185,7 @@ $$ LANGUAGE plpgsql;
 ### **Sécurité RLS (Row Level Security)**
 
 Toutes les tables implémentent des policies multi-tenant :
+
 ```sql
 -- Exemple pour stock_movements
 CREATE POLICY "Users can only see movements from their organization"
@@ -189,52 +204,59 @@ USING (
 ## 🔗 Couche Hooks TypeScript
 
 ### **Architecture Pattern**
+
 Chaque hook suit le pattern React standard avec :
+
 - **État local** via `useState`
 - **Optimisation** via `useCallback` + `useMemo`
 - **Gestion erreurs** unifiée avec `useToast`
 - **Type safety** strict TypeScript
 
 ### **use-stock-movements.ts**
+
 ```typescript
 interface StockMovement {
-  id: string
-  product_id: string
-  movement_type: 'IN' | 'OUT' | 'ADJUST' | 'TRANSFER'
-  quantity_change: number
-  unit_cost?: number
-  reference_type?: string
-  reference_id?: string
-  notes?: string
-  created_by: string
-  created_at: string
+  id: string;
+  product_id: string;
+  movement_type: 'IN' | 'OUT' | 'ADJUST' | 'TRANSFER';
+  quantity_change: number;
+  unit_cost?: number;
+  reference_type?: string;
+  reference_id?: string;
+  notes?: string;
+  created_by: string;
+  created_at: string;
 }
 
 export function useStockMovements() {
-  const [movements, setMovements] = useState<StockMovement[]>([])
-  const [loading, setLoading] = useState(false)
+  const [movements, setMovements] = useState<StockMovement[]>([]);
+  const [loading, setLoading] = useState(false);
 
   const createMovement = useCallback(async (data: CreateMovementData) => {
     // Validation + insertion + trigger automatique stock_quantity
-  }, [])
+  }, []);
 
   const getAvailableStock = useCallback(async (productId: string) => {
     // Appel fonction get_available_stock()
-  }, [])
+  }, []);
 
-  return { movements, loading, createMovement, getAvailableStock }
+  return { movements, loading, createMovement, getAvailableStock };
 }
 ```
 
 ### **use-purchase-orders.ts**
+
 Gestion complète workflow PO avec :
+
 - **Création** avec calculs automatiques
 - **Transitions statuts** avec validation business
 - **Réception items** avec mouvements stock automatiques
 - **Statistiques** temps réel
 
 ### **use-sales-orders.ts**
+
 Intégration avancée avec stock :
+
 - **Validation disponibilité** avant confirmation
 - **Réservations automatiques** à la confirmation
 - **Libération réservations** à l'annulation/expédition
@@ -243,17 +265,20 @@ Intégration avancée avec stock :
 ## 🖼️ Couche Interface UI
 
 ### **Architecture Composants**
+
 - **Pages** : `/stocks`, `/commandes/fournisseurs`, `/commandes/clients`
 - **Composants Business** : Formulaires, modals, listes avec filtres
 - **Design System** : shadcn/ui avec thème Vérone (noir/blanc/gris)
 
 ### **Performance UX**
+
 - **Pagination** : 25-50 éléments par page
 - **Lazy Loading** : Chargement différé composants lourds
 - **Debouncing** : 300ms sur recherches/filtres
 - **Optimistic Updates** : UI réactive avec rollback erreurs
 
 ### **Responsive Design**
+
 - **Mobile-first** : Interface tactile adaptative
 - **Breakpoints** : sm/md/lg/xl suivant Tailwind
 - **Touch-friendly** : Boutons 44px minimum, gestures intuitifs
@@ -261,6 +286,7 @@ Intégration avancée avec stock :
 ## 🔄 Workflows Business
 
 ### **Commande Fournisseur Complète**
+
 ```mermaid
 graph TD
     A[DRAFT] --> B[SENT]
@@ -274,11 +300,13 @@ graph TD
 ```
 
 **Actions Automatiques** :
+
 - **SENT** : Email fournisseur + timestamp
 - **CONFIRMED** : Validation business + alerte livraison
 - **RECEIVED** : Mouvements stock IN + recalcul totaux
 
 ### **Commande Client avec Stock**
+
 ```mermaid
 graph TD
     A[DRAFT] --> B{Stock OK?}
@@ -292,6 +320,7 @@ graph TD
 ```
 
 **Intégration Stock** :
+
 - **Validation** : Contrôle get_available_stock() temps réel
 - **Réservation** : Création automatique à confirmation
 - **Expédition** : Mouvement OUT + libération réservation
@@ -299,18 +328,21 @@ graph TD
 ## 📊 Métriques & Monitoring
 
 ### **Performance Cibles**
+
 - **Chargement pages** : <2s (stocks/commandes)
 - **Validation stock** : <500ms temps réel
 - **Recherche produits** : <300ms avec autocomplete
 - **Pagination** : <1s changement page
 
 ### **Business KPIs**
+
 - **Précision stock** : 100% cohérence mouvements ↔ stock_quantity
 - **Prévention survente** : 0% commandes acceptées sans stock
 - **Workflow integrity** : 100% transitions statuts respectées
 - **Audit trail** : 100% traçabilité utilisateurs + timestamps
 
 ### **Sécurité & Compliance**
+
 - **RLS Enforcement** : 100% isolation multi-tenant
 - **Data Integrity** : Contraintes FK + triggers validation
 - **Audit Logging** : Tous mouvements avec utilisateur + timestamp
@@ -319,12 +351,14 @@ graph TD
 ## 🚀 Extensibilité Future
 
 ### **Modules Compatibles**
+
 - **Facturation** : Export commandes → factures automatique
 - **Comptabilité** : Intégration valorisation stock + mouvements
 - **Analytics** : Dashboard métriques performance stock/commandes
 - **Mobile App** : API-first permettant app mobile native
 
 ### **Intégrations Externes**
+
 - **ERP Tiers** : APIs standardisées import/export
 - **E-commerce** : Synchronisation stock temps réel
 - **Logistique** : Suivi livraisons + notifications automatiques

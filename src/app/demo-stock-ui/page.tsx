@@ -1,4 +1,4 @@
-'use client'
+'use client';
 
 /**
  * 🎨 Demo Page - Stock UI Components
@@ -7,17 +7,19 @@
  * Design System V2 - Best Practices 2025
  */
 
-import { useState } from 'react'
-import { Package, TrendingUp, AlertTriangle, ShoppingCart } from 'lucide-react'
+import { useState } from 'react';
+
+import { Package, TrendingUp, AlertTriangle, ShoppingCart } from 'lucide-react';
+
 import {
   ChannelBadge,
   ChannelFilter,
   StockMovementCard,
   StockKPICard,
-} from '@/components/ui-v2/stock'
+} from '@/components/ui-v2/stock';
 
 export default function DemoStockUIPage() {
-  const [selectedChannel, setSelectedChannel] = useState<string | null>(null)
+  const [selectedChannel, setSelectedChannel] = useState<string | null>(null);
 
   return (
     <div className="min-h-screen bg-gray-50 p-8">
@@ -50,7 +52,9 @@ export default function DemoStockUIPage() {
             </div>
 
             <div>
-              <p className="text-sm text-gray-600 mb-2">Taille Medium (default)</p>
+              <p className="text-sm text-gray-600 mb-2">
+                Taille Medium (default)
+              </p>
               <div className="flex flex-wrap gap-2">
                 <ChannelBadge channelCode="b2b" size="md" />
                 <ChannelBadge channelCode="ecommerce" size="md" />
@@ -264,5 +268,5 @@ export default function DemoStockUIPage() {
         </div>
       </div>
     </div>
-  )
+  );
 }

@@ -136,23 +136,30 @@ export const themeV2 = {
     DEFAULT: '200ms cubic-bezier(0.4, 0, 0.2, 1)',
     slow: '300ms cubic-bezier(0.4, 0, 0.2, 1)',
   },
-} as const
+} as const;
 
 // Type-safe color helpers
-export type ThemeColor = keyof typeof themeV2.colors
+export type ThemeColor = keyof typeof themeV2.colors;
 
-export const getColor = (color: ThemeColor, shade: number | 'DEFAULT' | 'light' | 'dark' = 'DEFAULT') => {
-  const colorObj = themeV2.colors[color]
+export const getColor = (
+  color: ThemeColor,
+  shade: number | 'DEFAULT' | 'light' | 'dark' = 'DEFAULT'
+) => {
+  const colorObj = themeV2.colors[color];
   if (typeof colorObj === 'object' && shade in colorObj) {
-    return colorObj[shade as keyof typeof colorObj]
+    return colorObj[shade as keyof typeof colorObj];
   }
-  return colorObj as unknown as string
-}
+  return colorObj as unknown as string;
+};
 
 // Utility: Generate gradient
-export const getGradient = (from: string, to: string, direction: string = 'to right') => {
-  return `linear-gradient(${direction}, ${from}, ${to})`
-}
+export const getGradient = (
+  from: string,
+  to: string,
+  direction: string = 'to right'
+) => {
+  return `linear-gradient(${direction}, ${from}, ${to})`;
+};
 
 // Pre-defined gradients pour ActionButtons
 export const gradients = {
@@ -164,6 +171,6 @@ export const gradients = {
   blueGreen: getGradient('#3b86d1', '#38ce3c'),
   purpleBlue: getGradient('#844fc1', '#3b86d1'),
   orangeRed: getGradient('#ff9b3e', '#ff4d6b'),
-} as const
+} as const;
 
-export type GradientType = keyof typeof gradients
+export type GradientType = keyof typeof gradients;

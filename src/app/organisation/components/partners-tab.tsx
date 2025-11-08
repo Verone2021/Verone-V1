@@ -1,10 +1,9 @@
-'use client'
+'use client';
 
-import { useState, useMemo, useEffect } from 'react'
-import { Card, CardContent } from '@/components/ui/card'
-import { ButtonV2 } from '@/components/ui/button'
-import { Input } from '@/components/ui/input'
-import { Badge } from '@/components/ui/badge'
+import { useState, useMemo, useEffect } from 'react';
+
+import Link from 'next/link';
+
 import {
   Search,
   Plus,
@@ -15,32 +14,39 @@ import {
   ExternalLink,
   Building2,
   LayoutGrid,
-  List
-} from 'lucide-react'
-import Link from 'next/link'
-import { useOrganisations } from '@/shared/modules/organisations/hooks'
-import { PartnerFormModal } from '@/components/business/partner-form-modal'
-import { OrganisationLogo } from '@/components/business/organisation-logo'
-import { OrganisationCard } from '@/components/business/organisation-card'
-import { OrganisationListView } from '@/components/business/organisation-list-view'
-import { spacing, colors } from '@/lib/design-system'
-import { createClient } from '@/lib/supabase/client'
-import { cn } from '@/lib/utils'
+  List,
+} from 'lucide-react';
+
+import { Badge } from '@/components/ui/badge';
+import { ButtonV2 } from '@/components/ui/button';
+import { Card, CardContent } from '@/components/ui/card';
+import { Input } from '@/components/ui/input';
+import { spacing, colors } from '@/lib/design-system';
+import { createClient } from '@/lib/supabase/client';
+import { cn } from '@verone/utils';
+import { OrganisationListView } from '@/shared/modules/customers/components/sections/OrganisationListView';
+import { OrganisationLogo } from '@/shared/modules/organisations/components';
+import { OrganisationCard } from '@/shared/modules/organisations/components/cards/OrganisationCard';
+import { PartnerFormModal } from '@/shared/modules/organisations/components/forms/PartnerFormModal';
+import { useOrganisations } from '@/shared/modules/organisations/hooks';
 
 export function PartnersTab() {
-  const [searchQuery, setSearchQuery] = useState('')
-  const [activeTab, setActiveTab] = useState<'active' | 'archived'>('active')
-  const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid')
-  const [archivedPartners, setArchivedPartners] = useState<any[]>([])
-  const [archivedLoading, setArchivedLoading] = useState(false)
-  const [isModalOpen, setIsModalOpen] = useState(false)
-  const [selectedPartner, setSelectedPartner] = useState<any>(null)
+  const [searchQuery, setSearchQuery] = useState('');
+  const [activeTab, setActiveTab] = useState<'active' | 'archived'>('active');
+  const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
+  const [archivedPartners, setArchivedPartners] = useState<any[]>([]);
+  const [archivedLoading, setArchivedLoading] = useState(false);
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [selectedPartner, setSelectedPartner] = useState<any>(null);
 
-  const filters = useMemo(() => ({
-    type: 'partner' as const,
-    is_active: true,
-    search: searchQuery || undefined
-  }), [searchQuery])
+  const filters = useMemo(
+    () => ({
+      type: 'partner' as const,
+      is_active: true,
+      search: searchQuery || undefined,
+    }),
+    [searchQuery]
+  );
 
   const {
     organisations: partners,
@@ -48,68 +54,69 @@ export function PartnersTab() {
     archiveOrganisation,
     unarchiveOrganisation,
     hardDeleteOrganisation,
-    refetch
-  } = useOrganisations(filters)
+    refetch,
+  } = useOrganisations(filters);
 
   const loadArchivedPartnersData = async () => {
-    setArchivedLoading(true)
+    setArchivedLoading(true);
     try {
-      const supabase = createClient()
+      const supabase = createClient();
       const { data, error } = await supabase
         .from('organisations')
         .select('*')
         .eq('type', 'partner')
         .not('archived_at', 'is', null)
-        .order('archived_at', { ascending: false })
+        .order('archived_at', { ascending: false });
 
-      if (error) throw error
-      setArchivedPartners((data || []) as any[])
+      if (error) throw error;
+      setArchivedPartners((data || []) as any[]);
     } catch (err) {
-      console.error('Erreur chargement partenaires archivés:', err)
+      console.error('Erreur chargement partenaires archivés:', err);
     } finally {
-      setArchivedLoading(false)
+      setArchivedLoading(false);
     }
-  }
+  };
 
   useEffect(() => {
     if (activeTab === 'archived') {
-      loadArchivedPartnersData()
+      loadArchivedPartnersData();
     }
-  }, [activeTab])
+  }, [activeTab]);
 
   const handleArchive = async (partner: any) => {
     if (!partner.archived_at) {
-      const success = await archiveOrganisation(partner.id)
+      const success = await archiveOrganisation(partner.id);
       if (success) {
-        refetch()
+        refetch();
         if (activeTab === 'archived') {
-          await loadArchivedPartnersData()
+          await loadArchivedPartnersData();
         }
       }
     } else {
-      const success = await unarchiveOrganisation(partner.id)
+      const success = await unarchiveOrganisation(partner.id);
       if (success) {
-        refetch()
-        await loadArchivedPartnersData()
+        refetch();
+        await loadArchivedPartnersData();
       }
     }
-  }
+  };
 
   const handleDelete = async (partner: any) => {
     const confirmed = confirm(
       `Êtes-vous sûr de vouloir supprimer définitivement "${partner.name}" ?\n\nCette action est irréversible !`
-    )
+    );
 
     if (confirmed) {
-      const success = await hardDeleteOrganisation(partner.id)
+      const success = await hardDeleteOrganisation(partner.id);
       if (success) {
-        await loadArchivedPartnersData()
+        await loadArchivedPartnersData();
       }
     }
-  }
+  };
 
-  const displayedPartners = activeTab === 'active' ? partners : archivedPartners
-  const isLoading = activeTab === 'active' ? loading : archivedLoading
+  const displayedPartners =
+    activeTab === 'active' ? partners : archivedPartners;
+  const isLoading = activeTab === 'active' ? loading : archivedLoading;
 
   return (
     <div className="space-y-4">
@@ -140,12 +147,17 @@ export function PartnersTab() {
               )}
             >
               Archivés
-              <span className="ml-2 opacity-70">({archivedPartners.length})</span>
+              <span className="ml-2 opacity-70">
+                ({archivedPartners.length})
+              </span>
             </button>
           </div>
 
           {/* Toggle Grid/List View */}
-          <div className="flex items-center gap-1 border rounded-lg" style={{ borderColor: colors.border.DEFAULT }}>
+          <div
+            className="flex items-center gap-1 border rounded-lg"
+            style={{ borderColor: colors.border.DEFAULT }}
+          >
             <button
               onClick={() => setViewMode('grid')}
               className={cn(
@@ -173,7 +185,11 @@ export function PartnersTab() {
           </div>
         </div>
 
-        <ButtonV2 variant="primary" onClick={() => setIsModalOpen(true)} icon={Plus}>
+        <ButtonV2
+          variant="primary"
+          onClick={() => setIsModalOpen(true)}
+          icon={Plus}
+        >
           Nouveau Partenaire
         </ButtonV2>
       </div>
@@ -189,9 +205,12 @@ export function PartnersTab() {
             <Input
               placeholder="Rechercher par nom..."
               value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
+              onChange={e => setSearchQuery(e.target.value)}
               className="pl-10"
-              style={{ borderColor: colors.border.DEFAULT, color: colors.text.DEFAULT }}
+              style={{
+                borderColor: colors.border.DEFAULT,
+                color: colors.text.DEFAULT,
+              }}
             />
           </div>
         </CardContent>
@@ -203,9 +222,9 @@ export function PartnersTab() {
           {Array.from({ length: 12 }).map((_, i) => (
             <Card key={i} className="animate-pulse">
               <CardContent style={{ padding: spacing[2] }}>
-                <div className="h-4 bg-gray-200 rounded w-3/4 mb-2"></div>
-                <div className="h-3 bg-gray-200 rounded w-full mb-2"></div>
-                <div className="h-3 bg-gray-200 rounded w-2/3"></div>
+                <div className="h-4 bg-gray-200 rounded w-3/4 mb-2" />
+                <div className="h-3 bg-gray-200 rounded w-full mb-2" />
+                <div className="h-3 bg-gray-200 rounded w-2/3" />
               </CardContent>
             </Card>
           ))}
@@ -213,8 +232,14 @@ export function PartnersTab() {
       ) : displayedPartners.length === 0 ? (
         <Card>
           <CardContent className="text-center" style={{ padding: spacing[8] }}>
-            <Building2 className="h-12 w-12 mx-auto mb-4" style={{ color: colors.text.muted }} />
-            <h3 className="text-lg font-medium mb-2" style={{ color: colors.text.DEFAULT }}>
+            <Building2
+              className="h-12 w-12 mx-auto mb-4"
+              style={{ color: colors.text.muted }}
+            />
+            <h3
+              className="text-lg font-medium mb-2"
+              style={{ color: colors.text.DEFAULT }}
+            >
               Aucun partenaire trouvé
             </h3>
             <p className="mb-4" style={{ color: colors.text.subtle }}>
@@ -222,11 +247,14 @@ export function PartnersTab() {
                 ? 'Aucun partenaire ne correspond à votre recherche.'
                 : activeTab === 'active'
                   ? 'Commencez par créer votre premier partenaire.'
-                  : 'Aucun partenaire archivé.'
-              }
+                  : 'Aucun partenaire archivé.'}
             </p>
             {activeTab === 'active' && (
-              <ButtonV2 variant="primary" onClick={() => setIsModalOpen(true)} icon={Plus}>
+              <ButtonV2
+                variant="primary"
+                onClick={() => setIsModalOpen(true)}
+                icon={Plus}
+              >
                 Créer un partenaire
               </ButtonV2>
             )}
@@ -234,12 +262,12 @@ export function PartnersTab() {
         </Card>
       ) : viewMode === 'grid' ? (
         <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6 gap-2">
-          {displayedPartners.map((partner) => (
+          {displayedPartners.map(partner => (
             <OrganisationCard
               key={partner.id}
               organisation={{
                 ...partner,
-                type: 'partner'
+                type: 'partner',
               }}
               activeTab={activeTab}
               onArchive={() => handleArchive(partner)}
@@ -253,16 +281,16 @@ export function PartnersTab() {
             <OrganisationListView
               organisations={displayedPartners.map(p => ({
                 ...p,
-                type: 'partner' as const
+                type: 'partner' as const,
               }))}
               activeTab={activeTab}
-              onArchive={(id) => {
-                const partner = displayedPartners.find(p => p.id === id)
-                if (partner) handleArchive(partner)
+              onArchive={id => {
+                const partner = displayedPartners.find(p => p.id === id);
+                if (partner) handleArchive(partner);
               }}
-              onDelete={(id) => {
-                const partner = displayedPartners.find(p => p.id === id)
-                if (partner) handleDelete(partner)
+              onDelete={id => {
+                const partner = displayedPartners.find(p => p.id === id);
+                if (partner) handleDelete(partner);
               }}
             />
           </CardContent>
@@ -274,10 +302,10 @@ export function PartnersTab() {
         onClose={() => setIsModalOpen(false)}
         partner={selectedPartner}
         onSuccess={() => {
-          refetch()
-          setIsModalOpen(false)
+          refetch();
+          setIsModalOpen(false);
         }}
       />
     </div>
-  )
+  );
 }

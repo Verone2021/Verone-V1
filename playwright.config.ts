@@ -3,7 +3,7 @@
  * Stratégie tests ciblés : 50 tests essentiels vs 677 exhaustifs
  */
 
-import { defineConfig, devices } from '@playwright/test'
+import { defineConfig, devices } from '@playwright/test';
 
 export default defineConfig({
   // Dossier des tests E2E
@@ -22,13 +22,13 @@ export default defineConfig({
   reporter: [
     ['html', { outputFolder: 'tests/reports/html' }],
     ['json', { outputFile: 'tests/reports/results.json' }],
-    ['list']
+    ['list'],
   ],
 
   // Timeout global
   timeout: 30000, // 30s par test
   expect: {
-    timeout: 5000 // 5s pour assertions
+    timeout: 5000, // 5s pour assertions
   },
 
   // Configuration base
@@ -70,8 +70,8 @@ export default defineConfig({
         storageState: './tests/.auth/user.json',
         // Console error tracking
         contextOptions: {
-          strictSelectors: false
-        }
+          strictSelectors: false,
+        },
       },
       dependencies: ['setup'], // Exécuter setup AVANT les tests
     },
@@ -90,4 +90,4 @@ export default defineConfig({
     reuseExistingServer: !process.env.CI,
     timeout: 120000, // 2 minutes pour démarrage
   },
-})
+});

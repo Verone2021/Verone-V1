@@ -8,6 +8,7 @@
 ## 📁 File Structure
 
 ### Complete File Tree
+
 ```
 src/app/[module]/
 ├── page.tsx                    # Main list view
@@ -40,6 +41,7 @@ src/app/api/[module]/
 ## 🧩 Component Architecture
 
 ### Main Page Component
+
 **File** : `src/app/[module]/page.tsx`
 
 ```typescript
@@ -70,11 +72,13 @@ export default function [Module]Page() {
 ```
 
 **Key Features** :
+
 - [Feature 1 description]
 - [Feature 2 description]
 - [Feature 3 description]
 
 **Dependencies** :
+
 - Hooks : [list]
 - Components : [list]
 - Utils : [list]
@@ -84,6 +88,7 @@ export default function [Module]Page() {
 ## 🔗 Data Flow
 
 ### Read Flow (GET)
+
 ```
 User Action
   ↓
@@ -103,6 +108,7 @@ Render UI
 ```
 
 ### Write Flow (CREATE/UPDATE)
+
 ```
 User Action (Form Submit)
   ↓
@@ -124,6 +130,7 @@ Toast Notification
 ```
 
 ### Delete Flow
+
 ```
 User Action (Delete button)
   ↓
@@ -149,6 +156,7 @@ Toast Notification
 ## 🎨 Design Patterns
 
 ### Pattern 1: Custom Hook for CRUD
+
 ```typescript
 // src/hooks/use-[module].ts
 export function use[Module]() {
@@ -180,12 +188,14 @@ export function use[Module]() {
 ```
 
 **Advantages** :
+
 - Separation of concerns
 - Reusable across pages
 - Centralized data fetching
 - Type-safe with TypeScript
 
 ### Pattern 2: Component Composition
+
 ```typescript
 // Atomic Design inspired
 
@@ -205,6 +215,7 @@ export function use[Module]() {
 ```
 
 ### Pattern 3: Error Boundaries
+
 ```typescript
 // src/app/[module]/page.tsx
 <ErrorBoundary fallback={<ErrorState />}>
@@ -219,6 +230,7 @@ export function use[Module]() {
 ## 🔐 Security Architecture
 
 ### RLS Policies
+
 ```sql
 -- Read policy
 CREATE POLICY "allow_select_[module]"
@@ -239,11 +251,13 @@ USING (
 ```
 
 ### Client-Side Validation
+
 - **Zod schemas** : [list validation rules]
 - **Business rules** : [list rules enforced]
 - **Permission checks** : [list permissions]
 
 ### Server-Side Validation
+
 - **API routes** : Double validation
 - **RLS enforcement** : Database level
 - **Input sanitization** : XSS prevention
@@ -255,25 +269,25 @@ USING (
 ### Optimization Strategies
 
 #### 1. Database Query Optimization
+
 ```typescript
 // ❌ BAD: N+1 queries
 for (const item of items) {
   const related = await supabase
     .from('related_table')
     .select('*')
-    .eq('item_id', item.id)
+    .eq('item_id', item.id);
 }
 
 // ✅ GOOD: Single query with JOIN
-const { data } = await supabase
-  .from('items')
-  .select(`
+const { data } = await supabase.from('items').select(`
     *,
     related_table (*)
-  `)
+  `);
 ```
 
 #### 2. React Performance
+
 ```typescript
 // useMemo for expensive computations
 const filteredData = useMemo(
@@ -294,6 +308,7 @@ export const [Module]Card = React.memo(({ item }) => {
 ```
 
 #### 3. Code Splitting
+
 ```typescript
 // Lazy load heavy components
 const [Module]Modal = dynamic(
@@ -303,6 +318,7 @@ const [Module]Modal = dynamic(
 ```
 
 ### Performance Metrics
+
 - **Initial Load** : [X]s
 - **Time to Interactive** : [X]s
 - **First Contentful Paint** : [X]s
@@ -313,16 +329,19 @@ const [Module]Modal = dynamic(
 ## 🧬 State Management
 
 ### Local State (useState)
+
 - UI state (modals, selected items)
 - Form inputs
 - Temporary filters
 
 ### Server State (React Query)
+
 - Database data
 - API responses
 - Cache management
 
 ### URL State (Next.js)
+
 - Filters (searchParams)
 - Pagination (page number)
 - Sorting (sort field)
@@ -332,24 +351,29 @@ const [Module]Modal = dynamic(
 ## 🔄 Real-time Updates (if applicable)
 
 ### Supabase Subscriptions
+
 ```typescript
 useEffect(() => {
   const channel = supabase
     .channel('[module]-changes')
-    .on('postgres_changes', {
-      event: '*',
-      schema: 'public',
-      table: '[table]'
-    }, (payload) => {
-      // Invalidate query cache
-      queryClient.invalidateQueries(['[module]'])
-    })
-    .subscribe()
+    .on(
+      'postgres_changes',
+      {
+        event: '*',
+        schema: 'public',
+        table: '[table]',
+      },
+      payload => {
+        // Invalidate query cache
+        queryClient.invalidateQueries(['[module]']);
+      }
+    )
+    .subscribe();
 
   return () => {
-    supabase.removeChannel(channel)
-  }
-}, [])
+    supabase.removeChannel(channel);
+  };
+}, []);
 ```
 
 ---
@@ -357,16 +381,19 @@ useEffect(() => {
 ## 📝 Code Quality
 
 ### TypeScript Usage
+
 - **Type Coverage** : [X]%
 - **Strict Mode** : ✅ Enabled
 - **No `any`** : ✅ (except justified cases)
 
 ### Code Standards
+
 - **ESLint** : ✅ No errors
 - **Prettier** : ✅ Formatted
 - **Naming Conventions** : camelCase, PascalCase, kebab-case
 
 ### Testing
+
 - **Unit Tests** : [X]% coverage
 - **Integration Tests** : [list critical paths]
 - **E2E Tests** : [list user flows]
@@ -376,6 +403,7 @@ useEffect(() => {
 ## 🔧 Dependencies
 
 ### NPM Packages
+
 - `@supabase/supabase-js` : Database client
 - `@tanstack/react-query` : Server state
 - `zod` : Validation
@@ -383,6 +411,7 @@ useEffect(() => {
 - [other dependencies]
 
 ### Internal Dependencies
+
 - `@/lib/supabase` : Supabase client
 - `@/components/ui-v2` : Design System V2
 - `@/hooks` : Shared hooks
@@ -393,11 +422,13 @@ useEffect(() => {
 ## 🚀 Deployment Considerations
 
 ### Environment Variables
+
 - `NEXT_PUBLIC_SUPABASE_URL`
 - `NEXT_PUBLIC_SUPABASE_ANON_KEY`
 - [module-specific vars]
 
 ### Build Optimizations
+
 - **Dynamic Imports** : Heavy components
 - **Image Optimization** : next/image
 - **Bundle Analysis** : [bundle size]

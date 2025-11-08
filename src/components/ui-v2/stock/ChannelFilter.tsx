@@ -1,4 +1,4 @@
-'use client'
+'use client';
 
 /**
  * 🎨 ChannelFilter Component
@@ -18,55 +18,58 @@
  * ```
  */
 
-import * as React from 'react'
-import { useState, useEffect } from 'react'
-import { Loader2 } from 'lucide-react'
+import * as React from 'react';
+import { useState, useEffect } from 'react';
+
+import { Loader2 } from 'lucide-react';
+
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from '@/components/ui/select'
-import { createClient } from '@/lib/supabase/client'
-import { ChannelBadge } from './ChannelBadge'
-import { type ChannelCode } from './types'
+} from '@/components/ui/select';
+import { createClient } from '@/lib/supabase/client';
+
+import { ChannelBadge } from './ChannelBadge';
+import { type ChannelCode } from './types';
 
 export interface ChannelFilterProps {
   /**
    * Canal sélectionné (ID ou null)
    */
-  selectedChannel: string | null
+  selectedChannel: string | null;
 
   /**
    * Callback changement de canal
    */
-  onChannelChange: (channelId: string | null) => void
+  onChannelChange: (channelId: string | null) => void;
 
   /**
    * Afficher l'option "Tous les canaux"
    * @default true
    */
-  showAllOption?: boolean
+  showAllOption?: boolean;
 
   /**
    * Placeholder personnalisé
    * @default "Sélectionner un canal"
    */
-  placeholder?: string
+  placeholder?: string;
 
   /**
    * Désactiver le select
    * @default false
    */
-  disabled?: boolean
+  disabled?: boolean;
 }
 
 interface SalesChannel {
-  id: string
-  name: string
-  code: string
-  is_active: boolean | null
+  id: string;
+  name: string;
+  code: string;
+  is_active: boolean | null;
 }
 
 /**
@@ -88,57 +91,57 @@ export function ChannelFilter({
   placeholder = 'Sélectionner un canal',
   disabled = false,
 }: ChannelFilterProps) {
-  const [channels, setChannels] = useState<SalesChannel[]>([])
-  const [isLoading, setIsLoading] = useState(true)
-  const [error, setError] = useState<string | null>(null)
+  const [channels, setChannels] = useState<SalesChannel[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     async function fetchChannels() {
       try {
-        setIsLoading(true)
-        setError(null)
+        setIsLoading(true);
+        setError(null);
 
-        const supabase = createClient()
+        const supabase = createClient();
 
         const { data, error: fetchError } = await supabase
           .from('sales_channels')
           .select('id, name, code, is_active')
           .eq('is_active', true)
-          .order('name', { ascending: true })
+          .order('name', { ascending: true });
 
         if (fetchError) {
-          throw fetchError
+          throw fetchError;
         }
 
-        setChannels(data || [])
+        setChannels(data || []);
       } catch (err) {
         const errorMessage =
-          err instanceof Error ? err.message : 'Erreur inconnue'
-        setError(errorMessage)
-        console.error('[ChannelFilter] Fetch error:', err)
+          err instanceof Error ? err.message : 'Erreur inconnue';
+        setError(errorMessage);
+        console.error('[ChannelFilter] Fetch error:', err);
       } finally {
-        setIsLoading(false)
+        setIsLoading(false);
       }
     }
 
-    fetchChannels()
-  }, [])
+    fetchChannels();
+  }, []);
 
   /**
    * Normaliser les codes canaux pour affichage badge
    */
   const normalizeChannelCode = (code: string): ChannelCode => {
-    const lowerCode = code.toLowerCase()
+    const lowerCode = code.toLowerCase();
 
-    if (lowerCode.includes('b2b')) return 'b2b'
+    if (lowerCode.includes('b2b')) return 'b2b';
     if (lowerCode.includes('ecommerce') || lowerCode.includes('e-commerce'))
-      return 'ecommerce'
-    if (lowerCode.includes('retail')) return 'retail'
-    if (lowerCode.includes('wholesale')) return 'wholesale'
+      return 'ecommerce';
+    if (lowerCode.includes('retail')) return 'retail';
+    if (lowerCode.includes('wholesale')) return 'wholesale';
 
     // Fallback default
-    return 'ecommerce'
-  }
+    return 'ecommerce';
+  };
 
   return (
     <div className="flex flex-col gap-2 w-64">
@@ -151,9 +154,7 @@ export function ChannelFilter({
 
       <Select
         value={selectedChannel || 'all'}
-        onValueChange={(value) =>
-          onChannelChange(value === 'all' ? null : value)
-        }
+        onValueChange={value => onChannelChange(value === 'all' ? null : value)}
         disabled={disabled || isLoading}
       >
         <SelectTrigger
@@ -189,7 +190,7 @@ export function ChannelFilter({
               Aucun canal actif
             </div>
           ) : (
-            channels.map((channel) => (
+            channels.map(channel => (
               <SelectItem key={channel.id} value={channel.id}>
                 <div className="flex items-center gap-2">
                   <ChannelBadge
@@ -205,10 +206,10 @@ export function ChannelFilter({
         </SelectContent>
       </Select>
     </div>
-  )
+  );
 }
 
 /**
  * Type export pour usage externe
  */
-ChannelFilter.displayName = 'ChannelFilter'
+ChannelFilter.displayName = 'ChannelFilter';

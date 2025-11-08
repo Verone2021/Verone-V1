@@ -5,7 +5,7 @@
  * TODO: À implémenter selon les besoins
  */
 
-import { colors } from '../tokens/colors'
+import { colors } from '../tokens/colors';
 
 export const darkTheme = {
   colors: {
@@ -68,6 +68,6 @@ export const darkTheme = {
       subtle: colors.accent[900],
     },
   },
-} as const
+} as const;
 
-export type DarkTheme = typeof darkTheme
+export type DarkTheme = typeof darkTheme;

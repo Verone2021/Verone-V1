@@ -11,11 +11,13 @@
 Le module **Conditionnements** (packages) permet de proposer un produit en différentes quantités avec des prix adaptés.
 
 **Use cases** :
+
 - Vente à l'unité : 1 chaise = 50€
 - Pack de 4 : 4 chaises = 180€ (-10%)
 - Pack de 6 : 6 chaises = 252€ (-16%)
 
 **Business rules** :
+
 - 1 produit = plusieurs packages possibles
 - 1 package par défaut obligatoire (type='single')
 - Pricing automatique ou manuel par package
@@ -73,6 +75,7 @@ CREATE TABLE product_packages (
 ```
 
 **Contraintes** :
+
 - 1 seul package `is_default=true` par produit
 - Au moins 1 package `type='single'` par produit
 - `base_quantity > 0`
@@ -88,36 +91,36 @@ Hook gestion packages avec calculs automatiques.
 
 ```typescript
 interface UseProductPackagesOptions {
-  productId: string
-  autoFetch?: boolean
+  productId: string;
+  autoFetch?: boolean;
 }
 
 function useProductPackages(options: UseProductPackagesOptions): {
   // Data
-  packages: ProductPackage[]
-  defaultPackage: ProductPackage | null
-  singlePackage: ProductPackage | null
-  totalPackages: number
-  hasMultiplePackages: boolean
-  hasDiscounts: boolean
-  maxDiscount: number
+  packages: ProductPackage[];
+  defaultPackage: ProductPackage | null;
+  singlePackage: ProductPackage | null;
+  totalPackages: number;
+  hasMultiplePackages: boolean;
+  hasDiscounts: boolean;
+  maxDiscount: number;
 
   // State
-  loading: boolean
-  error: string | null
+  loading: boolean;
+  error: string | null;
 
   // Actions
-  fetchPackages: () => Promise<void>
-  calculatePackagePrice: (basePrice: number, package: ProductPackage) => number
+  fetchPackages: () => Promise<void>;
+  calculatePackagePrice: (basePrice: number, package: ProductPackage) => number;
 
   // Helpers Business
-  getPackagesByType: (type: PackageType) => ProductPackage[]
-  getBestValuePackage: (basePrice: number) => ProductPackage | null
-  getDiscountLabel: (package: ProductPackage) => string | null
+  getPackagesByType: (type: PackageType) => ProductPackage[];
+  getBestValuePackage: (basePrice: number) => ProductPackage | null;
+  getDiscountLabel: (package: ProductPackage) => string | null;
 
   // Stats
-  isValidPackageSystem: boolean
-}
+  isValidPackageSystem: boolean;
+};
 ```
 
 ---
@@ -149,18 +152,16 @@ const handleCreatePackage = async () => {
     type: 'pack',
     base_quantity: 6,
     unit: 'unités',
-    discount_rate: 0.15,  // 15% remise
+    discount_rate: 0.15, // 15% remise
     is_default: false,
-    is_active: true
-  }
+    is_active: true,
+  };
 
-  await supabase
-    .from('product_packages')
-    .insert([packageData])
+  await supabase.from('product_packages').insert([packageData]);
 
-  toast.success('✅ Conditionnement créé')
-  refetch()
-}
+  toast.success('✅ Conditionnement créé');
+  refetch();
+};
 ```
 
 ---
@@ -197,22 +198,21 @@ netPrice = 300 × 0.85 = 255€
 ### Exemple Hook
 
 ```typescript
-const {
-  packages,
-  calculatePackagePrice,
-  getBestValuePackage
-} = useProductPackages({ productId })
+const { packages, calculatePackagePrice, getBestValuePackage } =
+  useProductPackages({ productId });
 
-const basePrice = 50 // Prix unitaire de base
+const basePrice = 50; // Prix unitaire de base
 
 packages.forEach(pkg => {
-  const price = calculatePackagePrice(basePrice, pkg)
-  const pricePerUnit = price / pkg.base_quantity
-  console.log(`Package ${pkg.base_quantity}x : ${price}€ (${pricePerUnit}€/unité)`)
-})
+  const price = calculatePackagePrice(basePrice, pkg);
+  const pricePerUnit = price / pkg.base_quantity;
+  console.log(
+    `Package ${pkg.base_quantity}x : ${price}€ (${pricePerUnit}€/unité)`
+  );
+});
 
-const bestValue = getBestValuePackage(basePrice)
-console.log('Meilleure valeur:', bestValue?.base_quantity, 'x')
+const bestValue = getBestValuePackage(basePrice);
+console.log('Meilleure valeur:', bestValue?.base_quantity, 'x');
 ```
 
 ---
@@ -287,7 +287,7 @@ WHERE product_id = $1
 ### Hook Helper : `isValidPackageSystem`
 
 ```typescript
-const { isValidPackageSystem } = useProductPackages({ productId })
+const { isValidPackageSystem } = useProductPackages({ productId });
 
 // Valide si :
 // ✓ Au moins 1 package existe
@@ -295,7 +295,7 @@ const { isValidPackageSystem } = useProductPackages({ productId })
 // ✓ 1 package type='single'
 
 if (!isValidPackageSystem) {
-  toast.error('⚠️ Système conditionnements invalide')
+  toast.error('⚠️ Système conditionnements invalide');
 }
 ```
 

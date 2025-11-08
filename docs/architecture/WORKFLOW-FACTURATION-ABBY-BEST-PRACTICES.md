@@ -9,10 +9,13 @@
 ## 🎯 QUESTIONS CLÉS
 
 ### **Question 1 : Lien Client → Facture**
+
 > Les factures doivent être liées directement au client pro (table `organisations`) et aux clients particuliers (table `individual_customers`).
 
 ### **Question 2 : Workflow Abby**
+
 > Doit-on :
+>
 > 1. **Ouvrir Abby → Créer facture → Importer dans Vérone** ?
 > 2. **Créer dans Vérone → Envoyer à Abby → Stocker retour** ?
 
@@ -24,14 +27,14 @@
 
 ### **Pourquoi Option 2 est meilleure ?**
 
-| Critère | Option 1 (Abby → Vérone) | Option 2 (Vérone → Abby) |
-|---------|--------------------------|--------------------------|
-| **Source de vérité** | ❌ Abby (externe) | ✅ Vérone (interne) |
-| **Contrôle workflow** | ❌ Manuel (admin ouvre Abby) | ✅ Automatique (API) |
-| **Cohérence données** | ❌ Risque désynchronisation | ✅ Sync automatique |
-| **Expérience utilisateur** | ❌ 2 interfaces (Vérone + Abby) | ✅ 1 interface (Vérone) |
-| **Traçabilité** | ❌ Difficile (2 systèmes) | ✅ Facile (1 système) |
-| **Scalabilité** | ❌ Lent (manuel) | ✅ Rapide (automatique) |
+| Critère                    | Option 1 (Abby → Vérone)        | Option 2 (Vérone → Abby) |
+| -------------------------- | ------------------------------- | ------------------------ |
+| **Source de vérité**       | ❌ Abby (externe)               | ✅ Vérone (interne)      |
+| **Contrôle workflow**      | ❌ Manuel (admin ouvre Abby)    | ✅ Automatique (API)     |
+| **Cohérence données**      | ❌ Risque désynchronisation     | ✅ Sync automatique      |
+| **Expérience utilisateur** | ❌ 2 interfaces (Vérone + Abby) | ✅ 1 interface (Vérone)  |
+| **Traçabilité**            | ❌ Difficile (2 systèmes)       | ✅ Facile (1 système)    |
+| **Scalabilité**            | ❌ Lent (manuel)                | ✅ Rapide (automatique)  |
 
 ---
 
@@ -49,6 +52,7 @@ Admin Vérone → Crée sales_order
 ```
 
 **Tables impliquées** :
+
 ```sql
 sales_orders (
   id,
@@ -88,6 +92,7 @@ RPC generate_invoice_from_order()
 ```
 
 **Gestion erreurs** :
+
 ```sql
 -- Si Abby API échoue
 INSERT INTO abby_sync_queue (
@@ -126,14 +131,16 @@ POST /api/webhooks/abby
 ```
 
 **Events supportés** :
+
 - `invoice.sent` → Status: draft → sent
 - `invoice.paid` → Status: sent → paid + INSERT payment
-- `invoice.cancelled` → Status: * → cancelled
+- `invoice.cancelled` → Status: \* → cancelled
 - `invoice.overdue` → Status: sent → overdue
 
 ### **Phase 4 : Enregistrement Paiement**
 
 **Cas 1 : Webhook Abby (paiement externe)**
+
 ```
 Abby Event: invoice.paid
   ↓
@@ -153,6 +160,7 @@ RPC handle_abby_webhook_invoice_paid()
 ```
 
 **Cas 2 : Saisie manuelle Vérone (paiement interne)**
+
 ```
 Admin Vérone → /factures/[id] → PaymentForm
   ↓
@@ -174,6 +182,7 @@ ELSE status='partially_paid'
 ## 🏛️ ARCHITECTURE DONNÉES : CLIENT FLEXIBLE
 
 ### **Problème : 2 types de clients**
+
 - **Organisations** (`organisations` table) : Clients B2B, fournisseurs, partenaires
 - **Particuliers** (`individual_customers` table) : Clients B2C
 
@@ -218,6 +227,7 @@ CREATE INDEX idx_invoices_customer ON invoices(customer_id, customer_type);
 ```
 
 **Query exemples** :
+
 ```sql
 -- Récupérer factures avec client (organisation)
 SELECT
@@ -303,11 +313,13 @@ CREATE TABLE sales_orders (
 ```
 
 **Avantages** :
+
 - ✅ Queries simplifiées (1 seul JOIN)
 - ✅ Foreign key constraints propres
 - ✅ Facilite reporting/analytics
 
 **Inconvénients** :
+
 - ❌ Table supplémentaire à maintenir
 - ❌ Sync nécessaire (trigger ou app logic)
 
@@ -316,6 +328,7 @@ CREATE TABLE sales_orders (
 ## 📊 COMPARAISON BEST PRACTICES INDUSTRIE
 
 ### **1. Stripe (Payment SaaS)**
+
 ```
 Workflow: Local → Stripe
 - Créer PaymentIntent local
@@ -325,6 +338,7 @@ Workflow: Local → Stripe
 ```
 
 ### **2. Salesforce (CRM/ERP)**
+
 ```
 Workflow: Salesforce → Intégrations
 - Créer Order/Invoice dans Salesforce
@@ -334,6 +348,7 @@ Workflow: Salesforce → Intégrations
 ```
 
 ### **3. Odoo (ERP Open Source)**
+
 ```
 Workflow: Odoo → QuickBooks/Xero
 - Créer facture Odoo
@@ -345,6 +360,7 @@ Workflow: Odoo → QuickBooks/Xero
 ### **🏆 Consensus Industrie : Application interne = Source de vérité**
 
 **Pourquoi ?**
+
 1. **Contrôle total** : Logique métier dans votre code
 2. **Audit trail** : Toutes modifications tracées localement
 3. **Offline resilience** : Continue de fonctionner si service externe down
@@ -358,6 +374,7 @@ Workflow: Odoo → QuickBooks/Xero
 ### **Étape par étape (UX Admin)**
 
 #### **1. Création Commande**
+
 ```
 Admin → Menu "Commandes" → "Nouvelle commande"
   ↓
@@ -380,6 +397,7 @@ Status: shipped → ✅ Prêt pour facturation
 ```
 
 #### **2. Génération Facture**
+
 ```
 Admin → Page "Commandes" → Filtre "Expédiées"
   ↓
@@ -402,6 +420,7 @@ Redirect: /factures/[id]
 ```
 
 #### **3. Consultation Facture**
+
 ```
 Admin → Menu "Factures" → /factures
   ↓
@@ -421,6 +440,7 @@ Page détail:
 ```
 
 #### **4. Enregistrement Paiement**
+
 ```
 Admin → /factures/[id] → PaymentForm
   ↓
@@ -448,6 +468,7 @@ Refresh page (montant restant updated)
 ## 🛡️ SÉCURITÉ & BEST PRACTICES
 
 ### **1. Webhooks Abby**
+
 ```typescript
 // Validation signature HMAC-SHA256
 const computedSignature = crypto
@@ -473,6 +494,7 @@ if (existingEvent) {
 ```
 
 ### **2. Retry Logic**
+
 ```sql
 -- Trigger exponential backoff
 CREATE OR REPLACE FUNCTION update_sync_queue_retry()
@@ -494,6 +516,7 @@ $$;
 ```
 
 ### **3. Data Coherence**
+
 ```sql
 -- Constraint: amount_paid ≤ total_ttc
 ALTER TABLE invoices ADD CONSTRAINT invoice_payment_coherent
@@ -509,6 +532,7 @@ ALTER TABLE invoices ADD CONSTRAINT invoice_totals_coherent
 ## 📝 RECOMMANDATIONS FINALES
 
 ### **✅ À FAIRE**
+
 1. **Vérone = Source de vérité** : Toutes créations/modifications partent de Vérone
 2. **Abby = Système externe** : Synchronisation unidirectionnelle (Vérone → Abby)
 3. **Webhooks Abby → Vérone** : Pour status updates (sent, paid, overdue)
@@ -517,6 +541,7 @@ ALTER TABLE invoices ADD CONSTRAINT invoice_totals_coherent
 6. **Idempotency** : Toutes opérations API/webhooks doivent être idempotentes
 
 ### **❌ À ÉVITER**
+
 1. **Ne PAS créer factures manuellement dans Abby** : Désynchronisation garantie
 2. **Ne PAS dupliquer logique métier** : 1 seul endroit (Vérone RPC functions)
 3. **Ne PAS sync bidirectionnelle sans contrôle** : Risque conflits
@@ -525,12 +550,14 @@ ALTER TABLE invoices ADD CONSTRAINT invoice_totals_coherent
 ### **🎯 Phase MVP vs Phase 2**
 
 **MVP (Phase 1 - ACTUELLE)** :
+
 - ✅ Créer facture Vérone → Push Abby
 - ✅ Webhooks Abby → Update status Vérone
 - ✅ Enregistrement paiement manuel Vérone
 - ⏸️ Push paiement vers Abby (optionnel)
 
 **Phase 2 (Future)** :
+
 - 🔄 Sync bidirectionnelle paiements (Vérone ↔ Abby)
 - 📄 Export PDF via Abby API
 - 📧 Envoi email facture via Abby
@@ -545,6 +572,7 @@ ALTER TABLE invoices ADD CONSTRAINT invoice_totals_coherent
 **Customer unified** : **Polymorphic association** (`customer_id` + `customer_type`)
 
 **Best practices respectées** :
+
 - ✅ Single source of truth (Vérone)
 - ✅ External system as slave (Abby)
 - ✅ Async queue + retries

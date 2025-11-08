@@ -11,11 +11,13 @@ Lance le clustering automatique des erreurs TypeScript et génère le plan de co
 ## Workflow Automatique
 
 1. **Export erreurs TypeScript**
+
    ```bash
    npm run type-check 2>&1 > ts-errors-raw.log
    ```
 
 2. **Exécution script clustering**
+
    ```bash
    node scripts/cluster-ts-errors.js
    # → Génère error-clusters.json
@@ -37,11 +39,13 @@ Lance le clustering automatique des erreurs TypeScript et génère le plan de co
 ## Output Généré
 
 **Fichiers créés :**
+
 - `ts-errors-raw.log` : Export brut
 - `error-clusters.json` : Clusters structurés
 - `TS_ERRORS_PLAN.md` : Plan correction
 
 **Exemple error-clusters.json :**
+
 ```json
 {
   "totalErrors": 975,

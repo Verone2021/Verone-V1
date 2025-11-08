@@ -25,27 +25,27 @@
 
 export const DEPLOYED_MODULES = {
   // ✅ Phase 1 - Déployé
-  contacts: true,           // Gestion contacts (personnes physiques)
-  purchase_orders: true,    // Commandes fournisseurs
+  contacts: true, // Gestion contacts (personnes physiques)
+  purchase_orders: true, // Commandes fournisseurs
+  products: true, // ✅ ACTIVÉ - Catalogue produits
+  invoices: true, // ✅ ACTIVÉ - Facturation
 
   // 🚧 Phase 2 - En développement
-  sales_orders: false,      // Commandes clients
-  products: false,          // Catalogue produits
-  stock: false,             // Gestion stocks
+  sales_orders: false, // Commandes clients
+  stock: false, // Gestion stocks
 
   // 🚧 Phase 3 - Planifié
-  invoices: false,          // Facturation
-  analytics: false,         // Analytics & KPI avancés
-  feeds: false              // Flux Google Merchant, Facebook, etc.
-} as const
+  analytics: false, // Analytics & KPI avancés
+  feeds: false, // Flux Google Merchant, Facebook, etc.
+} as const;
 
-export type DeployedModule = keyof typeof DEPLOYED_MODULES
+export type DeployedModule = keyof typeof DEPLOYED_MODULES;
 
 /**
  * Vérifie si un module est déployé et accessible
  */
 export function isModuleDeployed(module: DeployedModule): boolean {
-  return DEPLOYED_MODULES[module]
+  return DEPLOYED_MODULES[module];
 }
 
 /**
@@ -65,24 +65,26 @@ export function getModulePhase(module: DeployedModule): string {
     // Phase 3
     invoices: 'Phase 3',
     analytics: 'Phase 3',
-    feeds: 'Phase 3'
-  }
+    feeds: 'Phase 3',
+  };
 
-  return phases[module] || 'Bientôt'
+  return phases[module] || 'Bientôt';
 }
 
 /**
  * Retourne tous les modules déployés
  */
 export function getDeployedModules(): DeployedModule[] {
-  return (Object.keys(DEPLOYED_MODULES) as DeployedModule[])
-    .filter(module => DEPLOYED_MODULES[module])
+  return (Object.keys(DEPLOYED_MODULES) as DeployedModule[]).filter(
+    module => DEPLOYED_MODULES[module]
+  );
 }
 
 /**
  * Retourne tous les modules en développement
  */
 export function getPendingModules(): DeployedModule[] {
-  return (Object.keys(DEPLOYED_MODULES) as DeployedModule[])
-    .filter(module => !DEPLOYED_MODULES[module])
+  return (Object.keys(DEPLOYED_MODULES) as DeployedModule[]).filter(
+    module => !DEPLOYED_MODULES[module]
+  );
 }

@@ -98,22 +98,16 @@ Légende :
 
 ```css
 /* Couleurs autorisées UNIQUEMENT */
---verone-black: #000000      /* Texte principal, bordures, fond sélection */
---verone-white: #FFFFFF      /* Fond, texte inversé */
---verone-gray-50: #F9FAFB    /* Hover states */
---verone-gray-100: #F3F4F6   /* Backgrounds secondaires */
---verone-gray-200: #E5E7EB   /* Bordures */
---verone-gray-400: #9CA3AF   /* Icônes inactives */
---verone-gray-600: #4B5563   /* Texte secondaire */
-
-/* Couleurs système (uniquement pour états) */
---verone-blue-50: #EFF6FF    /* Sélection catégorie */
---verone-blue-100: #DBEAFE   /* Badge sélection */
---verone-blue-800: #1E40AF   /* Texte badge */
-
-/* INTERDIT ABSOLU */
-❌ Jaune, doré, ambre, orange
-❌ Couleurs vives ou saturées
+--verone-black:
+  #000000 /* Texte principal, bordures, fond sélection */
+    --verone-white: #ffffff /* Fond, texte inversé */ --verone-gray-50: #f9fafb
+    /* Hover states */ --verone-gray-100: #f3f4f6 /* Backgrounds secondaires */
+    --verone-gray-200: #e5e7eb /* Bordures */ --verone-gray-400: #9ca3af
+    /* Icônes inactives */ --verone-gray-600: #4b5563 /* Texte secondaire */
+    /* Couleurs système (uniquement pour états) */ --verone-blue-50: #eff6ff
+    /* Sélection catégorie */ --verone-blue-100: #dbeafe /* Badge sélection */
+    --verone-blue-800: #1e40af /* Texte badge */ /* INTERDIT ABSOLU */ ❌ Jaune,
+  doré, ambre, orange ❌ Couleurs vives ou saturées;
 ```
 
 ### Typographie
@@ -187,7 +181,7 @@ Dans `/src/app/catalogue/page.tsx` :
 // import { CategoryHierarchyFilter } from "../../components/business/category-hierarchy-filter"
 
 // PAR le nouveau
-import { CategoryHierarchyFilterV2 } from "../../components/business/category-hierarchy-filter-v2"
+import { CategoryHierarchyFilterV2 } from '../../components/business/category-hierarchy-filter-v2';
 ```
 
 ### Étape 3 : Mettre à jour l'utilisation
@@ -239,19 +233,19 @@ http://localhost:3000/catalogue
 ```typescript
 interface CategoryHierarchyFilterV2Props {
   // Données hiérarchiques (depuis hooks Supabase)
-  families: Family[]              // Liste des familles
-  categories: Category[]          // Liste des catégories
-  subcategories: Subcategory[]    // Liste des sous-catégories
-  products: Product[]             // ← NOUVEAU : Liste des produits pour compteurs
+  families: Family[]; // Liste des familles
+  categories: Category[]; // Liste des catégories
+  subcategories: Subcategory[]; // Liste des sous-catégories
+  products: Product[]; // ← NOUVEAU : Liste des produits pour compteurs
 
   // État de sélection (contrôlé depuis parent)
-  selectedSubcategories: string[] // IDs des sous-catégories sélectionnées
+  selectedSubcategories: string[]; // IDs des sous-catégories sélectionnées
 
   // Callback de sélection
-  onSubcategoryToggle: (subcategoryId: string) => void
+  onSubcategoryToggle: (subcategoryId: string) => void;
 
   // Classe CSS optionnelle
-  className?: string
+  className?: string;
 }
 ```
 
@@ -259,25 +253,25 @@ interface CategoryHierarchyFilterV2Props {
 
 ```typescript
 interface Family {
-  id: string
-  name: string
+  id: string;
+  name: string;
 }
 
 interface Category {
-  id: string
-  name: string
-  family_id: string
+  id: string;
+  name: string;
+  family_id: string;
 }
 
 interface Subcategory {
-  id: string
-  name: string
-  category_id: string
+  id: string;
+  name: string;
+  category_id: string;
 }
 
 interface Product {
-  id: string
-  subcategory_id?: string
+  id: string;
+  subcategory_id?: string;
   // ... autres props non utilisées pour le filtre
 }
 ```
@@ -338,56 +332,58 @@ export default function CataloguePage() {
 
 ```typescript
 const [filters, setFilters] = useState({
-  subcategories: [] as string[]
-})
+  subcategories: [] as string[],
+});
 
 const handleSubcategoryToggle = (subcategoryId: string) => {
   const newSubcategories = filters.subcategories.includes(subcategoryId)
     ? filters.subcategories.filter(id => id !== subcategoryId)
-    : [...filters.subcategories, subcategoryId]
+    : [...filters.subcategories, subcategoryId];
 
   setFilters(prev => ({
     ...prev,
-    subcategories: newSubcategories
-  }))
+    subcategories: newSubcategories,
+  }));
 
   // Synchroniser avec le backend
   setCatalogueFilters({
     search: filters.search,
     statuses: filters.status,
-    subcategories: newSubcategories
-  })
-}
+    subcategories: newSubcategories,
+  });
+};
 ```
 
 ### Exemple 3 : Avec URL state (persistance)
 
 ```typescript
-import { useRouter, useSearchParams } from 'next/navigation'
+import { useRouter, useSearchParams } from 'next/navigation';
 
-const router = useRouter()
-const searchParams = useSearchParams()
+const router = useRouter();
+const searchParams = useSearchParams();
 
 // Lire depuis URL au montage
-const initialSubcategories = searchParams.get('subcategories')?.split(',') || []
-const [selectedSubcategories, setSelectedSubcategories] = useState(initialSubcategories)
+const initialSubcategories =
+  searchParams.get('subcategories')?.split(',') || [];
+const [selectedSubcategories, setSelectedSubcategories] =
+  useState(initialSubcategories);
 
 const handleSubcategoryToggle = (subcategoryId: string) => {
   const newSubcategories = selectedSubcategories.includes(subcategoryId)
     ? selectedSubcategories.filter(id => id !== subcategoryId)
-    : [...selectedSubcategories, subcategoryId]
+    : [...selectedSubcategories, subcategoryId];
 
-  setSelectedSubcategories(newSubcategories)
+  setSelectedSubcategories(newSubcategories);
 
   // Mettre à jour l'URL
-  const params = new URLSearchParams(searchParams.toString())
+  const params = new URLSearchParams(searchParams.toString());
   if (newSubcategories.length > 0) {
-    params.set('subcategories', newSubcategories.join(','))
+    params.set('subcategories', newSubcategories.join(','));
   } else {
-    params.delete('subcategories')
+    params.delete('subcategories');
   }
-  router.push(`/catalogue?${params.toString()}`)
-}
+  router.push(`/catalogue?${params.toString()}`);
+};
 ```
 
 ---
@@ -461,13 +457,13 @@ Le composant utilise `useMemo` pour les calculs coûteux :
 const enrichedHierarchy = useMemo(() => {
   // Calculs de compteurs et filtrage
   // Se recalcule UNIQUEMENT si les données changent
-}, [families, categories, subcategories, products])
+}, [families, categories, subcategories, products]);
 
 // Filtres actifs mémoïsés
 const activeFilters = useMemo(() => {
   // Génération des badges
   // Se recalcule UNIQUEMENT si les sélections changent
-}, [selectedSubcategories, subcategories, categories, families])
+}, [selectedSubcategories, subcategories, categories, families]);
 ```
 
 ### 2. Optimisation du rendu
@@ -486,14 +482,15 @@ const activeFilters = useMemo(() => {
 Pour de très grandes arborescences (>1000 sous-catégories) :
 
 ```typescript
-import dynamic from 'next/dynamic'
+import dynamic from 'next/dynamic';
 
 const CategoryHierarchyFilterV2 = dynamic(
-  () => import('@/components/business/category-hierarchy-filter-v2').then(
-    mod => mod.CategoryHierarchyFilterV2
-  ),
+  () =>
+    import('@/components/business/category-hierarchy-filter-v2').then(
+      mod => mod.CategoryHierarchyFilterV2
+    ),
   { ssr: false } // Désactiver SSR si nécessaire
-)
+);
 ```
 
 ### 4. Metrics de performance
@@ -592,12 +589,15 @@ git push origin main
 ```typescript
 // Problème : Compteurs incorrects après archivage
 // Solution : Recharger les produits après archivage
-await loadCatalogueData()
+await loadCatalogueData();
 
 // Problème : Auto-expansion ne fonctionne pas
 // Solution : Vérifier que les IDs des sélections sont valides
-console.log('Selected:', selectedSubcategories)
-console.log('Available:', subcategories.map(s => s.id))
+console.log('Selected:', selectedSubcategories);
+console.log(
+  'Available:',
+  subcategories.map(s => s.id)
+);
 ```
 
 ### Contact
@@ -613,6 +613,7 @@ console.log('Available:', subcategories.map(s => s.id))
 ### Version 2.0 (2025-10-07)
 
 **Ajouté** :
+
 - ✨ Badges amovibles pour filtres actifs
 - ✨ Repliage automatique après sélection
 - ✨ Auto-expansion des catégories sélectionnées
@@ -621,11 +622,13 @@ console.log('Available:', subcategories.map(s => s.id))
 - ✨ Bouton "Réinitialiser" global
 
 **Modifié** :
+
 - 🎨 Design minimaliste strict noir/blanc
 - ⚡ Optimisation performances avec useMemo
 - 📱 Amélioration responsive mobile
 
 **Supprimé** :
+
 - ❌ Couleurs non Vérone (bleu, vert, rouge sauf états système)
 - ❌ Animations lourdes
 

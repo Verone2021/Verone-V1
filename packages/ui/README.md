@@ -55,6 +55,7 @@ Palette complète documentée dans [CLAUDE.md](../../CLAUDE.md#design-system-v2-
 ## 📚 Composants à migrer
 
 **Liste initiale à documenter** :
+
 - [ ] Buttons (primary, secondary, ghost, danger)
 - [ ] Inputs (text, number, date, select)
 - [ ] Cards (default, elevated, interactive)
@@ -67,5 +68,5 @@ Palette complète documentée dans [CLAUDE.md](../../CLAUDE.md#design-system-v2-
 
 ---
 
-*À migrer : Après Phase 1*
-*Référence actuelle : src/components/ui-v2/*
+_À migrer : Après Phase 1_
+_Référence actuelle : src/components/ui-v2/_

@@ -15,11 +15,11 @@ source:
   lines: 311-327
 
 displayed_in:
-  - location: "Statistiques détaillées"
+  - location: 'Statistiques détaillées'
 
 output:
   type: string
-  format: "Temps relatif"
+  format: 'Temps relatif'
 
 metadata:
   created_at: 2025-10-22

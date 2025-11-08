@@ -1,9 +1,11 @@
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { ButtonV2 } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
-import { AlertTriangle, XCircle, Package, ExternalLink } from 'lucide-react';
-import Link from 'next/link';
 import Image from 'next/image';
+import Link from 'next/link';
+
+import { AlertTriangle, XCircle, Package, ExternalLink } from 'lucide-react';
+
+import { Badge } from '@/components/ui/badge';
+import { ButtonV2 } from '@/components/ui/button';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { useProductImages } from '@/shared/modules/products/hooks';
 
 // Type définition pour StockAlert

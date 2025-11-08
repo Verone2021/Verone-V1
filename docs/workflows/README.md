@@ -53,20 +53,25 @@ Cette section documente les workflows business quotidiens du système Vérone : 
 ### Par Rôle
 
 #### Owner
+
 - [Owner Daily Workflow](./owner-daily-workflow.md)
 
 #### Admin
+
 - [Admin Daily Workflow](./admin-daily-workflow.md)
 
 ### Par Module
 
 #### Commandes
+
 - [Orders Lifecycle](./orders-lifecycle.md)
 
 #### Stock
+
 - [Stock Movements](./stock-movements.md)
 
 #### Sourcing
+
 - [Sourcing Validation](./sourcing-validation.md)
 
 ---

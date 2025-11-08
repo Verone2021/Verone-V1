@@ -1,105 +1,122 @@
-"use client"
+'use client';
 
-import { useCallback, useState } from 'react'
-import Image from 'next/image'
-import { Upload, X, AlertCircle, Camera, Loader2 } from 'lucide-react'
-import { ButtonV2 } from '@/components/ui/button'
-import { useSimpleImageUpload } from '@/shared/modules/common/hooks'
-import { cn } from '@/lib/utils'
+import { useCallback, useState } from 'react';
+
+import Image from 'next/image';
+
+import { Upload, X, AlertCircle, Camera, Loader2 } from 'lucide-react';
+
+import { ButtonV2 } from '@/components/ui/button';
+import { cn } from '@verone/utils';
+import { useSimpleImageUpload } from '@/shared/modules/common/hooks';
 
 interface ImageUploadProps {
-  value?: string
-  onChange?: (url: string | null) => void
-  disabled?: boolean
-  className?: string
-  placeholder?: string
-  size?: 'sm' | 'md' | 'lg'
-  showPreview?: boolean
+  value?: string;
+  onChange?: (url: string | null) => void;
+  disabled?: boolean;
+  className?: string;
+  placeholder?: string;
+  size?: 'sm' | 'md' | 'lg';
+  showPreview?: boolean;
 }
 
 const sizeClasses = {
   sm: 'w-24 h-24',
   md: 'w-32 h-32',
-  lg: 'w-48 h-48'
-}
+  lg: 'w-48 h-48',
+};
 
 export function ImageUpload({
   value,
   onChange,
   disabled = false,
   className,
-  placeholder = "Cliquez ou glissez une image ici",
+  placeholder = 'Cliquez ou glissez une image ici',
   size = 'md',
-  showPreview = true
+  showPreview = true,
 }: ImageUploadProps) {
-  const [isDragging, setIsDragging] = useState(false)
+  const [isDragging, setIsDragging] = useState(false);
 
   const { uploading, error, uploadImage, reset } = useSimpleImageUpload({
-    onSuccess: (url) => {
-      onChange?.(url)
+    onSuccess: url => {
+      onChange?.(url);
     },
-    onError: (error) => {
-      console.error('Erreur upload:', error)
-    }
-  })
+    onError: error => {
+      console.error('Erreur upload:', error);
+    },
+  });
 
-  const handleFileSelect = useCallback(async (file: File) => {
-    if (disabled || uploading) return
+  const handleFileSelect = useCallback(
+    async (file: File) => {
+      if (disabled || uploading) return;
 
-    reset()
-    await uploadImage(file)
-  }, [disabled, uploading, uploadImage, reset])
+      reset();
+      await uploadImage(file);
+    },
+    [disabled, uploading, uploadImage, reset]
+  );
 
-  const handleFileInput = useCallback((event: React.ChangeEvent<HTMLInputElement>) => {
-    const file = event.target.files?.[0]
-    if (file) {
-      handleFileSelect(file)
-    }
-    // Reset input pour permettre de sélectionner le même fichier
-    event.target.value = ''
-  }, [handleFileSelect])
+  const handleFileInput = useCallback(
+    (event: React.ChangeEvent<HTMLInputElement>) => {
+      const file = event.target.files?.[0];
+      if (file) {
+        handleFileSelect(file);
+      }
+      // Reset input pour permettre de sélectionner le même fichier
+      event.target.value = '';
+    },
+    [handleFileSelect]
+  );
 
-  const handleDragOver = useCallback((event: React.DragEvent) => {
-    event.preventDefault()
-    if (!disabled) {
-      setIsDragging(true)
-    }
-  }, [disabled])
+  const handleDragOver = useCallback(
+    (event: React.DragEvent) => {
+      event.preventDefault();
+      if (!disabled) {
+        setIsDragging(true);
+      }
+    },
+    [disabled]
+  );
 
   const handleDragLeave = useCallback((event: React.DragEvent) => {
-    event.preventDefault()
-    setIsDragging(false)
-  }, [])
+    event.preventDefault();
+    setIsDragging(false);
+  }, []);
 
-  const handleDrop = useCallback((event: React.DragEvent) => {
-    event.preventDefault()
-    setIsDragging(false)
+  const handleDrop = useCallback(
+    (event: React.DragEvent) => {
+      event.preventDefault();
+      setIsDragging(false);
 
-    if (disabled) return
+      if (disabled) return;
 
-    const file = event.dataTransfer.files[0]
-    if (file && file.type.startsWith('image/')) {
-      handleFileSelect(file)
-    }
-  }, [disabled, handleFileSelect])
+      const file = event.dataTransfer.files[0];
+      if (file && file.type.startsWith('image/')) {
+        handleFileSelect(file);
+      }
+    },
+    [disabled, handleFileSelect]
+  );
 
   const handleRemove = useCallback(() => {
-    onChange?.(null)
-    reset()
-  }, [onChange, reset])
+    onChange?.(null);
+    reset();
+  }, [onChange, reset]);
 
-  const hasImage = value && !uploading
+  const hasImage = value && !uploading;
 
   return (
-    <div className={cn("space-y-2", className)}>
+    <div className={cn('space-y-2', className)}>
       {/* Zone d'upload ou preview */}
       <div
         className={cn(
-          "relative border-2 border-dashed rounded-lg transition-colors cursor-pointer",
+          'relative border-2 border-dashed rounded-lg transition-colors cursor-pointer',
           sizeClasses[size],
-          isDragging ? "border-black bg-gray-50" : "border-gray-300 hover:border-gray-400",
-          disabled && "opacity-50 cursor-not-allowed",
-          error && "border-red-300"
+          isDragging
+            ? 'border-black bg-gray-50'
+            : 'border-gray-300 hover:border-gray-400',
+          disabled && 'opacity-50 cursor-not-allowed',
+          error && 'border-red-300'
         )}
         onDragOver={handleDragOver}
         onDragLeave={handleDragLeave}
@@ -174,10 +191,8 @@ export function ImageUpload({
 
       {/* URL de l'image (pour debug) */}
       {hasImage && (
-        <div className="text-xs text-gray-500 truncate">
-          ✓ Image uploadée
-        </div>
+        <div className="text-xs text-gray-500 truncate">✓ Image uploadée</div>
       )}
     </div>
-  )
+  );
 }

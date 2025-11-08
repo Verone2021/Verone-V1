@@ -77,6 +77,7 @@ async function getProducts(): Promise<ProductsResponse> {
 **Vers** : `packages/types/src/`
 
 **Liste initiale** :
+
 - [ ] Types Supabase générés
 - [ ] DTOs API (create, update, delete)
 - [ ] Types métier (Product, Order, Stock, etc.)
@@ -84,5 +85,5 @@ async function getProducts(): Promise<ProductsResponse> {
 
 ---
 
-*À migrer : Après Phase 1*
-*Référence actuelle : src/types/*
+_À migrer : Après Phase 1_
+_Référence actuelle : src/types/_

@@ -7,7 +7,7 @@
  * Date: 2025-10-14
  */
 
-'use client'
+'use client';
 
 import {
   AreaChart,
@@ -17,21 +17,22 @@ import {
   CartesianGrid,
   Tooltip,
   ResponsiveContainer,
-  TooltipProps
-} from 'recharts'
-import type { ProductsDataPoint } from '@/shared/modules/dashboard/hooks'
+  TooltipProps,
+} from 'recharts';
+
+import type { ProductsDataPoint } from '@/shared/modules/dashboard/hooks';
 
 interface ProductsChartProps {
-  data: ProductsDataPoint[]
-  isLoading?: boolean
+  data: ProductsDataPoint[];
+  isLoading?: boolean;
 }
 
 // Custom Tooltip
 const CustomTooltip = ({ active, payload }: any) => {
-  if (!active || !payload || !payload.length) return null
+  if (!active || !payload?.length) return null;
 
-  const count = payload[0].value || 0
-  const dataPoint = payload[0].payload as ProductsDataPoint
+  const count = payload[0].value || 0;
+  const dataPoint = payload[0].payload as ProductsDataPoint;
 
   return (
     <div className="bg-white border border-gray-200 rounded-lg shadow-lg p-3">
@@ -40,8 +41,8 @@ const CustomTooltip = ({ active, payload }: any) => {
         {count} produit{count > 1 ? 's' : ''}
       </p>
     </div>
-  )
-}
+  );
+};
 
 export function ProductsChart({ data, isLoading = false }: ProductsChartProps) {
   if (isLoading) {
@@ -49,7 +50,7 @@ export function ProductsChart({ data, isLoading = false }: ProductsChartProps) {
       <div className="w-full h-[300px] flex items-center justify-center bg-gray-50 rounded-lg animate-pulse">
         <div className="text-sm text-gray-400">Chargement des données...</div>
       </div>
-    )
+    );
   }
 
   if (!data || data.length === 0) {
@@ -57,7 +58,7 @@ export function ProductsChart({ data, isLoading = false }: ProductsChartProps) {
       <div className="w-full h-[300px] flex items-center justify-center bg-gray-50 rounded-lg">
         <div className="text-sm text-gray-500">Aucune donnée disponible</div>
       </div>
-    )
+    );
   }
 
   return (
@@ -96,5 +97,5 @@ export function ProductsChart({ data, isLoading = false }: ProductsChartProps) {
         </AreaChart>
       </ResponsiveContainer>
     </div>
-  )
+  );
 }

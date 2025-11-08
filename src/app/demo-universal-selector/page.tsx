@@ -1,12 +1,11 @@
 'use client';
 
 import { useState } from 'react';
-import {
-  UniversalProductSelectorV2,
-  SelectedProduct,
-} from '@/components/business/universal-product-selector-v2';
+
 import { ButtonV2 } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import type { SelectedProduct } from '@/shared/modules/products/components/selectors/UniversalProductSelectorV2';
+import { UniversalProductSelectorV2 } from '@/shared/modules/products/components/selectors/UniversalProductSelectorV2';
 
 export default function DemoUniversalSelectorPage() {
   const [showModal, setShowModal] = useState(false);
@@ -92,7 +91,7 @@ export default function DemoUniversalSelectorPage() {
         context={context}
         selectedProducts={selectedProducts}
         showQuantity={context === 'consultations' || context === 'orders'}
-        showImages={true}
+        showImages
       />
     </div>
   );

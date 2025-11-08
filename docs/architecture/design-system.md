@@ -20,21 +20,22 @@
 Design System V2 2025 : palette moderne, gradients, micro-interactions, inspiré Odoo/Figma/Dribbble/shadcn.
 
 **Palette 2025** :
+
 ```css
---verone-primary: #3b86d1      /* Bleu professionnel */
---verone-success: #38ce3c      /* Vert validation */
---verone-warning: #ff9b3e      /* Orange attention */
---verone-accent: #844fc1       /* Violet créatif */
---verone-danger: #ff4d6b       /* Rouge critique */
---verone-neutral: #6c7293      /* Gris interface */
+--verone-primary: #3b86d1 /* Bleu professionnel */ --verone-success: #38ce3c
+  /* Vert validation */ --verone-warning: #ff9b3e /* Orange attention */
+  --verone-accent: #844fc1 /* Violet créatif */ --verone-danger: #ff4d6b
+  /* Rouge critique */ --verone-neutral: #6c7293 /* Gris interface */;
 ```
 
 **Composants ui-v2** :
+
 - Button (gradients, micro-interactions)
 - KPI Cards (shadows élégantes)
 - Charts (couleurs vives)
 
 **Fichiers** :
+
 - `/Users/romeodossantos/verone-back-office-V1/src/lib/theme-v2.ts`
 - `/Users/romeodossantos/verone-back-office-V1/src/lib/design-system/`
 - `/Users/romeodossantos/verone-back-office-V1/src/components/ui-v2/`

@@ -7,6 +7,7 @@
 ## 🎯 Objectifs
 
 Définir les règles métier pour le workflow complet de validation des produits sourcing vers le catalogue, incluant :
+
 - **Validation conditionnelle échantillons** : Logique automatique basée sur `requires_sample`
 - **Workflow automatique** : Passage produit sourcing → catalogue selon validation
 - **Règles business** : Contrôles et validations selon type de produit
@@ -14,93 +15,98 @@ Définir les règles métier pour le workflow complet de validation des produits
 ## 📊 Workflow Sourcing Validation CORRECT
 
 ### **État 1: Création Sourcing**
+
 ```typescript
 // Formulaire sourcing rapide créé (déjà implémenté)
 const sourcingDraft = {
   creation_mode: 'sourcing',
   requires_sample: null, // À déterminer lors de la validation
-  status: 'draft'
-}
+  status: 'draft',
+};
 ```
 
 ### **État 2: Validation Sourcing → Détermination échantillons**
+
 ```typescript
 interface SourcingValidationRules {
   // Étape 1: Compléter les infos sourcing
   sourcing_completion: {
-    required_fields: ['name', 'supplier_id', 'cost_price', 'supplier_page_url'],
-    validation_trigger: 'Validation du sourcing'
-  },
+    required_fields: ['name', 'supplier_id', 'cost_price', 'supplier_page_url'];
+    validation_trigger: 'Validation du sourcing';
+  };
 
   // Étape 2: Décision échantillons
   sample_decision: {
     requires_sample_true: {
-      workflow: 'sourcing_validated → sample_request → sample_ordered → sample_delivered → sample_approved → catalogue',
-      description: 'Si échantillon nécessaire, processus complet requis'
-    },
+      workflow: 'sourcing_validated → sample_request → sample_ordered → sample_delivered → sample_approved → catalogue';
+      description: 'Si échantillon nécessaire, processus complet requis';
+    };
     requires_sample_false: {
-      workflow: 'sourcing_validated → catalogue',
-      description: 'Si pas d\'échantillon, passage direct au catalogue'
-    }
-  }
+      workflow: 'sourcing_validated → catalogue';
+      description: "Si pas d'échantillon, passage direct au catalogue";
+    };
+  };
 }
 ```
 
 ### **État 3: Demande de commande échantillons (Si requis)**
+
 ```typescript
 interface SampleOrderWorkflow {
   // Étape 3a: Demande de commande d'échantillons
   sample_request: {
-    status: 'sample_request_pending',
-    required_fields: ['sample_description', 'estimated_cost', 'delivery_time'],
-    validation: 'Demande approuvée par manager'
-  },
+    status: 'sample_request_pending';
+    required_fields: ['sample_description', 'estimated_cost', 'delivery_time'];
+    validation: 'Demande approuvée par manager';
+  };
 
   // Étape 3b: Commande d'échantillons
   sample_order: {
-    status: 'sample_ordered',
-    tracking: 'order_number, supplier_contact, expected_delivery',
-    notifications: 'Auto-reminder si retard livraison'
-  },
+    status: 'sample_ordered';
+    tracking: 'order_number, supplier_contact, expected_delivery';
+    notifications: 'Auto-reminder si retard livraison';
+  };
 
   // Étape 3c: Réception et validation échantillons
   sample_validation: {
-    status: 'sample_delivered',
-    actions: ['approve', 'reject', 'request_modifications'],
-    approval_required: 'Manager ou responsable catalogue'
-  }
+    status: 'sample_delivered';
+    actions: ['approve', 'reject', 'request_modifications'];
+    approval_required: 'Manager ou responsable catalogue';
+  };
 }
 ```
 
 ### **État 4: Passage Catalogue (Conditionnel)**
+
 ```typescript
 interface CatalogTransferRules {
   // Cas 1: Pas d'échantillon requis
   direct_transfer: {
-    condition: 'requires_sample === false && sourcing_validated === true',
-    workflow: 'sourcing_validated → product_created',
-    automatic: true
-  },
+    condition: 'requires_sample === false && sourcing_validated === true';
+    workflow: 'sourcing_validated → product_created';
+    automatic: true;
+  };
 
   // Cas 2: Échantillons requis ET validés
   sample_transfer: {
-    condition: 'requires_sample === true && sample_status === "approved"',
-    workflow: 'sample_approved → product_created',
-    automatic: true
-  },
+    condition: 'requires_sample === true && sample_status === "approved"';
+    workflow: 'sample_approved → product_created';
+    automatic: true;
+  };
 
   // Cas 3: Échantillons refusés
   sample_rejected: {
-    condition: 'sample_status === "rejected"',
-    workflow: 'sample_rejected → back_to_sourcing OR archive',
-    action: 'Retour sourcing ou archivage produit'
-  }
+    condition: 'sample_status === "rejected"';
+    workflow: 'sample_rejected → back_to_sourcing OR archive';
+    action: 'Retour sourcing ou archivage produit';
+  };
 }
 ```
 
 ## 🔧 Implémentation Database
 
 ### **Nouvelles colonnes product_drafts**
+
 ```sql
 -- Ajouter colonnes pour workflow validation CORRECT
 ALTER TABLE product_drafts ADD COLUMN IF NOT EXISTS sourcing_status TEXT DEFAULT 'draft';
@@ -151,6 +157,7 @@ ALTER TABLE product_drafts ALTER COLUMN sample_status TYPE sample_status_type US
 ```
 
 ### **Fonction validation automatique**
+
 ```sql
 CREATE OR REPLACE FUNCTION validate_sourcing_product(draft_id UUID)
 RETURNS TABLE (
@@ -256,61 +263,70 @@ $$ LANGUAGE plpgsql;
 ## 🎯 Interface Utilisateur
 
 ### **1. Formulaire Sourcing Enhanced**
+
 ```typescript
 // Ajout champ requires_sample au formulaire
 interface SourcingFormData {
-  name: string
-  supplier_page_url: string
-  assigned_client_id?: string
-  requires_sample: boolean | null // ⭐ NOUVEAU
-  supplier_id?: string           // ⭐ NOUVEAU
-  cost_price?: number           // ⭐ NOUVEAU
-  estimated_selling_price?: number // ⭐ NOUVEAU
+  name: string;
+  supplier_page_url: string;
+  assigned_client_id?: string;
+  requires_sample: boolean | null; // ⭐ NOUVEAU
+  supplier_id?: string; // ⭐ NOUVEAU
+  cost_price?: number; // ⭐ NOUVEAU
+  estimated_selling_price?: number; // ⭐ NOUVEAU
 }
 
 // Validation conditionnelle
 const validateSourcingForm = (data: SourcingFormData) => {
-  const errors = []
+  const errors = [];
 
   // Champs obligatoires base
-  if (!data.name) errors.push('Nom obligatoire')
-  if (!data.supplier_page_url) errors.push('URL fournisseur obligatoire')
+  if (!data.name) errors.push('Nom obligatoire');
+  if (!data.supplier_page_url) errors.push('URL fournisseur obligatoire');
 
   // Pour validation finale
   if (data.requires_sample !== null) {
-    if (!data.supplier_id) errors.push('Fournisseur obligatoire pour validation')
-    if (!data.cost_price || data.cost_price <= 0) errors.push('Prix d\'achat obligatoire')
+    if (!data.supplier_id)
+      errors.push('Fournisseur obligatoire pour validation');
+    if (!data.cost_price || data.cost_price <= 0)
+      errors.push("Prix d'achat obligatoire");
   }
 
-  return errors
-}
+  return errors;
+};
 ```
 
 ### **2. Interface Validation Échantillons**
+
 ```typescript
 interface SampleValidationInterface {
   // Liste produits avec échantillons requis
-  products_awaiting_samples: ProductDraft[]
+  products_awaiting_samples: ProductDraft[];
 
   // Actions disponibles
   actions: {
-    mark_sample_ordered: (draftId: string) => void
-    mark_sample_delivered: (draftId: string) => void
-    validate_sample: (draftId: string, approved: boolean, notes: string) => void
-    reject_sample: (draftId: string, reason: string) => void
-  }
+    mark_sample_ordered: (draftId: string) => void;
+    mark_sample_delivered: (draftId: string) => void;
+    validate_sample: (
+      draftId: string,
+      approved: boolean,
+      notes: string
+    ) => void;
+    reject_sample: (draftId: string, reason: string) => void;
+  };
 
   // États affichés
   sample_statuses: {
-    'ordered': 'Échantillon commandé',
-    'delivered': 'Échantillon livré',
-    'validated': 'Échantillon validé',
-    'rejected': 'Échantillon refusé'
-  }
+    ordered: 'Échantillon commandé';
+    delivered: 'Échantillon livré';
+    validated: 'Échantillon validé';
+    rejected: 'Échantillon refusé';
+  };
 }
 ```
 
 ### **3. Workflow Automatique**
+
 ```typescript
 interface AutoWorkflow {
   // Trigger automatique après validation échantillon
@@ -338,6 +354,7 @@ interface AutoWorkflow {
 ## 🔍 Tests Business Rules
 
 ### **Test 1: Produit sans échantillon**
+
 ```typescript
 describe('Sourcing without samples', () => {
   test('Direct validation to catalog', async () => {
@@ -347,18 +364,19 @@ describe('Sourcing without samples', () => {
       requires_sample: false,
       supplier_id: 'supplier-123',
       cost_price: 100,
-      estimated_selling_price: 150
-    })
+      estimated_selling_price: 150,
+    });
 
     // Should allow direct validation
-    const result = await validateSourcingProduct(draft.id)
-    expect(result.success).toBe(true)
-    expect(result.product_id).toBeTruthy()
-  })
-})
+    const result = await validateSourcingProduct(draft.id);
+    expect(result.success).toBe(true);
+    expect(result.product_id).toBeTruthy();
+  });
+});
 ```
 
 ### **Test 2: Produit avec échantillons**
+
 ```typescript
 describe('Sourcing with samples', () => {
   test('Requires sample validation before catalog', async () => {
@@ -366,40 +384,42 @@ describe('Sourcing with samples', () => {
       name: 'Test Product With Sample',
       requires_sample: true,
       supplier_id: 'supplier-123',
-      cost_price: 100
-    })
+      cost_price: 100,
+    });
 
     // Should fail validation without sample approval
-    const result = await validateSourcingProduct(draft.id)
-    expect(result.success).toBe(false)
-    expect(result.message).toContain('Échantillons doivent être validés')
+    const result = await validateSourcingProduct(draft.id);
+    expect(result.success).toBe(false);
+    expect(result.message).toContain('Échantillons doivent être validés');
 
     // After sample validation
-    await updateDraft(draft.id, { sample_status: 'validated' })
-    const result2 = await validateSourcingProduct(draft.id)
-    expect(result2.success).toBe(true)
-  })
-})
+    await updateDraft(draft.id, { sample_status: 'validated' });
+    const result2 = await validateSourcingProduct(draft.id);
+    expect(result2.success).toBe(true);
+  });
+});
 ```
 
 ## 📊 Métriques Business
 
 ### **KPIs Sourcing Workflow**
+
 ```typescript
 interface SourcingMetrics {
   // Performance workflow
-  avg_sourcing_to_catalog_time: 'jours moyens sourcing → catalogue',
-  sample_validation_rate: '% échantillons validés vs rejetés',
-  auto_validation_rate: '% produits validés automatiquement',
+  avg_sourcing_to_catalog_time: 'jours moyens sourcing → catalogue';
+  sample_validation_rate: '% échantillons validés vs rejetés';
+  auto_validation_rate: '% produits validés automatiquement';
 
   // Efficacité business
-  sourcing_success_rate: '% produits sourcing → ventes',
-  margin_accuracy: 'écart prix estimé vs réel',
-  supplier_reliability: 'temps livraison échantillons respecté'
+  sourcing_success_rate: '% produits sourcing → ventes';
+  margin_accuracy: 'écart prix estimé vs réel';
+  supplier_reliability: 'temps livraison échantillons respecté';
 }
 ```
 
 ### **Dashboard Sourcing**
+
 ```sql
 -- Vue métriques sourcing
 CREATE VIEW sourcing_workflow_metrics AS
@@ -417,17 +437,20 @@ AND created_at >= CURRENT_DATE - INTERVAL '30 days';
 ## ✅ Critères de Succès
 
 ### **Fonctionnel**
+
 - ✅ **Sauvegarde formulaire** : Tous champs sauvegardés correctement
 - ✅ **Validation conditionnelle** : Échantillons requis selon `requires_sample`
 - ✅ **Workflow automatique** : Passage catalogue sans intervention manuelle
 - ✅ **Business rules** : Validation prix, fournisseur, échantillons
 
 ### **Performance**
+
 - ✅ **Validation <2s** : Passage brouillon → produit catalogue
 - ✅ **Interface réactive** : Mise à jour statuts temps réel
 - ✅ **Workflow fluide** : Navigation sourcing → échantillons → catalogue
 
 ### **Qualité**
+
 - ✅ **0 erreur console** : Interface sans erreur JavaScript
 - ✅ **Validation robuste** : Gestion cas limites et erreurs
 - ✅ **Audit trail** : Traçabilité complète des validations

@@ -1,17 +1,30 @@
-'use client'
+'use client';
 
-import { useState, useEffect } from 'react'
-import { Plus, Minus, X } from 'lucide-react'
-import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog'
-import { ButtonV2 } from '@/components/ui/button'
-import { Input } from '@/components/ui/input'
-import { Label } from '@/components/ui/label'
-import { Textarea } from '@/components/ui/textarea'
-import { Card } from '@/components/ui/card'
-import { Separator } from '@/components/ui/separator'
-import { UniversalProductSelectorV2, SelectedProduct } from '@/components/business/universal-product-selector-v2'
-import { formatCurrency } from '@/lib/utils'
-import type { OrderType, CreateOrderItemData } from '@/shared/modules/orders/hooks'
+import { useState, useEffect } from 'react';
+
+import { Plus, Minus, X } from 'lucide-react';
+
+import { ButtonV2 } from '@/components/ui/button';
+import { Card } from '@/components/ui/card';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Separator } from '@/components/ui/separator';
+import { Textarea } from '@/components/ui/textarea';
+import { formatCurrency } from '@verone/utils';
+import type {
+  OrderType,
+  CreateOrderItemData,
+} from '@/shared/modules/orders/hooks';
+import type { SelectedProduct } from '@/shared/modules/products/components/selectors/UniversalProductSelectorV2';
+import { UniversalProductSelectorV2 } from '@/shared/modules/products/components/selectors/UniversalProductSelectorV2';
 
 /**
  * Modal Universel Ajout Produit à Commande
@@ -23,107 +36,114 @@ import type { OrderType, CreateOrderItemData } from '@/shared/modules/orders/hoo
  */
 
 interface AddProductToOrderModalProps {
-  open: boolean
-  onClose: () => void
-  orderType: OrderType
-  onAdd: (data: CreateOrderItemData) => Promise<void> | void
+  open: boolean;
+  onClose: () => void;
+  orderType: OrderType;
+  onAdd: (data: CreateOrderItemData) => Promise<void> | void;
 }
 
 interface ProductImage {
-  public_url: string
-  is_primary: boolean
-  display_order?: number
+  public_url: string;
+  is_primary: boolean;
+  display_order?: number;
 }
 
 export function AddProductToOrderModal({
   open,
   onClose,
   orderType,
-  onAdd
+  onAdd,
 }: AddProductToOrderModalProps) {
   // États
-  const [showProductSelector, setShowProductSelector] = useState(false)
-  const [selectedProduct, setSelectedProduct] = useState<SelectedProduct | null>(null)
-  const [quantity, setQuantity] = useState(1)
-  const [unitPrice, setUnitPrice] = useState(0)
-  const [discountPercentage, setDiscountPercentage] = useState(0)
-  const [ecoTax, setEcoTax] = useState(0)
-  const [taxRate, setTaxRate] = useState(0.20)  // TVA 20% par défaut (ventes)
-  const [notes, setNotes] = useState('')
-  const [isAdding, setIsAdding] = useState(false)
+  const [showProductSelector, setShowProductSelector] = useState(false);
+  const [selectedProduct, setSelectedProduct] =
+    useState<SelectedProduct | null>(null);
+  const [quantity, setQuantity] = useState(1);
+  const [unitPrice, setUnitPrice] = useState(0);
+  const [discountPercentage, setDiscountPercentage] = useState(0);
+  const [ecoTax, setEcoTax] = useState(0);
+  const [taxRate, setTaxRate] = useState(0.2); // TVA 20% par défaut (ventes)
+  const [notes, setNotes] = useState('');
+  const [isAdding, setIsAdding] = useState(false);
 
   // Auto-remplir prix/éco-taxe quand produit sélectionné
   useEffect(() => {
     if (selectedProduct) {
       // Prix selon orderType
-      const defaultPrice = orderType === 'purchase'
-        ? (selectedProduct as any).cost_price || 0
-        : (selectedProduct as any).min_selling_price || 0
+      const defaultPrice =
+        orderType === 'purchase'
+          ? (selectedProduct as any).cost_price || 0
+          : (selectedProduct as any).min_selling_price || 0;
 
-      setUnitPrice(defaultPrice)
-      setEcoTax((selectedProduct as any).eco_tax_default || 0)
+      setUnitPrice(defaultPrice);
+      setEcoTax((selectedProduct as any).eco_tax_default || 0);
     }
-  }, [selectedProduct, orderType])
+  }, [selectedProduct, orderType]);
 
   // Calculer totaux aperçu
-  const previewSubtotal = quantity * unitPrice * (1 - discountPercentage / 100)
-  const previewTotal = previewSubtotal + ecoTax
+  const previewSubtotal = quantity * unitPrice * (1 - discountPercentage / 100);
+  const previewTotal = previewSubtotal + ecoTax;
 
   // Labels dynamiques selon orderType
   const getPriceLabel = () =>
-    orderType === 'purchase' ? 'Prix achat indicatif' : 'Prix vente min indicatif'
+    orderType === 'purchase'
+      ? 'Prix achat indicatif'
+      : 'Prix vente min indicatif';
 
   const getModalTitle = () =>
     orderType === 'purchase'
       ? 'Ajouter un produit à la commande fournisseur'
-      : 'Ajouter un produit à la commande client'
+      : 'Ajouter un produit à la commande client';
 
   // Récupérer image primaire produit
   const getPrimaryImage = (product: any): string | null => {
-    const images = product.product_images as ProductImage[] | undefined
-    return images?.find(img => img.is_primary)?.public_url ||
-           images?.[0]?.public_url ||
-           null
-  }
+    const images = product.product_images as ProductImage[] | undefined;
+    return (
+      images?.find(img => img.is_primary)?.public_url ||
+      images?.[0]?.public_url ||
+      null
+    );
+  };
 
   // Gérer sélection produit depuis UniversalProductSelectorV2
   const handleProductSelect = (products: SelectedProduct[]) => {
     if (products.length > 0) {
-      setSelectedProduct(products[0])
+      setSelectedProduct(products[0]);
       // Si des quantités/prix sont déjà renseignés dans le sélecteur, les utiliser
-      if (products[0].quantity) setQuantity(products[0].quantity)
-      if (products[0].unit_price) setUnitPrice(products[0].unit_price)
-      if (products[0].discount_percentage) setDiscountPercentage(products[0].discount_percentage)
-      setShowProductSelector(false)
+      if (products[0].quantity) setQuantity(products[0].quantity);
+      if (products[0].unit_price) setUnitPrice(products[0].unit_price);
+      if (products[0].discount_percentage)
+        setDiscountPercentage(products[0].discount_percentage);
+      setShowProductSelector(false);
     }
-  }
+  };
 
   // Gérer ajout produit
   const handleAdd = async () => {
-    if (!selectedProduct) return
+    if (!selectedProduct) return;
 
     // Validation
     if (quantity <= 0) {
-      alert('La quantité doit être supérieure à 0')
-      return
+      alert('La quantité doit être supérieure à 0');
+      return;
     }
 
     if (unitPrice < 0) {
-      alert('Le prix unitaire ne peut pas être négatif')
-      return
+      alert('Le prix unitaire ne peut pas être négatif');
+      return;
     }
 
     if (discountPercentage < 0 || discountPercentage > 100) {
-      alert('La remise doit être entre 0 et 100%')
-      return
+      alert('La remise doit être entre 0 et 100%');
+      return;
     }
 
     if (ecoTax < 0) {
-      alert('L\'éco-taxe ne peut pas être négative')
-      return
+      alert("L'éco-taxe ne peut pas être négative");
+      return;
     }
 
-    setIsAdding(true)
+    setIsAdding(true);
 
     try {
       // Préparer données item
@@ -133,46 +153,48 @@ export function AddProductToOrderModal({
         unit_price_ht: unitPrice,
         discount_percentage: discountPercentage,
         eco_tax: ecoTax,
-        notes: notes.trim() || undefined
-      }
+        notes: notes.trim() || undefined,
+      };
 
       // Ajouter TVA si ventes
       if (orderType === 'sales') {
-        itemData.tax_rate = taxRate
+        itemData.tax_rate = taxRate;
       }
 
       // Appeler callback parent
-      await onAdd(itemData)
+      await onAdd(itemData);
 
       // Reset et fermer
-      resetForm()
-      onClose()
+      resetForm();
+      onClose();
     } catch (err) {
-      console.error('❌ Erreur ajout produit:', err)
-      alert(`Erreur lors de l'ajout du produit: ${err instanceof Error ? err.message : 'Erreur inconnue'}`)
+      console.error('❌ Erreur ajout produit:', err);
+      alert(
+        `Erreur lors de l'ajout du produit: ${err instanceof Error ? err.message : 'Erreur inconnue'}`
+      );
     } finally {
-      setIsAdding(false)
+      setIsAdding(false);
     }
-  }
+  };
 
   // Reset formulaire
   const resetForm = () => {
-    setSelectedProduct(null)
-    setQuantity(1)
-    setUnitPrice(0)
-    setDiscountPercentage(0)
-    setEcoTax(0)
-    setTaxRate(0.20)
-    setNotes('')
-    setShowProductSelector(false)
-  }
+    setSelectedProduct(null);
+    setQuantity(1);
+    setUnitPrice(0);
+    setDiscountPercentage(0);
+    setEcoTax(0);
+    setTaxRate(0.2);
+    setNotes('');
+    setShowProductSelector(false);
+  };
 
   // Reset au close
   useEffect(() => {
     if (!open) {
-      resetForm()
+      resetForm();
     }
-  }, [open])
+  }, [open]);
 
   return (
     <>
@@ -181,7 +203,8 @@ export function AddProductToOrderModal({
           <DialogHeader>
             <DialogTitle>{getModalTitle()}</DialogTitle>
             <DialogDescription>
-              Sélectionnez un produit puis configurez la quantité, le prix et les options.
+              Sélectionnez un produit puis configurez la quantité, le prix et
+              les options.
             </DialogDescription>
           </DialogHeader>
 
@@ -201,12 +224,13 @@ export function AddProductToOrderModal({
                     )}
                     <div className="flex-1">
                       <p className="font-medium">{selectedProduct.name}</p>
-                      <p className="text-sm text-gray-600">{selectedProduct.sku}</p>
+                      <p className="text-sm text-gray-600">
+                        {selectedProduct.sku}
+                      </p>
                       <p className="text-sm text-primary mt-1">
                         {orderType === 'purchase'
                           ? `Achat: ${formatCurrency((selectedProduct as any).cost_price || 0)}`
-                          : `Vente min: ${formatCurrency((selectedProduct as any).min_selling_price || 0)}`
-                        }
+                          : `Vente min: ${formatCurrency((selectedProduct as any).min_selling_price || 0)}`}
                       </p>
                     </div>
                     <ButtonV2
@@ -235,7 +259,9 @@ export function AddProductToOrderModal({
               <>
                 <Separator />
                 <div className="space-y-4">
-                  <h3 className="font-semibold text-lg">Configuration de la ligne</h3>
+                  <h3 className="font-semibold text-lg">
+                    Configuration de la ligne
+                  </h3>
 
                   <div className="grid grid-cols-2 gap-4">
                     {/* Quantité avec +/- */}
@@ -252,7 +278,11 @@ export function AddProductToOrderModal({
                         <Input
                           type="number"
                           value={quantity}
-                          onChange={(e) => setQuantity(Math.max(1, parseInt(e.target.value) || 1))}
+                          onChange={e =>
+                            setQuantity(
+                              Math.max(1, parseInt(e.target.value) || 1)
+                            )
+                          }
                           className="w-20 text-center"
                           min="1"
                         />
@@ -271,18 +301,22 @@ export function AddProductToOrderModal({
                       <Label>
                         Prix unitaire HT * €
                         <span className="text-xs text-gray-500 ml-2 font-normal">
-                          ({getPriceLabel()}: {formatCurrency(
+                          ({getPriceLabel()}:{' '}
+                          {formatCurrency(
                             orderType === 'purchase'
                               ? (selectedProduct as any).cost_price || 0
                               : (selectedProduct as any).min_selling_price || 0
-                          )})
+                          )}
+                          )
                         </span>
                       </Label>
                       <Input
                         type="number"
                         step="0.01"
                         value={unitPrice}
-                        onChange={(e) => setUnitPrice(parseFloat(e.target.value) || 0)}
+                        onChange={e =>
+                          setUnitPrice(parseFloat(e.target.value) || 0)
+                        }
                         placeholder="0.00"
                         className="mt-2"
                         min="0"
@@ -298,7 +332,9 @@ export function AddProductToOrderModal({
                         min="0"
                         max="100"
                         value={discountPercentage}
-                        onChange={(e) => setDiscountPercentage(parseFloat(e.target.value) || 0)}
+                        onChange={e =>
+                          setDiscountPercentage(parseFloat(e.target.value) || 0)
+                        }
                         placeholder="0"
                         className="mt-2"
                       />
@@ -309,14 +345,20 @@ export function AddProductToOrderModal({
                       <Label>
                         Éco-taxe €
                         <span className="text-xs text-gray-500 ml-2 font-normal">
-                          (indicative: {formatCurrency((selectedProduct as any).eco_tax_default || 0)})
+                          (indicative:{' '}
+                          {formatCurrency(
+                            (selectedProduct as any).eco_tax_default || 0
+                          )}
+                          )
                         </span>
                       </Label>
                       <Input
                         type="number"
                         step="0.01"
                         value={ecoTax}
-                        onChange={(e) => setEcoTax(parseFloat(e.target.value) || 0)}
+                        onChange={e =>
+                          setEcoTax(parseFloat(e.target.value) || 0)
+                        }
                         placeholder="0.00"
                         className="mt-2"
                         min="0"
@@ -331,7 +373,9 @@ export function AddProductToOrderModal({
                           type="number"
                           step="0.1"
                           value={taxRate * 100}
-                          onChange={(e) => setTaxRate((parseFloat(e.target.value) || 20) / 100)}
+                          onChange={e =>
+                            setTaxRate((parseFloat(e.target.value) || 20) / 100)
+                          }
                           placeholder="20"
                           className="mt-2"
                         />
@@ -344,7 +388,7 @@ export function AddProductToOrderModal({
                     <Label>Notes (optionnel)</Label>
                     <Textarea
                       value={notes}
-                      onChange={(e) => setNotes(e.target.value)}
+                      onChange={e => setNotes(e.target.value)}
                       placeholder="Commentaire spécifique à cette ligne..."
                       rows={2}
                       className="mt-2"
@@ -357,22 +401,33 @@ export function AddProductToOrderModal({
                     <div className="space-y-2 text-sm">
                       <div className="flex justify-between">
                         <span className="text-gray-600">Sous-total HT:</span>
-                        <span className="font-medium">{formatCurrency(previewSubtotal)}</span>
+                        <span className="font-medium">
+                          {formatCurrency(previewSubtotal)}
+                        </span>
                       </div>
                       <div className="flex justify-between">
                         <span className="text-gray-600">Éco-taxe:</span>
-                        <span className="font-medium">{formatCurrency(ecoTax)}</span>
+                        <span className="font-medium">
+                          {formatCurrency(ecoTax)}
+                        </span>
                       </div>
                       {discountPercentage > 0 && (
                         <div className="flex justify-between text-green-600">
                           <span>Remise ({discountPercentage}%):</span>
-                          <span>-{formatCurrency(quantity * unitPrice * (discountPercentage / 100))}</span>
+                          <span>
+                            -
+                            {formatCurrency(
+                              quantity * unitPrice * (discountPercentage / 100)
+                            )}
+                          </span>
                         </div>
                       )}
                       <Separator />
                       <div className="flex justify-between text-lg">
                         <span className="font-bold">Total ligne HT:</span>
-                        <span className="font-bold text-primary">{formatCurrency(previewTotal)}</span>
+                        <span className="font-bold text-primary">
+                          {formatCurrency(previewTotal)}
+                        </span>
                       </div>
                       {orderType === 'sales' && (
                         <div className="flex justify-between text-xs text-gray-500">
@@ -418,11 +473,11 @@ export function AddProductToOrderModal({
           context="orders"
           title={`Sélectionner un produit pour la commande ${orderType === 'purchase' ? 'fournisseur' : 'client'}`}
           description="Recherchez et sélectionnez le produit à ajouter"
-          showQuantity={true}
-          showPricing={true}
-          showImages={true}
+          showQuantity
+          showPricing
+          showImages
         />
       )}
     </>
-  )
+  );
 }

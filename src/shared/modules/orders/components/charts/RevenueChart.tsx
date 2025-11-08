@@ -7,7 +7,7 @@
  * Date: 2025-10-14
  */
 
-'use client'
+'use client';
 
 import {
   LineChart,
@@ -17,21 +17,22 @@ import {
   CartesianGrid,
   Tooltip,
   ResponsiveContainer,
-  TooltipProps
-} from 'recharts'
-import type { RevenueDataPoint } from '@/shared/modules/dashboard/hooks'
+  TooltipProps,
+} from 'recharts';
+
+import type { RevenueDataPoint } from '@/shared/modules/dashboard/hooks';
 
 interface RevenueChartProps {
-  data: RevenueDataPoint[]
-  isLoading?: boolean
+  data: RevenueDataPoint[];
+  isLoading?: boolean;
 }
 
 // Custom Tooltip avec formatage €
 const CustomTooltip = ({ active, payload }: any) => {
-  if (!active || !payload || !payload.length) return null
+  if (!active || !payload?.length) return null;
 
-  const revenue = payload[0].value || 0
-  const dataPoint = payload[0].payload as RevenueDataPoint
+  const revenue = payload[0].value || 0;
+  const dataPoint = payload[0].payload as RevenueDataPoint;
 
   return (
     <div className="bg-white border border-gray-200 rounded-lg shadow-lg p-3">
@@ -41,12 +42,12 @@ const CustomTooltip = ({ active, payload }: any) => {
           style: 'currency',
           currency: 'EUR',
           minimumFractionDigits: 0,
-          maximumFractionDigits: 0
+          maximumFractionDigits: 0,
         }).format(revenue as number)}
       </p>
     </div>
-  )
-}
+  );
+};
 
 export function RevenueChart({ data, isLoading = false }: RevenueChartProps) {
   if (isLoading) {
@@ -54,7 +55,7 @@ export function RevenueChart({ data, isLoading = false }: RevenueChartProps) {
       <div className="w-full h-[300px] flex items-center justify-center bg-gray-50 rounded-lg animate-pulse">
         <div className="text-sm text-gray-400">Chargement des données...</div>
       </div>
-    )
+    );
   }
 
   if (!data || data.length === 0) {
@@ -62,7 +63,7 @@ export function RevenueChart({ data, isLoading = false }: RevenueChartProps) {
       <div className="w-full h-[300px] flex items-center justify-center bg-gray-50 rounded-lg">
         <div className="text-sm text-gray-500">Aucune donnée disponible</div>
       </div>
-    )
+    );
   }
 
   return (
@@ -81,9 +82,7 @@ export function RevenueChart({ data, isLoading = false }: RevenueChartProps) {
           <YAxis
             tick={{ fontSize: 12, fill: '#666666' }}
             tickLine={{ stroke: '#E5E5E5' }}
-            tickFormatter={(value) =>
-              `${(value / 1000).toFixed(0)}k€`
-            }
+            tickFormatter={value => `${(value / 1000).toFixed(0)}k€`}
           />
           <Tooltip content={<CustomTooltip />} />
           <Line
@@ -97,5 +96,5 @@ export function RevenueChart({ data, isLoading = false }: RevenueChartProps) {
         </LineChart>
       </ResponsiveContainer>
     </div>
-  )
+  );
 }

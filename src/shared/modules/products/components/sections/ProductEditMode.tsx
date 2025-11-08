@@ -1,35 +1,57 @@
-"use client"
+'use client';
 
-import { useState, useEffect } from 'react'
-import { Settings, Eye, FolderTree, FileText, Tags, Truck, Package, DollarSign, BarChart3 } from 'lucide-react'
-import { ButtonV2 } from '@/components/ui/button'
-import { Badge } from '@/components/ui/badge'
-import { Input } from '@/components/ui/input'
-import { Label } from '@/components/ui/label'
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
-import { cn } from '@/lib/utils'
-import { createClient } from '@/lib/supabase/client'
-import { useSubcategories } from '@/shared/modules/categories/hooks'
+import { useState, useEffect } from 'react';
 
-import { ProductImageGallery } from './product-image-gallery'
-import { SampleRequirementSection } from './sample-requirement-section'
-import { CategoryHierarchyModal } from './categorize-modal'
-import { ProductCharacteristicsModal } from './product-characteristics-modal'
-import { ProductDescriptionsModal } from './product-descriptions-modal'
-import { ProductImagesModal } from './product-images-modal'
+import {
+  Settings,
+  Eye,
+  FolderTree,
+  FileText,
+  Tags,
+  Truck,
+  Package,
+  DollarSign,
+  BarChart3,
+} from 'lucide-react';
+
+import { ProductImageGallery } from '@/components/business/product-image-gallery';
+import { SampleRequirementSection } from '@/components/business/sample-requirement-section';
+import { Badge } from '@/components/ui/badge';
+import { ButtonV2 } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
+import { createClient } from '@/lib/supabase/client';
+import { cn } from '@verone/utils';
+import { CategoryHierarchyModal } from '@/shared/modules/categories/components/modals/CategorizeModal';
+import { useSubcategories } from '@/shared/modules/categories/hooks';
+import { ProductCharacteristicsModal } from '@/shared/modules/products/components/modals/ProductCharacteristicsModal';
+import { ProductDescriptionsModal } from '@/shared/modules/products/components/modals/ProductDescriptionsModal';
+import { ProductImagesModal } from '@/shared/modules/products/components/modals/ProductImagesModal';
 
 interface ProductEditModeProps {
-  product: any
-  onSwitchToView: () => void
-  onUpdate: (updatedProduct: any) => void
-  className?: string
+  product: any;
+  onSwitchToView: () => void;
+  onUpdate: (updatedProduct: any) => void;
+  className?: string;
 }
 
-export function ProductEditMode({ product, onSwitchToView, onUpdate, className }: ProductEditModeProps) {
-  const supabase = createClient()
-  const { subcategories } = useSubcategories()
+export function ProductEditMode({
+  product,
+  onSwitchToView,
+  onUpdate,
+  className,
+}: ProductEditModeProps) {
+  const supabase = createClient();
+  const { subcategories } = useSubcategories();
 
-  const [suppliers, setSuppliers] = useState<any[]>([])
+  const [suppliers, setSuppliers] = useState<any[]>([]);
   const [formData, setFormData] = useState({
     name: product.name || '',
     slug: product.slug || '',
@@ -55,12 +77,13 @@ export function ProductEditMode({ product, onSwitchToView, onUpdate, className }
     weight_unit: product.weight_unit || 'kg',
     supplier_reference: product.supplier_reference || '',
     supplier_page_url: product.supplier_page_url || '',
-  })
+  });
 
-  const [showCategorizeModal, setShowCategorizeModal] = useState(false)
-  const [showCharacteristicsModal, setShowCharacteristicsModal] = useState(false)
-  const [showDescriptionsModal, setShowDescriptionsModal] = useState(false)
-  const [showImagesModal, setShowImagesModal] = useState(false)
+  const [showCategorizeModal, setShowCategorizeModal] = useState(false);
+  const [showCharacteristicsModal, setShowCharacteristicsModal] =
+    useState(false);
+  const [showDescriptionsModal, setShowDescriptionsModal] = useState(false);
+  const [showImagesModal, setShowImagesModal] = useState(false);
 
   useEffect(() => {
     const fetchSuppliers = async () => {
@@ -68,37 +91,51 @@ export function ProductEditMode({ product, onSwitchToView, onUpdate, className }
         .from('organisations')
         .select('id, name')
         .eq('type', 'supplier')
-        .order('name')
-      if (data) setSuppliers(data)
-    }
-    fetchSuppliers()
-  }, [])
+        .order('name');
+      if (data) setSuppliers(data);
+    };
+    fetchSuppliers();
+  }, []);
 
   const handleFieldChange = (field: string, value: any) => {
-    setFormData(prev => ({ ...prev, [field]: value }))
-    onUpdate({ [field]: value })
-  }
+    setFormData(prev => ({ ...prev, [field]: value }));
+    onUpdate({ [field]: value });
+  };
 
   // Calculer la progression (amélioré selon les vrais requis)
-  const REQUIRED_FIELDS = ['name', 'subcategory_id', 'supplier_id', 'base_cost', 'selling_price', 'sku']
-  const completionPercentage = Math.round((
-    REQUIRED_FIELDS.filter(field => {
-      const value = formData[field as keyof typeof formData]
-      return value !== null && value !== undefined && value !== ''
-    }).length / REQUIRED_FIELDS.length
-  ) * 100)
+  const REQUIRED_FIELDS = [
+    'name',
+    'subcategory_id',
+    'supplier_id',
+    'base_cost',
+    'selling_price',
+    'sku',
+  ];
+  const completionPercentage = Math.round(
+    (REQUIRED_FIELDS.filter(field => {
+      const value = formData[field as keyof typeof formData];
+      return value !== null && value !== undefined && value !== '';
+    }).length /
+      REQUIRED_FIELDS.length) *
+      100
+  );
 
   const missingFields = REQUIRED_FIELDS.filter(field => {
-    const value = formData[field as keyof typeof formData]
-    return value === null || value === undefined || value === ''
-  })
+    const value = formData[field as keyof typeof formData];
+    return value === null || value === undefined || value === '';
+  });
 
   return (
-    <div className={cn("w-full", className)}>
+    <div className={cn('w-full', className)}>
       {/* Header compact avec navigation retour */}
       <div className="flex items-center justify-between mb-3">
         <div className="flex items-center space-x-2">
-          <ButtonV2 variant="ghost" size="sm" onClick={onSwitchToView} className="h-6 text-[10px] px-2">
+          <ButtonV2
+            variant="ghost"
+            size="sm"
+            onClick={onSwitchToView}
+            className="h-6 text-[10px] px-2"
+          >
             <Eye className="h-3 w-3 mr-1" />
             Présentation
           </ButtonV2>
@@ -115,17 +152,15 @@ export function ProductEditMode({ product, onSwitchToView, onUpdate, className }
 
       {/* Layout 3 colonnes ultra-dense restauré */}
       <div className="grid grid-cols-1 xl:grid-cols-12 gap-3">
-
         {/* COLONNE 1: Images & Métadonnées (25% - xl:col-span-3) */}
         <div className="xl:col-span-3 space-y-2">
-
           {/* Galerie d'images compacte */}
           <div className="bg-white border border-black">
             <ProductImageGallery
               productId={product.id}
               productName={product.name}
               productStatus={product.status}
-              compact={true}
+              compact
             />
           </div>
 
@@ -158,11 +193,21 @@ export function ProductEditMode({ product, onSwitchToView, onUpdate, className }
               </div>
               <div className="flex justify-between">
                 <span className="text-gray-600">Créé:</span>
-                <span>{new Date(product.created_at).toLocaleDateString('fr-FR', { day: '2-digit', month: '2-digit' })}</span>
+                <span>
+                  {new Date(product.created_at).toLocaleDateString('fr-FR', {
+                    day: '2-digit',
+                    month: '2-digit',
+                  })}
+                </span>
               </div>
               <div className="flex justify-between">
                 <span className="text-gray-600">MAJ:</span>
-                <span>{new Date(product.updated_at).toLocaleDateString('fr-FR', { day: '2-digit', month: '2-digit' })}</span>
+                <span>
+                  {new Date(product.updated_at).toLocaleDateString('fr-FR', {
+                    day: '2-digit',
+                    month: '2-digit',
+                  })}
+                </span>
               </div>
             </div>
           </div>
@@ -170,26 +215,34 @@ export function ProductEditMode({ product, onSwitchToView, onUpdate, className }
           {/* Status et progression compact */}
           <div className="bg-white border border-black p-2">
             <div className="space-y-2">
-              <Badge className={cn(
-                "text-[9px] px-1 py-0",
-                product.status === 'active' ? "bg-green-600 text-white" :
-                product.status === 'draft' ? "bg-gray-100 text-white" :
-                "bg-gray-600 text-white"
-              )}>
-                {product.status === 'active' ? 'Actif' :
-                 product.status === 'draft' ? 'Brouillon' :
-                 'Archivé'}
+              <Badge
+                className={cn(
+                  'text-[9px] px-1 py-0',
+                  product.status === 'active'
+                    ? 'bg-green-600 text-white'
+                    : product.status === 'draft'
+                      ? 'bg-gray-100 text-white'
+                      : 'bg-gray-600 text-white'
+                )}
+              >
+                {product.status === 'active'
+                  ? 'Actif'
+                  : product.status === 'draft'
+                    ? 'Brouillon'
+                    : 'Archivé'}
               </Badge>
               <div>
                 <div className="flex items-center justify-between mb-1">
                   <span className="text-[9px] text-gray-600">Complétude</span>
-                  <span className="text-[9px] font-medium">{completionPercentage}%</span>
+                  <span className="text-[9px] font-medium">
+                    {completionPercentage}%
+                  </span>
                 </div>
                 <div className="w-full bg-gray-200 rounded-full h-1">
                   <div
                     className="bg-black h-1 rounded-full transition-all"
                     style={{ width: `${completionPercentage}%` }}
-                  ></div>
+                  />
                 </div>
                 {missingFields.length > 0 && (
                   <p className="text-[8px] text-red-600 mt-1">
@@ -203,15 +256,16 @@ export function ProductEditMode({ product, onSwitchToView, onUpdate, className }
 
         {/* COLONNE 2: Informations Principales (45% - xl:col-span-5) */}
         <div className="xl:col-span-5 space-y-2">
-
           {/* Header produit avec bouton modifier */}
           <div className="bg-white border border-black p-2">
             <div className="flex items-start justify-between mb-2">
               <div className="flex-1">
-                <Label className="text-[9px] text-gray-600 mb-1 block">Nom du produit</Label>
+                <Label className="text-[9px] text-gray-600 mb-1 block">
+                  Nom du produit
+                </Label>
                 <Input
                   value={formData.name}
-                  onChange={(e) => handleFieldChange('name', e.target.value)}
+                  onChange={e => handleFieldChange('name', e.target.value)}
                   className="text-sm font-bold border-0 p-0 h-auto bg-transparent"
                   placeholder="Nom du produit"
                 />
@@ -219,7 +273,11 @@ export function ProductEditMode({ product, onSwitchToView, onUpdate, className }
                   SKU: {product.sku || 'Auto-généré'}
                 </div>
               </div>
-              <ButtonV2 variant="outline" size="sm" className="h-5 text-[9px] px-1">
+              <ButtonV2
+                variant="outline"
+                size="sm"
+                className="h-5 text-[9px] px-1"
+              >
                 <Settings className="h-2 w-2 mr-1" />
                 Modifier
               </ButtonV2>
@@ -233,7 +291,11 @@ export function ProductEditMode({ product, onSwitchToView, onUpdate, className }
                 <FileText className="h-3 w-3 mr-1" />
                 Informations générales
               </h3>
-              <ButtonV2 variant="outline" size="sm" className="h-5 text-[9px] px-1">
+              <ButtonV2
+                variant="outline"
+                size="sm"
+                className="h-5 text-[9px] px-1"
+              >
                 <Settings className="h-2 w-2 mr-1" />
                 Modifier
               </ButtonV2>
@@ -243,7 +305,7 @@ export function ProductEditMode({ product, onSwitchToView, onUpdate, className }
                 <Label className="text-[9px] text-gray-600">Slug URL</Label>
                 <Input
                   value={formData.slug}
-                  onChange={(e) => handleFieldChange('slug', e.target.value)}
+                  onChange={e => handleFieldChange('slug', e.target.value)}
                   className="h-6 text-[10px]"
                   placeholder="url-produit"
                 />
@@ -270,7 +332,9 @@ export function ProductEditMode({ product, onSwitchToView, onUpdate, className }
             </div>
 
             {/* Affichage hiérarchie actuelle compact */}
-            {product.subcategory?.category?.family || product.subcategory?.category || product.subcategory ? (
+            {product.subcategory?.category?.family ||
+            product.subcategory?.category ||
+            product.subcategory ? (
               <div className="bg-gray-50 p-2 rounded border">
                 <div className="flex items-center space-x-1 flex-wrap text-[9px]">
                   {product.subcategory?.category?.family && (
@@ -318,7 +382,11 @@ export function ProductEditMode({ product, onSwitchToView, onUpdate, className }
                 <Truck className="h-3 w-3 mr-1" />
                 Fournisseur & Références
               </h3>
-              <ButtonV2 variant="outline" size="sm" className="h-5 text-[9px] px-1">
+              <ButtonV2
+                variant="outline"
+                size="sm"
+                className="h-5 text-[9px] px-1"
+              >
                 <Settings className="h-2 w-2 mr-1" />
                 Modifier
               </ButtonV2>
@@ -328,14 +396,20 @@ export function ProductEditMode({ product, onSwitchToView, onUpdate, className }
                 <Label className="text-[9px] text-gray-600">Fournisseur</Label>
                 <Select
                   value={formData.supplier_id}
-                  onValueChange={(value) => handleFieldChange('supplier_id', value)}
+                  onValueChange={value =>
+                    handleFieldChange('supplier_id', value)
+                  }
                 >
                   <SelectTrigger className="h-6 text-[10px]">
                     <SelectValue placeholder="Sélectionner..." />
                   </SelectTrigger>
                   <SelectContent>
-                    {suppliers.map((supplier) => (
-                      <SelectItem key={supplier.id} value={supplier.id} className="text-[10px]">
+                    {suppliers.map(supplier => (
+                      <SelectItem
+                        key={supplier.id}
+                        value={supplier.id}
+                        className="text-[10px]"
+                      >
                         {supplier.name}
                       </SelectItem>
                     ))}
@@ -344,19 +418,27 @@ export function ProductEditMode({ product, onSwitchToView, onUpdate, className }
               </div>
               <div className="grid grid-cols-2 gap-2">
                 <div>
-                  <Label className="text-[9px] text-gray-600">Référence fournisseur</Label>
+                  <Label className="text-[9px] text-gray-600">
+                    Référence fournisseur
+                  </Label>
                   <Input
                     value={formData.supplier_reference}
-                    onChange={(e) => handleFieldChange('supplier_reference', e.target.value)}
+                    onChange={e =>
+                      handleFieldChange('supplier_reference', e.target.value)
+                    }
                     className="h-6 text-[10px]"
                     placeholder="REF-SUPP"
                   />
                 </div>
                 <div>
-                  <Label className="text-[9px] text-gray-600">Page fournisseur</Label>
+                  <Label className="text-[9px] text-gray-600">
+                    Page fournisseur
+                  </Label>
                   <Input
                     value={formData.supplier_page_url}
-                    onChange={(e) => handleFieldChange('supplier_page_url', e.target.value)}
+                    onChange={e =>
+                      handleFieldChange('supplier_page_url', e.target.value)
+                    }
                     className="h-6 text-[10px]"
                     placeholder="https://..."
                   />
@@ -411,8 +493,10 @@ export function ProductEditMode({ product, onSwitchToView, onUpdate, className }
                   <span>{product.material}</span>
                 </div>
               )}
-              {(!product.color && !product.material) && (
-                <p className="text-gray-400 italic text-[9px]">Aucune caractéristique définie</p>
+              {!product.color && !product.material && (
+                <p className="text-gray-400 italic text-[9px]">
+                  Aucune caractéristique définie
+                </p>
               )}
             </div>
           </div>
@@ -420,7 +504,6 @@ export function ProductEditMode({ product, onSwitchToView, onUpdate, className }
 
         {/* COLONNE 3: Gestion (30% - xl:col-span-4) */}
         <div className="xl:col-span-4 space-y-2">
-
           {/* Stock & Gestion avec bouton modifier */}
           <div className="bg-white border border-black p-2">
             <div className="flex items-center justify-between mb-2">
@@ -428,7 +511,11 @@ export function ProductEditMode({ product, onSwitchToView, onUpdate, className }
                 <BarChart3 className="h-3 w-3 mr-1" />
                 Stock & Disponibilité
               </h3>
-              <ButtonV2 variant="outline" size="sm" className="h-5 text-[9px] px-1">
+              <ButtonV2
+                variant="outline"
+                size="sm"
+                className="h-5 text-[9px] px-1"
+              >
                 <Settings className="h-2 w-2 mr-1" />
                 Modifier
               </ButtonV2>
@@ -439,15 +526,21 @@ export function ProductEditMode({ product, onSwitchToView, onUpdate, className }
                   <Label className="text-[9px] text-gray-600">Statut</Label>
                   <Select
                     value={formData.status}
-                    onValueChange={(value) => handleFieldChange('status', value)}
+                    onValueChange={value => handleFieldChange('status', value)}
                   >
                     <SelectTrigger className="h-6 text-[10px]">
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="draft" className="text-[10px]">Brouillon</SelectItem>
-                      <SelectItem value="active" className="text-[10px]">Actif</SelectItem>
-                      <SelectItem value="archived" className="text-[10px]">Archivé</SelectItem>
+                      <SelectItem value="draft" className="text-[10px]">
+                        Brouillon
+                      </SelectItem>
+                      <SelectItem value="active" className="text-[10px]">
+                        Actif
+                      </SelectItem>
+                      <SelectItem value="archived" className="text-[10px]">
+                        Archivé
+                      </SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
@@ -455,35 +548,54 @@ export function ProductEditMode({ product, onSwitchToView, onUpdate, className }
                   <Label className="text-[9px] text-gray-600">Condition</Label>
                   <Select
                     value={formData.condition}
-                    onValueChange={(value) => handleFieldChange('condition', value)}
+                    onValueChange={value =>
+                      handleFieldChange('condition', value)
+                    }
                   >
                     <SelectTrigger className="h-6 text-[10px]">
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="new" className="text-[10px]">Neuf</SelectItem>
-                      <SelectItem value="used" className="text-[10px]">Occasion</SelectItem>
-                      <SelectItem value="refurbished" className="text-[10px]">Reconditionné</SelectItem>
+                      <SelectItem value="new" className="text-[10px]">
+                        Neuf
+                      </SelectItem>
+                      <SelectItem value="used" className="text-[10px]">
+                        Occasion
+                      </SelectItem>
+                      <SelectItem value="refurbished" className="text-[10px]">
+                        Reconditionné
+                      </SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
               </div>
               <div className="grid grid-cols-2 gap-2">
                 <div>
-                  <Label className="text-[9px] text-gray-600">Quantité stock</Label>
+                  <Label className="text-[9px] text-gray-600">
+                    Quantité stock
+                  </Label>
                   <Input
                     type="number"
                     value={formData.stock_quantity}
-                    onChange={(e) => handleFieldChange('stock_quantity', parseInt(e.target.value))}
+                    onChange={e =>
+                      handleFieldChange(
+                        'stock_quantity',
+                        parseInt(e.target.value)
+                      )
+                    }
                     className="h-6 text-[10px]"
                   />
                 </div>
                 <div>
-                  <Label className="text-[9px] text-gray-600">Stock minimum</Label>
+                  <Label className="text-[9px] text-gray-600">
+                    Stock minimum
+                  </Label>
                   <Input
                     type="number"
                     value={formData.min_stock}
-                    onChange={(e) => handleFieldChange('min_stock', parseInt(e.target.value))}
+                    onChange={e =>
+                      handleFieldChange('min_stock', parseInt(e.target.value))
+                    }
                     className="h-6 text-[10px]"
                   />
                 </div>
@@ -498,42 +610,61 @@ export function ProductEditMode({ product, onSwitchToView, onUpdate, className }
                 <DollarSign className="h-3 w-3 mr-1" />
                 Tarification
               </h3>
-              <ButtonV2 variant="outline" size="sm" className="h-5 text-[9px] px-1">
+              <ButtonV2
+                variant="outline"
+                size="sm"
+                className="h-5 text-[9px] px-1"
+              >
                 <Settings className="h-2 w-2 mr-1" />
                 Modifier
               </ButtonV2>
             </div>
             <div className="space-y-2">
               <div>
-                <Label className="text-[9px] text-gray-600">Coût fournisseur HT</Label>
+                <Label className="text-[9px] text-gray-600">
+                  Coût fournisseur HT
+                </Label>
                 <Input
                   type="number"
                   step="0.01"
                   value={formData.base_cost}
-                  onChange={(e) => handleFieldChange('base_cost', parseFloat(e.target.value))}
+                  onChange={e =>
+                    handleFieldChange('base_cost', parseFloat(e.target.value))
+                  }
                   className="h-6 text-[10px]"
                   placeholder="0.00"
                 />
               </div>
               <div className="grid grid-cols-2 gap-2">
                 <div>
-                  <Label className="text-[9px] text-gray-600">Prix vente HT</Label>
+                  <Label className="text-[9px] text-gray-600">
+                    Prix vente HT
+                  </Label>
                   <Input
                     type="number"
                     step="0.01"
                     value={formData.selling_price}
-                    onChange={(e) => handleFieldChange('selling_price', parseFloat(e.target.value))}
+                    onChange={e =>
+                      handleFieldChange(
+                        'selling_price',
+                        parseFloat(e.target.value)
+                      )
+                    }
                     className="h-6 text-[10px]"
                     placeholder="0.00"
                   />
                 </div>
                 <div>
-                  <Label className="text-[9px] text-gray-600">Prix minimum HT</Label>
+                  <Label className="text-[9px] text-gray-600">
+                    Prix minimum HT
+                  </Label>
                   <Input
                     type="number"
                     step="0.01"
                     value={formData.min_price}
-                    onChange={(e) => handleFieldChange('min_price', parseFloat(e.target.value))}
+                    onChange={e =>
+                      handleFieldChange('min_price', parseFloat(e.target.value))
+                    }
                     className="h-6 text-[10px]"
                     placeholder="0.00"
                   />
@@ -546,7 +677,12 @@ export function ProductEditMode({ product, onSwitchToView, onUpdate, className }
                     type="number"
                     step="0.1"
                     value={formData.margin_percentage}
-                    onChange={(e) => handleFieldChange('margin_percentage', parseFloat(e.target.value))}
+                    onChange={e =>
+                      handleFieldChange(
+                        'margin_percentage',
+                        parseFloat(e.target.value)
+                      )
+                    }
                     className="h-6 text-[10px] bg-gray-50"
                     placeholder="0"
                     disabled
@@ -557,7 +693,9 @@ export function ProductEditMode({ product, onSwitchToView, onUpdate, className }
                   <Input
                     type="number"
                     value={formData.tax_rate}
-                    onChange={(e) => handleFieldChange('tax_rate', parseFloat(e.target.value))}
+                    onChange={e =>
+                      handleFieldChange('tax_rate', parseFloat(e.target.value))
+                    }
                     className="h-6 text-[10px]"
                     placeholder="20"
                   />
@@ -568,13 +706,23 @@ export function ProductEditMode({ product, onSwitchToView, onUpdate, className }
                   <div className="flex justify-between">
                     <span>Marge brute:</span>
                     <span className="font-medium">
-                      {((parseFloat(formData.selling_price) - parseFloat(formData.base_cost)) / parseFloat(formData.base_cost) * 100).toFixed(1)}%
+                      {(
+                        ((parseFloat(formData.selling_price) -
+                          parseFloat(formData.base_cost)) /
+                          parseFloat(formData.base_cost)) *
+                        100
+                      ).toFixed(1)}
+                      %
                     </span>
                   </div>
                   <div className="flex justify-between">
                     <span>Prix TTC:</span>
                     <span className="font-medium">
-                      {(parseFloat(formData.selling_price) * (1 + parseFloat(formData.tax_rate) / 100)).toFixed(2)}€
+                      {(
+                        parseFloat(formData.selling_price) *
+                        (1 + parseFloat(formData.tax_rate) / 100)
+                      ).toFixed(2)}
+                      €
                     </span>
                   </div>
                 </div>
@@ -589,14 +737,20 @@ export function ProductEditMode({ product, onSwitchToView, onUpdate, className }
                 <Tags className="h-3 w-3 mr-1" />
                 Identifiants
               </h3>
-              <ButtonV2 variant="outline" size="sm" className="h-5 text-[9px] px-1">
+              <ButtonV2
+                variant="outline"
+                size="sm"
+                className="h-5 text-[9px] px-1"
+              >
                 <Settings className="h-2 w-2 mr-1" />
                 Modifier
               </ButtonV2>
             </div>
             <div className="space-y-2">
               <div>
-                <Label className="text-[9px] text-gray-600">SKU (auto-généré)</Label>
+                <Label className="text-[9px] text-gray-600">
+                  SKU (auto-généré)
+                </Label>
                 <Input
                   value={formData.sku}
                   disabled
@@ -608,7 +762,7 @@ export function ProductEditMode({ product, onSwitchToView, onUpdate, className }
                   <Label className="text-[9px] text-gray-600">Marque</Label>
                   <Input
                     value={formData.brand}
-                    onChange={(e) => handleFieldChange('brand', e.target.value)}
+                    onChange={e => handleFieldChange('brand', e.target.value)}
                     className="h-6 text-[10px]"
                     placeholder="Marque"
                   />
@@ -617,7 +771,7 @@ export function ProductEditMode({ product, onSwitchToView, onUpdate, className }
                   <Label className="text-[9px] text-gray-600">GTIN/EAN</Label>
                   <Input
                     value={formData.gtin}
-                    onChange={(e) => handleFieldChange('gtin', e.target.value)}
+                    onChange={e => handleFieldChange('gtin', e.target.value)}
                     className="h-6 text-[10px]"
                     placeholder="13 chiffres"
                   />
@@ -633,7 +787,11 @@ export function ProductEditMode({ product, onSwitchToView, onUpdate, className }
                 <Package className="h-3 w-3 mr-1" />
                 Dimensions & Poids
               </h3>
-              <ButtonV2 variant="outline" size="sm" className="h-5 text-[9px] px-1">
+              <ButtonV2
+                variant="outline"
+                size="sm"
+                className="h-5 text-[9px] px-1"
+              >
                 <Settings className="h-2 w-2 mr-1" />
                 Modifier
               </ButtonV2>
@@ -646,7 +804,12 @@ export function ProductEditMode({ product, onSwitchToView, onUpdate, className }
                     type="number"
                     step="0.1"
                     value={formData.dimensions_length}
-                    onChange={(e) => handleFieldChange('dimensions_length', parseFloat(e.target.value))}
+                    onChange={e =>
+                      handleFieldChange(
+                        'dimensions_length',
+                        parseFloat(e.target.value)
+                      )
+                    }
                     className="h-6 text-[10px]"
                     placeholder="0"
                   />
@@ -657,7 +820,12 @@ export function ProductEditMode({ product, onSwitchToView, onUpdate, className }
                     type="number"
                     step="0.1"
                     value={formData.dimensions_width}
-                    onChange={(e) => handleFieldChange('dimensions_width', parseFloat(e.target.value))}
+                    onChange={e =>
+                      handleFieldChange(
+                        'dimensions_width',
+                        parseFloat(e.target.value)
+                      )
+                    }
                     className="h-6 text-[10px]"
                     placeholder="0"
                   />
@@ -668,7 +836,12 @@ export function ProductEditMode({ product, onSwitchToView, onUpdate, className }
                     type="number"
                     step="0.1"
                     value={formData.dimensions_height}
-                    onChange={(e) => handleFieldChange('dimensions_height', parseFloat(e.target.value))}
+                    onChange={e =>
+                      handleFieldChange(
+                        'dimensions_height',
+                        parseFloat(e.target.value)
+                      )
+                    }
                     className="h-6 text-[10px]"
                     placeholder="0"
                   />
@@ -681,7 +854,9 @@ export function ProductEditMode({ product, onSwitchToView, onUpdate, className }
                     type="number"
                     step="0.01"
                     value={formData.weight}
-                    onChange={(e) => handleFieldChange('weight', parseFloat(e.target.value))}
+                    onChange={e =>
+                      handleFieldChange('weight', parseFloat(e.target.value))
+                    }
                     className="h-6 text-[10px]"
                     placeholder="0"
                   />
@@ -690,15 +865,23 @@ export function ProductEditMode({ product, onSwitchToView, onUpdate, className }
                   <Label className="text-[9px] text-gray-600">Unité</Label>
                   <Select
                     value={formData.weight_unit}
-                    onValueChange={(value) => handleFieldChange('weight_unit', value)}
+                    onValueChange={value =>
+                      handleFieldChange('weight_unit', value)
+                    }
                   >
                     <SelectTrigger className="h-6 text-[10px]">
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="kg" className="text-[10px]">kg</SelectItem>
-                      <SelectItem value="g" className="text-[10px]">g</SelectItem>
-                      <SelectItem value="lb" className="text-[10px]">lb</SelectItem>
+                      <SelectItem value="kg" className="text-[10px]">
+                        kg
+                      </SelectItem>
+                      <SelectItem value="g" className="text-[10px]">
+                        g
+                      </SelectItem>
+                      <SelectItem value="lb" className="text-[10px]">
+                        lb
+                      </SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
@@ -708,13 +891,15 @@ export function ProductEditMode({ product, onSwitchToView, onUpdate, className }
 
           {/* Section échantillon */}
           <div className="bg-white border border-black p-2">
-            <h3 className="font-medium mb-2 text-[10px]">Gestion Échantillons</h3>
+            <h3 className="font-medium mb-2 text-[10px]">
+              Gestion Échantillons
+            </h3>
             <SampleRequirementSection
               requiresSample={product.requires_sample || false}
-              isProduct={true}
+              isProduct
               productName={product.name}
-              onRequirementChange={(requiresSample) => {
-                onUpdate({ requires_sample: requiresSample })
+              onRequirementChange={requiresSample => {
+                onUpdate({ requires_sample: requiresSample });
               }}
             />
           </div>
@@ -733,11 +918,11 @@ export function ProductEditMode({ product, onSwitchToView, onUpdate, className }
         isOpen={showCharacteristicsModal}
         onClose={() => setShowCharacteristicsModal(false)}
         productId={product.id}
-        productName={product.name || "Produit"}
+        productName={product.name || 'Produit'}
         initialData={{
           variant_attributes: product.variant_attributes,
           dimensions: product.dimensions,
-          weight: product.weight
+          weight: product.weight,
         }}
         onUpdate={onUpdate}
       />
@@ -746,11 +931,11 @@ export function ProductEditMode({ product, onSwitchToView, onUpdate, className }
         isOpen={showDescriptionsModal}
         onClose={() => setShowDescriptionsModal(false)}
         productId={product.id}
-        productName={product.name || "Produit"}
+        productName={product.name || 'Produit'}
         initialData={{
           description: product.description,
           technical_description: product.technical_description,
-          selling_points: product.selling_points
+          selling_points: product.selling_points,
         }}
         onUpdate={onUpdate}
       />
@@ -762,5 +947,5 @@ export function ProductEditMode({ product, onSwitchToView, onUpdate, className }
         onUpdate={onUpdate}
       />
     </div>
-  )
+  );
 }

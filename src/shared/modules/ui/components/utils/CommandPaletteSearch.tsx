@@ -1,7 +1,10 @@
-'use client'
+'use client';
 
-import React, { useEffect, useState, useCallback } from 'react'
-import { Search, Clock, Package, Layers, Tag } from 'lucide-react'
+import React, { useEffect, useState, useCallback } from 'react';
+
+import { VisuallyHidden } from '@radix-ui/react-visually-hidden';
+import { Search, Clock, Package, Layers, Tag } from 'lucide-react';
+
 import {
   CommandDialog,
   CommandEmpty,
@@ -10,20 +13,19 @@ import {
   CommandItem,
   CommandList,
   CommandSeparator,
-} from '@/components/ui/command'
-import { DialogTitle, DialogDescription } from '@/components/ui/dialog'
-import { VisuallyHidden } from '@radix-ui/react-visually-hidden'
-import { cn } from '@/lib/utils'
+} from '@/components/ui/command';
+import { DialogTitle, DialogDescription } from '@/components/ui/dialog';
+import { cn } from '@verone/utils';
 
 /**
  * Type d'item dans les résultats de recherche
  */
 export interface SearchItem {
-  id: string
-  type: 'product' | 'collection' | 'category'
-  title: string
-  subtitle?: string // SKU pour produit, description pour autres
-  url: string
+  id: string;
+  type: 'product' | 'collection' | 'category';
+  title: string;
+  subtitle?: string; // SKU pour produit, description pour autres
+  url: string;
 }
 
 /**
@@ -31,22 +33,22 @@ export interface SearchItem {
  */
 export interface CommandPaletteSearchProps {
   /** État ouvert/fermé */
-  open: boolean
+  open: boolean;
   /** Callback changement état */
-  onOpenChange: (open: boolean) => void
+  onOpenChange: (open: boolean) => void;
   /** Callback sélection item */
-  onSelect: (item: SearchItem) => void
+  onSelect: (item: SearchItem) => void;
   /** Items custom (sinon fetch depuis Supabase) */
-  items?: SearchItem[]
+  items?: SearchItem[];
   /** Classe CSS additionnelle */
-  className?: string
+  className?: string;
 }
 
 /**
  * Clé localStorage pour historique recherches
  */
-const HISTORY_STORAGE_KEY = 'verone-search-history'
-const MAX_HISTORY_ITEMS = 5
+const HISTORY_STORAGE_KEY = 'verone-search-history';
+const MAX_HISTORY_ITEMS = 5;
 
 /**
  * Icon selon type d'item
@@ -54,15 +56,15 @@ const MAX_HISTORY_ITEMS = 5
 const getIcon = (type: SearchItem['type']) => {
   switch (type) {
     case 'product':
-      return Package
+      return Package;
     case 'collection':
-      return Layers
+      return Layers;
     case 'category':
-      return Tag
+      return Tag;
     default:
-      return Package
+      return Package;
   }
-}
+};
 
 /**
  * CommandPaletteSearch - Command Palette moderne ⌘K/Ctrl+K
@@ -114,69 +116,69 @@ export function CommandPaletteSearch({
   items = [],
   className,
 }: CommandPaletteSearchProps) {
-  const [searchQuery, setSearchQuery] = useState('')
-  const [searchHistory, setSearchHistory] = useState<SearchItem[]>([])
+  const [searchQuery, setSearchQuery] = useState('');
+  const [searchHistory, setSearchHistory] = useState<SearchItem[]>([]);
 
   // Charger historique depuis localStorage au mount
   useEffect(() => {
     try {
-      const stored = localStorage.getItem(HISTORY_STORAGE_KEY)
+      const stored = localStorage.getItem(HISTORY_STORAGE_KEY);
       if (stored) {
-        const parsed = JSON.parse(stored) as SearchItem[]
-        setSearchHistory(parsed.slice(0, MAX_HISTORY_ITEMS))
+        const parsed = JSON.parse(stored) as SearchItem[];
+        setSearchHistory(parsed.slice(0, MAX_HISTORY_ITEMS));
       }
     } catch (error) {
-      console.error('Erreur chargement historique recherche:', error)
+      console.error('Erreur chargement historique recherche:', error);
     }
-  }, [])
+  }, []);
 
   // Sauvegarder item dans historique
   const saveToHistory = useCallback((item: SearchItem) => {
     try {
-      setSearchHistory((prev) => {
+      setSearchHistory(prev => {
         // Retirer item s'il existe déjà
-        const filtered = prev.filter((i) => i.id !== item.id)
+        const filtered = prev.filter(i => i.id !== item.id);
         // Ajouter en premier
-        const newHistory = [item, ...filtered].slice(0, MAX_HISTORY_ITEMS)
+        const newHistory = [item, ...filtered].slice(0, MAX_HISTORY_ITEMS);
         // Sauvegarder localStorage
-        localStorage.setItem(HISTORY_STORAGE_KEY, JSON.stringify(newHistory))
-        return newHistory
-      })
+        localStorage.setItem(HISTORY_STORAGE_KEY, JSON.stringify(newHistory));
+        return newHistory;
+      });
     } catch (error) {
-      console.error('Erreur sauvegarde historique recherche:', error)
+      console.error('Erreur sauvegarde historique recherche:', error);
     }
-  }, [])
+  }, []);
 
   // Handler sélection item
   const handleSelect = useCallback(
     (item: SearchItem) => {
-      saveToHistory(item)
-      onSelect(item)
-      setSearchQuery('')
+      saveToHistory(item);
+      onSelect(item);
+      setSearchQuery('');
     },
     [onSelect, saveToHistory]
-  )
+  );
 
   // Filtrer items selon query
-  const filteredItems = items.filter((item) => {
-    if (!searchQuery) return false
-    const query = searchQuery.toLowerCase()
+  const filteredItems = items.filter(item => {
+    if (!searchQuery) return false;
+    const query = searchQuery.toLowerCase();
     return (
       item.title.toLowerCase().includes(query) ||
       item.subtitle?.toLowerCase().includes(query) ||
       false
-    )
-  })
+    );
+  });
 
   // Grouper items par type
   const groupedItems = filteredItems.reduce(
     (acc, item) => {
-      if (!acc[item.type]) acc[item.type] = []
-      acc[item.type].push(item)
-      return acc
+      if (!acc[item.type]) acc[item.type] = [];
+      acc[item.type].push(item);
+      return acc;
     },
     {} as Record<SearchItem['type'], SearchItem[]>
-  )
+  );
 
   return (
     <CommandDialog
@@ -188,7 +190,8 @@ export function CommandPaletteSearch({
       <VisuallyHidden>
         <DialogTitle>Recherche globale</DialogTitle>
         <DialogDescription>
-          Recherchez des produits, collections ou catégories en tapant leur nom ou SKU
+          Recherchez des produits, collections ou catégories en tapant leur nom
+          ou SKU
         </DialogDescription>
       </VisuallyHidden>
 
@@ -211,8 +214,8 @@ export function CommandPaletteSearch({
         {!searchQuery && searchHistory.length > 0 && (
           <>
             <CommandGroup heading="Recherches récentes">
-              {searchHistory.map((item) => {
-                const Icon = getIcon(item.type)
+              {searchHistory.map(item => {
+                const Icon = getIcon(item.type);
                 return (
                   <CommandItem
                     key={`history-${item.id}`}
@@ -231,7 +234,7 @@ export function CommandPaletteSearch({
                       )}
                     </div>
                   </CommandItem>
-                )
+                );
               })}
             </CommandGroup>
             <CommandSeparator />
@@ -242,9 +245,11 @@ export function CommandPaletteSearch({
         {searchQuery && (
           <>
             {groupedItems.product && groupedItems.product.length > 0 && (
-              <CommandGroup heading={`Produits (${groupedItems.product.length})`}>
-                {groupedItems.product.map((item) => {
-                  const Icon = getIcon(item.type)
+              <CommandGroup
+                heading={`Produits (${groupedItems.product.length})`}
+              >
+                {groupedItems.product.map(item => {
+                  const Icon = getIcon(item.type);
                   return (
                     <CommandItem
                       key={item.id}
@@ -262,7 +267,7 @@ export function CommandPaletteSearch({
                         )}
                       </div>
                     </CommandItem>
-                  )
+                  );
                 })}
               </CommandGroup>
             )}
@@ -270,9 +275,11 @@ export function CommandPaletteSearch({
             {groupedItems.collection && groupedItems.collection.length > 0 && (
               <>
                 <CommandSeparator />
-                <CommandGroup heading={`Collections (${groupedItems.collection.length})`}>
-                  {groupedItems.collection.map((item) => {
-                    const Icon = getIcon(item.type)
+                <CommandGroup
+                  heading={`Collections (${groupedItems.collection.length})`}
+                >
+                  {groupedItems.collection.map(item => {
+                    const Icon = getIcon(item.type);
                     return (
                       <CommandItem
                         key={item.id}
@@ -283,7 +290,7 @@ export function CommandPaletteSearch({
                         <Icon className="mr-2 h-4 w-4" />
                         <span className="font-medium">{item.title}</span>
                       </CommandItem>
-                    )
+                    );
                   })}
                 </CommandGroup>
               </>
@@ -292,9 +299,11 @@ export function CommandPaletteSearch({
             {groupedItems.category && groupedItems.category.length > 0 && (
               <>
                 <CommandSeparator />
-                <CommandGroup heading={`Catégories (${groupedItems.category.length})`}>
-                  {groupedItems.category.map((item) => {
-                    const Icon = getIcon(item.type)
+                <CommandGroup
+                  heading={`Catégories (${groupedItems.category.length})`}
+                >
+                  {groupedItems.category.map(item => {
+                    const Icon = getIcon(item.type);
                     return (
                       <CommandItem
                         key={item.id}
@@ -305,7 +314,7 @@ export function CommandPaletteSearch({
                         <Icon className="mr-2 h-4 w-4" />
                         <span className="font-medium">{item.title}</span>
                       </CommandItem>
-                    )
+                    );
                   })}
                 </CommandGroup>
               </>
@@ -338,10 +347,10 @@ export function CommandPaletteSearch({
         </div>
       </div>
     </CommandDialog>
-  )
+  );
 }
 
 /**
  * Export default pour compatibilité
  */
-export default CommandPaletteSearch
+export default CommandPaletteSearch;

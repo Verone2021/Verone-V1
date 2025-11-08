@@ -29,5 +29,9 @@ export type {
 } from './types';
 
 // Erreurs
-export { QontoError, createQontoErrorFromResponse, isQontoError } from './errors';
+export {
+  QontoError,
+  createQontoErrorFromResponse,
+  isQontoError,
+} from './errors';
 export type { QontoErrorCode } from './errors';

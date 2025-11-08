@@ -1,94 +1,113 @@
-'use client'
+'use client';
 
-import React, { useState } from 'react'
-import { X, AlertTriangle, TrendingUp, TrendingDown, RotateCcw } from 'lucide-react'
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog'
-import { ButtonV2 } from '@/components/ui/button'
-import { Badge } from '@/components/ui/badge'
-import { MovementWithDetails } from '@/shared/modules/stock/hooks'
-import { useToast } from '@/shared/modules/common/hooks'
+import React, { useState } from 'react';
+
+import {
+  X,
+  AlertTriangle,
+  TrendingUp,
+  TrendingDown,
+  RotateCcw,
+} from 'lucide-react';
+
+import { Badge } from '@/components/ui/badge';
+import { ButtonV2 } from '@/components/ui/button';
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter,
+} from '@/components/ui/dialog';
+import { useToast } from '@/shared/modules/common/hooks';
+import type { MovementWithDetails } from '@/shared/modules/stock/hooks';
 
 interface CancelMovementModalProps {
-  movement: MovementWithDetails | null
-  isOpen: boolean
-  onClose: () => void
-  onSuccess: () => void
+  movement: MovementWithDetails | null;
+  isOpen: boolean;
+  onClose: () => void;
+  onSuccess: () => void;
 }
 
-export function CancelMovementModal({ movement, isOpen, onClose, onSuccess }: CancelMovementModalProps) {
-  const [cancelling, setCancelling] = useState(false)
-  const { toast } = useToast()
+export function CancelMovementModal({
+  movement,
+  isOpen,
+  onClose,
+  onSuccess,
+}: CancelMovementModalProps) {
+  const [cancelling, setCancelling] = useState(false);
+  const { toast } = useToast();
 
-  if (!movement) return null
+  if (!movement) return null;
 
   const getMovementTypeIcon = (movementType: string) => {
     switch (movementType) {
       case 'IN':
-        return <TrendingUp className="h-5 w-5 text-green-600" />
+        return <TrendingUp className="h-5 w-5 text-green-600" />;
       case 'OUT':
-        return <TrendingDown className="h-5 w-5 text-red-600" />
+        return <TrendingDown className="h-5 w-5 text-red-600" />;
       case 'ADJUST':
-        return <RotateCcw className="h-5 w-5 text-blue-600" />
+        return <RotateCcw className="h-5 w-5 text-blue-600" />;
       default:
-        return null
+        return null;
     }
-  }
+  };
 
   const getMovementTypeLabel = (movementType: string) => {
     switch (movementType) {
       case 'IN':
-        return 'Entrée de stock'
+        return 'Entrée de stock';
       case 'OUT':
-        return 'Sortie de stock'
+        return 'Sortie de stock';
       case 'ADJUST':
-        return 'Ajustement'
+        return 'Ajustement';
       default:
-        return movementType
+        return movementType;
     }
-  }
+  };
 
   const handleCancel = async () => {
-    setCancelling(true)
+    setCancelling(true);
 
     try {
       const response = await fetch(`/api/stock-movements/${movement.id}`, {
         method: 'DELETE',
-      })
+      });
 
-      const data = await response.json()
+      const data = await response.json();
 
       if (!response.ok) {
-        throw new Error(data.error || 'Erreur lors de l\'annulation')
+        throw new Error(data.error || "Erreur lors de l'annulation");
       }
 
       toast({
-        title: "Mouvement annulé",
+        title: 'Mouvement annulé',
         description: `Le mouvement a été annulé avec succès. Le stock et les alertes ont été mis à jour automatiquement.`,
-      })
+      });
 
-      onSuccess()
-      onClose()
+      onSuccess();
+      onClose();
     } catch (error: any) {
       toast({
-        title: "Erreur",
-        description: error.message || 'Impossible d\'annuler le mouvement',
-        variant: "destructive"
-      })
+        title: 'Erreur',
+        description: error.message || "Impossible d'annuler le mouvement",
+        variant: 'destructive',
+      });
     } finally {
-      setCancelling(false)
+      setCancelling(false);
     }
-  }
+  };
 
   const formatDate = (dateString: string) => {
-    const date = new Date(dateString)
+    const date = new Date(dateString);
     return date.toLocaleDateString('fr-FR', {
       day: '2-digit',
       month: '2-digit',
       year: 'numeric',
       hour: '2-digit',
-      minute: '2-digit'
-    })
-  }
+      minute: '2-digit',
+    });
+  };
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
@@ -115,7 +134,9 @@ export function CancelMovementModal({ movement, isOpen, onClose, onSuccess }: Ca
                 <ul className="mt-2 space-y-1 text-orange-700">
                   <li>• Recalculer le stock du produit</li>
                   <li>• Mettre à jour les alertes de stock</li>
-                  <li>• Supprimer définitivement ce mouvement de l'historique</li>
+                  <li>
+                    • Supprimer définitivement ce mouvement de l'historique
+                  </li>
                 </ul>
               </div>
             </div>
@@ -123,7 +144,9 @@ export function CancelMovementModal({ movement, isOpen, onClose, onSuccess }: Ca
 
           {/* Détails du mouvement */}
           <div className="space-y-3">
-            <h3 className="font-medium text-sm text-gray-500">Détails du mouvement à annuler :</h3>
+            <h3 className="font-medium text-sm text-gray-500">
+              Détails du mouvement à annuler :
+            </h3>
 
             <div className="border border-gray-200 rounded-lg p-4 space-y-3">
               {/* Type */}
@@ -131,7 +154,9 @@ export function CancelMovementModal({ movement, isOpen, onClose, onSuccess }: Ca
                 <span className="text-sm text-gray-600">Type</span>
                 <div className="flex items-center gap-2">
                   {getMovementTypeIcon(movement.movement_type)}
-                  <span className="font-medium">{getMovementTypeLabel(movement.movement_type)}</span>
+                  <span className="font-medium">
+                    {getMovementTypeLabel(movement.movement_type)}
+                  </span>
                 </div>
               </div>
 
@@ -147,11 +172,17 @@ export function CancelMovementModal({ movement, isOpen, onClose, onSuccess }: Ca
               <div className="flex items-center justify-between">
                 <span className="text-sm text-gray-600">Quantité</span>
                 <div className="text-right">
-                  <div className={`font-bold ${
-                    movement.quantity_change > 0 ? 'text-green-600' :
-                    movement.quantity_change < 0 ? 'text-red-600' : 'text-blue-600'
-                  }`}>
-                    {movement.quantity_change > 0 ? '+' : ''}{movement.quantity_change} unités
+                  <div
+                    className={`font-bold ${
+                      movement.quantity_change > 0
+                        ? 'text-green-600'
+                        : movement.quantity_change < 0
+                          ? 'text-red-600'
+                          : 'text-blue-600'
+                    }`}
+                  >
+                    {movement.quantity_change > 0 ? '+' : ''}
+                    {movement.quantity_change} unités
                   </div>
                   <div className="text-xs text-gray-500">
                     {movement.quantity_before} → {movement.quantity_after}
@@ -162,13 +193,17 @@ export function CancelMovementModal({ movement, isOpen, onClose, onSuccess }: Ca
               {/* Date */}
               <div className="flex items-center justify-between">
                 <span className="text-sm text-gray-600">Date</span>
-                <span className="text-sm font-medium">{formatDate(movement.performed_at)}</span>
+                <span className="text-sm font-medium">
+                  {formatDate(movement.performed_at)}
+                </span>
               </div>
 
               {/* Utilisateur */}
               <div className="flex items-center justify-between">
                 <span className="text-sm text-gray-600">Effectué par</span>
-                <span className="text-sm font-medium">{movement.user_name || 'Inconnu'}</span>
+                <span className="text-sm font-medium">
+                  {movement.user_name || 'Inconnu'}
+                </span>
               </div>
             </div>
           </div>
@@ -189,10 +224,10 @@ export function CancelMovementModal({ movement, isOpen, onClose, onSuccess }: Ca
             disabled={cancelling}
             className="bg-red-600 hover:bg-red-700"
           >
-            {cancelling ? 'Annulation...' : 'Confirmer l\'annulation'}
+            {cancelling ? 'Annulation...' : "Confirmer l'annulation"}
           </ButtonV2>
         </DialogFooter>
       </DialogContent>
     </Dialog>
-  )
+  );
 }

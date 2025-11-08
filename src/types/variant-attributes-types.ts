@@ -26,7 +26,7 @@
  *
  * Utilisation recommandée: DynamicColorSelector component
  */
-export type ProductColor = string
+export type ProductColor = string;
 
 /**
  * Couleurs prédéfinies (référence uniquement, non exhaustif)
@@ -47,8 +47,8 @@ export const PREDEFINED_COLORS = [
   'Or',
   'Argent',
   'Bronze',
-  'Transparent'
-] as const
+  'Transparent',
+] as const;
 
 /**
  * @deprecated Utiliser DynamicColorSelector + useProductColors hook
@@ -69,17 +69,17 @@ export const COLOR_LABELS: Record<string, string> = {
   or: 'Or',
   argent: 'Argent',
   bronze: 'Bronze',
-  transparent: 'Transparent'
-}
+  transparent: 'Transparent',
+};
 
 /**
  * @deprecated Utiliser DynamicColorSelector component à la place
  * Options statiques conservées pour rétrocompatibilité uniquement
  */
-export const COLOR_OPTIONS = PREDEFINED_COLORS.map((color) => ({
+export const COLOR_OPTIONS = PREDEFINED_COLORS.map(color => ({
   value: color,
-  label: color
-}))
+  label: color,
+}));
 
 // ===== MATÉRIAUX (15 principaux) =====
 
@@ -101,7 +101,7 @@ export type ProductMaterial =
   | 'velours'
   | 'lin'
   | 'coton'
-  | 'mixte'
+  | 'mixte';
 
 /**
  * Labels français pour affichage UI
@@ -121,16 +121,18 @@ export const MATERIAL_LABELS: Record<ProductMaterial, string> = {
   velours: 'Velours',
   lin: 'Lin',
   coton: 'Coton',
-  mixte: 'Mixte'
-}
+  mixte: 'Mixte',
+};
 
 /**
  * Options pour select UI
  */
-export const MATERIAL_OPTIONS = Object.entries(MATERIAL_LABELS).map(([value, label]) => ({
-  value: value as ProductMaterial,
-  label
-}))
+export const MATERIAL_OPTIONS = Object.entries(MATERIAL_LABELS).map(
+  ([value, label]) => ({
+    value: value as ProductMaterial,
+    label,
+  })
+);
 
 // ===== INTERFACE PRINCIPALE =====
 
@@ -141,16 +143,16 @@ export const MATERIAL_OPTIONS = Object.entries(MATERIAL_LABELS).map(([value, lab
  * Google Merchant Center: max 3 valeurs par attribut
  */
 export interface VariantAttributes {
-  color?: ProductColor
-  color_secondary?: ProductColor // Optionnel: couleur secondaire
-  material?: ProductMaterial
-  material_secondary?: ProductMaterial // Optionnel: matériau secondaire
+  color?: ProductColor;
+  color_secondary?: ProductColor; // Optionnel: couleur secondaire
+  material?: ProductMaterial;
+  material_secondary?: ProductMaterial; // Optionnel: matériau secondaire
 }
 
 /**
  * Type pour formulaire édition (tous champs optionnels)
  */
-export type VariantAttributesFormData = Partial<VariantAttributes>
+export type VariantAttributesFormData = Partial<VariantAttributes>;
 
 // ===== HELPERS & VALIDATION =====
 
@@ -159,14 +161,14 @@ export type VariantAttributesFormData = Partial<VariantAttributes>
  * Système dynamique: toute chaîne non-vide est valide
  */
 export function isValidColor(value: any): value is ProductColor {
-  return typeof value === 'string' && value.trim().length > 0
+  return typeof value === 'string' && value.trim().length > 0;
 }
 
 /**
  * Vérifie si une valeur est un matériau valide
  */
 export function isValidMaterial(value: any): value is ProductMaterial {
-  return typeof value === 'string' && value in MATERIAL_LABELS
+  return typeof value === 'string' && value in MATERIAL_LABELS;
 }
 
 /**
@@ -175,76 +177,86 @@ export function isValidMaterial(value: any): value is ProductMaterial {
  * Système dynamique: Capitalise première lettre
  */
 export function normalizeColor(value: string): ProductColor | null {
-  const trimmed = value.trim()
-  if (!trimmed) return null
-  return trimmed.charAt(0).toUpperCase() + trimmed.slice(1).toLowerCase()
+  const trimmed = value.trim();
+  if (!trimmed) return null;
+  return trimmed.charAt(0).toUpperCase() + trimmed.slice(1).toLowerCase();
 }
 
 /**
  * Normalise un matériau vers format standard
  */
 export function normalizeMaterial(value: string): ProductMaterial | null {
-  const normalized = value.toLowerCase().trim()
-  return isValidMaterial(normalized) ? normalized : null
+  const normalized = value.toLowerCase().trim();
+  return isValidMaterial(normalized) ? normalized : null;
 }
 
 /**
  * Récupère le label d'affichage pour une couleur
  * Système dynamique: retourne la couleur telle quelle (déjà formatée)
  */
-export function getColorLabel(color: ProductColor | string | null | undefined): string {
-  if (!color) return '-'
-  return typeof color === 'string' ? color : '-'
+export function getColorLabel(
+  color: ProductColor | string | null | undefined
+): string {
+  if (!color) return '-';
+  return typeof color === 'string' ? color : '-';
 }
 
 /**
  * Récupère le label d'affichage pour un matériau
  */
-export function getMaterialLabel(material: ProductMaterial | string | null | undefined): string {
-  if (!material) return '-'
+export function getMaterialLabel(
+  material: ProductMaterial | string | null | undefined
+): string {
+  if (!material) return '-';
   if (typeof material === 'string' && material in MATERIAL_LABELS) {
-    return MATERIAL_LABELS[material as ProductMaterial]
+    return MATERIAL_LABELS[material as ProductMaterial];
   }
-  return material
+  return material;
 }
 
 /**
  * Valide un objet VariantAttributes complet
  * Retourne les erreurs de validation le cas échéant
  */
-export function validateVariantAttributes(
-  attributes: any
-): { valid: boolean; errors: string[] } {
-  const errors: string[] = []
+export function validateVariantAttributes(attributes: any): {
+  valid: boolean;
+  errors: string[];
+} {
+  const errors: string[] = [];
 
   if (!attributes || typeof attributes !== 'object') {
-    return { valid: true, errors: [] } // Attributs optionnels
+    return { valid: true, errors: [] }; // Attributs optionnels
   }
 
   // Validation couleur principale
   if (attributes.color && !isValidColor(attributes.color)) {
-    errors.push(`Couleur invalide: ${attributes.color}`)
+    errors.push(`Couleur invalide: ${attributes.color}`);
   }
 
   // Validation couleur secondaire
   if (attributes.color_secondary && !isValidColor(attributes.color_secondary)) {
-    errors.push(`Couleur secondaire invalide: ${attributes.color_secondary}`)
+    errors.push(`Couleur secondaire invalide: ${attributes.color_secondary}`);
   }
 
   // Validation matériau principal
   if (attributes.material && !isValidMaterial(attributes.material)) {
-    errors.push(`Matériau invalide: ${attributes.material}`)
+    errors.push(`Matériau invalide: ${attributes.material}`);
   }
 
   // Validation matériau secondaire
-  if (attributes.material_secondary && !isValidMaterial(attributes.material_secondary)) {
-    errors.push(`Matériau secondaire invalide: ${attributes.material_secondary}`)
+  if (
+    attributes.material_secondary &&
+    !isValidMaterial(attributes.material_secondary)
+  ) {
+    errors.push(
+      `Matériau secondaire invalide: ${attributes.material_secondary}`
+    );
   }
 
   return {
     valid: errors.length === 0,
-    errors
-  }
+    errors,
+  };
 }
 
 /**
@@ -254,37 +266,37 @@ export function validateVariantAttributes(
 export function formatAttributesForDisplay(
   attributes: VariantAttributes | null | undefined
 ): Array<{ label: string; value: string }> {
-  if (!attributes) return []
+  if (!attributes) return [];
 
-  const display: Array<{ label: string; value: string }> = []
+  const display: Array<{ label: string; value: string }> = [];
 
   if (attributes.color) {
     display.push({
       label: 'Couleur',
-      value: getColorLabel(attributes.color)
-    })
+      value: getColorLabel(attributes.color),
+    });
   }
 
   if (attributes.color_secondary) {
     display.push({
       label: 'Couleur secondaire',
-      value: getColorLabel(attributes.color_secondary)
-    })
+      value: getColorLabel(attributes.color_secondary),
+    });
   }
 
   if (attributes.material) {
     display.push({
       label: 'Matériau',
-      value: getMaterialLabel(attributes.material)
-    })
+      value: getMaterialLabel(attributes.material),
+    });
   }
 
   if (attributes.material_secondary) {
     display.push({
       label: 'Matériau secondaire',
-      value: getMaterialLabel(attributes.material_secondary)
-    })
+      value: getMaterialLabel(attributes.material_secondary),
+    });
   }
 
-  return display
+  return display;
 }

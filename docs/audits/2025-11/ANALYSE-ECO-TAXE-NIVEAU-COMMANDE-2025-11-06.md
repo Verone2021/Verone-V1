@@ -34,6 +34,7 @@ ADD COLUMN IF NOT EXISTS eco_tax_default NUMERIC(10,2) DEFAULT 0;
 ```
 
 **Commentaire** :
+
 - Éco-taxe/éco-participation par ligne (ex: éco-mobilier France)
 - Prix réel modifiable dans la commande (pattern snapshot)
 - Copié depuis `products.eco_tax_default` lors ajout produit mais éditable
@@ -43,6 +44,7 @@ ADD COLUMN IF NOT EXISTS eco_tax_default NUMERIC(10,2) DEFAULT 0;
 **Triggers actuels** : `recalculate_purchase_order_totals()` et `recalculate_sales_order_totals()`
 
 **Logique de calcul** :
+
 ```sql
 -- Total HT = Somme de toutes les lignes (INCLUANT éco-taxe)
 SELECT COALESCE(SUM(
@@ -63,6 +65,7 @@ WHERE id = ...;
 ```
 
 **Architecture actuelle** :
+
 ```
 purchase_order_items.eco_tax (par ligne)
      ↓
@@ -80,6 +83,7 @@ purchase_orders.total_ttc
 #### 1. Colonne `eco_tax_total` au niveau commande
 
 **Recherche effectuée** :
+
 ```bash
 grep -rn "eco_tax_total\|deee_total\|eco_participation_total" supabase/migrations/
 # Résultat : AUCUN MATCH
@@ -90,6 +94,7 @@ grep -rn "eco_tax_total\|deee_total\|eco_participation_total" supabase/migration
 #### 2. Structure actuelle des tables commandes
 
 **`purchase_orders`** (depuis migration `20250916_004_create_stock_and_orders_tables.sql`) :
+
 ```sql
 CREATE TABLE purchase_orders (
   id uuid PRIMARY KEY,
@@ -109,6 +114,7 @@ CREATE TABLE purchase_orders (
 ```
 
 **`sales_orders`** (structure identique) :
+
 ```sql
 CREATE TABLE sales_orders (
   id uuid PRIMARY KEY,
@@ -160,6 +166,7 @@ CREATE TABLE sales_orders (
 **Principe** : Stocker explicitement l'éco-taxe globale, séparée du prix produits.
 
 **Migration à créer** :
+
 ```sql
 -- Fichier : supabase/migrations/20251106_XXX_add_eco_tax_total_orders.sql
 
@@ -259,12 +266,14 @@ $$ LANGUAGE plpgsql;
 ```
 
 **Avantages** :
+
 - ✅ Éco-taxe visible séparément dans factures (conformité légale France)
 - ✅ Calcul automatique via triggers (aucune saisie manuelle)
 - ✅ Facilite reporting éco-taxe collectée/reversée
 - ✅ Compatible avec architecture existante
 
 **Inconvénients** :
+
 - ⚠️ BREAKING CHANGE : `total_ht` ne contient plus l'éco-taxe
 - ⚠️ Nécessite migration de données existantes (recalcul rétroactif)
 - ⚠️ Tous les composants frontend doivent être mis à jour
@@ -276,6 +285,7 @@ $$ LANGUAGE plpgsql;
 **Principe** : Permettre une éco-taxe forfaitaire manuelle en plus de l'éco-taxe calculée.
 
 **Migration** :
+
 ```sql
 -- Éco-taxe forfaitaire MANUELLE (en plus de l'éco-taxe lignes)
 ALTER TABLE purchase_orders
@@ -326,11 +336,13 @@ $$ LANGUAGE plpgsql;
 ```
 
 **Avantages** :
+
 - ✅ Pas de breaking change (total_ht inclut toujours éco-taxe)
 - ✅ Permet éco-taxe forfaitaire en plus de l'éco-taxe par ligne
 - ✅ Éditable manuellement si besoin
 
 **Inconvénients** :
+
 - ❌ Éco-taxe toujours incluse dans `total_ht` (pas séparée sur factures)
 - ❌ Complexité : 2 sources d'éco-taxe (lignes + manuelle)
 - ❌ Risque confusion utilisateur
@@ -349,6 +361,7 @@ $$ LANGUAGE plpgsql;
 4. **Best practice** : Séparation claire prix vs taxes/contributions
 
 **Nouvelle architecture** :
+
 ```
 Facture :
 ┌────────────────────────────────┐
@@ -371,6 +384,7 @@ Facture :
 **Fichier** : `supabase/migrations/20251106_XXX_add_eco_tax_total_orders.sql`
 
 **Actions** :
+
 1. ✅ Ajouter colonnes `eco_tax_total` à `purchase_orders` et `sales_orders`
 2. ✅ Recalculer rétroactivement éco-taxe pour commandes existantes
 3. ✅ Adapter triggers `recalculate_purchase_order_totals()` et `recalculate_sales_order_totals()`
@@ -387,6 +401,7 @@ supabase gen types typescript --local > src/types/supabase.ts
 ```
 
 **Vérification** :
+
 ```typescript
 // src/types/supabase.ts
 export interface Database {
@@ -395,13 +410,13 @@ export interface Database {
       purchase_orders: {
         Row: {
           // ...
-          total_ht: number;           // Prix produits SEULEMENT
-          eco_tax_total: number;      // ✅ NOUVEAU
-          total_ttc: number;          // Prix total TTC
-        }
-      }
-    }
-  }
+          total_ht: number; // Prix produits SEULEMENT
+          eco_tax_total: number; // ✅ NOUVEAU
+          total_ttc: number; // Prix total TTC
+        };
+      };
+    };
+  };
 }
 ```
 
@@ -423,6 +438,7 @@ export interface Database {
    - Afficher éco-participation séparée
 
 **Exemple modification** :
+
 ```typescript
 // AVANT
 <div>Total HT : {order.total_ht}€</div>
@@ -440,6 +456,7 @@ export interface Database {
 **Tests critiques** :
 
 1. **Console errors = 0** (RÈGLE SACRÉE)
+
    ```bash
    mcp__playwright__browser_navigate("http://localhost:3000/commandes/clients")
    mcp__playwright__browser_console_messages()
@@ -462,11 +479,13 @@ export interface Database {
 **1. Changement sémantique `total_ht`**
 
 **AVANT** :
+
 ```typescript
-total_ht = prix_produits + eco_taxe_lignes
+total_ht = prix_produits + eco_taxe_lignes;
 ```
 
 **APRÈS** :
+
 ```typescript
 total_ht = prix_produits SEULEMENT
 eco_tax_total = somme(eco_tax lignes)
@@ -510,14 +529,17 @@ SELECT SUM(total_ht + eco_tax_total) FROM sales_orders;
 ## 📚 RÉFÉRENCES
 
 **Migrations** :
+
 - `supabase/migrations/20250916_004_create_stock_and_orders_tables.sql` (structure initiale)
 - `supabase/migrations/20251031_002_add_eco_tax_universal.sql` (éco-taxe lignes)
 
 **Réglementation** :
+
 - Décret n° 2014-1484 du 11 décembre 2014 (affichage éco-participation DEEE)
 - Loi AGEC 2020 (économie circulaire)
 
 **Architecture** :
+
 - Pattern snapshot : Éco-taxe copiée depuis `products.eco_tax_default` mais modifiable dans commande
 - Triggers automatiques : Recalcul totaux à chaque modification lignes
 

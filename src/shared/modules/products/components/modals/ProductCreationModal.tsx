@@ -1,85 +1,91 @@
-'use client'
+'use client';
 
-import React, { useState } from 'react'
-import { Plus, Package, AlertTriangle, RefreshCw } from 'lucide-react'
-import { ButtonV2 } from '@/components/ui/button'
-import { Input } from '@/components/ui/input'
-import { Label } from '@/components/ui/label'
-import { Textarea } from '@/components/ui/textarea'
+import React, { useState } from 'react';
+
+import { Plus, Package, AlertTriangle, RefreshCw } from 'lucide-react';
+
+import { ButtonV2 } from '@/components/ui/button';
 import {
   Dialog,
   DialogContent,
   DialogHeader,
   DialogTitle,
-} from '@/components/ui/dialog'
-import { useToast } from '@/shared/modules/common/hooks'
-import { useCatalogue } from '@/shared/modules/categories/hooks'
-import { formatPrice } from '@/lib/utils'
+} from '@/components/ui/dialog';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Textarea } from '@/components/ui/textarea';
+import { formatPrice } from '@verone/utils';
+import { useCatalogue } from '@/shared/modules/categories/hooks';
+import { useToast } from '@/shared/modules/common/hooks';
 
 interface ProductCreationModalProps {
-  isOpen: boolean
-  onClose: () => void
-  onSuccess: () => void
+  isOpen: boolean;
+  onClose: () => void;
+  onSuccess: () => void;
 }
 
-export function ProductCreationModal({ isOpen, onClose, onSuccess }: ProductCreationModalProps) {
-  const [name, setName] = useState('')
-  const [sku, setSku] = useState('')
-  const [priceHt, setPriceHt] = useState('')
-  const [description, setDescription] = useState('')
-  const [minStockLevel, setMinStockLevel] = useState('5')
-  const [loading, setLoading] = useState(false)
-  const [errors, setErrors] = useState<Record<string, string>>({})
+export function ProductCreationModal({
+  isOpen,
+  onClose,
+  onSuccess,
+}: ProductCreationModalProps) {
+  const [name, setName] = useState('');
+  const [sku, setSku] = useState('');
+  const [priceHt, setPriceHt] = useState('');
+  const [description, setDescription] = useState('');
+  const [minStockLevel, setMinStockLevel] = useState('5');
+  const [loading, setLoading] = useState(false);
+  const [errors, setErrors] = useState<Record<string, string>>({});
 
-  const { toast } = useToast()
-  const { createProduct } = useCatalogue()
+  const { toast } = useToast();
+  const { createProduct } = useCatalogue();
 
   // Validation en temps réel
   const validateForm = () => {
-    const newErrors: Record<string, string> = {}
+    const newErrors: Record<string, string> = {};
 
     if (!name.trim()) {
-      newErrors.name = 'Le nom du produit est obligatoire'
+      newErrors.name = 'Le nom du produit est obligatoire';
     }
 
     if (!sku.trim()) {
-      newErrors.sku = 'Le SKU est obligatoire'
+      newErrors.sku = 'Le SKU est obligatoire';
     } else if (sku.length < 3) {
-      newErrors.sku = 'Le SKU doit contenir au moins 3 caractères'
+      newErrors.sku = 'Le SKU doit contenir au moins 3 caractères';
     }
 
     if (!priceHt || parseFloat(priceHt) <= 0) {
-      newErrors.priceHt = 'Le prix HT doit être supérieur à 0'
+      newErrors.priceHt = 'Le prix HT doit être supérieur à 0';
     }
 
     if (!minStockLevel || parseInt(minStockLevel) < 0) {
-      newErrors.minStockLevel = 'Le seuil de stock doit être positif'
+      newErrors.minStockLevel = 'Le seuil de stock doit être positif';
     }
 
-    setErrors(newErrors)
-    return Object.keys(newErrors).length === 0
-  }
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault()
+    e.preventDefault();
 
     if (!validateForm()) {
       toast({
-        title: "Erreurs de validation",
-        description: "Veuillez corriger les erreurs dans le formulaire",
-        variant: "destructive"
-      })
-      return
+        title: 'Erreurs de validation',
+        description: 'Veuillez corriger les erreurs dans le formulaire',
+        variant: 'destructive',
+      });
+      return;
     }
 
-    setLoading(true)
+    setLoading(true);
     try {
       // Générer automatiquement le SKU si besoin
-      const finalSku = sku.toUpperCase().replace(/\s+/g, '-')
+      const finalSku = sku.toUpperCase().replace(/\s+/g, '-');
 
       // Calculer le prix TTC (TVA 20%)
-      const priceHtValue = parseFloat(priceHt)
-      const priceTtc = priceHtValue * 1.2
+      const priceHtValue = parseFloat(priceHt);
+      const priceTtc = priceHtValue * 1.2;
 
       const productData = {
         name: name.trim(),
@@ -93,60 +99,59 @@ export function ProductCreationModal({ isOpen, onClose, onSuccess }: ProductCrea
         status: 'active' as const,
         variant_attributes: {},
         dimensions: {},
-        weight: null
-      }
+        weight: null,
+      };
 
-      console.log('Création produit:', productData)
+      console.log('Création produit:', productData);
 
-      await createProduct(productData as any)
+      await createProduct(productData as any);
 
       // Réinitialiser le formulaire
-      resetForm()
-      onSuccess()
-      onClose()
+      resetForm();
+      onSuccess();
+      onClose();
 
       toast({
-        title: "✅ Produit créé",
-        description: `${name} a été ajouté au catalogue avec succès`
-      })
-
+        title: '✅ Produit créé',
+        description: `${name} a été ajouté au catalogue avec succès`,
+      });
     } catch (error: any) {
-      console.error('❌ Erreur création produit:', error)
+      console.error('❌ Erreur création produit:', error);
 
       // Gestion des erreurs spécifiques
-      let errorMessage = "Impossible de créer le produit"
+      let errorMessage = 'Impossible de créer le produit';
 
       if (error.code === '23505') {
-        errorMessage = "Ce SKU existe déjà. Veuillez en choisir un autre."
-        setErrors({ sku: "SKU déjà existant" })
+        errorMessage = 'Ce SKU existe déjà. Veuillez en choisir un autre.';
+        setErrors({ sku: 'SKU déjà existant' });
       } else if (error.message?.includes('sku_check')) {
-        errorMessage = "Le SKU doit contenir au moins 3 caractères"
-        setErrors({ sku: "SKU trop court" })
+        errorMessage = 'Le SKU doit contenir au moins 3 caractères';
+        setErrors({ sku: 'SKU trop court' });
       }
 
       toast({
-        title: "❌ Erreur",
+        title: '❌ Erreur',
         description: errorMessage,
-        variant: "destructive"
-      })
+        variant: 'destructive',
+      });
     } finally {
-      setLoading(false)
+      setLoading(false);
     }
-  }
+  };
 
   const resetForm = () => {
-    setName('')
-    setSku('')
-    setPriceHt('')
-    setDescription('')
-    setMinStockLevel('5')
-    setErrors({})
-  }
+    setName('');
+    setSku('');
+    setPriceHt('');
+    setDescription('');
+    setMinStockLevel('5');
+    setErrors({});
+  };
 
   const handleClose = () => {
-    onClose()
-    resetForm()
-  }
+    onClose();
+    resetForm();
+  };
 
   // Auto-génération SKU basé sur le nom
   const generateSku = () => {
@@ -155,10 +160,10 @@ export function ProductCreationModal({ isOpen, onClose, onSuccess }: ProductCrea
         .toUpperCase()
         .replace(/[^A-Z0-9\s]/g, '')
         .replace(/\s+/g, '-')
-        .substring(0, 20)
-      setSku(generatedSku)
+        .substring(0, 20);
+      setSku(generatedSku);
     }
-  }
+  };
 
   return (
     <Dialog open={isOpen} onOpenChange={handleClose}>
@@ -179,9 +184,9 @@ export function ProductCreationModal({ isOpen, onClose, onSuccess }: ProductCrea
             <Input
               id="name"
               value={name}
-              onChange={(e) => {
-                setName(e.target.value)
-                setErrors(prev => ({ ...prev, name: '' }))
+              onChange={e => {
+                setName(e.target.value);
+                setErrors(prev => ({ ...prev, name: '' }));
               }}
               onBlur={generateSku}
               placeholder="Nom du produit..."
@@ -205,9 +210,9 @@ export function ProductCreationModal({ isOpen, onClose, onSuccess }: ProductCrea
               <Input
                 id="sku"
                 value={sku}
-                onChange={(e) => {
-                  setSku(e.target.value)
-                  setErrors(prev => ({ ...prev, sku: '' }))
+                onChange={e => {
+                  setSku(e.target.value);
+                  setErrors(prev => ({ ...prev, sku: '' }));
                 }}
                 placeholder="SKU-PRODUIT"
                 className={errors.sku ? 'border-red-500' : ''}
@@ -243,15 +248,17 @@ export function ProductCreationModal({ isOpen, onClose, onSuccess }: ProductCrea
                 step="0.01"
                 min="0"
                 value={priceHt}
-                onChange={(e) => {
-                  setPriceHt(e.target.value)
-                  setErrors(prev => ({ ...prev, priceHt: '' }))
+                onChange={e => {
+                  setPriceHt(e.target.value);
+                  setErrors(prev => ({ ...prev, priceHt: '' }));
                 }}
                 placeholder="0.00"
                 className={`pr-8 ${errors.priceHt ? 'border-red-500' : ''}`}
                 required
               />
-              <span className="absolute right-3 top-2.5 text-sm text-gray-500">€</span>
+              <span className="absolute right-3 top-2.5 text-sm text-gray-500">
+                €
+              </span>
             </div>
             {priceHt && (
               <p className="text-sm text-gray-600">
@@ -272,7 +279,7 @@ export function ProductCreationModal({ isOpen, onClose, onSuccess }: ProductCrea
             <Textarea
               id="description"
               value={description}
-              onChange={(e) => setDescription(e.target.value)}
+              onChange={e => setDescription(e.target.value)}
               placeholder="Description rapide du produit..."
               rows={2}
             />
@@ -286,9 +293,9 @@ export function ProductCreationModal({ isOpen, onClose, onSuccess }: ProductCrea
               type="number"
               min="0"
               value={minStockLevel}
-              onChange={(e) => {
-                setMinStockLevel(e.target.value)
-                setErrors(prev => ({ ...prev, minStockLevel: '' }))
+              onChange={e => {
+                setMinStockLevel(e.target.value);
+                setErrors(prev => ({ ...prev, minStockLevel: '' }));
               }}
               className={errors.minStockLevel ? 'border-red-500' : ''}
             />
@@ -313,11 +320,7 @@ export function ProductCreationModal({ isOpen, onClose, onSuccess }: ProductCrea
             >
               Annuler
             </ButtonV2>
-            <ButtonV2
-              type="submit"
-              disabled={loading}
-              className="flex-1"
-            >
+            <ButtonV2 type="submit" disabled={loading} className="flex-1">
               {loading ? (
                 <RefreshCw className="h-4 w-4 animate-spin mr-2" />
               ) : (
@@ -329,5 +332,5 @@ export function ProductCreationModal({ isOpen, onClose, onSuccess }: ProductCrea
         </form>
       </DialogContent>
     </Dialog>
-  )
+  );
 }

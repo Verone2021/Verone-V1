@@ -19,17 +19,49 @@ const PAGES = [
 
   // Organisations & Contacts (11)
   { path: '/organisation', name: 'Organisations Hub', module: 'Organisations' },
-  { path: '/organisation/all', name: 'Toutes Organisations', module: 'Organisations' },
-  { path: '/organisation/contacts', name: 'Contacts Orga', module: 'Organisations' },
-  { path: '/contacts-organisations', name: 'Contacts Hub', module: 'Organisations' },
-  { path: '/contacts-organisations/contacts', name: 'Liste Contacts', module: 'Organisations' },
-  { path: '/contacts-organisations/customers', name: 'Liste Clients', module: 'Organisations' },
-  { path: '/contacts-organisations/suppliers', name: 'Liste Fournisseurs', module: 'Organisations' },
-  { path: '/contacts-organisations/partners', name: 'Liste Partenaires', module: 'Organisations' },
+  {
+    path: '/organisation/all',
+    name: 'Toutes Organisations',
+    module: 'Organisations',
+  },
+  {
+    path: '/organisation/contacts',
+    name: 'Contacts Orga',
+    module: 'Organisations',
+  },
+  {
+    path: '/contacts-organisations',
+    name: 'Contacts Hub',
+    module: 'Organisations',
+  },
+  {
+    path: '/contacts-organisations/contacts',
+    name: 'Liste Contacts',
+    module: 'Organisations',
+  },
+  {
+    path: '/contacts-organisations/customers',
+    name: 'Liste Clients',
+    module: 'Organisations',
+  },
+  {
+    path: '/contacts-organisations/suppliers',
+    name: 'Liste Fournisseurs',
+    module: 'Organisations',
+  },
+  {
+    path: '/contacts-organisations/partners',
+    name: 'Liste Partenaires',
+    module: 'Organisations',
+  },
 
   // Admin (3)
   { path: '/admin/users', name: 'Gestion Utilisateurs', module: 'Admin' },
-  { path: '/admin/activite-utilisateurs', name: 'Activité Utilisateurs', module: 'Admin' },
+  {
+    path: '/admin/activite-utilisateurs',
+    name: 'Activité Utilisateurs',
+    module: 'Admin',
+  },
 
   // Paramètres (1)
   { path: '/parametres', name: 'Paramètres', module: 'Paramètres' },
@@ -37,23 +69,63 @@ const PAGES = [
   // Produits - Catalogue (15)
   { path: '/produits', name: 'Produits Hub', module: 'Produits' },
   { path: '/produits/catalogue', name: 'Catalogue', module: 'Produits' },
-  { path: '/produits/catalogue/dashboard', name: 'Dashboard Catalogue', module: 'Produits' },
-  { path: '/produits/catalogue/stocks', name: 'Stocks Catalogue', module: 'Produits' },
-  { path: '/produits/catalogue/categories', name: 'Catégories', module: 'Produits' },
-  { path: '/produits/catalogue/archived', name: 'Produits Archivés', module: 'Produits' },
-  { path: '/produits/catalogue/collections', name: 'Collections', module: 'Produits' },
-  { path: '/produits/catalogue/variantes', name: 'Variantes', module: 'Produits' },
+  {
+    path: '/produits/catalogue/dashboard',
+    name: 'Dashboard Catalogue',
+    module: 'Produits',
+  },
+  {
+    path: '/produits/catalogue/stocks',
+    name: 'Stocks Catalogue',
+    module: 'Produits',
+  },
+  {
+    path: '/produits/catalogue/categories',
+    name: 'Catégories',
+    module: 'Produits',
+  },
+  {
+    path: '/produits/catalogue/archived',
+    name: 'Produits Archivés',
+    module: 'Produits',
+  },
+  {
+    path: '/produits/catalogue/collections',
+    name: 'Collections',
+    module: 'Produits',
+  },
+  {
+    path: '/produits/catalogue/variantes',
+    name: 'Variantes',
+    module: 'Produits',
+  },
 
   // Produits - Sourcing (5)
   { path: '/produits/sourcing', name: 'Sourcing Hub', module: 'Produits' },
-  { path: '/produits/sourcing/produits', name: 'Produits Sourcing', module: 'Produits' },
-  { path: '/produits/sourcing/echantillons', name: 'Échantillons', module: 'Produits' },
-  { path: '/produits/sourcing/validation', name: 'Validation Sourcing', module: 'Produits' },
+  {
+    path: '/produits/sourcing/produits',
+    name: 'Produits Sourcing',
+    module: 'Produits',
+  },
+  {
+    path: '/produits/sourcing/echantillons',
+    name: 'Échantillons',
+    module: 'Produits',
+  },
+  {
+    path: '/produits/sourcing/validation',
+    name: 'Validation Sourcing',
+    module: 'Produits',
+  },
 
   // Stocks (10)
   { path: '/stocks', name: 'Stocks Hub', module: 'Stocks' },
   { path: '/stocks/alertes', name: 'Alertes Stock', module: 'Stocks' },
-  { path: '/stocks/ajustements/create', name: 'Créer Ajustement', module: 'Stocks' },
+  {
+    path: '/stocks/ajustements/create',
+    name: 'Créer Ajustement',
+    module: 'Stocks',
+  },
   { path: '/stocks/entrees', name: 'Entrées Stock', module: 'Stocks' },
   { path: '/stocks/expeditions', name: 'Expéditions Stock', module: 'Stocks' },
   { path: '/stocks/inventaire', name: 'Inventaire', module: 'Stocks' },
@@ -64,21 +136,53 @@ const PAGES = [
 
   // Commandes (4)
   { path: '/commandes', name: 'Commandes Hub', module: 'Commandes' },
-  { path: '/commandes/clients', name: 'Commandes Clients', module: 'Commandes' },
-  { path: '/commandes/fournisseurs', name: 'Commandes Fournisseurs', module: 'Commandes' },
-  { path: '/commandes/expeditions', name: 'Expéditions Commandes', module: 'Commandes' },
+  {
+    path: '/commandes/clients',
+    name: 'Commandes Clients',
+    module: 'Commandes',
+  },
+  {
+    path: '/commandes/fournisseurs',
+    name: 'Commandes Fournisseurs',
+    module: 'Commandes',
+  },
+  {
+    path: '/commandes/expeditions',
+    name: 'Expéditions Commandes',
+    module: 'Commandes',
+  },
 
   // Consultations (3)
-  { path: '/consultations', name: 'Consultations Liste', module: 'Consultations' },
-  { path: '/consultations/create', name: 'Créer Consultation', module: 'Consultations' },
+  {
+    path: '/consultations',
+    name: 'Consultations Liste',
+    module: 'Consultations',
+  },
+  {
+    path: '/consultations/create',
+    name: 'Créer Consultation',
+    module: 'Consultations',
+  },
 
   // Canaux Vente (3)
   { path: '/canaux-vente', name: 'Canaux Vente Hub', module: 'Canaux Vente' },
-  { path: '/canaux-vente/google-merchant', name: 'Google Merchant', module: 'Canaux Vente' },
-  { path: '/canaux-vente/prix-clients', name: 'Prix Clients (NOUVEAU)', module: 'Canaux Vente' },
+  {
+    path: '/canaux-vente/google-merchant',
+    name: 'Google Merchant',
+    module: 'Canaux Vente',
+  },
+  {
+    path: '/canaux-vente/prix-clients',
+    name: 'Prix Clients (NOUVEAU)',
+    module: 'Canaux Vente',
+  },
 
   // Finance (2)
-  { path: '/finance/rapprochement', name: 'Rapprochement Bancaire', module: 'Finance' },
+  {
+    path: '/finance/rapprochement',
+    name: 'Rapprochement Bancaire',
+    module: 'Finance',
+  },
 
   // Factures (2)
   { path: '/factures', name: 'Factures Liste', module: 'Factures' },
@@ -86,7 +190,7 @@ const PAGES = [
   // Autres (3)
   { path: '/tresorerie', name: 'Trésorerie', module: 'Trésorerie' },
   { path: '/ventes', name: 'Ventes', module: 'Ventes' },
-  { path: '/notifications', name: 'Notifications', module: 'Notifications' }
+  { path: '/notifications', name: 'Notifications', module: 'Notifications' },
 ];
 
 async function testAllPages() {
@@ -103,7 +207,7 @@ async function testAllPages() {
 
   // Collecter les erreurs console
   const pageErrors = [];
-  page.on('console', (msg) => {
+  page.on('console', msg => {
     if (msg.type() === 'error') {
       pageErrors.push(msg.text());
     }
@@ -118,7 +222,7 @@ async function testAllPages() {
     try {
       const response = await page.goto(url, {
         waitUntil: 'domcontentloaded',
-        timeout: 10000
+        timeout: 10000,
       });
 
       await page.waitForTimeout(2000); // Attendre chargement
@@ -135,7 +239,7 @@ async function testAllPages() {
         title: title,
         finalUrl: currentUrl,
         errors: [...pageErrors],
-        success: status === 200 && pageErrors.length === 0
+        success: status === 200 && pageErrors.length === 0,
       };
 
       results.push(result);
@@ -150,7 +254,6 @@ async function testAllPages() {
         warningCount++;
         console.log(`  ⚠️ WARNING: Status ${status}`);
       }
-
     } catch (error) {
       errorCount++;
       results.push({
@@ -159,7 +262,7 @@ async function testAllPages() {
         module: pageInfo.module,
         status: 0,
         error: error.message,
-        success: false
+        success: false,
       });
       console.log(`  ❌ CRASH: ${error.message}`);
     }
@@ -174,9 +277,9 @@ async function testAllPages() {
     summary: {
       success: successCount,
       errors: errorCount,
-      warnings: warningCount
+      warnings: warningCount,
     },
-    results: results
+    results: results,
   };
 
   const reportPath = './test-results-pages.json';
@@ -194,7 +297,7 @@ async function testAllPages() {
 // Exécution
 testAllPages()
   .then(() => process.exit(0))
-  .catch((err) => {
+  .catch(err => {
     console.error('Erreur fatale:', err);
     process.exit(1);
   });

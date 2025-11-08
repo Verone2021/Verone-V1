@@ -15,20 +15,20 @@
  */
 
 // Export tokens
-export * from './tokens'
+export * from './tokens';
 
 // Export themes
-export * from './themes'
+export * from './themes';
 
 // Export utils
-export * from './utils'
+export * from './utils';
 
 // Default exports for convenience
-import { theme } from './themes'
-import { colors } from './tokens/colors'
-import { spacing } from './tokens/spacing'
-import { typography } from './tokens/typography'
-import { shadows } from './tokens/shadows'
+import { theme } from './themes';
+import { colors } from './tokens/colors';
+import { shadows } from './tokens/shadows';
+import { spacing } from './tokens/spacing';
+import { typography } from './tokens/typography';
 
 export const designSystem = {
   theme,
@@ -38,4 +38,4 @@ export const designSystem = {
     typography,
     shadows,
   },
-} as const
+} as const;

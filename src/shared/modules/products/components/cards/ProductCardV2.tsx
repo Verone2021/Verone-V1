@@ -1,14 +1,17 @@
 'use client';
 
 import { memo, useCallback, useState } from 'react';
+
 import Image from 'next/image';
 import { useRouter } from 'next/navigation';
+
+import { Package, Archive, Trash2, ArchiveRestore, Eye } from 'lucide-react';
+
 import { Badge } from '@/components/ui/badge';
 import { ButtonV2 } from '@/components/ui/button';
-import { cn } from '@/lib/utils';
-import { Package, Archive, Trash2, ArchiveRestore, Eye } from 'lucide-react';
-import { useProductImages } from '@/shared/modules/products/hooks';
+import { cn } from '@verone/utils';
 import type { Product } from '@/shared/modules/categories/hooks';
+import { useProductImages } from '@/shared/modules/products/hooks';
 
 interface ProductCardProps {
   product: Product;

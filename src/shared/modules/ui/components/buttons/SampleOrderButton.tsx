@@ -1,10 +1,13 @@
-'use client'
+'use client';
 
-import { useState } from 'react'
-import { useRouter } from 'next/navigation'
-import { Package, Loader2, CheckCircle, AlertCircle } from 'lucide-react'
-import { ButtonV2 } from '@/components/ui/button'
-import { Badge } from '@/components/ui/badge'
+import { useState } from 'react';
+
+import { useRouter } from 'next/navigation';
+
+import { Package, Loader2, CheckCircle, AlertCircle } from 'lucide-react';
+
+import { Badge } from '@/components/ui/badge';
+import { ButtonV2 } from '@/components/ui/button';
 import {
   Dialog,
   DialogContent,
@@ -12,18 +15,18 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-} from '@/components/ui/dialog'
-import { useSampleOrder } from '@/shared/modules/orders/hooks'
-import { cn } from '@/lib/utils'
+} from '@/components/ui/dialog';
+import { cn } from '@verone/utils';
+import { useSampleOrder } from '@/shared/modules/orders/hooks';
 
 interface SampleOrderButtonProps {
-  productId: string
-  productName: string
-  supplierName?: string
-  costPrice?: number
-  className?: string
-  variant?: 'secondary' | 'outline' | 'ghost'
-  size?: 'secondary' | 'sm' | 'lg'
+  productId: string;
+  productName: string;
+  supplierName?: string;
+  costPrice?: number;
+  className?: string;
+  variant?: 'secondary' | 'outline' | 'ghost';
+  size?: 'secondary' | 'sm' | 'lg';
 }
 
 export function SampleOrderButton({
@@ -33,24 +36,28 @@ export function SampleOrderButton({
   costPrice,
   className,
   variant = 'outline',
-  size = 'secondary'
+  size = 'secondary',
 }: SampleOrderButtonProps) {
-  const router = useRouter()
-  const { requestSample, isLoading } = useSampleOrder()
-  const [showConfirmDialog, setShowConfirmDialog] = useState(false)
-  const [result, setResult] = useState<{ success: boolean; purchaseOrderId?: string; isNewOrder?: boolean } | null>(null)
+  const router = useRouter();
+  const { requestSample, isLoading } = useSampleOrder();
+  const [showConfirmDialog, setShowConfirmDialog] = useState(false);
+  const [result, setResult] = useState<{
+    success: boolean;
+    purchaseOrderId?: string;
+    isNewOrder?: boolean;
+  } | null>(null);
 
   const handleRequestSample = async () => {
-    const response = await requestSample(productId)
-    setResult(response)
-    setShowConfirmDialog(false)
+    const response = await requestSample(productId);
+    setResult(response);
+    setShowConfirmDialog(false);
 
     // Si succès, proposer d'ouvrir la commande
     if (response.success && response.purchaseOrderId) {
       // Optionnel : rediriger vers la commande
       // router.push(`/commandes/fournisseurs/${response.purchaseOrderId}`)
     }
-  }
+  };
 
   return (
     <>
@@ -60,7 +67,7 @@ export function SampleOrderButton({
         onClick={() => setShowConfirmDialog(true)}
         disabled={isLoading}
         className={cn(
-          "border-blue-300 text-blue-700 hover:bg-blue-50",
+          'border-blue-300 text-blue-700 hover:bg-blue-50',
           className
         )}
       >
@@ -83,34 +90,46 @@ export function SampleOrderButton({
           <DialogHeader>
             <DialogTitle>Commander un échantillon</DialogTitle>
             <DialogDescription>
-              Vous êtes sur le point de commander un échantillon pour validation qualité.
+              Vous êtes sur le point de commander un échantillon pour validation
+              qualité.
             </DialogDescription>
           </DialogHeader>
 
           <div className="space-y-4 py-4">
             <div className="bg-blue-50 p-4 rounded-lg border border-blue-200">
-              <h4 className="font-medium text-blue-900 mb-2">Détails de la commande</h4>
+              <h4 className="font-medium text-blue-900 mb-2">
+                Détails de la commande
+              </h4>
               <div className="space-y-2 text-sm">
                 <div className="flex justify-between">
                   <span className="text-blue-700">Produit :</span>
-                  <span className="font-medium text-blue-900">{productName}</span>
+                  <span className="font-medium text-blue-900">
+                    {productName}
+                  </span>
                 </div>
                 {supplierName && (
                   <div className="flex justify-between">
                     <span className="text-blue-700">Fournisseur :</span>
-                    <span className="font-medium text-blue-900">{supplierName}</span>
+                    <span className="font-medium text-blue-900">
+                      {supplierName}
+                    </span>
                   </div>
                 )}
                 <div className="flex justify-between">
                   <span className="text-blue-700">Quantité :</span>
-                  <Badge variant="outline" className="bg-white border-blue-300 text-blue-700">
+                  <Badge
+                    variant="outline"
+                    className="bg-white border-blue-300 text-blue-700"
+                  >
                     1 unité (échantillon)
                   </Badge>
                 </div>
                 {costPrice && (
                   <div className="flex justify-between">
                     <span className="text-blue-700">Prix unitaire :</span>
-                    <span className="font-medium text-blue-900">{costPrice.toFixed(2)} €</span>
+                    <span className="font-medium text-blue-900">
+                      {costPrice.toFixed(2)} €
+                    </span>
                   </div>
                 )}
               </div>
@@ -120,8 +139,9 @@ export function SampleOrderButton({
               <p className="flex items-start gap-2">
                 <AlertCircle className="h-4 w-4 mt-0.5 flex-shrink-0" />
                 <span>
-                  L'échantillon sera ajouté à une commande draft existante si disponible,
-                  sinon une nouvelle commande sera créée automatiquement.
+                  L'échantillon sera ajouté à une commande draft existante si
+                  disponible, sinon une nouvelle commande sera créée
+                  automatiquement.
                 </span>
               </p>
             </div>
@@ -156,5 +176,5 @@ export function SampleOrderButton({
         </DialogContent>
       </Dialog>
     </>
-  )
+  );
 }

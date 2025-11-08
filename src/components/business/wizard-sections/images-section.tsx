@@ -1,128 +1,146 @@
-"use client"
+'use client';
 
-import { useRef, useState } from 'react'
-import { Upload, X, Image as ImageIcon, AlertCircle, Camera, Plus } from 'lucide-react'
-import { Button } from '../../ui/button'
-import { Label } from '../../ui/label'
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../../ui/card'
-import { Badge } from '../../ui/badge'
-import { Alert, AlertDescription } from '../../ui/alert'
-import { useToast } from '@/shared/modules/common/hooks'
-import { WizardFormData } from '../complete-product-wizard'
-import { cn } from '../../../lib/utils'
+import { useRef, useState } from 'react';
+
+import {
+  Upload,
+  X,
+  Image as ImageIcon,
+  AlertCircle,
+  Camera,
+  Plus,
+} from 'lucide-react';
+
+import { useToast } from '@/shared/modules/common/hooks';
+
+import { cn } from '../../../lib/utils';
+import { Alert, AlertDescription } from '../../ui/alert';
+import { Badge } from '../../ui/badge';
+import { Button } from '../../ui/button';
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from '../../ui/card';
+import { Label } from '../../ui/label';
+import type { WizardFormData } from '../complete-product-wizard';
 
 interface ImagesSectionProps {
-  selectedImages: File[]
-  setSelectedImages: (images: File[]) => void
-  formData: WizardFormData
-  onSave: () => void
+  selectedImages: File[];
+  setSelectedImages: (images: File[]) => void;
+  formData: WizardFormData;
+  onSave: () => void;
 }
 
 export function ImagesSection({
   selectedImages,
   setSelectedImages,
   formData,
-  onSave
+  onSave,
 }: ImagesSectionProps) {
-  const { toast } = useToast()
-  const fileInputRef = useRef<HTMLInputElement>(null)
-  const [dragActive, setDragActive] = useState(false)
-  const [imagePreviews, setImagePreviews] = useState<{ file: File; preview: string }[]>([])
+  const { toast } = useToast();
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const [dragActive, setDragActive] = useState(false);
+  const [imagePreviews, setImagePreviews] = useState<
+    { file: File; preview: string }[]
+  >([]);
 
   // Gestion de la sélection de fichiers
   const handleFileSelect = (files: File[]) => {
-    const imageFiles = files.filter(file => file.type.startsWith('image/'))
+    const imageFiles = files.filter(file => file.type.startsWith('image/'));
 
     if (imageFiles.length !== files.length) {
       toast({
-        title: "Fichiers ignorés",
-        description: "Seules les images sont acceptées",
-        variant: "destructive"
-      })
+        title: 'Fichiers ignorés',
+        description: 'Seules les images sont acceptées',
+        variant: 'destructive',
+      });
     }
 
     if (selectedImages.length + imageFiles.length > 10) {
       toast({
-        title: "Limite dépassée",
-        description: "Maximum 10 images par produit",
-        variant: "destructive"
-      })
-      return
+        title: 'Limite dépassée',
+        description: 'Maximum 10 images par produit',
+        variant: 'destructive',
+      });
+      return;
     }
 
     // Créer les previews
-    const newPreviews: { file: File; preview: string }[] = []
-    let processedCount = 0
+    const newPreviews: { file: File; preview: string }[] = [];
+    let processedCount = 0;
 
     imageFiles.forEach(file => {
-      const reader = new FileReader()
-      reader.onload = (e) => {
+      const reader = new FileReader();
+      reader.onload = e => {
         newPreviews.push({
           file,
-          preview: e.target?.result as string
-        })
-        processedCount++
+          preview: e.target?.result as string,
+        });
+        processedCount++;
 
         if (processedCount === imageFiles.length) {
-          setSelectedImages([...selectedImages, ...imageFiles])
-          setImagePreviews([...imagePreviews, ...newPreviews])
+          setSelectedImages([...selectedImages, ...imageFiles]);
+          setImagePreviews([...imagePreviews, ...newPreviews]);
         }
-      }
-      reader.readAsDataURL(file)
-    })
-  }
+      };
+      reader.readAsDataURL(file);
+    });
+  };
 
   // Gestion drag & drop
   const handleDragOver = (e: React.DragEvent) => {
-    e.preventDefault()
-    e.stopPropagation()
-    setDragActive(true)
-  }
+    e.preventDefault();
+    e.stopPropagation();
+    setDragActive(true);
+  };
 
   const handleDragLeave = (e: React.DragEvent) => {
-    e.preventDefault()
-    e.stopPropagation()
-    setDragActive(false)
-  }
+    e.preventDefault();
+    e.stopPropagation();
+    setDragActive(false);
+  };
 
   const handleDrop = (e: React.DragEvent) => {
-    e.preventDefault()
-    e.stopPropagation()
-    setDragActive(false)
+    e.preventDefault();
+    e.stopPropagation();
+    setDragActive(false);
 
-    const files = Array.from(e.dataTransfer.files)
-    handleFileSelect(files)
-  }
+    const files = Array.from(e.dataTransfer.files);
+    handleFileSelect(files);
+  };
 
   // Supprimer une image
   const removeImage = (index: number) => {
-    const newImages = selectedImages.filter((_, i) => i !== index)
-    const newPreviews = imagePreviews.filter((_, i) => i !== index)
-    setSelectedImages(newImages)
-    setImagePreviews(newPreviews)
-  }
+    const newImages = selectedImages.filter((_, i) => i !== index);
+    const newPreviews = imagePreviews.filter((_, i) => i !== index);
+    setSelectedImages(newImages);
+    setImagePreviews(newPreviews);
+  };
 
   // Réorganiser les images (définir comme principale)
   const setPrimaryImage = (index: number) => {
-    if (index === 0) return // Déjà principale
+    if (index === 0) return; // Déjà principale
 
-    const newImages = [...selectedImages]
-    const newPreviews = [...imagePreviews]
+    const newImages = [...selectedImages];
+    const newPreviews = [...imagePreviews];
 
-    const [movedImage] = newImages.splice(index, 1)
-    const [movedPreview] = newPreviews.splice(index, 1)
+    const [movedImage] = newImages.splice(index, 1);
+    const [movedPreview] = newPreviews.splice(index, 1);
 
-    newImages.unshift(movedImage)
-    newPreviews.unshift(movedPreview)
+    newImages.unshift(movedImage);
+    newPreviews.unshift(movedPreview);
 
-    setSelectedImages(newImages)
-    setImagePreviews(newPreviews)
+    setSelectedImages(newImages);
+    setImagePreviews(newPreviews);
 
     toast({
-      title: "Image principale définie",
-      description: "Cette image sera affichée en premier"
-    })
-  }
+      title: 'Image principale définie',
+      description: 'Cette image sera affichée en premier',
+    });
+  };
 
   return (
     <div className="space-y-6">
@@ -140,12 +158,12 @@ export function ImagesSection({
           {/* Zone d'upload */}
           <div
             className={cn(
-              "border-2 border-dashed rounded-lg p-6 text-center transition-colors cursor-pointer",
+              'border-2 border-dashed rounded-lg p-6 text-center transition-colors cursor-pointer',
               dragActive
-                ? "border-blue-400 bg-blue-50"
+                ? 'border-blue-400 bg-blue-50'
                 : selectedImages.length > 0
-                  ? "border-green-300 bg-green-50"
-                  : "border-gray-300 hover:border-gray-400"
+                  ? 'border-green-300 bg-green-50'
+                  : 'border-gray-300 hover:border-gray-400'
             )}
             onDragOver={handleDragOver}
             onDragLeave={handleDragLeave}
@@ -165,8 +183,7 @@ export function ImagesSection({
                 <p className="text-gray-600">
                   {selectedImages.length > 0
                     ? `${selectedImages.length} image(s) sélectionnée(s)`
-                    : "Glissez-déposez vos images ou cliquez pour sélectionner"
-                  }
+                    : 'Glissez-déposez vos images ou cliquez pour sélectionner'}
                 </p>
                 <p className="text-xs text-gray-500 mt-1">
                   PNG, JPG, WEBP jusqu'à 10MB par image • Maximum 10 images
@@ -179,10 +196,10 @@ export function ImagesSection({
                 multiple
                 accept="image/*"
                 className="hidden"
-                onChange={(e) => {
-                  const files = Array.from(e.target.files || [])
+                onChange={e => {
+                  const files = Array.from(e.target.files || []);
                   if (files.length > 0) {
-                    handleFileSelect(files)
+                    handleFileSelect(files);
                   }
                 }}
               />
@@ -221,9 +238,7 @@ export function ImagesSection({
 
                     {/* Badge image principale */}
                     {index === 0 && (
-                      <Badge
-                        className="absolute top-2 left-2 bg-blue-600 text-white text-xs"
-                      >
+                      <Badge className="absolute top-2 left-2 bg-blue-600 text-white text-xs">
                         Principale
                       </Badge>
                     )}
@@ -264,11 +279,19 @@ export function ImagesSection({
             <AlertCircle className="h-4 w-4" />
             <AlertDescription>
               <div className="space-y-2">
-                <div className="font-medium">Conseils pour de meilleures images :</div>
+                <div className="font-medium">
+                  Conseils pour de meilleures images :
+                </div>
                 <ul className="text-sm space-y-1">
-                  <li>• La première image sera utilisée comme image principale</li>
-                  <li>• Utilisez des images de haute qualité (min. 800x800px)</li>
-                  <li>• Préférez un fond neutre pour mettre en valeur le produit</li>
+                  <li>
+                    • La première image sera utilisée comme image principale
+                  </li>
+                  <li>
+                    • Utilisez des images de haute qualité (min. 800x800px)
+                  </li>
+                  <li>
+                    • Préférez un fond neutre pour mettre en valeur le produit
+                  </li>
                   <li>• Incluez différents angles de vue</li>
                   <li>• Ajoutez des images d'ambiance si pertinentes</li>
                 </ul>
@@ -278,5 +301,5 @@ export function ImagesSection({
         </CardContent>
       </Card>
     </div>
-  )
+  );
 }

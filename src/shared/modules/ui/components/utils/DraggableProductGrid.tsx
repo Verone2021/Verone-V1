@@ -1,26 +1,37 @@
-"use client"
+'use client';
 
-import { useState, useRef, useCallback } from 'react'
-import { GripVertical, Save, RotateCcw, Check, AlertCircle } from 'lucide-react'
-import { ProductCard } from './product-card'
-import { ButtonV2 } from '@/components/ui/button'
-import { Badge } from '@/components/ui/badge'
-import { cn } from '@/lib/utils'
-import { CollectionProduct, ReorderCollectionProductsInput } from '@/types/collections'
+import { useState, useRef, useCallback } from 'react';
+
+import {
+  GripVertical,
+  Save,
+  RotateCcw,
+  Check,
+  AlertCircle,
+} from 'lucide-react';
+
+import { Badge } from '@/components/ui/badge';
+import { ButtonV2 } from '@/components/ui/button';
+import { cn } from '@verone/utils';
+import { ProductCard } from '@/shared/modules/products/components/cards/ProductCard';
+import type {
+  CollectionProduct,
+  ReorderCollectionProductsInput,
+} from '@verone/types';
 
 interface DraggableProductGridProps {
-  products: CollectionProduct[]
-  collectionId: string
-  onReorder?: (input: ReorderCollectionProductsInput) => Promise<boolean>
-  onRemoveProduct?: (productId: string) => Promise<boolean>
-  className?: string
-  disabled?: boolean
+  products: CollectionProduct[];
+  collectionId: string;
+  onReorder?: (input: ReorderCollectionProductsInput) => Promise<boolean>;
+  onRemoveProduct?: (productId: string) => Promise<boolean>;
+  className?: string;
+  disabled?: boolean;
 }
 
 interface DragState {
-  draggedIndex: number | null
-  dragOverIndex: number | null
-  isDragging: boolean
+  draggedIndex: number | null;
+  dragOverIndex: number | null;
+  isDragging: boolean;
 }
 
 export function DraggableProductGrid({
@@ -29,200 +40,219 @@ export function DraggableProductGrid({
   onReorder,
   onRemoveProduct,
   className,
-  disabled = false
+  disabled = false,
 }: DraggableProductGridProps) {
-  const [products, setProducts] = useState(initialProducts)
+  const [products, setProducts] = useState(initialProducts);
   const [dragState, setDragState] = useState<DragState>({
     draggedIndex: null,
     dragOverIndex: null,
-    isDragging: false
-  })
-  const [hasChanges, setHasChanges] = useState(false)
-  const [saving, setSaving] = useState(false)
-  const [saveStatus, setSaveStatus] = useState<'idle' | 'success' | 'error'>('idle')
+    isDragging: false,
+  });
+  const [hasChanges, setHasChanges] = useState(false);
+  const [saving, setSaving] = useState(false);
+  const [saveStatus, setSaveStatus] = useState<'idle' | 'success' | 'error'>(
+    'idle'
+  );
 
-  const draggedElementRef = useRef<HTMLDivElement | null>(null)
-  const gridRef = useRef<HTMLDivElement>(null)
+  const draggedElementRef = useRef<HTMLDivElement | null>(null);
+  const gridRef = useRef<HTMLDivElement>(null);
 
   // Check if order has changed from initial
   const orderChanged = products.some((product, index) => {
-    const originalIndex = initialProducts.findIndex(p => p.id === product.id)
-    return originalIndex !== index
-  })
+    const originalIndex = initialProducts.findIndex(p => p.id === product.id);
+    return originalIndex !== index;
+  });
 
-  const handleDragStart = useCallback((e: React.DragEvent, index: number) => {
-    if (disabled) return
+  const handleDragStart = useCallback(
+    (e: React.DragEvent, index: number) => {
+      if (disabled) return;
 
-    const dragData = {
-      type: 'collection-product',
-      productId: products[index].id,
-      fromIndex: index,
-      collectionId
-    }
+      const dragData = {
+        type: 'collection-product',
+        productId: products[index].id,
+        fromIndex: index,
+        collectionId,
+      };
 
-    e.dataTransfer.setData('application/json', JSON.stringify(dragData))
-    e.dataTransfer.effectAllowed = 'move'
+      e.dataTransfer.setData('application/json', JSON.stringify(dragData));
+      e.dataTransfer.effectAllowed = 'move';
 
-    // Store reference to dragged element
-    draggedElementRef.current = e.currentTarget as HTMLDivElement
+      // Store reference to dragged element
+      draggedElementRef.current = e.currentTarget as HTMLDivElement;
 
-    // Add drag image styling
-    const dragImage = e.currentTarget.cloneNode(true) as HTMLElement
-    dragImage.style.transform = 'rotate(5deg)'
-    dragImage.style.opacity = '0.8'
-    dragImage.style.border = '2px dashed #000'
-    document.body.appendChild(dragImage)
-    e.dataTransfer.setDragImage(dragImage, 50, 50)
-    setTimeout(() => document.body.removeChild(dragImage), 0)
+      // Add drag image styling
+      const dragImage = e.currentTarget.cloneNode(true) as HTMLElement;
+      dragImage.style.transform = 'rotate(5deg)';
+      dragImage.style.opacity = '0.8';
+      dragImage.style.border = '2px dashed #000';
+      document.body.appendChild(dragImage);
+      e.dataTransfer.setDragImage(dragImage, 50, 50);
+      setTimeout(() => document.body.removeChild(dragImage), 0);
 
-    setDragState({
-      draggedIndex: index,
-      dragOverIndex: null,
-      isDragging: true
-    })
-  }, [products, collectionId, disabled])
+      setDragState({
+        draggedIndex: index,
+        dragOverIndex: null,
+        isDragging: true,
+      });
+    },
+    [products, collectionId, disabled]
+  );
 
-  const handleDragOver = useCallback((e: React.DragEvent, index: number) => {
-    if (disabled) return
+  const handleDragOver = useCallback(
+    (e: React.DragEvent, index: number) => {
+      if (disabled) return;
 
-    e.preventDefault()
-    e.dataTransfer.dropEffect = 'move'
+      e.preventDefault();
+      e.dataTransfer.dropEffect = 'move';
 
-    setDragState(prev => ({
-      ...prev,
-      dragOverIndex: index
-    }))
-  }, [disabled])
+      setDragState(prev => ({
+        ...prev,
+        dragOverIndex: index,
+      }));
+    },
+    [disabled]
+  );
 
-  const handleDragEnter = useCallback((e: React.DragEvent, index: number) => {
-    if (disabled) return
-    e.preventDefault()
-  }, [disabled])
+  const handleDragEnter = useCallback(
+    (e: React.DragEvent, index: number) => {
+      if (disabled) return;
+      e.preventDefault();
+    },
+    [disabled]
+  );
 
-  const handleDragLeave = useCallback((e: React.DragEvent) => {
-    if (disabled) return
+  const handleDragLeave = useCallback(
+    (e: React.DragEvent) => {
+      if (disabled) return;
 
-    // Only clear dragOverIndex if we're leaving the grid entirely
-    const rect = gridRef.current?.getBoundingClientRect()
-    if (rect) {
-      const { clientX, clientY } = e
-      const isOutside = (
-        clientX < rect.left ||
-        clientX > rect.right ||
-        clientY < rect.top ||
-        clientY > rect.bottom
-      )
+      // Only clear dragOverIndex if we're leaving the grid entirely
+      const rect = gridRef.current?.getBoundingClientRect();
+      if (rect) {
+        const { clientX, clientY } = e;
+        const isOutside =
+          clientX < rect.left ||
+          clientX > rect.right ||
+          clientY < rect.top ||
+          clientY > rect.bottom;
 
-      if (isOutside) {
-        setDragState(prev => ({
-          ...prev,
-          dragOverIndex: null
-        }))
-      }
-    }
-  }, [disabled])
-
-  const handleDrop = useCallback((e: React.DragEvent, dropIndex: number) => {
-    if (disabled) return
-
-    e.preventDefault()
-
-    try {
-      const dragData = JSON.parse(e.dataTransfer.getData('application/json'))
-
-      if (dragData.type === 'collection-product' && dragData.collectionId === collectionId) {
-        const fromIndex = dragData.fromIndex
-
-        if (fromIndex !== dropIndex) {
-          // Reorder products
-          const newProducts = [...products]
-          const [draggedProduct] = newProducts.splice(fromIndex, 1)
-          newProducts.splice(dropIndex, 0, draggedProduct)
-
-          // Update positions
-          const updatedProducts = newProducts.map((product, index) => ({
-            ...product,
-            position: index + 1
-          }))
-
-          setProducts(updatedProducts)
-          setHasChanges(true)
-          setSaveStatus('idle')
+        if (isOutside) {
+          setDragState(prev => ({
+            ...prev,
+            dragOverIndex: null,
+          }));
         }
       }
-    } catch (error) {
-      console.error('Error handling drop:', error)
-    }
+    },
+    [disabled]
+  );
 
-    setDragState({
-      draggedIndex: null,
-      dragOverIndex: null,
-      isDragging: false
-    })
-  }, [products, collectionId, disabled])
+  const handleDrop = useCallback(
+    (e: React.DragEvent, dropIndex: number) => {
+      if (disabled) return;
+
+      e.preventDefault();
+
+      try {
+        const dragData = JSON.parse(e.dataTransfer.getData('application/json'));
+
+        if (
+          dragData.type === 'collection-product' &&
+          dragData.collectionId === collectionId
+        ) {
+          const fromIndex = dragData.fromIndex;
+
+          if (fromIndex !== dropIndex) {
+            // Reorder products
+            const newProducts = [...products];
+            const [draggedProduct] = newProducts.splice(fromIndex, 1);
+            newProducts.splice(dropIndex, 0, draggedProduct);
+
+            // Update positions
+            const updatedProducts = newProducts.map((product, index) => ({
+              ...product,
+              position: index + 1,
+            }));
+
+            setProducts(updatedProducts);
+            setHasChanges(true);
+            setSaveStatus('idle');
+          }
+        }
+      } catch (error) {
+        console.error('Error handling drop:', error);
+      }
+
+      setDragState({
+        draggedIndex: null,
+        dragOverIndex: null,
+        isDragging: false,
+      });
+    },
+    [products, collectionId, disabled]
+  );
 
   const handleDragEnd = useCallback(() => {
     setDragState({
       draggedIndex: null,
       dragOverIndex: null,
-      isDragging: false
-    })
-  }, [])
+      isDragging: false,
+    });
+  }, []);
 
   const saveChanges = async () => {
-    if (!onReorder || saving || !hasChanges) return
+    if (!onReorder || saving || !hasChanges) return;
 
-    setSaving(true)
-    setSaveStatus('idle')
+    setSaving(true);
+    setSaveStatus('idle');
 
     try {
       const reorderInput: ReorderCollectionProductsInput = {
         collection_id: collectionId,
         product_orders: products.map((product, index) => ({
           product_id: product.id,
-          position: index + 1
-        }))
-      }
+          position: index + 1,
+        })),
+      };
 
-      const success = await onReorder(reorderInput)
+      const success = await onReorder(reorderInput);
 
       if (success) {
-        setHasChanges(false)
-        setSaveStatus('success')
-        setTimeout(() => setSaveStatus('idle'), 3000)
+        setHasChanges(false);
+        setSaveStatus('success');
+        setTimeout(() => setSaveStatus('idle'), 3000);
       } else {
-        setSaveStatus('error')
+        setSaveStatus('error');
       }
     } catch (error) {
-      console.error('Error saving reorder:', error)
-      setSaveStatus('error')
+      console.error('Error saving reorder:', error);
+      setSaveStatus('error');
     } finally {
-      setSaving(false)
+      setSaving(false);
     }
-  }
+  };
 
   const resetOrder = () => {
-    setProducts(initialProducts)
-    setHasChanges(false)
-    setSaveStatus('idle')
-  }
+    setProducts(initialProducts);
+    setHasChanges(false);
+    setSaveStatus('idle');
+  };
 
   const handleRemoveProduct = async (productId: string) => {
-    if (!onRemoveProduct || disabled) return
+    if (!onRemoveProduct || disabled) return;
 
     try {
-      const success = await onRemoveProduct(productId)
+      const success = await onRemoveProduct(productId);
       if (success) {
-        setProducts(prev => prev.filter(p => p.id !== productId))
-        setHasChanges(true)
+        setProducts(prev => prev.filter(p => p.id !== productId));
+        setHasChanges(true);
       }
     } catch (error) {
-      console.error('Error removing product:', error)
+      console.error('Error removing product:', error);
     }
-  }
+  };
 
   return (
-    <div className={cn("space-y-4", className)}>
+    <div className={cn('space-y-4', className)}>
       {/* Header with save controls */}
       {(hasChanges || orderChanged) && (
         <div className="flex items-center justify-between p-3 bg-blue-50 border border-blue-200 rounded-lg">
@@ -242,7 +272,10 @@ export function DraggableProductGrid({
             )}
 
             {saveStatus === 'error' && (
-              <Badge variant="destructive" className="bg-red-100 text-red-800 border-red-300">
+              <Badge
+                variant="destructive"
+                className="bg-red-100 text-red-800 border-red-300"
+              >
                 <AlertCircle className="h-3 w-3 mr-1" />
                 Erreur
               </Badge>
@@ -284,43 +317,45 @@ export function DraggableProductGrid({
       <div
         ref={gridRef}
         className={cn(
-          "grid gap-4 transition-opacity",
-          dragState.isDragging && "select-none",
-          disabled && "opacity-50 pointer-events-none"
+          'grid gap-4 transition-opacity',
+          dragState.isDragging && 'select-none',
+          disabled && 'opacity-50 pointer-events-none'
         )}
         style={{
-          gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))'
+          gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))',
         }}
         onDragLeave={handleDragLeave}
       >
         {products.map((product, index) => {
-          const isDragged = dragState.draggedIndex === index
-          const isDragOver = dragState.dragOverIndex === index
-          const isBeingDragged = dragState.isDragging && isDragged
+          const isDragged = dragState.draggedIndex === index;
+          const isDragOver = dragState.dragOverIndex === index;
+          const isBeingDragged = dragState.isDragging && isDragged;
 
           return (
             <div
               key={product.id}
               className={cn(
-                "group relative transition-all duration-200",
-                isBeingDragged && "opacity-50 scale-95",
-                isDragOver && !isDragged && "scale-105",
-                isDragOver && "z-10"
+                'group relative transition-all duration-200',
+                isBeingDragged && 'opacity-50 scale-95',
+                isDragOver && !isDragged && 'scale-105',
+                isDragOver && 'z-10'
               )}
               draggable={!disabled}
-              onDragStart={(e) => handleDragStart(e, index)}
-              onDragOver={(e) => handleDragOver(e, index)}
-              onDragEnter={(e) => handleDragEnter(e, index)}
-              onDrop={(e) => handleDrop(e, index)}
+              onDragStart={e => handleDragStart(e, index)}
+              onDragOver={e => handleDragOver(e, index)}
+              onDragEnter={e => handleDragEnter(e, index)}
+              onDrop={e => handleDrop(e, index)}
               onDragEnd={handleDragEnd}
             >
               {/* Drag handle */}
-              <div className={cn(
-                "absolute -left-3 top-2 z-20 p-1 bg-white border border-gray-300 rounded shadow-sm transition-all",
-                "opacity-0 group-hover:opacity-100",
-                isDragged && "opacity-100",
-                disabled && "hidden"
-              )}>
+              <div
+                className={cn(
+                  'absolute -left-3 top-2 z-20 p-1 bg-white border border-gray-300 rounded shadow-sm transition-all',
+                  'opacity-0 group-hover:opacity-100',
+                  isDragged && 'opacity-100',
+                  disabled && 'hidden'
+                )}
+              >
                 <GripVertical className="h-4 w-4 text-gray-500 cursor-grab active:cursor-grabbing" />
               </div>
 
@@ -335,34 +370,35 @@ export function DraggableProductGrid({
               </div>
 
               {/* Product card */}
-              <div className={cn(
-                "transition-transform duration-200",
-                isDragOver && !isDragged && "transform translate-y-1"
-              )}>
+              <div
+                className={cn(
+                  'transition-transform duration-200',
+                  isDragOver && !isDragged && 'transform translate-y-1'
+                )}
+              >
                 <ProductCard
-                  product={{
-                    id: product.id,
-                    name: product.name,
-                    sku: product.sku || '',
-                    cost_price: product.cost_price || 0,
-                    price_ht: product.cost_price || 0,
-                    status: 'in_stock' as any,
-                    condition: 'new' as any,
-                    created_at: product.added_at,
-                    updated_at: product.added_at,
-                    archived_at: null,
-                    supplier: null
-                  } as any}
+                  product={
+                    {
+                      id: product.id,
+                      name: product.name,
+                      sku: product.sku || '',
+                      cost_price: product.cost_price || 0,
+                      price_ht: product.cost_price || 0,
+                      status: 'in_stock' as any,
+                      condition: 'new' as any,
+                      created_at: product.added_at,
+                      updated_at: product.added_at,
+                      archived_at: null,
+                      supplier: null,
+                    } as any
+                  }
                   showActions={!disabled}
                   onDelete={() => handleRemoveProduct(product.id)}
-                  className={cn(
-                    "cursor-move",
-                    disabled && "cursor-default"
-                  )}
+                  className={cn('cursor-move', disabled && 'cursor-default')}
                 />
               </div>
             </div>
-          )
+          );
         })}
       </div>
 
@@ -370,11 +406,25 @@ export function DraggableProductGrid({
       {products.length === 0 && (
         <div className="text-center py-12 border-2 border-dashed border-gray-300 rounded-lg">
           <div className="text-gray-500">
-            <svg className="h-12 w-12 mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
+            <svg
+              className="h-12 w-12 mx-auto mb-4"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"
+              />
             </svg>
-            <p className="text-lg font-medium mb-2">Aucun produit dans cette collection</p>
-            <p className="text-sm">Ajoutez des produits pour commencer à organiser votre collection</p>
+            <p className="text-lg font-medium mb-2">
+              Aucun produit dans cette collection
+            </p>
+            <p className="text-sm">
+              Ajoutez des produits pour commencer à organiser votre collection
+            </p>
           </div>
         </div>
       )}
@@ -386,5 +436,5 @@ export function DraggableProductGrid({
         </div>
       )}
     </div>
-  )
+  );
 }

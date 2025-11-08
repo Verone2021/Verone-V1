@@ -233,7 +233,8 @@ jobs:
   monitoring-summary:
     name: 📈 Monitoring Summary
     runs-on: ubuntu-latest
-    needs: [production-console-check, performance-monitoring, database-monitoring]
+    needs:
+      [production-console-check, performance-monitoring, database-monitoring]
     if: always()
 
     steps:

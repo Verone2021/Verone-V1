@@ -12,11 +12,13 @@
 ### Problème Initial Signalé
 
 **Message utilisateur** :
+
 > "Les alertes 'Warning' pour le temps de traitement ne devraient pas être dans les alertes de stock... De plus c'est erroné car je viens de voir que les sorties sont validées et donc sont en 'prévisionnelle' et non en 'réelle'... Il n'y a pas de 'prévisionnel' dans le mouvement de stock. Seulement les commandes expédiées et reçues réellement sont comptabilisées dans le mouvement de stock."
 
 ### Règle Métier Fondamentale
 
 **Page `/stocks/mouvements` doit afficher UNIQUEMENT :**
+
 - ❌ **PAS** les commandes validées (forecast)
 - ✅ **UNIQUEMENT** les mouvements réels :
   - Commandes **EXPÉDIÉES** (sorties réelles)
@@ -24,6 +26,7 @@
   - Ajustements manuels
 
 **Page `/stocks/previsionnel` doit afficher :**
+
 - Commandes clients validées non expédiées (forecast out)
 - Commandes fournisseurs confirmées non reçues (forecast in)
 
@@ -38,11 +41,12 @@
 ```typescript
 // ❌ BUG : .eq('affects_forecast', false) EXCLUT les valeurs NULL
 if (appliedFilters.affects_forecast !== undefined) {
-  query = query.eq('affects_forecast', false)
+  query = query.eq('affects_forecast', false);
 }
 ```
 
 **Impact** :
+
 - `.eq(false)` en PostgreSQL exclut les valeurs `NULL`
 - Données historiques (avant 2025-09-18) ont `affects_forecast = NULL`
 - Ces mouvements n'apparaissaient PAS dans page mouvements réels
@@ -51,11 +55,13 @@ if (appliedFilters.affects_forecast !== undefined) {
 ### Cause Racine
 
 **Timeline** :
+
 1. **2025-09-18** : Colonne `affects_forecast` ajoutée à `stock_movements`
 2. **Mouvements existants** : `affects_forecast = NULL` (pas de valeur par défaut)
 3. **Nouveau code** : `.eq(false)` excluait ces mouvements historiques
 
 **Pattern problématique identifié dans 8 locations** :
+
 - Ligne 139 : `fetchMovements()` - Filtre principal
 - Ligne 255 : `fetchStats()` - Total count
 - Ligne 261 : Stats aujourd'hui
@@ -90,6 +96,7 @@ if (appliedFilters.affects_forecast === false) {
 ```
 
 **Locations corrigées** :
+
 - ✅ Ligne 139 : `fetchMovements()` - Filtre principal
 - ✅ Ligne 255 : `fetchStats()` - Total count
 - ✅ Ligne 261 : Stats aujourd'hui
@@ -111,19 +118,17 @@ if (appliedFilters.affects_forecast === false) {
 **Correction appliquée** (ligne 230-231) :
 
 ```typescript
-await supabase
-  .from('stock_movements')
-  .insert({
-    product_id: formData.product_id,
-    movement_type: 'ADJUST',
-    quantity_change: quantityChange,
-    quantity_before: quantityBefore,
-    quantity_after: quantityAfter,
-    affects_forecast: false,  // ✅ EXPLICITE : Ajustements = mouvements réels
-    forecast_type: null,      // ✅ EXPLICITE : Pas de direction prévisionnel
-    reference_type: 'manual_adjustment',
-    // ... autres champs
-  })
+await supabase.from('stock_movements').insert({
+  product_id: formData.product_id,
+  movement_type: 'ADJUST',
+  quantity_change: quantityChange,
+  quantity_before: quantityBefore,
+  quantity_after: quantityAfter,
+  affects_forecast: false, // ✅ EXPLICITE : Ajustements = mouvements réels
+  forecast_type: null, // ✅ EXPLICITE : Pas de direction prévisionnel
+  reference_type: 'manual_adjustment',
+  // ... autres champs
+});
 ```
 
 ### 3. Migration Nettoyage Données Historiques
@@ -133,6 +138,7 @@ await supabase
 **Objectif** : Normaliser toutes les valeurs NULL → false
 
 **Résultat exécution** :
+
 ```
 ✅ Migration réussie: Tous les mouvements ont affects_forecast défini
 Total mouvements: 10
@@ -150,13 +156,13 @@ Pourcentage NULL: %0.00
 
 **Résultats** :
 
-| Critère | Avant Fix | Après Fix | Status |
-|---------|-----------|-----------|--------|
-| **Total Mouvements** | ❓ Potentiellement sous-estimé | **3 mouvements** | ✅ |
-| **Mouvements Affichés** | ❓ Incomplet | **3 mouvements réels** | ✅ |
-| **KPI "Ce Mois"** | ❓ | **3** | ✅ |
-| **Console Errors** | ❓ | **0 errors** | ✅ |
-| **Build** | ✅ | ✅ | ✅ |
+| Critère                 | Avant Fix                      | Après Fix              | Status |
+| ----------------------- | ------------------------------ | ---------------------- | ------ |
+| **Total Mouvements**    | ❓ Potentiellement sous-estimé | **3 mouvements**       | ✅     |
+| **Mouvements Affichés** | ❓ Incomplet                   | **3 mouvements réels** | ✅     |
+| **KPI "Ce Mois"**       | ❓                             | **3**                  | ✅     |
+| **Console Errors**      | ❓                             | **0 errors**           | ✅     |
+| **Build**               | ✅                             | ✅                     | ✅     |
 
 ### Mouvements Visibles
 
@@ -184,6 +190,7 @@ Pourcentage NULL: %0.00
 **Fichier** : `.playwright-mcp/validation-finale-mouvements-reels-3-mouvements-fixes.png`
 
 **Contenu visible** :
+
 - ✅ KPI "Total Mouvements : 3"
 - ✅ KPI "Ce Mois : 3"
 - ✅ 3 lignes dans tableau mouvements
@@ -197,6 +204,7 @@ Pourcentage NULL: %0.00
 ### Avant Corrections
 
 **Problèmes** :
+
 - ❌ Mouvements historiques potentiellement exclus
 - ❌ Stats sous-estimées (si données NULL présentes)
 - ❌ Exports incomplets
@@ -205,6 +213,7 @@ Pourcentage NULL: %0.00
 ### Après Corrections
 
 **Améliorations** :
+
 - ✅ **100% des mouvements réels affichés** (NULL + false)
 - ✅ **Stats précises** sur TOUTES périodes
 - ✅ **Exports complets** incluant historique
@@ -213,6 +222,7 @@ Pourcentage NULL: %0.00
 ### Régression Zéro
 
 **Tests non-régression** :
+
 - ✅ Console = 0 errors
 - ✅ Build successful
 - ✅ Page charge correctement
@@ -242,13 +252,14 @@ Pourcentage NULL: %0.00
 
 ```typescript
 await supabase.from('stock_movements').insert({
-  affects_forecast: false,  // ou true si prévisionnel
-  forecast_type: null,      // ou 'in'/'out' si prévisionnel
+  affects_forecast: false, // ou true si prévisionnel
+  forecast_type: null, // ou 'in'/'out' si prévisionnel
   // ... autres champs
-})
+});
 ```
 
 **Locations à vérifier** :
+
 - ✅ `stock-adjustment-form.tsx` - **CORRIGÉ**
 - ✅ Triggers database (déjà correct selon investigation)
 - ✅ Workflows réception/expédition (déjà correct selon investigation)
@@ -340,11 +351,13 @@ GROUP BY affects_forecast;
 ### Règle Métier Respectée
 
 **Page `/stocks/mouvements` affiche UNIQUEMENT mouvements réels** :
+
 - ✅ Commandes expédiées (OUT)
 - ✅ Commandes reçues (IN)
 - ✅ Ajustements manuels (ADJUST)
 
 **Page `/stocks/previsionnel` affichera UNIQUEMENT forecast** :
+
 - Commandes validées non expédiées
 - Commandes confirmées non reçues
 
@@ -358,4 +371,4 @@ GROUP BY affects_forecast;
 
 ---
 
-*Rapport généré automatiquement par Claude Code - 2025-11-03*
+_Rapport généré automatiquement par Claude Code - 2025-11-03_

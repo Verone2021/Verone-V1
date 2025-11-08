@@ -1,19 +1,21 @@
-'use client'
+'use client';
 
-import React from 'react'
-import { LucideIcon } from 'lucide-react'
-import { cn } from '@/lib/utils'
+import React from 'react';
+
+import type { LucideIcon } from 'lucide-react';
+
+import { cn } from '@verone/utils';
 
 export interface CompactQuickAction {
-  id: string
-  label: string
-  icon: LucideIcon
-  onClick: () => void
+  id: string;
+  label: string;
+  icon: LucideIcon;
+  onClick: () => void;
 }
 
 export interface CompactQuickActionsProps {
-  actions: CompactQuickAction[]
-  className?: string
+  actions: CompactQuickAction[];
+  className?: string;
 }
 
 /**
@@ -29,7 +31,10 @@ export interface CompactQuickActionsProps {
  *
  * @see /src/lib/design-system pour tokens
  */
-export function CompactQuickActions({ actions, className }: CompactQuickActionsProps) {
+export function CompactQuickActions({
+  actions,
+  className,
+}: CompactQuickActionsProps) {
   return (
     <div
       className={cn(
@@ -39,7 +44,7 @@ export function CompactQuickActions({ actions, className }: CompactQuickActionsP
       )}
     >
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-2">
-        {actions.map((action) => (
+        {actions.map(action => (
           <button
             key={action.id}
             onClick={action.onClick}
@@ -64,5 +69,5 @@ export function CompactQuickActions({ actions, className }: CompactQuickActionsP
         ))}
       </div>
     </div>
-  )
+  );
 }

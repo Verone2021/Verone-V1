@@ -55,7 +55,7 @@ import {
 } from '@/components/ui/select';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { createClient } from '@/lib/supabase/client';
-import { cn } from '@/lib/utils';
+import { cn } from '@verone/utils';
 import { ProductThumbnail } from '@/shared/modules/products/components/images/ProductThumbnail';
 
 // ============================================================================

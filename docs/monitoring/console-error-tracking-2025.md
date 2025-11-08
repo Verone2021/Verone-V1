@@ -70,6 +70,7 @@ Remplace Sentry par une solution légère, gratuite, et totalement intégrée av
 **Fichier** : `src/lib/monitoring/console-error-tracker.ts`
 
 **Features** :
+
 - Override `console.error` et `console.warn`
 - Capture global `error` events
 - Capture `unhandledrejection` events
@@ -79,35 +80,37 @@ Remplace Sentry par une solution légère, gratuite, et totalement intégrée av
 - Export singleton + React hook
 
 **Interface** :
+
 ```typescript
 export interface ConsoleErrorLog {
-  timestamp: string
-  level: 'error' | 'warn' | 'info'
-  message: string
-  url: string
-  userAgent: string
-  sessionId?: string
-  userId?: string
-  stack?: string
+  timestamp: string;
+  level: 'error' | 'warn' | 'info';
+  message: string;
+  url: string;
+  userAgent: string;
+  sessionId?: string;
+  userId?: string;
+  stack?: string;
 }
 ```
 
 **Usage** :
+
 ```typescript
-import { consoleErrorTracker } from '@/lib/monitoring/console-error-tracker'
+import { consoleErrorTracker } from '@/lib/monitoring/console-error-tracker';
 
 // Setup (automatique via provider)
-consoleErrorTracker.setup()
+consoleErrorTracker.setup();
 
 // Récupérer erreurs
-const errors = consoleErrorTracker.getErrors()
+const errors = consoleErrorTracker.getErrors();
 
 // Statistiques
-const stats = consoleErrorTracker.getStats()
+const stats = consoleErrorTracker.getStats();
 // { totalErrors: 3, totalWarnings: 1, lastError: {...} }
 
 // Clear
-consoleErrorTracker.clearErrors()
+consoleErrorTracker.clearErrors();
 ```
 
 ### 2. Provider React
@@ -115,11 +118,10 @@ consoleErrorTracker.clearErrors()
 **Fichier** : `src/components/providers/console-error-tracker-provider.tsx`
 
 **Intégration** : `src/app/layout.tsx`
+
 ```tsx
 <ConsoleErrorTrackerProvider>
-  <ClientOnlyActivityTracker>
-    {children}
-  </ClientOnlyActivityTracker>
+  <ClientOnlyActivityTracker>{children}</ClientOnlyActivityTracker>
 </ConsoleErrorTrackerProvider>
 ```
 
@@ -132,9 +134,11 @@ consoleErrorTracker.clearErrors()
 **Endpoints** :
 
 #### POST `/api/logs`
+
 Enregistre un log dans `logs/logs-YYYY-MM-DD.json`
 
 **Request** :
+
 ```json
 {
   "timestamp": "2025-10-23T10:00:00.000Z",
@@ -149,6 +153,7 @@ Enregistre un log dans `logs/logs-YYYY-MM-DD.json`
 ```
 
 **Response** :
+
 ```json
 {
   "success": true,
@@ -158,9 +163,11 @@ Enregistre un log dans `logs/logs-YYYY-MM-DD.json`
 ```
 
 #### GET `/api/logs`
+
 Récupère logs du jour
 
 **Response** :
+
 ```json
 {
   "logs": [...],
@@ -170,6 +177,7 @@ Récupère logs du jour
 ```
 
 **Stockage** :
+
 - Répertoire : `logs/`
 - Format : `logs-YYYY-MM-DD.json`
 - Limite : 1000 logs/fichier (auto-rotation)
@@ -180,6 +188,7 @@ Récupère logs du jour
 **Fichier** : `src/lib/monitoring/mcp-error-checker.ts`
 
 **Utilitaires** :
+
 - `formatErrorReport()` : Format rapport lisible
 - `calculateErrorStats()` : Statistiques erreurs
 - `isCriticalError()` : Détection erreurs critiques
@@ -187,6 +196,7 @@ Récupère logs du jour
 - `MCP_ERROR_CHECK_WORKFLOW` : Template workflow MCP
 
 **Commande Claude** : `.claude/commands/check-errors.md`
+
 ```
 /check-errors [url]
 ```
@@ -198,6 +208,7 @@ Récupère logs du jour
 ### Déjà installé ✅
 
 Le système est complètement installé et fonctionnel :
+
 1. ✅ Console Error Tracker créé
 2. ✅ Provider intégré dans layout
 3. ✅ API route `/api/logs` créée
@@ -235,33 +246,37 @@ curl http://localhost:3000/api/logs
 Le Console Error Tracker est **activé automatiquement** dès le chargement de l'app.
 
 **Console messages** :
+
 ```
 ✅ [ConsoleErrorTracker] Monitoring activé
 ```
 
 **Accès global** :
+
 ```javascript
 // Dans la console browser
-window.__consoleErrorTracker.getErrors()
+window.__consoleErrorTracker.getErrors();
 // []
 
-window.__consoleErrorTracker.getStats()
+window.__consoleErrorTracker.getStats();
 // { totalErrors: 0, totalWarnings: 0, lastError: undefined }
 ```
 
 ### Production (Vercel)
 
 En production, le système :
+
 1. ✅ Continue de tracker erreurs en mémoire
 2. ✅ POST automatiquement vers `/api/logs`
 3. ✅ Enrichit avec `sessionId` et `userId` (localStorage)
 4. ✅ Limite à 100 erreurs en mémoire (performance)
 
 **Configuration** : `src/lib/monitoring/console-error-tracker.ts`
+
 ```typescript
 export const consoleErrorTracker = new ConsoleErrorTracker({
-  sendToApi: process.env.NODE_ENV === 'production' // ✅ Activé uniquement prod
-})
+  sendToApi: process.env.NODE_ENV === 'production', // ✅ Activé uniquement prod
+});
 ```
 
 ---
@@ -271,46 +286,53 @@ export const consoleErrorTracker = new ConsoleErrorTracker({
 ### Workflow Automatique
 
 #### 1. Naviguer vers la page
+
 ```typescript
 mcp__playwright__browser_navigate({
-  url: "http://localhost:3000/contacts-organisations/suppliers"
-})
+  url: 'http://localhost:3000/contacts-organisations/suppliers',
+});
 ```
 
 #### 2. Attendre chargement complet
+
 ```typescript
-mcp__playwright__browser_wait_for({ time: 2 })
+mcp__playwright__browser_wait_for({ time: 2 });
 ```
 
 #### 3. Récupérer erreurs trackées
+
 ```typescript
 mcp__playwright__browser_evaluate({
-  function: "() => window.__consoleErrorTracker?.getErrors() || []"
-})
+  function: '() => window.__consoleErrorTracker?.getErrors() || []',
+});
 // Retourne: []  (si zero erreurs)
 ```
 
 #### 4. Vérifier console messages bruts
+
 ```typescript
-mcp__playwright__browser_console_messages({ onlyErrors: true })
+mcp__playwright__browser_console_messages({ onlyErrors: true });
 // Retourne: [] (si zero erreurs)
 ```
 
 #### 5. Prendre screenshot (preuve)
+
 ```typescript
 mcp__playwright__browser_take_screenshot({
-  filename: "suppliers-console-ok.png"
-})
+  filename: 'suppliers-console-ok.png',
+});
 ```
 
 ### Commande Claude : `/check-errors`
 
 **Usage simplifié** :
+
 ```
 /check-errors http://localhost:3000/dashboard
 ```
 
 **Output** :
+
 ```
 🔍 Error Check Report - http://localhost:3000/dashboard
 📅 2025-10-23T10:00:00.000Z
@@ -320,6 +342,7 @@ mcp__playwright__browser_take_screenshot({
 ```
 
 **Avec erreurs** :
+
 ```
 🔍 Error Check Report - http://localhost:3000/page
 📅 2025-10-23T10:00:00.000Z
@@ -343,6 +366,7 @@ mcp__playwright__browser_take_screenshot({
 **Description** : Enregistre log dans fichier JSON quotidien
 
 **Request** :
+
 ```bash
 curl -X POST http://localhost:3000/api/logs \
   -H "Content-Type: application/json" \
@@ -356,6 +380,7 @@ curl -X POST http://localhost:3000/api/logs \
 ```
 
 **Response** :
+
 ```json
 {
   "success": true,
@@ -365,6 +390,7 @@ curl -X POST http://localhost:3000/api/logs \
 ```
 
 **Validation** :
+
 - `timestamp` : Required (ISO 8601)
 - `level` : Required (`error` | `warn` | `info`)
 - `message` : Required (string)
@@ -375,6 +401,7 @@ curl -X POST http://localhost:3000/api/logs \
 - `stack` : Optional (string)
 
 **Erreurs** :
+
 - `400` : Champs requis manquants
 - `500` : Erreur serveur (filesystem)
 
@@ -383,11 +410,13 @@ curl -X POST http://localhost:3000/api/logs \
 **Description** : Récupère logs du jour
 
 **Request** :
+
 ```bash
 curl http://localhost:3000/api/logs
 ```
 
 **Response** :
+
 ```json
 {
   "logs": [
@@ -411,18 +440,18 @@ curl http://localhost:3000/api/logs
 
 ## Avantages vs Sentry
 
-| Feature | Sentry | Console Error Tracker |
-|---------|--------|----------------------|
-| **Prix** | 26$/mois (Team) | ✅ Gratuit |
-| **Limite events** | 50k/mois | ✅ Illimité |
-| **Setup** | Config complexe | ✅ Zero config |
-| **Dépendances** | `@sentry/nextjs` (heavy) | ✅ Zero deps |
-| **Performance** | Impact +100ms | ✅ <5ms overhead |
-| **Privacy** | Données externes | ✅ Logs locaux |
-| **MCP Integration** | ❌ Non compatible | ✅ Native |
-| **Claude Code Fix** | ❌ Manuel | ✅ Automatisé |
-| **Dev Experience** | Dashboard externe | ✅ Console browser |
-| **Production** | Monitoring centralisé | ✅ Vercel Analytics |
+| Feature             | Sentry                   | Console Error Tracker |
+| ------------------- | ------------------------ | --------------------- |
+| **Prix**            | 26$/mois (Team)          | ✅ Gratuit            |
+| **Limite events**   | 50k/mois                 | ✅ Illimité           |
+| **Setup**           | Config complexe          | ✅ Zero config        |
+| **Dépendances**     | `@sentry/nextjs` (heavy) | ✅ Zero deps          |
+| **Performance**     | Impact +100ms            | ✅ <5ms overhead      |
+| **Privacy**         | Données externes         | ✅ Logs locaux        |
+| **MCP Integration** | ❌ Non compatible        | ✅ Native             |
+| **Claude Code Fix** | ❌ Manuel                | ✅ Automatisé         |
+| **Dev Experience**  | Dashboard externe        | ✅ Console browser    |
+| **Production**      | Monitoring centralisé    | ✅ Vercel Analytics   |
 
 ### Pourquoi ce choix ?
 
@@ -437,6 +466,7 @@ curl http://localhost:3000/api/logs
 7. **Trend 2025** : "Keep It Simple, Stupid" (KISS principle)
 
 **Citation Reddit** :
+
 > "For internal tools, console.log structuré + Playwright tests > Sentry.
 > Save your money for scaling issues that matter."
 > — r/nextjs senior dev, Jan 2025
@@ -455,6 +485,7 @@ curl http://localhost:3000/api/logs
 ```
 
 **Pourquoi ?** :
+
 - Erreurs masquent souvent bugs critiques
 - Production = console propre obligatoire
 - UX dégradée si erreurs (silent failures)
@@ -462,6 +493,7 @@ curl http://localhost:3000/api/logs
 ### 2. Systematic Checking
 
 **Avant chaque PR** :
+
 ```bash
 # 1. Démarrer dev server
 npm run dev
@@ -480,17 +512,20 @@ npm run dev
 ### 3. Error Categorization
 
 **Critical Errors** (Fix immediately) :
+
 - `Uncaught TypeError`
 - `Unhandled Promise rejection`
 - `Failed to fetch` (API errors)
 - `Cannot read property X of undefined`
 
 **Warnings** (Fix when possible) :
+
 - React Hook dependencies
 - Console deprecation warnings
 - Performance warnings
 
 **Ignore** (Safe) :
+
 - React DevTools info
 - Fast Refresh logs
 - Next.js compilation logs
@@ -498,6 +533,7 @@ npm run dev
 ### 4. Context Enrichment
 
 Le système enrichit automatiquement avec :
+
 - `timestamp` : ISO 8601
 - `url` : Page actuelle
 - `userAgent` : Browser info
@@ -506,20 +542,23 @@ Le système enrichit automatiquement avec :
 - `stack` : Stack trace (si disponible)
 
 **Setup localStorage** :
+
 ```typescript
 // À la connexion utilisateur
-localStorage.setItem('verone_user_id', user.id)
-localStorage.setItem('verone_session_id', generateSessionId())
+localStorage.setItem('verone_user_id', user.id);
+localStorage.setItem('verone_session_id', generateSessionId());
 ```
 
 ### 5. Monitoring Production
 
 **Vercel Analytics** (gratuit) :
+
 - Core Web Vitals automatiques
 - Page views tracking
 - Real User Monitoring (RUM)
 
 **Logs files** :
+
 - `logs/logs-YYYY-MM-DD.json`
 - Rotation quotidienne automatique
 - Limite 1000 logs/fichier
@@ -534,10 +573,12 @@ localStorage.setItem('verone_session_id', generateSessionId())
 ### Problème : Console Error Tracker ne s'active pas
 
 **Symptômes** :
+
 - Pas de message `✅ [ConsoleErrorTracker] Monitoring activé`
 - `window.__consoleErrorTracker` undefined
 
 **Solutions** :
+
 1. Vérifier `src/app/layout.tsx` contient `<ConsoleErrorTrackerProvider>`
 2. Vérifier console browser (F12) pour erreurs setup
 3. Vérifier `'use client'` présent dans provider
@@ -546,10 +587,12 @@ localStorage.setItem('verone_session_id', generateSessionId())
 ### Problème : API `/api/logs` retourne 500
 
 **Symptômes** :
+
 - POST `/api/logs` échoue
 - Erreur "Erreur serveur"
 
 **Solutions** :
+
 1. Vérifier répertoire `logs/` existe
 2. Vérifier permissions écriture filesystem
 3. Vérifier format JSON request valide
@@ -558,10 +601,12 @@ localStorage.setItem('verone_session_id', generateSessionId())
 ### Problème : MCP Playwright ne récupère pas erreurs
 
 **Symptômes** :
+
 - `getErrors()` retourne toujours `[]`
 - Erreurs visibles dans console browser mais pas via MCP
 
 **Solutions** :
+
 1. Vérifier `window.__consoleErrorTracker` existe (evaluate first)
 2. Attendre 2s après navigate (permettre setup complet)
 3. Vérifier erreurs ne sont pas filtrées par browser
@@ -570,10 +615,12 @@ localStorage.setItem('verone_session_id', generateSessionId())
 ### Problème : Logs non enregistrés en production
 
 **Symptômes** :
+
 - Fichiers `logs/*.json` vides
 - POST `/api/logs` non appelé
 
 **Solutions** :
+
 1. Vérifier `NODE_ENV=production` dans Vercel
 2. Vérifier `sendToApi: true` activé en production
 3. Vérifier CORS si domaine différent
@@ -584,6 +631,7 @@ localStorage.setItem('verone_session_id', generateSessionId())
 ## Roadmap
 
 ### Phase 1 ✅ (Complété - 2025-10-23)
+
 - [x] Console Error Tracker client-side
 - [x] Provider React intégration
 - [x] API route `/api/logs`
@@ -592,6 +640,7 @@ localStorage.setItem('verone_session_id', generateSessionId())
 - [x] Documentation complète
 
 ### Phase 2 (Q4 2025)
+
 - [ ] GitHub Actions CI integration
 - [ ] Discord/Slack alerts webhook
 - [ ] Dashboard visualization (`/admin/logs`)
@@ -599,6 +648,7 @@ localStorage.setItem('verone_session_id', generateSessionId())
 - [ ] Sourcemap support (stack traces)
 
 ### Phase 3 (Q1 2026)
+
 - [ ] AI-powered error fixing (Claude Code auto-fix)
 - [ ] Performance metrics tracking
 - [ ] User sessions replay (lightweight)
@@ -609,6 +659,7 @@ localStorage.setItem('verone_session_id', generateSessionId())
 ## Références
 
 **Code** :
+
 - `src/lib/monitoring/console-error-tracker.ts`
 - `src/lib/monitoring/mcp-error-checker.ts`
 - `src/components/providers/console-error-tracker-provider.tsx`
@@ -616,11 +667,13 @@ localStorage.setItem('verone_session_id', generateSessionId())
 - `.claude/commands/check-errors.md`
 
 **Documentation** :
+
 - [MCP Playwright Browser](https://modelcontextprotocol.io/docs)
 - [Next.js Error Handling](https://nextjs.org/docs/app/building-your-application/routing/error-handling)
 - [Vercel Analytics](https://vercel.com/docs/analytics)
 
 **Best Practices** :
+
 - Reddit r/nextjs 2025
 - GitHub Next.js discussions
 - Twitter #webdev senior devs

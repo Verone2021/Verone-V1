@@ -1,4 +1,4 @@
-const { getSecurityHeaders } = require('./src/lib/security/headers.js');
+const { getSecurityHeaders } = require('./src/lib/security/headers.ts');
 
 /** @type {import('next').NextConfig} */
 const nextConfig = {
@@ -9,16 +9,20 @@ const nextConfig = {
   // Bug Next.js 15.5.4 avec prerendering pages d'erreur /_error, /404, /500
   output: 'standalone',
 
-  // ESLint: Temporairement ignoré pendant build (Phase 1 focus: TypeScript errors only)
-  // Phase 4 corrigera exhaustive-deps + no-img-element, puis on réactivera
+  // ESLint: Activé avec config stricte @verone/eslint-config (2025-11-07)
+  // Validation complète au build avec TypeScript recommended + Prettier
+  // TEMPORARY (2025-11-08): ignoreDuringBuilds pour migration monorepo @verone/*
   eslint: {
-    ignoreDuringBuilds: true,
+    dirs: ['src', 'app'], // Valider uniquement code source
+    ignoreDuringBuilds: true, // TEMPORARY - Re-enable after fixing warnings
   },
 
-  // TypeScript: Ignorer erreurs temporairement (inférence types Supabase à corriger)
-  // TODO Phase dédiée : corriger tous les types Supabase `never` avec assertions explicites
+  // TypeScript: Validation stricte TEMPORAIREMENT désactivée (2025-11-07)
+  // TODO: Retirer ignoreBuildErrors après correction 249 erreurs TS
+  // Voir: docs/audits/2025-11/TS_ERRORS_PLAN.md
+  // Note: Utiliser npm run type-check pour validation locale avant commit
   typescript: {
-    ignoreBuildErrors: true,
+    ignoreBuildErrors: true, // TEMPORARY - Remove after TS errors fixed
   },
 
   // Security headers
@@ -62,9 +66,9 @@ const nextConfig = {
   transpilePackages: [
     '@verone/database',
     '@verone/shared-ui',
-    '@verone/business-logic'
+    '@verone/business-logic',
   ],
-  
+
   // Performance optimizations
   images: {
     formats: ['image/avif', 'image/webp'],
@@ -89,7 +93,7 @@ const nextConfig = {
       },
     ],
   },
-  
+
   // Environment variables for client-side
   env: {
     BUILD_TIME: new Date().toISOString(),

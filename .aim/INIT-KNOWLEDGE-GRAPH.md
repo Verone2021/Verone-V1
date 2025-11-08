@@ -289,29 +289,32 @@
 ## 🔄 Commandes Memory MCP
 
 ### Création Entités
+
 ```typescript
 // Sera automatiquement créé au premier usage du Memory MCP
 // Le fichier .aim/verone-knowledge-graph.json sera généré
 ```
 
 ### Recherche
+
 ```typescript
 // Exemple: Rechercher information sur tarification
-memory.searchMemory("tarification B2B")
+memory.searchMemory('tarification B2B');
 // → Retourne entité + relations + observations
 
 // Exemple: Trouver modules dépendants de Stock
-memory.searchMemory("Stock Module dependencies")
+memory.searchMemory('Stock Module dependencies');
 // → Retourne Orders + Catalogue
 ```
 
 ### Ajout Observation
+
 ```typescript
 // Exemple: Ajouter décision technique
 memory.addObservation(
-  "Catalogue Module",
-  "Migration vers Server Components completée - Performance +40%"
-)
+  'Catalogue Module',
+  'Migration vers Server Components completée - Performance +40%'
+);
 ```
 
 ---
@@ -325,4 +328,4 @@ memory.addObservation(
 
 ---
 
-*Knowledge Graph initialisé - Ready for Memory MCP*
+_Knowledge Graph initialisé - Ready for Memory MCP_

@@ -9,6 +9,7 @@
 Cette structure reflète l'architecture modulaire de Vérone Back Office avec **19 modules applicatifs** + **aspects transverses**. Chaque dossier correspond à une section de l'application (`src/app/`).
 
 ### Principes
+
 - ✅ **Module-Based** : Organisation par feature/module (01-17)
 - ✅ **Numérotation** : Ordre logique workflow business
 - ✅ **Transverse** : Aspects cross-module (98-99)
@@ -19,30 +20,36 @@ Cette structure reflète l'architecture modulaire de Vérone Back Office avec **
 ## 📚 INDEX COMPLET DES MODULES
 
 ### 🔐 01. Authentification
+
 **Path**: `01-authentification/`
 **App route**: `/login`, `/profile`
 **Contenu**: Rôles, permissions, stratégies auth, sécurité session
 
 **Fichiers** :
-- *(Aucun fichier pour le moment - dossier pré-créé)*
+
+- _(Aucun fichier pour le moment - dossier pré-créé)_
 
 ---
 
 ### 📊 02. Dashboard
+
 **Path**: `02-dashboard/`
 **App route**: `/dashboard`
 **Contenu**: Métriques KPI, calculs dashboard, widgets, optimisation performance
 
 **Fichiers** :
-- *(Aucun fichier pour le moment - dossier pré-créé)*
+
+- _(Aucun fichier pour le moment - dossier pré-créé)_
 
 ---
 
 ### 🏢 03. Organisations & Contacts
+
 **Path**: `03-organisations-contacts/`
 **App route**: `/contacts-organisations`
 
 #### Sous-modules :
+
 - **organisations/** : Types organisations, gestion multi-organisation
 - **contacts/** : Relations contacts, rôles
 - **customers/** : Clients B2B/B2C, segmentation
@@ -50,16 +57,20 @@ Cette structure reflète l'architecture modulaire de Vérone Back Office avec **
 - **partners/** : Partenaires commerciaux
 
 **Fichiers** :
-- *(Aucun fichier pour le moment - dossiers pré-créés)*
+
+- _(Aucun fichier pour le moment - dossiers pré-créés)_
 
 ---
 
 ### 📦 04. Produits
+
 **Path**: `04-produits/`
 **App route**: `/produits`
 
 #### 04.1 Catalogue (`catalogue/`)
+
 **Route**: `/produits/catalogue`
+
 - **categories/** : Hiérarchie catégories (5 fichiers attendus)
 - **families/** : Familles produits (4 fichiers attendus)
 - **collections/** : Collections saisonnières (6 fichiers attendus)
@@ -70,7 +81,9 @@ Cette structure reflète l'architecture modulaire de Vérone Back Office avec **
 - **catalogue.md** ✅ (règles générales catalogue)
 
 #### 04.2 Sourcing (`sourcing/`)
+
 **Route**: `/produits/sourcing`
+
 - `sourcing-validation-workflow.md` ✅
 - `supplier-vs-internal-data.md` ✅
 
@@ -79,11 +92,13 @@ Cette structure reflète l'architecture modulaire de Vérone Back Office avec **
 ---
 
 ### 💰 05. Pricing & Tarification
+
 **Path**: `05-pricing-tarification/`
 **App route**: `/produits/pricing` (intégré dans produits)
 **Contenu**: Prix multi-canaux, règles tarification B2B/B2C, remises, marges
 
 **Fichiers** :
+
 - `pricing-multi-canaux-clients.md` ✅
 - `tarification.md` ✅
 
@@ -92,10 +107,12 @@ Cette structure reflète l'architecture modulaire de Vérone Back Office avec **
 ---
 
 ### 📦 06. Stocks
+
 **Path**: `06-stocks/`
 **App route**: `/stocks`
 
 #### Sous-modules :
+
 - **movements/** : `stock-traceability-rules.md` ✅
 - **inventaire/** : Comptages, ajustements
 - **alertes/** : Seuils, notifications rupture
@@ -110,10 +127,12 @@ Cette structure reflète l'architecture modulaire de Vérone Back Office avec **
 ---
 
 ### 🛒 07. Commandes
+
 **Path**: `07-commandes/`
 **App route**: `/commandes`
 
 #### Sous-modules :
+
 - **clients/** :
   - `address-autofill-orders.md` ✅
   - `sales-order-cancellation-workflow.md` ✅
@@ -125,11 +144,13 @@ Cette structure reflète l'architecture modulaire de Vérone Back Office avec **
 ---
 
 ### 💼 08. Consultations
+
 **Path**: `08-consultations/`
 **App route**: `/consultations`
 **Contenu**: Workflow consultations clients, devis, suivi projets
 
 **Fichiers** :
+
 - `consultations-clients.md` ✅
 
 **Total** : 1 fichier
@@ -137,113 +158,136 @@ Cette structure reflète l'architecture modulaire de Vérone Back Office avec **
 ---
 
 ### 💳 09. Ventes
+
 **Path**: `09-ventes/`
 **App route**: `/ventes`
 **Contenu**: Processus vente, conversion devis, facturation
 
 **Fichiers** :
-- *(Aucun fichier pour le moment - dossier pré-créé)*
+
+- _(Aucun fichier pour le moment - dossier pré-créé)_
 
 ---
 
 ### 💼 10. Finance
+
 **Path**: `10-finance/`
 **App route**: `/finance`
 
 #### Sous-modules :
+
 - **depenses/** : Gestion dépenses, catégorisation
 - **rapprochement/** : Rapprochement bancaire
 - **accounting/** : Écritures comptables, exports
 
 **Fichiers** :
-- *(Aucun fichier pour le moment - dossiers pré-créés)*
+
+- _(Aucun fichier pour le moment - dossiers pré-créés)_
 
 ---
 
 ### 🧾 11. Factures
+
 **Path**: `11-factures/`
 **App route**: `/factures`
 **Contenu**: Génération factures, mentions légales, templates, exports
 
 **Fichiers** :
-- *(Aucun fichier pour le moment - dossier pré-créé)*
+
+- _(Aucun fichier pour le moment - dossier pré-créé)_
 
 ---
 
 ### 💰 12. Trésorerie
+
 **Path**: `12-tresorerie/`
 **App route**: `/tresorerie`
 **Contenu**: Prévisions trésorerie, encaissements, décaissements
 
 **Fichiers** :
-- *(Aucun fichier pour le moment - dossier pré-créé)*
+
+- _(Aucun fichier pour le moment - dossier pré-créé)_
 
 ---
 
 ### 🌐 13. Canaux de Vente
+
 **Path**: `13-canaux-vente/`
 **App route**: `/canaux-vente`
 
 #### Sous-modules :
+
 - **google-merchant/** : Feeds Google Merchant Center, optimisation
 - **prix-clients/** : Grilles tarifaires par canal
 - **integrations/** : Connexions marketplaces, APIs externes
 
 **Fichiers** :
-- *(Aucun fichier pour le moment - dossiers pré-créés)*
+
+- _(Aucun fichier pour le moment - dossiers pré-créés)_
 
 ---
 
 ### 👥 14. Administration
+
 **Path**: `14-admin/`
 **App route**: `/admin`
 
 #### Sous-modules :
+
 - **users/** : Gestion utilisateurs, rôles, permissions
 - **activite-utilisateurs/** : Logs activité, audit trails
 
 **Fichiers** :
-- *(Aucun fichier pour le moment - dossiers pré-créés)*
+
+- _(Aucun fichier pour le moment - dossiers pré-créés)_
 
 ---
 
 ### 🔔 15. Notifications
+
 **Path**: `15-notifications/`
 **App route**: `/notifications`
 **Contenu**: Système notifications temps réel, préférences, templates
 
 **Fichiers** :
-- *(Aucun fichier pour le moment - dossier pré-créé)*
+
+- _(Aucun fichier pour le moment - dossier pré-créé)_
 
 ---
 
 ### ⚙️ 16. Paramètres
+
 **Path**: `16-parametres/`
 **App route**: `/parametres`
 **Contenu**: Configuration application, préférences utilisateur
 
 **Fichiers** :
-- *(Aucun fichier pour le moment - dossier pré-créé)*
+
+- _(Aucun fichier pour le moment - dossier pré-créé)_
 
 ---
 
 ### 🏢 17. Organisation
+
 **Path**: `17-organisation/`
 **App route**: `/organisation`
 **Contenu**: Configuration organisation courante, profil entreprise
 
 **Fichiers** :
-- *(Aucun fichier pour le moment - dossier pré-créé)*
+
+- _(Aucun fichier pour le moment - dossier pré-créé)_
 
 ---
 
 ## 🎨 ASPECTS TRANSVERSES
 
 ### 98. UX/UI
+
 **Path**: `98-ux-ui/`
 **Contenu**: Design System V2, patterns UI/UX, composants réutilisables, accessibilité
 
 **Fichiers** :
+
 - `SIDEBAR-UX-RULES-2025.md` ✅
 
 **Total** : 1 fichier
@@ -251,10 +295,12 @@ Cette structure reflète l'architecture modulaire de Vérone Back Office avec **
 ---
 
 ### 99. Transverses
+
 **Path**: `99-transverses/`
 **Contenu**: Aspects cross-module, patterns globaux
 
 #### Sous-modules :
+
 - **workflows/** : Workflows métier multi-modules
 - **integrations/** : `integrations-externes.md` ✅
 - **data-quality/** : Règles qualité données, validations
@@ -274,6 +320,7 @@ Coverage : ~17% (16/93 sous-modules)
 ```
 
 ### Répartition par module :
+
 - ✅ **Produits** : 4 fichiers (catalogue, sourcing)
 - ✅ **Commandes** : 3 fichiers (clients, expéditions)
 - ✅ **Pricing** : 2 fichiers
@@ -287,12 +334,14 @@ Coverage : ~17% (16/93 sous-modules)
 **Pour ajouter un nouveau fichier business rule** :
 
 ### Règle générale
+
 1. Identifier le **module applicatif** concerné (route dans `src/app/`)
 2. Placer dans le dossier numéroté correspondant (01-17)
 3. Si multi-module → `99-transverses/workflows/`
 4. Si UX/Design → `98-ux-ui/`
 
 ### Exemples
+
 ```bash
 # Règle sur les remises → Pricing
 docs/business-rules/05-pricing-tarification/discount-rules.md
@@ -305,6 +354,7 @@ docs/business-rules/98-ux-ui/modal-pattern.md
 ```
 
 ### Naming Convention
+
 - **kebab-case** pour tous les fichiers
 - **Langue** : Français (sauf termes techniques anglais)
 - **Format** : Markdown (.md)
@@ -321,6 +371,7 @@ Ce système de classification est **automatiquement compris par Claude Code** vi
 3. **MCP Tools** : `mcp__serena__write_memory` pour nouveaux patterns
 
 **Workflow automatique** :
+
 ```typescript
 // Claude identifie automatiquement la destination
 User: "Créer règle business pour calcul TVA factures"
@@ -345,13 +396,16 @@ Claude: → docs/business-rules/07-commandes/clients/cancellation-workflow.md
 ## 🚀 CONTRIBUER
 
 ### Ajouter une nouvelle règle
+
 1. Identifier le module concerné
 2. Créer le fichier dans le bon sous-dossier
 3. Suivre le template Markdown standard
 4. Mettre à jour ce README si nouveau pattern
 
 ### Nettoyer .gitkeep
+
 Quand un dossier reçoit son premier fichier, **supprimer le .gitkeep** :
+
 ```bash
 rm docs/business-rules/XX-module/.gitkeep
 ```

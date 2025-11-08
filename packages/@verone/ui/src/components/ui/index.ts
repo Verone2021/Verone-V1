@@ -9,8 +9,8 @@
 // BUTTON COMPONENTS
 // ========================================
 export * from './button-unified';
-// Note: button.tsx exports buttonVariants - conflit avec button-unified
-// export * from './button'; // ButtonV2 legacy - commenté pour éviter conflit buttonVariants
+// Export sélectif de Button sans buttonVariants (conflit)
+export { Button, ButtonV2, type ButtonV2Props } from './button';
 export * from './action-button';
 export * from './modern-action-button';
 export * from './standard-modify-button';

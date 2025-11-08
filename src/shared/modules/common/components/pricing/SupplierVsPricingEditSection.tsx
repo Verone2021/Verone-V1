@@ -1,48 +1,59 @@
-"use client"
+'use client';
 
-import { useState } from 'react'
-import { DollarSign, Save, X, Edit, AlertCircle, TrendingUp } from 'lucide-react'
-import { ButtonV2 } from '@/components/ui/button'
-import { cn, formatPrice } from '@/lib/utils'
-import { useInlineEdit, type EditableSection } from '@/shared/modules/common/hooks'
+import { useState } from 'react';
+
+import {
+  DollarSign,
+  Save,
+  X,
+  Edit,
+  AlertCircle,
+  TrendingUp,
+} from 'lucide-react';
+
+import { ButtonV2 } from '@/components/ui/button';
+import { cn, formatPrice } from '@verone/utils';
+import {
+  useInlineEdit,
+  type EditableSection,
+} from '@/shared/modules/common/hooks';
 
 interface Product {
-  id: string
-  variant_group_id?: string    // ID du groupe de variantes (si produit fait partie d'un groupe)
+  id: string;
+  variant_group_id?: string; // ID du groupe de variantes (si produit fait partie d'un groupe)
   // Tarification simplifiée 2025
-  cost_price?: number          // Prix d'achat fournisseur HT (euros)
-  margin_percentage?: number   // Taux de marge en pourcentage (ex: 25 pour 25%)
-  tax_rate?: number           // Taux de TVA (ex: 0.2 pour 20%)
+  cost_price?: number; // Prix d'achat fournisseur HT (euros)
+  margin_percentage?: number; // Taux de marge en pourcentage (ex: 25 pour 25%)
+  tax_rate?: number; // Taux de TVA (ex: 0.2 pour 20%)
 
   // Champs calculés automatiquement
-  selling_price?: number      // Prix minimum de vente calculé
+  selling_price?: number; // Prix minimum de vente calculé
 }
 
 interface VariantGroup {
-  id: string
-  name: string
-  has_common_cost_price?: boolean | null
-  common_cost_price?: number | null
+  id: string;
+  name: string;
+  has_common_cost_price?: boolean | null;
+  common_cost_price?: number | null;
 }
 
 interface SupplierVsPricingEditSectionProps {
-  product: Product
-  variantGroup?: VariantGroup | null
-  onUpdate: (updatedProduct: Partial<Product>) => void
-  className?: string
+  product: Product;
+  variantGroup?: VariantGroup | null;
+  onUpdate: (updatedProduct: Partial<Product>) => void;
+  className?: string;
 }
 
 export function SupplierVsPricingEditSection({
   product,
   variantGroup,
   onUpdate,
-  className
+  className,
 }: SupplierVsPricingEditSectionProps) {
   // Verrouillage si cost_price géré par le groupe de variantes
   const isCostPriceManagedByGroup = !!(
-    variantGroup?.has_common_cost_price &&
-    product.variant_group_id
-  )
+    variantGroup?.has_common_cost_price && product.variant_group_id
+  );
   const {
     isEditing,
     isSaving,
@@ -52,106 +63,120 @@ export function SupplierVsPricingEditSection({
     cancelEdit,
     updateEditedData,
     saveChanges,
-    hasChanges
+    hasChanges,
   } = useInlineEdit({
     productId: product.id,
-    onUpdate: (updatedData) => {
-      onUpdate(updatedData)
+    onUpdate: updatedData => {
+      onUpdate(updatedData);
     },
-    onError: (error) => {
-      console.error('❌ Erreur mise à jour pricing supplier/internal:', error)
-    }
-  })
+    onError: error => {
+      console.error('❌ Erreur mise à jour pricing supplier/internal:', error);
+    },
+  });
 
-  const section: EditableSection = 'pricing'
-  const editData = getEditedData(section)
-  const error = getError(section)
+  const section: EditableSection = 'pricing';
+  const editData = getEditedData(section);
+  const error = getError(section);
 
   // Récupération des données de tarification simplifiée
   // Si cost_price géré par le groupe, utiliser common_cost_price
   const currentCostPrice = isCostPriceManagedByGroup
-    ? (variantGroup?.common_cost_price || 0)
-    : (product.cost_price || 0)
-  const currentMarginPercentage = product.margin_percentage || 25 // Défaut 25%
+    ? variantGroup?.common_cost_price || 0
+    : product.cost_price || 0;
+  const currentMarginPercentage = product.margin_percentage || 25; // Défaut 25%
 
   // Calcul automatique du prix de vente minimum
-  const calculateMinSellingPrice = (costPrice: number, marginPercentage: number) => {
-    if (!costPrice || costPrice <= 0) return 0
-    return costPrice * (1 + (marginPercentage / 100))
-  }
+  const calculateMinSellingPrice = (
+    costPrice: number,
+    marginPercentage: number
+  ) => {
+    if (!costPrice || costPrice <= 0) return 0;
+    return costPrice * (1 + marginPercentage / 100);
+  };
 
-  const currentSellingPrice = calculateMinSellingPrice(currentCostPrice, currentMarginPercentage)
+  const currentSellingPrice = calculateMinSellingPrice(
+    currentCostPrice,
+    currentMarginPercentage
+  );
 
   const handleStartEdit = () => {
     startEdit(section, {
       cost_price: currentCostPrice,
-      margin_percentage: currentMarginPercentage
-    })
-  }
+      margin_percentage: currentMarginPercentage,
+    });
+  };
 
   const handleSave = async () => {
     // Validation business rules avant sauvegarde
     if (editData?.cost_price && editData.cost_price <= 0) {
-      alert('⚠️ Le prix d\'achat doit être supérieur à 0')
-      return
+      alert("⚠️ Le prix d'achat doit être supérieur à 0");
+      return;
     }
 
     if (editData?.margin_percentage && editData.margin_percentage < 5) {
-      const confirmed = confirm(`⚠️ Marge très faible (${editData.margin_percentage}%). Continuer ?`)
-      if (!confirmed) return
+      const confirmed = confirm(
+        `⚠️ Marge très faible (${editData.margin_percentage}%). Continuer ?`
+      );
+      if (!confirmed) return;
     }
 
     // Calculer le prix de vente pour sauvegarde
     const sellingPrice = editData?.cost_price
-      ? calculateMinSellingPrice(editData.cost_price, editData.margin_percentage || 25)
-      : 0
+      ? calculateMinSellingPrice(
+          editData.cost_price,
+          editData.margin_percentage || 25
+        )
+      : 0;
 
     const dataToSave = {
       cost_price: editData?.cost_price,
       margin_percentage: editData?.margin_percentage,
-      selling_price: sellingPrice // Prix calculé automatiquement
-    }
+      selling_price: sellingPrice, // Prix calculé automatiquement
+    };
 
     // Directement sauvegarder avec les données finales
-    updateEditedData(section, dataToSave)
+    updateEditedData(section, dataToSave);
 
     // Attendre un cycle pour que l'état soit mis à jour
     setTimeout(async () => {
-      const success = await saveChanges(section)
+      const success = await saveChanges(section);
       if (success) {
-        console.log('✅ Tarification mise à jour avec succès')
+        console.log('✅ Tarification mise à jour avec succès');
       }
-    }, 0)
-  }
+    }, 0);
+  };
 
   const handleCancel = () => {
-    cancelEdit(section)
-  }
+    cancelEdit(section);
+  };
 
   const handlePriceChange = (field: string, value: string) => {
-    let numValue: number
+    let numValue: number;
 
     if (field === 'margin_percentage') {
-      numValue = parseFloat(value) || 0   // Garde le pourcentage tel quel
+      numValue = parseFloat(value) || 0; // Garde le pourcentage tel quel
     } else {
-      numValue = parseFloat(value) || 0   // Prix en euros
+      numValue = parseFloat(value) || 0; // Prix en euros
     }
 
-    updateEditedData(section, { [field]: numValue })
-  }
+    updateEditedData(section, { [field]: numValue });
+  };
 
   // Calculer prix de vente en temps réel pendant l'édition
   const editSellingPrice = editData
-    ? calculateMinSellingPrice(editData.cost_price || 0, editData.margin_percentage || 25)
-    : currentSellingPrice
+    ? calculateMinSellingPrice(
+        editData.cost_price || 0,
+        editData.margin_percentage || 25
+      )
+    : currentSellingPrice;
 
   const editMarginAmount = editData
     ? editSellingPrice - (editData.cost_price || 0)
-    : currentSellingPrice - currentCostPrice
+    : currentSellingPrice - currentCostPrice;
 
   if (isEditing(section)) {
     return (
-      <div className={cn("card-verone p-4", className)}>
+      <div className={cn('card-verone p-4', className)}>
         <div className="flex items-center justify-between mb-3">
           <h3 className="text-lg font-medium text-black flex items-center">
             <DollarSign className="h-5 w-5 mr-2" />
@@ -194,10 +219,10 @@ export function SupplierVsPricingEditSection({
               <input
                 type="number"
                 value={editData?.cost_price || ''}
-                onChange={(e) => handlePriceChange('cost_price', e.target.value)}
+                onChange={e => handlePriceChange('cost_price', e.target.value)}
                 className={cn(
-                  "w-full px-3 py-2 border border-red-300 rounded-md focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-red-500",
-                  isCostPriceManagedByGroup && "bg-gray-100 cursor-not-allowed"
+                  'w-full px-3 py-2 border border-red-300 rounded-md focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-red-500',
+                  isCostPriceManagedByGroup && 'bg-gray-100 cursor-not-allowed'
                 )}
                 step="0.01"
                 min="0"
@@ -225,7 +250,9 @@ export function SupplierVsPricingEditSection({
               <input
                 type="number"
                 value={editData?.margin_percentage || ''}
-                onChange={(e) => handlePriceChange('margin_percentage', e.target.value)}
+                onChange={e =>
+                  handlePriceChange('margin_percentage', e.target.value)
+                }
                 className="w-full px-3 py-2 border border-blue-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                 step="1"
                 min="0"
@@ -261,7 +288,6 @@ export function SupplierVsPricingEditSection({
             </div>
           )}
 
-
           {/* Alertes */}
           {editData?.margin_percentage && editData.margin_percentage < 5 && (
             <div className="bg-gray-50 p-3 rounded-lg border border-gray-200">
@@ -280,12 +306,12 @@ export function SupplierVsPricingEditSection({
           </div>
         )}
       </div>
-    )
+    );
   }
 
   // Mode affichage
   return (
-    <div className={cn("card-verone p-4", className)}>
+    <div className={cn('card-verone p-4', className)}>
       <div className="flex items-center justify-between mb-3">
         <h3 className="text-lg font-medium text-black flex items-center">
           <DollarSign className="h-5 w-5 mr-2" />
@@ -300,7 +326,8 @@ export function SupplierVsPricingEditSection({
       {/* Banner informatif si cost_price géré par groupe */}
       {isCostPriceManagedByGroup && (
         <div className="mb-3 p-2 bg-blue-50 border border-blue-200 rounded text-xs text-blue-800">
-          ℹ️ Le prix d'achat est commun à toutes les variantes du groupe "{variantGroup?.name}".{' '}
+          ℹ️ Le prix d'achat est commun à toutes les variantes du groupe "
+          {variantGroup?.name}".{' '}
           <a
             href={`/produits/catalogue/variantes/${variantGroup?.id}`}
             className="underline font-medium hover:text-blue-900"
@@ -314,7 +341,9 @@ export function SupplierVsPricingEditSection({
         {/* Prix d'achat */}
         {currentCostPrice > 0 && (
           <div className="bg-red-50 p-3 rounded-lg">
-            <div className="text-xs text-red-600 font-medium mb-1">📦 PRIX D'ACHAT FOURNISSEUR</div>
+            <div className="text-xs text-red-600 font-medium mb-1">
+              📦 PRIX D'ACHAT FOURNISSEUR
+            </div>
             <div className="flex justify-between items-center">
               <span className="text-red-700 font-medium">Coût HT:</span>
               <span className="text-lg font-bold text-red-800">
@@ -327,14 +356,21 @@ export function SupplierVsPricingEditSection({
         {/* Taux de marge */}
         {currentMarginPercentage > 0 && (
           <div className="bg-blue-50 p-3 rounded-lg">
-            <div className="text-xs text-blue-600 font-medium mb-1">📈 TAUX DE MARGE</div>
+            <div className="text-xs text-blue-600 font-medium mb-1">
+              📈 TAUX DE MARGE
+            </div>
             <div className="flex justify-between items-center">
               <span className="text-blue-700 font-medium">Pourcentage:</span>
-              <span className={cn(
-                "text-lg font-bold",
-                currentMarginPercentage > 20 ? "text-green-600" :
-                currentMarginPercentage > 5 ? "text-black" : "text-red-600"
-              )}>
+              <span
+                className={cn(
+                  'text-lg font-bold',
+                  currentMarginPercentage > 20
+                    ? 'text-green-600'
+                    : currentMarginPercentage > 5
+                      ? 'text-black'
+                      : 'text-red-600'
+                )}
+              >
                 {currentMarginPercentage}%
               </span>
             </div>
@@ -344,7 +380,9 @@ export function SupplierVsPricingEditSection({
         {/* Prix de vente calculé */}
         {currentCostPrice > 0 && currentMarginPercentage > 0 && (
           <div className="bg-green-50 p-3 rounded-lg">
-            <div className="text-xs text-green-600 font-medium mb-1">💰 PRIX MINIMUM DE VENTE</div>
+            <div className="text-xs text-green-600 font-medium mb-1">
+              💰 PRIX MINIMUM DE VENTE
+            </div>
             <div className="flex justify-between items-center">
               <span className="text-green-700 font-medium">Prix HT:</span>
               <span className="text-xl font-bold text-green-800">
@@ -367,12 +405,12 @@ export function SupplierVsPricingEditSection({
               ? "Prix d'achat et taux de marge non renseignés"
               : !currentCostPrice
                 ? "Prix d'achat non renseigné"
-                : "Taux de marge non renseigné"}
+                : 'Taux de marge non renseigné'}
           </div>
         )}
       </div>
     </div>
-  )
+  );
 }
 
 /**

@@ -350,11 +350,11 @@ export function validateGoogleMerchantProduct(product: GoogleMerchantProduct): {
     errors.push('Description manquante');
   }
 
-  if (!attrs.link || !attrs.link.startsWith('http')) {
+  if (!attrs.link?.startsWith('http')) {
     errors.push('URL produit invalide');
   }
 
-  if (!attrs.imageLink || !attrs.imageLink.startsWith('http')) {
+  if (!attrs.imageLink?.startsWith('http')) {
     errors.push('URL image invalide');
   }
 

@@ -1,13 +1,12 @@
-'use client'
+'use client';
 
-import React, { useState } from 'react'
-import { Check, ChevronsUpDown, X, LucideIcon } from 'lucide-react'
-import { ButtonV2 } from '@/components/ui/button'
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from '@/components/ui/popover'
+import React, { useState } from 'react';
+
+import type { LucideIcon } from 'lucide-react';
+import { Check, ChevronsUpDown, X } from 'lucide-react';
+
+import { Badge } from '@/components/ui/badge';
+import { ButtonV2 } from '@/components/ui/button';
 import {
   Command,
   CommandEmpty,
@@ -15,20 +14,24 @@ import {
   CommandInput,
   CommandItem,
   CommandList,
-} from '@/components/ui/command'
-import { Badge } from '@/components/ui/badge'
-import { cn } from '@/lib/utils'
+} from '@/components/ui/command';
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from '@/components/ui/popover';
+import { cn } from '@verone/utils';
 
 /**
  * Option de filtre
  */
 export interface FilterOption {
   /** Valeur unique */
-  value: string
+  value: string;
   /** Label affiché */
-  label: string
+  label: string;
   /** Nombre de produits (optionnel) */
-  count?: number
+  count?: number;
 }
 
 /**
@@ -36,19 +39,19 @@ export interface FilterOption {
  */
 export interface FilterComboboxProps {
   /** Label du filtre (ex: "Statut", "Catégories") */
-  label: string
+  label: string;
   /** Options disponibles */
-  options: FilterOption[]
+  options: FilterOption[];
   /** Valeurs sélectionnées */
-  selectedValues: string[]
+  selectedValues: string[];
   /** Callback changement sélection */
-  onSelectionChange: (values: string[]) => void
+  onSelectionChange: (values: string[]) => void;
   /** Icon optionnel */
-  icon?: LucideIcon
+  icon?: LucideIcon;
   /** Placeholder input recherche */
-  placeholder?: string
+  placeholder?: string;
   /** Classe CSS additionnelle */
-  className?: string
+  className?: string;
 }
 
 /**
@@ -97,37 +100,37 @@ export function FilterCombobox({
   placeholder = 'Rechercher...',
   className,
 }: FilterComboboxProps) {
-  const [open, setOpen] = useState(false)
-  const [searchQuery, setSearchQuery] = useState('')
+  const [open, setOpen] = useState(false);
+  const [searchQuery, setSearchQuery] = useState('');
 
   // Toggle sélection d'une valeur
   const toggleValue = (value: string) => {
     const newValues = selectedValues.includes(value)
-      ? selectedValues.filter((v) => v !== value)
-      : [...selectedValues, value]
-    onSelectionChange(newValues)
-  }
+      ? selectedValues.filter(v => v !== value)
+      : [...selectedValues, value];
+    onSelectionChange(newValues);
+  };
 
   // Clear all
   const clearAll = () => {
-    onSelectionChange([])
-  }
+    onSelectionChange([]);
+  };
 
   // Retirer une valeur depuis le chip
   const removeValue = (value: string, e: React.MouseEvent) => {
-    e.stopPropagation()
-    onSelectionChange(selectedValues.filter((v) => v !== value))
-  }
+    e.stopPropagation();
+    onSelectionChange(selectedValues.filter(v => v !== value));
+  };
 
   // Filtrer options selon recherche
-  const filteredOptions = options.filter((option) =>
+  const filteredOptions = options.filter(option =>
     option.label.toLowerCase().includes(searchQuery.toLowerCase())
-  )
+  );
 
   // Trouver label d'une option
   const getOptionLabel = (value: string) => {
-    return options.find((o) => o.value === value)?.label || value
-  }
+    return options.find(o => o.value === value)?.label || value;
+  };
 
   return (
     <div className={cn('space-y-2', className)}>
@@ -181,8 +184,8 @@ export function FilterCombobox({
             <CommandList>
               <CommandEmpty>Aucun résultat trouvé</CommandEmpty>
               <CommandGroup>
-                {filteredOptions.map((option) => {
-                  const isSelected = selectedValues.includes(option.value)
+                {filteredOptions.map(option => {
+                  const isSelected = selectedValues.includes(option.value);
                   return (
                     <CommandItem
                       key={option.value}
@@ -207,7 +210,7 @@ export function FilterCombobox({
                         </span>
                       )}
                     </CommandItem>
-                  )
+                  );
                 })}
               </CommandGroup>
             </CommandList>
@@ -218,12 +221,12 @@ export function FilterCombobox({
       {/* Chips sélectionnés */}
       {selectedValues.length > 0 && (
         <div className="flex flex-wrap gap-2">
-          {selectedValues.map((value) => (
+          {selectedValues.map(value => (
             <Badge
               key={value}
               variant="outline"
               className="cursor-pointer hover:bg-neutral-100"
-              onClick={(e) => removeValue(value, e)}
+              onClick={e => removeValue(value, e)}
             >
               {getOptionLabel(value)}
               <X className="ml-1 h-3 w-3" />
@@ -232,10 +235,10 @@ export function FilterCombobox({
         </div>
       )}
     </div>
-  )
+  );
 }
 
 /**
  * Export default pour compatibilité
  */
-export default FilterCombobox
+export default FilterCombobox;

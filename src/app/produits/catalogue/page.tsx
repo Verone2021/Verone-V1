@@ -19,8 +19,8 @@ import {
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { ViewModeToggle } from '@/components/ui/view-mode-toggle';
-import { cn } from '@/lib/utils';
-import { checkSLOCompliance, debounce } from '@/lib/utils';
+import { cn } from '@verone/utils';
+import { checkSLOCompliance, debounce } from '@verone/utils';
 import { CategoryHierarchyFilterV2 } from '@/shared/modules/categories/components/filters/CategoryHierarchyFilterV2';
 import type { Product } from '@/shared/modules/categories/hooks';
 import { useCatalogue, Category } from '@/shared/modules/categories/hooks';

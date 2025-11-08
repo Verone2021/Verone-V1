@@ -1,12 +1,13 @@
-'use client'
+'use client';
 
-import { Plus, Minus, Trash2, Package } from 'lucide-react'
-import { TableCell, TableRow } from '@/components/ui/table'
-import { Input } from '@/components/ui/input'
-import { ButtonV2 } from '@/components/ui/button'
-import { Badge } from '@/components/ui/badge'
-import { formatCurrency } from '@/lib/utils'
-import type { OrderItem, OrderType } from '@/shared/modules/orders/hooks'
+import { Plus, Minus, Trash2, Package } from 'lucide-react';
+
+import { Badge } from '@/components/ui/badge';
+import { ButtonV2 } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { TableCell, TableRow } from '@/components/ui/table';
+import { formatCurrency } from '@verone/utils';
+import type { OrderItem, OrderType } from '@/shared/modules/orders/hooks';
 
 /**
  * Composant Universel Ligne Item Éditable
@@ -42,17 +43,17 @@ import type { OrderItem, OrderType } from '@/shared/modules/orders/hooks'
  */
 
 interface ProductImage {
-  public_url: string
-  is_primary: boolean
-  display_order?: number
+  public_url: string;
+  is_primary: boolean;
+  display_order?: number;
 }
 
 interface EditableOrderItemRowProps {
-  item: OrderItem
-  orderType: OrderType
-  onUpdate?: (itemId: string, data: Partial<OrderItem>) => void
-  onDelete?: (itemId: string) => void
-  readonly?: boolean
+  item: OrderItem;
+  orderType: OrderType;
+  onUpdate?: (itemId: string, data: Partial<OrderItem>) => void;
+  onDelete?: (itemId: string) => void;
+  readonly?: boolean;
 }
 
 export function EditableOrderItemRow({
@@ -60,72 +61,81 @@ export function EditableOrderItemRow({
   orderType,
   onUpdate,
   onDelete,
-  readonly = false
+  readonly = false,
 }: EditableOrderItemRowProps) {
   // Calculer total ligne HT
   const calculateTotal = (): number => {
-    const subtotal = item.quantity * item.unit_price_ht * (1 - (item.discount_percentage || 0) / 100)
-    return subtotal + (item.eco_tax || 0)
-  }
+    const subtotal =
+      item.quantity *
+      item.unit_price_ht *
+      (1 - (item.discount_percentage || 0) / 100);
+    return subtotal + (item.eco_tax || 0);
+  };
 
   // Récupérer image primaire produit
   const getPrimaryImage = (): string | null => {
-    const images = item.products?.product_images as ProductImage[] | undefined
-    return images?.find(img => img.is_primary)?.public_url ||
-           images?.[0]?.public_url ||
-           null
-  }
+    const images = item.products?.product_images as ProductImage[] | undefined;
+    return (
+      images?.find(img => img.is_primary)?.public_url ||
+      images?.[0]?.public_url ||
+      null
+    );
+  };
 
   // Handler modification quantité
   const handleQuantityChange = (newQuantity: number) => {
-    const validQuantity = Math.max(1, newQuantity)
+    const validQuantity = Math.max(1, newQuantity);
     if (onUpdate && !readonly) {
-      onUpdate(item.id, { quantity: validQuantity })
+      onUpdate(item.id, { quantity: validQuantity });
     }
-  }
+  };
 
   // Handler modification prix
   const handlePriceChange = (newPrice: number) => {
-    const validPrice = Math.max(0, newPrice)
+    const validPrice = Math.max(0, newPrice);
     if (onUpdate && !readonly) {
-      onUpdate(item.id, { unit_price_ht: validPrice })
+      onUpdate(item.id, { unit_price_ht: validPrice });
     }
-  }
+  };
 
   // Handler modification remise
   const handleDiscountChange = (newDiscount: number) => {
-    const validDiscount = Math.min(100, Math.max(0, newDiscount))
+    const validDiscount = Math.min(100, Math.max(0, newDiscount));
     if (onUpdate && !readonly) {
-      onUpdate(item.id, { discount_percentage: validDiscount })
+      onUpdate(item.id, { discount_percentage: validDiscount });
     }
-  }
+  };
 
   // Handler modification éco-taxe
   const handleEcoTaxChange = (newEcoTax: number) => {
-    const validEcoTax = Math.max(0, newEcoTax)
+    const validEcoTax = Math.max(0, newEcoTax);
     if (onUpdate && !readonly) {
-      onUpdate(item.id, { eco_tax: validEcoTax })
+      onUpdate(item.id, { eco_tax: validEcoTax });
     }
-  }
+  };
 
   // Handler modification TVA (ventes uniquement)
   const handleTaxRateChange = (newTaxRate: number) => {
-    const validTaxRate = Math.max(0, newTaxRate) / 100
+    const validTaxRate = Math.max(0, newTaxRate) / 100;
     if (onUpdate && !readonly && orderType === 'sales') {
-      onUpdate(item.id, { tax_rate: validTaxRate })
+      onUpdate(item.id, { tax_rate: validTaxRate });
     }
-  }
+  };
 
   // Handler suppression
   const handleDelete = () => {
     if (onDelete && !readonly) {
-      if (confirm('Êtes-vous sûr de vouloir supprimer ce produit de la commande ?')) {
-        onDelete(item.id)
+      if (
+        confirm(
+          'Êtes-vous sûr de vouloir supprimer ce produit de la commande ?'
+        )
+      ) {
+        onDelete(item.id);
       }
     }
-  }
+  };
 
-  const primaryImage = getPrimaryImage()
+  const primaryImage = getPrimaryImage();
 
   return (
     <TableRow>
@@ -188,7 +198,9 @@ export function EditableOrderItemRow({
             <Input
               type="number"
               value={item.quantity}
-              onChange={(e) => handleQuantityChange(parseInt(e.target.value) || 1)}
+              onChange={e =>
+                handleQuantityChange(parseInt(e.target.value) || 1)
+              }
               className="w-16 text-center"
               min="1"
             />
@@ -212,7 +224,7 @@ export function EditableOrderItemRow({
             type="number"
             step="0.01"
             value={item.unit_price_ht}
-            onChange={(e) => handlePriceChange(parseFloat(e.target.value) || 0)}
+            onChange={e => handlePriceChange(parseFloat(e.target.value) || 0)}
             className="w-24"
             min="0"
           />
@@ -230,7 +242,9 @@ export function EditableOrderItemRow({
             min="0"
             max="100"
             value={item.discount_percentage || 0}
-            onChange={(e) => handleDiscountChange(parseFloat(e.target.value) || 0)}
+            onChange={e =>
+              handleDiscountChange(parseFloat(e.target.value) || 0)
+            }
             className="w-20"
           />
         )}
@@ -245,7 +259,7 @@ export function EditableOrderItemRow({
             type="number"
             step="0.01"
             value={item.eco_tax || 0}
-            onChange={(e) => handleEcoTaxChange(parseFloat(e.target.value) || 0)}
+            onChange={e => handleEcoTaxChange(parseFloat(e.target.value) || 0)}
             className="w-20"
             min="0"
           />
@@ -256,13 +270,17 @@ export function EditableOrderItemRow({
       {orderType === 'sales' && (
         <TableCell>
           {readonly ? (
-            <span className="text-sm">{((item.tax_rate || 0.20) * 100).toFixed(1)}%</span>
+            <span className="text-sm">
+              {((item.tax_rate || 0.2) * 100).toFixed(1)}%
+            </span>
           ) : (
             <Input
               type="number"
               step="0.1"
-              value={((item.tax_rate || 0.20) * 100).toFixed(1)}
-              onChange={(e) => handleTaxRateChange(parseFloat(e.target.value) || 20)}
+              value={((item.tax_rate || 0.2) * 100).toFixed(1)}
+              onChange={e =>
+                handleTaxRateChange(parseFloat(e.target.value) || 20)
+              }
               className="w-20"
               min="0"
             />
@@ -289,5 +307,5 @@ export function EditableOrderItemRow({
         )}
       </TableCell>
     </TableRow>
-  )
+  );
 }

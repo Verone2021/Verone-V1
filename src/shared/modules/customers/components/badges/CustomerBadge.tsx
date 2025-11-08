@@ -9,14 +9,15 @@
  * - Variant colors: B2B (blue), B2C (purple)
  */
 
-import { Building2, User } from 'lucide-react'
-import { Badge } from '@/components/ui/badge'
+import { Building2, User } from 'lucide-react';
+
+import { Badge } from '@/components/ui/badge';
 import {
   Tooltip,
   TooltipContent,
   TooltipProvider,
-  TooltipTrigger
-} from '@/components/ui/tooltip'
+  TooltipTrigger,
+} from '@/components/ui/tooltip';
 
 // =====================================================================
 // TYPES
@@ -24,19 +25,19 @@ import {
 
 export interface CustomerBadgeProps {
   // B2B Organisation
-  organisationId?: string | null
-  organisationLegalName?: string | null
-  organisationTradeName?: string | null
+  organisationId?: string | null;
+  organisationLegalName?: string | null;
+  organisationTradeName?: string | null;
 
   // B2C Individual
-  individualId?: string | null
-  individualFirstName?: string | null
-  individualLastName?: string | null
-  individualEmail?: string | null
+  individualId?: string | null;
+  individualFirstName?: string | null;
+  individualLastName?: string | null;
+  individualEmail?: string | null;
 
   // Optional
-  showIcon?: boolean
-  compact?: boolean
+  showIcon?: boolean;
+  compact?: boolean;
 }
 
 // =====================================================================
@@ -52,57 +53,57 @@ export function CustomerBadge({
   individualLastName,
   individualEmail,
   showIcon = true,
-  compact = false
+  compact = false,
 }: CustomerBadgeProps) {
   // Déterminer le type client
-  const isB2B = !!organisationId
-  const isB2C = !!individualId
+  const isB2B = !!organisationId;
+  const isB2C = !!individualId;
 
   // Si aucun client, retourner null
   if (!isB2B && !isB2C) {
-    return null
+    return null;
   }
 
   // Display name (compact)
-  let displayName = ''
-  let fullName = ''
-  let customerType = ''
+  let displayName = '';
+  let fullName = '';
+  let customerType = '';
 
   if (isB2B) {
-    displayName = organisationTradeName || organisationLegalName || 'Organisation inconnue'
-    fullName = `${organisationLegalName}${organisationTradeName ? ` (${organisationTradeName})` : ''}`
-    customerType = 'B2B'
+    displayName =
+      organisationTradeName || organisationLegalName || 'Organisation inconnue';
+    fullName = `${organisationLegalName}${organisationTradeName ? ` (${organisationTradeName})` : ''}`;
+    customerType = 'B2B';
   } else if (isB2C) {
-    displayName = `${individualFirstName} ${individualLastName}`
-    fullName = displayName
-    customerType = 'B2C'
+    displayName = `${individualFirstName} ${individualLastName}`;
+    fullName = displayName;
+    customerType = 'B2C';
   }
 
   // Truncate si trop long (compact mode)
-  const truncatedName = compact && displayName.length > 25
-    ? `${displayName.substring(0, 25)}...`
-    : displayName
+  const truncatedName =
+    compact && displayName.length > 25
+      ? `${displayName.substring(0, 25)}...`
+      : displayName;
 
   // Icon
-  const Icon = isB2B ? Building2 : User
+  const Icon = isB2B ? Building2 : User;
 
   // Badge variant
-  const variant = isB2B ? 'default' : 'secondary'
+  const variant = isB2B ? 'default' : 'secondary';
 
   // Tooltip content
   const tooltipContent = (
     <div className="space-y-1">
       <div className="font-medium">{fullName}</div>
-      <div className="text-xs text-muted-foreground">
-        Type: {customerType}
-      </div>
+      <div className="text-xs text-muted-foreground">Type: {customerType}</div>
       {isB2C && individualEmail && (
         <div className="text-xs text-muted-foreground">
           Email: {individualEmail}
         </div>
       )}
     </div>
-  )
+  );
 
   return (
     <TooltipProvider delayDuration={300}>
@@ -124,7 +125,7 @@ export function CustomerBadge({
         </TooltipContent>
       </Tooltip>
     </TooltipProvider>
-  )
+  );
 }
 
 // =====================================================================
@@ -132,13 +133,13 @@ export function CustomerBadge({
 // =====================================================================
 
 export function customerBadgePropsFromSample(sample: {
-  customer_org_id?: string | null
-  customer_org_legal_name?: string | null
-  customer_org_trade_name?: string | null
-  customer_ind_id?: string | null
-  customer_ind_first_name?: string | null
-  customer_ind_last_name?: string | null
-  customer_ind_email?: string | null
+  customer_org_id?: string | null;
+  customer_org_legal_name?: string | null;
+  customer_org_trade_name?: string | null;
+  customer_ind_id?: string | null;
+  customer_ind_first_name?: string | null;
+  customer_ind_last_name?: string | null;
+  customer_ind_email?: string | null;
 }): CustomerBadgeProps {
   return {
     organisationId: sample.customer_org_id,
@@ -147,6 +148,6 @@ export function customerBadgePropsFromSample(sample: {
     individualId: sample.customer_ind_id,
     individualFirstName: sample.customer_ind_first_name,
     individualLastName: sample.customer_ind_last_name,
-    individualEmail: sample.customer_ind_email
-  }
+    individualEmail: sample.customer_ind_email,
+  };
 }

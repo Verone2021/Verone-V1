@@ -1,43 +1,56 @@
-"use client"
+'use client';
 
-import { useState, useEffect } from 'react'
-import { X, ArrowLeft, ArrowRight, Check, Upload, Palette, Settings, Info } from 'lucide-react'
-import { ButtonV2 } from '@/components/ui/button'
-import { Badge } from '@/components/ui/badge'
-import { cn } from '@/lib/utils'
+import { useState, useEffect } from 'react';
+
 import {
+  X,
+  ArrowLeft,
+  ArrowRight,
+  Check,
+  Upload,
+  Palette,
+  Settings,
+  Info,
+} from 'lucide-react';
+
+import { Badge } from '@/components/ui/badge';
+import { ButtonV2 } from '@/components/ui/button';
+import { RoomMultiSelect } from '@/components/ui/room-multi-select';
+import { cn } from '@verone/utils';
+import { CollectionImageUpload } from '@/shared/modules/common/components/collections/CollectionImageUpload';
+import type {
   CollectionFormState,
   CollectionFormErrors,
   CreateCollectionInput,
+} from '@verone/types';
+import {
   CollectionStyle,
   CollectionVisibility,
-  COLLECTION_STYLE_OPTIONS
-} from '@/types/collections'
+  COLLECTION_STYLE_OPTIONS,
+} from '@verone/types';
 
 // ✅ Export pour utilisation externe
-export type { CreateCollectionInput }
-import { RoomMultiSelect } from '@/components/ui/room-multi-select'
-import type { RoomType } from '../../types/room-types'
-import { CollectionImageUpload } from './collection-image-upload'
+export type { CreateCollectionInput };
+import type { RoomType } from '@verone/types';
 
 interface CollectionCreationWizardProps {
-  isOpen: boolean
-  onClose: () => void
-  onSubmit: (data: CreateCollectionInput) => Promise<boolean>
-  loading?: boolean
-  editingCollection?: any // Type étendu pour support édition
+  isOpen: boolean;
+  onClose: () => void;
+  onSubmit: (data: CreateCollectionInput) => Promise<boolean>;
+  loading?: boolean;
+  editingCollection?: any; // Type étendu pour support édition
 }
 
-type WizardStep = 1 | 2 | 3
+type WizardStep = 1 | 2 | 3;
 
 export function CollectionCreationWizard({
   isOpen,
   onClose,
   onSubmit,
   loading = false,
-  editingCollection
+  editingCollection,
 }: CollectionCreationWizardProps) {
-  const [currentStep, setCurrentStep] = useState<WizardStep>(1)
+  const [currentStep, setCurrentStep] = useState<WizardStep>(1);
   const [formData, setFormData] = useState<CollectionFormState>({
     // Step 1: Basic Info
     name: '',
@@ -52,70 +65,77 @@ export function CollectionCreationWizard({
     theme_tags: [],
     meta_title: '',
     meta_description: '',
-    display_order: 0
-  })
-  const [errors, setErrors] = useState<CollectionFormErrors>({})
-  const [completedSteps, setCompletedSteps] = useState<Set<WizardStep>>(new Set())
-  const [collectionId, setCollectionId] = useState<string>('')
+    display_order: 0,
+  });
+  const [errors, setErrors] = useState<CollectionFormErrors>({});
+  const [completedSteps, setCompletedSteps] = useState<Set<WizardStep>>(
+    new Set()
+  );
+  const [collectionId, setCollectionId] = useState<string>('');
 
   // Initialize form when modal opens (create or edit mode)
   useEffect(() => {
     if (isOpen) {
-      setCurrentStep(1)
-      setCollectionId(editingCollection?.id || '')
-      setFormData(editingCollection ? {
-        name: editingCollection.name || '',
-        description: editingCollection.description || '',
-        image_url: editingCollection.image_url || '',
-        style: editingCollection.style || null,
-        suitable_rooms: editingCollection.suitable_rooms || [],
-        color_theme: editingCollection.color_theme || '#FFFFFF',
-        visibility: editingCollection.visibility || 'private',
-        theme_tags: editingCollection.theme_tags || [],
-        meta_title: editingCollection.meta_title || '',
-        meta_description: editingCollection.meta_description || '',
-        display_order: editingCollection.display_order || 0
-      } : {
-        name: '',
-        description: '',
-        image_url: '',
-        style: null,
-        suitable_rooms: [],
-        color_theme: '#FFFFFF',
-        visibility: 'private',
-        theme_tags: [],
-        meta_title: '',
-        meta_description: '',
-        display_order: 0
-      })
-      setErrors({})
-      setCompletedSteps(new Set())
+      setCurrentStep(1);
+      setCollectionId(editingCollection?.id || '');
+      setFormData(
+        editingCollection
+          ? {
+              name: editingCollection.name || '',
+              description: editingCollection.description || '',
+              image_url: editingCollection.image_url || '',
+              style: editingCollection.style || null,
+              suitable_rooms: editingCollection.suitable_rooms || [],
+              color_theme: editingCollection.color_theme || '#FFFFFF',
+              visibility: editingCollection.visibility || 'private',
+              theme_tags: editingCollection.theme_tags || [],
+              meta_title: editingCollection.meta_title || '',
+              meta_description: editingCollection.meta_description || '',
+              display_order: editingCollection.display_order || 0,
+            }
+          : {
+              name: '',
+              description: '',
+              image_url: '',
+              style: null,
+              suitable_rooms: [],
+              color_theme: '#FFFFFF',
+              visibility: 'private',
+              theme_tags: [],
+              meta_title: '',
+              meta_description: '',
+              display_order: 0,
+            }
+      );
+      setErrors({});
+      setCompletedSteps(new Set());
     }
-  }, [isOpen, editingCollection])
+  }, [isOpen, editingCollection]);
 
   const updateFormData = (updates: Partial<CollectionFormState>) => {
-    setFormData(prev => ({ ...prev, ...updates }))
+    setFormData(prev => ({ ...prev, ...updates }));
     // Clear related errors
-    const newErrors = { ...errors }
+    const newErrors = { ...errors };
     Object.keys(updates).forEach(key => {
-      delete newErrors[key as keyof CollectionFormErrors]
-    })
-    setErrors(newErrors)
-  }
+      delete newErrors[key as keyof CollectionFormErrors];
+    });
+    setErrors(newErrors);
+  };
 
   const validateStep = (step: WizardStep): boolean => {
-    const newErrors: CollectionFormErrors = {}
+    const newErrors: CollectionFormErrors = {};
 
     switch (step) {
       case 1:
         if (!formData.name.trim()) {
-          newErrors.name = 'Le nom est obligatoire'
+          newErrors.name = 'Le nom est obligatoire';
         } else if (formData.name.length < 3) {
-          newErrors.name = 'Le nom doit contenir au moins 3 caractères'
+          newErrors.name = 'Le nom doit contenir au moins 3 caractères';
         }
 
         if (formData.description.length > 500) {
-          newErrors.description = 'La description ne peut pas dépasser 500 caractères'
+          newErrors.description =
+            'La description ne peut pas dépasser 500 caractères';
         }
 
         // Note: image_url validation retirée - utilise maintenant collection_images table
@@ -123,100 +143,108 @@ export function CollectionCreationWizard({
 
       case 2:
         if (!formData.style) {
-          newErrors.style = 'Veuillez sélectionner un style'
+          newErrors.style = 'Veuillez sélectionner un style';
         }
         // suitable_rooms est optionnel
-        break
+        break;
 
       case 3:
         if (formData.meta_title && formData.meta_title.length > 60) {
-          newErrors.meta_title = 'Le titre SEO ne peut pas dépasser 60 caractères'
+          newErrors.meta_title =
+            'Le titre SEO ne peut pas dépasser 60 caractères';
         }
-        if (formData.meta_description && formData.meta_description.length > 160) {
-          newErrors.meta_description = 'La description SEO ne peut pas dépasser 160 caractères'
+        if (
+          formData.meta_description &&
+          formData.meta_description.length > 160
+        ) {
+          newErrors.meta_description =
+            'La description SEO ne peut pas dépasser 160 caractères';
         }
-        break
+        break;
     }
 
-    setErrors(newErrors)
-    return Object.keys(newErrors).length === 0
-  }
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
+  };
 
   const isValidUrl = (url: string): boolean => {
     try {
-      new URL(url)
-      return true
+      new URL(url);
+      return true;
     } catch {
-      return false
+      return false;
     }
-  }
+  };
 
   const canProceed = (step: WizardStep): boolean => {
     switch (step) {
       case 1:
-        return !!formData.name.trim()
+        return !!formData.name.trim();
       case 2:
-        return !!formData.style
+        return !!formData.style;
       case 3:
-        return true // Optional step
+        return true; // Optional step
     }
-  }
+  };
 
   const handleNext = () => {
     if (validateStep(currentStep)) {
-      setCompletedSteps(prev => new Set([...prev, currentStep]))
+      setCompletedSteps(prev => new Set([...prev, currentStep]));
       if (currentStep < 3) {
-        setCurrentStep((currentStep + 1) as WizardStep)
+        setCurrentStep((currentStep + 1) as WizardStep);
       }
     }
-  }
+  };
 
   const handlePrevious = () => {
     if (currentStep > 1) {
-      setCurrentStep((currentStep - 1) as WizardStep)
+      setCurrentStep((currentStep - 1) as WizardStep);
     }
-  }
+  };
 
   const handleSubmit = async () => {
-    if (!validateStep(3)) return
+    if (!validateStep(3)) return;
 
     const submitData: CreateCollectionInput = {
       name: formData.name,
       description: formData.description || undefined,
       image_url: formData.image_url || undefined,
       style: formData.style || undefined,
-      suitable_rooms: formData.suitable_rooms.length > 0 ? formData.suitable_rooms : undefined,
+      suitable_rooms:
+        formData.suitable_rooms.length > 0
+          ? formData.suitable_rooms
+          : undefined,
       color_theme: formData.color_theme,
       visibility: formData.visibility,
       theme_tags: formData.theme_tags,
       meta_title: formData.meta_title || undefined,
       meta_description: formData.meta_description || undefined,
-      display_order: formData.display_order
-    }
+      display_order: formData.display_order,
+    };
 
-    const success = await onSubmit(submitData)
+    const success = await onSubmit(submitData);
     if (success) {
       // Note: L'image sera uploadée via le composant CollectionImageUpload
       // si un collectionId est disponible (mode édition)
-      onClose()
+      onClose();
     }
-  }
+  };
 
   const addTag = (tag: string) => {
     if (tag.trim() && !formData.theme_tags.includes(tag.trim())) {
       updateFormData({
-        theme_tags: [...formData.theme_tags, tag.trim()]
-      })
+        theme_tags: [...formData.theme_tags, tag.trim()],
+      });
     }
-  }
+  };
 
   const removeTag = (tagToRemove: string) => {
     updateFormData({
-      theme_tags: formData.theme_tags.filter(tag => tag !== tagToRemove)
-    })
-  }
+      theme_tags: formData.theme_tags.filter(tag => tag !== tagToRemove),
+    });
+  };
 
-  if (!isOpen) return null
+  if (!isOpen) return null;
 
   return (
     <div className="fixed inset-0 z-50 bg-black/50 flex items-center justify-center p-4">
@@ -225,7 +253,9 @@ export function CollectionCreationWizard({
         <div className="flex items-center justify-between p-6 border-b border-gray-200">
           <div>
             <h2 className="text-xl font-semibold text-black">
-              {editingCollection ? 'Modifier la collection' : 'Créer une collection'}
+              {editingCollection
+                ? 'Modifier la collection'
+                : 'Créer une collection'}
             </h2>
             <p className="text-sm text-gray-600 mt-1">
               Organisez vos produits selon votre style et vos besoins
@@ -244,40 +274,48 @@ export function CollectionCreationWizard({
         {/* Steps Indicator */}
         <div className="px-6 py-4 border-b border-gray-100">
           <div className="flex items-center justify-between">
-            {[1, 2, 3].map((step) => {
-              const isCompleted = completedSteps.has(step as WizardStep)
-              const isCurrent = currentStep === step
-              const canAccess = step <= currentStep || isCompleted
+            {[1, 2, 3].map(step => {
+              const isCompleted = completedSteps.has(step as WizardStep);
+              const isCurrent = currentStep === step;
+              const canAccess = step <= currentStep || isCompleted;
 
               return (
                 <div key={step} className="flex items-center">
                   <button
-                    onClick={() => canAccess && setCurrentStep(step as WizardStep)}
+                    onClick={() =>
+                      canAccess && setCurrentStep(step as WizardStep)
+                    }
                     disabled={!canAccess}
                     className={cn(
-                      "flex items-center justify-center w-8 h-8 rounded-full text-sm font-medium transition-colors",
-                      isCompleted && "bg-green-600 text-white",
-                      isCurrent && !isCompleted && "bg-black text-white",
-                      !isCurrent && !isCompleted && canAccess && "bg-gray-200 text-gray-600 hover:bg-gray-300",
-                      !canAccess && "bg-gray-100 text-gray-400 cursor-not-allowed"
+                      'flex items-center justify-center w-8 h-8 rounded-full text-sm font-medium transition-colors',
+                      isCompleted && 'bg-green-600 text-white',
+                      isCurrent && !isCompleted && 'bg-black text-white',
+                      !isCurrent &&
+                        !isCompleted &&
+                        canAccess &&
+                        'bg-gray-200 text-gray-600 hover:bg-gray-300',
+                      !canAccess &&
+                        'bg-gray-100 text-gray-400 cursor-not-allowed'
                     )}
                   >
                     {isCompleted ? <Check className="h-4 w-4" /> : step}
                   </button>
 
                   <div className="ml-3 text-sm">
-                    <div className={cn(
-                      "font-medium",
-                      isCurrent ? "text-black" : "text-gray-600"
-                    )}>
-                      {step === 1 && "Informations"}
-                      {step === 2 && "Style & Pièce"}
-                      {step === 3 && "Paramètres"}
+                    <div
+                      className={cn(
+                        'font-medium',
+                        isCurrent ? 'text-black' : 'text-gray-600'
+                      )}
+                    >
+                      {step === 1 && 'Informations'}
+                      {step === 2 && 'Style & Pièce'}
+                      {step === 3 && 'Paramètres'}
                     </div>
                     <div className="text-gray-400 text-xs">
-                      {step === 1 && "Nom et description"}
-                      {step === 2 && "Style et catégorie"}
-                      {step === 3 && "Visibilité et SEO"}
+                      {step === 1 && 'Nom et description'}
+                      {step === 2 && 'Style et catégorie'}
+                      {step === 3 && 'Visibilité et SEO'}
                     </div>
                   </div>
 
@@ -285,7 +323,7 @@ export function CollectionCreationWizard({
                     <ArrowRight className="h-4 w-4 text-gray-300 mx-4" />
                   )}
                 </div>
-              )
+              );
             })}
           </div>
         </div>
@@ -297,7 +335,9 @@ export function CollectionCreationWizard({
             <div className="space-y-6">
               <div className="flex items-center space-x-3 mb-4">
                 <Info className="h-5 w-5 text-blue-600" />
-                <h3 className="text-lg font-medium text-black">Informations de base</h3>
+                <h3 className="text-lg font-medium text-black">
+                  Informations de base
+                </h3>
               </div>
 
               {/* Collection Name */}
@@ -308,11 +348,11 @@ export function CollectionCreationWizard({
                 <input
                   type="text"
                   value={formData.name}
-                  onChange={(e) => updateFormData({ name: e.target.value })}
+                  onChange={e => updateFormData({ name: e.target.value })}
                   placeholder="Ex: Salon minimaliste blanc"
                   className={cn(
-                    "w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-black",
-                    errors.name ? "border-red-500" : "border-gray-300"
+                    'w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-black',
+                    errors.name ? 'border-red-500' : 'border-gray-300'
                   )}
                 />
                 {errors.name && (
@@ -327,12 +367,14 @@ export function CollectionCreationWizard({
                 </label>
                 <textarea
                   value={formData.description}
-                  onChange={(e) => updateFormData({ description: e.target.value })}
+                  onChange={e =>
+                    updateFormData({ description: e.target.value })
+                  }
                   placeholder="Décrivez l'ambiance et le style de cette collection..."
                   rows={3}
                   className={cn(
-                    "w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-black",
-                    errors.description ? "border-red-500" : "border-gray-300"
+                    'w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-black',
+                    errors.description ? 'border-red-500' : 'border-gray-300'
                   )}
                 />
                 <div className="flex justify-between items-center mt-1">
@@ -354,12 +396,13 @@ export function CollectionCreationWizard({
                   collectionId={collectionId}
                   disabled={!collectionId}
                   onImageUpload={(imageId, publicUrl) => {
-                    console.log('✅ Image collection uploadée:', imageId)
+                    console.log('✅ Image collection uploadée:', imageId);
                   }}
                 />
                 {!collectionId && (
                   <p className="text-xs text-gray-500 mt-2">
-                    L'image pourra être ajoutée après la création de la collection
+                    L'image pourra être ajoutée après la création de la
+                    collection
                   </p>
                 )}
               </div>
@@ -371,7 +414,9 @@ export function CollectionCreationWizard({
             <div className="space-y-6">
               <div className="flex items-center space-x-3 mb-4">
                 <Palette className="h-5 w-5 text-purple-600" />
-                <h3 className="text-lg font-medium text-black">Style et catégorie</h3>
+                <h3 className="text-lg font-medium text-black">
+                  Style et catégorie
+                </h3>
               </div>
 
               {/* Style Selection */}
@@ -380,18 +425,20 @@ export function CollectionCreationWizard({
                   Style décoratif *
                 </label>
                 <div className="grid grid-cols-2 gap-3">
-                  {COLLECTION_STYLE_OPTIONS.map((option) => (
+                  {COLLECTION_STYLE_OPTIONS.map(option => (
                     <button
                       key={option.value}
-                      onClick={() => updateFormData({
-                        style: option.value,
-                        color_theme: option.color
-                      })}
+                      onClick={() =>
+                        updateFormData({
+                          style: option.value,
+                          color_theme: option.color,
+                        })
+                      }
                       className={cn(
-                        "p-3 rounded-lg border-2 text-left transition-all",
+                        'p-3 rounded-lg border-2 text-left transition-all',
                         formData.style === option.value
-                          ? "border-black bg-gray-50"
-                          : "border-gray-200 hover:border-gray-300"
+                          ? 'border-black bg-gray-50'
+                          : 'border-gray-200 hover:border-gray-300'
                       )}
                     >
                       <div className="flex items-center space-x-3">
@@ -400,8 +447,12 @@ export function CollectionCreationWizard({
                           style={{ backgroundColor: option.color }}
                         />
                         <div>
-                          <div className="font-medium text-sm">{option.label}</div>
-                          <div className="text-xs text-gray-500">{option.description}</div>
+                          <div className="font-medium text-sm">
+                            {option.label}
+                          </div>
+                          <div className="text-xs text-gray-500">
+                            {option.description}
+                          </div>
                         </div>
                       </div>
                     </button>
@@ -418,17 +469,21 @@ export function CollectionCreationWizard({
                   Pièces de la maison compatibles
                 </label>
                 <p className="text-xs text-gray-600 mb-2">
-                  Sélectionnez les pièces où cette collection peut être utilisée (aligné avec la table products pour automatisation via triggers)
+                  Sélectionnez les pièces où cette collection peut être utilisée
+                  (aligné avec la table products pour automatisation via
+                  triggers)
                 </p>
                 <RoomMultiSelect
                   value={formData.suitable_rooms as RoomType[]}
-                  onChange={(rooms) => updateFormData({ suitable_rooms: rooms })}
+                  onChange={rooms => updateFormData({ suitable_rooms: rooms })}
                   placeholder="Sélectionner les pièces compatibles..."
                   className="w-full"
                 />
                 {formData.suitable_rooms.length > 0 && (
                   <p className="text-xs text-gray-500 mt-2">
-                    {formData.suitable_rooms.length} pièce{formData.suitable_rooms.length > 1 ? 's' : ''} sélectionnée{formData.suitable_rooms.length > 1 ? 's' : ''}
+                    {formData.suitable_rooms.length} pièce
+                    {formData.suitable_rooms.length > 1 ? 's' : ''} sélectionnée
+                    {formData.suitable_rooms.length > 1 ? 's' : ''}
                   </p>
                 )}
               </div>
@@ -440,7 +495,9 @@ export function CollectionCreationWizard({
             <div className="space-y-6">
               <div className="flex items-center space-x-3 mb-4">
                 <Settings className="h-5 w-5 text-green-600" />
-                <h3 className="text-lg font-medium text-black">Paramètres et métadonnées</h3>
+                <h3 className="text-lg font-medium text-black">
+                  Paramètres et métadonnées
+                </h3>
               </div>
 
               {/* Visibility - Simple toggle Private/Public */}
@@ -449,24 +506,29 @@ export function CollectionCreationWizard({
                   Visibilité
                 </label>
                 <p className="text-xs text-gray-600 mb-3">
-                  Les collections publiques seront visibles sur vos canaux de vente (site web, Google Merchant, etc.)
+                  Les collections publiques seront visibles sur vos canaux de
+                  vente (site web, Google Merchant, etc.)
                 </p>
                 <div className="grid grid-cols-2 gap-3">
                   <button
                     type="button"
                     onClick={() => updateFormData({ visibility: 'private' })}
                     className={cn(
-                      "p-3 rounded-lg border-2 text-center transition-all",
+                      'p-3 rounded-lg border-2 text-center transition-all',
                       formData.visibility === 'private'
-                        ? "border-black bg-black text-white"
-                        : "border-gray-200 hover:border-gray-300"
+                        ? 'border-black bg-black text-white'
+                        : 'border-gray-200 hover:border-gray-300'
                     )}
                   >
                     <div className="font-medium text-sm">Privée</div>
-                    <div className={cn(
-                      "text-xs mt-1",
-                      formData.visibility === 'private' ? "text-gray-200" : "text-gray-500"
-                    )}>
+                    <div
+                      className={cn(
+                        'text-xs mt-1',
+                        formData.visibility === 'private'
+                          ? 'text-gray-200'
+                          : 'text-gray-500'
+                      )}
+                    >
                       Visible uniquement dans le back-office
                     </div>
                   </button>
@@ -474,17 +536,21 @@ export function CollectionCreationWizard({
                     type="button"
                     onClick={() => updateFormData({ visibility: 'public' })}
                     className={cn(
-                      "p-3 rounded-lg border-2 text-center transition-all",
+                      'p-3 rounded-lg border-2 text-center transition-all',
                       formData.visibility === 'public'
-                        ? "border-black bg-black text-white"
-                        : "border-gray-200 hover:border-gray-300"
+                        ? 'border-black bg-black text-white'
+                        : 'border-gray-200 hover:border-gray-300'
                     )}
                   >
                     <div className="font-medium text-sm">Publique</div>
-                    <div className={cn(
-                      "text-xs mt-1",
-                      formData.visibility === 'public' ? "text-gray-200" : "text-gray-500"
-                    )}>
+                    <div
+                      className={cn(
+                        'text-xs mt-1',
+                        formData.visibility === 'public'
+                          ? 'text-gray-200'
+                          : 'text-gray-500'
+                      )}
+                    >
                       Visible sur les canaux de vente
                     </div>
                   </button>
@@ -501,16 +567,16 @@ export function CollectionCreationWizard({
                     type="text"
                     placeholder="Tapez un tag et appuyez sur Entrée"
                     className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-black"
-                    onKeyDown={(e) => {
+                    onKeyDown={e => {
                       if (e.key === 'Enter') {
-                        e.preventDefault()
-                        addTag(e.currentTarget.value)
-                        e.currentTarget.value = ''
+                        e.preventDefault();
+                        addTag(e.currentTarget.value);
+                        e.currentTarget.value = '';
                       }
                     }}
                   />
                   <div className="flex flex-wrap gap-2">
-                    {formData.theme_tags.map((tag) => (
+                    {formData.theme_tags.map(tag => (
                       <Badge
                         key={tag}
                         variant="secondary"
@@ -535,16 +601,20 @@ export function CollectionCreationWizard({
                   <input
                     type="text"
                     value={formData.meta_title}
-                    onChange={(e) => updateFormData({ meta_title: e.target.value })}
+                    onChange={e =>
+                      updateFormData({ meta_title: e.target.value })
+                    }
                     placeholder="Titre optimisé pour les moteurs de recherche"
                     className={cn(
-                      "w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-black",
-                      errors.meta_title ? "border-red-500" : "border-gray-300"
+                      'w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-black',
+                      errors.meta_title ? 'border-red-500' : 'border-gray-300'
                     )}
                   />
                   <div className="flex justify-between items-center mt-1">
                     {errors.meta_title && (
-                      <p className="text-sm text-red-600">{errors.meta_title}</p>
+                      <p className="text-sm text-red-600">
+                        {errors.meta_title}
+                      </p>
                     )}
                     <p className="text-xs text-gray-500 ml-auto">
                       {formData.meta_title.length}/60
@@ -558,17 +628,23 @@ export function CollectionCreationWizard({
                   </label>
                   <textarea
                     value={formData.meta_description}
-                    onChange={(e) => updateFormData({ meta_description: e.target.value })}
+                    onChange={e =>
+                      updateFormData({ meta_description: e.target.value })
+                    }
                     placeholder="Description optimisée pour les moteurs de recherche"
                     rows={2}
                     className={cn(
-                      "w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-black",
-                      errors.meta_description ? "border-red-500" : "border-gray-300"
+                      'w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-black',
+                      errors.meta_description
+                        ? 'border-red-500'
+                        : 'border-gray-300'
                     )}
                   />
                   <div className="flex justify-between items-center mt-1">
                     {errors.meta_description && (
-                      <p className="text-sm text-red-600">{errors.meta_description}</p>
+                      <p className="text-sm text-red-600">
+                        {errors.meta_description}
+                      </p>
                     )}
                     <p className="text-xs text-gray-500 ml-auto">
                       {formData.meta_description.length}/160
@@ -637,5 +713,5 @@ export function CollectionCreationWizard({
         </div>
       </div>
     </div>
-  )
+  );
 }

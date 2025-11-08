@@ -1,29 +1,38 @@
-"use client"
+'use client';
 
-import { useState } from 'react'
-import { User, Save, X, Edit, Mail, Phone, Globe } from 'lucide-react'
-import { ButtonV2 } from '@/components/ui/button'
-import { cn } from '@/lib/utils'
-import { getOrganisationDisplayName } from '../../lib/utils/organisation-helpers'
-import { useInlineEdit, type EditableSection } from '@/shared/modules/common/hooks'
+import { useState } from 'react';
+
+import { User, Save, X, Edit, Mail, Phone, Globe } from 'lucide-react';
+
+import { ButtonV2 } from '@/components/ui/button';
+import { cn } from '@verone/utils';
+import { getOrganisationDisplayName } from '@/lib/utils/organisation-helpers';
+import {
+  useInlineEdit,
+  type EditableSection,
+} from '@/shared/modules/common/hooks';
 
 interface Organisation {
-  id: string
-  legal_name: string
-  trade_name?: string | null
-  email?: string | null
-  phone?: string | null
-  secondary_email?: string | null
-  website?: string | null
+  id: string;
+  legal_name: string;
+  trade_name?: string | null;
+  email?: string | null;
+  phone?: string | null;
+  secondary_email?: string | null;
+  website?: string | null;
 }
 
 interface ContactEditSectionProps {
-  organisation: Organisation
-  onUpdate: (updatedOrganisation: Partial<Organisation>) => void
-  className?: string
+  organisation: Organisation;
+  onUpdate: (updatedOrganisation: Partial<Organisation>) => void;
+  className?: string;
 }
 
-export function ContactEditSection({ organisation, onUpdate, className }: ContactEditSectionProps) {
+export function ContactEditSection({
+  organisation,
+  onUpdate,
+  className,
+}: ContactEditSectionProps) {
   const {
     isEditing,
     isSaving,
@@ -33,20 +42,20 @@ export function ContactEditSection({ organisation, onUpdate, className }: Contac
     cancelEdit,
     updateEditedData,
     saveChanges,
-    hasChanges
+    hasChanges,
   } = useInlineEdit({
     organisationId: organisation.id,
-    onUpdate: (updatedData) => {
-      onUpdate(updatedData)
+    onUpdate: updatedData => {
+      onUpdate(updatedData);
     },
-    onError: (error) => {
-      console.error('❌ Erreur mise à jour informations contact:', error)
-    }
-  })
+    onError: error => {
+      console.error('❌ Erreur mise à jour informations contact:', error);
+    },
+  });
 
-  const section: EditableSection = 'contact'
-  const editData = getEditedData(section)
-  const error = getError(section)
+  const section: EditableSection = 'contact';
+  const editData = getEditedData(section);
+  const error = getError(section);
 
   const handleStartEdit = () => {
     startEdit(section, {
@@ -55,39 +64,43 @@ export function ContactEditSection({ organisation, onUpdate, className }: Contac
       email: organisation.email || '',
       phone: organisation.phone || '',
       secondary_email: organisation.secondary_email || '',
-      website: organisation.website || ''
-    })
-  }
+      website: organisation.website || '',
+    });
+  };
 
   const handleSave = async () => {
-    const success = await saveChanges(section)
+    const success = await saveChanges(section);
     if (success) {
-      console.log('✅ Informations contact mises à jour avec succès')
+      console.log('✅ Informations contact mises à jour avec succès');
     }
-  }
+  };
 
   const handleCancel = () => {
-    cancelEdit(section)
-  }
+    cancelEdit(section);
+  };
 
   const handleFieldChange = (field: string, value: string) => {
     // Nettoyage automatique des emails et URLs
-    let processedValue = value.trim()
+    let processedValue = value.trim();
 
     if (field === 'email' || field === 'secondary_email') {
-      processedValue = processedValue.toLowerCase()
+      processedValue = processedValue.toLowerCase();
     }
 
-    if (field === 'website' && processedValue && !processedValue.startsWith('http')) {
-      processedValue = `https://${processedValue}`
+    if (
+      field === 'website' &&
+      processedValue &&
+      !processedValue.startsWith('http')
+    ) {
+      processedValue = `https://${processedValue}`;
     }
 
-    updateEditedData(section, { [field]: processedValue || null })
-  }
+    updateEditedData(section, { [field]: processedValue || null });
+  };
 
   if (isEditing(section)) {
     return (
-      <div className={cn("card-verone p-4", className)}>
+      <div className={cn('card-verone p-4', className)}>
         <div className="flex items-center justify-between mb-3">
           <h3 className="text-lg font-medium text-black flex items-center">
             <User className="h-5 w-5 mr-2" />
@@ -124,7 +137,7 @@ export function ContactEditSection({ organisation, onUpdate, className }: Contac
             <input
               type="text"
               value={editData?.name || ''}
-              onChange={(e) => handleFieldChange('name', e.target.value)}
+              onChange={e => handleFieldChange('name', e.target.value)}
               className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-black focus:border-black"
               placeholder="Nom du fournisseur"
               required
@@ -139,7 +152,7 @@ export function ContactEditSection({ organisation, onUpdate, className }: Contac
             <input
               type="email"
               value={editData?.email || ''}
-              onChange={(e) => handleFieldChange('email', e.target.value)}
+              onChange={e => handleFieldChange('email', e.target.value)}
               className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-black focus:border-black"
               placeholder="contact@fournisseur.com"
             />
@@ -153,7 +166,7 @@ export function ContactEditSection({ organisation, onUpdate, className }: Contac
             <input
               type="tel"
               value={editData?.phone || ''}
-              onChange={(e) => handleFieldChange('phone', e.target.value)}
+              onChange={e => handleFieldChange('phone', e.target.value)}
               className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-black focus:border-black"
               placeholder="+33 1 23 45 67 89"
             />
@@ -167,7 +180,9 @@ export function ContactEditSection({ organisation, onUpdate, className }: Contac
             <input
               type="email"
               value={editData?.secondary_email || ''}
-              onChange={(e) => handleFieldChange('secondary_email', e.target.value)}
+              onChange={e =>
+                handleFieldChange('secondary_email', e.target.value)
+              }
               className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-black focus:border-black"
               placeholder="commercial@fournisseur.com"
             />
@@ -184,7 +199,7 @@ export function ContactEditSection({ organisation, onUpdate, className }: Contac
             <input
               type="url"
               value={editData?.website || ''}
-              onChange={(e) => handleFieldChange('website', e.target.value)}
+              onChange={e => handleFieldChange('website', e.target.value)}
               className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-black focus:border-black"
               placeholder="www.fournisseur.com"
             />
@@ -201,12 +216,12 @@ export function ContactEditSection({ organisation, onUpdate, className }: Contac
           </div>
         )}
       </div>
-    )
+    );
   }
 
   // Mode affichage
   return (
-    <div className={cn("card-verone p-4", className)}>
+    <div className={cn('card-verone p-4', className)}>
       <div className="flex items-center justify-between mb-3">
         <h3 className="text-lg font-medium text-black flex items-center">
           <User className="h-5 w-5 mr-2" />
@@ -221,7 +236,9 @@ export function ContactEditSection({ organisation, onUpdate, className }: Contac
       <div className="space-y-3">
         <div>
           <span className="text-sm text-black opacity-70">Nom:</span>
-          <div className="text-lg font-semibold text-black">{getOrganisationDisplayName(organisation as any)}</div>
+          <div className="text-lg font-semibold text-black">
+            {getOrganisationDisplayName(organisation as any)}
+          </div>
         </div>
 
         {organisation.email && (
@@ -231,7 +248,10 @@ export function ContactEditSection({ organisation, onUpdate, className }: Contac
               Email principal:
             </span>
             <div className="text-sm text-blue-600">
-              <a href={`mailto:${organisation.email}`} className="hover:underline">
+              <a
+                href={`mailto:${organisation.email}`}
+                className="hover:underline"
+              >
                 {organisation.email}
               </a>
             </div>
@@ -259,7 +279,10 @@ export function ContactEditSection({ organisation, onUpdate, className }: Contac
               Email secondaire:
             </span>
             <div className="text-sm text-blue-600">
-              <a href={`mailto:${organisation.secondary_email}`} className="hover:underline">
+              <a
+                href={`mailto:${organisation.secondary_email}`}
+                className="hover:underline"
+              >
                 {organisation.secondary_email}
               </a>
             </div>
@@ -273,7 +296,12 @@ export function ContactEditSection({ organisation, onUpdate, className }: Contac
               Site web:
             </span>
             <div className="text-sm text-blue-600">
-              <a href={organisation.website} target="_blank" rel="noopener noreferrer" className="hover:underline">
+              <a
+                href={organisation.website}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="hover:underline"
+              >
                 {organisation.website}
               </a>
             </div>
@@ -281,12 +309,14 @@ export function ContactEditSection({ organisation, onUpdate, className }: Contac
         )}
 
         {/* Message si aucune info contact */}
-        {!organisation.email && !organisation.phone && !organisation.website && (
-          <div className="text-center text-gray-400 text-xs italic py-2">
-            Aucune information de contact renseignée
-          </div>
-        )}
+        {!organisation.email &&
+          !organisation.phone &&
+          !organisation.website && (
+            <div className="text-center text-gray-400 text-xs italic py-2">
+              Aucune information de contact renseignée
+            </div>
+          )}
       </div>
     </div>
-  )
+  );
 }

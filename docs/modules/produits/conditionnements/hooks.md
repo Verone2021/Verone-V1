@@ -15,55 +15,55 @@ Hook complet gestion packages avec calculs business automatiques.
 
 ```typescript
 interface UseProductPackagesOptions {
-  productId: string
-  autoFetch?: boolean
+  productId: string;
+  autoFetch?: boolean;
 }
 
-type PackageType = 'single' | 'pack' | 'bulk' | 'custom'
+type PackageType = 'single' | 'pack' | 'bulk' | 'custom';
 
 interface ProductPackage {
-  id: string
-  product_id: string
-  type: PackageType
-  base_quantity: number
-  unit: string
-  unit_price_ht?: number
-  discount_rate?: number
-  is_default: boolean
-  display_order: number
-  is_active: boolean
-  created_at: string
-  updated_at: string
+  id: string;
+  product_id: string;
+  type: PackageType;
+  base_quantity: number;
+  unit: string;
+  unit_price_ht?: number;
+  discount_rate?: number;
+  is_default: boolean;
+  display_order: number;
+  is_active: boolean;
+  created_at: string;
+  updated_at: string;
 }
 
 function useProductPackages(options: UseProductPackagesOptions): {
   // 📊 Data
-  packages: ProductPackage[]
-  defaultPackage: ProductPackage | null
-  singlePackage: ProductPackage | null
+  packages: ProductPackage[];
+  defaultPackage: ProductPackage | null;
+  singlePackage: ProductPackage | null;
 
   // 🔄 State
-  loading: boolean
-  error: string | null
+  loading: boolean;
+  error: string | null;
 
   // 🎬 Actions
-  fetchPackages: () => Promise<void>
-  calculatePackagePrice: (basePrice: number, pkg: ProductPackage) => number
+  fetchPackages: () => Promise<void>;
+  calculatePackagePrice: (basePrice: number, pkg: ProductPackage) => number;
 
   // 🛠️ Helpers Business
-  getPackagesByType: (type: PackageType) => ProductPackage[]
-  getPackPackages: () => ProductPackage[]
-  getBulkPackages: () => ProductPackage[]
-  getBestValuePackage: (basePrice: number) => ProductPackage | null
-  getDiscountLabel: (pkg: ProductPackage) => string | null
+  getPackagesByType: (type: PackageType) => ProductPackage[];
+  getPackPackages: () => ProductPackage[];
+  getBulkPackages: () => ProductPackage[];
+  getBestValuePackage: (basePrice: number) => ProductPackage | null;
+  getDiscountLabel: (pkg: ProductPackage) => string | null;
 
   // 📈 Stats
-  totalPackages: number
-  hasMultiplePackages: boolean
-  hasDiscounts: boolean
-  maxDiscount: number
-  isValidPackageSystem: boolean
-}
+  totalPackages: number;
+  hasMultiplePackages: boolean;
+  hasDiscounts: boolean;
+  maxDiscount: number;
+  isValidPackageSystem: boolean;
+};
 ```
 
 ---
@@ -75,43 +75,40 @@ Calcule le prix total d'un package selon les business rules.
 ### Algorithme
 
 ```typescript
-function calculatePackagePrice(
-  basePrice: number,
-  pkg: ProductPackage
-): number {
+function calculatePackagePrice(basePrice: number, pkg: ProductPackage): number {
   // Mode 1 : Prix unitaire spécifique défini
   if (pkg.unit_price_ht && pkg.unit_price_ht > 0) {
-    return pkg.unit_price_ht * pkg.base_quantity
+    return pkg.unit_price_ht * pkg.base_quantity;
   }
 
   // Mode 2 : Prix de base avec remise
-  const grossPrice = basePrice * pkg.base_quantity
-  const discount = pkg.discount_rate || 0
-  const netPrice = grossPrice * (1 - discount)
+  const grossPrice = basePrice * pkg.base_quantity;
+  const discount = pkg.discount_rate || 0;
+  const netPrice = grossPrice * (1 - discount);
 
-  return Math.round(netPrice * 100) / 100 // Arrondi 2 décimales
+  return Math.round(netPrice * 100) / 100; // Arrondi 2 décimales
 }
 ```
 
 ### Exemples
 
 ```typescript
-const basePrice = 50 // Prix unitaire de base
+const basePrice = 50; // Prix unitaire de base
 
 // Package 1 : Mode Prix Spécifique
 const pack1 = {
   base_quantity: 6,
-  unit_price_ht: 45
-}
-calculatePackagePrice(basePrice, pack1)
+  unit_price_ht: 45,
+};
+calculatePackagePrice(basePrice, pack1);
 // = 45 × 6 = 270€
 
 // Package 2 : Mode Remise
 const pack2 = {
   base_quantity: 6,
-  discount_rate: 0.15  // 15%
-}
-calculatePackagePrice(basePrice, pack2)
+  discount_rate: 0.15, // 15%
+};
+calculatePackagePrice(basePrice, pack2);
 // = 50 × 6 × (1 - 0.15)
 // = 300 × 0.85
 // = 255€
@@ -127,27 +124,33 @@ Retourne le package avec le meilleur prix unitaire.
 
 ```typescript
 function getBestValuePackage(basePrice: number): ProductPackage | null {
-  if (packages.length === 0) return null
+  if (packages.length === 0) return null;
 
   return packages.reduce((best, current) => {
-    const currentPricePerUnit = calculatePackagePrice(basePrice, current) / current.base_quantity
-    const bestPricePerUnit = calculatePackagePrice(basePrice, best) / best.base_quantity
+    const currentPricePerUnit =
+      calculatePackagePrice(basePrice, current) / current.base_quantity;
+    const bestPricePerUnit =
+      calculatePackagePrice(basePrice, best) / best.base_quantity;
 
-    return currentPricePerUnit < bestPricePerUnit ? current : best
-  })
+    return currentPricePerUnit < bestPricePerUnit ? current : best;
+  });
 }
 ```
 
 ### Exemple
 
 ```typescript
-const { getBestValuePackage } = useProductPackages({ productId })
+const { getBestValuePackage } = useProductPackages({ productId });
 
-const bestValue = getBestValuePackage(50)
+const bestValue = getBestValuePackage(50);
 // Retourne le package avec le prix/unité le plus bas
 
-console.log('Meilleure valeur:', bestValue.base_quantity, 'x')
-console.log('Prix unitaire:', calculatePackagePrice(50, bestValue) / bestValue.base_quantity, '€')
+console.log('Meilleure valeur:', bestValue.base_quantity, 'x');
+console.log(
+  'Prix unitaire:',
+  calculatePackagePrice(50, bestValue) / bestValue.base_quantity,
+  '€'
+);
 ```
 
 ---
@@ -160,23 +163,23 @@ Génère un label UX pour afficher la remise.
 
 ```typescript
 function getDiscountLabel(pkg: ProductPackage): string | null {
-  const discount = pkg.discount_rate
-  if (!discount || discount === 0) return null
+  const discount = pkg.discount_rate;
+  if (!discount || discount === 0) return null;
 
-  return `Jusqu'à -${Math.round(discount * 100)}%`
+  return `Jusqu'à -${Math.round(discount * 100)}%`;
 }
 ```
 
 ### Exemples
 
 ```typescript
-getDiscountLabel({ discount_rate: 0.15 })
+getDiscountLabel({ discount_rate: 0.15 });
 // "Jusqu'à -15%"
 
-getDiscountLabel({ discount_rate: 0.25 })
+getDiscountLabel({ discount_rate: 0.25 });
 // "Jusqu'à -25%"
 
-getDiscountLabel({ discount_rate: 0 })
+getDiscountLabel({ discount_rate: 0 });
 // null
 ```
 
@@ -190,13 +193,13 @@ Valide que le système de packages respecte les business rules.
 
 ```typescript
 // Règle 1 : Au moins 1 package existe
-packages.length > 0
+packages.length > 0;
 
 // Règle 2 : 1 package par défaut
-packages.some(pkg => pkg.is_default)
+packages.some(pkg => pkg.is_default);
 
 // Règle 3 : 1 package type='single'
-packages.some(pkg => pkg.type === 'single')
+packages.some(pkg => pkg.type === 'single');
 
 // isValidPackageSystem = true si les 3 règles OK
 ```
@@ -204,12 +207,12 @@ packages.some(pkg => pkg.type === 'single')
 ### Exemple
 
 ```typescript
-const { isValidPackageSystem } = useProductPackages({ productId })
+const { isValidPackageSystem } = useProductPackages({ productId });
 
 if (!isValidPackageSystem) {
-  toast.error('⚠️ Configuration packages invalide')
+  toast.error('⚠️ Configuration packages invalide');
   // Bloquer l'ajout au panier
-  return
+  return;
 }
 ```
 

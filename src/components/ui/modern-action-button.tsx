@@ -16,7 +16,7 @@ import {
   Loader2,
 } from 'lucide-react';
 
-import { cn } from '@/lib/utils';
+import { cn } from '@verone/utils';
 
 import type { ButtonV2Props } from './button';
 import { ButtonV2 } from './button';

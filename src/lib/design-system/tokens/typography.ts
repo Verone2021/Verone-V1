@@ -83,7 +83,7 @@ export const typography = {
     wider: '0.05em',
     widest: '0.1em',
   },
-} as const
+} as const;
 
 /**
  * Semantic typography pour composants
@@ -158,10 +158,10 @@ export const componentTypography = {
       lineHeight: typography.lineHeight.relaxed,
     },
   },
-} as const
+} as const;
 
 /**
  * Type helpers
  */
-export type FontSize = keyof typeof typography.fontSize
-export type FontWeight = keyof typeof typography.fontWeight
+export type FontSize = keyof typeof typography.fontSize;
+export type FontWeight = keyof typeof typography.fontWeight;

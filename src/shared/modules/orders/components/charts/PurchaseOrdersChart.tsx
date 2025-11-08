@@ -7,7 +7,7 @@
  * Date: 2025-10-14
  */
 
-'use client'
+'use client';
 
 import {
   LineChart,
@@ -17,21 +17,22 @@ import {
   CartesianGrid,
   Tooltip,
   ResponsiveContainer,
-  TooltipProps
-} from 'recharts'
-import type { PurchaseOrderDataPoint } from '@/shared/modules/dashboard/hooks'
+  TooltipProps,
+} from 'recharts';
+
+import type { PurchaseOrderDataPoint } from '@/shared/modules/dashboard/hooks';
 
 interface PurchaseOrdersChartProps {
-  data: PurchaseOrderDataPoint[]
-  isLoading?: boolean
+  data: PurchaseOrderDataPoint[];
+  isLoading?: boolean;
 }
 
 // Custom Tooltip avec formatage €
 const CustomTooltip = ({ active, payload }: any) => {
-  if (!active || !payload || !payload.length) return null
+  if (!active || !payload?.length) return null;
 
-  const amount = payload[0].value || 0
-  const dataPoint = payload[0].payload as PurchaseOrderDataPoint
+  const amount = payload[0].value || 0;
+  const dataPoint = payload[0].payload as PurchaseOrderDataPoint;
 
   return (
     <div className="bg-white border border-gray-200 rounded-lg shadow-lg p-3">
@@ -41,20 +42,23 @@ const CustomTooltip = ({ active, payload }: any) => {
           style: 'currency',
           currency: 'EUR',
           minimumFractionDigits: 0,
-          maximumFractionDigits: 0
+          maximumFractionDigits: 0,
         }).format(amount as number)}
       </p>
     </div>
-  )
-}
+  );
+};
 
-export function PurchaseOrdersChart({ data, isLoading = false }: PurchaseOrdersChartProps) {
+export function PurchaseOrdersChart({
+  data,
+  isLoading = false,
+}: PurchaseOrdersChartProps) {
   if (isLoading) {
     return (
       <div className="w-full h-[300px] flex items-center justify-center bg-gray-50 rounded-lg animate-pulse">
         <div className="text-sm text-gray-400">Chargement des données...</div>
       </div>
-    )
+    );
   }
 
   if (!data || data.length === 0) {
@@ -62,7 +66,7 @@ export function PurchaseOrdersChart({ data, isLoading = false }: PurchaseOrdersC
       <div className="w-full h-[300px] flex items-center justify-center bg-gray-50 rounded-lg">
         <div className="text-sm text-gray-500">Aucune donnée disponible</div>
       </div>
-    )
+    );
   }
 
   return (
@@ -81,9 +85,7 @@ export function PurchaseOrdersChart({ data, isLoading = false }: PurchaseOrdersC
           <YAxis
             tick={{ fontSize: 12, fill: '#666666' }}
             tickLine={{ stroke: '#E5E5E5' }}
-            tickFormatter={(value) =>
-              `${(value / 1000).toFixed(0)}k€`
-            }
+            tickFormatter={value => `${(value / 1000).toFixed(0)}k€`}
           />
           <Tooltip content={<CustomTooltip />} />
           <Line
@@ -97,5 +99,5 @@ export function PurchaseOrdersChart({ data, isLoading = false }: PurchaseOrdersC
         </LineChart>
       </ResponsiveContainer>
     </div>
-  )
+  );
 }

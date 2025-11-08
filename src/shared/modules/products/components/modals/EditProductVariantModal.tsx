@@ -16,6 +16,10 @@
  */
 
 import { useState, useEffect } from 'react';
+
+import { AlertCircle, Save, X } from 'lucide-react';
+
+import { ButtonV2 } from '@/components/ui/button';
 import {
   Dialog,
   DialogContent,
@@ -24,10 +28,8 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog';
-import { ButtonV2 } from '@/components/ui/button';
-import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
-import { Textarea } from '@/components/ui/textarea';
+import { Label } from '@/components/ui/label';
 import {
   Select,
   SelectContent,
@@ -35,19 +37,19 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { AlertCircle, Save, X } from 'lucide-react';
+import { Textarea } from '@/components/ui/textarea';
 import { createClient } from '@/lib/supabase/client';
 import { useToast } from '@/shared/modules/common/hooks';
 import { useOrganisations } from '@/shared/modules/organisations/hooks';
-import { SupplierSelector } from '@/components/business/supplier-selector';
-import type { VariantProduct, VariantGroup } from '@/types/variant-groups';
-import { COLLECTION_STYLE_OPTIONS } from '@/types/collections';
+import { SupplierSelector } from '@/shared/modules/suppliers/components/selectors/SupplierSelector';
+import { COLLECTION_STYLE_OPTIONS } from '@verone/types';
 import {
   COLOR_OPTIONS,
   MATERIAL_OPTIONS,
   type ProductColor,
   type ProductMaterial,
-} from '@/types/variant-attributes-types';
+} from '@verone/types';
+import type { VariantProduct, VariantGroup } from '@verone/types';
 
 interface EditProductVariantModalProps {
   isOpen: boolean;
@@ -457,7 +459,7 @@ export function EditProductVariantModal({
             >
               {isSubmitting ? (
                 <>
-                  <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+                  <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2" />
                   Enregistrement...
                 </>
               ) : (

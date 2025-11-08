@@ -7,36 +7,50 @@
  * Chaque carte affiche un badge indiquant si les données sont RÉELLES ou MOCK.
  */
 
-"use client"
+'use client';
 
-import React from 'react'
-import { Clock, Activity, Calendar, TrendingUp, Users, Target } from 'lucide-react'
-import { UserDetailData } from '../page'
-import { DataStatusBadge } from '@/components/ui/data-status-badge'
+import React from 'react';
+
+import {
+  Clock,
+  Activity,
+  Calendar,
+  TrendingUp,
+  Users,
+  Target,
+} from 'lucide-react';
+
+import { DataStatusBadge } from '@/components/ui/data-status-badge';
+
+import type { UserDetailData } from '../page';
 
 interface UserStatsCardsProps {
-  user: UserDetailData
+  user: UserDetailData;
 }
 
 export function UserStatsCards({ user }: UserStatsCardsProps) {
   const getEngagementLevel = (score: number) => {
-    if (score >= 80) return { level: 'Très élevé', color: 'text-green-600' }
-    if (score >= 60) return { level: 'Élevé', color: 'text-blue-600' }
-    if (score >= 40) return { level: 'Moyen', color: 'text-neutral-900' }
-    return { level: 'Faible', color: 'text-red-500' }
-  }
+    if (score >= 80) return { level: 'Très élevé', color: 'text-green-600' };
+    if (score >= 60) return { level: 'Élevé', color: 'text-blue-600' };
+    if (score >= 40) return { level: 'Moyen', color: 'text-neutral-900' };
+    return { level: 'Faible', color: 'text-red-500' };
+  };
 
   const getFrequencyLabel = (frequency: 'high' | 'medium' | 'low') => {
     switch (frequency) {
-      case 'high': return { label: 'Fréquent', color: 'text-green-600' }
-      case 'medium': return { label: 'Régulier', color: 'text-blue-600' }
-      case 'low': return { label: 'Occasionnel', color: 'text-neutral-900' }
-      default: return { label: 'Inconnu', color: 'text-neutral-500' }
+      case 'high':
+        return { label: 'Fréquent', color: 'text-green-600' };
+      case 'medium':
+        return { label: 'Régulier', color: 'text-blue-600' };
+      case 'low':
+        return { label: 'Occasionnel', color: 'text-neutral-900' };
+      default:
+        return { label: 'Inconnu', color: 'text-neutral-500' };
     }
-  }
+  };
 
-  const engagement = getEngagementLevel(user.analytics.engagement_score)
-  const frequency = getFrequencyLabel(user.analytics.login_frequency)
+  const engagement = getEngagementLevel(user.analytics.engagement_score);
+  const frequency = getFrequencyLabel(user.analytics.login_frequency);
 
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
@@ -87,9 +101,7 @@ export function UserStatsCards({ user }: UserStatsCardsProps) {
             <p className={`text-xl font-bold ${frequency.color}`}>
               {frequency.label}
             </p>
-            <p className="text-[11px] text-neutral-500">
-              Rythme de connexion
-            </p>
+            <p className="text-[11px] text-neutral-500">Rythme de connexion</p>
           </div>
           <div className="p-1.5 bg-neutral-50 border border-neutral-200 rounded">
             <TrendingUp className="h-5 w-5 text-neutral-500" />
@@ -126,7 +138,8 @@ export function UserStatsCards({ user }: UserStatsCardsProps) {
               {user.analytics.days_since_creation}
             </p>
             <p className="text-[11px] text-neutral-500">
-              Jour{user.analytics.days_since_creation > 1 ? 's' : ''} d'existence
+              Jour{user.analytics.days_since_creation > 1 ? 's' : ''}{' '}
+              d'existence
             </p>
           </div>
           <div className="p-1.5 bg-neutral-50 border border-neutral-200 rounded">
@@ -143,12 +156,15 @@ export function UserStatsCards({ user }: UserStatsCardsProps) {
             <p className="text-xs text-neutral-600">Statut</p>
             <p className="text-xl font-bold text-neutral-900">
               {user.last_sign_in_at &&
-                (Date.now() - new Date(user.last_sign_in_at).getTime()) < (7 * 24 * 60 * 60 * 1000)
-                ? 'Actif' : 'Dormant'
-              }
+              Date.now() - new Date(user.last_sign_in_at).getTime() <
+                7 * 24 * 60 * 60 * 1000
+                ? 'Actif'
+                : 'Dormant'}
             </p>
             <p className="text-[11px] text-neutral-500">
-              {user.last_sign_in_at ? 'Dernière activité récente' : 'Pas de connexion récente'}
+              {user.last_sign_in_at
+                ? 'Dernière activité récente'
+                : 'Pas de connexion récente'}
             </p>
           </div>
           <div className="p-1.5 bg-neutral-50 border border-neutral-200 rounded">
@@ -175,7 +191,6 @@ export function UserStatsCards({ user }: UserStatsCardsProps) {
           </div>
         </div>
       </div>
-
     </div>
-  )
+  );
 }

@@ -8,7 +8,7 @@ name: 🔍 PR Validation & Deploy Check
 
 on:
   pull_request:
-    branches: [ main ]
+    branches: [main]
     types: [opened, synchronize, ready_for_review]
 
 env:

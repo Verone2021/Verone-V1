@@ -5,24 +5,40 @@
  * Approche classique : Upload → Storage → URL directe
  */
 
-"use client"
+'use client';
 
-import React, { useRef, useState } from "react"
-import { Upload, X, Image as ImageIcon, Loader2, CheckCircle, AlertCircle, RefreshCw } from "lucide-react"
-import { ButtonV2 } from "@/components/ui/button"
-import { Progress } from "@/components/ui/progress"
-import { Alert, AlertDescription } from "@/components/ui/alert"
-import { cn } from "../../lib/utils"
-import Image from "next/image"
-import { useImageUpload, type UseImageUploadProps } from '@/shared/modules/common/hooks'
-import type { BucketType } from '@/lib/upload/validation'
+import React, { useRef, useState } from 'react';
 
-interface ImageUploadV2Props extends Omit<UseImageUploadProps, 'onUploadSuccess' | 'onUploadError'> {
-  currentImageUrl?: string
-  onImageUpload: (url: string) => void
-  onImageRemove: () => void
-  className?: string
-  allowReplace?: boolean
+import Image from 'next/image';
+
+import {
+  Upload,
+  X,
+  Image as ImageIcon,
+  Loader2,
+  CheckCircle,
+  AlertCircle,
+  RefreshCw,
+} from 'lucide-react';
+
+import { Alert, AlertDescription } from '@/components/ui/alert';
+import { ButtonV2 } from '@/components/ui/button';
+import { Progress } from '@/components/ui/progress';
+import type { BucketType } from '@/lib/upload/validation';
+import {
+  useImageUpload,
+  type UseImageUploadProps,
+} from '@/shared/modules/common/hooks';
+
+import { cn } from '../../lib/utils';
+
+interface ImageUploadV2Props
+  extends Omit<UseImageUploadProps, 'onUploadSuccess' | 'onUploadError'> {
+  currentImageUrl?: string;
+  onImageUpload: (url: string) => void;
+  onImageRemove: () => void;
+  className?: string;
+  allowReplace?: boolean;
 }
 
 export function ImageUploadV2({
@@ -32,13 +48,13 @@ export function ImageUploadV2({
   onImageRemove,
   className,
   allowReplace = true,
-  autoUpload = true
+  autoUpload = true,
 }: ImageUploadV2Props) {
   // État pour drag & drop
-  const [dragActive, setDragActive] = useState(false)
+  const [dragActive, setDragActive] = useState(false);
 
   // Référence pour input file
-  const fileInputRef = useRef<HTMLInputElement>(null)
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   // Hook simple d'upload
   const {
@@ -57,111 +73,111 @@ export function ImageUploadV2({
     deleteUploadedFile,
     canUpload,
     supportedTypes,
-    maxSizeMB
+    maxSizeMB,
   } = useImageUpload({
     bucket,
     autoUpload,
-    onUploadSuccess: (result) => {
-      console.log('🎉 Upload terminé:', result?.publicUrl)
-      onImageUpload(result?.publicUrl ?? '')
+    onUploadSuccess: result => {
+      console.log('🎉 Upload terminé:', result?.publicUrl);
+      onImageUpload(result?.publicUrl ?? '');
     },
-    onUploadError: (error) => {
-      console.error('❌ Erreur upload:', error?.message)
-    }
-  })
+    onUploadError: error => {
+      console.error('❌ Erreur upload:', error?.message);
+    },
+  });
 
   /**
    * 📁 Gestion sélection de fichier
    */
   const handleFileSelect = async (file: File) => {
     if (!canUpload) {
-      console.warn('⚠️ Upload non autorisé')
-      return
+      console.warn('⚠️ Upload non autorisé');
+      return;
     }
 
     // Validation préalable avec feedback immédiat
-    const validation = validateFile(file)
+    const validation = validateFile(file);
     if (!validation.isValid) {
       // L'erreur sera affichée par le hook
-      return
+      return;
     }
 
     // Nettoyer les erreurs précédentes
-    clearError()
+    clearError();
 
     // Lancer l'upload
-    const success = await uploadFile(file)
+    const success = await uploadFile(file);
 
     if (success) {
-      console.log('✅ Upload réussi')
+      console.log('✅ Upload réussi');
     } else {
-      console.log('❌ Upload échoué')
+      console.log('❌ Upload échoué');
     }
-  }
+  };
 
   /**
    * 🗑️ Gestion suppression d'image
    */
   const handleRemoveImage = async () => {
-    if (!currentImageUrl) return
+    if (!currentImageUrl) return;
 
     try {
       // Si c'est un fichier qu'on vient d'uploader
       if (uploadResult) {
-        const success = await deleteUploadedFile()
+        const success = await deleteUploadedFile();
         if (success) {
-          onImageRemove()
+          onImageRemove();
         }
       } else {
         // Image existante - juste callback
-        onImageRemove()
+        onImageRemove();
       }
     } catch (error) {
-      console.error('❌ Erreur suppression:', error)
+      console.error('❌ Erreur suppression:', error);
     }
-  }
+  };
 
   /**
    * 🖱️ Gestionnaires drag & drop
    */
   const handleDrag = (e: React.DragEvent) => {
-    e.preventDefault()
-    e.stopPropagation()
-  }
+    e.preventDefault();
+    e.stopPropagation();
+  };
 
   const handleDragIn = (e: React.DragEvent) => {
-    e.preventDefault()
-    e.stopPropagation()
+    e.preventDefault();
+    e.stopPropagation();
     if (canUpload) {
-      setDragActive(true)
+      setDragActive(true);
     }
-  }
+  };
 
   const handleDragOut = (e: React.DragEvent) => {
-    e.preventDefault()
-    e.stopPropagation()
-    setDragActive(false)
-  }
+    e.preventDefault();
+    e.stopPropagation();
+    setDragActive(false);
+  };
 
   const handleDrop = (e: React.DragEvent) => {
-    e.preventDefault()
-    e.stopPropagation()
-    setDragActive(false)
+    e.preventDefault();
+    e.stopPropagation();
+    setDragActive(false);
 
-    if (!canUpload) return
+    if (!canUpload) return;
 
-    const files = e.dataTransfer.files
+    const files = e.dataTransfer.files;
     if (files && files[0]) {
-      handleFileSelect(files[0])
+      handleFileSelect(files[0]);
     }
-  }
+  };
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const files = e.target.files
+    const files = e.target.files;
     if (files && files[0]) {
-      handleFileSelect(files[0])
+      handleFileSelect(files[0]);
     }
-  }
+  };
 
   /**
    * 🎨 Rendu des états d'upload
@@ -173,7 +189,7 @@ export function ImageUploadV2({
           <CheckCircle className="w-5 h-5" />
           <span className="text-sm font-medium">Upload réussi !</span>
         </div>
-      )
+      );
     }
 
     if (isUploading) {
@@ -194,25 +210,26 @@ export function ImageUploadV2({
               <div className="flex justify-between text-xs text-gray-500">
                 <span>{Math.round(progress.percentage)}%</span>
                 <span>
-                  {Math.round(progress.uploaded / 1024)}KB / {Math.round(progress.total / 1024)}KB
+                  {Math.round(progress.uploaded / 1024)}KB /{' '}
+                  {Math.round(progress.total / 1024)}KB
                 </span>
               </div>
             </div>
           )}
         </div>
-      )
+      );
     }
 
-    return null
-  }
+    return null;
+  };
 
   /**
    * 🚨 Rendu des erreurs
    */
   const renderError = () => {
-    const errorMessage = validationError || error?.message
+    const errorMessage = validationError || error?.message;
 
-    if (!errorMessage) return null
+    if (!errorMessage) return null;
 
     return (
       <Alert variant="destructive" className="mt-4">
@@ -232,14 +249,14 @@ export function ImageUploadV2({
           )}
         </AlertDescription>
       </Alert>
-    )
-  }
+    );
+  };
 
   // Déterminer l'URL de l'image à afficher
-  const displayImageUrl = uploadResult?.publicUrl || currentImageUrl
+  const displayImageUrl = uploadResult?.publicUrl || currentImageUrl;
 
   return (
-    <div className={cn("space-y-4", className)}>
+    <div className={cn('space-y-4', className)}>
       {/* Image actuelle */}
       {displayImageUrl && (
         <div className="relative w-full max-w-xs mx-auto">
@@ -267,10 +284,12 @@ export function ImageUploadV2({
       {(!displayImageUrl || allowReplace) && !isUploading && (
         <div
           className={cn(
-            "border-2 border-dashed border-gray-300 rounded-lg p-6 text-center transition-colors",
-            canUpload ? "cursor-pointer hover:border-gray-400" : "opacity-50 cursor-not-allowed",
-            dragActive && canUpload && "border-black bg-gray-50",
-            (error || validationError) && "border-red-500 bg-red-50"
+            'border-2 border-dashed border-gray-300 rounded-lg p-6 text-center transition-colors',
+            canUpload
+              ? 'cursor-pointer hover:border-gray-400'
+              : 'opacity-50 cursor-not-allowed',
+            dragActive && canUpload && 'border-black bg-gray-50',
+            (error || validationError) && 'border-red-500 bg-red-50'
           )}
           onDragEnter={handleDragIn}
           onDragLeave={handleDragOut}
@@ -293,7 +312,9 @@ export function ImageUploadV2({
             </div>
             <div>
               <p className="text-sm font-medium">
-                {canUpload ? 'Cliquez ou glissez une image' : 'Connectez-vous pour uploader'}
+                {canUpload
+                  ? 'Cliquez ou glissez une image'
+                  : 'Connectez-vous pour uploader'}
               </p>
               <p className="text-xs text-gray-500">
                 JPG, PNG, WebP (max {maxSizeMB}MB)
@@ -328,5 +349,5 @@ export function ImageUploadV2({
         </ButtonV2>
       )}
     </div>
-  )
+  );
 }

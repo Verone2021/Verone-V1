@@ -149,7 +149,8 @@
 }
 
 @keyframes pulseSubtle {
-  0%, 100% {
+  0%,
+  100% {
     opacity: 1;
   }
   50% {
@@ -173,7 +174,8 @@
  * ======================================== */
 
 @keyframes logoFloat {
-  0%, 100% {
+  0%,
+  100% {
     transform: translateY(0px) rotate(0deg);
   }
   50% {
@@ -184,11 +186,11 @@
 @keyframes logoHover {
   0% {
     transform: scale(1) rotate(0deg);
-    filter: drop-shadow(0 0 0px rgba(0,0,0,0));
+    filter: drop-shadow(0 0 0px rgba(0, 0, 0, 0));
   }
   100% {
     transform: scale(1.1) rotate(360deg);
-    filter: drop-shadow(0 8px 16px rgba(0,0,0,0.15));
+    filter: drop-shadow(0 8px 16px rgba(0, 0, 0, 0.15));
   }
 }
 
@@ -204,11 +206,16 @@
 }
 
 @keyframes borderGlow {
-  0%, 100% {
-    box-shadow: 0 0 0 1px rgba(0,0,0,0.1), 0 2px 4px rgba(0,0,0,0.05);
+  0%,
+  100% {
+    box-shadow:
+      0 0 0 1px rgba(0, 0, 0, 0.1),
+      0 2px 4px rgba(0, 0, 0, 0.05);
   }
   50% {
-    box-shadow: 0 0 0 1px rgba(0,0,0,0.2), 0 8px 24px rgba(0,0,0,0.12);
+    box-shadow:
+      0 0 0 1px rgba(0, 0, 0, 0.2),
+      0 8px 24px rgba(0, 0, 0, 0.12);
   }
 }
 
@@ -224,13 +231,14 @@
 }
 
 @keyframes buttonPulse {
-  0%, 100% {
+  0%,
+  100% {
     transform: scale(1);
-    box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
   }
   50% {
     transform: scale(1.02);
-    box-shadow: 0 6px 16px rgba(0,0,0,0.15);
+    box-shadow: 0 6px 16px rgba(0, 0, 0, 0.15);
   }
 }
 
@@ -301,7 +309,7 @@
 }
 
 .hover-glow:hover {
-  box-shadow: 0 8px 32px rgba(0,0,0,0.12);
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.12);
 }
 
 /* Layout premium */

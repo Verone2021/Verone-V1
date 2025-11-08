@@ -16,15 +16,15 @@ const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
 const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
 
 if (!supabaseUrl || !supabaseServiceKey) {
-  console.error('❌ Variables d\'environnement Supabase manquantes');
+  console.error("❌ Variables d'environnement Supabase manquantes");
   process.exit(1);
 }
 
 const supabase = createClient(supabaseUrl, supabaseServiceKey, {
   auth: {
     autoRefreshToken: false,
-    persistSession: false
-  }
+    persistSession: false,
+  },
 });
 
 console.log('🚀 Exécution migration product_colors...\n');
@@ -32,7 +32,10 @@ console.log('🚀 Exécution migration product_colors...\n');
 (async () => {
   try {
     // Lire le fichier SQL
-    const migrationPath = path.join(__dirname, '../../supabase/migrations/20251007_001_product_colors_table.sql');
+    const migrationPath = path.join(
+      __dirname,
+      '../../supabase/migrations/20251007_001_product_colors_table.sql'
+    );
     const migrationSQL = fs.readFileSync(migrationPath, 'utf8');
 
     console.log('📄 Migration chargée:', migrationPath);
@@ -43,16 +46,22 @@ console.log('🚀 Exécution migration product_colors...\n');
     // On doit utiliser l'API REST ou créer une fonction
 
     console.log('⚠️  Note: Exécution SQL directe via client Supabase limitée');
-    console.log('✅ Solution: La migration sera exécutée automatiquement au prochain déploiement');
+    console.log(
+      '✅ Solution: La migration sera exécutée automatiquement au prochain déploiement'
+    );
     console.log('');
-    console.log('🔄 Alternative: Exécuter manuellement dans Supabase Dashboard → SQL Editor');
+    console.log(
+      '🔄 Alternative: Exécuter manuellement dans Supabase Dashboard → SQL Editor'
+    );
     console.log('   ou utiliser la CLI Supabase:');
     console.log('');
     console.log('   supabase db push');
     console.log('');
 
     // Pour le moment, on crée les couleurs directement avec le client
-    console.log('📝 Création directe des couleurs prédéfinies via client Supabase...\n');
+    console.log(
+      '📝 Création directe des couleurs prédéfinies via client Supabase...\n'
+    );
 
     const predefinedColors = [
       { name: 'Noir', hex_code: '#000000', is_predefined: true },
@@ -69,7 +78,7 @@ console.log('🚀 Exécution migration product_colors...\n');
       { name: 'Or', hex_code: '#D97706', is_predefined: true },
       { name: 'Argent', hex_code: '#9CA3AF', is_predefined: true },
       { name: 'Bronze', hex_code: '#CD7F32', is_predefined: true },
-      { name: 'Transparent', hex_code: '#F3F4F6', is_predefined: true }
+      { name: 'Transparent', hex_code: '#F3F4F6', is_predefined: true },
     ];
 
     // Vérifier si la table existe
@@ -79,13 +88,15 @@ console.log('🚀 Exécution migration product_colors...\n');
       .limit(1);
 
     if (tables === null) {
-      console.error('❌ Table product_colors n\'existe pas encore');
+      console.error("❌ Table product_colors n'existe pas encore");
       console.log('');
       console.log('📋 Actions requises:');
       console.log('1. Aller sur Supabase Dashboard');
       console.log('2. Ouvrir SQL Editor');
       console.log('3. Copier/coller le contenu de:');
-      console.log('   supabase/migrations/20251007_001_product_colors_table.sql');
+      console.log(
+        '   supabase/migrations/20251007_001_product_colors_table.sql'
+      );
       console.log('4. Exécuter la requête');
       console.log('');
       process.exit(1);
@@ -96,7 +107,7 @@ console.log('🚀 Exécution migration product_colors...\n');
       .from('product_colors')
       .upsert(predefinedColors, {
         onConflict: 'name',
-        ignoreDuplicates: true
+        ignoreDuplicates: true,
       });
 
     if (error) {
@@ -115,11 +126,12 @@ console.log('🚀 Exécution migration product_colors...\n');
     console.log('\n🎨 Liste des couleurs:');
     allColors?.forEach(color => {
       const indicator = color.is_predefined ? '●' : '○';
-      console.log(`  ${indicator} ${color.name.padEnd(15)} ${color.hex_code || ''}`);
+      console.log(
+        `  ${indicator} ${color.name.padEnd(15)} ${color.hex_code || ''}`
+      );
     });
 
     console.log('\n🎉 Migration terminée avec succès!');
-
   } catch (error) {
     console.error('❌ Erreur:', error.message);
     process.exit(1);

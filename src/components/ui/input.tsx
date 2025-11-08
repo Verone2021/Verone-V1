@@ -1,5 +1,6 @@
-import * as React from "react"
-import { cn } from "@/lib/utils"
+import * as React from 'react';
+
+import { cn } from '@verone/utils';
 
 export interface InputProps
   extends React.InputHTMLAttributes<HTMLInputElement> {
@@ -7,33 +8,33 @@ export interface InputProps
    * Variant du champ
    * @default "default"
    */
-  variant?: "default" | "error" | "success"
+  variant?: 'default' | 'error' | 'success';
 
   /**
    * Taille du champ
    * @default "md"
    */
-  inputSize?: "sm" | "md" | "lg"
+  inputSize?: 'sm' | 'md' | 'lg';
 
   /**
    * Icône à gauche du champ
    */
-  iconLeft?: React.ReactNode
+  iconLeft?: React.ReactNode;
 
   /**
    * Icône à droite du champ
    */
-  iconRight?: React.ReactNode
+  iconRight?: React.ReactNode;
 
   /**
    * Message d'erreur (affiche automatiquement variant="error")
    */
-  error?: string
+  error?: string;
 
   /**
    * Message d'aide
    */
-  helperText?: string
+  helperText?: string;
 }
 
 const Input = React.forwardRef<HTMLInputElement, InputProps>(
@@ -41,8 +42,8 @@ const Input = React.forwardRef<HTMLInputElement, InputProps>(
     {
       className,
       type,
-      variant = "default",
-      inputSize = "md",
+      variant = 'default',
+      inputSize = 'md',
       iconLeft,
       iconRight,
       error,
@@ -52,19 +53,20 @@ const Input = React.forwardRef<HTMLInputElement, InputProps>(
     },
     ref
   ) => {
-    const actualVariant = error ? "error" : variant
+    const actualVariant = error ? 'error' : variant;
 
     const sizeClasses = {
-      sm: "h-8 px-3 text-sm",
-      md: "h-10 px-4 text-sm",
-      lg: "h-12 px-4 text-base",
-    }
+      sm: 'h-8 px-3 text-sm',
+      md: 'h-10 px-4 text-sm',
+      lg: 'h-12 px-4 text-base',
+    };
 
     const variantClasses = {
-      default: "border-slate-300 focus:border-blue-500 focus:ring-blue-500/20",
-      error: "border-red-500 focus:border-red-600 focus:ring-red-500/20",
-      success: "border-green-500 focus:border-green-600 focus:ring-green-500/20",
-    }
+      default: 'border-slate-300 focus:border-blue-500 focus:ring-blue-500/20',
+      error: 'border-red-500 focus:border-red-600 focus:ring-red-500/20',
+      success:
+        'border-green-500 focus:border-green-600 focus:ring-green-500/20',
+    };
 
     return (
       <div className="w-full">
@@ -79,11 +81,11 @@ const Input = React.forwardRef<HTMLInputElement, InputProps>(
             type={type}
             className={cn(
               // Base styles
-              "flex w-full rounded-lg border bg-white",
-              "transition-all duration-200",
-              "placeholder:text-slate-400",
-              "focus:outline-none focus:ring-2",
-              "disabled:cursor-not-allowed disabled:opacity-50 disabled:bg-slate-50",
+              'flex w-full rounded-lg border bg-white',
+              'transition-all duration-200',
+              'placeholder:text-slate-400',
+              'focus:outline-none focus:ring-2',
+              'disabled:cursor-not-allowed disabled:opacity-50 disabled:bg-slate-50',
 
               // Size
               sizeClasses[inputSize],
@@ -92,8 +94,8 @@ const Input = React.forwardRef<HTMLInputElement, InputProps>(
               variantClasses[actualVariant],
 
               // Icon padding
-              iconLeft && "pl-10",
-              iconRight && "pr-10",
+              iconLeft && 'pl-10',
+              iconRight && 'pr-10',
 
               className
             )}
@@ -110,18 +112,16 @@ const Input = React.forwardRef<HTMLInputElement, InputProps>(
         </div>
 
         {/* Error message */}
-        {error && (
-          <p className="mt-1.5 text-sm text-red-600">{error}</p>
-        )}
+        {error && <p className="mt-1.5 text-sm text-red-600">{error}</p>}
 
         {/* Helper text */}
         {helperText && !error && (
           <p className="mt-1.5 text-sm text-slate-500">{helperText}</p>
         )}
       </div>
-    )
+    );
   }
-)
-Input.displayName = "Input"
+);
+Input.displayName = 'Input';
 
-export { Input }
+export { Input };

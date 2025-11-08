@@ -1,6 +1,7 @@
-'use client'
+'use client';
 
-import React, { useState, useEffect, useMemo } from 'react'
+import React, { useState, useEffect, useMemo } from 'react';
+
 import {
   Package,
   Search,
@@ -18,18 +19,26 @@ import {
   ArrowUpDown,
   X,
   Clock,
-  Boxes
-} from 'lucide-react'
-import { ButtonV2 } from '@/components/ui/button'
-import { Input } from '@/components/ui/input'
-import { Badge } from '@/components/ui/badge'
+  Boxes,
+} from 'lucide-react';
+
+import { Badge } from '@/components/ui/badge';
+import { ButtonV2 } from '@/components/ui/button';
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from '@/components/ui/card';
+import { Input } from '@/components/ui/input';
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from '@/components/ui/select'
+} from '@/components/ui/select';
 import {
   Table,
   TableBody,
@@ -37,30 +46,31 @@ import {
   TableHead,
   TableHeader,
   TableRow,
-} from '@/components/ui/table'
+} from '@/components/ui/table';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { formatPrice } from '@verone/utils';
+import { useCatalogue } from '@/shared/modules/categories/hooks';
+import { useToast } from '@/shared/modules/common/hooks';
+import { ProductStockHistoryModal } from '@/shared/modules/products/components/modals/ProductStockHistoryModal';
+import { GeneralStockMovementModal } from '@/shared/modules/stock/components/modals/GeneralStockMovementModal';
+import { StockMovementModal } from '@/shared/modules/stock/components/modals/StockMovementModal';
 import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from '@/components/ui/card'
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
-import { useToast } from '@/shared/modules/common/hooks'
-import { useCatalogue } from '@/shared/modules/categories/hooks'
-import { useStock } from '@/shared/modules/stock/hooks'
-import { StockMovementModal } from '@/components/business/stock-movement-modal'
-import { GeneralStockMovementModal } from '@/components/business/general-stock-movement-modal'
-import { ProductStockHistoryModal } from '@/components/business/product-stock-history-modal'
-import { StockDisplay, StockSummaryCard } from '@/components/business/stock-display'
-import { formatPrice } from '@/lib/utils'
+  StockDisplay,
+  StockSummaryCard,
+} from '@/shared/modules/stock/components/sections/StockDisplay';
+import { useStock } from '@/shared/modules/stock/hooks';
 
 interface StockFilters {
-  search: string
-  status: 'all' | 'in_stock' | 'low_stock' | 'out_of_stock' | 'forecasted_shortage'
-  category: string
-  sortBy: 'name' | 'sku' | 'stock_real' | 'stock_available' | 'updated_at'
-  sortOrder: 'asc' | 'desc'
+  search: string;
+  status:
+    | 'all'
+    | 'in_stock'
+    | 'low_stock'
+    | 'out_of_stock'
+    | 'forecasted_shortage';
+  category: string;
+  sortBy: 'name' | 'sku' | 'stock_real' | 'stock_available' | 'updated_at';
+  sortOrder: 'asc' | 'desc';
 }
 
 export default function CatalogueStocksPage() {
@@ -69,37 +79,43 @@ export default function CatalogueStocksPage() {
     status: 'all',
     category: 'all',
     sortBy: 'name',
-    sortOrder: 'asc'
-  })
-  const [selectedProduct, setSelectedProduct] = useState<any>(null)
-  const [showMovementModal, setShowMovementModal] = useState(false)
-  const [showGeneralMovementModal, setShowGeneralMovementModal] = useState(false)
-  const [showHistoryModal, setShowHistoryModal] = useState(false)
-  const [selectedProductForHistory, setSelectedProductForHistory] = useState<any>(null)
-  const [activeTab, setActiveTab] = useState('overview')
+    sortOrder: 'asc',
+  });
+  const [selectedProduct, setSelectedProduct] = useState<any>(null);
+  const [showMovementModal, setShowMovementModal] = useState(false);
+  const [showGeneralMovementModal, setShowGeneralMovementModal] =
+    useState(false);
+  const [showHistoryModal, setShowHistoryModal] = useState(false);
+  const [selectedProductForHistory, setSelectedProductForHistory] =
+    useState<any>(null);
+  const [activeTab, setActiveTab] = useState('overview');
 
-  const { toast } = useToast()
-  const { products, loading: productsLoading, loadCatalogueData } = useCatalogue()
+  const { toast } = useToast();
+  const {
+    products,
+    loading: productsLoading,
+    loadCatalogueData,
+  } = useCatalogue();
   const {
     stockData,
     summary,
     loading: stockLoading,
     fetchAllStock,
-    getStockAlerts
-  } = useStock()
+    getStockAlerts,
+  } = useStock();
 
   // Charger les données au montage
   useEffect(() => {
-    loadCatalogueData()
-    fetchAllStock()
-  }, [])
+    loadCatalogueData();
+    fetchAllStock();
+  }, []);
 
   // Données enrichies produits + stock
   const enrichedProducts = useMemo(() => {
-    if (!products || !stockData) return []
+    if (!products || !stockData) return [];
 
     return products.map(product => {
-      const stock = stockData.find(s => s.product_id === product.id)
+      const stock = stockData.find(s => s.product_id === product.id);
       return {
         ...product,
         stock_real: stock?.stock_real || 0,
@@ -107,95 +123,96 @@ export default function CatalogueStocksPage() {
         stock_forecasted_out: stock?.stock_forecasted_out || 0,
         stock_available: stock?.stock_available || 0,
         stock_total_forecasted: stock?.stock_total_forecasted || 0,
-        last_movement_at: stock?.last_movement_at
-      }
-    })
-  }, [products, stockData])
+        last_movement_at: stock?.last_movement_at,
+      };
+    });
+  }, [products, stockData]);
 
   // Filtrage et tri des produits
   const filteredProducts = useMemo(() => {
-    let filtered = enrichedProducts
+    let filtered = enrichedProducts;
 
     // Recherche textuelle
     if (filters.search) {
-      const search = filters.search.toLowerCase()
-      filtered = filtered.filter(product =>
-        product.name.toLowerCase().includes(search) ||
-        product.sku.toLowerCase().includes(search)
-      )
+      const search = filters.search.toLowerCase();
+      filtered = filtered.filter(
+        product =>
+          product.name.toLowerCase().includes(search) ||
+          product.sku.toLowerCase().includes(search)
+      );
     }
 
     // Filtrage par statut
     if (filters.status !== 'all') {
       filtered = filtered.filter(product => {
-        const minLevel = 5 // Valeur par défaut pour le niveau minimal de stock
+        const minLevel = 5; // Valeur par défaut pour le niveau minimal de stock
         switch (filters.status) {
           case 'out_of_stock':
-            return product.stock_real <= 0
+            return product.stock_real <= 0;
           case 'low_stock':
-            return product.stock_real > 0 && product.stock_real <= minLevel
+            return product.stock_real > 0 && product.stock_real <= minLevel;
           case 'in_stock':
-            return product.stock_real > minLevel
+            return product.stock_real > minLevel;
           case 'forecasted_shortage':
-            return product.stock_available <= minLevel
+            return product.stock_available <= minLevel;
           default:
-            return true
+            return true;
         }
-      })
+      });
     }
 
     // Tri
     filtered.sort((a, b) => {
-      let aValue: any = a[filters.sortBy as keyof typeof a]
-      let bValue: any = b[filters.sortBy as keyof typeof b]
+      let aValue: any = a[filters.sortBy as keyof typeof a];
+      let bValue: any = b[filters.sortBy as keyof typeof b];
 
       if (typeof aValue === 'string') {
-        aValue = aValue.toLowerCase()
-        bValue = bValue.toLowerCase()
+        aValue = aValue.toLowerCase();
+        bValue = bValue.toLowerCase();
       }
 
-      if (aValue < bValue) return filters.sortOrder === 'asc' ? -1 : 1
-      if (aValue > bValue) return filters.sortOrder === 'asc' ? 1 : -1
-      return 0
-    })
+      if (aValue < bValue) return filters.sortOrder === 'asc' ? -1 : 1;
+      if (aValue > bValue) return filters.sortOrder === 'asc' ? 1 : -1;
+      return 0;
+    });
 
-    return filtered
-  }, [enrichedProducts, filters])
+    return filtered;
+  }, [enrichedProducts, filters]);
 
   // Alertes stock
-  const stockAlerts = useMemo(() => getStockAlerts(), [getStockAlerts])
+  const stockAlerts = useMemo(() => getStockAlerts(), [getStockAlerts]);
 
   // Handlers
   const handleRefresh = async () => {
-    await Promise.all([loadCatalogueData(), fetchAllStock()])
+    await Promise.all([loadCatalogueData(), fetchAllStock()]);
     toast({
-      title: "Données actualisées",
-      description: "Le stock a été rechargé avec succès"
-    })
-  }
+      title: 'Données actualisées',
+      description: 'Le stock a été rechargé avec succès',
+    });
+  };
 
   const handleMovementSuccess = () => {
-    fetchAllStock()
-    setSelectedProduct(null)
-    setShowMovementModal(false)
-  }
+    fetchAllStock();
+    setSelectedProduct(null);
+    setShowMovementModal(false);
+  };
 
   const handleGeneralMovementSuccess = () => {
-    fetchAllStock()
-    setShowGeneralMovementModal(false)
-  }
+    fetchAllStock();
+    setShowGeneralMovementModal(false);
+  };
 
   const handleShowHistory = (product: any) => {
-    setSelectedProductForHistory(product)
-    setShowHistoryModal(true)
-  }
+    setSelectedProductForHistory(product);
+    setShowHistoryModal(true);
+  };
 
   const handleCloseHistory = () => {
-    setShowHistoryModal(false)
-    setSelectedProductForHistory(null)
-  }
+    setShowHistoryModal(false);
+    setSelectedProductForHistory(null);
+  };
 
-  const loading = productsLoading || stockLoading
+  const loading = productsLoading || stockLoading;
 
   return (
     <div className="space-y-6">
@@ -210,7 +227,7 @@ export default function CatalogueStocksPage() {
         <div className="flex gap-2">
           <ButtonV2
             variant="outline"
-            onClick={() => window.location.href = '/historique-mouvements'}
+            onClick={() => (window.location.href = '/historique-mouvements')}
           >
             <History className="h-4 w-4 mr-2" />
             Historique complet
@@ -222,8 +239,14 @@ export default function CatalogueStocksPage() {
             <Plus className="h-4 w-4 mr-2" />
             Nouveau mouvement
           </ButtonV2>
-          <ButtonV2 variant="outline" onClick={handleRefresh} disabled={loading}>
-            <RefreshCw className={`h-4 w-4 mr-2 ${loading ? 'animate-spin' : ''}`} />
+          <ButtonV2
+            variant="outline"
+            onClick={handleRefresh}
+            disabled={loading}
+          >
+            <RefreshCw
+              className={`h-4 w-4 mr-2 ${loading ? 'animate-spin' : ''}`}
+            />
             Actualiser
           </ButtonV2>
           <ButtonV2 variant="outline">
@@ -274,13 +297,24 @@ export default function CatalogueStocksPage() {
           </CardHeader>
           <CardContent>
             <div className="space-y-2">
-              {stockAlerts.slice(0, 3).map((alert) => (
-                <div key={alert.product_id} className="flex items-center justify-between p-2 bg-white rounded">
+              {stockAlerts.slice(0, 3).map(alert => (
+                <div
+                  key={alert.product_id}
+                  className="flex items-center justify-between p-2 bg-white rounded"
+                >
                   <div>
                     <span className="font-medium">{alert.product_name}</span>
-                    <span className="text-sm text-gray-600 ml-2">({alert.product_sku})</span>
+                    <span className="text-sm text-gray-600 ml-2">
+                      ({alert.product_sku})
+                    </span>
                   </div>
-                  <Badge variant={alert.alert_type === 'critical' ? 'destructive' : 'secondary'}>
+                  <Badge
+                    variant={
+                      alert.alert_type === 'critical'
+                        ? 'destructive'
+                        : 'secondary'
+                    }
+                  >
                     {alert.alert_message}
                   </Badge>
                 </div>
@@ -313,11 +347,18 @@ export default function CatalogueStocksPage() {
                   <Input
                     placeholder="Rechercher un produit..."
                     value={filters.search}
-                    onChange={(e) => setFilters({ ...filters, search: e.target.value })}
+                    onChange={e =>
+                      setFilters({ ...filters, search: e.target.value })
+                    }
                     className="w-full"
                   />
                 </div>
-                <Select value={filters.status} onValueChange={(value: any) => setFilters({ ...filters, status: value })}>
+                <Select
+                  value={filters.status}
+                  onValueChange={(value: any) =>
+                    setFilters({ ...filters, status: value })
+                  }
+                >
                   <SelectTrigger className="w-[180px]">
                     <SelectValue placeholder="Statut stock" />
                   </SelectTrigger>
@@ -326,10 +367,17 @@ export default function CatalogueStocksPage() {
                     <SelectItem value="in_stock">En stock</SelectItem>
                     <SelectItem value="low_stock">Stock faible</SelectItem>
                     <SelectItem value="out_of_stock">Épuisé</SelectItem>
-                    <SelectItem value="forecasted_shortage">Rupture prévue</SelectItem>
+                    <SelectItem value="forecasted_shortage">
+                      Rupture prévue
+                    </SelectItem>
                   </SelectContent>
                 </Select>
-                <Select value={filters.sortBy} onValueChange={(value: any) => setFilters({ ...filters, sortBy: value })}>
+                <Select
+                  value={filters.sortBy}
+                  onValueChange={(value: any) =>
+                    setFilters({ ...filters, sortBy: value })
+                  }
+                >
                   <SelectTrigger className="w-[150px]">
                     <SelectValue placeholder="Trier par" />
                   </SelectTrigger>
@@ -337,13 +385,20 @@ export default function CatalogueStocksPage() {
                     <SelectItem value="name">Nom</SelectItem>
                     <SelectItem value="sku">SKU</SelectItem>
                     <SelectItem value="stock_real">Stock physique</SelectItem>
-                    <SelectItem value="stock_available">Stock disponible</SelectItem>
+                    <SelectItem value="stock_available">
+                      Stock disponible
+                    </SelectItem>
                   </SelectContent>
                 </Select>
                 <ButtonV2
                   variant="outline"
                   size="sm"
-                  onClick={() => setFilters({ ...filters, sortOrder: filters.sortOrder === 'asc' ? 'desc' : 'asc' })}
+                  onClick={() =>
+                    setFilters({
+                      ...filters,
+                      sortOrder: filters.sortOrder === 'asc' ? 'desc' : 'asc',
+                    })
+                  }
                 >
                   <ArrowUpDown className="h-4 w-4" />
                 </ButtonV2>
@@ -375,12 +430,15 @@ export default function CatalogueStocksPage() {
                     </TableRow>
                   ) : filteredProducts.length === 0 ? (
                     <TableRow>
-                      <TableCell colSpan={6} className="text-center py-8 text-gray-500">
+                      <TableCell
+                        colSpan={6}
+                        className="text-center py-8 text-gray-500"
+                      >
                         Aucun produit trouvé
                       </TableCell>
                     </TableRow>
                   ) : (
-                    filteredProducts.map((product) => (
+                    filteredProducts.map(product => (
                       <TableRow key={product.id}>
                         <TableCell>
                           <div className="flex items-center gap-3">
@@ -394,7 +452,10 @@ export default function CatalogueStocksPage() {
                             <div>
                               <div className="font-medium">{product.name}</div>
                               <div className="text-sm text-gray-600">
-                                {formatPrice((product as any).minimumSellingPrice || (product as any).price_ttc)}
+                                {formatPrice(
+                                  (product as any).minimumSellingPrice ||
+                                    (product as any).price_ttc
+                                )}
                               </div>
                             </div>
                           </div>
@@ -413,27 +474,28 @@ export default function CatalogueStocksPage() {
                           <div className="flex items-center gap-2 text-sm">
                             {product.stock_forecasted_in > 0 && (
                               <span className="flex items-center gap-1 text-green-600">
-                                <TrendingUp className="h-3 w-3" />
-                                +{product.stock_forecasted_in}
+                                <TrendingUp className="h-3 w-3" />+
+                                {product.stock_forecasted_in}
                               </span>
                             )}
                             {product.stock_forecasted_out > 0 && (
                               <span className="flex items-center gap-1 text-red-600">
-                                <TrendingDown className="h-3 w-3" />
-                                -{product.stock_forecasted_out}
+                                <TrendingDown className="h-3 w-3" />-
+                                {product.stock_forecasted_out}
                               </span>
                             )}
-                            {product.stock_forecasted_in === 0 && product.stock_forecasted_out === 0 && (
-                              <span className="text-gray-400">-</span>
-                            )}
+                            {product.stock_forecasted_in === 0 &&
+                              product.stock_forecasted_out === 0 && (
+                                <span className="text-gray-400">-</span>
+                              )}
                           </div>
                         </TableCell>
                         <TableCell>
                           <Badge
                             variant={
                               product.stock_available <= 5
-                                ? "destructive"
-                                : "default"
+                                ? 'destructive'
+                                : 'default'
                             }
                           >
                             {product.stock_available}
@@ -445,8 +507,8 @@ export default function CatalogueStocksPage() {
                               variant="outline"
                               size="sm"
                               onClick={() => {
-                                setSelectedProduct(product)
-                                setShowMovementModal(true)
+                                setSelectedProduct(product);
+                                setShowMovementModal(true);
                               }}
                             >
                               <Plus className="h-4 w-4 mr-1" />
@@ -479,7 +541,9 @@ export default function CatalogueStocksPage() {
               </CardDescription>
             </CardHeader>
             <CardContent>
-              <p className="text-gray-600">Vue détaillée du stock physique en cours de développement...</p>
+              <p className="text-gray-600">
+                Vue détaillée du stock physique en cours de développement...
+              </p>
             </CardContent>
           </Card>
         </TabsContent>
@@ -493,7 +557,9 @@ export default function CatalogueStocksPage() {
               </CardDescription>
             </CardHeader>
             <CardContent>
-              <p className="text-gray-600">Vue prévisionnelle en cours de développement...</p>
+              <p className="text-gray-600">
+                Vue prévisionnelle en cours de développement...
+              </p>
             </CardContent>
           </Card>
         </TabsContent>
@@ -507,7 +573,9 @@ export default function CatalogueStocksPage() {
               </CardDescription>
             </CardHeader>
             <CardContent>
-              <p className="text-gray-600">Historique des mouvements en cours de développement...</p>
+              <p className="text-gray-600">
+                Historique des mouvements en cours de développement...
+              </p>
             </CardContent>
           </Card>
         </TabsContent>
@@ -519,8 +587,8 @@ export default function CatalogueStocksPage() {
           product={selectedProduct}
           isOpen={showMovementModal}
           onClose={() => {
-            setShowMovementModal(false)
-            setSelectedProduct(null)
+            setShowMovementModal(false);
+            setSelectedProduct(null);
           }}
           onSuccess={handleMovementSuccess}
         />
@@ -538,5 +606,5 @@ export default function CatalogueStocksPage() {
         onClose={handleCloseHistory}
       />
     </div>
-  )
+  );
 }

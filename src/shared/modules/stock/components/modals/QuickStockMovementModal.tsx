@@ -1,30 +1,39 @@
-'use client'
+'use client';
 
-import React, { useState, useEffect } from 'react'
-import { Plus, Minus, Settings, Loader2 } from 'lucide-react'
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog'
-import { ButtonV2 } from '@/components/ui/button'
-import { Input } from '@/components/ui/input'
-import { Label } from '@/components/ui/label'
-import { Textarea } from '@/components/ui/textarea'
+import React, { useState, useEffect } from 'react';
+
+import { Plus, Minus, Settings, Loader2 } from 'lucide-react';
+
+import { ButtonV2 } from '@/components/ui/button';
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+  DialogFooter,
+} from '@/components/ui/dialog';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from '@/components/ui/select'
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
-import { useStockMovements } from '@/shared/modules/stock/hooks'
-import { useToast } from '@/shared/modules/common/hooks'
+} from '@/components/ui/select';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Textarea } from '@/components/ui/textarea';
+import { useToast } from '@/shared/modules/common/hooks';
+import { useStockMovements } from '@/shared/modules/stock/hooks';
 
 interface QuickStockMovementModalProps {
-  isOpen: boolean
-  onClose: () => void
-  onSuccess: () => void
-  productId?: string
-  productName?: string
-  currentStock?: number
+  isOpen: boolean;
+  onClose: () => void;
+  onSuccess: () => void;
+  productId?: string;
+  productName?: string;
+  currentStock?: number;
 }
 
 export function QuickStockMovementModal({
@@ -33,81 +42,90 @@ export function QuickStockMovementModal({
   onSuccess,
   productId: initialProductId,
   productName: initialProductName,
-  currentStock: initialCurrentStock
+  currentStock: initialCurrentStock,
 }: QuickStockMovementModalProps) {
-  const [movementType, setMovementType] = useState<'IN' | 'OUT' | 'ADJUST'>('IN')
-  const [productId, setProductId] = useState(initialProductId || '')
-  const [quantity, setQuantity] = useState('')
-  const [notes, setNotes] = useState('')
-  const [reasonCode, setReasonCode] = useState('')
-  const [submitting, setSubmitting] = useState(false)
+  const [movementType, setMovementType] = useState<'IN' | 'OUT' | 'ADJUST'>(
+    'IN'
+  );
+  const [productId, setProductId] = useState(initialProductId || '');
+  const [quantity, setQuantity] = useState('');
+  const [notes, setNotes] = useState('');
+  const [reasonCode, setReasonCode] = useState('');
+  const [submitting, setSubmitting] = useState(false);
 
-  const { addStock, removeStock, adjustStock, getReasonsByCategory } = useStockMovements()
-  const { toast } = useToast()
-  const reasons = getReasonsByCategory()
+  const { addStock, removeStock, adjustStock, getReasonsByCategory } =
+    useStockMovements();
+  const { toast } = useToast();
+  const reasons = getReasonsByCategory();
 
   useEffect(() => {
     if (initialProductId) {
-      setProductId(initialProductId)
+      setProductId(initialProductId);
     }
-  }, [initialProductId])
+  }, [initialProductId]);
 
   const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault()
+    e.preventDefault();
 
     if (!productId) {
       toast({
-        title: "Erreur",
-        description: "Veuillez sélectionner un produit",
-        variant: "destructive"
-      })
-      return
+        title: 'Erreur',
+        description: 'Veuillez sélectionner un produit',
+        variant: 'destructive',
+      });
+      return;
     }
 
     if (!quantity || parseFloat(quantity) <= 0) {
       toast({
-        title: "Erreur",
-        description: "La quantité doit être supérieure à 0",
-        variant: "destructive"
-      })
-      return
+        title: 'Erreur',
+        description: 'La quantité doit être supérieure à 0',
+        variant: 'destructive',
+      });
+      return;
     }
 
-    setSubmitting(true)
+    setSubmitting(true);
     try {
-      const qty = parseFloat(quantity)
+      const qty = parseFloat(quantity);
 
       switch (movementType) {
         case 'IN':
-          await addStock(productId, qty, undefined, notes || undefined)
-          break
+          await addStock(productId, qty, undefined, notes || undefined);
+          break;
         case 'OUT':
-          await removeStock(productId, qty, reasonCode || 'manual_entry', undefined, notes || undefined)
-          break
+          await removeStock(
+            productId,
+            qty,
+            reasonCode || 'manual_entry',
+            undefined,
+            notes || undefined
+          );
+          break;
         case 'ADJUST':
-          await adjustStock(productId, qty, notes || undefined)
-          break
+          await adjustStock(productId, qty, notes || undefined);
+          break;
       }
 
       toast({
-        title: "Succès",
+        title: 'Succès',
         description: `Mouvement de stock enregistré avec succès${initialCurrentStock !== undefined ? `. Stock actuel : ${initialCurrentStock}` : ''}`,
-      })
+      });
 
       // Reset form
-      setQuantity('')
-      setNotes('')
-      setReasonCode('')
+      setQuantity('');
+      setNotes('');
+      setReasonCode('');
 
-      onSuccess()
-      onClose()
+      onSuccess();
+      onClose();
     } catch (error: any) {
       // L'erreur est déjà gérée par le hook avec un toast
-      console.error('Erreur mouvement stock:', error)
+      console.error('Erreur mouvement stock:', error);
     } finally {
-      setSubmitting(false)
+      setSubmitting(false);
     }
-  }
+  };
 
   const getReasonOptions = () => {
     switch (movementType) {
@@ -115,16 +133,16 @@ export function QuickStockMovementModal({
         return [
           ...reasons.sorties_normales,
           ...reasons.pertes_degradations,
-          ...reasons.usage_commercial
-        ]
+          ...reasons.usage_commercial,
+        ];
       case 'IN':
-        return reasons.entrees_speciales
+        return reasons.entrees_speciales;
       case 'ADJUST':
-        return reasons.ajustements
+        return reasons.ajustements;
       default:
-        return []
+        return [];
     }
-  }
+  };
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
@@ -150,7 +168,11 @@ export function QuickStockMovementModal({
         </DialogHeader>
 
         <form onSubmit={handleSubmit}>
-          <Tabs value={movementType} onValueChange={(v) => setMovementType(v as any)} className="w-full">
+          <Tabs
+            value={movementType}
+            onValueChange={v => setMovementType(v as any)}
+            className="w-full"
+          >
             <TabsList className="grid w-full grid-cols-3">
               <TabsTrigger value="IN" className="flex items-center gap-2">
                 <Plus className="h-4 w-4" />
@@ -176,13 +198,14 @@ export function QuickStockMovementModal({
                     min="0"
                     step="1"
                     value={quantity}
-                    onChange={(e) => setQuantity(e.target.value)}
+                    onChange={e => setQuantity(e.target.value)}
                     placeholder="Ex: 10"
                     required
                     className="mt-1"
                   />
                   <p className="text-xs text-gray-500 mt-1">
-                    Ajoutez du stock lors d'une réception fournisseur ou retour client
+                    Ajoutez du stock lors d'une réception fournisseur ou retour
+                    client
                   </p>
                 </div>
 
@@ -193,7 +216,7 @@ export function QuickStockMovementModal({
                       <SelectValue placeholder="Sélectionner un motif" />
                     </SelectTrigger>
                     <SelectContent>
-                      {getReasonOptions().map((reason) => (
+                      {getReasonOptions().map(reason => (
                         <SelectItem key={reason.code} value={reason.code}>
                           {reason.label}
                         </SelectItem>
@@ -206,7 +229,8 @@ export function QuickStockMovementModal({
               <TabsContent value="OUT" className="space-y-4 m-0">
                 <div className="p-3 bg-orange-50 border border-orange-200 rounded-lg">
                   <p className="text-sm text-orange-900">
-                    ⚠️ Vous ne pouvez pas retirer plus que la quantité disponible en stock
+                    ⚠️ Vous ne pouvez pas retirer plus que la quantité
+                    disponible en stock
                   </p>
                 </div>
 
@@ -218,7 +242,7 @@ export function QuickStockMovementModal({
                     min="0"
                     step="1"
                     value={quantity}
-                    onChange={(e) => setQuantity(e.target.value)}
+                    onChange={e => setQuantity(e.target.value)}
                     placeholder="Ex: 5"
                     required
                     className="mt-1"
@@ -231,13 +255,15 @@ export function QuickStockMovementModal({
                 </div>
 
                 <div>
-                  <Label htmlFor="reason-out">Motif de sortie (optionnel)</Label>
+                  <Label htmlFor="reason-out">
+                    Motif de sortie (optionnel)
+                  </Label>
                   <Select value={reasonCode} onValueChange={setReasonCode}>
                     <SelectTrigger id="reason-out" className="mt-1">
                       <SelectValue placeholder="Sélectionner un motif" />
                     </SelectTrigger>
                     <SelectContent>
-                      {getReasonOptions().map((reason) => (
+                      {getReasonOptions().map(reason => (
                         <SelectItem key={reason.code} value={reason.code}>
                           {reason.label}
                         </SelectItem>
@@ -250,33 +276,44 @@ export function QuickStockMovementModal({
               <TabsContent value="ADJUST" className="space-y-4 m-0">
                 <div className="p-3 bg-blue-50 border border-blue-200 rounded-lg">
                   <p className="text-sm text-blue-900">
-                    ℹ️ L'ajustement définit la nouvelle quantité totale en stock (pas une différence)
+                    ℹ️ L'ajustement définit la nouvelle quantité totale en stock
+                    (pas une différence)
                   </p>
                 </div>
 
                 <div>
-                  <Label htmlFor="quantity-adjust">Nouvelle quantité totale *</Label>
+                  <Label htmlFor="quantity-adjust">
+                    Nouvelle quantité totale *
+                  </Label>
                   <Input
                     id="quantity-adjust"
                     type="number"
                     min="0"
                     step="1"
                     value={quantity}
-                    onChange={(e) => setQuantity(e.target.value)}
+                    onChange={e => setQuantity(e.target.value)}
                     placeholder="Ex: 15"
                     required
                     className="mt-1"
                   />
                   {initialCurrentStock !== undefined && (
                     <p className="text-xs text-gray-500 mt-1">
-                      Stock actuel : {initialCurrentStock} unités → Nouvelle quantité : {quantity || '0'} unités
+                      Stock actuel : {initialCurrentStock} unités → Nouvelle
+                      quantité : {quantity || '0'} unités
                       {quantity && (
-                        <span className={`ml-2 font-medium ${
-                          parseFloat(quantity) > initialCurrentStock ? 'text-green-600' :
-                          parseFloat(quantity) < initialCurrentStock ? 'text-red-600' :
-                          'text-gray-600'
-                        }`}>
-                          ({parseFloat(quantity) > initialCurrentStock ? '+' : ''}
+                        <span
+                          className={`ml-2 font-medium ${
+                            parseFloat(quantity) > initialCurrentStock
+                              ? 'text-green-600'
+                              : parseFloat(quantity) < initialCurrentStock
+                                ? 'text-red-600'
+                                : 'text-gray-600'
+                          }`}
+                        >
+                          (
+                          {parseFloat(quantity) > initialCurrentStock
+                            ? '+'
+                            : ''}
                           {parseFloat(quantity) - initialCurrentStock})
                         </span>
                       )}
@@ -285,13 +322,15 @@ export function QuickStockMovementModal({
                 </div>
 
                 <div>
-                  <Label htmlFor="reason-adjust">Motif d'ajustement (optionnel)</Label>
+                  <Label htmlFor="reason-adjust">
+                    Motif d'ajustement (optionnel)
+                  </Label>
                   <Select value={reasonCode} onValueChange={setReasonCode}>
                     <SelectTrigger id="reason-adjust" className="mt-1">
                       <SelectValue placeholder="Sélectionner un motif" />
                     </SelectTrigger>
                     <SelectContent>
-                      {getReasonOptions().map((reason) => (
+                      {getReasonOptions().map(reason => (
                         <SelectItem key={reason.code} value={reason.code}>
                           {reason.label}
                         </SelectItem>
@@ -306,7 +345,7 @@ export function QuickStockMovementModal({
                 <Textarea
                   id="notes"
                   value={notes}
-                  onChange={(e) => setNotes(e.target.value)}
+                  onChange={e => setNotes(e.target.value)}
                   placeholder="Ajoutez des détails sur ce mouvement..."
                   rows={3}
                   className="mt-1"
@@ -343,5 +382,5 @@ export function QuickStockMovementModal({
         </form>
       </DialogContent>
     </Dialog>
-  )
+  );
 }

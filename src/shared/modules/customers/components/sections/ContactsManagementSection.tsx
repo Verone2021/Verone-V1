@@ -1,10 +1,9 @@
-'use client'
+'use client';
 
-import { useState, useEffect, useMemo } from 'react'
-import Link from 'next/link'
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
-import { ButtonV2 } from '@/components/ui/button'
-import { Badge } from '@/components/ui/badge'
+import { useState, useEffect, useMemo } from 'react';
+
+import Link from 'next/link';
+
 import {
   Plus,
   Phone,
@@ -17,26 +16,40 @@ import {
   Star,
   StarOff,
   ExternalLink,
-  Eye
-} from 'lucide-react'
-import { useContacts, type Contact } from '@/shared/modules/organisations/hooks'
-import { ContactFormModal } from './contact-form-modal'
+  Eye,
+} from 'lucide-react';
+
+import { Badge } from '@/components/ui/badge';
+import { ButtonV2 } from '@/components/ui/button';
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from '@/components/ui/card';
+import {
+  useContacts,
+  type Contact,
+} from '@/shared/modules/organisations/hooks';
+
+import { ContactFormModal } from '../modals/contact-form-modal';
 
 interface ContactsManagementSectionProps {
-  organisationId: string
-  organisationName: string
-  organisationType: 'supplier' | 'customer'
-  onUpdate?: () => void
+  organisationId: string;
+  organisationName: string;
+  organisationType: 'supplier' | 'customer';
+  onUpdate?: () => void;
 }
 
 export function ContactsManagementSection({
   organisationId,
   organisationName,
   organisationType,
-  onUpdate
+  onUpdate,
 }: ContactsManagementSectionProps) {
-  const [isModalOpen, setIsModalOpen] = useState(false)
-  const [editingContact, setEditingContact] = useState<Contact | null>(null)
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [editingContact, setEditingContact] = useState<Contact | null>(null);
 
   const {
     loading,
@@ -47,36 +60,38 @@ export function ContactsManagementSection({
     deactivateContact,
     setPrimaryContact,
     getContactFullName,
-    getContactRoles
-  } = useContacts()
+    getContactRoles,
+  } = useContacts();
 
   // Charger les contacts à l'initialisation
   useEffect(() => {
-    loadContacts()
-  }, [organisationId])
+    loadContacts();
+  }, [organisationId]);
 
   // Filtrer les contacts de cette organisation
   const organisationContacts = useMemo(() => {
-    return contacts.filter(contact => contact.organisation_id === organisationId)
-  }, [contacts, organisationId])
+    return contacts.filter(
+      contact => contact.organisation_id === organisationId
+    );
+  }, [contacts, organisationId]);
 
   const loadContacts = async () => {
     try {
-      await fetchOrganisationContacts(organisationId)
+      await fetchOrganisationContacts(organisationId);
     } catch (error: any) {
-      console.error('Erreur lors du chargement des contacts:', error)
+      console.error('Erreur lors du chargement des contacts:', error);
     }
-  }
+  };
 
   const handleCreateContact = () => {
-    setEditingContact(null)
-    setIsModalOpen(true)
-  }
+    setEditingContact(null);
+    setIsModalOpen(true);
+  };
 
   const handleEditContact = (contact: Contact) => {
-    setEditingContact(contact)
-    setIsModalOpen(true)
-  }
+    setEditingContact(contact);
+    setIsModalOpen(true);
+  };
 
   const handleContactSaved = async (contactData: any) => {
     try {
@@ -85,110 +100,131 @@ export function ContactsManagementSection({
         organisationName,
         organisationType,
         contactData,
-        editingContact: editingContact?.id
-      })
+        editingContact: editingContact?.id,
+      });
 
       if (editingContact) {
         // Mise à jour
-        await updateContact(editingContact.id, contactData)
+        await updateContact(editingContact.id, contactData);
       } else {
         // Création avec association automatique
         const fullContactData = {
           ...contactData,
-          organisation_id: organisationId
-        }
-        console.log('📝 Données finales pour création:', fullContactData)
-        await createContact(fullContactData)
+          organisation_id: organisationId,
+        };
+        console.log('📝 Données finales pour création:', fullContactData);
+        await createContact(fullContactData);
       }
 
-      setIsModalOpen(false)
-      setEditingContact(null)
-      await loadContacts()
-      onUpdate?.()
+      setIsModalOpen(false);
+      setEditingContact(null);
+      await loadContacts();
+      onUpdate?.();
     } catch (error: any) {
-      console.error('❌ ERREUR SAUVEGARDE CONTACT - ContactsManagementSection:')
-      console.error('Error object:', error)
-      console.error('Error string:', String(error))
-      console.error('Error message:', error?.message)
-      console.error('OrganisationId:', organisationId)
-      console.error('ContactData received:', contactData)
+      console.error(
+        '❌ ERREUR SAUVEGARDE CONTACT - ContactsManagementSection:'
+      );
+      console.error('Error object:', error);
+      console.error('Error string:', String(error));
+      console.error('Error message:', error?.message);
+      console.error('OrganisationId:', organisationId);
+      console.error('ContactData received:', contactData);
 
       try {
-        console.error('Error JSON:', JSON.stringify(error, null, 2))
+        console.error('Error JSON:', JSON.stringify(error, null, 2));
       } catch (e) {
-        console.error('Cannot stringify error:', e)
+        console.error('Cannot stringify error:', e);
       }
     }
-  }
+  };
 
   const handleDeleteContact = async (contact: Contact) => {
     const confirmed = confirm(
       `Êtes-vous sûr de vouloir supprimer le contact "${getContactFullName(contact)}" ?\n\nCette action peut être annulée en réactivant le contact.`
-    )
+    );
 
     if (confirmed) {
       try {
-        await deactivateContact(contact.id)
-        await loadContacts()
-        onUpdate?.()
+        await deactivateContact(contact.id);
+        await loadContacts();
+        onUpdate?.();
       } catch (error: any) {
-        console.error('Erreur lors de la suppression:', error)
+        console.error('Erreur lors de la suppression:', error);
       }
     }
-  }
+  };
 
   const handleSetPrimary = async (contact: Contact) => {
     try {
-      await setPrimaryContact(contact.id)
-      await loadContacts()
-      onUpdate?.()
+      await setPrimaryContact(contact.id);
+      await loadContacts();
+      onUpdate?.();
     } catch (error: any) {
-      console.error('Erreur lors de la définition du contact principal:', error)
+      console.error(
+        'Erreur lors de la définition du contact principal:',
+        error
+      );
     }
-  }
+  };
 
   const getContactTypeIcon = (contact: Contact) => {
     if (contact.is_primary_contact) {
-      return <Star className="h-4 w-4 text-gray-700" />
+      return <Star className="h-4 w-4 text-gray-700" />;
     }
-    return <Users className="h-4 w-4 text-gray-400" />
-  }
+    return <Users className="h-4 w-4 text-gray-400" />;
+  };
 
   const getContactTypeBadges = (contact: Contact) => {
-    const badges = []
+    const badges: JSX.Element[] = [];
 
     if (contact.is_primary_contact) {
       badges.push(
-        <Badge key="primary" variant="secondary" className="bg-gray-100 text-gray-900 border-gray-200">
+        <Badge
+          key="primary"
+          variant="secondary"
+          className="bg-gray-100 text-gray-900 border-gray-200"
+        >
           <Star className="h-3 w-3 mr-1" />
           Principal
         </Badge>
-      )
+      );
     }
     if (contact.is_commercial_contact) {
       badges.push(
-        <Badge key="commercial" variant="outline" className="bg-blue-50 text-blue-700 border-blue-200">
+        <Badge
+          key="commercial"
+          variant="outline"
+          className="bg-blue-50 text-blue-700 border-blue-200"
+        >
           Commercial
         </Badge>
-      )
+      );
     }
     if (contact.is_billing_contact) {
       badges.push(
-        <Badge key="billing" variant="outline" className="bg-green-50 text-green-700 border-green-200">
+        <Badge
+          key="billing"
+          variant="outline"
+          className="bg-green-50 text-green-700 border-green-200"
+        >
           Facturation
         </Badge>
-      )
+      );
     }
     if (contact.is_technical_contact) {
       badges.push(
-        <Badge key="technical" variant="outline" className="bg-purple-50 text-purple-700 border-purple-200">
+        <Badge
+          key="technical"
+          variant="outline"
+          className="bg-purple-50 text-purple-700 border-purple-200"
+        >
           Technique
         </Badge>
-      )
+      );
     }
 
-    return badges
-  }
+    return badges;
+  };
 
   return (
     <>
@@ -202,7 +238,8 @@ export function ContactsManagementSection({
               </CardTitle>
               <CardDescription>
                 Gestion des contacts pour {organisationName}
-                {organisationContacts.length > 0 && ` • ${organisationContacts.length} contact${organisationContacts.length > 1 ? 's' : ''}`}
+                {organisationContacts.length > 0 &&
+                  ` • ${organisationContacts.length} contact${organisationContacts.length > 1 ? 's' : ''}`}
               </CardDescription>
             </div>
             <ButtonV2 onClick={handleCreateContact}>
@@ -217,7 +254,7 @@ export function ContactsManagementSection({
             <div className="space-y-4">
               {Array.from({ length: 2 }).map((_, i) => (
                 <div key={i} className="animate-pulse">
-                  <div className="h-20 bg-gray-200 rounded"></div>
+                  <div className="h-20 bg-gray-200 rounded" />
                 </div>
               ))}
             </div>
@@ -237,7 +274,7 @@ export function ContactsManagementSection({
             </div>
           ) : (
             <div className="space-y-4">
-              {organisationContacts.map((contact) => (
+              {organisationContacts.map(contact => (
                 <div
                   key={contact.id}
                   className="border rounded-lg p-4 hover:shadow-sm transition-shadow"
@@ -316,7 +353,9 @@ export function ContactsManagementSection({
                         asChild
                         title="Voir le détail du contact"
                       >
-                        <Link href={`/contacts-organisations/contacts/${contact.id}`}>
+                        <Link
+                          href={`/contacts-organisations/contacts/${contact.id}`}
+                        >
                           <Eye className="h-4 w-4" />
                         </Link>
                       </ButtonV2>
@@ -351,15 +390,15 @@ export function ContactsManagementSection({
         {...({
           isOpen: isModalOpen,
           onClose: () => {
-            setIsModalOpen(false)
-            setEditingContact(null)
+            setIsModalOpen(false);
+            setEditingContact(null);
           },
           onSave: handleContactSaved,
           contact: (editingContact ?? undefined) as any,
           organisationId: organisationId,
-          organisationName: organisationName
+          organisationName: organisationName,
         } as any)}
       />
     </>
-  )
+  );
 }

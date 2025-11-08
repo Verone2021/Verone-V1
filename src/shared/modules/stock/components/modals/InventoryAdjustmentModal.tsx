@@ -8,34 +8,40 @@
  * @since Phase 3.5.2 - 2025-11-01
  */
 
-'use client'
+'use client';
 
-import React, { useState, useEffect } from 'react'
-import { Plus, Minus, Settings, Loader2, Upload, X } from 'lucide-react'
+import React, { useState, useEffect } from 'react';
+
+import { Plus, Minus, Settings, Loader2, Upload, X } from 'lucide-react';
+
+import { ButtonV2 } from '@/components/ui/button';
 import {
   Dialog,
   DialogContent,
   DialogHeader,
   DialogTitle,
   DialogDescription,
-  DialogFooter
-} from '@/components/ui/dialog'
-import { ButtonV2 } from '@/components/ui/button'
-import { Input } from '@/components/ui/input'
-import { Label } from '@/components/ui/label'
-import { Textarea } from '@/components/ui/textarea'
+  DialogFooter,
+} from '@/components/ui/dialog';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from '@/components/ui/select'
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
-import { useStockUI, type ReasonCode } from '@/shared/modules/stock/hooks'
-import { useStockMovements, type StockReasonCode } from '@/shared/modules/stock/hooks'
-import { createClient } from '@/lib/supabase/client'
-import { useToast } from '@/shared/modules/common/hooks'
+} from '@/components/ui/select';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Textarea } from '@/components/ui/textarea';
+import { type ReasonCode } from '@/hooks/core/use-stock-core';
+import { createClient } from '@/lib/supabase/client';
+import { useToast } from '@/shared/modules/common/hooks';
+import { useStockUI } from '@/shared/modules/stock/hooks';
+import {
+  useStockMovements,
+  type StockReasonCode,
+} from '@/shared/modules/stock/hooks';
 
 // =====================================================================
 // TYPES & INTERFACES
@@ -47,65 +53,65 @@ import { useToast } from '@/shared/modules/common/hooks'
  */
 const REASON_CODE_MAPPING: Record<StockReasonCode, ReasonCode> = {
   // Sorties normales
-  'sale': 'sale',
-  'transfer_out': 'transfer_out',
+  sale: 'sale',
+  transfer_out: 'transfer_out',
 
   // Pertes & Dégradations → 'damage'
-  'damage_transport': 'damage',
-  'damage_handling': 'damage',
-  'damage_storage': 'damage',
-  'theft': 'damage',
-  'loss_unknown': 'damage',
+  damage_transport: 'damage',
+  damage_handling: 'damage',
+  damage_storage: 'damage',
+  theft: 'damage',
+  loss_unknown: 'damage',
 
   // Usage Commercial → 'sample'
-  'sample_client': 'sample',
-  'sample_showroom': 'sample',
-  'marketing_event': 'sample',
-  'photography': 'sample',
+  sample_client: 'sample',
+  sample_showroom: 'sample',
+  marketing_event: 'sample',
+  photography: 'sample',
 
   // R&D & Production → 'sample'
-  'rd_testing': 'sample',
-  'prototype': 'sample',
-  'quality_control': 'sample',
+  rd_testing: 'sample',
+  prototype: 'sample',
+  quality_control: 'sample',
 
   // Retours & SAV
-  'return_supplier': 'return_supplier',
-  'return_customer': 'return_customer',
-  'warranty_replacement': 'return_customer',
+  return_supplier: 'return_supplier',
+  return_customer: 'return_customer',
+  warranty_replacement: 'return_customer',
 
   // Ajustements & Corrections → 'adjustment'
-  'inventory_correction': 'adjustment',
-  'write_off': 'adjustment',
-  'obsolete': 'adjustment',
+  inventory_correction: 'adjustment',
+  write_off: 'adjustment',
+  obsolete: 'adjustment',
 
   // Entrées spéciales
-  'purchase_reception': 'purchase',
-  'return_from_client': 'return_customer',
-  'found_inventory': 'adjustment',
-  'manual_adjustment': 'adjustment'
-}
+  purchase_reception: 'purchase',
+  return_from_client: 'return_customer',
+  found_inventory: 'adjustment',
+  manual_adjustment: 'adjustment',
+};
 
 interface InventoryAdjustmentModalProps {
-  isOpen: boolean
-  onClose: () => void
-  onSuccess: () => void
+  isOpen: boolean;
+  onClose: () => void;
+  onSuccess: () => void;
   product: {
-    id: string
-    name: string
-    sku: string
-    stock_quantity: number
-  } | null
+    id: string;
+    name: string;
+    sku: string;
+    stock_quantity: number;
+  } | null;
 }
 
-type AdjustmentType = 'increase' | 'decrease' | 'correction'
+type AdjustmentType = 'increase' | 'decrease' | 'correction';
 
 interface AdjustmentFormData {
-  adjustmentType: AdjustmentType
-  quantity: string
-  reasonCode: StockReasonCode | ''
-  notes: string
-  uploadedFile: File | null
-  uploadedFileUrl: string
+  adjustmentType: AdjustmentType;
+  quantity: string;
+  reasonCode: StockReasonCode | '';
+  notes: string;
+  uploadedFile: File | null;
+  uploadedFileUrl: string;
 }
 
 // =====================================================================
@@ -116,8 +122,8 @@ const INCREASE_REASONS: { code: StockReasonCode; label: string }[] = [
   { code: 'found_inventory', label: 'Trouvaille inventaire' },
   { code: 'manual_adjustment', label: 'Ajustement manuel' },
   { code: 'return_from_client', label: 'Retour client' },
-  { code: 'purchase_reception', label: 'Réception fournisseur' }
-]
+  { code: 'purchase_reception', label: 'Réception fournisseur' },
+];
 
 const DECREASE_REASONS: { code: StockReasonCode; label: string }[] = [
   { code: 'damage_transport', label: 'Casse transport' },
@@ -126,12 +132,12 @@ const DECREASE_REASONS: { code: StockReasonCode; label: string }[] = [
   { code: 'theft', label: 'Vol/Disparition' },
   { code: 'loss_unknown', label: 'Perte inexpliquée' },
   { code: 'write_off', label: 'Mise au rebut' },
-  { code: 'obsolete', label: 'Produit obsolète' }
-]
+  { code: 'obsolete', label: 'Produit obsolète' },
+];
 
 const CORRECTION_REASONS: { code: StockReasonCode; label: string }[] = [
-  { code: 'inventory_correction', label: 'Correction inventaire' }
-]
+  { code: 'inventory_correction', label: 'Correction inventaire' },
+];
 
 // =====================================================================
 // COMPOSANT PRINCIPAL
@@ -141,12 +147,12 @@ export function InventoryAdjustmentModal({
   isOpen,
   onClose,
   onSuccess,
-  product
+  product,
 }: InventoryAdjustmentModalProps) {
-  const supabase = createClient()
-  const { toast } = useToast()
-  const stock = useStockUI({ autoLoad: false })
-  const { getReasonDescription } = useStockMovements()
+  const supabase = createClient();
+  const { toast } = useToast();
+  const stock = useStockUI({ autoLoad: false });
+  const { getReasonDescription } = useStockMovements();
 
   // État formulaire
   const [formData, setFormData] = useState<AdjustmentFormData>({
@@ -155,11 +161,11 @@ export function InventoryAdjustmentModal({
     reasonCode: '',
     notes: '',
     uploadedFile: null,
-    uploadedFileUrl: ''
-  })
+    uploadedFileUrl: '',
+  });
 
-  const [submitting, setSubmitting] = useState(false)
-  const [uploading, setUploading] = useState(false)
+  const [submitting, setSubmitting] = useState(false);
+  const [uploading, setUploading] = useState(false);
 
   // Reset form quand produit change ou modal s'ouvre
   useEffect(() => {
@@ -170,169 +176,175 @@ export function InventoryAdjustmentModal({
         reasonCode: '',
         notes: '',
         uploadedFile: null,
-        uploadedFileUrl: ''
-      })
+        uploadedFileUrl: '',
+      });
     }
-  }, [isOpen, product])
+  }, [isOpen, product]);
 
   // Calculer quantity_change selon type ajustement
   const calculateQuantityChange = (): number => {
-    if (!product || !formData.quantity) return 0
+    if (!product || !formData.quantity) return 0;
 
-    const qty = parseFloat(formData.quantity)
-    if (isNaN(qty)) return 0
+    const qty = parseFloat(formData.quantity);
+    if (isNaN(qty)) return 0;
 
     switch (formData.adjustmentType) {
       case 'increase':
-        return Math.abs(qty) // Positif
+        return Math.abs(qty); // Positif
       case 'decrease':
-        return -Math.abs(qty) // Négatif
+        return -Math.abs(qty); // Négatif
       case 'correction':
         // Correction = différence entre stock actuel et quantité cible
-        return qty - product.stock_quantity
+        return qty - product.stock_quantity;
       default:
-        return 0
+        return 0;
     }
-  }
+  };
 
   // Calculer nouveau stock après ajustement
   const calculateNewStock = (): number => {
-    if (!product) return 0
-    return product.stock_quantity + calculateQuantityChange()
-  }
+    if (!product) return 0;
+    return product.stock_quantity + calculateQuantityChange();
+  };
 
   // Obtenir les reason codes selon type d'ajustement
   const getReasonOptions = (): { code: StockReasonCode; label: string }[] => {
     switch (formData.adjustmentType) {
       case 'increase':
-        return INCREASE_REASONS
+        return INCREASE_REASONS;
       case 'decrease':
-        return DECREASE_REASONS
+        return DECREASE_REASONS;
       case 'correction':
-        return CORRECTION_REASONS
+        return CORRECTION_REASONS;
       default:
-        return []
+        return [];
     }
-  }
+  };
 
   // Validation formulaire
   const validateForm = (): { valid: boolean; error?: string } => {
     if (!product) {
-      return { valid: false, error: 'Aucun produit sélectionné' }
+      return { valid: false, error: 'Aucun produit sélectionné' };
     }
 
     if (!formData.quantity || formData.quantity === '0') {
-      return { valid: false, error: 'Veuillez saisir une quantité' }
+      return { valid: false, error: 'Veuillez saisir une quantité' };
     }
 
-    const qty = parseFloat(formData.quantity)
+    const qty = parseFloat(formData.quantity);
     if (isNaN(qty) || qty < 0) {
-      return { valid: false, error: 'Quantité invalide' }
+      return { valid: false, error: 'Quantité invalide' };
     }
 
     // Pour decrease : vérifier stock suffisant
-    if (formData.adjustmentType === 'decrease' && qty > product.stock_quantity) {
+    if (
+      formData.adjustmentType === 'decrease' &&
+      qty > product.stock_quantity
+    ) {
       return {
         valid: false,
-        error: `Stock insuffisant (stock actuel: ${product.stock_quantity})`
-      }
+        error: `Stock insuffisant (stock actuel: ${product.stock_quantity})`,
+      };
     }
 
     // Pour correction : nouvelle quantité doit être >= 0
     if (formData.adjustmentType === 'correction' && calculateNewStock() < 0) {
       return {
         valid: false,
-        error: 'La nouvelle quantité ne peut pas être négative'
-      }
+        error: 'La nouvelle quantité ne peut pas être négative',
+      };
     }
 
     if (!formData.reasonCode) {
-      return { valid: false, error: 'Veuillez sélectionner un motif' }
+      return { valid: false, error: 'Veuillez sélectionner un motif' };
     }
 
     if (formData.notes.trim().length < 10) {
       return {
         valid: false,
-        error: 'Les notes doivent contenir au moins 10 caractères'
-      }
+        error: 'Les notes doivent contenir au moins 10 caractères',
+      };
     }
 
-    return { valid: true }
-  }
+    return { valid: true };
+  };
 
   // Upload fichier justificatif
   const handleFileUpload = async (file: File) => {
-    if (!product) return
+    if (!product) return;
 
-    setUploading(true)
+    setUploading(true);
 
     try {
       // Générer nom fichier unique
-      const timestamp = Date.now()
-      const fileExt = file.name.split('.').pop()
-      const fileName = `${product.sku}_adjustment_${timestamp}.${fileExt}`
+      const timestamp = Date.now();
+      const fileExt = file.name.split('.').pop();
+      const fileName = `${product.sku}_adjustment_${timestamp}.${fileExt}`;
       const filePath = `adjustments/${new Date().getFullYear()}/${String(
         new Date().getMonth() + 1
-      ).padStart(2, '0')}/${fileName}`
+      ).padStart(2, '0')}/${fileName}`;
 
       // Upload vers Supabase Storage
       const { data, error } = await supabase.storage
         .from('stock-adjustments')
         .upload(filePath, file, {
           cacheControl: '3600',
-          upsert: false
-        })
+          upsert: false,
+        });
 
-      if (error) throw error
+      if (error) throw error;
 
       // Obtenir URL publique
       const { data: publicUrlData } = supabase.storage
         .from('stock-adjustments')
-        .getPublicUrl(data.path)
+        .getPublicUrl(data.path);
 
       setFormData({
         ...formData,
         uploadedFile: file,
-        uploadedFileUrl: publicUrlData.publicUrl
-      })
+        uploadedFileUrl: publicUrlData.publicUrl,
+      });
 
       toast({
         title: '✅ Fichier uploadé',
-        description: `${file.name} a été téléchargé avec succès`
-      })
+        description: `${file.name} a été téléchargé avec succès`,
+      });
     } catch (err) {
-      console.error('Erreur upload fichier:', err)
+      console.error('Erreur upload fichier:', err);
       toast({
         variant: 'destructive',
         title: 'Erreur upload',
-        description: err instanceof Error ? err.message : 'Impossible d\'uploader le fichier'
-      })
+        description:
+          err instanceof Error
+            ? err.message
+            : "Impossible d'uploader le fichier",
+      });
     } finally {
-      setUploading(false)
+      setUploading(false);
     }
-  }
+  };
 
   // Soumission formulaire
   const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault()
+    e.preventDefault();
 
-    if (!product) return
+    if (!product) return;
 
     // Validation
-    const validation = validateForm()
+    const validation = validateForm();
     if (!validation.valid) {
       toast({
         variant: 'destructive',
         title: 'Erreur validation',
-        description: validation.error
-      })
-      return
+        description: validation.error,
+      });
+      return;
     }
 
-    setSubmitting(true)
+    setSubmitting(true);
 
     try {
-      const quantityChange = calculateQuantityChange()
+      const quantityChange = calculateQuantityChange();
 
       // ✅ FIX: Envoyer directement StockReasonCode (enum détaillé PostgreSQL)
       // Ne PAS mapper vers ReasonCode (enum simplifié) car PostgreSQL attend stock_reason_code
@@ -345,16 +357,16 @@ export function InventoryAdjustmentModal({
         notes: `[${getReasonDescription(formData.reasonCode as StockReasonCode)}] ${formData.notes}`,
         reference_type: 'manual_adjustment', // ✅ Valeur valide dans ReferenceType
         reference_id: crypto.randomUUID(), // ✅ UUID unique pour traçabilité
-        affects_forecast: false
-      })
+        affects_forecast: false,
+      });
 
       if (movement) {
         // Si fichier uploadé, stocker référence dans metadata (optionnel)
         // Pour l'instant, on laisse juste l'URL dans les notes
 
         // Callback succès
-        onSuccess()
-        onClose()
+        onSuccess();
+        onClose();
 
         // Reset form
         setFormData({
@@ -363,25 +375,25 @@ export function InventoryAdjustmentModal({
           reasonCode: '',
           notes: '',
           uploadedFile: null,
-          uploadedFileUrl: ''
-        })
+          uploadedFileUrl: '',
+        });
       }
     } catch (err) {
-      console.error('Erreur création ajustement:', err)
+      console.error('Erreur création ajustement:', err);
       // Toast erreur déjà géré par use-stock-ui
     } finally {
-      setSubmitting(false)
+      setSubmitting(false);
     }
-  }
+  };
 
   // Handler changement type ajustement (reset reason code)
   const handleAdjustmentTypeChange = (type: AdjustmentType) => {
     setFormData({
       ...formData,
       adjustmentType: type,
-      reasonCode: '' // Reset reason code car options différentes
-    })
-  }
+      reasonCode: '', // Reset reason code car options différentes
+    });
+  };
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
@@ -408,7 +420,7 @@ export function InventoryAdjustmentModal({
         <form onSubmit={handleSubmit}>
           <Tabs
             value={formData.adjustmentType}
-            onValueChange={(v) => handleAdjustmentTypeChange(v as AdjustmentType)}
+            onValueChange={v => handleAdjustmentTypeChange(v as AdjustmentType)}
             className="w-full"
           >
             {/* Tabs List */}
@@ -421,7 +433,10 @@ export function InventoryAdjustmentModal({
                 <Minus className="h-4 w-4" />
                 Diminuer
               </TabsTrigger>
-              <TabsTrigger value="correction" className="flex items-center gap-2">
+              <TabsTrigger
+                value="correction"
+                className="flex items-center gap-2"
+              >
                 <Settings className="h-4 w-4" />
                 Corriger
               </TabsTrigger>
@@ -433,26 +448,32 @@ export function InventoryAdjustmentModal({
               <TabsContent value="increase" className="space-y-4 m-0">
                 <div className="p-3 bg-green-50 border border-green-200 rounded-lg">
                   <p className="text-sm text-green-900">
-                    ✅ Augmentez le stock suite à une trouvaille inventaire, retour client ou réception manuelle
+                    ✅ Augmentez le stock suite à une trouvaille inventaire,
+                    retour client ou réception manuelle
                   </p>
                 </div>
 
                 <div>
-                  <Label htmlFor="quantity-increase">Quantité à ajouter *</Label>
+                  <Label htmlFor="quantity-increase">
+                    Quantité à ajouter *
+                  </Label>
                   <Input
                     id="quantity-increase"
                     type="number"
                     min="1"
                     step="1"
                     value={formData.quantity}
-                    onChange={(e) => setFormData({ ...formData, quantity: e.target.value })}
+                    onChange={e =>
+                      setFormData({ ...formData, quantity: e.target.value })
+                    }
                     placeholder="Ex: 10"
                     required
                     className="mt-1"
                   />
                   {product && formData.quantity && (
                     <p className="text-xs text-gray-500 mt-1">
-                      Stock actuel: {product.stock_quantity} → Nouveau: {calculateNewStock()}
+                      Stock actuel: {product.stock_quantity} → Nouveau:{' '}
+                      {calculateNewStock()}
                       <span className="text-green-600 font-medium ml-2">
                         (+{calculateQuantityChange()})
                       </span>
@@ -465,12 +486,15 @@ export function InventoryAdjustmentModal({
               <TabsContent value="decrease" className="space-y-4 m-0">
                 <div className="p-3 bg-orange-50 border border-orange-200 rounded-lg">
                   <p className="text-sm text-orange-900">
-                    ⚠️ Diminuez le stock suite à une casse, perte, vol ou mise au rebut
+                    ⚠️ Diminuez le stock suite à une casse, perte, vol ou mise
+                    au rebut
                   </p>
                 </div>
 
                 <div>
-                  <Label htmlFor="quantity-decrease">Quantité à retirer *</Label>
+                  <Label htmlFor="quantity-decrease">
+                    Quantité à retirer *
+                  </Label>
                   <Input
                     id="quantity-decrease"
                     type="number"
@@ -478,14 +502,17 @@ export function InventoryAdjustmentModal({
                     max={product?.stock_quantity || 0}
                     step="1"
                     value={formData.quantity}
-                    onChange={(e) => setFormData({ ...formData, quantity: e.target.value })}
+                    onChange={e =>
+                      setFormData({ ...formData, quantity: e.target.value })
+                    }
                     placeholder="Ex: 5"
                     required
                     className="mt-1"
                   />
                   {product && formData.quantity && (
                     <p className="text-xs text-gray-500 mt-1">
-                      Stock actuel: {product.stock_quantity} → Nouveau: {calculateNewStock()}
+                      Stock actuel: {product.stock_quantity} → Nouveau:{' '}
+                      {calculateNewStock()}
                       <span className="text-red-600 font-medium ml-2">
                         ({calculateQuantityChange()})
                       </span>
@@ -503,33 +530,39 @@ export function InventoryAdjustmentModal({
               <TabsContent value="correction" className="space-y-4 m-0">
                 <div className="p-3 bg-blue-50 border border-blue-200 rounded-lg">
                   <p className="text-sm text-blue-900">
-                    ℹ️ Correction suite à inventaire physique : définissez la nouvelle quantité totale réelle
+                    ℹ️ Correction suite à inventaire physique : définissez la
+                    nouvelle quantité totale réelle
                   </p>
                 </div>
 
                 <div>
-                  <Label htmlFor="quantity-correction">Nouvelle quantité totale *</Label>
+                  <Label htmlFor="quantity-correction">
+                    Nouvelle quantité totale *
+                  </Label>
                   <Input
                     id="quantity-correction"
                     type="number"
                     min="0"
                     step="1"
                     value={formData.quantity}
-                    onChange={(e) => setFormData({ ...formData, quantity: e.target.value })}
+                    onChange={e =>
+                      setFormData({ ...formData, quantity: e.target.value })
+                    }
                     placeholder="Ex: 15"
                     required
                     className="mt-1"
                   />
                   {product && formData.quantity && (
                     <p className="text-xs text-gray-500 mt-1">
-                      Stock actuel: {product.stock_quantity} → Nouvelle quantité: {formData.quantity}
+                      Stock actuel: {product.stock_quantity} → Nouvelle
+                      quantité: {formData.quantity}
                       <span
                         className={`ml-2 font-medium ${
                           calculateQuantityChange() > 0
                             ? 'text-green-600'
                             : calculateQuantityChange() < 0
-                            ? 'text-red-600'
-                            : 'text-gray-600'
+                              ? 'text-red-600'
+                              : 'text-gray-600'
                         }`}
                       >
                         ({calculateQuantityChange() > 0 ? '+' : ''}
@@ -545,13 +578,18 @@ export function InventoryAdjustmentModal({
                 <Label htmlFor="reason">Motif *</Label>
                 <Select
                   value={formData.reasonCode}
-                  onValueChange={(value) => setFormData({ ...formData, reasonCode: value as StockReasonCode })}
+                  onValueChange={value =>
+                    setFormData({
+                      ...formData,
+                      reasonCode: value as StockReasonCode,
+                    })
+                  }
                 >
                   <SelectTrigger id="reason" className="mt-1">
                     <SelectValue placeholder="Sélectionner un motif" />
                   </SelectTrigger>
                   <SelectContent>
-                    {getReasonOptions().map((reason) => (
+                    {getReasonOptions().map(reason => (
                       <SelectItem key={reason.code} value={reason.code}>
                         {reason.label}
                       </SelectItem>
@@ -563,12 +601,17 @@ export function InventoryAdjustmentModal({
               {/* Notes - Commun à tous */}
               <div>
                 <Label htmlFor="notes">
-                  Notes * <span className="text-gray-500 text-xs">(minimum 10 caractères)</span>
+                  Notes *{' '}
+                  <span className="text-gray-500 text-xs">
+                    (minimum 10 caractères)
+                  </span>
                 </Label>
                 <Textarea
                   id="notes"
                   value={formData.notes}
-                  onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
+                  onChange={e =>
+                    setFormData({ ...formData, notes: e.target.value })
+                  }
                   placeholder="Détails sur l'ajustement..."
                   rows={3}
                   className="mt-1"
@@ -581,7 +624,9 @@ export function InventoryAdjustmentModal({
 
               {/* Upload Fichier Justificatif */}
               <div>
-                <Label htmlFor="file-upload">Document justificatif (optionnel mais recommandé)</Label>
+                <Label htmlFor="file-upload">
+                  Document justificatif (optionnel mais recommandé)
+                </Label>
                 <div className="mt-1">
                   {!formData.uploadedFile ? (
                     <label
@@ -592,13 +637,18 @@ export function InventoryAdjustmentModal({
                         {uploading ? (
                           <>
                             <Loader2 className="h-8 w-8 text-gray-400 animate-spin mb-2" />
-                            <p className="text-sm text-gray-500">Upload en cours...</p>
+                            <p className="text-sm text-gray-500">
+                              Upload en cours...
+                            </p>
                           </>
                         ) : (
                           <>
                             <Upload className="h-8 w-8 text-gray-400 mb-2" />
                             <p className="text-sm text-gray-500">
-                              <span className="font-semibold">Cliquez pour uploader</span> ou glissez-déposez
+                              <span className="font-semibold">
+                                Cliquez pour uploader
+                              </span>{' '}
+                              ou glissez-déposez
                             </p>
                             <p className="text-xs text-gray-400 mt-1">
                               PNG, JPG, PDF, Excel (max 5MB)
@@ -611,9 +661,9 @@ export function InventoryAdjustmentModal({
                         type="file"
                         className="hidden"
                         accept="image/*,.pdf,.xls,.xlsx"
-                        onChange={(e) => {
-                          const file = e.target.files?.[0]
-                          if (file) handleFileUpload(file)
+                        onChange={e => {
+                          const file = e.target.files?.[0];
+                          if (file) handleFileUpload(file);
                         }}
                         disabled={uploading}
                       />
@@ -634,7 +684,7 @@ export function InventoryAdjustmentModal({
                           setFormData({
                             ...formData,
                             uploadedFile: null,
-                            uploadedFileUrl: ''
+                            uploadedFileUrl: '',
                           })
                         }
                         className="h-7 w-7 p-0 hover:bg-red-100 hover:text-red-600"
@@ -669,12 +719,12 @@ export function InventoryAdjustmentModal({
                   Enregistrement...
                 </>
               ) : (
-                'Enregistrer l\'ajustement'
+                "Enregistrer l'ajustement"
               )}
             </ButtonV2>
           </DialogFooter>
         </form>
       </DialogContent>
     </Dialog>
-  )
+  );
 }

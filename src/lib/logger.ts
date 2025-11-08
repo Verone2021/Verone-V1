@@ -71,7 +71,7 @@ class VeroneLogger {
 
   constructor() {
     this.serviceName = 'verone-back-office';
-    this.environment = process.env.NODE_ENV as any || 'development';
+    this.environment = (process.env.NODE_ENV as any) || 'development';
     this.version = process.env.npm_package_version || '1.0.0';
   }
 
@@ -118,8 +118,14 @@ class VeroneLogger {
 
     // Remove sensitive fields
     const sensitiveFields = [
-      'password', 'token', 'secret', 'key', 'apiKey',
-      'authorization', 'cookie', 'session'
+      'password',
+      'token',
+      'secret',
+      'key',
+      'apiKey',
+      'authorization',
+      'cookie',
+      'session',
     ];
 
     sensitiveFields.forEach(field => {
@@ -145,7 +151,9 @@ class VeroneLogger {
     if (this.environment === 'development') {
       const emoji = this.getLevelEmoji(entry.level);
       const timestamp = new Date(entry.timestamp).toLocaleTimeString();
-      console.log(`${emoji} ${timestamp} [${entry.level.toUpperCase()}] ${entry.message}`);
+      console.log(
+        `${emoji} ${timestamp} [${entry.level.toUpperCase()}] ${entry.message}`
+      );
 
       if (entry.context) {
         console.log('  Context:', entry.context);
@@ -173,43 +181,99 @@ class VeroneLogger {
       info: 'ℹ️',
       warn: '⚠️',
       error: '❌',
-      fatal: '💀'
+      fatal: '💀',
     };
     return emojis[level] || 'ℹ️';
   }
 
   // Public logging methods
-  debug(message: string, context?: LogContext, metrics?: Record<string, number | string>): void {
-    const entry = this.createLogEntry('debug', message, context, undefined, metrics);
+  debug(
+    message: string,
+    context?: LogContext,
+    metrics?: Record<string, number | string>
+  ): void {
+    const entry = this.createLogEntry(
+      'debug',
+      message,
+      context,
+      undefined,
+      metrics
+    );
     this.output(entry);
   }
 
-  info(message: string, context?: LogContext, metrics?: Record<string, number | string>): void {
-    const entry = this.createLogEntry('info', message, context, undefined, metrics);
+  info(
+    message: string,
+    context?: LogContext,
+    metrics?: Record<string, number | string>
+  ): void {
+    const entry = this.createLogEntry(
+      'info',
+      message,
+      context,
+      undefined,
+      metrics
+    );
     this.output(entry);
   }
 
-  warn(message: string, context?: LogContext, metrics?: Record<string, number | string>): void {
-    const entry = this.createLogEntry('warn', message, context, undefined, metrics);
+  warn(
+    message: string,
+    context?: LogContext,
+    metrics?: Record<string, number | string>
+  ): void {
+    const entry = this.createLogEntry(
+      'warn',
+      message,
+      context,
+      undefined,
+      metrics
+    );
     this.output(entry);
   }
 
-  error(message: string, error?: Error, context?: LogContext, metrics?: Record<string, number | string>): void {
-    const entry = this.createLogEntry('error', message, context, error, metrics);
+  error(
+    message: string,
+    error?: Error,
+    context?: LogContext,
+    metrics?: Record<string, number | string>
+  ): void {
+    const entry = this.createLogEntry(
+      'error',
+      message,
+      context,
+      error,
+      metrics
+    );
     this.output(entry);
   }
 
-  fatal(message: string, error?: Error, context?: LogContext, metrics?: Record<string, number | string>): void {
-    const entry = this.createLogEntry('fatal', message, context, error, metrics);
+  fatal(
+    message: string,
+    error?: Error,
+    context?: LogContext,
+    metrics?: Record<string, number | string>
+  ): void {
+    const entry = this.createLogEntry(
+      'fatal',
+      message,
+      context,
+      error,
+      metrics
+    );
     this.output(entry);
   }
 
   // Business-specific logging methods
-  business(operation: string, context?: LogContext, metrics?: Record<string, number | string>): void {
+  business(
+    operation: string,
+    context?: LogContext,
+    metrics?: Record<string, number | string>
+  ): void {
     const businessContext = {
       ...context,
       operation,
-      category: 'business'
+      category: 'business',
     };
 
     this.info(`Business Operation: ${operation}`, businessContext, metrics);
@@ -219,17 +283,21 @@ class VeroneLogger {
     const perfContext = {
       ...context,
       operation,
-      category: 'performance'
+      category: 'performance',
     };
 
     const metrics = {
       duration_ms: duration,
-      memory_mb: process.memoryUsage().heapUsed / 1024 / 1024
+      memory_mb: process.memoryUsage().heapUsed / 1024 / 1024,
     };
 
     // Log warning si performance dégradée
     if (duration > 2000) {
-      this.warn(`Slow Operation: ${operation} took ${duration}ms`, perfContext, metrics);
+      this.warn(
+        `Slow Operation: ${operation} took ${duration}ms`,
+        perfContext,
+        metrics
+      );
     } else {
       this.info(`Performance: ${operation}`, perfContext, metrics);
     }
@@ -239,7 +307,7 @@ class VeroneLogger {
     const securityContext = {
       ...context,
       category: 'security',
-      event
+      event,
     };
 
     this.warn(`Security Event: ${event}`, securityContext);
@@ -250,7 +318,7 @@ class VeroneLogger {
       ...context,
       category: 'audit',
       action,
-      resource
+      resource,
     };
 
     this.info(`Audit: ${action} on ${resource}`, auditContext);
@@ -270,7 +338,7 @@ class VeroneLogger {
       ip: req.headers['x-forwarded-for'] || req.connection?.remoteAddress,
       method: req.method,
       url: req.url,
-      sessionId: req.headers['x-session-id']
+      sessionId: req.headers['x-session-id'],
     };
   }
 }
@@ -288,7 +356,7 @@ export const createBusinessMetrics = (
   catalogue_views: catalogueViews,
   feed_generations: feedGenerations,
   pdf_exports: pdfExports,
-  ...customMetrics
+  ...customMetrics,
 });
 
 export const createPerformanceMetrics = (
@@ -300,7 +368,7 @@ export const createPerformanceMetrics = (
   response_time_ms: responseTime,
   db_queries: dbQueries,
   cache_hits: cacheHits,
-  ...customMetrics
+  ...customMetrics,
 });
 
 // Business-specific loggers
@@ -309,39 +377,59 @@ export const catalogueLogger = {
     logger.business('product_viewed', {
       userId,
       resource: 'product',
-      productId
+      productId,
     });
   },
 
-  collectionGenerated: (collectionId: string, productCount: number, userId?: string) => {
-    logger.business('collection_generated', {
-      userId,
-      resource: 'collection',
-      collectionId
-    }, {
-      product_count: productCount
-    });
+  collectionGenerated: (
+    collectionId: string,
+    productCount: number,
+    userId?: string
+  ) => {
+    logger.business(
+      'collection_generated',
+      {
+        userId,
+        resource: 'collection',
+        collectionId,
+      },
+      {
+        product_count: productCount,
+      }
+    );
   },
 
   feedGenerated: (feedType: string, productCount: number, duration: number) => {
-    logger.business('feed_generated', {
-      operation: 'generate_feed',
-      feedType
-    }, {
-      product_count: productCount,
-      generation_time_ms: duration
-    });
+    logger.business(
+      'feed_generated',
+      {
+        operation: 'generate_feed',
+        feedType,
+      },
+      {
+        product_count: productCount,
+        generation_time_ms: duration,
+      }
+    );
   },
 
-  pdfExported: (collectionId: string, productCount: number, duration: number) => {
-    logger.business('pdf_exported', {
-      operation: 'export_pdf',
-      collectionId
-    }, {
-      product_count: productCount,
-      export_time_ms: duration
-    });
-  }
+  pdfExported: (
+    collectionId: string,
+    productCount: number,
+    duration: number
+  ) => {
+    logger.business(
+      'pdf_exported',
+      {
+        operation: 'export_pdf',
+        collectionId,
+      },
+      {
+        product_count: productCount,
+        export_time_ms: duration,
+      }
+    );
+  },
 };
 
 export default logger;

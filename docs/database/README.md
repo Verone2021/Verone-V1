@@ -44,21 +44,21 @@ Cette documentation complète couvre **100% de la base de données** Vérone :
 // ⚠️ MANDATORY - Consulter AVANT création table/colonne
 
 // 1. Lire schéma complet
-Read("docs/database/SCHEMA-REFERENCE.md")
+Read('docs/database/SCHEMA-REFERENCE.md');
 
 // 2. Lire guide anti-hallucination
-Read("docs/database/best-practices.md")
+Read('docs/database/best-practices.md');
 
 // 3. Rechercher structure similaire
 mcp__serena__search_for_pattern({
-  pattern: "supplier|customer|price",
-  relative_path: "docs/database/"
-})
+  pattern: 'supplier|customer|price',
+  relative_path: 'docs/database/',
+});
 
 // 4. Si doute → Demander confirmation
 AskUserQuestion({
-  question: "Table X existe-t-elle déjà sous autre forme?"
-})
+  question: 'Table X existe-t-elle déjà sous autre forme?',
+});
 
 // 5. Migration SQL documentée
 // Fichier: supabase/migrations/YYYYMMDD_NNN_description.sql
@@ -75,6 +75,7 @@ AskUserQuestion({
 > Documentation exhaustive des **78 tables** avec toutes colonnes, types, contraintes, relations
 
 **Contenu** :
+
 - 78 tables organisées par module (Produits, Commandes, Finance, Stocks, etc.)
 - Toutes colonnes avec type, nullable, default, description
 - Colonnes calculées automatiquement (triggers)
@@ -83,6 +84,7 @@ AskUserQuestion({
 - Contraintes UNIQUE/CHECK
 
 **Quand consulter** :
+
 - ✅ Avant créer nouvelle table
 - ✅ Avant ajouter colonne à table existante
 - ✅ Pour comprendre architecture module
@@ -99,6 +101,7 @@ AskUserQuestion({
 > Guide OBLIGATOIRE pour prévenir hallucinations IA (tables/colonnes en double)
 
 **Contenu** :
+
 - ❌ 6 tables à NE JAMAIS créer (`suppliers`, `customers`, `products_pricing`, etc.)
 - ❌ 6 colonnes à NE JAMAIS ajouter (`cost_price`, `primary_image_url`, `stock_quantity`, etc.)
 - ✅ Workflow consultation documentation (4 étapes)
@@ -107,6 +110,7 @@ AskUserQuestion({
 - ✅ Règles d'or à mémoriser
 
 **Quand consulter** :
+
 - ✅ **TOUJOURS** avant créer table/colonne
 - ✅ Si AI propose créer nouvelle structure
 - ✅ En cas de doute sur architecture
@@ -123,6 +127,7 @@ AskUserQuestion({
 > Documentation complète des **158 triggers** PostgreSQL automatiques
 
 **Contenu** :
+
 - 158 triggers organisés par table (59 tables)
 - 10 triggers critiques interdépendants (stock)
 - 42 triggers `update_updated_at` (timestamp auto)
@@ -131,12 +136,14 @@ AskUserQuestion({
 - Définitions SQL complètes
 
 **Quand consulter** :
+
 - ✅ Avant modifier colonne calculée (`stock_quantity`, `total_amount`, etc.)
 - ✅ Pour comprendre pourquoi colonne se met à jour automatiquement
 - ✅ Avant créer nouveau trigger (éviter doublons)
 - ✅ Pour débugger valeurs inattendues
 
 **Points critiques** :
+
 - ⚠️ `maintain_stock_totals()` : 10 triggers interdépendants (NE PAS dupliquer)
 - ⚠️ Colonnes calculées : `products.stock_quantity`, `sales_orders.total_amount`
 
@@ -151,6 +158,7 @@ AskUserQuestion({
 > Documentation exhaustive des **217 RLS policies** (Row-Level Security)
 
 **Contenu** :
+
 - 217 policies sur 73 tables
 - Matrice rôles (Owner, Admin, Catalog Manager, Sales, User)
 - Policies par commande : 92 SELECT, 47 INSERT, 42 UPDATE, 24 DELETE, 12 ALL
@@ -158,12 +166,14 @@ AskUserQuestion({
 - Clauses USING / WITH CHECK détaillées
 
 **Quand consulter** :
+
 - ✅ Avant créer nouvelle table (RLS obligatoire)
 - ✅ Pour comprendre droits par rôle
 - ✅ Pour débugger erreurs 403 Forbidden
 - ✅ Avant ajouter nouveau rôle utilisateur
 
 **Point critique** :
+
 - ⚠️ Fonction `get_user_role()` utilisée par 217 policies (NE PAS modifier)
 
 **Taille** : ~1100 lignes, lecture 15 min
@@ -177,6 +187,7 @@ AskUserQuestion({
 > Documentation complète des **254 fonctions** PostgreSQL
 
 **Contenu** :
+
 - 254 fonctions organisées par type :
   - 89 TRIGGER functions (35.0%)
   - 72 RPC functions appelables client (28.3%)
@@ -189,12 +200,14 @@ AskUserQuestion({
 - Index alphabétique 109 fonctions principales
 
 **Quand consulter** :
+
 - ✅ Avant créer fonction RPC (éviter doublons)
 - ✅ Pour comprendre logique métier (pricing, stock, calculs)
 - ✅ Pour appeler RPC depuis Next.js client
 - ✅ Pour débugger erreurs fonctions
 
 **Points critiques** :
+
 - ⚠️ `calculate_product_price_v2()` : Pricing multi-canal (channel > customer)
 - ⚠️ `maintain_stock_totals()` : Calcul stock automatique
 - ⚠️ `get_user_role()` : Utilisé par 217 RLS policies
@@ -210,6 +223,7 @@ AskUserQuestion({
 > Documentation exhaustive des **34 types enum** PostgreSQL (194 valeurs)
 
 **Contenu** :
+
 - 34 types enum organisés par module :
   - 9 enums Produits & Catalogue
   - 3 enums Commandes & Ventes
@@ -223,12 +237,14 @@ AskUserQuestion({
 - Template ajout valeur enum sécurisé
 
 **Quand consulter** :
+
 - ✅ Avant créer colonne avec contrainte valeurs
 - ✅ Pour voir valeurs possibles d'un enum
 - ✅ Avant ajouter nouvelle valeur à enum existant
 - ✅ Pour comprendre workflow statuts (sales_order_status, etc.)
 
 **Points critiques** :
+
 - ⚠️ `user_role_type` : 5 rôles utilisés par 217 RLS policies
 - ⚠️ `organisation_type` : Table polymorphe (supplier, customer, partner)
 - ⚠️ `stock_reason_code` : 25 motifs traçabilité stock
@@ -244,6 +260,7 @@ AskUserQuestion({
 > Documentation complète des **85 contraintes FK** (intégrité référentielle)
 
 **Contenu** :
+
 - 85 foreign keys sur 52 tables sources → 27 tables référencées
 - ON DELETE / ON UPDATE rules détaillées
 - Diagrammes relations principales (hiérarchie catalogue, workflows, pricing)
@@ -251,12 +268,14 @@ AskUserQuestion({
 - Points critiques CASCADE/RESTRICT/SET NULL
 
 **Quand consulter** :
+
 - ✅ Avant ajouter relation entre tables
 - ✅ Pour comprendre impact suppression (CASCADE, RESTRICT)
 - ✅ Pour voir tables liées à une table centrale
 - ✅ Pour débugger erreurs FK constraint violated
 
 **Points critiques** :
+
 - ⚠️ CASCADE destructeurs : `products` → `stock_movements` (perte historique)
 - ⚠️ RESTRICT bloquants : `sales_orders` si `invoices` existe
 - ⚠️ SET NULL dangereux : `stock_movements.performed_by` (perte traçabilité)
@@ -269,23 +288,23 @@ AskUserQuestion({
 
 ### ❌ NE JAMAIS CRÉER CES TABLES
 
-| ❌ Table Hallucination | ✅ Utiliser À La Place | Documentation |
-|------------------------|------------------------|---------------|
-| `suppliers` | `organisations WHERE type='supplier'` | [SCHEMA-REFERENCE.md § Organisations](./SCHEMA-REFERENCE.md#organisations) |
-| `customers` | `organisations WHERE type='customer'` + `individual_customers` | [SCHEMA-REFERENCE.md § Organisations](./SCHEMA-REFERENCE.md#organisations) |
-| `products_pricing` | `price_list_items` + `calculate_product_price_v2()` | [best-practices.md § Pricing](./best-practices.md#pricing) |
-| `product_stock` | `stock_movements` (triggers calculent auto) | [triggers.md § Stock](./triggers.md#stock) |
-| `user_roles` | `user_profiles.role` (enum `user_role_type`) | [enums.md § user_role_type](./enums.md#user-role-type) |
+| ❌ Table Hallucination | ✅ Utiliser À La Place                                         | Documentation                                                              |
+| ---------------------- | -------------------------------------------------------------- | -------------------------------------------------------------------------- |
+| `suppliers`            | `organisations WHERE type='supplier'`                          | [SCHEMA-REFERENCE.md § Organisations](./SCHEMA-REFERENCE.md#organisations) |
+| `customers`            | `organisations WHERE type='customer'` + `individual_customers` | [SCHEMA-REFERENCE.md § Organisations](./SCHEMA-REFERENCE.md#organisations) |
+| `products_pricing`     | `price_list_items` + `calculate_product_price_v2()`            | [best-practices.md § Pricing](./best-practices.md#pricing)                 |
+| `product_stock`        | `stock_movements` (triggers calculent auto)                    | [triggers.md § Stock](./triggers.md#stock)                                 |
+| `user_roles`           | `user_profiles.role` (enum `user_role_type`)                   | [enums.md § user_role_type](./enums.md#user-role-type)                     |
 
 ### ❌ NE JAMAIS AJOUTER CES COLONNES
 
-| ❌ Colonne Hallucination | ✅ Utiliser À La Place | Documentation |
-|--------------------------|------------------------|---------------|
-| `products.cost_price` | `price_list_items.cost_price` | [best-practices.md § Pricing](./best-practices.md#pricing) |
-| `products.sale_price` | `calculate_product_price_v2()` RPC | [functions-rpc.md § Pricing](./functions-rpc.md#pricing) |
-| `products.primary_image_url` | `product_images WHERE is_primary=true` | [best-practices.md § Images](./best-practices.md#images) |
-| `products.stock_quantity` | Calculé par trigger `maintain_stock_totals()` | [triggers.md § Stock](./triggers.md#maintain-stock-totals) |
-| `sales_orders.total_amount` | Calculé par trigger `calculate_sales_order_total()` | [triggers.md § Orders](./triggers.md#calculate-sales-order-total) |
+| ❌ Colonne Hallucination     | ✅ Utiliser À La Place                              | Documentation                                                     |
+| ---------------------------- | --------------------------------------------------- | ----------------------------------------------------------------- |
+| `products.cost_price`        | `price_list_items.cost_price`                       | [best-practices.md § Pricing](./best-practices.md#pricing)        |
+| `products.sale_price`        | `calculate_product_price_v2()` RPC                  | [functions-rpc.md § Pricing](./functions-rpc.md#pricing)          |
+| `products.primary_image_url` | `product_images WHERE is_primary=true`              | [best-practices.md § Images](./best-practices.md#images)          |
+| `products.stock_quantity`    | Calculé par trigger `maintain_stock_totals()`       | [triggers.md § Stock](./triggers.md#maintain-stock-totals)        |
+| `sales_orders.total_amount`  | Calculé par trigger `calculate_sales_order_total()` | [triggers.md § Orders](./triggers.md#calculate-sales-order-total) |
 
 **Guide complet** : [best-practices.md](./best-practices.md)
 
@@ -296,13 +315,15 @@ AskUserQuestion({
 ### 🏗️ Architecture Database
 
 **Questions** :
-- *Comment est organisée la base de données?*
-- *Quels sont les modules principaux?*
-- *Quelles tables sont centrales (hub)?*
+
+- _Comment est organisée la base de données?_
+- _Quels sont les modules principaux?_
+- _Quelles tables sont centrales (hub)?_
 
 **Réponse** : [SCHEMA-REFERENCE.md § Organisation par Module](./SCHEMA-REFERENCE.md#organisation-par-module)
 
 **Modules principaux** :
+
 - Catalogue & Produits (11 tables)
 - Commandes Ventes (7 tables)
 - Commandes Achats (4 tables)
@@ -316,13 +337,15 @@ AskUserQuestion({
 ### 🔐 Sécurité & RLS
 
 **Questions** :
-- *Quels rôles existent dans le système?*
-- *Qui peut voir/modifier quelles tables?*
-- *Comment ajouter RLS à nouvelle table?*
+
+- _Quels rôles existent dans le système?_
+- _Qui peut voir/modifier quelles tables?_
+- _Comment ajouter RLS à nouvelle table?_
 
 **Réponse** : [rls-policies.md](./rls-policies.md)
 
 **Rôles système** :
+
 - `owner` : Tous droits (super-admin)
 - `admin` : Quasi tous droits (gestion quotidienne)
 - `catalog_manager` : Produits, fournisseurs, pricing
@@ -334,13 +357,15 @@ AskUserQuestion({
 ### 💰 Système Pricing Multi-Canal
 
 **Questions** :
-- *Comment sont gérés les prix produits?*
-- *Comment calculer prix final avec canal/client?*
-- *Où stocker nouveaux prix?*
+
+- _Comment sont gérés les prix produits?_
+- _Comment calculer prix final avec canal/client?_
+- _Où stocker nouveaux prix?_
 
 **Réponse** : **[pricing-architecture.md](./pricing-architecture.md)** (documentation complète) + [best-practices.md § Pricing](./best-practices.md#pricing)
 
 **Architecture Pricing** :
+
 ```
 price_list_items (tous les prix)
   ├─ cost_price (prix achat)
@@ -357,13 +382,14 @@ Priorité Calcul (calculate_product_price_v2):
 ```
 
 **RPC Call** :
+
 ```typescript
 const { data } = await supabase.rpc('calculate_product_price_v2', {
   p_product_id: 'uuid',
-  p_quantity: 50,          // Tiered pricing
+  p_quantity: 50, // Tiered pricing
   p_channel_id: 'uuid',
-  p_customer_id: 'uuid',   // Optionnel
-  p_date: '2025-10-17'     // Optionnel
+  p_customer_id: 'uuid', // Optionnel
+  p_date: '2025-10-17', // Optionnel
 });
 ```
 
@@ -376,13 +402,15 @@ const { data } = await supabase.rpc('calculate_product_price_v2', {
 ### 📦 Gestion Stock Automatique
 
 **Questions** :
-- *Comment est calculé le stock produit?*
-- *Pourquoi `products.stock_quantity` se met à jour automatiquement?*
-- *Comment créer mouvement de stock?*
+
+- _Comment est calculé le stock produit?_
+- _Pourquoi `products.stock_quantity` se met à jour automatiquement?_
+- _Comment créer mouvement de stock?_
 
 **Réponse** : [triggers.md § Stock](./triggers.md#stock) + [best-practices.md § Stock](./best-practices.md#stock)
 
 **Système Stock** :
+
 - ❌ JAMAIS modifier `products.stock_quantity` manuellement
 - ✅ TOUJOURS créer `stock_movement`
 - ⚡ Trigger `maintain_stock_totals()` calcule automatiquement :
@@ -392,6 +420,7 @@ const { data } = await supabase.rpc('calculate_product_price_v2', {
   - `stock_quantity` = stock_real + forecasted_in - forecasted_out
 
 **Code** :
+
 ```sql
 -- ✅ BON: Créer mouvement
 INSERT INTO stock_movements (
@@ -411,13 +440,15 @@ UPDATE products SET stock_quantity = stock_quantity - 10;
 ### 🏢 Organisations Polymorphes
 
 **Questions** :
-- *Comment gérer fournisseurs/clients/partenaires?*
-- *Pourquoi pas de table `suppliers` séparée?*
-- *Comment différencier B2B/B2C?*
+
+- _Comment gérer fournisseurs/clients/partenaires?_
+- _Pourquoi pas de table `suppliers` séparée?_
+- _Comment différencier B2B/B2C?_
 
 **Réponse** : [best-practices.md § Organisations](./best-practices.md#organisations)
 
 **Architecture Organisations** :
+
 ```
 organisations (table polymorphe)
   ├── type = 'supplier' → Fournisseurs
@@ -428,6 +459,7 @@ organisations (table polymorphe)
 ```
 
 **Avantages table polymorphe** :
+
 - Vision unifiée tous partenaires
 - Contacts uniques (table `contacts` → `organisations`)
 - Documents financiers unifiés (`partner_id` → `organisations`)
@@ -437,13 +469,15 @@ organisations (table polymorphe)
 ### 🖼️ Images Produits (One-to-Many)
 
 **Questions** :
-- *Comment stocker images produits?*
-- *Comment récupérer image principale?*
-- *Pourquoi pas `products.primary_image_url`?*
+
+- _Comment stocker images produits?_
+- _Comment récupérer image principale?_
+- _Pourquoi pas `products.primary_image_url`?_
 
 **Réponse** : [best-practices.md § Images](./best-practices.md#images)
 
 **Architecture Images** :
+
 ```
 product_images (table dédiée)
   ├── product_id → products
@@ -455,11 +489,10 @@ product_images (table dédiée)
 ```
 
 **Query Pattern** :
+
 ```typescript
 // ✅ BON: LEFT JOIN product_images
-const { data } = await supabase
-  .from('products')
-  .select(`
+const { data } = await supabase.from('products').select(`
     *,
     product_images!left (public_url, is_primary)
   `);
@@ -467,7 +500,7 @@ const { data } = await supabase
 // Enrichissement frontend obligatoire
 const enriched = data.map(p => ({
   ...p,
-  primary_image_url: p.product_images?.[0]?.public_url || null
+  primary_image_url: p.product_images?.[0]?.public_url || null,
 }));
 ```
 
@@ -520,6 +553,7 @@ WHERE table_name = 'organisations' AND column_name = 'supplier_segment';
 ### Q1: Comment vérifier si table existe déjà?
 
 **Réponse** :
+
 ```sql
 -- Query PostgreSQL
 SELECT tablename
@@ -537,6 +571,7 @@ WHERE schemaname = 'public'
 **Réponse** : Lire [triggers.md](./triggers.md)
 
 **Colonnes calculées automatiquement** :
+
 - `products.stock_quantity` → trigger `maintain_stock_totals()`
 - `products.stock_real` → trigger `maintain_stock_totals()`
 - `products.updated_at` → trigger `update_updated_at()`
@@ -563,7 +598,7 @@ WHERE schemaname = 'public'
 const { data, error } = await supabase.rpc('calculate_product_price_v2', {
   product_id: 'uuid',
   channel_id: 'uuid',
-  customer_id: 'uuid'
+  customer_id: 'uuid',
 });
 ```
 
@@ -574,12 +609,14 @@ const { data, error } = await supabase.rpc('calculate_product_price_v2', {
 **Réponse** : Lire [rls-policies.md](./rls-policies.md)
 
 **Causes fréquentes** :
+
 1. RLS policy manquante pour votre rôle
 2. Fonction `get_user_role()` retourne NULL (user non authentifié)
 3. Clause USING policy ne matche pas vos données
 4. RLS activé mais aucune policy SELECT (DENY par défaut)
 
 **Debug** :
+
 ```sql
 -- Vérifier rôle utilisateur
 SELECT get_user_role();
@@ -624,6 +661,7 @@ WHERE tablename = 'products';
 ### Signaler Erreur Documentation
 
 Si documentation incorrecte/obsolète :
+
 1. Vérifier date dernière extraction (haut de chaque fichier)
 2. Comparer avec database réelle (query PostgreSQL)
 3. Signaler dans MEMORY-BANK avec preuve
@@ -636,4 +674,4 @@ Si documentation incorrecte/obsolète :
 **Maintenu par** : Vérone Documentation Team
 **Version** : 2.0 (Extraction Complète)
 
-*Vérone Back Office - Professional Database Documentation*
+_Vérone Back Office - Professional Database Documentation_

@@ -3,10 +3,8 @@
  * Description: Cartes KPIs trésorerie avec métriques AR + AP
  */
 
-'use client'
+'use client';
 
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
-import { Skeleton } from '@/components/ui/skeleton'
 import {
   TrendingUp,
   TrendingDown,
@@ -14,18 +12,21 @@ import {
   ArrowUpCircle,
   ArrowDownCircle,
   AlertCircle,
-  DollarSign
-} from 'lucide-react'
-import type { TreasuryStats } from '@/shared/modules/finance/hooks'
+  DollarSign,
+} from 'lucide-react';
+
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Skeleton } from '@/components/ui/skeleton';
+import type { TreasuryStats } from '@/shared/modules/finance/hooks';
 
 // =====================================================================
 // TYPES
 // =====================================================================
 
 interface TreasuryKPIsProps {
-  stats: TreasuryStats | null
-  bankBalance?: number | null
-  loading?: boolean
+  stats: TreasuryStats | null;
+  bankBalance?: number | null;
+  loading?: boolean;
 }
 
 // =====================================================================
@@ -37,32 +38,36 @@ function formatCurrency(amount: number): string {
     style: 'currency',
     currency: 'EUR',
     minimumFractionDigits: 0,
-    maximumFractionDigits: 0
-  }).format(amount)
+    maximumFractionDigits: 0,
+  }).format(amount);
 }
 
 // =====================================================================
 // COMPOSANT
 // =====================================================================
 
-export function TreasuryKPIs({ stats, bankBalance, loading }: TreasuryKPIsProps) {
+export function TreasuryKPIs({
+  stats,
+  bankBalance,
+  loading,
+}: TreasuryKPIsProps) {
   if (loading) {
     return (
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-        {[1, 2, 3, 4, 5, 6, 7, 8].map((i) => (
+        {[1, 2, 3, 4, 5, 6, 7, 8].map(i => (
           <Skeleton key={i} className="h-32" />
         ))}
       </div>
-    )
+    );
   }
 
   if (!stats) {
-    return null
+    return null;
   }
 
   // Calculer métriques dérivées
-  const arPendingAmount = stats.total_invoiced_ar - stats.total_paid_ar
-  const apPendingAmount = stats.total_invoiced_ap - stats.total_paid_ap
+  const arPendingAmount = stats.total_invoiced_ar - stats.total_paid_ar;
+  const apPendingAmount = stats.total_invoiced_ap - stats.total_paid_ap;
 
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
@@ -79,21 +84,23 @@ export function TreasuryKPIs({ stats, bankBalance, loading }: TreasuryKPIsProps)
             <div className="text-2xl font-bold text-blue-900">
               {formatCurrency(bankBalance)}
             </div>
-            <p className="text-xs text-blue-700 mt-1">
-              Temps réel (Qonto)
-            </p>
+            <p className="text-xs text-blue-700 mt-1">Temps réel (Qonto)</p>
           </CardContent>
         </Card>
       )}
 
       {/* Balance Nette (Net Balance) */}
-      <Card className={
-        stats.net_balance >= 0
-          ? 'bg-gradient-to-br from-green-50 to-green-100 border-green-200'
-          : 'bg-gradient-to-br from-red-50 to-red-100 border-red-200'
-      }>
+      <Card
+        className={
+          stats.net_balance >= 0
+            ? 'bg-gradient-to-br from-green-50 to-green-100 border-green-200'
+            : 'bg-gradient-to-br from-red-50 to-red-100 border-red-200'
+        }
+      >
         <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-          <CardTitle className={`text-sm font-medium ${stats.net_balance >= 0 ? 'text-green-900' : 'text-red-900'}`}>
+          <CardTitle
+            className={`text-sm font-medium ${stats.net_balance >= 0 ? 'text-green-900' : 'text-red-900'}`}
+          >
             Balance Nette
           </CardTitle>
           {stats.net_balance >= 0 ? (
@@ -103,32 +110,46 @@ export function TreasuryKPIs({ stats, bankBalance, loading }: TreasuryKPIsProps)
           )}
         </CardHeader>
         <CardContent>
-          <div className={`text-2xl font-bold ${stats.net_balance >= 0 ? 'text-green-900' : 'text-red-900'}`}>
+          <div
+            className={`text-2xl font-bold ${stats.net_balance >= 0 ? 'text-green-900' : 'text-red-900'}`}
+          >
             {formatCurrency(stats.net_balance)}
           </div>
-          <p className={`text-xs mt-1 ${stats.net_balance >= 0 ? 'text-green-700' : 'text-red-700'}`}>
+          <p
+            className={`text-xs mt-1 ${stats.net_balance >= 0 ? 'text-green-700' : 'text-red-700'}`}
+          >
             AR - AP (période)
           </p>
         </CardContent>
       </Card>
 
       {/* Flux Net (Cash Flow) */}
-      <Card className={
-        stats.net_cash_flow >= 0
-          ? 'bg-gradient-to-br from-emerald-50 to-emerald-100 border-emerald-200'
-          : 'bg-gradient-to-br from-orange-50 to-orange-100 border-orange-200'
-      }>
+      <Card
+        className={
+          stats.net_cash_flow >= 0
+            ? 'bg-gradient-to-br from-emerald-50 to-emerald-100 border-emerald-200'
+            : 'bg-gradient-to-br from-orange-50 to-orange-100 border-orange-200'
+        }
+      >
         <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-          <CardTitle className={`text-sm font-medium ${stats.net_cash_flow >= 0 ? 'text-emerald-900' : 'text-orange-900'}`}>
+          <CardTitle
+            className={`text-sm font-medium ${stats.net_cash_flow >= 0 ? 'text-emerald-900' : 'text-orange-900'}`}
+          >
             Flux Trésorerie
           </CardTitle>
-          <DollarSign className={`h-4 w-4 ${stats.net_cash_flow >= 0 ? 'text-emerald-600' : 'text-orange-600'}`} />
+          <DollarSign
+            className={`h-4 w-4 ${stats.net_cash_flow >= 0 ? 'text-emerald-600' : 'text-orange-600'}`}
+          />
         </CardHeader>
         <CardContent>
-          <div className={`text-2xl font-bold ${stats.net_cash_flow >= 0 ? 'text-emerald-900' : 'text-orange-900'}`}>
+          <div
+            className={`text-2xl font-bold ${stats.net_cash_flow >= 0 ? 'text-emerald-900' : 'text-orange-900'}`}
+          >
             {formatCurrency(stats.net_cash_flow)}
           </div>
-          <p className={`text-xs mt-1 ${stats.net_cash_flow >= 0 ? 'text-emerald-700' : 'text-orange-700'}`}>
+          <p
+            className={`text-xs mt-1 ${stats.net_cash_flow >= 0 ? 'text-emerald-700' : 'text-orange-700'}`}
+          >
             Encaissements - Décaissements
           </p>
         </CardContent>
@@ -148,9 +169,7 @@ export function TreasuryKPIs({ stats, bankBalance, loading }: TreasuryKPIsProps)
           <div className="text-2xl font-bold text-gray-900">
             {formatCurrency(stats.total_invoiced_ar)}
           </div>
-          <p className="text-xs text-gray-500 mt-1">
-            Total factures clients
-          </p>
+          <p className="text-xs text-gray-500 mt-1">Total factures clients</p>
         </CardContent>
       </Card>
 
@@ -166,9 +185,7 @@ export function TreasuryKPIs({ stats, bankBalance, loading }: TreasuryKPIsProps)
           <div className="text-2xl font-bold text-green-600">
             {formatCurrency(stats.total_paid_ar)}
           </div>
-          <p className="text-xs text-gray-500 mt-1">
-            Paiements reçus clients
-          </p>
+          <p className="text-xs text-gray-500 mt-1">Paiements reçus clients</p>
         </CardContent>
       </Card>
 
@@ -222,9 +239,7 @@ export function TreasuryKPIs({ stats, bankBalance, loading }: TreasuryKPIsProps)
           <div className="text-2xl font-bold text-red-600">
             {formatCurrency(stats.total_paid_ap)}
           </div>
-          <p className="text-xs text-gray-500 mt-1">
-            Paiements effectués
-          </p>
+          <p className="text-xs text-gray-500 mt-1">Paiements effectués</p>
         </CardContent>
       </Card>
 
@@ -246,5 +261,5 @@ export function TreasuryKPIs({ stats, bankBalance, loading }: TreasuryKPIsProps)
         </CardContent>
       </Card>
     </div>
-  )
+  );
 }

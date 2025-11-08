@@ -9,15 +9,12 @@
  * - Gestion state comma-separated string
  */
 
-'use client'
+'use client';
 
-import React, { useState, useRef, useEffect } from 'react'
-import { Check, ChevronDown, X } from 'lucide-react'
-import { cn } from '@/lib/utils'
-import { ButtonV2 } from '@/components/ui/button'
-import { Badge } from '@/components/ui/badge'
-import { Label } from '@/components/ui/label'
-import { SupplierCategoryCode, getCategoryLabel } from './supplier-category-badge'
+import React, { useState, useRef, useEffect } from 'react';
+
+import type { LucideIcon } from 'lucide-react';
+import { Check, ChevronDown, X } from 'lucide-react';
 import {
   Sofa,
   TreeDeciduous,
@@ -32,27 +29,33 @@ import {
   Wrench,
   Package,
   Package2,
-  LucideIcon,
-} from 'lucide-react'
+} from 'lucide-react';
+
+import { Badge } from '@/components/ui/badge';
+import { ButtonV2 } from '@/components/ui/button';
+import { Label } from '@/components/ui/label';
+import { cn } from '@verone/utils';
+import type { SupplierCategoryCode } from '@/shared/modules/categories/components/badges/SupplierCategoryBadge';
+import { getCategoryLabel } from '@/shared/modules/categories/components/badges/SupplierCategoryBadge';
 
 interface SupplierCategorySelectProps {
   /** Valeur actuelle: array de codes OU string comma-separated */
-  value: SupplierCategoryCode[] | string | null | undefined
+  value: SupplierCategoryCode[] | string | null | undefined;
   /** Callback onChange avec array de codes */
-  onChange: (categories: SupplierCategoryCode[]) => void
-  disabled?: boolean
-  showLabel?: boolean
-  placeholder?: string
-  maxDisplay?: number
-  className?: string
+  onChange: (categories: SupplierCategoryCode[]) => void;
+  disabled?: boolean;
+  showLabel?: boolean;
+  placeholder?: string;
+  maxDisplay?: number;
+  className?: string;
 }
 
 // Configuration catégories (synchronisée avec supplier-category-badge.tsx)
 const CATEGORY_OPTIONS: Array<{
-  code: SupplierCategoryCode
-  label: string
-  icon: LucideIcon
-  description: string
+  code: SupplierCategoryCode;
+  label: string;
+  icon: LucideIcon;
+  description: string;
 }> = [
   {
     code: 'furniture_indoor',
@@ -88,7 +91,7 @@ const CATEGORY_OPTIONS: Array<{
     code: 'art_sculptures',
     label: 'Art & Sculptures',
     icon: Paintbrush,
-    description: 'Œuvres d\'art, sculptures design',
+    description: "Œuvres d'art, sculptures design",
   },
   {
     code: 'mirrors_frames',
@@ -132,7 +135,7 @@ const CATEGORY_OPTIONS: Array<{
     icon: Package2,
     description: 'Bois, métaux, composants',
   },
-]
+];
 
 export function SupplierCategorySelect({
   value,
@@ -143,63 +146,66 @@ export function SupplierCategorySelect({
   maxDisplay = 3,
   className,
 }: SupplierCategorySelectProps) {
-  const [isOpen, setIsOpen] = useState(false)
-  const [searchTerm, setSearchTerm] = useState('')
-  const dropdownRef = useRef<HTMLDivElement>(null)
-  const inputRef = useRef<HTMLInputElement>(null)
+  const [isOpen, setIsOpen] = useState(false);
+  const [searchTerm, setSearchTerm] = useState('');
+  const dropdownRef = useRef<HTMLDivElement>(null);
+  const inputRef = useRef<HTMLInputElement>(null);
 
   // Parser la valeur en array
   const selectedCategories = React.useMemo(() => {
-    if (!value) return []
-    if (Array.isArray(value)) return value
+    if (!value) return [];
+    if (Array.isArray(value)) return value;
     return value
       .split(',')
-      .map((c) => c.trim())
-      .filter((c) => c) as SupplierCategoryCode[]
-  }, [value])
+      .map(c => c.trim())
+      .filter(c => c) as SupplierCategoryCode[];
+  }, [value]);
 
   // Fermer dropdown en cliquant dehors
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
-      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
-        setIsOpen(false)
-        setSearchTerm('')
+      if (
+        dropdownRef.current &&
+        !dropdownRef.current.contains(event.target as Node)
+      ) {
+        setIsOpen(false);
+        setSearchTerm('');
       }
-    }
+    };
 
-    document.addEventListener('mousedown', handleClickOutside)
-    return () => document.removeEventListener('mousedown', handleClickOutside)
-  }, [])
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
 
   // Filtrer catégories selon recherche
   const filteredCategories = CATEGORY_OPTIONS.filter(
-    (cat) =>
+    cat =>
       cat.label.toLowerCase().includes(searchTerm.toLowerCase()) ||
       cat.description.toLowerCase().includes(searchTerm.toLowerCase())
-  )
+  );
 
   const handleSelect = (categoryCode: SupplierCategoryCode) => {
-    if (disabled) return
+    if (disabled) return;
 
     const newValue = selectedCategories.includes(categoryCode)
-      ? selectedCategories.filter((c) => c !== categoryCode)
-      : [...selectedCategories, categoryCode]
+      ? selectedCategories.filter(c => c !== categoryCode)
+      : [...selectedCategories, categoryCode];
 
-    onChange(newValue)
-  }
+    onChange(newValue);
+  };
 
   const handleRemove = (categoryCode: SupplierCategoryCode) => {
-    if (disabled) return
-    onChange(selectedCategories.filter((c) => c !== categoryCode))
-  }
+    if (disabled) return;
+    onChange(selectedCategories.filter(c => c !== categoryCode));
+  };
 
   const handleClearAll = () => {
-    if (disabled) return
-    onChange([])
-  }
+    if (disabled) return;
+    onChange([]);
+  };
 
-  const displayCategories = selectedCategories.slice(0, maxDisplay)
-  const remainingCount = selectedCategories.length - maxDisplay
+  const displayCategories = selectedCategories.slice(0, maxDisplay);
+  const remainingCount = selectedCategories.length - maxDisplay;
 
   return (
     <div className={cn('relative', className)}>
@@ -226,10 +232,10 @@ export function SupplierCategorySelect({
               <span>{placeholder}</span>
             ) : (
               <>
-                {displayCategories.map((code) => {
-                  const config = CATEGORY_OPTIONS.find((c) => c.code === code)
-                  if (!config) return null
-                  const Icon = config.icon
+                {displayCategories.map(code => {
+                  const config = CATEGORY_OPTIONS.find(c => c.code === code);
+                  if (!config) return null;
+                  const Icon = config.icon;
 
                   return (
                     <Badge
@@ -241,16 +247,16 @@ export function SupplierCategorySelect({
                       <span>{config.label}</span>
                       <button
                         type="button"
-                        onClick={(e) => {
-                          e.stopPropagation()
-                          handleRemove(code)
+                        onClick={e => {
+                          e.stopPropagation();
+                          handleRemove(code);
                         }}
                         className="ml-1 hover:bg-neutral-200 rounded-sm"
                       >
                         <X className="h-3 w-3" />
                       </button>
                     </Badge>
-                  )
+                  );
                 })}
                 {remainingCount > 0 && (
                   <Badge variant="outline" className="bg-neutral-100">
@@ -260,7 +266,12 @@ export function SupplierCategorySelect({
               </>
             )}
           </div>
-          <ChevronDown className={cn('h-4 w-4 transition-transform', isOpen && 'rotate-180')} />
+          <ChevronDown
+            className={cn(
+              'h-4 w-4 transition-transform',
+              isOpen && 'rotate-180'
+            )}
+          />
         </ButtonV2>
 
         {/* Dropdown menu */}
@@ -273,7 +284,7 @@ export function SupplierCategorySelect({
                 type="text"
                 placeholder="Rechercher une catégorie..."
                 value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
+                onChange={e => setSearchTerm(e.target.value)}
                 className="w-full px-3 py-2 text-sm border border-neutral-200 rounded-md focus:outline-none focus:ring-2 focus:ring-primary-500"
               />
               {selectedCategories.length > 0 && (
@@ -297,9 +308,11 @@ export function SupplierCategorySelect({
                 </div>
               ) : (
                 <div className="space-y-1">
-                  {filteredCategories.map((category) => {
-                    const isSelected = selectedCategories.includes(category.code)
-                    const Icon = category.icon
+                  {filteredCategories.map(category => {
+                    const isSelected = selectedCategories.includes(
+                      category.code
+                    );
+                    const Icon = category.icon;
 
                     return (
                       <button
@@ -320,15 +333,21 @@ export function SupplierCategorySelect({
                               : 'border-neutral-300'
                           )}
                         >
-                          {isSelected && <Check className="h-3 w-3 text-white" />}
+                          {isSelected && (
+                            <Check className="h-3 w-3 text-white" />
+                          )}
                         </div>
                         <Icon className="h-4 w-4 text-neutral-600" />
                         <div className="flex-1 text-left">
-                          <div className="font-medium text-neutral-900">{category.label}</div>
-                          <div className="text-xs text-neutral-500">{category.description}</div>
+                          <div className="font-medium text-neutral-900">
+                            {category.label}
+                          </div>
+                          <div className="text-xs text-neutral-500">
+                            {category.description}
+                          </div>
                         </div>
                       </button>
-                    )
+                    );
                   })}
                 </div>
               )}
@@ -340,28 +359,31 @@ export function SupplierCategorySelect({
       {/* Helper text */}
       {selectedCategories.length > 0 && (
         <p className="mt-1.5 text-xs text-neutral-600">
-          {selectedCategories.length} catégorie{selectedCategories.length > 1 ? 's' : ''}{' '}
-          sélectionnée{selectedCategories.length > 1 ? 's' : ''}
+          {selectedCategories.length} catégorie
+          {selectedCategories.length > 1 ? 's' : ''} sélectionnée
+          {selectedCategories.length > 1 ? 's' : ''}
         </p>
       )}
     </div>
-  )
+  );
 }
 
 /**
  * Helper: Convertir array en string comma-separated (pour DB storage)
  */
 export function categoriesToString(categories: SupplierCategoryCode[]): string {
-  return categories.join(',')
+  return categories.join(',');
 }
 
 /**
  * Helper: Parser string comma-separated en array
  */
-export function stringToCategories(categoriesString: string | null | undefined): SupplierCategoryCode[] {
-  if (!categoriesString) return []
+export function stringToCategories(
+  categoriesString: string | null | undefined
+): SupplierCategoryCode[] {
+  if (!categoriesString) return [];
   return categoriesString
     .split(',')
-    .map((c) => c.trim())
-    .filter((c) => c) as SupplierCategoryCode[]
+    .map(c => c.trim())
+    .filter(c => c) as SupplierCategoryCode[];
 }

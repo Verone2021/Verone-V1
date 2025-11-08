@@ -18,6 +18,7 @@
 ## 🚀 **Utilisation Rapide**
 
 ### **Démarrer Mode YOLO**
+
 ```bash
 # Via script direct
 ./.claude/security/start-yolo-mode.sh
@@ -27,6 +28,7 @@
 ```
 
 ### **Arrêter Mode YOLO**
+
 ```bash
 # Arrêt normal
 docker-compose -f .claude/security/yolo-docker-config.yml down
@@ -72,6 +74,7 @@ docker-compose -f .claude/security/yolo-docker-config.yml down
 ## 🔧 **Configuration MCP Agents**
 
 Le mode YOLO utilise les agents MCP de sécurité :
+
 - **orchestrator** : Coordination centrale
 - **security-scanner** : Détection menaces
 - **filesystem-guardian** : Protection fichiers
@@ -80,12 +83,14 @@ Le mode YOLO utilise les agents MCP de sécurité :
 ## 📊 **Métriques Sécurité**
 
 ### **Objectifs Performance**
+
 - Démarrage container : <30s
 - Impact performance : <10%
 - Détection menaces : <100ms
 - Isolation breach : <1s
 
 ### **Garanties Sécurité**
+
 - Zero exposition credentials
 - Zero accès système host
 - Zero escalade privilèges

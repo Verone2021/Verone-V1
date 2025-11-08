@@ -1,9 +1,13 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+
 import Image from 'next/image';
 import Link from 'next/link';
+
 import { Package, Loader2 } from 'lucide-react';
+
+import { Badge } from '@/components/ui/badge';
 import {
   Table,
   TableBody,
@@ -12,7 +16,6 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table';
-import { Badge } from '@/components/ui/badge';
 import { createClient } from '@/lib/supabase/client';
 
 interface OrderItem {
@@ -125,7 +128,9 @@ export function OrderItemsTable({ orderId, orderType }: OrderItemsTableProps) {
     return (
       <div className="text-center py-8">
         <Package className="h-10 w-10 text-gray-300 mx-auto mb-2" />
-        <p className="text-sm text-gray-500">Aucun produit dans cette commande</p>
+        <p className="text-sm text-gray-500">
+          Aucun produit dans cette commande
+        </p>
       </div>
     );
   }

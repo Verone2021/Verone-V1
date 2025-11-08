@@ -5,14 +5,16 @@
  * Sécurisé avec authentification, rate limiting et validation.
  */
 
-import { NextRequest, NextResponse } from 'next/server';
-import { withLogging } from '@/lib/middleware/logging';
+import type { NextRequest } from 'next/server';
+import { NextResponse } from 'next/server';
+
+import { logger, catalogueLogger } from '@/lib/logger';
 import {
   withApiSecurity,
   validateInput,
   sanitizeString,
 } from '@/lib/middleware/api-security';
-import { logger, catalogueLogger } from '@/lib/logger';
+import { withLogging } from '@/lib/middleware/logging';
 
 // Mock data pour démonstration
 const MOCK_PRODUCTS = [

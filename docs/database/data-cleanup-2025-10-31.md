@@ -10,18 +10,18 @@
 
 ### Données Supprimées
 
-| Type de Données | Avant | Après | Supprimés |
-|-----------------|-------|-------|-----------|
-| **Purchase Orders** | 2 | 0 | 2 |
-| **Purchase Order Items** | 2 | 0 | 2 |
-| **Stock Movements** | 3 | 0 | 3 |
-| **Produits Test** | 10 | 0 | 10 |
+| Type de Données          | Avant | Après | Supprimés |
+| ------------------------ | ----- | ----- | --------- |
+| **Purchase Orders**      | 2     | 0     | 2         |
+| **Purchase Order Items** | 2     | 0     | 2         |
+| **Stock Movements**      | 3     | 0     | 3         |
+| **Produits Test**        | 10    | 0     | 10        |
 
 ### Données Conservées
 
-| Type de Données | Count | Raison Conservation |
-|-----------------|-------|---------------------|
-| **Produit FMIL-KAKI-14** | 1 | Produit réel (fournisseur Opjet) avec stock prévisionnel |
+| Type de Données          | Count | Raison Conservation                                      |
+| ------------------------ | ----- | -------------------------------------------------------- |
+| **Produit FMIL-KAKI-14** | 1     | Produit réel (fournisseur Opjet) avec stock prévisionnel |
 
 ---
 
@@ -33,6 +33,7 @@
 2. **PO-2025-00014** (received, 0.00€, créé 2025-10-30 21:49)
 
 **Méthode** :
+
 - Suppression CASCADE des `purchase_order_items` liés
 - Aucun blocage `financial_documents` (vérifié : 0 documents)
 
@@ -40,13 +41,14 @@
 
 **Total** : 3 mouvements
 
-| Type | Motif | Quantité | Produit Concerné |
-|------|-------|----------|------------------|
-| IN | purchase_reception | +10 | PRD-0008 Test Chaise Bureau Pro |
-| IN | purchase_reception | +5 | PRD-0008 Test Chaise Bureau Pro |
-| OUT | purchase_reception | -5 | PRD-0008 Test Chaise Bureau Pro |
+| Type | Motif              | Quantité | Produit Concerné                |
+| ---- | ------------------ | -------- | ------------------------------- |
+| IN   | purchase_reception | +10      | PRD-0008 Test Chaise Bureau Pro |
+| IN   | purchase_reception | +5       | PRD-0008 Test Chaise Bureau Pro |
+| OUT  | purchase_reception | -5       | PRD-0008 Test Chaise Bureau Pro |
 
 **Impact Stock** :
+
 - Triggers `maintain_stock_totals` ont recalculé automatiquement les colonnes `products.stock_*`
 - Produit PRD-0008 : Stock réel 5 → 0 (supprimé ensuite avec produits test)
 
@@ -55,6 +57,7 @@
 **Critères suppression** : `sku LIKE 'PRD-%' OR sku LIKE 'TEST-%' OR name ILIKE '%test%'`
 
 **Liste complète** :
+
 1. PRD-0001 - Groupe Test Claude 2025
 2. PRD-0002 - Groupe Test Claude 2025
 3. PRD-0003 - Test Produit Wizard Fix
@@ -91,13 +94,14 @@ END;
 
 ### Foreign Keys Respectées
 
-| FK Contrainte | Type | Impact |
-|---------------|------|--------|
-| `purchase_order_items.purchase_order_id` → `purchase_orders` | CASCADE | Items supprimés auto |
+| FK Contrainte                                                     | Type     | Impact                                        |
+| ----------------------------------------------------------------- | -------- | --------------------------------------------- |
+| `purchase_order_items.purchase_order_id` → `purchase_orders`      | CASCADE  | Items supprimés auto                          |
 | `stock_movements.purchase_order_item_id` → `purchase_order_items` | SET NULL | Référence devient NULL (OK si supprimé avant) |
-| `financial_documents.purchase_order_id` → `purchase_orders` | RESTRICT | Vérifié : 0 documents → Pas de blocage |
+| `financial_documents.purchase_order_id` → `purchase_orders`       | RESTRICT | Vérifié : 0 documents → Pas de blocage        |
 
 **Ordre suppression respecté** :
+
 1. Stock movements (aucune FK sortante bloquante)
 2. Purchase order items
 3. Purchase orders
@@ -139,6 +143,7 @@ SELECT COUNT(*) FROM products WHERE sku = 'FMIL-KAKI-14'; -- 1
 ```
 
 **Prête pour** :
+
 - Tests fonctionnels workflow commandes achats
 - Tests workflow réceptions avec mouvements stock
 - Tests création produits et commandes from scratch
@@ -163,6 +168,7 @@ SELECT COUNT(*) FROM products WHERE sku = 'FMIL-KAKI-14'; -- 1
 **Phase 0 terminée** ✅
 
 **Phases suivantes** (selon plan approuvé) :
+
 1. Phase 1 : Alignement UX commandes achats (3 jours)
 2. Phase 2 : Fonctionnalités achats complètes (4 jours)
 3. Phase 3 : Simplification système stock (5 jours)

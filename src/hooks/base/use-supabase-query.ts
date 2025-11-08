@@ -8,6 +8,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+
 import { createClient } from '@/lib/supabase/client';
 export interface QueryOptions<T> {
   tableName: string;

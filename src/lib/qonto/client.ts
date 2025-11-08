@@ -4,6 +4,7 @@
 // Description: Client HTTP pour API Qonto avec retry logic
 // =====================================================================
 
+import { QontoError } from './errors';
 import type {
   QontoTransaction,
   QontoBankAccount,
@@ -11,7 +12,6 @@ import type {
   QontoApiResponse,
   QontoConfig,
 } from './types';
-import { QontoError } from './errors';
 
 // =====================================================================
 // CLIENT
@@ -23,9 +23,13 @@ export class QontoClient {
 
   constructor(config?: Partial<QontoConfig>) {
     this.config = {
-      organizationId: config?.organizationId || process.env.QONTO_ORGANIZATION_ID!,
+      organizationId:
+        config?.organizationId || process.env.QONTO_ORGANIZATION_ID!,
       apiKey: config?.apiKey || process.env.QONTO_API_KEY!,
-      baseUrl: config?.baseUrl || process.env.QONTO_API_BASE_URL || 'https://thirdparty.qonto.com',
+      baseUrl:
+        config?.baseUrl ||
+        process.env.QONTO_API_BASE_URL ||
+        'https://thirdparty.qonto.com',
       timeout: config?.timeout || 30000,
       maxRetries: config?.maxRetries || 3,
       retryDelay: config?.retryDelay || 1000,
@@ -34,7 +38,9 @@ export class QontoClient {
     this.baseUrl = this.config.baseUrl!;
 
     if (!this.config.organizationId || !this.config.apiKey) {
-      throw new Error('Qonto credentials missing (QONTO_ORGANIZATION_ID or QONTO_API_KEY)');
+      throw new Error(
+        'Qonto credentials missing (QONTO_ORGANIZATION_ID or QONTO_API_KEY)'
+      );
     }
   }
 
@@ -81,7 +87,9 @@ export class QontoClient {
       if (this.shouldRetry(error) && retryCount < this.config.maxRetries!) {
         const delay = this.calculateRetryDelay(retryCount);
         await this.sleep(delay);
-        return this.request<T>(method, endpoint, body, { retryCount: retryCount + 1 });
+        return this.request<T>(method, endpoint, body, {
+          retryCount: retryCount + 1,
+        });
       }
 
       throw error;
@@ -94,17 +102,16 @@ export class QontoClient {
 
       // Timeout error
       if (err instanceof Error && err.name === 'AbortError') {
-        const timeoutError = new QontoError(
-          'Request timeout',
-          'TIMEOUT',
-          408,
-          { timeout: this.config.timeout }
-        );
+        const timeoutError = new QontoError('Request timeout', 'TIMEOUT', 408, {
+          timeout: this.config.timeout,
+        });
 
         if (retryCount < this.config.maxRetries!) {
           const delay = this.calculateRetryDelay(retryCount);
           await this.sleep(delay);
-          return this.request<T>(method, endpoint, body, { retryCount: retryCount + 1 });
+          return this.request<T>(method, endpoint, body, {
+            retryCount: retryCount + 1,
+          });
         }
 
         throw timeoutError;
@@ -124,16 +131,17 @@ export class QontoClient {
   // ===================================================================
 
   async getBankAccounts(): Promise<QontoBankAccount[]> {
-    const response = await this.request<QontoApiResponse<{ bank_accounts: QontoBankAccount[] }>>(
-      'GET',
-      '/v2/bank_accounts'
-    );
+    const response = await this.request<
+      QontoApiResponse<{ bank_accounts: QontoBankAccount[] }>
+    >('GET', '/v2/bank_accounts');
     return response.bank_accounts;
   }
 
   async getBankAccountById(accountId: string): Promise<QontoBankAccount> {
     const accounts = await this.getBankAccounts();
-    const account = accounts.find((acc) => acc.slug === accountId || acc.id === accountId);
+    const account = accounts.find(
+      acc => acc.slug === accountId || acc.id === accountId
+    );
 
     if (!account) {
       throw new QontoError(
@@ -160,28 +168,37 @@ export class QontoClient {
     sortBy?: string;
     perPage?: number;
     currentPage?: number;
-  }): Promise<{ transactions: QontoTransaction[]; meta: { total_count: number } }> {
+  }): Promise<{
+    transactions: QontoTransaction[];
+    meta: { total_count: number };
+  }> {
     const queryParams = new URLSearchParams();
 
-    if (params?.bankAccountId) queryParams.append('bank_account_id', params.bankAccountId);
+    if (params?.bankAccountId)
+      queryParams.append('bank_account_id', params.bankAccountId);
     if (params?.status) queryParams.append('status', params.status);
-    if (params?.updatedAtFrom) queryParams.append('updated_at_from', params.updatedAtFrom);
-    if (params?.updatedAtTo) queryParams.append('updated_at_to', params.updatedAtTo);
-    if (params?.settledAtFrom) queryParams.append('settled_at_from', params.settledAtFrom);
-    if (params?.settledAtTo) queryParams.append('settled_at_to', params.settledAtTo);
+    if (params?.updatedAtFrom)
+      queryParams.append('updated_at_from', params.updatedAtFrom);
+    if (params?.updatedAtTo)
+      queryParams.append('updated_at_to', params.updatedAtTo);
+    if (params?.settledAtFrom)
+      queryParams.append('settled_at_from', params.settledAtFrom);
+    if (params?.settledAtTo)
+      queryParams.append('settled_at_to', params.settledAtTo);
     if (params?.sortBy) queryParams.append('sort_by', params.sortBy);
-    if (params?.perPage) queryParams.append('per_page', params.perPage.toString());
-    if (params?.currentPage) queryParams.append('current_page', params.currentPage.toString());
+    if (params?.perPage)
+      queryParams.append('per_page', params.perPage.toString());
+    if (params?.currentPage)
+      queryParams.append('current_page', params.currentPage.toString());
 
     const endpoint = `/v2/transactions${queryParams.toString() ? `?${queryParams.toString()}` : ''}`;
 
-    const response = await this.request<QontoApiResponse<{
-      transactions: QontoTransaction[];
-      meta: { total_count: number };
-    }>>(
-      'GET',
-      endpoint
-    );
+    const response = await this.request<
+      QontoApiResponse<{
+        transactions: QontoTransaction[];
+        meta: { total_count: number };
+      }>
+    >('GET', endpoint);
 
     return {
       transactions: response.transactions,
@@ -190,10 +207,9 @@ export class QontoClient {
   }
 
   async getTransactionById(transactionId: string): Promise<QontoTransaction> {
-    const response = await this.request<QontoApiResponse<{ transaction: QontoTransaction }>>(
-      'GET',
-      `/v2/transactions/${transactionId}`
-    );
+    const response = await this.request<
+      QontoApiResponse<{ transaction: QontoTransaction }>
+    >('GET', `/v2/transactions/${transactionId}`);
     return response.transaction;
   }
 
@@ -205,9 +221,15 @@ export class QontoClient {
     const accounts = await this.getBankAccounts();
 
     if (bankAccountId) {
-      const account = accounts.find((acc) => acc.slug === bankAccountId || acc.id === bankAccountId);
+      const account = accounts.find(
+        acc => acc.slug === bankAccountId || acc.id === bankAccountId
+      );
       if (!account) {
-        throw new QontoError(`Bank account ${bankAccountId} not found`, 'NOT_FOUND', 404);
+        throw new QontoError(
+          `Bank account ${bankAccountId} not found`,
+          'NOT_FOUND',
+          404
+        );
       }
 
       return {
@@ -234,23 +256,44 @@ export class QontoClient {
   // ===================================================================
 
   private createErrorFromResponse(status: number, data: any): QontoError {
-    const message = data?.message || data?.error || `Qonto API error (${status})`;
+    const message =
+      data?.message || data?.error || `Qonto API error (${status})`;
 
     switch (status) {
       case 400:
         return new QontoError(message, 'VALIDATION_ERROR', status, data);
       case 401:
-        return new QontoError('Invalid Qonto credentials', 'AUTH_ERROR', status, data);
+        return new QontoError(
+          'Invalid Qonto credentials',
+          'AUTH_ERROR',
+          status,
+          data
+        );
       case 403:
-        return new QontoError('Insufficient Qonto permissions', 'PERMISSION_ERROR', status, data);
+        return new QontoError(
+          'Insufficient Qonto permissions',
+          'PERMISSION_ERROR',
+          status,
+          data
+        );
       case 404:
         return new QontoError('Resource not found', 'NOT_FOUND', status, data);
       case 429:
-        return new QontoError('Qonto rate limit exceeded', 'RATE_LIMIT', status, data);
+        return new QontoError(
+          'Qonto rate limit exceeded',
+          'RATE_LIMIT',
+          status,
+          data
+        );
       case 500:
       case 502:
       case 503:
-        return new QontoError('Qonto server error', 'SERVER_ERROR', status, data);
+        return new QontoError(
+          'Qonto server error',
+          'SERVER_ERROR',
+          status,
+          data
+        );
       default:
         return new QontoError(message, 'UNKNOWN_ERROR', status, data);
     }
@@ -272,7 +315,7 @@ export class QontoClient {
   }
 
   private sleep(ms: number): Promise<void> {
-    return new Promise((resolve) => setTimeout(resolve, ms));
+    return new Promise(resolve => setTimeout(resolve, ms));
   }
 }
 

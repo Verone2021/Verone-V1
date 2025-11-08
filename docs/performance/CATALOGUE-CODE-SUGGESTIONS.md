@@ -223,27 +223,31 @@ export default function CatalogueDashboardPage() {
 #### Changements Clés
 
 1. **Import ajouté** :
+
    ```typescript
-   import { useRealDashboardMetrics } from '../../../hooks/use-real-dashboard-metrics'
+   import { useRealDashboardMetrics } from '../../../hooks/use-real-dashboard-metrics';
    ```
 
 2. **Hook remplacé** :
+
    ```typescript
    // AVANT
-   const { products, loading: productsLoading } = useProducts()
+   const { products, loading: productsLoading } = useProducts();
 
    // APRÈS
-   const { metrics, isLoading: metricsLoading } = useRealDashboardMetrics()
-   const { products: recentProductsList, loading: productsLoading } = useProducts({}, 0)
+   const { metrics, isLoading: metricsLoading } = useRealDashboardMetrics();
+   const { products: recentProductsList, loading: productsLoading } =
+     useProducts({}, 0);
    ```
 
 3. **Calculs simplifiés** :
+
    ```typescript
    // AVANT : .filter() JS sur array incomplet
-   const totalProducts = products?.length || 0
+   const totalProducts = products?.length || 0;
 
    // APRÈS : Valeur pré-calculée SQL
-   const totalProducts = metrics?.products.total || 0
+   const totalProducts = metrics?.products.total || 0;
    ```
 
 4. **Impact Performance** :
@@ -492,8 +496,9 @@ export function useProductMetrics() {
   const fetch = async () => {
     try {
       // ✅ OPTIMISATION P1 : Utiliser RPC SQL agrégée
-      const { data: metrics, error: rpcError } = await supabase
-        .rpc('get_products_status_metrics');
+      const { data: metrics, error: rpcError } = await supabase.rpc(
+        'get_products_status_metrics'
+      );
 
       if (!rpcError && metrics) {
         // RPC réussie - utiliser résultats directs ✅
@@ -510,16 +515,21 @@ export function useProductMetrics() {
           archived: metrics.archived,
           in_stock: metrics.in_stock,
           recent_7d: metrics.recent_7d,
-          computed_at: metrics.computed_at
+          computed_at: metrics.computed_at,
         };
       }
 
       // ⚠️ FALLBACK : Si RPC échoue, utiliser COUNT queries
-      console.warn('⚠️ RPC get_products_status_metrics échouée, utilisation fallback:', rpcError);
+      console.warn(
+        '⚠️ RPC get_products_status_metrics échouée, utilisation fallback:',
+        rpcError
+      );
       return await fallbackFetch();
-
     } catch (error) {
-      console.error('❌ Erreur lors de la récupération des métriques produits:', error);
+      console.error(
+        '❌ Erreur lors de la récupération des métriques produits:',
+        error
+      );
       return await fallbackFetch();
     }
   };
@@ -528,15 +538,29 @@ export function useProductMetrics() {
   const fallbackFetch = async () => {
     try {
       // Fallback vers requêtes COUNT optimisées
-      const [totalResult, activeResult, inactiveResult, draftResult] = await Promise.all([
-        supabase.from('products').select('id', { count: 'exact', head: true }),
-        supabase.from('products').select('id', { count: 'exact', head: true })
-          .in('status', ['in_stock', 'preorder', 'coming_soon', 'pret_a_commander']),
-        supabase.from('products').select('id', { count: 'exact', head: true })
-          .in('status', ['out_of_stock', 'discontinued']),
-        supabase.from('products').select('id', { count: 'exact', head: true })
-          .in('status', ['coming_soon', 'preorder'])
-      ]);
+      const [totalResult, activeResult, inactiveResult, draftResult] =
+        await Promise.all([
+          supabase
+            .from('products')
+            .select('id', { count: 'exact', head: true }),
+          supabase
+            .from('products')
+            .select('id', { count: 'exact', head: true })
+            .in('status', [
+              'in_stock',
+              'preorder',
+              'coming_soon',
+              'pret_a_commander',
+            ]),
+          supabase
+            .from('products')
+            .select('id', { count: 'exact', head: true })
+            .in('status', ['out_of_stock', 'discontinued']),
+          supabase
+            .from('products')
+            .select('id', { count: 'exact', head: true })
+            .in('status', ['coming_soon', 'preorder']),
+        ]);
 
       // Tendance: comparaison robuste (7 derniers jours vs 7 précédents)
       const today = new Date();
@@ -562,7 +586,8 @@ export function useProductMetrics() {
 
       let trend = 0;
       if (previousValidCount > 0) {
-        trend = ((recentValidCount - previousValidCount) / previousValidCount) * 100;
+        trend =
+          ((recentValidCount - previousValidCount) / previousValidCount) * 100;
       } else if (recentValidCount > 0) {
         trend = 100;
       }
@@ -578,7 +603,6 @@ export function useProductMetrics() {
 
       console.log('📊 Métriques produits via fallback COUNT:', result);
       return result;
-
     } catch (fallbackError) {
       console.error('❌ Erreur fallback métriques:', fallbackError);
       // Retour valeurs par défaut en dernier recours
@@ -616,46 +640,50 @@ export function useProductMetrics() {
  * VERSION OPTIMISÉE avec RPC SQL (2025-10-11)
  */
 
-'use client'
+'use client';
 
-import useSWR from 'swr'
-import { createClient } from '@/lib/supabase/client'
+import useSWR from 'swr';
+import { createClient } from '@/lib/supabase/client';
 
 export interface RealDashboardMetrics {
   products: {
-    total: number
-    active: number
-    published: number
-    archived: number
-    trend: number
-    in_stock: number
-    out_of_stock: number
-    recent_7d: number
-  }
+    total: number;
+    active: number;
+    published: number;
+    archived: number;
+    trend: number;
+    in_stock: number;
+    out_of_stock: number;
+    recent_7d: number;
+  };
   variantGroups: {
-    total: number
-    published: number
-    archived: number
-  }
+    total: number;
+    published: number;
+    archived: number;
+  };
   collections: {
-    total: number
-    active: number
-    inactive: number
-  }
-  computed_at?: string
+    total: number;
+    active: number;
+    inactive: number;
+  };
+  computed_at?: string;
 }
 
 // 📊 Fetcher optimisé - RPC SQL agrégée
 const metricsFetcher = async (): Promise<RealDashboardMetrics> => {
-  const supabase = createClient()
+  const supabase = createClient();
 
   try {
     // ✅ OPTIMISATION P1 : Utiliser RPC consolidée (single query)
-    const { data: dashboardData, error: dashboardError } = await supabase
-      .rpc('get_dashboard_metrics')
+    const { data: dashboardData, error: dashboardError } = await supabase.rpc(
+      'get_dashboard_metrics'
+    );
 
     if (!dashboardError && dashboardData) {
-      console.log('✅ Dashboard métriques via RPC consolidée (optimisé):', dashboardData)
+      console.log(
+        '✅ Dashboard métriques via RPC consolidée (optimisé):',
+        dashboardData
+      );
 
       return {
         products: {
@@ -666,47 +694,50 @@ const metricsFetcher = async (): Promise<RealDashboardMetrics> => {
           trend: dashboardData.products.trend_pct,
           in_stock: dashboardData.products.in_stock,
           out_of_stock: dashboardData.products.out_of_stock,
-          recent_7d: dashboardData.products.recent_7d
+          recent_7d: dashboardData.products.recent_7d,
         },
         variantGroups: {
           total: dashboardData.variant_groups.total,
           published: dashboardData.variant_groups.published,
-          archived: dashboardData.variant_groups.archived
+          archived: dashboardData.variant_groups.archived,
         },
         collections: {
           total: dashboardData.collections.total,
           active: dashboardData.collections.active,
-          inactive: dashboardData.collections.inactive
+          inactive: dashboardData.collections.inactive,
         },
-        computed_at: dashboardData.generated_at
-      }
+        computed_at: dashboardData.generated_at,
+      };
     }
 
     // ⚠️ FALLBACK : Si RPC consolidée échoue, utiliser RPC individuelles
-    console.warn('⚠️ RPC get_dashboard_metrics échouée, utilisation RPC individuelles:', dashboardError)
-    return await fallbackFetch(supabase)
-
+    console.warn(
+      '⚠️ RPC get_dashboard_metrics échouée, utilisation RPC individuelles:',
+      dashboardError
+    );
+    return await fallbackFetch(supabase);
   } catch (error) {
-    console.error('❌ Erreur métriques dashboard:', error)
-    return await fallbackFetch(supabase)
+    console.error('❌ Erreur métriques dashboard:', error);
+    return await fallbackFetch(supabase);
   }
-}
+};
 
 // Fonction fallback avec RPC individuelles
 const fallbackFetch = async (supabase: any): Promise<RealDashboardMetrics> => {
   try {
     // Requêtes RPC parallèles (meilleur que COUNT queries)
-    const [productsResult, variantGroupsResult, collectionsResult] = await Promise.all([
-      supabase.rpc('get_products_status_metrics'),
-      supabase.rpc('get_variant_groups_metrics'),
-      supabase.rpc('get_collections_metrics')
-    ])
+    const [productsResult, variantGroupsResult, collectionsResult] =
+      await Promise.all([
+        supabase.rpc('get_products_status_metrics'),
+        supabase.rpc('get_variant_groups_metrics'),
+        supabase.rpc('get_collections_metrics'),
+      ]);
 
-    if (productsResult.error) throw productsResult.error
-    if (variantGroupsResult.error) throw variantGroupsResult.error
-    if (collectionsResult.error) throw collectionsResult.error
+    if (productsResult.error) throw productsResult.error;
+    if (variantGroupsResult.error) throw variantGroupsResult.error;
+    if (collectionsResult.error) throw collectionsResult.error;
 
-    console.log('📊 Dashboard métriques via RPC individuelles (fallback)')
+    console.log('📊 Dashboard métriques via RPC individuelles (fallback)');
 
     return {
       products: {
@@ -717,76 +748,88 @@ const fallbackFetch = async (supabase: any): Promise<RealDashboardMetrics> => {
         trend: productsResult.data.trend_pct,
         in_stock: productsResult.data.in_stock,
         out_of_stock: productsResult.data.out_of_stock,
-        recent_7d: productsResult.data.recent_7d
+        recent_7d: productsResult.data.recent_7d,
       },
       variantGroups: {
         total: variantGroupsResult.data.total,
         published: variantGroupsResult.data.published,
-        archived: variantGroupsResult.data.archived
+        archived: variantGroupsResult.data.archived,
       },
       collections: {
         total: collectionsResult.data.total,
         active: collectionsResult.data.active,
-        inactive: collectionsResult.data.inactive
-      }
-    }
+        inactive: collectionsResult.data.inactive,
+      },
+    };
   } catch (fallbackError) {
-    console.error('❌ Erreur fallback RPC individuelles:', fallbackError)
-    return await ultimateFallback(supabase)
+    console.error('❌ Erreur fallback RPC individuelles:', fallbackError);
+    return await ultimateFallback(supabase);
   }
-}
+};
 
 // Ultimate fallback avec COUNT queries (version originale)
-const ultimateFallback = async (supabase: any): Promise<RealDashboardMetrics> => {
-  console.warn('⚠️ Ultimate fallback: COUNT queries directes')
+const ultimateFallback = async (
+  supabase: any
+): Promise<RealDashboardMetrics> => {
+  console.warn('⚠️ Ultimate fallback: COUNT queries directes');
 
   // 🎯 Query 1: Métriques produits (avec statuts enum réels)
   const { data: products, error: productsError } = await supabase
     .from('products')
-    .select('id, status, created_at')
+    .select('id, status, created_at');
 
-  if (productsError) throw productsError
+  if (productsError) throw productsError;
 
   // 🎯 Query 2: Métriques variant groups
   const { data: variantGroups, error: variantGroupsError } = await supabase
     .from('variant_groups')
-    .select('id, archived_at')
+    .select('id, archived_at');
 
-  if (variantGroupsError) throw variantGroupsError
+  if (variantGroupsError) throw variantGroupsError;
 
   // 🎯 Query 3: Métriques collections
   const { data: collections, error: collectionsError } = await supabase
     .from('collections')
-    .select('id, is_active')
+    .select('id, is_active');
 
-  if (collectionsError) throw collectionsError
+  if (collectionsError) throw collectionsError;
 
   // 📈 Calculs côté client
-  const totalProducts = products?.length || 0
-  const activeProducts = products?.filter(p =>
-    ['in_stock', 'preorder', 'coming_soon', 'pret_a_commander'].includes(p.status)
-  )?.length || 0
-  const publishedProducts = products?.filter(p =>
-    !['sourcing', 'echantillon_a_commander'].includes(p.status)
-  )?.length || 0
-  const archivedProducts = products?.filter(p => p.status === 'discontinued')?.length || 0
-  const inStockProducts = products?.filter(p => p.status === 'in_stock')?.length || 0
-  const outOfStockProducts = products?.filter(p => p.status === 'out_of_stock')?.length || 0
+  const totalProducts = products?.length || 0;
+  const activeProducts =
+    products?.filter(p =>
+      ['in_stock', 'preorder', 'coming_soon', 'pret_a_commander'].includes(
+        p.status
+      )
+    )?.length || 0;
+  const publishedProducts =
+    products?.filter(
+      p => !['sourcing', 'echantillon_a_commander'].includes(p.status)
+    )?.length || 0;
+  const archivedProducts =
+    products?.filter(p => p.status === 'discontinued')?.length || 0;
+  const inStockProducts =
+    products?.filter(p => p.status === 'in_stock')?.length || 0;
+  const outOfStockProducts =
+    products?.filter(p => p.status === 'out_of_stock')?.length || 0;
 
-  const weekAgo = new Date()
-  weekAgo.setDate(weekAgo.getDate() - 7)
-  const recentProducts = products?.filter(p =>
-    new Date(p.created_at) >= weekAgo
-  )?.length || 0
-  const trend = totalProducts > 0 ? Math.round((recentProducts / totalProducts) * 100) : 0
+  const weekAgo = new Date();
+  weekAgo.setDate(weekAgo.getDate() - 7);
+  const recentProducts =
+    products?.filter(p => new Date(p.created_at) >= weekAgo)?.length || 0;
+  const trend =
+    totalProducts > 0 ? Math.round((recentProducts / totalProducts) * 100) : 0;
 
-  const totalVariantGroups = variantGroups?.length || 0
-  const publishedVariantGroups = variantGroups?.filter(vg => !vg.archived_at)?.length || 0
-  const archivedVariantGroups = variantGroups?.filter(vg => vg.archived_at)?.length || 0
+  const totalVariantGroups = variantGroups?.length || 0;
+  const publishedVariantGroups =
+    variantGroups?.filter(vg => !vg.archived_at)?.length || 0;
+  const archivedVariantGroups =
+    variantGroups?.filter(vg => vg.archived_at)?.length || 0;
 
-  const totalCollections = collections?.length || 0
-  const activeCollections = collections?.filter(c => c.is_active)?.length || 0
-  const inactiveCollections = collections?.filter(c => !c.is_active)?.length || 0
+  const totalCollections = collections?.length || 0;
+  const activeCollections = collections?.filter(c => c.is_active)?.length || 0;
+  const inactiveCollections =
+    collections?.filter(c => !c.is_active)?.length || 0;
 
   return {
     products: {
@@ -797,40 +840,40 @@ const ultimateFallback = async (supabase: any): Promise<RealDashboardMetrics> =>
       trend,
       in_stock: inStockProducts,
       out_of_stock: outOfStockProducts,
-      recent_7d: recentProducts
+      recent_7d: recentProducts,
     },
     variantGroups: {
       total: totalVariantGroups,
       published: publishedVariantGroups,
-      archived: archivedVariantGroups
+      archived: archivedVariantGroups,
     },
     collections: {
       total: totalCollections,
       active: activeCollections,
-      inactive: inactiveCollections
-    }
-  }
-}
+      inactive: inactiveCollections,
+    },
+  };
+};
 
 export function useRealDashboardMetrics() {
   const { data, error, isLoading, mutate } = useSWR(
     'real-dashboard-metrics',
     metricsFetcher,
     {
-      refreshInterval: 60000,         // Refresh toutes les 60s
-      revalidateOnFocus: false,        // Pas de re-fetch au focus
+      refreshInterval: 60000, // Refresh toutes les 60s
+      revalidateOnFocus: false, // Pas de re-fetch au focus
       revalidateOnReconnect: true,
-      dedupingInterval: 30000,         // Dédupe 30s (optimisé)
-      keepPreviousData: true           // Garde données pendant refresh
+      dedupingInterval: 30000, // Dédupe 30s (optimisé)
+      keepPreviousData: true, // Garde données pendant refresh
     }
-  )
+  );
 
   return {
     metrics: data || null,
     isLoading,
     error,
-    refetch: () => mutate()
-  }
+    refetch: () => mutate(),
+  };
 }
 ```
 
@@ -894,28 +937,30 @@ SELECT get_dashboard_metrics();
 ```typescript
 // Script test performance (à exécuter via node ou dev tools)
 const testDashboardPerformance = async () => {
-  const start = performance.now()
+  const start = performance.now();
 
   // Charger dashboard
-  window.location.href = '/catalogue/dashboard'
+  window.location.href = '/catalogue/dashboard';
 
   // Attendre chargement complet
   await new Promise(resolve => {
     const checkLoaded = setInterval(() => {
-      const totalProducts = document.querySelector('[data-metric="total-products"]')
+      const totalProducts = document.querySelector(
+        '[data-metric="total-products"]'
+      );
       if (totalProducts && totalProducts.textContent !== '0') {
-        clearInterval(checkLoaded)
-        resolve()
+        clearInterval(checkLoaded);
+        resolve();
       }
-    }, 100)
-  })
+    }, 100);
+  });
 
-  const duration = performance.now() - start
-  console.log(`✅ Dashboard loaded in ${duration}ms`)
-  console.log(`SLO <2000ms : ${duration < 2000 ? '✅ PASS' : '❌ FAIL'}`)
-}
+  const duration = performance.now() - start;
+  console.log(`✅ Dashboard loaded in ${duration}ms`);
+  console.log(`SLO <2000ms : ${duration < 2000 ? '✅ PASS' : '❌ FAIL'}`);
+};
 
-testDashboardPerformance()
+testDashboardPerformance();
 ```
 
 ---

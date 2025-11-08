@@ -16,3 +16,13 @@ export * from './variant-attributes-types';
 export type * from './reception-shipment';
 export * from './room-types';
 export type * from './business-rules';
+
+// Types business réexportés depuis supabase (via Database type)
+import type { Database } from './supabase';
+
+export type Contact = Database['public']['Tables']['contacts']['Row'];
+export type Product = Database['public']['Tables']['products']['Row'];
+export type Collection = Database['public']['Tables']['collections']['Row'];
+
+// Types créations
+export type CreateCollectionData = Database['public']['Tables']['collections']['Insert'];

@@ -1,76 +1,94 @@
-"use client"
+'use client';
 
-import { useState, useEffect } from 'react'
-import { useForm } from 'react-hook-form'
-import { zodResolver } from '@hookform/resolvers/zod'
-import * as z from 'zod'
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog'
-import { ButtonV2 } from '@/components/ui/button'
-import { Input } from '@/components/ui/input'
-import { Label } from '@/components/ui/label'
-import { Textarea } from '@/components/ui/textarea'
-import { Checkbox } from '@/components/ui/checkbox'
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
-import { LogoUploadButton } from './logo-upload-button'
-import { OrganisationContactsManager } from './organisation-contacts-manager'
-import { AddressSelector } from './address-selector'
-import { spacing, colors, componentShadows } from '@/lib/design-system'
-import { Building2, MapPin, FileText, CreditCard, Users } from 'lucide-react'
+import { useState, useEffect } from 'react';
+
+import { zodResolver } from '@hookform/resolvers/zod';
+import { Building2, MapPin, FileText, CreditCard, Users } from 'lucide-react';
+import { useForm } from 'react-hook-form';
+import * as z from 'zod';
+
+import { ButtonV2 } from '@/components/ui/button';
+import { Checkbox } from '@/components/ui/checkbox';
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
+import { Textarea } from '@/components/ui/textarea';
+import { spacing, colors, componentShadows } from '@/lib/design-system';
+import { AddressSelector } from '@/shared/modules/common/components/address/AddressSelector';
+import { LogoUploadButton } from '@/shared/modules/organisations/components/forms/logo-upload-button';
+import { OrganisationContactsManager } from '@/shared/modules/organisations/components/forms/organisation-contacts-manager';
 
 // ========================
 // TYPES & SCHEMAS
 // ========================
 
-export type OrganisationType = 'supplier' | 'customer' | 'partner' | 'internal' | 'generic'
+export type OrganisationType =
+  | 'supplier'
+  | 'customer'
+  | 'partner'
+  | 'internal'
+  | 'generic';
 
 export interface Organisation {
-  id: string
-  legal_name: string // Dénomination sociale (nom enregistré RCS)
-  trade_name: string | null // Nom commercial (si différent)
-  has_different_trade_name: boolean | null // Indicateur nom commercial
-  type: OrganisationType
-  country: string | null
-  is_active: boolean
-  notes: string | null
+  id: string;
+  legal_name: string; // Dénomination sociale (nom enregistré RCS)
+  trade_name: string | null; // Nom commercial (si différent)
+  has_different_trade_name: boolean | null; // Indicateur nom commercial
+  type: OrganisationType;
+  country: string | null;
+  is_active: boolean;
+  notes: string | null;
 
   // Contact principal
-  email: string | null
-  phone: string | null
-  website: string | null
+  email: string | null;
+  phone: string | null;
+  website: string | null;
 
   // Adresse principale (héritée - alias vers billing ou shipping selon contexte)
-  address_line1: string | null
-  address_line2: string | null
-  postal_code: string | null
-  city: string | null
-  region: string | null
+  address_line1: string | null;
+  address_line2: string | null;
+  postal_code: string | null;
+  city: string | null;
+  region: string | null;
 
   // Adresse de facturation
-  billing_address_line1: string | null
-  billing_address_line2: string | null
-  billing_postal_code: string | null
-  billing_city: string | null
-  billing_region: string | null
-  billing_country: string
+  billing_address_line1: string | null;
+  billing_address_line2: string | null;
+  billing_postal_code: string | null;
+  billing_city: string | null;
+  billing_region: string | null;
+  billing_country: string;
 
   // Adresse de livraison
-  shipping_address_line1: string | null
-  shipping_address_line2: string | null
-  shipping_postal_code: string | null
-  shipping_city: string | null
-  shipping_region: string | null
-  shipping_country: string
-  has_different_shipping_address: boolean
+  shipping_address_line1: string | null;
+  shipping_address_line2: string | null;
+  shipping_postal_code: string | null;
+  shipping_city: string | null;
+  shipping_region: string | null;
+  shipping_country: string;
+  has_different_shipping_address: boolean;
 
-  legal_form: string | null
-  siren: string | null // SIREN (9 chiffres)
-  siret: string | null // SIRET (14 chiffres)
-  vat_number: string | null
-  industry_sector: string | null
-  currency: string
-  payment_terms: string | null
-  logo_url: string | null
-  supplier_segment: string | null
+  legal_form: string | null;
+  siren: string | null; // SIREN (9 chiffres)
+  siret: string | null; // SIRET (14 chiffres)
+  vat_number: string | null;
+  industry_sector: string | null;
+  currency: string;
+  payment_terms: string | null;
+  logo_url: string | null;
+  supplier_segment: string | null;
 }
 
 const baseOrganisationSchema = z.object({
@@ -112,17 +130,19 @@ const baseOrganisationSchema = z.object({
 
   // Légal
   legal_form: z.string().optional().or(z.literal('')),
-  siren: z.string()
+  siren: z
+    .string()
     .optional()
     .or(z.literal(''))
-    .refine((val) => !val || /^\d{9}$/.test(val), {
-      message: 'Le SIREN doit contenir exactement 9 chiffres'
+    .refine(val => !val || /^\d{9}$/.test(val), {
+      message: 'Le SIREN doit contenir exactement 9 chiffres',
     }),
-  siret: z.string()
+  siret: z
+    .string()
     .optional()
     .or(z.literal(''))
-    .refine((val) => !val || /^\d{14}$/.test(val), {
-      message: 'Le SIRET doit contenir exactement 14 chiffres'
+    .refine(val => !val || /^\d{14}$/.test(val), {
+      message: 'Le SIRET doit contenir exactement 14 chiffres',
     }),
   vat_number: z.string().optional().or(z.literal('')),
   industry_sector: z.string().optional().or(z.literal('')),
@@ -141,9 +161,9 @@ const baseOrganisationSchema = z.object({
 
   // Supplier specific
   supplier_segment: z.string().optional().or(z.literal('')),
-})
+});
 
-export type OrganisationFormData = z.infer<typeof baseOrganisationSchema>
+export type OrganisationFormData = z.infer<typeof baseOrganisationSchema>;
 
 // ========================
 // CONSTANTS
@@ -162,14 +182,14 @@ const COUNTRIES = [
   { value: 'US', label: 'États-Unis' },
   { value: 'CN', label: 'Chine' },
   { value: 'OTHER', label: 'Autre' },
-]
+];
 
 const CURRENCIES = [
   { value: 'EUR', label: 'Euro (€)' },
   { value: 'USD', label: 'Dollar US ($)' },
   { value: 'GBP', label: 'Livre Sterling (£)' },
   { value: 'CHF', label: 'Franc Suisse (CHF)' },
-]
+];
 
 const LEGAL_FORMS = [
   { value: 'SARL', label: 'SARL' },
@@ -179,7 +199,7 @@ const LEGAL_FORMS = [
   { value: 'SCI', label: 'SCI' },
   { value: 'EI', label: 'Entreprise Individuelle' },
   { value: 'AUTRE', label: 'Autre' },
-]
+];
 
 const PAYMENT_TERMS_OPTIONS = [
   { value: 'NET_30', label: 'Net 30 jours' },
@@ -187,20 +207,22 @@ const PAYMENT_TERMS_OPTIONS = [
   { value: 'NET_60', label: 'Net 60 jours' },
   { value: 'IMMEDIATE', label: 'Paiement immédiat' },
   { value: 'CUSTOM', label: 'Personnalisé' },
-]
+];
 
 const SUPPLIER_SEGMENTS = [
   { value: 'STRATEGIC', label: 'Stratégique' },
   { value: 'TACTICAL', label: 'Tactique' },
   { value: 'OPERATIONAL', label: 'Opérationnel' },
   { value: 'COMMODITY', label: 'Commodité' },
-]
+];
 
 // ========================
 // HELPERS
 // ========================
 
-const getDefaultValues = (organisation?: Organisation | null): OrganisationFormData => {
+const getDefaultValues = (
+  organisation?: Organisation | null
+): OrganisationFormData => {
   if (!organisation) {
     return {
       legal_name: '',
@@ -233,7 +255,7 @@ const getDefaultValues = (organisation?: Organisation | null): OrganisationFormD
       payment_terms: '',
       prepayment_required: false,
       supplier_segment: '',
-    }
+    };
   }
 
   return {
@@ -257,7 +279,8 @@ const getDefaultValues = (organisation?: Organisation | null): OrganisationFormD
     shipping_city: organisation.shipping_city || '',
     shipping_region: organisation.shipping_region || '',
     shipping_country: organisation.shipping_country || 'FR',
-    has_different_shipping_address: organisation.has_different_shipping_address || false,
+    has_different_shipping_address:
+      organisation.has_different_shipping_address || false,
     legal_form: organisation.legal_form || '',
     siren: organisation.siren || '',
     siret: organisation.siret || '',
@@ -267,8 +290,8 @@ const getDefaultValues = (organisation?: Organisation | null): OrganisationFormD
     payment_terms: organisation.payment_terms || '',
     prepayment_required: (organisation as any).prepayment_required || false,
     supplier_segment: organisation.supplier_segment || '',
-  }
-}
+  };
+};
 
 const getOrganisationTypeLabel = (type: OrganisationType): string => {
   const labels: Record<OrganisationType, string> = {
@@ -277,25 +300,28 @@ const getOrganisationTypeLabel = (type: OrganisationType): string => {
     partner: 'Prestataire',
     internal: 'Interne',
     generic: 'Organisation',
-  }
-  return labels[type]
-}
+  };
+  return labels[type];
+};
 
 // ========================
 // COMPONENT
 // ========================
 
 interface UnifiedOrganisationFormProps {
-  isOpen: boolean
-  onClose: () => void
-  onSubmit: (data: OrganisationFormData, organisationId?: string) => Promise<void>
-  onSuccess?: (organisation: Organisation) => void
-  organisationType: OrganisationType
-  organisation?: Organisation | null
-  mode?: 'create' | 'edit'
-  title?: string
-  onLogoUploadSuccess?: () => void
-  customSections?: React.ReactNode
+  isOpen: boolean;
+  onClose: () => void;
+  onSubmit: (
+    data: OrganisationFormData,
+    organisationId?: string
+  ) => Promise<void>;
+  onSuccess?: (organisation: Organisation) => void;
+  organisationType: OrganisationType;
+  organisation?: Organisation | null;
+  mode?: 'create' | 'edit';
+  title?: string;
+  onLogoUploadSuccess?: () => void;
+  customSections?: React.ReactNode;
 }
 
 export function UnifiedOrganisationForm({
@@ -310,39 +336,41 @@ export function UnifiedOrganisationForm({
   onLogoUploadSuccess,
   customSections,
 }: UnifiedOrganisationFormProps) {
-  const [isSubmitting, setIsSubmitting] = useState(false)
-  const isCustomer = organisationType === 'customer'
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const isCustomer = organisationType === 'customer';
 
   const form = useForm<OrganisationFormData>({
     resolver: zodResolver(baseOrganisationSchema) as any,
     defaultValues: getDefaultValues(organisation),
-  })
+  });
 
   useEffect(() => {
     if (isOpen) {
-      form.reset(getDefaultValues(organisation))
+      form.reset(getDefaultValues(organisation));
     }
-  }, [isOpen, organisation])
+  }, [isOpen, organisation]);
 
   const handleSubmit = async (data: OrganisationFormData) => {
-    setIsSubmitting(true)
+    setIsSubmitting(true);
     try {
-      await onSubmit(data, organisation?.id)
+      await onSubmit(data, organisation?.id);
     } catch (error) {
-      console.error('Erreur lors de la soumission:', error)
+      console.error('Erreur lors de la soumission:', error);
     } finally {
-      setIsSubmitting(false)
+      setIsSubmitting(false);
     }
-  }
+  };
 
   const handleClose = () => {
     if (!isSubmitting) {
-      form.reset()
-      onClose()
+      form.reset();
+      onClose();
     }
-  }
+  };
 
-  const displayTitle = title || `${mode === 'edit' ? 'Modifier' : 'Créer'} ${getOrganisationTypeLabel(organisationType)}`
+  const displayTitle =
+    title ||
+    `${mode === 'edit' ? 'Modifier' : 'Créer'} ${getOrganisationTypeLabel(organisationType)}`;
 
   return (
     <Dialog open={isOpen} onOpenChange={handleClose}>
@@ -353,7 +381,7 @@ export function UnifiedOrganisationForm({
           borderColor: colors.border.DEFAULT,
           borderRadius: '10px',
           boxShadow: componentShadows.modal,
-          transition: 'all 200ms cubic-bezier(0.4, 0, 0.2, 1)'
+          transition: 'all 200ms cubic-bezier(0.4, 0, 0.2, 1)',
         }}
       >
         {/* Header */}
@@ -367,8 +395,13 @@ export function UnifiedOrganisationForm({
         </DialogHeader>
 
         <form onSubmit={form.handleSubmit(handleSubmit as any)}>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: spacing[8] }}>
-
+          <div
+            style={{
+              display: 'flex',
+              flexDirection: 'column',
+              gap: spacing[8],
+            }}
+          >
             {/* Logo Upload Section */}
             {organisation && (
               <div
@@ -380,14 +413,14 @@ export function UnifiedOrganisationForm({
                   borderStyle: 'solid',
                   borderColor: colors.border.DEFAULT,
                   boxShadow: componentShadows.card,
-                  transition: 'all 200ms cubic-bezier(0.4, 0, 0.2, 1)'
+                  transition: 'all 200ms cubic-bezier(0.4, 0, 0.2, 1)',
                 }}
               >
                 <Label
                   className="text-sm font-medium flex items-center gap-2"
                   style={{
                     color: colors.text.DEFAULT,
-                    marginBottom: spacing[4]
+                    marginBottom: spacing[4],
                   }}
                 >
                   <Building2 className="h-4 w-4" />
@@ -409,14 +442,20 @@ export function UnifiedOrganisationForm({
                 className="text-lg font-semibold flex items-center gap-2"
                 style={{
                   color: colors.text.DEFAULT,
-                  marginBottom: spacing[4]
+                  marginBottom: spacing[4],
                 }}
               >
                 <Building2 className="h-5 w-5" />
                 Informations générales
               </h3>
 
-              <div style={{ display: 'flex', flexDirection: 'column', gap: spacing[4] }}>
+              <div
+                style={{
+                  display: 'flex',
+                  flexDirection: 'column',
+                  gap: spacing[4],
+                }}
+              >
                 {/* Dénomination sociale (legal_name) */}
                 <div>
                   <Label
@@ -425,11 +464,13 @@ export function UnifiedOrganisationForm({
                     style={{
                       color: colors.text.DEFAULT,
                       display: 'block',
-                      marginBottom: spacing[2]
+                      marginBottom: spacing[2],
                     }}
                   >
                     Dénomination sociale *
-                    <span className="text-xs text-gray-500 ml-2">(Nom enregistré au RCS)</span>
+                    <span className="text-xs text-gray-500 ml-2">
+                      (Nom enregistré au RCS)
+                    </span>
                   </Label>
                   <Input
                     id="legal_name"
@@ -438,28 +479,43 @@ export function UnifiedOrganisationForm({
                     disabled={isSubmitting}
                     className="transition-all duration-200"
                     style={{
-                      borderColor: form.formState.errors.legal_name ? colors.danger[500] : colors.border.DEFAULT,
+                      borderColor: form.formState.errors.legal_name
+                        ? colors.danger[500]
+                        : colors.border.DEFAULT,
                       color: colors.text.DEFAULT,
-                      borderRadius: '8px'
+                      borderRadius: '8px',
                     }}
                   />
                   {form.formState.errors.legal_name && (
-                    <p style={{
-                      color: colors.danger[500],
-                      fontSize: '0.875rem',
-                      marginTop: spacing[1]
-                    }}>
+                    <p
+                      style={{
+                        color: colors.danger[500],
+                        fontSize: '0.875rem',
+                        marginTop: spacing[1],
+                      }}
+                    >
                       {form.formState.errors.legal_name.message}
                     </p>
                   )}
                 </div>
 
                 {/* Checkbox: Nom commercial différent */}
-                <div style={{ display: 'flex', alignItems: 'center', gap: spacing[2] }}>
+                <div
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: spacing[2],
+                  }}
+                >
                   <Checkbox
                     id="has_different_trade_name"
                     checked={form.watch('has_different_trade_name')}
-                    onCheckedChange={(checked) => form.setValue('has_different_trade_name', checked as boolean)}
+                    onCheckedChange={checked =>
+                      form.setValue(
+                        'has_different_trade_name',
+                        checked as boolean
+                      )
+                    }
                     disabled={isSubmitting}
                   />
                   <Label
@@ -480,11 +536,13 @@ export function UnifiedOrganisationForm({
                       style={{
                         color: colors.text.DEFAULT,
                         display: 'block',
-                        marginBottom: spacing[2]
+                        marginBottom: spacing[2],
                       }}
                     >
                       Nom commercial *
-                      <span className="text-xs text-gray-500 ml-2">(Nom utilisé publiquement)</span>
+                      <span className="text-xs text-gray-500 ml-2">
+                        (Nom utilisé publiquement)
+                      </span>
                     </Label>
                     <Input
                       id="trade_name"
@@ -495,7 +553,7 @@ export function UnifiedOrganisationForm({
                       style={{
                         borderColor: colors.border.DEFAULT,
                         color: colors.text.DEFAULT,
-                        borderRadius: '8px'
+                        borderRadius: '8px',
                       }}
                     />
                   </div>
@@ -509,28 +567,30 @@ export function UnifiedOrganisationForm({
                     style={{
                       color: colors.text.DEFAULT,
                       display: 'block',
-                      marginBottom: spacing[2]
+                      marginBottom: spacing[2],
                     }}
                   >
                     Pays *
                   </Label>
                   <Select
                     value={form.watch('country')}
-                    onValueChange={(value) => form.setValue('country', value)}
+                    onValueChange={value => form.setValue('country', value)}
                     disabled={isSubmitting}
                   >
                     <SelectTrigger
                       className="transition-all duration-200"
                       style={{
-                        borderColor: form.formState.errors.country ? colors.danger[500] : colors.border.DEFAULT,
+                        borderColor: form.formState.errors.country
+                          ? colors.danger[500]
+                          : colors.border.DEFAULT,
                         color: colors.text.DEFAULT,
-                        borderRadius: '8px'
+                        borderRadius: '8px',
                       }}
                     >
                       <SelectValue placeholder="Sélectionner un pays" />
                     </SelectTrigger>
                     <SelectContent>
-                      {COUNTRIES.map((country) => (
+                      {COUNTRIES.map(country => (
                         <SelectItem key={country.value} value={country.value}>
                           {country.label}
                         </SelectItem>
@@ -538,22 +598,32 @@ export function UnifiedOrganisationForm({
                     </SelectContent>
                   </Select>
                   {form.formState.errors.country && (
-                    <p style={{
-                      color: colors.danger[500],
-                      fontSize: '0.875rem',
-                      marginTop: spacing[1]
-                    }}>
+                    <p
+                      style={{
+                        color: colors.danger[500],
+                        fontSize: '0.875rem',
+                        marginTop: spacing[1],
+                      }}
+                    >
                       {form.formState.errors.country.message}
                     </p>
                   )}
                 </div>
 
                 {/* Active Status */}
-                <div style={{ display: 'flex', alignItems: 'center', gap: spacing[2] }}>
+                <div
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: spacing[2],
+                  }}
+                >
                   <Checkbox
                     id="is_active"
                     checked={form.watch('is_active')}
-                    onCheckedChange={(checked) => form.setValue('is_active', checked as boolean)}
+                    onCheckedChange={checked =>
+                      form.setValue('is_active', checked as boolean)
+                    }
                     disabled={isSubmitting}
                   />
                   <Label
@@ -578,14 +648,20 @@ export function UnifiedOrganisationForm({
                   className="text-lg font-semibold flex items-center gap-2"
                   style={{
                     color: colors.text.DEFAULT,
-                    marginBottom: spacing[4]
+                    marginBottom: spacing[4],
                   }}
                 >
                   <MapPin className="h-5 w-5" />
                   Adresse de facturation
                 </h3>
 
-                <div style={{ display: 'flex', flexDirection: 'column', gap: spacing[4] }}>
+                <div
+                  style={{
+                    display: 'flex',
+                    flexDirection: 'column',
+                    gap: spacing[4],
+                  }}
+                >
                   {/* Billing Address Line 1 */}
                   <div>
                     <Label
@@ -594,7 +670,7 @@ export function UnifiedOrganisationForm({
                       style={{
                         color: colors.text.DEFAULT,
                         display: 'block',
-                        marginBottom: spacing[2]
+                        marginBottom: spacing[2],
                       }}
                     >
                       Adresse ligne 1
@@ -607,7 +683,7 @@ export function UnifiedOrganisationForm({
                       style={{
                         borderColor: colors.border.DEFAULT,
                         color: colors.text.DEFAULT,
-                        borderRadius: '8px'
+                        borderRadius: '8px',
                       }}
                     />
                   </div>
@@ -620,7 +696,7 @@ export function UnifiedOrganisationForm({
                       style={{
                         color: colors.text.DEFAULT,
                         display: 'block',
-                        marginBottom: spacing[2]
+                        marginBottom: spacing[2],
                       }}
                     >
                       Adresse ligne 2
@@ -633,13 +709,19 @@ export function UnifiedOrganisationForm({
                       style={{
                         borderColor: colors.border.DEFAULT,
                         color: colors.text.DEFAULT,
-                        borderRadius: '8px'
+                        borderRadius: '8px',
                       }}
                     />
                   </div>
 
                   {/* Billing Postal Code + City */}
-                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 2fr', gap: spacing[3] }}>
+                  <div
+                    style={{
+                      display: 'grid',
+                      gridTemplateColumns: '1fr 2fr',
+                      gap: spacing[3],
+                    }}
+                  >
                     <div>
                       <Label
                         htmlFor="billing_postal_code"
@@ -647,7 +729,7 @@ export function UnifiedOrganisationForm({
                         style={{
                           color: colors.text.DEFAULT,
                           display: 'block',
-                          marginBottom: spacing[2]
+                          marginBottom: spacing[2],
                         }}
                       >
                         Code postal
@@ -660,7 +742,7 @@ export function UnifiedOrganisationForm({
                         style={{
                           borderColor: colors.border.DEFAULT,
                           color: colors.text.DEFAULT,
-                          borderRadius: '8px'
+                          borderRadius: '8px',
                         }}
                       />
                     </div>
@@ -672,7 +754,7 @@ export function UnifiedOrganisationForm({
                         style={{
                           color: colors.text.DEFAULT,
                           display: 'block',
-                          marginBottom: spacing[2]
+                          marginBottom: spacing[2],
                         }}
                       >
                         Ville
@@ -685,7 +767,7 @@ export function UnifiedOrganisationForm({
                         style={{
                           borderColor: colors.border.DEFAULT,
                           color: colors.text.DEFAULT,
-                          borderRadius: '8px'
+                          borderRadius: '8px',
                         }}
                       />
                     </div>
@@ -699,7 +781,7 @@ export function UnifiedOrganisationForm({
                       style={{
                         color: colors.text.DEFAULT,
                         display: 'block',
-                        marginBottom: spacing[2]
+                        marginBottom: spacing[2],
                       }}
                     >
                       Région / État
@@ -712,7 +794,7 @@ export function UnifiedOrganisationForm({
                       style={{
                         borderColor: colors.border.DEFAULT,
                         color: colors.text.DEFAULT,
-                        borderRadius: '8px'
+                        borderRadius: '8px',
                       }}
                     />
                   </div>
@@ -725,27 +807,29 @@ export function UnifiedOrganisationForm({
                       style={{
                         color: colors.text.DEFAULT,
                         display: 'block',
-                        marginBottom: spacing[2]
+                        marginBottom: spacing[2],
                       }}
                     >
                       Pays
                     </Label>
                     <Select
                       value={form.watch('billing_country')}
-                      onValueChange={(value) => form.setValue('billing_country', value)}
+                      onValueChange={value =>
+                        form.setValue('billing_country', value)
+                      }
                       disabled={isSubmitting}
                     >
                       <SelectTrigger
                         style={{
                           borderColor: colors.border.DEFAULT,
                           color: colors.text.DEFAULT,
-                          borderRadius: '8px'
+                          borderRadius: '8px',
                         }}
                       >
                         <SelectValue placeholder="Sélectionner un pays" />
                       </SelectTrigger>
                       <SelectContent>
-                        {COUNTRIES.map((country) => (
+                        {COUNTRIES.map(country => (
                           <SelectItem key={country.value} value={country.value}>
                             {country.label}
                           </SelectItem>
@@ -763,14 +847,20 @@ export function UnifiedOrganisationForm({
                 className="text-lg font-semibold flex items-center gap-2"
                 style={{
                   color: colors.text.DEFAULT,
-                  marginBottom: spacing[4]
+                  marginBottom: spacing[4],
                 }}
               >
                 <FileText className="h-5 w-5" />
                 Informations légales
               </h3>
 
-              <div style={{ display: 'flex', flexDirection: 'column', gap: spacing[4] }}>
+              <div
+                style={{
+                  display: 'flex',
+                  flexDirection: 'column',
+                  gap: spacing[4],
+                }}
+              >
                 {/* Legal Form */}
                 <div>
                   <Label
@@ -779,27 +869,30 @@ export function UnifiedOrganisationForm({
                     style={{
                       color: colors.text.DEFAULT,
                       display: 'block',
-                      marginBottom: spacing[2]
+                      marginBottom: spacing[2],
                     }}
                   >
                     Forme juridique
                   </Label>
                   <Select
                     value={form.watch('legal_form')}
-                    onValueChange={(value) => form.setValue('legal_form', value)}
+                    onValueChange={value => form.setValue('legal_form', value)}
                     disabled={isSubmitting}
                   >
                     <SelectTrigger
                       style={{
                         borderColor: colors.border.DEFAULT,
-                        color: colors.text.DEFAULT
+                        color: colors.text.DEFAULT,
                       }}
                     >
                       <SelectValue placeholder="Sélectionner une forme juridique" />
                     </SelectTrigger>
                     <SelectContent>
-                      {LEGAL_FORMS.map((legalForm) => (
-                        <SelectItem key={legalForm.value} value={legalForm.value}>
+                      {LEGAL_FORMS.map(legalForm => (
+                        <SelectItem
+                          key={legalForm.value}
+                          value={legalForm.value}
+                        >
                           {legalForm.label}
                         </SelectItem>
                       ))}
@@ -815,11 +908,14 @@ export function UnifiedOrganisationForm({
                     style={{
                       color: colors.text.DEFAULT,
                       display: 'block',
-                      marginBottom: spacing[2]
+                      marginBottom: spacing[2],
                     }}
                   >
                     SIREN
-                    <span className="text-xs text-gray-500 ml-2">(9 chiffres - obligatoire sur factures depuis juillet 2024)</span>
+                    <span className="text-xs text-gray-500 ml-2">
+                      (9 chiffres - obligatoire sur factures depuis juillet
+                      2024)
+                    </span>
                   </Label>
                   <Input
                     id="siren"
@@ -828,17 +924,21 @@ export function UnifiedOrganisationForm({
                     maxLength={9}
                     disabled={isSubmitting}
                     style={{
-                      borderColor: form.formState.errors.siren ? colors.danger[500] : colors.border.DEFAULT,
+                      borderColor: form.formState.errors.siren
+                        ? colors.danger[500]
+                        : colors.border.DEFAULT,
                       color: colors.text.DEFAULT,
-                      fontFamily: 'monospace'
+                      fontFamily: 'monospace',
                     }}
                   />
                   {form.formState.errors.siren && (
-                    <p style={{
-                      color: colors.danger[500],
-                      fontSize: '0.875rem',
-                      marginTop: spacing[1]
-                    }}>
+                    <p
+                      style={{
+                        color: colors.danger[500],
+                        fontSize: '0.875rem',
+                        marginTop: spacing[1],
+                      }}
+                    >
                       {form.formState.errors.siren.message}
                     </p>
                   )}
@@ -852,11 +952,13 @@ export function UnifiedOrganisationForm({
                     style={{
                       color: colors.text.DEFAULT,
                       display: 'block',
-                      marginBottom: spacing[2]
+                      marginBottom: spacing[2],
                     }}
                   >
                     SIRET
-                    <span className="text-xs text-gray-500 ml-2">(14 chiffres)</span>
+                    <span className="text-xs text-gray-500 ml-2">
+                      (14 chiffres)
+                    </span>
                   </Label>
                   <Input
                     id="siret"
@@ -865,17 +967,21 @@ export function UnifiedOrganisationForm({
                     maxLength={14}
                     disabled={isSubmitting}
                     style={{
-                      borderColor: form.formState.errors.siret ? colors.danger[500] : colors.border.DEFAULT,
+                      borderColor: form.formState.errors.siret
+                        ? colors.danger[500]
+                        : colors.border.DEFAULT,
                       color: colors.text.DEFAULT,
-                      fontFamily: 'monospace'
+                      fontFamily: 'monospace',
                     }}
                   />
                   {form.formState.errors.siret && (
-                    <p style={{
-                      color: colors.danger[500],
-                      fontSize: '0.875rem',
-                      marginTop: spacing[1]
-                    }}>
+                    <p
+                      style={{
+                        color: colors.danger[500],
+                        fontSize: '0.875rem',
+                        marginTop: spacing[1],
+                      }}
+                    >
                       {form.formState.errors.siret.message}
                     </p>
                   )}
@@ -889,7 +995,7 @@ export function UnifiedOrganisationForm({
                     style={{
                       color: colors.text.DEFAULT,
                       display: 'block',
-                      marginBottom: spacing[2]
+                      marginBottom: spacing[2],
                     }}
                   >
                     Numéro TVA
@@ -901,7 +1007,7 @@ export function UnifiedOrganisationForm({
                     disabled={isSubmitting}
                     style={{
                       borderColor: colors.border.DEFAULT,
-                      color: colors.text.DEFAULT
+                      color: colors.text.DEFAULT,
                     }}
                   />
                 </div>
@@ -914,7 +1020,7 @@ export function UnifiedOrganisationForm({
                     style={{
                       color: colors.text.DEFAULT,
                       display: 'block',
-                      marginBottom: spacing[2]
+                      marginBottom: spacing[2],
                     }}
                   >
                     Secteur d'activité
@@ -926,7 +1032,7 @@ export function UnifiedOrganisationForm({
                     disabled={isSubmitting}
                     style={{
                       borderColor: colors.border.DEFAULT,
-                      color: colors.text.DEFAULT
+                      color: colors.text.DEFAULT,
                     }}
                   />
                 </div>
@@ -939,14 +1045,20 @@ export function UnifiedOrganisationForm({
                 className="text-lg font-semibold flex items-center gap-2"
                 style={{
                   color: colors.text.DEFAULT,
-                  marginBottom: spacing[4]
+                  marginBottom: spacing[4],
                 }}
               >
                 <CreditCard className="h-5 w-5" />
                 Informations commerciales
               </h3>
 
-              <div style={{ display: 'flex', flexDirection: 'column', gap: spacing[4] }}>
+              <div
+                style={{
+                  display: 'flex',
+                  flexDirection: 'column',
+                  gap: spacing[4],
+                }}
+              >
                 {/* Currency */}
                 <div>
                   <Label
@@ -955,26 +1067,26 @@ export function UnifiedOrganisationForm({
                     style={{
                       color: colors.text.DEFAULT,
                       display: 'block',
-                      marginBottom: spacing[2]
+                      marginBottom: spacing[2],
                     }}
                   >
                     Devise
                   </Label>
                   <Select
                     value={form.watch('currency')}
-                    onValueChange={(value) => form.setValue('currency', value)}
+                    onValueChange={value => form.setValue('currency', value)}
                     disabled={isSubmitting}
                   >
                     <SelectTrigger
                       style={{
                         borderColor: colors.border.DEFAULT,
-                        color: colors.text.DEFAULT
+                        color: colors.text.DEFAULT,
                       }}
                     >
                       <SelectValue placeholder="Sélectionner une devise" />
                     </SelectTrigger>
                     <SelectContent>
-                      {CURRENCIES.map((currency) => (
+                      {CURRENCIES.map(currency => (
                         <SelectItem key={currency.value} value={currency.value}>
                           {currency.label}
                         </SelectItem>
@@ -991,26 +1103,28 @@ export function UnifiedOrganisationForm({
                     style={{
                       color: colors.text.DEFAULT,
                       display: 'block',
-                      marginBottom: spacing[2]
+                      marginBottom: spacing[2],
                     }}
                   >
                     Conditions de paiement
                   </Label>
                   <Select
                     value={form.watch('payment_terms')}
-                    onValueChange={(value) => form.setValue('payment_terms', value)}
+                    onValueChange={value =>
+                      form.setValue('payment_terms', value)
+                    }
                     disabled={isSubmitting}
                   >
                     <SelectTrigger
                       style={{
                         borderColor: colors.border.DEFAULT,
-                        color: colors.text.DEFAULT
+                        color: colors.text.DEFAULT,
                       }}
                     >
                       <SelectValue placeholder="Sélectionner des conditions" />
                     </SelectTrigger>
                     <SelectContent>
-                      {PAYMENT_TERMS_OPTIONS.map((option) => (
+                      {PAYMENT_TERMS_OPTIONS.map(option => (
                         <SelectItem key={option.value} value={option.value}>
                           {option.label}
                         </SelectItem>
@@ -1027,7 +1141,7 @@ export function UnifiedOrganisationForm({
                 className="text-lg font-semibold flex items-center gap-2"
                 style={{
                   color: colors.text.DEFAULT,
-                  marginBottom: spacing[4]
+                  marginBottom: spacing[4],
                 }}
               >
                 <FileText className="h-5 w-5" />
@@ -1044,7 +1158,7 @@ export function UnifiedOrganisationForm({
                   borderColor: colors.border.DEFAULT,
                   color: colors.text.DEFAULT,
                   backgroundColor: colors.background.DEFAULT,
-                  borderRadius: '8px'
+                  borderRadius: '8px',
                 }}
               />
             </div>
@@ -1055,7 +1169,7 @@ export function UnifiedOrganisationForm({
                 className="text-lg font-semibold flex items-center gap-2"
                 style={{
                   color: colors.text.DEFAULT,
-                  marginBottom: spacing[4]
+                  marginBottom: spacing[4],
                 }}
               >
                 <Users className="h-5 w-5" />
@@ -1080,7 +1194,7 @@ export function UnifiedOrganisationForm({
                 paddingTop: spacing[6],
                 borderTopWidth: '1px',
                 borderTopStyle: 'solid',
-                borderTopColor: colors.border.DEFAULT
+                borderTopColor: colors.border.DEFAULT,
               }}
             >
               <ButtonV2
@@ -1091,22 +1205,17 @@ export function UnifiedOrganisationForm({
               >
                 Annuler
               </ButtonV2>
-              <ButtonV2
-                type="submit"
-                variant="primary"
-                disabled={isSubmitting}
-              >
+              <ButtonV2 type="submit" variant="primary" disabled={isSubmitting}>
                 {isSubmitting
                   ? 'Enregistrement...'
                   : mode === 'edit'
                     ? 'Mettre à jour'
-                    : 'Créer'
-                }
+                    : 'Créer'}
               </ButtonV2>
             </div>
           </div>
         </form>
       </DialogContent>
     </Dialog>
-  )
+  );
 }

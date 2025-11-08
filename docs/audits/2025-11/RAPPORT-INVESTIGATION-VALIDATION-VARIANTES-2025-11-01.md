@@ -12,10 +12,12 @@
 ### Problème Signalé
 
 L'utilisateur a découvert que **2 produits "Fauteuil Milo - Vert"** existent dans le catalogue :
+
 - `FMIL-VERT-01` : 5 unités de stock
 - `FMIL-VERT-22` : 1040 unités de stock (créé pendant tests Phase 3)
 
 **Règle métier violée** :
+
 > Dans un variant_group, chaque couleur doit être UNIQUE. Pas de doublon couleur/matière autorisé.
 
 ### Root Cause
@@ -35,6 +37,7 @@ L'utilisateur a découvert que **2 produits "Fauteuil Milo - Vert"** existent da
 **Statut** : ✅ Validé & Implémenté
 
 **Contenu Ligne 153-154** :
+
 ```markdown
 **Règle:** Au moins **couleur OU matière** doit être renseigné.
 ```
@@ -53,8 +56,12 @@ La règle d'unicité existe **uniquement dans le code**, pas dans la documentati
 **Lignes 117-122** :
 
 ```typescript
-setError(`Un produit avec la couleur "${variantValue}" existe déjà dans ce groupe. Chaque produit doit avoir une couleur unique.`)
-setError(`Un produit avec le matériau "${variantValue}" existe déjà dans ce groupe. Chaque produit doit avoir un matériau unique.`)
+setError(
+  `Un produit avec la couleur "${variantValue}" existe déjà dans ce groupe. Chaque produit doit avoir une couleur unique.`
+);
+setError(
+  `Un produit avec le matériau "${variantValue}" existe déjà dans ce groupe. Chaque produit doit avoir un matériau unique.`
+);
 ```
 
 ✅ **Validation fonctionnelle** : Le modal d'édition vérifie les doublons avant modification.
@@ -68,27 +75,31 @@ setError(`Un produit avec le matériau "${variantValue}" existe déjà dans ce g
 
 ```typescript
 if (!color && !material) {
-  setError('Veuillez renseigner au moins la couleur ou la matière')
-  return
+  setError('Veuillez renseigner au moins la couleur ou la matière');
+  return;
 }
 ```
 
 ❌ **Validation manquante** : Le modal vérifie seulement qu'AU MOINS un attribut est renseigné, mais **ne vérifie PAS les doublons**.
 
 **Code actuel (ligne 74-90)** :
-```typescript
-const variantAttributes: Record<string, string> = {}
-if (color) variantAttributes.color = color
-if (material) variantAttributes.material = material
 
-const response = await fetch(`/api/products/${productData.id}/variants/create`, {
-  method: 'POST',
-  headers: { 'Content-Type': 'application/json' },
-  body: JSON.stringify({
-    variant_attributes: variantAttributes,
-    additional_note: additionalNote || null
-  })
-})
+```typescript
+const variantAttributes: Record<string, string> = {};
+if (color) variantAttributes.color = color;
+if (material) variantAttributes.material = material;
+
+const response = await fetch(
+  `/api/products/${productData.id}/variants/create`,
+  {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      variant_attributes: variantAttributes,
+      additional_note: additionalNote || null,
+    }),
+  }
+);
 ```
 
 **Résultat** : L'API est appelée **sans vérification préalable** des doublons côté client.
@@ -131,6 +142,7 @@ AND (conname LIKE '%variant%' OR conname LIKE '%color%');
 **Période cible** : 14-20 octobre 2024
 
 **Commande** :
+
 ```bash
 git log --since="2024-10-14" --until="2024-10-20" --all --oneline -- \
   src/components/business/*variant*.tsx \
@@ -161,33 +173,36 @@ Ajouter validation similaire à `edit-product-variant-modal.tsx` :
 ```typescript
 // ✅ VALIDATION À AJOUTER (lignes 66-90)
 if (!color && !material) {
-  setError('Veuillez renseigner au moins la couleur ou la matière')
-  return
+  setError('Veuillez renseigner au moins la couleur ou la matière');
+  return;
 }
 
 // 🆕 NOUVELLE VALIDATION ANTI-DOUBLON
-const response = await fetch(`/api/products/${productData.id}/variants/check-duplicate`, {
-  method: 'POST',
-  headers: { 'Content-Type': 'application/json' },
-  body: JSON.stringify({
-    variant_group_id: productData.variant_group_id,
-    color: color || null,
-    material: material || null
-  })
-})
+const response = await fetch(
+  `/api/products/${productData.id}/variants/check-duplicate`,
+  {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      variant_group_id: productData.variant_group_id,
+      color: color || null,
+      material: material || null,
+    }),
+  }
+);
 
-const checkResult = await response.json()
+const checkResult = await response.json();
 
 if (checkResult.exists) {
-  const duplicateAttribute = checkResult.duplicateAttribute // 'color' ou 'material'
-  const duplicateValue = duplicateAttribute === 'color' ? color : material
+  const duplicateAttribute = checkResult.duplicateAttribute; // 'color' ou 'material'
+  const duplicateValue = duplicateAttribute === 'color' ? color : material;
 
   setError(
     `Un produit avec ${duplicateAttribute === 'color' ? 'la couleur' : 'le matériau'} ` +
-    `"${duplicateValue}" existe déjà dans ce groupe. ` +
-    `Chaque produit doit avoir ${duplicateAttribute === 'color' ? 'une couleur' : 'un matériau'} unique.`
-  )
-  return
+      `"${duplicateValue}" existe déjà dans ce groupe. ` +
+      `Chaque produit doit avoir ${duplicateAttribute === 'color' ? 'une couleur' : 'un matériau'} unique.`
+  );
+  return;
 }
 
 // Continue avec création...
@@ -216,17 +231,17 @@ const { data: existingVariants } = await supabase
   .from('products')
   .select('id, variant_attributes')
   .eq('variant_group_id', variantGroupId)
-  .neq('id', productId) // Exclure produit actuel si édition
+  .neq('id', productId); // Exclure produit actuel si édition
 
 for (const variant of existingVariants || []) {
-  const attrs = variant.variant_attributes as Record<string, string>
+  const attrs = variant.variant_attributes as Record<string, string>;
 
   // Vérifier doublon couleur
   if (newColor && attrs.color === newColor) {
     return NextResponse.json(
       { error: `Couleur "${newColor}" déjà utilisée dans ce groupe` },
       { status: 400 }
-    )
+    );
   }
 
   // Vérifier doublon matière
@@ -234,7 +249,7 @@ for (const variant of existingVariants || []) {
     return NextResponse.json(
       { error: `Matériau "${newMaterial}" déjà utilisé dans ce groupe` },
       { status: 400 }
-    )
+    );
   }
 }
 
@@ -329,7 +344,7 @@ La contrainte d'unicité couleur/matière n'est **pas documentée** dans les rè
 **Solution** :
 Ajouter section dans la documentation :
 
-```markdown
+````markdown
 ### Contraintes d'Unicité
 
 **Règle STRICTE** : Dans un variant_group, chaque attribut différenciant doit être UNIQUE.
@@ -337,12 +352,15 @@ Ajouter section dans la documentation :
 #### Validation Couleur
 
 ❌ **Invalide** (2 variantes avec même couleur) :
+
 ```json
 { "variant_attributes": { "color": "Bleu Canard" } }
 { "variant_attributes": { "color": "Bleu Canard" } }  // ❌ REJETÉ
 ```
+````
 
 ✅ **Valide** (couleurs différentes) :
+
 ```json
 { "variant_attributes": { "color": "Bleu Canard" } }
 { "variant_attributes": { "color": "Bleu Nuit" } }    // ✅ OK
@@ -357,17 +375,20 @@ Même règle pour `material` : Pas de doublons dans le même groupe.
 Si un produit a DEUX attributs (`color` + `material`), seule la **combinaison complète** doit être unique :
 
 ✅ **Valide** (couleur identique OK si matière différente) :
+
 ```json
 { "variant_attributes": { "color": "Bleu", "material": "Velours" } }
 { "variant_attributes": { "color": "Bleu", "material": "Lin" } }  // ✅ OK
 ```
 
 ❌ **Invalide** (combinaison identique) :
+
 ```json
 { "variant_attributes": { "color": "Bleu", "material": "Velours" } }
 { "variant_attributes": { "color": "Bleu", "material": "Velours" } }  // ❌ REJETÉ
 ```
-```
+
+````
 
 ---
 
@@ -402,7 +423,7 @@ import { DynamicColorSelector } from '@/components/business/DynamicColorSelector
   placeholder="Choisir ou créer une couleur..."
   label="Couleur"
 />
-```
+````
 
 **Avantage** : Workflow UX amélioré, cohérence avec modal création.
 
@@ -410,13 +431,13 @@ import { DynamicColorSelector } from '@/components/business/DynamicColorSelector
 
 ## 📊 SYNTHÈSE IMPACT
 
-| Problème | Sévérité | Impact Business | Effort Fix |
-|----------|----------|----------------|------------|
-| #1 - Validation Client Manquante | 🔴 **CRITIQUE** | Permet doublons variantes | 2h |
-| #2 - Validation API Backend | 🔴 **CRITIQUE** | Accepte doublons même si client valide | 1h |
-| #3 - Contrainte Database | 🟡 **MOYEN** | Pas de protection ultime | 2h |
-| #4 - Documentation Incomplète | 🟢 **FAIBLE** | Confusion développeurs | 30min |
-| #5 - Feature Création Couleur | 🟡 **MOYEN** | UX dégradée | 1h |
+| Problème                         | Sévérité        | Impact Business                        | Effort Fix |
+| -------------------------------- | --------------- | -------------------------------------- | ---------- |
+| #1 - Validation Client Manquante | 🔴 **CRITIQUE** | Permet doublons variantes              | 2h         |
+| #2 - Validation API Backend      | 🔴 **CRITIQUE** | Accepte doublons même si client valide | 1h         |
+| #3 - Contrainte Database         | 🟡 **MOYEN**    | Pas de protection ultime               | 2h         |
+| #4 - Documentation Incomplète    | 🟢 **FAIBLE**   | Confusion développeurs                 | 30min      |
+| #5 - Feature Création Couleur    | 🟡 **MOYEN**    | UX dégradée                            | 1h         |
 
 **TOTAL EFFORT** : **~6.5 heures** pour correction complète.
 
@@ -488,20 +509,20 @@ describe('POST /api/products/[id]/variants/create', () => {
     // Setup: Créer produit avec variante Bleu
     // Test: Tenter créer variante Bleu
     // Assert: HTTP 400 + message erreur
-  })
+  });
 
   it('should reject duplicate material in same variant_group', async () => {
     // Setup: Créer produit avec variante Velours
     // Test: Tenter créer variante Velours
     // Assert: HTTP 400 + message erreur
-  })
+  });
 
   it('should allow duplicate color if different material', async () => {
     // Setup: Créer variante { color: 'Bleu', material: 'Velours' }
     // Test: Créer variante { color: 'Bleu', material: 'Lin' }
     // Assert: HTTP 200 + création OK
-  })
-})
+  });
+});
 ```
 
 ### Tests E2E Playwright
@@ -515,7 +536,7 @@ test('Création variante avec doublon couleur rejetée', async ({ page }) => {
   // 5. Assert: Message erreur affiché "Couleur déjà utilisée"
   // 6. Assert: Modal reste ouvert
   // 7. Assert: Aucune variante créée en database
-})
+});
 
 test('Création couleur dans modal édition variante', async ({ page }) => {
   // 1. Naviguer page produit avec variantes
@@ -526,7 +547,7 @@ test('Création couleur dans modal édition variante', async ({ page }) => {
   // 6. Assert: Couleur créée et sélectionnée
   // 7. Sauvegarder variante
   // 8. Assert: Variante modifiée avec nouvelle couleur
-})
+});
 ```
 
 ---
@@ -536,17 +557,20 @@ test('Création couleur dans modal édition variante', async ({ page }) => {
 **Critères de Validation** :
 
 ✅ **Phase 1 Complete** :
+
 - [ ] Impossible de créer doublon variante depuis UI
 - [ ] API rejette doublons avec erreur 400
 - [ ] 0 erreurs console lors des tests
 - [ ] Tests Playwright PASS
 
 ✅ **Phase 2 Complete** :
+
 - [ ] Database rejette doublons via triggers
 - [ ] Modal édition permet création couleurs
 - [ ] Aucun doublon détecté en production
 
 ✅ **Phase 3 Complete** :
+
 - [ ] Documentation à jour avec contraintes unicité
 - [ ] Tests E2E ajoutés au CI
 - [ ] Git history analysis documentée
@@ -585,6 +609,7 @@ test('Création couleur dans modal édition variante', async ({ page }) => {
 **Règle d'Or** : **JAMAIS faire confiance uniquement au client.**
 
 Toute validation critique doit être **triple** :
+
 1. Client (UX feedback rapide)
 2. API (Sécurité applicative)
 3. Database (Protection ultime)
@@ -594,18 +619,22 @@ Toute validation critique doit être **triple** :
 ## 📞 CONTACTS & RÉFÉRENCES
 
 **Fichiers Modifiés** :
+
 - `src/components/business/variant-creation-modal.tsx` (ligne 66-90)
 - `src/components/business/edit-product-variant-modal.tsx` (ligne 117-122)
 - `src/app/api/products/[productId]/variants/create/route.ts` (à vérifier)
 
 **Documentation Référence** :
+
 - `docs/business-rules/04-produits/catalogue/variants/product-variants-rules.md`
 
 **Incidents Liés** :
+
 - Création FMIL-VERT-22 pendant tests Phase 3 (2025-11-01)
 - Doublon détecté par utilisateur lors de correction manuelle
 
 **Prochaine Étape Immédiate** :
+
 1. ✅ Valider ce rapport avec utilisateur
 2. ⏳ Obtenir autorisation démarrer Phase 1 Hotfix
 3. ⏳ Implémenter corrections

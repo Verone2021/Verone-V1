@@ -7,9 +7,11 @@
 'use client';
 
 import { useState } from 'react';
+
+import { FileText, Loader2 } from 'lucide-react';
+
 import { ButtonV2 } from '@/components/ui/button';
 import { useToast } from '@/shared/modules/common/hooks';
-import { FileText, Loader2 } from 'lucide-react';
 
 // =====================================================================
 // TYPE PROPS

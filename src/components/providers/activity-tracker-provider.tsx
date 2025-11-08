@@ -5,43 +5,50 @@
  * ⏰ Tracking 24/7 (équipes internationales)
  */
 
-'use client'
+'use client';
 
-import { useEffect, useState } from 'react'
-import { usePathname } from 'next/navigation'
-import { useUserActivityTracker } from '@/shared/modules/notifications/hooks'
-import { createClient } from '@/lib/supabase/client'
-import type { User } from '@supabase/supabase-js'
+import { useEffect, useState } from 'react';
+
+import { usePathname } from 'next/navigation';
+
+import type { User } from '@supabase/supabase-js';
+
+import { createClient } from '@/lib/supabase/client';
+import { useUserActivityTracker } from '@/shared/modules/notifications/hooks';
 
 interface ActivityTrackerProviderProps {
-  children: React.ReactNode
+  children: React.ReactNode;
 }
 
-export function ActivityTrackerProvider({ children }: ActivityTrackerProviderProps) {
-  const pathname = usePathname()
-  const [user, setUser] = useState<User | null>(null)
+export function ActivityTrackerProvider({
+  children,
+}: ActivityTrackerProviderProps) {
+  const pathname = usePathname();
+  const [user, setUser] = useState<User | null>(null);
 
   // Suivre l'authentification utilisateur
   useEffect(() => {
-    const supabase = createClient()
+    const supabase = createClient();
 
     // Obtenir session initiale
     const getSession = async () => {
-      const { data: { session } } = await supabase.auth.getSession()
-      setUser(session?.user ?? null)
-    }
+      const {
+        data: { session },
+      } = await supabase.auth.getSession();
+      setUser(session?.user ?? null);
+    };
 
-    getSession()
+    getSession();
 
     // Écouter changements authentification
     const {
       data: { subscription },
     } = supabase.auth.onAuthStateChange((_event, session) => {
-      setUser(session?.user ?? null)
-    })
+      setUser(session?.user ?? null);
+    });
 
-    return () => subscription.unsubscribe()
-  }, [])
+    return () => subscription.unsubscribe();
+  }, []);
 
   // Initialiser tracker uniquement si user authentifié
   const {
@@ -50,15 +57,20 @@ export function ActivityTrackerProvider({ children }: ActivityTrackerProviderPro
     trackSearch,
     trackFilterApplied,
     currentSession,
-    flushEvents
-  } = useUserActivityTracker()
+    flushEvents,
+  } = useUserActivityTracker();
 
   // Tracking automatique changement de page (24/7)
   useEffect(() => {
     if (user && pathname) {
       // Ne pas tracker pages publiques/auth
-      const publicPaths = ['/login', '/signup', '/forgot-password', '/reset-password']
-      const isPublicPath = publicPaths.some(path => pathname.startsWith(path))
+      const publicPaths = [
+        '/login',
+        '/signup',
+        '/forgot-password',
+        '/reset-password',
+      ];
+      const isPublicPath = publicPaths.some(path => pathname.startsWith(path));
 
       if (!isPublicPath) {
         trackEvent({
@@ -66,30 +78,30 @@ export function ActivityTrackerProvider({ children }: ActivityTrackerProviderPro
           new_data: {
             page_url: pathname,
             page_title: document.title,
-            referrer: document.referrer
-          }
-        })
+            referrer: document.referrer,
+          },
+        });
       }
     }
     // Seulement pathname et user dans les dépendances pour éviter boucles infinies
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [pathname, user])
+  }, [pathname, user]);
 
   // Flush événements avant fermeture page
   useEffect(() => {
     const handleBeforeUnload = () => {
-      flushEvents()
-    }
+      flushEvents();
+    };
 
-    window.addEventListener('beforeunload', handleBeforeUnload)
+    window.addEventListener('beforeunload', handleBeforeUnload);
 
     return () => {
-      window.removeEventListener('beforeunload', handleBeforeUnload)
-    }
+      window.removeEventListener('beforeunload', handleBeforeUnload);
+    };
     // Pas de dépendances - on veut installer le listener une seule fois
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [])
+  }, []);
 
   // Rendre provider invisible (ne modifie pas le DOM)
-  return <>{children}</>
+  return <>{children}</>;
 }

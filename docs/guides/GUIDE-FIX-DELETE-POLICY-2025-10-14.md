@@ -9,13 +9,16 @@
 ## 📋 Résumé du Problème
 
 ### Symptômes Observés
+
 - ✅ Code JavaScript exécute `DELETE` sans erreur
 - ✅ Message "Suppression réussie !" affiché
 - ❌ **MAIS** la commande reste dans le tableau
 - ❌ Base de données retourne `{data: [], error: null}` (blocage silencieux RLS)
 
 ### Cause Racine
+
 La migration `20251013_019_restore_original_rls_policies_sales_orders.sql` a restauré **3 policies uniquement** :
+
 1. ✅ SELECT - Consultation
 2. ✅ INSERT - Création
 3. ✅ UPDATE - Modification
@@ -28,6 +31,7 @@ Sans policy DELETE, PostgreSQL RLS bloque toutes les suppressions silencieusemen
 ## 🔧 Solution - Appliquer Migration 026
 
 ### Fichier à Appliquer
+
 ```
 supabase/migrations/20251014_026_add_delete_policy_sales_orders.sql
 ```
@@ -40,10 +44,12 @@ supabase/migrations/20251014_026_add_delete_policy_sales_orders.sql
    - Menu latéral → **SQL Editor**
 
 2. **Copier le contenu de la migration**
+
    ```bash
    # Depuis le terminal
    cat supabase/migrations/20251014_026_add_delete_policy_sales_orders.sql
    ```
+
    Ou ouvrir le fichier et tout sélectionner (Cmd+A)
 
 3. **Coller dans SQL Editor**
@@ -53,6 +59,7 @@ supabase/migrations/20251014_026_add_delete_policy_sales_orders.sql
 
 4. **Vérifier le résultat**
    Vous devriez voir dans les logs :
+
    ```
    ========================================
    AJOUT POLICY DELETE SALES_ORDERS
@@ -86,7 +93,9 @@ npx supabase db push
 ## ✅ Validation Post-Migration
 
 ### Test 1: Vérifier la Policy en Base
+
 Exécuter dans SQL Editor :
+
 ```sql
 SELECT policyname, cmd as operation
 FROM pg_policies
@@ -95,6 +104,7 @@ ORDER BY policyname;
 ```
 
 **Résultat attendu (4 lignes):**
+
 ```
 policyname                                              | operation
 --------------------------------------------------------|-----------
@@ -112,6 +122,7 @@ Utilisateurs peuvent voir leurs commandes clients      | SELECT
 4. **Confirmer** la suppression
 
 **Résultat attendu:**
+
 - ✅ Message "Commande supprimée avec succès"
 - ✅ SO-2025-00016 **disparaît** du tableau
 - ✅ Compteur passe de "5 commandes" à "4 commandes"
@@ -120,6 +131,7 @@ Utilisateurs peuvent voir leurs commandes clients      | SELECT
 ### Test 3: Vérifier les Logs Console
 
 Ouvrir DevTools (F12) → Console, vous devriez voir :
+
 ```
 🔍 [DELETE] Début suppression commande: f3957bd2-...
 📊 [DELETE] Statut récupéré: {status: cancelled} Erreur: null
@@ -135,6 +147,7 @@ Ouvrir DevTools (F12) → Console, vous devriez voir :
 ## 🔍 Débogage si la Migration Échoue
 
 ### Erreur: "Policy already exists"
+
 ```sql
 -- Vérifier si la policy existe déjà
 SELECT policyname FROM pg_policies
@@ -144,6 +157,7 @@ WHERE tablename = 'sales_orders' AND cmd = 'DELETE';
 Si elle existe, **pas besoin d'action**, le problème est ailleurs.
 
 ### Erreur: "Function user_has_access_to_organisation does not exist"
+
 ```sql
 -- Vérifier les fonctions RLS
 SELECT proname FROM pg_proc
@@ -153,20 +167,25 @@ WHERE proname IN ('get_user_role', 'get_user_organisation_id', 'user_has_access_
 Si manquante, appliquer d'abord les migrations RLS de base (migrations 001-004).
 
 ### Suppression échoue toujours après migration
+
 1. **Vérifier RLS activé:**
+
    ```sql
    SELECT relname, relrowsecurity
    FROM pg_class
    WHERE relname = 'sales_orders';
    ```
+
    `relrowsecurity` doit être `true`.
 
 2. **Vérifier l'utilisateur actuel:**
+
    ```sql
    SELECT current_user, auth.uid();
    ```
 
 3. **Tester la policy manuellement:**
+
    ```sql
    -- Remplacer UUID par l'ID de SO-2025-00016
    SELECT * FROM sales_orders WHERE id = 'f3957bd2-aed5-4ad9-b8c1-744b5b637228';
@@ -180,11 +199,13 @@ Si manquante, appliquer d'abord les migrations RLS de base (migrations 001-004).
 ## 📊 Impact de la Correction
 
 ### Avant (❌ BUG)
+
 - DELETE bloqué silencieusement par RLS
 - Application affiche faux succès
 - Confusion utilisateur (commande toujours visible)
 
 ### Après (✅ FIX)
+
 - DELETE autorisé si `user_has_access_to_organisation()`
 - Suppression effective en base de données
 - UI mise à jour correctement

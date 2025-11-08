@@ -1,22 +1,23 @@
-'use client'
+'use client';
 
-import { Info } from 'lucide-react'
-import { Input } from '@/components/ui/input'
-import { Label } from '@/components/ui/label'
+import { Info } from 'lucide-react';
+
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
 import {
   Tooltip,
   TooltipContent,
   TooltipProvider,
   TooltipTrigger,
-} from '@/components/ui/tooltip'
+} from '@/components/ui/tooltip';
 
 interface EcoTaxVatInputProps {
-  value: number | null
-  onChange: (value: number | null) => void
-  defaultTaxRate?: number
-  disabled?: boolean
-  label?: string
-  className?: string
+  value: number | null;
+  onChange: (value: number | null) => void;
+  defaultTaxRate?: number;
+  disabled?: boolean;
+  label?: string;
+  className?: string;
 }
 
 export function EcoTaxVatInput({
@@ -24,22 +25,22 @@ export function EcoTaxVatInput({
   onChange,
   defaultTaxRate = 20,
   disabled = false,
-  label = "TVA Éco-taxe",
-  className = ""
+  label = 'TVA Éco-taxe',
+  className = '',
 }: EcoTaxVatInputProps) {
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const val = e.target.value
+    const val = e.target.value;
     if (val === '' || val === null) {
-      onChange(null)
+      onChange(null);
     } else {
-      const numericValue = parseFloat(val)
+      const numericValue = parseFloat(val);
       if (!isNaN(numericValue) && numericValue >= 0 && numericValue <= 100) {
-        onChange(numericValue)
+        onChange(numericValue);
       }
     }
-  }
+  };
 
-  const displayValue = value !== null ? value : ''
+  const displayValue = value !== null ? value : '';
 
   return (
     <div className={className}>
@@ -83,7 +84,8 @@ export function EcoTaxVatInput({
 
       {value !== null && (
         <p className="text-xs text-gray-500 mt-1">
-          TVA éco-taxe : {value}% (différente de la TVA commande {defaultTaxRate}%)
+          TVA éco-taxe : {value}% (différente de la TVA commande{' '}
+          {defaultTaxRate}%)
         </p>
       )}
       {value === null && (
@@ -92,5 +94,5 @@ export function EcoTaxVatInput({
         </p>
       )}
     </div>
-  )
+  );
 }

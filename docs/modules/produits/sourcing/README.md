@@ -9,6 +9,7 @@
 ## 📊 Vue d'Ensemble
 
 Le **Sourcing** est le module de recherche et validation de nouveaux produits. Il permet de :
+
 - Créer rapidement des produits en mode "sourcing" (3 champs minimum)
 - Gérer les sourcing internes (exploration catalogue)
 - Gérer les sourcing clients (demandes spécifiques)
@@ -64,17 +65,20 @@ Le **Sourcing** est le module de recherche et validation de nouveaux produits. I
 **Fichier** : `src/app/produits/sourcing/produits/page.tsx`
 
 **Features** :
+
 - Liste produits en sourcing (status='sourcing')
 - Filtres : Type sourcing, Fournisseur, Client assigné
 - Actions : Nouveau sourcing, Valider, Commander échantillon
 - Statistiques : Total sourcing, Internes, Clients, Avec échantillon
 
 **Composants** :
+
 - `QuickSourcingModal` : Création rapide
 - `SourcingProductCard` : Card produit sourcing
 - `SourcingFilters` : Barre filtres
 
 **Colonnes affichées** :
+
 - Image
 - Nom produit
 - Fournisseur
@@ -92,6 +96,7 @@ Le **Sourcing** est le module de recherche et validation de nouveaux produits. I
 **Fichier** : `src/app/produits/sourcing/produits/[id]/page.tsx`
 
 **Sections** :
+
 1. **Informations Sourcing** :
    - Nom, SKU, Status
    - URL page fournisseur (lien externe)
@@ -119,6 +124,7 @@ Le **Sourcing** est le module de recherche et validation de nouveaux produits. I
    - Captures écran page fournisseur
 
 **Actions** :
+
 - Modifier informations
 - Commander échantillon
 - Valider au catalogue
@@ -131,6 +137,7 @@ Le **Sourcing** est le module de recherche et validation de nouveaux produits. I
 **Fichier** : `src/app/produits/sourcing/produits/create/page.tsx`
 
 **Formulaire Complet** (vs modal simplifiée) :
+
 - Nom produit (REQUIRED)
 - URL page fournisseur (REQUIRED)
 - Prix achat HT (REQUIRED)
@@ -150,29 +157,33 @@ Le **Sourcing** est le module de recherche et validation de nouveaux produits. I
 Hook principal CRUD sourcing avec filtres avancés.
 
 **Signature** :
+
 ```typescript
 interface SourcingFilters {
-  search?: string
-  status?: string
-  sourcing_type?: 'interne' | 'client'
-  supplier_id?: string
-  assigned_client_id?: string
-  has_supplier?: boolean
-  requires_sample?: boolean
+  search?: string;
+  status?: string;
+  sourcing_type?: 'interne' | 'client';
+  supplier_id?: string;
+  assigned_client_id?: string;
+  has_supplier?: boolean;
+  requires_sample?: boolean;
 }
 
 function useSourcingProducts(filters?: SourcingFilters): {
-  products: SourcingProduct[]
-  loading: boolean
-  error: string | null
-  refetch: () => void
-  createSourcingProduct: (data: SourcingFormData) => Promise<SourcingProduct | null>
-  validateSourcing: (id: string) => Promise<boolean>
-  orderSample: (id: string) => Promise<PurchaseOrder | null>
-}
+  products: SourcingProduct[];
+  loading: boolean;
+  error: string | null;
+  refetch: () => void;
+  createSourcingProduct: (
+    data: SourcingFormData
+  ) => Promise<SourcingProduct | null>;
+  validateSourcing: (id: string) => Promise<boolean>;
+  orderSample: (id: string) => Promise<PurchaseOrder | null>;
+};
 ```
 
 **Tables accédées** :
+
 - products (WHERE status='sourcing')
 - organisations (JOIN supplier + assigned_client)
 - product_images (LEFT JOIN)
@@ -186,11 +197,12 @@ function useSourcingProducts(filters?: SourcingFilters): {
 Modal **création rapide** depuis liste sourcing.
 
 **Props** :
+
 ```typescript
 interface QuickSourcingModalProps {
-  open: boolean
-  onClose: () => void
-  onSuccess?: () => void
+  open: boolean;
+  onClose: () => void;
+  onSuccess?: () => void;
 }
 ```
 
@@ -203,25 +215,29 @@ interface QuickSourcingModalProps {
 Formulaire **3 champs minimum** pour sourcing rapide.
 
 **Props** :
+
 ```typescript
 interface SourcingQuickFormProps {
-  onSuccess?: (productId: string) => void
-  onCancel?: () => void
-  showHeader?: boolean
+  onSuccess?: (productId: string) => void;
+  onCancel?: () => void;
+  showHeader?: boolean;
 }
 ```
 
 **Champs** :
+
 - Nom produit (input text)
 - URL page fournisseur (input url)
 - Prix achat HT (input number)
 
 **Validation** :
+
 - Nom : min 3 caractères
 - URL : format URL valide
 - Prix : > 0
 
 **Soumission** :
+
 ```typescript
 const productData = {
   name,
@@ -229,10 +245,10 @@ const productData = {
   cost_price: parseFloat(price),
   creation_mode: 'sourcing',
   status: 'sourcing',
-  requires_sample: false
-}
+  requires_sample: false,
+};
 
-await createSourcingProduct(productData)
+await createSourcingProduct(productData);
 ```
 
 ---
@@ -242,16 +258,18 @@ await createSourcingProduct(productData)
 Modal **édition produit sourcing** avec tous champs.
 
 **Props** :
+
 ```typescript
 interface EditSourcingProductModalProps {
-  open: boolean
-  onClose: () => void
-  product: SourcingProduct
-  onUpdate?: () => void
+  open: boolean;
+  onClose: () => void;
+  product: SourcingProduct;
+  onUpdate?: () => void;
 }
 ```
 
 **Champs éditables** :
+
 - Nom
 - URL fournisseur
 - Prix achat HT
@@ -448,42 +466,48 @@ WHERE p.requires_sample = true;
 
 ```typescript
 test('Créer produit sourcing via modal rapide', async ({ page }) => {
-  await page.goto('/produits/sourcing/produits')
+  await page.goto('/produits/sourcing/produits');
 
   // Ouvrir modal
-  await page.click('button:has-text("Nouveau Sourcing")')
+  await page.click('button:has-text("Nouveau Sourcing")');
 
   // Remplir formulaire
-  await page.fill('input[name="name"]', 'Test Sourcing Fauteuil')
-  await page.fill('input[name="supplier_page_url"]', 'https://supplier.com/product')
-  await page.fill('input[name="cost_price"]', '150')
+  await page.fill('input[name="name"]', 'Test Sourcing Fauteuil');
+  await page.fill(
+    'input[name="supplier_page_url"]',
+    'https://supplier.com/product'
+  );
+  await page.fill('input[name="cost_price"]', '150');
 
   // Soumettre
-  await page.click('button:has-text("Créer")')
+  await page.click('button:has-text("Créer")');
 
   // Vérifier
-  await expect(page.locator('text=Test Sourcing Fauteuil')).toBeVisible()
-})
+  await expect(page.locator('text=Test Sourcing Fauteuil')).toBeVisible();
+});
 ```
 
 ### Test Validation Catalogue
 
 ```typescript
-test('Valider produit sourcing au catalogue', async ({ page, sourcingProductId }) => {
-  await page.goto(`/produits/sourcing/produits/${sourcingProductId}`)
+test('Valider produit sourcing au catalogue', async ({
+  page,
+  sourcingProductId,
+}) => {
+  await page.goto(`/produits/sourcing/produits/${sourcingProductId}`);
 
   // Clic valider
-  await page.click('button:has-text("Valider au catalogue")')
+  await page.click('button:has-text("Valider au catalogue")');
 
   // Confirmation
-  await page.click('button:has-text("Confirmer")')
+  await page.click('button:has-text("Confirmer")');
 
   // Vérifier redirection
-  await expect(page).toHaveURL(`/produits/catalogue/${sourcingProductId}`)
+  await expect(page).toHaveURL(`/produits/catalogue/${sourcingProductId}`);
 
   // Vérifier toast
-  await expect(page.locator('text=Produit validé au catalogue')).toBeVisible()
-})
+  await expect(page.locator('text=Produit validé au catalogue')).toBeVisible();
+});
 ```
 
 ---
@@ -491,6 +515,7 @@ test('Valider produit sourcing au catalogue', async ({ page, sourcingProductId }
 ## 📊 Performance
 
 **SLOs** :
+
 - ✅ Liste sourcing : <2s
 - ✅ Création sourcing rapide : <1.5s
 - ✅ Validation catalogue : <2s

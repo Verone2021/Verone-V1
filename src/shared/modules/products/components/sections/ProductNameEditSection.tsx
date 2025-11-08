@@ -8,7 +8,7 @@ import { ButtonV2 } from '@/components/ui/button';
 import { ButtonUnified } from '@/components/ui/button-unified';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { cn, formatPrice } from '@/lib/utils';
+import { cn, formatPrice } from '@verone/utils';
 import {
   useInlineEdit,
   type EditableSection,

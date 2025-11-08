@@ -11,11 +11,13 @@
 Le module **Variantes** permet de gérer des produits avec variations (couleur, taille, matière, etc.) de manière structurée.
 
 **Concepts clés** :
+
 - **Variant Group** : Groupe de variantes (ex: "Fauteuil Milo")
 - **Variant Attributes** : Attributs variant (couleur, taille, matière)
 - **Variants** : Produits individuels dans le groupe
 
 **Exemple** :
+
 ```
 Variant Group: "Fauteuil Milo"
 ├── Variant 1: Fauteuil Milo - Vert / Velours / L90
@@ -69,6 +71,7 @@ CREATE TABLE variant_groups (
 ```
 
 **Colonnes clés** :
+
 - `master_product_id` : Produit principal (référence)
 - `attribute_schema` : Définition attributs (ex: `{color: ['Vert', 'Bleu'], material: ['Velours', 'Lin']}`)
 - `is_active` : Groupe actif/inactif
@@ -83,6 +86,7 @@ ADD COLUMN variant_attributes JSONB;  -- Valeurs attributs (ex: {color: 'Vert', 
 ```
 
 **Queries variantes** :
+
 ```sql
 -- Tous produits d'un groupe
 SELECT * FROM products
@@ -105,12 +109,15 @@ Hook CRUD groupes variantes.
 
 ```typescript
 function useVariantGroups(): {
-  groups: VariantGroup[]
-  loading: boolean
-  createGroup: (data: CreateGroupData) => Promise<VariantGroup | null>
-  updateGroup: (id: string, data: UpdateGroupData) => Promise<VariantGroup | null>
-  deleteGroup: (id: string) => Promise<boolean>
-}
+  groups: VariantGroup[];
+  loading: boolean;
+  createGroup: (data: CreateGroupData) => Promise<VariantGroup | null>;
+  updateGroup: (
+    id: string,
+    data: UpdateGroupData
+  ) => Promise<VariantGroup | null>;
+  deleteGroup: (id: string) => Promise<boolean>;
+};
 ```
 
 ### `useProductVariants(variantGroupId)`
@@ -119,12 +126,18 @@ Hook produits d'un groupe variantes.
 
 ```typescript
 function useProductVariants(variantGroupId: string): {
-  variants: Product[]
-  loading: boolean
-  addVariant: (productId: string, attributes: Record<string, any>) => Promise<boolean>
-  removeVariant: (productId: string) => Promise<boolean>
-  updateVariantAttributes: (productId: string, attributes: Record<string, any>) => Promise<boolean>
-}
+  variants: Product[];
+  loading: boolean;
+  addVariant: (
+    productId: string,
+    attributes: Record<string, any>
+  ) => Promise<boolean>;
+  removeVariant: (productId: string) => Promise<boolean>;
+  updateVariantAttributes: (
+    productId: string,
+    attributes: Record<string, any>
+  ) => Promise<boolean>;
+};
 ```
 
 ---
@@ -137,9 +150,9 @@ Section gestion variantes sur page produit.
 
 ```typescript
 interface ProductVariantsSectionProps {
-  productId: string
-  variantGroupId?: string
-  onUpdate?: () => void
+  productId: string;
+  variantGroupId?: string;
+  onUpdate?: () => void;
 }
 ```
 
@@ -149,9 +162,9 @@ Grille affichage variantes avec filtres par attribut.
 
 ```typescript
 interface ProductVariantsGridProps {
-  variants: Product[]
-  onSelect?: (variant: Product) => void
-  filters?: VariantFilters
+  variants: Product[];
+  onSelect?: (variant: Product) => void;
+  filters?: VariantFilters;
 }
 ```
 
@@ -161,9 +174,9 @@ interface ProductVariantsGridProps {
 
 ```typescript
 interface VariantAttributesEditorProps {
-  attributes: Record<string, any>
-  schema: Record<string, string[]>
-  onChange: (attributes: Record<string, any>) => void
+  attributes: Record<string, any>;
+  schema: Record<string, string[]>;
+  onChange: (attributes: Record<string, any>) => void;
 }
 ```
 

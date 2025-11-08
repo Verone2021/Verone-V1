@@ -5,15 +5,15 @@
 // =====================================================================
 
 export type QontoErrorCode =
-  | 'AUTH_ERROR'           // 401: Credentials invalides
-  | 'PERMISSION_ERROR'     // 403: Permissions insuffisantes
-  | 'NOT_FOUND'            // 404: Ressource introuvable
-  | 'VALIDATION_ERROR'     // 400: Paramètres invalides
-  | 'RATE_LIMIT'           // 429: Quota API dépassé
-  | 'SERVER_ERROR'         // 500/502/503: Erreur serveur Qonto
-  | 'TIMEOUT'              // 408: Request timeout
-  | 'NETWORK_ERROR'        // 0: Erreur réseau
-  | 'UNKNOWN_ERROR';       // Erreur inconnue
+  | 'AUTH_ERROR' // 401: Credentials invalides
+  | 'PERMISSION_ERROR' // 403: Permissions insuffisantes
+  | 'NOT_FOUND' // 404: Ressource introuvable
+  | 'VALIDATION_ERROR' // 400: Paramètres invalides
+  | 'RATE_LIMIT' // 429: Quota API dépassé
+  | 'SERVER_ERROR' // 500/502/503: Erreur serveur Qonto
+  | 'TIMEOUT' // 408: Request timeout
+  | 'NETWORK_ERROR' // 0: Erreur réseau
+  | 'UNKNOWN_ERROR'; // Erreur inconnue
 
 export class QontoError extends Error {
   public readonly code: QontoErrorCode;
@@ -75,7 +75,7 @@ export class QontoError extends Error {
   getUserMessage(): string {
     switch (this.code) {
       case 'AUTH_ERROR':
-        return 'Erreur d\'authentification Qonto. Vérifiez vos identifiants.';
+        return "Erreur d'authentification Qonto. Vérifiez vos identifiants.";
       case 'PERMISSION_ERROR':
         return 'Permissions insuffisantes pour accéder à cette ressource Qonto.';
       case 'NOT_FOUND':
@@ -91,7 +91,7 @@ export class QontoError extends Error {
       case 'NETWORK_ERROR':
         return 'Erreur de connexion réseau. Vérifiez votre connexion internet.';
       default:
-        return 'Une erreur inattendue s\'est produite.';
+        return "Une erreur inattendue s'est produite.";
     }
   }
 
@@ -103,12 +103,12 @@ export class QontoError extends Error {
       case 'RATE_LIMIT':
         return 60000; // 1 minute
       case 'SERVER_ERROR':
-        return 5000;  // 5 secondes
+        return 5000; // 5 secondes
       case 'TIMEOUT':
       case 'NETWORK_ERROR':
-        return 2000;  // 2 secondes
+        return 2000; // 2 secondes
       default:
-        return 0;     // Pas de retry suggéré
+        return 0; // Pas de retry suggéré
     }
   }
 }
@@ -120,23 +120,51 @@ export function createQontoErrorFromResponse(
   status: number,
   responseData?: any
 ): QontoError {
-  const message = responseData?.message || responseData?.error || `Qonto API error (${status})`;
+  const message =
+    responseData?.message ||
+    responseData?.error ||
+    `Qonto API error (${status})`;
 
   switch (status) {
     case 400:
       return new QontoError(message, 'VALIDATION_ERROR', status, responseData);
     case 401:
-      return new QontoError('Invalid Qonto credentials', 'AUTH_ERROR', status, responseData);
+      return new QontoError(
+        'Invalid Qonto credentials',
+        'AUTH_ERROR',
+        status,
+        responseData
+      );
     case 403:
-      return new QontoError('Insufficient Qonto permissions', 'PERMISSION_ERROR', status, responseData);
+      return new QontoError(
+        'Insufficient Qonto permissions',
+        'PERMISSION_ERROR',
+        status,
+        responseData
+      );
     case 404:
-      return new QontoError('Resource not found', 'NOT_FOUND', status, responseData);
+      return new QontoError(
+        'Resource not found',
+        'NOT_FOUND',
+        status,
+        responseData
+      );
     case 429:
-      return new QontoError('Qonto rate limit exceeded', 'RATE_LIMIT', status, responseData);
+      return new QontoError(
+        'Qonto rate limit exceeded',
+        'RATE_LIMIT',
+        status,
+        responseData
+      );
     case 500:
     case 502:
     case 503:
-      return new QontoError('Qonto server error', 'SERVER_ERROR', status, responseData);
+      return new QontoError(
+        'Qonto server error',
+        'SERVER_ERROR',
+        status,
+        responseData
+      );
     default:
       return new QontoError(message, 'UNKNOWN_ERROR', status, responseData);
   }

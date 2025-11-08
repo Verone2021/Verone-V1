@@ -179,6 +179,7 @@ git push origin main
 ```
 
 **Résultat automatique** (sous 3 minutes) :
+
 1. ✅ GitHub enregistre commit
 2. ✅ Vercel détecte push sur `main`
 3. ✅ Vercel build automatique (~2 min)
@@ -186,6 +187,7 @@ git push origin main
 5. ✅ URL https://verone-backoffice.vercel.app mise à jour
 
 **Vérifier déploiement** :
+
 - Dashboard Vercel : https://vercel.com/verone2021/verone-backoffice
 - Check status : ✅ "Ready" (vert) = succès
 - Tester URL production dans navigateur
@@ -216,12 +218,14 @@ git push origin feature/phase2-stocks
 ```
 
 **Résultat automatique** :
+
 1. ✅ Vercel crée **Preview Deployment** automatique
 2. ✅ URL Preview unique générée (ex: verone-backoffice-git-feature-phase2-stocks.vercel.app)
 3. ✅ Tester sur URL Preview SANS affecter production
 4. ✅ Production (`main`) reste inchangée
 
 **Comment trouver URL Preview ?**
+
 - GitHub → Pull Request → Vercel bot commente avec URL
 - Vercel Dashboard → Deployments → Chercher branche `feature/phase2-stocks`
 
@@ -236,25 +240,31 @@ git push origin feature/phase2-stocks
 3. **Base** : `main` ← **Compare** : `feature/phase2-stocks`
 4. **Create pull request**
 5. Remplir description :
+
    ```markdown
    ## 🎯 Objectif
+
    Implémentation module Stocks Phase 2
 
    ## ✅ Changements
+
    - Interface gestion inventaire
    - Hook useStocks intégration Supabase
    - Page liste produits avec quantités
    - Mouvements de stock (entrées/sorties)
 
    ## 🧪 Tests
+
    - [x] Console errors : 0 erreur
    - [x] MCP Playwright validation
    - [x] Preview deployment testé
    - [x] Supabase queries validées
 
    ## 📸 Screenshots
+
    [Ajouter screenshots validation]
    ```
+
 6. **Merge pull request** (bouton vert)
 7. **Confirm merge**
 8. **Delete branch** (nettoyer après merge)
@@ -437,12 +447,14 @@ git tag -l                    # Liste tous tags
 ### Problème 1 : "fatal: The current branch has no upstream branch"
 
 **Erreur** :
+
 ```bash
 $ git push
 fatal: The current branch feature/test has no upstream branch.
 ```
 
 **Solution** :
+
 ```bash
 # Première fois qu'on push une nouvelle branche
 git push -u origin feature/test
@@ -455,12 +467,14 @@ git push --set-upstream origin feature/test
 ### Problème 2 : "Your branch is behind 'origin/main'"
 
 **Erreur** :
+
 ```bash
 $ git status
 Your branch is behind 'origin/main' by 5 commits, and can be fast-forwarded.
 ```
 
 **Solution** :
+
 ```bash
 # Mettre à jour la branche locale
 git pull origin main
@@ -472,6 +486,7 @@ git pull origin main
 ### Problème 3 : Conflits de Merge
 
 **Erreur** :
+
 ```bash
 $ git merge feature/test
 CONFLICT (content): Merge conflict in src/app/page.tsx
@@ -481,12 +496,14 @@ Automatic merge failed; fix conflicts and then commit the result.
 **Solution détaillée** :
 
 1. **Identifier fichiers en conflit** :
+
    ```bash
    git status
    # Chercher : "both modified:"
    ```
 
 2. **Ouvrir fichier et chercher marqueurs** :
+
    ```tsx
    <<<<<<< HEAD
    Code version main (actuelle)
@@ -510,6 +527,7 @@ Automatic merge failed; fix conflicts and then commit the result.
 ### Problème 4 : "error: failed to push some refs"
 
 **Erreur** :
+
 ```bash
 $ git push origin main
 error: failed to push some refs to 'https://github.com/Verone2021/Verone-backoffice.git'
@@ -517,6 +535,7 @@ hint: Updates were rejected because the remote contains work that you do not hav
 ```
 
 **Solution** :
+
 ```bash
 # 1. Récupérer changements remote
 git pull origin main
@@ -567,6 +586,7 @@ Type error: Property 'products' does not exist on type 'DashboardMetrics'
 ```
 
 **Solution** :
+
 1. Corriger erreur TypeScript localement
 2. Tester `npm run build` en local
 3. Commit + push fix
@@ -579,6 +599,7 @@ Error: NEXT_PUBLIC_SUPABASE_URL is not defined
 ```
 
 **Solution** :
+
 1. Vercel Dashboard → Settings → Environment Variables
 2. Ajouter variable manquante
 3. Cocher Production + Preview + Development
@@ -592,6 +613,7 @@ Module not found: Can't resolve '@/hooks/use-products'
 ```
 
 **Solution** :
+
 1. Vérifier chemin import en local
 2. Vérifier fichier existe dans Git : `git ls-files | grep use-products`
 3. Si manquant : `git add src/hooks/use-products.ts` puis commit
@@ -670,4 +692,4 @@ Module not found: Can't resolve '@/hooks/use-products'
 
 **🎯 Prochaine étape** : [Guide Insertion Données Produits](./data-insertion-process.md)
 
-*Guide créé le 2025-10-01 - Vérone Back Office Phase 1*
+_Guide créé le 2025-10-01 - Vérone Back Office Phase 1_

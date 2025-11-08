@@ -7,10 +7,20 @@
 'use client';
 
 import { useState } from 'react';
-import { useForm } from 'react-hook-form';
+
 import { zodResolver } from '@hookform/resolvers/zod';
+import { DollarSign, Loader2 } from 'lucide-react';
+import { useForm } from 'react-hook-form';
 import * as z from 'zod';
+
 import { ButtonV2 } from '@/components/ui/button';
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from '@/components/ui/card';
 import {
   Form,
   FormControl,
@@ -29,16 +39,8 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from '@/components/ui/card';
-import { useToast } from '@/shared/modules/common/hooks';
-import { DollarSign, Loader2 } from 'lucide-react';
 import { createClient } from '@/lib/supabase/client';
+import { useToast } from '@/shared/modules/common/hooks';
 
 // =====================================================================
 // VALIDATION SCHEMA
@@ -49,7 +51,7 @@ const paymentFormSchema = z.object({
   amount: z
     .string()
     .min(1, 'Montant requis')
-    .refine((val) => !isNaN(parseFloat(val)) && parseFloat(val) > 0, {
+    .refine(val => !isNaN(parseFloat(val)) && parseFloat(val) > 0, {
       message: 'Montant doit être supérieur à 0',
     }),
   paymentDate: z.string().min(1, 'Date de paiement requise'),
@@ -134,7 +136,8 @@ export function PaymentForm({
         throw fetchError;
       }
 
-      const newAmountPaid = ((currentInvoice as any).amount_paid || 0) + parseFloat(values.amount);
+      const newAmountPaid =
+        ((currentInvoice as any).amount_paid || 0) + parseFloat(values.amount);
       const newStatus =
         newAmountPaid >= (currentInvoice as any).total_ttc
           ? 'paid'
@@ -175,7 +178,7 @@ export function PaymentForm({
         description:
           error instanceof Error
             ? error.message
-            : 'Impossible d\'enregistrer le paiement',
+            : "Impossible d'enregistrer le paiement",
         variant: 'destructive',
       });
     } finally {
@@ -196,7 +199,8 @@ export function PaymentForm({
       <CardHeader>
         <CardTitle>Enregistrer un paiement</CardTitle>
         <CardDescription>
-          Facture {invoiceNumber} • Montant restant dû: {formatAmount(remainingAmount)}
+          Facture {invoiceNumber} • Montant restant dû:{' '}
+          {formatAmount(remainingAmount)}
         </CardDescription>
       </CardHeader>
 
@@ -254,14 +258,19 @@ export function PaymentForm({
               render={({ field }) => (
                 <FormItem>
                   <FormLabel>Méthode de paiement</FormLabel>
-                  <Select onValueChange={field.onChange} defaultValue={field.value}>
+                  <Select
+                    onValueChange={field.onChange}
+                    defaultValue={field.value}
+                  >
                     <FormControl>
                       <SelectTrigger>
                         <SelectValue placeholder="Sélectionner une méthode" />
                       </SelectTrigger>
                     </FormControl>
                     <SelectContent>
-                      <SelectItem value="bank_transfer">Virement bancaire</SelectItem>
+                      <SelectItem value="bank_transfer">
+                        Virement bancaire
+                      </SelectItem>
                       <SelectItem value="check">Chèque</SelectItem>
                       <SelectItem value="cash">Espèces</SelectItem>
                       <SelectItem value="card">Carte bancaire</SelectItem>

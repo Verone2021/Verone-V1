@@ -16,6 +16,7 @@ npx supabase gen types typescript --project-id aorroydfjsrygmosnzrl > src/types/
 ```
 
 **Fréquence recommandée** :
+
 - Après chaque migration Supabase appliquée en production
 - Lorsque des erreurs TypeScript indiquent des tables/colonnes manquantes
 - Au minimum 1 fois par mois

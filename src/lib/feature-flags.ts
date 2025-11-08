@@ -9,40 +9,40 @@
 
 export interface FeatureFlags {
   // Phases de déploiement
-  phase1Enabled: boolean
-  phase2Enabled: boolean
-  phase3Enabled: boolean
+  phase1Enabled: boolean;
+  phase2Enabled: boolean;
+  phase3Enabled: boolean;
 
   // Modules Phase 1 (ACTIFS)
-  dashboardEnabled: boolean
-  profilesEnabled: boolean
-  catalogueEnabled: boolean
-  sourcingEnabled: boolean
+  dashboardEnabled: boolean;
+  profilesEnabled: boolean;
+  catalogueEnabled: boolean;
+  sourcingEnabled: boolean;
 
   // Modules Phase 2 (INACTIFS pour Phase 1)
-  stocksEnabled: boolean
-  commandesEnabled: boolean
+  stocksEnabled: boolean;
+  commandesEnabled: boolean;
 
   // Modules Phase 3 (INACTIFS pour Phase 1)
-  interactionsEnabled: boolean
-  canauxVenteEnabled: boolean
-  contactsEnabled: boolean
+  interactionsEnabled: boolean;
+  canauxVenteEnabled: boolean;
+  contactsEnabled: boolean;
 
   // Modules spéciaux (toujours actifs)
-  adminEnabled: boolean
-  parametresEnabled: boolean
-  testsManuelsEnabled: boolean
+  adminEnabled: boolean;
+  parametresEnabled: boolean;
+  testsManuelsEnabled: boolean;
 
   // Features spécifiques
-  photoUploadWorkflowEnabled: boolean
-  googleMerchantSyncEnabled: boolean
-  mcpMonitoringEnabled: boolean
+  photoUploadWorkflowEnabled: boolean;
+  googleMerchantSyncEnabled: boolean;
+  mcpMonitoringEnabled: boolean;
 
   // Modules Finance (Phase 2)
-  financeEnabled: boolean
-  facturationEnabled: boolean
-  tresorerieEnabled: boolean
-  rapprochementEnabled: boolean
+  financeEnabled: boolean;
+  facturationEnabled: boolean;
+  tresorerieEnabled: boolean;
+  rapprochementEnabled: boolean;
 }
 
 /**
@@ -72,77 +72,86 @@ export interface FeatureFlags {
  */
 export const featureFlags: FeatureFlags = {
   // Phases - TOUTES PHASES ACTIVÉES
-  phase1Enabled: true,   // Auth + Profil + Dashboard basique
-  phase2Enabled: true,   // Stocks + Commandes (ACTIVÉ)
-  phase3Enabled: true,   // Interactions + Canaux (ACTIVÉ)
+  phase1Enabled: true, // Auth + Profil + Dashboard basique
+  phase2Enabled: true, // Stocks + Commandes (ACTIVÉ)
+  phase3Enabled: true, // Interactions + Canaux (ACTIVÉ)
 
   // Phase 1 - Modules Core ACTIFS
-  dashboardEnabled: true,      // ✅ Dashboard (vue d'ensemble, KPIs)
-  profilesEnabled: true,       // ✅ Profil utilisateur (préférences, activité)
-  catalogueEnabled: true,      // ✅ Produits activés
-  sourcingEnabled: true,       // ✅ Sourcing activé
+  dashboardEnabled: true, // ✅ Dashboard (vue d'ensemble, KPIs)
+  profilesEnabled: true, // ✅ Profil utilisateur (préférences, activité)
+  catalogueEnabled: true, // ✅ Produits activés
+  sourcingEnabled: true, // ✅ Sourcing activé
 
   // Phase 2 - ACTIVÉ
-  stocksEnabled: true,         // ✅ Stocks activés
-  commandesEnabled: true,      // ✅ Commandes activées
+  stocksEnabled: true, // ✅ Stocks activés
+  commandesEnabled: true, // ✅ Commandes activées
 
   // Phase 3 - ACTIVÉ
-  interactionsEnabled: true,   // ✅ Interactions/Consultations activées
-  canauxVenteEnabled: true,    // ✅ Canaux vente activés
-  contactsEnabled: true,       // ✅ Organisations & Contacts ACTIFS (fournisseurs, clients, prestataires)
+  interactionsEnabled: true, // ✅ Interactions/Consultations activées
+  canauxVenteEnabled: true, // ✅ Canaux vente activés
+  contactsEnabled: true, // ✅ Organisations & Contacts ACTIFS (fournisseurs, clients, prestataires)
 
   // Modules spéciaux - Toujours accessibles (authentification requise)
-  adminEnabled: true,          // ✅ Administration (gestion utilisateurs, rôles, permissions)
-  parametresEnabled: true,     // ✅ Paramètres (configuration application)
-  testsManuelsEnabled: false,  // ❌ Tests manuels désactivés (environnement dev uniquement)
+  adminEnabled: true, // ✅ Administration (gestion utilisateurs, rôles, permissions)
+  parametresEnabled: true, // ✅ Paramètres (configuration application)
+  testsManuelsEnabled: false, // ❌ Tests manuels désactivés (environnement dev uniquement)
 
   // Features spécifiques - ACTIVÉES
-  photoUploadWorkflowEnabled: true,      // ✅ Upload photos activé
-  googleMerchantSyncEnabled: true,       // ✅ Google Merchant activé
-  mcpMonitoringEnabled: true,            // ✅ Monitoring MCP activé
+  photoUploadWorkflowEnabled: true, // ✅ Upload photos activé
+  googleMerchantSyncEnabled: true, // ✅ Google Merchant activé
+  mcpMonitoringEnabled: true, // ✅ Monitoring MCP activé
 
   // Modules Finance - ACTIVÉS
-  financeEnabled: true,          // ✅ Module Finance global
-  facturationEnabled: true,      // ✅ Facturation activée
-  tresorerieEnabled: true,       // ✅ Trésorerie activée
-  rapprochementEnabled: true     // ✅ Rapprochement bancaire activé
-}
+  financeEnabled: true, // ✅ Module Finance global
+  facturationEnabled: true, // ✅ Facturation activée
+  tresorerieEnabled: true, // ✅ Trésorerie activée
+  rapprochementEnabled: true, // ✅ Rapprochement bancaire activé
+};
 
 /**
  * Helper pour vérifier si un module est activé
  */
 export function isModuleEnabled(moduleName: keyof FeatureFlags): boolean {
-  return featureFlags[moduleName]
+  return featureFlags[moduleName];
 }
 
 /**
  * Helper pour obtenir la phase d'un module
  */
 export function getModulePhase(moduleName: string): number {
-  const phase1Modules = ['dashboard', 'profiles', 'catalogue', 'organisation', 'sourcing', 'contacts']
-  const phase2Modules = ['stocks', 'commandes']
-  const phase3Modules = ['interactions', 'canaux-vente']
+  const phase1Modules = [
+    'dashboard',
+    'profiles',
+    'catalogue',
+    'organisation',
+    'sourcing',
+    'contacts',
+  ];
+  const phase2Modules = ['stocks', 'commandes'];
+  const phase3Modules = ['interactions', 'canaux-vente'];
 
-  if (phase1Modules.includes(moduleName)) return 1
-  if (phase2Modules.includes(moduleName)) return 2
-  if (phase3Modules.includes(moduleName)) return 3
+  if (phase1Modules.includes(moduleName)) return 1;
+  if (phase2Modules.includes(moduleName)) return 2;
+  if (phase3Modules.includes(moduleName)) return 3;
 
-  return 0 // Modules spéciaux
+  return 0; // Modules spéciaux
 }
 
 /**
  * Helper pour obtenir le statut de déploiement d'un module
  */
-export function getModuleDeploymentStatus(moduleName: string): 'active' | 'coming-soon' | 'disabled' {
-  const phase = getModulePhase(moduleName)
+export function getModuleDeploymentStatus(
+  moduleName: string
+): 'active' | 'coming-soon' | 'disabled' {
+  const phase = getModulePhase(moduleName);
 
-  if (phase === 1 && featureFlags.phase1Enabled) return 'active'
-  if (phase === 2 && featureFlags.phase2Enabled) return 'active'
-  if (phase === 3 && featureFlags.phase3Enabled) return 'active'
+  if (phase === 1 && featureFlags.phase1Enabled) return 'active';
+  if (phase === 2 && featureFlags.phase2Enabled) return 'active';
+  if (phase === 3 && featureFlags.phase3Enabled) return 'active';
 
-  if (phase === 0) return 'active' // Modules spéciaux toujours actifs
+  if (phase === 0) return 'active'; // Modules spéciaux toujours actifs
 
-  return 'coming-soon'
+  return 'coming-soon';
 }
 
 /**
@@ -151,8 +160,8 @@ export function getModuleDeploymentStatus(moduleName: string): 'active' | 'comin
 export const PHASE_LABELS = {
   1: 'Phase 1',
   2: 'Phase 2',
-  3: 'Phase 3'
-} as const
+  3: 'Phase 3',
+} as const;
 
 /**
  * Configuration des couleurs pour les badges de phase
@@ -160,5 +169,5 @@ export const PHASE_LABELS = {
 export const PHASE_COLORS = {
   active: 'bg-green-100 text-green-800',
   'coming-soon': 'bg-gray-100 text-gray-900',
-  disabled: 'bg-gray-100 text-gray-600'
-} as const
+  disabled: 'bg-gray-100 text-gray-600',
+} as const;

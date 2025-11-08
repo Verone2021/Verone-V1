@@ -102,7 +102,11 @@ export interface AbbyPayment {
 
 export interface AbbyWebhookEvent {
   id: string; // Event ID unique pour idempotency
-  type: 'invoice.paid' | 'invoice.sent' | 'invoice.cancelled' | 'payment.received';
+  type:
+    | 'invoice.paid'
+    | 'invoice.sent'
+    | 'invoice.cancelled'
+    | 'payment.received';
   data: {
     invoice?: AbbyInvoice;
     payment?: AbbyPayment;

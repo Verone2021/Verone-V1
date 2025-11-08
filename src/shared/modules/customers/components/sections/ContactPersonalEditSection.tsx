@@ -1,18 +1,26 @@
-'use client'
+'use client';
 
-import { User, Save, X, Edit } from 'lucide-react'
-import { ButtonV2 } from '@/components/ui/button'
-import { cn } from '@/lib/utils'
-import { useInlineEdit, type EditableSection } from '@/shared/modules/common/hooks'
-import type { Contact } from '@/shared/modules/common/hooks'
+import { User, Save, X, Edit } from 'lucide-react';
+
+import { ButtonV2 } from '@/components/ui/button';
+import { cn } from '@verone/utils';
+import {
+  useInlineEdit,
+  type EditableSection,
+} from '@/shared/modules/common/hooks';
+import type { Contact } from '@/shared/modules/common/hooks';
 
 interface ContactPersonalEditSectionProps {
-  contact: Contact
-  onUpdate: (updatedContact: Partial<Contact>) => void
-  className?: string
+  contact: Contact;
+  onUpdate: (updatedContact: Partial<Contact>) => void;
+  className?: string;
 }
 
-export function ContactPersonalEditSection({ contact, onUpdate, className }: ContactPersonalEditSectionProps) {
+export function ContactPersonalEditSection({
+  contact,
+  onUpdate,
+  className,
+}: ContactPersonalEditSectionProps) {
   const {
     isEditing,
     isSaving,
@@ -22,48 +30,48 @@ export function ContactPersonalEditSection({ contact, onUpdate, className }: Con
     cancelEdit,
     updateEditedData,
     saveChanges,
-    hasChanges
+    hasChanges,
   } = useInlineEdit({
     contactId: contact.id,
-    onUpdate: (updatedData) => {
-      onUpdate(updatedData)
+    onUpdate: updatedData => {
+      onUpdate(updatedData);
     },
-    onError: (error) => {
-      console.error('❌ Erreur mise à jour informations personnelles:', error)
-    }
-  })
+    onError: error => {
+      console.error('❌ Erreur mise à jour informations personnelles:', error);
+    },
+  });
 
-  const section: EditableSection = 'personal'
-  const editData = getEditedData(section)
-  const error = getError(section)
+  const section: EditableSection = 'personal';
+  const editData = getEditedData(section);
+  const error = getError(section);
 
   const handleStartEdit = () => {
     startEdit(section, {
       first_name: contact.first_name,
       last_name: contact.last_name,
       title: contact.title || '',
-      department: contact.department || ''
-    })
-  }
+      department: contact.department || '',
+    });
+  };
 
   const handleSave = async () => {
-    const success = await saveChanges(section)
+    const success = await saveChanges(section);
     if (success) {
-      console.log('✅ Informations personnelles mises à jour avec succès')
+      console.log('✅ Informations personnelles mises à jour avec succès');
     }
-  }
+  };
 
   const handleCancel = () => {
-    cancelEdit(section)
-  }
+    cancelEdit(section);
+  };
 
   const handleFieldChange = (field: string, value: string) => {
-    updateEditedData(section, { [field]: value.trim() || null })
-  }
+    updateEditedData(section, { [field]: value.trim() || null });
+  };
 
   if (isEditing(section)) {
     return (
-      <div className={cn("card-verone p-4", className)}>
+      <div className={cn('card-verone p-4', className)}>
         <div className="flex items-center justify-between mb-3">
           <h3 className="text-lg font-medium text-black flex items-center">
             <User className="h-5 w-5 mr-2" />
@@ -100,7 +108,7 @@ export function ContactPersonalEditSection({ contact, onUpdate, className }: Con
             <input
               type="text"
               value={editData?.first_name || ''}
-              onChange={(e) => handleFieldChange('first_name', e.target.value)}
+              onChange={e => handleFieldChange('first_name', e.target.value)}
               className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-black focus:border-black"
               placeholder="Prénom"
               required
@@ -115,7 +123,7 @@ export function ContactPersonalEditSection({ contact, onUpdate, className }: Con
             <input
               type="text"
               value={editData?.last_name || ''}
-              onChange={(e) => handleFieldChange('last_name', e.target.value)}
+              onChange={e => handleFieldChange('last_name', e.target.value)}
               className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-black focus:border-black"
               placeholder="Nom de famille"
               required
@@ -130,7 +138,7 @@ export function ContactPersonalEditSection({ contact, onUpdate, className }: Con
             <input
               type="text"
               value={editData?.title || ''}
-              onChange={(e) => handleFieldChange('title', e.target.value)}
+              onChange={e => handleFieldChange('title', e.target.value)}
               className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-black focus:border-black"
               placeholder="Directeur Commercial, Chef de Projet..."
             />
@@ -144,7 +152,7 @@ export function ContactPersonalEditSection({ contact, onUpdate, className }: Con
             <input
               type="text"
               value={editData?.department || ''}
-              onChange={(e) => handleFieldChange('department', e.target.value)}
+              onChange={e => handleFieldChange('department', e.target.value)}
               className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-black focus:border-black"
               placeholder="Commercial, Support, Production..."
             />
@@ -158,12 +166,12 @@ export function ContactPersonalEditSection({ contact, onUpdate, className }: Con
           </div>
         )}
       </div>
-    )
+    );
   }
 
   // Mode affichage
   return (
-    <div className={cn("card-verone p-4", className)}>
+    <div className={cn('card-verone p-4', className)}>
       <div className="flex items-center justify-between mb-3">
         <h3 className="text-lg font-medium text-black flex items-center">
           <User className="h-5 w-5 mr-2" />
@@ -178,12 +186,16 @@ export function ContactPersonalEditSection({ contact, onUpdate, className }: Con
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <div>
           <span className="text-sm text-black opacity-70">Prénom:</span>
-          <div className="text-lg font-semibold text-black">{contact.first_name}</div>
+          <div className="text-lg font-semibold text-black">
+            {contact.first_name}
+          </div>
         </div>
 
         <div>
           <span className="text-sm text-black opacity-70">Nom:</span>
-          <div className="text-lg font-semibold text-black">{contact.last_name}</div>
+          <div className="text-lg font-semibold text-black">
+            {contact.last_name}
+          </div>
         </div>
 
         {contact.title && (
@@ -207,5 +219,5 @@ export function ContactPersonalEditSection({ contact, onUpdate, className }: Con
         )}
       </div>
     </div>
-  )
+  );
 }

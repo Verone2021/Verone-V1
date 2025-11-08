@@ -15,11 +15,11 @@ source:
   lines: 293-309
 
 displayed_in:
-  - location: "Statistiques détaillées"
+  - location: 'Statistiques détaillées'
 
 output:
   type: string
-  format: "Nom module avec icône"
+  format: 'Nom module avec icône'
 
 metadata:
   created_at: 2025-10-22

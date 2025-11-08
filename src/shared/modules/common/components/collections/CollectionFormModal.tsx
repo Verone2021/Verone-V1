@@ -1,19 +1,7 @@
-'use client'
+'use client';
 
-import { useState, useEffect } from 'react'
-import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog'
-import { ButtonV2 } from '@/components/ui/button'
-import { Input } from '@/components/ui/input'
-import { Label } from '@/components/ui/label'
-import { Textarea } from '@/components/ui/textarea'
-import { Badge } from '@/components/ui/badge'
-import { X, Tag, Plus } from 'lucide-react'
-import { cn } from '@/lib/utils'
-import type { Collection, CreateCollectionData } from '@/shared/modules/common/hooks'
-import type { RoomCategory, CollectionStyle } from '@/types/collections'
-import { RoomMultiSelect } from '@/components/ui/room-multi-select'
-import type { RoomType } from '../../types/room-types'
-import { CollectionImageUpload } from './collection-image-upload'
+import { useState, useEffect } from 'react';
+
 import {
   ComponentInstanceIcon,
   DesktopIcon,
@@ -22,39 +10,109 @@ import {
   GearIcon,
   ReaderIcon,
   SewingPinIcon,
-  DrawingPinIcon
-} from '@radix-ui/react-icons'
+  DrawingPinIcon,
+} from '@radix-ui/react-icons';
+import { X, Tag, Plus } from 'lucide-react';
 
-const COLLECTION_STYLES: { value: CollectionStyle; label: string; description: string; icon: string }[] = [
-  { value: 'minimaliste', label: 'Minimaliste', description: 'Épuré et fonctionnel', icon: '⬜' },
-  { value: 'contemporain', label: 'Contemporain', description: 'Moderne et actuel', icon: '🏙️' },
-  { value: 'moderne', label: 'Moderne', description: 'Design avant-gardiste', icon: '🚀' },
-  { value: 'scandinave', label: 'Scandinave', description: 'Chaleureux et lumineux', icon: '🌲' },
-  { value: 'industriel', label: 'Industriel', description: 'Brut et authentique', icon: '⚙️' },
-  { value: 'classique', label: 'Classique', description: 'Intemporel et élégant', icon: '👑' },
-  { value: 'boheme', label: 'Bohème', description: 'Libre et éclectique', icon: '🌺' },
-  { value: 'art_deco', label: 'Art Déco', description: 'Raffiné et géométrique', icon: '💎' },
-]
+import { CollectionImageUpload } from '@/components/business/collection-image-upload';
+import { Badge } from '@/components/ui/badge';
+import { ButtonV2 } from '@/components/ui/button';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { RoomMultiSelect } from '@/components/ui/room-multi-select';
+import { Textarea } from '@/components/ui/textarea';
+import { cn } from '@verone/utils';
+import type {
+  Collection,
+  CreateCollectionData,
+} from '@/shared/modules/common/hooks';
+import type { RoomCategory, CollectionStyle } from '@verone/types';
+import type { RoomType } from '@verone/types';
 
-const ROOM_CATEGORIES: { value: RoomCategory; label: string; icon: string }[] = [
-  { value: 'chambre', label: 'Chambre', icon: '🛏️' },
-  { value: 'wc_salle_bain', label: 'WC / Salle de bain', icon: '🚿' },
-  { value: 'salon', label: 'Salon', icon: '🛋️' },
-  { value: 'cuisine', label: 'Cuisine', icon: '🍽️' },
-  { value: 'bureau', label: 'Bureau', icon: '💼' },
-  { value: 'salle_a_manger', label: 'Salle à manger', icon: '🍷' },
-  { value: 'entree', label: 'Entrée', icon: '🚪' },
-  { value: 'plusieurs_pieces', label: 'Plusieurs pièces', icon: '🏠' },
-  { value: 'exterieur_balcon', label: 'Extérieur - Balcon', icon: '🌿' },
-  { value: 'exterieur_jardin', label: 'Extérieur - Jardin', icon: '🌳' },
-]
+const COLLECTION_STYLES: {
+  value: CollectionStyle;
+  label: string;
+  description: string;
+  icon: string;
+}[] = [
+  {
+    value: 'minimaliste',
+    label: 'Minimaliste',
+    description: 'Épuré et fonctionnel',
+    icon: '⬜',
+  },
+  {
+    value: 'contemporain',
+    label: 'Contemporain',
+    description: 'Moderne et actuel',
+    icon: '🏙️',
+  },
+  {
+    value: 'moderne',
+    label: 'Moderne',
+    description: 'Design avant-gardiste',
+    icon: '🚀',
+  },
+  {
+    value: 'scandinave',
+    label: 'Scandinave',
+    description: 'Chaleureux et lumineux',
+    icon: '🌲',
+  },
+  {
+    value: 'industriel',
+    label: 'Industriel',
+    description: 'Brut et authentique',
+    icon: '⚙️',
+  },
+  {
+    value: 'classique',
+    label: 'Classique',
+    description: 'Intemporel et élégant',
+    icon: '👑',
+  },
+  {
+    value: 'boheme',
+    label: 'Bohème',
+    description: 'Libre et éclectique',
+    icon: '🌺',
+  },
+  {
+    value: 'art_deco',
+    label: 'Art Déco',
+    description: 'Raffiné et géométrique',
+    icon: '💎',
+  },
+];
+
+const ROOM_CATEGORIES: { value: RoomCategory; label: string; icon: string }[] =
+  [
+    { value: 'chambre', label: 'Chambre', icon: '🛏️' },
+    { value: 'wc_salle_bain', label: 'WC / Salle de bain', icon: '🚿' },
+    { value: 'salon', label: 'Salon', icon: '🛋️' },
+    { value: 'cuisine', label: 'Cuisine', icon: '🍽️' },
+    { value: 'bureau', label: 'Bureau', icon: '💼' },
+    { value: 'salle_a_manger', label: 'Salle à manger', icon: '🍷' },
+    { value: 'entree', label: 'Entrée', icon: '🚪' },
+    { value: 'plusieurs_pieces', label: 'Plusieurs pièces', icon: '🏠' },
+    { value: 'exterieur_balcon', label: 'Extérieur - Balcon', icon: '🌿' },
+    { value: 'exterieur_jardin', label: 'Extérieur - Jardin', icon: '🌳' },
+  ];
 
 interface CollectionFormModalProps {
-  isOpen: boolean
-  onClose: () => void
-  onSubmit: (data: CreateCollectionData) => Promise<void>
-  collection?: Collection
-  mode: 'create' | 'edit'
+  isOpen: boolean;
+  onClose: () => void;
+  onSubmit: (data: CreateCollectionData) => Promise<void>;
+  collection?: Collection;
+  mode: 'create' | 'edit';
 }
 
 export function CollectionFormModal({
@@ -62,54 +120,54 @@ export function CollectionFormModal({
   onClose,
   onSubmit,
   collection,
-  mode
+  mode,
 }: CollectionFormModalProps) {
-  const [name, setName] = useState('')
-  const [description, setDescription] = useState('')
-  const [style, setStyle] = useState<CollectionStyle | undefined>()
-  const [suitableRooms, setSuitableRooms] = useState<RoomType[]>([])
-  const [tags, setTags] = useState<string[]>([])
-  const [newTag, setNewTag] = useState('')
-  const [visibility, setVisibility] = useState<'public' | 'private'>('private')
-  const [isActive, setIsActive] = useState(true)
-  const [isSubmitting, setIsSubmitting] = useState(false)
+  const [name, setName] = useState('');
+  const [description, setDescription] = useState('');
+  const [style, setStyle] = useState<CollectionStyle | undefined>();
+  const [suitableRooms, setSuitableRooms] = useState<RoomType[]>([]);
+  const [tags, setTags] = useState<string[]>([]);
+  const [newTag, setNewTag] = useState('');
+  const [visibility, setVisibility] = useState<'public' | 'private'>('private');
+  const [isActive, setIsActive] = useState(true);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   useEffect(() => {
     if (collection && mode === 'edit') {
-      setName(collection.name)
-      setDescription(collection.description || '')
-      setStyle(collection.style as any)
-      setSuitableRooms((collection.suitable_rooms || []) as RoomType[])
-      setTags(collection.theme_tags || [])
-      setVisibility(collection.visibility)
-      setIsActive(collection.is_active)
+      setName(collection.name);
+      setDescription(collection.description || '');
+      setStyle(collection.style as any);
+      setSuitableRooms((collection.suitable_rooms || []) as RoomType[]);
+      setTags(collection.theme_tags || []);
+      setVisibility(collection.visibility);
+      setIsActive(collection.is_active);
     } else {
-      setName('')
-      setDescription('')
-      setStyle(undefined)
-      setSuitableRooms([])
-      setTags([])
-      setVisibility('private')
-      setIsActive(true)
+      setName('');
+      setDescription('');
+      setStyle(undefined);
+      setSuitableRooms([]);
+      setTags([]);
+      setVisibility('private');
+      setIsActive(true);
     }
-  }, [collection, mode, isOpen])
+  }, [collection, mode, isOpen]);
 
   const handleAddTag = () => {
     if (newTag.trim() && !tags.includes(newTag.trim())) {
-      setTags([...tags, newTag.trim()])
-      setNewTag('')
+      setTags([...tags, newTag.trim()]);
+      setNewTag('');
     }
-  }
+  };
 
   const handleRemoveTag = (tagToRemove: string) => {
-    setTags(tags.filter(t => t !== tagToRemove))
-  }
+    setTags(tags.filter(t => t !== tagToRemove));
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault()
-    if (!name.trim()) return
+    e.preventDefault();
+    if (!name.trim()) return;
 
-    setIsSubmitting(true)
+    setIsSubmitting(true);
     try {
       await onSubmit({
         name: name.trim(),
@@ -119,24 +177,27 @@ export function CollectionFormModal({
         theme_tags: tags,
         visibility,
         is_active: isActive,
-      })
-      onClose()
+      });
+      onClose();
     } catch (error) {
-      console.error('Erreur lors de la soumission:', error)
+      console.error('Erreur lors de la soumission:', error);
     } finally {
-      setIsSubmitting(false)
+      setIsSubmitting(false);
     }
-  }
+  };
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>
-            {mode === 'create' ? 'Nouvelle collection' : 'Modifier la collection'}
+            {mode === 'create'
+              ? 'Nouvelle collection'
+              : 'Modifier la collection'}
           </DialogTitle>
           <DialogDescription>
-            Créez une collection thématique pour organiser vos produits par style et destination
+            Créez une collection thématique pour organiser vos produits par
+            style et destination
           </DialogDescription>
         </DialogHeader>
 
@@ -150,7 +211,7 @@ export function CollectionFormModal({
               <Input
                 id="name"
                 value={name}
-                onChange={(e) => setName(e.target.value)}
+                onChange={e => setName(e.target.value)}
                 placeholder="Ex: Collection Scandinave Salon 2025"
                 className="mt-1"
                 required
@@ -164,7 +225,7 @@ export function CollectionFormModal({
               <Textarea
                 id="description"
                 value={description}
-                onChange={(e) => setDescription(e.target.value)}
+                onChange={e => setDescription(e.target.value)}
                 placeholder="Décrivez l'ambiance et les caractéristiques de cette collection..."
                 rows={3}
                 className="mt-1"
@@ -176,11 +237,13 @@ export function CollectionFormModal({
               <Label className="text-sm font-medium">Image de couverture</Label>
               <div className="mt-2 w-full">
                 <CollectionImageUpload
-                  collectionId={collection?.id || ''}
-                  onImageUpload={(imageId, publicUrl) => {
-                    console.log('✅ Image collection uploadée:', imageId)
-                  }}
-                  className="w-full"
+                  {...({
+                    collectionId: collection?.id || '',
+                    onImageUpload: (imageId, publicUrl) => {
+                      console.log('✅ Image collection uploadée:', imageId);
+                    },
+                    className: 'w-full',
+                  } as any)}
                 />
               </div>
             </div>
@@ -190,25 +253,37 @@ export function CollectionFormModal({
           <div className="space-y-3">
             <Label className="text-sm font-medium">Style décoratif</Label>
             <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-              {COLLECTION_STYLES.map((styleOption) => (
+              {COLLECTION_STYLES.map(styleOption => (
                 <button
                   key={styleOption.value}
                   type="button"
-                  onClick={() => setStyle(style === styleOption.value ? undefined : styleOption.value)}
+                  onClick={() =>
+                    setStyle(
+                      style === styleOption.value
+                        ? undefined
+                        : styleOption.value
+                    )
+                  }
                   className={cn(
-                    "flex flex-col items-center gap-2 p-4 rounded-lg border-2 text-center transition-all",
+                    'flex flex-col items-center gap-2 p-4 rounded-lg border-2 text-center transition-all',
                     style === styleOption.value
-                      ? "border-black bg-black text-white shadow-md"
-                      : "border-gray-300 hover:border-gray-400 hover:shadow-sm"
+                      ? 'border-black bg-black text-white shadow-md'
+                      : 'border-gray-300 hover:border-gray-400 hover:shadow-sm'
                   )}
                 >
                   <div className="text-2xl mb-1">{styleOption.icon}</div>
                   <div className="space-y-1">
-                    <div className="font-medium text-sm">{styleOption.label}</div>
-                    <div className={cn(
-                      "text-xs",
-                      style === styleOption.value ? "text-gray-200" : "text-gray-500"
-                    )}>
+                    <div className="font-medium text-sm">
+                      {styleOption.label}
+                    </div>
+                    <div
+                      className={cn(
+                        'text-xs',
+                        style === styleOption.value
+                          ? 'text-gray-200'
+                          : 'text-gray-500'
+                      )}
+                    >
                       {styleOption.description}
                     </div>
                   </div>
@@ -233,7 +308,9 @@ export function CollectionFormModal({
             />
             {suitableRooms.length > 0 && (
               <p className="text-xs text-gray-600">
-                {suitableRooms.length} pièce{suitableRooms.length > 1 ? 's' : ''} sélectionnée{suitableRooms.length > 1 ? 's' : ''}
+                {suitableRooms.length} pièce
+                {suitableRooms.length > 1 ? 's' : ''} sélectionnée
+                {suitableRooms.length > 1 ? 's' : ''}
               </p>
             )}
           </div>
@@ -244,11 +321,11 @@ export function CollectionFormModal({
             <div className="flex gap-2">
               <Input
                 value={newTag}
-                onChange={(e) => setNewTag(e.target.value)}
-                onKeyDown={(e) => {
+                onChange={e => setNewTag(e.target.value)}
+                onKeyDown={e => {
                   if (e.key === 'Enter') {
-                    e.preventDefault()
-                    handleAddTag()
+                    e.preventDefault();
+                    handleAddTag();
                   }
                 }}
                 placeholder="Ex: Eco-responsable, Petit espace..."
@@ -264,7 +341,7 @@ export function CollectionFormModal({
             </div>
             {tags.length > 0 && (
               <div className="flex flex-wrap gap-2">
-                {tags.map((tag) => (
+                {tags.map(tag => (
                   <Badge key={tag} variant="outline" className="pl-2 pr-1">
                     <Tag className="h-3 w-3 mr-1" />
                     {tag}
@@ -290,7 +367,9 @@ export function CollectionFormModal({
               </div>
               <select
                 value={visibility}
-                onChange={(e) => setVisibility(e.target.value as 'public' | 'private')}
+                onChange={e =>
+                  setVisibility(e.target.value as 'public' | 'private')
+                }
                 className="border border-gray-300 rounded px-3 py-2"
               >
                 <option value="private">Privée</option>
@@ -307,14 +386,14 @@ export function CollectionFormModal({
                 type="button"
                 onClick={() => setIsActive(!isActive)}
                 className={cn(
-                  "relative inline-flex h-6 w-11 items-center rounded-full transition-colors",
-                  isActive ? "bg-black" : "bg-gray-300"
+                  'relative inline-flex h-6 w-11 items-center rounded-full transition-colors',
+                  isActive ? 'bg-black' : 'bg-gray-300'
                 )}
               >
                 <span
                   className={cn(
-                    "inline-block h-4 w-4 transform rounded-full bg-white transition-transform",
-                    isActive ? "translate-x-6" : "translate-x-1"
+                    'inline-block h-4 w-4 transform rounded-full bg-white transition-transform',
+                    isActive ? 'translate-x-6' : 'translate-x-1'
                   )}
                 />
               </button>
@@ -335,11 +414,15 @@ export function CollectionFormModal({
               disabled={!name.trim() || isSubmitting}
               className="bg-black text-white hover:bg-gray-800"
             >
-              {isSubmitting ? 'Enregistrement...' : mode === 'create' ? 'Créer' : 'Enregistrer'}
+              {isSubmitting
+                ? 'Enregistrement...'
+                : mode === 'create'
+                  ? 'Créer'
+                  : 'Enregistrer'}
             </ButtonV2>
           </DialogFooter>
         </form>
       </DialogContent>
     </Dialog>
-  )
+  );
 }

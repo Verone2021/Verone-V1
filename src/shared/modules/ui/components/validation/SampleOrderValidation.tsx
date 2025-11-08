@@ -1,7 +1,9 @@
-"use client"
+'use client';
 
-import { useState, useEffect } from 'react'
-import { useRouter } from 'next/navigation'
+import { useState, useEffect } from 'react';
+
+import { useRouter } from 'next/navigation';
+
 import {
   CheckCircle,
   Clock,
@@ -17,21 +19,18 @@ import {
   Plus,
   ArrowRight,
   Loader2,
-  Star
-} from 'lucide-react'
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
-import { ButtonV2 } from '@/components/ui/button'
-import { Badge } from '@/components/ui/badge'
-import { Input } from '@/components/ui/input'
-import { Textarea } from '@/components/ui/textarea'
-import { Label } from '@/components/ui/label'
+  Star,
+} from 'lucide-react';
+
+import { Badge } from '@/components/ui/badge';
+import { ButtonV2 } from '@/components/ui/button';
 import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select'
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from '@/components/ui/card';
 import {
   Dialog,
   DialogContent,
@@ -40,54 +39,72 @@ import {
   DialogHeader,
   DialogTitle,
   DialogTrigger,
-} from '@/components/ui/dialog'
-import { useSourcingProducts } from '@/shared/modules/products/hooks'
-import { useToast } from '@/shared/modules/common/hooks'
-import { createClient } from '@/lib/supabase/client'
+} from '@/components/ui/dialog';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
+import { Textarea } from '@/components/ui/textarea';
+import { createClient } from '@/lib/supabase/client';
+import { useToast } from '@/shared/modules/common/hooks';
+import { useSourcingProducts } from '@/shared/modules/products/hooks';
 
 interface SampleOrder {
-  id: string
-  supplier_id: string
+  id: string;
+  supplier_id: string;
   supplier: {
-    id: string
-    name: string
-    contact_email?: string
-    contact_phone?: string
-  }
-  status: 'draft' | 'pending_approval' | 'approved' | 'ordered' | 'delivered' | 'completed'
-  estimated_total_cost: number
-  actual_total_cost?: number
-  expected_delivery_days: number
-  created_at: string
-  approved_at?: string
-  ordered_at?: string
-  delivered_at?: string
-  approval_notes?: string
-  sample_order_items: SampleOrderItem[]
+    id: string;
+    name: string;
+    contact_email?: string;
+    contact_phone?: string;
+  };
+  status:
+    | 'draft'
+    | 'pending_approval'
+    | 'approved'
+    | 'ordered'
+    | 'delivered'
+    | 'completed';
+  estimated_total_cost: number;
+  actual_total_cost?: number;
+  expected_delivery_days: number;
+  created_at: string;
+  approved_at?: string;
+  ordered_at?: string;
+  delivered_at?: string;
+  approval_notes?: string;
+  sample_order_items: SampleOrderItem[];
 }
 
 interface SampleOrderItem {
-  id: string
-  product_draft_id: string
-  description: string
-  estimated_cost: number
-  delivery_time_days: number
-  status: 'pending' | 'approved' | 'rejected'
+  id: string;
+  product_draft_id: string;
+  description: string;
+  estimated_cost: number;
+  delivery_time_days: number;
+  status: 'pending' | 'approved' | 'rejected';
   product_drafts: {
-    id: string
-    name: string
-    supplier_page_url: string
-    primary_image_url?: string
-  }
+    id: string;
+    name: string;
+    supplier_page_url: string;
+    primary_image_url?: string;
+  };
 }
 
 interface SampleOrderValidationProps {
-  className?: string
+  className?: string;
 }
 
-export function SampleOrderValidation({ className }: SampleOrderValidationProps) {
-  const router = useRouter()
-  const { toast } = useToast()
+export function SampleOrderValidation({
+  className,
+}: SampleOrderValidationProps) {
+  const router = useRouter();
+  const { toast } = useToast();
   // TODO: Hook useDrafts n'existe pas - Code legacy à refactorer
   // const {
   //   approveSampleOrder,
@@ -98,57 +115,62 @@ export function SampleOrderValidation({ className }: SampleOrderValidationProps)
   //   getSourcingWorkflowMetrics
   // } = useDrafts()
 
-  const [sampleOrders, setSampleOrders] = useState<SampleOrder[]>([])
-  const [selectedOrder, setSelectedOrder] = useState<SampleOrder | null>(null)
-  const [loading, setLoading] = useState(true)
-  const [validationNotes, setValidationNotes] = useState('')
-  const [selectedItems, setSelectedItems] = useState<string[]>([])
-  const [workflowMetrics, setWorkflowMetrics] = useState<any>(null)
+  const [sampleOrders, setSampleOrders] = useState<SampleOrder[]>([]);
+  const [selectedOrder, setSelectedOrder] = useState<SampleOrder | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [validationNotes, setValidationNotes] = useState('');
+  const [selectedItems, setSelectedItems] = useState<string[]>([]);
+  const [workflowMetrics, setWorkflowMetrics] = useState<any>(null);
 
-  const supabase = createClient()
+  const supabase = createClient();
 
   // TODO: Implement these functions properly
   const getSourcingWorkflowMetrics = async () => {
-    return { total: 0, pending: 0, approved: 0, rejected: 0 }
-  }
+    return { total: 0, pending: 0, approved: 0, rejected: 0 };
+  };
 
   const approveSampleOrder = async (orderId: string, notes?: string) => {
     const { error } = await supabase
       .from('sample_orders')
       .update({ status: 'approved', notes })
-      .eq('id', orderId)
-    if (error) throw error
-  }
+      .eq('id', orderId);
+    if (error) throw error;
+  };
 
   const markSampleOrderDelivered = async (orderId: string) => {
     const { error } = await supabase
       .from('sample_orders')
       .update({ status: 'delivered', delivered_at: new Date().toISOString() })
-      .eq('id', orderId)
-    if (error) throw error
-  }
+      .eq('id', orderId);
+    if (error) throw error;
+  };
 
-  const validateSamples = async (draftIds: string[], result: 'approved' | 'rejected', notes?: string) => {
+  const validateSamples = async (
+    draftIds: string[],
+    result: 'approved' | 'rejected',
+    notes?: string
+  ) => {
     const { error } = await (supabase as any)
       .from('product_drafts')
       .update({ status: result, validation_notes: notes } as any)
-      .in('id', draftIds)
-    if (error) throw error
-  }
+      .in('id', draftIds);
+    if (error) throw error;
+  };
 
   const transferToProductCatalog = async (draftId: string) => {
     // Implement transfer logic here
-    throw new Error('transferToProductCatalog not yet implemented')
-  }
+    throw new Error('transferToProductCatalog not yet implemented');
+  };
 
   // Charger toutes les commandes d'échantillons
   const loadSampleOrders = async () => {
     try {
-      setLoading(true)
+      setLoading(true);
 
       const { data: orders, error } = await supabase
         .from('sample_orders')
-        .select(`
+        .select(
+          `
           *,
           suppliers!inner (
             id,
@@ -164,76 +186,82 @@ export function SampleOrderValidation({ className }: SampleOrderValidationProps)
               supplier_page_url
             )
           )
-        `)
-        .order('created_at', { ascending: false })
+        `
+        )
+        .order('created_at', { ascending: false });
 
-      if (error) throw error
+      if (error) throw error;
 
-      setSampleOrders(orders as any || [])
+      setSampleOrders((orders as any) || []);
 
       // Charger les métriques du workflow
       try {
-        const metrics = await getSourcingWorkflowMetrics()
-        setWorkflowMetrics(metrics)
+        const metrics = await getSourcingWorkflowMetrics();
+        setWorkflowMetrics(metrics);
       } catch (metricsError) {
-        console.warn('Métriques workflow non disponibles:', metricsError)
+        console.warn('Métriques workflow non disponibles:', metricsError);
       }
-
     } catch (error) {
-      console.error('Erreur chargement commandes échantillons:', error)
+      console.error('Erreur chargement commandes échantillons:', error);
       toast({
-        title: "Erreur",
+        title: 'Erreur',
         description: "Impossible de charger les commandes d'échantillons",
-        variant: "destructive"
-      })
+        variant: 'destructive',
+      });
     } finally {
-      setLoading(false)
+      setLoading(false);
     }
-  }
+  };
 
   // Approuver une commande d'échantillons
   const handleApproveOrder = async (orderId: string, notes?: string) => {
     try {
-      await approveSampleOrder(orderId, notes)
+      await approveSampleOrder(orderId, notes);
 
       toast({
-        title: "Commande approuvée",
-        description: "La commande d'échantillons a été approuvée"
-      })
+        title: 'Commande approuvée',
+        description: "La commande d'échantillons a été approuvée",
+      });
 
-      await loadSampleOrders()
-      setSelectedOrder(null)
-      setValidationNotes('')
+      await loadSampleOrders();
+      setSelectedOrder(null);
+      setValidationNotes('');
     } catch (error) {
-      console.error('Erreur approbation commande:', error)
+      console.error('Erreur approbation commande:', error);
       toast({
-        title: "Erreur",
-        description: error instanceof Error ? error.message : "Impossible d'approuver la commande",
-        variant: "destructive"
-      })
+        title: 'Erreur',
+        description:
+          error instanceof Error
+            ? error.message
+            : "Impossible d'approuver la commande",
+        variant: 'destructive',
+      });
     }
-  }
+  };
 
   // Marquer comme livré
   const handleMarkDelivered = async (orderId: string) => {
     try {
-      await markSampleOrderDelivered(orderId)
+      await markSampleOrderDelivered(orderId);
 
       toast({
-        title: "Livraison confirmée",
-        description: "La commande a été marquée comme livrée"
-      })
+        title: 'Livraison confirmée',
+        description: 'La commande a été marquée comme livrée',
+      });
 
-      await loadSampleOrders()
+      await loadSampleOrders();
     } catch (error) {
-      console.error('Erreur marquage livraison:', error)
+      console.error('Erreur marquage livraison:', error);
       toast({
-        title: "Erreur",
-        description: error instanceof Error ? error.message : "Impossible de marquer comme livré",
-        variant: "destructive"
-      })
+        title: 'Erreur',
+        description:
+          error instanceof Error
+            ? error.message
+            : 'Impossible de marquer comme livré',
+        variant: 'destructive',
+      });
     }
-  }
+  };
 
   // Valider des échantillons
   const handleValidateSamples = async (
@@ -242,82 +270,114 @@ export function SampleOrderValidation({ className }: SampleOrderValidationProps)
     notes?: string
   ) => {
     try {
-      await validateSamples(draftIds, result, notes)
+      await validateSamples(draftIds, result, notes);
 
       toast({
         title: `Échantillons ${result === 'approved' ? 'validés' : 'rejetés'}`,
-        description: `${draftIds.length} échantillon(s) ${result === 'approved' ? 'approuvé(s)' : 'rejeté(s)'}`
-      })
+        description: `${draftIds.length} échantillon(s) ${result === 'approved' ? 'approuvé(s)' : 'rejeté(s)'}`,
+      });
 
-      await loadSampleOrders()
-      setSelectedItems([])
-      setValidationNotes('')
+      await loadSampleOrders();
+      setSelectedItems([]);
+      setValidationNotes('');
     } catch (error) {
-      console.error('Erreur validation échantillons:', error)
+      console.error('Erreur validation échantillons:', error);
       toast({
-        title: "Erreur",
-        description: error instanceof Error ? error.message : "Impossible de valider les échantillons",
-        variant: "destructive"
-      })
+        title: 'Erreur',
+        description:
+          error instanceof Error
+            ? error.message
+            : 'Impossible de valider les échantillons',
+        variant: 'destructive',
+      });
     }
-  }
+  };
 
   // Transférer vers catalogue
   const handleTransferToCatalog = async (draftIds: string[]) => {
     try {
       const transfers = await Promise.allSettled(
         draftIds.map(draftId => transferToProductCatalog(draftId))
-      )
+      );
 
-      const successful = transfers.filter(t => t.status === 'fulfilled').length
-      const failed = transfers.filter(t => t.status === 'rejected').length
+      const successful = transfers.filter(t => t.status === 'fulfilled').length;
+      const failed = transfers.filter(t => t.status === 'rejected').length;
 
       if (successful > 0) {
         toast({
-          title: "Transfert réussi",
-          description: `${successful} produit(s) ajouté(s) au catalogue${failed > 0 ? ` (${failed} échec(s))` : ''}`
-        })
+          title: 'Transfert réussi',
+          description: `${successful} produit(s) ajouté(s) au catalogue${failed > 0 ? ` (${failed} échec(s))` : ''}`,
+        });
       }
 
       if (failed > 0 && successful === 0) {
         toast({
-          title: "Erreur transfert",
-          description: "Impossible de transférer les produits vers le catalogue",
-          variant: "destructive"
-        })
+          title: 'Erreur transfert',
+          description:
+            'Impossible de transférer les produits vers le catalogue',
+          variant: 'destructive',
+        });
       }
 
-      await loadSampleOrders()
-      setSelectedItems([])
+      await loadSampleOrders();
+      setSelectedItems([]);
     } catch (error) {
-      console.error('Erreur transfert catalogue:', error)
+      console.error('Erreur transfert catalogue:', error);
       toast({
-        title: "Erreur",
-        description: error instanceof Error ? error.message : "Erreur lors du transfert",
-        variant: "destructive"
-      })
+        title: 'Erreur',
+        description:
+          error instanceof Error ? error.message : 'Erreur lors du transfert',
+        variant: 'destructive',
+      });
     }
-  }
+  };
 
   // Obtenir le badge de statut
   const getStatusBadge = (status: string) => {
     switch (status) {
       case 'draft':
-        return <Badge variant="outline" className="border-gray-300 text-gray-600">Brouillon</Badge>
+        return (
+          <Badge variant="outline" className="border-gray-300 text-gray-600">
+            Brouillon
+          </Badge>
+        );
       case 'pending_approval':
-        return <Badge variant="outline" className="border-gray-300 text-black">En attente d'approbation</Badge>
+        return (
+          <Badge variant="outline" className="border-gray-300 text-black">
+            En attente d'approbation
+          </Badge>
+        );
       case 'approved':
-        return <Badge variant="outline" className="border-green-300 text-green-600">Approuvée</Badge>
+        return (
+          <Badge variant="outline" className="border-green-300 text-green-600">
+            Approuvée
+          </Badge>
+        );
       case 'ordered':
-        return <Badge variant="outline" className="border-blue-300 text-blue-600">Commandée</Badge>
+        return (
+          <Badge variant="outline" className="border-blue-300 text-blue-600">
+            Commandée
+          </Badge>
+        );
       case 'delivered':
-        return <Badge variant="outline" className="border-purple-300 text-purple-600">Livrée</Badge>
+        return (
+          <Badge
+            variant="outline"
+            className="border-purple-300 text-purple-600"
+          >
+            Livrée
+          </Badge>
+        );
       case 'completed':
-        return <Badge variant="outline" className="border-gray-800 text-gray-800">Terminée</Badge>
+        return (
+          <Badge variant="outline" className="border-gray-800 text-gray-800">
+            Terminée
+          </Badge>
+        );
       default:
-        return <Badge variant="outline">Inconnu</Badge>
+        return <Badge variant="outline">Inconnu</Badge>;
     }
-  }
+  };
 
   // Formater la date
   const formatDate = (dateString: string) => {
@@ -326,21 +386,21 @@ export function SampleOrderValidation({ className }: SampleOrderValidationProps)
       month: '2-digit',
       year: 'numeric',
       hour: '2-digit',
-      minute: '2-digit'
-    })
-  }
+      minute: '2-digit',
+    });
+  };
 
   // Chargement initial
   useEffect(() => {
-    loadSampleOrders()
-  }, [])
+    loadSampleOrders();
+  }, []);
 
   if (loading) {
     return (
       <div className="flex items-center justify-center p-8">
         <Loader2 className="h-8 w-8 animate-spin text-gray-600" />
       </div>
-    )
+    );
   }
 
   return (
@@ -349,8 +409,12 @@ export function SampleOrderValidation({ className }: SampleOrderValidationProps)
       <div className="bg-white border border-gray-200 rounded-lg p-6">
         <div className="flex items-center justify-between mb-4">
           <div>
-            <h2 className="text-2xl font-bold text-black">Validation Échantillons Groupés</h2>
-            <p className="text-gray-600">Gestion des commandes d'échantillons par fournisseur</p>
+            <h2 className="text-2xl font-bold text-black">
+              Validation Échantillons Groupés
+            </h2>
+            <p className="text-gray-600">
+              Gestion des commandes d'échantillons par fournisseur
+            </p>
           </div>
           <ButtonV2
             onClick={() => router.push('/produits/sourcing/validation')}
@@ -365,19 +429,29 @@ export function SampleOrderValidation({ className }: SampleOrderValidationProps)
         {workflowMetrics && (
           <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
             <div className="text-center p-4 bg-gray-50 rounded-lg">
-              <div className="text-2xl font-bold text-black">{workflowMetrics.total_sourcing || 0}</div>
+              <div className="text-2xl font-bold text-black">
+                {workflowMetrics.total_sourcing || 0}
+              </div>
               <div className="text-sm text-gray-600">Total sourcing</div>
             </div>
             <div className="text-center p-4 bg-gray-50 rounded-lg">
-              <div className="text-2xl font-bold text-black">{workflowMetrics.requiring_samples || 0}</div>
-              <div className="text-sm text-gray-600">Nécessitent échantillons</div>
+              <div className="text-2xl font-bold text-black">
+                {workflowMetrics.requiring_samples || 0}
+              </div>
+              <div className="text-sm text-gray-600">
+                Nécessitent échantillons
+              </div>
             </div>
             <div className="text-center p-4 bg-green-50 rounded-lg">
-              <div className="text-2xl font-bold text-green-600">{workflowMetrics.samples_validated || 0}</div>
+              <div className="text-2xl font-bold text-green-600">
+                {workflowMetrics.samples_validated || 0}
+              </div>
               <div className="text-sm text-gray-600">Échantillons validés</div>
             </div>
             <div className="text-center p-4 bg-blue-50 rounded-lg">
-              <div className="text-2xl font-bold text-blue-600">{workflowMetrics.approved_products || 0}</div>
+              <div className="text-2xl font-bold text-blue-600">
+                {workflowMetrics.approved_products || 0}
+              </div>
               <div className="text-sm text-gray-600">Produits approuvés</div>
             </div>
           </div>
@@ -387,26 +461,39 @@ export function SampleOrderValidation({ className }: SampleOrderValidationProps)
       {/* Liste des commandes d'échantillons */}
       <Card className="border-black">
         <CardHeader>
-          <CardTitle className="text-black">Commandes d'Échantillons ({sampleOrders.length})</CardTitle>
-          <CardDescription>Commandes groupées par fournisseur avec statuts de validation</CardDescription>
+          <CardTitle className="text-black">
+            Commandes d'Échantillons ({sampleOrders.length})
+          </CardTitle>
+          <CardDescription>
+            Commandes groupées par fournisseur avec statuts de validation
+          </CardDescription>
         </CardHeader>
         <CardContent>
           <div className="space-y-6">
             {sampleOrders.length === 0 ? (
               <div className="text-center py-8">
                 <Package className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-                <p className="text-gray-600">Aucune commande d'échantillons en cours</p>
-                <p className="text-sm text-gray-500">Les nouvelles commandes apparaîtront ici</p>
+                <p className="text-gray-600">
+                  Aucune commande d'échantillons en cours
+                </p>
+                <p className="text-sm text-gray-500">
+                  Les nouvelles commandes apparaîtront ici
+                </p>
               </div>
             ) : (
-              sampleOrders.map((order) => (
-                <div key={order.id} className="border border-gray-200 rounded-lg p-6 hover:bg-gray-50 transition-colors">
+              sampleOrders.map(order => (
+                <div
+                  key={order.id}
+                  className="border border-gray-200 rounded-lg p-6 hover:bg-gray-50 transition-colors"
+                >
                   {/* En-tête commande */}
                   <div className="flex items-start justify-between mb-4">
                     <div className="flex-1">
                       <div className="flex items-center space-x-3 mb-2">
                         <Building className="h-5 w-5 text-gray-400" />
-                        <h3 className="font-semibold text-black text-lg">{order.supplier.name}</h3>
+                        <h3 className="font-semibold text-black text-lg">
+                          {order.supplier.name}
+                        </h3>
                         {getStatusBadge(order.status)}
                         <Badge variant="outline" className="text-xs">
                           {order.sample_order_items.length} item(s)
@@ -416,13 +503,18 @@ export function SampleOrderValidation({ className }: SampleOrderValidationProps)
                       {order.supplier.contact_email && (
                         <div className="text-sm text-gray-600">
                           📧 {order.supplier.contact_email}
-                          {order.supplier.contact_phone && ` • 📞 ${order.supplier.contact_phone}`}
+                          {order.supplier.contact_phone &&
+                            ` • 📞 ${order.supplier.contact_phone}`}
                         </div>
                       )}
                     </div>
 
                     <div className="flex items-center space-x-2 ml-4">
-                      <ButtonV2 variant="outline" size="sm" className="border-gray-300">
+                      <ButtonV2
+                        variant="outline"
+                        size="sm"
+                        className="border-gray-300"
+                      >
                         <Eye className="h-4 w-4" />
                       </ButtonV2>
                       {order.status === 'pending_approval' && (
@@ -457,42 +549,66 @@ export function SampleOrderValidation({ className }: SampleOrderValidationProps)
                     <div className="flex items-center space-x-2 text-sm">
                       <Euro className="h-4 w-4 text-gray-400" />
                       <span className="text-gray-600">Coût estimé:</span>
-                      <span className="font-medium text-black">{order.estimated_total_cost}€</span>
+                      <span className="font-medium text-black">
+                        {order.estimated_total_cost}€
+                      </span>
                     </div>
                     <div className="flex items-center space-x-2 text-sm">
                       <Calendar className="h-4 w-4 text-gray-400" />
                       <span className="text-gray-600">Délai:</span>
-                      <span className="text-black">{order.expected_delivery_days} jours</span>
+                      <span className="text-black">
+                        {order.expected_delivery_days} jours
+                      </span>
                     </div>
                     <div className="flex items-center space-x-2 text-sm">
                       <Clock className="h-4 w-4 text-gray-400" />
                       <span className="text-gray-600">Créée le:</span>
-                      <span className="text-black">{formatDate(order.created_at)}</span>
+                      <span className="text-black">
+                        {formatDate(order.created_at)}
+                      </span>
                     </div>
                   </div>
 
                   {/* Liste des items */}
                   <div className="space-y-3">
-                    <h4 className="font-medium text-gray-900">Produits ({order.sample_order_items.length})</h4>
-                    {order.sample_order_items.map((item) => (
-                      <div key={item.id} className="flex items-center space-x-4 p-3 bg-gray-50 rounded-lg">
+                    <h4 className="font-medium text-gray-900">
+                      Produits ({order.sample_order_items.length})
+                    </h4>
+                    {order.sample_order_items.map(item => (
+                      <div
+                        key={item.id}
+                        className="flex items-center space-x-4 p-3 bg-gray-50 rounded-lg"
+                      >
                         <div className="flex items-center space-x-2">
                           <input
                             type="checkbox"
-                            checked={selectedItems.includes(item.product_draft_id)}
-                            onChange={(e) => {
+                            checked={selectedItems.includes(
+                              item.product_draft_id
+                            )}
+                            onChange={e => {
                               if (e.target.checked) {
-                                setSelectedItems(prev => [...prev, item.product_draft_id])
+                                setSelectedItems(prev => [
+                                  ...prev,
+                                  item.product_draft_id,
+                                ]);
                               } else {
-                                setSelectedItems(prev => prev.filter(id => id !== item.product_draft_id))
+                                setSelectedItems(prev =>
+                                  prev.filter(
+                                    id => id !== item.product_draft_id
+                                  )
+                                );
                               }
                             }}
                             className="rounded border-gray-300"
                           />
                         </div>
                         <div className="flex-1">
-                          <div className="font-medium text-black">{item.product_drafts.name}</div>
-                          <div className="text-sm text-gray-600">{item.description}</div>
+                          <div className="font-medium text-black">
+                            {item.product_drafts.name}
+                          </div>
+                          <div className="text-sm text-gray-600">
+                            {item.description}
+                          </div>
                         </div>
                         <div className="text-sm text-gray-600">
                           {item.estimated_cost}€ • {item.delivery_time_days}j
@@ -522,25 +638,39 @@ export function SampleOrderValidation({ className }: SampleOrderValidationProps)
                           </DialogTrigger>
                           <DialogContent>
                             <DialogHeader>
-                              <DialogTitle>Rejeter les échantillons</DialogTitle>
+                              <DialogTitle>
+                                Rejeter les échantillons
+                              </DialogTitle>
                               <DialogDescription>
-                                Les échantillons sélectionnés seront marqués comme rejetés
+                                Les échantillons sélectionnés seront marqués
+                                comme rejetés
                               </DialogDescription>
                             </DialogHeader>
                             <div className="space-y-4">
                               <Textarea
                                 placeholder="Raison du rejet..."
                                 value={validationNotes}
-                                onChange={(e) => setValidationNotes(e.target.value)}
+                                onChange={e =>
+                                  setValidationNotes(e.target.value)
+                                }
                                 className="border-black focus:ring-black"
                               />
                             </div>
                             <DialogFooter>
-                              <ButtonV2 variant="outline" onClick={() => setValidationNotes('')}>
+                              <ButtonV2
+                                variant="outline"
+                                onClick={() => setValidationNotes('')}
+                              >
                                 Annuler
                               </ButtonV2>
                               <ButtonV2
-                                onClick={() => handleValidateSamples(selectedItems, 'rejected', validationNotes)}
+                                onClick={() =>
+                                  handleValidateSamples(
+                                    selectedItems,
+                                    'rejected',
+                                    validationNotes
+                                  )
+                                }
                                 className="bg-red-600 hover:bg-red-700 text-white"
                               >
                                 Confirmer Rejet
@@ -561,27 +691,39 @@ export function SampleOrderValidation({ className }: SampleOrderValidationProps)
                           </DialogTrigger>
                           <DialogContent>
                             <DialogHeader>
-                              <DialogTitle>Valider et transférer au catalogue</DialogTitle>
+                              <DialogTitle>
+                                Valider et transférer au catalogue
+                              </DialogTitle>
                               <DialogDescription>
-                                Les échantillons seront validés et les produits ajoutés au catalogue
+                                Les échantillons seront validés et les produits
+                                ajoutés au catalogue
                               </DialogDescription>
                             </DialogHeader>
                             <div className="space-y-4">
                               <Textarea
                                 placeholder="Notes de validation (optionnel)..."
                                 value={validationNotes}
-                                onChange={(e) => setValidationNotes(e.target.value)}
+                                onChange={e =>
+                                  setValidationNotes(e.target.value)
+                                }
                                 className="border-black focus:ring-black"
                               />
                             </div>
                             <DialogFooter>
-                              <ButtonV2 variant="outline" onClick={() => setValidationNotes('')}>
+                              <ButtonV2
+                                variant="outline"
+                                onClick={() => setValidationNotes('')}
+                              >
                                 Annuler
                               </ButtonV2>
                               <ButtonV2
                                 onClick={async () => {
-                                  await handleValidateSamples(selectedItems, 'approved', validationNotes)
-                                  await handleTransferToCatalog(selectedItems)
+                                  await handleValidateSamples(
+                                    selectedItems,
+                                    'approved',
+                                    validationNotes
+                                  );
+                                  await handleTransferToCatalog(selectedItems);
                                 }}
                                 className="bg-green-600 hover:bg-green-700 text-white"
                               >
@@ -602,7 +744,10 @@ export function SampleOrderValidation({ className }: SampleOrderValidationProps)
 
       {/* Dialog d'approbation commande */}
       {selectedOrder && (
-        <Dialog open={!!selectedOrder} onOpenChange={() => setSelectedOrder(null)}>
+        <Dialog
+          open={!!selectedOrder}
+          onOpenChange={() => setSelectedOrder(null)}
+        >
           <DialogContent className="max-w-md">
             <DialogHeader>
               <DialogTitle>Approuver la commande</DialogTitle>
@@ -612,17 +757,25 @@ export function SampleOrderValidation({ className }: SampleOrderValidationProps)
             </DialogHeader>
             <div className="space-y-4">
               <div className="p-4 bg-gray-50 rounded-lg">
-                <div className="text-sm text-gray-600 mb-2">Résumé de la commande:</div>
+                <div className="text-sm text-gray-600 mb-2">
+                  Résumé de la commande:
+                </div>
                 <div className="space-y-1">
-                  <div>• {selectedOrder.sample_order_items.length} produit(s)</div>
-                  <div>• Coût estimé: {selectedOrder.estimated_total_cost}€</div>
-                  <div>• Délai: {selectedOrder.expected_delivery_days} jours</div>
+                  <div>
+                    • {selectedOrder.sample_order_items.length} produit(s)
+                  </div>
+                  <div>
+                    • Coût estimé: {selectedOrder.estimated_total_cost}€
+                  </div>
+                  <div>
+                    • Délai: {selectedOrder.expected_delivery_days} jours
+                  </div>
                 </div>
               </div>
               <Textarea
                 placeholder="Notes d'approbation (optionnel)..."
                 value={validationNotes}
-                onChange={(e) => setValidationNotes(e.target.value)}
+                onChange={e => setValidationNotes(e.target.value)}
                 className="border-black focus:ring-black"
               />
             </div>
@@ -630,14 +783,16 @@ export function SampleOrderValidation({ className }: SampleOrderValidationProps)
               <ButtonV2
                 variant="outline"
                 onClick={() => {
-                  setSelectedOrder(null)
-                  setValidationNotes('')
+                  setSelectedOrder(null);
+                  setValidationNotes('');
                 }}
               >
                 Annuler
               </ButtonV2>
               <ButtonV2
-                onClick={() => handleApproveOrder(selectedOrder.id, validationNotes)}
+                onClick={() =>
+                  handleApproveOrder(selectedOrder.id, validationNotes)
+                }
                 className="bg-green-600 hover:bg-green-700 text-white"
               >
                 Confirmer Approbation
@@ -647,5 +802,5 @@ export function SampleOrderValidation({ className }: SampleOrderValidationProps)
         </Dialog>
       )}
     </div>
-  )
+  );
 }

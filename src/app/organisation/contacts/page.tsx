@@ -5,11 +5,13 @@
  * (contacts fournisseurs, contacts clients B2B)
  */
 
-'use client'
+'use client';
 
-import { Contact } from 'lucide-react'
-import { PageHeader } from '@/components/layout/page-header'
-import { ContactsTab } from '../components/contacts-tab'
+import { Contact } from 'lucide-react';
+
+import { PageHeader } from '@/components/layout/page-header';
+
+import { ContactsTab } from '../components/contacts-tab';
 
 export default function ContactsPage() {
   return (
@@ -24,5 +26,5 @@ export default function ContactsPage() {
         <ContactsTab />
       </div>
     </div>
-  )
+  );
 }

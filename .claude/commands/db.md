@@ -3,6 +3,7 @@
 Shortcuts pour opérations database courantes : queries, migrations, logs, advisors.
 
 ## Usage
+
 ```bash
 /db <operation> [args]
 ```
@@ -10,26 +11,31 @@ Shortcuts pour opérations database courantes : queries, migrations, logs, advis
 ## Operations Disponibles
 
 ### 1. Query Rapide
+
 ```bash
 /db query "SELECT * FROM products LIMIT 10"
 ```
 
 **Exécution:**
+
 - Credentials `.env.local` chargés automatiquement
 - `mcp__supabase__execute_sql` avec query fournie
 - Résultat formaté en table lisible
 
 **Use Cases:**
+
 - Vérifier données rapidement
 - Debug valeurs database
 - Tester queries avant intégration
 
 ### 2. Logs Analysis
+
 ```bash
 /db logs [service] [limit]
 ```
 
 **Services disponibles:**
+
 - `api` - Erreurs API backend (default)
 - `postgres` - Erreurs PostgreSQL
 - `auth` - Erreurs authentification
@@ -37,6 +43,7 @@ Shortcuts pour opérations database courantes : queries, migrations, logs, advis
 - `storage` - Erreurs upload/download fichiers
 
 **Exemples:**
+
 ```bash
 /db logs api 50         # 50 derniers logs API
 /db logs postgres       # Logs PostgreSQL (default 20)
@@ -44,22 +51,26 @@ Shortcuts pour opérations database courantes : queries, migrations, logs, advis
 ```
 
 **Output:**
+
 - Timestamp + Severity + Message
 - Erreurs groupées par type
 - Suggestions fix si patterns connus
 
 ### 3. Migrations Management
+
 ```bash
 /db migrations [action]
 ```
 
 **Actions:**
+
 - `list` - Liste toutes migrations (applied + pending)
 - `status` - Statut migrations (up-to-date ou pending)
 - `latest` - Afficher dernière migration appliquée
 - `plan` - Dry-run prochaine migration
 
 **Exemples:**
+
 ```bash
 /db migrations list     # Toutes migrations
 /db migrations status   # Statut synchronisation
@@ -67,29 +78,34 @@ Shortcuts pour opérations database courantes : queries, migrations, logs, advis
 ```
 
 **Safety Checks:**
+
 - ⚠️ Warning si migrations pending
 - 🚨 Alert si schema drift détecté
 - ✅ Confirmation si up-to-date
 
 ### 4. Security & Performance Advisors
+
 ```bash
 /db advisors [focus]
 ```
 
 **Focus areas:**
+
 - `security` - RLS policies, auth, permissions
 - `performance` - Indexes, queries, optimizations
 - `all` - Complet (default)
 
 **Exécution:**
+
 ```typescript
 mcp__supabase__get_advisors({
   schemas: ['public'],
-  focus: 'security' // ou 'performance' ou undefined
-})
+  focus: 'security', // ou 'performance' ou undefined
+});
 ```
 
 **Output:**
+
 ```
 🔒 SECURITY ADVISORS
   ⚠️ Table 'orders' missing RLS policy
@@ -103,21 +119,25 @@ mcp__supabase__get_advisors({
 ```
 
 ### 5. Schema Inspection
+
 ```bash
 /db schema [table]
 ```
 
 **Sans argument:**
+
 - Liste toutes les tables public schema
 - Nombre de colonnes par table
 - RLS enabled status
 
 **Avec table spécifique:**
+
 ```bash
 /db schema products
 ```
 
 **Output:**
+
 ```
 Table: products
 Columns: 15
@@ -143,21 +163,25 @@ RLS Policies:
 ```
 
 ### 6. Types Generation
+
 ```bash
 /db types
 ```
 
 **Exécution:**
+
 ```typescript
-mcp__supabase__generate_typescript_types()
+mcp__supabase__generate_typescript_types();
 ```
 
 **Actions:**
+
 - Génère types TypeScript depuis schema
 - Sauvegarde dans `src/types/supabase.ts`
 - Update imports si nécessaire
 
 **Output:**
+
 ```typescript
 // src/types/supabase.ts
 export interface Database {
@@ -165,55 +189,61 @@ export interface Database {
     Tables: {
       products: {
         Row: {
-          id: string
-          name: string
-          sku: string | null
+          id: string;
+          name: string;
+          sku: string | null;
           // ...
-        }
+        };
         Insert: {
-          id?: string
-          name: string
+          id?: string;
+          name: string;
           // ...
-        }
+        };
         Update: {
-          name?: string
+          name?: string;
           // ...
-        }
-      }
+        };
+      };
       // ...
-    }
-  }
+    };
+  };
 }
 ```
 
 **Use Cases:**
+
 - Après migration database
 - Quand types désynchronisés
 - Setup initial projet
 
 ### 7. RLS Testing
+
 ```bash
 /db rls-test <table> <role>
 ```
 
 **Roles:**
+
 - `anon` - Utilisateur non-authentifié
 - `authenticated` - Utilisateur authentifié
 - `owner` - Owner role
 - `admin` - Admin role
 
 **Exemples:**
+
 ```bash
 /db rls-test products anon
 ```
 
 **Test Execution:**
+
 - SELECT test avec role
 - INSERT test avec role
 - UPDATE test avec role
 - DELETE test avec role
 
 **Output:**
+
 ```
 RLS Test: products (role: anon)
 
@@ -226,11 +256,13 @@ DELETE: ❌ FAIL (Permission denied)
 ```
 
 ### 8. Quick Stats
+
 ```bash
 /db stats
 ```
 
 **Metrics:**
+
 ```sql
 -- Nombre total par table
 SELECT
@@ -243,6 +275,7 @@ LIMIT 10;
 ```
 
 **Output:**
+
 ```
 📊 Database Quick Stats
 
@@ -267,6 +300,7 @@ Activity (Last 24h):
 ## Auto-Connection Logic
 
 **Priority Order:**
+
 1. Read `DATABASE_URL` from `.env.local` (line 19)
 2. Parse connection string
 3. Try Session Pooler (port 5432) first
@@ -274,6 +308,7 @@ Activity (Last 24h):
 5. Cache credentials for session
 
 **Credentials:**
+
 ```
 Host: aws-1-eu-west-3.pooler.supabase.com
 Port: 5432 (pooler) or 6543 (direct)
@@ -285,6 +320,7 @@ Password: ADFVKDJCJDNC934 (from .env.local)
 ## Error Handling
 
 ### Connection Failed
+
 ```
 ❌ Database connection failed
 → Check .env.local exists
@@ -294,6 +330,7 @@ Password: ADFVKDJCJDNC934 (from .env.local)
 ```
 
 ### Query Error
+
 ```
 ❌ Query failed: syntax error at "FORM"
 → Fix SQL syntax
@@ -302,6 +339,7 @@ Password: ADFVKDJCJDNC934 (from .env.local)
 ```
 
 ### Migration Pending
+
 ```
 ⚠️ 3 migrations pending
 → Review migrations in supabase/migrations/
@@ -312,6 +350,7 @@ Password: ADFVKDJCJDNC934 (from .env.local)
 ## Best Practices
 
 ### ✅ DO
+
 - Use `/db query` pour vérifications rapides
 - Run `/db advisors` après migrations
 - Generate types après schema changes
@@ -319,25 +358,29 @@ Password: ADFVKDJCJDNC934 (from .env.local)
 - Monitor logs régulièrement
 
 ### ❌ DON'T
+
 - Jamais DROP tables en production via /db query
 - Pas de queries destructives sans backup
-- Éviter SELECT * sur large tables sans LIMIT
+- Éviter SELECT \* sur large tables sans LIMIT
 - Ne pas ignorer security advisors
 - Pas de hardcoded credentials
 
 ## Examples
 
 ### Debug Produit Manquant
+
 ```bash
 /db query "SELECT id, name, sku FROM products WHERE sku = 'PROD-123'"
 ```
 
 ### Vérifier RLS Orders
+
 ```bash
 /db rls-test orders authenticated
 ```
 
 ### Check Performance Catalogue
+
 ```bash
 /db advisors performance
 # Résultat: "Add index on products(category_id)"
@@ -348,6 +391,7 @@ Password: ADFVKDJCJDNC934 (from .env.local)
 ```
 
 ### Après Migration
+
 ```bash
 /db migrations status
 # ⚠️ 1 migration pending

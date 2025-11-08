@@ -24,16 +24,18 @@ Définir les règles métier et le workflow technique pour l'annulation sécuris
 ```typescript
 // BLOCAGE COMPLET
 if (payment_status === 'paid') {
-  throw Error('Impossible d\'annuler : commande déjà payée')
+  throw Error("Impossible d'annuler : commande déjà payée");
 }
 ```
 
 **Justification** :
+
 - Protection financière absolue
 - Éviter incohérences comptables
 - Nécessite processus remboursement distinct
 
 **Message utilisateur** :
+
 > "Impossible d'annuler la commande {order_number} : le paiement a déjà été reçu. Veuillez contacter un administrateur pour procéder à un remboursement."
 
 ---
@@ -45,27 +47,31 @@ if (payment_status === 'paid') {
 ```typescript
 // WORKFLOW OBLIGATOIRE: confirmed → draft → cancelled
 if (status === 'confirmed' && newStatus === 'cancelled') {
-  throw Error('Dévalidation obligatoire avant annulation')
+  throw Error('Dévalidation obligatoire avant annulation');
 }
 ```
 
 **Justification** :
+
 - **Best Practice ERP** : Conforme Microsoft Dynamics 365, SAP, NetSuite
 - **Auditabilité maximale** : 2 actions distinctes visibles dans l'historique
 - **Réutilisation code** : Trigger CAS 2 (confirmed → draft) déjà implémenté
 - **Simplicité technique** : Moins de code = moins de bugs
 
 **Workflow requis** :
+
 ```
 confirmed → [Dévalider] → draft → [Annuler] → cancelled
 ```
 
 **Messages utilisateur** :
+
 - UI: Bouton "Annuler" DÉSACTIVÉ si `status = 'confirmed'`
 - Tooltip: "Impossible d'annuler directement une commande validée. Veuillez d'abord la dévalider (retour brouillon), puis l'annuler."
 - Server Action: Erreur code `CANCELLATION_BLOCKED_MUST_DECONFIRM`
 
 **Recherche Best Practices** :
+
 - Microsoft Dynamics 365: "cancellation point should be set earlier in the flow"
 - SAP: 2-step approval workflows standard
 - NetSuite: "reversal actions require multiple steps for accountability"
@@ -79,15 +85,17 @@ confirmed → [Dévalider] → draft → [Annuler] → cancelled
 ```typescript
 // BLOCAGE si livrée
 if (status === 'delivered') {
-  throw Error('Impossible d\'annuler : commande déjà livrée')
+  throw Error("Impossible d'annuler : commande déjà livrée");
 }
 ```
 
 **Justification** :
+
 - Produits déjà chez le client
 - Nécessite processus retour/avoir
 
 **Message utilisateur** :
+
 > "Impossible d'annuler la commande {order_number} : elle a déjà été livrée. Veuillez créer un avoir ou contacter le service client."
 
 ---
@@ -105,12 +113,14 @@ if (old_status === 'confirmed' && new_status === 'draft') {
 ```
 
 **Justification** :
+
 - Stock libéré AVANT annulation (workflow 2-step)
 - Éviter blocage stock fantôme
 - Permettre réallocation immédiate à d'autres commandes
 - Maintenir cohérence stock disponible
 
 **Action automatique** :
+
 - ✅ Mouvement stock IN créé automatiquement par trigger CAS 2
 - ✅ `performed_by` = `confirmed_by` (utilisateur qui dévalide)
 - ✅ `performed_at` = NOW()
@@ -131,6 +141,7 @@ if (old_status === 'draft' && new_status === 'cancelled') {
 ```
 
 **Justification** :
+
 - Commandes draft n'ont jamais réservé de stock
 - Pas d'impact sur stock_forecasted_out
 - Workflow simple 1-step suffisant
@@ -146,6 +157,7 @@ draft → cancelled
 ```
 
 **Étapes** :
+
 1. Utilisateur clique "Annuler" (bouton rouge actif)
 2. Confirmation popup
 3. Server Action valide : ✅ draft → cancelled autorisé
@@ -169,6 +181,7 @@ confirmed → draft → cancelled
 ```
 
 **Étapes DÉVALIDATION** :
+
 1. Utilisateur clique "Dévalider" (bouton orange)
 2. Confirmation popup
 3. Server Action : `updateSalesOrderStatus(orderId, 'draft')`
@@ -189,24 +202,17 @@ confirmed → draft → cancelled
      - `stock_available = stock_real - stock_forecasted_out` augmente
 6. Success toast : "Commande dévalidée - Stock prévisionnel libéré"
 
-**Étapes ANNULATION** :
-7. Utilisateur clique "Annuler" (bouton rouge actif maintenant)
-8. Confirmation popup
-9. Server Action : `updateSalesOrderStatus(orderId, 'cancelled')`
-10. UPDATE `sales_orders` :
-    - `status = 'cancelled'`
-    - `cancelled_at = NOW()`
-    - `cancelled_by = user_id`
-11. Trigger : **Aucune action** (stock déjà libéré à l'étape 5)
-12. Success toast : "Commande annulée"
+**Étapes ANNULATION** : 7. Utilisateur clique "Annuler" (bouton rouge actif maintenant) 8. Confirmation popup 9. Server Action : `updateSalesOrderStatus(orderId, 'cancelled')` 10. UPDATE `sales_orders` : - `status = 'cancelled'` - `cancelled_at = NOW()` - `cancelled_by = user_id` 11. Trigger : **Aucune action** (stock déjà libéré à l'étape 5) 12. Success toast : "Commande annulée"
 
 **Impact stock** : ✅ Libéré lors de la dévalidation (étape 5)
 
 **UI** :
+
 - Commande confirmed : Bouton "Annuler" DÉSACTIVÉ (gris) + Tooltip explicatif
 - Commande draft (après dévalidation) : Bouton "Annuler" ACTIF (rouge)
 
 **Exemple** :
+
 ```sql
 -- AVANT dévalidation
 stock_real = 100
@@ -233,6 +239,7 @@ confirmed → cancelled ❌ BLOCKED
 ```
 
 **Comportement UI** :
+
 1. Commande en statut `confirmed`
 2. Bouton "Annuler" **DÉSACTIVÉ** (gris, opacity 50%)
 3. Cursor `not-allowed` au hover
@@ -240,6 +247,7 @@ confirmed → cancelled ❌ BLOCKED
    > "Impossible d'annuler directement une commande validée. Veuillez d'abord la dévalider (retour brouillon), puis l'annuler."
 
 **Protection Server Action** :
+
 ```typescript
 // src/app/actions/sales-orders.ts:77-84
 if (order.status === 'confirmed') {
@@ -247,13 +255,14 @@ if (order.status === 'confirmed') {
     success: false,
     error: `Impossible d'annuler directement... Workflow requis : Validée → Brouillon → Annulée.`,
     code: 'CANCELLATION_BLOCKED_MUST_DECONFIRM',
-  }
+  };
 }
 ```
 
 **Impact stock** : ❌ Aucun (annulation refusée)
 
 **Rationale** :
+
 - **Best Practice ERP** : Processus reversible tracé étape par étape
 - **Réutilisation code** : Trigger CAS 2 déjà existant
 - **Auditabilité** : 2 actions distinctes dans historique
@@ -267,6 +276,7 @@ if (order.status === 'confirmed') {
 ```
 
 **Étapes** :
+
 1. Commande payée (tout status)
 2. **Bouton "Annuler" désactivé UI** (gris, cursor-not-allowed)
 3. Tooltip :
@@ -287,6 +297,7 @@ delivered → ❌ BLOCKED
 ```
 
 **Étapes** :
+
 1. Commande livrée
 2. **Bouton "Annuler" désactivé UI**
 3. Tooltip :
@@ -302,6 +313,7 @@ delivered → ❌ BLOCKED
 ### **1. Migration Database (2025-10-14)**
 
 **Migration 010** : Ajout colonne `cancelled_by`
+
 ```sql
 -- Fichier: 20251014_010_add_cancelled_by_column.sql
 ALTER TABLE sales_orders ADD COLUMN cancelled_by UUID REFERENCES auth.users(id);
@@ -313,6 +325,7 @@ ALTER TABLE sales_orders ADD CONSTRAINT valid_sales_workflow_timestamps CHECK (
 ```
 
 **Migration 011** : ⚠️ CAS 3 trigger non utilisé (workflow dévalidation obligatoire)
+
 ```sql
 -- Fichier: 20251014_011_add_cancellation_logic_trigger.sql
 -- ℹ️ CAS 3 reste dans le code mais jamais appelé
@@ -334,7 +347,7 @@ if (newStatus === 'cancelled') {
     .from('sales_orders')
     .select('payment_status, order_number, status')
     .eq('id', orderId)
-    .single()
+    .single();
 
   // RÈGLE ABSOLUE #1: Bloquer annulation si déjà payée
   if (order.payment_status === 'paid') {
@@ -342,7 +355,7 @@ if (newStatus === 'cancelled') {
       success: false,
       error: `Impossible d'annuler la commande ${order.order_number} : le paiement a déjà été reçu. Veuillez contacter un administrateur pour procéder à un remboursement.`,
       code: 'CANCELLATION_BLOCKED_PAID_ORDER',
-    }
+    };
   }
 
   // RÈGLE ABSOLUE #2: Bloquer annulation si confirmed (doit dévalider d'abord) ✨ NOUVEAU
@@ -351,7 +364,7 @@ if (newStatus === 'cancelled') {
       success: false,
       error: `Impossible d'annuler directement la commande ${order.order_number} validée. Veuillez d'abord la dévalider (passer en brouillon), puis l'annuler. Workflow requis : Validée → Brouillon → Annulée.`,
       code: 'CANCELLATION_BLOCKED_MUST_DECONFIRM',
-    }
+    };
   }
 
   // Validation complémentaire: Bloquer si status inapproprié
@@ -360,12 +373,13 @@ if (newStatus === 'cancelled') {
       success: false,
       error: `Impossible d'annuler la commande ${order.order_number} : elle a déjà été livrée. Veuillez créer un avoir ou contacter le service client.`,
       code: 'CANCELLATION_BLOCKED_DELIVERED',
-    }
+    };
   }
 }
 ```
 
 **Codes Erreur** :
+
 - `CANCELLATION_BLOCKED_PAID_ORDER` : Paiement déjà reçu
 - `CANCELLATION_BLOCKED_MUST_DECONFIRM` : **Dévalidation obligatoire** ✨ NOUVEAU
 - `CANCELLATION_BLOCKED_DELIVERED` : Commande livrée
@@ -422,6 +436,7 @@ if (newStatus === 'cancelled') {
 ```
 
 **Comportement UI** :
+
 - **Draft** : Bouton rouge ACTIF ✅
 - **Confirmed** : Bouton gris DÉSACTIVÉ + Tooltip dévalidation obligatoire ✨ NOUVEAU
 - **Paid** : Bouton gris DÉSACTIVÉ + Tooltip contact admin
@@ -431,18 +446,19 @@ if (newStatus === 'cancelled') {
 
 ## 📊 MATRICE DÉCISION ANNULATION ✨ MISE À JOUR 2025-10-14
 
-| Status Actuel | Payment Status | Annulation Directe | Workflow Requis | Action Stock | Trigger CAS |
-|---------------|----------------|--------------------|-----------------|--------------|-------------|
-| `draft` | `pending` | ✅ **OUI** | Directe | ❌ Aucune | Aucun |
-| `confirmed` | `pending` | ❌ **BLOQUÉ** | Dévalider → Annuler | ✅ Libéré lors dévalidation | CAS 2 |
-| `confirmed` | `paid` | ❌ **BLOQUÉ** | Impossible | ❌ Refusé | - |
-| `partially_shipped` | `pending` | ❌ **BLOQUÉ** | Dévalider → Annuler | ✅ Libéré lors dévalidation | CAS 2 |
-| `shipped` | `pending` | ❌ **BLOQUÉ** | Dévalider → Annuler | ✅ Libéré lors dévalidation | CAS 2 |
-| `shipped` | `paid` | ❌ **BLOQUÉ** | Impossible | ❌ Refusé | - |
-| `delivered` | `*` | ❌ **BLOQUÉ** | Impossible (créer avoir) | ❌ Refusé | - |
-| `cancelled` | `*` | ❌ Déjà annulée | N/A | ❌ Aucune | - |
+| Status Actuel       | Payment Status | Annulation Directe | Workflow Requis          | Action Stock                | Trigger CAS |
+| ------------------- | -------------- | ------------------ | ------------------------ | --------------------------- | ----------- |
+| `draft`             | `pending`      | ✅ **OUI**         | Directe                  | ❌ Aucune                   | Aucun       |
+| `confirmed`         | `pending`      | ❌ **BLOQUÉ**      | Dévalider → Annuler      | ✅ Libéré lors dévalidation | CAS 2       |
+| `confirmed`         | `paid`         | ❌ **BLOQUÉ**      | Impossible               | ❌ Refusé                   | -           |
+| `partially_shipped` | `pending`      | ❌ **BLOQUÉ**      | Dévalider → Annuler      | ✅ Libéré lors dévalidation | CAS 2       |
+| `shipped`           | `pending`      | ❌ **BLOQUÉ**      | Dévalider → Annuler      | ✅ Libéré lors dévalidation | CAS 2       |
+| `shipped`           | `paid`         | ❌ **BLOQUÉ**      | Impossible               | ❌ Refusé                   | -           |
+| `delivered`         | `*`            | ❌ **BLOQUÉ**      | Impossible (créer avoir) | ❌ Refusé                   | -           |
+| `cancelled`         | `*`            | ❌ Déjà annulée    | N/A                      | ❌ Aucune                   | -           |
 
 **Légende** :
+
 - ✅ **OUI** : Annulation directe autorisée (bouton actif)
 - ❌ **BLOQUÉ** : Annulation directe bloquée (bouton désactivé ou server error)
 - **Workflow Requis** : Étapes à suivre pour annuler
@@ -490,12 +506,14 @@ if (newStatus === 'cancelled') {
 **Préconditions** : Commande en statut `draft`
 
 **Étapes** :
+
 1. Aller sur `/commandes/clients`
 2. Identifier commande draft
 3. Cliquer bouton "Annuler" (rouge)
 4. Confirmer popup
 
 **Résultat attendu** :
+
 - ✅ Commande passe à `status = 'cancelled'`
 - ✅ Toast success affiché
 - ✅ Console errors = 0
@@ -506,17 +524,20 @@ if (newStatus === 'cancelled') {
 ### **Test 2 : Annuler commande confirmed (libération stock)**
 
 **Préconditions** :
+
 - Commande en statut `confirmed`
 - `payment_status = 'pending'`
 - Stock prévisionnel réservé (mouvement OUT existe)
 
 **Étapes** :
+
 1. Noter `stock_forecasted_out` AVANT annulation
 2. Cliquer bouton "Annuler"
 3. Confirmer popup
 4. Vérifier `stock_forecasted_out` APRÈS
 
 **Résultat attendu** :
+
 - ✅ Commande passe à `status = 'cancelled'`
 - ✅ `cancelled_by` = user_id actuel
 - ✅ `cancelled_at` = timestamp annulation
@@ -530,6 +551,7 @@ if (newStatus === 'cancelled') {
 - ✅ Console errors = 0
 
 **Exemple vérification SQL** :
+
 ```sql
 -- Vérifier mouvement créé
 SELECT * FROM stock_movements
@@ -552,15 +574,18 @@ WHERE id = 'product_id_ici';
 ### **Test 3 : Bloquer annulation commande payée**
 
 **Préconditions** :
+
 - Commande en statut `confirmed` ou `shipped`
 - `payment_status = 'paid'`
 
 **Étapes** :
+
 1. Aller sur `/commandes/clients`
 2. Identifier commande payée
 3. Observer bouton "Annuler"
 
 **Résultat attendu** :
+
 - ✅ Bouton "Annuler" **désactivé** (gris, opacity 50%)
 - ✅ Cursor `not-allowed` au hover
 - ✅ Tooltip : "Impossible d'annuler : commande déjà payée"
@@ -568,9 +593,10 @@ WHERE id = 'product_id_ici';
 - ✅ Console errors = 0
 
 **Vérification Server Action (si bypass UI)** :
+
 ```typescript
 // Simuler requête directe Server Action
-const result = await updateSalesOrderStatus(orderId, 'cancelled')
+const result = await updateSalesOrderStatus(orderId, 'cancelled');
 // Résultat attendu:
 // { success: false, error: "Impossible d'annuler... paiement déjà reçu" }
 ```
@@ -582,10 +608,12 @@ const result = await updateSalesOrderStatus(orderId, 'cancelled')
 **Préconditions** : Commande en statut `delivered`
 
 **Étapes** :
+
 1. Identifier commande livrée
 2. Observer bouton "Annuler"
 
 **Résultat attendu** :
+
 - ✅ Bouton "Annuler" **désactivé**
 - ✅ Tooltip : "Impossible d'annuler : commande déjà livrée"
 - ✅ Console errors = 0
@@ -599,6 +627,7 @@ const result = await updateSalesOrderStatus(orderId, 'cancelled')
 **Cas** : `status = 'partially_shipped'`
 
 **Comportement** :
+
 - ✅ Annulation autorisée SI `payment_status != 'paid'`
 - ✅ Libère UNIQUEMENT stock prévisionnel restant (non expédié)
 - ⚠️ Ne crée PAS de mouvement pour items déjà expédiés
@@ -617,11 +646,11 @@ await supabase
   .from('stock_reservations')
   .update({
     released_at: new Date().toISOString(),
-    released_by: userId
+    released_by: userId,
   })
   .eq('reference_type', 'sales_order')
   .eq('reference_id', orderId)
-  .is('released_at', null)
+  .is('released_at', null);
 ```
 
 ---
@@ -646,11 +675,13 @@ EXECUTE FUNCTION notify_order_cancelled();
 ### **Problème 1 : Bouton Annuler ne fonctionne pas**
 
 **Diagnostic** :
+
 1. Vérifier console browser (F12) : Erreurs JS ?
 2. Vérifier Network tab : Requête POST `/api/...` échoue ?
 3. Vérifier Server Action logs : Erreur backend ?
 
 **Solutions** :
+
 - Si erreur "cancelled_by not found" → Vérifier migration 010 appliquée
 - Si erreur RLS 403 → Vérifier JWT utilisateur valide
 - Si pas de réponse → Vérifier serveur Next.js running
@@ -660,6 +691,7 @@ EXECUTE FUNCTION notify_order_cancelled();
 ### **Problème 2 : Stock prévisionnel pas libéré**
 
 **Diagnostic** :
+
 ```sql
 -- Vérifier trigger existe
 SELECT * FROM pg_trigger WHERE tgname = 'trigger_sales_order_stock';
@@ -676,6 +708,7 @@ AND reason_code = 'cancelled';
 ```
 
 **Solutions** :
+
 - Si trigger manquant → Appliquer migration 011
 - Si fonction ancienne → Re-run migration 011
 - Si mouvement pas créé → Vérifier logs PostgreSQL
@@ -685,13 +718,15 @@ AND reason_code = 'cancelled';
 ### **Problème 3 : Annulation commande payée acceptée (CRITIQUE)**
 
 **Diagnostic** :
+
 ```typescript
 // Vérifier Server Action contient validation
-const code = await readFile('src/app/actions/sales-orders.ts')
+const code = await readFile('src/app/actions/sales-orders.ts');
 // Chercher: if (order.payment_status === 'paid')
 ```
 
 **Solutions** :
+
 - Si validation absente → Réappliquer code Server Action
 - Si bypass UI possible → Vérifier protection backend
 - **URGENT** : Rollback commande si annulée à tort
@@ -702,13 +737,13 @@ const code = await readFile('src/app/actions/sales-orders.ts')
 
 ### **Fichiers Modifiés**
 
-| Fichier | Changement | Lignes |
-|---------|------------|--------|
-| `supabase/migrations/20251014_010_add_cancelled_by_column.sql` | Ajout colonne + constraint | 1-180 |
-| `supabase/migrations/20251014_011_add_cancellation_logic_trigger.sql` | Logique annulation trigger CAS 3 | 1-280 |
-| `src/app/actions/sales-orders.ts` | Validation payment_status | 51-85 |
-| `src/app/commandes/clients/page.tsx` | UI bouton désactivé si payé | 654-682 |
-| `manifests/business-rules/sales-order-cancellation-workflow.md` | Documentation (ce fichier) | - |
+| Fichier                                                               | Changement                       | Lignes  |
+| --------------------------------------------------------------------- | -------------------------------- | ------- |
+| `supabase/migrations/20251014_010_add_cancelled_by_column.sql`        | Ajout colonne + constraint       | 1-180   |
+| `supabase/migrations/20251014_011_add_cancellation_logic_trigger.sql` | Logique annulation trigger CAS 3 | 1-280   |
+| `src/app/actions/sales-orders.ts`                                     | Validation payment_status        | 51-85   |
+| `src/app/commandes/clients/page.tsx`                                  | UI bouton désactivé si payé      | 654-682 |
+| `manifests/business-rules/sales-order-cancellation-workflow.md`       | Documentation (ce fichier)       | -       |
 
 ### **Migrations Liées**
 
@@ -733,16 +768,19 @@ const code = await readFile('src/app/actions/sales-orders.ts')
 ### **2025-10-14 - Version 2.0.0 (Workflow Dévalidation Obligatoire)** ✅ ACTIF
 
 **Décision Workflow** :
+
 - ✅ **CHOISI** : Option A - Dévalidation obligatoire (confirmed → draft → cancelled)
 - ❌ **REJETÉ** : Option B - Annulation directe (confirmed → cancelled)
 
 **Rationale** :
+
 - Conforme best practices ERP (Microsoft Dynamics 365, SAP, NetSuite)
 - Réutilise trigger CAS 2 existant (moins de code = moins de bugs)
 - Auditabilité maximale (2 actions distinctes visibles)
 - Recherche best practices confirmée via WebSearch
 
 **Ajouté** :
+
 - **RÈGLE ABSOLUE #2** : Dévalidation obligatoire avant annulation
 - Blocage annulation directe si `status = 'confirmed'`
 - Code erreur : `CANCELLATION_BLOCKED_MUST_DECONFIRM`
@@ -752,17 +790,20 @@ const code = await readFile('src/app/actions/sales-orders.ts')
 - Tests MCP Browser complets (4 scénarios validés)
 
 **Modifié** :
+
 - `src/app/actions/sales-orders.ts` : Validation server-side (lignes 51-94)
 - `src/app/commandes/clients/page.tsx` : Conditional rendering UI (lignes 654-694)
 - Documentation workflow complète
 
 **Tests Validés** :
+
 - ✅ Test 1: Draft → Cancelled (bouton actif, 0 console errors)
 - ✅ Test 2: Confirmed (bouton désactivé, tooltip correct)
 - ✅ Test 3: Server Action bloque confirmed → cancelled
 - ✅ Test 4: Screenshot preuve visuelle (.playwright-mcp/)
 
 **Impact** :
+
 - Protection financière renforcée (règle payée inchangée)
 - Workflow conforme best practices ERP
 - UX claire (bouton disabled + tooltip explicatif)
@@ -778,6 +819,7 @@ const code = await readFile('src/app/actions/sales-orders.ts')
 **Status** : ⚠️ REMPLACÉ par Version 2.0.0
 
 **Ajouté** :
+
 - Règle absolue blocage annulation si payée
 - Règle blocage annulation si livrée
 - Colonne `cancelled_by` pour traçabilité
@@ -795,4 +837,4 @@ const code = await readFile('src/app/actions/sales-orders.ts')
 
 ---
 
-*Vérone Back Office 2025 - Professional ERP Excellence*
+_Vérone Back Office 2025 - Professional ERP Excellence_

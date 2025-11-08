@@ -1,15 +1,7 @@
-"use client"
+'use client';
 
-import { useState, useRef } from "react"
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
-import { ButtonV2 } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
-import { Textarea } from "@/components/ui/textarea"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { Badge } from "@/components/ui/badge"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
+import { useState, useRef } from 'react';
+
 import {
   AlertTriangle,
   Bug,
@@ -25,48 +17,76 @@ import {
   X,
   Zap,
   Info,
-  CheckCircle
-} from "lucide-react"
-import { cn } from "@/lib/utils"
+  CheckCircle,
+} from 'lucide-react';
 
-export type ErrorType = 'console_error' | 'ui_bug' | 'performance' | 'functionality' | 'accessibility' | 'design'
-export type ErrorSeverity = 'low' | 'medium' | 'high' | 'critical'
-export type ReportStatus = 'open' | 'in_progress' | 'resolved' | 'closed'
+import { Badge } from '@/components/ui/badge';
+import { ButtonV2 } from '@/components/ui/button';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from '@/components/ui/dialog';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Textarea } from '@/components/ui/textarea';
+import { cn } from '@verone/utils';
+
+export type ErrorType =
+  | 'console_error'
+  | 'ui_bug'
+  | 'performance'
+  | 'functionality'
+  | 'accessibility'
+  | 'design';
+export type ErrorSeverity = 'low' | 'medium' | 'high' | 'critical';
+export type ReportStatus = 'open' | 'in_progress' | 'resolved' | 'closed';
 
 interface ErrorReport {
-  id?: string
-  testId: string
-  title: string
-  description: string
-  errorType: ErrorType
-  severity: ErrorSeverity
-  status: ReportStatus
-  screenshots: File[]
-  codeSnippet?: string
-  browserInfo?: BrowserInfo
-  steps?: string[]
-  expectedBehavior?: string
-  actualBehavior?: string
-  assignedTo?: string
-  createdAt: Date
-  updatedAt?: Date
+  id?: string;
+  testId: string;
+  title: string;
+  description: string;
+  errorType: ErrorType;
+  severity: ErrorSeverity;
+  status: ReportStatus;
+  screenshots: File[];
+  codeSnippet?: string;
+  browserInfo?: BrowserInfo;
+  steps?: string[];
+  expectedBehavior?: string;
+  actualBehavior?: string;
+  assignedTo?: string;
+  createdAt: Date;
+  updatedAt?: Date;
 }
 
 interface BrowserInfo {
-  userAgent: string
-  url: string
-  viewport: string
-  timestamp: string
+  userAgent: string;
+  url: string;
+  viewport: string;
+  timestamp: string;
 }
 
 interface ErrorReportModalProps {
-  testId: string
-  testTitle: string
-  isOpen: boolean
-  onClose: () => void
-  onSubmit: (report: ErrorReport) => Promise<void>
-  existingReport?: ErrorReport
-  children?: React.ReactNode
+  testId: string;
+  testTitle: string;
+  isOpen: boolean;
+  onClose: () => void;
+  onSubmit: (report: ErrorReport) => Promise<void>;
+  existingReport?: ErrorReport;
+  children?: React.ReactNode;
 }
 
 // Configuration des types d'erreurs
@@ -75,63 +95,63 @@ const ERROR_TYPE_CONFIG = {
     label: 'Erreur Console',
     icon: Code,
     description: 'Erreurs JavaScript dans la console',
-    color: 'text-red-600'
+    color: 'text-red-600',
   },
   ui_bug: {
     label: 'Bug Interface',
     icon: Monitor,
-    description: 'Problème d\'affichage ou d\'interaction',
-    color: 'text-black'
+    description: "Problème d'affichage ou d'interaction",
+    color: 'text-black',
   },
   performance: {
     label: 'Performance',
     icon: Zap,
     description: 'Lenteur ou problème de performance',
-    color: 'text-gray-700'
+    color: 'text-gray-700',
   },
   functionality: {
     label: 'Fonctionnalité',
     icon: Bug,
     description: 'Fonctionnalité qui ne marche pas',
-    color: 'text-blue-600'
+    color: 'text-blue-600',
   },
   accessibility: {
     label: 'Accessibilité',
     icon: User,
-    description: 'Problème d\'accessibilité (A11y)',
-    color: 'text-purple-600'
+    description: "Problème d'accessibilité (A11y)",
+    color: 'text-purple-600',
   },
   design: {
     label: 'Design System',
     icon: FileText,
     description: 'Non-respect du Design System Vérone',
-    color: 'text-pink-600'
-  }
-} as const
+    color: 'text-pink-600',
+  },
+} as const;
 
 // Configuration de sévérité
 const SEVERITY_CONFIG = {
   low: {
     label: 'Faible',
     color: 'bg-gray-200 text-gray-800',
-    description: 'Problème mineur, peut attendre'
+    description: 'Problème mineur, peut attendre',
   },
   medium: {
     label: 'Moyenne',
     color: 'bg-gray-400 text-white',
-    description: 'Problème notable, à corriger'
+    description: 'Problème notable, à corriger',
   },
   high: {
     label: 'Élevée',
     color: 'bg-gray-600 text-white',
-    description: 'Problème important, prioritaire'
+    description: 'Problème important, prioritaire',
   },
   critical: {
     label: 'Critique',
     color: 'bg-red-600 text-white', // ✅ Rouge au lieu de noir pour critique
-    description: 'Problème bloquant, urgent'
-  }
-} as const
+    description: 'Problème bloquant, urgent',
+  },
+} as const;
 
 // Hook pour la détection automatique du navigateur
 const useBrowserInfo = (): BrowserInfo => {
@@ -139,9 +159,9 @@ const useBrowserInfo = (): BrowserInfo => {
     userAgent: navigator.userAgent,
     url: window.location.href,
     viewport: `${window.innerWidth}x${window.innerHeight}`,
-    timestamp: new Date().toISOString()
-  }
-}
+    timestamp: new Date().toISOString(),
+  };
+};
 
 export function ErrorReportModal({
   testId,
@@ -150,12 +170,12 @@ export function ErrorReportModal({
   onClose,
   onSubmit,
   existingReport,
-  children
+  children,
 }: ErrorReportModalProps) {
-  const [isSubmitting, setIsSubmitting] = useState(false)
-  const [currentTab, setCurrentTab] = useState('details')
-  const fileInputRef = useRef<HTMLInputElement>(null)
-  const browserInfo = useBrowserInfo()
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [currentTab, setCurrentTab] = useState('details');
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const browserInfo = useBrowserInfo();
 
   // État du formulaire
   const [formData, setFormData] = useState<Partial<ErrorReport>>({
@@ -171,77 +191,77 @@ export function ErrorReportModal({
     expectedBehavior: existingReport?.expectedBehavior || '',
     actualBehavior: existingReport?.actualBehavior || '',
     browserInfo,
-    createdAt: existingReport?.createdAt || new Date()
-  })
+    createdAt: existingReport?.createdAt || new Date(),
+  });
 
   // Gestion de l'upload de screenshots
   const handleFileUpload = (files: FileList | null) => {
-    if (!files) return
+    if (!files) return;
 
     const newFiles = Array.from(files).filter(file => {
-      const isImage = file.type.startsWith('image/')
-      const isValidSize = file.size <= 10 * 1024 * 1024 // 10MB max
-      return isImage && isValidSize
-    })
+      const isImage = file.type.startsWith('image/');
+      const isValidSize = file.size <= 10 * 1024 * 1024; // 10MB max
+      return isImage && isValidSize;
+    });
 
     setFormData(prev => ({
       ...prev,
-      screenshots: [...(prev.screenshots || []), ...newFiles]
-    }))
-  }
+      screenshots: [...(prev.screenshots || []), ...newFiles],
+    }));
+  };
 
   // Supprimer un screenshot
   const removeScreenshot = (index: number) => {
     setFormData(prev => ({
       ...prev,
-      screenshots: prev.screenshots?.filter((_, i) => i !== index) || []
-    }))
-  }
+      screenshots: prev.screenshots?.filter((_, i) => i !== index) || [],
+    }));
+  };
 
   // Ajouter une étape de reproduction
   const addStep = () => {
     setFormData(prev => ({
       ...prev,
-      steps: [...(prev.steps || []), '']
-    }))
-  }
+      steps: [...(prev.steps || []), ''],
+    }));
+  };
 
   const updateStep = (index: number, value: string) => {
     setFormData(prev => ({
       ...prev,
-      steps: prev.steps?.map((step, i) => i === index ? value : step) || []
-    }))
-  }
+      steps: prev.steps?.map((step, i) => (i === index ? value : step)) || [],
+    }));
+  };
 
   const removeStep = (index: number) => {
     setFormData(prev => ({
       ...prev,
-      steps: prev.steps?.filter((_, i) => i !== index) || []
-    }))
-  }
+      steps: prev.steps?.filter((_, i) => i !== index) || [],
+    }));
+  };
 
   // Soumission du formulaire
   const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault()
-    if (!formData.title || !formData.description) return
+    e.preventDefault();
+    if (!formData.title || !formData.description) return;
 
-    setIsSubmitting(true)
+    setIsSubmitting(true);
 
     try {
       const report: ErrorReport = {
         ...formData,
         id: existingReport?.id || `error_${Date.now()}`,
-        updatedAt: new Date()
-      } as ErrorReport
+        updatedAt: new Date(),
+      } as ErrorReport;
 
-      await onSubmit(report)
-      onClose()
+      await onSubmit(report);
+      onClose();
     } catch (error) {
-      console.error('Error submitting report:', error)
+      console.error('Error submitting report:', error);
     } finally {
-      setIsSubmitting(false)
+      setIsSubmitting(false);
     }
-  }
+  };
 
   // Capture automatique de screenshot
   const captureScreenshot = async () => {
@@ -249,48 +269,44 @@ export function ErrorReportModal({
       // Utilisation de l'API Screen Capture si disponible
       if ('getDisplayMedia' in navigator.mediaDevices) {
         const stream = await navigator.mediaDevices.getDisplayMedia({
-          video: true
-        })
+          video: true,
+        });
 
-        const video = document.createElement('video')
-        video.srcObject = stream
-        video.play()
+        const video = document.createElement('video');
+        video.srcObject = stream;
+        video.play();
 
         video.addEventListener('loadedmetadata', () => {
-          const canvas = document.createElement('canvas')
-          canvas.width = video.videoWidth
-          canvas.height = video.videoHeight
+          const canvas = document.createElement('canvas');
+          canvas.width = video.videoWidth;
+          canvas.height = video.videoHeight;
 
-          const ctx = canvas.getContext('2d')
-          ctx?.drawImage(video, 0, 0)
+          const ctx = canvas.getContext('2d');
+          ctx?.drawImage(video, 0, 0);
 
-          canvas.toBlob((blob) => {
+          canvas.toBlob(blob => {
             if (blob) {
               const file = new File([blob], `screenshot-${Date.now()}.png`, {
-                type: 'image/png'
-              })
+                type: 'image/png',
+              });
               setFormData(prev => ({
                 ...prev,
-                screenshots: [...(prev.screenshots || []), file]
-              }))
+                screenshots: [...(prev.screenshots || []), file],
+              }));
             }
-          })
+          });
 
-          stream.getTracks().forEach(track => track.stop())
-        })
+          stream.getTracks().forEach(track => track.stop());
+        });
       }
     } catch (error) {
-      console.log('Screenshot capture not available:', error)
+      console.log('Screenshot capture not available:', error);
     }
-  }
+  };
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      {children && (
-        <DialogTrigger asChild>
-          {children}
-        </DialogTrigger>
-      )}
+      {children && <DialogTrigger asChild>{children}</DialogTrigger>}
 
       <DialogContent className="max-w-4xl max-h-[90vh] overflow-hidden">
         <DialogHeader>
@@ -301,7 +317,11 @@ export function ErrorReportModal({
         </DialogHeader>
 
         <form onSubmit={handleSubmit} className="h-full">
-          <Tabs value={currentTab} onValueChange={setCurrentTab} className="h-full">
+          <Tabs
+            value={currentTab}
+            onValueChange={setCurrentTab}
+            className="h-full"
+          >
             <TabsList className="grid w-full grid-cols-4">
               <TabsTrigger value="details">Détails</TabsTrigger>
               <TabsTrigger value="media">Captures</TabsTrigger>
@@ -317,7 +337,9 @@ export function ErrorReportModal({
                   <Input
                     id="title"
                     value={formData.title}
-                    onChange={(e) => setFormData(prev => ({ ...prev, title: e.target.value }))}
+                    onChange={e =>
+                      setFormData(prev => ({ ...prev, title: e.target.value }))
+                    }
                     placeholder="Ex: Bouton 'Valider' ne répond pas"
                     required
                   />
@@ -335,20 +357,26 @@ export function ErrorReportModal({
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
-                      {Object.entries(ERROR_TYPE_CONFIG).map(([key, config]) => {
-                        const Icon = config.icon
-                        return (
-                          <SelectItem key={key} value={key}>
-                            <div className="flex items-center gap-2">
-                              <Icon className="h-4 w-4" />
-                              <div>
-                                <div className="font-medium">{config.label}</div>
-                                <div className="text-xs text-gray-600">{config.description}</div>
+                      {Object.entries(ERROR_TYPE_CONFIG).map(
+                        ([key, config]) => {
+                          const Icon = config.icon;
+                          return (
+                            <SelectItem key={key} value={key}>
+                              <div className="flex items-center gap-2">
+                                <Icon className="h-4 w-4" />
+                                <div>
+                                  <div className="font-medium">
+                                    {config.label}
+                                  </div>
+                                  <div className="text-xs text-gray-600">
+                                    {config.description}
+                                  </div>
+                                </div>
                               </div>
-                            </div>
-                          </SelectItem>
-                        )
-                      })}
+                            </SelectItem>
+                          );
+                        }
+                      )}
                     </SelectContent>
                   </Select>
                 </div>
@@ -370,10 +398,12 @@ export function ErrorReportModal({
                       {Object.entries(SEVERITY_CONFIG).map(([key, config]) => (
                         <SelectItem key={key} value={key}>
                           <div className="flex items-center gap-2">
-                            <Badge className={cn("text-xs", config.color)}>
+                            <Badge className={cn('text-xs', config.color)}>
                               {config.label}
                             </Badge>
-                            <span className="text-sm">{config.description}</span>
+                            <span className="text-sm">
+                              {config.description}
+                            </span>
                           </div>
                         </SelectItem>
                       ))}
@@ -427,7 +457,12 @@ export function ErrorReportModal({
                 <Textarea
                   id="description"
                   value={formData.description}
-                  onChange={(e) => setFormData(prev => ({ ...prev, description: e.target.value }))}
+                  onChange={e =>
+                    setFormData(prev => ({
+                      ...prev,
+                      description: e.target.value,
+                    }))
+                  }
                   placeholder="Décrivez le problème en détail..."
                   className="min-h-[100px]"
                   required
@@ -440,7 +475,12 @@ export function ErrorReportModal({
                   <Textarea
                     id="expected"
                     value={formData.expectedBehavior}
-                    onChange={(e) => setFormData(prev => ({ ...prev, expectedBehavior: e.target.value }))}
+                    onChange={e =>
+                      setFormData(prev => ({
+                        ...prev,
+                        expectedBehavior: e.target.value,
+                      }))
+                    }
                     placeholder="Ce qui devrait se passer..."
                     className="min-h-[80px]"
                   />
@@ -451,7 +491,12 @@ export function ErrorReportModal({
                   <Textarea
                     id="actual"
                     value={formData.actualBehavior}
-                    onChange={(e) => setFormData(prev => ({ ...prev, actualBehavior: e.target.value }))}
+                    onChange={e =>
+                      setFormData(prev => ({
+                        ...prev,
+                        actualBehavior: e.target.value,
+                      }))
+                    }
                     placeholder="Ce qui se passe réellement..."
                     className="min-h-[80px]"
                   />
@@ -492,17 +537,17 @@ export function ErrorReportModal({
                   accept="image/*"
                   multiple
                   className="hidden"
-                  onChange={(e) => handleFileUpload(e.target.files)}
+                  onChange={e => handleFileUpload(e.target.files)}
                 />
 
                 {/* Zone de drag & drop */}
                 <div
                   className="border-2 border-dashed border-gray-300 rounded-lg p-8 text-center hover:border-gray-400 transition-colors"
-                  onDrop={(e) => {
-                    e.preventDefault()
-                    handleFileUpload(e.dataTransfer.files)
+                  onDrop={e => {
+                    e.preventDefault();
+                    handleFileUpload(e.dataTransfer.files);
                   }}
-                  onDragOver={(e) => e.preventDefault()}
+                  onDragOver={e => e.preventDefault()}
                 >
                   <Image className="h-12 w-12 mx-auto text-gray-400 mb-4" />
                   <p className="text-gray-600">
@@ -552,7 +597,12 @@ export function ErrorReportModal({
                   <Textarea
                     id="codeSnippet"
                     value={formData.codeSnippet}
-                    onChange={(e) => setFormData(prev => ({ ...prev, codeSnippet: e.target.value }))}
+                    onChange={e =>
+                      setFormData(prev => ({
+                        ...prev,
+                        codeSnippet: e.target.value,
+                      }))
+                    }
                     placeholder="Coller le code d'erreur de la console JavaScript..."
                     className="font-mono text-sm min-h-[120px]"
                   />
@@ -567,7 +617,9 @@ export function ErrorReportModal({
                   </CardHeader>
                   <CardContent className="space-y-2">
                     <div>
-                      <Label className="text-xs text-gray-600">User Agent</Label>
+                      <Label className="text-xs text-gray-600">
+                        User Agent
+                      </Label>
                       <p className="text-sm font-mono bg-gray-100 p-2 rounded">
                         {browserInfo.userAgent}
                       </p>
@@ -580,15 +632,21 @@ export function ErrorReportModal({
                     </div>
                     <div className="grid grid-cols-2 gap-2">
                       <div>
-                        <Label className="text-xs text-gray-600">Résolution</Label>
+                        <Label className="text-xs text-gray-600">
+                          Résolution
+                        </Label>
                         <p className="text-sm font-mono bg-gray-100 p-2 rounded">
                           {browserInfo.viewport}
                         </p>
                       </div>
                       <div>
-                        <Label className="text-xs text-gray-600">Timestamp</Label>
+                        <Label className="text-xs text-gray-600">
+                          Timestamp
+                        </Label>
                         <p className="text-sm font-mono bg-gray-100 p-2 rounded">
-                          {new Date(browserInfo.timestamp).toLocaleString('fr-FR')}
+                          {new Date(browserInfo.timestamp).toLocaleString(
+                            'fr-FR'
+                          )}
                         </p>
                       </div>
                     </div>
@@ -622,7 +680,7 @@ export function ErrorReportModal({
                         <div className="flex-1">
                           <Textarea
                             value={step}
-                            onChange={(e) => updateStep(index, e.target.value)}
+                            onChange={e => updateStep(index, e.target.value)}
                             placeholder={`Étape ${index + 1}: Décrire l'action...`}
                             className="min-h-[60px]"
                           />
@@ -642,7 +700,9 @@ export function ErrorReportModal({
                   <div className="text-center py-8 text-gray-500">
                     <FileText className="h-12 w-12 mx-auto mb-4 text-gray-400" />
                     <p>Aucune étape de reproduction ajoutée</p>
-                    <p className="text-sm">Cliquez sur "Ajouter étape" pour commencer</p>
+                    <p className="text-sm">
+                      Cliquez sur "Ajouter étape" pour commencer
+                    </p>
                   </div>
                 )}
               </div>
@@ -668,7 +728,9 @@ export function ErrorReportModal({
 
               <ButtonV2
                 type="submit"
-                disabled={isSubmitting || !formData.title || !formData.description}
+                disabled={
+                  isSubmitting || !formData.title || !formData.description
+                }
                 className="bg-black text-white hover:bg-gray-800"
               >
                 {isSubmitting ? (
@@ -688,17 +750,17 @@ export function ErrorReportModal({
         </form>
       </DialogContent>
     </Dialog>
-  )
+  );
 }
 
 // Bouton rapide pour ouvrir le modal
 interface QuickErrorReportProps {
-  testId: string
-  testTitle: string
-  onSubmit: (report: ErrorReport) => Promise<void>
-  variant?: 'button' | 'icon'
-  size?: 'sm' | 'md' | 'lg'
-  className?: string
+  testId: string;
+  testTitle: string;
+  onSubmit: (report: ErrorReport) => Promise<void>;
+  variant?: 'button' | 'icon';
+  size?: 'sm' | 'md' | 'lg';
+  className?: string;
 }
 
 export function QuickErrorReport({
@@ -707,29 +769,30 @@ export function QuickErrorReport({
   onSubmit,
   variant = 'button',
   size = 'sm',
-  className
+  className,
 }: QuickErrorReportProps) {
-  const [isOpen, setIsOpen] = useState(false)
+  const [isOpen, setIsOpen] = useState(false);
 
-  const trigger = variant === 'icon' ? (
-    <ButtonV2
-      variant="ghost"
-      size="sm"
-      className={cn("h-8 w-8 p-0", className)}
-      title="Signaler une erreur"
-    >
-      <AlertTriangle className="h-4 w-4 text-black" />
-    </ButtonV2>
-  ) : (
-    <ButtonV2
-      variant="outline"
-      size={size}
-      className={cn("text-black border-gray-300 hover:bg-gray-50", className)}
-    >
-      <AlertTriangle className="mr-2 h-4 w-4" />
-      Signaler erreur
-    </ButtonV2>
-  )
+  const trigger =
+    variant === 'icon' ? (
+      <ButtonV2
+        variant="ghost"
+        size="sm"
+        className={cn('h-8 w-8 p-0', className)}
+        title="Signaler une erreur"
+      >
+        <AlertTriangle className="h-4 w-4 text-black" />
+      </ButtonV2>
+    ) : (
+      <ButtonV2
+        variant="outline"
+        size={size}
+        className={cn('text-black border-gray-300 hover:bg-gray-50', className)}
+      >
+        <AlertTriangle className="mr-2 h-4 w-4" />
+        Signaler erreur
+      </ButtonV2>
+    );
 
   return (
     <ErrorReportModal
@@ -741,5 +804,5 @@ export function QuickErrorReport({
     >
       {trigger}
     </ErrorReportModal>
-  )
+  );
 }

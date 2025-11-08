@@ -1,31 +1,34 @@
-"use client"
+'use client';
 
-import { useState, useEffect, useRef } from 'react'
-import Image from 'next/image'
-import { Edit, Upload, Trash2, RotateCw, Eye, Camera } from 'lucide-react'
-import { ButtonV2 } from '@/components/ui/button'
-import { Badge } from '@/components/ui/badge'
-import { cn } from '@/lib/utils'
-import { useConsultationImages } from '@/shared/modules/common/hooks'
-import { ConsultationImageViewerModal } from './consultation-image-viewer-modal'
-import { ConsultationPhotosModal } from './consultation-photos-modal'
+import { useState, useEffect, useRef } from 'react';
+
+import Image from 'next/image';
+
+import { Edit, Upload, Trash2, RotateCw, Eye, Camera } from 'lucide-react';
+
+import { Badge } from '@/components/ui/badge';
+import { ButtonV2 } from '@/components/ui/button';
+import { cn } from '@verone/utils';
+import { useConsultationImages } from '@/shared/modules/common/hooks';
+import { ConsultationImageViewerModal } from '@/shared/modules/consultations/components/images/ConsultationImageViewerModal';
+import { ConsultationPhotosModal } from '@/shared/modules/consultations/components/modals/ConsultationPhotosModal';
 
 interface ConsultationImageGalleryProps {
-  consultationId: string
-  consultationTitle: string
-  consultationStatus: 'en_attente' | 'en_cours' | 'terminee' | 'annulee'
-  fallbackImage?: string
-  className?: string
-  compact?: boolean
-  allowEdit?: boolean
+  consultationId: string;
+  consultationTitle: string;
+  consultationStatus: 'en_attente' | 'en_cours' | 'terminee' | 'annulee';
+  fallbackImage?: string;
+  className?: string;
+  compact?: boolean;
+  allowEdit?: boolean;
 }
 
 const statusConfig = {
-  en_attente: { label: "⏳ En attente", className: "bg-gray-100 text-white" },
-  en_cours: { label: "🔄 En cours", className: "bg-blue-600 text-white" },
-  terminee: { label: "✅ Terminée", className: "bg-green-600 text-white" },
-  annulee: { label: "❌ Annulée", className: "bg-gray-600 text-white" }
-}
+  en_attente: { label: '⏳ En attente', className: 'bg-gray-100 text-white' },
+  en_cours: { label: '🔄 En cours', className: 'bg-blue-600 text-white' },
+  terminee: { label: '✅ Terminée', className: 'bg-green-600 text-white' },
+  annulee: { label: '❌ Annulée', className: 'bg-gray-600 text-white' },
+};
 
 export function ConsultationImageGallery({
   consultationId,
@@ -34,14 +37,14 @@ export function ConsultationImageGallery({
   fallbackImage = '/placeholder-consultation.svg',
   className,
   compact = true,
-  allowEdit = false
+  allowEdit = false,
 }: ConsultationImageGalleryProps) {
-  const [selectedImageIndex, setSelectedImageIndex] = useState(0)
-  const [showImageViewer, setShowImageViewer] = useState(false)
-  const [showPhotosModal, setShowPhotosModal] = useState(false)
+  const [selectedImageIndex, setSelectedImageIndex] = useState(0);
+  const [showImageViewer, setShowImageViewer] = useState(false);
+  const [showPhotosModal, setShowPhotosModal] = useState(false);
 
   // Référence pour l'input file (pattern React 2024)
-  const fileInputRef = useRef<HTMLInputElement>(null)
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   // Hook optimisé pour les images de consultation
   const {
@@ -56,65 +59,71 @@ export function ConsultationImageGallery({
     setPrimaryImage,
     hasImages,
     galleryImages,
-    stats
+    stats,
   } = useConsultationImages({
     consultationId,
-    autoFetch: true
-  })
+    autoFetch: true,
+  });
 
   // Synchroniser l'index sélectionné avec l'image principale
   useEffect(() => {
     if (hasImages && images.length > 0) {
-      const primaryIndex = images.findIndex(img => img.is_primary)
+      const primaryIndex = images.findIndex(img => img.is_primary);
       if (primaryIndex !== -1) {
-        setSelectedImageIndex(primaryIndex)
+        setSelectedImageIndex(primaryIndex);
       }
     }
-  }, [images, hasImages])
+  }, [images, hasImages]);
 
   // Image principale optimisée
   const displayImage = hasImages
     ? images[selectedImageIndex] || primaryImage
-    : null
+    : null;
 
-  const mainImageSrc = displayImage?.public_url || fallbackImage
+  const mainImageSrc = displayImage?.public_url || fallbackImage;
 
   const handleImageSelect = (index: number) => {
-    setSelectedImageIndex(index)
-  }
+    setSelectedImageIndex(index);
+  };
 
   const handleSetPrimary = async (imageId: string, index: number) => {
-    if (!allowEdit) return
+    if (!allowEdit) return;
 
     try {
-      await setPrimaryImage(imageId)
-      setSelectedImageIndex(index)
+      await setPrimaryImage(imageId);
+      setSelectedImageIndex(index);
     } catch (err) {
-      console.error('❌ Erreur définition image principale consultation:', err)
+      console.error('❌ Erreur définition image principale consultation:', err);
     }
-  }
+  };
 
   const handleDeleteImage = async (imageId: string) => {
-    if (!allowEdit) return
+    if (!allowEdit) return;
 
-    if (confirm('Êtes-vous sûr de vouloir supprimer cette image de la consultation ?')) {
+    if (
+      confirm(
+        'Êtes-vous sûr de vouloir supprimer cette image de la consultation ?'
+      )
+    ) {
       try {
-        await deleteImage(imageId)
+        await deleteImage(imageId);
         // Ajuster l'index sélectionné si nécessaire
         if (selectedImageIndex >= images.length - 1) {
-          setSelectedImageIndex(Math.max(0, images.length - 2))
+          setSelectedImageIndex(Math.max(0, images.length - 2));
         }
       } catch (err) {
-        console.error('❌ Erreur suppression image consultation:', err)
+        console.error('❌ Erreur suppression image consultation:', err);
       }
     }
-  }
+  };
 
-  const handleFileUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
-    if (!allowEdit) return
+  const handleFileUpload = async (
+    event: React.ChangeEvent<HTMLInputElement>
+  ) => {
+    if (!allowEdit) return;
 
-    const files = event.target.files
-    if (!files || files.length === 0) return
+    const files = event.target.files;
+    if (!files || files.length === 0) return;
 
     for (const file of Array.from(files)) {
       if (file.type.startsWith('image/')) {
@@ -123,33 +132,36 @@ export function ConsultationImageGallery({
             file,
             altText: `Photo consultation ${consultationTitle}`,
             imageType: 'gallery',
-            isPrimary: images.length === 0 // Première image = principale
-          })
+            isPrimary: images.length === 0, // Première image = principale
+          });
         } catch (err) {
-          console.error('❌ Erreur upload image consultation:', err)
+          console.error('❌ Erreur upload image consultation:', err);
         }
       }
     }
 
     // Reset input
-    event.target.value = ''
-  }
+    event.target.value = '';
+  };
 
   if (loading) {
     return (
-      <div className={cn("space-y-1", className)}>
-        <div className="relative aspect-square bg-gray-100 animate-pulse rounded"></div>
+      <div className={cn('space-y-1', className)}>
+        <div className="relative aspect-square bg-gray-100 animate-pulse rounded" />
         <div className="grid grid-cols-4 gap-1">
           {[1, 2, 3, 4].map(i => (
-            <div key={i} className="aspect-square bg-gray-100 animate-pulse rounded"></div>
+            <div
+              key={i}
+              className="aspect-square bg-gray-100 animate-pulse rounded"
+            />
           ))}
         </div>
       </div>
-    )
+    );
   }
 
   return (
-    <div className={cn("space-y-1", className)}>
+    <div className={cn('space-y-1', className)}>
       {/* Image principale compacte 200x200 */}
       <div className="relative w-[200px] h-[200px] overflow-hidden rounded border border-gray-200 bg-white">
         <Image
@@ -163,8 +175,14 @@ export function ConsultationImageGallery({
 
         {/* Badge statut consultation overlay */}
         <div className="absolute top-1 right-2">
-          <Badge className={cn("text-xs", statusConfig[consultationStatus]?.className || "bg-gray-600 text-white")}>
-            {statusConfig[consultationStatus]?.label || "⚪ Statut inconnu"}
+          <Badge
+            className={cn(
+              'text-xs',
+              statusConfig[consultationStatus]?.className ||
+                'bg-gray-600 text-white'
+            )}
+          >
+            {statusConfig[consultationStatus]?.label || '⚪ Statut inconnu'}
           </Badge>
         </div>
 
@@ -196,7 +214,10 @@ export function ConsultationImageGallery({
                 size="sm"
                 variant="secondary"
                 className="text-xs"
-                onClick={() => displayImage && handleSetPrimary(displayImage.id, selectedImageIndex)}
+                onClick={() =>
+                  displayImage &&
+                  handleSetPrimary(displayImage.id, selectedImageIndex)
+                }
               >
                 ★ Principal
               </ButtonV2>
@@ -225,8 +246,10 @@ export function ConsultationImageGallery({
               key={image.id}
               onClick={() => handleImageSelect(index)}
               className={cn(
-                "relative w-[48px] h-[48px] overflow-hidden border transition-all rounded group",
-                selectedImageIndex === index ? "border-black ring-1 ring-black" : "border-gray-300 hover:border-gray-500"
+                'relative w-[48px] h-[48px] overflow-hidden border transition-all rounded group',
+                selectedImageIndex === index
+                  ? 'border-black ring-1 ring-black'
+                  : 'border-gray-300 hover:border-gray-500'
               )}
             >
               <Image
@@ -248,9 +271,9 @@ export function ConsultationImageGallery({
               {allowEdit && (
                 <div className="absolute inset-0 bg-black bg-opacity-0 hover:bg-opacity-50 transition-all duration-200 flex items-center justify-center opacity-0 hover:opacity-100">
                   <button
-                    onClick={(e) => {
-                      e.stopPropagation()
-                      handleDeleteImage(image.id)
+                    onClick={e => {
+                      e.stopPropagation();
+                      handleDeleteImage(image.id);
                     }}
                     className="text-white hover:text-red-300"
                   >
@@ -342,9 +365,8 @@ export function ConsultationImageGallery({
       {/* Stats optimisées */}
       {hasImages && (
         <div className="text-xs text-gray-500 text-center">
-          {stats.total} photo{stats.total > 1 ? 's' : ''} •
-          {stats.primary} principale •
-          {stats.gallery} galerie
+          {stats.total} photo{stats.total > 1 ? 's' : ''} •{stats.primary}{' '}
+          principale •{stats.gallery} galerie
         </div>
       )}
 
@@ -371,5 +393,5 @@ export function ConsultationImageGallery({
         />
       )}
     </div>
-  )
+  );
 }

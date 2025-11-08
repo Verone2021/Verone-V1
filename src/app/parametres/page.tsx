@@ -1,6 +1,7 @@
-'use client'
+'use client';
 
-import React from 'react'
+import React from 'react';
+
 import {
   Settings,
   User,
@@ -9,26 +10,27 @@ import {
   Globe,
   Palette,
   Database,
-  Save
-} from 'lucide-react'
-import { ButtonV2 } from '@/components/ui/button'
-import { Input } from '@/components/ui/input'
+  Save,
+} from 'lucide-react';
+
+import { ButtonV2 } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
 
 interface SettingSection {
-  id: string
-  title: string
-  description: string
-  icon: React.ReactNode
-  settings: SettingItem[]
+  id: string;
+  title: string;
+  description: string;
+  icon: React.ReactNode;
+  settings: SettingItem[];
 }
 
 interface SettingItem {
-  id: string
-  label: string
-  description: string
-  type: 'input' | 'toggle' | 'select'
-  value: string | boolean
-  options?: string[]
+  id: string;
+  label: string;
+  description: string;
+  type: 'input' | 'toggle' | 'select';
+  value: string | boolean;
+  options?: string[];
 }
 
 const settingSections: SettingSection[] = [
@@ -41,18 +43,18 @@ const settingSections: SettingSection[] = [
       {
         id: 'name',
         label: 'Nom complet',
-        description: 'Votre nom tel qu\'il apparaît dans l\'interface',
+        description: "Votre nom tel qu'il apparaît dans l'interface",
         type: 'input',
-        value: 'Utilisateur Admin'
+        value: 'Utilisateur Admin',
       },
       {
         id: 'email',
         label: 'Email',
         description: 'Adresse email pour les notifications',
         type: 'input',
-        value: 'admin@verone.com'
-      }
-    ]
+        value: 'admin@verone.com',
+      },
+    ],
   },
   {
     id: 'notifications',
@@ -65,47 +67,47 @@ const settingSections: SettingSection[] = [
         label: 'Notifications par email',
         description: 'Recevoir les alertes importantes par email',
         type: 'toggle',
-        value: true
+        value: true,
       },
       {
         id: 'stock_alerts',
         label: 'Alertes de stock',
         description: 'Notifications en cas de stock faible',
         type: 'toggle',
-        value: true
+        value: true,
       },
       {
         id: 'order_notifications',
         label: 'Notifications de commandes',
         description: 'Alertes pour les nouvelles commandes',
         type: 'toggle',
-        value: true
-      }
-    ]
+        value: true,
+      },
+    ],
   },
   {
     id: 'appearance',
     title: 'Apparence',
-    description: 'Personnalisation de l\'interface',
+    description: "Personnalisation de l'interface",
     icon: <Palette className="h-5 w-5" />,
     settings: [
       {
         id: 'language',
         label: 'Langue',
-        description: 'Langue de l\'interface',
+        description: "Langue de l'interface",
         type: 'select',
         value: 'Français',
-        options: ['Français', 'English', 'Español']
+        options: ['Français', 'English', 'Español'],
       },
       {
         id: 'timezone',
         label: 'Fuseau horaire',
-        description: 'Fuseau horaire pour l\'affichage des dates',
+        description: "Fuseau horaire pour l'affichage des dates",
         type: 'select',
         value: 'Europe/Paris',
-        options: ['Europe/Paris', 'UTC', 'America/New_York']
-      }
-    ]
+        options: ['Europe/Paris', 'UTC', 'America/New_York'],
+      },
+    ],
   },
   {
     id: 'security',
@@ -118,21 +120,27 @@ const settingSections: SettingSection[] = [
         label: 'Authentification à deux facteurs',
         description: 'Renforcer la sécurité de votre compte',
         type: 'toggle',
-        value: false
+        value: false,
       },
       {
         id: 'session_timeout',
-        label: 'Délai d\'inactivité',
+        label: "Délai d'inactivité",
         description: 'Temps avant déconnexion automatique',
         type: 'select',
         value: '30 minutes',
-        options: ['15 minutes', '30 minutes', '1 heure', '4 heures']
-      }
-    ]
-  }
-]
+        options: ['15 minutes', '30 minutes', '1 heure', '4 heures'],
+      },
+    ],
+  },
+];
 
-function ToggleSwitch({ enabled, onChange }: { enabled: boolean; onChange: (enabled: boolean) => void }) {
+function ToggleSwitch({
+  enabled,
+  onChange,
+}: {
+  enabled: boolean;
+  onChange: (enabled: boolean) => void;
+}) {
   return (
     <button
       onClick={() => onChange(!enabled)}
@@ -146,7 +154,7 @@ function ToggleSwitch({ enabled, onChange }: { enabled: boolean; onChange: (enab
         }`}
       />
     </button>
-  )
+  );
 }
 
 export default function ParametresPage() {
@@ -165,24 +173,36 @@ export default function ParametresPage() {
 
       {/* Settings sections */}
       <div className="space-y-6">
-        {settingSections.map((section) => (
-          <div key={section.id} className="bg-white rounded-lg border border-gray-200 p-6">
+        {settingSections.map(section => (
+          <div
+            key={section.id}
+            className="bg-white rounded-lg border border-gray-200 p-6"
+          >
             <div className="flex items-center space-x-3 mb-4">
               <div className="h-10 w-10 bg-gray-100 rounded-lg flex items-center justify-center">
                 {section.icon}
               </div>
               <div>
-                <h3 className="text-lg font-semibold text-black">{section.title}</h3>
+                <h3 className="text-lg font-semibold text-black">
+                  {section.title}
+                </h3>
                 <p className="text-sm text-gray-600">{section.description}</p>
               </div>
             </div>
 
             <div className="space-y-4">
-              {section.settings.map((setting) => (
-                <div key={setting.id} className="flex items-center justify-between py-3 border-b border-gray-100 last:border-b-0">
+              {section.settings.map(setting => (
+                <div
+                  key={setting.id}
+                  className="flex items-center justify-between py-3 border-b border-gray-100 last:border-b-0"
+                >
                   <div className="flex-1">
-                    <label className="text-sm font-medium text-black">{setting.label}</label>
-                    <p className="text-sm text-gray-500">{setting.description}</p>
+                    <label className="text-sm font-medium text-black">
+                      {setting.label}
+                    </label>
+                    <p className="text-sm text-gray-500">
+                      {setting.description}
+                    </p>
                   </div>
                   <div className="ml-4">
                     {setting.type === 'input' && (
@@ -205,7 +225,7 @@ export default function ParametresPage() {
                         onChange={() => {}}
                         className="w-48 h-10 px-3 border border-gray-300 rounded-md bg-white text-sm focus:outline-none focus:ring-2 focus:ring-black focus:border-black"
                       >
-                        {setting.options?.map((option) => (
+                        {setting.options?.map(option => (
                           <option key={option} value={option}>
                             {option}
                           </option>
@@ -227,18 +247,26 @@ export default function ParametresPage() {
             <Database className="h-5 w-5" />
           </div>
           <div>
-            <h3 className="text-lg font-semibold text-black">Informations système</h3>
-            <p className="text-sm text-gray-600">Détails techniques de l'application</p>
+            <h3 className="text-lg font-semibold text-black">
+              Informations système
+            </h3>
+            <p className="text-sm text-gray-600">
+              Détails techniques de l'application
+            </p>
           </div>
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div className="space-y-2">
-            <p className="text-sm font-medium text-gray-600">Version de l'application</p>
+            <p className="text-sm font-medium text-gray-600">
+              Version de l'application
+            </p>
             <p className="text-sm text-black">v1.0.0</p>
           </div>
           <div className="space-y-2">
-            <p className="text-sm font-medium text-gray-600">Dernière mise à jour</p>
+            <p className="text-sm font-medium text-gray-600">
+              Dernière mise à jour
+            </p>
             <p className="text-sm text-black">15 janvier 2024</p>
           </div>
           <div className="space-y-2">
@@ -260,5 +288,5 @@ export default function ParametresPage() {
         </ButtonV2>
       </div>
     </div>
-  )
+  );
 }

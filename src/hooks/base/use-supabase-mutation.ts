@@ -8,8 +8,10 @@
 'use client';
 
 import { useState } from 'react';
-import { createClient } from '@/lib/supabase/client';
+
 import { toast } from 'react-hot-toast';
+
+import { createClient } from '@/lib/supabase/client';
 
 export interface MutationOptions<T> {
   tableName: string;
@@ -55,10 +57,10 @@ export function useSupabaseMutation<T>(
       toast.success('Créé avec succès');
 
       if (options.onSuccess) {
-        await options.onSuccess(result as any);
+        await options.onSuccess(result);
       }
 
-      return result as any;
+      return result;
     } catch (err) {
       const message = err instanceof Error ? err.message : 'Erreur création';
       setError(message);
@@ -91,10 +93,10 @@ export function useSupabaseMutation<T>(
       toast.success('Modifié avec succès');
 
       if (options.onSuccess) {
-        await options.onSuccess(result as any);
+        await options.onSuccess(result);
       }
 
-      return result as any;
+      return result;
     } catch (err) {
       const message =
         err instanceof Error ? err.message : 'Erreur modification';

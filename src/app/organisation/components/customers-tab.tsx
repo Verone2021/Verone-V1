@@ -1,10 +1,9 @@
-'use client'
+'use client';
 
-import { useState, useMemo, useEffect } from 'react'
-import { Card, CardContent } from '@/components/ui/card'
-import { ButtonV2 } from '@/components/ui/button'
-import { Input } from '@/components/ui/input'
-import { Badge } from '@/components/ui/badge'
+import { useState, useMemo, useEffect } from 'react';
+
+import Link from 'next/link';
+
 import {
   Search,
   Plus,
@@ -15,35 +14,50 @@ import {
   ExternalLink,
   Building2,
   LayoutGrid,
-  List
-} from 'lucide-react'
-import Link from 'next/link'
-import { useOrganisations, getOrganisationDisplayName, type Organisation } from '@/shared/modules/organisations/hooks'
-import { CustomerFormModal } from '@/components/business/customer-form-modal'
-import { OrganisationLogo } from '@/components/business/organisation-logo'
-import { OrganisationCard } from '@/components/business/organisation-card'
-import { OrganisationListView } from '@/components/business/organisation-list-view'
-import { spacing, colors } from '@/lib/design-system'
-import { createClient } from '@/lib/supabase/client'
-import { cn } from '@/lib/utils'
+  List,
+} from 'lucide-react';
+
+import { Badge } from '@/components/ui/badge';
+import { ButtonV2 } from '@/components/ui/button';
+import { Card, CardContent } from '@/components/ui/card';
+import { Input } from '@/components/ui/input';
+import { spacing, colors } from '@/lib/design-system';
+import { createClient } from '@/lib/supabase/client';
+import { cn } from '@verone/utils';
+import { CustomerFormModal } from '@/shared/modules/customers/components/modals/CustomerFormModal';
+import { OrganisationListView } from '@/shared/modules/customers/components/sections/OrganisationListView';
+import { OrganisationLogo } from '@/shared/modules/organisations/components';
+import { OrganisationCard } from '@/shared/modules/organisations/components/cards/OrganisationCard';
+import {
+  useOrganisations,
+  getOrganisationDisplayName,
+  type Organisation,
+} from '@/shared/modules/organisations/hooks';
 
 // ✅ FIX TypeScript: Utiliser type Organisation (pas de Customer local)
 // IMPORTANT: Organisation utilise "legal_name" (pas "name")
 // Interface Organisation définie dans use-organisations.ts
 
 export function CustomersTab() {
-  const [searchQuery, setSearchQuery] = useState('')
-  const [activeTab, setActiveTab] = useState<'active' | 'archived'>('active')
-  const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid')
-  const [archivedCustomers, setArchivedCustomers] = useState<Organisation[]>([])
-  const [archivedLoading, setArchivedLoading] = useState(false)
-  const [isModalOpen, setIsModalOpen] = useState(false)
-  const [selectedCustomer, setSelectedCustomer] = useState<Organisation | null>(null)
+  const [searchQuery, setSearchQuery] = useState('');
+  const [activeTab, setActiveTab] = useState<'active' | 'archived'>('active');
+  const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
+  const [archivedCustomers, setArchivedCustomers] = useState<Organisation[]>(
+    []
+  );
+  const [archivedLoading, setArchivedLoading] = useState(false);
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [selectedCustomer, setSelectedCustomer] = useState<Organisation | null>(
+    null
+  );
 
-  const filters = useMemo(() => ({
-    is_active: true,
-    search: searchQuery || undefined
-  }), [searchQuery])
+  const filters = useMemo(
+    () => ({
+      is_active: true,
+      search: searchQuery || undefined,
+    }),
+    [searchQuery]
+  );
 
   const {
     organisations: customers,
@@ -51,82 +65,87 @@ export function CustomersTab() {
     archiveOrganisation,
     unarchiveOrganisation,
     hardDeleteOrganisation,
-    refetch
-  } = useOrganisations(filters)
+    refetch,
+  } = useOrganisations(filters);
 
   const filteredCustomers = useMemo(() => {
-    if (!customers) return []
-    return customers.filter(customer => customer.type === 'customer')
-  }, [customers])
+    if (!customers) return [];
+    return customers.filter(customer => customer.type === 'customer');
+  }, [customers]);
 
   const stats = useMemo(() => {
-    const total = filteredCustomers.length
-    const active = filteredCustomers.filter(c => c.is_active).length
-    const professional = filteredCustomers.filter(c => c.customer_type === 'professional').length
-    const individual = filteredCustomers.filter(c => c.customer_type === 'individual').length
+    const total = filteredCustomers.length;
+    const active = filteredCustomers.filter(c => c.is_active).length;
+    const professional = filteredCustomers.filter(
+      c => c.customer_type === 'professional'
+    ).length;
+    const individual = filteredCustomers.filter(
+      c => c.customer_type === 'individual'
+    ).length;
 
-    return { total, active, professional, individual }
-  }, [filteredCustomers])
+    return { total, active, professional, individual };
+  }, [filteredCustomers]);
 
   const loadArchivedCustomersData = async () => {
-    setArchivedLoading(true)
+    setArchivedLoading(true);
     try {
-      const supabase = createClient()
+      const supabase = createClient();
       const { data, error } = await supabase
         .from('organisations')
         .select('*')
         .eq('type', 'customer')
         .not('archived_at', 'is', null)
-        .order('archived_at', { ascending: false })
+        .order('archived_at', { ascending: false });
 
-      if (error) throw error
-      setArchivedCustomers((data || []) as unknown as Organisation[])
+      if (error) throw error;
+      setArchivedCustomers((data || []) as unknown as Organisation[]);
     } catch (err) {
-      console.error('Erreur chargement clients archivés:', err)
+      console.error('Erreur chargement clients archivés:', err);
     } finally {
-      setArchivedLoading(false)
+      setArchivedLoading(false);
     }
-  }
+  };
 
   useEffect(() => {
     if (activeTab === 'archived') {
-      loadArchivedCustomersData()
+      loadArchivedCustomersData();
     }
-  }, [activeTab])
+  }, [activeTab]);
 
   const handleArchive = async (customer: Organisation) => {
     if (!customer.archived_at) {
-      const success = await archiveOrganisation(customer.id)
+      const success = await archiveOrganisation(customer.id);
       if (success) {
-        refetch()
+        refetch();
         if (activeTab === 'archived') {
-          await loadArchivedCustomersData()
+          await loadArchivedCustomersData();
         }
       }
     } else {
-      const success = await unarchiveOrganisation(customer.id)
+      const success = await unarchiveOrganisation(customer.id);
       if (success) {
-        refetch()
-        await loadArchivedCustomersData()
+        refetch();
+        await loadArchivedCustomersData();
       }
     }
-  }
+  };
 
   const handleDelete = async (customer: Organisation) => {
     const confirmed = confirm(
       `Êtes-vous sûr de vouloir supprimer définitivement "${getOrganisationDisplayName(customer)}" ?\n\nCette action est irréversible !`
-    )
+    );
 
     if (confirmed) {
-      const success = await hardDeleteOrganisation(customer.id)
+      const success = await hardDeleteOrganisation(customer.id);
       if (success) {
-        await loadArchivedCustomersData()
+        await loadArchivedCustomersData();
       }
     }
-  }
+  };
 
-  const displayedCustomers = activeTab === 'active' ? filteredCustomers : archivedCustomers
-  const isLoading = activeTab === 'active' ? loading : archivedLoading
+  const displayedCustomers =
+    activeTab === 'active' ? filteredCustomers : archivedCustomers;
+  const isLoading = activeTab === 'active' ? loading : archivedLoading;
 
   return (
     <div className="space-y-4">
@@ -144,7 +163,9 @@ export function CustomersTab() {
               )}
             >
               Actifs
-              <span className="ml-2 opacity-70">({filteredCustomers.length})</span>
+              <span className="ml-2 opacity-70">
+                ({filteredCustomers.length})
+              </span>
             </button>
 
             <button
@@ -157,12 +178,17 @@ export function CustomersTab() {
               )}
             >
               Archivés
-              <span className="ml-2 opacity-70">({archivedCustomers.length})</span>
+              <span className="ml-2 opacity-70">
+                ({archivedCustomers.length})
+              </span>
             </button>
           </div>
 
           {/* Toggle Grid/List View */}
-          <div className="flex items-center gap-1 border rounded-lg" style={{ borderColor: colors.border.DEFAULT }}>
+          <div
+            className="flex items-center gap-1 border rounded-lg"
+            style={{ borderColor: colors.border.DEFAULT }}
+          >
             <button
               onClick={() => setViewMode('grid')}
               className={cn(
@@ -190,7 +216,11 @@ export function CustomersTab() {
           </div>
         </div>
 
-        <ButtonV2 variant="primary" onClick={() => setIsModalOpen(true)} icon={Plus}>
+        <ButtonV2
+          variant="primary"
+          onClick={() => setIsModalOpen(true)}
+          icon={Plus}
+        >
           Nouveau Client
         </ButtonV2>
       </div>
@@ -206,9 +236,12 @@ export function CustomersTab() {
             <Input
               placeholder="Rechercher par nom..."
               value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
+              onChange={e => setSearchQuery(e.target.value)}
               className="pl-10"
-              style={{ borderColor: colors.border.DEFAULT, color: colors.text.DEFAULT }}
+              style={{
+                borderColor: colors.border.DEFAULT,
+                color: colors.text.DEFAULT,
+              }}
             />
           </div>
         </CardContent>
@@ -220,9 +253,9 @@ export function CustomersTab() {
           {Array.from({ length: 12 }).map((_, i) => (
             <Card key={i} className="animate-pulse">
               <CardContent style={{ padding: spacing[2] }}>
-                <div className="h-4 bg-gray-200 rounded w-3/4 mb-2"></div>
-                <div className="h-3 bg-gray-200 rounded w-full mb-2"></div>
-                <div className="h-3 bg-gray-200 rounded w-2/3"></div>
+                <div className="h-4 bg-gray-200 rounded w-3/4 mb-2" />
+                <div className="h-3 bg-gray-200 rounded w-full mb-2" />
+                <div className="h-3 bg-gray-200 rounded w-2/3" />
               </CardContent>
             </Card>
           ))}
@@ -230,8 +263,14 @@ export function CustomersTab() {
       ) : displayedCustomers.length === 0 ? (
         <Card>
           <CardContent className="text-center" style={{ padding: spacing[8] }}>
-            <Building2 className="h-12 w-12 mx-auto mb-4" style={{ color: colors.text.muted }} />
-            <h3 className="text-lg font-medium mb-2" style={{ color: colors.text.DEFAULT }}>
+            <Building2
+              className="h-12 w-12 mx-auto mb-4"
+              style={{ color: colors.text.muted }}
+            />
+            <h3
+              className="text-lg font-medium mb-2"
+              style={{ color: colors.text.DEFAULT }}
+            >
               Aucun client trouvé
             </h3>
             <p className="mb-4" style={{ color: colors.text.subtle }}>
@@ -239,11 +278,14 @@ export function CustomersTab() {
                 ? 'Aucun client ne correspond à votre recherche.'
                 : activeTab === 'active'
                   ? 'Commencez par créer votre premier client.'
-                  : 'Aucun client archivé.'
-              }
+                  : 'Aucun client archivé.'}
             </p>
             {activeTab === 'active' && (
-              <ButtonV2 variant="primary" onClick={() => setIsModalOpen(true)} icon={Plus}>
+              <ButtonV2
+                variant="primary"
+                onClick={() => setIsModalOpen(true)}
+                icon={Plus}
+              >
                 Créer un client
               </ButtonV2>
             )}
@@ -251,13 +293,15 @@ export function CustomersTab() {
         </Card>
       ) : viewMode === 'grid' ? (
         <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6 gap-2">
-          {displayedCustomers.map((customer) => (
+          {displayedCustomers.map(customer => (
             <OrganisationCard
               key={customer.id}
-              organisation={{
-                ...customer,
-                type: 'customer'
-              } as any}
+              organisation={
+                {
+                  ...customer,
+                  type: 'customer',
+                } as any
+              }
               activeTab={activeTab}
               onArchive={() => handleArchive(customer)}
               onDelete={() => handleDelete(customer)}
@@ -268,18 +312,20 @@ export function CustomersTab() {
         <Card>
           <CardContent style={{ padding: spacing[3] }}>
             <OrganisationListView
-              organisations={displayedCustomers.map(c => ({
-                ...c,
-                type: 'customer' as const
-              })) as any}
+              organisations={
+                displayedCustomers.map(c => ({
+                  ...c,
+                  type: 'customer' as const,
+                })) as any
+              }
               activeTab={activeTab}
-              onArchive={(id) => {
-                const customer = displayedCustomers.find(c => c.id === id)
-                if (customer) handleArchive(customer)
+              onArchive={id => {
+                const customer = displayedCustomers.find(c => c.id === id);
+                if (customer) handleArchive(customer);
               }}
-              onDelete={(id) => {
-                const customer = displayedCustomers.find(c => c.id === id)
-                if (customer) handleDelete(customer)
+              onDelete={id => {
+                const customer = displayedCustomers.find(c => c.id === id);
+                if (customer) handleDelete(customer);
               }}
             />
           </CardContent>
@@ -290,16 +336,16 @@ export function CustomersTab() {
         isOpen={isModalOpen}
         onClose={() => setIsModalOpen(false)}
         onCustomerCreated={() => {
-          refetch()
-          setIsModalOpen(false)
+          refetch();
+          setIsModalOpen(false);
         }}
         onCustomerUpdated={() => {
-          refetch()
-          setIsModalOpen(false)
+          refetch();
+          setIsModalOpen(false);
         }}
         customer={selectedCustomer as any}
         mode={selectedCustomer ? 'edit' : 'create'}
       />
     </div>
-  )
+  );
 }

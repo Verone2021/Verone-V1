@@ -8,7 +8,9 @@ console.log('🔄 Revert ButtonV2 Import Path Script');
 console.log('========================================\n');
 
 // Trouver tous les fichiers avec le mauvais import (ui-v2)
-console.log('📂 Recherche des fichiers avec import ButtonV2 depuis ui-v2/button...\n');
+console.log(
+  '📂 Recherche des fichiers avec import ButtonV2 depuis ui-v2/button...\n'
+);
 
 let files = [];
 try {

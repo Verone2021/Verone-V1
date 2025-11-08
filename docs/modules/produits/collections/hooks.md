@@ -22,35 +22,38 @@ Hook principal CRUD collections avec filtres.
 
 ```typescript
 interface CollectionFilters {
-  search?: string
-  is_active?: boolean
-  archived?: boolean
+  search?: string;
+  is_active?: boolean;
+  archived?: boolean;
 }
 
 interface Collection {
-  id: string
-  name: string
-  slug: string
-  description: string | null
-  image_url: string | null
-  is_active: boolean
-  display_order: number
-  archived_at: string | null
-  created_at: string
-  updated_at: string
-  products_count?: number
+  id: string;
+  name: string;
+  slug: string;
+  description: string | null;
+  image_url: string | null;
+  is_active: boolean;
+  display_order: number;
+  archived_at: string | null;
+  created_at: string;
+  updated_at: string;
+  products_count?: number;
 }
 
 function useCollections(filters?: CollectionFilters): {
-  collections: Collection[]
-  loading: boolean
-  error: string | null
-  createCollection: (data: CreateCollectionData) => Promise<Collection | null>
-  updateCollection: (id: string, data: UpdateCollectionData) => Promise<Collection | null>
-  deleteCollection: (id: string) => Promise<boolean>
-  toggleActive: (id: string) => Promise<boolean>
-  refetch: () => void
-}
+  collections: Collection[];
+  loading: boolean;
+  error: string | null;
+  createCollection: (data: CreateCollectionData) => Promise<Collection | null>;
+  updateCollection: (
+    id: string,
+    data: UpdateCollectionData
+  ) => Promise<Collection | null>;
+  deleteCollection: (id: string) => Promise<boolean>;
+  toggleActive: (id: string) => Promise<boolean>;
+  refetch: () => void;
+};
 ```
 
 ### Exemple
@@ -98,14 +101,14 @@ Hook détail collection avec produits associés.
 
 ```typescript
 function useCollection(id: string): {
-  collection: Collection | null
-  products: Product[]
-  loading: boolean
-  error: string | null
-  addProduct: (productId: string) => Promise<boolean>
-  removeProduct: (productId: string) => Promise<boolean>
-  reorderProducts: (productIds: string[]) => Promise<boolean>
-}
+  collection: Collection | null;
+  products: Product[];
+  loading: boolean;
+  error: string | null;
+  addProduct: (productId: string) => Promise<boolean>;
+  removeProduct: (productId: string) => Promise<boolean>;
+  reorderProducts: (productIds: string[]) => Promise<boolean>;
+};
 ```
 
 ### Exemple
@@ -153,35 +156,32 @@ Hook spécialisé gestion produits collection.
 
 ```typescript
 function useCollectionProducts(collectionId: string): {
-  products: Product[]
-  loading: boolean
-  error: string | null
-  addProducts: (productIds: string[]) => Promise<boolean>
-  removeProduct: (productId: string) => Promise<boolean>
-  updateDisplayOrder: (productId: string, order: number) => Promise<boolean>
-}
+  products: Product[];
+  loading: boolean;
+  error: string | null;
+  addProducts: (productIds: string[]) => Promise<boolean>;
+  removeProduct: (productId: string) => Promise<boolean>;
+  updateDisplayOrder: (productId: string, order: number) => Promise<boolean>;
+};
 ```
 
 ### Exemple
 
 ```typescript
-const {
-  products,
-  addProducts,
-  removeProduct
-} = useCollectionProducts(collectionId)
+const { products, addProducts, removeProduct } =
+  useCollectionProducts(collectionId);
 
 // Ajouter plusieurs produits
 const handleAddProducts = async (selectedIds: string[]) => {
-  await addProducts(selectedIds)
-  toast.success(`${selectedIds.length} produits ajoutés`)
-}
+  await addProducts(selectedIds);
+  toast.success(`${selectedIds.length} produits ajoutés`);
+};
 
 // Retirer 1 produit
 const handleRemove = async (productId: string) => {
-  if (!confirm('Retirer ce produit ?')) return
-  await removeProduct(productId)
-}
+  if (!confirm('Retirer ce produit ?')) return;
+  await removeProduct(productId);
+};
 ```
 
 ---

@@ -8,6 +8,7 @@
 ## 🎯 Résumé Exécutif
 
 Le déploiement sur Vercel est **techniquement bloqué** par un bug de cache/résolution de modules Next.js 15, malgré :
+
 - ✅ **Build local 100% fonctionnel** (0 erreurs)
 - ✅ **Tous les fichiers présents sur GitHub** (vérifiés)
 - ✅ **Configuration Vercel correcte** (variables d'environnement, Deploy Hook)
@@ -20,6 +21,7 @@ Le déploiement sur Vercel est **techniquement bloqué** par un bug de cache/ré
 ### ✅ **Ce qui fonctionne**
 
 1. **Build Local** (validation complète)
+
    ```bash
    npm run build
    ✓ Compiled successfully
@@ -51,6 +53,7 @@ Le déploiement sur Vercel est **techniquement bloqué** par un bug de cache/ré
 ### ❌ **Le Problème**
 
 **Erreur systématique sur Vercel** :
+
 ```
 Module not found: Can't resolve '@/lib/logger'
 Module not found: Can't resolve '@/lib/supabase/server'
@@ -60,6 +63,7 @@ Module not found: Can't resolve '@/lib/middleware/api-security'
 ```
 
 **Derniers déploiements échoués** :
+
 1. `4Np1RAVow` - Error (1m 9s) - 18 minutes ago - Commit: `696bd6b`
 2. `FVtsuJSnv` - Error (1m 9s) - 22 minutes ago - Redeploy
 3. `YsKVREiHu` - Error (1m 21s) - 4h ago - Redeploy
@@ -85,6 +89,7 @@ Le problème identifié est un **bug connu de Vercel** avec Next.js 15 concernan
    - Webpack module resolution cache non invalidé
 
 3. **Vérifications effectuées** :
+
    ```bash
    # Local : tous les fichiers présents
    find src/lib -type f -name "*.ts" | wc -l
@@ -102,6 +107,7 @@ Le problème identifié est un **bug connu de Vercel** avec Next.js 15 concernan
 ### **Webhook GitHub manquant**
 
 Investigation supplémentaire :
+
 - ✅ Repository connecté sur Vercel
 - ❌ **Webhook GitHub ABSENT** (vérifié sur `github.com/Verone2021/Verone-backoffice/settings/hooks`)
 - Conséquence : Push GitHub ne déclenche PAS de déploiement automatique
@@ -111,14 +117,14 @@ Investigation supplémentaire :
 
 ## 🛠️ Solutions Tentées
 
-| Action | Statut | Résultat |
-|--------|--------|----------|
-| Redeploy via UI Vercel | ❌ Échec | Erreur modules |
-| Push Git avec tous fichiers | ❌ Échec | Erreur modules |
-| Vercel CLI deployment | ❌ Échec | Erreur modules + permissions |
-| Purge Data Cache | ✅ Effectué | Erreur persiste |
-| Deploy Hook manuel | ✅ Créé | Déploiement en cours d'évaluation |
-| Vérification webhook GitHub | ⚠️ Absent | Déploiements auto impossibles |
+| Action                      | Statut      | Résultat                          |
+| --------------------------- | ----------- | --------------------------------- |
+| Redeploy via UI Vercel      | ❌ Échec    | Erreur modules                    |
+| Push Git avec tous fichiers | ❌ Échec    | Erreur modules                    |
+| Vercel CLI deployment       | ❌ Échec    | Erreur modules + permissions      |
+| Purge Data Cache            | ✅ Effectué | Erreur persiste                   |
+| Deploy Hook manuel          | ✅ Créé     | Déploiement en cours d'évaluation |
+| Vérification webhook GitHub | ⚠️ Absent   | Déploiements auto impossibles     |
 
 ---
 
@@ -146,6 +152,7 @@ Cette solution force Vercel à recréer toute la configuration :
 ### **Option 2 : Contact Support Vercel (Si Option 1 échoue)**
 
 Ouvrir un ticket avec :
+
 - Project ID : `prj_X4eg9YtIF4qS2eTwIRLidsA9SB1d`
 - Error : "Module resolution cache corrupted in Next.js 15 build"
 - Evidence : Build local fonctionne, fichiers présents sur GitHub
@@ -155,16 +162,19 @@ Ouvrir un ticket avec :
 ## 📋 Checklist Pré-Déploiement
 
 **Build Local** :
+
 - [x] `npm run build` réussit (0 erreurs)
 - [x] `npm run type-check` réussit
 - [x] Tous les fichiers commitées
 
 **GitHub** :
+
 - [x] Repository à jour (`Verone2021/Verone-backoffice`)
 - [x] Branch `main` contient tous les fichiers
 - [x] Commit SHA : `696bd6b`
 
 **Vercel** :
+
 - [x] Variables d'environnement configurées
 - [x] Deploy Hook créé
 - [ ] ⚠️ Webhook GitHub manquant
@@ -185,11 +195,13 @@ Ouvrir un ticket avec :
 ## 📞 Informations de Contact
 
 **Projet Vercel** :
+
 - **Project ID** : `prj_X4eg9YtIF4qS2eTwIRLidsA9SB1d`
 - **Team ID** : `team_sYPhPzbeKMa8CB79SBRDGyji`
 - **URL Project** : `https://vercel.com/verone2021s-projects/verone-back-office`
 
 **Repository GitHub** :
+
 - **URL** : `https://github.com/Verone2021/Verone-backoffice`
 - **Branch** : `main`
 - **Derniers commits** :

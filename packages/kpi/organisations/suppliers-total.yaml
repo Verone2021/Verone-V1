@@ -43,21 +43,21 @@ source:
 displayed_in:
   - component: src/app/contacts-organisations/suppliers/page.tsx
     location: "Stats header - Badge 'Total' (ligne ~280-295)"
-    description: "Premier badge row statistiques fournisseurs"
+    description: 'Premier badge row statistiques fournisseurs'
     screenshot: suppliers-list-page.png
 
 thresholds:
-  excellent: "> 50"
-  good: "20-50"
-  warning: "5-20"
-  critical: "< 5"
+  excellent: '> 50'
+  good: '20-50'
+  warning: '5-20'
+  critical: '< 5'
 
 tests:
-  - scenario: "Production actuelle"
+  - scenario: 'Production actuelle'
     inputs:
       suppliers_count: 11
     expected_output: 11
-    threshold_expected: "warning"
+    threshold_expected: 'warning'
 
 metadata:
   created_at: 2025-10-22

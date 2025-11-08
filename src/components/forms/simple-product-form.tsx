@@ -1,100 +1,106 @@
-"use client"
+'use client';
 
-import { useState } from 'react'
-import { ButtonV2 } from '@/components/ui/button'
-import { Input } from '@/components/ui/input'
-import { Label } from '@/components/ui/label'
-import { Upload, Loader2, CheckCircle, XCircle } from 'lucide-react'
-import { createClient } from '../../lib/supabase/client'
+import { useState } from 'react';
+
+import { Upload, Loader2, CheckCircle, XCircle } from 'lucide-react';
+
+import { ButtonV2 } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+
+import { createClient } from '../../lib/supabase/client';
 
 interface SimpleProductFormProps {
-  onSuccess?: (product: any) => void
-  onCancel?: () => void
+  onSuccess?: (product: any) => void;
+  onCancel?: () => void;
 }
 
 interface FormData {
-  name: string
-  supplier_page_url: string
-  imageFile: File | null
+  name: string;
+  supplier_page_url: string;
+  imageFile: File | null;
 }
 
-export function SimpleProductForm({ onSuccess, onCancel }: SimpleProductFormProps) {
+export function SimpleProductForm({
+  onSuccess,
+  onCancel,
+}: SimpleProductFormProps) {
   const [formData, setFormData] = useState<FormData>({
     name: '',
     supplier_page_url: '',
-    imageFile: null
-  })
+    imageFile: null,
+  });
 
-  const [loading, setLoading] = useState(false)
-  const [error, setError] = useState<string | null>(null)
-  const [imagePreview, setImagePreview] = useState<string | null>(null)
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [imagePreview, setImagePreview] = useState<string | null>(null);
 
-  const supabase = createClient()
+  const supabase = createClient();
 
   // Gérer la sélection d'image
   const handleImageSelect = (event: React.ChangeEvent<HTMLInputElement>) => {
-    const file = event.target.files?.[0]
+    const file = event.target.files?.[0];
     if (file) {
       // Vérifier le type de fichier
       if (!file.type.startsWith('image/')) {
-        setError('Veuillez sélectionner un fichier image valide')
-        return
+        setError('Veuillez sélectionner un fichier image valide');
+        return;
       }
 
       // Vérifier la taille (max 5MB)
       if (file.size > 5 * 1024 * 1024) {
-        setError('L\'image ne doit pas dépasser 5MB')
-        return
+        setError("L'image ne doit pas dépasser 5MB");
+        return;
       }
 
-      setFormData(prev => ({ ...prev, imageFile: file }))
+      setFormData(prev => ({ ...prev, imageFile: file }));
 
       // Créer un aperçu
-      const reader = new FileReader()
-      reader.onload = (e) => {
-        setImagePreview(e.target?.result as string)
-      }
-      reader.readAsDataURL(file)
-      setError(null)
+      const reader = new FileReader();
+      reader.onload = e => {
+        setImagePreview(e.target?.result as string);
+      };
+      reader.readAsDataURL(file);
+      setError(null);
     }
-  }
+  };
 
   // Valider le formulaire
   const validateForm = (): boolean => {
     if (!formData.name.trim()) {
-      setError('Le nom du produit est obligatoire')
-      return false
+      setError('Le nom du produit est obligatoire');
+      return false;
     }
 
     if (!formData.supplier_page_url.trim()) {
-      setError('Le lien du produit est obligatoire')
-      return false
+      setError('Le lien du produit est obligatoire');
+      return false;
     }
 
     // Valider l'URL
     try {
-      new URL(formData.supplier_page_url)
+      new URL(formData.supplier_page_url);
     } catch {
-      setError('Veuillez entrer un lien valide')
-      return false
+      setError('Veuillez entrer un lien valide');
+      return false;
     }
 
     if (!formData.imageFile) {
-      setError('Une image est obligatoire')
-      return false
+      setError('Une image est obligatoire');
+      return false;
     }
 
-    return true
-  }
+    return true;
+  };
 
   // Soumettre le formulaire
   const handleSubmit = async (event: React.FormEvent) => {
-    event.preventDefault()
+    event.preventDefault();
 
-    if (!validateForm()) return
+    if (!validateForm()) return;
 
-    setLoading(true)
-    setError(null)
+    setLoading(true);
+    setError(null);
 
     try {
       // 1. Créer le produit dans la table products
@@ -106,32 +112,32 @@ export function SimpleProductForm({ onSuccess, onCancel }: SimpleProductFormProp
         creation_mode: 'complete',
         // Required fields with defaults
         price_ht: 0.01, // Will be set later from product detail page
-        cost_price: 0.01 // Will be set later from product detail page (must be > 0)
-      }
+        cost_price: 0.01, // Will be set later from product detail page (must be > 0)
+      };
 
       const { data: newProduct, error: productError } = await supabase
         .from('products')
         .insert(productData as any)
         .select()
-        .single()
+        .single();
 
-      if (productError) throw productError
+      if (productError) throw productError;
 
       // 2. Uploader l'image
       if (formData.imageFile && newProduct) {
         // Générer un nom de fichier unique
-        const fileExt = formData.imageFile.name.split('.').pop()?.toLowerCase()
-        const fileName = `product-${newProduct.id}-${Date.now()}.${fileExt}`
+        const fileExt = formData.imageFile.name.split('.').pop()?.toLowerCase();
+        const fileName = `product-${newProduct.id}-${Date.now()}.${fileExt}`;
 
         // Upload vers Storage
         const { data: uploadData, error: uploadError } = await supabase.storage
           .from('product-images')
           .upload(fileName, formData.imageFile, {
             cacheControl: '3600',
-            upsert: false
-          })
+            upsert: false,
+          });
 
-        if (uploadError) throw uploadError
+        if (uploadError) throw uploadError;
 
         // Créer l'entrée dans product_images
         const { error: dbError } = await supabase
@@ -144,45 +150,51 @@ export function SimpleProductForm({ onSuccess, onCancel }: SimpleProductFormProp
             alt_text: formData.name,
             file_size: formData.imageFile.size,
             format: fileExt || 'jpg',
-            display_order: 0
-          })
+            display_order: 0,
+          });
 
         if (dbError) {
           // Nettoyer le fichier uploadé en cas d'erreur DB
-          await supabase.storage.from('product-images').remove([uploadData.path])
-          throw dbError
+          await supabase.storage
+            .from('product-images')
+            .remove([uploadData.path]);
+          throw dbError;
         }
       }
 
-      console.log('✅ Produit créé avec succès:', newProduct.sku)
+      console.log('✅ Produit créé avec succès:', newProduct.sku);
 
       // Réinitialiser le formulaire
       setFormData({
         name: '',
         supplier_page_url: '',
-        imageFile: null
-      })
-      setImagePreview(null)
+        imageFile: null,
+      });
+      setImagePreview(null);
 
       // Appeler le callback de succès
       if (onSuccess) {
-        onSuccess(newProduct)
+        onSuccess(newProduct);
       }
-
     } catch (error) {
-      console.error('❌ Erreur création produit:', error)
-      setError(error instanceof Error ? error.message : 'Erreur lors de la création du produit')
+      console.error('❌ Erreur création produit:', error);
+      setError(
+        error instanceof Error
+          ? error.message
+          : 'Erreur lors de la création du produit'
+      );
     } finally {
-      setLoading(false)
+      setLoading(false);
     }
-  }
+  };
 
   return (
     <div className="bg-white border border-black p-6">
       <div className="mb-6">
         <h2 className="text-xl font-semibold text-black">Nouveau Produit</h2>
         <p className="text-sm text-gray-600 mt-1">
-          Créez un nouveau produit avec les informations essentielles. Vous pourrez le compléter plus tard.
+          Créez un nouveau produit avec les informations essentielles. Vous
+          pourrez le compléter plus tard.
         </p>
       </div>
 
@@ -196,7 +208,9 @@ export function SimpleProductForm({ onSuccess, onCancel }: SimpleProductFormProp
             id="name"
             type="text"
             value={formData.name}
-            onChange={(e) => setFormData(prev => ({ ...prev, name: e.target.value }))}
+            onChange={e =>
+              setFormData(prev => ({ ...prev, name: e.target.value }))
+            }
             placeholder="Ex: Canapé scandinave 3 places"
             className="mt-1"
             disabled={loading}
@@ -205,14 +219,22 @@ export function SimpleProductForm({ onSuccess, onCancel }: SimpleProductFormProp
 
         {/* Lien du produit */}
         <div>
-          <Label htmlFor="supplier_page_url" className="text-sm font-medium text-black">
+          <Label
+            htmlFor="supplier_page_url"
+            className="text-sm font-medium text-black"
+          >
             Lien du produit *
           </Label>
           <Input
             id="supplier_page_url"
             type="url"
             value={formData.supplier_page_url}
-            onChange={(e) => setFormData(prev => ({ ...prev, supplier_page_url: e.target.value }))}
+            onChange={e =>
+              setFormData(prev => ({
+                ...prev,
+                supplier_page_url: e.target.value,
+              }))
+            }
             placeholder="https://fournisseur.com/produit"
             className="mt-1"
             disabled={loading}
@@ -262,7 +284,9 @@ export function SimpleProductForm({ onSuccess, onCancel }: SimpleProductFormProp
                       {formData.imageFile?.name}
                     </p>
                     <p className="text-xs text-gray-500">
-                      {formData.imageFile && (formData.imageFile.size / 1024 / 1024).toFixed(2)} MB
+                      {formData.imageFile &&
+                        (formData.imageFile.size / 1024 / 1024).toFixed(2)}{' '}
+                      MB
                     </p>
                   </div>
                   <CheckCircle className="h-5 w-5 text-green-600" />
@@ -312,10 +336,11 @@ export function SimpleProductForm({ onSuccess, onCancel }: SimpleProductFormProp
 
       <div className="mt-4 p-3 bg-blue-50 border border-blue-200">
         <p className="text-xs text-blue-700">
-          <strong>Note :</strong> Après la création, vous pourrez compléter les informations du produit
-          (prix, catégorie, description, etc.) depuis la page détail du produit.
+          <strong>Note :</strong> Après la création, vous pourrez compléter les
+          informations du produit (prix, catégorie, description, etc.) depuis la
+          page détail du produit.
         </p>
       </div>
     </div>
-  )
+  );
 }

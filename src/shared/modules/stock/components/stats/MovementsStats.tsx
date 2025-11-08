@@ -1,33 +1,38 @@
-'use client'
+'use client';
 
-import React from 'react'
-import { TrendingUp, Activity, Clock, BarChart3 } from 'lucide-react'
-import { StockKPICard } from '@/components/ui-v2/stock/StockKPICard'
-import { MovementsStats } from '@/shared/modules/stock/hooks'
+import React from 'react';
+
+import { TrendingUp, Activity, Clock, BarChart3 } from 'lucide-react';
+
+import { StockKPICard } from '@/components/ui-v2/stock/StockKPICard';
+import type { MovementsStats } from '@/shared/modules/stock/hooks';
 
 interface MovementsStatsCardsProps {
-  stats: MovementsStats | null
-  loading: boolean
+  stats: MovementsStats | null;
+  loading: boolean;
 }
 
-export function MovementsStatsCards({ stats, loading }: MovementsStatsCardsProps) {
+export function MovementsStatsCards({
+  stats,
+  loading,
+}: MovementsStatsCardsProps) {
   if (loading) {
     return (
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
         {[...Array(4)].map((_, i) => (
-          <div key={i} className="h-20 bg-gray-200 rounded-lg animate-pulse"></div>
+          <div key={i} className="h-20 bg-gray-200 rounded-lg animate-pulse" />
         ))}
       </div>
-    )
+    );
   }
 
   if (!stats) {
-    return null
+    return null;
   }
 
   const formatNumber = (num: number) => {
-    return new Intl.NumberFormat('fr-FR').format(num)
-  }
+    return new Intl.NumberFormat('fr-FR').format(num);
+  };
 
   return (
     <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
@@ -63,5 +68,5 @@ export function MovementsStatsCards({ stats, loading }: MovementsStatsCardsProps
         variant="default"
       />
     </div>
-  )
+  );
 }

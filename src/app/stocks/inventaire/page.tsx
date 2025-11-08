@@ -1,9 +1,11 @@
-'use client'
+'use client';
 
-import React, { useState, useEffect } from 'react'
-import { useRouter, useSearchParams } from 'next/navigation'
-import Image from 'next/image'
-import Link from 'next/link'
+import React, { useState, useEffect } from 'react';
+
+import Image from 'next/image';
+import Link from 'next/link';
+import { useRouter, useSearchParams } from 'next/navigation';
+
 import {
   Package,
   Search,
@@ -19,83 +21,85 @@ import {
   Clock,
   User,
   FileText,
-  ExternalLink
-} from 'lucide-react'
-import { ButtonV2 } from '@/components/ui/button'
-import { Input } from '@/components/ui/input'
-import { Badge } from '@/components/ui/badge'
-import { Card, CardContent } from '@/components/ui/card'
-import { useStockInventory } from '@/shared/modules/stock/hooks'
-import { useStockMovements } from '@/shared/modules/stock/hooks'
-import { formatPrice } from '@/lib/utils'
+  ExternalLink,
+} from 'lucide-react';
+
+import { Badge } from '@/components/ui/badge';
+import { ButtonV2 } from '@/components/ui/button';
+import { Card, CardContent } from '@/components/ui/card';
 import {
   Dialog,
   DialogContent,
   DialogHeader,
   DialogTitle,
   DialogDescription,
-} from '@/components/ui/dialog'
-import { StockReportsModal } from '@/components/business/stock-reports-modal'
-import { ProductHistoryModal } from '@/components/business/product-history-modal'
-import { InventoryAdjustmentModal } from '@/components/business/inventory-adjustment-modal'
-import { StockKPICard } from '@/components/ui-v2/stock'
+} from '@/components/ui/dialog';
+import { Input } from '@/components/ui/input';
+import { StockKPICard } from '@/components/ui-v2/stock';
+import { formatPrice } from '@verone/utils';
+import { ProductHistoryModal } from '@/shared/modules/products/components/modals/ProductHistoryModal';
+import { InventoryAdjustmentModal } from '@/shared/modules/stock/components/modals/InventoryAdjustmentModal';
+import { StockReportsModal } from '@/shared/modules/stock/components/modals/StockReportsModal';
+import { useStockMovements } from '@/shared/modules/stock/hooks';
+import { useStockInventory } from '@/shared/modules/stock/hooks';
 
 export default function InventairePage() {
-  const router = useRouter()
-  const searchParams = useSearchParams()
+  const router = useRouter();
+  const searchParams = useSearchParams();
   const [filters, setFilters] = useState({
     search: '',
     dateFrom: '',
-    dateTo: ''
-  })
-  const [selectedProduct, setSelectedProduct] = useState<any>(null)
-  const [isHistoryModalOpen, setIsHistoryModalOpen] = useState(false)
-  const [isReportsModalOpen, setIsReportsModalOpen] = useState(false)
-  const [isAdjustmentModalOpen, setIsAdjustmentModalOpen] = useState(false)
+    dateTo: '',
+  });
+  const [selectedProduct, setSelectedProduct] = useState<any>(null);
+  const [isHistoryModalOpen, setIsHistoryModalOpen] = useState(false);
+  const [isReportsModalOpen, setIsReportsModalOpen] = useState(false);
+  const [isAdjustmentModalOpen, setIsAdjustmentModalOpen] = useState(false);
 
-  const { inventory, stats, loading, fetchInventory, exportInventoryCSV } = useStockInventory()
+  const { inventory, stats, loading, fetchInventory, exportInventoryCSV } =
+    useStockInventory();
 
   useEffect(() => {
-    fetchInventory()
-  }, [fetchInventory])
+    fetchInventory();
+  }, [fetchInventory]);
 
   // Ouvrir automatiquement le modal si query param ?id= présent (venant des notifications)
   useEffect(() => {
-    const productId = searchParams.get('id')
+    const productId = searchParams.get('id');
     if (productId && inventory.length > 0 && !isHistoryModalOpen) {
-      const product = inventory.find(p => p.id === productId)
+      const product = inventory.find(p => p.id === productId);
       if (product) {
-        setSelectedProduct(product)
-        setIsHistoryModalOpen(true)
+        setSelectedProduct(product);
+        setIsHistoryModalOpen(true);
       }
     }
-  }, [searchParams, inventory, isHistoryModalOpen])
+  }, [searchParams, inventory, isHistoryModalOpen]);
 
   const handleRefresh = () => {
-    fetchInventory(filters)
-  }
+    fetchInventory(filters);
+  };
 
   const handleExport = () => {
-    exportInventoryCSV(inventory)
-  }
+    exportInventoryCSV(inventory);
+  };
 
   const handleSearch = (value: string) => {
-    setFilters(prev => ({ ...prev, search: value }))
-  }
+    setFilters(prev => ({ ...prev, search: value }));
+  };
 
   const handleApplyFilters = () => {
-    fetchInventory(filters)
-  }
+    fetchInventory(filters);
+  };
 
   const openHistoryModal = (product: any) => {
-    setSelectedProduct(product)
-    setIsHistoryModalOpen(true)
-  }
+    setSelectedProduct(product);
+    setIsHistoryModalOpen(true);
+  };
 
   const openAdjustmentModal = (product: any) => {
-    setSelectedProduct(product)
-    setIsAdjustmentModalOpen(true)
-  }
+    setSelectedProduct(product);
+    setIsAdjustmentModalOpen(true);
+  };
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -116,8 +120,12 @@ export default function InventairePage() {
               <div className="flex items-center space-x-2">
                 <Package className="h-6 w-6 text-black" />
                 <div>
-                  <h1 className="text-xl font-bold text-black">Inventaire Stock</h1>
-                  <p className="text-xs text-gray-600">Vue consolidée des mouvements</p>
+                  <h1 className="text-xl font-bold text-black">
+                    Inventaire Stock
+                  </h1>
+                  <p className="text-xs text-gray-600">
+                    Vue consolidée des mouvements
+                  </p>
                 </div>
               </div>
             </div>
@@ -129,7 +137,9 @@ export default function InventairePage() {
                 disabled={loading}
                 className="border-black text-black hover:bg-black hover:text-white h-8 text-xs"
               >
-                <RefreshCw className={`h-3 w-3 mr-1.5 ${loading ? 'animate-spin' : ''}`} />
+                <RefreshCw
+                  className={`h-3 w-3 mr-1.5 ${loading ? 'animate-spin' : ''}`}
+                />
                 Actualiser
               </ButtonV2>
               <ButtonV2
@@ -186,7 +196,10 @@ export default function InventairePage() {
             value={new Date().toLocaleDateString('fr-FR')}
             icon={Calendar}
             variant="info"
-            subtitle={new Date().toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' })}
+            subtitle={new Date().toLocaleTimeString('fr-FR', {
+              hour: '2-digit',
+              minute: '2-digit',
+            })}
           />
         </div>
 
@@ -198,21 +211,25 @@ export default function InventairePage() {
               <Input
                 placeholder="Rechercher produit, SKU..."
                 value={filters.search}
-                onChange={(e) => handleSearch(e.target.value)}
+                onChange={e => handleSearch(e.target.value)}
                 className="pl-8 border-gray-300 h-9 text-sm"
               />
             </div>
             <Input
               type="date"
               value={filters.dateFrom}
-              onChange={(e) => setFilters(prev => ({ ...prev, dateFrom: e.target.value }))}
+              onChange={e =>
+                setFilters(prev => ({ ...prev, dateFrom: e.target.value }))
+              }
               className="border-gray-300 w-40 h-9 text-sm"
               placeholder="Date début"
             />
             <Input
               type="date"
               value={filters.dateTo}
-              onChange={(e) => setFilters(prev => ({ ...prev, dateTo: e.target.value }))}
+              onChange={e =>
+                setFilters(prev => ({ ...prev, dateTo: e.target.value }))
+              }
               className="border-gray-300 w-40 h-9 text-sm"
               placeholder="Date fin"
             />
@@ -251,19 +268,35 @@ export default function InventairePage() {
                 <table className="w-full">
                   <thead className="bg-gray-50 border-b border-gray-200">
                     <tr>
-                      <th className="text-center py-2 px-3 font-medium text-gray-900 text-xs w-16"></th>
-                      <th className="text-left py-2 px-3 font-medium text-gray-900 text-xs">Produit</th>
-                      <th className="text-left py-2 px-3 font-medium text-gray-900 text-xs">SKU</th>
-                      <th className="text-right py-2 px-3 font-medium text-gray-900 text-xs">Entrées</th>
-                      <th className="text-right py-2 px-3 font-medium text-gray-900 text-xs">Sorties</th>
-                      <th className="text-right py-2 px-3 font-medium text-gray-900 text-xs">Ajust.</th>
-                      <th className="text-right py-2 px-3 font-medium text-gray-900 text-xs">Stock</th>
-                      <th className="text-left py-2 px-3 font-medium text-gray-900 text-xs">Dernière MAJ</th>
-                      <th className="text-center py-2 px-3 font-medium text-gray-900 text-xs">Actions</th>
+                      <th className="text-center py-2 px-3 font-medium text-gray-900 text-xs w-16" />
+                      <th className="text-left py-2 px-3 font-medium text-gray-900 text-xs">
+                        Produit
+                      </th>
+                      <th className="text-left py-2 px-3 font-medium text-gray-900 text-xs">
+                        SKU
+                      </th>
+                      <th className="text-right py-2 px-3 font-medium text-gray-900 text-xs">
+                        Entrées
+                      </th>
+                      <th className="text-right py-2 px-3 font-medium text-gray-900 text-xs">
+                        Sorties
+                      </th>
+                      <th className="text-right py-2 px-3 font-medium text-gray-900 text-xs">
+                        Ajust.
+                      </th>
+                      <th className="text-right py-2 px-3 font-medium text-gray-900 text-xs">
+                        Stock
+                      </th>
+                      <th className="text-left py-2 px-3 font-medium text-gray-900 text-xs">
+                        Dernière MAJ
+                      </th>
+                      <th className="text-center py-2 px-3 font-medium text-gray-900 text-xs">
+                        Actions
+                      </th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-gray-100">
-                    {inventory.map((item) => (
+                    {inventory.map(item => (
                       <tr
                         key={item.id}
                         onClick={() => openHistoryModal(item)}
@@ -293,18 +326,24 @@ export default function InventairePage() {
                           </Link>
                         </td>
                         <td className="py-2 px-3">
-                          <span className="text-gray-500 font-mono text-xs">{item.sku}</span>
+                          <span className="text-gray-500 font-mono text-xs">
+                            {item.sku}
+                          </span>
                         </td>
                         <td className="py-2 px-3 text-right">
                           <div className="flex items-center justify-end gap-1">
                             <TrendingUp className="h-4 w-4 text-black" />
-                            <span className="font-medium text-black text-sm">+{item.total_in}</span>
+                            <span className="font-medium text-black text-sm">
+                              +{item.total_in}
+                            </span>
                           </div>
                         </td>
                         <td className="py-2 px-3 text-right">
                           <div className="flex items-center justify-end gap-1">
                             <TrendingDown className="h-4 w-4 text-gray-600" />
-                            <span className="font-medium text-gray-700 text-sm">-{item.total_out}</span>
+                            <span className="font-medium text-gray-700 text-sm">
+                              -{item.total_out}
+                            </span>
                           </div>
                         </td>
                         <td className="py-2 px-3 text-right">
@@ -317,7 +356,8 @@ export default function InventairePage() {
                                   <TrendingDown className="h-4 w-4 text-gray-500" />
                                 )}
                                 <span className="font-medium text-gray-700 text-sm">
-                                  {item.total_adjustments > 0 ? '+' : ''}{item.total_adjustments}
+                                  {item.total_adjustments > 0 ? '+' : ''}
+                                  {item.total_adjustments}
                                 </span>
                               </>
                             ) : (
@@ -326,17 +366,22 @@ export default function InventairePage() {
                           </div>
                         </td>
                         <td className="py-2 px-3 text-right">
-                          <span className="font-bold text-black text-base">{item.stock_quantity}</span>
+                          <span className="font-bold text-black text-base">
+                            {item.stock_quantity}
+                          </span>
                         </td>
                         <td className="py-2 px-3">
                           <span className="text-xs text-gray-600">
                             {item.last_movement_at
-                              ? new Date(item.last_movement_at).toLocaleString('fr-FR', {
-                                  day: '2-digit',
-                                  month: '2-digit',
-                                  hour: '2-digit',
-                                  minute: '2-digit'
-                                })
+                              ? new Date(item.last_movement_at).toLocaleString(
+                                  'fr-FR',
+                                  {
+                                    day: '2-digit',
+                                    month: '2-digit',
+                                    hour: '2-digit',
+                                    minute: '2-digit',
+                                  }
+                                )
                               : 'N/A'}
                           </span>
                         </td>
@@ -345,9 +390,9 @@ export default function InventairePage() {
                             <ButtonV2
                               variant="ghost"
                               size="sm"
-                              onClick={(e) => {
-                                e.stopPropagation()
-                                openAdjustmentModal(item)
+                              onClick={e => {
+                                e.stopPropagation();
+                                openAdjustmentModal(item);
                               }}
                               title="Ajuster le stock"
                               className="h-7 w-7 p-0 hover:bg-green-600 hover:text-white transition-colors"
@@ -357,9 +402,9 @@ export default function InventairePage() {
                             <ButtonV2
                               variant="ghost"
                               size="sm"
-                              onClick={(e) => {
-                                e.stopPropagation()
-                                openHistoryModal(item)
+                              onClick={e => {
+                                e.stopPropagation();
+                                openHistoryModal(item);
                               }}
                               title="Voir historique détaillé"
                               className="h-7 w-7 p-0 hover:bg-black hover:text-white transition-colors"
@@ -380,7 +425,8 @@ export default function InventairePage() {
         {/* Footer stats - Compact */}
         <div className="flex items-center justify-between text-xs text-gray-600 px-1">
           <p>
-            <span className="font-medium text-black">{inventory.length}</span> produit(s) avec mouvements
+            <span className="font-medium text-black">{inventory.length}</span>{' '}
+            produit(s) avec mouvements
           </p>
           <p className="text-gray-500">
             {stats.total_movements} mouvements totaux
@@ -393,7 +439,7 @@ export default function InventairePage() {
         isOpen={isAdjustmentModalOpen}
         onClose={() => setIsAdjustmentModalOpen(false)}
         onSuccess={() => {
-          fetchInventory() // Refresh data après ajustement
+          fetchInventory(); // Refresh data après ajustement
         }}
         product={selectedProduct}
       />
@@ -411,5 +457,5 @@ export default function InventairePage() {
         onClose={() => setIsReportsModalOpen(false)}
       />
     </div>
-  )
+  );
 }

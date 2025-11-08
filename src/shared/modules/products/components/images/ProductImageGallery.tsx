@@ -1,13 +1,17 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+
 import Image from 'next/image';
+
 import { Edit, Upload, Trash2, RotateCw, Eye } from 'lucide-react';
-import { ButtonV2 } from '@/components/ui/button';
+
 import { Badge } from '@/components/ui/badge';
-import { cn } from '@/lib/utils';
+import { Button } from '@/components/ui/button';
+import { cn } from '@verone/utils';
 import { useProductImages } from '@/shared/modules/common/hooks';
-import { ProductImageViewerModal } from './product-image-viewer-modal';
+
+import { ProductImageViewerModal } from './ProductImageViewerModal';
 
 interface ProductImageGalleryProps {
   productId: string;
@@ -108,13 +112,13 @@ export function ProductImageGallery({
   if (loading) {
     return (
       <div className={cn('space-y-4', className)}>
-        <div className="relative aspect-square bg-gray-100 animate-pulse card-verone"></div>
+        <div className="relative aspect-square bg-gray-100 animate-pulse card-verone" />
         <div className="grid grid-cols-4 gap-1">
           {[1, 2, 3, 4].map(i => (
             <div
               key={i}
               className="aspect-square bg-gray-100 animate-pulse rounded"
-            ></div>
+            />
           ))}
         </div>
       </div>
@@ -145,7 +149,7 @@ export function ProductImageGallery({
           {hasImages && (
             <div className="absolute inset-0 bg-black bg-opacity-0 hover:bg-opacity-30 transition-all duration-300 flex items-center justify-center opacity-0 hover:opacity-100">
               <div className="flex space-x-2">
-                <ButtonV2
+                <Button
                   size="sm"
                   variant="secondary"
                   className="text-xs"
@@ -153,9 +157,9 @@ export function ProductImageGallery({
                 >
                   <Eye className="h-3 w-3 mr-1" />
                   Voir
-                </ButtonV2>
+                </Button>
                 {!displayImage?.is_primary && (
-                  <ButtonV2
+                  <Button
                     size="sm"
                     variant="secondary"
                     className="text-xs"
@@ -168,7 +172,7 @@ export function ProductImageGallery({
                   >
                     <RotateCw className="h-3 w-3 mr-1" />
                     Définir principale
-                  </ButtonV2>
+                  </Button>
                 )}
               </div>
             </div>
@@ -199,7 +203,7 @@ export function ProductImageGallery({
 
       {/* Bouton actualiser compacté */}
       <div className="flex items-center justify-between px-2">
-        <ButtonV2
+        <Button
           onClick={fetchImages}
           disabled={loading}
           variant="outline"
@@ -208,7 +212,7 @@ export function ProductImageGallery({
         >
           <RotateCw className="h-3 w-3 mr-1" />
           Actualiser
-        </ButtonV2>
+        </Button>
         <div className="text-[10px] text-gray-500">
           {images.length} image{images.length !== 1 ? 's' : ''} •
           {images.filter(i => i.is_primary).length} principale •
@@ -219,7 +223,7 @@ export function ProductImageGallery({
       {/* Actions section */}
       <div className="card-verone p-3">
         <h3 className="text-xs font-semibold mb-2">Actions</h3>
-        <ButtonV2
+        <Button
           onClick={() => setShowUploadDialog(true)}
           variant="outline"
           size="sm"
@@ -228,7 +232,7 @@ export function ProductImageGallery({
         >
           <Upload className="h-3 w-3 mr-1" />
           Gérer photos ({galleryImages.length})
-        </ButtonV2>
+        </Button>
       </div>
 
       {/* Product Image Viewer Modal */}

@@ -1,82 +1,97 @@
-'use client'
+'use client';
 
-import { useState, useEffect } from 'react'
-import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog'
-import { ButtonV2 } from '@/components/ui/button'
-import { Input } from '@/components/ui/input'
-import { Label } from '@/components/ui/label'
-import { Badge } from '@/components/ui/badge'
-import { Check, AlertCircle, ArrowRight } from 'lucide-react'
-import { UniversalProductSelectorV2, SelectedProduct } from '@/components/business/universal-product-selector-v2'
-import type { AddProductToGroupData, VariantGroup } from '../../types/variant-groups'
+import { useState, useEffect } from 'react';
+
+import { Check, AlertCircle, ArrowRight } from 'lucide-react';
+
+import { Badge } from '@/components/ui/badge';
+import { ButtonV2 } from '@/components/ui/button';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import type { SelectedProduct } from '@/shared/modules/products/components/selectors/UniversalProductSelectorV2';
+import { UniversalProductSelectorV2 } from '@/shared/modules/products/components/selectors/UniversalProductSelectorV2';
+import type {
+  AddProductToGroupData,
+  VariantGroup,
+} from '@verone/types';
 
 interface VariantAddProductModalProps {
-  isOpen: boolean
-  onClose: () => void
-  onSubmit: (data: AddProductToGroupData) => Promise<void>
-  group: VariantGroup | null
+  isOpen: boolean;
+  onClose: () => void;
+  onSubmit: (data: AddProductToGroupData) => Promise<void>;
+  group: VariantGroup | null;
 }
 
 export function VariantAddProductModal({
   isOpen,
   onClose,
   onSubmit,
-  group
+  group,
 }: VariantAddProductModalProps) {
-  const [showProductSelector, setShowProductSelector] = useState(false)
-  const [selectedProduct, setSelectedProduct] = useState<SelectedProduct | null>(null)
-  const [color, setColor] = useState('')
-  const [material, setMaterial] = useState('')
-  const [commonWeight, setCommonWeight] = useState<number | undefined>()
-  const [isSubmitting, setIsSubmitting] = useState(false)
+  const [showProductSelector, setShowProductSelector] = useState(false);
+  const [selectedProduct, setSelectedProduct] =
+    useState<SelectedProduct | null>(null);
+  const [color, setColor] = useState('');
+  const [material, setMaterial] = useState('');
+  const [commonWeight, setCommonWeight] = useState<number | undefined>();
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const newName = selectedProduct && (color || material)
-    ? `${group?.name || ''} - ${[color, material].filter(Boolean).join(' - ')}`
-    : group?.name || ''
+  const newName =
+    selectedProduct && (color || material)
+      ? `${group?.name || ''} - ${[color, material].filter(Boolean).join(' - ')}`
+      : group?.name || '';
 
   useEffect(() => {
     if (!isOpen) {
-      setSelectedProduct(null)
-      setColor('')
-      setMaterial('')
-      setCommonWeight(undefined)
-      setShowProductSelector(false)
+      setSelectedProduct(null);
+      setColor('');
+      setMaterial('');
+      setCommonWeight(undefined);
+      setShowProductSelector(false);
     }
-  }, [isOpen])
+  }, [isOpen]);
 
   useEffect(() => {
     if (selectedProduct?.variant_attributes) {
-      setColor(selectedProduct.variant_attributes.color || '')
-      setMaterial(selectedProduct.variant_attributes.material || '')
+      setColor(selectedProduct.variant_attributes.color || '');
+      setMaterial(selectedProduct.variant_attributes.material || '');
     }
-  }, [selectedProduct])
+  }, [selectedProduct]);
 
   const handleProductSelect = (products: SelectedProduct[]) => {
     if (products.length > 0) {
-      setSelectedProduct(products[0])
-      setShowProductSelector(false)
+      setSelectedProduct(products[0]);
+      setShowProductSelector(false);
     }
-  }
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault()
-    if (!selectedProduct || (!color && !material)) return
+    e.preventDefault();
+    if (!selectedProduct || (!color && !material)) return;
 
-    setIsSubmitting(true)
+    setIsSubmitting(true);
     try {
       await onSubmit({
         product_id: selectedProduct.id,
-        variant_group_id: group?.id || ''
-      })
-      onClose()
+        variant_group_id: group?.id || '',
+      });
+      onClose();
     } catch (error) {
-      console.error('Erreur lors de l\'ajout du produit:', error)
+      console.error("Erreur lors de l'ajout du produit:", error);
     } finally {
-      setIsSubmitting(false)
+      setIsSubmitting(false);
     }
-  }
+  };
 
-  if (!group) return null
+  if (!group) return null;
 
   return (
     <>
@@ -99,7 +114,9 @@ export function VariantAddProductModal({
                   <div className="mt-2 p-4 border border-gray-300 rounded-md flex items-center justify-between">
                     <div>
                       <div className="font-medium">{selectedProduct.name}</div>
-                      <div className="text-sm text-gray-600">{selectedProduct.sku}</div>
+                      <div className="text-sm text-gray-600">
+                        {selectedProduct.sku}
+                      </div>
                     </div>
                     <ButtonV2
                       type="button"
@@ -121,7 +138,9 @@ export function VariantAddProductModal({
                   </ButtonV2>
                 )}
                 <p className="text-xs text-gray-600 mt-1">
-                  Seuls les produits de la sous-catégorie "{group.subcategory?.name}" sans groupe de variantes sont disponibles
+                  Seuls les produits de la sous-catégorie "
+                  {group.subcategory?.name}" sans groupe de variantes sont
+                  disponibles
                 </p>
               </div>
 
@@ -135,7 +154,7 @@ export function VariantAddProductModal({
                       <Input
                         id="color"
                         value={color}
-                        onChange={(e) => setColor(e.target.value)}
+                        onChange={e => setColor(e.target.value)}
                         placeholder="Ex: Noir, Blanc, Bleu"
                         className="mt-1"
                       />
@@ -148,7 +167,7 @@ export function VariantAddProductModal({
                       <Input
                         id="material"
                         value={material}
-                        onChange={(e) => setMaterial(e.target.value)}
+                        onChange={e => setMaterial(e.target.value)}
                         placeholder="Ex: Bois, Métal, Tissu"
                         className="mt-1"
                       />
@@ -156,7 +175,10 @@ export function VariantAddProductModal({
                   </div>
 
                   <div>
-                    <Label htmlFor="common_weight" className="text-sm font-medium">
+                    <Label
+                      htmlFor="common_weight"
+                      className="text-sm font-medium"
+                    >
                       Poids commun (kg)
                     </Label>
                     <Input
@@ -165,7 +187,13 @@ export function VariantAddProductModal({
                       step="0.01"
                       min="0"
                       value={commonWeight || ''}
-                      onChange={(e) => setCommonWeight(e.target.value ? parseFloat(e.target.value) : undefined)}
+                      onChange={e =>
+                        setCommonWeight(
+                          e.target.value
+                            ? parseFloat(e.target.value)
+                            : undefined
+                        )
+                      }
                       placeholder="Ex: 2.5"
                       className="mt-1"
                     />
@@ -174,12 +202,16 @@ export function VariantAddProductModal({
                     </p>
                   </div>
 
-                  {(!color && !material) && (
+                  {!color && !material && (
                     <div className="bg-gray-50 border border-gray-200 rounded-lg p-3 flex items-start space-x-2">
                       <AlertCircle className="h-5 w-5 text-black flex-shrink-0 mt-0.5" />
                       <div className="text-sm text-gray-900">
-                        <p className="font-medium">Au moins une variante requise</p>
-                        <p className="text-xs mt-1">Veuillez renseigner la couleur et/ou la matière</p>
+                        <p className="font-medium">
+                          Au moins une variante requise
+                        </p>
+                        <p className="text-xs mt-1">
+                          Veuillez renseigner la couleur et/ou la matière
+                        </p>
                       </div>
                     </div>
                   )}
@@ -200,7 +232,9 @@ export function VariantAddProductModal({
                       </div>
                       <div className="flex items-center space-x-2">
                         <span className="text-gray-600">Nouveau nom :</span>
-                        <Badge className="bg-blue-600 text-white">{newName}</Badge>
+                        <Badge className="bg-blue-600 text-white">
+                          {newName}
+                        </Badge>
                       </div>
                     </div>
                   </div>
@@ -224,15 +258,17 @@ export function VariantAddProductModal({
                     </h4>
                     <ul className="text-sm text-gray-700 space-y-1">
                       <li>→ Sous-catégorie : {group.subcategory?.name}</li>
-                      {(group.dimensions_length || group.dimensions_width || group.dimensions_height) && (
+                      {(group.dimensions_length ||
+                        group.dimensions_width ||
+                        group.dimensions_height) && (
                         <li>
-                          → Dimensions : {group.dimensions_length || 0} × {group.dimensions_width || 0} × {group.dimensions_height || 0} {group.dimensions_unit}
+                          → Dimensions : {group.dimensions_length || 0} ×{' '}
+                          {group.dimensions_width || 0} ×{' '}
+                          {group.dimensions_height || 0} {group.dimensions_unit}
                         </li>
                       )}
                       {commonWeight && (
-                        <li>
-                          → Poids commun : {commonWeight} kg
-                        </li>
+                        <li>→ Poids commun : {commonWeight} kg</li>
                       )}
                     </ul>
                   </div>
@@ -251,7 +287,9 @@ export function VariantAddProductModal({
               </ButtonV2>
               <ButtonV2
                 type="submit"
-                disabled={!selectedProduct || (!color && !material) || isSubmitting}
+                disabled={
+                  !selectedProduct || (!color && !material) || isSubmitting
+                }
                 className="bg-black text-white hover:bg-gray-800"
               >
                 {isSubmitting ? 'Ajout en cours...' : 'Ajouter au groupe'}
@@ -273,9 +311,9 @@ export function VariantAddProductModal({
           description={`Groupe : ${group.name} • ${group.subcategory?.name}`}
           showQuantity={false}
           showPricing={false}
-          showImages={true}
+          showImages
         />
       )}
     </>
-  )
+  );
 }

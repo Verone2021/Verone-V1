@@ -1,4 +1,4 @@
-'use client'
+'use client';
 
 /**
  * 📊 Page Stock Analytics
@@ -9,9 +9,11 @@
  * @since 2025-11-02
  */
 
-import * as React from 'react'
-import { useEffect } from 'react'
-import Image from 'next/image'
+import * as React from 'react';
+import { useEffect } from 'react';
+
+import Image from 'next/image';
+
 import {
   TrendingUp,
   Package,
@@ -19,12 +21,18 @@ import {
   Clock,
   AlertTriangle,
   BarChart3,
-  RefreshCw
-} from 'lucide-react'
-import { useStockAnalytics } from '@/shared/modules/stock/hooks'
-import { StockKPICard } from '@/components/ui-v2/stock'
-import { Button } from '@/components/ui/button'
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
+  RefreshCw,
+} from 'lucide-react';
+
+import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from '@/components/ui/card';
 import {
   Table,
   TableBody,
@@ -32,18 +40,19 @@ import {
   TableHead,
   TableHeader,
   TableRow,
-} from '@/components/ui/table'
-import { Badge } from '@/components/ui/badge'
-import { ABC_CLASSES, XYZ_CLASSES } from '@/shared/modules/stock/hooks'
+} from '@/components/ui/table';
+import { StockKPICard } from '@/components/ui-v2/stock';
+import { useStockAnalytics } from '@/shared/modules/stock/hooks';
+import { ABC_CLASSES, XYZ_CLASSES } from '@/shared/modules/stock/hooks';
 
 export default function StockAnalyticsPage() {
-  const { report, loading, error, generateReport } = useStockAnalytics()
+  const { report, loading, error, generateReport } = useStockAnalytics();
 
   // Générer le rapport au chargement de la page
   useEffect(() => {
-    generateReport(90)
+    generateReport(90);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [])
+  }, []);
 
   /**
    * Formate un nombre avec 2 décimales
@@ -51,39 +60,45 @@ export default function StockAnalyticsPage() {
   const formatNumber = (num: number, decimals = 2): string => {
     return num.toLocaleString('fr-FR', {
       minimumFractionDigits: decimals,
-      maximumFractionDigits: decimals
-    })
-  }
+      maximumFractionDigits: decimals,
+    });
+  };
 
   /**
    * Retourne la couleur du badge ABC
    */
   const getABCBadgeColor = (abcClass: 'A' | 'B' | 'C') => {
-    const cls = ABC_CLASSES.find(c => c.id === abcClass)
-    return cls ? cls.color : 'bg-gray-100'
-  }
+    const cls = ABC_CLASSES.find(c => c.id === abcClass);
+    return cls ? cls.color : 'bg-gray-100';
+  };
 
   /**
    * Retourne la couleur du badge XYZ
    */
   const getXYZBadgeColor = (xyzClass: 'X' | 'Y' | 'Z') => {
-    const cls = XYZ_CLASSES.find(c => c.id === xyzClass)
-    return cls ? cls.color : 'bg-gray-100'
-  }
+    const cls = XYZ_CLASSES.find(c => c.id === xyzClass);
+    return cls ? cls.color : 'bg-gray-100';
+  };
 
   if (error) {
     return (
       <div className="container mx-auto p-6">
         <div className="bg-red-50 border border-red-200 rounded-lg p-4">
-          <p className="text-red-800 font-medium">Erreur lors du chargement des analytics</p>
+          <p className="text-red-800 font-medium">
+            Erreur lors du chargement des analytics
+          </p>
           <p className="text-red-600 text-sm mt-1">{error}</p>
-          <Button onClick={() => generateReport(90)} className="mt-4" variant="outline">
+          <Button
+            onClick={() => generateReport(90)}
+            className="mt-4"
+            variant="outline"
+          >
             <RefreshCw className="w-4 h-4 mr-2" />
             Réessayer
           </Button>
         </div>
       </div>
-    )
+    );
   }
 
   if (loading || !report) {
@@ -96,10 +111,17 @@ export default function StockAnalyticsPage() {
           </div>
         </div>
       </div>
-    )
+    );
   }
 
-  const { summary, products, abc_classes, xyz_classes, top_20_high_value, top_20_low_turnover } = report
+  const {
+    summary,
+    products,
+    abc_classes,
+    xyz_classes,
+    top_20_high_value,
+    top_20_low_turnover,
+  } = report;
 
   return (
     <div className="container mx-auto p-6 space-y-6">
@@ -190,12 +212,17 @@ export default function StockAnalyticsPage() {
         <Card>
           <CardHeader>
             <CardTitle>Distribution ABC</CardTitle>
-            <CardDescription>Classification Pareto 80/15/5 sur la valeur</CardDescription>
+            <CardDescription>
+              Classification Pareto 80/15/5 sur la valeur
+            </CardDescription>
           </CardHeader>
           <CardContent>
             <div className="space-y-3">
-              {abc_classes.map((cls) => (
-                <div key={cls.class_id} className="flex items-center justify-between">
+              {abc_classes.map(cls => (
+                <div
+                  key={cls.class_id}
+                  className="flex items-center justify-between"
+                >
                   <div className="flex items-center gap-3">
                     <Badge className={cls.color}>{cls.class_id}</Badge>
                     <div>
@@ -205,7 +232,9 @@ export default function StockAnalyticsPage() {
                   </div>
                   <div className="text-right">
                     <p className="font-bold">{cls.count} produits</p>
-                    <p className="text-xs text-gray-500">{formatNumber(cls.percentage, 1)}% valeur</p>
+                    <p className="text-xs text-gray-500">
+                      {formatNumber(cls.percentage, 1)}% valeur
+                    </p>
                   </div>
                 </div>
               ))}
@@ -221,8 +250,11 @@ export default function StockAnalyticsPage() {
           </CardHeader>
           <CardContent>
             <div className="space-y-3">
-              {xyz_classes.map((cls) => (
-                <div key={cls.class_id} className="flex items-center justify-between">
+              {xyz_classes.map(cls => (
+                <div
+                  key={cls.class_id}
+                  className="flex items-center justify-between"
+                >
                   <div className="flex items-center gap-3">
                     <Badge className={cls.color}>{cls.class_id}</Badge>
                     <div>
@@ -245,7 +277,9 @@ export default function StockAnalyticsPage() {
       <Card>
         <CardHeader>
           <CardTitle>Top 20 - Haute Valeur Stock</CardTitle>
-          <CardDescription>Produits avec la plus forte valeur d'inventaire</CardDescription>
+          <CardDescription>
+            Produits avec la plus forte valeur d'inventaire
+          </CardDescription>
         </CardHeader>
         <CardContent>
           <Table>
@@ -284,14 +318,24 @@ export default function StockAnalyticsPage() {
                       )}
                     </div>
                   </TableCell>
-                  <TableCell className="max-w-xs truncate">{product.product_name}</TableCell>
-                  <TableCell className="font-mono text-sm">{product.sku}</TableCell>
-                  <TableCell className="text-right">{product.stock_current}</TableCell>
+                  <TableCell className="max-w-xs truncate">
+                    {product.product_name}
+                  </TableCell>
+                  <TableCell className="font-mono text-sm">
+                    {product.sku}
+                  </TableCell>
+                  <TableCell className="text-right">
+                    {product.stock_current}
+                  </TableCell>
                   <TableCell className="text-right font-bold">
                     {formatNumber(product.stock_value, 0)} €
                   </TableCell>
-                  <TableCell className="text-right">{formatNumber(product.adu)}</TableCell>
-                  <TableCell className="text-right">{formatNumber(product.turnover_rate, 1)}%</TableCell>
+                  <TableCell className="text-right">
+                    {formatNumber(product.adu)}
+                  </TableCell>
+                  <TableCell className="text-right">
+                    {formatNumber(product.turnover_rate, 1)}%
+                  </TableCell>
                   <TableCell className="text-center">
                     <Badge className={getABCBadgeColor(product.abc_class)}>
                       {product.abc_class}
@@ -313,7 +357,10 @@ export default function StockAnalyticsPage() {
       <Card>
         <CardHeader>
           <CardTitle>Top 20 - Faible Rotation</CardTitle>
-          <CardDescription>Produits avec le taux de rotation le plus faible (risque immobilisation)</CardDescription>
+          <CardDescription>
+            Produits avec le taux de rotation le plus faible (risque
+            immobilisation)
+          </CardDescription>
         </CardHeader>
         <CardContent>
           <Table>
@@ -331,7 +378,7 @@ export default function StockAnalyticsPage() {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {top_20_low_turnover.map((product) => (
+              {top_20_low_turnover.map(product => (
                 <TableRow key={product.product_id}>
                   <TableCell>
                     <div className="flex items-center justify-center">
@@ -350,19 +397,35 @@ export default function StockAnalyticsPage() {
                       )}
                     </div>
                   </TableCell>
-                  <TableCell className="max-w-xs truncate">{product.product_name}</TableCell>
-                  <TableCell className="font-mono text-sm">{product.sku}</TableCell>
-                  <TableCell className="text-right">{product.stock_current}</TableCell>
+                  <TableCell className="max-w-xs truncate">
+                    {product.product_name}
+                  </TableCell>
+                  <TableCell className="font-mono text-sm">
+                    {product.sku}
+                  </TableCell>
                   <TableCell className="text-right">
-                    <span className={product.turnover_rate < 5 ? 'text-red-600 font-bold' : ''}>
+                    {product.stock_current}
+                  </TableCell>
+                  <TableCell className="text-right">
+                    <span
+                      className={
+                        product.turnover_rate < 5
+                          ? 'text-red-600 font-bold'
+                          : ''
+                      }
+                    >
                       {formatNumber(product.turnover_rate, 1)}%
                     </span>
                   </TableCell>
                   <TableCell className="text-right">
-                    {product.coverage_days > 900 ? '∞' : `${formatNumber(product.coverage_days, 0)}j`}
+                    {product.coverage_days > 900
+                      ? '∞'
+                      : `${formatNumber(product.coverage_days, 0)}j`}
                   </TableCell>
                   <TableCell className="text-right">
-                    {product.days_inactive !== null ? `${product.days_inactive}j` : '-'}
+                    {product.days_inactive !== null
+                      ? `${product.days_inactive}j`
+                      : '-'}
                   </TableCell>
                   <TableCell className="text-center">
                     <Badge className={getABCBadgeColor(product.abc_class)}>
@@ -383,11 +446,14 @@ export default function StockAnalyticsPage() {
 
       {/* Footer Info */}
       <div className="text-center text-sm text-gray-500">
-        <p>Rapport généré le {new Date(report.generated_at).toLocaleString('fr-FR')}</p>
+        <p>
+          Rapport généré le{' '}
+          {new Date(report.generated_at).toLocaleString('fr-FR')}
+        </p>
         <p className="mt-1">
           {products.length} produits analysés • Période: 90 jours
         </p>
       </div>
     </div>
-  )
+  );
 }

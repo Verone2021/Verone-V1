@@ -31,6 +31,7 @@ docs/ci-cd/
 ## 🔄 Workflow Déploiement Actuel
 
 ### Production
+
 - **Branch** : `production-stable`
 - **Auto-deploy** : ✅ Activé
 - **URL** : https://verone-v1.vercel.app
@@ -38,6 +39,7 @@ docs/ci-cd/
 - **Vercel Project** : verone-v1
 
 ### Staging (Preview)
+
 - **Branch** : `main`
 - **Auto-deploy** : ✅ Activé (preview deployments)
 - **URL** : `https://verone-v1-git-{branch}-verone2021s-projects.vercel.app`
@@ -101,16 +103,20 @@ npm run lint
 ### Vercel Ne Détecte Pas Commits
 
 1. **Vérifier connexion GitHub**
+
    ```bash
    curl -s -H "Authorization: Bearer $VERCEL_TOKEN" \
      "https://api.vercel.com/v9/projects/$PROJECT_ID" | jq '.link'
    ```
+
    Si `null` → Déconnecter/reconnecter GitHub
 
 2. **Vérifier webhooks GitHub**
+
    ```bash
    gh api repos/Verone2021/Verone-V1/hooks
    ```
+
    Chercher `api.vercel.com` avec `last_response.code = 200`
 
 3. **Vérifier production branch**
@@ -140,12 +146,14 @@ const errors = await page.console_messages({ onlyErrors: true });
 ## 📊 Métriques & Monitoring
 
 ### SLOs Production
+
 - **Build Time** : < 2 minutes
 - **Deployment Frequency** : Multiple/jour
 - **Console Errors** : 0 (zero tolerance)
 - **Uptime** : 99.9%
 
 ### URLs Monitoring
+
 - **Production** : https://verone-v1.vercel.app
 - **Vercel Dashboard** : https://vercel.com/verone2021s-projects/verone-v1
 - **Analytics** : https://vercel.com/verone2021s-projects/verone-v1/analytics
@@ -155,12 +163,14 @@ const errors = await page.console_messages({ onlyErrors: true });
 ## 🔗 Références
 
 ### Documentation Externe
+
 - [Vercel Deployments](https://vercel.com/docs/deployments)
 - [Vercel Git Integration](https://vercel.com/docs/deployments/git)
 - [Vercel API](https://vercel.com/docs/rest-api)
 - [Next.js Deployment](https://nextjs.org/docs/deployment)
 
 ### Documentation Interne
+
 - [Configuration Vercel](../guides/VERCEL-CONFIGURATION-2025.md)
 - [Architecture Système](../../CLAUDE.md)
 

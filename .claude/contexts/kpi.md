@@ -39,7 +39,7 @@ inputs:
 output:
   type: number
   unit: ratio
-  format: "0.00"
+  format: '0.00'
 source:
   table: sales_order_items + products + price_list_items
   hook: use-stock-metrics.ts
@@ -48,17 +48,17 @@ displayed_in:
   - src/app/dashboard/page.tsx:125
   - src/components/stock/stock-metrics-card.tsx:45
 thresholds:
-  excellent: "> 8"
-  good: "4-8"
-  warning: "2-4"
-  critical: "< 2"
+  excellent: '> 8'
+  good: '4-8'
+  warning: '2-4'
+  critical: '< 2'
 tests:
-  - scenario: "Stock rapide (turnover = 10)"
+  - scenario: 'Stock rapide (turnover = 10)'
     inputs:
       cost_of_goods_sold: 100000
       average_inventory_value: 10000
     expected_output: 10.0
-  - scenario: "Stock lent (turnover = 1.5)"
+  - scenario: 'Stock lent (turnover = 1.5)'
     inputs:
       cost_of_goods_sold: 30000
       average_inventory_value: 20000
@@ -98,6 +98,7 @@ metadata:
 - [ ] `metadata.status` : active | draft | deprecated
 
 **Sections optionnelles mais recommandées** :
+
 - `references` : Liens docs/code/database
 - `business_notes` : Contexte métier Vérone spécifique
 - `alerts` : Alertes automatiques futures
@@ -144,6 +145,7 @@ metadata:
 **Catalogue** : `packages/kpi/catalogue.md` version 2.0.0
 
 ### Module Organisations (8 KPI) ✅
+
 - Total Organisations
 - Total Fournisseurs
 - Fournisseurs Actifs
@@ -154,6 +156,7 @@ metadata:
 - Produits référencés (par fournisseur)
 
 ### Module Profil et rôles (3 KPI) ✅
+
 - Sessions totales (utilisateur)
 - Score d'engagement (utilisateur)
 - Temps passé par module (utilisateur)
@@ -161,17 +164,20 @@ metadata:
 ### KPI À DOCUMENTER (37 restants)
 
 #### Dashboard (4 KPI - PRIORITÉ CRITIQUE)
+
 - [ ] CA du mois
 - [ ] Valeur stock
 - [ ] Commandes ventes (count)
 - [ ] Commandes achats (count)
 
 #### Organisations - Onglets (3 KPI - PRIORITÉ HAUTE)
+
 - [ ] Contacts par organisation
 - [ ] Commandes par organisation
 - [ ] Produits par organisation (compteur onglet)
 
 #### Utilisateurs (5 KPI - PRIORITÉ HAUTE)
+
 - [ ] Durée moyenne session
 - [ ] Fréquence de connexion
 - [ ] Ancienneté compte (jours)
@@ -188,25 +194,30 @@ metadata:
 
 ```typescript
 // Exemple : packages/kpi/hooks/use-total-organisations-kpi.ts
-import { useOrganisations } from '@/hooks/use-organisations'
+import { useOrganisations } from '@/hooks/use-organisations';
 
 export function useTotalOrganisationsKPI(includeArchived = false) {
-  const { organisations, loading, error } = useOrganisations({})
+  const { organisations, loading, error } = useOrganisations({});
 
-  const total = organisations.filter(o =>
-    includeArchived || !o.archived_at
-  ).length
+  const total = organisations.filter(
+    o => includeArchived || !o.archived_at
+  ).length;
 
   const threshold =
-    total > 200 ? 'excellent' :
-    total > 100 ? 'good' :
-    total > 50 ? 'warning' : 'critical'
+    total > 200
+      ? 'excellent'
+      : total > 100
+        ? 'good'
+        : total > 50
+          ? 'warning'
+          : 'critical';
 
-  return { total, threshold, loading, error }
+  return { total, threshold, loading, error };
 }
 ```
 
 **Avantages hooks KPI** :
+
 - Logique calcul centralisée
 - Réutilisable cross-composants
 - Tests unitaires isolés
@@ -264,17 +275,20 @@ jobs:
 ## 📈 MÉTRIQUES SUCCÈS KPI
 
 **Coverage** :
+
 - Phase 1 (Oct 2025) : 23% (11/48) ✅
 - Phase 2 (Nov 2025) : 75% (36/48) 🎯
 - Phase 3 (Déc 2025) : 100% (48/48) 🎯
 
 **Qualité** :
+
 - Format YAML valide : 100%
 - Sections obligatoires complètes : 100%
 - Tests scenarios présents : 100%
 - References code valides : 100%
 
 **Automatisation** :
+
 - CI/CD validation YAML : ⏳ À implémenter
 - Auto-update catalogue : ⏳ À implémenter
 - Hooks React KPI : ⏳ À créer

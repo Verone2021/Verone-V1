@@ -51,13 +51,16 @@ Cette section documente le système complet d'authentification et d'autorisation
 ### Par Thématique
 
 #### Permissions & Rôles
+
 - [Matrice Rôles/Permissions](./roles-permissions-matrix.md)
 - [Profils Utilisateurs](./user-profiles.md)
 
 #### Sécurité Database
+
 - [RLS Policies](./rls-policies.md)
 
 #### Workflows Utilisateur
+
 - [Flows Authentification](./authentication-flows.md)
 
 ---

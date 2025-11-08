@@ -5,10 +5,10 @@
  */
 
 // Import cn from shadcn utils
-import { cn } from '@/lib/utils'
+import { cn } from '@verone/utils';
 
 // Re-export cn
-export { cn }
+export { cn };
 
 // Type helper pour conditional classnames
-export type ClassValue = Parameters<typeof cn>[0]
+export type ClassValue = Parameters<typeof cn>[0];

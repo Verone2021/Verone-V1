@@ -22,44 +22,44 @@
 
 ### Statistiques Générales
 
-| Catégorie | Total | Description |
-|-----------|-------|-------------|
-| **Fonctions TRIGGER** | 89 | Exécutées automatiquement par triggers (34.9%) |
-| **Fonctions RPC** | 72 | Appelables depuis client/API (28.2%) |
-| **Fonctions HELPER** | 46 | Utilitaires internes (18.0%) |
-| **Fonctions CALCULATION** | 28 | Calculs métier complexes (11.0%) |
-| **Fonctions VALIDATION** | 15 | Validation business rules (5.9%) |
-| **Fonctions SYSTEM** | 5 | Maintenance/Cron (2.0%) |
-| **TOTAL** | **255** | **100%** |
+| Catégorie                 | Total   | Description                                    |
+| ------------------------- | ------- | ---------------------------------------------- |
+| **Fonctions TRIGGER**     | 89      | Exécutées automatiquement par triggers (34.9%) |
+| **Fonctions RPC**         | 72      | Appelables depuis client/API (28.2%)           |
+| **Fonctions HELPER**      | 46      | Utilitaires internes (18.0%)                   |
+| **Fonctions CALCULATION** | 28      | Calculs métier complexes (11.0%)               |
+| **Fonctions VALIDATION**  | 15      | Validation business rules (5.9%)               |
+| **Fonctions SYSTEM**      | 5       | Maintenance/Cron (2.0%)                        |
+| **TOTAL**                 | **255** | **100%**                                       |
 
 ### Répartition par Type de Retour
 
 | Type Retour | Fonctions | % Total |
-|-------------|-----------|---------|
-| `trigger` | 89 | 35.0% |
-| `record` | 52 | 20.5% |
-| `jsonb` | 38 | 15.0% |
-| `void` | 27 | 10.6% |
-| `boolean` | 18 | 7.1% |
-| `integer` | 12 | 4.7% |
-| `numeric` | 8 | 3.1% |
-| Autres | 10 | 3.9% |
+| ----------- | --------- | ------- |
+| `trigger`   | 89        | 35.0%   |
+| `record`    | 52        | 20.5%   |
+| `jsonb`     | 38        | 15.0%   |
+| `void`      | 27        | 10.6%   |
+| `boolean`   | 18        | 7.1%    |
+| `integer`   | 12        | 4.7%    |
+| `numeric`   | 8         | 3.1%    |
+| Autres      | 10        | 3.9%    |
 
 ### Répartition par Module
 
-| Module | Fonctions | % Total |
-|--------|-----------|---------|
-| Catalogue | 62 | 24.4% |
-| Stocks | 35 | 13.8% |
-| Pricing | 28 | 11.0% |
-| Orders | 25 | 9.8% |
-| Finance | 18 | 7.1% |
-| Users | 15 | 5.9% |
-| Testing | 12 | 4.7% |
-| Collections | 10 | 3.9% |
-| System | 8 | 3.1% |
-| Errors | 7 | 2.8% |
-| Autres | 34 | 13.4% |
+| Module      | Fonctions | % Total |
+| ----------- | --------- | ------- |
+| Catalogue   | 62        | 24.4%   |
+| Stocks      | 35        | 13.8%   |
+| Pricing     | 28        | 11.0%   |
+| Orders      | 25        | 9.8%    |
+| Finance     | 18        | 7.1%    |
+| Users       | 15        | 5.9%    |
+| Testing     | 12        | 4.7%    |
+| Collections | 10        | 3.9%    |
+| System      | 8         | 3.1%    |
+| Errors      | 7         | 2.8%    |
+| Autres      | 34        | 13.4%   |
 
 ---
 
@@ -92,6 +92,7 @@ $function$
 **Usage** : Base de toute sécurité RLS application
 
 **⚠️ RÈGLES ABSOLUES** :
+
 - ❌ JAMAIS modifier sans audit sécurité complet
 - ❌ JAMAIS supprimer (casse 217 policies)
 - ✅ Tester TOUTES policies après modification
@@ -166,6 +167,7 @@ $function$
 **Usage** : Synchronise stock products depuis stock_movements
 
 **⚠️ RÈGLES ABSOLUES** :
+
 - ❌ JAMAIS modifier sans lire triggers.md section stock
 - ❌ JAMAIS désactiver (corruption données)
 - ✅ Lire 10 triggers stock interdépendants
@@ -195,6 +197,7 @@ $function$
 **Usage** : Mise à jour automatique `updated_at` sur 42 tables
 
 **Tables concernées** :
+
 - `categories`, `families`, `subcategories`
 - `products`, `product_images`, `product_packages`
 - `price_lists`, `price_list_items`
@@ -243,6 +246,7 @@ STABLE
 **Architecture** : Utilise système price_lists + price_list_items (pas de prix dans products)
 
 **Logique Priorité** :
+
 1. **customer_pricing** (prix client individuel) - PRIORITÉ MAX
 2. **group_price_lists** (prix groupe client)
 3. **channel_pricing** (prix canal via channel_price_lists)
@@ -250,6 +254,7 @@ STABLE
 5. **base price_list** (fallback liste par défaut)
 
 **Fonctionnalités** :
+
 - ✅ Tiered pricing (prix par quantité)
 - ✅ Validité temporelle (valid_from/valid_until)
 - ✅ Multi-devise
@@ -257,13 +262,14 @@ STABLE
 - ✅ Traçabilité source prix
 
 **Appel client** :
+
 ```typescript
 const { data } = await supabase.rpc('calculate_product_price_v2', {
   p_product_id: 'uuid-produit',
-  p_quantity: 50,  // Tiered pricing
+  p_quantity: 50, // Tiered pricing
   p_channel_id: 'uuid-canal',
-  p_customer_id: 'uuid-client',  // Optionnel
-  p_date: '2025-10-17'  // Optionnel (défaut: aujourd'hui)
+  p_customer_id: 'uuid-client', // Optionnel
+  p_date: '2025-10-17', // Optionnel (défaut: aujourd'hui)
 });
 
 // Retour :
@@ -283,6 +289,7 @@ const { data } = await supabase.rpc('calculate_product_price_v2', {
 ```
 
 **Business Rules** :
+
 1. Cherche prix applicable via `get_applicable_price_lists()` (priorité)
 2. Filtre par quantité (min_quantity ≤ p_quantity ≤ max_quantity)
 3. Filtre par date (valid_from ≤ p_date ≤ valid_until)
@@ -507,17 +514,20 @@ $function$
 #### 2.1. Catalogue & Products (18 fonctions)
 
 **RPC Pricing** :
+
 - `calculate_batch_prices_v2(product_ids uuid[])` - Prix batch
 - `calculate_product_price_v2(product_id, channel_id, customer_id)` - Prix final
 - `calculate_package_price(product_id, quantity)` - Prix packaging
 
 **RPC Products** :
+
 - `get_product_with_images(product_id uuid)` - Produit complet
 - `get_product_variants(parent_id uuid)` - Variantes
 - `search_products(query text, filters jsonb)` - Recherche
 - `get_collection_products(collection_id uuid)` - Produits collection
 
 **RPC Status** :
+
 - `check_incomplete_catalog_products()` - Produits incomplets
 - `calculate_automatic_product_status(product_id)` - Statut auto
 - `calculate_sourcing_product_status(product_id)` - Statut sourcing
@@ -528,20 +538,24 @@ $function$
 #### 2.2. Orders & Sales (15 fonctions)
 
 **RPC Create** :
+
 - `create_sales_order_with_items(order_data jsonb, items jsonb[])` - Créer commande+items
 - `create_purchase_order_with_items(po_data jsonb, items jsonb[])` - Créer PO+items
 
 **RPC Checks** :
+
 - `check_orders_stock_consistency()` - Cohérence stock
 - `check_late_shipments()` - Expéditions retard
 - `auto_cancel_unpaid_orders()` - Annule impayées
 
 **RPC Workflow** :
+
 - `approve_sample_request(sample_order_id uuid)` - Approuve échantillon
 - `calculate_order_line_price(order_item_id uuid)` - Prix ligne
 - `cancel_order_forecast_movements(order_id uuid)` - Annule prévisions
 
 **RPC Ristourne** ⭐ NOUVEAU (2025-10-25):
+
 - `get_order_total_retrocession(order_id uuid)` - Commission totale commande
 
 **Autres RPC orders** : 7 fonctions
@@ -549,15 +563,18 @@ $function$
 #### 2.3. Finance & Invoicing (12 fonctions)
 
 **RPC Revenue** :
+
 - `calculate_annual_revenue_bfa(year integer)` - Revenu annuel
 - `get_monthly_revenue_breakdown(year integer, month integer)` - Détail mensuel
 
 **RPC Invoices** :
+
 - `check_overdue_invoices()` - Factures échues
 - `generate_invoice_pdf(invoice_id uuid)` - PDF facture
 - `send_invoice_email(invoice_id uuid)` - Email facture
 
 **RPC Banking** :
+
 - `auto_match_bank_transaction(transaction_id uuid)` - Rapprochement auto
 - `reconcile_bank_transaction(transaction_id, invoice_id)` - Rapprochement manuel
 
@@ -566,10 +583,12 @@ $function$
 #### 2.4. Users & Permissions (8 fonctions)
 
 **RPC Core** :
+
 - `get_user_role()` ⭐ - Rôle user courant (CRITICAL)
 - `get_user_permissions(user_id uuid)` - Permissions user
 
 **RPC Management** :
+
 - `switch_user_role(user_id uuid, new_role user_role_type)` - Change rôle
 - `calculate_engagement_score(user_id uuid)` - Score engagement
 - `get_user_activity_summary(user_id uuid, days integer)` - Résumé activité
@@ -579,6 +598,7 @@ $function$
 #### 2.5. Testing & QA (7 fonctions)
 
 **RPC Tests** :
+
 - `auto_lock_section_if_complete(section_id uuid)` - Lock section complète
 - `unlock_test_section(section_id uuid)` - Délock section
 - `reset_test_progress(test_id uuid)` - Reset progression
@@ -589,6 +609,7 @@ $function$
 #### 2.6. Error Handling & MCP (5 fonctions)
 
 **RPC Errors** :
+
 - `classify_error_with_ai(error_data jsonb)` - Classification AI
 - `enqueue_error_for_resolution(error_id uuid)` - File résolution
 - `auto_resolve_known_errors()` - Résolution auto
@@ -599,6 +620,7 @@ $function$
 #### 2.7. Collections & Tags (7 fonctions)
 
 **RPC Tags** :
+
 - `add_collection_tag(collection_id uuid, tag text)` - Ajoute tag
 - `remove_collection_tag(collection_id uuid, tag text)` - Retire tag
 - `get_popular_tags(limit integer)` - Tags populaires
@@ -609,6 +631,7 @@ $function$
 #### 2.8. System & Maintenance (12 fonctions)
 
 **RPC Cleanup** :
+
 - `cleanup_old_sessions(days integer)` - Nettoie sessions
 - `cleanup_old_activity_logs(months integer)` - Nettoie logs
 - `vacuum_analyze_all_tables()` - Vacuum complet
@@ -777,18 +800,18 @@ $function$
 97. `update_group_product_count` - TRIGGER - Compteur produits groupe
 98. `update_invoice_paid_amount` - TRIGGER - Payé facture
 99. `update_invoice_total` - TRIGGER - Total facture
-100. `update_order_paid_amount` - TRIGGER - Payé commande
-101. `update_product_search_vector` - TRIGGER - Vecteur recherche
-102. `update_product_stock` - TRIGGER - Stock produit
-103. `update_products_updated_at` - TRIGGER - updated_at produits
-104. `update_stock_movements_updated_at` - TRIGGER - updated_at stocks
-105. `update_updated_at` ⭐ - TRIGGER - updated_at universel (CRITICAL)
-106. `update_user_profiles_updated_at` - TRIGGER - updated_at users
-107. `validate_contact_constraints` - TRIGGER - Contraintes contact
-108. `validate_discount_rules` - TRIGGER - Règles discount
-109. `validate_order_customer` - TRIGGER - Customer SO
+100.  `update_order_paid_amount` - TRIGGER - Payé commande
+101.  `update_product_search_vector` - TRIGGER - Vecteur recherche
+102.  `update_product_stock` - TRIGGER - Stock produit
+103.  `update_products_updated_at` - TRIGGER - updated_at produits
+104.  `update_stock_movements_updated_at` - TRIGGER - updated_at stocks
+105.  `update_updated_at` ⭐ - TRIGGER - updated_at universel (CRITICAL)
+106.  `update_user_profiles_updated_at` - TRIGGER - updated_at users
+107.  `validate_contact_constraints` - TRIGGER - Contraintes contact
+108.  `validate_discount_rules` - TRIGGER - Règles discount
+109.  `validate_order_customer` - TRIGGER - Customer SO
 
-*Note: 254 fonctions au total, 109 principales documentées ici*
+_Note: 254 fonctions au total, 109 principales documentées ici_
 
 ---
 
@@ -798,6 +821,7 @@ $function$
 
 ```markdown
 ❌ INTERDIT ABSOLU :
+
 1. Modifier get_user_role() sans audit sécurité complet (217 policies)
 2. Modifier maintain_stock_totals() sans lire triggers.md stock (10 triggers)
 3. Supprimer fonction sans vérifier dépendances (grep database + code)
@@ -805,11 +829,12 @@ $function$
 5. Créer SECURITY DEFINER sans validation sécurité
 
 ✅ OBLIGATOIRE AVANT MODIFICATION :
+
 1. Lire docs/database/SCHEMA-REFERENCE.md
 2. Lire docs/database/triggers.md (triggers utilisant fonction)
 3. Lire docs/database/rls-policies.md (policies utilisant fonction)
 4. Lire docs/database/functions-rpc.md (CE FICHIER)
-5. Grep database pour appels: SELECT * FROM pg_proc WHERE ...
+5. Grep database pour appels: SELECT \* FROM pg_proc WHERE ...
 6. Grep codebase: grep -r "nom_fonction" src/
 7. Tests exhaustifs sur données test
 8. Validation utilisateur si fonction critique (Top 10)
@@ -817,18 +842,18 @@ $function$
 
 ### Top 10 Fonctions Critiques
 
-| Rang | Fonction | Criticité | Impact | Validation |
-|------|----------|-----------|--------|------------|
-| 1 | `get_user_role()` | 🔴 MAX | 217 policies | Triple |
-| 2 | `maintain_stock_totals()` | 🔴 MAX | 10 triggers stock | Triple |
-| 3 | `update_updated_at()` | 🟠 ÉLEVÉ | 42 tables | Double |
-| 4 | `calculate_product_price_v2()` | 🟠 ÉLEVÉ | Tarification | Double |
-| 5 | `calculate_sales_order_total()` | 🟠 ÉLEVÉ | Totaux SO | Double |
-| 6 | `handle_order_cancellation()` | 🟡 MOYEN | Workflow | Simple |
-| 7 | `ensure_single_primary_image()` | 🟡 MOYEN | Unicité | Simple |
-| 8 | `validate_product_category()` | 🟡 MOYEN | Cohérence | Simple |
-| 9 | `calculate_batch_prices_v2()` | 🟡 MOYEN | Performance | Simple |
-| 10 | `check_orders_stock_consistency()` | 🟡 MOYEN | Cohérence | Simple |
+| Rang | Fonction                           | Criticité | Impact            | Validation |
+| ---- | ---------------------------------- | --------- | ----------------- | ---------- |
+| 1    | `get_user_role()`                  | 🔴 MAX    | 217 policies      | Triple     |
+| 2    | `maintain_stock_totals()`          | 🔴 MAX    | 10 triggers stock | Triple     |
+| 3    | `update_updated_at()`              | 🟠 ÉLEVÉ  | 42 tables         | Double     |
+| 4    | `calculate_product_price_v2()`     | 🟠 ÉLEVÉ  | Tarification      | Double     |
+| 5    | `calculate_sales_order_total()`    | 🟠 ÉLEVÉ  | Totaux SO         | Double     |
+| 6    | `handle_order_cancellation()`      | 🟡 MOYEN  | Workflow          | Simple     |
+| 7    | `ensure_single_primary_image()`    | 🟡 MOYEN  | Unicité           | Simple     |
+| 8    | `validate_product_category()`      | 🟡 MOYEN  | Cohérence         | Simple     |
+| 9    | `calculate_batch_prices_v2()`      | 🟡 MOYEN  | Performance       | Simple     |
+| 10   | `check_orders_stock_consistency()` | 🟡 MOYEN  | Cohérence         | Simple     |
 
 ---
 
@@ -856,46 +881,49 @@ grep -A 5 "supabase.rpc('nom_fonction'" src/
 const { data, error } = await supabase.rpc('calculate_product_price_v2', {
   product_id: '123e4567-e89b-12d3-a456-426614174000',
   channel_id: '123e4567-e89b-12d3-a456-426614174001',
-  customer_id: null // Optional
-})
+  customer_id: null, // Optional
+});
 
 if (error) {
-  console.error('RPC error:', error)
-  return
+  console.error('RPC error:', error);
+  return;
 }
 
-console.log('Final price:', data.final_price)
-console.log('Discount:', data.discount_percentage)
+console.log('Final price:', data.final_price);
+console.log('Discount:', data.discount_percentage);
 ```
 
 #### Exemple: get_order_total_retrocession() ⭐ NOUVEAU
 
 ```typescript
 // Calculate total retrocession (commission) for an order
-const { data: totalCommission, error } = await supabase
-  .rpc('get_order_total_retrocession', {
-    p_order_id: 'f47ac10b-58cc-4372-a567-0e02b2c3d479'
-  })
+const { data: totalCommission, error } = await supabase.rpc(
+  'get_order_total_retrocession',
+  {
+    p_order_id: 'f47ac10b-58cc-4372-a567-0e02b2c3d479',
+  }
+);
 
 if (error) {
-  console.error('RPC error:', error)
-  return
+  console.error('RPC error:', error);
+  return;
 }
 
-console.log(`Commission totale: ${totalCommission}€`)
+console.log(`Commission totale: ${totalCommission}€`);
 // Output: Commission totale: 125.50€
 // (SUM of all line-level retrocession_amount in the order)
 
 // Use case: Display commission on order summary page
 const orderSummary = {
-  total_ht: 2500.00,
-  total_ttc: 3000.00,
-  commission: totalCommission,  // 125.50€
-  commission_rate: (totalCommission / 2500 * 100).toFixed(2) + '%'  // 5.02%
-}
+  total_ht: 2500.0,
+  total_ttc: 3000.0,
+  commission: totalCommission, // 125.50€
+  commission_rate: ((totalCommission / 2500) * 100).toFixed(2) + '%', // 5.02%
+};
 ```
 
 **Function Details**:
+
 - **Parameters**: `p_order_id` (UUID) - Sales order ID
 - **Returns**: `NUMERIC(10,2)` - Total commission in EUR
 - **Logic**: `SUM(retrocession_amount)` from all `sales_order_items` for the order
@@ -903,6 +931,7 @@ const orderSummary = {
 - **Added**: 2025-10-25 (Migration `20251025_002_add_retrocession_system.sql`)
 
 **SQL Implementation**:
+
 ```sql
 CREATE OR REPLACE FUNCTION get_order_total_retrocession(p_order_id UUID)
 RETURNS NUMERIC AS $$
@@ -944,31 +973,31 @@ PGPASSWORD="..." psql -c "SELECT pg_get_functiondef(oid) FROM pg_proc WHERE pron
 
 ### Par Catégorie
 
-| Catégorie | Fonctions | % |
-|-----------|-----------|---|
-| TRIGGER | 89 | 35.0% |
-| RPC | 72 | 28.3% |
-| HELPER | 45 | 17.7% |
-| CALCULATION | 28 | 11.0% |
-| VALIDATION | 15 | 5.9% |
-| SYSTEM | 5 | 2.0% |
-| **TOTAL** | **254** | **100%** |
+| Catégorie   | Fonctions | %        |
+| ----------- | --------- | -------- |
+| TRIGGER     | 89        | 35.0%    |
+| RPC         | 72        | 28.3%    |
+| HELPER      | 45        | 17.7%    |
+| CALCULATION | 28        | 11.0%    |
+| VALIDATION  | 15        | 5.9%     |
+| SYSTEM      | 5         | 2.0%     |
+| **TOTAL**   | **254**   | **100%** |
 
 ### Par Module
 
-| Module | Fonctions | % |
-|--------|-----------|---|
-| Catalogue | 62 | 24.4% |
-| Stocks | 35 | 13.8% |
-| Pricing | 28 | 11.0% |
-| Orders | 25 | 9.8% |
-| Finance | 18 | 7.1% |
-| Users | 15 | 5.9% |
-| Testing | 12 | 4.7% |
-| Collections | 10 | 3.9% |
-| System | 8 | 3.1% |
-| Errors | 7 | 2.8% |
-| Autres | 34 | 13.4% |
+| Module      | Fonctions | %     |
+| ----------- | --------- | ----- |
+| Catalogue   | 62        | 24.4% |
+| Stocks      | 35        | 13.8% |
+| Pricing     | 28        | 11.0% |
+| Orders      | 25        | 9.8%  |
+| Finance     | 18        | 7.1%  |
+| Users       | 15        | 5.9%  |
+| Testing     | 12        | 4.7%  |
+| Collections | 10        | 3.9%  |
+| System      | 8         | 3.1%  |
+| Errors      | 7         | 2.8%  |
+| Autres      | 34        | 13.4% |
 
 ---
 
@@ -986,7 +1015,7 @@ PGPASSWORD="..." psql -c "SELECT pg_get_functiondef(oid) FROM pg_proc WHERE pron
 
 **✅ Documentation Functions & RPC Complète - 25 Octobre 2025**
 
-*256 fonctions documentées (89 triggers, 73 RPC, 45 helpers, 49 autres)*
-*Source de vérité pour logique métier database*
-*Dernière ajout : get_order_total_retrocession() - Commission B2B*
-*Consultation OBLIGATOIRE avant appel RPC ou modification*
+_256 fonctions documentées (89 triggers, 73 RPC, 45 helpers, 49 autres)_
+_Source de vérité pour logique métier database_
+_Dernière ajout : get_order_total_retrocession() - Commission B2B_
+_Consultation OBLIGATOIRE avant appel RPC ou modification_

@@ -7,7 +7,12 @@
 'use client';
 
 import { useState } from 'react';
+
+import { FileText, Loader2, Download, TrendingUp } from 'lucide-react';
+
+import { Badge } from '@/components/ui/badge';
 import { ButtonV2 } from '@/components/ui/button';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import {
   Dialog,
   DialogContent,
@@ -17,6 +22,13 @@ import {
   DialogTrigger,
 } from '@/components/ui/dialog';
 import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
+import {
   Table,
   TableBody,
   TableCell,
@@ -24,17 +36,7 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table';
-import { Badge } from '@/components/ui/badge';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
 import { useToast } from '@/shared/modules/common/hooks';
-import { FileText, Loader2, Download, TrendingUp } from 'lucide-react';
 
 // =====================================================================
 // TYPES
@@ -73,8 +75,12 @@ interface BFAReportData {
 export function BFAReportModal() {
   const [isOpen, setIsOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
-  const [reportData, setReportData] = useState<BFAReportData['data'] | null>(null);
-  const [selectedYear, setSelectedYear] = useState(new Date().getFullYear().toString());
+  const [reportData, setReportData] = useState<BFAReportData['data'] | null>(
+    null
+  );
+  const [selectedYear, setSelectedYear] = useState(
+    new Date().getFullYear().toString()
+  );
 
   const { toast } = useToast();
 
@@ -104,7 +110,9 @@ export function BFAReportModal() {
       toast({
         title: 'Erreur',
         description:
-          error instanceof Error ? error.message : 'Impossible de charger le rapport BFA',
+          error instanceof Error
+            ? error.message
+            : 'Impossible de charger le rapport BFA',
         variant: 'destructive',
       });
     } finally {
@@ -141,7 +149,9 @@ export function BFAReportModal() {
   };
 
   // Déterminer badge variant selon taux
-  const getRateBadgeVariant = (rate: number): 'secondary' | 'secondary' | 'outline' => {
+  const getRateBadgeVariant = (
+    rate: number
+  ): 'secondary' | 'secondary' | 'outline' => {
     if (rate >= 7) return 'secondary';
     if (rate >= 3) return 'secondary';
     return 'outline';
@@ -172,7 +182,7 @@ export function BFAReportModal() {
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
-              {availableYears.map((year) => (
+              {availableYears.map(year => (
                 <SelectItem key={year} value={year.toString()}>
                   {year}
                 </SelectItem>
@@ -200,7 +210,9 @@ export function BFAReportModal() {
                   </CardTitle>
                 </CardHeader>
                 <CardContent>
-                  <div className="text-2xl font-bold">{reportData.summary.totalCustomers}</div>
+                  <div className="text-2xl font-bold">
+                    {reportData.summary.totalCustomers}
+                  </div>
                 </CardContent>
               </Card>
 
@@ -257,7 +269,8 @@ export function BFAReportModal() {
                     <FileText className="mb-4 h-12 w-12 text-muted-foreground" />
                     <p className="text-lg font-medium">Aucun client éligible</p>
                     <p className="text-sm text-muted-foreground">
-                      Aucun client n'a atteint le seuil minimum de 5 000€ HT en {selectedYear}
+                      Aucun client n'a atteint le seuil minimum de 5 000€ HT en{' '}
+                      {selectedYear}
                     </p>
                   </CardContent>
                 </Card>
@@ -267,13 +280,17 @@ export function BFAReportModal() {
                     <TableHeader>
                       <TableRow>
                         <TableHead>Client</TableHead>
-                        <TableHead className="text-right">CA Annuel HT</TableHead>
+                        <TableHead className="text-right">
+                          CA Annuel HT
+                        </TableHead>
                         <TableHead className="text-center">Taux BFA</TableHead>
-                        <TableHead className="text-right">Montant BFA</TableHead>
+                        <TableHead className="text-right">
+                          Montant BFA
+                        </TableHead>
                       </TableRow>
                     </TableHeader>
                     <TableBody>
-                      {reportData.customers.map((customer) => (
+                      {reportData.customers.map(customer => (
                         <TableRow key={customer.organisation_id}>
                           <TableCell className="font-medium">
                             {customer.organisation_name}
@@ -282,7 +299,9 @@ export function BFAReportModal() {
                             {formatAmount(customer.annual_revenue_ht)}
                           </TableCell>
                           <TableCell className="text-center">
-                            <Badge variant={getRateBadgeVariant(customer.bfa_rate)}>
+                            <Badge
+                              variant={getRateBadgeVariant(customer.bfa_rate)}
+                            >
                               {formatRate(customer.bfa_rate)}
                             </Badge>
                           </TableCell>

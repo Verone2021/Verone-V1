@@ -19,13 +19,15 @@ const colors = {
   green: '\x1b[32m',
   yellow: '\x1b[33m',
   blue: '\x1b[34m',
-  red: '\x1b[31m'
+  red: '\x1b[31m',
 };
 
 console.log(`\n${colors.blue}🔧 Script Fix Button → ButtonV2${colors.reset}\n`);
 
 // Étape 1 : Récupérer tous les fichiers qui importent Button depuis ui/
-console.log(`${colors.yellow}📂 Recherche des fichiers avec import Button...${colors.reset}`);
+console.log(
+  `${colors.yellow}📂 Recherche des fichiers avec import Button...${colors.reset}`
+);
 
 let files = [];
 try {
@@ -35,11 +37,15 @@ try {
   );
   files = output.trim().split('\n').filter(Boolean);
 } catch (error) {
-  console.log(`${colors.red}❌ Erreur lors de la recherche des fichiers${colors.reset}`);
+  console.log(
+    `${colors.red}❌ Erreur lors de la recherche des fichiers${colors.reset}`
+  );
   process.exit(1);
 }
 
-console.log(`${colors.green}✅ ${files.length} fichiers trouvés${colors.reset}\n`);
+console.log(
+  `${colors.green}✅ ${files.length} fichiers trouvés${colors.reset}\n`
+);
 
 // Étape 2 : Traiter chaque fichier
 let successCount = 0;
@@ -48,7 +54,9 @@ const errors = [];
 
 files.forEach((filePath, index) => {
   try {
-    console.log(`${colors.blue}[${index + 1}/${files.length}]${colors.reset} ${filePath}`);
+    console.log(
+      `${colors.blue}[${index + 1}/${files.length}]${colors.reset} ${filePath}`
+    );
 
     // Lire le contenu du fichier
     let content = fs.readFileSync(filePath, 'utf-8');
@@ -64,7 +72,7 @@ files.forEach((filePath, index) => {
     }
 
     // Remplacement 2 : Import avec alias (rare mais possible)
-    if (content.includes("import { Button as")) {
+    if (content.includes('import { Button as')) {
       content = content.replace(
         /import \{ Button as ([^}]+) \} from '@\/components\/ui\/button'/g,
         "import { ButtonV2 as $1 } from '@/components/ui-v2/button'"
@@ -86,9 +94,10 @@ files.forEach((filePath, index) => {
       console.log(`  ${colors.green}✅ Modifié${colors.reset}`);
       successCount++;
     } else {
-      console.log(`  ${colors.yellow}⚠️  Aucune modification nécessaire${colors.reset}`);
+      console.log(
+        `  ${colors.yellow}⚠️  Aucune modification nécessaire${colors.reset}`
+      );
     }
-
   } catch (error) {
     console.log(`  ${colors.red}❌ Erreur: ${error.message}${colors.reset}`);
     errors.push({ file: filePath, error: error.message });
@@ -100,8 +109,12 @@ files.forEach((filePath, index) => {
 console.log(`\n${'='.repeat(60)}`);
 console.log(`${colors.blue}📊 RAPPORT FINAL${colors.reset}`);
 console.log(`${'='.repeat(60)}\n`);
-console.log(`${colors.green}✅ Fichiers modifiés : ${successCount}${colors.reset}`);
-console.log(`${colors.yellow}⚠️  Fichiers non modifiés : ${files.length - successCount - errorCount}${colors.reset}`);
+console.log(
+  `${colors.green}✅ Fichiers modifiés : ${successCount}${colors.reset}`
+);
+console.log(
+  `${colors.yellow}⚠️  Fichiers non modifiés : ${files.length - successCount - errorCount}${colors.reset}`
+);
 console.log(`${colors.red}❌ Erreurs : ${errorCount}${colors.reset}\n`);
 
 if (errors.length > 0) {

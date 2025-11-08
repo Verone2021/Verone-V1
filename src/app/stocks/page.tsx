@@ -1,9 +1,11 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { useRouter } from 'next/navigation';
-import Link from 'next/link';
+
 import Image from 'next/image';
+import Link from 'next/link';
+import { useRouter } from 'next/navigation';
+
 import {
   Package,
   BarChart3,
@@ -19,6 +21,9 @@ import {
   CheckCircle,
   Eye,
 } from 'lucide-react';
+
+import { Badge } from '@/components/ui/badge';
+import { ButtonV2 } from '@/components/ui/button';
 import {
   Card,
   CardContent,
@@ -26,13 +31,11 @@ import {
   CardHeader,
   CardTitle,
 } from '@/components/ui/card';
-import { ButtonV2 } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
+import { StockKPICard } from '@/components/ui-v2/stock/StockKPICard';
+import { formatPrice } from '@verone/utils';
 import { useStockDashboard } from '@/shared/modules/stock/hooks';
 import { useStockAlerts } from '@/shared/modules/stock/hooks';
 import { useMovementsHistory } from '@/shared/modules/stock/hooks';
-import { formatPrice } from '@/lib/utils';
-import { StockKPICard } from '@/components/ui-v2/stock/StockKPICard';
 
 export default function StocksDashboardPage() {
   const router = useRouter();
@@ -40,7 +43,11 @@ export default function StocksDashboardPage() {
 
   // 🆕 Phase 3.6: Hooks widgets minimalistes
   const { alerts, criticalAlerts, loading: alertsLoading } = useStockAlerts();
-  const { movements: lastMovements, loading: movementsLoading, fetchMovements } = useMovementsHistory();
+  const {
+    movements: lastMovements,
+    loading: movementsLoading,
+    fetchMovements,
+  } = useMovementsHistory();
 
   // Charger derniers mouvements réels au montage
   useEffect(() => {
@@ -422,12 +429,15 @@ export default function StocksDashboardPage() {
                                 {movement.product_name || 'Produit inconnu'}
                               </p>
                               <p className="text-xs text-gray-500">
-                                {new Date(movement.performed_at).toLocaleString('fr-FR', {
-                                  day: 'numeric',
-                                  month: 'short',
-                                  hour: '2-digit',
-                                  minute: '2-digit'
-                                })}
+                                {new Date(movement.performed_at).toLocaleString(
+                                  'fr-FR',
+                                  {
+                                    day: 'numeric',
+                                    month: 'short',
+                                    hour: '2-digit',
+                                    minute: '2-digit',
+                                  }
+                                )}
                               </p>
                             </div>
                           </div>

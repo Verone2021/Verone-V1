@@ -47,7 +47,11 @@ export interface QontoBalance {
 // TRANSACTIONS
 // =====================================================================
 
-export type QontoTransactionStatus = 'pending' | 'declined' | 'reversed' | 'completed';
+export type QontoTransactionStatus =
+  | 'pending'
+  | 'declined'
+  | 'reversed'
+  | 'completed';
 export type QontoTransactionSide = 'credit' | 'debit';
 export type QontoOperationType =
   | 'transfer'
@@ -167,11 +171,11 @@ export interface GetTransactionsParams {
 // =====================================================================
 
 export type MatchingStatus =
-  | 'unmatched'        // Transaction non rapprochée
-  | 'auto_matched'     // Rapprochement automatique (95%)
-  | 'manual_matched'   // Rapprochement manuel (5%)
-  | 'partial_matched'  // Paiement partiel
-  | 'ignored';         // Transaction ignorée (frais, etc.)
+  | 'unmatched' // Transaction non rapprochée
+  | 'auto_matched' // Rapprochement automatique (95%)
+  | 'manual_matched' // Rapprochement manuel (5%)
+  | 'partial_matched' // Paiement partiel
+  | 'ignored'; // Transaction ignorée (frais, etc.)
 
 export interface BankTransaction {
   id: string;

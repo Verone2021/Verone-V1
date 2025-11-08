@@ -16,36 +16,36 @@
 interface ProductDataStructure {
   // DONNÉES FOURNISSEUR (reçues du fournisseur)
   supplier: {
-    description: string      // Description technique du fournisseur
-    reference: string        // Référence fournisseur (leur SKU)
-    price: number           // Prix d'achat HT (en centimes)
-    lead_time?: number      // Délai livraison fournisseur (jours)
-    minimum_order?: number  // Quantité minimum commande
-    catalog_url?: string    // Lien catalogue fournisseur
-    notes?: string          // Notes techniques fournisseur
-  }
+    description: string; // Description technique du fournisseur
+    reference: string; // Référence fournisseur (leur SKU)
+    price: number; // Prix d'achat HT (en centimes)
+    lead_time?: number; // Délai livraison fournisseur (jours)
+    minimum_order?: number; // Quantité minimum commande
+    catalog_url?: string; // Lien catalogue fournisseur
+    notes?: string; // Notes techniques fournisseur
+  };
 
   // DONNÉES INTERNES VÉRONE (nos données commerciales)
   internal: {
-    description: string      // Notre description commerciale/marketing
-    selling_price: number   // Notre prix de vente HT (en centimes)
-    margin_percentage: number // Marge calculée automatiquement
-    marketing_notes?: string // Notes commerciales internes
-    internal_reference?: string // Notre référence interne si différente
-    sales_arguments?: string[] // Arguments de vente
-    target_market?: string   // Marché cible (B2B/B2C/Premium)
-  }
+    description: string; // Notre description commerciale/marketing
+    selling_price: number; // Notre prix de vente HT (en centimes)
+    margin_percentage: number; // Marge calculée automatiquement
+    marketing_notes?: string; // Notes commerciales internes
+    internal_reference?: string; // Notre référence interne si différente
+    sales_arguments?: string[]; // Arguments de vente
+    target_market?: string; // Marché cible (B2B/B2C/Premium)
+  };
 
   // DONNÉES PARTAGÉES (communes)
   shared: {
-    name: string            // Nom produit (peut être adapté vs fournisseur)
-    dimensions: Dimensions  // Dimensions exactes
-    weight: number         // Poids
-    images: string[]       // Photos (nos photos + photos fournisseur)
-    category_hierarchy: CategoryHierarchy
-    stock_quantity: number
-    gtin?: string
-  }
+    name: string; // Nom produit (peut être adapté vs fournisseur)
+    dimensions: Dimensions; // Dimensions exactes
+    weight: number; // Poids
+    images: string[]; // Photos (nos photos + photos fournisseur)
+    category_hierarchy: CategoryHierarchy;
+    stock_quantity: number;
+    gtin?: string;
+  };
 }
 ```
 
@@ -54,30 +54,37 @@ interface ProductDataStructure {
 ### **PRIX-001 : Distinction Obligatoire des Prix**
 
 **Champs Prix Requis** :
+
 - ✅ **`supplier_price`** : Prix d'achat fournisseur HT (en centimes)
 - ✅ **`selling_price`** : Prix de vente Vérone HT (en centimes)
 - ✅ **`margin_percentage`** : Marge calculée automatiquement
 
 **Calculs Automatiques** :
+
 ```typescript
 function calculateMargin(sellingPrice: number, supplierPrice: number): number {
-  return ((sellingPrice - supplierPrice) / supplierPrice) * 100
+  return ((sellingPrice - supplierPrice) / supplierPrice) * 100;
 }
 
-function calculateSellingPrice(supplierPrice: number, targetMargin: number): number {
-  return supplierPrice * (1 + targetMargin / 100)
+function calculateSellingPrice(
+  supplierPrice: number,
+  targetMargin: number
+): number {
+  return supplierPrice * (1 + targetMargin / 100);
 }
 ```
 
 ### **PRIX-002 : Validation Business Rules**
 
 **Contraintes Prix** :
+
 - Marge minimum : 20% (configurable par catégorie)
 - Marge maximum : 400% (alerte si dépassement)
 - Prix de vente DOIT être > prix d'achat
 - Validation lors de toute modification
 
 **Alertes Automatiques** :
+
 - ⚠️ Marge < 20% → Alerte "Marge faible"
 - ⚠️ Marge > 200% → Alerte "Marge élevée - vérifier concurrence"
 - 🚨 Prix vente < Prix achat → Erreur bloquante
@@ -86,12 +93,16 @@ function calculateSellingPrice(supplierPrice: number, targetMargin: number): num
 
 ```typescript
 interface PriceHistory {
-  date: string
-  supplier_price: number
-  selling_price: number
-  margin_percentage: number
-  reason: 'supplier_increase' | 'market_adjustment' | 'promotion' | 'manual_update'
-  user_id: string
+  date: string;
+  supplier_price: number;
+  selling_price: number;
+  margin_percentage: number;
+  reason:
+    | 'supplier_increase'
+    | 'market_adjustment'
+    | 'promotion'
+    | 'manual_update';
+  user_id: string;
 }
 ```
 
@@ -100,6 +111,7 @@ interface PriceHistory {
 ### **DESC-001 : Description Fournisseur vs Description Vérone**
 
 **Description Fournisseur (`supplier_description`)** :
+
 - Informations techniques détaillées
 - Spécifications matériaux
 - Instructions d'entretien
@@ -107,6 +119,7 @@ interface PriceHistory {
 - **Objectif** : Référence technique interne
 
 **Description Vérone (`internal_description`)** :
+
 - Description commerciale/marketing
 - Mise en valeur des atouts produit
 - Adaptation au style Vérone (élégance, luxe)
@@ -136,16 +149,19 @@ détente raffiné."
 ### **REF-001 : Système de Références Multiple**
 
 **Référence Fournisseur (`supplier_reference`)** :
+
 - SKU/référence du fournisseur
 - Code commande chez le fournisseur
 - **Usage** : Commandes, SAV, communications fournisseur
 
 **Référence Interne Vérone (`internal_reference`)** :
+
 - Notre SKU selon nomenclature Vérone
 - Format : [FAMILLE]-[PRODUIT]-[COULEUR]-[MATIÈRE]
 - **Usage** : Catalogues clients, gestion interne, commandes
 
 **GTIN/EAN (`gtin`)** :
+
 - Code-barres international unique
 - Commun fournisseur/Vérone si existant
 - **Usage** : Logistique, intégrations externes
@@ -154,10 +170,10 @@ détente raffiné."
 
 ```typescript
 interface ReferenceMapping {
-  verone_sku: string        // Notre référence
-  supplier_reference: string // Référence fournisseur
-  gtin?: string             // Code-barres
-  alternative_references?: string[] // Autres références (ancien SKU, etc.)
+  verone_sku: string; // Notre référence
+  supplier_reference: string; // Référence fournisseur
+  gtin?: string; // Code-barres
+  alternative_references?: string[]; // Autres références (ancien SKU, etc.)
 }
 ```
 
@@ -204,36 +220,39 @@ sequenceDiagram
 ### **Sections d'Édition Séparées**
 
 **1. Section "Informations Fournisseur"**
+
 ```typescript
 interface SupplierInfoSection {
-  supplier_description: string
-  supplier_reference: string
-  supplier_price: number       // Label: "Prix d'achat fournisseur HT"
-  supplier_lead_time?: number
-  supplier_catalog_url?: string
-  supplier_notes?: string
+  supplier_description: string;
+  supplier_reference: string;
+  supplier_price: number; // Label: "Prix d'achat fournisseur HT"
+  supplier_lead_time?: number;
+  supplier_catalog_url?: string;
+  supplier_notes?: string;
 }
 ```
 
 **2. Section "Informations Commerciales Vérone"**
+
 ```typescript
 interface InternalInfoSection {
-  internal_description: string
-  selling_price: number        // Label: "Prix de vente Vérone HT"
-  margin_percentage: number    // Label: "Marge %" (calculé auto)
-  marketing_notes?: string
-  sales_arguments?: string[]
-  target_market?: string
+  internal_description: string;
+  selling_price: number; // Label: "Prix de vente Vérone HT"
+  margin_percentage: number; // Label: "Marge %" (calculé auto)
+  marketing_notes?: string;
+  sales_arguments?: string[];
+  target_market?: string;
 }
 ```
 
 **3. Section "Calculs et Validation"**
+
 ```typescript
 interface PricingValidation {
-  margin_amount: number        // Label: "Marge en €" (selling - supplier)
-  margin_percentage: number    // Label: "Marge en %"
-  competitive_analysis?: CompetitorPricing
-  price_history: PriceHistory[]
+  margin_amount: number; // Label: "Marge en €" (selling - supplier)
+  margin_percentage: number; // Label: "Marge en %"
+  competitive_analysis?: CompetitorPricing;
+  price_history: PriceHistory[];
 }
 ```
 
@@ -252,35 +271,35 @@ interface PricingValidation {
 ```typescript
 const PRICE_LABELS = {
   supplier_price: "Prix d'achat fournisseur HT",
-  selling_price: "Prix de vente Vérone HT",
-  margin_amount: "Marge en € (vente - achat)",
-  margin_percentage: "Marge en %",
-  cost_with_shipping: "Coût total (achat + transport)",
-  recommended_retail: "Prix conseillé TTC client"
-}
+  selling_price: 'Prix de vente Vérone HT',
+  margin_amount: 'Marge en € (vente - achat)',
+  margin_percentage: 'Marge en %',
+  cost_with_shipping: 'Coût total (achat + transport)',
+  recommended_retail: 'Prix conseillé TTC client',
+};
 ```
 
 ### **Labels pour les Descriptions**
 
 ```typescript
 const DESCRIPTION_LABELS = {
-  supplier_description: "Description technique fournisseur",
-  internal_description: "Description commerciale Vérone",
-  marketing_notes: "Notes marketing internes",
-  sales_arguments: "Arguments de vente",
-  supplier_notes: "Notes techniques fournisseur"
-}
+  supplier_description: 'Description technique fournisseur',
+  internal_description: 'Description commerciale Vérone',
+  marketing_notes: 'Notes marketing internes',
+  sales_arguments: 'Arguments de vente',
+  supplier_notes: 'Notes techniques fournisseur',
+};
 ```
 
 ### **Labels pour les Références**
 
 ```typescript
 const REFERENCE_LABELS = {
-  supplier_reference: "Référence fournisseur",
-  internal_reference: "SKU Vérone",
-  gtin: "Code-barres GTIN/EAN",
-  alternative_references: "Autres références"
-}
+  supplier_reference: 'Référence fournisseur',
+  internal_reference: 'SKU Vérone',
+  gtin: 'Code-barres GTIN/EAN',
+  alternative_references: 'Autres références',
+};
 ```
 
 ## 🔒 Permissions et Accès
@@ -288,20 +307,24 @@ const REFERENCE_LABELS = {
 ### **Niveaux d'Autorisation**
 
 **Lecture Seule** :
+
 - Tous les utilisateurs peuvent voir les données fournisseur
 - Accès aux calculs de marge (pourcentage uniquement)
 
 **Édition Données Fournisseur** :
+
 - Rôle : `catalogue:supplier-data:edit`
 - Modifications prix d'achat, descriptions techniques
 - Historisation automatique des changements
 
 **Édition Données Commerciales** :
+
 - Rôle : `catalogue:pricing:edit`
 - Modifications prix de vente, descriptions marketing
 - Validation business rules (marge minimum)
 
 **Administration Complète** :
+
 - Rôle : `catalogue:admin`
 - Accès à l'historique détaillé des prix
 - Configuration des règles de marge par catégorie
@@ -363,16 +386,19 @@ const REFERENCE_LABELS = {
 ## 🎯 Objectifs Business
 
 ### **Clarté et Traçabilité**
+
 - ✅ Distinction immédiate entre données fournisseur/internes
 - ✅ Labels explicites pour tous les champs prix
 - ✅ Historique complet des évolutions pricing
 
 ### **Optimisation Commerciale**
+
 - ✅ Calculs de marge automatiques et fiables
 - ✅ Alertes proactives sur marges anormales
 - ✅ Support décisionnel pour pricing stratégique
 
 ### **Efficacité Opérationnelle**
+
 - ✅ Import simplifié données fournisseur
 - ✅ Adaptation rapide descriptions pour catalogues clients
 - ✅ Gestion références multiples sans confusion

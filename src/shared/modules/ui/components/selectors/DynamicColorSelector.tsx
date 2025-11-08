@@ -17,21 +17,23 @@
  * ```
  */
 
-'use client'
+'use client';
 
-import { useState, useRef, useEffect } from 'react'
-import { Check, Plus, Search, Loader2 } from 'lucide-react'
-import { useColorSelection } from '@/shared/modules/products/hooks'
-import { cn } from '@/lib/utils'
+import { useState, useRef, useEffect } from 'react';
+
+import { Check, Plus, Search, Loader2 } from 'lucide-react';
+
+import { cn } from '@verone/utils';
+import { useColorSelection } from '@/shared/modules/products/hooks';
 
 interface DynamicColorSelectorProps {
-  value?: string
-  onChange: (color: string) => void
-  required?: boolean
-  disabled?: boolean
-  placeholder?: string
-  className?: string
-  excludeColors?: string[] // Couleurs à exclure (déjà utilisées)
+  value?: string;
+  onChange: (color: string) => void;
+  required?: boolean;
+  disabled?: boolean;
+  placeholder?: string;
+  className?: string;
+  excludeColors?: string[]; // Couleurs à exclure (déjà utilisées)
 }
 
 export function DynamicColorSelector({
@@ -41,7 +43,7 @@ export function DynamicColorSelector({
   disabled = false,
   placeholder = 'Rechercher ou créer une couleur...',
   className,
-  excludeColors = []
+  excludeColors = [],
 }: DynamicColorSelectorProps) {
   const {
     selectedColor,
@@ -52,27 +54,27 @@ export function DynamicColorSelector({
     colorExists,
     handleCreateAndSelect,
     isCreating,
-    loading
-  } = useColorSelection(value, excludeColors)
+    loading,
+  } = useColorSelection(value, excludeColors);
 
-  const [isOpen, setIsOpen] = useState(false)
-  const [inputFocused, setInputFocused] = useState(false)
-  const inputRef = useRef<HTMLInputElement>(null)
-  const dropdownRef = useRef<HTMLDivElement>(null)
+  const [isOpen, setIsOpen] = useState(false);
+  const [inputFocused, setInputFocused] = useState(false);
+  const inputRef = useRef<HTMLInputElement>(null);
+  const dropdownRef = useRef<HTMLDivElement>(null);
 
   // Sync selectedColor with parent value
   useEffect(() => {
     if (value !== selectedColor) {
-      setSelectedColor(value)
+      setSelectedColor(value);
     }
-  }, [value, selectedColor, setSelectedColor])
+  }, [value, selectedColor, setSelectedColor]);
 
   // Notify parent when color changes
   useEffect(() => {
     if (selectedColor && selectedColor !== value) {
-      onChange(selectedColor)
+      onChange(selectedColor);
     }
-  }, [selectedColor, onChange, value])
+  }, [selectedColor, onChange, value]);
 
   // Close dropdown when clicking outside
   useEffect(() => {
@@ -83,45 +85,45 @@ export function DynamicColorSelector({
         inputRef.current &&
         !inputRef.current.contains(event.target as Node)
       ) {
-        setIsOpen(false)
-        setInputFocused(false)
+        setIsOpen(false);
+        setInputFocused(false);
       }
     }
 
-    document.addEventListener('mousedown', handleClickOutside)
-    return () => document.removeEventListener('mousedown', handleClickOutside)
-  }, [])
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
 
   // Handle color selection
   const handleSelectColor = (colorName: string) => {
-    setSelectedColor(colorName)
-    setSearchQuery('')
-    setIsOpen(false)
-    setInputFocused(false)
-    onChange(colorName)
-  }
+    setSelectedColor(colorName);
+    setSearchQuery('');
+    setIsOpen(false);
+    setInputFocused(false);
+    onChange(colorName);
+  };
 
   // Handle color creation
   const handleCreateColor = async () => {
-    await handleCreateAndSelect()
-    setIsOpen(false)
-    setInputFocused(false)
-  }
+    await handleCreateAndSelect();
+    setIsOpen(false);
+    setInputFocused(false);
+  };
 
   // Handle input change
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setSearchQuery(e.target.value)
-    setIsOpen(true)
-  }
+    setSearchQuery(e.target.value);
+    setIsOpen(true);
+  };
 
   // Handle input focus
   const handleInputFocus = () => {
-    setInputFocused(true)
-    setIsOpen(true)
-  }
+    setInputFocused(true);
+    setIsOpen(true);
+  };
 
   // Get currently selected color object
-  const selectedColorObj = filteredColors.find(c => c.name === selectedColor)
+  const selectedColorObj = filteredColors.find(c => c.name === selectedColor);
 
   return (
     <div className={cn('relative', className)}>
@@ -172,8 +174,8 @@ export function DynamicColorSelector({
           <button
             type="button"
             onClick={() => {
-              setSearchQuery('')
-              inputRef.current?.focus()
+              setSearchQuery('');
+              inputRef.current?.focus();
             }}
             className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-black"
           >
@@ -206,7 +208,7 @@ export function DynamicColorSelector({
           {/* Color list */}
           {!loading && filteredColors.length > 0 && (
             <div className="py-1">
-              {filteredColors.map((color) => (
+              {filteredColors.map(color => (
                 <button
                   key={color.id}
                   type="button"
@@ -274,7 +276,10 @@ export function DynamicColorSelector({
                     <Plus className="h-4 w-4 text-green-600" />
                   )}
                   <span className="text-sm font-medium text-green-700">
-                    Créer "{searchQuery.charAt(0).toUpperCase() + searchQuery.slice(1).toLowerCase()}"
+                    Créer "
+                    {searchQuery.charAt(0).toUpperCase() +
+                      searchQuery.slice(1).toLowerCase()}
+                    "
                   </span>
                 </button>
               </div>
@@ -284,10 +289,13 @@ export function DynamicColorSelector({
           {!loading && filteredColors.length > 0 && (
             <div className="border-t px-3 py-2 bg-gray-50">
               <div className="text-xs text-gray-600">
-                {filteredColors.length} couleur{filteredColors.length > 1 ? 's' : ''} disponible{filteredColors.length > 1 ? 's' : ''}
+                {filteredColors.length} couleur
+                {filteredColors.length > 1 ? 's' : ''} disponible
+                {filteredColors.length > 1 ? 's' : ''}
                 {excludeColors.length > 0 && (
                   <span className="ml-2 text-black">
-                    • {excludeColors.length} déjà utilisée{excludeColors.length > 1 ? 's' : ''}
+                    • {excludeColors.length} déjà utilisée
+                    {excludeColors.length > 1 ? 's' : ''}
                   </span>
                 )}
                 {searchQuery.trim() && !colorExists && (
@@ -308,7 +316,7 @@ export function DynamicColorSelector({
         </div>
       )}
     </div>
-  )
+  );
 }
 
 /**

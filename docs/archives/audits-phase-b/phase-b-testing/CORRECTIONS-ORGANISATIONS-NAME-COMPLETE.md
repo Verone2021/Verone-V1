@@ -136,8 +136,7 @@ const matchesOrgName = normalizeString(
 // AVANT
 order.organisations?.name
   .toLowerCase()
-  .includes(searchTerm.toLowerCase())
-  (
+  .includes(searchTerm.toLowerCase())(
     // APRÈS
     order.organisations?.trade_name || order.organisations?.legal_name || ''
   )

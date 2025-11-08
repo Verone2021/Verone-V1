@@ -1,95 +1,123 @@
-'use client'
+'use client';
 
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog'
-import { Card, CardContent } from '@/components/ui/card'
-import { ButtonV2 } from '@/components/ui/button'
-import { Badge } from '@/components/ui/badge'
-import { Package, Truck, MapPin, DollarSign, Calendar, FileText, ArrowLeft, Check } from 'lucide-react'
-import { format } from 'date-fns'
-import { fr } from 'date-fns/locale'
+import { format } from 'date-fns';
+import { fr } from 'date-fns/locale';
+import {
+  Package,
+  Truck,
+  MapPin,
+  DollarSign,
+  Calendar,
+  FileText,
+  ArrowLeft,
+  Check,
+} from 'lucide-react';
 
-export type ShippingMethod = 'packlink' | 'mondial_relay' | 'chronotruck' | 'manual'
-export type ShipmentType = 'parcel' | 'pallet'
+import { Badge } from '@/components/ui/badge';
+import { ButtonV2 } from '@/components/ui/button';
+import { Card, CardContent } from '@/components/ui/card';
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog';
+
+export type ShippingMethod =
+  | 'packlink'
+  | 'mondial_relay'
+  | 'chronotruck'
+  | 'manual';
+export type ShipmentType = 'parcel' | 'pallet';
 
 export interface ShipmentRecapData {
   // Identifiants
-  orderId: string
-  orderNumber: string
+  orderId: string;
+  orderNumber: string;
 
   // Transporteur
-  shippingMethod: ShippingMethod
-  carrierName?: string
-  serviceName?: string
+  shippingMethod: ShippingMethod;
+  carrierName?: string;
+  serviceName?: string;
 
   // Type expédition
-  shipmentType: ShipmentType
+  shipmentType: ShipmentType;
 
   // Tracking
-  trackingNumber?: string
-  trackingUrl?: string
+  trackingNumber?: string;
+  trackingUrl?: string;
 
   // Colis/Palettes
   parcels: {
-    number: number
-    type: ShipmentType
-    weight_kg: number
-    length_cm?: number
-    width_cm?: number
-    height_cm?: number
-  }[]
+    number: number;
+    type: ShipmentType;
+    weight_kg: number;
+    length_cm?: number;
+    width_cm?: number;
+    height_cm?: number;
+  }[];
 
   // Coûts
-  costPaid: number
-  costCharged: number
+  costPaid: number;
+  costCharged: number;
 
   // Dates
-  estimatedDelivery?: Date
+  estimatedDelivery?: Date;
 
   // Notes
-  notes?: string
+  notes?: string;
 
   // Métadonnées spécifiques transporteur
   metadata?: {
     // Packlink
-    packlink_label_url?: string
-    packlink_service_id?: number
+    packlink_label_url?: string;
+    packlink_service_id?: number;
 
     // Mondial Relay
-    relay_point_id?: string
-    relay_point_name?: string
-    relay_point_address?: string
+    relay_point_id?: string;
+    relay_point_name?: string;
+    relay_point_address?: string;
 
     // Chronotruck
-    chronotruck_reference?: string
-    chronotruck_palette_count?: number
-    chronotruck_url?: string
-  }
+    chronotruck_reference?: string;
+    chronotruck_palette_count?: number;
+    chronotruck_url?: string;
+  };
 }
 
 interface ShipmentRecapModalProps {
-  open: boolean
-  data: ShipmentRecapData
-  onConfirm: () => void | Promise<void>
-  onBack: () => void
-  loading?: boolean
+  open: boolean;
+  data: ShipmentRecapData;
+  onConfirm: () => void | Promise<void>;
+  onBack: () => void;
+  loading?: boolean;
 }
 
-const SHIPPING_METHOD_LABELS: Record<ShippingMethod, { name: string; icon: typeof Truck }> = {
+const SHIPPING_METHOD_LABELS: Record<
+  ShippingMethod,
+  { name: string; icon: typeof Truck }
+> = {
   packlink: { name: 'Packlink PRO', icon: Truck },
   mondial_relay: { name: 'Mondial Relay', icon: MapPin },
   chronotruck: { name: 'Chronotruck', icon: Package },
-  manual: { name: 'Saisie manuelle', icon: FileText }
-}
+  manual: { name: 'Saisie manuelle', icon: FileText },
+};
 
 const SHIPMENT_TYPE_LABELS: Record<ShipmentType, string> = {
   parcel: 'Colis',
-  pallet: 'Palette'
-}
+  pallet: 'Palette',
+};
 
-export function ShipmentRecapModal({ open, data, onConfirm, onBack, loading }: ShipmentRecapModalProps) {
-  const methodInfo = SHIPPING_METHOD_LABELS[data.shippingMethod]
-  const margin = data.costCharged - data.costPaid
-  const totalWeight = data.parcels.reduce((sum, p) => sum + p.weight_kg, 0)
+export function ShipmentRecapModal({
+  open,
+  data,
+  onConfirm,
+  onBack,
+  loading,
+}: ShipmentRecapModalProps) {
+  const methodInfo = SHIPPING_METHOD_LABELS[data.shippingMethod];
+  const margin = data.costCharged - data.costPaid;
+  const totalWeight = data.parcels.reduce((sum, p) => sum + p.weight_kg, 0);
 
   return (
     <Dialog open={open} onOpenChange={() => {}}>
@@ -103,7 +131,6 @@ export function ShipmentRecapModal({ open, data, onConfirm, onBack, loading }: S
         </DialogHeader>
 
         <div className="space-y-4 mt-6">
-
           {/* Transporteur */}
           <Card>
             <CardContent className="pt-6">
@@ -120,7 +147,9 @@ export function ShipmentRecapModal({ open, data, onConfirm, onBack, loading }: S
 
                 {data.carrierName && (
                   <div>
-                    <p className="text-sm text-gray-600">Transporteur effectif</p>
+                    <p className="text-sm text-gray-600">
+                      Transporteur effectif
+                    </p>
                     <p className="font-medium">{data.carrierName}</p>
                   </div>
                 )}
@@ -154,7 +183,9 @@ export function ShipmentRecapModal({ open, data, onConfirm, onBack, loading }: S
                 <div className="grid grid-cols-2 gap-4">
                   <div>
                     <p className="text-sm text-gray-600">Numéro de suivi</p>
-                    <p className="font-medium font-mono">{data.trackingNumber}</p>
+                    <p className="font-medium font-mono">
+                      {data.trackingNumber}
+                    </p>
                   </div>
 
                   {data.trackingUrl && (
@@ -181,13 +212,17 @@ export function ShipmentRecapModal({ open, data, onConfirm, onBack, loading }: S
               <div className="flex items-center gap-3 mb-4">
                 <Package className="h-5 w-5 text-gray-700" />
                 <h3 className="font-semibold text-lg">
-                  {data.shipmentType === 'parcel' ? 'Colis' : 'Palettes'} ({data.parcels.length})
+                  {data.shipmentType === 'parcel' ? 'Colis' : 'Palettes'} (
+                  {data.parcels.length})
                 </h3>
               </div>
 
               <div className="space-y-3">
                 {data.parcels.map((parcel, idx) => (
-                  <div key={idx} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                  <div
+                    key={idx}
+                    className="flex items-center justify-between p-3 bg-gray-50 rounded-lg"
+                  >
                     <div className="flex items-center gap-4">
                       <div className="flex items-center justify-center w-10 h-10 bg-white rounded-full border-2 border-gray-300">
                         <span className="font-semibold text-sm">{idx + 1}</span>
@@ -196,12 +231,17 @@ export function ShipmentRecapModal({ open, data, onConfirm, onBack, loading }: S
                         <p className="font-medium">
                           {SHIPMENT_TYPE_LABELS[parcel.type]} #{idx + 1}
                         </p>
-                        {parcel.length_cm && parcel.width_cm && parcel.height_cm ? (
+                        {parcel.length_cm &&
+                        parcel.width_cm &&
+                        parcel.height_cm ? (
                           <p className="text-sm text-gray-600">
-                            {parcel.length_cm} × {parcel.width_cm} × {parcel.height_cm} cm
+                            {parcel.length_cm} × {parcel.width_cm} ×{' '}
+                            {parcel.height_cm} cm
                           </p>
                         ) : data.shipmentType === 'pallet' ? (
-                          <p className="text-sm text-gray-600">Palette standard 120 × 80 cm</p>
+                          <p className="text-sm text-gray-600">
+                            Palette standard 120 × 80 cm
+                          </p>
                         ) : null}
                       </div>
                     </div>
@@ -214,7 +254,9 @@ export function ShipmentRecapModal({ open, data, onConfirm, onBack, loading }: S
                 <div className="pt-3 border-t">
                   <div className="flex justify-between text-sm">
                     <span className="text-gray-600">Poids total</span>
-                    <span className="font-semibold">{totalWeight.toFixed(2)} kg</span>
+                    <span className="font-semibold">
+                      {totalWeight.toFixed(2)} kg
+                    </span>
                   </div>
                 </div>
               </div>
@@ -232,22 +274,31 @@ export function ShipmentRecapModal({ open, data, onConfirm, onBack, loading }: S
               <div className="space-y-2">
                 <div className="flex justify-between">
                   <span className="text-gray-600">Coût réel payé</span>
-                  <span className="font-medium">{data.costPaid.toFixed(2)} €</span>
+                  <span className="font-medium">
+                    {data.costPaid.toFixed(2)} €
+                  </span>
                 </div>
 
                 <div className="flex justify-between">
                   <span className="text-gray-600">Montant facturé client</span>
-                  <span className="font-medium">{data.costCharged.toFixed(2)} €</span>
+                  <span className="font-medium">
+                    {data.costCharged.toFixed(2)} €
+                  </span>
                 </div>
 
                 <div className="flex justify-between pt-2 border-t">
                   <span className="font-semibold">Marge</span>
                   <span
                     className={`font-semibold ${
-                      margin > 0 ? 'text-green-600' : margin < 0 ? 'text-red-600' : 'text-gray-900'
+                      margin > 0
+                        ? 'text-green-600'
+                        : margin < 0
+                          ? 'text-red-600'
+                          : 'text-gray-900'
                     }`}
                   >
-                    {margin > 0 ? '+' : ''}{margin.toFixed(2)} €
+                    {margin > 0 ? '+' : ''}
+                    {margin.toFixed(2)} €
                   </span>
                 </div>
               </div>
@@ -264,72 +315,88 @@ export function ShipmentRecapModal({ open, data, onConfirm, onBack, loading }: S
                 </div>
 
                 <p className="font-medium">
-                  {format(data.estimatedDelivery, 'EEEE d MMMM yyyy', { locale: fr })}
+                  {format(data.estimatedDelivery, 'EEEE d MMMM yyyy', {
+                    locale: fr,
+                  })}
                 </p>
               </CardContent>
             </Card>
           )}
 
           {/* Informations spécifiques Mondial Relay */}
-          {data.shippingMethod === 'mondial_relay' && data.metadata?.relay_point_name && (
-            <Card>
-              <CardContent className="pt-6">
-                <div className="flex items-center gap-3 mb-4">
-                  <MapPin className="h-5 w-5 text-gray-700" />
-                  <h3 className="font-semibold text-lg">Point Relais</h3>
-                </div>
-
-                <div className="space-y-2">
-                  <p className="font-medium">{data.metadata.relay_point_name}</p>
-                  {data.metadata.relay_point_address && (
-                    <p className="text-sm text-gray-600">{data.metadata.relay_point_address}</p>
-                  )}
-                  {data.metadata.relay_point_id && (
-                    <p className="text-xs text-gray-500">ID: {data.metadata.relay_point_id}</p>
-                  )}
-                </div>
-              </CardContent>
-            </Card>
-          )}
-
-          {/* Informations spécifiques Chronotruck */}
-          {data.shippingMethod === 'chronotruck' && data.metadata?.chronotruck_reference && (
-            <Card>
-              <CardContent className="pt-6">
-                <div className="flex items-center gap-3 mb-4">
-                  <Truck className="h-5 w-5 text-gray-700" />
-                  <h3 className="font-semibold text-lg">Chronotruck</h3>
-                </div>
-
-                <div className="space-y-2">
-                  <div>
-                    <p className="text-sm text-gray-600">Référence</p>
-                    <p className="font-medium font-mono">{data.metadata.chronotruck_reference}</p>
+          {data.shippingMethod === 'mondial_relay' &&
+            data.metadata?.relay_point_name && (
+              <Card>
+                <CardContent className="pt-6">
+                  <div className="flex items-center gap-3 mb-4">
+                    <MapPin className="h-5 w-5 text-gray-700" />
+                    <h3 className="font-semibold text-lg">Point Relais</h3>
                   </div>
 
-                  {data.metadata.chronotruck_palette_count && (
-                    <div>
-                      <p className="text-sm text-gray-600">Nombre de palettes</p>
-                      <p className="font-medium">{data.metadata.chronotruck_palette_count}</p>
-                    </div>
-                  )}
+                  <div className="space-y-2">
+                    <p className="font-medium">
+                      {data.metadata.relay_point_name}
+                    </p>
+                    {data.metadata.relay_point_address && (
+                      <p className="text-sm text-gray-600">
+                        {data.metadata.relay_point_address}
+                      </p>
+                    )}
+                    {data.metadata.relay_point_id && (
+                      <p className="text-xs text-gray-500">
+                        ID: {data.metadata.relay_point_id}
+                      </p>
+                    )}
+                  </div>
+                </CardContent>
+              </Card>
+            )}
 
-                  {data.metadata.chronotruck_url && (
+          {/* Informations spécifiques Chronotruck */}
+          {data.shippingMethod === 'chronotruck' &&
+            data.metadata?.chronotruck_reference && (
+              <Card>
+                <CardContent className="pt-6">
+                  <div className="flex items-center gap-3 mb-4">
+                    <Truck className="h-5 w-5 text-gray-700" />
+                    <h3 className="font-semibold text-lg">Chronotruck</h3>
+                  </div>
+
+                  <div className="space-y-2">
                     <div>
-                      <a
-                        href={data.metadata.chronotruck_url}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="text-blue-600 hover:underline text-sm"
-                      >
-                        Voir sur Chronotruck →
-                      </a>
+                      <p className="text-sm text-gray-600">Référence</p>
+                      <p className="font-medium font-mono">
+                        {data.metadata.chronotruck_reference}
+                      </p>
                     </div>
-                  )}
-                </div>
-              </CardContent>
-            </Card>
-          )}
+
+                    {data.metadata.chronotruck_palette_count && (
+                      <div>
+                        <p className="text-sm text-gray-600">
+                          Nombre de palettes
+                        </p>
+                        <p className="font-medium">
+                          {data.metadata.chronotruck_palette_count}
+                        </p>
+                      </div>
+                    )}
+
+                    {data.metadata.chronotruck_url && (
+                      <div>
+                        <a
+                          href={data.metadata.chronotruck_url}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="text-blue-600 hover:underline text-sm"
+                        >
+                          Voir sur Chronotruck →
+                        </a>
+                      </div>
+                    )}
+                  </div>
+                </CardContent>
+              </Card>
+            )}
 
           {/* Notes */}
           {data.notes && (
@@ -340,11 +407,12 @@ export function ShipmentRecapModal({ open, data, onConfirm, onBack, loading }: S
                   <h3 className="font-semibold text-lg">Notes</h3>
                 </div>
 
-                <p className="text-sm text-gray-700 whitespace-pre-wrap">{data.notes}</p>
+                <p className="text-sm text-gray-700 whitespace-pre-wrap">
+                  {data.notes}
+                </p>
               </CardContent>
             </Card>
           )}
-
         </div>
 
         {/* Actions */}
@@ -354,7 +422,12 @@ export function ShipmentRecapModal({ open, data, onConfirm, onBack, loading }: S
             Retour
           </ButtonV2>
 
-          <ButtonV2 onClick={onConfirm} disabled={loading} size="lg" className="min-w-[200px]">
+          <ButtonV2
+            onClick={onConfirm}
+            disabled={loading}
+            size="lg"
+            className="min-w-[200px]"
+          >
             {loading ? (
               'Enregistrement...'
             ) : (
@@ -367,5 +440,5 @@ export function ShipmentRecapModal({ open, data, onConfirm, onBack, loading }: S
         </div>
       </DialogContent>
     </Dialog>
-  )
+  );
 }

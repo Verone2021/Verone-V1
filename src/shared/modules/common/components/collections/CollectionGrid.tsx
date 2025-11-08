@@ -4,17 +4,23 @@
  */
 
 import React, { useState } from 'react';
-import { ProductCard } from './product-card';
+
+import { ProductCardV2 } from '@/components/business/product-card-v2';
 import { ButtonV2 } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { cn } from '@/lib/utils';
+import { cn } from '@verone/utils';
 
 interface Product {
   id: string;
   name: string;
   sku: string;
   price_ht: number;
-  status: 'in_stock' | 'out_of_stock' | 'preorder' | 'coming_soon' | 'discontinued';
+  status:
+    | 'in_stock'
+    | 'out_of_stock'
+    | 'preorder'
+    | 'coming_soon'
+    | 'discontinued';
   primary_image_url: string;
   category?: string;
   variant_attributes?: Record<string, string>;
@@ -79,13 +85,9 @@ const FilterSection = ({
               onChange={() => handleChange(option.value)}
               className="w-4 h-4 border border-black focus:ring-black focus:ring-1"
             />
-            <span className="text-sm text-black flex-1">
-              {option.label}
-            </span>
+            <span className="text-sm text-black flex-1">{option.label}</span>
             {option.count !== undefined && (
-              <span className="text-xs text-gray-500">
-                ({option.count})
-              </span>
+              <span className="text-xs text-gray-500">({option.count})</span>
             )}
           </label>
         ))}
@@ -96,7 +98,7 @@ const FilterSection = ({
 
 export const CollectionGrid: React.FC<CollectionGridProps> = ({
   products,
-  title = "Catalogue",
+  title = 'Catalogue',
   description,
   categories = [],
   statusOptions = [],
@@ -115,19 +117,28 @@ export const CollectionGrid: React.FC<CollectionGridProps> = ({
   // Filtrage des produits
   const filteredProducts = products.filter(product => {
     // Filtre par recherche
-    if (searchQuery && !product.name.toLowerCase().includes(searchQuery.toLowerCase()) &&
-        !product.sku.toLowerCase().includes(searchQuery.toLowerCase())) {
+    if (
+      searchQuery &&
+      !product.name.toLowerCase().includes(searchQuery.toLowerCase()) &&
+      !product.sku.toLowerCase().includes(searchQuery.toLowerCase())
+    ) {
       return false;
     }
 
     // Filtre par catégorie
-    if (selectedCategories.length > 0 && product.category &&
-        !selectedCategories.includes(product.category)) {
+    if (
+      selectedCategories.length > 0 &&
+      product.category &&
+      !selectedCategories.includes(product.category)
+    ) {
       return false;
     }
 
     // Filtre par statut
-    if (selectedStatuses.length > 0 && !selectedStatuses.includes(product.status)) {
+    if (
+      selectedStatuses.length > 0 &&
+      !selectedStatuses.includes(product.status)
+    ) {
       return false;
     }
 
@@ -149,16 +160,15 @@ export const CollectionGrid: React.FC<CollectionGridProps> = ({
   }
 
   return (
-    <div className={cn("space-y-6", className)}>
+    <div className={cn('space-y-6', className)}>
       {/* Header */}
       <div className="flex items-start justify-between border-b border-black pb-4">
         <div>
           <h2 className="text-2xl font-bold text-black">{title}</h2>
-          {description && (
-            <p className="text-gray-600 mt-1">{description}</p>
-          )}
+          {description && <p className="text-gray-600 mt-1">{description}</p>}
           <div className="text-sm text-gray-500 mt-2">
-            {filteredProducts.length} produit{filteredProducts.length > 1 ? 's' : ''}
+            {filteredProducts.length} produit
+            {filteredProducts.length > 1 ? 's' : ''}
             {filteredProducts.length !== products.length && (
               <span> sur {products.length}</span>
             )}
@@ -173,9 +183,7 @@ export const CollectionGrid: React.FC<CollectionGridProps> = ({
             </ButtonV2>
           )}
           {onAddProduct && (
-            <ButtonV2 onClick={onAddProduct}>
-              Nouveau produit
-            </ButtonV2>
+            <ButtonV2 onClick={onAddProduct}>Nouveau produit</ButtonV2>
           )}
         </div>
       </div>
@@ -189,7 +197,7 @@ export const CollectionGrid: React.FC<CollectionGridProps> = ({
             <Input
               placeholder="Nom ou référence..."
               value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
+              onChange={e => setSearchQuery(e.target.value)}
               className="border-black focus:ring-black"
             />
           </div>
@@ -215,7 +223,9 @@ export const CollectionGrid: React.FC<CollectionGridProps> = ({
           )}
 
           {/* Reset filtres */}
-          {(selectedCategories.length > 0 || selectedStatuses.length > 0 || searchQuery) && (
+          {(selectedCategories.length > 0 ||
+            selectedStatuses.length > 0 ||
+            searchQuery) && (
             <ButtonV2
               variant="ghost"
               onClick={resetFilters}
@@ -251,10 +261,10 @@ export const CollectionGrid: React.FC<CollectionGridProps> = ({
         <div className="lg:col-span-3">
           {filteredProducts.length === 0 ? (
             <div className="text-center py-12">
-              <div className="text-gray-500 mb-4">
-                Aucun produit trouvé
-              </div>
-              {(selectedCategories.length > 0 || selectedStatuses.length > 0 || searchQuery) && (
+              <div className="text-gray-500 mb-4">Aucun produit trouvé</div>
+              {(selectedCategories.length > 0 ||
+                selectedStatuses.length > 0 ||
+                searchQuery) && (
                 <ButtonV2 variant="secondary" onClick={resetFilters}>
                   Voir tous les produits
                 </ButtonV2>
@@ -264,15 +274,15 @@ export const CollectionGrid: React.FC<CollectionGridProps> = ({
             <div
               className={cn(
                 viewMode === 'grid'
-                  ? "grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6"
-                  : "space-y-4"
+                  ? 'grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6'
+                  : 'space-y-4'
               )}
             >
               {filteredProducts.map(product => (
-                <ProductCard
+                <ProductCardV2
                   key={product.id}
                   product={product as any}
-                  className={viewMode === 'list' ? "flex-row" : undefined}
+                  className={viewMode === 'list' ? 'flex-row' : undefined}
                 />
               ))}
             </div>

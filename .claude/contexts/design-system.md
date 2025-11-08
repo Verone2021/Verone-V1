@@ -9,12 +9,10 @@
 **Palette Moderne 2025** - Inspirée Odoo, Figma, Dribbble, shadcn/ui
 
 ```css
---verone-primary: #3b86d1      /* Bleu professionnel */
---verone-success: #38ce3c      /* Vert validation */
---verone-warning: #ff9b3e      /* Orange attention */
---verone-accent: #844fc1       /* Violet créatif */
---verone-danger: #ff4d6b       /* Rouge critique */
---verone-neutral: #6c7293      /* Gris interface */
+--verone-primary: #3b86d1 /* Bleu professionnel */ --verone-success: #38ce3c
+  /* Vert validation */ --verone-warning: #ff9b3e /* Orange attention */
+  --verone-accent: #844fc1 /* Violet créatif */ --verone-danger: #ff4d6b
+  /* Rouge critique */ --verone-neutral: #6c7293 /* Gris interface */;
 ```
 
 **Fichiers Design System V2** :
@@ -26,6 +24,7 @@ src/components/ui-v2/        # Composants modernes (Button, KPI Cards, etc.)
 ```
 
 **Tendances 2025** :
+
 - ✅ Couleurs vives et gradients autorisés
 - ✅ Rounded corners (border-radius: 8-16px)
 - ✅ Micro-interactions (hover, focus, active states)
@@ -84,18 +83,16 @@ src/stories/
 
 ```typescript
 // ✅ CORRECT : Jointure product_images
-const { data } = await supabase
-  .from('products')
-  .select(`
+const { data } = await supabase.from('products').select(`
     id, name, sku,
     product_images!left (public_url, is_primary)
-  `)
+  `);
 
 // Enrichissement MANDATORY
 const enriched = data.map(p => ({
   ...p,
-  primary_image_url: p.product_images?.[0]?.public_url || null
-}))
+  primary_image_url: p.product_images?.[0]?.public_url || null,
+}));
 
 // ❌ INTERDIT : products.primary_image_url (colonne supprimée)
 ```
@@ -107,6 +104,7 @@ const enriched = data.map(p => ({
 ### ButtonV2
 
 **Variants** :
+
 - `primary` : Action principale (CTA)
 - `secondary` : Actions secondaires
 - `outline` : Actions neutres
@@ -114,6 +112,7 @@ const enriched = data.map(p => ({
 - `danger` : Actions destructives
 
 **Sizes** :
+
 - `sm` : Petits boutons (interfaces denses)
 - `md` : Taille par défaut
 - `lg` : Boutons proéminents (hero sections)
@@ -131,11 +130,13 @@ import { ButtonV2 } from '@/components/ui/button'
 ### InputV2
 
 **Variants** :
+
 - `default` : Champ standard
 - `error` : Erreur validation
 - `success` : Validation réussie
 
 **Props** :
+
 - `error` : Message d'erreur (affiche automatiquement variant error)
 - `success` : Message de succès
 

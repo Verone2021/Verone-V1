@@ -1,38 +1,40 @@
-"use client"
+'use client';
 
-import { useState, useEffect } from 'react'
-import { UseFormReturn } from 'react-hook-form'
-import { MapPin, Home, Building, Copy } from 'lucide-react'
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
-import { Label } from '@/components/ui/label'
-import { Input } from '@/components/ui/input'
-import { Checkbox } from '@/components/ui/checkbox'
-import { ButtonV2 } from '@/components/ui/button'
-import { Separator } from '@/components/ui/separator'
+import { useState, useEffect } from 'react';
+
+import { MapPin, Home, Building, Copy } from 'lucide-react';
+import type { UseFormReturn } from 'react-hook-form';
+
+import { ButtonV2 } from '@/components/ui/button';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Checkbox } from '@/components/ui/checkbox';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Separator } from '@/components/ui/separator';
 
 interface AddressData {
-  address_line1?: string
-  address_line2?: string
-  postal_code?: string
-  city?: string
-  region?: string
-  country?: string
+  address_line1?: string;
+  address_line2?: string;
+  postal_code?: string;
+  city?: string;
+  region?: string;
+  country?: string;
 }
 
 interface AddressSelectorProps {
-  form: UseFormReturn<any>
-  className?: string
+  form: UseFormReturn<any>;
+  className?: string;
 }
 
 export function AddressSelector({ form, className }: AddressSelectorProps) {
-  const [hasDifferentShipping, setHasDifferentShipping] = useState(false)
+  const [hasDifferentShipping, setHasDifferentShipping] = useState(false);
 
   // Surveiller les changements du checkbox dans le formulaire
-  const formHasDifferentShipping = form.watch('has_different_shipping_address')
+  const formHasDifferentShipping = form.watch('has_different_shipping_address');
 
   useEffect(() => {
-    setHasDifferentShipping(formHasDifferentShipping || false)
-  }, [formHasDifferentShipping])
+    setHasDifferentShipping(formHasDifferentShipping || false);
+  }, [formHasDifferentShipping]);
 
   // Fonction pour copier l'adresse de facturation vers la livraison
   const copyBillingToShipping = () => {
@@ -43,12 +45,12 @@ export function AddressSelector({ form, className }: AddressSelectorProps) {
       shipping_city: form.getValues('billing_city'),
       shipping_region: form.getValues('billing_region'),
       shipping_country: form.getValues('billing_country'),
-    }
+    };
 
     Object.entries(billingData).forEach(([key, value]) => {
-      form.setValue(key, value)
-    })
-  }
+      form.setValue(key, value);
+    });
+  };
 
   // Fonction pour vider l'adresse de livraison
   const clearShippingAddress = () => {
@@ -58,24 +60,24 @@ export function AddressSelector({ form, className }: AddressSelectorProps) {
       'shipping_postal_code',
       'shipping_city',
       'shipping_region',
-      'shipping_country'
-    ]
+      'shipping_country',
+    ];
 
     shippingFields.forEach(field => {
-      form.setValue(field, '')
-    })
-  }
+      form.setValue(field, '');
+    });
+  };
 
   // Gérer le changement du checkbox
   const handleShippingToggle = (checked: boolean) => {
-    setHasDifferentShipping(checked)
-    form.setValue('has_different_shipping_address', checked)
+    setHasDifferentShipping(checked);
+    form.setValue('has_different_shipping_address', checked);
 
     if (!checked) {
       // Si on désactive, vider l'adresse de livraison
-      clearShippingAddress()
+      clearShippingAddress();
     }
-  }
+  };
 
   return (
     <div className={className}>
@@ -98,7 +100,10 @@ export function AddressSelector({ form, className }: AddressSelectorProps) {
               />
               {form.formState.errors.billing_address_line1 && (
                 <p className="text-sm text-red-600 mt-1">
-                  {String(form.formState.errors.billing_address_line1?.message || 'Champ requis')}
+                  {String(
+                    form.formState.errors.billing_address_line1?.message ||
+                      'Champ requis'
+                  )}
                 </p>
               )}
             </div>
@@ -121,7 +126,10 @@ export function AddressSelector({ form, className }: AddressSelectorProps) {
               />
               {form.formState.errors.billing_postal_code && (
                 <p className="text-sm text-red-600 mt-1">
-                  {String(form.formState.errors.billing_postal_code?.message || 'Champ requis')}
+                  {String(
+                    form.formState.errors.billing_postal_code?.message ||
+                      'Champ requis'
+                  )}
                 </p>
               )}
             </div>
@@ -135,7 +143,10 @@ export function AddressSelector({ form, className }: AddressSelectorProps) {
               />
               {form.formState.errors.billing_city && (
                 <p className="text-sm text-red-600 mt-1">
-                  {String(form.formState.errors.billing_city?.message || 'Champ requis')}
+                  {String(
+                    form.formState.errors.billing_city?.message ||
+                      'Champ requis'
+                  )}
                 </p>
               )}
             </div>
@@ -199,7 +210,9 @@ export function AddressSelector({ form, className }: AddressSelectorProps) {
           <CardContent className="space-y-4">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="md:col-span-2">
-                <Label htmlFor="shipping_address_line1">Adresse ligne 1 *</Label>
+                <Label htmlFor="shipping_address_line1">
+                  Adresse ligne 1 *
+                </Label>
                 <Input
                   id="shipping_address_line1"
                   placeholder="456 avenue des Champs"
@@ -207,7 +220,10 @@ export function AddressSelector({ form, className }: AddressSelectorProps) {
                 />
                 {form.formState.errors.shipping_address_line1 && (
                   <p className="text-sm text-red-600 mt-1">
-                    {String(form.formState.errors.shipping_address_line1?.message || 'Champ requis')}
+                    {String(
+                      form.formState.errors.shipping_address_line1?.message ||
+                        'Champ requis'
+                    )}
                   </p>
                 )}
               </div>
@@ -230,7 +246,10 @@ export function AddressSelector({ form, className }: AddressSelectorProps) {
                 />
                 {form.formState.errors.shipping_postal_code && (
                   <p className="text-sm text-red-600 mt-1">
-                    {String(form.formState.errors.shipping_postal_code?.message || 'Champ requis')}
+                    {String(
+                      form.formState.errors.shipping_postal_code?.message ||
+                        'Champ requis'
+                    )}
                   </p>
                 )}
               </div>
@@ -244,7 +263,10 @@ export function AddressSelector({ form, className }: AddressSelectorProps) {
                 />
                 {form.formState.errors.shipping_city && (
                   <p className="text-sm text-red-600 mt-1">
-                    {String(form.formState.errors.shipping_city?.message || 'Champ requis')}
+                    {String(
+                      form.formState.errors.shipping_city?.message ||
+                        'Champ requis'
+                    )}
                   </p>
                 )}
               </div>
@@ -271,5 +293,5 @@ export function AddressSelector({ form, className }: AddressSelectorProps) {
         </Card>
       )}
     </div>
-  )
+  );
 }

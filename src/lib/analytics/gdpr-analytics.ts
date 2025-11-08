@@ -4,57 +4,61 @@
  * Conforme RGPD français + business intelligence sans compromis
  */
 
-import { createHash } from 'crypto'
+import { createHash } from 'crypto';
 
 export interface AnalyticsEvent {
-  event_type: 'page_view' | 'user_action' | 'business_metric' | 'performance_metric'
-  event_name: string
-  properties: Record<string, any>
-  timestamp: Date
-  session_id: string
-  user_consent: ConsentLevel
-  anonymized: boolean
+  event_type:
+    | 'page_view'
+    | 'user_action'
+    | 'business_metric'
+    | 'performance_metric';
+  event_name: string;
+  properties: Record<string, any>;
+  timestamp: Date;
+  session_id: string;
+  user_consent: ConsentLevel;
+  anonymized: boolean;
 }
 
 export interface ConsentLevel {
-  necessary: boolean        // Always true - required for functionality
-  analytics: boolean        // User choice - anonymous usage analytics
-  marketing: boolean        // User choice - personalization and CRM
-  preferences: boolean      // User choice - UI/UX customization
+  necessary: boolean; // Always true - required for functionality
+  analytics: boolean; // User choice - anonymous usage analytics
+  marketing: boolean; // User choice - personalization and CRM
+  preferences: boolean; // User choice - UI/UX customization
 }
 
 export interface UserSession {
-  session_id: string
-  created_at: Date
-  consent_given: ConsentLevel
-  consent_timestamp: Date
-  last_activity: Date
-  page_views: number
-  events_count: number
-  is_anonymous: boolean
+  session_id: string;
+  created_at: Date;
+  consent_given: ConsentLevel;
+  consent_timestamp: Date;
+  last_activity: Date;
+  page_views: number;
+  events_count: number;
+  is_anonymous: boolean;
 }
 
 export interface BusinessMetrics {
   catalogue_usage: {
-    products_viewed: number
-    collections_created: number
-    pdfs_generated: number
-    shares_completed: number
-  }
+    products_viewed: number;
+    collections_created: number;
+    pdfs_generated: number;
+    shares_completed: number;
+  };
   performance_metrics: {
-    avg_load_time: number
+    avg_load_time: number;
     core_web_vitals: {
-      lcp: number
-      fid: number
-      cls: number
-    }
-  }
+      lcp: number;
+      fid: number;
+      cls: number;
+    };
+  };
   user_journey: {
-    entry_page: string
-    exit_page: string
-    session_duration: number
-    pages_visited: number
-  }
+    entry_page: string;
+    exit_page: string;
+    session_duration: number;
+    pages_visited: number;
+  };
 }
 
 /**
@@ -62,13 +66,13 @@ export interface BusinessMetrics {
  * Gestion conforme du consentement utilisateur
  */
 export class GDPRConsentManager {
-  private consent: ConsentLevel | null = null
-  private session_id: string
-  private storage_key = 'verone_consent_v2'
+  private consent: ConsentLevel | null = null;
+  private session_id: string;
+  private storage_key = 'verone_consent_v2';
 
   constructor() {
-    this.session_id = this.generateSessionId()
-    this.loadStoredConsent()
+    this.session_id = this.generateSessionId();
+    this.loadStoredConsent();
   }
 
   /**
@@ -76,9 +80,12 @@ export class GDPRConsentManager {
    */
   private generateSessionId(): string {
     // Générer ID session sans données personnelles
-    const timestamp = Date.now()
-    const random = Math.random().toString(36).substring(2)
-    return createHash('sha256').update(`${timestamp}-${random}`).digest('hex').substring(0, 16)
+    const timestamp = Date.now();
+    const random = Math.random().toString(36).substring(2);
+    return createHash('sha256')
+      .update(`${timestamp}-${random}`)
+      .digest('hex')
+      .substring(0, 16);
   }
 
   /**
@@ -86,25 +93,25 @@ export class GDPRConsentManager {
    */
   private loadStoredConsent(): void {
     try {
-      const stored = localStorage.getItem(this.storage_key)
+      const stored = localStorage.getItem(this.storage_key);
       if (stored) {
-        const parsed = JSON.parse(stored)
+        const parsed = JSON.parse(stored);
 
         // Vérifier validité (consent expire après 13 mois selon RGPD)
-        const consentDate = new Date(parsed.timestamp)
-        const thirteenMonthsAgo = new Date()
-        thirteenMonthsAgo.setMonth(thirteenMonthsAgo.getMonth() - 13)
+        const consentDate = new Date(parsed.timestamp);
+        const thirteenMonthsAgo = new Date();
+        thirteenMonthsAgo.setMonth(thirteenMonthsAgo.getMonth() - 13);
 
         if (consentDate > thirteenMonthsAgo) {
-          this.consent = parsed.consent
+          this.consent = parsed.consent;
         } else {
           // Consent expiré, supprimer
-          this.clearConsent()
+          this.clearConsent();
         }
       }
     } catch (error) {
-      console.warn('[GDPR] Error loading consent:', error)
-      this.clearConsent()
+      console.warn('[GDPR] Error loading consent:', error);
+      this.clearConsent();
     }
   }
 
@@ -116,50 +123,50 @@ export class GDPRConsentManager {
       necessary: true, // Toujours requis
       analytics: consent.analytics,
       marketing: consent.marketing,
-      preferences: consent.preferences
-    }
+      preferences: consent.preferences,
+    };
 
     // Stockage avec timestamp
     const consentData = {
       consent: this.consent,
       timestamp: new Date().toISOString(),
-      session_id: this.session_id
-    }
+      session_id: this.session_id,
+    };
 
     try {
-      localStorage.setItem(this.storage_key, JSON.stringify(consentData))
+      localStorage.setItem(this.storage_key, JSON.stringify(consentData));
     } catch (error) {
-      console.warn('[GDPR] Error storing consent:', error)
+      console.warn('[GDPR] Error storing consent:', error);
     }
 
     // Émettre événement consent pour analytics
-    this.emitConsentEvent()
+    this.emitConsentEvent();
   }
 
   /**
    * 📋 Obtenir consent actuel
    */
   getConsent(): ConsentLevel | null {
-    return this.consent
+    return this.consent;
   }
 
   /**
    * 🔍 Vérifier si tracking autorisé
    */
   canTrack(type: 'analytics' | 'marketing' | 'preferences'): boolean {
-    if (!this.consent) return false
-    return this.consent[type] === true
+    if (!this.consent) return false;
+    return this.consent[type] === true;
   }
 
   /**
    * 🗑️ Supprimer consent
    */
   clearConsent(): void {
-    this.consent = null
+    this.consent = null;
     try {
-      localStorage.removeItem(this.storage_key)
+      localStorage.removeItem(this.storage_key);
     } catch (error) {
-      console.warn('[GDPR] Error clearing consent:', error)
+      console.warn('[GDPR] Error clearing consent:', error);
     }
   }
 
@@ -168,9 +175,11 @@ export class GDPRConsentManager {
    */
   private emitConsentEvent(): void {
     if (typeof window !== 'undefined' && this.consent) {
-      window.dispatchEvent(new CustomEvent('gdpr_consent_updated', {
-        detail: { consent: this.consent, session_id: this.session_id }
-      }))
+      window.dispatchEvent(
+        new CustomEvent('gdpr_consent_updated', {
+          detail: { consent: this.consent, session_id: this.session_id },
+        })
+      );
     }
   }
 
@@ -178,7 +187,7 @@ export class GDPRConsentManager {
    * 📊 Obtenir session ID
    */
   getSessionId(): string {
-    return this.session_id
+    return this.session_id;
   }
 }
 
@@ -187,36 +196,36 @@ export class GDPRConsentManager {
  * Collecte analytics respectueuse avec anonymisation
  */
 export class GDPRAnalytics {
-  private consentManager: GDPRConsentManager
-  private events: AnalyticsEvent[] = []
-  private metrics: BusinessMetrics
-  private isInitialized = false
+  private consentManager: GDPRConsentManager;
+  private events: AnalyticsEvent[] = [];
+  private metrics: BusinessMetrics;
+  private isInitialized = false;
 
   constructor() {
-    this.consentManager = new GDPRConsentManager()
-    this.metrics = this.initializeMetrics()
-    this.setupEventListeners()
+    this.consentManager = new GDPRConsentManager();
+    this.metrics = this.initializeMetrics();
+    this.setupEventListeners();
   }
 
   /**
    * 🚀 Initialisation analytics
    */
   async initialize(): Promise<void> {
-    if (this.isInitialized) return
+    if (this.isInitialized) return;
 
     // Vérifier consent avant initialisation
-    const consent = this.consentManager.getConsent()
+    const consent = this.consentManager.getConsent();
     if (!consent) {
-      console.log('[Analytics] Waiting for user consent...')
-      return
+      console.log('[Analytics] Waiting for user consent...');
+      return;
     }
 
-    this.isInitialized = true
-    console.log('[Analytics] Initialized with GDPR compliance')
+    this.isInitialized = true;
+    console.log('[Analytics] Initialized with GDPR compliance');
 
     // Tracking initial si autorisé
     if (this.consentManager.canTrack('analytics')) {
-      this.trackPageView(window.location.pathname)
+      this.trackPageView(window.location.pathname);
     }
   }
 
@@ -224,11 +233,14 @@ export class GDPRAnalytics {
    * 🎯 Tracking événement
    */
   track(event_name: string, properties: Record<string, any> = {}): void {
-    const consent = this.consentManager.getConsent()
-    if (!consent) return
+    const consent = this.consentManager.getConsent();
+    if (!consent) return;
 
     // Filtrer propriétés selon consent
-    const filteredProperties = this.filterPropertiesByConsent(properties, consent)
+    const filteredProperties = this.filterPropertiesByConsent(
+      properties,
+      consent
+    );
 
     const event: AnalyticsEvent = {
       event_type: 'user_action',
@@ -237,14 +249,14 @@ export class GDPRAnalytics {
       timestamp: new Date(),
       session_id: this.consentManager.getSessionId(),
       user_consent: consent,
-      anonymized: !consent.marketing
-    }
+      anonymized: !consent.marketing,
+    };
 
-    this.addEvent(event)
+    this.addEvent(event);
 
     // Envoi différé si analytics autorisé
     if (consent.analytics) {
-      this.sendEventToEndpoint(event)
+      this.sendEventToEndpoint(event);
     }
   }
 
@@ -252,8 +264,8 @@ export class GDPRAnalytics {
    * 📄 Tracking page view
    */
   trackPageView(path: string): void {
-    const consent = this.consentManager.getConsent()
-    if (!consent || !consent.analytics) return
+    const consent = this.consentManager.getConsent();
+    if (!consent?.analytics) return;
 
     const event: AnalyticsEvent = {
       event_type: 'page_view',
@@ -263,25 +275,29 @@ export class GDPRAnalytics {
         referrer: this.anonymizeReferrer(document.referrer),
         user_agent: this.anonymizeUserAgent(navigator.userAgent),
         viewport: `${window.innerWidth}x${window.innerHeight}`,
-        language: navigator.language
+        language: navigator.language,
       },
       timestamp: new Date(),
       session_id: this.consentManager.getSessionId(),
       user_consent: consent,
-      anonymized: true
-    }
+      anonymized: true,
+    };
 
-    this.addEvent(event)
-    this.updateMetrics('page_view', event.properties)
-    this.sendEventToEndpoint(event)
+    this.addEvent(event);
+    this.updateMetrics('page_view', event.properties);
+    this.sendEventToEndpoint(event);
   }
 
   /**
    * 📊 Tracking métriques business
    */
-  trackBusinessMetric(metric_name: string, value: number, context?: Record<string, any>): void {
-    const consent = this.consentManager.getConsent()
-    if (!consent || !consent.analytics) return
+  trackBusinessMetric(
+    metric_name: string,
+    value: number,
+    context?: Record<string, any>
+  ): void {
+    const consent = this.consentManager.getConsent();
+    if (!consent?.analytics) return;
 
     const event: AnalyticsEvent = {
       event_type: 'business_metric',
@@ -289,25 +305,25 @@ export class GDPRAnalytics {
       properties: {
         value,
         context: context || {},
-        anonymized: true
+        anonymized: true,
       },
       timestamp: new Date(),
       session_id: this.consentManager.getSessionId(),
       user_consent: consent,
-      anonymized: true
-    }
+      anonymized: true,
+    };
 
-    this.addEvent(event)
-    this.updateMetrics('business', { metric_name, value, context })
-    this.sendEventToEndpoint(event)
+    this.addEvent(event);
+    this.updateMetrics('business', { metric_name, value, context });
+    this.sendEventToEndpoint(event);
   }
 
   /**
    * ⚡ Tracking performance
    */
   trackPerformance(metric_name: string, timing: number): void {
-    const consent = this.consentManager.getConsent()
-    if (!consent || !consent.analytics) return
+    const consent = this.consentManager.getConsent();
+    if (!consent?.analytics) return;
 
     const event: AnalyticsEvent = {
       event_type: 'performance_metric',
@@ -315,46 +331,56 @@ export class GDPRAnalytics {
       properties: {
         timing,
         url: this.anonymizePath(window.location.pathname),
-        connection_type: (navigator as any).connection?.effectiveType || 'unknown'
+        connection_type:
+          (navigator as any).connection?.effectiveType || 'unknown',
       },
       timestamp: new Date(),
       session_id: this.consentManager.getSessionId(),
       user_consent: consent,
-      anonymized: true
-    }
+      anonymized: true,
+    };
 
-    this.addEvent(event)
-    this.updateMetrics('performance', { metric_name, timing })
-    this.sendEventToEndpoint(event)
+    this.addEvent(event);
+    this.updateMetrics('performance', { metric_name, timing });
+    this.sendEventToEndpoint(event);
   }
 
   /**
    * 🔒 Filtrage propriétés selon consent
    */
-  private filterPropertiesByConsent(properties: Record<string, any>, consent: ConsentLevel): Record<string, any> {
-    const filtered: Record<string, any> = {}
+  private filterPropertiesByConsent(
+    properties: Record<string, any>,
+    consent: ConsentLevel
+  ): Record<string, any> {
+    const filtered: Record<string, any> = {};
 
     // Propriétés toujours autorisées (necessary)
-    const allowedKeys = ['action', 'category', 'value', 'path', 'duration']
+    const allowedKeys = ['action', 'category', 'value', 'path', 'duration'];
 
     // Propriétés analytics (si consent analytics)
     if (consent.analytics) {
-      allowedKeys.push('user_agent', 'referrer', 'language', 'viewport', 'session_duration')
+      allowedKeys.push(
+        'user_agent',
+        'referrer',
+        'language',
+        'viewport',
+        'session_duration'
+      );
     }
 
     // Propriétés marketing (si consent marketing)
     if (consent.marketing) {
-      allowedKeys.push('user_id', 'campaign', 'source', 'medium', 'content')
+      allowedKeys.push('user_id', 'campaign', 'source', 'medium', 'content');
     }
 
     // Filtrer les propriétés
     Object.keys(properties).forEach(key => {
       if (allowedKeys.includes(key)) {
-        filtered[key] = properties[key]
+        filtered[key] = properties[key];
       }
-    })
+    });
 
-    return filtered
+    return filtered;
   }
 
   /**
@@ -362,31 +388,43 @@ export class GDPRAnalytics {
    */
   private anonymizePath(path: string): string {
     // Supprimer IDs potentiellement sensibles
-    return path.replace(/\/[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}/gi, '/[id]')
-               .replace(/\/\d+/g, '/[id]')
+    return path
+      .replace(
+        /\/[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}/gi,
+        '/[id]'
+      )
+      .replace(/\/\d+/g, '/[id]');
   }
 
   private anonymizeReferrer(referrer: string): string {
-    if (!referrer) return ''
+    if (!referrer) return '';
     try {
-      const url = new URL(referrer)
-      return url.hostname
+      const url = new URL(referrer);
+      return url.hostname;
     } catch {
-      return 'unknown'
+      return 'unknown';
     }
   }
 
   private anonymizeUserAgent(userAgent: string): string {
     // Garder seulement browser + OS, supprimer données précises
-    const browser = userAgent.includes('Chrome') ? 'Chrome' :
-                   userAgent.includes('Firefox') ? 'Firefox' :
-                   userAgent.includes('Safari') ? 'Safari' : 'Other'
+    const browser = userAgent.includes('Chrome')
+      ? 'Chrome'
+      : userAgent.includes('Firefox')
+        ? 'Firefox'
+        : userAgent.includes('Safari')
+          ? 'Safari'
+          : 'Other';
 
-    const os = userAgent.includes('Windows') ? 'Windows' :
-               userAgent.includes('Mac') ? 'macOS' :
-               userAgent.includes('Linux') ? 'Linux' : 'Other'
+    const os = userAgent.includes('Windows')
+      ? 'Windows'
+      : userAgent.includes('Mac')
+        ? 'macOS'
+        : userAgent.includes('Linux')
+          ? 'Linux'
+          : 'Other';
 
-    return `${browser}/${os}`
+    return `${browser}/${os}`;
   }
 
   /**
@@ -398,23 +436,23 @@ export class GDPRAnalytics {
         products_viewed: 0,
         collections_created: 0,
         pdfs_generated: 0,
-        shares_completed: 0
+        shares_completed: 0,
       },
       performance_metrics: {
         avg_load_time: 0,
         core_web_vitals: {
           lcp: 0,
           fid: 0,
-          cls: 0
-        }
+          cls: 0,
+        },
       },
       user_journey: {
         entry_page: '',
         exit_page: '',
         session_duration: 0,
-        pages_visited: 0
-      }
-    }
+        pages_visited: 0,
+      },
+    };
   }
 
   /**
@@ -423,18 +461,18 @@ export class GDPRAnalytics {
   private updateMetrics(type: string, data: any): void {
     switch (type) {
       case 'page_view':
-        this.metrics.user_journey.pages_visited++
-        break
+        this.metrics.user_journey.pages_visited++;
+        break;
       case 'business':
         if (data.metric_name.includes('product_view')) {
-          this.metrics.catalogue_usage.products_viewed++
+          this.metrics.catalogue_usage.products_viewed++;
         }
-        break
+        break;
       case 'performance':
         if (data.metric_name === 'page_load_time') {
-          this.metrics.performance_metrics.avg_load_time = data.timing
+          this.metrics.performance_metrics.avg_load_time = data.timing;
         }
-        break
+        break;
     }
   }
 
@@ -447,12 +485,12 @@ export class GDPRAnalytics {
       await fetch('/api/analytics/events', {
         method: 'POST',
         headers: {
-          'Content-Type': 'application/json'
+          'Content-Type': 'application/json',
         },
-        body: JSON.stringify(event)
-      })
+        body: JSON.stringify(event),
+      });
     } catch (error) {
-      console.warn('[Analytics] Failed to send event:', error)
+      console.warn('[Analytics] Failed to send event:', error);
     }
   }
 
@@ -460,11 +498,11 @@ export class GDPRAnalytics {
    * 📋 Ajout événement local
    */
   private addEvent(event: AnalyticsEvent): void {
-    this.events.push(event)
+    this.events.push(event);
 
     // Limiter historique local (protection mémoire)
     if (this.events.length > 100) {
-      this.events = this.events.slice(-50)
+      this.events = this.events.slice(-50);
     }
   }
 
@@ -472,41 +510,46 @@ export class GDPRAnalytics {
    * 🎧 Configuration listeners
    */
   private setupEventListeners(): void {
-    if (typeof window === 'undefined') return
+    if (typeof window === 'undefined') return;
 
     // Listener consent updates
     window.addEventListener('gdpr_consent_updated', (event: any) => {
-      const { consent } = event.detail
+      const { consent } = event.detail;
       if (consent.analytics && !this.isInitialized) {
-        this.initialize()
+        this.initialize();
       }
-    })
+    });
 
     // Performance monitoring
     window.addEventListener('load', () => {
       setTimeout(() => {
-        const navigation = performance.getEntriesByType('navigation')[0] as PerformanceNavigationTiming
+        const navigation = performance.getEntriesByType(
+          'navigation'
+        )[0] as PerformanceNavigationTiming;
         if (navigation) {
-          this.trackPerformance('page_load_time', navigation.loadEventEnd - navigation.fetchStart)
+          this.trackPerformance(
+            'page_load_time',
+            navigation.loadEventEnd - navigation.fetchStart
+          );
         }
-      }, 0)
-    })
+      }, 0);
+    });
 
     // Page visibility (respect vie privée)
     document.addEventListener('visibilitychange', () => {
       if (document.visibilityState === 'hidden') {
         // Session cleanup si nécessaire
-        this.flushEvents()
+        this.flushEvents();
       }
-    })
+    });
   }
 
   /**
    * 📤 Envoi événements en attente
    */
   private async flushEvents(): Promise<void> {
-    const consent = this.consentManager.getConsent()
-    if (!consent || !consent.analytics) return
+    const consent = this.consentManager.getConsent();
+    if (!consent?.analytics) return;
 
     // Envoi batch événements
     if (this.events.length > 0) {
@@ -514,16 +557,16 @@ export class GDPRAnalytics {
         await fetch('/api/analytics/batch', {
           method: 'POST',
           headers: {
-            'Content-Type': 'application/json'
+            'Content-Type': 'application/json',
           },
           body: JSON.stringify({
             events: this.events,
-            session_id: this.consentManager.getSessionId()
-          })
-        })
-        this.events = []
+            session_id: this.consentManager.getSessionId(),
+          }),
+        });
+        this.events = [];
       } catch (error) {
-        console.warn('[Analytics] Failed to flush events:', error)
+        console.warn('[Analytics] Failed to flush events:', error);
       }
     }
   }
@@ -532,37 +575,44 @@ export class GDPRAnalytics {
    * 📊 Obtenir métriques actuelles
    */
   getMetrics(): BusinessMetrics {
-    return { ...this.metrics }
+    return { ...this.metrics };
   }
 
   /**
    * 🔧 Obtenir gestionnaire consent
    */
   getConsentManager(): GDPRConsentManager {
-    return this.consentManager
+    return this.consentManager;
   }
 }
 
 /**
  * 🎯 Instance globale analytics
  */
-export const gdprAnalytics = new GDPRAnalytics()
+export const gdprAnalytics = new GDPRAnalytics();
 
 /**
  * 🚀 Helpers utilisation
  */
-export function trackEvent(name: string, properties?: Record<string, any>): void {
-  gdprAnalytics.track(name, properties)
+export function trackEvent(
+  name: string,
+  properties?: Record<string, any>
+): void {
+  gdprAnalytics.track(name, properties);
 }
 
 export function trackPageView(path?: string): void {
-  gdprAnalytics.trackPageView(path || window.location.pathname)
+  gdprAnalytics.trackPageView(path || window.location.pathname);
 }
 
-export function trackBusinessMetric(name: string, value: number, context?: Record<string, any>): void {
-  gdprAnalytics.trackBusinessMetric(name, value, context)
+export function trackBusinessMetric(
+  name: string,
+  value: number,
+  context?: Record<string, any>
+): void {
+  gdprAnalytics.trackBusinessMetric(name, value, context);
 }
 
 export function setUserConsent(consent: ConsentLevel): void {
-  gdprAnalytics.getConsentManager().setConsent(consent)
+  gdprAnalytics.getConsentManager().setConsent(consent);
 }

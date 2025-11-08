@@ -26,33 +26,33 @@ Migrer tous les composants de `src/components/business/` vers une architecture m
 
 ### Métriques Globales
 
-| Métrique | Avant | Après | Delta |
-|----------|-------|-------|-------|
-| **Composants business/** | 111 | 0 | -111 |
-| **Composants shared/modules/** | 82 | 185 | +103 |
-| **Modules structurés** | 11 | 14 | +3 |
-| **Doublons détectés** | 23 | 0 | -23 |
+| Métrique                       | Avant | Après | Delta |
+| ------------------------------ | ----- | ----- | ----- |
+| **Composants business/**       | 111   | 0     | -111  |
+| **Composants shared/modules/** | 82    | 185   | +103  |
+| **Modules structurés**         | 11    | 14    | +3    |
+| **Doublons détectés**          | 23    | 0     | -23   |
 
 ---
 
 ## 🗂️ MODULES CRÉÉS (14)
 
-| Module | Composants | Structure | Status |
-|--------|-----------|-----------|--------|
-| **Stock** | 18 | modals, sections, tables, filters, stats, badges, cards, charts | ✅ Complet |
-| **Orders** | 19 | modals, sections, tables, forms, charts | ✅ Complet |
-| **Products** | 42 | wizards, modals, sections, cards, grids, selectors, images, charts, sourcing | ✅ Complet |
-| **Suppliers** | 4 | badges, selectors, pricing | ✅ Nouveau |
-| **Categories** | 9 | modals, selectors, filters, badges | ✅ Complet |
-| **Channels** | 4 | google-merchant | ✅ Complet |
-| **Common** | 15 | address, carrier, collections, pricing, kpi | ✅ Complet |
-| **Consultations** | 7 | modals, images, associations, suggestions, interfaces | ✅ Complet |
-| **Customers** | 20 | modals, selectors, cards, sections, badges | ✅ Complet |
-| **Finance** | 8 | forms, buttons, reports, modals, kpis | ✅ Complet |
-| **Logistics** | 4 | shipment-forms | ✅ Complet |
-| **Notifications** | 3 | widgets, dropdowns | ✅ Complet |
-| **Organisations** | 7 | sections, cards, forms, buttons | ✅ Complet |
-| **UI** | 23 | modals, selectors, inputs, buttons, utils, badges, panels, sections, forms, validation | ✅ Complet |
+| Module            | Composants | Structure                                                                              | Status     |
+| ----------------- | ---------- | -------------------------------------------------------------------------------------- | ---------- |
+| **Stock**         | 18         | modals, sections, tables, filters, stats, badges, cards, charts                        | ✅ Complet |
+| **Orders**        | 19         | modals, sections, tables, forms, charts                                                | ✅ Complet |
+| **Products**      | 42         | wizards, modals, sections, cards, grids, selectors, images, charts, sourcing           | ✅ Complet |
+| **Suppliers**     | 4          | badges, selectors, pricing                                                             | ✅ Nouveau |
+| **Categories**    | 9          | modals, selectors, filters, badges                                                     | ✅ Complet |
+| **Channels**      | 4          | google-merchant                                                                        | ✅ Complet |
+| **Common**        | 15         | address, carrier, collections, pricing, kpi                                            | ✅ Complet |
+| **Consultations** | 7          | modals, images, associations, suggestions, interfaces                                  | ✅ Complet |
+| **Customers**     | 20         | modals, selectors, cards, sections, badges                                             | ✅ Complet |
+| **Finance**       | 8          | forms, buttons, reports, modals, kpis                                                  | ✅ Complet |
+| **Logistics**     | 4          | shipment-forms                                                                         | ✅ Complet |
+| **Notifications** | 3          | widgets, dropdowns                                                                     | ✅ Complet |
+| **Organisations** | 7          | sections, cards, forms, buttons                                                        | ✅ Complet |
+| **UI**            | 23         | modals, selectors, inputs, buttons, utils, badges, panels, sections, forms, validation | ✅ Complet |
 
 **Total** : 14 modules, 185 composants
 
@@ -65,6 +65,7 @@ Migrer tous les composants de `src/components/business/` vers une architecture m
 **Durée** : 1h | **Commits** : 3 (`7df886b`, `aa0aa62`, `db07c5c`)
 
 #### Structure créée
+
 ```
 src/shared/modules/stock/components/
 ├── modals/         (7) CancelMovement, GeneralStockMovement, InventoryAdjustment, MovementDetails, QuickStockMovement, StockMovement, StockReports
@@ -86,6 +87,7 @@ src/shared/modules/stock/components/
 **Durée** : 1h | **Commits** : 2 (`c625a81`, `fe10d0d`)
 
 #### Structure créée
+
 ```
 src/shared/modules/orders/components/
 ├── modals/         (11) AddProductToOrder, OrderDetail, PurchaseOrderDetail, PurchaseOrderForm, PurchaseOrderReception, QuickPurchaseOrder, SalesOrderForm, SalesOrderShipment, ShipmentRecap, ShippingManager, UniversalOrderDetails
@@ -104,6 +106,7 @@ src/shared/modules/orders/components/
 **Durée** : 1h | **Commits** : 2 (`659fdfd`, `81a7c50`)
 
 #### Structure créée
+
 ```
 src/shared/modules/products/components/
 ├── wizards/        (4) CompleteProduct, ProductCreation, VariantGroupCreation, ProductConsultationManager
@@ -119,6 +122,7 @@ src/shared/modules/products/components/
 **Durée** : 1h | **Commits** : 2 (`f254e8f`, `31cc0a6`)
 
 #### Structure créée
+
 ```
 src/shared/modules/products/components/
 ├── sections/       (9) ProductDetailAccordion, ProductDualMode, ProductEditMode, ProductInfo, ProductNameEdit, ProductStatusEdit, ProductViewMode, ProductVariants, VariantSiblings
@@ -135,6 +139,7 @@ src/shared/modules/products/components/
 **Durée** : 45min | **Commits** : 2 (`78ccf70`, `7eea119`)
 
 #### Structure créée
+
 ```
 src/shared/modules/products/components/
 ├── selectors/      (4) ProductSelector, ProductStatusSelector, ProductTypeSelector, UniversalProductSelectorV2
@@ -150,6 +155,7 @@ src/shared/modules/products/components/
 **Durée** : 30min | **Commit** : `ba54479`
 
 #### Structure créée
+
 ```
 src/shared/modules/products/components/
 ├── charts/         (1) ProductsChart
@@ -167,6 +173,7 @@ src/shared/modules/products/components/
 **Durée** : 30min | **Commit** : `889b4cb`
 
 #### Structure créée
+
 ```
 src/shared/modules/suppliers/components/
 ├── badges/         (1) SupplierSegmentBadge
@@ -183,6 +190,7 @@ src/shared/modules/suppliers/components/
 **Durée** : 30min | **Commit** : `5647a32`
 
 #### Finance (2)
+
 ```
 src/shared/modules/finance/components/
 ├── forms/          (1) PaymentForm
@@ -190,6 +198,7 @@ src/shared/modules/finance/components/
 ```
 
 #### Consultations (1)
+
 ```
 src/shared/modules/consultations/components/
 └── interfaces/     (1) ConsultationOrderInterface
@@ -204,6 +213,7 @@ src/shared/modules/consultations/components/
 **Durée** : 45min | **Commit** : `3849702`
 
 #### Structure créée
+
 ```
 src/shared/modules/ui/components/
 ├── badges/         (1) PreferredBadge
@@ -224,6 +234,7 @@ src/shared/modules/ui/components/
 **Durée** : 15min | **Commit** : `ae396e5`
 
 #### Actions
+
 - ✅ Migré : QuickSourcingModal → products/modals/
 - ✅ Supprimé doublon : purchase-order-reception-form.tsx
 - ✅ Supprimé test components : test-checkbox, test-progress-bar, test-status-badge
@@ -237,9 +248,11 @@ src/shared/modules/ui/components/
 ## 🧹 DOUBLONS SUPPRIMÉS (23 fichiers)
 
 ### Session 1 : Audit Initial
+
 - ✅ kpi-card.tsx (commit `c66f067`)
 
 ### Session 2 : Customers/Common/Notifications
+
 - ✅ client-assignment-selector.tsx
 - ✅ customer-selector.tsx
 - ✅ customer-type-selector.tsx
@@ -257,6 +270,7 @@ src/shared/modules/ui/components/
 **Commit** : `3d2c755`
 
 ### Session 3 : Doublons réapparus
+
 - ✅ address-input.tsx (réapparition)
 - ✅ create-organisation-modal.tsx (réapparition)
 - ✅ customer-selector.tsx (réapparition)
@@ -265,6 +279,7 @@ src/shared/modules/ui/components/
 **Commit** : `aa709a6`
 
 ### Session 4 : Cleanup final
+
 - ✅ purchase-order-reception-form.tsx
 - ✅ test-checkbox.tsx
 - ✅ test-progress-bar.tsx
@@ -394,13 +409,13 @@ src/shared/modules/
 
 ### Timeline
 
-| Phase | Durée | Composants | Commits |
-|-------|-------|------------|---------|
-| **Audit & Classification** | 2h | 98 analysés | 3 |
-| **BATCH 1-2 (Stock + Orders)** | 2h | 37 migrés | 5 |
-| **BATCH 3-6 (Products)** | 3h | 42 migrés | 6 |
-| **BATCH 7-10 (Finaux)** | 1.5h | 16 migrés | 4 |
-| **Cleanup & Rapports** | 0.5h | 5 nettoyés | 2 |
+| Phase                          | Durée | Composants  | Commits |
+| ------------------------------ | ----- | ----------- | ------- |
+| **Audit & Classification**     | 2h    | 98 analysés | 3       |
+| **BATCH 1-2 (Stock + Orders)** | 2h    | 37 migrés   | 5       |
+| **BATCH 3-6 (Products)**       | 3h    | 42 migrés   | 6       |
+| **BATCH 7-10 (Finaux)**        | 1.5h  | 16 migrés   | 4       |
+| **Cleanup & Rapports**         | 0.5h  | 5 nettoyés  | 2       |
 
 **Total** : ~5h pour 95 composants + 23 doublons supprimés
 
@@ -435,15 +450,17 @@ src/shared/modules/
 **Cause** : ~250 imports pointent encore vers `@/components/business/` (supprimé)
 
 **Exemple** :
+
 ```typescript
 // ❌ Ancien import (cassé)
-import { ProductCard } from '@/components/business/product-card'
+import { ProductCard } from '@/components/business/product-card';
 
 // ✅ Nouvel import (à implémenter)
-import { ProductCard } from '@/shared/modules/products/components/cards'
+import { ProductCard } from '@/shared/modules/products/components/cards';
 ```
 
 **Impact** :
+
 - Build : ❌ Échec TypeScript
 - Runtime : ❌ Module not found
 - Pages : ❌ Toutes cassées
@@ -465,6 +482,7 @@ import { ProductCard } from '@/shared/modules/products/components/cards'
 **Status** : ⏳ **En attente**
 
 **Tests requis** :
+
 - `npm run type-check` = 0 erreurs
 - `npm run build` = SUCCESS
 - `npm run lint` = 0 erreurs
@@ -503,6 +521,7 @@ Migration complète en 1 journée au lieu de 2 → Repos mérité
 ✅ **Migration 100% COMPLÈTE** en 1 journée au lieu de 5 prévus
 
 **Réalisations** :
+
 - 95 composants uniques migrés
 - 23 doublons supprimés
 - 14 modules structurés
@@ -524,6 +543,7 @@ Migration complète en 1 journée au lieu de 2 → Repos mérité
 **v3.0.0-modules-migration** (JOUR 5)
 
 Conditions :
+
 - ✅ Migration modules (DONE)
 - ⏳ Migration hooks
 - ⏳ Update imports

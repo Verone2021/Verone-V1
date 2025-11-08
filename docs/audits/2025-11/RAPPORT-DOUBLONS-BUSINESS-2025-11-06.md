@@ -18,37 +18,38 @@
 
 ### Customers Module (11 doublons)
 
-| Fichier business/                          | Migré vers shared/modules/                                           |
-|--------------------------------------------|----------------------------------------------------------------------|
-| `client-assignment-selector.tsx`           | `customers/components/selectors/ClientAssignmentSelector.tsx`        |
-| `customer-selector.tsx`                    | `customers/components/selectors/CustomerSelector.tsx`                |
-| `customer-type-selector.tsx`               | `customers/components/selectors/CustomerTypeSelector.tsx`            |
-| `contact-form-modal.tsx`                   | `customers/components/modals/ContactFormModal.tsx`                   |
-| `customer-form-modal.tsx`                  | `customers/components/modals/CustomerFormModal.tsx`                  |
-| `create-individual-customer-modal.tsx`     | `customers/components/modals/CreateIndividualCustomerModal.tsx`      |
-| `create-organisation-modal.tsx`            | `customers/components/modals/CreateOrganisationModal.tsx`            |
-| `confirm-delete-organisation-modal.tsx`    | `customers/components/modals/ConfirmDeleteOrganisationModal.tsx`     |
-| `organisation-card.tsx`                    | `customers/components/cards/OrganisationCard.tsx`                    |
-| `organisation-logo-card.tsx`               | `customers/components/cards/OrganisationLogoCard.tsx`                |
-| `organisation-logo.tsx`                    | `customers/components/cards/OrganisationLogo.tsx`                    |
+| Fichier business/                       | Migré vers shared/modules/                                       |
+| --------------------------------------- | ---------------------------------------------------------------- |
+| `client-assignment-selector.tsx`        | `customers/components/selectors/ClientAssignmentSelector.tsx`    |
+| `customer-selector.tsx`                 | `customers/components/selectors/CustomerSelector.tsx`            |
+| `customer-type-selector.tsx`            | `customers/components/selectors/CustomerTypeSelector.tsx`        |
+| `contact-form-modal.tsx`                | `customers/components/modals/ContactFormModal.tsx`               |
+| `customer-form-modal.tsx`               | `customers/components/modals/CustomerFormModal.tsx`              |
+| `create-individual-customer-modal.tsx`  | `customers/components/modals/CreateIndividualCustomerModal.tsx`  |
+| `create-organisation-modal.tsx`         | `customers/components/modals/CreateOrganisationModal.tsx`        |
+| `confirm-delete-organisation-modal.tsx` | `customers/components/modals/ConfirmDeleteOrganisationModal.tsx` |
+| `organisation-card.tsx`                 | `customers/components/cards/OrganisationCard.tsx`                |
+| `organisation-logo-card.tsx`            | `customers/components/cards/OrganisationLogoCard.tsx`            |
+| `organisation-logo.tsx`                 | `customers/components/cards/OrganisationLogo.tsx`                |
 
 ### Common Module (1 doublon)
 
-| Fichier business/     | Migré vers shared/modules/                     |
-|-----------------------|-----------------------------------------------|
-| `address-input.tsx`   | `common/components/address/AddressInput.tsx`  |
+| Fichier business/   | Migré vers shared/modules/                   |
+| ------------------- | -------------------------------------------- |
+| `address-input.tsx` | `common/components/address/AddressInput.tsx` |
 
 ### Notifications Module (1 doublon)
 
-| Fichier business/             | Migré vers shared/modules/                                |
-|-------------------------------|----------------------------------------------------------|
-| `notifications-dropdown.tsx`  | `notifications/components/dropdowns/NotificationsDropdown.tsx` |
+| Fichier business/            | Migré vers shared/modules/                                     |
+| ---------------------------- | -------------------------------------------------------------- |
+| `notifications-dropdown.tsx` | `notifications/components/dropdowns/NotificationsDropdown.tsx` |
 
 ---
 
 ## 📦 COMPOSANTS MIGRÉS PAR MODULE (82 total)
 
 ### Customers Module (9 composants)
+
 - ContactDetailsEditSection
 - ContactEditSection
 - ContactPersonalEditSection
@@ -60,6 +61,7 @@
 - CustomerBadge
 
 ### Categories Module (9 composants)
+
 - CategorizeModal
 - CategorySelector
 - CategoryHierarchySelector
@@ -71,6 +73,7 @@
 - SupplierCategoryBadge
 
 ### Common Module (14 composants)
+
 - AddressEditSection
 - AddressInput
 - AddressSelector
@@ -87,6 +90,7 @@
 - KPICard
 
 ### Consultations Module (6 composants)
+
 - EditConsultationModal
 - ConsultationPhotosModal
 - ConsultationImageGallery
@@ -95,6 +99,7 @@
 - ConsultationSuggestions
 
 ### Products Module (8 composants)
+
 - EditProductVariantModal
 - EditSourcingProductModal
 - CompletionStatusCompact
@@ -105,6 +110,7 @@
 - SampleRequirementSection
 
 ### Finance Module (5 composants)
+
 - FinancialPaymentForm
 - GenerateInvoiceButton
 - ABCAnalysisView
@@ -112,12 +118,14 @@
 - BFAReportModal
 
 ### Channels Module (4 composants)
+
 - GoogleMerchantConfigModal
 - GoogleMerchantMetadataEditor
 - GoogleMerchantProductCard
 - GoogleMerchantProductManager
 
 ### UI Module (14 composants)
+
 - ConfirmDeleteModal
 - ConfirmSubmitModal
 - ErrorReportModal
@@ -134,12 +142,14 @@
 - DraggableProductGrid
 
 ### Logistics Module (4 composants)
+
 - ChronotruckShipmentForm
 - ManualShipmentForm
 - MondialRelayShipmentForm
 - PacklinkShipmentForm
 
 ### Organisations Module (7 composants)
+
 - OrganisationProductsSection
 - OrganisationStatsCard
 - LegalIdentityEditSection
@@ -149,6 +159,7 @@
 - LogoUploadButton
 
 ### Notifications Module (2 composants)
+
 - NotificationWidget
 - NotificationsDropdown
 
@@ -159,6 +170,7 @@
 Après suppression des 13 doublons confirmés, il reste **98 composants** à classifier :
 
 ### Orders & Shipments (19 composants)
+
 - add-product-to-order-modal.tsx
 - editable-order-item-row.tsx
 - order-detail-modal.tsx
@@ -180,6 +192,7 @@ Après suppression des 13 doublons confirmés, il reste **98 composants** à cla
 - revenue-chart.tsx
 
 ### Stock & Movements (14 composants)
+
 - cancel-movement-modal.tsx
 - general-stock-movement-modal.tsx
 - inventory-adjustment-modal.tsx
@@ -200,6 +213,7 @@ Après suppression des 13 doublons confirmés, il reste **98 composants** à cla
 - stock-view-section.tsx
 
 ### Products (41 composants)
+
 - complete-product-wizard.tsx
 - primary-image-upload.tsx
 - product-card-v2.tsx
@@ -243,18 +257,22 @@ Après suppression des 13 doublons confirmés, il reste **98 composants** à cla
 - sourcing-quick-form.tsx
 
 ### Suppliers (4 composants)
+
 - supplier-segment-badge.tsx
 - supplier-segment-select.tsx
 - supplier-selector.tsx
 
 ### Consultations (1 composant)
+
 - consultation-order-interface.tsx
 
 ### Finance (2 composants)
+
 - payment-form.tsx
 - treasury-kpis.tsx
 
 ### UI Common (6 composants)
+
 - preferred-badge.tsx
 - quick-action-modal.tsx
 - relations-edit-section.tsx
@@ -266,11 +284,13 @@ Après suppression des 13 doublons confirmés, il reste **98 composants** à cla
 - unified-organisation-form.tsx
 
 ### Testing (3 composants)
+
 - test-checkbox.tsx
 - test-progress-bar.tsx
 - test-status-badge.tsx
 
 ### Autres (4 composants)
+
 - quantity-breaks-display.tsx
 
 ---
@@ -278,6 +298,7 @@ Après suppression des 13 doublons confirmés, il reste **98 composants** à cla
 ## 🎯 ACTION ITEMS
 
 ### PRIORITÉ 1 : Suppression doublons (13 fichiers)
+
 ```bash
 # Supprimer les 13 doublons confirmés
 rm src/components/business/client-assignment-selector.tsx
@@ -298,6 +319,7 @@ git add -A && git commit -m "refactor(audit): Suppression 13 doublons confirmés
 ```
 
 ### PRIORITÉ 2 : Migration par modules (98 composants)
+
 - **Stock Module** : 18 composants
 - **Orders Module** : 19 composants
 - **Products Module** : 41 composants

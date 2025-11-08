@@ -20,6 +20,7 @@
 Setup complet environnement développement pour Vérone : Node.js, Supabase CLI, VS Code, extensions recommandées, outils MCP.
 
 **À documenter** :
+
 - Node.js 18+ installation
 - Supabase CLI setup
 - VS Code extensions (ESLint, Prettier, Tailwind IntelliSense)

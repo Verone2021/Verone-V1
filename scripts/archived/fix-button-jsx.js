@@ -60,7 +60,9 @@ files.forEach((filePath, index) => {
       const openTags = (content.match(/<Button(\s|>|\/)/g) || []).length;
       const closeTags = (content.match(/<\/Button>/g) || []).length;
 
-      console.log(`  ✅ Modifié (${openTags} opening tags, ${closeTags} closing tags)\n`);
+      console.log(
+        `  ✅ Modifié (${openTags} opening tags, ${closeTags} closing tags)\n`
+      );
       modifiedCount++;
     } else {
       console.log(`  ⚠️ Aucune modification nécessaire\n`);

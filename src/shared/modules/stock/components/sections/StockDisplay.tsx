@@ -1,18 +1,26 @@
-'use client'
+'use client';
 
-import React from 'react'
-import { Badge } from '@/components/ui/badge'
-import { Progress } from '@/components/ui/progress'
-import { AlertTriangle, TrendingUp, TrendingDown, Package, Clock } from 'lucide-react'
+import React from 'react';
+
+import {
+  AlertTriangle,
+  TrendingUp,
+  TrendingDown,
+  Package,
+  Clock,
+} from 'lucide-react';
+
+import { Badge } from '@/components/ui/badge';
+import { Progress } from '@/components/ui/progress';
 
 interface StockDisplayProps {
-  stock_real: number
-  stock_forecasted_in?: number
-  stock_forecasted_out?: number
-  stock_available?: number
-  min_stock?: number
-  showDetails?: boolean
-  size?: 'sm' | 'md' | 'lg'
+  stock_real: number;
+  stock_forecasted_in?: number;
+  stock_forecasted_out?: number;
+  stock_available?: number;
+  min_stock?: number;
+  showDetails?: boolean;
+  size?: 'sm' | 'md' | 'lg';
 }
 
 export function StockDisplay({
@@ -22,26 +30,26 @@ export function StockDisplay({
   stock_available,
   min_stock = 5,
   showDetails = false,
-  size = 'md'
+  size = 'md',
 }: StockDisplayProps) {
-  const available = stock_available ?? (stock_real - stock_forecasted_out)
+  const available = stock_available ?? stock_real - stock_forecasted_out;
 
   // Déterminer le statut du stock
   const getStockStatus = () => {
-    if (stock_real <= 0) return 'critical'
-    if (stock_real <= min_stock) return 'low'
-    if (available <= min_stock) return 'forecasted_low'
-    return 'normal'
-  }
+    if (stock_real <= 0) return 'critical';
+    if (stock_real <= min_stock) return 'low';
+    if (available <= min_stock) return 'forecasted_low';
+    return 'normal';
+  };
 
-  const status = getStockStatus()
+  const status = getStockStatus();
 
   // Styles selon la taille
   const sizeClasses = {
     sm: 'text-xs',
     md: 'text-sm',
-    lg: 'text-base'
-  }
+    lg: 'text-base',
+  };
 
   // Couleurs selon le statut
   const statusConfig = {
@@ -51,7 +59,7 @@ export function StockDisplay({
       borderColor: 'border-red-200',
       icon: AlertTriangle,
       label: 'Épuisé',
-      badgeVariant: 'destructive' as const
+      badgeVariant: 'destructive' as const,
     },
     low: {
       color: 'text-white',
@@ -59,7 +67,7 @@ export function StockDisplay({
       borderColor: 'border-gray-300',
       icon: AlertTriangle,
       label: 'Stock faible',
-      badgeVariant: 'secondary' as const
+      badgeVariant: 'secondary' as const,
     },
     forecasted_low: {
       color: 'text-blue-600',
@@ -67,7 +75,7 @@ export function StockDisplay({
       borderColor: 'border-blue-200',
       icon: Clock,
       label: 'Prévision faible',
-      badgeVariant: 'outline' as const
+      badgeVariant: 'outline' as const,
     },
     normal: {
       color: 'text-green-600',
@@ -75,12 +83,12 @@ export function StockDisplay({
       borderColor: 'border-green-200',
       icon: Package,
       label: 'Normal',
-      badgeVariant: 'secondary' as const
-    }
-  }
+      badgeVariant: 'secondary' as const,
+    },
+  };
 
-  const config = statusConfig[status]
-  const Icon = config.icon
+  const config = statusConfig[status];
+  const Icon = config.icon;
 
   if (!showDetails) {
     // Affichage compact
@@ -94,38 +102,34 @@ export function StockDisplay({
           <div className="flex items-center gap-1 text-xs text-gray-500">
             {stock_forecasted_in > 0 && (
               <span className="flex items-center gap-1 text-green-600">
-                <TrendingUp className="h-3 w-3" />
-                +{stock_forecasted_in}
+                <TrendingUp className="h-3 w-3" />+{stock_forecasted_in}
               </span>
             )}
             {stock_forecasted_out > 0 && (
               <span className="flex items-center gap-1 text-red-600">
-                <TrendingDown className="h-3 w-3" />
-                -{stock_forecasted_out}
+                <TrendingDown className="h-3 w-3" />-{stock_forecasted_out}
               </span>
             )}
           </div>
         )}
       </div>
-    )
+    );
   }
 
   // Affichage détaillé
-  const stockLevel = Math.min((stock_real / (min_stock * 2)) * 100, 100)
+  const stockLevel = Math.min((stock_real / (min_stock * 2)) * 100, 100);
 
   return (
-    <div className={`p-4 rounded-lg border ${config.bgColor} ${config.borderColor}`}>
+    <div
+      className={`p-4 rounded-lg border ${config.bgColor} ${config.borderColor}`}
+    >
       {/* En-tête avec statut */}
       <div className="flex items-center justify-between mb-3">
         <div className="flex items-center gap-2">
           <Icon className={`h-4 w-4 ${config.color}`} />
-          <span className={`font-medium ${config.color}`}>
-            {config.label}
-          </span>
+          <span className={`font-medium ${config.color}`}>{config.label}</span>
         </div>
-        <Badge variant={config.badgeVariant}>
-          {stock_real} unités
-        </Badge>
+        <Badge variant={config.badgeVariant}>{stock_real} unités</Badge>
       </div>
 
       {/* Barre de progression du stock */}
@@ -182,7 +186,11 @@ export function StockDisplay({
                 <Clock className="h-3 w-3" />
                 Stock disponible
               </span>
-              <span className={available <= min_stock ? 'text-white' : 'text-green-600'}>
+              <span
+                className={
+                  available <= min_stock ? 'text-white' : 'text-green-600'
+                }
+              >
                 {available}
               </span>
             </div>
@@ -194,23 +202,26 @@ export function StockDisplay({
       {status !== 'normal' && (
         <div className="mt-3 p-2 rounded bg-white/50 border border-white/20">
           <div className={`text-xs ${config.color}`}>
-            {status === 'critical' && 'Stock épuisé - Réapprovisionnement urgent'}
-            {status === 'low' && `Stock sous le seuil minimum (${min_stock} unités)`}
-            {status === 'forecasted_low' && 'Stock disponible faible avec les prévisions'}
+            {status === 'critical' &&
+              'Stock épuisé - Réapprovisionnement urgent'}
+            {status === 'low' &&
+              `Stock sous le seuil minimum (${min_stock} unités)`}
+            {status === 'forecasted_low' &&
+              'Stock disponible faible avec les prévisions'}
           </div>
         </div>
       )}
     </div>
-  )
+  );
 }
 
 interface StockSummaryCardProps {
-  title: string
-  value: number
-  change?: number
-  changeType?: 'increase' | 'decrease'
-  icon: React.ElementType
-  color?: 'blue' | 'green' | 'red' | 'orange'
+  title: string;
+  value: number;
+  change?: number;
+  changeType?: 'increase' | 'decrease';
+  icon: React.ElementType;
+  color?: 'blue' | 'green' | 'red' | 'orange';
 }
 
 export function StockSummaryCard({
@@ -219,27 +230,31 @@ export function StockSummaryCard({
   change,
   changeType,
   icon: Icon,
-  color = 'blue'
+  color = 'blue',
 }: StockSummaryCardProps) {
   const colorClasses = {
     blue: 'text-blue-600 bg-blue-50 border-blue-200',
     green: 'text-green-600 bg-green-50 border-green-200',
     red: 'text-red-600 bg-red-50 border-red-200',
-    orange: 'text-orange-600 bg-orange-50 border-orange-200'
-  }
+    orange: 'text-orange-600 bg-orange-50 border-orange-200',
+  };
 
   return (
     <div className={`p-4 rounded-lg border ${colorClasses[color]}`}>
       <div className="flex items-center justify-between">
         <div>
           <p className="text-sm font-medium text-gray-600">{title}</p>
-          <p className={`text-2xl font-bold ${colorClasses[color].split(' ')[0]}`}>
+          <p
+            className={`text-2xl font-bold ${colorClasses[color].split(' ')[0]}`}
+          >
             {value.toLocaleString()}
           </p>
           {change !== undefined && (
-            <p className={`text-xs flex items-center gap-1 mt-1 ${
-              changeType === 'increase' ? 'text-green-600' : 'text-red-600'
-            }`}>
+            <p
+              className={`text-xs flex items-center gap-1 mt-1 ${
+                changeType === 'increase' ? 'text-green-600' : 'text-red-600'
+              }`}
+            >
               {changeType === 'increase' ? (
                 <TrendingUp className="h-3 w-3" />
               ) : (
@@ -252,5 +267,5 @@ export function StockSummaryCard({
         <Icon className={`h-8 w-8 ${colorClasses[color].split(' ')[0]}`} />
       </div>
     </div>
-  )
+  );
 }

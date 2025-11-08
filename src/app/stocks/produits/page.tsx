@@ -1,8 +1,10 @@
-'use client'
+'use client';
 
-import React, { useState, useEffect, useMemo } from 'react'
-import { useRouter } from 'next/navigation'
-import Image from 'next/image'
+import React, { useState, useEffect, useMemo } from 'react';
+
+import Image from 'next/image';
+import { useRouter } from 'next/navigation';
+
 import {
   Package,
   Search,
@@ -22,67 +24,75 @@ import {
   Calendar,
   ArrowUpDown,
   X,
-  ArrowLeft
-} from 'lucide-react'
-import { ButtonV2 } from '@/components/ui/button'
-import { Input } from '@/components/ui/input'
-import { Badge } from '@/components/ui/badge'
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select'
+  ArrowLeft,
+} from 'lucide-react';
+
+import { Badge } from '@/components/ui/badge';
+import { ButtonV2 } from '@/components/ui/button';
 import {
   Dialog,
   DialogContent,
   DialogHeader,
   DialogTitle,
   DialogTrigger,
-} from '@/components/ui/dialog'
-import { useToast } from '@/shared/modules/common/hooks'
-import { useStock } from '@/shared/modules/stock/hooks'
-import { useStockMovements } from '@/shared/modules/stock/hooks'
-import { useStockReservations } from '@/shared/modules/stock/hooks'
-import { formatPrice } from '@/lib/utils'
+} from '@/components/ui/dialog';
+import { Input } from '@/components/ui/input';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
+import { formatPrice } from '@verone/utils';
+import { useToast } from '@/shared/modules/common/hooks';
+import { useStock } from '@/shared/modules/stock/hooks';
+import { useStockMovements } from '@/shared/modules/stock/hooks';
+import { useStockReservations } from '@/shared/modules/stock/hooks';
 
 interface StockFilters {
-  search: string
-  status: 'all' | 'in_stock' | 'low_stock' | 'out_of_stock'
-  category: string
-  sortBy: 'name' | 'sku' | 'stock' | 'updated_at'
-  sortOrder: 'asc' | 'desc'
+  search: string;
+  status: 'all' | 'in_stock' | 'low_stock' | 'out_of_stock';
+  category: string;
+  sortBy: 'name' | 'sku' | 'stock' | 'updated_at';
+  sortOrder: 'asc' | 'desc';
 }
 
 interface StockMovementModalProps {
-  product: any
-  isOpen: boolean
-  onClose: () => void
-  onSuccess: () => void
+  product: any;
+  isOpen: boolean;
+  onClose: () => void;
+  onSuccess: () => void;
 }
 
-function StockMovementModal({ product, isOpen, onClose, onSuccess }: StockMovementModalProps) {
-  const [movementType, setMovementType] = useState<'IN' | 'OUT' | 'ADJUST'>('IN')
-  const [quantity, setQuantity] = useState('')
-  const [unitCost, setUnitCost] = useState('')
-  const [notes, setNotes] = useState('')
-  const [loading, setLoading] = useState(false)
-  const { createMovement } = useStockMovements()
-  const { toast } = useToast()
+function StockMovementModal({
+  product,
+  isOpen,
+  onClose,
+  onSuccess,
+}: StockMovementModalProps) {
+  const [movementType, setMovementType] = useState<'IN' | 'OUT' | 'ADJUST'>(
+    'IN'
+  );
+  const [quantity, setQuantity] = useState('');
+  const [unitCost, setUnitCost] = useState('');
+  const [notes, setNotes] = useState('');
+  const [loading, setLoading] = useState(false);
+  const { createMovement } = useStockMovements();
+  const { toast } = useToast();
 
   const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault()
+    e.preventDefault();
     if (!quantity || parseInt(quantity) <= 0) {
       toast({
-        title: "Erreur",
-        description: "Veuillez saisir une quantité valide",
-        variant: "destructive"
-      })
-      return
+        title: 'Erreur',
+        description: 'Veuillez saisir une quantité valide',
+        variant: 'destructive',
+      });
+      return;
     }
 
-    setLoading(true)
+    setLoading(true);
     try {
       await createMovement({
         product_id: product.id,
@@ -90,20 +100,20 @@ function StockMovementModal({ product, isOpen, onClose, onSuccess }: StockMoveme
         quantity_change: parseInt(quantity),
         unit_cost: unitCost ? parseFloat(unitCost) : undefined,
         reference_type: 'manual_entry',
-        notes: notes
-      })
+        notes: notes,
+      });
 
-      onSuccess()
-      onClose()
-      setQuantity('')
-      setUnitCost('')
-      setNotes('')
+      onSuccess();
+      onClose();
+      setQuantity('');
+      setUnitCost('');
+      setNotes('');
     } catch (error) {
       // L'erreur est déjà gérée dans le hook
     } finally {
-      setLoading(false)
+      setLoading(false);
     }
-  }
+  };
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
@@ -113,8 +123,13 @@ function StockMovementModal({ product, isOpen, onClose, onSuccess }: StockMoveme
         </DialogHeader>
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
-            <label className="block text-sm font-medium mb-2">Type de mouvement</label>
-            <Select value={movementType} onValueChange={(value: any) => setMovementType(value)}>
+            <label className="block text-sm font-medium mb-2">
+              Type de mouvement
+            </label>
+            <Select
+              value={movementType}
+              onValueChange={(value: any) => setMovementType(value)}
+            >
               <SelectTrigger>
                 <SelectValue />
               </SelectTrigger>
@@ -134,8 +149,12 @@ function StockMovementModal({ product, isOpen, onClose, onSuccess }: StockMoveme
               type="number"
               min="1"
               value={quantity}
-              onChange={(e) => setQuantity(e.target.value)}
-              placeholder={movementType === 'ADJUST' ? 'Quantité finale souhaitée' : 'Quantité du mouvement'}
+              onChange={e => setQuantity(e.target.value)}
+              placeholder={
+                movementType === 'ADJUST'
+                  ? 'Quantité finale souhaitée'
+                  : 'Quantité du mouvement'
+              }
               required
             />
             {product && (
@@ -146,13 +165,15 @@ function StockMovementModal({ product, isOpen, onClose, onSuccess }: StockMoveme
           </div>
 
           <div>
-            <label className="block text-sm font-medium mb-2">Coût unitaire (optionnel)</label>
+            <label className="block text-sm font-medium mb-2">
+              Coût unitaire (optionnel)
+            </label>
             <Input
               type="number"
               step="0.01"
               min="0"
               value={unitCost}
-              onChange={(e) => setUnitCost(e.target.value)}
+              onChange={e => setUnitCost(e.target.value)}
               placeholder="0.00"
             />
           </div>
@@ -161,47 +182,64 @@ function StockMovementModal({ product, isOpen, onClose, onSuccess }: StockMoveme
             <label className="block text-sm font-medium mb-2">Notes</label>
             <Input
               value={notes}
-              onChange={(e) => setNotes(e.target.value)}
+              onChange={e => setNotes(e.target.value)}
               placeholder="Raison du mouvement..."
             />
           </div>
 
           <div className="flex gap-2 pt-4">
-            <ButtonV2 type="button" variant="outline" onClick={onClose} className="flex-1">
+            <ButtonV2
+              type="button"
+              variant="outline"
+              onClick={onClose}
+              className="flex-1"
+            >
               Annuler
             </ButtonV2>
             <ButtonV2 type="submit" disabled={loading} className="flex-1">
-              {loading ? <RefreshCw className="h-4 w-4 animate-spin" /> : 'Enregistrer'}
+              {loading ? (
+                <RefreshCw className="h-4 w-4 animate-spin" />
+              ) : (
+                'Enregistrer'
+              )}
             </ButtonV2>
           </div>
         </form>
       </DialogContent>
     </Dialog>
-  )
+  );
 }
 
-function ProductHistoryModal({ product, isOpen, onClose }: { product: any, isOpen: boolean, onClose: () => void }) {
-  const [movements, setMovements] = useState([])
-  const [loading, setLoading] = useState(false)
-  const { getProductHistory } = useStockMovements()
+function ProductHistoryModal({
+  product,
+  isOpen,
+  onClose,
+}: {
+  product: any;
+  isOpen: boolean;
+  onClose: () => void;
+}) {
+  const [movements, setMovements] = useState([]);
+  const [loading, setLoading] = useState(false);
+  const { getProductHistory } = useStockMovements();
 
   useEffect(() => {
     if (isOpen && product) {
-      loadHistory()
+      loadHistory();
     }
-  }, [isOpen, product])
+  }, [isOpen, product]);
 
   const loadHistory = async () => {
-    setLoading(true)
+    setLoading(true);
     try {
-      const history = await getProductHistory(product.id)
-      setMovements(history as any)
+      const history = await getProductHistory(product.id);
+      setMovements(history as any);
     } catch (error) {
       // Erreur gérée dans le hook
     } finally {
-      setLoading(false)
+      setLoading(false);
     }
-  }
+  };
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
@@ -215,7 +253,9 @@ function ProductHistoryModal({ product, isOpen, onClose }: { product: any, isOpe
               <RefreshCw className="h-6 w-6 animate-spin" />
             </div>
           ) : movements.length === 0 ? (
-            <p className="text-center text-gray-500 py-8">Aucun mouvement trouvé</p>
+            <p className="text-center text-gray-500 py-8">
+              Aucun mouvement trouvé
+            </p>
           ) : (
             <div className="space-y-3">
               {movements.map((movement: any) => (
@@ -223,13 +263,19 @@ function ProductHistoryModal({ product, isOpen, onClose }: { product: any, isOpe
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-2">
                       <Badge
-                        variant={movement.movement_type === 'IN' ? 'secondary' :
-                                movement.movement_type === 'OUT' ? 'destructive' : 'secondary'}
+                        variant={
+                          movement.movement_type === 'IN'
+                            ? 'secondary'
+                            : movement.movement_type === 'OUT'
+                              ? 'destructive'
+                              : 'secondary'
+                        }
                       >
                         {movement.movement_type}
                       </Badge>
                       <span className="font-medium">
-                        {movement.quantity_change > 0 ? '+' : ''}{movement.quantity_change}
+                        {movement.quantity_change > 0 ? '+' : ''}
+                        {movement.quantity_change}
                       </span>
                     </div>
                     <span className="text-sm text-gray-500">
@@ -237,7 +283,8 @@ function ProductHistoryModal({ product, isOpen, onClose }: { product: any, isOpe
                     </span>
                   </div>
                   <div className="mt-1 text-sm text-gray-600">
-                    Stock: {movement.quantity_before} → {movement.quantity_after}
+                    Stock: {movement.quantity_before} →{' '}
+                    {movement.quantity_after}
                   </div>
                   {movement.notes && (
                     <div className="mt-1 text-sm text-gray-500">
@@ -246,7 +293,8 @@ function ProductHistoryModal({ product, isOpen, onClose }: { product: any, isOpe
                   )}
                   {movement.user_profiles && (
                     <div className="mt-1 text-xs text-gray-400">
-                      Par: {movement.user_profiles.first_name} {movement.user_profiles.last_name}
+                      Par: {movement.user_profiles.first_name}{' '}
+                      {movement.user_profiles.last_name}
                     </div>
                   )}
                 </div>
@@ -256,167 +304,183 @@ function ProductHistoryModal({ product, isOpen, onClose }: { product: any, isOpe
         </div>
       </DialogContent>
     </Dialog>
-  )
+  );
 }
 
 export default function StockInventairePage() {
-  const router = useRouter()
+  const router = useRouter();
   const [filters, setFilters] = useState<StockFilters>({
     search: '',
     status: 'all',
     category: 'all',
     sortBy: 'name',
-    sortOrder: 'asc'
-  })
-  const [selectedProduct, setSelectedProduct] = useState<any>(null)
-  const [isMovementModalOpen, setIsMovementModalOpen] = useState(false)
-  const [isHistoryModalOpen, setIsHistoryModalOpen] = useState(false)
-  const [reservations, setReservations] = useState<any[]>([])
-  const [products, setProducts] = useState<any[]>([])
-  const [productsLoading, setProductsLoading] = useState(true)
+    sortOrder: 'asc',
+  });
+  const [selectedProduct, setSelectedProduct] = useState<any>(null);
+  const [isMovementModalOpen, setIsMovementModalOpen] = useState(false);
+  const [isHistoryModalOpen, setIsHistoryModalOpen] = useState(false);
+  const [reservations, setReservations] = useState<any[]>([]);
+  const [products, setProducts] = useState<any[]>([]);
+  const [productsLoading, setProductsLoading] = useState(true);
 
-  const { toast } = useToast()
-  const { fetchInventoryProducts } = useStock()
-  const { stats: movementStats, fetchStats } = useStockMovements()
-  const { fetchReservations, getAvailableStockForProduct } = useStockReservations()
+  const { toast } = useToast();
+  const { fetchInventoryProducts } = useStock();
+  const { stats: movementStats, fetchStats } = useStockMovements();
+  const { fetchReservations, getAvailableStockForProduct } =
+    useStockReservations();
 
   // Charger les données au montage
   useEffect(() => {
-    loadData()
-  }, [])
+    loadData();
+  }, []);
 
   const loadData = async () => {
-    setProductsLoading(true)
+    setProductsLoading(true);
     try {
       const [inventoryProducts] = await Promise.all([
         fetchInventoryProducts(),
-        fetchStats()
+        fetchStats(),
         // fetchReservations désactivé temporairement - erreur clé étrangère
-      ])
-      setProducts(inventoryProducts)
+      ]);
+      setProducts(inventoryProducts);
     } finally {
-      setProductsLoading(false)
+      setProductsLoading(false);
     }
-  }
+  };
 
   // Calculer les statistiques de stock
   const stockStats = useMemo(() => {
-    if (!products) return { total: 0, inStock: 0, lowStock: 0, outOfStock: 0 }
+    if (!products) return { total: 0, inStock: 0, lowStock: 0, outOfStock: 0 };
 
-    return products.reduce((stats, product) => {
-      stats.total++
-      const stock = product.stock_quantity || 0
-      const minStock = product.min_stock || 5
+    return products.reduce(
+      (stats, product) => {
+        stats.total++;
+        const stock = product.stock_quantity || 0;
+        const minStock = product.min_stock || 5;
 
-      if (stock === 0) {
-        stats.outOfStock++
-      } else if (stock <= minStock) {
-        stats.lowStock++
-      } else {
-        stats.inStock++
-      }
+        if (stock === 0) {
+          stats.outOfStock++;
+        } else if (stock <= minStock) {
+          stats.lowStock++;
+        } else {
+          stats.inStock++;
+        }
 
-      return stats
-    }, { total: 0, inStock: 0, lowStock: 0, outOfStock: 0 })
-  }, [products])
+        return stats;
+      },
+      { total: 0, inStock: 0, lowStock: 0, outOfStock: 0 }
+    );
+  }, [products]);
 
   // Filtrer et trier les produits
   const filteredProducts = useMemo(() => {
-    if (!products) return []
+    if (!products) return [];
 
     const filtered = products.filter(product => {
       // Filtre de recherche
       if (filters.search) {
-        const searchLower = filters.search.toLowerCase()
+        const searchLower = filters.search.toLowerCase();
         const matchesSearch =
           product.name.toLowerCase().includes(searchLower) ||
-          product.sku.toLowerCase().includes(searchLower)
-        if (!matchesSearch) return false
+          product.sku.toLowerCase().includes(searchLower);
+        if (!matchesSearch) return false;
       }
 
       // Filtre de statut
       if (filters.status !== 'all') {
-        const stock = product.stock_quantity || 0
-        const minStock = product.min_stock || 5
+        const stock = product.stock_quantity || 0;
+        const minStock = product.min_stock || 5;
 
         switch (filters.status) {
           case 'out_of_stock':
-            if (stock > 0) return false
-            break
+            if (stock > 0) return false;
+            break;
           case 'low_stock':
-            if (stock === 0 || stock > minStock) return false
-            break
+            if (stock === 0 || stock > minStock) return false;
+            break;
           case 'in_stock':
-            if (stock <= minStock) return false
-            break
+            if (stock <= minStock) return false;
+            break;
         }
       }
 
-      return true
-    })
+      return true;
+    });
 
     // Trier
     filtered.sort((a, b) => {
-      let aValue: any
-      let bValue: any
+      let aValue: any;
+      let bValue: any;
 
       switch (filters.sortBy) {
         case 'name':
-          aValue = a.name
-          bValue = b.name
-          break
+          aValue = a.name;
+          bValue = b.name;
+          break;
         case 'sku':
-          aValue = a.sku
-          bValue = b.sku
-          break
+          aValue = a.sku;
+          bValue = b.sku;
+          break;
         case 'stock':
-          aValue = a.stock_quantity || 0
-          bValue = b.stock_quantity || 0
-          break
+          aValue = a.stock_quantity || 0;
+          bValue = b.stock_quantity || 0;
+          break;
         case 'updated_at':
-          aValue = new Date(a.updated_at)
-          bValue = new Date(b.updated_at)
-          break
+          aValue = new Date(a.updated_at);
+          bValue = new Date(b.updated_at);
+          break;
         default:
-          aValue = a.name
-          bValue = b.name
+          aValue = a.name;
+          bValue = b.name;
       }
 
       if (filters.sortOrder === 'desc') {
-        return aValue < bValue ? 1 : -1
+        return aValue < bValue ? 1 : -1;
       }
-      return aValue > bValue ? 1 : -1
-    })
+      return aValue > bValue ? 1 : -1;
+    });
 
-    return filtered
-  }, [products, filters])
+    return filtered;
+  }, [products, filters]);
 
   const getStockStatus = (product: any) => {
-    const stock = product.stock_quantity || 0
-    const minStock = product.min_stock || 5
+    const stock = product.stock_quantity || 0;
+    const minStock = product.min_stock || 5;
 
     if (stock === 0) {
-      return { label: 'Rupture', color: 'bg-red-100 text-red-800', icon: TrendingDown }
+      return {
+        label: 'Rupture',
+        color: 'bg-red-100 text-red-800',
+        icon: TrendingDown,
+      };
     } else if (stock <= minStock) {
-      return { label: 'Stock faible', color: 'bg-gray-100 text-gray-900', icon: AlertTriangle }
+      return {
+        label: 'Stock faible',
+        color: 'bg-gray-100 text-gray-900',
+        icon: AlertTriangle,
+      };
     } else {
-      return { label: 'En stock', color: 'bg-green-100 text-green-800', icon: TrendingUp }
+      return {
+        label: 'En stock',
+        color: 'bg-green-100 text-green-800',
+        icon: TrendingUp,
+      };
     }
-  }
+  };
 
   const handleMovementSuccess = () => {
-    loadData()
-  }
+    loadData();
+  };
 
   const openMovementModal = (product: any) => {
-    setSelectedProduct(product)
-    setIsMovementModalOpen(true)
-  }
+    setSelectedProduct(product);
+    setIsMovementModalOpen(true);
+  };
 
   const openHistoryModal = (product: any) => {
-    setSelectedProduct(product)
-    setIsHistoryModalOpen(true)
-  }
+    setSelectedProduct(product);
+    setIsHistoryModalOpen(true);
+  };
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -436,8 +500,12 @@ export default function StockInventairePage() {
               <div className="flex items-center space-x-3">
                 <Package className="h-8 w-8 text-black" />
                 <div>
-                  <h1 className="text-2xl font-bold text-black">Inventaire Détaillé</h1>
-                  <p className="text-gray-600">Suivi temps réel des mouvements et réservations</p>
+                  <h1 className="text-2xl font-bold text-black">
+                    Inventaire Détaillé
+                  </h1>
+                  <p className="text-gray-600">
+                    Suivi temps réel des mouvements et réservations
+                  </p>
                 </div>
               </div>
             </div>
@@ -448,7 +516,9 @@ export default function StockInventairePage() {
                 disabled={productsLoading}
                 className="border-black text-black hover:bg-black hover:text-white"
               >
-                <RefreshCw className={`h-4 w-4 ${productsLoading ? 'animate-spin' : ''}`} />
+                <RefreshCw
+                  className={`h-4 w-4 ${productsLoading ? 'animate-spin' : ''}`}
+                />
               </ButtonV2>
               <ButtonV2
                 variant="outline"
@@ -473,8 +543,12 @@ export default function StockInventairePage() {
             <div className="flex items-center">
               <Package className="h-8 w-8 text-blue-500" />
               <div className="ml-4">
-                <p className="text-sm font-medium text-gray-600">Total produits</p>
-                <p className="text-2xl font-bold text-black">{stockStats.total}</p>
+                <p className="text-sm font-medium text-gray-600">
+                  Total produits
+                </p>
+                <p className="text-2xl font-bold text-black">
+                  {stockStats.total}
+                </p>
               </div>
             </div>
           </div>
@@ -483,7 +557,9 @@ export default function StockInventairePage() {
               <TrendingUp className="h-8 w-8 text-green-500" />
               <div className="ml-4">
                 <p className="text-sm font-medium text-gray-600">En stock</p>
-                <p className="text-2xl font-bold text-green-600">{stockStats.inStock}</p>
+                <p className="text-2xl font-bold text-green-600">
+                  {stockStats.inStock}
+                </p>
               </div>
             </div>
           </div>
@@ -491,8 +567,12 @@ export default function StockInventairePage() {
             <div className="flex items-center">
               <AlertTriangle className="h-8 w-8 text-gray-900" />
               <div className="ml-4">
-                <p className="text-sm font-medium text-gray-600">Stock faible</p>
-                <p className="text-2xl font-bold text-black">{stockStats.lowStock}</p>
+                <p className="text-sm font-medium text-gray-600">
+                  Stock faible
+                </p>
+                <p className="text-2xl font-bold text-black">
+                  {stockStats.lowStock}
+                </p>
               </div>
             </div>
           </div>
@@ -501,7 +581,9 @@ export default function StockInventairePage() {
               <TrendingDown className="h-8 w-8 text-red-500" />
               <div className="ml-4">
                 <p className="text-sm font-medium text-gray-600">Ruptures</p>
-                <p className="text-2xl font-bold text-red-600">{stockStats.outOfStock}</p>
+                <p className="text-2xl font-bold text-red-600">
+                  {stockStats.outOfStock}
+                </p>
               </div>
             </div>
           </div>
@@ -518,14 +600,18 @@ export default function StockInventairePage() {
                   placeholder="Rechercher par nom, SKU..."
                   className="pl-10"
                   value={filters.search}
-                  onChange={(e) => setFilters(prev => ({ ...prev, search: e.target.value }))}
+                  onChange={e =>
+                    setFilters(prev => ({ ...prev, search: e.target.value }))
+                  }
                 />
               </div>
             </div>
 
             <Select
               value={filters.status}
-              onValueChange={(value: any) => setFilters(prev => ({ ...prev, status: value }))}
+              onValueChange={(value: any) =>
+                setFilters(prev => ({ ...prev, status: value }))
+              }
             >
               <SelectTrigger className="w-[180px]">
                 <SelectValue placeholder="Statut" />
@@ -540,7 +626,9 @@ export default function StockInventairePage() {
 
             <Select
               value={filters.sortBy}
-              onValueChange={(value: any) => setFilters(prev => ({ ...prev, sortBy: value }))}
+              onValueChange={(value: any) =>
+                setFilters(prev => ({ ...prev, sortBy: value }))
+              }
             >
               <SelectTrigger className="w-[160px]">
                 <SelectValue placeholder="Trier par" />
@@ -556,10 +644,12 @@ export default function StockInventairePage() {
             <ButtonV2
               variant="outline"
               size="sm"
-              onClick={() => setFilters(prev => ({
-                ...prev,
-                sortOrder: prev.sortOrder === 'asc' ? 'desc' : 'asc'
-              }))}
+              onClick={() =>
+                setFilters(prev => ({
+                  ...prev,
+                  sortOrder: prev.sortOrder === 'asc' ? 'desc' : 'asc',
+                }))
+              }
               className="border-black text-black hover:bg-black hover:text-white"
             >
               <ArrowUpDown className="h-4 w-4" />
@@ -569,13 +659,15 @@ export default function StockInventairePage() {
               <ButtonV2
                 variant="outline"
                 size="sm"
-                onClick={() => setFilters({
-                  search: '',
-                  status: 'all',
-                  category: 'all',
-                  sortBy: 'name',
-                  sortOrder: 'asc'
-                })}
+                onClick={() =>
+                  setFilters({
+                    search: '',
+                    status: 'all',
+                    category: 'all',
+                    sortBy: 'name',
+                    sortOrder: 'asc',
+                  })
+                }
                 className="border-black text-black hover:bg-black hover:text-white"
               >
                 <X className="h-4 w-4" />
@@ -590,14 +682,30 @@ export default function StockInventairePage() {
             <table className="w-full">
               <thead className="bg-gray-50 border-b border-gray-200">
                 <tr>
-                  <th className="text-left py-3 px-4 font-medium text-gray-900">Produit</th>
-                  <th className="text-left py-3 px-4 font-medium text-gray-900">SKU</th>
-                  <th className="text-left py-3 px-4 font-medium text-gray-900">Stock</th>
-                  <th className="text-left py-3 px-4 font-medium text-gray-900">Seuil min</th>
-                  <th className="text-left py-3 px-4 font-medium text-gray-900">Statut</th>
-                  <th className="text-left py-3 px-4 font-medium text-gray-900">Prix</th>
-                  <th className="text-left py-3 px-4 font-medium text-gray-900">Dernière MAJ</th>
-                  <th className="text-left py-3 px-4 font-medium text-gray-900">Actions</th>
+                  <th className="text-left py-3 px-4 font-medium text-gray-900">
+                    Produit
+                  </th>
+                  <th className="text-left py-3 px-4 font-medium text-gray-900">
+                    SKU
+                  </th>
+                  <th className="text-left py-3 px-4 font-medium text-gray-900">
+                    Stock
+                  </th>
+                  <th className="text-left py-3 px-4 font-medium text-gray-900">
+                    Seuil min
+                  </th>
+                  <th className="text-left py-3 px-4 font-medium text-gray-900">
+                    Statut
+                  </th>
+                  <th className="text-left py-3 px-4 font-medium text-gray-900">
+                    Prix
+                  </th>
+                  <th className="text-left py-3 px-4 font-medium text-gray-900">
+                    Dernière MAJ
+                  </th>
+                  <th className="text-left py-3 px-4 font-medium text-gray-900">
+                    Actions
+                  </th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-200">
@@ -614,9 +722,9 @@ export default function StockInventairePage() {
                     </td>
                   </tr>
                 ) : (
-                  filteredProducts.map((product) => {
-                    const status = getStockStatus(product)
-                    const StatusIcon = status.icon
+                  filteredProducts.map(product => {
+                    const status = getStockStatus(product);
+                    const StatusIcon = status.icon;
 
                     return (
                       <tr key={product.id} className="hover:bg-gray-50">
@@ -636,9 +744,14 @@ export default function StockInventairePage() {
                               </div>
                             )}
                             <div>
-                              <span className="font-medium text-black">{product.name}</span>
+                              <span className="font-medium text-black">
+                                {product.name}
+                              </span>
                               {product.stock_quantity === 0 && (
-                                <Badge variant="destructive" className="ml-2 text-xs">
+                                <Badge
+                                  variant="destructive"
+                                  className="ml-2 text-xs"
+                                >
                                   Rupture
                                 </Badge>
                               )}
@@ -646,7 +759,9 @@ export default function StockInventairePage() {
                           </div>
                         </td>
                         <td className="py-3 px-4">
-                          <span className="text-gray-500 font-mono text-sm">{product.sku}</span>
+                          <span className="text-gray-500 font-mono text-sm">
+                            {product.sku}
+                          </span>
                         </td>
                         <td className="py-3 px-4">
                           <div className="flex items-center">
@@ -657,10 +772,14 @@ export default function StockInventairePage() {
                           </div>
                         </td>
                         <td className="py-3 px-4">
-                          <span className="text-gray-500">{product.min_stock || 5}</span>
+                          <span className="text-gray-500">
+                            {product.min_stock || 5}
+                          </span>
                         </td>
                         <td className="py-3 px-4">
-                          <span className={`px-2 py-1 rounded-full text-xs font-medium ${status.color}`}>
+                          <span
+                            className={`px-2 py-1 rounded-full text-xs font-medium ${status.color}`}
+                          >
                             {status.label}
                           </span>
                         </td>
@@ -671,7 +790,9 @@ export default function StockInventairePage() {
                         </td>
                         <td className="py-3 px-4">
                           <span className="text-gray-500 text-sm">
-                            {new Date(product.updated_at).toLocaleDateString('fr-FR')}
+                            {new Date(product.updated_at).toLocaleDateString(
+                              'fr-FR'
+                            )}
                           </span>
                         </td>
                         <td className="py-3 px-4">
@@ -692,13 +813,17 @@ export default function StockInventairePage() {
                             >
                               <Plus className="h-4 w-4" />
                             </ButtonV2>
-                            <ButtonV2 variant="ghost" size="sm" title="Modifier">
+                            <ButtonV2
+                              variant="ghost"
+                              size="sm"
+                              title="Modifier"
+                            >
                               <Edit className="h-4 w-4" />
                             </ButtonV2>
                           </div>
                         </td>
                       </tr>
-                    )
+                    );
                   })
                 )}
               </tbody>
@@ -709,7 +834,9 @@ export default function StockInventairePage() {
         {/* Pagination */}
         <div className="flex items-center justify-between">
           <p className="text-sm text-gray-700">
-            Affichage de <span className="font-medium">{filteredProducts.length}</span> produit(s)
+            Affichage de{' '}
+            <span className="font-medium">{filteredProducts.length}</span>{' '}
+            produit(s)
           </p>
           <div className="text-sm text-gray-500">
             Dernière mise à jour: {new Date().toLocaleTimeString('fr-FR')}
@@ -731,5 +858,5 @@ export default function StockInventairePage() {
         />
       </div>
     </div>
-  )
+  );
 }

@@ -1,6 +1,7 @@
 import type { Meta, StoryObj } from '@storybook/nextjs';
-import { Button, ButtonV2 } from '@/components/ui/button';
 import { Save, Trash2, Plus, Download, Settings } from 'lucide-react';
+
+import { Button, ButtonV2 } from '@/components/ui/button';
 
 const meta = {
   title: '1-UI-Base/Buttons/Button',

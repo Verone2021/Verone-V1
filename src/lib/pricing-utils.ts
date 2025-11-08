@@ -102,7 +102,7 @@ export function validatePricing(
   const errors: string[] = [];
 
   if (costPrice <= 0) {
-    errors.push('Le prix d\'achat HT doit être supérieur à 0€');
+    errors.push("Le prix d'achat HT doit être supérieur à 0€");
   }
 
   if (targetMarginPercentage < 0) {

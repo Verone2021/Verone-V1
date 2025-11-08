@@ -1,6 +1,7 @@
-"use client"
+'use client';
 
-import { useRouter } from 'next/navigation'
+import { useRouter } from 'next/navigation';
+
 import {
   ShoppingBag,
   MessageCircle,
@@ -12,27 +13,34 @@ import {
   AlertCircle,
   Users,
   Package,
-  Loader2
-} from 'lucide-react'
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
-import { ButtonV2 } from '@/components/ui/button'
-import { Badge } from '@/components/ui/badge'
-import { useSalesDashboard } from '@/shared/modules/orders/hooks'
+  Loader2,
+} from 'lucide-react';
+
+import { Badge } from '@/components/ui/badge';
+import { ButtonV2 } from '@/components/ui/button';
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from '@/components/ui/card';
+import { useSalesDashboard } from '@/shared/modules/orders/hooks';
 
 export default function VentesDashboardPage() {
-  const router = useRouter()
-  const { metrics, loading, error } = useSalesDashboard()
+  const router = useRouter();
+  const { metrics, loading, error } = useSalesDashboard();
 
   // Extraction avec fallbacks si pas de données
   const stats = metrics?.stats || {
     consultationsActives: 0,
     commandesEnCours: 0,
     chiffreAffaireMois: 0,
-    tauxConversion: 0
-  }
+    tauxConversion: 0,
+  };
 
-  const recentConsultations = metrics?.recentConsultations || []
-  const recentOrders = metrics?.recentOrders || []
+  const recentConsultations = metrics?.recentConsultations || [];
+  const recentOrders = metrics?.recentOrders || [];
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -81,7 +89,9 @@ export default function VentesDashboardPage() {
                   <MessageCircle className="h-4 w-4 text-black" />
                 </CardHeader>
                 <CardContent>
-                  <div className="text-2xl font-bold text-black">{stats.consultationsActives}</div>
+                  <div className="text-2xl font-bold text-black">
+                    {stats.consultationsActives}
+                  </div>
                   <p className="text-xs text-gray-600 mt-1">
                     En attente de réponse
                   </p>
@@ -96,7 +106,9 @@ export default function VentesDashboardPage() {
                   <Package className="h-4 w-4 text-black" />
                 </CardHeader>
                 <CardContent>
-                  <div className="text-2xl font-bold text-black">{stats.commandesEnCours}</div>
+                  <div className="text-2xl font-bold text-black">
+                    {stats.commandesEnCours}
+                  </div>
                   <p className="text-xs text-gray-600 mt-1">
                     À préparer ou expédier
                   </p>
@@ -114,9 +126,7 @@ export default function VentesDashboardPage() {
                   <div className="text-2xl font-bold text-black">
                     {stats.chiffreAffaireMois.toLocaleString('fr-FR')} €
                   </div>
-                  <p className="text-xs text-gray-600 mt-1">
-                    Mois en cours
-                  </p>
+                  <p className="text-xs text-gray-600 mt-1">Mois en cours</p>
                 </CardContent>
               </Card>
 
@@ -128,7 +138,9 @@ export default function VentesDashboardPage() {
                   <TrendingUp className="h-4 w-4 text-blue-600" />
                 </CardHeader>
                 <CardContent>
-                  <div className="text-2xl font-bold text-black">{stats.tauxConversion}%</div>
+                  <div className="text-2xl font-bold text-black">
+                    {stats.tauxConversion}%
+                  </div>
                   <p className="text-xs text-gray-600 mt-1">
                     Consultations → Commandes
                   </p>
@@ -157,8 +169,12 @@ export default function VentesDashboardPage() {
                         <MessageCircle className="h-6 w-6 text-blue-600" />
                       </div>
                       <div className="text-left flex-1">
-                        <div className="font-semibold text-base">Consultations</div>
-                        <div className="text-sm opacity-70">Demandes clients et devis</div>
+                        <div className="font-semibold text-base">
+                          Consultations
+                        </div>
+                        <div className="text-sm opacity-70">
+                          Demandes clients et devis
+                        </div>
                       </div>
                       {stats.consultationsActives > 0 && (
                         <Badge variant="secondary" className="bg-blue-600">
@@ -179,8 +195,12 @@ export default function VentesDashboardPage() {
                         <ShoppingBag className="h-6 w-6 text-green-600" />
                       </div>
                       <div className="text-left flex-1">
-                        <div className="font-semibold text-base">Commandes Clients</div>
-                        <div className="text-sm opacity-70">Ventes et suivi livraisons</div>
+                        <div className="font-semibold text-base">
+                          Commandes Clients
+                        </div>
+                        <div className="text-sm opacity-70">
+                          Ventes et suivi livraisons
+                        </div>
                       </div>
                       {stats.commandesEnCours > 0 && (
                         <Badge variant="secondary" className="bg-green-600">
@@ -209,27 +229,43 @@ export default function VentesDashboardPage() {
                     {recentConsultations.length === 0 ? (
                       <div className="text-center py-6">
                         <MessageCircle className="h-10 w-10 text-gray-300 mx-auto mb-2" />
-                        <p className="text-sm text-gray-500">Aucune consultation récente</p>
+                        <p className="text-sm text-gray-500">
+                          Aucune consultation récente
+                        </p>
                       </div>
                     ) : (
-                      recentConsultations.map((consult) => (
-                        <div key={consult.id} className="flex items-center justify-between p-3 border border-gray-200 rounded-lg hover:bg-gray-50">
+                      recentConsultations.map(consult => (
+                        <div
+                          key={consult.id}
+                          className="flex items-center justify-between p-3 border border-gray-200 rounded-lg hover:bg-gray-50"
+                        >
                           <div className="flex items-center gap-3">
                             <Users className="h-4 w-4 text-gray-400" />
                             <div>
-                              <div className="font-medium text-sm text-black">{consult.organisation_name || consult.client_email}</div>
+                              <div className="font-medium text-sm text-black">
+                                {consult.organisation_name ||
+                                  consult.client_email}
+                              </div>
                               <div className="text-xs text-gray-600">
-                                {consult.tarif_maximum ? `Budget max: ${consult.tarif_maximum}€` : 'Budget non défini'}
+                                {consult.tarif_maximum
+                                  ? `Budget max: ${consult.tarif_maximum}€`
+                                  : 'Budget non défini'}
                               </div>
                             </div>
                           </div>
                           <div className="flex items-center gap-2">
-                            <Badge variant="outline" className="border-orange-300 text-orange-600 text-xs">
+                            <Badge
+                              variant="outline"
+                              className="border-orange-300 text-orange-600 text-xs"
+                            >
                               <Clock className="h-3 w-3 mr-1" />
                               {consult.status}
                             </Badge>
                             <span className="text-xs text-gray-500">
-                              {new Date(consult.created_at).toLocaleDateString('fr-FR', { day: '2-digit', month: '2-digit' })}
+                              {new Date(consult.created_at).toLocaleDateString(
+                                'fr-FR',
+                                { day: '2-digit', month: '2-digit' }
+                              )}
                             </span>
                           </div>
                         </div>
@@ -260,21 +296,35 @@ export default function VentesDashboardPage() {
                     {recentOrders.length === 0 ? (
                       <div className="text-center py-6">
                         <Package className="h-10 w-10 text-gray-300 mx-auto mb-2" />
-                        <p className="text-sm text-gray-500">Aucune commande récente</p>
+                        <p className="text-sm text-gray-500">
+                          Aucune commande récente
+                        </p>
                       </div>
                     ) : (
-                      recentOrders.map((cmd) => (
-                        <div key={cmd.id} className="flex items-center justify-between p-3 border border-gray-200 rounded-lg hover:bg-gray-50">
+                      recentOrders.map(cmd => (
+                        <div
+                          key={cmd.id}
+                          className="flex items-center justify-between p-3 border border-gray-200 rounded-lg hover:bg-gray-50"
+                        >
                           <div className="flex items-center gap-3">
                             <Package className="h-4 w-4 text-gray-400" />
                             <div>
-                              <div className="font-medium text-sm text-black">{cmd.order_number}</div>
-                              <div className="text-xs text-gray-600">{cmd.customer_name}</div>
+                              <div className="font-medium text-sm text-black">
+                                {cmd.order_number}
+                              </div>
+                              <div className="text-xs text-gray-600">
+                                {cmd.customer_name}
+                              </div>
                             </div>
                           </div>
                           <div className="flex items-center gap-2">
-                            <div className="text-sm font-medium text-black">{cmd.total_ttc.toLocaleString('fr-FR')} €</div>
-                            <Badge variant="outline" className="border-blue-300 text-blue-600 text-xs">
+                            <div className="text-sm font-medium text-black">
+                              {cmd.total_ttc.toLocaleString('fr-FR')} €
+                            </div>
+                            <Badge
+                              variant="outline"
+                              className="border-blue-300 text-blue-600 text-xs"
+                            >
                               <Clock className="h-3 w-3 mr-1" />
                               {cmd.status}
                             </Badge>
@@ -341,5 +391,5 @@ export default function VentesDashboardPage() {
         )}
       </div>
     </div>
-  )
+  );
 }

@@ -1,96 +1,113 @@
-"use client"
+'use client';
 
-import { useState, useRef, useEffect } from 'react'
-import { Check, ChevronDown, X } from 'lucide-react'
-import { cn } from '../../lib/utils'
-import { Button } from './button'
-import { Badge } from './badge'
-import { RoomType, ROOM_CONFIGS, ROOM_CATEGORIES, getRoomLabel, getRoomsByCategory } from '../../types/room-types'
+import { useState, useRef, useEffect } from 'react';
+
+import { Check, ChevronDown, X } from 'lucide-react';
+
+import { Badge } from './badge';
+import { Button } from './button';
+import { cn } from '../../lib/utils';
+import type { RoomType } from '../../types/room-types';
+import {
+  ROOM_CONFIGS,
+  ROOM_CATEGORIES,
+  getRoomLabel,
+  getRoomsByCategory,
+} from '../../types/room-types';
 
 interface RoomMultiSelectProps {
-  value: RoomType[]
-  onChange: (value: RoomType[]) => void
-  placeholder?: string
-  className?: string
-  disabled?: boolean
-  error?: string
+  value: RoomType[];
+  onChange: (value: RoomType[]) => void;
+  placeholder?: string;
+  className?: string;
+  disabled?: boolean;
+  error?: string;
 }
 
 export function RoomMultiSelect({
   value = [],
   onChange,
-  placeholder = "Sélectionner les pièces...",
+  placeholder = 'Sélectionner les pièces...',
   className,
   disabled = false,
-  error
+  error,
 }: RoomMultiSelectProps) {
-  const [isOpen, setIsOpen] = useState(false)
-  const [searchTerm, setSearchTerm] = useState('')
-  const dropdownRef = useRef<HTMLDivElement>(null)
-  const inputRef = useRef<HTMLInputElement>(null)
+  const [isOpen, setIsOpen] = useState(false);
+  const [searchTerm, setSearchTerm] = useState('');
+  const dropdownRef = useRef<HTMLDivElement>(null);
+  const inputRef = useRef<HTMLInputElement>(null);
 
   // Fermer le dropdown en cliquant à l'extérieur
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
-      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
-        setIsOpen(false)
-        setSearchTerm('')
+      if (
+        dropdownRef.current &&
+        !dropdownRef.current.contains(event.target as Node)
+      ) {
+        setIsOpen(false);
+        setSearchTerm('');
       }
-    }
+    };
 
-    document.addEventListener('mousedown', handleClickOutside)
-    return () => document.removeEventListener('mousedown', handleClickOutside)
-  }, [])
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
 
   // Filtrer les pièces selon le terme de recherche
-  const filteredRooms = ROOM_CONFIGS.filter(room =>
-    room.label.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    room.description?.toLowerCase().includes(searchTerm.toLowerCase())
-  )
+  const filteredRooms = ROOM_CONFIGS.filter(
+    room =>
+      room.label.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      room.description?.toLowerCase().includes(searchTerm.toLowerCase())
+  );
 
   // Grouper les pièces filtrées par catégorie
-  const groupedRooms = Object.entries(ROOM_CATEGORIES).reduce((acc, [categoryKey, categoryLabel]) => {
-    const categoryRooms = filteredRooms.filter(room => room.category === categoryKey)
-    if (categoryRooms.length > 0) {
-      acc[categoryKey as keyof typeof ROOM_CATEGORIES] = categoryRooms
-    }
-    return acc
-  }, {} as Record<keyof typeof ROOM_CATEGORIES, typeof filteredRooms>)
+  const groupedRooms = Object.entries(ROOM_CATEGORIES).reduce(
+    (acc, [categoryKey, categoryLabel]) => {
+      const categoryRooms = filteredRooms.filter(
+        room => room.category === categoryKey
+      );
+      if (categoryRooms.length > 0) {
+        acc[categoryKey as keyof typeof ROOM_CATEGORIES] = categoryRooms;
+      }
+      return acc;
+    },
+    {} as Record<keyof typeof ROOM_CATEGORIES, typeof filteredRooms>
+  );
 
   const handleSelect = (roomType: RoomType) => {
-    if (disabled) return
+    if (disabled) return;
 
     const newValue = value.includes(roomType)
       ? value.filter(r => r !== roomType)
-      : [...value, roomType]
+      : [...value, roomType];
 
-    onChange(newValue)
-  }
+    onChange(newValue);
+  };
 
   const handleRemove = (roomType: RoomType) => {
-    if (disabled) return
-    onChange(value.filter(r => r !== roomType))
-  }
+    if (disabled) return;
+    onChange(value.filter(r => r !== roomType));
+  };
 
   const handleClearAll = () => {
-    if (disabled) return
-    onChange([])
-  }
+    if (disabled) return;
+    onChange([]);
+  };
 
   const handleKeyDown = (event: React.KeyboardEvent) => {
     if (event.key === 'Enter') {
-      event.preventDefault()
+      event.preventDefault();
       if (!isOpen) {
-        setIsOpen(true)
+        setIsOpen(true);
       }
     } else if (event.key === 'Escape') {
-      setIsOpen(false)
-      setSearchTerm('')
+      setIsOpen(false);
+      setSearchTerm('');
     }
-  }
+  };
 
   return (
-    <div className={cn("relative", className)} ref={dropdownRef}>
+    <div className={cn('relative', className)} ref={dropdownRef}>
       {/* Trigger Button */}
       <Button
         type="button"
@@ -98,10 +115,10 @@ export function RoomMultiSelect({
         onClick={() => !disabled && setIsOpen(!isOpen)}
         disabled={disabled}
         className={cn(
-          "w-full justify-between text-left font-normal min-h-10",
-          !value.length && "text-muted-foreground",
-          error && "border-red-500 focus:border-red-500 focus:ring-red-500",
-          disabled && "opacity-50 cursor-not-allowed"
+          'w-full justify-between text-left font-normal min-h-10',
+          !value.length && 'text-muted-foreground',
+          error && 'border-red-500 focus:border-red-500 focus:ring-red-500',
+          disabled && 'opacity-50 cursor-not-allowed'
         )}
         onKeyDown={handleKeyDown}
       >
@@ -110,7 +127,7 @@ export function RoomMultiSelect({
             <span>{placeholder}</span>
           ) : (
             <>
-              {value.slice(0, 2).map((roomType) => (
+              {value.slice(0, 2).map(roomType => (
                 <Badge
                   key={roomType}
                   variant="secondary"
@@ -119,9 +136,9 @@ export function RoomMultiSelect({
                   {getRoomLabel(roomType)}
                   {!disabled && (
                     <span
-                      onClick={(e) => {
-                        e.stopPropagation()
-                        handleRemove(roomType)
+                      onClick={e => {
+                        e.stopPropagation();
+                        handleRemove(roomType);
                       }}
                       className="ml-1 hover:text-red-300 cursor-pointer"
                     >
@@ -138,7 +155,9 @@ export function RoomMultiSelect({
             </>
           )}
         </div>
-        <ChevronDown className={cn("h-4 w-4 transition-transform", isOpen && "rotate-180")} />
+        <ChevronDown
+          className={cn('h-4 w-4 transition-transform', isOpen && 'rotate-180')}
+        />
       </Button>
 
       {/* Dropdown */}
@@ -151,7 +170,7 @@ export function RoomMultiSelect({
               type="text"
               placeholder="Rechercher une pièce..."
               value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
+              onChange={e => setSearchTerm(e.target.value)}
               className="w-full px-3 py-2 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-black focus:border-black"
               autoFocus
             />
@@ -176,36 +195,40 @@ export function RoomMultiSelect({
               Object.entries(groupedRooms).map(([categoryKey, rooms]) => (
                 <div key={categoryKey}>
                   <div className="px-3 py-2 text-xs font-semibold text-gray-600 bg-gray-50 border-b border-gray-100">
-                    {ROOM_CATEGORIES[categoryKey as keyof typeof ROOM_CATEGORIES]}
+                    {
+                      ROOM_CATEGORIES[
+                        categoryKey as keyof typeof ROOM_CATEGORIES
+                      ]
+                    }
                   </div>
-                  {rooms.map((room) => {
-                    const isSelected = value.includes(room.value)
+                  {rooms.map(room => {
+                    const isSelected = value.includes(room.value);
                     return (
                       <button
                         key={room.value}
                         type="button"
                         onClick={() => handleSelect(room.value)}
                         className={cn(
-                          "w-full px-3 py-2 text-left text-sm hover:bg-gray-50 flex items-center justify-between group",
-                          isSelected && "bg-black text-white hover:bg-gray-800"
+                          'w-full px-3 py-2 text-left text-sm hover:bg-gray-50 flex items-center justify-between group',
+                          isSelected && 'bg-black text-white hover:bg-gray-800'
                         )}
                       >
                         <div className="flex-1">
                           <div className="font-medium">{room.label}</div>
                           {room.description && (
-                            <div className={cn(
-                              "text-xs mt-1",
-                              isSelected ? "text-gray-300" : "text-gray-500"
-                            )}>
+                            <div
+                              className={cn(
+                                'text-xs mt-1',
+                                isSelected ? 'text-gray-300' : 'text-gray-500'
+                              )}
+                            >
                               {room.description}
                             </div>
                           )}
                         </div>
-                        {isSelected && (
-                          <Check className="h-4 w-4 ml-2" />
-                        )}
+                        {isSelected && <Check className="h-4 w-4 ml-2" />}
                       </button>
-                    )
+                    );
                   })}
                 </div>
               ))
@@ -216,7 +239,8 @@ export function RoomMultiSelect({
           {value.length > 0 && (
             <div className="p-2 border-t border-gray-200 bg-gray-50">
               <div className="text-xs text-gray-600 text-center">
-                {value.length} pièce{value.length > 1 ? 's' : ''} sélectionnée{value.length > 1 ? 's' : ''}
+                {value.length} pièce{value.length > 1 ? 's' : ''} sélectionnée
+                {value.length > 1 ? 's' : ''}
               </div>
             </div>
           )}
@@ -224,11 +248,7 @@ export function RoomMultiSelect({
       )}
 
       {/* Message d'erreur */}
-      {error && (
-        <div className="mt-1 text-sm text-red-600">
-          {error}
-        </div>
-      )}
+      {error && <div className="mt-1 text-sm text-red-600">{error}</div>}
     </div>
-  )
+  );
 }

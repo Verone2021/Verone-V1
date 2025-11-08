@@ -5,32 +5,39 @@
  * à un groupe de variantes
  */
 
-"use client"
+'use client';
 
-import { useState, useEffect } from 'react'
-import { ButtonV2 } from '@/components/ui/button'
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog'
-import { Input } from '@/components/ui/input'
-import { Badge } from '@/components/ui/badge'
-import { useToast } from '@/shared/modules/common/hooks'
-import { Search, Package, Plus, Loader2, Check } from 'lucide-react'
-import { useVariantProducts } from '@/shared/modules/products/hooks'
+import { useState, useEffect } from 'react';
+
+import { Search, Package, Plus, Loader2, Check } from 'lucide-react';
+
+import { Badge } from '@/components/ui/badge';
+import { ButtonV2 } from '@/components/ui/button';
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog';
+import { Input } from '@/components/ui/input';
+import { useToast } from '@/shared/modules/common/hooks';
+import { useVariantProducts } from '@/shared/modules/products/hooks';
 
 interface Product {
-  id: string
-  name: string
-  sku: string
-  price_ht: number
-  status: string
-  variant_group_id: string | null
+  id: string;
+  name: string;
+  sku: string;
+  price_ht: number;
+  status: string;
+  variant_group_id: string | null;
 }
 
 interface ProductSelectorProps {
-  isOpen: boolean
-  onClose: () => void
-  variantGroupId: string
-  groupName: string
-  onProductsAdded: (count: number) => void
+  isOpen: boolean;
+  onClose: () => void;
+  variantGroupId: string;
+  groupName: string;
+  onProductsAdded: (count: number) => void;
 }
 
 export function ProductSelector({
@@ -38,120 +45,151 @@ export function ProductSelector({
   onClose,
   variantGroupId,
   groupName,
-  onProductsAdded
+  onProductsAdded,
 }: ProductSelectorProps) {
-  const { toast } = useToast()
-  const [searchTerm, setSearchTerm] = useState('')
-  const [availableProducts, setAvailableProducts] = useState<Product[]>([])
-  const [selectedProducts, setSelectedProducts] = useState<Set<string>>(new Set())
-  const [loading, setLoading] = useState(false)
-  const [searching, setSearching] = useState(false)
+  const { toast } = useToast();
+  const [searchTerm, setSearchTerm] = useState('');
+  const [availableProducts, setAvailableProducts] = useState<Product[]>([]);
+  const [selectedProducts, setSelectedProducts] = useState<Set<string>>(
+    new Set()
+  );
+  const [loading, setLoading] = useState(false);
+  const [searching, setSearching] = useState(false);
 
-  const { addProductToVariantGroup, getAvailableProductsForVariantGroup } = useVariantProducts()
+  const { addProductToVariantGroup, getAvailableProductsForVariantGroup } =
+    useVariantProducts();
 
   // Rechercher les produits disponibles
   const searchProducts = async (search?: string) => {
-    setSearching(true)
+    setSearching(true);
     try {
-      const products = await getAvailableProductsForVariantGroup(search, 50)
-      setAvailableProducts(products as any)
+      const products = await getAvailableProductsForVariantGroup(search, 50);
+      setAvailableProducts(products as any);
     } catch (error) {
-      console.error('Error searching products:', error)
+      console.error('Error searching products:', error);
     } finally {
-      setSearching(false)
+      setSearching(false);
     }
-  }
+  };
 
   // Charger les produits au montage et à chaque changement de recherche
   useEffect(() => {
     if (isOpen) {
-      searchProducts(searchTerm)
+      searchProducts(searchTerm);
     }
-  }, [isOpen, searchTerm])
+  }, [isOpen, searchTerm]);
 
   // Reset lors de l'ouverture/fermeture
   useEffect(() => {
     if (isOpen) {
-      setSelectedProducts(new Set())
-      setSearchTerm('')
+      setSelectedProducts(new Set());
+      setSearchTerm('');
     }
-  }, [isOpen])
+  }, [isOpen]);
 
   // Gérer la sélection/désélection d'un produit
   const toggleProductSelection = (productId: string) => {
     setSelectedProducts(prev => {
-      const newSet = new Set(prev)
+      const newSet = new Set(prev);
       if (newSet.has(productId)) {
-        newSet.delete(productId)
+        newSet.delete(productId);
       } else {
-        newSet.add(productId)
+        newSet.add(productId);
       }
-      return newSet
-    })
-  }
+      return newSet;
+    });
+  };
 
   // Ajouter les produits sélectionnés au groupe
   const handleAddProducts = async () => {
     if (selectedProducts.size === 0) {
       toast({
-        title: "❌ Aucun produit sélectionné",
-        description: "Veuillez sélectionner au moins un produit",
-        variant: "destructive"
-      })
-      return
+        title: '❌ Aucun produit sélectionné',
+        description: 'Veuillez sélectionner au moins un produit',
+        variant: 'destructive',
+      });
+      return;
     }
 
-    setLoading(true)
-    let addedCount = 0
+    setLoading(true);
+    let addedCount = 0;
 
     try {
       // Ajouter chaque produit sélectionné au groupe
       for (const productId of selectedProducts) {
-        const success = await addProductToVariantGroup(productId, variantGroupId)
+        const success = await addProductToVariantGroup(
+          productId,
+          variantGroupId
+        );
         if (success) {
-          addedCount++
+          addedCount++;
         }
       }
 
       if (addedCount > 0) {
         toast({
-          title: "✅ Produits ajoutés",
-          description: `${addedCount} produit(s) ajouté(s) au groupe "${groupName}"`
-        })
-        onProductsAdded(addedCount)
-        onClose()
+          title: '✅ Produits ajoutés',
+          description: `${addedCount} produit(s) ajouté(s) au groupe "${groupName}"`,
+        });
+        onProductsAdded(addedCount);
+        onClose();
       } else {
         toast({
-          title: "❌ Erreur",
+          title: '❌ Erreur',
           description: "Aucun produit n'a pu être ajouté",
-          variant: "destructive"
-        })
+          variant: 'destructive',
+        });
       }
     } catch (error) {
-      console.error('Error adding products:', error)
+      console.error('Error adding products:', error);
       toast({
-        title: "❌ Erreur",
+        title: '❌ Erreur',
         description: "Une erreur est survenue lors de l'ajout",
-        variant: "destructive"
-      })
+        variant: 'destructive',
+      });
     } finally {
-      setLoading(false)
+      setLoading(false);
     }
-  }
+  };
 
   // Obtenir le statut badge pour un produit
   const getStatusBadge = (status: string) => {
     switch (status) {
       case 'in_stock':
-        return <Badge variant="outline" className="border-green-300 text-green-600 text-xs">En stock</Badge>
+        return (
+          <Badge
+            variant="outline"
+            className="border-green-300 text-green-600 text-xs"
+          >
+            En stock
+          </Badge>
+        );
       case 'out_of_stock':
-        return <Badge variant="outline" className="border-red-300 text-red-600 text-xs">Rupture</Badge>
+        return (
+          <Badge
+            variant="outline"
+            className="border-red-300 text-red-600 text-xs"
+          >
+            Rupture
+          </Badge>
+        );
       case 'draft':
-        return <Badge variant="outline" className="border-gray-300 text-gray-600 text-xs">Brouillon</Badge>
+        return (
+          <Badge
+            variant="outline"
+            className="border-gray-300 text-gray-600 text-xs"
+          >
+            Brouillon
+          </Badge>
+        );
       default:
-        return <Badge variant="outline" className="text-xs">{status}</Badge>
+        return (
+          <Badge variant="outline" className="text-xs">
+            {status}
+          </Badge>
+        );
     }
-  }
+  };
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
@@ -161,7 +199,8 @@ export function ProductSelector({
             Ajouter des produits au groupe "{groupName}"
           </DialogTitle>
           <p className="text-sm text-gray-600 mt-1">
-            Sélectionnez les produits existants à ajouter à ce groupe de variantes
+            Sélectionnez les produits existants à ajouter à ce groupe de
+            variantes
           </p>
         </DialogHeader>
 
@@ -172,7 +211,7 @@ export function ProductSelector({
             <Input
               placeholder="Rechercher des produits..."
               value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
+              onChange={e => setSearchTerm(e.target.value)}
               className="pl-10 border-gray-300 focus:border-black"
             />
           </div>
@@ -181,8 +220,8 @@ export function ProductSelector({
           {selectedProducts.size > 0 && (
             <div className="p-3 bg-blue-50 rounded-lg border border-blue-200">
               <p className="text-sm text-blue-700">
-                {selectedProducts.size} produit(s) sélectionné(s) •
-                Maximum 30 produits par groupe (Google Merchant Center)
+                {selectedProducts.size} produit(s) sélectionné(s) • Maximum 30
+                produits par groupe (Google Merchant Center)
               </p>
             </div>
           )}
@@ -202,26 +241,32 @@ export function ProductSelector({
                   <Package className="h-12 w-12 text-gray-400 mx-auto mb-4" />
                   <p className="text-gray-600">Aucun produit trouvé</p>
                   <p className="text-sm text-gray-500">
-                    {searchTerm ? 'Essayez un autre terme de recherche' : 'Tous les produits disponibles sont déjà dans des groupes'}
+                    {searchTerm
+                      ? 'Essayez un autre terme de recherche'
+                      : 'Tous les produits disponibles sont déjà dans des groupes'}
                   </p>
                 </div>
               </div>
             ) : (
               <div className="divide-y">
-                {availableProducts.map((product) => {
-                  const isSelected = selectedProducts.has(product.id)
+                {availableProducts.map(product => {
+                  const isSelected = selectedProducts.has(product.id);
                   return (
                     <div
                       key={product.id}
                       className={`p-4 hover:bg-gray-50 cursor-pointer transition-colors ${
-                        isSelected ? 'bg-blue-50 border-l-4 border-l-blue-500' : ''
+                        isSelected
+                          ? 'bg-blue-50 border-l-4 border-l-blue-500'
+                          : ''
                       }`}
                       onClick={() => toggleProductSelection(product.id)}
                     >
                       <div className="flex items-center justify-between">
                         <div className="flex-1">
                           <div className="flex items-center space-x-3 mb-2">
-                            <h4 className="font-medium text-gray-900">{product.name}</h4>
+                            <h4 className="font-medium text-gray-900">
+                              {product.name}
+                            </h4>
                             {getStatusBadge(product.status)}
                             {isSelected && (
                               <Check className="h-4 w-4 text-blue-600" />
@@ -233,12 +278,16 @@ export function ProductSelector({
                           </div>
                         </div>
                         <ButtonV2
-                          variant={isSelected ? "secondary" : "outline"}
+                          variant={isSelected ? 'secondary' : 'outline'}
                           size="sm"
-                          className={isSelected ? "bg-blue-600 hover:bg-blue-700" : "border-gray-300"}
-                          onClick={(e) => {
-                            e.stopPropagation()
-                            toggleProductSelection(product.id)
+                          className={
+                            isSelected
+                              ? 'bg-blue-600 hover:bg-blue-700'
+                              : 'border-gray-300'
+                          }
+                          onClick={e => {
+                            e.stopPropagation();
+                            toggleProductSelection(product.id);
                           }}
                         >
                           {isSelected ? (
@@ -255,7 +304,7 @@ export function ProductSelector({
                         </ButtonV2>
                       </div>
                     </div>
-                  )
+                  );
                 })}
               </div>
             )}
@@ -285,11 +334,12 @@ export function ProductSelector({
               ) : (
                 <Plus className="h-4 w-4 mr-2" />
               )}
-              Ajouter {selectedProducts.size > 0 ? `(${selectedProducts.size})` : ''}
+              Ajouter{' '}
+              {selectedProducts.size > 0 ? `(${selectedProducts.size})` : ''}
             </ButtonV2>
           </div>
         </div>
       </DialogContent>
     </Dialog>
-  )
+  );
 }

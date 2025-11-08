@@ -1,4 +1,4 @@
-'use client'
+'use client';
 
 /**
  * 🎯 VÉRONE - Modal Gestion Caractéristiques Produit
@@ -10,13 +10,8 @@
  * - Interface claire et validation en temps réel
  */
 
-import React, { useState, useEffect } from 'react'
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog'
-import { ButtonV2 } from '@/components/ui/button'
-import { Input } from '@/components/ui/input'
-import { Label } from '@/components/ui/label'
-import { Badge } from '@/components/ui/badge'
-import { Alert, AlertDescription } from '@/components/ui/alert'
+import React, { useState, useEffect } from 'react';
+
 import {
   Settings,
   Plus,
@@ -28,22 +23,34 @@ import {
   Layers,
   AlertCircle,
   CheckCircle,
-  Package
-} from 'lucide-react'
-import { cn } from '@/lib/utils'
-import { createClient } from '@/lib/supabase/client'
+  Package,
+} from 'lucide-react';
+
+import { Alert, AlertDescription } from '@/components/ui/alert';
+import { Badge } from '@/components/ui/badge';
+import { ButtonV2 } from '@/components/ui/button';
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { createClient } from '@/lib/supabase/client';
+import { cn } from '@verone/utils';
 
 interface ProductCharacteristicsModalProps {
-  isOpen: boolean
-  onClose: () => void
-  productId: string
-  productName: string
+  isOpen: boolean;
+  onClose: () => void;
+  productId: string;
+  productName: string;
   initialData?: {
-    variant_attributes?: Record<string, any>
-    dimensions?: Record<string, any>
-    weight?: number
-  }
-  onUpdate: (data: any) => void
+    variant_attributes?: Record<string, any>;
+    dimensions?: Record<string, any>;
+    weight?: number;
+  };
+  onUpdate: (data: any) => void;
 }
 
 // Caractéristiques prédéfinies pour l'interface
@@ -52,33 +59,58 @@ const VARIANT_TEMPLATES = {
     label: 'Couleur',
     icon: Palette,
     placeholder: 'ex: Blanc cassé, Bleu marine...',
-    suggestions: ['Blanc', 'Noir', 'Gris', 'Beige', 'Marron', 'Bleu', 'Rouge', 'Vert']
+    suggestions: [
+      'Blanc',
+      'Noir',
+      'Gris',
+      'Beige',
+      'Marron',
+      'Bleu',
+      'Rouge',
+      'Vert',
+    ],
   },
   material: {
     label: 'Matériau',
     icon: Layers,
     placeholder: 'ex: Chêne massif, Métal brossé...',
-    suggestions: ['Bois', 'Métal', 'Tissu', 'Cuir', 'Plastique', 'Verre', 'Céramique', 'Marbre']
+    suggestions: [
+      'Bois',
+      'Métal',
+      'Tissu',
+      'Cuir',
+      'Plastique',
+      'Verre',
+      'Céramique',
+      'Marbre',
+    ],
   },
   style: {
     label: 'Style',
     icon: Package,
     placeholder: 'ex: Moderne, Classique...',
-    suggestions: ['Moderne', 'Classique', 'Industriel', 'Scandinave', 'Rustique', 'Art déco']
+    suggestions: [
+      'Moderne',
+      'Classique',
+      'Industriel',
+      'Scandinave',
+      'Rustique',
+      'Art déco',
+    ],
   },
   finish: {
     label: 'Finition',
     icon: Settings,
     placeholder: 'ex: Vernis mat, Laqué brillant...',
-    suggestions: ['Mat', 'Brillant', 'Satiné', 'Brossé', 'Poli', 'Texturé']
-  }
-}
+    suggestions: ['Mat', 'Brillant', 'Satiné', 'Brossé', 'Poli', 'Texturé'],
+  },
+};
 
 const DIMENSION_FIELDS = [
   { key: 'width', label: 'Largeur', unit: 'cm' },
   { key: 'height', label: 'Hauteur', unit: 'cm' },
-  { key: 'depth', label: 'Profondeur', unit: 'cm' }
-]
+  { key: 'depth', label: 'Profondeur', unit: 'cm' },
+];
 
 export function ProductCharacteristicsModal({
   isOpen,
@@ -86,111 +118,121 @@ export function ProductCharacteristicsModal({
   productId,
   productName,
   initialData,
-  onUpdate
+  onUpdate,
 }: ProductCharacteristicsModalProps) {
-  const supabase = createClient()
+  const supabase = createClient();
 
   // États locaux pour les formulaires
-  const [variantAttributes, setVariantAttributes] = useState<Record<string, string>>({})
-  const [dimensions, setDimensions] = useState<Record<string, number>>({})
-  const [weight, setWeight] = useState<number | undefined>()
-  const [customAttributes, setCustomAttributes] = useState<Record<string, string>>({})
+  const [variantAttributes, setVariantAttributes] = useState<
+    Record<string, string>
+  >({});
+  const [dimensions, setDimensions] = useState<Record<string, number>>({});
+  const [weight, setWeight] = useState<number | undefined>();
+  const [customAttributes, setCustomAttributes] = useState<
+    Record<string, string>
+  >({});
 
   // États UI
-  const [saving, setSaving] = useState(false)
-  const [error, setError] = useState<string | null>(null)
-  const [success, setSuccess] = useState(false)
-  const [newAttributeKey, setNewAttributeKey] = useState('')
-  const [newAttributeValue, setNewAttributeValue] = useState('')
+  const [saving, setSaving] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [success, setSuccess] = useState(false);
+  const [newAttributeKey, setNewAttributeKey] = useState('');
+  const [newAttributeValue, setNewAttributeValue] = useState('');
 
   // Initialiser les données
   useEffect(() => {
     if (initialData) {
       // Variant attributes
-      const variants = initialData.variant_attributes || {}
-      const predefinedKeys = Object.keys(VARIANT_TEMPLATES)
+      const variants = initialData.variant_attributes || {};
+      const predefinedKeys = Object.keys(VARIANT_TEMPLATES);
 
-      const predefined: Record<string, string> = {}
-      const custom: Record<string, string> = {}
+      const predefined: Record<string, string> = {};
+      const custom: Record<string, string> = {};
 
       Object.entries(variants).forEach(([key, value]) => {
         if (predefinedKeys.includes(key)) {
-          predefined[key] = String(value)
+          predefined[key] = String(value);
         } else {
-          custom[key] = String(value)
+          custom[key] = String(value);
         }
-      })
+      });
 
-      setVariantAttributes(predefined)
-      setCustomAttributes(custom)
+      setVariantAttributes(predefined);
+      setCustomAttributes(custom);
 
       // Dimensions
-      setDimensions(initialData.dimensions || {})
+      setDimensions(initialData.dimensions || {});
 
       // Weight
-      setWeight(initialData.weight)
+      setWeight(initialData.weight);
     }
-  }, [initialData])
+  }, [initialData]);
 
   /**
    * 💾 Sauvegarde des caractéristiques
    */
   const handleSave = async () => {
     try {
-      setSaving(true)
-      setError(null)
+      setSaving(true);
+      setError(null);
 
       // Combiner tous les variant_attributes
       const allVariantAttributes = {
         ...variantAttributes,
-        ...customAttributes
-      }
+        ...customAttributes,
+      };
 
       // Nettoyer les valeurs vides
       Object.keys(allVariantAttributes).forEach(key => {
-        if (!allVariantAttributes[key] || allVariantAttributes[key].trim() === '') {
-          delete allVariantAttributes[key]
+        if (
+          !allVariantAttributes[key] ||
+          allVariantAttributes[key].trim() === ''
+        ) {
+          delete allVariantAttributes[key];
         }
-      })
+      });
 
       // Nettoyer les dimensions vides
-      const cleanDimensions = { ...dimensions }
+      const cleanDimensions = { ...dimensions };
       Object.keys(cleanDimensions).forEach(key => {
         if (!cleanDimensions[key] || cleanDimensions[key] === 0) {
-          delete cleanDimensions[key]
+          delete cleanDimensions[key];
         }
-      })
+      });
 
       const updateData = {
-        variant_attributes: Object.keys(allVariantAttributes).length > 0 ? allVariantAttributes : null,
-        dimensions: Object.keys(cleanDimensions).length > 0 ? cleanDimensions : null,
+        variant_attributes:
+          Object.keys(allVariantAttributes).length > 0
+            ? allVariantAttributes
+            : null,
+        dimensions:
+          Object.keys(cleanDimensions).length > 0 ? cleanDimensions : null,
         weight: weight || null,
-        updated_at: new Date().toISOString()
-      }
+        updated_at: new Date().toISOString(),
+      };
 
       const { error } = await supabase
         .from('products')
         .update(updateData)
-        .eq('id', productId)
+        .eq('id', productId);
 
-      if (error) throw error
+      if (error) throw error;
 
-      setSuccess(true)
-      onUpdate(updateData)
+      setSuccess(true);
+      onUpdate(updateData);
 
       // Fermer le modal après 1.5s
       setTimeout(() => {
-        setSuccess(false)
-        onClose()
-      }, 1500)
-
+        setSuccess(false);
+        onClose();
+      }, 1500);
     } catch (err) {
-      console.error('❌ Erreur sauvegarde caractéristiques:', err)
-      setError(err instanceof Error ? err.message : 'Erreur sauvegarde')
+      console.error('❌ Erreur sauvegarde caractéristiques:', err);
+      setError(err instanceof Error ? err.message : 'Erreur sauvegarde');
     } finally {
-      setSaving(false)
+      setSaving(false);
     }
-  }
+  };
 
   /**
    * ➕ Ajouter attribut personnalisé
@@ -199,34 +241,34 @@ export function ProductCharacteristicsModal({
     if (newAttributeKey.trim() && newAttributeValue.trim()) {
       setCustomAttributes(prev => ({
         ...prev,
-        [newAttributeKey.trim()]: newAttributeValue.trim()
-      }))
-      setNewAttributeKey('')
-      setNewAttributeValue('')
+        [newAttributeKey.trim()]: newAttributeValue.trim(),
+      }));
+      setNewAttributeKey('');
+      setNewAttributeValue('');
     }
-  }
+  };
 
   /**
    * 🗑️ Supprimer attribut personnalisé
    */
   const handleRemoveCustomAttribute = (key: string) => {
     setCustomAttributes(prev => {
-      const updated = { ...prev }
-      delete updated[key]
-      return updated
-    })
-  }
+      const updated = { ...prev };
+      delete updated[key];
+      return updated;
+    });
+  };
 
   /**
    * 📐 Mise à jour dimension
    */
   const handleDimensionChange = (key: string, value: string) => {
-    const numValue = parseFloat(value)
+    const numValue = parseFloat(value);
     setDimensions(prev => ({
       ...prev,
-      [key]: isNaN(numValue) ? 0 : numValue
-    }))
-  }
+      [key]: isNaN(numValue) ? 0 : numValue,
+    }));
+  };
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
@@ -235,14 +277,17 @@ export function ProductCharacteristicsModal({
           <DialogTitle className="flex items-center gap-3">
             <Settings className="h-6 w-6 text-black" />
             <div className="flex flex-col">
-              <span className="text-xl font-semibold text-black">Caractéristiques produit</span>
-              <span className="text-sm text-gray-600 font-normal">{productName}</span>
+              <span className="text-xl font-semibold text-black">
+                Caractéristiques produit
+              </span>
+              <span className="text-sm text-gray-600 font-normal">
+                {productName}
+              </span>
             </div>
           </DialogTitle>
         </DialogHeader>
 
         <div className="flex-1 overflow-y-auto space-y-6 py-6">
-
           {/* Messages d'état */}
           {error && (
             <Alert variant="destructive">
@@ -269,20 +314,25 @@ export function ProductCharacteristicsModal({
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               {Object.entries(VARIANT_TEMPLATES).map(([key, template]) => {
-                const Icon = template.icon
+                const Icon = template.icon;
                 return (
                   <div key={key} className="space-y-2">
-                    <Label htmlFor={key} className="text-sm font-medium flex items-center gap-2">
+                    <Label
+                      htmlFor={key}
+                      className="text-sm font-medium flex items-center gap-2"
+                    >
                       <Icon className="h-4 w-4 text-gray-600" />
                       {template.label}
                     </Label>
                     <Input
                       id={key}
                       value={variantAttributes[key] || ''}
-                      onChange={(e) => setVariantAttributes(prev => ({
-                        ...prev,
-                        [key]: e.target.value
-                      }))}
+                      onChange={e =>
+                        setVariantAttributes(prev => ({
+                          ...prev,
+                          [key]: e.target.value,
+                        }))
+                      }
                       placeholder={template.placeholder}
                       className="text-sm"
                     />
@@ -293,10 +343,12 @@ export function ProductCharacteristicsModal({
                             key={suggestion}
                             variant="outline"
                             className="text-xs cursor-pointer hover:bg-gray-100"
-                            onClick={() => setVariantAttributes(prev => ({
-                              ...prev,
-                              [key]: suggestion
-                            }))}
+                            onClick={() =>
+                              setVariantAttributes(prev => ({
+                                ...prev,
+                                [key]: suggestion,
+                              }))
+                            }
                           >
                             {suggestion}
                           </Badge>
@@ -304,7 +356,7 @@ export function ProductCharacteristicsModal({
                       </div>
                     )}
                   </div>
-                )
+                );
               })}
             </div>
           </div>
@@ -329,7 +381,9 @@ export function ProductCharacteristicsModal({
                       step="0.1"
                       min="0"
                       value={dimensions[field.key] || ''}
-                      onChange={(e) => handleDimensionChange(field.key, e.target.value)}
+                      onChange={e =>
+                        handleDimensionChange(field.key, e.target.value)
+                      }
                       placeholder="0"
                       className="text-sm pr-8"
                     />
@@ -344,7 +398,10 @@ export function ProductCharacteristicsModal({
             {/* Poids */}
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
               <div className="space-y-2">
-                <Label htmlFor="weight" className="text-sm font-medium flex items-center gap-2">
+                <Label
+                  htmlFor="weight"
+                  className="text-sm font-medium flex items-center gap-2"
+                >
                   <Weight className="h-4 w-4 text-gray-600" />
                   Poids
                 </Label>
@@ -355,7 +412,9 @@ export function ProductCharacteristicsModal({
                     step="0.1"
                     min="0"
                     value={weight || ''}
-                    onChange={(e) => setWeight(parseFloat(e.target.value) || undefined)}
+                    onChange={e =>
+                      setWeight(parseFloat(e.target.value) || undefined)
+                    }
                     placeholder="0"
                     className="text-sm pr-8"
                   />
@@ -378,9 +437,14 @@ export function ProductCharacteristicsModal({
             {Object.keys(customAttributes).length > 0 && (
               <div className="space-y-2">
                 {Object.entries(customAttributes).map(([key, value]) => (
-                  <div key={key} className="flex items-center gap-2 p-3 bg-gray-50 rounded-lg">
+                  <div
+                    key={key}
+                    className="flex items-center gap-2 p-3 bg-gray-50 rounded-lg"
+                  >
                     <div className="flex-1 grid grid-cols-2 gap-2">
-                      <div className="text-sm font-medium text-black">{key}</div>
+                      <div className="text-sm font-medium text-black">
+                        {key}
+                      </div>
                       <div className="text-sm text-gray-700">{value}</div>
                     </div>
                     <ButtonV2
@@ -400,14 +464,14 @@ export function ProductCharacteristicsModal({
             <div className="grid grid-cols-2 gap-2">
               <Input
                 value={newAttributeKey}
-                onChange={(e) => setNewAttributeKey(e.target.value)}
+                onChange={e => setNewAttributeKey(e.target.value)}
                 placeholder="Nom de l'attribut"
                 className="text-sm"
               />
               <div className="flex gap-2">
                 <Input
                   value={newAttributeValue}
-                  onChange={(e) => setNewAttributeValue(e.target.value)}
+                  onChange={e => setNewAttributeValue(e.target.value)}
                   placeholder="Valeur"
                   className="text-sm flex-1"
                 />
@@ -415,7 +479,9 @@ export function ProductCharacteristicsModal({
                   variant="outline"
                   size="sm"
                   onClick={handleAddCustomAttribute}
-                  disabled={!newAttributeKey.trim() || !newAttributeValue.trim()}
+                  disabled={
+                    !newAttributeKey.trim() || !newAttributeValue.trim()
+                  }
                 >
                   <Plus className="h-4 w-4" />
                 </ButtonV2>
@@ -428,7 +494,9 @@ export function ProductCharacteristicsModal({
         <div className="border-t pt-4 bg-gray-50 -mx-6 -mb-6 px-6 pb-6 mt-6">
           <div className="flex items-center justify-between">
             <div className="text-sm text-gray-600">
-              {Object.keys(variantAttributes).length + Object.keys(customAttributes).length} attribut(s) défini(s)
+              {Object.keys(variantAttributes).length +
+                Object.keys(customAttributes).length}{' '}
+              attribut(s) défini(s)
             </div>
             <div className="flex gap-2">
               <ButtonV2 variant="outline" onClick={onClose} disabled={saving}>
@@ -453,5 +521,5 @@ export function ProductCharacteristicsModal({
         </div>
       </DialogContent>
     </Dialog>
-  )
+  );
 }

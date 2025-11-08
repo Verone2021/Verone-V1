@@ -13,9 +13,11 @@
 ### Problème Initial
 
 **Citation utilisateur** :
+
 > "Je ne veux pas qu'il y ait de divergences entre la base de données et le frontend. Si j'ai dans les mouvements seulement 8 éléments, je veux qu'il y ait que 8 éléments dans ma base de données. C'est les bonnes pratiques."
 
 **Symptômes** :
+
 - Fauteuil Milo - Ocre affichait **58 unités** en BDD
 - Page `/stocks/mouvements` montrait **3 mouvements** : -3, +5, +6 = **8 unités attendues**
 - **Écart de 50 unités** inexpliqué
@@ -24,25 +26,27 @@
 ### Solution Implémentée
 
 **Architecture "Mouvements = SOURCE DE VÉRITÉ"** :
+
 1. ✅ **Migration resync** : Correction immédiate des données (58 → 8)
 2. ✅ **Trigger unique** : Synchronisation automatique permanente
 3. ✅ **Suppression triggers conflictuels** : 5 triggers obsolètes désactivés
 
 ### Résultats AVANT / APRÈS
 
-| Métrique | AVANT | APRÈS | Amélioration |
-|----------|-------|-------|--------------|
-| **Stock Fauteuil Milo** | 58 unités | **8 unités** | ✅ -50 unités |
-| **Produits en stock** | 17 (fantômes) | **1** | ✅ -16 fantômes |
-| **Valeur stock** | Incorrecte | **872 €** | ✅ Exacte |
-| **Écarts BDD vs Frontend** | Oui (50 unités) | **0** | ✅ Synchronisé |
-| **Triggers stock** | 5 conflictuels | **1 unique** | ✅ Architecture simplifiée |
+| Métrique                   | AVANT           | APRÈS        | Amélioration               |
+| -------------------------- | --------------- | ------------ | -------------------------- |
+| **Stock Fauteuil Milo**    | 58 unités       | **8 unités** | ✅ -50 unités              |
+| **Produits en stock**      | 17 (fantômes)   | **1**        | ✅ -16 fantômes            |
+| **Valeur stock**           | Incorrecte      | **872 €**    | ✅ Exacte                  |
+| **Écarts BDD vs Frontend** | Oui (50 unités) | **0**        | ✅ Synchronisé             |
+| **Triggers stock**         | 5 conflictuels  | **1 unique** | ✅ Architecture simplifiée |
 
 ---
 
 ## 📋 PHASE 1 : DIAGNOSTIC (10min)
 
 ### Objectif
+
 Identifier TOUS les produits désynchronisés entre `stock_real` (BDD) et SUM(quantity_change) (mouvements réels).
 
 ### Requête SQL Exécutée
@@ -75,11 +79,12 @@ ORDER BY ABS(p.stock_real - COALESCE(sfm.calculated_stock_real, 0)) DESC;
 
 **1 seul produit désynchronisé identifié** :
 
-| SKU | Nom | stock_real BDD | Attendu | Écart | Mouvements |
-|-----|-----|----------------|---------|-------|------------|
-| FMIL-OCRE-02 | Fauteuil Milo - Ocre | **58** | **8** | **+50** | 3 |
+| SKU          | Nom                  | stock_real BDD | Attendu | Écart   | Mouvements |
+| ------------ | -------------------- | -------------- | ------- | ------- | ---------- |
+| FMIL-OCRE-02 | Fauteuil Milo - Ocre | **58**         | **8**   | **+50** | 3          |
 
 **Analyse** :
+
 - 3 mouvements réels : -3, +5, +6 = 8 unités attendues
 - 58 en BDD provient d'un stock initial fantôme (données legacy)
 - Écart créé par migration `20251014_004` qui a copié `stock_quantity` (valeur obsolète) vers `stock_real`
@@ -89,6 +94,7 @@ ORDER BY ABS(p.stock_real - COALESCE(sfm.calculated_stock_real, 0)) DESC;
 ## 🔧 PHASE 2 : CORRECTION DONNÉES (15min)
 
 ### Objectif
+
 Recalculer `stock_real` pour TOUS les produits depuis les mouvements réels.
 
 ### Migration Créée
@@ -96,6 +102,7 @@ Recalculer `stock_real` pour TOUS les produits depuis les mouvements réels.
 **Fichier** : `supabase/migrations/20251103_002_resync_stock_real_from_movements.sql`
 
 **Fonction RPC** :
+
 ```sql
 CREATE OR REPLACE FUNCTION resync_all_product_stocks()
 RETURNS TABLE(
@@ -165,6 +172,7 @@ $$ LANGUAGE plpgsql;
 ```
 
 **Impact** :
+
 - ✅ Fauteuil Milo - Ocre : **58 → 8 unités**
 - ✅ **0 écarts restants** dans toute la base
 - ✅ Fonction `resync_all_product_stocks()` disponible pour audits futurs
@@ -174,6 +182,7 @@ $$ LANGUAGE plpgsql;
 ## 🏗️ PHASE 3 : ARCHITECTURE DÉFINITIVE (30min)
 
 ### Objectif
+
 Créer UN SEUL trigger qui garantit `stock_real = SUM(quantity_change)` de manière permanente et automatique.
 
 ### Migration Créée
@@ -183,6 +192,7 @@ Créer UN SEUL trigger qui garantit `stock_real = SUM(quantity_change)` de mani�
 ### Étape 3.1 : Suppression Triggers Conflictuels
 
 **Triggers désactivés** (5 au total) :
+
 1. `maintain_stock_coherence`
 2. `update_product_stock_advanced_trigger`
 3. `trigger_maintain_stock_totals`
@@ -194,6 +204,7 @@ Créer UN SEUL trigger qui garantit `stock_real = SUM(quantity_change)` de mani�
 ### Étape 3.2 : Création Trigger Unique SOURCE DE VÉRITÉ
 
 **Fonction** :
+
 ```sql
 CREATE OR REPLACE FUNCTION maintain_stock_from_movements()
 RETURNS TRIGGER AS $$
@@ -250,6 +261,7 @@ $$ LANGUAGE plpgsql;
 ```
 
 **Trigger** :
+
 ```sql
 CREATE TRIGGER maintain_stock_from_movements_trigger
   AFTER INSERT OR UPDATE OR DELETE ON stock_movements
@@ -260,16 +272,19 @@ CREATE TRIGGER maintain_stock_from_movements_trigger
 ### Caractéristiques Techniques
 
 **Architecture** :
+
 - ✅ **Trigger AFTER** : Exécuté après validation contraintes
 - ✅ **FOR EACH ROW** : Traite chaque mouvement individuellement
 - ✅ **INSERT OR UPDATE OR DELETE** : Gère TOUS les cas
 
 **Principe** :
+
 - Les mouvements de stock sont **IMMUABLES** (source de vérité)
 - `stock_real` est **TOUJOURS RECALCULÉ** depuis les mouvements
 - Aucune modification directe de `stock_real` autorisée
 
 **Garanties** :
+
 - ✅ **Idempotent** : Peut être appelé N fois sans risque
 - ✅ **Atomic** : Transaction complète ou rollback
 - ✅ **Automatique** : Aucune intervention manuelle requise
@@ -299,15 +314,16 @@ Garantie: stock_real = SUM(quantity_change) TOUJOURS
 
 **Résultat** :
 
-| KPI | Valeur Affichée | Valeur Attendue | Statut |
-|-----|----------------|-----------------|--------|
-| **Stock Réel** | **8 unités** | 8 | ✅ CORRECT |
-| **Produits en stock** | **1 produits** | 1 | ✅ CORRECT |
-| **Disponible** | **5 unités** | 5 (8 - 3 réservé) | ✅ CORRECT |
-| **Alertes** | **1 actions requises** | 1 | ✅ CORRECT |
-| **Valeur Stock** | **872 €** | 872 € (8 × 109€) | ✅ CORRECT |
+| KPI                   | Valeur Affichée        | Valeur Attendue   | Statut     |
+| --------------------- | ---------------------- | ----------------- | ---------- |
+| **Stock Réel**        | **8 unités**           | 8                 | ✅ CORRECT |
+| **Produits en stock** | **1 produits**         | 1                 | ✅ CORRECT |
+| **Disponible**        | **5 unités**           | 5 (8 - 3 réservé) | ✅ CORRECT |
+| **Alertes**           | **1 actions requises** | 1                 | ✅ CORRECT |
+| **Valeur Stock**      | **872 €**              | 872 € (8 × 109€)  | ✅ CORRECT |
 
 **Derniers mouvements affichés** :
+
 - ✅ Fauteuil Milo - Ocre : +6 unités (1 nov., 19:00)
 - ✅ Fauteuil Milo - Ocre : +5 unités (1 nov., 18:53)
 - ✅ Fauteuil Milo - Ocre : -3 unités (1 nov., 16:45)
@@ -319,6 +335,7 @@ Garantie: stock_real = SUM(quantity_change) TOUJOURS
 **Résultat** : ✅ **0 erreurs**
 
 **Logs observés** :
+
 - `[LOG] ✅ [useStockUI] Auth OK`
 - `[LOG] ✅ Activity tracking: 1 events logged`
 - `[WARNING] ⚠️ SLO query dépassé: activity-stats 2217ms > 2000ms` (non bloquant)
@@ -328,6 +345,7 @@ Garantie: stock_real = SUM(quantity_change) TOUJOURS
 **Fichier** : `.playwright-mcp/validation-finale-stock-8-unites-synchronise.png`
 
 **Capture écran confirme** :
+
 - ✅ Stock Réel : 8
 - ✅ 1 produits en stock
 - ✅ Valeur : 872 €
@@ -352,17 +370,20 @@ WHERE archived_at IS NULL
 ```
 
 **Impact** :
+
 - `stock_quantity` contenait des valeurs obsolètes (données test/legacy)
 - Fauteuil Milo avait `stock_quantity = 58` (ancien stock fantôme)
 - Migration a copié 58 dans `stock_real`, écrasant la valeur correcte
 
 **Leçon apprise** :
+
 - ❌ Ne JAMAIS copier `stock_quantity` vers `stock_real`
 - ✅ TOUJOURS recalculer depuis `stock_movements` (source de vérité)
 
 ### Architecture Antérieure (Problématique)
 
 **5 triggers conflictuels** :
+
 1. `maintain_stock_coherence` (BEFORE INSERT) - Recalcule avant insert
 2. `update_product_stock_advanced` (AFTER INSERT) - Met à jour après insert
 3. `trigger_maintain_stock_totals` (AFTER INSERT/UPDATE/DELETE) - Recalcule totaux
@@ -370,6 +391,7 @@ WHERE archived_at IS NULL
 5. `trigger_update_product_stock_on_update` (AFTER UPDATE) - Synchronise si qty change
 
 **Problème** :
+
 - Ces triggers pouvaient s'exécuter dans un ordre non déterministe
 - Logiques différentes créaient des incohérences
 - Maintenance difficile (5 fichiers distincts)
@@ -381,11 +403,13 @@ WHERE archived_at IS NULL
 ### 1. Mouvements = SOURCE DE VÉRITÉ UNIQUE
 
 **Principe** :
+
 - Les mouvements de stock sont **IMMUABLES** (append-only log)
 - `stock_real` est **DÉRIVÉ** (computed from movements)
 - Aucune modification directe de `stock_real` autorisée
 
 **Avantages** :
+
 - ✅ **Audit trail complet** : Historique de chaque changement
 - ✅ **Recalcul possible** : Peut régénérer stock_real à tout moment
 - ✅ **Pas de perte données** : Mouvements jamais modifiés
@@ -394,11 +418,13 @@ WHERE archived_at IS NULL
 ### 2. Trigger Unique (Pas de Conflits)
 
 **Principe** :
+
 - UN SEUL trigger sur `stock_movements`
 - Logique centralisée dans une fonction
 - Simple à tester et maintenir
 
 **Avantages** :
+
 - ✅ **Pas de race conditions** : Ordre déterministe
 - ✅ **Code simple** : 1 fichier au lieu de 5
 - ✅ **Testable** : Logique isolée
@@ -406,16 +432,19 @@ WHERE archived_at IS NULL
 ### 3. Idempotence
 
 **Principe** :
+
 - Fonction `resync_all_product_stocks()` peut être appelée N fois
 - Trigger recalcule TOUJOURS depuis zéro (pas de delta)
 
 **Avantages** :
+
 - ✅ **Résilience** : Correction automatique si désync
 - ✅ **Pas de side effects** : Résultat toujours prévisible
 
 ### 4. Monitoring Continu
 
 **Outils disponibles** :
+
 ```sql
 -- Vérifier écarts (doit retourner 0 lignes)
 SELECT * FROM resync_all_product_stocks();
@@ -434,6 +463,7 @@ WHERE p.archived_at IS NULL
 ```
 
 **Recommandation** :
+
 - ✅ **Cron quotidien** : Exécuter `resync_all_product_stocks()` (détection proactive)
 - ✅ **Alerte si écarts** : Créer GitHub Issue automatique si > 0 lignes retournées
 
@@ -461,11 +491,13 @@ WHERE p.archived_at IS NULL
 **Aucune modification requise** ✅
 
 **Raison** : Le code TypeScript respectait déjà le pattern "triggers-only" :
+
 - Aucun `UPDATE products SET stock_real` dans le code
 - Toutes modifications passent par `INSERT INTO stock_movements`
 - Les triggers font la synchronisation automatique
 
 **Validation** :
+
 ```bash
 grep -r "UPDATE products SET stock_real" src/
 # Résultat : Aucune correspondance ✅
@@ -488,6 +520,7 @@ grep -r "UPDATE products SET stock_real" src/
 ### Migrations Appliquées
 
 **Ordre chronologique** :
+
 ```bash
 # 1. Archivage fantômes (optionnel, nettoyage)
 psql -f 20251103_001_archive_ghost_products.sql
@@ -504,12 +537,14 @@ psql -f 20251103_003_trigger_unique_stock_source_of_truth.sql
 ### Rollback (si nécessaire)
 
 **Étape 1** : Restaurer anciens triggers
+
 ```sql
 -- Restaurer depuis backup migration précédente
 -- (triggers originaux sauvegardés avant suppression)
 ```
 
 **Étape 2** : Annuler resync
+
 ```sql
 -- Pas de rollback nécessaire car données corrigées
 -- Si vraiment besoin, restaurer depuis backup BDD
@@ -545,16 +580,16 @@ WHERE tgname IN (
 
 ### Objectifs vs Résultats
 
-| Objectif | Cible | Résultat | Statut |
-|----------|-------|----------|--------|
-| **Synchronisation BDD ↔ Frontend** | 0 écarts | **0 écarts** | ✅ ATTEINT |
-| **Stock Fauteuil Milo** | 8 unités | **8 unités** | ✅ ATTEINT |
-| **Produits fantômes** | 0 | **0** (16 archivés) | ✅ ATTEINT |
-| **Triggers conflictuels** | 0 | **0** (5 supprimés) | ✅ ATTEINT |
-| **Console errors** | 0 | **0** | ✅ ATTEINT |
-| **Trigger unique actif** | Oui | **Oui** | ✅ ATTEINT |
-| **Fonction resync disponible** | Oui | **Oui** | ✅ ATTEINT |
-| **Architecture simplifiée** | Oui | **1 trigger vs 5** | ✅ ATTEINT |
+| Objectif                            | Cible    | Résultat            | Statut     |
+| ----------------------------------- | -------- | ------------------- | ---------- |
+| **Synchronisation BDD ↔ Frontend** | 0 écarts | **0 écarts**        | ✅ ATTEINT |
+| **Stock Fauteuil Milo**             | 8 unités | **8 unités**        | ✅ ATTEINT |
+| **Produits fantômes**               | 0        | **0** (16 archivés) | ✅ ATTEINT |
+| **Triggers conflictuels**           | 0        | **0** (5 supprimés) | ✅ ATTEINT |
+| **Console errors**                  | 0        | **0**               | ✅ ATTEINT |
+| **Trigger unique actif**            | Oui      | **Oui**             | ✅ ATTEINT |
+| **Fonction resync disponible**      | Oui      | **Oui**             | ✅ ATTEINT |
+| **Architecture simplifiée**         | Oui      | **1 trigger vs 5**  | ✅ ATTEINT |
 
 ### Performance
 
@@ -565,12 +600,14 @@ WHERE tgname IN (
 ### Business Impact
 
 **AVANT** :
+
 - ❌ Décisions métier basées sur données fausses (58 vs 8)
 - ❌ Valeur stock incorrecte (6 322€ vs 872€)
 - ❌ Alertes faussées (13 vs 1)
 - ❌ Confusion équipe (pourquoi 58 si seulement 3 mouvements ?)
 
 **APRÈS** :
+
 - ✅ **100% confiance** dans les données affichées
 - ✅ KPI reflètent exactement les mouvements de stock
 - ✅ Pas de divergence possible BDD ↔ Frontend
@@ -583,6 +620,7 @@ WHERE tgname IN (
 ### 1. Monitoring Automatique (Priorité Haute)
 
 **Cron quotidien** :
+
 ```sql
 -- Créer job Supabase Edge Function
 -- Exécuter chaque jour à 02:00 UTC
@@ -592,38 +630,41 @@ SELECT * FROM resync_all_product_stocks();
 ```
 
 **Alertes** :
+
 - Si écarts détectés → Créer GitHub Issue automatique
 - Si > 10 écarts → Alerte critique équipe DevOps
 
 ### 2. Tests E2E (Priorité Moyenne)
 
 **Scénarios à tester** :
+
 ```typescript
 // Test 1 : Créer mouvement IN → Vérifier stock_real
 it('should update stock_real after INSERT movement', async () => {
-  await createMovement({ type: 'IN', quantity: 10 })
-  const product = await getProduct(productId)
-  expect(product.stock_real).toBe(initialStock + 10)
-})
+  await createMovement({ type: 'IN', quantity: 10 });
+  const product = await getProduct(productId);
+  expect(product.stock_real).toBe(initialStock + 10);
+});
 
 // Test 2 : Supprimer mouvement → Recalcul auto
 it('should recalculate stock_real after DELETE movement', async () => {
-  await deleteMovement(movementId)
-  const product = await getProduct(productId)
-  expect(product.stock_real).toBe(expectedStockAfterDelete)
-})
+  await deleteMovement(movementId);
+  const product = await getProduct(productId);
+  expect(product.stock_real).toBe(expectedStockAfterDelete);
+});
 
 // Test 3 : Vérifier prévisionnels
 it('should calculate forecasted stock correctly', async () => {
-  await createMovement({ type: 'IN', affects_forecast: true, quantity: 5 })
-  const product = await getProduct(productId)
-  expect(product.stock_forecasted_in).toBe(5)
-})
+  await createMovement({ type: 'IN', affects_forecast: true, quantity: 5 });
+  const product = await getProduct(productId);
+  expect(product.stock_forecasted_in).toBe(5);
+});
 ```
 
 ### 3. Dashboard Admin (Priorité Basse)
 
 **Page `/admin/stock-health`** :
+
 - Afficher nb produits désynchronisés (doit = 0)
 - Historique exécutions `resync_all_product_stocks()`
 - Graphique évolution écarts dans le temps
@@ -632,6 +673,7 @@ it('should calculate forecasted stock correctly', async () => {
 ### 4. Documentation Technique
 
 **Mise à jour requise** :
+
 - ✅ `docs/database/triggers.md` : Documenter nouveau trigger unique
 - ✅ `docs/workflows/stock-movements.md` : Expliquer architecture SOURCE DE VÉRITÉ
 - ✅ `docs/business-rules/06-stocks/movements/real-vs-forecast-separation.md` : Ajouter section synchronisation
@@ -643,11 +685,13 @@ it('should calculate forecasted stock correctly', async () => {
 ### Objectif Atteint ✅
 
 **Citation utilisateur validée** :
+
 > "Je ne veux pas qu'il y ait de divergences entre la base de données et le frontend."
 
 **Résultat** : ✅ **0 divergences possibles**
 
 **Garantie** :
+
 - Les mouvements de stock sont la **SOURCE DE VÉRITÉ UNIQUE**
 - `stock_real` est **TOUJOURS = SUM(quantity_change)** des mouvements réels
 - Synchronisation **AUTOMATIQUE** via trigger unique
@@ -656,26 +700,32 @@ it('should calculate forecasted stock correctly', async () => {
 ### Livraisons
 
 **3 migrations SQL** :
+
 1. ✅ Archivage fantômes
 2. ✅ Fonction resync + Correction données
 3. ✅ Trigger unique SOURCE DE VÉRITÉ
 
 **1 rapport complet** :
+
 - ✅ Ce document (25 pages, exhaustif)
 
 **Preuves visuelles** :
+
 - ✅ Screenshot validation finale (8 unités, 872€)
 
 ### Prochaines Étapes
 
 **Immédiat** (cette session) :
+
 - ✅ Commit + Push migrations (avec autorisation utilisateur)
 
 **Court terme** (cette semaine) :
+
 - [ ] Mise à jour documentation technique
 - [ ] Tests E2E scénarios mouvements
 
 **Moyen terme** (ce mois) :
+
 - [ ] Cron monitoring quotidien
 - [ ] Dashboard admin stock-health
 
@@ -694,6 +744,7 @@ it('should calculate forecasted stock correctly', async () => {
 **Fichier** : `.playwright-mcp/validation-finale-stock-8-unites-synchronise.png`
 
 **KPI Visibles** :
+
 - Stock Réel : 8 (✅)
 - Disponible : 5 (✅)
 - Alertes : 1 (✅)
@@ -703,6 +754,7 @@ it('should calculate forecasted stock correctly', async () => {
 ### Logs Migrations
 
 **Migration 20251103_002** :
+
 ```
 ✅ Produit corrigé: Fauteuil Milo - Ocre (FMIL-OCRE-02)
    Stock avant: 58 unités
@@ -716,6 +768,7 @@ it('should calculate forecasted stock correctly', async () => {
 ```
 
 **Migration 20251103_003** :
+
 ```
 ✅ Triggers conflictuels supprimés
 

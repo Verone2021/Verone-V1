@@ -8,14 +8,24 @@
  * - Paiements dépenses
  */
 
-'use client'
+'use client';
 
-import { useState } from 'react'
-import { useForm } from 'react-hook-form'
-import { zodResolver } from '@hookform/resolvers/zod'
-import * as z from 'zod'
-import { useFinancialPayments, PaymentMethod } from '@/shared/modules/finance/hooks'
-import { ButtonV2 } from '@/components/ui/button'
+import { useState } from 'react';
+
+import { zodResolver } from '@hookform/resolvers/zod';
+
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from '@/components/ui/popover';
+import { CalendarIcon, Loader2 } from 'lucide-react';
+import { format } from 'date-fns';
+import { fr } from 'date-fns/locale';
+import { useForm } from 'react-hook-form';
+import * as z from 'zod';
+import { ButtonV2 } from '@/components/ui/button';
+import { Calendar } from '@/components/ui/calendar';
 import {
   Form,
   FormControl,
@@ -23,23 +33,20 @@ import {
   FormField,
   FormItem,
   FormLabel,
-  FormMessage
-} from '@/components/ui/form'
-import { Input } from '@/components/ui/input'
+  FormMessage,
+} from '@/components/ui/form';
+import { Input } from '@/components/ui/input';
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
-  SelectValue
-} from '@/components/ui/select'
-import { Textarea } from '@/components/ui/textarea'
-import { Calendar } from '@/components/ui/calendar'
-import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover'
-import { CalendarIcon, Loader2 } from 'lucide-react'
-import { format } from 'date-fns'
-import { fr } from 'date-fns/locale'
-import { cn } from '@/lib/utils'
+  SelectValue,
+} from '@/components/ui/select';
+import { Textarea } from '@/components/ui/textarea';
+import { cn } from '@verone/utils';
+import { useFinancialPayments } from '@/shared/modules/finance/hooks';
+import type { PaymentMethod } from '@/shared/modules/finance/hooks';
 
 // =====================================================================
 // SCHEMA VALIDATION
@@ -52,30 +59,33 @@ const paymentFormSchema = z.object({
     .max(999999, 'Montant trop élevé'),
 
   payment_date: z.date({
-    message: 'La date de paiement est requise'
+    message: 'La date de paiement est requise',
   }),
 
-  payment_method: z.enum(['virement', 'carte', 'cheque', 'especes', 'prelevement', 'other'], {
-    message: 'La méthode de paiement est requise'
-  }),
+  payment_method: z.enum(
+    ['virement', 'carte', 'cheque', 'especes', 'prelevement', 'other'],
+    {
+      message: 'La méthode de paiement est requise',
+    }
+  ),
 
   transaction_reference: z.string().optional(),
 
-  notes: z.string().optional()
-})
+  notes: z.string().optional(),
+});
 
-type PaymentFormValues = z.infer<typeof paymentFormSchema>
+type PaymentFormValues = z.infer<typeof paymentFormSchema>;
 
 // =====================================================================
 // TYPES
 // =====================================================================
 
 interface FinancialPaymentFormProps {
-  documentId: string
-  documentNumber: string
-  remainingAmount: number
-  onSuccess?: () => void
-  onCancel?: () => void
+  documentId: string;
+  documentNumber: string;
+  remainingAmount: number;
+  onSuccess?: () => void;
+  onCancel?: () => void;
 }
 
 // =====================================================================
@@ -87,10 +97,10 @@ export function FinancialPaymentForm({
   documentNumber,
   remainingAmount,
   onSuccess,
-  onCancel
+  onCancel,
 }: FinancialPaymentFormProps) {
-  const [isSubmitting, setIsSubmitting] = useState(false)
-  const { recordPayment } = useFinancialPayments(documentId)
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const { recordPayment } = useFinancialPayments(documentId);
 
   // Form setup
   const form = useForm<PaymentFormValues>({
@@ -100,14 +110,14 @@ export function FinancialPaymentForm({
       payment_date: new Date(),
       payment_method: 'virement',
       transaction_reference: '',
-      notes: ''
-    }
-  })
+      notes: '',
+    },
+  });
 
   // Submit handler
   const onSubmit = async (values: PaymentFormValues) => {
     try {
-      setIsSubmitting(true)
+      setIsSubmitting(true);
 
       await recordPayment?.({
         document_id: documentId,
@@ -115,18 +125,18 @@ export function FinancialPaymentForm({
         payment_date: format(values.payment_date, 'yyyy-MM-dd'),
         payment_method: values.payment_method as PaymentMethod,
         transaction_reference: values.transaction_reference,
-        notes: values.notes
-      })
+        notes: values.notes,
+      });
 
-      form.reset()
-      onSuccess?.()
+      form.reset();
+      onSuccess?.();
     } catch (error) {
-      console.error('Payment record error:', error)
+      console.error('Payment record error:', error);
       // Toast error déjà géré dans le hook
     } finally {
-      setIsSubmitting(false)
+      setIsSubmitting(false);
     }
-  }
+  };
 
   // Payment methods options
   const paymentMethods: { value: PaymentMethod; label: string }[] = [
@@ -135,8 +145,8 @@ export function FinancialPaymentForm({
     { value: 'cheque', label: 'Chèque' },
     { value: 'especes', label: 'Espèces' },
     { value: 'prelevement', label: 'Prélèvement' },
-    { value: 'other', label: 'Autre' }
-  ]
+    { value: 'other', label: 'Autre' },
+  ];
 
   return (
     <div className="space-y-6">
@@ -144,7 +154,8 @@ export function FinancialPaymentForm({
       <div>
         <h3 className="text-lg font-semibold">Enregistrer un paiement</h3>
         <p className="text-sm text-gray-500">
-          Document : {documentNumber} • Restant dû : {remainingAmount.toFixed(2)} €
+          Document : {documentNumber} • Restant dû :{' '}
+          {remainingAmount.toFixed(2)} €
         </p>
       </div>
 
@@ -165,7 +176,7 @@ export function FinancialPaymentForm({
                       step="0.01"
                       placeholder="0.00"
                       {...field}
-                      onChange={(e) => field.onChange(parseFloat(e.target.value))}
+                      onChange={e => field.onChange(parseFloat(e.target.value))}
                       className="pr-8"
                     />
                     <span className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500">
@@ -212,7 +223,7 @@ export function FinancialPaymentForm({
                       mode="single"
                       selected={field.value}
                       onSelect={field.onChange}
-                      disabled={(date) =>
+                      disabled={date =>
                         date > new Date() || date < new Date('1900-01-01')
                       }
                       initialFocus
@@ -231,14 +242,17 @@ export function FinancialPaymentForm({
             render={({ field }) => (
               <FormItem>
                 <FormLabel>Méthode de paiement *</FormLabel>
-                <Select onValueChange={field.onChange} defaultValue={field.value}>
+                <Select
+                  onValueChange={field.onChange}
+                  defaultValue={field.value}
+                >
                   <FormControl>
                     <SelectTrigger>
                       <SelectValue placeholder="Sélectionner une méthode" />
                     </SelectTrigger>
                   </FormControl>
                   <SelectContent>
-                    {paymentMethods.map((method) => (
+                    {paymentMethods.map(method => (
                       <SelectItem key={method.value} value={method.value}>
                         {method.label}
                       </SelectItem>
@@ -258,10 +272,7 @@ export function FinancialPaymentForm({
               <FormItem>
                 <FormLabel>Référence transaction</FormLabel>
                 <FormControl>
-                  <Input
-                    placeholder="Ex: VIR-2025-001234"
-                    {...field}
-                  />
+                  <Input placeholder="Ex: VIR-2025-001234" {...field} />
                 </FormControl>
                 <FormDescription>
                   Référence bancaire ou numéro de transaction
@@ -293,11 +304,7 @@ export function FinancialPaymentForm({
 
           {/* Actions */}
           <div className="flex gap-3 pt-4">
-            <ButtonV2
-              type="submit"
-              disabled={isSubmitting}
-              className="flex-1"
-            >
+            <ButtonV2 type="submit" disabled={isSubmitting} className="flex-1">
               {isSubmitting ? (
                 <>
                   <Loader2 className="mr-2 h-4 w-4 animate-spin" />
@@ -322,5 +329,5 @@ export function FinancialPaymentForm({
         </form>
       </Form>
     </div>
-  )
+  );
 }

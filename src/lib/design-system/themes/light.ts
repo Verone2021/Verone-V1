@@ -4,7 +4,7 @@
  * Thème clair (défaut) pour l'application
  */
 
-import { colors } from '../tokens/colors'
+import { colors } from '../tokens/colors';
 
 export const lightTheme = {
   colors: {
@@ -67,6 +67,6 @@ export const lightTheme = {
       subtle: colors.accent[50],
     },
   },
-} as const
+} as const;
 
-export type LightTheme = typeof lightTheme
+export type LightTheme = typeof lightTheme;

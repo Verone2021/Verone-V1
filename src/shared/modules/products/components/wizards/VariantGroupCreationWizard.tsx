@@ -10,72 +10,85 @@
  * @see src/types/variant-groups.ts - DECORATIVE_STYLES avec icônes Lucide
  */
 
-'use client'
+'use client';
 
-import * as React from 'react'
-import { useState } from 'react'
-import { useRouter } from 'next/navigation'
-import { Check, ArrowLeft, ArrowRight, Loader2, X, ExternalLink } from 'lucide-react'
-import { cn } from '@/lib/utils'
-import { ButtonV2 } from '@/components/ui/button'
+import * as React from 'react';
+import { useState } from 'react';
+
+import Link from 'next/link';
+import { useRouter } from 'next/navigation';
+
+import {
+  Check,
+  ArrowLeft,
+  ArrowRight,
+  Loader2,
+  X,
+  ExternalLink,
+} from 'lucide-react';
+import { toast } from 'react-hot-toast';
+
+import { Badge } from '@/components/ui/badge';
+import { ButtonV2 } from '@/components/ui/button';
+import { Checkbox } from '@/components/ui/checkbox';
 import {
   Dialog,
   DialogContent,
   DialogHeader,
   DialogTitle,
   DialogDescription,
-  DialogFooter
-} from '@/components/ui/dialog'
-import { Input } from '@/components/ui/input'
-import { Label } from '@/components/ui/label'
-import { Textarea } from '@/components/ui/textarea'
+  DialogFooter,
+} from '@/components/ui/dialog';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
-  SelectValue
-} from '@/components/ui/select'
-import { Checkbox } from '@/components/ui/checkbox'
-import { Badge } from '@/components/ui/badge'
-import { toast } from 'react-hot-toast'
-import { CategoryFilterCombobox } from '@/components/business/category-filter-combobox'
-import { useVariantGroups } from '@/shared/modules/products/hooks'
-import { useOrganisations } from '@/shared/modules/organisations/hooks'
-import { DECORATIVE_STYLES, type DecorativeStyle } from '@/types/variant-groups'
-import { ROOM_TYPES } from '@/types/collections'
-import Link from 'next/link'
+  SelectValue,
+} from '@/components/ui/select';
+import { Textarea } from '@/components/ui/textarea';
+import { cn } from '@verone/utils';
+import { CategoryFilterCombobox } from '@/shared/modules/categories/components/filters/CategoryFilterCombobox';
+import { useOrganisations } from '@/shared/modules/organisations/hooks';
+import { useVariantGroups } from '@/shared/modules/products/hooks';
+import { ROOM_TYPES } from '@verone/types';
+import {
+  DECORATIVE_STYLES,
+  type DecorativeStyle,
+} from '@verone/types';
 
 // =====================================================================
 // TYPES
 // =====================================================================
 
-type WizardStep = 1 | 2 | 3
+type WizardStep = 1 | 2 | 3;
 
 interface FormData {
   // Step 1: Informations de base
-  name: string
-  base_sku: string
-  subcategory_id: string
+  name: string;
+  base_sku: string;
+  subcategory_id: string;
 
   // Step 2: Style & Attributs
-  style: DecorativeStyle | ''
-  suitable_rooms: string[]
-  dimensions_length: number | ''
-  dimensions_width: number | ''
-  dimensions_height: number | ''
-  dimensions_unit: 'cm' | 'm' | 'mm' | 'in'
+  style: DecorativeStyle | '';
+  suitable_rooms: string[];
+  dimensions_length: number | '';
+  dimensions_width: number | '';
+  dimensions_height: number | '';
+  dimensions_unit: 'cm' | 'm' | 'mm' | 'in';
 
   // Step 3: Fournisseur & Options
-  has_common_supplier: boolean
-  supplier_id: string
-  common_weight: number | ''
+  has_common_supplier: boolean;
+  supplier_id: string;
+  common_weight: number | '';
 }
 
 export interface VariantGroupCreationWizardProps {
-  isOpen: boolean
-  onClose: () => void
-  onSuccess?: (groupId: string) => void
+  isOpen: boolean;
+  onClose: () => void;
+  onSuccess?: (groupId: string) => void;
 }
 
 // =====================================================================
@@ -85,16 +98,18 @@ export interface VariantGroupCreationWizardProps {
 export function VariantGroupCreationWizard({
   isOpen,
   onClose,
-  onSuccess
+  onSuccess,
 }: VariantGroupCreationWizardProps) {
-  const router = useRouter()
-  const { createVariantGroup } = useVariantGroups()
-  const { organisations } = useOrganisations()
+  const router = useRouter();
+  const { createVariantGroup } = useVariantGroups();
+  const { organisations } = useOrganisations();
 
   // État du wizard
-  const [currentStep, setCurrentStep] = useState<WizardStep>(1)
-  const [completedSteps, setCompletedSteps] = useState<Set<WizardStep>>(new Set())
-  const [isSubmitting, setIsSubmitting] = useState(false)
+  const [currentStep, setCurrentStep] = useState<WizardStep>(1);
+  const [completedSteps, setCompletedSteps] = useState<Set<WizardStep>>(
+    new Set()
+  );
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   // Données du formulaire
   const [formData, setFormData] = useState<FormData>({
@@ -109,23 +124,23 @@ export function VariantGroupCreationWizard({
     dimensions_unit: 'cm',
     has_common_supplier: false,
     supplier_id: '',
-    common_weight: ''
-  })
+    common_weight: '',
+  });
 
   // Fournisseurs actifs uniquement
   const suppliers = React.useMemo(() => {
     return (organisations || []).filter(
       org => (org as any).organisation_type === 'supplier' && !org.archived_at
-    )
-  }, [organisations])
+    );
+  }, [organisations]);
 
   // ===================================================================
   // HELPERS
   // ===================================================================
 
   const updateFormData = (updates: Partial<FormData>) => {
-    setFormData(prev => ({ ...prev, ...updates }))
-  }
+    setFormData(prev => ({ ...prev, ...updates }));
+  };
 
   const resetForm = () => {
     setFormData({
@@ -140,32 +155,36 @@ export function VariantGroupCreationWizard({
       dimensions_unit: 'cm',
       has_common_supplier: false,
       supplier_id: '',
-      common_weight: ''
-    })
-    setCurrentStep(1)
-    setCompletedSteps(new Set())
-  }
+      common_weight: '',
+    });
+    setCurrentStep(1);
+    setCompletedSteps(new Set());
+  };
 
   // ===================================================================
   // VALIDATION PAR ÉTAPE
   // ===================================================================
 
   const canProceedFromStep1 = (): boolean => {
-    return !!(formData.name.trim() && formData.base_sku.trim() && formData.subcategory_id)
-  }
+    return !!(
+      formData.name.trim() &&
+      formData.base_sku.trim() &&
+      formData.subcategory_id
+    );
+  };
 
   const canProceedFromStep2 = (): boolean => {
     // Optionnel: style et dimensions, donc toujours true
-    return true
-  }
+    return true;
+  };
 
   const canProceedFromStep3 = (): boolean => {
     // Si fournisseur commun activé, doit avoir un fournisseur sélectionné
     if (formData.has_common_supplier && !formData.supplier_id) {
-      return false
+      return false;
     }
-    return true
-  }
+    return true;
+  };
 
   // ===================================================================
   // NAVIGATION
@@ -174,30 +193,30 @@ export function VariantGroupCreationWizard({
   const handleNext = () => {
     // Validation selon l'étape actuelle
     if (currentStep === 1 && !canProceedFromStep1()) {
-      toast.error('Veuillez remplir tous les champs requis')
-      return
+      toast.error('Veuillez remplir tous les champs requis');
+      return;
     }
 
     if (currentStep === 2 && !canProceedFromStep2()) {
-      toast.error('Veuillez remplir les informations de style')
-      return
+      toast.error('Veuillez remplir les informations de style');
+      return;
     }
 
     if (currentStep === 3) {
-      handleSubmit()
-      return
+      handleSubmit();
+      return;
     }
 
     // Marquer l'étape comme complétée et passer à la suivante
-    setCompletedSteps(prev => new Set(prev).add(currentStep))
-    setCurrentStep(prev => (prev + 1) as WizardStep)
-  }
+    setCompletedSteps(prev => new Set(prev).add(currentStep));
+    setCurrentStep(prev => (prev + 1) as WizardStep);
+  };
 
   const handleBack = () => {
     if (currentStep > 1) {
-      setCurrentStep(prev => (prev - 1) as WizardStep)
+      setCurrentStep(prev => (prev - 1) as WizardStep);
     }
-  }
+  };
 
   // ===================================================================
   // SOUMISSION
@@ -205,66 +224,72 @@ export function VariantGroupCreationWizard({
 
   const handleSubmit = async () => {
     if (!canProceedFromStep3()) {
-      toast.error('Veuillez sélectionner un fournisseur ou désactiver l\'option')
-      return
+      toast.error(
+        "Veuillez sélectionner un fournisseur ou désactiver l'option"
+      );
+      return;
     }
 
-    setIsSubmitting(true)
+    setIsSubmitting(true);
 
     try {
       const payload: any = {
         name: formData.name.trim(),
         base_sku: formData.base_sku.trim(),
-        subcategory_id: formData.subcategory_id
-      }
+        subcategory_id: formData.subcategory_id,
+      };
 
       // Ajouter style si défini
       if (formData.style) {
-        payload.style = formData.style
+        payload.style = formData.style;
       }
 
       // Ajouter suitable_rooms si défini
       if (formData.suitable_rooms.length > 0) {
-        payload.suitable_rooms = formData.suitable_rooms
+        payload.suitable_rooms = formData.suitable_rooms;
       }
 
       // Ajouter dimensions si définies
-      if (formData.dimensions_length && formData.dimensions_width && formData.dimensions_height) {
-        payload.dimensions_length = Number(formData.dimensions_length)
-        payload.dimensions_width = Number(formData.dimensions_width)
-        payload.dimensions_height = Number(formData.dimensions_height)
-        payload.dimensions_unit = formData.dimensions_unit
+      if (
+        formData.dimensions_length &&
+        formData.dimensions_width &&
+        formData.dimensions_height
+      ) {
+        payload.dimensions_length = Number(formData.dimensions_length);
+        payload.dimensions_width = Number(formData.dimensions_width);
+        payload.dimensions_height = Number(formData.dimensions_height);
+        payload.dimensions_unit = formData.dimensions_unit;
       }
 
       // Ajouter fournisseur commun si activé
       if (formData.has_common_supplier) {
-        payload.has_common_supplier = true
-        payload.supplier_id = formData.supplier_id
+        payload.has_common_supplier = true;
+        payload.supplier_id = formData.supplier_id;
       }
 
       // Ajouter poids commun si défini
       if (formData.common_weight) {
-        payload.common_weight = Number(formData.common_weight)
+        payload.common_weight = Number(formData.common_weight);
       }
 
-      const newGroup = await createVariantGroup(payload)
+      const newGroup = await createVariantGroup(payload);
 
-      toast.success('Groupe de variantes créé avec succès !')
-      resetForm()
-      onClose()
+      toast.success('Groupe de variantes créé avec succès !');
+      resetForm();
+      onClose();
 
       if (onSuccess && newGroup?.id) {
-        onSuccess(newGroup.id)
+        onSuccess(newGroup.id);
       } else if (newGroup?.id) {
-        router.push(`/produits/catalogue/variantes/${newGroup.id}`)
+        router.push(`/produits/catalogue/variantes/${newGroup.id}`);
       }
     } catch (error) {
-      console.error('Error creating variant group:', error)
-      toast.error('Erreur lors de la création du groupe de variantes')
+      console.error('Error creating variant group:', error);
+      toast.error('Erreur lors de la création du groupe de variantes');
     } finally {
-      setIsSubmitting(false)
+      setIsSubmitting(false);
     }
-  }
+  };
 
   // ===================================================================
   // HANDLERS - Suitable Rooms
@@ -275,23 +300,24 @@ export function VariantGroupCreationWizard({
       ...prev,
       suitable_rooms: prev.suitable_rooms.includes(room)
         ? prev.suitable_rooms.filter(r => r !== room)
-        : [...prev.suitable_rooms, room]
-    }))
-  }
+        : [...prev.suitable_rooms, room],
+    }));
+  };
 
   // ===================================================================
   // RENDER
   // ===================================================================
 
   return (
-    <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
+    <Dialog open={isOpen} onOpenChange={open => !open && onClose()}>
       <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle className="text-2xl font-bold">
             Créer un groupe de variantes
           </DialogTitle>
           <DialogDescription>
-            Créez un groupe pour organiser des produits similaires avec différentes options (couleurs, matériaux, etc.)
+            Créez un groupe pour organiser des produits similaires avec
+            différentes options (couleurs, matériaux, etc.)
           </DialogDescription>
         </DialogHeader>
 
@@ -299,9 +325,9 @@ export function VariantGroupCreationWizard({
             INDICATEURS D'ÉTAPES
         =============================================================== */}
         <div className="flex items-center justify-between py-4">
-          {[1, 2, 3].map((step) => {
-            const isCompleted = completedSteps.has(step as WizardStep)
-            const isCurrent = currentStep === step
+          {[1, 2, 3].map(step => {
+            const isCompleted = completedSteps.has(step as WizardStep);
+            const isCurrent = currentStep === step;
 
             return (
               <React.Fragment key={step}>
@@ -326,12 +352,14 @@ export function VariantGroupCreationWizard({
                   <div
                     className={cn(
                       'flex-1 h-0.5 mx-2',
-                      completedSteps.has(step as WizardStep) ? 'bg-black' : 'bg-gray-200'
+                      completedSteps.has(step as WizardStep)
+                        ? 'bg-black'
+                        : 'bg-gray-200'
                     )}
                   />
                 )}
               </React.Fragment>
-            )
+            );
           })}
         </div>
 
@@ -349,7 +377,7 @@ export function VariantGroupCreationWizard({
                 <Input
                   id="name"
                   value={formData.name}
-                  onChange={(e) => updateFormData({ name: e.target.value })}
+                  onChange={e => updateFormData({ name: e.target.value })}
                   placeholder="Ex: Fauteuil Milo"
                   className="mt-1"
                 />
@@ -365,12 +393,15 @@ export function VariantGroupCreationWizard({
                 <Input
                   id="base_sku"
                   value={formData.base_sku}
-                  onChange={(e) => updateFormData({ base_sku: e.target.value.toUpperCase() })}
+                  onChange={e =>
+                    updateFormData({ base_sku: e.target.value.toUpperCase() })
+                  }
                   placeholder="Ex: FAUT-MILO"
                   className="mt-1 uppercase"
                 />
                 <p className="text-xs text-gray-500 mt-1">
-                  SKU de base pour la génération automatique des SKU produits (ex: FAUT-MILO-001, FAUT-MILO-002)
+                  SKU de base pour la génération automatique des SKU produits
+                  (ex: FAUT-MILO-001, FAUT-MILO-002)
                 </p>
               </div>
 
@@ -380,7 +411,9 @@ export function VariantGroupCreationWizard({
                 </Label>
                 <CategoryFilterCombobox
                   value={formData.subcategory_id}
-                  onValueChange={(value) => updateFormData({ subcategory_id: value || '' })}
+                  onValueChange={value =>
+                    updateFormData({ subcategory_id: value || '' })
+                  }
                   placeholder="Sélectionner une sous-catégorie"
                   entityType="variant_groups"
                   className="mt-1"
@@ -399,9 +432,9 @@ export function VariantGroupCreationWizard({
               <div>
                 <Label>Style décoratif</Label>
                 <div className="grid grid-cols-2 gap-3 mt-2">
-                  {DECORATIVE_STYLES.map((option) => {
-                    const Icon = option.icon
-                    const isSelected = formData.style === option.value
+                  {DECORATIVE_STYLES.map(option => {
+                    const Icon = option.icon;
+                    const isSelected = formData.style === option.value;
 
                     return (
                       <button
@@ -417,16 +450,20 @@ export function VariantGroupCreationWizard({
                       >
                         <Icon className="h-5 w-5 shrink-0" />
                         <div className="flex-1 min-w-0">
-                          <div className="font-medium text-sm">{option.label}</div>
-                          <div className={cn(
-                            'text-xs',
-                            isSelected ? 'text-gray-200' : 'text-gray-500'
-                          )}>
+                          <div className="font-medium text-sm">
+                            {option.label}
+                          </div>
+                          <div
+                            className={cn(
+                              'text-xs',
+                              isSelected ? 'text-gray-200' : 'text-gray-500'
+                            )}
+                          >
                             {option.description}
                           </div>
                         </div>
                       </button>
-                    )
+                    );
                   })}
                 </div>
               </div>
@@ -435,8 +472,10 @@ export function VariantGroupCreationWizard({
               <div>
                 <Label>Pièces compatibles</Label>
                 <div className="flex flex-wrap gap-2 mt-2">
-                  {ROOM_TYPES.map((room) => {
-                    const isSelected = formData.suitable_rooms.includes(room.value)
+                  {ROOM_TYPES.map(room => {
+                    const isSelected = formData.suitable_rooms.includes(
+                      room.value
+                    );
 
                     return (
                       <Badge
@@ -450,7 +489,7 @@ export function VariantGroupCreationWizard({
                       >
                         {room.emoji} {room.label}
                       </Badge>
-                    )
+                    );
                   })}
                 </div>
                 <p className="text-xs text-gray-500 mt-2">
@@ -466,7 +505,13 @@ export function VariantGroupCreationWizard({
                     <Input
                       type="number"
                       value={formData.dimensions_length}
-                      onChange={(e) => updateFormData({ dimensions_length: e.target.value ? Number(e.target.value) : '' })}
+                      onChange={e =>
+                        updateFormData({
+                          dimensions_length: e.target.value
+                            ? Number(e.target.value)
+                            : '',
+                        })
+                      }
                       placeholder="Longueur"
                       min="0"
                       step="0.1"
@@ -476,7 +521,13 @@ export function VariantGroupCreationWizard({
                     <Input
                       type="number"
                       value={formData.dimensions_width}
-                      onChange={(e) => updateFormData({ dimensions_width: e.target.value ? Number(e.target.value) : '' })}
+                      onChange={e =>
+                        updateFormData({
+                          dimensions_width: e.target.value
+                            ? Number(e.target.value)
+                            : '',
+                        })
+                      }
                       placeholder="Largeur"
                       min="0"
                       step="0.1"
@@ -486,7 +537,13 @@ export function VariantGroupCreationWizard({
                     <Input
                       type="number"
                       value={formData.dimensions_height}
-                      onChange={(e) => updateFormData({ dimensions_height: e.target.value ? Number(e.target.value) : '' })}
+                      onChange={e =>
+                        updateFormData({
+                          dimensions_height: e.target.value
+                            ? Number(e.target.value)
+                            : '',
+                        })
+                      }
                       placeholder="Hauteur"
                       min="0"
                       step="0.1"
@@ -495,7 +552,9 @@ export function VariantGroupCreationWizard({
                   <div className="col-span-1">
                     <Select
                       value={formData.dimensions_unit}
-                      onValueChange={(value: any) => updateFormData({ dimensions_unit: value })}
+                      onValueChange={(value: any) =>
+                        updateFormData({ dimensions_unit: value })
+                      }
                     >
                       <SelectTrigger>
                         <SelectValue />
@@ -525,12 +584,17 @@ export function VariantGroupCreationWizard({
                   <Checkbox
                     id="has-common-supplier"
                     checked={formData.has_common_supplier}
-                    onCheckedChange={(checked) => {
-                      updateFormData({ has_common_supplier: checked as boolean })
-                      if (!checked) updateFormData({ supplier_id: '' })
+                    onCheckedChange={checked => {
+                      updateFormData({
+                        has_common_supplier: checked as boolean,
+                      });
+                      if (!checked) updateFormData({ supplier_id: '' });
                     }}
                   />
-                  <Label htmlFor="has-common-supplier" className="text-sm font-medium cursor-pointer">
+                  <Label
+                    htmlFor="has-common-supplier"
+                    className="text-sm font-medium cursor-pointer"
+                  >
                     Même fournisseur pour tous les produits
                   </Label>
                 </div>
@@ -542,15 +606,19 @@ export function VariantGroupCreationWizard({
                     </Label>
                     <Select
                       value={formData.supplier_id}
-                      onValueChange={(value) => updateFormData({ supplier_id: value })}
+                      onValueChange={value =>
+                        updateFormData({ supplier_id: value })
+                      }
                     >
                       <SelectTrigger id="supplier" className="mt-1">
                         <SelectValue placeholder="Sélectionner un fournisseur" />
                       </SelectTrigger>
                       <SelectContent>
-                        {suppliers.map((supplier) => (
+                        {suppliers.map(supplier => (
                           <SelectItem key={supplier.id} value={supplier.id}>
-                            {supplier.legal_name || supplier.trade_name || 'Sans nom'}
+                            {supplier.legal_name ||
+                              supplier.trade_name ||
+                              'Sans nom'}
                           </SelectItem>
                         ))}
                       </SelectContent>
@@ -568,7 +636,8 @@ export function VariantGroupCreationWizard({
                       </div>
                     )}
                     <p className="text-xs text-gray-500 mt-1">
-                      Ce fournisseur sera automatiquement assigné à tous les produits du groupe
+                      Ce fournisseur sera automatiquement assigné à tous les
+                      produits du groupe
                     </p>
                   </div>
                 )}
@@ -581,7 +650,13 @@ export function VariantGroupCreationWizard({
                   id="common_weight"
                   type="number"
                   value={formData.common_weight}
-                  onChange={(e) => updateFormData({ common_weight: e.target.value ? Number(e.target.value) : '' })}
+                  onChange={e =>
+                    updateFormData({
+                      common_weight: e.target.value
+                        ? Number(e.target.value)
+                        : '',
+                    })
+                  }
                   placeholder="Ex: 12.5"
                   min="0"
                   step="0.1"
@@ -618,8 +693,8 @@ export function VariantGroupCreationWizard({
               type="button"
               variant="ghost"
               onClick={() => {
-                resetForm()
-                onClose()
+                resetForm();
+                onClose();
               }}
               disabled={isSubmitting}
             >
@@ -654,5 +729,5 @@ export function VariantGroupCreationWizard({
         </DialogFooter>
       </DialogContent>
     </Dialog>
-  )
+  );
 }

@@ -5,8 +5,11 @@
  * avec métriques de performance et contexte business enrichi.
  */
 
-import { NextRequest, NextResponse } from 'next/server';
-import { logger, LogContext } from '../logger';
+import type { NextRequest } from 'next/server';
+import { NextResponse } from 'next/server';
+
+import type { LogContext } from '../logger';
+import { logger } from '../logger';
 
 export interface LoggingOptions {
   // Exclure certains endpoints du logging (ex: health checks)
@@ -23,7 +26,7 @@ const DEFAULT_OPTIONS: LoggingOptions = {
   excludePaths: ['/api/health', '/api/_next'],
   logRequestBody: false,
   logResponseBody: false,
-  slowRequestThreshold: 2000
+  slowRequestThreshold: 2000,
 };
 
 /**
@@ -52,7 +55,7 @@ export function withLogging<T extends any[]>(
     logger.info(`→ ${req.method} ${pathname}`, {
       ...requestContext,
       operation: 'api_request_start',
-      category: 'api'
+      category: 'api',
     });
 
     // Log request body si activé et présent
@@ -62,7 +65,7 @@ export function withLogging<T extends any[]>(
         if (body) {
           logger.debug('Request body', {
             ...requestContext,
-            body: sanitizeRequestBody(body)
+            body: sanitizeRequestBody(body),
           });
         }
       } catch (error) {
@@ -81,7 +84,6 @@ export function withLogging<T extends any[]>(
       // Calculer taille de réponse approximative
       const responseText = await response.clone().text();
       responseSize = new Blob([responseText]).size;
-
     } catch (err) {
       error = err as Error;
 
@@ -89,14 +91,14 @@ export function withLogging<T extends any[]>(
       logger.error(`API Error: ${req.method} ${pathname}`, error, {
         ...requestContext,
         operation: 'api_request_error',
-        category: 'api'
+        category: 'api',
       });
 
       // Créer une réponse d'erreur
       response = NextResponse.json(
         {
           error: 'Internal Server Error',
-          requestId: requestContext.requestId
+          requestId: requestContext.requestId,
         },
         { status: 500 }
       );
@@ -111,7 +113,7 @@ export function withLogging<T extends any[]>(
       operation: 'api_request_end',
       category: 'api',
       statusCode,
-      duration
+      duration,
     };
 
     // Métriques de performance
@@ -119,7 +121,7 @@ export function withLogging<T extends any[]>(
       duration_ms: duration,
       status_code: statusCode,
       response_size_bytes: responseSize,
-      memory_mb: process.memoryUsage().heapUsed / 1024 / 1024
+      memory_mb: process.memoryUsage().heapUsed / 1024 / 1024,
     };
 
     // Déterminer niveau de log selon performance et statut
@@ -144,7 +146,7 @@ export function withLogging<T extends any[]>(
         const responseText = await response.clone().text();
         logger.debug('Response body', {
           ...requestContext,
-          body: sanitizeResponseBody(responseText)
+          body: sanitizeResponseBody(responseText),
         });
       } catch (error) {
         // Ignore les erreurs de parsing du body
@@ -152,7 +154,13 @@ export function withLogging<T extends any[]>(
     }
 
     // Logs business spécialisés selon endpoint
-    logBusinessMetrics(pathname, req.method, statusCode, duration, requestContext);
+    logBusinessMetrics(
+      pathname,
+      req.method,
+      statusCode,
+      duration,
+      requestContext
+    );
 
     // Ajouter headers de tracing
     response.headers.set('X-Request-ID', requestContext.requestId || '');
@@ -194,7 +202,10 @@ function sanitizeResponseBody(body: string): any {
     // Truncate si trop large
     const stringified = JSON.stringify(parsed);
     if (stringified.length > 1000) {
-      return { truncated: true, preview: stringified.substring(0, 997) + '...' };
+      return {
+        truncated: true,
+        preview: stringified.substring(0, 997) + '...',
+      };
     }
 
     return parsed;
@@ -215,28 +226,36 @@ function logBusinessMetrics(
 ) {
   // Catalogue endpoints
   if (pathname.startsWith('/api/catalogue')) {
-    logger.business('catalogue_api_usage', {
-      ...context,
-      category: 'business',
-      resource: 'catalogue'
-    }, {
-      response_time_ms: duration,
-      success: statusCode < 400 ? 1 : 0
-    });
+    logger.business(
+      'catalogue_api_usage',
+      {
+        ...context,
+        category: 'business',
+        resource: 'catalogue',
+      },
+      {
+        response_time_ms: duration,
+        success: statusCode < 400 ? 1 : 0,
+      }
+    );
   }
 
   // Feeds endpoints
   if (pathname.startsWith('/api/feeds/')) {
     const feedType = pathname.split('/').pop() || 'unknown';
-    logger.business('feed_api_usage', {
-      ...context,
-      category: 'business',
-      resource: 'feed',
-      feedType
-    }, {
-      generation_time_ms: duration,
-      success: statusCode < 400 ? 1 : 0
-    });
+    logger.business(
+      'feed_api_usage',
+      {
+        ...context,
+        category: 'business',
+        resource: 'feed',
+        feedType,
+      },
+      {
+        generation_time_ms: duration,
+        success: statusCode < 400 ? 1 : 0,
+      }
+    );
   }
 
   // Auth endpoints
@@ -244,30 +263,34 @@ function logBusinessMetrics(
     logger.security('auth_api_usage', {
       ...context,
       category: 'security',
-      resource: 'auth'
+      resource: 'auth',
     });
   }
 
   // Webhooks endpoints
   if (pathname.startsWith('/api/webhooks/')) {
     const source = pathname.split('/').pop() || 'unknown';
-    logger.business('webhook_received', {
-      ...context,
-      category: 'business',
-      resource: 'webhook',
-      source
-    }, {
-      processing_time_ms: duration,
-      success: statusCode < 400 ? 1 : 0
-    });
+    logger.business(
+      'webhook_received',
+      {
+        ...context,
+        category: 'business',
+        resource: 'webhook',
+        source,
+      },
+      {
+        processing_time_ms: duration,
+        success: statusCode < 400 ? 1 : 0,
+      }
+    );
   }
 }
 
 /**
  * Middleware simple pour Route Handlers (app router)
  */
-export function logApiRoute(handler: Function, options: LoggingOptions = {}) {
-  return withLogging(handler as any, options);
+export function logApiRoute(handler: any, options: LoggingOptions = {}) {
+  return withLogging(handler, options);
 }
 
 /**
@@ -275,24 +298,33 @@ export function logApiRoute(handler: Function, options: LoggingOptions = {}) {
  */
 export function useApiLogger() {
   return {
-    logApiCall: (endpoint: string, method: string, duration: number, success: boolean) => {
-      logger.business('client_api_call', {
-        operation: 'client_api_call',
-        category: 'frontend',
-        endpoint,
-        method
-      }, {
-        duration_ms: duration,
-        success: success ? 1 : 0
-      });
+    logApiCall: (
+      endpoint: string,
+      method: string,
+      duration: number,
+      success: boolean
+    ) => {
+      logger.business(
+        'client_api_call',
+        {
+          operation: 'client_api_call',
+          category: 'frontend',
+          endpoint,
+          method,
+        },
+        {
+          duration_ms: duration,
+          success: success ? 1 : 0,
+        }
+      );
     },
 
     logUserAction: (action: string, resource: string, context?: LogContext) => {
       logger.audit(action, resource, {
         ...context,
-        category: 'user_action'
+        category: 'user_action',
       });
-    }
+    },
   };
 }
 

@@ -12,12 +12,13 @@
  * - Alertes échéances
  */
 
-'use client'
+'use client';
 
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
-import { Badge } from '@/components/ui/badge'
-import { AlertCircle, Lock } from 'lucide-react'
-import { featureFlags } from '@/lib/feature-flags'
+import { useState, useEffect } from 'react';
+
+import Link from 'next/link';
+
+import { AlertCircle, Lock } from 'lucide-react';
 import {
   Banknote,
   TrendingUp,
@@ -26,37 +27,45 @@ import {
   Download,
   AlertTriangle,
   Calendar,
-  ArrowRight
-} from 'lucide-react'
-import { useState, useEffect } from 'react'
-import Link from 'next/link'
+  ArrowRight,
+} from 'lucide-react';
+
+import { Badge } from '@/components/ui/badge';
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from '@/components/ui/card';
+import { featureFlags } from '@/lib/feature-flags';
 
 // =====================================================================
 // TYPES
 // =====================================================================
 
 interface BankAccount {
-  id: string
-  name: string
-  iban: string
-  balance: number
-  currency: string
-  status: string
-  authorized_balance: number
+  id: string;
+  name: string;
+  iban: string;
+  balance: number;
+  currency: string;
+  status: string;
+  authorized_balance: number;
 }
 
 interface Transaction {
-  transaction_id: string
-  label: string
-  amount: number
-  currency: string
-  side: 'credit' | 'debit'
-  operation_type: string
-  settled_at: string | null
-  status: string
+  transaction_id: string;
+  label: string;
+  amount: number;
+  currency: string;
+  side: 'credit' | 'debit';
+  operation_type: string;
+  settled_at: string | null;
+  status: string;
   counterparty?: {
-    name: string
-  }
+    name: string;
+  };
 }
 
 // =====================================================================
@@ -68,8 +77,12 @@ function BankAccountCard({ account }: { account: BankAccount }) {
     <Card>
       <CardHeader>
         <div className="flex items-center justify-between">
-          <CardTitle className="text-sm font-medium">{account.name || 'Compte principal'}</CardTitle>
-          <Badge variant={account.status === 'active' ? 'secondary' : 'secondary'}>
+          <CardTitle className="text-sm font-medium">
+            {account.name || 'Compte principal'}
+          </CardTitle>
+          <Badge
+            variant={account.status === 'active' ? 'secondary' : 'secondary'}
+          >
             {account.status === 'active' ? 'Actif' : 'Fermé'}
           </Badge>
         </div>
@@ -83,10 +96,12 @@ function BankAccountCard({ account }: { account: BankAccount }) {
             <p className="text-2xl font-bold">
               {account.balance.toLocaleString('fr-FR', {
                 style: 'currency',
-                currency: account.currency
+                currency: account.currency,
               })}
             </p>
-            <p className="text-xs text-muted-foreground mt-1">Solde disponible</p>
+            <p className="text-xs text-muted-foreground mt-1">
+              Solde disponible
+            </p>
           </div>
           {account.balance > 0 ? (
             <TrendingUp className="h-4 w-4 text-green-600" />
@@ -102,7 +117,7 @@ function BankAccountCard({ account }: { account: BankAccount }) {
               <span className="font-medium text-foreground">
                 {account.authorized_balance.toLocaleString('fr-FR', {
                   style: 'currency',
-                  currency: account.currency
+                  currency: account.currency,
                 })}
               </span>
             </p>
@@ -110,7 +125,7 @@ function BankAccountCard({ account }: { account: BankAccount }) {
         )}
       </CardContent>
     </Card>
-  )
+  );
 }
 
 // =====================================================================
@@ -118,7 +133,7 @@ function BankAccountCard({ account }: { account: BankAccount }) {
 // =====================================================================
 
 function TransactionRow({ transaction }: { transaction: Transaction }) {
-  const isCredit = transaction.side === 'credit'
+  const isCredit = transaction.side === 'credit';
 
   return (
     <div className="flex items-center justify-between py-3 border-b last:border-0">
@@ -129,7 +144,9 @@ function TransactionRow({ transaction }: { transaction: Transaction }) {
             {transaction.operation_type}
           </Badge>
           {transaction.counterparty?.name && (
-            <span className="text-xs text-muted-foreground">{transaction.counterparty.name}</span>
+            <span className="text-xs text-muted-foreground">
+              {transaction.counterparty.name}
+            </span>
           )}
         </div>
       </div>
@@ -144,7 +161,7 @@ function TransactionRow({ transaction }: { transaction: Transaction }) {
             {isCredit ? '+' : '-'}
             {Math.abs(transaction.amount).toLocaleString('fr-FR', {
               style: 'currency',
-              currency: transaction.currency
+              currency: transaction.currency,
             })}
           </p>
           <p className="text-xs text-muted-foreground">
@@ -159,19 +176,19 @@ function TransactionRow({ transaction }: { transaction: Transaction }) {
             transaction.status === 'completed'
               ? 'secondary'
               : transaction.status === 'pending'
-              ? 'secondary'
-              : 'destructive'
+                ? 'secondary'
+                : 'destructive'
           }
         >
           {transaction.status === 'completed'
             ? 'Réglée'
             : transaction.status === 'pending'
-            ? 'En attente'
-            : 'Rejetée'}
+              ? 'En attente'
+              : 'Rejetée'}
         </Badge>
       </div>
     </div>
-  )
+  );
 }
 
 // =====================================================================
@@ -188,7 +205,9 @@ export default function TresoreriePage() {
             <div className="flex items-center gap-3">
               <Lock className="h-6 w-6 text-orange-600" />
               <div>
-                <CardTitle className="text-orange-900">Module Trésorerie - Phase 2</CardTitle>
+                <CardTitle className="text-orange-900">
+                  Module Trésorerie - Phase 2
+                </CardTitle>
                 <CardDescription className="text-orange-700">
                   Ce module sera disponible après le déploiement Phase 1
                 </CardDescription>
@@ -200,11 +219,15 @@ export default function TresoreriePage() {
               <div className="flex items-start gap-2">
                 <AlertCircle className="h-5 w-5 text-orange-600 mt-0.5 flex-shrink-0" />
                 <div>
-                  <p className="font-medium text-orange-900">Fonctionnalités Phase 2</p>
+                  <p className="font-medium text-orange-900">
+                    Fonctionnalités Phase 2
+                  </p>
                   <ul className="text-sm text-orange-700 list-disc list-inside mt-1">
                     <li>Intégration Qonto (comptes bancaires temps réel)</li>
                     <li>Prévisions trésorerie 30/60/90 jours</li>
-                    <li>KPIs AR (Accounts Receivable) + AP (Accounts Payable)</li>
+                    <li>
+                      KPIs AR (Accounts Receivable) + AP (Accounts Payable)
+                    </li>
                     <li>Alertes échéances automatiques</li>
                   </ul>
                 </div>

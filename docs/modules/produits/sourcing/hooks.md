@@ -15,45 +15,47 @@ Hook CRUD pour gestion produits en sourcing avec filtres avancés.
 
 ```typescript
 interface SourcingFilters {
-  search?: string                    // Recherche nom/SKU
-  status?: string                    // Statut (défaut: 'sourcing')
-  sourcing_type?: 'interne' | 'client'  // Type sourcing
-  supplier_id?: string               // Filtrer par fournisseur
-  assigned_client_id?: string        // Filtrer par client assigné
-  has_supplier?: boolean             // Fournisseur défini ?
-  requires_sample?: boolean          // Échantillon requis ?
+  search?: string; // Recherche nom/SKU
+  status?: string; // Statut (défaut: 'sourcing')
+  sourcing_type?: 'interne' | 'client'; // Type sourcing
+  supplier_id?: string; // Filtrer par fournisseur
+  assigned_client_id?: string; // Filtrer par client assigné
+  has_supplier?: boolean; // Fournisseur défini ?
+  requires_sample?: boolean; // Échantillon requis ?
 }
 
 interface SourcingProduct {
-  id: string
-  sku: string
-  name: string
-  supplier_page_url: string | null
-  cost_price: number | null
-  margin_percentage?: number
-  status: string
-  supplier_id: string | null
-  supplier?: Organisation
-  creation_mode: string
-  sourcing_type?: 'interne' | 'client'
-  requires_sample: boolean
-  assigned_client_id: string | null
-  assigned_client?: Organisation
-  created_at: string
-  updated_at: string
-  estimated_selling_price?: number
-  main_image_url?: string
+  id: string;
+  sku: string;
+  name: string;
+  supplier_page_url: string | null;
+  cost_price: number | null;
+  margin_percentage?: number;
+  status: string;
+  supplier_id: string | null;
+  supplier?: Organisation;
+  creation_mode: string;
+  sourcing_type?: 'interne' | 'client';
+  requires_sample: boolean;
+  assigned_client_id: string | null;
+  assigned_client?: Organisation;
+  created_at: string;
+  updated_at: string;
+  estimated_selling_price?: number;
+  main_image_url?: string;
 }
 
 function useSourcingProducts(filters?: SourcingFilters): {
-  products: SourcingProduct[]
-  loading: boolean
-  error: string | null
-  refetch: () => void
-  createSourcingProduct: (data: SourcingFormData) => Promise<SourcingProduct | null>
-  validateSourcing: (id: string) => Promise<boolean>
-  orderSample: (id: string) => Promise<PurchaseOrder | null>
-}
+  products: SourcingProduct[];
+  loading: boolean;
+  error: string | null;
+  refetch: () => void;
+  createSourcingProduct: (
+    data: SourcingFormData
+  ) => Promise<SourcingProduct | null>;
+  validateSourcing: (id: string) => Promise<boolean>;
+  orderSample: (id: string) => Promise<PurchaseOrder | null>;
+};
 ```
 
 #### Tables Accédées
@@ -92,21 +94,21 @@ const createSourcingProduct = async (data: SourcingFormData) => {
     requires_sample: data.requires_sample || false,
     assigned_client_id: data.assigned_client_id,
     margin_percentage: data.margin_percentage,
-    completion_percentage: 30  // Auto calculé
-  }
+    completion_percentage: 30, // Auto calculé
+  };
 
   const { data: product, error } = await supabase
     .from('products')
     .insert([productData])
     .select()
-    .single()
+    .single();
 
-  if (error) throw error
+  if (error) throw error;
 
-  toast.success('✅ Produit en sourcing créé')
-  refetch()
-  return product
-}
+  toast.success('✅ Produit en sourcing créé');
+  refetch();
+  return product;
+};
 ```
 
 ##### `validateSourcing(id)`
@@ -122,16 +124,15 @@ const validateSourcing = async (productId: string) => {
       status: 'in_stock',
       stock_real: 1,
       completion_percentage: 100,
-      creation_mode: 'complete'
+      creation_mode: 'complete',
     })
-    .eq('id', productId)
+    .eq('id', productId);
 
-  if (updateError) throw updateError
+  if (updateError) throw updateError;
 
   // 2. Créer mouvement stock
-  await supabase
-    .from('stock_movements')
-    .insert([{
+  await supabase.from('stock_movements').insert([
+    {
       product_id: productId,
       movement_type: 'sourcing_validation',
       quantity_change: 1,
@@ -139,13 +140,14 @@ const validateSourcing = async (productId: string) => {
       quantity_after: 1,
       affects_forecast: false,
       reason_code: 'sourcing_completed',
-      notes: 'Produit validé du sourcing au catalogue'
-    }])
+      notes: 'Produit validé du sourcing au catalogue',
+    },
+  ]);
 
-  toast.success('✅ Produit validé au catalogue')
-  router.push(`/produits/catalogue/${productId}`)
-  return true
-}
+  toast.success('✅ Produit validé au catalogue');
+  router.push(`/produits/catalogue/${productId}`);
+  return true;
+};
 ```
 
 ##### `orderSample(id)`
@@ -154,37 +156,39 @@ Commande un échantillon pour produit sourcing.
 
 ```typescript
 const orderSample = async (productId: string) => {
-  const product = products.find(p => p.id === productId)
-  if (!product) return null
+  const product = products.find(p => p.id === productId);
+  if (!product) return null;
 
   // Créer PO draft pour échantillon
   const { data: po, error } = await supabase
     .from('purchase_orders')
-    .insert([{
-      supplier_id: product.supplier_id,
-      status: 'draft',
-      notes: `Échantillon sourcing - ${product.name}`,
-      delivery_address: 'Back-office Vérone'
-    }])
+    .insert([
+      {
+        supplier_id: product.supplier_id,
+        status: 'draft',
+        notes: `Échantillon sourcing - ${product.name}`,
+        delivery_address: 'Back-office Vérone',
+      },
+    ])
     .select()
-    .single()
+    .single();
 
-  if (error) throw error
+  if (error) throw error;
 
   // Créer ligne PO
-  await supabase
-    .from('purchase_order_items')
-    .insert([{
+  await supabase.from('purchase_order_items').insert([
+    {
       purchase_order_id: po.id,
       product_id: productId,
       quantity: 1,
-      unit_price: product.cost_price
-    }])
+      unit_price: product.cost_price,
+    },
+  ]);
 
-  toast.success('✅ Échantillon commandé')
-  router.push(`/achats/commandes/${po.id}`)
-  return po
-}
+  toast.success('✅ Échantillon commandé');
+  router.push(`/achats/commandes/${po.id}`);
+  return po;
+};
 ```
 
 #### Exemple d'Utilisation

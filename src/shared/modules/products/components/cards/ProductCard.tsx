@@ -1,12 +1,15 @@
 'use client';
 
 import { memo, useCallback } from 'react';
+
 import Image from 'next/image';
 import { useRouter } from 'next/navigation';
+
+import { Package, Archive, Trash2, ArchiveRestore } from 'lucide-react';
+
 import { Badge } from '@/components/ui/badge';
 import { ButtonV2 } from '@/components/ui/button';
-import { cn } from '@/lib/utils';
-import { Package, Archive, Trash2, ArchiveRestore } from 'lucide-react';
+import { cn } from '@verone/utils';
 import { useProductImages } from '@/shared/modules/common/hooks';
 // 🚀 OPTIMISATION: Imports packages/pricing désactivés temporairement
 // import { useProductPackages } from '@/shared/modules/common/hooks'

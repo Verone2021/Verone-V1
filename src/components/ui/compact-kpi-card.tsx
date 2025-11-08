@@ -1,20 +1,22 @@
-'use client'
+'use client';
 
-import React from 'react'
-import { LucideIcon } from 'lucide-react'
-import { themeV2 } from '@/lib/theme-v2'
+import React from 'react';
+
+import type { LucideIcon } from 'lucide-react';
+
+import { themeV2 } from '@/lib/theme-v2';
 
 export interface CompactKpiCardProps {
-  label: string
-  value: string | number
-  icon: LucideIcon
+  label: string;
+  value: string | number;
+  icon: LucideIcon;
   trend?: {
-    value: number
-    isPositive: boolean
-  }
-  color?: 'primary' | 'success' | 'warning' | 'accent' | 'danger'
-  sparklineData?: number[]
-  onClick?: () => void
+    value: number;
+    isPositive: boolean;
+  };
+  color?: 'primary' | 'success' | 'warning' | 'accent' | 'danger';
+  sparklineData?: number[];
+  onClick?: () => void;
 }
 
 export function CompactKpiCard({
@@ -32,7 +34,7 @@ export function CompactKpiCard({
     warning: themeV2.colors.warning.DEFAULT,
     accent: themeV2.colors.accent.DEFAULT,
     danger: themeV2.colors.danger.DEFAULT,
-  }
+  };
 
   const bgColorMap = {
     primary: themeV2.colors.primary[50],
@@ -40,10 +42,10 @@ export function CompactKpiCard({
     warning: themeV2.colors.warning[50],
     accent: themeV2.colors.accent[50],
     danger: themeV2.colors.danger[50],
-  }
+  };
 
-  const iconColor = colorMap[color]
-  const bgColor = bgColorMap[color]
+  const iconColor = colorMap[color];
+  const bgColor = bgColorMap[color];
 
   return (
     <div
@@ -86,7 +88,8 @@ export function CompactKpiCard({
             ${trend.isPositive ? 'bg-green-50 text-green-700' : 'bg-red-50 text-red-700'}
           `}
         >
-          {trend.isPositive ? '+' : ''}{trend.value}%
+          {trend.isPositive ? '+' : ''}
+          {trend.value}%
         </div>
       )}
 
@@ -97,24 +100,27 @@ export function CompactKpiCard({
         </svg>
       )}
     </div>
-  )
+  );
 }
 
 // Mini sparkline component interne
 function MiniSparkline({ data, color }: { data: number[]; color: string }) {
-  const width = 40
-  const height = 20
-  const padding = 2
+  const width = 40;
+  const height = 20;
+  const padding = 2;
 
-  const max = Math.max(...data)
-  const min = Math.min(...data)
-  const range = max - min || 1
+  const max = Math.max(...data);
+  const min = Math.min(...data);
+  const range = max - min || 1;
 
-  const points = data.map((value, index) => {
-    const x = (index / (data.length - 1)) * (width - padding * 2) + padding
-    const y = height - padding - ((value - min) / range) * (height - padding * 2)
-    return `${x},${y}`
-  }).join(' ')
+  const points = data
+    .map((value, index) => {
+      const x = (index / (data.length - 1)) * (width - padding * 2) + padding;
+      const y =
+        height - padding - ((value - min) / range) * (height - padding * 2);
+      return `${x},${y}`;
+    })
+    .join(' ');
 
   return (
     <polyline
@@ -125,5 +131,5 @@ function MiniSparkline({ data, color }: { data: number[]; color: string }) {
       strokeLinecap="round"
       strokeLinejoin="round"
     />
-  )
+  );
 }

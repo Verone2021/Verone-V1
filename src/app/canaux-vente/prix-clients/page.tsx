@@ -1,7 +1,9 @@
-'use client'
+'use client';
 
-import { useState, useEffect } from 'react'
-import { useRouter } from 'next/navigation'
+import { useState, useEffect } from 'react';
+
+import { useRouter } from 'next/navigation';
+
 import {
   Euro,
   Users,
@@ -13,178 +15,229 @@ import {
   Edit2,
   Trash2,
   PercentIcon,
-  Tag
-} from 'lucide-react'
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
-import { ButtonV2 } from '@/components/ui/button'
-import { Input } from '@/components/ui/input'
-import { Badge } from '@/components/ui/badge'
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
-import { createClient } from '@/lib/supabase/client'
-import { CustomerPricing } from '@/shared/modules/finance/hooks'
+  Tag,
+} from 'lucide-react';
+
+import { Badge } from '@/components/ui/badge';
+import { ButtonV2 } from '@/components/ui/button';
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from '@/components/ui/card';
+import { Input } from '@/components/ui/input';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
+import { createClient } from '@/lib/supabase/client';
+import type { CustomerPricing } from '@/shared/modules/finance/hooks';
 
 // Stats interface
 interface Stats {
-  total_pricing_rules: number
-  active_rules: number
-  customers_with_pricing: number
-  avg_discount: number
-  total_retrocession: number
+  total_pricing_rules: number;
+  active_rules: number;
+  customers_with_pricing: number;
+  avg_discount: number;
+  total_retrocession: number;
 }
 
 export default function PrixClientsPage() {
-  const router = useRouter()
-  const supabase = createClient()
+  const router = useRouter();
+  const supabase = createClient();
 
-  const [pricingRules, setPricingRules] = useState<CustomerPricing[]>([])
-  const [filteredRules, setFilteredRules] = useState<CustomerPricing[]>([])
-  const [isLoading, setIsLoading] = useState(true)
-  const [searchQuery, setSearchQuery] = useState('')
-  const [customerFilter, setCustomerFilter] = useState<string>('all')
-  const [statusFilter, setStatusFilter] = useState<string>('all')
+  const [pricingRules, setPricingRules] = useState<CustomerPricing[]>([]);
+  const [filteredRules, setFilteredRules] = useState<CustomerPricing[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [customerFilter, setCustomerFilter] = useState<string>('all');
+  const [statusFilter, setStatusFilter] = useState<string>('all');
 
   const [stats, setStats] = useState<Stats>({
     total_pricing_rules: 0,
     active_rules: 0,
     customers_with_pricing: 0,
     avg_discount: 0,
-    total_retrocession: 0
-  })
+    total_retrocession: 0,
+  });
 
   // Charger les prix clients
   useEffect(() => {
-    loadPricingRules()
-  }, [])
+    loadPricingRules();
+  }, []);
 
   const loadPricingRules = async () => {
-    setIsLoading(true)
+    setIsLoading(true);
     try {
       // Requête customer_pricing seul (sans jointures pour MVP)
       const { data: pricingData, error } = await supabase
         .from('customer_pricing')
         .select('*')
-        .order('created_at', { ascending: false })
+        .order('created_at', { ascending: false });
 
-      if (error) throw error
+      if (error) throw error;
 
       if (!pricingData || pricingData.length === 0) {
-        setPricingRules([])
-        setFilteredRules([])
-        calculateStats([])
-        return
+        setPricingRules([]);
+        setFilteredRules([]);
+        calculateStats([]);
+        return;
       }
 
       // Récupérer les organisations et produits séparément
-      const customerIds = [...new Set(pricingData.map(p => p.customer_id).filter(Boolean))]
-      const productIds = [...new Set(pricingData.map(p => p.product_id).filter(Boolean))]
+      const customerIds = [
+        ...new Set(pricingData.map(p => p.customer_id).filter(Boolean)),
+      ];
+      const productIds = [
+        ...new Set(pricingData.map(p => p.product_id).filter(Boolean)),
+      ];
 
       // Fetch organisations
       const { data: orgsData } = await supabase
         .from('organisations')
         .select('id, trade_name, legal_name')
-        .in('id', customerIds)
+        .in('id', customerIds);
 
       // Fetch products
       const { data: productsData } = await supabase
         .from('products')
         .select('id, name')
-        .in('id', productIds)
+        .in('id', productIds);
 
       // Créer des maps pour lookup rapide
-      const orgsMap = new Map(orgsData?.map(o => [o.id, o]) || [])
-      const productsMap = new Map(productsData?.map(p => [p.id, p]) || [])
+      const orgsMap = new Map(orgsData?.map(o => [o.id, o]) || []);
+      const productsMap = new Map(productsData?.map(p => [p.id, p]) || []);
 
       // Transformer les données avec les noms
       const transformedData: CustomerPricing[] = pricingData.map(item => {
-        const org = orgsMap.get(item.customer_id)
-        const product = productsMap.get(item.product_id)
+        const org = orgsMap.get(item.customer_id);
+        const product = productsMap.get(item.product_id);
 
         return {
           ...item,
-          customer_name: org?.trade_name || org?.legal_name || `Client ${item.customer_id?.slice(0, 8)}`,
-          product_name: product?.name || `Produit ${item.product_id?.slice(0, 8)}`
-        } as CustomerPricing
-      })
+          customer_name:
+            org?.trade_name ||
+            org?.legal_name ||
+            `Client ${item.customer_id?.slice(0, 8)}`,
+          product_name:
+            product?.name || `Produit ${item.product_id?.slice(0, 8)}`,
+        } as CustomerPricing;
+      });
 
-      setPricingRules(transformedData)
-      setFilteredRules(transformedData)
-      calculateStats(transformedData)
+      setPricingRules(transformedData);
+      setFilteredRules(transformedData);
+      calculateStats(transformedData);
     } catch (error) {
-      console.error('Erreur chargement prix clients:', error)
-      setPricingRules([])
-      setFilteredRules([])
+      console.error('Erreur chargement prix clients:', error);
+      setPricingRules([]);
+      setFilteredRules([]);
     } finally {
-      setIsLoading(false)
+      setIsLoading(false);
     }
-  }
+  };
 
   // Calculer les statistiques
   const calculateStats = (data: CustomerPricing[]) => {
-    const activeRules = data.filter(r => r.is_active)
-    const uniqueCustomers = new Set(data.map(r => r.customer_id)).size
-    const avgDiscount = data.length > 0
-      ? data.reduce((sum, r) => sum + (r.discount_rate || 0), 0) / data.length
-      : 0
-    const totalRetrocession = data.reduce((sum, r) => sum + (r.retrocession_rate || 0), 0)
+    const activeRules = data.filter(r => r.is_active);
+    const uniqueCustomers = new Set(data.map(r => r.customer_id)).size;
+    const avgDiscount =
+      data.length > 0
+        ? data.reduce((sum, r) => sum + (r.discount_rate || 0), 0) / data.length
+        : 0;
+    const totalRetrocession = data.reduce(
+      (sum, r) => sum + (r.retrocession_rate || 0),
+      0
+    );
 
     setStats({
       total_pricing_rules: data.length,
       active_rules: activeRules.length,
       customers_with_pricing: uniqueCustomers,
       avg_discount: avgDiscount,
-      total_retrocession: totalRetrocession
-    })
-  }
+      total_retrocession: totalRetrocession,
+    });
+  };
 
   // Filtrer les prix clients
   useEffect(() => {
-    let filtered = pricingRules
+    let filtered = pricingRules;
 
     // Recherche textuelle
     if (searchQuery) {
-      filtered = filtered.filter(rule =>
-        rule.customer_name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        rule.product_name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        rule.contract_reference?.toLowerCase().includes(searchQuery.toLowerCase())
-      )
+      filtered = filtered.filter(
+        rule =>
+          rule.customer_name
+            ?.toLowerCase()
+            .includes(searchQuery.toLowerCase()) ||
+          rule.product_name
+            ?.toLowerCase()
+            .includes(searchQuery.toLowerCase()) ||
+          rule.contract_reference
+            ?.toLowerCase()
+            .includes(searchQuery.toLowerCase())
+      );
     }
 
     // Filtre customer_type
     if (customerFilter !== 'all') {
-      filtered = filtered.filter(rule => rule.customer_type === customerFilter)
+      filtered = filtered.filter(rule => rule.customer_type === customerFilter);
     }
 
     // Filtre statut
     if (statusFilter === 'active') {
-      filtered = filtered.filter(rule => rule.is_active)
+      filtered = filtered.filter(rule => rule.is_active);
     } else if (statusFilter === 'inactive') {
-      filtered = filtered.filter(rule => !rule.is_active)
+      filtered = filtered.filter(rule => !rule.is_active);
     }
 
-    setFilteredRules(filtered)
-  }, [searchQuery, customerFilter, statusFilter, pricingRules])
+    setFilteredRules(filtered);
+  }, [searchQuery, customerFilter, statusFilter, pricingRules]);
 
   // Formater le prix
   const formatPrice = (amount: number) => {
-    return new Intl.NumberFormat('fr-FR', { style: 'currency', currency: 'EUR' }).format(amount)
-  }
+    return new Intl.NumberFormat('fr-FR', {
+      style: 'currency',
+      currency: 'EUR',
+    }).format(amount);
+  };
 
   // Badge statut
   const getStatusBadge = (rule: CustomerPricing) => {
     if (!rule.is_active) {
-      return <Badge variant="outline" className="border-gray-300 text-gray-600">Inactif</Badge>
+      return (
+        <Badge variant="outline" className="border-gray-300 text-gray-600">
+          Inactif
+        </Badge>
+      );
     }
     if (rule.approval_status === 'pending') {
-      return <Badge variant="outline" className="border-orange-300 text-orange-600">En attente</Badge>
+      return (
+        <Badge variant="outline" className="border-orange-300 text-orange-600">
+          En attente
+        </Badge>
+      );
     }
     if (rule.approval_status === 'approved') {
-      return <Badge variant="outline" className="border-green-300 text-green-600">Approuvé</Badge>
+      return (
+        <Badge variant="outline" className="border-green-300 text-green-600">
+          Approuvé
+        </Badge>
+      );
     }
     if (rule.approval_status === 'rejected') {
-      return <Badge variant="outline" className="border-red-300 text-red-600">Rejeté</Badge>
+      return (
+        <Badge variant="outline" className="border-red-300 text-red-600">
+          Rejeté
+        </Badge>
+      );
     }
-    return null
-  }
+    return null;
+  };
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -202,7 +255,7 @@ export default function PrixClientsPage() {
               className="bg-black hover:bg-gray-800 text-white"
               onClick={() => {
                 // TODO ÉTAPE 3: Modal/Page création prix client
-                alert('Fonctionnalité à venir: Créer un nouveau prix client')
+                alert('Fonctionnalité à venir: Créer un nouveau prix client');
               }}
             >
               <Plus className="h-4 w-4 mr-2" />
@@ -220,7 +273,9 @@ export default function PrixClientsPage() {
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-sm text-gray-600">Prix configurés</p>
-                  <p className="text-2xl font-bold text-black">{stats.total_pricing_rules}</p>
+                  <p className="text-2xl font-bold text-black">
+                    {stats.total_pricing_rules}
+                  </p>
                 </div>
                 <Euro className="h-8 w-8 text-black" />
               </div>
@@ -232,7 +287,9 @@ export default function PrixClientsPage() {
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-sm text-gray-600">Règles actives</p>
-                  <p className="text-2xl font-bold text-green-600">{stats.active_rules}</p>
+                  <p className="text-2xl font-bold text-green-600">
+                    {stats.active_rules}
+                  </p>
                 </div>
                 <Tag className="h-8 w-8 text-green-600" />
               </div>
@@ -244,7 +301,9 @@ export default function PrixClientsPage() {
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-sm text-gray-600">Clients</p>
-                  <p className="text-2xl font-bold text-blue-600">{stats.customers_with_pricing}</p>
+                  <p className="text-2xl font-bold text-blue-600">
+                    {stats.customers_with_pricing}
+                  </p>
                 </div>
                 <Users className="h-8 w-8 text-blue-600" />
               </div>
@@ -295,7 +354,7 @@ export default function PrixClientsPage() {
                 <Input
                   placeholder="Rechercher client, produit..."
                   value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
+                  onChange={e => setSearchQuery(e.target.value)}
                   className="flex-1"
                 />
               </div>
@@ -325,9 +384,9 @@ export default function PrixClientsPage() {
               <ButtonV2
                 variant="outline"
                 onClick={() => {
-                  setSearchQuery('')
-                  setCustomerFilter('all')
-                  setStatusFilter('all')
+                  setSearchQuery('');
+                  setCustomerFilter('all');
+                  setStatusFilter('all');
                 }}
                 className="border-black text-black hover:bg-black hover:text-white"
               >
@@ -342,14 +401,17 @@ export default function PrixClientsPage() {
           <CardHeader>
             <CardTitle className="text-black">Tarifs Personnalisés</CardTitle>
             <CardDescription>
-              {filteredRules.length} prix configuré{filteredRules.length !== 1 ? 's' : ''}
+              {filteredRules.length} prix configuré
+              {filteredRules.length !== 1 ? 's' : ''}
             </CardDescription>
           </CardHeader>
           <CardContent>
             {isLoading ? (
               <div className="text-center py-12">
-                <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-black"></div>
-                <p className="text-gray-600 mt-4">Chargement des prix clients...</p>
+                <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-black" />
+                <p className="text-gray-600 mt-4">
+                  Chargement des prix clients...
+                </p>
               </div>
             ) : filteredRules.length === 0 ? (
               <div className="text-center py-12">
@@ -409,10 +471,12 @@ export default function PrixClientsPage() {
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-gray-200">
-                    {filteredRules.map((rule) => (
+                    {filteredRules.map(rule => (
                       <tr key={rule.id} className="hover:bg-gray-50">
                         <td className="px-4 py-3 text-sm">
-                          <p className="font-medium text-gray-900">{rule.customer_name}</p>
+                          <p className="font-medium text-gray-900">
+                            {rule.customer_name}
+                          </p>
                           {rule.contract_reference && (
                             <p className="text-xs text-gray-500">
                               Contrat: {rule.contract_reference}
@@ -423,18 +487,27 @@ export default function PrixClientsPage() {
                           {rule.product_name}
                         </td>
                         <td className="px-4 py-3 text-sm">
-                          <Badge variant="outline" className="border-blue-300 text-blue-600">
+                          <Badge
+                            variant="outline"
+                            className="border-blue-300 text-blue-600"
+                          >
                             {rule.customer_type}
                           </Badge>
                         </td>
                         <td className="px-4 py-3 text-sm text-right font-medium text-gray-900">
-                          {rule.custom_price_ht ? formatPrice(rule.custom_price_ht) : '-'}
+                          {rule.custom_price_ht
+                            ? formatPrice(rule.custom_price_ht)
+                            : '-'}
                         </td>
                         <td className="px-4 py-3 text-sm text-right text-purple-600 font-medium">
-                          {rule.discount_rate ? `${rule.discount_rate.toFixed(1)}%` : '-'}
+                          {rule.discount_rate
+                            ? `${rule.discount_rate.toFixed(1)}%`
+                            : '-'}
                         </td>
                         <td className="px-4 py-3 text-sm text-right text-orange-600 font-semibold">
-                          {rule.retrocession_rate ? `${rule.retrocession_rate.toFixed(1)}%` : '0%'}
+                          {rule.retrocession_rate
+                            ? `${rule.retrocession_rate.toFixed(1)}%`
+                            : '0%'}
                         </td>
                         <td className="px-4 py-3 text-sm text-right text-gray-700">
                           {rule.min_quantity || 1}
@@ -470,5 +543,5 @@ export default function PrixClientsPage() {
         </Card>
       </div>
     </div>
-  )
+  );
 }

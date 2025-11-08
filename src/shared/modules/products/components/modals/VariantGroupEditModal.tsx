@@ -1,27 +1,46 @@
-'use client'
+'use client';
 
-import { useState, useEffect } from 'react'
-import Link from 'next/link'
-import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog'
-import { ButtonV2 } from '@/components/ui/button'
-import { Input } from '@/components/ui/input'
-import { Label } from '@/components/ui/label'
-import { Checkbox } from '@/components/ui/checkbox'
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
-import { useSubcategories } from '@/shared/modules/common/hooks'
-import { useOrganisations } from '@/shared/modules/common/hooks'
-import { normalizeForSKU } from '../../lib/sku-generator'
-import type { VariantGroup, UpdateVariantGroupData } from '../../types/variant-groups'
-import { DECORATIVE_STYLES } from '../../types/variant-groups'
-import { ROOM_TYPES } from '@/types/collections'
-import { cn } from '@/lib/utils'
-import { ExternalLink } from 'lucide-react'
+import { useState, useEffect } from 'react';
+
+import Link from 'next/link';
+
+import { ExternalLink } from 'lucide-react';
+
+import { Button } from '@/components/ui/button';
+import { Checkbox } from '@/components/ui/checkbox';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
+import { normalizeForSKU } from '@/lib/sku-generator';
+import { cn } from '@verone/utils';
+import { useSubcategories } from '@/shared/modules/common/hooks';
+import { useOrganisations } from '@/shared/modules/common/hooks';
+import { ROOM_TYPES } from '@verone/types';
+import type {
+  VariantGroup,
+  UpdateVariantGroupData,
+} from '@verone/types';
+import { DECORATIVE_STYLES } from '@verone/types';
 
 interface VariantGroupEditModalProps {
-  isOpen: boolean
-  onClose: () => void
-  onSubmit: (groupId: string, data: UpdateVariantGroupData) => Promise<void>
-  group: VariantGroup | null
+  isOpen: boolean;
+  onClose: () => void;
+  onSubmit: (groupId: string, data: UpdateVariantGroupData) => Promise<void>;
+  group: VariantGroup | null;
 }
 
 const DIMENSION_UNITS = [
@@ -29,103 +48,116 @@ const DIMENSION_UNITS = [
   { value: 'm', label: 'Mètres (m)' },
   { value: 'mm', label: 'Millimètres (mm)' },
   { value: 'in', label: 'Pouces (in)' },
-] as const
+] as const;
 
 export function VariantGroupEditModal({
   isOpen,
   onClose,
   onSubmit,
-  group
+  group,
 }: VariantGroupEditModalProps) {
-  const { subcategories, loading: subcategoriesLoading } = useSubcategories()
-  const { organisations: suppliers, loading: suppliersLoading } = useOrganisations({
-    type: 'supplier',
-    is_active: true
-  })
+  const { subcategories, loading: subcategoriesLoading } = useSubcategories();
+  const { organisations: suppliers, loading: suppliersLoading } =
+    useOrganisations({
+      type: 'supplier',
+      is_active: true,
+    });
 
-  const [name, setName] = useState('')
-  const [baseSku, setBaseSku] = useState('')
-  const [variantType, setVariantType] = useState<'color' | 'material'>('color')
-  const [subcategoryId, setSubcategoryId] = useState('')
-  const [dimensionsLength, setDimensionsLength] = useState<number | undefined>()
-  const [dimensionsWidth, setDimensionsWidth] = useState<number | undefined>()
-  const [dimensionsHeight, setDimensionsHeight] = useState<number | undefined>()
-  const [dimensionsUnit, setDimensionsUnit] = useState<'cm' | 'm' | 'mm' | 'in'>('cm')
-  const [commonWeight, setCommonWeight] = useState<number | undefined>()
-  const [hasCommonWeight, setHasCommonWeight] = useState(false)
-  const [commonCostPrice, setCommonCostPrice] = useState<number | undefined>()
-  const [hasCommonCostPrice, setHasCommonCostPrice] = useState(false)
-  const [style, setStyle] = useState<string>('')
-  const [suitableRooms, setSuitableRooms] = useState<string[]>([])
-  const [hasCommonSupplier, setHasCommonSupplier] = useState(false)
-  const [supplierId, setSupplierId] = useState<string | undefined>()
-  const [isSubmitting, setIsSubmitting] = useState(false)
+  const [name, setName] = useState('');
+  const [baseSku, setBaseSku] = useState('');
+  const [variantType, setVariantType] = useState<'color' | 'material'>('color');
+  const [subcategoryId, setSubcategoryId] = useState('');
+  const [dimensionsLength, setDimensionsLength] = useState<
+    number | undefined
+  >();
+  const [dimensionsWidth, setDimensionsWidth] = useState<number | undefined>();
+  const [dimensionsHeight, setDimensionsHeight] = useState<
+    number | undefined
+  >();
+  const [dimensionsUnit, setDimensionsUnit] = useState<
+    'cm' | 'm' | 'mm' | 'in'
+  >('cm');
+  const [commonWeight, setCommonWeight] = useState<number | undefined>();
+  const [hasCommonWeight, setHasCommonWeight] = useState(false);
+  const [commonCostPrice, setCommonCostPrice] = useState<number | undefined>();
+  const [hasCommonCostPrice, setHasCommonCostPrice] = useState(false);
+  const [style, setStyle] = useState<string>('');
+  const [suitableRooms, setSuitableRooms] = useState<string[]>([]);
+  const [hasCommonSupplier, setHasCommonSupplier] = useState(false);
+  const [supplierId, setSupplierId] = useState<string | undefined>();
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   // Initialiser les valeurs du formulaire quand le groupe change
   useEffect(() => {
     if (group && isOpen) {
-      setName(group.name || '')
-      setBaseSku(group.base_sku || '')
-      setVariantType(group.variant_type || 'color')
-      setSubcategoryId(group.subcategory_id || '')
+      setName(group.name || '');
+      setBaseSku(group.base_sku || '');
+      setVariantType(group.variant_type || 'color');
+      setSubcategoryId(group.subcategory_id || '');
 
       // Dimensions communes (colonnes séparées)
-      setDimensionsLength(group.dimensions_length || undefined)
-      setDimensionsWidth(group.dimensions_width || undefined)
-      setDimensionsHeight(group.dimensions_height || undefined)
-      setDimensionsUnit(group.dimensions_unit || 'cm')
+      setDimensionsLength(group.dimensions_length || undefined);
+      setDimensionsWidth(group.dimensions_width || undefined);
+      setDimensionsHeight(group.dimensions_height || undefined);
+      setDimensionsUnit(group.dimensions_unit || 'cm');
 
       // Poids commun
-      setCommonWeight(group.common_weight || undefined)
-      setHasCommonWeight(group.has_common_weight || false)
+      setCommonWeight(group.common_weight || undefined);
+      setHasCommonWeight(group.has_common_weight || false);
 
       // Prix d'achat commun
-      setCommonCostPrice(group.common_cost_price || undefined)
-      setHasCommonCostPrice(group.has_common_cost_price || false)
+      setCommonCostPrice(group.common_cost_price || undefined);
+      setHasCommonCostPrice(group.has_common_cost_price || false);
 
       // Style décoratif
-      setStyle(group.style || '')
+      setStyle(group.style || '');
 
       // Pièces compatibles
-      setSuitableRooms(group.suitable_rooms || [])
+      setSuitableRooms(group.suitable_rooms || []);
 
       // Fournisseur commun
-      setHasCommonSupplier(group.has_common_supplier || false)
-      setSupplierId(group.supplier_id || undefined)
+      setHasCommonSupplier(group.has_common_supplier || false);
+      setSupplierId(group.supplier_id || undefined);
     }
-  }, [group, isOpen])
+  }, [group, isOpen]);
 
   // Auto-générer base_sku quand le nom change
   useEffect(() => {
     if (name.trim() && name !== group?.name) {
-      const generatedSku = normalizeForSKU(name, 30)
-      setBaseSku(generatedSku)
+      const generatedSku = normalizeForSKU(name, 30);
+      setBaseSku(generatedSku);
     }
-  }, [name, group?.name])
+  }, [name, group?.name]);
 
   const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault()
-    if (!group || !name.trim() || !baseSku.trim() || !subcategoryId) return
+    e.preventDefault();
+    if (!group || !name.trim() || !baseSku.trim() || !subcategoryId) return;
 
     // Validation: si fournisseur commun coché, un fournisseur doit être sélectionné
     if (hasCommonSupplier && !supplierId) {
-      alert('Veuillez sélectionner un fournisseur ou décocher la case "Même fournisseur pour tous les produits"')
-      return
+      alert(
+        'Veuillez sélectionner un fournisseur ou décocher la case "Même fournisseur pour tous les produits"'
+      );
+      return;
     }
 
     // Validation: si poids commun coché, un poids doit être saisi
     if (hasCommonWeight && !commonWeight) {
-      alert('Veuillez saisir un poids ou décocher la case "Même poids pour tous les produits"')
-      return
+      alert(
+        'Veuillez saisir un poids ou décocher la case "Même poids pour tous les produits"'
+      );
+      return;
     }
 
     // Validation: si prix d'achat commun coché, un prix doit être saisi
     if (hasCommonCostPrice && !commonCostPrice) {
-      alert('Veuillez saisir un prix d\'achat ou décocher la case "Même prix d\'achat pour tous les produits"')
-      return
+      alert(
+        'Veuillez saisir un prix d\'achat ou décocher la case "Même prix d\'achat pour tous les produits"'
+      );
+      return;
     }
 
-    setIsSubmitting(true)
+    setIsSubmitting(true);
     try {
       // Préparer les données
       const updateData: UpdateVariantGroupData = {
@@ -134,8 +166,8 @@ export function VariantGroupEditModal({
         variant_type: variantType,
         subcategory_id: subcategoryId,
         has_common_supplier: hasCommonSupplier,
-        supplier_id: hasCommonSupplier ? (supplierId || null) : null,
-      }
+        supplier_id: hasCommonSupplier ? supplierId || null : null,
+      };
 
       // Dimensions communes en JSONB (format compatible avec products.dimensions)
       if (dimensionsLength && dimensionsWidth && dimensionsHeight) {
@@ -143,36 +175,39 @@ export function VariantGroupEditModal({
           length: dimensionsLength,
           width: dimensionsWidth,
           height: dimensionsHeight,
-          unit: dimensionsUnit || 'cm'
-        }
+          unit: dimensionsUnit || 'cm',
+        };
       } else {
-        updateData.common_dimensions = null
+        updateData.common_dimensions = null;
       }
 
       // Poids commun
-      updateData.common_weight = hasCommonWeight ? (commonWeight || null) : null
-      updateData.has_common_weight = hasCommonWeight
+      updateData.common_weight = hasCommonWeight ? commonWeight || null : null;
+      updateData.has_common_weight = hasCommonWeight;
 
       // Prix d'achat commun
-      updateData.common_cost_price = hasCommonCostPrice ? (commonCostPrice || null) : null
-      updateData.has_common_cost_price = hasCommonCostPrice
+      updateData.common_cost_price = hasCommonCostPrice
+        ? commonCostPrice || null
+        : null;
+      updateData.has_common_cost_price = hasCommonCostPrice;
 
       // Style décoratif
-      updateData.style = style || undefined
+      updateData.style = style || undefined;
 
       // Pièces compatibles
-      updateData.suitable_rooms = suitableRooms.length > 0 ? suitableRooms : undefined
+      updateData.suitable_rooms =
+        suitableRooms.length > 0 ? suitableRooms : undefined;
 
-      await onSubmit(group.id, updateData)
-      onClose()
+      await onSubmit(group.id, updateData);
+      onClose();
     } catch (error) {
-      console.error('Erreur lors de la modification du groupe:', error)
+      console.error('Erreur lors de la modification du groupe:', error);
     } finally {
-      setIsSubmitting(false)
+      setIsSubmitting(false);
     }
-  }
+  };
 
-  if (!group) return null
+  if (!group) return null;
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
@@ -180,7 +215,8 @@ export function VariantGroupEditModal({
         <DialogHeader>
           <DialogTitle>Modifier le groupe de variantes</DialogTitle>
           <DialogDescription>
-            Modifiez les informations du groupe. Les changements seront propagés aux produits du groupe.
+            Modifiez les informations du groupe. Les changements seront propagés
+            aux produits du groupe.
           </DialogDescription>
         </DialogHeader>
 
@@ -193,7 +229,7 @@ export function VariantGroupEditModal({
               <Input
                 id="name"
                 value={name}
-                onChange={(e) => setName(e.target.value)}
+                onChange={e => setName(e.target.value)}
                 placeholder="Ex: Chaise Design Scandinave"
                 className="mt-1"
                 required
@@ -210,13 +246,14 @@ export function VariantGroupEditModal({
               <Input
                 id="base_sku"
                 value={baseSku}
-                onChange={(e) => setBaseSku(e.target.value)}
+                onChange={e => setBaseSku(e.target.value)}
                 placeholder="Ex: CHAISE-DESIGN-SCANDI"
                 className="mt-1 font-mono text-sm"
                 required
               />
               <p className="text-xs text-gray-600 mt-1">
-                Pattern: {baseSku ? `${baseSku}-[VARIANTE]` : 'BASE_SKU-[VARIANTE]'}
+                Pattern:{' '}
+                {baseSku ? `${baseSku}-[VARIANTE]` : 'BASE_SKU-[VARIANTE]'}
               </p>
             </div>
 
@@ -227,7 +264,9 @@ export function VariantGroupEditModal({
               <select
                 id="variant_type"
                 value={variantType}
-                onChange={(e) => setVariantType(e.target.value as 'color' | 'material')}
+                onChange={e =>
+                  setVariantType(e.target.value as 'color' | 'material')
+                }
                 className="mt-1 w-full border border-gray-300 rounded-md px-3 py-2 focus:ring-2 focus:ring-black focus:border-black"
                 required
               >
@@ -235,7 +274,8 @@ export function VariantGroupEditModal({
                 <option value="material">🧵 Matériau</option>
               </select>
               <p className="text-xs text-gray-600 mt-1">
-                Définit l'attribut principal qui différencie les produits du groupe
+                Définit l'attribut principal qui différencie les produits du
+                groupe
               </p>
             </div>
 
@@ -246,13 +286,13 @@ export function VariantGroupEditModal({
               <select
                 id="subcategory"
                 value={subcategoryId}
-                onChange={(e) => setSubcategoryId(e.target.value)}
+                onChange={e => setSubcategoryId(e.target.value)}
                 className="mt-1 w-full border border-gray-300 rounded-md px-3 py-2 focus:ring-2 focus:ring-black focus:border-black"
                 required
                 disabled={subcategoriesLoading}
               >
                 <option value="">Sélectionner une sous-catégorie</option>
-                {subcategories?.map((sub) => (
+                {subcategories?.map(sub => (
                   <option key={sub.id} value={sub.id}>
                     {sub.category?.name} → {sub.name}
                   </option>
@@ -265,7 +305,9 @@ export function VariantGroupEditModal({
           </div>
 
           <div className="space-y-3 pt-4 border-t">
-            <Label className="text-sm font-medium">Dimensions communes (optionnel)</Label>
+            <Label className="text-sm font-medium">
+              Dimensions communes (optionnel)
+            </Label>
             <p className="text-xs text-gray-600">
               Si tous les produits du groupe ont les mêmes dimensions
             </p>
@@ -280,7 +322,11 @@ export function VariantGroupEditModal({
                   type="number"
                   step="0.01"
                   value={dimensionsLength || ''}
-                  onChange={(e) => setDimensionsLength(e.target.value ? parseFloat(e.target.value) : undefined)}
+                  onChange={e =>
+                    setDimensionsLength(
+                      e.target.value ? parseFloat(e.target.value) : undefined
+                    )
+                  }
                   placeholder="0"
                   className="mt-1"
                 />
@@ -295,7 +341,11 @@ export function VariantGroupEditModal({
                   type="number"
                   step="0.01"
                   value={dimensionsWidth || ''}
-                  onChange={(e) => setDimensionsWidth(e.target.value ? parseFloat(e.target.value) : undefined)}
+                  onChange={e =>
+                    setDimensionsWidth(
+                      e.target.value ? parseFloat(e.target.value) : undefined
+                    )
+                  }
                   placeholder="0"
                   className="mt-1"
                 />
@@ -310,7 +360,11 @@ export function VariantGroupEditModal({
                   type="number"
                   step="0.01"
                   value={dimensionsHeight || ''}
-                  onChange={(e) => setDimensionsHeight(e.target.value ? parseFloat(e.target.value) : undefined)}
+                  onChange={e =>
+                    setDimensionsHeight(
+                      e.target.value ? parseFloat(e.target.value) : undefined
+                    )
+                  }
                   placeholder="0"
                   className="mt-1"
                 />
@@ -323,10 +377,10 @@ export function VariantGroupEditModal({
                 <select
                   id="unit"
                   value={dimensionsUnit}
-                  onChange={(e) => setDimensionsUnit(e.target.value as any)}
+                  onChange={e => setDimensionsUnit(e.target.value as any)}
                   className="mt-1 w-full border border-gray-300 rounded-md px-2 py-2 text-sm"
                 >
-                  {DIMENSION_UNITS.map((unit) => (
+                  {DIMENSION_UNITS.map(unit => (
                     <option key={unit.value} value={unit.value}>
                       {unit.value}
                     </option>
@@ -341,9 +395,9 @@ export function VariantGroupEditModal({
               <Checkbox
                 id="has-common-weight"
                 checked={hasCommonWeight}
-                onCheckedChange={(checked) => {
-                  setHasCommonWeight(checked as boolean)
-                  if (!checked) setCommonWeight(undefined)
+                onCheckedChange={checked => {
+                  setHasCommonWeight(checked as boolean);
+                  if (!checked) setCommonWeight(undefined);
                 }}
               />
               <Label
@@ -354,7 +408,8 @@ export function VariantGroupEditModal({
               </Label>
             </div>
             <p className="text-xs text-gray-600 ml-6">
-              Si cochée, tous les produits du groupe hériteront automatiquement du poids saisi
+              Si cochée, tous les produits du groupe hériteront automatiquement
+              du poids saisi
             </p>
 
             {hasCommonWeight && (
@@ -369,14 +424,21 @@ export function VariantGroupEditModal({
                     step="0.01"
                     min="0"
                     value={commonWeight || ''}
-                    onChange={(e) => setCommonWeight(e.target.value ? parseFloat(e.target.value) : undefined)}
+                    onChange={e =>
+                      setCommonWeight(
+                        e.target.value ? parseFloat(e.target.value) : undefined
+                      )
+                    }
                     placeholder="0.00"
                     className="flex-1"
                   />
-                  <span className="text-sm text-gray-600 mb-2 min-w-[30px]">kg</span>
+                  <span className="text-sm text-gray-600 mb-2 min-w-[30px]">
+                    kg
+                  </span>
                 </div>
                 <p className="text-xs text-blue-700 bg-blue-50 p-2 rounded border border-blue-200">
-                  💡 Ce poids sera appliqué automatiquement à tous les produits du groupe et ne pourra pas être modifié individuellement
+                  💡 Ce poids sera appliqué automatiquement à tous les produits
+                  du groupe et ne pourra pas être modifié individuellement
                 </p>
               </div>
             )}
@@ -387,9 +449,9 @@ export function VariantGroupEditModal({
               <Checkbox
                 id="has-common-cost-price"
                 checked={hasCommonCostPrice}
-                onCheckedChange={(checked) => {
-                  setHasCommonCostPrice(checked as boolean)
-                  if (!checked) setCommonCostPrice(undefined)
+                onCheckedChange={checked => {
+                  setHasCommonCostPrice(checked as boolean);
+                  if (!checked) setCommonCostPrice(undefined);
                 }}
               />
               <Label
@@ -400,12 +462,16 @@ export function VariantGroupEditModal({
               </Label>
             </div>
             <p className="text-xs text-gray-600 ml-6">
-              Si cochée, tous les produits du groupe hériteront automatiquement du prix d'achat saisi
+              Si cochée, tous les produits du groupe hériteront automatiquement
+              du prix d'achat saisi
             </p>
 
             {hasCommonCostPrice && (
               <div className="ml-6 space-y-2">
-                <Label htmlFor="common_cost_price" className="text-sm font-medium">
+                <Label
+                  htmlFor="common_cost_price"
+                  className="text-sm font-medium"
+                >
                   Prix d'achat commun <span className="text-red-500">*</span>
                 </Label>
                 <div className="flex items-end space-x-2">
@@ -415,14 +481,22 @@ export function VariantGroupEditModal({
                     step="0.01"
                     min="0.01"
                     value={commonCostPrice || ''}
-                    onChange={(e) => setCommonCostPrice(e.target.value ? parseFloat(e.target.value) : undefined)}
+                    onChange={e =>
+                      setCommonCostPrice(
+                        e.target.value ? parseFloat(e.target.value) : undefined
+                      )
+                    }
                     placeholder="0.00"
                     className="flex-1"
                   />
-                  <span className="text-sm text-gray-600 mb-2 min-w-[30px]">€</span>
+                  <span className="text-sm text-gray-600 mb-2 min-w-[30px]">
+                    €
+                  </span>
                 </div>
                 <p className="text-xs text-blue-700 bg-blue-50 p-2 rounded border border-blue-200">
-                  💡 Ce prix d'achat sera appliqué automatiquement à tous les produits du groupe et ne pourra pas être modifié individuellement
+                  💡 Ce prix d'achat sera appliqué automatiquement à tous les
+                  produits du groupe et ne pourra pas être modifié
+                  individuellement
                 </p>
               </div>
             )}
@@ -436,32 +510,42 @@ export function VariantGroupEditModal({
               Style commun à tous les produits du groupe
             </p>
             <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-              {DECORATIVE_STYLES.map((styleOption) => {
-                const Icon = styleOption.icon
+              {DECORATIVE_STYLES.map(styleOption => {
+                const Icon = styleOption.icon;
                 return (
                   <button
                     key={styleOption.value}
                     type="button"
-                    onClick={() => setStyle(style === styleOption.value ? '' : styleOption.value)}
+                    onClick={() =>
+                      setStyle(
+                        style === styleOption.value ? '' : styleOption.value
+                      )
+                    }
                     className={cn(
-                      "flex flex-col items-center gap-2 p-4 rounded-lg border-2 text-center transition-all",
+                      'flex flex-col items-center gap-2 p-4 rounded-lg border-2 text-center transition-all',
                       style === styleOption.value
-                        ? "border-black bg-black text-white shadow-md"
-                        : "border-gray-300 hover:border-gray-400 hover:shadow-sm"
+                        ? 'border-black bg-black text-white shadow-md'
+                        : 'border-gray-300 hover:border-gray-400 hover:shadow-sm'
                     )}
                   >
                     <Icon className="w-6 h-6" />
                     <div className="space-y-1">
-                      <div className="font-medium text-sm">{styleOption.label}</div>
-                      <div className={cn(
-                        "text-xs",
-                        style === styleOption.value ? "text-gray-200" : "text-gray-500"
-                      )}>
+                      <div className="font-medium text-sm">
+                        {styleOption.label}
+                      </div>
+                      <div
+                        className={cn(
+                          'text-xs',
+                          style === styleOption.value
+                            ? 'text-gray-200'
+                            : 'text-gray-500'
+                        )}
+                      >
                         {styleOption.description}
                       </div>
                     </div>
                   </button>
-                )
+                );
               })}
             </div>
           </div>
@@ -474,16 +558,18 @@ export function VariantGroupEditModal({
               Sélectionnez les pièces où ces produits peuvent être utilisés
             </p>
             <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 max-h-60 overflow-y-auto border border-gray-200 rounded-md p-3">
-              {ROOM_TYPES.map((room) => (
+              {ROOM_TYPES.map(room => (
                 <div key={room.value} className="flex items-center space-x-2">
                   <Checkbox
                     id={`room-${room.value}`}
                     checked={suitableRooms.includes(room.value)}
-                    onCheckedChange={(checked) => {
+                    onCheckedChange={checked => {
                       if (checked) {
-                        setSuitableRooms([...suitableRooms, room.value])
+                        setSuitableRooms([...suitableRooms, room.value]);
                       } else {
-                        setSuitableRooms(suitableRooms.filter(r => r !== room.value))
+                        setSuitableRooms(
+                          suitableRooms.filter(r => r !== room.value)
+                        );
                       }
                     }}
                   />
@@ -498,7 +584,9 @@ export function VariantGroupEditModal({
             </div>
             {suitableRooms.length > 0 && (
               <p className="text-xs text-blue-700 bg-blue-50 p-2 rounded border border-blue-200">
-                {suitableRooms.length} pièce{suitableRooms.length > 1 ? 's' : ''} sélectionnée{suitableRooms.length > 1 ? 's' : ''}
+                {suitableRooms.length} pièce
+                {suitableRooms.length > 1 ? 's' : ''} sélectionnée
+                {suitableRooms.length > 1 ? 's' : ''}
               </p>
             )}
           </div>
@@ -508,9 +596,9 @@ export function VariantGroupEditModal({
               <Checkbox
                 id="has-common-supplier"
                 checked={hasCommonSupplier}
-                onCheckedChange={(checked) => {
-                  setHasCommonSupplier(checked as boolean)
-                  if (!checked) setSupplierId(undefined)
+                onCheckedChange={checked => {
+                  setHasCommonSupplier(checked as boolean);
+                  if (!checked) setSupplierId(undefined);
                 }}
               />
               <Label
@@ -521,7 +609,8 @@ export function VariantGroupEditModal({
               </Label>
             </div>
             <p className="text-xs text-gray-600 ml-6">
-              Si cochée, tous les produits du groupe hériteront automatiquement du fournisseur sélectionné
+              Si cochée, tous les produits du groupe hériteront automatiquement
+              du fournisseur sélectionné
             </p>
 
             {hasCommonSupplier && (
@@ -538,9 +627,11 @@ export function VariantGroupEditModal({
                     <SelectValue placeholder="Sélectionner un fournisseur" />
                   </SelectTrigger>
                   <SelectContent>
-                    {suppliers.map((supplier) => (
+                    {suppliers.map(supplier => (
                       <SelectItem key={supplier.id} value={supplier.id}>
-                        {supplier.legal_name || supplier.trade_name || 'Sans nom'}
+                        {supplier.legal_name ||
+                          supplier.trade_name ||
+                          'Sans nom'}
                       </SelectItem>
                     ))}
                   </SelectContent>
@@ -557,31 +648,40 @@ export function VariantGroupEditModal({
                   </Link>
                 )}
                 <p className="text-xs text-blue-700 bg-blue-50 p-2 rounded border border-blue-200">
-                  💡 Ce fournisseur sera appliqué automatiquement à tous les produits du groupe et ne pourra pas être modifié individuellement
+                  💡 Ce fournisseur sera appliqué automatiquement à tous les
+                  produits du groupe et ne pourra pas être modifié
+                  individuellement
                 </p>
               </div>
             )}
           </div>
 
           <DialogFooter>
-            <ButtonV2
+            <Button
               type="button"
               variant="outline"
               onClick={onClose}
               disabled={isSubmitting}
             >
               Annuler
-            </ButtonV2>
-            <ButtonV2
+            </Button>
+            <Button
               type="submit"
-              disabled={!name.trim() || !baseSku.trim() || !subcategoryId || isSubmitting}
+              disabled={
+                !name.trim() ||
+                !baseSku.trim() ||
+                !subcategoryId ||
+                isSubmitting
+              }
               className="bg-black text-white hover:bg-gray-800"
             >
-              {isSubmitting ? 'Modification...' : 'Enregistrer les modifications'}
-            </ButtonV2>
+              {isSubmitting
+                ? 'Modification...'
+                : 'Enregistrer les modifications'}
+            </Button>
           </DialogFooter>
         </form>
       </DialogContent>
     </Dialog>
-  )
+  );
 }

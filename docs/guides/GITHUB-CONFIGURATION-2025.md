@@ -41,15 +41,18 @@
 ## 🔑 Token GitHub - Détails
 
 ### **Token Actif**
+
 ```bash
 GH_TOKEN=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
 ```
 
 ### **Permissions Requises**
+
 - ✅ `repo` : Accès complet aux repositories
 - ✅ `workflow` : Gestion GitHub Actions
 
 ### **Localisation**
+
 1. **Shell persistant** : `~/.zshrc` (ligne ajoutée automatiquement)
 2. **Session actuelle** : Variable d'environnement exportée
 3. **Projet local** : `.env.local` (ligne 11)
@@ -59,6 +62,7 @@ GH_TOKEN=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
 ## 📁 Repositories GitHub
 
 ### **Repository Principal (✅ CONSERVÉ)**
+
 ```json
 {
   "nom": "Verone-backoffice",
@@ -71,6 +75,7 @@ GH_TOKEN=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
 ```
 
 ### **Repository à Supprimer (⚠️ EN ATTENTE SUPPRESSION)**
+
 ```json
 {
   "nom": "verone-back-office",
@@ -83,6 +88,7 @@ GH_TOKEN=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
 ```
 
 ### **Autres Repositories**
+
 ```json
 {
   "nom": "want-it-now-mvp",
@@ -105,6 +111,7 @@ GH_TOKEN=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
 ## 🔧 Configuration Fichiers
 
 ### **.env.local**
+
 ```bash
 # Ligne 7-11 : Configuration GitHub
 # ---------- GITHUB ----------
@@ -115,6 +122,7 @@ GH_TOKEN=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
 ```
 
 ### **.env.example**
+
 ```bash
 # Ligne 7-12 : Template GitHub
 # ---------- GITHUB ----------
@@ -126,6 +134,7 @@ GH_TOKEN=ghp_your_github_token_here
 ```
 
 ### **~/.zshrc**
+
 ```bash
 # Lignes ajoutées à la fin du fichier
 # =========================
@@ -141,6 +150,7 @@ export GH_TOKEN="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"
 ## ✅ Tests de Validation
 
 ### **Test 1 : MCP GitHub - Lecture**
+
 ```bash
 # Commande
 mcp__github__get_file_contents(owner="Verone2021", repo="verone-back-office", path="package.json")
@@ -150,6 +160,7 @@ mcp__github__get_file_contents(owner="Verone2021", repo="verone-back-office", pa
 ```
 
 ### **Test 2 : MCP GitHub - Historique**
+
 ```bash
 # Commande
 mcp__github__list_commits(owner="Verone2021", repo="verone-back-office", perPage=3)
@@ -162,6 +173,7 @@ mcp__github__list_commits(owner="Verone2021", repo="verone-back-office", perPage
 ```
 
 ### **Test 3 : Search Repositories**
+
 ```bash
 # Commande
 mcp__github__search_repositories(query="user:Verone2021")
@@ -177,17 +189,20 @@ mcp__github__search_repositories(query="user:Verone2021")
 ## 🚨 Best Practices Appliquées
 
 ### **✅ Standards Anthropic Claude Code**
+
 - Utilisation de `GH_TOKEN` au lieu de `GITHUB_TOKEN`
 - Pas de `ANTHROPIC_API_KEY` dans .env (évite charges API)
 - Documentation inline dans fichiers .env
 - `.gitignore` configuré pour `.env*`
 
 ### **✅ Standards GitHub**
+
 - Token format `ghp_*` (Personal Access Token classique)
 - Permissions minimales requises (repo, workflow)
 - Token stocké dans shell config pour persistance
 
 ### **✅ Organisation Projet 2025**
+
 - Documentation dans `docs/guides/` (pas à la racine)
 - Fichiers .env synchronisés et documentés
 - Configuration validée par tests MCP
@@ -197,6 +212,7 @@ mcp__github__search_repositories(query="user:Verone2021")
 ## 🔄 Workflow d'Utilisation
 
 ### **Pour Claude Code (MCP GitHub)**
+
 ```typescript
 // MCP GitHub utilise automatiquement GH_TOKEN
 mcp__github__create_pull_request(...)
@@ -205,6 +221,7 @@ mcp__github__create_branch(...)
 ```
 
 ### **Pour gh CLI (Terminal)**
+
 ```bash
 # Authentification automatique via GH_TOKEN
 gh repo view Verone2021/verone-back-office
@@ -213,6 +230,7 @@ gh issue list
 ```
 
 ### **Pour Git Push (HTTPS)**
+
 ```bash
 # Git utilisera GH_TOKEN automatiquement pour HTTPS
 git push origin main
@@ -224,12 +242,14 @@ git pull origin main
 ## 🛡️ Sécurité
 
 ### **✅ Protections Activées**
+
 - `.env.local` dans `.gitignore`
 - Token jamais commité dans repository
 - Permissions GitHub limitées au strict nécessaire
 - Documentation séparée du code sensible
 
 ### **⚠️ Si Token Compromis**
+
 1. Aller sur : https://github.com/settings/tokens
 2. Révoquer le token `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`
 3. Générer nouveau token avec mêmes permissions
@@ -263,6 +283,7 @@ git pull origin main
 - ✅ Documentation complète
 
 **Actions Restantes :**
+
 1. Vérifier email Gmail pour code de vérification
 2. Entrer le code sur https://github.com/Verone2021/verone-back-office/settings/delete
 3. Finaliser la suppression du repository doublon
@@ -271,5 +292,5 @@ git pull origin main
 
 ---
 
-*Documentation générée le 2 octobre 2025*
-*Vérone Back Office - Professional AI-Assisted Development Excellence*
+_Documentation générée le 2 octobre 2025_
+_Vérone Back Office - Professional AI-Assisted Development Excellence_

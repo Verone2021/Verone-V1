@@ -16,7 +16,7 @@ while ((match = errorRegex.exec(logContent)) !== null) {
     line: parseInt(match[2]),
     column: parseInt(match[3]),
     code: match[4],
-    message: match[5]
+    message: match[5],
   });
 }
 
@@ -30,7 +30,7 @@ errors.forEach(error => {
       code: error.code,
       count: 0,
       errors: [],
-      patterns: {}
+      patterns: {},
     };
   }
 
@@ -42,7 +42,7 @@ errors.forEach(error => {
     clusters[error.code].patterns[pattern] = {
       pattern,
       count: 0,
-      examples: []
+      examples: [],
     };
   }
 
@@ -52,41 +52,47 @@ errors.forEach(error => {
     clusters[error.code].patterns[pattern].examples.push({
       file: error.file,
       line: error.line,
-      message: error.message
+      message: error.message,
     });
   }
 });
 
 function detectPattern(message) {
   if (message.includes("Type 'null' is not assignable")) {
-    return "null → undefined incompatibility";
+    return 'null → undefined incompatibility';
   }
   if (message.includes("Type 'undefined' is not assignable")) {
-    return "undefined → null incompatibility";
+    return 'undefined → null incompatibility';
   }
-  if (message.includes("boolean | null") && message.includes("boolean")) {
-    return "boolean | null → boolean";
+  if (message.includes('boolean | null') && message.includes('boolean')) {
+    return 'boolean | null → boolean';
   }
-  if (message.includes("Property") && message.includes("does not exist")) {
+  if (message.includes('Property') && message.includes('does not exist')) {
     const propMatch = message.match(/Property '(\w+)' does not exist/);
-    return propMatch ? `Missing property: ${propMatch[1]}` : "Missing property";
+    return propMatch ? `Missing property: ${propMatch[1]}` : 'Missing property';
   }
-  if (message.includes("is not assignable to type")) {
-    return "Type incompatibility";
+  if (message.includes('is not assignable to type')) {
+    return 'Type incompatibility';
   }
-  if (message.includes('"') && message.includes('|') && message.includes('is not assignable')) {
-    return "String literal union mismatch";
+  if (
+    message.includes('"') &&
+    message.includes('|') &&
+    message.includes('is not assignable')
+  ) {
+    return 'String literal union mismatch';
   }
-  if (message.includes("[]") && message.includes("is not assignable")) {
-    return "Array type mismatch";
+  if (message.includes('[]') && message.includes('is not assignable')) {
+    return 'Array type mismatch';
   }
-  if (message.includes("Record<") && message.includes("is not assignable")) {
-    return "Record type mismatch";
+  if (message.includes('Record<') && message.includes('is not assignable')) {
+    return 'Record type mismatch';
   }
-  return "Other";
+  return 'Other';
 }
 
-const sortedClusters = Object.values(clusters).sort((a, b) => b.count - a.count);
+const sortedClusters = Object.values(clusters).sort(
+  (a, b) => b.count - a.count
+);
 
 const stats = {
   totalErrors: errors.length,
@@ -94,14 +100,14 @@ const stats = {
   topFamilies: sortedClusters.slice(0, 10).map(c => ({
     code: c.code,
     count: c.count,
-    percentage: ((c.count / errors.length) * 100).toFixed(1) + '%'
-  }))
+    percentage: ((c.count / errors.length) * 100).toFixed(1) + '%',
+  })),
 };
 
 const output = {
   generatedAt: new Date().toISOString(),
   stats,
-  clusters: sortedClusters
+  clusters: sortedClusters,
 };
 
 const outputPath = path.join(process.cwd(), 'error-clusters.json');

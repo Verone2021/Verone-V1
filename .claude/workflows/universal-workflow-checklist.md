@@ -3,6 +3,7 @@
 **Référence rapide** : Une page pour tous les types de features (formulaires, pages, composants, hooks, DB, API)
 
 **Documentation complète** :
+
 - 🧠 Workflow détaillé : Voir `CLAUDE.md` section "WORKFLOW UNIVERSEL 2025"
 - 📚 Exemples concrets : Voir `.claude/workflows/universal-workflow-examples.md`
 
@@ -187,6 +188,7 @@
 
 - [ ] **Add Files** : `git add [fichiers-modifiés]`
 - [ ] **Commit Message** : Format conventionnel
+
   ```
   feat(module): Description courte (max 72 chars)
 
@@ -197,6 +199,7 @@
   Tests: ✅ Console = 0 errors
   Build: ✅ Success (Xs)
   ```
+
 - [ ] **Push** : `git push origin [branch]`
 
 ---
@@ -214,13 +217,14 @@
 
 ## 📊 TEMPS ESTIMÉS PAR COMPLEXITÉ
 
-| Complexité | THINK | TEST | CODE | RE-TEST | DOC | COMMIT | TOTAL |
-|------------|-------|------|------|---------|-----|--------|-------|
-| Simple     | 5min  | 5min | 20min| 10min   | 3min| 2min   | ~45min|
-| Moyen      | 10min | 8min | 30min| 15min   | 5min| 2min   | ~70min|
-| Complexe   | 15min | 10min| 40min| 20min   | 7min| 2min   | ~95min|
+| Complexité | THINK | TEST  | CODE  | RE-TEST | DOC  | COMMIT | TOTAL  |
+| ---------- | ----- | ----- | ----- | ------- | ---- | ------ | ------ |
+| Simple     | 5min  | 5min  | 20min | 10min   | 3min | 2min   | ~45min |
+| Moyen      | 10min | 8min  | 30min | 15min   | 5min | 2min   | ~70min |
+| Complexe   | 15min | 10min | 40min | 20min   | 7min | 2min   | ~95min |
 
 **Exemples Complexité** :
+
 - **Simple** : Ajout bouton, modification texte, nouveau badge
 - **Moyen** : Nouveau composant UI, hook custom, query complexe
 - **Complexe** : Nouveau formulaire complet, migration DB, page avec Server Actions

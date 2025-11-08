@@ -20,6 +20,7 @@
 Architecture sécurité complète du système Vérone : RLS policies, JWT validation, RGPD compliance, audit trails.
 
 **À documenter** :
+
 - Row Level Security (RLS) strategy Supabase
 - JWT tokens validation (Supabase Auth)
 - RGPD compliance (anonymisation data, exports)

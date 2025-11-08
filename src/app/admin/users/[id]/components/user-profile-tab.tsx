@@ -5,9 +5,10 @@
  * du profil utilisateur dans l'interface d'administration.
  */
 
-"use client"
+'use client';
 
-import React from 'react'
+import React from 'react';
+
 import {
   User,
   Mail,
@@ -22,13 +23,15 @@ import {
   Clock,
   Shield,
   Database,
-  Key
-} from 'lucide-react'
-import { RoleBadge, type UserRole } from '@/components/ui/role-badge'
-import { UserDetailData } from '../page'
+  Key,
+} from 'lucide-react';
+
+import { RoleBadge, type UserRole } from '@/components/ui/role-badge';
+
+import type { UserDetailData } from '../page';
 
 interface UserProfileTabProps {
-  user: UserDetailData
+  user: UserDetailData;
 }
 
 export function UserProfileTab({ user }: UserProfileTabProps) {
@@ -38,39 +41,39 @@ export function UserProfileTab({ user }: UserProfileTabProps) {
       month: 'long',
       day: 'numeric',
       hour: '2-digit',
-      minute: '2-digit'
-    })
-  }
+      minute: '2-digit',
+    });
+  };
 
   const formatUserName = (email: string, user_metadata: any = null) => {
     if (user_metadata?.name) {
-      return user_metadata.name
+      return user_metadata.name;
     }
 
     if (user_metadata?.first_name || user_metadata?.last_name) {
       return [user_metadata.first_name, user_metadata.last_name]
         .filter(Boolean)
         .join(' ')
-        .trim()
+        .trim();
     }
 
-    const tempName = email.split('@')[0].split('.') || ['']
-    return tempName.length > 1 ? tempName.join(' ') : tempName[0]
-  }
+    const tempName = email.split('@')[0].split('.') || [''];
+    return tempName.length > 1 ? tempName.join(' ') : tempName[0];
+  };
 
   const getFirstName = (email: string, user_metadata: any = null) => {
-    if (user_metadata?.first_name) return user_metadata.first_name
-    const tempName = email.split('@')[0].split('.') || ['']
-    return tempName[0] || ''
-  }
+    if (user_metadata?.first_name) return user_metadata.first_name;
+    const tempName = email.split('@')[0].split('.') || [''];
+    return tempName[0] || '';
+  };
 
   const getLastName = (email: string, user_metadata: any = null) => {
-    if (user_metadata?.last_name) return user_metadata.last_name
-    const tempName = email.split('@')[0].split('.') || ['']
-    return tempName[1] || ''
-  }
+    if (user_metadata?.last_name) return user_metadata.last_name;
+    const tempName = email.split('@')[0].split('.') || [''];
+    return tempName[1] || '';
+  };
 
-  const isEmailConfirmed = !!user.email_confirmed_at
+  const isEmailConfirmed = !!user.email_confirmed_at;
 
   return (
     <div className="space-y-2">
@@ -84,9 +87,14 @@ export function UserProfileTab({ user }: UserProfileTabProps) {
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-3">
           {/* Prénom */}
           <div className="space-y-1">
-            <label className="text-xs font-medium text-neutral-600">Prénom</label>
+            <label className="text-xs font-medium text-neutral-600">
+              Prénom
+            </label>
             <div className="p-1.5 bg-neutral-50 border border-neutral-200 rounded">
-              <span className="text-neutral-900">{getFirstName(user.email, user.user_metadata) || 'Non renseigné'}</span>
+              <span className="text-neutral-900">
+                {getFirstName(user.email, user.user_metadata) ||
+                  'Non renseigné'}
+              </span>
             </div>
           </div>
 
@@ -94,13 +102,17 @@ export function UserProfileTab({ user }: UserProfileTabProps) {
           <div className="space-y-1">
             <label className="text-xs font-medium text-neutral-600">Nom</label>
             <div className="p-1.5 bg-neutral-50 border border-neutral-200 rounded">
-              <span className="text-neutral-900">{getLastName(user.email, user.user_metadata) || 'Non renseigné'}</span>
+              <span className="text-neutral-900">
+                {getLastName(user.email, user.user_metadata) || 'Non renseigné'}
+              </span>
             </div>
           </div>
 
           {/* Email */}
           <div className="space-y-1">
-            <label className="text-xs font-medium text-neutral-600">Adresse e-mail</label>
+            <label className="text-xs font-medium text-neutral-600">
+              Adresse e-mail
+            </label>
             <div className="p-2 bg-neutral-50 border border-neutral-200 rounded flex items-center justify-between">
               <div className="flex items-center space-x-2">
                 <Mail className="h-3 w-3 text-neutral-500" />
@@ -122,7 +134,9 @@ export function UserProfileTab({ user }: UserProfileTabProps) {
 
           {/* Téléphone */}
           <div className="space-y-1">
-            <label className="text-xs font-medium text-neutral-600">Téléphone</label>
+            <label className="text-xs font-medium text-neutral-600">
+              Téléphone
+            </label>
             <div className="p-1.5 bg-neutral-50 border border-neutral-200 rounded flex items-center space-x-2">
               <Phone className="h-3 w-3 text-neutral-500" />
               <span className="text-neutral-900">
@@ -133,7 +147,9 @@ export function UserProfileTab({ user }: UserProfileTabProps) {
 
           {/* Poste */}
           <div className="space-y-1">
-            <label className="text-xs font-medium text-neutral-600">Poste</label>
+            <label className="text-xs font-medium text-neutral-600">
+              Poste
+            </label>
             <div className="p-1.5 bg-neutral-50 border border-neutral-200 rounded flex items-center space-x-2">
               <Briefcase className="h-3 w-3 text-neutral-500" />
               <span className="text-neutral-900">
@@ -144,7 +160,9 @@ export function UserProfileTab({ user }: UserProfileTabProps) {
 
           {/* Nom complet affiché */}
           <div className="space-y-1">
-            <label className="text-xs font-medium text-neutral-600">Nom d'affichage</label>
+            <label className="text-xs font-medium text-neutral-600">
+              Nom d'affichage
+            </label>
             <div className="p-1.5 bg-neutral-50 border border-neutral-200 rounded">
               <span className="text-neutral-900 font-medium">
                 {formatUserName(user.email, user.user_metadata)}
@@ -164,7 +182,9 @@ export function UserProfileTab({ user }: UserProfileTabProps) {
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-3">
           {/* Rôle */}
           <div className="space-y-1">
-            <label className="text-xs font-medium text-neutral-600">Rôle système</label>
+            <label className="text-xs font-medium text-neutral-600">
+              Rôle système
+            </label>
             <div className="p-1.5 bg-neutral-50 border border-neutral-200 rounded">
               {user.profile?.role ? (
                 <RoleBadge role={user.profile.role as UserRole} />
@@ -176,30 +196,41 @@ export function UserProfileTab({ user }: UserProfileTabProps) {
 
           {/* Type utilisateur */}
           <div className="space-y-1">
-            <label className="text-xs font-medium text-neutral-600">Type utilisateur</label>
+            <label className="text-xs font-medium text-neutral-600">
+              Type utilisateur
+            </label>
             <div className="p-1.5 bg-neutral-50 border border-neutral-200 rounded flex items-center space-x-2">
               <Tag className="h-3 w-3 text-neutral-500" />
               <span className="text-neutral-900">
-                {user.profile?.user_type === 'staff' ? 'Équipe Vérone' : 'Utilisateur standard'}
+                {user.profile?.user_type === 'staff'
+                  ? 'Équipe Vérone'
+                  : 'Utilisateur standard'}
               </span>
             </div>
           </div>
 
           {/* ID Utilisateur */}
           <div className="space-y-1">
-            <label className="text-xs font-medium text-neutral-600">Identifiant unique</label>
+            <label className="text-xs font-medium text-neutral-600">
+              Identifiant unique
+            </label>
             <div className="p-1.5 bg-neutral-50 border border-neutral-200 rounded flex items-center space-x-2">
               <Key className="h-3 w-3 text-neutral-500" />
-              <span className="text-neutral-900 font-mono text-xs">{user.id}</span>
+              <span className="text-neutral-900 font-mono text-xs">
+                {user.id}
+              </span>
             </div>
           </div>
 
           {/* Statut du compte */}
           <div className="space-y-1">
-            <label className="text-xs font-medium text-neutral-600">Statut du compte</label>
+            <label className="text-xs font-medium text-neutral-600">
+              Statut du compte
+            </label>
             <div className="p-1.5 bg-neutral-50 border border-neutral-200 rounded">
               {user.last_sign_in_at &&
-                (Date.now() - new Date(user.last_sign_in_at).getTime()) < (30 * 24 * 60 * 60 * 1000) ? (
+              Date.now() - new Date(user.last_sign_in_at).getTime() <
+                30 * 24 * 60 * 60 * 1000 ? (
                 <div className="flex items-center space-x-2 text-green-600">
                   <CheckCircle className="h-3 w-3" />
                   <span className="font-medium">Compte actif</span>
@@ -225,20 +256,28 @@ export function UserProfileTab({ user }: UserProfileTabProps) {
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-3">
           {/* Date de création */}
           <div className="space-y-1">
-            <label className="text-xs font-medium text-neutral-600">Compte créé le</label>
+            <label className="text-xs font-medium text-neutral-600">
+              Compte créé le
+            </label>
             <div className="p-1.5 bg-neutral-50 border border-neutral-200 rounded flex items-center space-x-2">
               <Calendar className="h-3 w-3 text-neutral-500" />
-              <span className="text-neutral-900">{formatDate(user.created_at)}</span>
+              <span className="text-neutral-900">
+                {formatDate(user.created_at)}
+              </span>
             </div>
           </div>
 
           {/* Dernière connexion */}
           <div className="space-y-1">
-            <label className="text-xs font-medium text-neutral-600">Dernière connexion</label>
+            <label className="text-xs font-medium text-neutral-600">
+              Dernière connexion
+            </label>
             <div className="p-1.5 bg-neutral-50 border border-neutral-200 rounded flex items-center space-x-2">
               <Clock className="h-3 w-3 text-neutral-500" />
               <span className="text-neutral-900">
-                {user.last_sign_in_at ? formatDate(user.last_sign_in_at) : 'Jamais connecté'}
+                {user.last_sign_in_at
+                  ? formatDate(user.last_sign_in_at)
+                  : 'Jamais connecté'}
               </span>
             </div>
           </div>
@@ -246,10 +285,14 @@ export function UserProfileTab({ user }: UserProfileTabProps) {
           {/* Confirmation email */}
           {user.email_confirmed_at && (
             <div className="space-y-1">
-              <label className="text-xs font-medium text-neutral-600">Email confirmé le</label>
+              <label className="text-xs font-medium text-neutral-600">
+                Email confirmé le
+              </label>
               <div className="p-1.5 bg-neutral-50 border border-neutral-200 rounded flex items-center space-x-2">
                 <CheckCircle className="h-3 w-3 text-green-600" />
-                <span className="text-neutral-900">{formatDate(user.email_confirmed_at)}</span>
+                <span className="text-neutral-900">
+                  {formatDate(user.email_confirmed_at)}
+                </span>
               </div>
             </div>
           )}
@@ -257,10 +300,14 @@ export function UserProfileTab({ user }: UserProfileTabProps) {
           {/* Dernière mise à jour profil */}
           {user.profile?.updated_at && (
             <div className="space-y-1">
-              <label className="text-xs font-medium text-neutral-600">Profil mis à jour</label>
+              <label className="text-xs font-medium text-neutral-600">
+                Profil mis à jour
+              </label>
               <div className="p-1.5 bg-neutral-50 border border-neutral-200 rounded flex items-center space-x-2">
                 <Database className="h-3 w-3 text-neutral-500" />
-                <span className="text-neutral-900">{formatDate(user.profile.updated_at)}</span>
+                <span className="text-neutral-900">
+                  {formatDate(user.profile.updated_at)}
+                </span>
               </div>
             </div>
           )}
@@ -283,5 +330,5 @@ export function UserProfileTab({ user }: UserProfileTabProps) {
         </div>
       )}
     </div>
-  )
+  );
 }

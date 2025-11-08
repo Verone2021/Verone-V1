@@ -11,17 +11,17 @@ import {
   Store,
   Package,
   type LucideIcon,
-} from 'lucide-react'
+} from 'lucide-react';
 
 /**
  * Codes canaux de vente supportés
  */
-export type ChannelCode = 'b2b' | 'ecommerce' | 'retail' | 'wholesale'
+export type ChannelCode = 'b2b' | 'ecommerce' | 'retail' | 'wholesale';
 
 /**
  * Types de mouvements de stock
  */
-export type MovementType = 'IN' | 'OUT' | 'ADJUST' | 'TRANSFER'
+export type MovementType = 'IN' | 'OUT' | 'ADJUST' | 'TRANSFER';
 
 /**
  * Configuration visuelle des canaux de vente
@@ -56,7 +56,7 @@ export const CHANNEL_CONFIG = {
     hoverColor: 'hover:bg-purple-700',
     icon: Package,
   },
-} as const
+} as const;
 
 /**
  * Configuration visuelle des types de mouvements
@@ -91,12 +91,12 @@ export const MOVEMENT_CONFIG = {
     textColor: 'text-purple-700',
     sign: '⇄',
   },
-} as const
+} as const;
 
 /**
  * Variantes KPI Card
  */
-export type KPIVariant = 'default' | 'success' | 'warning' | 'danger' | 'info'
+export type KPIVariant = 'default' | 'success' | 'warning' | 'danger' | 'info';
 
 /**
  * Configuration visuelle des variantes KPI
@@ -127,7 +127,7 @@ export const KPI_VARIANT_CONFIG = {
     iconBgColor: 'bg-purple-100',
     iconTextColor: 'text-purple-600',
   },
-} as const
+} as const;
 
 /**
  * Tailles standard des composants
@@ -151,9 +151,9 @@ export const SIZES = {
     fontSize: 'text-sm',
     iconSize: 16,
   },
-} as const
+} as const;
 
 /**
  * Type helper pour icônes Lucide
  */
-export type { LucideIcon }
+export type { LucideIcon };

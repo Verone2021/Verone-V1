@@ -23,7 +23,7 @@ Vérone Back Office - Phase 1
 
 - ✅ **Visualisation temps réel** : Tu vois le browser s'ouvrir et naviguer
 - ✅ **Validation immédiate** : Détection erreurs instantanée
-- ✅ **Pas de scripts** : Pas de code à maintenir (*.js, *.mjs, *.ts)
+- ✅ **Pas de scripts** : Pas de code à maintenir (_.js, _.mjs, \*.ts)
 - ✅ **Console checking** : Vérification erreurs automatique
 - ✅ **Screenshots proof** : Capture visuelle validation
 - ✅ **Confiance maximale** : Transparence totale du process
@@ -55,6 +55,7 @@ Vérone Back Office - Phase 1
 **Objectif** : Valider process complet avant catalogue
 
 **Produits sélectionnés** :
+
 1. **Canapé Modèle A** (avec 3 variantes couleurs)
 2. **Table Bois Massif** (avec 2 dimensions)
 3. **Chaise Design Simple** (produit simple sans variantes)
@@ -69,6 +70,7 @@ Vérone Back Office - Phase 1
 **Objectif** : Insérer 50+ produits par catégories
 
 **Organisation par batchs** :
+
 - **Batch 1** : Canapés et fauteuils (10-15 produits) → ~2h
 - **Batch 2** : Tables et chaises (10-15 produits) → ~2h
 - **Batch 3** : Luminaires (10-15 produits) → ~1.5h
@@ -105,6 +107,7 @@ git checkout -b feature/phase1-data-test
 ## 1. Canapé Modèle A
 
 **Informations générales :**
+
 - Nom : Canapé Modèle A
 - SKU : CAN-MOD-A-001
 - Catégorie : Mobilier > Canapés
@@ -117,6 +120,7 @@ git checkout -b feature/phase1-data-test
 Canapé 3 places en tissu premium, design contemporain. Assise profonde et confortable avec coussins déhoussables. Structure bois massif garantie 10 ans.
 
 **Caractéristiques :**
+
 - Dimensions : L220 x P95 x H85 cm
 - Matière assise : Tissu premium anti-taches
 - Structure : Bois massif + ressorts ensachés
@@ -125,15 +129,18 @@ Canapé 3 places en tissu premium, design contemporain. Assise profonde et confo
 - Nombre de places : 3
 
 **Variantes :**
+
 1. Gris clair (SKU: CAN-MOD-A-001-GC, +0€)
 2. Bleu marine (SKU: CAN-MOD-A-001-BM, +150€)
 3. Beige (SKU: CAN-MOD-A-001-BG, +0€)
 
 **Images :**
+
 - Image principale : [URL ou chemin]
 - Galerie : [URLs supplémentaires]
 
 **SEO :**
+
 - Meta title : Canapé Modèle A - 3 Places Design Contemporain | Vérone
 - Meta description : Découvrez notre canapé 3 places au design contemporain. Tissu premium, structure bois massif. Livraison gratuite. Garantie 10 ans.
 
@@ -142,6 +149,7 @@ Canapé 3 places en tissu premium, design contemporain. Assise profonde et confo
 ## 2. Table Bois Massif
 
 **Informations générales :**
+
 - Nom : Table Bois Massif Rectangulaire
 - SKU : TAB-BM-RECT-001
 - Catégorie : Mobilier > Tables
@@ -154,6 +162,7 @@ Canapé 3 places en tissu premium, design contemporain. Assise profonde et confo
 Table à manger rectangulaire en chêne massif. Finition huilée naturelle. Design intemporel alliant robustesse et élégance.
 
 **Caractéristiques :**
+
 - Matière : Chêne massif européen
 - Finition : Huilée naturelle
 - Épaisseur plateau : 4 cm
@@ -161,6 +170,7 @@ Table à manger rectangulaire en chêne massif. Finition huilée naturelle. Desi
 - Poids : 45 kg (160 cm) / 55 kg (180 cm)
 
 **Variantes :**
+
 1. 160x90 cm (SKU: TAB-BM-RECT-001-160, Prix: 890€)
 2. 180x90 cm (SKU: TAB-BM-RECT-001-180, Prix: 1090€)
 
@@ -169,6 +179,7 @@ Table à manger rectangulaire en chêne massif. Finition huilée naturelle. Desi
 ## 3. Chaise Design Simple
 
 **Informations générales :**
+
 - Nom : Chaise Design Minimaliste
 - SKU : CHA-DES-MIN-001
 - Catégorie : Mobilier > Chaises
@@ -180,6 +191,7 @@ Table à manger rectangulaire en chêne massif. Finition huilée naturelle. Desi
 Chaise au design épuré et minimaliste. Structure métal noir mat, assise bois naturel. Empilable pour gain de place.
 
 **Caractéristiques :**
+
 - Dimensions : L45 x P50 x H80 cm (assise H45 cm)
 - Matière assise : Bois hêtre massif
 - Structure : Métal noir mat
@@ -193,6 +205,7 @@ Chaise au design épuré et minimaliste. Structure métal noir mat, assise bois 
 ## 4. Luminaire LED Premium
 
 **Informations générales :**
+
 - Nom : Suspension LED Premium Ø50
 - SKU : LUM-SUS-LED-050
 - Catégorie : Éclairage > Suspensions
@@ -204,6 +217,7 @@ Chaise au design épuré et minimaliste. Structure métal noir mat, assise bois 
 Suspension LED design avec diffuseur en verre opalin. Intensité variable via télécommande. Idéale pour salle à manger ou salon.
 
 **Caractéristiques techniques :**
+
 - Diamètre : 50 cm
 - Hauteur : 30 cm
 - Puissance : 40W LED intégrée
@@ -219,6 +233,7 @@ Suspension LED design avec diffuseur en verre opalin. Intensité variable via t�
 ## 5. Tapis Berbère 200x300
 
 **Informations générales :**
+
 - Nom : Tapis Berbère Fait Main 200x300
 - SKU : TAP-BER-FM-200300
 - Catégorie : Décoration > Tapis
@@ -231,6 +246,7 @@ Suspension LED design avec diffuseur en verre opalin. Intensité variable via t�
 Tapis berbère traditionnel tissé à la main au Maroc. Laine 100% naturelle, motifs géométriques authentiques. Chaque pièce est unique.
 
 **Caractéristiques :**
+
 - Dimensions : 200 x 300 cm
 - Matière : Laine 100% naturelle
 - Fabrication : Tissage main artisanal
@@ -240,6 +256,7 @@ Tapis berbère traditionnel tissé à la main au Maroc. Laine 100% naturelle, mo
 - Entretien : Nettoyage à sec recommandé
 
 **Collection :**
+
 - Nom : Heritage Berbère
 - Description : Collection de tapis berbères authentiques tissés à la main
 ```
@@ -266,6 +283,7 @@ Commence !
 ```
 
 **Claude utilisera automatiquement** :
+
 ```typescript
 // Navigation
 mcp__playwright__browser_navigate(url: "http://localhost:3000/catalogue/create")
@@ -324,6 +342,7 @@ Même process : navigate → fill → validate → screenshot
 ```
 
 **Commits intermédiaires** après chaque produit :
+
 - `📦 DATA TEST 2/5: Table Bois Massif + 2 dimensions`
 - `📦 DATA TEST 3/5: Chaise Design Minimaliste`
 - `📦 DATA TEST 4/5: Suspension LED Premium`
@@ -413,6 +432,7 @@ docs/data/
 ## [Numéro]. [Nom Produit]
 
 ### Informations générales
+
 - Nom :
 - SKU :
 - Catégorie :
@@ -421,23 +441,28 @@ docs/data/
 - Publié :
 
 ### Description
+
 [Texte descriptif 2-3 paragraphes]
 
 ### Caractéristiques
+
 - Dimensions :
 - Matière :
 - Couleur :
 - Poids :
 
 ### Variantes (si applicable)
+
 1. [Nom variante] (SKU: XXX, Prix: XXX)
 2. [Nom variante] (SKU: XXX, Prix: XXX)
 
 ### Images
+
 - Principale : [URL]
 - Galerie : [URLs]
 
 ### SEO
+
 - Meta title :
 - Meta description :
 
@@ -510,11 +535,13 @@ Validation : Console propre, screenshots OK"
 **Même process pour** :
 
 - **Batch 2** : Tables et chaises (15 produits, ~2h)
+
   ```
   ✅ BATCH 2/4 COMPLET: 15 Tables et chaises
   ```
 
 - **Batch 3** : Luminaires (13 produits, ~1.5h)
+
   ```
   ✅ BATCH 3/4 COMPLET: 13 Luminaires
   ```
@@ -591,6 +618,7 @@ git push origin v1.0.0-catalogue-complet
 #### Problème 1 : Erreur "SKU already exists"
 
 **Solution** :
+
 ```
 1. Vérifier SKU unique dans Supabase
 2. Modifier SKU si doublon détecté
@@ -601,6 +629,7 @@ git push origin v1.0.0-catalogue-complet
 #### Problème 2 : Upload Image Failed
 
 **Solution** :
+
 ```
 1. Vérifier taille image < 5MB
 2. Format accepté : JPG, PNG, WEBP
@@ -611,6 +640,7 @@ git push origin v1.0.0-catalogue-complet
 #### Problème 3 : Console Error "Failed to fetch"
 
 **Solution** :
+
 ```
 1. Vérifier serveur local tourne (npm run dev)
 2. Vérifier Supabase connection (.env.local)
@@ -621,6 +651,7 @@ git push origin v1.0.0-catalogue-complet
 #### Problème 4 : Variantes non enregistrées
 
 **Solution** :
+
 ```
 1. Vérifier bouton "Ajouter variante" cliqué
 2. Remplir TOUS champs variante (SKU, prix, attributs)
@@ -654,6 +685,7 @@ git push origin v1.0.0-catalogue-complet
 - Produit complexe (5+ variantes + collection) : **15-20 minutes**
 
 **Si plus lent** :
+
 1. Vérifier connexion internet
 2. Vérifier performance Supabase (dashboard)
 3. Redémarrer serveur local si nécessaire
@@ -670,27 +702,31 @@ git push origin v1.0.0-catalogue-complet
 # Tracking Insertion Catalogue - Phase 1
 
 ## Test Pilote
+
 - [x] Canapé Modèle A (3 variantes)
 - [x] Table Bois Massif (2 dimensions)
 - [x] Chaise Design Minimaliste
 - [x] Luminaire LED Premium
 - [x] Tapis Berbère + Collection
-**Status** : ✅ COMPLET (2025-10-01)
+      **Status** : ✅ COMPLET (2025-10-01)
 
 ## Batch 1 : Canapés & Fauteuils (12 produits)
+
 - [x] Canapé d'Angle Panoramique
 - [x] Fauteuil Club Vintage
 - [ ] Canapé 2 Places Compact
 - [ ] Méridienne Design
 - [ ] ...
-**Progress** : 2/12 (17%)
+      **Progress** : 2/12 (17%)
 
 ## Batch 2 : Tables & Chaises (15 produits)
+
 - [ ] Table Ronde Extensible
 - [ ] ...
-**Progress** : 0/15 (0%)
+      **Progress** : 0/15 (0%)
 
 ## Stats Globales
+
 - **Total produits** : 5/50 (10%)
 - **Total variantes** : 12/97 (12%)
 - **Temps passé** : 1h
@@ -728,12 +764,14 @@ Répéter
 ### Commits Réguliers
 
 **Commiter après** :
+
 - ✅ Chaque produit si complexe (5+ variantes)
 - ✅ Tous les 3-4 produits simples
 - ✅ Fin de chaque batch
 - ✅ Avant pause longue
 
 **Ne jamais** :
+
 - ❌ Insérer 20 produits sans commit
 - ❌ Travailler plusieurs heures sans push
 - ❌ Merger vers main sans validation complète
@@ -750,4 +788,4 @@ Répéter
 
 **🎯 Prochaine étape** : [Checklist Déploiement Production](./production-deployment-checklist.md)
 
-*Guide créé le 2025-10-01 - Vérone Back Office Phase 1*
+_Guide créé le 2025-10-01 - Vérone Back Office Phase 1_

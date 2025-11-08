@@ -1,31 +1,33 @@
-'use client'
+'use client';
 
-import React from 'react'
-import { Grid, List } from 'lucide-react'
-import { cn } from '@/lib/utils'
+import React from 'react';
+
+import { Grid, List } from 'lucide-react';
+
+import { cn } from '@verone/utils';
 
 /**
  * Mode d'affichage (grille ou liste)
  */
-export type ViewMode = 'grid' | 'list'
+export type ViewMode = 'grid' | 'list';
 
 /**
  * Variante visuelle du toggle
  */
-export type ViewModeVariant = 'outline' | 'pills' | 'segmented'
+export type ViewModeVariant = 'outline' | 'pills' | 'segmented';
 
 /**
  * Props pour ViewModeToggle
  */
 export interface ViewModeToggleProps {
   /** Mode actif */
-  value: ViewMode
+  value: ViewMode;
   /** Callback changement mode */
-  onChange: (value: ViewMode) => void
+  onChange: (value: ViewMode) => void;
   /** Variante visuelle */
-  variant?: ViewModeVariant
+  variant?: ViewModeVariant;
   /** Classe CSS additionnelle */
-  className?: string
+  className?: string;
 }
 
 /**
@@ -70,7 +72,7 @@ export function ViewModeToggle({
     'transition-all duration-200',
     'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2',
     'cursor-pointer'
-  )
+  );
 
   // Classes selon variante
   const variantClasses = {
@@ -110,12 +112,16 @@ export function ViewModeToggle({
         ),
       separator: null,
     },
-  }
+  };
 
-  const styles = variantClasses[variant]
+  const styles = variantClasses[variant];
 
   return (
-    <div className={cn(styles.container, className)} role="group" aria-label="Mode d'affichage">
+    <div
+      className={cn(styles.container, className)}
+      role="group"
+      aria-label="Mode d'affichage"
+    >
       {/* Bouton Grid */}
       <button
         onClick={() => onChange('grid')}
@@ -143,10 +149,10 @@ export function ViewModeToggle({
         <List className="h-4 w-4" />
       </button>
     </div>
-  )
+  );
 }
 
 /**
  * Export default pour compatibilité
  */
-export default ViewModeToggle
+export default ViewModeToggle;

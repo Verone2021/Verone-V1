@@ -5,28 +5,32 @@
  * Garantit la cohérence visuelle et l'économie d'espace vertical
  */
 
-'use client'
+'use client';
 
-import React from 'react'
-import { useRouter } from 'next/navigation'
-import { ArrowLeft, LucideIcon } from 'lucide-react'
-import { ButtonV2 } from '@/components/ui/button'
+import React from 'react';
+
+import { useRouter } from 'next/navigation';
+
+import type { LucideIcon } from 'lucide-react';
+import { ArrowLeft } from 'lucide-react';
+
+import { ButtonV2 } from '@/components/ui/button';
 
 export interface PageHeaderProps {
   /** Titre principal de la page */
-  title: string
+  title: string;
   /** Description optionnelle sous le titre */
-  description?: string
+  description?: string;
   /** Icône optionnelle à côté du titre */
-  icon?: LucideIcon
+  icon?: LucideIcon;
   /** Afficher le bouton retour */
-  showBackButton?: boolean
+  showBackButton?: boolean;
   /** URL de retour (utilise router.push) */
-  backButtonHref?: string
+  backButtonHref?: string;
   /** Callback personnalisé pour le bouton retour */
-  onBackClick?: () => void
+  onBackClick?: () => void;
   /** Action(s) à afficher à droite du header (bouton, etc.) */
-  action?: React.ReactNode
+  action?: React.ReactNode;
 }
 
 export function PageHeader({
@@ -38,17 +42,17 @@ export function PageHeader({
   onBackClick,
   action,
 }: PageHeaderProps) {
-  const router = useRouter()
+  const router = useRouter();
 
   const handleBackClick = () => {
     if (onBackClick) {
-      onBackClick()
+      onBackClick();
     } else if (backButtonHref) {
-      router.push(backButtonHref)
+      router.push(backButtonHref);
     } else {
-      router.back()
+      router.back();
     }
-  }
+  };
 
   return (
     <div className="bg-white border-b border-slate-200 px-6 py-4">
@@ -77,12 +81,8 @@ export function PageHeader({
         </div>
 
         {/* Action(s) à droite */}
-        {action && (
-          <div>
-            {action}
-          </div>
-        )}
+        {action && <div>{action}</div>}
       </div>
     </div>
-  )
+  );
 }

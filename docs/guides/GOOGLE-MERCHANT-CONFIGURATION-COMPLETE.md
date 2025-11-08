@@ -9,12 +9,14 @@
 ## 📋 Vue d'Ensemble
 
 ### Architecture Validée ✅
+
 - ✅ **Schéma DB** : 100% compatible Google Merchant 2025 (11 champs requis mappables)
 - ✅ **Système Variantes** : `item_group_id` auto-sync opérationnel
 - ✅ **Transformateurs** : Mapping 31 colonnes Excel + validation API
 - ✅ **Routes API** : test-connection, export-excel, sync-product implémentés
 
 ### Ce qu'il Reste à Faire
+
 - [ ] Créer Service Account Google Cloud
 - [ ] Configurer accès Google Merchant Center
 - [ ] Extraire 5 variables d'environnement
@@ -31,10 +33,12 @@
 ### 1.2 Sélectionner ou Créer Projet
 
 **Si projet Vérone existe déjà** :
+
 - Sélectionner le projet dans le menu déroulant en haut
 - Vérifier que l'ID du projet correspond à vos besoins
 
 **Si aucun projet n'existe** :
+
 1. Cliquer sur le menu projet (en haut) → "New Project"
 2. Nom : `Verone Production` ou `Verone Google Merchant`
 3. Prendre note de l'**Project ID** généré (ex: `verone-prod-123456`)
@@ -155,13 +159,13 @@ Ouvrir le fichier `verone-prod-123456-abc123def456.json` avec un éditeur de tex
 
 **Mapping JSON → Variables .env** :
 
-| Variable .env | Clé JSON | Exemple Valeur |
-|---------------|----------|----------------|
-| `GOOGLE_MERCHANT_SERVICE_ACCOUNT_EMAIL` | `client_email` | `google-merchant-verone@verone-prod-123456.iam.gserviceaccount.com` |
-| `GOOGLE_MERCHANT_PRIVATE_KEY` | `private_key` | `-----BEGIN PRIVATE KEY-----\nMIIE...ABC\n-----END PRIVATE KEY-----\n` |
-| `GOOGLE_MERCHANT_PRIVATE_KEY_ID` | `private_key_id` | `abc123def456789...` |
-| `GOOGLE_MERCHANT_CLIENT_ID` | `client_id` | `123456789012345678901` |
-| `GOOGLE_CLOUD_PROJECT_ID` | `project_id` | `verone-prod-123456` |
+| Variable .env                           | Clé JSON         | Exemple Valeur                                                         |
+| --------------------------------------- | ---------------- | ---------------------------------------------------------------------- |
+| `GOOGLE_MERCHANT_SERVICE_ACCOUNT_EMAIL` | `client_email`   | `google-merchant-verone@verone-prod-123456.iam.gserviceaccount.com`    |
+| `GOOGLE_MERCHANT_PRIVATE_KEY`           | `private_key`    | `-----BEGIN PRIVATE KEY-----\nMIIE...ABC\n-----END PRIVATE KEY-----\n` |
+| `GOOGLE_MERCHANT_PRIVATE_KEY_ID`        | `private_key_id` | `abc123def456789...`                                                   |
+| `GOOGLE_MERCHANT_CLIENT_ID`             | `client_id`      | `123456789012345678901`                                                |
+| `GOOGLE_CLOUD_PROJECT_ID`               | `project_id`     | `verone-prod-123456`                                                   |
 
 ### 3.3 Ajouter dans `.env.local`
 
@@ -183,12 +187,14 @@ SUPABASE_SERVICE_ROLE_KEY="..."
 ### 3.4 Vérifications Importantes
 
 **⚠️ Format Private Key** :
+
 - La clé doit commencer par `-----BEGIN PRIVATE KEY-----\n`
 - Les retours à la ligne doivent être `\n` (échappés)
 - Terminer par `\n-----END PRIVATE KEY-----\n`
 - **Garder les guillemets doubles** autour de la valeur
 
 **⚠️ Sécurité** :
+
 - `.env.local` doit être dans `.gitignore` (déjà configuré)
 - **NE JAMAIS** committer ces credentials
 - Utiliser `.env.example` pour documenter les variables nécessaires
@@ -209,11 +215,13 @@ npm run dev
 ### 4.1 Test Connexion API (Route GET)
 
 **Terminal** :
+
 ```bash
 curl http://localhost:3000/api/google-merchant/test-connection | jq
 ```
 
 **Résultat Attendu (Succès)** :
+
 ```json
 {
   "success": true,
@@ -239,12 +247,12 @@ curl http://localhost:3000/api/google-merchant/test-connection | jq
 
 **Erreurs Possibles** :
 
-| Erreur | Cause | Solution |
-|--------|-------|----------|
-| `Authentication failed` | Clé privée invalide | Vérifier format `\n` dans PRIVATE_KEY |
-| `API connection failed` | API Content non activée | Activer sur console.cloud.google.com |
+| Erreur                     | Cause                     | Solution                                |
+| -------------------------- | ------------------------- | --------------------------------------- |
+| `Authentication failed`    | Clé privée invalide       | Vérifier format `\n` dans PRIVATE_KEY   |
+| `API connection failed`    | API Content non activée   | Activer sur console.cloud.google.com    |
 | `Insufficient permissions` | Service account pas Admin | Ajouter role Admin dans Merchant Center |
-| `Account not found` | accountId incorrect | Vérifier ID 5495521926 dans config.ts |
+| `Account not found`        | accountId incorrect       | Vérifier ID 5495521926 dans config.ts   |
 
 ### 4.2 Test Extended (Route POST)
 
@@ -255,6 +263,7 @@ curl -X POST http://localhost:3000/api/google-merchant/test-connection \
 ```
 
 **Résultat Attendu** :
+
 ```json
 {
   "success": true,
@@ -275,6 +284,7 @@ curl -X POST http://localhost:3000/api/google-merchant/test-connection \
 ### 4.3 Test Interface Web (MCP Playwright Recommandé)
 
 **Option A : Test Manuel** :
+
 1. Ouvrir navigateur : http://localhost:3000/canaux-vente/google-merchant
 2. Vérifier **0 erreur console** (F12 → Console)
 3. Cliquer bouton "**Tester Connexion**"
@@ -284,17 +294,21 @@ curl -X POST http://localhost:3000/api/google-merchant/test-connection \
 
 ```typescript
 // Workflow automatique
-mcp__playwright__browser_navigate("http://localhost:3000/canaux-vente/google-merchant")
-mcp__playwright__browser_console_messages({ onlyErrors: true })
+mcp__playwright__browser_navigate(
+  'http://localhost:3000/canaux-vente/google-merchant'
+);
+mcp__playwright__browser_console_messages({ onlyErrors: true });
 // Résultat attendu: [] (aucune erreur)
 
 mcp__playwright__browser_click({
-  element: "Bouton Tester Connexion",
-  ref: "[data-testid='test-connection-btn']"
-})
+  element: 'Bouton Tester Connexion',
+  ref: "[data-testid='test-connection-btn']",
+});
 
-mcp__playwright__browser_wait_for({ text: "Connexion réussie" })
-mcp__playwright__browser_take_screenshot({ filename: "google-merchant-success.png" })
+mcp__playwright__browser_wait_for({ text: 'Connexion réussie' });
+mcp__playwright__browser_take_screenshot({
+  filename: 'google-merchant-success.png',
+});
 ```
 
 ### 4.4 Test Export Excel
@@ -307,6 +321,7 @@ mcp__playwright__browser_take_screenshot({ filename: "google-merchant-success.pn
    - Données produits correctement mappées
 
 **Validation Colonnes Obligatoires** :
+
 ```
 id, title, description, availability, link, image link, price,
 identifier exists, gtin, mpn, brand, condition, item group id
@@ -337,18 +352,21 @@ identifier exists, gtin, mpn, brand, condition, item group id
 ## 📊 Checklist Validation Complète
 
 ### Configuration Google Cloud ✅
+
 - [ ] Service Account `google-merchant-verone` créé
 - [ ] Clé JSON téléchargée et sauvegardée
 - [ ] API Content activée pour le projet
 - [ ] Project ID noté et vérifié
 
 ### Configuration Merchant Center ✅
+
 - [ ] Service account email ajouté dans Users
 - [ ] Access level "Admin" accordé
 - [ ] Data Source ID vérifié (10571293810)
 - [ ] Service account status "Active"
 
 ### Variables d'Environnement ✅
+
 - [ ] `GOOGLE_MERCHANT_SERVICE_ACCOUNT_EMAIL` configurée
 - [ ] `GOOGLE_MERCHANT_PRIVATE_KEY` configurée (format `\n` correct)
 - [ ] `GOOGLE_MERCHANT_PRIVATE_KEY_ID` configurée
@@ -358,6 +376,7 @@ identifier exists, gtin, mpn, brand, condition, item group id
 - [ ] Serveur dev redémarré
 
 ### Tests de Validation ✅
+
 - [ ] `GET /api/google-merchant/test-connection` → `authentication: true`
 - [ ] `GET /api/google-merchant/test-connection` → `apiConnection: true`
 - [ ] `POST /api/google-merchant/test-connection` → productListTest réussie
@@ -370,9 +389,11 @@ identifier exists, gtin, mpn, brand, condition, item group id
 ## 🎯 Synchronisation Complète (Planification)
 
 ### Timing Recommandé
+
 **J+7 minimum après Big Bang deployment** (selon `POST-DEPLOIEMENT-GOOGLE-MERCHANT.md`)
 
 ### Objectifs KPI
+
 - **241 produits** dans catalogue Vérone
 - **≥95% produits approuvés** par Google Merchant
 - **<5% produits rejetés** (résolution sous 48h)
@@ -403,6 +424,7 @@ identifier exists, gtin, mpn, brand, condition, item group id
 **Cause** : Retours à la ligne non échappés dans `GOOGLE_MERCHANT_PRIVATE_KEY`
 
 **Solution** :
+
 ```bash
 # La clé doit contenir des \n littéraux
 GOOGLE_MERCHANT_PRIVATE_KEY="-----BEGIN PRIVATE KEY-----\nMIIE...\n-----END PRIVATE KEY-----\n"
@@ -419,6 +441,7 @@ MIIEvQIBADAN...
 **Cause** : Email service account mal orthographié ou pas ajouté
 
 **Solution** :
+
 1. Vérifier email exact depuis JSON : `client_email`
 2. Copier-coller (ne pas retaper manuellement)
 3. Vérifier dans https://merchants.google.com/mc/accounts/5495521926/users
@@ -429,6 +452,7 @@ MIIEvQIBADAN...
 **Cause** : API pas activée ou mauvais projet sélectionné
 
 **Solution** :
+
 1. Aller sur https://console.cloud.google.com/apis/library/content.googleapis.com
 2. **Vérifier projet sélectionné** (menu déroulant en haut)
 3. Cliquer "ENABLE"
@@ -439,6 +463,7 @@ MIIEvQIBADAN...
 **Cause** : Service account n'a pas role Admin
 
 **Solution** :
+
 1. https://merchants.google.com/mc/accounts/5495521926/users
 2. Trouver le service account
 3. Edit → Access level : "Admin"
@@ -449,6 +474,7 @@ MIIEvQIBADAN...
 **Cause** : Données produit incomplètes (title, description, image, etc.)
 
 **Solution** :
+
 1. Vérifier logs Sentry : détails erreur Google
 2. Corriger données produit dans Supabase
 3. Re-synchroniser produit spécifique
@@ -459,17 +485,20 @@ MIIEvQIBADAN...
 ## 📚 Références
 
 ### Documentation Interne
+
 - [Setup Guide Original](../../manifests/technical-specs/google-merchant-setup.md)
 - [Post-Déploiement Checklist](../deployment/POST-DEPLOIEMENT-GOOGLE-MERCHANT.md)
 - [Session Variantes Architecture](../../MEMORY-BANK/archive/sessions/session-2025-09-30-variantes-dual-mode-google-merchant.md)
 
 ### Documentation Google Officielle
+
 - [Content API for Shopping](https://developers.google.com/shopping-content/guides/quickstart)
 - [Service Account Authentication](https://cloud.google.com/iam/docs/service-accounts)
 - [Product Data Specification](https://support.google.com/merchants/answer/7052112)
 - [Merchant Center Help](https://support.google.com/merchants/)
 
 ### Code Source
+
 - Transformer API : `src/lib/google-merchant/transformer.ts`
 - Transformer Excel : `src/lib/google-merchant/excel-transformer.ts`
 - Configuration : `src/lib/google-merchant/config.ts`
@@ -480,6 +509,7 @@ MIIEvQIBADAN...
 ## ✅ Validation Finale
 
 **Critères de Succès** :
+
 1. ✅ Test connexion : `authentication: true` + `apiConnection: true`
 2. ✅ Export Excel : 31 colonnes avec données valides
 3. ✅ 0 erreur console sur interface web

@@ -5,9 +5,10 @@
 // =====================================================================
 
 import { createClient } from '@/lib/supabase/server';
+
 import { getAbbyClient } from './client';
-import type { CreateInvoicePayload } from './types';
 import { AbbyError } from './errors';
+import type { CreateInvoicePayload } from './types';
 
 // =====================================================================
 // TYPES
@@ -52,9 +53,7 @@ export async function processSyncQueue(): Promise<{
       .from('abby_sync_queue')
       .select('*')
       .eq('status', 'pending')
-      .or(
-        `next_retry_at.is.null,next_retry_at.lte.${new Date().toISOString()}`
-      )
+      .or(`next_retry_at.is.null,next_retry_at.lte.${new Date().toISOString()}`)
       .order('created_at', { ascending: true })
       .limit(50); // Batch de 50 max
 
@@ -258,9 +257,7 @@ async function processSyncCustomer(
     );
   }
 
-  console.log(
-    `Customer ${item.entity_id} synced to Abby: ${abbyCustomer.id}`
-  );
+  console.log(`Customer ${item.entity_id} synced to Abby: ${abbyCustomer.id}`);
 }
 
 // =====================================================================
@@ -297,7 +294,9 @@ export async function cleanupOldSyncOperations(): Promise<number> {
   const supabase = await createClient();
 
   // Appeler RPC cleanup_old_sync_operations() (migration 003)
-  const { data, error } = await supabase.rpc('cleanup_old_sync_operations' as any);
+  const { data, error } = await supabase.rpc(
+    'cleanup_old_sync_operations' as any
+  );
 
   if (error) {
     console.error('Failed to cleanup old sync operations:', error);

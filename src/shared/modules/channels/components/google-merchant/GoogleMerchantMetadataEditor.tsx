@@ -1,7 +1,11 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+
 import { FileText, Eye, AlertCircle } from 'lucide-react';
+
+import { Badge } from '@/components/ui/badge';
+import { ButtonV2 } from '@/components/ui/button';
 import {
   Dialog,
   DialogContent,
@@ -10,13 +14,11 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog';
-import { ButtonV2 } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
-import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { cn } from '@/lib/utils';
+import { Textarea } from '@/components/ui/textarea';
+import { cn } from '@verone/utils';
 
 /**
  * Props pour GoogleMerchantMetadataEditor

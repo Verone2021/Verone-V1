@@ -1,71 +1,86 @@
-"use client"
+'use client';
 
-import { Input } from '../../ui/input'
-import { Label } from '../../ui/label'
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../../ui/card'
-import { Alert, AlertDescription } from '../../ui/alert'
-import { Package, TrendingUp, TrendingDown, AlertTriangle, Info } from 'lucide-react'
-import { WizardFormData } from '../complete-product-wizard'
+import {
+  Package,
+  TrendingUp,
+  TrendingDown,
+  AlertTriangle,
+  Info,
+} from 'lucide-react';
+
+import { Alert, AlertDescription } from '../../ui/alert';
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from '../../ui/card';
+import { Input } from '../../ui/input';
+import { Label } from '../../ui/label';
+import type { WizardFormData } from '../complete-product-wizard';
 
 interface StockSectionProps {
-  formData: WizardFormData
-  setFormData: (data: WizardFormData) => void
-  onSave: () => void
+  formData: WizardFormData;
+  setFormData: (data: WizardFormData) => void;
+  onSave: () => void;
 }
 
 export function StockSection({
   formData,
   setFormData,
-  onSave
+  onSave,
 }: StockSectionProps) {
-
   const updateField = (field: keyof WizardFormData, value: any) => {
     setFormData({
       ...formData,
-      [field]: value
-    })
-  }
+      [field]: value,
+    });
+  };
 
   // Calculs de statut stock basés sur min_stock uniquement
-  const stockReal = parseInt(formData.stock_real || '0')
-  const stockMin = parseInt(formData.min_stock || '0')
-  const reorderPoint = parseInt(formData.reorder_point || '0')
-  const stockForecastedIn = parseInt(formData.stock_forecasted_in || '0')
-  const stockForecastedOut = parseInt(formData.stock_forecasted_out || '0')
+  const stockReal = parseInt(formData.stock_real || '0');
+  const stockMin = parseInt(formData.min_stock || '0');
+  const reorderPoint = parseInt(formData.reorder_point || '0');
+  const stockForecastedIn = parseInt(formData.stock_forecasted_in || '0');
+  const stockForecastedOut = parseInt(formData.stock_forecasted_out || '0');
 
   const getStockStatus = () => {
-    if (stockReal <= 0) return {
-      status: 'rupture',
-      label: 'Rupture de stock',
-      color: 'text-red-600',
-      icon: '🚨'
-    }
-    if (stockReal <= stockMin) return {
-      status: 'critique',
-      label: 'Stock critique',
-      color: 'text-black',
-      icon: '⚠️'
-    }
-    if (stockReal <= reorderPoint) return {
-      status: 'reappro',
-      label: 'À réapprovisionner',
-      color: 'text-gray-700',
-      icon: '📦'
-    }
+    if (stockReal <= 0)
+      return {
+        status: 'rupture',
+        label: 'Rupture de stock',
+        color: 'text-red-600',
+        icon: '🚨',
+      };
+    if (stockReal <= stockMin)
+      return {
+        status: 'critique',
+        label: 'Stock critique',
+        color: 'text-black',
+        icon: '⚠️',
+      };
+    if (stockReal <= reorderPoint)
+      return {
+        status: 'reappro',
+        label: 'À réapprovisionner',
+        color: 'text-gray-700',
+        icon: '📦',
+      };
     return {
       status: 'ok',
       label: 'Stock correct',
       color: 'text-green-600',
-      icon: '✅'
-    }
-  }
+      icon: '✅',
+    };
+  };
 
   // Calculer le stock disponible (réel - réservé)
-  const stockAvailable = Math.max(0, stockReal - stockForecastedOut)
+  const stockAvailable = Math.max(0, stockReal - stockForecastedOut);
   // Calculer le stock projeté (réel + entrant - sortant)
-  const stockProjected = stockReal + stockForecastedIn - stockForecastedOut
+  const stockProjected = stockReal + stockForecastedIn - stockForecastedOut;
 
-  const stockStatus = getStockStatus()
+  const stockStatus = getStockStatus();
 
   return (
     <div className="space-y-6">
@@ -84,10 +99,13 @@ export function StockSection({
           <div className="bg-gray-50 p-4 rounded-lg border-l-4 border-blue-500">
             <div className="flex items-center mb-3">
               <Info className="h-4 w-4 mr-2 text-blue-600" />
-              <h4 className="font-medium text-blue-800">Stocks calculés automatiquement</h4>
+              <h4 className="font-medium text-blue-800">
+                Stocks calculés automatiquement
+              </h4>
             </div>
             <p className="text-xs text-blue-600 mb-4">
-              Ces valeurs sont mises à jour automatiquement par les mouvements de stock, commandes et réceptions.
+              Ces valeurs sont mises à jour automatiquement par les mouvements
+              de stock, commandes et réceptions.
             </p>
 
             <div className="grid md:grid-cols-2 gap-4">
@@ -171,15 +189,21 @@ export function StockSection({
           <div className="bg-white p-4 rounded-lg border-l-4 border-green-500">
             <div className="flex items-center mb-3">
               <AlertTriangle className="h-4 w-4 mr-2 text-green-600" />
-              <h4 className="font-medium text-green-800">Paramètres configurables</h4>
+              <h4 className="font-medium text-green-800">
+                Paramètres configurables
+              </h4>
             </div>
             <p className="text-xs text-green-600 mb-4">
-              Ces seuils sont configurés par vous selon vos besoins métier et stratégie de stock.
+              Ces seuils sont configurés par vous selon vos besoins métier et
+              stratégie de stock.
             </p>
 
             <div className="grid md:grid-cols-2 gap-6">
               <div className="space-y-2">
-                <Label htmlFor="min_stock" className="flex items-center text-base font-medium">
+                <Label
+                  htmlFor="min_stock"
+                  className="flex items-center text-base font-medium"
+                >
                   <AlertTriangle className="h-4 w-4 mr-2 text-black" />
                   Stock minimum critique
                 </Label>
@@ -188,7 +212,7 @@ export function StockSection({
                   type="number"
                   min="0"
                   value={formData.min_stock}
-                  onChange={(e) => updateField('min_stock', e.target.value)}
+                  onChange={e => updateField('min_stock', e.target.value)}
                   placeholder="5"
                   className="border-gray-200 focus:border-black focus:ring-gray-500"
                 />
@@ -203,7 +227,10 @@ export function StockSection({
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="reorder_point" className="flex items-center text-base font-medium">
+                <Label
+                  htmlFor="reorder_point"
+                  className="flex items-center text-base font-medium"
+                >
                   <TrendingUp className="h-4 w-4 mr-2 text-blue-600" />
                   Point de réapprovisionnement
                 </Label>
@@ -212,13 +239,14 @@ export function StockSection({
                   type="number"
                   min="0"
                   value={formData.reorder_point}
-                  onChange={(e) => updateField('reorder_point', e.target.value)}
+                  onChange={e => updateField('reorder_point', e.target.value)}
                   placeholder="10"
                   className="border-blue-200 focus:border-blue-500 focus:ring-blue-500"
                 />
                 <div className="text-xs space-y-1">
                   <p className="text-blue-600 font-medium">
-                    📦 Seuil de récommande - Déclenche statut "À réapprovisionner"
+                    📦 Seuil de récommande - Déclenche statut "À
+                    réapprovisionner"
                   </p>
                   <p className="text-gray-500">
                     Généralement 2-3x le stock minimum selon délai fournisseur
@@ -229,12 +257,18 @@ export function StockSection({
           </div>
 
           {/* ANALYSE ET STATUT DU STOCK */}
-          {(formData.stock_real || formData.min_stock || formData.reorder_point) && (
+          {(formData.stock_real ||
+            formData.min_stock ||
+            formData.reorder_point) && (
             <Alert className="bg-slate-50 border-slate-200">
               <div className="flex items-center">
-                {stockStatus.icon && <span className="text-lg mr-2">{stockStatus.icon}</span>}
+                {stockStatus.icon && (
+                  <span className="text-lg mr-2">{stockStatus.icon}</span>
+                )}
                 <Info className="h-4 w-4 mr-2" />
-                <span className="font-medium">Analyse automatique du stock</span>
+                <span className="font-medium">
+                  Analyse automatique du stock
+                </span>
               </div>
               <AlertDescription className="mt-3">
                 <div className="space-y-3">
@@ -249,27 +283,53 @@ export function StockSection({
                   {/* Métriques détaillées */}
                   <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm bg-white p-3 rounded border">
                     <div>
-                      <div className="text-gray-600 text-xs">Stock physique</div>
+                      <div className="text-gray-600 text-xs">
+                        Stock physique
+                      </div>
                       <div className="font-semibold text-lg">{stockReal}</div>
-                      <div className="text-xs text-gray-500">unités en entrepôt</div>
+                      <div className="text-xs text-gray-500">
+                        unités en entrepôt
+                      </div>
                     </div>
                     <div>
-                      <div className="text-gray-600 text-xs">Stock disponible</div>
-                      <div className="font-semibold text-lg text-green-600">{stockAvailable}</div>
-                      <div className="text-xs text-gray-500">vendable immédiatement</div>
+                      <div className="text-gray-600 text-xs">
+                        Stock disponible
+                      </div>
+                      <div className="font-semibold text-lg text-green-600">
+                        {stockAvailable}
+                      </div>
+                      <div className="text-xs text-gray-500">
+                        vendable immédiatement
+                      </div>
                     </div>
                     <div>
                       <div className="text-gray-600 text-xs">Stock projeté</div>
-                      <div className={`font-semibold text-lg ${stockProjected > stockReal ? 'text-blue-600' : stockProjected < stockReal ? 'text-black' : 'text-gray-700'}`}>
+                      <div
+                        className={`font-semibold text-lg ${stockProjected > stockReal ? 'text-blue-600' : stockProjected < stockReal ? 'text-black' : 'text-gray-700'}`}
+                      >
                         {stockProjected}
                       </div>
-                      <div className="text-xs text-gray-500">après mouvements prévus</div>
+                      <div className="text-xs text-gray-500">
+                        après mouvements prévus
+                      </div>
                     </div>
                     <div>
-                      <div className="text-gray-600 text-xs">Seuils configurés</div>
+                      <div className="text-gray-600 text-xs">
+                        Seuils configurés
+                      </div>
                       <div className="text-sm space-y-1">
-                        <div>Min: <span className="font-medium text-black">{stockMin}</span></div>
-                        <div>Réappro: <span className="font-medium text-blue-600">{reorderPoint}</span></div>
+                        <div>
+                          Min:{' '}
+                          <span className="font-medium text-black">
+                            {stockMin}
+                          </span>
+                        </div>
+                        <div>
+                          Réappro:{' '}
+                          <span className="font-medium text-blue-600">
+                            {reorderPoint}
+                          </span>
+                        </div>
                       </div>
                     </div>
                   </div>
@@ -277,17 +337,20 @@ export function StockSection({
                   {/* Alertes et recommandations */}
                   {stockStatus.status === 'rupture' && (
                     <div className="bg-red-50 text-red-800 p-2 rounded text-xs">
-                      🚨 <strong>Action urgente requise:</strong> Stock en rupture - Réapprovisionnement prioritaire
+                      🚨 <strong>Action urgente requise:</strong> Stock en
+                      rupture - Réapprovisionnement prioritaire
                     </div>
                   )}
                   {stockStatus.status === 'critique' && (
                     <div className="bg-gray-50 text-gray-900 p-2 rounded text-xs">
-                      ⚠️ <strong>Stock critique:</strong> Niveau inférieur au minimum de sécurité ({stockMin} unités)
+                      ⚠️ <strong>Stock critique:</strong> Niveau inférieur au
+                      minimum de sécurité ({stockMin} unités)
                     </div>
                   )}
                   {stockStatus.status === 'reappro' && (
                     <div className="bg-gray-50 text-gray-900 p-2 rounded text-xs">
-                      📦 <strong>Réapprovisionnement recommandé:</strong> Stock sous le point de commande ({reorderPoint} unités)
+                      📦 <strong>Réapprovisionnement recommandé:</strong> Stock
+                      sous le point de commande ({reorderPoint} unités)
                     </div>
                   )}
                 </div>
@@ -312,8 +375,8 @@ export function StockSection({
                 Point de réapprovisionnement
               </div>
               <div className="text-xs text-blue-600">
-                Définissez-le selon le délai fournisseur et la consommation moyenne.
-                Généralement 2-3 fois le stock minimum.
+                Définissez-le selon le délai fournisseur et la consommation
+                moyenne. Généralement 2-3 fois le stock minimum.
               </div>
             </div>
 
@@ -322,8 +385,8 @@ export function StockSection({
                 Stock minimum critique
               </div>
               <div className="text-xs text-black">
-                Correspond au stock de sécurité pour éviter les ruptures.
-                Basé sur la variabilité de la demande.
+                Correspond au stock de sécurité pour éviter les ruptures. Basé
+                sur la variabilité de la demande.
               </div>
             </div>
 
@@ -332,8 +395,8 @@ export function StockSection({
                 Stock prévisionnel
               </div>
               <div className="text-xs text-green-600">
-                Utilisé pour calculer le stock disponible réel et anticiper les besoins.
-                Mis à jour automatiquement par les commandes.
+                Utilisé pour calculer le stock disponible réel et anticiper les
+                besoins. Mis à jour automatiquement par les commandes.
               </div>
             </div>
 
@@ -342,13 +405,13 @@ export function StockSection({
                 Optimisation
               </div>
               <div className="text-xs text-purple-600">
-                Analysez régulièrement les mouvements pour ajuster les seuils
-                et optimiser le niveau de stock.
+                Analysez régulièrement les mouvements pour ajuster les seuils et
+                optimiser le niveau de stock.
               </div>
             </div>
           </div>
         </CardContent>
       </Card>
     </div>
-  )
+  );
 }

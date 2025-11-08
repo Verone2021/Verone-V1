@@ -11,11 +11,11 @@ Best Practices : Développeurs Seniors 2025
 
 3 scripts TypeScript pour garantir **qualité et cohérence** du code Vérone :
 
-| Script | Objectif | Sévérité | Temps |
-|--------|----------|----------|-------|
-| `check-db-type-alignment.ts` | Types DB/Frontend alignés | ❌ Bloquant | ~2s |
-| `check-duplicate-hooks.ts` | Pas de hooks dupliqués | ⚠️ Warning | ~3s |
-| `check-naming-consistency.ts` | Conventions nommage | ❌ Bloquant | ~2s |
+| Script                        | Objectif                  | Sévérité    | Temps |
+| ----------------------------- | ------------------------- | ----------- | ----- |
+| `check-db-type-alignment.ts`  | Types DB/Frontend alignés | ❌ Bloquant | ~2s   |
+| `check-duplicate-hooks.ts`    | Pas de hooks dupliqués    | ⚠️ Warning  | ~3s   |
+| `check-naming-consistency.ts` | Conventions nommage       | ❌ Bloquant | ~2s   |
 
 **Total validation** : ~7s (bloque commit si erreurs)
 
@@ -55,6 +55,7 @@ node scripts/validation/check-naming-consistency.ts --staged
 ### Automatique (Git Hooks)
 
 **Pre-commit hook** (`.husky/pre-commit`) :
+
 - ✅ Type check
 - ✅ Lint staged files
 - ✅ Naming conventions (staged)
@@ -70,10 +71,10 @@ node scripts/validation/check-naming-consistency.ts --staged
 
 ### Détections
 
-| Anti-Pattern | Sévérité | Message |
-|--------------|----------|---------|
-| `type Product = { id: string }` | ❌ Error | Utiliser `Database["public"]["Tables"]["products"]["Row"]` |
-| `interface Order { ... }` | ❌ Error | Utiliser types Database générés |
+| Anti-Pattern                    | Sévérité   | Message                                                               |
+| ------------------------------- | ---------- | --------------------------------------------------------------------- |
+| `type Product = { id: string }` | ❌ Error   | Utiliser `Database["public"]["Tables"]["products"]["Row"]`            |
+| `interface Order { ... }`       | ❌ Error   | Utiliser types Database générés                                       |
 | `.from('products')` (sans type) | ⚠️ Warning | Ajouter `.from<Database["public"]["Tables"]["products"]["Row"]>(...)` |
 
 ### Best Practices
@@ -130,15 +131,16 @@ const { data } = await supabase
 
 ### Détections
 
-| Type | Sévérité | Exemple |
-|------|----------|---------|
-| Noms similaires | ❌ Error | `use-organizations.ts` vs `use-organisations.ts` |
-| Même table Supabase | ⚠️ Warning | 3 hooks accèdent `products` |
-| Hook non utilisé | ℹ️ Info | 0 imports dans codebase |
+| Type                | Sévérité   | Exemple                                          |
+| ------------------- | ---------- | ------------------------------------------------ |
+| Noms similaires     | ❌ Error   | `use-organizations.ts` vs `use-organisations.ts` |
+| Même table Supabase | ⚠️ Warning | 3 hooks accèdent `products`                      |
+| Hook non utilisé    | ℹ️ Info    | 0 imports dans codebase                          |
 
 ### Analyse
 
 Pour chaque hook, extrait :
+
 - **Tables** : `.from('products')`
 - **Queries** : `.select()`, `.insert()`, etc.
 - **Exports** : Fonctions exportées
@@ -215,15 +217,15 @@ export function useCatalogue() {
 
 ### Conventions
 
-| Type | Convention | Exemple Valid | Exemple Invalid |
-|------|-----------|---------------|-----------------|
-| **Hooks** | `use-{domain}.ts` | `use-products.ts` | `products-hook.ts` |
-| **Components** | `{name}.tsx` | `product-card.tsx` | `ProductCard.tsx` |
-| **Types** | `PascalCase` | `Product`, `OrderItem` | `product`, `order_item` |
-| **Functions** | `camelCase` | `calculatePrice` | `calculate_price` |
-| **Variables** | `camelCase` ou `UPPER_CASE` | `productPrice`, `MAX_RETRIES` | `product_price` |
-| **DB Tables** | `snake_case` | `products`, `sales_orders` | `Products` |
-| **Enums** | `snake_case_type` | `user_role_type` | `UserRole` |
+| Type           | Convention                  | Exemple Valid                 | Exemple Invalid         |
+| -------------- | --------------------------- | ----------------------------- | ----------------------- |
+| **Hooks**      | `use-{domain}.ts`           | `use-products.ts`             | `products-hook.ts`      |
+| **Components** | `{name}.tsx`                | `product-card.tsx`            | `ProductCard.tsx`       |
+| **Types**      | `PascalCase`                | `Product`, `OrderItem`        | `product`, `order_item` |
+| **Functions**  | `camelCase`                 | `calculatePrice`              | `calculate_price`       |
+| **Variables**  | `camelCase` ou `UPPER_CASE` | `productPrice`, `MAX_RETRIES` | `product_price`         |
+| **DB Tables**  | `snake_case`                | `products`, `sales_orders`    | `Products`              |
+| **Enums**      | `snake_case_type`           | `user_role_type`              | `UserRole`              |
 
 ### Détections
 
@@ -330,10 +332,10 @@ npm run lint:strict:fix   # Auto-fix
 
 ## 🎯 Exit Codes
 
-| Code | Signification |
-|------|---------------|
-| `0` | ✅ Validation réussie |
-| `1` | ❌ Erreurs détectées (bloque commit) |
+| Code | Signification                        |
+| ---- | ------------------------------------ |
+| `0`  | ✅ Validation réussie                |
+| `1`  | ❌ Erreurs détectées (bloque commit) |
 
 ---
 

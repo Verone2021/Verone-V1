@@ -28,7 +28,7 @@ import { PageHeader } from '@/components/layout/page-header';
 import { Badge } from '@/components/ui/badge';
 import { ButtonV2 } from '@/components/ui/button';
 import { KPICardUnified } from '@/components/ui/kpi-card-unified';
-import { cn } from '@/lib/utils';
+import { cn } from '@verone/utils';
 import { CategoryFilterCombobox } from '@/shared/modules/categories/components/filters/CategoryFilterCombobox';
 import { useToast } from '@/shared/modules/common/hooks';
 import { VariantAddProductModal } from '@/shared/modules/products/components/modals/VariantAddProductModal';

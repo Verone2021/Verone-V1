@@ -1,2 +1,6 @@
 // Re-export from shared modules for backward compatibility
-export { CustomerSelector } from '@/shared/modules/orders/components/modals/customer-selector'
+export {
+  CustomerSelector,
+  type UnifiedCustomer,
+  type CustomerType,
+} from '@/shared/modules/orders/components/modals/customer-selector';

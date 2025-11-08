@@ -11,6 +11,7 @@
 Le module **Collections** permet de regrouper des produits dans des collections thématiques pour faciliter la présentation et la vente groupée.
 
 **Use cases** :
+
 - Collections saisonnières (Été 2025, Noël, etc.)
 - Collections par style (Vintage, Moderne, Scandinave)
 - Collections par pièce (Salon, Chambre, Bureau)
@@ -68,6 +69,7 @@ CREATE TABLE collections (
 ```
 
 **Colonnes clés** :
+
 - `name` : Nom collection (unique)
 - `slug` : URL-friendly identifier
 - `image_url` : Image principale collection
@@ -88,6 +90,7 @@ CREATE TABLE collection_products (
 ```
 
 **Colonnes clés** :
+
 - `collection_id` : FK vers collections
 - `product_id` : FK vers products
 - `display_order` : Ordre produit dans collection
@@ -103,20 +106,23 @@ Hook principal CRUD collections avec filtres.
 
 ```typescript
 interface CollectionFilters {
-  search?: string
-  is_active?: boolean
-  archived?: boolean
+  search?: string;
+  is_active?: boolean;
+  archived?: boolean;
 }
 
 function useCollections(filters?: CollectionFilters): {
-  collections: Collection[]
-  loading: boolean
-  error: string | null
-  createCollection: (data: CreateCollectionData) => Promise<Collection | null>
-  updateCollection: (id: string, data: UpdateCollectionData) => Promise<Collection | null>
-  deleteCollection: (id: string) => Promise<boolean>
-  refetch: () => void
-}
+  collections: Collection[];
+  loading: boolean;
+  error: string | null;
+  createCollection: (data: CreateCollectionData) => Promise<Collection | null>;
+  updateCollection: (
+    id: string,
+    data: UpdateCollectionData
+  ) => Promise<Collection | null>;
+  deleteCollection: (id: string) => Promise<boolean>;
+  refetch: () => void;
+};
 ```
 
 ### `useCollection(id)`
@@ -125,14 +131,14 @@ Hook détail collection unique avec produits.
 
 ```typescript
 function useCollection(id: string): {
-  collection: Collection | null
-  products: Product[]
-  loading: boolean
-  error: string | null
-  addProduct: (productId: string) => Promise<boolean>
-  removeProduct: (productId: string) => Promise<boolean>
-  reorderProducts: (productIds: string[]) => Promise<boolean>
-}
+  collection: Collection | null;
+  products: Product[];
+  loading: boolean;
+  error: string | null;
+  addProduct: (productId: string) => Promise<boolean>;
+  removeProduct: (productId: string) => Promise<boolean>;
+  reorderProducts: (productIds: string[]) => Promise<boolean>;
+};
 ```
 
 ### `useCollectionProducts(collectionId)`
@@ -141,12 +147,12 @@ Hook gestion produits d'une collection.
 
 ```typescript
 function useCollectionProducts(collectionId: string): {
-  products: Product[]
-  loading: boolean
-  addProducts: (productIds: string[]) => Promise<boolean>
-  removeProduct: (productId: string) => Promise<boolean>
-  updateDisplayOrder: (productId: string, order: number) => Promise<boolean>
-}
+  products: Product[];
+  loading: boolean;
+  addProducts: (productIds: string[]) => Promise<boolean>;
+  removeProduct: (productId: string) => Promise<boolean>;
+  updateDisplayOrder: (productId: string, order: number) => Promise<boolean>;
+};
 ```
 
 ---
@@ -159,8 +165,8 @@ Grille affichage collections avec cards.
 
 ```typescript
 interface CollectionGridProps {
-  collections: Collection[]
-  onSelect?: (collection: Collection) => void
+  collections: Collection[];
+  onSelect?: (collection: Collection) => void;
 }
 ```
 
@@ -170,8 +176,8 @@ Wizard création collection (nom, description, image).
 
 ```typescript
 interface CollectionCreationWizardProps {
-  onSuccess?: (collectionId: string) => void
-  onCancel?: () => void
+  onSuccess?: (collectionId: string) => void;
+  onCancel?: () => void;
 }
 ```
 
@@ -181,9 +187,9 @@ Modal gestion produits dans collection (ajout, retrait, réorganisation).
 
 ```typescript
 interface CollectionProductsManagerModalProps {
-  open: boolean
-  onClose: () => void
-  collectionId: string
+  open: boolean;
+  onClose: () => void;
+  collectionId: string;
 }
 ```
 

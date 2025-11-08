@@ -36,19 +36,20 @@
  * }
  */
 
-'use client'
+'use client';
 
-import { useEffect, useState } from 'react'
-import { createClient } from '@/lib/supabase/client'
-import { useToast } from '@/shared/modules/common/hooks'
+import { useEffect, useState } from 'react';
+
 import {
   useStockCore,
   type UseStockCoreReturn,
   type CreateMovementParams,
   type MovementFilters,
   type StockMovement,
-  type StockItem
-} from '@/hooks/core/use-stock-core'
+  type StockItem,
+} from '@/hooks/core/use-stock-core';
+import { createClient } from '@/lib/supabase/client';
+import { useToast } from '@/shared/modules/common/hooks';
 
 // ============================================================================
 // TYPES & INTERFACES
@@ -58,25 +59,31 @@ import {
  * Configuration hook UI (simplifié vs use-stock-core)
  */
 export interface UseStockUIConfig {
-  channelId?: string | null  // Canal vente actif (optional, auto-injecté si OUT sale)
-  autoLoad?: boolean         // Charger stocks automatiquement au montage (default: true)
-  initialFilters?: MovementFilters  // Filtres initiaux mouvements
+  channelId?: string | null; // Canal vente actif (optional, auto-injecté si OUT sale)
+  autoLoad?: boolean; // Charger stocks automatiquement au montage (default: true)
+  initialFilters?: MovementFilters; // Filtres initiaux mouvements
 }
 
 /**
  * API retournée par hook UI (extend use-stock-core avec toast)
  */
-export interface UseStockUIReturn extends Omit<UseStockCoreReturn, 'createMovement'> {
+export interface UseStockUIReturn
+  extends Omit<UseStockCoreReturn, 'createMovement'> {
   // Override avec toast notifications
-  createMovement: (params: CreateMovementParams) => Promise<StockMovement | null>
+  createMovement: (
+    params: CreateMovementParams
+  ) => Promise<StockMovement | null>;
 
   // Méthodes UI avec toast
-  createMovementWithToast: (params: CreateMovementParams, successMessage?: string) => Promise<StockMovement | null>
+  createMovementWithToast: (
+    params: CreateMovementParams,
+    successMessage?: string
+  ) => Promise<StockMovement | null>;
 
   // États UI enrichis
-  isAuthenticated: boolean
-  userId: string | null
-  currentChannel: { id: string; name: string } | null
+  isAuthenticated: boolean;
+  userId: string | null;
+  currentChannel: { id: string; name: string } | null;
 }
 
 // ============================================================================
@@ -84,18 +91,17 @@ export interface UseStockUIReturn extends Omit<UseStockCoreReturn, 'createMoveme
 // ============================================================================
 
 export function useStockUI(config: UseStockUIConfig = {}): UseStockUIReturn {
-  const {
-    channelId = null,
-    autoLoad = true,
-    initialFilters
-  } = config
+  const { channelId = null, autoLoad = true, initialFilters } = config;
 
-  const { toast } = useToast()
-  const supabase = createClient()
+  const { toast } = useToast();
+  const supabase = createClient();
 
-  const [userId, setUserId] = useState<string | null>(null)
-  const [isAuthenticated, setIsAuthenticated] = useState(false)
-  const [currentChannel, setCurrentChannel] = useState<{ id: string; name: string } | null>(null)
+  const [userId, setUserId] = useState<string | null>(null);
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [currentChannel, setCurrentChannel] = useState<{
+    id: string;
+    name: string;
+  } | null>(null);
 
   // =========================================================================
   // AUTHENTIFICATION & SESSION
@@ -107,40 +113,43 @@ export function useStockUI(config: UseStockUIConfig = {}): UseStockUIReturn {
   useEffect(() => {
     const getUser = async () => {
       try {
-        const { data: { user }, error } = await supabase.auth.getUser()
+        const {
+          data: { user },
+          error,
+        } = await supabase.auth.getUser();
 
         if (error) {
-          console.error('❌ [useStockUI] Erreur auth:', error)
-          setIsAuthenticated(false)
-          setUserId(null)
-          return
+          console.error('❌ [useStockUI] Erreur auth:', error);
+          setIsAuthenticated(false);
+          setUserId(null);
+          return;
         }
 
         if (user) {
-          setUserId(user.id)
-          setIsAuthenticated(true)
-          console.log('✅ [useStockUI] Auth OK, user:', user.id)
+          setUserId(user.id);
+          setIsAuthenticated(true);
+          console.log('✅ [useStockUI] Auth OK, user:', user.id);
         } else {
-          setIsAuthenticated(false)
-          setUserId(null)
+          setIsAuthenticated(false);
+          setUserId(null);
         }
       } catch (err) {
-        console.error('❌ [useStockUI] Exception auth:', err)
-        setIsAuthenticated(false)
-        setUserId(null)
+        console.error('❌ [useStockUI] Exception auth:', err);
+        setIsAuthenticated(false);
+        setUserId(null);
       }
-    }
+    };
 
-    getUser()
-  }, [supabase])
+    getUser();
+  }, [supabase]);
 
   /**
    * Récupérer infos canal si channelId fourni
    */
   useEffect(() => {
     if (!channelId) {
-      setCurrentChannel(null)
-      return
+      setCurrentChannel(null);
+      return;
     }
 
     const fetchChannel = async () => {
@@ -149,22 +158,24 @@ export function useStockUI(config: UseStockUIConfig = {}): UseStockUIReturn {
           .from('sales_channels')
           .select('id, name, code')
           .eq('id', channelId)
-          .single()
+          .single();
 
-        if (error) throw error
+        if (error) throw error;
 
         if (data) {
-          setCurrentChannel({ id: data.id, name: data.name })
-          console.log(`✅ [useStockUI] Canal actif: ${data.name} (${data.code})`)
+          setCurrentChannel({ id: data.id, name: data.name });
+          console.log(
+            `✅ [useStockUI] Canal actif: ${data.name} (${data.code})`
+          );
         }
       } catch (err) {
-        console.error('❌ [useStockUI] Erreur fetch canal:', err)
-        setCurrentChannel(null)
+        console.error('❌ [useStockUI] Erreur fetch canal:', err);
+        setCurrentChannel(null);
       }
-    }
+    };
 
-    fetchChannel()
-  }, [channelId, supabase])
+    fetchChannel();
+  }, [channelId, supabase]);
 
   // =========================================================================
   // HOOK CORE avec Dependency Injection
@@ -173,8 +184,8 @@ export function useStockUI(config: UseStockUIConfig = {}): UseStockUIReturn {
   const stockCore = useStockCore({
     supabase,
     channelId,
-    userId: userId || 'anonymous'  // Fallback si pas auth
-  })
+    userId: userId || 'anonymous', // Fallback si pas auth
+  });
 
   // =========================================================================
   // CHARGEMENT AUTO AU MONTAGE
@@ -182,22 +193,22 @@ export function useStockUI(config: UseStockUIConfig = {}): UseStockUIReturn {
 
   useEffect(() => {
     if (autoLoad && isAuthenticated) {
-      console.log('🔄 [useStockUI] Auto-load stocks au montage')
+      console.log('🔄 [useStockUI] Auto-load stocks au montage');
 
       // Charger stocks + mouvements initiaux
       Promise.all([
         stockCore.getStockItems({ archived: false }),
-        stockCore.getMovements(initialFilters || { limit: 100 })
+        stockCore.getMovements(initialFilters || { limit: 100 }),
       ]).catch(err => {
-        console.error('❌ [useStockUI] Erreur auto-load:', err)
+        console.error('❌ [useStockUI] Erreur auto-load:', err);
         toast({
           variant: 'destructive',
           title: 'Erreur chargement',
-          description: 'Impossible de charger les données stock'
-        })
-      })
+          description: 'Impossible de charger les données stock',
+        });
+      });
     }
-  }, [autoLoad, isAuthenticated, initialFilters])
+  }, [autoLoad, isAuthenticated, initialFilters]);
 
   // =========================================================================
   // MÉTHODES UI avec TOAST NOTIFICATIONS
@@ -206,9 +217,11 @@ export function useStockUI(config: UseStockUIConfig = {}): UseStockUIReturn {
   /**
    * Créer mouvement avec toast automatique
    */
-  const createMovement = async (params: CreateMovementParams): Promise<StockMovement | null> => {
-    return createMovementWithToast(params)
-  }
+  const createMovement = async (
+    params: CreateMovementParams
+  ): Promise<StockMovement | null> => {
+    return createMovementWithToast(params);
+  };
 
   /**
    * Créer mouvement avec toast custom
@@ -221,35 +234,38 @@ export function useStockUI(config: UseStockUIConfig = {}): UseStockUIReturn {
       toast({
         variant: 'destructive',
         title: 'Non authentifié',
-        description: 'Vous devez être connecté pour créer un mouvement stock'
-      })
-      return null
+        description: 'Vous devez être connecté pour créer un mouvement stock',
+      });
+      return null;
     }
 
     try {
-      const movement = await stockCore.createMovement(params)
+      const movement = await stockCore.createMovement(params);
 
       // Toast succès
       toast({
         variant: 'success',
         title: '✅ Mouvement créé',
-        description: successMessage || `${params.movement_type} de ${Math.abs(params.quantity_change)} unités`
-      })
+        description:
+          successMessage ||
+          `${params.movement_type} de ${Math.abs(params.quantity_change)} unités`,
+      });
 
-      return movement
+      return movement;
     } catch (err) {
-      console.error('❌ [useStockUI] Erreur création mouvement:', err)
+      console.error('❌ [useStockUI] Erreur création mouvement:', err);
 
       // Toast erreur
       toast({
         variant: 'destructive',
         title: 'Erreur création mouvement',
-        description: err instanceof Error ? err.message : 'Une erreur est survenue'
-      })
+        description:
+          err instanceof Error ? err.message : 'Une erreur est survenue',
+      });
 
-      return null
+      return null;
     }
-  }
+  };
 
   // =========================================================================
   // RETURN API UI
@@ -266,8 +282,8 @@ export function useStockUI(config: UseStockUIConfig = {}): UseStockUIReturn {
     // États UI enrichis
     isAuthenticated,
     userId,
-    currentChannel
-  }
+    currentChannel,
+  };
 }
 
 // ============================================================================
@@ -283,5 +299,5 @@ export type {
   MovementType,
   ReferenceType,
   ReasonCode,
-  ForecastType
-} from '@/hooks/core/use-stock-core'
+  ForecastType,
+} from '@/hooks/core/use-stock-core';

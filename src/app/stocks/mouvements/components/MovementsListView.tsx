@@ -6,18 +6,19 @@
  * @since Phase 3.4.4 - 2025-10-31
  */
 
-'use client'
+'use client';
 
-import { StockMovementCard } from '@/components/ui-v2/stock'
-import type { MovementWithDetails } from '@/shared/modules/stock/hooks'
-import type { StockMovementCardProps } from '@/components/ui-v2/stock/StockMovementCard'
-import { Clock } from 'lucide-react'
+import { Clock } from 'lucide-react';
+
+import { StockMovementCard } from '@/components/ui-v2/stock';
+import type { StockMovementCardProps } from '@/components/ui-v2/stock/StockMovementCard';
+import type { MovementWithDetails } from '@/shared/modules/stock/hooks';
 
 interface MovementsListViewProps {
-  movements: MovementWithDetails[]
-  loading?: boolean
-  emptyMessage?: string
-  selectedChannel?: string | null
+  movements: MovementWithDetails[];
+  loading?: boolean;
+  emptyMessage?: string;
+  selectedChannel?: string | null;
 }
 
 /**
@@ -25,7 +26,9 @@ interface MovementsListViewProps {
  *
  * Transforme les données du hook vers le format attendu par StockMovementCard
  */
-function mapMovementToCard(movement: MovementWithDetails): StockMovementCardProps {
+function mapMovementToCard(
+  movement: MovementWithDetails
+): StockMovementCardProps {
   return {
     movement: {
       id: movement.id,
@@ -38,17 +41,19 @@ function mapMovementToCard(movement: MovementWithDetails): StockMovementCardProp
       products: {
         name: movement.product_name || 'Produit inconnu',
         sku: movement.product_sku || 'SKU inconnu',
-        image_url: movement.product_image_url || null  // ✅ NOUVEAU - Image produit
+        image_url: movement.product_image_url || null, // ✅ NOUVEAU - Image produit
       },
 
       // 🆕 Phase 3.4.4: Mapping canal depuis JOIN
       channel_id: movement.channel_id || null,
-      sales_channels: movement.channel_name ? {
-        name: movement.channel_name,
-        code: movement.channel_code || ''
-      } : null
-    }
-  }
+      sales_channels: movement.channel_name
+        ? {
+            name: movement.channel_name,
+            code: movement.channel_code || '',
+          }
+        : null,
+    },
+  };
 }
 
 /**
@@ -61,7 +66,7 @@ export function MovementsListView({
   movements,
   loading = false,
   emptyMessage = 'Aucun mouvement trouvé',
-  selectedChannel = null
+  selectedChannel = null,
 }: MovementsListViewProps) {
   // Empty state
   if (!loading && movements.length === 0) {
@@ -69,13 +74,10 @@ export function MovementsListView({
       <div className="flex flex-col items-center justify-center py-12 text-center">
         <Clock className="h-16 w-16 text-gray-300 mb-4" />
         <p className="text-sm text-gray-500">
-          {selectedChannel
-            ? 'Aucun mouvement pour ce canal'
-            : emptyMessage
-          }
+          {selectedChannel ? 'Aucun mouvement pour ce canal' : emptyMessage}
         </p>
       </div>
-    )
+    );
   }
 
   // Loading state
@@ -89,18 +91,15 @@ export function MovementsListView({
           />
         ))}
       </div>
-    )
+    );
   }
 
   // Grid responsive de cards
   return (
     <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
-      {movements.map((movement) => (
-        <StockMovementCard
-          key={movement.id}
-          {...mapMovementToCard(movement)}
-        />
+      {movements.map(movement => (
+        <StockMovementCard key={movement.id} {...mapMovementToCard(movement)} />
       ))}
     </div>
-  )
+  );
 }

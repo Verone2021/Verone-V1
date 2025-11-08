@@ -9,11 +9,11 @@
 
 'use client';
 
-import { useSupabaseQuery, type QueryOptions } from './use-supabase-query';
 import {
   useSupabaseMutation,
   type MutationOptions,
 } from './use-supabase-mutation';
+import { useSupabaseQuery, type QueryOptions } from './use-supabase-query';
 
 export interface CRUDOptions<T> extends QueryOptions<T>, MutationOptions<T> {}
 

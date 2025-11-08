@@ -1,7 +1,9 @@
 'use client';
 
 import { useState } from 'react';
+
 import Link from 'next/link';
+
 import {
   MoreVertical,
   Edit,
@@ -16,8 +18,10 @@ import {
   XCircle,
   BarChart,
 } from 'lucide-react';
-import { Card, CardContent } from '@/components/ui/card';
+
 import { Badge } from '@/components/ui/badge';
+import { ButtonV2 } from '@/components/ui/button';
+import { Card, CardContent } from '@/components/ui/card';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -25,11 +29,10 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-import { ButtonV2 } from '@/components/ui/button';
-import { ProductThumbnail } from '@/components/business/product-thumbnail';
-import { GoogleMerchantPriceEditor } from '@/components/business/google-merchant-price-editor';
-import { GoogleMerchantMetadataEditor } from '@/components/business/google-merchant-metadata-editor';
-import { cn } from '@/lib/utils';
+import { cn } from '@verone/utils';
+import { GoogleMerchantMetadataEditor } from '@/shared/modules/channels/components/google-merchant/GoogleMerchantMetadataEditor';
+import { GoogleMerchantPriceEditor } from '@/shared/modules/channels/components/google-merchant/GoogleMerchantPriceEditor';
+import { ProductThumbnail } from '@/shared/modules/products/components/images/ProductThumbnail';
 
 /**
  * Produit Google Merchant (simplifié pour card)

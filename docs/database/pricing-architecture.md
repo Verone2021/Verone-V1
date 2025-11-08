@@ -11,6 +11,7 @@
 ### Principe Architectural
 
 **Séparation Prix / Produits** :
+
 ```
 products (données produit)
   ↓ NO direct price columns
@@ -23,6 +24,7 @@ price_list_items (tous les prix)
 ```
 
 **Avantages** :
+
 - ✅ Pricing multi-canal (prix différents par canal/client)
 - ✅ Historique prix (versioning via price_list_history)
 - ✅ Flexibilité promos/tarifs spéciaux
@@ -37,31 +39,32 @@ price_list_items (tous les prix)
 
 **Colonnes (21 au total)** :
 
-| Colonne | Type | Nullable | Default | Description |
-|---------|------|----------|---------|-------------|
-| `id` | uuid | NO | gen_random_uuid() | PK |
-| `price_list_id` | uuid | NO | - | FK vers price_lists.id (canal pricing) |
-| `product_id` | uuid | NO | - | FK vers products.id |
-| `price_ht` | numeric | NO | - | **Prix vente HT (obligatoire)** |
-| `cost_price` | numeric | YES | - | Prix achat fournisseur (optionnel) |
-| `suggested_retail_price` | numeric | YES | - | Prix conseillé public (optionnel) |
-| `min_quantity` | integer | YES | 1 | Quantité minimum pour ce prix |
-| `max_quantity` | integer | YES | - | Quantité maximum (NULL = illimité) |
-| `currency` | varchar | YES | - | Devise (EUR par défaut si NULL) |
-| `discount_rate` | numeric | YES | - | Taux remise (%) |
-| `margin_rate` | numeric | YES | - | Taux marge (%) |
-| `valid_from` | date | YES | - | Date début validité |
-| `valid_until` | date | YES | - | Date fin validité |
-| `is_active` | boolean | YES | true | Actif/Inactif |
-| `notes` | text | YES | - | Notes internes |
-| `tags` | text[] | YES | - | Tags pour filtrage |
-| `attributes` | jsonb | YES | '{}' | Attributs custom JSON |
-| `created_at` | timestamptz | YES | now() | Date création |
-| `updated_at` | timestamptz | YES | now() | Date modification |
-| `created_by` | uuid | YES | - | Utilisateur créateur |
-| `updated_by` | uuid | YES | - | Utilisateur modificateur |
+| Colonne                  | Type        | Nullable | Default           | Description                            |
+| ------------------------ | ----------- | -------- | ----------------- | -------------------------------------- |
+| `id`                     | uuid        | NO       | gen_random_uuid() | PK                                     |
+| `price_list_id`          | uuid        | NO       | -                 | FK vers price_lists.id (canal pricing) |
+| `product_id`             | uuid        | NO       | -                 | FK vers products.id                    |
+| `price_ht`               | numeric     | NO       | -                 | **Prix vente HT (obligatoire)**        |
+| `cost_price`             | numeric     | YES      | -                 | Prix achat fournisseur (optionnel)     |
+| `suggested_retail_price` | numeric     | YES      | -                 | Prix conseillé public (optionnel)      |
+| `min_quantity`           | integer     | YES      | 1                 | Quantité minimum pour ce prix          |
+| `max_quantity`           | integer     | YES      | -                 | Quantité maximum (NULL = illimité)     |
+| `currency`               | varchar     | YES      | -                 | Devise (EUR par défaut si NULL)        |
+| `discount_rate`          | numeric     | YES      | -                 | Taux remise (%)                        |
+| `margin_rate`            | numeric     | YES      | -                 | Taux marge (%)                         |
+| `valid_from`             | date        | YES      | -                 | Date début validité                    |
+| `valid_until`            | date        | YES      | -                 | Date fin validité                      |
+| `is_active`              | boolean     | YES      | true              | Actif/Inactif                          |
+| `notes`                  | text        | YES      | -                 | Notes internes                         |
+| `tags`                   | text[]      | YES      | -                 | Tags pour filtrage                     |
+| `attributes`             | jsonb       | YES      | '{}'              | Attributs custom JSON                  |
+| `created_at`             | timestamptz | YES      | now()             | Date création                          |
+| `updated_at`             | timestamptz | YES      | now()             | Date modification                      |
+| `created_by`             | uuid        | YES      | -                 | Utilisateur créateur                   |
+| `updated_by`             | uuid        | YES      | -                 | Utilisateur modificateur               |
 
 **Foreign Keys** :
+
 ```sql
 price_list_items_price_list_id_fkey
   → price_lists(id) ON DELETE CASCADE
@@ -71,6 +74,7 @@ price_list_items_product_id_fkey
 ```
 
 **Indexes (9 au total)** :
+
 ```sql
 -- Index primaire
 price_list_items_pkey (id) UNIQUE
@@ -101,36 +105,36 @@ idx_price_items_context_lookup
 
 **Colonnes (18 au total)** :
 
-| Colonne | Type | Nullable | Default | Description |
-|---------|------|----------|---------|-------------|
-| `id` | uuid | NO | gen_random_uuid() | PK |
-| `code` | varchar | NO | - | Code unique (ex: B2B_STANDARD_2025) |
-| `name` | varchar | NO | - | Nom affichage |
-| `description` | text | YES | - | Description liste prix |
-| `list_type` | varchar | NO | - | Type: 'base', 'channel', 'customer', 'group' |
-| `priority` | integer | NO | 100 | Priorité calcul (plus bas = priorité haute) |
-| `currency` | varchar | YES | 'EUR' | Devise par défaut |
-| `includes_tax` | boolean | YES | false | Prix TTC ou HT |
-| `valid_from` | date | YES | - | Date début validité |
-| `valid_until` | date | YES | - | Date fin validité |
-| `is_active` | boolean | YES | true | Actif/Inactif |
-| `requires_approval` | boolean | YES | false | Nécessite validation |
-| `config` | jsonb | YES | '{}' | Configuration JSON |
-| `product_count` | integer | YES | 0 | Nombre produits (dénormalisé) |
-| `created_at` | timestamptz | YES | now() | Date création |
-| `updated_at` | timestamptz | YES | now() | Date modification |
-| `created_by` | uuid | YES | - | Utilisateur créateur |
-| `updated_by` | uuid | YES | - | Utilisateur modificateur |
+| Colonne             | Type        | Nullable | Default           | Description                                  |
+| ------------------- | ----------- | -------- | ----------------- | -------------------------------------------- |
+| `id`                | uuid        | NO       | gen_random_uuid() | PK                                           |
+| `code`              | varchar     | NO       | -                 | Code unique (ex: B2B_STANDARD_2025)          |
+| `name`              | varchar     | NO       | -                 | Nom affichage                                |
+| `description`       | text        | YES      | -                 | Description liste prix                       |
+| `list_type`         | varchar     | NO       | -                 | Type: 'base', 'channel', 'customer', 'group' |
+| `priority`          | integer     | NO       | 100               | Priorité calcul (plus bas = priorité haute)  |
+| `currency`          | varchar     | YES      | 'EUR'             | Devise par défaut                            |
+| `includes_tax`      | boolean     | YES      | false             | Prix TTC ou HT                               |
+| `valid_from`        | date        | YES      | -                 | Date début validité                          |
+| `valid_until`       | date        | YES      | -                 | Date fin validité                            |
+| `is_active`         | boolean     | YES      | true              | Actif/Inactif                                |
+| `requires_approval` | boolean     | YES      | false             | Nécessite validation                         |
+| `config`            | jsonb       | YES      | '{}'              | Configuration JSON                           |
+| `product_count`     | integer     | YES      | 0                 | Nombre produits (dénormalisé)                |
+| `created_at`        | timestamptz | YES      | now()             | Date création                                |
+| `updated_at`        | timestamptz | YES      | now()             | Date modification                            |
+| `created_by`        | uuid        | YES      | -                 | Utilisateur créateur                         |
+| `updated_by`        | uuid        | YES      | -                 | Utilisateur modificateur                     |
 
 **Canaux configurés (au 2025-10-17)** :
 
-| ID | Code | Name | Type | Active | Produits |
-|----|------|------|------|--------|----------|
-| `b379b981...` | CATALOG_BASE_2025 | Catalogue Base 2025 | base | ✅ | 16 |
-| `06c85627...` | B2B_STANDARD_2025 | B2B Standard 2025 | channel | ✅ | 16 |
-| `9e13c06d...` | WHOLESALE_STANDARD_2025 | Wholesale Standard 2025 | channel | ✅ | 16 |
-| `15166345...` | RETAIL_STANDARD_2025 | Retail Standard 2025 | channel | ✅ | 0 |
-| `dd9eee15...` | ECOMMERCE_STANDARD_2025 | E-Commerce Standard 2025 | channel | ✅ | 0 |
+| ID            | Code                    | Name                     | Type    | Active | Produits |
+| ------------- | ----------------------- | ------------------------ | ------- | ------ | -------- |
+| `b379b981...` | CATALOG_BASE_2025       | Catalogue Base 2025      | base    | ✅     | 16       |
+| `06c85627...` | B2B_STANDARD_2025       | B2B Standard 2025        | channel | ✅     | 16       |
+| `9e13c06d...` | WHOLESALE_STANDARD_2025 | Wholesale Standard 2025  | channel | ✅     | 16       |
+| `15166345...` | RETAIL_STANDARD_2025    | Retail Standard 2025     | channel | ✅     | 0        |
+| `dd9eee15...` | ECOMMERCE_STANDARD_2025 | E-Commerce Standard 2025 | channel | ✅     | 0        |
 
 ---
 
@@ -139,6 +143,7 @@ idx_price_items_context_lookup
 ### Règle 1 : Prix Multi-Canal
 
 **Pattern** : Un produit peut avoir plusieurs prix selon le canal
+
 ```sql
 -- Exemple : Produit X avec 3 prix différents
 SELECT
@@ -166,6 +171,7 @@ ORDER BY pl.priority, pli.min_quantity;
 **Fonction** : `calculate_product_price_v2()`
 
 **Signature** :
+
 ```sql
 calculate_product_price_v2(
   p_product_id UUID,
@@ -191,20 +197,22 @@ RETURNS TABLE (
 ```
 
 **Logique Priorité** :
+
 1. **Prix Client** (customer_pricing) - PRIORITÉ MAX
 2. **Prix Groupe Client** (group_price_lists)
 3. **Prix Canal** (channel_pricing ou channel_price_lists)
 4. **Prix Base** (price_list avec list_type='base')
 
 **Exemple usage TypeScript** :
+
 ```typescript
 const { data, error } = await supabase.rpc('calculate_product_price_v2', {
   p_product_id: 'uuid-produit',
   p_quantity: 50,
   p_channel_id: 'uuid-canal-b2b',
-  p_customer_id: 'uuid-client-vip',  // Optionnel
-  p_customer_type: 'professional',   // Optionnel
-  p_date: '2025-10-17'               // Optionnel (défaut: aujourd'hui)
+  p_customer_id: 'uuid-client-vip', // Optionnel
+  p_customer_type: 'professional', // Optionnel
+  p_date: '2025-10-17', // Optionnel (défaut: aujourd'hui)
 });
 
 // Retour :
@@ -226,6 +234,7 @@ const { data, error } = await supabase.rpc('calculate_product_price_v2', {
 ### Règle 3 : Tiered Pricing (Prix par Quantité)
 
 **Pattern** : Prix différents selon quantité commandée
+
 ```sql
 -- Configuration tiered pricing
 INSERT INTO price_list_items (price_list_id, product_id, price_ht, min_quantity, max_quantity)
@@ -241,6 +250,7 @@ VALUES
 ### Règle 4 : Validité Temporelle
 
 **Pattern** : Prix limités dans le temps (promotions)
+
 ```sql
 -- Prix promo valide du 01/11 au 30/11/2025
 INSERT INTO price_list_items (
@@ -258,6 +268,7 @@ INSERT INTO price_list_items (
 ### Règle 5 : Fallback Prix
 
 **Si produit sans prix dans price_list_items** :
+
 1. RPC cherche prix liste par défaut (priority le plus bas)
 2. Si aucun prix trouvé → Retourne NULL (pas d'erreur)
 3. Frontend affiche "Prix non disponible" ou "Nous consulter"
@@ -268,11 +279,13 @@ INSERT INTO price_list_items (
 **Pattern** : Commission % calculée par LIGNE de commande (pas par commande totale)
 
 **Tables impliquées** :
+
 - `customer_pricing.retrocession_rate` (configuration: 0-100%)
 - `sales_order_items.retrocession_rate` (snapshot au moment commande)
 - `sales_order_items.retrocession_amount` (montant calculé automatiquement)
 
 **Business Logic** :
+
 ```sql
 -- 1. Configuration ristourne au niveau client/produit
 INSERT INTO customer_pricing (
@@ -296,6 +309,7 @@ INSERT INTO customer_pricing (
 ```
 
 **Calcul Automatique** :
+
 ```sql
 -- Trigger: trg_calculate_retrocession (BEFORE INSERT/UPDATE)
 -- Fonction: calculate_retrocession_amount()
@@ -311,6 +325,7 @@ NEW.retrocession_amount := ROUND(
 ```
 
 **Commission Totale Commande** :
+
 ```sql
 -- Fonction RPC: get_order_total_retrocession(order_id)
 SELECT get_order_total_retrocession('uuid-commande');
@@ -324,6 +339,7 @@ SELECT get_order_total_retrocession('uuid-commande');
 ```
 
 **Exemple Usage TypeScript** :
+
 ```typescript
 // 1. Récupérer taux ristourne client/produit
 const { data: pricing } = await supabase
@@ -340,24 +356,27 @@ const { data: orderLine } = await supabase
     sales_order_id: orderId,
     product_id: productId,
     quantity: 10,
-    unit_price_ht: 120.00,
-    total_ht: 1200.00,
-    retrocession_rate: pricing.retrocession_rate || 0  // 5.00%
+    unit_price_ht: 120.0,
+    total_ht: 1200.0,
+    retrocession_rate: pricing.retrocession_rate || 0, // 5.00%
     // retrocession_amount sera calculé automatiquement = 60.00€
   })
   .select()
   .single();
 
 // 3. Obtenir commission totale commande
-const { data: totalCommission } = await supabase
-  .rpc('get_order_total_retrocession', {
-    p_order_id: orderId
-  });
+const { data: totalCommission } = await supabase.rpc(
+  'get_order_total_retrocession',
+  {
+    p_order_id: orderId,
+  }
+);
 
 console.log(`Commission totale: ${totalCommission}€`);
 ```
 
 **Contraintes Business** :
+
 - ✅ Taux ristourne : 0-100% (contrainte CHECK)
 - ✅ Montant ristourne : ≥ 0 (contrainte CHECK)
 - ✅ Calcul automatique (trigger BEFORE INSERT/UPDATE)
@@ -365,6 +384,7 @@ console.log(`Commission totale: ${totalCommission}€`);
 - ✅ Snapshot taux au moment commande (traçabilité)
 
 **Migration Supabase** :
+
 ```sql
 -- Ajoutée: 2025-10-25
 -- Fichier: supabase/migrations/20251025_002_add_retrocession_system.sql
@@ -374,6 +394,7 @@ console.log(`Commission totale: ${totalCommission}€`);
 ```
 
 **Cas d'usage B2B** :
+
 1. **Revendeur avec commission fixe** : 5% sur tous produits
 2. **Partenaire avec taux variable** : 3-10% selon produit
 3. **Programme fidélité** : Taux évolutif selon volume
@@ -384,6 +405,7 @@ console.log(`Commission totale: ${totalCommission}€`);
 ## 🔍 QUERIES COURANTES
 
 ### Query 1 : Prix produit par canal
+
 ```sql
 SELECT
   p.id,
@@ -408,6 +430,7 @@ ORDER BY pl.priority, pli.min_quantity;
 ```
 
 ### Query 2 : Produits sans prix (Data Quality)
+
 ```sql
 SELECT
   p.id,
@@ -425,6 +448,7 @@ ORDER BY p.created_at DESC;
 ```
 
 ### Query 3 : Prix minimum/maximum par canal
+
 ```sql
 SELECT
   pl.code AS canal,
@@ -443,6 +467,7 @@ ORDER BY pl.priority;
 ```
 
 ### Query 4 : Historique prix produit
+
 ```sql
 -- Via price_list_history (si activé)
 SELECT
@@ -460,6 +485,7 @@ LIMIT 10;
 ```
 
 ### Query 5 : Prix avec marge calculée
+
 ```sql
 SELECT
   p.name,
@@ -492,15 +518,15 @@ const { data, error } = await supabase
   .from('price_list_items')
   .insert({
     product_id: productId,
-    price_list_id: priceListId,  // Ex: B2B_STANDARD_2025
-    price_ht: 150.00,
-    cost_price: 90.00,
-    suggested_retail_price: 180.00,
+    price_list_id: priceListId, // Ex: B2B_STANDARD_2025
+    price_ht: 150.0,
+    cost_price: 90.0,
+    suggested_retail_price: 180.0,
     min_quantity: 1,
-    max_quantity: null,  // Illimité
+    max_quantity: null, // Illimité
     currency: 'EUR',
     is_active: true,
-    notes: 'Prix initial catalogue 2025'
+    notes: 'Prix initial catalogue 2025',
   })
   .select();
 ```
@@ -517,15 +543,13 @@ const { data: currentPrice } = await supabase
   .single();
 
 // 2. Créer entrée historique (optionnel)
-await supabase
-  .from('price_list_history')
-  .insert({
-    price_list_item_id: currentPrice.id,
-    old_price_ht: currentPrice.price_ht,
-    new_price_ht: newPrice,
-    change_reason: 'Ajustement saisonnier',
-    changed_by: userId
-  });
+await supabase.from('price_list_history').insert({
+  price_list_item_id: currentPrice.id,
+  old_price_ht: currentPrice.price_ht,
+  new_price_ht: newPrice,
+  change_reason: 'Ajustement saisonnier',
+  changed_by: userId,
+});
 
 // 3. Mettre à jour prix
 const { data, error } = await supabase
@@ -533,7 +557,7 @@ const { data, error } = await supabase
   .update({
     price_ht: newPrice,
     updated_at: new Date().toISOString(),
-    updated_by: userId
+    updated_by: userId,
   })
   .eq('id', currentPrice.id);
 ```
@@ -546,7 +570,7 @@ const { data: pricing } = await supabase.rpc('calculate_product_price_v2', {
   p_product_id: productId,
   p_quantity: quantity,
   p_channel_id: channelId,
-  p_customer_id: customerId  // Optionnel
+  p_customer_id: customerId, // Optionnel
 });
 
 const displayPrice = pricing?.price_ht;
@@ -555,7 +579,8 @@ const priceSource = pricing?.price_source; // 'customer', 'channel', 'base'
 // Option 2 : JOIN direct (si pas de calcul priorité nécessaire)
 const { data } = await supabase
   .from('products')
-  .select(`
+  .select(
+    `
     id, name, sku,
     price_list_items!inner (
       price_ht,
@@ -564,7 +589,8 @@ const { data } = await supabase
       max_quantity,
       price_lists!inner (code, name)
     )
-  `)
+  `
+  )
   .eq('id', productId)
   .eq('price_list_items.price_lists.code', 'B2B_STANDARD_2025')
   .eq('price_list_items.is_active', true)
@@ -583,10 +609,10 @@ const { data: newPriceList } = await supabase
     code: 'PROMO_BLACK_FRIDAY_2025',
     name: 'Promotion Black Friday 2025',
     list_type: 'channel',
-    priority: 50,  // Priorité haute
+    priority: 50, // Priorité haute
     valid_from: '2025-11-25',
     valid_until: '2025-11-30',
-    is_active: true
+    is_active: true,
   })
   .select()
   .single();
@@ -600,16 +626,14 @@ const { data: basePrice } = await supabase
 const promoItems = basePrice.map(item => ({
   price_list_id: newPriceList.id,
   product_id: item.product_id,
-  price_ht: item.price_ht * 0.8,  // -20%
+  price_ht: item.price_ht * 0.8, // -20%
   min_quantity: 1,
   currency: 'EUR',
   is_active: true,
-  notes: 'Black Friday -20%'
+  notes: 'Black Friday -20%',
 }));
 
-await supabase
-  .from('price_list_items')
-  .insert(promoItems);
+await supabase.from('price_list_items').insert(promoItems);
 ```
 
 ---
@@ -619,6 +643,7 @@ await supabase
 ### ❌ NE PAS ajouter champs prix dans products
 
 **Interdit** :
+
 ```sql
 ALTER TABLE products
 ADD COLUMN price NUMERIC;        -- ❌ NON !
@@ -627,6 +652,7 @@ ADD COLUMN base_price NUMERIC;   -- ❌ NON !
 ```
 
 **Raison** :
+
 - Brise architecture multi-canal
 - Pas de gestion priorités client/canal
 - Pas d'historique prix
@@ -636,6 +662,7 @@ ADD COLUMN base_price NUMERIC;   -- ❌ NON !
 **Utiliser** : `price_list_items` (déjà existant) ✅
 
 **Historique hallucination** :
+
 - **17 octobre 2025** : Agent a ajouté `products.cost_price`
 - **Impact** : Incohérence données, confusion frontend
 - **Fix** : Migration `20251017_003_remove_cost_price_column.sql`
@@ -644,24 +671,27 @@ ADD COLUMN base_price NUMERIC;   -- ❌ NON !
 ### ❌ NE PAS bypasser calculate_product_price_v2
 
 **Mauvais** :
+
 ```typescript
 // ❌ Fragile - Pas de gestion priorités/tiering
 const price = product.price_list_items?.[0]?.price_ht;
 ```
 
 **Bon** :
+
 ```typescript
 // ✅ Robuste - Gère priorités, tiering, validité
 const { data: price } = await supabase.rpc('calculate_product_price_v2', {
   p_product_id: productId,
   p_quantity: quantity,
-  p_channel_id: channelId
+  p_channel_id: channelId,
 });
 ```
 
 ### ❌ NE PAS modifier prix manuellement sans historique
 
 **Mauvais** :
+
 ```sql
 -- ❌ Perte traçabilité
 UPDATE price_list_items
@@ -670,6 +700,7 @@ WHERE id = 'uuid';
 ```
 
 **Bon** :
+
 ```sql
 -- ✅ Avec historique
 BEGIN;
@@ -694,6 +725,7 @@ COMMIT;
 ### ❌ NE PAS créer table `products_pricing` séparée
 
 **Interdit** :
+
 ```sql
 CREATE TABLE products_pricing (  -- ❌ NON !
   product_id UUID,
@@ -704,6 +736,7 @@ CREATE TABLE products_pricing (  -- ❌ NON !
 **Raison** : Table `price_list_items` existe déjà avec architecture complète
 
 **Utiliser** :
+
 - `price_list_items` pour prix par canal/client
 - `calculate_product_price_v2()` pour calcul dynamique
 
@@ -721,6 +754,7 @@ CREATE TABLE products_pricing (  -- ❌ NON !
 - **Prix moyen** : Varie par canal (B2B < Wholesale < Retail)
 
 **Canaux et couverture** :
+
 ```
 CATALOG_BASE_2025       : 16 produits (base de référence)
 B2B_STANDARD_2025       : 16 produits (prix professionnels)
@@ -730,12 +764,14 @@ ECOMMERCE_STANDARD_2025 :  0 produits (à configurer)
 ```
 
 **Cohérence données** :
+
 - ✅ **0 prix invalides** (≤ 0 ou NULL)
 - ✅ **0 anomalies coût** (cost_price négatif)
 - ✅ **RPC fonctionnel** (test validé)
 - ✅ **Indexes optimisés** (9 indexes sur price_list_items)
 
 **Performance** :
+
 - Index covering `idx_price_items_context_lookup` pour queries fréquentes
 - Index BRIN `idx_price_items_created_brin` pour archivage efficace
 - Contrainte UNIQUE `unique_price_tier` prévient duplicatas
@@ -745,6 +781,7 @@ ECOMMERCE_STANDARD_2025 :  0 produits (à configurer)
 ## 🔗 LIENS CONNEXES
 
 ### Documentation Database
+
 - **[SCHEMA-REFERENCE.md](./SCHEMA-REFERENCE.md)** - Structure complète 78 tables (voir § Pricing Multi-Canal)
 - **[functions-rpc.md](./functions-rpc.md)** - RPC calculate_product_price_v2 détaillé
 - **[best-practices.md](./best-practices.md)** - Anti-patterns pricing (§3 Prix Produits)
@@ -752,12 +789,14 @@ ECOMMERCE_STANDARD_2025 :  0 produits (à configurer)
 - **[foreign-keys.md](./foreign-keys.md)** - Relations price_lists ↔ price_list_items
 
 ### Modules Liés
+
 - **Channel Pricing** : `channel_price_lists`, `channel_pricing`
 - **Customer Pricing** : `customer_price_lists`, `customer_pricing`
 - **Group Pricing** : `group_price_lists`
 - **Historique** : `price_list_history`
 
 ### Architecture Système
+
 ```
 price_lists (canaux)
   ↓ one-to-many
@@ -778,16 +817,19 @@ Priorité calcul (calculate_product_price_v2):
 ## 🚀 ÉVOLUTIONS FUTURES
 
 ### Phase 2 (Q1 2026) : Multi-Devise Complète
+
 - Currency conversion automatique (API taux change)
 - Prix par pays/région
 - Gestion TVA multi-pays
 
 ### Phase 3 (Q2 2026) : Dynamic Pricing
+
 - Pricing algorithmique (demande, stock, concurrence)
 - A/B testing prix
 - Pricing prédictif ML
 
 ### Phase 4 (Q3 2026) : Customer Intelligence
+
 - Pricing personnalisé (historique achats)
 - Recommandations prix optimaux
 - Analytics marge par segment client
@@ -799,4 +841,4 @@ Priorité calcul (calculate_product_price_v2):
 **Auteur** : verone-database-architect agent
 **Status** : ✅ Complet et validé
 
-*Vérone Back Office - Architecture Pricing Multi-Canal 2025*
+_Vérone Back Office - Architecture Pricing Multi-Canal 2025_

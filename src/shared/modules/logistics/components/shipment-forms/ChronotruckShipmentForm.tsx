@@ -1,33 +1,42 @@
-'use client'
+'use client';
 
-import { useState } from 'react'
-import { ButtonV2 } from '@/components/ui/button'
-import { Card, CardContent } from '@/components/ui/card'
-import { Badge } from '@/components/ui/badge'
-import { Truck, ExternalLink, AlertCircle } from 'lucide-react'
-import { SalesOrder } from '@/shared/modules/orders/hooks'
-import { ShipmentRecapData } from './shipment-recap-modal'
+import { useState } from 'react';
+
+import { Truck, ExternalLink, AlertCircle } from 'lucide-react';
+
+import { Badge } from '@/components/ui/badge';
+import { ButtonV2 } from '@/components/ui/button';
+import { Card, CardContent } from '@/components/ui/card';
+import type { SalesOrder } from '@/shared/modules/orders/hooks';
+// import { ShipmentRecapData } from './shipment-recap-modal'
+
+// Temporary type until shipment-recap-modal is implemented
+type ShipmentRecapData = any;
 
 interface ChronotruckShipmentFormProps {
-  order: SalesOrder
-  onComplete: (data: ShipmentRecapData) => void
-  onBack: () => void
+  order: SalesOrder;
+  onComplete: (data: ShipmentRecapData) => void;
+  onBack: () => void;
 }
 
-export function ChronotruckShipmentForm({ order, onComplete, onBack }: ChronotruckShipmentFormProps) {
+export function ChronotruckShipmentForm({
+  order,
+  onComplete,
+  onBack,
+}: ChronotruckShipmentFormProps) {
   // Données palettes (1 palette par défaut)
-  const [paletteCount, setPaletteCount] = useState(1)
-  const [weightPerPallet, setWeightPerPallet] = useState(0)
-  const [heightCm, setHeightCm] = useState(150) // Hauteur standard palette chargée
+  const [paletteCount, setPaletteCount] = useState(1);
+  const [weightPerPallet, setWeightPerPallet] = useState(0);
+  const [heightCm, setHeightCm] = useState(150); // Hauteur standard palette chargée
 
   // Données Chronotruck
-  const [chronotruckRef, setChronotruckRef] = useState('')
-  const [chronotruckUrl, setChronotruckUrl] = useState('')
+  const [chronotruckRef, setChronotruckRef] = useState('');
+  const [chronotruckUrl, setChronotruckUrl] = useState('');
 
   // Coûts
-  const [costPaid, setCostPaid] = useState(0)
-  const [costCharged, setCostCharged] = useState(0)
-  const [notes, setNotes] = useState('')
+  const [costPaid, setCostPaid] = useState(0);
+  const [costCharged, setCostCharged] = useState(0);
+  const [notes, setNotes] = useState('');
 
   const canSubmit = (): boolean => {
     return (
@@ -35,11 +44,11 @@ export function ChronotruckShipmentForm({ order, onComplete, onBack }: Chronotru
       weightPerPallet > 0 &&
       weightPerPallet <= 240 && // Limite poids palette
       chronotruckRef.trim() !== '' // Référence obligatoire
-    )
-  }
+    );
+  };
 
   const handleSubmit = () => {
-    if (!canSubmit()) return
+    if (!canSubmit()) return;
 
     // Créer tableau de palettes (toutes identiques pour simplification)
     const parcels = Array.from({ length: paletteCount }, (_, idx) => ({
@@ -48,8 +57,8 @@ export function ChronotruckShipmentForm({ order, onComplete, onBack }: Chronotru
       weight_kg: weightPerPallet,
       length_cm: 120, // Palette EUR standard
       width_cm: 80,
-      height_cm: heightCm
-    }))
+      height_cm: heightCm,
+    }));
 
     const recapData: ShipmentRecapData = {
       orderId: order.id,
@@ -64,14 +73,14 @@ export function ChronotruckShipmentForm({ order, onComplete, onBack }: Chronotru
       metadata: {
         chronotruck_reference: chronotruckRef,
         chronotruck_palette_count: paletteCount,
-        chronotruck_url: chronotruckUrl || undefined
-      }
-    }
+        chronotruck_url: chronotruckUrl || undefined,
+      },
+    };
 
-    onComplete(recapData)
-  }
+    onComplete(recapData);
+  };
 
-  const totalWeight = paletteCount * weightPerPallet
+  const totalWeight = paletteCount * weightPerPallet;
 
   return (
     <div className="space-y-6">
@@ -82,7 +91,9 @@ export function ChronotruckShipmentForm({ order, onComplete, onBack }: Chronotru
             <div className="flex items-center gap-3">
               <Truck className="h-5 w-5 text-orange-600" />
               <div>
-                <h3 className="font-semibold text-orange-900">Chronotruck - Transport de Palettes</h3>
+                <h3 className="font-semibold text-orange-900">
+                  Chronotruck - Transport de Palettes
+                </h3>
                 <p className="text-sm text-orange-700 mt-1">
                   Créez d'abord votre réservation sur l'application Chronotruck
                 </p>
@@ -123,7 +134,9 @@ export function ChronotruckShipmentForm({ order, onComplete, onBack }: Chronotru
       {/* Référence Chronotruck */}
       <Card className="border-2 border-orange-200">
         <CardContent className="pt-6">
-          <h3 className="font-semibold text-lg mb-4">Référence Chronotruck *</h3>
+          <h3 className="font-semibold text-lg mb-4">
+            Référence Chronotruck *
+          </h3>
 
           <div className="space-y-4">
             <div>
@@ -134,11 +147,12 @@ export function ChronotruckShipmentForm({ order, onComplete, onBack }: Chronotru
                 type="text"
                 className="w-full px-3 py-2 border rounded-md font-mono"
                 value={chronotruckRef}
-                onChange={(e) => setChronotruckRef(e.target.value)}
+                onChange={e => setChronotruckRef(e.target.value)}
                 placeholder="Ex: CHT-2025-XXXXX"
               />
               <p className="text-xs text-gray-500 mt-1">
-                Référence fournie par Chronotruck après création de la réservation
+                Référence fournie par Chronotruck après création de la
+                réservation
               </p>
             </div>
 
@@ -150,7 +164,7 @@ export function ChronotruckShipmentForm({ order, onComplete, onBack }: Chronotru
                 type="url"
                 className="w-full px-3 py-2 border rounded-md"
                 value={chronotruckUrl}
-                onChange={(e) => setChronotruckUrl(e.target.value)}
+                onChange={e => setChronotruckUrl(e.target.value)}
                 placeholder="https://app.chronotruck.com/tracking/..."
               />
               <p className="text-xs text-gray-500 mt-1">
@@ -164,26 +178,34 @@ export function ChronotruckShipmentForm({ order, onComplete, onBack }: Chronotru
       {/* Configuration Palettes */}
       <Card>
         <CardContent className="pt-6">
-          <h3 className="font-semibold text-lg mb-4">Configuration des palettes</h3>
+          <h3 className="font-semibold text-lg mb-4">
+            Configuration des palettes
+          </h3>
 
           <div className="space-y-4">
             {/* Nombre de palettes */}
             <div>
-              <label className="block text-sm font-medium mb-2">Nombre de palettes *</label>
+              <label className="block text-sm font-medium mb-2">
+                Nombre de palettes *
+              </label>
               <input
                 type="number"
                 min="1"
                 max="10"
                 className="w-full px-3 py-2 border rounded-md"
                 value={paletteCount || ''}
-                onChange={(e) => setPaletteCount(parseInt(e.target.value) || 1)}
+                onChange={e => setPaletteCount(parseInt(e.target.value) || 1)}
               />
-              <p className="text-xs text-gray-500 mt-1">De 1 à 10 palettes par expédition</p>
+              <p className="text-xs text-gray-500 mt-1">
+                De 1 à 10 palettes par expédition
+              </p>
             </div>
 
             {/* Poids par palette */}
             <div>
-              <label className="block text-sm font-medium mb-2">Poids par palette (kg) *</label>
+              <label className="block text-sm font-medium mb-2">
+                Poids par palette (kg) *
+              </label>
               <input
                 type="number"
                 step="1"
@@ -191,24 +213,29 @@ export function ChronotruckShipmentForm({ order, onComplete, onBack }: Chronotru
                 max="240"
                 className="w-full px-3 py-2 border rounded-md"
                 value={weightPerPallet || ''}
-                onChange={(e) => setWeightPerPallet(parseFloat(e.target.value) || 0)}
+                onChange={e =>
+                  setWeightPerPallet(parseFloat(e.target.value) || 0)
+                }
                 placeholder="Ex: 180"
               />
               <p className="text-xs text-gray-500 mt-1">
-                Max 240 kg par palette • Poids total : <strong>{totalWeight} kg</strong>
+                Max 240 kg par palette • Poids total :{' '}
+                <strong>{totalWeight} kg</strong>
               </p>
             </div>
 
             {/* Hauteur chargée */}
             <div>
-              <label className="block text-sm font-medium mb-2">Hauteur chargée (cm)</label>
+              <label className="block text-sm font-medium mb-2">
+                Hauteur chargée (cm)
+              </label>
               <input
                 type="number"
                 min="10"
                 max="180"
                 className="w-full px-3 py-2 border rounded-md"
                 value={heightCm || ''}
-                onChange={(e) => setHeightCm(parseInt(e.target.value) || 150)}
+                onChange={e => setHeightCm(parseInt(e.target.value) || 150)}
               />
               <p className="text-xs text-gray-500 mt-1">
                 Hauteur totale palette + marchandise (recommandé : 150-180 cm)
@@ -217,7 +244,9 @@ export function ChronotruckShipmentForm({ order, onComplete, onBack }: Chronotru
 
             {/* Dimensions fixes palette EUR */}
             <div className="p-4 bg-gray-50 rounded-lg">
-              <p className="text-sm font-medium text-gray-700 mb-2">Dimensions palette EUR standard :</p>
+              <p className="text-sm font-medium text-gray-700 mb-2">
+                Dimensions palette EUR standard :
+              </p>
               <div className="flex items-center gap-4 text-sm text-gray-600">
                 <Badge variant="outline">Longueur : 120 cm</Badge>
                 <Badge variant="outline">Largeur : 80 cm</Badge>
@@ -234,44 +263,54 @@ export function ChronotruckShipmentForm({ order, onComplete, onBack }: Chronotru
           <h3 className="font-semibold text-lg mb-4">Coûts de livraison</h3>
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <label className="block text-sm font-medium mb-2">Coût payé à Chronotruck (€)</label>
+              <label className="block text-sm font-medium mb-2">
+                Coût payé à Chronotruck (€)
+              </label>
               <input
                 type="number"
                 step="0.01"
                 min="0"
                 className="w-full px-3 py-2 border rounded-md"
                 value={costPaid || ''}
-                onChange={(e) => setCostPaid(parseFloat(e.target.value) || 0)}
+                onChange={e => setCostPaid(parseFloat(e.target.value) || 0)}
                 placeholder="0.00"
               />
-              <p className="text-xs text-gray-500 mt-1">Montant facturé par Chronotruck</p>
+              <p className="text-xs text-gray-500 mt-1">
+                Montant facturé par Chronotruck
+              </p>
             </div>
             <div>
-              <label className="block text-sm font-medium mb-2">Coût facturé au client (€)</label>
+              <label className="block text-sm font-medium mb-2">
+                Coût facturé au client (€)
+              </label>
               <input
                 type="number"
                 step="0.01"
                 min="0"
                 className="w-full px-3 py-2 border rounded-md"
                 value={costCharged || ''}
-                onChange={(e) => setCostCharged(parseFloat(e.target.value) || 0)}
+                onChange={e => setCostCharged(parseFloat(e.target.value) || 0)}
                 placeholder="0.00"
               />
-              <p className="text-xs text-gray-500 mt-1">Montant facturé au client (0 si inclus)</p>
+              <p className="text-xs text-gray-500 mt-1">
+                Montant facturé au client (0 si inclus)
+              </p>
             </div>
           </div>
 
           {/* Marge calculée */}
           {(costPaid > 0 || costCharged > 0) && (
             <div className="mt-4 p-3 bg-gray-50 rounded-lg flex justify-between items-center">
-              <span className="text-sm font-medium text-gray-700">Marge calculée</span>
+              <span className="text-sm font-medium text-gray-700">
+                Marge calculée
+              </span>
               <span
                 className={`font-semibold ${
                   costCharged - costPaid > 0
                     ? 'text-green-600'
                     : costCharged - costPaid < 0
-                    ? 'text-red-600'
-                    : 'text-gray-900'
+                      ? 'text-red-600'
+                      : 'text-gray-900'
                 }`}
               >
                 {costCharged - costPaid > 0 ? '+' : ''}
@@ -284,12 +323,14 @@ export function ChronotruckShipmentForm({ order, onComplete, onBack }: Chronotru
 
       {/* Notes */}
       <div>
-        <label className="block text-sm font-medium mb-2">Notes (optionnel)</label>
+        <label className="block text-sm font-medium mb-2">
+          Notes (optionnel)
+        </label>
         <textarea
           className="w-full px-3 py-2 border rounded-md"
           rows={3}
           value={notes}
-          onChange={(e) => setNotes(e.target.value)}
+          onChange={e => setNotes(e.target.value)}
           placeholder="Informations complémentaires sur l'expédition par palette..."
         />
       </div>
@@ -306,9 +347,10 @@ export function ChronotruckShipmentForm({ order, onComplete, onBack }: Chronotru
 
       {!canSubmit() && (
         <p className="text-sm text-red-600 text-center">
-          ⚠️ Veuillez renseigner la référence Chronotruck, le poids et le nombre de palettes
+          ⚠️ Veuillez renseigner la référence Chronotruck, le poids et le nombre
+          de palettes
         </p>
       )}
     </div>
-  )
+  );
 }

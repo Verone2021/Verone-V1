@@ -12,69 +12,69 @@
  */
 
 export interface MCPErrorCheckResult {
-  url: string
-  timestamp: string
-  hasErrors: boolean
-  errorCount: number
-  warningCount: number
-  errors: ConsoleErrorLog[]
-  consoleErrors: string[]
-  summary: string
+  url: string;
+  timestamp: string;
+  hasErrors: boolean;
+  errorCount: number;
+  warningCount: number;
+  errors: ConsoleErrorLog[];
+  consoleErrors: string[];
+  summary: string;
 }
 
 export interface ConsoleErrorLog {
-  timestamp: string
-  level: 'error' | 'warn' | 'info'
-  message: string
-  url: string
-  userAgent: string
-  sessionId?: string
-  userId?: string
-  stack?: string
+  timestamp: string;
+  level: 'error' | 'warn' | 'info';
+  message: string;
+  url: string;
+  userAgent: string;
+  sessionId?: string;
+  userId?: string;
+  stack?: string;
 }
 
 /**
  * 🎯 Format rapport d'erreurs
  */
 export function formatErrorReport(result: MCPErrorCheckResult): string {
-  const lines: string[] = []
+  const lines: string[] = [];
 
-  lines.push(`🔍 Error Check Report - ${result.url}`)
-  lines.push(`📅 ${result.timestamp}`)
-  lines.push('')
+  lines.push(`🔍 Error Check Report - ${result.url}`);
+  lines.push(`📅 ${result.timestamp}`);
+  lines.push('');
 
   if (!result.hasErrors) {
-    lines.push('✅ Zero erreurs console détectées')
-    lines.push('✅ Application fonctionne correctement')
+    lines.push('✅ Zero erreurs console détectées');
+    lines.push('✅ Application fonctionne correctement');
   } else {
-    lines.push(`❌ ${result.errorCount} erreur(s) détectée(s)`)
+    lines.push(`❌ ${result.errorCount} erreur(s) détectée(s)`);
     if (result.warningCount > 0) {
-      lines.push(`⚠️  ${result.warningCount} warning(s)`)
+      lines.push(`⚠️  ${result.warningCount} warning(s)`);
     }
-    lines.push('')
+    lines.push('');
 
     // Erreurs trackées (en mémoire)
     if (result.errors.length > 0) {
-      lines.push('🔴 Erreurs trackées (Console Error Tracker):')
+      lines.push('🔴 Erreurs trackées (Console Error Tracker):');
       result.errors.forEach((err, i) => {
-        lines.push(`${i + 1}. [${err.level.toUpperCase()}] ${err.message}`)
+        lines.push(`${i + 1}. [${err.level.toUpperCase()}] ${err.message}`);
         if (err.stack) {
-          lines.push(`   Stack: ${err.stack.split('\n')[0]}`)
+          lines.push(`   Stack: ${err.stack.split('\n')[0]}`);
         }
-      })
-      lines.push('')
+      });
+      lines.push('');
     }
 
     // Console errors bruts (MCP Playwright)
     if (result.consoleErrors.length > 0) {
-      lines.push('🔴 Console Errors (MCP Playwright):')
+      lines.push('🔴 Console Errors (MCP Playwright):');
       result.consoleErrors.forEach((err, i) => {
-        lines.push(`${i + 1}. ${err}`)
-      })
+        lines.push(`${i + 1}. ${err}`);
+      });
     }
   }
 
-  return lines.join('\n')
+  return lines.join('\n');
 }
 
 /**
@@ -85,12 +85,15 @@ export function calculateErrorStats(errors: ConsoleErrorLog[]) {
     totalErrors: errors.filter(e => e.level === 'error').length,
     totalWarnings: errors.filter(e => e.level === 'warn').length,
     lastError: errors[errors.length - 1],
-    errorsByPage: errors.reduce((acc, err) => {
-      const page = new URL(err.url).pathname
-      acc[page] = (acc[page] || 0) + 1
-      return acc
-    }, {} as Record<string, number>)
-  }
+    errorsByPage: errors.reduce(
+      (acc, err) => {
+        const page = new URL(err.url).pathname;
+        acc[page] = (acc[page] || 0) + 1;
+        return acc;
+      },
+      {} as Record<string, number>
+    ),
+  };
 }
 
 /**
@@ -107,10 +110,10 @@ export function isCriticalError(error: ConsoleErrorLog): boolean {
     /network error/i,
     /syntax error/i,
     /reference error/i,
-    /type error/i
-  ]
+    /type error/i,
+  ];
 
-  return criticalPatterns.some(pattern => pattern.test(error.message))
+  return criticalPatterns.some(pattern => pattern.test(error.message));
 }
 
 /**
@@ -137,7 +140,7 @@ mcp__playwright__browser_console_messages({ onlyErrors: true })
 mcp__playwright__browser_take_screenshot({
   filename: "error-screenshot.png"
 })
-`
+`;
 
 /**
  * 🎯 Utilitaire pour filter erreurs par critères
@@ -145,29 +148,29 @@ mcp__playwright__browser_take_screenshot({
 export function filterErrors(
   errors: ConsoleErrorLog[],
   filters: {
-    level?: 'error' | 'warn' | 'info'
-    url?: string
-    since?: Date
-    criticalOnly?: boolean
+    level?: 'error' | 'warn' | 'info';
+    url?: string;
+    since?: Date;
+    criticalOnly?: boolean;
   }
 ): ConsoleErrorLog[] {
-  let filtered = errors
+  let filtered = errors;
 
   if (filters.level) {
-    filtered = filtered.filter(e => e.level === filters.level)
+    filtered = filtered.filter(e => e.level === filters.level);
   }
 
   if (filters.url) {
-    filtered = filtered.filter(e => e.url.includes(filters.url!))
+    filtered = filtered.filter(e => e.url.includes(filters.url!));
   }
 
   if (filters.since) {
-    filtered = filtered.filter(e => new Date(e.timestamp) >= filters.since!)
+    filtered = filtered.filter(e => new Date(e.timestamp) >= filters.since!);
   }
 
   if (filters.criticalOnly) {
-    filtered = filtered.filter(isCriticalError)
+    filtered = filtered.filter(isCriticalError);
   }
 
-  return filtered
+  return filtered;
 }

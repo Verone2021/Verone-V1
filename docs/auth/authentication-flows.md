@@ -20,6 +20,7 @@
 Documentation des workflows d'authentification complets dans le système Vérone : login, signup, récupération mot de passe, gestion sessions JWT.
 
 **À documenter** :
+
 - Flow login (email/password → JWT → redirect dashboard)
 - Flow signup (création tenant + user Owner)
 - Flow password recovery (email → reset link → nouveau password)

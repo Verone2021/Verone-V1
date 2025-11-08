@@ -1,6 +1,7 @@
 import { useState } from 'react';
+
 import { createClient } from '@/lib/supabase/client';
-import { useToast } from './use-toast';
+import { useToast } from '@/shared/modules/common/hooks';
 
 interface DraftPurchaseOrderParams {
   productId: string;

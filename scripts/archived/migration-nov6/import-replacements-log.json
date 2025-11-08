@@ -1,0 +1,822 @@
+[
+  {
+    "file": "src//app/canaux-vente/google-merchant/page.tsx",
+    "old": "@/components/business/google-merchant-config-modal",
+    "new": "@/shared/modules/channels/components/google-merchant/GoogleMerchantConfigModal"
+  },
+  {
+    "file": "src//app/canaux-vente/google-merchant/page.tsx",
+    "old": "@/components/business/google-merchant-product-manager",
+    "new": "@/shared/modules/channels/components/google-merchant/GoogleMerchantProductManager"
+  },
+  {
+    "file": "src//app/canaux-vente/google-merchant/page.tsx",
+    "old": "@/components/business/google-merchant-product-card",
+    "new": "@/shared/modules/channels/components/google-merchant/GoogleMerchantProductCard"
+  },
+  {
+    "file": "src//app/produits/catalogue/variantes/[groupId]/page.tsx",
+    "old": "@/components/business/universal-product-selector-v2",
+    "new": "@/shared/modules/products/components/selectors/UniversalProductSelectorV2"
+  },
+  {
+    "file": "src//app/produits/catalogue/variantes/page.tsx",
+    "old": "@/components/business/variant-group-creation-wizard",
+    "new": "@/shared/modules/products/components/wizards/VariantGroupCreationWizard"
+  },
+  {
+    "file": "src//app/produits/catalogue/variantes/page.tsx",
+    "old": "@/components/business/category-filter-combobox",
+    "new": "@/shared/modules/categories/components/filters/CategoryFilterCombobox"
+  },
+  {
+    "file": "src//app/produits/catalogue/stocks/page.tsx",
+    "old": "@/components/business/stock-movement-modal",
+    "new": "@/shared/modules/stock/components/modals/StockMovementModal"
+  },
+  {
+    "file": "src//app/produits/catalogue/stocks/page.tsx",
+    "old": "@/components/business/general-stock-movement-modal",
+    "new": "@/shared/modules/stock/components/modals/GeneralStockMovementModal"
+  },
+  {
+    "file": "src//app/produits/catalogue/stocks/page.tsx",
+    "old": "@/components/business/product-stock-history-modal",
+    "new": "@/shared/modules/stock/components/modals/ProductStockHistoryModal"
+  },
+  {
+    "file": "src//app/produits/catalogue/stocks/page.tsx",
+    "old": "@/components/business/stock-display",
+    "new": "@/shared/modules/stock/components/displays/StockDisplay"
+  },
+  {
+    "file": "src//app/produits/catalogue/[productId]/page.tsx",
+    "old": "@/components/business/product-image-gallery",
+    "new": "@/shared/modules/products/components/images/ProductImageGallery"
+  },
+  {
+    "file": "src//app/produits/catalogue/[productId]/page.tsx",
+    "old": "@/components/business/product-photos-modal",
+    "new": "@/shared/modules/products/components/modals/ProductPhotosModal"
+  },
+  {
+    "file": "src//app/produits/catalogue/[productId]/page.tsx",
+    "old": "@/components/business/product-characteristics-modal",
+    "new": "@/shared/modules/products/components/modals/ProductCharacteristicsModal"
+  },
+  {
+    "file": "src//app/produits/catalogue/[productId]/page.tsx",
+    "old": "@/components/business/product-descriptions-modal",
+    "new": "@/shared/modules/products/components/modals/ProductDescriptionsModal"
+  },
+  {
+    "file": "src//app/produits/catalogue/[productId]/page.tsx",
+    "old": "@/components/business/category-hierarchy-selector",
+    "new": "@/shared/modules/categories/components/selectors/CategoryHierarchySelector"
+  },
+  {
+    "file": "src//app/produits/catalogue/[productId]/page.tsx",
+    "old": "@/components/business/product-detail-accordion",
+    "new": "@/shared/modules/products/components/sections/ProductDetailAccordion"
+  },
+  {
+    "file": "src//app/produits/catalogue/[productId]/page.tsx",
+    "old": "@/components/business/product-info-section",
+    "new": "@/shared/modules/products/components/sections/ProductInfoSection"
+  },
+  {
+    "file": "src//app/produits/catalogue/[productId]/page.tsx",
+    "old": "@/components/business/product-variants-grid",
+    "new": "@/shared/modules/products/components/grids/ProductVariantsGrid"
+  },
+  {
+    "file": "src//app/produits/catalogue/[productId]/page.tsx",
+    "old": "@/components/business/sample-requirement-section",
+    "new": "@/shared/modules/products/components/sections/SampleRequirementSection"
+  },
+  {
+    "file": "src//app/produits/catalogue/[productId]/page.tsx",
+    "old": "@/components/business/supplier-vs-pricing-edit-section",
+    "new": "@/shared/modules/products/components/sections/SupplierVsPricingEditSection"
+  },
+  {
+    "file": "src//app/produits/catalogue/[productId]/page.tsx",
+    "old": "@/components/business/stock-edit-section",
+    "new": "@/shared/modules/stock/components/sections/StockEditSection"
+  },
+  {
+    "file": "src//app/produits/catalogue/[productId]/page.tsx",
+    "old": "@/components/business/stock-status-compact",
+    "new": "@/shared/modules/stock/components/badges/StockStatusCompact"
+  },
+  {
+    "file": "src//app/produits/catalogue/[productId]/page.tsx",
+    "old": "@/components/business/product-status-compact",
+    "new": "@/shared/modules/products/components/badges/ProductStatusCompact"
+  },
+  {
+    "file": "src//app/produits/catalogue/[productId]/page.tsx",
+    "old": "@/components/business/completion-status-compact",
+    "new": "@/shared/modules/products/components/badges/CompletionStatusCompact"
+  },
+  {
+    "file": "src//app/produits/catalogue/[productId]/page.tsx",
+    "old": "@/components/business/product-fixed-characteristics",
+    "new": "@/shared/modules/products/components/sections/ProductFixedCharacteristics"
+  },
+  {
+    "file": "src//app/produits/catalogue/[productId]/page.tsx",
+    "old": "@/components/business/supplier-edit-section",
+    "new": "@/shared/modules/products/components/sections/SupplierEditSection"
+  },
+  {
+    "file": "src//app/produits/catalogue/[productId]/page.tsx",
+    "old": "@/components/business/weight-edit-section",
+    "new": "@/shared/modules/products/components/sections/WeightEditSection"
+  },
+  {
+    "file": "src//app/produits/catalogue/[productId]/page.tsx",
+    "old": "@/components/business/identifiers-complete-edit-section",
+    "new": "@/shared/modules/products/components/sections/IdentifiersCompleteEditSection"
+  },
+  {
+    "file": "src//app/produits/catalogue/[productId]/page.tsx",
+    "old": "@/components/business/product-descriptions-edit-section",
+    "new": "@/shared/modules/products/components/sections/ProductDescriptionsEditSection"
+  },
+  {
+    "file": "src//app/produits/catalogue/nouveau/page.tsx",
+    "old": "@/components/business/complete-product-wizard",
+    "new": "@/shared/modules/products/components/wizards/CompleteProductWizard"
+  },
+  {
+    "file": "src//app/produits/catalogue/collections/[collectionId]/page.tsx",
+    "old": "@/components/business/universal-product-selector-v2",
+    "new": "@/shared/modules/products/components/selectors/UniversalProductSelectorV2"
+  },
+  {
+    "file": "src//app/produits/catalogue/collections/page.tsx",
+    "old": "@/components/business/collection-creation-wizard",
+    "new": "@/shared/modules/common/components/collections/CollectionCreationWizard"
+  },
+  {
+    "file": "src//app/produits/catalogue/collections/page.tsx",
+    "old": "@/components/business/universal-product-selector-v2",
+    "new": "@/shared/modules/products/components/selectors/UniversalProductSelectorV2"
+  },
+  {
+    "file": "src//app/produits/catalogue/page.tsx",
+    "old": "@/components/business/product-card-v2",
+    "new": "@/shared/modules/products/components/cards/ProductCardV2"
+  },
+  {
+    "file": "src//app/produits/catalogue/page.tsx",
+    "old": "@/components/business/category-hierarchy-filter-v2",
+    "new": "@/shared/modules/categories/components/filters/CategoryHierarchyFilterV2"
+  },
+  {
+    "file": "src//app/produits/catalogue/page.tsx",
+    "old": "@/components/business/command-palette-search",
+    "new": "@/shared/modules/ui/components/utils/CommandPaletteSearch"
+  },
+  {
+    "file": "src//app/produits/catalogue/page.tsx",
+    "old": "@/components/business/filter-combobox",
+    "new": "@/shared/modules/ui/components/selectors/FilterCombobox"
+  },
+  {
+    "file": "src//app/produits/sourcing/produits/[id]/page.tsx",
+    "old": "@/components/business/edit-sourcing-product-modal",
+    "new": "@/shared/modules/products/components/modals/EditSourcingProductModal"
+  },
+  {
+    "file": "src//app/produits/sourcing/produits/[id]/page.tsx",
+    "old": "@/components/business/supplier-selector",
+    "new": "@/shared/modules/suppliers/components/selectors/SupplierSelector"
+  },
+  {
+    "file": "src//app/produits/sourcing/produits/page.tsx",
+    "old": "@/components/business/quick-sourcing-modal",
+    "new": "@/shared/modules/products/components/modals/QuickSourcingModal"
+  },
+  {
+    "file": "src//app/produits/sourcing/produits/create/page.tsx",
+    "old": "@/components/business/sourcing-quick-form",
+    "new": "@/shared/modules/products/components/sourcing/SourcingQuickForm"
+  },
+  {
+    "file": "src//app/produits/sourcing/echantillons/page.tsx",
+    "old": "@/components/business/customer-selector",
+    "new": "@/shared/modules/customers/components/selectors/CustomerSelector"
+  },
+  {
+    "file": "src//app/produits/sourcing/echantillons/page.tsx",
+    "old": "@/components/business/universal-product-selector-v2",
+    "new": "@/shared/modules/products/components/selectors/UniversalProductSelectorV2"
+  },
+  {
+    "file": "src//app/produits/sourcing/echantillons/page.tsx",
+    "old": "@/components/business/customer-badge",
+    "new": "@/shared/modules/customers/components/badges/CustomerBadge"
+  },
+  {
+    "file": "src//app/produits/sourcing/validation/page.tsx",
+    "old": "@/components/business/sample-validation-simple",
+    "new": "@/shared/modules/ui/components/validation/SampleValidationSimple"
+  },
+  {
+    "file": "src//app/stocks/mouvements/page.tsx",
+    "old": "@/components/business/movements-table",
+    "new": "@/shared/modules/stock/components/tables/MovementsTable"
+  },
+  {
+    "file": "src//app/stocks/mouvements/page.tsx",
+    "old": "@/components/business/movements-filters",
+    "new": "@/shared/modules/stock/components/filters/MovementsFilters"
+  },
+  {
+    "file": "src//app/stocks/mouvements/page.tsx",
+    "old": "@/components/business/movements-stats",
+    "new": "@/shared/modules/stock/components/stats/MovementsStatsCards"
+  },
+  {
+    "file": "src//app/stocks/mouvements/page.tsx",
+    "old": "@/components/business/movement-details-modal",
+    "new": "@/shared/modules/stock/components/modals/MovementDetailsModal"
+  },
+  {
+    "file": "src//app/stocks/mouvements/page.tsx",
+    "old": "@/components/business/cancel-movement-modal",
+    "new": "@/shared/modules/stock/components/modals/CancelMovementModal"
+  },
+  {
+    "file": "src//app/stocks/mouvements/page.tsx",
+    "old": "@/components/business/universal-order-details-modal",
+    "new": "@/shared/modules/orders/components/modals/UniversalOrderDetailsModal"
+  },
+  {
+    "file": "src//app/stocks/previsionnel/page.tsx",
+    "old": "@/components/business/order-items-table",
+    "new": "@/shared/modules/orders/components/tables/OrderItemsTable"
+  },
+  {
+    "file": "src//app/stocks/inventaire/page.tsx",
+    "old": "@/components/business/stock-reports-modal",
+    "new": "@/shared/modules/stock/components/modals/StockReportsModal"
+  },
+  {
+    "file": "src//app/stocks/inventaire/page.tsx",
+    "old": "@/components/business/product-history-modal",
+    "new": "@/shared/modules/stock/components/modals/ProductHistoryModal"
+  },
+  {
+    "file": "src//app/stocks/inventaire/page.tsx",
+    "old": "@/components/business/inventory-adjustment-modal",
+    "new": "@/shared/modules/stock/components/modals/InventoryAdjustmentModal"
+  },
+  {
+    "file": "src//app/stocks/expeditions/page.tsx",
+    "old": "@/components/business/sales-order-shipment-modal",
+    "new": "@/shared/modules/orders/components/modals/SalesOrderShipmentModal"
+  },
+  {
+    "file": "src//app/stocks/receptions/page.tsx",
+    "old": "@/components/business/purchase-order-reception-modal",
+    "new": "@/shared/modules/orders/components/modals/PurchaseOrderReceptionModal"
+  },
+  {
+    "file": "src//app/contacts-organisations/customers/[customerId]/page.tsx",
+    "old": "@/components/business/legal-identity-edit-section",
+    "new": "@/shared/modules/organisations/components/sections/LegalIdentityEditSection"
+  },
+  {
+    "file": "src//app/contacts-organisations/customers/[customerId]/page.tsx",
+    "old": "@/components/business/contact-edit-section",
+    "new": "@/shared/modules/customers/components/sections/ContactEditSection"
+  },
+  {
+    "file": "src//app/contacts-organisations/customers/[customerId]/page.tsx",
+    "old": "@/components/business/address-edit-section",
+    "new": "@/shared/modules/common/components/address/AddressEditSection"
+  },
+  {
+    "file": "src//app/contacts-organisations/customers/[customerId]/page.tsx",
+    "old": "@/components/business/commercial-edit-section",
+    "new": "@/shared/modules/organisations/components/sections/CommercialEditSection"
+  },
+  {
+    "file": "src//app/contacts-organisations/customers/[customerId]/page.tsx",
+    "old": "@/components/business/performance-edit-section",
+    "new": "@/shared/modules/organisations/components/sections/PerformanceEditSection"
+  },
+  {
+    "file": "src//app/contacts-organisations/customers/[customerId]/page.tsx",
+    "old": "@/components/business/contacts-management-section",
+    "new": "@/shared/modules/customers/components/sections/ContactsManagementSection"
+  },
+  {
+    "file": "src//app/contacts-organisations/customers/[customerId]/page.tsx",
+    "old": "@/components/business/organisation-logo-card",
+    "new": "@/shared/modules/organisations/components/cards/OrganisationLogoCard"
+  },
+  {
+    "file": "src//app/contacts-organisations/customers/[customerId]/page.tsx",
+    "old": "@/components/business/organisation-stats-card",
+    "new": "@/shared/modules/organisations/components/cards/OrganisationStatsCard"
+  },
+  {
+    "file": "src//app/contacts-organisations/customers/[customerId]/page.tsx",
+    "old": "@/components/business/organisation-products-section",
+    "new": "@/shared/modules/organisations/components/sections/OrganisationProductsSection"
+  },
+  {
+    "file": "src//app/contacts-organisations/customers/page.tsx",
+    "old": "@/components/business/customer-form-modal",
+    "new": "@/shared/modules/customers/components/modals/CustomerFormModal"
+  },
+  {
+    "file": "src//app/contacts-organisations/customers/page.tsx",
+    "old": "@/components/business/organisation-logo",
+    "new": "@/shared/modules/organisations/components/cards/OrganisationLogo"
+  },
+  {
+    "file": "src//app/contacts-organisations/customers/page.tsx",
+    "old": "@/components/business/heart-badge",
+    "new": "@/shared/modules/ui/components/badges/HeartBadge"
+  },
+  {
+    "file": "src//app/contacts-organisations/customers/page.tsx",
+    "old": "@/components/business/favorite-toggle-button",
+    "new": "@/shared/modules/ui/components/buttons/FavoriteToggleButton"
+  },
+  {
+    "file": "src//app/contacts-organisations/customers/page.tsx",
+    "old": "@/components/business/confirm-delete-organisation-modal",
+    "new": "@/shared/modules/ui/components/modals/ConfirmDeleteModal"
+  },
+  {
+    "file": "src//app/contacts-organisations/suppliers/[supplierId]/page.tsx",
+    "old": "@/components/business/legal-identity-edit-section",
+    "new": "@/shared/modules/organisations/components/sections/LegalIdentityEditSection"
+  },
+  {
+    "file": "src//app/contacts-organisations/suppliers/[supplierId]/page.tsx",
+    "old": "@/components/business/contact-edit-section",
+    "new": "@/shared/modules/customers/components/sections/ContactEditSection"
+  },
+  {
+    "file": "src//app/contacts-organisations/suppliers/[supplierId]/page.tsx",
+    "old": "@/components/business/address-edit-section",
+    "new": "@/shared/modules/common/components/address/AddressEditSection"
+  },
+  {
+    "file": "src//app/contacts-organisations/suppliers/[supplierId]/page.tsx",
+    "old": "@/components/business/commercial-edit-section",
+    "new": "@/shared/modules/organisations/components/sections/CommercialEditSection"
+  },
+  {
+    "file": "src//app/contacts-organisations/suppliers/[supplierId]/page.tsx",
+    "old": "@/components/business/performance-edit-section",
+    "new": "@/shared/modules/organisations/components/sections/PerformanceEditSection"
+  },
+  {
+    "file": "src//app/contacts-organisations/suppliers/[supplierId]/page.tsx",
+    "old": "@/components/business/contacts-management-section",
+    "new": "@/shared/modules/customers/components/sections/ContactsManagementSection"
+  },
+  {
+    "file": "src//app/contacts-organisations/suppliers/[supplierId]/page.tsx",
+    "old": "@/components/business/organisation-logo-card",
+    "new": "@/shared/modules/organisations/components/cards/OrganisationLogoCard"
+  },
+  {
+    "file": "src//app/contacts-organisations/suppliers/[supplierId]/page.tsx",
+    "old": "@/components/business/organisation-stats-card",
+    "new": "@/shared/modules/organisations/components/cards/OrganisationStatsCard"
+  },
+  {
+    "file": "src//app/contacts-organisations/suppliers/[supplierId]/page.tsx",
+    "old": "@/components/business/organisation-purchase-orders-section",
+    "new": "@/shared/modules/organisations/components/sections/OrganisationPurchaseOrdersSection"
+  },
+  {
+    "file": "src//app/contacts-organisations/suppliers/[supplierId]/page.tsx",
+    "old": "@/components/business/organisation-products-section",
+    "new": "@/shared/modules/organisations/components/sections/OrganisationProductsSection"
+  },
+  {
+    "file": "src//app/contacts-organisations/suppliers/page.tsx",
+    "old": "@/components/business/supplier-form-modal",
+    "new": "@/shared/modules/organisations/components/forms/SupplierFormModal"
+  },
+  {
+    "file": "src//app/contacts-organisations/suppliers/page.tsx",
+    "old": "@/components/business/organisation-logo",
+    "new": "@/shared/modules/organisations/components/cards/OrganisationLogo"
+  },
+  {
+    "file": "src//app/contacts-organisations/suppliers/page.tsx",
+    "old": "@/components/business/supplier-segment-badge",
+    "new": "@/shared/modules/suppliers/components/badges/SupplierSegmentBadge"
+  },
+  {
+    "file": "src//app/contacts-organisations/suppliers/page.tsx",
+    "old": "@/components/business/supplier-category-badge",
+    "new": "@/shared/modules/categories/components/badges/SupplierCategoryBadge"
+  },
+  {
+    "file": "src//app/contacts-organisations/suppliers/page.tsx",
+    "old": "@/components/business/heart-badge",
+    "new": "@/shared/modules/ui/components/badges/HeartBadge"
+  },
+  {
+    "file": "src//app/contacts-organisations/suppliers/page.tsx",
+    "old": "@/components/business/favorite-toggle-button",
+    "new": "@/shared/modules/ui/components/buttons/FavoriteToggleButton"
+  },
+  {
+    "file": "src//app/contacts-organisations/suppliers/page.tsx",
+    "old": "@/components/business/confirm-delete-organisation-modal",
+    "new": "@/shared/modules/ui/components/modals/ConfirmDeleteModal"
+  },
+  {
+    "file": "src//app/contacts-organisations/contacts/[contactId]/page.tsx",
+    "old": "@/components/business/contact-personal-edit-section",
+    "new": "@/shared/modules/customers/components/sections/ContactPersonalEditSection"
+  },
+  {
+    "file": "src//app/contacts-organisations/contacts/[contactId]/page.tsx",
+    "old": "@/components/business/contact-details-edit-section",
+    "new": "@/shared/modules/customers/components/sections/ContactDetailsEditSection"
+  },
+  {
+    "file": "src//app/contacts-organisations/contacts/[contactId]/page.tsx",
+    "old": "@/components/business/contact-roles-edit-section",
+    "new": "@/shared/modules/customers/components/sections/ContactRolesEditSection"
+  },
+  {
+    "file": "src//app/contacts-organisations/contacts/[contactId]/page.tsx",
+    "old": "@/components/business/contact-preferences-edit-section",
+    "new": "@/shared/modules/customers/components/sections/ContactPreferencesEditSection"
+  },
+  {
+    "file": "src//app/contacts-organisations/partners/[partnerId]/page.tsx",
+    "old": "@/components/business/legal-identity-edit-section",
+    "new": "@/shared/modules/organisations/components/sections/LegalIdentityEditSection"
+  },
+  {
+    "file": "src//app/contacts-organisations/partners/[partnerId]/page.tsx",
+    "old": "@/components/business/contact-edit-section",
+    "new": "@/shared/modules/customers/components/sections/ContactEditSection"
+  },
+  {
+    "file": "src//app/contacts-organisations/partners/[partnerId]/page.tsx",
+    "old": "@/components/business/address-edit-section",
+    "new": "@/shared/modules/common/components/address/AddressEditSection"
+  },
+  {
+    "file": "src//app/contacts-organisations/partners/[partnerId]/page.tsx",
+    "old": "@/components/business/commercial-edit-section",
+    "new": "@/shared/modules/organisations/components/sections/CommercialEditSection"
+  },
+  {
+    "file": "src//app/contacts-organisations/partners/[partnerId]/page.tsx",
+    "old": "@/components/business/contacts-management-section",
+    "new": "@/shared/modules/customers/components/sections/ContactsManagementSection"
+  },
+  {
+    "file": "src//app/contacts-organisations/partners/[partnerId]/page.tsx",
+    "old": "@/components/business/organisation-logo-card",
+    "new": "@/shared/modules/organisations/components/cards/OrganisationLogoCard"
+  },
+  {
+    "file": "src//app/contacts-organisations/partners/[partnerId]/page.tsx",
+    "old": "@/components/business/organisation-stats-card",
+    "new": "@/shared/modules/organisations/components/cards/OrganisationStatsCard"
+  },
+  {
+    "file": "src//app/contacts-organisations/partners/page.tsx",
+    "old": "@/components/business/partner-form-modal",
+    "new": "@/shared/modules/organisations/components/forms/PartnerFormModal"
+  },
+  {
+    "file": "src//app/contacts-organisations/partners/page.tsx",
+    "old": "@/components/business/organisation-logo",
+    "new": "@/shared/modules/organisations/components/cards/OrganisationLogo"
+  },
+  {
+    "file": "src//app/contacts-organisations/partners/page.tsx",
+    "old": "@/components/business/heart-badge",
+    "new": "@/shared/modules/ui/components/badges/HeartBadge"
+  },
+  {
+    "file": "src//app/contacts-organisations/partners/page.tsx",
+    "old": "@/components/business/favorite-toggle-button",
+    "new": "@/shared/modules/ui/components/buttons/FavoriteToggleButton"
+  },
+  {
+    "file": "src//app/contacts-organisations/partners/page.tsx",
+    "old": "@/components/business/confirm-delete-organisation-modal",
+    "new": "@/shared/modules/ui/components/modals/ConfirmDeleteModal"
+  },
+  {
+    "file": "src//app/factures/[id]/page.tsx",
+    "old": "@/components/business/payment-form",
+    "new": "@/shared/modules/finance/components/forms/PaymentForm"
+  },
+  {
+    "file": "src//app/organisation/components/partners-tab.tsx",
+    "old": "@/components/business/partner-form-modal",
+    "new": "@/shared/modules/organisations/components/forms/PartnerFormModal"
+  },
+  {
+    "file": "src//app/organisation/components/partners-tab.tsx",
+    "old": "@/components/business/organisation-logo",
+    "new": "@/shared/modules/organisations/components/cards/OrganisationLogo"
+  },
+  {
+    "file": "src//app/organisation/components/partners-tab.tsx",
+    "old": "@/components/business/organisation-card",
+    "new": "@/shared/modules/organisations/components/cards/OrganisationCard"
+  },
+  {
+    "file": "src//app/organisation/components/partners-tab.tsx",
+    "old": "@/components/business/organisation-list-view",
+    "new": "@/shared/modules/customers/components/sections/OrganisationListView"
+  },
+  {
+    "file": "src//app/organisation/components/suppliers-tab.tsx",
+    "old": "@/components/business/supplier-form-modal",
+    "new": "@/shared/modules/organisations/components/forms/SupplierFormModal"
+  },
+  {
+    "file": "src//app/organisation/components/suppliers-tab.tsx",
+    "old": "@/components/business/organisation-logo",
+    "new": "@/shared/modules/organisations/components/cards/OrganisationLogo"
+  },
+  {
+    "file": "src//app/organisation/components/suppliers-tab.tsx",
+    "old": "@/components/business/organisation-card",
+    "new": "@/shared/modules/organisations/components/cards/OrganisationCard"
+  },
+  {
+    "file": "src//app/organisation/components/suppliers-tab.tsx",
+    "old": "@/components/business/organisation-list-view",
+    "new": "@/shared/modules/customers/components/sections/OrganisationListView"
+  },
+  {
+    "file": "src//app/organisation/components/suppliers-tab.tsx",
+    "old": "@/components/business/supplier-segment-badge",
+    "new": "@/shared/modules/suppliers/components/badges/SupplierSegmentBadge"
+  },
+  {
+    "file": "src//app/organisation/components/suppliers-tab.tsx",
+    "old": "@/components/business/supplier-category-badge",
+    "new": "@/shared/modules/categories/components/badges/SupplierCategoryBadge"
+  },
+  {
+    "file": "src//app/organisation/components/customers-tab.tsx",
+    "old": "@/components/business/customer-form-modal",
+    "new": "@/shared/modules/customers/components/modals/CustomerFormModal"
+  },
+  {
+    "file": "src//app/organisation/components/customers-tab.tsx",
+    "old": "@/components/business/organisation-logo",
+    "new": "@/shared/modules/organisations/components/cards/OrganisationLogo"
+  },
+  {
+    "file": "src//app/organisation/components/customers-tab.tsx",
+    "old": "@/components/business/organisation-card",
+    "new": "@/shared/modules/organisations/components/cards/OrganisationCard"
+  },
+  {
+    "file": "src//app/organisation/components/customers-tab.tsx",
+    "old": "@/components/business/organisation-list-view",
+    "new": "@/shared/modules/customers/components/sections/OrganisationListView"
+  },
+  {
+    "file": "src//app/finance/depenses/[id]/page.tsx",
+    "old": "@/components/business/financial-payment-form",
+    "new": "@/shared/modules/finance/components/forms/FinancialPaymentForm"
+  },
+  {
+    "file": "src//app/demo-universal-selector/page.tsx",
+    "old": "@/components/business/universal-product-selector-v2",
+    "new": "@/shared/modules/products/components/selectors/UniversalProductSelectorV2"
+  },
+  {
+    "file": "src//shared/modules/customers/components/sections/OrganisationListView.tsx",
+    "old": "@/components/business/supplier-segment-badge",
+    "new": "@/shared/modules/suppliers/components/badges/SupplierSegmentBadge"
+  },
+  {
+    "file": "src//shared/modules/products/components/sections/SupplierEditSection.tsx",
+    "old": "@/components/business/supplier-selector",
+    "new": "@/shared/modules/suppliers/components/selectors/SupplierSelector"
+  },
+  {
+    "file": "src//shared/modules/products/components/modals/QuickSourcingModal.tsx",
+    "old": "@/components/business/sourcing-quick-form",
+    "new": "@/shared/modules/products/components/sourcing/SourcingQuickForm"
+  },
+  {
+    "file": "src//shared/modules/products/components/modals/EditProductVariantModal.tsx",
+    "old": "@/components/business/supplier-selector",
+    "new": "@/shared/modules/suppliers/components/selectors/SupplierSelector"
+  },
+  {
+    "file": "src//shared/modules/products/components/modals/VariantAddProductModal.tsx",
+    "old": "@/components/business/universal-product-selector-v2",
+    "new": "@/shared/modules/products/components/selectors/UniversalProductSelectorV2"
+  },
+  {
+    "file": "src//shared/modules/products/components/modals/EditSourcingProductModal.tsx",
+    "old": "@/components/business/supplier-selector",
+    "new": "@/shared/modules/suppliers/components/selectors/SupplierSelector"
+  },
+  {
+    "file": "src//shared/modules/products/components/wizards/VariantGroupCreationWizard.tsx",
+    "old": "@/components/business/category-filter-combobox",
+    "new": "@/shared/modules/categories/components/filters/CategoryFilterCombobox"
+  },
+  {
+    "file": "src//shared/modules/products/components/wizards/CompleteProductWizard.tsx",
+    "old": "@/components/business/wizard-sections/general-info-section",
+    "new": "@/shared/modules/products/components/wizards/sections/GeneralInfoSection"
+  },
+  {
+    "file": "src//shared/modules/products/components/wizards/CompleteProductWizard.tsx",
+    "old": "@/components/business/wizard-sections/supplier-section",
+    "new": "@/shared/modules/products/components/wizards/sections/SupplierSection"
+  },
+  {
+    "file": "src//shared/modules/products/components/wizards/CompleteProductWizard.tsx",
+    "old": "@/components/business/wizard-sections/pricing-section",
+    "new": "@/shared/modules/products/components/wizards/sections/PricingSection"
+  },
+  {
+    "file": "src//shared/modules/products/components/wizards/CompleteProductWizard.tsx",
+    "old": "@/components/business/wizard-sections/technical-section",
+    "new": "@/shared/modules/products/components/wizards/sections/TechnicalSection"
+  },
+  {
+    "file": "src//shared/modules/products/components/wizards/CompleteProductWizard.tsx",
+    "old": "@/components/business/wizard-sections/images-section",
+    "new": "@/shared/modules/products/components/wizards/sections/ImagesSection"
+  },
+  {
+    "file": "src//shared/modules/products/components/wizards/CompleteProductWizard.tsx",
+    "old": "@/components/business/wizard-sections/stock-section",
+    "new": "@/shared/modules/products/components/wizards/sections/StockSection"
+  },
+  {
+    "file": "src//shared/modules/products/components/selectors/UniversalProductSelectorV2.tsx",
+    "old": "@/components/business/product-thumbnail",
+    "new": "@/shared/modules/products/components/images/ProductThumbnail"
+  },
+  {
+    "file": "src//shared/modules/suppliers/components/selectors/SupplierSegmentSelect.tsx",
+    "old": "@/components/business/supplier-segment-badge",
+    "new": "@/shared/modules/suppliers/components/badges/SupplierSegmentBadge"
+  },
+  {
+    "file": "src//shared/modules/common/components/collections/CollectionCreationWizard.tsx",
+    "old": "@/components/business/collection-image-upload",
+    "new": "@/shared/modules/common/components/collections/CollectionImageUpload"
+  },
+  {
+    "file": "src//shared/modules/organisations/components/forms/organisation-contacts-manager.tsx",
+    "old": "@/components/business/contact-form-modal-wrapper",
+    "new": "@/shared/modules/organisations/components/forms/ContactFormModalWrapper"
+  },
+  {
+    "file": "src//shared/modules/organisations/components/forms/supplier-segment-select.tsx",
+    "old": "@/components/business/supplier-segment-badge",
+    "new": "@/shared/modules/suppliers/components/badges/SupplierSegmentBadge"
+  },
+  {
+    "file": "src//shared/modules/organisations/components/forms/SupplierFormModal.tsx",
+    "old": "@/components/business/supplier-segment-badge",
+    "new": "@/shared/modules/suppliers/components/badges/SupplierSegmentBadge"
+  },
+  {
+    "file": "src//shared/modules/organisations/components/cards/OrganisationCard.tsx",
+    "old": "@/components/business/supplier-segment-badge",
+    "new": "@/shared/modules/suppliers/components/badges/SupplierSegmentBadge"
+  },
+  {
+    "file": "src//shared/modules/organisations/components/cards/OrganisationCard.tsx",
+    "old": "@/components/business/supplier-category-badge",
+    "new": "@/shared/modules/categories/components/badges/SupplierCategoryBadge"
+  },
+  {
+    "file": "src//shared/modules/consultations/components/images/ConsultationImageGallery.tsx",
+    "old": "@/components/business/consultation-image-viewer-modal",
+    "new": "@/shared/modules/consultations/components/images/ConsultationImageViewerModal"
+  },
+  {
+    "file": "src//shared/modules/consultations/components/images/ConsultationImageGallery.tsx",
+    "old": "@/components/business/consultation-photos-modal",
+    "new": "@/shared/modules/consultations/components/images/ConsultationPhotosModal"
+  },
+  {
+    "file": "src//shared/modules/consultations/components/interfaces/ConsultationOrderInterface.tsx",
+    "old": "@/components/business/universal-product-selector-v2",
+    "new": "@/shared/modules/products/components/selectors/UniversalProductSelectorV2"
+  },
+  {
+    "file": "src//shared/modules/consultations/components/interfaces/ConsultationOrderInterface.tsx",
+    "old": "@/components/business/edit-sourcing-product-modal",
+    "new": "@/shared/modules/products/components/modals/EditSourcingProductModal"
+  },
+  {
+    "file": "src//shared/modules/orders/components/modals/SalesOrderShipmentModal.tsx",
+    "old": "@/components/business/sales-order-shipment-form",
+    "new": "@/shared/modules/orders/components/forms/SalesOrderShipmentForm"
+  },
+  {
+    "file": "src//shared/modules/orders/components/modals/UniversalOrderDetailsModal.tsx",
+    "old": "@/components/business/editable-order-item-row",
+    "new": "@/shared/modules/orders/components/tables/EditableOrderItemRow"
+  },
+  {
+    "file": "src//shared/modules/orders/components/modals/UniversalOrderDetailsModal.tsx",
+    "old": "@/components/business/add-product-to-order-modal",
+    "new": "@/shared/modules/orders/components/modals/AddProductToOrderModal"
+  },
+  {
+    "file": "src//shared/modules/orders/components/modals/UniversalOrderDetailsModal.tsx",
+    "old": "@/components/business/order-header-edit-section",
+    "new": "@/shared/modules/orders/components/sections/OrderHeaderEditSection"
+  },
+  {
+    "file": "src//shared/modules/orders/components/modals/OrderDetailModal.tsx",
+    "old": "@/components/business/sales-order-shipment-modal",
+    "new": "@/shared/modules/orders/components/modals/SalesOrderShipmentModal"
+  },
+  {
+    "file": "src//shared/modules/orders/components/modals/SalesOrderFormModal.tsx",
+    "old": "@/components/business/universal-product-selector-v2",
+    "new": "@/shared/modules/products/components/selectors/UniversalProductSelectorV2"
+  },
+  {
+    "file": "src//shared/modules/orders/components/modals/PurchaseOrderReceptionModal.tsx",
+    "old": "@/components/business/purchase-order-reception-form",
+    "new": "@/shared/modules/orders/components/forms/PurchaseOrderReceptionForm"
+  },
+  {
+    "file": "src//shared/modules/orders/components/modals/PurchaseOrderFormModal.tsx",
+    "old": "@/components/business/universal-product-selector-v2",
+    "new": "@/shared/modules/products/components/selectors/UniversalProductSelectorV2"
+  },
+  {
+    "file": "src//shared/modules/orders/components/modals/AddProductToOrderModal.tsx",
+    "old": "@/components/business/universal-product-selector-v2",
+    "new": "@/shared/modules/products/components/selectors/UniversalProductSelectorV2"
+  },
+  {
+    "file": "src//shared/modules/stock/components/modals/GeneralStockMovementModal.tsx",
+    "old": "@/components/business/stock-display",
+    "new": "@/shared/modules/stock/components/displays/StockDisplay"
+  },
+  {
+    "file": "src//shared/modules/stock/components/modals/StockReportsModal.tsx",
+    "old": "@/components/business/aging-report-view",
+    "new": "@/shared/modules/stock/components/reports/AgingReportView"
+  },
+  {
+    "file": "src//shared/modules/stock/components/modals/StockReportsModal.tsx",
+    "old": "@/components/business/abc-analysis-view",
+    "new": "@/shared/modules/stock/components/reports/ABCAnalysisView"
+  },
+  {
+    "file": "src//shared/modules/categories/components/selectors/SupplierCategorySelect.tsx",
+    "old": "@/components/business/supplier-category-badge",
+    "new": "@/shared/modules/categories/components/badges/SupplierCategoryBadge"
+  },
+  {
+    "file": "src//shared/modules/channels/components/google-merchant/GoogleMerchantProductCard.tsx",
+    "old": "@/components/business/product-thumbnail",
+    "new": "@/shared/modules/products/components/images/ProductThumbnail"
+  },
+  {
+    "file": "src//shared/modules/channels/components/google-merchant/GoogleMerchantProductCard.tsx",
+    "old": "@/components/business/google-merchant-price-editor",
+    "new": "@/shared/modules/channels/components/google-merchant/GoogleMerchantPriceEditor"
+  },
+  {
+    "file": "src//shared/modules/channels/components/google-merchant/GoogleMerchantProductCard.tsx",
+    "old": "@/components/business/google-merchant-metadata-editor",
+    "new": "@/shared/modules/channels/components/google-merchant/GoogleMerchantMetadataEditor"
+  },
+  {
+    "file": "src//shared/modules/channels/components/google-merchant/GoogleMerchantProductManager.tsx",
+    "old": "@/components/business/product-thumbnail",
+    "new": "@/shared/modules/products/components/images/ProductThumbnail"
+  },
+  {
+    "file": "src//components/forms/QuickVariantForm.tsx",
+    "old": "@/components/business/DynamicColorSelector",
+    "new": "@/shared/modules/ui/components/selectors/DynamicColorSelector"
+  }
+]

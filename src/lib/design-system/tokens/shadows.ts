@@ -54,7 +54,7 @@ export const shadows = {
    * Usage : Inputs, wells
    */
   inner: 'inset 0 2px 4px 0 rgb(0 0 0 / 0.05)',
-} as const
+} as const;
 
 /**
  * Semantic shadows pour composants
@@ -69,10 +69,10 @@ export const componentShadows = {
   toast: shadows['2xl'],
   input: shadows.none,
   inputFocus: shadows.sm,
-} as const
+} as const;
 
 /**
  * Type helpers
  */
-export type ShadowScale = keyof typeof shadows
-export type ComponentShadow = keyof typeof componentShadows
+export type ShadowScale = keyof typeof shadows;
+export type ComponentShadow = keyof typeof componentShadows;

@@ -1,35 +1,44 @@
-'use client'
+'use client';
 
-import { useState } from 'react'
-import { Link, Euro, FileText, Star, Save, X } from 'lucide-react'
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
-import { ButtonV2 } from '@/components/ui/button'
-import { Input } from '@/components/ui/input'
-import { Label } from '@/components/ui/label'
-import { Textarea } from '@/components/ui/textarea'
-import { Switch } from '@/components/ui/switch'
-import { Alert, AlertDescription } from '@/components/ui/alert'
-import { useToast } from '@/shared/modules/common/hooks'
-import { ProductSelector } from './product-selector'
+import { useState } from 'react';
+
+import { Link, Euro, FileText, Star, Save, X } from 'lucide-react';
+
+import { Alert, AlertDescription } from '@/components/ui/alert';
+import { ButtonV2 } from '@/components/ui/button';
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from '@/components/ui/card';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Switch } from '@/components/ui/switch';
+import { Textarea } from '@/components/ui/textarea';
+import { useToast } from '@/shared/modules/common/hooks';
+// TODO: Réactiver lors Phase 2+ (module consultations désactivé)
+// import { ProductSelector } from './product-selector'
 
 interface Product {
-  id: string
-  name: string
-  sku: string
-  status: string
-  creation_mode: string
-  requires_sample: boolean
-  supplier_name?: string
-  product_type: string
-  assigned_client_id?: string
+  id: string;
+  name: string;
+  sku: string;
+  status: string;
+  creation_mode: string;
+  requires_sample: boolean;
+  supplier_name?: string;
+  product_type: string;
+  assigned_client_id?: string;
 }
 
 interface ConsultationProductAssociationProps {
-  consultationId: string
-  consultationName: string
-  onAssociationCreated?: () => void
-  onCancel?: () => void
-  className?: string
+  consultationId: string;
+  consultationName: string;
+  onAssociationCreated?: () => void;
+  onCancel?: () => void;
+  className?: string;
 }
 
 export function ConsultationProductAssociation({
@@ -37,37 +46,40 @@ export function ConsultationProductAssociation({
   consultationName,
   onAssociationCreated,
   onCancel,
-  className
+  className,
 }: ConsultationProductAssociationProps) {
-  const { toast } = useToast()
-  const [selectedProduct, setSelectedProduct] = useState<Product | null>(null)
-  const [proposedPrice, setProposedPrice] = useState('')
-  const [notes, setNotes] = useState('')
-  const [isPrimaryProposal, setIsPrimaryProposal] = useState(false)
-  const [loading, setLoading] = useState(false)
-  const [errors, setErrors] = useState<Record<string, string>>({})
+  const { toast } = useToast();
+  const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
+  const [proposedPrice, setProposedPrice] = useState('');
+  const [notes, setNotes] = useState('');
+  const [isPrimaryProposal, setIsPrimaryProposal] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const [errors, setErrors] = useState<Record<string, string>>({});
 
   // Validation
   const validateForm = () => {
-    const newErrors: Record<string, string> = {}
+    const newErrors: Record<string, string> = {};
 
     if (!selectedProduct) {
-      newErrors.product = 'Veuillez sélectionner un produit'
+      newErrors.product = 'Veuillez sélectionner un produit';
     }
 
-    if (proposedPrice && (isNaN(parseFloat(proposedPrice)) || parseFloat(proposedPrice) <= 0)) {
-      newErrors.proposedPrice = 'Le prix doit être un nombre positif'
+    if (
+      proposedPrice &&
+      (isNaN(parseFloat(proposedPrice)) || parseFloat(proposedPrice) <= 0)
+    ) {
+      newErrors.proposedPrice = 'Le prix doit être un nombre positif';
     }
 
-    setErrors(newErrors)
-    return Object.keys(newErrors).length === 0
-  }
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
+  };
 
   // Créer l'association
   const handleCreateAssociation = async () => {
-    if (!validateForm()) return
+    if (!validateForm()) return;
 
-    setLoading(true)
+    setLoading(true);
 
     try {
       const response = await fetch('/api/consultations/associations', {
@@ -80,41 +92,45 @@ export function ConsultationProductAssociation({
           product_id: selectedProduct!.id,
           proposed_price: proposedPrice ? parseFloat(proposedPrice) : null,
           notes: notes.trim() || null,
-          is_primary_proposal: isPrimaryProposal
-        })
-      })
+          is_primary_proposal: isPrimaryProposal,
+        }),
+      });
 
-      const result = await response.json()
+      const result = await response.json();
 
       if (!response.ok) {
-        throw new Error(result.error || 'Erreur lors de la création de l\'association')
+        throw new Error(
+          result.error || "Erreur lors de la création de l'association"
+        );
       }
 
       toast({
-        title: "Association créée",
-        description: `${selectedProduct!.name} a été ajouté à la consultation ${consultationName}`
-      })
+        title: 'Association créée',
+        description: `${selectedProduct!.name} a été ajouté à la consultation ${consultationName}`,
+      });
 
       // Reset form
-      setSelectedProduct(null)
-      setProposedPrice('')
-      setNotes('')
-      setIsPrimaryProposal(false)
-      setErrors({})
+      setSelectedProduct(null);
+      setProposedPrice('');
+      setNotes('');
+      setIsPrimaryProposal(false);
+      setErrors({});
 
-      onAssociationCreated?.()
-
+      onAssociationCreated?.();
     } catch (error) {
-      console.error('Erreur création association:', error)
+      console.error('Erreur création association:', error);
       toast({
-        title: "Erreur",
-        description: error instanceof Error ? error.message : "Impossible de créer l'association",
-        variant: "destructive"
-      })
+        title: 'Erreur',
+        description:
+          error instanceof Error
+            ? error.message
+            : "Impossible de créer l'association",
+        variant: 'destructive',
+      });
     } finally {
-      setLoading(false)
+      setLoading(false);
     }
-  }
+  };
 
   return (
     <div className={`space-y-6 ${className}`}>
@@ -133,11 +149,15 @@ export function ConsultationProductAssociation({
 
       <div className="grid lg:grid-cols-2 gap-6">
         {/* Sélecteur de produit */}
-        <ProductSelector
+        {/* TODO: Réactiver lors Phase 2+ (module consultations désactivé) */}
+        {/* <ProductSelector
           consultationId={consultationId}
           onProductSelect={setSelectedProduct}
           selectedProductId={selectedProduct?.id}
-        />
+        /> */}
+        <div className="text-sm text-muted-foreground">
+          ProductSelector désactivé (Phase 2+)
+        </div>
 
         {/* Détails de l'association */}
         <Card>
@@ -159,11 +179,19 @@ export function ConsultationProductAssociation({
                   <div className="space-y-2">
                     <div className="font-medium">Produit sélectionné :</div>
                     <div className="text-sm">
-                      <div><strong>{selectedProduct.name}</strong></div>
-                      <div className="text-gray-600">SKU: {selectedProduct.sku}</div>
-                      <div className="text-gray-600">Statut: {selectedProduct.status}</div>
+                      <div>
+                        <strong>{selectedProduct.name}</strong>
+                      </div>
+                      <div className="text-gray-600">
+                        SKU: {selectedProduct.sku}
+                      </div>
+                      <div className="text-gray-600">
+                        Statut: {selectedProduct.status}
+                      </div>
                       {selectedProduct.supplier_name && (
-                        <div className="text-gray-600">Fournisseur: {selectedProduct.supplier_name}</div>
+                        <div className="text-gray-600">
+                          Fournisseur: {selectedProduct.supplier_name}
+                        </div>
                       )}
                     </div>
                   </div>
@@ -197,10 +225,10 @@ export function ConsultationProductAssociation({
                 step="0.01"
                 min="0"
                 value={proposedPrice}
-                onChange={(e) => {
-                  setProposedPrice(e.target.value)
+                onChange={e => {
+                  setProposedPrice(e.target.value);
                   if (errors.proposedPrice) {
-                    setErrors(prev => ({ ...prev, proposedPrice: '' }))
+                    setErrors(prev => ({ ...prev, proposedPrice: '' }));
                   }
                 }}
                 placeholder="Prix personnalisé pour cette consultation..."
@@ -221,7 +249,7 @@ export function ConsultationProductAssociation({
               <Textarea
                 id="notes"
                 value={notes}
-                onChange={(e) => setNotes(e.target.value)}
+                onChange={e => setNotes(e.target.value)}
                 placeholder="Ajustements, conditions spéciales, remarques pour le client..."
                 rows={3}
                 className="border-black resize-none"
@@ -294,15 +322,30 @@ export function ConsultationProductAssociation({
           <div className="space-y-2">
             <div className="font-medium">ℹ️ Règles d'association :</div>
             <div className="text-sm space-y-1">
-              <p>• <strong>Produits catalogue</strong> : Disponibles pour toutes les consultations</p>
-              <p>• <strong>Produits sourcing interne</strong> : Disponibles pour toutes les consultations</p>
-              <p>• <strong>Produits sourcing client</strong> : Disponibles uniquement pour ce client</p>
-              <p>• <strong>Prix personnalisé</strong> : Remplace le prix standard pour cette consultation</p>
-              <p>• <strong>Échantillons</strong> : Recommandés mais non bloquants pour l'association</p>
+              <p>
+                • <strong>Produits catalogue</strong> : Disponibles pour toutes
+                les consultations
+              </p>
+              <p>
+                • <strong>Produits sourcing interne</strong> : Disponibles pour
+                toutes les consultations
+              </p>
+              <p>
+                • <strong>Produits sourcing client</strong> : Disponibles
+                uniquement pour ce client
+              </p>
+              <p>
+                • <strong>Prix personnalisé</strong> : Remplace le prix standard
+                pour cette consultation
+              </p>
+              <p>
+                • <strong>Échantillons</strong> : Recommandés mais non bloquants
+                pour l'association
+              </p>
             </div>
           </div>
         </AlertDescription>
       </Alert>
     </div>
-  )
+  );
 }

@@ -21,14 +21,14 @@ source:
 
 displayed_in:
   - component: Page détail organisation (tous types)
-    location: "Section Statistiques - Produits référencés"
+    location: 'Section Statistiques - Produits référencés'
     screenshot: supplier-detail-page.png
 
 thresholds:
-  excellent: "> 50"
-  good: "10-50"
-  warning: "1-10"
-  critical: "0"
+  excellent: '> 50'
+  good: '10-50'
+  warning: '1-10'
+  critical: '0'
 
 metadata:
   created_at: 2025-10-22

@@ -7,8 +7,15 @@
 
 'use client';
 
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { AlertCircle, Lock } from 'lucide-react';
+
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from '@/components/ui/card';
 import { featureFlags } from '@/lib/feature-flags';
 
 // =====================================================================
@@ -25,7 +32,9 @@ export default function RapprochementPage() {
             <div className="flex items-center gap-3">
               <Lock className="h-6 w-6 text-orange-600" />
               <div>
-                <CardTitle className="text-orange-900">Module Rapprochement Bancaire - Phase 2</CardTitle>
+                <CardTitle className="text-orange-900">
+                  Module Rapprochement Bancaire - Phase 2
+                </CardTitle>
                 <CardDescription className="text-orange-700">
                   Ce module sera disponible après le déploiement Phase 1
                 </CardDescription>
@@ -37,9 +46,13 @@ export default function RapprochementPage() {
               <div className="flex items-start gap-2">
                 <AlertCircle className="h-5 w-5 text-orange-600 mt-0.5 flex-shrink-0" />
                 <div>
-                  <p className="font-medium text-orange-900">Fonctionnalités Phase 2</p>
+                  <p className="font-medium text-orange-900">
+                    Fonctionnalités Phase 2
+                  </p>
                   <ul className="text-sm text-orange-700 list-disc list-inside mt-1">
-                    <li>Rapprochement automatique transactions Qonto ↔ factures</li>
+                    <li>
+                      Rapprochement automatique transactions Qonto ↔ factures
+                    </li>
                     <li>Suggestions intelligentes avec score de confiance</li>
                     <li>Validation manuelle transactions non rapprochées</li>
                     <li>Export CSV pour comptabilité</li>

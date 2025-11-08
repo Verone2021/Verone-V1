@@ -5,12 +5,14 @@
 ## 🔍 Problème Identifié et Résolu
 
 ### Problème Original
+
 - Configuration `--extension` sans extension Chrome installée
 - Chrome installé mais pas dans PATH système
 - Manque de paramètres pour navigation visible
 - Absence de gestion d'état/session
 
 ### Diagnostic Technique
+
 ```bash
 Chrome installé : ✅ /Applications/Google Chrome.app/Contents/MacOS/Google Chrome
 Chrome dans PATH : ❌ Pas accessible via 'chrome' command
@@ -21,14 +23,12 @@ Extension Bridge : ❌ Non installée
 ## 🚀 Configuration Finale Optimale (Chrome Extension)
 
 ### .mcp.json mis à jour - Meilleures Pratiques Microsoft
+
 ```json
 {
   "playwright": {
     "command": "npx",
-    "args": [
-      "@playwright/mcp@latest",
-      "--extension"
-    ]
+    "args": ["@playwright/mcp@latest", "--extension"]
   }
 }
 ```
@@ -37,35 +37,38 @@ Extension Bridge : ❌ Non installée
 
 ### Paramètres Expliqués
 
-| Paramètre | Fonction | Bénéfice Navigation |
-|-----------|----------|-------------------|
-| `--browser=chromium` | Utilise moteur Chromium | Compatible avec Chrome installé |
-| `--executable-path=...` | Chemin direct vers Chrome | Contourne problème PATH |
-| `--isolated` | Session propre | Pas d'interférence historique |
-| `--output-dir=.playwright-mcp` | Dossier de sortie | Organisation screenshots/traces |
-| `--save-session` | Sauvegarde état | Persistence login/cookies |
-| `--save-trace` | Enregistrement actions | Debug/replay possible |
-| `--grant-permissions=...` | Permissions navigateur | Clipboard, géolocalisation |
-| `--timeout-action=10000` | Timeout actions (10s) | Adapté application locale |
-| `--timeout-navigation=30000` | Timeout navigation (30s) | Sécurité chargement pages |
-| `--user-agent=...` | Identité Chrome moderne | Compatibilité sites web |
+| Paramètre                      | Fonction                  | Bénéfice Navigation             |
+| ------------------------------ | ------------------------- | ------------------------------- |
+| `--browser=chromium`           | Utilise moteur Chromium   | Compatible avec Chrome installé |
+| `--executable-path=...`        | Chemin direct vers Chrome | Contourne problème PATH         |
+| `--isolated`                   | Session propre            | Pas d'interférence historique   |
+| `--output-dir=.playwright-mcp` | Dossier de sortie         | Organisation screenshots/traces |
+| `--save-session`               | Sauvegarde état           | Persistence login/cookies       |
+| `--save-trace`                 | Enregistrement actions    | Debug/replay possible           |
+| `--grant-permissions=...`      | Permissions navigateur    | Clipboard, géolocalisation      |
+| `--timeout-action=10000`       | Timeout actions (10s)     | Adapté application locale       |
+| `--timeout-navigation=30000`   | Timeout navigation (30s)  | Sécurité chargement pages       |
+| `--user-agent=...`             | Identité Chrome moderne   | Compatibilité sites web         |
 
 ## 🎯 Fonctionnalités Activées
 
 ### Navigation Manuelle Visible
+
 ```typescript
 // Browser Chrome s'ouvrira visuellement
-mcp__playwright__browser_navigate("http://localhost:3000")
+mcp__playwright__browser_navigate('http://localhost:3000');
 // Vous verrez la navigation en temps réel !
 ```
 
 ### Console Error Checking Automatique
+
 ```typescript
-mcp__playwright__browser_console_messages()
+mcp__playwright__browser_console_messages();
 // Conformité RÈGLE SACRÉE zéro erreur
 ```
 
 ### Screenshots & Traces Automatiques
+
 ```bash
 .playwright-mcp/
 ├── session-state.json        # État connexion sauvegardé
@@ -79,6 +82,7 @@ mcp__playwright__browser_console_messages()
 ## 🔧 Tests de Validation
 
 ### 1. Test de Connexion MCP
+
 ```bash
 # Après redémarrage Claude Code
 npx @playwright/mcp@latest --help
@@ -86,21 +90,26 @@ npx @playwright/mcp@latest --help
 ```
 
 ### 2. Test Navigation Application
+
 ```typescript
 // Dans Claude Code après redémarrage
-mcp__playwright__browser_navigate("http://localhost:3000")
+mcp__playwright__browser_navigate('http://localhost:3000');
 // Browser Chrome doit s'ouvrir visuellement
 ```
 
 ### 3. Test Page Collections
+
 ```typescript
-mcp__playwright__browser_navigate("http://localhost:3000/catalogue/collections")
+mcp__playwright__browser_navigate(
+  'http://localhost:3000/catalogue/collections'
+);
 // Redirection login visible + screenshot automatique
 ```
 
 ## 📋 Commande /browser-test Créée
 
 Utilisation après redémarrage :
+
 ```bash
 /browser-test                                    # Test homepage
 /browser-test localhost:3000/catalogue/collections   # Test Collections
@@ -109,15 +118,18 @@ Utilisation après redémarrage :
 ## 🎪 Différences Avant/Après
 
 ### ❌ Configuration Précédente (Non-fonctionnelle)
+
 ```json
 "args": ["@playwright/mcp@latest", "--extension"]
 ```
+
 - Extension Chrome requise non installée
 - Chrome inaccessible (PATH)
 - Pas de navigation visible
 - Pas de gestion session
 
 ### ✅ Configuration Actuelle (Optimisée)
+
 ```json
 "args": [
   "@playwright/mcp@latest",
@@ -126,6 +138,7 @@ Utilisation après redémarrage :
   // ... + 8 paramètres d'optimisation
 ]
 ```
+
 - Chrome directement accessible
 - Navigation manuelle visible
 - Session + traces sauvegardées
@@ -141,6 +154,7 @@ Utilisation après redémarrage :
 ## 🏆 Résultat Final
 
 **Navigation manuelle Playwright MCP fonctionnelle avec :**
+
 - ✅ Browser Chrome visible qui s'ouvre
 - ✅ Navigation temps réel observable
 - ✅ Console error checking automatique

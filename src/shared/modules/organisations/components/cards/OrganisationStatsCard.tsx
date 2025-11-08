@@ -1,24 +1,25 @@
-'use client'
+'use client';
 
 /**
  * Composant réutilisable : Card Statistiques Organisation
  * Affichage conditionnel selon type (supplier/customer/provider)
  */
 
-import { Package, TrendingUp, Calendar } from 'lucide-react'
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
-import type { Organisation } from '@/shared/modules/organisations/hooks'
+import { Package, TrendingUp, Calendar } from 'lucide-react';
+
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import type { Organisation } from '@/shared/modules/organisations/hooks';
 
 interface OrganisationStatsCardProps {
-  organisation: Organisation
-  organisationType: 'supplier' | 'customer' | 'provider'
-  className?: string
+  organisation: Organisation;
+  organisationType: 'supplier' | 'customer' | 'provider';
+  className?: string;
 }
 
 export function OrganisationStatsCard({
   organisation,
   organisationType,
-  className
+  className,
 }: OrganisationStatsCardProps) {
   // Format date unifié
   const formatDate = (dateString: string) => {
@@ -27,9 +28,9 @@ export function OrganisationStatsCard({
       month: 'long',
       day: 'numeric',
       hour: '2-digit',
-      minute: '2-digit'
-    })
-  }
+      minute: '2-digit',
+    });
+  };
 
   return (
     <Card className={className}>
@@ -74,7 +75,9 @@ export function OrganisationStatsCard({
           {organisationType === 'supplier' && organisation.supplier_segment && (
             <div className="flex justify-between">
               <span>Segment:</span>
-              <span className="font-medium">{organisation.supplier_segment}</span>
+              <span className="font-medium">
+                {organisation.supplier_segment}
+              </span>
             </div>
           )}
 
@@ -82,7 +85,9 @@ export function OrganisationStatsCard({
           {organisation.industry_sector && (
             <div className="flex justify-between">
               <span>Secteur:</span>
-              <span className="font-medium">{organisation.industry_sector}</span>
+              <span className="font-medium">
+                {organisation.industry_sector}
+              </span>
             </div>
           )}
 
@@ -108,5 +113,5 @@ export function OrganisationStatsCard({
         )}
       </CardContent>
     </Card>
-  )
+  );
 }

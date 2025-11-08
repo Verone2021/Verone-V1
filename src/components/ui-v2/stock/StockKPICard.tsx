@@ -1,4 +1,4 @@
-'use client'
+'use client';
 
 /**
  * 🎨 StockKPICard Component
@@ -20,53 +20,56 @@
  * ```
  */
 
-import * as React from 'react'
-import { ArrowUp, ArrowDown } from 'lucide-react'
-import { Card } from '@/components/ui/card'
-import { cn } from '@/lib/utils'
-import { KPI_VARIANT_CONFIG, type KPIVariant, type LucideIcon } from './types'
+import * as React from 'react';
+
+import { ArrowUp, ArrowDown } from 'lucide-react';
+
+import { Card } from '@/components/ui/card';
+import { cn } from '@verone/utils';
+
+import { KPI_VARIANT_CONFIG, type KPIVariant, type LucideIcon } from './types';
 
 export interface StockKPICardProps {
   /**
    * Titre de la métrique
    */
-  title: string
+  title: string;
 
   /**
    * Valeur de la métrique (nombre ou string formaté)
    */
-  value: number | string
+  value: number | string;
 
   /**
    * Icône Lucide React
    */
-  icon: LucideIcon
+  icon: LucideIcon;
 
   /**
    * Tendance optionnelle
    */
   trend?: {
-    value: number
-    direction: 'up' | 'down'
-  }
+    value: number;
+    direction: 'up' | 'down';
+  };
 
   /**
    * Sous-titre ou badge descriptif (affiché sous la valeur)
    * @since Phase 3.3 - Migration Dashboard
    * @example "15 produits en stock"
    */
-  subtitle?: string
+  subtitle?: string;
 
   /**
    * Variante visuelle
    * @default "default"
    */
-  variant?: KPIVariant
+  variant?: KPIVariant;
 
   /**
    * Classes CSS additionnelles
    */
-  className?: string
+  className?: string;
 }
 
 /**
@@ -91,7 +94,7 @@ export function StockKPICard({
   variant = 'default',
   className,
 }: StockKPICardProps) {
-  const config = KPI_VARIANT_CONFIG[variant]
+  const config = KPI_VARIANT_CONFIG[variant];
 
   /**
    * Formater la valeur
@@ -99,10 +102,10 @@ export function StockKPICard({
   const formatValue = (val: number | string): string => {
     if (typeof val === 'number') {
       // Format nombre avec espaces pour milliers
-      return val.toLocaleString('fr-FR')
+      return val.toLocaleString('fr-FR');
     }
-    return val
-  }
+    return val;
+  };
 
   return (
     <Card
@@ -140,9 +143,7 @@ export function StockKPICard({
               <div
                 className={cn(
                   'flex items-center gap-0.5 text-xs font-medium',
-                  trend.direction === 'up'
-                    ? 'text-green-600'
-                    : 'text-red-600'
+                  trend.direction === 'up' ? 'text-green-600' : 'text-red-600'
                 )}
                 aria-label={`Tendance ${trend.direction === 'up' ? 'hausse' : 'baisse'} de ${trend.value}%`}
               >
@@ -158,17 +159,15 @@ export function StockKPICard({
 
           {/* Subtitle */}
           {subtitle && (
-            <p className="text-xs text-gray-500 mt-0.5 truncate">
-              {subtitle}
-            </p>
+            <p className="text-xs text-gray-500 mt-0.5 truncate">{subtitle}</p>
           )}
         </div>
       </div>
     </Card>
-  )
+  );
 }
 
 /**
  * Type export pour usage externe
  */
-StockKPICard.displayName = 'StockKPICard'
+StockKPICard.displayName = 'StockKPICard';

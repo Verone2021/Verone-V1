@@ -9,6 +9,7 @@
 ## 📊 Vue d'Ensemble
 
 Module central pour gérer **tous les partenaires** de l'écosystème Vérone :
+
 - Fournisseurs (suppliers)
 - Clients B2B (customers)
 - Clients B2C (individual_customers)
@@ -22,6 +23,7 @@ Module central pour gérer **tous les partenaires** de l'écosystème Vérone :
 ## ✅ Features Validées
 
 ### CRUD Organisations
+
 - ✅ Création fournisseur avec catégories
 - ✅ Création client B2B
 - ✅ Création client B2C (via `individual_customers`)
@@ -30,12 +32,14 @@ Module central pour gérer **tous les partenaires** de l'écosystème Vérone :
 - ✅ Toggle favoris (coeur)
 
 ### Gestion Contacts
+
 - ✅ Ajout contacts multi-organisations
 - ✅ Rôles contacts (Principal, Facturation, Commercial, etc.)
 - ✅ Association emails/téléphones
 - ✅ Préférences communication
 
 ### UI/UX
+
 - ✅ Vue grille 4×3 cards responsive
 - ✅ Vue liste (tableau)
 - ✅ Pagination 1, 2, 3, 4, 5 avec navigation
@@ -76,19 +80,20 @@ src/components/business/
 
 ```typescript
 const {
-  organisations,        // Organisation[]
-  loading,             // boolean
-  error,               // Error | null
-  createOrganisation,  // (data) => Promise<Organisation>
-  updateOrganisation,  // (id, data) => Promise<Organisation>
-  deleteOrganisation,  // (id) => Promise<void>
-  toggleFavorite,      // (id) => Promise<void>
+  organisations, // Organisation[]
+  loading, // boolean
+  error, // Error | null
+  createOrganisation, // (data) => Promise<Organisation>
+  updateOrganisation, // (id, data) => Promise<Organisation>
+  deleteOrganisation, // (id) => Promise<void>
+  toggleFavorite, // (id) => Promise<void>
   archiveOrganisation, // (id) => Promise<void>
   restoreOrganisation, // (id) => Promise<void>
 } = useOrganisations({ type: 'supplier' | 'customer' });
 ```
 
 **Tables Supabase** :
+
 - `organisations` (polymorphe avec `type`)
 - `organisation_favorites` (toggle favoris)
 
@@ -98,15 +103,16 @@ const {
 
 ```typescript
 const {
-  contacts,           // Contact[]
+  contacts, // Contact[]
   loading,
-  createContact,     // (data) => Promise<Contact>
-  updateContact,     // (id, data) => Promise<Contact>
-  deleteContact,     // (id) => Promise<void>
+  createContact, // (data) => Promise<Contact>
+  updateContact, // (id, data) => Promise<Contact>
+  deleteContact, // (id) => Promise<void>
 } = useContacts({ organisationId: 'uuid' });
 ```
 
 **Tables Supabase** :
+
 - `contacts`
 
 ### `use-customers.ts`
@@ -115,9 +121,9 @@ const {
 
 ```typescript
 const {
-  customers,          // Organisation[] (type='customer')
-  createB2BCustomer,  // organisations uniquement
-  createB2CCustomer,  // organisations + individual_customers
+  customers, // Organisation[] (type='customer')
+  createB2BCustomer, // organisations uniquement
+  createB2CCustomer, // organisations + individual_customers
 } = useCustomers();
 ```
 
@@ -127,7 +133,7 @@ const {
 
 ```typescript
 const {
-  suppliers,          // Organisation[] (type='supplier')
+  suppliers, // Organisation[] (type='supplier')
   supplierCategories, // Catégories fournisseurs
 } = useSuppliers();
 ```
@@ -150,18 +156,19 @@ const { toggleFavorite, isFavorite } = useToggleFavorite({
 
 ### Table `organisations`
 
-| Colonne | Type | Description |
-|---------|------|-------------|
-| `id` | `uuid` | PK |
-| `type` | `organisation_type` | supplier, customer, partner, internal |
-| `legal_name` | `text` | Nom légal officiel |
-| `trade_name` | `text` | Nom commercial |
-| `siren` | `text` | SIREN (9 chiffres) |
-| `logo_url` | `text` | URL logo Supabase Storage |
-| `archived_at` | `timestamptz` | Date archivage (NULL si actif) |
-| `created_at` | `timestamptz` | Date création |
+| Colonne       | Type                | Description                           |
+| ------------- | ------------------- | ------------------------------------- |
+| `id`          | `uuid`              | PK                                    |
+| `type`        | `organisation_type` | supplier, customer, partner, internal |
+| `legal_name`  | `text`              | Nom légal officiel                    |
+| `trade_name`  | `text`              | Nom commercial                        |
+| `siren`       | `text`              | SIREN (9 chiffres)                    |
+| `logo_url`    | `text`              | URL logo Supabase Storage             |
+| `archived_at` | `timestamptz`       | Date archivage (NULL si actif)        |
+| `created_at`  | `timestamptz`       | Date création                         |
 
 **RLS Policies** :
+
 - Owner : CRUD complet
 - Admin : CRUD complet
 - Sales : SELECT, UPDATE limité
@@ -169,26 +176,26 @@ const { toggleFavorite, isFavorite } = useToggleFavorite({
 
 ### Table `contacts`
 
-| Colonne | Type | Description |
-|---------|------|-------------|
-| `id` | `uuid` | PK |
-| `organisation_id` | `uuid` | FK → organisations |
-| `first_name` | `text` | Prénom |
-| `last_name` | `text` | Nom |
-| `email` | `text` | Email principal |
-| `phone` | `text` | Téléphone principal |
-| `role` | `contact_role_type` | principal, billing, commercial, etc. |
+| Colonne           | Type                | Description                          |
+| ----------------- | ------------------- | ------------------------------------ |
+| `id`              | `uuid`              | PK                                   |
+| `organisation_id` | `uuid`              | FK → organisations                   |
+| `first_name`      | `text`              | Prénom                               |
+| `last_name`       | `text`              | Nom                                  |
+| `email`           | `text`              | Email principal                      |
+| `phone`           | `text`              | Téléphone principal                  |
+| `role`            | `contact_role_type` | principal, billing, commercial, etc. |
 
 ### Table `individual_customers`
 
-| Colonne | Type | Description |
-|---------|------|-------------|
-| `id` | `uuid` | PK |
+| Colonne           | Type   | Description                          |
+| ----------------- | ------ | ------------------------------------ |
+| `id`              | `uuid` | PK                                   |
 | `organisation_id` | `uuid` | FK → organisations (type='customer') |
-| `first_name` | `text` | Prénom client B2C |
-| `last_name` | `text` | Nom client B2C |
-| `email` | `text` | Email |
-| `phone` | `text` | Téléphone |
+| `first_name`      | `text` | Prénom client B2C                    |
+| `last_name`       | `text` | Nom client B2C                       |
+| `email`           | `text` | Email                                |
+| `phone`           | `text` | Téléphone                            |
 
 ---
 
@@ -197,6 +204,7 @@ const { toggleFavorite, isFavorite } = useToggleFavorite({
 ### E2E Tests (Playwright)
 
 ✅ **test-organisations.spec.ts** :
+
 - Création fournisseur avec catégorie
 - Création client B2B
 - Modification organisation
@@ -268,7 +276,7 @@ import { Database } from '@/types/supabase';
 type Organisation = Database['public']['Tables']['organisations']['Row'];
 
 // ❌ MAUVAIS
-type Organisation = { id: string, name: string }; // Type manuel
+type Organisation = { id: string; name: string }; // Type manuel
 ```
 
 ### Réutilisation Hooks
@@ -288,6 +296,7 @@ const { organisations: customers } = useOrganisations({ type: 'customer' });
 **Ce module est VERROUILLÉ** (voir `PROTECTED_FILES.json` + `.github/CODEOWNERS`).
 
 Toute modification requiert :
+
 1. Autorisation @owner ou @tech-lead
 2. PR avec review obligatoire
 3. Tests E2E validés

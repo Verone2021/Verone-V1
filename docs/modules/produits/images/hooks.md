@@ -15,77 +15,89 @@ Hook complet gestion images produit avec triggers automatiques.
 
 ```typescript
 interface UseProductImagesOptions {
-  productId: string
-  bucketName?: string  // Défaut: 'product-images'
-  autoFetch?: boolean  // Défaut: true
+  productId: string;
+  bucketName?: string; // Défaut: 'product-images'
+  autoFetch?: boolean; // Défaut: true
 }
 
-type ImageType = 'gallery' | 'technical' | 'detail' | 'lifestyle' | 'dimension' | 'other'
+type ImageType =
+  | 'gallery'
+  | 'technical'
+  | 'detail'
+  | 'lifestyle'
+  | 'dimension'
+  | 'other';
 
 interface ProductImage {
-  id: string
-  product_id: string
-  storage_path: string
-  public_url: string
-  display_order: number
-  is_primary: boolean
-  image_type: ImageType
-  alt_text: string | null
-  file_size: number | null
-  format: string | null
-  width: number | null
-  height: number | null
-  created_at: string
-  updated_at: string
+  id: string;
+  product_id: string;
+  storage_path: string;
+  public_url: string;
+  display_order: number;
+  is_primary: boolean;
+  image_type: ImageType;
+  alt_text: string | null;
+  file_size: number | null;
+  format: string | null;
+  width: number | null;
+  height: number | null;
+  created_at: string;
+  updated_at: string;
 }
 
 interface UploadOptions {
-  isPrimary?: boolean
-  imageType?: ImageType
-  altText?: string
+  isPrimary?: boolean;
+  imageType?: ImageType;
+  altText?: string;
 }
 
 interface MultiUploadOptions {
-  imageType?: ImageType
-  altTextPrefix?: string
-  firstImagePrimary?: boolean
+  imageType?: ImageType;
+  altTextPrefix?: string;
+  firstImagePrimary?: boolean;
 }
 
 interface ImageMetadata {
-  alt_text?: string
-  image_type?: ImageType
-  width?: number
-  height?: number
+  alt_text?: string;
+  image_type?: ImageType;
+  width?: number;
+  height?: number;
 }
 
 function useProductImages(options: UseProductImagesOptions): {
   // 📊 Data
-  images: ProductImage[]
-  primaryImage: ProductImage | null
-  galleryImages: ProductImage[]
-  technicalImages: ProductImage[]
+  images: ProductImage[];
+  primaryImage: ProductImage | null;
+  galleryImages: ProductImage[];
+  technicalImages: ProductImage[];
 
   // 🔄 State
-  loading: boolean
-  uploading: boolean
-  error: string | null
+  loading: boolean;
+  uploading: boolean;
+  error: string | null;
 
   // 🎬 Actions
-  fetchImages: () => Promise<void>
-  uploadImage: (file: File, options?: UploadOptions) => Promise<ProductImage>
-  uploadMultipleImages: (files: File[], options?: MultiUploadOptions) => Promise<ProductImage[]>
-  deleteImage: (imageId: string) => Promise<void>
-  reorderImages: (imageIds: string[]) => Promise<void>
-  setPrimaryImage: (imageId: string) => Promise<void>
-  updateImageMetadata: (imageId: string, metadata: ImageMetadata) => Promise<void>
+  fetchImages: () => Promise<void>;
+  uploadImage: (file: File, options?: UploadOptions) => Promise<ProductImage>;
+  uploadMultipleImages: (
+    files: File[],
+    options?: MultiUploadOptions
+  ) => Promise<ProductImage[]>;
+  deleteImage: (imageId: string) => Promise<void>;
+  reorderImages: (imageIds: string[]) => Promise<void>;
+  setPrimaryImage: (imageId: string) => Promise<void>;
+  updateImageMetadata: (
+    imageId: string,
+    metadata: ImageMetadata
+  ) => Promise<void>;
 
   // 🛠️ Helpers
-  getImagesByType: (type: ImageType) => ProductImage[]
+  getImagesByType: (type: ImageType) => ProductImage[];
 
   // 📈 Stats
-  totalImages: number
-  hasImages: boolean
-}
+  totalImages: number;
+  hasImages: boolean;
+};
 ```
 
 ---
@@ -103,27 +115,27 @@ async function uploadImage(
 ): Promise<ProductImage> {
   try {
     // 1. Validation
-    validateImage(file)
+    validateImage(file);
 
     // 2. Compression (si > 1MB)
-    const compressedFile = await compressImage(file)
+    const compressedFile = await compressImage(file);
 
     // 3. Generate unique filename
-    const fileExt = file.name.split('.').pop()?.toLowerCase()
-    const fileName = `products/${productId}/${Date.now()}-${Math.random().toString(36).substring(2)}.${fileExt}`
+    const fileExt = file.name.split('.').pop()?.toLowerCase();
+    const fileName = `products/${productId}/${Date.now()}-${Math.random().toString(36).substring(2)}.${fileExt}`;
 
     // 4. Upload to Supabase Storage
     const { data: uploadData, error: uploadError } = await supabase.storage
       .from(bucketName)
       .upload(fileName, compressedFile, {
         cacheControl: '3600',
-        upsert: false
-      })
+        upsert: false,
+      });
 
-    if (uploadError) throw uploadError
+    if (uploadError) throw uploadError;
 
     // 5. Get next display_order
-    const nextOrder = getNextDisplayOrder()
+    const nextOrder = getNextDisplayOrder();
 
     // 6. Create database record
     const imageData = {
@@ -134,19 +146,19 @@ async function uploadImage(
       image_type: options.imageType || 'gallery',
       alt_text: options.altText || file.name,
       file_size: file.size,
-      format: fileExt || 'jpg'
-    }
+      format: fileExt || 'jpg',
+    };
 
     const { data: dbData, error: dbError } = await supabase
       .from('product_images')
       .insert([imageData])
       .select()
-      .single()
+      .single();
 
     if (dbError) {
       // Cleanup uploaded file if database insert fails
-      await supabase.storage.from(bucketName).remove([uploadData.path])
-      throw dbError
+      await supabase.storage.from(bucketName).remove([uploadData.path]);
+      throw dbError;
     }
 
     // 7. Triggers automatiques :
@@ -154,11 +166,11 @@ async function uploadImage(
     //    - ensure_single_primary_image() → gère primary
 
     // 8. Refresh images list
-    await fetchImages()
+    await fetchImages();
 
-    return dbData
+    return dbData;
   } catch (error) {
-    throw error
+    throw error;
   }
 }
 ```
@@ -166,20 +178,20 @@ async function uploadImage(
 ### Exemple
 
 ```typescript
-const { uploadImage } = useProductImages({ productId })
+const { uploadImage } = useProductImages({ productId });
 
 // Upload simple
 await uploadImage(file, {
   imageType: 'gallery',
-  altText: 'Photo produit principale'
-})
+  altText: 'Photo produit principale',
+});
 
 // Upload avec primary
 await uploadImage(file, {
   isPrimary: true, // Sera LA image primaire
   imageType: 'gallery',
-  altText: 'Image principale'
-})
+  altText: 'Image principale',
+});
 ```
 
 ---
@@ -195,41 +207,41 @@ async function uploadMultipleImages(
   files: File[],
   options: MultiUploadOptions = {}
 ): Promise<ProductImage[]> {
-  const results = []
+  const results = [];
 
   for (let i = 0; i < files.length; i++) {
-    const file = files[i]
+    const file = files[i];
     try {
       const result = await uploadImage(file, {
         imageType: options.imageType || 'gallery',
         altText: options.altTextPrefix
           ? `${options.altTextPrefix} ${i + 1}`
           : file.name,
-        isPrimary: options.firstImagePrimary && i === 0
-      })
-      results.push(result)
+        isPrimary: options.firstImagePrimary && i === 0,
+      });
+      results.push(result);
     } catch (error) {
-      console.error('Erreur upload image:', error)
+      console.error('Erreur upload image:', error);
       // Continue avec les autres fichiers
     }
   }
 
-  return results
+  return results;
 }
 ```
 
 ### Exemple
 
 ```typescript
-const { uploadMultipleImages } = useProductImages({ productId })
+const { uploadMultipleImages } = useProductImages({ productId });
 
-const files = Array.from(fileInput.files || [])
+const files = Array.from(fileInput.files || []);
 
 await uploadMultipleImages(files, {
   imageType: 'gallery',
   altTextPrefix: 'Fauteuil Vintage',
-  firstImagePrimary: images.length === 0 // Si aucune image, première = primary
-})
+  firstImagePrimary: images.length === 0, // Si aucune image, première = primary
+});
 ```
 
 ---
@@ -248,37 +260,37 @@ async function deleteImage(imageId: string): Promise<void> {
       .from('product_images')
       .select('id, product_id, storage_path, public_url, is_primary')
       .eq('id', imageId)
-      .single()
+      .single();
 
     // 2. Delete from storage
     const { error: storageError } = await supabase.storage
       .from(bucketName)
-      .remove([imageData.storage_path])
+      .remove([imageData.storage_path]);
 
     if (storageError) {
-      console.warn('Erreur suppression storage (non-bloquant)')
+      console.warn('Erreur suppression storage (non-bloquant)');
     }
 
     // 3. Delete from database
     const { error: dbError } = await supabase
       .from('product_images')
       .delete()
-      .eq('id', imageId)
+      .eq('id', imageId);
 
-    if (dbError) throw dbError
+    if (dbError) throw dbError;
 
     // 4. Si image primaire supprimée → Définir nouvelle primaire
     if (imageData.is_primary && images.length > 1) {
-      const firstRemaining = images.find(img => img.id !== imageId)
+      const firstRemaining = images.find(img => img.id !== imageId);
       if (firstRemaining) {
-        await setPrimaryImage(firstRemaining.id)
+        await setPrimaryImage(firstRemaining.id);
       }
     }
 
     // 5. Refresh
-    await fetchImages()
+    await fetchImages();
   } catch (error) {
-    throw error
+    throw error;
   }
 }
 ```
@@ -298,16 +310,16 @@ async function setPrimaryImage(imageId: string): Promise<void> {
     const { error } = await supabase
       .from('product_images')
       .update({ is_primary: true })
-      .eq('id', imageId)
+      .eq('id', imageId);
 
-    if (error) throw error
+    if (error) throw error;
 
     // Trigger : ensure_single_primary_image()
     // → Unset automatiquement autres primaires du même produit
 
-    await fetchImages()
+    await fetchImages();
   } catch (error) {
-    throw error
+    throw error;
   }
 }
 ```
@@ -315,10 +327,10 @@ async function setPrimaryImage(imageId: string): Promise<void> {
 ### Exemple
 
 ```typescript
-const { setPrimaryImage } = useProductImages({ productId })
+const { setPrimaryImage } = useProductImages({ productId });
 
 // Définir image comme primaire
-await setPrimaryImage(imageId)
+await setPrimaryImage(imageId);
 // Trigger s'assure qu'il n'y a qu'1 seule image is_primary=true
 ```
 
@@ -339,12 +351,12 @@ async function reorderImages(imageIds: string[]): Promise<void> {
         .from('product_images')
         .update({ display_order: index })
         .eq('id', imageId)
-    )
+    );
 
-    await Promise.all(updates)
-    await fetchImages()
+    await Promise.all(updates);
+    await fetchImages();
   } catch (error) {
-    throw error
+    throw error;
   }
 }
 ```
@@ -352,11 +364,11 @@ async function reorderImages(imageIds: string[]): Promise<void> {
 ### Exemple
 
 ```typescript
-const { images, reorderImages } = useProductImages({ productId })
+const { images, reorderImages } = useProductImages({ productId });
 
 // Après drag & drop
-const newOrder = ['id3', 'id1', 'id2', 'id4']
-await reorderImages(newOrder)
+const newOrder = ['id3', 'id1', 'id2', 'id4'];
+await reorderImages(newOrder);
 ```
 
 ---
@@ -367,13 +379,13 @@ Filtre images par type.
 
 ```typescript
 function getImagesByType(type: ImageType): ProductImage[] {
-  return images.filter(img => img.image_type === type)
+  return images.filter(img => img.image_type === type);
 }
 
 // Exemples
-const galleryImages = getImagesByType('gallery')
-const technicalImages = getImagesByType('technical')
-const lifestyleImages = getImagesByType('lifestyle')
+const galleryImages = getImagesByType('gallery');
+const technicalImages = getImagesByType('technical');
+const lifestyleImages = getImagesByType('lifestyle');
 ```
 
 ---
@@ -382,13 +394,15 @@ const lifestyleImages = getImagesByType('lifestyle')
 
 ```typescript
 const {
-  totalImages,      // Nombre total d'images
-  hasImages,        // Au moins 1 image ?
-  galleryImages,    // Images type='gallery'
-  technicalImages   // Images type='technical'
-} = useProductImages({ productId })
+  totalImages, // Nombre total d'images
+  hasImages, // Au moins 1 image ?
+  galleryImages, // Images type='gallery'
+  technicalImages, // Images type='technical'
+} = useProductImages({ productId });
 
-console.log(`${totalImages} images (${galleryImages.length} galerie, ${technicalImages.length} techniques)`)
+console.log(
+  `${totalImages} images (${galleryImages.length} galerie, ${technicalImages.length} techniques)`
+);
 ```
 
 ---

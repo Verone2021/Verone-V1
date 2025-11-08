@@ -24,13 +24,13 @@ displayed_in:
 output:
   type: number
   unit: minutes
-  format: "Xmin"
+  format: 'Xmin'
 
 thresholds:
-  excellent: "> 30min"
-  good: "15-30min"
-  warning: "5-15min"
-  critical: "< 5min"
+  excellent: '> 30min'
+  good: '15-30min'
+  warning: '5-15min'
+  critical: '< 5min'
 
 metadata:
   created_at: 2025-10-22

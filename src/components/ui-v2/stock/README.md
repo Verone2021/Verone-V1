@@ -21,15 +21,17 @@ Fournir des composants réutilisables, performants et accessibles pour le module
 Badge de canal de vente avec icône et couleurs distinctives.
 
 **Props**:
+
 ```typescript
 interface ChannelBadgeProps {
-  channelCode: 'b2b' | 'ecommerce' | 'retail' | 'wholesale'
-  size?: 'sm' | 'md' | 'lg' // Default: 'md'
-  showIcon?: boolean        // Default: true
+  channelCode: 'b2b' | 'ecommerce' | 'retail' | 'wholesale';
+  size?: 'sm' | 'md' | 'lg'; // Default: 'md'
+  showIcon?: boolean; // Default: true
 }
 ```
 
 **Usage**:
+
 ```tsx
 import { ChannelBadge } from '@/components/ui-v2/stock'
 
@@ -38,6 +40,7 @@ import { ChannelBadge } from '@/components/ui-v2/stock'
 ```
 
 **Features**:
+
 - 4 canaux supportés avec couleurs Design System V2
 - Icônes Lucide React (Building2, ShoppingCart, Store, Package)
 - 3 tailles (sm=20px, md=24px, lg=28px)
@@ -51,17 +54,19 @@ import { ChannelBadge } from '@/components/ui-v2/stock'
 Dropdown select de canal avec fetch Supabase automatique.
 
 **Props**:
+
 ```typescript
 interface ChannelFilterProps {
-  selectedChannel: string | null
-  onChannelChange: (channelId: string | null) => void
-  showAllOption?: boolean   // Default: true
-  placeholder?: string      // Default: "Sélectionner un canal"
-  disabled?: boolean        // Default: false
+  selectedChannel: string | null;
+  onChannelChange: (channelId: string | null) => void;
+  showAllOption?: boolean; // Default: true
+  placeholder?: string; // Default: "Sélectionner un canal"
+  disabled?: boolean; // Default: false
 }
 ```
 
 **Usage**:
+
 ```tsx
 import { ChannelFilter } from '@/components/ui-v2/stock'
 import { useState } from 'react'
@@ -76,6 +81,7 @@ const [channel, setChannel] = useState<string | null>(null)
 ```
 
 **Features**:
+
 - Fetch `sales_channels` depuis Supabase (is_active=true)
 - Option "Tous les canaux" configurable
 - Badge coloré dans dropdown
@@ -89,25 +95,27 @@ const [channel, setChannel] = useState<string | null>(null)
 Card de mouvement de stock avec traçabilité complète.
 
 **Props**:
+
 ```typescript
 interface StockMovementCardProps {
   movement: {
-    id: string
-    movement_type: 'IN' | 'OUT' | 'ADJUST' | 'TRANSFER'
-    quantity_change: number
-    reason_code: string
-    performed_at: string
-    channel_id?: string | null
-    products?: { name: string; sku: string } | null
-    sales_channels?: { name: string; code: string } | null
-  }
-  onClick?: () => void
+    id: string;
+    movement_type: 'IN' | 'OUT' | 'ADJUST' | 'TRANSFER';
+    quantity_change: number;
+    reason_code: string;
+    performed_at: string;
+    channel_id?: string | null;
+    products?: { name: string; sku: string } | null;
+    sales_channels?: { name: string; code: string } | null;
+  };
+  onClick?: () => void;
 }
 ```
 
 **Usage**:
+
 ```tsx
-import { StockMovementCard } from '@/components/ui-v2/stock'
+import { StockMovementCard } from '@/components/ui-v2/stock';
 
 <StockMovementCard
   movement={{
@@ -118,13 +126,14 @@ import { StockMovementCard } from '@/components/ui-v2/stock'
     performed_at: '2025-10-31T10:00:00Z',
     channel_id: 'ch-1',
     products: { name: 'Canapé Oslo', sku: 'CANAPE-001' },
-    sales_channels: { name: 'E-commerce', code: 'ecommerce' }
+    sales_channels: { name: 'E-commerce', code: 'ecommerce' },
   }}
   onClick={() => navigate(`/stocks/mouvements/${id}`)}
-/>
+/>;
 ```
 
 **Features**:
+
 - Border-left 4px coloré selon type mouvement (IN=green, OUT=red, ADJUST=blue, TRANSFER=purple)
 - Grid layout 4 colonnes responsive: Product | Quantity | Channel | Date
 - Height fixe 120px
@@ -140,22 +149,24 @@ import { StockMovementCard } from '@/components/ui-v2/stock'
 KPI Card ultra-compact pour métriques stock.
 
 **Props**:
+
 ```typescript
-import { type LucideIcon } from 'lucide-react'
+import { type LucideIcon } from 'lucide-react';
 
 interface StockKPICardProps {
-  title: string
-  value: number | string
-  icon: LucideIcon
-  trend?: { value: number; direction: 'up' | 'down' }
-  variant?: 'default' | 'success' | 'warning' | 'danger' // Default: 'default'
+  title: string;
+  value: number | string;
+  icon: LucideIcon;
+  trend?: { value: number; direction: 'up' | 'down' };
+  variant?: 'default' | 'success' | 'warning' | 'danger'; // Default: 'default'
 }
 ```
 
 **Usage**:
+
 ```tsx
-import { StockKPICard } from '@/components/ui-v2/stock'
-import { Package, TrendingUp } from 'lucide-react'
+import { StockKPICard } from '@/components/ui-v2/stock';
+import { Package, TrendingUp } from 'lucide-react';
 
 <StockKPICard
   title="Total Stock"
@@ -163,10 +174,11 @@ import { Package, TrendingUp } from 'lucide-react'
   icon={Package}
   variant="success"
   trend={{ value: 12.5, direction: 'up' }}
-/>
+/>;
 ```
 
 **Features**:
+
 - Height fixe 80px (ultra-compact)
 - Flex layout horizontal: [Icon Circle 40x40] [Content]
 - 4 variants avec couleurs Design System V2
@@ -221,11 +233,13 @@ npm run dev
 ```
 
 **Type check**:
+
 ```bash
 npm run type-check
 ```
 
 **Build production**:
+
 ```bash
 npm run build
 ```
@@ -238,24 +252,24 @@ npm run build
 
 ```typescript
 // Components
-export { ChannelBadge, ChannelFilter, StockMovementCard, StockKPICard }
+export { ChannelBadge, ChannelFilter, StockMovementCard, StockKPICard };
 
 // Types
-export type { ChannelCode, MovementType, KPIVariant, LucideIcon }
+export type { ChannelCode, MovementType, KPIVariant, LucideIcon };
 
 // Constants
-export { CHANNEL_CONFIG, MOVEMENT_CONFIG, KPI_VARIANT_CONFIG, SIZES }
+export { CHANNEL_CONFIG, MOVEMENT_CONFIG, KPI_VARIANT_CONFIG, SIZES };
 ```
 
 **Usage avancé**:
 
 ```tsx
-import { CHANNEL_CONFIG, type ChannelCode } from '@/components/ui-v2/stock'
+import { CHANNEL_CONFIG, type ChannelCode } from '@/components/ui-v2/stock';
 
 // Accès direct aux configs
-const b2bConfig = CHANNEL_CONFIG.b2b
-console.log(b2bConfig.label) // "B2B"
-console.log(b2bConfig.icon)  // Building2
+const b2bConfig = CHANNEL_CONFIG.b2b;
+console.log(b2bConfig.label); // "B2B"
+console.log(b2bConfig.icon); // Building2
 ```
 
 ---
@@ -283,12 +297,14 @@ console.log(b2bConfig.icon)  // Building2
 ## 🚀 Roadmap
 
 **Phase 3.1 (Actuel)**:
+
 - [x] ChannelBadge
 - [x] ChannelFilter
 - [x] StockMovementCard
 - [x] StockKPICard
 
 **Phase 3.2 (À venir)**:
+
 - [ ] StockAlertBanner
 - [ ] InventoryStatusBadge
 - [ ] WarehouseSelector

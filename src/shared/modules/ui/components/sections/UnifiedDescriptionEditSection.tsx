@@ -10,7 +10,7 @@ import { ButtonUnified } from '@/components/ui/button-unified';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
-import { cn } from '@/lib/utils';
+import { cn } from '@verone/utils';
 import {
   useInlineEdit,
   type EditableSection,

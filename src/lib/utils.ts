@@ -1,8 +1,8 @@
-import { type ClassValue, clsx } from "clsx"
-import { twMerge } from "tailwind-merge"
+import { type ClassValue, clsx } from 'clsx';
+import { twMerge } from 'tailwind-merge';
 
 export function cn(...inputs: ClassValue[]) {
-  return twMerge(clsx(inputs))
+  return twMerge(clsx(inputs));
 }
 
 // ========================================
@@ -18,8 +18,8 @@ export function formatPrice(priceInEuros: number): string {
   return new Intl.NumberFormat('fr-FR', {
     style: 'currency',
     currency: 'EUR',
-    minimumFractionDigits: 2
-  }).format(priceInEuros)
+    minimumFractionDigits: 2,
+  }).format(priceInEuros);
 }
 
 /**
@@ -28,7 +28,7 @@ export function formatPrice(priceInEuros: number): string {
  * @returns Prix formaté (ex: "149,90 €")
  */
 export function formatPriceFromCents(priceInCents: number): string {
-  return formatPrice(priceInCents / 100)
+  return formatPrice(priceInCents / 100);
 }
 
 /**
@@ -38,12 +38,12 @@ export function formatPriceFromCents(priceInCents: number): string {
  * @returns SKU formaté (ex: "VER-MOB-CANAPE-001")
  */
 export function generateSKU(category: string, brand?: string): string {
-  const prefix = 'VER'
-  const catCode = category.toUpperCase().substring(0, 3)
-  const brandCode = brand ? brand.toUpperCase().substring(0, 3) : 'GEN'
-  const timestamp = Date.now().toString().slice(-3)
+  const prefix = 'VER';
+  const catCode = category.toUpperCase().substring(0, 3);
+  const brandCode = brand ? brand.toUpperCase().substring(0, 3) : 'GEN';
+  const timestamp = Date.now().toString().slice(-3);
 
-  return `${prefix}-${catCode}-${brandCode}-${timestamp}`
+  return `${prefix}-${catCode}-${brandCode}-${timestamp}`;
 }
 
 /**
@@ -53,8 +53,9 @@ export function generateSKU(category: string, brand?: string): string {
  */
 export function validateSKU(sku: string): boolean {
   // Format: VER-XXX-XXX-XXX (lettres et chiffres, tirets)
-  const skuRegex = /^[A-Z0-9]{1,10}-[A-Z0-9]{1,10}-[A-Z0-9]{1,10}-[A-Z0-9]{1,10}$/
-  return skuRegex.test(sku)
+  const skuRegex =
+    /^[A-Z0-9]{1,10}-[A-Z0-9]{1,10}-[A-Z0-9]{1,10}-[A-Z0-9]{1,10}$/;
+  return skuRegex.test(sku);
 }
 
 /**
@@ -64,9 +65,9 @@ export function validateSKU(sku: string): boolean {
  */
 export function formatWeight(weightKg: number): string {
   if (weightKg < 1) {
-    return `${Math.round(weightKg * 1000)} g`
+    return `${Math.round(weightKg * 1000)} g`;
   }
-  return `${weightKg.toFixed(1)} kg`
+  return `${weightKg.toFixed(1)} kg`;
 }
 
 /**
@@ -75,18 +76,18 @@ export function formatWeight(weightKg: number): string {
  * @returns Dimensions formatées (ex: "120 × 80 × 45 cm")
  */
 export function formatDimensions(dimensions: {
-  length?: number
-  width?: number
-  height?: number
-  unit?: string
+  length?: number;
+  width?: number;
+  height?: number;
+  unit?: string;
 }): string {
-  const { length, width, height, unit = 'cm' } = dimensions
+  const { length, width, height, unit = 'cm' } = dimensions;
 
   if (!length || !width || !height) {
-    return 'Dimensions non spécifiées'
+    return 'Dimensions non spécifiées';
   }
 
-  return `${length} × ${width} × ${height} ${unit}`
+  return `${length} × ${width} × ${height} ${unit}`;
 }
 
 /**
@@ -94,31 +95,31 @@ export function formatDimensions(dimensions: {
  */
 export const statusConfig = {
   in_stock: {
-    label: "En stock",
-    color: "success",
-    icon: "✓"
+    label: 'En stock',
+    color: 'success',
+    icon: '✓',
   },
   out_of_stock: {
-    label: "Rupture de stock",
-    color: "destructive",
-    icon: "✕"
+    label: 'Rupture de stock',
+    color: 'destructive',
+    icon: '✕',
   },
   preorder: {
-    label: "Précommande",
-    color: "info",
-    icon: "📅"
+    label: 'Précommande',
+    color: 'info',
+    icon: '📅',
   },
   coming_soon: {
-    label: "Bientôt disponible",
-    color: "warning",
-    icon: "⏳"
+    label: 'Bientôt disponible',
+    color: 'warning',
+    icon: '⏳',
   },
   discontinued: {
-    label: "Produit arrêté",
-    color: "secondary",
-    icon: "⚠"
-  }
-} as const
+    label: 'Produit arrêté',
+    color: 'secondary',
+    icon: '⚠',
+  },
+} as const;
 
 /**
  * Valide la performance SLO
@@ -130,23 +131,25 @@ export function checkSLOCompliance(
   startTime: number,
   operation: 'dashboard' | 'search' | 'feeds' | 'pdf'
 ): { isCompliant: boolean; duration: number; threshold: number } {
-  const duration = Date.now() - startTime
+  const duration = Date.now() - startTime;
 
   const thresholds = {
-    dashboard: 2000,   // 2s max
-    search: 1000,      // 1s max
-    feeds: 10000,      // 10s max
-    pdf: 5000          // 5s max
-  }
+    dashboard: 2000, // 2s max
+    search: 1000, // 1s max
+    feeds: 10000, // 10s max
+    pdf: 5000, // 5s max
+  };
 
-  const threshold = thresholds[operation]
-  const isCompliant = duration <= threshold
+  const threshold = thresholds[operation];
+  const isCompliant = duration <= threshold;
 
   if (!isCompliant) {
-    console.warn(`SLO violation: ${operation} took ${duration}ms (max: ${threshold}ms)`)
+    console.warn(
+      `SLO violation: ${operation} took ${duration}ms (max: ${threshold}ms)`
+    );
   }
 
-  return { isCompliant, duration, threshold }
+  return { isCompliant, duration, threshold };
 }
 
 /**
@@ -159,12 +162,12 @@ export function debounce<T extends (...args: any[]) => any>(
   func: T,
   wait: number
 ): (...args: Parameters<T>) => void {
-  let timeout: NodeJS.Timeout
+  let timeout: NodeJS.Timeout;
 
   return (...args: Parameters<T>) => {
-    clearTimeout(timeout)
-    timeout = setTimeout(() => func(...args), wait)
-  }
+    clearTimeout(timeout);
+    timeout = setTimeout(() => func(...args), wait);
+  };
 }
 
 /**
@@ -180,7 +183,7 @@ export function generateSlug(name: string): string {
     .replace(/[^a-z0-9\s-]/g, '') // Garde uniquement lettres, chiffres, espaces, tirets
     .trim()
     .replace(/\s+/g, '-') // Remplace espaces par tirets
-    .replace(/-+/g, '-') // Supprime tirets multiples
+    .replace(/-+/g, '-'); // Supprime tirets multiples
 }
 
 /**
@@ -189,8 +192,8 @@ export function generateSlug(name: string): string {
  * @returns true si email valide
  */
 export function validateEmail(email: string): boolean {
-  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
-  return emailRegex.test(email)
+  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+  return emailRegex.test(email);
 }
 
 /**
@@ -203,16 +206,16 @@ export function formatDate(
   date: Date | string,
   options: Intl.DateTimeFormatOptions = {}
 ): string {
-  const dateObj = typeof date === 'string' ? new Date(date) : date
+  const dateObj = typeof date === 'string' ? new Date(date) : date;
 
   const defaultOptions: Intl.DateTimeFormatOptions = {
     year: 'numeric',
     month: 'long',
     day: 'numeric',
-    ...options
-  }
+    ...options,
+  };
 
-  return new Intl.DateTimeFormat('fr-FR', defaultOptions).format(dateObj)
+  return new Intl.DateTimeFormat('fr-FR', defaultOptions).format(dateObj);
 }
 
 /**
@@ -225,8 +228,8 @@ export function calculateDiscountPercentage(
   originalPrice: number,
   discountedPrice: number
 ): number {
-  if (originalPrice <= 0) return 0
-  return Math.round(((originalPrice - discountedPrice) / originalPrice) * 100)
+  if (originalPrice <= 0) return 0;
+  return Math.round(((originalPrice - discountedPrice) / originalPrice) * 100);
 }
 
 /**
@@ -236,8 +239,8 @@ export function calculateDiscountPercentage(
  * @returns Prix après remise
  */
 export function applyDiscount(price: number, discountPercent: number): number {
-  const discount = price * (discountPercent / 100)
-  return Math.round(price - discount)
+  const discount = price * (discountPercent / 100);
+  return Math.round(price - discount);
 }
 
 /**
@@ -250,15 +253,16 @@ export function formatCurrency(
   amount: number | string,
   currency: string = 'EUR'
 ): string {
-  const numericAmount = typeof amount === 'string' ? parseFloat(amount) : amount
+  const numericAmount =
+    typeof amount === 'string' ? parseFloat(amount) : amount;
 
-  if (isNaN(numericAmount)) return '0,00 €'
+  if (isNaN(numericAmount)) return '0,00 €';
 
   return new Intl.NumberFormat('fr-FR', {
     style: 'currency',
     currency: currency,
-    minimumFractionDigits: 2
-  }).format(numericAmount)
+    minimumFractionDigits: 2,
+  }).format(numericAmount);
 }
 
 /**
@@ -267,11 +271,11 @@ export function formatCurrency(
  * @returns Date formatée courte (ex: "15/03/2024")
  */
 export function formatDateShort(date: Date | string): string {
-  const dateObj = typeof date === 'string' ? new Date(date) : date
+  const dateObj = typeof date === 'string' ? new Date(date) : date;
 
   return new Intl.DateTimeFormat('fr-FR', {
     day: '2-digit',
     month: '2-digit',
-    year: 'numeric'
-  }).format(dateObj)
+    year: 'numeric',
+  }).format(dateObj);
 }

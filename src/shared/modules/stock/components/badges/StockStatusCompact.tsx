@@ -1,9 +1,13 @@
 'use client';
 
 import { Package } from 'lucide-react';
+
 import { Badge } from '@/components/ui/badge';
-import { cn } from '@/lib/utils';
-import { useStockStatus, type StockStatusData } from '@/shared/modules/stock/hooks';
+import { cn } from '@verone/utils';
+import {
+  useStockStatus,
+  type StockStatusData,
+} from '@/shared/modules/stock/hooks';
 
 interface StockStatusCompactProps {
   product: StockStatusData & { id: string };

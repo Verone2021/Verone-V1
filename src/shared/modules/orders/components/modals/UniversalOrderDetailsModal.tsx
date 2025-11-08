@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+
 import {
   X,
   Package,
@@ -12,6 +13,10 @@ import {
   Edit,
   Save,
 } from 'lucide-react';
+
+import { Badge } from '@/components/ui/badge';
+import { ButtonV2 } from '@/components/ui/button';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import {
   Dialog,
   DialogContent,
@@ -19,9 +24,6 @@ import {
   DialogTitle,
   DialogFooter,
 } from '@/components/ui/dialog';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
-import { ButtonV2 } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
 import {
   Table,
@@ -31,12 +33,12 @@ import {
   TableRow,
 } from '@/components/ui/table';
 import { createClient } from '@/lib/supabase/client';
-import { formatCurrency } from '@/lib/utils';
-import { useOrderItems } from '@/shared/modules/orders/hooks';
-import { EditableOrderItemRow } from '@/components/business/editable-order-item-row';
-import { AddProductToOrderModal } from '@/components/business/add-product-to-order-modal';
-import { OrderHeaderEditSection } from '@/components/business/order-header-edit-section';
+import { formatCurrency } from '@verone/utils';
 import { useInlineEdit } from '@/shared/modules/common/hooks';
+import { AddProductToOrderModal } from '@/shared/modules/orders/components/modals/AddProductToOrderModal';
+import { OrderHeaderEditSection } from '@/shared/modules/orders/components/sections/OrderHeaderEditSection';
+import { EditableOrderItemRow } from '@/shared/modules/orders/components/tables/EditableOrderItemRow';
+import { useOrderItems } from '@/shared/modules/orders/hooks';
 
 interface UniversalOrderDetailsModalProps {
   orderId: string | null;
@@ -224,13 +226,14 @@ export function UniversalOrderDetailsModal({
 
         if (orderType === 'sales') {
           // Récupérer Sales Order SANS items
-          const { data: order, error: orderError } = await supabase
+          // ⚠️ Type cast needed: Supabase types might be stale, eco_tax_vat_rate exists in DB
+          const { data: order, error: orderError } = (await supabase
             .from('sales_orders')
             .select(
               'id, order_number, status, created_at, expected_delivery_date, total_ttc, customer_id, customer_type, billing_address, shipping_address, payment_terms, tax_rate, eco_tax_vat_rate'
             )
             .eq('id', orderId)
-            .single();
+            .single()) as any;
 
           if (orderError) throw orderError;
 
@@ -279,13 +282,14 @@ export function UniversalOrderDetailsModal({
           });
         } else if (orderType === 'purchase') {
           // Récupérer Purchase Order SANS items
-          const { data: order, error: orderError } = await supabase
+          // ⚠️ Type cast needed: Supabase types might be stale, eco_tax_vat_rate exists in DB
+          const { data: order, error: orderError } = (await supabase
             .from('purchase_orders')
             .select(
               'id, po_number, status, created_at, expected_delivery_date, total_ttc, supplier_id, delivery_address, payment_terms, tax_rate, eco_tax_vat_rate'
             )
             .eq('id', orderId)
-            .single();
+            .single()) as any;
 
           if (orderError) throw orderError;
 
@@ -389,7 +393,7 @@ export function UniversalOrderDetailsModal({
             </DialogTitle>
             <div className="flex items-center gap-2">
               {/* Bouton Modifier uniquement si status = draft */}
-              {orderHeader && orderHeader.status === 'draft' && !isEditMode && (
+              {orderHeader?.status === 'draft' && !isEditMode && (
                 <ButtonV2 variant="outline" size="sm" onClick={toggleMode}>
                   <Edit className="h-4 w-4 mr-2" />
                   Modifier
@@ -513,18 +517,16 @@ export function UniversalOrderDetailsModal({
                     Articles ({items.length})
                   </CardTitle>
                   {/* Bouton Ajouter Produit (mode edit uniquement) */}
-                  {isEditMode &&
-                    orderHeader &&
-                    orderHeader.status === 'draft' && (
-                      <ButtonV2
-                        variant="outline"
-                        size="sm"
-                        onClick={() => setShowAddProductModal(true)}
-                      >
-                        <Package className="h-4 w-4 mr-2" />
-                        Ajouter un produit
-                      </ButtonV2>
-                    )}
+                  {isEditMode && orderHeader?.status === 'draft' && (
+                    <ButtonV2
+                      variant="outline"
+                      size="sm"
+                      onClick={() => setShowAddProductModal(true)}
+                    >
+                      <Package className="h-4 w-4 mr-2" />
+                      Ajouter un produit
+                    </ButtonV2>
+                  )}
                 </div>
               </CardHeader>
               <CardContent>
@@ -538,7 +540,7 @@ export function UniversalOrderDetailsModal({
                       <TableHead>Éco-taxe</TableHead>
                       {orderType === 'sales' && <TableHead>TVA</TableHead>}
                       <TableHead>Total HT</TableHead>
-                      <TableHead></TableHead>
+                      <TableHead />
                     </TableRow>
                   </TableHeader>
                   <TableBody>

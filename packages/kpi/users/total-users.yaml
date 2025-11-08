@@ -37,21 +37,21 @@ source:
 displayed_in:
   - component: src/app/admin/users/page.tsx
     location: "Card 'Utilisateurs' (ligne ~155-170)"
-    description: "Première card statistiques"
+    description: 'Première card statistiques'
     screenshot: admin-users-list-page.png
 
 thresholds:
-  excellent: "> 50"
-  good: "20-50"
-  warning: "5-20"
-  critical: "< 5"
+  excellent: '> 50'
+  good: '20-50'
+  warning: '5-20'
+  critical: '< 5'
 
 tests:
-  - scenario: "Production actuelle"
+  - scenario: 'Production actuelle'
     inputs:
       users_count: 3
     expected_output: 3
-    threshold_expected: "critical"
+    threshold_expected: 'critical'
 
 metadata:
   created_at: 2025-10-22

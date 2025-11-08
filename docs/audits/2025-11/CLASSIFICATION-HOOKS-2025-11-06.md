@@ -7,23 +7,23 @@
 
 ## 📊 RÉSUMÉ PAR MODULE
 
-| Module | Hooks | Priorité | Complexité |
-|--------|-------|----------|------------|
-| **Stock** | 16 | P1 | Haute |
-| **Products** | 13 | P1 | Haute |
-| **Orders** | 11 | P1 | Haute |
-| **Dashboard** | 8 | P1 | Moyenne |
-| **Finance** | 8 | P2 | Moyenne |
-| **Customers** | 3 | P2 | Basse |
-| **Organisations** | 4 | P2 | Basse |
-| **Categories** | 4 | P2 | Basse |
-| **Collections** | 3 | P2 | Basse |
-| **Consultations** | 2 | P2 | Basse |
-| **Channels** | 3 | P2 | Basse |
-| **Notifications** | 2 | P2 | Basse |
-| **UI/Common** | 9 | P3 | Basse |
-| **Admin** | 2 | P3 | Basse |
-| **Testing** | 3 | P3 | Basse |
+| Module            | Hooks | Priorité | Complexité |
+| ----------------- | ----- | -------- | ---------- |
+| **Stock**         | 16    | P1       | Haute      |
+| **Products**      | 13    | P1       | Haute      |
+| **Orders**        | 11    | P1       | Haute      |
+| **Dashboard**     | 8     | P1       | Moyenne    |
+| **Finance**       | 8     | P2       | Moyenne    |
+| **Customers**     | 3     | P2       | Basse      |
+| **Organisations** | 4     | P2       | Basse      |
+| **Categories**    | 4     | P2       | Basse      |
+| **Collections**   | 3     | P2       | Basse      |
+| **Consultations** | 2     | P2       | Basse      |
+| **Channels**      | 3     | P2       | Basse      |
+| **Notifications** | 2     | P2       | Basse      |
+| **UI/Common**     | 9     | P3       | Basse      |
+| **Admin**         | 2     | P3       | Basse      |
+| **Testing**       | 3     | P3       | Basse      |
 
 **Total** : 87 hooks
 
@@ -34,6 +34,7 @@
 **Destination** : `src/shared/modules/stock/hooks/`
 
 ### Hooks
+
 - `use-stock.ts` - Hook principal stock
 - `use-stock-alerts.ts` - Gestion alertes stock
 - `use-stock-alerts-count.ts` - Compteur alertes
@@ -57,6 +58,7 @@
 **Destination** : `src/shared/modules/products/hooks/`
 
 ### Hooks
+
 - `use-products.ts` - Hook principal produits
 - `use-product-colors.ts` - Couleurs produits
 - `use-product-images.ts` - Images produits
@@ -82,16 +84,19 @@
 ### Hooks
 
 #### Purchase Orders (4)
+
 - `use-purchase-orders.ts` - Commandes fournisseurs
 - `use-purchase-receptions.ts` - Réceptions commandes
 - `use-draft-purchase-order.ts` - Brouillons commandes
 
 #### Sales Orders (3)
+
 - `use-sales-orders.ts` - Commandes ventes
 - `use-sales-shipments.ts` - Expéditions ventes
 - `use-sales-dashboard.ts` - Dashboard ventes
 
 #### Common (4)
+
 - `use-order-items.ts` - Items commandes
 - `use-orders-status.ts` - Status commandes
 - `use-shipments.ts` - Expéditions
@@ -108,6 +113,7 @@
 **Destination** : `src/shared/modules/dashboard/hooks/` (nouveau module)
 
 ### Hooks
+
 - `use-complete-dashboard-metrics.ts` - Métriques dashboard complètes
 - `use-real-dashboard-metrics.ts` - Métriques réelles
 - `use-dashboard-analytics.ts` - Analytics dashboard
@@ -128,19 +134,23 @@
 ### Hooks
 
 #### Reports (3)
+
 - `use-abc-analysis.ts` - Analyse ABC
 - `use-aging-report.ts` - Rapport vieillissement
 - `use-bank-reconciliation.ts` - Rapprochement bancaire
 
 #### Payments & Documents (2)
+
 - `use-financial-documents.ts` - Documents financiers
 - `use-financial-payments.ts` - Paiements
 
 #### Pricing (2)
+
 - `use-pricing.ts` - Gestion prix
 - `use-price-lists.ts` - Listes de prix
 
 #### Treasury (1)
+
 - `use-treasury-stats.ts` - Stats trésorerie
 
 **Total** : 8 hooks
@@ -152,6 +162,7 @@
 **Destination** : `src/shared/modules/customers/hooks/`
 
 ### Hooks
+
 - `use-customers.ts` - Hook principal clients
 - `use-contacts.ts` - Gestion contacts
 - `use-customer-samples.ts` - Échantillons clients
@@ -165,6 +176,7 @@
 **Destination** : `src/shared/modules/organisations/hooks/`
 
 ### Hooks
+
 - `use-organisations.ts` - Hook principal organisations
 - `use-organisation-tab-counts.ts` - Compteurs onglets
 - `use-suppliers.ts` - Fournisseurs
@@ -179,6 +191,7 @@
 **Destination** : `src/shared/modules/categories/hooks/`
 
 ### Hooks
+
 - `use-categories.ts` - Catégories principales
 - `use-subcategories.ts` - Sous-catégories
 - `use-families.ts` - Familles produits
@@ -193,6 +206,7 @@
 **Destination** : `src/shared/modules/common/hooks/collections/`
 
 ### Hooks
+
 - `use-collections.ts` - Collections principales
 - `use-collection-images.ts` - Images collections
 - `use-collection-products.ts` - Produits collections
@@ -206,6 +220,7 @@
 **Destination** : `src/shared/modules/consultations/hooks/`
 
 ### Hooks
+
 - `use-consultations.ts` - Consultations principales
 - `use-consultation-images.ts` - Images consultations
 
@@ -218,6 +233,7 @@
 **Destination** : `src/shared/modules/channels/hooks/google-merchant/`
 
 ### Hooks
+
 - `use-google-merchant-config.ts` - Config Google Merchant
 - `use-google-merchant-products.ts` - Produits Google Merchant
 - `use-google-merchant-sync.ts` - Sync Google Merchant
@@ -231,6 +247,7 @@
 **Destination** : `src/shared/modules/notifications/hooks/`
 
 ### Hooks
+
 - `use-notifications.ts` - Notifications principales
 - `use-dashboard-notifications.ts` - Notifications dashboard (doublon ?)
 
@@ -247,12 +264,14 @@
 ### Hooks
 
 #### UI State (4)
+
 - `use-toast.ts` - Toasts notifications
 - `use-mobile.tsx` - Détection mobile
 - `use-inline-edit.ts` - Édition inline
 - `use-section-locking.ts` - Verrouillage sections
 
 #### Utils (5)
+
 - `use-image-upload.ts` - Upload images
 - `use-simple-image-upload.ts` - Upload simple
 - `use-toggle-favorite.ts` - Toggle favoris
@@ -268,6 +287,7 @@
 **Destination** : `src/shared/modules/common/hooks/`
 
 ### Hooks
+
 - `use-base-hook.ts` - Hook de base
 - `use-supabase-query.ts` - Queries Supabase
 
@@ -280,6 +300,7 @@
 **Destination** : `src/shared/modules/admin/hooks/`
 
 ### Hooks
+
 - `use-user-activity-tracker.ts` - Tracking activité utilisateur
 - `use-automation-triggers.ts` - Déclencheurs automation
 
@@ -292,6 +313,7 @@
 **Destination** : `src/shared/modules/testing/hooks/` ou à supprimer
 
 ### Hooks
+
 - `use-critical-testing.ts` - Tests critiques
 - `use-test-persistence.ts` - Persistance tests
 - `use-mcp-resolution.ts` - Résolution MCP
@@ -307,6 +329,7 @@
 ### BATCH 1 : Stock Hooks (16 hooks) - 1.5h
 
 **Hooks** :
+
 - use-stock.ts
 - use-stock-alerts.ts
 - use-stock-alerts-count.ts
@@ -328,6 +351,7 @@
 ### BATCH 2 : Products Hooks (13 hooks) - 1h
 
 **Hooks** :
+
 - use-products.ts
 - use-product-colors.ts
 - use-product-images.ts
@@ -349,6 +373,7 @@
 ### BATCH 3 : Orders Hooks (11 hooks) - 1h
 
 **Hooks** :
+
 - use-purchase-orders.ts
 - use-purchase-receptions.ts
 - use-draft-purchase-order.ts
@@ -369,6 +394,7 @@
 ### BATCH 4 : Dashboard + Finance Hooks (14 hooks) - 1h
 
 **Dashboard (6)** :
+
 - use-complete-dashboard-metrics.ts
 - use-real-dashboard-metrics.ts
 - use-dashboard-analytics.ts
@@ -376,6 +402,7 @@
 - use-recent-activity.ts
 
 **Finance (8)** :
+
 - use-abc-analysis.ts
 - use-aging-report.ts
 - use-bank-reconciliation.ts
@@ -386,6 +413,7 @@
 - use-treasury-stats.ts
 
 **Destination** :
+
 - `src/shared/modules/dashboard/hooks/`
 - `src/shared/modules/finance/hooks/`
 
@@ -398,7 +426,7 @@
 **Categories (4)** : use-categories, use-subcategories, use-families, use-catalogue
 **Collections (3)** : use-collections, use-collection-images, use-collection-products
 **Consultations (2)** : use-consultations, use-consultation-images
-**Channels (3)** : use-google-merchant-*
+**Channels (3)** : use-google-merchant-\*
 **Notifications (2)** : use-notifications, use-dashboard-notifications
 
 **Destination** : Modules respectifs
@@ -413,6 +441,7 @@
 **Testing (3)** : use-critical-testing, use-test-persistence, use-mcp-resolution
 
 **Destination** :
+
 - `src/shared/modules/ui/hooks/`
 - `src/shared/modules/common/hooks/`
 - `src/shared/modules/admin/hooks/`
@@ -432,15 +461,19 @@
 ## 🔄 DÉPENDANCES
 
 ### Stock → Orders
+
 - `use-stock-orders-metrics` dépend potentiellement de `use-orders-status`
 
 ### Products → Categories
+
 - `use-products` peut dépendre de `use-categories`
 
 ### Orders → Products + Stock
+
 - `use-order-items` dépend de `use-products` et `use-stock`
 
 ### Dashboard → All
+
 - Hooks dashboard dépendent de tous les autres modules
 
 ---

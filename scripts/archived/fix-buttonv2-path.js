@@ -8,7 +8,9 @@ console.log('🔧 Fix ButtonV2 Import Path Script');
 console.log('=====================================\n');
 
 // Étape 1 : Trouver tous les fichiers avec le mauvais import ButtonV2
-console.log('📂 Recherche des fichiers avec import ButtonV2 depuis ui/button...\n');
+console.log(
+  '📂 Recherche des fichiers avec import ButtonV2 depuis ui/button...\n'
+);
 
 let files = [];
 try {

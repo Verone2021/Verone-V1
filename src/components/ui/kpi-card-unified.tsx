@@ -6,7 +6,7 @@ import { cva, type VariantProps } from 'class-variance-authority';
 import type { LucideIcon } from 'lucide-react';
 import { ArrowUp, ArrowDown, TrendingUp } from 'lucide-react';
 
-import { cn } from '@/lib/utils';
+import { cn } from '@verone/utils';
 
 /**
  * KPICardUnified - Composant KPI Card générique unifié Design System V2

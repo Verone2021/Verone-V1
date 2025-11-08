@@ -26,11 +26,11 @@ node tools/scripts/generate-stories.js --component=ProductCard
 
 ### Options
 
-| Option | Description |
-|--------|-------------|
-| `--dry-run` | Affiche les fichiers qui seraient créés sans les créer |
-| `--component=Name` | Génère story pour un seul composant spécifique |
-| `--force` | Force la régénération même si story existe déjà |
+| Option             | Description                                            |
+| ------------------ | ------------------------------------------------------ |
+| `--dry-run`        | Affiche les fichiers qui seraient créés sans les créer |
+| `--component=Name` | Génère story pour un seul composant spécifique         |
+| `--force`          | Force la régénération même si story existe déjà        |
 
 ### Fonctionnement
 
@@ -42,17 +42,18 @@ node tools/scripts/generate-stories.js --component=ProductCard
 
 ### Templates utilisés
 
-| Catégorie | Template | Exemples |
-|-----------|----------|----------|
-| **ui** | `variants-story.template.tsx` | Button, Badge, Card |
-| **business** | `business-story.template.tsx` | ProductCard, OrderTable |
-| **forms** | `business-story.template.tsx` | ProductForm, CreateOrderForm |
-| **layout** | `basic-story.template.tsx` | Header, Sidebar |
-| **admin** | `business-story.template.tsx` | UserManagement, Settings |
+| Catégorie    | Template                      | Exemples                     |
+| ------------ | ----------------------------- | ---------------------------- |
+| **ui**       | `variants-story.template.tsx` | Button, Badge, Card          |
+| **business** | `business-story.template.tsx` | ProductCard, OrderTable      |
+| **forms**    | `business-story.template.tsx` | ProductForm, CreateOrderForm |
+| **layout**   | `basic-story.template.tsx`    | Header, Sidebar              |
+| **admin**    | `business-story.template.tsx` | UserManagement, Settings     |
 
 ### Exclusions
 
 Composants **déjà créés manuellement** (exclus de la génération auto) :
+
 - `ui/button.tsx`
 - `ui/card.tsx`
 - `ui/verone-card.tsx`
@@ -60,6 +61,7 @@ Composants **déjà créés manuellement** (exclus de la génération auto) :
 - `ui/input.tsx`
 
 Dossiers **exclus** :
+
 - `testing/`
 - `providers/`
 - Fichiers spéciaux (`index.tsx`, `types.ts`)

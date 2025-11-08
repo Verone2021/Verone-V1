@@ -23,9 +23,9 @@ Grille affichage collections avec cards.
 
 ```typescript
 interface CollectionGridProps {
-  collections: Collection[]
-  onSelect?: (collection: Collection) => void
-  showActions?: boolean
+  collections: Collection[];
+  onSelect?: (collection: Collection) => void;
+  showActions?: boolean;
 }
 ```
 
@@ -51,8 +51,8 @@ Wizard création collection.
 
 ```typescript
 interface CollectionCreationWizardProps {
-  onSuccess?: (collectionId: string) => void
-  onCancel?: () => void
+  onSuccess?: (collectionId: string) => void;
+  onCancel?: () => void;
 }
 ```
 
@@ -77,10 +77,10 @@ Modal gestion produits collection (ajout, retrait, réorganisation).
 
 ```typescript
 interface CollectionProductsManagerModalProps {
-  open: boolean
-  onClose: () => void
-  collectionId: string
-  onUpdate?: () => void
+  open: boolean;
+  onClose: () => void;
+  collectionId: string;
+  onUpdate?: () => void;
 }
 ```
 

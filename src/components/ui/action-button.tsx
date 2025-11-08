@@ -10,7 +10,7 @@ import {
   componentSpacing,
   componentShadows,
 } from '@/lib/design-system';
-import { cn } from '@/lib/utils';
+import { cn } from '@verone/utils';
 
 /**
  * @deprecated Utilisez ButtonUnified à la place

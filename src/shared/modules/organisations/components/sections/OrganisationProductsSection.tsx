@@ -1,26 +1,35 @@
-'use client'
+'use client';
 
 /**
  * Section affichage produits pour une organisation
  * Utilisé dans page détail fournisseur - onglet Produits
  */
 
-import { useEffect, useState } from 'react'
-import { Package, Plus, Eye, Barcode, Euro, Box } from 'lucide-react'
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card'
-import { ButtonV2 } from '@/components/ui/button'
-import { Badge } from '@/components/ui/badge'
-import { useProducts } from '@/shared/modules/products/hooks'
-import Link from 'next/link'
-import { formatCurrency } from '@/lib/utils'
-import Image from 'next/image'
+import { useEffect, useState } from 'react';
+
+import Image from 'next/image';
+import Link from 'next/link';
+
+import { Package, Plus, Eye, Barcode, Euro, Box } from 'lucide-react';
+
+import { Badge } from '@/components/ui/badge';
+import { ButtonV2 } from '@/components/ui/button';
+import {
+  Card,
+  CardContent,
+  CardHeader,
+  CardTitle,
+  CardDescription,
+} from '@/components/ui/card';
+import { formatCurrency } from '@verone/utils';
+import { useProducts } from '@/shared/modules/products/hooks';
 
 interface OrganisationProductsSectionProps {
-  organisationId: string
-  organisationName: string
-  organisationType: 'supplier' | 'customer'
-  onUpdate?: () => void
-  className?: string
+  organisationId: string;
+  organisationName: string;
+  organisationType: 'supplier' | 'customer';
+  onUpdate?: () => void;
+  className?: string;
 }
 
 export function OrganisationProductsSection({
@@ -28,34 +37,36 @@ export function OrganisationProductsSection({
   organisationName,
   organisationType,
   onUpdate,
-  className
+  className,
 }: OrganisationProductsSectionProps) {
-  const { products, loading, refetch: fetchProducts } = useProducts()
-  const [organisationProducts, setOrganisationProducts] = useState<any[]>([])
+  const { products, loading, refetch: fetchProducts } = useProducts();
+  const [organisationProducts, setOrganisationProducts] = useState<any[]>([]);
 
   // Charger les produits
   useEffect(() => {
-    fetchProducts()
-  }, [])
+    fetchProducts();
+  }, []);
 
   // Filtrer les produits pour cette organisation
   useEffect(() => {
-    let filtered: any[] = []
+    let filtered: any[] = [];
 
     if (organisationType === 'supplier') {
-      filtered = products.filter(p => p.supplier_id === organisationId)
+      filtered = products.filter(p => p.supplier_id === organisationId);
     }
     // Pour les clients, on pourrait filtrer autrement (commandes clients, etc.)
 
-    setOrganisationProducts(filtered)
-  }, [products, organisationId, organisationType])
+    setOrganisationProducts(filtered);
+  }, [products, organisationId, organisationType]);
 
   if (loading && organisationProducts.length === 0) {
     return (
       <div className="flex items-center justify-center py-12">
-        <div className="animate-pulse text-gray-500">Chargement des produits...</div>
+        <div className="animate-pulse text-gray-500">
+          Chargement des produits...
+        </div>
       </div>
-    )
+    );
   }
 
   if (organisationProducts.length === 0) {
@@ -83,16 +94,21 @@ export function OrganisationProductsSection({
           </div>
         </CardContent>
       </Card>
-    )
+    );
   }
 
   // Calculer stats
   const stats = {
     total: organisationProducts.length,
-    inStock: organisationProducts.filter(p => (p.stock_quantity || 0) > 0).length,
-    outOfStock: organisationProducts.filter(p => (p.stock_quantity || 0) === 0).length,
-    totalValue: organisationProducts.reduce((sum, p) => sum + ((p.selling_price_ht || 0) * (p.stock_quantity || 0)), 0)
-  }
+    inStock: organisationProducts.filter(p => (p.stock_quantity || 0) > 0)
+      .length,
+    outOfStock: organisationProducts.filter(p => (p.stock_quantity || 0) === 0)
+      .length,
+    totalValue: organisationProducts.reduce(
+      (sum, p) => sum + (p.selling_price_ht || 0) * (p.stock_quantity || 0),
+      0
+    ),
+  };
 
   return (
     <div className="space-y-6">
@@ -106,7 +122,8 @@ export function OrganisationProductsSection({
                 Produits {organisationType === 'supplier' ? 'Fournisseur' : ''}
               </CardTitle>
               <CardDescription>
-                {stats.total} produit(s) • Valeur stock: {formatCurrency(stats.totalValue)} HT
+                {stats.total} produit(s) • Valeur stock:{' '}
+                {formatCurrency(stats.totalValue)} HT
               </CardDescription>
             </div>
             {organisationType === 'supplier' && (
@@ -127,11 +144,15 @@ export function OrganisationProductsSection({
               <div className="text-xs text-gray-600">Total produits</div>
             </div>
             <div className="text-center p-3 bg-green-50 rounded-lg">
-              <div className="text-2xl font-bold text-green-600">{stats.inStock}</div>
+              <div className="text-2xl font-bold text-green-600">
+                {stats.inStock}
+              </div>
               <div className="text-xs text-gray-600">En stock</div>
             </div>
             <div className="text-center p-3 bg-red-50 rounded-lg">
-              <div className="text-2xl font-bold text-red-600">{stats.outOfStock}</div>
+              <div className="text-2xl font-bold text-red-600">
+                {stats.outOfStock}
+              </div>
               <div className="text-xs text-gray-600">Rupture</div>
             </div>
           </div>
@@ -140,7 +161,7 @@ export function OrganisationProductsSection({
 
       {/* Grille produits */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-        {organisationProducts.map((product) => (
+        {organisationProducts.map(product => (
           <Card key={product.id} className="hover:shadow-md transition-shadow">
             <CardContent className="p-4">
               {/* Image produit */}
@@ -180,15 +201,28 @@ export function OrganisationProductsSection({
                   </div>
 
                   <Badge
-                    variant={(product.stock_quantity || 0) > 0 ? 'secondary' : 'destructive'}
-                    className={(product.stock_quantity || 0) > 0 ? 'bg-green-100 text-green-800' : ''}
+                    variant={
+                      (product.stock_quantity || 0) > 0
+                        ? 'secondary'
+                        : 'destructive'
+                    }
+                    className={
+                      (product.stock_quantity || 0) > 0
+                        ? 'bg-green-100 text-green-800'
+                        : ''
+                    }
                   >
                     <Box className="h-3 w-3 mr-1" />
                     Stock: {product.stock_quantity || 0}
                   </Badge>
                 </div>
 
-                <ButtonV2 variant="outline" size="sm" className="w-full mt-2" asChild>
+                <ButtonV2
+                  variant="outline"
+                  size="sm"
+                  className="w-full mt-2"
+                  asChild
+                >
                   <Link href={`/catalogue/${product.id}`}>
                     <Eye className="h-4 w-4 mr-2" />
                     Voir détails
@@ -200,5 +234,5 @@ export function OrganisationProductsSection({
         ))}
       </div>
     </div>
-  )
+  );
 }

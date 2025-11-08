@@ -1,8 +1,12 @@
 'use client';
 
+import { useEffect, useState } from 'react';
+
+import { useRouter } from 'next/navigation';
+
 import { User, LogOut, Settings, Users, Activity } from 'lucide-react';
+
 import { ButtonV2 } from '@/components/ui/button';
-import { cn } from '../../lib/utils';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -11,9 +15,9 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { createClient } from '@/lib/supabase/client';
-import { useRouter } from 'next/navigation';
-import { useEffect, useState } from 'react';
 import { NotificationsDropdown } from '@/shared/modules/notifications/components/dropdowns/NotificationsDropdown';
+
+import { cn } from '../../lib/utils';
 
 interface AppHeaderProps {
   className?: string;

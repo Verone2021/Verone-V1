@@ -16,6 +16,7 @@
 ### **Table `products` - Corrections Requises**
 
 #### **AVANT (État Actuel)**
+
 ```sql
 -- Champs problématiques actuels
 price_ht INTEGER NOT NULL,                    -- ❌ Ambiguë : prix de quoi ?
@@ -27,6 +28,7 @@ variant_attributes JSONB DEFAULT '{}',       -- ❌ Utilisé pour édition dynam
 ```
 
 #### **APRÈS (État Cible)**
+
 ```sql
 -- Prix clarifiés et séparés
 supplier_price INTEGER NULL,                  -- ✅ Prix d'achat fournisseur HT (centimes)
@@ -61,6 +63,7 @@ supplier_notes TEXT NULL                      -- ✅ Notes techniques fournisseu
 ### **Table `product_groups` - Ajouts Requis**
 
 #### **AJOUTS pour Caractéristiques Communes**
+
 ```sql
 -- Caractéristiques communes (déplacées depuis products)
 dimensions JSONB NULL,                        -- ✅ Dimensions communes à toutes variantes
@@ -221,6 +224,7 @@ ALTER TABLE products ALTER COLUMN selling_price SET NOT NULL;
 ## 🔧 Nouvelles Contraintes Business
 
 ### **Validation des Prix**
+
 ```sql
 -- Contrainte : marge minimum 5% (configurable)
 ALTER TABLE products
@@ -248,6 +252,7 @@ CREATE TRIGGER trigger_check_maximum_margin
 ```
 
 ### **Validation Couleurs/Matières**
+
 ```sql
 -- Listes contrôlées pour couleurs et matières
 CREATE TYPE color_type AS ENUM (
@@ -284,58 +289,61 @@ CREATE TYPE material_type AS ENUM (
      - `internal-info-edit-section.tsx`
 
 4. **Types TypeScript à Corriger** :
+
 ```typescript
 interface Product {
   // PRIX CLARIFIÉS
-  supplier_price?: number        // Prix d'achat fournisseur HT (centimes)
-  selling_price: number         // Prix de vente Vérone HT (centimes)
-  margin_percentage?: number    // Marge calculée automatiquement
+  supplier_price?: number; // Prix d'achat fournisseur HT (centimes)
+  selling_price: number; // Prix de vente Vérone HT (centimes)
+  margin_percentage?: number; // Marge calculée automatiquement
 
   // DESCRIPTIONS SÉPARÉES
-  supplier_description?: string // Description technique fournisseur
-  internal_description?: string // Description commerciale Vérone
-  marketing_notes?: string     // Notes marketing internes
+  supplier_description?: string; // Description technique fournisseur
+  internal_description?: string; // Description commerciale Vérone
+  marketing_notes?: string; // Notes marketing internes
 
   // CARACTÉRISTIQUES FIXES (plus de variant_attributes dynamique)
-  color?: string               // Couleur variante
-  material?: string            // Matière variante
+  color?: string; // Couleur variante
+  material?: string; // Matière variante
   // dimensions et weight → déplacés vers ProductGroup
 
   // RÉFÉRENCES CLARIFIÉES
-  supplier_reference?: string  // Référence fournisseur
-  internal_reference?: string  // Notre SKU
-  gtin?: string               // Code-barres
+  supplier_reference?: string; // Référence fournisseur
+  internal_reference?: string; // Notre SKU
+  gtin?: string; // Code-barres
 
   // DONNÉES FOURNISSEUR
-  supplier_lead_time_days?: number
-  supplier_minimum_order?: number
-  supplier_catalog_url?: string
-  supplier_notes?: string
+  supplier_lead_time_days?: number;
+  supplier_minimum_order?: number;
+  supplier_catalog_url?: string;
+  supplier_notes?: string;
 }
 
 interface ProductGroup {
   // CARACTÉRISTIQUES COMMUNES (déplacées depuis Product)
-  dimensions?: Dimensions      // Communes à toutes variantes
-  weight?: number             // Commun à toutes variantes
-  technical_specs?: Record<string, any>
+  dimensions?: Dimensions; // Communes à toutes variantes
+  weight?: number; // Commun à toutes variantes
+  technical_specs?: Record<string, any>;
 
   // INFORMATIONS FOURNISSEUR GROUPE
-  primary_supplier_id?: string
-  supplier_collection?: string
-  technical_description?: string
-  usage_description?: string
+  primary_supplier_id?: string;
+  supplier_collection?: string;
+  technical_description?: string;
+  usage_description?: string;
 }
 ```
 
 ## ⚠️ Risques et Mitigations
 
 ### **Risques Identifiés**
+
 1. **Perte de données** lors de la migration
 2. **Incohérence prix** si mauvaise interprétation price_ht/cost_price
 3. **Rupture frontend** pendant la transition
 4. **Corruption données** si migration échoue partiellement
 
 ### **Mitigations**
+
 1. **Backup complet** avant toute modification
 2. **Validation manuelle** échantillon données après migration
 3. **Déploiement progressif** : ajout champs → migration → suppression anciens
@@ -358,16 +366,19 @@ interface ProductGroup {
 ## 🎯 Bénéfices Attendus
 
 ### **Clarté Business**
+
 - ✅ Distinction immédiate prix fournisseur vs prix de vente
 - ✅ Calculs de marge automatiques et fiables
 - ✅ Descriptions adaptées aux contextes (technique vs commercial)
 
 ### **Efficacité Opérationnelle**
+
 - ✅ Import données fournisseur structuré
 - ✅ Génération catalogues clients optimisée
 - ✅ Gestion variantes au bon niveau architectural
 
 ### **Évolutivité Technique**
+
 - ✅ Schéma de données cohérent avec business rules
 - ✅ Support multi-fournisseurs facilité
 - ✅ Intégrations externes (feeds) simplifiées

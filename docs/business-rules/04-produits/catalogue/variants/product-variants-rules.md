@@ -25,6 +25,7 @@ Une **variante produit** est une déclinaison d'un produit existant qui partage 
 **Principe:** Toutes les variantes d'un même groupe se voient mutuellement.
 
 **Exemple:**
+
 ```
 Groupe "Fauteuil Scandinave":
 ├─ Variante A (Bleu): Voit B et C
@@ -53,6 +54,7 @@ Groupe "Fauteuil Scandinave":
 **Template:** `{NOM_BASE} - {COULEUR} - {MATIÈRE}`
 
 **Exemples:**
+
 ```
 Nom de base: "Chaise Moderne"
 ├─ Variante 1: "Chaise Moderne - Noir"
@@ -66,7 +68,7 @@ Nom de base: "Chaise Moderne"
 
 ```typescript
 // Exemple code
-const baseName = product.name.split(' - ')[0]
+const baseName = product.name.split(' - ')[0];
 // "Fauteuil Design - Bleu Canard" → "Fauteuil Design"
 ```
 
@@ -75,6 +77,7 @@ const baseName = product.name.split(' - ')[0]
 **Règle:** Si un produit avec un nom différent est ajouté à un groupe de variantes existant, son nom est **automatiquement réécrit** pour correspondre au format du groupe.
 
 **Exemple:**
+
 ```
 Produit initial: "Ma Super Chaise"
 Ajout au groupe: "Fauteuil Club" (variantes existantes)
@@ -91,38 +94,38 @@ Ajout au groupe: "Fauteuil Club" (variantes existantes)
 
 Ces champs sont **automatiquement copiés** du produit parent et doivent être **identiques** pour toutes les variantes du groupe:
 
-| Champ | Type | Règle | Justification |
-|-------|------|-------|---------------|
-| **Nom de base** | string | Identique | Cohérence catalogue |
-| **dimensions_length** | float | Identique | Même encombrement |
-| **dimensions_width** | float | Identique | Même encombrement |
-| **dimensions_height** | float | Identique | Même encombrement |
-| **dimensions_unit** | string | Identique | Cohérence mesures |
-| **supplier_id** | UUID | Identique | Même source approvisionnement |
-| **category_id** | UUID | Identique | Même classification |
-| **subcategory_id** | UUID | Identique | Même classification |
-| **base_cost** | decimal | Identique (par défaut) | Coût similaire |
-| **selling_price** | decimal | Identique (par défaut) | Prix similaire |
-| **technical_description** | text | Identique | Mêmes specs techniques |
-| **brand** | string | Identique | Même fabricant |
+| Champ                     | Type    | Règle                  | Justification                 |
+| ------------------------- | ------- | ---------------------- | ----------------------------- |
+| **Nom de base**           | string  | Identique              | Cohérence catalogue           |
+| **dimensions_length**     | float   | Identique              | Même encombrement             |
+| **dimensions_width**      | float   | Identique              | Même encombrement             |
+| **dimensions_height**     | float   | Identique              | Même encombrement             |
+| **dimensions_unit**       | string  | Identique              | Cohérence mesures             |
+| **supplier_id**           | UUID    | Identique              | Même source approvisionnement |
+| **category_id**           | UUID    | Identique              | Même classification           |
+| **subcategory_id**        | UUID    | Identique              | Même classification           |
+| **base_cost**             | decimal | Identique (par défaut) | Coût similaire                |
+| **selling_price**         | decimal | Identique (par défaut) | Prix similaire                |
+| **technical_description** | text    | Identique              | Mêmes specs techniques        |
+| **brand**                 | string  | Identique              | Même fabricant                |
 
 ### Copiés avec Possibilité de Variation
 
-| Champ | Type | Règle | Notes |
-|-------|------|-------|-------|
-| **weight** | float | Copié (peut varier légèrement) | Poids peut différer légèrement selon matière |
-| **weight_unit** | string | Copié | kg/g |
-| **description** | text | Copiée ou remplacée | Si `additional_note` fournie |
+| Champ           | Type   | Règle                          | Notes                                        |
+| --------------- | ------ | ------------------------------ | -------------------------------------------- |
+| **weight**      | float  | Copié (peut varier légèrement) | Poids peut différer légèrement selon matière |
+| **weight_unit** | string | Copié                          | kg/g                                         |
+| **description** | text   | Copiée ou remplacée            | Si `additional_note` fournie                 |
 
 ### Propres à Chaque Variante
 
-| Champ | Type | Règle | Usage |
-|-------|------|-------|-------|
-| **id** | UUID | Unique | Identifiant unique |
-| **sku** | string | Généré | Format: `{PARENT_SKU}-V{POSITION}` |
-| **variant_attributes** | JSONB | Unique | Stocke color, material |
-| **variant_position** | integer | Unique | Position dans le groupe (1, 2, 3...) |
-| **product_images** | relation | Unique | Chaque variante a ses propres images |
+| Champ                  | Type     | Règle  | Usage                                |
+| ---------------------- | -------- | ------ | ------------------------------------ |
+| **id**                 | UUID     | Unique | Identifiant unique                   |
+| **sku**                | string   | Généré | Format: `{PARENT_SKU}-V{POSITION}`   |
+| **variant_attributes** | JSONB    | Unique | Stocke color, material               |
+| **variant_position**   | integer  | Unique | Position dans le groupe (1, 2, 3...) |
+| **product_images**     | relation | Unique | Chaque variante a ses propres images |
 
 ---
 
@@ -133,18 +136,21 @@ Ces champs sont **automatiquement copiés** du produit parent et doivent être *
 Les seuls champs **modifiables** lors de la création d'une variante:
 
 #### 1. **Couleur** (`color`)
+
 - **Type:** string
 - **Exemples:** "Noir", "Blanc Cassé", "Bleu Canard", "Rose Poudré"
 - **Validation:** Aucune restriction (texte libre)
 - **Affichage:** Badge coloré dans liste variantes
 
 #### 2. **Matière** (`material`)
+
 - **Type:** string
 - **Exemples:** "Chêne Massif", "Métal Laqué", "Tissu Velours", "Rotin Naturel"
 - **Validation:** Aucune restriction (texte libre)
 - **Affichage:** Badge dans liste variantes
 
 #### 3. **Note Additionnelle** (`additional_note`)
+
 - **Type:** string (optionnel)
 - **Usage:** Remplace le champ `description` si fourni
 - **Exemples:** "Finition mate", "Assemblage à prévoir", "Coussin inclus"
@@ -170,16 +176,17 @@ Les seuls champs **modifiables** lors de la création d'une variante:
 
 ### Champs Database
 
-| Champ | Type | Défaut | Description |
-|-------|------|--------|-------------|
-| `variant_group_id` | UUID | NULL | Identifiant du groupe de variantes |
-| `is_variant_parent` | boolean | false | Produit parent du groupe |
-| `variant_position` | integer | 1 | Position dans le groupe |
-| `variant_attributes` | JSONB | {} | Attributs différenciants |
+| Champ                | Type    | Défaut | Description                        |
+| -------------------- | ------- | ------ | ---------------------------------- |
+| `variant_group_id`   | UUID    | NULL   | Identifiant du groupe de variantes |
+| `is_variant_parent`  | boolean | false  | Produit parent du groupe           |
+| `variant_position`   | integer | 1      | Position dans le groupe            |
+| `variant_attributes` | JSONB   | {}     | Attributs différenciants           |
 
 ### Création Groupe
 
 **Scénario 1:** Produit sans groupe existant
+
 1. Générer nouveau UUID pour `variant_group_id`
 2. Mettre à jour produit parent:
    - `variant_group_id` = UUID généré
@@ -191,6 +198,7 @@ Les seuls champs **modifiables** lors de la création d'une variante:
    - `variant_position` = 2
 
 **Scénario 2:** Produit avec groupe existant
+
 1. Récupérer `max(variant_position)` du groupe
 2. Créer variante avec:
    - `variant_group_id` = ID groupe existant
@@ -202,6 +210,7 @@ Les seuls champs **modifiables** lors de la création d'une variante:
 **Format:** `{SKU_PARENT}-V{POSITION}`
 
 **Exemples:**
+
 ```
 Parent: CHAIR-MOD-001 (position 1)
 ├─ Variante 1: CHAIR-MOD-001-V2
@@ -239,6 +248,7 @@ Parent: CHAIR-MOD-001 (position 1)
 ### Depuis Page Variantes (Future)
 
 **TODO:** Interface de gestion groupes de variantes
+
 - Créer nouveau groupe de variantes
 - Ajouter produits existants à un groupe
 - Modifier attributs variantes en masse
@@ -251,6 +261,7 @@ Parent: CHAIR-MOD-001 (position 1)
 ### Google Merchant Center
 
 **Champ:** `item_group_id`
+
 - Compatible avec système `variant_group_id`
 - Permet groupement variantes dans Google Shopping
 - Badge "Google Merchant" affiché dans UI
@@ -258,6 +269,7 @@ Parent: CHAIR-MOD-001 (position 1)
 ### Feeds Export
 
 **Règle:** Chaque variante est exportée comme produit séparé avec:
+
 - `item_group_id` = `variant_group_id`
 - `color` = `variant_attributes.color`
 - `material` = `variant_attributes.material`
@@ -269,6 +281,7 @@ Parent: CHAIR-MOD-001 (position 1)
 ### Exemple 1: Fauteuil 3 Coloris
 
 **Produit Parent:**
+
 ```json
 {
   "id": "abc-123",
@@ -279,7 +292,7 @@ Parent: CHAIR-MOD-001 (position 1)
   "dimensions_width": 85,
   "dimensions_height": 95,
   "dimensions_unit": "cm",
-  "selling_price": 450.00,
+  "selling_price": 450.0,
   "variant_group_id": "group-789",
   "is_variant_parent": true,
   "variant_position": 1
@@ -287,6 +300,7 @@ Parent: CHAIR-MOD-001 (position 1)
 ```
 
 **Variante 1 (Bleu Canard):**
+
 ```json
 {
   "id": "def-456",
@@ -297,7 +311,7 @@ Parent: CHAIR-MOD-001 (position 1)
   "dimensions_width": 85,
   "dimensions_height": 95,
   "dimensions_unit": "cm",
-  "selling_price": 450.00,
+  "selling_price": 450.0,
   "variant_group_id": "group-789",
   "is_variant_parent": false,
   "variant_position": 2,
@@ -308,6 +322,7 @@ Parent: CHAIR-MOD-001 (position 1)
 ```
 
 **Variante 2 (Rose Poudré - Velours):**
+
 ```json
 {
   "id": "ghi-789",
@@ -318,7 +333,7 @@ Parent: CHAIR-MOD-001 (position 1)
   "dimensions_width": 85,
   "dimensions_height": 95,
   "dimensions_unit": "cm",
-  "selling_price": 475.00,
+  "selling_price": 475.0,
   "variant_group_id": "group-789",
   "is_variant_parent": false,
   "variant_position": 3,
@@ -385,6 +400,7 @@ Parent: CHAIR-MOD-001 (position 1)
 
 **Dernière Révision:** 2025-09-26
 **Implémenté Dans:**
+
 - `src/components/business/variant-creation-modal.tsx`
 - `src/app/api/products/[productId]/variants/create/route.ts`
 - `src/components/business/product-variants-section.tsx`

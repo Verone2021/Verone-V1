@@ -1,24 +1,36 @@
-'use client'
+'use client';
 
 /**
  * Section affichage commandes achats (purchase orders) pour une organisation
  * Utilisé dans page détail fournisseur - onglet Commandes
  */
 
-import { useEffect, useState } from 'react'
-import { ShoppingCart, Plus, Eye, Package, Calendar, Euro } from 'lucide-react'
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card'
-import { ButtonV2 } from '@/components/ui/button'
-import { Badge } from '@/components/ui/badge'
-import { usePurchaseOrders, type PurchaseOrder } from '@/shared/modules/orders/hooks'
-import Link from 'next/link'
-import { formatCurrency, formatDate } from '@/lib/utils'
+import { useEffect, useState } from 'react';
+
+import Link from 'next/link';
+
+import { ShoppingCart, Plus, Eye, Package, Calendar, Euro } from 'lucide-react';
+
+import { Badge } from '@/components/ui/badge';
+import { ButtonV2 } from '@/components/ui/button';
+import {
+  Card,
+  CardContent,
+  CardHeader,
+  CardTitle,
+  CardDescription,
+} from '@/components/ui/card';
+import { formatCurrency, formatDate } from '@verone/utils';
+import {
+  usePurchaseOrders,
+  type PurchaseOrder,
+} from '@/shared/modules/orders/hooks';
 
 interface OrganisationPurchaseOrdersSectionProps {
-  organisationId: string
-  organisationName: string
-  onUpdate?: () => void
-  className?: string
+  organisationId: string;
+  organisationName: string;
+  onUpdate?: () => void;
+  className?: string;
 }
 
 // Mapping statuts avec couleurs
@@ -26,30 +38,35 @@ const STATUS_CONFIG: Record<string, { label: string; color: string }> = {
   draft: { label: 'Brouillon', color: 'bg-gray-100 text-gray-800' },
   sent: { label: 'Envoyée', color: 'bg-blue-100 text-blue-800' },
   confirmed: { label: 'Confirmée', color: 'bg-purple-100 text-purple-800' },
-  partially_received: { label: 'Partiellement reçue', color: 'bg-yellow-100 text-yellow-800' },
+  partially_received: {
+    label: 'Partiellement reçue',
+    color: 'bg-yellow-100 text-yellow-800',
+  },
   received: { label: 'Reçue', color: 'bg-green-100 text-green-800' },
-  cancelled: { label: 'Annulée', color: 'bg-red-100 text-red-800' }
-}
+  cancelled: { label: 'Annulée', color: 'bg-red-100 text-red-800' },
+};
 
 export function OrganisationPurchaseOrdersSection({
   organisationId,
   organisationName,
   onUpdate,
-  className
+  className,
 }: OrganisationPurchaseOrdersSectionProps) {
-  const { orders, loading, fetchOrders } = usePurchaseOrders()
-  const [supplierOrders, setSupplierOrders] = useState<PurchaseOrder[]>([])
+  const { orders, loading, fetchOrders } = usePurchaseOrders();
+  const [supplierOrders, setSupplierOrders] = useState<PurchaseOrder[]>([]);
 
   // Charger les commandes du fournisseur
   useEffect(() => {
-    fetchOrders({ supplier_id: organisationId })
-  }, [organisationId])
+    fetchOrders({ supplier_id: organisationId });
+  }, [organisationId]);
 
   // Filtrer les commandes pour ce fournisseur
   useEffect(() => {
-    const filtered = orders.filter(order => order.supplier_id === organisationId)
-    setSupplierOrders(filtered)
-  }, [orders, organisationId])
+    const filtered = orders.filter(
+      order => order.supplier_id === organisationId
+    );
+    setSupplierOrders(filtered);
+  }, [orders, organisationId]);
 
   // Calculer statistiques
   const stats = {
@@ -58,15 +75,17 @@ export function OrganisationPurchaseOrdersSection({
     sent: supplierOrders.filter(o => o.status === 'sent').length,
     confirmed: supplierOrders.filter(o => o.status === 'confirmed').length,
     received: supplierOrders.filter(o => o.status === 'received').length,
-    totalValue: supplierOrders.reduce((sum, o) => sum + o.total_ttc, 0)
-  }
+    totalValue: supplierOrders.reduce((sum, o) => sum + o.total_ttc, 0),
+  };
 
   if (loading && supplierOrders.length === 0) {
     return (
       <div className="flex items-center justify-center py-12">
-        <div className="animate-pulse text-gray-500">Chargement des commandes...</div>
+        <div className="animate-pulse text-gray-500">
+          Chargement des commandes...
+        </div>
       </div>
-    )
+    );
   }
 
   if (supplierOrders.length === 0) {
@@ -82,7 +101,9 @@ export function OrganisationPurchaseOrdersSection({
               Aucune commande d'achat trouvée pour {organisationName}.
             </p>
             <ButtonV2 asChild>
-              <Link href={`/commandes/fournisseurs/create?supplier_id=${organisationId}`}>
+              <Link
+                href={`/commandes/fournisseurs/create?supplier_id=${organisationId}`}
+              >
                 <Plus className="h-4 w-4 mr-2" />
                 Créer une commande
               </Link>
@@ -90,7 +111,7 @@ export function OrganisationPurchaseOrdersSection({
           </div>
         </CardContent>
       </Card>
-    )
+    );
   }
 
   return (
@@ -105,11 +126,14 @@ export function OrganisationPurchaseOrdersSection({
                 Commandes d'achat
               </CardTitle>
               <CardDescription>
-                {stats.total} commande(s) • {formatCurrency(stats.totalValue)} TTC
+                {stats.total} commande(s) • {formatCurrency(stats.totalValue)}{' '}
+                TTC
               </CardDescription>
             </div>
             <ButtonV2 asChild>
-              <Link href={`/commandes/fournisseurs/create?supplier_id=${organisationId}`}>
+              <Link
+                href={`/commandes/fournisseurs/create?supplier_id=${organisationId}`}
+              >
                 <Plus className="h-4 w-4 mr-2" />
                 Nouvelle commande
               </Link>
@@ -124,15 +148,21 @@ export function OrganisationPurchaseOrdersSection({
               <div className="text-xs text-gray-600">Brouillons</div>
             </div>
             <div className="text-center p-3 bg-blue-50 rounded-lg">
-              <div className="text-2xl font-bold text-blue-600">{stats.sent}</div>
+              <div className="text-2xl font-bold text-blue-600">
+                {stats.sent}
+              </div>
               <div className="text-xs text-gray-600">Envoyées</div>
             </div>
             <div className="text-center p-3 bg-purple-50 rounded-lg">
-              <div className="text-2xl font-bold text-purple-600">{stats.confirmed}</div>
+              <div className="text-2xl font-bold text-purple-600">
+                {stats.confirmed}
+              </div>
               <div className="text-xs text-gray-600">Confirmées</div>
             </div>
             <div className="text-center p-3 bg-green-50 rounded-lg">
-              <div className="text-2xl font-bold text-green-600">{stats.received}</div>
+              <div className="text-2xl font-bold text-green-600">
+                {stats.received}
+              </div>
               <div className="text-xs text-gray-600">Reçues</div>
             </div>
           </div>
@@ -141,7 +171,7 @@ export function OrganisationPurchaseOrdersSection({
 
       {/* Liste des commandes */}
       <div className="grid gap-4">
-        {supplierOrders.map((order) => (
+        {supplierOrders.map(order => (
           <Card key={order.id} className="hover:shadow-md transition-shadow">
             <CardContent className="p-6">
               <div className="flex items-start justify-between">
@@ -215,5 +245,5 @@ export function OrganisationPurchaseOrdersSection({
         ))}
       </div>
     </div>
-  )
+  );
 }

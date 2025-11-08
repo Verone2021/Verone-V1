@@ -5,55 +5,69 @@
  * CORRECTION: Utilise la table subcategories avec category_id
  */
 
-"use client"
+'use client';
 
-import { useState, useEffect } from 'react'
-import { ButtonV2 } from '@/components/ui/button'
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog'
-import { Input } from '@/components/ui/input'
-import { Textarea } from '@/components/ui/textarea'
-import { Label } from '@/components/ui/label'
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
-import { useToast } from '@/shared/modules/common/hooks'
-import { Upload, X, Save, Loader2 } from 'lucide-react'
-import { createClient } from '@/lib/supabase/client'
+import { useState, useEffect } from 'react';
+
+import { Upload, X, Save, Loader2 } from 'lucide-react';
+
+import { ButtonV2 } from '@/components/ui/button';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
+import { Textarea } from '@/components/ui/textarea';
+import { createClient } from '@/lib/supabase/client';
+import { useToast } from '@/shared/modules/common/hooks';
 
 interface CategoryWithFamily {
-  id: string
-  name: string
-  family_name: string
+  id: string;
+  name: string;
+  family_name: string;
 }
 
 interface Subcategory {
-  id: string
-  category_id: string // ID de la catégorie parent
-  name: string
-  slug: string
-  description?: string
-  image_url?: string
-  display_order: number
-  is_active: boolean
-  created_at?: string
-  updated_at?: string
+  id: string;
+  category_id: string; // ID de la catégorie parent
+  name: string;
+  slug: string;
+  description?: string;
+  image_url?: string;
+  display_order: number;
+  is_active: boolean;
+  created_at?: string;
+  updated_at?: string;
 }
 
 interface SubcategoryFormData {
-  parent_id: string // ID de la catégorie parent (mappé depuis category_id)
-  family_id: string // Récupéré automatiquement depuis la catégorie parent
-  name: string
-  description: string
-  image_url?: string
-  display_order: number
-  is_active: boolean
+  parent_id: string; // ID de la catégorie parent (mappé depuis category_id)
+  family_id: string; // Récupéré automatiquement depuis la catégorie parent
+  name: string;
+  description: string;
+  image_url?: string;
+  display_order: number;
+  is_active: boolean;
 }
 
 interface SubcategoryFormProps {
-  isOpen: boolean
-  onClose: () => void
-  onSubmit: (subcategory: Subcategory) => void
-  initialData?: Subcategory | null
-  mode: 'create' | 'edit'
-  categories: CategoryWithFamily[] // Liste des catégories pour sélection parent
+  isOpen: boolean;
+  onClose: () => void;
+  onSubmit: (subcategory: Subcategory) => void;
+  initialData?: Subcategory | null;
+  mode: 'create' | 'edit';
+  categories: CategoryWithFamily[]; // Liste des catégories pour sélection parent
 }
 
 export function SubcategoryForm({
@@ -62,11 +76,11 @@ export function SubcategoryForm({
   onSubmit,
   initialData = null,
   mode,
-  categories
+  categories,
 }: SubcategoryFormProps) {
-  const { toast } = useToast()
-  const [loading, setLoading] = useState(false)
-  const [uploadingImage, setUploadingImage] = useState(false)
+  const { toast } = useToast();
+  const [loading, setLoading] = useState(false);
+  const [uploadingImage, setUploadingImage] = useState(false);
 
   // État du formulaire - CORRECTION: utiliser category_id au lieu de parent_id
   const [formData, setFormData] = useState<SubcategoryFormData>({
@@ -76,8 +90,8 @@ export function SubcategoryForm({
     description: initialData?.description || '',
     image_url: initialData?.image_url || '',
     display_order: initialData?.display_order || 1,
-    is_active: initialData?.is_active ?? true
-  })
+    is_active: initialData?.is_active ?? true,
+  });
 
   // Reset form when modal opens/closes or initialData changes
   useEffect(() => {
@@ -89,115 +103,121 @@ export function SubcategoryForm({
         description: initialData?.description || '',
         image_url: initialData?.image_url || '',
         display_order: initialData?.display_order || 1,
-        is_active: initialData?.is_active ?? true
-      })
+        is_active: initialData?.is_active ?? true,
+      });
     }
-  }, [isOpen, initialData])
+  }, [isOpen, initialData]);
 
   // Mise à jour automatique du family_id quand on change de catégorie parent
   const handleCategoryChange = async (categoryId: string) => {
-    setFormData(prev => ({ ...prev, parent_id: categoryId }))
+    setFormData(prev => ({ ...prev, parent_id: categoryId }));
 
     // Récupérer le family_id de la catégorie sélectionnée
     try {
-      const supabase = createClient()
+      const supabase = createClient();
       const { data, error } = await supabase
         .from('categories')
         .select('family_id')
         .eq('id', categoryId)
-        .single()
+        .single();
 
-      if (error) throw error
+      if (error) throw error;
 
-      setFormData(prev => ({ ...prev, family_id: data.family_id }) as any)
+      setFormData(prev => ({ ...prev, family_id: data.family_id }) as any);
     } catch (error: any) {
-      console.error('Erreur récupération family_id catégorie:', error?.message || JSON.stringify(error))
+      console.error(
+        'Erreur récupération family_id catégorie:',
+        error?.message || JSON.stringify(error)
+      );
     }
-  }
+  };
 
   // Génération du slug automatique
   const generateSlug = (name: string): string => {
     return name
       .toLowerCase()
-      .normalize("NFD")
-      .replace(/[\u0300-\u036f]/g, "")
-      .replace(/[^a-z0-9 -]/g, "")
-      .replace(/\s+/g, "-")
-      .replace(/-+/g, "-")
-      .replace(/^-+|-+$/g, '')
-  }
+      .normalize('NFD')
+      .replace(/[\u0300-\u036f]/g, '')
+      .replace(/[^a-z0-9 -]/g, '')
+      .replace(/\s+/g, '-')
+      .replace(/-+/g, '-')
+      .replace(/^-+|-+$/g, '');
+  };
 
   // Upload d'image vers Supabase Storage
   const handleImageUpload = async (file: File) => {
-    setUploadingImage(true)
+    setUploadingImage(true);
     try {
-      const supabase = createClient()
-      const fileExt = file.name.split('.').pop()
-      const fileName = `subcategory-${Date.now()}.${fileExt}`
-      const filePath = `subcategory-images/${fileName}`
+      const supabase = createClient();
+      const fileExt = file.name.split('.').pop();
+      const fileName = `subcategory-${Date.now()}.${fileExt}`;
+      const filePath = `subcategory-images/${fileName}`;
 
       const { error: uploadError } = await supabase.storage
         .from('family-images')
-        .upload(filePath, file)
+        .upload(filePath, file);
 
-      if (uploadError) throw uploadError
+      if (uploadError) throw uploadError;
 
-      const { data: { publicUrl } } = supabase.storage
-        .from('family-images')
-        .getPublicUrl(filePath)
+      const {
+        data: { publicUrl },
+      } = supabase.storage.from('family-images').getPublicUrl(filePath);
 
-      setFormData(prev => ({ ...prev, image_url: publicUrl }))
+      setFormData(prev => ({ ...prev, image_url: publicUrl }));
 
       toast({
-        title: "✅ Image téléchargée",
-        description: "L'image a été uploadée avec succès"
-      })
+        title: '✅ Image téléchargée',
+        description: "L'image a été uploadée avec succès",
+      });
     } catch (error: any) {
-      console.error('Erreur upload image sous-catégorie:', error?.message || JSON.stringify(error))
+      console.error(
+        'Erreur upload image sous-catégorie:',
+        error?.message || JSON.stringify(error)
+      );
       toast({
-        title: "❌ Erreur upload",
+        title: '❌ Erreur upload',
         description: "Impossible de télécharger l'image",
-        variant: "destructive"
-      })
+        variant: 'destructive',
+      });
     } finally {
-      setUploadingImage(false)
+      setUploadingImage(false);
     }
-  }
+  };
 
   // Suppression d'image
   const handleRemoveImage = () => {
-    setFormData(prev => ({ ...prev, image_url: '' }))
-  }
+    setFormData(prev => ({ ...prev, image_url: '' }));
+  };
 
   // Soumission du formulaire - CORRECTION: utiliser table subcategories
   const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault()
+    e.preventDefault();
 
     if (!formData.name.trim()) {
       toast({
-        title: "❌ Nom requis",
-        description: "Le nom de la sous-catégorie est obligatoire",
-        variant: "destructive"
-      })
-      return
+        title: '❌ Nom requis',
+        description: 'Le nom de la sous-catégorie est obligatoire',
+        variant: 'destructive',
+      });
+      return;
     }
 
     if (!formData.parent_id) {
       toast({
-        title: "❌ Catégorie requise",
-        description: "Vous devez sélectionner une catégorie parent",
-        variant: "destructive"
-      })
-      return
+        title: '❌ Catégorie requise',
+        description: 'Vous devez sélectionner une catégorie parent',
+        variant: 'destructive',
+      });
+      return;
     }
 
-    setLoading(true)
+    setLoading(true);
 
     try {
-      const supabase = createClient()
-      const slug = generateSlug(formData.name)
+      const supabase = createClient();
+      const slug = generateSlug(formData.name);
 
-      let result
+      let result;
 
       if (mode === 'create') {
         // CORRECTION: Utiliser la table subcategories avec category_id
@@ -208,22 +228,22 @@ export function SubcategoryForm({
           description: formData.description,
           image_url: formData.image_url,
           display_order: formData.display_order,
-          is_active: formData.is_active
-        }
+          is_active: formData.is_active,
+        };
 
         const { data, error } = await supabase
           .from('subcategories')
           .insert([subcategoryData])
           .select()
-          .single()
+          .single();
 
-        if (error) throw error
-        result = data
+        if (error) throw error;
+        result = data;
 
         toast({
-          title: "✅ Sous-catégorie créée",
-          description: `La sous-catégorie "${formData.name}" a été créée`
-        })
+          title: '✅ Sous-catégorie créée',
+          description: `La sous-catégorie "${formData.name}" a été créée`,
+        });
       } else {
         // CORRECTION: Mettre à jour dans la table subcategories
         const updateData = {
@@ -233,49 +253,55 @@ export function SubcategoryForm({
           display_order: formData.display_order,
           is_active: formData.is_active,
           slug,
-          updated_at: new Date().toISOString()
-        }
+          updated_at: new Date().toISOString(),
+        };
 
         const { data, error } = await supabase
           .from('subcategories')
           .update(updateData)
           .eq('id', initialData!.id)
           .select()
-          .single()
+          .single();
 
-        if (error) throw error
-        result = data
+        if (error) throw error;
+        result = data;
 
         toast({
-          title: "✅ Sous-catégorie modifiée",
-          description: `La sous-catégorie "${formData.name}" a été mise à jour`
-        })
+          title: '✅ Sous-catégorie modifiée',
+          description: `La sous-catégorie "${formData.name}" a été mise à jour`,
+        });
       }
 
-      onSubmit(result as Subcategory)
-      onClose()
-
+      onSubmit(result as Subcategory);
+      onClose();
     } catch (error: any) {
-      console.error('Erreur soumission formulaire sous-catégorie:', error?.message || JSON.stringify(error))
+      console.error(
+        'Erreur soumission formulaire sous-catégorie:',
+        error?.message || JSON.stringify(error)
+      );
 
       // Gestion spécifique des erreurs de contrainte unique
-      let errorMessage = error.message || "Une erreur est survenue"
+      let errorMessage = error.message || 'Une erreur est survenue';
       if (error.code === '23505') {
-        errorMessage = 'Une sous-catégorie avec ce nom existe déjà dans cette catégorie. Veuillez choisir un nom différent.'
+        errorMessage =
+          'Une sous-catégorie avec ce nom existe déjà dans cette catégorie. Veuillez choisir un nom différent.';
       }
 
       toast({
-        title: "❌ Erreur",
+        title: '❌ Erreur',
         description: errorMessage,
-        variant: "destructive"
-      })
+        variant: 'destructive',
+      });
     } finally {
-      setLoading(false)
+      setLoading(false);
     }
-  }
+  };
 
-  const title = mode === 'create' ? 'Nouvelle sous-catégorie' : 'Modifier la sous-catégorie'
-  const selectedCategory = categories.find(c => c.id === formData.parent_id)
+  const title =
+    mode === 'create'
+      ? 'Nouvelle sous-catégorie'
+      : 'Modifier la sous-catégorie';
+  const selectedCategory = categories.find(c => c.id === formData.parent_id);
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
@@ -283,17 +309,19 @@ export function SubcategoryForm({
         <DialogHeader>
           <DialogTitle className="text-black">{title}</DialogTitle>
           <DialogDescription>
-            {mode === 'create' ? 'Créer une nouvelle sous-catégorie dans une catégorie existante' : 'Modifier les informations de cette sous-catégorie'}
+            {mode === 'create'
+              ? 'Créer une nouvelle sous-catégorie dans une catégorie existante'
+              : 'Modifier les informations de cette sous-catégorie'}
           </DialogDescription>
         </DialogHeader>
 
         <form onSubmit={handleSubmit} className="space-y-6">
           {/* Catégorie parent */}
           <div className="space-y-2">
-            <Label className="text-black">
-              Catégorie parent*
-            </Label>
-            {(mode === 'edit' || (mode === 'create' && initialData?.category_id)) && selectedCategory ? (
+            <Label className="text-black">Catégorie parent*</Label>
+            {(mode === 'edit' ||
+              (mode === 'create' && initialData?.category_id)) &&
+            selectedCategory ? (
               <div className="p-3 bg-gray-50 rounded-lg border">
                 <div className="text-sm font-medium text-gray-900">
                   {selectedCategory.name}
@@ -302,7 +330,8 @@ export function SubcategoryForm({
                   Famille: {selectedCategory.family_name}
                 </div>
                 <p className="text-xs text-gray-500 mt-1">
-                  La catégorie parent ne peut pas être modifiée pour préserver la cohérence de l'arborescence.
+                  La catégorie parent ne peut pas être modifiée pour préserver
+                  la cohérence de l'arborescence.
                 </p>
               </div>
             ) : (
@@ -315,7 +344,7 @@ export function SubcategoryForm({
                   <SelectValue placeholder="Sélectionnez une catégorie..." />
                 </SelectTrigger>
                 <SelectContent>
-                  {categories.map((category) => (
+                  {categories.map(category => (
                     <SelectItem key={category.id} value={category.id}>
                       <div>
                         <div className="font-medium">{category.name}</div>
@@ -338,7 +367,9 @@ export function SubcategoryForm({
             <Input
               id="name"
               value={formData.name}
-              onChange={(e) => setFormData(prev => ({ ...prev, name: e.target.value }))}
+              onChange={e =>
+                setFormData(prev => ({ ...prev, name: e.target.value }))
+              }
               placeholder="Ex: Chaises de bureau, Tables basses..."
               className="border-gray-300 focus:border-black"
               required
@@ -353,7 +384,9 @@ export function SubcategoryForm({
             <Textarea
               id="description"
               value={formData.description}
-              onChange={(e) => setFormData(prev => ({ ...prev, description: e.target.value }))}
+              onChange={e =>
+                setFormData(prev => ({ ...prev, description: e.target.value }))
+              }
               placeholder="Description de cette sous-catégorie"
               className="border-gray-300 focus:border-black resize-none"
               rows={3}
@@ -398,16 +431,16 @@ export function SubcategoryForm({
                       type="file"
                       accept="image/*"
                       className="hidden"
-                      onChange={(e) => {
-                        const file = e.target.files?.[0]
+                      onChange={e => {
+                        const file = e.target.files?.[0];
                         if (file && file.size <= 5 * 1024 * 1024) {
-                          handleImageUpload(file)
+                          handleImageUpload(file);
                         } else {
                           toast({
-                            title: "❌ Fichier trop volumineux",
+                            title: '❌ Fichier trop volumineux',
                             description: "L'image doit faire moins de 5MB",
-                            variant: "destructive"
-                          })
+                            variant: 'destructive',
+                          });
                         }
                       }}
                       disabled={uploadingImage}
@@ -428,10 +461,12 @@ export function SubcategoryForm({
               type="number"
               min="1"
               value={formData.display_order}
-              onChange={(e) => setFormData(prev => ({
-                ...prev,
-                display_order: parseInt(e.target.value) || 1
-              }))}
+              onChange={e =>
+                setFormData(prev => ({
+                  ...prev,
+                  display_order: parseInt(e.target.value) || 1,
+                }))
+              }
               className="border-gray-300 focus:border-black"
             />
           </div>
@@ -441,10 +476,12 @@ export function SubcategoryForm({
             <Label className="text-black">Statut</Label>
             <Select
               value={formData.is_active ? 'active' : 'inactive'}
-              onValueChange={(value) => setFormData(prev => ({
-                ...prev,
-                is_active: value === 'active'
-              }))}
+              onValueChange={value =>
+                setFormData(prev => ({
+                  ...prev,
+                  is_active: value === 'active',
+                }))
+              }
             >
               <SelectTrigger className="border-gray-300 focus:border-black">
                 <SelectValue />
@@ -482,5 +519,5 @@ export function SubcategoryForm({
         </form>
       </DialogContent>
     </Dialog>
-  )
+  );
 }

@@ -45,14 +45,14 @@ source:
 displayed_in:
   - component: src/app/contacts-organisations/suppliers/page.tsx
     location: "Stats header - Badge 'Archivés' (ligne ~314-329)"
-    description: "Troisième badge row statistiques avec couleur grise"
+    description: 'Troisième badge row statistiques avec couleur grise'
     screenshot: suppliers-list-page.png
 
 thresholds:
-  excellent: "< 10%"
-  good: "10-20%"
-  warning: "20-40%"
-  critical: "> 40%"
+  excellent: '< 10%'
+  good: '10-20%'
+  warning: '20-40%'
+  critical: '> 40%'
   interpretation: |
     Pourcentage archivés / total fournisseurs :
     - < 10% : Excellent (peu de ruptures)
@@ -61,21 +61,21 @@ thresholds:
     - > 40% : Critique (trop de ruptures)
 
 tests:
-  - scenario: "Production actuelle"
+  - scenario: 'Production actuelle'
     inputs:
       archived_count: 0
       total: 11
     expected_output: 0
-    rate: "0%"
-    threshold_expected: "excellent"
+    rate: '0%'
+    threshold_expected: 'excellent'
 
-  - scenario: "Turnover élevé"
+  - scenario: 'Turnover élevé'
     inputs:
       archived_count: 25
       total: 50
     expected_output: 25
-    rate: "50%"
-    threshold_expected: "critical"
+    rate: '50%'
+    threshold_expected: 'critical'
 
 metadata:
   created_at: 2025-10-22

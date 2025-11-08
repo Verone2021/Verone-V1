@@ -2,42 +2,43 @@
  * Modal d'édition de collection - Vérone Back Office
  */
 
-'use client'
+'use client';
 
-import { useState } from 'react'
+import { useState } from 'react';
+
+import { ButtonV2 } from '@/components/ui/button';
 import {
   Dialog,
   DialogContent,
   DialogHeader,
   DialogTitle,
   DialogFooter,
-} from '@/components/ui/dialog'
-import { ButtonV2 } from '@/components/ui/button'
-import { Input } from '@/components/ui/input'
-import { Label } from '@/components/ui/label'
-import { Textarea } from '@/components/ui/textarea'
+} from '@/components/ui/dialog';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { RoomMultiSelect } from '@/components/ui/room-multi-select';
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from '@/components/ui/select'
-import { Collection } from '@/shared/modules/collections/hooks'
+} from '@/components/ui/select';
+import { Textarea } from '@/components/ui/textarea';
+import type { Collection } from '@/shared/modules/collections/hooks';
+import type { CollectionStyle } from '@verone/types';
 import {
   COLLECTION_STYLE_OPTIONS,
   ROOM_CATEGORY_OPTIONS,
-  CollectionStyle,
-  RoomCategory
-} from '@/types/collections'
-import { RoomMultiSelect } from '@/components/ui/room-multi-select'
-import type { RoomType } from '@/types/room-types'
+  RoomCategory,
+} from '@verone/types';
+import type { RoomType } from '@verone/types';
 
 interface CollectionEditModalProps {
-  collection: Collection | null
-  isOpen: boolean
-  onClose: () => void
-  onSave: (data: Partial<Collection>) => Promise<void>
+  collection: Collection | null;
+  isOpen: boolean;
+  onClose: () => void;
+  onSave: (data: Partial<Collection>) => Promise<void>;
 }
 
 export function CollectionEditModal({
@@ -46,7 +47,7 @@ export function CollectionEditModal({
   onClose,
   onSave,
 }: CollectionEditModalProps) {
-  const [loading, setLoading] = useState(false)
+  const [loading, setLoading] = useState(false);
   const [formData, setFormData] = useState({
     name: collection?.name || '',
     description: collection?.description || '',
@@ -54,24 +55,24 @@ export function CollectionEditModal({
     is_active: collection?.is_active ?? true,
     style: collection?.style || null,
     suitable_rooms: collection?.suitable_rooms || [],
-  })
+  });
 
   const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault()
-    setLoading(true)
+    e.preventDefault();
+    setLoading(true);
 
     try {
       await onSave({
         id: collection?.id,
         ...formData,
-      } as any)
-      onClose()
+      } as any);
+      onClose();
     } catch (error) {
-      console.error('Erreur lors de la sauvegarde:', error)
+      console.error('Erreur lors de la sauvegarde:', error);
     } finally {
-      setLoading(false)
+      setLoading(false);
     }
-  }
+  };
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
@@ -89,7 +90,7 @@ export function CollectionEditModal({
               <Input
                 id="name"
                 value={formData.name}
-                onChange={(e) =>
+                onChange={e =>
                   setFormData({ ...formData, name: e.target.value })
                 }
                 placeholder="Ex: Collection Printemps 2025"
@@ -102,7 +103,7 @@ export function CollectionEditModal({
               <Textarea
                 id="description"
                 value={formData.description}
-                onChange={(e) =>
+                onChange={e =>
                   setFormData({ ...formData, description: e.target.value })
                 }
                 placeholder="Description de la collection..."
@@ -140,7 +141,7 @@ export function CollectionEditModal({
                   <SelectValue placeholder="Sélectionner un style" />
                 </SelectTrigger>
                 <SelectContent>
-                  {COLLECTION_STYLE_OPTIONS.map((option) => (
+                  {COLLECTION_STYLE_OPTIONS.map(option => (
                     <SelectItem key={option.value} value={option.value}>
                       {option.label}
                     </SelectItem>
@@ -156,7 +157,7 @@ export function CollectionEditModal({
               </p>
               <RoomMultiSelect
                 value={formData.suitable_rooms as RoomType[]}
-                onChange={(rooms) =>
+                onChange={rooms =>
                   setFormData({ ...formData, suitable_rooms: rooms })
                 }
                 placeholder="Sélectionner les pièces compatibles..."
@@ -164,7 +165,9 @@ export function CollectionEditModal({
               />
               {formData.suitable_rooms.length > 0 && (
                 <p className="text-xs text-gray-500 mt-1">
-                  {formData.suitable_rooms.length} pièce{formData.suitable_rooms.length > 1 ? 's' : ''} sélectionnée{formData.suitable_rooms.length > 1 ? 's' : ''}
+                  {formData.suitable_rooms.length} pièce
+                  {formData.suitable_rooms.length > 1 ? 's' : ''} sélectionnée
+                  {formData.suitable_rooms.length > 1 ? 's' : ''}
                 </p>
               )}
             </div>
@@ -174,7 +177,7 @@ export function CollectionEditModal({
                 type="checkbox"
                 id="is_active"
                 checked={formData.is_active}
-                onChange={(e) =>
+                onChange={e =>
                   setFormData({ ...formData, is_active: e.target.checked })
                 }
                 className="h-4 w-4 rounded border-gray-300"
@@ -205,5 +208,5 @@ export function CollectionEditModal({
         </form>
       </DialogContent>
     </Dialog>
-  )
+  );
 }

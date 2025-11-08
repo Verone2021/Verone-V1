@@ -10,13 +10,13 @@ import { ButtonUnified } from '@/components/ui/button-unified';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { RoomMultiSelect } from '@/components/ui/room-multi-select';
-import { cn } from '@/lib/utils';
+import { cn } from '@verone/utils';
 import {
   useInlineEdit,
   type EditableSection,
 } from '@/shared/modules/common/hooks/use-inline-edit';
-import type { RoomType } from '@/types/room-types';
-import { getRoomLabel } from '@/types/room-types';
+import type { RoomType } from '@verone/types';
+import { getRoomLabel } from '@verone/types';
 
 interface Product {
   id: string;

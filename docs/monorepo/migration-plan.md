@@ -11,6 +11,7 @@
 Ce document décrit le plan détaillé de migration du projet Vérone Back Office vers une architecture monorepo.
 
 **Pourquoi monorepo ?**
+
 - Partage code facilité (UI, types, KPI, utils)
 - Build optimisé (Turborepo/Nx : build uniquement code modifié)
 - Versioning cohérent
@@ -18,6 +19,7 @@ Ce document décrit le plan détaillé de migration du projet Vérone Back Offic
 - Scalabilité (ajout apps/services facile)
 
 **Quand migrer ?**
+
 - ✅ Phase 1 déployée en production stable
 - ✅ Tous modules core validés (auth, catalogue, commandes, stock)
 - ✅ Storybook complet avec tous composants documentés
@@ -125,6 +127,7 @@ verone-monorepo/
 **Risque** : Faible
 
 **Actions** :
+
 1. Initialiser Turborepo
    ```bash
    npx create-turbo@latest verone-monorepo
@@ -135,6 +138,7 @@ verone-monorepo/
 5. Migrer .github/workflows pour build sélectif
 
 **Validation** :
+
 - [ ] `npm install` fonctionne à la racine
 - [ ] `turbo run build` exécute sans erreur
 - [ ] Git history préservé
@@ -147,6 +151,7 @@ verone-monorepo/
 **Risque** : Moyen
 
 **Actions** :
+
 1. Créer packages/ui/ avec package.json
 2. Migrer src/components/ui-v2/ → packages/ui/src/components/
 3. Migrer src/lib/design-system/ → packages/ui/src/tokens/
@@ -157,6 +162,7 @@ verone-monorepo/
 8. Publier package local (@verone/ui)
 
 **Validation** :
+
 - [ ] Storybook fonctionne : `npm run storybook` dans packages/ui/
 - [ ] Build réussi : `npm run build` dans packages/ui/
 - [ ] Import fonctionne : `import { Button } from '@verone/ui'`
@@ -170,6 +176,7 @@ verone-monorepo/
 **Risque** : Faible
 
 **Actions** :
+
 1. Créer packages/types/ avec package.json
 2. Migrer src/types/ → packages/types/src/
 3. Séparer en modules (catalogue/, orders/, stock/, auth/, common/)
@@ -177,6 +184,7 @@ verone-monorepo/
 5. Publier package local (@verone/types)
 
 **Validation** :
+
 - [ ] Build réussi : `npm run build` dans packages/types/
 - [ ] Import fonctionne : `import { Product } from '@verone/types'`
 - [ ] Types disponibles dans apps/web et apps/api
@@ -189,6 +197,7 @@ verone-monorepo/
 **Risque** : Moyen
 
 **Actions** :
+
 1. Créer apps/web/ avec Next.js setup
 2. Migrer src/app/ → apps/web/app/
 3. Migrer src/components/ → apps/web/components/ (sauf ui-v2)
@@ -201,6 +210,7 @@ verone-monorepo/
 8. Tester toutes pages et features
 
 **Validation** :
+
 - [ ] `npm run dev` fonctionne dans apps/web/
 - [ ] Toutes pages accessibles
 - [ ] Zero console errors
@@ -215,6 +225,7 @@ verone-monorepo/
 **Risque** : Élevé
 
 **Actions** :
+
 1. Initialiser NestJS : `nest new api`
 2. Créer modules (auth, catalogue, orders, stock)
 3. Migrer logique métier depuis Next.js API Routes
@@ -225,6 +236,7 @@ verone-monorepo/
 8. Documentation API (Swagger)
 
 **Migration progressive des endpoints** :
+
 ```
 Phase 1 : Module Auth
 Phase 2 : Module Catalogue
@@ -234,6 +246,7 @@ Phase 5 : Modules avancés (feeds, analytics)
 ```
 
 **Validation par module** :
+
 - [ ] Tests unitaires passent (coverage > 80%)
 - [ ] Tests E2E API passent (Postman/Insomnia)
 - [ ] Documentation Swagger à jour
@@ -249,12 +262,13 @@ Phase 5 : Modules avancés (feeds, analytics)
 **Stratégie** : Feature flags + Proxy
 
 **Actions** :
+
 1. Configurer proxy Next.js → NestJS (next.config.js rewrites)
 2. Activer feature flag par module
    ```typescript
    // .env
-   USE_NESTJS_AUTH=true
-   USE_NESTJS_CATALOGUE=false
+   USE_NESTJS_AUTH = true;
+   USE_NESTJS_CATALOGUE = false;
    ```
 3. Migrer module par module :
    - a. Tests complets en staging
@@ -265,6 +279,7 @@ Phase 5 : Modules avancés (feeds, analytics)
 4. Désactiver proxy quand 100% endpoints migrés
 
 **Validation par module** :
+
 - [ ] Metrics identiques (latence, erreur rate)
 - [ ] Zero console errors frontend
 - [ ] Tests E2E passent
@@ -278,6 +293,7 @@ Phase 5 : Modules avancés (feeds, analytics)
 **Risque** : Faible
 
 **Actions** :
+
 1. Supprimer code obsolète (ancien src/, API Routes migrées)
 2. Optimiser builds Turborepo
 3. Configurer caching Turborepo (local + remote)
@@ -286,6 +302,7 @@ Phase 5 : Modules avancés (feeds, analytics)
 6. Former équipe sur nouvelle structure
 
 **Validation finale** :
+
 - [ ] Build monorepo complet < 5 min
 - [ ] Zero dead code (audit knip)
 - [ ] Zero cycles dépendances (audit madge)
@@ -296,15 +313,15 @@ Phase 5 : Modules avancés (feeds, analytics)
 
 ## ⏱️ Timeline estimée
 
-| Étape | Durée | Dépendances | Risque |
-|-------|-------|-------------|--------|
-| 1. Infrastructure | 2j | - | Faible |
-| 2. packages/ui | 3-5j | Étape 1 | Moyen |
-| 3. packages/types | 2j | Étape 1 | Faible |
-| 4. apps/web | 5-7j | Étapes 2, 3 | Moyen |
-| 5. apps/api | 10-15j | Étape 3 | Élevé |
-| 6. Migration API | 15-20j | Étapes 4, 5 | Élevé |
-| 7. Cleanup | 3-5j | Toutes | Faible |
+| Étape             | Durée  | Dépendances | Risque |
+| ----------------- | ------ | ----------- | ------ |
+| 1. Infrastructure | 2j     | -           | Faible |
+| 2. packages/ui    | 3-5j   | Étape 1     | Moyen  |
+| 3. packages/types | 2j     | Étape 1     | Faible |
+| 4. apps/web       | 5-7j   | Étapes 2, 3 | Moyen  |
+| 5. apps/api       | 10-15j | Étape 3     | Élevé  |
+| 6. Migration API  | 15-20j | Étapes 4, 5 | Élevé  |
+| 7. Cleanup        | 3-5j   | Toutes      | Faible |
 
 **Total** : 40-56 jours ouvrés (8-12 semaines)
 
@@ -317,6 +334,7 @@ Phase 5 : Modules avancés (feeds, analytics)
 **Probabilité** : Moyenne
 **Impact** : Élevé
 **Mitigation** :
+
 - Feature flags obligatoires
 - Tests E2E complets
 - Monitoring metrics temps réel
@@ -327,6 +345,7 @@ Phase 5 : Modules avancés (feeds, analytics)
 **Probabilité** : Faible
 **Impact** : Moyen
 **Mitigation** :
+
 - Benchmarks avant/après
 - Optimisation queries DB
 - Caching agressif (Redis future)
@@ -337,6 +356,7 @@ Phase 5 : Modules avancés (feeds, analytics)
 **Probabilité** : Moyenne
 **Impact** : Moyen
 **Mitigation** :
+
 - Migration incrémentale
 - Types stricts dès packages/
 - CI/CD bloque si erreurs types
@@ -346,6 +366,7 @@ Phase 5 : Modules avancés (feeds, analytics)
 **Probabilité** : Faible
 **Impact** : Faible
 **Mitigation** :
+
 - Audits knip réguliers
 - Code review strict
 - Bundle size monitoring
@@ -372,16 +393,19 @@ Avant de commencer Étape 1, vérifier :
 ## 📚 Ressources
 
 **Documentation officielle** :
+
 - [Turborepo Docs](https://turbo.build/repo/docs)
 - [NestJS Docs](https://docs.nestjs.com/)
 - [Monorepo Best Practices](https://monorepo.tools/)
 
 **Templates** :
+
 - packages/ui/package.json.template
 - apps/api/tsconfig.json.template
 - turbo.json.template
 
 **Scripts** :
+
 - tools/scripts/migration/migrate-component-to-ui.sh
 - tools/scripts/migration/migrate-api-route-to-nestjs.sh
 

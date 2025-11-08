@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+
 import {
   Plus,
   Minus,
@@ -13,9 +14,10 @@ import {
   X,
   Sparkles,
 } from 'lucide-react';
+
+import { Alert, AlertDescription } from '@/components/ui/alert';
+import { Badge } from '@/components/ui/badge';
 import { ButtonV2 } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
 import {
   Card,
   CardContent,
@@ -23,19 +25,15 @@ import {
   CardHeader,
   CardTitle,
 } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
 import { Checkbox } from '@/components/ui/checkbox';
-import { Alert, AlertDescription } from '@/components/ui/alert';
-import {
-  useConsultationItems,
-  ConsultationItem,
-} from '@/shared/modules/common/hooks';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import type { ConsultationItem } from '@/shared/modules/common/hooks';
+import { useConsultationItems } from '@/shared/modules/common/hooks';
 import { useToast } from '@/shared/modules/common/hooks';
-import {
-  UniversalProductSelectorV2,
-  SelectedProduct,
-} from './universal-product-selector-v2';
-import { SourcingProductModal } from './sourcing-product-modal';
+import { EditSourcingProductModal } from '@/shared/modules/products/components/modals/EditSourcingProductModal';
+import type { SelectedProduct } from '@/shared/modules/products/components/selectors/UniversalProductSelectorV2';
+import { UniversalProductSelectorV2 } from '@/shared/modules/products/components/selectors/UniversalProductSelectorV2';
 import { useProducts } from '@/shared/modules/products/hooks';
 
 interface ConsultationOrderInterfaceProps {
@@ -138,7 +136,7 @@ export function ConsultationOrderInterface({
       <Card>
         <CardContent className="p-6">
           <div className="flex items-center justify-center">
-            <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-black mr-3"></div>
+            <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-black mr-3" />
             <span>Chargement des produits...</span>
           </div>
         </CardContent>
@@ -420,15 +418,17 @@ export function ConsultationOrderInterface({
         mode="multi"
         context="consultations"
         selectedProducts={[]}
-        showQuantity={true}
-        showImages={true}
+        showQuantity
+        showImages
       />
 
-      <SourcingProductModal
-        open={showSourcingModal}
-        onClose={() => setShowSourcingModal(false)}
-        consultationId={consultationId}
-        onProductCreatedAndAdded={handleProductAdded}
+      <EditSourcingProductModal
+        {...({
+          open: showSourcingModal,
+          onClose: () => setShowSourcingModal(false),
+          consultationId: consultationId,
+          onProductCreatedAndAdded: handleProductAdded,
+        } as any)}
       />
     </div>
   );

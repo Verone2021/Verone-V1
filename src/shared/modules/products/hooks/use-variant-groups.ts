@@ -1,10 +1,11 @@
 'use client';
 
 import { useState, useEffect, useCallback, useRef } from 'react';
+
+import logger from '@/lib/logger';
+import { generateProductSKU } from '@/lib/sku-generator';
 import { createClient } from '@/lib/supabase/client';
 import { useToast } from '@/shared/modules/common/hooks';
-import { generateProductSKU } from '@/lib/sku-generator';
-import logger from '@/lib/logger';
 import type {
   VariantGroup,
   VariantProduct,
@@ -13,7 +14,7 @@ import type {
   VariantGroupFilters,
   VariantType,
   EditableProductFields,
-} from '@/types/variant-groups';
+} from '@verone/types';
 
 export function useVariantGroups(filters?: VariantGroupFilters) {
   const [variantGroups, setVariantGroups] = useState<VariantGroup[]>([]);
@@ -1375,7 +1376,7 @@ export function useProductVariantEditing() {
       };
 
       // Si le produit appartient à un groupe, régénérer automatiquement nom ET SKU
-      if (groupData && groupData.name && groupData.base_sku) {
+      if (groupData?.name && groupData.base_sku) {
         const variantType = groupData.variant_type || attributeKey;
         const variantValue = updatedAttributes[variantType];
 

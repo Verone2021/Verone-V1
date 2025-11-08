@@ -145,10 +145,10 @@ export const colors = {
     muted: '#ced4da',
     inverse: '#ffffff',
   },
-} as const
+} as const;
 
 /**
  * Type helper pour autocomplete
  */
-export type ColorScale = keyof typeof colors
-export type ColorShade = keyof typeof colors.primary
+export type ColorScale = keyof typeof colors;
+export type ColorShade = keyof typeof colors.primary;

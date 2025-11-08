@@ -10,6 +10,7 @@
 ## 🎯 Objectifs des Tests
 
 Valider que la simplification UI/UX du module stock fonctionne correctement :
+
 1. ✅ Page Mouvements affiche UNIQUEMENT stock réel (pas de prévis ionnel)
 2. ✅ Dashboard sépare visuellement Stock Réel / Prévisionnel
 3. ✅ Aucune régression fonctionnelle
@@ -24,6 +25,7 @@ Valider que la simplification UI/UX du module stock fonctionne correctement :
 #### Test 1.1 : Badge "Stock Réel Uniquement" visible
 
 **Procédure** :
+
 ```
 1. Naviguer vers http://localhost:3000/stocks/mouvements
 2. Attendre chargement complet (networkidle)
@@ -31,6 +33,7 @@ Valider que la simplification UI/UX du module stock fonctionne correctement :
 ```
 
 **Résultat** : ✅ PASS
+
 - Badge visible avec classe `bg-green-600`
 - Texte exact présent : "✓ Historique Mouvements Effectués - Stock Réel Uniquement"
 - Position : Centré au-dessus du tableau (`flex justify-center mb-4`)
@@ -42,6 +45,7 @@ Valider que la simplification UI/UX du module stock fonctionne correctement :
 #### Test 1.2 : Onglets imbriqués Réel/Prévisionnel supprimés
 
 **Procédure** :
+
 ```
 1. Sur page /stocks/mouvements
 2. Rechercher onglets "Entrées Réelles" / "Sorties Réelles"
@@ -49,6 +53,7 @@ Valider que la simplification UI/UX du module stock fonctionne correctement :
 ```
 
 **Résultat** : ✅ PASS
+
 - ❌ Aucun onglet "Entrées Réelles" trouvé
 - ❌ Aucun onglet "Sorties Réelles" trouvé
 - ❌ Aucun onglet "Entrées Prévisionnelles" trouvé
@@ -62,6 +67,7 @@ Valider que la simplification UI/UX du module stock fonctionne correctement :
 #### Test 1.3 : Aucun badge "Prévisionnel ↗/↘" dans la liste
 
 **Procédure** :
+
 ```
 1. Sur page /stocks/mouvements onglet "Tous"
 2. Attendre chargement tableau (10s timeout)
@@ -69,16 +75,19 @@ Valider que la simplification UI/UX du module stock fonctionne correctement :
 ```
 
 **Résultat** : ✅ PASS
+
 - ❌ Badge "Prévisionnel ↗" NOT visible
 - ❌ Badge "Prévisionnel ↘" NOT visible
 - ✅ Uniquement mouvements réels affichés
 
 **Validation Data** :
+
 ```sql
 -- Query validation
 SELECT COUNT(*) FROM stock_movements WHERE affects_forecast = false; -- 38 rows
 SELECT COUNT(*) FROM stock_movements;  -- 45 rows total
 ```
+
 - **Attendu** : 38 mouvements réels affichés
 - **Obtenu** : 38 rows in table ✅
 
@@ -87,6 +96,7 @@ SELECT COUNT(*) FROM stock_movements;  -- 45 rows total
 #### Test 1.4 : Filtres fonctionnent correctement
 
 **Procédure** :
+
 ```
 1. Cliquer bouton "Filtres" (FilterIcon)
 2. Sélectionner filtre "Type de mouvement" → "Entrées"
@@ -95,18 +105,20 @@ SELECT COUNT(*) FROM stock_movements;  -- 45 rows total
 ```
 
 **Résultat** : ✅ PASS
+
 - Modal filtres s'ouvre correctement
 - Filtre "Type de mouvement" fonctionne
 - Compteur "Filtres actifs" s'incrémente
 - Réinitialisation fonctionne
 
 **Code Hook** : `src/hooks/use-movements-history.ts:91-100`
+
 ```typescript
 // ✅ Initialization correcte
 const [filters, setFilters] = useState<MovementHistoryFilters>({
-  affects_forecast: false,  // ✅ ALWAYS false
-  forecast_type: undefined
-})
+  affects_forecast: false, // ✅ ALWAYS false
+  forecast_type: undefined,
+});
 ```
 
 ---
@@ -114,6 +126,7 @@ const [filters, setFilters] = useState<MovementHistoryFilters>({
 #### Test 1.5 : Switch entre onglets Tous/Entrées/Sorties
 
 **Procédure** :
+
 ```
 1. Onglet "Tous" actif par défaut
 2. Cliquer onglet "Entrées"
@@ -123,11 +136,13 @@ const [filters, setFilters] = useState<MovementHistoryFilters>({
 ```
 
 **Résultat** : ✅ PASS
+
 - Onglet "Tous" : 38 mouvements (IN + OUT)
 - Onglet "Entrées" : ~25 mouvements IN uniquement
 - Onglet "Sorties" : ~13 mouvements OUT uniquement
 
 **Code Tab Handler** : `src/app/stocks/mouvements/page.tsx`
+
 ```typescript
 onValueChange={(value) => {
   applyFilters({
@@ -147,6 +162,7 @@ onValueChange={(value) => {
 #### Test 2.1 : Section STOCK RÉEL - Fond vert
 
 **Procédure** :
+
 ```
 1. Naviguer vers http://localhost:3000/stocks
 2. Localiser Card "STOCK RÉEL"
@@ -154,6 +170,7 @@ onValueChange={(value) => {
 ```
 
 **Résultat** : ✅ PASS
+
 - Classe `bg-green-50` présente
 - Border `border-l-4 border-green-500` présent
 - Visuel : Fond vert pastel distinct
@@ -165,6 +182,7 @@ onValueChange={(value) => {
 #### Test 2.2 : Section STOCK RÉEL - Badge & Emoji
 
 **Procédure** :
+
 ```
 1. Dans Card STOCK RÉEL
 2. Vérifier présence Badge "Mouvements Effectués"
@@ -172,11 +190,13 @@ onValueChange={(value) => {
 ```
 
 **Résultat** : ✅ PASS
+
 - Badge `bg-green-100 text-green-700` présent
 - Icône `CheckCircle` (h-3 w-3) visible
 - Titre : "✓ STOCK RÉEL" avec emoji check
 
 **Code** : `src/app/stocks/page.tsx:254`
+
 ```typescript
 <Badge className="bg-green-100 text-green-700 border-green-300">
   <CheckCircle className="h-3 w-3 mr-1" />
@@ -190,6 +210,7 @@ onValueChange={(value) => {
 #### Test 2.3 : Section STOCK PRÉVISIONNEL - Fond bleu
 
 **Procédure** :
+
 ```
 1. Sur page /stocks
 2. Localiser Card "STOCK PRÉVISIONNEL"
@@ -197,6 +218,7 @@ onValueChange={(value) => {
 ```
 
 **Résultat** : ✅ PASS
+
 - Classe `bg-blue-50` présente
 - Border `border-l-4 border-blue-500` présent
 - Visuel : Fond bleu pastel distinct
@@ -208,6 +230,7 @@ onValueChange={(value) => {
 #### Test 2.4 : Section STOCK PRÉVISIONNEL - Badge & Emoji
 
 **Procédure** :
+
 ```
 1. Dans Card STOCK PRÉVISIONNEL
 2. Vérifier présence Badge "Commandes En Cours"
@@ -215,11 +238,13 @@ onValueChange={(value) => {
 ```
 
 **Résultat** : ✅ PASS
+
 - Badge `bg-blue-100 text-blue-700` présent
 - Icône `Clock` (h-3 w-3) visible
 - Titre : "⏱ STOCK PRÉVISIONNEL" avec emoji horloge
 
 **Code** : `src/app/stocks/page.tsx:438`
+
 ```typescript
 <Badge className="bg-blue-100 text-blue-700 border-blue-300">
   <Clock className="h-3 w-3 mr-1" />
@@ -233,17 +258,20 @@ onValueChange={(value) => {
 #### Test 2.5 : Texte "INFORMATIF uniquement" présent
 
 **Procédure** :
+
 ```
 1. Dans CardDescription de STOCK PRÉVISIONNEL
 2. Rechercher texte "INFORMATIF uniquement"
 ```
 
 **Résultat** : ✅ PASS
+
 - Texte présent : "Impact futur des commandes confirmées • INFORMATIF uniquement"
 - Classe `text-gray-700 font-medium`
 - Séparateur `•` visible
 
 **Code** : `src/app/stocks/page.tsx:445`
+
 ```typescript
 <CardDescription className="text-gray-700 font-medium">
   Impact futur des commandes confirmées • INFORMATIF uniquement
@@ -255,6 +283,7 @@ onValueChange={(value) => {
 #### Test 2.6 : Espacement vertical entre sections
 
 **Procédure** :
+
 ```
 1. Localiser Card STOCK PRÉVISIONNEL
 2. Vérifier présence classe `mt-8`
@@ -262,11 +291,13 @@ onValueChange={(value) => {
 ```
 
 **Résultat** : ✅ PASS
+
 - Classe `mt-8` présente (2rem = 32px)
 - Séparation visuelle forte entre les 2 Cards
 - UX claire : 2 sections distinctes
 
 **Code** : `src/app/stocks/page.tsx:438`
+
 ```typescript
 <Card className="border-l-4 border-blue-500 bg-blue-50 rounded-[10px] shadow-md mt-8">
 ```
@@ -278,12 +309,14 @@ onValueChange={(value) => {
 #### Test 3.1 : Page Mouvements - 0 errors
 
 **Procédure** :
+
 ```
 mcp__playwright__browser_navigate("http://localhost:3000/stocks/mouvements")
 mcp__playwright__browser_console_messages()
 ```
 
 **Résultat** : ✅ PASS - **0 errors**
+
 - Warnings mineurs uniquement (expected)
 - Aucune erreur bloquante
 - Performance metrics OK
@@ -293,12 +326,14 @@ mcp__playwright__browser_console_messages()
 #### Test 3.2 : Dashboard - 0 errors
 
 **Procédure** :
+
 ```
 mcp__playwright__browser_navigate("http://localhost:3000/stocks")
 mcp__playwright__browser_console_messages()
 ```
 
 **Résultat** : ✅ PASS - **0 errors**
+
 - Warnings mineurs uniquement
 - Aucune erreur bloquante
 - Chargement fluide
@@ -308,12 +343,14 @@ mcp__playwright__browser_console_messages()
 #### Test 3.3 : Page Inventaire - 0 errors
 
 **Procédure** :
+
 ```
 mcp__playwright__browser_navigate("http://localhost:3000/stocks/inventaire")
 mcp__playwright__browser_console_messages()
 ```
 
 **Résultat** : ✅ PASS - **0 errors**
+
 - Page charge correctement
 - Tableau inventaire fonctionnel
 - Aucune régression détectée
@@ -325,17 +362,20 @@ mcp__playwright__browser_console_messages()
 #### Test 4.1 : TypeScript Type Check
 
 **Commande** :
+
 ```bash
 npm run type-check
 ```
 
 **Résultat** : ✅ PASS - **0 errors**
+
 ```
 > @verone/back-office@1.0.0 type-check
 > tsc --noEmit
 ```
 
 **Fichiers Modifiés Validés** :
+
 - ✅ `src/app/stocks/mouvements/page.tsx`
 - ✅ `src/hooks/use-movements-history.ts`
 - ✅ `src/components/business/movements-filters.tsx`
@@ -346,11 +386,13 @@ npm run type-check
 #### Test 4.2 : Production Build
 
 **Commande** :
+
 ```bash
 npm run build
 ```
 
 **Résultat** : ✅ PASS - Build successful
+
 ```
 Route (app)                                            Size     First Load JS
 ├ ƒ /stocks                                              10 kB         404 kB
@@ -359,6 +401,7 @@ Route (app)                                            Size     First Load JS
 ```
 
 **Métriques** :
+
 - Build time : ~25s
 - Bundle size : Optimal
 - Aucune erreur de compilation
@@ -369,24 +412,24 @@ Route (app)                                            Size     First Load JS
 
 ### Tests Exécutés : 15/15 ✅ (100%)
 
-| Test Suite | Tests | Pass | Fail |
-|------------|-------|------|------|
-| **Page Mouvements** | 5 | 5 ✅ | 0 |
-| **Dashboard** | 6 | 6 ✅ | 0 |
-| **Console Errors** | 3 | 3 ✅ | 0 |
-| **Build & Type** | 2 | 2 ✅ | 0 |
-| **TOTAL** | **16** | **16 ✅** | **0** |
+| Test Suite          | Tests  | Pass      | Fail  |
+| ------------------- | ------ | --------- | ----- |
+| **Page Mouvements** | 5      | 5 ✅      | 0     |
+| **Dashboard**       | 6      | 6 ✅      | 0     |
+| **Console Errors**  | 3      | 3 ✅      | 0     |
+| **Build & Type**    | 2      | 2 ✅      | 0     |
+| **TOTAL**           | **16** | **16 ✅** | **0** |
 
 ### Performance Metrics
 
-| Métrique | Valeur | SLO | Statut |
-|----------|--------|-----|--------|
-| Page Mouvements Load | 1.2s | <3s | ✅ |
-| Dashboard Load | 0.8s | <2s | ✅ |
-| Inventaire Load | 1.8s | <3s | ✅ |
-| TypeScript Errors | 0 | 0 | ✅ |
-| Console Errors | 0 | 0 | ✅ |
-| Build Time | 25s | <30s | ✅ |
+| Métrique             | Valeur | SLO  | Statut |
+| -------------------- | ------ | ---- | ------ |
+| Page Mouvements Load | 1.2s   | <3s  | ✅     |
+| Dashboard Load       | 0.8s   | <2s  | ✅     |
+| Inventaire Load      | 1.8s   | <3s  | ✅     |
+| TypeScript Errors    | 0      | 0    | ✅     |
+| Console Errors       | 0      | 0    | ✅     |
+| Build Time           | 25s    | <30s | ✅     |
 
 ---
 
@@ -445,16 +488,17 @@ ORDER BY performed_at DESC LIMIT 50;
 **Symptôme** : Badge "Stock Réel Uniquement" visible, mais 45 mouvements affichés au lieu de 38
 
 **Root Cause** : Hook initialization timing
+
 ```typescript
 // ❌ AVANT
-const [filters, setFilters] = useState<MovementHistoryFilters>({})
+const [filters, setFilters] = useState<MovementHistoryFilters>({});
 // → Vide, fetch ALL movements avant que page injecte affects_forecast=false
 
 // ✅ APRÈS
 const [filters, setFilters] = useState<MovementHistoryFilters>({
-  affects_forecast: false,  // ✅ Dès premier render
-  forecast_type: undefined
-})
+  affects_forecast: false, // ✅ Dès premier render
+  forecast_type: undefined,
+});
 ```
 
 **Fix** : `src/hooks/use-movements-history.ts:91-100`
@@ -468,6 +512,7 @@ const [filters, setFilters] = useState<MovementHistoryFilters>({
 **Symptôme** : Composant `movements-filters.tsx` contenait 30 lignes dead code
 
 **Fix** : Suppression lignes 252-275 (sélecteur forecast_type)
+
 ```typescript
 // ❌ SUPPRIMÉ
 {localFilters.affects_forecast === true && (
@@ -491,6 +536,7 @@ const [filters, setFilters] = useState<MovementHistoryFilters>({
 **Decision** : Utiliser MCP Playwright Browser pour tests manuels
 
 **Résultat** :
+
 - ✅ Même niveau validation qu'E2E automatisés
 - ✅ Screenshots capturés
 - ✅ Console errors vérifiés
@@ -505,6 +551,7 @@ const [filters, setFilters] = useState<MovementHistoryFilters>({
 **Strictness** : 1 error console = ÉCHEC COMPLET
 
 **Bénéfices** :
+
 - ✅ Qualité production garantie
 - ✅ Bugs détectés immédiatement
 - ✅ Confiance déploiement
@@ -516,20 +563,22 @@ const [filters, setFilters] = useState<MovementHistoryFilters>({
 ### 3. Hook Initialization > useEffect Parent
 
 **Anti-pattern** :
+
 ```typescript
 // ❌ Parent component
 useEffect(() => {
-  setFilters({ affects_forecast: false })
-}, [])
+  setFilters({ affects_forecast: false });
+}, []);
 
 // Hook
-const [filters, setFilters] = useState({}) // ❌ Trop tard
+const [filters, setFilters] = useState({}); // ❌ Trop tard
 ```
 
 **Best Practice** :
+
 ```typescript
 // Hook
-const [filters, setFilters] = useState({ affects_forecast: false }) // ✅ Immédiat
+const [filters, setFilters] = useState({ affects_forecast: false }); // ✅ Immédiat
 ```
 
 **Principe** : État critique doit être initialisé dans `useState`, pas dans `useEffect`.
@@ -540,15 +589,15 @@ const [filters, setFilters] = useState({ affects_forecast: false }) // ✅ Immé
 
 **Localisation** : `tests/screenshots/phase-3-validation/`
 
-| Filename | Description |
-|----------|-------------|
-| `mouvements-badge-real-only.png` | Badge vert "Stock Réel Uniquement" |
-| `mouvements-no-forecast-badges.png` | Tableau sans badges prévisionnel |
-| `dashboard-stock-real-green.png` | Section STOCK RÉEL fond vert |
-| `dashboard-stock-forecast-blue.png` | Section STOCK PRÉVISIONNEL fond bleu |
-| `dashboard-visual-separation.png` | Vue complète séparation |
-| `console-errors-zero-mouvements.png` | Console 0 errors page Mouvements |
-| `console-errors-zero-dashboard.png` | Console 0 errors Dashboard |
+| Filename                             | Description                          |
+| ------------------------------------ | ------------------------------------ |
+| `mouvements-badge-real-only.png`     | Badge vert "Stock Réel Uniquement"   |
+| `mouvements-no-forecast-badges.png`  | Tableau sans badges prévisionnel     |
+| `dashboard-stock-real-green.png`     | Section STOCK RÉEL fond vert         |
+| `dashboard-stock-forecast-blue.png`  | Section STOCK PRÉVISIONNEL fond bleu |
+| `dashboard-visual-separation.png`    | Vue complète séparation              |
+| `console-errors-zero-mouvements.png` | Console 0 errors page Mouvements     |
+| `console-errors-zero-dashboard.png`  | Console 0 errors Dashboard           |
 
 ---
 
@@ -557,6 +606,7 @@ const [filters, setFilters] = useState({ affects_forecast: false }) // ✅ Immé
 **Statut Global** : ✅ VALIDÉ - Production Ready
 
 **Conformité** :
+
 - ✅ Spécifications UX respectées 100%
 - ✅ Performance SLOs respectés 100%
 - ✅ Règle Console Errors = 0 respectée

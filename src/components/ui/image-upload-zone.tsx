@@ -5,22 +5,25 @@
  * Features: Preview, validation format/taille, upload Supabase Storage
  */
 
-'use client'
+'use client';
 
-import { useCallback, useState } from 'react'
-import { useDropzone } from 'react-dropzone'
-import { createClient } from '@/lib/supabase/client'
-import { ButtonV2 } from '@/components/ui/button'
-import { Card, CardContent } from '@/components/ui/card'
+import { useCallback, useState } from 'react';
+
+import Image from 'next/image';
+
 import {
   Upload,
   X,
   FileImage,
   Loader2,
   AlertCircle,
-  CheckCircle2
-} from 'lucide-react'
-import Image from 'next/image'
+  CheckCircle2,
+} from 'lucide-react';
+import { useDropzone } from 'react-dropzone';
+
+import { ButtonV2 } from '@/components/ui/button';
+import { Card, CardContent } from '@/components/ui/card';
+import { createClient } from '@/lib/supabase/client';
 
 // =====================================================================
 // TYPES
@@ -28,46 +31,46 @@ import Image from 'next/image'
 
 interface ImageUploadZoneProps {
   /** Bucket Supabase Storage (ex: 'stock-adjustments', 'expense-receipts') */
-  bucket: string
+  bucket: string;
 
   /** Sous-dossier dans bucket (ex: 'adjustments/2025/10') */
-  folder: string
+  folder: string;
 
   /** Callback avec URL publique fichier uploadé */
-  onUploadSuccess: (publicUrl: string, fileName: string) => void
+  onUploadSuccess: (publicUrl: string, fileName: string) => void;
 
   /** Callback erreur upload */
-  onUploadError?: (error: Error) => void
+  onUploadError?: (error: Error) => void;
 
   /** URL fichier existant (mode édition) */
-  existingFileUrl?: string
+  existingFileUrl?: string;
 
   /** Nom fichier existant (mode édition) */
-  existingFileName?: string
+  existingFileName?: string;
 
   /** Formats acceptés (défaut: images + PDF) */
   acceptedFormats?: {
-    [key: string]: string[]
-  }
+    [key: string]: string[];
+  };
 
   /** Taille max en MB (défaut: 10 MB) */
-  maxSizeMB?: number
+  maxSizeMB?: number;
 
   /** Multiple fichiers ? (défaut: false) */
-  multiple?: boolean
+  multiple?: boolean;
 
   /** Label personnalisé */
-  label?: string
+  label?: string;
 
   /** Description helper text */
-  helperText?: string
+  helperText?: string;
 }
 
 interface UploadedFile {
-  name: string
-  size: number
-  url: string
-  storagePath: string
+  name: string;
+  size: number;
+  url: string;
+  storagePath: string;
 }
 
 // =====================================================================
@@ -76,11 +79,11 @@ interface UploadedFile {
 
 const DEFAULT_ACCEPTED_FORMATS = {
   'image/*': ['.png', '.jpg', '.jpeg', '.webp'],
-  'application/pdf': ['.pdf']
-}
+  'application/pdf': ['.pdf'],
+};
 
-const DEFAULT_MAX_SIZE_MB = 10
-const DEFAULT_MAX_SIZE_BYTES = DEFAULT_MAX_SIZE_MB * 1024 * 1024
+const DEFAULT_MAX_SIZE_MB = 10;
+const DEFAULT_MAX_SIZE_BYTES = DEFAULT_MAX_SIZE_MB * 1024 * 1024;
 
 // =====================================================================
 // COMPOSANT PRINCIPAL
@@ -97,97 +100,97 @@ export function ImageUploadZone({
   maxSizeMB = DEFAULT_MAX_SIZE_MB,
   multiple = false,
   label = 'Document justificatif',
-  helperText = 'Glissez-déposez ou cliquez pour sélectionner'
+  helperText = 'Glissez-déposez ou cliquez pour sélectionner',
 }: ImageUploadZoneProps) {
-  const [uploading, setUploading] = useState(false)
+  const [uploading, setUploading] = useState(false);
   const [uploadedFile, setUploadedFile] = useState<UploadedFile | null>(
     existingFileUrl && existingFileName
       ? {
           name: existingFileName,
           size: 0,
           url: existingFileUrl,
-          storagePath: ''
+          storagePath: '',
         }
       : null
-  )
-  const [error, setError] = useState<string | null>(null)
+  );
+  const [error, setError] = useState<string | null>(null);
 
-  const supabase = createClient()
+  const supabase = createClient();
 
   // Upload fichier vers Supabase Storage
   const uploadFile = async (file: File): Promise<UploadedFile> => {
     // Générer nom unique avec timestamp
-    const timestamp = Date.now()
-    const sanitizedName = file.name.replace(/[^a-zA-Z0-9.-]/g, '_')
-    const fileName = `${timestamp}_${sanitizedName}`
-    const storagePath = `${folder}/${fileName}`
+    const timestamp = Date.now();
+    const sanitizedName = file.name.replace(/[^a-zA-Z0-9.-]/g, '_');
+    const fileName = `${timestamp}_${sanitizedName}`;
+    const storagePath = `${folder}/${fileName}`;
 
     // Upload vers Supabase Storage
     const { error: uploadError } = await supabase.storage
       .from(bucket)
       .upload(storagePath, file, {
         cacheControl: '3600',
-        upsert: false
-      })
+        upsert: false,
+      });
 
     if (uploadError) {
-      throw new Error(`Échec upload: ${uploadError.message}`)
+      throw new Error(`Échec upload: ${uploadError.message}`);
     }
 
     // Récupérer URL publique (bucket privé → signedUrl requise)
     // Note: Pour buckets publics, utiliser getPublicUrl()
     const { data: urlData } = supabase.storage
       .from(bucket)
-      .getPublicUrl(storagePath)
+      .getPublicUrl(storagePath);
 
     if (!urlData?.publicUrl) {
-      throw new Error('Impossible de récupérer URL publique')
+      throw new Error('Impossible de récupérer URL publique');
     }
 
     return {
       name: file.name,
       size: file.size,
       url: urlData.publicUrl,
-      storagePath
-    }
-  }
+      storagePath,
+    };
+  };
 
   // Handler drop fichiers
   const onDrop = useCallback(
     async (acceptedFiles: File[]) => {
-      if (acceptedFiles.length === 0) return
+      if (acceptedFiles.length === 0) return;
 
-      const file = acceptedFiles[0] // Single file pour l'instant
+      const file = acceptedFiles[0]; // Single file pour l'instant
 
       // Reset états
-      setError(null)
-      setUploading(true)
+      setError(null);
+      setUploading(true);
 
       try {
         // Validation taille
-        const maxSizeBytes = maxSizeMB * 1024 * 1024
+        const maxSizeBytes = maxSizeMB * 1024 * 1024;
         if (file.size > maxSizeBytes) {
-          throw new Error(`Fichier trop volumineux (max ${maxSizeMB} MB)`)
+          throw new Error(`Fichier trop volumineux (max ${maxSizeMB} MB)`);
         }
 
         // Upload
-        const uploadedFile = await uploadFile(file)
+        const uploadedFile = await uploadFile(file);
 
-        setUploadedFile(uploadedFile)
-        onUploadSuccess(uploadedFile.url, uploadedFile.name)
+        setUploadedFile(uploadedFile);
+        onUploadSuccess(uploadedFile.url, uploadedFile.name);
       } catch (err) {
         const errorMessage =
-          err instanceof Error ? err.message : 'Erreur upload inconnue'
-        setError(errorMessage)
+          err instanceof Error ? err.message : 'Erreur upload inconnue';
+        setError(errorMessage);
         if (onUploadError) {
-          onUploadError(err instanceof Error ? err : new Error(errorMessage))
+          onUploadError(err instanceof Error ? err : new Error(errorMessage));
         }
       } finally {
-        setUploading(false)
+        setUploading(false);
       }
     },
     [bucket, folder, maxSizeMB, onUploadSuccess, onUploadError]
-  )
+  );
 
   // Configuration react-dropzone
   const { getRootProps, getInputProps, isDragActive } = useDropzone({
@@ -195,25 +198,25 @@ export function ImageUploadZone({
     accept: acceptedFormats,
     maxSize: maxSizeMB * 1024 * 1024,
     multiple,
-    disabled: uploading || !!uploadedFile
-  })
+    disabled: uploading || !!uploadedFile,
+  });
 
   // Supprimer fichier uploadé
   const handleRemoveFile = async () => {
-    if (!uploadedFile) return
+    if (!uploadedFile) return;
 
     // Si fichier uploadé sur Supabase (pas existant), supprimer du storage
     if (uploadedFile.storagePath) {
       try {
-        await supabase.storage.from(bucket).remove([uploadedFile.storagePath])
+        await supabase.storage.from(bucket).remove([uploadedFile.storagePath]);
       } catch (err) {
-        console.error('Échec suppression fichier:', err)
+        console.error('Échec suppression fichier:', err);
       }
     }
 
-    setUploadedFile(null)
-    setError(null)
-  }
+    setUploadedFile(null);
+    setError(null);
+  };
 
   return (
     <div className="space-y-2">
@@ -242,13 +245,11 @@ export function ImageUploadZone({
               <>
                 <Upload className="h-12 w-12 text-gray-400 mb-4" />
                 <p className="text-sm font-medium text-gray-900 mb-1">
-                  {isDragActive
-                    ? 'Déposez le fichier ici'
-                    : helperText}
+                  {isDragActive ? 'Déposez le fichier ici' : helperText}
                 </p>
                 <p className="text-xs text-gray-500">
                   {Object.keys(acceptedFormats)
-                    .flatMap((key) => acceptedFormats[key])
+                    .flatMap(key => acceptedFormats[key])
                     .join(', ')}{' '}
                   (max {maxSizeMB} MB)
                 </p>
@@ -312,5 +313,5 @@ export function ImageUploadZone({
         </div>
       )}
     </div>
-  )
+  );
 }

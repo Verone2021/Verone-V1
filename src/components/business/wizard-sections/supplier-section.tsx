@@ -1,29 +1,36 @@
-"use client"
+'use client';
 
-import { Input } from '../../ui/input'
-import { Label } from '../../ui/label'
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../../ui/card'
-import { Building2, ExternalLink } from 'lucide-react'
-import { WizardFormData } from '../complete-product-wizard'
-import { SupplierSelector } from '../supplier-selector'
+import { Building2, ExternalLink } from 'lucide-react';
+
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from '../../ui/card';
+import { Input } from '../../ui/input';
+import { Label } from '../../ui/label';
+import type { WizardFormData } from '../complete-product-wizard';
+import { SupplierSelector } from '../supplier-selector';
 
 interface SupplierSectionProps {
-  formData: WizardFormData
-  setFormData: (data: WizardFormData) => void
-  onSave: () => void
+  formData: WizardFormData;
+  setFormData: (data: WizardFormData) => void;
+  onSave: () => void;
 }
 
 export function SupplierSection({
   formData,
   setFormData,
-  onSave
+  onSave,
 }: SupplierSectionProps) {
   const updateField = (field: keyof WizardFormData, value: any) => {
     setFormData({
       ...formData,
-      [field]: value
-    })
-  }
+      [field]: value,
+    });
+  };
 
   return (
     <div className="space-y-6">
@@ -45,7 +52,9 @@ export function SupplierSection({
             </Label>
             <SupplierSelector
               selectedSupplierId={formData.supplier_id}
-              onSupplierChange={(supplierId) => updateField('supplier_id', supplierId)}
+              onSupplierChange={supplierId =>
+                updateField('supplier_id', supplierId)
+              }
               required={false}
             />
             <p className="text-xs text-gray-500">
@@ -55,13 +64,11 @@ export function SupplierSection({
 
           {/* Référence fournisseur */}
           <div className="space-y-2">
-            <Label htmlFor="supplier_reference">
-              Référence fournisseur
-            </Label>
+            <Label htmlFor="supplier_reference">Référence fournisseur</Label>
             <Input
               id="supplier_reference"
               value={formData.supplier_reference}
-              onChange={(e) => updateField('supplier_reference', e.target.value)}
+              onChange={e => updateField('supplier_reference', e.target.value)}
               placeholder="REF-FOURNISSEUR-123"
             />
             <p className="text-xs text-gray-500">
@@ -71,15 +78,13 @@ export function SupplierSection({
 
           {/* URL page fournisseur */}
           <div className="space-y-2">
-            <Label htmlFor="supplier_page_url">
-              URL page fournisseur
-            </Label>
+            <Label htmlFor="supplier_page_url">URL page fournisseur</Label>
             <div className="relative">
               <Input
                 id="supplier_page_url"
                 type="url"
                 value={formData.supplier_page_url}
-                onChange={(e) => updateField('supplier_page_url', e.target.value)}
+                onChange={e => updateField('supplier_page_url', e.target.value)}
                 placeholder="https://fournisseur.com/produit/123"
                 className="pr-10"
               />
@@ -101,13 +106,11 @@ export function SupplierSection({
 
           {/* Marque */}
           <div className="space-y-2">
-            <Label htmlFor="brand">
-              Marque
-            </Label>
+            <Label htmlFor="brand">Marque</Label>
             <Input
               id="brand"
               value={formData.brand}
-              onChange={(e) => updateField('brand', e.target.value)}
+              onChange={e => updateField('brand', e.target.value)}
               placeholder="Ex: IKEA, Kartell, Hay..."
             />
             <p className="text-xs text-gray-500">
@@ -117,13 +120,11 @@ export function SupplierSection({
 
           {/* GTIN / Code-barres */}
           <div className="space-y-2">
-            <Label htmlFor="gtin">
-              GTIN / Code-barres
-            </Label>
+            <Label htmlFor="gtin">GTIN / Code-barres</Label>
             <Input
               id="gtin"
               value={formData.gtin}
-              onChange={(e) => updateField('gtin', e.target.value)}
+              onChange={e => updateField('gtin', e.target.value)}
               placeholder="1234567890123"
               pattern="[0-9]*"
             />
@@ -134,5 +135,5 @@ export function SupplierSection({
         </CardContent>
       </Card>
     </div>
-  )
+  );
 }

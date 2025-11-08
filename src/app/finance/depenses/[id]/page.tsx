@@ -4,27 +4,15 @@
  * Description: Affichage détail + historique paiements + formulaire paiement
  */
 
-'use client'
+'use client';
 
-import { useEffect, useState } from 'react'
-import { use } from 'react'
-import { createClient } from '@/lib/supabase/client'
-import { useFinancialPayments } from '@/shared/modules/finance/hooks'
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
-import { Badge } from '@/components/ui/badge'
-import { ButtonV2 } from '@/components/ui/button'
-import { Separator } from '@/components/ui/separator'
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow
-} from '@/components/ui/table'
-import { Skeleton } from '@/components/ui/skeleton'
-import { FinancialPaymentForm } from '@/components/business/financial-payment-form'
-import { ExpenseForm } from '@/components/forms/expense-form'
+import { useEffect, useState } from 'react';
+import { use } from 'react';
+
+import Link from 'next/link';
+
+import { format } from 'date-fns';
+import { fr } from 'date-fns/locale';
 import {
   ArrowLeft,
   FileText,
@@ -37,20 +25,38 @@ import {
   Clock,
   CreditCard,
   Tag,
-  FileImage
-} from 'lucide-react'
-import { format } from 'date-fns'
-import { fr } from 'date-fns/locale'
-import Link from 'next/link'
-import type { FinancialDocument, DocumentStatus } from '@/shared/modules/finance/hooks'
-import { getOrganisationDisplayName } from '@/lib/utils/organisation-helpers'
+  FileImage,
+} from 'lucide-react';
+
+import { ExpenseForm } from '@/components/forms/expense-form';
+import { Badge } from '@/components/ui/badge';
+import { ButtonV2 } from '@/components/ui/button';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Separator } from '@/components/ui/separator';
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from '@/components/ui/table';
+import { createClient } from '@/lib/supabase/client';
+import { useFinancialPayments } from '@/shared/modules/finance/hooks';
+import { Skeleton } from '@/components/ui/skeleton';
+import { FinancialPaymentForm } from '@/shared/modules/finance/components/forms/FinancialPaymentForm';
+import type {
+  FinancialDocument,
+  DocumentStatus,
+} from '@/shared/modules/finance/hooks';
+import { getOrganisationDisplayName } from '@/lib/utils/organisation-helpers';
 
 // =====================================================================
 // TYPES
 // =====================================================================
 
 interface PageProps {
-  params: Promise<{ id: string }>
+  params: Promise<{ id: string }>;
 }
 
 // =====================================================================
@@ -58,84 +64,95 @@ interface PageProps {
 // =====================================================================
 
 export default function ExpenseDetailPage(props: PageProps) {
-  const params = use(props.params)
-  const [document, setDocument] = useState<FinancialDocument | null>(null)
-  const [loading, setLoading] = useState(true)
-  const [showPaymentForm, setShowPaymentForm] = useState(false)
+  const params = use(props.params);
+  const [document, setDocument] = useState<FinancialDocument | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [showPaymentForm, setShowPaymentForm] = useState(false);
 
-  const supabase = createClient()
+  const supabase = createClient();
 
   // Ne pas initialiser le hook si c'est "create"
-  const isCreateMode = params.id === 'create'
-  const { payments, loading: paymentsLoading, refresh: refreshPayments } = useFinancialPayments(
-    isCreateMode ? '' : params.id
-  )
+  const isCreateMode = params.id === 'create';
+  const {
+    payments,
+    loading: paymentsLoading,
+    refresh: refreshPayments,
+  } = useFinancialPayments(isCreateMode ? '' : params.id);
 
   // Fetch document
   const fetchDocument = async () => {
     // Si mode création, on ne charge rien
     if (isCreateMode) {
-      setLoading(false)
-      return
+      setLoading(false);
+      return;
     }
 
     try {
-      setLoading(true)
+      setLoading(true);
 
       const { data, error } = await supabase
         .from('financial_documents')
-        .select(`
+        .select(
+          `
           *,
           partner:organisations!partner_id(id, legal_name, trade_name, type),
           expense_category:expense_categories(id, name, account_code, description)
-        `)
+        `
+        )
         .eq('id', params.id)
-        .single()
+        .single();
 
-      if (error) throw error
+      if (error) throw error;
 
-      setDocument(data as unknown as FinancialDocument)
+      setDocument(data as unknown as FinancialDocument);
     } catch (error) {
-      console.error('Fetch document error:', error)
+      console.error('Fetch document error:', error);
     } finally {
-      setLoading(false)
+      setLoading(false);
     }
-  }
+  };
 
   useEffect(() => {
-    fetchDocument()
-  }, [params.id])
+    fetchDocument();
+  }, [params.id]);
 
   // Badge status helper
   const getStatusBadge = (status: DocumentStatus) => {
-    const variants: Record<DocumentStatus, { variant: any; icon: any; label: string }> = {
+    const variants: Record<
+      DocumentStatus,
+      { variant: any; icon: any; label: string }
+    > = {
       draft: { variant: 'secondary', icon: FileText, label: 'Brouillon' },
       sent: { variant: 'secondary', icon: FileText, label: 'Envoyée' },
       received: { variant: 'secondary', icon: CheckCircle2, label: 'Reçue' },
       paid: { variant: 'success', icon: CheckCircle2, label: 'Payée' },
       partially_paid: { variant: 'warning', icon: Clock, label: 'Partiel' },
-      overdue: { variant: 'destructive', icon: AlertCircle, label: 'En retard' },
+      overdue: {
+        variant: 'destructive',
+        icon: AlertCircle,
+        label: 'En retard',
+      },
       cancelled: { variant: 'secondary', icon: FileText, label: 'Annulée' },
-      refunded: { variant: 'secondary', icon: FileText, label: 'Remboursée' }
-    }
+      refunded: { variant: 'secondary', icon: FileText, label: 'Remboursée' },
+    };
 
-    const config = variants[status]
-    const Icon = config.icon
+    const config = variants[status];
+    const Icon = config.icon;
 
     return (
       <Badge variant={config.variant} className="flex items-center gap-1">
         <Icon className="h-3 w-3" />
         {config.label}
       </Badge>
-    )
-  }
+    );
+  };
 
   // Handle payment success
   const handlePaymentSuccess = () => {
-    setShowPaymentForm(false)
-    fetchDocument() // Refresh document (amount_paid updated)
-    refreshPayments() // Refresh payments list
-  }
+    setShowPaymentForm(false);
+    fetchDocument(); // Refresh document (amount_paid updated)
+    refreshPayments(); // Refresh payments list
+  };
 
   if (loading) {
     return (
@@ -144,7 +161,7 @@ export default function ExpenseDetailPage(props: PageProps) {
         <Skeleton className="h-64 w-full" />
         <Skeleton className="h-96 w-full" />
       </div>
-    )
+    );
   }
 
   // Mode création - afficher formulaire de création
@@ -168,7 +185,7 @@ export default function ExpenseDetailPage(props: PageProps) {
 
         <ExpenseForm />
       </div>
-    )
+    );
   }
 
   if (!document) {
@@ -185,11 +202,11 @@ export default function ExpenseDetailPage(props: PageProps) {
           </Link>
         </ButtonV2>
       </div>
-    )
+    );
   }
 
-  const remaining = document.total_ttc - document.amount_paid
-  const isPaid = document.status === 'paid'
+  const remaining = document.total_ttc - document.amount_paid;
+  const isPaid = document.status === 'paid';
 
   return (
     <div className="flex flex-col gap-6 p-6">
@@ -204,9 +221,7 @@ export default function ExpenseDetailPage(props: PageProps) {
 
           <div>
             <h1 className="text-3xl font-bold">{document.document_number}</h1>
-            <p className="text-gray-500 mt-1">
-              Dépense opérationnelle
-            </p>
+            <p className="text-gray-500 mt-1">Dépense opérationnelle</p>
           </div>
         </div>
 
@@ -215,7 +230,11 @@ export default function ExpenseDetailPage(props: PageProps) {
 
           {document.uploaded_file_url && (
             <ButtonV2 variant="outline" asChild>
-              <a href={document.uploaded_file_url} target="_blank" rel="noopener noreferrer">
+              <a
+                href={document.uploaded_file_url}
+                target="_blank"
+                rel="noopener noreferrer"
+              >
                 <Download className="h-4 w-4 mr-2" />
                 Télécharger justificatif
               </a>
@@ -258,7 +277,11 @@ export default function ExpenseDetailPage(props: PageProps) {
           <CardContent>
             <div className="flex items-center gap-2">
               <Building2 className="h-5 w-5 text-gray-400" />
-              <span className="font-medium">{document.partner ? getOrganisationDisplayName(document.partner) : 'N/A'}</span>
+              <span className="font-medium">
+                {document.partner
+                  ? getOrganisationDisplayName(document.partner)
+                  : 'N/A'}
+              </span>
             </div>
           </CardContent>
         </Card>
@@ -273,7 +296,9 @@ export default function ExpenseDetailPage(props: PageProps) {
             <div className="flex items-center gap-2">
               <Calendar className="h-5 w-5 text-gray-400" />
               <span className="font-medium">
-                {format(new Date(document.document_date), 'dd MMMM yyyy', { locale: fr })}
+                {format(new Date(document.document_date), 'dd MMMM yyyy', {
+                  locale: fr,
+                })}
               </span>
             </div>
           </CardContent>
@@ -290,7 +315,9 @@ export default function ExpenseDetailPage(props: PageProps) {
               <Calendar className="h-5 w-5 text-gray-400" />
               <span className="font-medium">
                 {document.due_date
-                  ? format(new Date(document.due_date), 'dd MMMM yyyy', { locale: fr })
+                  ? format(new Date(document.due_date), 'dd MMMM yyyy', {
+                      locale: fr,
+                    })
                   : 'Non définie'}
               </span>
             </div>
@@ -319,17 +346,23 @@ export default function ExpenseDetailPage(props: PageProps) {
           <div className="grid grid-cols-2 md:grid-cols-5 gap-6">
             <div>
               <p className="text-sm text-gray-500 mb-1">Total HT</p>
-              <p className="text-2xl font-bold">{document.total_ht.toFixed(2)} €</p>
+              <p className="text-2xl font-bold">
+                {document.total_ht.toFixed(2)} €
+              </p>
             </div>
 
             <div>
               <p className="text-sm text-gray-500 mb-1">TVA</p>
-              <p className="text-2xl font-bold">{document.tva_amount.toFixed(2)} €</p>
+              <p className="text-2xl font-bold">
+                {document.tva_amount.toFixed(2)} €
+              </p>
             </div>
 
             <div>
               <p className="text-sm text-gray-500 mb-1">Total TTC</p>
-              <p className="text-2xl font-bold">{document.total_ttc.toFixed(2)} €</p>
+              <p className="text-2xl font-bold">
+                {document.total_ttc.toFixed(2)} €
+              </p>
             </div>
 
             <div>
@@ -341,7 +374,9 @@ export default function ExpenseDetailPage(props: PageProps) {
 
             <div>
               <p className="text-sm text-gray-500 mb-1">Restant dû</p>
-              <p className={`text-2xl font-bold ${remaining > 0 ? 'text-orange-600' : 'text-gray-400'}`}>
+              <p
+                className={`text-2xl font-bold ${remaining > 0 ? 'text-orange-600' : 'text-gray-400'}`}
+              >
                 {remaining.toFixed(2)} €
               </p>
             </div>
@@ -379,7 +414,7 @@ export default function ExpenseDetailPage(props: PageProps) {
 
           {paymentsLoading ? (
             <div className="space-y-3">
-              {[1, 2, 3].map((i) => (
+              {[1, 2, 3].map(i => (
                 <Skeleton key={i} className="h-12 w-full" />
               ))}
             </div>
@@ -402,10 +437,12 @@ export default function ExpenseDetailPage(props: PageProps) {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {payments.map((payment) => (
+                {payments.map(payment => (
                   <TableRow key={payment.id}>
                     <TableCell>
-                      {format(new Date(payment.payment_date), 'dd MMM yyyy', { locale: fr })}
+                      {format(new Date(payment.payment_date), 'dd MMM yyyy', {
+                        locale: fr,
+                      })}
                     </TableCell>
                     <TableCell className="font-medium text-green-600">
                       {payment.amount_paid.toFixed(2)} €
@@ -434,7 +471,9 @@ export default function ExpenseDetailPage(props: PageProps) {
             <CardTitle>Notes</CardTitle>
           </CardHeader>
           <CardContent>
-            <p className="text-gray-700 whitespace-pre-wrap">{document.notes}</p>
+            <p className="text-gray-700 whitespace-pre-wrap">
+              {document.notes}
+            </p>
           </CardContent>
         </Card>
       )}
@@ -455,7 +494,11 @@ export default function ExpenseDetailPage(props: PageProps) {
                 </p>
               </div>
               <ButtonV2 variant="outline" asChild>
-                <a href={document.uploaded_file_url} target="_blank" rel="noopener noreferrer">
+                <a
+                  href={document.uploaded_file_url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                >
                   <Download className="h-4 w-4 mr-2" />
                   Télécharger
                 </a>
@@ -465,5 +508,5 @@ export default function ExpenseDetailPage(props: PageProps) {
         </Card>
       )}
     </div>
-  )
+  );
 }

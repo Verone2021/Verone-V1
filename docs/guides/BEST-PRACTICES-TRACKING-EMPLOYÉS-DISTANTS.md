@@ -13,6 +13,7 @@
 ### **1. Tracking Activité Professionnelle**
 
 **QUE trackons-nous:**
+
 - ✅ Pages visitées dans l'application
 - ✅ Actions métier importantes (créer produit, passer commande, etc.)
 - ✅ Temps passé par module/section
@@ -23,19 +24,20 @@
 
 ### **2. Métriques Productivité (Non Punitives)**
 
-| Métrique | Utilité Business | Utilité Employé |
-|----------|------------------|-----------------|
-| **Temps par module** | Identifier goulots d'étranglement | Voir où je passe mon temps |
-| **Actions complétées** | Mesurer vélocité équipe | Voir ma productivité |
-| **Engagement score** | Détecter désengagement | Auto-évaluation |
-| **Module favori** | Optimiser formation | Connaître mes forces |
-| **Erreurs fréquentes** | Bug fixes prioritaires | Éviter répétitions |
+| Métrique               | Utilité Business                  | Utilité Employé            |
+| ---------------------- | --------------------------------- | -------------------------- |
+| **Temps par module**   | Identifier goulots d'étranglement | Voir où je passe mon temps |
+| **Actions complétées** | Mesurer vélocité équipe           | Voir ma productivité       |
+| **Engagement score**   | Détecter désengagement            | Auto-évaluation            |
+| **Module favori**      | Optimiser formation               | Connaître mes forces       |
+| **Erreurs fréquentes** | Bug fixes prioritaires            | Éviter répétitions         |
 
 **Principe:** Chaque métrique doit servir employé ET entreprise
 
 ### **3. Transparence Totale**
 
 **Page "Mon Activité" (À créer Phase 2):**
+
 ```
 /mon-activite
 ├── Mon score engagement: 85/100
@@ -57,18 +59,19 @@
 
 ### **1. Surveillance Invasive Interdite**
 
-| ❌ INTERDIT | ✅ AUTORISÉ |
-|------------|------------|
-| Screenshots automatiques | Temps passé par page |
-| Keylogging (frappe clavier) | Actions métier importantes |
-| Webcam monitoring | Statut connecté/déconnecté |
-| Tracking GPS localisation | Module actuellement utilisé |
-| Lecture emails personnels | Erreurs application |
-| Monitoring réseaux sociaux | Performance temps chargement |
+| ❌ INTERDIT                 | ✅ AUTORISÉ                  |
+| --------------------------- | ---------------------------- |
+| Screenshots automatiques    | Temps passé par page         |
+| Keylogging (frappe clavier) | Actions métier importantes   |
+| Webcam monitoring           | Statut connecté/déconnecté   |
+| Tracking GPS localisation   | Module actuellement utilisé  |
+| Lecture emails personnels   | Erreurs application          |
+| Monitoring réseaux sociaux  | Performance temps chargement |
 
 ### **2. Métriques Anxiogènes Bannies**
 
 **Métriques EXCLUES volontairement:**
+
 - ❌ "Idle time" détaillé (pause café = OK!)
 - ❌ Comparaisons publiques employés (classements)
 - ❌ Alertes "Pas actif depuis X minutes"
@@ -106,6 +109,7 @@ if (isWorkingHours() && user) {
 ### **Dashboard Admin `/admin/activity-overview`** (Phase 2)
 
 **Vue "Qui travaille maintenant" (Temps Réel)**
+
 ```
 ┌─────────────────────────────────────┐
 │ 👤 3 employés actifs maintenant     │
@@ -121,6 +125,7 @@ if (isWorkingHours() && user) {
 ```
 
 **Graphique Temps par Module (Cette Semaine)**
+
 ```
 Dashboard     ████████░░ 40%
 Catalogue     ██████░░░░ 30%
@@ -129,6 +134,7 @@ Sourcing      ██░░░░░░░░ 10%
 ```
 
 **Top Actions Équipe (Aujourd'hui)**
+
 ```
 1. Créations produits: 23
 2. Validations commandes: 15
@@ -137,6 +143,7 @@ Sourcing      ██░░░░░░░░ 10%
 ```
 
 **Utilité:**
+
 - Identifier goulots (trop de temps sur une tâche = besoin formation?)
 - Répartir charge travail (qui fait quoi?)
 - Valoriser contributions (X produits créés cette semaine!)
@@ -165,6 +172,7 @@ Sourcing      ██░░░░░░░░ 10%
 ```
 
 **Données Stockées:**
+
 - ✅ Type action (création, modification, recherche, etc.)
 - ✅ Timestamp précis
 - ✅ Page concernée
@@ -211,19 +219,20 @@ Je soussigné(e) [NOM PRÉNOM], comprends et accepte que:
    - Rétention: 30 jours détail, 1 an agrégé
 
 Fait à [VILLE], le [DATE]
-Signature: _______________
+Signature: ******\_\_\_******
 ```
 
 ### **2. Politique Rétention Données**
 
-| Type Données | Durée Rétention | Raison |
-|--------------|-----------------|--------|
-| **Logs détaillés** | 30 jours | Debugging récent |
-| **Métriques agrégées** | 1 an | Tendances annuelles |
-| **Sessions actives** | Temps réel | Performance |
-| **Données sensibles** | Jamais stockées | RGPD |
+| Type Données           | Durée Rétention | Raison              |
+| ---------------------- | --------------- | ------------------- |
+| **Logs détaillés**     | 30 jours        | Debugging récent    |
+| **Métriques agrégées** | 1 an            | Tendances annuelles |
+| **Sessions actives**   | Temps réel      | Performance         |
+| **Données sensibles**  | Jamais stockées | RGPD                |
 
 **Auto-purge:**
+
 ```sql
 -- Cron job quotidien (Supabase)
 DELETE FROM user_activity_logs
@@ -267,18 +276,21 @@ user_agent: simplifyUserAgent(request.headers.get('user-agent'))
 ### **Conformité Recommandations Reddit/GitHub/Forums**
 
 #### **1. Transparence First (r/sysadmin consensus)**
+
 - ✅ Employés informés AVANT tracking
 - ✅ Consentement écrit requis
 - ✅ Interface "Mon Activité" accessible
 - ✅ Pas de tracking caché/sournois
 
 #### **2. Focus Productivité (HackerNews thread)**
+
 - ✅ Métriques aident organisation
 - ✅ Identification goulots workflows
 - ✅ Pas de "gotcha moments" punitifs
 - ✅ Données = amélioration, pas punition
 
 #### **3. Privacy by Design (GitHub best practices)**
+
 - ✅ Minimum données collectées
 - ✅ Anonymisation par défaut
 - ✅ RLS policies strictes (Supabase)
@@ -286,6 +298,7 @@ user_agent: simplifyUserAgent(request.headers.get('user-agent'))
 - ✅ Auto-purge données anciennes
 
 #### **4. Remote Workers Specifics (Remote.com guide)**
+
 - ✅ Tracking heures travail uniquement
 - ✅ Respect fuseaux horaires
 - ✅ Pas de "always on" surveillance
@@ -298,6 +311,7 @@ user_agent: simplifyUserAgent(request.headers.get('user-agent'))
 ### **Questions Business Légitimes:**
 
 **1. "Mon équipe est-elle productive?"**
+
 ```sql
 -- Engagement score moyen équipe
 SELECT AVG(engagement_score) as team_engagement
@@ -311,6 +325,7 @@ FROM (
 ```
 
 **2. "Où sont les goulots d'étranglement?"**
+
 ```sql
 -- Modules les plus utilisés
 SELECT
@@ -324,6 +339,7 @@ ORDER BY avg_time DESC;
 ```
 
 **3. "Quels utilisateurs ont besoin d'aide?"**
+
 ```sql
 -- Users avec engagement < 30 (désengagement?)
 SELECT
@@ -372,6 +388,7 @@ ORDER BY score ASC;
 ## ✅ CHECKLIST DÉPLOIEMENT TRACKING
 
 ### **Avant Activation:**
+
 - [ ] Document consentement signé TOUS employés
 - [ ] Page "Mon Activité" accessible
 - [ ] Formation équipe "Comment utiliser métriques positivement"
@@ -379,6 +396,7 @@ ORDER BY score ASC;
 - [ ] Tests RLS (users voient UNIQUEMENT leur activité)
 
 ### **Après Activation:**
+
 - [ ] Review hebdomadaire métriques (pas quotidienne = micromanage)
 - [ ] Feedback employés sur tracking (amélioration continue)
 - [ ] Audit mensuel conformité RGPD
@@ -389,16 +407,19 @@ ORDER BY score ASC;
 ## 📚 RESSOURCES COMPLÉMENTAIRES
 
 ### **Outils Inspirants (Open Source)**
+
 - **Plausible Analytics** - Privacy-first web analytics
 - **Matomo** - GDPR compliant analytics
 - **PostHog** - Product analytics with privacy
 
 ### **Lectures Recommandées**
+
 - "Measuring and Managing Performance in Organizations" - Robert Austin
 - "The Tyranny of Metrics" - Jerry Muller
 - "Radical Candor" - Kim Scott (feedback culture)
 
 ### **Réglementations**
+
 - RGPD (EU) - Articles 6, 9, 13
 - CNIL (France) - Surveillance employés guidelines
 - CCPA (California) - Employee data rights
@@ -421,12 +442,14 @@ ORDER BY score ASC;
 ```
 
 **Principe d'Or:**
+
 > "Track pour aider, jamais pour punir"
 
 **Test Éthique:**
+
 > "Si ce tracking était appliqué à moi, serais-je à l'aise?"
 
 ---
 
-*Document Best Practices Tracking Employés Distants - Vérone 2025*
-*Conforme RGPD, éthique, et focus productivité*
+_Document Best Practices Tracking Employés Distants - Vérone 2025_
+_Conforme RGPD, éthique, et focus productivité_

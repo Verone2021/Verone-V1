@@ -22,14 +22,12 @@ export const GOOGLE_MERCHANT_CONFIG = {
   currency: 'EUR',
 
   // Authentication Scopes
-  scopes: [
-    'https://www.googleapis.com/auth/content'
-  ],
+  scopes: ['https://www.googleapis.com/auth/content'],
 
   // Rate Limiting
   rateLimit: {
     requestsPerSecond: 5,
-    batchSize: 1000
+    batchSize: 1000,
   },
 
   // URLs
@@ -39,34 +37,38 @@ export const GOOGLE_MERCHANT_CONFIG = {
   validation: {
     maxTitleLength: 150,
     maxDescriptionLength: 200,
-    maxHighlightLength: 150
-  }
-} as const
+    maxHighlightLength: 150,
+  },
+} as const;
 
-export type GoogleMerchantConfig = typeof GOOGLE_MERCHANT_CONFIG
+export type GoogleMerchantConfig = typeof GOOGLE_MERCHANT_CONFIG;
 
 // Helper pour construire les URLs de ressources
-export const getResourcePaths = (accountId = GOOGLE_MERCHANT_CONFIG.accountId) => ({
+export const getResourcePaths = (
+  accountId = GOOGLE_MERCHANT_CONFIG.accountId
+) => ({
   account: `accounts/${accountId}`,
   dataSource: `accounts/${accountId}/dataSources/${GOOGLE_MERCHANT_CONFIG.dataSourceId}`,
   // 🔧 FIX: URLs correctes selon documentation officielle Google Merchant API v1beta
   productInputs: `products/${GOOGLE_MERCHANT_CONFIG.apiVersion}/accounts/${accountId}/productInputs`,
-  products: `products/${GOOGLE_MERCHANT_CONFIG.apiVersion}/accounts/${accountId}/products`
-})
+  products: `products/${GOOGLE_MERCHANT_CONFIG.apiVersion}/accounts/${accountId}/products`,
+});
 
 // Helper pour validation des champs requis
 export const validateGoogleMerchantEnv = () => {
   const requiredEnvVars = [
     'GOOGLE_MERCHANT_SERVICE_ACCOUNT_EMAIL',
     'GOOGLE_MERCHANT_PRIVATE_KEY',
-    'NEXT_PUBLIC_APP_URL'
-  ]
+    'NEXT_PUBLIC_APP_URL',
+  ];
 
-  const missing = requiredEnvVars.filter(envVar => !process.env[envVar])
+  const missing = requiredEnvVars.filter(envVar => !process.env[envVar]);
 
   if (missing.length > 0) {
-    throw new Error(`Variables d'environnement manquantes pour Google Merchant: ${missing.join(', ')}`)
+    throw new Error(
+      `Variables d'environnement manquantes pour Google Merchant: ${missing.join(', ')}`
+    );
   }
 
-  return true
-}
+  return true;
+};

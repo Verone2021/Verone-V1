@@ -9,6 +9,7 @@
 ## 🎯 Objectifs Business
 
 ### **Vision Stratégique**
+
 Permettre une tarification flexible et intelligente pour s'adapter aux différents segments clients et canaux de distribution :
 
 1. **Prix par Canal de Vente** : Tarifs différenciés selon le canal (retail, wholesale, ecommerce, b2b)
@@ -23,6 +24,7 @@ Permettre une tarification flexible et intelligente pour s'adapter aux différen
 ### **Tables Créées**
 
 #### 1. **`sales_channels`** - Définition Canaux de Vente
+
 ```sql
 id                      UUID PRIMARY KEY
 code                    VARCHAR(50) UNIQUE  -- 'retail', 'wholesale', 'ecommerce', 'b2b'
@@ -35,12 +37,14 @@ icon_name               VARCHAR(50)
 ```
 
 **Canaux Initiaux (Seed Data)** :
+
 - `retail` : Vente Détail (magasin physique/showroom)
 - `wholesale` : Vente en Gros (MOQ élevé, -20% discount par défaut)
 - `ecommerce` : E-Commerce B2C (particuliers)
 - `b2b` : Plateforme B2B (-15% discount par défaut)
 
 #### 2. **`channel_pricing`** - Prix Produits par Canal
+
 ```sql
 id                UUID PRIMARY KEY
 product_id        UUID REFERENCES products(id)
@@ -55,6 +59,7 @@ is_active         BOOLEAN
 ```
 
 **Modes Tarifaires Exclusifs** :
+
 - `custom_price_ht` : Prix fixe (ex: 150.00€ HT)
 - `discount_rate` : Remise (ex: 0.20 = -20%)
 - `markup_rate` : Majoration (ex: 0.30 = +30%)
@@ -63,6 +68,7 @@ is_active         BOOLEAN
 **Contrainte** : Un seul mode actif par ligne (exclusivité mutuelle)
 
 #### 3. **`customer_pricing`** - Prix Clients Spécifiques
+
 ```sql
 id                  UUID PRIMARY KEY
 customer_id         UUID             -- Polymorphic (organisations OU individual_customers)
@@ -81,12 +87,14 @@ approved_at         TIMESTAMPTZ
 ```
 
 **Workflow Validation** :
+
 1. Commercial crée customer_pricing (`approval_status = 'pending'`)
 2. Admin/Owner approuve (`approval_status = 'approved'`)
 3. Prix devient actif et prioritaire sur autres tarifs
 4. Traçabilité complète (approved_by, approved_at)
 
 #### 4. **`order_discounts`** - Remises RFA (Remise Fin d'Affaire)
+
 ```sql
 id                          UUID PRIMARY KEY
 code                        VARCHAR(50) UNIQUE  -- 'RFA-2025-Q1', 'WINTER-SALE'
@@ -108,6 +116,7 @@ is_combinable               BOOLEAN             -- Cumulable avec autres remises
 ```
 
 **Exemples Remises** :
+
 - **RFA-2025-Q1** : 15% sur commandes >1000€, wholesale uniquement, 100 utilisations max
 - **WINTER-SALE** : 50€ de remise fixe sur commandes >500€, tous canaux, cumulable
 - **B2B-LAUNCH** : 20% sur première commande B2B, non cumulable, code requis
@@ -146,23 +155,27 @@ FALLBACK: products.price_ht (prix de base)
 **Produit** : Fauteuil FMIL-BEIGE-05, `price_ht = 250.00€`
 
 **Contexte 1** : Client particulier, canal e-commerce, quantité 1
+
 - ✅ Pas de customer_pricing
 - ✅ Pas de channel_pricing (ecommerce hérite prix base)
 - ✅ Pas de package (quantité 1)
 - **Résultat** : `250.00€` (source: 'base')
 
 **Contexte 2** : Client B2B sans contrat, canal b2b, quantité 1
+
 - ✅ Pas de customer_pricing
 - ✅ Channel b2b : `default_discount_rate = 0.15` (-15%)
 - ✅ Pas de pricing spécifique produit dans channel_pricing
 - **Résultat** : `212.50€` (250 × 0.85, source: 'channel_pricing')
 
 **Contexte 3** : Client B2B avec contrat cadre, quantité 10
+
 - ✅ `customer_pricing` actif : `discount_rate = 0.25` (-25%), `min_quantity = 5`
 - **Résultat** : `187.50€` (250 × 0.75, source: 'customer_pricing')
 - 🚫 Ignore channel_pricing (priorité inférieure)
 
 **Contexte 4** : Client wholesale, quantité 50
+
 - ✅ Pas de customer_pricing
 - ✅ `channel_pricing` wholesale : `custom_price_ht = 180.00€`, `min_quantity = 20`
 - **Résultat** : `180.00€` (source: 'channel_pricing')
@@ -174,30 +187,36 @@ FALLBACK: products.price_ht (prix de base)
 ### **Row Level Security (RLS)**
 
 #### **sales_channels**
+
 - **SELECT** : Tous utilisateurs authentifiés
 - **INSERT/UPDATE/DELETE** : Owner + Admin uniquement
 
 #### **channel_pricing**
+
 - **SELECT** : Tous utilisateurs authentifiés
 - **INSERT/UPDATE/DELETE** : Owner + Admin + Catalog Manager
 
 #### **customer_pricing**
+
 - **SELECT** : Tous utilisateurs authentifiés
 - **INSERT/UPDATE/DELETE** : Owner + Admin uniquement (validation requise)
 
 #### **order_discounts**
+
 - **SELECT** : Tous utilisateurs authentifiés
 - **INSERT/UPDATE/DELETE** : Owner + Admin uniquement
 
 ### **Validation Workflow**
 
 **Customer Pricing** :
+
 1. Commercial crée contrat (`approval_status = 'pending'`)
 2. Admin/Owner review et approuve
 3. État passe à `'approved'` avec traçabilité
 4. Prix devient actif immédiatement
 
 **Sécurité Fonction RPC** :
+
 - `calculate_product_price()` : `SECURITY DEFINER`
 - Accessible via Supabase RPC authentifié
 - Logs automatiques de tous calculs
@@ -211,6 +230,7 @@ FALLBACK: products.price_ht (prix de base)
 **Besoin** : Fournisseur de décoration "Déco Pro" avec contrat cadre 2025
 
 **Configuration** :
+
 ```sql
 INSERT INTO customer_pricing (
   customer_id, customer_type, product_id,
@@ -226,6 +246,7 @@ INSERT INTO customer_pricing (
 ```
 
 **Résultat** :
+
 - Toutes commandes Déco Pro = -30% automatique
 - Valide uniquement année 2025
 - Priorité MAX (ignore canal et packages)
@@ -235,6 +256,7 @@ INSERT INTO customer_pricing (
 **Besoin** : Prix dégressifs wholesale selon quantités
 
 **Configuration** :
+
 ```sql
 -- Palier 1: 20-49 unités = -20%
 INSERT INTO channel_pricing (
@@ -256,6 +278,7 @@ INSERT INTO channel_pricing (
 ```
 
 **Résultat** :
+
 - 1-19 unités : Prix base (ou discount canal par défaut)
 - 20-49 unités : -20%
 - 50+ unités : 180€ fixe
@@ -265,6 +288,7 @@ INSERT INTO channel_pricing (
 **Besoin** : Liquidation stock hiver 2025
 
 **Configuration** :
+
 ```sql
 INSERT INTO order_discounts (
   code, name, discount_type, discount_value,
@@ -281,6 +305,7 @@ INSERT INTO order_discounts (
 ```
 
 **Résultat** :
+
 - 25% remise sur commande totale
 - Minimum 500€ de commande
 - Retail + E-commerce uniquement
@@ -294,7 +319,7 @@ INSERT INTO order_discounts (
 ### **Hook React : `use-pricing.ts`**
 
 ```typescript
-import { useProductPrice, useSalesChannels } from '@/hooks/use-pricing'
+import { useProductPrice, useSalesChannels } from '@/hooks/use-pricing';
 
 // Calcul prix single product
 const { data: pricing, isLoading } = useProductPrice({
@@ -302,8 +327,8 @@ const { data: pricing, isLoading } = useProductPrice({
   customerId: 'uuid-customer',
   customerType: 'organization',
   channelId: 'uuid-channel',
-  quantity: 10
-})
+  quantity: 10,
+});
 
 // Résultat:
 // pricing = {
@@ -317,6 +342,7 @@ const { data: pricing, isLoading } = useProductPrice({
 ### **API Route : `/api/pricing/calculate`**
 
 #### **POST - Batch Pricing**
+
 ```bash
 POST /api/pricing/calculate
 Content-Type: application/json
@@ -369,6 +395,7 @@ Content-Type: application/json
 ```
 
 #### **GET - Single Product**
+
 ```bash
 GET /api/pricing/calculate?productId=uuid-1&customerId=uuid-customer&channelId=uuid-channel&quantity=10
 
@@ -439,6 +466,7 @@ CREATE INDEX idx_channel_pricing_validity ON channel_pricing(
 ### **Tests à Effectuer**
 
 #### **Test 1 : Waterfall Pricing**
+
 ```sql
 -- Base price
 SELECT * FROM calculate_product_price(
@@ -467,6 +495,7 @@ SELECT * FROM calculate_product_price(
 ```
 
 #### **Test 2 : Paliers Quantités**
+
 ```sql
 -- Quantité 1 : prix base
 SELECT * FROM calculate_product_price('uuid-product', quantity := 1);
@@ -479,6 +508,7 @@ SELECT * FROM calculate_product_price('uuid-product', 'uuid-wholesale', quantity
 ```
 
 #### **Test 3 : Validation Workflow**
+
 ```sql
 -- 1. Créer customer pricing pending
 INSERT INTO customer_pricing (..., approval_status = 'pending');

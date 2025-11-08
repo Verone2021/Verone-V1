@@ -1,2 +1,12 @@
-// Re-export from shared modules for backward compatibility
-export { SupplierSegmentBadge } from '@/shared/modules/suppliers/components/badges/SupplierSegmentBadge'
+/**
+ * Re-export: SupplierSegmentBadge
+ *
+ * Backward compatibility re-export
+ * Composant migré vers: src/shared/modules/suppliers/components/badges/SupplierSegmentBadge.tsx
+ */
+
+export {
+  SupplierSegmentBadge,
+  SupplierSegmentBadgeWithTooltip,
+  type SupplierSegmentType,
+} from '@/shared/modules/suppliers/components/badges/SupplierSegmentBadge';

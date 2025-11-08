@@ -1,21 +1,24 @@
-'use client'
+'use client';
 
-import { useState } from 'react'
-import { Upload, Trash2, Loader2, AlertCircle, ImagePlus } from 'lucide-react'
-import { ButtonV2 } from '@/components/ui/button'
-import { OrganisationLogo } from './organisation-logo'
-import { useLogoUpload } from '@/shared/modules/common/hooks'
-import { cn } from '@/lib/utils'
-import { spacing, colors } from '@/lib/design-system'
-import Image from 'next/image'
+import { useState } from 'react';
+
+import Image from 'next/image';
+
+import { Upload, Trash2, Loader2, AlertCircle, ImagePlus } from 'lucide-react';
+
+import { OrganisationLogo } from '@/components/business/organisation-logo';
+import { ButtonV2 } from '@/components/ui/button';
+import { spacing, colors } from '@/lib/design-system';
+import { cn } from '@verone/utils';
+import { useLogoUpload } from '@/shared/modules/common/hooks';
 
 interface LogoUploadButtonProps {
-  organisationId: string
-  organisationName: string
-  currentLogoUrl?: string | null
-  onUploadSuccess?: () => void
-  size?: 'sm' | 'md' | 'lg' | 'xl'
-  className?: string
+  organisationId: string;
+  organisationName: string;
+  currentLogoUrl?: string | null;
+  onUploadSuccess?: () => void;
+  size?: 'sm' | 'md' | 'lg' | 'xl';
+  className?: string;
 }
 
 /**
@@ -43,89 +46,89 @@ export function LogoUploadButton({
   currentLogoUrl,
   onUploadSuccess,
   size = 'lg',
-  className
+  className,
 }: LogoUploadButtonProps) {
-  const [previewUrl, setPreviewUrl] = useState<string | null>(null)
-  const [dragActive, setDragActive] = useState(false)
+  const [previewUrl, setPreviewUrl] = useState<string | null>(null);
+  const [dragActive, setDragActive] = useState(false);
 
   const { uploadLogo, deleteLogo, uploading, deleting, error } = useLogoUpload({
     organisationId,
     currentLogoUrl,
     onSuccess: () => {
-      setPreviewUrl(null)
+      setPreviewUrl(null);
       if (onUploadSuccess) {
-        onUploadSuccess()
+        onUploadSuccess();
       }
     },
-    onError: (err) => {
-      console.error('Erreur logo:', err)
-    }
-  })
+    onError: err => {
+      console.error('Erreur logo:', err);
+    },
+  });
 
   /**
    * Gestion upload d'un fichier
    */
   const handleFileUpload = async (file: File) => {
-    if (!file) return
+    if (!file) return;
 
     // Preview local avant upload
-    const reader = new FileReader()
+    const reader = new FileReader();
     reader.onloadend = () => {
-      setPreviewUrl(reader.result as string)
-    }
-    reader.readAsDataURL(file)
+      setPreviewUrl(reader.result as string);
+    };
+    reader.readAsDataURL(file);
 
     // Upload
-    await uploadLogo(file)
-  }
+    await uploadLogo(file);
+  };
 
   /**
    * Gestionnaires drag & drop
    */
   const handleDrag = (e: React.DragEvent) => {
-    e.preventDefault()
-    e.stopPropagation()
-  }
+    e.preventDefault();
+    e.stopPropagation();
+  };
 
   const handleDragIn = (e: React.DragEvent) => {
-    e.preventDefault()
-    e.stopPropagation()
-    setDragActive(true)
-  }
+    e.preventDefault();
+    e.stopPropagation();
+    setDragActive(true);
+  };
 
   const handleDragOut = (e: React.DragEvent) => {
-    e.preventDefault()
-    e.stopPropagation()
-    setDragActive(false)
-  }
+    e.preventDefault();
+    e.stopPropagation();
+    setDragActive(false);
+  };
 
   const handleDrop = (e: React.DragEvent) => {
-    e.preventDefault()
-    e.stopPropagation()
-    setDragActive(false)
+    e.preventDefault();
+    e.stopPropagation();
+    setDragActive(false);
 
-    const files = e.dataTransfer.files
+    const files = e.dataTransfer.files;
     if (files && files[0]) {
-      handleFileUpload(files[0])
+      handleFileUpload(files[0]);
     }
-  }
+  };
 
   /**
    * Gestion click pour ouvrir sélecteur de fichiers
    */
   const handleClick = () => {
-    const input = document.createElement('input')
-    input.type = 'file'
-    input.accept = 'image/png,image/jpeg,image/svg+xml,image/webp'
+    const input = document.createElement('input');
+    input.type = 'file';
+    input.accept = 'image/png,image/jpeg,image/svg+xml,image/webp';
     input.onchange = (e: Event) => {
-      const target = e.target as HTMLInputElement
-      const file = target.files?.[0]
+      const target = e.target as HTMLInputElement;
+      const file = target.files?.[0];
       if (file) {
-        handleFileUpload(file)
+        handleFileUpload(file);
       }
-    }
-    input.click()
-  }
+    };
+    input.click();
+  };
 
   /**
    * Gestion suppression
@@ -133,24 +136,24 @@ export function LogoUploadButton({
   const handleDelete = async () => {
     const confirmed = confirm(
       `Êtes-vous sûr de vouloir supprimer le logo de "${organisationName}" ?`
-    )
+    );
 
     if (confirmed) {
-      await deleteLogo()
+      await deleteLogo();
     }
-  }
+  };
 
-  const isLoading = uploading || deleting
+  const isLoading = uploading || deleting;
 
   // Obtenir l'URL complète du logo depuis Supabase Storage
   const getLogoUrl = () => {
-    if (!currentLogoUrl) return null
-    if (currentLogoUrl.startsWith('http')) return currentLogoUrl
+    if (!currentLogoUrl) return null;
+    if (currentLogoUrl.startsWith('http')) return currentLogoUrl;
     // Construire l'URL publique Supabase
-    return `${process.env.NEXT_PUBLIC_SUPABASE_URL}/storage/v1/object/public/organisation-logos/${currentLogoUrl}`
-  }
+    return `${process.env.NEXT_PUBLIC_SUPABASE_URL}/storage/v1/object/public/organisation-logos/${currentLogoUrl}`;
+  };
 
-  const logoUrl = getLogoUrl()
+  const logoUrl = getLogoUrl();
 
   return (
     <div className={cn('space-y-4', className)}>
@@ -174,13 +177,15 @@ export function LogoUploadButton({
           {logoUrl || previewUrl ? (
             <div className="relative">
               {logoUrl && !previewUrl ? (
-                <div className={cn(
-                  'relative rounded-md overflow-hidden border border-gray-200',
-                  size === 'sm' && 'h-16 w-16',
-                  size === 'md' && 'h-24 w-24',
-                  size === 'lg' && 'h-32 w-32',
-                  size === 'xl' && 'h-40 w-40'
-                )}>
+                <div
+                  className={cn(
+                    'relative rounded-md overflow-hidden border border-gray-200',
+                    size === 'sm' && 'h-16 w-16',
+                    size === 'md' && 'h-24 w-24',
+                    size === 'lg' && 'h-32 w-32',
+                    size === 'xl' && 'h-40 w-40'
+                  )}
+                >
                   <Image
                     src={logoUrl}
                     alt={`Logo ${organisationName}`}
@@ -272,7 +277,7 @@ export function LogoUploadButton({
           style={{
             backgroundColor: colors.danger[50],
             borderColor: colors.danger[200],
-            color: colors.danger[700]
+            color: colors.danger[700],
           }}
         >
           <AlertCircle className="h-4 w-4 flex-shrink-0 mt-0.5" />
@@ -283,5 +288,5 @@ export function LogoUploadButton({
         </div>
       )}
     </div>
-  )
+  );
 }

@@ -1,2 +1,2 @@
 // Re-export from shared modules for backward compatibility
-export { PartnerFormModal } from '@/shared/modules/organisations/components/forms/PartnerFormModal'
+export { PartnerFormModal } from '@/shared/modules/organisations/components/forms/PartnerFormModal';

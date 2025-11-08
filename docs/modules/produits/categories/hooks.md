@@ -21,25 +21,28 @@ Hook CRUD catégories niveau 1.
 
 ```typescript
 interface Category {
-  id: string
-  name: string
-  slug: string
-  description: string | null
-  icon: string | null
-  display_order: number
-  subcategories_count?: number
-  products_count?: number
+  id: string;
+  name: string;
+  slug: string;
+  description: string | null;
+  icon: string | null;
+  display_order: number;
+  subcategories_count?: number;
+  products_count?: number;
 }
 
 function useCategories(): {
-  categories: Category[]
-  loading: boolean
-  error: string | null
-  createCategory: (data: CreateCategoryData) => Promise<Category | null>
-  updateCategory: (id: string, data: UpdateCategoryData) => Promise<Category | null>
-  deleteCategory: (id: string) => Promise<boolean>
-  refetch: () => void
-}
+  categories: Category[];
+  loading: boolean;
+  error: string | null;
+  createCategory: (data: CreateCategoryData) => Promise<Category | null>;
+  updateCategory: (
+    id: string,
+    data: UpdateCategoryData
+  ) => Promise<Category | null>;
+  deleteCategory: (id: string) => Promise<boolean>;
+  refetch: () => void;
+};
 ```
 
 ### Exemple
@@ -88,25 +91,30 @@ Hook sous-catégories niveau 2.
 
 ```typescript
 interface Subcategory {
-  id: string
-  category_id: string
-  name: string
-  slug: string
-  description: string | null
-  icon: string | null
-  display_order: number
-  families_count?: number
-  products_count?: number
+  id: string;
+  category_id: string;
+  name: string;
+  slug: string;
+  description: string | null;
+  icon: string | null;
+  display_order: number;
+  families_count?: number;
+  products_count?: number;
 }
 
 function useSubcategories(categoryId?: string): {
-  subcategories: Subcategory[]
-  loading: boolean
-  error: string | null
-  createSubcategory: (data: CreateSubcategoryData) => Promise<Subcategory | null>
-  updateSubcategory: (id: string, data: UpdateSubcategoryData) => Promise<Subcategory | null>
-  refetch: () => void
-}
+  subcategories: Subcategory[];
+  loading: boolean;
+  error: string | null;
+  createSubcategory: (
+    data: CreateSubcategoryData
+  ) => Promise<Subcategory | null>;
+  updateSubcategory: (
+    id: string,
+    data: UpdateSubcategoryData
+  ) => Promise<Subcategory | null>;
+  refetch: () => void;
+};
 ```
 
 ### Exemple
@@ -130,22 +138,22 @@ Hook familles niveau 3.
 
 ```typescript
 interface Family {
-  id: string
-  subcategory_id: string
-  name: string
-  slug: string
-  description: string | null
-  display_order: number
-  products_count?: number
+  id: string;
+  subcategory_id: string;
+  name: string;
+  slug: string;
+  description: string | null;
+  display_order: number;
+  products_count?: number;
 }
 
 function useFamilies(subcategoryId?: string): {
-  families: Family[]
-  loading: boolean
-  error: string | null
-  createFamily: (data: CreateFamilyData) => Promise<Family | null>
-  refetch: () => void
-}
+  families: Family[];
+  loading: boolean;
+  error: string | null;
+  createFamily: (data: CreateFamilyData) => Promise<Family | null>;
+  refetch: () => void;
+};
 ```
 
 ### Exemple

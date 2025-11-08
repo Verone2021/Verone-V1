@@ -18,18 +18,21 @@
 ### Code Critique à Protéger (Vérone)
 
 **Priorité CRITIQUE** :
+
 - `src/lib/supabase/server.ts` (configuration Supabase SSR)
 - `.env`, `.env.local`, `.env.production` (secrets)
 - `supabase/migrations/**` (schéma BDD)
 - `manifests/business-rules/**` (règles métier validées)
 
 **Priorité HAUTE** :
+
 - `src/lib/supabase/client.ts` (client Supabase)
 - `src/hooks/use-supabase-*.tsx` (hooks critiques)
 - `MEMORY-BANK/sessions/**` (rapports validés)
 - `docs/architecture/**` (architecture validée)
 
 **Priorité MOYENNE** :
+
 - Components UI stabilisés après tests complets
 - Scripts de production (`scripts/deploy-*.ts`)
 - Configuration CI/CD (`.github/workflows/`)
@@ -79,13 +82,13 @@ Utiliser le système de permissions intégré de Claude Code pour **bloquer comp
 
 ### 🔑 Syntaxe Patterns
 
-| Pattern | Signification | Exemple |
-|---------|---------------|---------|
-| `Read(./path/file.ts)` | Bloque lecture fichier exact | `Read(./.env)` |
-| `Edit(./path/file.ts)` | Bloque écriture fichier exact | `Edit(./server.ts)` |
-| `Read(./path/**)` | Bloque lecture récursive dossier | `Read(./migrations/**)` |
-| `Edit(./path/*.ts)` | Bloque écriture tous .ts du dossier | `Edit(./scripts/*.ts)` |
-| `.env*` | Wildcard pour .env.local, .env.prod, etc. | `Read(./.env*)` |
+| Pattern                | Signification                             | Exemple                 |
+| ---------------------- | ----------------------------------------- | ----------------------- |
+| `Read(./path/file.ts)` | Bloque lecture fichier exact              | `Read(./.env)`          |
+| `Edit(./path/file.ts)` | Bloque écriture fichier exact             | `Edit(./server.ts)`     |
+| `Read(./path/**)`      | Bloque lecture récursive dossier          | `Read(./migrations/**)` |
+| `Edit(./path/*.ts)`    | Bloque écriture tous .ts du dossier       | `Edit(./scripts/*.ts)`  |
+| `.env*`                | Wildcard pour .env.local, .env.prod, etc. | `Read(./.env*)`         |
 
 ### ✅ Avantages
 
@@ -185,6 +188,7 @@ node_modules/
 ### ⚠️ Limitations CRITIQUES
 
 **🚨 BUG REPORTÉ (GitHub Issue #1373)** :
+
 ```
 Read() bypasses .claude/claude.json and .gitignore restrictions
 for ignored files
@@ -216,6 +220,7 @@ Documenter explicitement dans `CLAUDE.md` les fichiers **interdits de modificati
 ### ❌ INTERDIT ABSOLU - NE JAMAIS MODIFIER
 
 **Fichiers critiques production** :
+
 - `src/lib/supabase/server.ts` : Configuration Supabase SSR validée (commit 005b68b)
   - Raison : Modifications cassent auth Admin API
   - Si besoin modification : Demander approbation utilisateur AVANT
@@ -235,6 +240,7 @@ Documenter explicitement dans `CLAUDE.md` les fichiers **interdits de modificati
 ### ⚠️ MODIFICATION AVEC PRÉCAUTIONS
 
 **Fichiers stables nécessitant review** :
+
 - `src/lib/supabase/client.ts` : Demander avant modification
 - `MEMORY-BANK/sessions/**` : Rapports sessions validés (append-only)
 - `scripts/deploy-*.ts` : Scripts production sensibles
@@ -242,6 +248,7 @@ Documenter explicitement dans `CLAUDE.md` les fichiers **interdits de modificati
 ### ✅ MODIFICATION LIBRE
 
 **Fichiers non critiques** :
+
 - `src/components/**/*.tsx` : Components UI (sauf validés)
 - `docs/guides/**` : Documentation guides
 - `TASKS/**` : Task management files
@@ -356,12 +363,12 @@ services:
 
     # Filesystem read-only pour code production
     volumes:
-      - ./src:/workspace/src:ro              # READ-ONLY
-      - ./manifests:/workspace/manifests:ro  # READ-ONLY
-      - ./supabase:/workspace/supabase:ro    # READ-ONLY
+      - ./src:/workspace/src:ro # READ-ONLY
+      - ./manifests:/workspace/manifests:ro # READ-ONLY
+      - ./supabase:/workspace/supabase:ro # READ-ONLY
 
       # Workspace temporaire pour outputs agent
-      - ./tmp-agent-outputs:/workspace/outputs:rw  # READ-WRITE
+      - ./tmp-agent-outputs:/workspace/outputs:rw # READ-WRITE
 
     # Désactiver réseau (no internet = no data exfiltration)
     network_mode: none
@@ -426,12 +433,14 @@ cat ./tmp-agent-outputs/suggestions.md
 ### 🎯 Cas d'Usage Idéal
 
 **Quand utiliser Paranoid Mode :**
+
 - Code production ultra-critique (finance, santé, sécurité)
 - Compliance stricte (RGPD, SOC2, ISO27001)
 - Audit externe (démontrer impossibilité modification)
 - Formation agents IA (environnement sandbox safe)
 
 **Vérone** : Pas nécessaire actuellement (Stratégie #1 suffisante), MAIS prévoir si :
+
 - Passage production client critique
 - Intégration paiements sensibles (Stripe, Qonto)
 - Données personnelles volume élevé (RGPD strict)
@@ -442,13 +451,13 @@ cat ./tmp-agent-outputs/suggestions.md
 
 ## 📊 TABLEAU COMPARATIF DES 5 STRATÉGIES
 
-| Stratégie | Protection | Fiabilité | Effort | UX Dev | Recommandation |
-|-----------|------------|-----------|--------|--------|----------------|
-| #1 settings.json deny | ⭐⭐⭐⭐⭐ | Très haute | Faible | Excellent | ✅ PRIORITÉ 1 |
-| #2 .gitignore | ⭐⭐⭐☆☆ | Partielle | Très faible | Excellent | ⚠️ Backup uniquement |
-| #3 CLAUDE.md | ⭐⭐⭐☆☆ | Variable | Très faible | Excellent | ✅ Complément #1 |
-| #4 Git Worktrees | ⭐⭐⭐⭐☆ | Maximale | Moyen | Bon | ✅ Tests expérimentaux |
-| #5 Container RO | ⭐⭐⭐⭐⭐ | Absolue | Élevé | Moyen | 🔒 Production critique |
+| Stratégie             | Protection | Fiabilité  | Effort      | UX Dev    | Recommandation         |
+| --------------------- | ---------- | ---------- | ----------- | --------- | ---------------------- |
+| #1 settings.json deny | ⭐⭐⭐⭐⭐ | Très haute | Faible      | Excellent | ✅ PRIORITÉ 1          |
+| #2 .gitignore         | ⭐⭐⭐☆☆   | Partielle  | Très faible | Excellent | ⚠️ Backup uniquement   |
+| #3 CLAUDE.md          | ⭐⭐⭐☆☆   | Variable   | Très faible | Excellent | ✅ Complément #1       |
+| #4 Git Worktrees      | ⭐⭐⭐⭐☆  | Maximale   | Moyen       | Bon       | ✅ Tests expérimentaux |
+| #5 Container RO       | ⭐⭐⭐⭐⭐ | Absolue    | Élevé       | Moyen     | 🔒 Production critique |
 
 ---
 
@@ -470,6 +479,7 @@ Layer 3 (Backup) : .gitignore respect
 ```
 
 **Fichiers protégés** :
+
 - `.env*` (secrets)
 - `src/lib/supabase/server.ts` (config critique)
 - `supabase/migrations/**` (schéma BDD)
@@ -665,4 +675,4 @@ git checkout 005b68b -- src/lib/supabase/server.ts
 **Version** : 1.0
 **Sources** : Anthropic Docs + GitHub Issues + Security Research + Community Best Practices
 
-*Vérone Back Office - Secure AI-Assisted Development Excellence*
+_Vérone Back Office - Secure AI-Assisted Development Excellence_

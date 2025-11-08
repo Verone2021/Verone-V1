@@ -11,11 +11,13 @@
 Système de gestion des utilisateurs Vérone avec rôles, permissions et profils complets.
 
 **Pages concernées** :
+
 - `/admin/users` - Liste utilisateurs
 - `/admin/users/[id]` - Détail utilisateur
 - `/profile` - Profil personnel
 
 **Tables database** :
+
 - `auth.users` (Supabase Auth)
 - `user_profiles` (17 colonnes)
 
@@ -25,11 +27,11 @@ Système de gestion des utilisateurs Vérone avec rôles, permissions et profils
 
 ### Types de Rôles
 
-| Rôle | Code | Permissions | Cas d'usage |
-|------|------|-------------|-------------|
-| **Owner** | `owner` | Tous droits | Fondateur, accès total |
-| **Admin** | `admin` | Gestion utilisateurs, config système | Responsable IT/Admin |
-| **Catalog Manager** | `catalog_manager` | Catalogue, stocks, commandes | Gestionnaire catalogue |
+| Rôle                | Code              | Permissions                          | Cas d'usage            |
+| ------------------- | ----------------- | ------------------------------------ | ---------------------- |
+| **Owner**           | `owner`           | Tous droits                          | Fondateur, accès total |
+| **Admin**           | `admin`           | Gestion utilisateurs, config système | Responsable IT/Admin   |
+| **Catalog Manager** | `catalog_manager` | Catalogue, stocks, commandes         | Gestionnaire catalogue |
 
 **Enum** : `user_role_type` dans `docs/database/enums.md`
 
@@ -44,16 +46,17 @@ Système de gestion des utilisateurs Vérone avec rôles, permissions et profils
 
 ### Champs Optionnels (Migration 20251030_001)
 
-| Champ | Type | Validation | Max Length |
-|-------|------|------------|------------|
-| `first_name` | TEXT | Trim, length > 0 | 50 chars |
-| `last_name` | TEXT | Trim, length > 0 | 50 chars |
-| `phone` | TEXT | Format français | - |
-| `job_title` | TEXT | Trim, length > 0 | 100 chars |
+| Champ        | Type | Validation       | Max Length |
+| ------------ | ---- | ---------------- | ---------- |
+| `first_name` | TEXT | Trim, length > 0 | 50 chars   |
+| `last_name`  | TEXT | Trim, length > 0 | 50 chars   |
+| `phone`      | TEXT | Format français  | -          |
+| `job_title`  | TEXT | Trim, length > 0 | 100 chars  |
 
 ### Validation Téléphone
 
 **Formats acceptés** :
+
 ```
 0123456789              # Standard français
 +33123456789            # International
@@ -61,6 +64,7 @@ Système de gestion des utilisateurs Vérone avec rôles, permissions et profils
 ```
 
 **Regex PostgreSQL** :
+
 ```sql
 phone ~ '^(\+33|0)[1-9][0-9]{8}$' OR
 phone ~ '^\+33\s?[1-9](\s?[0-9]{2}){4}$'
@@ -77,6 +81,7 @@ phone ~ '^\+33\s?[1-9](\s?[0-9]{2}){4}$'
 **Page** : `/admin/users` → Modal `EditUserDialog`
 
 **Étapes** :
+
 1. **Affichage** :
    - Récupération valeurs depuis `user_profiles` (first_name, last_name, job_title)
    - Fallback temporaire : Extraction depuis email si colonnes vides
@@ -93,6 +98,7 @@ phone ~ '^\+33\s?[1-9](\s?[0-9]{2}){4}$'
    - Revalidation `/admin/users` page
 
 **Code** :
+
 - Composant : `src/components/admin/edit-user-dialog.tsx`
 - Action : `src/lib/actions/user-management.ts::updateUserProfile()`
 
@@ -122,10 +128,12 @@ user_metadata: {
 ### Policies user_profiles
 
 **Lecture** :
+
 - ✅ Owner/Admin : Tous profils
 - ✅ Utilisateur standard : Son propre profil uniquement
 
 **Écriture** :
+
 - ✅ Owner/Admin : Modification tous profils
 - ✅ Utilisateur standard : Modification son propre profil (champs limités)
 
@@ -179,6 +187,7 @@ WHERE phone IS NOT NULL;
 **Page liste** : `/admin/users`
 
 **Champs recherchables** :
+
 - Email
 - Prénom
 - Nom
@@ -186,6 +195,7 @@ WHERE phone IS NOT NULL;
 - Organisation (si associé)
 
 **Tri** :
+
 - Par défaut : Date création DESC (nouveaux en premier)
 - Options : Nom, Email, Rôle
 
@@ -209,6 +219,7 @@ Toutes modifications profil sont tracées :
 **Table** : `user_activity_logs`
 
 **Events tracés** :
+
 - `user_profile_updated` - Modification profil
 - `user_role_changed` - Changement rôle
 - `user_created` - Création utilisateur
@@ -245,12 +256,14 @@ Toutes modifications profil sont tracées :
 ## 📚 Références
 
 **Documentation liée** :
+
 - Database : `docs/database/SCHEMA-REFERENCE.md` (user_profiles ligne 474)
 - RLS Policies : `docs/database/rls-policies.md`
 - Enums : `docs/database/enums.md` (user_role_type)
 - Migration : `supabase/migrations/20251030_001_add_job_title_to_user_profiles.sql`
 
 **Code source** :
+
 - Page liste : `src/app/admin/users/page.tsx`
 - Composant modal : `src/components/admin/edit-user-dialog.tsx`
 - Actions : `src/lib/actions/user-management.ts`

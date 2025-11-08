@@ -19,16 +19,16 @@
 ## 🚨 CONTEXTE & PROBLÈME RÉSOLU
 
 ### **Erreur Historique**
+
 ```typescript
 // ❌ ANCIEN CODE (ERREUR)
-const { data } = await supabase
-  .from('products')
-  .select('id, name, image_url')  // ← Colonne n'existe plus!
+const { data } = await supabase.from('products').select('id, name, image_url'); // ← Colonne n'existe plus!
 ```
 
 **Symptôme** : `ERROR: 42703: column "image_url" does not exist`
 
 ### **Migration Effectuée**
+
 - **Migration** : `20250916_008_remove_primary_image_url_columns.sql`
 - **Action** : Suppression colonne `image_url` de table `products`
 - **Raison** : Centralisation images dans table dédiée `product_images`
@@ -38,11 +38,13 @@ const { data } = await supabase
 ## ✅ PATTERN CORRECT OBLIGATOIRE
 
 ### **Pattern 1 : Récupérer Image Primaire**
+
 ```typescript
 // ✅ CORRECT - Avec Supabase Client
 const { data } = await supabase
   .from('products')
-  .select(`
+  .select(
+    `
     id,
     name,
     sku,
@@ -52,19 +54,22 @@ const { data } = await supabase
       public_url,
       is_primary
     )
-  `)
-  .eq('product_images.is_primary', true)
+  `
+  )
+  .eq('product_images.is_primary', true);
 ```
 
 **Transformation Data** :
+
 ```typescript
 const products = (data || []).map(product => ({
   ...product,
-  primary_image_url: product.product_images?.[0]?.public_url || null
-}))
+  primary_image_url: product.product_images?.[0]?.public_url || null,
+}));
 ```
 
 ### **Pattern 2 : SQL Direct**
+
 ```sql
 -- ✅ CORRECT - Jointure SQL
 SELECT
@@ -81,11 +86,13 @@ ORDER BY p.name
 ```
 
 ### **Pattern 3 : Collection Products**
+
 ```typescript
 // ✅ CORRECT - Via collection_products
 const { data: products } = await supabase
   .from('collection_products')
-  .select(`
+  .select(
+    `
     position,
     products:product_id (
       id,
@@ -96,9 +103,10 @@ const { data: products } = await supabase
         is_primary
       )
     )
-  `)
+  `
+  )
   .eq('collection_id', collectionId)
-  .order('position', { ascending: true })
+  .order('position', { ascending: true });
 ```
 
 ---
@@ -106,16 +114,19 @@ const { data: products } = await supabase
 ## 📋 CAS D'USAGE VALIDÉS
 
 ### **1. Product Selector Modal**
+
 - **Fichier** : `src/components/business/product-selector-modal.tsx`
 - **Pattern** : Jointure `product_images!left` avec transformation data
 - **Statut** : ✅ Corrigé (28/09/2025)
 
 ### **2. Collections Hook**
+
 - **Fichier** : `src/hooks/use-collections.ts`
 - **Pattern** : Nested select avec `product_images!left`
 - **Statut** : ✅ Corrigé (28/09/2025)
 
 ### **3. Cas Futurs Identifiés**
+
 - **Commandes** : Jointure obligatoire pour affichage produits commandés
 - **Catalogues** : Idem pour génération PDF/exports
 - **Feeds** : Idem pour flux produits partagés
@@ -126,6 +137,7 @@ const { data: products } = await supabase
 ## 🏗️ ARCHITECTURE BASE DE DONNÉES
 
 ### **Table `products`**
+
 ```sql
 CREATE TABLE products (
   id UUID PRIMARY KEY,
@@ -140,6 +152,7 @@ CREATE TABLE products (
 ```
 
 ### **Table `product_images`**
+
 ```sql
 CREATE TABLE product_images (
   id UUID PRIMARY KEY,
@@ -183,24 +196,28 @@ Avant d'écrire une requête produit :
 ## 📊 PERFORMANCE & OPTIMISATION
 
 ### **Performance Considerations**
+
 - **Jointure LEFT** : Évite exclusion produits sans images
 - **Index `is_primary`** : Accélère filtre image principale
 - **Limite résultats** : Toujours utiliser `.limit()` pour listes longues
 
 ### **Exemple Optimisé**
+
 ```typescript
 // ✅ Optimisé avec limite + filtre
 const { data } = await supabase
   .from('products')
-  .select(`
+  .select(
+    `
     id,
     name,
     product_images!left (
       public_url
     )
-  `)
+  `
+  )
   .eq('status', 'in_stock')
-  .limit(50)  // ← Limite pour performance
+  .limit(50); // ← Limite pour performance
 ```
 
 ---
@@ -208,11 +225,13 @@ const { data } = await supabase
 ## 🚀 IMPACT BUSINESS
 
 ### **Avant Correction (27/09/2025)**
+
 - ❌ Erreur console bloquante : "Error fetching products: {}"
 - ❌ Modale sélection produits non fonctionnelle
 - ❌ Collections impossibles à peupler
 
 ### **Après Correction (28/09/2025)**
+
 - ✅ Requêtes produits fonctionnelles
 - ✅ Images correctement récupérées
 - ✅ Collections opérationnelles
@@ -223,10 +242,12 @@ const { data } = await supabase
 ## 🔗 FICHIERS CONCERNÉS
 
 ### **Corrigés**
+
 - `/src/components/business/product-selector-modal.tsx`
 - `/src/hooks/use-collections.ts`
 
 ### **À Surveiller (Futurs)**
+
 - Tout nouveau composant affichant des produits avec images
 - Routes API retournant des produits
 - Exports/PDF incluant visuels produits

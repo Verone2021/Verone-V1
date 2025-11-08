@@ -21,26 +21,29 @@ Hook CRUD groupes variantes.
 
 ```typescript
 interface VariantGroup {
-  id: string
-  name: string
-  description: string | null
-  master_product_id: string | null
-  attribute_schema: Record<string, string[]> | null
-  is_active: boolean
-  variants_count?: number
-  created_at: string
-  updated_at: string
+  id: string;
+  name: string;
+  description: string | null;
+  master_product_id: string | null;
+  attribute_schema: Record<string, string[]> | null;
+  is_active: boolean;
+  variants_count?: number;
+  created_at: string;
+  updated_at: string;
 }
 
 function useVariantGroups(): {
-  groups: VariantGroup[]
-  loading: boolean
-  error: string | null
-  createGroup: (data: CreateGroupData) => Promise<VariantGroup | null>
-  updateGroup: (id: string, data: UpdateGroupData) => Promise<VariantGroup | null>
-  deleteGroup: (id: string) => Promise<boolean>
-  refetch: () => void
-}
+  groups: VariantGroup[];
+  loading: boolean;
+  error: string | null;
+  createGroup: (data: CreateGroupData) => Promise<VariantGroup | null>;
+  updateGroup: (
+    id: string,
+    data: UpdateGroupData
+  ) => Promise<VariantGroup | null>;
+  deleteGroup: (id: string) => Promise<boolean>;
+  refetch: () => void;
+};
 ```
 
 ### Exemple
@@ -86,34 +89,33 @@ Hook détail groupe avec variantes.
 
 ```typescript
 function useVariantGroup(id: string): {
-  group: VariantGroup | null
-  variants: Product[]
-  loading: boolean
-  error: string | null
-  addVariant: (productId: string, attributes: Record<string, any>) => Promise<boolean>
-  removeVariant: (productId: string) => Promise<boolean>
-  generateAllCombinations: () => Promise<Product[]>
-}
+  group: VariantGroup | null;
+  variants: Product[];
+  loading: boolean;
+  error: string | null;
+  addVariant: (
+    productId: string,
+    attributes: Record<string, any>
+  ) => Promise<boolean>;
+  removeVariant: (productId: string) => Promise<boolean>;
+  generateAllCombinations: () => Promise<Product[]>;
+};
 ```
 
 ### Exemple
 
 ```typescript
-const {
-  group,
-  variants,
-  addVariant,
-  generateAllCombinations
-} = useVariantGroup(groupId)
+const { group, variants, addVariant, generateAllCombinations } =
+  useVariantGroup(groupId);
 
 // Ajouter variante existante
 await addVariant(productId, {
   color: 'Bleu',
-  material: 'Velours'
-})
+  material: 'Velours',
+});
 
 // Générer toutes combinaisons
-const newVariants = await generateAllCombinations()
+const newVariants = await generateAllCombinations();
 // Crée : Vert/Velours, Vert/Lin, Bleu/Velours, Bleu/Lin, etc.
 ```
 
@@ -127,32 +129,32 @@ Hook produits d'un groupe variantes.
 
 ```typescript
 function useProductVariants(variantGroupId: string): {
-  variants: Product[]
-  loading: boolean
-  error: string | null
-  updateVariantAttributes: (productId: string, attributes: Record<string, any>) => Promise<boolean>
-  getVariantsByAttribute: (attribute: string, value: string) => Product[]
-}
+  variants: Product[];
+  loading: boolean;
+  error: string | null;
+  updateVariantAttributes: (
+    productId: string,
+    attributes: Record<string, any>
+  ) => Promise<boolean>;
+  getVariantsByAttribute: (attribute: string, value: string) => Product[];
+};
 ```
 
 ### Exemple
 
 ```typescript
-const {
-  variants,
-  updateVariantAttributes,
-  getVariantsByAttribute
-} = useProductVariants(groupId)
+const { variants, updateVariantAttributes, getVariantsByAttribute } =
+  useProductVariants(groupId);
 
 // Mettre à jour attributs
 await updateVariantAttributes(productId, {
   color: 'Rouge',
-  material: 'Cuir'
-})
+  material: 'Cuir',
+});
 
 // Filtrer par attribut
-const greenVariants = getVariantsByAttribute('color', 'Vert')
-const velvetVariants = getVariantsByAttribute('material', 'Velours')
+const greenVariants = getVariantsByAttribute('color', 'Vert');
+const velvetVariants = getVariantsByAttribute('material', 'Velours');
 ```
 
 ---

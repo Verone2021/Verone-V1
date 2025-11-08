@@ -20,6 +20,7 @@
 Stratégie tests 2025 : -80% volume tests (50 vs 677), focus qualité, Console Error Checking MANDATORY.
 
 **À documenter** :
+
 - Ancien système (677 tests supprimé)
 - Nouveau système (4 priorités)
 - Console Error Checking Protocol (MCP Playwright)

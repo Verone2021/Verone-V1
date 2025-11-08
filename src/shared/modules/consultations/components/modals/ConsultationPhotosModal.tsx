@@ -1,4 +1,4 @@
-'use client'
+'use client';
 
 /**
  * 🎯 VÉRONE - Modal Gestion Photos Consultation
@@ -9,11 +9,10 @@
  * - Design harmonieux selon guidelines Vérone
  */
 
-import React, { useState } from 'react'
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog'
-import { ButtonV2 } from '@/components/ui/button'
-import { Badge } from '@/components/ui/badge'
-import { Alert, AlertDescription } from '@/components/ui/alert'
+import React, { useState } from 'react';
+
+import Image from 'next/image';
+
 import {
   Upload,
   X,
@@ -23,19 +22,29 @@ import {
   AlertCircle,
   Loader2,
   Camera,
-  RotateCw
-} from 'lucide-react'
-import { cn } from '@/lib/utils'
-import Image from 'next/image'
-import { useConsultationImages } from '@/shared/modules/consultations/hooks'
+  RotateCw,
+} from 'lucide-react';
+
+import { Alert, AlertDescription } from '@/components/ui/alert';
+import { Badge } from '@/components/ui/badge';
+import { ButtonV2 } from '@/components/ui/button';
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+} from '@/components/ui/dialog';
+import { cn } from '@verone/utils';
+import { useConsultationImages } from '@/shared/modules/consultations/hooks';
 
 interface ConsultationPhotosModalProps {
-  isOpen: boolean
-  onClose: () => void
-  consultationId: string
-  consultationTitle: string
-  maxImages?: number
-  onImagesUpdated?: () => void
+  isOpen: boolean;
+  onClose: () => void;
+  consultationId: string;
+  consultationTitle: string;
+  maxImages?: number;
+  onImagesUpdated?: () => void;
 }
 
 export function ConsultationPhotosModal({
@@ -44,7 +53,7 @@ export function ConsultationPhotosModal({
   consultationId,
   consultationTitle,
   maxImages = 20,
-  onImagesUpdated
+  onImagesUpdated,
 }: ConsultationPhotosModalProps) {
   // Hook principal pour gestion images
   const {
@@ -57,32 +66,34 @@ export function ConsultationPhotosModal({
     uploadImage,
     deleteImage,
     setPrimaryImage,
-    fetchImages
+    fetchImages,
   } = useConsultationImages({
     consultationId,
-    autoFetch: true
-  })
+    autoFetch: true,
+  });
 
   // États locaux pour UI
-  const [dragActive, setDragActive] = useState(false)
-  const [deletingImageId, setDeletingImageId] = useState<string | null>(null)
-  const [settingPrimaryId, setSettingPrimaryId] = useState<string | null>(null)
+  const [dragActive, setDragActive] = useState(false);
+  const [deletingImageId, setDeletingImageId] = useState<string | null>(null);
+  const [settingPrimaryId, setSettingPrimaryId] = useState<string | null>(null);
 
   // Référence pour l'input file
-  const fileInputRef = React.useRef<HTMLInputElement>(null)
+  const fileInputRef = React.useRef<HTMLInputElement>(null);
 
   /**
    * 📁 Gestion upload fichiers multiples
    */
   const handleFilesDrop = async (files: FileList) => {
-    if (!files || files.length === 0) return
+    if (!files || files.length === 0) return;
 
-    const fileArray = Array.from(files)
-    const remainingSlots = maxImages - images.length
+    const fileArray = Array.from(files);
+    const remainingSlots = maxImages - images.length;
 
     if (fileArray.length > remainingSlots) {
-      alert(`⚠️ Vous ne pouvez ajouter que ${remainingSlots} image(s) supplémentaire(s) (limite: ${maxImages})`)
-      return
+      alert(
+        `⚠️ Vous ne pouvez ajouter que ${remainingSlots} image(s) supplémentaire(s) (limite: ${maxImages})`
+      );
+      return;
     }
 
     try {
@@ -91,17 +102,19 @@ export function ConsultationPhotosModal({
           file,
           altText: `Photo consultation ${consultationTitle}`,
           imageType: 'gallery',
-          isPrimary: images.length === 0 // Première image = principale
-        })
+          isPrimary: images.length === 0, // Première image = principale
+        });
       }
 
       // Actualiser la galerie externe
-      onImagesUpdated?.()
+      onImagesUpdated?.();
     } catch (error) {
-      console.error('❌ Erreur upload multiple:', error)
-      alert(`Erreur lors de l'upload: ${error instanceof Error ? error.message : 'Erreur inconnue'}`)
+      console.error('❌ Erreur upload multiple:', error);
+      alert(
+        `Erreur lors de l'upload: ${error instanceof Error ? error.message : 'Erreur inconnue'}`
+      );
     }
-  }
+  };
 
   /**
    * 🗑️ Gestion suppression avec protection image principale
@@ -110,77 +123,77 @@ export function ConsultationPhotosModal({
     if (isPrimary) {
       const confirmDelete = confirm(
         '⚠️ Cette image est définie comme image principale. Êtes-vous sûr de vouloir la supprimer ?\n\nUne autre image sera automatiquement définie comme principale.'
-      )
-      if (!confirmDelete) return
+      );
+      if (!confirmDelete) return;
     }
 
-    setDeletingImageId(imageId)
+    setDeletingImageId(imageId);
     try {
-      await deleteImage(imageId)
-      onImagesUpdated?.()
+      await deleteImage(imageId);
+      onImagesUpdated?.();
     } catch (error) {
-      console.error('❌ Erreur suppression image:', error)
+      console.error('❌ Erreur suppression image:', error);
     } finally {
-      setDeletingImageId(null)
+      setDeletingImageId(null);
     }
-  }
+  };
 
   /**
    * ⭐ Gestion changement image principale
    */
   const handleSetPrimary = async (imageId: string) => {
-    setSettingPrimaryId(imageId)
+    setSettingPrimaryId(imageId);
     try {
-      await setPrimaryImage(imageId)
-      onImagesUpdated?.()
+      await setPrimaryImage(imageId);
+      onImagesUpdated?.();
     } catch (error) {
-      console.error('❌ Erreur changement image principale:', error)
+      console.error('❌ Erreur changement image principale:', error);
     } finally {
-      setSettingPrimaryId(null)
+      setSettingPrimaryId(null);
     }
-  }
+  };
 
   /**
    * 🖱️ Gestionnaires drag & drop
    */
   const handleDrag = (e: React.DragEvent) => {
-    e.preventDefault()
-    e.stopPropagation()
-  }
+    e.preventDefault();
+    e.stopPropagation();
+  };
 
   const handleDragIn = (e: React.DragEvent) => {
-    e.preventDefault()
-    e.stopPropagation()
-    setDragActive(true)
-  }
+    e.preventDefault();
+    e.stopPropagation();
+    setDragActive(true);
+  };
 
   const handleDragOut = (e: React.DragEvent) => {
-    e.preventDefault()
-    e.stopPropagation()
-    setDragActive(false)
-  }
+    e.preventDefault();
+    e.stopPropagation();
+    setDragActive(false);
+  };
 
   const handleDrop = (e: React.DragEvent) => {
-    e.preventDefault()
-    e.stopPropagation()
-    setDragActive(false)
+    e.preventDefault();
+    e.stopPropagation();
+    setDragActive(false);
 
-    const files = e.dataTransfer.files
+    const files = e.dataTransfer.files;
     if (files) {
-      handleFilesDrop(files)
+      handleFilesDrop(files);
     }
-  }
+  };
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const files = e.target.files
+    const files = e.target.files;
     if (files) {
-      handleFilesDrop(files)
+      handleFilesDrop(files);
     }
     // Reset input
     if (e.target) {
-      e.target.value = ''
+      e.target.value = '';
     }
-  }
+  };
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
@@ -189,12 +202,17 @@ export function ConsultationPhotosModal({
           <DialogTitle className="flex items-center gap-1">
             <Camera className="h-3 w-3 text-purple-600" />
             <div className="flex flex-col">
-              <span className="text-xs font-semibold text-black">Gestion des photos</span>
-              <span className="text-xs text-gray-600 font-normal">{consultationTitle}</span>
+              <span className="text-xs font-semibold text-black">
+                Gestion des photos
+              </span>
+              <span className="text-xs text-gray-600 font-normal">
+                {consultationTitle}
+              </span>
             </div>
           </DialogTitle>
           <DialogDescription>
-            Gérez les photos de la consultation : ajout, suppression, image principale
+            Gérez les photos de la consultation : ajout, suppression, image
+            principale
           </DialogDescription>
         </DialogHeader>
 
@@ -203,8 +221,12 @@ export function ConsultationPhotosModal({
           <div className="flex items-center justify-between bg-gray-50 p-1 rounded">
             <div className="flex items-center gap-1">
               <div className="text-center">
-                <div className="text-xs font-bold text-black">{images.length}</div>
-                <div className="text-xs text-gray-600">Photo{images.length > 1 ? 's' : ''}</div>
+                <div className="text-xs font-bold text-black">
+                  {images.length}
+                </div>
+                <div className="text-xs text-gray-600">
+                  Photo{images.length > 1 ? 's' : ''}
+                </div>
               </div>
               <div className="text-center">
                 <div className="text-xs font-bold text-purple-600">
@@ -213,7 +235,9 @@ export function ConsultationPhotosModal({
                 <div className="text-xs text-gray-600">Principale</div>
               </div>
               <div className="text-center">
-                <div className="text-xs font-bold text-green-600">{maxImages - images.length}</div>
+                <div className="text-xs font-bold text-green-600">
+                  {maxImages - images.length}
+                </div>
                 <div className="text-xs text-gray-600">Restantes</div>
               </div>
             </div>
@@ -232,10 +256,11 @@ export function ConsultationPhotosModal({
           {images.length < maxImages && (
             <div
               className={cn(
-                "relative border-2 border-dashed border-purple-300 rounded p-1 text-center transition-all",
-                dragActive && "border-purple-600 bg-purple-50",
-                error && "border-red-500 bg-red-50",
-                !uploading && "cursor-pointer hover:border-purple-400 hover:bg-purple-50/50"
+                'relative border-2 border-dashed border-purple-300 rounded p-1 text-center transition-all',
+                dragActive && 'border-purple-600 bg-purple-50',
+                error && 'border-red-500 bg-red-50',
+                !uploading &&
+                  'cursor-pointer hover:border-purple-400 hover:bg-purple-50/50'
               )}
               onDragEnter={handleDragIn}
               onDragLeave={handleDragOut}
@@ -269,7 +294,8 @@ export function ConsultationPhotosModal({
                     Cliquez ou glissez-déposez vos images ici
                   </p>
                   <p className="text-xs text-gray-500 mt-1">
-                    JPG, PNG, WebP • Max 10MB par image • Jusqu'à {maxImages - images.length} image(s)
+                    JPG, PNG, WebP • Max 10MB par image • Jusqu'à{' '}
+                    {maxImages - images.length} image(s)
                   </p>
                   {images.length === 0 && (
                     <p className="text-xs text-purple-600 mt-1 font-medium">
@@ -292,7 +318,7 @@ export function ConsultationPhotosModal({
           {/* Grille d'images */}
           {hasImages ? (
             <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-1">
-              {images.map((image) => (
+              {images.map(image => (
                 <div
                   key={image.id}
                   className="group relative aspect-square bg-gray-100 rounded overflow-hidden border-2 border-gray-200 hover:border-purple-400 transition-all"
@@ -336,7 +362,9 @@ export function ConsultationPhotosModal({
                       <ButtonV2
                         size="sm"
                         variant="destructive"
-                        onClick={() => handleDeleteImage(image.id, image.is_primary)}
+                        onClick={() =>
+                          handleDeleteImage(image.id, image.is_primary)
+                        }
                         disabled={deletingImageId === image.id}
                       >
                         {deletingImageId === image.id ? (
@@ -357,7 +385,9 @@ export function ConsultationPhotosModal({
             <div className="text-center py-12 text-gray-500">
               <Camera className="h-3 w-3 text-gray-300 mx-auto mb-1" />
               <p className="text-xs">Aucune photo pour cette consultation</p>
-              <p className="text-xs mt-1">Ajoutez des photos via la zone ci-dessus</p>
+              <p className="text-xs mt-1">
+                Ajoutez des photos via la zone ci-dessus
+              </p>
             </div>
           )}
         </div>
@@ -374,5 +404,5 @@ export function ConsultationPhotosModal({
         </div>
       </DialogContent>
     </Dialog>
-  )
+  );
 }

@@ -1,42 +1,56 @@
-"use client"
+'use client';
 
-import { useState } from 'react'
-import { X, Loader2, AlertTriangle, CheckCircle } from 'lucide-react'
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
-import { ButtonV2 } from '@/components/ui/button'
-import { Badge } from '@/components/ui/badge'
-import { Input } from '@/components/ui/input'
-import { Label } from '@/components/ui/label'
-import { Textarea } from '@/components/ui/textarea'
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
-import { cn } from '@/lib/utils'
+import { useState } from 'react';
 
-export type ActionType = 'create' | 'update' | 'delete' | 'confirm' | 'custom'
+import { X, Loader2, AlertTriangle, CheckCircle } from 'lucide-react';
+
+import { Badge } from '@/components/ui/badge';
+import { ButtonV2 } from '@/components/ui/button';
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from '@/components/ui/card';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
+import { Textarea } from '@/components/ui/textarea';
+import { cn } from '@verone/utils';
+
+export type ActionType = 'create' | 'update' | 'delete' | 'confirm' | 'custom';
 
 export interface QuickActionField {
-  name: string
-  label: string
-  type: 'text' | 'number' | 'textarea' | 'select' | 'email' | 'password'
-  placeholder?: string
-  required?: boolean
-  options?: { value: string; label: string }[]
-  defaultValue?: string | number
-  validation?: (value: any) => string | null
+  name: string;
+  label: string;
+  type: 'text' | 'number' | 'textarea' | 'select' | 'email' | 'password';
+  placeholder?: string;
+  required?: boolean;
+  options?: { value: string; label: string }[];
+  defaultValue?: string | number;
+  validation?: (value: any) => string | null;
 }
 
 export interface QuickActionModalProps {
-  isOpen: boolean
-  onClose: () => void
-  title: string
-  description?: string
-  actionType: ActionType
-  fields?: QuickActionField[]
-  confirmText?: string
-  cancelText?: string
-  destructive?: boolean
-  loading?: boolean
-  onSubmit: (data: Record<string, any>) => Promise<void> | void
-  children?: React.ReactNode
+  isOpen: boolean;
+  onClose: () => void;
+  title: string;
+  description?: string;
+  actionType: ActionType;
+  fields?: QuickActionField[];
+  confirmText?: string;
+  cancelText?: string;
+  destructive?: boolean;
+  loading?: boolean;
+  onSubmit: (data: Record<string, any>) => Promise<void> | void;
+  children?: React.ReactNode;
 }
 
 export function QuickActionModal({
@@ -51,22 +65,22 @@ export function QuickActionModal({
   destructive = false,
   loading = false,
   onSubmit,
-  children
+  children,
 }: QuickActionModalProps) {
-  const [formData, setFormData] = useState<Record<string, any>>({})
-  const [errors, setErrors] = useState<Record<string, string>>({})
-  const [isSubmitting, setIsSubmitting] = useState(false)
+  const [formData, setFormData] = useState<Record<string, any>>({});
+  const [errors, setErrors] = useState<Record<string, string>>({});
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   // Initialiser les valeurs par défaut
   useState(() => {
-    const defaultData: Record<string, any> = {}
+    const defaultData: Record<string, any> = {};
     fields.forEach(field => {
       if (field.defaultValue !== undefined) {
-        defaultData[field.name] = field.defaultValue
+        defaultData[field.name] = field.defaultValue;
       }
-    })
-    setFormData(defaultData)
-  })
+    });
+    setFormData(defaultData);
+  });
 
   const getActionConfig = () => {
     switch (actionType) {
@@ -74,103 +88,103 @@ export function QuickActionModal({
         return {
           confirmText: confirmText || 'Créer',
           variant: 'secondary' as const,
-          icon: null
-        }
+          icon: null,
+        };
       case 'update':
         return {
           confirmText: confirmText || 'Mettre à jour',
           variant: 'secondary' as const,
-          icon: null
-        }
+          icon: null,
+        };
       case 'delete':
         return {
           confirmText: confirmText || 'Supprimer',
           variant: 'destructive' as const,
-          icon: <AlertTriangle className="h-4 w-4" />
-        }
+          icon: <AlertTriangle className="h-4 w-4" />,
+        };
       case 'confirm':
         return {
           confirmText: confirmText || 'Confirmer',
           variant: 'secondary' as const,
-          icon: <CheckCircle className="h-4 w-4" />
-        }
+          icon: <CheckCircle className="h-4 w-4" />,
+        };
       default:
         return {
           confirmText: confirmText || 'Valider',
           variant: 'secondary' as const,
-          icon: null
-        }
+          icon: null,
+        };
     }
-  }
+  };
 
-  const config = getActionConfig()
+  const config = getActionConfig();
 
   const handleInputChange = (name: string, value: any) => {
-    setFormData(prev => ({ ...prev, [name]: value }))
+    setFormData(prev => ({ ...prev, [name]: value }));
 
     // Effacer l'erreur si elle existe
     if (errors[name]) {
-      setErrors(prev => ({ ...prev, [name]: '' }))
+      setErrors(prev => ({ ...prev, [name]: '' }));
     }
-  }
+  };
 
   const validateForm = () => {
-    const newErrors: Record<string, string> = {}
+    const newErrors: Record<string, string> = {};
 
     fields.forEach(field => {
-      const value = formData[field.name]
+      const value = formData[field.name];
 
       // Validation des champs requis
       if (field.required && (!value || value === '')) {
-        newErrors[field.name] = `${field.label} est requis`
-        return
+        newErrors[field.name] = `${field.label} est requis`;
+        return;
       }
 
       // Validation personnalisée
       if (field.validation && value) {
-        const error = field.validation(value)
+        const error = field.validation(value);
         if (error) {
-          newErrors[field.name] = error
+          newErrors[field.name] = error;
         }
       }
 
       // Validation du type email
       if (field.type === 'email' && value && !/\S+@\S+\.\S+/.test(value)) {
-        newErrors[field.name] = 'Email invalide'
+        newErrors[field.name] = 'Email invalide';
       }
 
       // Validation des nombres
       if (field.type === 'number' && value && isNaN(Number(value))) {
-        newErrors[field.name] = 'Doit être un nombre valide'
+        newErrors[field.name] = 'Doit être un nombre valide';
       }
-    })
+    });
 
-    setErrors(newErrors)
-    return Object.keys(newErrors).length === 0
-  }
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault()
+    e.preventDefault();
 
     if (!validateForm()) {
-      return
+      return;
     }
 
-    setIsSubmitting(true)
+    setIsSubmitting(true);
 
     try {
-      await onSubmit(formData)
-      onClose()
+      await onSubmit(formData);
+      onClose();
     } catch (error) {
-      console.error('Erreur lors de la soumission:', error)
+      console.error('Erreur lors de la soumission:', error);
     } finally {
-      setIsSubmitting(false)
+      setIsSubmitting(false);
     }
-  }
+  };
 
   const renderField = (field: QuickActionField) => {
-    const value = formData[field.name] || ''
-    const error = errors[field.name]
+    const value = formData[field.name] || '';
+    const error = errors[field.name];
 
     switch (field.type) {
       case 'select':
@@ -182,9 +196,11 @@ export function QuickActionModal({
             </Label>
             <Select
               value={value}
-              onValueChange={(val) => handleInputChange(field.name, val)}
+              onValueChange={val => handleInputChange(field.name, val)}
             >
-              <SelectTrigger className={cn('border-black', error && 'border-red-500')}>
+              <SelectTrigger
+                className={cn('border-black', error && 'border-red-500')}
+              >
                 <SelectValue placeholder={field.placeholder} />
               </SelectTrigger>
               <SelectContent>
@@ -197,7 +213,7 @@ export function QuickActionModal({
             </Select>
             {error && <p className="text-xs text-red-500">{error}</p>}
           </div>
-        )
+        );
 
       case 'textarea':
         return (
@@ -209,14 +225,17 @@ export function QuickActionModal({
             <Textarea
               id={field.name}
               value={value}
-              onChange={(e) => handleInputChange(field.name, e.target.value)}
+              onChange={e => handleInputChange(field.name, e.target.value)}
               placeholder={field.placeholder}
-              className={cn('border-black resize-none', error && 'border-red-500')}
+              className={cn(
+                'border-black resize-none',
+                error && 'border-red-500'
+              )}
               rows={3}
             />
             {error && <p className="text-xs text-red-500">{error}</p>}
           </div>
-        )
+        );
 
       default:
         return (
@@ -229,18 +248,18 @@ export function QuickActionModal({
               id={field.name}
               type={field.type}
               value={value}
-              onChange={(e) => handleInputChange(field.name, e.target.value)}
+              onChange={e => handleInputChange(field.name, e.target.value)}
               placeholder={field.placeholder}
               className={cn('border-black', error && 'border-red-500')}
             />
             {error && <p className="text-xs text-red-500">{error}</p>}
           </div>
-        )
+        );
     }
-  }
+  };
 
   if (!isOpen) {
-    return null
+    return null;
   }
 
   return (
@@ -253,7 +272,10 @@ export function QuickActionModal({
                 {config.icon}
                 <span>{title}</span>
                 {destructive && (
-                  <Badge variant="outline" className="border-red-300 text-red-600">
+                  <Badge
+                    variant="outline"
+                    className="border-red-300 text-red-600"
+                  >
                     Attention
                   </Badge>
                 )}
@@ -300,7 +322,9 @@ export function QuickActionModal({
                 type="submit"
                 variant={destructive ? 'destructive' : 'secondary'}
                 disabled={isSubmitting || loading}
-                className={destructive ? '' : 'bg-black hover:bg-gray-800 text-white'}
+                className={
+                  destructive ? '' : 'bg-black hover:bg-gray-800 text-white'
+                }
               >
                 {(isSubmitting || loading) && (
                   <Loader2 className="h-4 w-4 mr-2 animate-spin" />
@@ -312,26 +336,29 @@ export function QuickActionModal({
         </CardContent>
       </Card>
     </div>
-  )
+  );
 }
 
 // Hooks et fonctions utilitaires pour faciliter l'utilisation
 
 export function useQuickActionModal() {
-  const [isOpen, setIsOpen] = useState(false)
-  const [config, setConfig] = useState<Partial<QuickActionModalProps>>({})
+  const [isOpen, setIsOpen] = useState(false);
+  const [config, setConfig] = useState<Partial<QuickActionModalProps>>({});
 
   const openModal = (modalConfig: Partial<QuickActionModalProps>) => {
-    setConfig(modalConfig)
-    setIsOpen(true)
-  }
+    setConfig(modalConfig);
+    setIsOpen(true);
+  };
 
   const closeModal = () => {
-    setIsOpen(false)
-    setConfig({})
-  }
+    setIsOpen(false);
+    setConfig({});
+  };
 
-  const Modal = ({ children, ...props }: Partial<QuickActionModalProps> & { children?: React.ReactNode }) => (
+  const Modal = ({
+    children,
+    ...props
+  }: Partial<QuickActionModalProps> & { children?: React.ReactNode }) => (
     <QuickActionModal
       {...config}
       {...(props as any)}
@@ -340,18 +367,20 @@ export function useQuickActionModal() {
     >
       {children}
     </QuickActionModal>
-  )
+  );
 
   return {
     openModal,
     closeModal,
     Modal,
-    isOpen
-  }
+    isOpen,
+  };
 }
 
 // Modals préconfigurés pour des actions communes
-export const StockAdjustmentModal = (props: Omit<QuickActionModalProps, 'fields' | 'title' | 'actionType'>) => (
+export const StockAdjustmentModal = (
+  props: Omit<QuickActionModalProps, 'fields' | 'title' | 'actionType'>
+) => (
   <QuickActionModal
     {...props}
     title="Ajuster Stock"
@@ -362,7 +391,8 @@ export const StockAdjustmentModal = (props: Omit<QuickActionModalProps, 'fields'
         label: 'Nouvelle quantité',
         type: 'number',
         required: true,
-        validation: (value) => value < 0 ? 'La quantité ne peut pas être négative' : null
+        validation: value =>
+          value < 0 ? 'La quantité ne peut pas être négative' : null,
       },
       {
         name: 'reason',
@@ -373,20 +403,22 @@ export const StockAdjustmentModal = (props: Omit<QuickActionModalProps, 'fields'
           { value: 'inventory_found', label: 'Inventaire trouvaille' },
           { value: 'damaged', label: 'Produit endommagé' },
           { value: 'correction', label: 'Correction' },
-          { value: 'other', label: 'Autre' }
-        ]
+          { value: 'other', label: 'Autre' },
+        ],
       },
       {
         name: 'notes',
         label: 'Notes',
         type: 'textarea',
-        placeholder: 'Détails de l\'ajustement...'
-      }
+        placeholder: "Détails de l'ajustement...",
+      },
     ]}
   />
-)
+);
 
-export const QuickOrderModal = (props: Omit<QuickActionModalProps, 'fields' | 'title' | 'actionType'>) => (
+export const QuickOrderModal = (
+  props: Omit<QuickActionModalProps, 'fields' | 'title' | 'actionType'>
+) => (
   <QuickActionModal
     {...props}
     title="Commande Rapide"
@@ -397,27 +429,28 @@ export const QuickOrderModal = (props: Omit<QuickActionModalProps, 'fields' | 't
         label: 'Fournisseur',
         type: 'select',
         required: true,
-        options: [] // À peupler dynamiquement
+        options: [], // À peupler dynamiquement
       },
       {
         name: 'quantity',
         label: 'Quantité',
         type: 'number',
         required: true,
-        validation: (value) => value <= 0 ? 'La quantité doit être positive' : null
+        validation: value =>
+          value <= 0 ? 'La quantité doit être positive' : null,
       },
       {
         name: 'unit_price',
         label: 'Prix unitaire',
         type: 'number',
-        placeholder: '0.00'
+        placeholder: '0.00',
       },
       {
         name: 'notes',
         label: 'Notes commande',
         type: 'textarea',
-        placeholder: 'Informations supplémentaires...'
-      }
+        placeholder: 'Informations supplémentaires...',
+      },
     ]}
   />
-)
+);

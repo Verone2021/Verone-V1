@@ -1,38 +1,44 @@
-"use client"
+'use client';
 
-import * as React from "react"
-import Image from "next/image"
-import { Badge } from "@/components/ui/badge"
-import { Package2 } from "lucide-react"
-import { cn } from "@/lib/utils"
-import { formatStatusForDisplay, type ProductStatus } from "@/lib/product-status-utils"
+import * as React from 'react';
+
+import Image from 'next/image';
+
+import { Package2 } from 'lucide-react';
+
+import { Badge } from '@/components/ui/badge';
+import {
+  formatStatusForDisplay,
+  type ProductStatus,
+} from '@/lib/product-status-utils';
+import { cn } from '@verone/utils';
 
 interface ProductVariantGridCardProps {
   variant: {
-    id: string
-    name: string
-    sku?: string | null
-    selling_price?: number | null
-    price_ht?: number | null
-    status?: string | null
-    primary_image_url?: string | null
-    variant_attributes?: Record<string, string | number> | null
-    is_primary?: boolean
-  }
-  onClick?: (variantId: string) => void
-  isCurrentProduct?: boolean
-  className?: string
+    id: string;
+    name: string;
+    sku?: string | null;
+    selling_price?: number | null;
+    price_ht?: number | null;
+    status?: string | null;
+    primary_image_url?: string | null;
+    variant_attributes?: Record<string, string | number> | null;
+    is_primary?: boolean;
+  };
+  onClick?: (variantId: string) => void;
+  isCurrentProduct?: boolean;
+  className?: string;
 }
 
 // Helper: Formater prix compact
 function formatPriceCompact(price: number | null | undefined): string {
-  if (price === null || price === undefined) return "—"
+  if (price === null || price === undefined) return '—';
   return new Intl.NumberFormat('fr-FR', {
     style: 'currency',
     currency: 'EUR',
     minimumFractionDigits: 0,
     maximumFractionDigits: 2,
-  }).format(price)
+  }).format(price);
 }
 
 export function ProductVariantGridCard({
@@ -41,44 +47,48 @@ export function ProductVariantGridCard({
   isCurrentProduct = false,
   className,
 }: ProductVariantGridCardProps) {
-  const price = variant.selling_price ?? variant.price_ht
+  const price = variant.selling_price ?? variant.price_ht;
   const statusDisplay = variant.status
     ? formatStatusForDisplay(variant.status as ProductStatus)
-    : { label: "—", variant: "secondary" as const }
+    : { label: '—', variant: 'secondary' as const };
 
   // Extraire 2 premiers attributs pour affichage compact
   const attributes = variant.variant_attributes
     ? Object.entries(variant.variant_attributes).slice(0, 2)
-    : []
+    : [];
 
   const handleClick = () => {
     if (onClick && !isCurrentProduct) {
-      onClick(variant.id)
+      onClick(variant.id);
     }
-  }
+  };
 
   return (
     <div
       className={cn(
-        "group relative border rounded-lg p-2 transition-all duration-150",
-        "hover:shadow-md",
+        'group relative border rounded-lg p-2 transition-all duration-150',
+        'hover:shadow-md',
         isCurrentProduct
-          ? "border-primary-500 bg-primary-50/50 shadow-sm"
-          : "border-neutral-200 bg-white hover:border-primary-300",
-        !isCurrentProduct && onClick && "cursor-pointer",
-        isCurrentProduct && "ring-2 ring-primary-500 ring-offset-1",
+          ? 'border-primary-500 bg-primary-50/50 shadow-sm'
+          : 'border-neutral-200 bg-white hover:border-primary-300',
+        !isCurrentProduct && onClick && 'cursor-pointer',
+        isCurrentProduct && 'ring-2 ring-primary-500 ring-offset-1',
         className
       )}
       onClick={handleClick}
-      role={onClick && !isCurrentProduct ? "button" : undefined}
+      role={onClick && !isCurrentProduct ? 'button' : undefined}
       tabIndex={onClick && !isCurrentProduct ? 0 : undefined}
-      onKeyDown={(e) => {
-        if (onClick && !isCurrentProduct && (e.key === "Enter" || e.key === " ")) {
-          e.preventDefault()
-          handleClick()
+      onKeyDown={e => {
+        if (
+          onClick &&
+          !isCurrentProduct &&
+          (e.key === 'Enter' || e.key === ' ')
+        ) {
+          e.preventDefault();
+          handleClick();
         }
       }}
-      aria-current={isCurrentProduct ? "true" : undefined}
+      aria-current={isCurrentProduct ? 'true' : undefined}
     >
       {/* Badge "Actuel" si c'est le produit courant */}
       {isCurrentProduct && (
@@ -132,10 +142,12 @@ export function ProductVariantGridCard({
           )}
 
           {/* Prix */}
-          <p className={cn(
-            "text-sm font-semibold leading-tight",
-            price ? "text-primary-600" : "text-neutral-400"
-          )}>
+          <p
+            className={cn(
+              'text-sm font-semibold leading-tight',
+              price ? 'text-primary-600' : 'text-neutral-400'
+            )}
+          >
             {formatPriceCompact(price)}
           </p>
         </div>
@@ -170,5 +182,5 @@ export function ProductVariantGridCard({
         <div className="absolute inset-0 rounded-lg bg-primary-500/0 group-hover:bg-primary-500/5 transition-colors duration-150 pointer-events-none" />
       )}
     </div>
-  )
+  );
 }

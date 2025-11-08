@@ -25,9 +25,9 @@ Modal wrapper pour création rapide produit sourcing.
 
 ```typescript
 interface QuickSourcingModalProps {
-  open: boolean
-  onClose: () => void
-  onSuccess?: () => void
+  open: boolean;
+  onClose: () => void;
+  onSuccess?: () => void;
 }
 ```
 
@@ -69,9 +69,9 @@ Formulaire simplifié 3 champs pour création rapide.
 
 ```typescript
 interface SourcingQuickFormProps {
-  onSuccess?: (productId: string) => void
-  onCancel?: () => void
-  showHeader?: boolean
+  onSuccess?: (productId: string) => void;
+  onCancel?: () => void;
+  showHeader?: boolean;
 }
 ```
 
@@ -98,8 +98,8 @@ interface SourcingQuickFormProps {
 const schema = z.object({
   name: z.string().min(3, 'Minimum 3 caractères'),
   supplier_page_url: z.string().url('URL invalide'),
-  cost_price: z.number().positive('Prix doit être > 0')
-})
+  cost_price: z.number().positive('Prix doit être > 0'),
+});
 ```
 
 ### Usage
@@ -134,10 +134,10 @@ Modal édition complète produit sourcing.
 
 ```typescript
 interface EditSourcingProductModalProps {
-  open: boolean
-  onClose: () => void
-  product: SourcingProduct
-  onUpdate?: () => void
+  open: boolean;
+  onClose: () => void;
+  product: SourcingProduct;
+  onUpdate?: () => void;
 }
 ```
 
@@ -191,9 +191,9 @@ Modal affichage détails produit sourcing (read-only).
 
 ```typescript
 interface SourcingProductModalProps {
-  open: boolean
-  onClose: () => void
-  productId: string
+  open: boolean;
+  onClose: () => void;
+  productId: string;
 }
 ```
 

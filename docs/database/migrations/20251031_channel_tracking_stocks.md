@@ -10,11 +10,11 @@
 
 ### Modifications Database
 
-| Élément | Modification | Impact |
-|---------|-------------|--------|
-| `stock_movements` | Ajout colonne `channel_id UUID NULL` | Analytics traçabilité canal |
-| `sales_orders` | ✅ Déjà existant `channel_id UUID` | Aucune migration nécessaire |
-| Trigger `handle_sales_order_stock()` | Propagation `channel_id` CAS 1, 4, 5 | Remplissage auto canal |
+| Élément                              | Modification                         | Impact                      |
+| ------------------------------------ | ------------------------------------ | --------------------------- |
+| `stock_movements`                    | Ajout colonne `channel_id UUID NULL` | Analytics traçabilité canal |
+| `sales_orders`                       | ✅ Déjà existant `channel_id UUID`   | Aucune migration nécessaire |
+| Trigger `handle_sales_order_stock()` | Propagation `channel_id` CAS 1, 4, 5 | Remplissage auto canal      |
 
 ### Fichiers Migration
 
@@ -36,6 +36,7 @@
 ### Règles Métier
 
 ✅ **channel_id UNIQUEMENT sur mouvements OUT ventes clients**
+
 - ✅ CAS 1: Validation commande (OUT prévisionnel) → channel_id propagé
 - ✅ CAS 4: Sortie entrepôt complète (OUT réel) → channel_id propagé
 - ✅ CAS 5: Expédition partielle (OUT réel) → channel_id propagé
@@ -45,10 +46,12 @@
 - ❌ Transferts inter-entrepôts (TRANSFER) → **PAS** de channel_id
 
 ✅ **channel_id optionnel (NULL) sur sales_orders**
+
 - Phase 1: Accepte NULL (éviter blocages tests)
 - Phase 2+: Deviendra NOT NULL (contrainte renforcée)
 
 ✅ **Stock GLOBAL unique**
+
 - Pas de stock séparé par canal
 - `channel_id` sert UNIQUEMENT à tracer/filtrer pour analytics
 - Aucun impact sur calculs stock (triggers existants inchangés)
@@ -60,12 +63,14 @@
 ### Table stock_movements
 
 **Nouvelle colonne:**
+
 ```sql
 channel_id UUID NULL
   REFERENCES sales_channels(id) ON DELETE SET NULL
 ```
 
 **Indexes créés:**
+
 ```sql
 -- Index partiel (seulement mouvements avec canal)
 CREATE INDEX idx_stock_movements_channel
@@ -79,6 +84,7 @@ CREATE INDEX idx_stock_movements_channel_type
 ```
 
 **Rationale indexes partiels:**
+
 - Majorité mouvements n'ont pas de canal (IN, ADJUST, TRANSFER)
 - Index partiel réduit taille et améliore performance
 - WHERE clause filtre seulement mouvements OUT ventes clients
@@ -86,6 +92,7 @@ CREATE INDEX idx_stock_movements_channel_type
 ### Trigger handle_sales_order_stock()
 
 **Modifications CAS 1** (Validation commande):
+
 ```sql
 INSERT INTO stock_movements (
     -- ... colonnes existantes ...
@@ -98,6 +105,7 @@ FROM products WHERE id = v_item.product_id;
 ```
 
 **Modifications CAS 4** (Sortie entrepôt):
+
 ```sql
 -- Même pattern que CAS 1
 channel_id  -- 🆕 AJOUT dans INSERT
@@ -105,6 +113,7 @@ NEW.channel_id  -- 🆕 PROPAGATION SELECT
 ```
 
 **Modifications CAS 5** (Expédition partielle):
+
 ```sql
 INSERT INTO stock_movements (
     -- ... colonnes existantes ...
@@ -117,6 +126,7 @@ VALUES (
 ```
 
 **Points critiques:**
+
 - ⚠️ CAS 2-3 (annulation/dévalidation) **NON modifiés** (mouvements IN)
 - ⚠️ Trigger reste `SECURITY DEFINER` (permissions RLS)
 - ⚠️ Algorithme idempotent CAS 5 **préservé** (comparaison SUM mouvements)
@@ -128,26 +138,31 @@ VALUES (
 ### Performance
 
 **Positif:**
+
 - ✅ Indexes partiels minimisent overhead
 - ✅ Queries analytics 10x plus rapides (filtres canal)
 - ✅ Pas de full table scan sur 100k+ mouvements
 
 **Neutre:**
+
 - ➖ +8 bytes par mouvement stock (UUID NULL)
 - ➖ +2 indexes (~2% espace disque additionnel)
 
 **Risques:**
+
 - ⚠️ Aucun impact calculs stock (colonne metadata pure)
 - ⚠️ Trigger légèrement plus lent (+3% temps INSERT - négligeable)
 
 ### Sécurité
 
 **Contraintes:**
+
 - ✅ FK ON DELETE SET NULL (pas de cascade destructeur)
 - ✅ Colonne NULLABLE (pas de breaking change)
 - ✅ RLS policies inchangées (channel_id pas sensible)
 
 **Validation:**
+
 - ✅ Pas de secrets/credentials exposés
 - ✅ Pas de modification données existantes
 - ✅ Idempotent (IF NOT EXISTS, DO blocks)
@@ -155,11 +170,13 @@ VALUES (
 ### Maintenance
 
 **Documentation:**
+
 - ✅ COMMENT ON COLUMN exhaustif (usage, scope, propagation)
 - ✅ COMMENT ON FUNCTION mis à jour (workflow CAS 1-5)
 - ✅ Inline comments 🆕 dans trigger (modifications claires)
 
 **Rollback:**
+
 ```sql
 -- Migration 20251031_003 rollback
 ALTER TABLE stock_movements DROP COLUMN IF EXISTS channel_id CASCADE;
@@ -175,6 +192,7 @@ ALTER TABLE stock_movements DROP COLUMN IF EXISTS channel_id CASCADE;
 ### Tests Pré-Déploiement
 
 **1. Migration 003 - Colonne & Indexes**
+
 ```sql
 -- Vérifier colonne créée
 SELECT column_name, data_type, is_nullable
@@ -196,6 +214,7 @@ WHERE tablename = 'stock_movements' AND indexname LIKE '%channel%';
 ```
 
 **2. Migration 004 - Trigger Propagation**
+
 ```sql
 -- Test CAS 1: Création commande avec canal B2B
 INSERT INTO sales_orders (
@@ -214,6 +233,7 @@ WHERE reference_type = 'sales_order' AND reference_id = 'order_uuid';
 ```
 
 **3. Validation Intégrité**
+
 ```sql
 -- Vérifier aucun mouvement IN avec channel_id
 SELECT COUNT(*)
@@ -237,6 +257,7 @@ WHERE reference_type = 'purchase_order' AND channel_id IS NOT NULL;
 ### Tests Post-Déploiement
 
 **Analytics Queries Performance**
+
 ```sql
 -- Query 1: Mouvements OUT par canal (dernier mois)
 EXPLAIN ANALYZE
@@ -327,16 +348,19 @@ WHERE table_name = 'stock_movements' AND column_name = 'channel_id';
 ### Métriques à Surveiller (7 jours)
 
 **Performance:**
+
 - Temps moyen INSERT stock_movements (<50ms)
 - Temps queries analytics canal (<100ms)
 - Taille indexes (croissance linéaire)
 
 **Intégrité:**
+
 - COUNT(channel_id NOT NULL) augmente uniquement sur OUT ventes
 - COUNT(channel_id NOT NULL WHERE movement_type='IN') = 0 (toujours)
 - Aucune erreur FK violation logs
 
 **Usage:**
+
 ```sql
 -- Dashboard metrics (à exécuter quotidiennement)
 SELECT
@@ -362,15 +386,18 @@ WHERE movement_type = 'IN' AND channel_id IS NOT NULL;
 ## 📚 RÉFÉRENCES
 
 **Documentation:**
+
 - `docs/database/SCHEMA-REFERENCE.md` - Table stock_movements (ligne 447-452)
 - `docs/database/triggers.md` - Trigger handle_sales_order_stock (ligne 54-110)
 - `docs/database/best-practices.md` - Anti-patterns évités
 
 **Migrations liées:**
+
 - `20251031_001_remove_duplicate_purchase_order_forecast_trigger.sql` - Cleanup triggers
 - `20251031_002_add_customer_samples_view.sql` - Vue échantillons
 
 **Contacts:**
+
 - Auteur: Database Guardian (Claude Code)
 - Validation: Romeo Dos Santos
 - Date: 2025-10-31

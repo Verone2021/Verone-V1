@@ -1,115 +1,146 @@
-'use client'
+'use client';
 
-import { useState, useEffect } from 'react'
-import { Search, Package, Zap, Info, ExternalLink } from 'lucide-react'
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
-import { ButtonV2 } from '@/components/ui/button'
-import { Input } from '@/components/ui/input'
-import { Label } from '@/components/ui/label'
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
-import { Badge } from '@/components/ui/badge'
-import { Alert, AlertDescription } from '@/components/ui/alert'
-import { createClient } from '@/lib/supabase/client'
+import { useState, useEffect } from 'react';
 
-const supabase = createClient()
+import { Search, Package, Zap, Info, ExternalLink } from 'lucide-react';
+
+import { Alert, AlertDescription } from '@/components/ui/alert';
+import { Badge } from '@/components/ui/badge';
+import { ButtonV2 } from '@/components/ui/button';
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from '@/components/ui/card';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { createClient } from '@/lib/supabase/client';
+
+const supabase = createClient();
 
 interface Product {
-  id: string
-  name: string
-  sku: string
-  status: string
-  creation_mode: string
-  requires_sample: boolean
-  supplier_name?: string
-  product_type: string
-  assigned_client_id?: string
+  id: string;
+  name: string;
+  sku: string;
+  status: string;
+  creation_mode: string;
+  requires_sample: boolean;
+  supplier_name?: string;
+  product_type: string;
+  assigned_client_id?: string;
 }
 
 interface ProductSelectorProps {
-  consultationId?: string
-  onProductSelect: (product: Product) => void
-  selectedProductId?: string
-  className?: string
+  consultationId?: string;
+  onProductSelect: (product: Product) => void;
+  selectedProductId?: string;
+  className?: string;
 }
 
 export function ProductSelector({
   consultationId,
   onProductSelect,
   selectedProductId,
-  className
+  className,
 }: ProductSelectorProps) {
-  const [products, setProducts] = useState<Product[]>([])
-  const [loading, setLoading] = useState(false)
-  const [searchTerm, setSearchTerm] = useState('')
-  const [activeTab, setActiveTab] = useState('all')
+  const [products, setProducts] = useState<Product[]>([]);
+  const [loading, setLoading] = useState(false);
+  const [searchTerm, setSearchTerm] = useState('');
+  const [activeTab, setActiveTab] = useState('all');
 
   // Charger les produits éligibles
   const loadProducts = async () => {
     try {
-      setLoading(true)
+      setLoading(true);
 
-      const { data, error } = await supabase
-        .rpc('get_consultation_eligible_products', {
-          target_consultation_id: consultationId || undefined
-        })
+      const { data, error } = await supabase.rpc(
+        'get_consultation_eligible_products',
+        {
+          target_consultation_id: consultationId || undefined,
+        }
+      );
 
-      if (error) throw error
-      setProducts(data || [])
+      if (error) throw error;
+      setProducts(data || []);
     } catch (err) {
-      console.error('Erreur chargement produits:', err)
+      console.error('Erreur chargement produits:', err);
     } finally {
-      setLoading(false)
+      setLoading(false);
     }
-  }
+  };
 
   useEffect(() => {
-    loadProducts()
-  }, [consultationId])
+    loadProducts();
+  }, [consultationId]);
 
   // Filtrer les produits selon la recherche et l'onglet
   const filteredProducts = products.filter(product => {
     const matchesSearch =
       product.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
       product.sku.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      product.supplier_name?.toLowerCase().includes(searchTerm.toLowerCase())
+      product.supplier_name?.toLowerCase().includes(searchTerm.toLowerCase());
 
     const matchesTab =
       activeTab === 'all' ||
-      (activeTab === 'catalogue' && (product.creation_mode === 'complete' || !product.creation_mode)) ||
-      (activeTab === 'sourcing' && product.creation_mode === 'sourcing')
+      (activeTab === 'catalogue' &&
+        (product.creation_mode === 'complete' || !product.creation_mode)) ||
+      (activeTab === 'sourcing' && product.creation_mode === 'sourcing');
 
-    return matchesSearch && matchesTab
-  })
+    return matchesSearch && matchesTab;
+  });
 
   // Grouper par type
-  const catalogueProducts = filteredProducts.filter(p => p.creation_mode === 'complete' || !p.creation_mode)
-  const sourcingProducts = filteredProducts.filter(p => p.creation_mode === 'sourcing')
+  const catalogueProducts = filteredProducts.filter(
+    p => p.creation_mode === 'complete' || !p.creation_mode
+  );
+  const sourcingProducts = filteredProducts.filter(
+    p => p.creation_mode === 'sourcing'
+  );
 
   const getStatusColor = (status: string) => {
     switch (status) {
-      case 'in_stock': return 'bg-green-100 text-green-800'
-      case 'out_of_stock': return 'bg-red-100 text-red-800'
-      case 'sourcing': return 'bg-blue-100 text-blue-800'
-      case 'preorder': return 'bg-gray-100 text-gray-900'
-      case 'coming_soon': return 'bg-purple-100 text-purple-800'
-      case 'pret_a_commander': return 'bg-gray-100 text-gray-900'
-      case 'echantillon_a_commander': return 'bg-gray-100 text-gray-800'
-      default: return 'bg-gray-100 text-gray-600'
+      case 'in_stock':
+        return 'bg-green-100 text-green-800';
+      case 'out_of_stock':
+        return 'bg-red-100 text-red-800';
+      case 'sourcing':
+        return 'bg-blue-100 text-blue-800';
+      case 'preorder':
+        return 'bg-gray-100 text-gray-900';
+      case 'coming_soon':
+        return 'bg-purple-100 text-purple-800';
+      case 'pret_a_commander':
+        return 'bg-gray-100 text-gray-900';
+      case 'echantillon_a_commander':
+        return 'bg-gray-100 text-gray-800';
+      default:
+        return 'bg-gray-100 text-gray-600';
     }
-  }
+  };
 
   const getStatusLabel = (status: string) => {
     switch (status) {
-      case 'in_stock': return 'En stock'
-      case 'out_of_stock': return 'Rupture'
-      case 'sourcing': return 'Sourcing'
-      case 'preorder': return 'Précommande'
-      case 'coming_soon': return 'Bientôt dispo'
-      case 'pret_a_commander': return 'Prêt à commander'
-      case 'echantillon_a_commander': return 'Échantillon requis'
-      default: return status
+      case 'in_stock':
+        return 'En stock';
+      case 'out_of_stock':
+        return 'Rupture';
+      case 'sourcing':
+        return 'Sourcing';
+      case 'preorder':
+        return 'Précommande';
+      case 'coming_soon':
+        return 'Bientôt dispo';
+      case 'pret_a_commander':
+        return 'Prêt à commander';
+      case 'echantillon_a_commander':
+        return 'Échantillon requis';
+      default:
+        return status;
     }
-  }
+  };
 
   const ProductCard = ({ product }: { product: Product }) => (
     <Card
@@ -130,14 +161,21 @@ export function ProductSelector({
               </Badge>
 
               {product.creation_mode === 'sourcing' && (
-                <Badge variant="outline" className="border-blue-500 text-blue-700">
+                <Badge
+                  variant="outline"
+                  className="border-blue-500 text-blue-700"
+                >
                   <Zap className="h-3 w-3 mr-1" />
                   Sourcing
                 </Badge>
               )}
 
-              {(product.creation_mode === 'complete' || !product.creation_mode) && (
-                <Badge variant="outline" className="border-green-500 text-green-700">
+              {(product.creation_mode === 'complete' ||
+                !product.creation_mode) && (
+                <Badge
+                  variant="outline"
+                  className="border-green-500 text-green-700"
+                >
                   <Package className="h-3 w-3 mr-1" />
                   Catalogue
                 </Badge>
@@ -170,7 +208,7 @@ export function ProductSelector({
         </div>
       </CardContent>
     </Card>
-  )
+  );
 
   if (loading) {
     return (
@@ -182,7 +220,7 @@ export function ProductSelector({
           </div>
         </CardContent>
       </Card>
-    )
+    );
   }
 
   return (
@@ -193,7 +231,8 @@ export function ProductSelector({
           Sélectionner un produit
         </CardTitle>
         <CardDescription>
-          Choisissez un produit du catalogue ou en sourcing pour cette consultation
+          Choisissez un produit du catalogue ou en sourcing pour cette
+          consultation
         </CardDescription>
       </CardHeader>
 
@@ -205,7 +244,7 @@ export function ProductSelector({
             <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
             <Input
               value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
+              onChange={e => setSearchTerm(e.target.value)}
               placeholder="Nom, SKU, fournisseur..."
               className="pl-10 border-black"
             />
@@ -226,10 +265,15 @@ export function ProductSelector({
             </TabsTrigger>
           </TabsList>
 
-          <TabsContent value="all" className="space-y-3 max-h-96 overflow-y-auto">
+          <TabsContent
+            value="all"
+            className="space-y-3 max-h-96 overflow-y-auto"
+          >
             {filteredProducts.length === 0 ? (
               <div className="text-center py-8 text-gray-500">
-                {searchTerm ? 'Aucun produit trouvé' : 'Aucun produit disponible'}
+                {searchTerm
+                  ? 'Aucun produit trouvé'
+                  : 'Aucun produit disponible'}
               </div>
             ) : (
               filteredProducts.map(product => (
@@ -238,7 +282,10 @@ export function ProductSelector({
             )}
           </TabsContent>
 
-          <TabsContent value="catalogue" className="space-y-3 max-h-96 overflow-y-auto">
+          <TabsContent
+            value="catalogue"
+            className="space-y-3 max-h-96 overflow-y-auto"
+          >
             {catalogueProducts.length === 0 ? (
               <div className="text-center py-8 text-gray-500">
                 Aucun produit catalogue disponible
@@ -250,7 +297,10 @@ export function ProductSelector({
             )}
           </TabsContent>
 
-          <TabsContent value="sourcing" className="space-y-3 max-h-96 overflow-y-auto">
+          <TabsContent
+            value="sourcing"
+            className="space-y-3 max-h-96 overflow-y-auto"
+          >
             {sourcingProducts.length === 0 ? (
               <div className="text-center py-8 text-gray-500">
                 Aucun produit sourcing disponible
@@ -268,9 +318,17 @@ export function ProductSelector({
           <Info className="h-4 w-4" />
           <AlertDescription>
             <div className="space-y-1 text-sm">
-              <p><strong>Catalogue :</strong> Produits validés disponibles à la vente</p>
-              <p><strong>Sourcing :</strong> Produits en recherche/développement</p>
-              <p><strong>Échantillon :</strong> Validation qualité recommandée (non bloquante)</p>
+              <p>
+                <strong>Catalogue :</strong> Produits validés disponibles à la
+                vente
+              </p>
+              <p>
+                <strong>Sourcing :</strong> Produits en recherche/développement
+              </p>
+              <p>
+                <strong>Échantillon :</strong> Validation qualité recommandée
+                (non bloquante)
+              </p>
             </div>
           </AlertDescription>
         </Alert>
@@ -278,19 +336,25 @@ export function ProductSelector({
         {/* Statistiques */}
         <div className="grid grid-cols-3 gap-4 pt-4 border-t">
           <div className="text-center">
-            <div className="text-lg font-bold text-black">{products.length}</div>
+            <div className="text-lg font-bold text-black">
+              {products.length}
+            </div>
             <div className="text-xs text-gray-600">Total</div>
           </div>
           <div className="text-center">
-            <div className="text-lg font-bold text-green-600">{catalogueProducts.length}</div>
+            <div className="text-lg font-bold text-green-600">
+              {catalogueProducts.length}
+            </div>
             <div className="text-xs text-gray-600">Catalogue</div>
           </div>
           <div className="text-center">
-            <div className="text-lg font-bold text-blue-600">{sourcingProducts.length}</div>
+            <div className="text-lg font-bold text-blue-600">
+              {sourcingProducts.length}
+            </div>
             <div className="text-xs text-gray-600">Sourcing</div>
           </div>
         </div>
       </CardContent>
     </Card>
-  )
+  );
 }

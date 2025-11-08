@@ -20,6 +20,7 @@
 Documentation des 10+ triggers automatiques de base de données qui maintiennent les métriques à jour, enregistrent les audit logs, et valident les données.
 
 **À documenter** :
+
 - Trigger `updated_at` automatique
 - Triggers mise à jour métriques (compteurs, totaux)
 - Triggers audit trail

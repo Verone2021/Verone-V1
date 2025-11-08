@@ -1,14 +1,7 @@
-'use client'
+'use client';
 
-import { useState } from 'react'
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
-import { ButtonV2 } from '@/components/ui/button'
-import { Badge } from '@/components/ui/badge'
-import { Switch } from '@/components/ui/switch'
-import { Label } from '@/components/ui/label'
-import { Textarea } from '@/components/ui/textarea'
-import { Separator } from '@/components/ui/separator'
-import { SampleOrderButton } from './sample-order-button'
+import { useState } from 'react';
+
 import {
   CheckCircle,
   AlertCircle,
@@ -16,32 +9,41 @@ import {
   Clock,
   User,
   FileText,
-  Settings
-} from 'lucide-react'
-import { cn } from '@/lib/utils'
+  Settings,
+} from 'lucide-react';
+
+import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Label } from '@/components/ui/label';
+import { Separator } from '@/components/ui/separator';
+import { Switch } from '@/components/ui/switch';
+import { Textarea } from '@/components/ui/textarea';
+import { cn } from '@verone/utils';
+import { SampleOrderButton } from '@/shared/modules/ui/components/buttons/SampleOrderButton';
 
 interface SampleRequirementSectionProps {
   // Données de base
-  requiresSample: boolean
-  isProduct?: boolean // true pour produit, false pour brouillon
-  onRequirementChange?: (requiresSample: boolean) => void
+  requiresSample: boolean;
+  isProduct?: boolean; // true pour produit, false pour brouillon
+  onRequirementChange?: (requiresSample: boolean) => void;
 
   // Métadonnées optionnelles pour l'affichage
-  productId?: string  // ID du produit pour commander échantillon
-  productName?: string
-  productType?: 'standard' | 'custom'
-  assignedClientId?: string
+  productId?: string; // ID du produit pour commander échantillon
+  productName?: string;
+  productType?: 'standard' | 'custom';
+  assignedClientId?: string;
   assignedClient?: {
-    id: string
-    name: string
-    type: string
-  }
-  supplierName?: string  // Nom du fournisseur
-  costPrice?: number     // Prix d'achat
+    id: string;
+    name: string;
+    type: string;
+  };
+  supplierName?: string; // Nom du fournisseur
+  costPrice?: number; // Prix d'achat
 
   // État d'édition
-  disabled?: boolean
-  className?: string
+  disabled?: boolean;
+  className?: string;
 }
 
 export function SampleRequirementSection({
@@ -56,14 +58,14 @@ export function SampleRequirementSection({
   supplierName,
   costPrice,
   disabled = false,
-  className
+  className,
 }: SampleRequirementSectionProps) {
-  const [notes, setNotes] = useState('')
-  const [showNotes, setShowNotes] = useState(false)
+  const [notes, setNotes] = useState('');
+  const [showNotes, setShowNotes] = useState(false);
 
   const handleToggle = (newValue: boolean) => {
-    onRequirementChange?.(newValue)
-  }
+    onRequirementChange?.(newValue);
+  };
 
   const getSampleStatusBadge = () => {
     if (requiresSample) {
@@ -72,16 +74,19 @@ export function SampleRequirementSection({
           <AlertCircle className="h-3 w-3 mr-1" />
           Échantillon requis
         </Badge>
-      )
+      );
     } else {
       return (
-        <Badge variant="outline" className="bg-green-50 text-green-700 border-green-200">
+        <Badge
+          variant="outline"
+          className="bg-green-50 text-green-700 border-green-200"
+        >
           <CheckCircle className="h-3 w-3 mr-1" />
           Aucun échantillon
         </Badge>
-      )
+      );
     }
-  }
+  };
 
   const getWorkflowInfo = () => {
     if (!requiresSample) {
@@ -93,7 +98,8 @@ export function SampleRequirementSection({
               <span className="font-medium">Processus normal</span>
             </div>
             <p className="mt-1 text-green-700">
-              Ce produit peut être commandé ou validé directement sans échantillon préalable.
+              Ce produit peut être commandé ou validé directement sans
+              échantillon préalable.
             </p>
           </div>
 
@@ -101,8 +107,12 @@ export function SampleRequirementSection({
           {isProduct && productId && productName && (
             <div className="flex items-center justify-between p-3 bg-blue-50 rounded-lg border border-blue-200">
               <div className="text-sm">
-                <p className="font-medium text-blue-900">Besoin de tester le produit ?</p>
-                <p className="text-blue-700">Commandez un échantillon pour validation qualité</p>
+                <p className="font-medium text-blue-900">
+                  Besoin de tester le produit ?
+                </p>
+                <p className="text-blue-700">
+                  Commandez un échantillon pour validation qualité
+                </p>
               </div>
               <SampleOrderButton
                 productId={productId}
@@ -114,7 +124,7 @@ export function SampleRequirementSection({
             </div>
           )}
         </div>
-      )
+      );
     }
 
     return (
@@ -135,11 +145,11 @@ export function SampleRequirementSection({
           </p>
         )}
       </div>
-    )
-  }
+    );
+  };
 
   return (
-    <Card className={cn("", className)}>
+    <Card className={cn('', className)}>
       <CardHeader>
         <div className="flex items-center justify-between">
           <CardTitle className="flex items-center gap-2">
@@ -203,21 +213,23 @@ export function SampleRequirementSection({
             <Separator />
 
             <div className="flex items-center justify-between">
-              <Label className="text-sm font-medium">Notes sur l'échantillonnage</Label>
-              <ButtonV2
+              <Label className="text-sm font-medium">
+                Notes sur l'échantillonnage
+              </Label>
+              <Button
                 variant="ghost"
                 size="sm"
                 onClick={() => setShowNotes(!showNotes)}
               >
                 <Settings className="h-4 w-4" />
                 {showNotes ? 'Masquer' : 'Ajouter des notes'}
-              </ButtonV2>
+              </Button>
             </div>
 
             {showNotes && (
               <Textarea
                 value={notes}
-                onChange={(e) => setNotes(e.target.value)}
+                onChange={e => setNotes(e.target.value)}
                 placeholder="Instructions spéciales pour l'échantillonnage, matériaux, couleurs, dimensions..."
                 rows={3}
                 disabled={disabled}
@@ -230,11 +242,12 @@ export function SampleRequirementSection({
         {requiresSample && !isProduct && (
           <div className="text-xs text-gray-500 bg-gray-50 p-3 rounded border">
             <FileText className="h-4 w-4 inline mr-1" />
-            <strong>À venir :</strong> Interface de gestion complète des échantillons avec suivi des demandes,
-            validation, et historique sera disponible prochainement.
+            <strong>À venir :</strong> Interface de gestion complète des
+            échantillons avec suivi des demandes, validation, et historique sera
+            disponible prochainement.
           </div>
         )}
       </CardContent>
     </Card>
-  )
+  );
 }

@@ -31,35 +31,39 @@
 
 ```typescript
 // 1. Sequential Thinking
-mcp__sequential-thinking__sequentialthinking({
-  thought: "Analyser formulaire échantillons : champs requis, validations, edge cases",
-  totalThoughts: 8
-})
+mcp__sequential -
+  thinking__sequentialthinking({
+    thought:
+      'Analyser formulaire échantillons : champs requis, validations, edge cases',
+    totalThoughts: 8,
+  });
 
 // 2. Analyse Code Existant (Serena)
-mcp__serena__read_memory("sample-forms-context")
-mcp__serena__get_symbols_overview("src/components/business/payment-form.tsx")
+mcp__serena__read_memory('sample-forms-context');
+mcp__serena__get_symbols_overview('src/components/business/payment-form.tsx');
 // → Identifier pattern react-hook-form + Zod validé
 
 mcp__serena__find_symbol({
-  name_path: "PaymentForm",
+  name_path: 'PaymentForm',
   include_body: false,
-  depth: 1  // Voir methods
-})
+  depth: 1, // Voir methods
+});
 
 // 3. Documentation Officielle
-mcp__context7__resolve-library-id("react-hook-form")
-mcp__context7__get-library-docs({
-  library: "react-hook-form",
-  topic: "validation"
-})
+mcp__context7__resolve - library - id('react-hook-form');
+mcp__context7__get -
+  library -
+  docs({
+    library: 'react-hook-form',
+    topic: 'validation',
+  });
 
 // 4. Business Rules
-Read("docs/business-rules/04-produits/sourcing/sample-orders.md")
-Read("docs/business-rules/03-organisations-contacts/customers/")
+Read('docs/business-rules/04-produits/sourcing/sample-orders.md');
+Read('docs/business-rules/03-organisations-contacts/customers/');
 
 // 5. Database Schema
-Read("docs/database/SCHEMA-REFERENCE.md")
+Read('docs/database/SCHEMA-REFERENCE.md');
 // → Vérifier tables: purchase_orders, purchase_order_items, organisations, customers
 ```
 
@@ -82,6 +86,7 @@ Read("docs/database/SCHEMA-REFERENCE.md")
 
 ```markdown
 ## Contexte
+
 - Fichiers impactés :
   - `src/app/produits/sourcing/echantillons/page.tsx` (formulaire principal)
   - Réutiliser : `src/components/business/customer-selector.tsx`
@@ -97,6 +102,7 @@ Read("docs/database/SCHEMA-REFERENCE.md")
   - sample_type = 'customer' dans purchase_order_items
 
 ## Edge Cases Identifiés
+
 1. Client supprimé → Erreur "Client non trouvé" avec form.setError
 2. Produit sans fournisseur → Afficher warning, autoriser quand même
 3. Quantité > 10 → Validation Zod max(10)
@@ -104,6 +110,7 @@ Read("docs/database/SCHEMA-REFERENCE.md")
 5. Double submit → disabled state pendant loading
 
 ## Approche Technique
+
 1. Schema Zod avec validation conditionnelle B2B/B2C
 2. useForm avec zodResolver
 3. FormField pour chaque champ avec FormMessage
@@ -155,30 +162,35 @@ npm run build
 ```typescript
 // Fichier: src/app/produits/sourcing/echantillons/page.tsx
 
-import { z } from 'zod'
+import { z } from 'zod';
 
 // Schema validation conditionnelle B2B/B2C
-const sampleFormSchema = z.object({
-  customerType: z.enum(['professional', 'individual'], {
-    required_error: 'Type de client requis'
-  }),
-  customerId: z.string().uuid('Client invalide').min(1, 'Client requis'),
-  productId: z.string().uuid('Produit invalide').min(1, 'Produit requis'),
-  quantity: z.number().min(1, 'Min 1').max(10, 'Max 10 échantillons'),
-  deliveryAddress: z.string().optional(),
-  notes: z.string().max(500, 'Max 500 caractères').optional()
-}).refine(data => {
-  // Validation conditionnelle : adresse obligatoire si B2B
-  if (data.customerType === 'professional' && !data.deliveryAddress) {
-    return false
-  }
-  return true
-}, {
-  message: "Adresse de livraison requise pour clients professionnels",
-  path: ["deliveryAddress"]
-})
+const sampleFormSchema = z
+  .object({
+    customerType: z.enum(['professional', 'individual'], {
+      required_error: 'Type de client requis',
+    }),
+    customerId: z.string().uuid('Client invalide').min(1, 'Client requis'),
+    productId: z.string().uuid('Produit invalide').min(1, 'Produit requis'),
+    quantity: z.number().min(1, 'Min 1').max(10, 'Max 10 échantillons'),
+    deliveryAddress: z.string().optional(),
+    notes: z.string().max(500, 'Max 500 caractères').optional(),
+  })
+  .refine(
+    data => {
+      // Validation conditionnelle : adresse obligatoire si B2B
+      if (data.customerType === 'professional' && !data.deliveryAddress) {
+        return false;
+      }
+      return true;
+    },
+    {
+      message: 'Adresse de livraison requise pour clients professionnels',
+      path: ['deliveryAddress'],
+    }
+  );
 
-type SampleFormValues = z.infer<typeof sampleFormSchema>
+type SampleFormValues = z.infer<typeof sampleFormSchema>;
 ```
 
 #### 3.2 useForm Setup
@@ -193,9 +205,9 @@ const form = useForm<SampleFormValues>({
     productId: '',
     quantity: 1,
     deliveryAddress: '',
-    notes: ''
-  }
-})
+    notes: '',
+  },
+});
 ```
 
 #### 3.3 Conversion Champs en FormField
@@ -246,7 +258,7 @@ const form = useForm<SampleFormValues>({
 
 ```typescript
 const onSubmit = async (values: SampleFormValues) => {
-  setSubmitting(true)
+  setSubmitting(true);
 
   try {
     // Insert purchase_order
@@ -256,12 +268,12 @@ const onSubmit = async (values: SampleFormValues) => {
         supplier_id: selectedProduct.supplier_id,
         status: 'pending',
         total_amount: selectedProduct.cost_price * values.quantity,
-        notes: values.notes
+        notes: values.notes,
       })
       .select()
-      .single()
+      .single();
 
-    if (poError) throw poError
+    if (poError) throw poError;
 
     // Insert purchase_order_item (échantillon)
     const { error: itemError } = await supabase
@@ -272,39 +284,36 @@ const onSubmit = async (values: SampleFormValues) => {
         quantity: values.quantity,
         unit_cost: selectedProduct.cost_price,
         sample_type: 'customer',
-        customer_organisation_id: values.customerType === 'professional'
-          ? values.customerId
-          : null,
-        customer_individual_id: values.customerType === 'individual'
-          ? values.customerId
-          : null
-      })
+        customer_organisation_id:
+          values.customerType === 'professional' ? values.customerId : null,
+        customer_individual_id:
+          values.customerType === 'individual' ? values.customerId : null,
+      });
 
-    if (itemError) throw itemError
+    if (itemError) throw itemError;
 
     // Success
     toast({
       title: 'Succès',
-      description: 'Demande d\'échantillon créée'
-    })
+      description: "Demande d'échantillon créée",
+    });
 
-    form.reset()
-    setShowModal(false)
-    router.refresh()
-
+    form.reset();
+    setShowModal(false);
+    router.refresh();
   } catch (error: any) {
-    console.error('Error creating sample order:', error)
+    console.error('Error creating sample order:', error);
     toast({
       title: 'Erreur',
       description: error.message || 'Une erreur est survenue',
-      variant: 'destructive'
-    })
+      variant: 'destructive',
+    });
 
     // Garder formulaire ouvert pour correction
   } finally {
-    setSubmitting(false)
+    setSubmitting(false);
   }
-}
+};
 ```
 
 #### Checklist Phase CODE
@@ -424,7 +433,7 @@ mcp__playwright__browser_console_messages()
 ```typescript
 // Serena Memory
 mcp__serena__write_memory({
-  key: "sample-order-form-validation-pattern",
+  key: 'sample-order-form-validation-pattern',
   content: `
     ## Décisions Architecturales
     - Pattern react-hook-form + Zod avec validation conditionnelle B2B/B2C
@@ -443,8 +452,8 @@ mcp__serena__write_memory({
     - zodResolver rend validation très propre
     - form.reset() après succès important pour UX
     - Toast error + garder modal ouvert = meilleure UX que fermer
-  `
-})
+  `,
+});
 ```
 
 #### Checklist Phase DOCUMENT
@@ -530,6 +539,7 @@ WebFetch("https://dribbble.com/shots/[...]", prompt: "Analyze modern product car
 ```
 
 **Edge Cases** :
+
 1. Image manquante → Fallback placeholder
 2. Prix absent → Badge "Prix sur demande"
 3. Long product name → Truncate avec ellipsis
@@ -542,11 +552,11 @@ WebFetch("https://dribbble.com/shots/[...]", prompt: "Analyze modern product car
 ### 🧪 PHASE 2: TEST - 5 min
 
 ```typescript
-mcp__playwright__browser_navigate("http://localhost:3000/produits/catalogue")
-mcp__playwright__browser_console_messages()  // ✅ 0 errors
+mcp__playwright__browser_navigate('http://localhost:3000/produits/catalogue');
+mcp__playwright__browser_console_messages(); // ✅ 0 errors
 
 // Screenshot produits existants
-mcp__playwright__browser_take_screenshot("products-before-new-card.png")
+mcp__playwright__browser_take_screenshot('products-before-new-card.png');
 ```
 
 ---
@@ -669,7 +679,7 @@ mcp__playwright__browser_console_messages()  // ✅ 0 errors
 
 ```typescript
 mcp__serena__write_memory({
-  key: "product-card-component-pattern",
+  key: 'product-card-component-pattern',
   content: `
     ## Pattern UI Component
     - Variants (default, compact, large) avec cn() utility
@@ -681,8 +691,8 @@ mcp__serena__write_memory({
     ## Responsive
     - Mobile : h-32 (compact)
     - Desktop : h-48 (default)
-  `
-})
+  `,
+});
 ```
 
 ---
@@ -723,17 +733,18 @@ git push origin production-stable
 
 ```typescript
 // Analyse hooks existants
-mcp__serena__get_symbols_overview("src/hooks/use-customers.ts")
-mcp__serena__find_symbol({ name_path: "useCustomers", include_body: true })
+mcp__serena__get_symbols_overview('src/hooks/use-customers.ts');
+mcp__serena__find_symbol({ name_path: 'useCustomers', include_body: true });
 
 // Documentation SWR
-mcp__context7__get-library-docs({ library: "swr", topic: "pagination" })
+mcp__context7__get - library - docs({ library: 'swr', topic: 'pagination' });
 
 // Business Rules
-Read("docs/business-rules/04-produits/catalogue/filtering.md")
+Read('docs/business-rules/04-produits/catalogue/filtering.md');
 ```
 
 **Edge Cases** :
+
 1. Loading state initial
 2. Error handling réseau
 3. Pagination (50 produits/page)
@@ -746,7 +757,9 @@ Read("docs/business-rules/04-produits/catalogue/filtering.md")
 
 ```typescript
 // Test hook similaire existe
-mcp__playwright__browser_navigate("http://localhost:3000/contacts-organisations")
+mcp__playwright__browser_navigate(
+  'http://localhost:3000/contacts-organisations'
+);
 // ✅ useCustomers fonctionne, s'en inspirer
 ```
 
@@ -756,81 +769,75 @@ mcp__playwright__browser_navigate("http://localhost:3000/contacts-organisations"
 
 ```typescript
 // Fichier: src/hooks/use-products.ts
-'use client'
+'use client';
 
-import useSWR from 'swr'
-import { createClient } from '@/lib/supabase/client'
+import useSWR from 'swr';
+import { createClient } from '@/lib/supabase/client';
 
 type UseProductsParams = {
-  search?: string
-  status?: 'active' | 'draft' | 'archived'
-  categoryId?: string
-  page?: number
-  limit?: number
-}
+  search?: string;
+  status?: 'active' | 'draft' | 'archived';
+  categoryId?: string;
+  page?: number;
+  limit?: number;
+};
 
 type Product = {
-  id: string
-  name: string
-  sku: string | null
-  price: number | null
-  status: string
-  category_id: string | null
-}
+  id: string;
+  name: string;
+  sku: string | null;
+  price: number | null;
+  status: string;
+  category_id: string | null;
+};
 
 export function useProducts(params: UseProductsParams = {}) {
-  const {
-    search = '',
-    status,
-    categoryId,
-    page = 1,
-    limit = 50
-  } = params
+  const { search = '', status, categoryId, page = 1, limit = 50 } = params;
 
-  const supabase = createClient()
+  const supabase = createClient();
 
   const fetcher = async () => {
     let query = supabase
       .from('products')
       .select('*', { count: 'exact' })
       .order('name')
-      .range((page - 1) * limit, page * limit - 1)
+      .range((page - 1) * limit, page * limit - 1);
 
     if (search) {
-      query = query.or(`name.ilike.%${search}%,sku.ilike.%${search}%`)
+      query = query.or(`name.ilike.%${search}%,sku.ilike.%${search}%`);
     }
 
     if (status) {
-      query = query.eq('status', status)
+      query = query.eq('status', status);
     }
 
     if (categoryId) {
-      query = query.eq('category_id', categoryId)
+      query = query.eq('category_id', categoryId);
     }
 
-    const { data, error, count } = await query
+    const { data, error, count } = await query;
 
-    if (error) throw error
+    if (error) throw error;
 
-    return { products: data as Product[], total: count || 0 }
-  }
+    return { products: data as Product[], total: count || 0 };
+  };
 
   const { data, error, isLoading, mutate } = useSWR(
     ['products', params],
     fetcher,
     {
       revalidateOnFocus: false,
-      revalidateIfStale: false
+      revalidateIfStale: false,
     }
-  )
+  );
 
   return {
     products: data?.products || [],
     total: data?.total || 0,
     isLoading,
     error,
-    mutate  // Pour invalidation cache
-  }
+    mutate, // Pour invalidation cache
+  };
 }
 ```
 
@@ -874,7 +881,7 @@ mcp__playwright__browser_console_messages()  // ✅ 0 errors
 
 ```typescript
 mcp__serena__write_memory({
-  key: "use-products-hook-pattern",
+  key: 'use-products-hook-pattern',
   content: `
     ## Pattern SWR Hook
     - Pagination avec range()
@@ -887,8 +894,8 @@ mcp__serena__write_memory({
     - Error handling avec error object
     - Empty state (products = [])
     - Cache invalidation après mutation
-  `
-})
+  `,
+});
 ```
 
 ---
@@ -926,9 +933,9 @@ Co-Authored-By: Claude <noreply@anthropic.com>"
 
 ```typescript
 // Documentation Database
-Read("docs/database/SCHEMA-REFERENCE.md")
-Read("docs/database/best-practices.md")
-Read("docs/database/migrations-convention.md")
+Read('docs/database/SCHEMA-REFERENCE.md');
+Read('docs/database/best-practices.md');
+Read('docs/database/migrations-convention.md');
 
 // Vérifier table products
 mcp__supabase__execute_sql(`
@@ -936,19 +943,20 @@ mcp__supabase__execute_sql(`
   FROM information_schema.columns
   WHERE table_name = 'products'
   ORDER BY ordinal_position
-`)
+`);
 
 // Rechercher patterns similaires
 mcp__serena__search_for_pattern({
-  pattern: "ADD COLUMN.*price",
-  relative_path: "supabase/migrations/"
-})
+  pattern: 'ADD COLUMN.*price',
+  relative_path: 'supabase/migrations/',
+});
 
 // Advisors Supabase
-mcp__supabase__get_advisors("security")
+mcp__supabase__get_advisors('security');
 ```
 
 **Edge Cases** :
+
 1. Produits existants → NULL autorisé initialement
 2. Contrainte check (margin >= 0 et <= 100)
 3. Index si requêtes fréquentes
@@ -1080,18 +1088,18 @@ npm run build  // ✅ Success
 
 ```typescript
 // Update SCHEMA-REFERENCE.md
-Edit("docs/database/SCHEMA-REFERENCE.md", {
-  section: "products",
+Edit('docs/database/SCHEMA-REFERENCE.md', {
+  section: 'products',
   add: `
     - cost_price_margin (DECIMAL(5,2), NULL) : Marge bénéficiaire 0-100%
       * Contrainte : check_cost_price_margin_range (0-100)
       * Index : idx_products_cost_price_margin (partial, WHERE NOT NULL)
-  `
-})
+  `,
+});
 
 // Serena Memory
 mcp__serena__write_memory({
-  key: "products-cost-price-margin-migration",
+  key: 'products-cost-price-margin-migration',
   content: `
     ## Décision Architecturale
     - Colonne cost_price_margin (DECIMAL 5,2) pour marge 0-100%
@@ -1102,8 +1110,8 @@ mcp__serena__write_memory({
     ## Migration Idempotente
     - IF NOT EXISTS sur colonne
     - DROP IF EXISTS sur constraint avant CREATE
-  `
-})
+  `,
+});
 ```
 
 ---
@@ -1148,21 +1156,24 @@ git push origin production-stable
 
 ```typescript
 // Analyse architecture Next.js 15
-mcp__serena__get_symbols_overview("src/app/produits/catalogue/page.tsx")
-mcp__context7__get-library-docs({ library: "next.js", topic: "app-router-dynamic-routes" })
+mcp__serena__get_symbols_overview('src/app/produits/catalogue/page.tsx');
+mcp__context7__get -
+  library -
+  docs({ library: 'next.js', topic: 'app-router-dynamic-routes' });
 
 // Business Rules
-Read("docs/business-rules/04-produits/catalogue/product-details.md")
+Read('docs/business-rules/04-produits/catalogue/product-details.md');
 
 // Database Schema
 mcp__supabase__execute_sql(`
   SELECT column_name
   FROM information_schema.columns
   WHERE table_name = 'products'
-`)
+`);
 ```
 
 **Edge Cases** :
+
 1. Produit introuvable → 404 notFound()
 2. Produit archivé → Banner warning
 3. Images multiples → Carrousel
@@ -1424,7 +1435,7 @@ mcp__playwright__browser_resize({ width: 1024, height: 768 })
 
 ```typescript
 mcp__serena__write_memory({
-  key: "product-details-page-pattern",
+  key: 'product-details-page-pattern',
   content: `
     ## Architecture Next.js 15
     - Server Component avec generateMetadata (SEO)
@@ -1438,8 +1449,8 @@ mcp__serena__write_memory({
     - Produit archivé → Banner warning
     - Images manquantes → Placeholder
     - Variantes → Tableau dans Card
-  `
-})
+  `,
+});
 ```
 
 ---
@@ -1474,30 +1485,35 @@ git push origin production-stable
 ## 🎯 Résumé Patterns Identifiés
 
 ### Pattern Formulaire
+
 - ✅ Zod schema validation
 - ✅ useForm + zodResolver
 - ✅ FormField + FormMessage
 - ✅ Server Action try/catch
 
 ### Pattern Composant UI
+
 - ✅ TypeScript props avec variants
 - ✅ cn() utility Tailwind
 - ✅ Hover effects
 - ✅ Responsive design
 
 ### Pattern Hook Custom
+
 - ✅ SWR avec cache
 - ✅ TypeScript types stricts
 - ✅ Error/loading states
 - ✅ Return mutate
 
 ### Pattern Database
+
 - ✅ Migration idempotente (IF NOT EXISTS)
 - ✅ Contraintes validation
 - ✅ Index partial
 - ✅ Commentaires explicatifs
 
 ### Pattern Page Next.js
+
 - ✅ Server Component
 - ✅ generateMetadata (SEO)
 - ✅ loading.tsx + error.tsx

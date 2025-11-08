@@ -1,10 +1,12 @@
 'use client';
 
 import { useState, useEffect, useCallback, useMemo } from 'react';
+
 import useSWR from 'swr';
+
+import { calculateMinimumSellingPrice, formatPrice } from '@/lib/pricing-utils';
 import { createClient } from '@/lib/supabase/client';
 import { useToast } from '@/shared/modules/common/hooks';
-import { calculateMinimumSellingPrice, formatPrice } from '@/lib/pricing-utils';
 
 // ✅ Interface pour product_images (BR-TECH-002)
 interface ProductImage {
@@ -214,7 +216,7 @@ const productsFetcher = async (
     .range(page * PRODUCTS_PER_PAGE, (page + 1) * PRODUCTS_PER_PAGE - 1);
 
   // Appliquer les filtres
-  if (filters?.search && filters.search.trim()) {
+  if (filters?.search?.trim()) {
     query = query.or(
       `name.ilike.%${filters.search}%,sku.ilike.%${filters.search}%`
     );

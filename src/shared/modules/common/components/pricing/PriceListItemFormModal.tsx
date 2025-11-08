@@ -1,18 +1,22 @@
-'use client'
+'use client';
 
-import { useState, useEffect } from 'react'
-import { Plus, Trash2, Search } from 'lucide-react'
-import { ButtonV2 } from '@/components/ui/button'
-import { Input } from '@/components/ui/input'
-import { Label } from '@/components/ui/label'
-import { Textarea } from '@/components/ui/textarea'
+import { useState, useEffect } from 'react';
+
+import { Plus, Trash2, Search } from 'lucide-react';
+
+import { Badge } from '@/components/ui/badge';
+import { ButtonV2 } from '@/components/ui/button';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import {
   Dialog,
   DialogContent,
   DialogDescription,
   DialogHeader,
   DialogTitle,
-} from '@/components/ui/dialog'
+} from '@/components/ui/dialog';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Switch } from '@/components/ui/switch';
 import {
   Table,
   TableBody,
@@ -20,50 +24,48 @@ import {
   TableHead,
   TableHeader,
   TableRow,
-} from '@/components/ui/table'
-import { Switch } from '@/components/ui/switch'
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
-import { Badge } from '@/components/ui/badge'
-import { useProducts } from '@/shared/modules/products/hooks'
+} from '@/components/ui/table';
+import { Textarea } from '@/components/ui/textarea';
+import { formatCurrency } from '@verone/utils';
 import {
   useCreatePriceListItem,
   useUpdatePriceListItem,
   usePriceListItems,
-  usePriceList
-} from '@/shared/modules/finance/hooks'
-import { formatCurrency } from '@/lib/utils'
+  usePriceList,
+} from '@/shared/modules/finance/hooks';
+import { useProducts } from '@/shared/modules/products/hooks';
 
 interface PriceListItemFormModalProps {
-  open: boolean
-  onClose: () => void
-  priceListId: string
-  itemId?: string | null
+  open: boolean;
+  onClose: () => void;
+  priceListId: string;
+  itemId?: string | null;
 }
 
 interface TierForm {
-  min_quantity: number
-  max_quantity: number | null
-  price_ht: number
-  discount_rate: number
-  margin_rate: number
-  valid_from: string
-  valid_until: string
-  is_active: boolean
-  notes: string
+  min_quantity: number;
+  max_quantity: number | null;
+  price_ht: number;
+  discount_rate: number;
+  margin_rate: number;
+  valid_from: string;
+  valid_until: string;
+  is_active: boolean;
+  notes: string;
 }
 
 export function PriceListItemFormModal({
   open,
   onClose,
   priceListId,
-  itemId
+  itemId,
 }: PriceListItemFormModalProps) {
-  const isEditMode = !!itemId
+  const isEditMode = !!itemId;
 
   // Product selection state
-  const [productSearchTerm, setProductSearchTerm] = useState('')
-  const [selectedProduct, setSelectedProduct] = useState<any>(null)
-  const [showProductSearch, setShowProductSearch] = useState(!isEditMode)
+  const [productSearchTerm, setProductSearchTerm] = useState('');
+  const [selectedProduct, setSelectedProduct] = useState<any>(null);
+  const [showProductSearch, setShowProductSearch] = useState(!isEditMode);
 
   // Tiers configuration state
   const [tiers, setTiers] = useState<TierForm[]>([
@@ -76,55 +78,63 @@ export function PriceListItemFormModal({
       valid_from: '',
       valid_until: '',
       is_active: true,
-      notes: ''
-    }
-  ])
+      notes: '',
+    },
+  ]);
 
   // Hooks
-  const { products } = useProducts({ search: productSearchTerm }) as any
-  const { data: priceList } = usePriceList(priceListId)
-  const { data: existingItems } = usePriceListItems(priceListId)
-  const { mutate: createItem, isPending: isCreating } = useCreatePriceListItem()
-  const { mutate: updateItem, isPending: isUpdating } = useUpdatePriceListItem()
+  const { products } = useProducts({ search: productSearchTerm }) as any;
+  const { data: priceList } = usePriceList(priceListId);
+  const { data: existingItems } = usePriceListItems(priceListId);
+  const { mutate: createItem, isPending: isCreating } =
+    useCreatePriceListItem();
+  const { mutate: updateItem, isPending: isUpdating } =
+    useUpdatePriceListItem();
 
-  const isLoading = isCreating || isUpdating
+  const isLoading = isCreating || isUpdating;
 
   // Load existing item in edit mode
   useEffect(() => {
     if (itemId && existingItems) {
-      const item = existingItems.find((i: any) => i.id === itemId)
+      const item = existingItems.find((i: any) => i.id === itemId);
       if (item) {
-        setSelectedProduct(item.products)
-        setTiers([{
-          min_quantity: item.min_quantity,
-          max_quantity: item.max_quantity,
-          price_ht: (item as any).price_ht,
-          discount_rate: (item.discount_rate || 0) * 100, // Convert to percentage
-          margin_rate: (item.margin_rate || 0) * 100,
-          valid_from: item.valid_from || '',
-          valid_until: item.valid_until || '',
-          is_active: item.is_active,
-          notes: item.notes || ''
-        }])
-        setShowProductSearch(false)
+        setSelectedProduct(item.products);
+        setTiers([
+          {
+            min_quantity: item.min_quantity,
+            max_quantity: item.max_quantity,
+            price_ht: (item as any).price_ht,
+            discount_rate: (item.discount_rate || 0) * 100, // Convert to percentage
+            margin_rate: (item.margin_rate || 0) * 100,
+            valid_from: item.valid_from || '',
+            valid_until: item.valid_until || '',
+            is_active: item.is_active,
+            notes: item.notes || '',
+          },
+        ]);
+        setShowProductSearch(false);
       }
     }
-  }, [itemId, existingItems])
+  }, [itemId, existingItems]);
 
   const handleSelectProduct = (product: any) => {
-    setSelectedProduct(product)
-    setShowProductSearch(false)
+    setSelectedProduct(product);
+    setShowProductSearch(false);
     // Initialize first tier with product's base price
-    setTiers([{
-      ...tiers[0],
-      price_ht: product.price_ht || 0
-    }])
-  }
+    setTiers([
+      {
+        ...tiers[0],
+        price_ht: product.price_ht || 0,
+      },
+    ]);
+  };
 
   const handleAddTier = () => {
     // Add new tier with next logical min_quantity
-    const lastTier = tiers[tiers.length - 1]
-    const nextMinQty = lastTier.max_quantity ? lastTier.max_quantity + 1 : lastTier.min_quantity + 10
+    const lastTier = tiers[tiers.length - 1];
+    const nextMinQty = lastTier.max_quantity
+      ? lastTier.max_quantity + 1
+      : lastTier.min_quantity + 10;
 
     setTiers([
       ...tiers,
@@ -137,143 +147,157 @@ export function PriceListItemFormModal({
         valid_from: lastTier.valid_from,
         valid_until: lastTier.valid_until,
         is_active: true,
-        notes: ''
-      }
-    ])
-  }
+        notes: '',
+      },
+    ]);
+  };
 
   const handleRemoveTier = (index: number) => {
     if (tiers.length > 1) {
-      setTiers(tiers.filter((_, i) => i !== index))
+      setTiers(tiers.filter((_, i) => i !== index));
     }
-  }
+  };
 
-  const handleTierChange = (index: number, field: keyof TierForm, value: any) => {
-    const newTiers = [...tiers]
+  const handleTierChange = (
+    index: number,
+    field: keyof TierForm,
+    value: any
+  ) => {
+    const newTiers = [...tiers];
     newTiers[index] = {
       ...newTiers[index],
-      [field]: value
-    }
-    setTiers(newTiers)
-  }
+      [field]: value,
+    };
+    setTiers(newTiers);
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault()
+    e.preventDefault();
 
     if (!selectedProduct) {
-      alert('Veuillez sélectionner un produit')
-      return
+      alert('Veuillez sélectionner un produit');
+      return;
     }
 
     // Validate tiers
     for (const tier of tiers) {
       if (tier.min_quantity < 1) {
-        alert('La quantité minimum doit être au moins 1')
-        return
+        alert('La quantité minimum doit être au moins 1');
+        return;
       }
       if (tier.max_quantity !== null && tier.max_quantity < tier.min_quantity) {
-        alert('La quantité maximum doit être supérieure à la quantité minimum')
-        return
+        alert('La quantité maximum doit être supérieure à la quantité minimum');
+        return;
       }
       if (tier.price_ht <= 0) {
-        alert('Le prix doit être supérieur à 0')
-        return
+        alert('Le prix doit être supérieur à 0');
+        return;
       }
     }
 
     // Sort tiers by min_quantity
-    const sortedTiers = [...tiers].sort((a, b) => a.min_quantity - b.min_quantity)
+    const sortedTiers = [...tiers].sort(
+      (a, b) => a.min_quantity - b.min_quantity
+    );
 
     if (isEditMode && itemId) {
       // Update existing item (only one tier in edit mode)
-      const tier = sortedTiers[0]
+      const tier = sortedTiers[0];
       updateItem(
         {
           itemId,
           priceListId,
           data: {
             cost_price: tier.price_ht,
-            discount_rate: tier.discount_rate > 0 ? tier.discount_rate / 100 : undefined,
+            discount_rate:
+              tier.discount_rate > 0 ? tier.discount_rate / 100 : undefined,
             min_quantity: tier.min_quantity,
             max_quantity: tier.max_quantity ?? undefined,
-            margin_rate: tier.margin_rate > 0 ? tier.margin_rate / 100 : undefined,
+            margin_rate:
+              tier.margin_rate > 0 ? tier.margin_rate / 100 : undefined,
             valid_from: tier.valid_from || undefined,
             valid_until: tier.valid_until || undefined,
             is_active: tier.is_active,
-            notes: tier.notes || undefined
-          }
+            notes: tier.notes || undefined,
+          },
         },
         {
           onSuccess: () => {
-            onClose()
-            resetForm()
-          }
+            onClose();
+            resetForm();
+          },
         }
-      )
+      );
     } else {
       // Create multiple items (one per tier)
-      let successCount = 0
-      const totalTiers = sortedTiers.length
+      let successCount = 0;
+      const totalTiers = sortedTiers.length;
 
       for (const tier of sortedTiers) {
-        await new Promise<void>((resolve) => {
+        await new Promise<void>(resolve => {
           createItem(
             {
               price_list_id: priceListId,
               product_id: selectedProduct.id,
               cost_price: tier.price_ht,
-              discount_rate: tier.discount_rate > 0 ? tier.discount_rate / 100 : undefined,
+              discount_rate:
+                tier.discount_rate > 0 ? tier.discount_rate / 100 : undefined,
               min_quantity: tier.min_quantity,
               max_quantity: tier.max_quantity ?? undefined,
-              margin_rate: tier.margin_rate > 0 ? tier.margin_rate / 100 : undefined,
+              margin_rate:
+                tier.margin_rate > 0 ? tier.margin_rate / 100 : undefined,
               currency: (priceList as any)?.currency,
               valid_from: tier.valid_from || undefined,
               valid_until: tier.valid_until || undefined,
               is_active: tier.is_active,
-              notes: tier.notes || undefined
+              notes: tier.notes || undefined,
             },
             {
               onSuccess: () => {
-                successCount++
+                successCount++;
                 if (successCount === totalTiers) {
-                  onClose()
-                  resetForm()
+                  onClose();
+                  resetForm();
                 }
-                resolve()
+                resolve();
               },
               onError: () => {
-                resolve()
-              }
+                resolve();
+              },
             }
-          )
-        })
+          );
+        });
       }
     }
-  }
+  };
 
   const resetForm = () => {
-    setSelectedProduct(null)
-    setProductSearchTerm('')
-    setShowProductSearch(true)
-    setTiers([{
-      min_quantity: 1,
-      max_quantity: null,
-      price_ht: 0,
-      discount_rate: 0,
-      margin_rate: 0,
-      valid_from: '',
-      valid_until: '',
-      is_active: true,
-      notes: ''
-    }])
-  }
+    setSelectedProduct(null);
+    setProductSearchTerm('');
+    setShowProductSearch(true);
+    setTiers([
+      {
+        min_quantity: 1,
+        max_quantity: null,
+        price_ht: 0,
+        discount_rate: 0,
+        margin_rate: 0,
+        valid_from: '',
+        valid_until: '',
+        is_active: true,
+        notes: '',
+      },
+    ]);
+  };
 
   return (
     <Dialog open={open} onOpenChange={onClose}>
       <DialogContent className="max-w-6xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>
-            {isEditMode ? 'Modifier le palier de prix' : 'Ajouter un produit avec paliers'}
+            {isEditMode
+              ? 'Modifier le palier de prix'
+              : 'Ajouter un produit avec paliers'}
           </DialogTitle>
           <DialogDescription>
             {isEditMode
@@ -287,7 +311,9 @@ export function PriceListItemFormModal({
           {showProductSearch && !isEditMode && (
             <Card>
               <CardHeader>
-                <CardTitle className="text-lg">1. Sélectionner le Produit</CardTitle>
+                <CardTitle className="text-lg">
+                  1. Sélectionner le Produit
+                </CardTitle>
               </CardHeader>
               <CardContent>
                 <div className="space-y-4">
@@ -296,7 +322,7 @@ export function PriceListItemFormModal({
                     <Input
                       placeholder="Rechercher par nom ou SKU..."
                       value={productSearchTerm}
-                      onChange={(e) => setProductSearchTerm(e.target.value)}
+                      onChange={e => setProductSearchTerm(e.target.value)}
                       className="pl-10"
                     />
                   </div>
@@ -309,17 +335,23 @@ export function PriceListItemFormModal({
                             <TableHead>Produit</TableHead>
                             <TableHead>SKU</TableHead>
                             <TableHead>Prix Catalogue</TableHead>
-                            <TableHead></TableHead>
+                            <TableHead />
                           </TableRow>
                         </TableHeader>
                         <TableBody>
                           {products.map((product: any) => (
                             <TableRow key={product.id}>
-                              <TableCell className="font-medium">{product.name}</TableCell>
-                              <TableCell>
-                                <span className="font-mono text-sm">{product.sku}</span>
+                              <TableCell className="font-medium">
+                                {product.name}
                               </TableCell>
-                              <TableCell>{formatCurrency(product.price_ht)}</TableCell>
+                              <TableCell>
+                                <span className="font-mono text-sm">
+                                  {product.sku}
+                                </span>
+                              </TableCell>
+                              <TableCell>
+                                {formatCurrency(product.price_ht)}
+                              </TableCell>
                               <TableCell>
                                 <ButtonV2
                                   type="button"
@@ -346,10 +378,16 @@ export function PriceListItemFormModal({
               <CardContent className="pt-4">
                 <div className="flex items-center justify-between">
                   <div>
-                    <p className="font-semibold text-lg">{selectedProduct.name}</p>
+                    <p className="font-semibold text-lg">
+                      {selectedProduct.name}
+                    </p>
                     <p className="text-sm text-gray-600">
-                      SKU: <span className="font-mono">{selectedProduct.sku}</span> •
-                      Prix catalogue: <span className="font-medium">{formatCurrency(selectedProduct.price_ht)}</span>
+                      SKU:{' '}
+                      <span className="font-mono">{selectedProduct.sku}</span> •
+                      Prix catalogue:{' '}
+                      <span className="font-medium">
+                        {formatCurrency(selectedProduct.price_ht)}
+                      </span>
                     </p>
                   </div>
                   {!isEditMode && (
@@ -358,8 +396,8 @@ export function PriceListItemFormModal({
                       variant="outline"
                       size="sm"
                       onClick={() => {
-                        setSelectedProduct(null)
-                        setShowProductSearch(true)
+                        setSelectedProduct(null);
+                        setShowProductSearch(true);
                       }}
                     >
                       Changer
@@ -376,7 +414,9 @@ export function PriceListItemFormModal({
               <CardHeader>
                 <div className="flex items-center justify-between">
                   <CardTitle className="text-lg">
-                    {isEditMode ? 'Paramètres du Palier' : '2. Configurer les Paliers de Prix'}
+                    {isEditMode
+                      ? 'Paramètres du Palier'
+                      : '2. Configurer les Paliers de Prix'}
                   </CardTitle>
                   {!isEditMode && (
                     <ButtonV2
@@ -395,7 +435,10 @@ export function PriceListItemFormModal({
               <CardContent>
                 <div className="space-y-4">
                   {tiers.map((tier, index) => (
-                    <div key={index} className="p-4 border rounded-lg space-y-4">
+                    <div
+                      key={index}
+                      className="p-4 border rounded-lg space-y-4"
+                    >
                       <div className="flex items-center justify-between">
                         <Badge variant="secondary">Palier {index + 1}</Badge>
                         {!isEditMode && tiers.length > 1 && (
@@ -415,26 +458,41 @@ export function PriceListItemFormModal({
                         {/* Quantités */}
                         <div className="space-y-2">
                           <Label htmlFor={`min_qty_${index}`}>
-                            Quantité Minimum <span className="text-red-600">*</span>
+                            Quantité Minimum{' '}
+                            <span className="text-red-600">*</span>
                           </Label>
                           <Input
                             id={`min_qty_${index}`}
                             type="number"
                             min="1"
                             value={tier.min_quantity}
-                            onChange={(e) => handleTierChange(index, 'min_quantity', parseInt(e.target.value) || 1)}
+                            onChange={e =>
+                              handleTierChange(
+                                index,
+                                'min_quantity',
+                                parseInt(e.target.value) || 1
+                              )
+                            }
                             required
                           />
                         </div>
 
                         <div className="space-y-2">
-                          <Label htmlFor={`max_qty_${index}`}>Quantité Maximum</Label>
+                          <Label htmlFor={`max_qty_${index}`}>
+                            Quantité Maximum
+                          </Label>
                           <Input
                             id={`max_qty_${index}`}
                             type="number"
                             min={tier.min_quantity}
                             value={tier.max_quantity || ''}
-                            onChange={(e) => handleTierChange(index, 'max_quantity', e.target.value ? parseInt(e.target.value) : null)}
+                            onChange={e =>
+                              handleTierChange(
+                                index,
+                                'max_quantity',
+                                e.target.value ? parseInt(e.target.value) : null
+                              )
+                            }
                             placeholder="∞ (illimité)"
                           />
                         </div>
@@ -442,7 +500,8 @@ export function PriceListItemFormModal({
                         {/* Prix et Remises */}
                         <div className="space-y-2">
                           <Label htmlFor={`price_${index}`}>
-                            Prix HT ({(priceList as any)?.currency}) <span className="text-red-600">*</span>
+                            Prix HT ({(priceList as any)?.currency}){' '}
+                            <span className="text-red-600">*</span>
                           </Label>
                           <Input
                             id={`price_${index}`}
@@ -450,13 +509,21 @@ export function PriceListItemFormModal({
                             step="0.01"
                             min="0"
                             value={tier.price_ht}
-                            onChange={(e) => handleTierChange(index, 'price_ht', parseFloat(e.target.value) || 0)}
+                            onChange={e =>
+                              handleTierChange(
+                                index,
+                                'price_ht',
+                                parseFloat(e.target.value) || 0
+                              )
+                            }
                             required
                           />
                         </div>
 
                         <div className="space-y-2">
-                          <Label htmlFor={`discount_${index}`}>Remise (%)</Label>
+                          <Label htmlFor={`discount_${index}`}>
+                            Remise (%)
+                          </Label>
                           <Input
                             id={`discount_${index}`}
                             type="number"
@@ -464,7 +531,13 @@ export function PriceListItemFormModal({
                             min="0"
                             max="100"
                             value={tier.discount_rate}
-                            onChange={(e) => handleTierChange(index, 'discount_rate', parseFloat(e.target.value) || 0)}
+                            onChange={e =>
+                              handleTierChange(
+                                index,
+                                'discount_rate',
+                                parseFloat(e.target.value) || 0
+                              )
+                            }
                             placeholder="0"
                           />
                         </div>
@@ -478,29 +551,51 @@ export function PriceListItemFormModal({
                             min="0"
                             max="100"
                             value={tier.margin_rate}
-                            onChange={(e) => handleTierChange(index, 'margin_rate', parseFloat(e.target.value) || 0)}
+                            onChange={e =>
+                              handleTierChange(
+                                index,
+                                'margin_rate',
+                                parseFloat(e.target.value) || 0
+                              )
+                            }
                             placeholder="0"
                           />
                         </div>
 
                         {/* Validité */}
                         <div className="space-y-2">
-                          <Label htmlFor={`valid_from_${index}`}>Date Début Validité</Label>
+                          <Label htmlFor={`valid_from_${index}`}>
+                            Date Début Validité
+                          </Label>
                           <Input
                             id={`valid_from_${index}`}
                             type="date"
                             value={tier.valid_from}
-                            onChange={(e) => handleTierChange(index, 'valid_from', e.target.value)}
+                            onChange={e =>
+                              handleTierChange(
+                                index,
+                                'valid_from',
+                                e.target.value
+                              )
+                            }
                           />
                         </div>
 
                         <div className="space-y-2">
-                          <Label htmlFor={`valid_until_${index}`}>Date Fin Validité</Label>
+                          <Label htmlFor={`valid_until_${index}`}>
+                            Date Fin Validité
+                          </Label>
                           <Input
                             id={`valid_until_${index}`}
                             type="date"
                             value={tier.valid_until}
-                            onChange={(e) => handleTierChange(index, 'valid_until', e.target.value)}
+                            onChange={e =>
+                              handleTierChange(
+                                index,
+                                'valid_until',
+                                e.target.value
+                              )
+                            }
                           />
                         </div>
                       </div>
@@ -511,7 +606,9 @@ export function PriceListItemFormModal({
                         <Textarea
                           id={`notes_${index}`}
                           value={tier.notes}
-                          onChange={(e) => handleTierChange(index, 'notes', e.target.value)}
+                          onChange={e =>
+                            handleTierChange(index, 'notes', e.target.value)
+                          }
                           placeholder="Notes optionnelles sur ce palier"
                           rows={2}
                         />
@@ -523,7 +620,9 @@ export function PriceListItemFormModal({
                         <Switch
                           id={`active_${index}`}
                           checked={tier.is_active}
-                          onCheckedChange={(checked) => handleTierChange(index, 'is_active', checked)}
+                          onCheckedChange={checked =>
+                            handleTierChange(index, 'is_active', checked)
+                          }
                         />
                       </div>
                     </div>
@@ -535,19 +634,24 @@ export function PriceListItemFormModal({
 
           {/* Actions */}
           <div className="flex justify-end gap-4 pt-4">
-            <ButtonV2 type="button" variant="outline" onClick={onClose} disabled={isLoading}>
+            <ButtonV2
+              type="button"
+              variant="outline"
+              onClick={onClose}
+              disabled={isLoading}
+            >
               Annuler
             </ButtonV2>
             <ButtonV2 type="submit" disabled={isLoading || !selectedProduct}>
               {isLoading
                 ? 'Enregistrement...'
                 : isEditMode
-                ? 'Mettre à jour'
-                : `Créer ${tiers.length} palier${tiers.length > 1 ? 's' : ''}`}
+                  ? 'Mettre à jour'
+                  : `Créer ${tiers.length} palier${tiers.length > 1 ? 's' : ''}`}
             </ButtonV2>
           </div>
         </form>
       </DialogContent>
     </Dialog>
-  )
+  );
 }

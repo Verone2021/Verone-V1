@@ -680,6 +680,222 @@ Delta : -150 erreurs
 
 ---
 
+## 🎨 FORMATAGE & LINTING (Best Practices 2025)
+
+**Approche Moderne** : ESLint + Prettier découplés, configs monorepo partagées
+
+### Stack
+
+- **Prettier 3.6.2** : Formatage automatique (80 cols, single quotes, LF)
+- **ESLint 8.57** : Linting + TypeScript strict mode
+- **eslint-config-prettier** : Désactive règles conflictuelles (approche moderne 2025)
+- **eslint-plugin-prettier** : Prettier comme règle ESLint (`plugin:prettier/recommended`)
+
+### Architecture Monorepo
+
+**Packages partagés** :
+
+```
+packages/@verone/
+├── eslint-config/           # Config ESLint stricte partagée
+│   ├── package.json
+│   ├── index.js             # Extends: next, @typescript-eslint/recommended, storybook, prettier
+│   └── README.md
+└── prettier-config/         # Config Prettier partagée
+    ├── package.json
+    ├── index.json           # Config recommandée 2025
+    └── README.md
+```
+
+**Usage dans apps** :
+
+```json
+// .eslintrc.json
+{
+  "extends": "@verone/eslint-config"
+}
+
+// .prettierrc
+"@verone/prettier-config"
+```
+
+### Règles ESLint Strictes (Par Défaut)
+
+**TypeScript Strict** :
+
+- `@typescript-eslint/no-explicit-any`: `error`
+- `@typescript-eslint/explicit-function-return-type`: `warn`
+- `@typescript-eslint/consistent-type-imports`: `error` (prefer `type` imports)
+- `@typescript-eslint/no-floating-promises`: `error`
+
+**React & Next.js** :
+
+- `react-hooks/rules-of-hooks`: `error`
+- `@next/next/no-img-element`: `error` (utiliser next/image)
+- `react/self-closing-comp`: `error`
+
+**Code Quality** :
+
+- `prefer-const`: `error`
+- `no-var`: `error`
+- `no-console`: `warn` (autorise `console.warn` et `console.error`)
+- `no-debugger`: `error`
+
+**Import Organization** :
+
+```typescript
+// Ordre automatique alphabétique avec groupes :
+// 1. react
+// 2. next/**
+// 3. external packages
+// 4. internal (@/**)
+// 5. parent/sibling
+```
+
+### Commandes
+
+```bash
+# Prettier
+npm run format          # Formater tout le code
+npm run format:check    # Vérifier formatage sans modifier
+
+# ESLint
+npm run lint            # ESLint strict par défaut (@verone/eslint-config)
+npm run lint:fix        # Auto-fix erreurs ESLint
+
+# Type check
+npm run type-check      # TypeScript validation (AVANT commit)
+
+# All-in-one
+npm run validate:all    # type-check + validations custom
+```
+
+### Pre-Commit Automatique (Husky + Lint-Staged)
+
+**Workflow déclenché sur `git commit`** :
+
+```bash
+# .husky/pre-commit
+1. ✅ Type check (tsc --noEmit)
+2. ✅ Prettier → ESLint (lint-staged - ordre optimisé)
+3. ✅ Naming conventions validation
+4. ✅ Database type alignment check
+```
+
+**.lintstagedrc.json** :
+
+```json
+{
+  "*.{ts,tsx}": [
+    "prettier --write", // 1. Formater AVANT
+    "eslint --fix" // 2. Linter APRÈS
+  ]
+}
+```
+
+**Ordre important** : Prettier d'abord (formatage), puis ESLint (qualité code).
+
+### Validation Build (Strict Mode)
+
+**next.config.js** :
+
+```javascript
+eslint: {
+  dirs: ['src', 'app']; // Valide code source au build
+}
+// Build ÉCHOUE si erreurs ESLint ou TypeScript
+```
+
+**Protection production** : Zero tolerance pour erreurs.
+
+### Fichiers Ignore
+
+**.prettierignore** :
+
+```
+node_modules, .next, dist, *.generated.ts, src/types/supabase.ts
+```
+
+**.eslintignore** :
+
+```
+node_modules, .next, dist, *.generated.ts, next.config.js
+```
+
+### Extensions Recommandées
+
+**Plugins ESLint actifs** :
+
+- `plugin:@typescript-eslint/recommended` (types stricts)
+- `plugin:prettier/recommended` (formatage comme règle)
+- `plugin:storybook/recommended` (composants UI)
+- `next/core-web-vitals` (performance)
+
+### Overrides par Type de Fichier
+
+**Tests** (`**/*.test.ts`, `**/*.spec.ts`) :
+
+- `@typescript-eslint/no-explicit-any`: `off`
+- `no-console`: `off`
+
+**Configs** (`*.config.ts`, `*.config.js`) :
+
+- `@typescript-eslint/no-var-requires`: `off`
+
+**Scripts** (`scripts/**/*.ts`) :
+
+- `no-console`: `off`
+- `@typescript-eslint/no-explicit-any`: `warn`
+
+### Best Practices 2025
+
+**✅ DO** :
+
+- Utiliser `type` imports : `import type { User } from './types'`
+- Déclarer return types : `function foo(): string {}`
+- Prefer const : `const x = 1` (pas `let`)
+- Utiliser next/image : `<Image />` (pas `<img />`)
+- Formater avant commit : Pre-commit automatique actif
+
+**❌ DON'T** :
+
+- `any` explicite (erreur bloquante)
+- `var` (erreur bloquante)
+- `console.log` sans raison (warning)
+- Ignorer erreurs Prettier (commit bloqué)
+- Bypass pre-commit hooks (--no-verify)
+
+### Troubleshooting
+
+**Erreur "Prettier conflicts with ESLint"** :
+
+- ✅ Vérifier : `eslint-config-prettier` installé
+- ✅ Vérifier : `.eslintrc.json` extends `@verone/eslint-config`
+- ✅ Vérifier : `plugin:prettier/recommended` en DERNIER dans extends
+
+**Pre-commit bloqué** :
+
+```bash
+# Formatter manuellement
+npm run format
+
+# Linter avec auto-fix
+npm run lint:fix
+
+# Vérifier type errors
+npm run type-check
+
+# Re-commit
+git add . && git commit
+```
+
+**Build échoue sur ESLint/TypeScript** :
+
+- Temporaire : Commenter validation dans `next.config.js`
+- Permanent : Corriger TOUTES erreurs (approche professionnelle)
+
+---
+
 ## 🤖 MCP AGENTS - USAGE PRIORITAIRE
 
 ### Serena - Code Intelligence
@@ -774,9 +990,17 @@ supabase/migrations/     # Database migrations
 ```bash
 # Développement
 npm run dev              # Next.js dev server (localhost:3000)
-npm run build            # Production build
-npm run lint             # ESLint
-npm run type-check       # TypeScript check
+npm run build            # Production build (validation ESLint + TypeScript)
+npm run type-check       # TypeScript check (AVANT commit)
+
+# Formatage & Linting
+npm run format           # Prettier : formater tout le code
+npm run format:check     # Vérifier formatage sans modifier
+npm run lint             # ESLint strict (@verone/eslint-config)
+npm run lint:fix         # Auto-fix erreurs ESLint
+
+# Validation
+npm run validate:all     # type-check + validations custom (hooks, naming, DB types)
 
 # Audit
 npm run audit:all        # Tous audits (duplicates, cycles, deadcode, spelling)

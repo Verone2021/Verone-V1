@@ -1,19 +1,36 @@
-'use client'
+'use client';
 
-import { UserCheck, Save, X, Edit, Star, Users, Calculator, Wrench } from 'lucide-react'
-import { ButtonV2 } from '@/components/ui/button'
-import { Badge } from '@/components/ui/badge'
-import { cn } from '@/lib/utils'
-import { useInlineEdit, type EditableSection } from '@/shared/modules/common/hooks'
-import type { Contact } from '@/shared/modules/common/hooks'
+import {
+  UserCheck,
+  Save,
+  X,
+  Edit,
+  Star,
+  Users,
+  Calculator,
+  Wrench,
+} from 'lucide-react';
+
+import { Badge } from '@/components/ui/badge';
+import { ButtonV2 } from '@/components/ui/button';
+import { cn } from '@verone/utils';
+import {
+  useInlineEdit,
+  type EditableSection,
+} from '@/shared/modules/common/hooks';
+import type { Contact } from '@/shared/modules/common/hooks';
 
 interface ContactRolesEditSectionProps {
-  contact: Contact
-  onUpdate: (updatedContact: Partial<Contact>) => void
-  className?: string
+  contact: Contact;
+  onUpdate: (updatedContact: Partial<Contact>) => void;
+  className?: string;
 }
 
-export function ContactRolesEditSection({ contact, onUpdate, className }: ContactRolesEditSectionProps) {
+export function ContactRolesEditSection({
+  contact,
+  onUpdate,
+  className,
+}: ContactRolesEditSectionProps) {
   const {
     isEditing,
     isSaving,
@@ -23,87 +40,103 @@ export function ContactRolesEditSection({ contact, onUpdate, className }: Contac
     cancelEdit,
     updateEditedData,
     saveChanges,
-    hasChanges
+    hasChanges,
   } = useInlineEdit({
     contactId: contact.id,
-    onUpdate: (updatedData) => {
-      onUpdate(updatedData)
+    onUpdate: updatedData => {
+      onUpdate(updatedData);
     },
-    onError: (error) => {
-      console.error('❌ Erreur mise à jour rôles:', error)
-    }
-  })
+    onError: error => {
+      console.error('❌ Erreur mise à jour rôles:', error);
+    },
+  });
 
-  const section: EditableSection = 'roles'
-  const editData = getEditedData(section)
-  const error = getError(section)
+  const section: EditableSection = 'roles';
+  const editData = getEditedData(section);
+  const error = getError(section);
 
   const handleStartEdit = () => {
     startEdit(section, {
       is_primary_contact: contact.is_primary_contact || false,
       is_commercial_contact: contact.is_commercial_contact || false,
       is_billing_contact: contact.is_billing_contact || false,
-      is_technical_contact: contact.is_technical_contact || false
-    })
-  }
+      is_technical_contact: contact.is_technical_contact || false,
+    });
+  };
 
   const handleSave = async () => {
-    const success = await saveChanges(section)
+    const success = await saveChanges(section);
     if (success) {
-      console.log('✅ Rôles mis à jour avec succès')
+      console.log('✅ Rôles mis à jour avec succès');
     }
-  }
+  };
 
   const handleCancel = () => {
-    cancelEdit(section)
-  }
+    cancelEdit(section);
+  };
 
   const handleRoleChange = (role: string, checked: boolean) => {
-    updateEditedData(section, { [role]: checked })
-  }
+    updateEditedData(section, { [role]: checked });
+  };
 
   const getContactTypeBadges = (contactData: any) => {
-    const badges = []
+    const badges: JSX.Element[] = [];
 
     if (contactData?.is_primary_contact) {
       badges.push(
-        <Badge key="primary" variant="secondary" className="bg-gray-100 text-gray-900 border-gray-200">
+        <Badge
+          key="primary"
+          variant="secondary"
+          className="bg-gray-100 text-gray-900 border-gray-200"
+        >
           <Star className="h-3 w-3 mr-1" />
           Principal
         </Badge>
-      )
+      );
     }
     if (contactData?.is_commercial_contact) {
       badges.push(
-        <Badge key="commercial" variant="outline" className="bg-blue-50 text-blue-700 border-blue-200">
+        <Badge
+          key="commercial"
+          variant="outline"
+          className="bg-blue-50 text-blue-700 border-blue-200"
+        >
           <Users className="h-3 w-3 mr-1" />
           Commercial
         </Badge>
-      )
+      );
     }
     if (contactData?.is_billing_contact) {
       badges.push(
-        <Badge key="billing" variant="outline" className="bg-green-50 text-green-700 border-green-200">
+        <Badge
+          key="billing"
+          variant="outline"
+          className="bg-green-50 text-green-700 border-green-200"
+        >
           <Calculator className="h-3 w-3 mr-1" />
           Facturation
         </Badge>
-      )
+      );
     }
     if (contactData?.is_technical_contact) {
       badges.push(
-        <Badge key="technical" variant="outline" className="bg-purple-50 text-purple-700 border-purple-200">
+        <Badge
+          key="technical"
+          variant="outline"
+          className="bg-purple-50 text-purple-700 border-purple-200"
+        >
           <Wrench className="h-3 w-3 mr-1" />
           Technique
         </Badge>
-      )
+      );
     }
 
-    return badges
-  }
+    return badges;
+  };
 
   if (isEditing(section)) {
     return (
-      <div className={cn("card-verone p-4", className)}>
+      <div className={cn('card-verone p-4', className)}>
         <div className="flex items-center justify-between mb-3">
           <h3 className="text-lg font-medium text-black flex items-center">
             <UserCheck className="h-5 w-5 mr-2" />
@@ -133,7 +166,8 @@ export function ContactRolesEditSection({ contact, onUpdate, className }: Contac
 
         <div className="space-y-4">
           <div className="text-xs text-gray-600 mb-4">
-            Un contact peut avoir plusieurs rôles selon ses responsabilités dans l'organisation.
+            Un contact peut avoir plusieurs rôles selon ses responsabilités dans
+            l'organisation.
           </div>
 
           {/* Contact Principal */}
@@ -142,13 +176,20 @@ export function ContactRolesEditSection({ contact, onUpdate, className }: Contac
               type="checkbox"
               id="is_primary_contact"
               checked={editData?.is_primary_contact || false}
-              onChange={(e) => handleRoleChange('is_primary_contact', e.target.checked)}
+              onChange={e =>
+                handleRoleChange('is_primary_contact', e.target.checked)
+              }
               className="h-4 w-4 text-gray-700 focus:ring-gray-500 border-gray-300 rounded"
             />
-            <label htmlFor="is_primary_contact" className="flex-1 cursor-pointer">
+            <label
+              htmlFor="is_primary_contact"
+              className="flex-1 cursor-pointer"
+            >
               <div className="flex items-center">
                 <Star className="h-4 w-4 mr-2 text-gray-700" />
-                <span className="font-medium text-black">Contact Principal</span>
+                <span className="font-medium text-black">
+                  Contact Principal
+                </span>
               </div>
               <div className="text-sm text-gray-600 mt-1">
                 Contact privilégié pour toutes les communications importantes
@@ -162,13 +203,20 @@ export function ContactRolesEditSection({ contact, onUpdate, className }: Contac
               type="checkbox"
               id="is_commercial_contact"
               checked={editData?.is_commercial_contact || false}
-              onChange={(e) => handleRoleChange('is_commercial_contact', e.target.checked)}
+              onChange={e =>
+                handleRoleChange('is_commercial_contact', e.target.checked)
+              }
               className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
             />
-            <label htmlFor="is_commercial_contact" className="flex-1 cursor-pointer">
+            <label
+              htmlFor="is_commercial_contact"
+              className="flex-1 cursor-pointer"
+            >
               <div className="flex items-center">
                 <Users className="h-4 w-4 mr-2 text-blue-600" />
-                <span className="font-medium text-black">Contact Commercial</span>
+                <span className="font-medium text-black">
+                  Contact Commercial
+                </span>
               </div>
               <div className="text-sm text-gray-600 mt-1">
                 Responsable des relations commerciales, devis et négociations
@@ -182,13 +230,20 @@ export function ContactRolesEditSection({ contact, onUpdate, className }: Contac
               type="checkbox"
               id="is_billing_contact"
               checked={editData?.is_billing_contact || false}
-              onChange={(e) => handleRoleChange('is_billing_contact', e.target.checked)}
+              onChange={e =>
+                handleRoleChange('is_billing_contact', e.target.checked)
+              }
               className="h-4 w-4 text-green-600 focus:ring-green-500 border-gray-300 rounded"
             />
-            <label htmlFor="is_billing_contact" className="flex-1 cursor-pointer">
+            <label
+              htmlFor="is_billing_contact"
+              className="flex-1 cursor-pointer"
+            >
               <div className="flex items-center">
                 <Calculator className="h-4 w-4 mr-2 text-green-600" />
-                <span className="font-medium text-black">Contact Facturation</span>
+                <span className="font-medium text-black">
+                  Contact Facturation
+                </span>
               </div>
               <div className="text-sm text-gray-600 mt-1">
                 Responsable de la gestion des factures et des paiements
@@ -202,13 +257,20 @@ export function ContactRolesEditSection({ contact, onUpdate, className }: Contac
               type="checkbox"
               id="is_technical_contact"
               checked={editData?.is_technical_contact || false}
-              onChange={(e) => handleRoleChange('is_technical_contact', e.target.checked)}
+              onChange={e =>
+                handleRoleChange('is_technical_contact', e.target.checked)
+              }
               className="h-4 w-4 text-purple-600 focus:ring-purple-500 border-gray-300 rounded"
             />
-            <label htmlFor="is_technical_contact" className="flex-1 cursor-pointer">
+            <label
+              htmlFor="is_technical_contact"
+              className="flex-1 cursor-pointer"
+            >
               <div className="flex items-center">
                 <Wrench className="h-4 w-4 mr-2 text-purple-600" />
-                <span className="font-medium text-black">Contact Technique</span>
+                <span className="font-medium text-black">
+                  Contact Technique
+                </span>
               </div>
               <div className="text-sm text-gray-600 mt-1">
                 Responsable des aspects techniques, support et maintenance
@@ -224,12 +286,12 @@ export function ContactRolesEditSection({ contact, onUpdate, className }: Contac
           </div>
         )}
       </div>
-    )
+    );
   }
 
   // Mode affichage
   return (
-    <div className={cn("card-verone p-4", className)}>
+    <div className={cn('card-verone p-4', className)}>
       <div className="flex items-center justify-between mb-3">
         <h3 className="text-lg font-medium text-black flex items-center">
           <UserCheck className="h-5 w-5 mr-2" />
@@ -275,12 +337,15 @@ export function ContactRolesEditSection({ contact, onUpdate, className }: Contac
         </div>
 
         {/* Message si aucun rôle spécifique */}
-        {!contact.is_primary_contact && !contact.is_commercial_contact && !contact.is_billing_contact && !contact.is_technical_contact && (
-          <div className="text-center text-gray-400 text-xs italic py-2">
-            Aucun rôle spécifique attribué
-          </div>
-        )}
+        {!contact.is_primary_contact &&
+          !contact.is_commercial_contact &&
+          !contact.is_billing_contact &&
+          !contact.is_technical_contact && (
+            <div className="text-center text-gray-400 text-xs italic py-2">
+              Aucun rôle spécifique attribué
+            </div>
+          )}
       </div>
     </div>
-  )
+  );
 }

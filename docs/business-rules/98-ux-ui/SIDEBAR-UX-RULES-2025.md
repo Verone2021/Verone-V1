@@ -9,19 +9,23 @@
 ## 📋 RÈGLES GÉNÉRALES SIDEBAR
 
 ### RG-SB-001: Structure Navigation
+
 **RÈGLE ABSOLUE:** La sidebar ne doit JAMAIS dépasser 20 items au total (parents + enfants)
 
 **Limites validées:**
+
 - ✅ Items maximum: **15 items** (optimal UX 2025)
 - ✅ Niveaux hiérarchie: **2 niveaux maximum**
 - ✅ Enfants par parent: **5 maximum**
 
 **Raison métier:**
+
 - Navigation cognitive overload au-delà de 15 items
 - Performance dégradée > 20 items (scroll, animations)
 - Mobile UX compromise avec trop d'items
 
 **Exemples:**
+
 ```typescript
 // ✅ BON - 15 items, 2 niveaux
 navItems = [
@@ -45,24 +49,29 @@ navItems = [
 ---
 
 ### RG-SB-002: Interdiction Formulaires
+
 **RÈGLE ABSOLUE:** JAMAIS de formulaires ou actions de création dans la sidebar
 
 **Interdit:**
+
 - ❌ Bouton "Nouveau Produit"
 - ❌ Formulaire inline "Créer catégorie"
 - ❌ Actions CRUD directes
 
 **Solution validée:**
+
 - ✅ Boutons d'action dans les pages (ex: header page Catalogue)
 - ✅ Modals pour création rapide
 - ✅ Navigation uniquement dans sidebar
 
 **Raison métier:**
+
 - Sidebar = navigation pure
 - Formulaires = context switching cognitif
 - Mobile UX impossible avec formulaires sidebar
 
 **Exemple migration:**
+
 ```typescript
 // ❌ AVANT - Formulaire dans sidebar
 {
@@ -80,51 +89,62 @@ navItems = [
 ---
 
 ### RG-SB-003: Dashboards Redondants
+
 **RÈGLE ABSOLUE:** UN SEUL dashboard principal, JAMAIS de sous-dashboards
 
 **Interdit:**
+
 - ❌ Dashboard global + Catalogue/Dashboard
 - ❌ Dashboard global + Stocks/Vue d'Ensemble
 - ❌ Dashboard global + Interactions/Dashboard
 
 **Solution validée:**
+
 - ✅ Dashboard principal unique (/)
 - ✅ Pages modules avec KPIs intégrés
 - ✅ Widgets dashboard configurables
 
 **Raison métier:**
+
 - Dashboard redondant = confusion utilisateur
 - Maintenance complexe (2x KPIs à synchroniser)
 - Performance (2x requêtes API)
 
 **Exemple migration:**
+
 ```typescript
 // ❌ AVANT - Dashboards multiples
 navItems = [
-  { title: "Dashboard", href: "/" },
-  { title: "Catalogue", children: [
-    { title: "Dashboard", href: "/catalogue/dashboard" }  // Redondant
-  ]}
-]
+  { title: 'Dashboard', href: '/' },
+  {
+    title: 'Catalogue',
+    children: [
+      { title: 'Dashboard', href: '/catalogue/dashboard' }, // Redondant
+    ],
+  },
+];
 
 // ✅ APRÈS - Dashboard unique
 navItems = [
-  { title: "Dashboard", href: "/" },               // Seul dashboard
-  { title: "Catalogue", href: "/catalogue" }       // Page avec KPIs intégrés
-]
+  { title: 'Dashboard', href: '/' }, // Seul dashboard
+  { title: 'Catalogue', href: '/catalogue' }, // Page avec KPIs intégrés
+];
 ```
 
 ---
 
 ### RG-SB-004: Groupement Logique Modules
+
 **RÈGLE MÉTIER:** Regrouper items selon workflows business réels
 
 **Principe:**
+
 - ✅ Grouper items utilisés ensemble dans même workflow
 - ✅ Réduire clics navigation entre étapes workflow
 - ✅ Cohérence métier > structure technique
 
 **Cas validé - Module "Ventes":**
+
 ```typescript
 // ❌ AVANT - Séparés (2 modules distincts)
 navItems = [
@@ -149,22 +169,24 @@ navItems = [
 ---
 
 ### RG-SB-005: Fusion Items Similaires
+
 **RÈGLE MÉTIER:** Fusionner items similaires avec système de filtres/tabs
 
 **Cas validé - Stocks:**
+
 ```typescript
 // ❌ AVANT - 3 items séparés
 children: [
-  { title: "Inventaire", href: "/stocks/inventaire" },
-  { title: "Entrées", href: "/stocks/entrees" },
-  { title: "Sorties", href: "/stocks/sorties" }
-]
+  { title: 'Inventaire', href: '/stocks/inventaire' },
+  { title: 'Entrées', href: '/stocks/entrees' },
+  { title: 'Sorties', href: '/stocks/sorties' },
+];
 
 // ✅ APRÈS - 2 items fusionnés
 children: [
-  { title: "Inventaire", href: "/stocks/inventaire" },
-  { title: "Mouvements", href: "/stocks/mouvements" }  // Entrées + Sorties avec filtres
-]
+  { title: 'Inventaire', href: '/stocks/inventaire' },
+  { title: 'Mouvements', href: '/stocks/mouvements' }, // Entrées + Sorties avec filtres
+];
 
 // IMPLÉMENTATION PAGE:
 // /stocks/mouvements → Tabs: [Tous, Entrées, Sorties]
@@ -172,6 +194,7 @@ children: [
 ```
 
 **Bénéfices:**
+
 - Navigation -33% clics
 - Code DRY (1 composant vs 2)
 - UX cohérente (même interface)
@@ -181,14 +204,17 @@ children: [
 ## 🎨 RÈGLES DESIGN SYSTEM
 
 ### RG-SB-006: Largeurs Standards
+
 **RÈGLE TECHNIQUE:** Respecter standards industrie sidebar width
 
 **Dimensions validées:**
+
 - ✅ **Expanded:** 256px (16rem, w-64 Tailwind)
 - ✅ **Collapsed:** 64px (4rem, w-16 Tailwind)
 - ✅ **Transition:** 300ms ease-out
 
 **Code standard:**
+
 ```typescript
 // Classe Tailwind
 className={cn(
@@ -198,6 +224,7 @@ className={cn(
 ```
 
 **Raison métier:**
+
 - 256px = optimal lisibilité labels (Nielsen Norman)
 - 64px = minimal touch target mobile (44x44px)
 - 300ms = perçu instantané < 400ms (études UX)
@@ -205,18 +232,21 @@ className={cn(
 ---
 
 ### RG-SB-007: Couleurs Vérone Strictes
+
 **RÈGLE DESIGN:** Sidebar UNIQUEMENT noir & blanc (design system Vérone)
 
 **Palette autorisée:**
+
 ```css
---sidebar-background: hsl(0 0% 100%)      /* Blanc pur */
---sidebar-foreground: hsl(0 0% 0%)        /* Noir signature */
---sidebar-primary: hsl(0 0% 0%)           /* Noir primaire */
---sidebar-accent: hsl(0 0% 0%)            /* Noir accent */
---sidebar-border: hsl(0 0% 0%)            /* Bordure noire */
+--sidebar-background: hsl(0 0% 100%) /* Blanc pur */
+  --sidebar-foreground: hsl(0 0% 0%) /* Noir signature */
+  --sidebar-primary: hsl(0 0% 0%) /* Noir primaire */
+  --sidebar-accent: hsl(0 0% 0%) /* Noir accent */
+  --sidebar-border: hsl(0 0% 0%) /* Bordure noire */;
 ```
 
 **INTERDIT ABSOLU:**
+
 ```css
 ❌ Jaune, doré, ambre (hsl(45...))
 ❌ Couleurs gradient
@@ -224,6 +254,7 @@ className={cn(
 ```
 
 **Exception unique - Badges urgents:**
+
 ```typescript
 // Seule exception couleur: badges notifications urgentes
 <Badge variant="urgent">  // Rouge pour alertes critiques
@@ -233,9 +264,11 @@ className={cn(
 ---
 
 ### RG-SB-008: États Visuels Requis
+
 **RÈGLE UX:** Feedback visuel OBLIGATOIRE pour tous états interactifs
 
 **États obligatoires:**
+
 1. **Default** (état repos)
 2. **Hover** (survol souris)
 3. **Active** (page courante)
@@ -243,6 +276,7 @@ className={cn(
 5. **Disabled** (module inactif)
 
 **Implémentation standard:**
+
 ```typescript
 className={cn(
   // Default
@@ -263,6 +297,7 @@ className={cn(
 ```
 
 **Raison métier:**
+
 - Feedback visuel = confiance utilisateur
 - Active state = orientation navigation
 - Focus visible = accessibilité clavier
@@ -273,9 +308,11 @@ className={cn(
 ## ⚡ RÈGLES FONCTIONNALITÉS AVANCÉES
 
 ### RG-SB-009: Mode Collapse Icon-Only
+
 **RÈGLE FONCTIONNELLE:** Mode collapse OBLIGATOIRE avec tooltips
 
 **Spécifications:**
+
 - ✅ Toggle button visible permanent
 - ✅ State persistence localStorage
 - ✅ Tooltips side="right" en mode collapsed
@@ -283,6 +320,7 @@ className={cn(
 - ✅ Icônes centrées verticalement
 
 **Implémentation:**
+
 ```typescript
 // State management
 const [state, setState] = useState<'expanded' | 'collapsed'>(() => {
@@ -304,6 +342,7 @@ useEffect(() => {
 ```
 
 **Raison métier:**
+
 - Gain espace écran (~200px)
 - Power users préfèrent compact
 - Mobile landscape nécessite collapse
@@ -311,9 +350,11 @@ useEffect(() => {
 ---
 
 ### RG-SB-010: Search Bar Intégrée
+
 **RÈGLE FONCTIONNELLE:** Recherche live filtering OBLIGATOIRE si >10 items
 
 **Spécifications:**
+
 - ✅ Input en haut sidebar (sous header)
 - ✅ Placeholder: "Rechercher..."
 - ✅ Filtrage instantané (useMemo)
@@ -322,31 +363,34 @@ useEffect(() => {
 - ✅ Raccourci clavier: Cmd+K / Ctrl+K
 
 **Algorithme filtrage:**
+
 ```typescript
 const filteredItems = useMemo(() => {
-  if (!searchQuery.trim()) return navItems
+  if (!searchQuery.trim()) return navItems;
 
-  const query = searchQuery.toLowerCase()
+  const query = searchQuery.toLowerCase();
 
   return navItems.filter(item => {
     // Match titre
-    const matchTitle = item.title.toLowerCase().includes(query)
+    const matchTitle = item.title.toLowerCase().includes(query);
 
     // Match description
-    const matchDesc = item.description?.toLowerCase().includes(query)
+    const matchDesc = item.description?.toLowerCase().includes(query);
 
     // Match children
-    const matchChildren = item.children?.some(child =>
-      child.title.toLowerCase().includes(query) ||
-      child.description?.toLowerCase().includes(query)
-    )
+    const matchChildren = item.children?.some(
+      child =>
+        child.title.toLowerCase().includes(query) ||
+        child.description?.toLowerCase().includes(query)
+    );
 
-    return matchTitle || matchDesc || matchChildren
-  })
-}, [searchQuery, navItems])
+    return matchTitle || matchDesc || matchChildren;
+  });
+}, [searchQuery, navItems]);
 ```
 
 **Raison métier:**
+
 - Navigation rapide large système
 - Découverte fonctionnalités (description)
 - Accessibilité (recherche textuelle)
@@ -354,9 +398,11 @@ const filteredItems = useMemo(() => {
 ---
 
 ### RG-SB-011: Badges Notifications
+
 **RÈGLE FONCTIONNELLE:** Système badges pour alertes utilisateur
 
 **Spécifications:**
+
 - ✅ Variants: "default" (noir), "urgent" (rouge)
 - ✅ Position: ml-auto (aligné droite)
 - ✅ Format: nombre (ex: 11, 5, 2)
@@ -364,6 +410,7 @@ const filteredItems = useMemo(() => {
 - ✅ Animation pulse si variant="urgent"
 
 **Cas d'usage validés:**
+
 ```typescript
 // Stocks - Alertes critiques
 {
@@ -389,12 +436,17 @@ const filteredItems = useMemo(() => {
 ```
 
 **Calcul automatique parent:**
+
 ```typescript
 // Badge parent = somme badges enfants
-const parentBadge = item.children?.reduce((sum, child) => sum + (child.badge || 0), 0)
+const parentBadge = item.children?.reduce(
+  (sum, child) => sum + (child.badge || 0),
+  0
+);
 ```
 
 **Raison métier:**
+
 - Alertes visuelles immédiates
 - Priorisation tâches utilisateur
 - Réduction temps découverte alertes
@@ -402,9 +454,11 @@ const parentBadge = item.children?.reduce((sum, child) => sum + (child.badge || 
 ---
 
 ### RG-SB-012: Dark Mode Support
+
 **RÈGLE FONCTIONNELLE:** Toggle dark mode avec persistence
 
 **Spécifications:**
+
 - ✅ Toggle en footer sidebar
 - ✅ Icons: Sun (light) / Moon (dark)
 - ✅ Persistence localStorage
@@ -412,6 +466,7 @@ const parentBadge = item.children?.reduce((sum, child) => sum + (child.badge || 
 - ✅ Transition smooth couleurs
 
 **Implémentation:**
+
 ```typescript
 // State avec persistence
 const [theme, setTheme] = useState<'light' | 'dark'>(() => {
@@ -434,15 +489,17 @@ useEffect(() => {
 ```
 
 **Variables CSS dark mode:**
+
 ```css
 .dark {
-  --sidebar-background: hsl(0 0% 10%);      /* Noir foncé */
-  --sidebar-foreground: hsl(0 0% 100%);     /* Blanc */
-  --sidebar-border: hsl(0 0% 20%);          /* Gris foncé */
+  --sidebar-background: hsl(0 0% 10%); /* Noir foncé */
+  --sidebar-foreground: hsl(0 0% 100%); /* Blanc */
+  --sidebar-border: hsl(0 0% 20%); /* Gris foncé */
 }
 ```
 
 **Raison métier:**
+
 - Confort visuel utilisateur (fatigue oculaire)
 - Trend UX 2025 (90% apps supportent)
 - Accessibilité (préférences système)
@@ -452,9 +509,11 @@ useEffect(() => {
 ## ♿ RÈGLES ACCESSIBILITÉ
 
 ### RG-SB-013: Navigation Clavier
+
 **RÈGLE ACCESSIBILITÉ:** Support clavier complet OBLIGATOIRE
 
 **Interactions clavier requises:**
+
 - ✅ **Tab/Shift+Tab:** Navigation entre items
 - ✅ **Enter/Space:** Activer link/toggle
 - ✅ **Escape:** Fermer search/collapse
@@ -462,24 +521,27 @@ useEffect(() => {
 - ✅ **Cmd+K / Ctrl+K:** Focus search bar
 
 **Implémentation:**
+
 ```typescript
 // Focus visible obligatoire
-className="focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-black"
+className =
+  'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-black';
 
 // Raccourci clavier search
 useEffect(() => {
   const handleKeyDown = (e: KeyboardEvent) => {
     if ((e.metaKey || e.ctrlKey) && e.key === 'k') {
-      e.preventDefault()
-      searchInputRef.current?.focus()
+      e.preventDefault();
+      searchInputRef.current?.focus();
     }
-  }
-  document.addEventListener('keydown', handleKeyDown)
-  return () => document.removeEventListener('keydown', handleKeyDown)
-}, [])
+  };
+  document.addEventListener('keydown', handleKeyDown);
+  return () => document.removeEventListener('keydown', handleKeyDown);
+}, []);
 ```
 
 **Raison métier:**
+
 - Utilisateurs power (développeurs, admins)
 - Accessibilité handicap moteur
 - Productivité (+30% vitesse navigation)
@@ -487,9 +549,11 @@ useEffect(() => {
 ---
 
 ### RG-SB-014: ARIA Labels
+
 **RÈGLE ACCESSIBILITÉ:** Labels descriptifs pour screen readers
 
 **Attributs ARIA requis:**
+
 ```typescript
 // Navigation principale
 <nav aria-label="Navigation principale Vérone">
@@ -515,6 +579,7 @@ useEffect(() => {
 ```
 
 **Raison métier:**
+
 - Accessibilité visuelle (screen readers)
 - Compliance WCAG 2.1 AAA
 - SEO (semantic markup)
@@ -522,9 +587,11 @@ useEffect(() => {
 ---
 
 ### RG-SB-015: Animations Respectueuses
+
 **RÈGLE ACCESSIBILITÉ:** Respect prefers-reduced-motion
 
 **Implémentation:**
+
 ```css
 /* Respect user preferences */
 @media (prefers-reduced-motion: reduce) {
@@ -547,6 +614,7 @@ className={cn(
 ```
 
 **Raison métier:**
+
 - Accessibilité (troubles vestibulaires)
 - Performance (low-end devices)
 - Compliance WCAG 2.1 AAA
@@ -556,9 +624,11 @@ className={cn(
 ## 🚀 RÈGLES PERFORMANCE
 
 ### RG-SB-016: Animations 60fps
+
 **RÈGLE PERFORMANCE:** Animations GPU-accelerated OBLIGATOIRES
 
 **Propriétés CSS autorisées:**
+
 - ✅ `transform` (GPU-accelerated)
 - ✅ `opacity` (GPU-accelerated)
 - ❌ `width` (reflow - lent)
@@ -566,6 +636,7 @@ className={cn(
 - ❌ `margin/padding` (reflow - lent)
 
 **Implémentation optimale:**
+
 ```css
 /* ✅ BON - GPU-accelerated */
 .sidebar-collapsed {
@@ -582,11 +653,13 @@ className={cn(
 
 **Exception validée:**
 Pour sidebar, width transition acceptable car:
+
 - Fréquence basse (1-2x par session)
 - Élément isolé (pas de reflow cascade)
 - UX prime sur micro-optimisation
 
 **Raison métier:**
+
 - 60fps = perception fluidité
 - GPU = batterie mobile optimisée
 - Reflow = freeze UI mobile
@@ -594,9 +667,11 @@ Pour sidebar, width transition acceptable car:
 ---
 
 ### RG-SB-017: Lazy Loading Icons
+
 **RÈGLE PERFORMANCE:** Icons lazy-loaded si >20 items
 
 **Stratégie:**
+
 ```typescript
 // ❌ MAUVAIS - Import statique tous icons
 import { Home, Package, Truck, Users, ... } from 'lucide-react'
@@ -614,10 +689,12 @@ const iconComponents = {
 ```
 
 **Seuil validé:**
+
 - < 20 items: Import statique OK
 - ≥ 20 items: Lazy load REQUIS
 
 **Raison métier:**
+
 - Bundle size (-50% si 20+ icons)
 - Initial load speed (+200ms économisés)
 - Core Web Vitals (LCP optimisé)
@@ -625,29 +702,32 @@ const iconComponents = {
 ---
 
 ### RG-SB-018: State Persistence Optimisée
+
 **RÈGLE PERFORMANCE:** localStorage avec debounce write
 
 **Implémentation:**
+
 ```typescript
 // ❌ MAUVAIS - Write immédiat chaque setState
 useEffect(() => {
-  localStorage.setItem('sidebar:state', state)
-}, [state])
+  localStorage.setItem('sidebar:state', state);
+}, [state]);
 
 // ✅ BON - Debounced write
-import { useDebouncedCallback } from 'use-debounce'
+import { useDebouncedCallback } from 'use-debounce';
 
 const debouncedSave = useDebouncedCallback(
   (value: string) => localStorage.setItem('sidebar:state', value),
-  500  // 500ms debounce
-)
+  500 // 500ms debounce
+);
 
 useEffect(() => {
-  debouncedSave(state)
-}, [state])
+  debouncedSave(state);
+}, [state]);
 ```
 
 **Raison métier:**
+
 - localStorage = synchronous blocking
 - Debounce = -80% writes
 - Performance mobile (storage lent)
@@ -657,15 +737,18 @@ useEffect(() => {
 ## 📊 RÈGLES MONITORING
 
 ### RG-SB-019: Console Error Zero Tolerance
+
 **RÈGLE QUALITÉ:** AUCUNE erreur console autorisée
 
 **Workflow validation:**
+
 1. MCP Playwright Browser navigate
 2. `mcp__playwright__browser_console_messages()`
 3. Si errors → STOP → Fix ALL → Re-test
 4. Screenshot proof console clean
 
 **Erreurs bloquantes:**
+
 ```typescript
 ❌ TypeError: Cannot read property 'x' of undefined
 ❌ Warning: Each child in list should have unique key
@@ -674,6 +757,7 @@ useEffect(() => {
 ```
 
 **Raison métier:**
+
 - Erreurs = bugs cachés
 - Console polluted = debug difficile
 - Professionnalisme (client voit console)
@@ -681,31 +765,34 @@ useEffect(() => {
 ---
 
 ### RG-SB-020: Analytics Navigation
+
 **RÈGLE MONITORING:** Tracking clics navigation (optionnel)
 
 **Événements à tracker:**
+
 ```typescript
 // Click navigation item
 analytics.track('sidebar_navigation', {
   from: currentPath,
   to: item.href,
   item_title: item.title,
-  collapsed: isCollapsed
-})
+  collapsed: isCollapsed,
+});
 
 // Toggle collapse
 analytics.track('sidebar_toggle', {
-  state: isCollapsed ? 'collapsed' : 'expanded'
-})
+  state: isCollapsed ? 'collapsed' : 'expanded',
+});
 
 // Search usage
 analytics.track('sidebar_search', {
   query: searchQuery,
-  results_count: filteredItems.length
-})
+  results_count: filteredItems.length,
+});
 ```
 
 **Raison métier:**
+
 - Optimisation UX data-driven
 - Identifier items populaires/inutilisés
 - A/B testing navigation
@@ -715,9 +802,11 @@ analytics.track('sidebar_search', {
 ## 🔄 RÈGLES MAINTENANCE
 
 ### RG-SB-021: Structure NavItem Typée
+
 **RÈGLE CODE:** TypeScript strict pour NavItem structure
 
 **Type validé:**
+
 ```typescript
 interface NavItem {
   title: string                              // REQUIS
@@ -735,6 +824,7 @@ const navItems: NavItem[] = [...]
 ```
 
 **Bénéfices:**
+
 - Type safety (erreurs compile-time)
 - Autocomplete IDE
 - Refactoring sécurisé
@@ -743,9 +833,11 @@ const navItems: NavItem[] = [...]
 ---
 
 ### RG-SB-022: Ajout Item - Checklist
+
 **RÈGLE PROCESSUS:** Validation obligatoire avant ajout item
 
 **Checklist validation:**
+
 - [ ] Item nécessaire ? (pas redondant avec existant)
 - [ ] Limite 15 items respectée ? (sinon fusionner/supprimer)
 - [ ] Niveau hiérarchie ≤ 2 ? (sinon restructurer)
@@ -756,6 +848,7 @@ const navItems: NavItem[] = [...]
 - [ ] Badge calculé automatiquement ? (si parent)
 
 **Exemple ajout validé:**
+
 ```typescript
 // ✅ VALIDÉ - Tous critères respectés
 {
@@ -777,9 +870,11 @@ const navItems: NavItem[] = [...]
 ---
 
 ### RG-SB-023: Documentation Synchronisée
+
 **RÈGLE MAINTENANCE:** Documentation mise à jour SYSTÉMATIQUE
 
 **Fichiers à maintenir:**
+
 1. **`docs/architecture/SIDEBAR-OPTIMIZATION-2025.md`**
    - Architecture complète
    - Before/After metrics
@@ -796,6 +891,7 @@ const navItems: NavItem[] = [...]
    - Leçons apprises
 
 **Workflow update:**
+
 ```bash
 # Après modification sidebar
 1. Update app-sidebar.tsx
@@ -805,6 +901,7 @@ const navItems: NavItem[] = [...]
 ```
 
 **Raison métier:**
+
 - Onboarding nouveaux devs
 - Éviter régression
 - Traçabilité décisions
@@ -814,9 +911,11 @@ const navItems: NavItem[] = [...]
 ## 🏆 MÉTRIQUES SUCCÈS
 
 ### RG-SB-024: KPIs Navigation
+
 **RÈGLE MONITORING:** Suivi KPIs navigation mensuels
 
 **KPIs validés:**
+
 ```typescript
 // Performance
 ✅ Animation FPS: 60fps constant
@@ -837,6 +936,7 @@ const navItems: NavItem[] = [...]
 ```
 
 **Reporting mensuel:**
+
 - Dashboard analytics navigation
 - A/B testing structures alternatives
 - User feedback surveys
@@ -846,20 +946,23 @@ const navItems: NavItem[] = [...]
 ## 📝 VALIDATION RÈGLES
 
 ### Responsable Validation
+
 - **Équipe UX:** Validation ergonomie, accessibilité
 - **Équipe Dev:** Validation technique, performance
 - **Product Owner:** Validation métier, workflows
 
 ### Processus Révision
+
 - **Fréquence:** Trimestrielle (ou si nouvelle best practice)
 - **Trigger révision:** Feedback users, nouvelles normes WCAG, framework updates
 - **Validation:** Commit dans `manifests/business-rules/`
 
 ### Historique Versions
+
 - **v1.0 (2025-10-10):** Version initiale post-optimisation révolutionnaire
 - **v1.1 (TBD):** Futures évolutions selon feedback production
 
 ---
 
 **RÈGLES VALIDÉES EN PRODUCTION** ✅
-*Vérone Back Office 2025 - Excellence Navigation UX*
+_Vérone Back Office 2025 - Excellence Navigation UX_

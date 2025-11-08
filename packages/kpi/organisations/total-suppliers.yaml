@@ -43,17 +43,17 @@ source:
 displayed_in:
   - component: src/app/contacts-organisations/page.tsx
     location: "Card 'Fournisseurs' (ligne ~130-155)"
-    description: "Deuxième carte statistiques page accueil"
+    description: 'Deuxième carte statistiques page accueil'
     screenshot: contacts-organisations-page.png
   - component: src/app/contacts-organisations/suppliers/page.tsx
     location: "Stats header 'Total' (ligne ~247)"
-    description: "Header statistiques page liste fournisseurs"
+    description: 'Header statistiques page liste fournisseurs'
 
 thresholds:
-  excellent: "> 50"
-  good: "20-50"
-  warning: "5-20"
-  critical: "< 5"
+  excellent: '> 50'
+  good: '20-50'
+  warning: '5-20'
+  critical: '< 5'
   interpretation: |
     - > 50 : Large réseau fournisseurs
     - 20-50 : Portefeuille diversifié
@@ -61,17 +61,17 @@ thresholds:
     - < 5 : Dépendance forte (risque)
 
 tests:
-  - scenario: "Réseau standard"
+  - scenario: 'Réseau standard'
     inputs:
       suppliers_count: 11
     expected_output: 11
-    threshold_expected: "warning"
+    threshold_expected: 'warning'
 
-  - scenario: "Large réseau"
+  - scenario: 'Large réseau'
     inputs:
       suppliers_count: 75
     expected_output: 75
-    threshold_expected: "excellent"
+    threshold_expected: 'excellent'
 
 metadata:
   created_at: 2025-10-22

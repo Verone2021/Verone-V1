@@ -271,7 +271,7 @@ jobs:
           secret: ${{ secrets.GITHUB_TOKEN }}
           approvers: ${{ github.repository_owner }}
           minimum-approvals: 1
-          issue-title: "🔒 Approve deployment to PRODUCTION"
+          issue-title: '🔒 Approve deployment to PRODUCTION'
           issue-body: |
             ## 🚀 Production Deployment Approval Required
 

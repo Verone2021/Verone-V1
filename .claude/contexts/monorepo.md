@@ -137,9 +137,9 @@ mv src/stories packages/ui/stories
 
 ```typescript
 // packages/types/src/index.ts
-export * from './organisation'
-export * from './product'
-export * from './order'
+export * from './organisation';
+export * from './product';
+export * from './order';
 // ... tous types DTO communs
 ```
 
@@ -233,8 +233,8 @@ turbo format
 export function formatCurrency(amount: number, currency = 'EUR'): string {
   return new Intl.NumberFormat('fr-FR', {
     style: 'currency',
-    currency
-  }).format(amount)
+    currency,
+  }).format(amount);
 }
 ```
 
@@ -263,16 +263,19 @@ export class OrdersService {
 ## 🎯 BÉNÉFICES MONOREPO
 
 **Performance** :
+
 - Build incrémental (uniquement packages modifiés)
 - Cache distribué entre builds
 - Parallélisation tasks
 
 **Qualité** :
+
 - Types partagés (source unique vérité)
 - Lint/format/tests uniformes
 - Composants UI réutilisables garantis
 
 **DX** :
+
 - Hot reload cross-packages
 - Jump-to-definition cross-workspace
 - Refactoring safe (rename propagé)

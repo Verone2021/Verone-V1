@@ -1,13 +1,20 @@
-'use server'
+'use server';
 
-import { createAdminClient } from '@/lib/supabase/server'
-import { revalidatePath } from 'next/cache'
+import { revalidatePath } from 'next/cache';
 
-export type SalesOrderStatus = 'draft' | 'confirmed' | 'partially_shipped' | 'shipped' | 'delivered' | 'cancelled'
+import { createAdminClient } from '@/lib/supabase/server';
+
+export type SalesOrderStatus =
+  | 'draft'
+  | 'confirmed'
+  | 'partially_shipped'
+  | 'shipped'
+  | 'delivered'
+  | 'cancelled';
 
 interface UpdateStatusResult {
-  success: boolean
-  error?: string
+  success: boolean;
+  error?: string;
 }
 
 /**
@@ -26,105 +33,115 @@ export async function updateSalesOrderStatus(
 ): Promise<UpdateStatusResult> {
   try {
     // Créer le client Supabase ADMIN (bypasse RLS policies)
-    const supabase = createAdminClient()
+    const supabase = createAdminClient();
 
     // Log pour debug
-    console.log(`🔍 [Server Action ADMIN] Tentative mise à jour commande ${orderId} vers ${newStatus} par user ${userId}`)
+    console.log(
+      `🔍 [Server Action ADMIN] Tentative mise à jour commande ${orderId} vers ${newStatus} par user ${userId}`
+    );
 
     // Stocker l'utilisateur courant en session PostgreSQL pour les triggers (notamment stock_movements)
-    await supabase.rpc('set_current_user_id', { user_id: userId })
+    await supabase.rpc('set_current_user_id', { user_id: userId });
 
     // Vérifier d'abord que la commande existe et récupérer son statut actuel + timestamps
     const { data: existingOrder, error: fetchError } = await supabase
       .from('sales_orders')
-      .select('id, order_number, status, confirmed_at, shipped_at, delivered_at, cancelled_at')
+      .select(
+        'id, order_number, status, confirmed_at, shipped_at, delivered_at, cancelled_at'
+      )
       .eq('id', orderId)
-      .single()
+      .single();
 
     if (fetchError) {
-      console.error('❌ [Server Action] Erreur fetch commande:', fetchError)
+      console.error('❌ [Server Action] Erreur fetch commande:', fetchError);
       return {
         success: false,
-        error: `Impossible de récupérer la commande: ${fetchError.message}`
-      }
+        error: `Impossible de récupérer la commande: ${fetchError.message}`,
+      };
     }
 
     if (!existingOrder) {
-      console.error('❌ [Server Action] Commande non trouvée:', orderId)
+      console.error('❌ [Server Action] Commande non trouvée:', orderId);
       return {
         success: false,
-        error: 'Commande non trouvée'
-      }
+        error: 'Commande non trouvée',
+      };
     }
 
-    console.log(`📊 [Server Action] Commande trouvée: ${existingOrder.order_number}, statut actuel: ${existingOrder.status}`)
+    console.log(
+      `📊 [Server Action] Commande trouvée: ${existingOrder.order_number}, statut actuel: ${existingOrder.status}`
+    );
 
     // Préparer les champs à mettre à jour selon le workflow
-    const updateFields: any = { status: newStatus }
+    const updateFields: any = { status: newStatus };
 
     // Gérer les timestamps selon les contraintes PostgreSQL
     if (newStatus === 'confirmed') {
-      updateFields.confirmed_at = new Date().toISOString()
-      updateFields.confirmed_by = userId
+      updateFields.confirmed_at = new Date().toISOString();
+      updateFields.confirmed_by = userId;
     } else if (newStatus === 'shipped' || newStatus === 'partially_shipped') {
       if (!existingOrder.confirmed_at) {
-        updateFields.confirmed_at = new Date().toISOString()
-        updateFields.confirmed_by = userId
+        updateFields.confirmed_at = new Date().toISOString();
+        updateFields.confirmed_by = userId;
       }
-      updateFields.shipped_at = new Date().toISOString()
+      updateFields.shipped_at = new Date().toISOString();
     } else if (newStatus === 'delivered') {
       if (!existingOrder.confirmed_at) {
-        updateFields.confirmed_at = new Date().toISOString()
-        updateFields.confirmed_by = userId
+        updateFields.confirmed_at = new Date().toISOString();
+        updateFields.confirmed_by = userId;
       }
       if (!existingOrder.shipped_at) {
-        updateFields.shipped_at = new Date().toISOString()
+        updateFields.shipped_at = new Date().toISOString();
       }
-      updateFields.delivered_at = new Date().toISOString()
+      updateFields.delivered_at = new Date().toISOString();
     } else if (newStatus === 'cancelled') {
-      updateFields.cancelled_at = new Date().toISOString()
-      updateFields.cancelled_by = userId
+      updateFields.cancelled_at = new Date().toISOString();
+      updateFields.cancelled_by = userId;
     }
 
-    console.log(`🔧 [Server Action] Champs à mettre à jour:`, updateFields)
+    console.log(`🔧 [Server Action] Champs à mettre à jour:`, updateFields);
 
     // Mettre à jour le statut de la commande
     const { data: updatedData, error: updateError } = await supabase
       .from('sales_orders')
       .update(updateFields)
       .eq('id', orderId)
-      .select()
+      .select();
 
     if (updateError) {
-      console.error('❌ [Server Action] Erreur UPDATE:', updateError)
+      console.error('❌ [Server Action] Erreur UPDATE:', updateError);
       return {
         success: false,
-        error: updateError.message
-      }
+        error: updateError.message,
+      };
     }
 
     // Vérifier si l'UPDATE a affecté des lignes
     if (!updatedData || updatedData.length === 0) {
-      console.error('❌ [Server Action] UPDATE n\'a affecté AUCUNE ligne (RLS policy bloque probablement)')
+      console.error(
+        "❌ [Server Action] UPDATE n'a affecté AUCUNE ligne (RLS policy bloque probablement)"
+      );
       return {
         success: false,
-        error: 'Mise à jour bloquée (RLS policy)'
-      }
+        error: 'Mise à jour bloquée (RLS policy)',
+      };
     }
 
-    console.log(`✅ [Server Action] Commande ${existingOrder.order_number} mise à jour avec succès: ${existingOrder.status} → ${newStatus}`)
+    console.log(
+      `✅ [Server Action] Commande ${existingOrder.order_number} mise à jour avec succès: ${existingOrder.status} → ${newStatus}`
+    );
 
     // Revalider le cache Next.js pour la page des commandes
-    revalidatePath('/commandes/clients')
+    revalidatePath('/commandes/clients');
 
     return {
-      success: true
-    }
+      success: true,
+    };
   } catch (err) {
-    console.error('❌ [Server Action] Exception updateSalesOrderStatus:', err)
+    console.error('❌ [Server Action] Exception updateSalesOrderStatus:', err);
     return {
       success: false,
-      error: err instanceof Error ? err.message : 'Erreur inconnue'
-    }
+      error: err instanceof Error ? err.message : 'Erreur inconnue',
+    };
   }
 }

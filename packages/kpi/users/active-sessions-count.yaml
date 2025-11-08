@@ -15,7 +15,7 @@ source:
   lines: 407-432
 
 displayed_in:
-  - location: "Section Sessions actives"
+  - location: 'Section Sessions actives'
 
 output:
   type: number

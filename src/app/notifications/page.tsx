@@ -27,7 +27,7 @@ import { Bell, Search, CheckCheck, Trash2, Filter, X } from 'lucide-react';
 
 import { ButtonV2 } from '@/components/ui/button';
 import { spacing, colors } from '@/lib/design-system';
-import { cn } from '@/lib/utils';
+import { cn } from '@verone/utils';
 import {
   useDatabaseNotifications,
   type DatabaseNotification,

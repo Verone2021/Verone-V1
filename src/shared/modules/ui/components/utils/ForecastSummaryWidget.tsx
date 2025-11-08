@@ -1,11 +1,27 @@
-"use client"
+'use client';
 
-import { useState } from 'react'
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
-import { Badge } from '@/components/ui/badge'
-import { ButtonV2 } from '@/components/ui/button'
-import { ArrowDownToLine, ArrowUpFromLine, ExternalLink, Package, TrendingUp, TrendingDown } from 'lucide-react'
-import Link from 'next/link'
+import { useState } from 'react';
+
+import Link from 'next/link';
+
+import {
+  ArrowDownToLine,
+  ArrowUpFromLine,
+  ExternalLink,
+  Package,
+  TrendingUp,
+  TrendingDown,
+} from 'lucide-react';
+
+import { Badge } from '@/components/ui/badge';
+import { ButtonV2 } from '@/components/ui/button';
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from '@/components/ui/card';
 
 // =============================================
 // WIDGET PRÉVISIONNEL STOCK - DESIGN COMPACT
@@ -13,22 +29,22 @@ import Link from 'next/link'
 // =============================================
 
 export interface ForecastedOrder {
-  id: string
-  order_number: string
-  order_type: 'purchase' | 'sales' // PO ou SO
-  client_name?: string // Pour SO
-  supplier_name?: string // Pour PO
-  total_quantity: number
-  expected_date: string
-  status: string
+  id: string;
+  order_number: string;
+  order_type: 'purchase' | 'sales'; // PO ou SO
+  client_name?: string; // Pour SO
+  supplier_name?: string; // Pour PO
+  total_quantity: number;
+  expected_date: string;
+  status: string;
 }
 
 interface ForecastSummaryWidgetProps {
-  incomingOrders: ForecastedOrder[] // Commandes fournisseurs (entrées)
-  outgoingOrders: ForecastedOrder[] // Commandes clients (sorties)
-  totalIn: number // Total entrées prévisionnelles
-  totalOut: number // Total sorties prévisionnelles (valeur absolue)
-  onOrderClick?: (orderId: string, orderType: 'purchase' | 'sales') => void
+  incomingOrders: ForecastedOrder[]; // Commandes fournisseurs (entrées)
+  outgoingOrders: ForecastedOrder[]; // Commandes clients (sorties)
+  totalIn: number; // Total entrées prévisionnelles
+  totalOut: number; // Total sorties prévisionnelles (valeur absolue)
+  onOrderClick?: (orderId: string, orderType: 'purchase' | 'sales') => void;
 }
 
 export function ForecastSummaryWidget({
@@ -36,30 +52,36 @@ export function ForecastSummaryWidget({
   outgoingOrders,
   totalIn,
   totalOut,
-  onOrderClick
+  onOrderClick,
 }: ForecastSummaryWidgetProps) {
-  const [activeTab, setActiveTab] = useState<'in' | 'out'>('in')
+  const [activeTab, setActiveTab] = useState<'in' | 'out'>('in');
 
-  const displayedOrders = activeTab === 'in' ? incomingOrders : outgoingOrders
+  const displayedOrders = activeTab === 'in' ? incomingOrders : outgoingOrders;
 
   return (
     <Card className="border-black">
       <CardHeader className="pb-3">
         <div className="flex items-center justify-between">
           <div>
-            <CardTitle className="text-black text-lg">Stock Prévisionnel</CardTitle>
+            <CardTitle className="text-black text-lg">
+              Stock Prévisionnel
+            </CardTitle>
             <CardDescription className="text-xs">
               Commandes en cours impactant les stocks futurs
             </CardDescription>
           </div>
           <div className="flex gap-2">
-            <Badge variant="outline" className="border-green-300 text-green-600 text-xs">
-              <TrendingUp className="h-3 w-3 mr-1" />
-              +{totalIn} entrées
+            <Badge
+              variant="outline"
+              className="border-green-300 text-green-600 text-xs"
+            >
+              <TrendingUp className="h-3 w-3 mr-1" />+{totalIn} entrées
             </Badge>
-            <Badge variant="outline" className="border-red-300 text-red-600 text-xs">
-              <TrendingDown className="h-3 w-3 mr-1" />
-              -{totalOut} sorties
+            <Badge
+              variant="outline"
+              className="border-red-300 text-red-600 text-xs"
+            >
+              <TrendingDown className="h-3 w-3 mr-1" />-{totalOut} sorties
             </Badge>
           </div>
         </div>
@@ -79,7 +101,10 @@ export function ForecastSummaryWidget({
             <div className="flex items-center justify-center gap-2">
               <ArrowDownToLine className="h-4 w-4" />
               <span>Entrées Prévues</span>
-              <Badge variant="outline" className="ml-1 border-green-300 text-green-600 text-xs">
+              <Badge
+                variant="outline"
+                className="ml-1 border-green-300 text-green-600 text-xs"
+              >
                 {incomingOrders.length}
               </Badge>
             </div>
@@ -96,7 +121,10 @@ export function ForecastSummaryWidget({
             <div className="flex items-center justify-center gap-2">
               <ArrowUpFromLine className="h-4 w-4" />
               <span>Sorties Prévues</span>
-              <Badge variant="outline" className="ml-1 border-red-300 text-red-600 text-xs">
+              <Badge
+                variant="outline"
+                className="ml-1 border-red-300 text-red-600 text-xs"
+              >
                 {outgoingOrders.length}
               </Badge>
             </div>
@@ -115,7 +143,7 @@ export function ForecastSummaryWidget({
               </p>
             </div>
           ) : (
-            displayedOrders.map((order) => (
+            displayedOrders.map(order => (
               <div
                 key={order.id}
                 className="flex items-center justify-between p-2 border border-gray-200 rounded-md hover:bg-gray-50 transition-colors cursor-pointer"
@@ -129,7 +157,9 @@ export function ForecastSummaryWidget({
                     <ExternalLink className="h-3 w-3 text-gray-400" />
                   </div>
                   <p className="text-xs text-gray-600">
-                    {order.order_type === 'purchase' ? order.supplier_name : order.client_name}
+                    {order.order_type === 'purchase'
+                      ? order.supplier_name
+                      : order.client_name}
                   </p>
                 </div>
 
@@ -142,7 +172,8 @@ export function ForecastSummaryWidget({
                         : 'border-red-300 text-red-600'
                     }`}
                   >
-                    {activeTab === 'in' ? '+' : '-'}{order.total_quantity} unités
+                    {activeTab === 'in' ? '+' : '-'}
+                    {order.total_quantity} unités
                   </Badge>
                   <p className="text-xs text-gray-500 mt-1">
                     {new Date(order.expected_date).toLocaleDateString('fr-FR')}
@@ -178,5 +209,5 @@ export function ForecastSummaryWidget({
         </div>
       </CardContent>
     </Card>
-  )
+  );
 }

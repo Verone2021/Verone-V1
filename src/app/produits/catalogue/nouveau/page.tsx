@@ -1,29 +1,44 @@
-"use client"
+'use client';
 
-import { useState } from 'react'
-import { useRouter } from 'next/navigation'
-import { ArrowLeft, Settings, CheckCircle, Circle, ArrowRight } from 'lucide-react'
-import { Button } from '@/components/ui/button'
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
-import { Badge } from '@/components/ui/badge'
-import { CompleteProductWizard } from '@/components/business/complete-product-wizard'
+import { useState } from 'react';
+
+import { useRouter } from 'next/navigation';
+
+import {
+  ArrowLeft,
+  Settings,
+  CheckCircle,
+  Circle,
+  ArrowRight,
+} from 'lucide-react';
+
+import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from '@/components/ui/card';
+import { CompleteProductWizard } from '@/shared/modules/products/components/wizards/CompleteProductWizard';
 
 export default function NouveauProduitPage() {
-  const router = useRouter()
-  const [showForm, setShowForm] = useState(false)
+  const router = useRouter();
+  const [showForm, setShowForm] = useState(false);
 
   const handleSuccess = (productId: string) => {
     // Rediriger vers la page du produit créé
-    router.push(`/produits/catalogue/${productId}`)
-  }
+    router.push(`/produits/catalogue/${productId}`);
+  };
 
   const handleBack = () => {
     if (showForm) {
-      setShowForm(false)
+      setShowForm(false);
     } else {
-      router.push('/produits/catalogue')
+      router.push('/produits/catalogue');
     }
-  }
+  };
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -73,8 +88,8 @@ export default function NouveauProduitPage() {
                 Nouveau Produit Complet
               </h1>
               <p className="text-lg text-gray-600 max-w-2xl mx-auto">
-                Création détaillée avec toutes les informations produit.
-                Wizard guidé en 6 étapes pour un produit prêt à vendre.
+                Création détaillée avec toutes les informations produit. Wizard
+                guidé en 6 étapes pour un produit prêt à vendre.
               </p>
             </div>
 
@@ -88,7 +103,9 @@ export default function NouveauProduitPage() {
                   <div className="mx-auto mb-4 p-3 bg-green-100 rounded-full w-fit">
                     <Settings className="h-8 w-8 text-green-600" />
                   </div>
-                  <CardTitle className="text-xl">Wizard Produit Complet</CardTitle>
+                  <CardTitle className="text-xl">
+                    Wizard Produit Complet
+                  </CardTitle>
                   <CardDescription className="text-base">
                     Création guidée avec toutes les informations produit
                   </CardDescription>
@@ -99,12 +116,26 @@ export default function NouveauProduitPage() {
                       ✨ 6 sections disponibles :
                     </div>
                     <ul className="text-sm text-gray-600 space-y-1">
-                      <li>• <strong>Informations générales</strong> (nom, description, catégorie)</li>
-                      <li>• <strong>Fournisseur</strong> (sourcing, référence)</li>
-                      <li>• <strong>Tarification</strong> (prix, marges, coûts)</li>
-                      <li>• <strong>Caractéristiques techniques</strong> (dimensions, poids)</li>
-                      <li>• <strong>Images</strong> (galerie produit)</li>
-                      <li>• <strong>Stock</strong> (quantités, alertes)</li>
+                      <li>
+                        • <strong>Informations générales</strong> (nom,
+                        description, catégorie)
+                      </li>
+                      <li>
+                        • <strong>Fournisseur</strong> (sourcing, référence)
+                      </li>
+                      <li>
+                        • <strong>Tarification</strong> (prix, marges, coûts)
+                      </li>
+                      <li>
+                        • <strong>Caractéristiques techniques</strong>{' '}
+                        (dimensions, poids)
+                      </li>
+                      <li>
+                        • <strong>Images</strong> (galerie produit)
+                      </li>
+                      <li>
+                        • <strong>Stock</strong> (quantités, alertes)
+                      </li>
                     </ul>
                   </div>
 
@@ -113,7 +144,9 @@ export default function NouveauProduitPage() {
                       🔄 Flexibilité totale :
                     </div>
                     <ul className="text-sm text-gray-600 space-y-1">
-                      <li>• <strong>Aucun champ obligatoire</strong></li>
+                      <li>
+                        • <strong>Aucun champ obligatoire</strong>
+                      </li>
                       <li>• Sauvegarde progressive</li>
                       <li>• Navigation libre entre les sections</li>
                       <li>• Finalisation quand vous voulez</li>
@@ -132,7 +165,10 @@ export default function NouveauProduitPage() {
                   </div>
 
                   <div className="pt-2">
-                    <Badge variant="outline" className="text-green-600 border-green-200">
+                    <Badge
+                      variant="outline"
+                      className="text-green-600 border-green-200"
+                    >
                       Temps estimé : 5-15 minutes
                     </Badge>
                   </div>
@@ -160,5 +196,5 @@ export default function NouveauProduitPage() {
         )}
       </div>
     </div>
-  )
+  );
 }

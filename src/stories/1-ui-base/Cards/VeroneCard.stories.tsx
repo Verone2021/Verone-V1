@@ -1,4 +1,5 @@
 import type { Meta, StoryObj } from '@storybook/nextjs';
+
 import { VéroneCard } from '@/components/ui/verone-card';
 
 const meta = {
@@ -236,7 +237,7 @@ export const Grid: Story = {
         slug="salon"
         count={45}
         countLabel="produit"
-        isActive={true}
+        isActive
       />
       <VéroneCard
         title="Fauteuils"
@@ -244,7 +245,7 @@ export const Grid: Story = {
         slug="fauteuils"
         count={18}
         countLabel="produit"
-        isActive={true}
+        isActive
       />
       <VéroneCard
         title="Tables"
@@ -252,7 +253,7 @@ export const Grid: Story = {
         slug="tables"
         count={23}
         countLabel="produit"
-        isActive={true}
+        isActive
       />
       <VéroneCard
         title="Luminaires"
@@ -260,7 +261,7 @@ export const Grid: Story = {
         slug="luminaires"
         count={67}
         countLabel="produit"
-        isActive={true}
+        isActive
       />
       <VéroneCard
         title="Décoration"
@@ -268,7 +269,7 @@ export const Grid: Story = {
         slug="deco"
         count={92}
         countLabel="produit"
-        isActive={true}
+        isActive
       />
       <VéroneCard
         title="Archive 2024"
@@ -301,7 +302,7 @@ export const RealWorld: Story = {
             slug="mobilier-salon"
             count={45}
             countLabel="produit"
-            isActive={true}
+            isActive
             onClick={() => console.log('Navigate to family')}
             onEdit={() => console.log('Edit family')}
           />
@@ -312,7 +313,7 @@ export const RealWorld: Story = {
             slug="mobilier-chambre"
             count={38}
             countLabel="produit"
-            isActive={true}
+            isActive
             onClick={() => console.log('Navigate to family')}
             onEdit={() => console.log('Edit family')}
           />
@@ -331,7 +332,7 @@ export const RealWorld: Story = {
             slug="fauteuils"
             count={18}
             countLabel="produit"
-            isActive={true}
+            isActive
             iconPosition="top-right"
           />
           <VéroneCard
@@ -340,7 +341,7 @@ export const RealWorld: Story = {
             slug="tables"
             count={23}
             countLabel="produit"
-            isActive={true}
+            isActive
             iconPosition="top-right"
           />
           <VéroneCard
@@ -349,7 +350,7 @@ export const RealWorld: Story = {
             slug="luminaires"
             count={67}
             countLabel="produit"
-            isActive={true}
+            isActive
             iconPosition="top-right"
           />
         </div>

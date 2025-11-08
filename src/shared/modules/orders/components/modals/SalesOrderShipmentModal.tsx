@@ -1,45 +1,56 @@
-'use client'
+'use client';
 
 /**
  * 📦 Modal Wrapper: Expédition Sales Order
  * Charge données enrichies et affiche SalesOrderShipmentForm
  */
 
-import { useEffect, useState } from 'react'
-import { X } from 'lucide-react'
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog'
-import { ButtonV2 } from '@/components/ui/button'
-import { SalesOrderShipmentForm } from './sales-order-shipment-form'
-import { useSalesShipments, type SalesOrderForShipment } from '@/shared/modules/orders/hooks'
-import type { SalesOrder } from '@/shared/modules/orders/hooks'
+import { useEffect, useState } from 'react';
+
+import { X } from 'lucide-react';
+
+import { ButtonV2 } from '@/components/ui/button';
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog';
+import { SalesOrderShipmentForm } from '@/shared/modules/orders/components/forms/SalesOrderShipmentForm';
+import {
+  useSalesShipments,
+  type SalesOrderForShipment,
+} from '@/shared/modules/orders/hooks';
+import type { SalesOrder } from '@/shared/modules/orders/hooks';
 
 interface SalesOrderShipmentModalProps {
-  order: SalesOrder
-  open: boolean
-  onClose: () => void
-  onSuccess: () => void
+  order: SalesOrder;
+  open: boolean;
+  onClose: () => void;
+  onSuccess: () => void;
 }
 
 export function SalesOrderShipmentModal({
   order,
   open,
   onClose,
-  onSuccess
+  onSuccess,
 }: SalesOrderShipmentModalProps) {
-  const { loadSalesOrderForShipment, loading } = useSalesShipments()
-  const [enrichedOrder, setEnrichedOrder] = useState<SalesOrderForShipment | null>(null)
+  const { loadSalesOrderForShipment, loading } = useSalesShipments();
+  const [enrichedOrder, setEnrichedOrder] =
+    useState<SalesOrderForShipment | null>(null);
 
   // Charger données enrichies (items avec stock) quand modal s'ouvre
   useEffect(() => {
     if (open && order?.id) {
       loadSalesOrderForShipment(order.id).then(data => {
-        setEnrichedOrder(data)
-      })
+        setEnrichedOrder(data);
+      });
     } else {
       // Reset quand modal se ferme
-      setEnrichedOrder(null)
+      setEnrichedOrder(null);
     }
-  }, [open, order?.id, loadSalesOrderForShipment])
+  }, [open, order?.id, loadSalesOrderForShipment]);
 
   return (
     <Dialog open={open} onOpenChange={onClose}>
@@ -52,7 +63,8 @@ export function SalesOrderShipmentModal({
               </DialogTitle>
               <p className="text-sm text-gray-600 mt-1">
                 Commande {order.order_number}
-                {enrichedOrder?.organisations && ` • ${enrichedOrder.organisations.trade_name || enrichedOrder.organisations.legal_name}`}
+                {enrichedOrder?.organisations &&
+                  ` • ${enrichedOrder.organisations.trade_name || enrichedOrder.organisations.legal_name}`}
               </p>
             </div>
             <ButtonV2 variant="ghost" size="sm" onClick={onClose}>
@@ -71,8 +83,8 @@ export function SalesOrderShipmentModal({
             <SalesOrderShipmentForm
               salesOrder={enrichedOrder}
               onSuccess={() => {
-                onSuccess()
-                onClose()
+                onSuccess();
+                onClose();
               }}
               onCancel={onClose}
             />
@@ -80,5 +92,5 @@ export function SalesOrderShipmentModal({
         </div>
       </DialogContent>
     </Dialog>
-  )
+  );
 }

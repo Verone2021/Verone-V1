@@ -22,7 +22,7 @@ displayed_in:
 output:
   type: number
   unit: sessions/week
-  format: "0.0"
+  format: '0.0'
 
 metadata:
   created_at: 2025-10-22

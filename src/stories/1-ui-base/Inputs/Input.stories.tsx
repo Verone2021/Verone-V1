@@ -1,5 +1,6 @@
+import { useState } from 'react';
+
 import type { Meta, StoryObj } from '@storybook/nextjs';
-import { Input } from '@/components/ui/input';
 import {
   Search,
   Mail,
@@ -11,7 +12,8 @@ import {
   Calendar,
   DollarSign,
 } from 'lucide-react';
-import { useState } from 'react';
+
+import { Input } from '@/components/ui/input';
 
 const meta = {
   title: '1-UI-Base/Inputs/Input',
@@ -186,15 +188,14 @@ export const WithIconRight: Story = {
 /**
  * Password avec toggle visibility
  */
-export const PasswordToggle: Story = {
-  render: () => {
-    const [showPassword, setShowPassword] = useState(false);
+function PasswordToggleComponent() {
+  const [showPassword, setShowPassword] = useState(false);
 
-    return (
-      <div className="w-[350px]">
-        <label className="block text-sm font-medium text-slate-700 mb-1.5">
-          Password
-        </label>
+  return (
+    <div className="w-[350px]">
+      <label className="block text-sm font-medium text-slate-700 mb-1.5">
+        Password
+      </label>
         <Input
           type={showPassword ? 'text' : 'password'}
           placeholder="Enter password"
@@ -215,7 +216,10 @@ export const PasswordToggle: Story = {
         />
       </div>
     );
-  },
+}
+
+export const PasswordToggle: Story = {
+  render: () => <PasswordToggleComponent />,
 };
 
 /**

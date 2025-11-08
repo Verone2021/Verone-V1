@@ -1,9 +1,11 @@
 'use client';
 
 import React from 'react';
+
 import { CheckCircle2 } from 'lucide-react';
+
 import { Badge } from '@/components/ui/badge';
-import { cn } from '@/lib/utils';
+import { cn } from '@verone/utils';
 import {
   useCompletionStatus,
   type CompletionStatusData,

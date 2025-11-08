@@ -9,11 +9,13 @@
 ## 📊 Vue d'Ensemble
 
 Le module **Catégories** gère la taxonomie hiérarchique des produits en 3 niveaux :
+
 1. **Catégories** (niveau 1) - Ex: Mobilier, Décoration
 2. **Sous-catégories** (niveau 2) - Ex: Salon, Chambre
 3. **Familles** (niveau 3) - Ex: Fauteuils, Tables basses
 
 **Structure hiérarchique** :
+
 ```
 Catégorie
 └── Sous-catégorie
@@ -66,6 +68,7 @@ CREATE TABLE categories (
 ```
 
 **Exemples** :
+
 - Mobilier (icon: 'Sofa')
 - Décoration (icon: 'Palette')
 - Luminaires (icon: 'Lightbulb')
@@ -88,6 +91,7 @@ CREATE TABLE subcategories (
 ```
 
 **Exemples (Mobilier)** :
+
 - Salon (Canapés, Fauteuils, Tables basses)
 - Chambre (Lits, Commodes, Tables de chevet)
 - Bureau (Bureaux, Chaises, Rangements)
@@ -108,6 +112,7 @@ CREATE TABLE families (
 ```
 
 **Exemples (Salon)** :
+
 - Fauteuils
 - Canapés 2 places
 - Canapés 3 places
@@ -124,13 +129,16 @@ Hook CRUD catégories niveau 1.
 
 ```typescript
 function useCategories(): {
-  categories: Category[]
-  loading: boolean
-  error: string | null
-  createCategory: (data: CreateCategoryData) => Promise<Category | null>
-  updateCategory: (id: string, data: UpdateCategoryData) => Promise<Category | null>
-  deleteCategory: (id: string) => Promise<boolean>
-}
+  categories: Category[];
+  loading: boolean;
+  error: string | null;
+  createCategory: (data: CreateCategoryData) => Promise<Category | null>;
+  updateCategory: (
+    id: string,
+    data: UpdateCategoryData
+  ) => Promise<Category | null>;
+  deleteCategory: (id: string) => Promise<boolean>;
+};
 ```
 
 ### `useSubcategories(categoryId?)`
@@ -139,11 +147,16 @@ Hook sous-catégories niveau 2.
 
 ```typescript
 function useSubcategories(categoryId?: string): {
-  subcategories: Subcategory[]
-  loading: boolean
-  createSubcategory: (data: CreateSubcategoryData) => Promise<Subcategory | null>
-  updateSubcategory: (id: string, data: UpdateSubcategoryData) => Promise<Subcategory | null>
-}
+  subcategories: Subcategory[];
+  loading: boolean;
+  createSubcategory: (
+    data: CreateSubcategoryData
+  ) => Promise<Subcategory | null>;
+  updateSubcategory: (
+    id: string,
+    data: UpdateSubcategoryData
+  ) => Promise<Subcategory | null>;
+};
 ```
 
 ### `useFamilies(subcategoryId?)`
@@ -152,10 +165,10 @@ Hook familles niveau 3.
 
 ```typescript
 function useFamilies(subcategoryId?: string): {
-  families: Family[]
-  loading: boolean
-  createFamily: (data: CreateFamilyData) => Promise<Family | null>
-}
+  families: Family[];
+  loading: boolean;
+  createFamily: (data: CreateFamilyData) => Promise<Family | null>;
+};
 ```
 
 ---
@@ -168,9 +181,9 @@ Dropdown sélection catégorie niveau 1.
 
 ```typescript
 interface CategorySelectorProps {
-  value: string | null
-  onChange: (categoryId: string) => void
-  placeholder?: string
+  value: string | null;
+  onChange: (categoryId: string) => void;
+  placeholder?: string;
 }
 ```
 
@@ -180,9 +193,9 @@ Dropdown sous-catégorie (filtré par catégorie).
 
 ```typescript
 interface SubcategorySelectorProps {
-  categoryId: string | null
-  value: string | null
-  onChange: (subcategoryId: string) => void
+  categoryId: string | null;
+  value: string | null;
+  onChange: (subcategoryId: string) => void;
 }
 ```
 
@@ -192,9 +205,9 @@ Dropdown famille (filtré par sous-catégorie).
 
 ```typescript
 interface FamilySelectorProps {
-  subcategoryId: string | null
-  value: string | null
-  onChange: (familyId: string) => void
+  subcategoryId: string | null;
+  value: string | null;
+  onChange: (familyId: string) => void;
 }
 ```
 

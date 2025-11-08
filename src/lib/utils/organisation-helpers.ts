@@ -5,9 +5,9 @@
  * organisation.name → legal_name + trade_name
  */
 
-import type { Database } from '@/types/database'
+import type { Database } from '@verone/types';
 
-type Organisation = Database['public']['Tables']['organisations']['Row']
+type Organisation = Database['public']['Tables']['organisations']['Row'];
 
 /**
  * Retourne le nom d'affichage préféré d'une organisation
@@ -31,7 +31,7 @@ type Organisation = Database['public']['Tables']['organisations']['Row']
 export function getOrganisationDisplayName(
   org: Pick<Organisation, 'legal_name' | 'trade_name'>
 ): string {
-  return org.trade_name || org.legal_name
+  return org.trade_name || org.legal_name;
 }
 
 /**
@@ -43,7 +43,7 @@ export function getOrganisationDisplayName(
 export function getOrganisationLegalName(
   org: Pick<Organisation, 'legal_name'>
 ): string {
-  return org.legal_name
+  return org.legal_name;
 }
 
 /**
@@ -55,5 +55,5 @@ export function getOrganisationLegalName(
 export function getOrganisationTradeName(
   org: Pick<Organisation, 'trade_name'>
 ): string | null {
-  return org.trade_name
+  return org.trade_name;
 }

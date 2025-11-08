@@ -1,10 +1,11 @@
-"use client"
+'use client';
 
-import { Package, Edit2 } from 'lucide-react'
-import { ButtonV2 } from '@/components/ui/button'
-import { Badge } from '@/components/ui/badge'
-import { COLLECTION_STYLE_OPTIONS } from '@/types/collections'
-import { cn } from '@/lib/utils'
+import { Package, Edit2 } from 'lucide-react';
+
+import { Badge } from '@/components/ui/badge';
+import { ButtonV2 } from '@/components/ui/button';
+import { cn } from '@verone/utils';
+import { COLLECTION_STYLE_OPTIONS } from '@verone/types';
 
 /**
  * Formatte le style décoratif pour affichage
@@ -12,46 +13,46 @@ import { cn } from '@/lib/utils'
  * @returns Label formatté du style
  */
 function formatStyle(style: string): string {
-  const styleOption = COLLECTION_STYLE_OPTIONS.find(s => s.value === style)
-  return styleOption?.label || style
+  const styleOption = COLLECTION_STYLE_OPTIONS.find(s => s.value === style);
+  return styleOption?.label || style;
 }
 
 interface Product {
-  id: string
-  name?: string
+  id: string;
+  name?: string;
   // Caractéristiques fixes de la variante (nouveau système variant_groups)
-  variant_attributes?: Record<string, any> | null
-  variant_group_id?: string | null
-  video_url?: string
+  variant_attributes?: Record<string, any> | null;
+  variant_group_id?: string | null;
+  video_url?: string;
 
   // Navigation catégorielle
   subcategory?: {
-    name?: string
+    name?: string;
     category?: {
-      name?: string
+      name?: string;
       family?: {
-        name?: string
-      }
-    }
-  }
+        name?: string;
+      };
+    };
+  };
 
   // Données héritées du Variant Group (lecture seule)
   variant_group?: {
-    id?: string
-    dimensions_length?: number | null
-    dimensions_width?: number | null
-    dimensions_height?: number | null
-    dimensions_unit?: string
-    common_weight?: number | null
-    style?: string | null
-    suitable_rooms?: string[] | null
-  }
+    id?: string;
+    dimensions_length?: number | null;
+    dimensions_width?: number | null;
+    dimensions_height?: number | null;
+    dimensions_unit?: string;
+    common_weight?: number | null;
+    style?: string | null;
+    suitable_rooms?: string[] | null;
+  };
 }
 
 interface ProductFixedCharacteristicsProps {
-  product: Product
-  className?: string
-  onEditVideoUrl?: () => void // Seule action d'édition autorisée
+  product: Product;
+  className?: string;
+  onEditVideoUrl?: () => void; // Seule action d'édition autorisée
 }
 
 /**
@@ -66,129 +67,167 @@ interface ProductFixedCharacteristicsProps {
  */
 function getCompatibleRooms(product: Product): string[] {
   // Priorité 1 : Si le groupe a défini des pièces compatibles, les utiliser (héritage)
-  if (product.variant_group?.suitable_rooms && product.variant_group.suitable_rooms.length > 0) {
-    return product.variant_group.suitable_rooms
+  if (
+    product.variant_group?.suitable_rooms &&
+    product.variant_group.suitable_rooms.length > 0
+  ) {
+    return product.variant_group.suitable_rooms;
   }
 
   // Priorité 2 : Calcul automatique selon type de produit
-  const productName = product.name?.toLowerCase() || ''
-  const subcategoryName = product.subcategory?.name?.toLowerCase() || ''
-  const categoryName = product.subcategory?.category?.name?.toLowerCase() || ''
-  const familyName = product.subcategory?.category?.family?.name?.toLowerCase() || ''
+  const productName = product.name?.toLowerCase() || '';
+  const subcategoryName = product.subcategory?.name?.toLowerCase() || '';
+  const categoryName = product.subcategory?.category?.name?.toLowerCase() || '';
+  const familyName =
+    product.subcategory?.category?.family?.name?.toLowerCase() || '';
 
   // Toutes les pièces disponibles
   const allRooms = [
-    'salon', 'chambre', 'cuisine', 'salle à manger', 'bureau',
-    'entrée', 'couloir', 'salle de bains', 'wc', 'dressing',
-    'terrasse', 'jardin', 'cave', 'garage'
-  ]
+    'salon',
+    'chambre',
+    'cuisine',
+    'salle à manger',
+    'bureau',
+    'entrée',
+    'couloir',
+    'salle de bains',
+    'wc',
+    'dressing',
+    'terrasse',
+    'jardin',
+    'cave',
+    'garage',
+  ];
 
   // Chaises et sièges → toutes les pièces
-  if (productName.includes('chaise') ||
-      productName.includes('fauteuil') ||
-      productName.includes('siège') ||
-      productName.includes('tabouret') ||
-      subcategoryName.includes('chaise') ||
-      subcategoryName.includes('siège')) {
-    return allRooms
+  if (
+    productName.includes('chaise') ||
+    productName.includes('fauteuil') ||
+    productName.includes('siège') ||
+    productName.includes('tabouret') ||
+    subcategoryName.includes('chaise') ||
+    subcategoryName.includes('siège')
+  ) {
+    return allRooms;
   }
 
   // Lavabos et sanitaires → salle de bains/wc uniquement
-  if (productName.includes('lavabo') ||
-      productName.includes('vasque') ||
-      productName.includes('évier') ||
-      productName.includes('toilette') ||
-      subcategoryName.includes('sanitaire') ||
-      categoryName.includes('sanitaire')) {
-    return ['wc', 'salle de bains']
+  if (
+    productName.includes('lavabo') ||
+    productName.includes('vasque') ||
+    productName.includes('évier') ||
+    productName.includes('toilette') ||
+    subcategoryName.includes('sanitaire') ||
+    categoryName.includes('sanitaire')
+  ) {
+    return ['wc', 'salle de bains'];
   }
 
   // Lits → chambre uniquement
-  if (productName.includes('lit') ||
-      productName.includes('matelas') ||
-      productName.includes('sommier') ||
-      subcategoryName.includes('lit') ||
-      subcategoryName.includes('couchage')) {
-    return ['chambre']
+  if (
+    productName.includes('lit') ||
+    productName.includes('matelas') ||
+    productName.includes('sommier') ||
+    subcategoryName.includes('lit') ||
+    subcategoryName.includes('couchage')
+  ) {
+    return ['chambre'];
   }
 
   // Tables → selon le type
   if (productName.includes('table')) {
     if (productName.includes('chevet') || productName.includes('nuit')) {
-      return ['chambre']
+      return ['chambre'];
     }
-    if (productName.includes('salle à manger') || productName.includes('repas')) {
-      return ['salle à manger']
+    if (
+      productName.includes('salle à manger') ||
+      productName.includes('repas')
+    ) {
+      return ['salle à manger'];
     }
     if (productName.includes('bureau') || productName.includes('travail')) {
-      return ['bureau']
+      return ['bureau'];
     }
     if (productName.includes('basse') || productName.includes('salon')) {
-      return ['salon']
+      return ['salon'];
     }
     // Table générique → salon, salle à manger, bureau
-    return ['salon', 'salle à manger', 'bureau']
+    return ['salon', 'salle à manger', 'bureau'];
   }
 
   // Éclairage → toutes les pièces
-  if (categoryName.includes('éclairage') ||
-      productName.includes('lampe') ||
-      productName.includes('luminaire') ||
-      productName.includes('applique')) {
-    return allRooms
+  if (
+    categoryName.includes('éclairage') ||
+    productName.includes('lampe') ||
+    productName.includes('luminaire') ||
+    productName.includes('applique')
+  ) {
+    return allRooms;
   }
 
   // Armoires et rangements
-  if (productName.includes('armoire') ||
-      productName.includes('placard') ||
-      productName.includes('commode') ||
-      subcategoryName.includes('rangement')) {
+  if (
+    productName.includes('armoire') ||
+    productName.includes('placard') ||
+    productName.includes('commode') ||
+    subcategoryName.includes('rangement')
+  ) {
     if (productName.includes('dressing') || productName.includes('penderie')) {
-      return ['chambre', 'dressing']
+      return ['chambre', 'dressing'];
     }
     // Rangement générique → plusieurs pièces
-    return ['salon', 'chambre', 'bureau', 'entrée']
+    return ['salon', 'chambre', 'bureau', 'entrée'];
   }
 
   // Canapés → salon principalement
-  if (productName.includes('canapé') ||
-      productName.includes('sofa') ||
-      subcategoryName.includes('canapé')) {
-    return ['salon']
+  if (
+    productName.includes('canapé') ||
+    productName.includes('sofa') ||
+    subcategoryName.includes('canapé')
+  ) {
+    return ['salon'];
   }
 
   // Par défaut : pièces principales
-  return ['salon', 'chambre', 'bureau']
+  return ['salon', 'chambre', 'bureau'];
 }
 
 // Labels pour les types d'attributs variantes
-const VARIANT_ATTRIBUTE_LABELS: Record<string, { label: string; emoji: string }> = {
+const VARIANT_ATTRIBUTE_LABELS: Record<
+  string,
+  { label: string; emoji: string }
+> = {
   color: { label: 'Couleur', emoji: '🎨' },
   size: { label: 'Taille', emoji: '📏' },
   material: { label: 'Matériau', emoji: '🧵' },
-  pattern: { label: 'Motif', emoji: '🔷' }
-}
+  pattern: { label: 'Motif', emoji: '🔷' },
+};
 
 export function ProductFixedCharacteristics({
   product,
   className,
-  onEditVideoUrl
+  onEditVideoUrl,
 }: ProductFixedCharacteristicsProps) {
   // Récupérer les dimensions depuis variant_group (colonnes séparées alignées avec SQL)
-  const variantGroup = product.variant_group
-  const dimensions = (variantGroup?.dimensions_length || variantGroup?.dimensions_width || variantGroup?.dimensions_height) ? {
-    length: variantGroup.dimensions_length,
-    width: variantGroup.dimensions_width,
-    height: variantGroup.dimensions_height,
-    unit: variantGroup.dimensions_unit || 'cm'
-  } : null
+  const variantGroup = product.variant_group;
+  const dimensions =
+    variantGroup?.dimensions_length ||
+    variantGroup?.dimensions_width ||
+    variantGroup?.dimensions_height
+      ? {
+          length: variantGroup.dimensions_length,
+          width: variantGroup.dimensions_width,
+          height: variantGroup.dimensions_height,
+          unit: variantGroup.dimensions_unit || 'cm',
+        }
+      : null;
 
-  const compatibleRooms = getCompatibleRooms(product)
-  const variantAttributes = product.variant_attributes || {}
-  const hasVariantAttributes = Object.keys(variantAttributes).length > 0
+  const compatibleRooms = getCompatibleRooms(product);
+  const variantAttributes = product.variant_attributes || {};
+  const hasVariantAttributes = Object.keys(variantAttributes).length > 0;
 
   return (
-    <div className={cn("card-verone p-4", className)}>
+    <div className={cn('card-verone p-4', className)}>
       <div className="flex items-center justify-between mb-3">
         <h3 className="text-lg font-medium text-black flex items-center">
           <Package className="h-5 w-5 mr-2" />
@@ -216,9 +255,15 @@ export function ProductFixedCharacteristics({
             </h4>
             <div className="grid grid-cols-2 gap-3">
               {Object.entries(variantAttributes).map(([key, value]) => {
-                const attributeInfo = VARIANT_ATTRIBUTE_LABELS[key] || { label: key, emoji: '🔹' }
+                const attributeInfo = VARIANT_ATTRIBUTE_LABELS[key] || {
+                  label: key,
+                  emoji: '🔹',
+                };
                 return (
-                  <div key={key} className="bg-purple-50 p-2 rounded border border-purple-200">
+                  <div
+                    key={key}
+                    className="bg-purple-50 p-2 rounded border border-purple-200"
+                  >
                     <span className="text-xs text-black opacity-60 flex items-center gap-1">
                       <span>{attributeInfo.emoji}</span>
                       {attributeInfo.label}
@@ -229,7 +274,7 @@ export function ProductFixedCharacteristics({
                       )}
                     </div>
                   </div>
-                )
+                );
               })}
             </div>
             <div className="text-xs text-purple-600 mt-1 flex items-center gap-1">
@@ -249,13 +294,17 @@ export function ProductFixedCharacteristics({
         {/* Pièces compatibles (automatique selon type produit) */}
         <div>
           <h4 className="text-sm font-medium text-black mb-2 opacity-70 flex items-center gap-2">
-            {product.variant_group?.suitable_rooms && product.variant_group.suitable_rooms.length > 0
+            {product.variant_group?.suitable_rooms &&
+            product.variant_group.suitable_rooms.length > 0
               ? '🏠 Pièces compatibles (héritées du groupe)'
-              : 'Pièces de maison compatibles'
-            }
-            {product.variant_group?.suitable_rooms && product.variant_group.suitable_rooms.length > 0 && product.variant_group_id && (
-              <span className="text-xs bg-green-100 text-green-700 px-2 py-0.5 rounded">🔒 Non modifiable ici</span>
-            )}
+              : 'Pièces de maison compatibles'}
+            {product.variant_group?.suitable_rooms &&
+              product.variant_group.suitable_rooms.length > 0 &&
+              product.variant_group_id && (
+                <span className="text-xs bg-green-100 text-green-700 px-2 py-0.5 rounded">
+                  🔒 Non modifiable ici
+                </span>
+              )}
           </h4>
           <div className="bg-green-50 p-3 rounded border border-green-200">
             <div className="flex flex-wrap gap-2">
@@ -269,7 +318,8 @@ export function ProductFixedCharacteristics({
               ))}
             </div>
             <div className="text-xs text-green-600 mt-2 flex items-center gap-1">
-              {product.variant_group?.suitable_rooms && product.variant_group.suitable_rooms.length > 0 ? (
+              {product.variant_group?.suitable_rooms &&
+              product.variant_group.suitable_rooms.length > 0 ? (
                 <>
                   🏠 Pièces communes à toutes les variantes du groupe
                   {product.variant_group_id && (
@@ -293,11 +343,14 @@ export function ProductFixedCharacteristics({
           <div>
             <h4 className="text-sm font-medium text-black mb-2 opacity-70 flex items-center gap-2">
               📐 Dimensions (héritées du groupe)
-              <span className="text-xs bg-green-100 text-green-700 px-2 py-0.5 rounded">🔒 Non modifiable ici</span>
+              <span className="text-xs bg-green-100 text-green-700 px-2 py-0.5 rounded">
+                🔒 Non modifiable ici
+              </span>
             </h4>
             <div className="bg-green-50 p-3 rounded border border-green-200">
               <div className="text-sm font-medium text-black">
-                L: {dimensions.length || '-'} × l: {dimensions.width || '-'} × H: {dimensions.height || '-'} {dimensions.unit || 'cm'}
+                L: {dimensions.length || '-'} × l: {dimensions.width || '-'} ×
+                H: {dimensions.height || '-'} {dimensions.unit || 'cm'}
               </div>
               <div className="text-xs text-green-600 mt-2 flex items-center gap-1">
                 📏 Dimensions communes à toutes les variantes du groupe
@@ -319,7 +372,9 @@ export function ProductFixedCharacteristics({
           <div>
             <h4 className="text-sm font-medium text-black mb-2 opacity-70 flex items-center gap-2">
               ⚖️ Poids (hérité du groupe)
-              <span className="text-xs bg-blue-100 text-blue-700 px-2 py-0.5 rounded">🔒 Non modifiable ici</span>
+              <span className="text-xs bg-blue-100 text-blue-700 px-2 py-0.5 rounded">
+                🔒 Non modifiable ici
+              </span>
             </h4>
             <div className="bg-blue-50 p-3 rounded border border-blue-200">
               <div className="text-sm font-medium text-black">
@@ -345,7 +400,9 @@ export function ProductFixedCharacteristics({
           <div>
             <h4 className="text-sm font-medium text-black mb-2 opacity-70 flex items-center gap-2">
               🎨 Style décoratif (hérité du groupe)
-              <span className="text-xs bg-purple-100 text-purple-700 px-2 py-0.5 rounded">🔒 Non modifiable ici</span>
+              <span className="text-xs bg-purple-100 text-purple-700 px-2 py-0.5 rounded">
+                🔒 Non modifiable ici
+              </span>
             </h4>
             <div className="bg-purple-50 p-3 rounded border border-purple-200">
               <Badge variant="outline" className="bg-white">
@@ -376,7 +433,9 @@ export function ProductFixedCharacteristics({
               <div className="flex items-center justify-between">
                 <div className="flex items-center text-sm">
                   <Package className="h-4 w-4 mr-2 text-green-600" />
-                  <span className="text-green-700 font-medium">Vidéo disponible</span>
+                  <span className="text-green-700 font-medium">
+                    Vidéo disponible
+                  </span>
                 </div>
                 {onEditVideoUrl && (
                   <ButtonV2
@@ -406,7 +465,8 @@ export function ProductFixedCharacteristics({
             </div>
             {product.variant_group_id && (
               <div className="text-xs text-gray-400 mt-1">
-                Les caractéristiques sont gérées au niveau du groupe de variantes
+                Les caractéristiques sont gérées au niveau du groupe de
+                variantes
               </div>
             )}
           </div>
@@ -416,19 +476,33 @@ export function ProductFixedCharacteristics({
         {product.variant_group_id && (
           <div className="border-t border-gray-200 pt-3 mt-4">
             <div className="text-xs text-gray-600 space-y-1">
-              <div className="font-medium">📋 Règles de gestion (système variant_groups) :</div>
+              <div className="font-medium">
+                📋 Règles de gestion (système variant_groups) :
+              </div>
               <ul className="list-disc list-inside space-y-1 ml-2">
-                <li><strong>Attributs variantes</strong> : Différences spécifiques entre produits du groupe (couleur, matériau)</li>
-                <li><strong>Dimensions/Poids</strong> : Peuvent varier ou être communes selon le groupe</li>
-                <li><strong>Édition</strong> : Gérer les variantes depuis la page du groupe</li>
-                <li><strong>Images/Vidéos</strong> : Spécifiques à chaque produit (modifiables individuellement)</li>
+                <li>
+                  <strong>Attributs variantes</strong> : Différences spécifiques
+                  entre produits du groupe (couleur, matériau)
+                </li>
+                <li>
+                  <strong>Dimensions/Poids</strong> : Peuvent varier ou être
+                  communes selon le groupe
+                </li>
+                <li>
+                  <strong>Édition</strong> : Gérer les variantes depuis la page
+                  du groupe
+                </li>
+                <li>
+                  <strong>Images/Vidéos</strong> : Spécifiques à chaque produit
+                  (modifiables individuellement)
+                </li>
               </ul>
             </div>
           </div>
         )}
       </div>
     </div>
-  )
+  );
 }
 
 /**

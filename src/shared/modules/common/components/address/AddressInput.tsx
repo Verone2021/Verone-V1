@@ -1,24 +1,26 @@
-'use client'
+'use client';
 
-import { useState, useEffect } from 'react'
-import { MapPin, Copy } from 'lucide-react'
-import { ButtonV2 } from '@/components/ui/button'
-import { Label } from '@/components/ui/label'
-import { Textarea } from '@/components/ui/textarea'
-import { getOrganisationDisplayName } from '@/lib/utils/organisation-helpers'
-import { Organisation } from '@/shared/modules/organisations/hooks'
-import { UnifiedCustomer } from './customer-selector'
+import { useState, useEffect } from 'react';
+
+import { MapPin, Copy } from 'lucide-react';
+
+import type { UnifiedCustomer } from '@/components/business/customer-selector';
+import { ButtonV2 } from '@/components/ui/button';
+import { Label } from '@/components/ui/label';
+import { Textarea } from '@/components/ui/textarea';
+import { getOrganisationDisplayName } from '@/lib/utils/organisation-helpers';
+import type { Organisation } from '@/shared/modules/organisations/hooks';
 
 interface AddressInputProps {
-  label: string
-  value: string
-  onChange: (value: string) => void
-  placeholder?: string
-  selectedOrganisation?: Organisation | null
-  selectedCustomer?: UnifiedCustomer | null
-  addressType?: 'shipping' | 'billing'
-  disabled?: boolean
-  className?: string
+  label: string;
+  value: string;
+  onChange: (value: string) => void;
+  placeholder?: string;
+  selectedOrganisation?: Organisation | null;
+  selectedCustomer?: UnifiedCustomer | null;
+  addressType?: 'shipping' | 'billing';
+  disabled?: boolean;
+  className?: string;
 }
 
 export function AddressInput({
@@ -30,54 +32,72 @@ export function AddressInput({
   selectedCustomer,
   addressType = 'shipping',
   disabled = false,
-  className = ""
+  className = '',
 }: AddressInputProps) {
-  const [showCopyButton, setShowCopyButton] = useState(false)
+  const [showCopyButton, setShowCopyButton] = useState(false);
 
   // Vérifier si une adresse est disponible
   useEffect(() => {
     if (selectedOrganisation) {
-      const hasAddress = !!(selectedOrganisation.address_line1 ||
-                        selectedOrganisation.city ||
-                        selectedOrganisation.postal_code)
-      setShowCopyButton(hasAddress)
+      const hasAddress = !!(
+        selectedOrganisation.address_line1 ||
+        selectedOrganisation.city ||
+        selectedOrganisation.postal_code
+      );
+      setShowCopyButton(hasAddress);
     } else if (selectedCustomer) {
-      const hasAddress = hasCustomerAddress()
-      setShowCopyButton(hasAddress)
+      const hasAddress = hasCustomerAddress();
+      setShowCopyButton(hasAddress);
     } else {
-      setShowCopyButton(false)
+      setShowCopyButton(false);
     }
-  }, [selectedOrganisation, selectedCustomer, addressType])
+  }, [selectedOrganisation, selectedCustomer, addressType]);
 
   // Vérifier si le client a une adresse disponible
   const hasCustomerAddress = (): boolean => {
-    if (!selectedCustomer) return false
+    if (!selectedCustomer) return false;
 
     if (selectedCustomer.type === 'professional') {
       // Client B2B
       if (addressType === 'billing') {
-        return !!(selectedCustomer.billing_address_line1 || selectedCustomer.billing_city || selectedCustomer.billing_postal_code)
+        return !!(
+          selectedCustomer.billing_address_line1 ||
+          selectedCustomer.billing_city ||
+          selectedCustomer.billing_postal_code
+        );
       } else {
         // Pour la livraison, vérifier d'abord l'adresse de livraison, puis celle de facturation
         return !!(
-          selectedCustomer.shipping_address_line1 || selectedCustomer.shipping_city || selectedCustomer.shipping_postal_code ||
-          selectedCustomer.billing_address_line1 || selectedCustomer.billing_city || selectedCustomer.billing_postal_code
-        )
+          selectedCustomer.shipping_address_line1 ||
+          selectedCustomer.shipping_city ||
+          selectedCustomer.shipping_postal_code ||
+          selectedCustomer.billing_address_line1 ||
+          selectedCustomer.billing_city ||
+          selectedCustomer.billing_postal_code
+        );
       }
     } else {
       // Client B2C
       if (addressType === 'billing') {
         // Vérifier d'abord l'adresse de facturation spécifique, puis l'adresse principale
         return !!(
-          selectedCustomer.billing_address_line1_individual || selectedCustomer.billing_city_individual || selectedCustomer.billing_postal_code_individual ||
-          selectedCustomer.address_line1 || selectedCustomer.city || selectedCustomer.postal_code
-        )
+          selectedCustomer.billing_address_line1_individual ||
+          selectedCustomer.billing_city_individual ||
+          selectedCustomer.billing_postal_code_individual ||
+          selectedCustomer.address_line1 ||
+          selectedCustomer.city ||
+          selectedCustomer.postal_code
+        );
       } else {
         // Pour la livraison, utiliser l'adresse principale
-        return !!(selectedCustomer.address_line1 || selectedCustomer.city || selectedCustomer.postal_code)
+        return !!(
+          selectedCustomer.address_line1 ||
+          selectedCustomer.city ||
+          selectedCustomer.postal_code
+        );
       }
     }
-  }
+  };
 
   // Formatter l'adresse de l'organisation
   const formatOrganisationAddress = (org: Organisation): string => {
@@ -87,11 +107,11 @@ export function AddressInput({
       org.address_line2,
       [org.postal_code, org.city].filter(Boolean).join(' '),
       org.region,
-      org.country
-    ].filter(Boolean)
+      org.country,
+    ].filter(Boolean);
 
-    return parts.join('\n')
-  }
+    return parts.join('\n');
+  };
 
   // Formatter l'adresse du client
   const formatCustomerAddress = (customer: UnifiedCustomer): string => {
@@ -102,42 +122,73 @@ export function AddressInput({
           customer.name,
           customer.billing_address_line1,
           customer.billing_address_line2,
-          [customer.billing_postal_code, customer.billing_city].filter(Boolean).join(' '),
+          [customer.billing_postal_code, customer.billing_city]
+            .filter(Boolean)
+            .join(' '),
           customer.billing_region,
-          customer.billing_country
-        ].filter(Boolean)
-        return parts.join('\n')
+          customer.billing_country,
+        ].filter(Boolean);
+        return parts.join('\n');
       } else {
         // Livraison : utiliser adresse de livraison si disponible, sinon adresse de facturation
-        const useShipping = !!(customer.shipping_address_line1 || customer.shipping_city || customer.shipping_postal_code)
+        const useShipping = !!(
+          customer.shipping_address_line1 ||
+          customer.shipping_city ||
+          customer.shipping_postal_code
+        );
         const parts = [
           customer.name,
-          useShipping ? customer.shipping_address_line1 : customer.billing_address_line1,
-          useShipping ? customer.shipping_address_line2 : customer.billing_address_line2,
           useShipping
-            ? [customer.shipping_postal_code, customer.shipping_city].filter(Boolean).join(' ')
-            : [customer.billing_postal_code, customer.billing_city].filter(Boolean).join(' '),
+            ? customer.shipping_address_line1
+            : customer.billing_address_line1,
+          useShipping
+            ? customer.shipping_address_line2
+            : customer.billing_address_line2,
+          useShipping
+            ? [customer.shipping_postal_code, customer.shipping_city]
+                .filter(Boolean)
+                .join(' ')
+            : [customer.billing_postal_code, customer.billing_city]
+                .filter(Boolean)
+                .join(' '),
           useShipping ? customer.shipping_region : customer.billing_region,
-          useShipping ? customer.shipping_country : customer.billing_country
-        ].filter(Boolean)
-        return parts.join('\n')
+          useShipping ? customer.shipping_country : customer.billing_country,
+        ].filter(Boolean);
+        return parts.join('\n');
       }
     } else {
       // Client B2C
       if (addressType === 'billing') {
         // Utiliser adresse de facturation spécifique si disponible, sinon adresse principale
-        const useSpecificBilling = !!(customer.billing_address_line1_individual || customer.billing_city_individual || customer.billing_postal_code_individual)
+        const useSpecificBilling = !!(
+          customer.billing_address_line1_individual ||
+          customer.billing_city_individual ||
+          customer.billing_postal_code_individual
+        );
         const parts = [
           customer.name,
-          useSpecificBilling ? customer.billing_address_line1_individual : customer.address_line1,
-          useSpecificBilling ? customer.billing_address_line2_individual : customer.address_line2,
           useSpecificBilling
-            ? [customer.billing_postal_code_individual, customer.billing_city_individual].filter(Boolean).join(' ')
+            ? customer.billing_address_line1_individual
+            : customer.address_line1,
+          useSpecificBilling
+            ? customer.billing_address_line2_individual
+            : customer.address_line2,
+          useSpecificBilling
+            ? [
+                customer.billing_postal_code_individual,
+                customer.billing_city_individual,
+              ]
+                .filter(Boolean)
+                .join(' ')
             : [customer.postal_code, customer.city].filter(Boolean).join(' '),
-          useSpecificBilling ? customer.billing_region_individual : customer.region,
-          useSpecificBilling ? customer.billing_country_individual : customer.country
-        ].filter(Boolean)
-        return parts.join('\n')
+          useSpecificBilling
+            ? customer.billing_region_individual
+            : customer.region,
+          useSpecificBilling
+            ? customer.billing_country_individual
+            : customer.country,
+        ].filter(Boolean);
+        return parts.join('\n');
       } else {
         // Livraison : utiliser adresse principale
         const parts = [
@@ -146,42 +197,42 @@ export function AddressInput({
           customer.address_line2,
           [customer.postal_code, customer.city].filter(Boolean).join(' '),
           customer.region,
-          customer.country
-        ].filter(Boolean)
-        return parts.join('\n')
+          customer.country,
+        ].filter(Boolean);
+        return parts.join('\n');
       }
     }
-  }
+  };
 
   // Copier l'adresse appropriée
   const copyAddress = () => {
     if (selectedOrganisation) {
-      const formattedAddress = formatOrganisationAddress(selectedOrganisation)
-      onChange(formattedAddress)
+      const formattedAddress = formatOrganisationAddress(selectedOrganisation);
+      onChange(formattedAddress);
     } else if (selectedCustomer) {
-      const formattedAddress = formatCustomerAddress(selectedCustomer)
-      onChange(formattedAddress)
+      const formattedAddress = formatCustomerAddress(selectedCustomer);
+      onChange(formattedAddress);
     }
-  }
+  };
 
   // Obtenir le texte du bouton et l'aperçu
   const getButtonText = () => {
     if (selectedOrganisation) {
-      return `Utiliser adresse ${selectedOrganisation.type === 'customer' ? 'client' : 'fournisseur'}`
+      return `Utiliser adresse ${selectedOrganisation.type === 'customer' ? 'client' : 'fournisseur'}`;
     } else if (selectedCustomer) {
-      return `Utiliser adresse client`
+      return `Utiliser adresse client`;
     }
-    return 'Utiliser adresse'
-  }
+    return 'Utiliser adresse';
+  };
 
   const getAddressPreview = () => {
     if (selectedOrganisation) {
-      return formatOrganisationAddress(selectedOrganisation)
+      return formatOrganisationAddress(selectedOrganisation);
     } else if (selectedCustomer) {
-      return formatCustomerAddress(selectedCustomer)
+      return formatCustomerAddress(selectedCustomer);
     }
-    return ''
-  }
+    return '';
+  };
 
   return (
     <div className={`space-y-2 ${className}`}>
@@ -208,7 +259,7 @@ export function AddressInput({
         id={label.toLowerCase().replace(/\s+/g, '-')}
         placeholder={placeholder || `${label} complète...`}
         value={value}
-        onChange={(e) => onChange(e.target.value)}
+        onChange={e => onChange(e.target.value)}
         className="min-h-[100px] resize-none"
         disabled={disabled}
       />
@@ -219,11 +270,9 @@ export function AddressInput({
             <MapPin className="h-3 w-3" />
             <span className="font-medium">Adresse disponible :</span>
           </div>
-          <div className="whitespace-pre-line">
-            {getAddressPreview()}
-          </div>
+          <div className="whitespace-pre-line">{getAddressPreview()}</div>
         </div>
       )}
     </div>
-  )
+  );
 }

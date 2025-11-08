@@ -45,6 +45,7 @@ packages/kpi/
 Voir [EXAMPLE.yaml](./EXAMPLE.yaml) pour le format complet.
 
 **Sections obligatoires** :
+
 - `name` : Nom KPI
 - `description` : Description métier
 - `category` : Catégorie (stock, sales, finance, etc.)
@@ -62,6 +63,7 @@ Voir [EXAMPLE.yaml](./EXAMPLE.yaml) pour le format complet.
 ## ✅ Validation
 
 Chaque KPI YAML doit avoir :
+
 1. **Tests unitaires** : Basés sur la section `tests:` du YAML
 2. **Hook React** : Hook `use-[kpi-name].ts` associé
 3. **Documentation** : Référence dans docs/metrics/
@@ -88,18 +90,21 @@ export function StockMetrics() {
 ## 📊 KPI à documenter (Phase 1)
 
 **Stock** :
+
 - [ ] Taux de rotation stock
 - [ ] Couverture stock (jours)
 - [ ] Valeur stock
 - [ ] Stock négatif prévu
 
 **Ventes** :
+
 - [ ] CA mensuel
 - [ ] Panier moyen
 - [ ] Taux de conversion
 - [ ] Top produits
 
 **Finance** :
+
 - [ ] Marge brute
 - [ ] Marge nette
 - [ ] Cash flow
@@ -107,5 +112,5 @@ export function StockMetrics() {
 
 ---
 
-*À migrer : Après Phase 1*
-*Référence actuelle : src/hooks/use-*-metrics.ts*
+_À migrer : Après Phase 1_
+_Référence actuelle : src/hooks/use-_-metrics.ts\*

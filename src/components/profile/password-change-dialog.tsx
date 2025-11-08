@@ -5,12 +5,13 @@
  * Utilise les bonnes pratiques Supabase Auth
  */
 
-"use client"
+'use client';
 
-import React, { useState } from 'react'
-import { Eye, EyeOff, Key, AlertCircle, CheckCircle2 } from 'lucide-react'
-import { ButtonV2 } from '@/components/ui/button'
-import { Input } from '@/components/ui/input'
+import React, { useState } from 'react';
+
+import { Eye, EyeOff, Key, AlertCircle, CheckCircle2 } from 'lucide-react';
+
+import { ButtonV2 } from '@/components/ui/button';
 import {
   Dialog,
   DialogContent,
@@ -18,38 +19,42 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-} from '@/components/ui/dialog'
-import { createClient } from '@/lib/supabase/client'
-import { cn } from '@/lib/utils'
+} from '@/components/ui/dialog';
+import { Input } from '@/components/ui/input';
+import { createClient } from '@/lib/supabase/client';
+import { cn } from '@verone/utils';
 
 interface PasswordChangeDialogProps {
-  open: boolean
-  onOpenChange: (open: boolean) => void
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
 }
 
 interface PasswordStrength {
-  score: number
-  label: string
-  color: string
+  score: number;
+  label: string;
+  color: string;
   requirements: {
-    length: boolean
-    uppercase: boolean
-    lowercase: boolean
-    number: boolean
-    special: boolean
-  }
+    length: boolean;
+    uppercase: boolean;
+    lowercase: boolean;
+    number: boolean;
+    special: boolean;
+  };
 }
 
-export function PasswordChangeDialog({ open, onOpenChange }: PasswordChangeDialogProps) {
-  const [currentPassword, setCurrentPassword] = useState('')
-  const [newPassword, setNewPassword] = useState('')
-  const [confirmPassword, setConfirmPassword] = useState('')
-  const [showCurrentPassword, setShowCurrentPassword] = useState(false)
-  const [showNewPassword, setShowNewPassword] = useState(false)
-  const [showConfirmPassword, setShowConfirmPassword] = useState(false)
-  const [loading, setLoading] = useState(false)
-  const [error, setError] = useState('')
-  const [success, setSuccess] = useState(false)
+export function PasswordChangeDialog({
+  open,
+  onOpenChange,
+}: PasswordChangeDialogProps) {
+  const [currentPassword, setCurrentPassword] = useState('');
+  const [newPassword, setNewPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
+  const [showCurrentPassword, setShowCurrentPassword] = useState(false);
+  const [showNewPassword, setShowNewPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState('');
+  const [success, setSuccess] = useState(false);
 
   // Analyse de la force du mot de passe
   const analyzePasswordStrength = (password: string): PasswordStrength => {
@@ -58,112 +63,114 @@ export function PasswordChangeDialog({ open, onOpenChange }: PasswordChangeDialo
       uppercase: /[A-Z]/.test(password),
       lowercase: /[a-z]/.test(password),
       number: /[0-9]/.test(password),
-      special: /[!@#$%^&*(),.?\":{}|<>]/.test(password)
-    }
+      special: /[!@#$%^&*(),.?\":{}|<>]/.test(password),
+    };
 
-    const score = Object.values(requirements).filter(Boolean).length
+    const score = Object.values(requirements).filter(Boolean).length;
 
-    let label = ''
-    let color = ''
+    let label = '';
+    let color = '';
 
     switch (score) {
       case 0:
       case 1:
-        label = 'Très faible'
-        color = 'text-red-600'
-        break
+        label = 'Très faible';
+        color = 'text-red-600';
+        break;
       case 2:
-        label = 'Faible'
-        color = 'text-black'
-        break
+        label = 'Faible';
+        color = 'text-black';
+        break;
       case 3:
-        label = 'Moyen'
-        color = 'text-black'
-        break
+        label = 'Moyen';
+        color = 'text-black';
+        break;
       case 4:
-        label = 'Fort'
-        color = 'text-green-500'
-        break
+        label = 'Fort';
+        color = 'text-green-500';
+        break;
       case 5:
-        label = 'Très fort'
-        color = 'text-green-600'
-        break
+        label = 'Très fort';
+        color = 'text-green-600';
+        break;
       default:
-        label = 'Inconnu'
-        color = 'text-gray-500'
+        label = 'Inconnu';
+        color = 'text-gray-500';
     }
 
-    return { score, label, color, requirements }
-  }
+    return { score, label, color, requirements };
+  };
 
-  const passwordStrength = analyzePasswordStrength(newPassword)
-  const isPasswordValid = passwordStrength.score >= 4
-  const isConfirmValid = newPassword === confirmPassword && confirmPassword.length > 0
+  const passwordStrength = analyzePasswordStrength(newPassword);
+  const isPasswordValid = passwordStrength.score >= 4;
+  const isConfirmValid =
+    newPassword === confirmPassword && confirmPassword.length > 0;
 
   const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault()
+    e.preventDefault();
 
     if (!isPasswordValid) {
-      setError('Le mot de passe ne respecte pas les critères de sécurité')
-      return
+      setError('Le mot de passe ne respecte pas les critères de sécurité');
+      return;
     }
 
     if (!isConfirmValid) {
-      setError('La confirmation du mot de passe ne correspond pas')
-      return
+      setError('La confirmation du mot de passe ne correspond pas');
+      return;
     }
 
     try {
-      setLoading(true)
-      setError('')
+      setLoading(true);
+      setError('');
 
-      const supabase = createClient()
+      const supabase = createClient();
 
       // Tentative de mise à jour du mot de passe
       const { error: updateError } = await supabase.auth.updateUser({
-        password: newPassword
-      })
+        password: newPassword,
+      });
 
       if (updateError) {
-        throw updateError
+        throw updateError;
       }
 
-      setSuccess(true)
+      setSuccess(true);
 
       // Reset du formulaire après succès
       setTimeout(() => {
-        setCurrentPassword('')
-        setNewPassword('')
-        setConfirmPassword('')
-        setSuccess(false)
-        onOpenChange(false)
+        setCurrentPassword('');
+        setNewPassword('');
+        setConfirmPassword('');
+        setSuccess(false);
+        onOpenChange(false);
 
         // Notification à l'utilisateur
-        alert('Mot de passe mis à jour avec succès ! Vous allez être redirigé vers la page de connexion.')
+        alert(
+          'Mot de passe mis à jour avec succès ! Vous allez être redirigé vers la page de connexion.'
+        );
 
         // Déconnexion forcée pour sécurité
-        supabase.auth.signOut()
-        window.location.href = '/login'
-      }, 2000)
-
+        supabase.auth.signOut();
+        window.location.href = '/login';
+      }, 2000);
     } catch (error: any) {
-      console.error('Erreur changement mot de passe:', error)
-      setError(error.message || 'Erreur lors du changement de mot de passe')
+      console.error('Erreur changement mot de passe:', error);
+      setError(error.message || 'Erreur lors du changement de mot de passe');
     } finally {
-      setLoading(false)
+      setLoading(false);
     }
-  }
+  };
 
   const handleClose = () => {
     if (!loading) {
-      setCurrentPassword('')
-      setNewPassword('')
-      setConfirmPassword('')
-      setError('')
-      setSuccess(false)
-      onOpenChange(false)
+      setCurrentPassword('');
+      setNewPassword('');
+      setConfirmPassword('');
+      setError('');
+      setSuccess(false);
+      onOpenChange(false);
     }
-  }
+  };
 
   return (
     <Dialog open={open} onOpenChange={handleClose}>
@@ -182,7 +189,9 @@ export function PasswordChangeDialog({ open, onOpenChange }: PasswordChangeDialo
           <div className="flex flex-col items-center space-y-4 py-6">
             <CheckCircle2 className="h-12 w-12 text-green-600" />
             <div className="text-center">
-              <p className="font-medium text-verone-black">Mot de passe mis à jour !</p>
+              <p className="font-medium text-verone-black">
+                Mot de passe mis à jour !
+              </p>
               <p className="text-sm text-verone-black opacity-70">
                 Vous allez être redirigé vers la connexion...
               </p>
@@ -192,7 +201,10 @@ export function PasswordChangeDialog({ open, onOpenChange }: PasswordChangeDialo
           <form onSubmit={handleSubmit} className="space-y-4">
             {/* Nouveau mot de passe */}
             <div className="space-y-2">
-              <label htmlFor="newPassword" className="text-sm font-medium text-verone-black">
+              <label
+                htmlFor="newPassword"
+                className="text-sm font-medium text-verone-black"
+              >
                 Nouveau mot de passe
               </label>
               <div className="relative">
@@ -200,7 +212,7 @@ export function PasswordChangeDialog({ open, onOpenChange }: PasswordChangeDialo
                   id="newPassword"
                   type={showNewPassword ? 'text' : 'password'}
                   value={newPassword}
-                  onChange={(e) => setNewPassword(e.target.value)}
+                  onChange={e => setNewPassword(e.target.value)}
                   className="border-verone-black focus:ring-verone-black pr-10"
                   placeholder="Votre nouveau mot de passe"
                   required
@@ -222,8 +234,15 @@ export function PasswordChangeDialog({ open, onOpenChange }: PasswordChangeDialo
               {newPassword && (
                 <div className="space-y-2">
                   <div className="flex items-center justify-between">
-                    <span className="text-xs text-verone-black opacity-60">Force du mot de passe</span>
-                    <span className={cn("text-xs font-medium", passwordStrength.color)}>
+                    <span className="text-xs text-verone-black opacity-60">
+                      Force du mot de passe
+                    </span>
+                    <span
+                      className={cn(
+                        'text-xs font-medium',
+                        passwordStrength.color
+                      )}
+                    >
                       {passwordStrength.label}
                     </span>
                   </div>
@@ -233,32 +252,45 @@ export function PasswordChangeDialog({ open, onOpenChange }: PasswordChangeDialo
                       <div
                         key={i}
                         className={cn(
-                          "h-1 rounded-full",
+                          'h-1 rounded-full',
                           i < passwordStrength.score
                             ? passwordStrength.score <= 2
-                              ? "bg-red-500"
+                              ? 'bg-red-500'
                               : passwordStrength.score <= 3
-                                ? "bg-black"
-                                : "bg-green-500"
-                            : "bg-gray-200"
+                                ? 'bg-black'
+                                : 'bg-green-500'
+                            : 'bg-gray-200'
                         )}
                       />
                     ))}
                   </div>
 
                   <div className="text-xs space-y-1">
-                    {Object.entries(passwordStrength.requirements).map(([key, met]) => (
-                      <div key={key} className={cn("flex items-center space-x-2", met ? "text-green-600" : "text-red-500")}>
-                        <div className={cn("w-2 h-2 rounded-full", met ? "bg-green-600" : "bg-red-500")} />
-                        <span>
-                          {key === 'length' && '8 caractères minimum'}
-                          {key === 'uppercase' && 'Une majuscule'}
-                          {key === 'lowercase' && 'Une minuscule'}
-                          {key === 'number' && 'Un chiffre'}
-                          {key === 'special' && 'Un caractère spécial'}
-                        </span>
-                      </div>
-                    ))}
+                    {Object.entries(passwordStrength.requirements).map(
+                      ([key, met]) => (
+                        <div
+                          key={key}
+                          className={cn(
+                            'flex items-center space-x-2',
+                            met ? 'text-green-600' : 'text-red-500'
+                          )}
+                        >
+                          <div
+                            className={cn(
+                              'w-2 h-2 rounded-full',
+                              met ? 'bg-green-600' : 'bg-red-500'
+                            )}
+                          />
+                          <span>
+                            {key === 'length' && '8 caractères minimum'}
+                            {key === 'uppercase' && 'Une majuscule'}
+                            {key === 'lowercase' && 'Une minuscule'}
+                            {key === 'number' && 'Un chiffre'}
+                            {key === 'special' && 'Un caractère spécial'}
+                          </span>
+                        </div>
+                      )
+                    )}
                   </div>
                 </div>
               )}
@@ -266,7 +298,10 @@ export function PasswordChangeDialog({ open, onOpenChange }: PasswordChangeDialo
 
             {/* Confirmation mot de passe */}
             <div className="space-y-2">
-              <label htmlFor="confirmPassword" className="text-sm font-medium text-verone-black">
+              <label
+                htmlFor="confirmPassword"
+                className="text-sm font-medium text-verone-black"
+              >
                 Confirmer le mot de passe
               </label>
               <div className="relative">
@@ -274,10 +309,12 @@ export function PasswordChangeDialog({ open, onOpenChange }: PasswordChangeDialo
                   id="confirmPassword"
                   type={showConfirmPassword ? 'text' : 'password'}
                   value={confirmPassword}
-                  onChange={(e) => setConfirmPassword(e.target.value)}
+                  onChange={e => setConfirmPassword(e.target.value)}
                   className={cn(
-                    "border-verone-black focus:ring-verone-black pr-10",
-                    confirmPassword && !isConfirmValid && "border-red-500 focus:ring-red-500"
+                    'border-verone-black focus:ring-verone-black pr-10',
+                    confirmPassword &&
+                      !isConfirmValid &&
+                      'border-red-500 focus:ring-red-500'
                   )}
                   placeholder="Confirmez votre nouveau mot de passe"
                   required
@@ -295,7 +332,9 @@ export function PasswordChangeDialog({ open, onOpenChange }: PasswordChangeDialo
                 </button>
               </div>
               {confirmPassword && !isConfirmValid && (
-                <p className="text-xs text-red-500">Les mots de passe ne correspondent pas</p>
+                <p className="text-xs text-red-500">
+                  Les mots de passe ne correspondent pas
+                </p>
               )}
             </div>
 
@@ -329,5 +368,5 @@ export function PasswordChangeDialog({ open, onOpenChange }: PasswordChangeDialo
         )}
       </DialogContent>
     </Dialog>
-  )
+  );
 }

@@ -1,7 +1,12 @@
-"use client"
+'use client';
 
-import { useState } from 'react'
-import { Plus, Building2, X } from 'lucide-react'
+import { useState } from 'react';
+
+import { Plus, Building2, X } from 'lucide-react';
+
+import { ButtonV2 } from '@/components/ui/button';
+import { Card, CardContent } from '@/components/ui/card';
+import { Checkbox } from '@/components/ui/checkbox';
 import {
   Dialog,
   DialogContent,
@@ -9,73 +14,78 @@ import {
   DialogHeader,
   DialogTitle,
   DialogTrigger,
-} from '@/components/ui/dialog'
-import { ButtonV2 } from '@/components/ui/button'
-import { Input } from '@/components/ui/input'
-import { Label } from '@/components/ui/label'
-import { Textarea } from '@/components/ui/textarea'
-import { Checkbox } from '@/components/ui/checkbox'
+} from '@/components/ui/dialog';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from '@/components/ui/select'
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
-import { Card, CardContent } from '@/components/ui/card'
-import { useOrganisations, type CreateOrganisationData } from '@/shared/modules/organisations/hooks'
-import { useToast } from '@/shared/modules/common/hooks'
+} from '@/components/ui/select';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Textarea } from '@/components/ui/textarea';
+import { useToast } from '@/shared/modules/common/hooks';
+import {
+  useOrganisations,
+  type CreateOrganisationData,
+} from '@/shared/modules/organisations/hooks';
 
 interface CreateOrganisationModalProps {
-  onOrganisationCreated?: (organisationId: string, organisationName: string) => void
-  trigger?: React.ReactNode
-  defaultType?: 'supplier' | 'customer' | 'partner' | 'internal'
-  buttonLabel?: string
+  onOrganisationCreated?: (
+    organisationId: string,
+    organisationName: string
+  ) => void;
+  trigger?: React.ReactNode;
+  defaultType?: 'supplier' | 'customer' | 'partner' | 'internal';
+  buttonLabel?: string;
 }
 
 export function CreateOrganisationModal({
   onOrganisationCreated,
   trigger,
   defaultType = 'customer',
-  buttonLabel
+  buttonLabel,
 }: CreateOrganisationModalProps) {
-  const [open, setOpen] = useState(false)
+  const [open, setOpen] = useState(false);
   const [formData, setFormData] = useState<Partial<CreateOrganisationData>>({
     type: defaultType,
     is_active: true,
     has_different_shipping_address: false,
     customer_type: 'professional',
-    prepayment_required: false
-  })
+    prepayment_required: false,
+  });
 
-  const { createOrganisation, loading } = useOrganisations()
-  const { toast } = useToast()
+  const { createOrganisation, loading } = useOrganisations();
+  const { toast } = useToast();
 
   const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault()
+    e.preventDefault();
 
     // Validation champs obligatoires
     if (!formData.legal_name || !formData.type) {
       toast({
-        title: "Erreur de validation",
-        description: "Le nom et le type sont obligatoires.",
-        variant: "destructive"
-      })
-      return
+        title: 'Erreur de validation',
+        description: 'Le nom et le type sont obligatoires.',
+        variant: 'destructive',
+      });
+      return;
     }
 
     try {
-      const newOrganisation = await createOrganisation(formData as CreateOrganisationData)
+      const newOrganisation = await createOrganisation(
+        formData as CreateOrganisationData
+      );
 
       toast({
-        title: "✅ Organisation créée",
-        description: `${formData.legal_name} a été créée avec succès.`
-      })
+        title: '✅ Organisation créée',
+        description: `${formData.legal_name} a été créée avec succès.`,
+      });
 
       // Callback avec l'ID et le nom de l'organisation
       if (onOrganisationCreated && newOrganisation) {
-        onOrganisationCreated(newOrganisation.id, newOrganisation.name)
+        onOrganisationCreated(newOrganisation.id, newOrganisation.name);
       }
 
       // Reset form et fermer modal
@@ -84,38 +94,41 @@ export function CreateOrganisationModal({
         is_active: true,
         has_different_shipping_address: false,
         customer_type: 'professional',
-        prepayment_required: false
-      })
-      setOpen(false)
+        prepayment_required: false,
+      });
+      setOpen(false);
     } catch (error) {
       toast({
-        title: "❌ Erreur création organisation",
-        description: error instanceof Error ? error.message : "Erreur inconnue",
-        variant: "destructive"
-      })
+        title: '❌ Erreur création organisation',
+        description: error instanceof Error ? error.message : 'Erreur inconnue',
+        variant: 'destructive',
+      });
     }
-  }
+  };
 
-  const handleInputChange = (field: keyof CreateOrganisationData, value: any) => {
-    setFormData(prev => ({ ...prev, [field]: value }))
-  }
+  const handleInputChange = (
+    field: keyof CreateOrganisationData,
+    value: any
+  ) => {
+    setFormData(prev => ({ ...prev, [field]: value }));
+  };
 
   // Label par défaut basé sur le type
   const getDefaultLabel = () => {
-    if (buttonLabel) return buttonLabel
+    if (buttonLabel) return buttonLabel;
     switch (defaultType) {
       case 'supplier':
-        return 'Nouveau fournisseur'
+        return 'Nouveau fournisseur';
       case 'customer':
-        return 'Nouveau client'
+        return 'Nouveau client';
       case 'partner':
-        return 'Nouveau partenaire'
+        return 'Nouveau partenaire';
       case 'internal':
-        return 'Nouvelle organisation interne'
+        return 'Nouvelle organisation interne';
       default:
-        return 'Nouvelle organisation'
+        return 'Nouvelle organisation';
     }
-  }
+  };
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
@@ -134,7 +147,8 @@ export function CreateOrganisationModal({
             Créer une nouvelle organisation
           </DialogTitle>
           <DialogDescription>
-            Remplissez les champs obligatoires (*) et les informations complémentaires si disponibles.
+            Remplissez les champs obligatoires (*) et les informations
+            complémentaires si disponibles.
           </DialogDescription>
         </DialogHeader>
 
@@ -154,12 +168,15 @@ export function CreateOrganisationModal({
                   {/* Nom (obligatoire) */}
                   <div className="space-y-2">
                     <Label htmlFor="name">
-                      Nom de l'organisation <span className="text-red-500">*</span>
+                      Nom de l'organisation{' '}
+                      <span className="text-red-500">*</span>
                     </Label>
                     <Input
                       id="name"
                       value={formData.legal_name || ''}
-                      onChange={(e) => handleInputChange('legal_name', e.target.value)}
+                      onChange={e =>
+                        handleInputChange('legal_name', e.target.value)
+                      }
                       placeholder="Entreprise SARL"
                       className="border-black"
                       required
@@ -173,7 +190,7 @@ export function CreateOrganisationModal({
                     </Label>
                     <Select
                       value={formData.type}
-                      onValueChange={(value) => handleInputChange('type', value)}
+                      onValueChange={value => handleInputChange('type', value)}
                     >
                       <SelectTrigger className="border-black">
                         <SelectValue />
@@ -194,7 +211,7 @@ export function CreateOrganisationModal({
                       id="email"
                       type="email"
                       value={formData.email || ''}
-                      onChange={(e) => handleInputChange('email', e.target.value)}
+                      onChange={e => handleInputChange('email', e.target.value)}
                       placeholder="contact@entreprise.fr"
                       className="border-black"
                     />
@@ -206,7 +223,7 @@ export function CreateOrganisationModal({
                     <Input
                       id="phone"
                       value={formData.phone || ''}
-                      onChange={(e) => handleInputChange('phone', e.target.value)}
+                      onChange={e => handleInputChange('phone', e.target.value)}
                       placeholder="+33 1 23 45 67 89"
                       className="border-black"
                     />
@@ -219,7 +236,9 @@ export function CreateOrganisationModal({
                       id="website"
                       type="url"
                       value={formData.website || ''}
-                      onChange={(e) => handleInputChange('website', e.target.value)}
+                      onChange={e =>
+                        handleInputChange('website', e.target.value)
+                      }
                       placeholder="https://www.entreprise.fr"
                       className="border-black"
                     />
@@ -231,7 +250,9 @@ export function CreateOrganisationModal({
                     <Input
                       id="country"
                       value={formData.country || ''}
-                      onChange={(e) => handleInputChange('country', e.target.value)}
+                      onChange={e =>
+                        handleInputChange('country', e.target.value)
+                      }
                       placeholder="France"
                       className="border-black"
                     />
@@ -242,7 +263,9 @@ export function CreateOrganisationModal({
                     <Checkbox
                       id="is_active"
                       checked={formData.is_active}
-                      onCheckedChange={(checked) => handleInputChange('is_active', checked)}
+                      onCheckedChange={checked =>
+                        handleInputChange('is_active', checked)
+                      }
                     />
                     <Label htmlFor="is_active" className="cursor-pointer">
                       Organisation active
@@ -256,26 +279,42 @@ export function CreateOrganisationModal({
             <TabsContent value="addresses" className="space-y-4">
               <Card>
                 <CardContent className="pt-6 space-y-4">
-                  <h3 className="font-semibold text-sm">Adresse de facturation</h3>
+                  <h3 className="font-semibold text-sm">
+                    Adresse de facturation
+                  </h3>
 
                   <div className="grid grid-cols-2 gap-4">
                     <div className="col-span-2 space-y-2">
-                      <Label htmlFor="billing_address_line1">Adresse ligne 1</Label>
+                      <Label htmlFor="billing_address_line1">
+                        Adresse ligne 1
+                      </Label>
                       <Input
                         id="billing_address_line1"
                         value={formData.billing_address_line1 || ''}
-                        onChange={(e) => handleInputChange('billing_address_line1', e.target.value)}
+                        onChange={e =>
+                          handleInputChange(
+                            'billing_address_line1',
+                            e.target.value
+                          )
+                        }
                         placeholder="12 rue de la Paix"
                         className="border-black"
                       />
                     </div>
 
                     <div className="col-span-2 space-y-2">
-                      <Label htmlFor="billing_address_line2">Adresse ligne 2</Label>
+                      <Label htmlFor="billing_address_line2">
+                        Adresse ligne 2
+                      </Label>
                       <Input
                         id="billing_address_line2"
                         value={formData.billing_address_line2 || ''}
-                        onChange={(e) => handleInputChange('billing_address_line2', e.target.value)}
+                        onChange={e =>
+                          handleInputChange(
+                            'billing_address_line2',
+                            e.target.value
+                          )
+                        }
                         placeholder="Bâtiment A, 3ème étage"
                         className="border-black"
                       />
@@ -286,7 +325,12 @@ export function CreateOrganisationModal({
                       <Input
                         id="billing_postal_code"
                         value={formData.billing_postal_code || ''}
-                        onChange={(e) => handleInputChange('billing_postal_code', e.target.value)}
+                        onChange={e =>
+                          handleInputChange(
+                            'billing_postal_code',
+                            e.target.value
+                          )
+                        }
                         placeholder="75001"
                         className="border-black"
                       />
@@ -297,7 +341,9 @@ export function CreateOrganisationModal({
                       <Input
                         id="billing_city"
                         value={formData.billing_city || ''}
-                        onChange={(e) => handleInputChange('billing_city', e.target.value)}
+                        onChange={e =>
+                          handleInputChange('billing_city', e.target.value)
+                        }
                         placeholder="Paris"
                         className="border-black"
                       />
@@ -308,7 +354,9 @@ export function CreateOrganisationModal({
                       <Input
                         id="billing_region"
                         value={formData.billing_region || ''}
-                        onChange={(e) => handleInputChange('billing_region', e.target.value)}
+                        onChange={e =>
+                          handleInputChange('billing_region', e.target.value)
+                        }
                         placeholder="Île-de-France"
                         className="border-black"
                       />
@@ -319,7 +367,9 @@ export function CreateOrganisationModal({
                       <Input
                         id="billing_country"
                         value={formData.billing_country || ''}
-                        onChange={(e) => handleInputChange('billing_country', e.target.value)}
+                        onChange={e =>
+                          handleInputChange('billing_country', e.target.value)
+                        }
                         placeholder="France"
                         className="border-black"
                       />
@@ -330,46 +380,77 @@ export function CreateOrganisationModal({
                     <Checkbox
                       id="has_different_shipping_address"
                       checked={formData.has_different_shipping_address}
-                      onCheckedChange={(checked) => handleInputChange('has_different_shipping_address', checked)}
+                      onCheckedChange={checked =>
+                        handleInputChange(
+                          'has_different_shipping_address',
+                          checked
+                        )
+                      }
                     />
-                    <Label htmlFor="has_different_shipping_address" className="cursor-pointer">
+                    <Label
+                      htmlFor="has_different_shipping_address"
+                      className="cursor-pointer"
+                    >
                       Adresse de livraison différente
                     </Label>
                   </div>
 
                   {formData.has_different_shipping_address && (
                     <>
-                      <h3 className="font-semibold text-sm pt-4">Adresse de livraison</h3>
+                      <h3 className="font-semibold text-sm pt-4">
+                        Adresse de livraison
+                      </h3>
 
                       <div className="grid grid-cols-2 gap-4">
                         <div className="col-span-2 space-y-2">
-                          <Label htmlFor="shipping_address_line1">Adresse ligne 1</Label>
+                          <Label htmlFor="shipping_address_line1">
+                            Adresse ligne 1
+                          </Label>
                           <Input
                             id="shipping_address_line1"
                             value={formData.shipping_address_line1 || ''}
-                            onChange={(e) => handleInputChange('shipping_address_line1', e.target.value)}
+                            onChange={e =>
+                              handleInputChange(
+                                'shipping_address_line1',
+                                e.target.value
+                              )
+                            }
                             placeholder="15 avenue des Champs"
                             className="border-black"
                           />
                         </div>
 
                         <div className="col-span-2 space-y-2">
-                          <Label htmlFor="shipping_address_line2">Adresse ligne 2</Label>
+                          <Label htmlFor="shipping_address_line2">
+                            Adresse ligne 2
+                          </Label>
                           <Input
                             id="shipping_address_line2"
                             value={formData.shipping_address_line2 || ''}
-                            onChange={(e) => handleInputChange('shipping_address_line2', e.target.value)}
+                            onChange={e =>
+                              handleInputChange(
+                                'shipping_address_line2',
+                                e.target.value
+                              )
+                            }
                             placeholder="Entrepôt B"
                             className="border-black"
                           />
                         </div>
 
                         <div className="space-y-2">
-                          <Label htmlFor="shipping_postal_code">Code postal</Label>
+                          <Label htmlFor="shipping_postal_code">
+                            Code postal
+                          </Label>
                           <Input
                             id="shipping_postal_code"
                             value={formData.shipping_postal_code || ''}
-                            onChange={(e) => handleInputChange('shipping_postal_code', e.target.value)}
+                            onChange={e =>
+                              handleInputChange(
+                                'shipping_postal_code',
+                                e.target.value
+                              )
+                            }
                             placeholder="75008"
                             className="border-black"
                           />
@@ -380,7 +461,9 @@ export function CreateOrganisationModal({
                           <Input
                             id="shipping_city"
                             value={formData.shipping_city || ''}
-                            onChange={(e) => handleInputChange('shipping_city', e.target.value)}
+                            onChange={e =>
+                              handleInputChange('shipping_city', e.target.value)
+                            }
                             placeholder="Paris"
                             className="border-black"
                           />
@@ -391,7 +474,12 @@ export function CreateOrganisationModal({
                           <Input
                             id="shipping_region"
                             value={formData.shipping_region || ''}
-                            onChange={(e) => handleInputChange('shipping_region', e.target.value)}
+                            onChange={e =>
+                              handleInputChange(
+                                'shipping_region',
+                                e.target.value
+                              )
+                            }
                             placeholder="Île-de-France"
                             className="border-black"
                           />
@@ -402,7 +490,12 @@ export function CreateOrganisationModal({
                           <Input
                             id="shipping_country"
                             value={formData.shipping_country || ''}
-                            onChange={(e) => handleInputChange('shipping_country', e.target.value)}
+                            onChange={e =>
+                              handleInputChange(
+                                'shipping_country',
+                                e.target.value
+                              )
+                            }
                             placeholder="France"
                             className="border-black"
                           />
@@ -423,7 +516,7 @@ export function CreateOrganisationModal({
                     <Input
                       id="siret"
                       value={formData.siret || ''}
-                      onChange={(e) => handleInputChange('siret', e.target.value)}
+                      onChange={e => handleInputChange('siret', e.target.value)}
                       placeholder="123 456 789 00012"
                       className="border-black"
                     />
@@ -434,7 +527,9 @@ export function CreateOrganisationModal({
                     <Input
                       id="vat_number"
                       value={formData.vat_number || ''}
-                      onChange={(e) => handleInputChange('vat_number', e.target.value)}
+                      onChange={e =>
+                        handleInputChange('vat_number', e.target.value)
+                      }
                       placeholder="FR12345678901"
                       className="border-black"
                     />
@@ -445,7 +540,9 @@ export function CreateOrganisationModal({
                     <Input
                       id="legal_form"
                       value={formData.legal_form || ''}
-                      onChange={(e) => handleInputChange('legal_form', e.target.value)}
+                      onChange={e =>
+                        handleInputChange('legal_form', e.target.value)
+                      }
                       placeholder="SARL, SAS, SA..."
                       className="border-black"
                     />
@@ -456,7 +553,9 @@ export function CreateOrganisationModal({
                     <Input
                       id="industry_sector"
                       value={formData.industry_sector || ''}
-                      onChange={(e) => handleInputChange('industry_sector', e.target.value)}
+                      onChange={e =>
+                        handleInputChange('industry_sector', e.target.value)
+                      }
                       placeholder="Décoration, Mobilier..."
                       className="border-black"
                     />
@@ -470,11 +569,15 @@ export function CreateOrganisationModal({
               <Card>
                 <CardContent className="pt-6 space-y-4">
                   <div className="space-y-2">
-                    <Label htmlFor="payment_terms">Conditions de paiement</Label>
+                    <Label htmlFor="payment_terms">
+                      Conditions de paiement
+                    </Label>
                     <Input
                       id="payment_terms"
                       value={formData.payment_terms || ''}
-                      onChange={(e) => handleInputChange('payment_terms', e.target.value)}
+                      onChange={e =>
+                        handleInputChange('payment_terms', e.target.value)
+                      }
                       placeholder="30 jours fin de mois"
                       className="border-black"
                     />
@@ -484,9 +587,14 @@ export function CreateOrganisationModal({
                     <Checkbox
                       id="prepayment_required"
                       checked={formData.prepayment_required}
-                      onCheckedChange={(checked) => handleInputChange('prepayment_required', checked)}
+                      onCheckedChange={checked =>
+                        handleInputChange('prepayment_required', checked)
+                      }
                     />
-                    <Label htmlFor="prepayment_required" className="cursor-pointer">
+                    <Label
+                      htmlFor="prepayment_required"
+                      className="cursor-pointer"
+                    >
                       Acompte requis
                     </Label>
                   </div>
@@ -496,7 +604,7 @@ export function CreateOrganisationModal({
                     <Textarea
                       id="notes"
                       value={formData.notes || ''}
-                      onChange={(e) => handleInputChange('notes', e.target.value)}
+                      onChange={e => handleInputChange('notes', e.target.value)}
                       placeholder="Informations complémentaires..."
                       className="border-black min-h-[100px]"
                     />
@@ -521,11 +629,11 @@ export function CreateOrganisationModal({
               className="bg-black hover:bg-gray-800 text-white"
               disabled={loading}
             >
-              {loading ? 'Création...' : 'Créer l\'organisation'}
+              {loading ? 'Création...' : "Créer l'organisation"}
             </ButtonV2>
           </div>
         </form>
       </DialogContent>
     </Dialog>
-  )
+  );
 }

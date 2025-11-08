@@ -1,29 +1,51 @@
-'use client'
+'use client';
 
-import { useState, useEffect } from 'react'
-import { X, Save, Calendar, Mail, Phone, Building, AlertCircle } from 'lucide-react'
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog'
-import { ButtonV2 } from '@/components/ui/button'
-import { Input } from '@/components/ui/input'
-import { Label } from '@/components/ui/label'
-import { Textarea } from '@/components/ui/textarea'
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
-import { Alert, AlertDescription } from '@/components/ui/alert'
-import { ClientConsultation } from '@/shared/modules/consultations/hooks'
-import { cn } from '@/lib/utils'
+import { useState, useEffect } from 'react';
+
+import {
+  X,
+  Save,
+  Calendar,
+  Mail,
+  Phone,
+  Building,
+  AlertCircle,
+} from 'lucide-react';
+
+import { Alert, AlertDescription } from '@/components/ui/alert';
+import { ButtonV2 } from '@/components/ui/button';
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+} from '@/components/ui/dialog';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
+import { Textarea } from '@/components/ui/textarea';
+import { cn } from '@verone/utils';
+import type { ClientConsultation } from '@/shared/modules/consultations/hooks';
 
 interface EditConsultationModalProps {
-  open: boolean
-  onClose: () => void
-  consultation: ClientConsultation
-  onUpdated: (updates: Partial<ClientConsultation>) => Promise<boolean>
+  open: boolean;
+  onClose: () => void;
+  consultation: ClientConsultation;
+  onUpdated: (updates: Partial<ClientConsultation>) => Promise<boolean>;
 }
 
 export function EditConsultationModal({
   open,
   onClose,
   consultation,
-  onUpdated
+  onUpdated,
 }: EditConsultationModalProps) {
   const [formData, setFormData] = useState({
     organisation_name: '',
@@ -34,10 +56,10 @@ export function EditConsultationModal({
     tarif_maximum: 0,
     estimated_response_date: '',
     priority_level: 2,
-    source_channel: 'website' as 'website' | 'email' | 'phone' | 'other'
-  })
-  const [isSubmitting, setIsSubmitting] = useState(false)
-  const [errors, setErrors] = useState<Record<string, string>>({})
+    source_channel: 'website' as 'website' | 'email' | 'phone' | 'other',
+  });
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [errors, setErrors] = useState<Record<string, string>>({});
 
   // Initialiser le formulaire avec les données de la consultation
   useEffect(() => {
@@ -50,47 +72,49 @@ export function EditConsultationModal({
         notes_internes: consultation.notes_internes || '',
         tarif_maximum: consultation.tarif_maximum || 0,
         estimated_response_date: consultation.estimated_response_date
-          ? new Date(consultation.estimated_response_date).toISOString().split('T')[0]
+          ? new Date(consultation.estimated_response_date)
+              .toISOString()
+              .split('T')[0]
           : '',
         priority_level: consultation.priority_level || 2,
-        source_channel: consultation.source_channel || 'website'
-      })
+        source_channel: consultation.source_channel || 'website',
+      });
     }
-  }, [consultation])
+  }, [consultation]);
 
   const validateForm = () => {
-    const newErrors: Record<string, string> = {}
+    const newErrors: Record<string, string> = {};
 
     if (!formData.organisation_name.trim()) {
-      newErrors.organisation_name = 'L\'organisation cliente est obligatoire'
+      newErrors.organisation_name = "L'organisation cliente est obligatoire";
     }
 
     if (!formData.client_email.trim()) {
-      newErrors.client_email = 'L\'email client est obligatoire'
+      newErrors.client_email = "L'email client est obligatoire";
     } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.client_email)) {
-      newErrors.client_email = 'Format d\'email invalide'
+      newErrors.client_email = "Format d'email invalide";
     }
 
     if (!formData.descriptif.trim()) {
-      newErrors.descriptif = 'La description est obligatoire'
+      newErrors.descriptif = 'La description est obligatoire';
     }
 
     if (formData.tarif_maximum && formData.tarif_maximum < 0) {
-      newErrors.tarif_maximum = 'Le budget ne peut pas être négatif'
+      newErrors.tarif_maximum = 'Le budget ne peut pas être négatif';
     }
 
-    setErrors(newErrors)
-    return Object.keys(newErrors).length === 0
-  }
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault()
+    e.preventDefault();
 
     if (!validateForm()) {
-      return
+      return;
     }
 
-    setIsSubmitting(true)
+    setIsSubmitting(true);
 
     try {
       const updates: Partial<ClientConsultation> = {
@@ -99,23 +123,24 @@ export function EditConsultationModal({
         client_phone: formData.client_phone || undefined,
         descriptif: formData.descriptif,
         notes_internes: formData.notes_internes || undefined,
-        tarif_maximum: formData.tarif_maximum > 0 ? formData.tarif_maximum : undefined,
+        tarif_maximum:
+          formData.tarif_maximum > 0 ? formData.tarif_maximum : undefined,
         estimated_response_date: formData.estimated_response_date || undefined,
         priority_level: formData.priority_level,
-        source_channel: formData.source_channel
-      }
+        source_channel: formData.source_channel,
+      };
 
-      const success = await onUpdated(updates)
+      const success = await onUpdated(updates);
 
       if (success) {
-        onClose()
+        onClose();
       }
     } catch (error) {
-      console.error('Erreur mise à jour consultation:', error)
+      console.error('Erreur mise à jour consultation:', error);
     } finally {
-      setIsSubmitting(false)
+      setIsSubmitting(false);
     }
-  }
+  };
 
   return (
     <Dialog open={open} onOpenChange={onClose}>
@@ -147,14 +172,19 @@ export function EditConsultationModal({
                 id="organisation-name"
                 type="text"
                 value={formData.organisation_name}
-                onChange={(e) => {
-                  setFormData(prev => ({ ...prev, organisation_name: e.target.value }))
-                  if (errors.organisation_name) setErrors(prev => ({ ...prev, organisation_name: '' }))
+                onChange={e => {
+                  setFormData(prev => ({
+                    ...prev,
+                    organisation_name: e.target.value,
+                  }));
+                  if (errors.organisation_name)
+                    setErrors(prev => ({ ...prev, organisation_name: '' }));
                 }}
                 placeholder="Nom de l'organisation cliente"
                 className={cn(
-                  "pl-10",
-                  errors.organisation_name && "border-red-300 focus:border-red-500"
+                  'pl-10',
+                  errors.organisation_name &&
+                    'border-red-300 focus:border-red-500'
                 )}
               />
             </div>
@@ -174,14 +204,18 @@ export function EditConsultationModal({
                 id="client-email"
                 type="email"
                 value={formData.client_email}
-                onChange={(e) => {
-                  setFormData(prev => ({ ...prev, client_email: e.target.value }))
-                  if (errors.client_email) setErrors(prev => ({ ...prev, client_email: '' }))
+                onChange={e => {
+                  setFormData(prev => ({
+                    ...prev,
+                    client_email: e.target.value,
+                  }));
+                  if (errors.client_email)
+                    setErrors(prev => ({ ...prev, client_email: '' }));
                 }}
                 placeholder="client@example.com"
                 className={cn(
-                  "pl-10",
-                  errors.client_email && "border-red-300 focus:border-red-500"
+                  'pl-10',
+                  errors.client_email && 'border-red-300 focus:border-red-500'
                 )}
               />
             </div>
@@ -201,7 +235,12 @@ export function EditConsultationModal({
                 id="client-phone"
                 type="tel"
                 value={formData.client_phone}
-                onChange={(e) => setFormData(prev => ({ ...prev, client_phone: e.target.value }))}
+                onChange={e =>
+                  setFormData(prev => ({
+                    ...prev,
+                    client_phone: e.target.value,
+                  }))
+                }
                 placeholder="+33 6 12 34 56 78"
                 className="pl-10"
               />
@@ -216,14 +255,15 @@ export function EditConsultationModal({
             <Textarea
               id="descriptif"
               value={formData.descriptif}
-              onChange={(e) => {
-                setFormData(prev => ({ ...prev, descriptif: e.target.value }))
-                if (errors.descriptif) setErrors(prev => ({ ...prev, descriptif: '' }))
+              onChange={e => {
+                setFormData(prev => ({ ...prev, descriptif: e.target.value }));
+                if (errors.descriptif)
+                  setErrors(prev => ({ ...prev, descriptif: '' }));
               }}
               placeholder="Décrivez les besoins du client..."
               rows={4}
               className={cn(
-                errors.descriptif && "border-red-300 focus:border-red-500"
+                errors.descriptif && 'border-red-300 focus:border-red-500'
               )}
             />
             {errors.descriptif && (
@@ -239,7 +279,12 @@ export function EditConsultationModal({
             <Textarea
               id="notes-internes"
               value={formData.notes_internes}
-              onChange={(e) => setFormData(prev => ({ ...prev, notes_internes: e.target.value }))}
+              onChange={e =>
+                setFormData(prev => ({
+                  ...prev,
+                  notes_internes: e.target.value,
+                }))
+              }
               placeholder="Notes privées visibles uniquement par l'équipe..."
               rows={3}
             />
@@ -261,14 +306,15 @@ export function EditConsultationModal({
                 step="0.01"
                 min="0"
                 value={formData.tarif_maximum || ''}
-                onChange={(e) => {
-                  const value = parseFloat(e.target.value) || 0
-                  setFormData(prev => ({ ...prev, tarif_maximum: value }))
-                  if (errors.tarif_maximum) setErrors(prev => ({ ...prev, tarif_maximum: '' }))
+                onChange={e => {
+                  const value = parseFloat(e.target.value) || 0;
+                  setFormData(prev => ({ ...prev, tarif_maximum: value }));
+                  if (errors.tarif_maximum)
+                    setErrors(prev => ({ ...prev, tarif_maximum: '' }));
                 }}
                 placeholder="5000"
                 className={cn(
-                  errors.tarif_maximum && "border-red-300 focus:border-red-500"
+                  errors.tarif_maximum && 'border-red-300 focus:border-red-500'
                 )}
               />
               {errors.tarif_maximum && (
@@ -287,7 +333,12 @@ export function EditConsultationModal({
                   id="estimated-date"
                   type="date"
                   value={formData.estimated_response_date}
-                  onChange={(e) => setFormData(prev => ({ ...prev, estimated_response_date: e.target.value }))}
+                  onChange={e =>
+                    setFormData(prev => ({
+                      ...prev,
+                      estimated_response_date: e.target.value,
+                    }))
+                  }
                   className="pl-10"
                 />
               </div>
@@ -303,7 +354,12 @@ export function EditConsultationModal({
               </Label>
               <Select
                 value={formData.priority_level.toString()}
-                onValueChange={(value) => setFormData(prev => ({ ...prev, priority_level: parseInt(value) }))}
+                onValueChange={value =>
+                  setFormData(prev => ({
+                    ...prev,
+                    priority_level: parseInt(value),
+                  }))
+                }
               >
                 <SelectTrigger>
                   <SelectValue />
@@ -325,7 +381,9 @@ export function EditConsultationModal({
               </Label>
               <Select
                 value={formData.source_channel}
-                onValueChange={(value: any) => setFormData(prev => ({ ...prev, source_channel: value }))}
+                onValueChange={(value: any) =>
+                  setFormData(prev => ({ ...prev, source_channel: value }))
+                }
               >
                 <SelectTrigger>
                   <SelectValue />
@@ -342,9 +400,7 @@ export function EditConsultationModal({
 
           {/* Actions */}
           <div className="flex items-center justify-between pt-6 border-t border-gray-200">
-            <div className="text-xs text-gray-500">
-              * Champs obligatoires
-            </div>
+            <div className="text-xs text-gray-500">* Champs obligatoires</div>
 
             <div className="flex items-center space-x-3">
               <ButtonV2
@@ -363,7 +419,7 @@ export function EditConsultationModal({
               >
                 {isSubmitting ? (
                   <>
-                    <div className="animate-spin rounded-full h-3 w-3 border-b-2 border-white mr-2"></div>
+                    <div className="animate-spin rounded-full h-3 w-3 border-b-2 border-white mr-2" />
                     Enregistrement...
                   </>
                 ) : (
@@ -378,5 +434,5 @@ export function EditConsultationModal({
         </form>
       </DialogContent>
     </Dialog>
-  )
+  );
 }

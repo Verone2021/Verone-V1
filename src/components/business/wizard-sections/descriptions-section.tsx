@@ -1,46 +1,57 @@
-"use client"
+'use client';
 
-import { useState } from 'react'
-import { Input } from '../../ui/input'
-import { Label } from '../../ui/label'
-import { Textarea } from '../../ui/textarea'
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../../ui/card'
-import { Badge } from '../../ui/badge'
-import { Button } from '../../ui/button'
-import { Plus, X, FileText, List, Sparkles } from 'lucide-react'
-import { WizardFormData } from '../complete-product-wizard'
+import { useState } from 'react';
+
+import { Plus, X, FileText, List, Sparkles } from 'lucide-react';
+
+import { Badge } from '../../ui/badge';
+import { Button } from '../../ui/button';
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from '../../ui/card';
+import { Input } from '../../ui/input';
+import { Label } from '../../ui/label';
+import { Textarea } from '../../ui/textarea';
+import type { WizardFormData } from '../complete-product-wizard';
 
 interface DescriptionsSectionProps {
-  formData: WizardFormData
-  setFormData: (data: WizardFormData) => void
-  onSave: () => void
+  formData: WizardFormData;
+  setFormData: (data: WizardFormData) => void;
+  onSave: () => void;
 }
 
 export function DescriptionsSection({
   formData,
   setFormData,
-  onSave
+  onSave,
 }: DescriptionsSectionProps) {
-  const [newSellingPoint, setNewSellingPoint] = useState('')
+  const [newSellingPoint, setNewSellingPoint] = useState('');
 
   const updateField = (field: keyof WizardFormData, value: any) => {
     setFormData({
       ...formData,
-      [field]: value
-    })
-  }
+      [field]: value,
+    });
+  };
 
   const addSellingPoint = () => {
     if (newSellingPoint.trim()) {
-      updateField('selling_points', [...formData.selling_points, newSellingPoint.trim()])
-      setNewSellingPoint('')
+      updateField('selling_points', [
+        ...formData.selling_points,
+        newSellingPoint.trim(),
+      ]);
+      setNewSellingPoint('');
     }
-  }
+  };
 
   const removeSellingPoint = (index: number) => {
-    const updated = formData.selling_points.filter((_, i) => i !== index)
-    updateField('selling_points', updated)
-  }
+    const updated = formData.selling_points.filter((_, i) => i !== index);
+    updateField('selling_points', updated);
+  };
 
   return (
     <div className="space-y-6">
@@ -52,7 +63,8 @@ export function DescriptionsSection({
             Description caractéristique
           </CardTitle>
           <CardDescription>
-            Description commerciale et technique visible sur les catalogues et la page produit
+            Description commerciale et technique visible sur les catalogues et
+            la page produit
           </CardDescription>
         </CardHeader>
         <CardContent className="pt-6 space-y-4">
@@ -63,7 +75,7 @@ export function DescriptionsSection({
             <Textarea
               id="description"
               value={formData.description}
-              onChange={(e) => updateField('description', e.target.value)}
+              onChange={e => updateField('description', e.target.value)}
               placeholder="Décrivez le produit de manière détaillée...
 
 Exemple pour un fauteuil :
@@ -78,7 +90,8 @@ Exemple pour un fauteuil :
             />
             <p className="text-xs text-gray-500 flex items-center">
               <Sparkles className="h-3 w-3 mr-1" style={{ color: '#3b86d1' }} />
-              Conseil : Combinez les aspects commerciaux (design, confort) et techniques (dimensions, matériaux)
+              Conseil : Combinez les aspects commerciaux (design, confort) et
+              techniques (dimensions, matériaux)
             </p>
           </div>
 
@@ -144,12 +157,12 @@ Exemple pour un fauteuil :
               <Input
                 id="new-selling-point"
                 value={newSellingPoint}
-                onChange={(e) => setNewSellingPoint(e.target.value)}
+                onChange={e => setNewSellingPoint(e.target.value)}
                 placeholder="Ex: Design nordique authentique, Garantie 5 ans..."
-                onKeyPress={(e) => {
+                onKeyPress={e => {
                   if (e.key === 'Enter') {
-                    e.preventDefault()
-                    addSellingPoint()
+                    e.preventDefault();
+                    addSellingPoint();
                   }
                 }}
                 className="flex-1"
@@ -166,14 +179,20 @@ Exemple pour un fauteuil :
               </Button>
             </div>
             <p className="text-xs text-gray-500">
-              Appuyez sur <kbd className="px-1 py-0.5 bg-gray-100 border border-gray-300 rounded text-xs">Entrée</kbd> pour ajouter rapidement
+              Appuyez sur{' '}
+              <kbd className="px-1 py-0.5 bg-gray-100 border border-gray-300 rounded text-xs">
+                Entrée
+              </kbd>{' '}
+              pour ajouter rapidement
             </p>
           </div>
 
           {/* Suggestions de points de vente */}
           {formData.selling_points.length < 3 && (
             <div className="mt-4 p-4 bg-gray-50 rounded-lg border border-gray-200">
-              <p className="text-xs font-medium text-gray-700 mb-2">💡 Suggestions de points de vente :</p>
+              <p className="text-xs font-medium text-gray-700 mb-2">
+                💡 Suggestions de points de vente :
+              </p>
               <div className="flex flex-wrap gap-2">
                 {[
                   'Qualité premium garantie',
@@ -181,19 +200,24 @@ Exemple pour un fauteuil :
                   'Garantie constructeur étendue',
                   'Matériaux durables et écologiques',
                   'Design exclusif',
-                  'Service client dédié'
+                  'Service client dédié',
                 ].map((suggestion, idx) => (
                   <button
                     key={idx}
                     type="button"
                     onClick={() => {
                       if (!formData.selling_points.includes(suggestion)) {
-                        updateField('selling_points', [...formData.selling_points, suggestion])
+                        updateField('selling_points', [
+                          ...formData.selling_points,
+                          suggestion,
+                        ]);
                       }
                     }}
                     className="text-xs px-2 py-1 bg-white border border-gray-300 rounded hover:border-[#844fc1] transition-colors"
                     style={{
-                      ...(formData.selling_points.includes(suggestion) ? { opacity: 0.5, cursor: 'not-allowed' } : {})
+                      ...(formData.selling_points.includes(suggestion)
+                        ? { opacity: 0.5, cursor: 'not-allowed' }
+                        : {}),
                     }}
                     disabled={formData.selling_points.includes(suggestion)}
                   >
@@ -206,5 +230,5 @@ Exemple pour un fauteuil :
         </CardContent>
       </Card>
     </div>
-  )
+  );
 }

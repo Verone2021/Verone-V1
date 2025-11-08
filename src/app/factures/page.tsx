@@ -5,8 +5,15 @@
 // STATUS: DÉSACTIVÉ Phase 1 - Placeholder uniquement
 // =====================================================================
 
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { AlertCircle, Lock } from 'lucide-react';
+
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from '@/components/ui/card';
 import { featureFlags } from '@/lib/feature-flags';
 
 // =====================================================================
@@ -15,7 +22,8 @@ import { featureFlags } from '@/lib/feature-flags';
 
 export const metadata = {
   title: 'Factures | Vérone Back Office',
-  description: 'Gestion des factures clients - Système de facturation intégré Abby.fr',
+  description:
+    'Gestion des factures clients - Système de facturation intégré Abby.fr',
 };
 
 // =====================================================================
@@ -32,7 +40,9 @@ export default function FacturesPage() {
             <div className="flex items-center gap-3">
               <Lock className="h-6 w-6 text-orange-600" />
               <div>
-                <CardTitle className="text-orange-900">Module Finance - Phase 2</CardTitle>
+                <CardTitle className="text-orange-900">
+                  Module Finance - Phase 2
+                </CardTitle>
                 <CardDescription className="text-orange-700">
                   Ce module sera disponible après le déploiement Phase 1
                 </CardDescription>
@@ -44,7 +54,9 @@ export default function FacturesPage() {
               <div className="flex items-start gap-2">
                 <AlertCircle className="h-5 w-5 text-orange-600 mt-0.5 flex-shrink-0" />
                 <div>
-                  <p className="font-medium text-orange-900">Phase 1 (Actuelle)</p>
+                  <p className="font-medium text-orange-900">
+                    Phase 1 (Actuelle)
+                  </p>
                   <p className="text-sm text-orange-700">
                     Sourcing • Catalogue • Organisations • Stock • Commandes
                   </p>
@@ -53,9 +65,12 @@ export default function FacturesPage() {
               <div className="flex items-start gap-2">
                 <Lock className="h-5 w-5 text-orange-600 mt-0.5 flex-shrink-0" />
                 <div>
-                  <p className="font-medium text-orange-900">Phase 2 (Prochainement)</p>
+                  <p className="font-medium text-orange-900">
+                    Phase 2 (Prochainement)
+                  </p>
                   <p className="text-sm text-orange-700">
-                    Facturation • Trésorerie • Rapprochement bancaire • Intégrations (Qonto, Abby)
+                    Facturation • Trésorerie • Rapprochement bancaire •
+                    Intégrations (Qonto, Abby)
                   </p>
                 </div>
               </div>

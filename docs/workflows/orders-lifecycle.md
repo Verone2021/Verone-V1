@@ -20,6 +20,7 @@
 Cycle de vie complet d'une commande dans le système Vérone : Devis → Commande → Livraison → Facturation.
 
 **À documenter** :
+
 - **Devis** : Création, envoi client, validation/refus
 - **Commande** : Conversion devis → commande, validation, préparation
 - **Livraison** : Expédition, tracking, réception

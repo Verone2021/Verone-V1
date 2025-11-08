@@ -1,6 +1,7 @@
-'use client'
+'use client';
 
-import React, { useState } from 'react'
+import React, { useState } from 'react';
+
 import {
   FileText,
   TrendingUp,
@@ -13,40 +14,41 @@ import {
   Download,
   Calendar,
   Filter,
-  X
-} from 'lucide-react'
-import { ButtonV2 } from '@/components/ui/button'
-import { Badge } from '@/components/ui/badge'
-import { Input } from '@/components/ui/input'
-import { Label } from '@/components/ui/label'
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select'
-import { useToast } from '@/shared/modules/common/hooks'
-import { AgingReportView } from '@/components/business/aging-report-view'
-import { ABCAnalysisView } from '@/components/business/abc-analysis-view'
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogDescription,
-} from '@/components/ui/dialog'
+  X,
+} from 'lucide-react';
+
+import { Badge } from '@/components/ui/badge';
+import { ButtonV2 } from '@/components/ui/button';
 import {
   Card,
   CardContent,
   CardDescription,
   CardHeader,
   CardTitle,
-} from '@/components/ui/card'
+} from '@/components/ui/card';
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+} from '@/components/ui/dialog';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
+import { useToast } from '@/shared/modules/common/hooks';
+import { ABCAnalysisView } from '@/shared/modules/stock/components/reports/ABCAnalysisView';
+import { AgingReportView } from '@/shared/modules/stock/components/reports/AgingReportView';
 
 interface StockReportsModalProps {
-  isOpen: boolean
-  onClose: () => void
+  isOpen: boolean;
+  onClose: () => void;
 }
 
 // Catalogue des 8 rapports essentiels (basé sur manifests/features/SYSTEME-RAPPORTS-STOCK-COMPLET.md)
@@ -58,34 +60,40 @@ const AVAILABLE_REPORTS = [
     icon: Clock,
     priority: 'high',
     status: 'available',
-    metrics: ['Age moyen', '% stock >90j', 'Valeur immobilisée', 'Top 20 anciens'],
+    metrics: [
+      'Age moyen',
+      '% stock >90j',
+      'Valeur immobilisée',
+      'Top 20 anciens',
+    ],
     visualizations: ['Histogramme empilé', 'Heatmap'],
     filters: ['Période', 'Catégorie', 'Fournisseur'],
-    exports: ['PDF', 'Excel', 'CSV']
+    exports: ['PDF', 'Excel', 'CSV'],
   },
   {
     id: 'rotation',
     name: 'Rotation des Stocks',
-    description: 'Analyser turnover ratio et identifier produits à faible rotation',
+    description:
+      'Analyser turnover ratio et identifier produits à faible rotation',
     icon: RotateCw,
     priority: 'high',
     status: 'available',
     metrics: ['Turnover Ratio', 'Jours moyen rotation', 'Classification FSN'],
     visualizations: ['Graphique rotation', 'Matrice ABC/FSN'],
     filters: ['Période', 'Catégorie'],
-    exports: ['PDF', 'Excel', 'CSV']
+    exports: ['PDF', 'Excel', 'CSV'],
   },
   {
     id: 'valorisation',
     name: 'Valorisation Stock',
-    description: 'Vue financière complète de l\'inventaire',
+    description: "Vue financière complète de l'inventaire",
     icon: TrendingUp,
     priority: 'medium',
     status: 'available',
     metrics: ['Valeur totale', 'Valeur par catégorie', 'Coût unitaire moyen'],
     visualizations: ['Secteurs', 'Barres Top 10'],
     filters: ['Date snapshot', 'Catégorie', 'Fournisseur'],
-    exports: ['PDF', 'Excel', 'CSV']
+    exports: ['PDF', 'Excel', 'CSV'],
   },
   {
     id: 'niveaux',
@@ -97,7 +105,7 @@ const AVAILABLE_REPORTS = [
     metrics: ['Stock actuel', 'Stock sécurité', 'Jours couverture'],
     visualizations: ['Barres comparatives', 'Jauge'],
     filters: ['Catégorie', 'Emplacement'],
-    exports: ['PDF', 'Excel', 'CSV']
+    exports: ['PDF', 'Excel', 'CSV'],
   },
   {
     id: 'mouvements',
@@ -109,7 +117,7 @@ const AVAILABLE_REPORTS = [
     metrics: ['Total IN', 'Total OUT', 'Total ADJUST', 'Net change'],
     visualizations: ['Timeline', 'Courbes tendances'],
     filters: ['Période', 'Type mouvement', 'Produit'],
-    exports: ['PDF', 'Excel', 'CSV']
+    exports: ['PDF', 'Excel', 'CSV'],
   },
   {
     id: 'out-of-stock',
@@ -121,7 +129,7 @@ const AVAILABLE_REPORTS = [
     metrics: ['Produits en rupture', 'Risque <7j', 'Perte CA estimée'],
     visualizations: ['Tableau urgence', 'Historique ruptures'],
     filters: ['Catégorie', 'Seuil jours'],
-    exports: ['PDF', 'Excel', 'CSV']
+    exports: ['PDF', 'Excel', 'CSV'],
   },
   {
     id: 'fournisseurs',
@@ -133,7 +141,7 @@ const AVAILABLE_REPORTS = [
     metrics: ['Délai moyen', 'Taux conformité', 'Quality Index'],
     visualizations: ['Tableau scoring', 'Graphique délais'],
     filters: ['Fournisseur', 'Période'],
-    exports: ['PDF', 'Excel']
+    exports: ['PDF', 'Excel'],
   },
   {
     id: 'abc-xyz',
@@ -145,96 +153,106 @@ const AVAILABLE_REPORTS = [
     metrics: ['% valeur cumulée', 'Coefficient variation', 'Classe ABC'],
     visualizations: ['Matrice 9 cases', 'Courbe Pareto'],
     filters: ['Période analyse'],
-    exports: ['PDF', 'Excel']
-  }
-]
+    exports: ['PDF', 'Excel'],
+  },
+];
 
 export function StockReportsModal({ isOpen, onClose }: StockReportsModalProps) {
-  const [selectedReport, setSelectedReport] = useState<string | null>(null)
+  const [selectedReport, setSelectedReport] = useState<string | null>(null);
   const [config, setConfig] = useState({
     dateFrom: '',
     dateTo: '',
     preset: '30j',
     format: 'pdf' as 'pdf' | 'excel' | 'csv',
     category: '',
-    supplier: ''
-  })
-  const [showReport, setShowReport] = useState(false)
-  const { toast } = useToast()
+    supplier: '',
+  });
+  const [showReport, setShowReport] = useState(false);
+  const { toast } = useToast();
 
   const handleReportSelect = (reportId: string) => {
-    setSelectedReport(reportId)
-    setShowReport(false) // Reset l'affichage du rapport
+    setSelectedReport(reportId);
+    setShowReport(false); // Reset l'affichage du rapport
 
     // Configuration par défaut selon le type de rapport
-    const today = new Date()
-    const thirtyDaysAgo = new Date()
-    thirtyDaysAgo.setDate(today.getDate() - 30)
+    const today = new Date();
+    const thirtyDaysAgo = new Date();
+    thirtyDaysAgo.setDate(today.getDate() - 30);
 
     setConfig({
       preset: '30j',
       dateFrom: thirtyDaysAgo.toISOString().split('T')[0],
       dateTo: today.toISOString().split('T')[0],
-      format: 'pdf'
-    } as any)
-  }
+      format: 'pdf',
+    } as any);
+  };
 
   const handleGenerateReport = () => {
-    setShowReport(true)
-    const reportName = AVAILABLE_REPORTS.find(r => r.id === selectedReport)?.name
+    setShowReport(true);
+    const reportName = AVAILABLE_REPORTS.find(
+      r => r.id === selectedReport
+    )?.name;
     toast({
-      title: "Rapport généré",
-      description: `Le rapport ${reportName} a été généré avec succès.`
-    })
-  }
+      title: 'Rapport généré',
+      description: `Le rapport ${reportName} a été généré avec succès.`,
+    });
+  };
 
   const handlePresetChange = (preset: string) => {
-    const today = new Date()
-    const dateFrom = new Date()
+    const today = new Date();
+    const dateFrom = new Date();
 
     if (preset === 'custom') {
       // Pour période personnalisée, on met à jour le preset mais garde les dates actuelles
-      setConfig(prev => ({ ...prev, preset }))
-      return
+      setConfig(prev => ({ ...prev, preset }));
+      return;
     }
 
-    switch(preset) {
+    switch (preset) {
       case '7j':
-        dateFrom.setDate(today.getDate() - 7)
-        break
+        dateFrom.setDate(today.getDate() - 7);
+        break;
       case '30j':
-        dateFrom.setDate(today.getDate() - 30)
-        break
+        dateFrom.setDate(today.getDate() - 30);
+        break;
       case '90j':
-        dateFrom.setDate(today.getDate() - 90)
-        break
+        dateFrom.setDate(today.getDate() - 90);
+        break;
     }
 
     setConfig(prev => ({
       ...prev,
       preset,
       dateFrom: dateFrom.toISOString().split('T')[0],
-      dateTo: today.toISOString().split('T')[0]
-    }))
-  }
+      dateTo: today.toISOString().split('T')[0],
+    }));
+  };
 
   const getPriorityColor = (priority: string) => {
     switch (priority) {
-      case 'high': return 'bg-red-100 text-red-800 border-red-200'
-      case 'medium': return 'bg-blue-100 text-blue-800 border-blue-200'
-      case 'low': return 'bg-gray-100 text-gray-800 border-gray-200'
-      default: return 'bg-gray-100 text-gray-800 border-gray-200'
+      case 'high':
+        return 'bg-red-100 text-red-800 border-red-200';
+      case 'medium':
+        return 'bg-blue-100 text-blue-800 border-blue-200';
+      case 'low':
+        return 'bg-gray-100 text-gray-800 border-gray-200';
+      default:
+        return 'bg-gray-100 text-gray-800 border-gray-200';
     }
-  }
+  };
 
   const getPriorityLabel = (priority: string) => {
     switch (priority) {
-      case 'high': return 'P0 - Prioritaire'
-      case 'medium': return 'P1 - Standard'
-      case 'low': return 'P2 - Optionnel'
-      default: return priority
+      case 'high':
+        return 'P0 - Prioritaire';
+      case 'medium':
+        return 'P1 - Standard';
+      case 'low':
+        return 'P2 - Optionnel';
+      default:
+        return priority;
     }
-  }
+  };
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
@@ -244,24 +262,27 @@ export function StockReportsModal({ isOpen, onClose }: StockReportsModalProps) {
             <div className="flex items-center gap-3">
               <BarChart3 className="h-6 w-6 text-black" />
               <div>
-                <DialogTitle className="text-2xl font-bold">Rapports de Stock</DialogTitle>
+                <DialogTitle className="text-2xl font-bold">
+                  Rapports de Stock
+                </DialogTitle>
                 <DialogDescription className="text-sm text-gray-600 mt-1">
                   Sélectionnez un rapport pour analyser vos données de stock
                 </DialogDescription>
               </div>
             </div>
             <Badge variant="outline" className="font-mono text-xs">
-              {AVAILABLE_REPORTS.filter(r => r.status === 'available').length}/8 disponibles
+              {AVAILABLE_REPORTS.filter(r => r.status === 'available').length}/8
+              disponibles
             </Badge>
           </div>
         </DialogHeader>
 
         {/* Grille des rapports */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 py-4">
-          {AVAILABLE_REPORTS.map((report) => {
-            const Icon = report.icon
-            const isSelected = selectedReport === report.id
-            const isComingSoon = report.status === 'coming_soon'
+          {AVAILABLE_REPORTS.map(report => {
+            const Icon = report.icon;
+            const isSelected = selectedReport === report.id;
+            const isComingSoon = report.status === 'coming_soon';
 
             return (
               <Card
@@ -276,21 +297,30 @@ export function StockReportsModal({ isOpen, onClose }: StockReportsModalProps) {
                 <CardHeader className="pb-3">
                   <div className="flex items-start justify-between">
                     <div className="flex items-center gap-3">
-                      <div className={`p-2 rounded-lg ${
-                        isSelected ? 'bg-black text-white' : 'bg-gray-100 text-gray-700'
-                      }`}>
+                      <div
+                        className={`p-2 rounded-lg ${
+                          isSelected
+                            ? 'bg-black text-white'
+                            : 'bg-gray-100 text-gray-700'
+                        }`}
+                      >
                         <Icon className="h-5 w-5" />
                       </div>
                       <div className="flex-1">
                         <CardTitle className="text-base font-bold flex items-center gap-2">
                           {report.name}
                           {isComingSoon && (
-                            <Badge variant="outline" className="text-xs bg-yellow-50 text-yellow-800 border-yellow-200">
+                            <Badge
+                              variant="outline"
+                              className="text-xs bg-yellow-50 text-yellow-800 border-yellow-200"
+                            >
                               Bientôt
                             </Badge>
                           )}
                         </CardTitle>
-                        <Badge className={`${getPriorityColor(report.priority)} text-xs mt-1`}>
+                        <Badge
+                          className={`${getPriorityColor(report.priority)} text-xs mt-1`}
+                        >
                           {getPriorityLabel(report.priority)}
                         </Badge>
                       </div>
@@ -310,12 +340,19 @@ export function StockReportsModal({ isOpen, onClose }: StockReportsModalProps) {
                     </p>
                     <div className="flex flex-wrap gap-1">
                       {report.metrics.slice(0, 3).map((metric, idx) => (
-                        <Badge key={idx} variant="outline" className="text-xs bg-blue-50 text-blue-700 border-blue-200">
+                        <Badge
+                          key={idx}
+                          variant="outline"
+                          className="text-xs bg-blue-50 text-blue-700 border-blue-200"
+                        >
                           {metric}
                         </Badge>
                       ))}
                       {report.metrics.length > 3 && (
-                        <Badge variant="outline" className="text-xs bg-gray-50 text-gray-600">
+                        <Badge
+                          variant="outline"
+                          className="text-xs bg-gray-50 text-gray-600"
+                        >
                           +{report.metrics.length - 3}
                         </Badge>
                       )}
@@ -338,7 +375,7 @@ export function StockReportsModal({ isOpen, onClose }: StockReportsModalProps) {
                   </div>
                 </CardContent>
               </Card>
-            )
+            );
           })}
         </div>
 
@@ -353,7 +390,12 @@ export function StockReportsModal({ isOpen, onClose }: StockReportsModalProps) {
                     Configuration du rapport
                   </h3>
                   <p className="text-sm text-gray-700 mt-1">
-                    <strong>{AVAILABLE_REPORTS.find(r => r.id === selectedReport)?.name}</strong>
+                    <strong>
+                      {
+                        AVAILABLE_REPORTS.find(r => r.id === selectedReport)
+                          ?.name
+                      }
+                    </strong>
                   </p>
                 </div>
                 <ButtonV2
@@ -371,7 +413,9 @@ export function StockReportsModal({ isOpen, onClose }: StockReportsModalProps) {
                 {/* Période */}
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div className="space-y-2">
-                    <Label className="text-xs font-semibold">Période d'analyse</Label>
+                    <Label className="text-xs font-semibold">
+                      Période d'analyse
+                    </Label>
                     <Select
                       value={config.preset}
                       onValueChange={handlePresetChange}
@@ -383,16 +427,22 @@ export function StockReportsModal({ isOpen, onClose }: StockReportsModalProps) {
                         <SelectItem value="7j">7 derniers jours</SelectItem>
                         <SelectItem value="30j">30 derniers jours</SelectItem>
                         <SelectItem value="90j">90 derniers jours</SelectItem>
-                        <SelectItem value="custom">Période personnalisée</SelectItem>
+                        <SelectItem value="custom">
+                          Période personnalisée
+                        </SelectItem>
                       </SelectContent>
                     </Select>
                   </div>
 
                   <div className="space-y-2">
-                    <Label className="text-xs font-semibold">Format d'export</Label>
+                    <Label className="text-xs font-semibold">
+                      Format d'export
+                    </Label>
                     <Select
                       value={config.format}
-                      onValueChange={(value: 'pdf' | 'excel' | 'csv') => setConfig(prev => ({ ...prev, format: value }))}
+                      onValueChange={(value: 'pdf' | 'excel' | 'csv') =>
+                        setConfig(prev => ({ ...prev, format: value }))
+                      }
                     >
                       <SelectTrigger className="h-9 text-sm">
                         <SelectValue />
@@ -410,11 +460,18 @@ export function StockReportsModal({ isOpen, onClose }: StockReportsModalProps) {
                 {config.preset === 'custom' && (
                   <div className="grid grid-cols-2 gap-4">
                     <div className="space-y-2">
-                      <Label className="text-xs font-semibold">Date début</Label>
+                      <Label className="text-xs font-semibold">
+                        Date début
+                      </Label>
                       <Input
                         type="date"
                         value={config.dateFrom}
-                        onChange={(e) => setConfig(prev => ({ ...prev, dateFrom: e.target.value }))}
+                        onChange={e =>
+                          setConfig(prev => ({
+                            ...prev,
+                            dateFrom: e.target.value,
+                          }))
+                        }
                         className="h-9 text-sm"
                       />
                     </div>
@@ -423,7 +480,12 @@ export function StockReportsModal({ isOpen, onClose }: StockReportsModalProps) {
                       <Input
                         type="date"
                         value={config.dateTo}
-                        onChange={(e) => setConfig(prev => ({ ...prev, dateTo: e.target.value }))}
+                        onChange={e =>
+                          setConfig(prev => ({
+                            ...prev,
+                            dateTo: e.target.value,
+                          }))
+                        }
                         className="h-9 text-sm"
                       />
                     </div>
@@ -432,17 +494,23 @@ export function StockReportsModal({ isOpen, onClose }: StockReportsModalProps) {
 
                 {/* Résumé configuration */}
                 <div className="bg-white border border-blue-200 rounded p-3 space-y-1">
-                  <p className="text-xs font-semibold text-gray-700">Aperçu de la configuration</p>
+                  <p className="text-xs font-semibold text-gray-700">
+                    Aperçu de la configuration
+                  </p>
                   <div className="flex flex-wrap gap-2 text-xs">
                     <Badge variant="outline" className="bg-blue-50">
-                      📅 {config.preset === 'custom' ? 'Personnalisée' : config.preset}
+                      📅{' '}
+                      {config.preset === 'custom'
+                        ? 'Personnalisée'
+                        : config.preset}
                     </Badge>
                     <Badge variant="outline" className="bg-blue-50">
                       📄 {config.format.toUpperCase()}
                     </Badge>
                     {config.dateFrom && config.dateTo && (
                       <Badge variant="outline" className="bg-blue-50">
-                        {new Date(config.dateFrom).toLocaleDateString('fr-FR')} → {new Date(config.dateTo).toLocaleDateString('fr-FR')}
+                        {new Date(config.dateFrom).toLocaleDateString('fr-FR')}{' '}
+                        → {new Date(config.dateTo).toLocaleDateString('fr-FR')}
                       </Badge>
                     )}
                   </div>
@@ -458,7 +526,10 @@ export function StockReportsModal({ isOpen, onClose }: StockReportsModalProps) {
                   <Download className="h-4 w-4 mr-2" />
                   Générer le rapport
                 </ButtonV2>
-                <ButtonV2 variant="outline" onClick={() => setSelectedReport(null)}>
+                <ButtonV2
+                  variant="outline"
+                  onClick={() => setSelectedReport(null)}
+                >
                   Annuler
                 </ButtonV2>
               </div>
@@ -467,7 +538,10 @@ export function StockReportsModal({ isOpen, onClose }: StockReportsModalProps) {
             {/* Affichage du rapport aging */}
             {showReport && selectedReport === 'aging' && (
               <div className="mt-4">
-                <AgingReportView dateFrom={config.dateFrom} dateTo={config.dateTo} />
+                <AgingReportView
+                  dateFrom={config.dateFrom}
+                  dateTo={config.dateTo}
+                />
               </div>
             )}
 
@@ -486,11 +560,25 @@ export function StockReportsModal({ isOpen, onClose }: StockReportsModalProps) {
             <div className="flex items-center gap-4">
               <span className="flex items-center gap-1">
                 <Calendar className="h-3 w-3" />
-                <strong>{AVAILABLE_REPORTS.filter(r => r.status === 'available').length} rapports</strong> disponibles immédiatement
+                <strong>
+                  {
+                    AVAILABLE_REPORTS.filter(r => r.status === 'available')
+                      .length
+                  }{' '}
+                  rapports
+                </strong>{' '}
+                disponibles immédiatement
               </span>
               <span className="flex items-center gap-1">
                 <Clock className="h-3 w-3" />
-                <strong>{AVAILABLE_REPORTS.filter(r => r.status === 'coming_soon').length} rapports</strong> en développement
+                <strong>
+                  {
+                    AVAILABLE_REPORTS.filter(r => r.status === 'coming_soon')
+                      .length
+                  }{' '}
+                  rapports
+                </strong>{' '}
+                en développement
               </span>
             </div>
             <span className="text-gray-500 italic">
@@ -500,5 +588,5 @@ export function StockReportsModal({ isOpen, onClose }: StockReportsModalProps) {
         </div>
       </DialogContent>
     </Dialog>
-  )
+  );
 }

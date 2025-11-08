@@ -1,4 +1,4 @@
-'use client'
+'use client';
 
 /**
  * 🎯 VÉRONE - Modal Gestion Photos Produit
@@ -10,11 +10,10 @@
  * - Design harmonieux selon guidelines Vérone
  */
 
-import React, { useState } from 'react'
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog'
-import { ButtonV2 } from '@/components/ui/button'
-import { Badge } from '@/components/ui/badge'
-import { Alert, AlertDescription } from '@/components/ui/alert'
+import React, { useState } from 'react';
+
+import Image from 'next/image';
+
 import {
   Upload,
   X,
@@ -25,20 +24,29 @@ import {
   CheckCircle,
   Loader2,
   Camera,
-  Move
-} from 'lucide-react'
-import { cn } from '@/lib/utils'
-import Image from 'next/image'
-import { useProductImages } from '@/shared/modules/products/hooks'
+  Move,
+} from 'lucide-react';
+
+import { Alert, AlertDescription } from '@/components/ui/alert';
+import { Badge } from '@/components/ui/badge';
+import { ButtonV2 } from '@/components/ui/button';
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog';
+import { cn } from '@verone/utils';
+import { useProductImages } from '@/shared/modules/products/hooks';
 
 interface ProductPhotosModalProps {
-  isOpen: boolean
-  onClose: () => void
-  productId: string
-  productName: string
-  productType?: 'draft' | 'product'
-  maxImages?: number
-  onImagesUpdated?: () => void // Callback pour actualiser la galerie externe
+  isOpen: boolean;
+  onClose: () => void;
+  productId: string;
+  productName: string;
+  productType?: 'draft' | 'product';
+  maxImages?: number;
+  onImagesUpdated?: () => void; // Callback pour actualiser la galerie externe
 }
 
 export function ProductPhotosModal({
@@ -48,7 +56,7 @@ export function ProductPhotosModal({
   productName,
   productType = 'product',
   maxImages = 20,
-  onImagesUpdated
+  onImagesUpdated,
 }: ProductPhotosModalProps) {
   // Hook principal pour gestion images
   const {
@@ -62,67 +70,75 @@ export function ProductPhotosModal({
     deleteImage,
     setPrimaryImage,
     reorderImages,
-    fetchImages
+    fetchImages,
   } = useProductImages({
     productId,
-    autoFetch: true
-  })
+    autoFetch: true,
+  });
 
   // États locaux pour UI
-  const [dragActive, setDragActive] = useState(false)
-  const [deletingImageId, setDeletingImageId] = useState<string | null>(null)
-  const [settingPrimaryId, setSettingPrimaryId] = useState<string | null>(null)
+  const [dragActive, setDragActive] = useState(false);
+  const [deletingImageId, setDeletingImageId] = useState<string | null>(null);
+  const [settingPrimaryId, setSettingPrimaryId] = useState<string | null>(null);
 
   // Référence pour l'input file réutilisable
-  const fileInputRef = React.useRef<HTMLInputElement>(null)
+  const fileInputRef = React.useRef<HTMLInputElement>(null);
 
   /**
    * 📁 Gestion upload fichiers multiples
    */
   const handleFilesDrop = async (files: FileList) => {
-    console.log('🚀 handleFilesDrop started with', files?.length || 0, 'files')
+    console.log('🚀 handleFilesDrop started with', files?.length || 0, 'files');
 
     if (!files || files.length === 0) {
-      console.warn('⚠️ No files provided to handleFilesDrop')
-      return
+      console.warn('⚠️ No files provided to handleFilesDrop');
+      return;
     }
 
-    const fileArray = Array.from(files)
-    const remainingSlots = maxImages - images.length
-    console.log(`📊 Current images: ${images.length}, Max: ${maxImages}, Remaining slots: ${remainingSlots}`)
+    const fileArray = Array.from(files);
+    const remainingSlots = maxImages - images.length;
+    console.log(
+      `📊 Current images: ${images.length}, Max: ${maxImages}, Remaining slots: ${remainingSlots}`
+    );
 
     if (fileArray.length > remainingSlots) {
-      const message = `⚠️ Vous ne pouvez ajouter que ${remainingSlots} image(s) supplémentaire(s) (limite: ${maxImages})`
-      console.warn(message)
-      alert(message)
-      return
+      const message = `⚠️ Vous ne pouvez ajouter que ${remainingSlots} image(s) supplémentaire(s) (limite: ${maxImages})`;
+      console.warn(message);
+      alert(message);
+      return;
     }
 
     try {
-      console.log('📤 Starting upload process...')
+      console.log('📤 Starting upload process...');
       for (let i = 0; i < fileArray.length; i++) {
-        const file = fileArray[i]
-        console.log(`📷 Uploading file ${i + 1}/${fileArray.length}:`, file.name, file.size, 'bytes')
+        const file = fileArray[i];
+        console.log(
+          `📷 Uploading file ${i + 1}/${fileArray.length}:`,
+          file.name,
+          file.size,
+          'bytes'
+        );
 
         await uploadImage(file, {
           imageType: 'gallery',
           altText: `${productName} - ${file.name}`,
-          isPrimary: !primaryImage && images.length === 0 // Première image = principale
-        })
+          isPrimary: !primaryImage && images.length === 0, // Première image = principale
+        });
 
-        console.log(`✅ File ${i + 1} uploaded successfully:`, file.name)
+        console.log(`✅ File ${i + 1} uploaded successfully:`, file.name);
       }
-      console.log('🎉 Upload multiple terminé avec succès')
+      console.log('🎉 Upload multiple terminé avec succès');
 
       // Actualiser la galerie externe
-      onImagesUpdated?.()
-
+      onImagesUpdated?.();
     } catch (error) {
-      console.error('❌ Erreur upload multiple:', error)
+      console.error('❌ Erreur upload multiple:', error);
       // Afficher l'erreur à l'utilisateur
-      alert(`Erreur lors de l'upload: ${error instanceof Error ? error.message : 'Erreur inconnue'}`)
+      alert(
+        `Erreur lors de l'upload: ${error instanceof Error ? error.message : 'Erreur inconnue'}`
+      );
     }
-  }
+  };
 
   /**
    * 🗑️ Gestion suppression avec protection image principale
@@ -131,85 +147,85 @@ export function ProductPhotosModal({
     if (isPrimary) {
       const confirmDelete = confirm(
         '⚠️ Cette image est définie comme image principale. Êtes-vous sûr de vouloir la supprimer ?\n\nUne autre image sera automatiquement définie comme principale.'
-      )
-      if (!confirmDelete) return
+      );
+      if (!confirmDelete) return;
     }
 
-    setDeletingImageId(imageId)
+    setDeletingImageId(imageId);
     try {
-      await deleteImage(imageId)
-      console.log('✅ Image supprimée avec succès')
+      await deleteImage(imageId);
+      console.log('✅ Image supprimée avec succès');
       // Actualiser la galerie externe
-      onImagesUpdated?.()
+      onImagesUpdated?.();
     } catch (error) {
-      console.error('❌ Erreur suppression image:', error)
+      console.error('❌ Erreur suppression image:', error);
     } finally {
-      setDeletingImageId(null)
+      setDeletingImageId(null);
     }
-  }
+  };
 
   /**
    * ⭐ Gestion changement image principale
    */
   const handleSetPrimary = async (imageId: string) => {
-    setSettingPrimaryId(imageId)
+    setSettingPrimaryId(imageId);
     try {
-      await setPrimaryImage(imageId)
-      console.log('✅ Image principale mise à jour')
+      await setPrimaryImage(imageId);
+      console.log('✅ Image principale mise à jour');
       // Actualiser la galerie externe
-      onImagesUpdated?.()
+      onImagesUpdated?.();
     } catch (error) {
-      console.error('❌ Erreur changement image principale:', error)
+      console.error('❌ Erreur changement image principale:', error);
     } finally {
-      setSettingPrimaryId(null)
+      setSettingPrimaryId(null);
     }
-  }
+  };
 
   /**
    * 🖱️ Gestionnaires drag & drop
    */
   const handleDrag = (e: React.DragEvent) => {
-    e.preventDefault()
-    e.stopPropagation()
-  }
+    e.preventDefault();
+    e.stopPropagation();
+  };
 
   const handleDragIn = (e: React.DragEvent) => {
-    e.preventDefault()
-    e.stopPropagation()
-    setDragActive(true)
-  }
+    e.preventDefault();
+    e.stopPropagation();
+    setDragActive(true);
+  };
 
   const handleDragOut = (e: React.DragEvent) => {
-    e.preventDefault()
-    e.stopPropagation()
-    setDragActive(false)
-  }
+    e.preventDefault();
+    e.stopPropagation();
+    setDragActive(false);
+  };
 
   const handleDrop = (e: React.DragEvent) => {
-    e.preventDefault()
-    e.stopPropagation()
-    setDragActive(false)
+    e.preventDefault();
+    e.stopPropagation();
+    setDragActive(false);
 
-    const files = e.dataTransfer.files
+    const files = e.dataTransfer.files;
     if (files) {
-      handleFilesDrop(files)
+      handleFilesDrop(files);
     }
-  }
+  };
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    console.log('🎯 handleInputChange triggered')
-    const files = e.target.files
-    console.log('📁 Files selected:', files?.length || 0)
+    console.log('🎯 handleInputChange triggered');
+    const files = e.target.files;
+    console.log('📁 Files selected:', files?.length || 0);
     if (files) {
-      handleFilesDrop(files)
+      handleFilesDrop(files);
     } else {
-      console.warn('⚠️ No files selected')
+      console.warn('⚠️ No files selected');
     }
     // Reset input après utilisation pour permettre la re-sélection du même fichier
     if (e.target) {
-      e.target.value = ''
+      e.target.value = '';
     }
-  }
+  };
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
@@ -218,8 +234,12 @@ export function ProductPhotosModal({
           <DialogTitle className="flex items-center gap-3">
             <Camera className="h-6 w-6 text-black" />
             <div className="flex flex-col">
-              <span className="text-xl font-semibold text-black">Gestion des photos</span>
-              <span className="text-sm text-gray-600 font-normal">{productName}</span>
+              <span className="text-xl font-semibold text-black">
+                Gestion des photos
+              </span>
+              <span className="text-sm text-gray-600 font-normal">
+                {productName}
+              </span>
             </div>
           </DialogTitle>
         </DialogHeader>
@@ -229,8 +249,12 @@ export function ProductPhotosModal({
           <div className="flex items-center justify-between bg-gray-50 p-4 rounded-lg">
             <div className="flex items-center gap-6">
               <div className="text-center">
-                <div className="text-2xl font-bold text-black">{images.length}</div>
-                <div className="text-xs text-gray-600">Photo{images.length > 1 ? 's' : ''}</div>
+                <div className="text-2xl font-bold text-black">
+                  {images.length}
+                </div>
+                <div className="text-xs text-gray-600">
+                  Photo{images.length > 1 ? 's' : ''}
+                </div>
               </div>
               <div className="text-center">
                 <div className="text-2xl font-bold text-blue-600">
@@ -239,7 +263,9 @@ export function ProductPhotosModal({
                 <div className="text-xs text-gray-600">Principale</div>
               </div>
               <div className="text-center">
-                <div className="text-2xl font-bold text-green-600">{maxImages - images.length}</div>
+                <div className="text-2xl font-bold text-green-600">
+                  {maxImages - images.length}
+                </div>
                 <div className="text-xs text-gray-600">Restantes</div>
               </div>
             </div>
@@ -258,10 +284,11 @@ export function ProductPhotosModal({
           {images.length < maxImages && (
             <div
               className={cn(
-                "relative border-2 border-dashed border-gray-300 rounded-lg p-8 text-center transition-all",
-                dragActive && "border-black bg-gray-100",
-                error && "border-red-500 bg-red-50",
-                !uploading && "cursor-pointer hover:border-gray-400 hover:bg-gray-50"
+                'relative border-2 border-dashed border-gray-300 rounded-lg p-8 text-center transition-all',
+                dragActive && 'border-black bg-gray-100',
+                error && 'border-red-500 bg-red-50',
+                !uploading &&
+                  'cursor-pointer hover:border-gray-400 hover:bg-gray-50'
               )}
               onDragEnter={handleDragIn}
               onDragLeave={handleDragOut}
@@ -295,11 +322,13 @@ export function ProductPhotosModal({
                     Cliquez ou glissez-déposez vos images ici
                   </p>
                   <p className="text-xs text-gray-500 mt-2">
-                    JPG, PNG, WebP • Max 10MB par image • Jusqu'à {maxImages - images.length} image(s)
+                    JPG, PNG, WebP • Max 10MB par image • Jusqu'à{' '}
+                    {maxImages - images.length} image(s)
                   </p>
                   {images.length === 0 && (
                     <p className="text-xs text-blue-600 mt-2">
-                      🌟 La première image sera automatiquement définie comme principale
+                      🌟 La première image sera automatiquement définie comme
+                      principale
                     </p>
                   )}
                 </div>
@@ -318,7 +347,9 @@ export function ProductPhotosModal({
           {loading && !uploading && (
             <div className="flex items-center justify-center py-12">
               <Loader2 className="h-8 w-8 animate-spin text-gray-400 mr-3" />
-              <span className="text-lg text-gray-600">Chargement des photos...</span>
+              <span className="text-lg text-gray-600">
+                Chargement des photos...
+              </span>
             </div>
           )}
 
@@ -326,7 +357,9 @@ export function ProductPhotosModal({
           {hasImages && !loading && (
             <div className="space-y-4">
               <div className="flex items-center justify-between">
-                <h3 className="text-lg font-semibold text-black">Photos du produit</h3>
+                <h3 className="text-lg font-semibold text-black">
+                  Photos du produit
+                </h3>
                 <p className="text-sm text-gray-500">
                   Cliquez sur l'⭐ pour définir comme image principale
                 </p>
@@ -337,10 +370,10 @@ export function ProductPhotosModal({
                   <div
                     key={image.id}
                     className={cn(
-                      "relative group border-2 rounded-xl overflow-hidden transition-all duration-200 hover:shadow-lg",
+                      'relative group border-2 rounded-xl overflow-hidden transition-all duration-200 hover:shadow-lg',
                       image.is_primary
-                        ? "border-blue-500 shadow-lg ring-4 ring-blue-100"
-                        : "border-gray-200 hover:border-gray-300"
+                        ? 'border-blue-500 shadow-lg ring-4 ring-blue-100'
+                        : 'border-gray-200 hover:border-gray-300'
                     )}
                   >
                     {/* Image */}
@@ -398,7 +431,12 @@ export function ProductPhotosModal({
                         <ButtonV2
                           size="sm"
                           variant="destructive"
-                          onClick={() => handleDeleteImage(image.id, image.is_primary || false)}
+                          onClick={() =>
+                            handleDeleteImage(
+                              image.id,
+                              image.is_primary || false
+                            )
+                          }
                           disabled={deletingImageId === image.id}
                           className="h-9 px-3 bg-red-500/90 hover:bg-red-600 text-white border-0 relative z-40"
                           title="Supprimer la photo"
@@ -435,7 +473,9 @@ export function ProductPhotosModal({
               <div className="w-24 h-24 rounded-full bg-gray-100 flex items-center justify-center mx-auto mb-6">
                 <Camera className="h-12 w-12 text-gray-400" />
               </div>
-              <h3 className="text-xl font-semibold text-black mb-2">Aucune photo</h3>
+              <h3 className="text-xl font-semibold text-black mb-2">
+                Aucune photo
+              </h3>
               <p className="text-gray-600 mb-6">
                 Commencez par ajouter vos premières photos au produit
               </p>
@@ -454,7 +494,9 @@ export function ProductPhotosModal({
         <div className="border-t pt-4 bg-gray-50 -mx-6 -mb-6 px-6 pb-6 mt-6">
           <div className="flex items-center justify-between">
             <div className="flex items-center space-x-6 text-sm text-gray-600">
-              <span>{images.length} photo{images.length > 1 ? 's' : ''} au total</span>
+              <span>
+                {images.length} photo{images.length > 1 ? 's' : ''} au total
+              </span>
               {primaryImage && (
                 <span className="flex items-center text-green-600">
                   <CheckCircle className="h-4 w-4 mr-1" />
@@ -462,9 +504,7 @@ export function ProductPhotosModal({
                 </span>
               )}
               {images.length === maxImages && (
-                <span className="text-black">
-                  Limite d'images atteinte
-                </span>
+                <span className="text-black">Limite d'images atteinte</span>
               )}
             </div>
             <ButtonV2 onClick={onClose} variant="outline">
@@ -474,5 +514,5 @@ export function ProductPhotosModal({
         </div>
       </DialogContent>
     </Dialog>
-  )
+  );
 }

@@ -1,7 +1,7 @@
-'use client'
+'use client';
 
-import { Badge } from '@/components/ui/badge'
-import { ButtonV2 } from '@/components/ui/button'
+import Link from 'next/link';
+
 import {
   Archive,
   ArchiveRestore,
@@ -10,56 +10,59 @@ import {
   Package,
   MapPin,
   Mail,
-  Phone
-} from 'lucide-react'
-import Link from 'next/link'
-import { getOrganisationDisplayName } from '@/lib/utils/organisation-helpers'
-import { OrganisationLogo } from './organisation-logo'
-import { SupplierSegmentBadge, SupplierSegmentType } from './supplier-segment-badge'
+  Phone,
+} from 'lucide-react';
+
+import { Badge } from '@/components/ui/badge';
+import { ButtonV2 } from '@/components/ui/button';
+import { getOrganisationDisplayName } from '@/lib/utils/organisation-helpers';
+import { OrganisationLogo } from '@/shared/modules/organisations/components/display/OrganisationLogo';
+import type { SupplierSegmentType } from '@/shared/modules/suppliers/components/badges/SupplierSegmentBadge';
+import { SupplierSegmentBadge } from '@/shared/modules/suppliers/components/badges/SupplierSegmentBadge';
 
 interface OrganisationListViewProps {
   organisations: Array<{
-    id: string
-    legal_name: string
-    trade_name?: string | null
-    type: 'customer' | 'supplier' | 'partner'
-    email?: string | null
-    phone?: string | null
-    country?: string | null
-    city?: string | null
-    postal_code?: string | null
-    is_active: boolean
-    archived_at?: string | null
-    logo_url?: string | null
-    customer_type?: 'professional' | 'individual' | null
-    supplier_segment?: SupplierSegmentType | null
+    id: string;
+    legal_name: string;
+    trade_name?: string | null;
+    type: 'customer' | 'supplier' | 'partner';
+    email?: string | null;
+    phone?: string | null;
+    country?: string | null;
+    city?: string | null;
+    postal_code?: string | null;
+    is_active: boolean;
+    archived_at?: string | null;
+    logo_url?: string | null;
+    customer_type?: 'professional' | 'individual' | null;
+    supplier_segment?: SupplierSegmentType | null;
     _count?: {
-      products?: number
-    }
-  }>
-  activeTab: 'active' | 'archived'
-  onArchive: (id: string) => void
-  onDelete?: (id: string) => void
+      products?: number;
+    };
+  }>;
+  activeTab: 'active' | 'archived';
+  onArchive: (id: string) => void;
+  onDelete?: (id: string) => void;
 }
 
 /**
  * Formatte le code pays en version courte (FR au lieu de France)
  */
 function formatCountryCode(country: string | null): string {
-  if (!country) return ''
+  if (!country) return '';
 
   const countryMap: Record<string, string> = {
-    'France': 'FR',
-    'Belgium': 'BE',
-    'Switzerland': 'CH',
-    'Italy': 'IT',
-    'Spain': 'ES',
-    'Germany': 'DE',
+    France: 'FR',
+    Belgium: 'BE',
+    Switzerland: 'CH',
+    Italy: 'IT',
+    Spain: 'ES',
+    Germany: 'DE',
     'United Kingdom': 'UK',
-    'Netherlands': 'NL'
-  }
+    Netherlands: 'NL',
+  };
 
-  return countryMap[country] || country.substring(0, 2).toUpperCase()
+  return countryMap[country] || country.substring(0, 2).toUpperCase();
 }
 
 /**
@@ -67,10 +70,10 @@ function formatCountryCode(country: string | null): string {
  */
 function getTypeLabel(type: string, customerType?: string | null) {
   if (type === 'customer') {
-    return customerType === 'professional' ? 'B2B Pro' : 'B2C'
+    return customerType === 'professional' ? 'B2B Pro' : 'B2C';
   }
-  if (type === 'supplier') return 'Fournisseur'
-  return 'Partenaire'
+  if (type === 'supplier') return 'Fournisseur';
+  return 'Partenaire';
 }
 
 /**
@@ -80,10 +83,10 @@ function getTypeBadgeColor(type: string, customerType?: string | null) {
   if (type === 'customer') {
     return customerType === 'professional'
       ? 'bg-blue-50 text-blue-700 border-blue-200'
-      : 'bg-purple-50 text-purple-700 border-purple-200'
+      : 'bg-purple-50 text-purple-700 border-purple-200';
   }
-  if (type === 'supplier') return 'bg-green-50 text-green-700 border-green-200'
-  return 'bg-orange-50 text-orange-700 border-orange-200'
+  if (type === 'supplier') return 'bg-green-50 text-green-700 border-green-200';
+  return 'bg-orange-50 text-orange-700 border-orange-200';
 }
 
 /**
@@ -96,16 +99,16 @@ export function OrganisationListView({
   organisations,
   activeTab,
   onArchive,
-  onDelete
+  onDelete,
 }: OrganisationListViewProps) {
   const getBaseUrl = (type: string) => {
-    if (type === 'customer') return '/contacts-organisations/customers'
-    if (type === 'supplier') return '/contacts-organisations/suppliers'
-    return '/contacts-organisations/partners'
-  }
+    if (type === 'customer') return '/contacts-organisations/customers';
+    if (type === 'supplier') return '/contacts-organisations/suppliers';
+    return '/contacts-organisations/partners';
+  };
 
   // Afficher colonne Produits uniquement pour Suppliers
-  const showProductsColumn = organisations.some(org => org.type === 'supplier')
+  const showProductsColumn = organisations.some(org => org.type === 'supplier');
 
   return (
     <div className="overflow-x-auto">
@@ -123,9 +126,9 @@ export function OrganisationListView({
           </tr>
         </thead>
         <tbody className="divide-y divide-gray-100">
-          {organisations.map((org) => {
-            const countryCode = formatCountryCode(org.country || null)
-            const baseUrl = getBaseUrl(org.type)
+          {organisations.map(org => {
+            const countryCode = formatCountryCode(org.country || null);
+            const baseUrl = getBaseUrl(org.type);
 
             return (
               <tr key={org.id} className="hover:bg-gray-50 transition-colors">
@@ -135,7 +138,7 @@ export function OrganisationListView({
                     <OrganisationLogo
                       logoUrl={org.logo_url}
                       organisationName={getOrganisationDisplayName(org as any)}
-                      size="xs"
+                      size="sm"
                       fallback="initials"
                       className="flex-shrink-0"
                     />
@@ -285,10 +288,10 @@ export function OrganisationListView({
                   </div>
                 </td>
               </tr>
-            )
+            );
           })}
         </tbody>
       </table>
     </div>
-  )
+  );
 }

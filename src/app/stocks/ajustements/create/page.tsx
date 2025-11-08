@@ -4,12 +4,14 @@
  * Description: Page création ajustement inventaire (augmentation/diminution/correction)
  */
 
-'use client'
+'use client';
 
-import { StockAdjustmentForm } from '@/components/forms/stock-adjustment-form'
-import { ButtonV2 } from '@/components/ui/button'
-import { ArrowLeft } from 'lucide-react'
-import Link from 'next/link'
+import Link from 'next/link';
+
+import { ArrowLeft } from 'lucide-react';
+
+import { StockAdjustmentForm } from '@/components/forms/stock-adjustment-form';
+import { ButtonV2 } from '@/components/ui/button';
 
 export default function CreateStockAdjustmentPage() {
   return (
@@ -25,7 +27,8 @@ export default function CreateStockAdjustmentPage() {
         <div>
           <h1 className="text-3xl font-bold">Nouvel Ajustement Stock</h1>
           <p className="text-gray-500 mt-1">
-            Créer un ajustement d'inventaire (augmentation, diminution ou correction)
+            Créer un ajustement d'inventaire (augmentation, diminution ou
+            correction)
           </p>
         </div>
       </div>
@@ -33,5 +36,5 @@ export default function CreateStockAdjustmentPage() {
       {/* Formulaire */}
       <StockAdjustmentForm />
     </div>
-  )
+  );
 }

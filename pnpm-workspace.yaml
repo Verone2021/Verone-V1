@@ -1,0 +1,11 @@
+# Vérone Monorepo Workspace
+# Configuration workspace pour back-office + canaux de vente
+
+packages:
+  # Packages partagés (configs, UI, business logic)
+  - 'packages/*'
+  - 'packages/@verone/*'
+
+  # Applications (à créer)
+  # - 'apps/back-office'
+  # - 'apps/sales-channels'

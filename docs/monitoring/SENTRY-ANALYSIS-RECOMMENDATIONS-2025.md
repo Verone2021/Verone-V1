@@ -8,12 +8,14 @@
 ## 📊 DIAGNOSTIC INITIAL
 
 ### ❌ Sentry N'ÉTAIT PAS réellement installé
+
 - **Dépendances** : Aucun package `@sentry/*` dans package.json
 - **Configuration** : Code commenté et désactivé dans next.config.js
-- **Intégration** : Aucun fichier SDK Sentry (instrumentation.ts, sentry.*.config.ts)
+- **Intégration** : Aucun fichier SDK Sentry (instrumentation.ts, sentry.\*.config.ts)
 - **MCP Server** : Sentry MCP retiré de .mcp.json
 
 ### ✅ Ce qui existait
+
 1. **console-error-tracker.ts** - Solution maison lightweight
    - Capture console.error automatiquement
    - Logs JSON structurés
@@ -35,6 +37,7 @@
 ## 🚨 POURQUOI SENTRY EST OVERKILL
 
 ### 1. Complexité excessive pour early-stage
+
 ```
 Installation complète Sentry nécessite:
 - @sentry/nextjs (5+ MB dépendance)
@@ -47,12 +50,15 @@ Installation complète Sentry nécessite:
 ```
 
 ### 2. Impact Performance
+
 **Source** : GitHub Issue #15034 (Jan 2025)
+
 - **+31% temps démarrage serveur** avec @sentry/node
 - Cause : `require-in-the-middle` utilisé par OpenTelemetry
 - 463ms wall clock time bloquant main thread
 
 ### 3. Coût prohibitif au scale
+
 ```
 Free tier   : 5,000 events/mois seulement
 Team plan   : $29/mois (base)
@@ -61,11 +67,13 @@ Team plan   : $29/mois (base)
 ```
 
 **Exemple calcul** :
+
 - 100 users/jour = ~3000 events/jour = 90K/mois
 - → Dépasse free tier en 2 jours
 - → Team plan + overages = $50-100/mois minimum
 
 ### 4. Features inutilisées
+
 - ❌ Performance monitoring (SLOs Vercel suffisent)
 - ❌ User feedback widgets (pas users externes Phase 1)
 - ❌ Release tracking (Git + Vercel suffisent)
@@ -79,6 +87,7 @@ Team plan   : $29/mois (base)
 ### Phase 1 (Maintenant - 0-6 mois)
 
 #### 1. Vercel Observability ⭐ (Déjà actif)
+
 ```typescript
 Coût      : Gratuit (inclus tous plans)
 Features  :
@@ -94,12 +103,14 @@ Accès     :
 ```
 
 **Comment utiliser** :
+
 1. Se connecter à dashboard Vercel
 2. Sélectionner projet verone-back-office
 3. Onglet "Logs" → Filtrer par erreurs
 4. Analyser stack traces directement
 
 #### 2. console-error-tracker.ts ⭐ (Déjà implémenté)
+
 ```typescript
 Fichier   : src/lib/monitoring/console-error-tracker.ts
 État      : ✅ Actif et fonctionnel
@@ -118,6 +129,7 @@ Améliorations suggérées :
 ```
 
 **Usage recommandé** :
+
 ```typescript
 // Dans _app.tsx ou layout.tsx
 import { useConsoleErrorTracking } from '@/lib/monitoring/console-error-tracker'
@@ -129,6 +141,7 @@ export default function RootLayout() {
 ```
 
 #### 3. MCP Playwright Browser ⭐ (Déjà configuré)
+
 ```typescript
 Tool      : mcp__playwright__browser_console_messages
 
@@ -144,6 +157,7 @@ Usage     :
 ### Phase 2 (Si besoin scale - 6-12 mois)
 
 #### Option A : PostHog ⭐⭐⭐ (RECOMMANDÉ)
+
 ```
 Prix      : FREE tier très généreux
             - 1M events/mois gratuits
@@ -168,6 +182,7 @@ Idéal pour :
 ```
 
 #### Option B : Rollbar
+
 ```
 Prix      : FREE tier avec users illimités
             - 5,000 events/mois
@@ -190,6 +205,7 @@ Idéal pour :
 ```
 
 #### Option C : GlitchTip (Open Source)
+
 ```
 Prix      : Self-hosted gratuit
             OU $15/mois (100K errors)
@@ -214,6 +230,7 @@ Idéal pour :
 ## 🛠 CHANGEMENTS APPLIQUÉS (26 oct 2025)
 
 ### 1. Suppression Dead Code
+
 ```bash
 ✅ SUPPRIMÉ : src/hooks/use-sentry-status.ts
    Raison    : Hook inutilisé appelant API inexistante
@@ -221,6 +238,7 @@ Idéal pour :
 ```
 
 ### 2. Nettoyage next.config.js
+
 ```javascript
 ✅ SUPPRIMÉ : Lignes 2-3 (import Sentry commenté)
 ✅ SUPPRIMÉ : Lignes 149-186 (sentryWebpackPluginOptions)
@@ -229,6 +247,7 @@ AVANT (147 lignes) → APRÈS (147 lignes nettoyées)
 ```
 
 ### 3. Vérifications
+
 ```bash
 ✅ TypeScript   : Erreurs préexistantes (ignoreBuildErrors: true)
 ✅ Syntaxe JS   : next.config.js valide
@@ -241,6 +260,7 @@ AVANT (147 lignes) → APRÈS (147 lignes nettoyées)
 ## 📋 PLAN D'ACTION RECOMMANDÉ
 
 ### Immédiat (Maintenant)
+
 ```
 1. ✅ Dead code nettoyé
 2. ✅ Documentation créée
@@ -251,6 +271,7 @@ AVANT (147 lignes) → APRÈS (147 lignes nettoyées)
 ```
 
 ### Court terme (1-2 semaines)
+
 ```
 4. Améliorer console-error-tracker :
    - Créer route /api/logs
@@ -259,6 +280,7 @@ AVANT (147 lignes) → APRÈS (147 lignes nettoyées)
 ```
 
 ### Moyen terme (3-6 mois)
+
 ```
 5. Réévaluer si scale atteint :
    - >1000 users actifs
@@ -275,6 +297,7 @@ AVANT (147 lignes) → APRÈS (147 lignes nettoyées)
 ## 🎓 AVIS COMMUNAUTÉ & SOURCES
 
 ### Reddit/HackerNews Consensus 2025
+
 ```
 ✅ "Sentry excellent MAIS overkill early-stage"
 ✅ "Vercel logs + simple tracker suffisent Phase 1"
@@ -288,6 +311,7 @@ AVANT (147 lignes) → APRÈS (147 lignes nettoyées)
 ```
 
 ### Sources Techniques
+
 - GitHub Issue #15034 : @sentry/node performance impact
 - Vercel Docs : docs.vercel.com/observability
 - PostHog comparison : posthog.com/blog/best-sentry-alternatives
@@ -298,6 +322,7 @@ AVANT (147 lignes) → APRÈS (147 lignes nettoyées)
 ## 💡 BEST PRACTICES 2025
 
 ### DO ✅
+
 1. **Start simple** : Console logs + Vercel native suffisent
 2. **Measure first** : Identifier real needs avant installer APM
 3. **Free tiers** : Maximiser outils gratuits (Vercel, PostHog)
@@ -305,6 +330,7 @@ AVANT (147 lignes) → APRÈS (147 lignes nettoyées)
 5. **MCP tools** : Utiliser Playwright Browser pour monitoring
 
 ### DON'T ❌
+
 1. **Overengineering** : Pas installer Sentry "au cas où"
 2. **Vendor lock-in** : Éviter dépendance forte sur outil payant
 3. **Ignore performance** : Monitoring tools peuvent ralentir app
@@ -315,25 +341,27 @@ AVANT (147 lignes) → APRÈS (147 lignes nettoyées)
 
 ## 📊 COMPARAISON RAPIDE
 
-| Critère | Vercel Native | console-tracker | Sentry | PostHog | Rollbar |
-|---------|---------------|-----------------|--------|---------|---------|
-| **Prix/mois** | 0€ | 0€ | 29€+ | 0€ | 0€ |
-| **Events gratuits** | Illimité | Illimité | 5K | 1M | 5K |
-| **Setup time** | 0 min | 0 min | 2h | 30 min | 30 min |
-| **Performance impact** | Minimal | Minimal | Moyen | Faible | Faible |
-| **Session replay** | ❌ | ❌ | 50/mois | Illimité | ❌ |
-| **Analytics** | Basique | ❌ | ❌ | ✅✅✅ | ❌ |
-| **Next.js support** | ✅✅✅ | ✅✅✅ | ✅✅ | ✅✅ | ✅✅ |
-| **Recommandé pour** | Phase 1 | Phase 1 | Scale | Scale | Errors only |
+| Critère                | Vercel Native | console-tracker | Sentry  | PostHog  | Rollbar     |
+| ---------------------- | ------------- | --------------- | ------- | -------- | ----------- |
+| **Prix/mois**          | 0€            | 0€              | 29€+    | 0€       | 0€          |
+| **Events gratuits**    | Illimité      | Illimité        | 5K      | 1M       | 5K          |
+| **Setup time**         | 0 min         | 0 min           | 2h      | 30 min   | 30 min      |
+| **Performance impact** | Minimal       | Minimal         | Moyen   | Faible   | Faible      |
+| **Session replay**     | ❌            | ❌              | 50/mois | Illimité | ❌          |
+| **Analytics**          | Basique       | ❌              | ❌      | ✅✅✅   | ❌          |
+| **Next.js support**    | ✅✅✅        | ✅✅✅          | ✅✅    | ✅✅     | ✅✅        |
+| **Recommandé pour**    | Phase 1       | Phase 1         | Scale   | Scale    | Errors only |
 
 ---
 
 ## 🎯 CONCLUSION
 
 ### Pour Vérone Back Office :
+
 **GARDER stack actuelle (Vercel + console-tracker) pendant Phase 1**
 
 ### Raisons :
+
 1. ✅ 0€ coût infrastructure
 2. ✅ 0 impact performance
 3. ✅ Setup déjà complet et fonctionnel
@@ -341,9 +369,11 @@ AVANT (147 lignes) → APRÈS (147 lignes nettoyées)
 5. ✅ Compatible Claude Code workflow (MCP)
 
 ### Prochaine réévaluation :
+
 **Dans 3-6 mois OU si :**
-- >1000 users actifs simultanés
-- >100 erreurs critiques/jour
+
+- > 1000 users actifs simultanés
+- > 100 erreurs critiques/jour
 - Besoin analytics utilisateurs avancées
 - Budget monitoring >$50/mois justifié
 

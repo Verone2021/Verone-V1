@@ -1,10 +1,7 @@
-'use client'
+'use client';
 
-import { useState, useEffect } from 'react'
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
-import { ButtonV2 } from '@/components/ui/button'
-import { Input } from '@/components/ui/input'
-import { Badge } from '@/components/ui/badge'
+import { useState, useEffect } from 'react';
+
 import {
   Search,
   Plus,
@@ -16,16 +13,24 @@ import {
   Archive,
   Trash2,
   ArchiveRestore,
-  Eye
-} from 'lucide-react'
-import { useContacts } from '@/shared/modules/organisations/hooks'
-import { getOrganisationDisplayName, type Organisation } from '@/shared/modules/organisations/hooks'
+  Eye,
+} from 'lucide-react';
+
+import { Badge } from '@/components/ui/badge';
+import { ButtonV2 } from '@/components/ui/button';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Input } from '@/components/ui/input';
+import { useContacts } from '@/shared/modules/organisations/hooks';
+import {
+  getOrganisationDisplayName,
+  type Organisation,
+} from '@/shared/modules/organisations/hooks';
 
 interface ContactStats {
-  totalContacts: number
-  supplierContacts: number
-  customerContacts: number
-  partnerContacts: number
+  totalContacts: number;
+  supplierContacts: number;
+  customerContacts: number;
+  partnerContacts: number;
 }
 
 export function ContactsTab() {
@@ -35,50 +40,64 @@ export function ContactsTab() {
     fetchContacts,
     deactivateContact,
     activateContact,
-    deleteContact
-  } = useContacts()
-  const [searchTerm, setSearchTerm] = useState('')
-  const [filterType, setFilterType] = useState<'all' | 'supplier' | 'customer'>('all')
-  const [filterRole, setFilterRole] = useState<'all' | 'primary' | 'commercial' | 'technical' | 'billing'>('all')
+    deleteContact,
+  } = useContacts();
+  const [searchTerm, setSearchTerm] = useState('');
+  const [filterType, setFilterType] = useState<'all' | 'supplier' | 'customer'>(
+    'all'
+  );
+  const [filterRole, setFilterRole] = useState<
+    'all' | 'primary' | 'commercial' | 'technical' | 'billing'
+  >('all');
 
   useEffect(() => {
-    fetchContacts()
-  }, [fetchContacts])
+    fetchContacts();
+  }, [fetchContacts]);
 
   const filteredContacts = contacts.filter(contact => {
-    const matchesSearch = contact.first_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         contact.last_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         contact.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         (contact.organisation && getOrganisationDisplayName(contact.organisation as Organisation).toLowerCase().includes(searchTerm.toLowerCase()))
+    const matchesSearch =
+      contact.first_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      contact.last_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      contact.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      (contact.organisation &&
+        getOrganisationDisplayName(contact.organisation as Organisation)
+          .toLowerCase()
+          .includes(searchTerm.toLowerCase()));
 
-    const matchesType = filterType === 'all' ||
-                       (filterType === 'supplier' && contact.organisation?.type === 'supplier') ||
-                       (filterType === 'customer' && contact.organisation?.type === 'customer')
+    const matchesType =
+      filterType === 'all' ||
+      (filterType === 'supplier' &&
+        contact.organisation?.type === 'supplier') ||
+      (filterType === 'customer' && contact.organisation?.type === 'customer');
 
-    const matchesRole = filterRole === 'all' ||
-                       (filterRole === 'primary' && contact.is_primary_contact) ||
-                       (filterRole === 'commercial' && contact.is_commercial_contact) ||
-                       (filterRole === 'technical' && contact.is_technical_contact) ||
-                       (filterRole === 'billing' && contact.is_billing_contact)
+    const matchesRole =
+      filterRole === 'all' ||
+      (filterRole === 'primary' && contact.is_primary_contact) ||
+      (filterRole === 'commercial' && contact.is_commercial_contact) ||
+      (filterRole === 'technical' && contact.is_technical_contact) ||
+      (filterRole === 'billing' && contact.is_billing_contact);
 
-    return matchesSearch && matchesType && matchesRole
-  })
+    return matchesSearch && matchesType && matchesRole;
+  });
 
   const stats: ContactStats = {
     totalContacts: contacts.length,
-    supplierContacts: contacts.filter(c => c.organisation?.type === 'supplier').length,
-    customerContacts: contacts.filter(c => c.organisation?.type === 'customer').length,
-    partnerContacts: contacts.filter(c => c.organisation?.type === 'partner').length
-  }
+    supplierContacts: contacts.filter(c => c.organisation?.type === 'supplier')
+      .length,
+    customerContacts: contacts.filter(c => c.organisation?.type === 'customer')
+      .length,
+    partnerContacts: contacts.filter(c => c.organisation?.type === 'partner')
+      .length,
+  };
 
   const getContactRoles = (contact: any) => {
-    const roles = []
-    if (contact.is_primary_contact) roles.push('Principal')
-    if (contact.is_commercial_contact) roles.push('Commercial')
-    if (contact.is_billing_contact) roles.push('Facturation')
-    if (contact.is_technical_contact) roles.push('Technique')
-    return roles.join(', ') || 'Aucun rôle'
-  }
+    const roles: string[] = [];
+    if (contact.is_primary_contact) roles.push('Principal');
+    if (contact.is_commercial_contact) roles.push('Commercial');
+    if (contact.is_billing_contact) roles.push('Facturation');
+    if (contact.is_technical_contact) roles.push('Technique');
+    return roles.join(', ') || 'Aucun rôle';
+  };
 
   const getOrganisationTypeInfo = (type: string) => {
     switch (type) {
@@ -86,48 +105,48 @@ export function ContactsTab() {
         return {
           icon: <Building className="h-4 w-4" />,
           label: 'Fournisseur',
-          color: 'bg-blue-50 text-blue-700 border-blue-200'
-        }
+          color: 'bg-blue-50 text-blue-700 border-blue-200',
+        };
       case 'customer':
         return {
           icon: <Users className="h-4 w-4" />,
           label: 'Client Pro',
-          color: 'bg-green-50 text-green-700 border-green-200'
-        }
+          color: 'bg-green-50 text-green-700 border-green-200',
+        };
       default:
         return {
           icon: <Building className="h-4 w-4" />,
           label: 'Organisation',
-          color: 'bg-gray-50 text-gray-700 border-gray-200'
-        }
+          color: 'bg-gray-50 text-gray-700 border-gray-200',
+        };
     }
-  }
+  };
 
   const handleArchive = async (contact: any) => {
     try {
       if (contact.is_active) {
-        await deactivateContact(contact.id)
+        await deactivateContact(contact.id);
       } else {
-        await activateContact(contact.id)
+        await activateContact(contact.id);
       }
     } catch (error) {
-      console.error('Erreur archivage contact:', error)
+      console.error('Erreur archivage contact:', error);
     }
-  }
+  };
 
   const handleDelete = async (contact: any) => {
     const confirmed = confirm(
       `Êtes-vous sûr de vouloir supprimer définitivement "${contact.first_name} ${contact.last_name}" ?\n\nCette action est irréversible !`
-    )
+    );
 
     if (confirmed) {
       try {
-        await deleteContact(contact.id)
+        await deleteContact(contact.id);
       } catch (error) {
-        console.error('Erreur suppression contact:', error)
+        console.error('Erreur suppression contact:', error);
       }
     }
-  }
+  };
 
   return (
     <div className="space-y-4">
@@ -141,7 +160,9 @@ export function ContactsTab() {
             <Users className="h-4 w-4 text-gray-400" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-black">{stats.totalContacts}</div>
+            <div className="text-2xl font-bold text-black">
+              {stats.totalContacts}
+            </div>
             <p className="text-xs text-gray-500">Contacts enregistrés</p>
           </CardContent>
         </Card>
@@ -154,7 +175,9 @@ export function ContactsTab() {
             <Building className="h-4 w-4 text-blue-500" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-blue-600">{stats.supplierContacts}</div>
+            <div className="text-2xl font-bold text-blue-600">
+              {stats.supplierContacts}
+            </div>
             <p className="text-xs text-gray-500">Contacts fournisseurs</p>
           </CardContent>
         </Card>
@@ -167,7 +190,9 @@ export function ContactsTab() {
             <Users className="h-4 w-4 text-green-500" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-green-600">{stats.customerContacts}</div>
+            <div className="text-2xl font-bold text-green-600">
+              {stats.customerContacts}
+            </div>
             <p className="text-xs text-gray-500">Contacts clients pros</p>
           </CardContent>
         </Card>
@@ -180,7 +205,9 @@ export function ContactsTab() {
             <UserCheck className="h-4 w-4 text-purple-500" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-purple-600">{stats.partnerContacts}</div>
+            <div className="text-2xl font-bold text-purple-600">
+              {stats.partnerContacts}
+            </div>
             <p className="text-xs text-gray-500">Contacts prestataires</p>
           </CardContent>
         </Card>
@@ -198,7 +225,7 @@ export function ContactsTab() {
                   placeholder="Rechercher par nom, email, organisation..."
                   className="pl-10"
                   value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
+                  onChange={e => setSearchTerm(e.target.value)}
                 />
               </div>
             </div>
@@ -242,7 +269,9 @@ export function ContactsTab() {
                   Principaux
                 </ButtonV2>
                 <ButtonV2
-                  variant={filterRole === 'commercial' ? 'secondary' : 'outline'}
+                  variant={
+                    filterRole === 'commercial' ? 'secondary' : 'outline'
+                  }
                   size="sm"
                   onClick={() => setFilterRole('commercial')}
                 >
@@ -266,14 +295,19 @@ export function ContactsTab() {
         <CardHeader>
           <div className="flex justify-between items-center">
             <CardTitle>
-              {filteredContacts.length} contact{filteredContacts.length > 1 ? 's' : ''}
+              {filteredContacts.length} contact
+              {filteredContacts.length > 1 ? 's' : ''}
               {(filterType !== 'all' || filterRole !== 'all') && (
                 <span className="text-gray-500 font-normal">
-                  {' '}(filtré{filteredContacts.length > 1 ? 's' : ''})
+                  {' '}
+                  (filtré{filteredContacts.length > 1 ? 's' : ''})
                 </span>
               )}
             </CardTitle>
-            <ButtonV2 className="bg-black text-white hover:bg-gray-800" icon={Plus}>
+            <ButtonV2
+              className="bg-black text-white hover:bg-gray-800"
+              icon={Plus}
+            >
               Nouveau contact
             </ButtonV2>
           </div>
@@ -287,7 +321,9 @@ export function ContactsTab() {
             <div className="text-center py-8">
               <Users className="h-12 w-12 text-gray-300 mx-auto mb-4" />
               <p className="text-gray-500">
-                {searchTerm ? 'Aucun contact trouvé pour cette recherche' : 'Aucun contact enregistré'}
+                {searchTerm
+                  ? 'Aucun contact trouvé pour cette recherche'
+                  : 'Aucun contact enregistré'}
               </p>
             </div>
           ) : (
@@ -295,17 +331,31 @@ export function ContactsTab() {
               <table className="w-full">
                 <thead className="border-b">
                   <tr>
-                    <th className="text-left py-3 px-4 font-medium text-gray-900">Contact</th>
-                    <th className="text-left py-3 px-4 font-medium text-gray-900">Organisation</th>
-                    <th className="text-left py-3 px-4 font-medium text-gray-900">Rôles</th>
-                    <th className="text-left py-3 px-4 font-medium text-gray-900">Coordonnées</th>
-                    <th className="text-left py-3 px-4 font-medium text-gray-900">Statut</th>
-                    <th className="text-left py-3 px-4 font-medium text-gray-900">Actions</th>
+                    <th className="text-left py-3 px-4 font-medium text-gray-900">
+                      Contact
+                    </th>
+                    <th className="text-left py-3 px-4 font-medium text-gray-900">
+                      Organisation
+                    </th>
+                    <th className="text-left py-3 px-4 font-medium text-gray-900">
+                      Rôles
+                    </th>
+                    <th className="text-left py-3 px-4 font-medium text-gray-900">
+                      Coordonnées
+                    </th>
+                    <th className="text-left py-3 px-4 font-medium text-gray-900">
+                      Statut
+                    </th>
+                    <th className="text-left py-3 px-4 font-medium text-gray-900">
+                      Actions
+                    </th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-gray-200">
-                  {filteredContacts.map((contact) => {
-                    const orgTypeInfo = getOrganisationTypeInfo(contact.organisation?.type || '')
+                  {filteredContacts.map(contact => {
+                    const orgTypeInfo = getOrganisationTypeInfo(
+                      contact.organisation?.type || ''
+                    );
 
                     return (
                       <tr key={contact.id} className="hover:bg-gray-50">
@@ -315,19 +365,29 @@ export function ContactsTab() {
                               {contact.first_name} {contact.last_name}
                             </span>
                             {contact.title && (
-                              <p className="text-sm text-gray-500">{contact.title}</p>
+                              <p className="text-sm text-gray-500">
+                                {contact.title}
+                              </p>
                             )}
                             {contact.department && (
-                              <p className="text-xs text-gray-400">{contact.department}</p>
+                              <p className="text-xs text-gray-400">
+                                {contact.department}
+                              </p>
                             )}
                           </div>
                         </td>
                         <td className="py-3 px-4">
                           <div className="space-y-1">
                             <span className="font-medium text-black">
-                              {contact.organisation && getOrganisationDisplayName(contact.organisation as Organisation)}
+                              {contact.organisation &&
+                                getOrganisationDisplayName(
+                                  contact.organisation as Organisation
+                                )}
                             </span>
-                            <Badge variant="outline" className={orgTypeInfo.color}>
+                            <Badge
+                              variant="outline"
+                              className={orgTypeInfo.color}
+                            >
                               <div className="flex items-center gap-1">
                                 {orgTypeInfo.icon}
                                 {orgTypeInfo.label}
@@ -357,9 +417,10 @@ export function ContactsTab() {
                         <td className="py-3 px-4">
                           <Badge
                             variant="outline"
-                            className={contact.is_active
-                              ? 'bg-green-50 text-green-700 border-green-200'
-                              : 'bg-gray-50 text-gray-700 border-gray-200'
+                            className={
+                              contact.is_active
+                                ? 'bg-green-50 text-green-700 border-green-200'
+                                : 'bg-gray-50 text-gray-700 border-gray-200'
                             }
                           >
                             {contact.is_active ? 'Actif' : 'Inactif'}
@@ -371,7 +432,7 @@ export function ContactsTab() {
                               variant="outline"
                               size="sm"
                               onClick={() => handleArchive(contact)}
-                              className={`${!contact.is_active ? "text-blue-600 border-blue-200 hover:bg-blue-50" : "text-black border-gray-200 hover:bg-gray-50"}`}
+                              className={`${!contact.is_active ? 'text-blue-600 border-blue-200 hover:bg-blue-50' : 'text-black border-gray-200 hover:bg-gray-50'}`}
                             >
                               {!contact.is_active ? (
                                 <ArchiveRestore className="h-4 w-4" />
@@ -395,7 +456,7 @@ export function ContactsTab() {
                           </div>
                         </td>
                       </tr>
-                    )
+                    );
                   })}
                 </tbody>
               </table>
@@ -408,8 +469,7 @@ export function ContactsTab() {
       <Card className="border-2 border-blue-200 bg-blue-50">
         <CardHeader>
           <CardTitle className="flex items-center gap-2 text-blue-700">
-            <Users className="h-5 w-5" />
-            À Propos des Contacts
+            <Users className="h-5 w-5" />À Propos des Contacts
           </CardTitle>
         </CardHeader>
         <CardContent>
@@ -422,15 +482,17 @@ export function ContactsTab() {
               </p>
             </div>
             <div>
-              <h4 className="font-medium text-blue-700 mb-2">Clients Professionnels</h4>
+              <h4 className="font-medium text-blue-700 mb-2">
+                Clients Professionnels
+              </h4>
               <p className="text-blue-600">
-                Contacts d'entreprises clientes. Les clients particuliers
-                ont leurs données directement dans l'organisation.
+                Contacts d'entreprises clientes. Les clients particuliers ont
+                leurs données directement dans l'organisation.
               </p>
             </div>
           </div>
         </CardContent>
       </Card>
     </div>
-  )
+  );
 }

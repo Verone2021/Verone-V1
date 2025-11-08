@@ -22,19 +22,23 @@ Catalogue des erreurs courantes rencontrées dans le système Vérone avec cause
 **À documenter** :
 
 ### RLS Errors
+
 - **"new row violates row-level security policy"** → Missing tenant_id ou policy manquante
 - **"permission denied for table X"** → RLS policy trop restrictive
 
 ### Database Errors
+
 - **"duplicate key value violates unique constraint"** → Constraint UNIQUE violation
 - **"null value in column X violates not-null constraint"** → Champ obligatoire manquant
 
 ### API Errors
+
 - **500 Internal Server Error** → Check Sentry logs, erreur serveur
 - **401 Unauthorized** → JWT token invalide/expiré
 - **403 Forbidden** → Permissions insuffisantes (Admin vs Owner)
 
 ### Performance Errors
+
 - **Query timeout** → Index manquant, N+1 queries
 - **Slow dashboard** → Too many hooks, cache missing
 

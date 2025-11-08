@@ -4,23 +4,33 @@
  * Aligné avec primary-image-upload.tsx (best practices)
  */
 
-"use client"
+'use client';
 
-import React, { useRef, useState, useEffect } from "react"
-import { Upload, X, Image as ImageIcon, Loader2, CheckCircle, AlertCircle } from "lucide-react"
-import { ButtonV2 } from "@/components/ui/button"
-import { Alert, AlertDescription } from "@/components/ui/alert"
-import { Badge } from "@/components/ui/badge"
-import { cn } from '@/lib/utils'
-import Image from "next/image"
-import { useCollectionImages } from '@/shared/modules/collections/hooks'
+import React, { useRef, useState, useEffect } from 'react';
+
+import Image from 'next/image';
+
+import {
+  Upload,
+  X,
+  Image as ImageIcon,
+  Loader2,
+  CheckCircle,
+  AlertCircle,
+} from 'lucide-react';
+
+import { Alert, AlertDescription } from '@/components/ui/alert';
+import { Badge } from '@/components/ui/badge';
+import { ButtonV2 } from '@/components/ui/button';
+import { cn } from '@verone/utils';
+import { useCollectionImages } from '@/shared/modules/collections/hooks';
 
 interface CollectionImageUploadProps {
-  collectionId: string
-  onImageUpload?: (imageId: string, publicUrl: string) => void
-  onImageRemove?: () => void
-  className?: string
-  disabled?: boolean
+  collectionId: string;
+  onImageUpload?: (imageId: string, publicUrl: string) => void;
+  onImageRemove?: () => void;
+  className?: string;
+  disabled?: boolean;
 }
 
 export function CollectionImageUpload({
@@ -28,13 +38,13 @@ export function CollectionImageUpload({
   onImageUpload,
   onImageRemove,
   className,
-  disabled = false
+  disabled = false,
 }: CollectionImageUploadProps) {
   // État pour drag & drop
-  const [dragActive, setDragActive] = useState(false)
+  const [dragActive, setDragActive] = useState(false);
 
   // Référence pour input file
-  const fileInputRef = useRef<HTMLInputElement>(null)
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   // Hook useCollectionImages pour gestion cohérente
   const {
@@ -45,33 +55,33 @@ export function CollectionImageUpload({
     uploadImage,
     deleteImage,
     hasImages,
-    fetchImages
+    fetchImages,
   } = useCollectionImages({
     collectionId,
-    autoFetch: !!collectionId
-  })
+    autoFetch: !!collectionId,
+  });
 
   // 🔄 Synchronisation avec useCollectionImages
   useEffect(() => {
     if (collectionId && collectionId.trim() !== '') {
-      fetchImages()
+      fetchImages();
     }
-  }, [collectionId, fetchImages])
+  }, [collectionId, fetchImages]);
 
   // 🎯 Callback après upload réussi
   useEffect(() => {
     if (primaryImage && onImageUpload) {
-      onImageUpload(primaryImage.id, primaryImage.public_url || '')
+      onImageUpload(primaryImage.id, primaryImage.public_url || '');
     }
-  }, [primaryImage, onImageUpload])
+  }, [primaryImage, onImageUpload]);
 
   /**
    * 📁 Gestion sélection de fichier
    */
   const handleFileSelect = async (file: File) => {
     if (!collectionId || collectionId.trim() === '') {
-      console.warn('⚠️ Impossible d\'uploader sans ID de collection valide')
-      return
+      console.warn("⚠️ Impossible d'uploader sans ID de collection valide");
+      return;
     }
 
     try {
@@ -79,75 +89,75 @@ export function CollectionImageUpload({
       const result = await uploadImage(file, {
         isPrimary: true,
         imageType: 'cover',
-        altText: `Image couverture - ${file.name}`
-      })
+        altText: `Image couverture - ${file.name}`,
+      });
 
-      console.log('✅ Image couverture collection uploadée avec succès')
+      console.log('✅ Image couverture collection uploadée avec succès');
     } catch (error) {
-      console.error('❌ Erreur upload image collection:', error)
+      console.error('❌ Erreur upload image collection:', error);
     }
-  }
+  };
 
   /**
    * 🗑️ Gestion suppression d'image
    */
   const handleRemoveImage = async () => {
-    if (!primaryImage) return
+    if (!primaryImage) return;
 
     try {
-      await deleteImage(primaryImage.id)
-      onImageRemove?.()
-      console.log('✅ Image collection supprimée')
+      await deleteImage(primaryImage.id);
+      onImageRemove?.();
+      console.log('✅ Image collection supprimée');
     } catch (error) {
-      console.error('❌ Erreur suppression image collection:', error)
+      console.error('❌ Erreur suppression image collection:', error);
     }
-  }
+  };
 
   /**
    * 🖱️ Handlers Drag & Drop
    */
   const handleDrag = (e: React.DragEvent) => {
-    e.preventDefault()
-    e.stopPropagation()
-    if (e.type === "dragenter" || e.type === "dragover") {
-      setDragActive(true)
-    } else if (e.type === "dragleave") {
-      setDragActive(false)
+    e.preventDefault();
+    e.stopPropagation();
+    if (e.type === 'dragenter' || e.type === 'dragover') {
+      setDragActive(true);
+    } else if (e.type === 'dragleave') {
+      setDragActive(false);
     }
-  }
+  };
 
   const handleDrop = (e: React.DragEvent) => {
-    e.preventDefault()
-    e.stopPropagation()
-    setDragActive(false)
+    e.preventDefault();
+    e.stopPropagation();
+    setDragActive(false);
 
-    if (disabled || !collectionId) return
+    if (disabled || !collectionId) return;
 
-    const files = e.dataTransfer.files
+    const files = e.dataTransfer.files;
     if (files && files[0]) {
-      handleFileSelect(files[0])
+      handleFileSelect(files[0]);
     }
-  }
+  };
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    e.preventDefault()
-    if (disabled || !collectionId) return
+    e.preventDefault();
+    if (disabled || !collectionId) return;
 
-    const files = e.target.files
+    const files = e.target.files;
     if (files && files[0]) {
-      handleFileSelect(files[0])
+      handleFileSelect(files[0]);
     }
-  }
+  };
 
   const handleButtonClick = () => {
     if (!disabled && collectionId) {
-      fileInputRef.current?.click()
+      fileInputRef.current?.click();
     }
-  }
+  };
 
   // 🎨 Affichage selon l'état
   return (
-    <div className={cn("space-y-4", className)}>
+    <div className={cn('space-y-4', className)}>
       {/* Erreur */}
       {error && (
         <Alert variant="destructive">
@@ -182,7 +192,10 @@ export function CollectionImageUpload({
             </div>
           </div>
           <div className="flex items-center gap-2 mt-2">
-            <Badge variant="outline" className="bg-green-50 text-green-700 border-green-200">
+            <Badge
+              variant="outline"
+              className="bg-green-50 text-green-700 border-green-200"
+            >
               <CheckCircle className="w-3 h-3 mr-1" />
               Image chargée
             </Badge>
@@ -197,9 +210,11 @@ export function CollectionImageUpload({
         /* Zone drag & drop */
         <div
           className={cn(
-            "relative aspect-video w-full max-w-md rounded-lg border-2 border-dashed transition-colors",
-            dragActive ? "border-black bg-gray-50" : "border-gray-300 hover:border-gray-400",
-            disabled && "opacity-50 cursor-not-allowed"
+            'relative aspect-video w-full max-w-md rounded-lg border-2 border-dashed transition-colors',
+            dragActive
+              ? 'border-black bg-gray-50'
+              : 'border-gray-300 hover:border-gray-400',
+            disabled && 'opacity-50 cursor-not-allowed'
           )}
           onDragEnter={handleDrag}
           onDragLeave={handleDrag}
@@ -219,7 +234,9 @@ export function CollectionImageUpload({
             {uploading ? (
               <>
                 <Loader2 className="w-12 h-12 text-gray-400 animate-spin mb-4" />
-                <p className="text-sm font-medium text-gray-700">Upload en cours...</p>
+                <p className="text-sm font-medium text-gray-700">
+                  Upload en cours...
+                </p>
               </>
             ) : (
               <>
@@ -227,11 +244,11 @@ export function CollectionImageUpload({
                   <Upload className="w-8 h-8 text-gray-400" />
                 </div>
                 <p className="text-sm font-medium text-gray-700 mb-1">
-                  {dragActive ? "Déposer l'image ici" : "Glisser-déposer une image"}
+                  {dragActive
+                    ? "Déposer l'image ici"
+                    : 'Glisser-déposer une image'}
                 </p>
-                <p className="text-xs text-gray-500 mb-4">
-                  ou
-                </p>
+                <p className="text-xs text-gray-500 mb-4">ou</p>
                 <ButtonV2
                   type="button"
                   variant="outline"
@@ -261,5 +278,5 @@ export function CollectionImageUpload({
         </Alert>
       )}
     </div>
-  )
+  );
 }

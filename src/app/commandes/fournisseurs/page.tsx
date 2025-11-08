@@ -1,7 +1,9 @@
 'use client';
 
 import { useState, useEffect, useMemo } from 'react';
+
 import { useSearchParams } from 'next/navigation';
+
 import {
   Plus,
   Filter,
@@ -18,8 +20,9 @@ import {
   ArrowUp,
   ArrowDown,
 } from 'lucide-react';
+
+import { Badge } from '@/components/ui/badge';
 import { ButtonV2 } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
 import {
   Card,
   CardContent,
@@ -27,7 +30,15 @@ import {
   CardHeader,
   CardTitle,
 } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
+import { Input } from '@/components/ui/input';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
+import { Separator } from '@/components/ui/separator';
 import {
   Table,
   TableBody,
@@ -36,27 +47,19 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import {
-  usePurchaseOrders,
+import { formatCurrency, formatDate } from '@verone/utils';
+import { getOrganisationDisplayName } from '@/lib/utils/organisation-helpers';
+import { PurchaseOrderDetailModal } from '@/shared/modules/orders/components/modals/PurchaseOrderDetailModal';
+import { PurchaseOrderFormModal } from '@/shared/modules/orders/components/modals/PurchaseOrderFormModal';
+import { PurchaseOrderReceptionModal } from '@/shared/modules/orders/components/modals/PurchaseOrderReceptionModal';
+import type {
   PurchaseOrder,
   PurchaseOrderStatus,
 } from '@/shared/modules/orders/hooks';
+import { usePurchaseOrders } from '@/shared/modules/orders/hooks';
 import { useOrganisations } from '@/shared/modules/organisations/hooks';
-import { PurchaseOrderFormModal } from '@/shared/modules/orders/components/modals/PurchaseOrderFormModal';
-import { PurchaseOrderReceptionModal } from '@/shared/modules/orders/components/modals/PurchaseOrderReceptionModal';
-import { PurchaseOrderDetailModal } from '@/shared/modules/orders/components/modals/PurchaseOrderDetailModal';
-import { formatCurrency, formatDate } from '@/lib/utils';
-import { Separator } from '@/components/ui/separator';
-import { getOrganisationDisplayName } from '@/lib/utils/organisation-helpers';
-import type { Database } from '@/types/database';
+import type { Database } from '@verone/types';
 
 type PurchaseOrderRow = Database['public']['Tables']['purchase_orders']['Row'];
 
@@ -408,7 +411,9 @@ export default function PurchaseOrdersPage() {
             <div className="text-xs text-gray-500 mt-1 space-y-0.5">
               <div>HT: {formatCurrency(filteredStats.total_ht)}</div>
               {filteredStats.eco_tax_total > 0 && (
-                <div className="text-amber-600">Éco-taxe HT: {formatCurrency(filteredStats.eco_tax_total)}</div>
+                <div className="text-amber-600">
+                  Éco-taxe HT: {formatCurrency(filteredStats.eco_tax_total)}
+                </div>
               )}
               <div>TVA: {formatCurrency(filteredStats.total_tva)}</div>
             </div>

@@ -3,92 +3,105 @@
  * Utilisé dans pages détail fournisseur/client/prestataire
  */
 
-import { useState, useEffect } from 'react'
-import { useContacts } from './use-contacts'
-import { usePurchaseOrders } from './use-purchase-orders'
-import { useProducts } from './use-products'
+import { useState, useEffect } from 'react';
+
+import { usePurchaseOrders } from '@/shared/modules/orders/hooks/use-purchase-orders';
+import { useProducts } from '@/shared/modules/products/hooks/use-products';
+
+import { useContacts } from './use-contacts';
 
 export interface OrganisationTabCounts {
-  contacts: number
-  orders: number
-  products: number
-  invoices: number
-  loading: boolean
+  contacts: number;
+  orders: number;
+  products: number;
+  invoices: number;
+  loading: boolean;
 }
 
 interface UseOrganisationTabCountsProps {
-  organisationId: string
-  organisationType: 'supplier' | 'customer' | 'provider'
+  organisationId: string;
+  organisationType: 'supplier' | 'customer' | 'provider';
 }
 
-export function useOrganisationTabCounts({ organisationId, organisationType }: UseOrganisationTabCountsProps) {
+export function useOrganisationTabCounts({
+  organisationId,
+  organisationType,
+}: UseOrganisationTabCountsProps) {
   const [counts, setCounts] = useState<OrganisationTabCounts>({
     contacts: 0,
     orders: 0,
     products: 0,
     invoices: 0,
-    loading: true
-  })
+    loading: true,
+  });
 
   // Hooks pour récupérer les données
-  const { contacts, fetchOrganisationContacts } = useContacts()
-  const { orders, fetchOrders } = usePurchaseOrders()
-  const { products, refetch: refetchProducts } = useProducts()
+  const { contacts, fetchOrganisationContacts } = useContacts();
+  const { orders, fetchOrders } = usePurchaseOrders();
+  const { products, refetch: refetchProducts } = useProducts();
 
   // Charger et compter les contacts
   useEffect(() => {
     if (organisationId) {
       fetchOrganisationContacts(organisationId).then(() => {
-        const orgContacts = contacts.filter(c => c.organisation_id === organisationId)
-        setCounts(prev => ({ ...prev, contacts: orgContacts.length }))
-      })
+        const orgContacts = contacts.filter(
+          c => c.organisation_id === organisationId
+        );
+        setCounts(prev => ({ ...prev, contacts: orgContacts.length }));
+      });
     }
-  }, [organisationId, contacts.length])
+  }, [organisationId, contacts.length]);
 
   // Charger et compter les commandes (si fournisseur)
   useEffect(() => {
     if (organisationId && organisationType === 'supplier') {
       fetchOrders({ supplier_id: organisationId }).then(() => {
-        const orgOrders = orders.filter(o => o.supplier_id === organisationId)
-        setCounts(prev => ({ ...prev, orders: orgOrders.length, loading: false }))
-      })
+        const orgOrders = orders.filter(o => o.supplier_id === organisationId);
+        setCounts(prev => ({
+          ...prev,
+          orders: orgOrders.length,
+          loading: false,
+        }));
+      });
     }
-  }, [organisationId, organisationType, orders.length])
+  }, [organisationId, organisationType, orders.length]);
 
   // Charger et compter les produits (si fournisseur)
   useEffect(() => {
     if (organisationId && organisationType === 'supplier') {
       refetchProducts().then(() => {
-        const orgProducts = products.filter(p => p.supplier_id === organisationId)
-        setCounts(prev => ({ ...prev, products: orgProducts.length }))
-      })
+        const orgProducts = products.filter(
+          p => p.supplier_id === organisationId
+        );
+        setCounts(prev => ({ ...prev, products: orgProducts.length }));
+      });
     }
-  }, [organisationId, organisationType, products.length])
+  }, [organisationId, organisationType, products.length]);
 
   // Rafraîchir tous les compteurs
   const refreshCounts = async () => {
-    setCounts(prev => ({ ...prev, loading: true }))
+    setCounts(prev => ({ ...prev, loading: true }));
 
     if (organisationId) {
       // Contacts
-      await fetchOrganisationContacts(organisationId)
+      await fetchOrganisationContacts(organisationId);
 
       // Commandes (fournisseurs)
       if (organisationType === 'supplier') {
-        await fetchOrders({ supplier_id: organisationId })
+        await fetchOrders({ supplier_id: organisationId });
       }
 
       // Produits (fournisseurs)
       if (organisationType === 'supplier') {
-        await refetchProducts()
+        await refetchProducts();
       }
 
-      setCounts(prev => ({ ...prev, loading: false }))
+      setCounts(prev => ({ ...prev, loading: false }));
     }
-  }
+  };
 
   return {
     counts,
-    refreshCounts
-  }
+    refreshCounts,
+  };
 }

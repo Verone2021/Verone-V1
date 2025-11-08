@@ -44,7 +44,7 @@ export const spacing = {
   72: '18rem', // 288px
   80: '20rem', // 320px
   96: '24rem', // 384px
-} as const
+} as const;
 
 /**
  * Semantic spacing pour composants communs
@@ -74,10 +74,10 @@ export const componentSpacing = {
     lg: spacing[4], // 16px
     xl: spacing[6], // 24px
   },
-} as const
+} as const;
 
 /**
  * Type helpers
  */
-export type SpacingScale = keyof typeof spacing
-export type ComponentSpacing = keyof typeof componentSpacing
+export type SpacingScale = keyof typeof spacing;
+export type ComponentSpacing = keyof typeof componentSpacing;

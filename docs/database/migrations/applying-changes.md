@@ -20,6 +20,7 @@
 Procédures détaillées pour appliquer des changements de schéma database en production de manière sécurisée.
 
 **À documenter** :
+
 - Étapes appliquer migration production
 - Cas spécifiques : ajout colonne, modification type, ajout contrainte
 - Procédure rollback en cas d'erreur

@@ -13,6 +13,7 @@ Réduire le boilerplate répété dans 60+ hooks tout en **conservant la logique
 **Problème initial** : Pattern `useState` + `useEffect` + `createClient()` répété dans chaque hook (~40 lignes boilerplate).
 
 **Solution** : Base hooks architecture avec 3 hooks composables :
+
 - `useSupabaseQuery<T>()` - Queries read-only
 - `useSupabaseMutation<T>()` - Mutations (create, update, delete)
 - `useSupabaseCRUD<T>()` - Combinaison query + mutations
@@ -23,31 +24,31 @@ Réduire le boilerplate répété dans 60+ hooks tout en **conservant la logique
 
 ### Résultats Migration
 
-| Métrique | Avant | Après | Δ |
-|----------|-------|-------|---|
-| **Lignes totales** | 117 | 101 | -16 (-14%) |
-| **Boilerplate** | 40 lignes | 8 lignes | -32 lignes (-80%) |
-| **Logique métier** | 77 lignes | 77 lignes | 0 (conservée) |
-| **Type errors** | 0 | 0 | ✅ |
+| Métrique           | Avant     | Après     | Δ                 |
+| ------------------ | --------- | --------- | ----------------- |
+| **Lignes totales** | 117       | 101       | -16 (-14%)        |
+| **Boilerplate**    | 40 lignes | 8 lignes  | -32 lignes (-80%) |
+| **Logique métier** | 77 lignes | 77 lignes | 0 (conservée)     |
+| **Type errors**    | 0         | 0         | ✅                |
 
 ### Code Avant (117 lignes)
 
 ```typescript
 export function useCollectionProducts(collectionId: string) {
-  const [products, setProducts] = useState<CollectionProductWithMeta[]>([])
-  const [loading, setLoading] = useState(false)
-  const [error, setError] = useState<string | null>(null)
+  const [products, setProducts] = useState<CollectionProductWithMeta[]>([]);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
-  const supabase = createClient()
+  const supabase = createClient();
 
   const fetchCollectionProducts = async () => {
     if (!collectionId) {
-      setProducts([])
-      return
+      setProducts([]);
+      return;
     }
 
-    setLoading(true)
-    setError(null)
+    setLoading(true);
+    setError(null);
 
     try {
       const { data, error: fetchError } = await supabase
@@ -55,36 +56,43 @@ export function useCollectionProducts(collectionId: string) {
         .select(`...`)
         .eq('collection_id', collectionId)
         .eq('products.creation_mode', 'complete')
-        .order('position', { ascending: true })
+        .order('position', { ascending: true });
 
-      if (fetchError) throw fetchError
+      if (fetchError) throw fetchError;
 
       const transformedProducts = (data || [])
         .filter(item => item.products)
         .map(item => ({
           // ... transformation logique métier
-        }))
+        }));
 
-      setProducts(transformedProducts)
+      setProducts(transformedProducts);
     } catch (err) {
-      console.error('Error fetching collection products:', err)
-      setError(err instanceof Error ? err.message : 'Une erreur est survenue')
+      console.error('Error fetching collection products:', err);
+      setError(err instanceof Error ? err.message : 'Une erreur est survenue');
     } finally {
-      setLoading(false)
+      setLoading(false);
     }
-  }
+  };
 
   useEffect(() => {
-    fetchCollectionProducts()
-  }, [collectionId])
+    fetchCollectionProducts();
+  }, [collectionId]);
 
-  const productIds = products.map(item => item.product_id)
+  const productIds = products.map(item => item.product_id);
 
-  return { products, productIds, loading, error, refetch: fetchCollectionProducts }
+  return {
+    products,
+    productIds,
+    loading,
+    error,
+    refetch: fetchCollectionProducts,
+  };
 }
 ```
 
 **❌ Problèmes** :
+
 - 40 lignes boilerplate répétées (useState, useEffect, try/catch)
 - Gestion manuelle loading/error states
 - `createClient()` appelé manuellement
@@ -104,15 +112,15 @@ export function useCollectionProducts(collectionId: string) {
         product_images!left (id, public_url, is_primary, ...)
       )
     `,
-    filters: (query) => {
-      if (!collectionId) return query.limit(0)
+    filters: query => {
+      if (!collectionId) return query.limit(0);
       return query
         .eq('collection_id', collectionId)
-        .eq('products.creation_mode', 'complete')
+        .eq('products.creation_mode', 'complete');
     },
     orderBy: { column: 'position', ascending: true },
-    autoFetch: !!collectionId
-  })
+    autoFetch: !!collectionId,
+  });
 
   // ✅ LOGIQUE MÉTIER CONSERVÉE : Transformation spécifique
   const products = useMemo(() => {
@@ -120,18 +128,19 @@ export function useCollectionProducts(collectionId: string) {
       .filter(item => item.products)
       .map(item => ({
         // ... transformation identique (logique métier préservée)
-      }))
-  }, [data])
+      }));
+  }, [data]);
 
   const productIds = useMemo(() => {
-    return products.map(item => item.product_id)
-  }, [products])
+    return products.map(item => item.product_id);
+  }, [products]);
 
-  return { products, productIds, loading, error, refetch }
+  return { products, productIds, loading, error, refetch };
 }
 ```
 
 **✅ Avantages** :
+
 - -80% boilerplate (40→8 lignes)
 - Logique métier 100% conservée
 - Code plus lisible et maintenable
@@ -147,35 +156,41 @@ export function useCollectionProducts(collectionId: string) {
 **Candidats** : Hooks qui ne font QUE fetcher des données sans mutations
 
 **Migration** :
+
 ```typescript
 // AVANT
-const [data, setData] = useState([])
-const [loading, setLoading] = useState(false)
-const supabase = createClient()
+const [data, setData] = useState([]);
+const [loading, setLoading] = useState(false);
+const supabase = createClient();
 
 const fetchData = async () => {
-  setLoading(true)
-  const { data, error } = await supabase.from('table').select('*')
-  setData(data)
-  setLoading(false)
-}
+  setLoading(true);
+  const { data, error } = await supabase.from('table').select('*');
+  setData(data);
+  setLoading(false);
+};
 
-useEffect(() => { fetchData() }, [])
+useEffect(() => {
+  fetchData();
+}, []);
 
 // APRÈS
 const { data, loading, error, refetch } = useSupabaseQuery({
   tableName: 'table',
   select: '*',
-  autoFetch: true
-})
+  autoFetch: true,
+});
 
 // Logique métier custom conservée
 const transformedData = useMemo(() => {
-  return (data || []).map(item => ({ /* transformation */ }))
-}, [data])
+  return (data || []).map(item => ({
+    /* transformation */
+  }));
+}, [data]);
 ```
 
 **Exemples candidats** :
+
 - `use-collection-products.ts` ✅ MIGRÉ
 - `use-stock-alerts.ts` (read-only avec calculs)
 - `use-dashboard-analytics.ts` (read-only avec agrégations)
@@ -185,6 +200,7 @@ const transformedData = useMemo(() => {
 **Candidats** : Hooks avec create, update, delete + refetch
 
 **Migration** :
+
 ```typescript
 // APRÈS
 const { data, loading, error, create, update, delete, refetch } = useSupabaseCRUD({
@@ -205,6 +221,7 @@ const createWithSlug = async (item) => {
 ```
 
 **Exemples candidats** :
+
 - `use-categories.ts` (avec generateSlug)
 - `use-families.ts` (avec toggleStatus)
 - Hooks simples CRUD sans logique complexe
@@ -216,6 +233,7 @@ const createWithSlug = async (item) => {
 **Stratégie** : NE PAS migrer complètement, ou utiliser base hooks partiellement
 
 **Exemples** :
+
 - `use-contacts.ts` (499 lignes, trop complexe)
 - `use-stock-movements.ts` (logique traceability)
 - Hooks avec 5+ méthodes custom
@@ -240,16 +258,19 @@ Pour chaque hook candidat :
 ## 🎯 Prochaines Étapes
 
 ### Phase 1 : Migrations Simples (5-10 hooks)
+
 - [ ] use-collection-images.ts (read-only, 90 lignes)
 - [ ] use-automation-triggers.ts (CRUD simple)
 - [ ] use-bank-reconciliation.ts (queries + calculs)
 
 ### Phase 2 : Migrations Moyennes (10-20 hooks)
+
 - [ ] use-categories.ts (avec generateSlug)
 - [ ] use-families.ts (avec toggleStatus)
 - [ ] use-stock-alerts.ts (avec calculs)
 
 ### Phase 3 : Documentation & Cleanup
+
 - [ ] Documenter pattern pour hooks restants
 - [ ] Identifier hooks deadcode (20 non utilisés)
 - [ ] Archiver hooks morts

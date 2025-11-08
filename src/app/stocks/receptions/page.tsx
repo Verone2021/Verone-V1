@@ -18,6 +18,7 @@
  */
 
 import { useState, useEffect } from 'react';
+
 import {
   Package,
   Truck,
@@ -29,8 +30,9 @@ import {
   CheckCircle,
   Eye,
 } from 'lucide-react';
+
+import { Badge } from '@/components/ui/badge';
 import { ButtonV2 } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
 import {
   Card,
   CardContent,
@@ -38,7 +40,14 @@ import {
   CardHeader,
   CardTitle,
 } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
+import { Input } from '@/components/ui/input';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
 import {
   Table,
   TableBody,
@@ -47,17 +56,10 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { formatCurrency, formatDate } from '@verone/utils';
+import { PurchaseOrderReceptionModal } from '@/shared/modules/orders/components/modals/PurchaseOrderReceptionModal';
 import { usePurchaseReceptions } from '@/shared/modules/orders/hooks';
-import { PurchaseOrderReceptionModal } from '@/components/business/purchase-order-reception-modal';
-import { formatCurrency, formatDate } from '@/lib/utils';
 
 export default function ReceptionsPage() {
   const {

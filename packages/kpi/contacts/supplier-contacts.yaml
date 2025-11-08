@@ -22,10 +22,10 @@ displayed_in:
     location: "Card 'Contacts fournisseurs'"
 
 thresholds:
-  excellent: "> 50"
-  good: "20-50"
-  warning: "5-20"
-  critical: "< 5"
+  excellent: '> 50'
+  good: '20-50'
+  warning: '5-20'
+  critical: '< 5'
 
 metadata:
   created_at: 2025-10-22

@@ -133,8 +133,7 @@ export async function parseAndValidateWebhook<T = unknown>(
   request: Request,
   secret: string | undefined
 ): Promise<
-  | { valid: true; payload: T }
-  | { valid: false; error: string; payload?: never }
+  { valid: true; payload: T } | { valid: false; error: string; payload?: never }
 > {
   try {
     // 1. Extraire corps brut (nécessaire pour signature)
@@ -216,5 +215,8 @@ export function generateTestSignature(
   const payloadString =
     typeof payload === 'string' ? payload : JSON.stringify(payload);
 
-  return crypto.createHmac('sha256', secret).update(payloadString).digest('hex');
+  return crypto
+    .createHmac('sha256', secret)
+    .update(payloadString)
+    .digest('hex');
 }

@@ -24,12 +24,14 @@
 ### Bug #1 : Erreur 404 "Commande fournisseur introuvable"
 
 **Symptôme** :
+
 ```
 POST /api/purchase-receptions/validate 404
 Error: Commande fournisseur introuvable
 ```
 
 **Cause Root** :
+
 ```typescript
 // ❌ AVANT (ligne 19-26 de route.ts)
 import { createClient } from '@/lib/supabase/server'
@@ -39,11 +41,13 @@ export async function POST(request: NextRequest) {
 ```
 
 **Explication** :
+
 - `createClient()` crée un client Supabase avec seulement l'anon key
 - Les RLS policies sur `purchase_orders` requièrent `user_has_access_to_organisation()`
 - Sans session user, la query retourne null → 404
 
 **Solution Appliquée** :
+
 ```typescript
 // ✅ APRÈS (ligne 19-26 de route.ts)
 import { createServerClient } from '@/lib/supabase/server'
@@ -53,6 +57,7 @@ export async function POST(request: NextRequest) {
 ```
 
 **Impact** :
+
 - src/app/api/purchase-receptions/validate/route.ts:19
 - src/app/api/purchase-receptions/validate/route.ts:26
 
@@ -61,12 +66,14 @@ export async function POST(request: NextRequest) {
 ### Bug #2 : User sans rôle (RLS blocking data)
 
 **Symptôme** :
+
 ```
 Page affiche : 0 commande(s)
 Alors que 3 commandes existent en base
 ```
 
 **Cause Root** :
+
 ```sql
 SELECT role FROM user_profiles
 WHERE user_id = '100d2439-0f52-46b1-9c30-ad7934b44719';
@@ -74,6 +81,7 @@ WHERE user_id = '100d2439-0f52-46b1-9c30-ad7934b44719';
 ```
 
 **Fonction RLS bloquante** :
+
 ```sql
 CREATE FUNCTION user_has_access_to_organisation(org_id UUID)
 BEGIN
@@ -85,6 +93,7 @@ END;
 ```
 
 **Solution Appliquée** :
+
 ```sql
 UPDATE user_profiles
 SET role = 'owner'
@@ -92,6 +101,7 @@ WHERE user_id = '100d2439-0f52-46b1-9c30-ad7934b44719';
 ```
 
 **Validation** :
+
 - Refresh page → 3 commandes affichées ✅
 
 ---
@@ -106,6 +116,7 @@ WHERE user_id = '100d2439-0f52-46b1-9c30-ad7934b44719';
 **Attendu** : Statut → `received`, stock_quantity +5, mouvements créés
 
 **Steps Exécutés** :
+
 1. ✅ Navigue vers `/commandes/fournisseurs`
 2. ✅ Clique "Réceptionner la commande" PO-2025-TEST-1
 3. ✅ Modal affiche : 5 unités à recevoir
@@ -141,6 +152,7 @@ ORDER BY performed_at;
 | 17:53:40 | IN | +5 | ✗ | Entrée stock réel - PO PO-2025-TEST-1 |
 
 **KPIs Updated** :
+
 - "En cours" : 3 → 2 ✅
 - "Reçues" : 0 → 1 ✅
 - Chiffre d'affaires : 603,00 € (ajouté) ✅
@@ -157,6 +169,7 @@ ORDER BY performed_at;
 **Attendu** : Statut → `partially_received`, quantity_received=6, reste 4
 
 **Steps Exécutés** :
+
 1. ✅ Confirme PO-2025-TEST-2 (status draft → confirmed)
 2. ✅ Vérifie mouvement prévisionnel créé : IN +10
 3. ✅ Clique "Réceptionner la commande"
@@ -193,12 +206,14 @@ ORDER BY performed_at;
 | 18:00:14 | IN | +6 | ✗ | Réception partielle - 6/10 unités (déjà reçu: 0) |
 
 **Validation Trigger Différentiel** :
+
 - Prévisionnel initial : +10
 - Réception partielle : -6 forecast, +6 réel
 - **Reste prévisionnel** : 10 - 6 = **4 unités** ✅
 - Permet une 2ème réception ultérieure des 4 restantes
 
 **KPIs Updated** :
+
 - "Part. reçue" : 0 → 1 ✅
 - Chiffre d'affaires : 603€ → 1 803€ (+1200€) ✅
 - "En cours" : 2 → 1 (reste seulement PO-2025-TEST-2) ✅
@@ -215,6 +230,7 @@ ORDER BY performed_at;
 **Attendu** : Statut → `cancelled`, prévisionnel annulé (OUT -2)
 
 **Steps Exécutés** :
+
 1. ✅ Confirme PO-2025-TEST-3 (draft → confirmed)
 2. ✅ Vérifie mouvement prévisionnel créé : IN +2
 3. ✅ Clique "Annuler la commande"
@@ -243,11 +259,13 @@ ORDER BY performed_at;
 | 18:01:51 | OUT | -2 | ✓ | Annulation prévisionnel - Commande annulée |
 
 **Validation Trigger Annulation** :
+
 - Prévisionnel créé : +2
 - Annulation : -2 ✅
 - **Solde prévisionnel** : 0 (annulé complètement)
 
 **KPIs Updated** :
+
 - "Annulées" : 0 → 1 ✅
 - "En cours" : 2 → 1 (ne compte plus PO-2025-TEST-3) ✅
 - Onglet "Annulée (1)" apparaît ✅
@@ -259,6 +277,7 @@ ORDER BY performed_at;
 ## 📊 État Final du Système
 
 ### KPIs Dashboard
+
 ```
 Total commandes     : 3
 Chiffre d'affaires  : 1 803,00 € (HT: 1 502,50 €, TVA: 300,50 €)
@@ -268,13 +287,15 @@ Annulées            : 1 (PO-2025-TEST-3)
 ```
 
 ### Purchase Orders Status
-| PO Number | Status | Qty Ordered | Qty Received | Remaining |
-|-----------|--------|-------------|--------------|-----------|
-| PO-2025-TEST-1 | received | 5 | 5 | 0 |
-| PO-2025-TEST-2 | partially_received | 10 | 6 | 4 |
-| PO-2025-TEST-3 | cancelled | 2 | 0 | 0 |
+
+| PO Number      | Status             | Qty Ordered | Qty Received | Remaining |
+| -------------- | ------------------ | ----------- | ------------ | --------- |
+| PO-2025-TEST-1 | received           | 5           | 5            | 0         |
+| PO-2025-TEST-2 | partially_received | 10          | 6            | 4         |
+| PO-2025-TEST-3 | cancelled          | 2           | 0            | 0         |
 
 ### Stock Movements Summary
+
 ```sql
 SELECT
     reference_id,
@@ -304,12 +325,14 @@ GROUP BY reference_id;
 **Table** : `purchase_orders` (AFTER UPDATE)
 
 **Cas testés** :
+
 1. ✅ **Confirmation** (draft/sent → confirmed) : Crée prévisionnel IN
 2. ✅ **Réception complète** (confirmed → received) : Annule prévisionnel OUT + Crée réel IN
 3. ✅ **Réception partielle** (confirmed → partially_received) : Différentiel -6 forecast, +6 réel
 4. ✅ **Annulation** (confirmed → cancelled) : Annule prévisionnel OUT
 
 **Validation Algorithme Différentiel** :
+
 ```sql
 -- Calcul dans trigger (ligne 95-105)
 SELECT COALESCE(SUM(ABS(quantity_change)), 0)
@@ -325,6 +348,7 @@ v_qty_diff := v_item.quantity_received - v_already_received;
 ```
 
 **Test Réception Multiple** :
+
 - 1ère réception : quantity_received=6, v_already_received=0 → v_qty_diff=6 ✅
 - 2ème réception (future) : quantity_received=10, v_already_received=6 → v_qty_diff=4 ✅
 
@@ -333,6 +357,7 @@ v_qty_diff := v_item.quantity_received - v_already_received;
 ## 🎯 Couverture Tests
 
 ### API Routes
+
 - ✅ `/api/purchase-receptions/validate` (POST)
   - Payload validation
   - Purchase order lookup avec RLS
@@ -341,6 +366,7 @@ v_qty_diff := v_item.quantity_received - v_already_received;
   - Trigger execution automatique
 
 ### Database
+
 - ✅ Table `purchase_orders` (UPDATE status)
 - ✅ Table `purchase_order_items` (UPDATE quantity_received)
 - ✅ Table `stock_movements` (INSERT via triggers)
@@ -349,6 +375,7 @@ v_qty_diff := v_item.quantity_received - v_already_received;
 - ✅ Check constraint `valid_workflow_timestamps`
 
 ### UI Components
+
 - ✅ `/commandes/fournisseurs` (liste commandes)
 - ✅ Modal `purchase-order-reception-form.tsx`
   - Affichage items avec calculs (restante, à recevoir)
@@ -359,6 +386,7 @@ v_qty_diff := v_item.quantity_received - v_already_received;
 - ✅ Filtres onglets (Brouillon, Confirmée, Part. reçue, Reçue, Annulée)
 
 ### Hooks
+
 - ✅ `use-purchase-receptions.ts`
   - loadPurchaseOrderForReception()
   - prepareReceptionItems() (calcul différentiel)
@@ -371,6 +399,7 @@ v_qty_diff := v_item.quantity_received - v_already_received;
 ## 📸 Captures d'Écran
 
 **Fichiers générés** :
+
 - `.playwright-mcp/test-reception-partielle-60pct-modal.png` : Modal réception partielle avec 6/10 unités
 - `.playwright-mcp/test-final-3-scenarios-complete.png` : État final avec 3 commandes (Reçue/Partielle/Annulée)
 
@@ -379,24 +408,28 @@ v_qty_diff := v_item.quantity_received - v_already_received;
 ## 🚀 Performance & Console
 
 ### Build Status
+
 ```bash
 npm run build
 ✓ Compiled successfully (0 errors)
 ```
 
 ### Type Check
+
 ```bash
 npm run type-check
 No TypeScript errors ✅
 ```
 
 ### Console Errors
+
 ```
 Total errors : 0 ✅
 Warnings     : 2 (DialogTitle accessibility - pre-existing, not blocking)
 ```
 
 **Détail warnings** :
+
 ```
 [ERROR] `DialogContent` requires a `DialogTitle` for screen reader accessibility
 [WARNING] Missing `Description` or `aria-describedby` for {DialogContent}
@@ -411,14 +444,15 @@ Warnings     : 2 (DialogTitle accessibility - pre-existing, not blocking)
 ### Améliorations Futures
 
 1. **Tests Automatisés** :
+
    ```typescript
    // tests/e2e/purchase-reception.spec.ts
    test('Complete reception workflow', async ({ page }) => {
-     await page.goto('/commandes/fournisseurs')
-     await page.click('[data-testid="reception-PO-2025-TEST-1"]')
-     await page.click('[data-testid="validate-complete"]')
-     await expect(page.locator('[data-status="received"]')).toBeVisible()
-   })
+     await page.goto('/commandes/fournisseurs');
+     await page.click('[data-testid="reception-PO-2025-TEST-1"]');
+     await page.click('[data-testid="validate-complete"]');
+     await expect(page.locator('[data-status="received"]')).toBeVisible();
+   });
    ```
 
 2. **Accessibilité Dialogs** :
@@ -462,6 +496,7 @@ Warnings     : 2 (DialogTitle accessibility - pre-existing, not blocking)
 **Phase 3 - Workflow Achats : COMPLET ✅**
 
 Tous les scénarios de réception ont été testés avec succès. Le système gère correctement :
+
 - Les réceptions complètes et partielles
 - Le calcul différentiel pour éviter les doublons
 - L'annulation de commandes avec retrait du prévisionnel

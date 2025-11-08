@@ -4,8 +4,10 @@
  */
 
 import { useState, useCallback, useMemo } from 'react';
+
 import { createClient } from '@/lib/supabase/client';
 import { useToast } from '@/shared/modules/common/hooks';
+
 import type { StockReasonCode } from './use-stock-movements';
 
 // Types pour le stock unifié

@@ -1,7 +1,9 @@
 'use client';
 
 import { useState, useEffect, useCallback, useMemo } from 'react';
+
 import { useParams, useRouter } from 'next/navigation';
+
 import {
   ArrowLeft,
   Share2,
@@ -17,12 +19,8 @@ import {
   Clock,
   Info,
 } from 'lucide-react';
+
 import { ButtonV2 } from '@/components/ui/button';
-import { ProductImageGallery } from '@/components/business/product-image-gallery';
-import { ProductPhotosModal } from '@/components/business/product-photos-modal';
-import { ProductCharacteristicsModal } from '@/components/business/product-characteristics-modal';
-import { ProductDescriptionsModal } from '@/components/business/product-descriptions-modal';
-import { CategoryHierarchySelector } from '@/components/business/category-hierarchy-selector';
 import {
   Dialog,
   DialogContent,
@@ -31,22 +29,27 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog';
-import { ProductDetailAccordion } from '@/components/business/product-detail-accordion';
-import { ProductInfoSection } from '@/components/business/product-info-section';
-import { ProductVariantsGrid } from '@/components/business/product-variants-grid';
-import { SampleRequirementSection } from '@/components/business/sample-requirement-section';
-import { SupplierVsPricingEditSection } from '@/components/business/supplier-vs-pricing-edit-section';
-import { StockEditSection } from '@/components/business/stock-edit-section';
-import { StockStatusCompact } from '@/components/business/stock-status-compact';
-import { ProductStatusCompact } from '@/components/business/product-status-compact';
-import { CompletionStatusCompact } from '@/components/business/completion-status-compact';
-import { ProductFixedCharacteristics } from '@/components/business/product-fixed-characteristics';
-import { SupplierEditSection } from '@/components/business/supplier-edit-section';
-import { WeightEditSection } from '@/components/business/weight-edit-section';
-import { IdentifiersCompleteEditSection } from '@/components/business/identifiers-complete-edit-section';
-import { ProductDescriptionsEditSection } from '@/components/business/product-descriptions-edit-section';
-import { cn, checkSLOCompliance } from '@/lib/utils';
 import { createClient } from '@/lib/supabase/client';
+import { cn, checkSLOCompliance } from '@verone/utils';
+import { CategoryHierarchySelector } from '@/shared/modules/categories/components/selectors/CategoryHierarchySelector';
+import { SupplierVsPricingEditSection } from '@/shared/modules/common/components/pricing/SupplierVsPricingEditSection';
+import { CompletionStatusCompact } from '@/shared/modules/products/components/badges/CompletionStatusCompact';
+import { ProductStatusCompact } from '@/shared/modules/products/components/badges/ProductStatusCompact';
+import { ProductVariantsGrid } from '@/shared/modules/products/components/grids/ProductVariantsGrid';
+import { ProductFixedCharacteristics } from '@/shared/modules/products/components/images/ProductFixedCharacteristics';
+import { ProductImageGallery } from '@/shared/modules/products/components/images/ProductImageGallery';
+import { ProductCharacteristicsModal } from '@/shared/modules/products/components/modals/ProductCharacteristicsModal';
+import { ProductDescriptionsModal } from '@/shared/modules/products/components/modals/ProductDescriptionsModal';
+import { ProductPhotosModal } from '@/shared/modules/products/components/modals/ProductPhotosModal';
+import { IdentifiersCompleteEditSection } from '@/shared/modules/products/components/sections/IdentifiersCompleteEditSection';
+import { ProductDescriptionsEditSection } from '@/shared/modules/products/components/sections/ProductDescriptionsEditSection';
+import { ProductDetailAccordion } from '@/shared/modules/products/components/sections/ProductDetailAccordion';
+import { ProductInfoSection } from '@/shared/modules/products/components/sections/ProductInfoSection';
+import { SampleRequirementSection } from '@/shared/modules/products/components/sections/SampleRequirementSection';
+import { StockEditSection } from '@/shared/modules/stock/components/sections/StockEditSection';
+import { SupplierEditSection } from '@/shared/modules/products/components/sections/SupplierEditSection';
+import { WeightEditSection } from '@/shared/modules/products/components/sections/WeightEditSection';
+import { StockStatusCompact } from '@/shared/modules/stock/components/badges/StockStatusCompact';
 
 // Champs obligatoires pour un produit complet
 const REQUIRED_PRODUCT_FIELDS = [
@@ -356,7 +359,7 @@ export default function ProductDetailPage() {
       <div className="container mx-auto py-6">
         <div className="flex items-center justify-center h-64">
           <div className="text-center">
-            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-black mx-auto mb-4"></div>
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-black mx-auto mb-4" />
             <p>Chargement du produit...</p>
           </div>
         </div>
@@ -487,7 +490,7 @@ export default function ProductDetailPage() {
           <ProductDetailAccordion
             title="Informations Générales"
             icon={Info}
-            defaultOpen={true}
+            defaultOpen
             badge={
               missingFields.infosGenerales > 0
                 ? missingFields.infosGenerales
@@ -610,7 +613,7 @@ export default function ProductDetailPage() {
             <ProductDetailAccordion
               title="Variantes Produit"
               icon={Package}
-              defaultOpen={true}
+              defaultOpen
             >
               <ProductVariantsGrid
                 productId={product.id}
@@ -717,7 +720,7 @@ export default function ProductDetailPage() {
             <SampleRequirementSection
               productId={product.id}
               requiresSample={product.requires_sample || false}
-              isProduct={true}
+              isProduct
               productName={product.name}
               supplierName={
                 (product.supplier?.legal_name ||

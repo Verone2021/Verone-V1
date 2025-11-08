@@ -6,13 +6,13 @@ services:
     container_name: verone-yolo-secure
 
     # ISOLATION MAXIMALE
-    network_mode: "bridge"
+    network_mode: 'bridge'
     security_opt:
       - no-new-privileges:true
       - apparmor:unconfined
 
     # FILESYSTEM PROTECTION
-    read_only: false  # Need write for development
+    read_only: false # Need write for development
     tmpfs:
       - /tmp:noexec,nosuid,size=2g
       - /var/tmp:noexec,nosuid,size=1g
@@ -31,7 +31,7 @@ services:
       - ./tailwind.config.js:/app/tailwind.config.js:ro
       - ./tsconfig.json:/app/tsconfig.json:ro
       - ./postcss.config.js:/app/postcss.config.js:ro
-      - /app/node_modules  # Anonymous volume
+      - /app/node_modules # Anonymous volume
       - yolo-safe-cache:/app/.next
 
     # ENVIRONMENT PROTECTION
@@ -57,11 +57,11 @@ services:
       "
 
     ports:
-      - "3000:3000"
+      - '3000:3000'
 
     # HEALTH CHECK
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:3000/api/health || exit 1"]
+      test: ['CMD', 'curl', '-f', 'http://localhost:3000/api/health || exit 1']
       interval: 30s
       timeout: 10s
       retries: 3

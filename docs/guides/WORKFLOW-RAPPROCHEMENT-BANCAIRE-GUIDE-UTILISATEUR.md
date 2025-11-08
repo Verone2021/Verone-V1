@@ -9,6 +9,7 @@
 ## 📊 VUE D'ENSEMBLE
 
 Le rapprochement bancaire Vérone est un système **intelligent** qui :
+
 - ✅ **95% automatique** : Matching instantané via webhooks Qonto
 - ✅ **5% manuel** : Interface simple pour cas complexes
 - ✅ **Temps réel** : Moins de 1 minute entre transaction bancaire et facture payée
@@ -114,6 +115,7 @@ Le rapprochement bancaire Vérone est un système **intelligent** qui :
 ### **Page: /finance/rapprochement**
 
 #### **Section 1: KPIs (En-tête)**
+
 ```
 ┌──────────────────────────────────────────────────────────────┐
 │  Rapprochement Bancaire                     [Actualiser]     │
@@ -128,6 +130,7 @@ Le rapprochement bancaire Vérone est un système **intelligent** qui :
 ```
 
 #### **Section 2: Transactions à Rapprocher**
+
 ```
 ┌──────────────────────────────────────────────────────────────┐
 │ Transactions à rapprocher                                    │
@@ -150,6 +153,7 @@ Le rapprochement bancaire Vérone est un système **intelligent** qui :
 ```
 
 #### **Section 3: Factures Impayées (Référence)**
+
 ```
 ┌──────────────────────────────────────────────────────────────┐
 │ Factures en attente de paiement (45)                         │
@@ -171,12 +175,14 @@ Le rapprochement bancaire Vérone est un système **intelligent** qui :
 **Quand** : Suggestion avec confidence >= 80%
 
 **Steps** :
+
 1. Clic sur **"Valider"** dans suggestion
 2. Système vérifie cohérence (montant, statut facture)
 3. Confirmation toast: "Rapprochement réussi"
 4. Transaction disparaît de la liste
 
 **Résultat** :
+
 - ✅ Payment créé
 - ✅ Invoice status → "paid"
 - ✅ Bank transaction → "manual_matched" (car validation admin)
@@ -188,11 +194,13 @@ Le rapprochement bancaire Vérone est un système **intelligent** qui :
 **Quand** : Frais bancaires, commissions, virements internes
 
 **Steps** :
+
 1. Clic sur **"Ignorer"**
 2. Confirmation : "Transaction ignorée"
 3. Transaction marquée "ignored"
 
 **Résultat** :
+
 - ✅ Transaction ne réapparaît plus
 - ✅ Visible dans historique avec raison
 
@@ -203,6 +211,7 @@ Le rapprochement bancaire Vérone est un système **intelligent** qui :
 **Quand** : Aucune suggestion ou paiement partiel
 
 **Steps** :
+
 1. Clic sur **"Matcher manuellement"**
 2. Modal s'ouvre :
    ```
@@ -227,6 +236,7 @@ Le rapprochement bancaire Vérone est un système **intelligent** qui :
 5. Clic "Valider Match"
 
 **Résultat** :
+
 - ✅ Paiements multiples créés si plusieurs factures
 - ✅ Chaque facture mise à jour
 - ✅ Transaction rapprochée
@@ -237,18 +247,19 @@ Le rapprochement bancaire Vérone est un système **intelligent** qui :
 
 ### **Objectifs SLOs**
 
-| Métrique | Objectif | Actuel | Status |
-|----------|----------|--------|--------|
-| **Taux auto-match** | >= 95% | 92% | 🟡 En amélioration |
-| **Temps traitement** | < 1min | 30s | ✅ OK |
-| **Erreurs matching** | < 1% | 0.5% | ✅ OK |
-| **Temps revue manuelle** | < 2min/tx | 1min30 | ✅ OK |
+| Métrique                 | Objectif  | Actuel | Status             |
+| ------------------------ | --------- | ------ | ------------------ |
+| **Taux auto-match**      | >= 95%    | 92%    | 🟡 En amélioration |
+| **Temps traitement**     | < 1min    | 30s    | ✅ OK              |
+| **Erreurs matching**     | < 1%      | 0.5%   | ✅ OK              |
+| **Temps revue manuelle** | < 2min/tx | 1min30 | ✅ OK              |
 
 ### **Dashboard KPIs**
 
 **Accessible** : `/finance/rapprochement`
 
 **Indicateurs clés** :
+
 - Transactions en attente (nombre + montant)
 - Taux auto-match (%)
 - Revue manuelle requise (nombre)
@@ -263,10 +274,12 @@ Le rapprochement bancaire Vérone est un système **intelligent** qui :
 **Problème** : Client paie 2x la même facture
 
 **Détection** :
+
 - Facture déjà status "paid"
 - Transaction similaire détectée
 
 **Solution** :
+
 1. Système ignore auto-match (facture déjà payée)
 2. Admin reçoit alerte
 3. Admin contacte client pour remboursement
@@ -279,10 +292,12 @@ Le rapprochement bancaire Vérone est un système **intelligent** qui :
 **Problème** : Client paie 500€ sur facture de 1 000€
 
 **Détection** :
+
 - Montant transaction < montant facture
 - Confidence score réduit
 
 **Solution** :
+
 1. Suggestion affichée avec warning "Paiement partiel"
 2. Admin valide partiellement
 3. Facture passe en "partial_matched"
@@ -295,10 +310,12 @@ Le rapprochement bancaire Vérone est un système **intelligent** qui :
 **Problème** : 1 virement = plusieurs factures
 
 **Détection** :
+
 - Aucun match exact montant
 - Plusieurs factures candidates
 
 **Solution** :
+
 1. Aucune suggestion automatique (confidence < 50%)
 2. Admin fait matching manuel
 3. Sélectionne N factures dont total = montant transaction
@@ -336,6 +353,7 @@ Le rapprochement bancaire Vérone est un système **intelligent** qui :
 ### **Q: Que faire si je ne trouve pas la facture correspondante?**
 
 **R:**
+
 1. Vérifier que facture est bien créée dans `/factures`
 2. Si facture n'existe pas → créer facture d'abord
 3. Refresh page rapprochement → suggestion devrait apparaître
@@ -346,6 +364,7 @@ Le rapprochement bancaire Vérone est un système **intelligent** qui :
 
 **R:**
 Non, pour l'instant matching est définitif. **Solution** :
+
 1. Contacter admin système
 2. Admin supprime payment manuellement (base de données)
 3. Future feature : Bouton "Annuler matching" (Roadmap Phase 2)
@@ -355,6 +374,7 @@ Non, pour l'instant matching est définitif. **Solution** :
 ### **Q: Comment gérer un remboursement client?**
 
 **R:**
+
 1. Transaction bancaire = sortie d'argent (débit)
 2. Système ignore automatiquement débits pour matching
 3. Admin crée avoir (credit note) manuellement
@@ -365,11 +385,13 @@ Non, pour l'instant matching est définitif. **Solution** :
 ### **Q: Taux auto-match faible (<90%) - que faire?**
 
 **R: Causes fréquentes** :
+
 - Clients n'incluent pas référence facture → **Former clients**
 - Noms clients variables → **Standardiser base clients**
 - Montants décalés (frais bancaires) → **Documenter frais**
 
 **Actions** :
+
 1. Analyser transactions manuelles récurrentes
 2. Identifier patterns
 3. Améliorer algo matching (si besoin technique)
@@ -379,18 +401,21 @@ Non, pour l'instant matching est définitif. **Solution** :
 ## 🚀 ROADMAP AMÉLIORATIONS
 
 ### **Phase 1: MVP (ACTUEL)** ✅
+
 - Auto-match 95%
 - Suggestions intelligentes
 - Validation manuelle simple
 - Dashboard KPIs
 
 ### **Phase 2: Automatisation Avancée** (Q1 2026)
+
 - Matching multi-factures automatique
 - ML-based confidence scoring
 - Annulation matchings
 - Export rapports Excel
 
 ### **Phase 3: Intelligence Artificielle** (Q2 2026)
+
 - Apprentissage automatique patterns clients
 - Prédiction paiements
 - Alertes proactives retards

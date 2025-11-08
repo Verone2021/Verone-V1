@@ -1,15 +1,17 @@
 'use client';
 
 import * as React from 'react';
-import { Badge } from '@/components/ui/badge';
-import { Label } from '@/components/ui/label';
-import { ButtonV2 } from '@/components/ui/button';
+
 import { Edit2, Check, X } from 'lucide-react';
-import { cn } from '@/lib/utils';
+
+import { Badge } from '@/components/ui/badge';
+import { ButtonV2 } from '@/components/ui/button';
+import { Label } from '@/components/ui/label';
 import {
   formatStatusForDisplay,
   type ProductStatus,
 } from '@/lib/product-status-utils';
+import { cn } from '@verone/utils';
 
 interface ProductInfoSectionProps {
   product: {

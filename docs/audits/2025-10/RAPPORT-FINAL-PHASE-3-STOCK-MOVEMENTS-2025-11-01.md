@@ -22,13 +22,13 @@
 
 ## 🎯 PRODUITS TESTÉS
 
-| Produit | SKU | Mouvements | Stock Initial | Stock Final | Durée Tests |
-|---------|-----|------------|---------------|-------------|-------------|
-| **Produit A** - Fauteuil Milo - Ocre | FMIL-OCRE-02 | 1 | 0 | 50 | ~5 min |
-| **Produit B** - Fauteuil Milo - Bleu | FMIL-BLEU-15 | 7 | 0 | 125 | ~30 min |
-| **Produit C** - Fauteuil Milo - Vert | FMIL-VERT-22 | 10 | 0 | 1040 | ~35 min |
-| **Produit D** - Fauteuil Milo - Beige | FMIL-BEIGE-05 | 4 | 0 | 250 | ~10 min |
-| **TOTAL** | - | **22** | **0** | **1465** | **~80 min** |
+| Produit                               | SKU           | Mouvements | Stock Initial | Stock Final | Durée Tests |
+| ------------------------------------- | ------------- | ---------- | ------------- | ----------- | ----------- |
+| **Produit A** - Fauteuil Milo - Ocre  | FMIL-OCRE-02  | 1          | 0             | 50          | ~5 min      |
+| **Produit B** - Fauteuil Milo - Bleu  | FMIL-BLEU-15  | 7          | 0             | 125         | ~30 min     |
+| **Produit C** - Fauteuil Milo - Vert  | FMIL-VERT-22  | 10         | 0             | 1040        | ~35 min     |
+| **Produit D** - Fauteuil Milo - Beige | FMIL-BEIGE-05 | 4          | 0             | 250         | ~10 min     |
+| **TOTAL**                             | -             | **22**     | **0**         | **1465**    | **~80 min** |
 
 ---
 
@@ -73,6 +73,7 @@ Trigger database execution   : <100ms
 ## 🧪 TESTS DÉTAILLÉS PAR PHASE
 
 ### Phase 3.5.1 - Produit A (Baseline)
+
 **Objectif** : Validation baseline système
 
 - ✅ 1 mouvement créé (+50 unités)
@@ -81,27 +82,31 @@ Trigger database execution   : <100ms
 - ✅ Trigger database fonctionnel
 
 ### Phase 3.5.3 - Produit B (Tests Standard)
+
 **Objectif** : 7 mouvements variés
 
-| # | Type | Quantité | Stock | Résultat |
-|---|------|----------|-------|----------|
-| 1 | Augmenter | +100 | 0→100 | ✅ |
-| 2 | Diminuer | -10 | 100→90 | ✅ |
-| 3 | Augmenter | +50 | 90→140 | ✅ |
-| 4 | Corriger | 100 | 140→100 | ✅ |
-| 5 | Diminuer | -5 | 135→130 | ✅ |
-| 6 | Diminuer | -8 | 130→122 | ✅ |
-| 7 | Augmenter | +3 | 122→125 | ✅ |
+| #   | Type      | Quantité | Stock   | Résultat |
+| --- | --------- | -------- | ------- | -------- |
+| 1   | Augmenter | +100     | 0→100   | ✅       |
+| 2   | Diminuer  | -10      | 100→90  | ✅       |
+| 3   | Augmenter | +50      | 90→140  | ✅       |
+| 4   | Corriger  | 100      | 140→100 | ✅       |
+| 5   | Diminuer  | -5       | 135→130 | ✅       |
+| 6   | Diminuer  | -8       | 130→122 | ✅       |
+| 7   | Augmenter | +3       | 122→125 | ✅       |
 
 **Résultats** :
+
 - ✅ 7/7 mouvements success
 - ✅ Console 0 errors
 - ✅ Stock final = 125 unités
 
 ### Phase 3.5.5 - Produit C (Edge Cases)
+
 **Objectif** : Tests série rapide + edge cases
 
 **Tests Série Rapide** (Mouvements 4-8) :
+
 - ✅ 5 mouvements en <10 minutes
 - ✅ Performance système validée
 
@@ -121,12 +126,14 @@ Trigger database execution   : <100ms
    - ✅ Cyrillique : Привет
 
 **Résultats** :
+
 - ✅ 10/10 mouvements success
 - ✅ Console 0 errors
 - ✅ Stock final = 1040 unités
 - ✅ UTF-8 encoding parfait
 
 ### Phase 3.5.6 - Produit D (Backend SQL)
+
 **Objectif** : Validation robustesse backend
 
 **Approche** : Insertion SQL directe (bypass UI)
@@ -137,6 +144,7 @@ Trigger database execution   : <100ms
 - ✅ Stock final = 250 unités
 
 **Découvertes** :
+
 - `reference_id` obligatoire (trigger validation)
 - `quantity_change = 0` interdit (trigger validation)
 - Enum `stock_reason_code` : 25 valeurs (pas simplement "adjustment")
@@ -179,13 +187,13 @@ Trigger database execution   : <100ms
 
 ## 📸 SCREENSHOTS RÉFÉRENCE
 
-| Phase | Fichier | Description |
-|-------|---------|-------------|
-| 3.5.3 | `phase-3-5-3-mouvement-7-produit-b-stock-125.png` | Produit B final (125 unités) |
-| 3.5.5 | `phase-3-5-5-mouvement-9-notes-ultra-longues-1100-chars-stock-1030.png` | Notes ultra-longues |
-| 3.5.5 | `phase-3-5-5-FINAL-produit-c-stock-1040-18-mouvements-console-0-errors.png` | Produit C final (1040 unités) |
-| 3.5.6 | `phase-3-5-6-produit-d-page-stock-section.png` | Page produit D |
-| 3 | `phase-3-validation-finale-22-mouvements-0-errors.png` | **Validation finale 22 mouvements** |
+| Phase | Fichier                                                                     | Description                         |
+| ----- | --------------------------------------------------------------------------- | ----------------------------------- |
+| 3.5.3 | `phase-3-5-3-mouvement-7-produit-b-stock-125.png`                           | Produit B final (125 unités)        |
+| 3.5.5 | `phase-3-5-5-mouvement-9-notes-ultra-longues-1100-chars-stock-1030.png`     | Notes ultra-longues                 |
+| 3.5.5 | `phase-3-5-5-FINAL-produit-c-stock-1040-18-mouvements-console-0-errors.png` | Produit C final (1040 unités)       |
+| 3.5.6 | `phase-3-5-6-produit-d-page-stock-section.png`                              | Page produit D                      |
+| 3     | `phase-3-validation-finale-22-mouvements-0-errors.png`                      | **Validation finale 22 mouvements** |
 
 ---
 
@@ -272,6 +280,7 @@ Uptime Tests     : 100% (aucun crash détecté)
 **Le système de mouvements stock est PRODUCTION-READY** ✅
 
 **Points forts identifiés** :
+
 - Architecture solide (Frontend + Backend + Database)
 - Business logic robuste avec triggers PostgreSQL
 - Performance excellente (real-time updates <200ms)
@@ -281,6 +290,7 @@ Uptime Tests     : 100% (aucun crash détecté)
 **Recommandation** : **Déploiement production autorisé**
 
 **Next Steps** :
+
 1. Phase 4 : Mouvements liés commandes (IN/OUT avec sales_orders, purchase_orders)
 2. Phase 5 : Analytics avancés (graphiques, rapports, exports)
 3. Phase 6 : Multi-warehouse support

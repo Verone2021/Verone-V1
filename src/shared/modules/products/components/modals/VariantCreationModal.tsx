@@ -1,145 +1,159 @@
-"use client"
+'use client';
 
-import { useState, useEffect } from 'react'
-import { X, Save, AlertCircle, Copy, Palette, Layers } from 'lucide-react'
-import { ButtonV2 } from '@/components/ui/button'
-import { Badge } from '@/components/ui/badge'
-import { cn } from '@/lib/utils'
-import { createClient } from '@/lib/supabase/client'
+import { useState, useEffect } from 'react';
+
+import { X, Save, AlertCircle, Copy, Palette, Layers } from 'lucide-react';
+
+import { Badge } from '@/components/ui/badge';
+import { ButtonV2 } from '@/components/ui/button';
+import { createClient } from '@/lib/supabase/client';
+import { cn } from '@verone/utils';
 
 interface ProductData {
-  id: string
-  name: string
-  sku: string
-  supplier_id?: string
+  id: string;
+  name: string;
+  sku: string;
+  supplier_id?: string;
   supplier?: {
-    id: string
-    name: string
-  }
-  dimensions_length?: number
-  dimensions_width?: number
-  dimensions_height?: number
-  dimensions_unit?: string
-  weight?: number
-  weight_unit?: string
-  base_cost?: number
-  selling_price?: number
-  description?: string
-  technical_description?: string
-  category_id?: string
-  subcategory_id?: string
-  variant_group_id?: string
+    id: string;
+    name: string;
+  };
+  dimensions_length?: number;
+  dimensions_width?: number;
+  dimensions_height?: number;
+  dimensions_unit?: string;
+  weight?: number;
+  weight_unit?: string;
+  base_cost?: number;
+  selling_price?: number;
+  description?: string;
+  technical_description?: string;
+  category_id?: string;
+  subcategory_id?: string;
+  variant_group_id?: string;
 }
 
 interface VariantCreationModalProps {
-  isOpen: boolean
-  onClose: () => void
-  productData: ProductData
-  onVariantCreated?: () => void
+  isOpen: boolean;
+  onClose: () => void;
+  productData: ProductData;
+  onVariantCreated?: () => void;
 }
 
 export function VariantCreationModal({
   isOpen,
   onClose,
   productData,
-  onVariantCreated
+  onVariantCreated,
 }: VariantCreationModalProps) {
-  const [color, setColor] = useState('')
-  const [material, setMaterial] = useState('')
-  const [additionalNote, setAdditionalNote] = useState('')
-  const [isCreating, setIsCreating] = useState(false)
-  const [error, setError] = useState<string | null>(null)
-  const [success, setSuccess] = useState(false)
+  const [color, setColor] = useState('');
+  const [material, setMaterial] = useState('');
+  const [additionalNote, setAdditionalNote] = useState('');
+  const [isCreating, setIsCreating] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [success, setSuccess] = useState(false);
 
   useEffect(() => {
     if (isOpen) {
-      setColor('')
-      setMaterial('')
-      setAdditionalNote('')
-      setError(null)
-      setSuccess(false)
+      setColor('');
+      setMaterial('');
+      setAdditionalNote('');
+      setError(null);
+      setSuccess(false);
     }
-  }, [isOpen])
+  }, [isOpen]);
 
-  if (!isOpen) return null
+  if (!isOpen) return null;
 
   const handleCreateVariant = async () => {
     if (!color && !material) {
-      setError('Veuillez renseigner au moins la couleur ou la matière')
-      return
+      setError('Veuillez renseigner au moins la couleur ou la matière');
+      return;
     }
 
     // ✅ VALIDATION ANTI-DOUBLON - Vérifier unicité couleur/matière dans le groupe
     if (productData.variant_group_id) {
-      const supabase = createClient()
+      const supabase = createClient();
 
       const { data: existingProducts, error: checkError } = await supabase
         .from('products')
         .select('id, variant_attributes')
-        .eq('variant_group_id', productData.variant_group_id)
+        .eq('variant_group_id', productData.variant_group_id);
 
       if (checkError) {
-        setError('Erreur lors de la validation : ' + checkError.message)
-        return
+        setError('Erreur lors de la validation : ' + checkError.message);
+        return;
       }
 
       // Vérifier si la couleur ou matière existe déjà
       if (existingProducts && existingProducts.length > 0) {
         for (const existing of existingProducts) {
-          const existingAttrs = existing.variant_attributes as Record<string, any>
+          const existingAttrs = existing.variant_attributes as Record<
+            string,
+            any
+          >;
 
           if (color && existingAttrs?.color === color.toLowerCase()) {
-            setError(`Un produit avec la couleur "${color}" existe déjà dans ce groupe. Chaque produit doit avoir une couleur unique.`)
-            return
+            setError(
+              `Un produit avec la couleur "${color}" existe déjà dans ce groupe. Chaque produit doit avoir une couleur unique.`
+            );
+            return;
           }
 
           if (material && existingAttrs?.material === material.toLowerCase()) {
-            setError(`Un produit avec le matériau "${material}" existe déjà dans ce groupe. Chaque produit doit avoir un matériau unique.`)
-            return
+            setError(
+              `Un produit avec le matériau "${material}" existe déjà dans ce groupe. Chaque produit doit avoir un matériau unique.`
+            );
+            return;
           }
         }
       }
     }
 
-    setIsCreating(true)
-    setError(null)
+    setIsCreating(true);
+    setError(null);
 
     try {
-      const variantAttributes: Record<string, string> = {}
-      if (color) variantAttributes.color = color
-      if (material) variantAttributes.material = material
+      const variantAttributes: Record<string, string> = {};
+      if (color) variantAttributes.color = color;
+      if (material) variantAttributes.material = material;
 
-      const variantSuffix = [color, material].filter(Boolean).join(' - ')
+      const variantSuffix = [color, material].filter(Boolean).join(' - ');
 
-      const response = await fetch(`/api/products/${productData.id}/variants/create`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({
-          variant_attributes: variantAttributes,
-          additional_note: additionalNote || null
-        })
-      })
+      const response = await fetch(
+        `/api/products/${productData.id}/variants/create`,
+        {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            variant_attributes: variantAttributes,
+            additional_note: additionalNote || null,
+          }),
+        }
+      );
 
-      const result = await response.json()
+      const result = await response.json();
 
       if (!response.ok) {
-        throw new Error(result.error || 'Erreur lors de la création de la variante')
+        throw new Error(
+          result.error || 'Erreur lors de la création de la variante'
+        );
       }
 
-      setSuccess(true)
+      setSuccess(true);
       setTimeout(() => {
-        if (onVariantCreated) onVariantCreated()
-        onClose()
-      }, 1500)
+        if (onVariantCreated) onVariantCreated();
+        onClose();
+      }, 1500);
     } catch (err) {
-      console.error('❌ Erreur création variante:', err)
-      setError(err instanceof Error ? err.message : 'Erreur inconnue')
+      console.error('❌ Erreur création variante:', err);
+      setError(err instanceof Error ? err.message : 'Erreur inconnue');
     } finally {
-      setIsCreating(false)
+      setIsCreating(false);
     }
-  }
+  };
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
@@ -169,21 +183,30 @@ export function VariantCreationModal({
             <div className="space-y-2 text-sm">
               <div className="flex justify-between">
                 <span className="text-gray-600">Nom produit:</span>
-                <span className="font-medium text-gray-900">{productData.name}</span>
+                <span className="font-medium text-gray-900">
+                  {productData.name}
+                </span>
               </div>
 
               {productData.supplier && (
                 <div className="flex justify-between">
                   <span className="text-gray-600">Fournisseur:</span>
-                  <span className="font-medium text-blue-900">{productData.supplier.name}</span>
+                  <span className="font-medium text-blue-900">
+                    {productData.supplier.name}
+                  </span>
                 </div>
               )}
 
-              {(productData.dimensions_length || productData.dimensions_width || productData.dimensions_height) && (
+              {(productData.dimensions_length ||
+                productData.dimensions_width ||
+                productData.dimensions_height) && (
                 <div className="flex justify-between">
                   <span className="text-gray-600">Dimensions:</span>
                   <span className="font-medium text-gray-900 font-mono">
-                    {productData.dimensions_length || 0} × {productData.dimensions_width || 0} × {productData.dimensions_height || 0} {productData.dimensions_unit || 'cm'}
+                    {productData.dimensions_length || 0} ×{' '}
+                    {productData.dimensions_width || 0} ×{' '}
+                    {productData.dimensions_height || 0}{' '}
+                    {productData.dimensions_unit || 'cm'}
                   </span>
                 </div>
               )}
@@ -200,12 +223,15 @@ export function VariantCreationModal({
               {productData.category_id && (
                 <div className="flex justify-between">
                   <span className="text-gray-600">Catégorie:</span>
-                  <Badge variant="outline" className="text-xs">Identique</Badge>
+                  <Badge variant="outline" className="text-xs">
+                    Identique
+                  </Badge>
                 </div>
               )}
             </div>
             <div className="mt-3 text-xs text-gray-500 italic">
-              ℹ️ Ces informations seront identiques pour la variante (règle métier)
+              ℹ️ Ces informations seront identiques pour la variante (règle
+              métier)
             </div>
           </div>
 
@@ -226,7 +252,7 @@ export function VariantCreationModal({
                 <input
                   type="text"
                   value={color}
-                  onChange={(e) => setColor(e.target.value)}
+                  onChange={e => setColor(e.target.value)}
                   className="w-full px-3 py-2 border border-purple-300 rounded-md focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-purple-500"
                   placeholder="ex: Noir, Blanc Cassé, Gris Anthracite"
                   disabled={isCreating}
@@ -245,7 +271,7 @@ export function VariantCreationModal({
                 <input
                   type="text"
                   value={material}
-                  onChange={(e) => setMaterial(e.target.value)}
+                  onChange={e => setMaterial(e.target.value)}
                   className="w-full px-3 py-2 border border-purple-300 rounded-md focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-purple-500"
                   placeholder="ex: Chêne Massif, Métal Laqué, Tissu Velours"
                   disabled={isCreating}
@@ -262,7 +288,7 @@ export function VariantCreationModal({
                 </label>
                 <textarea
                   value={additionalNote}
-                  onChange={(e) => setAdditionalNote(e.target.value)}
+                  onChange={e => setAdditionalNote(e.target.value)}
                   className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                   placeholder="Détails supplémentaires pour différencier cette variante..."
                   rows={3}
@@ -279,7 +305,8 @@ export function VariantCreationModal({
                 APERÇU NOM VARIANTE
               </div>
               <div className="font-medium text-blue-900">
-                {productData.name} - {[color, material].filter(Boolean).join(' - ')}
+                {productData.name} -{' '}
+                {[color, material].filter(Boolean).join(' - ')}
               </div>
               <div className="text-xs text-blue-600 mt-1">
                 SKU sera auto-généré à la création
@@ -307,11 +334,7 @@ export function VariantCreationModal({
 
         {/* Actions */}
         <div className="sticky bottom-0 bg-white border-t border-gray-200 p-4 flex justify-end space-x-2">
-          <ButtonV2
-            variant="outline"
-            onClick={onClose}
-            disabled={isCreating}
-          >
+          <ButtonV2 variant="outline" onClick={onClose} disabled={isCreating}>
             Annuler
           </ButtonV2>
           <ButtonV2
@@ -325,5 +348,5 @@ export function VariantCreationModal({
         </div>
       </div>
     </div>
-  )
+  );
 }

@@ -5,20 +5,22 @@
  * directement depuis les vues listes/grilles
  */
 
-'use client'
+'use client';
 
-import { Heart, Loader2 } from 'lucide-react'
-import { useState } from 'react'
-import { useToggleFavorite } from '@/shared/modules/common/hooks'
-import { cn } from '@/lib/utils'
+import { useState } from 'react';
+
+import { Heart, Loader2 } from 'lucide-react';
+
+import { cn } from '@verone/utils';
+import { useToggleFavorite } from '@/shared/modules/common/hooks';
 
 interface FavoriteToggleButtonProps {
-  organisationId: string
-  isFavorite: boolean
-  organisationType: 'customer' | 'supplier' | 'partner'
-  disabled?: boolean
-  onToggleComplete?: () => void
-  className?: string
+  organisationId: string;
+  isFavorite: boolean;
+  organisationType: 'customer' | 'supplier' | 'partner';
+  disabled?: boolean;
+  onToggleComplete?: () => void;
+  className?: string;
 }
 
 export function FavoriteToggleButton({
@@ -29,34 +31,34 @@ export function FavoriteToggleButton({
   onToggleComplete,
   className,
 }: FavoriteToggleButtonProps) {
-  const [isAnimating, setIsAnimating] = useState(false)
+  const [isAnimating, setIsAnimating] = useState(false);
 
   const { toggleFavorite, isLoading } = useToggleFavorite({
     organisationId,
     organisationType,
     onSuccess: () => {
       // Animation de succès
-      setIsAnimating(true)
-      setTimeout(() => setIsAnimating(false), 300)
+      setIsAnimating(true);
+      setTimeout(() => setIsAnimating(false), 300);
       // Callback pour refetch data
-      onToggleComplete?.()
+      onToggleComplete?.();
     },
-    onError: (error) => {
-      console.error('Erreur toggle favori:', error)
+    onError: error => {
+      console.error('Erreur toggle favori:', error);
       // TODO: Afficher un toast d'erreur
     },
-  })
+  });
 
   const handleClick = async (e: React.MouseEvent) => {
-    e.preventDefault()
-    e.stopPropagation()
+    e.preventDefault();
+    e.stopPropagation();
 
-    if (disabled || isLoading) return
+    if (disabled || isLoading) return;
 
-    await toggleFavorite(isFavorite)
-  }
+    await toggleFavorite(isFavorite);
+  };
 
-  const isDisabled = disabled || isLoading
+  const isDisabled = disabled || isLoading;
 
   return (
     <button
@@ -75,8 +77,8 @@ export function FavoriteToggleButton({
         isDisabled
           ? 'Non disponible pour les éléments archivés'
           : isFavorite
-          ? 'Retirer des favoris'
-          : 'Ajouter aux favoris'
+            ? 'Retirer des favoris'
+            : 'Ajouter aux favoris'
       }
       aria-label={isFavorite ? 'Retirer des favoris' : 'Ajouter aux favoris'}
       aria-disabled={isDisabled}
@@ -95,5 +97,5 @@ export function FavoriteToggleButton({
         />
       )}
     </button>
-  )
+  );
 }

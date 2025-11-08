@@ -12,10 +12,10 @@
 
 Distinction entre **deux types d'échantillons** avec règles d'éligibilité différentes :
 
-| Type | Usage | Règle Éligibilité | Workflow |
-|------|-------|-------------------|----------|
-| **Internal** | Validation qualité produit avant catalogue | ❌ Strict : Produit JAMAIS eu de stock | Commande fournisseur → Réception → Validation interne |
-| **Customer** | Consultation client spécifique (gravure, personnalisation) | ✅ Relaxée : TOUJOURS autorisé | Commande fournisseur → Réception → Envoi client → Validation |
+| Type         | Usage                                                      | Règle Éligibilité                      | Workflow                                                     |
+| ------------ | ---------------------------------------------------------- | -------------------------------------- | ------------------------------------------------------------ |
+| **Internal** | Validation qualité produit avant catalogue                 | ❌ Strict : Produit JAMAIS eu de stock | Commande fournisseur → Réception → Validation interne        |
+| **Customer** | Consultation client spécifique (gravure, personnalisation) | ✅ Relaxée : TOUJOURS autorisé         | Commande fournisseur → Réception → Envoi client → Validation |
 
 ---
 
@@ -24,11 +24,13 @@ Distinction entre **deux types d'échantillons** avec règles d'éligibilité di
 ### Ancien Système (Fragile)
 
 **Détection** : Substring matching dans champ `notes`
+
 ```typescript
 .or('notes.not.eq.Échantillon pour validation,notes.is.null')
 ```
 
 **Problèmes** :
+
 - ❌ Fragile (typo casse détection)
 - ❌ Non queryable (pas de filtre rapide)
 - ❌ Pas de distinction types
@@ -38,6 +40,7 @@ Distinction entre **deux types d'échantillons** avec règles d'éligibilité di
 ### Nouveau Système (Robuste)
 
 **Détection** : Colonne dédiée `sample_type`
+
 ```typescript
 .is('sample_type', null)  // Non-échantillons
 .eq('sample_type', 'internal')  // Échantillons internes
@@ -45,6 +48,7 @@ Distinction entre **deux types d'échantillons** avec règles d'éligibilité di
 ```
 
 **Avantages** :
+
 - ✅ Robuste (colonne typée avec CHECK constraint)
 - ✅ Queryable (index partiel)
 - ✅ Type-safe (TypeScript)
@@ -80,8 +84,8 @@ WHERE sample_type IS NOT NULL;
 ```typescript
 Database['public']['Tables']['purchase_order_items']['Row'] = {
   // ... autres champs
-  sample_type: string | null  // 'internal' | 'customer' | null
-}
+  sample_type: string | null, // 'internal' | 'customer' | null
+};
 ```
 
 ### Code Hook
@@ -117,19 +121,22 @@ async function requestSample(
 **Usage** : Validation qualité produit avant ajout au catalogue
 
 **Déclenchement** :
+
 - Depuis page détail produit sourcing
 - Bouton "Commander échantillon" (existant)
 
 **Règle d'éligibilité** : ❌ **STRICT**
+
 ```typescript
 // Produit JAMAIS eu d'entrée de stock (hors échantillons)
-const hasStock = await checkStockHistory(productId)
+const hasStock = await checkStockHistory(productId);
 if (hasStock) {
-  return { eligible: false, reason: 'has_stock_history' }
+  return { eligible: false, reason: 'has_stock_history' };
 }
 ```
 
 **Workflow** :
+
 ```mermaid
 graph LR
 A[Page Sourcing] --> B[Commander échantillon]
@@ -141,6 +148,7 @@ E -->|❌ Rejeté| G[Archive sourcing]
 ```
 
 **Caractéristiques** :
+
 - Quantité : Toujours **1 unité**
 - Prix : `cost_price` du produit
 - Notes auto : `"Échantillon pour validation qualité - {nom produit}"`
@@ -153,17 +161,20 @@ E -->|❌ Rejeté| G[Archive sourcing]
 **Usage** : Validation client spécifique (consultation, gravure, personnalisation)
 
 **Déclenchement** :
+
 - Depuis page consultation client
 - Depuis page détail commande client
 - Bouton "Commander échantillon client" (à développer Phase 2)
 
 **Règle d'éligibilité** : ✅ **RELAXÉE**
+
 ```typescript
 // TOUJOURS autorisé (même si produit a du stock)
-return { eligible: true }
+return { eligible: true };
 ```
 
 **Workflow** :
+
 ```mermaid
 graph LR
 A[Consultation Client] --> B[Commander échantillon]
@@ -176,6 +187,7 @@ F -->|❌ Rejeté| H[Fin consultation]
 ```
 
 **Caractéristiques** :
+
 - Quantité : Variable (1+ selon besoin)
 - Prix : `cost_price` + frais éventuels
 - Notes : Personnalisées (ex: "Gravure initiales AB")
@@ -190,6 +202,7 @@ F -->|❌ Rejeté| H[Fin consultation]
 **Contexte** : Sourcing d'un nouveau fauteuil "Milo Vert"
 
 **Action** :
+
 1. Créer fiche sourcing produit
 2. Commander échantillon (`sample_type='internal'`)
 3. Réception + validation qualité
@@ -204,6 +217,7 @@ F -->|❌ Rejeté| H[Fin consultation]
 **Contexte** : Client veut fauteuil "Milo Vert" avec gravure initiales
 
 **Action** :
+
 1. Consultation client créée
 2. Commander échantillon gravé (`sample_type='customer'`)
 3. Réception + envoi client
@@ -218,6 +232,7 @@ F -->|❌ Rejeté| H[Fin consultation]
 **Contexte** : Produit déjà catalogue, besoin vérifier nouvelle couleur
 
 **Action** :
+
 1. Tentative échantillon interne
 2. ❌ **REFUSÉ** : "Ce produit a déjà été commandé"
 
@@ -232,23 +247,27 @@ F -->|❌ Rejeté| H[Fin consultation]
 ### Page Sourcing (Existant - Modifié)
 
 **Bouton** : "Commander échantillon"
+
 - Type : `internal` (par défaut)
 - Hook : `requestSample(productId, 'internal')`
 
 ### Page Consultation (Phase 2 - À Développer)
 
 **Bouton** : "Commander échantillon client"
+
 - Type : `customer`
 - Hook : `requestSample(productId, 'customer')`
 
 ### Page Échantillons (`/produits/sourcing/echantillons`)
 
 **Filtres** :
+
 - Tous
 - Échantillons internes
 - Échantillons clients
 
 **Badges** :
+
 - 🔵 Internal (bleu)
 - 🟢 Customer (vert)
 
@@ -284,11 +303,11 @@ WHERE sample_type IS NOT NULL;
 
 ```typescript
 // Type union strict
-type SampleType = 'internal' | 'customer'
+type SampleType = 'internal' | 'customer';
 
 // Validation runtime
 if (sampleType && !['internal', 'customer'].includes(sampleType)) {
-  throw new Error('Invalid sample type')
+  throw new Error('Invalid sample type');
 }
 ```
 

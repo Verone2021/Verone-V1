@@ -9,11 +9,13 @@
 ### Template Basique (`basic-story.template.tsx`)
 
 **Utiliser quand** :
+
 - Composant simple avec peu de props (< 5 props)
 - Pas de variantes multiples
 - Pas de logique complexe
 
 **Exemples** :
+
 - `Badge`
 - `Avatar`
 - `Separator`
@@ -21,6 +23,7 @@
 - `Progress`
 
 **Caractéristiques** :
+
 - 3 stories : Default, Interactive, EdgeCase
 - Layout : `centered`
 - Minimal argTypes
@@ -30,17 +33,20 @@
 ### Template Variants (`variants-story.template.tsx`)
 
 **Utiliser quand** :
+
 - Composant avec multiples variantes visuelles
 - Props `variant`, `size`, `disabled`
 - Design system avec états multiples
 
 **Exemples** :
+
 - `Button` (default, primary, destructive, outline, ghost)
 - `Card` (default, elevated, bordered, glass)
 - `Badge` (default, success, warning, error)
 - `Input` (default, error, success)
 
 **Caractéristiques** :
+
 - 10+ stories (une par variante + combinaisons)
 - Story `AllVariants` avec grille visuelle
 - Story `Sizes` pour comparaison
@@ -51,12 +57,14 @@
 ### Template Business (`business-story.template.tsx`)
 
 **Utiliser quand** :
+
 - Composant métier avec logique complexe
 - Nécessite données mock (products, orders, stock)
 - Intégration avec Supabase/Context
 - Permissions requises
 
 **Exemples** :
+
 - `ProductCard`
 - `OrderTable`
 - `StockMovementForm`
@@ -64,6 +72,7 @@
 - `DashboardKPI`
 
 **Caractéristiques** :
+
 - Mock data au début du fichier
 - 10 stories (Default, Loading, Empty, Error, Complete, Partial, ManyItems, Interactive, Mobile, Desktop, RealWorld)
 - Decorator avec layout background
@@ -89,6 +98,7 @@ cp src/stories/_templates/business-story.template.tsx \
 ### Étape 2 : Remplacer placeholders
 
 **Rechercher et remplacer** :
+
 - `ComponentName` → Nom réel du composant (`Button`, `ProductCard`)
 - `@/components/path/to/component-name` → Chemin réel (`@/components/ui/button`)
 - `Category/Subcategory/ComponentName` → Title Storybook (`1-UI-Base/Buttons/Button`)
@@ -125,25 +135,25 @@ cp src/stories/_templates/business-story.template.tsx \
 
 ```typescript
 // UI Base Components
-title: '1-UI-Base/Buttons/Button'
-title: '1-UI-Base/Cards/Card'
-title: '1-UI-Base/Inputs/Input'
+title: '1-UI-Base/Buttons/Button';
+title: '1-UI-Base/Cards/Card';
+title: '1-UI-Base/Inputs/Input';
 
 // Business Components
-title: '2-Business/Products/ProductCard'
-title: '2-Business/Orders/OrderTable'
-title: '2-Business/Stock/StockMovementCard'
+title: '2-Business/Products/ProductCard';
+title: '2-Business/Orders/OrderTable';
+title: '2-Business/Stock/StockMovementCard';
 
 // Forms
-title: '3-Forms/Products/ProductForm'
-title: '3-Forms/Orders/CreateOrderForm'
+title: '3-Forms/Products/ProductForm';
+title: '3-Forms/Orders/CreateOrderForm';
 
 // Layout
-title: '4-Layout/Header'
-title: '4-Layout/Sidebar'
+title: '4-Layout/Header';
+title: '4-Layout/Sidebar';
 
 // Admin
-title: '5-Admin/UserManagement/UserTable'
+title: '5-Admin/UserManagement/UserTable';
 ```
 
 ### Story Naming
@@ -188,6 +198,7 @@ const mockProducts = Array.from({ length: 10 }, (_, i) => ({
 **Script à créer** : `tools/scripts/generate-stories.js`
 
 **Fonctionnement** :
+
 1. Lire tous les fichiers `.tsx` dans `src/components/`
 2. Détecter type de composant (ui/business/form)
 3. Sélectionner template approprié
@@ -195,6 +206,7 @@ const mockProducts = Array.from({ length: 10 }, (_, i) => ({
 5. Sauvegarder dans bon dossier `src/stories/`
 
 **Utilisation** :
+
 ```bash
 npm run generate:stories
 # Génère stories manquantes automatiquement

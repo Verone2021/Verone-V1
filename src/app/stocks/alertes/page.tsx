@@ -1,8 +1,10 @@
 'use client';
 
 import { useState, useEffect, useMemo } from 'react';
-import { useRouter } from 'next/navigation';
+
 import Image from 'next/image';
+import { useRouter } from 'next/navigation';
+
 import {
   AlertTriangle,
   ArrowLeft,
@@ -22,6 +24,14 @@ import {
   Zap,
   BarChart3,
 } from 'lucide-react';
+
+import { useToast } from '@/shared/modules/common/hooks';
+import { useStockAlerts } from '@/shared/modules/stock/hooks';
+
+import { QuickPurchaseOrderModal } from '../../../components/business/quick-purchase-order-modal';
+import { StockAlertCard } from '../../../components/business/stock-alert-card';
+import { Badge } from '../../../components/ui/badge';
+import { ButtonV2 } from '../../../components/ui/button';
 import {
   Card,
   CardContent,
@@ -29,8 +39,6 @@ import {
   CardHeader,
   CardTitle,
 } from '../../../components/ui/card';
-import { ButtonV2 } from '../../../components/ui/button';
-import { Badge } from '../../../components/ui/badge';
 import { Input } from '../../../components/ui/input';
 import { Label } from '../../../components/ui/label';
 import {
@@ -40,10 +48,6 @@ import {
   SelectTrigger,
   SelectValue,
 } from '../../../components/ui/select';
-import { useStockAlerts } from '@/shared/modules/stock/hooks';
-import { useToast } from '@/shared/modules/common/hooks';
-import { QuickPurchaseOrderModal } from '../../../components/business/quick-purchase-order-modal';
-import { StockAlertCard } from '../../../components/business/stock-alert-card';
 
 type AlertSeverity = 'critical' | 'warning' | 'info';
 type AlertCategory = 'stock' | 'movement' | 'forecast' | 'system';

@@ -1,7 +1,9 @@
 'use client';
 
 import { useState } from 'react';
+
 import { useRouter } from 'next/navigation';
+
 import {
   Globe,
   ArrowLeft,
@@ -16,6 +18,10 @@ import {
   Search,
   Info,
 } from 'lucide-react';
+
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
+import { Badge } from '@/components/ui/badge';
+import { ButtonV2 } from '@/components/ui/button';
 import {
   Card,
   CardContent,
@@ -23,8 +29,6 @@ import {
   CardHeader,
   CardTitle,
 } from '@/components/ui/card';
-import { ButtonV2 } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { Progress } from '@/components/ui/progress';
 import {
@@ -43,17 +47,16 @@ import {
   TableRow,
 } from '@/components/ui/table';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
-import { GoogleMerchantConfigModal } from '@/components/business/google-merchant-config-modal';
-import { GoogleMerchantProductManager } from '@/components/business/google-merchant-product-manager';
-import { GoogleMerchantProductCard } from '@/components/business/google-merchant-product-card';
+import { logger } from '@/lib/logger';
+import { GoogleMerchantConfigModal } from '@/shared/modules/channels/components/google-merchant/GoogleMerchantConfigModal';
+import { GoogleMerchantProductCard } from '@/shared/modules/channels/components/google-merchant/GoogleMerchantProductCard';
+import { GoogleMerchantProductManager } from '@/shared/modules/channels/components/google-merchant/GoogleMerchantProductManager';
 import { useGoogleMerchantSync } from '@/shared/modules/channels/hooks';
 import {
   useGoogleMerchantProducts,
   useGoogleMerchantStats,
 } from '@/shared/modules/channels/hooks';
 import { useProducts } from '@/shared/modules/products/hooks';
-import { logger } from '@/lib/logger';
 
 export default function GoogleMerchantPage() {
   const router = useRouter();

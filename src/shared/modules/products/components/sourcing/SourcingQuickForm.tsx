@@ -1,34 +1,38 @@
-"use client"
+'use client';
 
-import { useState, useRef } from 'react'
-import { useRouter } from 'next/navigation'
-import { Upload, Link, Package, ArrowRight, Loader2, Euro } from 'lucide-react'
-import { ButtonV2 } from '@/components/ui/button'
-import { Input } from '@/components/ui/input'
-import { Label } from '@/components/ui/label'
-import { cn } from '@/lib/utils'
-import { useSourcingProducts } from '@/shared/modules/products/hooks'
-import { useToast } from '@/shared/modules/common/hooks'
-import { ClientAssignmentSelector } from './client-assignment-selector'
-import { ConsultationSuggestions } from './consultation-suggestions'
-import { SupplierSelector } from './supplier-selector'
+import { useState, useRef } from 'react';
+
+import { useRouter } from 'next/navigation';
+
+import { Upload, Link, Package, ArrowRight, Loader2, Euro } from 'lucide-react';
+
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { cn } from '@verone/utils';
+import { useToast } from '@/shared/modules/common/hooks';
+import { useSourcingProducts } from '@/shared/modules/products/hooks';
+
+import { ClientAssignmentSelector } from './client-assignment-selector';
+import { ConsultationSuggestions } from './consultation-suggestions';
+import { SupplierSelector } from './supplier-selector';
 
 interface SourcingQuickFormProps {
-  onSuccess?: (draftId: string) => void
-  onCancel?: () => void
-  className?: string
-  showHeader?: boolean // Afficher le header (défaut: true)
+  onSuccess?: (draftId: string) => void;
+  onCancel?: () => void;
+  className?: string;
+  showHeader?: boolean; // Afficher le header (défaut: true)
 }
 
 export function SourcingQuickForm({
   onSuccess,
   onCancel,
   className,
-  showHeader = true
+  showHeader = true,
 }: SourcingQuickFormProps) {
-  const router = useRouter()
-  const { toast } = useToast()
-  const { createSourcingProduct } = useSourcingProducts({})
+  const router = useRouter();
+  const { toast } = useToast();
+  const { createSourcingProduct } = useSourcingProducts({});
 
   // États du formulaire - Simplifié pour la nouvelle logique
   const [formData, setFormData] = useState({
@@ -36,79 +40,81 @@ export function SourcingQuickForm({
     supplier_page_url: '',
     cost_price: 0, // Prix d'achat fournisseur HT - OBLIGATOIRE
     supplier_id: '', // Facultatif - fournisseur assigné
-    assigned_client_id: '' // Facultatif - détermine automatiquement le type de sourcing
-  })
-  const [selectedImage, setSelectedImage] = useState<File | null>(null)
-  const [imagePreview, setImagePreview] = useState<string>('')
-  const [isSubmitting, setIsSubmitting] = useState(false)
-  const [errors, setErrors] = useState<Record<string, string>>({})
+    assigned_client_id: '', // Facultatif - détermine automatiquement le type de sourcing
+  });
+  const [selectedImage, setSelectedImage] = useState<File | null>(null);
+  const [imagePreview, setImagePreview] = useState<string>('');
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [errors, setErrors] = useState<Record<string, string>>({});
 
   // Référence pour l'input file (pattern React 2024)
-  const fileInputRef = useRef<HTMLInputElement>(null)
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   // Gestion upload image
   const handleImageSelect = (file: File) => {
-    setSelectedImage(file)
+    setSelectedImage(file);
 
     // Créer preview
-    const reader = new FileReader()
-    reader.onload = (e) => {
-      setImagePreview(e.target?.result as string)
-    }
-    reader.readAsDataURL(file)
+    const reader = new FileReader();
+    reader.onload = e => {
+      setImagePreview(e.target?.result as string);
+    };
+    reader.readAsDataURL(file);
 
     // Effacer erreur image
     if (errors.image) {
-      setErrors(prev => ({ ...prev, image: '' }))
+      setErrors(prev => ({ ...prev, image: '' }));
     }
-  }
+  };
 
   // Gestion drag & drop
   const handleDragOver = (e: React.DragEvent) => {
-    e.preventDefault()
-    e.stopPropagation()
-  }
+    e.preventDefault();
+    e.stopPropagation();
+  };
 
   const handleDrop = (e: React.DragEvent) => {
-    e.preventDefault()
-    e.stopPropagation()
+    e.preventDefault();
+    e.stopPropagation();
 
-    const files = Array.from(e.dataTransfer.files)
-    const imageFile = files.find(file => file.type.startsWith('image/'))
+    const files = Array.from(e.dataTransfer.files);
+    const imageFile = files.find(file => file.type.startsWith('image/'));
 
     if (imageFile) {
-      handleImageSelect(imageFile)
+      handleImageSelect(imageFile);
     } else {
       toast({
-        title: "Format invalide",
-        description: "Seules les images sont acceptées",
-        variant: "destructive"
-      })
+        title: 'Format invalide',
+        description: 'Seules les images sont acceptées',
+        variant: 'destructive',
+      });
     }
-  }
+  };
 
   // Validation formulaire
   const validateForm = () => {
-    const newErrors: Record<string, string> = {}
+    const newErrors: Record<string, string> = {};
 
     if (!formData.name.trim()) {
-      newErrors.name = 'Le nom du produit est obligatoire'
+      newErrors.name = 'Le nom du produit est obligatoire';
     }
 
     if (!formData.supplier_page_url.trim()) {
-      newErrors.supplier_page_url = 'L\'URL de la page fournisseur est obligatoire'
+      newErrors.supplier_page_url =
+        "L'URL de la page fournisseur est obligatoire";
     } else {
       // Validation format URL
       try {
-        new URL(formData.supplier_page_url)
+        new URL(formData.supplier_page_url);
       } catch {
-        newErrors.supplier_page_url = 'Format d\'URL invalide'
+        newErrors.supplier_page_url = "Format d'URL invalide";
       }
     }
 
     // Validation prix fournisseur OBLIGATOIRE
     if (!formData.cost_price || formData.cost_price <= 0) {
-      newErrors.cost_price = 'Le prix d\'achat fournisseur est obligatoire et doit être > 0€'
+      newErrors.cost_price =
+        "Le prix d'achat fournisseur est obligatoire et doit être > 0€";
     }
 
     // 🔥 FIX: Image facultative (BD accepte image_url NULL)
@@ -117,24 +123,24 @@ export function SourcingQuickForm({
     //   newErrors.image = 'Une image est obligatoire'
     // }
 
-    setErrors(newErrors)
-    return Object.keys(newErrors).length === 0
-  }
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
+  };
 
   // Soumission formulaire
   const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault()
+    e.preventDefault();
 
     if (!validateForm()) {
       toast({
-        title: "Erreurs de validation",
-        description: "Veuillez corriger les erreurs avant de continuer",
-        variant: "destructive"
-      })
-      return
+        title: 'Erreurs de validation',
+        description: 'Veuillez corriger les erreurs avant de continuer',
+        variant: 'destructive',
+      });
+      return;
     }
 
-    setIsSubmitting(true)
+    setIsSubmitting(true);
 
     try {
       const productData = {
@@ -143,39 +149,41 @@ export function SourcingQuickForm({
         cost_price: formData.cost_price, // 🔥 FIX: Prix réel saisi par utilisateur
         supplier_id: formData.supplier_id || undefined, // Facultatif - pour activer lien fournisseur
         assigned_client_id: formData.assigned_client_id || undefined,
-        imageFile: selectedImage || undefined // Upload image si fournie
-      }
+        imageFile: selectedImage || undefined, // Upload image si fournie
+      };
 
-      const newProduct = await createSourcingProduct(productData)
+      const newProduct = await createSourcingProduct(productData);
 
       if (newProduct) {
         toast({
-          title: "Sourcing enregistré",
-          description: "Le produit a été ajouté au sourcing"
-        })
+          title: 'Sourcing enregistré',
+          description: 'Le produit a été ajouté au sourcing',
+        });
 
         // Callback ou redirection
         if (onSuccess) {
-          onSuccess(newProduct.id)
+          onSuccess(newProduct.id);
         } else {
-          router.push('/produits/sourcing/produits')
+          router.push('/produits/sourcing/produits');
         }
       }
-
     } catch (error) {
-      console.error('Erreur création sourcing:', error)
+      console.error('Erreur création sourcing:', error);
       toast({
-        title: "Erreur",
-        description: error instanceof Error ? error.message : "Impossible de créer le sourcing",
-        variant: "destructive"
-      })
+        title: 'Erreur',
+        description:
+          error instanceof Error
+            ? error.message
+            : 'Impossible de créer le sourcing',
+        variant: 'destructive',
+      });
     } finally {
-      setIsSubmitting(false)
+      setIsSubmitting(false);
     }
-  }
+  };
 
   return (
-    <div className={cn("bg-white", className)}>
+    <div className={cn('bg-white', className)}>
       {/* Header */}
       {showHeader && (
         <div className="border-b border-gray-200 px-6 py-4">
@@ -183,7 +191,8 @@ export function SourcingQuickForm({
             <div>
               <h1 className="text-2xl font-bold text-black">Sourcing Rapide</h1>
               <p className="text-gray-600 mt-1">
-                Ajoutez rapidement un produit à sourcer pour le catalogue général ou pour un client spécifique
+                Ajoutez rapidement un produit à sourcer pour le catalogue
+                général ou pour un client spécifique
               </p>
             </div>
             <div className="flex items-center text-sm text-gray-500">
@@ -204,12 +213,12 @@ export function SourcingQuickForm({
 
           <div
             className={cn(
-              "border-2 border-dashed rounded-lg p-6 text-center transition-colors",
+              'border-2 border-dashed rounded-lg p-6 text-center transition-colors',
               selectedImage
-                ? "border-green-300 bg-green-50"
+                ? 'border-green-300 bg-green-50'
                 : errors.image
-                  ? "border-red-300 bg-red-50"
-                  : "border-gray-300 hover:border-gray-400"
+                  ? 'border-red-300 bg-red-50'
+                  : 'border-gray-300 hover:border-gray-400'
             )}
             onDragOver={handleDragOver}
             onDrop={handleDrop}
@@ -224,41 +233,39 @@ export function SourcingQuickForm({
                 <div className="text-sm text-gray-600">
                   {selectedImage?.name}
                 </div>
-                <ButtonV2
+                <Button
                   type="button"
                   variant="outline"
                   size="sm"
                   onClick={() => {
-                    setSelectedImage(null)
-                    setImagePreview('')
+                    setSelectedImage(null);
+                    setImagePreview('');
                   }}
                 >
                   Changer d'image
-                </ButtonV2>
+                </Button>
               </div>
             ) : (
               <div className="space-y-3">
                 <Upload className="mx-auto h-12 w-12 text-gray-400" />
                 <div>
-                  <p className="text-gray-600">
-                    Glissez-déposez une image ou
-                  </p>
-                  <ButtonV2
+                  <p className="text-gray-600">Glissez-déposez une image ou</p>
+                  <Button
                     type="button"
                     variant="ghost"
                     onClick={() => fileInputRef.current?.click()}
                     className="text-black hover:underline p-0 h-auto font-normal"
                   >
                     cliquez pour sélectionner
-                  </ButtonV2>
+                  </Button>
                   <input
                     ref={fileInputRef}
                     type="file"
                     accept="image/*"
                     className="hidden"
-                    onChange={(e) => {
-                      const file = e.target.files?.[0]
-                      if (file) handleImageSelect(file)
+                    onChange={e => {
+                      const file = e.target.files?.[0];
+                      if (file) handleImageSelect(file);
                     }}
                   />
                 </div>
@@ -282,19 +289,17 @@ export function SourcingQuickForm({
           <Input
             id="name"
             value={formData.name}
-            onChange={(e) => {
-              setFormData(prev => ({ ...prev, name: e.target.value }))
-              if (errors.name) setErrors(prev => ({ ...prev, name: '' }))
+            onChange={e => {
+              setFormData(prev => ({ ...prev, name: e.target.value }));
+              if (errors.name) setErrors(prev => ({ ...prev, name: '' }));
             }}
             placeholder="Ex: Fauteuil design scandinave..."
             className={cn(
-              "transition-colors",
-              errors.name && "border-red-300 focus:border-red-500"
+              'transition-colors',
+              errors.name && 'border-red-300 focus:border-red-500'
             )}
           />
-          {errors.name && (
-            <p className="text-sm text-red-600">{errors.name}</p>
-          )}
+          {errors.name && <p className="text-sm text-red-600">{errors.name}</p>}
         </div>
 
         {/* 3. URL FOURNISSEUR - Obligatoire */}
@@ -308,14 +313,19 @@ export function SourcingQuickForm({
               id="supplier_url"
               type="url"
               value={formData.supplier_page_url}
-              onChange={(e) => {
-                setFormData(prev => ({ ...prev, supplier_page_url: e.target.value }))
-                if (errors.supplier_page_url) setErrors(prev => ({ ...prev, supplier_page_url: '' }))
+              onChange={e => {
+                setFormData(prev => ({
+                  ...prev,
+                  supplier_page_url: e.target.value,
+                }));
+                if (errors.supplier_page_url)
+                  setErrors(prev => ({ ...prev, supplier_page_url: '' }));
               }}
               placeholder="https://fournisseur.com/produit/123"
               className={cn(
-                "pl-10 transition-colors",
-                errors.supplier_page_url && "border-red-300 focus:border-red-500"
+                'pl-10 transition-colors',
+                errors.supplier_page_url &&
+                  'border-red-300 focus:border-red-500'
               )}
             />
           </div>
@@ -340,15 +350,16 @@ export function SourcingQuickForm({
               step="0.01"
               min="0.01"
               value={formData.cost_price || ''}
-              onChange={(e) => {
-                const value = parseFloat(e.target.value) || 0
-                setFormData(prev => ({ ...prev, cost_price: value }))
-                if (errors.cost_price) setErrors(prev => ({ ...prev, cost_price: '' }))
+              onChange={e => {
+                const value = parseFloat(e.target.value) || 0;
+                setFormData(prev => ({ ...prev, cost_price: value }));
+                if (errors.cost_price)
+                  setErrors(prev => ({ ...prev, cost_price: '' }));
               }}
               placeholder="250.00"
               className={cn(
-                "pl-10 transition-colors",
-                errors.cost_price && "border-red-300 focus:border-red-500"
+                'pl-10 transition-colors',
+                errors.cost_price && 'border-red-300 focus:border-red-500'
               )}
             />
           </div>
@@ -356,7 +367,8 @@ export function SourcingQuickForm({
             <p className="text-sm text-red-600">{errors.cost_price}</p>
           )}
           <p className="text-xs text-gray-500">
-            Prix d'achat HT chez le fournisseur (requis pour validation sourcing)
+            Prix d'achat HT chez le fournisseur (requis pour validation
+            sourcing)
           </p>
         </div>
 
@@ -364,15 +376,16 @@ export function SourcingQuickForm({
         <div className="space-y-2">
           <SupplierSelector
             selectedSupplierId={formData.supplier_id || null}
-            onSupplierChange={(supplierId) => {
-              setFormData(prev => ({ ...prev, supplier_id: supplierId || '' }))
+            onSupplierChange={supplierId => {
+              setFormData(prev => ({ ...prev, supplier_id: supplierId || '' }));
             }}
             label="Fournisseur (facultatif)"
             placeholder="Sélectionner un fournisseur..."
             required={false}
           />
           <p className="text-xs text-gray-500">
-            Assignez un fournisseur pour activer le lien "détail fournisseur" dans la liste
+            Assignez un fournisseur pour activer le lien "détail fournisseur"
+            dans la liste
           </p>
         </div>
 
@@ -381,7 +394,7 @@ export function SourcingQuickForm({
           <ClientAssignmentSelector
             value={formData.assigned_client_id}
             onChange={(clientId, client) => {
-              setFormData(prev => ({ ...prev, assigned_client_id: clientId }))
+              setFormData(prev => ({ ...prev, assigned_client_id: clientId }));
             }}
             label="Organisation client professionnelle (facultatif)"
             placeholder="Laisser vide pour sourcing interne ou sélectionner un client..."
@@ -389,8 +402,11 @@ export function SourcingQuickForm({
             className="mb-4"
           />
           <p className="text-xs text-gray-500">
-            <strong>Sourcing interne :</strong> Laissez vide pour ajouter au catalogue général<br/>
-            <strong>Sourcing client :</strong> Sélectionnez un client pour une consultation spécifique
+            <strong>Sourcing interne :</strong> Laissez vide pour ajouter au
+            catalogue général
+            <br />
+            <strong>Sourcing client :</strong> Sélectionnez un client pour une
+            consultation spécifique
           </p>
         </div>
 
@@ -398,8 +414,8 @@ export function SourcingQuickForm({
         {formData.assigned_client_id && (
           <ConsultationSuggestions
             clientId={formData.assigned_client_id}
-            onLinkToConsultation={(consultationId) => {
-              console.log('Suggestion consultation:', consultationId)
+            onLinkToConsultation={consultationId => {
+              console.log('Suggestion consultation:', consultationId);
               // TODO: Stocker l'association pour après création du produit
             }}
             className="bg-blue-50 border-blue-200"
@@ -408,23 +424,21 @@ export function SourcingQuickForm({
 
         {/* Actions */}
         <div className="flex items-center justify-between pt-6 border-t border-gray-200">
-          <div className="text-sm text-gray-500">
-            * Champs obligatoires
-          </div>
+          <div className="text-sm text-gray-500">* Champs obligatoires</div>
 
           <div className="flex items-center space-x-3">
             {onCancel && (
-              <ButtonV2
+              <Button
                 type="button"
                 variant="ghost"
                 onClick={onCancel}
                 disabled={isSubmitting}
               >
                 Annuler
-              </ButtonV2>
+              </Button>
             )}
 
-            <ButtonV2
+            <Button
               type="submit"
               disabled={isSubmitting}
               className="bg-black hover:bg-gray-800 text-white"
@@ -440,10 +454,10 @@ export function SourcingQuickForm({
                   <ArrowRight className="h-4 w-4 ml-2" />
                 </>
               )}
-            </ButtonV2>
+            </Button>
           </div>
         </div>
       </form>
     </div>
-  )
+  );
 }

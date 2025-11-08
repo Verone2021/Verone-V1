@@ -5,24 +5,35 @@
  * Utilise useProductImages pour une gestion cohérente avec l'étape galerie
  */
 
-"use client"
+'use client';
 
-import React, { useRef, useState, useEffect } from "react"
-import { Upload, X, Image as ImageIcon, Loader2, CheckCircle, AlertCircle, Star } from "lucide-react"
-import { ButtonV2 } from "@/components/ui/button"
-import { Progress } from "@/components/ui/progress"
-import { Alert, AlertDescription } from "@/components/ui/alert"
-import { Badge } from "@/components/ui/badge"
-import { cn } from '@/lib/utils'
-import Image from "next/image"
-import { useProductImages } from '@/shared/modules/products/hooks'
+import React, { useRef, useState, useEffect } from 'react';
+
+import Image from 'next/image';
+
+import {
+  Upload,
+  X,
+  Image as ImageIcon,
+  Loader2,
+  CheckCircle,
+  AlertCircle,
+  Star,
+} from 'lucide-react';
+
+import { Alert, AlertDescription } from '@/components/ui/alert';
+import { Badge } from '@/components/ui/badge';
+import { ButtonV2 } from '@/components/ui/button';
+import { Progress } from '@/components/ui/progress';
+import { cn } from '@verone/utils';
+import { useProductImages } from '@/shared/modules/products/hooks';
 
 interface PrimaryImageUploadProps {
-  productId: string
-  productType?: 'draft' | 'product'
-  onImageUpload?: (imageId: string, publicUrl: string) => void
-  onImageRemove?: () => void
-  className?: string
+  productId: string;
+  productType?: 'draft' | 'product';
+  onImageUpload?: (imageId: string, publicUrl: string) => void;
+  onImageRemove?: () => void;
+  className?: string;
 }
 
 export function PrimaryImageUpload({
@@ -30,13 +41,13 @@ export function PrimaryImageUpload({
   productType = 'draft',
   onImageUpload,
   onImageRemove,
-  className
+  className,
 }: PrimaryImageUploadProps) {
   // État pour drag & drop
-  const [dragActive, setDragActive] = useState(false)
+  const [dragActive, setDragActive] = useState(false);
 
   // Référence pour input file
-  const fileInputRef = useRef<HTMLInputElement>(null)
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   // Hook useProductImages pour gestion cohérente
   const {
@@ -47,32 +58,32 @@ export function PrimaryImageUpload({
     uploadImage,
     deleteImage,
     hasImages,
-    fetchImages
+    fetchImages,
   } = useProductImages({
-    productId
-  })
+    productId,
+  });
 
   // 🔄 Synchronisation avec useProductImages
   useEffect(() => {
     if (productId && productId.trim() !== '') {
-      fetchImages()
+      fetchImages();
     }
-  }, [productId, fetchImages])
+  }, [productId, fetchImages]);
 
   // 🎯 Callback après upload réussi
   useEffect(() => {
     if (primaryImage && onImageUpload) {
-      onImageUpload(primaryImage.id, primaryImage.public_url || '')
+      onImageUpload(primaryImage.id, primaryImage.public_url || '');
     }
-  }, [primaryImage, onImageUpload])
+  }, [primaryImage, onImageUpload]);
 
   /**
    * 📁 Gestion sélection de fichier
    */
   const handleFileSelect = async (file: File) => {
     if (!productId || productId.trim() === '') {
-      console.warn('⚠️ Impossible d\'uploader sans ID de produit valide')
-      return
+      console.warn("⚠️ Impossible d'uploader sans ID de produit valide");
+      return;
     }
 
     try {
@@ -80,74 +91,74 @@ export function PrimaryImageUpload({
       const result = await uploadImage(file, {
         isPrimary: true,
         imageType: 'gallery',
-        altText: `Image principale - ${file.name}`
-      })
+        altText: `Image principale - ${file.name}`,
+      });
 
       // ✅ Le callback onImageUpload sera déclenché automatiquement par useEffect
-      console.log('✅ Image principale uploadée avec succès')
+      console.log('✅ Image principale uploadée avec succès');
     } catch (error) {
-      console.error('❌ Erreur upload image principale:', error)
+      console.error('❌ Erreur upload image principale:', error);
     }
-  }
+  };
 
   /**
    * 🗑️ Gestion suppression d'image
    */
   const handleRemoveImage = async () => {
-    if (!primaryImage) return
+    if (!primaryImage) return;
 
     try {
-      await deleteImage(primaryImage.id)
-      onImageRemove?.()
-      console.log('✅ Image principale supprimée')
+      await deleteImage(primaryImage.id);
+      onImageRemove?.();
+      console.log('✅ Image principale supprimée');
     } catch (error) {
-      console.error('❌ Erreur suppression image principale:', error)
+      console.error('❌ Erreur suppression image principale:', error);
     }
-  }
+  };
 
   /**
    * 🖱️ Gestionnaires drag & drop
    */
   const handleDrag = (e: React.DragEvent) => {
-    e.preventDefault()
-    e.stopPropagation()
-  }
+    e.preventDefault();
+    e.stopPropagation();
+  };
 
   const handleDragIn = (e: React.DragEvent) => {
-    e.preventDefault()
-    e.stopPropagation()
-    setDragActive(true)
-  }
+    e.preventDefault();
+    e.stopPropagation();
+    setDragActive(true);
+  };
 
   const handleDragOut = (e: React.DragEvent) => {
-    e.preventDefault()
-    e.stopPropagation()
-    setDragActive(false)
-  }
+    e.preventDefault();
+    e.stopPropagation();
+    setDragActive(false);
+  };
 
   const handleDrop = (e: React.DragEvent) => {
-    e.preventDefault()
-    e.stopPropagation()
-    setDragActive(false)
+    e.preventDefault();
+    e.stopPropagation();
+    setDragActive(false);
 
-    const files = e.dataTransfer.files
+    const files = e.dataTransfer.files;
     if (files && files[0]) {
-      handleFileSelect(files[0])
+      handleFileSelect(files[0]);
     }
-  }
+  };
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const files = e.target.files
+    const files = e.target.files;
     if (files && files[0]) {
-      handleFileSelect(files[0])
+      handleFileSelect(files[0]);
     }
-  }
+  };
 
   // Déterminer l'URL de l'image à afficher
-  const displayImageUrl = primaryImage?.public_url
+  const displayImageUrl = primaryImage?.public_url;
 
   return (
-    <div className={cn("space-y-4", className)}>
+    <div className={cn('space-y-4', className)}>
       {/* Image principale actuelle */}
       {displayImageUrl && (
         <div className="relative w-full max-w-xs mx-auto">
@@ -186,9 +197,9 @@ export function PrimaryImageUpload({
       {(!displayImageUrl || !primaryImage) && !uploading && productId && (
         <div
           className={cn(
-            "border-2 border-dashed border-gray-300 rounded-lg p-6 text-center transition-colors cursor-pointer hover:border-gray-400",
-            dragActive && "border-black bg-gray-50",
-            error && "border-red-500 bg-red-50"
+            'border-2 border-dashed border-gray-300 rounded-lg p-6 text-center transition-colors cursor-pointer hover:border-gray-400',
+            dragActive && 'border-black bg-gray-50',
+            error && 'border-red-500 bg-red-50'
           )}
           onDragEnter={handleDragIn}
           onDragLeave={handleDragOut}
@@ -212,9 +223,7 @@ export function PrimaryImageUpload({
               <p className="text-sm font-medium">
                 Cliquez ou glissez une image principale
               </p>
-              <p className="text-xs text-gray-500">
-                JPG, PNG, WebP (max 10MB)
-              </p>
+              <p className="text-xs text-gray-500">JPG, PNG, WebP (max 10MB)</p>
               <p className="text-xs text-blue-600 mt-1">
                 ✨ Cette image sera automatiquement dans votre galerie (étape 5)
               </p>
@@ -238,7 +247,9 @@ export function PrimaryImageUpload({
         <div className="space-y-3">
           <div className="flex items-center space-x-2 text-black">
             <Loader2 className="w-5 h-5 animate-spin" />
-            <span className="text-sm font-medium">Upload de l'image principale...</span>
+            <span className="text-sm font-medium">
+              Upload de l'image principale...
+            </span>
           </div>
         </div>
       )}
@@ -291,5 +302,5 @@ export function PrimaryImageUpload({
         </div>
       )}
     </div>
-  )
+  );
 }

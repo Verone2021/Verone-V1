@@ -44,14 +44,14 @@ source:
 displayed_in:
   - component: src/app/contacts-organisations/page.tsx
     location: "Card 'Total Organisations' (lignes ~100-125)"
-    description: "Première carte statistiques page accueil"
+    description: 'Première carte statistiques page accueil'
     screenshot: contacts-organisations-page.png
 
 thresholds:
-  excellent: "> 200"
-  good: "100-200"
-  warning: "50-100"
-  critical: "< 50"
+  excellent: '> 200'
+  good: '100-200'
+  warning: '50-100'
+  critical: '< 50'
   interpretation: |
     - > 200 : Base clients/fournisseurs solide
     - 100-200 : Portefeuille en développement
@@ -59,17 +59,17 @@ thresholds:
     - < 50 : Phase initiale
 
 tests:
-  - scenario: "Base standard"
+  - scenario: 'Base standard'
     inputs:
       organisations_count: 157
     expected_output: 157
-    threshold_expected: "good"
+    threshold_expected: 'good'
 
-  - scenario: "Démarrage"
+  - scenario: 'Démarrage'
     inputs:
       organisations_count: 45
     expected_output: 45
-    threshold_expected: "critical"
+    threshold_expected: 'critical'
 
 metadata:
   created_at: 2025-10-22

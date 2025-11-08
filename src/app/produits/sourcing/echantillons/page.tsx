@@ -13,7 +13,9 @@
  */
 
 import { useState } from 'react';
+
 import { useRouter } from 'next/navigation';
+
 import {
   Archive,
   ArchiveRestore,
@@ -34,30 +36,7 @@ import {
   Eye,
   Info,
 } from 'lucide-react';
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
-import { Input } from '@/components/ui/input';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogHeader,
-  DialogTitle,
-} from '@/components/ui/dialog';
+
 import {
   AlertDialog,
   AlertDialogAction,
@@ -68,30 +47,50 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
+import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from '@/components/ui/card';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Textarea } from '@/components/ui/textarea';
 import {
   Tooltip,
   TooltipContent,
   TooltipProvider,
   TooltipTrigger,
 } from '@/components/ui/tooltip';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Label } from '@/components/ui/label';
-import { Textarea } from '@/components/ui/textarea';
-import {
-  CustomerSelector,
-  UnifiedCustomer,
-} from '@/components/business/customer-selector';
-import {
-  UniversalProductSelectorV2,
-  SelectedProduct,
-} from '@/components/business/universal-product-selector-v2';
-import { CustomerBadge } from '@/components/business/customer-badge';
+import { createClient } from '@/lib/supabase/client';
+import { useToast } from '@/shared/modules/common/hooks';
+import { CustomerBadge } from '@/shared/modules/customers/components/badges/CustomerBadge';
 import {
   useCustomerSamples,
   CustomerSample,
 } from '@/shared/modules/customers/hooks';
-import { createClient } from '@/lib/supabase/client';
-import { useToast } from '@/shared/modules/common/hooks';
+import type { UnifiedCustomer } from '@/shared/modules/orders/components/modals/customer-selector';
+import { CustomerSelector } from '@/shared/modules/orders/components/modals/customer-selector';
+import type { SelectedProduct } from '@/shared/modules/products/components/selectors/UniversalProductSelectorV2';
+import { UniversalProductSelectorV2 } from '@/shared/modules/products/components/selectors/UniversalProductSelectorV2';
 
 export default function SourcingEchantillonsPage() {
   const router = useRouter();
@@ -434,7 +433,7 @@ export default function SourcingEchantillonsPage() {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
         <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-black mx-auto mb-4"></div>
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-black mx-auto mb-4" />
           <p className="text-gray-600">Chargement des échantillons...</p>
         </div>
       </div>
@@ -1125,7 +1124,7 @@ export default function SourcingEchantillonsPage() {
         context="consultations"
         selectedProducts={selectedProduct ? [selectedProduct] : []}
         showQuantity={false}
-        showImages={true}
+        showImages
       />
 
       {/* AlertDialog Confirmation Suppression */}

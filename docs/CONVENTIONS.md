@@ -14,32 +14,32 @@ Ce document définit les conventions et standards à suivre pour maintenir la co
 
 ### **Types de Clients**
 
-| Frontend | Backend DB | Documentation | Description |
-|----------|------------|---------------|-------------|
-| `professional` | `organization` | Client B2B | Entreprises, organisations |
-| `individual` | `individual` | Client B2C | Particuliers, personnes physiques |
+| Frontend       | Backend DB     | Documentation | Description                       |
+| -------------- | -------------- | ------------- | --------------------------------- |
+| `professional` | `organization` | Client B2B    | Entreprises, organisations        |
+| `individual`   | `individual`   | Client B2C    | Particuliers, personnes physiques |
 
 **Règle** : Utiliser `professional/individual` dans le code TypeScript/React, `organization/individual` dans la DB.
 
 ### **Statuts Commandes**
 
-| Code | Français | Description |
-|------|----------|-------------|
-| `draft` | Brouillon | Commande en cours de création |
-| `confirmed` | Confirmée | Commande validée, stock réservé |
-| `partially_shipped` | Partiellement expédiée | Livraison partielle |
-| `shipped` | Expédiée | Totalement expédiée |
-| `delivered` | Livrée | Reçue par le client |
-| `cancelled` | Annulée | Commande annulée |
+| Code                | Français               | Description                     |
+| ------------------- | ---------------------- | ------------------------------- |
+| `draft`             | Brouillon              | Commande en cours de création   |
+| `confirmed`         | Confirmée              | Commande validée, stock réservé |
+| `partially_shipped` | Partiellement expédiée | Livraison partielle             |
+| `shipped`           | Expédiée               | Totalement expédiée             |
+| `delivered`         | Livrée                 | Reçue par le client             |
+| `cancelled`         | Annulée                | Commande annulée                |
 
 ### **Types Mouvements Stock**
 
-| Type | Direction | Description |
-|------|-----------|-------------|
-| `IN` | Entrée | Réception, ajustement positif |
-| `OUT` | Sortie | Vente, ajustement négatif |
-| `ADJUST` | Ajustement | Correction inventaire |
-| `TRANSFER` | Transfert | Entre entrepôts |
+| Type       | Direction  | Description                   |
+| ---------- | ---------- | ----------------------------- |
+| `IN`       | Entrée     | Réception, ajustement positif |
+| `OUT`      | Sortie     | Vente, ajustement négatif     |
+| `ADJUST`   | Ajustement | Correction inventaire         |
+| `TRANSFER` | Transfert  | Entre entrepôts               |
 
 ---
 
@@ -68,6 +68,7 @@ verone-back-office/
 ```
 
 **Règles** :
+
 - `manifests/` : Specs immuables, ne pas modifier après validation
 - `MEMORY-BANK/` : État actuel, mettre à jour après chaque sprint
 - `.serena/memories/` : NE PAS UTILISER (deprecated)
@@ -81,26 +82,26 @@ verone-back-office/
 ```typescript
 // ✅ BON - Interface avec I prefix pour types DB
 interface IProduct {
-  id: string
-  name: string
-  sku: string
+  id: string;
+  name: string;
+  sku: string;
 }
 
 // ✅ BON - Type pour props composants
 type ProductCardProps = {
-  product: IProduct
-  onClick?: () => void
-}
+  product: IProduct;
+  onClick?: () => void;
+};
 
 // ✅ BON - Enum en SCREAMING_SNAKE_CASE
 enum StockMovementType {
   IN = 'IN',
   OUT = 'OUT',
-  ADJUST = 'ADJUST'
+  ADJUST = 'ADJUST',
 }
 
 // ❌ MAUVAIS - Pas de any
-const data: any = fetchData() // INTERDIT
+const data: any = fetchData(); // INTERDIT
 ```
 
 ### **React Components**
@@ -126,27 +127,27 @@ export function ProductCard(props) { // INTERDIT
 ```typescript
 // ✅ BON - Hook avec gestion erreur
 export function useProducts() {
-  const [loading, setLoading] = useState(false)
-  const [error, setError] = useState<Error | null>(null)
-  const [products, setProducts] = useState<IProduct[]>([])
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<Error | null>(null);
+  const [products, setProducts] = useState<IProduct[]>([]);
 
   // Logic...
 
-  return { products, loading, error }
+  return { products, loading, error };
 }
 ```
 
 ### **Naming Conventions**
 
-| Type | Convention | Exemple |
-|------|------------|---------|
-| Fichiers composants | PascalCase | `ProductCard.tsx` |
-| Fichiers hooks | kebab-case | `use-products.ts` |
-| Fichiers utils | kebab-case | `format-price.ts` |
-| Variables | camelCase | `productName` |
-| Constantes | SCREAMING_SNAKE_CASE | `MAX_UPLOAD_SIZE` |
-| Types/Interfaces | PascalCase | `ProductType` |
-| Enums | PascalCase | `OrderStatus` |
+| Type                | Convention           | Exemple           |
+| ------------------- | -------------------- | ----------------- |
+| Fichiers composants | PascalCase           | `ProductCard.tsx` |
+| Fichiers hooks      | kebab-case           | `use-products.ts` |
+| Fichiers utils      | kebab-case           | `format-price.ts` |
+| Variables           | camelCase            | `productName`     |
+| Constantes          | SCREAMING_SNAKE_CASE | `MAX_UPLOAD_SIZE` |
+| Types/Interfaces    | PascalCase           | `ProductType`     |
+| Enums               | PascalCase           | `OrderStatus`     |
 
 ---
 
@@ -197,12 +198,12 @@ CREATE TABLE sales_orders (
 ```css
 /* ✅ AUTORISÉ */
 --color-black: #000000;
---color-white: #FFFFFF;
+--color-white: #ffffff;
 --color-gray-*: #xxx; /* Nuances de gris uniquement */
 
 /* ❌ INTERDIT ABSOLU */
 --color-yellow: #xxx; /* JAMAIS de jaune */
---color-gold: #xxx;   /* JAMAIS de doré */
+--color-gold: #xxx; /* JAMAIS de doré */
 ```
 
 ### **Composants UI**
@@ -220,12 +221,12 @@ CREATE TABLE sales_orders (
 ```typescript
 // ❌ ÉVITER - Commentaires évidents
 // Incrémente le compteur
-counter++
+counter++;
 
 // ✅ BON - Commentaires business logic
 // Applique remise B2B si commande > 500€
 if (order.type === 'professional' && order.total > 500) {
-  applyDiscount(0.1)
+  applyDiscount(0.1);
 }
 ```
 
@@ -238,8 +239,8 @@ if (order.type === 'professional' && order.total > 500) {
  * @param vatRate Taux de TVA (défaut 20%)
  * @returns Prix TTC arrondi à 2 décimales
  */
-function calculatePriceTTC(priceHT: number, vatRate = 0.20): number {
-  return Math.round(priceHT * (1 + vatRate) * 100) / 100
+function calculatePriceTTC(priceHT: number, vatRate = 0.2): number {
+  return Math.round(priceHT * (1 + vatRate) * 100) / 100;
 }
 ```
 
@@ -270,18 +271,18 @@ git commit -m "WIP" # Pas de commit WIP
 
 ### **Emojis Commits**
 
-| Emoji | Usage |
-|-------|-------|
-| ✨ | Nouvelle fonctionnalité |
-| 🐛 | Correction de bug |
-| ♻️ | Refactoring |
-| 🎨 | UI/UX améliorations |
-| ⚡ | Performance |
-| 📝 | Documentation |
-| 🔒 | Sécurité |
-| 🗃️ | Base de données |
-| ✅ | Tests |
-| 🚀 | Déploiement |
+| Emoji | Usage                   |
+| ----- | ----------------------- |
+| ✨    | Nouvelle fonctionnalité |
+| 🐛    | Correction de bug       |
+| ♻️    | Refactoring             |
+| 🎨    | UI/UX améliorations     |
+| ⚡    | Performance             |
+| 📝    | Documentation           |
+| 🔒    | Sécurité                |
+| 🗃️    | Base de données         |
+| ✅    | Tests                   |
+| 🚀    | Déploiement             |
 
 ---
 
@@ -303,21 +304,24 @@ Avant chaque commit, vérifier :
 ## 📊 **MÉTRIQUES QUALITÉ**
 
 ### **Performance**
+
 - Dashboard : < 2s
 - Pages liste : < 3s
 - Actions utilisateur : < 500ms
 
 ### **Code Quality**
+
 - TypeScript strict : 100%
 - ESLint : 0 erreurs
 - Coverage tests : > 80%
 
 ### **UX**
+
 - Mobile responsive : 100%
 - Accessibilité WCAG : AA
 - Console errors : 0
 
 ---
 
-*Document de référence pour tous les développements Vérone Back Office.*
-*En cas de doute, ce document fait autorité.*
+_Document de référence pour tous les développements Vérone Back Office._
+_En cas de doute, ce document fait autorité._

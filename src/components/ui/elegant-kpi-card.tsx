@@ -6,7 +6,7 @@ import type { LucideIcon } from 'lucide-react';
 import { ArrowUp, ArrowDown } from 'lucide-react';
 
 import { colors, componentShadows } from '@/lib/design-system';
-import { cn } from '@/lib/utils';
+import { cn } from '@verone/utils';
 
 export interface ElegantKpiCardProps {
   label: string;

@@ -64,16 +64,16 @@ const handleCreateSourcing = async () => {
   const data = {
     name: 'Fauteuil Vintage Bleu',
     supplier_page_url: 'https://supplier.com/product/123',
-    cost_price: 150
-  }
+    cost_price: 150,
+  };
 
-  const product = await createSourcingProduct(data)
+  const product = await createSourcingProduct(data);
 
   if (product) {
-    toast.success('✅ Produit en sourcing créé')
-    refetch()
+    toast.success('✅ Produit en sourcing créé');
+    refetch();
   }
-}
+};
 ```
 
 ---
@@ -122,15 +122,15 @@ const handleCreateSourcing = async () => {
 
 ```typescript
 const handleOrderSample = async (productId: string) => {
-  if (!confirm('Commander 1 échantillon ?')) return
+  if (!confirm('Commander 1 échantillon ?')) return;
 
-  const po = await orderSample(productId)
+  const po = await orderSample(productId);
 
   if (po) {
-    toast.success('✅ Échantillon commandé')
-    router.push(`/achats/commandes/${po.id}`)
+    toast.success('✅ Échantillon commandé');
+    router.push(`/achats/commandes/${po.id}`);
   }
-}
+};
 ```
 
 ---
@@ -190,15 +190,15 @@ const handleOrderSample = async (productId: string) => {
 
 ```typescript
 const handleValidate = async (productId: string) => {
-  if (!confirm('Valider ce produit au catalogue ?')) return
+  if (!confirm('Valider ce produit au catalogue ?')) return;
 
-  const success = await validateSourcing(productId)
+  const success = await validateSourcing(productId);
 
   if (success) {
-    toast.success('✅ Produit validé au catalogue')
-    router.push(`/produits/catalogue/${productId}`)
+    toast.success('✅ Produit validé au catalogue');
+    router.push(`/produits/catalogue/${productId}`);
   }
-}
+};
 ```
 
 ---

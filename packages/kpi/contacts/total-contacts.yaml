@@ -36,10 +36,10 @@ displayed_in:
     location: "Card 'Total contacts' (ligne ~172-192)"
 
 thresholds:
-  excellent: "> 500"
-  good: "200-500"
-  warning: "50-200"
-  critical: "< 50"
+  excellent: '> 500'
+  good: '200-500'
+  warning: '50-200'
+  critical: '< 50'
 
 metadata:
   created_at: 2025-10-22

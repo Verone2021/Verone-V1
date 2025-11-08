@@ -1,19 +1,20 @@
-"use client"
+'use client';
 
-import { Trash2, X, AlertTriangle } from 'lucide-react'
-import { ButtonV2 } from '@/components/ui/button'
-import { cn } from '@/lib/utils'
+import { Trash2, X, AlertTriangle } from 'lucide-react';
+
+import { ButtonV2 } from '@/components/ui/button';
+import { cn } from '@verone/utils';
 
 interface ConfirmDeleteModalProps {
-  title: string
-  message: string
-  details?: string[]
-  itemName?: string
-  itemCount?: number
-  onConfirm: () => void
-  onCancel: () => void
-  loading?: boolean
-  className?: string
+  title: string;
+  message: string;
+  details?: string[];
+  itemName?: string;
+  itemCount?: number;
+  onConfirm: () => void;
+  onCancel: () => void;
+  loading?: boolean;
+  className?: string;
 }
 
 export function ConfirmDeleteModal({
@@ -25,11 +26,10 @@ export function ConfirmDeleteModal({
   onConfirm,
   onCancel,
   loading = false,
-  className
+  className,
 }: ConfirmDeleteModalProps) {
-
   return (
-    <div className={cn("bg-white rounded-lg max-w-md w-full p-6", className)}>
+    <div className={cn('bg-white rounded-lg max-w-md w-full p-6', className)}>
       {/* En-tête */}
       <div className="flex items-center space-x-3 mb-4">
         <div className="p-2 bg-red-100 text-red-600 rounded">
@@ -80,11 +80,7 @@ export function ConfirmDeleteModal({
 
       {/* Actions */}
       <div className="flex items-center justify-end space-x-3">
-        <ButtonV2
-          variant="outline"
-          onClick={onCancel}
-          disabled={loading}
-        >
+        <ButtonV2 variant="outline" onClick={onCancel} disabled={loading}>
           Annuler
         </ButtonV2>
         <ButtonV2
@@ -107,5 +103,5 @@ export function ConfirmDeleteModal({
         </ButtonV2>
       </div>
     </div>
-  )
+  );
 }

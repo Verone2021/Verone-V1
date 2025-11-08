@@ -9,10 +9,12 @@
 ## 🎯 SYMPTÔMES
 
 **Affichage actuel (ILLISIBLE)** :
+
 - `\u2705 Commande Valid\u00e9e`
 - `\ud83d\udea8 Stock Critique`
 
 **Affichage attendu (LISIBLE)** :
+
 - `✅ Commande Validée`
 - `🚨 Stock Critique`
 
@@ -65,6 +67,7 @@ PGPASSWORD="VOTRE_PASSWORD" psql \
 ### Test 1 : Vérifier Base de Données
 
 **Query SQL dans Supabase Studio** :
+
 ```sql
 -- Afficher 10 dernières notifications
 SELECT id, title, message, created_at
@@ -79,19 +82,27 @@ WHERE title LIKE '%\u%' OR message LIKE '%\u%';
 ```
 
 **Résultat attendu** :
+
 - Titres affichent emojis : `✅`, `🚨`
 - `remaining_unicode_codes` = **0**
 
 ### Test 2 : Vérifier Application Web (MCP Browser)
 
 1. **Recharger Dashboard**
+
    ```typescript
-   mcp__playwright__browser_navigate({ url: 'http://localhost:3000/dashboard' })
+   mcp__playwright__browser_navigate({
+     url: 'http://localhost:3000/dashboard',
+   });
    ```
 
 2. **Cliquer Badge Notifications**
+
    ```typescript
-   mcp__playwright__browser_click({ element: 'notifications button', ref: 'e166' })
+   mcp__playwright__browser_click({
+     element: 'notifications button',
+     ref: 'e166',
+   });
    ```
 
 3. **Vérifier Titres Lisibles**
@@ -99,13 +110,16 @@ WHERE title LIKE '%\u%' OR message LIKE '%\u%';
    - ✅ "🚨 Stock Critique" (au lieu de `\ud83d\udea8 Stock Critique`)
 
 4. **Screenshot Preuve**
+
    ```typescript
-   mcp__playwright__browser_take_screenshot({ filename: 'notifications-fixed-unicode.png' })
+   mcp__playwright__browser_take_screenshot({
+     filename: 'notifications-fixed-unicode.png',
+   });
    ```
 
 5. **Console Error Checking**
    ```typescript
-   mcp__playwright__browser_console_messages({ onlyErrors: true })
+   mcp__playwright__browser_console_messages({ onlyErrors: true });
    ```
    **Résultat attendu** : [] (ZÉRO erreur)
 
@@ -131,17 +145,17 @@ DROP TABLE notifications_backup_20251014;
 
 ### Corrections Appliquées
 
-| Code Unicode | Caractère | Usage |
-|--------------|-----------|-------|
-| `\u2705` | ✅ | Check mark (commandes validées) |
-| `\ud83d\udea8` | 🚨 | Police light (alertes urgentes) |
-| `\u00e9` | é | Accent aigu français |
-| `\u00e0` | à | Accent grave français |
-| `\u00e8` | è | Accent grave français |
-| `\u26a0\ufe0f` | ⚠️ | Warning sign |
-| `\u2139\ufe0f` | ℹ️ | Information |
-| `\ud83d\udce6` | 📦 | Package |
-| `\ud83d\udcbc` | 💼 | Briefcase |
+| Code Unicode   | Caractère | Usage                           |
+| -------------- | --------- | ------------------------------- |
+| `\u2705`       | ✅        | Check mark (commandes validées) |
+| `\ud83d\udea8` | 🚨        | Police light (alertes urgentes) |
+| `\u00e9`       | é         | Accent aigu français            |
+| `\u00e0`       | à         | Accent grave français           |
+| `\u00e8`       | è         | Accent grave français           |
+| `\u26a0\ufe0f` | ⚠️        | Warning sign                    |
+| `\u2139\ufe0f` | ℹ️        | Information                     |
+| `\ud83d\udce6` | 📦        | Package                         |
+| `\ud83d\udcbc` | 💼        | Briefcase                       |
 
 ### Tables Modifiées
 
@@ -154,6 +168,7 @@ DROP TABLE notifications_backup_20251014;
 ## 🚨 IMPORTANT
 
 **Permissions requises** :
+
 - Accès Supabase Studio avec droits UPDATE sur table `notifications`
 - OU credentials psql avec accès direct base
 
@@ -173,11 +188,12 @@ DROP TABLE notifications_backup_20251014;
 4. Vérifier query vérification retourne 0 codes restants
 
 **Fichiers référence** :
+
 - Script SQL : `/scripts/fix-notifications-unicode.sql`
 - Screenshot bug : `.playwright-mcp/notifications-unicode-escape-bug.png`
 - Rapport session : `/MEMORY-BANK/sessions/RAPPORT-SESSION-FEATURE5-NOTIFICATIONS-2025-10-14.md`
 
 ---
 
-*Guide créé automatiquement - 2025-10-14*
-*Feature 5 : Fix Unicode Notifications*
+_Guide créé automatiquement - 2025-10-14_
+_Feature 5 : Fix Unicode Notifications_

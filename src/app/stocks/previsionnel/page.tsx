@@ -11,6 +11,7 @@
  */
 
 import { useRouter } from 'next/navigation';
+
 import {
   ArrowLeft,
   Clock,
@@ -21,6 +22,15 @@ import {
   ShoppingCart,
   Truck,
 } from 'lucide-react';
+
+import {
+  Accordion,
+  AccordionContent,
+  AccordionItem,
+  AccordionTrigger,
+} from '@/components/ui/accordion';
+import { Badge } from '@/components/ui/badge';
+import { ButtonV2 } from '@/components/ui/button';
 import {
   Card,
   CardContent,
@@ -28,18 +38,10 @@ import {
   CardHeader,
   CardTitle,
 } from '@/components/ui/card';
-import { ButtonV2 } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import {
-  Accordion,
-  AccordionContent,
-  AccordionItem,
-  AccordionTrigger,
-} from '@/components/ui/accordion';
-import { useStockDashboard } from '@/shared/modules/stock/hooks';
-import { OrderItemsTable } from '@/components/business/order-items-table';
 import { StockKPICard } from '@/components/ui-v2/stock/StockKPICard';
+import { OrderItemsTable } from '@/shared/modules/orders/components/tables/OrderItemsTable';
+import { useStockDashboard } from '@/shared/modules/stock/hooks';
 
 export default function StockPrevisionnelPage() {
   const router = useRouter();
@@ -50,16 +52,16 @@ export default function StockPrevisionnelPage() {
       <div className="min-h-screen bg-white p-6 sm:p-8">
         <div className="max-w-7xl mx-auto space-y-6">
           {/* Skeleton loading */}
-          <div className="h-32 bg-gray-200 rounded-lg animate-pulse"></div>
+          <div className="h-32 bg-gray-200 rounded-lg animate-pulse" />
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
             {[1, 2, 3, 4].map(i => (
               <div
                 key={i}
                 className="h-24 bg-gray-200 rounded-lg animate-pulse"
-              ></div>
+              />
             ))}
           </div>
-          <div className="h-96 bg-gray-200 rounded-lg animate-pulse"></div>
+          <div className="h-96 bg-gray-200 rounded-lg animate-pulse" />
         </div>
       </div>
     );
@@ -215,7 +217,8 @@ export default function StockPrevisionnelPage() {
                               <Truck className="h-5 w-5 text-green-600" />
                               <div className="text-left">
                                 <p className="font-semibold text-black">
-                                  {order.order_number || `Commande #${order.id.slice(0, 8)}`}
+                                  {order.order_number ||
+                                    `Commande #${order.id.slice(0, 8)}`}
                                 </p>
                                 <p className="text-xs text-gray-500">
                                   {order.supplier_name || 'Fournisseur'}
@@ -230,7 +233,10 @@ export default function StockPrevisionnelPage() {
                           </div>
                         </AccordionTrigger>
                         <AccordionContent className="pt-4">
-                          <OrderItemsTable orderId={order.id} orderType="purchase" />
+                          <OrderItemsTable
+                            orderId={order.id}
+                            orderType="purchase"
+                          />
                         </AccordionContent>
                       </AccordionItem>
                     ))}
@@ -259,7 +265,8 @@ export default function StockPrevisionnelPage() {
                               <ShoppingCart className="h-5 w-5 text-red-600" />
                               <div className="text-left">
                                 <p className="font-semibold text-black">
-                                  {order.order_number || `Commande #${order.id.slice(0, 8)}`}
+                                  {order.order_number ||
+                                    `Commande #${order.id.slice(0, 8)}`}
                                 </p>
                                 <p className="text-xs text-gray-500">
                                   {order.client_name || 'Client'}
@@ -274,7 +281,10 @@ export default function StockPrevisionnelPage() {
                           </div>
                         </AccordionTrigger>
                         <AccordionContent className="pt-4">
-                          <OrderItemsTable orderId={order.id} orderType="sales" />
+                          <OrderItemsTable
+                            orderId={order.id}
+                            orderType="sales"
+                          />
                         </AccordionContent>
                       </AccordionItem>
                     ))}

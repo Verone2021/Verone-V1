@@ -5,65 +5,89 @@
  * Permet la navigation vers les détails produits et la gestion CRUD
  */
 
-"use client"
+'use client';
 
-import { useEffect, useState } from 'react'
-import { useParams, useRouter } from 'next/navigation'
-import { ArrowLeft, Plus, Edit, Trash2, Package, Grid3X3, Tag, Clock } from 'lucide-react'
-import { ButtonV2 } from '@/components/ui/button'
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
-import { Badge } from '@/components/ui/badge'
-import { useFamilies } from '@/shared/modules/categories/hooks'
-import { useCategories } from '@/shared/modules/categories/hooks'
-import { useSubcategories } from '@/shared/modules/categories/hooks'
-import { useProducts } from '@/shared/modules/products/hooks'
-import { VéroneCard } from '@/components/ui/verone-card'
-import type { Database } from '@/lib/supabase/types'
+import { useEffect, useState } from 'react';
 
-type Family = Database['public']['Tables']['families']['Row']
-type Category = Database['public']['Tables']['categories']['Row']
-type Subcategory = Database['public']['Tables']['subcategories']['Row']
+import { useParams, useRouter } from 'next/navigation';
+
+import {
+  ArrowLeft,
+  Plus,
+  Edit,
+  Trash2,
+  Package,
+  Grid3X3,
+  Tag,
+  Clock,
+} from 'lucide-react';
+
+import { Badge } from '@/components/ui/badge';
+import { ButtonV2 } from '@/components/ui/button';
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from '@/components/ui/card';
+import { VéroneCard } from '@/components/ui/verone-card';
+import type { Database } from '@/lib/supabase/types';
+import { useFamilies } from '@/shared/modules/categories/hooks';
+import { useCategories } from '@/shared/modules/categories/hooks';
+import { useSubcategories } from '@/shared/modules/categories/hooks';
+import { useProducts } from '@/shared/modules/products/hooks';
+
+type Family = Database['public']['Tables']['families']['Row'];
+type Category = Database['public']['Tables']['categories']['Row'];
+type Subcategory = Database['public']['Tables']['subcategories']['Row'];
 
 export default function SubcategoryDetailPage() {
-  const params = useParams()
-  const router = useRouter()
-  const subcategoryId = params.subcategoryId as string
+  const params = useParams();
+  const router = useRouter();
+  const subcategoryId = params.subcategoryId as string;
 
-  const { families, loading: familiesLoading } = useFamilies()
-  const { allCategories, loading: categoriesLoading } = useCategories()
-  const { subcategories, loading: subcategoriesLoading } = useSubcategories()
+  const { families, loading: familiesLoading } = useFamilies();
+  const { allCategories, loading: categoriesLoading } = useCategories();
+  const { subcategories, loading: subcategoriesLoading } = useSubcategories();
 
   // ✅ Hook pour charger les produits de la sous-catégorie
   const { products, loading: productsLoading } = useProducts(
     subcategoryId ? { subcategory_id: subcategoryId } : undefined
-  )
+  );
 
-  const [subcategory, setSubcategory] = useState<Subcategory | null>(null)
-  const [category, setCategory] = useState<Category | null>(null)
-  const [family, setFamily] = useState<Family | null>(null)
+  const [subcategory, setSubcategory] = useState<Subcategory | null>(null);
+  const [category, setCategory] = useState<Category | null>(null);
+  const [family, setFamily] = useState<Family | null>(null);
 
   useEffect(() => {
     if (subcategories && subcategoryId) {
-      const foundSubcategory = subcategories.find(s => s.id === subcategoryId)
-      setSubcategory(foundSubcategory || null)
+      const foundSubcategory = subcategories.find(s => s.id === subcategoryId);
+      setSubcategory(foundSubcategory || null);
     }
-  }, [subcategories, subcategoryId])
+  }, [subcategories, subcategoryId]);
 
   useEffect(() => {
     if (allCategories && subcategory?.category_id) {
-      const foundCategory = allCategories.find(c => c.id === subcategory.category_id)
-      setCategory(foundCategory || null)
+      const foundCategory = allCategories.find(
+        c => c.id === subcategory.category_id
+      );
+      setCategory(foundCategory || null);
     }
-  }, [allCategories, subcategory])
+  }, [allCategories, subcategory]);
 
   useEffect(() => {
     if (families && category?.family_id) {
-      const foundFamily = families.find(f => f.id === category.family_id)
-      setFamily(foundFamily || null)
+      const foundFamily = families.find(f => f.id === category.family_id);
+      setFamily(foundFamily || null);
     }
-  }, [families, category])
+  }, [families, category]);
 
-  const loading = familiesLoading || categoriesLoading || subcategoriesLoading || productsLoading
+  const loading =
+    familiesLoading ||
+    categoriesLoading ||
+    subcategoriesLoading ||
+    productsLoading;
 
   if (loading) {
     return (
@@ -75,19 +99,24 @@ export default function SubcategoryDetailPage() {
           </div>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {[...Array(6)].map((_, i) => (
-              <div key={i} className="h-48 bg-gray-200 rounded-lg animate-pulse" />
+              <div
+                key={i}
+                className="h-48 bg-gray-200 rounded-lg animate-pulse"
+              />
             ))}
           </div>
         </div>
       </div>
-    )
+    );
   }
 
   if (!subcategory) {
     return (
       <div className="min-h-screen bg-white p-6">
         <div className="max-w-6xl mx-auto text-center">
-          <h1 className="text-2xl font-bold text-black mb-4">Sous-catégorie non trouvée</h1>
+          <h1 className="text-2xl font-bold text-black mb-4">
+            Sous-catégorie non trouvée
+          </h1>
           <ButtonV2
             onClick={() => router.push('/produits/catalogue/categories')}
             variant="outline"
@@ -98,20 +127,20 @@ export default function SubcategoryDetailPage() {
           </ButtonV2>
         </div>
       </div>
-    )
+    );
   }
 
   const handleProductClick = (productId: string) => {
-    router.push(`/catalogue/${productId}`)
-  }
+    router.push(`/catalogue/${productId}`);
+  };
 
   const handleBackToCategory = () => {
     if (category) {
-      router.push(`/catalogue/categories/${category.id}`)
+      router.push(`/catalogue/categories/${category.id}`);
     } else {
-      router.push('/produits/catalogue/categories')
+      router.push('/produits/catalogue/categories');
     }
-  }
+  };
 
   return (
     <div className="min-h-screen bg-white p-6">
@@ -142,7 +171,9 @@ export default function SubcategoryDetailPage() {
                   <>
                     <span
                       className="hover:text-black cursor-pointer"
-                      onClick={() => router.push(`/catalogue/families/${family.id}`)}
+                      onClick={() =>
+                        router.push(`/catalogue/families/${family.id}`)
+                      }
                     >
                       {family.name}
                     </span>
@@ -153,22 +184,38 @@ export default function SubcategoryDetailPage() {
                   <>
                     <span
                       className="hover:text-black cursor-pointer"
-                      onClick={() => router.push(`/catalogue/categories/${category.id}`)}
+                      onClick={() =>
+                        router.push(`/catalogue/categories/${category.id}`)
+                      }
                     >
                       {category.name}
                     </span>
                     <span>•</span>
                   </>
                 )}
-                <span className="text-black font-medium">{subcategory.name}</span>
+                <span className="text-black font-medium">
+                  {subcategory.name}
+                </span>
               </div>
-              <h1 className="text-3xl font-bold text-black">{subcategory.name}</h1>
+              <h1 className="text-3xl font-bold text-black">
+                {subcategory.name}
+              </h1>
               <div className="text-gray-600 mt-1">
                 {products.length} produit{products.length !== 1 ? 's' : ''}
                 {subcategory.is_active ? (
-                  <Badge variant="outline" className="ml-2 border-black text-black">Actif</Badge>
+                  <Badge
+                    variant="outline"
+                    className="ml-2 border-black text-black"
+                  >
+                    Actif
+                  </Badge>
                 ) : (
-                  <Badge variant="outline" className="ml-2 border-gray-500 text-gray-600">Inactif</Badge>
+                  <Badge
+                    variant="outline"
+                    className="ml-2 border-gray-500 text-gray-600"
+                  >
+                    Inactif
+                  </Badge>
                 )}
               </div>
             </div>
@@ -210,7 +257,9 @@ export default function SubcategoryDetailPage() {
               <div className="flex items-center space-x-3">
                 <Package className="w-8 h-8 text-black" />
                 <div>
-                  <p className="text-2xl font-bold text-black">{products.length}</p>
+                  <p className="text-2xl font-bold text-black">
+                    {products.length}
+                  </p>
                   <p className="text-gray-600">Produits</p>
                 </div>
               </div>
@@ -222,7 +271,9 @@ export default function SubcategoryDetailPage() {
               <div className="flex items-center space-x-3">
                 <Grid3X3 className="w-8 h-8 text-black" />
                 <div>
-                  <p className="text-lg font-bold text-black">Ordre {subcategory.display_order || 0}</p>
+                  <p className="text-lg font-bold text-black">
+                    Ordre {subcategory.display_order || 0}
+                  </p>
                   <p className="text-gray-600">Position</p>
                 </div>
               </div>
@@ -234,7 +285,10 @@ export default function SubcategoryDetailPage() {
               <div className="flex items-center space-x-3">
                 <Tag className="w-8 h-8 text-black" />
                 <div>
-                  <Badge variant="outline" className="text-sm px-2 py-1 border-black text-black">
+                  <Badge
+                    variant="outline"
+                    className="text-sm px-2 py-1 border-black text-black"
+                  >
                     #{subcategory.slug}
                   </Badge>
                   <p className="text-gray-600 mt-1">Identifiant</p>
@@ -249,7 +303,11 @@ export default function SubcategoryDetailPage() {
                 <Clock className="w-8 h-8 text-black" />
                 <div>
                   <p className="text-sm font-bold text-black">
-                    {subcategory.created_at ? new Date(subcategory.created_at).toLocaleDateString('fr-FR') : 'N/A'}
+                    {subcategory.created_at
+                      ? new Date(subcategory.created_at).toLocaleDateString(
+                          'fr-FR'
+                        )
+                      : 'N/A'}
                   </p>
                   <p className="text-gray-600">Créée le</p>
                 </div>
@@ -278,7 +336,9 @@ export default function SubcategoryDetailPage() {
             <Card>
               <CardContent className="pt-6 text-center">
                 <Package className="w-16 h-16 text-gray-400 mx-auto mb-4" />
-                <p className="text-gray-500 mb-4">Aucun produit dans cette sous-catégorie</p>
+                <p className="text-gray-500 mb-4">
+                  Aucun produit dans cette sous-catégorie
+                </p>
                 <ButtonV2
                   variant="outline"
                   className="border-black text-black hover:bg-black hover:text-white"
@@ -290,7 +350,7 @@ export default function SubcategoryDetailPage() {
             </Card>
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-              {products.map((product) => (
+              {products.map(product => (
                 <VéroneCard
                   key={product.id}
                   title={product.name}
@@ -309,5 +369,5 @@ export default function SubcategoryDetailPage() {
         </div>
       </div>
     </div>
-  )
+  );
 }

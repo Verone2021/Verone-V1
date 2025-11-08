@@ -9,6 +9,7 @@
 ## 🎯 Contexte
 
 Le déploiement sur Vercel échoue systématiquement avec :
+
 ```
 Module not found: Can't resolve '@/lib/logger'
 Module not found: Can't resolve '@/lib/supabase/server'
@@ -16,6 +17,7 @@ Module not found: Can't resolve '@/lib/google-merchant/excel-transformer'
 ```
 
 **Diagnostic confirmé** :
+
 - ✅ Build local fonctionne (0 erreurs)
 - ✅ Tous les fichiers présents sur GitHub
 - ✅ Configuration Vercel correcte
@@ -124,16 +126,19 @@ vercel env add NEXT_PUBLIC_SUPABASE_ANON_KEY production
 ## 📊 Informations de Référence
 
 **Projet Vercel** :
+
 - **Project ID** : `prj_X4eg9YtIF4qS2eTwIRLidsA9SB1d`
 - **Team ID** : `team_sYPhPzbeKMa8CB79SBRDGyji`
 - **URL Project** : https://vercel.com/verone2021s-projects/verone-back-office
 
 **Repository GitHub** :
+
 - **URL** : https://github.com/Verone2021/Verone-backoffice
 - **Branch** : `main`
 - **Dernier commit validé** : `f5cf438` - Build TypeScript 100% fonctionnel
 
 **Build Local** :
+
 ```bash
 npm run build
 # ✓ Compiled successfully

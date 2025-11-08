@@ -1,11 +1,18 @@
 'use client';
 
 import { useState, useEffect, useMemo, useCallback } from 'react';
+
 import { Plus } from 'lucide-react';
+
+import { EcoTaxVatInput } from '@/components/forms/eco-tax-vat-input';
 import { ButtonV2 } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Textarea } from '@/components/ui/textarea';
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from '@/components/ui/card';
 import {
   Dialog,
   DialogContent,
@@ -14,6 +21,8 @@ import {
   DialogTitle,
   DialogTrigger,
 } from '@/components/ui/dialog';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
 import {
   Table,
   TableBody,
@@ -21,28 +30,26 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table';
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from '@/components/ui/card';
-import { CreateOrganisationModal } from './create-organisation-modal';
-import { SupplierSelector } from './supplier-selector';
-import { AddProductToOrderModal } from './add-product-to-order-modal';
-import { EditableOrderItemRow } from './editable-order-item-row';
-import { EcoTaxVatInput } from '@/components/forms/eco-tax-vat-input';
-import { UniversalProductSelectorV2, SelectedProduct } from '@/components/business/universal-product-selector-v2';
-import { useOrganisations, Organisation } from '@/shared/modules/organisations/hooks';
-import { useOrderItems, CreateOrderItemData } from '@/shared/modules/orders/hooks';
+import { Textarea } from '@/components/ui/textarea';
+import { formatCurrency } from '@verone/utils';
+import { useToast } from '@/shared/modules/common/hooks';
+import type { CreateOrderItemData } from '@/shared/modules/orders/hooks';
+import { useOrderItems } from '@/shared/modules/orders/hooks';
 import {
   usePurchaseOrders,
   CreatePurchaseOrderData,
 } from '@/shared/modules/orders/hooks';
-import { formatCurrency } from '@/lib/utils';
-import { useToast } from '@/shared/modules/common/hooks';
-import type { Database } from '@/types/database';
+import type { Organisation } from '@/shared/modules/organisations/hooks';
+import { useOrganisations } from '@/shared/modules/organisations/hooks';
+import type {
+  SelectedProduct} from '@/shared/modules/products/components/selectors/UniversalProductSelectorV2';
+import { AddProductToOrderModal } from './add-product-to-order-modal';
+import { CreateOrganisationModal } from './create-organisation-modal';
+import { SupplierSelector } from './supplier-selector';
+import { EditableOrderItemRow } from './editable-order-item-row';
+
+import { UniversalProductSelectorV2 } from '@/shared/modules/products/components/selectors/UniversalProductSelectorV2';
+import type { Database } from '@verone/types';
 
 type PurchaseOrder = Database['public']['Tables']['purchase_orders']['Row'];
 
@@ -107,6 +114,7 @@ export function PurchaseOrderFormModal({
   );
   const [notes, setNotes] = useState(order?.notes || '');
   const [ecoTaxVatRate, setEcoTaxVatRate] = useState<number | null>(
+    // @ts-ignore - eco_tax_vat_rate exists in DB, types might be stale
     order?.eco_tax_vat_rate ?? null
   );
 
@@ -192,7 +200,10 @@ export function PurchaseOrderFormModal({
   const totalTTC = totalHT * 1.2; // TVA 20%
 
   // Memoize excludeProductIds pour éviter re-renders infinis
-  const excludeProductIds = useMemo(() => items.map(item => item.product_id), [items]);
+  const excludeProductIds = useMemo(
+    () => items.map(item => item.product_id),
+    [items]
+  );
 
   // Gérer changement fournisseur
   const handleSupplierChange = async (supplierId: string | null) => {
@@ -232,7 +243,7 @@ export function PurchaseOrderFormModal({
           unit_price_ht: product.unit_price || 0,
           discount_percentage: product.discount_percentage || 0,
           eco_tax: 0, // TODO: Récupérer eco_tax du produit
-          notes: product.notes || ''
+          notes: product.notes || '',
         };
 
         await addItem(itemData);
@@ -428,7 +439,7 @@ export function PurchaseOrderFormModal({
                         selectedSupplierId={selectedSupplierId || null}
                         onSupplierChange={handleSupplierChange}
                         disabled={loading || isBlocked}
-                        required={true}
+                        required
                         label="Fournisseur"
                         placeholder="Sélectionner un fournisseur..."
                       />
@@ -630,9 +641,9 @@ export function PurchaseOrderFormModal({
           title="Sélectionner des produits pour la commande"
           description="Choisissez les produits à ajouter. Vous pourrez ajuster quantités et prix après sélection."
           excludeProductIds={excludeProductIds}
-          showImages={true}
-          showQuantity={true}
-          showPricing={true}
+          showImages
+          showQuantity
+          showPricing
         />
       )}
     </>

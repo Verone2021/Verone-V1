@@ -19,6 +19,7 @@
 ### 1. Module Organisations (21 KPI)
 
 #### Page d'accueil Organisations (4 KPI)
+
 - [`total-organisations.yaml`](./organisations/total-organisations.yaml) - **Total Organisations**
   - Toutes organisations tous types confondus
   - Status: ✅ Active | Priority: High
@@ -40,6 +41,7 @@
   - Valeur production : 1
 
 #### Page liste Fournisseurs (5 KPI)
+
 - [`suppliers-total.yaml`](./organisations/suppliers-total.yaml) - **Fournisseurs - Total**
   - Stats header liste fournisseurs
   - Status: ✅ Active | Priority: High
@@ -66,18 +68,21 @@
   - Exemple : 16 produits (Fournisseur 9078f112...)
 
 #### Page liste Clients (4 KPI)
+
 - [`customers-total.yaml`](./organisations/customers-total.yaml) - **Clients - Total**
 - [`customers-active.yaml`](./organisations/customers-active.yaml) - **Clients - Actifs**
 - [`customers-archived.yaml`](./organisations/customers-archived.yaml) - **Clients - Archivés**
 - [`customers-favorites.yaml`](./organisations/customers-favorites.yaml) - **Clients - Favoris**
 
 #### Page liste Prestataires (4 KPI)
+
 - [`partners-total.yaml`](./organisations/partners-total.yaml) - **Prestataires - Total**
 - [`partners-active.yaml`](./organisations/partners-active.yaml) - **Prestataires - Actifs**
 - [`partners-archived.yaml`](./organisations/partners-archived.yaml) - **Prestataires - Archivés**
 - [`partners-favorites.yaml`](./organisations/partners-favorites.yaml) - **Prestataires - Favoris**
 
 #### Page détail Organisation (4 KPI)
+
 - [`organisation-products-count.yaml`](./organisations/organisation-products-count.yaml) - **Produits référencés (détail)**
 - [`organisation-created-date.yaml`](./organisations/organisation-created-date.yaml) - **Date de création**
 - [`organisation-updated-date.yaml`](./organisations/organisation-updated-date.yaml) - **Date de modification**
@@ -88,6 +93,7 @@
 ### 2. Module Contacts (5 KPI)
 
 #### Page liste Contacts (5 KPI)
+
 - [`total-contacts.yaml`](./contacts/total-contacts.yaml) - **Total Contacts**
   - Nombre total contacts (personnes physiques)
   - Status: ✅ Active | Priority: High
@@ -113,6 +119,7 @@
 ### 3. Module Profil et rôles (22 KPI)
 
 #### Page liste Utilisateurs (4 KPI)
+
 - [`total-users.yaml`](./users/total-users.yaml) - **Total Utilisateurs**
   - Tous utilisateurs système
   - Status: ✅ Active | Priority: High
@@ -134,6 +141,7 @@
   - Valeur production : 1
 
 #### Page détail Utilisateur - Onglet Profil (7 KPI)
+
 - [`total-sessions.yaml`](./users/total-sessions.yaml) - **Sessions Totales**
   - Nombre total sessions utilisateur
   - Status: ✅ Active | Priority: High
@@ -166,6 +174,7 @@
   - Status: ✅ Active | Priority: Low
 
 #### Page détail Utilisateur - Onglet Activité (8 KPI)
+
 - [`engagement-score-activity.yaml`](./users/engagement-score-activity.yaml) - **Score d'Engagement (Activité)**
   - Score avec niveau coloré (contexte onglet Activité)
   - Status: ✅ Active | Priority: High
@@ -203,6 +212,7 @@
   - Modules trackés : Dashboard, Catalogue, Commandes, Stock, Contacts, Rapports, Other
 
 #### Tableau de bord Activité Équipe (3 KPI)
+
 - [`team-active-users-now.yaml`](./users/team-active-users-now.yaml) - **Utilisateurs Actifs (maintenant)**
   - Nombre utilisateurs actifs en ce moment
   - Status: ✅ Active | Priority: High
@@ -220,11 +230,13 @@
 ## 📊 Statistiques globales
 
 ### Par module
+
 - **Organizations** : 21 KPI (43.75%)
 - **Contacts** : 5 KPI (10.42%)
 - **Profil et rôles** : 22 KPI (45.83%)
 
 ### Par catégorie
+
 - **Compteurs** : 28 KPI (58.3%)
 - **Engagement** : 8 KPI (16.7%)
 - **Activité** : 4 KPI (8.3%)
@@ -232,11 +244,13 @@
 - **Indicateurs** : 7 KPI (14.6%)
 
 ### Par priorité
+
 - **High** : 30 KPI (62.5%)
 - **Medium** : 16 KPI (33.3%)
 - **Low** : 2 KPI (4.2%)
 
 ### Par statut
+
 - **Active** : 48 KPI (100%)
 - **Draft** : 0 KPI
 - **Deprecated** : 0 KPI
@@ -245,57 +259,58 @@
 
 ## 🔍 Index alphabétique
 
-| KPI | Module | Catégorie | Priorité | Fichier |
-|-----|--------|-----------|----------|---------|
-| Actions Totales | Profil | Engagement | Medium | [`users/total-actions.yaml`](./users/total-actions.yaml) |
-| Ancienneté Compte | Profil | Indicateurs | Low | [`users/account-seniority.yaml`](./users/account-seniority.yaml) |
-| Clients - Actifs | Organisations | Compteurs | High | [`organisations/customers-active.yaml`](./organisations/customers-active.yaml) |
-| Clients - Archivés | Organisations | Compteurs | Medium | [`organisations/customers-archived.yaml`](./organisations/customers-archived.yaml) |
-| Clients - Favoris | Organisations | Compteurs | Medium | [`organisations/customers-favorites.yaml`](./organisations/customers-favorites.yaml) |
-| Clients - Total | Organisations | Compteurs | High | [`organisations/customers-total.yaml`](./organisations/customers-total.yaml) |
-| Contacts Actifs | Contacts | Compteurs | Medium | [`contacts/active-contacts.yaml`](./contacts/active-contacts.yaml) |
-| Contacts Clients | Contacts | Compteurs | High | [`contacts/customer-contacts.yaml`](./contacts/customer-contacts.yaml) |
-| Contacts Fournisseurs | Contacts | Compteurs | High | [`contacts/supplier-contacts.yaml`](./contacts/supplier-contacts.yaml) |
-| Contacts Principaux | Contacts | Compteurs | Medium | [`contacts/primary-contacts.yaml`](./contacts/primary-contacts.yaml) |
-| Dernière Activité | Profil | Activité | Low | [`users/last-activity.yaml`](./users/last-activity.yaml) |
-| Durée Moyenne Session | Profil | Engagement | Medium | [`users/avg-session-duration.yaml`](./users/avg-session-duration.yaml) |
-| Engagement Moyen Équipe | Profil | Team Dashboard | High | [`users/team-avg-engagement.yaml`](./users/team-avg-engagement.yaml) |
-| Fournisseurs - Actifs | Organisations | Compteurs | High | [`organisations/suppliers-active.yaml`](./organisations/suppliers-active.yaml) |
-| Fournisseurs - Archivés | Organisations | Compteurs | Medium | [`organisations/suppliers-archived.yaml`](./organisations/suppliers-archived.yaml) |
-| Fournisseurs - Favoris | Organisations | Compteurs | Medium | [`organisations/suppliers-favorites.yaml`](./organisations/suppliers-favorites.yaml) |
-| Fournisseurs - Total | Organisations | Compteurs | High | [`organisations/suppliers-total.yaml`](./organisations/suppliers-total.yaml) |
-| Fréquence Connexion | Profil | Engagement | Medium | [`users/login-frequency.yaml`](./users/login-frequency.yaml) |
-| Gestionnaires Catalogue | Profil | Compteurs | Medium | [`users/catalog-managers-count.yaml`](./users/catalog-managers-count.yaml) |
-| Module Préféré | Profil | Activité | Medium | [`users/preferred-module.yaml`](./users/preferred-module.yaml) |
-| Prestataires - Actifs | Organisations | Compteurs | Medium | [`organisations/partners-active.yaml`](./organisations/partners-active.yaml) |
-| Prestataires - Archivés | Organisations | Compteurs | Medium | [`organisations/partners-archived.yaml`](./organisations/partners-archived.yaml) |
-| Prestataires - Favoris | Organisations | Compteurs | Medium | [`organisations/partners-favorites.yaml`](./organisations/partners-favorites.yaml) |
-| Prestataires - Total | Organisations | Compteurs | Medium | [`organisations/partners-total.yaml`](./organisations/partners-total.yaml) |
-| Produits référencés | Organisations | Métriques | High | [`organisations/products-per-supplier.yaml`](./organisations/products-per-supplier.yaml) |
-| Propriétaires (Owners) | Profil | Compteurs | High | [`users/owners-count.yaml`](./users/owners-count.yaml) |
-| Score d'Engagement | Profil | Engagement | High | [`users/engagement-score.yaml`](./users/engagement-score.yaml) |
-| Score d'Engagement (Activité) | Profil | Engagement | High | [`users/engagement-score-activity.yaml`](./users/engagement-score-activity.yaml) |
-| Sessions Actives | Profil | Activité | Low | [`users/active-sessions-count.yaml`](./users/active-sessions-count.yaml) |
-| Sessions par Semaine | Profil | Engagement | Medium | [`users/sessions-per-week.yaml`](./users/sessions-per-week.yaml) |
-| Sessions Totales | Profil | Engagement | High | [`users/total-sessions.yaml`](./users/total-sessions.yaml) |
-| Sessions Totales (30j) | Profil | Engagement | High | [`users/sessions-30-days.yaml`](./users/sessions-30-days.yaml) |
-| Statut Activité | Profil | Indicateurs | Medium | [`users/activity-status.yaml`](./users/activity-status.yaml) |
-| Temps par module | Profil | Activité | High | [`users/time-per-module.yaml`](./users/time-per-module.yaml) |
-| Total Clients Pro (B2B) | Organisations | Compteurs | High | [`organisations/total-customers-professional.yaml`](./organisations/total-customers-professional.yaml) |
-| Total Contacts | Contacts | Compteurs | High | [`contacts/total-contacts.yaml`](./contacts/total-contacts.yaml) |
-| Total Fournisseurs | Organisations | Compteurs | High | [`organisations/total-suppliers.yaml`](./organisations/total-suppliers.yaml) |
-| Total Organisations | Organisations | Compteurs | High | [`organisations/total-organisations.yaml`](./organisations/total-organisations.yaml) |
-| Total Prestataires | Organisations | Compteurs | Medium | [`organisations/total-partners.yaml`](./organisations/total-partners.yaml) |
-| Total Utilisateurs | Profil | Compteurs | High | [`users/total-users.yaml`](./users/total-users.yaml) |
-| Total Utilisateurs (Team) | Profil | Team Dashboard | Medium | [`users/team-total-users.yaml`](./users/team-total-users.yaml) |
-| Type Compte | Profil | Indicateurs | Low | [`users/account-type.yaml`](./users/account-type.yaml) |
-| Utilisateurs Actifs (maintenant) | Profil | Team Dashboard | High | [`users/team-active-users-now.yaml`](./users/team-active-users-now.yaml) |
+| KPI                              | Module        | Catégorie      | Priorité | Fichier                                                                                                |
+| -------------------------------- | ------------- | -------------- | -------- | ------------------------------------------------------------------------------------------------------ |
+| Actions Totales                  | Profil        | Engagement     | Medium   | [`users/total-actions.yaml`](./users/total-actions.yaml)                                               |
+| Ancienneté Compte                | Profil        | Indicateurs    | Low      | [`users/account-seniority.yaml`](./users/account-seniority.yaml)                                       |
+| Clients - Actifs                 | Organisations | Compteurs      | High     | [`organisations/customers-active.yaml`](./organisations/customers-active.yaml)                         |
+| Clients - Archivés               | Organisations | Compteurs      | Medium   | [`organisations/customers-archived.yaml`](./organisations/customers-archived.yaml)                     |
+| Clients - Favoris                | Organisations | Compteurs      | Medium   | [`organisations/customers-favorites.yaml`](./organisations/customers-favorites.yaml)                   |
+| Clients - Total                  | Organisations | Compteurs      | High     | [`organisations/customers-total.yaml`](./organisations/customers-total.yaml)                           |
+| Contacts Actifs                  | Contacts      | Compteurs      | Medium   | [`contacts/active-contacts.yaml`](./contacts/active-contacts.yaml)                                     |
+| Contacts Clients                 | Contacts      | Compteurs      | High     | [`contacts/customer-contacts.yaml`](./contacts/customer-contacts.yaml)                                 |
+| Contacts Fournisseurs            | Contacts      | Compteurs      | High     | [`contacts/supplier-contacts.yaml`](./contacts/supplier-contacts.yaml)                                 |
+| Contacts Principaux              | Contacts      | Compteurs      | Medium   | [`contacts/primary-contacts.yaml`](./contacts/primary-contacts.yaml)                                   |
+| Dernière Activité                | Profil        | Activité       | Low      | [`users/last-activity.yaml`](./users/last-activity.yaml)                                               |
+| Durée Moyenne Session            | Profil        | Engagement     | Medium   | [`users/avg-session-duration.yaml`](./users/avg-session-duration.yaml)                                 |
+| Engagement Moyen Équipe          | Profil        | Team Dashboard | High     | [`users/team-avg-engagement.yaml`](./users/team-avg-engagement.yaml)                                   |
+| Fournisseurs - Actifs            | Organisations | Compteurs      | High     | [`organisations/suppliers-active.yaml`](./organisations/suppliers-active.yaml)                         |
+| Fournisseurs - Archivés          | Organisations | Compteurs      | Medium   | [`organisations/suppliers-archived.yaml`](./organisations/suppliers-archived.yaml)                     |
+| Fournisseurs - Favoris           | Organisations | Compteurs      | Medium   | [`organisations/suppliers-favorites.yaml`](./organisations/suppliers-favorites.yaml)                   |
+| Fournisseurs - Total             | Organisations | Compteurs      | High     | [`organisations/suppliers-total.yaml`](./organisations/suppliers-total.yaml)                           |
+| Fréquence Connexion              | Profil        | Engagement     | Medium   | [`users/login-frequency.yaml`](./users/login-frequency.yaml)                                           |
+| Gestionnaires Catalogue          | Profil        | Compteurs      | Medium   | [`users/catalog-managers-count.yaml`](./users/catalog-managers-count.yaml)                             |
+| Module Préféré                   | Profil        | Activité       | Medium   | [`users/preferred-module.yaml`](./users/preferred-module.yaml)                                         |
+| Prestataires - Actifs            | Organisations | Compteurs      | Medium   | [`organisations/partners-active.yaml`](./organisations/partners-active.yaml)                           |
+| Prestataires - Archivés          | Organisations | Compteurs      | Medium   | [`organisations/partners-archived.yaml`](./organisations/partners-archived.yaml)                       |
+| Prestataires - Favoris           | Organisations | Compteurs      | Medium   | [`organisations/partners-favorites.yaml`](./organisations/partners-favorites.yaml)                     |
+| Prestataires - Total             | Organisations | Compteurs      | Medium   | [`organisations/partners-total.yaml`](./organisations/partners-total.yaml)                             |
+| Produits référencés              | Organisations | Métriques      | High     | [`organisations/products-per-supplier.yaml`](./organisations/products-per-supplier.yaml)               |
+| Propriétaires (Owners)           | Profil        | Compteurs      | High     | [`users/owners-count.yaml`](./users/owners-count.yaml)                                                 |
+| Score d'Engagement               | Profil        | Engagement     | High     | [`users/engagement-score.yaml`](./users/engagement-score.yaml)                                         |
+| Score d'Engagement (Activité)    | Profil        | Engagement     | High     | [`users/engagement-score-activity.yaml`](./users/engagement-score-activity.yaml)                       |
+| Sessions Actives                 | Profil        | Activité       | Low      | [`users/active-sessions-count.yaml`](./users/active-sessions-count.yaml)                               |
+| Sessions par Semaine             | Profil        | Engagement     | Medium   | [`users/sessions-per-week.yaml`](./users/sessions-per-week.yaml)                                       |
+| Sessions Totales                 | Profil        | Engagement     | High     | [`users/total-sessions.yaml`](./users/total-sessions.yaml)                                             |
+| Sessions Totales (30j)           | Profil        | Engagement     | High     | [`users/sessions-30-days.yaml`](./users/sessions-30-days.yaml)                                         |
+| Statut Activité                  | Profil        | Indicateurs    | Medium   | [`users/activity-status.yaml`](./users/activity-status.yaml)                                           |
+| Temps par module                 | Profil        | Activité       | High     | [`users/time-per-module.yaml`](./users/time-per-module.yaml)                                           |
+| Total Clients Pro (B2B)          | Organisations | Compteurs      | High     | [`organisations/total-customers-professional.yaml`](./organisations/total-customers-professional.yaml) |
+| Total Contacts                   | Contacts      | Compteurs      | High     | [`contacts/total-contacts.yaml`](./contacts/total-contacts.yaml)                                       |
+| Total Fournisseurs               | Organisations | Compteurs      | High     | [`organisations/total-suppliers.yaml`](./organisations/total-suppliers.yaml)                           |
+| Total Organisations              | Organisations | Compteurs      | High     | [`organisations/total-organisations.yaml`](./organisations/total-organisations.yaml)                   |
+| Total Prestataires               | Organisations | Compteurs      | Medium   | [`organisations/total-partners.yaml`](./organisations/total-partners.yaml)                             |
+| Total Utilisateurs               | Profil        | Compteurs      | High     | [`users/total-users.yaml`](./users/total-users.yaml)                                                   |
+| Total Utilisateurs (Team)        | Profil        | Team Dashboard | Medium   | [`users/team-total-users.yaml`](./users/team-total-users.yaml)                                         |
+| Type Compte                      | Profil        | Indicateurs    | Low      | [`users/account-type.yaml`](./users/account-type.yaml)                                                 |
+| Utilisateurs Actifs (maintenant) | Profil        | Team Dashboard | High     | [`users/team-active-users-now.yaml`](./users/team-active-users-now.yaml)                               |
 
 ---
 
 ## 🔗 Dépendances entre KPI
 
 ### Hiérarchie Organisations
+
 ```
 Total Organisations (tous types)
 ├── Total Fournisseurs (type='supplier')
@@ -317,6 +332,7 @@ Total Organisations (tous types)
 ```
 
 ### Hiérarchie Contacts
+
 ```
 Total Contacts (personnes physiques)
 ├── Contacts Fournisseurs (liés orgs type='supplier')
@@ -326,6 +342,7 @@ Total Contacts (personnes physiques)
 ```
 
 ### Hiérarchie Utilisateurs
+
 ```
 Total Utilisateurs
 ├── Par rôle:
@@ -341,8 +358,9 @@ Total Utilisateurs
 ```
 
 ### KPI dérivés complexes
+
 - **Score d'Engagement** : Composite de 4 sous-scores (login_frequency 25% + session_duration 20% + module_diversity 30% + actions_count 25%)
-- **Sessions par Semaine** : Dérivé de (total_sessions / days_since_creation) * 7
+- **Sessions par Semaine** : Dérivé de (total_sessions / days_since_creation) \* 7
 - **Module Préféré** : MAX(time_spent_minutes) des 7 modules trackés
 - **Engagement Moyen Équipe** : AVG(engagement_score) de tous utilisateurs
 
@@ -351,24 +369,28 @@ Total Utilisateurs
 ## 🚀 KPI à documenter (Prochaine phase - Modules non déployés)
 
 ### Dashboard (prioritaires)
+
 - [ ] CA du mois
 - [ ] Commandes ventes (count)
 - [ ] Commandes achats (count)
 - [ ] Valeur stock
 
 ### Stock (futur)
+
 - [ ] Taux de rotation stock
 - [ ] Couverture stock (jours)
 - [ ] Stock négatif prévu
 - [ ] Alertes stock bas
 
 ### Ventes (futur)
+
 - [ ] Panier moyen
 - [ ] Taux de conversion
 - [ ] Top produits vendus
 - [ ] Revenue par canal
 
 ### Onglets organisations (nécessitent déploiement modules)
+
 - [ ] Contacts par organisation (onglet)
 - [ ] Commandes par fournisseur (onglet)
 - [ ] Commandes par client (onglet)
@@ -382,6 +404,7 @@ Total Utilisateurs
 Tous les KPI suivent le format défini dans [`EXAMPLE.yaml`](./EXAMPLE.yaml).
 
 ### Sections obligatoires
+
 - `id` : Identifiant unique (kpi-module-nom)
 - `name` : Nom lisible
 - `description` : Description métier complète
@@ -398,6 +421,7 @@ Tous les KPI suivent le format défini dans [`EXAMPLE.yaml`](./EXAMPLE.yaml).
 - `metadata` : Dates, version, statut, priorité
 
 ### Sections optionnelles
+
 - `references` : Liens documentation/code
 - `business_notes` : Contexte métier Vérone
 
@@ -427,6 +451,7 @@ Tous les KPI suivent le format défini dans [`EXAMPLE.yaml`](./EXAMPLE.yaml).
 ## ✅ Validation exhaustive
 
 ### Méthodologie audit
+
 1. **Navigation browser** : MCP Playwright sur toutes les pages
 2. **Screenshots** : 6 captures écran validation visuelle
 3. **Console errors** : 0 (ZERO) sur toutes les pages ✅
@@ -434,6 +459,7 @@ Tous les KPI suivent le format défini dans [`EXAMPLE.yaml`](./EXAMPLE.yaml).
 5. **Inventaire créé** : `tools/reports/2025-10-22/kpi-inventory-exhaustif.md`
 
 ### Pages auditées
+
 - ✅ `/contacts-organisations` (4 KPI)
 - ✅ `/contacts-organisations/suppliers` (5 KPI)
 - ✅ `/contacts-organisations/suppliers/[id]` (4 KPI)
@@ -452,11 +478,13 @@ Tous les KPI suivent le format défini dans [`EXAMPLE.yaml`](./EXAMPLE.yaml).
 ## 📈 Comparaison audits
 
 ### Audit initial (2025-10-22 matin)
+
 - **KPI documentés** : 11
 - **Couverture** : 39% estimée
 - **Problèmes** : Modules non déployés inclus, KPI incomplets
 
 ### Audit exhaustif (2025-10-22 soir)
+
 - **KPI documentés** : 48 (+336% augmentation)
 - **Couverture** : 100% modules déployés
 - **Qualité** : Tous YAML complets avec formules, sources, tests

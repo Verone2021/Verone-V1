@@ -1,10 +1,9 @@
-'use client'
+'use client';
 
-import { useState, useMemo, useEffect } from 'react'
-import { Card, CardContent } from '@/components/ui/card'
-import { ButtonV2 } from '@/components/ui/button'
-import { Input } from '@/components/ui/input'
-import { Badge } from '@/components/ui/badge'
+import { useState, useMemo, useEffect } from 'react';
+
+import Link from 'next/link';
+
 import {
   Search,
   Plus,
@@ -15,33 +14,50 @@ import {
   ExternalLink,
   Building2,
   LayoutGrid,
-  List
-} from 'lucide-react'
-import Link from 'next/link'
-import { useSuppliers, type Organisation } from '@/shared/modules/organisations/hooks'
-import { SupplierFormModal } from '@/components/business/supplier-form-modal'
-import { OrganisationLogo } from '@/components/business/organisation-logo'
-import { OrganisationCard } from '@/components/business/organisation-card'
-import { OrganisationListView } from '@/components/business/organisation-list-view'
-import { SupplierSegmentBadge, SupplierSegmentType } from '@/components/business/supplier-segment-badge'
-import { SupplierCategoryBadge } from '@/components/business/supplier-category-badge'
-import { spacing, colors } from '@/lib/design-system'
-import { createClient } from '@/lib/supabase/client'
-import { cn } from '@/lib/utils'
+  List,
+} from 'lucide-react';
+
+import { Badge } from '@/components/ui/badge';
+import { ButtonV2 } from '@/components/ui/button';
+import { Card, CardContent } from '@/components/ui/card';
+import { Input } from '@/components/ui/input';
+import { spacing, colors } from '@/lib/design-system';
+import { createClient } from '@/lib/supabase/client';
+import { cn } from '@verone/utils';
+import { SupplierCategoryBadge } from '@/shared/modules/categories/components/badges/SupplierCategoryBadge';
+import { OrganisationListView } from '@/shared/modules/customers/components/sections/OrganisationListView';
+import { OrganisationLogo } from '@/shared/modules/organisations/components';
+import { OrganisationCard } from '@/shared/modules/organisations/components/cards/OrganisationCard';
+import { SupplierFormModal } from '@/shared/modules/organisations/components/forms/SupplierFormModal';
+import {
+  useSuppliers,
+  type Organisation,
+} from '@/shared/modules/organisations/hooks';
+import {
+  SupplierSegmentBadge,
+  SupplierSegmentType,
+} from '@/shared/modules/suppliers/components/badges/SupplierSegmentBadge';
 
 export function SuppliersTab() {
-  const [searchQuery, setSearchQuery] = useState('')
-  const [activeTab, setActiveTab] = useState<'active' | 'archived'>('active')
-  const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid')
-  const [archivedSuppliers, setArchivedSuppliers] = useState<Organisation[]>([])
-  const [archivedLoading, setArchivedLoading] = useState(false)
-  const [isModalOpen, setIsModalOpen] = useState(false)
-  const [selectedSupplier, setSelectedSupplier] = useState<Organisation | null>(null)
+  const [searchQuery, setSearchQuery] = useState('');
+  const [activeTab, setActiveTab] = useState<'active' | 'archived'>('active');
+  const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
+  const [archivedSuppliers, setArchivedSuppliers] = useState<Organisation[]>(
+    []
+  );
+  const [archivedLoading, setArchivedLoading] = useState(false);
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [selectedSupplier, setSelectedSupplier] = useState<Organisation | null>(
+    null
+  );
 
-  const filters = useMemo(() => ({
-    is_active: true,
-    search: searchQuery || undefined
-  }), [searchQuery])
+  const filters = useMemo(
+    () => ({
+      is_active: true,
+      search: searchQuery || undefined,
+    }),
+    [searchQuery]
+  );
 
   const {
     organisations: suppliers,
@@ -49,82 +65,85 @@ export function SuppliersTab() {
     archiveOrganisation,
     unarchiveOrganisation,
     hardDeleteOrganisation,
-    refetch
-  } = useSuppliers(filters)
+    refetch,
+  } = useSuppliers(filters);
 
   const loadArchivedSuppliersData = async () => {
-    setArchivedLoading(true)
+    setArchivedLoading(true);
     try {
-      const supabase = createClient()
+      const supabase = createClient();
       const { data, error } = await supabase
         .from('organisations')
-        .select(`
+        .select(
+          `
           *,
           products:products(count)
-        `)
+        `
+        )
         .eq('type', 'supplier')
         .not('archived_at', 'is', null)
-        .order('archived_at', { ascending: false })
+        .order('archived_at', { ascending: false });
 
-      if (error) throw error
+      if (error) throw error;
 
       const organisationsWithCounts = (data || []).map((org: any) => {
-        const { products, ...rest } = org
+        const { products, ...rest } = org;
         return {
           ...rest,
           _count: {
-            products: products?.[0]?.count || 0
-          }
-        }
-      })
+            products: products?.[0]?.count || 0,
+          },
+        };
+      });
 
-      setArchivedSuppliers(organisationsWithCounts as Organisation[])
+      setArchivedSuppliers(organisationsWithCounts as Organisation[]);
     } catch (err) {
-      console.error('Erreur chargement fournisseurs archivés:', err)
+      console.error('Erreur chargement fournisseurs archivés:', err);
     } finally {
-      setArchivedLoading(false)
+      setArchivedLoading(false);
     }
-  }
+  };
 
   useEffect(() => {
     if (activeTab === 'archived') {
-      loadArchivedSuppliersData()
+      loadArchivedSuppliersData();
     }
-  }, [activeTab])
+  }, [activeTab]);
 
   const handleArchive = async (supplier: Organisation) => {
     if (!supplier.archived_at) {
-      const success = await archiveOrganisation(supplier.id)
+      const success = await archiveOrganisation(supplier.id);
       if (success) {
-        refetch()
+        refetch();
         if (activeTab === 'archived') {
-          await loadArchivedSuppliersData()
+          await loadArchivedSuppliersData();
         }
       }
     } else {
-      const success = await unarchiveOrganisation(supplier.id)
+      const success = await unarchiveOrganisation(supplier.id);
       if (success) {
-        refetch()
-        await loadArchivedSuppliersData()
+        refetch();
+        await loadArchivedSuppliersData();
       }
     }
-  }
+  };
 
   const handleDelete = async (supplier: Organisation) => {
     const confirmed = confirm(
       `Êtes-vous sûr de vouloir supprimer définitivement "${supplier.trade_name || supplier.legal_name}" ?\n\nCette action est irréversible !`
-    )
+    );
 
     if (confirmed) {
-      const success = await hardDeleteOrganisation(supplier.id)
+      const success = await hardDeleteOrganisation(supplier.id);
       if (success) {
-        await loadArchivedSuppliersData()
+        await loadArchivedSuppliersData();
       }
     }
-  }
+  };
 
-  const displayedSuppliers = activeTab === 'active' ? suppliers : archivedSuppliers
-  const isLoading = activeTab === 'active' ? loading : archivedLoading
+  const displayedSuppliers =
+    activeTab === 'active' ? suppliers : archivedSuppliers;
+  const isLoading = activeTab === 'active' ? loading : archivedLoading;
 
   return (
     <div className="space-y-4">
@@ -155,12 +174,17 @@ export function SuppliersTab() {
               )}
             >
               Archivés
-              <span className="ml-2 opacity-70">({archivedSuppliers.length})</span>
+              <span className="ml-2 opacity-70">
+                ({archivedSuppliers.length})
+              </span>
             </button>
           </div>
 
           {/* Toggle Grid/List View */}
-          <div className="flex items-center gap-1 border rounded-lg" style={{ borderColor: colors.border.DEFAULT }}>
+          <div
+            className="flex items-center gap-1 border rounded-lg"
+            style={{ borderColor: colors.border.DEFAULT }}
+          >
             <button
               onClick={() => setViewMode('grid')}
               className={cn(
@@ -188,7 +212,11 @@ export function SuppliersTab() {
           </div>
         </div>
 
-        <ButtonV2 variant="primary" onClick={() => setIsModalOpen(true)} icon={Plus}>
+        <ButtonV2
+          variant="primary"
+          onClick={() => setIsModalOpen(true)}
+          icon={Plus}
+        >
           Nouveau Fournisseur
         </ButtonV2>
       </div>
@@ -204,9 +232,12 @@ export function SuppliersTab() {
             <Input
               placeholder="Rechercher par nom..."
               value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
+              onChange={e => setSearchQuery(e.target.value)}
               className="pl-10"
-              style={{ borderColor: colors.border.DEFAULT, color: colors.text.DEFAULT }}
+              style={{
+                borderColor: colors.border.DEFAULT,
+                color: colors.text.DEFAULT,
+              }}
             />
           </div>
         </CardContent>
@@ -218,9 +249,9 @@ export function SuppliersTab() {
           {Array.from({ length: 12 }).map((_, i) => (
             <Card key={i} className="animate-pulse">
               <CardContent style={{ padding: spacing[2] }}>
-                <div className="h-4 bg-gray-200 rounded w-3/4 mb-2"></div>
-                <div className="h-3 bg-gray-200 rounded w-full mb-2"></div>
-                <div className="h-3 bg-gray-200 rounded w-2/3"></div>
+                <div className="h-4 bg-gray-200 rounded w-3/4 mb-2" />
+                <div className="h-3 bg-gray-200 rounded w-full mb-2" />
+                <div className="h-3 bg-gray-200 rounded w-2/3" />
               </CardContent>
             </Card>
           ))}
@@ -228,8 +259,14 @@ export function SuppliersTab() {
       ) : displayedSuppliers.length === 0 ? (
         <Card>
           <CardContent className="text-center" style={{ padding: spacing[8] }}>
-            <Building2 className="h-12 w-12 mx-auto mb-4" style={{ color: colors.text.muted }} />
-            <h3 className="text-lg font-medium mb-2" style={{ color: colors.text.DEFAULT }}>
+            <Building2
+              className="h-12 w-12 mx-auto mb-4"
+              style={{ color: colors.text.muted }}
+            />
+            <h3
+              className="text-lg font-medium mb-2"
+              style={{ color: colors.text.DEFAULT }}
+            >
               Aucun fournisseur trouvé
             </h3>
             <p className="mb-4" style={{ color: colors.text.subtle }}>
@@ -237,11 +274,14 @@ export function SuppliersTab() {
                 ? 'Aucun fournisseur ne correspond à votre recherche.'
                 : activeTab === 'active'
                   ? 'Commencez par créer votre premier fournisseur.'
-                  : 'Aucun fournisseur archivé.'
-              }
+                  : 'Aucun fournisseur archivé.'}
             </p>
             {activeTab === 'active' && (
-              <ButtonV2 variant="primary" onClick={() => setIsModalOpen(true)} icon={Plus}>
+              <ButtonV2
+                variant="primary"
+                onClick={() => setIsModalOpen(true)}
+                icon={Plus}
+              >
                 Créer un fournisseur
               </ButtonV2>
             )}
@@ -249,13 +289,15 @@ export function SuppliersTab() {
         </Card>
       ) : viewMode === 'grid' ? (
         <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6 gap-2">
-          {displayedSuppliers.map((supplier) => (
+          {displayedSuppliers.map(supplier => (
             <OrganisationCard
               key={supplier.id}
-              organisation={{
-                ...supplier,
-                type: 'supplier'
-              } as any}
+              organisation={
+                {
+                  ...supplier,
+                  type: 'supplier',
+                } as any
+              }
               activeTab={activeTab}
               onArchive={() => handleArchive(supplier)}
               onDelete={() => handleDelete(supplier)}
@@ -266,18 +308,20 @@ export function SuppliersTab() {
         <Card>
           <CardContent style={{ padding: spacing[3] }}>
             <OrganisationListView
-              organisations={displayedSuppliers.map(s => ({
-                ...s,
-                type: 'supplier' as const
-              })) as any}
+              organisations={
+                displayedSuppliers.map(s => ({
+                  ...s,
+                  type: 'supplier' as const,
+                })) as any
+              }
               activeTab={activeTab}
-              onArchive={(id) => {
-                const supplier = displayedSuppliers.find(s => s.id === id)
-                if (supplier) handleArchive(supplier)
+              onArchive={id => {
+                const supplier = displayedSuppliers.find(s => s.id === id);
+                if (supplier) handleArchive(supplier);
               }}
-              onDelete={(id) => {
-                const supplier = displayedSuppliers.find(s => s.id === id)
-                if (supplier) handleDelete(supplier)
+              onDelete={id => {
+                const supplier = displayedSuppliers.find(s => s.id === id);
+                if (supplier) handleDelete(supplier);
               }}
             />
           </CardContent>
@@ -289,10 +333,10 @@ export function SuppliersTab() {
         onClose={() => setIsModalOpen(false)}
         supplier={selectedSupplier as any}
         onSuccess={() => {
-          refetch()
-          setIsModalOpen(false)
+          refetch();
+          setIsModalOpen(false);
         }}
       />
     </div>
-  )
+  );
 }

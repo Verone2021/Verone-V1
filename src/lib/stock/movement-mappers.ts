@@ -7,25 +7,25 @@
  * @since Phase 3.3.1 - Migration Dashboard
  */
 
-import type { StockMovementCardProps } from '@/components/ui-v2/stock/StockMovementCard'
+import type { StockMovementCardProps } from '@/components/ui-v2/stock/StockMovementCard';
 
 /**
  * Interface RecentMovement depuis use-stock-dashboard
  */
 export interface RecentMovement {
-  id: string
-  product_id: string
-  product_name: string
-  product_sku: string
-  movement_type: 'IN' | 'OUT' | 'ADJUST' | 'TRANSFER'
-  quantity_change: number
-  quantity_before: number
-  quantity_after: number
-  reason_code: string
-  notes: string | null
-  performed_at: string
-  performer_name: string | null
-  channel_id: string | null
+  id: string;
+  product_id: string;
+  product_name: string;
+  product_sku: string;
+  movement_type: 'IN' | 'OUT' | 'ADJUST' | 'TRANSFER';
+  quantity_change: number;
+  quantity_before: number;
+  quantity_after: number;
+  reason_code: string;
+  notes: string | null;
+  performed_at: string;
+  performer_name: string | null;
+  channel_id: string | null;
 }
 
 /**
@@ -63,15 +63,15 @@ export function mapRecentMovementToCard(
       // Mapping produit
       products: {
         name: movement.product_name,
-        sku: movement.product_sku
+        sku: movement.product_sku,
       },
 
       // Channel: null pour Phase 3.3 (sera ajouté Phase 3.4)
       // TODO Phase 3.4: Ajouter channel_id depuis base de données
       channel_id: null,
-      sales_channels: null
-    }
-  }
+      sales_channels: null,
+    },
+  };
 }
 
 /**
@@ -90,5 +90,5 @@ export function mapRecentMovementToCard(
 export function mapRecentMovementsToCards(
   movements: RecentMovement[]
 ): StockMovementCardProps[] {
-  return movements.map(mapRecentMovementToCard)
+  return movements.map(mapRecentMovementToCard);
 }

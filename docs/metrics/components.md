@@ -23,12 +23,14 @@
 Le dashboard Vérone utilise **4 graphiques Recharts** et **4 types de KPI Cards** pour visualiser les métriques business en temps réel.
 
 **Stack Visualisation** :
+
 - **Recharts** : Bibliothèque graphiques React (LineChart, BarChart, AreaChart)
 - **shadcn/ui** : Base composants KPI Cards
 - **Tailwind CSS** : Styles + responsive
 - **Design System V2** : Palette moderne 2025
 
 **Fichiers** :
+
 - Charts : `src/components/business/*-chart.tsx`
 - KPI Cards : `src/components/ui/*-kpi-card.tsx`
 
@@ -43,12 +45,14 @@ Le dashboard Vérone utilise **4 graphiques Recharts** et **4 types de KPI Cards
 **Type** : `LineChart` avec gradients
 
 **Source Données** :
+
 ```typescript
-const { analytics } = useDashboardAnalytics()
-data = analytics.revenue  // [{date: "12 Oct", revenue: 1250}, ...]
+const { analytics } = useDashboardAnalytics();
+data = analytics.revenue; // [{date: "12 Oct", revenue: 1250}, ...]
 ```
 
 **Structure** :
+
 ```typescript
 <LineChart data={revenue} width={600} height={300}>
   <CartesianGrid strokeDasharray="3 3" />
@@ -72,12 +76,14 @@ data = analytics.revenue  // [{date: "12 Oct", revenue: 1250}, ...]
 ```
 
 **Props Clés** :
+
 - `dataKey="revenue"` : Colonne valeur Y
 - `stroke` : Couleur ligne (#3b86d1 bleu professionnel)
 - `fill="url(#revenueGradient)"` : Gradient sous courbe
 - `type="monotone"` : Courbe lisse
 
 **Tooltip** :
+
 ```typescript
 formatter={(value) => [`${value}€`, 'Chiffre d\'affaires']}
 ```
@@ -93,11 +99,13 @@ formatter={(value) => [`${value}€`, 'Chiffre d\'affaires']}
 **Type** : `BarChart` vertical
 
 **Source Données** :
+
 ```typescript
-data = analytics.products  // [{week: "S2", count: 5}, ...]
+data = analytics.products; // [{week: "S2", count: 5}, ...]
 ```
 
 **Structure** :
+
 ```typescript
 <BarChart data={products} width={600} height={300}>
   <CartesianGrid strokeDasharray="3 3" />
@@ -113,6 +121,7 @@ data = analytics.products  // [{week: "S2", count: 5}, ...]
 ```
 
 **Props Clés** :
+
 - `dataKey="count"` : Nombre produits
 - `fill` : Couleur barres (#38ce3c vert validation)
 - `radius` : Coins arrondis top ([topLeft, topRight, bottomRight, bottomLeft])
@@ -130,11 +139,13 @@ data = analytics.products  // [{week: "S2", count: 5}, ...]
 **Type** : `AreaChart` multi-séries
 
 **Source Données** :
+
 ```typescript
-data = analytics.stockMovements  // [{date: "12 Oct", entrees: 30, sorties: 5}, ...]
+data = analytics.stockMovements; // [{date: "12 Oct", entrees: 30, sorties: 5}, ...]
 ```
 
 **Structure** :
+
 ```typescript
 <AreaChart data={stockMovements} width={600} height={300}>
   <CartesianGrid strokeDasharray="3 3" />
@@ -162,11 +173,13 @@ data = analytics.stockMovements  // [{date: "12 Oct", entrees: 30, sorties: 5}, 
 ```
 
 **Props Clés** :
+
 - 2 séries : `entrees` (vert) + `sorties` (orange)
 - `stackId="1"` : Zones empilées
 - `fillOpacity={0.6}` : Transparence 60%
 
 **Couleurs** :
+
 - Entrées : `--verone-success` (#38ce3c)
 - Sorties : `--verone-warning` (#ff9b3e)
 
@@ -181,11 +194,13 @@ data = analytics.stockMovements  // [{date: "12 Oct", entrees: 30, sorties: 5}, 
 **Type** : `BarChart` avec gradients
 
 **Source Données** :
+
 ```typescript
-data = analytics.purchaseOrders  // [{week: "S2", amount: 3500}, ...]
+data = analytics.purchaseOrders; // [{week: "S2", amount: 3500}, ...]
 ```
 
 **Structure** :
+
 ```typescript
 <BarChart data={purchaseOrders} width={600} height={300}>
   <CartesianGrid strokeDasharray="3 3" />
@@ -207,6 +222,7 @@ data = analytics.purchaseOrders  // [{week: "S2", amount: 3500}, ...]
 ```
 
 **Props Clés** :
+
 - `dataKey="amount"` : Montant total €
 - `fill="url(#poGradient)"` : Gradient violet
 - Couleur base : `--verone-accent` (#844fc1)
@@ -224,18 +240,20 @@ data = analytics.purchaseOrders  // [{week: "S2", amount: 3500}, ...]
 **Description** : KPI Card moderne avec gradients, ombres élégantes, et micro-animations.
 
 **Props** :
+
 ```typescript
 interface ElegantKPICardProps {
-  title: string              // "Chiffre d'affaires"
-  value: string | number     // "15 000€" ou 15000
-  trend?: number             // +25.5 (%)
-  icon?: React.ReactNode     // <DollarSign />
-  variant?: 'primary' | 'success' | 'warning' | 'danger' | 'accent'
-  className?: string
+  title: string; // "Chiffre d'affaires"
+  value: string | number; // "15 000€" ou 15000
+  trend?: number; // +25.5 (%)
+  icon?: React.ReactNode; // <DollarSign />
+  variant?: 'primary' | 'success' | 'warning' | 'danger' | 'accent';
+  className?: string;
 }
 ```
 
 **Variants Couleurs** :
+
 - `primary` : Bleu (#3b86d1) - Métriques principales
 - `success` : Vert (#38ce3c) - Métriques positives
 - `warning` : Orange (#ff9b3e) - Alertes modérées
@@ -243,6 +261,7 @@ interface ElegantKPICardProps {
 - `accent` : Violet (#844fc1) - Métriques secondaires
 
 **Exemple Utilisation** :
+
 ```tsx
 <ElegantKPICard
   title="Revenue Mensuel"
@@ -254,6 +273,7 @@ interface ElegantKPICardProps {
 ```
 
 **Rendu Visuel** :
+
 ```
 ┌─────────────────────────────────────┐
 │  [Icon]  Revenue Mensuel            │
@@ -264,6 +284,7 @@ interface ElegantKPICardProps {
 ```
 
 **Styles Clés** :
+
 ```css
 .elegant-kpi-card {
   background: linear-gradient(135deg, primary 0%, primary-dark 100%);
@@ -282,32 +303,35 @@ interface ElegantKPICardProps {
 **Description** : KPI Card classique sans gradients (plus sobre).
 
 **Props** :
+
 ```typescript
 interface KPICardProps {
-  title: string
-  value: string | number
-  icon?: React.ReactNode
-  description?: string       // Sous-titre optionnel
+  title: string;
+  value: string | number;
+  icon?: React.ReactNode;
+  description?: string; // Sous-titre optionnel
   trend?: {
-    value: number
-    label?: string           // "vs mois dernier"
-  }
-  className?: string
+    value: number;
+    label?: string; // "vs mois dernier"
+  };
+  className?: string;
 }
 ```
 
 **Exemple** :
+
 ```tsx
 <KPICard
   title="Produits Actifs"
   value={125}
   icon={<Package />}
   description="Catalogue publié"
-  trend={{ value: +8.2, label: "vs semaine dernière" }}
+  trend={{ value: +8.2, label: 'vs semaine dernière' }}
 />
 ```
 
 **Rendu** :
+
 ```
 ┌─────────────────────────────────────┐
 │  [Icon]  Produits Actifs            │
@@ -319,6 +343,7 @@ interface KPICardProps {
 ```
 
 **Différence avec Elegant** :
+
 - Pas de gradient background (fond blanc/gris clair)
 - Ombres plus subtiles
 - Moins d'animations
@@ -332,20 +357,23 @@ interface KPICardProps {
 **Description** : Version minimaliste pour dashboards denses.
 
 **Props** :
+
 ```typescript
 interface CompactKPICardProps {
-  label: string         // Court (ex: "CA")
-  value: string | number
-  variant?: 'default' | 'success' | 'warning' | 'danger'
+  label: string; // Court (ex: "CA")
+  value: string | number;
+  variant?: 'default' | 'success' | 'warning' | 'danger';
 }
 ```
 
 **Exemple** :
+
 ```tsx
 <CompactKPICard label="CA" value="15K€" variant="success" />
 ```
 
 **Rendu** :
+
 ```
 ┌──────────────┐
 │  CA          │
@@ -366,18 +394,20 @@ interface CompactKPICardProps {
 **Description** : Compromis entre Standard et Compact.
 
 **Props** :
+
 ```typescript
 interface MediumKPICardProps {
-  title: string
-  value: string | number
-  subtitle?: string
-  icon?: React.ReactNode
-  trend?: number
-  variant?: 'default' | 'primary' | 'success' | 'warning'
+  title: string;
+  value: string | number;
+  subtitle?: string;
+  icon?: React.ReactNode;
+  trend?: number;
+  variant?: 'default' | 'primary' | 'success' | 'warning';
 }
 ```
 
 **Exemple** :
+
 ```tsx
 <MediumKPICard
   title="Commandes"
@@ -390,6 +420,7 @@ interface MediumKPICardProps {
 ```
 
 **Rendu** :
+
 ```
 ┌───────────────────────┐
 │  [Icon]  Commandes    │
@@ -410,16 +441,17 @@ interface MediumKPICardProps {
 
 ```css
 :root {
-  --verone-primary: #3b86d1;      /* Bleu professionnel */
-  --verone-success: #38ce3c;      /* Vert validation */
-  --verone-warning: #ff9b3e;      /* Orange attention */
-  --verone-accent: #844fc1;       /* Violet créatif */
-  --verone-danger: #ff4d6b;       /* Rouge critique */
-  --verone-neutral: #6c7293;      /* Gris interface */
+  --verone-primary: #3b86d1; /* Bleu professionnel */
+  --verone-success: #38ce3c; /* Vert validation */
+  --verone-warning: #ff9b3e; /* Orange attention */
+  --verone-accent: #844fc1; /* Violet créatif */
+  --verone-danger: #ff4d6b; /* Rouge critique */
+  --verone-neutral: #6c7293; /* Gris interface */
 }
 ```
 
 **Gradients Prédéfinis** :
+
 ```css
 .gradient-primary {
   background: linear-gradient(135deg, #3b86d1 0%, #2563a8 100%);
@@ -436,35 +468,36 @@ interface MediumKPICardProps {
 
 **Mapping Variants → Couleurs** :
 
-| Variant | Couleur Primaire | Use Case |
-|---------|------------------|----------|
-| `primary` | #3b86d1 | CA, Revenue, Métriques principales |
-| `success` | #38ce3c | Stock OK, Commandes validées |
-| `warning` | #ff9b3e | Stock faible, Alertes modérées |
-| `danger` | #ff4d6b | Rupture stock, Erreurs critiques |
-| `accent` | #844fc1 | Métriques secondaires, Analytics |
-| `neutral` | #6c7293 | Métriques neutres, Textes |
+| Variant   | Couleur Primaire | Use Case                           |
+| --------- | ---------------- | ---------------------------------- |
+| `primary` | #3b86d1          | CA, Revenue, Métriques principales |
+| `success` | #38ce3c          | Stock OK, Commandes validées       |
+| `warning` | #ff9b3e          | Stock faible, Alertes modérées     |
+| `danger`  | #ff4d6b          | Rupture stock, Erreurs critiques   |
+| `accent`  | #844fc1          | Métriques secondaires, Analytics   |
+| `neutral` | #6c7293          | Métriques neutres, Textes          |
 
 ---
 
 ### Ombres (Shadows)
 
 **Hiérarchie** :
+
 ```css
 .shadow-sm {
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
 }
 
 .shadow-md {
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);  /* KPI Cards standard */
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15); /* KPI Cards standard */
 }
 
 .shadow-lg {
-  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);  /* KPI Cards elevated */
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2); /* KPI Cards elevated */
 }
 
 .shadow-elegant {
-  box-shadow: 0 4px 20px rgba(59, 134, 209, 0.25);  /* Elegant KPI (colorée) */
+  box-shadow: 0 4px 20px rgba(59, 134, 209, 0.25); /* Elegant KPI (colorée) */
 }
 ```
 
@@ -473,26 +506,28 @@ interface MediumKPICardProps {
 ### Typographie
 
 **Tailles Métriques** :
+
 ```css
 .metric-value {
-  font-size: 2rem;           /* 32px - Valeur principale */
+  font-size: 2rem; /* 32px - Valeur principale */
   font-weight: 700;
   line-height: 1.2;
 }
 
 .metric-title {
-  font-size: 0.875rem;       /* 14px - Titre KPI */
+  font-size: 0.875rem; /* 14px - Titre KPI */
   font-weight: 500;
   color: var(--verone-neutral);
 }
 
 .metric-trend {
-  font-size: 0.75rem;        /* 12px - Tendance % */
+  font-size: 0.75rem; /* 12px - Tendance % */
   font-weight: 600;
 }
 ```
 
 **Exemple Rendu** :
+
 ```
 Revenue Mensuel         ← metric-title (14px, #6c7293)
 45 000€                 ← metric-value (32px, bold)
@@ -506,6 +541,7 @@ Revenue Mensuel         ← metric-title (14px, #6c7293)
 ### Grid Dashboard
 
 **Structure 12 colonnes** :
+
 ```tsx
 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
   {/* 1 col mobile, 2 cols tablet, 3 cols desktop, 4 cols large */}
@@ -517,6 +553,7 @@ Revenue Mensuel         ← metric-title (14px, #6c7293)
 ```
 
 **Breakpoints Tailwind** :
+
 - `sm`: 640px (mobile landscape)
 - `md`: 768px (tablet)
 - `lg`: 1024px (desktop)
@@ -528,20 +565,21 @@ Revenue Mensuel         ← metric-title (14px, #6c7293)
 ### Charts Responsive
 
 **Pattern Container** :
+
 ```tsx
 <ResponsiveContainer width="100%" height={300}>
-  <LineChart data={revenue}>
-    ...
-  </LineChart>
+  <LineChart data={revenue}>...</LineChart>
 </ResponsiveContainer>
 ```
 
 **Mobile Adaptations** :
+
 - Charts : Height réduite (250px au lieu de 300px)
 - Legend : Masquée sur mobile (<640px)
 - Tooltip : Format compact
 
 **Exemple** :
+
 ```tsx
 <ResponsiveContainer width="100%" height={isMobile ? 250 : 300}>
   <LineChart data={revenue}>
@@ -558,6 +596,7 @@ Revenue Mensuel         ← metric-title (14px, #6c7293)
 ### Recharts Props Universelles
 
 **Tous Charts** :
+
 ```typescript
 {
   data: Array<any>,          // Données sources
@@ -573,6 +612,7 @@ Revenue Mensuel         ← metric-title (14px, #6c7293)
 ```
 
 **CartesianGrid** (grille fond) :
+
 ```typescript
 <CartesianGrid
   strokeDasharray="3 3"      // Pointillés 3px dash, 3px gap
@@ -582,6 +622,7 @@ Revenue Mensuel         ← metric-title (14px, #6c7293)
 ```
 
 **XAxis / YAxis** :
+
 ```typescript
 <XAxis
   dataKey="date"             // Colonne données X
@@ -595,6 +636,7 @@ Revenue Mensuel         ← metric-title (14px, #6c7293)
 ```
 
 **Tooltip** :
+
 ```typescript
 <Tooltip
   formatter={(value, name) => [`${value}€`, 'Chiffre d\'affaires']}
@@ -607,6 +649,7 @@ Revenue Mensuel         ← metric-title (14px, #6c7293)
 ```
 
 **Legend** (légende multi-séries) :
+
 ```typescript
 <Legend
   verticalAlign="top"
@@ -620,6 +663,7 @@ Revenue Mensuel         ← metric-title (14px, #6c7293)
 ### KPI Cards Props Universelles
 
 **Toutes KPI Cards** :
+
 ```typescript
 {
   title: string,             // Obligatoire
@@ -632,6 +676,7 @@ Revenue Mensuel         ← metric-title (14px, #6c7293)
 ```
 
 **Trend Formatting** :
+
 ```typescript
 const trendColor = trend >= 0 ? 'text-green-600' : 'text-red-600'
 const trendIcon = trend >= 0 ? <TrendingUp /> : <TrendingDown />
@@ -642,6 +687,7 @@ const trendIcon = trend >= 0 ? <TrendingUp /> : <TrendingDown />
 ### Gradients Recharts
 
 **Pattern Gradient Area** :
+
 ```tsx
 <defs>
   <linearGradient id="gradientId" x1="0" y1="0" x2="0" y2="1">

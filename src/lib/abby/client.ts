@@ -4,6 +4,14 @@
 // Description: Client HTTP type-safe pour intégration Abby.fr
 // =====================================================================
 
+import {
+  AbbyError,
+  AbbyNetworkError,
+  AbbyTimeoutError,
+  AbbyRetryExhaustedError,
+  createAbbyErrorFromResponse,
+  shouldRetryError,
+} from './errors';
 import type {
   AbbyClientConfig,
   AbbyCustomer,
@@ -13,15 +21,6 @@ import type {
   AddInvoiceLinePayload,
   AbbyApiResponse,
 } from './types';
-
-import {
-  AbbyError,
-  AbbyNetworkError,
-  AbbyTimeoutError,
-  AbbyRetryExhaustedError,
-  createAbbyErrorFromResponse,
-  shouldRetryError,
-} from './errors';
 
 // =====================================================================
 // CONFIGURATION PAR DÉFAUT
@@ -185,7 +184,7 @@ export class AbbyClient {
   // ===================================================================
 
   private sleep(ms: number): Promise<void> {
-    return new Promise((resolve) => setTimeout(resolve, ms));
+    return new Promise(resolve => setTimeout(resolve, ms));
   }
 
   // ===================================================================
@@ -206,9 +205,7 @@ export class AbbyClient {
   /**
    * Créer nouveau client Abby
    */
-  async createCustomer(
-    payload: CreateCustomerPayload
-  ): Promise<AbbyCustomer> {
+  async createCustomer(payload: CreateCustomerPayload): Promise<AbbyCustomer> {
     const response = await this.request<{ data: AbbyCustomer }>(
       'POST',
       '/customers',

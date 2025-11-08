@@ -5,9 +5,10 @@
  * Google Merchant Center (authentification, API, account info)
  */
 
-'use client'
+'use client';
 
-import { useState } from 'react'
+import { useState } from 'react';
+
 import {
   Settings,
   CheckCircle,
@@ -17,29 +18,30 @@ import {
   Eye,
   EyeOff,
   ExternalLink,
-  Package
-} from 'lucide-react'
+  Package,
+} from 'lucide-react';
+
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
+import { Badge } from '@/components/ui/badge';
+import { ButtonV2 } from '@/components/ui/button';
+import { Card, CardContent } from '@/components/ui/card';
 import {
   Dialog,
   DialogContent,
   DialogDescription,
   DialogHeader,
   DialogTitle,
-} from '@/components/ui/dialog'
-import { ButtonV2 } from '@/components/ui/button'
-import { Badge } from '@/components/ui/badge'
-import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert'
-import { Card, CardContent } from '@/components/ui/card'
-import { useGoogleMerchantConfig } from '@/shared/modules/channels/hooks'
+} from '@/components/ui/dialog';
+import { useGoogleMerchantConfig } from '@/shared/modules/channels/hooks';
 
 interface GoogleMerchantConfigModalProps {
-  open: boolean
-  onOpenChange: (open: boolean) => void
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
 }
 
 export function GoogleMerchantConfigModal({
   open,
-  onOpenChange
+  onOpenChange,
 }: GoogleMerchantConfigModalProps) {
   const {
     config,
@@ -48,10 +50,10 @@ export function GoogleMerchantConfigModal({
     error,
     testDetails,
     testConnection,
-    resetTest
-  } = useGoogleMerchantConfig()
+    resetTest,
+  } = useGoogleMerchantConfig();
 
-  const [showCredentials, setShowCredentials] = useState(false)
+  const [showCredentials, setShowCredentials] = useState(false);
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -68,15 +70,17 @@ export function GoogleMerchantConfigModal({
 
         <div className="space-y-6">
           {/* Status Badge Principal */}
-          <Card className={`border-2 ${
-            connectionStatus === 'success'
-              ? 'border-green-300 bg-green-50'
-              : connectionStatus === 'error'
-              ? 'border-red-300 bg-red-50'
-              : connectionStatus === 'testing'
-              ? 'border-blue-300 bg-blue-50'
-              : 'border-gray-300 bg-gray-50'
-          }`}>
+          <Card
+            className={`border-2 ${
+              connectionStatus === 'success'
+                ? 'border-green-300 bg-green-50'
+                : connectionStatus === 'error'
+                  ? 'border-red-300 bg-red-50'
+                  : connectionStatus === 'testing'
+                    ? 'border-blue-300 bg-blue-50'
+                    : 'border-gray-300 bg-gray-50'
+            }`}
+          >
             <CardContent className="p-4">
               <div className="flex items-center justify-between">
                 <div className="flex items-center space-x-3">
@@ -84,7 +88,9 @@ export function GoogleMerchantConfigModal({
                     <>
                       <CheckCircle className="h-6 w-6 text-green-600" />
                       <div>
-                        <p className="font-bold text-green-900">Connecté et opérationnel</p>
+                        <p className="font-bold text-green-900">
+                          Connecté et opérationnel
+                        </p>
                         <p className="text-sm text-green-700">
                           API Google Merchant Center accessible
                         </p>
@@ -95,7 +101,9 @@ export function GoogleMerchantConfigModal({
                     <>
                       <AlertCircle className="h-6 w-6 text-red-600" />
                       <div>
-                        <p className="font-bold text-red-900">Erreur de connexion</p>
+                        <p className="font-bold text-red-900">
+                          Erreur de connexion
+                        </p>
                         <p className="text-sm text-red-700">
                           Impossible de se connecter à l'API
                         </p>
@@ -106,7 +114,9 @@ export function GoogleMerchantConfigModal({
                     <>
                       <RefreshCw className="h-6 w-6 text-blue-600 animate-spin" />
                       <div>
-                        <p className="font-bold text-blue-900">Test en cours...</p>
+                        <p className="font-bold text-blue-900">
+                          Test en cours...
+                        </p>
                         <p className="text-sm text-blue-700">
                           Vérification authentification et API
                         </p>
@@ -117,7 +127,9 @@ export function GoogleMerchantConfigModal({
                     <>
                       <Info className="h-6 w-6 text-gray-600" />
                       <div>
-                        <p className="font-bold text-gray-900">Prêt pour le test</p>
+                        <p className="font-bold text-gray-900">
+                          Prêt pour le test
+                        </p>
                         <p className="text-sm text-gray-700">
                           Cliquez sur "Tester la connexion" pour valider
                         </p>
@@ -139,7 +151,9 @@ export function GoogleMerchantConfigModal({
           {/* Configuration Details */}
           <div className="space-y-4">
             <div className="flex items-center justify-between">
-              <h3 className="text-lg font-semibold text-black">Informations du compte</h3>
+              <h3 className="text-lg font-semibold text-black">
+                Informations du compte
+              </h3>
               <ButtonV2
                 variant="ghost"
                 size="sm"
@@ -183,7 +197,8 @@ export function GoogleMerchantConfigModal({
                 <CardContent className="p-4">
                   <p className="text-sm text-gray-600 mb-1">Langue / Pays</p>
                   <p className="font-medium text-black">
-                    {config?.contentLanguage.toUpperCase() || 'FR'} / {config?.targetCountry || 'FR'}
+                    {config?.contentLanguage.toUpperCase() || 'FR'} /{' '}
+                    {config?.targetCountry || 'FR'}
                   </p>
                 </CardContent>
               </Card>
@@ -202,23 +217,30 @@ export function GoogleMerchantConfigModal({
             {showCredentials && (
               <Alert className="border-blue-300 bg-blue-50">
                 <Info className="h-4 w-4 text-blue-600" />
-                <AlertTitle className="text-blue-900">Variables d'environnement</AlertTitle>
+                <AlertTitle className="text-blue-900">
+                  Variables d'environnement
+                </AlertTitle>
                 <AlertDescription className="text-blue-800 space-y-2 mt-2">
                   <div className="font-mono text-xs">
-                    <p className="text-gray-700">GOOGLE_MERCHANT_SERVICE_ACCOUNT_EMAIL</p>
+                    <p className="text-gray-700">
+                      GOOGLE_MERCHANT_SERVICE_ACCOUNT_EMAIL
+                    </p>
                     <p className="text-black break-all">
-                      {process.env.NEXT_PUBLIC_GOOGLE_MERCHANT_SERVICE_ACCOUNT_EMAIL ||
-                       'google-merchant-verone@make-gmail-integration-428317.iam.gserviceaccount.com'}
+                      {process.env
+                        .NEXT_PUBLIC_GOOGLE_MERCHANT_SERVICE_ACCOUNT_EMAIL ||
+                        'google-merchant-verone@make-gmail-integration-428317.iam.gserviceaccount.com'}
                     </p>
                   </div>
                   <div className="font-mono text-xs">
                     <p className="text-gray-700">GOOGLE_CLOUD_PROJECT_ID</p>
                     <p className="text-black">
-                      {process.env.NEXT_PUBLIC_GOOGLE_CLOUD_PROJECT_ID || 'make-gmail-integration-428317'}
+                      {process.env.NEXT_PUBLIC_GOOGLE_CLOUD_PROJECT_ID ||
+                        'make-gmail-integration-428317'}
                     </p>
                   </div>
                   <p className="text-xs text-blue-700 mt-2">
-                    🔒 Les clés privées ne sont jamais affichées pour des raisons de sécurité
+                    🔒 Les clés privées ne sont jamais affichées pour des
+                    raisons de sécurité
                   </p>
                 </AlertDescription>
               </Alert>
@@ -230,7 +252,9 @@ export function GoogleMerchantConfigModal({
             <Card className="border-green-300 bg-green-50">
               <CardContent className="p-4 space-y-3">
                 <div className="flex items-center justify-between">
-                  <h4 className="font-semibold text-green-900">Résultats du test</h4>
+                  <h4 className="font-semibold text-green-900">
+                    Résultats du test
+                  </h4>
                   <Badge className="border-green-400 text-green-700 bg-green-100">
                     {new Date(testDetails.timestamp).toLocaleString('fr-FR')}
                   </Badge>
@@ -258,7 +282,8 @@ export function GoogleMerchantConfigModal({
                       <span className="text-sm text-green-800">
                         Produits synchronisés détectés:{' '}
                         <strong className="text-green-900">
-                          {testDetails.details.productListTest.productCount || 0}
+                          {testDetails.details.productListTest.productCount ||
+                            0}
                         </strong>
                       </span>
                     </div>
@@ -269,7 +294,12 @@ export function GoogleMerchantConfigModal({
                   variant="outline"
                   size="sm"
                   className="w-full border-green-400 text-green-700 hover:bg-green-100"
-                  onClick={() => window.open(`https://merchants.google.com/mc/accounts/${config?.accountId}`, '_blank')}
+                  onClick={() =>
+                    window.open(
+                      `https://merchants.google.com/mc/accounts/${config?.accountId}`,
+                      '_blank'
+                    )
+                  }
                 >
                   <ExternalLink className="h-4 w-4 mr-2" />
                   Ouvrir Google Merchant Center
@@ -282,7 +312,9 @@ export function GoogleMerchantConfigModal({
           {connectionStatus === 'error' && error && (
             <Alert className="border-red-300 bg-red-50">
               <AlertCircle className="h-4 w-4 text-red-600" />
-              <AlertTitle className="text-red-900">Erreur de connexion</AlertTitle>
+              <AlertTitle className="text-red-900">
+                Erreur de connexion
+              </AlertTitle>
               <AlertDescription className="text-red-800">
                 <p className="font-mono text-sm mt-2 bg-red-100 p-3 rounded border border-red-200">
                   {error}
@@ -356,5 +388,5 @@ export function GoogleMerchantConfigModal({
         </div>
       </DialogContent>
     </Dialog>
-  )
+  );
 }

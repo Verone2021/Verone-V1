@@ -1,49 +1,58 @@
-'use client'
+'use client';
 
-import { useState } from 'react'
-import { ButtonV2 } from '@/components/ui/button'
-import { Card, CardContent } from '@/components/ui/card'
-import { Badge } from '@/components/ui/badge'
-import { MapPin, Package, AlertCircle } from 'lucide-react'
-import { SalesOrder } from '@/shared/modules/orders/hooks'
-import { ShipmentRecapData } from './shipment-recap-modal'
+import { useState } from 'react';
+
+import { MapPin, Package, AlertCircle } from 'lucide-react';
+
+import { Badge } from '@/components/ui/badge';
+import { ButtonV2 } from '@/components/ui/button';
+import { Card, CardContent } from '@/components/ui/card';
+import type { SalesOrder } from '@/shared/modules/orders/hooks';
+// import { ShipmentRecapData } from './shipment-recap-modal'
+
+// Temporary type until shipment-recap-modal is implemented
+type ShipmentRecapData = any;
 
 interface MondialRelayShipmentFormProps {
-  order: SalesOrder
-  onComplete: (data: ShipmentRecapData) => void
-  onBack: () => void
+  order: SalesOrder;
+  onComplete: (data: ShipmentRecapData) => void;
+  onBack: () => void;
 }
 
-export function MondialRelayShipmentForm({ order, onComplete, onBack }: MondialRelayShipmentFormProps) {
+export function MondialRelayShipmentForm({
+  order,
+  onComplete,
+  onBack,
+}: MondialRelayShipmentFormProps) {
   // Données colis
-  const [weightKg, setWeightKg] = useState(0)
-  const [lengthCm, setLengthCm] = useState(0)
-  const [widthCm, setWidthCm] = useState(0)
-  const [heightCm, setHeightCm] = useState(0)
+  const [weightKg, setWeightKg] = useState(0);
+  const [lengthCm, setLengthCm] = useState(0);
+  const [widthCm, setWidthCm] = useState(0);
+  const [heightCm, setHeightCm] = useState(0);
 
   // Point relais
-  const [relayPointId, setRelayPointId] = useState('')
-  const [relayPointName, setRelayPointName] = useState('')
-  const [relayPointAddress, setRelayPointAddress] = useState('')
+  const [relayPointId, setRelayPointId] = useState('');
+  const [relayPointName, setRelayPointName] = useState('');
+  const [relayPointAddress, setRelayPointAddress] = useState('');
 
   // Tracking
-  const [tracking, setTracking] = useState('')
+  const [tracking, setTracking] = useState('');
 
   // Coûts
-  const [costPaid, setCostPaid] = useState(0)
-  const [costCharged, setCostCharged] = useState(0)
-  const [notes, setNotes] = useState('')
+  const [costPaid, setCostPaid] = useState(0);
+  const [costCharged, setCostCharged] = useState(0);
+  const [notes, setNotes] = useState('');
 
   const canSubmit = (): boolean => {
     return (
       weightKg > 0 &&
       weightKg <= 30 && // Limite Mondial Relay
       relayPointName.trim() !== '' // Nom point relais obligatoire
-    )
-  }
+    );
+  };
 
   const handleSubmit = () => {
-    if (!canSubmit()) return
+    if (!canSubmit()) return;
 
     const recapData: ShipmentRecapData = {
       orderId: order.id,
@@ -58,8 +67,8 @@ export function MondialRelayShipmentForm({ order, onComplete, onBack }: MondialR
           weight_kg: weightKg,
           length_cm: lengthCm,
           width_cm: widthCm,
-          height_cm: heightCm
-        }
+          height_cm: heightCm,
+        },
       ],
       costPaid,
       costCharged,
@@ -68,12 +77,12 @@ export function MondialRelayShipmentForm({ order, onComplete, onBack }: MondialR
       metadata: {
         relay_point_id: relayPointId || undefined,
         relay_point_name: relayPointName,
-        relay_point_address: relayPointAddress || undefined
-      }
-    }
+        relay_point_address: relayPointAddress || undefined,
+      },
+    };
 
-    onComplete(recapData)
-  }
+    onComplete(recapData);
+  };
 
   return (
     <div className="space-y-6">
@@ -83,7 +92,9 @@ export function MondialRelayShipmentForm({ order, onComplete, onBack }: MondialR
           <div className="flex items-center gap-3">
             <MapPin className="h-5 w-5 text-yellow-600" />
             <div>
-              <h3 className="font-semibold text-yellow-900">Mondial Relay - Livraison en Point Relais</h3>
+              <h3 className="font-semibold text-yellow-900">
+                Mondial Relay - Livraison en Point Relais
+              </h3>
               <p className="text-sm text-yellow-700">
                 Livraison économique dans un point relais proche du client
               </p>
@@ -100,8 +111,9 @@ export function MondialRelayShipmentForm({ order, onComplete, onBack }: MondialR
             <div className="text-sm text-blue-900">
               <p className="font-semibold mb-1">📋 Saisie manuelle</p>
               <p className="text-blue-800">
-                Sélectionnez le point relais via l'interface Mondial Relay ou depuis votre système existant,
-                puis renseignez les informations ci-dessous.
+                Sélectionnez le point relais via l'interface Mondial Relay ou
+                depuis votre système existant, puis renseignez les informations
+                ci-dessous.
               </p>
             </div>
           </div>
@@ -118,12 +130,14 @@ export function MondialRelayShipmentForm({ order, onComplete, onBack }: MondialR
 
           <div className="space-y-4">
             <div>
-              <label className="block text-sm font-medium mb-2">Nom du point relais *</label>
+              <label className="block text-sm font-medium mb-2">
+                Nom du point relais *
+              </label>
               <input
                 type="text"
                 className="w-full px-3 py-2 border rounded-md"
                 value={relayPointName}
-                onChange={(e) => setRelayPointName(e.target.value)}
+                onChange={e => setRelayPointName(e.target.value)}
                 placeholder="Ex: RELAY Paris 15 - Tabac Presse"
               />
               <p className="text-xs text-gray-500 mt-1">
@@ -132,12 +146,14 @@ export function MondialRelayShipmentForm({ order, onComplete, onBack }: MondialR
             </div>
 
             <div>
-              <label className="block text-sm font-medium mb-2">Adresse complète</label>
+              <label className="block text-sm font-medium mb-2">
+                Adresse complète
+              </label>
               <textarea
                 className="w-full px-3 py-2 border rounded-md"
                 rows={2}
                 value={relayPointAddress}
-                onChange={(e) => setRelayPointAddress(e.target.value)}
+                onChange={e => setRelayPointAddress(e.target.value)}
                 placeholder="15 Rue de la Convention, 75015 Paris"
               />
               <p className="text-xs text-gray-500 mt-1">
@@ -146,12 +162,14 @@ export function MondialRelayShipmentForm({ order, onComplete, onBack }: MondialR
             </div>
 
             <div>
-              <label className="block text-sm font-medium mb-2">ID Point Relais (optionnel)</label>
+              <label className="block text-sm font-medium mb-2">
+                ID Point Relais (optionnel)
+              </label>
               <input
                 type="text"
                 className="w-full px-3 py-2 border rounded-md font-mono"
                 value={relayPointId}
-                onChange={(e) => setRelayPointId(e.target.value)}
+                onChange={e => setRelayPointId(e.target.value)}
                 placeholder="Ex: FR-75015-001"
               />
               <p className="text-xs text-gray-500 mt-1">
@@ -173,7 +191,9 @@ export function MondialRelayShipmentForm({ order, onComplete, onBack }: MondialR
           <div className="space-y-4">
             {/* Poids */}
             <div>
-              <label className="block text-sm font-medium mb-2">Poids (kg) *</label>
+              <label className="block text-sm font-medium mb-2">
+                Poids (kg) *
+              </label>
               <input
                 type="number"
                 step="0.1"
@@ -181,47 +201,55 @@ export function MondialRelayShipmentForm({ order, onComplete, onBack }: MondialR
                 max="30"
                 className="w-full px-3 py-2 border rounded-md"
                 value={weightKg || ''}
-                onChange={(e) => setWeightKg(parseFloat(e.target.value) || 0)}
+                onChange={e => setWeightKg(parseFloat(e.target.value) || 0)}
                 placeholder="Ex: 5.5"
               />
-              <p className="text-xs text-gray-500 mt-1">Max 30 kg pour Mondial Relay</p>
+              <p className="text-xs text-gray-500 mt-1">
+                Max 30 kg pour Mondial Relay
+              </p>
             </div>
 
             {/* Dimensions */}
             <div className="grid grid-cols-3 gap-3">
               <div>
-                <label className="block text-sm font-medium mb-2">Longueur (cm)</label>
+                <label className="block text-sm font-medium mb-2">
+                  Longueur (cm)
+                </label>
                 <input
                   type="number"
                   min="0"
                   max="150"
                   className="w-full px-3 py-2 border rounded-md"
                   value={lengthCm || ''}
-                  onChange={(e) => setLengthCm(parseInt(e.target.value) || 0)}
+                  onChange={e => setLengthCm(parseInt(e.target.value) || 0)}
                   placeholder="L"
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium mb-2">Largeur (cm)</label>
+                <label className="block text-sm font-medium mb-2">
+                  Largeur (cm)
+                </label>
                 <input
                   type="number"
                   min="0"
                   max="50"
                   className="w-full px-3 py-2 border rounded-md"
                   value={widthCm || ''}
-                  onChange={(e) => setWidthCm(parseInt(e.target.value) || 0)}
+                  onChange={e => setWidthCm(parseInt(e.target.value) || 0)}
                   placeholder="l"
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium mb-2">Hauteur (cm)</label>
+                <label className="block text-sm font-medium mb-2">
+                  Hauteur (cm)
+                </label>
                 <input
                   type="number"
                   min="0"
                   max="50"
                   className="w-full px-3 py-2 border rounded-md"
                   value={heightCm || ''}
-                  onChange={(e) => setHeightCm(parseInt(e.target.value) || 0)}
+                  onChange={e => setHeightCm(parseInt(e.target.value) || 0)}
                   placeholder="h"
                 />
               </div>
@@ -235,12 +263,14 @@ export function MondialRelayShipmentForm({ order, onComplete, onBack }: MondialR
 
       {/* Tracking */}
       <div>
-        <label className="block text-sm font-medium mb-2">Numéro de suivi</label>
+        <label className="block text-sm font-medium mb-2">
+          Numéro de suivi
+        </label>
         <input
           type="text"
           className="w-full px-3 py-2 border rounded-md font-mono"
           value={tracking}
-          onChange={(e) => setTracking(e.target.value)}
+          onChange={e => setTracking(e.target.value)}
           placeholder="Ex: MR123456789FR"
         />
         <p className="text-xs text-gray-500 mt-1">
@@ -254,44 +284,54 @@ export function MondialRelayShipmentForm({ order, onComplete, onBack }: MondialR
           <h3 className="font-semibold text-lg mb-4">Coûts de livraison</h3>
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <label className="block text-sm font-medium mb-2">Coût payé à Mondial Relay (€)</label>
+              <label className="block text-sm font-medium mb-2">
+                Coût payé à Mondial Relay (€)
+              </label>
               <input
                 type="number"
                 step="0.01"
                 min="0"
                 className="w-full px-3 py-2 border rounded-md"
                 value={costPaid || ''}
-                onChange={(e) => setCostPaid(parseFloat(e.target.value) || 0)}
+                onChange={e => setCostPaid(parseFloat(e.target.value) || 0)}
                 placeholder="0.00"
               />
-              <p className="text-xs text-gray-500 mt-1">Montant facturé par Mondial Relay</p>
+              <p className="text-xs text-gray-500 mt-1">
+                Montant facturé par Mondial Relay
+              </p>
             </div>
             <div>
-              <label className="block text-sm font-medium mb-2">Coût facturé au client (€)</label>
+              <label className="block text-sm font-medium mb-2">
+                Coût facturé au client (€)
+              </label>
               <input
                 type="number"
                 step="0.01"
                 min="0"
                 className="w-full px-3 py-2 border rounded-md"
                 value={costCharged || ''}
-                onChange={(e) => setCostCharged(parseFloat(e.target.value) || 0)}
+                onChange={e => setCostCharged(parseFloat(e.target.value) || 0)}
                 placeholder="0.00"
               />
-              <p className="text-xs text-gray-500 mt-1">Montant facturé au client (0 si inclus)</p>
+              <p className="text-xs text-gray-500 mt-1">
+                Montant facturé au client (0 si inclus)
+              </p>
             </div>
           </div>
 
           {/* Marge calculée */}
           {(costPaid > 0 || costCharged > 0) && (
             <div className="mt-4 p-3 bg-gray-50 rounded-lg flex justify-between items-center">
-              <span className="text-sm font-medium text-gray-700">Marge calculée</span>
+              <span className="text-sm font-medium text-gray-700">
+                Marge calculée
+              </span>
               <span
                 className={`font-semibold ${
                   costCharged - costPaid > 0
                     ? 'text-green-600'
                     : costCharged - costPaid < 0
-                    ? 'text-red-600'
-                    : 'text-gray-900'
+                      ? 'text-red-600'
+                      : 'text-gray-900'
                 }`}
               >
                 {costCharged - costPaid > 0 ? '+' : ''}
@@ -304,12 +344,14 @@ export function MondialRelayShipmentForm({ order, onComplete, onBack }: MondialR
 
       {/* Notes */}
       <div>
-        <label className="block text-sm font-medium mb-2">Notes (optionnel)</label>
+        <label className="block text-sm font-medium mb-2">
+          Notes (optionnel)
+        </label>
         <textarea
           className="w-full px-3 py-2 border rounded-md"
           rows={3}
           value={notes}
-          onChange={(e) => setNotes(e.target.value)}
+          onChange={e => setNotes(e.target.value)}
           placeholder="Informations complémentaires sur l'expédition en point relais..."
         />
       </div>
@@ -330,5 +372,5 @@ export function MondialRelayShipmentForm({ order, onComplete, onBack }: MondialR
         </p>
       )}
     </div>
-  )
+  );
 }

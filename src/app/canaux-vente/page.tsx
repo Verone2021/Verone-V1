@@ -1,7 +1,9 @@
-'use client'
+'use client';
 
-import { useState } from 'react'
-import { useRouter } from 'next/navigation'
+import { useState } from 'react';
+
+import { useRouter } from 'next/navigation';
+
 import {
   ShoppingBag,
   Globe,
@@ -16,12 +18,19 @@ import {
   Clock,
   ArrowUpDown,
   BarChart3,
-  TrendingUp
-} from 'lucide-react'
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
-import { ButtonV2 } from '@/components/ui/button'
-import { Badge } from '@/components/ui/badge'
-import { Progress } from '@/components/ui/progress'
+  TrendingUp,
+} from 'lucide-react';
+
+import { Badge } from '@/components/ui/badge';
+import { ButtonV2 } from '@/components/ui/button';
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from '@/components/ui/card';
+import { Progress } from '@/components/ui/progress';
 
 // Configuration des canaux de vente actifs
 const ACTIVE_CHANNELS = [
@@ -37,7 +46,7 @@ const ACTIVE_CHANNELS = [
     revenue_this_month: 12500,
     orders_this_month: 23,
     api: true,
-    path: '/canaux-vente/google-merchant'
+    path: '/canaux-vente/google-merchant',
   },
   {
     id: 'boutique_en_ligne',
@@ -51,9 +60,9 @@ const ACTIVE_CHANNELS = [
     revenue_this_month: 45670,
     orders_this_month: 89,
     api: false,
-    path: '/canaux-vente/boutique'
-  }
-]
+    path: '/canaux-vente/boutique',
+  },
+];
 
 // Canaux Phase 2 (à venir)
 const UPCOMING_CHANNELS = [
@@ -61,69 +70,93 @@ const UPCOMING_CHANNELS = [
     id: 'instagram_shopping',
     name: 'Instagram Shopping',
     description: 'Catalogue produits sur Instagram - Disponible en Phase 2',
-    icon: Smartphone
+    icon: Smartphone,
   },
   {
     id: 'facebook_marketplace',
     name: 'Facebook Marketplace',
     description: 'Vente sur Facebook Marketplace - Disponible en Phase 2',
-    icon: Store
-  }
-]
+    icon: Store,
+  },
+];
 
 export default function CanauxVentePage() {
-  const router = useRouter()
-  const [selectedChannel, setSelectedChannel] = useState<string | null>(null)
+  const router = useRouter();
+  const [selectedChannel, setSelectedChannel] = useState<string | null>(null);
 
   const getStatusBadge = (status: string) => {
     switch (status) {
       case 'active':
-        return <Badge variant="outline" className="border-green-300 text-green-600">Actif</Badge>
+        return (
+          <Badge variant="outline" className="border-green-300 text-green-600">
+            Actif
+          </Badge>
+        );
       case 'setup_required':
-        return <Badge variant="outline" className="border-gray-300 text-black">Configuration requise</Badge>
+        return (
+          <Badge variant="outline" className="border-gray-300 text-black">
+            Configuration requise
+          </Badge>
+        );
       case 'inactive':
-        return <Badge variant="outline" className="border-gray-300 text-gray-600">Inactif</Badge>
+        return (
+          <Badge variant="outline" className="border-gray-300 text-gray-600">
+            Inactif
+          </Badge>
+        );
       default:
-        return <Badge variant="outline">{status}</Badge>
+        return <Badge variant="outline">{status}</Badge>;
     }
-  }
+  };
 
   const getSyncStatusIcon = (status: string) => {
     switch (status) {
       case 'success':
-        return <CheckCircle className="h-4 w-4 text-green-600" />
+        return <CheckCircle className="h-4 w-4 text-green-600" />;
       case 'error':
-        return <AlertCircle className="h-4 w-4 text-red-600" />
+        return <AlertCircle className="h-4 w-4 text-red-600" />;
       case 'pending':
-        return <Clock className="h-4 w-4 text-gray-400" />
+        return <Clock className="h-4 w-4 text-gray-400" />;
       default:
-        return <Clock className="h-4 w-4 text-gray-400" />
+        return <Clock className="h-4 w-4 text-gray-400" />;
     }
-  }
+  };
 
   const formatDate = (dateString: string | null) => {
-    if (!dateString) return 'Jamais'
-    const date = new Date(dateString)
-    const now = new Date()
-    const diffInHours = (now.getTime() - date.getTime()) / (1000 * 60 * 60)
+    if (!dateString) return 'Jamais';
+    const date = new Date(dateString);
+    const now = new Date();
+    const diffInHours = (now.getTime() - date.getTime()) / (1000 * 60 * 60);
 
-    if (diffInHours < 1) return 'Il y a moins d\'une heure'
-    if (diffInHours < 24) return `Il y a ${Math.floor(diffInHours)} heures`
-    return date.toLocaleDateString('fr-FR')
-  }
+    if (diffInHours < 1) return "Il y a moins d'une heure";
+    if (diffInHours < 24) return `Il y a ${Math.floor(diffInHours)} heures`;
+    return date.toLocaleDateString('fr-FR');
+  };
 
   const formatCurrency = (amount: number) => {
-    return new Intl.NumberFormat('fr-FR', { style: 'currency', currency: 'EUR' }).format(amount)
-  }
+    return new Intl.NumberFormat('fr-FR', {
+      style: 'currency',
+      currency: 'EUR',
+    }).format(amount);
+  };
 
   // Calcul des statistiques globales
   const stats = {
     totalChannels: ACTIVE_CHANNELS.length,
     activeChannels: ACTIVE_CHANNELS.filter(c => c.status === 'active').length,
-    totalProducts: ACTIVE_CHANNELS.reduce((sum, c) => sum + c.products_synced, 0),
-    totalRevenue: ACTIVE_CHANNELS.reduce((sum, c) => sum + c.revenue_this_month, 0),
-    totalOrders: ACTIVE_CHANNELS.reduce((sum, c) => sum + c.orders_this_month, 0)
-  }
+    totalProducts: ACTIVE_CHANNELS.reduce(
+      (sum, c) => sum + c.products_synced,
+      0
+    ),
+    totalRevenue: ACTIVE_CHANNELS.reduce(
+      (sum, c) => sum + c.revenue_this_month,
+      0
+    ),
+    totalOrders: ACTIVE_CHANNELS.reduce(
+      (sum, c) => sum + c.orders_this_month,
+      0
+    ),
+  };
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -133,7 +166,9 @@ export default function CanauxVentePage() {
           <div className="flex items-center justify-between">
             <div>
               <h1 className="text-3xl font-bold text-black">Canaux de Vente</h1>
-              <p className="text-gray-600 mt-1">Gérez vos différents canaux de distribution et marketplaces</p>
+              <p className="text-gray-600 mt-1">
+                Gérez vos différents canaux de distribution et marketplaces
+              </p>
             </div>
             <div className="flex items-center space-x-3">
               <ButtonV2
@@ -143,9 +178,7 @@ export default function CanauxVentePage() {
                 <Settings className="h-4 w-4 mr-2" />
                 Paramètres
               </ButtonV2>
-              <ButtonV2
-                className="bg-black hover:bg-gray-800 text-white"
-              >
+              <ButtonV2 className="bg-black hover:bg-gray-800 text-white">
                 <ShoppingBag className="h-4 w-4 mr-2" />
                 Nouveau Canal
               </ButtonV2>
@@ -176,7 +209,9 @@ export default function CanauxVentePage() {
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-sm text-gray-600">Produits Synchronisés</p>
-                  <p className="text-2xl font-bold text-blue-600">{stats.totalProducts}</p>
+                  <p className="text-2xl font-bold text-blue-600">
+                    {stats.totalProducts}
+                  </p>
                 </div>
                 <Package className="h-8 w-8 text-blue-600" />
               </div>
@@ -202,7 +237,9 @@ export default function CanauxVentePage() {
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-sm text-gray-600">Commandes ce mois</p>
-                  <p className="text-2xl font-bold text-purple-600">{stats.totalOrders}</p>
+                  <p className="text-2xl font-bold text-purple-600">
+                    {stats.totalOrders}
+                  </p>
                 </div>
                 <BarChart3 className="h-8 w-8 text-purple-600" />
               </div>
@@ -225,13 +262,17 @@ export default function CanauxVentePage() {
         {/* Liste des canaux de vente actifs */}
         <Card className="border-black mb-6">
           <CardHeader>
-            <CardTitle className="text-black">Canaux de Distribution Actifs</CardTitle>
-            <CardDescription>Gérez et synchronisez vos produits sur différentes plateformes</CardDescription>
+            <CardTitle className="text-black">
+              Canaux de Distribution Actifs
+            </CardTitle>
+            <CardDescription>
+              Gérez et synchronisez vos produits sur différentes plateformes
+            </CardDescription>
           </CardHeader>
           <CardContent>
             <div className="space-y-4">
-              {ACTIVE_CHANNELS.map((channel) => {
-                const Icon = channel.icon
+              {ACTIVE_CHANNELS.map(channel => {
+                const Icon = channel.icon;
                 return (
                   <div
                     key={channel.id}
@@ -247,25 +288,38 @@ export default function CanauxVentePage() {
 
                           <div className="flex-1">
                             <div className="flex items-center space-x-3 mb-2">
-                              <h3 className="font-semibold text-black text-lg">{channel.name}</h3>
+                              <h3 className="font-semibold text-black text-lg">
+                                {channel.name}
+                              </h3>
                               {getStatusBadge(channel.status)}
                               {channel.api && (
-                                <Badge variant="outline" className="border-blue-300 text-blue-600">
+                                <Badge
+                                  variant="outline"
+                                  className="border-blue-300 text-blue-600"
+                                >
                                   API
                                 </Badge>
                               )}
                             </div>
 
-                            <p className="text-gray-600 mb-4">{channel.description}</p>
+                            <p className="text-gray-600 mb-4">
+                              {channel.description}
+                            </p>
 
                             <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
                               <div>
-                                <p className="text-sm text-gray-500">Produits synchronisés</p>
-                                <p className="font-semibold text-black">{channel.products_synced}</p>
+                                <p className="text-sm text-gray-500">
+                                  Produits synchronisés
+                                </p>
+                                <p className="font-semibold text-black">
+                                  {channel.products_synced}
+                                </p>
                               </div>
 
                               <div>
-                                <p className="text-sm text-gray-500">Dernière synchro</p>
+                                <p className="text-sm text-gray-500">
+                                  Dernière synchro
+                                </p>
                                 <div className="flex items-center space-x-1">
                                   {getSyncStatusIcon(channel.sync_status)}
                                   <p className="font-medium text-gray-700">
@@ -275,27 +329,38 @@ export default function CanauxVentePage() {
                               </div>
 
                               <div>
-                                <p className="text-sm text-gray-500">CA ce mois</p>
+                                <p className="text-sm text-gray-500">
+                                  CA ce mois
+                                </p>
                                 <p className="font-semibold text-green-600">
                                   {formatCurrency(channel.revenue_this_month)}
                                 </p>
                               </div>
 
                               <div>
-                                <p className="text-sm text-gray-500">Commandes</p>
-                                <p className="font-semibold text-blue-600">{channel.orders_this_month}</p>
+                                <p className="text-sm text-gray-500">
+                                  Commandes
+                                </p>
+                                <p className="font-semibold text-blue-600">
+                                  {channel.orders_this_month}
+                                </p>
                               </div>
                             </div>
 
-                            {channel.status === 'active' && channel.products_synced > 0 && (
-                              <div className="mt-4">
-                                <div className="flex items-center justify-between text-sm mb-1">
-                                  <span className="text-gray-600">Synchronisation</span>
-                                  <span className="text-gray-700 font-medium">100%</span>
+                            {channel.status === 'active' &&
+                              channel.products_synced > 0 && (
+                                <div className="mt-4">
+                                  <div className="flex items-center justify-between text-sm mb-1">
+                                    <span className="text-gray-600">
+                                      Synchronisation
+                                    </span>
+                                    <span className="text-gray-700 font-medium">
+                                      100%
+                                    </span>
+                                  </div>
+                                  <Progress value={100} className="h-2" />
                                 </div>
-                                <Progress value={100} className="h-2" />
-                              </div>
-                            )}
+                              )}
                           </div>
                         </div>
                       </div>
@@ -303,7 +368,7 @@ export default function CanauxVentePage() {
                       <ChevronRight className="h-5 w-5 text-gray-400 ml-4" />
                     </div>
                   </div>
-                )
+                );
               })}
             </div>
           </CardContent>
@@ -316,12 +381,14 @@ export default function CanauxVentePage() {
               <Clock className="h-5 w-5 mr-2" />
               Canaux à Venir - Phase 2
             </CardTitle>
-            <CardDescription>Ces canaux seront disponibles prochainement</CardDescription>
+            <CardDescription>
+              Ces canaux seront disponibles prochainement
+            </CardDescription>
           </CardHeader>
           <CardContent>
             <div className="space-y-3">
-              {UPCOMING_CHANNELS.map((channel) => {
-                const Icon = channel.icon
+              {UPCOMING_CHANNELS.map(channel => {
+                const Icon = channel.icon;
                 return (
                   <div
                     key={channel.id}
@@ -333,21 +400,28 @@ export default function CanauxVentePage() {
                       </div>
                       <div className="flex-1">
                         <div className="flex items-center space-x-2 mb-1">
-                          <h3 className="font-semibold text-gray-700">{channel.name}</h3>
-                          <Badge variant="outline" className="border-gray-400 text-gray-600">
+                          <h3 className="font-semibold text-gray-700">
+                            {channel.name}
+                          </h3>
+                          <Badge
+                            variant="outline"
+                            className="border-gray-400 text-gray-600"
+                          >
                             Bientôt disponible
                           </Badge>
                         </div>
-                        <p className="text-gray-500 text-sm">{channel.description}</p>
+                        <p className="text-gray-500 text-sm">
+                          {channel.description}
+                        </p>
                       </div>
                     </div>
                   </div>
-                )
+                );
               })}
             </div>
           </CardContent>
         </Card>
       </div>
     </div>
-  )
+  );
 }

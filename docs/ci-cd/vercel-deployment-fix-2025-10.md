@@ -10,12 +10,14 @@
 ## 📋 Contexte
 
 ### Problème Initial
+
 - ⚠️ Vercel ne détectait pas les nouveaux commits GitHub
 - ⚠️ Dernier déploiement bloqué sur commit `294123c` (23 oct, 13h37)
 - ⚠️ Commits plus récents (`f10d3ee`, `4f87817`) avec auth Supabase fonctionnelle ignorés
 - ⚠️ Tentatives de trigger via empty commits échouaient
 
 ### Symptômes
+
 ```bash
 # GitHub - Commits récents
 f10d3ee - fix(auth): Corriger déconnexion - utiliser Supabase signOut() ✅
@@ -38,6 +40,7 @@ curl -H "Authorization: token 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" \
 ```
 
 **Résultat** :
+
 ```json
 {
   "id": 576230045,
@@ -93,6 +96,7 @@ curl -X DELETE \
 ### Phase 3 : Reconnexion GitHub
 
 **Via Vercel Dashboard** :
+
 1. Settings > Git > Disconnect
 2. Settings > Git > Connect Git Repository
 3. Sélectionner `Verone2021/Verone-V1`
@@ -103,6 +107,7 @@ curl -X DELETE \
 ### Phase 4 : Reconfiguration Production Branch
 
 **Via Vercel Dashboard** :
+
 1. Settings > Environments > Production
 2. Changer de `main` → `production-stable`
 3. Sauvegarder
@@ -111,11 +116,13 @@ curl -X DELETE \
 
 **Problème rencontré** :
 Commits créés localement avec `git commit --allow-empty` rejetés par Vercel :
+
 ```
 Error: Deployment request did not have a git author with contributing access
 ```
 
 **Solution** : Commit manuel via GitHub UI
+
 1. Naviguer vers `https://github.com/Verone2021/Verone-V1/branches`
 2. Cliquer sur `production-stable`
 3. "Add file" > "Create new file"
@@ -151,6 +158,7 @@ Environment: Production
 ### Validation Production
 
 ✅ **Zero Console Errors** (règle sacrée respectée)
+
 ```javascript
 [LOG] ✅ Activity tracking: 1 events logged for user 100d2439...
 [LOG] ✅ Activity tracking: 1 events logged for user 100d2439...
@@ -158,6 +166,7 @@ Environment: Production
 ```
 
 ✅ **Fonctionnalités Validées**
+
 - Authentification Supabase (login/logout)
 - Sidebar navigation (Dashboard, Organisations & Contacts)
 - Dashboard avec KPIs réels
@@ -179,6 +188,7 @@ Environment: Production
 **Problème** : Vercel UI affichait "Connected" mais API retournait `link: null`
 
 **Leçon** : Toujours vérifier l'état réel via API avant de diagnostiquer
+
 ```bash
 curl -H "Authorization: Bearer $VERCEL_TOKEN" \
   "https://api.vercel.com/v9/projects/$PROJECT_ID" | jq '.link'
@@ -189,6 +199,7 @@ curl -H "Authorization: Bearer $VERCEL_TOKEN" \
 **Problème** : Webhook avec mauvais projet ID retournait 404 silencieusement
 
 **Leçon** : Auditer webhooks régulièrement, surtout après changements de repository
+
 ```bash
 # Vérifier tous les webhooks
 gh api repos/{owner}/{repo}/hooks
@@ -203,6 +214,7 @@ gh api repos/{owner}/{repo}/hooks
 ### 4. Branch Strategy Production
 
 **Leçon** : Isoler production sur branche dédiée (`production-stable`) permet :
+
 - Déploiements contrôlés (pas d'auto-deploy depuis `main`)
 - Rollback facile vers commits stables
 - Protection contre commits expérimentaux
@@ -258,6 +270,7 @@ curl -H "Authorization: token $GH_TOKEN" \
 ## 🚨 Procédure Si Problème Se Reproduit
 
 ### Symptômes
+
 - Vercel ne détecte pas nouveaux commits
 - Déploiements bloqués sur ancien commit
 - Push vers GitHub sans effet sur Vercel
@@ -265,34 +278,44 @@ curl -H "Authorization: token $GH_TOKEN" \
 ### Actions Immédiates
 
 **1. Vérifier connexion GitHub**
+
 ```bash
 curl -s -H "Authorization: Bearer $VERCEL_TOKEN" \
   "https://api.vercel.com/v9/projects/$PROJECT_ID" | jq '.link'
 ```
+
 Si `null` → Déconnecter/reconnecter GitHub via Dashboard
 
 **2. Vérifier webhooks GitHub**
+
 ```bash
 gh api repos/$OWNER/$REPO/hooks
 ```
+
 Si 404 ou mauvais projet ID → Supprimer et reconnecter GitHub
 
 **3. Vérifier production branch**
+
 ```bash
 curl -s -H "Authorization: Bearer $VERCEL_TOKEN" \
   "https://api.vercel.com/v9/projects/$PROJECT_ID" | jq '.productionBranch'
 ```
+
 Si incorrect → Reconfigurer via Settings > Environments > Production
 
 **4. Trigger manuel via GitHub UI**
+
 - Créer fichier dummy `.vercel-deploy-trigger-YYYYMMDD`
 - Commit message : `trigger: Manual deployment [raison]`
 - Committer directement sur production branch
 
 **5. Surveiller build via MCP Playwright**
+
 ```typescript
 // Naviguer vers déploiement
-await page.goto('https://vercel.com/verone2021s-projects/verone-v1/deployments');
+await page.goto(
+  'https://vercel.com/verone2021s-projects/verone-v1/deployments'
+);
 
 // Attendre "Ready"
 await page.waitForText('Ready');
@@ -307,31 +330,34 @@ const errors = await page.console_messages({ onlyErrors: true });
 
 ## 📊 Métriques Succès
 
-| Métrique | Avant Fix | Après Fix |
-|----------|-----------|-----------|
+| Métrique                | Avant Fix               | Après Fix               |
+| ----------------------- | ----------------------- | ----------------------- |
 | **Dernier déploiement** | 294123c (23 oct, 13h37) | 40293ad (24 oct, 02:18) |
-| **Build duration** | N/A (échoué) | 1m 41s ✅ |
-| **Console errors** | Inconnu | 0 ✅ |
-| **Auth fonctionnelle** | ❌ | ✅ |
-| **Sidebar visible** | ❌ | ✅ |
-| **Production branch** | `main` (incorrect) | `production-stable` ✅ |
-| **GitHub connected** | `null` | ✅ |
-| **Webhook actif** | 404 | ✅ (auto-créé) |
+| **Build duration**      | N/A (échoué)            | 1m 41s ✅               |
+| **Console errors**      | Inconnu                 | 0 ✅                    |
+| **Auth fonctionnelle**  | ❌                      | ✅                      |
+| **Sidebar visible**     | ❌                      | ✅                      |
+| **Production branch**   | `main` (incorrect)      | `production-stable` ✅  |
+| **GitHub connected**    | `null`                  | ✅                      |
+| **Webhook actif**       | 404                     | ✅ (auto-créé)          |
 
 ---
 
 ## 🔗 Références
 
 ### Documentation Vercel
+
 - [Git Integration](https://vercel.com/docs/deployments/git)
 - [Environment Variables](https://vercel.com/docs/projects/environment-variables)
 - [API Reference](https://vercel.com/docs/rest-api)
 
 ### Documentation Interne
+
 - `docs/guides/VERCEL-CONFIGURATION-2025.md` - Configuration initiale Vercel
 - `.env.local` - Variables d'environnement (ligne 15 : VERCEL_TOKEN)
 
 ### GitHub Issues
+
 - Aucun issue GitHub créé (résolution interne)
 
 ---
@@ -358,4 +384,4 @@ const errors = await page.console_messages({ onlyErrors: true });
 
 ---
 
-*Vérone Back Office - Professional AI-Assisted Development Excellence*
+_Vérone Back Office - Professional AI-Assisted Development Excellence_

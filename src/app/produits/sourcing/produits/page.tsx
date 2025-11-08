@@ -1,8 +1,10 @@
-"use client"
+'use client';
 
-import { useState, useMemo } from 'react'
-import { useRouter } from 'next/navigation'
-import Link from 'next/link'
+import { useState, useMemo } from 'react';
+
+import Link from 'next/link';
+import { useRouter } from 'next/navigation';
+
 import {
   Search,
   Filter,
@@ -21,23 +23,18 @@ import {
   ExternalLink,
   Euro,
   AlertCircle,
-  Globe
-} from 'lucide-react'
-import { useSourcingProducts } from '@/shared/modules/products/hooks'
-import { useSuppliers, useCustomers } from '@/shared/modules/organisations/hooks'
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
-import { ButtonV2 } from '@/components/ui/button'
-import { Badge } from '@/components/ui/badge'
-import { Input } from '@/components/ui/input'
-import { debounce } from '@/lib/utils'
-import { QuickSourcingModal } from '@/components/business/quick-sourcing-modal'
+  Globe,
+} from 'lucide-react';
+
+import { Badge } from '@/components/ui/badge';
+import { ButtonV2 } from '@/components/ui/button';
 import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select'
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from '@/components/ui/card';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -45,90 +42,166 @@ import {
   DropdownMenuLabel,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
-} from '@/components/ui/dropdown-menu'
+} from '@/components/ui/dropdown-menu';
+import { Input } from '@/components/ui/input';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
+import { debounce } from '@verone/utils';
+import {
+  useSuppliers,
+  useCustomers,
+} from '@/shared/modules/organisations/hooks';
+import { QuickSourcingModal } from '@/shared/modules/products/components/modals/QuickSourcingModal';
+import { useSourcingProducts } from '@/shared/modules/products/hooks';
 
 export default function SourcingProduitsPage() {
-  const router = useRouter()
-  const [searchTerm, setSearchTerm] = useState('')  // État local pour l'input
-  const [debouncedSearchTerm, setDebouncedSearchTerm] = useState('')  // ✅ État debounced pour le hook
-  const [statusFilter, setStatusFilter] = useState('all')
-  const [sourcingTypeFilter, setSourcingTypeFilter] = useState('all')
-  const [supplierFilter, setSupplierFilter] = useState('all') // 🆕 Filtre fournisseur
-  const [clientFilter, setClientFilter] = useState('all') // 🆕 Filtre client
-  const [isQuickSourcingModalOpen, setIsQuickSourcingModalOpen] = useState(false) // 🆕 Modal sourcing rapide
+  const router = useRouter();
+  const [searchTerm, setSearchTerm] = useState(''); // État local pour l'input
+  const [debouncedSearchTerm, setDebouncedSearchTerm] = useState(''); // ✅ État debounced pour le hook
+  const [statusFilter, setStatusFilter] = useState('all');
+  const [sourcingTypeFilter, setSourcingTypeFilter] = useState('all');
+  const [supplierFilter, setSupplierFilter] = useState('all'); // 🆕 Filtre fournisseur
+  const [clientFilter, setClientFilter] = useState('all'); // 🆕 Filtre client
+  const [isQuickSourcingModalOpen, setIsQuickSourcingModalOpen] =
+    useState(false); // 🆕 Modal sourcing rapide
 
   // ✅ FIX 3.5: Fonction debounce mémorisée
   const debouncedSearch = useMemo(
-    () => debounce((value: string) => {
-      setDebouncedSearchTerm(value)
-    }, 300),
+    () =>
+      debounce((value: string) => {
+        setDebouncedSearchTerm(value);
+      }, 300),
     []
-  )
+  );
 
   // Hooks pour charger fournisseurs et clients professionnels
-  const { organisations: suppliers } = useSuppliers()
-  const { organisations: customers } = useCustomers()
+  const { organisations: suppliers } = useSuppliers();
+  const { organisations: customers } = useCustomers();
 
   // Hook Supabase pour les produits sourcing
-  const { products: sourcingProducts, loading, error, validateSourcing, orderSample, refetch } = useSourcingProducts({
-    search: debouncedSearchTerm || undefined,  // ✅ Utiliser debouncedSearchTerm
+  const {
+    products: sourcingProducts,
+    loading,
+    error,
+    validateSourcing,
+    orderSample,
+    refetch,
+  } = useSourcingProducts({
+    search: debouncedSearchTerm || undefined, // ✅ Utiliser debouncedSearchTerm
     status: statusFilter === 'all' ? undefined : statusFilter,
-    sourcing_type: sourcingTypeFilter === 'all' ? undefined : (sourcingTypeFilter as 'interne' | 'client'),
+    sourcing_type:
+      sourcingTypeFilter === 'all'
+        ? undefined
+        : (sourcingTypeFilter as 'interne' | 'client'),
     supplier_id: supplierFilter === 'all' ? undefined : supplierFilter, // 🆕
-    assigned_client_id: clientFilter === 'all' ? undefined : clientFilter // 🆕
-  })
+    assigned_client_id: clientFilter === 'all' ? undefined : clientFilter, // 🆕
+  });
 
   const getStatusBadge = (status: string) => {
     switch (status) {
       case 'sourcing':
-        return <Badge variant="outline" className="border-blue-300 text-blue-600">En sourcing</Badge>
+        return (
+          <Badge variant="outline" className="border-blue-300 text-blue-600">
+            En sourcing
+          </Badge>
+        );
       case 'echantillon_a_commander':
-        return <Badge variant="outline" className="border-gray-300 text-black">Échantillon à commander</Badge>
+        return (
+          <Badge variant="outline" className="border-gray-300 text-black">
+            Échantillon à commander
+          </Badge>
+        );
       case 'echantillon_commande':
-        return <Badge variant="outline" className="border-gray-300 text-black">Échantillon commandé</Badge>
+        return (
+          <Badge variant="outline" className="border-gray-300 text-black">
+            Échantillon commandé
+          </Badge>
+        );
       case 'in_stock':
-        return <Badge variant="outline" className="border-green-300 text-green-600">En stock</Badge>
+        return (
+          <Badge variant="outline" className="border-green-300 text-green-600">
+            En stock
+          </Badge>
+        );
       case 'draft':
-        return <Badge variant="outline" className="border-gray-300 text-gray-600">Brouillon</Badge>
+        return (
+          <Badge variant="outline" className="border-gray-300 text-gray-600">
+            Brouillon
+          </Badge>
+        );
       default:
-        return <Badge variant="outline" className="border-gray-300 text-gray-600">{status}</Badge>
+        return (
+          <Badge variant="outline" className="border-gray-300 text-gray-600">
+            {status}
+          </Badge>
+        );
     }
-  }
+  };
 
-  const getSourcingTypeBadge = (sourcing_type: string | undefined, requires_sample: boolean) => {
+  const getSourcingTypeBadge = (
+    sourcing_type: string | undefined,
+    requires_sample: boolean
+  ) => {
     if (requires_sample) {
-      return <Badge variant="outline" className="border-gray-300 text-black text-xs">Échantillon requis</Badge>
+      return (
+        <Badge variant="outline" className="border-gray-300 text-black text-xs">
+          Échantillon requis
+        </Badge>
+      );
     }
     switch (sourcing_type) {
       case 'client':
-        return <Badge variant="outline" className="border-blue-300 text-blue-600 text-xs">Client</Badge>
+        return (
+          <Badge
+            variant="outline"
+            className="border-blue-300 text-blue-600 text-xs"
+          >
+            Client
+          </Badge>
+        );
       case 'interne':
-        return <Badge variant="outline" className="border-black text-black text-xs">Interne</Badge>
+        return (
+          <Badge variant="outline" className="border-black text-black text-xs">
+            Interne
+          </Badge>
+        );
       default:
-        return <Badge variant="outline" className="text-xs">Standard</Badge>
+        return (
+          <Badge variant="outline" className="text-xs">
+            Standard
+          </Badge>
+        );
     }
-  }
+  };
 
   // Les filtres sont appliqués directement dans le hook useSourcingProducts
-  const filteredProducts = sourcingProducts
+  const filteredProducts = sourcingProducts;
 
   // Handlers pour les actions
   const handleValidateSourcing = async (productId: string) => {
-    await validateSourcing(productId)
-  }
+    await validateSourcing(productId);
+  };
 
   const handleOrderSample = async (productId: string) => {
-    await orderSample(productId)
-  }
+    await orderSample(productId);
+  };
 
   const formatPrice = (price: number | null) => {
-    if (!price) return 'Non défini'
-    return new Intl.NumberFormat('fr-FR', { style: 'currency', currency: 'EUR' }).format(price)
-  }
+    if (!price) return 'Non défini';
+    return new Intl.NumberFormat('fr-FR', {
+      style: 'currency',
+      currency: 'EUR',
+    }).format(price);
+  };
 
   const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleDateString('fr-FR')
-  }
+    return new Date(dateString).toLocaleDateString('fr-FR');
+  };
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -137,8 +210,12 @@ export default function SourcingProduitsPage() {
         <div className="container mx-auto px-4 py-6">
           <div className="flex items-center justify-between">
             <div>
-              <h1 className="text-3xl font-bold text-black">Produits à Sourcer</h1>
-              <p className="text-gray-600 mt-1">Gestion des demandes de sourcing clients et internes</p>
+              <h1 className="text-3xl font-bold text-black">
+                Produits à Sourcer
+              </h1>
+              <p className="text-gray-600 mt-1">
+                Gestion des demandes de sourcing clients et internes
+              </p>
             </div>
             <div className="flex items-center space-x-3">
               <ButtonV2
@@ -150,7 +227,11 @@ export default function SourcingProduitsPage() {
               </ButtonV2>
               <ButtonV2
                 variant="outline"
-                onClick={() => router.push('/contacts-organisations/customers?type=professional')}
+                onClick={() =>
+                  router.push(
+                    '/contacts-organisations/customers?type=professional'
+                  )
+                }
                 className="border-black text-black hover:bg-black hover:text-white"
               >
                 <Users className="h-4 w-4 mr-2" />
@@ -181,10 +262,10 @@ export default function SourcingProduitsPage() {
                 <Input
                   placeholder="Rechercher un produit..."
                   value={searchTerm}
-                  onChange={(e) => {
-                    const value = e.target.value
-                    setSearchTerm(value)  // ✅ Mise à jour immédiate de l'input
-                    debouncedSearch(value)  // ✅ Recherche debouncée
+                  onChange={e => {
+                    const value = e.target.value;
+                    setSearchTerm(value); // ✅ Mise à jour immédiate de l'input
+                    debouncedSearch(value); // ✅ Recherche debouncée
                   }}
                   className="pl-10 border-black focus:ring-black"
                 />
@@ -197,14 +278,21 @@ export default function SourcingProduitsPage() {
                 <SelectContent>
                   <SelectItem value="all">Tous les statuts</SelectItem>
                   <SelectItem value="sourcing">En sourcing</SelectItem>
-                  <SelectItem value="echantillon_a_commander">Échantillon à commander</SelectItem>
-                  <SelectItem value="echantillon_commande">Échantillon commandé</SelectItem>
+                  <SelectItem value="echantillon_a_commander">
+                    Échantillon à commander
+                  </SelectItem>
+                  <SelectItem value="echantillon_commande">
+                    Échantillon commandé
+                  </SelectItem>
                   <SelectItem value="in_stock">En stock</SelectItem>
                   <SelectItem value="draft">Brouillon</SelectItem>
                 </SelectContent>
               </Select>
 
-              <Select value={sourcingTypeFilter} onValueChange={setSourcingTypeFilter}>
+              <Select
+                value={sourcingTypeFilter}
+                onValueChange={setSourcingTypeFilter}
+              >
                 <SelectTrigger className="border-black">
                   <SelectValue placeholder="Type sourcing" />
                 </SelectTrigger>
@@ -233,7 +321,9 @@ export default function SourcingProduitsPage() {
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-sm text-gray-600">Total</p>
-                  <p className="text-2xl font-bold text-black">{filteredProducts.length}</p>
+                  <p className="text-2xl font-bold text-black">
+                    {filteredProducts.length}
+                  </p>
                 </div>
                 <Package className="h-8 w-8 text-black" />
               </div>
@@ -246,7 +336,10 @@ export default function SourcingProduitsPage() {
                 <div>
                   <p className="text-sm text-gray-600">En cours</p>
                   <p className="text-2xl font-bold text-blue-600">
-                    {filteredProducts.filter(p => p.status === 'sourcing').length}
+                    {
+                      filteredProducts.filter(p => p.status === 'sourcing')
+                        .length
+                    }
                   </p>
                 </div>
                 <Clock className="h-8 w-8 text-blue-600" />
@@ -274,7 +367,10 @@ export default function SourcingProduitsPage() {
                 <div>
                   <p className="text-sm text-gray-600">En stock</p>
                   <p className="text-2xl font-bold text-green-600">
-                    {filteredProducts.filter(p => p.status === 'in_stock').length}
+                    {
+                      filteredProducts.filter(p => p.status === 'in_stock')
+                        .length
+                    }
                   </p>
                 </div>
                 <CheckCircle className="h-8 w-8 text-green-600" />
@@ -286,8 +382,12 @@ export default function SourcingProduitsPage() {
         {/* Liste des produits */}
         <Card className="border-black">
           <CardHeader>
-            <CardTitle className="text-black">Produits à Sourcer ({filteredProducts.length})</CardTitle>
-            <CardDescription>Liste complète des demandes de sourcing</CardDescription>
+            <CardTitle className="text-black">
+              Produits à Sourcer ({filteredProducts.length})
+            </CardTitle>
+            <CardDescription>
+              Liste complète des demandes de sourcing
+            </CardDescription>
           </CardHeader>
           <CardContent>
             {loading && (
@@ -306,41 +406,57 @@ export default function SourcingProduitsPage() {
 
             {!loading && !error && (
               <div className="space-y-4">
-                {filteredProducts.map((product) => (
-                  <div key={product.id} className="border border-gray-200 rounded-lg p-4 hover:bg-gray-50 transition-colors">
+                {filteredProducts.map(product => (
+                  <div
+                    key={product.id}
+                    className="border border-gray-200 rounded-lg p-4 hover:bg-gray-50 transition-colors"
+                  >
                     <div className="flex items-start justify-between">
                       <div className="flex-1">
                         <div className="flex items-start space-x-4 mb-4">
                           <div className="flex-1">
                             <div className="flex items-center space-x-3 mb-2">
-                              <h3 className="font-semibold text-black">{product.name}</h3>
+                              <h3 className="font-semibold text-black">
+                                {product.name}
+                              </h3>
                               {getStatusBadge(product.status)}
-                              {getSourcingTypeBadge(product.sourcing_type, product.requires_sample)}
+                              {getSourcingTypeBadge(
+                                product.sourcing_type,
+                                product.requires_sample
+                              )}
                             </div>
 
                             <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm">
                               <div className="flex items-center space-x-2">
                                 <Package className="h-4 w-4 text-gray-400" />
-                                <span className="text-gray-600">SKU: {product.sku}</span>
+                                <span className="text-gray-600">
+                                  SKU: {product.sku}
+                                </span>
                               </div>
 
                               {product.cost_price && (
                                 <div className="flex items-center space-x-2">
                                   <Euro className="h-4 w-4 text-gray-400" />
-                                  <span className="text-gray-600">Coût: {formatPrice(product.cost_price)}</span>
+                                  <span className="text-gray-600">
+                                    Coût: {formatPrice(product.cost_price)}
+                                  </span>
                                 </div>
                               )}
 
                               {product.supplier && (
                                 <div className="flex items-center space-x-2">
                                   <Building className="h-4 w-4 text-gray-400" />
-                                  <span className="text-gray-600">Fournisseur: {product.supplier.name}</span>
+                                  <span className="text-gray-600">
+                                    Fournisseur: {product.supplier.name}
+                                  </span>
                                 </div>
                               )}
 
                               <div className="flex items-center space-x-2">
                                 <Calendar className="h-4 w-4 text-gray-400" />
-                                <span className="text-gray-600">Créé: {formatDate(product.created_at)}</span>
+                                <span className="text-gray-600">
+                                  Créé: {formatDate(product.created_at)}
+                                </span>
                               </div>
 
                               {/* Lien vers page détails fournisseur (navigation interne) */}
@@ -392,8 +508,11 @@ export default function SourcingProduitsPage() {
                                 <div className="flex items-center space-x-2">
                                   <User className="h-4 w-4 text-blue-600" />
                                   <span className="text-blue-600">
-                                    <strong>Client assigné:</strong> {product.assigned_client.name}
-                                    {product.assigned_client.type === 'client' ? ' (Client)' : ` (${product.assigned_client.type})`}
+                                    <strong>Client assigné:</strong>{' '}
+                                    {product.assigned_client.name}
+                                    {product.assigned_client.type === 'client'
+                                      ? ' (Client)'
+                                      : ` (${product.assigned_client.type})`}
                                   </span>
                                 </div>
                               </div>
@@ -407,7 +526,11 @@ export default function SourcingProduitsPage() {
                           variant="outline"
                           size="sm"
                           className="border-gray-300"
-                          onClick={() => router.push(`/produits/sourcing/produits/${product.id}`)}
+                          onClick={() =>
+                            router.push(
+                              `/produits/sourcing/produits/${product.id}`
+                            )
+                          }
                         >
                           <Eye className="h-4 w-4" />
                         </ButtonV2>
@@ -415,39 +538,62 @@ export default function SourcingProduitsPage() {
                           variant="outline"
                           size="sm"
                           className="border-gray-300"
-                          onClick={() => router.push(`/catalogue/${product.id}/edit`)}
+                          onClick={() =>
+                            router.push(`/catalogue/${product.id}/edit`)
+                          }
                         >
                           <Edit className="h-4 w-4" />
                         </ButtonV2>
                         <DropdownMenu>
                           <DropdownMenuTrigger asChild>
-                            <ButtonV2 variant="outline" size="sm" className="border-gray-300">
+                            <ButtonV2
+                              variant="outline"
+                              size="sm"
+                              className="border-gray-300"
+                            >
                               <MoreHorizontal className="h-4 w-4" />
                             </ButtonV2>
                           </DropdownMenuTrigger>
                           <DropdownMenuContent align="end">
                             <DropdownMenuLabel>Actions</DropdownMenuLabel>
-                            <DropdownMenuItem onClick={() => router.push(`/produits/sourcing/produits/${product.id}`)}>
+                            <DropdownMenuItem
+                              onClick={() =>
+                                router.push(
+                                  `/produits/sourcing/produits/${product.id}`
+                                )
+                              }
+                            >
                               <Eye className="h-4 w-4 mr-2" />
                               Voir détails
                             </DropdownMenuItem>
-                            <DropdownMenuItem onClick={() => router.push(`/catalogue/${product.id}/edit`)}>
+                            <DropdownMenuItem
+                              onClick={() =>
+                                router.push(`/catalogue/${product.id}/edit`)
+                              }
+                            >
                               <Edit className="h-4 w-4 mr-2" />
                               Modifier
                             </DropdownMenuItem>
                             {product.status === 'sourcing' && (
-                              <DropdownMenuItem onClick={() => handleOrderSample(product.id)}>
+                              <DropdownMenuItem
+                                onClick={() => handleOrderSample(product.id)}
+                              >
                                 <Package className="h-4 w-4 mr-2" />
                                 Commander échantillon
                               </DropdownMenuItem>
                             )}
                             <DropdownMenuSeparator />
-                            {product.supplier_id && product.status === 'sourcing' && (
-                              <DropdownMenuItem onClick={() => handleValidateSourcing(product.id)}>
-                                <CheckCircle className="h-4 w-4 mr-2" />
-                                Valider et ajouter au catalogue
-                              </DropdownMenuItem>
-                            )}
+                            {product.supplier_id &&
+                              product.status === 'sourcing' && (
+                                <DropdownMenuItem
+                                  onClick={() =>
+                                    handleValidateSourcing(product.id)
+                                  }
+                                >
+                                  <CheckCircle className="h-4 w-4 mr-2" />
+                                  Valider et ajouter au catalogue
+                                </DropdownMenuItem>
+                              )}
                           </DropdownMenuContent>
                         </DropdownMenu>
                       </div>
@@ -459,7 +605,10 @@ export default function SourcingProduitsPage() {
                   <div className="text-center py-8">
                     <Package className="h-12 w-12 text-gray-400 mx-auto mb-4" />
                     <p className="text-gray-600">Aucun produit trouvé</p>
-                    <p className="text-sm text-gray-500">Essayez de modifier vos filtres ou créez votre premier produit sourcing</p>
+                    <p className="text-sm text-gray-500">
+                      Essayez de modifier vos filtres ou créez votre premier
+                      produit sourcing
+                    </p>
                   </div>
                 )}
               </div>
@@ -473,10 +622,10 @@ export default function SourcingProduitsPage() {
         open={isQuickSourcingModalOpen}
         onClose={() => setIsQuickSourcingModalOpen(false)}
         onSuccess={() => {
-          refetch()
-          setIsQuickSourcingModalOpen(false)
+          refetch();
+          setIsQuickSourcingModalOpen(false);
         }}
       />
     </div>
-  )
+  );
 }

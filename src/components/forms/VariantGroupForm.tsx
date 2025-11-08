@@ -1,71 +1,126 @@
-"use client"
+'use client';
 
-import { useState, useMemo, useEffect, useCallback } from 'react'
-import { X, Plus, ExternalLink } from 'lucide-react'
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog'
-import { Checkbox } from '@/components/ui/checkbox'
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
-import Link from 'next/link'
-import { ButtonV2 } from '@/components/ui/button'
-import { Input } from '@/components/ui/input'
-import { Label } from '@/components/ui/label'
-import { useFamilies } from '@/shared/modules/categories/hooks'
-import { useCategories } from '@/shared/modules/categories/hooks'
-import { useSubcategories } from '@/shared/modules/categories/hooks'
-import { useVariantGroups } from '@/shared/modules/products/hooks'
-import { useToast } from '@/shared/modules/common/hooks'
-import { useOrganisations } from '@/shared/modules/organisations/hooks'
-import { RoomMultiSelect } from '@/components/ui/room-multi-select'
-import { COLLECTION_STYLE_OPTIONS } from '@/types/collections'
-import { normalizeForSKU } from '@/lib/sku-generator'
-import type { VariantGroup, VariantType } from '@/types/variant-groups'
-import type { RoomType } from '@/types/room-types'
-import { cn } from '@/lib/utils'
+import { useState, useMemo, useEffect, useCallback } from 'react';
+
+import Link from 'next/link';
+
+import { X, Plus, ExternalLink } from 'lucide-react';
+
+import { ButtonV2 } from '@/components/ui/button';
+import { Checkbox } from '@/components/ui/checkbox';
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+} from '@/components/ui/dialog';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { RoomMultiSelect } from '@/components/ui/room-multi-select';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
+import { normalizeForSKU } from '@/lib/sku-generator';
+import { cn } from '@verone/utils';
+import { useFamilies } from '@/shared/modules/categories/hooks';
+import { useCategories } from '@/shared/modules/categories/hooks';
+import { useSubcategories } from '@/shared/modules/categories/hooks';
+import { useToast } from '@/shared/modules/common/hooks';
+import { useOrganisations } from '@/shared/modules/organisations/hooks';
+import { useVariantGroups } from '@/shared/modules/products/hooks';
+import { COLLECTION_STYLE_OPTIONS } from '@verone/types';
+import type { RoomType } from '@verone/types';
+import type { VariantGroup, VariantType } from '@verone/types';
 
 interface VariantGroupFormProps {
-  isOpen: boolean
-  onClose: () => void
-  onSubmit: (data: any) => void
-  editingGroup?: VariantGroup | null
+  isOpen: boolean;
+  onClose: () => void;
+  onSubmit: (data: any) => void;
+  editingGroup?: VariantGroup | null;
 }
 
 interface FormData {
-  name: string
-  base_sku: string
-  subcategory_id: string
-  variant_type: VariantType
+  name: string;
+  base_sku: string;
+  subcategory_id: string;
+  variant_type: VariantType;
   // Attributs de catégorisation
-  style: string
-  suitable_rooms: RoomType[]
+  style: string;
+  suitable_rooms: RoomType[];
   // Nouveaux champs pour attributs communs
-  common_length: string
-  common_width: string
-  common_height: string
-  common_dimensions_unit: 'cm' | 'm'
+  common_length: string;
+  common_width: string;
+  common_height: string;
+  common_dimensions_unit: 'cm' | 'm';
   // Fournisseur commun
-  has_common_supplier: boolean
-  supplier_id: string
+  has_common_supplier: boolean;
+  supplier_id: string;
 }
 
 const DECORATIVE_STYLES = [
-  { value: 'minimaliste', label: 'Minimaliste', description: 'Épuré et fonctionnel', icon: '⬜' },
-  { value: 'contemporain', label: 'Contemporain', description: 'Moderne et actuel', icon: '🏙️' },
-  { value: 'moderne', label: 'Moderne', description: 'Design avant-gardiste', icon: '🚀' },
-  { value: 'scandinave', label: 'Scandinave', description: 'Chaleureux et lumineux', icon: '🌲' },
-  { value: 'industriel', label: 'Industriel', description: 'Brut et authentique', icon: '⚙️' },
-  { value: 'classique', label: 'Classique', description: 'Intemporel et élégant', icon: '👑' },
-  { value: 'boheme', label: 'Bohème', description: 'Libre et éclectique', icon: '🌺' },
-  { value: 'art_deco', label: 'Art Déco', description: 'Raffiné et géométrique', icon: '💎' },
-] as const
+  {
+    value: 'minimaliste',
+    label: 'Minimaliste',
+    description: 'Épuré et fonctionnel',
+    icon: '⬜',
+  },
+  {
+    value: 'contemporain',
+    label: 'Contemporain',
+    description: 'Moderne et actuel',
+    icon: '🏙️',
+  },
+  {
+    value: 'moderne',
+    label: 'Moderne',
+    description: 'Design avant-gardiste',
+    icon: '🚀',
+  },
+  {
+    value: 'scandinave',
+    label: 'Scandinave',
+    description: 'Chaleureux et lumineux',
+    icon: '🌲',
+  },
+  {
+    value: 'industriel',
+    label: 'Industriel',
+    description: 'Brut et authentique',
+    icon: '⚙️',
+  },
+  {
+    value: 'classique',
+    label: 'Classique',
+    description: 'Intemporel et élégant',
+    icon: '👑',
+  },
+  {
+    value: 'boheme',
+    label: 'Bohème',
+    description: 'Libre et éclectique',
+    icon: '🌺',
+  },
+  {
+    value: 'art_deco',
+    label: 'Art Déco',
+    description: 'Raffiné et géométrique',
+    icon: '💎',
+  },
+] as const;
 
 export function VariantGroupForm({
   isOpen,
   onClose,
   onSubmit,
-  editingGroup
+  editingGroup,
 }: VariantGroupFormProps) {
-  const { toast } = useToast()
-  const { createVariantGroup, updateVariantGroup } = useVariantGroups()
+  const { toast } = useToast();
+  const { createVariantGroup, updateVariantGroup } = useVariantGroups();
 
   // États du formulaire
   const [formData, setFormData] = useState<FormData>({
@@ -80,76 +135,77 @@ export function VariantGroupForm({
     common_height: '',
     common_dimensions_unit: 'cm',
     has_common_supplier: false,
-    supplier_id: ''
-  })
+    supplier_id: '',
+  });
   const [filters, setFilters] = useState({
     familyId: '',
-    categoryId: ''
-  })
-  const [loading, setLoading] = useState(false)
-  const [errors, setErrors] = useState<Partial<FormData>>({})
+    categoryId: '',
+  });
+  const [loading, setLoading] = useState(false);
+  const [errors, setErrors] = useState<Partial<FormData>>({});
 
   // Hooks hiérarchie
-  const { families } = useFamilies()
-  const { getCategoriesByFamily } = useCategories()
-  const { getSubcategoriesByCategory } = useSubcategories()
-  const { organisations: suppliers, loading: suppliersLoading } = useOrganisations({
-    type: 'supplier',
-    is_active: true
-  })
+  const { families } = useFamilies();
+  const { getCategoriesByFamily } = useCategories();
+  const { getSubcategoriesByCategory } = useSubcategories();
+  const { organisations: suppliers, loading: suppliersLoading } =
+    useOrganisations({
+      type: 'supplier',
+      is_active: true,
+    });
 
   // Catégories et sous-catégories filtrées
   const filteredCategories = useMemo(() => {
-    if (!filters.familyId) return []
-    return getCategoriesByFamily(filters.familyId)
-  }, [filters.familyId, getCategoriesByFamily])
+    if (!filters.familyId) return [];
+    return getCategoriesByFamily(filters.familyId);
+  }, [filters.familyId, getCategoriesByFamily]);
 
-  const [filteredSubcategories, setFilteredSubcategories] = useState<any[]>([])
+  const [filteredSubcategories, setFilteredSubcategories] = useState<any[]>([]);
 
   // Charger sous-catégories quand catégorie change
   useEffect(() => {
     if (!filters.categoryId) {
-      setFilteredSubcategories([])
-      return
+      setFilteredSubcategories([]);
+      return;
     }
 
-    let isMounted = true
+    let isMounted = true;
 
     const loadSubcategories = async () => {
       try {
-        const subcats = await getSubcategoriesByCategory(filters.categoryId)
+        const subcats = await getSubcategoriesByCategory(filters.categoryId);
         if (isMounted) {
-          setFilteredSubcategories(subcats)
+          setFilteredSubcategories(subcats);
         }
       } catch (err) {
-        console.error('Erreur chargement sous-catégories:', err)
+        console.error('Erreur chargement sous-catégories:', err);
         if (isMounted) {
-          setFilteredSubcategories([])
+          setFilteredSubcategories([]);
         }
       }
-    }
+    };
 
-    loadSubcategories()
+    loadSubcategories();
 
     return () => {
-      isMounted = false
-    }
-  }, [filters.categoryId]) // Enlevé getSubcategoriesByCategory des dépendances
+      isMounted = false;
+    };
+  }, [filters.categoryId]); // Enlevé getSubcategoriesByCategory des dépendances
 
   // Auto-générer base_sku quand le nom change
   useEffect(() => {
     if (formData.name.trim() && !editingGroup) {
-      const generatedSku = normalizeForSKU(formData.name, 30)
-      setFormData(prev => ({ ...prev, base_sku: generatedSku }))
+      const generatedSku = normalizeForSKU(formData.name, 30);
+      setFormData(prev => ({ ...prev, base_sku: generatedSku }));
     }
-  }, [formData.name, editingGroup])
+  }, [formData.name, editingGroup]);
 
   // Réinitialiser le formulaire à l'ouverture
   useEffect(() => {
     if (isOpen) {
       if (editingGroup) {
         // Mode édition
-        const dimensions = editingGroup.common_dimensions as any || {}
+        const dimensions = (editingGroup.common_dimensions as any) || {};
         setFormData({
           name: editingGroup.name,
           base_sku: editingGroup.base_sku,
@@ -160,8 +216,8 @@ export function VariantGroupForm({
           common_length: dimensions.length?.toString() || '',
           common_width: dimensions.width?.toString() || '',
           common_height: dimensions.height?.toString() || '',
-          common_dimensions_unit: dimensions.unit || 'cm'
-        } as any)
+          common_dimensions_unit: dimensions.unit || 'cm',
+        } as any);
       } else {
         // Mode création
         setFormData({
@@ -174,59 +230,64 @@ export function VariantGroupForm({
           common_length: '',
           common_width: '',
           common_height: '',
-          common_dimensions_unit: 'cm'
-        } as any)
+          common_dimensions_unit: 'cm',
+        } as any);
         setFilters({
           familyId: '',
-          categoryId: ''
-        })
+          categoryId: '',
+        });
       }
-      setErrors({})
+      setErrors({});
     }
-  }, [isOpen, editingGroup])
+  }, [isOpen, editingGroup]);
 
   // Validation du formulaire
   const validateForm = (): boolean => {
-    const newErrors: Partial<FormData> = {}
+    const newErrors: Partial<FormData> = {};
 
     if (!formData.name.trim()) {
-      newErrors.name = 'Le nom du groupe est obligatoire'
+      newErrors.name = 'Le nom du groupe est obligatoire';
     } else if (formData.name.trim().length < 3) {
-      newErrors.name = 'Le nom doit contenir au moins 3 caractères'
+      newErrors.name = 'Le nom doit contenir au moins 3 caractères';
     }
 
     if (!formData.subcategory_id) {
-      newErrors.subcategory_id = 'La sous-catégorie est obligatoire'
+      newErrors.subcategory_id = 'La sous-catégorie est obligatoire';
     }
 
-    setErrors(newErrors)
-    return Object.keys(newErrors).length === 0
-  }
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
+  };
 
   // Soumission du formulaire
   const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault()
+    e.preventDefault();
 
     if (!validateForm()) {
       toast({
-        title: "Erreur de validation",
-        description: "Veuillez remplir tous les champs obligatoires",
-        variant: "destructive"
-      })
-      return
+        title: 'Erreur de validation',
+        description: 'Veuillez remplir tous les champs obligatoires',
+        variant: 'destructive',
+      });
+      return;
     }
 
-    setLoading(true)
+    setLoading(true);
 
     try {
       // Construire common_dimensions si au moins une dimension est renseignée
-      const hasDimensions = formData.common_length || formData.common_width || formData.common_height
-      const common_dimensions = hasDimensions ? {
-        length: parseFloat(formData.common_length) || null,
-        width: parseFloat(formData.common_width) || null,
-        height: parseFloat(formData.common_height) || null,
-        unit: formData.common_dimensions_unit
-      } : null
+      const hasDimensions =
+        formData.common_length ||
+        formData.common_width ||
+        formData.common_height;
+      const common_dimensions = hasDimensions
+        ? {
+            length: parseFloat(formData.common_length) || null,
+            width: parseFloat(formData.common_width) || null,
+            height: parseFloat(formData.common_height) || null,
+            unit: formData.common_dimensions_unit,
+          }
+        : null;
 
       const groupData = {
         name: formData.name.trim(),
@@ -234,59 +295,67 @@ export function VariantGroupForm({
         subcategory_id: formData.subcategory_id,
         variant_type: formData.variant_type,
         style: formData.style || null,
-        suitable_rooms: formData.suitable_rooms.length > 0 ? formData.suitable_rooms : null,
+        suitable_rooms:
+          formData.suitable_rooms.length > 0 ? formData.suitable_rooms : null,
         common_dimensions,
         has_common_supplier: formData.has_common_supplier,
-        supplier_id: formData.has_common_supplier ? (formData.supplier_id || null) : null
-      }
+        supplier_id: formData.has_common_supplier
+          ? formData.supplier_id || null
+          : null,
+      };
 
-      let success = false
+      let success = false;
 
       if (editingGroup) {
         // Mode édition
-        success = await updateVariantGroup(editingGroup.id, groupData)
+        success = await updateVariantGroup(editingGroup.id, groupData);
         if (success) {
           toast({
-            title: "Succès",
-            description: `Groupe "${formData.name}" modifié avec succès`
-          })
+            title: 'Succès',
+            description: `Groupe "${formData.name}" modifié avec succès`,
+          });
         }
       } else {
         // Mode création
-        success = !!(await createVariantGroup(groupData as any))
+        success = !!(await createVariantGroup(groupData as any));
         if (success) {
           toast({
-            title: "Succès",
-            description: `Groupe "${formData.name}" créé avec succès`
-          })
+            title: 'Succès',
+            description: `Groupe "${formData.name}" créé avec succès`,
+          });
         }
       }
 
       if (success) {
-        onSubmit(formData) // Callback pour refetch
-        onClose()
+        onSubmit(formData); // Callback pour refetch
+        onClose();
       }
     } catch (err) {
-      console.error('Erreur soumission groupe:', err)
+      console.error('Erreur soumission groupe:', err);
       toast({
-        title: "Erreur",
-        description: editingGroup ? "Impossible de modifier le groupe" : "Impossible de créer le groupe",
-        variant: "destructive"
-      })
+        title: 'Erreur',
+        description: editingGroup
+          ? 'Impossible de modifier le groupe'
+          : 'Impossible de créer le groupe',
+        variant: 'destructive',
+      });
     } finally {
-      setLoading(false)
+      setLoading(false);
     }
-  }
+  };
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="max-w-2xl">
         <DialogHeader>
           <DialogTitle className="text-xl font-light">
-            {editingGroup ? 'Modifier le groupe' : 'Nouveau groupe de variantes'}
+            {editingGroup
+              ? 'Modifier le groupe'
+              : 'Nouveau groupe de variantes'}
           </DialogTitle>
           <DialogDescription>
-            Créez un groupe pour organiser les variantes de produits (couleurs, tailles, matériaux)
+            Créez un groupe pour organiser les variantes de produits (couleurs,
+            tailles, matériaux)
           </DialogDescription>
         </DialogHeader>
 
@@ -301,7 +370,9 @@ export function VariantGroupForm({
               type="text"
               placeholder="Ex: Paniers Osier Naturel"
               value={formData.name}
-              onChange={(e) => setFormData(prev => ({ ...prev, name: e.target.value }))}
+              onChange={e =>
+                setFormData(prev => ({ ...prev, name: e.target.value }))
+              }
               className={errors.name ? 'border-red-500' : ''}
             />
             {errors.name && (
@@ -319,11 +390,16 @@ export function VariantGroupForm({
               type="text"
               placeholder="Ex: PANIERS-OSIER-NATUREL"
               value={formData.base_sku}
-              onChange={(e) => setFormData(prev => ({ ...prev, base_sku: e.target.value }))}
+              onChange={e =>
+                setFormData(prev => ({ ...prev, base_sku: e.target.value }))
+              }
               className="font-mono text-sm"
             />
             <p className="text-xs text-gray-600">
-              Généré automatiquement depuis le nom. Pattern: {formData.base_sku ? `${formData.base_sku}-[VARIANTE]` : 'BASE_SKU-[VARIANTE]'}
+              Généré automatiquement depuis le nom. Pattern:{' '}
+              {formData.base_sku
+                ? `${formData.base_sku}-[VARIANTE]`
+                : 'BASE_SKU-[VARIANTE]'}
             </p>
           </div>
 
@@ -333,24 +409,27 @@ export function VariantGroupForm({
               Catégorisation <span className="text-red-500">*</span>
             </Label>
             <p className="text-xs text-gray-600">
-              Sélectionnez la hiérarchie pour identifier la sous-catégorie des produits
+              Sélectionnez la hiérarchie pour identifier la sous-catégorie des
+              produits
             </p>
 
             <div className="grid grid-cols-3 gap-3">
               {/* Famille */}
               <div className="space-y-2">
-                <Label htmlFor="family" className="text-xs text-gray-600">Famille</Label>
+                <Label htmlFor="family" className="text-xs text-gray-600">
+                  Famille
+                </Label>
                 <select
                   id="family"
                   value={filters.familyId}
-                  onChange={(e) => {
-                    setFilters({ familyId: e.target.value, categoryId: '' })
-                    setFormData(prev => ({ ...prev, subcategory_id: '' }))
+                  onChange={e => {
+                    setFilters({ familyId: e.target.value, categoryId: '' });
+                    setFormData(prev => ({ ...prev, subcategory_id: '' }));
                   }}
                   className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm"
                 >
                   <option value="">Sélectionner...</option>
-                  {families.map((family) => (
+                  {families.map(family => (
                     <option key={family.id} value={family.id}>
                       {family.name}
                     </option>
@@ -360,19 +439,24 @@ export function VariantGroupForm({
 
               {/* Catégorie */}
               <div className="space-y-2">
-                <Label htmlFor="category" className="text-xs text-gray-600">Catégorie</Label>
+                <Label htmlFor="category" className="text-xs text-gray-600">
+                  Catégorie
+                </Label>
                 <select
                   id="category"
                   value={filters.categoryId}
-                  onChange={(e) => {
-                    setFilters(prev => ({ ...prev, categoryId: e.target.value }))
-                    setFormData(prev => ({ ...prev, subcategory_id: '' }))
+                  onChange={e => {
+                    setFilters(prev => ({
+                      ...prev,
+                      categoryId: e.target.value,
+                    }));
+                    setFormData(prev => ({ ...prev, subcategory_id: '' }));
                   }}
                   disabled={!filters.familyId}
                   className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm disabled:bg-gray-100"
                 >
                   <option value="">Sélectionner...</option>
-                  {filteredCategories.map((category) => (
+                  {filteredCategories.map(category => (
                     <option key={category.id} value={category.id}>
                       {category.name}
                     </option>
@@ -382,18 +466,25 @@ export function VariantGroupForm({
 
               {/* Sous-catégorie */}
               <div className="space-y-2">
-                <Label htmlFor="subcategory" className="text-xs text-gray-600">Sous-catégorie</Label>
+                <Label htmlFor="subcategory" className="text-xs text-gray-600">
+                  Sous-catégorie
+                </Label>
                 <select
                   id="subcategory"
                   value={formData.subcategory_id}
-                  onChange={(e) => setFormData(prev => ({ ...prev, subcategory_id: e.target.value }))}
+                  onChange={e =>
+                    setFormData(prev => ({
+                      ...prev,
+                      subcategory_id: e.target.value,
+                    }))
+                  }
                   disabled={!filters.categoryId}
                   className={`w-full border rounded-md px-3 py-2 text-sm disabled:bg-gray-100 ${
                     errors.subcategory_id ? 'border-red-500' : 'border-gray-300'
                   }`}
                 >
                   <option value="">Sélectionner...</option>
-                  {filteredSubcategories.map((subcategory) => (
+                  {filteredSubcategories.map(subcategory => (
                     <option key={subcategory.id} value={subcategory.id}>
                       {subcategory.name}
                     </option>
@@ -418,7 +509,12 @@ export function VariantGroupForm({
             <select
               id="variant_type"
               value={formData.variant_type}
-              onChange={(e) => setFormData(prev => ({ ...prev, variant_type: e.target.value as VariantType }))}
+              onChange={e =>
+                setFormData(prev => ({
+                  ...prev,
+                  variant_type: e.target.value as VariantType,
+                }))
+              }
               className="w-full border border-gray-300 rounded-md px-3 py-2"
             >
               <option value="color">Couleur</option>
@@ -435,53 +531,64 @@ export function VariantGroupForm({
               Choisissez le style esthétique des produits de ce groupe
             </p>
             <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-              {DECORATIVE_STYLES.map((styleOption) => {
-                const isSelected = formData.style === styleOption.value
+              {DECORATIVE_STYLES.map(styleOption => {
+                const isSelected = formData.style === styleOption.value;
                 return (
                   <button
                     key={styleOption.value}
                     type="button"
-                    onClick={() => setFormData(prev => ({ ...prev, style: isSelected ? '' : styleOption.value }))}
+                    onClick={() =>
+                      setFormData(prev => ({
+                        ...prev,
+                        style: isSelected ? '' : styleOption.value,
+                      }))
+                    }
                     className={cn(
-                      "flex flex-col items-center gap-2 p-4 rounded-lg border-2 text-center transition-all",
+                      'flex flex-col items-center gap-2 p-4 rounded-lg border-2 text-center transition-all',
                       isSelected
-                        ? "border-black bg-black text-white shadow-md"
-                        : "border-gray-300 hover:border-gray-400 hover:shadow-sm"
+                        ? 'border-black bg-black text-white shadow-md'
+                        : 'border-gray-300 hover:border-gray-400 hover:shadow-sm'
                     )}
                   >
                     <div className="text-2xl mb-1">{styleOption.icon}</div>
                     <div className="space-y-1">
-                      <div className="font-medium text-sm">{styleOption.label}</div>
-                      <div className={cn(
-                        "text-xs",
-                        isSelected ? "text-gray-200" : "text-gray-500"
-                      )}>
+                      <div className="font-medium text-sm">
+                        {styleOption.label}
+                      </div>
+                      <div
+                        className={cn(
+                          'text-xs',
+                          isSelected ? 'text-gray-200' : 'text-gray-500'
+                        )}
+                      >
                         {styleOption.description}
                       </div>
                     </div>
                   </button>
-                )
+                );
               })}
             </div>
           </div>
 
           {/* Pièces compatibles */}
           <div className="space-y-2">
-            <Label className="text-sm font-medium">
-              Pièces compatibles
-            </Label>
+            <Label className="text-sm font-medium">Pièces compatibles</Label>
             <p className="text-xs text-gray-600">
               Sélectionnez les pièces où ces produits peuvent être utilisés
             </p>
             <RoomMultiSelect
               value={formData.suitable_rooms}
-              onChange={(rooms) => setFormData(prev => ({ ...prev, suitable_rooms: rooms }))}
+              onChange={rooms =>
+                setFormData(prev => ({ ...prev, suitable_rooms: rooms }))
+              }
               placeholder="Sélectionner les pièces compatibles..."
               className="w-full"
             />
             {formData.suitable_rooms.length > 0 && (
               <p className="text-xs text-gray-600">
-                {formData.suitable_rooms.length} pièce{formData.suitable_rooms.length > 1 ? 's' : ''} sélectionnée{formData.suitable_rooms.length > 1 ? 's' : ''}
+                {formData.suitable_rooms.length} pièce
+                {formData.suitable_rooms.length > 1 ? 's' : ''} sélectionnée
+                {formData.suitable_rooms.length > 1 ? 's' : ''}
               </p>
             )}
           </div>
@@ -492,9 +599,13 @@ export function VariantGroupForm({
               <Checkbox
                 id="has-common-supplier"
                 checked={formData.has_common_supplier}
-                onCheckedChange={(checked) => {
-                  setFormData(prev => ({ ...prev, has_common_supplier: checked as boolean }))
-                  if (!checked) setFormData(prev => ({ ...prev, supplier_id: '' }))
+                onCheckedChange={checked => {
+                  setFormData(prev => ({
+                    ...prev,
+                    has_common_supplier: checked as boolean,
+                  }));
+                  if (!checked)
+                    setFormData(prev => ({ ...prev, supplier_id: '' }));
                 }}
               />
               <Label
@@ -505,7 +616,8 @@ export function VariantGroupForm({
               </Label>
             </div>
             <p className="text-xs text-gray-600 ml-6">
-              Si cochée, tous les produits du groupe hériteront automatiquement du fournisseur sélectionné
+              Si cochée, tous les produits du groupe hériteront automatiquement
+              du fournisseur sélectionné
             </p>
 
             {formData.has_common_supplier && (
@@ -515,16 +627,20 @@ export function VariantGroupForm({
                 </Label>
                 <Select
                   value={formData.supplier_id}
-                  onValueChange={(value) => setFormData(prev => ({ ...prev, supplier_id: value }))}
+                  onValueChange={value =>
+                    setFormData(prev => ({ ...prev, supplier_id: value }))
+                  }
                   disabled={suppliersLoading}
                 >
                   <SelectTrigger className="w-full">
                     <SelectValue placeholder="Sélectionner un fournisseur" />
                   </SelectTrigger>
                   <SelectContent>
-                    {suppliers.map((supplier) => (
+                    {suppliers.map(supplier => (
                       <SelectItem key={supplier.id} value={supplier.id}>
-                        {supplier.legal_name || supplier.trade_name || 'Sans nom'}
+                        {supplier.legal_name ||
+                          supplier.trade_name ||
+                          'Sans nom'}
                       </SelectItem>
                     ))}
                   </SelectContent>
@@ -541,7 +657,8 @@ export function VariantGroupForm({
                   </Link>
                 )}
                 <p className="text-xs text-blue-700 bg-blue-50 p-2 rounded border border-blue-200">
-                  💡 Ce fournisseur sera appliqué automatiquement à tous les produits du groupe
+                  💡 Ce fournisseur sera appliqué automatiquement à tous les
+                  produits du groupe
                 </p>
               </div>
             )}
@@ -550,21 +667,31 @@ export function VariantGroupForm({
           {/* Attributs communs */}
           <div className="space-y-3 p-4 bg-gray-50 rounded-lg border border-gray-200">
             <div>
-              <Label className="text-sm font-medium">Attributs communs (optionnels)</Label>
+              <Label className="text-sm font-medium">
+                Attributs communs (optionnels)
+              </Label>
               <p className="text-xs text-gray-600 mt-1">
-                Ces informations seront automatiquement copiées vers tous les produits du groupe
+                Ces informations seront automatiquement copiées vers tous les
+                produits du groupe
               </p>
             </div>
 
             {/* Dimensions */}
             <div className="space-y-2">
-              <Label className="text-xs font-medium text-gray-700">📐 Dimensions</Label>
+              <Label className="text-xs font-medium text-gray-700">
+                📐 Dimensions
+              </Label>
               <div className="grid grid-cols-4 gap-2">
                 <Input
                   type="number"
                   placeholder="Longueur"
                   value={formData.common_length}
-                  onChange={(e) => setFormData(prev => ({ ...prev, common_length: e.target.value }))}
+                  onChange={e =>
+                    setFormData(prev => ({
+                      ...prev,
+                      common_length: e.target.value,
+                    }))
+                  }
                   className="text-sm"
                   step="0.1"
                   min="0"
@@ -573,7 +700,12 @@ export function VariantGroupForm({
                   type="number"
                   placeholder="Largeur"
                   value={formData.common_width}
-                  onChange={(e) => setFormData(prev => ({ ...prev, common_width: e.target.value }))}
+                  onChange={e =>
+                    setFormData(prev => ({
+                      ...prev,
+                      common_width: e.target.value,
+                    }))
+                  }
                   className="text-sm"
                   step="0.1"
                   min="0"
@@ -582,14 +714,24 @@ export function VariantGroupForm({
                   type="number"
                   placeholder="Hauteur"
                   value={formData.common_height}
-                  onChange={(e) => setFormData(prev => ({ ...prev, common_height: e.target.value }))}
+                  onChange={e =>
+                    setFormData(prev => ({
+                      ...prev,
+                      common_height: e.target.value,
+                    }))
+                  }
                   className="text-sm"
                   step="0.1"
                   min="0"
                 />
                 <select
                   value={formData.common_dimensions_unit}
-                  onChange={(e) => setFormData(prev => ({ ...prev, common_dimensions_unit: e.target.value as 'cm' | 'm' }))}
+                  onChange={e =>
+                    setFormData(prev => ({
+                      ...prev,
+                      common_dimensions_unit: e.target.value as 'cm' | 'm',
+                    }))
+                  }
                   className="border border-gray-300 rounded-md px-2 py-2 text-sm"
                 >
                   <option value="cm">cm</option>
@@ -616,7 +758,7 @@ export function VariantGroupForm({
             >
               {loading ? (
                 <>
-                  <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+                  <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2" />
                   {editingGroup ? 'Modification...' : 'Création...'}
                 </>
               ) : (
@@ -630,5 +772,5 @@ export function VariantGroupForm({
         </form>
       </DialogContent>
     </Dialog>
-  )
+  );
 }

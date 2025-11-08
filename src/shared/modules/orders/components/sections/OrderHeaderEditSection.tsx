@@ -1,11 +1,12 @@
 'use client';
 
 import { Calendar, MapPin, FileText } from 'lucide-react';
-import { Card, CardContent } from '@/components/ui/card';
-import { Label } from '@/components/ui/label';
-import { Input } from '@/components/ui/input';
-import { Textarea } from '@/components/ui/textarea';
+
 import { EcoTaxVatInput } from '@/components/forms/eco-tax-vat-input';
+import { Card, CardContent } from '@/components/ui/card';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Textarea } from '@/components/ui/textarea';
 
 interface OrderHeaderEditSectionProps {
   orderType: 'sales' | 'purchase';
@@ -178,7 +179,7 @@ export function OrderHeaderEditSection({
         <div>
           <EcoTaxVatInput
             value={data.eco_tax_vat_rate ?? null}
-            onChange={(value) => onChange('eco_tax_vat_rate', value)}
+            onChange={value => onChange('eco_tax_vat_rate', value)}
             defaultTaxRate={data.tax_rate ? data.tax_rate * 100 : 20}
             disabled={readonly}
           />

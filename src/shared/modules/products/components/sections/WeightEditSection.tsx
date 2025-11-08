@@ -1,4 +1,4 @@
-"use client"
+'use client';
 
 /**
  * 🎯 Section Édition Poids Produit - Vérone Back Office
@@ -12,45 +12,49 @@
  * ✅ Pattern identique à supplier-edit-section
  */
 
-import { useState } from 'react'
-import { Weight, Save, X, Edit, AlertCircle } from 'lucide-react'
-import { ButtonV2 } from '@/components/ui/button'
-import { cn } from '@/lib/utils'
-import { useInlineEdit, type EditableSection } from '@/shared/modules/common/hooks'
-import { Input } from '@/components/ui/input'
-import { Label } from '@/components/ui/label'
+import { useState } from 'react';
+
+import { Weight, Save, X, Edit, AlertCircle } from 'lucide-react';
+
+import { ButtonV2 } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { cn } from '@verone/utils';
+import {
+  useInlineEdit,
+  type EditableSection,
+} from '@/shared/modules/common/hooks';
 
 interface Product {
-  id: string
-  weight?: number | null
-  variant_group_id?: string | null
+  id: string;
+  weight?: number | null;
+  variant_group_id?: string | null;
 }
 
 interface VariantGroup {
-  id: string
-  name: string
-  has_common_weight?: boolean
-  common_weight?: number | null
+  id: string;
+  name: string;
+  has_common_weight?: boolean;
+  common_weight?: number | null;
 }
 
 interface WeightEditSectionProps {
-  product: Product
-  variantGroup?: VariantGroup | null
-  onUpdate: (updatedProduct: Partial<Product>) => void
-  className?: string
+  product: Product;
+  variantGroup?: VariantGroup | null;
+  onUpdate: (updatedProduct: Partial<Product>) => void;
+  className?: string;
 }
 
 export function WeightEditSection({
   product,
   variantGroup,
   onUpdate,
-  className
+  className,
 }: WeightEditSectionProps) {
   // Lock si poids géré par le groupe
   const isWeightManagedByGroup = !!(
-    variantGroup?.has_common_weight &&
-    product.variant_group_id
-  )
+    variantGroup?.has_common_weight && product.variant_group_id
+  );
 
   const {
     isEditing,
@@ -61,48 +65,48 @@ export function WeightEditSection({
     cancelEdit,
     updateEditedData,
     saveChanges,
-    hasChanges
+    hasChanges,
   } = useInlineEdit({
     productId: product.id,
-    onUpdate: (updatedData) => {
-      onUpdate(updatedData)
+    onUpdate: updatedData => {
+      onUpdate(updatedData);
     },
-    onError: (error) => {
-      console.error('❌ Erreur mise à jour poids:', error)
-    }
-  })
+    onError: error => {
+      console.error('❌ Erreur mise à jour poids:', error);
+    },
+  });
 
-  const section: EditableSection = 'weight'
-  const editData = getEditedData(section)
-  const error = getError(section)
+  const section: EditableSection = 'weight';
+  const editData = getEditedData(section);
+  const error = getError(section);
 
-  const currentWeight = product.weight || null
+  const currentWeight = product.weight || null;
 
   const handleStartEdit = () => {
     startEdit(section, {
-      weight: product.weight || null
-    })
-  }
+      weight: product.weight || null,
+    });
+  };
 
   const handleSave = async () => {
-    const success = await saveChanges(section)
+    const success = await saveChanges(section);
     if (success) {
-      console.log('✅ Poids mis à jour avec succès')
+      console.log('✅ Poids mis à jour avec succès');
     }
-  }
+  };
 
   const handleCancel = () => {
-    cancelEdit(section)
-  }
+    cancelEdit(section);
+  };
 
   const handleFieldChange = (value: number | null) => {
-    updateEditedData(section, { weight: value })
-  }
+    updateEditedData(section, { weight: value });
+  };
 
   // Mode édition
   if (isEditing(section)) {
     return (
-      <div className={cn("card-verone p-4", className)}>
+      <div className={cn('card-verone p-4', className)}>
         <div className="flex items-center justify-between mb-3">
           <h3 className="text-lg font-medium text-black flex items-center">
             <Weight className="h-5 w-5 mr-2" />
@@ -142,7 +146,7 @@ export function WeightEditSection({
                 step="0.01"
                 min="0"
                 value={editData?.weight || ''}
-                onChange={(e) =>
+                onChange={e =>
                   handleFieldChange(
                     e.target.value ? parseFloat(e.target.value) : null
                   )
@@ -150,7 +154,9 @@ export function WeightEditSection({
                 placeholder="0.00"
                 className="flex-1"
               />
-              <span className="text-sm text-gray-600 mb-2 min-w-[30px]">kg</span>
+              <span className="text-sm text-gray-600 mb-2 min-w-[30px]">
+                kg
+              </span>
             </div>
           </div>
         </div>
@@ -162,19 +168,21 @@ export function WeightEditSection({
           </div>
         )}
       </div>
-    )
+    );
   }
 
   // Mode affichage
   return (
-    <div className={cn("card-verone p-4", className)}>
+    <div className={cn('card-verone p-4', className)}>
       <div className="flex items-center justify-between mb-3">
         <h3 className="text-lg font-medium text-black flex items-center">
           <Weight className="h-5 w-5 mr-2" />
           Poids
         </h3>
         {isWeightManagedByGroup ? (
-          <p className="text-xs text-black">ℹ️ Géré par le groupe de variantes</p>
+          <p className="text-xs text-black">
+            ℹ️ Géré par le groupe de variantes
+          </p>
         ) : (
           <ButtonV2 variant="outline" size="sm" onClick={handleStartEdit}>
             <Edit className="h-3 w-3 mr-1" />
@@ -185,7 +193,8 @@ export function WeightEditSection({
 
       {isWeightManagedByGroup && (
         <div className="mb-3 p-2 bg-blue-50 border border-blue-200 rounded text-xs text-blue-800">
-          ℹ️ Le poids est commun à toutes les variantes du groupe "{variantGroup?.name}".{' '}
+          ℹ️ Le poids est commun à toutes les variantes du groupe "
+          {variantGroup?.name}".{' '}
           <a
             href={`/produits/catalogue/variantes/${variantGroup?.id}`}
             className="underline font-medium hover:text-blue-900"
@@ -202,5 +211,5 @@ export function WeightEditSection({
         </div>
       </div>
     </div>
-  )
+  );
 }

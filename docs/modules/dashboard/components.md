@@ -16,16 +16,17 @@
 
 ```typescript
 interface ElegantKpiCardProps {
-  label: string                    // Libellé KPI (ex: "CA du Mois")
-  value: string | number           // Valeur affichée (ex: "327 €" ou 42)
-  icon: LucideIcon                 // Icône Lucide React
-  trend?: {                        // Trend indicator optionnel
-    value: number                  // Valeur % (ex: 12.5)
-    isPositive: boolean            // true = vert↑, false = rouge↓
-  }
-  description?: string             // Description optionnelle
-  onClick?: () => void             // Handler navigation
-  className?: string               // Classes Tailwind additionnelles
+  label: string; // Libellé KPI (ex: "CA du Mois")
+  value: string | number; // Valeur affichée (ex: "327 €" ou 42)
+  icon: LucideIcon; // Icône Lucide React
+  trend?: {
+    // Trend indicator optionnel
+    value: number; // Valeur % (ex: 12.5)
+    isPositive: boolean; // true = vert↑, false = rouge↓
+  };
+  description?: string; // Description optionnelle
+  onClick?: () => void; // Handler navigation
+  className?: string; // Classes Tailwind additionnelles
 }
 ```
 
@@ -74,11 +75,13 @@ export default function Dashboard() {
 ### Design Tokens
 
 **Tailles** :
+
 - Min height : 96px
 - Padding : 24px (p-6)
 - Gap : 12px (gap-3)
 
 **Couleurs** :
+
 ```typescript
 // Fond & Bordures
 background: 'white'
@@ -94,6 +97,7 @@ trend negative: 'danger-700' sur fond 'danger-50'
 ```
 
 **Typography** :
+
 - Label : 13px medium
 - Value : 28px bold, line-height 1.2
 - Trend : 12px medium
@@ -102,15 +106,18 @@ trend negative: 'danger-700' sur fond 'danger-50'
 ### États Visuels
 
 **Default** :
+
 - Fond blanc, bordure neutral-200
 - Shadow card légère
 
 **Hover** (si onClick présent) :
+
 - cursor: pointer
 - border: neutral-300
 - shadow: md (élévation)
 
 **Trend Badge** :
+
 ```tsx
 // Positif : Vert avec flèche haut
 <div className="bg-success-50 text-success-700">
@@ -131,6 +138,7 @@ trend negative: 'danger-700' sur fond 'danger-50'
 - ⚠️ Ajouter aria-label pour screen readers
 
 **Amélioration suggérée** :
+
 ```tsx
 <div
   onClick={onClick}
@@ -152,18 +160,18 @@ trend negative: 'danger-700' sur fond 'danger-50'
 
 ```typescript
 interface TimelineItem {
-  id: string
-  type: 'order' | 'product' | 'stock' | 'customer' | 'system'
-  title: string
-  description: string
-  timestamp: string | Date
-  user?: string
-  severity?: 'info' | 'warning' | 'error'
+  id: string;
+  type: 'order' | 'product' | 'stock' | 'customer' | 'system';
+  title: string;
+  description: string;
+  timestamp: string | Date;
+  user?: string;
+  severity?: 'info' | 'warning' | 'error';
 }
 
 interface ActivityTimelineProps {
-  items: TimelineItem[]
-  maxItems?: number              // Default: afficher tous
+  items: TimelineItem[];
+  maxItems?: number; // Default: afficher tous
 }
 ```
 
@@ -192,18 +200,20 @@ const recentActivity: TimelineItem[] = [
 
 ```tsx
 // Dashboard passe array vide
-const recentActivity: TimelineItem[] = []
+const recentActivity: TimelineItem[] = [];
 
 // Component affiche empty state
-{recentActivity.length > 0 ? (
-  <ActivityTimeline items={recentActivity} maxItems={4} />
-) : (
-  <div className="text-center py-12">
-    <ArrowLeftRight className="h-12 w-12 text-slate-300 mx-auto mb-3" />
-    <p className="text-sm text-slate-500">Aucune activité récente</p>
-    <p className="text-xs text-slate-400">L'historique apparaîtra ici</p>
-  </div>
-)}
+{
+  recentActivity.length > 0 ? (
+    <ActivityTimeline items={recentActivity} maxItems={4} />
+  ) : (
+    <div className="text-center py-12">
+      <ArrowLeftRight className="h-12 w-12 text-slate-300 mx-auto mb-3" />
+      <p className="text-sm text-slate-500">Aucune activité récente</p>
+      <p className="text-xs text-slate-400">L'historique apparaîtra ici</p>
+    </div>
+  );
+}
 ```
 
 ---
@@ -229,11 +239,11 @@ const recentActivity: TimelineItem[] = []
 const formatted = new Intl.NumberFormat('fr-FR', {
   style: 'currency',
   currency: 'EUR',
-  minimumFractionDigits: 0
-}).format(value)
+  minimumFractionDigits: 0,
+}).format(value);
 
 // Numbers
-const formatted = value.toString()  // Simple pour compteurs
+const formatted = value.toString(); // Simple pour compteurs
 ```
 
 ### Navigation onClick
@@ -251,11 +261,13 @@ const router = useRouter()
 ## Variantes Future
 
 **ElegantKpiCardSkeleton** (loading state) :
+
 ```tsx
 <div className="h-24 bg-gray-200 rounded-xl animate-pulse" />
 ```
 
 **ElegantKpiCardError** (error state) :
+
 ```tsx
 <div className="border-red-200 bg-red-50">
   <AlertCircle className="text-red-500" />

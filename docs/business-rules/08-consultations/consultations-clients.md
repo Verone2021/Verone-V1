@@ -1,4 +1,5 @@
 # 📋 Règles Métier - Consultations Clients
+
 **Date** : 23 septembre 2025
 **Version** : 1.0
 **Status** : ✅ IMPLÉMENTÉ
@@ -6,6 +7,7 @@
 ## 🎯 Objectifs
 
 Définir les règles métier pour le système de consultations clients dans Vérone Back Office, permettant :
+
 - **Réception structurée** des demandes clients depuis différents canaux
 - **Gestion workflow** avec assignation et suivi des consultations
 - **Liaison exclusive** avec les produits en mode sourcing uniquement
@@ -84,40 +86,46 @@ stateDiagram-v2
 ### **Règles de Transition**
 
 #### **EN_ATTENTE → EN_COURS**
+
 **Conditions** :
+
 - ✅ Consultation assignée à un utilisateur
 - ✅ Utilisateur avec rôle `admin`, `catalog_manager`, ou `sales`
 
 **Actions automatiques** :
+
 ```typescript
 const takeCharge = async (consultationId: string, userId: string) => {
   await updateConsultation(consultationId, {
     status: 'en_cours',
     assigned_to: userId,
-    updated_at: now()
+    updated_at: now(),
   });
 
   // Notification équipe
   await sendNotification({
     type: 'consultation_assigned',
     consultation_id: consultationId,
-    assigned_to: userId
+    assigned_to: userId,
   });
 };
 ```
 
 #### **EN_COURS → TERMINEE**
+
 **Conditions** :
+
 - ✅ Au moins un produit proposé au client
 - ✅ Réponse envoyée (email/téléphone/autre)
 
 **Actions automatiques** :
+
 ```typescript
 const completeConsultation = async (consultationId: string) => {
   await updateConsultation(consultationId, {
     status: 'terminee',
     responded_at: now(),
-    responded_by: getCurrentUserId()
+    responded_by: getCurrentUserId(),
   });
 
   // Archivage automatique après 30 jours
@@ -203,20 +211,20 @@ WHERE is_primary_proposal = true;
 ```typescript
 interface ProposalWorkflow {
   // 1. Sélection produits éligibles
-  eligible: 'sourcing products only',
+  eligible: 'sourcing products only';
 
   // 2. Proposition avec prix personnalisé
   pricing: {
-    base_price: 'from product.price_ht',
-    proposed_price: 'custom client price',
-    margin_calculation: 'automatic'
-  },
+    base_price: 'from product.price_ht';
+    proposed_price: 'custom client price';
+    margin_calculation: 'automatic';
+  };
 
   // 3. Validation commerciale
   validation: {
-    max_discount: '30%', // vs prix catalogue
-    approval_required: 'if discount > 20%'
-  }
+    max_discount: '30%'; // vs prix catalogue
+    approval_required: 'if discount > 20%';
+  };
 }
 ```
 
@@ -259,29 +267,29 @@ CREATE POLICY "Consultations insert access" ON client_consultations
 ```typescript
 interface AuditEvents {
   consultation_created: {
-    organisation_name: string,
-    source_channel: string,
-    created_by: string
-  },
+    organisation_name: string;
+    source_channel: string;
+    created_by: string;
+  };
 
   consultation_assigned: {
-    consultation_id: string,
-    assigned_to: string,
-    assigned_by: string
-  },
+    consultation_id: string;
+    assigned_to: string;
+    assigned_by: string;
+  };
 
   product_proposed: {
-    consultation_id: string,
-    product_id: string,
-    proposed_price: number,
-    is_primary: boolean
-  },
+    consultation_id: string;
+    product_id: string;
+    proposed_price: number;
+    is_primary: boolean;
+  };
 
   consultation_completed: {
-    consultation_id: string,
-    products_count: number,
-    response_time_hours: number
-  }
+    consultation_id: string;
+    products_count: number;
+    response_time_hours: number;
+  };
 }
 ```
 
@@ -292,18 +300,18 @@ interface AuditEvents {
 ```typescript
 interface ConsultationKPIs {
   // Performance équipe
-  average_response_time: 'heures entre création et première réponse',
-  completion_rate: '% consultations terminées vs abandonnées',
-  products_per_consultation: 'nombre moyen produits proposés',
+  average_response_time: 'heures entre création et première réponse';
+  completion_rate: '% consultations terminées vs abandonnées';
+  products_per_consultation: 'nombre moyen produits proposés';
 
   // Efficacité commerciale
-  conversion_rate: '% consultations → commandes clients',
-  average_deal_size: 'valeur moyenne des commandes issues de consultations',
-  sourcing_utilization: '% produits sourcing utilisés en consultations',
+  conversion_rate: '% consultations → commandes clients';
+  average_deal_size: 'valeur moyenne des commandes issues de consultations';
+  sourcing_utilization: '% produits sourcing utilisés en consultations';
 
   // Qualité service
-  client_satisfaction: 'scores retour clients',
-  repeat_consultation_rate: '% clients avec consultations multiples'
+  client_satisfaction: 'scores retour clients';
+  repeat_consultation_rate: '% clients avec consultations multiples';
 }
 ```
 
@@ -331,26 +339,26 @@ ORDER BY month DESC;
 ```typescript
 interface SourceChannels {
   website: {
-    form_endpoint: '/api/consultations/submit',
-    validation: 'recaptcha + rate_limiting',
-    auto_priority: 'normal'
-  },
+    form_endpoint: '/api/consultations/submit';
+    validation: 'recaptcha + rate_limiting';
+    auto_priority: 'normal';
+  };
 
   email: {
-    inbox: 'consultations@verone.com',
-    parsing: 'automatic extraction',
-    attachment_images: 'upload to storage'
-  },
+    inbox: 'consultations@verone.com';
+    parsing: 'automatic extraction';
+    attachment_images: 'upload to storage';
+  };
 
   phone: {
-    manual_entry: 'by sales team',
-    priority: 'high for direct calls'
-  },
+    manual_entry: 'by sales team';
+    priority: 'high for direct calls';
+  };
 
   other: {
-    trade_shows: 'events and exhibitions',
-    referrals: 'partner recommendations'
-  }
+    trade_shows: 'events and exhibitions';
+    referrals: 'partner recommendations';
+  };
 }
 ```
 
@@ -361,20 +369,20 @@ const notifications = {
   new_consultation: {
     recipients: ['sales_team'],
     delay: 'immediate',
-    escalation: 'manager if no assignment after 2h'
+    escalation: 'manager if no assignment after 2h',
   },
 
   consultation_assigned: {
     recipients: ['assigned_user'],
-    reminder: 'if no response after 24h'
+    reminder: 'if no response after 24h',
   },
 
   urgent_consultation: {
     recipients: ['sales_team', 'managers'],
     channels: ['email', 'slack'],
-    immediate: true
-  }
-}
+    immediate: true,
+  },
+};
 ```
 
 ## ✅ Critères de Validation
@@ -388,12 +396,14 @@ describe('Consultations Business Rules', () => {
     const sourcingProduct = await createProduct({ creation_mode: 'sourcing' });
 
     // Standard product → rejet
-    await expect(linkProductToConsultation(consultation.id, standardProduct.id))
-      .rejects.toThrow('Seuls les produits en mode sourcing');
+    await expect(
+      linkProductToConsultation(consultation.id, standardProduct.id)
+    ).rejects.toThrow('Seuls les produits en mode sourcing');
 
     // Sourcing product → succès
-    await expect(linkProductToConsultation(consultation.id, sourcingProduct.id))
-      .resolves.toBeTruthy();
+    await expect(
+      linkProductToConsultation(consultation.id, sourcingProduct.id)
+    ).resolves.toBeTruthy();
   });
 
   test('Workflow statuts complet', async () => {
@@ -409,11 +419,16 @@ describe('Consultations Business Rules', () => {
   });
 
   test('Une seule proposition principale', async () => {
-    await linkProductToConsultation(consultation.id, product1.id, { is_primary: true });
+    await linkProductToConsultation(consultation.id, product1.id, {
+      is_primary: true,
+    });
 
     // Deuxième produit primary → erreur
-    await expect(linkProductToConsultation(consultation.id, product2.id, { is_primary: true }))
-      .rejects.toThrow('unique constraint');
+    await expect(
+      linkProductToConsultation(consultation.id, product2.id, {
+        is_primary: true,
+      })
+    ).rejects.toThrow('unique constraint');
   });
 });
 ```
@@ -425,8 +440,8 @@ const performanceRequirements = {
   consultation_list_load: '< 2s pour 1000 consultations',
   product_search_response: '< 1s pour filtrage sourcing',
   consultation_creation: '< 500ms création + notification',
-  export_consultations: '< 10s pour 1 mois de données'
-}
+  export_consultations: '< 10s pour 1 mois de données',
+};
 ```
 
 ---

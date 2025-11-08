@@ -17,14 +17,14 @@ Ce document définit les règles métier pour le workflow de validation et d'exp
 
 ### Valeurs Enum: `sales_order_status`
 
-| Status | Label FR | Description | Modifiable | Actions disponibles |
-|--------|----------|-------------|------------|---------------------|
-| `draft` | Brouillon | Commande en création | ✅ Oui | Valider, Modifier, Supprimer |
-| `confirmed` | Validée | Commande validée, en attente paiement | ⚠️ Si non payée | Modifier (si non payée), Marquer payé |
-| `partially_shipped` | Partiellement expédiée | Expédition partielle effectuée | ❌ Non | Expédier reste |
-| `shipped` | Expédiée | Commande expédiée complète | ❌ Non | Confirmer livraison |
-| `delivered` | Livrée | Commande livrée client | ❌ Non | - |
-| `cancelled` | Annulée | Commande annulée | ❌ Non | - |
+| Status              | Label FR               | Description                           | Modifiable      | Actions disponibles                   |
+| ------------------- | ---------------------- | ------------------------------------- | --------------- | ------------------------------------- |
+| `draft`             | Brouillon              | Commande en création                  | ✅ Oui          | Valider, Modifier, Supprimer          |
+| `confirmed`         | Validée                | Commande validée, en attente paiement | ⚠️ Si non payée | Modifier (si non payée), Marquer payé |
+| `partially_shipped` | Partiellement expédiée | Expédition partielle effectuée        | ❌ Non          | Expédier reste                        |
+| `shipped`           | Expédiée               | Commande expédiée complète            | ❌ Non          | Confirmer livraison                   |
+| `delivered`         | Livrée                 | Commande livrée client                | ❌ Non          | -                                     |
+| `cancelled`         | Annulée                | Commande annulée                      | ❌ Non          | -                                     |
 
 ---
 
@@ -32,13 +32,13 @@ Ce document définit les règles métier pour le workflow de validation et d'exp
 
 ### Valeurs: `payment_status`
 
-| Payment Status | Label FR | Description | Peut expédier? |
-|----------------|----------|-------------|----------------|
-| `pending` | En attente | Paiement non reçu | ⚠️ Si crédit autorisé (B2B) |
-| `partial` | Partiel | Paiement partiel reçu | ❌ Non |
-| `paid` | Payé | Paiement complet reçu | ✅ Oui |
-| `refunded` | Remboursé | Paiement remboursé | ❌ Non |
-| `overdue` | En retard | Paiement en retard | ❌ Non |
+| Payment Status | Label FR   | Description           | Peut expédier?              |
+| -------------- | ---------- | --------------------- | --------------------------- |
+| `pending`      | En attente | Paiement non reçu     | ⚠️ Si crédit autorisé (B2B) |
+| `partial`      | Partiel    | Paiement partiel reçu | ❌ Non                      |
+| `paid`         | Payé       | Paiement complet reçu | ✅ Oui                      |
+| `refunded`     | Remboursé  | Paiement remboursé    | ❌ Non                      |
+| `overdue`      | En retard  | Paiement en retard    | ❌ Non                      |
 
 ---
 
@@ -105,24 +105,27 @@ Ce document définit les règles métier pour le workflow de validation et d'exp
 **Client:** Organisation avec crédit validé
 
 **Flux:**
+
 1. Création commande → `draft`
 2. Validation commerciale → `confirmed` + `payment_status: pending`
 3. **Autorisation expédition AVANT paiement** → Expédition possible
 4. Facturation → `payment_status: paid` (à échéance)
 
 **Règles:**
+
 - ✅ Expédition possible si `confirmed` + `pending` + crédit autorisé
 - ✅ Commande modifiable tant que `payment_status !== paid`
 - ⚠️ Validation crédit manuel (Phase 2)
 
 **Exemple:**
+
 ```typescript
 // Commande B2B prête pour expédition
 order.status === 'confirmed' &&
-order.payment_status === 'pending' &&
-order.customer_type === 'organization' &&
-// TODO Phase 2: order.credit_authorized === true
-!order.shipped_at
+  order.payment_status === 'pending' &&
+  order.customer_type === 'organization' &&
+  // TODO Phase 2: order.credit_authorized === true
+  !order.shipped_at;
 ```
 
 ---
@@ -134,22 +137,25 @@ order.customer_type === 'organization' &&
 **Client:** Individu (site e-commerce)
 
 **Flux:**
+
 1. Ajout panier → Paiement → `confirmed` + `payment_status: paid`
 2. Commande automatiquement prête → Visible page Expéditions
 3. Expédition → `shipped`
 
 **Règles:**
+
 - ✅ Paiement OBLIGATOIRE avant expédition
 - ❌ Pas de modification après paiement (verrouillée)
 - ✅ Workflow simplifié (moins d'étapes manuelles)
 
 **Exemple:**
+
 ```typescript
 // Commande B2C prête pour expédition
 order.status === 'confirmed' &&
-order.payment_status === 'paid' &&
-order.customer_type === 'individual' &&
-!order.shipped_at
+  order.payment_status === 'paid' &&
+  order.customer_type === 'individual' &&
+  !order.shipped_at;
 ```
 
 ---
@@ -159,27 +165,30 @@ order.customer_type === 'individual' &&
 ### Conditions Modification
 
 **Modifiable SI:**
+
 ```typescript
-(order.status === 'draft') ||
-(order.status === 'confirmed' && order.payment_status !== 'paid')
+order.status === 'draft' ||
+  (order.status === 'confirmed' && order.payment_status !== 'paid');
 ```
 
 **NON modifiable SI:**
+
 ```typescript
 order.payment_status === 'paid' ||
-order.status === 'shipped' ||
-order.status === 'delivered'
+  order.status === 'shipped' ||
+  order.status === 'delivered';
 ```
 
 ### Champs Modifiables
 
-| Statut | Produits | Quantités | Prix | Adresses | Notes |
-|--------|----------|-----------|------|----------|-------|
-| `draft` | ✅ | ✅ | ✅ | ✅ | ✅ |
-| `confirmed` (non payée) | ⚠️ | ⚠️ | ❌ | ✅ | ✅ |
-| `confirmed` (payée) | ❌ | ❌ | ❌ | ❌ | ⚠️ |
+| Statut                  | Produits | Quantités | Prix | Adresses | Notes |
+| ----------------------- | -------- | --------- | ---- | -------- | ----- |
+| `draft`                 | ✅       | ✅        | ✅   | ✅       | ✅    |
+| `confirmed` (non payée) | ⚠️       | ⚠️        | ❌   | ✅       | ✅    |
+| `confirmed` (payée)     | ❌       | ❌        | ❌   | ❌       | ⚠️    |
 
 **Légende:**
+
 - ✅ Modifiable librement
 - ⚠️ Modifiable avec restrictions
 - ❌ Non modifiable
@@ -191,23 +200,26 @@ order.status === 'delivered'
 ### Critères Affichage
 
 **Visible dans page Expéditions SI:**
+
 ```typescript
 order.status === 'confirmed' &&
-order.payment_status === 'paid' &&
-order.shipped_at === null
+  order.payment_status === 'paid' &&
+  order.shipped_at === null;
 ```
 
 **OU (Phase 2 - B2B crédit):**
+
 ```typescript
 order.status === 'confirmed' &&
-order.payment_status === 'pending' &&
-order.credit_authorized === true &&
-order.shipped_at === null
+  order.payment_status === 'pending' &&
+  order.credit_authorized === true &&
+  order.shipped_at === null;
 ```
 
 ### Statistiques Affichées
 
 #### 1. En Attente d'Expédition
+
 ```typescript
 COUNT(orders WHERE
   status = 'confirmed' AND
@@ -217,6 +229,7 @@ COUNT(orders WHERE
 ```
 
 #### 2. Urgentes (≤ 3 jours)
+
 ```typescript
 COUNT(orders WHERE
   status = 'confirmed' AND
@@ -227,6 +240,7 @@ COUNT(orders WHERE
 ```
 
 #### 3. En Retard (date dépassée)
+
 ```typescript
 COUNT(orders WHERE
   status = 'confirmed' AND
@@ -237,6 +251,7 @@ COUNT(orders WHERE
 ```
 
 #### 4. Valeur Totale
+
 ```typescript
 SUM(total_ttc WHERE
   status = 'confirmed' AND
@@ -247,11 +262,11 @@ SUM(total_ttc WHERE
 
 ### Badges Urgence
 
-| Condition | Badge | Couleur | Priorité |
-|-----------|-------|---------|----------|
-| `expected_delivery_date < TODAY` | En retard | 🔴 Rouge | Critique |
-| `expected_delivery_date <= TODAY + 3 days` | Urgent | 🟠 Orange | Haute |
-| Aucune date définie | - | - | Normale |
+| Condition                                  | Badge     | Couleur   | Priorité |
+| ------------------------------------------ | --------- | --------- | -------- |
+| `expected_delivery_date < TODAY`           | En retard | 🔴 Rouge  | Critique |
+| `expected_delivery_date <= TODAY + 3 days` | Urgent    | 🟠 Orange | Haute    |
+| Aucune date définie                        | -         | -         | Normale  |
 
 ---
 
@@ -260,32 +275,38 @@ SUM(total_ttc WHERE
 ### Modification Commande
 
 **Qui peut modifier:**
+
 - ✅ Créateur commande (created_by)
 - ✅ Administrateur (role: admin)
 - ✅ Responsable commercial (role: sales_manager)
 
 **Conditions supplémentaires:**
+
 - ✅ Statut `draft` ou `confirmed` non payée
 - ❌ Interdiction si `payment_status === 'paid'`
 
 ### Validation Commande
 
 **Qui peut valider:**
+
 - ✅ Créateur commande
 - ✅ Administrateur
 - ✅ Responsable commercial
 
 **Actions possibles:**
+
 - `draft` → `confirmed`: Validation
 - `draft` → `cancelled`: Annulation
 
 ### Expédition
 
 **Qui peut expédier:**
+
 - ✅ Responsable logistique (role: logistics_manager)
 - ✅ Administrateur
 
 **Conditions:**
+
 - ✅ `status === 'confirmed'`
 - ✅ `payment_status === 'paid'` (ou crédit autorisé)
 - ❌ Interdiction si déjà expédiée (`shipped_at !== null`)
@@ -297,16 +318,19 @@ SUM(total_ttc WHERE
 ### Fonctionnalités Désactivées
 
 **Facturation:**
+
 - ❌ Télécharger bon de commande
 - ❌ Générer facture
 - **Statut:** Boutons grisés avec tooltip "Phase 2"
 
 **Crédit B2B:**
+
 - ❌ Validation crédit automatique
 - ❌ Conditions paiement à échéance
 - ❌ Suivi paiements partiels
 
 **Mode Édition:**
+
 - ⚠️ Bouton "Modifier" présent mais TODO
 - ❌ Modal édition non implémentée
 - **Action actuelle:** `console.log('Modifier commande:', order.id)`
@@ -318,12 +342,13 @@ SUM(total_ttc WHERE
 ### Priorité Haute
 
 1. **Implémenter Mode Édition**
+
    ```typescript
    // SalesOrderFormModal
    interface Props {
-     mode: 'create' | 'edit'
-     orderId?: string
-     onSuccess?: () => void
+     mode: 'create' | 'edit';
+     orderId?: string;
+     onSuccess?: () => void;
    }
    ```
 
@@ -386,6 +411,7 @@ SUM(total_ttc WHERE
 ### Tests Non-Régression
 
 **À vérifier:**
+
 - [ ] Commandes existantes non impactées
 - [ ] Statistiques dashboard correctes
 - [ ] Filtres page commandes fonctionnels
@@ -401,6 +427,7 @@ SUM(total_ttc WHERE
 **Schema:** [/supabase/migrations/](../../supabase/migrations/)
 
 **Champs clés:**
+
 - `status`: sales_order_status (enum)
 - `payment_status`: varchar
 - `confirmed_at`: timestamptz
@@ -411,23 +438,26 @@ SUM(total_ttc WHERE
 ### Code Source
 
 **Pages:**
+
 - [/src/app/commandes/clients/page.tsx](../../src/app/commandes/clients/page.tsx)
 - [/src/app/commandes/expeditions/page.tsx](../../src/app/commandes/expeditions/page.tsx)
 
 **Composants:**
+
 - [/src/components/business/order-detail-modal.tsx](../../src/components/business/order-detail-modal.tsx)
 - [/src/components/business/sales-order-form-modal.tsx](../../src/components/business/sales-order-form-modal.tsx)
 
 **Hooks:**
+
 - [/src/hooks/use-sales-orders.ts](../../src/hooks/use-sales-orders.ts)
 
 ---
 
 ## 📝 Historique Modifications
 
-| Date | Version | Auteur | Changements |
-|------|---------|--------|-------------|
-| 2025-10-11 | 1.0 | Claude Code | Création initiale règles workflow validation/expédition |
+| Date       | Version | Auteur      | Changements                                             |
+| ---------- | ------- | ----------- | ------------------------------------------------------- |
+| 2025-10-11 | 1.0     | Claude Code | Création initiale règles workflow validation/expédition |
 
 ---
 

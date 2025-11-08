@@ -11,6 +11,7 @@
 Le module **Images** gère l'ensemble du système d'images produits avec upload, stockage Supabase, et triggers automatiques.
 
 **Features clés** :
+
 - Upload multiple (drag & drop)
 - Image primaire automatique
 - Génération URL publique auto
@@ -83,6 +84,7 @@ CREATE TABLE product_images (
 ```
 
 **Colonnes clés** :
+
 - `storage_path` : Chemin Supabase Storage (UNIQUE)
 - `public_url` : URL publique générée automatiquement
 - `is_primary` : Image primaire (1 seule par produit)
@@ -139,41 +141,53 @@ Hook complet gestion images produit.
 
 ```typescript
 interface UseProductImagesOptions {
-  productId: string
-  bucketName?: string
-  autoFetch?: boolean
+  productId: string;
+  bucketName?: string;
+  autoFetch?: boolean;
 }
 
-type ImageType = 'gallery' | 'technical' | 'detail' | 'lifestyle' | 'dimension' | 'other'
+type ImageType =
+  | 'gallery'
+  | 'technical'
+  | 'detail'
+  | 'lifestyle'
+  | 'dimension'
+  | 'other';
 
 function useProductImages(options: UseProductImagesOptions): {
   // 📊 Data
-  images: ProductImage[]
-  primaryImage: ProductImage | null
-  galleryImages: ProductImage[]
-  technicalImages: ProductImage[]
+  images: ProductImage[];
+  primaryImage: ProductImage | null;
+  galleryImages: ProductImage[];
+  technicalImages: ProductImage[];
 
   // 🔄 State
-  loading: boolean
-  uploading: boolean
-  error: string | null
+  loading: boolean;
+  uploading: boolean;
+  error: string | null;
 
   // 🎬 Actions
-  fetchImages: () => Promise<void>
-  uploadImage: (file: File, options?: UploadOptions) => Promise<ProductImage>
-  uploadMultipleImages: (files: File[], options?: MultiUploadOptions) => Promise<ProductImage[]>
-  deleteImage: (imageId: string) => Promise<void>
-  reorderImages: (imageIds: string[]) => Promise<void>
-  setPrimaryImage: (imageId: string) => Promise<void>
-  updateImageMetadata: (imageId: string, metadata: ImageMetadata) => Promise<void>
+  fetchImages: () => Promise<void>;
+  uploadImage: (file: File, options?: UploadOptions) => Promise<ProductImage>;
+  uploadMultipleImages: (
+    files: File[],
+    options?: MultiUploadOptions
+  ) => Promise<ProductImage[]>;
+  deleteImage: (imageId: string) => Promise<void>;
+  reorderImages: (imageIds: string[]) => Promise<void>;
+  setPrimaryImage: (imageId: string) => Promise<void>;
+  updateImageMetadata: (
+    imageId: string,
+    metadata: ImageMetadata
+  ) => Promise<void>;
 
   // 🛠️ Helpers
-  getImagesByType: (type: ImageType) => ProductImage[]
+  getImagesByType: (type: ImageType) => ProductImage[];
 
   // 📈 Stats
-  totalImages: number
-  hasImages: boolean
-}
+  totalImages: number;
+  hasImages: boolean;
+};
 ```
 
 ---
@@ -257,37 +271,37 @@ function useProductImages(options: UseProductImagesOptions): {
 
 ```typescript
 const validateImage = (file: File): boolean => {
-  const maxSize = 5 * 1024 * 1024 // 5MB
-  const allowedTypes = ['image/jpeg', 'image/png', 'image/webp']
+  const maxSize = 5 * 1024 * 1024; // 5MB
+  const allowedTypes = ['image/jpeg', 'image/png', 'image/webp'];
 
   if (file.size > maxSize) {
-    throw new Error('Image trop volumineuse (max 5MB)')
+    throw new Error('Image trop volumineuse (max 5MB)');
   }
 
   if (!allowedTypes.includes(file.type)) {
-    throw new Error('Format non supporté (JPEG, PNG, WebP uniquement)')
+    throw new Error('Format non supporté (JPEG, PNG, WebP uniquement)');
   }
 
-  return true
-}
+  return true;
+};
 ```
 
 ### Compression Automatique
 
 ```typescript
-import imageCompression from 'browser-image-compression'
+import imageCompression from 'browser-image-compression';
 
 const compressImage = async (file: File): Promise<File> => {
   if (file.size < 1 * 1024 * 1024) {
-    return file // Pas besoin compression
+    return file; // Pas besoin compression
   }
 
   return await imageCompression(file, {
     maxSizeMB: 1,
     maxWidthOrHeight: 1920,
-    useWebWorker: true
-  })
-}
+    useWebWorker: true,
+  });
+};
 ```
 
 ---

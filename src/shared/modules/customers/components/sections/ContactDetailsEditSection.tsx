@@ -1,18 +1,26 @@
-'use client'
+'use client';
 
-import { Phone, Mail, Save, X, Edit } from 'lucide-react'
-import { ButtonV2 } from '@/components/ui/button'
-import { cn } from '@/lib/utils'
-import { useInlineEdit, type EditableSection } from '@/shared/modules/common/hooks'
-import type { Contact } from '@/shared/modules/common/hooks'
+import { Phone, Mail, Save, X, Edit } from 'lucide-react';
+
+import { ButtonV2 } from '@/components/ui/button';
+import { cn } from '@verone/utils';
+import {
+  useInlineEdit,
+  type EditableSection,
+} from '@/shared/modules/common/hooks';
+import type { Contact } from '@/shared/modules/common/hooks';
 
 interface ContactDetailsEditSectionProps {
-  contact: Contact
-  onUpdate: (updatedContact: Partial<Contact>) => void
-  className?: string
+  contact: Contact;
+  onUpdate: (updatedContact: Partial<Contact>) => void;
+  className?: string;
 }
 
-export function ContactDetailsEditSection({ contact, onUpdate, className }: ContactDetailsEditSectionProps) {
+export function ContactDetailsEditSection({
+  contact,
+  onUpdate,
+  className,
+}: ContactDetailsEditSectionProps) {
   const {
     isEditing,
     isSaving,
@@ -22,20 +30,20 @@ export function ContactDetailsEditSection({ contact, onUpdate, className }: Cont
     cancelEdit,
     updateEditedData,
     saveChanges,
-    hasChanges
+    hasChanges,
   } = useInlineEdit({
     contactId: contact.id,
-    onUpdate: (updatedData) => {
-      onUpdate(updatedData)
+    onUpdate: updatedData => {
+      onUpdate(updatedData);
     },
-    onError: (error) => {
-      console.error('❌ Erreur mise à jour coordonnées:', error)
-    }
-  })
+    onError: error => {
+      console.error('❌ Erreur mise à jour coordonnées:', error);
+    },
+  });
 
-  const section: EditableSection = 'contact'
-  const editData = getEditedData(section)
-  const error = getError(section)
+  const section: EditableSection = 'contact';
+  const editData = getEditedData(section);
+  const error = getError(section);
 
   const handleStartEdit = () => {
     startEdit(section, {
@@ -43,36 +51,36 @@ export function ContactDetailsEditSection({ contact, onUpdate, className }: Cont
       phone: contact.phone || '',
       mobile: contact.mobile || '',
       secondary_email: contact.secondary_email || '',
-      direct_line: contact.direct_line || ''
-    })
-  }
+      direct_line: contact.direct_line || '',
+    });
+  };
 
   const handleSave = async () => {
-    const success = await saveChanges(section)
+    const success = await saveChanges(section);
     if (success) {
-      console.log('✅ Coordonnées mises à jour avec succès')
+      console.log('✅ Coordonnées mises à jour avec succès');
     }
-  }
+  };
 
   const handleCancel = () => {
-    cancelEdit(section)
-  }
+    cancelEdit(section);
+  };
 
   const handleFieldChange = (field: string, value: string) => {
     // Nettoyage automatique des emails
-    let processedValue = value.trim()
+    let processedValue = value.trim();
 
     if (field === 'email' || field === 'secondary_email') {
-      processedValue = processedValue.toLowerCase()
+      processedValue = processedValue.toLowerCase();
     }
 
     // Convertir les chaînes vides en null pour respecter les contraintes DB
-    updateEditedData(section, { [field]: processedValue || null })
-  }
+    updateEditedData(section, { [field]: processedValue || null });
+  };
 
   if (isEditing(section)) {
     return (
-      <div className={cn("card-verone p-4", className)}>
+      <div className={cn('card-verone p-4', className)}>
         <div className="flex items-center justify-between mb-3">
           <h3 className="text-lg font-medium text-black flex items-center">
             <Phone className="h-5 w-5 mr-2" />
@@ -109,7 +117,7 @@ export function ContactDetailsEditSection({ contact, onUpdate, className }: Cont
             <input
               type="email"
               value={editData?.email || ''}
-              onChange={(e) => handleFieldChange('email', e.target.value)}
+              onChange={e => handleFieldChange('email', e.target.value)}
               className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-black focus:border-black"
               placeholder="contact@email.com"
               required
@@ -124,7 +132,9 @@ export function ContactDetailsEditSection({ contact, onUpdate, className }: Cont
             <input
               type="email"
               value={editData?.secondary_email || ''}
-              onChange={(e) => handleFieldChange('secondary_email', e.target.value)}
+              onChange={e =>
+                handleFieldChange('secondary_email', e.target.value)
+              }
               className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-black focus:border-black"
               placeholder="contact.alternatif@email.com"
             />
@@ -142,7 +152,7 @@ export function ContactDetailsEditSection({ contact, onUpdate, className }: Cont
               <input
                 type="tel"
                 value={editData?.phone || ''}
-                onChange={(e) => handleFieldChange('phone', e.target.value)}
+                onChange={e => handleFieldChange('phone', e.target.value)}
                 className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-black focus:border-black"
                 placeholder="+33 1 23 45 67 89"
               />
@@ -156,7 +166,7 @@ export function ContactDetailsEditSection({ contact, onUpdate, className }: Cont
               <input
                 type="tel"
                 value={editData?.mobile || ''}
-                onChange={(e) => handleFieldChange('mobile', e.target.value)}
+                onChange={e => handleFieldChange('mobile', e.target.value)}
                 className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-black focus:border-black"
                 placeholder="+33 6 12 34 56 78"
               />
@@ -171,7 +181,7 @@ export function ContactDetailsEditSection({ contact, onUpdate, className }: Cont
             <input
               type="tel"
               value={editData?.direct_line || ''}
-              onChange={(e) => handleFieldChange('direct_line', e.target.value)}
+              onChange={e => handleFieldChange('direct_line', e.target.value)}
               className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-black focus:border-black"
               placeholder="+33 1 23 45 67 89 (poste 123)"
             />
@@ -188,12 +198,12 @@ export function ContactDetailsEditSection({ contact, onUpdate, className }: Cont
           </div>
         )}
       </div>
-    )
+    );
   }
 
   // Mode affichage
   return (
-    <div className={cn("card-verone p-4", className)}>
+    <div className={cn('card-verone p-4', className)}>
       <div className="flex items-center justify-between mb-3">
         <h3 className="text-lg font-medium text-black flex items-center">
           <Phone className="h-5 w-5 mr-2" />
@@ -225,7 +235,10 @@ export function ContactDetailsEditSection({ contact, onUpdate, className }: Cont
               Email secondaire:
             </span>
             <div className="text-sm text-blue-600">
-              <a href={`mailto:${contact.secondary_email}`} className="hover:underline">
+              <a
+                href={`mailto:${contact.secondary_email}`}
+                className="hover:underline"
+              >
                 {contact.secondary_email}
               </a>
             </div>
@@ -269,7 +282,10 @@ export function ContactDetailsEditSection({ contact, onUpdate, className }: Cont
               Ligne directe:
             </span>
             <div className="text-sm text-black">
-              <a href={`tel:${contact.direct_line}`} className="hover:underline">
+              <a
+                href={`tel:${contact.direct_line}`}
+                className="hover:underline"
+              >
                 {contact.direct_line}
               </a>
             </div>
@@ -277,12 +293,15 @@ export function ContactDetailsEditSection({ contact, onUpdate, className }: Cont
         )}
 
         {/* Message si aucune info contact */}
-        {!contact.phone && !contact.mobile && !contact.direct_line && !contact.secondary_email && (
-          <div className="text-center text-gray-400 text-xs italic py-2">
-            Seul l'email principal est renseigné
-          </div>
-        )}
+        {!contact.phone &&
+          !contact.mobile &&
+          !contact.direct_line &&
+          !contact.secondary_email && (
+            <div className="text-center text-gray-400 text-xs italic py-2">
+              Seul l'email principal est renseigné
+            </div>
+          )}
       </div>
     </div>
-  )
+  );
 }

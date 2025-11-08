@@ -104,13 +104,13 @@ curl http://localhost:3000/api/google-merchant/test-connection | jq
 
 ## 📊 Mapping JSON → Variables
 
-| Variable .env | Clé JSON | Valeur Extraite |
-|--------------|----------|-----------------|
-| `GOOGLE_MERCHANT_SERVICE_ACCOUNT_EMAIL` | `client_email` | google-merchant-verone@... |
-| `GOOGLE_MERCHANT_PRIVATE_KEY` | `private_key` | -----BEGIN PRIVATE KEY----- (2048 chars) |
-| `GOOGLE_MERCHANT_PRIVATE_KEY_ID` | `private_key_id` | 58090fe706f94301d25aecda869335a756630b8e |
-| `GOOGLE_MERCHANT_CLIENT_ID` | `client_id` | 111311801636391452848 |
-| `GOOGLE_CLOUD_PROJECT_ID` | `project_id` | make-gmail-integration-428317 |
+| Variable .env                           | Clé JSON         | Valeur Extraite                          |
+| --------------------------------------- | ---------------- | ---------------------------------------- |
+| `GOOGLE_MERCHANT_SERVICE_ACCOUNT_EMAIL` | `client_email`   | google-merchant-verone@...               |
+| `GOOGLE_MERCHANT_PRIVATE_KEY`           | `private_key`    | -----BEGIN PRIVATE KEY----- (2048 chars) |
+| `GOOGLE_MERCHANT_PRIVATE_KEY_ID`        | `private_key_id` | 58090fe706f94301d25aecda869335a756630b8e |
+| `GOOGLE_MERCHANT_CLIENT_ID`             | `client_id`      | 111311801636391452848                    |
+| `GOOGLE_CLOUD_PROJECT_ID`               | `project_id`     | make-gmail-integration-428317            |
 
 ---
 

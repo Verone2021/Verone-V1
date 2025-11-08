@@ -1,38 +1,66 @@
-"use client"
+'use client';
 
-import { Badge, TreePine, FolderOpen, Tags, ExternalLink, Package, Heart, Star, Eye, Calendar, Truck, ShieldCheck, ImageIcon, CheckCircle, AlertCircle, Clock, Settings, ChevronRight } from 'lucide-react'
-import { ButtonV2 } from '@/components/ui/button'
-import { cn } from '@/lib/utils'
-import { ProductImageGallery } from './product-image-gallery'
-import { ProductFixedCharacteristics } from './product-fixed-characteristics'
+import {
+  Badge,
+  TreePine,
+  FolderOpen,
+  Tags,
+  ExternalLink,
+  Package,
+  Heart,
+  Star,
+  Eye,
+  Calendar,
+  Truck,
+  ShieldCheck,
+  ImageIcon,
+  CheckCircle,
+  AlertCircle,
+  Clock,
+  Settings,
+  ChevronRight,
+} from 'lucide-react';
+
+import { ProductFixedCharacteristics } from '@/components/business/product-fixed-characteristics';
+import { ProductImageGallery } from '@/components/business/product-image-gallery';
+import { ButtonV2 } from '@/components/ui/button';
+import { cn } from '@verone/utils';
 
 interface ProductViewProps {
-  product: any
-  onSwitchToEdit: () => void
-  className?: string
+  product: any;
+  onSwitchToEdit: () => void;
+  className?: string;
 }
 
-export function ProductViewMode({ product, onSwitchToEdit, className }: ProductViewProps) {
+export function ProductViewMode({
+  product,
+  onSwitchToEdit,
+  className,
+}: ProductViewProps) {
   const getStockBadge = () => {
-    const stockQty = product.stock_quantity || 0
-    const condition = product.condition || 'new'
+    const stockQty = product.stock_quantity || 0;
+    const condition = product.condition || 'new';
 
     if (stockQty > 10) {
       return (
         <div className="flex items-center gap-2 text-green-700 bg-green-50 px-4 py-2 rounded-lg">
           <CheckCircle className="h-4 w-4" />
-          <span className="font-medium text-sm">En stock ({stockQty} disponibles)</span>
+          <span className="font-medium text-sm">
+            En stock ({stockQty} disponibles)
+          </span>
         </div>
-      )
+      );
     }
 
     if (stockQty > 0 && stockQty <= 10) {
       return (
         <div className="flex items-center gap-2 text-gray-800 bg-gray-50 px-4 py-2 rounded-lg">
           <AlertCircle className="h-4 w-4" />
-          <span className="font-medium text-sm">Stock limité ({stockQty} disponibles)</span>
+          <span className="font-medium text-sm">
+            Stock limité ({stockQty} disponibles)
+          </span>
         </div>
-      )
+      );
     }
 
     if (product.status === 'preorder') {
@@ -41,7 +69,7 @@ export function ProductViewMode({ product, onSwitchToEdit, className }: ProductV
           <Clock className="h-4 w-4" />
           <span className="font-medium text-sm">Précommande disponible</span>
         </div>
-      )
+      );
     }
 
     if (product.status === 'coming_soon') {
@@ -50,7 +78,7 @@ export function ProductViewMode({ product, onSwitchToEdit, className }: ProductV
           <Clock className="h-4 w-4" />
           <span className="font-medium text-sm">Bientôt disponible</span>
         </div>
-      )
+      );
     }
 
     return (
@@ -58,15 +86,13 @@ export function ProductViewMode({ product, onSwitchToEdit, className }: ProductV
         <AlertCircle className="h-4 w-4" />
         <span className="font-medium text-sm">Momentanément indisponible</span>
       </div>
-    )
-  }
+    );
+  };
 
   return (
-    <div className={cn("w-full", className)}>
-
+    <div className={cn('w-full', className)}>
       {/* Layout e-commerce optimisé: 50% images / 50% infos */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 max-w-6xl mx-auto">
-
         {/* COLONNE GAUCHE: Galerie Images */}
         <div className="space-y-4">
           {/* Galerie principale */}
@@ -82,7 +108,6 @@ export function ProductViewMode({ product, onSwitchToEdit, className }: ProductV
 
         {/* COLONNE DROITE: Informations produit e-commerce */}
         <div className="space-y-6">
-
           {/* Header produit minimaliste */}
           <div className="space-y-4">
             {/* Navigation / Catégorie */}
@@ -127,7 +152,7 @@ export function ProductViewMode({ product, onSwitchToEdit, className }: ProductV
                 </div>
                 <div className="text-xl text-gray-700">
                   <span className="font-semibold">
-                    {(product.selling_price * 1.20).toFixed(2)}€
+                    {(product.selling_price * 1.2).toFixed(2)}€
                   </span>
                   <span className="text-gray-500"> TTC</span>
                 </div>
@@ -139,9 +164,7 @@ export function ProductViewMode({ product, onSwitchToEdit, className }: ProductV
             )}
 
             {/* Statut stock */}
-            <div className="flex justify-center">
-              {getStockBadge()}
-            </div>
+            <div className="flex justify-center">{getStockBadge()}</div>
 
             {/* Bouton administration (seulement en mode admin) */}
             <div className="pt-4 border-t border-gray-200">
@@ -173,7 +196,9 @@ export function ProductViewMode({ product, onSwitchToEdit, className }: ProductV
           {/* Spécifications techniques - DÉPLACÉES ICI après description */}
           {product.technical_description && (
             <div className="space-y-4">
-              <h2 className="text-xl font-semibold text-black">Spécifications techniques</h2>
+              <h2 className="text-xl font-semibold text-black">
+                Spécifications techniques
+              </h2>
               <div className="bg-gray-50 rounded-lg p-4">
                 <p className="text-gray-700 leading-relaxed whitespace-pre-line">
                   {product.technical_description}
@@ -199,7 +224,9 @@ export function ProductViewMode({ product, onSwitchToEdit, className }: ProductV
 
           {/* Caractéristiques produit e-commerce */}
           <div className="space-y-4">
-            <h2 className="text-xl font-semibold text-black">Caractéristiques</h2>
+            <h2 className="text-xl font-semibold text-black">
+              Caractéristiques
+            </h2>
             <div className="bg-white border border-gray-200 rounded-lg p-4">
               <ProductFixedCharacteristics product={product} />
             </div>
@@ -207,7 +234,6 @@ export function ProductViewMode({ product, onSwitchToEdit, className }: ProductV
 
           {/* Informations complémentaires en accordéon style e-commerce */}
           <div className="space-y-2">
-
             {/* Livraison et retours */}
             <details className="bg-gray-50 rounded-lg">
               <summary className="p-4 cursor-pointer font-medium text-black hover:bg-gray-100 rounded-lg">
@@ -240,9 +266,13 @@ export function ProductViewMode({ product, onSwitchToEdit, className }: ProductV
                   </div>
                 </summary>
                 <div className="px-4 pb-4 text-gray-600 text-sm space-y-2">
-                  <p><strong>Fournisseur :</strong> {product.supplier.name}</p>
+                  <p>
+                    <strong>Fournisseur :</strong> {product.supplier.name}
+                  </p>
                   {product.supplier_reference && (
-                    <p><strong>Référence :</strong> {product.supplier_reference}</p>
+                    <p>
+                      <strong>Référence :</strong> {product.supplier_reference}
+                    </p>
                   )}
                   {product.supplier_page_url && (
                     <a
@@ -260,7 +290,10 @@ export function ProductViewMode({ product, onSwitchToEdit, className }: ProductV
             )}
 
             {/* Dimensions et poids */}
-            {(product.dimensions_length || product.dimensions_width || product.dimensions_height || product.weight) && (
+            {(product.dimensions_length ||
+              product.dimensions_width ||
+              product.dimensions_height ||
+              product.weight) && (
               <details className="bg-gray-50 rounded-lg">
                 <summary className="p-4 cursor-pointer font-medium text-black hover:bg-gray-100 rounded-lg">
                   <div className="flex items-center justify-between">
@@ -272,23 +305,35 @@ export function ProductViewMode({ product, onSwitchToEdit, className }: ProductV
                   </div>
                 </summary>
                 <div className="px-4 pb-4 text-gray-600 text-sm space-y-2">
-                  {(product.dimensions_length || product.dimensions_width || product.dimensions_height) && (
+                  {(product.dimensions_length ||
+                    product.dimensions_width ||
+                    product.dimensions_height) && (
                     <p>
-                      <strong>Dimensions :</strong> {product.dimensions_length || 0} × {product.dimensions_width || 0} × {product.dimensions_height || 0} {product.dimensions_unit || 'cm'}
+                      <strong>Dimensions :</strong>{' '}
+                      {product.dimensions_length || 0} ×{' '}
+                      {product.dimensions_width || 0} ×{' '}
+                      {product.dimensions_height || 0}{' '}
+                      {product.dimensions_unit || 'cm'}
                     </p>
                   )}
                   {product.weight && (
-                    <p><strong>Poids :</strong> {product.weight} {product.weight_unit || 'kg'}</p>
+                    <p>
+                      <strong>Poids :</strong> {product.weight}{' '}
+                      {product.weight_unit || 'kg'}
+                    </p>
                   )}
-                  <p><strong>Condition :</strong> {
-                    product.condition === 'new' ? 'Neuf' :
-                    product.condition === 'used' ? 'Occasion' : 'Reconditionné'
-                  }</p>
+                  <p>
+                    <strong>Condition :</strong>{' '}
+                    {product.condition === 'new'
+                      ? 'Neuf'
+                      : product.condition === 'used'
+                        ? 'Occasion'
+                        : 'Reconditionné'}
+                  </p>
                 </div>
               </details>
             )}
           </div>
-
         </div>
       </div>
 
@@ -306,16 +351,20 @@ export function ProductViewMode({ product, onSwitchToEdit, className }: ProductV
             <Eye className="h-8 w-8 mx-auto text-gray-400 mb-2" />
             <p className="text-xs text-gray-600">Ajouté le</p>
             <p className="text-sm font-medium text-gray-800">
-              {product.created_at ? new Date(product.created_at).toLocaleDateString('fr-FR') : 'N/A'}
+              {product.created_at
+                ? new Date(product.created_at).toLocaleDateString('fr-FR')
+                : 'N/A'}
             </p>
           </div>
           <div>
             <ShieldCheck className="h-8 w-8 mx-auto text-gray-400 mb-2" />
             <p className="text-xs text-gray-600">Garantie</p>
-            <p className="text-sm font-medium text-gray-800">2 ans constructeur</p>
+            <p className="text-sm font-medium text-gray-800">
+              2 ans constructeur
+            </p>
           </div>
         </div>
       </div>
     </div>
-  )
+  );
 }

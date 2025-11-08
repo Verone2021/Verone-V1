@@ -4,8 +4,8 @@
  * Export des thèmes light et dark
  */
 
-export * from './light'
-export * from './dark'
+export * from './light';
+export * from './dark';
 
 // Default theme export
-export { lightTheme as theme } from './light'
+export { lightTheme as theme } from './light';

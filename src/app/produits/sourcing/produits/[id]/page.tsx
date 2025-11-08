@@ -1,8 +1,10 @@
-"use client"
+'use client';
 
-import { useState, useEffect } from 'react'
-import { useRouter } from 'next/navigation'
-import { useParams } from 'next/navigation'
+import { useState, useEffect } from 'react';
+
+import { useRouter } from 'next/navigation';
+import { useParams } from 'next/navigation';
+
 import {
   ArrowLeft,
   Edit,
@@ -14,72 +16,92 @@ import {
   Building,
   Clock,
   Euro,
-  Globe
-} from 'lucide-react'
-import { ButtonV2 } from '@/components/ui/button'
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
-import { Badge } from '@/components/ui/badge'
-import { Alert, AlertDescription } from '@/components/ui/alert'
-import { useSourcingProducts } from '@/shared/modules/products/hooks'
-import { useToast } from '@/shared/modules/common/hooks'
-import { EditSourcingProductModal } from '@/components/business/edit-sourcing-product-modal'
-import { SupplierSelector } from '@/components/business/supplier-selector'
+  Globe,
+} from 'lucide-react';
+
+import { Alert, AlertDescription } from '@/components/ui/alert';
+import { Badge } from '@/components/ui/badge';
+import { ButtonV2 } from '@/components/ui/button';
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from '@/components/ui/card';
+import { useToast } from '@/shared/modules/common/hooks';
+import { EditSourcingProductModal } from '@/shared/modules/products/components/modals/EditSourcingProductModal';
+import { useSourcingProducts } from '@/shared/modules/products/hooks';
+import { SupplierSelector } from '@/shared/modules/suppliers/components/selectors/SupplierSelector';
 
 export default function SourcingProductDetailPage() {
-  const router = useRouter()
-  const params = useParams()
-  const { toast } = useToast()
-  const { products, loading, validateSourcing, orderSample, updateSourcingProduct, refetch } = useSourcingProducts()
-  const [isEditModalOpen, setIsEditModalOpen] = useState(false)
+  const router = useRouter();
+  const params = useParams();
+  const { toast } = useToast();
+  const {
+    products,
+    loading,
+    validateSourcing,
+    orderSample,
+    updateSourcingProduct,
+    refetch,
+  } = useSourcingProducts();
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
 
-  const productId = params.id as string
-  const product = products.find(p => p.id === productId)
+  const productId = params.id as string;
+  const product = products.find(p => p.id === productId);
 
   const formatPrice = (price: number | null) => {
-    if (!price) return 'Non défini'
-    return new Intl.NumberFormat('fr-FR', { style: 'currency', currency: 'EUR' }).format(price)
-  }
+    if (!price) return 'Non défini';
+    return new Intl.NumberFormat('fr-FR', {
+      style: 'currency',
+      currency: 'EUR',
+    }).format(price);
+  };
 
   const formatDate = (dateString: string) => {
     return new Date(dateString).toLocaleDateString('fr-FR', {
       day: '2-digit',
       month: 'long',
-      year: 'numeric'
-    })
-  }
+      year: 'numeric',
+    });
+  };
 
   const handleOrderSample = async () => {
     try {
-      await orderSample(productId)
+      await orderSample(productId);
       toast({
-        title: "Échantillon commandé",
-        description: "La demande d'échantillon a été enregistrée avec succès"
-      })
+        title: 'Échantillon commandé',
+        description: "La demande d'échantillon a été enregistrée avec succès",
+      });
     } catch (error) {
       toast({
-        title: "Erreur",
+        title: 'Erreur',
         description: "Impossible de commander l'échantillon",
-        variant: "destructive"
-      })
+        variant: 'destructive',
+      });
     }
-  }
+  };
 
   const handleValidateSourcing = async () => {
     try {
-      await validateSourcing(productId)
+      await validateSourcing(productId);
       toast({
-        title: "Sourcing validé",
-        description: "Le produit a été validé et ajouté au catalogue"
-      })
-      router.push('/catalogue')
+        title: 'Sourcing validé',
+        description: 'Le produit a été validé et ajouté au catalogue',
+      });
+      router.push('/catalogue');
     } catch (error) {
       toast({
-        title: "Erreur",
-        description: error instanceof Error ? error.message : "Impossible de valider le sourcing",
-        variant: "destructive"
-      })
+        title: 'Erreur',
+        description:
+          error instanceof Error
+            ? error.message
+            : 'Impossible de valider le sourcing',
+        variant: 'destructive',
+      });
     }
-  }
+  };
 
   if (loading) {
     return (
@@ -89,7 +111,7 @@ export default function SourcingProductDetailPage() {
           <p className="text-gray-600">Chargement du produit sourcing...</p>
         </div>
       </div>
-    )
+    );
   }
 
   if (!product) {
@@ -98,7 +120,9 @@ export default function SourcingProductDetailPage() {
         <Card className="max-w-md border-black">
           <CardContent className="text-center p-6">
             <AlertCircle className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-            <h3 className="text-lg font-medium text-black mb-2">Produit sourcing non trouvé</h3>
+            <h3 className="text-lg font-medium text-black mb-2">
+              Produit sourcing non trouvé
+            </h3>
             <p className="text-gray-600 mb-4">
               Ce produit n'existe pas ou n'est plus en mode sourcing.
             </p>
@@ -112,7 +136,7 @@ export default function SourcingProductDetailPage() {
           </CardContent>
         </Card>
       </div>
-    )
+    );
   }
 
   return (
@@ -131,8 +155,12 @@ export default function SourcingProductDetailPage() {
                 Retour au sourcing
               </ButtonV2>
               <div>
-                <h1 className="text-3xl font-bold text-black">Détail Sourcing</h1>
-                <p className="text-gray-600 mt-1">Validation et gestion du produit en sourcing</p>
+                <h1 className="text-3xl font-bold text-black">
+                  Détail Sourcing
+                </h1>
+                <p className="text-gray-600 mt-1">
+                  Validation et gestion du produit en sourcing
+                </p>
               </div>
             </div>
 
@@ -156,15 +184,22 @@ export default function SourcingProductDetailPage() {
           <CardHeader>
             <div className="flex items-start justify-between">
               <div className="flex-1">
-                <CardTitle className="text-2xl text-black">{product.name}</CardTitle>
+                <CardTitle className="text-2xl text-black">
+                  {product.name}
+                </CardTitle>
                 <CardDescription className="mt-2 text-base">
                   <span className="font-medium">SKU:</span> {product.sku} •
-                  <span className="ml-2">Créé le {formatDate(product.created_at)}</span>
+                  <span className="ml-2">
+                    Créé le {formatDate(product.created_at)}
+                  </span>
                 </CardDescription>
               </div>
               <div className="flex flex-col items-end space-y-2">
                 {product.sourcing_type === 'client' && (
-                  <Badge variant="outline" className="border-blue-300 text-blue-600">
+                  <Badge
+                    variant="outline"
+                    className="border-blue-300 text-blue-600"
+                  >
                     <User className="h-3 w-3 mr-1" />
                     Sourcing Client
                   </Badge>
@@ -176,7 +211,10 @@ export default function SourcingProductDetailPage() {
                   </Badge>
                 )}
                 {product.requires_sample && (
-                  <Badge variant="outline" className="border-gray-300 text-black">
+                  <Badge
+                    variant="outline"
+                    className="border-gray-300 text-black"
+                  >
                     <AlertCircle className="h-3 w-3 mr-1" />
                     Échantillon requis
                   </Badge>
@@ -191,20 +229,32 @@ export default function SourcingProductDetailPage() {
                 <div className="p-4 bg-gray-50 rounded-lg border border-gray-200">
                   <div className="flex items-center mb-2">
                     <Euro className="h-5 w-5 text-green-600 mr-2" />
-                    <h4 className="font-medium text-black">Prix d'achat fournisseur</h4>
+                    <h4 className="font-medium text-black">
+                      Prix d'achat fournisseur
+                    </h4>
                   </div>
-                  <p className="text-2xl font-bold text-green-600">{formatPrice(product.cost_price)}</p>
+                  <p className="text-2xl font-bold text-green-600">
+                    {formatPrice(product.cost_price)}
+                  </p>
                 </div>
 
                 {product.margin_percentage && (
                   <div className="p-4 bg-gray-50 rounded-lg border border-gray-200">
                     <div className="flex items-center mb-2">
                       <Euro className="h-5 w-5 text-blue-600 mr-2" />
-                      <h4 className="font-medium text-black">Marge configurée</h4>
+                      <h4 className="font-medium text-black">
+                        Marge configurée
+                      </h4>
                     </div>
-                    <p className="text-2xl font-bold text-blue-600">{product.margin_percentage}%</p>
+                    <p className="text-2xl font-bold text-blue-600">
+                      {product.margin_percentage}%
+                    </p>
                     <p className="text-sm text-gray-600 mt-1">
-                      Prix de vente calculé: {formatPrice(product.cost_price * (1 + product.margin_percentage / 100))}
+                      Prix de vente calculé:{' '}
+                      {formatPrice(
+                        product.cost_price *
+                          (1 + product.margin_percentage / 100)
+                      )}
                     </p>
                   </div>
                 )}
@@ -218,7 +268,9 @@ export default function SourcingProductDetailPage() {
                   <Building className="h-5 w-5 text-blue-600 mr-2" />
                   <h4 className="font-medium text-black">Fournisseur</h4>
                 </div>
-                <p className="text-lg font-semibold text-blue-900 mb-3">{product.supplier.name}</p>
+                <p className="text-lg font-semibold text-blue-900 mb-3">
+                  {product.supplier.name}
+                </p>
 
                 <div className="flex flex-col space-y-2">
                   {/* Lien vers page détails fournisseur (navigation interne) */}
@@ -268,7 +320,9 @@ export default function SourcingProductDetailPage() {
                 </div>
                 <p className="text-lg font-semibold text-purple-900">
                   {product.assigned_client.name}
-                  {product.assigned_client.type === 'client' ? ' (Client)' : ` (${product.assigned_client.type})`}
+                  {product.assigned_client.type === 'client'
+                    ? ' (Client)'
+                    : ` (${product.assigned_client.type})`}
                 </p>
               </div>
             )}
@@ -277,7 +331,9 @@ export default function SourcingProductDetailPage() {
             <div className="flex items-center text-sm text-gray-600 space-x-4 pt-4 border-t border-gray-200">
               <div className="flex items-center">
                 <Clock className="h-4 w-4 mr-2" />
-                <span>Dernière modification: {formatDate(product.updated_at)}</span>
+                <span>
+                  Dernière modification: {formatDate(product.updated_at)}
+                </span>
               </div>
             </div>
           </CardContent>
@@ -291,7 +347,8 @@ export default function SourcingProductDetailPage() {
               Actions de validation
             </CardTitle>
             <CardDescription>
-              Choisissez la prochaine étape selon le workflow de validation sourcing
+              Choisissez la prochaine étape selon le workflow de validation
+              sourcing
             </CardDescription>
           </CardHeader>
           <CardContent>
@@ -302,10 +359,13 @@ export default function SourcingProductDetailPage() {
                   <div>
                     <div className="flex items-center mb-3">
                       <Package className="h-6 w-6 text-black mr-2" />
-                      <h4 className="font-semibold text-black">Demander un échantillon</h4>
+                      <h4 className="font-semibold text-black">
+                        Demander un échantillon
+                      </h4>
                     </div>
                     <p className="text-sm text-gray-600 mb-4">
-                      Marquer ce produit comme nécessitant un échantillon et créer une demande de commande.
+                      Marquer ce produit comme nécessitant un échantillon et
+                      créer une demande de commande.
                     </p>
                   </div>
                   <ButtonV2
@@ -314,7 +374,9 @@ export default function SourcingProductDetailPage() {
                     className="w-full bg-gray-800 hover:bg-gray-900 text-white disabled:bg-gray-300 disabled:cursor-not-allowed disabled:text-gray-500"
                   >
                     <Package className="h-4 w-4 mr-2" />
-                    {product.supplier_id ? 'Commander échantillon' : 'Fournisseur requis'}
+                    {product.supplier_id
+                      ? 'Commander échantillon'
+                      : 'Fournisseur requis'}
                   </ButtonV2>
                 </CardContent>
               </Card>
@@ -325,10 +387,13 @@ export default function SourcingProductDetailPage() {
                   <div>
                     <div className="flex items-center mb-3">
                       <CheckCircle className="h-6 w-6 text-green-600 mr-2" />
-                      <h4 className="font-semibold text-black">Valider le sourcing</h4>
+                      <h4 className="font-semibold text-black">
+                        Valider le sourcing
+                      </h4>
                     </div>
                     <p className="text-sm text-gray-600 mb-4">
-                      Valider ce produit sourcing et l'ajouter au catalogue principal.
+                      Valider ce produit sourcing et l'ajouter au catalogue
+                      principal.
                     </p>
                   </div>
                   <ButtonV2
@@ -337,7 +402,9 @@ export default function SourcingProductDetailPage() {
                     className="w-full bg-green-600 hover:bg-green-700 text-white disabled:bg-gray-300 disabled:cursor-not-allowed"
                   >
                     <CheckCircle className="h-4 w-4 mr-2" />
-                    {product.supplier_id ? 'Valider et ajouter au catalogue' : 'Fournisseur requis'}
+                    {product.supplier_id
+                      ? 'Valider et ajouter au catalogue'
+                      : 'Fournisseur requis'}
                   </ButtonV2>
                 </CardContent>
               </Card>
@@ -348,7 +415,9 @@ export default function SourcingProductDetailPage() {
               <Alert className="mt-4 border-red-200 bg-red-50">
                 <AlertCircle className="h-4 w-4 text-red-600" />
                 <AlertDescription className="text-red-800">
-                  <strong>Fournisseur obligatoire :</strong> Vous devez lier un fournisseur à ce produit avant de pouvoir le valider vers le catalogue.
+                  <strong>Fournisseur obligatoire :</strong> Vous devez lier un
+                  fournisseur à ce produit avant de pouvoir le valider vers le
+                  catalogue.
                 </AlertDescription>
               </Alert>
             )}
@@ -358,9 +427,11 @@ export default function SourcingProductDetailPage() {
               <div className="mt-4 p-4 bg-gray-50 rounded-lg border border-gray-300">
                 <SupplierSelector
                   selectedSupplierId={null}
-                  onSupplierChange={async (supplierId) => {
+                  onSupplierChange={async supplierId => {
                     if (supplierId) {
-                      await updateSourcingProduct(productId, { supplier_id: supplierId })
+                      await updateSourcingProduct(productId, {
+                        supplier_id: supplierId,
+                      });
                     }
                   }}
                   label="Sélectionner un fournisseur pour activer la validation"
@@ -376,8 +447,10 @@ export default function SourcingProductDetailPage() {
         <Alert className="border-blue-200 bg-blue-50">
           <AlertCircle className="h-4 w-4 text-blue-600" />
           <AlertDescription className="text-blue-800">
-            <strong>Workflow sourcing :</strong> Les produits en sourcing doivent être validés avant d'apparaître dans le catalogue.
-            Si un échantillon est requis, utilisez d'abord l'action "Demander un échantillon" avant la validation finale.
+            <strong>Workflow sourcing :</strong> Les produits en sourcing
+            doivent être validés avant d'apparaître dans le catalogue. Si un
+            échantillon est requis, utilisez d'abord l'action "Demander un
+            échantillon" avant la validation finale.
           </AlertDescription>
         </Alert>
       </div>
@@ -392,5 +465,5 @@ export default function SourcingProductDetailPage() {
         />
       )}
     </div>
-  )
+  );
 }

@@ -1,9 +1,11 @@
 'use client';
 
 import { useState, useRef, useEffect } from 'react';
+
 import { Settings, ChevronDown } from 'lucide-react';
+
 import { Badge } from '@/components/ui/badge';
-import { cn } from '@/lib/utils';
+import { cn } from '@verone/utils';
 import {
   useProductStatus,
   PRODUCT_STATUS_OPTIONS,

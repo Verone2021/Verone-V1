@@ -1,17 +1,22 @@
-import Link from 'next/link'
-import { ArrowLeft, Package, RotateCcw, Trash2 } from 'lucide-react'
-import { Badge } from '@/components/ui/badge'
-import { ButtonV2 } from '@/components/ui/button'
+import Link from 'next/link';
+
+import { ArrowLeft, Package, RotateCcw, Trash2 } from 'lucide-react';
+
+import { Badge } from '@/components/ui/badge';
+import { ButtonV2 } from '@/components/ui/button';
 
 export default function ArchivedProductsPage() {
   // Données mockées pour l'interface
-  const archivedProducts: any[] = []
+  const archivedProducts: any[] = [];
 
   const statusConfig = {
-    archived: { label: "📦 Archivé", className: "bg-gray-600 text-white" },
-    discontinued: { label: "⛔ Arrêté", className: "bg-red-600 text-white" },
-    end_of_life: { label: "🔚 Fin de série", className: "bg-gray-100 text-white" }
-  }
+    archived: { label: '📦 Archivé', className: 'bg-gray-600 text-white' },
+    discontinued: { label: '⛔ Arrêté', className: 'bg-red-600 text-white' },
+    end_of_life: {
+      label: '🔚 Fin de série',
+      className: 'bg-gray-100 text-white',
+    },
+  };
 
   return (
     <div className="container mx-auto p-6 space-y-6">
@@ -78,15 +83,25 @@ export default function ArchivedProductsPage() {
       ) : (
         <div className="grid gap-4">
           {archivedProducts.map((product: any) => (
-            <div key={product.id} className="bg-white border border-gray-200 p-6 hover:shadow-sm transition-shadow">
+            <div
+              key={product.id}
+              className="bg-white border border-gray-200 p-6 hover:shadow-sm transition-shadow"
+            >
               <div className="flex items-start justify-between">
                 <div className="flex-1">
                   <div className="flex items-center gap-3 mb-2">
                     <h3 className="text-lg font-semibold text-black">
                       {product.name}
                     </h3>
-                    <Badge className={statusConfig[product.status as keyof typeof statusConfig]?.className || "bg-gray-600 text-white"}>
-                      {statusConfig[product.status as keyof typeof statusConfig]?.label || "📦 Archivé"}
+                    <Badge
+                      className={
+                        statusConfig[
+                          product.status as keyof typeof statusConfig
+                        ]?.className || 'bg-gray-600 text-white'
+                      }
+                    >
+                      {statusConfig[product.status as keyof typeof statusConfig]
+                        ?.label || '📦 Archivé'}
                     </Badge>
                   </div>
 
@@ -100,7 +115,9 @@ export default function ArchivedProductsPage() {
                     </div>
                     <div>
                       <span className="font-medium">Archivé le:</span>{' '}
-                      {new Date(product.archived_at).toLocaleDateString('fr-FR')}
+                      {new Date(product.archived_at).toLocaleDateString(
+                        'fr-FR'
+                      )}
                     </div>
                     <div>
                       <span className="font-medium">Raison:</span>{' '}
@@ -110,11 +127,7 @@ export default function ArchivedProductsPage() {
                 </div>
 
                 <div className="flex gap-2 ml-4">
-                  <ButtonV2
-                    variant="outline"
-                    size="sm"
-                    className="text-xs"
-                  >
+                  <ButtonV2 variant="outline" size="sm" className="text-xs">
                     <RotateCcw className="h-4 w-4 mr-1" />
                     Restaurer
                   </ButtonV2>
@@ -136,13 +149,24 @@ export default function ArchivedProductsPage() {
 
       {/* Note explicative */}
       <div className="bg-blue-50 border border-blue-200 p-4">
-        <h4 className="font-medium text-blue-900 mb-2">À propos des produits archivés</h4>
+        <h4 className="font-medium text-blue-900 mb-2">
+          À propos des produits archivés
+        </h4>
         <div className="text-sm text-blue-700 space-y-1">
-          <p><strong>📦 Archivé :</strong> Produits temporairement retirés du catalogue actif</p>
-          <p><strong>⛔ Arrêté :</strong> Produits définitivement arrêtés par le fabricant</p>
-          <p><strong>🔚 Fin de série :</strong> Produits en fin de vie commerciale</p>
+          <p>
+            <strong>📦 Archivé :</strong> Produits temporairement retirés du
+            catalogue actif
+          </p>
+          <p>
+            <strong>⛔ Arrêté :</strong> Produits définitivement arrêtés par le
+            fabricant
+          </p>
+          <p>
+            <strong>🔚 Fin de série :</strong> Produits en fin de vie
+            commerciale
+          </p>
         </div>
       </div>
     </div>
-  )
+  );
 }

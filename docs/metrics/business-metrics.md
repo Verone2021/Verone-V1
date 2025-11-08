@@ -19,6 +19,7 @@
 Documentation des métriques business clés du système Vérone : taux de conversion, panier moyen, croissance MoM/YoY, retention clients, performance catalogue.
 
 **À documenter** :
+
 - Taux conversion (Devis → Commande validée)
 - Panier moyen (Average Order Value)
 - Croissance revenue Month-over-Month / Year-over-Year

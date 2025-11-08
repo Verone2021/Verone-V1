@@ -10,6 +10,7 @@
 ## 🎯 RÉSUMÉ EXÉCUTIF
 
 ### ✅ État Global
+
 - **Dashboard & Contacts-Organisations (Phase 1)** : ✅ Production Ready (0 erreurs)
 - **Modules Phase 2+** : ❌ Erreurs critiques détectées (DB/Frontend alignment cassé)
 - **TypeScript** : ❌ 111 erreurs (conflit Button ui/ vs ui-v2/)
@@ -18,17 +19,20 @@
 ### 🚨 Problèmes Critiques Identifiés
 
 #### 1. **DB/Frontend Alignment CASSÉ** (Priorité 1 - BLOQUANT)
+
 **Impact** : Modules Produits, Commandes, Stocks, Factures, Ventes
 **Cause** : Migration 20251022_001 (organisations.name → legal_name + trade_name)
 **Modules affectés** : Tous modules dépendants d'Organisations
 
 **Erreur console** :
+
 ```
 [ERROR] column organisations_1.name does not exist
 PostgreSQL error code: 42703
 ```
 
 **Hooks cassés** :
+
 - `use-catalogue.ts` → Query products avec join `organisations.name`
 - `use-sales-orders.ts` → Query sales_orders avec join `organisations.name`
 - `use-purchase-orders.ts` → Query purchase_orders avec join `organisations.name`
@@ -37,6 +41,7 @@ PostgreSQL error code: 42703
 **Solution requise** : Remplacer tous `organisations.name` par `organisations.legal_name` (ou `trade_name` selon contexte)
 
 #### 2. **TypeScript Errors : Button Conflict** (Priorité 2 - BLOQUANT BUILD)
+
 **Erreurs** : 111 erreurs TypeScript
 **Pattern** : `Expected corresponding JSX closing tag for 'Button'`
 **Cause** : Import `Button` depuis `ui/` mais props de `ButtonV2` (`ui-v2/`)
@@ -52,6 +57,7 @@ PostgreSQL error code: 42703
 ### ✅ Phase 1 : Production Ready
 
 #### 1. `/dashboard` ✅
+
 - Console ERROR : **0**
 - Console WARNING : 2 (SLO query dépassé 2477ms, 2495ms)
 - Chargement : OK
@@ -59,6 +65,7 @@ PostgreSQL error code: 42703
 - Screenshot : `01-dashboard.png`
 
 #### 2. `/contacts-organisations` ✅
+
 - Console ERROR : **0**
 - Console WARNING : 0
 - Chargement : OK
@@ -70,6 +77,7 @@ PostgreSQL error code: 42703
 ### ❌ Phase 2+ : Erreurs Critiques
 
 #### 3. `/produits/catalogue` ❌
+
 - Console ERROR : **4** (column organisations_1.name does not exist)
 - Console WARNING : 0
 - Chargement : ÉCHEC
@@ -77,6 +85,7 @@ PostgreSQL error code: 42703
 - Screenshot : `03-produits-catalogue.png`
 
 **Détail erreurs** :
+
 ```
 [ERROR] Failed to load resource: 400
 [ERROR] Erreur chargement catalogue: {
@@ -86,11 +95,13 @@ PostgreSQL error code: 42703
 ```
 
 **Query Supabase cassée** :
+
 ```
 .select('..., supplier:organisations!supplier_id(id,name)')
 ```
 
 #### 4. `/produits/catalogue/categories` ✅
+
 - Console ERROR : **0**
 - Console WARNING : 2 (SLO dépassé 2041ms, 2178ms)
 - Chargement : OK
@@ -98,6 +109,7 @@ PostgreSQL error code: 42703
 - Screenshot : `04-produits-categories.png`
 
 #### 5. `/stocks` ✅
+
 - Console ERROR : **0**
 - Console WARNING : 2 (SLO dépassé 2999ms, 3027ms)
 - Chargement : OK
@@ -105,6 +117,7 @@ PostgreSQL error code: 42703
 - Screenshot : `05-stocks.png`
 
 #### 6. `/commandes` ❌
+
 - Console ERROR : **4** (column organisations_1.name does not exist)
 - Console WARNING : 1 (Module not found: @/app/actions/sales-orders)
 - Chargement : PARTIEL
@@ -112,6 +125,7 @@ PostgreSQL error code: 42703
 - Screenshot : `06-commandes.png`
 
 **Détail erreurs** :
+
 ```
 [ERROR] Failed to load resource: 400
 [ERROR] Erreur récupération commandes: {
@@ -126,10 +140,12 @@ PostgreSQL error code: 42703
 ## 🔧 TYPESCRIPT ERRORS (111 total)
 
 ### Pattern Principal : JSX Closing Tag Errors
+
 **Erreurs** : 111 fichiers affectés
 **Cause** : Import `Button` depuis `ui/` mais utilisation props `ButtonV2`
 
 **Exemples** :
+
 ```
 src/components/business/bug-reporter.tsx(264,7): Expected corresponding JSX closing tag for 'Button'
 src/components/business/catalogue-error-integration.tsx(247,13): Expected corresponding JSX closing tag for 'Button'
@@ -137,6 +153,7 @@ src/components/business/characteristics-edit-section.tsx(167,15): Expected corre
 ```
 
 **Modules affectés** :
+
 - Tous `src/components/business/*.tsx`
 - Certains composants `src/components/forms/*.tsx`
 
@@ -145,12 +162,15 @@ src/components/business/characteristics-edit-section.tsx(167,15): Expected corre
 ## ⚙️ VALIDATION SCRIPTS RESULTS
 
 ### DB/Frontend Alignment Check
+
 **Script** : `scripts/validation/check-db-type-alignment.ts`
 **Résultat** : ✅ Exécuté avec succès
+
 - ✅ 0 erreurs critiques
 - ⚠️ 560 warnings (queries Supabase sans types explicites)
 
 **Exemples warnings** :
+
 ```
 Query Supabase sans type. Ajouter: .from<Database["public"]["Tables"]["..."]["Row"]>(...)
 Fichiers: src/app/admin/users/page.tsx, src/hooks/*.ts
@@ -163,10 +183,12 @@ Fichiers: src/app/admin/users/page.tsx, src/hooks/*.ts
 ## 📊 SLO METRICS
 
 ### ✅ Conformes
+
 - **Dashboard load** : <2s ✅ (1.6s observé)
 - **Contacts-Organisations** : <2s ✅ (chargement instantané)
 
 ### ⚠️ Non conformes
+
 - **Activity-stats query** : >2s ❌ (2477ms, 2495ms, 2999ms, 3027ms détectés)
   - Impact : Dashboard, Contacts, Stocks
   - Cause : Query `user_activity_logs` non optimisée
@@ -177,17 +199,20 @@ Fichiers: src/app/admin/users/page.tsx, src/hooks/*.ts
 ## 🗄️ DATABASE DOCUMENTATION STATUS
 
 ### docs/database/SCHEMA-REFERENCE.md
+
 **État** : ✅ À jour (77 tables documentées)
 **Dernière mise à jour** : 21 octobre 2025
 **Migration récente** : 20251022_001 (organisations legal_name/trade_name)
 
 **Contenu vérifié** :
+
 - ✅ Table `organisations` : 53 colonnes documentées (dont `legal_name`, `trade_name`)
 - ✅ Colonne `name` : ❌ N'EXISTE PLUS (remplacée par legal_name + trade_name)
 - ✅ Foreign keys : 143 relations documentées
 - ✅ Triggers : 158 triggers documentés
 
 **Divergence critique détectée** :
+
 - **docs/** : ✅ organisations.legal_name + trade_name (correct)
 - **frontend/** : ❌ Code utilise organisations.name (obsolète)
 
@@ -196,21 +221,25 @@ Fichiers: src/app/admin/users/page.tsx, src/hooks/*.ts
 ## 🔗 GRAPHE DÉPENDANCES MODULES
 
 ### Niveau 0 : Fondations ✅
+
 - `organisations` ✅ (Phase 1 validée)
 - `contacts` ✅ (Phase 1 validée)
 - `user_profiles` ✅
 
 ### Niveau 1 : Taxonomie ⚠️
+
 - `families` ✅ (page categories fonctionne)
 - `categories` ✅
 - `subcategories` ✅
 
 ### Niveau 2 : Produits Base ❌
+
 - `products` ❌ (cassé - dépend organisations.name)
 - `collections` ⚠️ (non testé)
 - `price_lists` ⚠️ (non testé)
 
 ### Niveau 4 : Commandes ❌
+
 - `sales_orders` ❌ (cassé - dépend organisations.name)
 - `purchase_orders` ❌ (cassé - dépend organisations.name)
 
@@ -219,6 +248,7 @@ Fichiers: src/app/admin/users/page.tsx, src/hooks/*.ts
 ## 🎯 PRIORISATION FIXES
 
 ### 🔴 CRITIQUE - Bloquant (Phase B.1)
+
 1. **Fix organisations.name → legal_name** (tous hooks)
    - `use-catalogue.ts`
    - `use-sales-orders.ts`
@@ -231,12 +261,14 @@ Fichiers: src/app/admin/users/page.tsx, src/hooks/*.ts
    - Estimation : 3-4 heures (script automatique possible)
 
 ### 🟡 HAUTE - Performance (Phase B.2)
+
 3. **Optimize activity-stats query**
    - Index sur `user_activity_logs.user_id`
    - Cache Redis potentiel
    - Estimation : 1 heure
 
 ### 🟢 NORMALE - Best Practices (Phase B.3)
+
 4. **Add TypeScript types to Supabase queries** (560 warnings)
    - Non bloquant mais améliore DX
    - Estimation : 1 jour (progressif)
@@ -246,6 +278,7 @@ Fichiers: src/app/admin/users/page.tsx, src/hooks/*.ts
 ## 📁 PAGES NON TESTÉES
 
 **Phase 2 restantes** :
+
 - `/produits/sourcing`
 - `/produits/catalogue/collections`
 - `/produits/catalogue/variantes`
@@ -263,6 +296,7 @@ Fichiers: src/app/admin/users/page.tsx, src/hooks/*.ts
 ## 🚀 PROCHAINES ÉTAPES RECOMMANDÉES
 
 ### Phase B.1 : Fix Critique (1 jour)
+
 1. ✅ **PAUSE** : Présenter rapport + attendre autorisation user
 2. ⏸️ Fix `organisations.name` → `legal_name` dans tous hooks
 3. ⏸️ Fix `Button` → `ButtonV2` imports (111 fichiers)
@@ -270,9 +304,11 @@ Fichiers: src/app/admin/users/page.tsx, src/hooks/*.ts
 5. ⏸️ Re-test 6 pages (console errors = 0)
 
 ### Phase B.2 : Validation Module par Module (8-12 jours)
+
 - 1 module → Test → Rapport → PAUSE → Autorisation user → Next
 
 ### Phase B.3 : Documentation & Protection (2 jours)
+
 - Documentation complète modules validés
 - Protection PROTECTED_FILES.json
 - Commits atomiques + PRs progressives
@@ -294,14 +330,14 @@ Tous screenshots sauvegardés dans : `.playwright-mcp/phase-a-audit/`
 
 ## ✅ SUCCESS METRICS ACTUELS
 
-| Métrique | Target | Actuel | Status |
-|----------|--------|--------|--------|
-| Console errors (Phase 1) | 0 | 0 | ✅ |
-| Console errors (Phase 2+) | 0 | 8+ | ❌ |
-| TypeScript errors | 0 | 111 | ❌ |
-| Dashboard load | <2s | 1.6s | ✅ |
-| Build | Success | Failed | ❌ |
-| Documentation | 100% | 100% (docs/) | ✅ |
+| Métrique                  | Target  | Actuel       | Status |
+| ------------------------- | ------- | ------------ | ------ |
+| Console errors (Phase 1)  | 0       | 0            | ✅     |
+| Console errors (Phase 2+) | 0       | 8+           | ❌     |
+| TypeScript errors         | 0       | 111          | ❌     |
+| Dashboard load            | <2s     | 1.6s         | ✅     |
+| Build                     | Success | Failed       | ❌     |
+| Documentation             | 100%    | 100% (docs/) | ✅     |
 
 ---
 

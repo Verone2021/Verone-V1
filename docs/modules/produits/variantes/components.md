@@ -22,9 +22,9 @@ Section complète gestion variantes sur page produit.
 
 ```typescript
 interface ProductVariantsSectionProps {
-  productId: string
-  variantGroupId?: string
-  onUpdate?: () => void
+  productId: string;
+  variantGroupId?: string;
+  onUpdate?: () => void;
 }
 ```
 
@@ -58,10 +58,10 @@ Grille affichage variantes avec filtres par attribut.
 
 ```typescript
 interface ProductVariantsGridProps {
-  variants: Product[]
-  onSelect?: (variant: Product) => void
-  filters?: VariantFilters
-  groupBy?: string  // Attribut pour grouper (color, size, etc.)
+  variants: Product[];
+  onSelect?: (variant: Product) => void;
+  filters?: VariantFilters;
+  groupBy?: string; // Attribut pour grouper (color, size, etc.)
 }
 ```
 
@@ -87,9 +87,9 @@ import { ProductVariantsGrid } from '@/components/business/product-variants-grid
 
 ```typescript
 interface VariantAttributesEditorProps {
-  attributes: Record<string, any>
-  schema: Record<string, string[]>
-  onChange: (attributes: Record<string, any>) => void
+  attributes: Record<string, any>;
+  schema: Record<string, string[]>;
+  onChange: (attributes: Record<string, any>) => void;
 }
 ```
 

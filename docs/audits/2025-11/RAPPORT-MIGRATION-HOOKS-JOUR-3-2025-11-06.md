@@ -9,9 +9,11 @@
 ## 📊 RÉSUMÉ EXÉCUTIF
 
 ### Objectif
+
 Migration complète de tous les hooks React de `src/hooks/` vers `src/shared/modules/{module}/hooks/` pour préparer l'architecture monorepo modulaire.
 
 ### Résultat
+
 - ✅ **87 hooks migrés** vers 15 modules
 - ✅ **15 barrel exports** créés (index.ts)
 - ✅ **6 batches** exécutés avec succès
@@ -23,10 +25,12 @@ Migration complète de tous les hooks React de `src/hooks/` vers `src/shared/mod
 ## 🗂️ DÉTAIL DES BATCHES
 
 ### BATCH 1 - Stock (13 hooks)
+
 **Commit** : `6599d9a`
 **Module** : `src/shared/modules/stock/hooks/`
 
 Hooks migrés :
+
 - use-stock.ts
 - use-stock-alerts.ts
 - use-stock-alerts-count.ts
@@ -44,10 +48,12 @@ Hooks migrés :
 ---
 
 ### BATCH 2 - Products (13 hooks)
+
 **Commit** : `20ce5bf`
 **Module** : `src/shared/modules/products/hooks/`
 
 Hooks migrés :
+
 - use-products.ts
 - use-product-colors.ts
 - use-product-images.ts
@@ -65,10 +71,12 @@ Hooks migrés :
 ---
 
 ### BATCH 3 - Orders (12 hooks)
+
 **Commit** : `668c703`
 **Module** : `src/shared/modules/orders/hooks/`
 
 Hooks migrés :
+
 - use-draft-purchase-order.ts
 - use-order-items.ts
 - use-orders-status.ts
@@ -87,12 +95,15 @@ Hooks migrés :
 ---
 
 ### BATCH 4 - Finance + Dashboard (14 hooks)
+
 **Commit** : `83e0746`
 **Modules** :
+
 - `src/shared/modules/finance/hooks/` (8 hooks)
 - `src/shared/modules/dashboard/hooks/` (6 hooks)
 
 **Finance hooks** :
+
 - use-abc-analysis.ts
 - use-aging-report.ts
 - use-bank-reconciliation.ts
@@ -103,6 +114,7 @@ Hooks migrés :
 - use-treasury-stats.ts
 
 **Dashboard hooks** :
+
 - use-complete-dashboard-metrics.ts
 - use-real-dashboard-metrics.ts
 - use-dashboard-analytics.ts
@@ -114,40 +126,48 @@ Hooks migrés :
 ---
 
 ### BATCH 5 - Modules Secondaires (20 hooks)
+
 **Commit** : `c7c7aa5`
 **Modules** : 7 modules créés
 
 **Customers (2 hooks)** → `src/shared/modules/customers/hooks/` :
+
 - use-customer-samples.ts
 - use-customers.ts
 
 **Organisations (4 hooks)** → `src/shared/modules/organisations/hooks/` :
+
 - use-contacts.ts
 - use-organisation-tab-counts.ts
 - use-organisations.ts
 - use-suppliers.ts
 
 **Categories (4 hooks)** → `src/shared/modules/categories/hooks/` :
+
 - use-categories.ts
 - use-subcategories.ts
 - use-families.ts
 - use-catalogue.ts
 
 **Collections (3 hooks)** → `src/shared/modules/collections/hooks/` :
+
 - use-collection-images.ts
 - use-collection-products.ts
 - use-collections.ts
 
 **Consultations (2 hooks)** → `src/shared/modules/consultations/hooks/` :
+
 - use-consultation-images.ts
 - use-consultations.ts
 
 **Channels (3 hooks)** → `src/shared/modules/channels/hooks/` :
+
 - use-google-merchant-config.ts
 - use-google-merchant-products.ts
 - use-google-merchant-sync.ts
 
 **Notifications (2 hooks)** → `src/shared/modules/notifications/hooks/` :
+
 - use-notifications.ts
 - use-user-activity-tracker.ts
 
@@ -156,10 +176,12 @@ Hooks migrés :
 ---
 
 ### BATCH 6 - Common + Admin + Testing (15 hooks)
+
 **Commit** : `1ca75f6`
 **Modules** : 3 modules créés
 
 **Common/UI (10 hooks)** → `src/shared/modules/common/hooks/` :
+
 - use-base-hook.ts
 - use-image-upload.ts
 - use-inline-edit.ts
@@ -172,10 +194,12 @@ Hooks migrés :
 - use-toggle-favorite.ts
 
 **Admin (2 hooks)** → `src/shared/modules/admin/hooks/` :
+
 - use-automation-triggers.ts
 - use-mcp-resolution.ts
 
 **Testing (3 hooks)** → `src/shared/modules/testing/hooks/` :
+
 - use-critical-testing.ts
 - use-error-reporting.ts
 - use-test-persistence.ts
@@ -290,6 +314,7 @@ import { useStock } from '@/shared/modules/stock/hooks';
 ```
 
 **Stratégie** :
+
 1. Script batch automatique pour corrections en masse
 2. Validation par module
 3. Tests : `npm run type-check` + `npm run build`
@@ -317,24 +342,24 @@ import { useStock } from '@/shared/modules/stock/hooks';
 
 ### Répartition par Module
 
-| Module | Hooks | % du total |
-|--------|-------|------------|
-| Stock | 13 | 15% |
-| Products | 13 | 15% |
-| Orders | 12 | 14% |
-| Common | 10 | 11% |
-| Finance | 8 | 9% |
-| Dashboard | 5 | 6% |
-| Organisations | 4 | 5% |
-| Categories | 4 | 5% |
-| Collections | 3 | 3% |
-| Channels | 3 | 3% |
-| Testing | 3 | 3% |
-| Customers | 2 | 2% |
-| Consultations | 2 | 2% |
-| Notifications | 2 | 2% |
-| Admin | 2 | 2% |
-| **TOTAL** | **87** | **100%** |
+| Module        | Hooks  | % du total |
+| ------------- | ------ | ---------- |
+| Stock         | 13     | 15%        |
+| Products      | 13     | 15%        |
+| Orders        | 12     | 14%        |
+| Common        | 10     | 11%        |
+| Finance       | 8      | 9%         |
+| Dashboard     | 5      | 6%         |
+| Organisations | 4      | 5%         |
+| Categories    | 4      | 5%         |
+| Collections   | 3      | 3%         |
+| Channels      | 3      | 3%         |
+| Testing       | 3      | 3%         |
+| Customers     | 2      | 2%         |
+| Consultations | 2      | 2%         |
+| Notifications | 2      | 2%         |
+| Admin         | 2      | 2%         |
+| **TOTAL**     | **87** | **100%**   |
 
 ---
 
@@ -357,6 +382,7 @@ import { useStock } from '@/shared/modules/stock/hooks';
 Migration complète de 87 hooks vers 15 modules en 6 batches sans aucune erreur.
 
 L'architecture modulaire est maintenant en place, prête pour :
+
 - JOUR 4 : Mise à jour des imports
 - JOUR 5 : Validation finale et tag release
 

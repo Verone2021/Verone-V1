@@ -43,12 +43,15 @@ Cette section regroupe les guides de dépannage pour résoudre les problèmes co
 ### Par Type Erreur
 
 #### Erreurs RLS
+
 - [Common Errors - RLS](./common-errors.md#rls-errors)
 
 #### Erreurs Console
+
 - [Console Debugging](./console-debugging.md)
 
 #### Erreurs Performance
+
 - [Common Errors - Performance](./common-errors.md#performance-errors)
 
 ---

@@ -4,10 +4,12 @@
  * Configuration server pour middleware et server components
  */
 
+import { cookies } from 'next/headers';
+
 import { createServerClient as createSupabaseServerClient } from '@supabase/ssr';
 import { createClient as createSupabaseClient } from '@supabase/supabase-js';
-import { cookies } from 'next/headers';
-import { Database } from './types';
+
+import type { Database } from './types';
 
 export const createServerClient = async () => {
   const cookieStore = await cookies();

@@ -1,10 +1,12 @@
 'use client';
 
 import React from 'react';
+
 import { Settings, Save, X } from 'lucide-react';
-import { ButtonV2 } from '@/components/ui/button';
+
 import { Badge } from '@/components/ui/badge';
-import { cn } from '@/lib/utils';
+import { ButtonV2 } from '@/components/ui/button';
+import { cn } from '@verone/utils';
 import {
   useProductStatus,
   PRODUCT_STATUS_OPTIONS,

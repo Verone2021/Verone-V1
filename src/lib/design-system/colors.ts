@@ -14,7 +14,7 @@
  */
 
 // Re-export tokens modernes
-export * from './tokens/colors'
+export * from './tokens/colors';
 
 // Export thème V2 pour accès rapide
-export { themeV2 } from '../theme-v2'
+export { themeV2 } from '../theme-v2';

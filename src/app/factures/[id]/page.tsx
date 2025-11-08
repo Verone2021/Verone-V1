@@ -5,13 +5,28 @@
 // =====================================================================
 
 import { Suspense } from 'react';
-import { notFound } from 'next/navigation';
+
 import Link from 'next/link';
-import { createClient } from '@/lib/supabase/server';
-import { PaymentForm } from '@/components/business/payment-form';
-import { ButtonV2 } from '@/components/ui/button';
+import { notFound } from 'next/navigation';
+
+import {
+  ArrowLeft,
+  Calendar,
+  DollarSign,
+  FileText,
+  Loader2,
+} from 'lucide-react';
+
 import { Badge } from '@/components/ui/badge';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { ButtonV2 } from '@/components/ui/button';
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from '@/components/ui/card';
+import { Separator } from '@/components/ui/separator';
 import {
   Table,
   TableBody,
@@ -20,8 +35,8 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table';
-import { Separator } from '@/components/ui/separator';
-import { ArrowLeft, Calendar, DollarSign, FileText, Loader2 } from 'lucide-react';
+import { createClient } from '@/lib/supabase/server';
+import { PaymentForm } from '@/shared/modules/finance/components/forms/PaymentForm';
 
 // =====================================================================
 // TYPES
@@ -57,7 +72,11 @@ interface Payment {
 // METADATA
 // =====================================================================
 
-export async function generateMetadata({ params }: { params: Promise<{ id: string }> }) {
+export async function generateMetadata({
+  params,
+}: {
+  params: Promise<{ id: string }>;
+}) {
   const { id } = await params;
   return {
     title: `Facture ${id} | Vérone Back Office`,
@@ -69,17 +88,22 @@ export async function generateMetadata({ params }: { params: Promise<{ id: strin
 // PAGE COMPONENT
 // =====================================================================
 
-export default async function InvoiceDetailPage({ params }: { params: Promise<{ id: string }> }) {
+export default async function InvoiceDetailPage({
+  params,
+}: {
+  params: Promise<{ id: string }>;
+}) {
   // Await params pour Next.js 15
   const { id } = await params;
 
   // FEATURE FLAG: Finance module disabled for Phase 1
   const { featureFlags } = await import('@/lib/feature-flags');
-  
+
   if (!featureFlags.financeEnabled) {
-    const { Card, CardContent, CardDescription, CardHeader, CardTitle } = await import('@/components/ui/card');
+    const { Card, CardContent, CardDescription, CardHeader, CardTitle } =
+      await import('@/components/ui/card');
     const { AlertCircle, Lock } = await import('lucide-react');
-    
+
     return (
       <div className="container mx-auto py-8">
         <Card className="border-orange-200 bg-orange-50">
@@ -87,7 +111,9 @@ export default async function InvoiceDetailPage({ params }: { params: Promise<{ 
             <div className="flex items-center gap-3">
               <Lock className="h-6 w-6 text-orange-600" />
               <div>
-                <CardTitle className="text-orange-900">Module Finance - Phase 2</CardTitle>
+                <CardTitle className="text-orange-900">
+                  Module Finance - Phase 2
+                </CardTitle>
                 <CardDescription className="text-orange-700">
                   Ce module sera disponible après le déploiement Phase 1
                 </CardDescription>
@@ -99,7 +125,9 @@ export default async function InvoiceDetailPage({ params }: { params: Promise<{ 
               <div className="flex items-start gap-2">
                 <AlertCircle className="h-5 w-5 text-orange-600 mt-0.5 flex-shrink-0" />
                 <div>
-                  <p className="font-medium text-orange-900">Phase 1 (Actuelle)</p>
+                  <p className="font-medium text-orange-900">
+                    Phase 1 (Actuelle)
+                  </p>
                   <p className="text-sm text-orange-700">
                     Sourcing • Catalogue • Organisations • Stock • Commandes
                   </p>
@@ -108,9 +136,12 @@ export default async function InvoiceDetailPage({ params }: { params: Promise<{ 
               <div className="flex items-start gap-2">
                 <Lock className="h-5 w-5 text-orange-600 mt-0.5 flex-shrink-0" />
                 <div>
-                  <p className="font-medium text-orange-900">Phase 2 (Prochainement)</p>
+                  <p className="font-medium text-orange-900">
+                    Phase 2 (Prochainement)
+                  </p>
                   <p className="text-sm text-orange-700">
-                    Facturation • Trésorerie • Rapprochement bancaire • Intégrations (Qonto, Abby)
+                    Facturation • Trésorerie • Rapprochement bancaire •
+                    Intégrations (Qonto, Abby)
                   </p>
                 </div>
               </div>

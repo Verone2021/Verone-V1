@@ -1,31 +1,37 @@
-'use client'
+'use client';
 
-import { Card, CardContent } from '@/components/ui/card'
-import { Badge } from '@/components/ui/badge'
-import { Truck, MapPin, Package, FileText, CheckCircle2 } from 'lucide-react'
+import { Truck, MapPin, Package, FileText, CheckCircle2 } from 'lucide-react';
 
-export type ShippingMethod = 'packlink' | 'mondial_relay' | 'chronotruck' | 'manual'
-export type ShipmentType = 'parcel' | 'pallet'
+import { Badge } from '@/components/ui/badge';
+import { Card, CardContent } from '@/components/ui/card';
+
+export type ShippingMethod =
+  | 'packlink'
+  | 'mondial_relay'
+  | 'chronotruck'
+  | 'manual';
+export type ShipmentType = 'parcel' | 'pallet';
 
 interface CarrierOption {
-  method: ShippingMethod
-  name: string
-  description: string
-  icon: typeof Truck
-  supportedTypes: ShipmentType[]
-  integrationType: 'api' | 'manual'
-  recommended?: boolean
+  method: ShippingMethod;
+  name: string;
+  description: string;
+  icon: typeof Truck;
+  supportedTypes: ShipmentType[];
+  integrationType: 'api' | 'manual';
+  recommended?: boolean;
 }
 
 const CARRIER_OPTIONS: CarrierOption[] = [
   {
     method: 'packlink',
     name: 'Packlink PRO',
-    description: 'Agrégateur multi-transporteurs avec meilleur prix automatique',
+    description:
+      'Agrégateur multi-transporteurs avec meilleur prix automatique',
     icon: Truck,
     supportedTypes: ['parcel'],
     integrationType: 'api',
-    recommended: true
+    recommended: true,
   },
   {
     method: 'mondial_relay',
@@ -33,7 +39,7 @@ const CARRIER_OPTIONS: CarrierOption[] = [
     description: 'Livraison en points relais économique',
     icon: MapPin,
     supportedTypes: ['parcel'],
-    integrationType: 'manual' // ou 'api' selon configuration
+    integrationType: 'manual', // ou 'api' selon configuration
   },
   {
     method: 'chronotruck',
@@ -41,7 +47,7 @@ const CARRIER_OPTIONS: CarrierOption[] = [
     description: 'Transport de palettes professionnel',
     icon: Package,
     supportedTypes: ['pallet'],
-    integrationType: 'manual'
+    integrationType: 'manual',
   },
   {
     method: 'manual',
@@ -49,17 +55,21 @@ const CARRIER_OPTIONS: CarrierOption[] = [
     description: 'Saisie manuelle libre (tous types)',
     icon: FileText,
     supportedTypes: ['parcel', 'pallet'],
-    integrationType: 'manual'
-  }
-]
+    integrationType: 'manual',
+  },
+];
 
 interface CarrierSelectorProps {
-  selected: ShippingMethod | null
-  onSelect: (method: ShippingMethod) => void
-  disabled?: boolean
+  selected: ShippingMethod | null;
+  onSelect: (method: ShippingMethod) => void;
+  disabled?: boolean;
 }
 
-export function CarrierSelector({ selected, onSelect, disabled }: CarrierSelectorProps) {
+export function CarrierSelector({
+  selected,
+  onSelect,
+  disabled,
+}: CarrierSelectorProps) {
   return (
     <div className="space-y-3">
       <div className="flex items-center justify-between mb-4">
@@ -74,10 +84,10 @@ export function CarrierSelector({ selected, onSelect, disabled }: CarrierSelecto
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        {CARRIER_OPTIONS.map((carrier) => {
-          const Icon = carrier.icon
-          const isSelected = selected === carrier.method
-          const isApi = carrier.integrationType === 'api'
+        {CARRIER_OPTIONS.map(carrier => {
+          const Icon = carrier.icon;
+          const isSelected = selected === carrier.method;
+          const isApi = carrier.integrationType === 'api';
 
           return (
             <Card
@@ -90,7 +100,9 @@ export function CarrierSelector({ selected, onSelect, disabled }: CarrierSelecto
               <CardContent className="pt-6">
                 <div className="flex items-start justify-between mb-3">
                   <div className="flex items-center gap-3">
-                    <div className={`p-2 rounded-lg ${isSelected ? 'bg-black text-white' : 'bg-gray-100'}`}>
+                    <div
+                      className={`p-2 rounded-lg ${isSelected ? 'bg-black text-white' : 'bg-gray-100'}`}
+                    >
                       <Icon className="h-5 w-5" />
                     </div>
                     <div>
@@ -116,12 +128,16 @@ export function CarrierSelector({ selected, onSelect, disabled }: CarrierSelecto
                   )}
                 </div>
 
-                <p className="text-sm text-gray-600 mb-3">{carrier.description}</p>
+                <p className="text-sm text-gray-600 mb-3">
+                  {carrier.description}
+                </p>
 
                 <div className="flex items-center gap-2">
-                  <span className="text-xs text-gray-500">Types supportés:</span>
+                  <span className="text-xs text-gray-500">
+                    Types supportés:
+                  </span>
                   <div className="flex gap-1">
-                    {carrier.supportedTypes.map((type) => (
+                    {carrier.supportedTypes.map(type => (
                       <Badge key={type} variant="outline" className="text-xs">
                         {type === 'parcel' ? 'Colis' : 'Palettes'}
                       </Badge>
@@ -130,7 +146,7 @@ export function CarrierSelector({ selected, onSelect, disabled }: CarrierSelecto
                 </div>
               </CardContent>
             </Card>
-          )
+          );
         })}
       </div>
 
@@ -140,7 +156,8 @@ export function CarrierSelector({ selected, onSelect, disabled }: CarrierSelecto
             <CheckCircle2 className="h-5 w-5 text-blue-600 mt-0.5" />
             <div>
               <p className="font-medium text-blue-900">
-                {CARRIER_OPTIONS.find((c) => c.method === selected)?.name} sélectionné
+                {CARRIER_OPTIONS.find(c => c.method === selected)?.name}{' '}
+                sélectionné
               </p>
               <p className="text-sm text-blue-700 mt-1">
                 Remplissez le formulaire ci-dessous pour créer l'expédition
@@ -150,5 +167,5 @@ export function CarrierSelector({ selected, onSelect, disabled }: CarrierSelecto
         </div>
       )}
     </div>
-  )
+  );
 }

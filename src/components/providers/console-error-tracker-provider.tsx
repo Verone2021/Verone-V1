@@ -1,7 +1,8 @@
-'use client'
+'use client';
 
-import { useEffect } from 'react'
-import { consoleErrorTracker } from '@/lib/monitoring/console-error-tracker'
+import { useEffect } from 'react';
+
+import { consoleErrorTracker } from '@/lib/monitoring/console-error-tracker';
 
 /**
  * 🔍 Console Error Tracker Provider
@@ -12,12 +13,12 @@ import { consoleErrorTracker } from '@/lib/monitoring/console-error-tracker'
 export function ConsoleErrorTrackerProvider({
   children,
 }: {
-  children: React.ReactNode
+  children: React.ReactNode;
 }) {
   useEffect(() => {
     // Setup tracking au montage du composant
-    consoleErrorTracker.setup()
-  }, [])
+    consoleErrorTracker.setup();
+  }, []);
 
-  return <>{children}</>
+  return <>{children}</>;
 }

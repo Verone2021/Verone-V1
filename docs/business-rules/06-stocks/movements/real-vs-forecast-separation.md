@@ -20,11 +20,13 @@ Simplifier le frontend du module stock en séparant clairement **Stock Réel** (
 **Définition** : Mouvements de stock déjà effectués physiquement.
 
 **Critère Database** :
+
 ```sql
 affects_forecast = false OR affects_forecast IS NULL
 ```
 
 **Types de mouvements** :
+
 - ✅ Réceptions fournisseurs confirmées
 - ✅ Expéditions clients confirmées
 - ✅ Ajustements manuels d'inventaire
@@ -41,11 +43,13 @@ affects_forecast = false OR affects_forecast IS NULL
 **Définition** : Impact futur des commandes confirmées mais non livrées.
 
 **Critère Database** :
+
 ```sql
 affects_forecast = true
 ```
 
 **Types de mouvements** :
+
 - 📥 `forecast_type = 'in'` : Commandes fournisseurs en cours
 - 📤 `forecast_type = 'out'` : Commandes clients en cours
 
@@ -59,6 +63,7 @@ affects_forecast = true
 ### Page Mouvements (`/stocks/mouvements`)
 
 **Avant** (Confus) :
+
 ```
 Onglet "Tous"
   └─ Onglet "Réel" ❌
@@ -66,6 +71,7 @@ Onglet "Tous"
 ```
 
 **Après** (Simplifié) :
+
 ```
 Onglet "Tous" (badge vert "✓ Stock Réel Uniquement")
 Onglet "Entrées" (mouvements réels IN uniquement)
@@ -73,12 +79,13 @@ Onglet "Sorties" (mouvements réels OUT uniquement)
 ```
 
 **Code Hook Initialization** :
+
 ```typescript
 // src/hooks/use-movements-history.ts
 const [filters, setFilters] = useState<MovementHistoryFilters>({
-  affects_forecast: false,  // ✅ TOUJOURS false par défaut
-  forecast_type: undefined
-})
+  affects_forecast: false, // ✅ TOUJOURS false par défaut
+  forecast_type: undefined,
+});
 ```
 
 ### Dashboard (`/stocks`)
@@ -86,12 +93,14 @@ const [filters, setFilters] = useState<MovementHistoryFilters>({
 **Séparation Visuelle Forte** :
 
 **Section Stock Réel** :
+
 - 🎨 Fond : `bg-green-50`
 - 🏷️ Badge : `bg-green-600` avec icône CheckCircle
 - 📝 Titre : "✓ STOCK RÉEL"
 - 📄 Description : "Inventaire actuel et mouvements confirmés"
 
 **Section Stock Prévisionnel** :
+
 - 🎨 Fond : `bg-blue-50`
 - 🏷️ Badge : `bg-blue-600` avec icône Clock
 - 📝 Titre : "⏱ STOCK PRÉVISIONNEL"
@@ -106,14 +115,15 @@ const [filters, setFilters] = useState<MovementHistoryFilters>({
 
 **Colonnes Clés** :
 
-| Colonne | Type | Description |
-|---------|------|-------------|
-| `affects_forecast` | `boolean` | `false` = Réel, `true` = Prévisionnel |
-| `forecast_type` | `text` | `'in'` / `'out'` / `NULL` |
-| `movement_type` | `enum` | Type technique du mouvement |
-| `performed_at` | `timestamptz` | Date/heure du mouvement |
+| Colonne            | Type          | Description                           |
+| ------------------ | ------------- | ------------------------------------- |
+| `affects_forecast` | `boolean`     | `false` = Réel, `true` = Prévisionnel |
+| `forecast_type`    | `text`        | `'in'` / `'out'` / `NULL`             |
+| `movement_type`    | `enum`        | Type technique du mouvement           |
+| `performed_at`     | `timestamptz` | Date/heure du mouvement               |
 
 **Indexes Performance** :
+
 ```sql
 -- Historique par produit (page Mouvements)
 CREATE INDEX idx_stock_movements_product_date
@@ -131,6 +141,7 @@ ON stock_movements(affects_forecast, performed_at DESC);
 **Refresh** : Automatique via trigger après INSERT/UPDATE/DELETE sur `stock_movements`
 
 **Colonnes** :
+
 ```sql
 CREATE MATERIALIZED VIEW stock_snapshot AS
 SELECT
@@ -154,6 +165,7 @@ GROUP BY product_id;
 **Usage** : Widget Dashboard "Timeline Prévisionnel 30 jours"
 
 **Retour** :
+
 ```sql
 forecast_date         | DATE     -- Jour de la timeline
 stock_real_change     | INT      -- Mouvements réels du jour
@@ -169,6 +181,7 @@ cumulative_stock      | INT      -- Stock cumulé à cette date
 **Usage** : Dashboard widgets & Fiche produit
 
 **Retour** :
+
 ```sql
 product_name          | TEXT     -- Nom produit
 stock_real            | INT      -- Stock réel actuel
@@ -216,6 +229,7 @@ is_below_minimum      | BOOLEAN  -- Alerte stock faible
 ### Tests Manuels Effectués (2025-11-01)
 
 **Page Mouvements** :
+
 - ✅ Badge "✓ Stock Réel Uniquement" affiché sur onglet Tous
 - ✅ Aucun onglet imbriqué Réel/Prévisionnel visible
 - ✅ Aucun badge "Prévisionnel ↗/↘" dans la liste
@@ -223,6 +237,7 @@ is_below_minimum      | BOOLEAN  -- Alerte stock faible
 - ✅ 38 mouvements réels affichés (vs 45 totaux en base)
 
 **Dashboard** :
+
 - ✅ Section STOCK RÉEL : fond vert, emoji ✓, badge CheckCircle
 - ✅ Section STOCK PRÉVISIONNEL : fond bleu, emoji ⏱, badge Clock
 - ✅ Texte "INFORMATIF uniquement" présent
@@ -231,6 +246,7 @@ is_below_minimum      | BOOLEAN  -- Alerte stock faible
 ### Tests Automatisés (Playwright E2E)
 
 **Infrastructure créée** : `tests/e2e/stocks/`
+
 - `mouvements.spec.ts` : 8 tests page Mouvements
 - `dashboard.spec.ts` : 14 tests Dashboard séparation visuelle
 - `inventaire.spec.ts` : 5 tests page Inventaire
@@ -241,16 +257,17 @@ is_below_minimum      | BOOLEAN  -- Alerte stock faible
 
 ## 🚀 SLOs Performance
 
-| Métrique | Objectif | Mesuré | Statut |
-|----------|----------|--------|--------|
-| **Page Mouvements Load** | <3s | 1.2s | ✅ |
-| **Dashboard Load** | <2s | 0.8s | ✅ |
-| **Query Mouvements Réels** | <100ms | 0.121ms | ✅ |
-| **Query Historique Produit** | <100ms | 0.101ms | ✅ |
-| **Vue Matérialisée** | <100ms | 0.075ms | ✅ |
-| **RPC Timeline 30j** | <200ms | 0.150ms | ✅ |
+| Métrique                     | Objectif | Mesuré  | Statut |
+| ---------------------------- | -------- | ------- | ------ |
+| **Page Mouvements Load**     | <3s      | 1.2s    | ✅     |
+| **Dashboard Load**           | <2s      | 0.8s    | ✅     |
+| **Query Mouvements Réels**   | <100ms   | 0.121ms | ✅     |
+| **Query Historique Produit** | <100ms   | 0.101ms | ✅     |
+| **Vue Matérialisée**         | <100ms   | 0.075ms | ✅     |
+| **RPC Timeline 30j**         | <200ms   | 0.150ms | ✅     |
 
 **Gain Performance** :
+
 - Vue matérialisée : ~13% plus rapide que agrégation directe
 - Impact significatif avec >10k mouvements (actuellement 45)
 
@@ -271,6 +288,7 @@ CREATE POLICY stock_movements_select_own_org ON stock_movements
 ```
 
 **Fonctions Sécurité** :
+
 - `get_user_organisation_id()` : Récupère org de l'utilisateur auth
 - `user_has_access_to_organisation(org_id)` : Vérifie accès multi-tenant
 
@@ -279,12 +297,14 @@ CREATE POLICY stock_movements_select_own_org ON stock_movements
 ## 📚 Références
 
 **Standards ERP Consultés** :
+
 - Odoo : Séparation stricte Real / Forecast avec onglets dédiés
 - SAP : Section "Inventory on Hand" vs "Future Stock"
 - NetSuite : "Available" vs "On Order" / "Committed"
 - Shopify : "Available" vs "Incoming" avec badges colorés
 
 **Documentation Technique** :
+
 - Migrations : `supabase/migrations/20251102_*`
 - Code UI : `src/app/stocks/mouvements/page.tsx:467-503`
 - Hook : `src/hooks/use-movements-history.ts:91-100`
@@ -297,16 +317,18 @@ CREATE POLICY stock_movements_select_own_org ON stock_movements
 ### 1. Hook Initialization Timing
 
 **❌ Erreur Initiale** :
+
 ```typescript
-const [filters, setFilters] = useState<MovementHistoryFilters>({}) // Vide
+const [filters, setFilters] = useState<MovementHistoryFilters>({}); // Vide
 // → Page's useEffect inject filters TROP TARD → Fetch ALL movements
 ```
 
 **✅ Solution** :
+
 ```typescript
 const [filters, setFilters] = useState<MovementHistoryFilters>({
-  affects_forecast: false  // ✅ Default dès le premier render
-})
+  affects_forecast: false, // ✅ Default dès le premier render
+});
 ```
 
 **Principe** : Initialiser état dans `useState`, pas dans `useEffect` parent.
@@ -314,6 +336,7 @@ const [filters, setFilters] = useState<MovementHistoryFilters>({
 ### 2. UX Separation Patterns (2025)
 
 **Meilleures Pratiques** :
+
 - 🎨 **Backgrounds 50 opacity** : `bg-green-50` / `bg-blue-50`
 - 🏷️ **Badges 600 weight** : `bg-green-600` / `bg-blue-600`
 - ✨ **Emojis Simples** : ✓ (check) / ⏱ (horloge)
@@ -321,6 +344,7 @@ const [filters, setFilters] = useState<MovementHistoryFilters>({
 - 📝 **Textes Explicites** : "INFORMATIF uniquement"
 
 **Anti-patterns évités** :
+
 - ❌ Double-level tabs (confus)
 - ❌ Terminologie technique dans UI ("affects_forecast")
 - ❌ Séparation visuelle faible (même couleur sections)
@@ -328,11 +352,13 @@ const [filters, setFilters] = useState<MovementHistoryFilters>({
 ### 3. Database Performance
 
 **Vue Matérialisée** :
+
 - ✅ **REFRESH CONCURRENTLY** : Requiert UNIQUE INDEX
 - ✅ **Trigger STATEMENT-level** : Plus efficace que ROW-level
 - ✅ **Design pour scale** : Optimal >10k rows
 
 **Indexes Composites** :
+
 - ✅ **Order matters** : `(product_id, performed_at DESC)` ≠ `(performed_at, product_id)`
 - ✅ **WHERE clauses** : Partial indexes pour données fréquentes
 

@@ -19,6 +19,13 @@
   "permissions": {
     "mode": "rules",
     "allow": [
+      // ========================================
+      // PERMISSIONS SÉCURISÉES - PHASE 1 DEV ACTIF
+      // Date migration: 2025-11-07
+      // Backup: .claude/settings.json.backup-2025-11-07
+      // ========================================
+
+      // MCP Servers (OK - déjà granulaires)
       "mcp__*",
       "mcp__serena__*",
       "mcp__sequential-thinking__*",
@@ -30,118 +37,184 @@
       "mcp__filesystem__*",
       "mcp__memory__*",
       "mcp__ide__*",
+
+      // File Operations (RESTREINTES au projet)
       "Read",
-      "Read(*)",
+      "Read(/Users/romeodossantos/verone-back-office-V1/**)",
       "Write",
-      "Write(*)",
+      "Write(/Users/romeodossantos/verone-back-office-V1/src/**)",
+      "Write(/Users/romeodossantos/verone-back-office-V1/docs/**)",
+      "Write(/Users/romeodossantos/verone-back-office-V1/.vscode/**)",
+      "Write(/Users/romeodossantos/verone-back-office-V1/packages/**)",
+      "Write(/Users/romeodossantos/verone-back-office-V1/.claude/**)",
       "Edit",
-      "Edit(*)",
+      "Edit(/Users/romeodossantos/verone-back-office-V1/src/**)",
+      "Edit(/Users/romeodossantos/verone-back-office-V1/docs/**)",
+      "Edit(/Users/romeodossantos/verone-back-office-V1/packages/**)",
+      "Edit(/Users/romeodossantos/verone-back-office-V1/.vscode/**)",
       "MultiEdit",
-      "MultiEdit(*)",
-      "Bash(PGPASSWORD=*)",
-      "Bash(PGPASSWORD:*)",
-      "Bash(PGPASSWORD=\"*)",
-      "Bash(PGPASSWORD='*)",
-      "Bash(export PGPASSWORD=*)",
-      "Bash(psql:*)",
-      "Bash(psql *)",
-      "Bash(npx supabase:*)",
-      "Bash(supabase:*)",
-      "Bash(supabase *)",
-      "Bash(npm:*)",
-      "Bash(npm *)",
-      "Bash(npx:*)",
-      "Bash(npx *)",
-      "Bash(node:*)",
-      "Bash(node *)",
-      "Bash(git:*)",
-      "Bash(git *)",
-      "Bash(gh:*)",
-      "Bash(gh *)",
-      "Bash(mkdir:*)",
-      "Bash(mkdir *)",
-      "Bash(cp:*)",
-      "Bash(cp *)",
-      "Bash(mv:*)",
-      "Bash(mv *)",
-      "Bash(rm:*)",
-      "Bash(rm *)",
-      "Bash(chmod:*)",
-      "Bash(chmod *)",
-      "Bash(touch:*)",
-      "Bash(touch *)",
-      "Bash(npx playwright:*)",
+      "MultiEdit(/Users/romeodossantos/verone-back-office-V1/src/**)",
+      "MultiEdit(/Users/romeodossantos/verone-back-office-V1/docs/**)",
+
+      // Build & Dev (SPÉCIFIQUES)
+      "Bash(npm run dev)",
+      "Bash(npm run build)",
+      "Bash(npm run build:raw)",
+      "Bash(npm run type-check)",
+      "Bash(npm run lint)",
+      "Bash(npm run lint:fix)",
+      "Bash(npm run format)",
+      "Bash(npm run format:check)",
+      "Bash(npm run validate:all)",
+      "Bash(npm run validate:*)",
+      "Bash(npm install)",
+      "Bash(npm install *)",
+      "Bash(npm ci)",
+
+      // Tests (SPÉCIFIQUES)
+      "Bash(npm run test:*)",
       "Bash(npx playwright *)",
-      "Bash(ls:*)",
+
+      // Storybook
+      "Bash(npm run storybook)",
+      "Bash(npm run build-storybook)",
+
+      // Audit
+      "Bash(npm run audit:*)",
+
+      // pnpm (monorepo)
+      "Bash(pnpm install)",
+      "Bash(pnpm run *)",
+
+      // Git (LECTURE SEULEMENT sauf commit/push validés)
+      "Bash(git status)",
+      "Bash(git diff)",
+      "Bash(git diff *)",
+      "Bash(git log)",
+      "Bash(git log *)",
+      "Bash(git branch)",
+      "Bash(git branch *)",
+      "Bash(git show *)",
+      "Bash(git stash)",
+      "Bash(git stash *)",
+
+      // Git Modifications (AVEC VALIDATION - voir CLAUDE.md ligne 94)
+      "Bash(git add *)",
+      "Bash(git commit *)",
+      "Bash(git push origin *)",
+      "Bash(git checkout *)",
+      "Bash(git pull)",
+      "Bash(git pull *)",
+      "Bash(git fetch)",
+      "Bash(git fetch *)",
+
+      // GitHub CLI (LECTURE)
+      "Bash(gh issue list)",
+      "Bash(gh pr list)",
+      "Bash(gh pr view *)",
+      "Bash(gh issue view *)",
+
+      // GitHub CLI (ÉCRITURE - VALIDATION REQUISE)
+      "Bash(gh pr create *)",
+      "Bash(gh issue create *)",
+
+      // Database (LECTURE SEULEMENT - développement)
+      "Bash(PGPASSWORD=* psql * -c \"SELECT *\")",
+      "Bash(PGPASSWORD=* psql * -c 'SELECT *')",
+      "Bash(npx supabase db diff)",
+      "Bash(npx supabase db diff *)",
+      "Bash(npx supabase gen types *)",
+      "Bash(npx supabase status)",
+      "Bash(npx supabase start)",
+      "Bash(npx supabase stop)",
+
+      // Node & Scripts
+      "Bash(node scripts/*)",
+      "Bash(node .claude/scripts/*)",
+      "Bash(npx tsx scripts/*)",
+
+      // Utilities (SAFE)
+      "Bash(ls)",
       "Bash(ls *)",
-      "Bash(cat:*)",
-      "Bash(cat *)",
-      "Bash(echo:*)",
-      "Bash(echo *)",
-      "Bash(grep:*)",
-      "Bash(grep *)",
-      "Bash(awk:*)",
-      "Bash(awk *)",
-      "Bash(sed:*)",
-      "Bash(sed *)",
-      "Bash(tree:*)",
-      "Bash(tree *)",
-      "Bash(find:*)",
-      "Bash(find *)",
-      "Bash(curl:*)",
-      "Bash(curl *)",
-      "Bash(wget:*)",
-      "Bash(wget *)",
-      "Bash(ps:*)",
-      "Bash(ps *)",
-      "Bash(kill:*)",
-      "Bash(kill *)",
-      "Bash(pkill:*)",
-      "Bash(pkill *)",
-      "Bash(lsof:*)",
-      "Bash(lsof *)",
-      "Bash(xargs:*)",
-      "Bash(xargs *)",
-      "Bash(date:*)",
-      "Bash(date *)",
       "Bash(pwd)",
-      "Bash(pwd *)",
+      "Bash(date)",
+      "Bash(date *)",
+      "Bash(echo *)",
+      "Bash(cat *)",
+      "Bash(grep *)",
+      "Bash(find *)",
+      "Bash(tree *)",
       "Bash(whoami)",
-      "Bash(whoami *)",
-      "Bash(sleep:*)",
+      "Bash(ps *)",
+      "Bash(lsof *)",
+
+      // File Operations (SAFE)
+      "Bash(mkdir -p *)",
+      "Bash(mkdir *)",
+      "Bash(cp * *)",
+      "Bash(mv * *)",
+      "Bash(touch *)",
+      "Bash(chmod *)",
+
+      // Process Management (SAFE)
+      "Bash(kill *)",
+      "Bash(pkill *)",
       "Bash(sleep *)",
-      "Bash(open:*)",
-      "Bash(open *)",
-      "Bash(export:*)",
-      "Bash(export *)",
-      "Bash(source:*)",
-      "Bash(source *)",
-      "Bash(.claude/scripts/*)",
-      "Bash(.claude/security/*)",
-      "Bash(claude:*)",
-      "Bash(claude *)",
-      "Bash(turbo:*)",
-      "Bash(turbo *)",
-      "Bash(*)",
+
+      // Tools de Claude
       "Glob",
-      "Glob(*)",
       "Grep",
-      "Grep(*)",
       "TodoWrite",
-      "TodoWrite(*)",
       "WebSearch",
-      "WebSearch(*)",
       "WebFetch",
-      "WebFetch(*)",
       "NotebookEdit",
-      "NotebookEdit(*)",
       "Task",
-      "Task(*)",
-      "ExitPlanMode",
-      "ExitPlanMode(*)",
-      "*"
+      "ExitPlanMode"
     ],
-    "deny": []
+    "deny": [
+      // ========================================
+      // INTERDICTIONS ABSOLUES - SÉCURITÉ
+      // ========================================
+
+      // Destruction filesystem
+      "Bash(rm -rf *)",
+      "Bash(rm -r *)",
+      "Bash(rm -f *)",
+
+      // Git destructif
+      "Bash(git push --force *)",
+      "Bash(git push -f *)",
+      "Bash(git reset --hard *)",
+      "Bash(git push origin :*)",
+
+      // Database destructif
+      "Bash(* DROP TABLE *)",
+      "Bash(* DROP DATABASE *)",
+      "Bash(* DELETE FROM *)",
+      "Bash(* TRUNCATE *)",
+      "Bash(* ALTER TABLE *)",
+
+      // Permissions dangereuses
+      "Bash(chmod 777 *)",
+      "Bash(sudo *)",
+
+      // Fichiers sensibles
+      "Write(*.env*)",
+      "Write(*credentials*)",
+      "Write(*secret*)",
+      "Write(*password*)",
+      "Edit(*.env*)",
+      "Edit(*credentials*)",
+      "Edit(*secret*)",
+
+      // Wildcards dangereux
+      "Bash(*)",
+      "Read(*)",
+      "Write(*)",
+      "Edit(*)",
+      "MultiEdit(*)",
+      "*"
+    ]
   },
   "hooks": {
     "Stop": [
