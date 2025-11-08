@@ -12,6 +12,7 @@ export * from './components/badges';
 export * from './components/validation';
 export * from './components/inputs';
 export * from './components/selectors';
+export * from './components/utils';
 
 // Hooks
 export * from './hooks';

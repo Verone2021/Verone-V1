@@ -17,6 +17,49 @@ import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 
 import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@verone/ui';
+import { Badge } from '@verone/ui';
+import { Button } from '@verone/ui';
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from '@verone/ui';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from '@verone/ui';
+import { Input } from '@verone/ui';
+import { Label } from '@verone/ui';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@verone/ui';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@verone/ui';
+import { Textarea } from '@verone/ui';
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from '@verone/ui';
+import {
   Archive,
   ArchiveRestore,
   Trash2,
@@ -37,60 +80,14 @@ import {
   Info,
 } from 'lucide-react';
 
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-} from '@/components/ui/alert-dialog';
-import { Badge } from '@/components/ui/badge';
-import { Button } from '@/components/ui/button';
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from '@/components/ui/card';
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogHeader,
-  DialogTitle,
-} from '@/components/ui/dialog';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Textarea } from '@/components/ui/textarea';
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipProvider,
-  TooltipTrigger,
-} from '@/components/ui/tooltip';
+import { useToast } from '@verone/common';
+import { CustomerBadge } from '@verone/customers';
+import { useCustomerSamples, CustomerSample } from '@verone/customers';
+import type { UnifiedCustomer } from '@verone/orders';
+import { CustomerSelector } from '@verone/orders';
+import type { SelectedProduct } from '@verone/products';
+import { UniversalProductSelectorV2 } from '@verone/products';
 import { createClient } from '@verone/utils/supabase/client';
-import { useToast } from '@/shared/modules/common/hooks';
-import { CustomerBadge } from '@/shared/modules/customers/components/badges/CustomerBadge';
-import {
-  useCustomerSamples,
-  CustomerSample,
-} from '@/shared/modules/customers/hooks';
-import type { UnifiedCustomer } from '@/shared/modules/orders/components/modals/customer-selector';
-import { CustomerSelector } from '@/shared/modules/orders/components/modals/customer-selector';
-import type { SelectedProduct } from '@/shared/modules/products/components/selectors/UniversalProductSelectorV2';
-import { UniversalProductSelectorV2 } from '@/shared/modules/products/components/selectors/UniversalProductSelectorV2';
 
 export default function SourcingEchantillonsPage() {
   const router = useRouter();

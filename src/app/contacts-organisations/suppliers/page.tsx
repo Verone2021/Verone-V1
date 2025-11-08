@@ -4,6 +4,29 @@ import { useState, useMemo, useEffect } from 'react';
 
 import Link from 'next/link';
 
+import { Badge } from '@verone/ui';
+import { ButtonV2 } from '@verone/ui';
+import { Card, CardContent, CardHeader, CardTitle } from '@verone/ui';
+import { Input } from '@verone/ui';
+import {
+  Pagination,
+  PaginationContent,
+  PaginationItem,
+  PaginationLink,
+  PaginationNext,
+  PaginationPrevious,
+} from '@verone/ui';
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from '@verone/ui';
+import { HeartBadge } from '@verone/ui';
+import { FavoriteToggleButton } from '@verone/ui';
+import { cn } from '@verone/utils';
 import {
   Search,
   Plus,
@@ -21,47 +44,21 @@ import {
   List,
 } from 'lucide-react';
 
-import { Badge } from '@/components/ui/badge';
-import { ButtonV2 } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Input } from '@/components/ui/input';
-import {
-  Pagination,
-  PaginationContent,
-  PaginationItem,
-  PaginationLink,
-  PaginationNext,
-  PaginationPrevious,
-} from '@/components/ui/pagination';
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from '@/components/ui/table';
-import { spacing, colors } from '@verone/ui/design-system';
-import { createClient } from '@verone/utils/supabase/client';
-import { cn } from '@verone/utils';
 import {
   SupplierCategoryBadge,
   SupplierCategoryCode,
-} from '@/shared/modules/categories/components/badges/SupplierCategoryBadge';
-import { OrganisationLogo } from '@/shared/modules/organisations/components';
-import { ConfirmDeleteOrganisationModal } from '@/shared/modules/organisations/components';
-import { SupplierFormModal } from '@/shared/modules/organisations/components/forms/SupplierFormModal';
+} from '@verone/categories';
+import { OrganisationLogo } from '@verone/organisations';
+import { ConfirmDeleteOrganisationModal } from '@verone/organisations';
+import { SupplierFormModal } from '@verone/organisations';
 import {
   useSuppliers,
   getOrganisationDisplayName,
   type Organisation,
-} from '@/shared/modules/organisations/hooks';
-import {
-  SupplierSegmentBadge,
-  SupplierSegmentType,
-} from '@/shared/modules/suppliers/components/badges/SupplierSegmentBadge';
-import { HeartBadge } from '@/shared/modules/ui/components/badges/HeartBadge';
-import { FavoriteToggleButton } from '@/shared/modules/ui/components/buttons/FavoriteToggleButton';
+} from '@verone/organisations';
+import { SupplierSegmentBadge, SupplierSegmentType } from '@verone/suppliers';
+import { spacing, colors } from '@verone/ui/design-system';
+import { createClient } from '@verone/utils/supabase/client';
 
 // ✅ FIX TypeScript: Utiliser type Organisation (pas de Supplier local)
 // Interface Organisation définie dans use-organisations.ts

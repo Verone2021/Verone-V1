@@ -14,6 +14,28 @@ import React, {
   useCallback,
 } from 'react';
 
+import { Badge } from '@verone/ui';
+import { ButtonV2 } from '@verone/ui';
+import {
+  Command,
+  CommandDialog,
+  CommandEmpty,
+  CommandGroup,
+  CommandInput,
+  CommandItem,
+  CommandList,
+  CommandSeparator,
+  CommandShortcut,
+} from '@verone/ui';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from '@verone/ui';
+import { Input } from '@verone/ui';
+import { cn } from '@verone/utils';
 import {
   Search,
   Zap,
@@ -42,29 +64,6 @@ import {
   Shield,
   Gauge,
 } from 'lucide-react';
-
-import { Badge } from '@/components/ui/badge';
-import { ButtonV2 } from '@/components/ui/button';
-import {
-  Command,
-  CommandDialog,
-  CommandEmpty,
-  CommandGroup,
-  CommandInput,
-  CommandItem,
-  CommandList,
-  CommandSeparator,
-  CommandShortcut,
-} from '@/components/ui/command';
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogHeader,
-  DialogTitle,
-} from '@/components/ui/dialog';
-import { Input } from '@/components/ui/input';
-import { cn } from '@verone/utils';
 
 // Types pour les commandes
 export interface CommandAction {

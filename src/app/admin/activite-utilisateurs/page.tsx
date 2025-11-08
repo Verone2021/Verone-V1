@@ -6,6 +6,7 @@ import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 
+import { ButtonV2 } from '@verone/ui';
 import {
   Activity,
   User,
@@ -17,7 +18,6 @@ import {
   CheckCircle,
 } from 'lucide-react';
 
-import { ButtonV2 } from '@/components/ui/button';
 import { createClient } from '@verone/utils/supabase/client';
 
 interface UserActivityStats {

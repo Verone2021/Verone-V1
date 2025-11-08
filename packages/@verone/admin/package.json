@@ -34,6 +34,11 @@
       "types": "./src/components/*/index.ts",
       "import": "./src/components/*/index.ts",
       "require": "./src/components/*/index.ts"
+    },
+    "./actions/user-management": {
+      "types": "./src/actions/user-management.ts",
+      "import": "./src/actions/user-management.ts",
+      "require": "./src/actions/user-management.ts"
     }
   }
 }

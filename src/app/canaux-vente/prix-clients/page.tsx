@@ -4,6 +4,23 @@ import { useState, useEffect } from 'react';
 
 import { useRouter } from 'next/navigation';
 
+import { Badge } from '@verone/ui';
+import { ButtonV2 } from '@verone/ui';
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from '@verone/ui';
+import { Input } from '@verone/ui';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@verone/ui';
 import {
   Euro,
   Users,
@@ -18,25 +35,8 @@ import {
   Tag,
 } from 'lucide-react';
 
-import { Badge } from '@/components/ui/badge';
-import { ButtonV2 } from '@/components/ui/button';
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from '@/components/ui/card';
-import { Input } from '@/components/ui/input';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
+import type { CustomerPricing } from '@verone/finance';
 import { createClient } from '@verone/utils/supabase/client';
-import type { CustomerPricing } from '@/shared/modules/finance/hooks';
 
 // Stats interface
 interface Stats {

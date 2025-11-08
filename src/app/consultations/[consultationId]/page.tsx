@@ -20,12 +20,12 @@ import {
   Package,
 } from 'lucide-react';
 
-import { useToast } from '@/shared/modules/common/hooks';
-import { ConsultationImageGallery } from '@/shared/modules/consultations/components/images/ConsultationImageGallery';
-import { ConsultationOrderInterface } from '@/shared/modules/consultations/components/interfaces/ConsultationOrderInterface';
-import { EditConsultationModal } from '@/shared/modules/consultations/components/modals/EditConsultationModal';
-import type { ClientConsultation } from '@/shared/modules/consultations/hooks';
-import { useConsultations } from '@/shared/modules/consultations/hooks';
+import { useToast } from '@verone/common';
+import type { ClientConsultation } from '@verone/consultations';
+import { ConsultationImageGallery } from '@verone/consultations';
+import { ConsultationOrderInterface } from '@verone/consultations';
+import { EditConsultationModal } from '@verone/consultations';
+import { useConsultations } from '@verone/consultations';
 
 import { Alert, AlertDescription } from '../../../components/ui/alert';
 import { Badge } from '../../../components/ui/badge';

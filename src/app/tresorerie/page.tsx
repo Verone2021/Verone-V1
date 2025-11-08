@@ -18,6 +18,14 @@ import { useState, useEffect } from 'react';
 
 import Link from 'next/link';
 
+import { Badge } from '@verone/ui';
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from '@verone/ui';
 import { AlertCircle, Lock } from 'lucide-react';
 import {
   Banknote,
@@ -30,14 +38,6 @@ import {
   ArrowRight,
 } from 'lucide-react';
 
-import { Badge } from '@/components/ui/badge';
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from '@/components/ui/card';
 import { featureFlags } from '@/lib/feature-flags';
 
 // =====================================================================

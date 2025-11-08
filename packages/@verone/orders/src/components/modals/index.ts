@@ -9,3 +9,8 @@ export { SalesOrderShipmentModal } from './SalesOrderShipmentModal';
 export { ShipmentRecapModal } from './ShipmentRecapModal';
 export { ShippingManagerModal } from './ShippingManagerModal';
 export { UniversalOrderDetailsModal } from './UniversalOrderDetailsModal';
+export {
+  CustomerSelector,
+  type UnifiedCustomer,
+  type CustomerType,
+} from './customer-selector';

@@ -4,7 +4,7 @@
  * Intégration Sentry + Upstash + Analytics GDPR
  */
 
-import { gdprAnalytics } from '../analytics/gdpr-analytics';
+import { gdprAnalytics } from '@/lib/analytics/gdpr-analytics';
 
 export interface UploadPerformanceMetrics {
   // Identifiants
@@ -185,6 +185,8 @@ export class UploadPerformanceMonitor {
    * 📈 Charger tendances historiques
    */
   private loadHistoricalTrends(): void {
+    if (typeof window === 'undefined') return; // SSR guard
+
     try {
       const stored = localStorage.getItem('verone_upload_trends');
       if (stored) {

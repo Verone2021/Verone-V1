@@ -4,6 +4,8 @@ import React from 'react';
 
 import { useRouter } from 'next/navigation';
 
+import { ActivityTimeline, type TimelineItem } from '@verone/ui';
+import { KPICardUnified } from '@verone/ui';
 import {
   DollarSign,
   ShoppingCart,
@@ -13,12 +15,7 @@ import {
   ArrowLeftRight,
 } from 'lucide-react';
 
-import {
-  ActivityTimeline,
-  type TimelineItem,
-} from '@/components/ui/activity-timeline';
-import { KPICardUnified } from '@/components/ui/kpi-card-unified';
-import { useCompleteDashboardMetrics } from '@/shared/modules/dashboard/hooks';
+import { useCompleteDashboardMetrics } from '@verone/dashboard';
 
 export default function DashboardV2Page() {
   const router = useRouter();
@@ -101,7 +98,8 @@ export default function DashboardV2Page() {
             KPIs Essentiels
           </h2>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-            <KPICardUnified variant="elegant"
+            <KPICardUnified
+              variant="elegant"
               title="CA du Mois"
               value={new Intl.NumberFormat('fr-FR', {
                 style: 'currency',
@@ -116,21 +114,24 @@ export default function DashboardV2Page() {
               onClick={() => router.push('/commandes/clients')}
             />
 
-            <KPICardUnified variant="elegant"
+            <KPICardUnified
+              variant="elegant"
               title="Commandes Ventes"
               value={metrics.orders?.salesOrders || 0}
               icon={ShoppingCart}
               onClick={() => router.push('/commandes/clients')}
             />
 
-            <KPICardUnified variant="elegant"
+            <KPICardUnified
+              variant="elegant"
               title="Commandes Achats"
               value={metrics.orders?.purchaseOrders || 0}
               icon={TrendingUp}
               onClick={() => router.push('/commandes/fournisseurs')}
             />
 
-            <KPICardUnified variant="elegant"
+            <KPICardUnified
+              variant="elegant"
               title="Valeur Stock"
               value={new Intl.NumberFormat('fr-FR', {
                 style: 'currency',

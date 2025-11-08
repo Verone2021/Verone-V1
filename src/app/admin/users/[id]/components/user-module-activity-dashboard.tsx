@@ -31,7 +31,7 @@ import {
   useUserModuleMetrics,
   formatModuleTime,
   getProgressBarColor,
-} from '@/shared/modules/dashboard/hooks/metrics';
+} from '@verone/dashboard';
 
 interface UserModuleActivityDashboardProps {
   userId: string;

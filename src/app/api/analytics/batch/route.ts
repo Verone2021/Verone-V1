@@ -8,7 +8,7 @@
 import type { NextRequest } from 'next/server';
 import { NextResponse } from 'next/server';
 
-import { anonymizeIP, simplifyUserAgent } from '@/lib/analytics/privacy';
+import { anonymizeIP, simplifyUserAgent } from '@verone/utils/analytics';
 import { createClient } from '@verone/utils/supabase/server';
 
 export const runtime = 'edge';

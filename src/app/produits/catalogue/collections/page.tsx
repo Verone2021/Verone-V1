@@ -4,6 +4,11 @@ import { useState, useMemo, useCallback, useEffect } from 'react';
 
 import { useRouter } from 'next/navigation';
 
+import { getRoomLabel, type RoomType } from '@verone/types';
+import { Badge } from '@verone/ui';
+import { ButtonV2 } from '@verone/ui';
+import { KPICardUnified } from '@verone/ui';
+import { cn } from '@verone/utils';
 import {
   Search,
   Plus,
@@ -17,22 +22,17 @@ import {
   Eye,
 } from 'lucide-react';
 
-import { Badge } from '@/components/ui/badge';
-import { ButtonV2 } from '@/components/ui/button';
-import { KPICardUnified } from '@/components/ui/kpi-card-unified';
-import { cn } from '@verone/utils';
-import type { Collection } from '@/shared/modules/collections/hooks';
+import type { Collection } from '@verone/collections';
 import {
   useCollections,
   CollectionFilters,
   CreateCollectionData,
-} from '@/shared/modules/collections/hooks';
-import type { CreateCollectionInput } from '@/shared/modules/common/components/collections/CollectionCreationWizard';
-import { CollectionCreationWizard } from '@/shared/modules/common/components/collections/CollectionCreationWizard';
-import { useToast } from '@/shared/modules/common/hooks';
-import type { SelectedProduct } from '@/shared/modules/products/components/selectors/UniversalProductSelectorV2';
-import { UniversalProductSelectorV2 } from '@/shared/modules/products/components/selectors/UniversalProductSelectorV2';
-import { getRoomLabel, type RoomType } from '@verone/types';
+} from '@verone/collections';
+import type { CreateCollectionInput } from '@verone/common';
+import { CollectionCreationWizard } from '@verone/common';
+import { useToast } from '@verone/common';
+import type { SelectedProduct } from '@verone/products';
+import { UniversalProductSelectorV2 } from '@verone/products';
 
 // Interface filtres collections
 interface LocalCollectionFilters {
@@ -566,17 +566,20 @@ export default function CollectionsPage() {
 
       {/* KPI Cards */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4 px-6 pt-6">
-        <KPICardUnified variant="elegant"
+        <KPICardUnified
+          variant="elegant"
           title="Collections totales"
           value={loading ? '...' : stats.total}
           icon={Layers}
         />
-        <KPICardUnified variant="elegant"
+        <KPICardUnified
+          variant="elegant"
           title="Collections actives"
           value={loading ? '...' : stats.active}
           icon={Eye}
         />
-        <KPICardUnified variant="elegant"
+        <KPICardUnified
+          variant="elegant"
           title="Collections archivées"
           value={archivedLoading ? '...' : stats.archived}
           icon={Archive}

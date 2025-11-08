@@ -2,6 +2,8 @@
 
 import React from 'react';
 
+import { ButtonV2 } from '@verone/ui';
+import { Input } from '@verone/ui';
 import {
   Settings,
   User,
@@ -12,9 +14,6 @@ import {
   Database,
   Save,
 } from 'lucide-react';
-
-import { ButtonV2 } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
 
 interface SettingSection {
   id: string;

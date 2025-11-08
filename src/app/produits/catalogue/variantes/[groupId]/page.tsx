@@ -6,6 +6,16 @@ import Image from 'next/image';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 
+import { COLLECTION_STYLE_OPTIONS } from '@verone/types';
+import {
+  formatAttributesForDisplay,
+  type VariantAttributes,
+} from '@verone/types';
+import type { VariantProduct } from '@verone/types';
+import { Badge } from '@verone/ui';
+import { ButtonV2 } from '@verone/ui';
+import { Card, CardContent, CardHeader, CardTitle } from '@verone/ui';
+import { Input } from '@verone/ui';
 import {
   ChevronLeft,
   Package,
@@ -22,29 +32,16 @@ import {
   ExternalLink,
 } from 'lucide-react';
 
-import { Badge } from '@/components/ui/badge';
-import { ButtonV2 } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Input } from '@/components/ui/input';
+import { useToast } from '@verone/common';
+import type { SelectedProduct } from '@verone/products';
+import { CreateProductInGroupModal } from '@verone/products';
+import { EditProductVariantModal } from '@verone/products';
+import { VariantCreationModal } from '@verone/products';
+import { VariantGroupEditModal } from '@verone/products';
+import { UniversalProductSelectorV2 } from '@verone/products';
+import { useVariantGroups } from '@verone/products';
+import { useVariantGroup, useProductVariantEditing } from '@verone/products';
 import { getOrganisationDisplayName } from '@verone/utils/utils/organisation-helpers';
-import { useToast } from '@/shared/modules/common/hooks';
-import { CreateProductInGroupModal } from '@/shared/modules/products/components/modals/CreateProductInGroupModal';
-import { EditProductVariantModal } from '@/shared/modules/products/components/modals/EditProductVariantModal';
-import { VariantCreationModal } from '@/shared/modules/products/components/modals/VariantCreationModal';
-import { VariantGroupEditModal } from '@/shared/modules/products/components/modals/VariantGroupEditModal';
-import type { SelectedProduct } from '@/shared/modules/products/components/selectors/UniversalProductSelectorV2';
-import { UniversalProductSelectorV2 } from '@/shared/modules/products/components/selectors/UniversalProductSelectorV2';
-import { useVariantGroups } from '@/shared/modules/products/hooks';
-import {
-  useVariantGroup,
-  useProductVariantEditing,
-} from '@/shared/modules/products/hooks';
-import { COLLECTION_STYLE_OPTIONS } from '@verone/types';
-import {
-  formatAttributesForDisplay,
-  type VariantAttributes,
-} from '@verone/types';
-import type { VariantProduct } from '@verone/types';
 
 interface VariantGroupDetailPageProps {
   params: Promise<{

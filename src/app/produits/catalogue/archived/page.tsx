@@ -1,9 +1,8 @@
 import Link from 'next/link';
 
+import { Badge } from '@verone/ui';
+import { ButtonV2 } from '@verone/ui';
 import { ArrowLeft, Package, RotateCcw, Trash2 } from 'lucide-react';
-
-import { Badge } from '@/components/ui/badge';
-import { ButtonV2 } from '@/components/ui/button';
 
 export default function ArchivedProductsPage() {
   // Données mockées pour l'interface

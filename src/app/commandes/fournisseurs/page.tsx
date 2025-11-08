@@ -4,6 +4,35 @@ import { useState, useEffect, useMemo } from 'react';
 
 import { useSearchParams } from 'next/navigation';
 
+import type { Database } from '@verone/types';
+import { Badge } from '@verone/ui';
+import { ButtonV2 } from '@verone/ui';
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from '@verone/ui';
+import { Input } from '@verone/ui';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@verone/ui';
+import { Separator } from '@verone/ui';
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from '@verone/ui';
+import { Tabs, TabsList, TabsTrigger } from '@verone/ui';
+import { formatCurrency, formatDate } from '@verone/utils';
 import {
   Plus,
   Filter,
@@ -21,45 +50,13 @@ import {
   ArrowDown,
 } from 'lucide-react';
 
-import { Badge } from '@/components/ui/badge';
-import { ButtonV2 } from '@/components/ui/button';
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from '@/components/ui/card';
-import { Input } from '@/components/ui/input';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
-import { Separator } from '@/components/ui/separator';
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from '@/components/ui/table';
-import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { formatCurrency, formatDate } from '@verone/utils';
+import type { PurchaseOrder, PurchaseOrderStatus } from '@verone/orders';
+import { PurchaseOrderFormModal } from '@verone/orders';
+import { PurchaseOrderReceptionModal } from '@verone/orders';
+import { PurchaseOrderDetailModal } from '@verone/orders';
+import { usePurchaseOrders } from '@verone/orders';
+import { useOrganisations } from '@verone/organisations';
 import { getOrganisationDisplayName } from '@verone/utils/utils/organisation-helpers';
-import { PurchaseOrderDetailModal } from '@/shared/modules/orders/components/modals/PurchaseOrderDetailModal';
-import { PurchaseOrderFormModal } from '@/shared/modules/orders/components/modals/PurchaseOrderFormModal';
-import { PurchaseOrderReceptionModal } from '@/shared/modules/orders/components/modals/PurchaseOrderReceptionModal';
-import type {
-  PurchaseOrder,
-  PurchaseOrderStatus,
-} from '@/shared/modules/orders/hooks';
-import { usePurchaseOrders } from '@/shared/modules/orders/hooks';
-import { useOrganisations } from '@/shared/modules/organisations/hooks';
-import type { Database } from '@verone/types';
 
 type PurchaseOrderRow = Database['public']['Tables']['purchase_orders']['Row'];
 

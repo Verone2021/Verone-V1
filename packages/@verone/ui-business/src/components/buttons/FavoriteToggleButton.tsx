@@ -9,10 +9,10 @@
 
 import { useState } from 'react';
 
+import { cn } from '@verone/utils';
 import { Heart, Loader2 } from 'lucide-react';
 
-import { cn } from '@verone/utils';
-import { useToggleFavorite } from '@verone/common/hooks';
+import { useToggleFavorite } from '@/shared/modules/common/hooks';
 
 interface FavoriteToggleButtonProps {
   organisationId: string;

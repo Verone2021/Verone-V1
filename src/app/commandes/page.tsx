@@ -4,6 +4,16 @@ import { useState, useEffect } from 'react';
 
 import Link from 'next/link';
 
+import { Badge } from '@verone/ui';
+import { ButtonV2 } from '@verone/ui';
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from '@verone/ui';
+import { formatCurrency } from '@verone/utils';
 import {
   ShoppingCart,
   Package,
@@ -18,18 +28,8 @@ import {
   ShoppingBag,
 } from 'lucide-react';
 
-import { Badge } from '@/components/ui/badge';
-import { ButtonV2 } from '@/components/ui/button';
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from '@/components/ui/card';
-import { formatCurrency } from '@verone/utils';
-import { useSalesOrders } from '@/shared/modules/orders/hooks';
-import { usePurchaseOrders } from '@/shared/modules/orders/hooks';
+import { useSalesOrders } from '@verone/orders';
+import { usePurchaseOrders } from '@verone/orders';
 
 export default function CommandesOverviewPage() {
   const {

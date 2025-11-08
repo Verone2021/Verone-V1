@@ -9,10 +9,7 @@
 
 import React, { useState } from 'react';
 
-import { Edit, Save, X, User } from 'lucide-react';
-
-import type { UserWithProfile } from '@/app/admin/users/page';
-import { ButtonV2 } from '@/components/ui/button';
+import { ButtonV2 } from '@verone/ui';
 import {
   Dialog,
   DialogContent,
@@ -20,18 +17,21 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-} from '@/components/ui/dialog';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
+} from '@verone/ui';
+import { Input } from '@verone/ui';
+import { Label } from '@verone/ui';
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from '@/components/ui/select';
-import { updateUserProfile } from '@/lib/actions/user-management';
+} from '@verone/ui';
 import { cn } from '@verone/utils';
+import { Edit, Save, X, User } from 'lucide-react';
+
+import type { UserWithProfile } from '@/app/admin/users/page';
+import { updateUserProfile } from '@verone/admin/actions/user-management';
 
 interface EditUserDialogProps {
   open: boolean;

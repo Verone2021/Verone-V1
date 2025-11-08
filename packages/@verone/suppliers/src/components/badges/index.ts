@@ -1,1 +1,4 @@
-export { SupplierSegmentBadge } from './SupplierSegmentBadge';
+export {
+  SupplierSegmentBadge,
+  type SupplierSegmentType,
+} from './SupplierSegmentBadge';

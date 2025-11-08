@@ -5,6 +5,16 @@ import { use, useState, useCallback } from 'react';
 import Image from 'next/image';
 import { useRouter } from 'next/navigation';
 
+import { COLLECTION_STYLE_OPTIONS, type CollectionStyle } from '@verone/types';
+import type { RoomType } from '@verone/types';
+import { Badge } from '@verone/ui';
+import { ButtonV2 } from '@verone/ui';
+import { Card, CardContent, CardHeader, CardTitle } from '@verone/ui';
+import { Input } from '@verone/ui';
+import { Label } from '@verone/ui';
+import { RoomMultiSelect } from '@verone/ui';
+import { Textarea } from '@verone/ui';
+import { cn } from '@verone/utils';
 import {
   ChevronLeft,
   Eye,
@@ -21,26 +31,10 @@ import {
   Tag,
 } from 'lucide-react';
 
-import { Badge } from '@/components/ui/badge';
-import { ButtonV2 } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { RoomMultiSelect } from '@/components/ui/room-multi-select';
-import { Textarea } from '@/components/ui/textarea';
-import { cn } from '@verone/utils';
-import {
-  useCollection,
-  useCollections,
-} from '@/shared/modules/collections/hooks';
-import { useToast } from '@/shared/modules/common/hooks';
-import type { SelectedProduct } from '@/shared/modules/products/components/selectors/UniversalProductSelectorV2';
-import { UniversalProductSelectorV2 } from '@/shared/modules/products/components/selectors/UniversalProductSelectorV2';
-import {
-  COLLECTION_STYLE_OPTIONS,
-  type CollectionStyle,
-} from '@verone/types';
-import type { RoomType } from '@verone/types';
+import { useCollection, useCollections } from '@verone/collections';
+import { useToast } from '@verone/common';
+import type { SelectedProduct } from '@verone/products';
+import { UniversalProductSelectorV2 } from '@verone/products';
 
 interface CollectionDetailPageProps {
   params: Promise<{

@@ -16,6 +16,27 @@ import React, {
 } from 'react';
 
 // @ts-ignore
+
+import { Badge } from '@verone/ui';
+import { ButtonV2 } from '@verone/ui';
+import { Card, CardContent } from '@verone/ui';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from '@verone/ui';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from '@verone/ui';
+import { Progress } from '@verone/ui';
+import { cn } from '@verone/utils';
 import {
   AlertTriangle,
   Bell,
@@ -45,27 +66,6 @@ import {
   Globe,
 } from 'lucide-react';
 import { createPortal } from 'react-dom';
-
-import { Badge } from '@/components/ui/badge';
-import { ButtonV2 } from '@/components/ui/button';
-import { Card, CardContent } from '@/components/ui/card';
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogHeader,
-  DialogTitle,
-} from '@/components/ui/dialog';
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuLabel,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from '@/components/ui/dropdown-menu';
-import { Progress } from '@/components/ui/progress';
-import { cn } from '@verone/utils';
 
 // Types pour les notifications
 export interface VeroneNotification {

@@ -11,6 +11,8 @@
 'use client';
 
 import { useState } from 'react';
+
+import { ButtonUnified } from '@verone/ui';
 import {
   Save,
   Trash2,
@@ -19,17 +21,15 @@ import {
   Plus,
   ArrowRight,
   Check,
-  Upload
+  Upload,
 } from 'lucide-react';
-
-import { ButtonUnified } from '@/components/ui/button-unified';
 
 export default function ButtonUnifiedTestPage() {
   const [clickCount, setClickCount] = useState(0);
   const [isLoading, setIsLoading] = useState(false);
 
   const handleClick = () => {
-    setClickCount((prev) => prev + 1);
+    setClickCount(prev => prev + 1);
   };
 
   const handleLoadingTest = () => {
@@ -50,10 +50,7 @@ export default function ButtonUnifiedTestPage() {
       <section className="space-y-4">
         <h2 className="text-2xl font-semibold">1. Variants (8 types)</h2>
         <div className="flex flex-wrap gap-4">
-          <ButtonUnified
-            data-testid="button-default"
-            variant="default"
-          >
+          <ButtonUnified data-testid="button-default" variant="default">
             Default
           </ButtonUnified>
 
@@ -73,24 +70,15 @@ export default function ButtonUnifiedTestPage() {
             Outline
           </ButtonUnified>
 
-          <ButtonUnified
-            data-testid="button-secondary"
-            variant="secondary"
-          >
+          <ButtonUnified data-testid="button-secondary" variant="secondary">
             Secondary
           </ButtonUnified>
 
-          <ButtonUnified
-            data-testid="button-ghost"
-            variant="ghost"
-          >
+          <ButtonUnified data-testid="button-ghost" variant="ghost">
             Ghost
           </ButtonUnified>
 
-          <ButtonUnified
-            data-testid="button-link"
-            variant="link"
-          >
+          <ButtonUnified data-testid="button-link" variant="link">
             Link
           </ButtonUnified>
 
@@ -116,38 +104,23 @@ export default function ButtonUnifiedTestPage() {
       <section className="space-y-4">
         <h2 className="text-2xl font-semibold">2. Sizes (6 types)</h2>
         <div className="flex flex-wrap items-center gap-4">
-          <ButtonUnified
-            data-testid="button-size-xs"
-            size="xs"
-          >
+          <ButtonUnified data-testid="button-size-xs" size="xs">
             Extra Small
           </ButtonUnified>
 
-          <ButtonUnified
-            data-testid="button-size-sm"
-            size="sm"
-          >
+          <ButtonUnified data-testid="button-size-sm" size="sm">
             Small
           </ButtonUnified>
 
-          <ButtonUnified
-            data-testid="button-size-md"
-            size="md"
-          >
+          <ButtonUnified data-testid="button-size-md" size="md">
             Medium
           </ButtonUnified>
 
-          <ButtonUnified
-            data-testid="button-size-lg"
-            size="lg"
-          >
+          <ButtonUnified data-testid="button-size-lg" size="lg">
             Large
           </ButtonUnified>
 
-          <ButtonUnified
-            data-testid="button-size-xl"
-            size="xl"
-          >
+          <ButtonUnified data-testid="button-size-xl" size="xl">
             Extra Large
           </ButtonUnified>
 
@@ -180,11 +153,7 @@ export default function ButtonUnifiedTestPage() {
             Icon Right
           </ButtonUnified>
 
-          <ButtonUnified
-            data-testid="button-no-icon"
-          >
-            No Icon
-          </ButtonUnified>
+          <ButtonUnified data-testid="button-no-icon">No Icon</ButtonUnified>
         </div>
       </section>
 
@@ -192,10 +161,7 @@ export default function ButtonUnifiedTestPage() {
       <section className="space-y-4">
         <h2 className="text-2xl font-semibold">4. States</h2>
         <div className="flex flex-wrap gap-4">
-          <ButtonUnified
-            data-testid="button-normal"
-            onClick={handleClick}
-          >
+          <ButtonUnified data-testid="button-normal" onClick={handleClick}>
             Normal (clickable)
           </ButtonUnified>
 
@@ -207,10 +173,7 @@ export default function ButtonUnifiedTestPage() {
             {isLoading ? 'Loading...' : 'Test Loading'}
           </ButtonUnified>
 
-          <ButtonUnified
-            data-testid="button-disabled"
-            disabled
-          >
+          <ButtonUnified data-testid="button-disabled" disabled>
             Disabled
           </ButtonUnified>
 
@@ -260,16 +223,11 @@ export default function ButtonUnifiedTestPage() {
             aria-label="Enregistrer le document"
           />
 
-          <ButtonUnified
-            data-testid="button-focusable"
-          >
+          <ButtonUnified data-testid="button-focusable">
             Focusable
           </ButtonUnified>
 
-          <ButtonUnified
-            data-testid="button-disabled-not-focusable"
-            disabled
-          >
+          <ButtonUnified data-testid="button-disabled-not-focusable" disabled>
             Disabled (not focusable)
           </ButtonUnified>
         </div>

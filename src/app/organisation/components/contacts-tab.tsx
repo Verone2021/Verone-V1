@@ -2,6 +2,10 @@
 
 import { useState, useEffect } from 'react';
 
+import { Badge } from '@verone/ui';
+import { ButtonV2 } from '@verone/ui';
+import { Card, CardContent, CardHeader, CardTitle } from '@verone/ui';
+import { Input } from '@verone/ui';
 import {
   Search,
   Plus,
@@ -16,15 +20,11 @@ import {
   Eye,
 } from 'lucide-react';
 
-import { Badge } from '@/components/ui/badge';
-import { ButtonV2 } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Input } from '@/components/ui/input';
-import { useContacts } from '@/shared/modules/organisations/hooks';
+import { useContacts } from '@verone/organisations';
 import {
   getOrganisationDisplayName,
   type Organisation,
-} from '@/shared/modules/organisations/hooks';
+} from '@verone/organisations';
 
 interface ContactStats {
   totalContacts: number;

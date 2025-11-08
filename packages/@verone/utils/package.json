@@ -73,6 +73,16 @@
       "types": "./src/export/csv.ts",
       "import": "./src/export/csv.ts",
       "require": "./src/export/csv.ts"
+    },
+    "./analytics": {
+      "types": "./src/analytics/index.ts",
+      "import": "./src/analytics/index.ts",
+      "require": "./src/analytics/index.ts"
+    },
+    "./monitoring": {
+      "types": "./src/monitoring/index.ts",
+      "import": "./src/monitoring/index.ts",
+      "require": "./src/monitoring/index.ts"
     }
   }
 }

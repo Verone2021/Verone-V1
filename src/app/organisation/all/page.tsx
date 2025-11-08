@@ -4,10 +4,10 @@ import React, { useState, useEffect } from 'react';
 
 import { useRouter, useSearchParams } from 'next/navigation';
 
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@verone/ui';
 import { Building2 } from 'lucide-react';
 
 import { PageHeader } from '@/components/layout/page-header';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 
 import { CustomersTab } from '../components/customers-tab';
 import { PartnersTab } from '../components/partners-tab';

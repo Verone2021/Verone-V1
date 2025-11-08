@@ -4,6 +4,10 @@ import { useState, useMemo, useCallback, useEffect } from 'react';
 
 import { useRouter } from 'next/navigation';
 
+import { Badge } from '@verone/ui';
+import { ButtonV2 } from '@verone/ui';
+import { KPICardUnified } from '@verone/ui';
+import { cn } from '@verone/utils';
 import {
   Search,
   Plus,
@@ -25,16 +29,12 @@ import {
 } from 'lucide-react';
 
 import { PageHeader } from '@/components/layout/page-header';
-import { Badge } from '@/components/ui/badge';
-import { ButtonV2 } from '@/components/ui/button';
-import { KPICardUnified } from '@/components/ui/kpi-card-unified';
-import { cn } from '@verone/utils';
-import { CategoryFilterCombobox } from '@/shared/modules/categories/components/filters/CategoryFilterCombobox';
-import { useToast } from '@/shared/modules/common/hooks';
-import { VariantAddProductModal } from '@/shared/modules/products/components/modals/VariantAddProductModal';
-import { VariantGroupEditModal } from '@/shared/modules/products/components/modals/VariantGroupEditModal';
-import { VariantGroupCreationWizard } from '@/shared/modules/products/components/wizards/VariantGroupCreationWizard';
-import { useVariantGroups } from '@/shared/modules/products/hooks';
+import { CategoryFilterCombobox } from '@verone/categories';
+import { useToast } from '@verone/common';
+import { VariantAddProductModal } from '@verone/products';
+import { VariantGroupEditModal } from '@verone/products';
+import { VariantGroupCreationWizard } from '@verone/products';
+import { useVariantGroups } from '@verone/products';
 
 // Interface filtres variantes
 interface LocalVariantFilters {
@@ -455,17 +455,20 @@ export default function VariantesPage() {
       <div className="p-6 space-y-4">
         {/* KPI Cards */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          <KPICardUnified variant="elegant"
+          <KPICardUnified
+            variant="elegant"
             title="Groupes totaux"
             value={loading ? '...' : stats.total}
             icon={Layers}
           />
-          <KPICardUnified variant="elegant"
+          <KPICardUnified
+            variant="elegant"
             title="Produits totaux"
             value={loading ? '...' : stats.totalProducts}
             icon={Package}
           />
-          <KPICardUnified variant="elegant"
+          <KPICardUnified
+            variant="elegant"
             title="Types différents"
             value={loading ? '...' : stats.types}
             icon={Tags}

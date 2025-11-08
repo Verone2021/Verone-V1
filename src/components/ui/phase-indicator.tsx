@@ -6,16 +6,16 @@
  * Phase 2+: Modules "Bientôt disponible" avec indicateurs visuels
  */
 
+import { Badge } from '@verone/ui';
+import { cn } from '@verone/utils';
 import { Lock, Clock, Zap } from 'lucide-react';
 
-import { Badge } from '@/components/ui/badge';
 import {
   getModulePhase,
   getModuleDeploymentStatus,
   PHASE_LABELS,
   PHASE_COLORS,
 } from '@/lib/feature-flags';
-import { cn } from '@verone/utils';
 
 interface PhaseIndicatorProps {
   moduleName: string;

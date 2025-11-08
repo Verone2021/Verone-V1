@@ -4,6 +4,34 @@ import { useState } from 'react';
 
 import { useRouter } from 'next/navigation';
 
+import { Alert, AlertDescription, AlertTitle } from '@verone/ui';
+import { Badge } from '@verone/ui';
+import { ButtonV2 } from '@verone/ui';
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from '@verone/ui';
+import { Input } from '@verone/ui';
+import { Progress } from '@verone/ui';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@verone/ui';
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from '@verone/ui';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@verone/ui';
 import {
   Globe,
   ArrowLeft,
@@ -19,44 +47,16 @@ import {
   Info,
 } from 'lucide-react';
 
-import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
-import { Badge } from '@/components/ui/badge';
-import { ButtonV2 } from '@/components/ui/button';
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from '@/components/ui/card';
-import { Input } from '@/components/ui/input';
-import { Progress } from '@/components/ui/progress';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from '@/components/ui/table';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { logger } from '@verone/utils/logger';
-import { GoogleMerchantConfigModal } from '@/shared/modules/channels/components/google-merchant/GoogleMerchantConfigModal';
-import { GoogleMerchantProductCard } from '@/shared/modules/channels/components/google-merchant/GoogleMerchantProductCard';
-import { GoogleMerchantProductManager } from '@/shared/modules/channels/components/google-merchant/GoogleMerchantProductManager';
-import { useGoogleMerchantSync } from '@/shared/modules/channels/hooks';
+import { GoogleMerchantConfigModal } from '@verone/channels';
+import { GoogleMerchantProductCard } from '@verone/channels';
+import { GoogleMerchantProductManager } from '@verone/channels';
+import { useGoogleMerchantSync } from '@verone/channels';
 import {
   useGoogleMerchantProducts,
   useGoogleMerchantStats,
-} from '@/shared/modules/channels/hooks';
-import { useProducts } from '@/shared/modules/products/hooks';
+} from '@verone/channels';
+import { useProducts } from '@verone/products';
+import { logger } from '@verone/utils/logger';
 
 export default function GoogleMerchantPage() {
   const router = useRouter();

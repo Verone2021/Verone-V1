@@ -8,9 +8,8 @@
 import Image from 'next/image';
 import Link from 'next/link';
 
+import { ButtonV2 } from '@verone/ui';
 import { LogIn } from 'lucide-react';
-
-import { ButtonV2 } from '@/components/ui/button';
 
 export default function HomePage() {
   return (

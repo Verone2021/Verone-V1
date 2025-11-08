@@ -6,10 +6,10 @@ import { useRouter } from 'next/navigation';
 
 import { ArrowLeft, Send, Upload, Calendar, AlertCircle } from 'lucide-react';
 
-import { useToast } from '@/shared/modules/common/hooks';
-import { useConsultations } from '@/shared/modules/consultations/hooks';
-import type { CreateConsultationData } from '@/shared/modules/consultations/hooks';
-import { useOrganisations } from '@/shared/modules/organisations/hooks';
+import { useToast } from '@verone/common';
+import { useConsultations } from '@verone/consultations';
+import type { CreateConsultationData } from '@verone/consultations';
+import { useOrganisations } from '@verone/organisations';
 
 import { CreateOrganisationModal } from '../../../components/business/create-organisation-modal';
 import { Button } from '../../../components/ui/button';

@@ -9,10 +9,7 @@
 
 import React, { useState } from 'react';
 
-import { AlertTriangle, Trash2, X } from 'lucide-react';
-
-import type { UserWithProfile } from '@/app/admin/users/page';
-import { ButtonV2 } from '@/components/ui/button';
+import { ButtonV2 } from '@verone/ui';
 import {
   Dialog,
   DialogContent,
@@ -20,10 +17,13 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-} from '@/components/ui/dialog';
-import { RoleBadge, type UserRole } from '@/components/ui/role-badge';
-import { deleteUser } from '@/lib/actions/user-management';
+} from '@verone/ui';
+import { RoleBadge, type UserRole } from '@verone/ui';
 import { cn } from '@verone/utils';
+import { AlertTriangle, Trash2, X } from 'lucide-react';
+
+import type { UserWithProfile } from '@/app/admin/users/page';
+import { deleteUser } from '@verone/admin/actions/user-management';
 
 interface DeleteUserDialogProps {
   open: boolean;

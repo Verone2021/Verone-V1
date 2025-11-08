@@ -2,6 +2,7 @@
  * Form Component - shadcn/ui
  * Wrapper pour React Hook Form avec Radix UI
  */
+'use client';
 
 import * as React from 'react';
 

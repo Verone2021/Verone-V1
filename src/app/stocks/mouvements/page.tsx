@@ -4,6 +4,23 @@ import React, { useState, useEffect } from 'react';
 
 import { useRouter, useSearchParams } from 'next/navigation';
 
+import { Badge } from '@verone/ui';
+import { ButtonV2 } from '@verone/ui';
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from '@verone/ui';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@verone/ui';
+import { cn } from '@verone/utils';
 import {
   ArrowLeft,
   ArrowUpDown,
@@ -17,31 +34,14 @@ import {
   Table,
 } from 'lucide-react';
 
-import { Badge } from '@/components/ui/badge';
-import { ButtonV2 } from '@/components/ui/button';
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from '@/components/ui/card';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
-import { cn } from '@verone/utils';
-import { UniversalOrderDetailsModal } from '@/shared/modules/orders/components/modals/UniversalOrderDetailsModal';
-import { MovementsFilters } from '@/shared/modules/stock/components/filters/MovementsFilters';
-import { CancelMovementModal } from '@/shared/modules/stock/components/modals/CancelMovementModal';
-import { MovementDetailsModal } from '@/shared/modules/stock/components/modals/MovementDetailsModal';
-import { MovementsStatsCards } from '@/shared/modules/stock/components/stats';
-import { MovementsTable } from '@/shared/modules/stock/components/tables/MovementsTable';
-import type { MovementWithDetails } from '@/shared/modules/stock/hooks';
-import { useMovementsHistory } from '@/shared/modules/stock/hooks';
+import { UniversalOrderDetailsModal } from '@verone/orders';
+import type { MovementWithDetails } from '@verone/stock';
+import { MovementsFilters } from '@verone/stock';
+import { CancelMovementModal } from '@verone/stock';
+import { MovementDetailsModal } from '@verone/stock';
+import { MovementsStatsCards } from '@verone/stock';
+import { MovementsTable } from '@verone/stock';
+import { useMovementsHistory } from '@verone/stock';
 
 import { MovementsListView } from './components/MovementsListView';
 

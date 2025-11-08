@@ -9,9 +9,7 @@
 
 import React, { useState } from 'react';
 
-import { Eye, EyeOff, Key, AlertCircle, CheckCircle2 } from 'lucide-react';
-
-import { ButtonV2 } from '@/components/ui/button';
+import { ButtonV2 } from '@verone/ui';
 import {
   Dialog,
   DialogContent,
@@ -19,10 +17,12 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-} from '@/components/ui/dialog';
-import { Input } from '@/components/ui/input';
-import { createClient } from '@verone/utils/supabase/client';
+} from '@verone/ui';
+import { Input } from '@verone/ui';
 import { cn } from '@verone/utils';
+import { Eye, EyeOff, Key, AlertCircle, CheckCircle2 } from 'lucide-react';
+
+import { createClient } from '@verone/utils/supabase/client';
 
 interface PasswordChangeDialogProps {
   open: boolean;

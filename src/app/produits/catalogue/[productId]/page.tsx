@@ -4,6 +4,16 @@ import { useState, useEffect, useCallback, useMemo } from 'react';
 
 import { useParams, useRouter } from 'next/navigation';
 
+import { ButtonV2 } from '@verone/ui';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from '@verone/ui';
+import { cn, checkSLOCompliance } from '@verone/utils';
 import {
   ArrowLeft,
   Share2,
@@ -20,36 +30,26 @@ import {
   Info,
 } from 'lucide-react';
 
-import { ButtonV2 } from '@/components/ui/button';
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from '@/components/ui/dialog';
+import { CategoryHierarchySelector } from '@verone/categories';
+import { SupplierVsPricingEditSection } from '@verone/common';
+import { CompletionStatusCompact } from '@verone/products';
+import { ProductStatusCompact } from '@verone/products';
+import { ProductVariantsGrid } from '@verone/products';
+import { ProductFixedCharacteristics } from '@verone/products';
+import { ProductImageGallery } from '@verone/products';
+import { ProductCharacteristicsModal } from '@verone/products';
+import { ProductDescriptionsModal } from '@verone/products';
+import { ProductPhotosModal } from '@verone/products';
+import { IdentifiersCompleteEditSection } from '@verone/products';
+import { ProductDescriptionsEditSection } from '@verone/products';
+import { ProductDetailAccordion } from '@verone/products';
+import { ProductInfoSection } from '@verone/products';
+import { SampleRequirementSection } from '@verone/products';
+import { SupplierEditSection } from '@verone/products';
+import { WeightEditSection } from '@verone/products';
+import { StockEditSection } from '@verone/stock';
+import { StockStatusCompact } from '@verone/stock';
 import { createClient } from '@verone/utils/supabase/client';
-import { cn, checkSLOCompliance } from '@verone/utils';
-import { CategoryHierarchySelector } from '@/shared/modules/categories/components/selectors/CategoryHierarchySelector';
-import { SupplierVsPricingEditSection } from '@/shared/modules/common/components/pricing/SupplierVsPricingEditSection';
-import { CompletionStatusCompact } from '@/shared/modules/products/components/badges/CompletionStatusCompact';
-import { ProductStatusCompact } from '@/shared/modules/products/components/badges/ProductStatusCompact';
-import { ProductVariantsGrid } from '@/shared/modules/products/components/grids/ProductVariantsGrid';
-import { ProductFixedCharacteristics } from '@/shared/modules/products/components/images/ProductFixedCharacteristics';
-import { ProductImageGallery } from '@/shared/modules/products/components/images/ProductImageGallery';
-import { ProductCharacteristicsModal } from '@/shared/modules/products/components/modals/ProductCharacteristicsModal';
-import { ProductDescriptionsModal } from '@/shared/modules/products/components/modals/ProductDescriptionsModal';
-import { ProductPhotosModal } from '@/shared/modules/products/components/modals/ProductPhotosModal';
-import { IdentifiersCompleteEditSection } from '@/shared/modules/products/components/sections/IdentifiersCompleteEditSection';
-import { ProductDescriptionsEditSection } from '@/shared/modules/products/components/sections/ProductDescriptionsEditSection';
-import { ProductDetailAccordion } from '@/shared/modules/products/components/sections/ProductDetailAccordion';
-import { ProductInfoSection } from '@/shared/modules/products/components/sections/ProductInfoSection';
-import { SampleRequirementSection } from '@/shared/modules/products/components/sections/SampleRequirementSection';
-import { StockEditSection } from '@/shared/modules/stock/components/sections/StockEditSection';
-import { SupplierEditSection } from '@/shared/modules/products/components/sections/SupplierEditSection';
-import { WeightEditSection } from '@/shared/modules/products/components/sections/WeightEditSection';
-import { StockStatusCompact } from '@/shared/modules/stock/components/badges/StockStatusCompact';
 
 // Champs obligatoires pour un produit complet
 const REQUIRED_PRODUCT_FIELDS = [

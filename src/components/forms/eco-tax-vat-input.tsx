@@ -1,15 +1,14 @@
 'use client';
 
-import { Info } from 'lucide-react';
-
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
+import { Input } from '@verone/ui';
+import { Label } from '@verone/ui';
 import {
   Tooltip,
   TooltipContent,
   TooltipProvider,
   TooltipTrigger,
-} from '@/components/ui/tooltip';
+} from '@verone/ui';
+import { Info } from 'lucide-react';
 
 interface EcoTaxVatInputProps {
   value: number | null;

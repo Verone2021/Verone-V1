@@ -4,6 +4,16 @@ import { useState } from 'react';
 
 import { useRouter } from 'next/navigation';
 
+import { Badge } from '@verone/ui';
+import { ButtonV2 } from '@verone/ui';
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from '@verone/ui';
+import { Progress } from '@verone/ui';
 import {
   ShoppingBag,
   Globe,
@@ -20,17 +30,6 @@ import {
   BarChart3,
   TrendingUp,
 } from 'lucide-react';
-
-import { Badge } from '@/components/ui/badge';
-import { ButtonV2 } from '@/components/ui/button';
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from '@/components/ui/card';
-import { Progress } from '@/components/ui/progress';
 
 // Configuration des canaux de vente actifs
 const ACTIVE_CHANNELS = [

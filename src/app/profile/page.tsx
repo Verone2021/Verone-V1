@@ -3,6 +3,10 @@
 import React, { useEffect, useState } from 'react';
 
 import type { User as SupabaseUser } from '@supabase/supabase-js';
+import { ButtonV2 } from '@verone/ui';
+import { Input } from '@verone/ui';
+import { RoleBadge, type UserRole } from '@verone/ui';
+import { cn } from '@verone/utils';
 import {
   User,
   Mail,
@@ -16,12 +20,8 @@ import {
 } from 'lucide-react';
 
 import { PasswordChangeDialog } from '@/components/profile/password-change-dialog';
-import { ButtonV2 } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { RoleBadge, type UserRole } from '@/components/ui/role-badge';
-import { createClient } from '@verone/utils/supabase/client';
 import { themeV2 } from '@verone/ui/theme-v2';
-import { cn } from '@verone/utils';
+import { createClient } from '@verone/utils/supabase/client';
 import {
   validateProfileForm,
   sanitizeProfileData,

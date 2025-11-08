@@ -4,6 +4,35 @@ import { useState, useEffect } from 'react';
 
 import { useRouter } from 'next/navigation';
 
+import { Badge } from '@verone/ui';
+import { ButtonV2 } from '@verone/ui';
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from '@verone/ui';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from '@verone/ui';
+import { Input } from '@verone/ui';
+import { Label } from '@verone/ui';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@verone/ui';
+import { Textarea } from '@verone/ui';
+import { SampleValidationSimple } from '@verone/ui';
 import {
   CheckCircle,
   ArrowRight,
@@ -25,38 +54,9 @@ import {
   Settings,
 } from 'lucide-react';
 
-import { Badge } from '@/components/ui/badge';
-import { ButtonV2 } from '@/components/ui/button';
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from '@/components/ui/card';
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from '@/components/ui/dialog';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
-import { Textarea } from '@/components/ui/textarea';
-import { useToast } from '@/shared/modules/common/hooks';
-import type { SourcingProduct } from '@/shared/modules/products/hooks';
-import { useSourcingProducts } from '@/shared/modules/products/hooks';
-import { SampleValidationSimple } from '@/shared/modules/ui/components/validation/SampleValidationSimple';
+import { useToast } from '@verone/common';
+import type { SourcingProduct } from '@verone/products';
+import { useSourcingProducts } from '@verone/products';
 
 export default function SourcingValidationPage() {
   const router = useRouter();

@@ -23,9 +23,9 @@ import {
   Camera,
 } from 'lucide-react';
 
-import { useToast } from '@/shared/modules/common/hooks';
-import { useConsultations } from '@/shared/modules/consultations/hooks';
-import { useConsultationImages } from '@/shared/modules/consultations/hooks';
+import { useToast } from '@verone/common';
+import { useConsultations } from '@verone/consultations';
+import { useConsultationImages } from '@verone/consultations';
 
 import { ConsultationImageViewerModal } from '../../components/business/consultation-image-viewer-modal';
 import { ConsultationOrderInterface } from '../../components/business/consultation-order-interface';

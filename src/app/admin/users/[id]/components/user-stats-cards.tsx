@@ -11,6 +11,7 @@
 
 import React from 'react';
 
+import { DataStatusBadge } from '@verone/ui';
 import {
   Clock,
   Activity,
@@ -19,8 +20,6 @@ import {
   Users,
   Target,
 } from 'lucide-react';
-
-import { DataStatusBadge } from '@/components/ui/data-status-badge';
 
 import type { UserDetailData } from '../page';
 

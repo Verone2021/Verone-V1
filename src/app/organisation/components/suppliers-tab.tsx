@@ -4,6 +4,11 @@ import { useState, useMemo, useEffect } from 'react';
 
 import Link from 'next/link';
 
+import { Badge } from '@verone/ui';
+import { ButtonV2 } from '@verone/ui';
+import { Card, CardContent } from '@verone/ui';
+import { Input } from '@verone/ui';
+import { cn } from '@verone/utils';
 import {
   Search,
   Plus,
@@ -17,26 +22,15 @@ import {
   List,
 } from 'lucide-react';
 
-import { Badge } from '@/components/ui/badge';
-import { ButtonV2 } from '@/components/ui/button';
-import { Card, CardContent } from '@/components/ui/card';
-import { Input } from '@/components/ui/input';
+import { SupplierCategoryBadge } from '@verone/categories';
+import { OrganisationListView } from '@verone/customers';
+import { OrganisationLogo } from '@verone/organisations';
+import { OrganisationCard } from '@verone/organisations';
+import { SupplierFormModal } from '@verone/organisations';
+import { useSuppliers, type Organisation } from '@verone/organisations';
+import { SupplierSegmentBadge, SupplierSegmentType } from '@verone/suppliers';
 import { spacing, colors } from '@verone/ui/design-system';
 import { createClient } from '@verone/utils/supabase/client';
-import { cn } from '@verone/utils';
-import { SupplierCategoryBadge } from '@/shared/modules/categories/components/badges/SupplierCategoryBadge';
-import { OrganisationListView } from '@/shared/modules/customers/components/sections/OrganisationListView';
-import { OrganisationLogo } from '@/shared/modules/organisations/components';
-import { OrganisationCard } from '@/shared/modules/organisations/components/cards/OrganisationCard';
-import { SupplierFormModal } from '@/shared/modules/organisations/components/forms/SupplierFormModal';
-import {
-  useSuppliers,
-  type Organisation,
-} from '@/shared/modules/organisations/hooks';
-import {
-  SupplierSegmentBadge,
-  SupplierSegmentType,
-} from '@/shared/modules/suppliers/components/badges/SupplierSegmentBadge';
 
 export function SuppliersTab() {
   const [searchQuery, setSearchQuery] = useState('');

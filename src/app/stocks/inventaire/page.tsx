@@ -6,6 +6,18 @@ import Image from 'next/image';
 import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
 
+import { Badge } from '@verone/ui';
+import { ButtonV2 } from '@verone/ui';
+import { Card, CardContent } from '@verone/ui';
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+} from '@verone/ui';
+import { Input } from '@verone/ui';
+import { formatPrice } from '@verone/utils';
 import {
   Package,
   Search,
@@ -24,24 +36,12 @@ import {
   ExternalLink,
 } from 'lucide-react';
 
-import { Badge } from '@/components/ui/badge';
-import { ButtonV2 } from '@/components/ui/button';
-import { Card, CardContent } from '@/components/ui/card';
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogDescription,
-} from '@/components/ui/dialog';
-import { Input } from '@/components/ui/input';
 import { StockKPICard } from '@/components/ui-v2/stock';
-import { formatPrice } from '@verone/utils';
-import { ProductHistoryModal } from '@/shared/modules/products/components/modals/ProductHistoryModal';
-import { InventoryAdjustmentModal } from '@/shared/modules/stock/components/modals/InventoryAdjustmentModal';
-import { StockReportsModal } from '@/shared/modules/stock/components/modals/StockReportsModal';
-import { useStockMovements } from '@/shared/modules/stock/hooks';
-import { useStockInventory } from '@/shared/modules/stock/hooks';
+import { ProductHistoryModal } from '@verone/products';
+import { InventoryAdjustmentModal } from '@verone/stock';
+import { StockReportsModal } from '@verone/stock';
+import { useStockMovements } from '@verone/stock';
+import { useStockInventory } from '@verone/stock';
 
 export default function InventairePage() {
   const router = useRouter();

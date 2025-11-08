@@ -5,6 +5,10 @@ import { useState } from 'react';
 import Link from 'next/link';
 import { useParams } from 'next/navigation';
 
+import { Badge } from '@verone/ui';
+import { ButtonV2 } from '@verone/ui';
+import { Card, CardContent } from '@verone/ui';
+import { TabsNavigation, TabContent } from '@verone/ui';
 import {
   ArrowLeft,
   Building2,
@@ -17,28 +21,24 @@ import {
   Euro,
 } from 'lucide-react';
 
-import { Badge } from '@/components/ui/badge';
-import { ButtonV2 } from '@/components/ui/button';
-import { Card, CardContent } from '@/components/ui/card';
-import { TabsNavigation, TabContent } from '@/components/ui/tabs-navigation';
 import { isModuleDeployed, getModulePhase } from '@/lib/deployed-modules';
-import { AddressEditSection } from '@/shared/modules/common/components/address/AddressEditSection';
-import { ContactEditSection } from '@/shared/modules/customers/components/sections/ContactEditSection';
-import { ContactsManagementSection } from '@/shared/modules/customers/components/sections/ContactsManagementSection';
-import { OrganisationLogoCard } from '@/shared/modules/organisations/components/cards/OrganisationLogoCard';
-import { OrganisationStatsCard } from '@/shared/modules/organisations/components/cards/OrganisationStatsCard';
-import { CommercialEditSection } from '@/shared/modules/organisations/components/sections/CommercialEditSection';
-import { LegalIdentityEditSection } from '@/shared/modules/organisations/components/sections/LegalIdentityEditSection';
-import { PerformanceEditSection } from '@/shared/modules/organisations/components/sections/PerformanceEditSection';
+import { AddressEditSection } from '@verone/common';
+import { ContactEditSection } from '@verone/customers';
+import { ContactsManagementSection } from '@verone/customers';
+import { OrganisationLogoCard } from '@verone/organisations';
+import { OrganisationStatsCard } from '@verone/organisations';
+import { CommercialEditSection } from '@verone/organisations';
+import { LegalIdentityEditSection } from '@verone/organisations';
+import { PerformanceEditSection } from '@verone/organisations';
 import {
   useOrganisation,
   useOrganisations,
   getOrganisationDisplayName,
-} from '@/shared/modules/organisations/hooks';
-import { useOrganisationTabCounts } from '@/shared/modules/organisations/hooks';
+} from '@verone/organisations';
+import { useOrganisationTabCounts } from '@verone/organisations';
 // Phase 1: organisation-products-section désactivé (Phase 2+)
-// import { OrganisationProductsSection } from '@/shared/modules/organisations/components/sections/OrganisationProductsSection'
-import type { Organisation } from '@/shared/modules/organisations/hooks';
+// import { OrganisationProductsSection } from '@verone/organisations'
+import type { Organisation } from '@verone/organisations';
 
 export default function CustomerDetailPage() {
   const { customerId } = useParams();

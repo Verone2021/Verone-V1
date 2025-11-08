@@ -12,22 +12,22 @@ import { useState, useEffect } from 'react';
 
 import { useRouter } from 'next/navigation';
 
-import { format } from 'date-fns';
-import { Loader2, Save, AlertCircle } from 'lucide-react';
-
-import { ButtonV2 } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { ImageUploadZone } from '@/components/ui/image-upload-zone';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
+import { ButtonV2 } from '@verone/ui';
+import { Card, CardContent, CardHeader, CardTitle } from '@verone/ui';
+import { ImageUploadZone } from '@verone/ui';
+import { Input } from '@verone/ui';
+import { Label } from '@verone/ui';
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from '@/components/ui/select';
-import { Textarea } from '@/components/ui/textarea';
+} from '@verone/ui';
+import { Textarea } from '@verone/ui';
+import { format } from 'date-fns';
+import { Loader2, Save, AlertCircle } from 'lucide-react';
+
 import { createClient } from '@verone/utils/supabase/client';
 
 // =====================================================================

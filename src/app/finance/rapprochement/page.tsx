@@ -7,15 +7,15 @@
 
 'use client';
 
-import { AlertCircle, Lock } from 'lucide-react';
-
 import {
   Card,
   CardContent,
   CardDescription,
   CardHeader,
   CardTitle,
-} from '@/components/ui/card';
+} from '@verone/ui';
+import { AlertCircle, Lock } from 'lucide-react';
+
 import { featureFlags } from '@/lib/feature-flags';
 
 // =====================================================================

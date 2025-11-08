@@ -1,3 +1,5 @@
+'use client';
+
 /**
  * Hook centralisé pour gérer les compteurs des onglets organisation
  * Utilisé dans pages détail fournisseur/client/prestataire

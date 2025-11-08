@@ -1,1 +1,4 @@
-export { SupplierCategoryBadge } from './SupplierCategoryBadge';
+export {
+  SupplierCategoryBadge,
+  type SupplierCategoryCode,
+} from './SupplierCategoryBadge';

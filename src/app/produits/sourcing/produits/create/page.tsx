@@ -4,18 +4,18 @@ import { useState } from 'react';
 
 import { useRouter } from 'next/navigation';
 
-import { ArrowLeft, Zap, CheckCircle, Circle, ArrowRight } from 'lucide-react';
-
-import { Badge } from '@/components/ui/badge';
-import { Button } from '@/components/ui/button';
+import { Badge } from '@verone/ui';
+import { Button } from '@verone/ui';
 import {
   Card,
   CardContent,
   CardDescription,
   CardHeader,
   CardTitle,
-} from '@/components/ui/card';
-import { SourcingQuickForm } from '@/shared/modules/products/components/sourcing/SourcingQuickForm';
+} from '@verone/ui';
+import { ArrowLeft, Zap, CheckCircle, Circle, ArrowRight } from 'lucide-react';
+
+import { SourcingQuickForm } from '@verone/products';
 
 export default function NewSourcingPage() {
   const router = useRouter();

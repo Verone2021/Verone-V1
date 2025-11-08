@@ -11,9 +11,9 @@ import { useEffect, useState } from 'react';
 import { usePathname } from 'next/navigation';
 
 import type { User } from '@supabase/supabase-js';
+import { SidebarProvider } from '@verone/ui';
+import { TooltipProvider } from '@verone/ui';
 
-import { SidebarProvider } from '@/components/ui/sidebar';
-import { TooltipProvider } from '@/components/ui/tooltip';
 import { createClient } from '@verone/utils/supabase/client';
 
 import { AppHeader } from './app-header';

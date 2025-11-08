@@ -25,8 +25,8 @@ import {
   BarChart3,
 } from 'lucide-react';
 
-import { useToast } from '@/shared/modules/common/hooks';
-import { useStockAlerts } from '@/shared/modules/stock/hooks';
+import { useToast } from '@verone/common';
+import { useStockAlerts } from '@verone/stock';
 
 import { QuickPurchaseOrderModal } from '../../../components/business/quick-purchase-order-modal';
 import { StockAlertCard } from '../../../components/business/stock-alert-card';

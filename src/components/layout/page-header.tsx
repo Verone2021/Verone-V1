@@ -11,10 +11,9 @@ import React from 'react';
 
 import { useRouter } from 'next/navigation';
 
+import { ButtonV2 } from '@verone/ui';
 import type { LucideIcon } from 'lucide-react';
 import { ArrowLeft } from 'lucide-react';
-
-import { ButtonV2 } from '@/components/ui/button';
 
 export interface PageHeaderProps {
   /** Titre principal de la page */

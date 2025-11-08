@@ -11,16 +11,15 @@ import { Suspense } from 'react';
 
 import { useSearchParams, useRouter } from 'next/navigation';
 
-import { AlertCircle, Lock, ArrowLeft, Calendar } from 'lucide-react';
-
-import { ButtonV2 } from '@/components/ui/button';
+import { ButtonV2 } from '@verone/ui';
 import {
   Card,
   CardContent,
   CardDescription,
   CardHeader,
   CardTitle,
-} from '@/components/ui/card';
+} from '@verone/ui';
+import { AlertCircle, Lock, ArrowLeft, Calendar } from 'lucide-react';
 
 // Mapping noms modules pour affichage convivial
 const MODULE_NAMES: Record<string, string> = {

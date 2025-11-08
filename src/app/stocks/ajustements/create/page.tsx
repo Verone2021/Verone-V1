@@ -8,10 +8,10 @@
 
 import Link from 'next/link';
 
+import { ButtonV2 } from '@verone/ui';
 import { ArrowLeft } from 'lucide-react';
 
 import { StockAdjustmentForm } from '@/components/forms/stock-adjustment-form';
-import { ButtonV2 } from '@/components/ui/button';
 
 export default function CreateStockAdjustmentPage() {
   return (

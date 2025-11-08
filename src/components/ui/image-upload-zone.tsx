@@ -11,6 +11,8 @@ import { useCallback, useState } from 'react';
 
 import Image from 'next/image';
 
+import { ButtonV2 } from '@verone/ui';
+import { Card, CardContent } from '@verone/ui';
 import {
   Upload,
   X,
@@ -21,8 +23,6 @@ import {
 } from 'lucide-react';
 import { useDropzone } from 'react-dropzone';
 
-import { ButtonV2 } from '@/components/ui/button';
-import { Card, CardContent } from '@/components/ui/card';
 import { createClient } from '@verone/utils/supabase/client';
 
 // =====================================================================

@@ -102,11 +102,9 @@ export * from './compact-quick-actions';
 // ========================================
 // UPLOAD COMPONENTS
 // ========================================
-// DISABLED: Dépend de @verone/utils createClient non disponible
-// export * from './image-upload-zone';
+export * from './image-upload-zone';
 
 // ========================================
 // CUSTOM COMPONENTS
 // ========================================
-// DISABLED: Dépend de ../../types/room-types non disponible dans @verone/ui
-// export * from './room-multi-select';
+export * from './room-multi-select';

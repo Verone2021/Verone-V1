@@ -2,11 +2,10 @@
 
 import { useState } from 'react';
 
+import { ButtonV2 } from '@verone/ui';
+import { Input } from '@verone/ui';
+import { Label } from '@verone/ui';
 import { Upload, Loader2, CheckCircle, XCircle } from 'lucide-react';
-
-import { ButtonV2 } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
 
 import { createClient } from '../../lib/supabase/client';
 

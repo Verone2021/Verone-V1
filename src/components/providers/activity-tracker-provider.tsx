@@ -13,8 +13,8 @@ import { usePathname } from 'next/navigation';
 
 import type { User } from '@supabase/supabase-js';
 
+import { useUserActivityTracker } from '@verone/notifications';
 import { createClient } from '@verone/utils/supabase/client';
-import { useUserActivityTracker } from '@/shared/modules/notifications/hooks';
 
 interface ActivityTrackerProviderProps {
   children: React.ReactNode;

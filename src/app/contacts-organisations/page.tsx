@@ -4,11 +4,11 @@ import React from 'react';
 
 import { useRouter } from 'next/navigation';
 
+import { ButtonV2 } from '@verone/ui';
+import { KPICardUnified } from '@verone/ui';
 import { Building2, Truck, Settings, Phone, TrendingUp } from 'lucide-react';
 
-import { ButtonV2 } from '@/components/ui/button';
-import { KPICardUnified } from '@/components/ui/kpi-card-unified';
-import { useOrganisations } from '@/shared/modules/organisations/hooks';
+import { useOrganisations } from '@verone/organisations';
 
 interface OrganisationStats {
   totalOrganisations: number;
@@ -74,20 +74,23 @@ export default function ContactsOrganisationsPage() {
             Vue d'ensemble
           </h2>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-            <KPICardUnified variant="elegant"
+            <KPICardUnified
+              variant="elegant"
               title="Total Organisations"
               value={stats.totalOrganisations}
               icon={Building2}
             />
 
-            <KPICardUnified variant="elegant"
+            <KPICardUnified
+              variant="elegant"
               title="Fournisseurs"
               value={stats.suppliers}
               icon={Truck}
               onClick={() => router.push('/contacts-organisations/suppliers')}
             />
 
-            <KPICardUnified variant="elegant"
+            <KPICardUnified
+              variant="elegant"
               title="Clients Pro"
               value={stats.customersProfessional}
               icon={Building2}
@@ -98,7 +101,8 @@ export default function ContactsOrganisationsPage() {
               }
             />
 
-            <KPICardUnified variant="elegant"
+            <KPICardUnified
+              variant="elegant"
               title="Prestataires"
               value={stats.partners}
               icon={Settings}

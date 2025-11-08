@@ -11,6 +11,19 @@ import { use } from 'react';
 
 import Link from 'next/link';
 
+import { Badge } from '@verone/ui';
+import { ButtonV2 } from '@verone/ui';
+import { Card, CardContent, CardHeader, CardTitle } from '@verone/ui';
+import { Separator } from '@verone/ui';
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from '@verone/ui';
+import { Skeleton } from '@verone/ui';
 import { format } from 'date-fns';
 import { fr } from 'date-fns/locale';
 import {
@@ -29,26 +42,10 @@ import {
 } from 'lucide-react';
 
 import { ExpenseForm } from '@/components/forms/expense-form';
-import { Badge } from '@/components/ui/badge';
-import { ButtonV2 } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Separator } from '@/components/ui/separator';
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from '@/components/ui/table';
+import { useFinancialPayments } from '@verone/finance';
+import { FinancialPaymentForm } from '@verone/finance';
+import type { FinancialDocument, DocumentStatus } from '@verone/finance';
 import { createClient } from '@verone/utils/supabase/client';
-import { useFinancialPayments } from '@/shared/modules/finance/hooks';
-import { Skeleton } from '@/components/ui/skeleton';
-import { FinancialPaymentForm } from '@/shared/modules/finance/components/forms/FinancialPaymentForm';
-import type {
-  FinancialDocument,
-  DocumentStatus,
-} from '@/shared/modules/finance/hooks';
 import { getOrganisationDisplayName } from '@verone/utils/utils/organisation-helpers';
 
 // =====================================================================

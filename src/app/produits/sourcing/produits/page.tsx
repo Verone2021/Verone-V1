@@ -5,6 +5,32 @@ import { useState, useMemo } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 
+import { Badge } from '@verone/ui';
+import { ButtonV2 } from '@verone/ui';
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from '@verone/ui';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from '@verone/ui';
+import { Input } from '@verone/ui';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@verone/ui';
+import { debounce } from '@verone/utils';
 import {
   Search,
   Filter,
@@ -26,38 +52,9 @@ import {
   Globe,
 } from 'lucide-react';
 
-import { Badge } from '@/components/ui/badge';
-import { ButtonV2 } from '@/components/ui/button';
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from '@/components/ui/card';
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuLabel,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from '@/components/ui/dropdown-menu';
-import { Input } from '@/components/ui/input';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
-import { debounce } from '@verone/utils';
-import {
-  useSuppliers,
-  useCustomers,
-} from '@/shared/modules/organisations/hooks';
-import { QuickSourcingModal } from '@/shared/modules/products/components/modals/QuickSourcingModal';
-import { useSourcingProducts } from '@/shared/modules/products/hooks';
+import { useSuppliers, useCustomers } from '@verone/organisations';
+import { QuickSourcingModal } from '@verone/products';
+import { useSourcingProducts } from '@verone/products';
 
 export default function SourcingProduitsPage() {
   const router = useRouter();

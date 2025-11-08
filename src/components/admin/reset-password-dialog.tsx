@@ -9,10 +9,7 @@
 
 import React, { useState } from 'react';
 
-import { Key, Save, X, Eye, EyeOff } from 'lucide-react';
-
-import type { UserWithProfile } from '@/app/admin/users/page';
-import { ButtonV2 } from '@/components/ui/button';
+import { ButtonV2 } from '@verone/ui';
 import {
   Dialog,
   DialogContent,
@@ -20,12 +17,15 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-} from '@/components/ui/dialog';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { RoleBadge, type UserRole } from '@/components/ui/role-badge';
-import { resetUserPassword } from '@/lib/actions/user-management';
+} from '@verone/ui';
+import { Input } from '@verone/ui';
+import { Label } from '@verone/ui';
+import { RoleBadge, type UserRole } from '@verone/ui';
 import { cn } from '@verone/utils';
+import { Key, Save, X, Eye, EyeOff } from 'lucide-react';
+
+import type { UserWithProfile } from '@/app/admin/users/page';
+import { resetUserPassword } from '@verone/admin/actions/user-management';
 
 interface ResetPasswordDialogProps {
   open: boolean;

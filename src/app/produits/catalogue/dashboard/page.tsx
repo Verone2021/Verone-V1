@@ -13,6 +13,8 @@ import { useState, useEffect, useMemo } from 'react';
 
 import { useRouter } from 'next/navigation';
 
+import { Badge } from '@verone/ui';
+import { KPICardUnified } from '@verone/ui';
 import {
   Target,
   CheckCircle,
@@ -27,9 +29,7 @@ import {
   Plus,
 } from 'lucide-react';
 
-import { Badge } from '@/components/ui/badge';
-import { KPICardUnified } from '@/components/ui/kpi-card-unified';
-import { useProducts } from '@/shared/modules/products/hooks';
+import { useProducts } from '@verone/products';
 
 // Champs obligatoires pour calculer le taux de complétion
 const REQUIRED_PRODUCT_FIELDS = [
@@ -237,7 +237,8 @@ export default function DashboardProduitsPage() {
             Métriques Clés
           </h2>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-            <KPICardUnified variant="elegant"
+            <KPICardUnified
+              variant="elegant"
               title="Produits Catalogue"
               value={productsLoading ? '...' : metrics.catalogueCount}
               icon={Package}
@@ -246,7 +247,8 @@ export default function DashboardProduitsPage() {
               aria-title="Voir les produits du catalogue"
             />
 
-            <KPICardUnified variant="elegant"
+            <KPICardUnified
+              variant="elegant"
               title="En Sourcing"
               value={productsLoading ? '...' : metrics.sourcingCount}
               icon={Target}
@@ -255,7 +257,8 @@ export default function DashboardProduitsPage() {
               aria-title="Voir les produits en sourcing"
             />
 
-            <KPICardUnified variant="elegant"
+            <KPICardUnified
+              variant="elegant"
               title="Taux Complétion"
               value={productsLoading ? '...' : `${metrics.completionRate}%`}
               icon={TrendingUp}
@@ -264,7 +267,8 @@ export default function DashboardProduitsPage() {
               aria-title="Voir le taux de complétion des produits"
             />
 
-            <KPICardUnified variant="elegant"
+            <KPICardUnified
+              variant="elegant"
               title="Croissance Semaine"
               value={productsLoading ? '...' : `+${metrics.weekGrowth}`}
               icon={TrendingUp}

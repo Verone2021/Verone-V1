@@ -4,6 +4,7 @@ import React, { useEffect, useState } from 'react';
 
 import { useRouter } from 'next/navigation';
 
+import { KPICardUnified } from '@verone/ui';
 import {
   Package,
   Grid3x3,
@@ -18,9 +19,8 @@ import {
   BarChart3,
 } from 'lucide-react';
 
-import { KPICardUnified } from '@/components/ui/kpi-card-unified';
+import { useProductMetrics } from '@verone/dashboard';
 import { colors } from '@verone/ui/design-system';
-import { useProductMetrics } from '@/shared/modules/dashboard/hooks/metrics';
 
 export default function ProduitsPage() {
   const router = useRouter();
@@ -184,7 +184,8 @@ export default function ProduitsPage() {
             Métriques Clés
           </h2>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-            <KPICardUnified variant="elegant"
+            <KPICardUnified
+              variant="elegant"
               title="Total Produits"
               value={loading ? '...' : metrics.total}
               icon={TrendingUp}
@@ -200,7 +201,8 @@ export default function ProduitsPage() {
               onClick={() => router.push('/produits/catalogue')}
             />
 
-            <KPICardUnified variant="elegant"
+            <KPICardUnified
+              variant="elegant"
               title="Alertes Stock"
               value={loading ? '...' : stockAlertsCount}
               icon={AlertTriangle}
@@ -210,7 +212,8 @@ export default function ProduitsPage() {
               }
             />
 
-            <KPICardUnified variant="elegant"
+            <KPICardUnified
+              variant="elegant"
               title="Sourcing Actif"
               value={loading ? '...' : sourcingActiveCount}
               icon={Package}
@@ -218,7 +221,8 @@ export default function ProduitsPage() {
               onClick={() => router.push('/produits/sourcing')}
             />
 
-            <KPICardUnified variant="elegant"
+            <KPICardUnified
+              variant="elegant"
               title="Validations"
               value={loading ? '...' : validationsPendingCount}
               icon={Clock}

@@ -5,6 +5,20 @@ import { useState, useEffect, useMemo } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 
+import { Badge } from '@verone/ui';
+import {
+  Collapsible,
+  CollapsibleContent,
+  CollapsibleTrigger,
+} from '@verone/ui';
+import { SidebarProvider, SidebarTrigger, useSidebar } from '@verone/ui';
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+  TooltipProvider,
+} from '@verone/ui';
+import { cn } from '@verone/utils';
 import {
   Home,
   Users,
@@ -31,33 +45,13 @@ import {
   RefreshCw,
 } from 'lucide-react';
 
-import { Badge } from '@/components/ui/badge';
-import {
-  Collapsible,
-  CollapsibleContent,
-  CollapsibleTrigger,
-} from '@/components/ui/collapsible';
-import {
-  InactiveModuleWrapper,
-  PhaseIndicator,
-} from '@/components/ui/phase-indicator';
-import {
-  SidebarProvider,
-  SidebarTrigger,
-  useSidebar,
-} from '@/components/ui/sidebar';
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipTrigger,
-  TooltipProvider,
-} from '@/components/ui/tooltip';
 import { featureFlags, getModuleDeploymentStatus } from '@/lib/feature-flags';
 import { createClient } from '@verone/utils/supabase/client';
-import { cn } from '@verone/utils';
+
+import { InactiveModuleWrapper, PhaseIndicator } from '../ui/phase-indicator';
 
 // Phase 1: use-stock-alerts-count hook désactivé (Phase 2+)
-// import { useStockAlertsCount } from '@/shared/modules/stock/hooks'
+// import { useStockAlertsCount } from '@verone/stock'
 
 // Interface pour les éléments de navigation
 interface NavItem {

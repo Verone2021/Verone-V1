@@ -2,16 +2,16 @@
  * Form Component - shadcn/ui
  * Wrapper pour React Hook Form avec Radix UI
  */
+'use client';
 
 import * as React from 'react';
 
 import type * as LabelPrimitive from '@radix-ui/react-label';
 import { Slot } from '@radix-ui/react-slot';
+import { Label } from '@verone/ui';
+import { cn } from '@verone/utils';
 import type { ControllerProps, FieldPath, FieldValues } from 'react-hook-form';
 import { Controller, FormProvider, useFormContext } from 'react-hook-form';
-
-import { Label } from '@/components/ui/label';
-import { cn } from '@verone/utils';
 
 const Form = FormProvider;
 

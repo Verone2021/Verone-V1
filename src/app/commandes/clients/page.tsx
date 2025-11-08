@@ -4,6 +4,33 @@ import { useState, useEffect, useMemo } from 'react';
 
 import { useSearchParams } from 'next/navigation';
 
+import { Badge } from '@verone/ui';
+import { ButtonV2 } from '@verone/ui';
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from '@verone/ui';
+import { Input } from '@verone/ui';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@verone/ui';
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from '@verone/ui';
+import { Tabs, TabsList, TabsTrigger, TabsContent } from '@verone/ui';
+import { formatCurrency, formatDate } from '@verone/utils';
 import {
   Plus,
   Search,
@@ -21,41 +48,11 @@ import {
   FileSpreadsheet,
 } from 'lucide-react';
 
-import { Badge } from '@/components/ui/badge';
-import { ButtonV2 } from '@/components/ui/button';
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from '@/components/ui/card';
-import { Input } from '@/components/ui/input';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from '@/components/ui/table';
-import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
-import { formatCurrency, formatDate } from '@verone/utils';
-import { useToast } from '@/shared/modules/common/hooks';
-import { OrderDetailModal } from '@/shared/modules/orders/components/modals/OrderDetailModal';
-import { SalesOrderFormModal } from '@/shared/modules/orders/components/modals/SalesOrderFormModal';
-import type {
-  SalesOrder,
-  SalesOrderStatus,
-} from '@/shared/modules/orders/hooks';
-import { useSalesOrders } from '@/shared/modules/orders/hooks';
+import { useToast } from '@verone/common';
+import type { SalesOrder, SalesOrderStatus } from '@verone/orders';
+import { SalesOrderFormModal } from '@verone/orders';
+import { OrderDetailModal } from '@verone/orders';
+import { useSalesOrders } from '@verone/orders';
 
 const statusLabels: Record<SalesOrderStatus, string> = {
   draft: 'Brouillon',

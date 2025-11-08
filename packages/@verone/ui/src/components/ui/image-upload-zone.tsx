@@ -3,12 +3,7 @@
  * Description: Zone upload drag & drop réutilisable avec react-dropzone
  * Usage: StockAdjustmentForm, ExpenseForm, ProductForm (Step 2)
  * Features: Preview, validation format/taille, upload Supabase Storage
- *
- * DISABLED: Dépend de @verone/utils createClient (Supabase) non disponible dans package @verone/ui
- * TODO: Déplacer vers app principale ou créer @verone/upload séparé
  */
-
-// @ts-nocheck - DISABLED COMPONENT
 'use client';
 
 import { useCallback, useState } from 'react';

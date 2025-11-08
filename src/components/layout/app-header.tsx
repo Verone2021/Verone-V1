@@ -4,18 +4,18 @@ import { useEffect, useState } from 'react';
 
 import { useRouter } from 'next/navigation';
 
-import { User, LogOut, Settings, Users, Activity } from 'lucide-react';
-
-import { ButtonV2 } from '@/components/ui/button';
+import { ButtonV2 } from '@verone/ui';
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
-} from '@/components/ui/dropdown-menu';
+} from '@verone/ui';
+import { User, LogOut, Settings, Users, Activity } from 'lucide-react';
+
+import { NotificationsDropdown } from '@verone/notifications';
 import { createClient } from '@verone/utils/supabase/client';
-import { NotificationsDropdown } from '@/shared/modules/notifications/components/dropdowns/NotificationsDropdown';
 
 import { cn } from '../../lib/utils';
 

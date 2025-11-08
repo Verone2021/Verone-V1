@@ -5,6 +5,24 @@ import React, { useState, useEffect, useMemo } from 'react';
 import Image from 'next/image';
 import { useRouter } from 'next/navigation';
 
+import { Badge } from '@verone/ui';
+import { ButtonV2 } from '@verone/ui';
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from '@verone/ui';
+import { Input } from '@verone/ui';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@verone/ui';
+import { formatPrice } from '@verone/utils';
 import {
   Package,
   Search,
@@ -27,28 +45,10 @@ import {
   ArrowLeft,
 } from 'lucide-react';
 
-import { Badge } from '@/components/ui/badge';
-import { ButtonV2 } from '@/components/ui/button';
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from '@/components/ui/dialog';
-import { Input } from '@/components/ui/input';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
-import { formatPrice } from '@verone/utils';
-import { useToast } from '@/shared/modules/common/hooks';
-import { useStock } from '@/shared/modules/stock/hooks';
-import { useStockMovements } from '@/shared/modules/stock/hooks';
-import { useStockReservations } from '@/shared/modules/stock/hooks';
+import { useToast } from '@verone/common';
+import { useStock } from '@verone/stock';
+import { useStockMovements } from '@verone/stock';
+import { useStockReservations } from '@verone/stock';
 
 interface StockFilters {
   search: string;

@@ -19,6 +19,33 @@
 
 import { useState, useEffect } from 'react';
 
+import { Badge } from '@verone/ui';
+import { ButtonV2 } from '@verone/ui';
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from '@verone/ui';
+import { Input } from '@verone/ui';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@verone/ui';
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from '@verone/ui';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@verone/ui';
+import { formatCurrency, formatDate } from '@verone/utils';
 import {
   Package,
   Truck,
@@ -31,35 +58,8 @@ import {
   Eye,
 } from 'lucide-react';
 
-import { Badge } from '@/components/ui/badge';
-import { ButtonV2 } from '@/components/ui/button';
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from '@/components/ui/card';
-import { Input } from '@/components/ui/input';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from '@/components/ui/table';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { formatCurrency, formatDate } from '@verone/utils';
-import { PurchaseOrderReceptionModal } from '@/shared/modules/orders/components/modals/PurchaseOrderReceptionModal';
-import { usePurchaseReceptions } from '@/shared/modules/orders/hooks';
+import { PurchaseOrderReceptionModal } from '@verone/orders';
+import { usePurchaseReceptions } from '@verone/orders';
 
 export default function ReceptionsPage() {
   const {

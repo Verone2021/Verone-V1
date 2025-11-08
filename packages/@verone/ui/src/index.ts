@@ -15,3 +15,15 @@ export * from './components/ui';
 
 // UI Components - Business specific
 export * from './components/stock';
+
+// Re-export business components for convenience
+export { HeartBadge } from '@verone/organisations';
+export {
+  FavoriteToggleButton,
+  FilterCombobox,
+  type FilterOption,
+  DynamicColorSelector,
+  SampleValidationSimple,
+  CommandPaletteSearch,
+  type SearchItem,
+} from '@verone/ui-business';

@@ -5,6 +5,15 @@ import { useState, useMemo, useEffect } from 'react';
 import Image from 'next/image';
 import { useRouter } from 'next/navigation';
 
+import type { FilterOption } from '@verone/ui';
+import type { SearchItem } from '@verone/ui';
+import { Badge } from '@verone/ui';
+import { Button } from '@verone/ui';
+import { ViewModeToggle } from '@verone/ui';
+import { FilterCombobox } from '@verone/ui';
+import { CommandPaletteSearch as CommandPalette } from '@verone/ui';
+import { cn } from '@verone/utils';
+import { checkSLOCompliance, debounce } from '@verone/utils';
 import {
   Search,
   Filter,
@@ -16,24 +25,16 @@ import {
   Zap,
 } from 'lucide-react';
 
-import { Badge } from '@/components/ui/badge';
-import { Button } from '@/components/ui/button';
-import { ViewModeToggle } from '@/components/ui/view-mode-toggle';
-import { cn } from '@verone/utils';
-import { checkSLOCompliance, debounce } from '@verone/utils';
-import { CategoryHierarchyFilterV2 } from '@/shared/modules/categories/components/filters/CategoryHierarchyFilterV2';
-import type { Product } from '@/shared/modules/categories/hooks';
-import { useCatalogue, Category } from '@/shared/modules/categories/hooks';
-import { useFamilies } from '@/shared/modules/categories/hooks';
-import { useCategories } from '@/shared/modules/categories/hooks';
-import { useSubcategories } from '@/shared/modules/categories/hooks';
-import { ProductCardV2 as ProductCard } from '@/shared/modules/products/components/cards/ProductCardV2';
-import { useProductImages } from '@/shared/modules/products/hooks';
+import type { Product } from '@verone/categories';
+import { CategoryHierarchyFilterV2 } from '@verone/categories';
+import { useCatalogue, Category } from '@verone/categories';
+import { useFamilies } from '@verone/categories';
+import { useCategories } from '@verone/categories';
+import { useSubcategories } from '@verone/categories';
+import { ProductCardV2 as ProductCard } from '@verone/products';
+import { useProductImages } from '@verone/products';
+
 // Nouveaux composants UX/UI 2025
-import type { FilterOption } from '@/shared/modules/ui/components/selectors/FilterCombobox';
-import { FilterCombobox } from '@/shared/modules/ui/components/selectors/FilterCombobox';
-import type { SearchItem } from '@/shared/modules/ui/components/utils/CommandPaletteSearch';
-import { CommandPaletteSearch } from '@/shared/modules/ui/components/utils/CommandPaletteSearch';
 // Interface Produit selon business rules - utilise maintenant celle du hook useCatalogue
 
 // Interface filtres - migration brand → supplier
@@ -117,7 +118,7 @@ export default function CataloguePage() {
     }
   }, [activeTab, filters]);
 
-  // Listener global ⌘K pour CommandPaletteSearch
+  // Listener global ⌘K pour CommandPalette
   useEffect(() => {
     const down = (e: KeyboardEvent) => {
       if (e.key === 'k' && (e.metaKey || e.ctrlKey)) {
@@ -129,7 +130,7 @@ export default function CataloguePage() {
     return () => document.removeEventListener('keydown', down);
   }, []);
 
-  // Préparer les items pour CommandPaletteSearch
+  // Préparer les items pour CommandPalette
   const searchItems: SearchItem[] = useMemo(() => {
     return products.map(product => ({
       id: product.id,
@@ -611,8 +612,8 @@ export default function CataloguePage() {
         </div>
       </div>
 
-      {/* CommandPaletteSearch global ⌘K */}
-      <CommandPaletteSearch
+      {/* CommandPalette global ⌘K */}
+      <CommandPalette
         open={paletteOpen}
         onOpenChange={setPaletteOpen}
         onSelect={handleSearchSelect}

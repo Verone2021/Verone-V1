@@ -14,6 +14,23 @@ import { useEffect } from 'react';
 
 import Image from 'next/image';
 
+import { Badge } from '@verone/ui';
+import { Button } from '@verone/ui';
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from '@verone/ui';
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from '@verone/ui';
 import {
   TrendingUp,
   Package,
@@ -24,26 +41,9 @@ import {
   RefreshCw,
 } from 'lucide-react';
 
-import { Badge } from '@/components/ui/badge';
-import { Button } from '@/components/ui/button';
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from '@/components/ui/card';
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from '@/components/ui/table';
 import { StockKPICard } from '@/components/ui-v2/stock';
-import { useStockAnalytics } from '@/shared/modules/stock/hooks';
-import { ABC_CLASSES, XYZ_CLASSES } from '@/shared/modules/stock/hooks';
+import { useStockAnalytics } from '@verone/stock';
+import { ABC_CLASSES, XYZ_CLASSES } from '@verone/stock';
 
 export default function StockAnalyticsPage() {
   const { report, loading, error, generateReport } = useStockAnalytics();

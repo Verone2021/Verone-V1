@@ -4,18 +4,8 @@
 
 import { useState, useEffect } from 'react';
 
-import {
-  Search,
-  Link,
-  Unlink,
-  Users,
-  Package,
-  ArrowRight,
-  Plus,
-  Eye,
-  CheckCircle,
-} from 'lucide-react';
-
+import { useToast } from '@verone/common/hooks';
+import { useConsultations, useConsultationItems } from '@verone/consultations';
 import { Alert, AlertDescription } from '@verone/ui';
 import { Badge } from '@verone/ui';
 import { ButtonV2 } from '@verone/ui';
@@ -37,10 +27,16 @@ import {
 } from '@verone/ui';
 import { cn } from '@verone/utils';
 import {
-  useConsultations,
-  useConsultationItems,
-} from '@verone/common/hooks';
-import { useToast } from '@verone/common/hooks';
+  Search,
+  Link,
+  Unlink,
+  Users,
+  Package,
+  ArrowRight,
+  Plus,
+  Eye,
+  CheckCircle,
+} from 'lucide-react';
 
 interface ProductConsultationManagerProps {
   productId?: string; // Si fourni, focus sur ce produit

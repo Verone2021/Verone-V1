@@ -2,6 +2,33 @@
 
 import React, { useState, useEffect, useMemo } from 'react';
 
+import { Badge } from '@verone/ui';
+import { ButtonV2 } from '@verone/ui';
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from '@verone/ui';
+import { Input } from '@verone/ui';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@verone/ui';
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from '@verone/ui';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@verone/ui';
+import { formatPrice } from '@verone/utils';
 import {
   Package,
   Search,
@@ -22,43 +49,13 @@ import {
   Boxes,
 } from 'lucide-react';
 
-import { Badge } from '@/components/ui/badge';
-import { ButtonV2 } from '@/components/ui/button';
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from '@/components/ui/card';
-import { Input } from '@/components/ui/input';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from '@/components/ui/table';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { formatPrice } from '@verone/utils';
-import { useCatalogue } from '@/shared/modules/categories/hooks';
-import { useToast } from '@/shared/modules/common/hooks';
-import { ProductStockHistoryModal } from '@/shared/modules/products/components/modals/ProductStockHistoryModal';
-import { GeneralStockMovementModal } from '@/shared/modules/stock/components/modals/GeneralStockMovementModal';
-import { StockMovementModal } from '@/shared/modules/stock/components/modals/StockMovementModal';
-import {
-  StockDisplay,
-  StockSummaryCard,
-} from '@/shared/modules/stock/components/sections/StockDisplay';
-import { useStock } from '@/shared/modules/stock/hooks';
+import { useCatalogue } from '@verone/categories';
+import { useToast } from '@verone/common';
+import { ProductStockHistoryModal } from '@verone/products';
+import { GeneralStockMovementModal } from '@verone/stock';
+import { StockMovementModal } from '@verone/stock';
+import { StockDisplay, StockSummaryCard } from '@verone/stock';
+import { useStock } from '@verone/stock';
 
 interface StockFilters {
   search: string;

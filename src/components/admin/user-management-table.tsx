@@ -11,6 +11,24 @@ import React, { useState } from 'react';
 
 import { useRouter } from 'next/navigation';
 
+import { ButtonV2 } from '@verone/ui';
+import { Input } from '@verone/ui';
+import { RoleBadge, type UserRole } from '@verone/ui';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@verone/ui';
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from '@verone/ui';
 import {
   Edit,
   Trash2,
@@ -23,24 +41,6 @@ import {
 } from 'lucide-react';
 
 import type { UserWithProfile } from '@/app/admin/users/page';
-import { ButtonV2 } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { RoleBadge, type UserRole } from '@/components/ui/role-badge';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from '@/components/ui/table';
 
 import { DeleteUserDialog } from './delete-user-dialog';
 import { EditUserDialog } from './edit-user-dialog';

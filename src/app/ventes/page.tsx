@@ -2,6 +2,15 @@
 
 import { useRouter } from 'next/navigation';
 
+import { Badge } from '@verone/ui';
+import { ButtonV2 } from '@verone/ui';
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from '@verone/ui';
 import {
   ShoppingBag,
   MessageCircle,
@@ -16,16 +25,7 @@ import {
   Loader2,
 } from 'lucide-react';
 
-import { Badge } from '@/components/ui/badge';
-import { ButtonV2 } from '@/components/ui/button';
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from '@/components/ui/card';
-import { useSalesDashboard } from '@/shared/modules/orders/hooks';
+import { useSalesDashboard } from '@verone/orders';
 
 export default function VentesDashboardPage() {
   const router = useRouter();

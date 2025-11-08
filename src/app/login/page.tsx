@@ -5,15 +5,11 @@ import { useState } from 'react';
 import Image from 'next/image';
 import { useRouter } from 'next/navigation';
 
+import { ButtonV2 } from '@verone/ui';
+import { Card, CardContent, CardHeader } from '@verone/ui';
+import { Popover, PopoverTrigger, PopoverContent } from '@verone/ui';
 import { Eye, EyeOff, LogIn, Mail, Lock, Info } from 'lucide-react';
 
-import { ButtonV2 } from '@/components/ui/button';
-import { Card, CardContent, CardHeader } from '@/components/ui/card';
-import {
-  Popover,
-  PopoverTrigger,
-  PopoverContent,
-} from '@/components/ui/popover';
 import { createClient } from '@verone/utils/supabase/client';
 
 export default function LoginPage() {

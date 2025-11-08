@@ -2,7 +2,7 @@
 
 import { useEffect } from 'react';
 
-import { consoleErrorTracker } from '@/lib/monitoring/console-error-tracker';
+import { consoleErrorTracker } from '@verone/utils/monitoring';
 
 /**
  * 🔍 Console Error Tracker Provider

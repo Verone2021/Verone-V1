@@ -4,6 +4,15 @@ import { useState } from 'react';
 
 import { useRouter } from 'next/navigation';
 
+import { Badge } from '@verone/ui';
+import { Button } from '@verone/ui';
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from '@verone/ui';
 import {
   ArrowLeft,
   Settings,
@@ -12,16 +21,7 @@ import {
   ArrowRight,
 } from 'lucide-react';
 
-import { Badge } from '@/components/ui/badge';
-import { Button } from '@/components/ui/button';
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from '@/components/ui/card';
-import { CompleteProductWizard } from '@/shared/modules/products/components/wizards/CompleteProductWizard';
+import { CompleteProductWizard } from '@verone/products';
 
 export default function NouveauProduitPage() {
   const router = useRouter();

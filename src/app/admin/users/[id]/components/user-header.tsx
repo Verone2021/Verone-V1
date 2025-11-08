@@ -9,6 +9,7 @@
 
 import React from 'react';
 
+import { RoleBadge, type UserRole } from '@verone/ui';
 import {
   User,
   Mail,
@@ -17,8 +18,6 @@ import {
   CheckCircle,
   XCircle,
 } from 'lucide-react';
-
-import { RoleBadge, type UserRole } from '@/components/ui/role-badge';
 
 import type { UserDetailData } from '../page';
 

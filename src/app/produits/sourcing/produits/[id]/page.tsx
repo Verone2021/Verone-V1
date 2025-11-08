@@ -5,6 +5,16 @@ import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useParams } from 'next/navigation';
 
+import { Alert, AlertDescription } from '@verone/ui';
+import { Badge } from '@verone/ui';
+import { ButtonV2 } from '@verone/ui';
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from '@verone/ui';
 import {
   ArrowLeft,
   Edit,
@@ -19,20 +29,10 @@ import {
   Globe,
 } from 'lucide-react';
 
-import { Alert, AlertDescription } from '@/components/ui/alert';
-import { Badge } from '@/components/ui/badge';
-import { ButtonV2 } from '@/components/ui/button';
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from '@/components/ui/card';
-import { useToast } from '@/shared/modules/common/hooks';
-import { EditSourcingProductModal } from '@/shared/modules/products/components/modals/EditSourcingProductModal';
-import { useSourcingProducts } from '@/shared/modules/products/hooks';
-import { SupplierSelector } from '@/shared/modules/suppliers/components/selectors/SupplierSelector';
+import { useToast } from '@verone/common';
+import { EditSourcingProductModal } from '@verone/products';
+import { useSourcingProducts } from '@verone/products';
+import { SupplierSelector } from '@verone/suppliers';
 
 export default function SourcingProductDetailPage() {
   const router = useRouter();

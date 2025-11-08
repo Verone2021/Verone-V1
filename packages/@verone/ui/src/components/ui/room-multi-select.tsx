@@ -1,27 +1,23 @@
 /**
  * Room Multi-Select Component
- *
- * DISABLED: Dépend de ../../types/room-types non disponible dans package @verone/ui
- * TODO: Déplacer vers app principale ou créer @verone/types avec room-types
+ * Composant multi-sélection pour les types de pièces
  */
-
-// @ts-nocheck - DISABLED COMPONENT
 'use client';
 
 import { useState, useRef, useEffect } from 'react';
 
-import { cn } from '@verone/utils';
-import { Check, ChevronDown, X } from 'lucide-react';
-
-import { Badge } from './badge';
-import { Button } from './button';
-import type { RoomType } from '../../types/room-types';
+import type { RoomType } from '@verone/types';
 import {
   ROOM_CONFIGS,
   ROOM_CATEGORIES,
   getRoomLabel,
   getRoomsByCategory,
-} from '../../types/room-types';
+} from '@verone/types';
+import { cn } from '@verone/utils';
+import { Check, ChevronDown, X } from 'lucide-react';
+
+import { Badge } from './badge';
+import { Button } from './button';
 
 interface RoomMultiSelectProps {
   value: RoomType[];

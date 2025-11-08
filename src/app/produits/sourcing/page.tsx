@@ -4,6 +4,15 @@ import { useState, useEffect } from 'react';
 
 import { useRouter } from 'next/navigation';
 
+import { Badge } from '@verone/ui';
+import { ButtonV2 } from '@verone/ui';
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from '@verone/ui';
 import {
   Search,
   Eye,
@@ -18,16 +27,7 @@ import {
   ShoppingCart,
 } from 'lucide-react';
 
-import { Badge } from '@/components/ui/badge';
-import { ButtonV2 } from '@/components/ui/button';
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from '@/components/ui/card';
-import { useSourcingProducts } from '@/shared/modules/products/hooks';
+import { useSourcingProducts } from '@verone/products';
 
 export default function SourcingDashboardPage() {
   const router = useRouter();

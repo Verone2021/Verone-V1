@@ -15,6 +15,8 @@
 
 import { useState, useMemo } from 'react';
 
+import { ButtonV2 } from '@verone/ui';
+import { cn } from '@verone/utils';
 import {
   formatDistanceToNow,
   isToday,
@@ -25,13 +27,11 @@ import {
 import { fr } from 'date-fns/locale';
 import { Bell, Search, CheckCheck, Trash2, Filter, X } from 'lucide-react';
 
-import { ButtonV2 } from '@/components/ui/button';
-import { spacing, colors } from '@verone/ui/design-system';
-import { cn } from '@verone/utils';
 import {
   useDatabaseNotifications,
   type DatabaseNotification,
-} from '@/shared/modules/notifications/hooks';
+} from '@verone/notifications';
+import { spacing, colors } from '@verone/ui/design-system';
 
 // Types pour les filtres
 type FilterTab = 'all' | 'unread' | 'urgent' | 'by-type';
