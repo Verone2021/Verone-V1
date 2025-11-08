@@ -23,6 +23,7 @@
 **Row Level Security (RLS)** est un mécanisme de sécurité de Supabase (PostgreSQL) qui permet de contrôler l'accès aux lignes d'une table au niveau de la base de données.
 
 **Avantages** :
+
 - **Sécurité native** : Impossible de bypasser depuis le client (contrairement aux middlewares applicatifs)
 - **Performance** : Exécuté directement par PostgreSQL, pas de requêtes supplémentaires
 - **Isolation tenant** : Garantit qu'un utilisateur ne peut accéder qu'aux données de son organisation
@@ -41,6 +42,7 @@
 **Référence** : `supabase/migrations/20251016_003_align_owner_admin_policies.sql`
 
 Cette migration a corrigé 2 policies pour aligner Owner/Admin :
+
 - `stock_movements DELETE` : Ajout 'admin' (était Owner-only)
 - `sales_orders UPDATE` : Suppression DEBUG policy, restauration normale Owner+Admin+Sales
 
@@ -57,6 +59,7 @@ Cette migration a corrigé 2 policies pour aligner Owner/Admin :
 **Nom** : `Owners peuvent voir tous les logs d'activité`
 
 **Logic SQL** :
+
 ```sql
 CREATE POLICY "Owners peuvent voir tous les logs d'activité" ON user_activity_logs
 FOR SELECT
@@ -72,6 +75,7 @@ USING (
 ```
 
 **Comportement** :
+
 - Owner : ✅ Voir tous les logs de son tenant
 - Admin : ❌ Aucun accès (RLS bloque)
 - Sales : ❌ Aucun accès
@@ -81,6 +85,7 @@ USING (
 **Nom** : `System peut insérer logs automatiquement`
 
 **Logic SQL** :
+
 ```sql
 CREATE POLICY "System peut insérer logs automatiquement" ON user_activity_logs
 FOR INSERT
@@ -95,6 +100,7 @@ WITH CHECK (
 ```
 
 **Comportement** :
+
 - Tous rôles : ✅ Logs créés automatiquement par trigger système
 - Insertion manuelle : ❌ Bloquée (protection audit trail)
 
@@ -105,6 +111,7 @@ WITH CHECK (
 **Logic SQL** : Aucune policy = Aucun UPDATE/DELETE possible
 
 **Comportement** :
+
 - Tous rôles : ❌ Logs immuables (audit trail préservé)
 
 ---
@@ -118,6 +125,7 @@ WITH CHECK (
 **Nom** : `Tous utilisateurs peuvent voir les profils de leur organisation`
 
 **Logic SQL** :
+
 ```sql
 CREATE POLICY "Tous utilisateurs peuvent voir les profils" ON user_profiles
 FOR SELECT
@@ -132,6 +140,7 @@ USING (
 ```
 
 **Comportement** :
+
 - Owner : ✅ Voir tous profils du tenant
 - Admin : ✅ Voir tous profils du tenant
 - Sales : ✅ Voir tous profils du tenant
@@ -141,6 +150,7 @@ USING (
 **Nom** : `Uniquement owners peuvent créer des profils utilisateurs`
 
 **Logic SQL** :
+
 ```sql
 CREATE POLICY "Uniquement owners peuvent créer des profils" ON user_profiles
 FOR INSERT
@@ -156,6 +166,7 @@ WITH CHECK (
 ```
 
 **Comportement** :
+
 - Owner : ✅ Créer nouveaux profils
 - Admin : ❌ Impossible (RLS)
 - Sales : ❌ Impossible
@@ -165,6 +176,7 @@ WITH CHECK (
 **Nom** : `Owners peuvent modifier tous profils, Admin son profil uniquement`
 
 **Logic SQL** :
+
 ```sql
 CREATE POLICY "Owners peuvent modifier tous profils, Admin son profil" ON user_profiles
 FOR UPDATE
@@ -195,6 +207,7 @@ WITH CHECK (
 ```
 
 **Comportement** :
+
 - Owner : ✅ Modifier tous profils du tenant
 - Admin : ✅ Modifier SON profil uniquement (id = auth.uid())
 - Sales : ✅ Modifier SON profil uniquement
@@ -204,6 +217,7 @@ WITH CHECK (
 **Nom** : `Uniquement owners peuvent supprimer des profils`
 
 **Logic SQL** :
+
 ```sql
 CREATE POLICY "Uniquement owners peuvent supprimer des profils" ON user_profiles
 FOR DELETE
@@ -219,6 +233,7 @@ USING (
 ```
 
 **Comportement** :
+
 - Owner : ✅ Supprimer profils (sauf trigger prevent_last_owner_deletion)
 - Admin : ❌ Impossible (RLS)
 - Sales : ❌ Impossible
@@ -234,6 +249,7 @@ USING (
 **Nom** : `Tous utilisateurs peuvent voir les assignations`
 
 **Logic SQL** :
+
 ```sql
 CREATE POLICY "Tous utilisateurs peuvent voir les assignations" ON user_organisation_assignments
 FOR SELECT
@@ -248,6 +264,7 @@ USING (
 ```
 
 **Comportement** :
+
 - Tous rôles : ✅ Voir assignations du tenant
 
 #### INSERT/UPDATE/DELETE Policies
@@ -255,6 +272,7 @@ USING (
 **Nom** : `Uniquement owners peuvent gérer les assignations`
 
 **Logic SQL** :
+
 ```sql
 -- INSERT
 CREATE POLICY "Uniquement owners peuvent créer assignations" ON user_organisation_assignments
@@ -297,6 +315,7 @@ USING (
 ```
 
 **Comportement** :
+
 - Owner : ✅ CRUD complet assignations
 - Admin : ❌ Aucune modification possible
 - Sales : ❌ Aucune modification possible
@@ -314,6 +333,7 @@ USING (
 **Nom** : `Owners et admins peuvent gérer les organisations`
 
 **Logic SQL** :
+
 ```sql
 CREATE POLICY "Owners et admins peuvent gérer organisations" ON organisations
 FOR ALL
@@ -337,6 +357,7 @@ WITH CHECK (
 ```
 
 **Comportement** :
+
 - Owner : ✅ CRUD complet
 - Admin : ✅ CRUD complet (identique Owner)
 - Sales : ❌ Lecture seule (policy distincte)
@@ -352,6 +373,7 @@ WITH CHECK (
 **Nom** : `Owners et admins peuvent gérer listes de prix`
 
 **Logic SQL** :
+
 ```sql
 CREATE POLICY "Owners et admins peuvent gérer price lists" ON price_lists
 FOR ALL
@@ -375,6 +397,7 @@ WITH CHECK (
 ```
 
 **Comportement** :
+
 - Owner : ✅ CRUD complet (y compris DELETE)
 - Admin : ✅ CRUD complet (y compris DELETE) ← Correction appliquée
 - Sales : ❌ Lecture seule
@@ -392,6 +415,7 @@ WITH CHECK (
 **Nom** : `Owners, admins et sales peuvent gérer commandes`
 
 **Logic SQL** :
+
 ```sql
 CREATE POLICY "Owners, admins et sales peuvent gérer commandes" ON sales_orders
 FOR SELECT, INSERT, DELETE
@@ -407,6 +431,7 @@ USING (
 ```
 
 **Comportement** :
+
 - Owner : ✅ SELECT, INSERT, DELETE
 - Admin : ✅ SELECT, INSERT, DELETE
 - Sales : ✅ SELECT, INSERT, DELETE
@@ -416,6 +441,7 @@ USING (
 **Nom** : `Owners, admins et sales peuvent modifier leurs commandes`
 
 **Logic SQL** :
+
 ```sql
 CREATE POLICY "Owners, admins et sales peuvent modifier leurs commandes" ON sales_orders
 FOR UPDATE
@@ -439,6 +465,7 @@ WITH CHECK (
 ```
 
 **Comportement** :
+
 - Owner : ✅ UPDATE complet
 - Admin : ✅ UPDATE complet
 - Sales : ✅ UPDATE complet
@@ -456,6 +483,7 @@ WITH CHECK (
 **Nom** : `Owners et admins peuvent gérer mouvements stock`
 
 **Logic SQL** :
+
 ```sql
 CREATE POLICY "Owners et admins peuvent gérer mouvements" ON stock_movements
 FOR SELECT, INSERT, UPDATE
@@ -471,6 +499,7 @@ USING (
 ```
 
 **Comportement** :
+
 - Owner : ✅ SELECT, INSERT, UPDATE
 - Admin : ✅ SELECT, INSERT, UPDATE
 - Sales : ❌ Lecture seule (policy distincte)
@@ -480,6 +509,7 @@ USING (
 **Nom** : `Admins peuvent supprimer des mouvements de stock`
 
 **Logic SQL** :
+
 ```sql
 CREATE POLICY "Admins peuvent supprimer des mouvements de stock" ON stock_movements
 FOR DELETE
@@ -495,6 +525,7 @@ USING (
 ```
 
 **Comportement** :
+
 - Owner : ✅ DELETE
 - Admin : ✅ DELETE ← Ajout 2025-10-16
 - Sales : ❌ Interdit
@@ -512,6 +543,7 @@ USING (
 **Nom** : `Owners et admins peuvent gérer produits`
 
 **Logic SQL** :
+
 ```sql
 CREATE POLICY "Owners et admins peuvent gérer produits" ON products
 FOR ALL
@@ -535,6 +567,7 @@ WITH CHECK (
 ```
 
 **Comportement** :
+
 - Owner : ✅ CRUD complet
 - Admin : ✅ CRUD complet
 - Sales : ❌ Lecture seule
@@ -550,6 +583,7 @@ WITH CHECK (
 **Nom** : `Owners et admins peuvent gérer commandes achats`
 
 **Logic SQL** :
+
 ```sql
 CREATE POLICY "Owners et admins peuvent gérer purchase orders" ON purchase_orders
 FOR ALL
@@ -573,6 +607,7 @@ WITH CHECK (
 ```
 
 **Comportement** :
+
 - Owner : ✅ CRUD complet
 - Admin : ✅ CRUD complet
 - Sales : ❌ Lecture seule
@@ -588,6 +623,7 @@ WITH CHECK (
 **Nom** : `Owners et admins peuvent gérer contacts`
 
 **Logic SQL** :
+
 ```sql
 CREATE POLICY "Owners et admins peuvent gérer contacts" ON contacts
 FOR ALL
@@ -611,6 +647,7 @@ WITH CHECK (
 ```
 
 **Comportement** :
+
 - Owner : ✅ CRUD complet
 - Admin : ✅ CRUD complet
 - Sales : ❌ Lecture seule
@@ -624,6 +661,7 @@ WITH CHECK (
 **Objectif** : Garantir qu'un utilisateur ne peut accéder qu'aux données de son organisation
 
 **Pattern SQL** :
+
 ```sql
 USING (
   organisation_id IN (
@@ -635,11 +673,13 @@ USING (
 ```
 
 **Explication** :
+
 1. `auth.uid()` : ID utilisateur authentifié (fourni par Supabase Auth)
 2. `user_organisation_assignments` : Table jointure user ↔ organisation
 3. `organisation_id IN (...)` : Filtre uniquement les lignes du tenant utilisateur
 
 **Exemple** :
+
 ```sql
 -- User A (tenant 1) essaie de lire products
 SELECT * FROM products;
@@ -657,6 +697,7 @@ SELECT * FROM products;
 **Objectif** : Restreindre action aux Owners uniquement
 
 **Pattern SQL** :
+
 ```sql
 USING (
   organisation_id IN (
@@ -669,11 +710,13 @@ USING (
 ```
 
 **Explication** :
+
 1. Clause `AND role_name = 'owner'` filtre uniquement les Owners
 2. Si user n'est pas Owner du tenant, subquery renvoie 0 résultat
 3. RLS bloque l'accès (aucune ligne visible)
 
 **Tables concernées** :
+
 - user_activity_logs (SELECT)
 - user_profiles (INSERT, DELETE)
 - user_organisation_assignments (INSERT, UPDATE, DELETE)
@@ -685,6 +728,7 @@ USING (
 **Objectif** : Permettre action aux Owners ET Admins
 
 **Pattern SQL** :
+
 ```sql
 USING (
   organisation_id IN (
@@ -697,11 +741,13 @@ USING (
 ```
 
 **Explication** :
+
 1. Clause `role_name IN ('owner', 'admin')` autorise les 2 rôles
 2. Si user est Owner OU Admin, subquery renvoie organisation_id
 3. RLS autorise l'accès
 
 **Tables concernées** :
+
 - organisations
 - price_lists
 - products
@@ -716,6 +762,7 @@ USING (
 **Objectif** : Owner peut modifier tous profils, Admin son profil uniquement
 
 **Pattern SQL** :
+
 ```sql
 USING (
   -- Owner : tous profils
@@ -732,11 +779,13 @@ USING (
 ```
 
 **Explication** :
+
 1. Clause `OR` : soit Owner (accès complet), soit Admin/Sales (son profil)
 2. `id = auth.uid()` : Filtre uniquement la ligne de l'utilisateur connecté
 3. Owner bypass cette clause (toujours autorisé par première condition)
 
 **Tables concernées** :
+
 - user_profiles (UPDATE)
 
 ---
@@ -748,6 +797,7 @@ USING (
 **Objectif** : Lister toutes les policies RLS avec classification rôle
 
 **SQL** :
+
 ```sql
 SELECT
   tablename,
@@ -772,6 +822,7 @@ ORDER BY
 ```
 
 **Résultat attendu** :
+
 ```
 tablename                    | policyname                                      | cmd    | role_restriction
 -----------------------------+-------------------------------------------------+--------+-----------------
@@ -796,6 +847,7 @@ sales_orders                 | Owners, admins et sales peuvent modifier        |
 **Objectif** : Lister toutes les tables avec statut RLS
 
 **SQL** :
+
 ```sql
 SELECT
   schemaname,
@@ -807,6 +859,7 @@ ORDER BY tablename;
 ```
 
 **Résultat attendu** :
+
 ```
 schemaname | tablename                  | rls_enabled
 -----------+----------------------------+-------------
@@ -833,6 +886,7 @@ public     | variant_groups             | true
 **Objectif** : Vérifier que trigger prevent_last_owner_deletion existe
 
 **SQL** :
+
 ```sql
 SELECT
   tgname AS trigger_name,
@@ -843,6 +897,7 @@ WHERE tgname = 'prevent_last_owner_deletion';
 ```
 
 **Résultat attendu** :
+
 ```
 trigger_name               | table_name               | enabled
 ---------------------------+--------------------------+---------
@@ -858,6 +913,7 @@ prevent_last_owner_deletion| user_organisation_assignments | O
 ### Erreur : "Policy violation on table X"
 
 **Symptôme** :
+
 ```
 Error: new row violates row-level security policy for table "user_profiles"
 ```
@@ -865,7 +921,9 @@ Error: new row violates row-level security policy for table "user_profiles"
 **Cause** : RLS bloque l'opération (rôle insuffisant ou organisation_id incorrect)
 
 **Debug** :
+
 1. Vérifier rôle utilisateur :
+
    ```sql
    SELECT role_name
    FROM user_organisation_assignments
@@ -873,6 +931,7 @@ Error: new row violates row-level security policy for table "user_profiles"
    ```
 
 2. Vérifier organisation_id :
+
    ```sql
    SELECT organisation_id
    FROM user_organisation_assignments
@@ -887,6 +946,7 @@ Error: new row violates row-level security policy for table "user_profiles"
    ```
 
 **Solution** :
+
 - Si Admin essaie d'insérer user_profiles : Demander à Owner
 - Si organisation_id manquant : Corriger données user_organisation_assignments
 - Si policy manquante : Appliquer migration RLS
@@ -896,6 +956,7 @@ Error: new row violates row-level security policy for table "user_profiles"
 ### Erreur : "RLS not enabled on table X"
 
 **Symptôme** :
+
 ```
 Warning: Row Level Security is not enabled on table "variant_groups"
 ```
@@ -903,6 +964,7 @@ Warning: Row Level Security is not enabled on table "variant_groups"
 **Cause** : Table créée sans RLS activé
 
 **Solution** :
+
 ```sql
 ALTER TABLE variant_groups ENABLE ROW LEVEL SECURITY;
 
@@ -929,6 +991,7 @@ USING (
 **Cause** : Policy DELETE trop permissive ou RLS désactivé
 
 **Debug** :
+
 ```sql
 -- Vérifier policy DELETE user_profiles
 SELECT policyname, cmd, qual
@@ -939,6 +1002,7 @@ WHERE tablename = 'user_profiles' AND cmd = 'DELETE';
 ```
 
 **Solution** :
+
 ```sql
 -- Supprimer policy permissive
 DROP POLICY IF EXISTS "Admins peuvent supprimer profils" ON user_profiles;
@@ -966,6 +1030,7 @@ USING (
 **Cause** : DEBUG policy temporaire non supprimée ou policy WITH CHECK manquante
 
 **Debug** :
+
 ```sql
 -- Vérifier policies UPDATE sales_orders
 SELECT policyname, cmd, qual, with_check
@@ -979,6 +1044,7 @@ WHERE policyname LIKE 'DEBUG%';
 ```
 
 **Solution** :
+
 ```sql
 -- Supprimer DEBUG policy
 DROP POLICY IF EXISTS "DEBUG_sales_orders_update_owner_bypass" ON sales_orders;

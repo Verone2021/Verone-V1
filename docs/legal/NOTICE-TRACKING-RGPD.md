@@ -11,6 +11,7 @@
 Cette notice s'adresse à **tous les employés utilisant l'application Vérone Back Office**, notre plateforme CRM/ERP pour la gestion quotidienne de l'activité.
 
 En tant qu'utilisateur de l'application, **vos activités professionnelles sont enregistrées** pour les raisons détaillées ci-dessous. Cette notice explique:
+
 - ✅ Quelles données sont collectées
 - ✅ Pourquoi nous les collectons
 - ✅ Qui peut y accéder
@@ -33,6 +34,7 @@ En tant qu'utilisateur de l'application, **vos activités professionnelles sont 
 ### **Délégué à la Protection des Données (DPO)**
 
 Si vous avez des questions sur le traitement de vos données personnelles:
+
 - **Email DPO:** dpo@verone.com
 - **Réponse sous:** 30 jours ouvrés
 
@@ -44,25 +46,27 @@ Si vous avez des questions sur le traitement de vos données personnelles:
 
 Lorsque vous utilisez l'application Vérone Back Office, nous enregistrons automatiquement:
 
-| Type de Donnée | Exemple | Finalité |
-|----------------|---------|----------|
-| **Pages visitées** | `/catalogue`, `/commandes` | Navigation dans app |
-| **Actions métier** | "Création produit CAP-2025-123" | Activité professionnelle |
-| **Temps par module** | 15 minutes sur Catalogue | Métriques utilisation |
-| **Erreurs rencontrées** | "Erreur validation formulaire" | Debugging technique |
-| **Session ID** | `sess_abc123xyz` | Groupement actions |
-| **Timestamp** | `2025-10-07 14:32:15` | Chronologie activité |
-| **Module actuel** | "Dashboard" | Contexte action |
+| Type de Donnée          | Exemple                         | Finalité                 |
+| ----------------------- | ------------------------------- | ------------------------ |
+| **Pages visitées**      | `/catalogue`, `/commandes`      | Navigation dans app      |
+| **Actions métier**      | "Création produit CAP-2025-123" | Activité professionnelle |
+| **Temps par module**    | 15 minutes sur Catalogue        | Métriques utilisation    |
+| **Erreurs rencontrées** | "Erreur validation formulaire"  | Debugging technique      |
+| **Session ID**          | `sess_abc123xyz`                | Groupement actions       |
+| **Timestamp**           | `2025-10-07 14:32:15`           | Chronologie activité     |
+| **Module actuel**       | "Dashboard"                     | Contexte action          |
 
 ### **🔐 Données Techniques (Anonymisées)**
 
 En production uniquement (pas en développement):
+
 - **Adresse IP:** Anonymisée (12.34.xxx.xxx)
 - **User Agent:** Simplifié (Chrome/macOS, pas version détaillée)
 
 ### **❌ Données JAMAIS Collectées**
 
 Nous NE collectons JAMAIS:
+
 - ❌ Screenshots de votre écran
 - ❌ Enregistrement de votre frappe clavier (keylogging)
 - ❌ Accès à votre webcam ou microphone
@@ -81,37 +85,43 @@ Nous NE collectons JAMAIS:
 Ce traitement est basé sur l'**intérêt légitime** (Article 6.1.f RGPD).
 
 Un **Legitimate Interest Assessment** complet a été effectué pour garantir que:
+
 - ✅ Nos intérêts business sont légitimes
 - ✅ Le traitement est nécessaire
 - ✅ Vos droits sont protégés par des safeguards robustes
 
-📄 *Consultable sur demande: [docs/legal/LEGITIMATE-INTEREST-ASSESSMENT.md]*
+📄 _Consultable sur demande: [docs/legal/LEGITIMATE-INTEREST-ASSESSMENT.md]_
 
 ### **Finalités du Traitement**
 
 Nous utilisons vos données d'activité pour:
 
 #### **A. Améliorer l'Application (UX)**
+
 - **Objectif:** Identifier bugs, erreurs fréquentes, points de friction
 - **Bénéfice pour vous:** Application plus fluide, moins d'erreurs
 - **Exemple:** Si 80% des utilisateurs rencontrent une erreur sur une page → Bug fix prioritaire
 
 #### **B. Former les Employés**
+
 - **Objectif:** Détecter features sous-utilisées ou mal comprises
 - **Bénéfice pour vous:** Formation personnalisée sur ce dont vous avez réellement besoin
 - **Exemple:** Vous ne visitez jamais le module "Sourcing" → Formation proposée
 
 #### **C. Optimiser les Workflows**
+
 - **Objectif:** Identifier tâches chronophages ou processus inefficaces
 - **Bénéfice pour vous:** Tâches répétitives simplifiées, moins de temps perdu
 - **Exemple:** Création d'un produit prend 15min en moyenne → Formulaire simplifié
 
 #### **D. Mesurer l'Engagement Équipe**
+
 - **Objectif:** Vérifier que les employés distants utilisent correctement les outils
 - **Bénéfice pour vous:** Détection précoce de difficultés → Aide avant que problème empire
 - **Exemple:** Score engagement bas 2 semaines de suite → Discussion avec manager pour comprendre
 
 #### **E. Support Technique Efficace**
+
 - **Objectif:** Logs d'erreurs pour debugging et résolution rapide
 - **Bénéfice pour vous:** Support technique plus rapide et ciblé
 - **Exemple:** Vous signalez un bug → Logs nous aident à le reproduire et corriger
@@ -119,6 +129,7 @@ Nous utilisons vos données d'activité pour:
 ### **✅ IMPORTANT: Utilisation Éthique**
 
 Nous nous engageons à:
+
 - ✅ Utiliser les données UNIQUEMENT pour les finalités ci-dessus
 - ✅ Ne JAMAIS vendre vos données à des tiers
 - ✅ Ne PAS prendre de décisions RH basées uniquement sur les métriques
@@ -132,11 +143,11 @@ Nous nous engageons à:
 
 ### **Accès Interne**
 
-| Qui? | Quelles Données? | Pourquoi? |
-|------|------------------|-----------|
-| **VOUS** | VOS propres données uniquement | Transparence (page /mon-activite) |
-| **Propriétaires** | Métriques agrégées équipe + accès admin | Pilotage activité, pas micromanagement |
-| **Service Technique** | Logs erreurs anonymisés | Debugging et support uniquement |
+| Qui?                  | Quelles Données?                        | Pourquoi?                              |
+| --------------------- | --------------------------------------- | -------------------------------------- |
+| **VOUS**              | VOS propres données uniquement          | Transparence (page /mon-activite)      |
+| **Propriétaires**     | Métriques agrégées équipe + accès admin | Pilotage activité, pas micromanagement |
+| **Service Technique** | Logs erreurs anonymisés                 | Debugging et support uniquement        |
 
 ### **🔒 Sécurité des Accès (RLS Strict)**
 
@@ -159,12 +170,12 @@ Nous nous engageons à:
 
 ### **Rétention Limitée**
 
-| Type de Données | Durée Conservation | Justification |
-|-----------------|-------------------|---------------|
-| **Logs détaillés** | **30 jours** | Debugging récent et audit |
-| **Agrégations statistiques** | **1 an** | Analyse tendances annuelles |
-| **Données sensibles** | **0 jour (jamais)** | Protection vie privée |
-| **Sessions actives** | **Temps réel** | Monitoring performance |
+| Type de Données              | Durée Conservation  | Justification               |
+| ---------------------------- | ------------------- | --------------------------- |
+| **Logs détaillés**           | **30 jours**        | Debugging récent et audit   |
+| **Agrégations statistiques** | **1 an**            | Analyse tendances annuelles |
+| **Données sensibles**        | **0 jour (jamais)** | Protection vie privée       |
+| **Sessions actives**         | **Temps réel**      | Monitoring performance      |
 
 ### **🗑️ Suppression Automatique**
 
@@ -183,10 +194,12 @@ En vertu du RGPD, vous disposez des droits suivants:
 ### **✅ Droit d'Accès (Article 15)**
 
 **Vous pouvez:**
+
 - Consulter vos données à tout moment sur la page `/mon-activite`
 - Demander un export complet de vos données (CSV)
 
 **Comment?**
+
 - Cliquez sur votre profil → "Mon Activité" → Bouton "Export CSV"
 - OU envoyez un email à dpo@verone.com
 
@@ -195,6 +208,7 @@ En vertu du RGPD, vous disposez des droits suivants:
 ### **📝 Droit de Rectification (Article 16)**
 
 **Vous pouvez:**
+
 - Corriger des données inexactes ou incomplètes
 
 **Exemple:** Une action a été enregistrée par erreur à votre compte
@@ -204,9 +218,11 @@ En vertu du RGPD, vous disposez des droits suivants:
 ### **🗑️ Droit à l'Effacement (Article 17)**
 
 **Vous pouvez:**
+
 - Demander la suppression de vos données
 
 **⚠️ Limites:**
+
 - Impossible si données nécessaires pour obligation légale (audit comptable)
 - Impossible si données nécessaires pour droits juridiques (preuve travail effectué)
 
@@ -217,9 +233,11 @@ En vertu du RGPD, vous disposez des droits suivants:
 ### **⛔ Droit d'Opposition (Article 21)**
 
 **Vous pouvez:**
+
 - Vous opposer au traitement de vos données
 
 **⚠️ Important:**
+
 - L'entreprise peut refuser si "motifs légitimes impérieux" (ex: sécurité système)
 - Discussion avec DPO et manager dans ce cas
 
@@ -228,6 +246,7 @@ En vertu du RGPD, vous disposez des droits suivants:
 ### **📤 Droit à la Portabilité (Article 20)**
 
 **Vous pouvez:**
+
 - Recevoir vos données dans un format machine-readable (CSV)
 - Transférer ces données à un autre employeur (si changement de job)
 
@@ -236,6 +255,7 @@ En vertu du RGPD, vous disposez des droits suivants:
 ### **🚫 Droit de Limitation (Article 18)**
 
 **Vous pouvez:**
+
 - Demander limitation du traitement dans certains cas (litige, inexactitude)
 
 **Comment?** Email à dpo@verone.com
@@ -299,6 +319,7 @@ En vertu du RGPD, vous disposez des droits suivants:
 Si vous estimez que vos droits ne sont pas respectés, vous pouvez déposer une réclamation auprès de la **CNIL** (Commission Nationale de l'Informatique et des Libertés):
 
 **CNIL**
+
 - **Adresse:** 3 Place de Fontenoy, TSA 80715, 75334 Paris Cedex 07
 - **Téléphone:** 01 53 73 22 22
 - **Site web:** https://www.cnil.fr
@@ -307,6 +328,7 @@ Si vous estimez que vos droits ne sont pas respectés, vous pouvez déposer une 
 ### **🇪🇺 Si Vous Êtes dans un Autre Pays UE**
 
 Contactez l'autorité de protection des données de votre pays:
+
 - **Liste complète:** https://edpb.europa.eu/about-edpb/board/members_en
 
 ---
@@ -316,6 +338,7 @@ Contactez l'autorité de protection des données de votre pays:
 ### **Mises à Jour**
 
 Cette notice peut être modifiée si:
+
 - Nouvelles finalités de traitement
 - Nouvelles données collectées
 - Changements réglementaires (RGPD mis à jour)
@@ -323,6 +346,7 @@ Cette notice peut être modifiée si:
 ### **Notification**
 
 En cas de modification:
+
 - ✅ Vous serez informé par **email**
 - ✅ Notice mise à jour accessible sur cette page
 - ✅ Historique versions disponible (Annexe B)
@@ -360,10 +384,10 @@ En cas de modification:
 
 ### **Annexe B: Historique Versions**
 
-| Version | Date | Modifications |
-|---------|------|---------------|
-| 1.0 | 07/10/2025 | Création initiale notice |
-| - | - | - |
+| Version | Date       | Modifications            |
+| ------- | ---------- | ------------------------ |
+| 1.0     | 07/10/2025 | Création initiale notice |
+| -       | -          | -                        |
 
 ### **Annexe C: Documents Connexes**
 
@@ -397,12 +421,13 @@ Signature: _______________
 
 **📢 FIN DE LA NOTICE DE TRACKING ACTIVITÉ**
 
-*Document conforme aux Articles 13 et 14 du RGPD*
-*Vérone Back Office - Système Tracking Activité Utilisateur 2025*
+_Document conforme aux Articles 13 et 14 du RGPD_
+_Vérone Back Office - Système Tracking Activité Utilisateur 2025_
 
 ---
 
 **🔗 Liens Utiles:**
+
 - 🏠 Retour Dashboard: `/dashboard`
 - 📊 Mon Activité: `/mon-activite`
 - 💬 Contact DPO: dpo@verone.com

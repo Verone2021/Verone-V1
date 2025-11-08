@@ -22,8 +22,8 @@ displayed_in:
     location: "Card 'Gestionnaires Catalogue'"
 
 thresholds:
-  optimal: "2-5 catalog managers"
-  warning: "< 1 (risque gestion catalogue)"
+  optimal: '2-5 catalog managers'
+  warning: '< 1 (risque gestion catalogue)'
 
 metadata:
   created_at: 2025-10-22

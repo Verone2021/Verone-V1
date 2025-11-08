@@ -1,23 +1,30 @@
-"use client"
+'use client';
 
-import { ChevronRight, Home } from 'lucide-react'
-import Link from 'next/link'
-import { cn } from '../../lib/utils'
+import Link from 'next/link';
+
+import { ChevronRight, Home } from 'lucide-react';
+
+import { cn } from '../../lib/utils';
 
 interface BreadcrumbItem {
-  label: string
-  href?: string
-  active?: boolean
+  label: string;
+  href?: string;
+  active?: boolean;
 }
 
 interface BreadcrumbProps {
-  items: BreadcrumbItem[]
-  className?: string
+  items: BreadcrumbItem[];
+  className?: string;
 }
 
 export function Breadcrumb({ items, className }: BreadcrumbProps) {
   return (
-    <nav className={cn("flex items-center space-x-2 text-sm text-gray-600", className)}>
+    <nav
+      className={cn(
+        'flex items-center space-x-2 text-sm text-gray-600',
+        className
+      )}
+    >
       <Link
         href="/dashboard"
         className="flex items-center hover:text-black transition-colors"
@@ -36,14 +43,16 @@ export function Breadcrumb({ items, className }: BreadcrumbProps) {
               {item.label}
             </Link>
           ) : (
-            <span className={cn(
-              item.active ? "text-black font-medium" : "text-gray-600"
-            )}>
+            <span
+              className={cn(
+                item.active ? 'text-black font-medium' : 'text-gray-600'
+              )}
+            >
               {item.label}
             </span>
           )}
         </div>
       ))}
     </nav>
-  )
+  );
 }

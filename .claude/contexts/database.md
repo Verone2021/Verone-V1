@@ -19,25 +19,26 @@
 ## 🚫 RÈGLE ANTI-HALLUCINATION
 
 **Problème historique** :
-> *"À chaque fois, mon agent hallucine et crée des tables en plus. Par exemple, il créé une table `suppliers` alors qu'on a déjà `organisations`."*
+
+> _"À chaque fois, mon agent hallucine et crée des tables en plus. Par exemple, il créé une table `suppliers` alors qu'on a déjà `organisations`."_
 
 **WORKFLOW OBLIGATOIRE avant toute modification database** :
 
 ```typescript
 // ÉTAPE 1 : TOUJOURS consulter documentation AVANT création
-Read("docs/database/SCHEMA-REFERENCE.md")       // 78 tables
-Read("docs/database/best-practices.md")         // Anti-hallucination guide
+Read('docs/database/SCHEMA-REFERENCE.md'); // 78 tables
+Read('docs/database/best-practices.md'); // Anti-hallucination guide
 
 // ÉTAPE 2 : Rechercher structure similaire existante
 mcp__serena__search_for_pattern({
-  pattern: "supplier|customer|price",
-  relative_path: "docs/database/"
-})
+  pattern: 'supplier|customer|price',
+  relative_path: 'docs/database/',
+});
 
 // ÉTAPE 3 : Si doute → Demander confirmation utilisateur
 AskUserQuestion({
-  question: "Table `suppliers` existe-t-elle déjà sous autre forme ?"
-})
+  question: 'Table `suppliers` existe-t-elle déjà sous autre forme ?',
+});
 
 // ÉTAPE 4 : Migration SQL documentée uniquement
 // Fichier : supabase/migrations/YYYYMMDD_NNN_description.sql
@@ -47,23 +48,23 @@ AskUserQuestion({
 
 ## ❌ TABLES À NE JAMAIS CRÉER (Hallucinations Fréquentes)
 
-| ❌ NE PAS Créer       | ✅ Utiliser À La Place                          |
-| --------------------- | ----------------------------------------------- |
-| `suppliers`           | `organisations WHERE type='supplier'`           |
-| `customers`           | `organisations WHERE type='customer'` + `individual_customers` |
-| `products_pricing`    | `price_list_items` + `calculate_product_price_v2()` |
-| `product_stock`       | `stock_movements` (triggers calculent automatiquement) |
-| `user_roles`          | `user_profiles.role` (enum user_role_type)      |
+| ❌ NE PAS Créer    | ✅ Utiliser À La Place                                         |
+| ------------------ | -------------------------------------------------------------- |
+| `suppliers`        | `organisations WHERE type='supplier'`                          |
+| `customers`        | `organisations WHERE type='customer'` + `individual_customers` |
+| `products_pricing` | `price_list_items` + `calculate_product_price_v2()`            |
+| `product_stock`    | `stock_movements` (triggers calculent automatiquement)         |
+| `user_roles`       | `user_profiles.role` (enum user_role_type)                     |
 
 ## ❌ COLONNES À NE JAMAIS AJOUTER (Hallucinations Fréquentes)
 
-| ❌ NE PAS Ajouter             | ✅ Utiliser À La Place                          |
-| ----------------------------- | ----------------------------------------------- |
-| `products.cost_price`         | `price_list_items.cost_price`                   |
-| `products.sale_price`         | `calculate_product_price_v2()` (RPC multi-canal) |
-| `products.primary_image_url`  | `product_images WHERE is_primary=true` (LEFT JOIN) |
-| `products.stock_quantity`     | Calculé par trigger `maintain_stock_totals()`   |
-| `sales_orders.total_amount`   | Calculé par trigger `calculate_sales_order_total()` |
+| ❌ NE PAS Ajouter            | ✅ Utiliser À La Place                              |
+| ---------------------------- | --------------------------------------------------- |
+| `products.cost_price`        | `price_list_items.cost_price`                       |
+| `products.sale_price`        | `calculate_product_price_v2()` (RPC multi-canal)    |
+| `products.primary_image_url` | `product_images WHERE is_primary=true` (LEFT JOIN)  |
+| `products.stock_quantity`    | Calculé par trigger `maintain_stock_totals()`       |
+| `sales_orders.total_amount`  | Calculé par trigger `calculate_sales_order_total()` |
 
 ---
 

@@ -15,7 +15,7 @@ source:
   lines: 255-273
 
 displayed_in:
-  - location: "Statistiques détaillées"
+  - location: 'Statistiques détaillées'
 
 output:
   type: number

@@ -3,6 +3,7 @@
 Debug intelligent avec orchestration automatique : Console + Serena + Supabase + Playwright.
 
 ## Usage
+
 ```bash
 /fix [error-description]
 ```
@@ -12,81 +13,88 @@ Debug intelligent avec orchestration automatique : Console + Serena + Supabase +
 ### 1. Error Detection & Classification
 
 **Sans description fournie:**
+
 - Lancer `/error-check` automatiquement
 - Détecter erreurs console actives
 - Prioriser par severity (CRITICAL > HIGH > MEDIUM)
 
 **Avec description fournie:**
+
 - Parser description pour identifier type erreur
 - Catégoriser : Frontend | Backend | Database | Network
 
 **Error Types:**
+
 ```typescript
 type ErrorCategory =
-  | 'javascript'      // Console errors, React errors
-  | 'api'            // 400/500 errors, fetch failed
-  | 'database'       // SQL errors, RLS denials
-  | 'performance'    // Slow queries, timeout
-  | 'ui'             // Layout bugs, rendering issues
-  | 'auth'           // Login failed, permissions
+  | 'javascript' // Console errors, React errors
+  | 'api' // 400/500 errors, fetch failed
+  | 'database' // SQL errors, RLS denials
+  | 'performance' // Slow queries, timeout
+  | 'ui' // Layout bugs, rendering issues
+  | 'auth'; // Login failed, permissions
 ```
 
 ### 2. Multi-Agent Orchestration
 
 **Frontend Errors (JavaScript/React):**
+
 ```typescript
 // 1. Playwright: Reproduire erreur
-mcp__playwright__browser_navigate(url)
-mcp__playwright__browser_console_messages()
+mcp__playwright__browser_navigate(url);
+mcp__playwright__browser_console_messages();
 
 // 2. Serena: Localiser source
-mcp__serena__find_symbol(errorStacktrace)
-mcp__serena__get_symbols_overview(errorFile)
+mcp__serena__find_symbol(errorStacktrace);
+mcp__serena__get_symbols_overview(errorFile);
 
 // 3. Serena: Analyser context
-mcp__serena__find_referencing_symbols(buggyFunction)
+mcp__serena__find_referencing_symbols(buggyFunction);
 ```
 
 **Backend/API Errors:**
+
 ```typescript
 // 1. Supabase Logs: Identifier root cause
-mcp__supabase__get_logs('api', 50)
+mcp__supabase__get_logs('api', 50);
 
 // 2. Serena: Analyser API route
-mcp__serena__find_symbol('/api/products')
-mcp__serena__get_symbols_overview('src/app/api/products/route.ts')
+mcp__serena__find_symbol('/api/products');
+mcp__serena__get_symbols_overview('src/app/api/products/route.ts');
 
 // 3. Database: Vérifier queries
-mcp__supabase__execute_sql('EXPLAIN ANALYZE ...')
+mcp__supabase__execute_sql('EXPLAIN ANALYZE ...');
 ```
 
 **Database Errors:**
+
 ```typescript
 // 1. Supabase Logs: SQL errors
-mcp__supabase__get_logs('postgres', 30)
+mcp__supabase__get_logs('postgres', 30);
 
 // 2. RLS Issues: Test policies
 mcp__supabase__execute_sql(`
   SET ROLE authenticated;
   SELECT * FROM products LIMIT 1;
-`)
+`);
 
 // 3. Advisors: Security/Performance
-mcp__supabase__get_advisors()
+mcp__supabase__get_advisors();
 ```
 
 **Performance Issues:**
+
 ```typescript
 // 1. Playwright: Mesurer temps chargement
-mcp__playwright__browser_navigate(url)
+mcp__playwright__browser_navigate(url);
 // Mesurer performance.timing
 
 // 2. Supabase: Queries lentes
-mcp__supabase__get_logs('postgres', 100)
+mcp__supabase__get_logs('postgres', 100);
 // Filter slow queries >500ms
 
 // 3. Serena: Analyser hooks/components
-mcp__serena__find_symbol('useProducts')
+mcp__serena__find_symbol('useProducts');
 // Vérifier useMemo, useCallback usage
 ```
 
@@ -95,6 +103,7 @@ mcp__serena__find_symbol('useProducts')
 **Analyse Patterns Communs:**
 
 #### Pattern 1: Missing RLS Policy
+
 ```
 Error: "permission denied for table products"
 
@@ -110,6 +119,7 @@ USING (true);
 ```
 
 #### Pattern 2: Infinite Loop / Re-render
+
 ```
 Error: "Maximum update depth exceeded"
 
@@ -124,6 +134,7 @@ Fix Suggestion:
 ```
 
 #### Pattern 3: Race Condition
+
 ```
 Error: "Cannot read property 'id' of undefined"
 
@@ -138,6 +149,7 @@ Fix Suggestion:
 ```
 
 #### Pattern 4: N+1 Query Problem
+
 ```
 Performance: Page loads in 5s (Target: <3s)
 
@@ -154,16 +166,14 @@ Fix Suggestion:
 ### 4. Automated Fix Application
 
 **Si fix simple et safe:**
+
 ```typescript
 // Serena: Apply fix directly
-mcp__serena__replace_symbol_body(
-  symbolName,
-  filePath,
-  fixedCode
-)
+mcp__serena__replace_symbol_body(symbolName, filePath, fixedCode);
 ```
 
 **Si fix complexe:**
+
 ```typescript
 // Générer suggestion détaillée
 const suggestion = {
@@ -177,13 +187,14 @@ const suggestion = {
       product_images!left (public_url, is_primary)
     \`)`,
   reason: 'Product Images Pattern (BR-TECH-002)',
-  impact: 'Fixes missing images + follows business rules'
-}
+  impact: 'Fixes missing images + follows business rules',
+};
 ```
 
 ### 5. Validation Post-Fix
 
 **Tests Automatiques:**
+
 ```bash
 # 1. Console check
 mcp__playwright__browser_navigate(url)
@@ -199,6 +210,7 @@ mcp__supabase__get_logs('postgres')
 ```
 
 **Regression Tests:**
+
 - Tester pages impactées
 - Vérifier features adjacentes
 - Confirm zero new errors introduits
@@ -206,6 +218,7 @@ mcp__supabase__get_logs('postgres')
 ### 6. Documentation Fix
 
 **Memory Update:**
+
 ```typescript
 mcp__serena__write_memory(`
 # Fix Applied: [DATE]
@@ -226,18 +239,20 @@ mcp__serena__write_memory(`
 
 ## Prevention
 [Comment éviter à l'avenir]
-`)
+`);
 ```
 
 ## Debug Strategies par Type
 
 ### JavaScript Errors
+
 1. Reproduire avec Playwright
 2. Stack trace → Serena find symbol
 3. Analyser context code
 4. Fix + validate console clean
 
 ### API Errors
+
 1. Supabase API logs
 2. Identifier endpoint + status code
 3. Serena analyser route handler
@@ -245,6 +260,7 @@ mcp__serena__write_memory(`
 5. Fix + re-test API call
 
 ### Database Errors
+
 1. Postgres logs analysis
 2. Query EXPLAIN ANALYZE
 3. Check indexes (advisors)
@@ -252,12 +268,14 @@ mcp__serena__write_memory(`
 5. Migration si schema fix needed
 
 ### Performance Issues
+
 1. Mesurer baseline performance
 2. Identify bottleneck (queries/rendering)
 3. Optimize (indexes/memoization)
 4. Validate improvement >30%
 
 ### UI/Layout Bugs
+
 1. Screenshot état actuel
 2. Inspect element accessibility tree
 3. Verify Design System usage
@@ -267,6 +285,7 @@ mcp__serena__write_memory(`
 ## Examples
 
 ### Example 1: Console Error
+
 ```bash
 /fix "TypeError: Cannot read property 'name' of undefined in ProductCard"
 
@@ -298,6 +317,7 @@ mcp__serena__write_memory(`
 ```
 
 ### Example 2: Performance Issue
+
 ```bash
 /fix "Catalogue page loading 5 seconds, target <3s"
 
@@ -333,6 +353,7 @@ mcp__serena__write_memory(`
 ```
 
 ### Example 3: Database Permission Error
+
 ```bash
 /fix "permission denied for table orders"
 
@@ -375,6 +396,7 @@ mcp__serena__write_memory(`
 ```
 
 ## Success Metrics
+
 ✅ Error root cause identified <2 min
 ✅ Fix applied automatically (si safe)
 ✅ Validation tests passed

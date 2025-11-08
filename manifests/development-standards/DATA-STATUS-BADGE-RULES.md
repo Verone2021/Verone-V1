@@ -11,6 +11,7 @@
 Documenter visuellement l'état d'implémentation des données affichées dans l'application Vérone.
 
 **Problème résolu** :
+
 - ❌ Avant : Impossible de distinguer données RÉELLES vs MOCK
 - ✅ Après : Badge visuel clair sur chaque métrique/statistique
 
@@ -23,6 +24,7 @@ Documenter visuellement l'état d'implémentation des données affichées dans l
 **OBLIGATOIRE** pour toutes les statistiques, métriques, KPIs dans l'interface.
 
 **Exemples** :
+
 - ✅ Dashboard : Cartes stats (sessions, revenus, taux conversion)
 - ✅ Admin Users : Analytics utilisateur (engagement, durée session)
 - ✅ Catalogue : Métriques produits (vues, ventes, stock)
@@ -31,6 +33,7 @@ Documenter visuellement l'état d'implémentation des données affichées dans l
 ### **Règle #2 : Type "real" = Données Base de Données**
 
 Utiliser `type="real"` si et seulement si :
+
 - ✅ Données lues depuis Supabase (via query/RPC)
 - ✅ Données provenant d'API externe authentifiée
 - ✅ Données calculées EN BASE (fonctions SQL, triggers)
@@ -56,6 +59,7 @@ const balance = await qontoApi.getBalance()
 ### **Règle #3 : Type "mock" = Données Calculées ou Temporaires**
 
 Utiliser `type="mock"` si :
+
 - ⚠️ Données calculées côté FRONTEND (Math.round, formule JS)
 - ⚠️ Données hardcodées temporairement
 - ⚠️ Fonctionnalité pas encore implémentée (retourne 0 ou null)
@@ -99,6 +103,7 @@ const conversionRate = 2.5 // TODO: Implémenter calcul réel
 **Ne JAMAIS retirer le badge** une fois données RÉELLES implémentées.
 
 **Workflow** :
+
 1. Développement initial → `type="mock"`
 2. Implémentation complète → `type="real"`
 3. **Badge reste définitivement** → Traçabilité audit
@@ -109,10 +114,10 @@ const conversionRate = 2.5 // TODO: Implémenter calcul réel
 
 ### Couleurs Autorisées
 
-| Type | Couleur Border | Couleur Text | Icône | Signification |
-|------|---------------|--------------|-------|---------------|
-| **real** | `border-green-600` | `text-green-600` | CheckCircle2 | Données validées |
-| **mock** | `border-orange-500` | `text-orange-500` | AlertCircle | En développement |
+| Type     | Couleur Border      | Couleur Text      | Icône        | Signification    |
+| -------- | ------------------- | ----------------- | ------------ | ---------------- |
+| **real** | `border-green-600`  | `text-green-600`  | CheckCircle2 | Données validées |
+| **mock** | `border-orange-500` | `text-orange-500` | AlertCircle  | En développement |
 
 **INTERDIT** : Jaune/Doré/Ambre (hors charte Vérone)
 
@@ -133,7 +138,7 @@ bg-gradient-to-r from-green-400 to-blue-500
 ### Import Component
 
 ```typescript
-import { DataStatusBadge } from '@/components/ui/data-status-badge'
+import { DataStatusBadge } from '@/components/ui/data-status-badge';
 ```
 
 ### Usage Basique
@@ -189,33 +194,37 @@ Avant merge PR contenant nouvelles métriques :
 
 **Fichier** : `src/app/admin/users/[id]/components/user-stats-cards.tsx`
 
-| Métrique | Type | Raison |
-|----------|------|--------|
-| Sessions totales | `real` | Query `user_sessions.count()` |
-| Durée moy. session | `mock` | RPC retourne NULL |
-| Fréquence | `real` | Calculé depuis `engagement_score` (RPC) |
-| Engagement | `real` | RPC `get_user_activity_stats` |
-| Ancienneté | `real` | Calcul depuis `user.created_at` (BDD) |
-| Statut | `real` | Basé sur `last_sign_in_at` (BDD) |
-| Type compte | `real` | Depuis `user_profiles.user_type` |
-| Productivité | `mock` | Formule frontend (à migrer RPC) |
+| Métrique           | Type   | Raison                                  |
+| ------------------ | ------ | --------------------------------------- |
+| Sessions totales   | `real` | Query `user_sessions.count()`           |
+| Durée moy. session | `mock` | RPC retourne NULL                       |
+| Fréquence          | `real` | Calculé depuis `engagement_score` (RPC) |
+| Engagement         | `real` | RPC `get_user_activity_stats`           |
+| Ancienneté         | `real` | Calcul depuis `user.created_at` (BDD)   |
+| Statut             | `real` | Basé sur `last_sign_in_at` (BDD)        |
+| Type compte        | `real` | Depuis `user_profiles.user_type`        |
+| Productivité       | `mock` | Formule frontend (à migrer RPC)         |
 
 **Code exemple** :
 
 ```tsx
-{/* Sessions totales - RÉEL */}
+{
+  /* Sessions totales - RÉEL */
+}
 <div className="relative border p-4">
   <DataStatusBadge type="real" className="absolute top-2 right-2" />
   <p className="text-sm">Sessions totales</p>
   <p className="text-2xl font-bold">{user.analytics.total_sessions}</p>
-</div>
+</div>;
 
-{/* Durée session - MOCK */}
+{
+  /* Durée session - MOCK */
+}
 <div className="relative border p-4">
   <DataStatusBadge type="mock" className="absolute top-2 right-2" />
   <p className="text-sm">Durée moy. session</p>
   <p className="text-2xl font-bold">{user.analytics.avg_session_duration}min</p>
-</div>
+</div>;
 ```
 
 ---
@@ -241,7 +250,7 @@ CREATE FUNCTION calculate_metric() RETURNS ...
 
 ```tsx
 // Remplacer calcul frontend par query
-const { data } = await supabase.rpc('calculate_metric')
+const { data } = await supabase.rpc('calculate_metric');
 ```
 
 ### Étape 4 : Changer Badge
@@ -305,15 +314,18 @@ const daysSinceCreation = Math.floor(
 ## 📚 RÉFÉRENCES
 
 ### Documentation
+
 - Component source : `src/components/ui/data-status-badge.tsx`
 - Exemple usage : `src/app/admin/users/[id]/components/user-stats-cards.tsx`
 - Pattern réutilisable : `MEMORY-BANK/patterns/data-status-badge-pattern.md`
 
 ### Sessions Related
+
 - Fix tracking : `MEMORY-BANK/sessions/2025-10-11-RAPPORT-USER-ACTIVITY-TRACKING-FIX-COMPLET.md`
 - Admin Users tests : `MEMORY-BANK/sessions/2025-10-10-RAPPORT-FINAL-SESSION-COMPLETE.md`
 
 ### Design System
+
 - Couleurs Vérone : `CLAUDE.md` section Design System
 - Components UI : `src/components/ui/`
 
@@ -322,6 +334,7 @@ const daysSinceCreation = Math.floor(
 ## 🎯 RÉSUMÉ EXÉCUTIF
 
 **Règle simple** :
+
 - 🟢 Base de données ou API = `type="real"`
 - 🟠 Calcul frontend ou NULL = `type="mock"`
 
@@ -337,4 +350,4 @@ const daysSinceCreation = Math.floor(
 **Version** : 1.0
 **Auteur** : Claude Code + Workflow 2025
 
-*Vérone Back Office - Professional Data Documentation Excellence*
+_Vérone Back Office - Professional Data Documentation Excellence_

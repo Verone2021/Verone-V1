@@ -1,62 +1,75 @@
-"use client"
+'use client';
 
-import { useState } from 'react'
-import { Input } from '../../ui/input'
-import { Label } from '../../ui/label'
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../../ui/select'
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../../ui/card'
-import { Button } from '../../ui/button'
-import { Badge } from '../../ui/badge'
-import { Settings, Plus, X, Ruler } from 'lucide-react'
-import { WizardFormData } from '../complete-product-wizard'
+import { useState } from 'react';
+
+import { Settings, Plus, X, Ruler } from 'lucide-react';
+
+import { Badge } from '../../ui/badge';
+import { Button } from '../../ui/button';
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from '../../ui/card';
+import { Input } from '../../ui/input';
+import { Label } from '../../ui/label';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '../../ui/select';
+import type { WizardFormData } from '../complete-product-wizard';
 
 interface TechnicalSectionProps {
-  formData: WizardFormData
-  setFormData: (data: WizardFormData) => void
-  onSave: () => void
+  formData: WizardFormData;
+  setFormData: (data: WizardFormData) => void;
+  onSave: () => void;
 }
 
 export function TechnicalSection({
   formData,
   setFormData,
-  onSave
+  onSave,
 }: TechnicalSectionProps) {
-
-  const [newAttributeKey, setNewAttributeKey] = useState('')
-  const [newAttributeValue, setNewAttributeValue] = useState('')
+  const [newAttributeKey, setNewAttributeKey] = useState('');
+  const [newAttributeValue, setNewAttributeValue] = useState('');
 
   const updateField = (field: keyof WizardFormData, value: any) => {
     setFormData({
       ...formData,
-      [field]: value
-    })
-  }
+      [field]: value,
+    });
+  };
 
   const updateDimension = (key: string, value: string) => {
-    const dimensions = { ...formData.dimensions }
+    const dimensions = { ...formData.dimensions };
     if (value) {
-      dimensions[key] = parseFloat(value) || 0
+      dimensions[key] = parseFloat(value) || 0;
     } else {
-      delete dimensions[key]
+      delete dimensions[key];
     }
-    updateField('dimensions', dimensions)
-  }
+    updateField('dimensions', dimensions);
+  };
 
   const addVariantAttribute = () => {
     if (newAttributeKey.trim() && newAttributeValue.trim()) {
-      const variants = { ...formData.variant_attributes }
-      variants[newAttributeKey.trim()] = newAttributeValue.trim()
-      updateField('variant_attributes', variants)
-      setNewAttributeKey('')
-      setNewAttributeValue('')
+      const variants = { ...formData.variant_attributes };
+      variants[newAttributeKey.trim()] = newAttributeValue.trim();
+      updateField('variant_attributes', variants);
+      setNewAttributeKey('');
+      setNewAttributeValue('');
     }
-  }
+  };
 
   const removeVariantAttribute = (key: string) => {
-    const variants = { ...formData.variant_attributes }
-    delete variants[key]
-    updateField('variant_attributes', variants)
-  }
+    const variants = { ...formData.variant_attributes };
+    delete variants[key];
+    updateField('variant_attributes', variants);
+  };
 
   return (
     <div className="space-y-6">
@@ -88,7 +101,7 @@ export function TechnicalSection({
                     step="0.1"
                     min="0"
                     value={formData.dimensions.length || ''}
-                    onChange={(e) => updateDimension('length', e.target.value)}
+                    onChange={e => updateDimension('length', e.target.value)}
                     placeholder="0"
                     className="rounded-r-none"
                   />
@@ -107,7 +120,7 @@ export function TechnicalSection({
                     step="0.1"
                     min="0"
                     value={formData.dimensions.width || ''}
-                    onChange={(e) => updateDimension('width', e.target.value)}
+                    onChange={e => updateDimension('width', e.target.value)}
                     placeholder="0"
                     className="rounded-r-none"
                   />
@@ -126,7 +139,7 @@ export function TechnicalSection({
                     step="0.1"
                     min="0"
                     value={formData.dimensions.height || ''}
-                    onChange={(e) => updateDimension('height', e.target.value)}
+                    onChange={e => updateDimension('height', e.target.value)}
                     placeholder="0"
                     className="rounded-r-none"
                   />
@@ -145,7 +158,7 @@ export function TechnicalSection({
                     step="0.1"
                     min="0"
                     value={formData.weight}
-                    onChange={(e) => updateField('weight', e.target.value)}
+                    onChange={e => updateField('weight', e.target.value)}
                     placeholder="0"
                     className="rounded-r-none"
                   />
@@ -157,17 +170,24 @@ export function TechnicalSection({
             </div>
 
             {/* Résumé dimensions */}
-            {(formData.dimensions.length || formData.dimensions.width || formData.dimensions.height || formData.weight) && (
+            {(formData.dimensions.length ||
+              formData.dimensions.width ||
+              formData.dimensions.height ||
+              formData.weight) && (
               <div className="p-3 bg-gray-50 rounded-lg">
                 <div className="text-sm text-gray-600">
-                  <strong>Résumé :</strong>
-                  {' '}
+                  <strong>Résumé :</strong>{' '}
                   {[
-                    formData.dimensions.length && `L${formData.dimensions.length}cm`,
-                    formData.dimensions.width && `l${formData.dimensions.width}cm`,
-                    formData.dimensions.height && `H${formData.dimensions.height}cm`,
-                    formData.weight && `${formData.weight}kg`
-                  ].filter(Boolean).join(' × ')}
+                    formData.dimensions.length &&
+                      `L${formData.dimensions.length}cm`,
+                    formData.dimensions.width &&
+                      `l${formData.dimensions.width}cm`,
+                    formData.dimensions.height &&
+                      `H${formData.dimensions.height}cm`,
+                    formData.weight && `${formData.weight}kg`,
+                  ]
+                    .filter(Boolean)
+                    .join(' × ')}
                 </div>
               </div>
             )}
@@ -180,7 +200,8 @@ export function TechnicalSection({
         <CardHeader>
           <CardTitle>Attributs et variantes</CardTitle>
           <CardDescription>
-            Caractéristiques spécifiques du produit (couleur, matériau, finition, etc.)
+            Caractéristiques spécifiques du produit (couleur, matériau,
+            finition, etc.)
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
@@ -189,20 +210,26 @@ export function TechnicalSection({
             <div className="space-y-2">
               <Label>Attributs définis :</Label>
               <div className="flex flex-wrap gap-2">
-                {Object.entries(formData.variant_attributes).map(([key, value]) => (
-                  <Badge key={key} variant="secondary" className="flex items-center gap-1">
-                    <span className="font-medium">{key}:</span>
-                    <span>{value as string}</span>
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      className="h-auto p-0 ml-1"
-                      onClick={() => removeVariantAttribute(key)}
+                {Object.entries(formData.variant_attributes).map(
+                  ([key, value]) => (
+                    <Badge
+                      key={key}
+                      variant="secondary"
+                      className="flex items-center gap-1"
                     >
-                      <X className="h-3 w-3" />
-                    </Button>
-                  </Badge>
-                ))}
+                      <span className="font-medium">{key}:</span>
+                      <span>{value as string}</span>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        className="h-auto p-0 ml-1"
+                        onClick={() => removeVariantAttribute(key)}
+                      >
+                        <X className="h-3 w-3" />
+                      </Button>
+                    </Badge>
+                  )
+                )}
               </div>
             </div>
           )}
@@ -213,16 +240,16 @@ export function TechnicalSection({
             <div className="flex gap-2">
               <Input
                 value={newAttributeKey}
-                onChange={(e) => setNewAttributeKey(e.target.value)}
+                onChange={e => setNewAttributeKey(e.target.value)}
                 placeholder="Nom de l'attribut (ex: Couleur)"
                 className="flex-1"
               />
               <Input
                 value={newAttributeValue}
-                onChange={(e) => setNewAttributeValue(e.target.value)}
+                onChange={e => setNewAttributeValue(e.target.value)}
                 placeholder="Valeur (ex: Rouge)"
                 className="flex-1"
-                onKeyPress={(e) => e.key === 'Enter' && addVariantAttribute()}
+                onKeyPress={e => e.key === 'Enter' && addVariantAttribute()}
               />
               <Button
                 type="button"
@@ -237,14 +264,16 @@ export function TechnicalSection({
 
           {/* Suggestions d'attributs courants */}
           <div className="space-y-2">
-            <Label className="text-sm text-gray-600">Attributs suggérés :</Label>
+            <Label className="text-sm text-gray-600">
+              Attributs suggérés :
+            </Label>
             <div className="flex flex-wrap gap-2">
               {[
                 { key: 'Couleur', placeholder: 'Blanc, Noir, Rouge...' },
                 { key: 'Matériau', placeholder: 'Bois, Métal, Tissu...' },
                 { key: 'Finition', placeholder: 'Mat, Brillant, Satiné...' },
                 { key: 'Style', placeholder: 'Moderne, Classique, Vintage...' },
-                { key: 'Taille', placeholder: 'S, M, L, XL...' }
+                { key: 'Taille', placeholder: 'S, M, L, XL...' },
               ].map(({ key, placeholder }) => (
                 <Button
                   key={key}
@@ -252,8 +281,8 @@ export function TechnicalSection({
                   size="sm"
                   className="text-xs"
                   onClick={() => {
-                    setNewAttributeKey(key)
-                    setNewAttributeValue('')
+                    setNewAttributeKey(key);
+                    setNewAttributeValue('');
                   }}
                 >
                   + {key}
@@ -264,5 +293,5 @@ export function TechnicalSection({
         </CardContent>
       </Card>
     </div>
-  )
+  );
 }

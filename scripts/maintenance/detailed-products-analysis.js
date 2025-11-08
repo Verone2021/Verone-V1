@@ -14,7 +14,7 @@ const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
 const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
 
 if (!supabaseUrl || !supabaseKey) {
-  console.error('❌ Variables d\'environnement Supabase manquantes');
+  console.error("❌ Variables d'environnement Supabase manquantes");
   process.exit(1);
 }
 
@@ -29,12 +29,14 @@ async function getAllProducts() {
   try {
     const { data: products, error } = await supabase
       .from('products')
-      .select(`
+      .select(
+        `
         id, sku, name, slug, price_ht, cost_price, tax_rate, status, condition,
         variant_attributes, dimensions, weight, primary_image_url, gallery_images,
         supplier_reference, gtin, created_at, updated_at,
         subcategory_id, brand, supplier_id
-      `)
+      `
+      )
       .order('created_at', { ascending: false });
 
     if (error) throw error;
@@ -42,7 +44,6 @@ async function getAllProducts() {
     console.log(`✅ ${products.length} produits récupérés\n`);
 
     return products;
-
   } catch (error) {
     console.error('❌ Erreur récupération produits:', error.message);
     throw error;
@@ -58,7 +59,7 @@ async function analyzeProductQuality(products) {
     emptyGallery: [],
     missingData: [],
     potentialTest: [],
-    goodQuality: []
+    goodQuality: [],
   };
 
   products.forEach(product => {
@@ -68,7 +69,7 @@ async function analyzeProductQuality(products) {
     // Vérifier les images
     if (!product.primary_image_url || product.primary_image_url.trim() === '') {
       categories.noImage.push(product);
-      issues.push('Pas d\'image principale');
+      issues.push("Pas d'image principale");
       isTestCandidate = true;
     } else if (product.primary_image_url.includes('unsplash')) {
       categories.unsplashImage.push(product);
@@ -77,9 +78,13 @@ async function analyzeProductQuality(products) {
     }
 
     // Vérifier la galerie
-    if (!product.gallery_images ||
-        (Array.isArray(product.gallery_images) && product.gallery_images.length === 0) ||
-        (typeof product.gallery_images === 'object' && Object.keys(product.gallery_images).length === 0)) {
+    if (
+      !product.gallery_images ||
+      (Array.isArray(product.gallery_images) &&
+        product.gallery_images.length === 0) ||
+      (typeof product.gallery_images === 'object' &&
+        Object.keys(product.gallery_images).length === 0)
+    ) {
       categories.emptyGallery.push(product);
       issues.push('Galerie vide');
     }
@@ -99,17 +104,31 @@ async function analyzeProductQuality(products) {
       issues.push('Pas de marque');
     }
 
-    if (!product.dimensions || Object.keys(product.dimensions || {}).length === 0) {
+    if (
+      !product.dimensions ||
+      Object.keys(product.dimensions || {}).length === 0
+    ) {
       issues.push('Pas de dimensions');
     }
 
     // Vérifier les patterns suspects
     const suspiciousPatterns = [
-      'test', 'demo', 'sample', 'mock', 'fake', 'dummy', 'exemple',
-      'VER-TEST', 'TEST-', '-TEST-', 'DEMO-', '-DEMO'
+      'test',
+      'demo',
+      'sample',
+      'mock',
+      'fake',
+      'dummy',
+      'exemple',
+      'VER-TEST',
+      'TEST-',
+      '-TEST-',
+      'DEMO-',
+      '-DEMO',
     ];
 
-    const fullText = `${product.sku} ${product.name} ${product.slug}`.toLowerCase();
+    const fullText =
+      `${product.sku} ${product.name} ${product.slug}`.toLowerCase();
     const hasSuspiciousPattern = suspiciousPatterns.some(pattern =>
       fullText.includes(pattern.toLowerCase())
     );
@@ -120,7 +139,8 @@ async function analyzeProductQuality(products) {
     }
 
     // Vérifier les prix suspects (trop ronds, patterns de test)
-    if (product.price_ht % 10000 === 0) { // Prix multiples de 100€
+    if (product.price_ht % 10000 === 0) {
+      // Prix multiples de 100€
       issues.push('Prix suspect (trop rond)');
     }
 
@@ -138,14 +158,16 @@ async function analyzeProductQuality(products) {
 }
 
 function displayResults(categories) {
-  console.log('📊 RÉSULTATS DE L\'ANALYSE');
-  console.log('=' .repeat(60));
+  console.log("📊 RÉSULTATS DE L'ANALYSE");
+  console.log('='.repeat(60));
 
   console.log(`\n🚨 PRODUITS PROBLÉMATIQUES (candidats au nettoyage):`);
   console.log(`   • Sans image principale: ${categories.noImage.length}`);
   console.log(`   • Avec images Unsplash: ${categories.unsplashImage.length}`);
   console.log(`   • Galerie vide: ${categories.emptyGallery.length}`);
-  console.log(`   • Potentiels produits test: ${categories.potentialTest.length}`);
+  console.log(
+    `   • Potentiels produits test: ${categories.potentialTest.length}`
+  );
   console.log(`   • Données manquantes: ${categories.missingData.length}`);
   console.log(`   • Bonne qualité: ${categories.goodQuality.length}`);
 
@@ -158,8 +180,12 @@ function displayResults(categories) {
       console.log(`   ID: ${product.id}`);
       console.log(`   SKU: ${product.sku}`);
       console.log(`   Fournisseur ID: ${product.supplier_id || 'MANQUANT'}`);
-      console.log(`   Sous-catégorie ID: ${product.subcategory_id || 'MANQUANT'}`);
-      console.log(`   Créé: ${new Date(product.created_at).toLocaleDateString('fr-FR')}`);
+      console.log(
+        `   Sous-catégorie ID: ${product.subcategory_id || 'MANQUANT'}`
+      );
+      console.log(
+        `   Créé: ${new Date(product.created_at).toLocaleDateString('fr-FR')}`
+      );
       console.log('');
     });
   }
@@ -174,8 +200,12 @@ function displayResults(categories) {
       console.log(`   SKU: ${product.sku}`);
       console.log(`   Image: ${product.primary_image_url}`);
       console.log(`   Fournisseur ID: ${product.supplier_id || 'MANQUANT'}`);
-      console.log(`   Sous-catégorie ID: ${product.subcategory_id || 'MANQUANT'}`);
-      console.log(`   Créé: ${new Date(product.created_at).toLocaleDateString('fr-FR')}`);
+      console.log(
+        `   Sous-catégorie ID: ${product.subcategory_id || 'MANQUANT'}`
+      );
+      console.log(
+        `   Créé: ${new Date(product.created_at).toLocaleDateString('fr-FR')}`
+      );
       console.log('');
     });
   }
@@ -189,7 +219,9 @@ function displayResults(categories) {
       console.log(`   ID: ${product.id}`);
       console.log(`   SKU: ${product.sku}`);
       console.log(`   Problèmes: ${issues.join(', ')}`);
-      console.log(`   Créé: ${new Date(product.created_at).toLocaleDateString('fr-FR')}`);
+      console.log(
+        `   Créé: ${new Date(product.created_at).toLocaleDateString('fr-FR')}`
+      );
       console.log('');
     });
   }
@@ -197,18 +229,23 @@ function displayResults(categories) {
   // Produits recommandés pour suppression
   const candidatesForDeletion = [
     ...categories.noImage,
-    ...categories.unsplashImage.filter(p => !p.supplier_id || !p.subcategory_id),
-    ...categories.potentialTest.map(item => item.product)
+    ...categories.unsplashImage.filter(
+      p => !p.supplier_id || !p.subcategory_id
+    ),
+    ...categories.potentialTest.map(item => item.product),
   ];
 
   // Déduplication
-  const uniqueCandidates = candidatesForDeletion.filter((product, index, array) =>
-    array.findIndex(p => p.id === product.id) === index
+  const uniqueCandidates = candidatesForDeletion.filter(
+    (product, index, array) =>
+      array.findIndex(p => p.id === product.id) === index
   );
 
   if (uniqueCandidates.length > 0) {
-    console.log(`\n🗑️  RECOMMANDATION DE SUPPRESSION (${uniqueCandidates.length} produits):`);
-    console.log('=' .repeat(60));
+    console.log(
+      `\n🗑️  RECOMMANDATION DE SUPPRESSION (${uniqueCandidates.length} produits):`
+    );
+    console.log('='.repeat(60));
 
     uniqueCandidates.forEach((product, index) => {
       console.log(`${index + 1}. ${product.name} (${product.sku})`);
@@ -222,14 +259,20 @@ function displayResults(categories) {
 
     console.log('\n📝 LISTE DES IDs À SUPPRIMER:');
     console.log('-'.repeat(60));
-    console.log(JSON.stringify(uniqueCandidates.map(p => p.id), null, 2));
+    console.log(
+      JSON.stringify(
+        uniqueCandidates.map(p => p.id),
+        null,
+        2
+      )
+    );
   } else {
     console.log('\n✅ Aucun produit recommandé pour suppression');
   }
 
-  console.log('\n' + '=' .repeat(60));
+  console.log('\n' + '='.repeat(60));
   console.log('✅ Analyse détaillée terminée');
-  console.log('=' .repeat(60));
+  console.log('='.repeat(60));
 }
 
 async function main() {
@@ -244,9 +287,8 @@ async function main() {
 
     // 3. Afficher les résultats
     displayResults(categories);
-
   } catch (error) {
-    console.error('\n💥 Échec de l\'analyse:', error);
+    console.error("\n💥 Échec de l'analyse:", error);
     process.exit(1);
   }
 }

@@ -4,18 +4,20 @@
  * Layout pour pages publiques (non-authentifiées) sans sidebar/header
  */
 
-import { Inter } from "next/font/google"
+import { Inter } from 'next/font/google';
 
-const inter = Inter({ subsets: ["latin"] })
+const inter = Inter({ subsets: ['latin'] });
 
 interface PublicLayoutProps {
-  children: React.ReactNode
+  children: React.ReactNode;
 }
 
 export function PublicLayout({ children }: PublicLayoutProps) {
   return (
-    <div className={`${inter.className} min-h-screen bg-white text-black antialiased`}>
+    <div
+      className={`${inter.className} min-h-screen bg-white text-black antialiased`}
+    >
       {children}
     </div>
-  )
+  );
 }

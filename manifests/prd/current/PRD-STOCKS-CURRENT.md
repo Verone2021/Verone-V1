@@ -10,9 +10,11 @@
 ## 🎯 Vue d'Ensemble
 
 ### Description Actuelle
+
 Système de gestion stocks avec inventaire multi-emplacements, mouvements traçables (entrées, sorties, transferts, ajustements), filtres avancés, pagination, et statistiques temps réel.
 
 ### Scope Implémenté
+
 - ✅ Inventaire multi-emplacements
 - ✅ Mouvements stocks 4 types (entrée, sortie, transfert, ajustement)
 - ✅ Traçabilité complète (motifs obligatoires)
@@ -26,21 +28,24 @@ Système de gestion stocks avec inventaire multi-emplacements, mouvements traça
 ## 📊 Features Implémentées
 
 ### 1. Types Mouvements Stock
+
 ```typescript
 type MovementType =
-  | 'entry'      // Entrée stock (réception fournisseur, production)
-  | 'exit'       // Sortie stock (vente, consommation)
-  | 'transfer'   // Transfert inter-emplacements
-  | 'adjustment' // Ajustement inventaire (correction)
+  | 'entry' // Entrée stock (réception fournisseur, production)
+  | 'exit' // Sortie stock (vente, consommation)
+  | 'transfer' // Transfert inter-emplacements
+  | 'adjustment'; // Ajustement inventaire (correction)
 ```
 
 **Workflow** :
+
 1. Créer mouvement (type, produit, quantité, emplacement, motif)
 2. Validation automatique règles métier
 3. Impact stock immédiat
 4. Traçabilité persistée
 
 ### 2. Emplacements Multi-Sites
+
 - ✅ Gestion emplacements multiples
 - ✅ Stock par emplacement
 - ✅ Transferts inter-emplacements
@@ -48,6 +53,7 @@ type MovementType =
   - Colonnes: code, name, type (warehouse, store, virtual), address
 
 ### 3. Motifs Traçabilité (Obligatoires)
+
 ```typescript
 // Motifs par type mouvement
 entry_reasons = [
@@ -55,21 +61,22 @@ entry_reasons = [
   'Retour client',
   'Production interne',
   'Transfert entrant',
-  'Correction inventaire +'
-]
+  'Correction inventaire +',
+];
 
 exit_reasons = [
   'Vente client',
   'Transfert sortant',
   'Casse/Perte',
   'Échantillon',
-  'Correction inventaire -'
-]
+  'Correction inventaire -',
+];
 ```
 
 **Business Rule**: Motif obligatoire pour traçabilité audit
 
 ### 4. Filtres Avancés
+
 - ✅ Filtre date (de/à avec calendrier)
 - ✅ Filtre type mouvement (multiple select)
 - ✅ Filtre produit (autocomplete)
@@ -77,23 +84,26 @@ exit_reasons = [
 - ✅ Reset filtres rapide
 
 ### 5. Pagination Performante
+
 - ✅ Tailles: 10, 25, 50, 100 lignes/page
 - ✅ Navigation pages (prev, next, goto)
 - ✅ Total mouvements affiché
 - **État**: `pagination = { page, pageSize, total }`
 
 ### 6. Statistiques Temps Réel
+
 ```typescript
 stats = {
-  total_movements: number,     // Total mouvements période
-  total_entries: number,       // Entrées stock
-  total_exits: number,         // Sorties stock
-  total_transfers: number,     // Transferts
-  total_adjustments: number    // Ajustements
-}
+  total_movements: number, // Total mouvements période
+  total_entries: number, // Entrées stock
+  total_exits: number, // Sorties stock
+  total_transfers: number, // Transferts
+  total_adjustments: number, // Ajustements
+};
 ```
 
 ### 7. Historique Produit (Modal)
+
 - ✅ Clic mouvement → modal détail produit
 - ✅ Historique complet mouvements produit
 - ✅ Timeline chronologique
@@ -104,12 +114,14 @@ stats = {
 ## 🎨 Design System Appliqué
 
 ### Composants UI
+
 - **Table**: Dense (py-2.5) pour densité CRM
 - **Filtres**: Advanced filters panel collapsible
 - **Pagination**: Bottom sticky pagination bar
 - **Stats Cards**: 5 KPIs mouvements
 
 ### Icons Lucide
+
 - `TrendingUp` - Entrées
 - `TrendingDown` - Sorties
 - `RefreshCw` - Transferts
@@ -121,22 +133,25 @@ stats = {
 ## 🔧 Implémentation Technique
 
 ### Hook Principal
+
 ```typescript
 const {
-  movements,        // StockMovement[] paginé
-  stats,            // Stats temps réel
-  loading,          // boolean
-  error,            // Error | null
-  pagination,       // { page, pageSize, total }
-  applyFilters,     // (filters) => void
-  resetFilters,     // () => void
+  movements, // StockMovement[] paginé
+  stats, // Stats temps réel
+  loading, // boolean
+  error, // Error | null
+  pagination, // { page, pageSize, total }
+  applyFilters, // (filters) => void
+  resetFilters, // () => void
   handlePageChange, // (page) => void
-  handlePageSizeChange // (size) => void
-} = useStockMovements()
+  handlePageSizeChange, // (size) => void
+} = useStockMovements();
 ```
 
 ### Tables BDD
+
 **Table Principale**: `stock_movements`
+
 ```sql
 Colonnes clés:
 - movement_type (entry|exit|transfer|adjustment)
@@ -151,6 +166,7 @@ Colonnes clés:
 ```
 
 **Table Secondaire**: `stock_locations`
+
 ```sql
 Colonnes:
 - code (unique, ex: WH-01, STORE-PARIS)
@@ -165,6 +181,7 @@ Colonnes:
 ## 📋 Business Rules Appliquées
 
 ### Validation Mouvements
+
 1. **Quantité** : Doit être > 0
 2. **Motif** : Obligatoire (traçabilité audit)
 3. **Emplacement** : Doit être actif (is_active = true)
@@ -172,6 +189,7 @@ Colonnes:
 5. **Stock suffisant** : Pour sorties (quantity_available >= quantity_exit)
 
 ### Workflow Transfert
+
 ```
 1. Vérifier stock source >= quantité
 2. Créer mouvement EXIT (from_location)
@@ -181,6 +199,7 @@ Colonnes:
 ```
 
 ### Calcul Stock Actuel
+
 ```sql
 -- Stock actuel produit par emplacement
 SELECT
@@ -199,6 +218,7 @@ GROUP BY product_id, location_id
 ```
 
 **Business Rules Files**:
+
 - `manifests/business-rules/stock-movements-workflow.md`
 - `manifests/business-rules/stock-traceability-rules.md`
 
@@ -207,18 +227,22 @@ GROUP BY product_id, location_id
 ## 🚧 Limitations Connues & Roadmap
 
 ### Limitations Actuelles
+
 - ❌ Pas de réservation stock (commandes validées)
 - ❌ Pas d'alertes stock bas automatiques
 - ❌ Pas de prévisions stock (forecasting)
 - ❌ Pas d'import/export Excel mouvements
 
 ### Roadmap 2025-Q4
+
 **Priorité 1** (1 mois):
+
 - [ ] Alertes stock bas (notifications temps réel)
 - [ ] Réservation stock commandes
 - [ ] Export Excel mouvements
 
 **Priorité 2** (3 mois):
+
 - [ ] Rapports stocks détaillés (valeur stock, rotation)
 - [ ] Prévisions stock (ML forecasting)
 - [ ] Inventaire physique (scan barcode)
@@ -228,6 +252,7 @@ GROUP BY product_id, location_id
 ## 🔗 Dépendances & Relations
 
 ### Modules Liés
+
 - **Catalogue** (`/catalogue`) - Produits référencés
 - **Commandes** (`/commandes/clients`) - Sorties stock ventes
 - **Réceptions** (`/achats/receptions`) - Entrées stock fournisseurs (future)
@@ -237,12 +262,14 @@ GROUP BY product_id, location_id
 ## 🧪 Tests & Validation
 
 ### Tests Actuels
+
 - ✅ MCP Browser: 0 erreur console ✅
 - ✅ Filtres fonctionnels
 - ✅ Pagination testée
 - ✅ Statistiques correctes
 
 ### Tests Manquants
+
 - ⏳ Tests E2E (création mouvements, transferts)
 - ⏳ Tests performance (10 000+ mouvements)
 
@@ -251,6 +278,7 @@ GROUP BY product_id, location_id
 ## 📚 Documentation Associée
 
 ### Fichiers Clés
+
 - **Page**: `src/app/stocks/mouvements/page.tsx`
 - **Hook**: `src/hooks/use-stock-movements.ts`
 - **Business Rules**: `manifests/business-rules/stock-movements-workflow.md`

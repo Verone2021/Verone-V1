@@ -1,12 +1,14 @@
-import "./globals.css"
-import { Inter } from "next/font/google"
-import { Analytics } from '@vercel/analytics/react'
-import { Toaster } from 'sonner'
-import { AuthWrapper } from "../components/layout/auth-wrapper"
-import { ClientOnlyActivityTracker } from "../components/providers/client-only-activity-tracker"
-import { ReactQueryProvider } from "../components/providers/react-query-provider"
+import './globals.css';
+import { Inter } from 'next/font/google';
 
-const inter = Inter({ subsets: ["latin"] })
+import { Analytics } from '@vercel/analytics/react';
+import { Toaster } from 'sonner';
+
+import { AuthWrapper } from '../components/layout/auth-wrapper';
+import { ClientOnlyActivityTracker } from '../components/providers/client-only-activity-tracker';
+import { ReactQueryProvider } from '../components/providers/react-query-provider';
+
+const inter = Inter({ subsets: ['latin'] });
 
 /**
  * Configuration Next.js 15 - Dynamic Rendering
@@ -20,30 +22,31 @@ const inter = Inter({ subsets: ["latin"] })
  * Impact performance : +100-200ms latence (acceptable pour back-office)
  * Avantages : Build production stable, aucune erreur SSR
  */
-export const dynamic = 'force-dynamic'
-export const revalidate = 0
+export const dynamic = 'force-dynamic';
+export const revalidate = 0;
 
 export const metadata = {
-  title: "Vérone Back Office",
-  description: "CRM/ERP modulaire pour Vérone - Décoration et mobilier d'intérieur",
+  title: 'Vérone Back Office',
+  description:
+    "CRM/ERP modulaire pour Vérone - Décoration et mobilier d'intérieur",
   verification: {
-    google: "yTQQSKQhTyiY1QvulJ-7gcGU_j_8wIDljJd9O0HoCLQ"
-  }
-}
+    google: 'yTQQSKQhTyiY1QvulJ-7gcGU_j_8wIDljJd9O0HoCLQ',
+  },
+};
 
 export default function RootLayout({
   children,
 }: {
-  children: React.ReactNode
+  children: React.ReactNode;
 }) {
   return (
     <html lang="fr" className="h-full">
-      <body className={`${inter.className} h-full bg-white text-black antialiased`}>
+      <body
+        className={`${inter.className} h-full bg-white text-black antialiased`}
+      >
         <ReactQueryProvider>
           <AuthWrapper>
-            <ClientOnlyActivityTracker>
-              {children}
-            </ClientOnlyActivityTracker>
+            <ClientOnlyActivityTracker>{children}</ClientOnlyActivityTracker>
           </AuthWrapper>
         </ReactQueryProvider>
         {/* Toast notifications */}
@@ -52,5 +55,5 @@ export default function RootLayout({
         {process.env.VERCEL_ENV === 'production' && <Analytics />}
       </body>
     </html>
-  )
+  );
 }

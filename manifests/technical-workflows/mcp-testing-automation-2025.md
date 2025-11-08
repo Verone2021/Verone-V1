@@ -12,6 +12,7 @@
 ## 🏗 **Architecture MCP**
 
 ### **Servers MCP Configurés**
+
 ```json
 {
   "playwright": {
@@ -25,6 +26,7 @@
 ```
 
 ### **Intégration Workflow**
+
 ```
 Application ←→ Playwright MCP ←→ Console Monitoring ←→ Sentry Dashboard ←→ Claude Corrections
 ```
@@ -34,6 +36,7 @@ Application ←→ Playwright MCP ←→ Console Monitoring ←→ Sentry Dashbo
 ## 🚀 **Workflow Standard**
 
 ### **Étape 1 : Préparation Environment**
+
 ```bash
 # Vérification pré-requis
 npm run dev                    # Application localhost:3000
@@ -41,29 +44,34 @@ claude mcp:list               # Validation MCP servers actifs
 ```
 
 ### **Étape 2 : Tests Automatisés Navigation**
+
 ```typescript
 // Navigation pages critiques
-mcp__playwright__browser_navigate("http://localhost:3000")
-mcp__playwright__browser_navigate("http://localhost:3000/catalogue")
-mcp__playwright__browser_navigate("http://localhost:3000/catalogue/collections")
+mcp__playwright__browser_navigate('http://localhost:3000');
+mcp__playwright__browser_navigate('http://localhost:3000/catalogue');
+mcp__playwright__browser_navigate(
+  'http://localhost:3000/catalogue/collections'
+);
 
 // Validation interactions
-mcp__playwright__browser_click(element, ref)
-mcp__playwright__browser_snapshot()
+mcp__playwright__browser_click(element, ref);
+mcp__playwright__browser_snapshot();
 ```
 
 ### **Étape 3 : Monitoring Console Errors**
+
 ```typescript
 // Détection temps réel
-mcp__playwright__browser_console_messages()
+mcp__playwright__browser_console_messages();
 
 // Validation règle zéro erreur
 if (console.errors.length > 0) {
-  trigger_sentry_analysis()
+  trigger_sentry_analysis();
 }
 ```
 
 ### **Étape 4 : Sentry Integration**
+
 ```bash
 # Dashboard monitoring
 URL: https://verone.sentry.io/explore/traces/
@@ -74,12 +82,13 @@ Button: "Sentry Error Report" → Modal confirmation
 ```
 
 ### **Étape 5 : Corrections Automatiques**
+
 ```typescript
 // Analyse erreurs via Claude
-error_analysis = claude_analyze(sentry_errors)
-corrections = claude_generate_fixes(error_analysis)
-apply_corrections(corrections)
-validate_fixes()
+error_analysis = claude_analyze(sentry_errors);
+corrections = claude_generate_fixes(error_analysis);
+apply_corrections(corrections);
+validate_fixes();
 ```
 
 ---
@@ -87,6 +96,7 @@ validate_fixes()
 ## 📊 **Critères Validation**
 
 ### **Success Metrics**
+
 - ✅ **Chrome Navigation** : Visible et interactive
 - ✅ **Console Errors** : Count = 0 (tolérance zéro)
 - ✅ **Sentry Traces** : Génération automatique
@@ -94,6 +104,7 @@ validate_fixes()
 - ✅ **Error Detection** : Temps réel + dashboard accessible
 
 ### **Failure Conditions**
+
 - ❌ Console errors détectées
 - ❌ Navigation Chrome impossible
 - ❌ Sentry traces absentes
@@ -105,6 +116,7 @@ validate_fixes()
 ## 🔧 **Configuration Technique**
 
 ### **Environnement Variables**
+
 ```bash
 # Sentry Configuration
 SENTRY_DSN=https://25698064b38f249e069e5dcf9b8a6314@...
@@ -117,6 +129,7 @@ NODE_ENV=development
 ```
 
 ### **Dependencies Required**
+
 ```json
 {
   "@playwright/mcp": "latest",
@@ -130,6 +143,7 @@ NODE_ENV=development
 ## 📋 **Checklist Validation**
 
 ### **Pré-déploiement**
+
 - [ ] MCP servers connectés et opérationnels
 - [ ] Application accessible localhost:3000
 - [ ] Chrome navigation fonctionnelle
@@ -138,6 +152,7 @@ NODE_ENV=development
 - [ ] Dashboard Sentry accessible
 
 ### **Post-correction**
+
 - [ ] Fixes appliqués via Claude Code
 - [ ] Re-test navigation complete
 - [ ] Validation performance SLO
@@ -149,6 +164,7 @@ NODE_ENV=development
 ## 🎯 **Commandes Rapides**
 
 ### **Tests Manuels**
+
 ```bash
 /browser-test                  # Navigation complète
 /console-check                # Vérification erreurs
@@ -156,6 +172,7 @@ NODE_ENV=development
 ```
 
 ### **Debugging**
+
 ```bash
 # Logs application
 npm run dev 2>&1 | grep -E "(error|warn|sentry)"
@@ -170,12 +187,14 @@ claude mcp:status sentry
 ## 📚 **Documentation Référence**
 
 ### **Official Sources**
+
 - [MCP Protocol Specification](https://modelcontextprotocol.io/specification/2025-06-18)
 - [Playwright MCP Documentation](https://playwright.dev/docs/mcp)
 - [Sentry Performance Monitoring](https://docs.sentry.io/platforms/javascript/guides/nextjs/tracing/)
 - [Claude Code MCP Integration](https://docs.claude.com/en/docs/claude-code)
 
 ### **Best Practices 2025**
+
 - **Security** : OAuth URLs vs CLI/STDIO
 - **Performance** : Minimal configuration pour latence optimale
 - **Testing** : Schema validation + regression coverage
@@ -187,11 +206,13 @@ claude mcp:status sentry
 ## 🔄 **Versioning & Updates**
 
 ### **Version History**
+
 - **v2.0.0** : Configuration MCP restaurée + Sentry integration
 - **v1.5.x** : Tests manuels automatisés
 - **v1.0.x** : Setup initial Playwright Browser
 
 ### **Maintenance Schedule**
+
 - **Hebdomadaire** : Validation workflow complet
 - **Mensuel** : Update MCP servers versions
 - **Trimestriel** : Review performance metrics + SLO
@@ -201,4 +222,4 @@ claude mcp:status sentry
 
 **Workflow MCP Testing Automation 2025 : Standard Opérationnel Vérone** ✅
 
-*Ce manifeste définit le workflow de test automatisé le plus avancé pour garantir la qualité et performance continue de Vérone Back Office*
+_Ce manifeste définit le workflow de test automatisé le plus avancé pour garantir la qualité et performance continue de Vérone Back Office_

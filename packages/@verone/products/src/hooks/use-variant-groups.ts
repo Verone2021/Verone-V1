@@ -1,0 +1,1557 @@
+'use client';
+
+import { useState, useEffect, useCallback, useRef } from 'react';
+
+import logger from '@/lib/logger';
+import { generateProductSKU } from '@verone/products/utils';
+import { createClient } from '@/lib/supabase/client';
+import { useToast } from '@verone/common/hooks';
+import type {
+  VariantGroup,
+  VariantProduct,
+  CreateVariantGroupData,
+  AddProductsToGroupData,
+  VariantGroupFilters,
+  VariantType,
+  EditableProductFields,
+} from '@verone/types';
+
+export function useVariantGroups(filters?: VariantGroupFilters) {
+  const [variantGroups, setVariantGroups] = useState<VariantGroup[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const { toast } = useToast();
+
+  // Utiliser useRef pour créer le client UNE SEULE FOIS
+  const supabaseRef = useRef(createClient());
+  const supabase = supabaseRef.current;
+
+  // Récupérer tous les groupes de variantes
+  const fetchVariantGroups = useCallback(async () => {
+    setLoading(true);
+    setError(null);
+
+    try {
+      let query = supabase
+        .from('variant_groups')
+        .select(
+          `
+          id, name, base_sku, subcategory_id, variant_type,
+          product_count, has_common_supplier, supplier_id,
+          dimensions_length, dimensions_width, dimensions_height, dimensions_unit,
+          style, suitable_rooms, common_weight,
+          archived_at, created_at, updated_at
+        `
+        )
+        .is('archived_at', null) // IMPORTANT : Exclure les groupes archivés par défaut
+        .order('created_at', { ascending: false });
+
+      // Appliquer les filtres
+      if (filters?.search) {
+        query = query.ilike('name', `%${filters.search}%`);
+      }
+      if (filters?.subcategory_id) {
+        query = query.eq('subcategory_id', filters.subcategory_id);
+      }
+      if (filters?.variant_type) {
+        query = query.eq('variant_type', filters.variant_type);
+      }
+      if (filters?.is_active !== undefined) {
+        // Filtre par statut actif (groupes avec produits)
+        if (filters.is_active) {
+          query = query.gt('product_count', 0);
+        }
+      }
+      if (filters?.has_products) {
+        query = query.gt('product_count', 0);
+      }
+
+      const { data, error: fetchError } = await query;
+
+      if (fetchError) {
+        setError(fetchError.message);
+        logger.error('Erreur fetch variant groups', fetchError, {
+          operation: 'fetch_variant_groups_failed',
+        });
+        return;
+      }
+
+      // Récupérer tous les produits des groupes en une seule requête
+      const groupIds = (data || []).map(g => g.id);
+      let allProducts: any[] = [];
+
+      if (groupIds.length > 0) {
+        const { data: productsData } = await supabase
+          .from('products')
+          .select(
+            'id, name, sku, stock_status, product_status, variant_group_id, variant_position, cost_price, weight, variant_attributes'
+          )
+          .in('variant_group_id', groupIds)
+          .order('variant_position', { ascending: true });
+
+        allProducts = productsData || [];
+      }
+
+      // Récupérer les images des produits en une requête
+      const productIds = allProducts.map(p => p.id);
+      let allImages: any[] = [];
+
+      if (productIds.length > 0) {
+        const { data: imagesData } = await supabase
+          .from('product_images')
+          .select('product_id, public_url')
+          .in('product_id', productIds)
+          .order('display_order', { ascending: true });
+
+        allImages = imagesData || [];
+      }
+
+      // Associer les images aux produits
+      const productsWithImages = allProducts.map(product => ({
+        ...product,
+        image_url: allImages.find(img => img.product_id === product.id)
+          ?.public_url,
+      }));
+
+      // Grouper les produits par variant_group_id
+      const groupsWithProducts = (data || []).map(group => ({
+        ...group,
+        products: productsWithImages.filter(
+          p => p.variant_group_id === group.id
+        ),
+        product_count: productsWithImages.filter(
+          p => p.variant_group_id === group.id
+        ).length,
+      }));
+
+      setVariantGroups(groupsWithProducts as any);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Erreur inconnue');
+      logger.error('Erreur chargement variant groups', err as Error, {
+        operation: 'load_variant_groups_failed',
+      });
+    } finally {
+      setLoading(false);
+    }
+  }, [filters]);
+
+  useEffect(() => {
+    fetchVariantGroups();
+  }, [fetchVariantGroups]);
+
+  // Créer un nouveau groupe de variantes
+  const createVariantGroup = async (
+    data: CreateVariantGroupData
+  ): Promise<VariantGroup | null> => {
+    try {
+      const { data: newGroup, error: createError } = await supabase
+        .from('variant_groups')
+        .insert([
+          {
+            name: data.name,
+            base_sku: data.base_sku, // SKU de base pour génération automatique
+            subcategory_id: data.subcategory_id,
+            variant_type: data.variant_type || 'color', // Type de variante (color/material)
+            // Dimensions en colonnes séparées (aligné avec schéma SQL)
+            dimensions_length: data.dimensions_length || null,
+            dimensions_width: data.dimensions_width || null,
+            dimensions_height: data.dimensions_height || null,
+            dimensions_unit: data.dimensions_unit || 'cm',
+            // Poids commun
+            common_weight: data.common_weight || null,
+            has_common_weight: data.has_common_weight || false,
+            // Catégorisation
+            style: data.style || null,
+            suitable_rooms: data.suitable_rooms || null,
+            // Fournisseur commun
+            supplier_id: data.supplier_id || null, // Fournisseur commun (si has_common_supplier = true)
+            has_common_supplier: data.has_common_supplier || false, // Flag fournisseur commun
+            product_count: 0,
+          },
+        ] as any)
+        .select()
+        .single();
+
+      if (createError || !newGroup) {
+        toast({
+          title: 'Erreur',
+          description: createError?.message || 'Erreur lors de la création',
+          variant: 'destructive',
+        });
+        return null;
+      }
+
+      toast({
+        title: 'Succès',
+        description: `Groupe de variantes "${data.name}" créé`,
+      });
+
+      await fetchVariantGroups();
+      return newGroup as VariantGroup;
+    } catch (err) {
+      logger.error('Erreur création groupe', err as Error, {
+        operation: 'create_variant_group_failed',
+      });
+      toast({
+        title: 'Erreur',
+        description: 'Impossible de créer le groupe',
+        variant: 'destructive',
+      });
+      return null;
+    }
+  };
+
+  // Ajouter des produits à un groupe
+  const addProductsToGroup = async (
+    data: AddProductsToGroupData
+  ): Promise<boolean> => {
+    try {
+      // Vérifier que les produits ne sont pas déjà dans un groupe
+      const { data: existingProducts, error: checkError } = await supabase
+        .from('products')
+        .select('id, name, variant_group_id')
+        .in('id', data.product_ids)
+        .not('variant_group_id', 'is', null);
+
+      if (checkError) {
+        toast({
+          title: 'Erreur',
+          description: checkError.message,
+          variant: 'destructive',
+        });
+        return false;
+      }
+
+      if (existingProducts && existingProducts.length > 0) {
+        toast({
+          title: 'Attention',
+          description: `${existingProducts.length} produit(s) déjà dans un groupe`,
+          variant: 'destructive',
+        });
+        return false;
+      }
+
+      // Récupérer le nombre actuel de produits dans le groupe + tous les attributs à propager
+      const { data: groupData, error: groupError } = await supabase
+        .from('variant_groups')
+        .select(
+          'name, base_sku, product_count, dimensions_length, dimensions_width, dimensions_height, dimensions_unit, style, suitable_rooms, subcategory_id, variant_type'
+        )
+        .eq('id', data.variant_group_id)
+        .single();
+
+      if (groupError) {
+        toast({
+          title: 'Erreur',
+          description: groupError.message,
+          variant: 'destructive',
+        });
+        return false;
+      }
+
+      const currentCount = groupData?.product_count || 0;
+
+      // Préparer les dimensions et poids du groupe pour propagation
+      const hasDimensions =
+        groupData?.dimensions_length ||
+        groupData?.dimensions_width ||
+        groupData?.dimensions_height;
+      const dimensions = hasDimensions
+        ? {
+            length: groupData?.dimensions_length || null,
+            width: groupData?.dimensions_width || null,
+            height: groupData?.dimensions_height || null,
+            unit: groupData?.dimensions_unit || 'cm',
+          }
+        : null;
+
+      // Assigner les produits au groupe avec leur position
+      const updates = data.product_ids.map((productId, index) => ({
+        id: productId,
+        variant_group_id: data.variant_group_id,
+        variant_position: currentCount + index + 1,
+      }));
+
+      // Mettre à jour les produits par batch avec propagation complète
+      for (const update of updates) {
+        // Récupérer les variant_attributes du produit pour construire le nom et SKU
+        const { data: productData } = await supabase
+          .from('products')
+          .select('variant_attributes')
+          .eq('id', update.id)
+          .single();
+
+        // Construire le nom et SKU basés sur le groupe et les attributs variantes
+        let productName = groupData?.name || 'Produit';
+        let productSKU = '';
+
+        if (productData?.variant_attributes) {
+          const attrs = productData.variant_attributes as Record<string, any>;
+          const variantType = groupData?.variant_type || 'color';
+          const variantValue = attrs[variantType];
+          if (variantValue) {
+            productName = `${groupData?.name} - ${variantValue}`;
+            productSKU = generateProductSKU(
+              groupData?.base_sku || '',
+              variantValue
+            );
+          }
+        }
+
+        const { error: updateError } = await supabase
+          .from('products')
+          .update({
+            variant_group_id: update.variant_group_id,
+            variant_position: update.variant_position,
+            // Propager SEULEMENT les attributs qui existent dans products
+            name: productName,
+            ...(productSKU && { sku: productSKU }), // Générer SKU automatiquement
+            subcategory_id: groupData?.subcategory_id,
+            ...(dimensions && { dimensions }),
+            // ❌ RETIRÉ: style, suitable_rooms, common_weight (n'existent PAS dans products, seulement dans variant_groups)
+          })
+          .eq('id', update.id);
+
+        if (updateError) {
+          logger.error('Erreur update produit', updateError, {
+            operation: 'update_product_in_group_failed',
+          });
+          toast({
+            title: 'Erreur',
+            description: `Impossible d'ajouter le produit`,
+            variant: 'destructive',
+          });
+          return false;
+        }
+      }
+
+      // Mettre à jour le compteur du groupe
+      const { error: countError } = await supabase
+        .from('variant_groups')
+        .update({
+          product_count: currentCount + data.product_ids.length,
+          updated_at: new Date().toISOString(),
+        })
+        .eq('id', data.variant_group_id);
+
+      if (countError) {
+        logger.error('Erreur update count', countError, {
+          operation: 'update_variant_count_failed',
+        });
+      }
+
+      toast({
+        title: 'Succès',
+        description: `${data.product_ids.length} produit(s) ajouté(s) au groupe`,
+      });
+
+      await fetchVariantGroups();
+      return true;
+    } catch (err) {
+      logger.error('Erreur ajout produits', err as Error, {
+        operation: 'add_products_to_group_failed',
+      });
+      toast({
+        title: 'Erreur',
+        description: "Impossible d'ajouter les produits",
+        variant: 'destructive',
+      });
+      return false;
+    }
+  };
+
+  // Créer un nouveau produit directement dans le groupe avec auto-naming
+  const createProductInGroup = useCallback(
+    async (
+      groupId: string,
+      variantValue: string, // Ex: "Rouge", "L", "Coton"
+      variantType: VariantType
+    ): Promise<boolean> => {
+      try {
+        // 1. Récupérer le groupe pour avoir le nom, base_sku et les attributs communs
+        const { data: group, error: groupError } = await supabase
+          .from('variant_groups')
+          .select(
+            'name, base_sku, product_count, subcategory_id, common_dimensions, style, suitable_rooms, has_common_supplier, supplier_id'
+          )
+          .eq('id', groupId)
+          .single();
+
+        if (groupError || !group) {
+          throw new Error('Groupe introuvable');
+        }
+
+        // 2. Générer le nom du produit : "{group_name} - {variant_value}"
+        const productName = `${group.name} - ${variantValue}`;
+
+        // 3. Générer automatiquement le SKU : "{BASE_SKU}-{VARIANT_VALUE}"
+        const sku = generateProductSKU(group.base_sku, variantValue);
+
+        // 4. Vérifier l'unicité des attributs variantes dans le groupe
+        const { data: existingProducts } = await supabase
+          .from('products')
+          .select('variant_attributes')
+          .eq('variant_group_id', groupId);
+
+        if (existingProducts && existingProducts.length > 0) {
+          // Vérifier si un produit avec ces attributs existe déjà
+          // La validation dépend du variant_type du groupe
+          for (const existingProduct of existingProducts) {
+            const existing = existingProduct.variant_attributes as Record<
+              string,
+              any
+            >;
+
+            // Si le groupe est de type COLOR, bloquer si même couleur
+            if (variantType === 'color') {
+              if (existing?.color === variantValue) {
+                throw new Error(
+                  `Un produit avec la couleur "${variantValue}" existe déjà dans ce groupe. Chaque produit doit avoir une couleur unique.`
+                );
+              }
+            }
+            // Si le groupe est de type MATERIAL, bloquer si même matériau
+            else if (variantType === 'material') {
+              if (existing?.material === variantValue) {
+                throw new Error(
+                  `Un produit avec le matériau "${variantValue}" existe déjà dans ce groupe. Chaque produit doit avoir un matériau unique.`
+                );
+              }
+            }
+          }
+        }
+
+        // 5. Préparer les dimensions si elles existent
+        const commonDims = group.common_dimensions as any;
+        const hasDimensions =
+          commonDims?.length || commonDims?.width || commonDims?.height;
+
+        // 6. Créer le produit avec les attributs hérités du groupe
+        const newProduct = {
+          name: productName,
+          sku,
+          subcategory_id: group.subcategory_id,
+          variant_group_id: groupId,
+          variant_position: (group.product_count || 0) + 1,
+          variant_attributes: { [variantType]: variantValue },
+          status: 'pret_a_commander' as const, // Statut initial pour compléter plus tard
+          creation_mode: 'complete' as const, // Contrainte: 'sourcing' ou 'complete' uniquement
+          cost_price: 0.01, // Prix minimal symbolique > 0
+          // ❌ RETIRÉ: style, suitable_rooms, common_weight (n'existent PAS dans products, seulement dans variant_groups)
+          ...(hasDimensions && {
+            dimensions: {
+              length: commonDims.length || null,
+              width: commonDims.width || null,
+              height: commonDims.height || null,
+              unit: commonDims.unit || 'cm',
+            },
+          }),
+          // ✅ Hériter du fournisseur commun si défini dans le groupe
+          ...(group.has_common_supplier &&
+            group.supplier_id && {
+              supplier_id: group.supplier_id,
+            }),
+        };
+
+        logger.info('Création produit dans groupe', {
+          operation: 'create_product_in_group',
+          productName,
+          groupId,
+          hasCommonSupplier: group.has_common_supplier,
+          supplierId: group.supplier_id,
+          willInheritSupplier: group.has_common_supplier && group.supplier_id,
+        });
+
+        const { error: createError, data: createdProduct } = await supabase
+          .from('products')
+          .insert(newProduct)
+          .select()
+          .single();
+
+        if (createError) {
+          logger.error('Erreur création produit', createError, {
+            operation: 'create_product_failed',
+          });
+          throw createError;
+        }
+
+        logger.info('Produit créé avec succès', {
+          operation: 'create_product_success',
+          productId: createdProduct.id,
+          sku: createdProduct.sku,
+        });
+
+        // 7. Mettre à jour le compteur du groupe
+        const { error: updateError } = await supabase
+          .from('variant_groups')
+          .update({
+            product_count: (group.product_count || 0) + 1,
+            updated_at: new Date().toISOString(),
+          })
+          .eq('id', groupId);
+
+        if (updateError) {
+          logger.error('Erreur mise à jour compteur', updateError, {
+            operation: 'update_variant_counter_failed',
+          });
+        }
+
+        toast({
+          title: 'Produit créé',
+          description: `"${productName}" créé avec succès dans le groupe`,
+        });
+
+        return true;
+      } catch (err) {
+        logger.error('Erreur createProductInGroup', err as Error, {
+          operation: 'create_product_in_group_exception',
+        });
+        toast({
+          title: 'Erreur',
+          description: 'Impossible de créer le produit',
+          variant: 'destructive',
+        });
+        return false;
+      }
+    },
+    [supabase, toast]
+  );
+
+  // Mettre à jour un produit dans un groupe
+  const updateProductInGroup = useCallback(
+    async (
+      productId: string,
+      updates: Partial<EditableProductFields>
+    ): Promise<boolean> => {
+      try {
+        // Si les variant_attributes changent, on doit régénérer le nom et le SKU
+        const finalUpdates = { ...updates };
+
+        if (updates.variant_attributes) {
+          // Récupérer le produit et son groupe pour régénérer nom/SKU
+          const { data: product, error: productError } = await supabase
+            .from('products')
+            .select('variant_group_id')
+            .eq('id', productId)
+            .single();
+
+          if (productError || !product?.variant_group_id) {
+            throw new Error('Produit ou groupe introuvable');
+          }
+
+          // Récupérer les infos du groupe
+          const { data: group, error: groupError } = await supabase
+            .from('variant_groups')
+            .select('name, base_sku, variant_type')
+            .eq('id', product.variant_group_id)
+            .single();
+
+          if (groupError || !group) {
+            throw new Error('Groupe introuvable');
+          }
+
+          // Extraire la valeur de variante depuis les nouveaux attributs
+          const variantType = group.variant_type || 'color';
+          const variantValue = updates.variant_attributes[variantType];
+
+          if (variantValue) {
+            // Régénérer automatiquement le nom et le SKU
+            finalUpdates.name = `${group.name} - ${variantValue}`;
+            finalUpdates.sku = generateProductSKU(group.base_sku, variantValue);
+          }
+        }
+
+        const { error: updateError } = await supabase
+          .from('products')
+          .update({
+            ...finalUpdates,
+            updated_at: new Date().toISOString(),
+          } as any)
+          .eq('id', productId);
+
+        if (updateError) {
+          logger.error('Erreur mise à jour produit', updateError, {
+            operation: 'update_product_failed',
+          });
+          toast({
+            title: 'Erreur',
+            description: updateError.message,
+            variant: 'destructive',
+          });
+          return false;
+        }
+
+        toast({
+          title: 'Succès',
+          description: 'Produit mis à jour avec succès',
+        });
+
+        return true;
+      } catch (err) {
+        logger.error('Erreur updateProductInGroup', err as Error, {
+          operation: 'update_product_in_group_exception',
+        });
+        toast({
+          title: 'Erreur',
+          description: 'Impossible de mettre à jour le produit',
+          variant: 'destructive',
+        });
+        return false;
+      }
+    },
+    [supabase, toast]
+  );
+
+  // Retirer un produit d'un groupe
+  const removeProductFromGroup = async (
+    productId: string
+  ): Promise<boolean> => {
+    try {
+      // Récupérer le groupe actuel du produit
+      const { data: product, error: fetchError } = await supabase
+        .from('products')
+        .select('variant_group_id, variant_position')
+        .eq('id', productId)
+        .single();
+
+      if (fetchError || !product?.variant_group_id) {
+        toast({
+          title: 'Erreur',
+          description: 'Produit non trouvé ou pas dans un groupe',
+          variant: 'destructive',
+        });
+        return false;
+      }
+
+      // Retirer le produit du groupe
+      const { error: updateError } = await supabase
+        .from('products')
+        .update({
+          variant_group_id: null,
+          variant_position: null,
+        })
+        .eq('id', productId);
+
+      if (updateError) {
+        toast({
+          title: 'Erreur',
+          description: updateError.message,
+          variant: 'destructive',
+        });
+        return false;
+      }
+
+      // Réorganiser les positions des autres produits
+      const { data: remainingProducts } = await supabase
+        .from('products')
+        .select('id')
+        .eq('variant_group_id', product.variant_group_id)
+        .order('variant_position', { ascending: true });
+
+      if (remainingProducts) {
+        for (let i = 0; i < remainingProducts.length; i++) {
+          await supabase
+            .from('products')
+            .update({ variant_position: i + 1 })
+            .eq('id', remainingProducts[i].id);
+        }
+      }
+
+      // Mettre à jour le compteur du groupe
+      const { error: countError } = await supabase
+        .from('variant_groups')
+        .update({
+          product_count: remainingProducts?.length || 0,
+          updated_at: new Date().toISOString(),
+        })
+        .eq('id', product.variant_group_id);
+
+      if (countError) {
+        logger.error('Erreur update count', countError, {
+          operation: 'update_variant_count_failed',
+        });
+      }
+
+      // Rafraîchir la liste AVANT d'afficher le toast pour éviter l'erreur React
+      await fetchVariantGroups();
+
+      // Toast APRÈS le rafraîchissement pour éviter "Can't perform a React state update on a component that hasn't mounted yet"
+      toast({
+        title: 'Succès',
+        description: 'Produit retiré du groupe',
+      });
+
+      return true;
+    } catch (err) {
+      logger.error('Erreur retrait produit', err as Error, {
+        operation: 'remove_product_from_group_failed',
+      });
+      toast({
+        title: 'Erreur',
+        description: 'Impossible de retirer le produit',
+        variant: 'destructive',
+      });
+      return false;
+    }
+  };
+
+  // Supprimer un groupe de variantes
+  const deleteVariantGroup = async (groupId: string): Promise<boolean> => {
+    try {
+      // D'abord retirer tous les produits du groupe
+      const { error: updateError } = await supabase
+        .from('products')
+        .update({
+          variant_group_id: null,
+          variant_position: null,
+        })
+        .eq('variant_group_id', groupId);
+
+      if (updateError) {
+        toast({
+          title: 'Erreur',
+          description: updateError.message,
+          variant: 'destructive',
+        });
+        return false;
+      }
+
+      // Supprimer le groupe
+      const { error: deleteError } = await supabase
+        .from('variant_groups')
+        .delete()
+        .eq('id', groupId);
+
+      if (deleteError) {
+        toast({
+          title: 'Erreur',
+          description: deleteError.message,
+          variant: 'destructive',
+        });
+        return false;
+      }
+
+      toast({
+        title: 'Succès',
+        description: 'Groupe de variantes supprimé',
+      });
+
+      await fetchVariantGroups();
+      return true;
+    } catch (err) {
+      logger.error('Erreur suppression groupe', err as Error, {
+        operation: 'delete_variant_group_failed',
+      });
+      toast({
+        title: 'Erreur',
+        description: 'Impossible de supprimer le groupe',
+        variant: 'destructive',
+      });
+      return false;
+    }
+  };
+
+  // Mettre à jour un groupe de variantes
+  const updateVariantGroup = async (
+    groupId: string,
+    data: any
+  ): Promise<boolean> => {
+    try {
+      const updateData: any = {
+        updated_at: new Date().toISOString(),
+      };
+
+      if (data.name !== undefined) updateData.name = data.name;
+      if (data.variant_type !== undefined)
+        updateData.variant_type = data.variant_type;
+      if (data.subcategory_id !== undefined)
+        updateData.subcategory_id = data.subcategory_id;
+      if (data.style !== undefined) updateData.style = data.style;
+      if (data.suitable_rooms !== undefined)
+        updateData.suitable_rooms = data.suitable_rooms;
+
+      // Gestion du fournisseur commun
+      if (data.has_common_supplier !== undefined)
+        updateData.has_common_supplier = data.has_common_supplier;
+      if (data.supplier_id !== undefined)
+        updateData.supplier_id = data.supplier_id;
+
+      // Gestion des dimensions communes (JSONB - format moderne)
+      if (data.common_dimensions !== undefined) {
+        updateData.common_dimensions = data.common_dimensions;
+      }
+
+      // Gestion du poids commun
+      if (data.common_weight !== undefined) {
+        updateData.common_weight = data.common_weight;
+      }
+      if (data.has_common_weight !== undefined) {
+        updateData.has_common_weight = data.has_common_weight;
+      }
+
+      // Gestion du prix d'achat commun
+      if (data.common_cost_price !== undefined) {
+        updateData.common_cost_price = data.common_cost_price;
+      }
+      if (data.has_common_cost_price !== undefined) {
+        updateData.has_common_cost_price = data.has_common_cost_price;
+      }
+
+      logger.info('Mise à jour variant group', {
+        operation: 'update_variant_group',
+        groupId,
+        updateData,
+      });
+
+      // Mettre à jour le groupe avec logging détaillé
+      const { error: updateError, data: updatedGroup } = await supabase
+        .from('variant_groups')
+        .update(updateData)
+        .eq('id', groupId)
+        .select()
+        .single();
+
+      if (updateError) {
+        logger.error('Supabase update error', new Error(updateError.message), {
+          operation: 'update_variant_group_supabase_error',
+          message: updateError.message,
+          details: updateError.details,
+          hint: updateError.hint,
+          code: updateError.code,
+          updateData,
+        });
+        toast({
+          title: 'Erreur',
+          description: updateError.message,
+          variant: 'destructive',
+        });
+        return false;
+      }
+
+      logger.info('Variant group mis à jour avec succès', {
+        operation: 'update_variant_group_success',
+        groupId: updatedGroup.id,
+        name: updatedGroup.name,
+      });
+
+      // Propager le fournisseur aux produits si has_common_supplier est activé
+      if (
+        data.has_common_supplier !== undefined ||
+        data.supplier_id !== undefined
+      ) {
+        if (data.has_common_supplier && data.supplier_id) {
+          // Si fournisseur commun activé ET supplier_id valide, propager à tous les produits
+          logger.info('Propagation fournisseur aux produits', {
+            operation: 'propagate_supplier_to_products',
+            groupId,
+            supplierId: data.supplier_id,
+          });
+
+          const { error: supplierPropagationError } = await supabase
+            .from('products')
+            .update({ supplier_id: data.supplier_id })
+            .eq('variant_group_id', groupId);
+
+          if (supplierPropagationError) {
+            logger.error(
+              'Erreur propagation fournisseur',
+              supplierPropagationError,
+              {
+                operation: 'propagate_supplier_failed',
+              }
+            );
+          } else {
+            logger.info('Fournisseur propagé avec succès', {
+              operation: 'propagate_supplier_success',
+            });
+          }
+        }
+        // Si has_common_supplier est désactivé ou supplier_id null, les produits gardent leur supplier_id actuel
+      }
+
+      // Propager le poids aux produits si has_common_weight est activé
+      if (
+        data.has_common_weight !== undefined ||
+        data.common_weight !== undefined
+      ) {
+        if (data.has_common_weight && data.common_weight) {
+          // Si poids commun activé ET common_weight valide, propager à tous les produits
+          logger.info('Propagation poids aux produits', {
+            operation: 'propagate_weight_to_products',
+            groupId,
+            weight: data.common_weight,
+          });
+
+          const { error: weightPropagationError } = await supabase
+            .from('products')
+            .update({ weight: data.common_weight })
+            .eq('variant_group_id', groupId);
+
+          if (weightPropagationError) {
+            logger.error('Erreur propagation poids', weightPropagationError, {
+              operation: 'propagate_weight_failed',
+            });
+          } else {
+            logger.info('Poids propagé avec succès', {
+              operation: 'propagate_weight_success',
+            });
+          }
+        } else if (data.has_common_weight === false) {
+          // Si has_common_weight est désactivé, logger mais ne pas modifier les produits
+          logger.info('Désactivation poids commun', {
+            operation: 'disable_common_weight',
+            groupId,
+          });
+          // Les produits gardent leur poids actuel - pas de propagation null
+        }
+      }
+
+      // Propager le prix d'achat aux produits si has_common_cost_price est activé
+      if (
+        data.has_common_cost_price !== undefined ||
+        data.common_cost_price !== undefined
+      ) {
+        if (data.has_common_cost_price && data.common_cost_price) {
+          // Si prix d'achat commun activé ET common_cost_price valide, propager à tous les produits
+          logger.info("Propagation prix d'achat aux produits", {
+            operation: 'propagate_cost_price_to_products',
+            groupId,
+            costPrice: data.common_cost_price,
+          });
+
+          const { error: costPricePropagationError } = await supabase
+            .from('products')
+            .update({ cost_price: data.common_cost_price })
+            .eq('variant_group_id', groupId);
+
+          if (costPricePropagationError) {
+            logger.error(
+              "Erreur propagation prix d'achat",
+              costPricePropagationError,
+              {
+                operation: 'propagate_cost_price_failed',
+              }
+            );
+          } else {
+            logger.info("Prix d'achat propagé avec succès", {
+              operation: 'propagate_cost_price_success',
+            });
+          }
+        } else if (data.has_common_cost_price === false) {
+          // Si has_common_cost_price est désactivé, logger mais ne pas modifier les produits
+          logger.info("Désactivation prix d'achat commun", {
+            operation: 'disable_common_cost_price',
+            groupId,
+          });
+          // Les produits gardent leur prix d'achat actuel - pas de propagation null
+        }
+      }
+
+      // Si des attributs ont été modifiés, propager aux produits du groupe
+      const needsPropagation =
+        data.common_dimensions !== undefined ||
+        data.style !== undefined ||
+        data.suitable_rooms !== undefined ||
+        data.subcategory_id !== undefined ||
+        data.name !== undefined ||
+        data.common_weight !== undefined;
+
+      if (needsPropagation) {
+        const productsUpdateData: any = {};
+
+        // Dimensions communes (JSONB direct)
+        if (data.common_dimensions !== undefined) {
+          productsUpdateData.dimensions = data.common_dimensions;
+        }
+
+        // Autres champs communs (NOTE: style n'existe pas dans products, donc pas de propagation)
+        if (data.suitable_rooms !== undefined)
+          productsUpdateData.suitable_rooms = data.suitable_rooms;
+        if (data.subcategory_id !== undefined)
+          productsUpdateData.subcategory_id = data.subcategory_id;
+        if (data.common_weight !== undefined)
+          productsUpdateData.weight = data.common_weight;
+
+        // Si le nom du groupe change, mettre à jour les noms des produits
+        if (data.name !== undefined) {
+          // Récupérer tous les produits du groupe avec leurs variant_attributes
+          const { data: products } = await supabase
+            .from('products')
+            .select('id, variant_attributes')
+            .eq('variant_group_id', groupId);
+
+          if (products && products.length > 0) {
+            // Récupérer le variant_type du groupe
+            const { data: groupInfo } = await supabase
+              .from('variant_groups')
+              .select('variant_type')
+              .eq('id', groupId)
+              .single();
+
+            const variantType = groupInfo?.variant_type || 'color';
+
+            // Mettre à jour chaque produit avec le nouveau nom
+            for (const product of products) {
+              const attrs = product.variant_attributes as Record<string, any>;
+              const variantValue = attrs?.[variantType];
+              if (variantValue) {
+                const newProductName = `${data.name} - ${variantValue}`;
+                await supabase
+                  .from('products')
+                  .update({ name: newProductName })
+                  .eq('id', product.id);
+              }
+            }
+          }
+        }
+
+        // Propager les autres attributs aux produits du groupe (sauf name géré ci-dessus)
+        if (Object.keys(productsUpdateData).length > 0) {
+          const { error: productsError } = await supabase
+            .from('products')
+            .update(productsUpdateData)
+            .eq('variant_group_id', groupId);
+
+          if (productsError) {
+            logger.error('Erreur propagation dimensions', productsError, {
+              operation: 'propagate_dimensions_failed',
+            });
+            // Ne pas faire échouer toute l'opération si la propagation échoue
+          }
+        }
+      }
+
+      toast({
+        title: 'Succès',
+        description: 'Groupe de variantes mis à jour',
+      });
+
+      await fetchVariantGroups();
+      return true;
+    } catch (err) {
+      logger.error('Exception durant mise à jour variant group', err as Error, {
+        operation: 'update_variant_group_exception',
+      });
+      toast({
+        title: 'Erreur',
+        description: 'Impossible de mettre à jour le groupe',
+        variant: 'destructive',
+      });
+      return false;
+    }
+  };
+
+  // Récupérer les produits disponibles (pas encore dans un groupe)
+  const getAvailableProducts = async (subcategoryId?: string) => {
+    let query = supabase
+      .from('products')
+      .select('id, name, sku, stock_status, product_status')
+      .is('variant_group_id', null)
+      .in('product_status', ['active', 'preorder'])
+      .eq('creation_mode', 'complete')
+      .order('name', { ascending: true });
+
+    if (subcategoryId) {
+      query = query.eq('subcategory_id', subcategoryId);
+    }
+
+    const { data, error } = await query;
+
+    if (error) {
+      logger.error('Erreur fetch produits disponibles', error, {
+        operation: 'fetch_available_products_failed',
+      });
+      return [];
+    }
+
+    return data || [];
+  };
+
+  // Archiver un groupe de variantes (archive groupe + TOUS ses produits)
+  const archiveVariantGroup = async (groupId: string): Promise<boolean> => {
+    try {
+      // 1. Archiver le groupe
+      const { error: groupError } = await supabase
+        .from('variant_groups')
+        .update({
+          archived_at: new Date().toISOString(),
+          updated_at: new Date().toISOString(),
+        })
+        .eq('id', groupId);
+
+      if (groupError) {
+        toast({
+          title: 'Erreur',
+          description: groupError.message,
+          variant: 'destructive',
+        });
+        return false;
+      }
+
+      // 2. Archiver TOUS les produits du groupe en cascade
+      const { error: productsError } = await supabase
+        .from('products')
+        .update({
+          archived_at: new Date().toISOString(),
+          status: 'discontinued',
+          updated_at: new Date().toISOString(),
+        })
+        .eq('variant_group_id', groupId)
+        .is('archived_at', null); // Ne modifier que les produits non-archivés
+
+      if (productsError) {
+        toast({
+          title: 'Avertissement',
+          description: `Erreur lors de l'archivage des produits: ${productsError.message}`,
+          variant: 'destructive',
+        });
+        // Continue quand même, le groupe est archivé
+      }
+
+      toast({
+        title: 'Groupe archivé',
+        description: 'Le groupe et tous ses produits ont été archivés',
+      });
+
+      await fetchVariantGroups();
+      return true;
+    } catch (err) {
+      logger.error('Erreur archivage groupe', err as Error, {
+        operation: 'archive_variant_group_failed',
+      });
+      toast({
+        title: 'Erreur',
+        description: "Impossible d'archiver le groupe",
+        variant: 'destructive',
+      });
+      return false;
+    }
+  };
+
+  // Restaurer un groupe archivé (restaure groupe + TOUS ses produits)
+  const unarchiveVariantGroup = async (groupId: string): Promise<boolean> => {
+    try {
+      // 1. Restaurer le groupe
+      const { error: groupError } = await supabase
+        .from('variant_groups')
+        .update({
+          archived_at: null,
+          updated_at: new Date().toISOString(),
+        })
+        .eq('id', groupId);
+
+      if (groupError) {
+        toast({
+          title: 'Erreur',
+          description: groupError.message,
+          variant: 'destructive',
+        });
+        return false;
+      }
+
+      // 2. Restaurer TOUS les produits du groupe
+      const { error: productsError } = await supabase
+        .from('products')
+        .update({
+          archived_at: null,
+          status: 'in_stock', // Remettre en stock par défaut
+          updated_at: new Date().toISOString(),
+        })
+        .eq('variant_group_id', groupId)
+        .not('archived_at', 'is', null); // Ne modifier que les produits archivés
+
+      if (productsError) {
+        toast({
+          title: 'Avertissement',
+          description: `Erreur lors de la restauration des produits: ${productsError.message}`,
+          variant: 'destructive',
+        });
+      }
+
+      toast({
+        title: 'Groupe restauré',
+        description: 'Le groupe et tous ses produits ont été restaurés',
+      });
+
+      await fetchVariantGroups();
+      return true;
+    } catch (err) {
+      logger.error('Erreur restauration groupe', err as Error, {
+        operation: 'restore_variant_group_failed',
+      });
+      toast({
+        title: 'Erreur',
+        description: 'Impossible de restaurer le groupe',
+        variant: 'destructive',
+      });
+      return false;
+    }
+  };
+
+  // Charger les groupes de variantes archivés
+  const loadArchivedVariantGroups = async () => {
+    try {
+      const { data, error: fetchError } = await supabase
+        .from('variant_groups')
+        .select('*')
+        .not('archived_at', 'is', null)
+        .order('archived_at', { ascending: false });
+
+      if (fetchError) {
+        logger.error('Erreur chargement groupes archivés', fetchError, {
+          operation: 'fetch_archived_groups_failed',
+        });
+        return [];
+      }
+
+      // Récupérer les produits des groupes archivés (incluant archivés et actifs)
+      const groupIds = (data || []).map(g => g.id);
+      let allProducts: any[] = [];
+
+      if (groupIds.length > 0) {
+        const { data: productsData } = await supabase
+          .from('products')
+          .select(
+            'id, name, sku, stock_status, product_status, variant_group_id, variant_position, cost_price, weight, variant_attributes, archived_at'
+          )
+          .in('variant_group_id', groupIds)
+          .order('variant_position', { ascending: true });
+
+        allProducts = productsData || [];
+      }
+
+      // Récupérer les images
+      const productIds = allProducts.map(p => p.id);
+      let allImages: any[] = [];
+
+      if (productIds.length > 0) {
+        const { data: imagesData } = await supabase
+          .from('product_images')
+          .select('product_id, public_url')
+          .in('product_id', productIds)
+          .order('display_order', { ascending: true });
+
+        allImages = imagesData || [];
+      }
+
+      // Associer les images aux produits
+      const productsWithImages = allProducts.map(product => ({
+        ...product,
+        image_url: allImages.find(img => img.product_id === product.id)
+          ?.public_url,
+      }));
+
+      // Grouper les produits par variant_group_id
+      const groupsWithProducts = (data || []).map(group => ({
+        ...group,
+        products: productsWithImages.filter(
+          p => p.variant_group_id === group.id
+        ),
+        product_count: productsWithImages.filter(
+          p => p.variant_group_id === group.id
+        ).length,
+      }));
+
+      return groupsWithProducts;
+    } catch (err) {
+      logger.error('Erreur chargement variant groups', err as Error, {
+        operation: 'load_variant_groups_failed',
+      });
+      return [];
+    }
+  };
+
+  return {
+    variantGroups,
+    loading,
+    error,
+    createVariantGroup,
+    updateVariantGroup,
+    addProductsToGroup,
+    createProductInGroup,
+    updateProductInGroup,
+    removeProductFromGroup,
+    deleteVariantGroup,
+    archiveVariantGroup,
+    unarchiveVariantGroup,
+    loadArchivedVariantGroups,
+    getAvailableProducts,
+    refetch: fetchVariantGroups,
+  };
+}
+
+// Hook pour l'édition des attributs de produits dans un groupe de variantes
+export function useProductVariantEditing() {
+  const { toast } = useToast();
+  const supabaseRef = useRef(createClient());
+  const supabase = supabaseRef.current;
+
+  // Mettre à jour le prix d'un produit
+  const updateProductPrice = async (
+    productId: string,
+    price: number
+  ): Promise<boolean> => {
+    try {
+      const { error } = await supabase
+        .from('products')
+        .update({
+          cost_price: price,
+          updated_at: new Date().toISOString(),
+        })
+        .eq('id', productId);
+
+      if (error) {
+        toast({
+          title: 'Erreur',
+          description: error.message,
+          variant: 'destructive',
+        });
+        return false;
+      }
+
+      toast({
+        title: 'Succès',
+        description: 'Prix mis à jour',
+      });
+      return true;
+    } catch (err) {
+      logger.error('Erreur mise à jour prix', err as Error, {
+        operation: 'update_product_price_failed',
+      });
+      toast({
+        title: 'Erreur',
+        description: 'Impossible de mettre à jour le prix',
+        variant: 'destructive',
+      });
+      return false;
+    }
+  };
+
+  // Mettre à jour un attribut de variante d'un produit
+  const updateProductVariantAttribute = async (
+    productId: string,
+    attributeKey: string,
+    value: string
+  ): Promise<boolean> => {
+    try {
+      // Récupérer les attributs actuels ET les infos du groupe
+      const { data: product, error: fetchError } = await supabase
+        .from('products')
+        .select(
+          `
+          variant_attributes,
+          variant_group_id,
+          variant_groups (
+            name,
+            base_sku,
+            variant_type
+          )
+        `
+        )
+        .eq('id', productId)
+        .single();
+
+      if (fetchError) {
+        toast({
+          title: 'Erreur',
+          description: fetchError.message,
+          variant: 'destructive',
+        });
+        return false;
+      }
+
+      // Mettre à jour l'attribut spécifique
+      const updatedAttributes = {
+        ...((product?.variant_attributes || {}) as any),
+        [attributeKey]: value,
+      };
+
+      // Récupérer les infos du groupe pour régénérer nom et SKU
+      const groupData = (product as any)?.variant_groups;
+
+      // Préparer les données de mise à jour
+      const updateData: any = {
+        variant_attributes: updatedAttributes,
+        updated_at: new Date().toISOString(),
+      };
+
+      // Si le produit appartient à un groupe, régénérer automatiquement nom ET SKU
+      if (groupData?.name && groupData.base_sku) {
+        const variantType = groupData.variant_type || attributeKey;
+        const variantValue = updatedAttributes[variantType];
+
+        if (variantValue) {
+          // Générer le nouveau nom : "{group_name} - {variant_value}"
+          updateData.name = `${groupData.name} - ${variantValue}`;
+
+          // Générer le nouveau SKU : "{BASE_SKU}-{VARIANT_VALUE}"
+          updateData.sku = generateProductSKU(groupData.base_sku, variantValue);
+        }
+      }
+
+      const { error: updateError } = await supabase
+        .from('products')
+        .update(updateData)
+        .eq('id', productId);
+
+      if (updateError) {
+        toast({
+          title: 'Erreur',
+          description: updateError.message,
+          variant: 'destructive',
+        });
+        return false;
+      }
+
+      toast({
+        title: 'Succès',
+        description: `${attributeKey === 'color' ? 'Couleur' : attributeKey === 'material' ? 'Matière' : attributeKey} mise à jour`,
+      });
+      return true;
+    } catch (err) {
+      logger.error('Erreur mise à jour attribut', err as Error, {
+        operation: 'update_product_attribute_failed',
+      });
+      toast({
+        title: 'Erreur',
+        description: "Impossible de mettre à jour l'attribut",
+        variant: 'destructive',
+      });
+      return false;
+    }
+  };
+
+  return {
+    updateProductPrice,
+    updateProductVariantAttribute,
+  };
+}
+
+// Hook pour récupérer un groupe de variantes spécifique avec ses produits
+export function useVariantGroup(groupId: string) {
+  const [variantGroup, setVariantGroup] = useState<VariantGroup | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  const supabaseRef = useRef(createClient());
+  const supabase = supabaseRef.current;
+
+  useEffect(() => {
+    const fetchVariantGroup = async () => {
+      if (!groupId) {
+        setLoading(false);
+        return;
+      }
+
+      setLoading(true);
+      setError(null);
+      setVariantGroup(null);
+
+      try {
+        // Récupérer le groupe de variantes avec jointures
+        const { data: groupData, error: fetchError } = await supabase
+          .from('variant_groups')
+          .select(
+            `
+            *,
+            subcategory:subcategories (
+              id,
+              name,
+              category:categories!inner (
+                id,
+                name,
+                family:families!inner (
+                  id,
+                  name
+                )
+              )
+            ),
+            supplier:organisations!variant_groups_supplier_id_fkey (
+              id,
+              legal_name,
+              trade_name
+            )
+          `
+          )
+          .eq('id', groupId)
+          .maybeSingle();
+
+        if (fetchError) {
+          setLoading(false);
+          setError(fetchError.message);
+          setVariantGroup(null);
+          return;
+        }
+
+        // Récupérer les produits du groupe avec prix et attributs
+        const { data: productsData } = await supabase
+          .from('products')
+          .select(
+            `
+            id,
+            name,
+            sku,
+            stock_status,
+            product_status,
+            variant_group_id,
+            variant_position,
+            cost_price,
+            weight,
+            variant_attributes,
+            supplier:organisations!products_supplier_id_fkey (
+              id,
+              legal_name,
+              trade_name
+            )
+          `
+          )
+          .eq('variant_group_id', groupId)
+          .order('variant_position', { ascending: true });
+
+        const products = productsData || [];
+
+        // Récupérer les images des produits
+        const productIds = products.map(p => p.id);
+        let allImages: any[] = [];
+
+        if (productIds.length > 0) {
+          const { data: imagesData } = await supabase
+            .from('product_images')
+            .select('product_id, public_url')
+            .in('product_id', productIds)
+            .order('display_order', { ascending: true });
+
+          allImages = imagesData || [];
+        }
+
+        // Associer les images aux produits
+        const productsWithImages = products.map(product => ({
+          ...product,
+          image_url: allImages.find(img => img.product_id === product.id)
+            ?.public_url,
+        }));
+
+        // Construire l'objet groupe complet
+        const groupWithProducts = {
+          ...groupData,
+          products: productsWithImages,
+          product_count: productsWithImages.length,
+        };
+
+        setVariantGroup(groupWithProducts as any);
+        setLoading(false);
+        setError(null);
+      } catch (err) {
+        const errorMessage =
+          err instanceof Error ? err.message : 'Erreur inconnue';
+        setLoading(false);
+        setError(errorMessage);
+        setVariantGroup(null);
+      }
+    };
+
+    fetchVariantGroup();
+  }, [groupId, supabase]);
+
+  return { variantGroup, loading, error };
+}

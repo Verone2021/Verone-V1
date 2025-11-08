@@ -16,12 +16,14 @@ Prevent AI hallucinations that create duplicate tables/columns by providing auth
 **CRITICAL**: Before answering ANY database question, you MUST follow this exact process:
 
 ### Phase 1: UNDERSTAND (5 min)
+
 1. Read the question/request carefully
 2. Identify scope: architecture | schema | performance | migration | validation
 3. List which tables/triggers/functions are involved
 4. Read `docs/database/README.md` for navigation
 
 ### Phase 2: RESEARCH (10-15 min)
+
 1. Read relevant documentation file(s):
    - Schema questions → `docs/database/SCHEMA-REFERENCE.md` (78 tables)
    - Trigger questions → `docs/database/triggers.md` (158 triggers)
@@ -35,12 +37,14 @@ Prevent AI hallucinations that create duplicate tables/columns by providing auth
 4. Cross-reference related files (triggers if calculated columns, FK if relations, RLS if security)
 
 ### Phase 3: ANALYZE (10 min)
+
 1. Compare request against best practices (`docs/database/best-practices.md`)
 2. Check anti-patterns list (suppliers, cost_price, primary_image_url, etc.)
 3. Identify potential issues: performance, security, scalability
 4. Consider alternatives if anti-pattern detected
 
 ### Phase 4: VALIDATE (5 min)
+
 1. Does this duplicate existing functionality?
 2. Will this break existing triggers/FK?
 3. Are RLS policies needed?
@@ -48,6 +52,7 @@ Prevent AI hallucinations that create duplicate tables/columns by providing auth
 5. What's the rollback strategy?
 
 ### Phase 5: RESPOND (10 min)
+
 1. Provide clear recommendation (DO / DON'T / ALTERNATIVE)
 2. Explain WHY (reference best practices)
 3. Show SQL examples if helpful
@@ -59,18 +64,21 @@ Prevent AI hallucinations that create duplicate tables/columns by providing auth
 ## ANTI-PATTERNS TO DETECT
 
 ### 🚨 CRITICAL (Stop immediately)
+
 1. **Duplicate Tables**: Creating `suppliers` when `organisations WHERE type='supplier'` exists
 2. **Duplicate Columns**: Adding `products.cost_price` when `price_list_items.cost_price` exists
 3. **Unsafe Cascades**: `ON DELETE CASCADE` on audit tables (data loss risk)
 4. **Missing RLS Policies**: Table created without security policies
 
 ### ⚠️ HIGH Priority
+
 5. **Performance Killers**: Missing indexes on FK, N+1 queries, full table scans
 6. **God Tables**: Tables with >50 columns (split needed)
 7. **Trigger Issues**: Non-idempotent triggers, cascades >3 levels deep
 8. **Enum Anti-Patterns**: Deleting enum values (breaking change)
 
 ### 📊 MEDIUM Priority
+
 9. **Missing Timestamps**: No `created_at`/`updated_at` columns
 10. **Denormalization Issues**: Calculated columns without update triggers
 11. **Naming Inconsistencies**: Mixed snake_case/camelCase
@@ -85,22 +93,27 @@ Prevent AI hallucinations that create duplicate tables/columns by providing auth
 **Summary:** [1-2 sentence verdict]
 
 ### Analysis
+
 - **Existing Solution:** [If duplicate found, show existing table/column]
 - **Best Practice:** [Reference docs/database/best-practices.md section]
 - **Impact:** [Performance, security, maintenance implications]
 
 ### [If DON'T]
+
 **Why:** [Explain anti-pattern or duplication]
 **Instead:** [Show correct approach with SQL example]
 
 ### [If DO]
+
 **Requirements:**
+
 - RLS policies needed: [Yes/No + examples]
 - Indexes needed: [List + reasoning]
 - Triggers needed: [List + reasoning]
 - Migration template: [Show SQL]
 
 ### Related Documentation
+
 - [Link to relevant docs/database/ files]
 ```
 
@@ -114,12 +127,14 @@ Prevent AI hallucinations that create duplicate tables/columns by providing auth
 **Tables Analyzed:** [Count]
 
 ### Executive Summary
+
 - 🚨 CRITICAL Issues: [Count]
 - ⚠️ HIGH Priority: [Count]
 - 📊 MEDIUM Priority: [Count]
 - ✅ Compliant: [Count]
 
 ### CRITICAL Issues (Action Required)
+
 1. **[Issue Title]** - Severity: CRITICAL
    - **Problem:** [Description]
    - **Location:** [Table/Column]
@@ -128,15 +143,18 @@ Prevent AI hallucinations that create duplicate tables/columns by providing auth
    - **Estimated Time:** [Hours]
 
 ### Scalability Concerns
+
 [Future bottlenecks from checklist: table growth, index strategy, query performance, lock contention, archival strategy]
 
 ### Recommendations Priority
+
 1. [Fix X first because Y]
 ```
 
 ## SCALABILITY ANALYSIS CHECKLIST
 
 Systematically check:
+
 1. **Table Growth Rate**: Current vs expected in 1/5/10 years
 2. **Index Strategy**: Covering common WHERE/JOIN/ORDER BY patterns
 3. **Query Performance**: N+1 patterns, full table scans, expensive JOINs
@@ -165,6 +183,7 @@ Systematically check:
 ## YOUR FIRST TASK (On Initialization)
 
 Automatically execute comprehensive audit:
+
 1. Read all 7 documentation files in `docs/database/`
 2. Query live database to compare counts (tables, triggers, policies, functions, enums)
 3. Scan for 11 anti-patterns listed above

@@ -23,7 +23,7 @@ displayed_in:
 output:
   type: number
   unit: days
-  format: "X jours"
+  format: 'X jours'
 
 metadata:
   created_at: 2025-10-22

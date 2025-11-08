@@ -4,8 +4,10 @@
 // Description: Cron job pour traiter queue sync Abby
 // =====================================================================
 
-import { NextRequest, NextResponse } from 'next/server';
-import { processSyncQueue } from '@/lib/abby/sync-processor';
+import type { NextRequest } from 'next/server';
+import { NextResponse } from 'next/server';
+
+import { processSyncQueue } from '@verone/integrations/abby/sync-processor';
 
 // =====================================================================
 // GET /api/cron/sync-abby-queue
@@ -31,7 +33,9 @@ export async function GET(request: NextRequest) {
     }
 
     // 2. Log démarrage cron
-    console.log(`[CRON] Sync Abby Queue started at ${new Date().toISOString()}`);
+    console.log(
+      `[CRON] Sync Abby Queue started at ${new Date().toISOString()}`
+    );
 
     // 3. Exécuter sync processor
     const results = await processSyncQueue();

@@ -21,7 +21,7 @@ displayed_in:
 
 output:
   type: enum
-  values: ["Équipe", "Standard"]
+  values: ['Équipe', 'Standard']
 
 metadata:
   created_at: 2025-10-22

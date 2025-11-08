@@ -1,11 +1,14 @@
-'use client'
+'use client';
 
-import { useState } from 'react'
-import { useParams } from 'next/navigation'
-import Link from 'next/link'
-import { Card, CardContent } from '@/components/ui/card'
-import { ButtonV2 } from '@/components/ui/button'
-import { Badge } from '@/components/ui/badge'
+import { useState } from 'react';
+
+import Link from 'next/link';
+import { useParams } from 'next/navigation';
+
+import { Badge } from '@verone/ui';
+import { ButtonV2 } from '@verone/ui';
+import { Card, CardContent } from '@verone/ui';
+import { TabsNavigation, TabContent } from '@verone/ui';
 import {
   ArrowLeft,
   Building2,
@@ -14,49 +17,53 @@ import {
   Package,
   Phone,
   ShoppingCart,
-  FileText
-} from 'lucide-react'
-import { useOrganisation, useSuppliers, getOrganisationDisplayName } from '@/hooks/use-organisations'
-import { useOrganisationTabs } from '@/hooks/use-organisation-tabs'
-import { LegalIdentityEditSection } from '@/components/business/legal-identity-edit-section'
-import { ContactEditSection } from '@/components/business/contact-edit-section'
-import { AddressEditSection } from '@/components/business/address-edit-section'
-import { CommercialEditSection } from '@/components/business/commercial-edit-section'
-import { PerformanceEditSection } from '@/components/business/performance-edit-section'
-import { ContactsManagementSection } from '@/components/business/contacts-management-section'
-import { OrganisationLogoCard } from '@/components/business/organisation-logo-card'
-import { OrganisationStatsCard } from '@/components/business/organisation-stats-card'
-// Phase 1: Sections produits/commandes désactivées (Phase 2+)
-// import { OrganisationPurchaseOrdersSection } from '@/components/business/organisation-purchase-orders-section'
-// import { OrganisationProductsSection } from '@/components/business/organisation-products-section'
-import { TabsNavigation, TabContent } from '@/components/ui/tabs-navigation'
-import { isModuleDeployed, getModulePhase } from '@/lib/deployed-modules'
-import type { Organisation } from '@/hooks/use-organisations'
+  FileText,
+} from 'lucide-react';
+
+import { isModuleDeployed, getModulePhase } from '@/lib/deployed-modules';
+import { AddressEditSection } from '@verone/common';
+import { ContactEditSection } from '@verone/customers';
+import { ContactsManagementSection } from '@verone/customers';
+import { OrganisationPurchaseOrdersSection } from '@verone/orders';
+import { OrganisationLogoCard } from '@verone/organisations';
+import { OrganisationStatsCard } from '@verone/organisations';
+import { CommercialEditSection } from '@verone/organisations';
+import { LegalIdentityEditSection } from '@verone/organisations';
+import { PerformanceEditSection } from '@verone/organisations';
+import {
+  useOrganisation,
+  useSuppliers,
+  getOrganisationDisplayName,
+} from '@verone/organisations';
+import { useOrganisationTabCounts } from '@verone/organisations';
+import { OrganisationProductsSection } from '@verone/organisations';
+import type { Organisation } from '@verone/organisations';
 
 export default function SupplierDetailPage() {
-  const { supplierId } = useParams()
-  const [activeTab, setActiveTab] = useState('contacts')
+  const { supplierId } = useParams();
+  const [activeTab, setActiveTab] = useState('contacts');
 
-  const { organisation: supplier, loading, error } = useOrganisation(supplierId as string)
   const {
-    archiveOrganisation,
-    unarchiveOrganisation,
-    refetch
-  } = useSuppliers()
+    organisation: supplier,
+    loading,
+    error,
+  } = useOrganisation(supplierId as string);
+  const { archiveOrganisation, unarchiveOrganisation, refetch } =
+    useSuppliers();
 
   // Hook centralisé pour les compteurs d'onglets
-  const { counts, refreshCounts } = useOrganisationTabs({
+  const { counts, refreshCounts } = useOrganisationTabCounts({
     organisationId: supplierId as string,
-    organisationType: 'supplier'
-  })
+    organisationType: 'supplier',
+  });
 
   // Gestionnaire de mise à jour des données fournisseur
   const handleSupplierUpdate = (updatedData: Partial<Organisation>) => {
     // Les données sont automatiquement mises à jour par le hook useInlineEdit
-    refetch()
+    refetch();
     // Rafraîchir les compteurs
-    refreshCounts()
-  }
+    refreshCounts();
+  };
 
   // Configuration des onglets avec compteurs du hook + modules déployés
   const tabs = [
@@ -65,7 +72,7 @@ export default function SupplierDetailPage() {
       label: 'Contacts',
       icon: <Phone className="h-4 w-4" />,
       badge: counts.contacts.toString(),
-      disabled: !isModuleDeployed('contacts')
+      disabled: !isModuleDeployed('contacts'),
     },
     {
       id: 'orders',
@@ -73,14 +80,14 @@ export default function SupplierDetailPage() {
       icon: <ShoppingCart className="h-4 w-4" />,
       badge: counts.orders.toString(),
       disabled: !isModuleDeployed('purchase_orders'),
-      disabledBadge: getModulePhase('purchase_orders')
+      disabledBadge: getModulePhase('purchase_orders'),
     },
     {
       id: 'invoices',
       label: 'Factures',
       icon: <FileText className="h-4 w-4" />,
       disabled: !isModuleDeployed('invoices'),
-      disabledBadge: getModulePhase('invoices')
+      disabledBadge: getModulePhase('invoices'),
     },
     {
       id: 'products',
@@ -88,24 +95,24 @@ export default function SupplierDetailPage() {
       icon: <Package className="h-4 w-4" />,
       badge: counts.products.toString(),
       disabled: !isModuleDeployed('products'),
-      disabledBadge: getModulePhase('products')
-    }
-  ]
+      disabledBadge: getModulePhase('products'),
+    },
+  ];
 
   if (loading) {
     return (
       <div className="container mx-auto p-4 space-y-4">
         <div className="animate-pulse">
-          <div className="h-8 bg-gray-200 rounded w-1/3 mb-4"></div>
-          <div className="h-6 bg-gray-200 rounded w-1/2 mb-8"></div>
+          <div className="h-8 bg-gray-200 rounded w-1/3 mb-4" />
+          <div className="h-6 bg-gray-200 rounded w-1/2 mb-8" />
           <div className="space-y-4">
-            <div className="h-32 bg-gray-200 rounded"></div>
-            <div className="h-32 bg-gray-200 rounded"></div>
-            <div className="h-32 bg-gray-200 rounded"></div>
+            <div className="h-32 bg-gray-200 rounded" />
+            <div className="h-32 bg-gray-200 rounded" />
+            <div className="h-32 bg-gray-200 rounded" />
           </div>
         </div>
       </div>
-    )
+    );
   }
 
   if (error || !supplier) {
@@ -118,7 +125,8 @@ export default function SupplierDetailPage() {
               Fournisseur introuvable
             </h3>
             <p className="text-gray-600 mb-4">
-              Ce fournisseur n'existe pas ou vous n'avez pas les droits pour le consulter.
+              Ce fournisseur n'existe pas ou vous n'avez pas les droits pour le
+              consulter.
             </p>
             <ButtonV2 asChild>
               <Link href="/contacts-organisations/suppliers">
@@ -129,26 +137,26 @@ export default function SupplierDetailPage() {
           </CardContent>
         </Card>
       </div>
-    )
+    );
   }
 
   const handleArchive = async () => {
     if (!supplier.archived_at) {
       // Archiver
-      const success = await archiveOrganisation(supplier.id)
+      const success = await archiveOrganisation(supplier.id);
       if (success) {
-        console.log('✅ Fournisseur archivé avec succès')
-        refetch()
+        console.log('✅ Fournisseur archivé avec succès');
+        refetch();
       }
     } else {
       // Restaurer
-      const success = await unarchiveOrganisation(supplier.id)
+      const success = await unarchiveOrganisation(supplier.id);
       if (success) {
-        console.log('✅ Fournisseur restauré avec succès')
-        refetch()
+        console.log('✅ Fournisseur restauré avec succès');
+        refetch();
       }
     }
-  }
+  };
 
   return (
     <div className="container mx-auto p-4 space-y-4">
@@ -165,23 +173,32 @@ export default function SupplierDetailPage() {
           </div>
           <div className="flex items-center gap-3 mb-2">
             <Building2 className="h-5 w-5 text-black" />
-            <h1 className="text-lg font-semibold text-black">{getOrganisationDisplayName(supplier)}</h1>
+            <h1 className="text-lg font-semibold text-black">
+              {getOrganisationDisplayName(supplier)}
+            </h1>
             <div className="flex gap-2">
               <Badge
-                variant={supplier.is_active ? 'default' : 'secondary'}
-                className={supplier.is_active ? 'bg-green-100 text-green-800' : ''}
+                variant={supplier.is_active ? 'secondary' : 'secondary'}
+                className={
+                  supplier.is_active ? 'bg-green-100 text-green-800' : ''
+                }
               >
                 {supplier.is_active ? 'Actif' : 'Inactif'}
               </Badge>
               {supplier.archived_at && (
-                <Badge variant="danger" className="bg-red-100 text-red-800">
+                <Badge
+                  variant="destructive"
+                  className="bg-red-100 text-red-800"
+                >
                   Archivé
                 </Badge>
               )}
             </div>
           </div>
           <p className="text-sm text-gray-600">
-            Fournisseur • {supplier.supplier_segment && `${supplier.supplier_segment} • `}ID: {supplier.id.slice(0, 8)}
+            Fournisseur •{' '}
+            {supplier.supplier_segment && `${supplier.supplier_segment} • `}ID:{' '}
+            {supplier.id.slice(0, 8)}
           </p>
         </div>
 
@@ -190,7 +207,11 @@ export default function SupplierDetailPage() {
           <ButtonV2
             variant="outline"
             onClick={handleArchive}
-            className={supplier.archived_at ? "text-blue-600 border-blue-200 hover:bg-blue-50" : "text-black border-gray-200 hover:bg-gray-50"}
+            className={
+              supplier.archived_at
+                ? 'text-blue-600 border-blue-200 hover:bg-blue-50'
+                : 'text-black border-gray-200 hover:bg-gray-50'
+            }
           >
             {supplier.archived_at ? (
               <>
@@ -251,7 +272,6 @@ export default function SupplierDetailPage() {
           <PerformanceEditSection
             organisation={supplier}
             onUpdate={handleSupplierUpdate}
-            organisationType="supplier"
           />
 
           {/* Statistiques - Composant réutilisable */}
@@ -280,12 +300,11 @@ export default function SupplierDetailPage() {
         </TabContent>
 
         <TabContent activeTab={activeTab} tabId="orders">
-          {/* Phase 1: Onglet Commandes désactivé (Phase 2+) */}
-          <div className="p-6 text-center">
-            <p className="text-muted-foreground">
-              🛒 Gestion des commandes fournisseurs disponible en <strong>Phase 2</strong>
-            </p>
-          </div>
+          <OrganisationPurchaseOrdersSection
+            organisationId={supplier.id}
+            organisationName={getOrganisationDisplayName(supplier)}
+            onUpdate={() => handleSupplierUpdate({})}
+          />
         </TabContent>
 
         <TabContent activeTab={activeTab} tabId="invoices">
@@ -301,15 +320,14 @@ export default function SupplierDetailPage() {
         </TabContent>
 
         <TabContent activeTab={activeTab} tabId="products">
-          {/* Phase 1: Onglet Produits désactivé (Phase 2+) */}
-          <div className="p-6 text-center">
-            <p className="text-muted-foreground">
-              📦 Gestion des produits fournisseurs disponible en <strong>Phase 2</strong>
-            </p>
-          </div>
+          <OrganisationProductsSection
+            organisationId={supplier.id}
+            organisationName={getOrganisationDisplayName(supplier)}
+            organisationType="supplier"
+            onUpdate={() => handleSupplierUpdate({})}
+          />
         </TabContent>
       </div>
-
     </div>
-  )
+  );
 }

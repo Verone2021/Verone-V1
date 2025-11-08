@@ -22,8 +22,8 @@ displayed_in:
     location: "Card 'Contacts principaux'"
 
 thresholds:
-  good: "1 par organisation minimum"
-  warning: "Organisations sans contact principal"
+  good: '1 par organisation minimum'
+  warning: 'Organisations sans contact principal'
 
 metadata:
   created_at: 2025-10-22

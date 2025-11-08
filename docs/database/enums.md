@@ -1,43 +1,50 @@
-# <¯ Enums PostgreSQL - Vérone Database
+# <ï¿½ Enums PostgreSQL - Vï¿½rone Database
 
-**Source de vérité pour tous les types ENUM** utilisés dans la base de données Vérone.
+**Source de vï¿½ritï¿½ pour tous les types ENUM** utilisï¿½s dans la base de donnï¿½es Vï¿½rone.
 
 ---
 
-## =Ê STATISTIQUES GLOBALES
+## ðŸ“Š STATISTIQUES GLOBALES
 
-- **Total Types Enum** : 34 types
-- **Total Valeurs** : 194 valeurs
-- **Date Extraction** : 2025-10-17
+- **Total Types Enum** : 36 types (+2 nouveaux: stock_status_type, product_status_type)
+- **Total Valeurs** : 201 valeurs (+7: 3 stock_status + 4 product_status)
+- **DerniÃ¨re Mise Ã  Jour** : 2025-11-04 (Refonte systÃ¨me dual status produits)
+- **Date Extraction Initiale** : 2025-10-17
 - **Project** : aorroydfjsrygmosnzrl
 
 ---
 
-## =Ú INDEX DES ENUMS PAR MODULE
+## =ï¿½ INDEX DES ENUMS PAR MODULE
 
-### Module Produits & Catalogue (9 enums)
-1. `availability_status_type` (8 valeurs)
-2. `availability_type_enum` (4 valeurs)
-3. `image_type_enum` (5 valeurs)
-4. `package_type` (4 valeurs)
-5. `room_type` (30 valeurs)
-6. `sourcing_status_type` (4 valeurs)
-7. `sample_status_type` (7 valeurs)
-8. `sample_request_status_type` (3 valeurs)
-9. `language_type` (3 valeurs)
+### Module Produits & Catalogue (11 enums)
+
+1. `availability_status_type` (8 valeurs) âš ï¸ DEPRECATED - RemplacÃ© par stock_status_type + product_status_type
+2. **`stock_status_type` (3 valeurs) - NOUVEAU 2025-11-04**
+3. **`product_status_type` (4 valeurs) - NOUVEAU 2025-11-04**
+4. `availability_type_enum` (4 valeurs)
+5. `image_type_enum` (5 valeurs)
+6. `package_type` (4 valeurs)
+7. `room_type` (30 valeurs)
+8. `sourcing_status_type` (4 valeurs)
+9. `sample_status_type` (7 valeurs)
+10. `sample_request_status_type` (3 valeurs)
+11. `language_type` (3 valeurs)
 
 ### Module Commandes & Ventes (3 enums)
+
 1. `sales_order_status` (6 valeurs)
 2. `purchase_order_status` (6 valeurs)
 3. `purchase_type` (3 valeurs)
 
 ### Module Stock & Logistique (4 enums)
+
 1. `movement_type` (4 valeurs)
 2. `stock_reason_code` (25 valeurs)
 3. `shipment_type` (2 valeurs)
 4. `shipping_method` (4 valeurs)
 
-### Module Finance & Comptabilité (5 enums)
+### Module Finance & Comptabilitï¿½ (5 enums)
+
 1. `document_type` (5 valeurs)
 2. `document_status` (8 valeurs)
 3. `document_direction` (2 valeurs)
@@ -45,17 +52,20 @@
 5. `bank_provider` (2 valeurs)
 
 ### Module Organisations & Utilisateurs (4 enums)
+
 1. `organisation_type` (4 valeurs)
 2. `supplier_segment_type` (5 valeurs)
 3. `user_role_type` (5 valeurs)
 4. `user_type` (4 valeurs)
 
 ### Module Feeds & Exports (3 enums)
+
 1. `feed_platform_type` (3 valeurs)
 2. `feed_format_type` (3 valeurs)
 3. `feed_export_status_type` (5 valeurs)
 
-### Module Technique & Système (6 enums)
+### Module Technique & Systï¿½me (6 enums)
+
 1. `error_severity_enum` (4 valeurs)
 2. `error_status_enum` (4 valeurs)
 3. `error_type_enum` (7 valeurs)
@@ -65,41 +75,143 @@
 
 ---
 
-## = ENUMS DÉTAILLÉS
+## =
+
+ENUMS Dï¿½TAILLï¿½S
 
 ### 1. AVAILABILITY_STATUS_TYPE (8 valeurs)
 
-**Usage** : Statut de disponibilité des produits (produits sourcing/catalogue)
+**Usage** : Statut de disponibilitï¿½ des produits (produits sourcing/catalogue)
 
 **Valeurs** :
+
 ```sql
 CREATE TYPE availability_status_type AS ENUM (
   'in_stock',                    -- 1. En stock disponible
   'out_of_stock',                -- 2. Rupture de stock
-  'preorder',                    -- 3. Précommande
-  'coming_soon',                 -- 4. Bientôt disponible
-  'discontinued',                -- 5. Arrêté/abandonné
+  'preorder',                    -- 3. Prï¿½commande
+  'coming_soon',                 -- 4. Bientï¿½t disponible
+  'discontinued',                -- 5. Arrï¿½tï¿½/abandonnï¿½
   'sourcing',                    -- 6. En cours de sourcing
-  'pret_a_commander',            -- 7. Prêt à commander
-  'echantillon_a_commander'      -- 8. Échantillon à commander
+  'pret_a_commander',            -- 7. Prï¿½t ï¿½ commander
+  'echantillon_a_commander'      -- 8. ï¿½chantillon ï¿½ commander
 );
 ```
 
-**Tables Utilisatrices** : `products`, `product_drafts`
+**Tables Utilisatrices** : `products` (colonne `status_deprecated`)
+
+**âš ï¸ DEPRECATED** : Ce type ENUM est obsolÃ¨te depuis le 2025-11-04. Il a Ã©tÃ© remplacÃ© par le systÃ¨me dual status :
+
+- `stock_status_type` pour la disponibilitÃ© stock
+- `product_status_type` pour le statut commercial (manuel)
+
+Voir migration `20251104_100_refonte_statuts_produits_stock_commercial.sql`
 
 ---
 
-### 2. AVAILABILITY_TYPE_ENUM (4 valeurs)
+### 2. STOCK_STATUS_TYPE (3 valeurs) ðŸ†•
 
-**Usage** : Type de disponibilité simple
+**Date CrÃ©ation** : 2025-11-04
+**Usage** : Statut stock automatique calculÃ© par trigger selon stock rÃ©el et prÃ©visionnel
+**Modification** : AUTOMATIQUE UNIQUEMENT (trigger `calculate_stock_status_trigger`)
 
 **Valeurs** :
+
+```sql
+CREATE TYPE stock_status_type AS ENUM (
+  'in_stock',      -- 1. Stock disponible (stock_real > 0)
+  'out_of_stock',  -- 2. Aucun stock (stock_real = 0 AND stock_forecasted_in = 0)
+  'coming_soon'    -- 3. Commande fournisseur en cours (stock_real = 0 AND stock_forecasted_in > 0)
+);
+```
+
+**Tables Utilisatrices** : `products` (colonne `stock_status`)
+
+**Business Rules** :
+
+- CalculÃ© automatiquement via trigger `trg_calculate_stock_status`
+- ExÃ©cutÃ© BEFORE INSERT OR UPDATE OF stock_real, stock_forecasted_in, product_status
+- Produits `draft` forcÃ©s Ã  `out_of_stock` mÃªme si stock physique existe
+- Impossible de modifier manuellement (recalcul immÃ©diat par trigger)
+
+**Trigger Logic** :
+
+```sql
+IF product_status = 'draft' THEN
+    stock_status := 'out_of_stock'
+ELSIF stock_real > 0 THEN
+    stock_status := 'in_stock'
+ELSIF COALESCE(stock_forecasted_in, 0) > 0 THEN
+    stock_status := 'coming_soon'
+ELSE
+    stock_status := 'out_of_stock'
+END IF
+```
+
+**Affichage UI** :
+
+- `in_stock` â†’ Badge vert "En stock"
+- `out_of_stock` â†’ Badge rouge "Rupture"
+- `coming_soon` â†’ Badge bleu "BientÃ´t"
+
+---
+
+### 3. PRODUCT_STATUS_TYPE (4 valeurs) ðŸ†•
+
+**Date CrÃ©ation** : 2025-11-04
+**Usage** : Statut commercial manuel indÃ©pendant du stock
+**Modification** : MANUELLE (modifiable par utilisateurs Owner/Admin)
+
+**Valeurs** :
+
+```sql
+CREATE TYPE product_status_type AS ENUM (
+  'active',        -- 1. Produit actif normal dans le catalogue
+  'preorder',      -- 2. Produit en prÃ©commande (disponible sous 2-8 semaines)
+  'discontinued',  -- 3. Produit arrÃªtÃ© du catalogue (fin de vie)
+  'draft'          -- 4. Produit en cours de sourcing (non publiÃ©)
+);
+```
+
+**Tables Utilisatrices** : `products` (colonne `product_status`)
+
+**Business Rules** :
+
+- INDÃ‰PENDANT du stock_status (peut coexister toute combinaison)
+- Produits `draft` forcent stock_status = 'out_of_stock' (via trigger)
+- Alertes stock uniquement pour `product_status = 'active'`
+- Filtres dashboard excluent `discontinued` et `draft` par dÃ©faut
+
+**Exemples Combinaisons** :
+| product_status | stock_status | Affichage UI | Cas d'usage |
+|----------------|--------------|--------------|-------------|
+| active | in_stock | ðŸŸ¢ En stock | Produit normal disponible |
+| active | out_of_stock | ðŸ”´ Rupture | Produit actif mais stock Ã©puisÃ© |
+| preorder | coming_soon | ðŸ”µ BientÃ´t + ðŸŸ£ PrÃ©commande | PrÃ©commande avec commande fournisseur |
+| discontinued | in_stock | ðŸŸ¢ En stock + âš« ArrÃªtÃ© | Fin de sÃ©rie, derniÃ¨res piÃ¨ces |
+| draft | out_of_stock | ðŸ”´ Rupture + ðŸŸ  Brouillon | Produit sourcing (forcÃ©) |
+
+**Affichage UI** :
+
+- Badge affichÃ© UNIQUEMENT si `!= 'active'`
+- `preorder` â†’ Badge violet "PrÃ©commande"
+- `discontinued` â†’ Badge gris "ArrÃªtÃ©"
+- `draft` â†’ Badge orange "Brouillon"
+
+---
+
+### 4. AVAILABILITY_TYPE_ENUM (4 valeurs)
+
+**Usage** : Type de disponibilitï¿½ simple
+
+**Valeurs** :
+
 ```sql
 CREATE TYPE availability_type_enum AS ENUM (
-  'normal',         -- 1. Disponibilité normale
-  'preorder',       -- 2. Précommande
-  'coming_soon',    -- 3. Bientôt disponible
-  'discontinued'    -- 4. Arrêté
+  'normal',         -- 1. Disponibilitï¿½ normale
+  'preorder',       -- 2. Prï¿½commande
+  'coming_soon',    -- 3. Bientï¿½t disponible
+  'discontinued'    -- 4. Arrï¿½tï¿½
 );
 ```
 
@@ -107,9 +219,10 @@ CREATE TYPE availability_type_enum AS ENUM (
 
 ### 3. BANK_PROVIDER (2 valeurs)
 
-**Usage** : Banques supportées pour synchronisation bancaire
+**Usage** : Banques supportï¿½es pour synchronisation bancaire
 
 **Valeurs** :
+
 ```sql
 CREATE TYPE bank_provider AS ENUM (
   'qonto',     -- 1. Qonto (banque business)
@@ -126,6 +239,7 @@ CREATE TYPE bank_provider AS ENUM (
 **Usage** : Direction des documents financiers
 
 **Valeurs** :
+
 ```sql
 CREATE TYPE document_direction AS ENUM (
   'inbound',   -- 1. Entrant (factures fournisseurs, etc.)
@@ -142,16 +256,17 @@ CREATE TYPE document_direction AS ENUM (
 **Usage** : Statut workflow documents financiers
 
 **Valeurs** :
+
 ```sql
 CREATE TYPE document_status AS ENUM (
   'draft',            -- 1. Brouillon
-  'sent',             -- 2. Envoyé
-  'received',         -- 3. Reçu
-  'paid',             -- 4. Payé
-  'partially_paid',   -- 5. Partiellement payé
+  'sent',             -- 2. Envoyï¿½
+  'received',         -- 3. Reï¿½u
+  'paid',             -- 4. Payï¿½
+  'partially_paid',   -- 5. Partiellement payï¿½
   'overdue',          -- 6. En retard
-  'cancelled',        -- 7. Annulé
-  'refunded'          -- 8. Remboursé
+  'cancelled',        -- 7. Annulï¿½
+  'refunded'          -- 8. Remboursï¿½
 );
 ```
 
@@ -164,6 +279,7 @@ CREATE TYPE document_status AS ENUM (
 **Usage** : Types de documents financiers
 
 **Valeurs** :
+
 ```sql
 CREATE TYPE document_type AS ENUM (
   'customer_invoice',       -- 1. Facture client (vente)
@@ -180,15 +296,16 @@ CREATE TYPE document_type AS ENUM (
 
 ### 7. ERROR_SEVERITY_ENUM (4 valeurs)
 
-**Usage** : Niveau de gravité erreurs techniques
+**Usage** : Niveau de gravitï¿½ erreurs techniques
 
 **Valeurs** :
+
 ```sql
 CREATE TYPE error_severity_enum AS ENUM (
   'critical',   -- 1. Critique (bloque l'utilisation)
   'high',       -- 2. Haute (impact majeur)
-  'medium',     -- 3. Moyenne (impact modéré)
-  'low'         -- 4. Basse (cosmétique)
+  'medium',     -- 3. Moyenne (impact modï¿½rï¿½)
+  'low'         -- 4. Basse (cosmï¿½tique)
 );
 ```
 
@@ -198,15 +315,16 @@ CREATE TYPE error_severity_enum AS ENUM (
 
 ### 8. ERROR_STATUS_ENUM (4 valeurs)
 
-**Usage** : Statut résolution erreurs
+**Usage** : Statut rï¿½solution erreurs
 
 **Valeurs** :
+
 ```sql
 CREATE TYPE error_status_enum AS ENUM (
   'open',         -- 1. Ouvert
-  'in_progress',  -- 2. En cours de résolution
-  'resolved',     -- 3. Résolu
-  'closed'        -- 4. Fermé
+  'in_progress',  -- 2. En cours de rï¿½solution
+  'resolved',     -- 3. Rï¿½solu
+  'closed'        -- 4. Fermï¿½
 );
 ```
 
@@ -216,17 +334,18 @@ CREATE TYPE error_status_enum AS ENUM (
 
 ### 9. ERROR_TYPE_ENUM (7 valeurs)
 
-**Usage** : Catégorisation erreurs techniques
+**Usage** : Catï¿½gorisation erreurs techniques
 
 **Valeurs** :
+
 ```sql
 CREATE TYPE error_type_enum AS ENUM (
   'javascript_error',    -- 1. Erreur JavaScript
-  'network_error',       -- 2. Erreur réseau
+  'network_error',       -- 2. Erreur rï¿½seau
   'ui_bug',              -- 3. Bug interface
-  'performance_issue',   -- 4. Problème performance
+  'performance_issue',   -- 4. Problï¿½me performance
   'console_error',       -- 5. Erreur console
-  'data_validation',     -- 6. Validation données
+  'data_validation',     -- 6. Validation donnï¿½es
   'functional_bug'       -- 7. Bug fonctionnel
 );
 ```
@@ -240,13 +359,14 @@ CREATE TYPE error_type_enum AS ENUM (
 **Usage** : Statut exports feeds (Google Merchant, Facebook)
 
 **Valeurs** :
+
 ```sql
 CREATE TYPE feed_export_status_type AS ENUM (
   'pending',      -- 1. En attente
-  'processing',   -- 2. En cours de génération
-  'completed',    -- 3. Terminé avec succès
-  'failed',       -- 4. Échec
-  'cancelled'     -- 5. Annulé
+  'processing',   -- 2. En cours de gï¿½nï¿½ration
+  'completed',    -- 3. Terminï¿½ avec succï¿½s
+  'failed',       -- 4. ï¿½chec
+  'cancelled'     -- 5. Annulï¿½
 );
 ```
 
@@ -259,6 +379,7 @@ CREATE TYPE feed_export_status_type AS ENUM (
 **Usage** : Format de sortie feeds
 
 **Valeurs** :
+
 ```sql
 CREATE TYPE feed_format_type AS ENUM (
   'csv',    -- 1. CSV (Google Merchant)
@@ -276,11 +397,12 @@ CREATE TYPE feed_format_type AS ENUM (
 **Usage** : Plateformes cibles pour feeds produits
 
 **Valeurs** :
+
 ```sql
 CREATE TYPE feed_platform_type AS ENUM (
   'google_merchant',  -- 1. Google Merchant Center
   'facebook_meta',    -- 2. Facebook/Meta Catalog
-  'custom'            -- 3. Feed personnalisé
+  'custom'            -- 3. Feed personnalisï¿½
 );
 ```
 
@@ -293,11 +415,12 @@ CREATE TYPE feed_platform_type AS ENUM (
 **Usage** : Types d'images produits
 
 **Valeurs** :
+
 ```sql
 CREATE TYPE image_type_enum AS ENUM (
   'primary',     -- 1. Image principale
   'gallery',     -- 2. Galerie produit
-  'technical',   -- 3. Schéma technique
+  'technical',   -- 3. Schï¿½ma technique
   'lifestyle',   -- 4. Photo lifestyle/ambiance
   'thumbnail'    -- 5. Miniature
 );
@@ -309,12 +432,13 @@ CREATE TYPE image_type_enum AS ENUM (
 
 ### 14. LANGUAGE_TYPE (3 valeurs)
 
-**Usage** : Langues supportées pour traductions
+**Usage** : Langues supportï¿½es pour traductions
 
 **Valeurs** :
+
 ```sql
 CREATE TYPE language_type AS ENUM (
-  'fr',  -- 1. Français
+  'fr',  -- 1. Franï¿½ais
   'en',  -- 2. Anglais
   'pt'   -- 3. Portugais
 );
@@ -329,13 +453,14 @@ CREATE TYPE language_type AS ENUM (
 **Usage** : Statut rapprochement bancaire
 
 **Valeurs** :
+
 ```sql
 CREATE TYPE matching_status AS ENUM (
-  'unmatched',       -- 1. Non rapproché
-  'auto_matched',    -- 2. Rapproché automatiquement
-  'manual_matched',  -- 3. Rapproché manuellement
-  'partial_matched', -- 4. Partiellement rapproché
-  'ignored'          -- 5. Ignoré
+  'unmatched',       -- 1. Non rapprochï¿½
+  'auto_matched',    -- 2. Rapprochï¿½ automatiquement
+  'manual_matched',  -- 3. Rapprochï¿½ manuellement
+  'partial_matched', -- 4. Partiellement rapprochï¿½
+  'ignored'          -- 5. Ignorï¿½
 );
 ```
 
@@ -348,9 +473,10 @@ CREATE TYPE matching_status AS ENUM (
 **Usage** : Types de mouvements de stock
 
 **Valeurs** :
+
 ```sql
 CREATE TYPE movement_type AS ENUM (
-  'IN',        -- 1. Entrée de stock
+  'IN',        -- 1. Entrï¿½e de stock
   'OUT',       -- 2. Sortie de stock
   'ADJUST',    -- 3. Ajustement/correction
   'TRANSFER'   -- 4. Transfert entre emplacements
@@ -359,7 +485,7 @@ CREATE TYPE movement_type AS ENUM (
 
 **Tables Utilisatrices** : `stock_movements`
 
-  **CRITIQUE** : Utilisé par trigger `maintain_stock_totals()` pour calculs stock_real/forecasted
+ï¿½ **CRITIQUE** : Utilisï¿½ par trigger `maintain_stock_totals()` pour calculs stock_real/forecasted
 
 ---
 
@@ -368,6 +494,7 @@ CREATE TYPE movement_type AS ENUM (
 **Usage** : Type d'organisation (table polymorphe organisations)
 
 **Valeurs** :
+
 ```sql
 CREATE TYPE organisation_type AS ENUM (
   'internal',   -- 1. Organisation interne
@@ -379,9 +506,10 @@ CREATE TYPE organisation_type AS ENUM (
 
 **Tables Utilisatrices** : `organisations`
 
-  **ANTI-HALLUCINATION** :
-- L JAMAIS créer table `suppliers` (utiliser `organisations WHERE type='supplier'`)
-- L JAMAIS créer table `customers` (utiliser `organisations WHERE type='customer'` + `individual_customers`)
+ï¿½ **ANTI-HALLUCINATION** :
+
+- L JAMAIS crï¿½er table `suppliers` (utiliser `organisations WHERE type='supplier'`)
+- L JAMAIS crï¿½er table `customers` (utiliser `organisations WHERE type='customer'` + `individual_customers`)
 
 ---
 
@@ -390,12 +518,13 @@ CREATE TYPE organisation_type AS ENUM (
 **Usage** : Types de conditionnement produits
 
 **Valeurs** :
+
 ```sql
 CREATE TYPE package_type AS ENUM (
-  'single',  -- 1. Unité simple
+  'single',  -- 1. Unitï¿½ simple
   'pack',    -- 2. Pack multi-produits
   'bulk',    -- 3. Vrac/en gros
-  'custom'   -- 4. Conditionnement personnalisé
+  'custom'   -- 4. Conditionnement personnalisï¿½
 );
 ```
 
@@ -408,14 +537,15 @@ CREATE TYPE package_type AS ENUM (
 **Usage** : Workflow commandes fournisseurs
 
 **Valeurs** :
+
 ```sql
 CREATE TYPE purchase_order_status AS ENUM (
   'draft',               -- 1. Brouillon
-  'sent',                -- 2. Envoyé au fournisseur
-  'confirmed',           -- 3. Confirmé par fournisseur
-  'partially_received',  -- 4. Partiellement reçu
-  'received',            -- 5. Complètement reçu
-  'cancelled'            -- 6. Annulé
+  'sent',                -- 2. Envoyï¿½ au fournisseur
+  'confirmed',           -- 3. Confirmï¿½ par fournisseur
+  'partially_received',  -- 4. Partiellement reï¿½u
+  'received',            -- 5. Complï¿½tement reï¿½u
+  'cancelled'            -- 6. Annulï¿½
 );
 ```
 
@@ -428,11 +558,12 @@ CREATE TYPE purchase_order_status AS ENUM (
 **Usage** : Mode d'achat produits
 
 **Valeurs** :
+
 ```sql
 CREATE TYPE purchase_type AS ENUM (
   'dropshipping',  -- 1. Dropshipping direct
   'stock',         -- 2. Achat en stock
-  'on_demand'      -- 3. À la demande
+  'on_demand'      -- 3. ï¿½ la demande
 );
 ```
 
@@ -442,22 +573,23 @@ CREATE TYPE purchase_type AS ENUM (
 
 ### 21. ROOM_TYPE (30 valeurs)
 
-**Usage** : Types de pièces pour catégorisation mobilier
+**Usage** : Types de piï¿½ces pour catï¿½gorisation mobilier
 
 **Valeurs** :
+
 ```sql
 CREATE TYPE room_type AS ENUM (
   'salon',             -- 1. Salon
-  'salle_a_manger',    -- 2. Salle à manger
+  'salle_a_manger',    -- 2. Salle ï¿½ manger
   'chambre',           -- 3. Chambre
   'bureau',            -- 4. Bureau
-  'bibliotheque',      -- 5. Bibliothèque
-  'salon_sejour',      -- 6. Salon-séjour
+  'bibliotheque',      -- 5. Bibliothï¿½que
+  'salon_sejour',      -- 6. Salon-sï¿½jour
   'cuisine',           -- 7. Cuisine
   'salle_de_bain',     -- 8. Salle de bain
   'wc',                -- 9. WC
   'toilettes',         -- 10. Toilettes
-  'hall_entree',       -- 11. Hall d'entrée
+  'hall_entree',       -- 11. Hall d'entrï¿½e
   'couloir',           -- 12. Couloir
   'cellier',           -- 13. Cellier
   'buanderie',         -- 14. Buanderie
@@ -468,7 +600,7 @@ CREATE TYPE room_type AS ENUM (
   'terrasse',          -- 19. Terrasse
   'balcon',            -- 20. Balcon
   'jardin',            -- 21. Jardin
-  'veranda',           -- 22. Véranda
+  'veranda',           -- 22. Vï¿½randa
   'loggia',            -- 23. Loggia
   'cour',              -- 24. Cour
   'patio',             -- 25. Patio
@@ -489,14 +621,15 @@ CREATE TYPE room_type AS ENUM (
 **Usage** : Workflow commandes clients
 
 **Valeurs** :
+
 ```sql
 CREATE TYPE sales_order_status AS ENUM (
   'draft',               -- 1. Brouillon
-  'confirmed',           -- 2. Confirmé
-  'partially_shipped',   -- 3. Partiellement expédié
-  'shipped',             -- 4. Expédié
-  'delivered',           -- 5. Livré
-  'cancelled'            -- 6. Annulé
+  'confirmed',           -- 2. Confirmï¿½
+  'partially_shipped',   -- 3. Partiellement expï¿½diï¿½
+  'shipped',             -- 4. Expï¿½diï¿½
+  'delivered',           -- 5. Livrï¿½
+  'cancelled'            -- 6. Annulï¿½
 );
 ```
 
@@ -506,14 +639,15 @@ CREATE TYPE sales_order_status AS ENUM (
 
 ### 23. SAMPLE_REQUEST_STATUS_TYPE (3 valeurs)
 
-**Usage** : Workflow validation demandes échantillons
+**Usage** : Workflow validation demandes ï¿½chantillons
 
 **Valeurs** :
+
 ```sql
 CREATE TYPE sample_request_status_type AS ENUM (
   'pending_approval',  -- 1. En attente validation
-  'approved',          -- 2. Approuvé
-  'rejected'           -- 3. Rejeté
+  'approved',          -- 2. Approuvï¿½
+  'rejected'           -- 3. Rejetï¿½
 );
 ```
 
@@ -523,18 +657,19 @@ CREATE TYPE sample_request_status_type AS ENUM (
 
 ### 24. SAMPLE_STATUS_TYPE (7 valeurs)
 
-**Usage** : Statut échantillons produits (workflow sourcing)
+**Usage** : Statut ï¿½chantillons produits (workflow sourcing)
 
 **Valeurs** :
+
 ```sql
 CREATE TYPE sample_status_type AS ENUM (
-  'not_required',       -- 1. Échantillon non requis
+  'not_required',       -- 1. ï¿½chantillon non requis
   'request_pending',    -- 2. Demande en attente
-  'request_approved',   -- 3. Demande approuvée
-  'ordered',            -- 4. Commandé
-  'delivered',          -- 5. Livré
-  'approved',           -- 6. Validé (OK pour catalogue)
-  'rejected'            -- 7. Rejeté (KO)
+  'request_approved',   -- 3. Demande approuvï¿½e
+  'ordered',            -- 4. Commandï¿½
+  'delivered',          -- 5. Livrï¿½
+  'approved',           -- 6. Validï¿½ (OK pour catalogue)
+  'rejected'            -- 7. Rejetï¿½ (KO)
 );
 ```
 
@@ -544,9 +679,10 @@ CREATE TYPE sample_status_type AS ENUM (
 
 ### 25. SCHEDULE_FREQUENCY_TYPE (4 valeurs)
 
-**Usage** : Fréquence exports feeds automatisés
+**Usage** : Frï¿½quence exports feeds automatisï¿½s
 
 **Valeurs** :
+
 ```sql
 CREATE TYPE schedule_frequency_type AS ENUM (
   'manual',   -- 1. Manuel uniquement
@@ -562,9 +698,10 @@ CREATE TYPE schedule_frequency_type AS ENUM (
 
 ### 26. SHIPMENT_TYPE (2 valeurs)
 
-**Usage** : Type d'expédition
+**Usage** : Type d'expï¿½dition
 
 **Valeurs** :
+
 ```sql
 CREATE TYPE shipment_type AS ENUM (
   'parcel',  -- 1. Colis (standard)
@@ -578,9 +715,10 @@ CREATE TYPE shipment_type AS ENUM (
 
 ### 27. SHIPPING_METHOD (4 valeurs)
 
-**Usage** : Méthodes d'expédition supportées
+**Usage** : Mï¿½thodes d'expï¿½dition supportï¿½es
 
 **Valeurs** :
+
 ```sql
 CREATE TYPE shipping_method AS ENUM (
   'packlink',       -- 1. Packlink API
@@ -599,12 +737,13 @@ CREATE TYPE shipping_method AS ENUM (
 **Usage** : Workflow sourcing produits
 
 **Valeurs** :
+
 ```sql
 CREATE TYPE sourcing_status_type AS ENUM (
   'draft',                  -- 1. Brouillon sourcing
-  'sourcing_validated',     -- 2. Sourcing validé
-  'ready_for_catalog',      -- 3. Prêt pour catalogue
-  'archived'                -- 4. Archivé
+  'sourcing_validated',     -- 2. Sourcing validï¿½
+  'ready_for_catalog',      -- 3. Prï¿½t pour catalogue
+  'archived'                -- 4. Archivï¿½
 );
 ```
 
@@ -614,9 +753,10 @@ CREATE TYPE sourcing_status_type AS ENUM (
 
 ### 29. STOCK_REASON_CODE (25 valeurs)
 
-**Usage** : Codes motifs mouvements de stock (traçabilité complète)
+**Usage** : Codes motifs mouvements de stock (traï¿½abilitï¿½ complï¿½te)
 
 **Valeurs** :
+
 ```sql
 CREATE TYPE stock_reason_code AS ENUM (
   -- SORTIES STOCK (OUT)
@@ -627,51 +767,52 @@ CREATE TYPE stock_reason_code AS ENUM (
   'damage_storage',         -- 5. Dommage stockage
   'theft',                  -- 6. Vol
   'loss_unknown',           -- 7. Perte origine inconnue
-  'sample_client',          -- 8. Échantillon client
-  'sample_showroom',        -- 9. Échantillon showroom
-  'marketing_event',        -- 10. Événement marketing
+  'sample_client',          -- 8. ï¿½chantillon client
+  'sample_showroom',        -- 9. ï¿½chantillon showroom
+  'marketing_event',        -- 10. ï¿½vï¿½nement marketing
   'photography',            -- 11. Photographie produit
   'rd_testing',             -- 12. Tests R&D
   'prototype',              -- 13. Prototype
-  'quality_control',        -- 14. Contrôle qualité
+  'quality_control',        -- 14. Contrï¿½le qualitï¿½
   'return_supplier',        -- 15. Retour fournisseur
   'return_customer',        -- 16. Retour client
   'warranty_replacement',   -- 17. Remplacement garantie
 
-  -- ENTRÉES STOCK (IN)
-  'purchase_reception',     -- 21. Réception achat
+  -- ENTRï¿½ES STOCK (IN)
+  'purchase_reception',     -- 21. Rï¿½ception achat
   'return_from_client',     -- 22. Retour client
-  'found_inventory',        -- 23. Trouvé inventaire
+  'found_inventory',        -- 23. Trouvï¿½ inventaire
 
   -- AJUSTEMENTS (ADJUST)
   'inventory_correction',   -- 18. Correction inventaire
-  'write_off',              -- 19. Dépréciation
-  'obsolete',               -- 20. Obsolète
+  'write_off',              -- 19. Dï¿½prï¿½ciation
+  'obsolete',               -- 20. Obsolï¿½te
   'manual_adjustment',      -- 24. Ajustement manuel
 
   -- ANNULATIONS
-  'cancelled'               -- 25. Annulé
+  'cancelled'               -- 25. Annulï¿½
 );
 ```
 
 **Tables Utilisatrices** : `stock_movements`
 
-  **CRITIQUE** : Utilisé pour traçabilité complète et analytics stock
+ï¿½ **CRITIQUE** : Utilisï¿½ pour traï¿½abilitï¿½ complï¿½te et analytics stock
 
 ---
 
 ### 30. SUPPLIER_SEGMENT_TYPE (5 valeurs)
 
-**Usage** : Segmentation fournisseurs (stratégie approvisionnement)
+**Usage** : Segmentation fournisseurs (stratï¿½gie approvisionnement)
 
 **Valeurs** :
+
 ```sql
 CREATE TYPE supplier_segment_type AS ENUM (
-  'strategic',  -- 1. Stratégique (partenaire clé)
-  'preferred',  -- 2. Préféré (bon fournisseur)
-  'approved',   -- 3. Approuvé (standard)
-  'commodity',  -- 4. Commodité (générique)
-  'artisan'     -- 5. Artisan (unique/spécialisé)
+  'strategic',  -- 1. Stratï¿½gique (partenaire clï¿½)
+  'preferred',  -- 2. Prï¿½fï¿½rï¿½ (bon fournisseur)
+  'approved',   -- 3. Approuvï¿½ (standard)
+  'commodity',  -- 4. Commoditï¿½ (gï¿½nï¿½rique)
+  'artisan'     -- 5. Artisan (unique/spï¿½cialisï¿½)
 );
 ```
 
@@ -681,14 +822,15 @@ CREATE TYPE supplier_segment_type AS ENUM (
 
 ### 31. TEST_STATUS_ENUM (4 valeurs)
 
-**Usage** : Statut résultats tests manuels
+**Usage** : Statut rï¿½sultats tests manuels
 
 **Valeurs** :
+
 ```sql
 CREATE TYPE test_status_enum AS ENUM (
   'pending',  -- 1. En attente
-  'passed',   -- 2. Réussi
-  'failed',   -- 3. Échoué
+  'passed',   -- 2. Rï¿½ussi
+  'failed',   -- 3. ï¿½chouï¿½
   'warning'   -- 4. Avertissement
 );
 ```
@@ -702,10 +844,11 @@ CREATE TYPE test_status_enum AS ENUM (
 **Usage** : Sens transaction bancaire
 
 **Valeurs** :
+
 ```sql
 CREATE TYPE transaction_side AS ENUM (
-  'credit',  -- 1. Crédit (entrée d'argent)
-  'debit'    -- 2. Débit (sortie d'argent)
+  'credit',  -- 1. Crï¿½dit (entrï¿½e d'argent)
+  'debit'    -- 2. Dï¿½bit (sortie d'argent)
 );
 ```
 
@@ -715,12 +858,13 @@ CREATE TYPE transaction_side AS ENUM (
 
 ### 33. USER_ROLE_TYPE (5 valeurs)
 
-**Usage** : Rôles utilisateurs système (RLS policies)
+**Usage** : Rï¿½les utilisateurs systï¿½me (RLS policies)
 
 **Valeurs** :
+
 ```sql
 CREATE TYPE user_role_type AS ENUM (
-  'owner',             -- 1. Propriétaire (tous droits)
+  'owner',             -- 1. Propriï¿½taire (tous droits)
   'admin',             -- 2. Administrateur (quasi tous droits)
   'catalog_manager',   -- 3. Gestionnaire catalogue
   'sales',             -- 4. Commercial
@@ -730,18 +874,19 @@ CREATE TYPE user_role_type AS ENUM (
 
 **Tables Utilisatrices** : `user_profiles`
 
-  **CRITIQUE** : Utilisé par fonction `get_user_role()` dans 217 RLS policies
+ï¿½ **CRITIQUE** : Utilisï¿½ par fonction `get_user_role()` dans 217 RLS policies
 
 ---
 
 ### 34. USER_TYPE (4 valeurs)
 
-**Usage** : Type d'utilisateur système
+**Usage** : Type d'utilisateur systï¿½me
 
 **Valeurs** :
+
 ```sql
 CREATE TYPE user_type AS ENUM (
-  'staff',     -- 1. Employé interne
+  'staff',     -- 1. Employï¿½ interne
   'supplier',  -- 2. Fournisseur
   'customer',  -- 3. Client
   'partner'    -- 4. Partenaire
@@ -752,9 +897,9 @@ CREATE TYPE user_type AS ENUM (
 
 ---
 
-##   RÈGLES MODIFICATION ENUMS
+## ï¿½ Rï¿½GLES MODIFICATION ENUMS
 
-### =« INTERDICTIONS
+### =ï¿½ INTERDICTIONS
 
 1. **JAMAIS supprimer valeur enum existante** (breaking change production)
 2. **JAMAIS renommer valeur enum** (breaking change application)
@@ -763,18 +908,18 @@ CREATE TYPE user_type AS ENUM (
 ###  BONNES PRATIQUES
 
 1. **Ajouter nouvelles valeurs** : Migration + ALTER TYPE ADD VALUE
-2. **Déprécier valeur** : Documenter + empêcher nouvelle utilisation
-3. **Remplacer enum** : Créer nouveau type + migration progressive
+2. **Dï¿½prï¿½cier valeur** : Documenter + empï¿½cher nouvelle utilisation
+3. **Remplacer enum** : Crï¿½er nouveau type + migration progressive
 
-### =Ý TEMPLATE AJOUT VALEUR
+### =ï¿½ TEMPLATE AJOUT VALEUR
 
 ```sql
 -- Migration: 20251017_001_add_new_status_to_enum.sql
 
--- Ajouter nouvelle valeur à la fin (sauf si ordre critique)
+-- Ajouter nouvelle valeur ï¿½ la fin (sauf si ordre critique)
 ALTER TYPE sales_order_status ADD VALUE 'returned';
 
--- Si ordre important, créer nouveau type + migration
+-- Si ordre important, crï¿½er nouveau type + migration
 CREATE TYPE sales_order_status_v2 AS ENUM (
   'draft',
   'confirmed',
@@ -785,7 +930,7 @@ CREATE TYPE sales_order_status_v2 AS ENUM (
   'cancelled'
 );
 
--- Migrer données puis swap
+-- Migrer donnï¿½es puis swap
 ALTER TABLE sales_orders RENAME COLUMN status TO status_old;
 ALTER TABLE sales_orders ADD COLUMN status sales_order_status_v2;
 UPDATE sales_orders SET status = status_old::text::sales_order_status_v2;
@@ -808,7 +953,7 @@ ALTER TYPE sales_order_status_v2 RENAME TO sales_order_status;
 
 ---
 
-**Documentation générée** : 2025-10-17
+**Documentation gï¿½nï¿½rï¿½e** : 2025-10-17
 **Source** : PostgreSQL Database `aorroydfjsrygmosnzrl`
 **Extraction** : MCP Supabase + Bash PostgreSQL
-**Vérone Back Office** - Database Documentation v2.0
+**Vï¿½rone Back Office** - Database Documentation v2.0

@@ -1,0 +1,1 @@
+export { HeartBadge } from './HeartBadge';

@@ -12,6 +12,7 @@
 Prévenir les modifications accidentelles des tables critiques qui casseraient l'authentification ou l'intégrité du système Vérone.
 
 **Problème résolu** :
+
 - ❌ Avant : Modification table → Auth cassé → Système DOWN → Panique
 - ✅ Après : Documentation + Guards automatiques → Modifications sûres → Système stable
 
@@ -21,24 +22,26 @@ Prévenir les modifications accidentelles des tables critiques qui casseraient l
 
 ### **Liste Officielle**
 
-| Table | Criticité | Raison | Owner |
-|-------|-----------|--------|-------|
-| **`user_profiles`** | 🔴 CRITIQUE | Lien direct auth.users - Breaking = Auth DOWN | Auth Team |
-| `auth.users` | 🔴 **INTERDIT** | Géré par Supabase - NEVER MODIFY | Supabase |
-| `auth.sessions` | 🔴 **INTERDIT** | Géré par Supabase - NEVER MODIFY | Supabase |
-| `organisations` | 🟡 Important | Relations utilisateurs - Futures | Product Team |
-| `suppliers` | 🟡 Important | Relations produits/commandes | Product Team |
-| `financial_payments` | 🟡 Important | Données comptables sensibles | Finance Team |
+| Table                | Criticité       | Raison                                        | Owner        |
+| -------------------- | --------------- | --------------------------------------------- | ------------ |
+| **`user_profiles`**  | 🔴 CRITIQUE     | Lien direct auth.users - Breaking = Auth DOWN | Auth Team    |
+| `auth.users`         | 🔴 **INTERDIT** | Géré par Supabase - NEVER MODIFY              | Supabase     |
+| `auth.sessions`      | 🔴 **INTERDIT** | Géré par Supabase - NEVER MODIFY              | Supabase     |
+| `organisations`      | 🟡 Important    | Relations utilisateurs - Futures              | Product Team |
+| `suppliers`          | 🟡 Important    | Relations produits/commandes                  | Product Team |
+| `financial_payments` | 🟡 Important    | Données comptables sensibles                  | Finance Team |
 
 ### **Règle Ajout Nouvelle Table Critique**
 
 Quand marquer table comme CRITIQUE :
+
 1. ✅ Table liée directement à `auth.users`
 2. ✅ Table référencée dans RLS policies
 3. ✅ Table utilisée dans auth middleware
 4. ✅ Table contenant données sensibles (paiements, etc.)
 
 **Process** :
+
 1. Ajouter table à liste ci-dessus
 2. Appliquer SQL comments (voir template)
 3. Documenter dans cette page
@@ -51,6 +54,7 @@ Quand marquer table comme CRITIQUE :
 ### **Règle #1 : JAMAIS Modifier Schéma `auth`**
 
 **INTERDIT ABSOLU** :
+
 ```sql
 ❌ ALTER TABLE auth.users ...;
 ❌ DROP TABLE auth.sessions ...;
@@ -59,11 +63,13 @@ Quand marquer table comme CRITIQUE :
 ```
 
 **Pourquoi** :
+
 - Supabase gère automatiquement ce schéma
 - Updates Supabase peuvent écraser modifications
 - Modifications cassent auth system = App DOWN
 
 **Si besoin données auth** :
+
 ```sql
 ✅ SELECT * FROM auth.users WHERE id = auth.uid();
 ✅ Lire seulement, jamais modifier
@@ -78,6 +84,7 @@ https://supabase.com/docs/guides/auth/managing-user-data
 ### **Règle #2 : Seulement Référencer auth.users(id)**
 
 **BON** ✅ :
+
 ```sql
 -- Primary key = garanti stable par Supabase
 ALTER TABLE user_profiles
@@ -86,6 +93,7 @@ FOREIGN KEY (id) REFERENCES auth.users(id) ON DELETE CASCADE;
 ```
 
 **MAUVAIS** ❌ :
+
 ```sql
 -- Autres colonnes peuvent changer lors updates Supabase
 ALTER TABLE user_profiles
@@ -94,9 +102,11 @@ FOREIGN KEY (email) REFERENCES auth.users(email); -- ❌ email pas PK
 ```
 
 **Colonnes auth.users SAFE** :
+
 - ✅ `id` (UUID, primary key, GARANTI stable)
 
 **Colonnes auth.users UNSAFE** :
+
 - ❌ `email` (peut changer structure, index, format)
 - ❌ `created_at` (peut être renommé, modifié)
 - ❌ `raw_user_meta_data` (structure interne Supabase)
@@ -107,6 +117,7 @@ FOREIGN KEY (email) REFERENCES auth.users(email); -- ❌ email pas PK
 ### **Règle #3 : Toujours ON DELETE CASCADE**
 
 **BON** ✅ :
+
 ```sql
 ALTER TABLE user_profiles
 ADD CONSTRAINT user_profiles_id_fkey
@@ -115,6 +126,7 @@ ON DELETE CASCADE; -- ✅ Auto-delete profile si user supprimé
 ```
 
 **MAUVAIS** ❌ :
+
 ```sql
 ALTER TABLE user_profiles
 ADD CONSTRAINT user_profiles_id_fkey
@@ -125,6 +137,7 @@ FOREIGN KEY (id) REFERENCES auth.users(id);
 ```
 
 **Pourquoi CASCADE** :
+
 - User deleted → Profile doit être auto-supprimé
 - Sans CASCADE → Violation contrainte → Erreur auth
 - Intégrité données garantie
@@ -134,6 +147,7 @@ FOREIGN KEY (id) REFERENCES auth.users(id);
 ### **Règle #4 : SECURITY DEFINER pour Triggers Cross-Schema**
 
 **BON** ✅ :
+
 ```sql
 CREATE FUNCTION private.sync_user_metadata()
 RETURNS TRIGGER
@@ -151,6 +165,7 @@ $$;
 ```
 
 **MAUVAIS** ❌ :
+
 ```sql
 CREATE FUNCTION sync_user_metadata()
 RETURNS TRIGGER
@@ -165,6 +180,7 @@ $$;
 ```
 
 **Pourquoi SECURITY DEFINER** :
+
 - Fonction s'exécute avec privilèges créateur (pas appelant)
 - Permet accès schéma `auth` depuis trigger `public`
 - Sans definer → Trigger échoue → Auth flow cassé
@@ -174,17 +190,20 @@ $$;
 ### **Règle #5 : NEVER Disable RLS**
 
 **INTERDIT ABSOLU** :
+
 ```sql
 ❌ ALTER TABLE user_profiles DISABLE ROW LEVEL SECURITY;
 ❌ DROP POLICY "users_can_view_profiles" ON user_profiles;
 ```
 
 **Pourquoi** :
+
 - RLS = Protection essentielle données utilisateurs
 - Désactiver = Faille sécurité majeure
 - Tous users peuvent voir/modifier toutes données
 
 **Si problème performance RLS** :
+
 ```sql
 ✅ Optimiser policies (subqueries, indexes)
 ✅ Utiliser SECURITY DEFINER functions
@@ -202,6 +221,7 @@ https://supabase.com/docs/guides/database/postgres/row-level-security
 ### **1. Ajouter Colonne Optionnelle**
 
 **Template** :
+
 ```sql
 -- Colonne NULL = non-breaking
 ALTER TABLE user_profiles
@@ -224,6 +244,7 @@ Purpose: Multi-tenant support';
 ```
 
 **Pourquoi safe** :
+
 - NULL autorisé → Utilisateurs existants non affectés
 - DEFAULT fourni → Nouveaux users ont valeur
 - Pas de breaking change
@@ -233,6 +254,7 @@ Purpose: Multi-tenant support';
 ### **2. Créer Index Performance**
 
 **Template** :
+
 ```sql
 -- Index complet
 CREATE INDEX IF NOT EXISTS idx_user_profiles_organisation_id
@@ -245,6 +267,7 @@ WHERE organisation_id IS NOT NULL;
 ```
 
 **Pourquoi safe** :
+
 - Index = optimisation pure, pas de logique
 - Aucun impact fonctionnel
 - Peut être droppé sans conséquence
@@ -254,6 +277,7 @@ WHERE organisation_id IS NOT NULL;
 ### **3. Ajouter Contrainte CHECK Non-Breaking**
 
 **Template** :
+
 ```sql
 -- Pattern IS NULL OR ... = non-breaking
 ALTER TABLE user_profiles
@@ -264,6 +288,7 @@ ADD CONSTRAINT check_phone_format CHECK (
 ```
 
 **Pourquoi safe** :
+
 - `IS NULL OR ...` → Données existantes NULL passent
 - Validation seulement si valeur fournie
 - Pas de rejet données existantes
@@ -273,6 +298,7 @@ ADD CONSTRAINT check_phone_format CHECK (
 ### **4. Créer Fonction Helper**
 
 **Template** :
+
 ```sql
 CREATE OR REPLACE FUNCTION get_user_full_name(user_record user_profiles)
 RETURNS TEXT
@@ -286,6 +312,7 @@ $$;
 ```
 
 **Pourquoi safe** :
+
 - Fonction pure, pas d'effet de bord
 - IMMUTABLE = optimisable par PostgreSQL
 - Aucun impact données existantes
@@ -297,6 +324,7 @@ $$;
 ### **1. ALTER COLUMN Type ou Nullability**
 
 **DANGEREUX** ❌ :
+
 ```sql
 -- Changer type
 ALTER TABLE user_profiles
@@ -308,6 +336,7 @@ ALTER COLUMN phone SET NOT NULL; -- ❌ Échoue si phone NULL existe
 ```
 
 **Si vraiment nécessaire** :
+
 1. ✅ Audit complet code utilisant colonne
 2. ✅ Migration données en 2 étapes :
    - Étape 1 : Ajouter nouvelle colonne
@@ -321,12 +350,14 @@ ALTER COLUMN phone SET NOT NULL; -- ❌ Échoue si phone NULL existe
 ### **2. DROP COLUMN**
 
 **DANGEREUX** ❌ :
+
 ```sql
 ALTER TABLE user_profiles
 DROP COLUMN phone; -- ❌ Peut casser code frontend/backend
 ```
 
 **Si vraiment nécessaire** :
+
 1. ✅ Grep complet codebase pour `phone`
 2. ✅ Vérifier RLS policies utilisant `phone`
 3. ✅ Test parcours utilisateur complet
@@ -338,6 +369,7 @@ DROP COLUMN phone; -- ❌ Peut casser code frontend/backend
 ### **3. Modifier Foreign Key auth.users**
 
 **DANGEREUX** ❌ :
+
 ```sql
 -- Supprimer FK
 ALTER TABLE user_profiles
@@ -352,6 +384,7 @@ ON DELETE SET NULL; -- ❌ Crée orphan records
 ```
 
 **JAMAIS FAIRE** sauf :
+
 - Emergency absolue (système DOWN)
 - Backup complet disponible
 - Senior dev + CTO approval
@@ -362,16 +395,19 @@ ON DELETE SET NULL; -- ❌ Crée orphan records
 ### **4. Ajouter NOT NULL sans Default**
 
 **DANGEREUX** ❌ :
+
 ```sql
 ALTER TABLE user_profiles
 ADD COLUMN organisation_id UUID NOT NULL; -- ❌ Bloque signup
 ```
 
 **Pourquoi dangereux** :
+
 - Nouveaux users → INSERT échoue (organisation_id manquant)
 - Auth flow cassé → Impossible créer compte
 
 **Solution** :
+
 ```sql
 -- Option A : Nullable
 ALTER TABLE user_profiles
@@ -427,6 +463,7 @@ cp supabase/migrations/_TEMPLATE_modify_critical_table.sql \
 Ouvrir : `TASKS/templates/CRITICAL-TABLE-MIGRATION-CHECKLIST.md`
 
 Cocher TOUS les 10 points :
+
 - [ ] 1. RLS restera activé
 - [ ] 2. Pas modification FK auth.users
 - [ ] 3. Nouvelles colonnes optionnelles
@@ -475,6 +512,7 @@ supabase db push
 ```
 
 **Validations automatiques s'exécutent** :
+
 - ✅ Test 1/5 : RLS enabled
 - ✅ Test 2/5 : Policies actives
 - ✅ Test 3/5 : FK auth.users intact
@@ -510,6 +548,7 @@ supabase db push
 **Besoin** : Lier utilisateurs à organisations pour multi-tenant
 
 **Migration** :
+
 ```sql
 -- user_profiles → organisations link
 ALTER TABLE user_profiles
@@ -533,6 +572,7 @@ WHERE organisation_id IS NOT NULL;
 ```
 
 **Checklist** :
+
 - ✅ RLS enabled (pas touché)
 - ✅ FK auth.users intact (pas modifié)
 - ✅ Nouvelle colonne NULL (optionnel)
@@ -553,6 +593,7 @@ WHERE organisation_id IS NOT NULL;
 **Besoin** : Changer `phone` de TEXT à INTEGER
 
 **Analyse** :
+
 ```sql
 -- DANGEREUX ❌
 ALTER TABLE user_profiles
@@ -563,6 +604,7 @@ ALTER COLUMN phone TYPE INTEGER USING phone::INTEGER;
 ```
 
 **Checklist** :
+
 - ❌ Données existantes incompatibles
 - ❌ Code frontend utilise format STRING
 - ❌ RLS policies filtrent sur LIKE '%...'
@@ -571,6 +613,7 @@ ALTER COLUMN phone TYPE INTEGER USING phone::INTEGER;
 **Résultat** : ❌ REJECT - Ne pas faire
 
 **Alternative SAFE** :
+
 ```sql
 -- Ajouter nouvelle colonne
 ALTER TABLE user_profiles
@@ -589,6 +632,7 @@ ADD COLUMN phone_numeric BIGINT;
 **Besoin** : Sync nom complet vers auth.users.raw_user_meta_data
 
 **Migration CORRECTE** :
+
 ```sql
 CREATE OR REPLACE FUNCTION private.sync_user_full_name()
 RETURNS TRIGGER
@@ -625,6 +669,7 @@ Purpose: Keep auth.users metadata in sync with profile changes';
 ```
 
 **Checklist** :
+
 - ✅ SECURITY DEFINER présent
 - ✅ Fonction dans schéma `private` (sécurité)
 - ✅ SET search_path défini
@@ -733,12 +778,14 @@ Commit + docs
 **Si doute → Demander senior dev AVANT modification**
 
 **JAMAIS** :
+
 - ❌ Modifier schéma `auth`
 - ❌ Désactiver RLS
 - ❌ Modifier FK auth.users
 - ❌ DROP COLUMN sans audit
 
 **TOUJOURS** :
+
 - ✅ Utiliser template migration
 - ✅ Remplir checklist complète
 - ✅ Tester localement d'abord
@@ -751,4 +798,4 @@ Commit + docs
 **Auteur** : Claude Code + Workflow 2025
 **Maintainer** : Vérone Dev Team
 
-*Protection Tables Critiques = Stabilité Système Garantie* 🔒
+_Protection Tables Critiques = Stabilité Système Garantie_ 🔒

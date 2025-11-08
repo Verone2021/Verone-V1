@@ -1,22 +1,29 @@
-'use client'
+'use client';
 
-import React from 'react'
-import { LucideIcon } from 'lucide-react'
-import { colors, componentSpacing, componentTypography, componentShadows } from '@/lib/design-system'
-import { cn } from '@/lib/utils'
+import React from 'react';
+
+import type { LucideIcon } from 'lucide-react';
+
+import {
+  colors,
+  componentSpacing,
+  componentTypography,
+  componentShadows,
+} from '@verone/ui/design-system';
+import { cn } from '@verone/utils';
 
 export interface MediumKpiCardProps {
-  label: string
-  value: string | number
-  icon: LucideIcon
+  label: string;
+  value: string | number;
+  icon: LucideIcon;
   trend?: {
-    value: number
-    isPositive: boolean
-  }
-  color?: 'primary' | 'success' | 'warning' | 'accent' | 'danger'
-  sparklineData?: number[]
-  onClick?: () => void
-  className?: string
+    value: number;
+    isPositive: boolean;
+  };
+  color?: 'primary' | 'success' | 'warning' | 'accent' | 'danger';
+  sparklineData?: number[];
+  onClick?: () => void;
+  className?: string;
 }
 
 /**
@@ -48,7 +55,7 @@ export function MediumKpiCard({
     warning: colors.warning.DEFAULT,
     accent: colors.accent.DEFAULT,
     danger: colors.danger.DEFAULT,
-  }
+  };
 
   const bgColorMap = {
     primary: colors.primary[50],
@@ -56,10 +63,10 @@ export function MediumKpiCard({
     warning: colors.warning[50],
     accent: colors.accent[50],
     danger: colors.danger[50],
-  }
+  };
 
-  const iconColor = colorMap[color]
-  const bgColor = bgColorMap[color]
+  const iconColor = colorMap[color];
+  const bgColor = bgColorMap[color];
 
   return (
     <div
@@ -116,10 +123,14 @@ export function MediumKpiCard({
         <div
           className={cn(
             'text-[10px] font-medium px-2 py-1 rounded flex-shrink-0',
-            trend.isPositive ? 'bg-success-50 text-success-700' : 'bg-danger-50 text-danger-700'
+            trend.isPositive
+              ? 'bg-success-50 text-success-700'
+              : 'bg-danger-50 text-danger-700'
           )}
           style={{
-            backgroundColor: trend.isPositive ? colors.success[50] : colors.danger[50],
+            backgroundColor: trend.isPositive
+              ? colors.success[50]
+              : colors.danger[50],
             color: trend.isPositive ? colors.success[700] : colors.danger[700],
           }}
         >
@@ -135,26 +146,27 @@ export function MediumKpiCard({
         </svg>
       )}
     </div>
-  )
+  );
 }
 
 // Mini sparkline component interne
 function MiniSparkline({ data, color }: { data: number[]; color: string }) {
-  const width = 45
-  const height = 25
-  const padding = 2
+  const width = 45;
+  const height = 25;
+  const padding = 2;
 
-  const max = Math.max(...data)
-  const min = Math.min(...data)
-  const range = max - min || 1
+  const max = Math.max(...data);
+  const min = Math.min(...data);
+  const range = max - min || 1;
 
   const points = data
     .map((value, index) => {
-      const x = (index / (data.length - 1)) * (width - padding * 2) + padding
-      const y = height - padding - ((value - min) / range) * (height - padding * 2)
-      return `${x},${y}`
+      const x = (index / (data.length - 1)) * (width - padding * 2) + padding;
+      const y =
+        height - padding - ((value - min) / range) * (height - padding * 2);
+      return `${x},${y}`;
     })
-    .join(' ')
+    .join(' ');
 
   return (
     <polyline
@@ -166,5 +178,5 @@ function MiniSparkline({ data, color }: { data: number[]; color: string }) {
       strokeLinejoin="round"
       opacity="0.8"
     />
-  )
+  );
 }

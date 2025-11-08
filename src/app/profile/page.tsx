@@ -1,102 +1,122 @@
-"use client"
+'use client';
 
-import React, { useEffect, useState } from 'react'
-import { User, Mail, Shield, Building, Edit, Save, X, Phone, Briefcase } from 'lucide-react'
-import { createClient } from '@/lib/supabase/client'
-import { ButtonV2 } from '@/components/ui/button'
-import { Input } from '@/components/ui/input'
-import { RoleBadge, type UserRole } from '@/components/ui/role-badge'
-import { PasswordChangeDialog } from '@/components/profile/password-change-dialog'
-import { validateProfileForm, sanitizeProfileData } from '@/lib/validation/profile-validation'
-import type { User as SupabaseUser } from '@supabase/supabase-js'
-import { themeV2 } from '@/lib/theme-v2'
-import { cn } from '@/lib/utils'
+import React, { useEffect, useState } from 'react';
+
+import type { User as SupabaseUser } from '@supabase/supabase-js';
+import { ButtonV2 } from '@verone/ui';
+import { Input } from '@verone/ui';
+import { RoleBadge, type UserRole } from '@verone/ui';
+import { cn } from '@verone/utils';
+import {
+  User,
+  Mail,
+  Shield,
+  Building,
+  Edit,
+  Save,
+  X,
+  Phone,
+  Briefcase,
+} from 'lucide-react';
+
+import { PasswordChangeDialog } from '@/components/profile/password-change-dialog';
+import { themeV2 } from '@verone/ui/theme-v2';
+import { createClient } from '@verone/utils/supabase/client';
+import {
+  validateProfileForm,
+  sanitizeProfileData,
+} from '@verone/utils/validation/profile-validation';
 
 interface UserProfile {
-  user_id: string
-  role: string
-  scopes: string[]
-  partner_id: string | null
-  first_name?: string | null
-  last_name?: string | null
-  phone?: string | null
-  job_title?: string | null
-  created_at: string
-  updated_at: string
+  user_id: string;
+  role: string;
+  scopes: string[];
+  partner_id: string | null;
+  first_name?: string | null;
+  last_name?: string | null;
+  phone?: string | null;
+  job_title?: string | null;
+  created_at: string;
+  updated_at: string;
 }
 
 export default function ProfilePage() {
-  const [user, setUser] = useState<SupabaseUser | null>(null)
-  const [profile, setProfile] = useState<UserProfile | null>(null)
-  const [loading, setLoading] = useState(true)
-  const [isEditing, setIsEditing] = useState(false)
-  const [showPasswordDialog, setShowPasswordDialog] = useState(false)
-  const [saveLoading, setSaveLoading] = useState(false)
-  const [validationErrors, setValidationErrors] = useState<Record<string, string>>({})
+  const [user, setUser] = useState<SupabaseUser | null>(null);
+  const [profile, setProfile] = useState<UserProfile | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [isEditing, setIsEditing] = useState(false);
+  const [showPasswordDialog, setShowPasswordDialog] = useState(false);
+  const [saveLoading, setSaveLoading] = useState(false);
+  const [validationErrors, setValidationErrors] = useState<
+    Record<string, string>
+  >({});
   const [editData, setEditData] = useState({
     email: '',
     raw_user_meta_data: { name: '' },
     first_name: '',
     last_name: '',
     phone: '',
-    job_title: ''
-  })
+    job_title: '',
+  });
 
   useEffect(() => {
     const loadUserData = async () => {
-      const supabase = createClient()
+      const supabase = createClient();
 
       // Get current user
-      const { data: { user }, error: userError } = await supabase.auth.getUser()
+      const {
+        data: { user },
+        error: userError,
+      } = await supabase.auth.getUser();
 
       if (userError || !user) {
-        console.error('Error fetching user:', userError)
-        return
+        console.error('Error fetching user:', userError);
+        return;
       }
 
-      setUser(user)
+      setUser(user);
 
       // Initialize edit data
       setEditData({
         email: user.email || '',
         raw_user_meta_data: {
-          name: user.user_metadata?.name || user.email?.split('@')[0] || ''
+          name: user.user_metadata?.name || user.email?.split('@')[0] || '',
         },
         first_name: '',
         last_name: '',
         phone: '',
-        job_title: ''
-      })
+        job_title: '',
+      });
 
       // Get user profile with extended fields
       const { data: profileData, error: profileError } = await supabase
         .from('user_profiles')
         .select('*')
         .eq('user_id', user.id)
-        .single()
+        .single();
 
       if (profileError) {
-        console.error('Error fetching profile:', profileError)
+        console.error('Error fetching profile:', profileError);
       } else {
-        setProfile(profileData)
+        setProfile(profileData as any);
         // Update edit data with profile info
         setEditData(prevData => ({
           ...prevData,
           first_name: profileData.first_name || '',
           last_name: profileData.last_name || '',
           phone: profileData.phone || '',
-          job_title: profileData.job_title || ''
-        }))
+          job_title: profileData.job_title || '',
+        }));
       }
 
-      setLoading(false)
-    }
+      setLoading(false);
+    };
 
-    loadUserData()
-  }, [])
+    loadUserData();
+  }, []);
 
   const handleSaveProfile = async () => {
-    if (!user) return
+    if (!user) return;
 
     // Validation des données
     const validationResult = validateProfileForm({
@@ -104,74 +124,74 @@ export default function ProfilePage() {
       firstName: editData.first_name,
       lastName: editData.last_name,
       phone: editData.phone,
-      jobTitle: editData.job_title
-    })
+      jobTitle: editData.job_title,
+    });
 
     if (!validationResult.isValid) {
-      setValidationErrors(validationResult.errors)
-      return
+      setValidationErrors(validationResult.errors);
+      return;
     }
 
-    setValidationErrors({})
+    setValidationErrors({});
 
     try {
-      setSaveLoading(true)
-      const supabase = createClient()
+      setSaveLoading(true);
+      const supabase = createClient();
 
       // Update auth user metadata (for display name)
       const { error: updateError } = await supabase.auth.updateUser({
-        data: editData.raw_user_meta_data
-      })
+        data: editData.raw_user_meta_data,
+      });
 
       if (updateError) {
-        console.error('Error updating auth metadata:', updateError)
-        return
+        console.error('Error updating auth metadata:', updateError);
+        return;
       }
 
       // Update user profile with validated and sanitized data
-      const sanitizedData = sanitizeProfileData(validationResult.formatted)
+      const sanitizedData = sanitizeProfileData(validationResult.formatted);
       console.log('🔍 Diagnostic profile update:', {
         user_id: user.id,
         sanitizedData,
-        originalFormData: validationResult.formatted
-      })
+        originalFormData: validationResult.formatted,
+      });
 
       // Vérifier si le profil existe avant update
       const { data: existingProfile, error: checkError } = await supabase
         .from('user_profiles')
         .select('user_id')
         .eq('user_id', user.id)
-        .single()
+        .single();
 
       if (checkError) {
-        console.error('❌ Erreur vérification profil existant:', checkError)
-        console.log('Profil inexistant - tentative de création')
+        console.error('❌ Erreur vérification profil existant:', checkError);
+        console.log('Profil inexistant - tentative de création');
 
         // Profil n'existe pas, le créer
         const { error: createError } = await supabase
           .from('user_profiles')
           .insert({
             user_id: user.id,
-            ...sanitizedData
-          })
+            ...sanitizedData,
+          } as any);
 
         if (createError) {
           console.error('❌ Erreur création profil:', {
             message: createError.message,
             details: createError.details,
             hint: createError.hint,
-            code: createError.code
-          })
-          return
+            code: createError.code,
+          });
+          return;
         }
-        console.log('✅ Profil créé avec succès')
+        console.log('✅ Profil créé avec succès');
       } else {
-        console.log('✅ Profil existant trouvé, tentative update')
+        console.log('✅ Profil existant trouvé, tentative update');
 
         const { error: profileError } = await supabase
           .from('user_profiles')
           .update(sanitizedData)
-          .eq('user_id', user.id)
+          .eq('user_id', user.id);
 
         if (profileError) {
           console.error('❌ Erreur update profil détaillée:', {
@@ -179,17 +199,20 @@ export default function ProfilePage() {
             details: profileError.details,
             hint: profileError.hint,
             code: profileError.code,
-            errorObject: profileError
-          })
-          return
+            errorObject: profileError,
+          });
+          return;
         }
-        console.log('✅ Profil mis à jour avec succès')
+        console.log('✅ Profil mis à jour avec succès');
       }
 
       // Refresh user data
-      const { data: { user: updatedUser }, error: userError } = await supabase.auth.getUser()
+      const {
+        data: { user: updatedUser },
+        error: userError,
+      } = await supabase.auth.getUser();
       if (!userError && updatedUser) {
-        setUser(updatedUser)
+        setUser(updatedUser);
       }
 
       // Refresh profile data
@@ -197,29 +220,29 @@ export default function ProfilePage() {
         .from('user_profiles')
         .select('*')
         .eq('user_id', user.id)
-        .single()
+        .single();
 
       if (updatedProfile) {
-        setProfile(updatedProfile)
+        setProfile(updatedProfile as any);
       }
 
-      setIsEditing(false)
+      setIsEditing(false);
     } catch (error) {
-      console.error('Error saving profile:', error)
+      console.error('Error saving profile:', error);
     } finally {
-      setSaveLoading(false)
+      setSaveLoading(false);
     }
-  }
+  };
 
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-neutral-50">
         <div className="text-center">
-          <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-primary-500 mx-auto mb-3"></div>
+          <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-primary-500 mx-auto mb-3" />
           <p className="text-neutral-600 text-sm">Chargement du profil...</p>
         </div>
       </div>
-    )
+    );
   }
 
   return (
@@ -234,9 +257,7 @@ export default function ProfilePage() {
                 <h1 className="text-lg font-bold text-neutral-900">
                   Mon Profil
                 </h1>
-                {profile && (
-                  <RoleBadge role={profile.role as UserRole} />
-                )}
+                {profile && <RoleBadge role={profile.role as UserRole} />}
               </div>
               <p className="text-sm text-neutral-600">
                 Informations de votre compte Vérone
@@ -301,19 +322,23 @@ export default function ProfilePage() {
                 {isEditing ? (
                   <Input
                     value={editData.raw_user_meta_data.name}
-                    onChange={(e) => setEditData({
-                      ...editData,
-                      raw_user_meta_data: {
-                        ...editData.raw_user_meta_data,
-                        name: e.target.value
-                      }
-                    })}
+                    onChange={e =>
+                      setEditData({
+                        ...editData,
+                        raw_user_meta_data: {
+                          ...editData.raw_user_meta_data,
+                          name: e.target.value,
+                        },
+                      })
+                    }
                     placeholder="Nom d'affichage"
                     className="border-neutral-300"
                   />
                 ) : (
                   <p className="font-medium text-xs text-neutral-900">
-                    {user?.user_metadata?.name || user?.email?.split('@')[0] || 'Non défini'}
+                    {user?.user_metadata?.name ||
+                      user?.email?.split('@')[0] ||
+                      'Non défini'}
                   </p>
                 )}
                 {validationErrors.displayName && (
@@ -334,10 +359,12 @@ export default function ProfilePage() {
                 {isEditing ? (
                   <Input
                     value={editData.first_name}
-                    onChange={(e) => setEditData({
-                      ...editData,
-                      first_name: e.target.value
-                    })}
+                    onChange={e =>
+                      setEditData({
+                        ...editData,
+                        first_name: e.target.value,
+                      })
+                    }
                     placeholder="Votre prénom"
                     maxLength={50}
                     className="border-neutral-300"
@@ -360,15 +387,18 @@ export default function ProfilePage() {
               <User className="h-3.5 w-3.5 text-neutral-400" />
               <div className="flex-1">
                 <p className="text-[11px] mb-1 text-neutral-600">
-                  Nom de famille <span className="text-[11px]">(optionnel)</span>
+                  Nom de famille{' '}
+                  <span className="text-[11px]">(optionnel)</span>
                 </p>
                 {isEditing ? (
                   <Input
                     value={editData.last_name}
-                    onChange={(e) => setEditData({
-                      ...editData,
-                      last_name: e.target.value
-                    })}
+                    onChange={e =>
+                      setEditData({
+                        ...editData,
+                        last_name: e.target.value,
+                      })
+                    }
                     placeholder="Votre nom de famille"
                     maxLength={50}
                     className="border-neutral-300"
@@ -396,10 +426,12 @@ export default function ProfilePage() {
                 {isEditing ? (
                   <Input
                     value={editData.phone}
-                    onChange={(e) => setEditData({
-                      ...editData,
-                      phone: e.target.value
-                    })}
+                    onChange={e =>
+                      setEditData({
+                        ...editData,
+                        phone: e.target.value,
+                      })
+                    }
                     placeholder="0X XX XX XX XX ou +33 X XX XX XX XX"
                     type="tel"
                     className="border-neutral-300"
@@ -427,15 +459,18 @@ export default function ProfilePage() {
               <Briefcase className="h-3.5 w-3.5 text-neutral-400" />
               <div className="flex-1">
                 <p className="text-[11px] mb-1 text-neutral-600">
-                  Intitulé de poste <span className="text-[11px]">(optionnel)</span>
+                  Intitulé de poste{' '}
+                  <span className="text-[11px]">(optionnel)</span>
                 </p>
                 {isEditing ? (
                   <Input
                     value={editData.job_title}
-                    onChange={(e) => setEditData({
-                      ...editData,
-                      job_title: e.target.value
-                    })}
+                    onChange={e =>
+                      setEditData({
+                        ...editData,
+                        job_title: e.target.value,
+                      })
+                    }
                     placeholder="Votre fonction/poste"
                     maxLength={100}
                     className="border-neutral-300"
@@ -514,10 +549,7 @@ export default function ProfilePage() {
                 Changer le mot de passe
               </ButtonV2>
               {profile?.role === 'owner' && (
-                <ButtonV2
-                  variant="secondary"
-                  size="sm"
-                >
+                <ButtonV2 variant="secondary" size="sm">
                   Paramètres système
                 </ButtonV2>
               )}
@@ -532,5 +564,5 @@ export default function ProfilePage() {
         onOpenChange={setShowPasswordDialog}
       />
     </div>
-  )
+  );
 }

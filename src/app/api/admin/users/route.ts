@@ -5,80 +5,87 @@
  * Retourne tous les utilisateurs avec leurs stats d'activité pour dashboard admin
  */
 
-import { NextResponse } from 'next/server'
-import { createServerClient } from '@/lib/supabase/server'
+import { NextResponse } from 'next/server';
+
+import { createServerClient } from '@verone/utils/supabase/server';
 
 // Node runtime requis pour cookies() async
-export const runtime = 'nodejs'
-export const dynamic = 'force-dynamic'
+export const runtime = 'nodejs';
+export const dynamic = 'force-dynamic';
 
 interface UserActivityStats {
-  user_id: string
-  email: string
-  full_name: string | null
-  role: string
-  total_sessions: number
-  total_actions: number
-  last_activity: string | null
-  engagement_score: number
-  most_used_module: string | null
-  is_active_now: boolean
+  user_id: string;
+  email: string;
+  full_name: string | null;
+  role: string;
+  total_sessions: number;
+  total_actions: number;
+  last_activity: string | null;
+  engagement_score: number;
+  most_used_module: string | null;
+  is_active_now: boolean;
 }
 
 export async function GET() {
   try {
-    const supabase = await createServerClient()
+    const supabase = await createServerClient();
 
     // Vérifier authentification
-    const { data: { user }, error: authError } = await supabase.auth.getUser()
+    const {
+      data: { user },
+      error: authError,
+    } = await supabase.auth.getUser();
     if (authError || !user) {
-      return NextResponse.json(
-        { error: 'Non authentifié' },
-        { status: 401 }
-      )
+      return NextResponse.json({ error: 'Non authentifié' }, { status: 401 });
     }
 
     // Vérifier rôle owner
-    const { data: profile, error: profileError } = await supabase
+    const { data: profile, error: profileError } = (await supabase
       .from('user_profiles')
       .select('role')
       .eq('user_id', user.id)
-      .single() as { data: any; error: any }
+      .single()) as { data: any; error: any };
 
     if (profileError || profile?.role !== 'owner') {
       return NextResponse.json(
         { error: 'Accès refusé - Owner uniquement' },
         { status: 403 }
-      )
+      );
     }
 
     // Récupérer tous les utilisateurs
-    const { data: profiles, error: profilesError } = await supabase
+    const { data: profiles, error: profilesError } = (await supabase
       .from('user_profiles')
-      .select(`
+      .select(
+        `
         user_id,
         first_name,
         last_name,
         role
-      `)
-      .order('last_name') as { data: any[]; error: any }
+      `
+      )
+      .order('last_name')) as { data: any[]; error: any };
 
     if (profilesError) {
-      throw profilesError
+      throw profilesError;
     }
 
     // Pour chaque profil, récupérer l'email depuis auth.users et les stats d'activité
     const usersWithStats = await Promise.all(
-      (profiles || []).map(async (profile) => {
+      (profiles || []).map(async profile => {
         // Récupérer email depuis auth.users
-        const { data: authUser } = await supabase.auth.admin.getUserById(profile.user_id)
+        const { data: authUser } = await supabase.auth.admin.getUserById(
+          profile.user_id
+        );
 
         // Stats d'activité via fonction SQL
-        const { data: stats } = await (supabase as any)
-          .rpc('get_user_activity_stats', {
+        const { data: stats } = await (supabase as any).rpc(
+          'get_user_activity_stats',
+          {
             p_user_id: profile.user_id,
-            p_days: 30
-          })
+            p_days: 30,
+          }
+        );
 
         const userStats = stats?.[0] || {
           total_sessions: 0,
@@ -86,23 +93,26 @@ export async function GET() {
           avg_session_duration: null,
           most_used_module: null,
           engagement_score: 0,
-          last_activity: null
-        }
+          last_activity: null,
+        };
 
         // Vérifier si session active (activité < 30 min)
-        let isActiveNow = false
+        let isActiveNow = false;
         if (userStats.last_activity) {
-          const lastActivity = new Date(userStats.last_activity)
-          const now = new Date()
-          const diffMinutes = (now.getTime() - lastActivity.getTime()) / (1000 * 60)
-          isActiveNow = diffMinutes < 30
+          const lastActivity = new Date(userStats.last_activity);
+          const now = new Date();
+          const diffMinutes =
+            (now.getTime() - lastActivity.getTime()) / (1000 * 60);
+          isActiveNow = diffMinutes < 30;
         }
 
-        const fullName = [profile.first_name, profile.last_name].filter(Boolean).join(' ') || null
+        const fullName =
+          [profile.first_name, profile.last_name].filter(Boolean).join(' ') ||
+          null;
 
         return {
           user_id: profile.user_id,
-          email: authUser?.user?.email || 'Pas d\'email',
+          email: authUser?.user?.email || "Pas d'email",
           full_name: fullName,
           role: profile.role,
           total_sessions: userStats.total_sessions || 0,
@@ -110,25 +120,27 @@ export async function GET() {
           last_activity: userStats.last_activity,
           engagement_score: userStats.engagement_score || 0,
           most_used_module: userStats.most_used_module,
-          is_active_now: isActiveNow
-        } as UserActivityStats
+          is_active_now: isActiveNow,
+        } as UserActivityStats;
       })
-    )
+    );
 
     // Trier par engagement score décroissant
-    usersWithStats.sort((a, b) => b.engagement_score - a.engagement_score)
+    usersWithStats.sort((a, b) => b.engagement_score - a.engagement_score);
 
     return NextResponse.json({
       success: true,
       users: usersWithStats,
-      total: usersWithStats.length
-    })
-
+      total: usersWithStats.length,
+    });
   } catch (error) {
-    console.error('Erreur API admin users:', error)
+    console.error('Erreur API admin users:', error);
     return NextResponse.json(
-      { error: 'Erreur serveur', details: error instanceof Error ? error.message : 'Unknown error' },
+      {
+        error: 'Erreur serveur',
+        details: error instanceof Error ? error.message : 'Unknown error',
+      },
       { status: 500 }
-    )
+    );
   }
 }

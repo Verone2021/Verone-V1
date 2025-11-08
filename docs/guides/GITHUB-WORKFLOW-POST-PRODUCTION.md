@@ -9,12 +9,14 @@
 ## 🎯 POURQUOI CE CHANGEMENT?
 
 ### Situation avant production
+
 - Développement direct sur `main`
 - Commits immédiats sans review
 - 1 seul développeur (Romeo)
 - Pas de risque (pas de clients)
 
 ### Situation après production
+
 - `main` = code en production chez les clients
 - Besoin de stabilité absolue
 - Tester avant de déployer
@@ -25,6 +27,7 @@
 ## 📊 WORKFLOW ACTUEL VS FUTUR
 
 ### ACTUEL (Trunk-Based - Avant Production)
+
 ```bash
 Modification code
     ↓
@@ -38,6 +41,7 @@ Fin (pas de validation)
 ```
 
 ### FUTUR (GitHub Flow - Après Production)
+
 ```bash
 Créer branche feature
     ↓
@@ -78,6 +82,7 @@ git checkout -b refactor/optimisation-queries
 ```
 
 **Convention de nommage:**
+
 - `feature/` = nouvelle fonctionnalité
 - `fix/` = correction bug
 - `refactor/` = refactoring code
@@ -103,6 +108,7 @@ git commit -m "🐛 FIX: Bug tri alphabétique"
 ```
 
 **Bonnes pratiques:**
+
 - Faire des commits atomiques (1 fonctionnalité = 1 commit)
 - Messages clairs avec emojis (comme actuellement)
 - Tester localement avant de pousser
@@ -122,6 +128,7 @@ git push -u origin feature/nom-fonctionnalite
 ### ÉTAPE 4: Créer une Pull Request (PR)
 
 #### Via GitHub Web (Recommandé pour novices)
+
 1. Aller sur https://github.com/Verone2021/Verone-backoffice
 2. Cliquer sur bouton jaune "Compare & pull request"
 3. Vérifier:
@@ -132,6 +139,7 @@ git push -u origin feature/nom-fonctionnalite
 6. Cliquer "Create pull request"
 
 #### Via GitHub CLI (Avancé)
+
 ```bash
 gh pr create --title "Filtres catalogue produits" --body "Ajout système filtres avec catégories"
 ```
@@ -141,6 +149,7 @@ gh pr create --title "Filtres catalogue produits" --body "Ajout système filtres
 **Même si vous êtes seul, faites une review!**
 
 Sur GitHub, dans la PR:
+
 1. Onglet "Files changed" → Voir tous les changements
 2. Vérifier:
    - ✅ Pas de code debug oublié
@@ -160,6 +169,7 @@ gh pr merge --merge
 ```
 
 **Types de merge:**
+
 - **Merge commit** (Recommandé): Garde tout l'historique
 - **Squash and merge**: Combine tous les commits en 1
 - **Rebase and merge**: Linéarise l'historique
@@ -327,16 +337,19 @@ Avant de merger une PR, vérifier:
 ### Où voir vos branches et PR?
 
 **Branches actives:**
+
 ```
 GitHub → Code → Branches
 ```
 
 **Pull Requests:**
+
 ```
 GitHub → Pull requests
 ```
 
 **Historique commits:**
+
 ```
 GitHub → Code → Commits
 ```
@@ -346,16 +359,19 @@ GitHub → Code → Commits
 ## 🎯 TIMELINE DE TRANSITION
 
 ### PHASE 1: MAINTENANT (Avant production)
+
 - ✅ Continuer commits directs sur `main`
 - ✅ Pas de branches
 - ✅ Pas de PR
 
 ### PHASE 2: DÉPLOIEMENT
+
 - ✅ Dernier commit sur `main`
 - ✅ Configuration Vercel
 - ✅ Vérification production
 
 ### PHASE 3: POST-PRODUCTION (Ce guide)
+
 - 🔄 Protection branche `main`
 - 🔄 Branches feature obligatoires
 - 🔄 Pull Requests systématiques
@@ -366,17 +382,21 @@ GitHub → Code → Commits
 ## 💡 CONSEILS PRATIQUES
 
 ### Pour débutant Git
+
 1. **Toujours vérifier sur quelle branche vous êtes**
+
    ```bash
    git branch  # Affiche branche actuelle (*)
    ```
 
 2. **Toujours partir de main à jour**
+
    ```bash
    git checkout main && git pull
    ```
 
 3. **Un doute? Vérifier le statut**
+
    ```bash
    git status  # Montre fichiers modifiés
    ```
@@ -387,6 +407,7 @@ GitHub → Code → Commits
    ```
 
 ### Organisation branches
+
 - 1 branche = 1 fonctionnalité complète
 - Pas de branches "fourre-tout"
 - Supprimer branches mergées (nettoyage)
@@ -403,6 +424,7 @@ GitHub → Code → Commits
 ---
 
 **Résumé ultra-simple:**
+
 1. Créer branche → 2. Développer → 3. Push → 4. PR → 5. Review → 6. Merge → 7. Nettoyage
 
-*Guide créé pour faciliter la transition vers GitHub Flow post-production - Vérone Back Office 2025*
+_Guide créé pour faciliter la transition vers GitHub Flow post-production - Vérone Back Office 2025_

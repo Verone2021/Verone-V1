@@ -19,6 +19,7 @@
 Documentation des fonctions RPC Supabase appelables depuis Next.js pour batch operations et calculs complexes.
 
 **À documenter** :
+
 - `batch_update_products()`
 - `calculate_order_total()`
 - Autres RPC functions

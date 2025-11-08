@@ -10,6 +10,7 @@
 ## 🎯 Vue d'ensemble
 
 Système professionnel de gestion d'expéditions supportant 4 transporteurs :
+
 1. **Packlink PRO** - Agrégateur multi-transporteurs (API automatique)
 2. **Mondial Relay** - Points relais économiques (API/Manuel)
 3. **Chronotruck** - Transport palettes spécialisé (Manuel via app.chronotruck.com)
@@ -41,6 +42,7 @@ ShippingManagerModal (Orchestrateur)
 ### **Composants React** (inspirés Shipstation/Sendcloud)
 
 #### **1. ShippingManagerModal** (Orchestrateur principal)
+
 ```typescript
 // src/components/business/shipping-manager-modal.tsx
 État:
@@ -56,6 +58,7 @@ Workflow:
 ```
 
 #### **2. CarrierSelector** ✅ CRÉÉ
+
 ```typescript
 // src/components/business/carrier-selector.tsx
 Props: { selected, onSelect, disabled }
@@ -64,6 +67,7 @@ Badges: Types supportés, API vs Manuel, Recommandé
 ```
 
 #### **3. ShipmentRecapModal** ✅ CRÉÉ
+
 ```typescript
 // src/components/business/shipment-recap-modal.tsx
 Props: { open, data, onConfirm, onBack, loading }
@@ -79,6 +83,7 @@ Actions: [Retour] [Valider l'expédition]
 ```
 
 #### **4. PacklinkShipmentForm** (À adapter existant)
+
 ```typescript
 // Adapter: src/components/business/shipping-manager-modal.tsx (ancien)
 Props: { order, onComplete(data) }
@@ -93,6 +98,7 @@ Submit:
 ```
 
 #### **5. MondialRelayShipmentForm** (À créer)
+
 ```typescript
 // src/components/business/mondial-relay-shipment-form.tsx
 Props: { order, onComplete(data) }
@@ -108,6 +114,7 @@ Submit:
 ```
 
 #### **6. ChronotruckShipmentForm** (À créer)
+
 ```typescript
 // src/components/business/chronotruck-shipment-form.tsx
 Props: { order, onComplete(data) }
@@ -125,6 +132,7 @@ Note: Lien externe vers https://app.chronotruck.com/
 ```
 
 #### **7. ManualShipmentForm** (À adapter existant)
+
 ```typescript
 // Adapter: src/components/business/shipping-manager-modal.tsx (ancien)
 Props: { order, onComplete(data) }
@@ -248,44 +256,44 @@ CREATE FUNCTION process_shipment_stock(
 
 export function useShipments() {
   // Existant
-  const createPacklinkShipment = async (request) => {
+  const createPacklinkShipment = async request => {
     // 1. Appel API /api/packlink/create-shipment
     // 2. Création shipment dans DB
     // 3. Création parcels
     // 4. Création parcel_items
     // 5. Appel RPC process_shipment_stock
     // 6. Retour { success, shipment, labelUrl }
-  }
+  };
 
   // NOUVEAU
-  const createMondialRelayShipment = async (request) => {
+  const createMondialRelayShipment = async request => {
     // 1. API Mondial Relay (si disponible) ou manuel
     // 2. Création shipment dans DB
     // 3. Création parcels
     // 4. Création parcel_items
     // 5. Appel RPC process_shipment_stock
     // 6. Retour { success, shipment }
-  }
+  };
 
   // NOUVEAU
-  const createChronotruckShipment = async (request) => {
+  const createChronotruckShipment = async request => {
     // 1. Création shipment dans DB (manuel)
     // 2. Enregistrement référence Chronotruck
     // 3. Création parcels (palettes)
     // 4. Création parcel_items
     // 5. Appel RPC process_shipment_stock
     // 6. Retour { success, shipment }
-  }
+  };
 
   // Adapter
-  const createManualShipment = async (request) => {
+  const createManualShipment = async request => {
     // 1. Création shipment dans DB
     // 2. Type parcel ou pallet selon choix
     // 3. Création parcels
     // 4. Création parcel_items
     // 5. Appel RPC process_shipment_stock
     // 6. Retour { success, shipment }
-  }
+  };
 }
 ```
 
@@ -295,21 +303,23 @@ export function useShipments() {
 
 ### **1. Transporteurs et Types Supportés**
 
-| Transporteur | Colis | Palettes | Intégration | Poids Max |
-|---|---|---|---|---|
-| **Packlink** | ✅ | ❌ | API | 30 kg |
-| **Mondial Relay** | ✅ | ❌ | API/Manuel | 30 kg |
-| **Chronotruck** | ❌ | ✅ | Manuel | 240 kg |
-| **Manuel** | ✅ | ✅ | Manuel | Illimité |
+| Transporteur      | Colis | Palettes | Intégration | Poids Max |
+| ----------------- | ----- | -------- | ----------- | --------- |
+| **Packlink**      | ✅    | ❌       | API         | 30 kg     |
+| **Mondial Relay** | ✅    | ❌       | API/Manuel  | 30 kg     |
+| **Chronotruck**   | ❌    | ✅       | Manuel      | 240 kg    |
+| **Manuel**        | ✅    | ✅       | Manuel      | Illimité  |
 
 ### **2. Dimensions Standards**
 
 **Colis** :
+
 - Variables selon transporteur
 - Packlink : max 120x80x80 cm
 - Mondial Relay : max 150x50x50 cm
 
 **Palettes** :
+
 - Standard européenne : 120 x 80 x 10 cm
 - Hauteur max chargée : 180 cm recommandé
 - Poids max : 240 kg
@@ -317,22 +327,26 @@ export function useShipments() {
 ### **3. Workflow Validation**
 
 ✅ **Avant création expédition** :
+
 - Commande confirmée (status = 'confirmed')
 - Paiement validé (payment_status = 'paid')
 - Stock suffisant pour tous les produits
 
 ✅ **Lors de la création** :
+
 - Sélection transporteur
 - Saisie dimensions/poids
 - Validation coûts
 - Affectation produits (optionnel)
 
 ✅ **Récapitulatif** :
+
 - Affichage synthèse complète
 - Calcul marge automatique
 - Validation utilisateur finale
 
 ✅ **Après validation** :
+
 - Création shipment dans DB
 - Déduction stock automatique (RPC)
 - Mise à jour statut commande
@@ -351,6 +365,7 @@ confirmed → partially_shipped → shipped → delivered
 ### **5. Gestion Multi-Expéditions**
 
 ✅ Une commande peut avoir **plusieurs expéditions** :
+
 - Expédition partielle possible
 - Tracking différent par expédition
 - Coûts cumulés
@@ -360,18 +375,21 @@ confirmed → partially_shipped → shipped → delivered
 ## 🚀 Plan d'Implémentation
 
 ### **Phase 1: Base de Données** ✅ TERMINÉ
+
 - [x] Migration créée et corrigée
 - [x] ENUMs : shipping_method + shipment_type
 - [x] Tables : shipments, shipping_parcels, parcel_items
 - [x] RPC process_shipment_stock
 
 ### **Phase 2: Composants de Base** ✅ EN COURS
+
 - [x] ShipmentRecapModal (clef de voûte)
 - [x] CarrierSelector
 - [ ] ChronotruckShipmentForm
 - [ ] MondialRelayShipmentForm
 
 ### **Phase 3: Refonte ShippingManagerModal** (PRIORITÉ)
+
 - [ ] Orchestrateur multi-étapes
 - [ ] Intégration CarrierSelector
 - [ ] Affichage conditionnel formulaires
@@ -379,6 +397,7 @@ confirmed → partially_shipped → shipped → delivered
 - [ ] Intégration ShipmentRecapModal
 
 ### **Phase 4: Hooks et API**
+
 - [ ] Adapter use-shipments.ts
 - [ ] Ajouter createMondialRelayShipment
 - [ ] Ajouter createChronotruckShipment
@@ -386,6 +405,7 @@ confirmed → partially_shipped → shipped → delivered
 - [ ] API route Mondial Relay (si nécessaire)
 
 ### **Phase 5: Tests**
+
 - [ ] Test workflow Packlink
 - [ ] Test workflow Mondial Relay
 - [ ] Test workflow Chronotruck
@@ -394,6 +414,7 @@ confirmed → partially_shipped → shipped → delivered
 - [ ] Console error check
 
 ### **Phase 6: Documentation**
+
 - [ ] Guide utilisateur
 - [ ] Mise à jour MEMORY-BANK
 - [ ] Commentaires code
@@ -403,12 +424,14 @@ confirmed → partially_shipped → shipped → delivered
 ## 🎨 Design System Vérone
 
 ### **Couleurs**
+
 - ✅ Noir (#000000) - Textes, bordures, boutons primaires
 - ✅ Blanc (#FFFFFF) - Backgrounds
 - ✅ Gris (#666666, #999999) - Textes secondaires
 - ❌ **AUCUN jaune/doré** (strictement interdit)
 
 ### **Composants shadcn/ui**
+
 - Dialog - Modals
 - Card - Sections de contenu
 - Badge - Statuts, labels
@@ -417,6 +440,7 @@ confirmed → partially_shipped → shipped → delivered
 - Input - Champs formulaires
 
 ### **Layout**
+
 - Desktop : Grid 2 colonnes
 - Mobile : Stack vertical
 - Images produits : 24x24 px (petites), 96x96 px (grandes)
@@ -426,19 +450,25 @@ confirmed → partially_shipped → shipped → delivered
 ## 📝 Notes Importantes
 
 ### **Packlink API**
+
 ⚠️ Actuellement en erreur 500 - Contact support nécessaire
+
 - Clé API : `03df0c...` (fournie)
 - Erreur : Tous endpoints retournent 500
 - Action : Contacter support Packlink PRO
 
 ### **Mondial Relay API**
+
 ❓ À clarifier avec utilisateur :
+
 - API disponible ?
 - Credentials ?
 - Workflow : API ou saisie manuelle ?
 
 ### **Chronotruck**
+
 ✅ Manuel uniquement :
+
 - Interface web : https://app.chronotruck.com/
 - Utilisateur crée réservation sur leur site
 - Saisie référence dans notre système
@@ -448,21 +478,25 @@ confirmed → partially_shipped → shipped → delivered
 ## ✅ Avantages Architecture V2
 
 ### **vs Version 1** (ancienne)
+
 - ❌ V1 : Tout dans un seul modal confus
 - ✅ V2 : Architecture modulaire claire
 
 ### **Inspiré des meilleurs** (Shipstation/Sendcloud)
+
 - ✅ Sélecteur transporteur visuel (cards)
 - ✅ Formulaires spécifiques par transporteur
 - ✅ Récapitulatif unifié avant validation
 - ✅ Workflow step-by-step
 
 ### **Extensible**
+
 - ✅ Facile d'ajouter nouveaux transporteurs
 - ✅ Structure uniforme pour tous
 - ✅ Métadonnées JSONB pour flexibilité
 
 ### **Professionnel**
+
 - ✅ Respecte règles métier standards
 - ✅ Multi-expéditions supporté
 - ✅ Tracking automatique
@@ -470,4 +504,4 @@ confirmed → partially_shipped → shipped → delivered
 
 ---
 
-*Vérone Back Office 2025 - Professional Multi-Carrier Shipping System*
+_Vérone Back Office 2025 - Professional Multi-Carrier Shipping System_

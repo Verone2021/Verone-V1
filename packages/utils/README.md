@@ -51,11 +51,11 @@ packages/utils/
 
 ```typescript
 // Dans apps/web ou apps/api
-import { formatCurrency, calculateMargin, validateSKU } from '@verone/utils'
+import { formatCurrency, calculateMargin, validateSKU } from '@verone/utils';
 
-const price = formatCurrency(1234.56, 'fr-FR') // "1 234,56 €"
-const margin = calculateMargin(100, 150)       // 50
-const isValid = validateSKU('PROD-12345')      // true
+const price = formatCurrency(1234.56, 'fr-FR'); // "1 234,56 €"
+const margin = calculateMargin(100, 150); // 50
+const isValid = validateSKU('PROD-12345'); // true
 ```
 
 ---
@@ -75,6 +75,7 @@ const isValid = validateSKU('PROD-12345')      // true
 **Vers** : `packages/utils/src/`
 
 **Liste initiale** :
+
 - [ ] Formatters (currency, date, number)
 - [ ] Validators (SKU, email, phone, SIREN)
 - [ ] Calculators (margin, tax, stock value)
@@ -84,5 +85,5 @@ const isValid = validateSKU('PROD-12345')      // true
 
 ---
 
-*À migrer : Après Phase 1*
-*Référence actuelle : src/lib/utils/, src/lib/helpers/*
+_À migrer : Après Phase 1_
+_Référence actuelle : src/lib/utils/, src/lib/helpers/_

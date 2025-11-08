@@ -14,6 +14,7 @@ curl -X DELETE "https://api.vercel.com/v9/projects/prj_X4eg9YtIF4qS2eTwIRLidsA9S
 ```
 
 **Résultat** : ✅ Repository déconnecté avec succès
+
 - Configuration supprimée
 - Cache build purgé
 - Deploy Hooks supprimés
@@ -35,6 +36,7 @@ curl -X POST "https://api.vercel.com/v1/projects/prj_X4eg9YtIF4qS2eTwIRLidsA9SB1
 **Résultat** : ✅ Repository reconnecté avec succès
 
 **Confirmation API** :
+
 ```json
 {
   "link": {
@@ -60,6 +62,7 @@ curl -X POST "https://api.vercel.com/v1/projects/prj_X4eg9YtIF4qS2eTwIRLidsA9SB1
 **Résultat** : ✅ Deploy Hook créé avec succès
 
 **Deploy Hook URL** :
+
 ```
 https://api.vercel.com/v1/integrations/deploy/prj_X4eg9YtIF4qS2eTwIRLidsA9SB1d/zgpt8bONt3
 ```
@@ -74,6 +77,7 @@ git push origin main
 ```
 
 **Résultat** : ✅ Push réussi vers GitHub
+
 - Commit SHA : `53f1747`
 - Branch : `main`
 
@@ -88,6 +92,7 @@ curl -X POST "https://api.vercel.com/v1/integrations/deploy/prj_X4eg9YtIF4qS2eTw
 **Résultat** : ✅ Job créé avec succès
 
 **Job Response** :
+
 ```json
 {
   "job": {
@@ -103,17 +108,20 @@ curl -X POST "https://api.vercel.com/v1/integrations/deploy/prj_X4eg9YtIF4qS2eTw
 ## 📋 État Actuel
 
 ### **Repository GitHub**
+
 - ✅ **Déconnecté** et **Reconnecté** avec succès
 - ✅ **Configuration fraîche** créée
 - ✅ **Cache build** purgé
 - ✅ **Deploy Hook** opérationnel
 
 ### **Déploiement Vercel**
+
 - ⏸️ **En attente** de création
 - ⚠️ Le webhook GitHub automatique n'a pas encore été créé
 - ⚠️ Aucun nouveau déploiement déclenché malgré le Push et le Deploy Hook
 
 ### **Derniers Déploiements (Historique)**
+
 ```
 1. dpl_4Np1RAVowA4FXcw7UzPRp6D14K7c - ERROR (00:20:17)
 2. dpl_... - ERROR (00:16:25)
@@ -166,6 +174,7 @@ Plusieurs possibilités :
 ### **Option 2 : Déclencher Déploiement Manuellement**
 
 **Via Vercel Dashboard** :
+
 1. Aller sur : https://vercel.com/verone2021s-projects/verone-back-office
 2. Onglet **Deployments**
 3. Cliquer sur **"Redeploy"** sur le dernier déploiement
@@ -177,6 +186,7 @@ Plusieurs possibilités :
 ### **Option 3 : Vérifier et Créer Webhook GitHub Manuellement**
 
 **Vérifier webhooks existants** :
+
 1. Aller sur : https://github.com/Verone2021/Verone-backoffice/settings/hooks
 2. Vérifier s'il y a un webhook Vercel
 3. Si absent, créer manuellement via Vercel Dashboard :
@@ -187,21 +197,25 @@ Plusieurs possibilités :
 ## 📊 Informations de Référence
 
 ### **Project Vercel**
+
 - **Project ID** : `prj_X4eg9YtIF4qS2eTwIRLidsA9SB1d`
 - **Team ID** : `team_sYPhPzbeKMa8CB79SBRDGyji`
 - **Project URL** : https://vercel.com/verone2021s-projects/verone-back-office
 
 ### **Repository GitHub**
+
 - **URL** : https://github.com/Verone2021/Verone-backoffice
 - **Branch** : `main`
 - **Dernier commit** : `53f1747` - Trigger Vercel deployment
 
 ### **Deploy Hook**
+
 - **ID** : `zgpt8bONt3`
 - **URL** : `https://api.vercel.com/v1/integrations/deploy/prj_X4eg9YtIF4qS2eTwIRLidsA9SB1d/zgpt8bONt3`
 - **Branch** : `main`
 
 ### **Job Déclenché**
+
 - **Job ID** : `yiVNBC4Z17FDyZKaFJHA`
 - **State** : `PENDING`
 - **Created** : 1759367045961 (03:17:25 UTC+2)
@@ -211,18 +225,21 @@ Plusieurs possibilités :
 ## 🎯 Commandes de Vérification Utiles
 
 ### **Vérifier Déploiements**
+
 ```bash
 curl -s "https://api.vercel.com/v6/deployments?projectId=prj_X4eg9YtIF4qS2eTwIRLidsA9SB1d&limit=3" \
   -H "Authorization: Bearer uY53v0FVdu2GW3pPYgtbKcsk" | jq '.deployments[]'
 ```
 
 ### **Vérifier État Project**
+
 ```bash
 curl -s "https://api.vercel.com/v1/projects/prj_X4eg9YtIF4qS2eTwIRLidsA9SB1d" \
   -H "Authorization: Bearer uY53v0FVdu2GW3pPYgtbKcsk" | jq '.link'
 ```
 
 ### **Déclencher Nouveau Déploiement**
+
 ```bash
 curl -X POST "https://api.vercel.com/v1/integrations/deploy/prj_X4eg9YtIF4qS2eTwIRLidsA9SB1d/zgpt8bONt3"
 ```
@@ -256,6 +273,7 @@ La déconnexion et reconnexion du repository GitHub a été effectuée avec succ
 ⏸️ **Déploiement : EN ATTENTE**
 
 Le déploiement automatique n'a pas encore été déclenché. Cela peut être dû à :
+
 1. Délai de création du webhook GitHub (5-10 minutes)
 2. Processing du job en queue
 3. Nécessité de déploiement manuel via Dashboard

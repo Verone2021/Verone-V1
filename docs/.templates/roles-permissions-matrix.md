@@ -30,18 +30,18 @@ Le système Vérone utilise Row Level Security (RLS) de Supabase pour garantir l
 
 ## Matrice de Permissions
 
-| Ressource / Action | Owner | Admin | Notes |
-|-------------------|-------|-------|-------|
-| **[Table/Module 1]** |
-| Lecture (SELECT) | ✅ Complet | ✅ Complet | Accès à toutes les entrées du tenant |
-| Création (INSERT) | ✅ Complet | ⚠️ Restreint | Admin : selon règles métier spécifiques |
-| Modification (UPDATE) | ✅ Complet | ⚠️ Restreint | Admin : champs limités (voir détails) |
-| Suppression (DELETE) | ✅ Complet | ❌ Interdit | Soft delete uniquement pour Owner |
-| **[Table/Module 2]** |
-| Lecture (SELECT) | ✅ Complet | ✅ Complet | |
-| Création (INSERT) | ✅ Complet | ✅ Complet | |
-| Modification (UPDATE) | ✅ Complet | ⚠️ Restreint | |
-| Suppression (DELETE) | ✅ Complet | ❌ Interdit | |
+| Ressource / Action    | Owner      | Admin        | Notes                                   |
+| --------------------- | ---------- | ------------ | --------------------------------------- |
+| **[Table/Module 1]**  |
+| Lecture (SELECT)      | ✅ Complet | ✅ Complet   | Accès à toutes les entrées du tenant    |
+| Création (INSERT)     | ✅ Complet | ⚠️ Restreint | Admin : selon règles métier spécifiques |
+| Modification (UPDATE) | ✅ Complet | ⚠️ Restreint | Admin : champs limités (voir détails)   |
+| Suppression (DELETE)  | ✅ Complet | ❌ Interdit  | Soft delete uniquement pour Owner       |
+| **[Table/Module 2]**  |
+| Lecture (SELECT)      | ✅ Complet | ✅ Complet   |                                         |
+| Création (INSERT)     | ✅ Complet | ✅ Complet   |                                         |
+| Modification (UPDATE) | ✅ Complet | ⚠️ Restreint |                                         |
+| Suppression (DELETE)  | ✅ Complet | ❌ Interdit  |                                         |
 
 ---
 
@@ -66,20 +66,20 @@ Le système Vérone utilise Row Level Security (RLS) de Supabase pour garantir l
 
 ### Owner Uniquement
 
-| Action Spéciale | Description | Justification |
-|----------------|-------------|---------------|
-| Export complet | Export CSV/PDF toutes données tenant | Propriété données |
-| Archivage massif | Archivage de multiples entrées | Gestion administrative |
-| Configuration système | Modification paramètres tenant | Contrôle infrastructure |
-| Gestion utilisateurs | CRUD complet sur profils Admin | Sécurité hiérarchique |
+| Action Spéciale       | Description                          | Justification           |
+| --------------------- | ------------------------------------ | ----------------------- |
+| Export complet        | Export CSV/PDF toutes données tenant | Propriété données       |
+| Archivage massif      | Archivage de multiples entrées       | Gestion administrative  |
+| Configuration système | Modification paramètres tenant       | Contrôle infrastructure |
+| Gestion utilisateurs  | CRUD complet sur profils Admin       | Sécurité hiérarchique   |
 
 ### Admin Restrictions
 
-| Action Restreinte | Limitation | Raison Métier |
-|------------------|------------|---------------|
-| Suppression définitive | Soft delete uniquement | Audit trail obligatoire |
-| Modification prix | Validation Owner requise | Contrôle commercial |
-| Export client sensible | Données anonymisées | Conformité RGPD |
+| Action Restreinte      | Limitation               | Raison Métier           |
+| ---------------------- | ------------------------ | ----------------------- |
+| Suppression définitive | Soft delete uniquement   | Audit trail obligatoire |
+| Modification prix      | Validation Owner requise | Contrôle commercial     |
+| Export client sensible | Données anonymisées      | Conformité RGPD         |
 
 ---
 
@@ -92,10 +92,12 @@ Le système Vérone utilise Row Level Security (RLS) de Supabase pour garantir l
 **Acteur** : Owner / Admin
 
 **Actions autorisées** :
+
 1. [Action 1 avec permission]
 2. [Action 2 avec permission]
 
 **Actions bloquées** :
+
 - [Action bloquée avec raison]
 
 ---
@@ -107,9 +109,11 @@ Le système Vérone utilise Row Level Security (RLS) de Supabase pour garantir l
 **Acteur** : Owner / Admin
 
 **Actions autorisées** :
+
 1. [Action 1 avec permission]
 
 **Actions bloquées** :
+
 - [Action bloquée avec raison]
 
 ---

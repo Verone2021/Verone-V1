@@ -1,6 +1,7 @@
-import type { Meta, StoryObj } from '@storybook/react';
-import { Button, ButtonV2 } from '@/components/ui/button';
+import type { Meta, StoryObj } from '@storybook/nextjs';
 import { Save, Trash2, Plus, Download, Settings } from 'lucide-react';
+
+import { Button, ButtonV2 } from '@/components/ui/button';
 
 const meta = {
   title: '1-UI-Base/Buttons/Button',
@@ -44,7 +45,15 @@ const meta = {
   argTypes: {
     variant: {
       control: 'select',
-      options: ['primary', 'secondary', 'outline', 'success', 'danger', 'warning', 'ghost'],
+      options: [
+        'primary',
+        'secondary',
+        'outline',
+        'success',
+        'danger',
+        'warning',
+        'ghost',
+      ],
       description: 'Variante visuelle du bouton',
     },
     size: {
@@ -63,7 +72,7 @@ const meta = {
     iconPosition: {
       control: 'radio',
       options: ['left', 'right'],
-      description: 'Position de l\'icône',
+      description: "Position de l'icône",
     },
   },
 } satisfies Meta<typeof ButtonV2>;
@@ -117,7 +126,7 @@ export const Success: Story = {
  */
 export const Danger: Story = {
   args: {
-    variant: 'danger',
+    variant: 'destructive',
     children: 'Delete',
     icon: Trash2,
   },
@@ -195,11 +204,21 @@ export const Disabled: Story = {
 export const Sizes: Story = {
   render: () => (
     <div className="flex items-center gap-4">
-      <ButtonV2 size="xs" variant="primary">XS (28px)</ButtonV2>
-      <ButtonV2 size="sm" variant="primary">SM (32px)</ButtonV2>
-      <ButtonV2 size="md" variant="primary">MD (36px)</ButtonV2>
-      <ButtonV2 size="lg" variant="primary">LG (40px)</ButtonV2>
-      <ButtonV2 size="xl" variant="primary">XL (44px)</ButtonV2>
+      <ButtonV2 size="xs" variant="primary">
+        XS (28px)
+      </ButtonV2>
+      <ButtonV2 size="sm" variant="primary">
+        SM (32px)
+      </ButtonV2>
+      <ButtonV2 size="md" variant="primary">
+        MD (36px)
+      </ButtonV2>
+      <ButtonV2 size="lg" variant="primary">
+        LG (40px)
+      </ButtonV2>
+      <ButtonV2 size="xl" variant="primary">
+        XL (44px)
+      </ButtonV2>
     </div>
   ),
 };
@@ -213,8 +232,12 @@ export const AllVariants: Story = {
       <ButtonV2 variant="primary">Primary</ButtonV2>
       <ButtonV2 variant="secondary">Secondary</ButtonV2>
       <ButtonV2 variant="outline">Outline</ButtonV2>
-      <ButtonV2 variant="success" icon={Save}>Success</ButtonV2>
-      <ButtonV2 variant="danger" icon={Trash2}>Danger</ButtonV2>
+      <ButtonV2 variant="success" icon={Save}>
+        Success
+      </ButtonV2>
+      <ButtonV2 variant="destructive" icon={Trash2}>
+        Danger
+      </ButtonV2>
       <ButtonV2 variant="warning">Warning</ButtonV2>
       <ButtonV2 variant="ghost">Ghost</ButtonV2>
     </div>
@@ -229,19 +252,29 @@ export const RealWorldExamples: Story = {
     <div className="space-y-6 p-4">
       {/* Actions principales formulaires */}
       <div className="space-y-2">
-        <h3 className="text-sm font-medium text-gray-700">Actions Formulaires</h3>
+        <h3 className="text-sm font-medium text-gray-700">
+          Actions Formulaires
+        </h3>
         <div className="flex gap-2">
-          <ButtonV2 variant="primary" icon={Save}>Enregistrer</ButtonV2>
+          <ButtonV2 variant="primary" icon={Save}>
+            Enregistrer
+          </ButtonV2>
           <ButtonV2 variant="secondary">Annuler</ButtonV2>
         </div>
       </div>
 
       {/* Actions destructives */}
       <div className="space-y-2">
-        <h3 className="text-sm font-medium text-gray-700">Actions Destructives</h3>
+        <h3 className="text-sm font-medium text-gray-700">
+          Actions Destructives
+        </h3>
         <div className="flex gap-2">
-          <ButtonV2 variant="danger" icon={Trash2} size="sm">Supprimer</ButtonV2>
-          <ButtonV2 variant="outline" size="sm">Conserver</ButtonV2>
+          <ButtonV2 variant="destructive" icon={Trash2} size="sm">
+            Supprimer
+          </ButtonV2>
+          <ButtonV2 variant="outline" size="sm">
+            Conserver
+          </ButtonV2>
         </div>
       </div>
 
@@ -249,9 +282,15 @@ export const RealWorldExamples: Story = {
       <div className="space-y-2">
         <h3 className="text-sm font-medium text-gray-700">Toolbar Actions</h3>
         <div className="flex gap-2">
-          <ButtonV2 variant="ghost" icon={Plus} size="sm">Nouveau</ButtonV2>
-          <ButtonV2 variant="ghost" icon={Download} size="sm">Exporter</ButtonV2>
-          <ButtonV2 variant="ghost" icon={Settings} size="sm">Paramètres</ButtonV2>
+          <ButtonV2 variant="ghost" icon={Plus} size="sm">
+            Nouveau
+          </ButtonV2>
+          <ButtonV2 variant="ghost" icon={Download} size="sm">
+            Exporter
+          </ButtonV2>
+          <ButtonV2 variant="ghost" icon={Settings} size="sm">
+            Paramètres
+          </ButtonV2>
         </div>
       </div>
 
@@ -259,9 +298,15 @@ export const RealWorldExamples: Story = {
       <div className="space-y-2">
         <h3 className="text-sm font-medium text-gray-700">États Loading</h3>
         <div className="flex gap-2">
-          <ButtonV2 variant="primary" loading>Chargement...</ButtonV2>
-          <ButtonV2 variant="success" loading>Validation...</ButtonV2>
-          <ButtonV2 variant="danger" loading>Suppression...</ButtonV2>
+          <ButtonV2 variant="primary" loading>
+            Chargement...
+          </ButtonV2>
+          <ButtonV2 variant="success" loading>
+            Validation...
+          </ButtonV2>
+          <ButtonV2 variant="destructive" loading>
+            Suppression...
+          </ButtonV2>
         </div>
       </div>
     </div>

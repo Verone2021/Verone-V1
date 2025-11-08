@@ -1,37 +1,41 @@
-'use client'
+'use client';
 
-import React, { useState, useEffect } from 'react'
-import { useRouter, useSearchParams } from 'next/navigation'
-import { Building2 } from 'lucide-react'
-import { PageHeader } from '@/components/layout/page-header'
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
-import { SuppliersTab } from '../components/suppliers-tab'
-import { CustomersTab } from '../components/customers-tab'
-import { PartnersTab } from '../components/partners-tab'
+import React, { useState, useEffect } from 'react';
 
-type TabValue = 'suppliers' | 'customers' | 'partners'
+import { useRouter, useSearchParams } from 'next/navigation';
+
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@verone/ui';
+import { Building2 } from 'lucide-react';
+
+import { PageHeader } from '@/components/layout/page-header';
+
+import { CustomersTab } from '../components/customers-tab';
+import { PartnersTab } from '../components/partners-tab';
+import { SuppliersTab } from '../components/suppliers-tab';
+
+type TabValue = 'suppliers' | 'customers' | 'partners';
 
 export default function OrganisationsAllPage() {
-  const router = useRouter()
-  const searchParams = useSearchParams()
-  const tabParam = searchParams.get('tab') as TabValue | null
+  const router = useRouter();
+  const searchParams = useSearchParams();
+  const tabParam = searchParams.get('tab') as TabValue | null;
 
   // Onglet actif basé sur URL searchParams (défaut: suppliers)
-  const [activeTab, setActiveTab] = useState<TabValue>(tabParam || 'suppliers')
+  const [activeTab, setActiveTab] = useState<TabValue>(tabParam || 'suppliers');
 
   // Sync avec URL quand searchParams change
   useEffect(() => {
     if (tabParam && ['suppliers', 'customers', 'partners'].includes(tabParam)) {
-      setActiveTab(tabParam as TabValue)
+      setActiveTab(tabParam);
     }
-  }, [tabParam])
+  }, [tabParam]);
 
   // Mettre à jour URL quand onglet change
   const handleTabChange = (value: string) => {
-    const tab = value as TabValue
-    setActiveTab(tab)
-    router.push(`/organisation/all?tab=${tab}`, { scroll: false })
-  }
+    const tab = value as TabValue;
+    setActiveTab(tab);
+    router.push(`/organisation/all?tab=${tab}`, { scroll: false });
+  };
 
   return (
     <div className="min-h-screen bg-slate-50">
@@ -45,7 +49,11 @@ export default function OrganisationsAllPage() {
 
       {/* Onglets Navigation */}
       <div className="p-6">
-        <Tabs value={activeTab} onValueChange={handleTabChange} className="w-full">
+        <Tabs
+          value={activeTab}
+          onValueChange={handleTabChange}
+          className="w-full"
+        >
           <TabsList className="grid w-full grid-cols-3 mb-6">
             <TabsTrigger value="suppliers" className="text-sm font-medium">
               Fournisseurs
@@ -72,5 +80,5 @@ export default function OrganisationsAllPage() {
         </Tabs>
       </div>
     </div>
-  )
+  );
 }

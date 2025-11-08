@@ -5,18 +5,22 @@
  * avec leurs rôles et informations dans l'interface d'administration.
  */
 
-"use client"
+'use client';
 
-import React, { useState } from 'react'
-import { Edit, Trash2, Shield, Phone, Mail, Calendar, Key, Eye } from 'lucide-react'
-import { useRouter } from 'next/navigation'
-import { ButtonV2 } from '@/components/ui/button'
-import { RoleBadge, type UserRole } from '@/components/ui/role-badge'
-import { Input } from '@/components/ui/input'
-import { UserWithProfile } from '@/app/admin/users/page'
-import { EditUserDialog } from './edit-user-dialog'
-import { DeleteUserDialog } from './delete-user-dialog'
-import { ResetPasswordDialog } from './reset-password-dialog'
+import React, { useState } from 'react';
+
+import { useRouter } from 'next/navigation';
+
+import { ButtonV2 } from '@verone/ui';
+import { Input } from '@verone/ui';
+import { RoleBadge, type UserRole } from '@verone/ui';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@verone/ui';
 import {
   Table,
   TableBody,
@@ -24,115 +28,128 @@ import {
   TableHead,
   TableHeader,
   TableRow,
-} from '@/components/ui/table'
+} from '@verone/ui';
 import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select'
+  Edit,
+  Trash2,
+  Shield,
+  Phone,
+  Mail,
+  Calendar,
+  Key,
+  Eye,
+} from 'lucide-react';
+
+import type { UserWithProfile } from '@/app/admin/users/page';
+
+import { DeleteUserDialog } from './delete-user-dialog';
+import { EditUserDialog } from './edit-user-dialog';
+import { ResetPasswordDialog } from './reset-password-dialog';
 
 interface UserManagementTableProps {
-  users: UserWithProfile[]
+  users: UserWithProfile[];
 }
 
 export function UserManagementTable({ users }: UserManagementTableProps) {
-  const router = useRouter()
-  const [searchTerm, setSearchTerm] = useState('')
-  const [roleFilter, setRoleFilter] = useState<string>('all')
-  const [editUserOpen, setEditUserOpen] = useState(false)
-  const [deleteUserOpen, setDeleteUserOpen] = useState(false)
-  const [resetPasswordOpen, setResetPasswordOpen] = useState(false)
-  const [selectedUser, setSelectedUser] = useState<UserWithProfile | null>(null)
+  const router = useRouter();
+  const [searchTerm, setSearchTerm] = useState('');
+  const [roleFilter, setRoleFilter] = useState<string>('all');
+  const [editUserOpen, setEditUserOpen] = useState(false);
+  const [deleteUserOpen, setDeleteUserOpen] = useState(false);
+  const [resetPasswordOpen, setResetPasswordOpen] = useState(false);
+  const [selectedUser, setSelectedUser] = useState<UserWithProfile | null>(
+    null
+  );
 
   // Filtrer les utilisateurs selon les critères
   const filteredUsers = users.filter(user => {
-    const matchesSearch =
-      user.email.toLowerCase().includes(searchTerm.toLowerCase())
+    const matchesSearch = user.email
+      .toLowerCase()
+      .includes(searchTerm.toLowerCase());
 
-    const matchesRole = roleFilter === 'all' || user.profile?.role === roleFilter
+    const matchesRole =
+      roleFilter === 'all' || user.profile?.role === roleFilter;
 
-    return matchesSearch && matchesRole
-  })
+    return matchesSearch && matchesRole;
+  });
 
   const formatDate = (dateString: string) => {
     return new Date(dateString).toLocaleDateString('fr-FR', {
       year: 'numeric',
       month: 'short',
-      day: 'numeric'
-    })
-  }
+      day: 'numeric',
+    });
+  };
 
   const formatUserName = (email: string, user_metadata: any = null) => {
     // Essayer d'obtenir le nom depuis les métadonnées
     if (user_metadata?.name) {
-      return user_metadata.name
+      return user_metadata.name;
     }
 
     if (user_metadata?.first_name || user_metadata?.last_name) {
       return [user_metadata.first_name, user_metadata.last_name]
         .filter(Boolean)
         .join(' ')
-        .trim()
+        .trim();
     }
 
     // Fallback : utiliser la partie avant @ comme nom temporaire
-    const tempName = email.split('@')[0].split('.') || ['']
-    return tempName.length > 1 ? tempName.join(' ') : tempName[0]
-  }
+    const tempName = email.split('@')[0].split('.') || [''];
+    return tempName.length > 1 ? tempName.join(' ') : tempName[0];
+  };
 
   const getFirstName = (email: string, user_metadata: any = null) => {
-    if (user_metadata?.first_name) return user_metadata.first_name
-    const tempName = email.split('@')[0].split('.') || ['']
-    return tempName[0] || ''
-  }
+    if (user_metadata?.first_name) return user_metadata.first_name;
+    const tempName = email.split('@')[0].split('.') || [''];
+    return tempName[0] || '';
+  };
 
   const getLastName = (email: string, user_metadata: any = null) => {
-    if (user_metadata?.last_name) return user_metadata.last_name
-    const tempName = email.split('@')[0].split('.') || ['']
-    return tempName[1] || ''
-  }
+    if (user_metadata?.last_name) return user_metadata.last_name;
+    const tempName = email.split('@')[0].split('.') || [''];
+    return tempName[1] || '';
+  };
 
   const getJobTitle = (user_metadata: any = null) => {
-    return user_metadata?.job_title || 'Non renseigné'
-  }
+    return user_metadata?.job_title || 'Non renseigné';
+  };
 
   const handleViewUserDetails = (user: UserWithProfile) => {
-    console.log('Navigation vers les détails utilisateur:', user.id) // Debug log
-    router.push(`/admin/users/${user.id}`)
-  }
+    console.log('Navigation vers les détails utilisateur:', user.id); // Debug log
+    router.push(`/admin/users/${user.id}`);
+  };
 
   const handleEditUser = (user: UserWithProfile) => {
-    setSelectedUser(user)
-    setEditUserOpen(true)
-  }
+    setSelectedUser(user);
+    setEditUserOpen(true);
+  };
 
   const handleDeleteUser = (user: UserWithProfile) => {
-    setSelectedUser(user)
-    setDeleteUserOpen(true)
-  }
+    setSelectedUser(user);
+    setDeleteUserOpen(true);
+  };
 
   const handleResetPassword = (user: UserWithProfile) => {
-    setSelectedUser(user)
-    setResetPasswordOpen(true)
-  }
+    setSelectedUser(user);
+    setResetPasswordOpen(true);
+  };
 
   const handleUserUpdated = () => {
     // This will trigger a page refresh to show the updated data
     // In a real app, we might want to update the local state instead
-    window.location.reload()
-  }
+    window.location.reload();
+  };
 
   const handleUserDeleted = () => {
     // This will trigger a page refresh to show the updated data
-    window.location.reload()
-  }
+    window.location.reload();
+  };
 
   const handlePasswordReset = () => {
     // This will trigger a page refresh to show the updated data
-    window.location.reload()
-  }
+    window.location.reload();
+  };
 
   return (
     <div className="space-y-4">
@@ -142,7 +159,7 @@ export function UserManagementTable({ users }: UserManagementTableProps) {
           <Input
             placeholder="Rechercher par nom ou email..."
             value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
+            onChange={e => setSearchTerm(e.target.value)}
             className="bg-white border-neutral-300 text-neutral-900 placeholder:text-neutral-500 focus:ring-primary-500 focus:border-primary-500 focus:ring-2 focus:ring-offset-0"
           />
         </div>
@@ -152,10 +169,30 @@ export function UserManagementTable({ users }: UserManagementTableProps) {
             <SelectValue placeholder="Filtrer par rôle" />
           </SelectTrigger>
           <SelectContent className="bg-white border-neutral-200">
-            <SelectItem value="all" className="text-neutral-900 focus:bg-neutral-100 focus:text-neutral-900">Tous les rôles</SelectItem>
-            <SelectItem value="owner" className="text-neutral-900 focus:bg-neutral-100 focus:text-neutral-900">Owner</SelectItem>
-            <SelectItem value="admin" className="text-neutral-900 focus:bg-neutral-100 focus:text-neutral-900">Admin</SelectItem>
-            <SelectItem value="catalog_manager" className="text-neutral-900 focus:bg-neutral-100 focus:text-neutral-900">Catalog Manager</SelectItem>
+            <SelectItem
+              value="all"
+              className="text-neutral-900 focus:bg-neutral-100 focus:text-neutral-900"
+            >
+              Tous les rôles
+            </SelectItem>
+            <SelectItem
+              value="owner"
+              className="text-neutral-900 focus:bg-neutral-100 focus:text-neutral-900"
+            >
+              Owner
+            </SelectItem>
+            <SelectItem
+              value="admin"
+              className="text-neutral-900 focus:bg-neutral-100 focus:text-neutral-900"
+            >
+              Admin
+            </SelectItem>
+            <SelectItem
+              value="catalog_manager"
+              className="text-neutral-900 focus:bg-neutral-100 focus:text-neutral-900"
+            >
+              Catalog Manager
+            </SelectItem>
           </SelectContent>
         </Select>
       </div>
@@ -165,24 +202,42 @@ export function UserManagementTable({ users }: UserManagementTableProps) {
         <Table>
           <TableHeader>
             <TableRow className="border-neutral-200">
-              <TableHead className="text-neutral-500 font-medium text-xs uppercase">Prénom</TableHead>
-              <TableHead className="text-neutral-500 font-medium text-xs uppercase">Nom</TableHead>
-              <TableHead className="text-neutral-500 font-medium text-xs uppercase">Rôle</TableHead>
-              <TableHead className="text-neutral-500 font-medium text-xs uppercase">Poste</TableHead>
-              <TableHead className="text-neutral-500 font-medium text-xs uppercase">Créé le</TableHead>
-              <TableHead className="text-neutral-500 font-medium text-xs uppercase">Actions</TableHead>
+              <TableHead className="text-neutral-500 font-medium text-xs uppercase">
+                Prénom
+              </TableHead>
+              <TableHead className="text-neutral-500 font-medium text-xs uppercase">
+                Nom
+              </TableHead>
+              <TableHead className="text-neutral-500 font-medium text-xs uppercase">
+                Rôle
+              </TableHead>
+              <TableHead className="text-neutral-500 font-medium text-xs uppercase">
+                Poste
+              </TableHead>
+              <TableHead className="text-neutral-500 font-medium text-xs uppercase">
+                Créé le
+              </TableHead>
+              <TableHead className="text-neutral-500 font-medium text-xs uppercase">
+                Actions
+              </TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
             {filteredUsers.length === 0 ? (
               <TableRow>
-                <TableCell colSpan={6} className="text-center py-8 text-neutral-500">
+                <TableCell
+                  colSpan={6}
+                  className="text-center py-8 text-neutral-500"
+                >
                   Aucun utilisateur trouvé
                 </TableCell>
               </TableRow>
             ) : (
-              filteredUsers.map((user) => (
-                <TableRow key={user.id} className="border-neutral-200 hover:bg-neutral-50">
+              filteredUsers.map(user => (
+                <TableRow
+                  key={user.id}
+                  className="border-neutral-200 hover:bg-neutral-50"
+                >
                   {/* Prénom */}
                   <TableCell>
                     <div className="font-medium text-neutral-900">
@@ -210,7 +265,9 @@ export function UserManagementTable({ users }: UserManagementTableProps) {
 
                   {/* Poste */}
                   <TableCell>
-                    <span className={`text-sm ${getJobTitle(user.user_metadata) === 'Non renseigné' ? 'text-neutral-500' : 'text-neutral-900'}`}>
+                    <span
+                      className={`text-sm ${getJobTitle(user.user_metadata) === 'Non renseigné' ? 'text-neutral-500' : 'text-neutral-900'}`}
+                    >
                       {getJobTitle(user.user_metadata)}
                     </span>
                   </TableCell>
@@ -250,8 +307,11 @@ export function UserManagementTable({ users }: UserManagementTableProps) {
                       />
 
                       {/* Ne pas permettre la suppression du dernier owner */}
-                      {!(user.profile?.role === 'owner' &&
-                        filteredUsers.filter(u => u.profile?.role === 'owner').length === 1) && (
+                      {!(
+                        user.profile?.role === 'owner' &&
+                        filteredUsers.filter(u => u.profile?.role === 'owner')
+                          .length === 1
+                      ) && (
                         <ButtonV2
                           variant="ghost"
                           size="sm"
@@ -273,22 +333,32 @@ export function UserManagementTable({ users }: UserManagementTableProps) {
       {/* Footer avec statistiques */}
       <div className="flex justify-between items-center text-xs text-neutral-500 pt-3 border-t border-neutral-200">
         <span>
-          {filteredUsers.length} utilisateur{filteredUsers.length > 1 ? 's' : ''} affiché{filteredUsers.length > 1 ? 's' : ''}
-          {searchTerm && ` (filtré${filteredUsers.length > 1 ? 's' : ''} sur ${users.length})`}
+          {filteredUsers.length} utilisateur
+          {filteredUsers.length > 1 ? 's' : ''} affiché
+          {filteredUsers.length > 1 ? 's' : ''}
+          {searchTerm &&
+            ` (filtré${filteredUsers.length > 1 ? 's' : ''} sur ${users.length})`}
         </span>
 
         <div className="flex items-center space-x-3">
           <span className="flex items-center space-x-1">
             <Shield className="h-2.5 w-2.5" />
-            <span>{users.filter(u => u.profile?.role === 'owner').length} Owner(s)</span>
+            <span>
+              {users.filter(u => u.profile?.role === 'owner').length} Owner(s)
+            </span>
           </span>
           <span className="flex items-center space-x-1">
             <Shield className="h-2.5 w-2.5" />
-            <span>{users.filter(u => u.profile?.role === 'admin').length} Admin(s)</span>
+            <span>
+              {users.filter(u => u.profile?.role === 'admin').length} Admin(s)
+            </span>
           </span>
           <span className="flex items-center space-x-1">
             <Shield className="h-2.5 w-2.5" />
-            <span>{users.filter(u => u.profile?.role === 'catalog_manager').length} Manager(s)</span>
+            <span>
+              {users.filter(u => u.profile?.role === 'catalog_manager').length}{' '}
+              Manager(s)
+            </span>
           </span>
         </div>
       </div>
@@ -315,5 +385,5 @@ export function UserManagementTable({ users }: UserManagementTableProps) {
         onPasswordReset={handlePasswordReset}
       />
     </div>
-  )
+  );
 }

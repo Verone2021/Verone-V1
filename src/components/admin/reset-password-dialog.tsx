@@ -5,14 +5,11 @@
  * avec validation et gestion appropriée des erreurs.
  */
 
-"use client"
+'use client';
 
-import React, { useState } from 'react'
-import { Key, Save, X, Eye, EyeOff } from 'lucide-react'
-import { ButtonV2 } from '@/components/ui/button'
-import { Input } from '@/components/ui/input'
-import { Label } from '@/components/ui/label'
-import { RoleBadge, type UserRole } from '@/components/ui/role-badge'
+import React, { useState } from 'react';
+
+import { ButtonV2 } from '@verone/ui';
 import {
   Dialog,
   DialogContent,
@@ -20,92 +17,97 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-} from '@/components/ui/dialog'
-import { resetUserPassword } from '@/lib/actions/user-management'
-import { UserWithProfile } from '@/app/admin/users/page'
-import { cn } from '@/lib/utils'
+} from '@verone/ui';
+import { Input } from '@verone/ui';
+import { Label } from '@verone/ui';
+import { RoleBadge, type UserRole } from '@verone/ui';
+import { cn } from '@verone/utils';
+import { Key, Save, X, Eye, EyeOff } from 'lucide-react';
+
+import type { UserWithProfile } from '@/app/admin/users/page';
+import { resetUserPassword } from '@verone/admin/actions/user-management';
 
 interface ResetPasswordDialogProps {
-  open: boolean
-  onOpenChange: (open: boolean) => void
-  user: UserWithProfile | null
-  onPasswordReset?: () => void
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+  user: UserWithProfile | null;
+  onPasswordReset?: () => void;
 }
 
 export function ResetPasswordDialog({
   open,
   onOpenChange,
   user,
-  onPasswordReset
+  onPasswordReset,
 }: ResetPasswordDialogProps) {
-  const [isResetting, setIsResetting] = useState(false)
-  const [error, setError] = useState<string>('')
-  const [newPassword, setNewPassword] = useState('')
-  const [confirmPassword, setConfirmPassword] = useState('')
-  const [showPassword, setShowPassword] = useState(false)
-  const [showConfirmPassword, setShowConfirmPassword] = useState(false)
+  const [isResetting, setIsResetting] = useState(false);
+  const [error, setError] = useState<string>('');
+  const [newPassword, setNewPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
-  if (!user) return null
+  if (!user) return null;
 
   const handleReset = async (e: React.FormEvent) => {
-    e.preventDefault()
+    e.preventDefault();
 
     // Validation côté client
     if (!newPassword.trim()) {
-      setError('Le mot de passe est requis')
-      return
+      setError('Le mot de passe est requis');
+      return;
     }
 
     if (newPassword.length < 8) {
-      setError('Le mot de passe doit contenir au moins 8 caractères')
-      return
+      setError('Le mot de passe doit contenir au moins 8 caractères');
+      return;
     }
 
     if (newPassword !== confirmPassword) {
-      setError('Les mots de passe ne correspondent pas')
-      return
+      setError('Les mots de passe ne correspondent pas');
+      return;
     }
 
     try {
-      setIsResetting(true)
-      setError('')
+      setIsResetting(true);
+      setError('');
 
-      const result = await resetUserPassword(user.id, newPassword)
+      const result = await resetUserPassword(user.id, newPassword);
 
       if (!result.success) {
-        setError(result.error || 'Erreur lors de la réinitialisation')
-        return
+        setError(result.error || 'Erreur lors de la réinitialisation');
+        return;
       }
 
       // Fermer le dialog et réinitialiser les champs
-      setNewPassword('')
-      setConfirmPassword('')
-      onOpenChange(false)
-      onPasswordReset?.()
+      setNewPassword('');
+      setConfirmPassword('');
+      onOpenChange(false);
+      onPasswordReset?.();
 
       // Notification succès
-      console.log('Mot de passe réinitialisé avec succès')
-
+      console.log('Mot de passe réinitialisé avec succès');
     } catch (error: any) {
-      console.error('Erreur réinitialisation mot de passe:', error)
-      setError(error.message || 'Une erreur inattendue s\'est produite')
+      console.error('Erreur réinitialisation mot de passe:', error);
+      setError(error.message || "Une erreur inattendue s'est produite");
     } finally {
-      setIsResetting(false)
+      setIsResetting(false);
     }
-  }
+  };
 
   const handleClose = () => {
     if (!isResetting) {
-      setError('')
-      setNewPassword('')
-      setConfirmPassword('')
-      setShowPassword(false)
-      setShowConfirmPassword(false)
-      onOpenChange(false)
+      setError('');
+      setNewPassword('');
+      setConfirmPassword('');
+      setShowPassword(false);
+      setShowConfirmPassword(false);
+      onOpenChange(false);
     }
-  }
+  };
 
-  const isFormValid = newPassword.length >= 8 && newPassword === confirmPassword
+  const isFormValid =
+    newPassword.length >= 8 && newPassword === confirmPassword;
 
   return (
     <Dialog open={open} onOpenChange={handleClose}>
@@ -138,7 +140,10 @@ export function ResetPasswordDialog({
         <form onSubmit={handleReset} className="space-y-4">
           {/* Nouveau mot de passe */}
           <div className="space-y-2">
-            <Label htmlFor="newPassword" className="text-sm font-medium text-black">
+            <Label
+              htmlFor="newPassword"
+              className="text-sm font-medium text-black"
+            >
               Nouveau mot de passe *
             </Label>
             <div className="relative">
@@ -146,7 +151,7 @@ export function ResetPasswordDialog({
                 id="newPassword"
                 type={showPassword ? 'text' : 'password'}
                 value={newPassword}
-                onChange={(e) => setNewPassword(e.target.value)}
+                onChange={e => setNewPassword(e.target.value)}
                 className="bg-white border-black text-black placeholder:text-black placeholder:opacity-50 focus:ring-black focus:border-black focus:ring-2 focus:ring-offset-0 pr-10"
                 placeholder="Minimum 8 caractères"
                 required
@@ -169,7 +174,10 @@ export function ResetPasswordDialog({
 
           {/* Confirmation mot de passe */}
           <div className="space-y-2">
-            <Label htmlFor="confirmPassword" className="text-sm font-medium text-black">
+            <Label
+              htmlFor="confirmPassword"
+              className="text-sm font-medium text-black"
+            >
               Confirmer le mot de passe *
             </Label>
             <div className="relative">
@@ -177,7 +185,7 @@ export function ResetPasswordDialog({
                 id="confirmPassword"
                 type={showConfirmPassword ? 'text' : 'password'}
                 value={confirmPassword}
-                onChange={(e) => setConfirmPassword(e.target.value)}
+                onChange={e => setConfirmPassword(e.target.value)}
                 className="bg-white border-black text-black placeholder:text-black placeholder:opacity-50 focus:ring-black focus:border-black focus:ring-2 focus:ring-offset-0 pr-10"
                 placeholder="Retaper le mot de passe"
                 required
@@ -201,13 +209,21 @@ export function ResetPasswordDialog({
           {/* Validation temps réel */}
           {newPassword && (
             <div className="text-xs space-y-1">
-              <div className={`flex items-center space-x-2 ${newPassword.length >= 8 ? 'text-green-600' : 'text-black opacity-50'}`}>
-                <div className={`w-2 h-2 rounded-full ${newPassword.length >= 8 ? 'bg-green-500' : 'bg-gray-300'}`} />
+              <div
+                className={`flex items-center space-x-2 ${newPassword.length >= 8 ? 'text-green-600' : 'text-black opacity-50'}`}
+              >
+                <div
+                  className={`w-2 h-2 rounded-full ${newPassword.length >= 8 ? 'bg-green-500' : 'bg-gray-300'}`}
+                />
                 <span>Au moins 8 caractères</span>
               </div>
               {confirmPassword && (
-                <div className={`flex items-center space-x-2 ${newPassword === confirmPassword ? 'text-green-600' : 'text-red-600'}`}>
-                  <div className={`w-2 h-2 rounded-full ${newPassword === confirmPassword ? 'bg-green-500' : 'bg-red-500'}`} />
+                <div
+                  className={`flex items-center space-x-2 ${newPassword === confirmPassword ? 'text-green-600' : 'text-red-600'}`}
+                >
+                  <div
+                    className={`w-2 h-2 rounded-full ${newPassword === confirmPassword ? 'bg-green-500' : 'bg-red-500'}`}
+                  />
                   <span>Les mots de passe correspondent</span>
                 </div>
               )}
@@ -246,5 +262,5 @@ export function ResetPasswordDialog({
         </form>
       </DialogContent>
     </Dialog>
-  )
+  );
 }

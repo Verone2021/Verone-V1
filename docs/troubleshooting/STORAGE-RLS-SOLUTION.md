@@ -5,6 +5,7 @@
 L'erreur `StorageApiError: new row violates row-level security policy` était causée par :
 
 ❌ **Absence totale de politiques RLS sur `storage.objects`**
+
 - RLS était activé mais aucune politique n'existait
 - Résultat : accès interdit total aux buckets Storage
 
@@ -89,6 +90,7 @@ Si vous voulez des **permissions plus granulaires** par rôle :
 ## 📊 **MONITORING & DEBUGGING**
 
 ### **Vérifier les Erreurs**
+
 ```sql
 -- Voir les politiques actives
 SELECT * FROM pg_policies WHERE schemaname = 'storage';
@@ -98,6 +100,7 @@ SELECT * FROM storage.objects WHERE bucket_id = 'family-images';
 ```
 
 ### **Logs Upload**
+
 - Le composant `ImageUpload.tsx` a des logs détaillés
 - Recherchez dans la console : `🚀 Début upload fichier`
 - En cas d'erreur : `❌ Erreur upload Storage`

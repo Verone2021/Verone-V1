@@ -10,18 +10,13 @@
 
 ```css
 /* Palette Vérone (STRICT) */
---black: #000000        /* Texte principal, sélections, bordures */
---white: #FFFFFF        /* Fond, texte inversé */
---gray-50: #F9FAFB      /* Hover états */
---gray-100: #F3F4F6     /* Backgrounds légers */
---gray-200: #E5E7EB     /* Bordures */
---gray-400: #9CA3AF     /* Icônes désactivées */
---gray-600: #4B5563     /* Texte secondaire */
-
-/* États système UNIQUEMENT */
---blue-50: #EFF6FF      /* Catégorie sélectionnée */
---blue-100: #DBEAFE     /* Badge catégorie */
---blue-800: #1E40AF     /* Texte badge */
+--black: #000000 /* Texte principal, sélections, bordures */ --white: #ffffff
+  /* Fond, texte inversé */ --gray-50: #f9fafb /* Hover états */
+  --gray-100: #f3f4f6 /* Backgrounds légers */ --gray-200: #e5e7eb
+  /* Bordures */ --gray-400: #9ca3af /* Icônes désactivées */
+  --gray-600: #4b5563 /* Texte secondaire */ /* États système UNIQUEMENT */
+  --blue-50: #eff6ff /* Catégorie sélectionnée */ --blue-100: #dbeafe
+  /* Badge catégorie */ --blue-800: #1e40af /* Texte badge */;
 ```
 
 ---
@@ -232,6 +227,7 @@ Maison et décoration › Mobilier › Fauteuil ✕
 ## 🖼️ MOCKUP 8 : États Vides
 
 ### Aucune famille avec produits
+
 ```
 ┌────────────────────────────────────────────────────────────────┐
 │ 🏷️ CATÉGORIES                                                 │
@@ -245,6 +241,7 @@ Maison et décoration › Mobilier › Fauteuil ✕
 ```
 
 ### Aucun filtre actif (zone badges masquée)
+
 ```
 ┌────────────────────────────────────────────────────────────────┐
 │ 🏷️ CATÉGORIES                                                 │
@@ -520,7 +517,9 @@ Adaptations :
 
       <!-- Sous-catégorie (double indentée) -->
       <div class="ml-6">
-        <button class="w-full flex items-center space-x-2 p-2 bg-black text-white">
+        <button
+          class="w-full flex items-center space-x-2 p-2 bg-black text-white"
+        >
           <div class="checkbox">✓</div>
           <span>Fauteuil</span>
           <span>(12)</span>
@@ -547,11 +546,7 @@ Adaptations :
 </button>
 
 <!-- Sous-catégorie -->
-<button
-  role="checkbox"
-  aria-checked="true"
-  aria-label="Fauteuil, 12 produits"
->
+<button role="checkbox" aria-checked="true" aria-label="Fauteuil, 12 produits">
   ☑ Fauteuil (12)
 </button>
 

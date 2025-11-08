@@ -7,13 +7,15 @@
 ## <� OBJECTIF
 
 Pr�venir les **hallucinations IA** qui cr�ent :
+
 - L Tables en double (`suppliers`, `customers`, etc.)
 - L Colonnes en double (`cost_price`, `primary_image_url`, etc.)
 - L Triggers/fonctions redondantes
 - L Enums/contraintes dupliqu�es
 
 **Probl�me historique rapport�** :
-> *"� chaque fois, mon agent hallucine et cr�e des tables en plus. Par exemple, il cr�� une table `suppliers` alors qu'on a d�j� `organisations`."*
+
+> _"� chaque fois, mon agent hallucine et cr�e des tables en plus. Par exemple, il cr�� une table `suppliers` alors qu'on a d�j� `organisations`."_
 
 ---
 
@@ -25,22 +27,22 @@ Pr�venir les **hallucinations IA** qui cr�ent :
 
 ```typescript
 // 1. Lire SCHEMA-REFERENCE.md
-Read("/Users/.../docs/database/SCHEMA-REFERENCE.md")
+Read('/Users/.../docs/database/SCHEMA-REFERENCE.md');
 
 // 2. Rechercher table/colonne similaire
 mcp__serena__search_for_pattern({
-  pattern: "supplier|customer|price",
-  relative_path: "docs/database/"
-})
+  pattern: 'supplier|customer|price',
+  relative_path: 'docs/database/',
+});
 
 // 3. V�rifier triggers si modification colonnes calcul�es
-Read("/Users/.../docs/database/triggers.md")
+Read('/Users/.../docs/database/triggers.md');
 
 // 4. V�rifier FK si ajout relations
-Read("/Users/.../docs/database/foreign-keys.md")
+Read('/Users/.../docs/database/foreign-keys.md');
 
 // 5. V�rifier enums si ajout contraintes
-Read("/Users/.../docs/database/enums.md")
+Read('/Users/.../docs/database/enums.md');
 ```
 
 ### �TAPE 2: VALIDATION AVEC UTILISATEUR
@@ -49,22 +51,27 @@ Read("/Users/.../docs/database/enums.md")
 
 ```typescript
 AskUserQuestion({
-  questions: [{
-    question: "Je veux cr�er une table `suppliers`. J'ai vu `organisations WHERE type='supplier'` dans le sch�ma. Dois-je :",
-    header: "Table Supplier",
-    options: [
-      {
-        label: "Utiliser organisations",
-        description: "Utiliser organisations avec type='supplier' (RECOMMAND�)"
-      },
-      {
-        label: "Cr�er nouvelle table",
-        description: "Cr�er table suppliers s�par�e (NE PAS FAIRE sauf si explicite)"
-      }
-    ],
-    multiSelect: false
-  }]
-})
+  questions: [
+    {
+      question:
+        "Je veux cr�er une table `suppliers`. J'ai vu `organisations WHERE type='supplier'` dans le sch�ma. Dois-je :",
+      header: 'Table Supplier',
+      options: [
+        {
+          label: 'Utiliser organisations',
+          description:
+            "Utiliser organisations avec type='supplier' (RECOMMAND�)",
+        },
+        {
+          label: 'Cr�er nouvelle table',
+          description:
+            'Cr�er table suppliers s�par�e (NE PAS FAIRE sauf si explicite)',
+        },
+      ],
+      multiSelect: false,
+    },
+  ],
+});
 ```
 
 ### �TAPE 3: MIGRATION DOCUMENT�E
@@ -105,14 +112,14 @@ CREATE TABLE suppliers (  -- L Table en double!
 
 #### L JAMAIS CR�ER CES TABLES
 
-| Table Hallucination |  Utiliser � La Place | Raison |
-|---------------------|------------------------|--------|
-| `suppliers` | `organisations WHERE type='supplier'` | Table polymorphe existante |
-| `customers` | `organisations WHERE type='customer'` + `individual_customers` | Syst�me dual B2B/B2C |
-| `products_pricing` | `price_list_items` | Syst�me pricing multi-canal existant |
-| `product_stock` | `stock_movements` + triggers | Stock calcul� automatiquement |
-| `user_roles` | `user_profiles.role` (enum) | Colonne + enum existant |
-| `categories_hierarchy` | `families` � `categories` � `subcategories` | Hi�rarchie 3 niveaux existante |
+| Table Hallucination    |  Utiliser � La Place                                           | Raison                               |
+| ---------------------- | -------------------------------------------------------------- | ------------------------------------ |
+| `suppliers`            | `organisations WHERE type='supplier'`                          | Table polymorphe existante           |
+| `customers`            | `organisations WHERE type='customer'` + `individual_customers` | Syst�me dual B2B/B2C                 |
+| `products_pricing`     | `price_list_items`                                             | Syst�me pricing multi-canal existant |
+| `product_stock`        | `stock_movements` + triggers                                   | Stock calcul� automatiquement        |
+| `user_roles`           | `user_profiles.role` (enum)                                    | Colonne + enum existant              |
+| `categories_hierarchy` | `families` � `categories` � `subcategories`                    | Hi�rarchie 3 niveaux existante       |
 
 ####  V�RIFICATION AVANT CR�ATION TABLE
 
@@ -146,16 +153,16 @@ ORDER BY t.typname, e.enumsortorder;
 
 #### L JAMAIS AJOUTER CES COLONNES
 
-| Colonne Hallucination |  Utiliser � La Place | Raison |
-|----------------------|------------------------|--------|
-| `products.cost_price` | `price_list_items.cost_price` | Prix dans syst�me price_lists (Migration 20251017_003) |
-| `products.price_ht` | `price_list_items.price_ht` | Prix dans syst�me price_lists (N'A JAMAIS EXIST�) |
-| `products.base_price` | `price_list_items.price_ht` | Prix dans syst�me price_lists (N'A JAMAIS EXIST�) |
-| `products.sale_price` | `price_list_items.sale_price` + `calculate_product_price_v2()` | Pricing multi-canal dynamique |
-| `products.primary_image_url` | `product_images WHERE is_primary=true` | Images dans table d�di�e |
-| `products.stock_quantity` | Calcul� par trigger `maintain_stock_totals()` | Colonne calcul�e automatiquement |
-| `sales_orders.total_amount` | Calcul� par trigger `calculate_sales_order_total()` | Colonne calcul�e automatiquement |
-| `organisations.is_supplier` | `organisations.type = 'supplier'` | Enum type existant |
+| Colonne Hallucination        |  Utiliser � La Place                                           | Raison                                                 |
+| ---------------------------- | -------------------------------------------------------------- | ------------------------------------------------------ |
+| `products.cost_price`        | `price_list_items.cost_price`                                  | Prix dans syst�me price_lists (Migration 20251017_003) |
+| `products.price_ht`          | `price_list_items.price_ht`                                    | Prix dans syst�me price_lists (N'A JAMAIS EXIST�)      |
+| `products.base_price`        | `price_list_items.price_ht`                                    | Prix dans syst�me price_lists (N'A JAMAIS EXIST�)      |
+| `products.sale_price`        | `price_list_items.sale_price` + `calculate_product_price_v2()` | Pricing multi-canal dynamique                          |
+| `products.primary_image_url` | `product_images WHERE is_primary=true`                         | Images dans table d�di�e                               |
+| `products.stock_quantity`    | Calcul� par trigger `maintain_stock_totals()`                  | Colonne calcul�e automatiquement                       |
+| `sales_orders.total_amount`  | Calcul� par trigger `calculate_sales_order_total()`            | Colonne calcul�e automatiquement                       |
+| `organisations.is_supplier`  | `organisations.type = 'supplier'`                              | Enum type existant                                     |
 
 ####  V�RIFICATION AVANT AJOUT COLONNE
 
@@ -280,6 +287,7 @@ INSERT INTO stock_movements (
 ```
 
 **Colonnes calcul�es automatiquement** :
+
 - `products.stock_real` (somme mouvements IN/OUT)
 - `products.stock_forecasted_in` (somme FORECASTED_IN)
 - `products.stock_forecasted_out` (somme FORECASTED_OUT)
@@ -337,6 +345,7 @@ const enriched = data.map(p => ({
 ```
 
 **Business Rule BR-TECH-002** :
+
 -  Toujours LEFT JOIN product_images dans queries produits
 -  Enrichissement frontend mandatory pour primary_image_url
 - L JAMAIS utiliser products.primary_image_url (colonne supprim�e)
@@ -408,6 +417,7 @@ WHERE o.type = 'customer' AND o.is_active = true;
 ```
 
 **Avantages table polymorphe** :
+
 - Vision unifi�e tous partenaires
 - Contacts uniques (table contacts � organisations)
 - Adresses uniques
@@ -459,6 +469,7 @@ WHERE routine_schema = 'public'
 ```
 
 **Triggers critiques � NE PAS dupliquer** :
+
 - `maintain_stock_totals()` (10 triggers interd�pendants)
 - `update_updated_at()` (42 tables)
 - `calculate_sales_order_total()` (calcul totaux commandes)
@@ -474,6 +485,7 @@ WHERE routine_schema = 'public'
 ## Avant toute modification database:
 
 ### �TAPE 1: RECHERCHE DOCUMENTATION
+
 - [ ] Lire SCHEMA-REFERENCE.md section concern�e
 - [ ] V�rifier enums.md si ajout contrainte
 - [ ] V�rifier foreign-keys.md si ajout relation
@@ -481,23 +493,27 @@ WHERE routine_schema = 'public'
 - [ ] V�rifier functions-rpc.md si modification logique m�tier
 
 ### �TAPE 2: V�RIFICATION EXISTANT
+
 - [ ] Query PostgreSQL: table existe d�j�?
 - [ ] Query PostgreSQL: colonne existe dans autre table?
 - [ ] Query PostgreSQL: enum existe pour cette contrainte?
 - [ ] Query PostgreSQL: trigger calcule d�j� cette valeur?
 
 ### �TAPE 3: VALIDATION UTILISATEUR
+
 - [ ] AskUserQuestion si doute sur architecture
 - [ ] Expliquer alternative trouv�e (table polymorphe, etc.)
 - [ ] Attendre confirmation AVANT cr�ation
 
 ### �TAPE 4: MIGRATION SQL
+
 - [ ] Cr�er fichier YYYYMMDD_NNN_description.sql
 - [ ] Migrations idempotentes (IF NOT EXISTS, IF EXISTS)
 - [ ] Commentaires explicatifs SQL
 - [ ] Tester migration sur dev AVANT production
 
 ### �TAPE 5: VALIDATION POST-MIGRATION
+
 - [ ] V�rifier contraintes cr��es correctement
 - [ ] Tester RLS policies si table cr��e
 - [ ] Tester triggers si colonne ajout�e
@@ -511,6 +527,7 @@ WHERE routine_schema = 'public'
 ### Exemple 1: Table `suppliers`
 
 **Hallucination AI** :
+
 ```sql
 -- L HALLUCINATION D�TECT�E
 CREATE TABLE suppliers (
@@ -523,16 +540,18 @@ CREATE TABLE suppliers (
 ```
 
 **Correction appliqu�e** :
+
 ```typescript
 //  RECHERCHE DOCUMENTATION
-const schema = await Read("docs/database/SCHEMA-REFERENCE.md");
+const schema = await Read('docs/database/SCHEMA-REFERENCE.md');
 
 //  D�COUVERTE
 // Table organisations existe avec type='supplier'
 
 //  QUESTION UTILISATEUR
 await AskUserQuestion({
-  question: "Table `organisations` existe avec type enum. Dois-je l'utiliser pour les fournisseurs?"
+  question:
+    "Table `organisations` existe avec type enum. Dois-je l'utiliser pour les fournisseurs?",
 });
 
 //  SOLUTION
@@ -543,6 +562,7 @@ await AskUserQuestion({
 ### Exemple 2: Colonne `products.cost_price`
 
 **Hallucination AI** :
+
 ```sql
 -- L HALLUCINATION D�TECT�E
 ALTER TABLE products
@@ -550,9 +570,10 @@ ADD COLUMN cost_price NUMERIC(10,2);
 ```
 
 **Correction appliqu�e** :
+
 ```typescript
 //  RECHERCHE DOCUMENTATION
-const schema = await Read("docs/database/SCHEMA-REFERENCE.md");
+const schema = await Read('docs/database/SCHEMA-REFERENCE.md');
 
 //  D�COUVERTE
 // Table price_list_items existe avec cost_price
@@ -566,6 +587,7 @@ const schema = await Read("docs/database/SCHEMA-REFERENCE.md");
 ### Exemple 3: Trigger `update_product_stock`
 
 **Hallucination AI** :
+
 ```sql
 -- L HALLUCINATION D�TECT�E
 CREATE FUNCTION update_product_stock()
@@ -585,9 +607,10 @@ EXECUTE FUNCTION update_product_stock();
 ```
 
 **Correction appliqu�e** :
+
 ```typescript
 //  RECHERCHE DOCUMENTATION
-const triggers = await Read("docs/database/triggers.md");
+const triggers = await Read('docs/database/triggers.md');
 
 //  D�COUVERTE
 // Trigger maintain_stock_totals() existe d�j�
@@ -603,18 +626,23 @@ const triggers = await Read("docs/database/triggers.md");
 ## <� R�GLES D'OR (� M�MORISER)
 
 ### 1. Documentation First
+
 **TOUJOURS consulter docs/database/ AVANT toute modification**
 
 ### 2. Search Before Create
+
 **TOUJOURS rechercher table/colonne similaire dans sch�ma existant**
 
 ### 3. Ask When Unsure
+
 **TOUJOURS demander utilisateur si doute sur architecture**
 
 ### 4. Migration Always
+
 **JAMAIS modifier sch�ma sans migration SQL document�e**
 
 ### 5. Verify After
+
 **TOUJOURS v�rifier contraintes/triggers cr��s correctement**
 
 ---
@@ -636,12 +664,14 @@ const triggers = await Read("docs/database/triggers.md");
 
 1. � **STOP** - Ne cr�ez RIEN
 2. =� **READ** - Lisez SCHEMA-REFERENCE.md + fichier concern�
-3. = **SEARCH** - Recherchez structure similaire existante
+3. =
+   **SEARCH** - Recherchez structure similaire existante
 4. S **ASK** - Posez question � l'utilisateur avec AskUserQuestion
 5.  **VALIDATE** - Attendez confirmation explicite AVANT cr�ation
 
 **Citation utilisateur** :
-> *"� chaque fois, mon agent hallucine et cr�e des tables en plus"*
+
+> _"� chaque fois, mon agent hallucine et cr�e des tables en plus"_
 
 **Ne soyez PAS cet agent. Consultez la documentation AVANT de cr�er.**
 

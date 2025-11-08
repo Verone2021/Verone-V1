@@ -18,11 +18,11 @@ source:
 
 displayed_in:
   - component: Page détail organisation
-    location: "Section Statistiques"
+    location: 'Section Statistiques'
 
 output:
   type: date
-  format: "DD/MM/YYYY"
+  format: 'DD/MM/YYYY'
 
 metadata:
   created_at: 2025-10-22

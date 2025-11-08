@@ -20,6 +20,7 @@
 Workflow complet de sourcing fournisseurs et validation échantillons pour création fiches produits dans Vérone.
 
 **À documenter** :
+
 1. Recherche fournisseurs (base suppliers)
 2. Demande échantillons (workflow samples)
 3. Validation qualité Owner (photos, specs, pricing)

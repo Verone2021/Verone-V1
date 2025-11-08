@@ -8,11 +8,13 @@
 ## 📊 Résultats Optimisation
 
 ### CLAUDE.md Simplifié ✅
+
 - **Avant:** 567 lignes (verbosité excessive)
 - **Après:** 252 lignes (-55% / -315 lignes)
 - **Gains:** ~8000 tokens économisés par session
 
 ### Améliorations Appliquées
+
 1. ✅ Supprimé répétitions MCP Browser (5+ mentions → 1)
 2. ✅ Condensé patterns classification (80 lignes → 8)
 3. ✅ Simplifié credentials Supabase (35 lignes → 12)
@@ -20,6 +22,7 @@
 5. ✅ Gardé UNIQUEMENT règles absolues essentielles
 
 ### Credentials Supabase Préservés
+
 ```typescript
 // 🔑 TOUJOURS accessible dans CLAUDE.md (lignes 84-97)
 // Fichier: /Users/romeodossantos/verone-back-office-V1/.env.local
@@ -39,31 +42,31 @@
 
 ### MEMORY-BANK/sessions - Top 10 Volumineux
 
-| Fichier | Lignes | Status | Recommandation |
-|---------|--------|--------|----------------|
-| `2025-10-10-plan-developpement-systeme-prix.md` | 1722 | Plan ancien | **Archive** |
-| `RAPPORT-SESSION-REFONTE-COMMANDES-ERP-2025-10-14.md` | 1235 | Récent | Garder |
-| `2025-10-09/AUDIT-CODE-QUALITY.md` | 1174 | Audit dépassé | **Archive** |
-| `2025-10-11-FINANCE-PARTIE3-TREASURY-DASHBOARD.md` | 1075 | Implémenté | **Archive** |
-| `2025-10-09/AUDIT-DESIGN-UX.md` | 920 | Audit dépassé | **Archive** |
-| `2025-10-09/RAPPORT-FINAL-PHASE-1.md` | 893 | Phase complétée | **Archive** |
-| `2025-10-10-recherche-best-practices-pricing-systems.md` | 859 | Recherche | **Archive** |
-| `2025-10-09/AUDIT-ORCHESTRATION-ARCHITECTURE.md` | 840 | Audit dépassé | **Archive** |
-| `2025-10-09/AUDIT-PERFORMANCE.md` | 832 | Audit dépassé | **Archive** |
-| `RAPPORT-SESSION-FEATURE5-NOTIFICATIONS-2025-10-14.md` | 799 | Récent | Garder |
+| Fichier                                                  | Lignes | Status          | Recommandation |
+| -------------------------------------------------------- | ------ | --------------- | -------------- |
+| `2025-10-10-plan-developpement-systeme-prix.md`          | 1722   | Plan ancien     | **Archive**    |
+| `RAPPORT-SESSION-REFONTE-COMMANDES-ERP-2025-10-14.md`    | 1235   | Récent          | Garder         |
+| `2025-10-09/AUDIT-CODE-QUALITY.md`                       | 1174   | Audit dépassé   | **Archive**    |
+| `2025-10-11-FINANCE-PARTIE3-TREASURY-DASHBOARD.md`       | 1075   | Implémenté      | **Archive**    |
+| `2025-10-09/AUDIT-DESIGN-UX.md`                          | 920    | Audit dépassé   | **Archive**    |
+| `2025-10-09/RAPPORT-FINAL-PHASE-1.md`                    | 893    | Phase complétée | **Archive**    |
+| `2025-10-10-recherche-best-practices-pricing-systems.md` | 859    | Recherche       | **Archive**    |
+| `2025-10-09/AUDIT-ORCHESTRATION-ARCHITECTURE.md`         | 840    | Audit dépassé   | **Archive**    |
+| `2025-10-09/AUDIT-PERFORMANCE.md`                        | 832    | Audit dépassé   | **Archive**    |
+| `RAPPORT-SESSION-FEATURE5-NOTIFICATIONS-2025-10-14.md`   | 799    | Récent          | Garder         |
 
 **Total archivable:** ~8000 lignes = ~20 000 tokens économisés
 
 ### manifests - Doublons Critiques 🚨
 
-| Fichier | Lignes | Problème |
-|---------|--------|----------|
-| `technical-specs/monitoring-observability.md` | 744 | **DOUBLON** avec archive/ |
-| `technical-specs/data-validation.md` | 712 | **DOUBLON** avec archive/ |
-| `architecture/API-CATALOGUE-V1.md` | 654 | **DOUBLON** avec archive/ |
-| `technical-specs/security-requirements.md` | 586 | **DOUBLON** avec archive/ |
-| `architecture/ERD-CATALOGUE-V1.md` | 584 | **DOUBLON** avec archive/ |
-| `prd/PRD-CATALOGUE-IMPLEMENTATION-V2.md` | 546 | **DOUBLON** avec archive/ |
+| Fichier                                       | Lignes | Problème                  |
+| --------------------------------------------- | ------ | ------------------------- |
+| `technical-specs/monitoring-observability.md` | 744    | **DOUBLON** avec archive/ |
+| `technical-specs/data-validation.md`          | 712    | **DOUBLON** avec archive/ |
+| `architecture/API-CATALOGUE-V1.md`            | 654    | **DOUBLON** avec archive/ |
+| `technical-specs/security-requirements.md`    | 586    | **DOUBLON** avec archive/ |
+| `architecture/ERD-CATALOGUE-V1.md`            | 584    | **DOUBLON** avec archive/ |
+| `prd/PRD-CATALOGUE-IMPLEMENTATION-V2.md`      | 546    | **DOUBLON** avec archive/ |
 
 **Total doublons:** ~4000 lignes × 2 = ~8000 lignes gaspillées = **20 000 tokens**
 
@@ -72,6 +75,7 @@
 ## 🔧 Actions d'Archivage Proposées
 
 ### Option 1: Archivage Sessions Anciennes (Recommandé)
+
 ```bash
 # Déplacer sessions audit 2025-10-09 (obsolètes)
 mv MEMORY-BANK/sessions/2025-10-09/* MEMORY-BANK/archive/sessions/2025-10-09/
@@ -87,6 +91,7 @@ mv MEMORY-BANK/sessions/2025-10-10-recherche-best-practices-pricing-systems.md \
 ```
 
 ### Option 2: Suppression Doublons manifests/ (CRITIQUE)
+
 ```bash
 # Supprimer fichiers dans manifests/ (garder archive/ comme référence)
 rm manifests/technical-specs/monitoring-observability.md
@@ -103,6 +108,7 @@ rm -rf manifests/archive/architecture/
 ```
 
 ### Option 3: Compression PRDs (Avancé)
+
 ```bash
 # Créer PRD condensés dans manifests/prd/current/
 # Supprimer PRDs verbeux anciens manifests/prd/PRD-*.md
@@ -114,19 +120,20 @@ rm -rf manifests/archive/architecture/
 
 ## 📈 Impact Total Estimé
 
-| Action | Tokens Économisés | Complexité |
-|--------|-------------------|------------|
-| ✅ CLAUDE.md simplifié | ~8 000 | Fait |
-| Option 1: Archive sessions | ~15 000 | Faible |
-| Option 2: Supprimer doublons | ~20 000 | Moyenne |
-| Option 3: Compression PRDs | ~10 000 | Élevée |
-| **TOTAL POSSIBLE** | **~53 000 tokens** | - |
+| Action                       | Tokens Économisés  | Complexité |
+| ---------------------------- | ------------------ | ---------- |
+| ✅ CLAUDE.md simplifié       | ~8 000             | Fait       |
+| Option 1: Archive sessions   | ~15 000            | Faible     |
+| Option 2: Supprimer doublons | ~20 000            | Moyenne    |
+| Option 3: Compression PRDs   | ~10 000            | Élevée     |
+| **TOTAL POSSIBLE**           | **~53 000 tokens** | -          |
 
 ---
 
 ## 🎯 Recommandation Finale
 
 ### Phase 1 (IMMÉDIAT) ✅
+
 1. ✅ CLAUDE.md simplifié (FAIT)
 2. Archiver dossier complet `MEMORY-BANK/sessions/2025-10-09/` (audits obsolètes)
 3. Archiver plans recherche anciens (2025-10-10)
@@ -134,6 +141,7 @@ rm -rf manifests/archive/architecture/
 **Gain Phase 1:** ~23 000 tokens (-30% context)
 
 ### Phase 2 (APRÈS VALIDATION UTILISATEUR)
+
 1. Décider stratégie doublons manifests/ vs archive/
 2. Compresser PRDs anciens en format condensé
 3. Créer index `MEMORY-BANK/sessions/INDEX.md` pour référence rapide
@@ -145,17 +153,20 @@ rm -rf manifests/archive/architecture/
 ## 🚨 Règles Sécurité Archivage
 
 ### ✅ À GARDER ABSOLUMENT
+
 - `MEMORY-BANK/sessions/RAPPORT-TEST-ANNULATION-STOCKS-2025-10-14.md` (session actuelle)
 - `MEMORY-BANK/sessions/RAPPORT-DEBUG-DELETE-RLS-2025-10-14.md` (bugs récents)
 - `manifests/business-rules/` (TOUS - règles business actives)
 - `manifests/prd/current/` (PRDs production alignés)
 
 ### ❌ À ARCHIVER
+
 - Audits 2025-10-09 (dépassés)
 - Plans recherche anciens (implémentés)
 - Doublons manifests/archive/
 
 ### ⚠️ À VÉRIFIER AVEC UTILISATEUR
+
 - PRDs verbeux (546+ lignes) - Condenser ou garder ?
 - Sessions FINANCE (1075 lignes) - Implémenté ou encore actif ?
 

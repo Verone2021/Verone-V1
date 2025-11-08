@@ -13,6 +13,7 @@ Système de tracking activité utilisateur professionnel, simple et respectueux 
 ### 📁 Fichiers Créés
 
 #### 1. **Migration Base de Données**
+
 - 📄 `supabase/migrations/20251007_003_user_activity_tracking_system.sql`
 - **Tables créées:**
   - `user_activity_logs` - Log complet chaque action
@@ -26,11 +27,13 @@ Système de tracking activité utilisateur professionnel, simple et respectueux 
   - Calcul temps par module automatique
 
 #### 2. **API Endpoints**
+
 - 📄 `src/app/api/analytics/events/route.ts` - Enregistrement événement unique
 - 📄 `src/app/api/analytics/batch/route.ts` - Enregistrement batch (optimisé)
 - 📄 `src/app/api/admin/users/[id]/activity/route.ts` - Récupération activité user (owners only)
 
 #### 3. **Providers & Hooks**
+
 - 📄 `src/components/providers/activity-tracker-provider.tsx` - Provider React tracking auto
 - 📄 `src/hooks/use-user-activity-tracker.ts` - Hook existant (déjà présent, maintenant connecté)
 - 📄 `src/app/layout.tsx` - Layout modifié avec ActivityTrackerProvider
@@ -56,6 +59,7 @@ supabase db push
 ```
 
 **Vérification Migration:**
+
 ```sql
 -- Dans Supabase SQL Editor, vérifier tables créées:
 SELECT table_name
@@ -123,18 +127,19 @@ SELECT * FROM get_user_activity_stats(
 
 ### **Par Utilisateur (Automatiques)**
 
-| Métrique | Description | Calcul |
-|----------|-------------|--------|
-| **Engagement Score** | Score 0-100 | (sessions × 10) + (actions × 2) + (modules × 5) |
-| **Sessions Totales** | Nombre sessions | COUNT(sessions) |
-| **Actions Totales** | Nombre actions | SUM(actions_count) |
-| **Durée Moyenne Session** | Temps moyen | AVG(session_end - session_start) |
-| **Module Favori** | Plus utilisé | MAX(time_per_module) |
-| **Dernière Activité** | Timestamp | MAX(last_activity) |
+| Métrique                  | Description     | Calcul                                          |
+| ------------------------- | --------------- | ----------------------------------------------- |
+| **Engagement Score**      | Score 0-100     | (sessions × 10) + (actions × 2) + (modules × 5) |
+| **Sessions Totales**      | Nombre sessions | COUNT(sessions)                                 |
+| **Actions Totales**       | Nombre actions  | SUM(actions_count)                              |
+| **Durée Moyenne Session** | Temps moyen     | AVG(session_end - session_start)                |
+| **Module Favori**         | Plus utilisé    | MAX(time_per_module)                            |
+| **Dernière Activité**     | Timestamp       | MAX(last_activity)                              |
 
 ### **Temps par Module (Automatique)**
 
 Le système track automatiquement le temps passé dans chaque module:
+
 - `dashboard` - Temps Dashboard
 - `catalogue` - Temps Catalogue
 - `stocks` - Temps Stocks
@@ -159,14 +164,15 @@ Le système track automatiquement le temps passé dans chaque module:
 ### **Transparence Employés**
 
 Chaque utilisateur peut voir sa propre activité via:
+
 ```typescript
 // Dans n'importe quel composant
-import { useUserActivityTracker } from '@/hooks/use-user-activity-tracker'
+import { useUserActivityTracker } from '@/hooks/use-user-activity-tracker';
 
-const { stats, currentSession } = useUserActivityTracker()
+const { stats, currentSession } = useUserActivityTracker();
 
-console.log('Mon score engagement:', stats?.engagement_score)
-console.log('Ma session actuelle:', currentSession)
+console.log('Mon score engagement:', stats?.engagement_score);
+console.log('Ma session actuelle:', currentSession);
 ```
 
 ### **Protection Données**
@@ -262,22 +268,26 @@ export function UserActivityPage({ userId }: { userId: string }) {
 ## 🎯 PROCHAINES ÉTAPES (Phase 2)
 
 ### **1. Dashboard Admin Temps Réel** (3-4h)
+
 - Page `/admin/activity-overview`
 - Vue "Qui travaille maintenant"
 - Graphiques temps par module
 - Export CSV activité
 
 ### **2. Composant Historique Activité** (2h)
+
 - Liste 50 dernières actions
 - Filtres par type action
 - Recherche dans historique
 
 ### **3. Interface "Mon Activité"** (1h)
+
 - Page `/mon-activite`
 - Voir son propre tracking
 - Transparence totale
 
 ### **4. Métriques Dashboard Connectées** (2h)
+
 - Remplacer mocks Phase 2 (Stocks, Commandes, Sourcing)
 - Connecter vraies données DB
 - Calculs temps réel
@@ -289,15 +299,18 @@ export function UserActivityPage({ userId }: { userId: string }) {
 ### **Problème: Événements pas enregistrés**
 
 1. Vérifier migration appliquée:
+
    ```sql
    SELECT * FROM user_activity_logs LIMIT 1;
    ```
+
    Si erreur "table does not exist" → Appliquer migration
 
 2. Vérifier user authentifié:
+
    ```typescript
-   const { user } = useAuth()
-   console.log('User:', user) // Doit être non-null
+   const { user } = useAuth();
+   console.log('User:', user); // Doit être non-null
    ```
 
 3. Vérifier console browser:
@@ -312,12 +325,15 @@ export function UserActivityPage({ userId }: { userId: string }) {
 ### **Problème: Hook use-user-activity-tracker erreur**
 
 Si erreur `use-auth not found`:
+
 ```typescript
 // Alternative sans use-auth
-import { createClient } from '@/lib/supabase/client'
+import { createClient } from '@/lib/supabase/client';
 
-const supabase = createClient()
-const { data: { user } } = await supabase.auth.getUser()
+const supabase = createClient();
+const {
+  data: { user },
+} = await supabase.auth.getUser();
 ```
 
 ---
@@ -348,4 +364,4 @@ const { data: { user } } = await supabase.auth.getUser()
 
 **🎉 Félicitations! Votre système de tracking activité est maintenant opérationnel!**
 
-*Pour questions ou problèmes: Vérifier logs Supabase + Console browser DevTools*
+_Pour questions ou problèmes: Vérifier logs Supabase + Console browser DevTools_

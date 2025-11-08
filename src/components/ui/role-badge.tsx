@@ -1,8 +1,18 @@
-"use client"
+'use client';
 
-import React, { useState } from 'react'
-import { Badge } from './badge'
-import { Shield, Crown, Users, Package, ShoppingCart, Eye, Info } from 'lucide-react'
+import React, { useState } from 'react';
+
+import {
+  Shield,
+  Crown,
+  Users,
+  Package,
+  ShoppingCart,
+  Eye,
+  Info,
+} from 'lucide-react';
+
+import { Badge } from './badge';
 import {
   Dialog,
   DialogContent,
@@ -10,19 +20,24 @@ import {
   DialogHeader,
   DialogTitle,
   DialogTrigger,
-} from './dialog'
+} from './dialog';
 
-export type UserRole = 'owner' | 'admin' | 'catalog_manager' | 'sales' | 'partner_manager'
+export type UserRole =
+  | 'owner'
+  | 'admin'
+  | 'catalog_manager'
+  | 'sales'
+  | 'partner_manager';
 
 interface RoleConfig {
-  label: string
-  description: string
-  color: string
-  icon: React.ReactNode
-  permissions: string[]
-  bgClass: string
-  textClass: string
-  borderClass: string
+  label: string;
+  description: string;
+  color: string;
+  icon: React.ReactNode;
+  permissions: string[];
+  bgClass: string;
+  textClass: string;
+  borderClass: string;
 }
 
 const roleConfigs: Record<UserRole, RoleConfig> = {
@@ -37,11 +52,11 @@ const roleConfigs: Record<UserRole, RoleConfig> = {
       'Accès à tous les modules',
       'Gestion des organisations',
       'Supervision complète',
-      'Exports et rapports avancés'
+      'Exports et rapports avancés',
     ],
     bgClass: 'bg-purple-100',
     textClass: 'text-purple-800',
-    borderClass: 'border-purple-200'
+    borderClass: 'border-purple-200',
   },
   admin: {
     label: 'Administrateur',
@@ -54,11 +69,11 @@ const roleConfigs: Record<UserRole, RoleConfig> = {
       'Accès aux rapports',
       'Gestion des clients',
       'Supervision des commandes',
-      'Paramètres avancés'
+      'Paramètres avancés',
     ],
     bgClass: 'bg-blue-100',
     textClass: 'text-blue-800',
-    borderClass: 'border-blue-200'
+    borderClass: 'border-blue-200',
   },
   catalog_manager: {
     label: 'Gestionnaire Catalogue',
@@ -71,11 +86,11 @@ const roleConfigs: Record<UserRole, RoleConfig> = {
       'Import/export catalogue',
       'Gestion des stocks',
       'Tarification produits',
-      'Photos et médias'
+      'Photos et médias',
     ],
     bgClass: 'bg-green-100',
     textClass: 'text-green-800',
-    borderClass: 'border-green-200'
+    borderClass: 'border-green-200',
   },
   sales: {
     label: 'Commercial',
@@ -88,11 +103,11 @@ const roleConfigs: Record<UserRole, RoleConfig> = {
       'Suivi clients',
       'Consultation catalogue',
       'Génération de rapports vente',
-      'Export catalogues clients'
+      'Export catalogues clients',
     ],
     bgClass: 'bg-gray-100',
     textClass: 'text-gray-900',
-    borderClass: 'border-gray-200'
+    borderClass: 'border-gray-200',
   },
   partner_manager: {
     label: 'Gestionnaire Partenaires',
@@ -105,38 +120,46 @@ const roleConfigs: Record<UserRole, RoleConfig> = {
       'Accès catalogues partenaires',
       'Rapports partenariats',
       'Communication externe',
-      'Gestion des accès partenaires'
+      'Gestion des accès partenaires',
     ],
     bgClass: 'bg-indigo-100',
     textClass: 'text-indigo-800',
-    borderClass: 'border-indigo-200'
-  }
-}
+    borderClass: 'border-indigo-200',
+  },
+};
 
 interface RoleBadgeProps {
-  role: UserRole
-  showDetails?: boolean
-  className?: string
+  role: UserRole;
+  showDetails?: boolean;
+  className?: string;
 }
 
-export function RoleBadge({ role, showDetails = true, className = '' }: RoleBadgeProps) {
-  const config = roleConfigs[role]
+export function RoleBadge({
+  role,
+  showDetails = true,
+  className = '',
+}: RoleBadgeProps) {
+  const config = roleConfigs[role];
 
   if (!showDetails) {
     return (
-      <Badge className={`${config.bgClass} ${config.textClass} border ${config.borderClass} ${className}`}>
+      <Badge
+        className={`${config.bgClass} ${config.textClass} border ${config.borderClass} ${className}`}
+      >
         <span className="flex items-center space-x-1">
           {config.icon}
           <span>{config.label}</span>
         </span>
       </Badge>
-    )
+    );
   }
 
   return (
     <Dialog>
       <DialogTrigger asChild>
-        <button className={`inline-flex items-center space-x-1 px-2 py-1 rounded-full text-xs font-medium border cursor-pointer hover:opacity-80 transition-opacity ${config.bgClass} ${config.textClass} ${config.borderClass} ${className}`}>
+        <button
+          className={`inline-flex items-center space-x-1 px-2 py-1 rounded-full text-xs font-medium border cursor-pointer hover:opacity-80 transition-opacity ${config.bgClass} ${config.textClass} ${config.borderClass} ${className}`}
+        >
           {config.icon}
           <span>{config.label}</span>
           <Info className="h-3 w-3 opacity-60" />
@@ -148,17 +171,20 @@ export function RoleBadge({ role, showDetails = true, className = '' }: RoleBadg
             {config.icon}
             <span>{config.label}</span>
           </DialogTitle>
-          <DialogDescription>
-            {config.description}
-          </DialogDescription>
+          <DialogDescription>{config.description}</DialogDescription>
         </DialogHeader>
 
         <div className="space-y-4">
           <div>
-            <h4 className="font-medium text-sm text-black mb-2">Permissions et accès :</h4>
+            <h4 className="font-medium text-sm text-black mb-2">
+              Permissions et accès :
+            </h4>
             <ul className="space-y-1">
               {config.permissions.map((permission, index) => (
-                <li key={index} className="flex items-start space-x-2 text-sm text-black opacity-80">
+                <li
+                  key={index}
+                  className="flex items-start space-x-2 text-sm text-black opacity-80"
+                >
                   <Eye className="h-3 w-3 mt-0.5 text-green-600 flex-shrink-0" />
                   <span>{permission}</span>
                 </li>
@@ -166,13 +192,16 @@ export function RoleBadge({ role, showDetails = true, className = '' }: RoleBadg
             </ul>
           </div>
 
-          <div className={`p-3 rounded border ${config.borderClass} ${config.bgClass}`}>
+          <div
+            className={`p-3 rounded border ${config.borderClass} ${config.bgClass}`}
+          >
             <p className={`text-xs ${config.textClass} opacity-90`}>
-              Ce rôle donne accès aux fonctionnalités essentielles pour {config.label.toLowerCase()} au sein du système Vérone.
+              Ce rôle donne accès aux fonctionnalités essentielles pour{' '}
+              {config.label.toLowerCase()} au sein du système Vérone.
             </p>
           </div>
         </div>
       </DialogContent>
     </Dialog>
-  )
+  );
 }

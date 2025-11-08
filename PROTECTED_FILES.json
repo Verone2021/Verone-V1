@@ -2,8 +2,8 @@
   "$schema": "http://json-schema.org/draft-07/schema#",
   "title": "Protected Files Configuration",
   "description": "Définit les fichiers et dossiers protégés nécessitant une autorisation spéciale pour modification",
-  "version": "1.0.0",
-  "lastUpdated": "2025-10-21",
+  "version": "2.0.0",
+  "lastUpdated": "2025-10-24",
   "protected": {
     "description": "Fichiers/dossiers INTERDITS de modification directe sans autorisation owner",
     "patterns": [
@@ -11,8 +11,23 @@
       "docs/metrics/**",
       "docs/database/triggers.md",
       "docs/database/best-practices.md",
+      "docs/database/SCHEMA-REFERENCE.md",
+      "docs/database/README.md",
       "docs/workflows/owner-daily-workflow.md",
       "docs/workflows/admin-daily-workflow.md",
+      "docs/modules/dashboard/**",
+      "src/app/dashboard/**",
+      "src/app/contacts-organisations/**",
+      "src/app/profile/**",
+      "src/app/admin/**",
+      "src/hooks/use-complete-dashboard-metrics.ts",
+      "src/hooks/use-organisations.ts",
+      "src/hooks/use-contacts.ts",
+      "src/hooks/use-customers.ts",
+      "src/hooks/use-toggle-favorite.ts",
+      "src/components/business/organisation-*.tsx",
+      "src/components/business/customer-*.tsx",
+      "src/components/business/contact-*.tsx",
       "supabase/migrations/*.sql",
       ".env.local",
       ".env.production",
@@ -85,5 +100,30 @@
       "Pre-commit hooks (husky)",
       "CI/CD checks (GitHub Actions)"
     ]
+  },
+  "phase1Validated": {
+    "description": "Code Phase 1 VERROUILLÉ - Modification requiert autorisation owner",
+    "validationDate": "2025-10-23",
+    "modules": ["dashboard", "organisations", "contacts", "profile", "admin"],
+    "features": [
+      "CRUD organisations (Fournisseurs, Clients B2B/B2C, Partenaires)",
+      "CRUD contacts multi-organisations",
+      "Toggle favoris",
+      "Vue grille/liste 4×3 responsive",
+      "Pagination 1-5",
+      "Dashboard 4 KPIs",
+      "Profile user settings"
+    ],
+    "tests": {
+      "e2e": "✅ Validés",
+      "consoleErrors": "✅ 0 errors",
+      "build": "✅ Succès",
+      "performance": "✅ Dashboard <2s"
+    },
+    "documentation": {
+      "path": "docs/modules/dashboard/",
+      "coverage": "100%",
+      "status": "✅ Production Ready"
+    }
   }
 }

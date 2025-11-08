@@ -15,7 +15,7 @@ const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
 const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
 
 if (!supabaseUrl || !supabaseServiceKey) {
-  console.error('❌ Variables d\'environnement Supabase manquantes');
+  console.error("❌ Variables d'environnement Supabase manquantes");
   process.exit(1);
 }
 
@@ -100,13 +100,18 @@ console.log('🗑️ Début du nettoyage de la base de données...\n');
     console.log(`  - Groupes variantes: ${groupsCountAfter}`);
     console.log(`  - Images: ${imagesCountAfter}\n`);
 
-    if (productsCountAfter === 0 && groupsCountAfter === 0 && imagesCountAfter === 0) {
+    if (
+      productsCountAfter === 0 &&
+      groupsCountAfter === 0 &&
+      imagesCountAfter === 0
+    ) {
       console.log('🎉 Nettoyage terminé avec succès !');
-      console.log('📋 Base de données réinitialisée, prête pour de nouvelles données.');
+      console.log(
+        '📋 Base de données réinitialisée, prête pour de nouvelles données.'
+      );
     } else {
       console.warn('⚠️ Attention : Des données subsistent encore');
     }
-
   } catch (error) {
     console.error('❌ Erreur lors du nettoyage:', error.message);
     process.exit(1);

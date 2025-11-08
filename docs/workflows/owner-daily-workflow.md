@@ -24,6 +24,7 @@
 ### Rôle Owner
 
 Le **Owner** est le propriétaire du tenant Vérone avec :
+
 - Accès complet toutes fonctionnalités
 - Supervision de l'équipe (métriques, activité, utilisateurs)
 - Validation workflows (Phase 2 à venir)
@@ -32,6 +33,7 @@ Le **Owner** est le propriétaire du tenant Vérone avec :
 ### Différences Owner vs Admin
 
 **Owner possède 3 avantages exclusifs** :
+
 1. Gestion utilisateurs complète (créer/modifier/supprimer profils)
 2. Visibilité métriques équipe (activité, performances)
 3. Accès pages admin (/admin/users, /admin/activite-utilisateurs)
@@ -54,6 +56,7 @@ Le **Owner** est le propriétaire du tenant Vérone avec :
 **Action** : Login → /dashboard
 
 **Écran Owner** :
+
 ```
 Dashboard Propriétaire Vérone
 ─────────────────────────────────────────
@@ -79,10 +82,12 @@ Dashboard Propriétaire Vérone
 ```
 
 **Différence avec Admin** :
+
 - Admin NE VOIT PAS section "Métriques Équipe"
 - Admin voit uniquement KPIs Business Globaux + Alertes
 
 **Actions Owner** :
+
 1. Consulter métriques équipe → Identifier performances utilisateurs
 2. Vérifier alertes critiques
 3. Planifier actions journée
@@ -94,6 +99,7 @@ Dashboard Propriétaire Vérone
 **Action** : /admin/activite-utilisateurs (Owner-only)
 
 **Écran Owner** :
+
 ```
 Activité Utilisateurs - Tableau de Bord
 ─────────────────────────────────────────
@@ -108,6 +114,7 @@ Claire Lefèvre | Sales | 3         | 3             | 3       | Hier 17h
 ```
 
 **Actions détaillées** :
+
 ```sql
 -- Query Owner peut exécuter (RLS autorise)
 SELECT
@@ -127,10 +134,12 @@ GROUP BY u.id, u.full_name, u.role_name;
 ```
 
 **Différence avec Admin** :
+
 - Admin essaie /admin/activite-utilisateurs → Redirect /dashboard (403 Forbidden)
 - Admin NE PEUT PAS voir user_activity_logs (RLS bloque)
 
 **Actions Owner** :
+
 1. Identifier utilisateurs les plus actifs
 2. Détecter baisse activité (utilisateur inactif)
 3. Exporter rapport CSV activité équipe
@@ -145,6 +154,7 @@ GROUP BY u.id, u.full_name, u.role_name;
 **Action** : /admin/users (Owner-only)
 
 **Écran Owner** :
+
 ```
 Gestion Utilisateurs
 ─────────────────────────────────────────
@@ -162,6 +172,7 @@ ID   | Nom Complet    | Email                  | Rôle  | Statut  | Dernière Co
 **Cas d'usage 1 : Créer Nouveau Salarié**
 
 **Workflow** :
+
 ```
 Owner → [+ Créer Utilisateur]
 
@@ -178,6 +189,7 @@ Envoyer email   : [✓] Email invitation avec lien activation
 ```
 
 **Backend** :
+
 ```sql
 -- INSERT user_profiles (Owner-only RLS)
 INSERT INTO user_profiles (
@@ -208,6 +220,7 @@ INSERT INTO user_organisation_assignments (
 ```
 
 **Résultat** :
+
 - Email invitation envoyé à david@verone.com
 - David clique lien → Définit son mot de passe
 - David login → Dashboard Admin (sans métriques équipe)
@@ -217,6 +230,7 @@ INSERT INTO user_organisation_assignments (
 **Cas d'usage 2 : Modifier Rôle Utilisateur**
 
 **Workflow** :
+
 ```
 Owner → Clic [Éditer] ligne "Bob Martin"
 
@@ -232,6 +246,7 @@ Réinitialiser MDP : [Envoyer email réinitialisation]
 ```
 
 **Backend** :
+
 ```sql
 -- UPDATE user_organisation_assignments (Owner-only RLS)
 UPDATE user_organisation_assignments
@@ -243,6 +258,7 @@ WHERE user_id = <bob_user_id>
 ```
 
 **Impact** :
+
 - Bob perd accès admin (plus de CRUD organisations, price_lists, etc.)
 - Bob garde accès sales (lecture + création sales_orders)
 
@@ -251,6 +267,7 @@ WHERE user_id = <bob_user_id>
 **Cas d'usage 3 : Supprimer Utilisateur**
 
 **Workflow** :
+
 ```
 Owner → Clic [Supprimer] ligne "Claire Lefèvre"
 
@@ -271,6 +288,7 @@ mais le compte sera désactivé.
 ```
 
 **Backend** :
+
 ```sql
 -- DELETE user_organisation_assignments (Owner-only RLS)
 DELETE FROM user_organisation_assignments
@@ -288,6 +306,7 @@ WHERE id = <claire_user_id>;
 ```
 
 **Protection Trigger** :
+
 ```sql
 -- Tentative suppression dernier Owner
 Owner → Clic [Supprimer] sur Jean Dupont (dernier Owner)
@@ -306,6 +325,7 @@ avant de supprimer cet utilisateur.
 ---
 
 **Différence avec Admin** :
+
 - Admin essaie /admin/users → Redirect /dashboard (403 Forbidden)
 - Admin NE PEUT PAS créer/supprimer utilisateurs (RLS bloque)
 - Admin PEUT modifier SON profil uniquement (/settings/profile)
@@ -321,6 +341,7 @@ avant de supprimer cet utilisateur.
 **Note** : Workflow validation Owner = fonctionnalité Phase 2 (à venir)
 
 **Écran Owner (Futur)** :
+
 ```
 Commandes Ventes en Attente Validation
 ─────────────────────────────────────────
@@ -332,6 +353,7 @@ SO-002   | Dupont & Fils    | 8 900 €  | Bob       | 15 Oct 14h    | [Valider]
 ```
 
 **Workflow Validation** :
+
 ```
 Owner → Clic [Valider] commande SO-001
 
@@ -353,6 +375,7 @@ Commentaire validation (optionnel) :
 ```
 
 **Backend (Phase 2)** :
+
 ```sql
 -- UPDATE sales_orders status (Owner validation)
 UPDATE sales_orders
@@ -380,6 +403,7 @@ INSERT INTO user_activity_logs (
 ```
 
 **Différence avec Admin** :
+
 - Phase 2 : Admin PEUT valider commandes (rôle identique Owner pour validation)
 - Owner garde visibilité user_activity_logs pour tracer qui valide quoi
 
@@ -394,6 +418,7 @@ INSERT INTO user_activity_logs (
 **Droits Owner** : Identiques Admin (CRUD complet)
 
 **Workflow Création Produit** :
+
 ```
 Owner → /catalogue/produits → [+ Nouveau Produit]
 
@@ -412,6 +437,7 @@ Stock Initial   : [50]
 ```
 
 **Backend** :
+
 ```sql
 -- INSERT products (Owner + Admin RLS)
 INSERT INTO products (
@@ -444,6 +470,7 @@ INSERT INTO products (
 **Droits Owner** : Identiques Admin (CRUD complet)
 
 **Workflow Commande Fournisseur** :
+
 ```
 Owner → /achats/commandes → [+ Nouvelle Commande]
 
@@ -465,6 +492,7 @@ Total TTC : 14 280 EUR
 ```
 
 **Backend** :
+
 ```sql
 -- INSERT purchase_orders (Owner + Admin RLS)
 INSERT INTO purchase_orders (
@@ -495,6 +523,7 @@ INSERT INTO purchase_orders (
 **Droits Owner** : Identiques Admin (CRUD complet, y compris DELETE)
 
 **Workflow Entrée Stock** :
+
 ```
 Owner → /stock/mouvements → [+ Nouveau Mouvement]
 
@@ -513,6 +542,7 @@ Nouveau Stock   : 150
 ```
 
 **Backend** :
+
 ```sql
 -- INSERT stock_movements (Owner + Admin RLS)
 INSERT INTO stock_movements (
@@ -538,6 +568,7 @@ WHERE id = <product_id>;
 ```
 
 **Note Migration 2025-10-16** :
+
 - Avant : DELETE stock_movements = Owner-only
 - Après : DELETE stock_movements = Owner + Admin (policy corrigée)
 
@@ -552,6 +583,7 @@ WHERE id = <product_id>;
 **Droits Owner** : Identiques Admin (exports complets)
 
 **Types Exports Disponibles** :
+
 1. Catalogue Produits (CSV/PDF)
 2. Listes Prix (CSV/PDF)
 3. Commandes Ventes (CSV/PDF)
@@ -560,6 +592,7 @@ WHERE id = <product_id>;
 6. **Rapport Activité Équipe (Owner-only)**
 
 **Export Catalogue** :
+
 ```
 Owner → /catalogue/produits → [Exporter CSV]
 
@@ -574,6 +607,7 @@ Filtres         : [Catégorie : Toutes ▼]
 ```
 
 **Résultat CSV** :
+
 ```csv
 SKU,Nom,Catégorie,Fournisseur,Prix Achat,Prix B2C,Prix B2B,Stock
 VRN-CHAIR-001,Chaise Scandinave Blanche,Mobilier,Nordic Design AB,89.00,179.00,149.00,150
@@ -592,6 +626,7 @@ VRN-TABLE-002,Table Basse Moderne,Mobilier,Nordic Design AB,150.00,299.00,249.00
 **Droits Owner** : Exclusif Owner (Admin n'a pas accès)
 
 **Workflow** :
+
 ```
 Owner → /admin/activite-utilisateurs → [Exporter Rapport CSV]
 
@@ -606,6 +641,7 @@ Colonnes        : [✓] Utilisateur, [✓] Rôle, [✓] Commandes,
 ```
 
 **Résultat CSV** :
+
 ```csv
 Utilisateur,Rôle,Commandes Créées,Consultations Créées,Exports Réalisés,Dernière Activité
 Alice Dupont,Admin,12,5,3,2025-10-16 15:30
@@ -614,6 +650,7 @@ Claire Lefèvre,Sales,3,3,3,2025-10-15 17:00
 ```
 
 **Différence avec Admin** :
+
 - Admin NE PEUT PAS exporter rapport activité équipe
 - Admin NE PEUT PAS voir user_activity_logs (RLS)
 
@@ -626,6 +663,7 @@ Claire Lefèvre,Sales,3,3,3,2025-10-15 17:00
 **Action** : /dashboard → Consulter métriques fin journée
 
 **Écran Owner** :
+
 ```
 Dashboard Propriétaire Vérone - 18h00
 ─────────────────────────────────────────
@@ -648,6 +686,7 @@ Dashboard Propriétaire Vérone - 18h00
 ```
 
 **Actions Owner** :
+
 1. Vérifier objectifs journée atteints
 2. Identifier tâches prioritaires demain
 3. Préparer réunions/formations équipe
@@ -659,6 +698,7 @@ Dashboard Propriétaire Vérone - 18h00
 **Action** : Déconnexion sécurisée
 
 **Workflow** :
+
 ```
 Owner → Clic avatar → [Déconnexion]
 
@@ -674,6 +714,7 @@ Options :
 ```
 
 **Backend** :
+
 ```sql
 -- DELETE user_sessions (Owner peut supprimer toutes ses sessions)
 DELETE FROM user_sessions
@@ -691,13 +732,18 @@ WHERE user_id = auth.uid();
 ### Résumé Pages Owner-Only
 
 **Pages accessibles uniquement par Owner** :
+
 1. `/admin/users` - Gestion utilisateurs (CRUD profils)
 2. `/admin/activite-utilisateurs` - Logs activité équipe
 
 **Si Admin essaie d'accéder** :
+
 ```typescript
 // middleware.ts
-if (pathname.startsWith('/admin/users') || pathname.startsWith('/admin/activite-utilisateurs')) {
+if (
+  pathname.startsWith('/admin/users') ||
+  pathname.startsWith('/admin/activite-utilisateurs')
+) {
   if (userRole !== 'owner') {
     return NextResponse.redirect(new URL('/dashboard', request.url));
   }
@@ -734,6 +780,7 @@ if (pathname.startsWith('/admin/users') || pathname.startsWith('/admin/activite-
 ### Résumé Tables Owner + Admin (Identiques)
 
 **Tables avec droits identiques Owner/Admin** :
+
 - organisations
 - price_lists (y compris DELETE)
 - products
@@ -776,22 +823,26 @@ if (pathname.startsWith('/admin/users') || pathname.startsWith('/admin/activite-
 ### Journée Type Owner
 
 **Matin (9h-12h)** :
+
 - Dashboard propriétaire (KPIs business + métriques équipe)
 - Consultation activité utilisateurs (user_activity_logs)
 - Gestion utilisateurs (créer/modifier/supprimer profils)
 
 **Après-midi (14h-18h)** :
+
 - Validation workflows Phase 2 (commandes, consultations)
 - Opérations business (identiques Admin : catalogue, commandes, stocks)
 - Exports & rapports (business + activité équipe)
 
 **Différences Owner vs Admin** :
+
 1. **Gestion équipe** : Owner PEUT créer/modifier/supprimer users, Admin NON
 2. **Visibilité équipe** : Owner PEUT voir métriques/logs, Admin NON
 3. **Pages exclusives** : Owner accède /admin/users + /admin/activite-utilisateurs
 4. **Tout le reste** : IDENTIQUE Admin (organisations, pricing, commandes, stocks, exports)
 
 **Temps Répartition** :
+
 - 30% supervision équipe (Owner-only)
 - 70% opérations business (identique Admin)
 

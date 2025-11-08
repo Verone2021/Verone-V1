@@ -1,0 +1,11 @@
+🔔 TEST NOTIFICATION HOOK
+
+Cette action devrait :
+1. ✅ Ouvrir le modal Cursor (demande de validation)
+2. ✅ Déclencher le hook "Notification"
+3. ✅ Jouer le son "Sosumi.aiff"
+4. ✅ Afficher notification macOS "Vérone Back Office - Action requise"
+
+Si vous voyez ce modal ET entendez le son, la configuration fonctionne parfaitement !
+
+Timestamp: 2025-11-05

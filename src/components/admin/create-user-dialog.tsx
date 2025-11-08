@@ -5,31 +5,56 @@
  * utilisateurs avec assignation de rôles.
  */
 
-"use client"
+'use client';
 
-import React, { useState, ReactNode } from 'react'
-import { User, Mail, Phone, Briefcase, Shield, Eye, EyeOff } from 'lucide-react'
-import { ButtonV2 } from '@/components/ui/button'
-import { Input } from '@/components/ui/input'
-import { Label } from '@/components/ui/label'
-import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog'
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
-import { RoleBadge, type UserRole } from '@/components/ui/role-badge'
-import { createUserWithRole } from '@/lib/actions/user-management'
-// import { validateProfileForm } from '@/lib/validation/profile-validation'
+import type { ReactNode } from 'react';
+import React, { useState } from 'react';
+
+import { ButtonV2 } from '@verone/ui';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from '@verone/ui';
+import { Input } from '@verone/ui';
+import { Label } from '@verone/ui';
+import { RoleBadge, type UserRole } from '@verone/ui';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@verone/ui';
+import {
+  User,
+  Mail,
+  Phone,
+  Briefcase,
+  Shield,
+  Eye,
+  EyeOff,
+} from 'lucide-react';
+
+import { createUserWithRole } from '@verone/admin/actions/user-management';
+// import { validateProfileForm } from '@verone/utils/validation/profile-validation'
 
 interface CreateUserDialogProps {
-  children: ReactNode
+  children: ReactNode;
 }
 
 interface CreateUserFormData {
-  email: string
-  password: string
-  role: UserRole
-  firstName: string
-  lastName: string
-  phone: string
-  jobTitle: string
+  email: string;
+  password: string;
+  role: UserRole;
+  firstName: string;
+  lastName: string;
+  phone: string;
+  jobTitle: string;
 }
 
 const INITIAL_FORM_DATA: CreateUserFormData = {
@@ -39,142 +64,157 @@ const INITIAL_FORM_DATA: CreateUserFormData = {
   firstName: '',
   lastName: '',
   phone: '',
-  jobTitle: ''
-}
+  jobTitle: '',
+};
 
 export function CreateUserDialog({ children }: CreateUserDialogProps) {
-  const [isOpen, setIsOpen] = useState(false)
-  const [isLoading, setIsLoading] = useState(false)
-  const [showPassword, setShowPassword] = useState(false)
-  const [formData, setFormData] = useState<CreateUserFormData>(INITIAL_FORM_DATA)
-  const [errors, setErrors] = useState<Record<string, string>>({})
+  const [isOpen, setIsOpen] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
+  const [formData, setFormData] =
+    useState<CreateUserFormData>(INITIAL_FORM_DATA);
+  const [errors, setErrors] = useState<Record<string, string>>({});
 
-  const handleInputChange = (field: keyof CreateUserFormData, value: string) => {
-    setFormData(prev => ({ ...prev, [field]: value }))
+  const handleInputChange = (
+    field: keyof CreateUserFormData,
+    value: string
+  ) => {
+    setFormData(prev => ({ ...prev, [field]: value }));
     // Nettoyer l'erreur lors de la saisie
     if (errors[field]) {
       setErrors(prev => {
-        const newErrors = { ...prev }
-        delete newErrors[field]
-        return newErrors
-      })
+        const newErrors = { ...prev };
+        delete newErrors[field];
+        return newErrors;
+      });
     }
-  }
+  };
 
   const validateForm = (): boolean => {
-    const newErrors: Record<string, string> = {}
+    const newErrors: Record<string, string> = {};
 
     // Validation email
     if (!formData.email) {
-      newErrors.email = 'L\'email est requis'
+      newErrors.email = "L'email est requis";
     } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email)) {
-      newErrors.email = 'Format d\'email invalide'
+      newErrors.email = "Format d'email invalide";
     }
 
     // Validation mot de passe
     if (!formData.password) {
-      newErrors.password = 'Le mot de passe est requis'
+      newErrors.password = 'Le mot de passe est requis';
     } else if (formData.password.length < 8) {
-      newErrors.password = 'Le mot de passe doit contenir au moins 8 caractères'
+      newErrors.password =
+        'Le mot de passe doit contenir au moins 8 caractères';
     }
 
     // Validation rôle
     if (!formData.role) {
-      newErrors.role = 'Le rôle est requis'
+      newErrors.role = 'Le rôle est requis';
     }
 
-    setErrors(newErrors)
-    return Object.keys(newErrors).length === 0
-  }
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault()
+    e.preventDefault();
 
-    if (!validateForm()) return
+    if (!validateForm()) return;
 
     try {
-      setIsLoading(true)
-      setErrors({}) // Nettoyer les erreurs précédentes
+      setIsLoading(true);
+      setErrors({}); // Nettoyer les erreurs précédentes
 
-      console.log('Début création utilisateur avec données:', { 
-        email: formData.email, 
+      console.log('Début création utilisateur avec données:', {
+        email: formData.email,
         role: formData.role,
-        hasPassword: !!formData.password 
-      })
+        hasPassword: !!formData.password,
+      });
 
-      const result = await createUserWithRole(formData)
+      const result = await createUserWithRole(formData);
 
-      console.log('Résultat création utilisateur:', result)
+      console.log('Résultat création utilisateur:', result);
 
       // Validation stricte de la réponse du Server Action
       if (!result || typeof result !== 'object') {
-        throw new Error('Réponse invalide du serveur - format inattendu')
+        throw new Error('Réponse invalide du serveur - format inattendu');
       }
 
       if (result.success) {
-        console.log('Utilisateur créé avec succès:', result.data)
-        
+        console.log('Utilisateur créé avec succès:', result.data);
+
         // Réinitialiser le formulaire
-        setFormData(INITIAL_FORM_DATA)
-        setErrors({})
-        setIsOpen(false)
+        setFormData(INITIAL_FORM_DATA);
+        setErrors({});
+        setIsOpen(false);
 
         // Utiliser router.refresh() pour recharger les données sans reload complet
         // Note: En Next.js 15, router.refresh() est la méthode recommandée
         // Pour l'instant, on utilise window.location.reload() mais on pourrait améliorer
-        console.log('Rechargement de la page pour afficher le nouvel utilisateur')
-        window.location.reload()
+        console.log(
+          'Rechargement de la page pour afficher le nouvel utilisateur'
+        );
+        window.location.reload();
       } else {
-        console.error('Échec création utilisateur:', result.error)
-        setErrors({ 
-          submit: result.error || 'Erreur inconnue lors de la création de l\'utilisateur' 
-        })
+        console.error('Échec création utilisateur:', result.error);
+        setErrors({
+          submit:
+            result.error ||
+            "Erreur inconnue lors de la création de l'utilisateur",
+        });
       }
     } catch (error: any) {
-      console.error('Erreur handleSubmit:', error)
-      
+      console.error('Erreur handleSubmit:', error);
+
       // Gestion d'erreurs plus robuste avec messages user-friendly
-      let errorMessage = 'Une erreur inattendue s\'est produite'
-      
+      let errorMessage = "Une erreur inattendue s'est produite";
+
       if (error?.name === 'TypeError' && error?.message?.includes('fetch')) {
-        errorMessage = 'Erreur de connexion au serveur. Veuillez réessayer.'
+        errorMessage = 'Erreur de connexion au serveur. Veuillez réessayer.';
       } else if (error?.message) {
-        errorMessage = error.message
+        errorMessage = error.message;
       }
-      
-      setErrors({ submit: errorMessage })
+
+      setErrors({ submit: errorMessage });
     } finally {
-      setIsLoading(false)
+      setIsLoading(false);
     }
-  }
+  };
 
   const resetForm = () => {
-    setFormData(INITIAL_FORM_DATA)
-    setErrors({})
-    setShowPassword(false)
-  }
+    setFormData(INITIAL_FORM_DATA);
+    setErrors({});
+    setShowPassword(false);
+  };
 
   return (
-    <Dialog open={isOpen} onOpenChange={(open) => {
-      setIsOpen(open)
-      if (!open) resetForm()
-    }}>
-      <DialogTrigger asChild>
-        {children}
-      </DialogTrigger>
+    <Dialog
+      open={isOpen}
+      onOpenChange={open => {
+        setIsOpen(open);
+        if (!open) resetForm();
+      }}
+    >
+      <DialogTrigger asChild>{children}</DialogTrigger>
 
       <DialogContent className="sm:max-w-md bg-white border-black">
         <DialogHeader>
-          <DialogTitle className="text-black">Créer un nouvel utilisateur</DialogTitle>
+          <DialogTitle className="text-black">
+            Créer un nouvel utilisateur
+          </DialogTitle>
           <DialogDescription className="text-black opacity-70">
-            Ajoutez un nouvel utilisateur au système Vérone avec ses permissions.
+            Ajoutez un nouvel utilisateur au système Vérone avec ses
+            permissions.
           </DialogDescription>
         </DialogHeader>
 
         <form onSubmit={handleSubmit} className="space-y-4">
           {/* Informations de connexion */}
           <div className="space-y-4">
-            <h3 className="text-sm font-semibold text-black">Informations de connexion</h3>
+            <h3 className="text-sm font-semibold text-black">
+              Informations de connexion
+            </h3>
 
             {/* Email */}
             <div className="space-y-2">
@@ -188,7 +228,7 @@ export function CreateUserDialog({ children }: CreateUserDialogProps) {
                   type="email"
                   placeholder="utilisateur@exemple.com"
                   value={formData.email}
-                  onChange={(e) => handleInputChange('email', e.target.value)}
+                  onChange={e => handleInputChange('email', e.target.value)}
                   className="pl-10 border-black focus:ring-black"
                   disabled={isLoading}
                 />
@@ -209,7 +249,7 @@ export function CreateUserDialog({ children }: CreateUserDialogProps) {
                   type={showPassword ? 'text' : 'password'}
                   placeholder="Mot de passe temporaire"
                   value={formData.password}
-                  onChange={(e) => handleInputChange('password', e.target.value)}
+                  onChange={e => handleInputChange('password', e.target.value)}
                   className="pr-10 border-black focus:ring-black"
                   disabled={isLoading}
                 />
@@ -218,14 +258,19 @@ export function CreateUserDialog({ children }: CreateUserDialogProps) {
                   onClick={() => setShowPassword(!showPassword)}
                   className="absolute right-3 top-1/2 -translate-y-1/2 text-black opacity-50 hover:opacity-70"
                 >
-                  {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                  {showPassword ? (
+                    <EyeOff className="h-4 w-4" />
+                  ) : (
+                    <Eye className="h-4 w-4" />
+                  )}
                 </button>
               </div>
               {errors.password && (
                 <p className="text-xs text-red-500">{errors.password}</p>
               )}
               <p className="text-xs text-black opacity-50">
-                L'utilisateur devra changer ce mot de passe lors de sa première connexion
+                L'utilisateur devra changer ce mot de passe lors de sa première
+                connexion
               </p>
             </div>
 
@@ -234,7 +279,12 @@ export function CreateUserDialog({ children }: CreateUserDialogProps) {
               <Label htmlFor="role" className="text-black">
                 Rôle <span className="text-red-500">*</span>
               </Label>
-              <Select value={formData.role} onValueChange={(value) => handleInputChange('role', value as UserRole)}>
+              <Select
+                value={formData.role}
+                onValueChange={value =>
+                  handleInputChange('role', value as UserRole)
+                }
+              >
                 <SelectTrigger className="border-black focus:ring-black">
                   <SelectValue placeholder="Sélectionner un rôle" />
                 </SelectTrigger>
@@ -267,12 +317,16 @@ export function CreateUserDialog({ children }: CreateUserDialogProps) {
 
           {/* Informations personnelles */}
           <div className="space-y-4">
-            <h3 className="text-sm font-semibold text-black">Informations personnelles (optionnelles)</h3>
+            <h3 className="text-sm font-semibold text-black">
+              Informations personnelles (optionnelles)
+            </h3>
 
             <div className="grid grid-cols-2 gap-4">
               {/* Prénom */}
               <div className="space-y-2">
-                <Label htmlFor="firstName" className="text-black">Prénom</Label>
+                <Label htmlFor="firstName" className="text-black">
+                  Prénom
+                </Label>
                 <div className="relative">
                   <User className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-black opacity-50" />
                   <Input
@@ -280,7 +334,9 @@ export function CreateUserDialog({ children }: CreateUserDialogProps) {
                     type="text"
                     placeholder="Prénom"
                     value={formData.firstName}
-                    onChange={(e) => handleInputChange('firstName', e.target.value)}
+                    onChange={e =>
+                      handleInputChange('firstName', e.target.value)
+                    }
                     className="pl-10 border-black focus:ring-black"
                     maxLength={50}
                     disabled={isLoading}
@@ -293,7 +349,9 @@ export function CreateUserDialog({ children }: CreateUserDialogProps) {
 
               {/* Nom */}
               <div className="space-y-2">
-                <Label htmlFor="lastName" className="text-black">Nom de famille</Label>
+                <Label htmlFor="lastName" className="text-black">
+                  Nom de famille
+                </Label>
                 <div className="relative">
                   <User className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-black opacity-50" />
                   <Input
@@ -301,7 +359,9 @@ export function CreateUserDialog({ children }: CreateUserDialogProps) {
                     type="text"
                     placeholder="Nom de famille"
                     value={formData.lastName}
-                    onChange={(e) => handleInputChange('lastName', e.target.value)}
+                    onChange={e =>
+                      handleInputChange('lastName', e.target.value)
+                    }
                     className="pl-10 border-black focus:ring-black"
                     maxLength={50}
                     disabled={isLoading}
@@ -315,7 +375,9 @@ export function CreateUserDialog({ children }: CreateUserDialogProps) {
 
             {/* Téléphone */}
             <div className="space-y-2">
-              <Label htmlFor="phone" className="text-black">Téléphone</Label>
+              <Label htmlFor="phone" className="text-black">
+                Téléphone
+              </Label>
               <div className="relative">
                 <Phone className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-black opacity-50" />
                 <Input
@@ -323,7 +385,7 @@ export function CreateUserDialog({ children }: CreateUserDialogProps) {
                   type="tel"
                   placeholder="0X XX XX XX XX"
                   value={formData.phone}
-                  onChange={(e) => handleInputChange('phone', e.target.value)}
+                  onChange={e => handleInputChange('phone', e.target.value)}
                   className="pl-10 border-black focus:ring-black"
                   disabled={isLoading}
                 />
@@ -338,7 +400,9 @@ export function CreateUserDialog({ children }: CreateUserDialogProps) {
 
             {/* Poste */}
             <div className="space-y-2">
-              <Label htmlFor="jobTitle" className="text-black">Intitulé de poste</Label>
+              <Label htmlFor="jobTitle" className="text-black">
+                Intitulé de poste
+              </Label>
               <div className="relative">
                 <Briefcase className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-black opacity-50" />
                 <Input
@@ -346,7 +410,7 @@ export function CreateUserDialog({ children }: CreateUserDialogProps) {
                   type="text"
                   placeholder="Fonction ou poste"
                   value={formData.jobTitle}
-                  onChange={(e) => handleInputChange('jobTitle', e.target.value)}
+                  onChange={e => handleInputChange('jobTitle', e.target.value)}
                   className="pl-10 border-black focus:ring-black"
                   maxLength={100}
                   disabled={isLoading}
@@ -386,5 +450,5 @@ export function CreateUserDialog({ children }: CreateUserDialogProps) {
         </form>
       </DialogContent>
     </Dialog>
-  )
+  );
 }

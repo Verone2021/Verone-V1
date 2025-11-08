@@ -5,56 +5,58 @@
  * ✅ RGPD Compliant: IP anonymisée, UA simplifié
  */
 
-import { createClient } from '@/lib/supabase/server'
-import { NextRequest, NextResponse } from 'next/server'
-import { anonymizeIP, simplifyUserAgent } from '@/lib/analytics/privacy'
+import type { NextRequest } from 'next/server';
+import { NextResponse } from 'next/server';
 
-export const runtime = 'edge'
-export const dynamic = 'force-dynamic'
+import { anonymizeIP, simplifyUserAgent } from '@verone/utils/analytics';
+import { createClient } from '@verone/utils/supabase/server';
+
+export const runtime = 'edge';
+export const dynamic = 'force-dynamic';
 
 interface ActivityEvent {
-  action: string
-  table_name?: string
-  record_id?: string
-  old_data?: Record<string, any>
-  new_data?: Record<string, any>
-  severity?: 'info' | 'warning' | 'error' | 'critical'
+  action: string;
+  table_name?: string;
+  record_id?: string;
+  old_data?: Record<string, any>;
+  new_data?: Record<string, any>;
+  severity?: 'info' | 'warning' | 'error' | 'critical';
   metadata?: {
-    page_url?: string
-    user_agent?: string
-    ip_address?: string
-    session_duration?: number
-    [key: string]: any
-  }
+    page_url?: string;
+    user_agent?: string;
+    ip_address?: string;
+    session_duration?: number;
+    [key: string]: any;
+  };
 }
 
 interface BatchRequest {
-  events: ActivityEvent[]
-  session_id: string
+  events: ActivityEvent[];
+  session_id: string;
 }
 
 export async function POST(request: NextRequest) {
   try {
-    const supabase = createClient()
+    const supabase = createClient();
 
     // Vérifier authentification
-    const { data: { user }, error: authError } = await supabase.auth.getUser()
+    const {
+      data: { user },
+      error: authError,
+    } = await supabase.auth.getUser();
 
     if (authError || !user) {
-      return NextResponse.json(
-        { error: 'Non autorisé' },
-        { status: 401 }
-      )
+      return NextResponse.json({ error: 'Non autorisé' }, { status: 401 });
     }
 
     // Parser batch request
-    const { events, session_id }: BatchRequest = await request.json()
+    const { events, session_id }: BatchRequest = await request.json();
 
     if (!events || !Array.isArray(events) || events.length === 0) {
       return NextResponse.json(
         { error: 'Aucun événement fourni' },
         { status: 400 }
-      )
+      );
     }
 
     // Limiter taille batch (protection DoS)
@@ -62,19 +64,21 @@ export async function POST(request: NextRequest) {
       return NextResponse.json(
         { error: 'Batch trop volumineux (max 100 événements)' },
         { status: 400 }
-      )
+      );
     }
 
     // Récupérer user_profile pour organisation_id
-    const { data: profile } = await supabase
+    const { data: profile } = (await supabase
       .from('user_profiles')
       .select('organisation_id')
       .eq('user_id', user.id)
-      .single() as { data: { organisation_id: string | null } | null }
+      .single()) as { data: { organisation_id: string | null } | null };
 
     // Récupérer IP et User Agent bruts une seule fois
-    const rawIP = request.headers.get('x-forwarded-for') || request.headers.get('x-real-ip')
-    const rawUA = request.headers.get('user-agent')
+    const rawIP =
+      request.headers.get('x-forwarded-for') ||
+      request.headers.get('x-real-ip');
+    const rawUA = request.headers.get('user-agent');
 
     // Préparer données pour insertion batch avec anonymisation RGPD
     const activityLogs = events.map(event => ({
@@ -90,36 +94,32 @@ export async function POST(request: NextRequest) {
       session_id: session_id,
       page_url: event.metadata?.page_url || null,
       user_agent: simplifyUserAgent(event.metadata?.user_agent || rawUA), // ✅ Anonymisé production
-      ip_address: anonymizeIP(rawIP) // ✅ Anonymisée production
-    }))
+      ip_address: anonymizeIP(rawIP), // ✅ Anonymisée production
+    }));
 
     // Insertion batch
     const { error: insertError, count } = await supabase
       .from('user_activity_logs')
-      .insert(activityLogs)
+      .insert(activityLogs);
 
     if (insertError) {
-      console.error('[Analytics Batch] Insert error:', insertError)
+      console.error('[Analytics Batch] Insert error:', insertError);
       return NextResponse.json(
         { error: 'Erreur enregistrement batch' },
         { status: 500 }
-      )
+      );
     }
 
     return NextResponse.json(
       {
         success: true,
         message: `${events.length} événements enregistrés`,
-        count: count || events.length
+        count: count || events.length,
       },
       { status: 200 }
-    )
-
+    );
   } catch (error) {
-    console.error('[Analytics Batch] Error:', error)
-    return NextResponse.json(
-      { error: 'Erreur serveur' },
-      { status: 500 }
-    )
+    console.error('[Analytics Batch] Error:', error);
+    return NextResponse.json({ error: 'Erreur serveur' }, { status: 500 });
   }
 }

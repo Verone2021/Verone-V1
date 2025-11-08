@@ -11,6 +11,7 @@
 ### ✅ **Connexion Vercel Vérifiée**
 
 **Compte Vercel :**
+
 - **Username :** verone2021
 - **Email :** veronebyromeo@gmail.com
 - **ID :** cHcpJ6XF7uveUTbeGxc9PsOQ
@@ -21,6 +22,7 @@
 ### ⚠️ **Problème Identifié**
 
 **Projet Vercel :** `verone-back-office`
+
 - **ID :** `prj_X4eg9YtIF4qS2eTwIRLidsA9SB1d`
 - **Framework :** Next.js
 - **Repository GitHub lié :** `verone-back-office` (Public) ❌ **ANCIEN REPOSITORY**
@@ -36,6 +38,7 @@
 ### **Variables d'Environnement Vercel**
 
 Le projet contient les variables suivantes (chiffrées) :
+
 ```bash
 GITHUB_TOKEN
 NEXT_PUBLIC_SUPABASE_URL
@@ -45,6 +48,7 @@ SUPABASE_SERVICE_ROLE_KEY
 ```
 
 ### **Configuration Build**
+
 ```json
 {
   "buildCommand": "npm run build",
@@ -106,15 +110,18 @@ Si la reconfiguration échoue, tu peux créer un nouveau projet :
 ## 🔑 Configuration Token Vercel
 
 ### **Token Actuel**
+
 ```bash
 VERCEL_TOKEN=uY53v0FVdu2GW3pPYgtbKcsk
 ```
 
 **Localisation :**
+
 - `.env.local` : Ligne 15
 - Scope : Accès complet au compte verone2021
 
 ### **Test Connexion API**
+
 ```bash
 # Vérifier le token
 curl -s -H "Authorization: Bearer uY53v0FVdu2GW3pPYgtbKcsk" \
@@ -130,6 +137,7 @@ curl -s -H "Authorization: Bearer uY53v0FVdu2GW3pPYgtbKcsk" \
 ## 📊 Projets Vercel
 
 ### **Projet 1 : verone-back-office** ⚠️
+
 ```json
 {
   "nom": "verone-back-office",
@@ -146,6 +154,7 @@ curl -s -H "Authorization: Bearer uY53v0FVdu2GW3pPYgtbKcsk" \
 **Action :** Reconfigurer pour pointer vers `Verone-backoffice` (Private)
 
 ### **Projet 2 : want-it-now-mvp** ✅
+
 ```json
 {
   "nom": "want-it-now-mvp",
@@ -168,6 +177,7 @@ curl -s -H "Authorization: Bearer uY53v0FVdu2GW3pPYgtbKcsk" \
 ### **Déploiement Automatique (après reconfiguration)**
 
 1. **Push vers GitHub**
+
    ```bash
    git add .
    git commit -m "Update feature"
@@ -258,14 +268,17 @@ Après reconfiguration, vérifier :
 ## 🚨 Problèmes Courants
 
 ### **Erreur : "Repository not found"**
+
 **Cause :** Repository GitHub supprimé ou permissions insuffisantes
 **Solution :** Reconfigurer avec le nouveau repository `Verone-backoffice`
 
 ### **Erreur : "Build failed - Module not found"**
+
 **Cause :** Variables d'environnement manquantes
 **Solution :** Vérifier toutes les variables dans Settings > Environment Variables
 
 ### **Erreur : "Deployment failed - No commits"**
+
 **Cause :** Repository vide ou aucun commit récent
 **Solution :** Pousser un commit vers `main` dans `Verone-backoffice`
 
@@ -292,6 +305,7 @@ Après reconfiguration, vérifier :
 - ⚠️ Déploiement en échec - À corriger après reconfiguration
 
 **Prochaines Étapes :**
+
 1. Finaliser suppression `verone-back-office` (Public) sur GitHub
 2. Reconfigurer Vercel pour pointer vers `Verone-backoffice` (Private)
 3. Déclencher nouveau déploiement
@@ -301,5 +315,5 @@ Après reconfiguration, vérifier :
 
 ---
 
-*Documentation générée le 2 octobre 2025*
-*Vérone Back Office - Professional AI-Assisted Development Excellence*
+_Documentation générée le 2 octobre 2025_
+_Vérone Back Office - Professional AI-Assisted Development Excellence_

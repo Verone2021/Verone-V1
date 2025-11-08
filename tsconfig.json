@@ -1,13 +1,10 @@
 {
   "compilerOptions": {
-    "lib": [
-      "dom",
-      "dom.iterable",
-      "es6"
-    ],
+    "lib": ["dom", "dom.iterable", "es6"],
     "allowJs": true,
     "skipLibCheck": true,
     "strict": true,
+    "noImplicitAny": false,
     "noEmit": true,
     "esModuleInterop": true,
     "module": "esnext",
@@ -23,23 +20,63 @@
     ],
     "baseUrl": ".",
     "paths": {
-      "@/*": [
-        "./src/*"
-      ]
+      "@/*": ["./src/*"],
+      "@verone/ui": ["./packages/@verone/ui/src"],
+      "@verone/ui/*": ["./packages/@verone/ui/src/*"],
+      "@verone/utils": ["./packages/@verone/utils/src"],
+      "@verone/utils/*": ["./packages/@verone/utils/src/*"],
+      "@verone/types": ["./packages/@verone/types/src"],
+      "@verone/types/*": ["./packages/@verone/types/src/*"],
+      "@verone/kpi": ["./packages/@verone/kpi/src"],
+      "@verone/config": ["./packages/@verone/config/src"],
+      "@verone/integrations": ["./packages/@verone/integrations/src"],
+      "@verone/integrations/*": ["./packages/@verone/integrations/src/*"],
+      "@verone/common": ["./packages/@verone/common/src"],
+      "@verone/common/*": ["./packages/@verone/common/src/*"],
+      "@verone/categories": ["./packages/@verone/categories/src"],
+      "@verone/categories/*": ["./packages/@verone/categories/src/*"],
+      "@verone/channels": ["./packages/@verone/channels/src"],
+      "@verone/channels/*": ["./packages/@verone/channels/src/*"],
+      "@verone/collections": ["./packages/@verone/collections/src"],
+      "@verone/collections/*": ["./packages/@verone/collections/src/*"],
+      "@verone/consultations": ["./packages/@verone/consultations/src"],
+      "@verone/consultations/*": ["./packages/@verone/consultations/src/*"],
+      "@verone/customers": ["./packages/@verone/customers/src"],
+      "@verone/customers/*": ["./packages/@verone/customers/src/*"],
+      "@verone/dashboard": ["./packages/@verone/dashboard/src"],
+      "@verone/dashboard/*": ["./packages/@verone/dashboard/src/*"],
+      "@verone/finance": ["./packages/@verone/finance/src"],
+      "@verone/finance/*": ["./packages/@verone/finance/src/*"],
+      "@verone/logistics": ["./packages/@verone/logistics/src"],
+      "@verone/logistics/*": ["./packages/@verone/logistics/src/*"],
+      "@verone/notifications": ["./packages/@verone/notifications/src"],
+      "@verone/notifications/*": ["./packages/@verone/notifications/src/*"],
+      "@verone/orders": ["./packages/@verone/orders/src"],
+      "@verone/orders/*": ["./packages/@verone/orders/src/*"],
+      "@verone/organisations": ["./packages/@verone/organisations/src"],
+      "@verone/organisations/*": ["./packages/@verone/organisations/src/*"],
+      "@verone/products": ["./packages/@verone/products/src"],
+      "@verone/products/*": ["./packages/@verone/products/src/*"],
+      "@verone/stock": ["./packages/@verone/stock/src"],
+      "@verone/stock/*": ["./packages/@verone/stock/src/*"],
+      "@verone/suppliers": ["./packages/@verone/suppliers/src"],
+      "@verone/suppliers/*": ["./packages/@verone/suppliers/src/*"],
+      "@verone/testing": ["./packages/@verone/testing/src"],
+      "@verone/testing/*": ["./packages/@verone/testing/src/*"],
+      "@verone/ui-business": ["./packages/@verone/ui-business/src"],
+      "@verone/ui-business/*": ["./packages/@verone/ui-business/src/*"],
+      "@verone/admin": ["./packages/@verone/admin/src"],
+      "@verone/admin/*": ["./packages/@verone/admin/src/*"]
     },
     "target": "ES2017"
   },
-  "include": [
-    "next-env.d.ts",
-    "**/*.ts",
-    "**/*.tsx",
-    ".next/types/**/*.ts"
-  ],
+  "include": ["next-env.d.ts", "**/*.ts", "**/*.tsx", ".next/types/**/*.ts"],
   "exclude": [
     "node_modules",
     "backups",
     "scripts",
     "MEMORY-BANK",
-    "TASKS"
+    "TASKS",
+    "docs/audits"
   ]
 }

@@ -55,14 +55,17 @@ Cette section documente l'ensemble des métriques et KPIs utilisés dans le syst
 ### Par Type Métrique
 
 #### KPIs Dashboard
+
 - [Dashboard KPIs](./dashboard-kpis.md)
 - [Composants Visualisation](./components.md)
 
 #### Métriques Business
+
 - [Business Metrics](./business-metrics.md)
 - [Formules Calcul](./calculations.md)
 
 #### Infrastructure Métriques
+
 - [Database Triggers](./database-triggers.md)
 - [Technical Metrics](./technical-metrics.md)
 

@@ -4,13 +4,14 @@
  * Pattern SSR-safe compatible Next.js 15
  */
 
-'use client'
+'use client';
 
-import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
-import { useState } from 'react'
+import { useState } from 'react';
+
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 
 interface ReactQueryProviderProps {
-  children: React.ReactNode
+  children: React.ReactNode;
 }
 
 /**
@@ -40,11 +41,9 @@ export function ReactQueryProvider({ children }: ReactQueryProviderProps) {
           },
         },
       })
-  )
+  );
 
   return (
-    <QueryClientProvider client={queryClient}>
-      {children}
-    </QueryClientProvider>
-  )
+    <QueryClientProvider client={queryClient}>{children}</QueryClientProvider>
+  );
 }

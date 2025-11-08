@@ -21,6 +21,7 @@
 **Problème Architecture** : Dashboard utilise hook liste paginée `useProducts()` au lieu d'un hook métriques dédié.
 
 **Conséquence** :
+
 - Charge 50 produits max (page 0)
 - Calcule stats sur 50 au lieu de 241
 - Précision KPIs : -79% erreur
@@ -35,15 +36,16 @@
 
 ```typescript
 // AVANT
-const { products } = useProducts()
-const totalProducts = products?.length || 0 // 50 max ❌
+const { products } = useProducts();
+const totalProducts = products?.length || 0; // 50 max ❌
 
 // APRÈS
-const { metrics } = useRealDashboardMetrics()
-const totalProducts = metrics?.products.total || 0 // 241 ✅
+const { metrics } = useRealDashboardMetrics();
+const totalProducts = metrics?.products.total || 0; // 241 ✅
 ```
 
 **Impact** :
+
 - Dashboard : 4948ms → 800ms (-83%)
 - SLO <2000ms : ✅ RESPECTÉ
 - Précision : 50 → 241 produits (100%)
@@ -68,6 +70,7 @@ $$;
 ```
 
 **Impact** :
+
 - Dashboard : 800ms → 300ms (-62% supplémentaire)
 - Performance totale : -94% vs initial
 
@@ -79,11 +82,11 @@ $$;
 
 ### Performance
 
-| Métrique | Avant | Après P0 | Après P1 | SLO |
-|----------|-------|----------|----------|-----|
-| Dashboard Load | 4948ms ❌ | 800ms ✅ | 300ms ✅ | <2000ms |
-| Précision KPIs | 50/241 ❌ | 241/241 ✅ | 241/241 ✅ | 100% |
-| Amélioration | - | -83% | -94% | - |
+| Métrique       | Avant     | Après P0   | Après P1   | SLO     |
+| -------------- | --------- | ---------- | ---------- | ------- |
+| Dashboard Load | 4948ms ❌ | 800ms ✅   | 300ms ✅   | <2000ms |
+| Précision KPIs | 50/241 ❌ | 241/241 ✅ | 241/241 ✅ | 100%    |
+| Amélioration   | -         | -83%       | -94%       | -       |
 
 ### Business Impact
 
@@ -129,12 +132,12 @@ $$;
 
 ## RISQUES & MITIGATION
 
-| Risque | Probabilité | Impact | Mitigation |
-|--------|-------------|--------|------------|
-| Régression KPIs | Faible | Moyen | Hook déjà testé, données réelles |
-| Performance dégradée | Très faible | Élevé | Hooks optimisés + indexes OK |
-| Erreurs console | Faible | Faible | Fallbacks défensifs intégrés |
-| Build échoue | Aucun | - | Non lié catalogue (Html import) |
+| Risque               | Probabilité | Impact | Mitigation                       |
+| -------------------- | ----------- | ------ | -------------------------------- |
+| Régression KPIs      | Faible      | Moyen  | Hook déjà testé, données réelles |
+| Performance dégradée | Très faible | Élevé  | Hooks optimisés + indexes OK     |
+| Erreurs console      | Faible      | Faible | Fallbacks défensifs intégrés     |
+| Build échoue         | Aucun       | -      | Non lié catalogue (Html import)  |
 
 ---
 
@@ -196,6 +199,7 @@ $$;
 **Recommandation** : ✅ **GO IMMÉDIAT**
 
 **Justification** :
+
 - SLO violé critique (-147% target)
 - Solution simple (1 heure)
 - Risque faible (hook testé)
@@ -206,6 +210,7 @@ $$;
 **Recommandation** : ✅ **GO CETTE SEMAINE**
 
 **Justification** :
+
 - Performance ultime (<300ms)
 - Effort minimal (1 heure)
 - Scalabilité future garantie

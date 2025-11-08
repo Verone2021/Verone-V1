@@ -36,19 +36,22 @@ src/stories/
 ## 🎯 Convention Naming Stories
 
 ### Format fichier story
+
 ```
 [ComponentName].stories.tsx
 ```
 
 **Exemples** :
+
 - `Button.stories.tsx`
 - `ProductCard.stories.tsx`
 - `ElegantKpiCard.stories.tsx`
 
 ### Format exports
+
 ```typescript
 import type { Meta, StoryObj } from '@storybook/react';
-import { Button } from '@/components/ui/button';
+import { ButtonV2 } from '@/components/ui-v2/button';
 
 const meta = {
   title: '1-UI-Base/Buttons/Button',
@@ -60,7 +63,14 @@ const meta = {
   argTypes: {
     variant: {
       control: 'select',
-      options: ['default', 'destructive', 'outline', 'secondary', 'ghost', 'link'],
+      options: [
+        'default',
+        'destructive',
+        'outline',
+        'secondary',
+        'ghost',
+        'link',
+      ],
     },
   },
 } satisfies Meta<typeof Button>;
@@ -80,6 +90,7 @@ export const Default: Story = {
 ## 📊 Statistiques Inventaire
 
 ### Composants UI (49)
+
 - **Buttons** : 8 variantes (button, action-button, modern-action-button, etc.)
 - **Cards** : 10 variantes (card, verone-card, compact-kpi-card, elegant-kpi-card, etc.)
 - **Inputs** : 12 types (input, textarea, select, combobox, etc.)
@@ -88,6 +99,7 @@ export const Default: Story = {
 - **Autres** : 11 composants (avatar, calendar, dialog, etc.)
 
 ### Composants Business (173)
+
 - **Products** : ~40 composants
 - **Orders** : ~35 composants
 - **Stock** : ~30 composants
@@ -95,12 +107,15 @@ export const Default: Story = {
 - **Autres** : ~43 composants
 
 ### Composants Forms (17)
+
 - Formulaires produits, commandes, organisations, etc.
 
 ### Composants Layout (5)
+
 - header, sidebar, footer, navigation, etc.
 
 ### Composants Admin (5)
+
 - user-management, settings, analytics, etc.
 
 ---
@@ -108,12 +123,14 @@ export const Default: Story = {
 ## 🚀 Utilisation
 
 ### Lancer Storybook
+
 ```bash
 npm run storybook
 # Ouvre http://localhost:6006
 ```
 
 ### Build Storybook statique
+
 ```bash
 npm run build-storybook
 # Génère dans storybook-static/
@@ -144,16 +161,19 @@ Pour chaque composant :
 ### Identifier Version
 
 **V1** (Ancien design system) :
+
 - Composants nommés simplement : `button`, `card`, `input`
 - Couleurs : Palette classique
 - Styles : Standards shadcn/ui
 
 **V2** (Nouveau design system 2025) :
+
 - Composants préfixés : `modern-action-button`, `elegant-kpi-card`, `verone-card`
 - Couleurs : Palette Vérone 2025 (bleu #3b86d1, vert #38ce3c, violet #844fc1)
 - Styles : Gradients, micro-interactions, shadows élégantes
 
 **Indication dans stories** :
+
 ```typescript
 parameters: {
   docs: {
@@ -169,12 +189,15 @@ parameters: {
 ## 📝 Templates Disponibles
 
 ### Template Story Basique
+
 Voir `_templates/basic-story.template.tsx`
 
 ### Template Story avec Variants
+
 Voir `_templates/variants-story.template.tsx`
 
 ### Template Story Business Complex
+
 Voir `_templates/business-story.template.tsx`
 
 ---
@@ -182,12 +205,14 @@ Voir `_templates/business-story.template.tsx`
 ## 🔧 Maintenance
 
 ### Après création complète
+
 1. Review visuelle dans Storybook
 2. Décision suppression composants obsolètes
 3. Mise à jour CLAUDE.md avec composants conservés
 4. Archivage composants supprimés
 
 ### Règles suppression
+
 - Si doublon V1/V2 → Conserver V2 uniquement
 - Si composant non utilisé → Vérifier avec `knip` avant suppression
 - Si composant critique → Garder même si peu utilisé

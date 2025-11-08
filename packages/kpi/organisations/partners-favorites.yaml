@@ -22,9 +22,9 @@ displayed_in:
     location: "Stats header - Badge 'Favoris' avec icône étoile"
 
 thresholds:
-  excellent: "2-5 favoris"
-  good: "1-2 favoris"
-  warning: "> 5 favoris OU 0 favoris"
+  excellent: '2-5 favoris'
+  good: '1-2 favoris'
+  warning: '> 5 favoris OU 0 favoris'
 
 metadata:
   created_at: 2025-10-22

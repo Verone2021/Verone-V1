@@ -1,8 +1,16 @@
-import type { Meta, StoryObj } from '@storybook/react';
-import { Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter } from '@/components/ui/card';
-import { ButtonV2 } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
+import type { Meta, StoryObj } from '@storybook/nextjs';
 import { Save, X } from 'lucide-react';
+
+import { Badge } from '@/components/ui/badge';
+import { ButtonV2 } from '@/components/ui/button';
+import {
+  Card,
+  CardHeader,
+  CardTitle,
+  CardDescription,
+  CardContent,
+  CardFooter,
+} from '@/components/ui/card';
 
 const meta = {
   title: '1-UI-Base/Cards/Card',
@@ -69,12 +77,17 @@ export const Complete: Story = {
       </CardHeader>
       <CardContent>
         <p className="text-sm text-slate-600">
-          Card content goes here. You can put any content: forms, lists, images, etc.
+          Card content goes here. You can put any content: forms, lists, images,
+          etc.
         </p>
       </CardContent>
       <CardFooter className="gap-2">
-        <ButtonV2 variant="primary" size="sm" icon={Save}>Save</ButtonV2>
-        <ButtonV2 variant="secondary" size="sm" icon={X}>Cancel</ButtonV2>
+        <ButtonV2 variant="primary" size="sm" icon={Save}>
+          Save
+        </ButtonV2>
+        <ButtonV2 variant="secondary" size="sm" icon={X}>
+          Cancel
+        </ButtonV2>
       </CardFooter>
     </Card>
   ),
@@ -121,7 +134,9 @@ export const WithForm: Story = {
     <Card className="w-[400px]">
       <CardHeader>
         <CardTitle>Create Account</CardTitle>
-        <CardDescription>Enter your details to create an account</CardDescription>
+        <CardDescription>
+          Enter your details to create an account
+        </CardDescription>
       </CardHeader>
       <CardContent>
         <form className="space-y-4">
@@ -134,7 +149,9 @@ export const WithForm: Story = {
             />
           </div>
           <div>
-            <label className="text-sm font-medium text-slate-700">Password</label>
+            <label className="text-sm font-medium text-slate-700">
+              Password
+            </label>
             <input
               type="password"
               placeholder="••••••••"
@@ -144,7 +161,9 @@ export const WithForm: Story = {
         </form>
       </CardContent>
       <CardFooter>
-        <ButtonV2 variant="primary" className="w-full">Create Account</ButtonV2>
+        <ButtonV2 variant="primary" className="w-full">
+          Create Account
+        </ButtonV2>
       </CardFooter>
     </Card>
   ),
@@ -163,11 +182,14 @@ export const WithImage: Story = {
       </CardHeader>
       <CardContent>
         <p className="text-sm text-slate-600">
-          Premium velvet armchair with modern design. Perfect for contemporary interiors.
+          Premium velvet armchair with modern design. Perfect for contemporary
+          interiors.
         </p>
       </CardContent>
       <CardFooter>
-        <ButtonV2 variant="primary" className="w-full">View Details</ButtonV2>
+        <ButtonV2 variant="primary" className="w-full">
+          View Details
+        </ButtonV2>
       </CardFooter>
     </Card>
   ),
@@ -185,7 +207,8 @@ export const Interactive: Story = {
       </CardHeader>
       <CardContent>
         <p className="text-sm text-slate-600">
-          This card has hover effects: shadow elevation, border color change, and scale animation.
+          This card has hover effects: shadow elevation, border color change,
+          and scale animation.
         </p>
       </CardContent>
     </Card>
@@ -198,13 +221,15 @@ export const Interactive: Story = {
 export const Grid: Story = {
   render: () => (
     <div className="grid grid-cols-3 gap-4">
-      {[1, 2, 3, 4, 5, 6].map((i) => (
+      {[1, 2, 3, 4, 5, 6].map(i => (
         <Card key={i} className="w-[200px]">
           <CardHeader>
             <CardTitle className="text-base">Card {i}</CardTitle>
           </CardHeader>
           <CardContent>
-            <p className="text-xs text-slate-600">Sample content for card {i}</p>
+            <p className="text-xs text-slate-600">
+              Sample content for card {i}
+            </p>
           </CardContent>
         </Card>
       ))}

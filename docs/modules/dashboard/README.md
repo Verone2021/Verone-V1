@@ -13,15 +13,15 @@ Le Dashboard principal affiche les **4 KPIs essentiels** en temps réel :
 
 ```typescript
 // Page : src/app/dashboard/page.tsx
-import { useCompleteDashboardMetrics } from '@/hooks/use-complete-dashboard-metrics'
+import { useCompleteDashboardMetrics } from '@/hooks/use-complete-dashboard-metrics';
 
-const { metrics, loading, error } = useCompleteDashboardMetrics()
+const { metrics, loading, error } = useCompleteDashboardMetrics();
 
 // Métriques disponibles :
-metrics.orders.monthRevenue      // CA du Mois
-metrics.orders.salesOrders       // Commandes Ventes
-metrics.orders.purchaseOrders    // Commandes Achats
-metrics.stocks.totalValue        // Valeur Stock
+metrics.orders.monthRevenue; // CA du Mois
+metrics.orders.salesOrders; // Commandes Ventes
+metrics.orders.purchaseOrders; // Commandes Achats
+metrics.stocks.totalValue; // Valeur Stock
 ```
 
 ---
@@ -29,16 +29,19 @@ metrics.stocks.totalValue        // Valeur Stock
 ## 🎯 Features Principales
 
 ### 4 KPI Cards Interactives
+
 - **CA du Mois** : Revenu mensuel (€) avec trend +12.5%
 - **Commandes Ventes** : Nombre de commandes clients actives
 - **Commandes Achats** : Nombre de commandes fournisseurs
 - **Valeur Stock** : Valeur totale inventaire (€)
 
 ### Navigation Rapide
+
 - 6 liens accès rapide : Catalogue, Commandes, Stocks, Fournisseurs, Clients, Collections
 - Click KPI → Navigation module détaillé
 
 ### Widgets Dashboard
+
 - **Top 5 Produits** : Vide (pas de données calculées)
 - **Activité Récente** : Timeline vide (pas de données)
 - **Statut Commandes** : Répartition Ventes/Achats/CA

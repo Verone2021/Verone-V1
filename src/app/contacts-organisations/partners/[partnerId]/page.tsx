@@ -1,56 +1,64 @@
-'use client'
+'use client';
 
-import { useState } from 'react'
-import { useParams } from 'next/navigation'
-import Link from 'next/link'
-import { Card, CardContent } from '@/components/ui/card'
-import { ButtonV2 } from '@/components/ui/button'
-import { Badge } from '@/components/ui/badge'
+import { useState } from 'react';
+
+import Link from 'next/link';
+import { useParams } from 'next/navigation';
+
+import { Badge } from '@verone/ui';
+import { ButtonV2 } from '@verone/ui';
+import { Card, CardContent } from '@verone/ui';
+import { TabsNavigation, TabContent } from '@verone/ui';
 import {
   ArrowLeft,
   Building2,
   Archive,
   ArchiveRestore,
   Phone,
-  FileText
-} from 'lucide-react'
-import { useOrganisation, useOrganisations, getOrganisationDisplayName } from '@/hooks/use-organisations'
-import { useOrganisationTabs } from '@/hooks/use-organisation-tabs'
-import { LegalIdentityEditSection } from '@/components/business/legal-identity-edit-section'
-import { ContactEditSection } from '@/components/business/contact-edit-section'
-import { AddressEditSection } from '@/components/business/address-edit-section'
-import { CommercialEditSection } from '@/components/business/commercial-edit-section'
-import { ContactsManagementSection } from '@/components/business/contacts-management-section'
-import { OrganisationLogoCard } from '@/components/business/organisation-logo-card'
-import { OrganisationStatsCard } from '@/components/business/organisation-stats-card'
-import { TabsNavigation, TabContent } from '@/components/ui/tabs-navigation'
-import { isModuleDeployed, getModulePhase } from '@/lib/deployed-modules'
-import type { Organisation } from '@/hooks/use-organisations'
+  FileText,
+} from 'lucide-react';
+
+import { isModuleDeployed, getModulePhase } from '@/lib/deployed-modules';
+import { AddressEditSection } from '@verone/common';
+import { ContactEditSection } from '@verone/customers';
+import { ContactsManagementSection } from '@verone/customers';
+import { OrganisationLogoCard } from '@verone/organisations';
+import { OrganisationStatsCard } from '@verone/organisations';
+import { CommercialEditSection } from '@verone/organisations';
+import { LegalIdentityEditSection } from '@verone/organisations';
+import {
+  useOrganisation,
+  useOrganisations,
+  getOrganisationDisplayName,
+} from '@verone/organisations';
+import { useOrganisationTabCounts } from '@verone/organisations';
+import type { Organisation } from '@verone/organisations';
 
 export default function PartnerDetailPage() {
-  const { partnerId } = useParams()
-  const [activeTab, setActiveTab] = useState('contacts')
+  const { partnerId } = useParams();
+  const [activeTab, setActiveTab] = useState('contacts');
 
-  const { organisation: partner, loading, error } = useOrganisation(partnerId as string)
   const {
-    archiveOrganisation,
-    unarchiveOrganisation,
-    refetch
-  } = useOrganisations({ type: 'partner' })
+    organisation: partner,
+    loading,
+    error,
+  } = useOrganisation(partnerId as string);
+  const { archiveOrganisation, unarchiveOrganisation, refetch } =
+    useOrganisations({ type: 'partner' });
 
   // Hook centralisé pour les compteurs d'onglets
-  const { counts, refreshCounts } = useOrganisationTabs({
+  const { counts, refreshCounts } = useOrganisationTabCounts({
     organisationId: partnerId as string,
-    organisationType: 'provider'
-  })
+    organisationType: 'provider',
+  });
 
   // Gestionnaire de mise à jour des données partenaire
   const handlePartnerUpdate = (updatedData: Partial<Organisation>) => {
     // Les données sont automatiquement mises à jour par le hook useInlineEdit
-    refetch()
+    refetch();
     // Rafraîchir les compteurs
-    refreshCounts()
-  }
+    refreshCounts();
+  };
 
   // Configuration des onglets avec compteurs du hook + modules déployés
   const tabs = [
@@ -59,31 +67,31 @@ export default function PartnerDetailPage() {
       label: 'Contacts',
       icon: <Phone className="h-4 w-4" />,
       badge: counts.contacts.toString(),
-      disabled: !isModuleDeployed('contacts')
+      disabled: !isModuleDeployed('contacts'),
     },
     {
       id: 'invoices',
       label: 'Factures',
       icon: <FileText className="h-4 w-4" />,
       disabled: !isModuleDeployed('invoices'),
-      disabledBadge: getModulePhase('invoices')
-    }
-  ]
+      disabledBadge: getModulePhase('invoices'),
+    },
+  ];
 
   if (loading) {
     return (
       <div className="container mx-auto p-4 space-y-4">
         <div className="animate-pulse">
-          <div className="h-8 bg-gray-200 rounded w-1/3 mb-4"></div>
-          <div className="h-6 bg-gray-200 rounded w-1/2 mb-8"></div>
+          <div className="h-8 bg-gray-200 rounded w-1/3 mb-4" />
+          <div className="h-6 bg-gray-200 rounded w-1/2 mb-8" />
           <div className="space-y-4">
-            <div className="h-32 bg-gray-200 rounded"></div>
-            <div className="h-32 bg-gray-200 rounded"></div>
-            <div className="h-32 bg-gray-200 rounded"></div>
+            <div className="h-32 bg-gray-200 rounded" />
+            <div className="h-32 bg-gray-200 rounded" />
+            <div className="h-32 bg-gray-200 rounded" />
           </div>
         </div>
       </div>
-    )
+    );
   }
 
   if (error || !partner) {
@@ -96,7 +104,8 @@ export default function PartnerDetailPage() {
               Partenaire introuvable
             </h3>
             <p className="text-gray-600 mb-4">
-              Ce partenaire n'existe pas ou vous n'avez pas les droits pour le consulter.
+              Ce partenaire n'existe pas ou vous n'avez pas les droits pour le
+              consulter.
             </p>
             <ButtonV2 asChild>
               <Link href="/contacts-organisations/partners">
@@ -107,26 +116,26 @@ export default function PartnerDetailPage() {
           </CardContent>
         </Card>
       </div>
-    )
+    );
   }
 
   const handleArchive = async () => {
     if (!partner.archived_at) {
       // Archiver
-      const success = await archiveOrganisation(partner.id)
+      const success = await archiveOrganisation(partner.id);
       if (success) {
-        console.log('✅ Partenaire archivé avec succès')
-        refetch()
+        console.log('✅ Partenaire archivé avec succès');
+        refetch();
       }
     } else {
       // Restaurer
-      const success = await unarchiveOrganisation(partner.id)
+      const success = await unarchiveOrganisation(partner.id);
       if (success) {
-        console.log('✅ Partenaire restauré avec succès')
-        refetch()
+        console.log('✅ Partenaire restauré avec succès');
+        refetch();
       }
     }
-  }
+  };
 
   return (
     <div className="container mx-auto p-4 space-y-4">
@@ -143,16 +152,23 @@ export default function PartnerDetailPage() {
           </div>
           <div className="flex items-center gap-3 mb-2">
             <Building2 className="h-5 w-5 text-black" />
-            <h1 className="text-lg font-semibold text-black">{getOrganisationDisplayName(partner)}</h1>
+            <h1 className="text-lg font-semibold text-black">
+              {getOrganisationDisplayName(partner)}
+            </h1>
             <div className="flex gap-2">
               <Badge
-                variant={partner.is_active ? 'default' : 'secondary'}
-                className={partner.is_active ? 'bg-green-100 text-green-800' : ''}
+                variant={partner.is_active ? 'secondary' : 'secondary'}
+                className={
+                  partner.is_active ? 'bg-green-100 text-green-800' : ''
+                }
               >
                 {partner.is_active ? 'Actif' : 'Inactif'}
               </Badge>
               {partner.archived_at && (
-                <Badge variant="danger" className="bg-red-100 text-red-800">
+                <Badge
+                  variant="destructive"
+                  className="bg-red-100 text-red-800"
+                >
                   Archivé
                 </Badge>
               )}
@@ -168,7 +184,11 @@ export default function PartnerDetailPage() {
           <ButtonV2
             variant="outline"
             onClick={handleArchive}
-            className={partner.archived_at ? "text-blue-600 border-blue-200 hover:bg-blue-50" : "text-black border-gray-200 hover:bg-gray-50"}
+            className={
+              partner.archived_at
+                ? 'text-blue-600 border-blue-200 hover:bg-blue-50'
+                : 'text-black border-gray-200 hover:bg-gray-50'
+            }
           >
             {partner.archived_at ? (
               <>
@@ -245,7 +265,7 @@ export default function PartnerDetailPage() {
           <ContactsManagementSection
             organisationId={partner.id}
             organisationName={getOrganisationDisplayName(partner)}
-            organisationType="provider"
+            organisationType="supplier"
             onUpdate={() => handlePartnerUpdate({})}
           />
         </TabContent>
@@ -262,7 +282,6 @@ export default function PartnerDetailPage() {
           </div>
         </TabContent>
       </div>
-
     </div>
-  )
+  );
 }

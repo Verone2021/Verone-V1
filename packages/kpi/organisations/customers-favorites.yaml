@@ -35,9 +35,9 @@ displayed_in:
     location: "Stats header - Badge 'Favoris' avec icône étoile"
 
 thresholds:
-  excellent: "5-15 favoris"
-  good: "1-5 favoris"
-  warning: "> 15 favoris OU 0 favoris"
+  excellent: '5-15 favoris'
+  good: '1-5 favoris'
+  warning: '> 15 favoris OU 0 favoris'
   interpretation: |
     - 5-15 : Optimal (clients VIP bien identifiés)
     - > 15 : Trop de favoris (perd sens priorisation)

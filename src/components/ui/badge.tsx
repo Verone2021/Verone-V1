@@ -1,40 +1,40 @@
-import * as React from "react"
-import { cva, type VariantProps } from "class-variance-authority"
-import { cn } from "@/lib/utils"
+import * as React from 'react';
+
+import { cva, type VariantProps } from 'class-variance-authority';
+
+import { cn } from '@verone/utils';
 
 const badgeVariants = cva(
-  "inline-flex items-center gap-1.5 rounded-full border font-medium transition-colors focus:outline-none focus:ring-2 focus:ring-slate-950 focus:ring-offset-2",
+  'inline-flex items-center gap-1.5 rounded-full border font-medium transition-colors focus:outline-none focus:ring-2 focus:ring-slate-950 focus:ring-offset-2',
   {
     variants: {
       variant: {
         default:
-          "border-transparent bg-slate-900 text-white hover:bg-slate-800",
+          'border-transparent bg-slate-900 text-white hover:bg-slate-800',
         secondary:
-          "border-transparent bg-slate-100 text-slate-900 hover:bg-slate-200",
+          'border-transparent bg-slate-100 text-slate-900 hover:bg-slate-200',
         success:
-          "border-transparent bg-green-100 text-green-800 hover:bg-green-200",
+          'border-transparent bg-green-100 text-green-800 hover:bg-green-200',
         warning:
-          "border-transparent bg-orange-100 text-orange-800 hover:bg-orange-200",
-        danger:
-          "border-transparent bg-red-100 text-red-800 hover:bg-red-200",
-        info:
-          "border-transparent bg-blue-100 text-blue-800 hover:bg-blue-200",
-        outline: "border-slate-300 bg-white text-slate-900 hover:bg-slate-50",
+          'border-transparent bg-orange-100 text-orange-800 hover:bg-orange-200',
+        danger: 'border-transparent bg-red-100 text-red-800 hover:bg-red-200',
+        info: 'border-transparent bg-blue-100 text-blue-800 hover:bg-blue-200',
+        outline: 'border-slate-300 bg-white text-slate-900 hover:bg-slate-50',
         destructive:
-          "border-transparent bg-red-600 text-white hover:bg-red-700",
+          'border-transparent bg-red-600 text-white hover:bg-red-700',
       },
       size: {
-        sm: "px-2 py-0.5 text-xs",
-        md: "px-2.5 py-0.5 text-sm",
-        lg: "px-3 py-1 text-base",
+        sm: 'px-2 py-0.5 text-xs',
+        md: 'px-2.5 py-0.5 text-sm',
+        lg: 'px-3 py-1 text-base',
       },
     },
     defaultVariants: {
-      variant: "default",
-      size: "md",
+      variant: 'default',
+      size: 'md',
     },
   }
-)
+);
 
 export interface BadgeProps
   extends React.HTMLAttributes<HTMLDivElement>,
@@ -42,22 +42,22 @@ export interface BadgeProps
   /**
    * Affiche un point indicateur à gauche
    */
-  dot?: boolean
+  dot?: boolean;
 
   /**
    * Couleur personnalisée du point
    */
-  dotColor?: string
+  dotColor?: string;
 
   /**
    * Icône à afficher
    */
-  icon?: React.ReactNode
+  icon?: React.ReactNode;
 
   /**
    * Permet de fermer le badge
    */
-  onRemove?: () => void
+  onRemove?: () => void;
 }
 
 function Badge({
@@ -72,15 +72,12 @@ function Badge({
   ...props
 }: BadgeProps) {
   return (
-    <div
-      className={cn(badgeVariants({ variant, size }), className)}
-      {...props}
-    >
+    <div className={cn(badgeVariants({ variant, size }), className)} {...props}>
       {dot && (
         <span
           className="h-1.5 w-1.5 rounded-full"
           style={{
-            backgroundColor: dotColor || "currentColor",
+            backgroundColor: dotColor || 'currentColor',
           }}
         />
       )}
@@ -111,7 +108,7 @@ function Badge({
         </button>
       )}
     </div>
-  )
+  );
 }
 
-export { Badge, badgeVariants }
+export { Badge, badgeVariants };

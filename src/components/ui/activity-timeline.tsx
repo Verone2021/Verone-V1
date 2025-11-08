@@ -1,25 +1,30 @@
-'use client'
+'use client';
 
-import React from 'react'
-import { LucideIcon } from 'lucide-react'
-import { themeV2 } from '@/lib/theme-v2'
+import React from 'react';
+
+import type { LucideIcon } from 'lucide-react';
+
+import { themeV2 } from '@verone/ui/theme-v2';
 
 export interface TimelineItem {
-  id: string
-  title: string
-  description?: string
-  timestamp: string
-  icon: LucideIcon
-  iconColor?: 'primary' | 'success' | 'warning' | 'danger' | 'neutral'
+  id: string;
+  title: string;
+  description?: string;
+  timestamp: string;
+  icon: LucideIcon;
+  iconColor?: 'primary' | 'success' | 'warning' | 'danger' | 'neutral';
 }
 
 export interface ActivityTimelineProps {
-  items: TimelineItem[]
-  maxItems?: number
+  items: TimelineItem[];
+  maxItems?: number;
 }
 
-export function ActivityTimeline({ items, maxItems = 5 }: ActivityTimelineProps) {
-  const displayedItems = items.slice(0, maxItems)
+export function ActivityTimeline({
+  items,
+  maxItems = 5,
+}: ActivityTimelineProps) {
+  const displayedItems = items.slice(0, maxItems);
 
   const getIconColor = (color?: string) => {
     const colorMap = {
@@ -28,9 +33,11 @@ export function ActivityTimeline({ items, maxItems = 5 }: ActivityTimelineProps)
       warning: themeV2.colors.warning.DEFAULT,
       danger: themeV2.colors.danger.DEFAULT,
       neutral: themeV2.colors.neutral[500],
-    }
-    return color ? colorMap[color as keyof typeof colorMap] : themeV2.colors.neutral[500]
-  }
+    };
+    return color
+      ? colorMap[color as keyof typeof colorMap]
+      : themeV2.colors.neutral[500];
+  };
 
   const getIconBg = (color?: string) => {
     const bgMap = {
@@ -39,17 +46,19 @@ export function ActivityTimeline({ items, maxItems = 5 }: ActivityTimelineProps)
       warning: themeV2.colors.warning[50],
       danger: themeV2.colors.danger[50],
       neutral: themeV2.colors.neutral[50],
-    }
-    return color ? bgMap[color as keyof typeof bgMap] : themeV2.colors.neutral[50]
-  }
+    };
+    return color
+      ? bgMap[color as keyof typeof bgMap]
+      : themeV2.colors.neutral[50];
+  };
 
   return (
     <div className="space-y-3">
       {displayedItems.map((item, index) => {
-        const Icon = item.icon
-        const iconColor = getIconColor(item.iconColor)
-        const iconBg = getIconBg(item.iconColor)
-        const isLast = index === displayedItems.length - 1
+        const Icon = item.icon;
+        const iconColor = getIconColor(item.iconColor);
+        const iconBg = getIconBg(item.iconColor);
+        const isLast = index === displayedItems.length - 1;
 
         return (
           <div key={item.id} className="relative flex gap-3">
@@ -92,8 +101,8 @@ export function ActivityTimeline({ items, maxItems = 5 }: ActivityTimelineProps)
               </div>
             </div>
           </div>
-        )
+        );
       })}
     </div>
-  )
+  );
 }

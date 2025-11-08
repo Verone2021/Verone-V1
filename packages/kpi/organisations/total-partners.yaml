@@ -43,14 +43,14 @@ source:
 displayed_in:
   - component: src/app/contacts-organisations/page.tsx
     location: "Card 'Prestataires' (ligne ~190-215)"
-    description: "Quatrième carte statistiques page accueil"
+    description: 'Quatrième carte statistiques page accueil'
     screenshot: contacts-organisations-page.png
 
 thresholds:
-  excellent: "> 20"
-  good: "10-20"
-  warning: "3-10"
-  critical: "< 3"
+  excellent: '> 20'
+  good: '10-20'
+  warning: '3-10'
+  critical: '< 3'
   interpretation: |
     - > 20 : Réseau prestataires diversifié
     - 10-20 : Couverture services correcte
@@ -58,17 +58,17 @@ thresholds:
     - < 3 : Dépendance forte (risque)
 
 tests:
-  - scenario: "Réseau minimal"
+  - scenario: 'Réseau minimal'
     inputs:
       partners_count: 1
     expected_output: 1
-    threshold_expected: "critical"
+    threshold_expected: 'critical'
 
-  - scenario: "Réseau standard"
+  - scenario: 'Réseau standard'
     inputs:
       partners_count: 15
     expected_output: 15
-    threshold_expected: "good"
+    threshold_expected: 'good'
 
 metadata:
   created_at: 2025-10-22

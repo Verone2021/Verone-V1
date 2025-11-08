@@ -19,6 +19,7 @@
 Documentation des métriques techniques pour monitoring performance et infrastructure du système Vérone.
 
 **À documenter** :
+
 - Performance queries database (temps exécution, slow queries)
 - Latence endpoints API REST
 - Taux hit cache (React Query, Supabase cache)

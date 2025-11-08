@@ -38,16 +38,19 @@ contacts-organisations/
 ### Organisations
 
 #### Types d'Organisations
+
 - **Clients** (Customers): Organisations acheteuses
 - **Fournisseurs** (Suppliers): Organisations vendeuses
 - **Partenaires** (Partners): Organisations collaboratrices
 
 #### Architecture Polymorphique
+
 - Table unique `organisations` avec champ `type`
 - Relations polymorphiques avec commandes, contacts, documents
 - Gestion centralisée avec vues typées
 
 #### Informations Organisations
+
 - Informations légales (SIRET, TVA, forme juridique)
 - Adresses (facturation, livraison, multiple)
 - Coordonnées (téléphone, email, site web)
@@ -57,11 +60,13 @@ contacts-organisations/
 ### Contacts
 
 #### Types Contacts
+
 - Contacts liés organisations (polymorphic)
 - Contacts indépendants
 - Contacts multi-organisations
 
 #### Informations Contacts
+
 - Identité (civilité, prénom, nom)
 - Fonction et département
 - Coordonnées (email, téléphone, mobile)
@@ -71,12 +76,14 @@ contacts-organisations/
 ### Gestion Relations
 
 #### Relations Organisations
+
 - Hiérarchies (filiales, maisons-mères)
 - Partenariats commerciaux
 - Historique commandes
 - Historique paiements
 
 #### Relations Contacts
+
 - Contacts principaux organisations
 - Contacts secondaires
 - Historique communications
@@ -89,11 +96,13 @@ contacts-organisations/
 ### Validation Organisations
 
 #### Champs Obligatoires
+
 - Nom organisation
 - Type organisation (customer, supplier, partner)
 - Email ou téléphone (au moins un)
 
 #### Champs Conditionnels
+
 - SIRET: Obligatoire si France
 - TVA intra: Si société assujettie TVA
 - Conditions commerciales: Si client avec pricing custom
@@ -101,6 +110,7 @@ contacts-organisations/
 ### Polymorphic Relations
 
 #### Pattern Architecture
+
 ```typescript
 // Relations polymorphiques
 organisation_type: 'customer' | 'supplier' | 'partner'
@@ -113,6 +123,7 @@ purchase_orders.supplier_id → organisations (type: supplier)
 ```
 
 #### Validation Code Review (Phase 3)
+
 - ✅ Polymorphic relations bien gérées
 - ✅ Filters typés strictement
 - Hook `use-organisations.ts` validé (score 9/10)
@@ -122,6 +133,7 @@ purchase_orders.supplier_id → organisations (type: supplier)
 ## Bugs Résolus (Sessions Précédentes)
 
 ### Bug Formulaire Organisations (2025-10-15)
+
 - **Symptôme**: Tag Mismatch Button/ButtonV2 (commit `8a472bd`)
 - **Solution**: Migration complète ButtonV2
 - **Tests**: Formulaire organisations validé
@@ -133,11 +145,13 @@ purchase_orders.supplier_id → organisations (type: supplier)
 ### RLS Policies
 
 **Tables organisations**:
+
 - `organisations` (table principale)
 - `organisation_contacts` (relations contacts)
 - `organisation_addresses` (adresses multiples)
 
 **Authentification**:
+
 - SELECT: `authenticated`
 - INSERT/UPDATE: `crm_manager`, `sales_manager`
 - DELETE: `admin`
@@ -145,12 +159,14 @@ purchase_orders.supplier_id → organisations (type: supplier)
 ### RGPD Compliance
 
 #### Données Personnelles
+
 - Consentement contact (opt-in email, phone)
 - Droit à l'oubli (suppression contacts)
 - Export données personnelles (GDPR)
 - Historique modifications (audit trail)
 
 #### Anonymisation
+
 - Anonymisation contacts inactifs >3 ans
 - Conservation légale minimale (factures, contrats)
 
@@ -159,12 +175,14 @@ purchase_orders.supplier_id → organisations (type: supplier)
 ## Performance
 
 ### Optimisations en Place
+
 - Pagination listes (50 organisations/page)
 - Cache SWR (5 min revalidation)
 - Index database (type, status, created_at)
 - Queries optimisées (SELECT colonnes essentielles)
 
 ### SLOs Estimés
+
 - **Liste organisations**: <2s (non mesuré Phase 4)
 - **Détail organisation**: <1s (non mesuré)
 - **Recherche organisations**: <500ms (non mesuré)
@@ -174,18 +192,21 @@ purchase_orders.supplier_id → organisations (type: supplier)
 ## Fichiers Critiques
 
 ### Hooks Custom
+
 - `use-organisations.ts` (gestion organisations, score 9/10 Code Review)
 - `use-customers.ts` (vue clients)
 - `use-suppliers.ts` (vue fournisseurs)
 - `use-contacts.ts` (gestion contacts)
 
 ### Composants Business
+
 - `organisation-form.tsx` (formulaire organisations)
 - `contact-form.tsx` (formulaire contacts)
 - `organisation-card.tsx` (affichage organisation)
 - `contact-list.tsx` (liste contacts organisation)
 
 ### Validation Code Review (Phase 3)
+
 - ✅ Polymorphic relations bien gérées
 - ✅ Filters typés strictement
 - ✅ Error handling robuste
@@ -195,21 +216,25 @@ purchase_orders.supplier_id → organisations (type: supplier)
 ## Intégrations
 
 ### Module Commandes
+
 - Clients liés commandes ventes (sales_orders)
 - Fournisseurs liés commandes achats (purchase_orders)
 - Historique commandes par organisation
 
 ### Module Facturation
+
 - Adresses facturation/livraison
 - Conditions paiement par organisation
 - Historique factures clients/fournisseurs
 
 ### Module Stocks
+
 - Mouvements liés fournisseurs (réceptions)
 - Mouvements liés clients (expéditions)
 - Statistiques stock par organisation
 
 ### Module Catalogue
+
 - Pricing custom clients (B2B)
 - Catalogues partagés (collections)
 - Produits fournisseurs (sourcing)
@@ -219,16 +244,19 @@ purchase_orders.supplier_id → organisations (type: supplier)
 ## Prochaines Étapes
 
 ### Court Terme (1 semaine)
+
 1. Tests E2E workflows complets (création/édition)
 2. Validation performance listes (<2s)
 3. Tests recherche avancée
 
 ### Moyen Terme (2 semaines)
+
 1. Optimisation requêtes SQL (SELECT spécifiques)
 2. Amélioration UX formulaires (autocomplete adresses)
 3. Export organisations CSV/Excel
 
 ### Long Terme (1 mois)
+
 1. Analytics organisations (CA, fréquence commandes)
 2. Segmentation clients avancée (RFM)
 3. Intégration CRM externe (API)

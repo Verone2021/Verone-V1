@@ -1,0 +1,1 @@
+export { ConsultationProductAssociation } from './ConsultationProductAssociation';

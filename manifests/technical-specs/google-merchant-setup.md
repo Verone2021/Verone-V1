@@ -42,6 +42,7 @@ NEXT_PUBLIC_APP_URL=https://verone.com
 ### Étape 4: Attribuer les Rôles
 
 Ajoutez ces rôles au Service Account :
+
 - **Content API User** (pour Google Merchant Center)
 - **Service Account Token Creator** (optionnel pour délégation)
 
@@ -55,6 +56,7 @@ Ajoutez ces rôles au Service Account :
 ### Étape 6: Extraire les Variables
 
 Depuis le fichier JSON téléchargé, récupérez :
+
 ```json
 {
   "type": "service_account",
@@ -140,18 +142,22 @@ GOOGLE_CLOUD_PROJECT_ID=your-project-123456
 ## 🆘 Dépannage
 
 ### Erreur "Authentication failed"
+
 - Vérifiez que toutes les variables d'environnement sont correctement définies
 - Assurez-vous que la clé privée est complète avec `\\n` pour les sauts de ligne
 - Vérifiez que le service account a les bonnes permissions
 
 ### Erreur "API not enabled"
+
 - Vérifiez que la Merchant API est activée dans Google Cloud Console
 - Attendez quelques minutes après l'activation
 
 ### Erreur "Access denied"
+
 - Vérifiez que le service account est ajouté dans Google Merchant Center
 - Assurez-vous qu'il a les permissions appropriées
 
 ### Erreur "Data source not found"
+
 - Vérifiez l'ID de la data source dans Google Merchant Center
 - Mettez à jour `GOOGLE_MERCHANT_CONFIG.dataSourceId` si nécessaire

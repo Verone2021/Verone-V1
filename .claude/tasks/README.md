@@ -5,6 +5,7 @@
 ## 🎯 Organisation des Tâches
 
 ### **Structure Recommandée**
+
 ```
 .claude/tasks/
 ├── README.md                           # Ce fichier
@@ -15,6 +16,7 @@
 ```
 
 ### **Types de Rapports**
+
 - **Tâches de développement** : Implémentation features, corrections bugs
 - **Analyses techniques** : Investigations, diagnostics, optimisations
 - **Configurations système** : Setup tools, environnements, déploiements
@@ -23,12 +25,14 @@
 ## 📊 Différence avec `manifests/process-learnings/`
 
 ### **`.claude/tasks/` (Nouveau)**
+
 - ✅ **Tâches individuelles** spécifiques et courtes
 - ✅ **Actions ponctuelles** avec résultats immédiats
 - ✅ **Debugging sessions** et troubleshooting
 - ✅ **Configuration changes** et setup tools
 
 ### **`manifests/process-learnings/`**
+
 - ✅ **Sessions complètes** multi-phases
 - ✅ **Retours d'expérience** métier et technique
 - ✅ **Décisions architecturales** importantes
@@ -51,32 +55,42 @@
 **Durée**: [Temps estimé/réel]
 
 ## 🎯 Objectif
+
 [Description claire de ce qui doit être accompli]
 
 ## 📋 Actions Réalisées
+
 - [ ] Action 1
 - [ ] Action 2
 - [ ] Action 3
 
 ## 🔧 Changements Techniques
+
 ### Fichiers Modifiés
+
 - `path/to/file.ts` - [Description modification]
 
 ### Nouvelles Fonctionnalités
+
 - [Liste des fonctionnalités ajoutées]
 
 ## 📊 Résultats
+
 ### ✅ Succès
+
 - [Points positifs]
 
 ### ❌ Problèmes Rencontrés
+
 - [Difficultés et solutions]
 
 ## 🔄 Next Steps
+
 - [Actions de suivi nécessaires]
 
 ---
-*Rapport généré avec Claude Code*
+
+_Rapport généré avec Claude Code_
 ```
 
 ---

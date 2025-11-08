@@ -13,7 +13,7 @@ async function createUser() {
   const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
 
   if (!supabaseUrl || !serviceRoleKey) {
-    console.error('❌ Erreur: Variables d\'environnement manquantes');
+    console.error("❌ Erreur: Variables d'environnement manquantes");
     console.error('NEXT_PUBLIC_SUPABASE_URL:', !!supabaseUrl);
     console.error('SUPABASE_SERVICE_ROLE_KEY:', !!serviceRoleKey);
     process.exit(1);
@@ -25,12 +25,12 @@ async function createUser() {
   const supabase = createClient(supabaseUrl, serviceRoleKey, {
     auth: {
       autoRefreshToken: false,
-      persistSession: false
-    }
+      persistSession: false,
+    },
   });
 
   try {
-    console.log('📝 Création de l\'utilisateur veronebyromeo@gmail.com...');
+    console.log("📝 Création de l'utilisateur veronebyromeo@gmail.com...");
 
     // Créer l'utilisateur avec l'API auth admin
     const { data, error } = await supabase.auth.admin.createUser({
@@ -39,8 +39,8 @@ async function createUser() {
       email_confirm: true, // Confirmer l'email automatiquement
       user_metadata: {
         name: 'Romeo Dos Santos',
-        role: 'admin'
-      }
+        role: 'admin',
+      },
     });
 
     if (error) {
@@ -48,31 +48,40 @@ async function createUser() {
 
       // Vérifier si l'utilisateur existe déjà
       if (error.message.includes('already registered')) {
-        console.log('ℹ️  L\'utilisateur existe déjà, tentative de mise à jour du mot de passe...');
+        console.log(
+          "ℹ️  L'utilisateur existe déjà, tentative de mise à jour du mot de passe..."
+        );
 
         // Récupérer l'utilisateur existant
-        const { data: users, error: listError } = await supabase.auth.admin.listUsers();
+        const { data: users, error: listError } =
+          await supabase.auth.admin.listUsers();
 
         if (listError) {
-          console.error('❌ Erreur lors de la récupération des utilisateurs:', listError.message);
+          console.error(
+            '❌ Erreur lors de la récupération des utilisateurs:',
+            listError.message
+          );
           return;
         }
 
-        const existingUser = users.users.find(u => u.email === 'veronebyromeo@gmail.com');
+        const existingUser = users.users.find(
+          u => u.email === 'veronebyromeo@gmail.com'
+        );
 
         if (existingUser) {
           console.log('🔄 Mise à jour du mot de passe...');
 
-          const { data: updateData, error: updateError } = await supabase.auth.admin.updateUserById(
-            existingUser.id,
-            {
+          const { data: updateData, error: updateError } =
+            await supabase.auth.admin.updateUserById(existingUser.id, {
               password: 'Abc123456',
-              email_confirm: true
-            }
-          );
+              email_confirm: true,
+            });
 
           if (updateError) {
-            console.error('❌ Erreur lors de la mise à jour:', updateError.message);
+            console.error(
+              '❌ Erreur lors de la mise à jour:',
+              updateError.message
+            );
           } else {
             console.log('✅ Mot de passe mis à jour avec succès !');
             console.log('👤 Utilisateur ID:', updateData.user.id);
@@ -87,7 +96,6 @@ async function createUser() {
     console.log('👤 Utilisateur ID:', data.user.id);
     console.log('📧 Email:', data.user.email);
     console.log('🔑 Mot de passe: Abc123456');
-
   } catch (err) {
     console.error('💥 Erreur inattendue:', err.message);
   }
@@ -99,7 +107,7 @@ createUser()
     console.log('🎉 Script terminé');
     process.exit(0);
   })
-  .catch((err) => {
+  .catch(err => {
     console.error('💥 Erreur fatale:', err);
     process.exit(1);
   });

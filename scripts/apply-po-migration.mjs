@@ -1,20 +1,21 @@
 #!/usr/bin/env node
 
-import { createClient } from '@supabase/supabase-js'
-import { readFileSync } from 'fs'
-import { fileURLToPath } from 'url'
-import { dirname, join } from 'path'
+import { createClient } from '@supabase/supabase-js';
+import { readFileSync } from 'fs';
+import { fileURLToPath } from 'url';
+import { dirname, join } from 'path';
 
-const __filename = fileURLToPath(import.meta.url)
-const __dirname = dirname(__filename)
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = dirname(__filename);
 
 // Configuration Supabase
-const supabaseUrl = 'https://aorroydfjsrygmosnzrl.supabase.co'
-const supabaseServiceKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImFvcnJveWRmanNyeWdtb3NuenJsIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc1NzcyNzQ3MCwiZXhwIjoyMDczMzAzNDcwfQ.q99nRT2xxk8QLbjX10UfnqCsW95wV4h45AYqYxbjRjY'
+const supabaseUrl = 'https://aorroydfjsrygmosnzrl.supabase.co';
+const supabaseServiceKey =
+  'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImFvcnJveWRmanNyeWdtb3NuenJsIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc1NzcyNzQ3MCwiZXhwIjoyMDczMzAzNDcwfQ.q99nRT2xxk8QLbjX10UfnqCsW95wV4h45AYqYxbjRjY';
 
-const supabase = createClient(supabaseUrl, supabaseServiceKey)
+const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
-console.log('🚀 Début application migration séquences PO...\n')
+console.log('🚀 Début application migration séquences PO...\n');
 
 // SQL de migration
 const migrationSQL = `
@@ -95,11 +96,11 @@ BEGIN
   RAISE NOTICE '✅ Fonctions generate_po_number() et reset_po_sequence_to_max() créées';
   RAISE NOTICE '✅ Permissions accordées';
 END $$;
-`
+`;
 
 async function applyMigration() {
   try {
-    console.log('📝 Exécution du SQL de migration...\n')
+    console.log('📝 Exécution du SQL de migration...\n');
 
     // Exécuter le SQL via une requête RPC personnalisée
     // Note: Supabase ne permet pas d'exécuter directement du DDL via l'API
@@ -108,65 +109,77 @@ async function applyMigration() {
     // Méthode alternative: exécuter chaque partie séparément
 
     // Partie 1: Vérifier et créer la séquence via la fonction reset
-    console.log('1️⃣ Création fonction reset_po_sequence_to_max...')
+    console.log('1️⃣ Création fonction reset_po_sequence_to_max...');
 
     const { data: existingOrders, error: ordersError } = await supabase
       .from('purchase_orders')
       .select('po_number')
       .order('created_at', { ascending: false })
-      .limit(10)
+      .limit(10);
 
     if (ordersError) {
-      console.error('❌ Erreur lecture commandes:', ordersError)
-      throw ordersError
+      console.error('❌ Erreur lecture commandes:', ordersError);
+      throw ordersError;
     }
 
-    console.log(`📊 Commandes existantes trouvées: ${existingOrders.length}`)
+    console.log(`📊 Commandes existantes trouvées: ${existingOrders.length}`);
     if (existingOrders.length > 0) {
-      console.log(`   Dernières: ${existingOrders.map(o => o.po_number).join(', ')}`)
+      console.log(
+        `   Dernières: ${existingOrders.map(o => o.po_number).join(', ')}`
+      );
     }
 
     // Essayer d'appeler reset_po_sequence_to_max() pour voir si elle existe
-    console.log('\n2️⃣ Test existence fonction reset_po_sequence_to_max...')
-    const { data: resetTest, error: resetTestError } = await supabase
-      .rpc('reset_po_sequence_to_max')
+    console.log('\n2️⃣ Test existence fonction reset_po_sequence_to_max...');
+    const { data: resetTest, error: resetTestError } = await supabase.rpc(
+      'reset_po_sequence_to_max'
+    );
 
     if (resetTestError) {
       if (resetTestError.code === 'PGRST202') {
-        console.log('⚠️  Fonction n\'existe pas encore - migration complète requise')
-        console.log('\n❌ IMPOSSIBLE d\'appliquer migration via script Node.js')
-        console.log('📋 Raison: CREATE SEQUENCE et CREATE FUNCTION nécessitent privilèges admin')
-        console.log('\n✅ SOLUTION: Appliquer manuellement via Supabase Studio')
-        console.log('📁 Guide: docs/guides/START-HERE-MIGRATION-PO-SEQUENCES.md')
-        process.exit(1)
+        console.log(
+          "⚠️  Fonction n'existe pas encore - migration complète requise"
+        );
+        console.log("\n❌ IMPOSSIBLE d'appliquer migration via script Node.js");
+        console.log(
+          '📋 Raison: CREATE SEQUENCE et CREATE FUNCTION nécessitent privilèges admin'
+        );
+        console.log(
+          '\n✅ SOLUTION: Appliquer manuellement via Supabase Studio'
+        );
+        console.log(
+          '📁 Guide: docs/guides/START-HERE-MIGRATION-PO-SEQUENCES.md'
+        );
+        process.exit(1);
       } else {
-        console.error('❌ Erreur inattendue:', resetTestError)
-        throw resetTestError
+        console.error('❌ Erreur inattendue:', resetTestError);
+        throw resetTestError;
       }
     }
 
-    console.log(`✅ Fonction existe déjà! Séquence réinitialisée à: ${resetTest}`)
+    console.log(
+      `✅ Fonction existe déjà! Séquence réinitialisée à: ${resetTest}`
+    );
 
     // Tester génération
-    console.log('\n3️⃣ Test génération numéro...')
-    const { data: testNumber, error: testError } = await supabase
-      .rpc('generate_po_number')
+    console.log('\n3️⃣ Test génération numéro...');
+    const { data: testNumber, error: testError } =
+      await supabase.rpc('generate_po_number');
 
     if (testError) {
-      console.error('❌ Erreur génération:', testError)
-      throw testError
+      console.error('❌ Erreur génération:', testError);
+      throw testError;
     }
 
-    console.log(`✅ Prochain numéro PO: ${testNumber}`)
+    console.log(`✅ Prochain numéro PO: ${testNumber}`);
 
-    console.log('\n🎉 Migration déjà appliquée avec succès!')
-    console.log(`📊 Prochain numéro de commande: ${testNumber}`)
-
+    console.log('\n🎉 Migration déjà appliquée avec succès!');
+    console.log(`📊 Prochain numéro de commande: ${testNumber}`);
   } catch (error) {
-    console.error('\n❌ Erreur lors de l\'application de la migration:', error)
-    process.exit(1)
+    console.error("\n❌ Erreur lors de l'application de la migration:", error);
+    process.exit(1);
   }
 }
 
 // Exécution
-applyMigration()
+applyMigration();

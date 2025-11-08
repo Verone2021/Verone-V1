@@ -9,6 +9,7 @@
 ## 📋 PRÉREQUIS
 
 ### **1. Compte Qonto requis**
+
 - ✅ Compte **Qonto Business** (pas compte personnel)
 - ✅ Rôle **Admin** ou **Owner** du compte
 - ✅ Abonnement actif (Essential, Business, ou Enterprise)
@@ -16,6 +17,7 @@
 ### **2. Vérifier éligibilité API**
 
 **Plans Qonto avec accès API** :
+
 - ❌ **Basic** : Pas d'accès API
 - ✅ **Smart** : API disponible (payant - 29€/mois)
 - ✅ **Premium** : API incluse (69€/mois)
@@ -47,6 +49,7 @@
 1. **Cliquer** : **"Créer une nouvelle clé API"** (Generate new API key)
 
 2. **Formulaire de création** :
+
    ```
    Nom de la clé : "Vérone Back Office - Production"
    Description : "API key pour synchronisation factures et transactions"
@@ -60,6 +63,7 @@
    ```
 
 3. **Restrictions de sécurité** (recommandé) :
+
    ```
    Adresses IP autorisées :
    - Ajouter IP serveur Vercel (ou laisser vide si IP dynamique)
@@ -76,6 +80,7 @@
 > ⚠️ **IMPORTANT** : La clé API ne s'affiche **qu'une seule fois** !
 
 1. **Qonto affiche** :
+
    ```
    Organization ID: qonto_org_1234567890abcdef
    API Key: sk_live_1234567890abcdefghijklmnopqrstuvwxyz
@@ -86,6 +91,7 @@
    - `API Key` (sk_live_xxx)
 
 3. **Stocker en sécurité** :
+
    ```bash
    # .env.local (JAMAIS commit sur Git !)
    QONTO_ORGANIZATION_ID=qonto_org_1234567890abcdef
@@ -288,6 +294,7 @@ vercel env add QONTO_WEBHOOK_SECRET
 ### **B. Restrictions IP (optionnel mais recommandé)**
 
 Si Vercel utilise IPs fixes :
+
 ```
 Whitelist IPs Vercel :
 - 76.76.21.21 (exemple - vérifier documentation Vercel)
@@ -298,6 +305,7 @@ Whitelist IPs Vercel :
 ### **C. Monitoring accès API**
 
 Qonto Dashboard → **"API & Webhooks"** → **"Logs"**
+
 - ✅ Vérifier appels API (quotas)
 - ✅ Alertes si comportement suspect
 - ✅ Rate limits : 100 req/min (plan Smart/Premium)
@@ -334,19 +342,23 @@ export function handleQontoError(error: any) {
 ## 📚 RESSOURCES OFFICIELLES QONTO
 
 ### **Documentation API**
+
 - 🔗 https://api-doc.qonto.com/
 - 🔗 https://api-doc.qonto.com/docs/business-api/getting-started
 
 ### **API Reference**
+
 - 🔗 GET /v2/bank_accounts : https://api-doc.qonto.com/docs/business-api/bank-accounts
 - 🔗 GET /v2/transactions : https://api-doc.qonto.com/docs/business-api/transactions
 - 🔗 POST /v2/transfers : https://api-doc.qonto.com/docs/business-api/transfers
 
 ### **Webhooks Documentation**
+
 - 🔗 https://api-doc.qonto.com/docs/business-api/webhooks
 - 🔗 Events reference : https://api-doc.qonto.com/docs/business-api/webhook-events
 
 ### **Support Qonto**
+
 - 📧 Email : api-support@qonto.com
 - 💬 Chat : Dans l'app Qonto (en bas à droite)
 - 📞 Téléphone : +33 1 76 39 00 01 (France)
@@ -389,6 +401,7 @@ Phase 4 : Validation Production
 Une fois Qonto configuré :
 
 1. **Tester en local** :
+
    ```bash
    npm run dev
    # Simuler webhook Qonto
@@ -399,11 +412,13 @@ Une fois Qonto configuré :
    ```
 
 2. **Déployer Vercel** :
+
    ```bash
    vercel --prod
    ```
 
 3. **Configurer URL webhook production** :
+
    ```
    Qonto Dashboard → Webhooks
    URL : https://verone-backoffice.vercel.app/api/webhooks/qonto
@@ -419,6 +434,7 @@ Une fois Qonto configuré :
 ## 🚀 PRÊT POUR PRODUCTION !
 
 Avec cette configuration :
+
 - ✅ Transactions temps réel (webhooks)
 - ✅ Auto-match factures 95%
 - ✅ Dashboard trésorerie temps réel

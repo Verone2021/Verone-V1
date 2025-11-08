@@ -5,59 +5,67 @@
  * Design System 2025 : Couleurs vives, gradients, rounded corners
  */
 
-import React from 'react'
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from './card'
-import { Badge } from './badge'
-import { ButtonV2 } from './button'
-import { Edit, Trash2, FolderOpen, Package, Tag } from 'lucide-react'
+import React from 'react';
+
+import { Edit, Trash2, FolderOpen, Package, Tag } from 'lucide-react';
+
+import { Badge } from './badge';
+import { ButtonV2 } from './button';
+import {
+  Card,
+  CardContent,
+  CardHeader,
+  CardTitle,
+  CardDescription,
+} from './card';
 
 interface VéroneCardProps {
   /** Titre principal de la carte */
-  title: string
+  title: string;
   /** Description optionnelle */
-  description?: string
+  description?: string;
   /** URL de l'icône personnalisée (32x32px max) */
-  imageUrl?: string
+  imageUrl?: string;
   /** Type d'entité pour icône de fallback */
-  entityType: 'family' | 'category' | 'subcategory' | 'product'
+  entityType: 'family' | 'category' | 'subcategory' | 'product';
   /** Slug/identifiant pour badge */
-  slug?: string
+  slug?: string;
   /** Compteur (ex: nombre d'enfants) */
-  count?: number
+  count?: number;
   /** Label du compteur (ex: "catégories", "produits") */
-  countLabel?: string
+  countLabel?: string;
   /** État actif/inactif */
-  isActive?: boolean
+  isActive?: boolean;
   /** Position icône dans la carte */
-  iconPosition?: 'top-left' | 'top-right'
+  iconPosition?: 'top-left' | 'top-right';
   /** Callback clic sur la carte */
-  onClick?: () => void
+  onClick?: () => void;
   /** Actions personnalisées */
-  onEdit?: () => void
-  onDelete?: () => void
+  onEdit?: () => void;
+  onDelete?: () => void;
   /** Props additionnelles pour personnalisation */
-  className?: string
+  className?: string;
 }
 
 /**
  * Icônes de fallback selon le type d'entité Vérone
  */
 const getFallbackIcon = (entityType: VéroneCardProps['entityType']) => {
-  const iconProps = { className: "w-8 h-8 text-blue-600" }
+  const iconProps = { className: 'w-8 h-8 text-blue-600' };
 
   switch (entityType) {
     case 'family':
-      return <FolderOpen {...iconProps} />
+      return <FolderOpen {...iconProps} />;
     case 'category':
-      return <Tag {...iconProps} />
+      return <Tag {...iconProps} />;
     case 'subcategory':
-      return <Package {...iconProps} />
+      return <Package {...iconProps} />;
     case 'product':
-      return <Package {...iconProps} />
+      return <Package {...iconProps} />;
     default:
-      return <Package {...iconProps} />
+      return <Package {...iconProps} />;
   }
-}
+};
 
 export function VéroneCard({
   title,
@@ -72,7 +80,7 @@ export function VéroneCard({
   onClick,
   onEdit,
   onDelete,
-  className = ''
+  className = '',
 }: VéroneCardProps) {
   return (
     <Card
@@ -90,8 +98,8 @@ export function VéroneCard({
                   src={imageUrl}
                   alt={`Icône ${title}`}
                   className="w-8 h-8 object-cover rounded border border-slate-200"
-                  onError={(e) => {
-                    e.currentTarget.style.display = 'none'
+                  onError={e => {
+                    e.currentTarget.style.display = 'none';
                   }}
                 />
               ) : (
@@ -102,7 +110,9 @@ export function VéroneCard({
 
           {/* Section contenu */}
           <div className="flex-1">
-            <CardTitle className="text-base text-slate-900 mb-1">{title}</CardTitle>
+            <CardTitle className="text-base text-slate-900 mb-1">
+              {title}
+            </CardTitle>
             {/* Badge slug sous le titre */}
             {slug && (
               <Badge variant="secondary" className="font-mono text-xs mb-1">
@@ -125,8 +135,8 @@ export function VéroneCard({
                     src={imageUrl}
                     alt={`Icône ${title}`}
                     className="w-12 h-12 object-cover rounded border border-slate-200"
-                    onError={(e) => {
-                      e.currentTarget.style.display = 'none'
+                    onError={e => {
+                      e.currentTarget.style.display = 'none';
                     }}
                   />
                 ) : (
@@ -135,7 +145,7 @@ export function VéroneCard({
                 {/* Badge statut sous l'image */}
                 {isActive !== undefined && (
                   <Badge
-                    variant={isActive ? "success" : "secondary"}
+                    variant={isActive ? 'success' : 'secondary'}
                     className="text-xs px-2 py-0.5"
                   >
                     {isActive ? 'Actif' : 'Inactif'}
@@ -152,9 +162,9 @@ export function VéroneCard({
                     variant="secondary"
                     size="sm"
                     className="w-8 h-8 p-0"
-                    onClick={(e) => {
-                      e.stopPropagation()
-                      onEdit()
+                    onClick={e => {
+                      e.stopPropagation();
+                      onEdit();
                     }}
                   >
                     <Edit className="w-4 h-4" />
@@ -162,12 +172,12 @@ export function VéroneCard({
                 )}
                 {onDelete && (
                   <ButtonV2
-                    variant="danger"
+                    variant="destructive"
                     size="sm"
                     className="w-8 h-8 p-0"
-                    onClick={(e) => {
-                      e.stopPropagation()
-                      onDelete()
+                    onClick={e => {
+                      e.stopPropagation();
+                      onDelete();
                     }}
                   >
                     <Trash2 className="w-4 h-4" />
@@ -183,10 +193,11 @@ export function VéroneCard({
         {/* Compteur si présent */}
         {count !== undefined && countLabel && (
           <div className="text-sm text-slate-600">
-            {count} {countLabel}{count !== 1 ? 's' : ''}
+            {count} {countLabel}
+            {count !== 1 ? 's' : ''}
           </div>
         )}
       </CardContent>
     </Card>
-  )
+  );
 }

@@ -25,7 +25,7 @@ displayed_in:
 
 output:
   type: enum
-  values: ["high", "medium", "low"]
+  values: ['high', 'medium', 'low']
 
 metadata:
   created_at: 2025-10-22

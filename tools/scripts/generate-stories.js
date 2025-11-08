@@ -32,11 +32,11 @@ const CONFIG = {
 
   // Catégories de composants
   categories: {
-    'ui': { title: '1-UI-Base', template: 'variants-story.template.tsx' },
-    'business': { title: '2-Business', template: 'business-story.template.tsx' },
-    'forms': { title: '3-Forms', template: 'business-story.template.tsx' },
-    'layout': { title: '4-Layout', template: 'basic-story.template.tsx' },
-    'admin': { title: '5-Admin', template: 'business-story.template.tsx' },
+    ui: { title: '1-UI-Base', template: 'variants-story.template.tsx' },
+    business: { title: '2-Business', template: 'business-story.template.tsx' },
+    forms: { title: '3-Forms', template: 'business-story.template.tsx' },
+    layout: { title: '4-Layout', template: 'basic-story.template.tsx' },
+    admin: { title: '5-Admin', template: 'business-story.template.tsx' },
   },
 
   // Exclusions (ne pas générer de stories)
@@ -111,7 +111,11 @@ function getComponentCategory(componentPath) {
   if (componentPath.startsWith('admin/')) return 'admin';
 
   // Fallback basé sur le chemin
-  if (componentPath.includes('product') || componentPath.includes('order') || componentPath.includes('stock')) {
+  if (
+    componentPath.includes('product') ||
+    componentPath.includes('order') ||
+    componentPath.includes('stock')
+  ) {
     return 'business';
   }
   if (componentPath.includes('form')) {
@@ -164,9 +168,10 @@ function extractComponentName(filePath) {
 
   // Fallback: nom du fichier
   const fileName = path.basename(filePath, '.tsx');
-  return fileName.split('-').map(part =>
-    part.charAt(0).toUpperCase() + part.slice(1)
-  ).join('');
+  return fileName
+    .split('-')
+    .map(part => part.charAt(0).toUpperCase() + part.slice(1))
+    .join('');
 }
 
 /**
@@ -267,14 +272,23 @@ function main() {
     }
 
     // Générer story
-    const content = generateStoryContent(componentName, componentPath, category);
+    const content = generateStoryContent(
+      componentName,
+      componentPath,
+      category
+    );
 
     if (!content) {
       errors++;
       continue;
     }
 
-    const success = createStoryFile(componentName, content, category, args.dryRun);
+    const success = createStoryFile(
+      componentName,
+      content,
+      category,
+      args.dryRun
+    );
 
     if (success) {
       created++;
@@ -291,7 +305,9 @@ function main() {
   console.log(`📦 Total: ${allComponents.length}`);
 
   if (args.dryRun) {
-    console.log('\n💡 Mode DRY-RUN activé. Relancez sans --dry-run pour créer les fichiers.');
+    console.log(
+      '\n💡 Mode DRY-RUN activé. Relancez sans --dry-run pour créer les fichiers.'
+    );
   }
 }
 

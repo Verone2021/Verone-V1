@@ -5,33 +5,42 @@
  * de l'utilisateur avec avatar, nom, rôle et statut.
  */
 
-"use client"
+'use client';
 
-import React from 'react'
-import { User, Mail, Calendar, Clock, CheckCircle, XCircle } from 'lucide-react'
-import { RoleBadge, type UserRole } from '@/components/ui/role-badge'
-import { UserDetailData } from '../page'
+import React from 'react';
+
+import { RoleBadge, type UserRole } from '@verone/ui';
+import {
+  User,
+  Mail,
+  Calendar,
+  Clock,
+  CheckCircle,
+  XCircle,
+} from 'lucide-react';
+
+import type { UserDetailData } from '../page';
 
 interface UserHeaderProps {
-  user: UserDetailData
+  user: UserDetailData;
 }
 
 export function UserHeader({ user }: UserHeaderProps) {
   const formatUserName = (email: string, user_metadata: any = null) => {
     if (user_metadata?.name) {
-      return user_metadata.name
+      return user_metadata.name;
     }
 
     if (user_metadata?.first_name || user_metadata?.last_name) {
       return [user_metadata.first_name, user_metadata.last_name]
         .filter(Boolean)
         .join(' ')
-        .trim()
+        .trim();
     }
 
-    const tempName = email.split('@')[0].split('.') || ['']
-    return tempName.length > 1 ? tempName.join(' ') : tempName[0]
-  }
+    const tempName = email.split('@')[0].split('.') || [''];
+    return tempName.length > 1 ? tempName.join(' ') : tempName[0];
+  };
 
   const getInitials = (name: string) => {
     return name
@@ -39,41 +48,46 @@ export function UserHeader({ user }: UserHeaderProps) {
       .map(word => word.charAt(0))
       .join('')
       .toUpperCase()
-      .slice(0, 2)
-  }
+      .slice(0, 2);
+  };
 
   const formatDate = (dateString: string) => {
     return new Date(dateString).toLocaleDateString('fr-FR', {
       year: 'numeric',
       month: 'long',
-      day: 'numeric'
-    })
-  }
+      day: 'numeric',
+    });
+  };
 
   const getTimeAgo = (dateString: string | null) => {
-    if (!dateString) return 'Jamais'
+    if (!dateString) return 'Jamais';
 
-    const date = new Date(dateString)
-    const now = new Date()
-    const diffInMinutes = Math.floor((now.getTime() - date.getTime()) / (1000 * 60))
+    const date = new Date(dateString);
+    const now = new Date();
+    const diffInMinutes = Math.floor(
+      (now.getTime() - date.getTime()) / (1000 * 60)
+    );
 
-    if (diffInMinutes < 1) return 'À l\'instant'
-    if (diffInMinutes < 60) return `Il y a ${diffInMinutes} min`
+    if (diffInMinutes < 1) return "À l'instant";
+    if (diffInMinutes < 60) return `Il y a ${diffInMinutes} min`;
 
-    const diffInHours = Math.floor(diffInMinutes / 60)
-    if (diffInHours < 24) return `Il y a ${diffInHours}h`
+    const diffInHours = Math.floor(diffInMinutes / 60);
+    if (diffInHours < 24) return `Il y a ${diffInHours}h`;
 
-    const diffInDays = Math.floor(diffInHours / 24)
-    if (diffInDays < 30) return `Il y a ${diffInDays} jour${diffInDays > 1 ? 's' : ''}`
+    const diffInDays = Math.floor(diffInHours / 24);
+    if (diffInDays < 30)
+      return `Il y a ${diffInDays} jour${diffInDays > 1 ? 's' : ''}`;
 
-    return formatDate(dateString)
-  }
+    return formatDate(dateString);
+  };
 
-  const userName = formatUserName(user.email, user.user_metadata)
-  const userInitials = getInitials(userName)
-  const isEmailConfirmed = !!user.email_confirmed_at
-  const isActiveUser = user.last_sign_in_at &&
-    (Date.now() - new Date(user.last_sign_in_at).getTime()) < (30 * 24 * 60 * 60 * 1000) // 30 jours
+  const userName = formatUserName(user.email, user.user_metadata);
+  const userInitials = getInitials(userName);
+  const isEmailConfirmed = !!user.email_confirmed_at;
+  const isActiveUser =
+    user.last_sign_in_at &&
+    Date.now() - new Date(user.last_sign_in_at).getTime() <
+      30 * 24 * 60 * 60 * 1000; // 30 jours
 
   return (
     <div className="bg-white border border-neutral-200 rounded-lg p-4">
@@ -81,7 +95,9 @@ export function UserHeader({ user }: UserHeaderProps) {
         {/* Avatar utilisateur */}
         <div className="flex-shrink-0">
           <div className="w-12 h-12 bg-neutral-100 border-2 border-neutral-300 rounded-lg flex items-center justify-center">
-            <span className="text-xl font-bold text-neutral-900">{userInitials}</span>
+            <span className="text-xl font-bold text-neutral-900">
+              {userInitials}
+            </span>
           </div>
         </div>
 
@@ -129,7 +145,9 @@ export function UserHeader({ user }: UserHeaderProps) {
                 </div>
                 <div className="flex items-center space-x-1">
                   <Clock className="h-3.5 w-3.5" />
-                  <span>Dernière connexion: {getTimeAgo(user.last_sign_in_at)}</span>
+                  <span>
+                    Dernière connexion: {getTimeAgo(user.last_sign_in_at)}
+                  </span>
                 </div>
               </div>
 
@@ -167,9 +185,10 @@ export function UserHeader({ user }: UserHeaderProps) {
         </div>
         <div>
           Compte {user.profile?.user_type === 'staff' ? 'Équipe' : 'Standard'} •
-          Actif depuis {user.analytics.days_since_creation} jour{user.analytics.days_since_creation > 1 ? 's' : ''}
+          Actif depuis {user.analytics.days_since_creation} jour
+          {user.analytics.days_since_creation > 1 ? 's' : ''}
         </div>
       </div>
     </div>
-  )
+  );
 }

@@ -32,7 +32,10 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
 const projectRoot = join(__dirname, '../..');
 const envPath = join(projectRoot, '.env.local');
-const migrationPath = join(projectRoot, 'supabase/migrations/20251008_003_fix_missing_rls_policies.sql');
+const migrationPath = join(
+  projectRoot,
+  'supabase/migrations/20251008_003_fix_missing_rls_policies.sql'
+);
 
 // Charger variables environnement
 dotenv.config({ path: envPath });
@@ -46,7 +49,7 @@ const colors = {
   blue: '\x1b[34m',
   magenta: '\x1b[35m',
   cyan: '\x1b[36m',
-  bold: '\x1b[1m'
+  bold: '\x1b[1m',
 };
 
 // Helpers logging
@@ -108,8 +111,8 @@ function initSupabaseClient(url, serviceRoleKey) {
     const supabase = createClient(url, serviceRoleKey, {
       auth: {
         autoRefreshToken: false,
-        persistSession: false
-      }
+        persistSession: false,
+      },
     });
 
     logSuccess('Client Supabase initialisé avec Service Role (bypass RLS)');
@@ -162,18 +165,23 @@ async function applyMigration(supabase, migrationSQL) {
       logWarning('Méthode .rpc() non disponible, tentative query directe...');
 
       // Alternative: Exécuter via fetch direct API Supabase
-      const response = await fetch(`${process.env.NEXT_PUBLIC_SUPABASE_URL}/rest/v1/rpc/exec`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'apikey': process.env.SUPABASE_SERVICE_ROLE_KEY,
-          'Authorization': `Bearer ${process.env.SUPABASE_SERVICE_ROLE_KEY}`
-        },
-        body: JSON.stringify({ query: migrationSQL })
-      });
+      const response = await fetch(
+        `${process.env.NEXT_PUBLIC_SUPABASE_URL}/rest/v1/rpc/exec`,
+        {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            apikey: process.env.SUPABASE_SERVICE_ROLE_KEY,
+            Authorization: `Bearer ${process.env.SUPABASE_SERVICE_ROLE_KEY}`,
+          },
+          body: JSON.stringify({ query: migrationSQL }),
+        }
+      );
 
       if (!response.ok) {
-        throw new Error(`Erreur HTTP: ${response.status} - ${response.statusText}`);
+        throw new Error(
+          `Erreur HTTP: ${response.status} - ${response.statusText}`
+        );
       }
 
       logSuccess('Migration appliquée avec succès (fetch direct)');
@@ -193,7 +201,11 @@ async function applyMigration(supabase, migrationSQL) {
 async function validateRLSEnabled(supabase) {
   logSection('5. VALIDATION RLS ENABLED');
 
-  const targetTables = ['variant_groups', 'sample_orders', 'sample_order_items'];
+  const targetTables = [
+    'variant_groups',
+    'sample_orders',
+    'sample_order_items',
+  ];
 
   try {
     const { data, error } = await supabase
@@ -205,7 +217,9 @@ async function validateRLSEnabled(supabase) {
     if (error) {
       // Fallback: query SQL directe
       logWarning('Query pg_tables échoué, validation manuelle requise');
-      logInfo('Vérifier manuellement dans Supabase Dashboard > Database > Tables');
+      logInfo(
+        'Vérifier manuellement dans Supabase Dashboard > Database > Tables'
+      );
       return false;
     }
 
@@ -237,7 +251,12 @@ async function validateRLSEnabled(supabase) {
 async function validatePolicies(supabase) {
   logSection('6. VALIDATION POLICIES');
 
-  const targetTables = ['variant_groups', 'sample_orders', 'sample_order_items', 'contacts'];
+  const targetTables = [
+    'variant_groups',
+    'sample_orders',
+    'sample_order_items',
+    'contacts',
+  ];
   const expectedPoliciesCount = 4; // SELECT, INSERT, UPDATE, DELETE
 
   logInfo('Vérification nombre de policies par table...');
@@ -245,14 +264,20 @@ async function validatePolicies(supabase) {
   try {
     // Note: pg_policies n'est pas accessible via PostgREST par défaut
     // Validation manuelle requise
-    logWarning('Validation policies nécessite accès pg_policies (non exposé via API)');
+    logWarning(
+      'Validation policies nécessite accès pg_policies (non exposé via API)'
+    );
     logInfo('Vérification manuelle recommandée:');
-    logInfo('  URL: https://supabase.com/dashboard/project/aorroydfjsrygmosnzrl/auth/policies');
+    logInfo(
+      '  URL: https://supabase.com/dashboard/project/aorroydfjsrygmosnzrl/auth/policies'
+    );
     logInfo('');
     logInfo('Attendu pour chaque table:');
 
     for (const table of targetTables) {
-      logInfo(`  ${table}: ${expectedPoliciesCount} policies (SELECT, INSERT, UPDATE, DELETE)`);
+      logInfo(
+        `  ${table}: ${expectedPoliciesCount} policies (SELECT, INSERT, UPDATE, DELETE)`
+      );
     }
 
     return true; // Validation manuelle
@@ -269,9 +294,15 @@ function generateReport(migrationApplied, rlsValidated, policiesValidated) {
   const allPassed = migrationApplied && rlsValidated && policiesValidated;
 
   console.log('Résultats:');
-  console.log(`  Migration appliquée:      ${migrationApplied ? '✅ OUI' : '❌ NON'}`);
-  console.log(`  RLS enabled (3 tables):   ${rlsValidated ? '✅ OUI' : '⚠️  VÉRIFICATION MANUELLE REQUISE'}`);
-  console.log(`  Policies validées:        ${policiesValidated ? '⚠️  VÉRIFICATION MANUELLE REQUISE' : '❌ NON'}`);
+  console.log(
+    `  Migration appliquée:      ${migrationApplied ? '✅ OUI' : '❌ NON'}`
+  );
+  console.log(
+    `  RLS enabled (3 tables):   ${rlsValidated ? '✅ OUI' : '⚠️  VÉRIFICATION MANUELLE REQUISE'}`
+  );
+  console.log(
+    `  Policies validées:        ${policiesValidated ? '⚠️  VÉRIFICATION MANUELLE REQUISE' : '❌ NON'}`
+  );
   console.log('');
 
   if (allPassed || migrationApplied) {
@@ -279,7 +310,9 @@ function generateReport(migrationApplied, rlsValidated, policiesValidated) {
     logInfo('');
     logInfo('PROCHAINES ÉTAPES:');
     logInfo('1. Vérifier manuellement policies dans Dashboard:');
-    logInfo('   https://supabase.com/dashboard/project/aorroydfjsrygmosnzrl/auth/policies');
+    logInfo(
+      '   https://supabase.com/dashboard/project/aorroydfjsrygmosnzrl/auth/policies'
+    );
     logInfo('');
     logInfo('2. Exécuter tests isolation multi-organisations:');
     logInfo('   - Créer 2 organisations test (org-test-a, org-test-b)');
@@ -306,10 +339,22 @@ function generateReport(migrationApplied, rlsValidated, policiesValidated) {
 // Main execution
 async function main() {
   console.clear();
-  log('╔════════════════════════════════════════════════════════════════════════════╗', 'cyan');
-  log('║         VÉRONE - APPLICATION MIGRATION RLS CRITIQUE                        ║', 'cyan');
-  log('║         Correction Vulnérabilité Sécurité 3 Tables                         ║', 'cyan');
-  log('╚════════════════════════════════════════════════════════════════════════════╝', 'cyan');
+  log(
+    '╔════════════════════════════════════════════════════════════════════════════╗',
+    'cyan'
+  );
+  log(
+    '║         VÉRONE - APPLICATION MIGRATION RLS CRITIQUE                        ║',
+    'cyan'
+  );
+  log(
+    '║         Correction Vulnérabilité Sécurité 3 Tables                         ║',
+    'cyan'
+  );
+  log(
+    '╚════════════════════════════════════════════════════════════════════════════╝',
+    'cyan'
+  );
   console.log('');
 
   try {
@@ -327,7 +372,9 @@ async function main() {
 
     if (!migrationApplied) {
       logError('Migration échouée - Arrêt du script');
-      logWarning('Appliquer migration manuellement via Supabase Dashboard SQL Editor');
+      logWarning(
+        'Appliquer migration manuellement via Supabase Dashboard SQL Editor'
+      );
       process.exit(1);
     }
 
@@ -338,9 +385,12 @@ async function main() {
     const policiesValidated = await validatePolicies(supabase);
 
     // 7. Rapport final
-    const exitCode = generateReport(migrationApplied, rlsValidated, policiesValidated);
+    const exitCode = generateReport(
+      migrationApplied,
+      rlsValidated,
+      policiesValidated
+    );
     process.exit(exitCode);
-
   } catch (error) {
     logError(`Erreur fatale: ${error.message}`);
     console.error(error);

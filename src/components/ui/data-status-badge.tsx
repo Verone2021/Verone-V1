@@ -14,13 +14,15 @@
  * ```
  */
 
-"use client"
+'use client';
 
-import React from 'react'
-import { CheckCircle2, AlertCircle } from 'lucide-react'
-import { cn } from '../../lib/utils'
+import React from 'react';
 
-export type DataStatusType = 'real' | 'mock'
+import { CheckCircle2, AlertCircle } from 'lucide-react';
+
+import { cn } from '../../lib/utils';
+
+export type DataStatusType = 'real' | 'mock';
 
 export interface DataStatusBadgeProps {
   /**
@@ -28,18 +30,18 @@ export interface DataStatusBadgeProps {
    * - "real": Vraies données depuis BDD/API
    * - "mock": Données mockées/calculées temporairement
    */
-  type: DataStatusType
+  type: DataStatusType;
 
   /**
    * Classes CSS additionnelles (optionnel)
    */
-  className?: string
+  className?: string;
 
   /**
    * Afficher en mode compact (icône seule, sans texte)
    * @default false
    */
-  compact?: boolean
+  compact?: boolean;
 }
 
 /**
@@ -53,7 +55,7 @@ const STATUS_CONFIG = {
     borderColor: 'border-green-600',
     textColor: 'text-green-600',
     iconColor: 'text-green-600',
-    title: 'Données réelles depuis la base de données'
+    title: 'Données réelles depuis la base de données',
   },
   mock: {
     icon: AlertCircle,
@@ -62,17 +64,17 @@ const STATUS_CONFIG = {
     borderColor: 'border-orange-500',
     textColor: 'text-orange-500',
     iconColor: 'text-orange-500',
-    title: 'Données mockées - fonctionnalité à développer'
-  }
-} as const
+    title: 'Données mockées - fonctionnalité à développer',
+  },
+} as const;
 
 export function DataStatusBadge({
   type,
   className,
-  compact = false
+  compact = false,
 }: DataStatusBadgeProps) {
-  const config = STATUS_CONFIG[type]
-  const Icon = config.icon
+  const config = STATUS_CONFIG[type];
+  const Icon = config.icon;
 
   return (
     <span
@@ -92,7 +94,7 @@ export function DataStatusBadge({
       <Icon className={cn('h-3 w-3', config.iconColor)} />
       {!compact && <span>{config.label}</span>}
     </span>
-  )
+  );
 }
 
 /**
@@ -108,15 +110,17 @@ export function DataStatusBadge({
  * <DataStatusBadge type={badgeType} />
  * ```
  */
-export function useDataStatus(dataSource: 'database' | 'calculated' | 'api' | 'mock'): DataStatusType {
+export function useDataStatus(
+  dataSource: 'database' | 'calculated' | 'api' | 'mock'
+): DataStatusType {
   switch (dataSource) {
     case 'database':
     case 'api':
-      return 'real'
+      return 'real';
     case 'calculated':
     case 'mock':
-      return 'mock'
+      return 'mock';
     default:
-      return 'mock'
+      return 'mock';
   }
 }

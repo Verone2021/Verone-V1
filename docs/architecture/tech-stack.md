@@ -20,6 +20,7 @@
 Stack technologique complet du système Vérone.
 
 **Frontend** :
+
 - Next.js 15 (App Router, Server Components)
 - React 18
 - TypeScript
@@ -29,16 +30,19 @@ Stack technologique complet du système Vérone.
 - React Query cache
 
 **Backend** :
+
 - Next.js API Routes
 - Supabase (PostgreSQL + Auth + Storage + Realtime)
 
 **Infrastructure** :
+
 - Vercel (hosting + déploiement)
 - Supabase Cloud (database + auth)
 - Sentry (monitoring)
 - GitHub (version control)
 
 **Dev Tools** :
+
 - MCP Servers (Serena, Supabase, Playwright, Sequential Thinking)
 - Claude Code orchestration
 - ESLint + Prettier

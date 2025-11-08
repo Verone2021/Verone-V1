@@ -9,6 +9,7 @@
 ## 🎯 Contexte
 
 Le déploiement sur Vercel échoue systématiquement avec :
+
 ```
 Module not found: Can't resolve '@/lib/logger'
 Module not found: Can't resolve '@/lib/supabase/server'
@@ -16,6 +17,7 @@ Module not found: Can't resolve '@/lib/google-merchant/excel-transformer'
 ```
 
 **Diagnostic confirmé** :
+
 - ✅ Build local fonctionne (0 erreurs)
 - ✅ Tous les fichiers présents sur GitHub
 - ✅ Configuration Vercel correcte
@@ -54,7 +56,6 @@ NEXT_PUBLIC_SUPABASE_URL=https://aorroydfjsrygmosnzrl.supabase.co
 NEXT_PUBLIC_SUPABASE_ANON_KEY=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImFvcnJveWRmanNyeWdtb3NuenJsIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTc3Mjc0NzAsImV4cCI6MjA3MzMwMzQ3MH0.fRi7svC8bAr3wihH76pfQnaq7tjuBMypAEi6q-rHCTA
 
 # Sentry (optionnel)
-NEXT_PUBLIC_SENTRY_DSN=https://25698064b38f249e069e5dcf9b8a6314@o4510076285943808.ingest.de.sentry.io/4510095142289488
 ```
 
 ### **Étape 4 : Déployer**
@@ -125,16 +126,19 @@ vercel env add NEXT_PUBLIC_SUPABASE_ANON_KEY production
 ## 📊 Informations de Référence
 
 **Projet Vercel** :
+
 - **Project ID** : `prj_X4eg9YtIF4qS2eTwIRLidsA9SB1d`
 - **Team ID** : `team_sYPhPzbeKMa8CB79SBRDGyji`
 - **URL Project** : https://vercel.com/verone2021s-projects/verone-back-office
 
 **Repository GitHub** :
+
 - **URL** : https://github.com/Verone2021/Verone-backoffice
 - **Branch** : `main`
 - **Dernier commit validé** : `f5cf438` - Build TypeScript 100% fonctionnel
 
 **Build Local** :
+
 ```bash
 npm run build
 # ✓ Compiled successfully

@@ -43,19 +43,19 @@ source:
 
 displayed_in:
   - component: src/app/contacts-organisations/suppliers/page.tsx
-    location: "Card fournisseur - Badge produits (ligne ~497-502)"
-    description: "Badge avec icône Package affichant count produits"
+    location: 'Card fournisseur - Badge produits (ligne ~497-502)'
+    description: 'Badge avec icône Package affichant count produits'
     screenshot: suppliers-list-page.png
   - component: src/app/contacts-organisations/suppliers/[supplierId]/page.tsx
-    location: "Section Statistiques - Produits référencés"
-    description: "Statistique détail fournisseur"
+    location: 'Section Statistiques - Produits référencés'
+    description: 'Statistique détail fournisseur'
     screenshot: supplier-detail-page.png
 
 thresholds:
-  excellent: "> 50 produits"
-  good: "10-50 produits"
-  warning: "1-10 produits"
-  critical: "0 produits"
+  excellent: '> 50 produits'
+  good: '10-50 produits'
+  warning: '1-10 produits'
+  critical: '0 produits'
   interpretation: |
     - > 50 : Fournisseur catalogue large
     - 10-50 : Catalogue standard
@@ -63,26 +63,26 @@ thresholds:
     - 0 : Fournisseur sans produits (à nettoyer ou nouveau)
 
 tests:
-  - scenario: "Fournisseur catalogue moyen"
+  - scenario: 'Fournisseur catalogue moyen'
     inputs:
-      supplier_id: "9078f112-..."
+      supplier_id: '9078f112-...'
       products_count: 16
     expected_output: 16
-    threshold_expected: "good"
+    threshold_expected: 'good'
 
-  - scenario: "Fournisseur vide"
+  - scenario: 'Fournisseur vide'
     inputs:
-      supplier_id: "xxx"
+      supplier_id: 'xxx'
       products_count: 0
     expected_output: 0
-    threshold_expected: "critical"
+    threshold_expected: 'critical'
 
-  - scenario: "Fournisseur catalogue large"
+  - scenario: 'Fournisseur catalogue large'
     inputs:
-      supplier_id: "yyy"
+      supplier_id: 'yyy'
       products_count: 120
     expected_output: 120
-    threshold_expected: "excellent"
+    threshold_expected: 'excellent'
 
 metadata:
   created_at: 2025-10-22

@@ -5,10 +5,11 @@
  * Aucune logique côté client pour éviter les blocages.
  */
 
-import Link from "next/link"
-import Image from "next/image"
-import { LogIn } from "lucide-react"
-import { ButtonV2 } from "@/components/ui/button"
+import Image from 'next/image';
+import Link from 'next/link';
+
+import { ButtonV2 } from '@verone/ui';
+import { LogIn } from 'lucide-react';
 
 export default function HomePage() {
   return (
@@ -25,7 +26,7 @@ export default function HomePage() {
             priority
             style={{
               objectPosition: 'center top',
-              clipPath: 'inset(0 0 45% 0)'
+              clipPath: 'inset(0 0 45% 0)',
             }}
           />
         </div>
@@ -40,10 +41,7 @@ export default function HomePage() {
         {/* Bouton de connexion */}
         <div className="pt-4">
           <Link href="/login">
-            <ButtonV2
-              size="lg"
-              variant="primary"
-            >
+            <ButtonV2 size="lg" variant="primary">
               <LogIn className="mr-2 h-5 w-5" />
               Se connecter
             </ButtonV2>
@@ -56,5 +54,5 @@ export default function HomePage() {
         </div>
       </div>
     </div>
-  )
+  );
 }

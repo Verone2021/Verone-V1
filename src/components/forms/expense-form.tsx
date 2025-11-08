@@ -6,60 +6,63 @@
  * Bucket Storage: expense-receipts
  */
 
-'use client'
+'use client';
 
-import { useState, useEffect } from 'react'
-import { createClient } from '@/lib/supabase/client'
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
-import { ButtonV2 } from '@/components/ui/button'
-import { Input } from '@/components/ui/input'
-import { Label } from '@/components/ui/label'
-import { Textarea } from '@/components/ui/textarea'
+import { useState, useEffect } from 'react';
+
+import { useRouter } from 'next/navigation';
+
+import { ButtonV2 } from '@verone/ui';
+import { Card, CardContent, CardHeader, CardTitle } from '@verone/ui';
+import { ImageUploadZone } from '@verone/ui';
+import { Input } from '@verone/ui';
+import { Label } from '@verone/ui';
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
-  SelectValue
-} from '@/components/ui/select'
-import { ImageUploadZone } from '@/components/ui/image-upload-zone'
-import { Loader2, Save, AlertCircle } from 'lucide-react'
-import { useRouter } from 'next/navigation'
-import { format } from 'date-fns'
+  SelectValue,
+} from '@verone/ui';
+import { Textarea } from '@verone/ui';
+import { format } from 'date-fns';
+import { Loader2, Save, AlertCircle } from 'lucide-react';
+
+import { createClient } from '@verone/utils/supabase/client';
 
 // =====================================================================
 // TYPES
 // =====================================================================
 
 interface Organisation {
-  id: string
-  name: string
-  type: string
+  id: string;
+  name: string;
+  type: string;
 }
 
 interface ExpenseCategory {
-  id: string
-  name: string
-  account_code: string | null
+  id: string;
+  name: string;
+  account_code: string | null;
 }
 
 interface ExpenseFormData {
-  expense_category_id: string
-  partner_id: string
-  document_number: string
-  document_date: string
-  total_ht: number
-  tva_rate: number
-  tva_amount: number
-  total_ttc: number
-  description: string
-  notes: string
-  uploaded_file_url?: string
+  expense_category_id: string;
+  partner_id: string;
+  document_number: string;
+  document_date: string;
+  total_ht: number;
+  tva_rate: number;
+  tva_amount: number;
+  total_ttc: number;
+  description: string;
+  notes: string;
+  uploaded_file_url?: string;
 }
 
 interface ExpenseFormProps {
-  onSuccess?: () => void
-  onCancel?: () => void
+  onSuccess?: () => void;
+  onCancel?: () => void;
 }
 
 // =====================================================================
@@ -70,16 +73,16 @@ const TVA_RATES = [
   { value: 0, label: '0% (Exonéré)' },
   { value: 5.5, label: '5,5% (Taux réduit)' },
   { value: 10, label: '10% (Taux intermédiaire)' },
-  { value: 20, label: '20% (Taux normal)' }
-] as const
+  { value: 20, label: '20% (Taux normal)' },
+] as const;
 
 // =====================================================================
 // COMPOSANT PRINCIPAL
 // =====================================================================
 
 export function ExpenseForm({ onSuccess, onCancel }: ExpenseFormProps) {
-  const router = useRouter()
-  const supabase = createClient()
+  const router = useRouter();
+  const supabase = createClient();
 
   // États formulaire
   const [formData, setFormData] = useState<ExpenseFormData>({
@@ -93,59 +96,59 @@ export function ExpenseForm({ onSuccess, onCancel }: ExpenseFormProps) {
     total_ttc: 0,
     description: '',
     notes: '',
-    uploaded_file_url: ''
-  })
+    uploaded_file_url: '',
+  });
 
   // États UI
-  const [categories, setCategories] = useState<ExpenseCategory[]>([])
-  const [suppliers, setSuppliers] = useState<Organisation[]>([])
-  const [loading, setLoading] = useState(false)
-  const [loadingData, setLoadingData] = useState(true)
-  const [error, setError] = useState<string | null>(null)
-  const [hasUploadedFile, setHasUploadedFile] = useState(false)
+  const [categories, setCategories] = useState<ExpenseCategory[]>([]);
+  const [suppliers, setSuppliers] = useState<Organisation[]>([]);
+  const [loading, setLoading] = useState(false);
+  const [loadingData, setLoadingData] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [hasUploadedFile, setHasUploadedFile] = useState(false);
 
   // Charger catégories et fournisseurs
   useEffect(() => {
     async function fetchData() {
       try {
-        setLoadingData(true)
+        setLoadingData(true);
 
         // Catégories dépenses
         const { data: categoriesData, error: categoriesError } = await supabase
           .from('expense_categories')
           .select('id, name, account_code')
           .eq('is_active', true)
-          .order('name')
+          .order('name');
 
-        if (categoriesError) throw categoriesError
-        setCategories(categoriesData || [])
+        if (categoriesError) throw categoriesError;
+        setCategories((categoriesData as any) || []);
 
         // Fournisseurs (organisations type supplier)
         const { data: suppliersData, error: suppliersError } = await supabase
           .from('organisations')
           .select('id, name, type')
           .eq('type', 'supplier')
-          .order('name')
+          .order('name');
 
-        if (suppliersError) throw suppliersError
-        setSuppliers(suppliersData || [])
+        if (suppliersError) throw suppliersError;
+        setSuppliers((suppliersData as any) || []);
       } catch (err) {
-        console.error('Erreur chargement données:', err)
-        setError('Impossible de charger les catégories et fournisseurs')
+        console.error('Erreur chargement données:', err);
+        setError('Impossible de charger les catégories et fournisseurs');
       } finally {
-        setLoadingData(false)
+        setLoadingData(false);
       }
     }
 
-    fetchData()
-  }, [])
+    fetchData();
+  }, []);
 
   // Auto-générer numéro dépense
   useEffect(() => {
     async function generateDocumentNumber() {
       try {
-        const year = new Date().getFullYear()
-        const month = String(new Date().getMonth() + 1).padStart(2, '0')
+        const year = new Date().getFullYear();
+        const month = String(new Date().getMonth() + 1).padStart(2, '0');
 
         // Compter dépenses du mois en cours
         const { count } = await supabase
@@ -156,75 +159,75 @@ export function ExpenseForm({ onSuccess, onCancel }: ExpenseFormProps) {
           .lt(
             'created_at',
             `${year}-${String(parseInt(month) + 1).padStart(2, '0')}-01`
-          )
+          );
 
-        const nextNumber = String((count || 0) + 1).padStart(3, '0')
-        const documentNumber = `DEP-${year}-${month}-${nextNumber}`
+        const nextNumber = String((count || 0) + 1).padStart(3, '0');
+        const documentNumber = `DEP-${year}-${month}-${nextNumber}`;
 
-        setFormData((prev) => ({ ...prev, document_number: documentNumber }))
+        setFormData(prev => ({ ...prev, document_number: documentNumber }));
       } catch (err) {
-        console.error('Erreur génération numéro:', err)
+        console.error('Erreur génération numéro:', err);
       }
     }
 
-    generateDocumentNumber()
-  }, [])
+    generateDocumentNumber();
+  }, []);
 
   // Calcul automatique TVA et TTC
   useEffect(() => {
-    const tvaAmount = (formData.total_ht * formData.tva_rate) / 100
-    const totalTtc = formData.total_ht + tvaAmount
+    const tvaAmount = (formData.total_ht * formData.tva_rate) / 100;
+    const totalTtc = formData.total_ht + tvaAmount;
 
-    setFormData((prev) => ({
+    setFormData(prev => ({
       ...prev,
       tva_amount: parseFloat(tvaAmount.toFixed(2)),
-      total_ttc: parseFloat(totalTtc.toFixed(2))
-    }))
-  }, [formData.total_ht, formData.tva_rate])
+      total_ttc: parseFloat(totalTtc.toFixed(2)),
+    }));
+  }, [formData.total_ht, formData.tva_rate]);
 
   // Validation formulaire
   const validateForm = (): boolean => {
     if (!formData.expense_category_id) {
-      setError('Veuillez sélectionner une catégorie de dépense')
-      return false
+      setError('Veuillez sélectionner une catégorie de dépense');
+      return false;
     }
 
     if (!formData.partner_id) {
-      setError('Veuillez sélectionner un fournisseur')
-      return false
+      setError('Veuillez sélectionner un fournisseur');
+      return false;
     }
 
     if (!formData.document_number.trim()) {
-      setError('Le numéro de document est requis')
-      return false
+      setError('Le numéro de document est requis');
+      return false;
     }
 
     if (formData.total_ht <= 0) {
-      setError('Le montant HT doit être supérieur à 0')
-      return false
+      setError('Le montant HT doit être supérieur à 0');
+      return false;
     }
 
     if (!formData.description.trim()) {
-      setError('La description est requise')
-      return false
+      setError('La description est requise');
+      return false;
     }
 
     if (!hasUploadedFile) {
-      setError('Le justificatif (facture/reçu) est obligatoire')
-      return false
+      setError('Le justificatif (facture/reçu) est obligatoire');
+      return false;
     }
 
-    return true
-  }
+    return true;
+  };
 
   // Soumission formulaire
   const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault()
-    setError(null)
+    e.preventDefault();
+    setError(null);
 
-    if (!validateForm()) return
+    if (!validateForm()) return;
 
-    setLoading(true)
+    setLoading(true);
 
     try {
       // Insérer financial_document
@@ -243,35 +246,35 @@ export function ExpenseForm({ onSuccess, onCancel }: ExpenseFormProps) {
           status: 'draft',
           description: formData.description,
           notes: formData.notes,
-          uploaded_file_url: formData.uploaded_file_url
-        })
+          uploaded_file_url: formData.uploaded_file_url,
+        } as any);
 
-      if (insertError) throw insertError
+      if (insertError) throw insertError;
 
       // Succès
       if (onSuccess) {
-        onSuccess()
+        onSuccess();
       } else {
-        router.push('/finance/depenses')
-        router.refresh()
+        router.push('/finance/depenses');
+        router.refresh();
       }
     } catch (err) {
-      console.error('Erreur création dépense:', err)
+      console.error('Erreur création dépense:', err);
       setError(
         err instanceof Error
           ? err.message
           : 'Erreur lors de la création de la dépense'
-      )
+      );
     } finally {
-      setLoading(false)
+      setLoading(false);
     }
-  }
+  };
 
   // Handler upload fichier
   const handleFileUpload = (url: string, fileName: string) => {
-    setFormData({ ...formData, uploaded_file_url: url })
-    setHasUploadedFile(true)
-  }
+    setFormData({ ...formData, uploaded_file_url: url });
+    setHasUploadedFile(true);
+  };
 
   return (
     <form onSubmit={handleSubmit} className="space-y-6">
@@ -309,7 +312,7 @@ export function ExpenseForm({ onSuccess, onCancel }: ExpenseFormProps) {
             ) : (
               <Select
                 value={formData.expense_category_id}
-                onValueChange={(value) =>
+                onValueChange={value =>
                   setFormData({ ...formData, expense_category_id: value })
                 }
                 disabled={loading}
@@ -318,10 +321,9 @@ export function ExpenseForm({ onSuccess, onCancel }: ExpenseFormProps) {
                   <SelectValue placeholder="Sélectionner une catégorie" />
                 </SelectTrigger>
                 <SelectContent>
-                  {categories.map((cat) => (
+                  {categories.map(cat => (
                     <SelectItem key={cat.id} value={cat.id}>
-                      {cat.name}{' '}
-                      {cat.account_code && `(${cat.account_code})`}
+                      {cat.name} {cat.account_code && `(${cat.account_code})`}
                     </SelectItem>
                   ))}
                 </SelectContent>
@@ -342,7 +344,7 @@ export function ExpenseForm({ onSuccess, onCancel }: ExpenseFormProps) {
             ) : (
               <Select
                 value={formData.partner_id}
-                onValueChange={(value) =>
+                onValueChange={value =>
                   setFormData({ ...formData, partner_id: value })
                 }
                 disabled={loading}
@@ -351,7 +353,7 @@ export function ExpenseForm({ onSuccess, onCancel }: ExpenseFormProps) {
                   <SelectValue placeholder="Sélectionner un fournisseur" />
                 </SelectTrigger>
                 <SelectContent>
-                  {suppliers.map((supplier) => (
+                  {suppliers.map(supplier => (
                     <SelectItem key={supplier.id} value={supplier.id}>
                       {supplier.name}
                     </SelectItem>
@@ -370,7 +372,7 @@ export function ExpenseForm({ onSuccess, onCancel }: ExpenseFormProps) {
               id="document_date"
               type="date"
               value={formData.document_date}
-              onChange={(e) =>
+              onChange={e =>
                 setFormData({ ...formData, document_date: e.target.value })
               }
               disabled={loading}
@@ -391,10 +393,10 @@ export function ExpenseForm({ onSuccess, onCancel }: ExpenseFormProps) {
                 step="0.01"
                 min="0.01"
                 value={formData.total_ht}
-                onChange={(e) =>
+                onChange={e =>
                   setFormData({
                     ...formData,
-                    total_ht: parseFloat(e.target.value) || 0
+                    total_ht: parseFloat(e.target.value) || 0,
                   })
                 }
                 disabled={loading}
@@ -409,7 +411,7 @@ export function ExpenseForm({ onSuccess, onCancel }: ExpenseFormProps) {
               </Label>
               <Select
                 value={formData.tva_rate.toString()}
-                onValueChange={(value) =>
+                onValueChange={value =>
                   setFormData({ ...formData, tva_rate: parseFloat(value) })
                 }
                 disabled={loading}
@@ -418,7 +420,7 @@ export function ExpenseForm({ onSuccess, onCancel }: ExpenseFormProps) {
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  {TVA_RATES.map((rate) => (
+                  {TVA_RATES.map(rate => (
                     <SelectItem key={rate.value} value={rate.value.toString()}>
                       {rate.label}
                     </SelectItem>
@@ -432,7 +434,9 @@ export function ExpenseForm({ onSuccess, onCancel }: ExpenseFormProps) {
           <div className="grid grid-cols-2 gap-4 p-4 bg-gray-50 rounded-md">
             <div>
               <p className="text-sm text-gray-500 mb-1">Montant TVA</p>
-              <p className="text-lg font-bold">{formData.tva_amount.toFixed(2)} €</p>
+              <p className="text-lg font-bold">
+                {formData.tva_amount.toFixed(2)} €
+              </p>
             </div>
             <div>
               <p className="text-sm text-gray-500 mb-1">Total TTC</p>
@@ -450,7 +454,7 @@ export function ExpenseForm({ onSuccess, onCancel }: ExpenseFormProps) {
             <Textarea
               id="description"
               value={formData.description}
-              onChange={(e) =>
+              onChange={e =>
                 setFormData({ ...formData, description: e.target.value })
               }
               placeholder="Décrivez la dépense..."
@@ -466,7 +470,7 @@ export function ExpenseForm({ onSuccess, onCancel }: ExpenseFormProps) {
             <Textarea
               id="notes"
               value={formData.notes}
-              onChange={(e) =>
+              onChange={e =>
                 setFormData({ ...formData, notes: e.target.value })
               }
               placeholder="Notes complémentaires..."
@@ -486,7 +490,7 @@ export function ExpenseForm({ onSuccess, onCancel }: ExpenseFormProps) {
             helperText="Upload obligatoire : facture, reçu ou ticket de caisse"
             acceptedFormats={{
               'image/*': ['.png', '.jpg', '.jpeg'],
-              'application/pdf': ['.pdf']
+              'application/pdf': ['.pdf'],
             }}
           />
         </CardContent>
@@ -523,5 +527,5 @@ export function ExpenseForm({ onSuccess, onCancel }: ExpenseFormProps) {
         )}
       </div>
     </form>
-  )
+  );
 }

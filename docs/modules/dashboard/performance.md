@@ -10,6 +10,7 @@
 ## 🎯 Performance SLOs
 
 ### Page Load Performance
+
 ```
 Target: <2s (dashboard load)
 Current: ~1.8s ✅
@@ -22,12 +23,14 @@ Time to Interactive (TTI): 1.6s ✅ (Target <2s)
 ```
 
 ### API Performance
+
 ```
 GET /api/dashboard/stock-orders-metrics: 320ms ✅ (Target <500ms)
 Supabase queries parallel: ~300ms ✅
 ```
 
 ### Database Performance
+
 ```
 ✅ useRealDashboardMetrics: <1s
 ✅ useStockOrdersMetrics: ~300ms
@@ -40,17 +43,20 @@ Supabase queries parallel: ~300ms ✅
 ## ⚠️ Performance Warnings Detected
 
 ### WARNING #1: activity-stats Query Slow
+
 **File** : Probablement `use-user-activity-tracker.ts`
 **Timing** : 2667ms et 2737ms
 **SLO** : <2000ms
 **Dépassement** : +33% et +37%
 
 **Root Cause** :
+
 - Query lourde sur `user_activity_logs`
 - Pas d'index sur `(user_id, created_at)`
 - Trop d'événements récupérés
 
 **Fix Recommandé** :
+
 ```sql
 -- 1. Créer index
 CREATE INDEX idx_user_activity_user_created
@@ -70,9 +76,10 @@ LIMIT 20  -- Au lieu de 100+
 ## ✅ Optimizations Applied
 
 ### 1. Parallel Queries
+
 ```typescript
 // ✅ OPTIMIZED: 4 queries parallèles
-const { metrics } = useCompleteDashboardMetrics()
+const { metrics } = useCompleteDashboardMetrics();
 // Combine:
 // - useRealDashboardMetrics()
 // - useOrganisations()
@@ -83,23 +90,28 @@ const { metrics } = useCompleteDashboardMetrics()
 ```
 
 ### 2. React Memoization
+
 ```typescript
 // Hook useCompleteDashboardMetrics déjà memoized
 export function useCompleteDashboardMetrics() {
-  const catalogueMetrics = useRealDashboardMetrics()  // Cached
-  const organisations = useOrganisations()            // Cached
-  const stockOrdersMetrics = useStockOrdersMetrics()  // Cached
+  const catalogueMetrics = useRealDashboardMetrics(); // Cached
+  const organisations = useOrganisations(); // Cached
+  const stockOrdersMetrics = useStockOrdersMetrics(); // Cached
 
   // Calculs uniquement si deps changent
-  const metrics = useMemo(() => ({
-    catalogue: { ...catalogueMetrics },
-    stocks: { totalValue: stockOrdersMetrics.stock_value },
-    // ...
-  }), [catalogueMetrics, organisations, stockOrdersMetrics])
+  const metrics = useMemo(
+    () => ({
+      catalogue: { ...catalogueMetrics },
+      stocks: { totalValue: stockOrdersMetrics.stock_value },
+      // ...
+    }),
+    [catalogueMetrics, organisations, stockOrdersMetrics]
+  );
 }
 ```
 
 ### 3. SQL RPC Optimization
+
 ```sql
 -- get_dashboard_stock_orders_metrics() optimized
 CREATE OR REPLACE FUNCTION get_dashboard_stock_orders_metrics()
@@ -124,11 +136,12 @@ $$ LANGUAGE plpgsql STABLE;
 ```
 
 ### 4. Component Optimization
+
 ```typescript
 // ElegantKpiCard déjà optimized
 export const ElegantKpiCard = React.memo(function ElegantKpiCard(props) {
   // Évite re-renders inutiles
-})
+});
 ```
 
 ---
@@ -136,6 +149,7 @@ export const ElegantKpiCard = React.memo(function ElegantKpiCard(props) {
 ## 📊 Performance Metrics
 
 ### Bundle Size
+
 ```
 Dashboard page: 6.79 kB (gzip)
 useCompleteDashboardMetrics: ~2 kB
@@ -145,6 +159,7 @@ Total JavaScript: ~15 kB (excellent)
 ```
 
 ### Network Requests
+
 ```
 First Load:
 - HTML page: 1 request
@@ -155,6 +170,7 @@ Total: 5 requests (~800ms)
 ```
 
 ### Memory Usage
+
 ```
 Average: 28 MB
 Peak: 35 MB (après navigation)
@@ -167,8 +183,10 @@ Peak: 35 MB (après navigation)
 ## 🚀 Optimization Recommendations
 
 ### Priority 1 (MEDIUM) - Fix activity-stats Query
+
 **Impact** : -60% query time
 **Effort** : LOW (1 index + 1 LIMIT)
+
 ```sql
 CREATE INDEX idx_user_activity_user_created
 ON user_activity_logs(user_id, created_at DESC);
@@ -181,12 +199,14 @@ const { data } = await supabase
   .select('*')
   .eq('user_id', userId)
   .order('created_at', { ascending: false })
-  .limit(20)  // ← Add limit
+  .limit(20); // ← Add limit
 ```
 
 ### Priority 2 (LOW) - Lazy Load Widgets
+
 **Impact** : -20% initial load
 **Effort** : MEDIUM
+
 ```typescript
 // Lazy load heavy widgets
 const TopProducts = dynamic(() => import('./TopProducts'), {
@@ -197,16 +217,18 @@ const ActivityTimeline = dynamic(() => import('./ActivityTimeline'))
 ```
 
 ### Priority 3 (LOW) - Cache RPC Results
+
 **Impact** : -30% repeated loads
 **Effort** : MEDIUM
+
 ```typescript
 // Add SWR caching
-import useSWR from 'swr'
+import useSWR from 'swr';
 
 const { data } = useSWR('/api/dashboard/stock-orders-metrics', fetcher, {
-  refreshInterval: 60000,  // Cache 1min
-  revalidateOnFocus: false
-})
+  refreshInterval: 60000, // Cache 1min
+  revalidateOnFocus: false,
+});
 ```
 
 ---
@@ -214,28 +236,30 @@ const { data } = useSWR('/api/dashboard/stock-orders-metrics', fetcher, {
 ## 🔍 Monitoring & Alerts
 
 ### Performance Monitoring (Future)
+
 ```typescript
 // Add Web Vitals reporting
-import { getCLS, getFID, getFCP, getLCP, getTTFB } from 'web-vitals'
+import { getCLS, getFID, getFCP, getLCP, getTTFB } from 'web-vitals';
 
 function sendToAnalytics(metric) {
   // Send to monitoring service (Sentry, Datadog, etc.)
-  console.log(metric.name, metric.value)
+  console.log(metric.name, metric.value);
 }
 
-getCLS(sendToAnalytics)
-getFID(sendToAnalytics)
-getFCP(sendToAnalytics)
-getLCP(sendToAnalytics)
-getTTFB(sendToAnalytics)
+getCLS(sendToAnalytics);
+getFID(sendToAnalytics);
+getFCP(sendToAnalytics);
+getLCP(sendToAnalytics);
+getTTFB(sendToAnalytics);
 ```
 
 ### SLO Alerting (Future)
+
 ```typescript
 // Alert si SLO dépassé
 if (loadTime > 2000) {
   // Send alert
-  console.error(`⚠️ SLO dépassé: dashboard ${loadTime}ms > 2000ms`)
+  console.error(`⚠️ SLO dépassé: dashboard ${loadTime}ms > 2000ms`);
 }
 ```
 
@@ -244,16 +268,19 @@ if (loadTime > 2000) {
 ## 📈 Performance History
 
 ### Baseline (2025-10-10)
+
 - Load Time: 2.1s
 - API Response: 400ms
 - Bundle: 8 kB
 
 ### Current (2025-10-17)
+
 - Load Time: 1.8s ✅ (-14% improvement)
 - API Response: 320ms ✅ (-20% improvement)
 - Bundle: 6.79 kB ✅ (-15% reduction)
 
 ### Goals (2025-Q4)
+
 - Load Time: <1.5s (Target -30%)
 - API Response: <250ms (Target -40%)
 - Zero SLO warnings
@@ -270,6 +297,7 @@ if (loadTime > 2000) {
 ✅ Bundle size minimal
 
 ⚠️ À implémenter:
+
 - [ ] Lazy loading widgets
 - [ ] SWR caching
 - [ ] Web Vitals monitoring

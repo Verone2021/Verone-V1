@@ -10,6 +10,7 @@
 ## 🎯 Vue d'ensemble
 
 Système complet de gestion des expéditions supportant 3 méthodes :
+
 1. **Packlink PRO** - Automatisé via API avec génération d'étiquettes
 2. **Chrono Track** - Partenaire externe avec saisie formulaire
 3. **Manuel** - Autres transporteurs non intégrés
@@ -19,6 +20,7 @@ Système complet de gestion des expéditions supportant 3 méthodes :
 ## 📋 Fonctionnalités Implémentées
 
 ### ✅ 1. Modal Commande Simplifié (`order-detail-modal.tsx`)
+
 - **Layout horizontal** 2 colonnes (Desktop)
 - **Images produits systématiques** avec fallback placeholder
 - Section client (nom, type, statut)
@@ -29,6 +31,7 @@ Système complet de gestion des expéditions supportant 3 méthodes :
 **Code clé** : `src/components/business/order-detail-modal.tsx`
 
 ### ✅ 2. Gestionnaire d'Expédition (`shipping-manager-modal.tsx`)
+
 - **Sélecteur 3 méthodes** : Packlink | Chrono Track | Manuel
 - **Multi-colis** avec add/remove dynamique
 - **Dimensions par colis** : poids (kg), L/l/h (cm)
@@ -44,6 +47,7 @@ Système complet de gestion des expéditions supportant 3 méthodes :
 ### ✅ 3. Migration Database Complète (`20251010_001_create_shipments_system.sql`)
 
 #### Tables créées :
+
 ```sql
 -- ENUM
 shipping_method: 'packlink' | 'chrono_track' | 'manual'
@@ -64,6 +68,7 @@ shipping_method: 'packlink' | 'chrono_track' | 'manual'
 ```
 
 #### RPC Function `process_shipment_stock()` :
+
 ```sql
 -- Automatique au moment de l'expédition :
 1. Créer mouvements stock (type 'sale' = sortie)
@@ -78,6 +83,7 @@ shipping_method: 'packlink' | 'chrono_track' | 'manual'
 ### ✅ 4. Hook React `use-shipments.ts`
 
 **Fonctions exportées** :
+
 ```typescript
 createPacklinkShipment(request)
   → Appelle API Packlink
@@ -104,6 +110,7 @@ fetchShipmentsForOrder(salesOrderId)
 ### ✅ 5. API Route Packlink (`/api/packlink/create-shipment`)
 
 **Workflow Packlink** :
+
 1. Authentification utilisateur
 2. Récupération commande + adresse client
 3. Appel API Packlink `POST /v1/shipments`
@@ -111,6 +118,7 @@ fetchShipmentsForOrder(salesOrderId)
 5. Retour données structurées
 
 **Environnement** :
+
 - API Key : `03df0c...` (fournie par utilisateur)
 - Endpoint : `https://api.packlink.com/v1`
 
@@ -121,6 +129,7 @@ fetchShipmentsForOrder(salesOrderId)
 ## 🔄 Workflow Complet Utilisateur
 
 ### Étape 1 : Création Commande
+
 ```
 Page Commandes → Bouton "Nouvelle commande" → SalesOrderFormModal
 → Sélection client (organisation/particulier)
@@ -129,6 +138,7 @@ Page Commandes → Bouton "Nouvelle commande" → SalesOrderFormModal
 ```
 
 ### Étape 2 : Confirmation & Paiement
+
 ```
 Liste commandes → Clic "Voir détails" → OrderDetailModal
 → Bouton "Confirmer commande" (draft → confirmed)
@@ -136,6 +146,7 @@ Liste commandes → Clic "Voir détails" → OrderDetailModal
 ```
 
 ### Étape 3 : Expédition
+
 ```
 OrderDetailModal → Bouton "Gérer l'expédition" → ShippingManagerModal
 
@@ -175,6 +186,7 @@ Option C - Manuel :
 ## 🎨 Design System Respect
 
 ### Composants shadcn/ui utilisés :
+
 - `Dialog` → Modals plein écran
 - `Card` → Sections regroupées
 - `Select` → Sélecteurs transporteurs
@@ -183,12 +195,14 @@ Option C - Manuel :
 - `Badge` → Statuts visuels
 
 ### Couleurs :
+
 - ✅ Noir (#000000) → Textes principaux
 - ✅ Blanc (#FFFFFF) → Backgrounds cards
 - ✅ Gris (#666666) → Textes secondaires
 - ❌ **Aucun jaune/doré** → Respect strict Vérone
 
 ### Layout :
+
 - Desktop : 2 colonnes (`grid-cols-1 lg:grid-cols-2`)
 - Mobile : 1 colonne stacked
 - Images produits : `w-24 h-24` systématiques
@@ -198,6 +212,7 @@ Option C - Manuel :
 ## 🔐 Sécurité & RLS
 
 ### Policies Supabase :
+
 ```sql
 -- Lecture : Tous les utilisateurs authentifiés
 CREATE POLICY "Authenticated users can read shipments"
@@ -213,6 +228,7 @@ CREATE POLICY "Authenticated users can update shipments"
 ```
 
 ### Audit Trail :
+
 - `created_by` → User ID au moment de la création
 - `shipped_by` → User ID qui a validé l'expédition
 - `created_at`, `updated_at` → Timestamps automatiques
@@ -222,6 +238,7 @@ CREATE POLICY "Authenticated users can update shipments"
 ## 📊 Base de Données
 
 ### Relations :
+
 ```
 sales_orders (1)
   └─→ (N) shipments
@@ -232,12 +249,14 @@ sales_orders (1)
 ```
 
 ### Contraintes :
+
 - `shipments.sales_order_id` → `sales_orders.id` ON DELETE CASCADE
 - `shipping_parcels.shipment_id` → `shipments.id` ON DELETE CASCADE
 - `parcel_items.parcel_id` → `shipping_parcels.id` ON DELETE CASCADE
 - `UNIQUE (shipment_id, parcel_number)` → Pas de doublons numéro colis
 
 ### Indexes :
+
 ```sql
 idx_shipments_sales_order   -- Recherche par commande
 idx_shipments_method        -- Filtrage par méthode
@@ -254,30 +273,35 @@ idx_parcel_items_order_item -- Suivi expéditions produit
 ### Étapes nécessaires :
 
 1. **Exécuter migration** :
+
 ```bash
 # Sur Supabase Dashboard ou CLI
 psql -h <host> -U postgres -d postgres < supabase/migrations/20251010_001_create_shipments_system.sql
 ```
 
 2. **Régénérer types TypeScript** :
+
 ```bash
 # Une fois migration exécutée
 npx supabase gen types typescript --project-id <project-id> > src/types/supabase.ts
 ```
 
 3. **Supprimer `as any` temporaires** :
+
 ```typescript
 // Dans use-shipments.ts et packlink route.ts
 // Remplacer .from('shipments' as any) par .from('shipments')
 ```
 
 4. **Vérifier API Key Packlink** :
+
 ```typescript
 // src/app/api/packlink/create-shipment/route.ts
-const PACKLINK_API_KEY = process.env.PACKLINK_API_KEY || '03df0c0d...'
+const PACKLINK_API_KEY = process.env.PACKLINK_API_KEY || '03df0c0d...';
 ```
 
 5. **Configurer warehouse address** :
+
 ```typescript
 // route.ts ligne ~100
 from: {
@@ -365,25 +389,28 @@ from: {
 ## 🔧 Maintenance
 
 ### Logs à surveiller :
+
 ```typescript
 // Console errors shipping-manager-modal
-console.error('Error creating shipment:', error)
+console.error('Error creating shipment:', error);
 
 // API route errors
-console.error('Erreur API Packlink route:', error)
+console.error('Erreur API Packlink route:', error);
 
 // Hook errors
-toast({ title: 'Erreur Packlink', variant: 'destructive' })
+toast({ title: 'Erreur Packlink', variant: 'destructive' });
 ```
 
 ### Sentry tags :
+
 ```typescript
 // À ajouter pour monitoring
-Sentry.setTag('shipment_method', shippingMethod)
-Sentry.setTag('sales_order_id', salesOrderId)
+Sentry.setTag('shipment_method', shippingMethod);
+Sentry.setTag('sales_order_id', salesOrderId);
 ```
 
 ### Base de données :
+
 ```sql
 -- Vérifier intégrité régulièrement
 SELECT COUNT(*) FROM shipments WHERE shipped_at IS NULL AND created_at < NOW() - INTERVAL '7 days';
@@ -401,18 +428,18 @@ WHERE pi.id IS NULL;
 
 ## ✅ Résumé Statut Implémentation
 
-| Composant | Fichier | Statut | Build OK |
-|-----------|---------|--------|----------|
-| Modal Commande | `order-detail-modal.tsx` | ✅ Complet | ✅ |
-| Modal Expédition | `shipping-manager-modal.tsx` | ✅ Complet | ✅ |
-| Page Commandes | `commandes/clients/page.tsx` | ✅ Modifié | ✅ |
-| Hook Expéditions | `use-shipments.ts` | ✅ Complet | ✅ |
-| API Packlink | `api/packlink/create-shipment/route.ts` | ✅ Complet | ✅ |
-| Migration DB | `20251010_001_create_shipments_system.sql` | ✅ Créée | ⏳ À exécuter |
-| Types Supabase | `use-sales-orders.ts` | ✅ Modifié | ✅ |
+| Composant        | Fichier                                    | Statut     | Build OK      |
+| ---------------- | ------------------------------------------ | ---------- | ------------- |
+| Modal Commande   | `order-detail-modal.tsx`                   | ✅ Complet | ✅            |
+| Modal Expédition | `shipping-manager-modal.tsx`               | ✅ Complet | ✅            |
+| Page Commandes   | `commandes/clients/page.tsx`               | ✅ Modifié | ✅            |
+| Hook Expéditions | `use-shipments.ts`                         | ✅ Complet | ✅            |
+| API Packlink     | `api/packlink/create-shipment/route.ts`    | ✅ Complet | ✅            |
+| Migration DB     | `20251010_001_create_shipments_system.sql` | ✅ Créée   | ⏳ À exécuter |
+| Types Supabase   | `use-sales-orders.ts`                      | ✅ Modifié | ✅            |
 
 **Prochaine étape** : Console Error Check via MCP Playwright Browser
 
 ---
 
-*Vérone Back Office 2025 - Professional Shipping Management System*
+_Vérone Back Office 2025 - Professional Shipping Management System_

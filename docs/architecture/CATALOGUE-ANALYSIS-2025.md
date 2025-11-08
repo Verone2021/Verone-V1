@@ -10,11 +10,14 @@
 ## 1. EXECUTIVE SUMMARY
 
 ### 1.1 Contexte
+
 Analyse approfondie de l'architecture du module Catalogue suite à la détection d'incohérences de données critiques :
+
 - **Hub Catalogue** affiche 19 produits
 - **Dashboard Catalogue** affiche 0 produits
 
 ### 1.2 Méthodologie
+
 - Analyse via MCP Serena (symbols overview + pattern search)
 - Vérification conformité business rules (manifests/business-rules/catalogue.md)
 - Audit migrations Supabase (table products + RLS policies)
@@ -23,16 +26,19 @@ Analyse approfondie de l'architecture du module Catalogue suite à la détection
 ### 1.3 Résultats Clés
 
 **Architecture Actuelle:**
+
 - **18 routes** catalogue (17 fonctionnelles + 1 backup legacy)
 - **14 hooks** catalogue principaux sur 59 totaux (23.7%)
 - **130+ composants** business catalogue-related
 
 **Incohérences Détectées:**
+
 - **3 critiques P0** (bloquantes production)
 - **4 majeures P1** (impact fonctionnel)
 - **3 mineures P2** (optimisations)
 
 **Gaps Business Rules:**
+
 - **2 critiques P0** (colonnes visibilité absentes, cron jobs manquants)
 - **3 majeurs P1** (tarifs dégressifs, réservations, tracking)
 - **2 mineurs P2** (collections avancées, analytics)
@@ -46,76 +52,85 @@ Analyse approfondie de l'architecture du module Catalogue suite à la détection
 ### 2.1 Structure Pages (18 routes)
 
 #### Routes Principales (6)
-| Route | Fichier | Fonction | Statut |
-|-------|---------|----------|--------|
-| `/catalogue` | `page.tsx` | Hub principal produits | ✅ Actif |
-| `/catalogue/dashboard` | `dashboard/page.tsx` | Tableau de bord KPIs | ⚠️ Bug 0 produits |
-| `/catalogue/nouveau` | `nouveau/page.tsx` | Création rapide | ⚠️ Redondance |
-| `/catalogue/create` | `create/page.tsx` | Création complète | ✅ Actif |
-| `/catalogue/archived` | `archived/page.tsx` | Produits archivés | ✅ Actif |
-| `/catalogue/stocks` | `stocks/page.tsx` | Gestion stocks | ✅ Actif |
+
+| Route                  | Fichier              | Fonction               | Statut            |
+| ---------------------- | -------------------- | ---------------------- | ----------------- |
+| `/catalogue`           | `page.tsx`           | Hub principal produits | ✅ Actif          |
+| `/catalogue/dashboard` | `dashboard/page.tsx` | Tableau de bord KPIs   | ⚠️ Bug 0 produits |
+| `/catalogue/nouveau`   | `nouveau/page.tsx`   | Création rapide        | ⚠️ Redondance     |
+| `/catalogue/create`    | `create/page.tsx`    | Création complète      | ✅ Actif          |
+| `/catalogue/archived`  | `archived/page.tsx`  | Produits archivés      | ✅ Actif          |
+| `/catalogue/stocks`    | `stocks/page.tsx`    | Gestion stocks         | ✅ Actif          |
 
 #### Routes Taxonomie (8)
-| Route | Fonction | Statut |
-|-------|----------|--------|
-| `/catalogue/categories` | Liste catégories | ✅ Actif |
-| `/catalogue/categories/[categoryId]` | Détail catégorie | ✅ Actif |
+
+| Route                                      | Fonction              | Statut   |
+| ------------------------------------------ | --------------------- | -------- |
+| `/catalogue/categories`                    | Liste catégories      | ✅ Actif |
+| `/catalogue/categories/[categoryId]`       | Détail catégorie      | ✅ Actif |
 | `/catalogue/subcategories/[subcategoryId]` | Détail sous-catégorie | ✅ Actif |
-| `/catalogue/families` | Gestion familles | ✅ Actif |
-| `/catalogue/families/[familyId]` | Détail famille | ✅ Actif |
-| `/catalogue/collections` | Gestion collections | ✅ Actif |
-| `/catalogue/collections/[collectionId]` | Détail collection | ✅ Actif |
+| `/catalogue/families`                      | Gestion familles      | ✅ Actif |
+| `/catalogue/families/[familyId]`           | Détail famille        | ✅ Actif |
+| `/catalogue/collections`                   | Gestion collections   | ✅ Actif |
+| `/catalogue/collections/[collectionId]`    | Détail collection     | ✅ Actif |
 
 #### Routes Produits & Variants (4)
-| Route | Fonction | Statut |
-|-------|----------|--------|
-| `/catalogue/[productId]` | Détail produit | ✅ Actif |
-| `/catalogue/[productId]/page-old-backup.tsx` | Backup ancien | ❌ À supprimer |
-| `/catalogue/edit/[draftId]` | Édition brouillon | ✅ Actif |
-| `/catalogue/variantes` | Gestion groupes variants | ✅ Actif |
-| `/catalogue/variantes/[groupId]` | Détail groupe variant | ✅ Actif |
+
+| Route                                        | Fonction                 | Statut         |
+| -------------------------------------------- | ------------------------ | -------------- |
+| `/catalogue/[productId]`                     | Détail produit           | ✅ Actif       |
+| `/catalogue/[productId]/page-old-backup.tsx` | Backup ancien            | ❌ À supprimer |
+| `/catalogue/edit/[draftId]`                  | Édition brouillon        | ✅ Actif       |
+| `/catalogue/variantes`                       | Gestion groupes variants | ✅ Actif       |
+| `/catalogue/variantes/[groupId]`             | Détail groupe variant    | ✅ Actif       |
 
 #### Route Sourcing (1)
-| Route | Fonction | Statut |
-|-------|----------|--------|
+
+| Route                        | Fonction                | Statut   |
+| ---------------------------- | ----------------------- | -------- |
 | `/catalogue/sourcing/rapide` | Sourcing rapide produit | ✅ Actif |
 
 ### 2.2 Hooks Catalogue (14 principaux)
 
 #### Hooks Produits (4)
-| Hook | Export Principal | Fonction | Lignes | SWR |
-|------|------------------|----------|--------|-----|
-| `use-products.ts` | `useProducts()`, `useProduct()` | Liste + détail produits | 433 | ✅ |
-| `use-catalogue.ts` | `useCatalogue()` | État global catalogue | 441 | ❌ |
-| `use-drafts.ts` | `useDrafts()` | Brouillons produits | - | - |
-| `use-sourcing-products.ts` | `useSourcingProducts()` | Produits sourcing | - | - |
-| `use-archived-products.ts` | `useArchivedProducts()` | Produits archivés | - | - |
+
+| Hook                       | Export Principal                | Fonction                | Lignes | SWR |
+| -------------------------- | ------------------------------- | ----------------------- | ------ | --- |
+| `use-products.ts`          | `useProducts()`, `useProduct()` | Liste + détail produits | 433    | ✅  |
+| `use-catalogue.ts`         | `useCatalogue()`                | État global catalogue   | 441    | ❌  |
+| `use-drafts.ts`            | `useDrafts()`                   | Brouillons produits     | -      | -   |
+| `use-sourcing-products.ts` | `useSourcingProducts()`         | Produits sourcing       | -      | -   |
+| `use-archived-products.ts` | `useArchivedProducts()`         | Produits archivés       | -      | -   |
 
 #### Hooks Taxonomie (4)
-| Hook | Export | Fonction |
-|------|--------|----------|
-| `use-categories.ts` | `useCategories()` | Gestion catégories |
-| `use-subcategories.ts` | `useSubcategories()` | Gestion sous-catégories |
-| `use-families.ts` | `useFamilies()` | Gestion familles produits |
-| `use-collections.ts` | `useCollections()` | Gestion collections |
+
+| Hook                   | Export               | Fonction                  |
+| ---------------------- | -------------------- | ------------------------- |
+| `use-categories.ts`    | `useCategories()`    | Gestion catégories        |
+| `use-subcategories.ts` | `useSubcategories()` | Gestion sous-catégories   |
+| `use-families.ts`      | `useFamilies()`      | Gestion familles produits |
+| `use-collections.ts`   | `useCollections()`   | Gestion collections       |
 
 #### Hooks Variants (3)
-| Hook | Export | Fonction | Statut |
-|------|--------|----------|--------|
-| `use-variant-groups.ts` | `useVariantGroups()`, `useVariantGroup()` | Gestion groupes variants | ✅ |
-| `use-variant-products.ts` | `useVariantProducts()` | Produits variants individuels | ✅ |
-| `use-product-variants.ts` | `useProductVariants()` | Wrapper variants | ⚠️ Redondant |
+
+| Hook                      | Export                                    | Fonction                      | Statut       |
+| ------------------------- | ----------------------------------------- | ----------------------------- | ------------ |
+| `use-variant-groups.ts`   | `useVariantGroups()`, `useVariantGroup()` | Gestion groupes variants      | ✅           |
+| `use-variant-products.ts` | `useVariantProducts()`                    | Produits variants individuels | ✅           |
+| `use-product-variants.ts` | `useProductVariants()`                    | Wrapper variants              | ⚠️ Redondant |
 
 #### Hooks Médias & Complémentaires (3)
-| Hook | Export | Fonction |
-|------|--------|----------|
-| `use-product-images.ts` | `useProductImages()` | Gestion images produits |
-| `use-product-colors.ts` | `useProductColors()` | Sélection couleurs |
+
+| Hook                         | Export                    | Fonction                         |
+| ---------------------------- | ------------------------- | -------------------------------- |
+| `use-product-images.ts`      | `useProductImages()`      | Gestion images produits          |
+| `use-product-colors.ts`      | `useProductColors()`      | Sélection couleurs               |
 | `use-collection-products.ts` | `useCollectionProducts()` | Association produits collections |
 
 ### 2.3 Composants Business Catalogue
 
 **130+ composants** dans `src/components/business/` en lien avec catalogue :
+
 - `product-card.tsx`, `product-creation-wizard.tsx`, `product-creation-modal.tsx`
 - `category-hierarchy-selector.tsx`, `category-hierarchy-filter-v2.tsx`
 - `variant-creation-modal.tsx`, `variant-group-edit-modal.tsx`
@@ -132,12 +147,14 @@ Analyse approfondie de l'architecture du module Catalogue suite à la détection
 #### 3.1.1 Dashboard Affiche 0 Produits (Hub: 19)
 
 **Symptôme:**
+
 - Hub `/catalogue` : 19 produits affichés
 - Dashboard `/catalogue/dashboard` : 0 produits affichés
 
 **Root Cause Identifiée:**
 
 **Hub Catalogue (page.tsx ligne 34-46) :**
+
 ```typescript
 const {
   products,
@@ -146,21 +163,22 @@ const {
   error,
   setFilters: setCatalogueFilters,
   // ...
-} = useCatalogue() // ← Utilise use-catalogue.ts
+} = useCatalogue(); // ← Utilise use-catalogue.ts
 ```
 
 **Dashboard Catalogue (dashboard/page.tsx ligne 52) :**
+
 ```typescript
-const { products, loading: productsLoading } = useProducts() // ← Utilise use-products.ts
+const { products, loading: productsLoading } = useProducts(); // ← Utilise use-products.ts
 ```
 
 **Analyse Comparative Hooks:**
 
 **use-catalogue.ts (ligne 163-174) :**
+
 ```typescript
-let query = supabase
-  .from('products')
-  .select(`
+let query = supabase.from('products').select(
+  `
     id, sku, name, slug,
     cost_price,
     status, condition,
@@ -168,17 +186,20 @@ let query = supabase
     archived_at, created_at, updated_at,
     supplier:organisations!supplier_id(id, name),      // ← JOIN supplier
     subcategories!subcategory_id(id, name)             // ← JOIN subcategories
-  `, { count: 'exact' });
+  `,
+  { count: 'exact' }
+);
 ```
+
 - **14 colonnes** + **2 JOINs**
 - **Pagination:** 500 par défaut (ligne 201)
 - **Filtrage:** `archived_at IS NULL` (ligne 177)
 
 **use-products.ts (ligne 135-148) :**
+
 ```typescript
-let query = supabase
-  .from('products')
-  .select(`
+let query = supabase.from('products').select(
+  `
     id,
     name,
     sku,
@@ -187,13 +208,17 @@ let query = supabase
     margin_percentage,
     created_at,
     subcategory_id
-  `, { count: 'exact' })
+  `,
+  { count: 'exact' }
+);
 ```
+
 - **8 colonnes** + **0 JOINs**
 - **Pagination:** 50 par défaut (ligne 123)
 - **PAS de filtrage** archived_at
 
 **Causes Probables:**
+
 1. **RLS Policies** différentes selon colonnes SELECT (supplier JOIN peut échouer silencieusement)
 2. **Foreign Keys** supplier_id / subcategory_id peuvent être NULL → JOIN échoue
 3. **Error Handling** dans use-products.ts cache les erreurs Supabase
@@ -212,8 +237,10 @@ let query = supabase
 #### 3.1.3 Colonnes Visibilité Produits Absentes
 
 **Business Rule (catalogue.md lignes 54-61) :**
+
 ```markdown
 ### Règles de visibilité par interface
+
 - Back-office : Tous les produits (y compris discontinués)
 - Particuliers : Produits actifs avec `visible_particuliers = true`
 - Professionnels : Produits actifs avec `visible_professionnels = true`
@@ -221,6 +248,7 @@ let query = supabase
 ```
 
 **Migration products (20250917_002_products_system_consolidated.sql) :**
+
 ```sql
 CREATE TABLE products (
   -- ... colonnes existantes ...
@@ -239,6 +267,7 @@ CREATE TABLE products (
 #### 3.2.1 Duplication Hooks: use-products vs use-catalogue
 
 **Analyse:**
+
 - **use-products.ts** : 433 lignes, SWR caching, SELECT léger (8 colonnes)
 - **use-catalogue.ts** : 441 lignes, pas de SWR, SELECT complet (14 colonnes + JOINs)
 - **Objectif:** Tous deux gèrent liste/CRUD produits
@@ -246,6 +275,7 @@ CREATE TABLE products (
 **Problème:** Logique dupliquée, maintenance double, incohérences garanties
 
 **Solution Recommandée:** Hook unifié `use-products-unified.ts` combinant :
+
 - SWR de use-products (performance)
 - JOINs de use-catalogue (données enrichies)
 - SELECT configurable selon contexte (liste légère vs détail complet)
@@ -253,11 +283,13 @@ CREATE TABLE products (
 #### 3.2.2 Hook Redondant: use-product-variants.ts
 
 **Analyse Hooks Variants:**
+
 - `use-variant-groups.ts` : Gestion GROUPES variants
 - `use-variant-products.ts` : Gestion PRODUITS variants individuels
 - `use-product-variants.ts` : Wrapper/alias (probablement legacy)
 
 **Symbols Overview:**
+
 - `use-product-variants.ts` : 1 export `useProductVariants()`
 - Aucune logique complexe détectée
 
@@ -268,10 +300,12 @@ CREATE TABLE products (
 #### 3.2.3 Pages Création Doubles: nouveau/ vs create/
 
 **Routes Détectées:**
+
 - `/catalogue/nouveau` (nouveau/page.tsx)
 - `/catalogue/create` (create/page.tsx)
 
 **Analyse Nécessaire:** Déterminer si :
+
 - **Identiques** → Supprimer nouveau/, garder create/ (RESTful standard)
 - **Différentes** → Renommer nouveau/ en quick-create/ (clarté)
 
@@ -304,6 +338,7 @@ CREATE TABLE products (
 **Problème:** Performances variables selon page
 
 **Solution:** SELECT configurable dans hook unifié :
+
 - Mode `list` : 8 colonnes essentielles
 - Mode `detail` : 14 colonnes + JOINs
 
@@ -323,7 +358,9 @@ CREATE TABLE products (
 ### 4.1 Règles Conformes ✅ (6/9)
 
 #### 4.1.1 Statuts de Disponibilité
+
 **Business Rule (catalogue.md lignes 5-9) :**
+
 ```
 en_stock → in_stock
 sur_commande → preorder
@@ -332,15 +369,19 @@ discontinue → discontinued
 ```
 
 **Migration (20250917_002 lignes 14-20) :**
+
 ```sql
 CREATE TYPE availability_status_type AS ENUM (
   'in_stock', 'out_of_stock', 'preorder', 'coming_soon', 'discontinued'
 );
 ```
+
 **Statut:** ✅ **CONFORME**
 
 #### 4.1.2 Variantes et Groupes
+
 **Business Rule (catalogue.md lignes 11-16) :**
+
 ```
 - Les variantes sont groupées par product_group_id
 - Chaque groupe = item_group_id feeds Meta/Google
@@ -348,6 +389,7 @@ CREATE TYPE availability_status_type AS ENUM (
 ```
 
 **Architecture:**
+
 - `use-variant-groups.ts` : Gestion groupes
 - `use-variant-products.ts` : Produits variants individuels
 - Relation `product_group_id` implémentée
@@ -355,7 +397,9 @@ CREATE TYPE availability_status_type AS ENUM (
 **Statut:** ✅ **CONFORME**
 
 #### 4.1.3 Catégorisation 3 Niveaux
+
 **Business Rule (catalogue.md lignes 44-52) :**
+
 ```
 1. Famille : Mobilier, Décoration, Éclairage, Textile
 2. Catégorie : Canapés, Tables, Luminaires, Rideaux
@@ -363,6 +407,7 @@ CREATE TYPE availability_status_type AS ENUM (
 ```
 
 **Architecture:**
+
 - Tables : `families`, `categories`, `subcategories`
 - Hooks dédiés : `use-families.ts`, `use-categories.ts`, `use-subcategories.ts`
 - Relation obligatoire : `subcategory_id` dans products
@@ -370,7 +415,9 @@ CREATE TYPE availability_status_type AS ENUM (
 **Statut:** ✅ **CONFORME**
 
 #### 4.1.4 Gestion Stocks
+
 **Business Rule (catalogue.md lignes 69-78) :**
+
 ```
 - Stock minimum : Seuil alerte réapprovisionnement
 - Stock sécurité : Quantité maintenir en permanence
@@ -378,6 +425,7 @@ CREATE TYPE availability_status_type AS ENUM (
 ```
 
 **Migration (lignes 76-80) :**
+
 ```sql
 stock_quantity INTEGER DEFAULT 0
   CONSTRAINT stock_non_negative CHECK (stock_quantity >= 0),
@@ -390,7 +438,9 @@ min_stock_level INTEGER DEFAULT 5
 **Statut:** ✅ **CONFORME**
 
 #### 4.1.5 Validation et Contrôles
+
 **Business Rule (catalogue.md lignes 94-100) :**
+
 ```
 - Nom produit : 5-200 caractères
 - Prix vente > Prix achat (alerte)
@@ -400,6 +450,7 @@ min_stock_level INTEGER DEFAULT 5
 ```
 
 **Migration (lignes 50-51, 55-56, 48-49) :**
+
 ```sql
 name VARCHAR(200) NOT NULL
   CONSTRAINT name_length CHECK (length(name) >= 5),
@@ -413,7 +464,9 @@ sku VARCHAR(100) NOT NULL UNIQUE
 **Statut:** ✅ **CONFORME**
 
 #### 4.1.6 Intégrations Externes (Partiel)
+
 **Business Rule (catalogue.md lignes 81-91) :**
+
 ```
 - Export quotidien automatique à 06h00
 - Filtrage : produits actifs, visibles, avec image
@@ -430,7 +483,9 @@ sku VARCHAR(100) NOT NULL UNIQUE
 ### 4.2 Règles Partielles ⚠️ (2/9)
 
 #### 4.2.1 Tarification
+
 **Business Rule (catalogue.md lignes 23-40) :**
+
 ```
 - Prix achat HT, Prix vente HT, Prix TTC B2C, Prix HT B2B
 - TVA 20% par défaut, modulable
@@ -439,6 +494,7 @@ sku VARCHAR(100) NOT NULL UNIQUE
 ```
 
 **Migration (lignes 54-60) :**
+
 ```sql
 price_ht DECIMAL(10,2) NOT NULL,
 cost_price DECIMAL(10,2),
@@ -448,13 +504,16 @@ tax_rate DECIMAL(5,4) DEFAULT 0.2000,
 **Hook Détecté:** `use-pricing.ts` (à auditer)
 
 **Manque:**
+
 - Tarifs dégressifs (paliers quantité)
 - Distinction prix B2C TTC / B2B HT
 
 **Statut:** ⚠️ **PARTIEL** (structure base OK, logique avancée à vérifier)
 
 #### 4.2.2 Collections et Partage
+
 **Business Rule (catalogue.md lignes 62-67) :**
+
 ```
 - Collections publiques ou privées
 - Liens partage durée vie configurable (30 jours défaut)
@@ -465,6 +524,7 @@ tax_rate DECIMAL(5,4) DEFAULT 0.2000,
 **Hook Détecté:** `use-collections.ts`
 
 **Manque:**
+
 - Durée vie liens
 - Protection mot de passe
 - Tracking consultations avancé
@@ -474,7 +534,9 @@ tax_rate DECIMAL(5,4) DEFAULT 0.2000,
 ### 4.3 Règles Non Conformes ❌ (1/9)
 
 #### 4.3.1 Visibilité Multi-Canaux
+
 **Business Rule (catalogue.md lignes 54-61) :**
+
 ```
 - Back-office : Tous produits
 - Particuliers : visible_particuliers = true
@@ -499,27 +561,31 @@ tax_rate DECIMAL(5,4) DEFAULT 0.2000,
 **Problème:** Dashboard utilise `use-products.ts` qui retourne 0 produits
 
 **Solution Rapide (Court Terme) :**
+
 ```typescript
 // src/app/catalogue/dashboard/page.tsx (ligne 52)
 // ❌ AVANT:
-const { products, loading: productsLoading } = useProducts()
+const { products, loading: productsLoading } = useProducts();
 
 // ✅ APRÈS:
-const { products, loading } = useCatalogue()
+const { products, loading } = useCatalogue();
 ```
 
 **Validation:**
+
 - Vérifier dashboard affiche 19 produits
 - Console Playwright MCP : 0 erreurs
 - Performance <2s maintenue
 
 **Solution Optimale (Long Terme) :**
+
 - Créer `use-products-unified.ts` (voir Action 2.1)
 - Migrer dashboard vers hook unifié
 
 #### Action 1.2 : Implémenter Colonnes Visibilité (4h)
 
 **Migration Requise:**
+
 ```sql
 -- supabase/migrations/20251011_001_products_visibility_channels.sql
 ALTER TABLE products
@@ -542,20 +608,22 @@ COMMENT ON COLUMN products.visible_affilies IS 'Visibilité plateforme affiliati
 ```
 
 **Hooks à Modifier:**
+
 ```typescript
 // use-products.ts - Ajouter filtres visibilité
 export interface ProductFilters {
   // ... filtres existants
-  channel?: 'particuliers' | 'professionnels' | 'affilies' // Nouveau
+  channel?: 'particuliers' | 'professionnels' | 'affilies'; // Nouveau
 }
 
 // Appliquer filtre dans query
 if (filters?.channel) {
-  query = query.eq(`visible_${filters.channel}`, true)
+  query = query.eq(`visible_${filters.channel}`, true);
 }
 ```
 
 **Validation:**
+
 - Tests filtres par canal
 - Vérification affichage produits selon profil utilisateur
 
@@ -564,6 +632,7 @@ if (filters?.channel) {
 **Scope:** Hors analyse catalogue mais critique
 
 **Actions:**
+
 - Vérifier schéma table `organisations` (colonne slug)
 - Fix requêtes SELECT si colonne absente
 - Tests CRUD organisations
@@ -573,18 +642,19 @@ if (filters?.channel) {
 #### Action 2.1 : Hook Unifié use-products-unified.ts (6h)
 
 **Architecture Cible:**
+
 ```typescript
 // src/hooks/use-products-unified.ts
 
-import useSWR from 'swr'
-import { createClient } from '@/lib/supabase/client'
+import useSWR from 'swr';
+import { createClient } from '@/lib/supabase/client';
 
-export type SelectMode = 'list' | 'detail'
+export type SelectMode = 'list' | 'detail';
 
 export interface UseProductsOptions {
-  filters?: ProductFilters
-  page?: number
-  mode?: SelectMode // 'list' ou 'detail'
+  filters?: ProductFilters;
+  page?: number;
+  mode?: SelectMode; // 'list' ou 'detail'
 }
 
 const SELECT_CONFIGS = {
@@ -598,17 +668,17 @@ const SELECT_CONFIGS = {
     created_at, updated_at,
     supplier:organisations!supplier_id(id, name),
     subcategories!subcategory_id(id, name)
-  ` // 14 colonnes + JOINs
-}
+  `, // 14 colonnes + JOINs
+};
 
 export function useProducts(options: UseProductsOptions = {}) {
-  const { filters, page = 0, mode = 'list' } = options
-  const supabase = createClient()
+  const { filters, page = 0, mode = 'list' } = options;
+  const supabase = createClient();
 
-  const swrKey = useMemo(() =>
-    ['products', mode, JSON.stringify(filters || {}), page],
+  const swrKey = useMemo(
+    () => ['products', mode, JSON.stringify(filters || {}), page],
     [mode, filters, page]
-  )
+  );
 
   const { data, error, isLoading, mutate } = useSWR(
     swrKey,
@@ -618,25 +688,27 @@ export function useProducts(options: UseProductsOptions = {}) {
         .select(SELECT_CONFIGS[mode], { count: 'exact' })
         .is('archived_at', null) // Exclure archivés par défaut
         .order('created_at', { ascending: false })
-        .range(page * 100, (page + 1) * 100 - 1) // Pagination 100
+        .range(page * 100, (page + 1) * 100 - 1); // Pagination 100
 
       // Appliquer filtres...
       if (filters?.search) {
-        query = query.or(`name.ilike.%${filters.search}%,sku.ilike.%${filters.search}%`)
+        query = query.or(
+          `name.ilike.%${filters.search}%,sku.ilike.%${filters.search}%`
+        );
       }
       // ... autres filtres
 
-      const { data, error, count } = await query
-      if (error) throw error
+      const { data, error, count } = await query;
+      if (error) throw error;
 
-      return { products: data || [], totalCount: count || 0 }
+      return { products: data || [], totalCount: count || 0 };
     },
     {
       revalidateOnFocus: false,
       dedupingInterval: 5 * 60 * 1000, // 5min cache
-      keepPreviousData: true
+      keepPreviousData: true,
     }
-  )
+  );
 
   return {
     products: data?.products || [],
@@ -645,29 +717,32 @@ export function useProducts(options: UseProductsOptions = {}) {
     error,
     refetch: mutate,
     // ... méthodes CRUD
-  }
+  };
 }
 ```
 
 **Migration Pages:**
+
 ```typescript
 // Hub Catalogue (liste légère)
-const { products } = useProducts({ mode: 'list' })
+const { products } = useProducts({ mode: 'list' });
 
 // Dashboard (avec stats détaillées)
-const { products } = useProducts({ mode: 'detail' })
+const { products } = useProducts({ mode: 'detail' });
 
 // Page détail produit
-const { product } = useProduct(id, { mode: 'detail' })
+const { product } = useProduct(id, { mode: 'detail' });
 ```
 
 **Suppression Après Migration:**
+
 - `use-catalogue.ts` (441 lignes)
 - Fonctionnalités intégrées dans `use-products-unified.ts`
 
 #### Action 2.2 : Cleanup Hook use-product-variants.ts (2h)
 
 **Étapes:**
+
 1. Grep usages dans codebase : `grep -r "use-product-variants" src/`
 2. Migrer vers `use-variant-products.ts`
 3. Supprimer fichier
@@ -676,17 +751,22 @@ const { product } = useProduct(id, { mode: 'detail' })
 #### Action 2.3 : Standardiser Pagination (1h)
 
 **Modifications:**
+
 ```typescript
 // Constante globale
-const PRODUCTS_PAGINATION_DEFAULT = 100
+const PRODUCTS_PAGINATION_DEFAULT = (100)
 
-// use-products-unified.ts
-.range(page * PRODUCTS_PAGINATION_DEFAULT, (page + 1) * PRODUCTS_PAGINATION_DEFAULT - 1)
+  // use-products-unified.ts
+  .range(
+    page * PRODUCTS_PAGINATION_DEFAULT,
+    (page + 1) * PRODUCTS_PAGINATION_DEFAULT - 1
+  );
 ```
 
 #### Action 2.4 : Audit Routes Création (1h)
 
 **Analyser:**
+
 - Différences fonctionnelles `/nouveau` vs `/create`
 - Si identiques : Supprimer `/nouveau`, redirect vers `/create`
 - Si différentes : Renommer `/nouveau` → `/quick-create`
@@ -694,12 +774,14 @@ const PRODUCTS_PAGINATION_DEFAULT = 100
 ### 5.3 Phase 3 : Optimisations (P2) - 4h
 
 #### Action 3.1 : Cleanup Fichiers Legacy (1h)
+
 - Supprimer `[productId]/page-old-backup.tsx`
 - Vérifier pas de références
 
 #### Action 3.2 : Implémenter Cron Export Feeds (2h)
 
 **Edge Function Supabase:**
+
 ```typescript
 // supabase/functions/export-product-feeds/index.ts
 import { createClient } from '@supabase/supabase-js'
@@ -732,13 +814,15 @@ Deno.serve(async (req) => {
 ```
 
 **Cron Config (supabase/functions/cron.yaml):**
+
 ```yaml
 - name: export-product-feeds
-  schedule: "0 6 * * *" # Tous les jours 06h00
+  schedule: '0 6 * * *' # Tous les jours 06h00
   function: export-product-feeds
 ```
 
 #### Action 3.3 : Tests Validation Complète (1h)
+
 - Dashboard KPIs corrects
 - Filtres visibilité fonctionnels
 - Hooks unifiés performants (<2s)
@@ -746,12 +830,12 @@ Deno.serve(async (req) => {
 
 ### 5.4 Récapitulatif Temps Consolidation
 
-| Phase | Actions | Temps Estimé | Priorité |
-|-------|---------|--------------|----------|
-| Phase 1 | Fixes critiques P0 | 8h | 🔴 Urgent |
-| Phase 2 | Consolidation hooks P1 | 10h | 🟠 Important |
-| Phase 3 | Optimisations P2 | 4h | 🟢 Nice to have |
-| **TOTAL** | **22 actions** | **22h** | **~3 jours** |
+| Phase     | Actions                | Temps Estimé | Priorité        |
+| --------- | ---------------------- | ------------ | --------------- |
+| Phase 1   | Fixes critiques P0     | 8h           | 🔴 Urgent       |
+| Phase 2   | Consolidation hooks P1 | 10h          | 🟠 Important    |
+| Phase 3   | Optimisations P2       | 4h           | 🟢 Nice to have |
+| **TOTAL** | **22 actions**         | **22h**      | **~3 jours**    |
 
 ---
 
@@ -842,38 +926,38 @@ supabase/functions/
 
 ### 7.1 Avant Consolidation
 
-| Métrique | Valeur Actuelle | Statut |
-|----------|-----------------|--------|
-| **Pages Catalogue** | 18 (dont 1 backup) | ⚠️ |
-| **Hooks Catalogue** | 14 (dont 2 redondants) | ⚠️ |
-| **Dashboard Produits** | 0 affiché (19 réels) | ❌ |
-| **Conformité Business Rules** | 65% (6/9) | ⚠️ |
-| **Colonnes Visibilité** | Absentes | ❌ |
-| **Cron Feeds Export** | Absent | ❌ |
-| **SWR Caching** | Partiel (1/2 hooks) | ⚠️ |
-| **Pagination Standard** | Incohérente (50 vs 500) | ⚠️ |
+| Métrique                      | Valeur Actuelle         | Statut |
+| ----------------------------- | ----------------------- | ------ |
+| **Pages Catalogue**           | 18 (dont 1 backup)      | ⚠️     |
+| **Hooks Catalogue**           | 14 (dont 2 redondants)  | ⚠️     |
+| **Dashboard Produits**        | 0 affiché (19 réels)    | ❌     |
+| **Conformité Business Rules** | 65% (6/9)               | ⚠️     |
+| **Colonnes Visibilité**       | Absentes                | ❌     |
+| **Cron Feeds Export**         | Absent                  | ❌     |
+| **SWR Caching**               | Partiel (1/2 hooks)     | ⚠️     |
+| **Pagination Standard**       | Incohérente (50 vs 500) | ⚠️     |
 
 ### 7.2 Après Consolidation
 
-| Métrique | Valeur Cible | Amélioration |
-|----------|--------------|--------------|
-| **Pages Catalogue** | 16 (cleanup) | -11% |
-| **Hooks Catalogue** | 12 (unifié + cleanup) | -14% |
-| **Dashboard Produits** | 19 affiché | +∞ (fix critique) |
-| **Conformité Business Rules** | 100% (9/9) | +35% |
-| **Colonnes Visibilité** | Implémentées | ✅ |
-| **Cron Feeds Export** | Quotidien 06h00 | ✅ |
-| **SWR Caching** | Généralisé | +100% |
-| **Pagination Standard** | 100 unifié | ✅ |
+| Métrique                      | Valeur Cible          | Amélioration      |
+| ----------------------------- | --------------------- | ----------------- |
+| **Pages Catalogue**           | 16 (cleanup)          | -11%              |
+| **Hooks Catalogue**           | 12 (unifié + cleanup) | -14%              |
+| **Dashboard Produits**        | 19 affiché            | +∞ (fix critique) |
+| **Conformité Business Rules** | 100% (9/9)            | +35%              |
+| **Colonnes Visibilité**       | Implémentées          | ✅                |
+| **Cron Feeds Export**         | Quotidien 06h00       | ✅                |
+| **SWR Caching**               | Généralisé            | +100%             |
+| **Pagination Standard**       | 100 unifié            | ✅                |
 
 ### 7.3 KPIs Performance
 
-| KPI | SLO | Actuel | Cible Post-Consolidation |
-|-----|-----|--------|--------------------------|
-| **Dashboard Load Time** | <2s | N/A (0 data) | <1.5s (SWR cache) |
-| **Hub Catalogue Load** | <2s | ~1.8s | <1.5s (SELECT optimisé) |
-| **Recherche Produits** | <500ms | Variable | <300ms (index + cache) |
-| **Export Feeds** | <10s | Manuel | <8s (automatisé) |
+| KPI                     | SLO    | Actuel       | Cible Post-Consolidation |
+| ----------------------- | ------ | ------------ | ------------------------ |
+| **Dashboard Load Time** | <2s    | N/A (0 data) | <1.5s (SWR cache)        |
+| **Hub Catalogue Load**  | <2s    | ~1.8s        | <1.5s (SELECT optimisé)  |
+| **Recherche Produits**  | <500ms | Variable     | <300ms (index + cache)   |
+| **Export Feeds**        | <10s   | Manuel       | <8s (automatisé)         |
 
 ---
 
@@ -940,24 +1024,25 @@ supabase/functions/
 
 ### 9.1 Risques Techniques
 
-| Risque | Probabilité | Impact | Mitigation |
-|--------|-------------|--------|------------|
-| **Migration hook casse pages** | Moyenne | Élevé | Tests progressifs page par page |
-| **RLS policies rejettent JOINs** | Faible | Élevé | Audit policies avant migration |
-| **Performance dégradée post-consolidation** | Faible | Moyen | Benchmarks avant/après |
-| **Cron feeds échoue silencieusement** | Moyenne | Moyen | Alertes Sentry + logs détaillés |
+| Risque                                      | Probabilité | Impact | Mitigation                      |
+| ------------------------------------------- | ----------- | ------ | ------------------------------- |
+| **Migration hook casse pages**              | Moyenne     | Élevé  | Tests progressifs page par page |
+| **RLS policies rejettent JOINs**            | Faible      | Élevé  | Audit policies avant migration  |
+| **Performance dégradée post-consolidation** | Faible      | Moyen  | Benchmarks avant/après          |
+| **Cron feeds échoue silencieusement**       | Moyenne     | Moyen  | Alertes Sentry + logs détaillés |
 
 ### 9.2 Risques Business
 
-| Risque | Probabilité | Impact | Mitigation |
-|--------|-------------|--------|------------|
-| **Visibilité mal configurée casse catalogues** | Moyenne | Élevé | Valeurs par défaut sûres (true) |
-| **Dashboard faux KPIs** | Nulle (déjà réalité) | Élevé | Fix prioritaire Sprint 1 |
-| **Feeds manquants impactent SEO** | Faible | Moyen | Export manuel backup avant automatisation |
+| Risque                                         | Probabilité          | Impact | Mitigation                                |
+| ---------------------------------------------- | -------------------- | ------ | ----------------------------------------- |
+| **Visibilité mal configurée casse catalogues** | Moyenne              | Élevé  | Valeurs par défaut sûres (true)           |
+| **Dashboard faux KPIs**                        | Nulle (déjà réalité) | Élevé  | Fix prioritaire Sprint 1                  |
+| **Feeds manquants impactent SEO**              | Faible               | Moyen  | Export manuel backup avant automatisation |
 
 ### 9.3 Plan Rollback
 
 **En cas d'échec migration :**
+
 1. Restaurer hooks originaux (`use-catalogue.ts`, `use-products.ts`)
 2. Rollback migration DB colonnes visibilité
 3. Désactiver cron feeds (manuel temporaire)
@@ -970,6 +1055,7 @@ supabase/functions/
 ### 10.1 Commandes Utiles
 
 #### Analyse Codebase
+
 ```bash
 # Lister usages hook
 grep -r "useCatalogue\|useProducts" src/app/catalogue/
@@ -982,6 +1068,7 @@ find src/app/catalogue -name "page.tsx" -type f | wc -l
 ```
 
 #### Tests Performance
+
 ```bash
 # Benchmark dashboard
 npm run dev
@@ -993,6 +1080,7 @@ npm run dev
 ```
 
 #### Migrations Supabase
+
 ```bash
 # Créer migration
 supabase migration new products_visibility_channels
@@ -1007,16 +1095,19 @@ supabase db diff
 ### 10.2 Références Documentation
 
 **Business Rules:**
+
 - `/manifests/business-rules/catalogue.md` - Règles métier catalogue
 - `/manifests/business-rules/product-variants-rules.md` - Gestion variants
 - `/manifests/business-rules/tarification.md` - Règles pricing
 
 **Architecture:**
+
 - `/supabase/migrations/20250917_002_products_system_consolidated.sql` - Schéma products
 - `/src/hooks/use-products.ts` - Hook produits actuel (433 lignes)
 - `/src/hooks/use-catalogue.ts` - Hook catalogue actuel (441 lignes)
 
 **Tests:**
+
 - `MEMORY-BANK/sessions/2025-10-11-TESTS-ORGANISATION-COMPLET.md` - Tests organisation
 - `docs/guides/TEMPLATE-PLAN-TESTS-MODULE.md` - Template tests modules
 
@@ -1024,6 +1115,7 @@ supabase db diff
 
 **Orchestrateur:** Vérone System Orchestrator
 **Agents Spécialisés:**
+
 - `verone-test-expert` : Tests Playwright workflows
 - `verone-design-expert` : Conformité UX/Design System
 
@@ -1034,18 +1126,21 @@ supabase db diff
 ## CONCLUSION
 
 **Analyse approfondie** du module Catalogue Vérone révèle :
+
 - **Architecture solide** (17 pages, 14 hooks, 130+ composants)
 - **Incohérences critiques** (Dashboard 0 produits, colonnes visibilité absentes)
 - **Redondances majeures** (hooks dupliqués, pages création doubles)
 - **Conformité partielle** (65% business rules implémentées)
 
 **Plan consolidation 22h** (3 jours) permettra :
+
 - **100% conformité** business rules
 - **Élimination redondances** (-2 hooks, -2 pages)
 - **Performance optimisée** (SWR généralisé, SELECT modes)
 - **Automatisation complète** (feeds export quotidien)
 
 **Prochaines étapes :**
+
 1. Validation plan avec Business Owner
 2. Sprint 1 : Fixes critiques P0 (8h)
 3. Sprint 2 : Consolidation P1 (10h)

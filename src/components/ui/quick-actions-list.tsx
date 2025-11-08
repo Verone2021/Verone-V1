@@ -1,22 +1,25 @@
-'use client'
+'use client';
 
-import React from 'react'
-import { LucideIcon, ChevronRight } from 'lucide-react'
-import { Separator } from '@/components/ui/separator'
-import { colors } from '@/lib/design-system'
-import { cn } from '@/lib/utils'
+import React from 'react';
+
+import { Separator } from '@verone/ui';
+import { cn } from '@verone/utils';
+import type { LucideIcon } from 'lucide-react';
+import { ChevronRight } from 'lucide-react';
+
+import { colors } from '@verone/ui/design-system';
 
 export interface QuickAction {
-  id: string
-  label: string
-  icon: LucideIcon
-  onClick: () => void
-  category: 'action' | 'consultation' | 'ajustement'
+  id: string;
+  label: string;
+  icon: LucideIcon;
+  onClick: () => void;
+  category: 'action' | 'consultation' | 'ajustement';
 }
 
 export interface QuickActionsListProps {
-  actions: QuickAction[]
-  className?: string
+  actions: QuickAction[];
+  className?: string;
 }
 
 /**
@@ -35,20 +38,27 @@ export interface QuickActionsListProps {
  *
  * @see shadcn/ui patterns for modern dashboard interactions
  */
-export function QuickActionsList({ actions, className }: QuickActionsListProps) {
+export function QuickActionsList({
+  actions,
+  className,
+}: QuickActionsListProps) {
   // Grouper par catégorie
-  const actionsGroup = actions.filter((a) => a.category === 'action')
-  const consultationsGroup = actions.filter((a) => a.category === 'consultation')
-  const ajustementsGroup = actions.filter((a) => a.category === 'ajustement')
+  const actionsGroup = actions.filter(a => a.category === 'action');
+  const consultationsGroup = actions.filter(a => a.category === 'consultation');
+  const ajustementsGroup = actions.filter(a => a.category === 'ajustement');
 
   const categoryLabels = {
     action: 'Actions',
     consultation: 'Consultations',
     ajustement: 'Ajustements',
-  }
+  };
 
-  const renderGroup = (group: QuickAction[], title: string, isLast: boolean = false) => {
-    if (group.length === 0) return null
+  const renderGroup = (
+    group: QuickAction[],
+    title: string,
+    isLast: boolean = false
+  ) => {
+    if (group.length === 0) return null;
 
     return (
       <div key={title}>
@@ -56,7 +66,7 @@ export function QuickActionsList({ actions, className }: QuickActionsListProps) 
           {title}
         </h4>
         <div className="space-y-0.5">
-          {group.map((action) => (
+          {group.map(action => (
             <button
               key={action.id}
               onClick={action.onClick}
@@ -88,8 +98,8 @@ export function QuickActionsList({ actions, className }: QuickActionsListProps) 
         </div>
         {!isLast && <Separator className="my-4" />}
       </div>
-    )
-  }
+    );
+  };
 
   return (
     <div
@@ -103,5 +113,5 @@ export function QuickActionsList({ actions, className }: QuickActionsListProps) 
       {renderGroup(consultationsGroup, categoryLabels.consultation)}
       {renderGroup(ajustementsGroup, categoryLabels.ajustement, true)}
     </div>
-  )
+  );
 }

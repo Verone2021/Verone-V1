@@ -1,7 +1,11 @@
-'use client'
+'use client';
 
-import React from 'react'
-import { useRouter } from 'next/navigation'
+import React from 'react';
+
+import { useRouter } from 'next/navigation';
+
+import { ActivityTimeline, type TimelineItem } from '@verone/ui';
+import { KPICardUnified } from '@verone/ui';
 import {
   DollarSign,
   ShoppingCart,
@@ -9,24 +13,23 @@ import {
   Package,
   TrendingUp,
   ArrowLeftRight,
-} from 'lucide-react'
-import { ElegantKpiCard } from '@/components/ui/elegant-kpi-card'
-import { ActivityTimeline, type TimelineItem } from '@/components/ui/activity-timeline'
-import { useCompleteDashboardMetrics } from '@/hooks/use-complete-dashboard-metrics'
+} from 'lucide-react';
+
+import { useCompleteDashboardMetrics } from '@verone/dashboard';
 
 export default function DashboardV2Page() {
-  const router = useRouter()
-  const { metrics, isLoading, error } = useCompleteDashboardMetrics()
+  const router = useRouter();
+  const { metrics, isLoading, error } = useCompleteDashboardMetrics();
 
   if (isLoading) {
     return (
       <div className="min-h-screen bg-slate-50 flex items-center justify-center">
         <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4" />
           <p className="text-slate-600">Chargement du dashboard...</p>
         </div>
       </div>
-    )
+    );
   }
 
   if (error || !metrics) {
@@ -35,10 +38,12 @@ export default function DashboardV2Page() {
         <div className="text-center">
           <AlertCircle className="h-12 w-12 text-red-500 mx-auto mb-4" />
           <p className="text-slate-900 font-medium">Erreur de chargement</p>
-          <p className="text-slate-600 text-sm">{error || 'Données indisponibles'}</p>
+          <p className="text-slate-600 text-sm">
+            {error || 'Données indisponibles'}
+          </p>
         </div>
       </div>
-    )
+    );
   }
 
   // Données mockées pour activité récente (à remplacer par vraies données)
@@ -75,22 +80,27 @@ export default function DashboardV2Page() {
       icon: ArrowLeftRight,
       iconColor: 'neutral',
     },
-  ]
+  ];
 
   return (
     <div className="min-h-screen bg-slate-50">
       {/* Header */}
       <div className="bg-white border-b border-slate-200 px-6 py-4">
-        <h1 className="text-xl font-bold text-slate-900">Dashboard Principal</h1>
+        <h1 className="text-xl font-bold text-slate-900">
+          Dashboard Principal
+        </h1>
       </div>
 
       <div className="p-6 space-y-6">
         {/* 4 Grandes KPIs */}
         <div>
-          <h2 className="text-sm font-semibold text-slate-700 mb-3">KPIs Essentiels</h2>
+          <h2 className="text-sm font-semibold text-slate-700 mb-3">
+            KPIs Essentiels
+          </h2>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-            <ElegantKpiCard
-              label="CA du Mois"
+            <KPICardUnified
+              variant="elegant"
+              title="CA du Mois"
               value={new Intl.NumberFormat('fr-FR', {
                 style: 'currency',
                 currency: 'EUR',
@@ -104,22 +114,25 @@ export default function DashboardV2Page() {
               onClick={() => router.push('/commandes/clients')}
             />
 
-            <ElegantKpiCard
-              label="Commandes Ventes"
+            <KPICardUnified
+              variant="elegant"
+              title="Commandes Ventes"
               value={metrics.orders?.salesOrders || 0}
               icon={ShoppingCart}
               onClick={() => router.push('/commandes/clients')}
             />
 
-            <ElegantKpiCard
-              label="Commandes Achats"
+            <KPICardUnified
+              variant="elegant"
+              title="Commandes Achats"
               value={metrics.orders?.purchaseOrders || 0}
               icon={TrendingUp}
               onClick={() => router.push('/commandes/fournisseurs')}
             />
 
-            <ElegantKpiCard
-              label="Valeur Stock"
+            <KPICardUnified
+              variant="elegant"
+              title="Valeur Stock"
               value={new Intl.NumberFormat('fr-FR', {
                 style: 'currency',
                 currency: 'EUR',
@@ -136,9 +149,13 @@ export default function DashboardV2Page() {
           {/* Top 5 Produits - VIDE (pas de données mockées) */}
           <div className="bg-white rounded-xl border border-slate-200 p-5">
             <div className="flex items-center justify-between mb-4">
-              <h3 className="text-base font-semibold text-slate-900">Top 5 Produits</h3>
+              <h3 className="text-base font-semibold text-slate-900">
+                Top 5 Produits
+              </h3>
               <button
-                onClick={() => router.push('/catalogue/produits?sort=best-sellers')}
+                onClick={() =>
+                  router.push('/catalogue/produits?sort=best-sellers')
+                }
                 className="text-xs text-blue-600 hover:text-blue-700 font-medium"
               >
                 Voir tout →
@@ -147,8 +164,12 @@ export default function DashboardV2Page() {
             <div className="flex items-center justify-center py-12">
               <div className="text-center">
                 <Package className="h-12 w-12 text-slate-300 mx-auto mb-3" />
-                <p className="text-sm text-slate-500 mb-1">Aucune donnée disponible</p>
-                <p className="text-xs text-slate-400">Les produits populaires apparaîtront ici</p>
+                <p className="text-sm text-slate-500 mb-1">
+                  Aucune donnée disponible
+                </p>
+                <p className="text-xs text-slate-400">
+                  Les produits populaires apparaîtront ici
+                </p>
               </div>
             </div>
           </div>
@@ -156,7 +177,9 @@ export default function DashboardV2Page() {
           {/* Activité Récente */}
           <div className="bg-white rounded-xl border border-slate-200 p-5">
             <div className="flex items-center justify-between mb-4">
-              <h3 className="text-base font-semibold text-slate-900">Activité Récente</h3>
+              <h3 className="text-base font-semibold text-slate-900">
+                Activité Récente
+              </h3>
               <button
                 onClick={() => router.push('/activite')}
                 className="text-xs text-blue-600 hover:text-blue-700 font-medium"
@@ -169,12 +192,16 @@ export default function DashboardV2Page() {
 
           {/* Statut Commandes */}
           <div className="bg-white rounded-xl border border-slate-200 p-5">
-            <h3 className="text-base font-semibold text-slate-900 mb-4">Statut Commandes</h3>
+            <h3 className="text-base font-semibold text-slate-900 mb-4">
+              Statut Commandes
+            </h3>
             <div className="space-y-3">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2">
-                  <div className="w-3 h-3 rounded-full bg-green-500"></div>
-                  <span className="text-sm text-slate-700">Commandes Ventes</span>
+                  <div className="w-3 h-3 rounded-full bg-green-500" />
+                  <span className="text-sm text-slate-700">
+                    Commandes Ventes
+                  </span>
                 </div>
                 <div className="flex items-center gap-2">
                   <span className="text-lg font-semibold text-slate-900">
@@ -182,16 +209,22 @@ export default function DashboardV2Page() {
                   </span>
                   <span className="text-xs text-slate-500">
                     {Math.round(
-                      ((metrics.orders?.salesOrders || 0) / ((metrics.orders?.salesOrders || 0) + (metrics.orders?.purchaseOrders || 0) || 1)) * 100
-                    )}%
+                      ((metrics.orders?.salesOrders || 0) /
+                        ((metrics.orders?.salesOrders || 0) +
+                          (metrics.orders?.purchaseOrders || 0) || 1)) *
+                        100
+                    )}
+                    %
                   </span>
                 </div>
               </div>
 
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2">
-                  <div className="w-3 h-3 rounded-full bg-orange-500"></div>
-                  <span className="text-sm text-slate-700">Commandes Achat</span>
+                  <div className="w-3 h-3 rounded-full bg-orange-500" />
+                  <span className="text-sm text-slate-700">
+                    Commandes Achat
+                  </span>
                 </div>
                 <div className="flex items-center gap-2">
                   <span className="text-lg font-semibold text-slate-900">
@@ -199,15 +232,19 @@ export default function DashboardV2Page() {
                   </span>
                   <span className="text-xs text-slate-500">
                     {Math.round(
-                      ((metrics.orders?.purchaseOrders || 0) / ((metrics.orders?.salesOrders || 0) + (metrics.orders?.purchaseOrders || 0) || 1)) * 100
-                    )}%
+                      ((metrics.orders?.purchaseOrders || 0) /
+                        ((metrics.orders?.salesOrders || 0) +
+                          (metrics.orders?.purchaseOrders || 0) || 1)) *
+                        100
+                    )}
+                    %
                   </span>
                 </div>
               </div>
 
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2">
-                  <div className="w-3 h-3 rounded-full bg-blue-500"></div>
+                  <div className="w-3 h-3 rounded-full bg-blue-500" />
                   <span className="text-sm text-slate-700">CA du Mois</span>
                 </div>
                 <div className="flex items-center gap-2">
@@ -234,11 +271,16 @@ export default function DashboardV2Page() {
 
           {/* Notifications */}
           <div className="bg-white rounded-xl border border-slate-200 p-5">
-            <h3 className="text-base font-semibold text-slate-900 mb-4">Notifications</h3>
+            <h3 className="text-base font-semibold text-slate-900 mb-4">
+              Notifications
+            </h3>
             <div className="space-y-2">
               {(metrics.stocks?.lowStockItems || 0) > 0 && (
                 <div className="flex items-start gap-2 p-2 bg-red-50 border border-red-100 rounded-lg">
-                  <AlertCircle size={16} className="text-red-600 flex-shrink-0 mt-0.5" />
+                  <AlertCircle
+                    size={16}
+                    className="text-red-600 flex-shrink-0 mt-0.5"
+                  />
                   <div className="flex-1 min-w-0">
                     <p className="text-xs font-medium text-red-900">
                       {metrics.stocks.lowStockItems} alertes stock critiques
@@ -255,7 +297,10 @@ export default function DashboardV2Page() {
 
               {(metrics.orders?.salesOrders || 0) > 0 && (
                 <div className="flex items-start gap-2 p-2 bg-green-50 border border-green-100 rounded-lg">
-                  <ShoppingCart size={16} className="text-green-600 flex-shrink-0 mt-0.5" />
+                  <ShoppingCart
+                    size={16}
+                    className="text-green-600 flex-shrink-0 mt-0.5"
+                  />
                   <div className="flex-1 min-w-0">
                     <p className="text-xs font-medium text-green-900">
                       {metrics.orders.salesOrders} commandes ventes actives
@@ -272,13 +317,16 @@ export default function DashboardV2Page() {
 
               {(metrics.sourcing?.samplesWaiting || 0) > 0 && (
                 <div className="flex items-start gap-2 p-2 bg-blue-50 border border-blue-100 rounded-lg">
-                  <Package size={16} className="text-blue-600 flex-shrink-0 mt-0.5" />
+                  <Package
+                    size={16}
+                    className="text-blue-600 flex-shrink-0 mt-0.5"
+                  />
                   <div className="flex-1 min-w-0">
                     <p className="text-xs font-medium text-blue-900">
                       {metrics.sourcing.samplesWaiting} échantillons en attente
                     </p>
                     <button
-                      onClick={() => router.push('/catalogue/sourcing')}
+                      onClick={() => router.push('/produits/sourcing')}
                       className="text-xs text-blue-600 hover:text-blue-700 underline mt-0.5"
                     >
                       Voir échantillons
@@ -288,19 +336,23 @@ export default function DashboardV2Page() {
               )}
 
               {(metrics.stocks?.lowStockItems || 0) === 0 &&
-               (metrics.orders?.salesOrders || 0) === 0 &&
-               (metrics.sourcing?.samplesWaiting || 0) === 0 && (
-                <div className="flex items-center justify-center py-8">
-                  <div className="text-center">
-                    <p className="text-sm text-slate-500 mb-1">Aucune notification</p>
-                    <p className="text-xs text-slate-400">Tout est à jour ! 🎉</p>
+                (metrics.orders?.salesOrders || 0) === 0 &&
+                (metrics.sourcing?.samplesWaiting || 0) === 0 && (
+                  <div className="flex items-center justify-center py-8">
+                    <div className="text-center">
+                      <p className="text-sm text-slate-500 mb-1">
+                        Aucune notification
+                      </p>
+                      <p className="text-xs text-slate-400">
+                        Tout est à jour ! 🎉
+                      </p>
+                    </div>
                   </div>
-                </div>
-              )}
+                )}
             </div>
           </div>
         </div>
       </div>
     </div>
-  )
+  );
 }

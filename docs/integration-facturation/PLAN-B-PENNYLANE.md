@@ -10,15 +10,15 @@
 
 ### Avantages Pennylane vs Abby
 
-| Critère | Pennylane | Abby.fr |
-|---------|-----------|---------|
-| **Documentation API** | ✅ Excellente, interactive | ⚠️ Limitée |
-| **Webhooks** | ✅ 15+ événements documentés | ❓ À confirmer |
-| **Endpoints Factures** | ✅ CRUD complet | ❓ À vérifier (404 possible) |
-| **Paiements** | ✅ API complète | ❓ Non documenté |
-| **Support** | ✅ Réactif (24-48h) | ⚠️ Variable |
-| **Adoption FR** | ✅ 50,000+ entreprises | ✅ Croissance forte |
-| **Tarif API** | Gratuit (plan Pro) | Gratuit (plan Pro) |
+| Critère                | Pennylane                    | Abby.fr                      |
+| ---------------------- | ---------------------------- | ---------------------------- |
+| **Documentation API**  | ✅ Excellente, interactive   | ⚠️ Limitée                   |
+| **Webhooks**           | ✅ 15+ événements documentés | ❓ À confirmer               |
+| **Endpoints Factures** | ✅ CRUD complet              | ❓ À vérifier (404 possible) |
+| **Paiements**          | ✅ API complète              | ❓ Non documenté             |
+| **Support**            | ✅ Réactif (24-48h)          | ⚠️ Variable                  |
+| **Adoption FR**        | ✅ 50,000+ entreprises       | ✅ Croissance forte          |
+| **Tarif API**          | Gratuit (plan Pro)           | Gratuit (plan Pro)           |
 
 **Conclusion** : Pennylane = **Safer bet** pour intégration professionnelle
 
@@ -53,14 +53,14 @@ invoice_status_history
 // Avant (Abby)
 const response = await fetch('/api/invoices/create-from-order', {
   method: 'POST',
-  body: JSON.stringify({ salesOrderId, provider: 'abby' })
-})
+  body: JSON.stringify({ salesOrderId, provider: 'abby' }),
+});
 
 // Après (Pennylane)
 const response = await fetch('/api/invoices/create-from-order', {
   method: 'POST',
-  body: JSON.stringify({ salesOrderId, provider: 'pennylane' })
-})
+  body: JSON.stringify({ salesOrderId, provider: 'pennylane' }),
+});
 ```
 
 **Impact** : Changement de 3 lignes dans `useInvoices.ts` !
@@ -71,18 +71,19 @@ const response = await fetch('/api/invoices/create-from-order', {
 
 ### Endpoints Mapping
 
-| Fonctionnalité | Abby (hypothétique) | Pennylane (confirmé) |
-|----------------|---------------------|----------------------|
-| **Créer facture** | `POST /invoices` | `POST /customer_invoices` |
-| **Liste factures** | `GET /invoices` | `GET /customer_invoices` |
-| **Détail facture** | `GET /invoices/:id` | `GET /customer_invoices/:id` |
-| **Créer client** | `POST /organization` | `POST /customers` |
-| **Créer paiement** | `POST /payments` | `POST /invoice_payments` |
-| **Webhooks** | ❓ Non documenté | `POST /webhooks` (setup) |
+| Fonctionnalité     | Abby (hypothétique)  | Pennylane (confirmé)         |
+| ------------------ | -------------------- | ---------------------------- |
+| **Créer facture**  | `POST /invoices`     | `POST /customer_invoices`    |
+| **Liste factures** | `GET /invoices`      | `GET /customer_invoices`     |
+| **Détail facture** | `GET /invoices/:id`  | `GET /customer_invoices/:id` |
+| **Créer client**   | `POST /organization` | `POST /customers`            |
+| **Créer paiement** | `POST /payments`     | `POST /invoice_payments`     |
+| **Webhooks**       | ❓ Non documenté     | `POST /webhooks` (setup)     |
 
 ### Format Payload Facture
 
 **Abby** (supposé) :
+
 ```json
 {
   "customer": { "company_name": "...", "email": "..." },
@@ -92,6 +93,7 @@ const response = await fetch('/api/invoices/create-from-order', {
 ```
 
 **Pennylane** (documenté) :
+
 ```json
 {
   "customer": { "source_id": "...", "name": "..." },
@@ -124,6 +126,7 @@ const response = await fetch('/api/invoices/create-from-order', {
 ### Phase 2 : Adapter Code (4h)
 
 #### 1. Renommer Tables Génériques (30 min)
+
 ```sql
 -- Migration : 20251011_015_rename_abby_to_generic.sql
 ALTER TABLE abby_sync_queue RENAME TO invoice_sync_queue;
@@ -135,20 +138,21 @@ ALTER TABLE invoice_sync_queue ADD COLUMN provider TEXT DEFAULT 'pennylane';
 ```
 
 #### 2. Créer Client Pennylane (2h)
+
 ```typescript
 // src/lib/invoicing/pennylane-client.ts
 export class PennylaneClient {
   async createInvoice(orderData: SalesOrder): Promise<Invoice> {
-    const payload = this.mapOrderToInvoice(orderData)
+    const payload = this.mapOrderToInvoice(orderData);
     const response = await fetch(`${this.baseUrl}/customer_invoices`, {
       method: 'POST',
       headers: {
-        'Authorization': `Bearer ${this.apiKey}`,
-        'Content-Type': 'application/json'
+        Authorization: `Bearer ${this.apiKey}`,
+        'Content-Type': 'application/json',
       },
-      body: JSON.stringify(payload)
-    })
-    return response.json()
+      body: JSON.stringify(payload),
+    });
+    return response.json();
   }
 
   private mapOrderToInvoice(order: SalesOrder) {
@@ -158,72 +162,74 @@ export class PennylaneClient {
         label: item.product_name,
         quantity: item.quantity,
         unit_price: item.unit_price,
-        vat_rate: 20
+        vat_rate: 20,
       })),
       draft: false,
-      date: new Date().toISOString()
-    }
+      date: new Date().toISOString(),
+    };
   }
 }
 ```
 
 #### 3. Adapter Routes API (1h)
+
 ```typescript
 // src/app/api/invoices/create-from-order/route.ts
-import { PennylaneClient } from '@/lib/invoicing/pennylane-client'
+import { PennylaneClient } from '@/lib/invoicing/pennylane-client';
 
 export async function POST(req: Request) {
-  const { salesOrderId } = await req.json()
+  const { salesOrderId } = await req.json();
 
   const client = new PennylaneClient({
     apiKey: process.env.PENNYLANE_API_KEY!,
-    baseUrl: process.env.PENNYLANE_API_BASE_URL!
-  })
+    baseUrl: process.env.PENNYLANE_API_BASE_URL!,
+  });
 
-  const invoice = await client.createInvoice(orderData)
+  const invoice = await client.createInvoice(orderData);
 
   // Enregistrer dans Supabase (RPC inchangé)
   await supabase.rpc('generate_invoice_from_order', {
     p_sales_order_id: salesOrderId,
     p_external_invoice_id: invoice.id,
     p_invoice_number: invoice.invoice_number,
-    p_provider: 'pennylane'
-  })
+    p_provider: 'pennylane',
+  });
 
-  return Response.json({ success: true, invoice })
+  return Response.json({ success: true, invoice });
 }
 ```
 
 #### 4. Configurer Webhooks (30 min)
+
 ```typescript
 // src/app/api/webhooks/pennylane/invoice-status/route.ts
-import crypto from 'crypto'
+import crypto from 'crypto';
 
 export async function POST(req: Request) {
-  const signature = req.headers.get('X-Pennylane-Signature')
-  const body = await req.text()
+  const signature = req.headers.get('X-Pennylane-Signature');
+  const body = await req.text();
 
   // Vérifier signature HMAC
   const expectedSignature = crypto
     .createHmac('sha256', process.env.PENNYLANE_WEBHOOK_SECRET!)
     .update(body)
-    .digest('hex')
+    .digest('hex');
 
   if (signature !== expectedSignature) {
-    return Response.json({ error: 'Invalid signature' }, { status: 401 })
+    return Response.json({ error: 'Invalid signature' }, { status: 401 });
   }
 
-  const event = JSON.parse(body)
+  const event = JSON.parse(body);
 
   if (event.type === 'invoice.paid') {
     await supabase.rpc('handle_invoice_webhook_paid', {
       p_external_invoice_id: event.data.invoice.id,
       p_payment_amount: event.data.payment.amount,
-      p_provider: 'pennylane'
-    })
+      p_provider: 'pennylane',
+    });
   }
 
-  return Response.json({ success: true })
+  return Response.json({ success: true });
 }
 ```
 
@@ -246,14 +252,15 @@ export async function POST(req: Request) {
 
 ## 🚀 Timeline Pivot Pennylane
 
-| Phase | Durée | Cumul |
-|-------|-------|-------|
-| Configuration compte + API | 1h | 1h |
-| Adaptation code (client, routes) | 4h | 5h |
-| Tests complets | 2h | 7h |
-| Documentation | 1h | **8h (1 jour)** |
+| Phase                            | Durée | Cumul           |
+| -------------------------------- | ----- | --------------- |
+| Configuration compte + API       | 1h    | 1h              |
+| Adaptation code (client, routes) | 4h    | 5h              |
+| Tests complets                   | 2h    | 7h              |
+| Documentation                    | 1h    | **8h (1 jour)** |
 
 **Comparaison** :
+
 - ⏱️ Abby (si fonctionnel) : 10 jours
 - ⏱️ Pennylane (pivot) : **1 jour**
 - 📊 Différence temps : Négligeable (setup identique ensuite)
@@ -263,12 +270,14 @@ export async function POST(req: Request) {
 ## ✅ Critères Décision : Abby vs Pennylane
 
 ### Rester sur Abby SI :
+
 - ✅ Test `POST /invoices` retourne **HTTP 201**
 - ✅ Webhooks confirmés par support Abby
 - ✅ Documentation API complète fournie
 - ✅ Support réactif (< 48h)
 
 ### Pivot Pennylane SI :
+
 - ❌ Test `POST /invoices` retourne **HTTP 404**
 - ❌ Webhooks non disponibles ou non documentés
 - ❌ Documentation API insuffisante
@@ -308,4 +317,4 @@ export async function POST(req: Request) {
 
 ---
 
-*Plan B Pennylane - Architecture Agnostique - Vérone Back Office 2025*
+_Plan B Pennylane - Architecture Agnostique - Vérone Back Office 2025_

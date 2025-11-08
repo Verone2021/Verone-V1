@@ -20,6 +20,7 @@
 Guide démarrage rapide : clone repo → setup env → premier dev server en moins de 15 minutes.
 
 **À documenter** :
+
 1. Clone repository
 2. Install dependencies (`npm install`)
 3. Setup .env.local (Supabase credentials)

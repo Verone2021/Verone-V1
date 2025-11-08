@@ -128,15 +128,18 @@ vercel --prod
 ## 🔙 ROLLBACK PROCEDURES
 
 **Database** :
+
 - Chaque migration DB doit avoir un script `down` documenté
 - Backup quotidien Supabase (automatique)
 - Backup manuel avant migration critique : `docs/ci-cd/rollback-procedures.md`
 
 **Vercel** :
+
 - Rollback instantané via dashboard (promote previous deployment)
 - Historique illimité des déploiements
 
 **Feature Flags** :
+
 - Désactivation sans redéploiement (mise à jour env var Vercel)
 
 ---
@@ -180,6 +183,7 @@ npm install -D jscpd madge dependency-cruiser knip ts-prune cspell
 Voir `.github/workflows/audit.yml` - Exécution automatique sur chaque PR.
 
 **Seuils de tolérance** :
+
 - Duplication : Max 5% (ajustable)
 - Cycles : 0 toléré (strict)
 - Dead code : Warning uniquement

@@ -1,8 +1,12 @@
-'use client'
+'use client';
 
-import React from 'react'
-import Link from 'next/link'
-import { useRouter } from 'next/navigation'
+import React from 'react';
+import { useEffect, useState } from 'react';
+
+import Link from 'next/link';
+import { useRouter } from 'next/navigation';
+
+import { ButtonV2 } from '@verone/ui';
 import {
   Activity,
   User,
@@ -11,154 +15,159 @@ import {
   AlertCircle,
   RefreshCw,
   ArrowRight,
-  CheckCircle
-} from 'lucide-react'
-import { useEffect, useState } from 'react'
-import { createClient } from '@/lib/supabase/client'
-import { ButtonV2 } from '@/components/ui/button'
+  CheckCircle,
+} from 'lucide-react';
+
+import { createClient } from '@verone/utils/supabase/client';
 
 interface UserActivityStats {
-  user_id: string
-  email: string
-  full_name: string | null
-  role: string
-  total_sessions: number
-  total_actions: number
-  last_activity: string | null
-  engagement_score: number
-  most_used_module: string | null
-  is_active_now: boolean
+  user_id: string;
+  email: string;
+  full_name: string | null;
+  role: string;
+  total_sessions: number;
+  total_actions: number;
+  last_activity: string | null;
+  engagement_score: number;
+  most_used_module: string | null;
+  is_active_now: boolean;
 }
 
 interface ApiResponse {
-  success: boolean
-  users: UserActivityStats[]
-  total: number
-  error?: string
+  success: boolean;
+  users: UserActivityStats[];
+  total: number;
+  error?: string;
 }
 
 export default function ActiviteUtilisateursPage() {
-  const router = useRouter()
-  const [users, setUsers] = useState<UserActivityStats[]>([])
-  const [isLoading, setIsLoading] = useState(true)
-  const [error, setError] = useState<string | null>(null)
-  const [lastRefresh, setLastRefresh] = useState<Date>(new Date())
-  const [userRole, setUserRole] = useState<string | null>(null)
-  const [isCheckingAccess, setIsCheckingAccess] = useState(true)
+  const router = useRouter();
+  const [users, setUsers] = useState<UserActivityStats[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [lastRefresh, setLastRefresh] = useState<Date>(new Date());
+  const [userRole, setUserRole] = useState<string | null>(null);
+  const [isCheckingAccess, setIsCheckingAccess] = useState(true);
 
   const fetchUsers = async () => {
     try {
-      setIsLoading(true)
-      setError(null)
+      setIsLoading(true);
+      setError(null);
 
-      const response = await fetch('/api/admin/users')
-      const data: ApiResponse = await response.json()
+      const response = await fetch('/api/admin/users');
+      const data: ApiResponse = await response.json();
 
       if (!response.ok) {
-        throw new Error(data.error || 'Erreur lors du chargement')
+        throw new Error(data.error || 'Erreur lors du chargement');
       }
 
-      setUsers(data.users)
-      setLastRefresh(new Date())
+      setUsers(data.users);
+      setLastRefresh(new Date());
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Erreur inconnue')
+      setError(err instanceof Error ? err.message : 'Erreur inconnue');
     } finally {
-      setIsLoading(false)
+      setIsLoading(false);
     }
-  }
+  };
 
   // Vérifier accès owner
   useEffect(() => {
     const checkAccess = async () => {
-      const supabase = createClient()
-      const { data: { user } } = await supabase.auth.getUser()
+      const supabase = createClient();
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
 
       if (!user) {
-        router.push('/login')
-        return
+        router.push('/login');
+        return;
       }
 
-      const { data: profile } = await supabase
+      const { data: profile } = (await supabase
         .from('user_profiles')
         .select('role')
         .eq('user_id', user.id)
-        .single() as { data: { role: string } | null }
+        .single()) as { data: { role: string } | null };
 
       if (profile?.role !== 'owner') {
-        router.push('/dashboard')
-        return
+        router.push('/dashboard');
+        return;
       }
 
-      setUserRole(profile.role)
-      setIsCheckingAccess(false)
-    }
+      setUserRole(profile.role);
+      setIsCheckingAccess(false);
+    };
 
-    checkAccess()
-  }, [router])
+    checkAccess();
+  }, [router]);
 
   useEffect(() => {
     if (!isCheckingAccess && userRole === 'owner') {
-      fetchUsers()
+      fetchUsers();
     }
-  }, [isCheckingAccess, userRole])
+  }, [isCheckingAccess, userRole]);
 
   // Auto-refresh toutes les 60 secondes
   useEffect(() => {
     const interval = setInterval(() => {
-      fetchUsers()
-    }, 60000)
+      fetchUsers();
+    }, 60000);
 
-    return () => clearInterval(interval)
-  }, [])
+    return () => clearInterval(interval);
+  }, []);
 
   const formatLastActivity = (lastActivity: string | null): string => {
-    if (!lastActivity) return 'Jamais'
+    if (!lastActivity) return 'Jamais';
 
-    const date = new Date(lastActivity)
-    const now = new Date()
-    const diffMs = now.getTime() - date.getTime()
-    const diffMinutes = Math.floor(diffMs / (1000 * 60))
-    const diffHours = Math.floor(diffMinutes / 60)
-    const diffDays = Math.floor(diffHours / 24)
+    const date = new Date(lastActivity);
+    const now = new Date();
+    const diffMs = now.getTime() - date.getTime();
+    const diffMinutes = Math.floor(diffMs / (1000 * 60));
+    const diffHours = Math.floor(diffMinutes / 60);
+    const diffDays = Math.floor(diffHours / 24);
 
-    if (diffMinutes < 1) return 'À l\'instant'
-    if (diffMinutes < 60) return `Il y a ${diffMinutes} min`
-    if (diffHours < 24) return `Il y a ${diffHours}h`
-    if (diffDays === 1) return 'Hier'
-    if (diffDays < 30) return `Il y a ${diffDays} jours`
+    if (diffMinutes < 1) return "À l'instant";
+    if (diffMinutes < 60) return `Il y a ${diffMinutes} min`;
+    if (diffHours < 24) return `Il y a ${diffHours}h`;
+    if (diffDays === 1) return 'Hier';
+    if (diffDays < 30) return `Il y a ${diffDays} jours`;
 
-    return date.toLocaleDateString('fr-FR')
-  }
+    return date.toLocaleDateString('fr-FR');
+  };
 
   const getRoleBadgeColor = (role: string): string => {
     switch (role) {
-      case 'owner': return 'bg-purple-100 text-purple-700 border-purple-300'
-      case 'admin': return 'bg-blue-100 text-blue-700 border-blue-300'
-      case 'employee': return 'bg-gray-100 text-gray-700 border-gray-300'
-      default: return 'bg-gray-100 text-gray-700 border-gray-300'
+      case 'owner':
+        return 'bg-purple-100 text-purple-700 border-purple-300';
+      case 'admin':
+        return 'bg-blue-100 text-blue-700 border-blue-300';
+      case 'employee':
+        return 'bg-gray-100 text-gray-700 border-gray-300';
+      default:
+        return 'bg-gray-100 text-gray-700 border-gray-300';
     }
-  }
+  };
 
   const getEngagementColor = (score: number): string => {
-    if (score >= 80) return 'text-green-600'
-    if (score >= 50) return 'text-blue-600'
-    if (score >= 20) return 'text-black'
-    return 'text-gray-600'
-  }
+    if (score >= 80) return 'text-green-600';
+    if (score >= 50) return 'text-blue-600';
+    if (score >= 20) return 'text-black';
+    return 'text-gray-600';
+  };
 
   const getModuleIcon = (module: string | null): string => {
     const icons: Record<string, string> = {
-      'dashboard': '📊',
-      'catalogue': '📦',
-      'stocks': '📈',
-      'sourcing': '🔍',
-      'commandes': '🛒',
-      'interactions': '💬',
-      'organisation': '🏢',
-      'admin': '⚙️'
-    }
-    return module ? icons[module] || '📄' : '—'
-  }
+      dashboard: '📊',
+      catalogue: '📦',
+      stocks: '📈',
+      sourcing: '🔍',
+      commandes: '🛒',
+      interactions: '💬',
+      organisation: '🏢',
+      admin: '⚙️',
+    };
+    return module ? icons[module] || '📄' : '—';
+  };
 
   if (isLoading && users.length === 0) {
     return (
@@ -168,8 +177,12 @@ export default function ActiviteUtilisateursPage() {
           <div className="flex items-center space-x-3">
             <Activity className="h-6 w-6 text-neutral-900" />
             <div>
-              <h1 className="text-xl font-bold text-neutral-900">Activité Utilisateurs</h1>
-              <p className="text-sm text-neutral-600">Monitoring temps réel de l'équipe</p>
+              <h1 className="text-xl font-bold text-neutral-900">
+                Activité Utilisateurs
+              </h1>
+              <p className="text-sm text-neutral-600">
+                Monitoring temps réel de l'équipe
+              </p>
             </div>
           </div>
         </div>
@@ -183,7 +196,7 @@ export default function ActiviteUtilisateursPage() {
           </div>
         </div>
       </div>
-    )
+    );
   }
 
   return (
@@ -194,8 +207,12 @@ export default function ActiviteUtilisateursPage() {
           <div className="flex items-center space-x-3">
             <Activity className="h-6 w-6 text-neutral-900" />
             <div>
-              <h1 className="text-xl font-bold text-neutral-900">Activité Utilisateurs</h1>
-              <p className="text-sm text-neutral-600">Monitoring temps réel de l'équipe</p>
+              <h1 className="text-xl font-bold text-neutral-900">
+                Activité Utilisateurs
+              </h1>
+              <p className="text-sm text-neutral-600">
+                Monitoring temps réel de l'équipe
+              </p>
             </div>
           </div>
 
@@ -224,7 +241,9 @@ export default function ActiviteUtilisateursPage() {
           <div className="flex">
             <AlertCircle className="h-5 w-5 text-red-400 mt-0.5" />
             <div className="ml-3">
-              <h3 className="text-sm font-medium text-red-800">Erreur de chargement</h3>
+              <h3 className="text-sm font-medium text-red-800">
+                Erreur de chargement
+              </h3>
               <p className="mt-1 text-sm text-red-700">{error}</p>
             </div>
           </div>
@@ -235,7 +254,9 @@ export default function ActiviteUtilisateursPage() {
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         <div className="bg-white rounded-lg border border-neutral-200 shadow-sm">
           <div className="flex flex-row items-center justify-between space-y-0 p-4 pb-2">
-            <div className="text-sm font-medium text-neutral-600">Utilisateurs Actifs</div>
+            <div className="text-sm font-medium text-neutral-600">
+              Utilisateurs Actifs
+            </div>
             <CheckCircle className="h-4 w-4 text-success-500" />
           </div>
           <div className="px-4 pb-4">
@@ -248,24 +269,33 @@ export default function ActiviteUtilisateursPage() {
 
         <div className="bg-white rounded-lg border border-neutral-200 shadow-sm">
           <div className="flex flex-row items-center justify-between space-y-0 p-4 pb-2">
-            <div className="text-sm font-medium text-neutral-600">Total Utilisateurs</div>
+            <div className="text-sm font-medium text-neutral-600">
+              Total Utilisateurs
+            </div>
             <User className="h-4 w-4 text-primary-500" />
           </div>
           <div className="px-4 pb-4">
-            <div className="text-2xl font-bold text-neutral-900">{users.length}</div>
+            <div className="text-2xl font-bold text-neutral-900">
+              {users.length}
+            </div>
             <p className="text-xs text-neutral-600">Équipe complète</p>
           </div>
         </div>
 
         <div className="bg-white rounded-lg border border-neutral-200 shadow-sm">
           <div className="flex flex-row items-center justify-between space-y-0 p-4 pb-2">
-            <div className="text-sm font-medium text-neutral-600">Engagement Moyen</div>
+            <div className="text-sm font-medium text-neutral-600">
+              Engagement Moyen
+            </div>
             <TrendingUp className="h-4 w-4 text-accent-500" />
           </div>
           <div className="px-4 pb-4">
             <div className="text-2xl font-bold text-neutral-900">
               {users.length > 0
-                ? Math.round(users.reduce((sum, u) => sum + u.engagement_score, 0) / users.length)
+                ? Math.round(
+                    users.reduce((sum, u) => sum + u.engagement_score, 0) /
+                      users.length
+                  )
                 : 0}
             </div>
             <p className="text-xs text-neutral-600">Score sur 100</p>
@@ -306,8 +336,11 @@ export default function ActiviteUtilisateursPage() {
               </tr>
             </thead>
             <tbody className="bg-white divide-y divide-neutral-200">
-              {users.map((user) => (
-                <tr key={user.user_id} className="hover:bg-neutral-50 transition-colors">
+              {users.map(user => (
+                <tr
+                  key={user.user_id}
+                  className="hover:bg-neutral-50 transition-colors"
+                >
                   <td className="px-6 py-4 whitespace-nowrap">
                     <div className="flex items-center">
                       <div className="flex-shrink-0 h-10 w-10 bg-neutral-200 rounded-full flex items-center justify-center">
@@ -317,12 +350,16 @@ export default function ActiviteUtilisateursPage() {
                         <div className="text-sm font-medium text-neutral-900">
                           {user.full_name || 'Sans nom'}
                         </div>
-                        <div className="text-sm text-neutral-500">{user.email}</div>
+                        <div className="text-sm text-neutral-500">
+                          {user.email}
+                        </div>
                       </div>
                     </div>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap">
-                    <span className={`px-2 py-1 text-xs font-medium rounded border ${getRoleBadgeColor(user.role)}`}>
+                    <span
+                      className={`px-2 py-1 text-xs font-medium rounded border ${getRoleBadgeColor(user.role)}`}
+                    >
                       {user.role}
                     </span>
                   </td>
@@ -330,14 +367,18 @@ export default function ActiviteUtilisateursPage() {
                     <div className="flex items-center">
                       {user.is_active_now && (
                         <span className="flex h-2 w-2 mr-2">
-                          <span className="animate-ping absolute inline-flex h-2 w-2 rounded-full bg-green-400 opacity-75"></span>
-                          <span className="relative inline-flex rounded-full h-2 w-2 bg-green-500"></span>
+                          <span className="animate-ping absolute inline-flex h-2 w-2 rounded-full bg-green-400 opacity-75" />
+                          <span className="relative inline-flex rounded-full h-2 w-2 bg-green-500" />
                         </span>
                       )}
                       <div>
-                        <div className="text-sm text-neutral-900">{formatLastActivity(user.last_activity)}</div>
+                        <div className="text-sm text-neutral-900">
+                          {formatLastActivity(user.last_activity)}
+                        </div>
                         {user.is_active_now && (
-                          <div className="text-xs text-success-600 font-medium">En ligne</div>
+                          <div className="text-xs text-success-600 font-medium">
+                            En ligne
+                          </div>
                         )}
                       </div>
                     </div>
@@ -350,16 +391,24 @@ export default function ActiviteUtilisateursPage() {
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-neutral-900">
                     <div className="flex items-center">
-                      <span className="mr-2">{getModuleIcon(user.most_used_module)}</span>
-                      <span className="capitalize">{user.most_used_module || '—'}</span>
+                      <span className="mr-2">
+                        {getModuleIcon(user.most_used_module)}
+                      </span>
+                      <span className="capitalize">
+                        {user.most_used_module || '—'}
+                      </span>
                     </div>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap">
                     <div className="flex items-center">
-                      <span className={`text-sm font-medium ${getEngagementColor(user.engagement_score)}`}>
+                      <span
+                        className={`text-sm font-medium ${getEngagementColor(user.engagement_score)}`}
+                      >
                         {user.engagement_score}
                       </span>
-                      <span className="text-xs text-neutral-500 ml-1">/100</span>
+                      <span className="text-xs text-neutral-500 ml-1">
+                        /100
+                      </span>
                     </div>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
@@ -379,12 +428,16 @@ export default function ActiviteUtilisateursPage() {
           {users.length === 0 && !isLoading && (
             <div className="text-center py-12">
               <User className="mx-auto h-12 w-12 text-neutral-400" />
-              <h3 className="mt-2 text-sm font-medium text-neutral-900">Aucun utilisateur</h3>
-              <p className="mt-1 text-sm text-neutral-500">Aucun utilisateur trouvé dans le système.</p>
+              <h3 className="mt-2 text-sm font-medium text-neutral-900">
+                Aucun utilisateur
+              </h3>
+              <p className="mt-1 text-sm text-neutral-500">
+                Aucun utilisateur trouvé dans le système.
+              </p>
             </div>
           )}
         </div>
       </div>
     </div>
-  )
+  );
 }

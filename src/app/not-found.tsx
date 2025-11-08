@@ -1,4 +1,4 @@
-"use client"
+'use client';
 
 /**
  * 🚫 Page 404 Personnalisée - Vérone Back Office
@@ -9,11 +9,12 @@
  * WORKAROUND (2025-10-17): Force dynamic rendering pour éviter prerendering error
  */
 
-import Link from 'next/link'
-import { AlertTriangle, Home, ArrowLeft } from 'lucide-react'
+import Link from 'next/link';
+
+import { AlertTriangle, Home, ArrowLeft } from 'lucide-react';
 
 // Force dynamic rendering pour éviter prerendering error avec Html import
-export const dynamic = 'force-dynamic'
+export const dynamic = 'force-dynamic';
 
 export default function NotFound() {
   return (
@@ -25,9 +26,7 @@ export default function NotFound() {
         </div>
 
         {/* Titre Vérone */}
-        <h1 className="text-3xl font-bold text-black mb-2">
-          404
-        </h1>
+        <h1 className="text-3xl font-bold text-black mb-2">404</h1>
 
         <h2 className="text-xl font-semibold text-black mb-4">
           Page introuvable
@@ -51,7 +50,7 @@ export default function NotFound() {
             className="w-full bg-white hover:bg-gray-50 text-black border-2 border-black py-3 px-4 rounded-lg transition-colors flex items-center justify-center"
             onClick={() => {
               if (typeof window !== 'undefined') {
-                window.history.back()
+                window.history.back();
               }
             }}
           >
@@ -68,5 +67,5 @@ export default function NotFound() {
         </div>
       </div>
     </div>
-  )
+  );
 }

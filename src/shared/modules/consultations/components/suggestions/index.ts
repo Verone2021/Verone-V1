@@ -1,0 +1,1 @@
+export { ConsultationSuggestions } from './ConsultationSuggestions';

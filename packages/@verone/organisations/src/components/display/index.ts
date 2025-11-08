@@ -1,0 +1,1 @@
+export { OrganisationLogo } from './OrganisationLogo';

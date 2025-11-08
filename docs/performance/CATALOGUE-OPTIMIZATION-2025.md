@@ -21,6 +21,7 @@ Impact Business     : KPIs affichent 0 produits (19 produits réels en base)
 ### Root Cause Identifiée
 
 **Problème Architecture** : Le dashboard `/catalogue/dashboard/page.tsx` utilise le mauvais hook :
+
 - Utilise `useProducts()` (hook liste paginée → charge 50 produits max)
 - Calcule les KPIs sur 50 produits au lieu de 241 en base
 - **Résultat** : Stats fausses (-79% précision) + temps chargement excessif
@@ -47,7 +48,7 @@ SLO <2000ms : LARGEMENT RESPECTÉ ✅
 
 ```typescript
 // CODE ACTUEL - PROBLÉMATIQUE
-const { products, loading: productsLoading } = useProducts()
+const { products, loading: productsLoading } = useProducts();
 
 // Problème :
 // - useProducts() charge page 0 uniquement (50 produits max)
@@ -56,6 +57,7 @@ const { products, loading: productsLoading } = useProducts()
 ```
 
 **Impact Mesurable** :
+
 - `totalProducts` : 50 affiché au lieu de 241 réel (-79% erreur)
 - `activeProducts` : Basé sur 50 produits (incomplet)
 - `publishedProducts` : Basé sur 50 produits (incomplet)
@@ -71,12 +73,12 @@ const { products, loading: productsLoading } = useProducts()
 
 export interface RealDashboardMetrics {
   products: {
-    total: number
-    active: number      // in_stock + preorder + coming_soon + pret_a_commander
-    published: number   // tous sauf sourcing/echantillon_a_commander
-    archived: number    // discontinued
-    trend: number       // Pourcentage nouveaux produits (7 derniers jours)
-  }
+    total: number;
+    active: number; // in_stock + preorder + coming_soon + pret_a_commander
+    published: number; // tous sauf sourcing/echantillon_a_commander
+    archived: number; // discontinued
+    trend: number; // Pourcentage nouveaux produits (7 derniers jours)
+  };
   // ... autres métriques
 }
 
@@ -93,17 +95,19 @@ export interface RealDashboardMetrics {
 // Status : ✅ Plus optimisé mais non utilisé
 
 // Méthode 1 (idéale) : RPC SQL agrégée
-const { data } = await supabase.rpc('get_products_status_metrics')
+const { data } = await supabase.rpc('get_products_status_metrics');
 // ⚠️ RPC n'existe pas en DB → fallback
 
 // Méthode 2 (fallback actuel) : COUNT queries parallèles ✅
 const [totalResult, activeResult, inactiveResult, draftResult] =
   await Promise.all([
     supabase.from('products').select('id', { count: 'exact', head: true }),
-    supabase.from('products').select('id', { count: 'exact', head: true })
+    supabase
+      .from('products')
+      .select('id', { count: 'exact', head: true })
       .in('status', ['in_stock']),
     // ... autres counts
-  ])
+  ]);
 
 // Performance estimée : ~300ms avec COUNT queries ✅
 ```
@@ -132,6 +136,7 @@ ANALYZE products; -- Stats mises à jour ✅
 ```
 
 **Impact Positif** :
+
 - Queries avec `WHERE status IN (...)` : Index utilisé ✅
 - Tris par `created_at` : Index utilisé ✅
 - COUNT queries rapides : <50ms par query estimé ✅
@@ -165,6 +170,7 @@ $$ LANGUAGE plpgsql STABLE;
 ```
 
 **Avantages** :
+
 - Single query au lieu de multiple queries parallèles
 - Agrégations côté DB (plus rapide que JS client-side)
 - Pas de data transfer (seulement résultat agrégé)
@@ -178,25 +184,30 @@ $$ LANGUAGE plpgsql STABLE;
 
 ```typescript
 export default function CatalogueDashboardPage() {
-  const router = useRouter()
-  const { products, loading: productsLoading } = useProducts() // ❌ Mauvais hook
+  const router = useRouter();
+  const { products, loading: productsLoading } = useProducts(); // ❌ Mauvais hook
 
   // Calculs KPIs - INEFFICACES (lignes 70-91)
-  const totalProducts = products?.length || 0 // ❌ Max 50
+  const totalProducts = products?.length || 0; // ❌ Max 50
 
-  const activeProducts = products?.filter(p =>
-    ['in_stock', 'preorder', 'coming_soon', 'pret_a_commander'].includes(p.status)
-  )?.length || 0 // ❌ Filtrage JS sur données incomplètes
+  const activeProducts =
+    products?.filter(p =>
+      ['in_stock', 'preorder', 'coming_soon', 'pret_a_commander'].includes(
+        p.status
+      )
+    )?.length || 0; // ❌ Filtrage JS sur données incomplètes
 
-  const publishedProducts = products?.filter(p =>
-    !['sourcing', 'echantillon_a_commander'].includes(p.status)
-  )?.length || 0 // ❌ Multiple .filter() non optimisés
+  const publishedProducts =
+    products?.filter(
+      p => !['sourcing', 'echantillon_a_commander'].includes(p.status)
+    )?.length || 0; // ❌ Multiple .filter() non optimisés
 
   // ... autres calculs
 }
 ```
 
 **Problèmes React** :
+
 - ❌ Aucun `useMemo` sur calculs KPIs (re-calcul à chaque render)
 - ❌ Multiple `.filter()` non memoized
 - ⚠️ `useProducts()` hook déclenche re-renders inutiles (SWR)
@@ -206,13 +217,13 @@ export default function CatalogueDashboardPage() {
 ```typescript
 // APRÈS OPTIMISATION P0
 export default function CatalogueDashboardPage() {
-  const router = useRouter()
-  const { metrics, isLoading } = useProductMetrics() // ✅ Hook dédié
+  const router = useRouter();
+  const { metrics, isLoading } = useProductMetrics(); // ✅ Hook dédié
 
   // Calculs instantanés - métriques déjà calculées côté serveur ✅
-  const totalProducts = metrics?.total || 0
-  const activeProducts = metrics?.active || 0
-  const publishedProducts = metrics?.published || 0
+  const totalProducts = metrics?.total || 0;
+  const activeProducts = metrics?.active || 0;
+  const publishedProducts = metrics?.published || 0;
 
   // Pas de .filter(), pas de recalcul, données déjà agrégées ✅
 }
@@ -226,15 +237,16 @@ export default function CatalogueDashboardPage() {
 
 ```typescript
 // Imports dashboard actuels
-import { useProducts } from '../../../hooks/use-products' // ~4KB
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card' // ~2KB
-import { Button } from '@/components/ui/button' // ~1KB
-import { Badge } from '@/components/ui/badge' // ~1KB
+import { useProducts } from '../../../hooks/use-products'; // ~4KB
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'; // ~2KB
+import { Button } from '@/components/ui/button'; // ~1KB
+import { Badge } from '@/components/ui/badge'; // ~1KB
 
 // Total dashboard page : ~15KB estimé (acceptable ✅)
 ```
 
 **Recommandation Bundle** :
+
 - ✅ Pas d'optimisation bundle nécessaire
 - Bundle size dashboard acceptable
 - Focus sur optimisations queries/hooks uniquement
@@ -253,16 +265,16 @@ import { Badge } from '@/components/ui/badge' // ~1KB
 
 ```typescript
 // AVANT (ligne 52)
-const { products, loading: productsLoading } = useProducts()
+const { products, loading: productsLoading } = useProducts();
 
 // APRÈS (SOLUTION IMMÉDIATE)
-const { metrics, isLoading } = useRealDashboardMetrics()
+const { metrics, isLoading } = useRealDashboardMetrics();
 
 // Puis adapter calculs (lines 70-91)
-const totalProducts = metrics?.products.total || 0
-const activeProducts = metrics?.products.active || 0
-const publishedProducts = metrics?.products.published || 0
-const archivedProducts = metrics?.products.archived || 0
+const totalProducts = metrics?.products.total || 0;
+const activeProducts = metrics?.products.active || 0;
+const publishedProducts = metrics?.products.published || 0;
+const archivedProducts = metrics?.products.archived || 0;
 ```
 
 **Complexité** : Faible (15 minutes)
@@ -370,7 +382,7 @@ export function useProductMetrics() {
 ```typescript
 // OPTIMISATION : Utiliser COUNT au lieu de charger tous les produits
 const metricsFetcher = async () => {
-  const supabase = createClient()
+  const supabase = createClient();
 
   // AVANT (ligne 33-36) : Charge 241 rows ❌
   // const { data: products } = await supabase
@@ -378,22 +390,23 @@ const metricsFetcher = async () => {
   //   .select('id, status, created_at')
 
   // APRÈS : Utiliser RPC SQL ✅
-  const { data: productsMetrics, error: productsError } = await supabase
-    .rpc('get_products_status_metrics')
+  const { data: productsMetrics, error: productsError } = await supabase.rpc(
+    'get_products_status_metrics'
+  );
 
-  if (productsError) throw productsError
+  if (productsError) throw productsError;
 
   // Queries variant_groups et collections inchangées
   const { data: variantGroups, error: variantGroupsError } = await supabase
     .from('variant_groups')
-    .select('id', { count: 'exact', head: true }) // COUNT optimisé
+    .select('id', { count: 'exact', head: true }); // COUNT optimisé
 
   const { data: collections, error: collectionsError } = await supabase
     .from('collections')
-    .select('id, is_active', { count: 'exact' })
+    .select('id, is_active', { count: 'exact' });
 
   // ... suite inchangée
-}
+};
 ```
 
 **Complexité** : Faible (15 minutes)
@@ -409,23 +422,23 @@ const metricsFetcher = async () => {
 **Fichier** : `src/app/catalogue/dashboard/page.tsx`
 
 ```typescript
-import { useMemo } from 'react'
+import { useMemo } from 'react';
 
 export default function CatalogueDashboardPage() {
-  const { metrics, isLoading } = useRealDashboardMetrics()
+  const { metrics, isLoading } = useRealDashboardMetrics();
 
   // Memoize calculs dérivés
   const publishedRate = useMemo(() => {
-    if (!metrics?.products.total) return 0
+    if (!metrics?.products.total) return 0;
     return Math.round(
       (metrics.products.published / metrics.products.total) * 100
-    )
-  }, [metrics?.products.total, metrics?.products.published])
+    );
+  }, [metrics?.products.total, metrics?.products.published]);
 
   // Memoize liste produits récents
   const recentProductsList = useMemo(() => {
-    return recentProducts.slice(0, 5)
-  }, [recentProducts])
+    return recentProducts.slice(0, 5);
+  }, [recentProducts]);
 
   // ... reste du composant
 }
@@ -445,15 +458,15 @@ export function useRealDashboardMetrics() {
     'real-dashboard-metrics',
     metricsFetcher,
     {
-      refreshInterval: 60000,         // Refresh toutes les 60s ✅
-      revalidateOnFocus: false,        // Pas de re-fetch au focus ✅
+      refreshInterval: 60000, // Refresh toutes les 60s ✅
+      revalidateOnFocus: false, // Pas de re-fetch au focus ✅
       revalidateOnReconnect: true,
-      dedupingInterval: 30000,         // APRÈS : 30s (avant: 10s) ✅
-      keepPreviousData: true           // Garde données pendant refresh ✅
+      dedupingInterval: 30000, // APRÈS : 30s (avant: 10s) ✅
+      keepPreviousData: true, // Garde données pendant refresh ✅
     }
-  )
+  );
 
-  return { metrics: data, isLoading, error, refetch: mutate }
+  return { metrics: data, isLoading, error, refetch: mutate };
 }
 ```
 
@@ -575,8 +588,8 @@ ORDER BY avg_duration DESC;
 if (dashboardLoadTime > 2000) {
   Sentry.captureMessage('Dashboard SLO violated', {
     level: 'warning',
-    extra: { loadTime: dashboardLoadTime }
-  })
+    extra: { loadTime: dashboardLoadTime },
+  });
 }
 ```
 

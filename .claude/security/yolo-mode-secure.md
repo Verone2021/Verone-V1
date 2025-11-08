@@ -8,6 +8,7 @@
 ## 🎯 **YOLO Mode Philosophy**
 
 ### **Core Principle**
+
 Développement rapide **SANS compromettre la sécurité** grâce à l'isolation Docker et la surveillance continue.
 
 ```
@@ -16,6 +17,7 @@ YOLO = You Only Live Once → Make it count with SECURITY
 ```
 
 ### **Security-First YOLO**
+
 - ✅ **Rapid development** avec protection maximale
 - ✅ **Container isolation** pour expérimentation sécurisée
 - ✅ **Real-time monitoring** des actions sensibles
@@ -26,6 +28,7 @@ YOLO = You Only Live Once → Make it count with SECURITY
 ## 🐳 **Docker Container Configuration**
 
 ### **Isolation Strategy**
+
 ```yaml
 # .claude/security/yolo-docker-config.yml
 version: '3.8'
@@ -36,7 +39,7 @@ services:
     container_name: verone-yolo-secure
 
     # ISOLATION MAXIMALE
-    network_mode: "bridge"
+    network_mode: 'bridge'
     security_opt:
       - no-new-privileges:true
       - apparmor:unconfined
@@ -55,7 +58,7 @@ services:
     volumes:
       - ./src:/app/src:rw
       - ./public:/app/public:rw
-      - /app/node_modules  # Anonymous volume
+      - /app/node_modules # Anonymous volume
       - yolo-safe-cache:/app/.next
 
     # ENVIRONMENT PROTECTION
@@ -74,8 +77,8 @@ services:
       "
 
     ports:
-      - "3000:3000"
-      - "9229:9229"  # Debug port (restricted)
+      - '3000:3000'
+      - '9229:9229' # Debug port (restricted)
 
 volumes:
   yolo-safe-cache:
@@ -83,6 +86,7 @@ volumes:
 ```
 
 ### **Container Startup Script**
+
 ```bash
 #!/bin/bash
 # .claude/security/start-yolo-mode.sh
@@ -125,6 +129,7 @@ echo "🔒 Protection: MAXIMUM"
 ## 🛡️ **Filesystem Guardian Rules**
 
 ### **Protection Configuration**
+
 ```json
 {
   "filesystemGuardian": {
@@ -151,8 +156,8 @@ echo "🔒 Protection: MAXIMUM"
       "read": true,
       "write": true,
       "create": true,
-      "delete": false,  // Sécurité: pas de suppression
-      "execute": false  // Sécurité: pas d'exécution
+      "delete": false, // Sécurité: pas de suppression
+      "execute": false // Sécurité: pas d'exécution
     },
 
     "securityRules": {
@@ -166,6 +171,7 @@ echo "🔒 Protection: MAXIMUM"
 ```
 
 ### **Auto-Classification System**
+
 ```typescript
 // .claude/security/auto-classifier.ts
 
@@ -181,14 +187,14 @@ const YOLO_SAFE_PATTERNS = {
     'src/**/*.{ts,tsx,js,jsx}',
     'components/**/*.{ts,tsx}',
     'hooks/**/*.ts',
-    'lib/**/*.ts'
+    'lib/**/*.ts',
   ],
 
   config: [
     'tailwind.config.js',
     'next.config.js',
     'tsconfig.json',
-    '.eslintrc.js'
+    '.eslintrc.js',
   ],
 
   prohibited: [
@@ -196,19 +202,20 @@ const YOLO_SAFE_PATTERNS = {
     '*.pem',
     '*.key',
     '.ssh/**/*',
-    'node_modules/.bin/**/*'
-  ]
+    'node_modules/.bin/**/*',
+  ],
 };
 
 function classifyForYolo(filePath: string): FileClassification {
   // Auto-classification logic
-  if (YOLO_SAFE_PATTERNS.prohibited.some(pattern =>
-      minimatch(filePath, pattern))) {
+  if (
+    YOLO_SAFE_PATTERNS.prohibited.some(pattern => minimatch(filePath, pattern))
+  ) {
     return {
       path: filePath,
       type: 'sensitive',
       riskLevel: 'dangerous',
-      allowedInYolo: false
+      allowedInYolo: false,
     };
   }
 
@@ -221,6 +228,7 @@ function classifyForYolo(filePath: string): FileClassification {
 ## 🔍 **Security Scanner Integration**
 
 ### **Real-Time Monitoring**
+
 ```typescript
 // .claude/security/security-monitor.ts
 
@@ -245,12 +253,14 @@ class YoloSecurityMonitor {
 
   private initializeWatchers() {
     // File system monitoring
-    chokidar.watch('**/*', {
-      ignored: /node_modules/,
-      persistent: true
-    }).on('all', (event, path) => {
-      this.handleFileSystemEvent(event, path);
-    });
+    chokidar
+      .watch('**/*', {
+        ignored: /node_modules/,
+        persistent: true,
+      })
+      .on('all', (event, path) => {
+        this.handleFileSystemEvent(event, path);
+      });
 
     // Network monitoring
     this.monitorNetworkRequests();
@@ -268,7 +278,7 @@ class YoloSecurityMonitor {
         type: 'file-access',
         severity: 'critical',
         details: { path },
-        action: 'blocked'
+        action: 'blocked',
       });
 
       // Block the operation
@@ -290,16 +300,19 @@ class YoloSecurityMonitor {
   }
 
   private async notifyAdministrators(alert: SecurityAlert) {
-    // Future: Integration with Sentry MCP
-    // await mcp__sentry__create_issue({
-    //   title: `YOLO Security Alert: ${alert.type}`,
-    //   description: JSON.stringify(alert, null, 2)
-    // });
+    // Future: Enhanced console-error-tracker with alert escalation
+    console.error('[VÉRONE:SECURITY]', {
+      level: 'critical',
+      title: `YOLO Security Alert: ${alert.type}`,
+      alert: JSON.stringify(alert, null, 2),
+      timestamp: new Date().toISOString(),
+    });
   }
 }
 ```
 
 ### **Automated Threat Detection**
+
 ```typescript
 // .claude/security/threat-detector.ts
 
@@ -313,18 +326,18 @@ const THREAT_SIGNATURES: ThreatSignature[] = [
   {
     pattern: /(?:password|passwd|pwd)\s*[=:]\s*['"]\w+['"]/gi,
     type: 'credential-exposure',
-    severity: 'critical'
+    severity: 'critical',
   },
   {
     pattern: /eval\s*\([^)]*\)/gi,
     type: 'malicious-code',
-    severity: 'high'
+    severity: 'high',
   },
   {
     pattern: /exec\s*\([^)]*\)/gi,
     type: 'system-access',
-    severity: 'high'
-  }
+    severity: 'high',
+  },
 ];
 
 function scanForThreats(content: string): ThreatSignature[] {
@@ -345,6 +358,7 @@ function scanForThreats(content: string): ThreatSignature[] {
 ## ⚡ **YOLO Commands Integration**
 
 ### **Secure Development Commands**
+
 ```bash
 # .claude/security/yolo-commands.sh
 
@@ -385,34 +399,41 @@ yolo-security-scan() {
 ```
 
 ### **Integration avec Custom Commands**
-```markdown
+
+````markdown
 # .claude/commands/yolo-secure.md
 
 ## 🔒 YOLO Secure Mode Command
 
 ### Utilisation
+
 ```bash
 /yolo-secure <action>
 ```
+````
 
 ### Actions Disponibles
+
 - `start`: Démarrer mode YOLO sécurisé
 - `stop`: Arrêter mode YOLO
 - `scan`: Scanner sécurité
 - `status`: Statut sécurité
 
 ### Workflow
+
 1. **Container Isolation** : Docker automatique
 2. **Filesystem Guardian** : Protection active
 3. **Security Monitor** : Surveillance temps réel
 4. **Threat Detection** : Auto-détection menaces
 
 ### Security Guarantees
+
 - ✅ **Network isolation** : Bridge mode uniquement
 - ✅ **Filesystem protection** : Read-only + tmpfs
 - ✅ **Resource limits** : CPU + Memory controlled
 - ✅ **Auto-quarantine** : Malicious code blocked
-```
+
+````
 
 ---
 
@@ -466,25 +487,28 @@ function generateSecurityReport(): YoloSecurityMetrics {
     }
   };
 }
-```
+````
 
 ---
 
 ## 🎯 **Success Criteria**
 
 ### **Security Requirements**
+
 - ✅ **100% Container Isolation** : Aucune évasion possible
 - ✅ **Real-time Threat Detection** : <100ms response time
 - ✅ **Zero Data Exposure** : Credentials jamais exposés
 - ✅ **Auto-Recovery** : Rollback automatique en cas de breach
 
 ### **Performance Requirements**
+
 - ✅ **Minimal Overhead** : <10% performance impact
 - ✅ **Fast Startup** : Container ready <30s
 - ✅ **Development Speed** : YOLO benefits maintained
 - ✅ **Monitoring Efficiency** : Real-time sans lag
 
 ### **Operational Requirements**
+
 - ✅ **One-Command Start** : Single script execution
 - ✅ **Transparent Operation** : Developer UX unchanged
 - ✅ **Emergency Procedures** : Instant shutdown capability
@@ -495,6 +519,7 @@ function generateSecurityReport(): YoloSecurityMetrics {
 ## 🚨 **Emergency Procedures**
 
 ### **Security Breach Response**
+
 ```bash
 # Immediate response (automated)
 1. Container isolation: IMMEDIATE
@@ -510,6 +535,7 @@ function generateSecurityReport(): YoloSecurityMetrics {
 ```
 
 ### **Manual Override**
+
 ```bash
 # Nuclear option (complete reset)
 ./claude/security/nuclear-reset.sh
@@ -518,4 +544,4 @@ function generateSecurityReport(): YoloSecurityMetrics {
 ---
 
 **🔒 YOLO Mode Sécurisé 2025 - Speed WITH Security**
-*Développement rapide sans compromis sécuritaire*
+_Développement rapide sans compromis sécuritaire_

@@ -10,9 +10,11 @@
 ## 🎯 Vue d'Ensemble
 
 ### Description Actuelle
+
 Système complet de gestion financière avec synchronisation bancaire Qonto, génération factures Abby, rapprochement automatique transactions ↔ factures, et suivi trésorerie temps réel. Architecture Vérone = source de vérité.
 
 ### Scope Implémenté
+
 - ✅ **Intégration Qonto** : Sync transactions bancaires automatique
 - ✅ **Intégration Abby** : Génération factures clients/fournisseurs
 - ✅ **Rapprochement Bancaire** : Matching automatique + manuel transactions ↔ factures
@@ -26,17 +28,19 @@ Système complet de gestion financière avec synchronisation bancaire Qonto, gé
 ## 📊 Features Implémentées
 
 ### 1. Intégration Qonto (Synchronisation Bancaire)
+
 ```typescript
 // API Routes
-POST /api/finance/qonto/sync-transactions  // Sync manuelle
-POST /api/finance/qonto/webhook            // Webhook temps réel
+POST / api / finance / qonto / sync - transactions; // Sync manuelle
+POST / api / finance / qonto / webhook; // Webhook temps réel
 
 // Types transactions
-type TransactionSide = 'credit' | 'debit'
-type MatchingStatus = 'matched' | 'unmatched' | 'pending_review'
+type TransactionSide = 'credit' | 'debit';
+type MatchingStatus = 'matched' | 'unmatched' | 'pending_review';
 ```
 
 **Features** :
+
 - ✅ Synchronisation automatique transactions bancaires
 - ✅ Webhook temps réel (nouvelle transaction Qonto)
 - ✅ Détection doublons (transaction_id unique)
@@ -44,6 +48,7 @@ type MatchingStatus = 'matched' | 'unmatched' | 'pending_review'
 - ✅ Support multi-comptes bancaires
 
 **Table** : `bank_transactions`
+
 ```sql
 Colonnes clés:
 - transaction_id (unique Qonto)
@@ -58,6 +63,7 @@ Colonnes clés:
 ```
 
 ### 2. Intégration Abby (Facturation)
+
 ```typescript
 // API Routes
 POST /api/finance/abby/generate-invoice     // Créer facture
@@ -69,6 +75,7 @@ Vérone (Source de vérité) → Abby (Système externe)
 ```
 
 **Workflow Facturation** :
+
 1. **Vérone** : Commande validée (`sales_orders.status = 'confirmed'`)
 2. **Vérone** : Création `financial_documents` (type: customer_invoice, status: draft)
 3. **API Abby** : POST invoice avec items/client/totaux
@@ -77,6 +84,7 @@ Vérone (Source de vérité) → Abby (Système externe)
 6. **Abby** : Envoi email client avec PDF
 
 **Table** : `financial_documents`
+
 ```sql
 Colonnes clés:
 - document_type ('customer_invoice' | 'supplier_invoice' | 'credit_note' | 'quote')
@@ -95,6 +103,7 @@ Colonnes clés:
 ### 3. Rapprochement Bancaire Automatique
 
 **Algorithme Matching** :
+
 ```typescript
 // Critères matching automatique
 1. Montant exact (transaction.amount === invoice.amount_remaining)
@@ -113,6 +122,7 @@ confidence =
 ```
 
 **Interface Rapprochement** :
+
 - ✅ Liste transactions non rapprochées (`matching_status: 'unmatched'`)
 - ✅ Suggestions matching avec score confiance
 - ✅ Validation manuelle admin
@@ -120,6 +130,7 @@ confidence =
 - ✅ Update statut facture (paid / partially_paid)
 
 **Table** : `financial_payments`
+
 ```sql
 Colonnes:
 - financial_document_id (FK financial_documents)
@@ -134,20 +145,22 @@ Colonnes:
 ### 4. Treasury Dashboard (KPIs Trésorerie)
 
 **Métriques Temps Réel** :
+
 ```typescript
 interface TreasuryStats {
-  total_unmatched: number           // Transactions non rapprochées
-  total_amount_pending: number      // Montant factures impayées
-  auto_match_rate: number           // % matching automatique
-  manual_review_count: number       // Transactions à revoir
-  current_balance: number           // Solde comptes bancaires
-  monthly_revenue: number           // CA mensuel
-  monthly_expenses: number          // Dépenses mensuelles
-  cash_flow: number                 // Flux trésorerie
+  total_unmatched: number; // Transactions non rapprochées
+  total_amount_pending: number; // Montant factures impayées
+  auto_match_rate: number; // % matching automatique
+  manual_review_count: number; // Transactions à revoir
+  current_balance: number; // Solde comptes bancaires
+  monthly_revenue: number; // CA mensuel
+  monthly_expenses: number; // Dépenses mensuelles
+  cash_flow: number; // Flux trésorerie
 }
 ```
 
 **Affichage** :
+
 - ✅ Stats cards (4 KPIs principaux)
 - ✅ Liste transactions unmatched avec suggestions
 - ✅ Liste factures impayées
@@ -156,6 +169,7 @@ interface TreasuryStats {
 ### 5. Webhooks Temps Réel
 
 **Qonto Webhook** :
+
 ```typescript
 POST /api/finance/qonto/webhook
 // Événements:
@@ -165,6 +179,7 @@ POST /api/finance/qonto/webhook
 ```
 
 **Abby Webhook** :
+
 ```typescript
 POST /api/finance/abby/webhook
 // Événements:
@@ -178,12 +193,14 @@ POST /api/finance/abby/webhook
 ## 🎨 Design System Appliqué
 
 ### Composants UI
+
 - **Stats Cards** : KPIs trésorerie
 - **Table Transactions** : Dense, filtres, tri
 - **Badge Suggestions** : Score confiance (couleur conditionnelle)
 - **Modal Détails** : Transaction + facture + historique
 
 ### Icons Lucide
+
 - `Wallet` - Trésorerie
 - `CreditCard` - Transactions
 - `FileText` - Factures
@@ -193,6 +210,7 @@ POST /api/finance/abby/webhook
 - `TrendingDown` - Dépenses
 
 ### Couleurs Statuts
+
 ```typescript
 documentStatusColors = {
   draft: 'gray',
@@ -200,14 +218,14 @@ documentStatusColors = {
   paid: 'green',
   partially_paid: 'yellow',
   overdue: 'red',
-  cancelled: 'gray'
-}
+  cancelled: 'gray',
+};
 
 matchingStatusColors = {
   matched: 'green',
   unmatched: 'yellow',
-  pending_review: 'orange'
-}
+  pending_review: 'orange',
+};
 ```
 
 ---
@@ -215,20 +233,22 @@ matchingStatusColors = {
 ## 🔧 Implémentation Technique
 
 ### Hook Principal
+
 ```typescript
 const {
-  unmatchedTransactions,  // BankTransaction[] non rapprochées
-  unpaidInvoices,         // Financial_documents[] impayées
-  stats,                  // TreasuryStats
+  unmatchedTransactions, // BankTransaction[] non rapprochées
+  unpaidInvoices, // Financial_documents[] impayées
+  stats, // TreasuryStats
   loading,
   error,
-  validateMatch,          // (transactionId, invoiceId) => Promise
-  createManualPayment,    // (invoiceId, amount, method) => Promise
-  refreshData             // () => Promise
-} = useBankReconciliation()
+  validateMatch, // (transactionId, invoiceId) => Promise
+  createManualPayment, // (invoiceId, amount, method) => Promise
+  refreshData, // () => Promise
+} = useBankReconciliation();
 ```
 
 ### APIs Clés
+
 ```typescript
 // Qonto Sync
 POST /api/finance/qonto/sync-transactions
@@ -257,22 +277,26 @@ Body: { transactionId, invoiceId }
 ### Tables BDD Complètes
 
 **financial_documents** (52 colonnes - table unifiée) :
+
 - Types : customer_invoice, supplier_invoice, credit_note, quote
 - Polymorphisme client : partner_id + partner_type
 - Intégration Abby : abby_invoice_id, abby_pdf_url
 - Paiements : amount_paid, amount_remaining, paid_at
 
 **bank_transactions** :
+
 - Sync Qonto : transaction_id (unique), settled_at, amount
 - Matching : matching_status, matched_invoice_id
 - Détails : counterparty_name, counterparty_iban, label_text
 
 **financial_payments** :
+
 - Lien transaction ↔ facture
 - Traçabilité : payment_date, created_by
 - Méthode : bank_transfer, card, cash, check
 
 **bank_accounts** :
+
 - Comptes bancaires Qonto
 - Soldes : current_balance, available_balance
 - API : qonto_account_id, qonto_org_id
@@ -282,11 +306,13 @@ Body: { transactionId, invoiceId }
 ## 📋 Business Rules Appliquées
 
 ### Règle 1 : Vérone = Source de Vérité
+
 - ✅ Toute création facture commence dans Vérone
 - ✅ Abby est système externe (sync outbound uniquement)
 - ✅ financial_documents.id = primary key (pas abby_invoice_id)
 
 ### Règle 2 : Matching Automatique Conditions
+
 ```typescript
 auto_match_enabled = true IF:
   - confidence >= 80%
@@ -296,6 +322,7 @@ auto_match_enabled = true IF:
 ```
 
 ### Règle 3 : Paiements Partiels
+
 ```typescript
 // Autoriser acomptes multiples
 financial_documents.amount_paid += payment.amount
@@ -308,6 +335,7 @@ status =
 ```
 
 ### Règle 4 : Webhooks Idempotence
+
 - ✅ Transaction Qonto : unique par transaction_id
 - ✅ Facture Abby : unique par abby_invoice_id
 - ✅ Doublons ignorés (INSERT ON CONFLICT DO NOTHING)
@@ -319,6 +347,7 @@ status =
 ## 🚧 Limitations Connues & Roadmap
 
 ### Limitations Actuelles
+
 - ❌ Pas de prévisions trésorerie (forecasting)
 - ❌ Pas d'export comptable (FEC)
 - ❌ Pas de relances automatiques impayés
@@ -327,16 +356,19 @@ status =
 ### Roadmap 2025-Q4
 
 **Priorité 1** (2 semaines) :
+
 - [ ] Relances automatiques factures impayées
 - [ ] Export comptable FEC (normes DGFiP)
 - [ ] Rapports trésorerie PDF
 
 **Priorité 2** (1 mois) :
+
 - [ ] Prévisions trésorerie (30/60/90 jours)
 - [ ] Dashboard analytics financières
 - [ ] Lettrage comptable complet
 
 **Priorité 3** (3 mois) :
+
 - [ ] Intégration comptable (Pennylane, QuickBooks)
 - [ ] Gestion budgets/prévisions
 - [ ] Reporting fiscal automatisé
@@ -346,11 +378,13 @@ status =
 ## 🔗 Dépendances & Relations
 
 ### Modules Liés
+
 - **Commandes** (`/commandes/clients`) - Génération factures depuis commandes
 - **Organisations** (`/contacts-organisations`) - Clients facturés
 - **Stocks** (`/stocks/mouvements`) - Valorisation stock
 
 ### Intégrations Externes
+
 - **Qonto API** : Synchronisation transactions bancaires
 - **Abby API** : Génération + envoi factures PDF
 - **Email** (future) : Relances impayés
@@ -360,12 +394,14 @@ status =
 ## 🧪 Tests & Validation
 
 ### Tests Actuels
+
 - ✅ Sync Qonto manuelle validée
 - ✅ Génération facture Abby testée
 - ✅ Matching automatique fonctionnel
 - ✅ Webhooks testés (Qonto + Abby)
 
 ### Tests Manquants
+
 - ⏳ Tests E2E workflow complet
 - ⏳ Tests performance (10 000+ transactions)
 - ⏳ Tests edge cases matching (montants proches, doublons)
@@ -375,6 +411,7 @@ status =
 ## 📚 Documentation Associée
 
 ### Fichiers Clés
+
 - **Page** : `src/app/finance/rapprochement/page.tsx`
 - **Hook** : `src/hooks/use-bank-reconciliation.ts`
 - **APIs** : `src/app/api/finance/qonto/*`, `src/app/api/finance/abby/*`
@@ -383,6 +420,7 @@ status =
   - `docs/integration-facturation/ABBY-API-SETUP-GUIDE.md`
 
 ### Sessions
+
 - `MEMORY-BANK/sessions/2025-10-11-SYSTEME-FACTURATION-COMPLET-SUCCESS.md` - Implémentation complète
 - `2025-10-10-migration-invoices-financial-documents.md` - Migration table unifiée
 

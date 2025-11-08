@@ -8,12 +8,12 @@
 
 ## 📊 Résumé Exécutif
 
-| Catégorie | Nombre | Action |
-|-----------|--------|--------|
-| ✅ **KEEP (V2)** | 37 | Conserver et enrichir dans Storybook |
-| ❌ **DELETE** | 12 | Supprimer (inutilisés détectés par knip) |
-| ⚠️ **REVIEW** | 3 | Décision utilisateur requise |
-| **TOTAL** | **52** | - |
+| Catégorie        | Nombre | Action                                   |
+| ---------------- | ------ | ---------------------------------------- |
+| ✅ **KEEP (V2)** | 37     | Conserver et enrichir dans Storybook     |
+| ❌ **DELETE**    | 12     | Supprimer (inutilisés détectés par knip) |
+| ⚠️ **REVIEW**    | 3      | Décision utilisateur requise             |
+| **TOTAL**        | **52** | -                                        |
 
 ---
 
@@ -24,6 +24,7 @@
 Ces composants **ne sont jamais importés** dans le codebase. Suppression sécurisée.
 
 #### 1. Buttons (2)
+
 ```bash
 # ❌ DELETE
 src/components/ui/action-button.tsx              # 4.8 KB - Oct 20
@@ -31,6 +32,7 @@ src/components/ui/standard-modify-button.tsx     # 705 B - Oct 15 (V1)
 ```
 
 **Raison**:
+
 - `action-button.tsx`: Utilisait CVA, mais **remplacé par** `modern-action-button.tsx` (V2)
 - `standard-modify-button.tsx`: Wrapper obsolète sur ancien `Button` (pas `ButtonV2`)
 
@@ -39,6 +41,7 @@ src/components/ui/standard-modify-button.tsx     # 705 B - Oct 15 (V1)
 ---
 
 #### 2. KPI Cards (2)
+
 ```bash
 # ❌ DELETE
 src/components/ui/compact-kpi-card.tsx            # 3.3 KB - Oct 20
@@ -52,6 +55,7 @@ src/components/ui/medium-kpi-card.tsx             # 4.8 KB - Oct 20
 ---
 
 #### 3. Quick Actions (2)
+
 ```bash
 # ❌ DELETE
 src/components/ui/quick-actions-list.tsx          # Oct 20
@@ -63,6 +67,7 @@ src/components/ui/compact-quick-actions.tsx       # Oct 20
 ---
 
 #### 4. Navigation & UI Utilities (6)
+
 ```bash
 # ❌ DELETE
 src/components/ui/activity-timeline.tsx           # Oct 20
@@ -74,6 +79,7 @@ src/components/ui/stat-pill.tsx                   # Oct 20
 ```
 
 **Raison**:
+
 - **Jamais utilisés** (knip dead code detection)
 - `notification-system.tsx`: Probablement remplacé par système toast (react-hot-toast)
 - `breadcrumb.tsx`, `command-palette.tsx`: Fonctionnalités non implémentées
@@ -85,12 +91,14 @@ src/components/ui/stat-pill.tsx                   # Oct 20
 ### Design System V2 - Vérone 2025
 
 Ces composants utilisent le **Design System V2** avec:
+
 - Palette moderne (#3b86d1 bleu, #38ce3c vert, #844fc1 violet)
 - Rounded corners (10px)
 - Micro-interactions (hover scale, transitions 200ms)
 - Tokens depuis `/src/lib/design-system`
 
 #### 1. Buttons (1)
+
 ```bash
 # ✅ KEEP
 src/components/ui/button.tsx                      # 6.5 KB - Oct 20
@@ -98,6 +106,7 @@ src/components/ui/button.tsx                      # 6.5 KB - Oct 20
 ```
 
 **Action**:
+
 - ✅ Conserver `ButtonV2` (7 variants: primary, secondary, outline, success, danger, warning, ghost)
 - ⚠️ **Supprimer export `Button`** (V1 obsolète, remplacé par ButtonV2)
 
@@ -106,6 +115,7 @@ src/components/ui/button.tsx                      # 6.5 KB - Oct 20
 ---
 
 #### 2. Action Buttons (1)
+
 ```bash
 # ✅ KEEP
 src/components/ui/modern-action-button.tsx        # 4.3 KB - Oct 20
@@ -113,6 +123,7 @@ src/components/ui/modern-action-button.tsx        # 4.3 KB - Oct 20
 ```
 
 **Fonctionnalités**:
+
 - Utilise `ButtonV2` comme base
 - 9 actions prédéfinies: edit, archive, delete, view, download, upload, copy, approve, reject
 - **Supérieur à** `action-button.tsx` (inutilisé)
@@ -122,6 +133,7 @@ src/components/ui/modern-action-button.tsx        # 4.3 KB - Oct 20
 ---
 
 #### 3. Cards (2)
+
 ```bash
 # ✅ KEEP
 src/components/ui/card.tsx                        # 1.9 KB - Oct 20
@@ -139,6 +151,7 @@ src/components/ui/verone-card.tsx                 # 6.0 KB - Oct 20
 ```
 
 **Fonctionnalités**:
+
 - Card spécialisée Design System V2
 - Affichage entities (family, category, product, supplier, customer)
 - Props: title, description, count, isActive, onEdit, onDelete, imageUrl
@@ -148,6 +161,7 @@ src/components/ui/verone-card.tsx                 # 6.0 KB - Oct 20
 ---
 
 #### 4. KPI Cards (1)
+
 ```bash
 # ✅ KEEP
 src/components/ui/elegant-kpi-card.tsx            # 3.2 KB - Oct 20
@@ -161,6 +175,7 @@ src/components/ui/elegant-kpi-card.tsx            # 3.2 KB - Oct 20
 ---
 
 #### 5. Badges (4)
+
 ```bash
 # ✅ KEEP
 src/components/ui/badge.tsx                       # Oct 20
@@ -171,12 +186,14 @@ src/components/ui/data-status-badge.tsx           # Oct 20
 **Note**: `stat-pill.tsx` ❌ inutilisé (supprimer)
 
 **Story**:
+
 - ✅ `Badge.stories.tsx` créée manuellement (16 stories)
 - ⚠️ `RoleBadge`, `DataStatusBadge` à générer
 
 ---
 
 #### 6. Inputs & Forms (9)
+
 ```bash
 # ✅ KEEP
 src/components/ui/input.tsx                       # Oct 20
@@ -191,12 +208,14 @@ src/components/ui/form.tsx                        # Oct 20
 ```
 
 **Story**:
+
 - ✅ `Input.stories.tsx` créée manuellement (12 stories)
 - ⚠️ Autres à générer automatiquement
 
 ---
 
 #### 7. Tables & Data Display (4)
+
 ```bash
 # ✅ KEEP
 src/components/ui/table.tsx                       # Oct 20
@@ -208,6 +227,7 @@ src/components/ui/avatar.tsx                      # Oct 20
 ---
 
 #### 8. Dialogs & Overlays (6)
+
 ```bash
 # ✅ KEEP
 src/components/ui/dialog.tsx                      # Oct 20
@@ -221,6 +241,7 @@ src/components/ui/tooltip.tsx                     # Oct 20
 ---
 
 #### 9. Navigation & Layout (4)
+
 ```bash
 # ✅ KEEP
 src/components/ui/sidebar.tsx                     # Oct 20
@@ -232,6 +253,7 @@ src/components/ui/scroll-area.tsx                 # Oct 20
 ---
 
 #### 10. Feedback & Status (5)
+
 ```bash
 # ✅ KEEP
 src/components/ui/alert.tsx                       # Oct 20
@@ -244,6 +266,7 @@ src/components/ui/spinner.tsx                     # Oct 20
 ---
 
 #### 11. Utilities (2)
+
 ```bash
 # ✅ KEEP
 src/components/ui/calendar.tsx                    # Oct 20
@@ -257,11 +280,14 @@ src/components/ui/view-mode-toggle.tsx            # Oct 20
 ### Exports Multiples dans Fichiers V2
 
 #### button.tsx
+
 **État actuel**: Exporte **2 composants**
+
 - ✅ `ButtonV2` (V2 moderne, utilisé, **KEEP**)
 - ❌ `Button` (V1 obsolète, **À SUPPRIMER**)
 
 **Action recommandée**:
+
 ```typescript
 // ❌ Supprimer export V1
 export const Button = React.forwardRef<...>  // DELETE
@@ -280,6 +306,7 @@ export { ButtonV2 as Button }
 ## 📋 Plan d'Action
 
 ### Phase 1: Suppression Sécurisée (5 min)
+
 ```bash
 # Backup avant suppression
 git tag backup-before-v1-cleanup-$(date +%Y%m%d)
@@ -303,6 +330,7 @@ npm run build
 ```
 
 ### Phase 2: Nettoyage Exports V1 (3 min)
+
 ```bash
 # Éditer button.tsx: Supprimer export Button (V1)
 # Option 1: Supprimer export Button complètement
@@ -310,6 +338,7 @@ npm run build
 ```
 
 ### Phase 3: Génération Stories Restantes (2 min)
+
 ```bash
 # Générer stories pour 37 composants V2 restants
 npm run generate:stories
@@ -320,6 +349,7 @@ npm run storybook
 ```
 
 ### Phase 4: Validation (5 min)
+
 ```bash
 # Tests
 npm run type-check
@@ -335,11 +365,13 @@ npm run build
 ## 📊 Métriques Finales
 
 ### Avant Cleanup
+
 - 📦 **262 composants TSX** (total)
 - 🗂️ **49 UI components** analysés
 - ⚠️ **183 fichiers inutilisés** (knip total)
 
 ### Après Cleanup
+
 - ✅ **37 composants UI V2** conservés
 - ❌ **12 composants UI** supprimés (-24%)
 - 📝 **257 stories** à générer (auto-générateur prêt)

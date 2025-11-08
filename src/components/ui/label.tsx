@@ -1,28 +1,30 @@
-import * as React from "react"
-import { cn } from "@/lib/utils"
-import { Info } from "lucide-react"
+import * as React from 'react';
+
+import { Info } from 'lucide-react';
+
+import { cn } from '@verone/utils';
 
 export interface LabelProps
   extends React.LabelHTMLAttributes<HTMLLabelElement> {
   /**
    * Marque le champ comme requis avec un astérisque
    */
-  required?: boolean
+  required?: boolean;
 
   /**
    * Message tooltip d'aide
    */
-  tooltip?: string
+  tooltip?: string;
 
   /**
    * État du champ associé
    */
-  state?: "default" | "error" | "success"
+  state?: 'default' | 'error' | 'success';
 
   /**
    * Désactivé
    */
-  disabled?: boolean
+  disabled?: boolean;
 }
 
 const Label = React.forwardRef<HTMLLabelElement, LabelProps>(
@@ -32,26 +34,26 @@ const Label = React.forwardRef<HTMLLabelElement, LabelProps>(
       children,
       required,
       tooltip,
-      state = "default",
+      state = 'default',
       disabled,
       ...props
     },
     ref
   ) => {
     const stateClasses = {
-      default: "text-slate-700",
-      error: "text-red-600",
-      success: "text-green-600",
-    }
+      default: 'text-slate-700',
+      error: 'text-red-600',
+      success: 'text-green-600',
+    };
 
     return (
       <label
         ref={ref}
         className={cn(
-          "inline-flex items-center gap-1.5 text-sm font-medium leading-none",
-          "peer-disabled:cursor-not-allowed peer-disabled:opacity-70",
+          'inline-flex items-center gap-1.5 text-sm font-medium leading-none',
+          'peer-disabled:cursor-not-allowed peer-disabled:opacity-70',
           stateClasses[state],
-          disabled && "cursor-not-allowed opacity-70",
+          disabled && 'cursor-not-allowed opacity-70',
           className
         )}
         {...props}
@@ -74,9 +76,9 @@ const Label = React.forwardRef<HTMLLabelElement, LabelProps>(
           </span>
         )}
       </label>
-    )
+    );
   }
-)
-Label.displayName = "Label"
+);
+Label.displayName = 'Label';
 
-export { Label }
+export { Label };

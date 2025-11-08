@@ -25,6 +25,7 @@
 Ce document répertorie **21 formules mathématiques** utilisées dans le système Vérone pour calculer KPIs, trends, et métriques business.
 
 **Conventions** :
+
 - Arrondi trends : 1 décimale (`Math.round(trend * 10) / 10`)
 - Arrondi montants : 2 décimales (`Math.round(amount * 100) / 100`)
 - Division par zéro : Retourne 0 (pas d'erreur)
@@ -37,6 +38,7 @@ Ce document répertorie **21 formules mathématiques** utilisées dans le systè
 ### 1. Product Trend (7 jours glissants)
 
 **Formule** :
+
 ```
 trend = ((recent7d - previous7d) / previous7d) × 100
 
@@ -46,35 +48,37 @@ Variables:
 ```
 
 **Implémentation TypeScript** :
+
 ```typescript
-const today = new Date()
-const sevenDaysAgo = new Date(today)
-sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7)
-const fourteenDaysAgo = new Date(today)
-fourteenDaysAgo.setDate(fourteenDaysAgo.getDate() - 14)
+const today = new Date();
+const sevenDaysAgo = new Date(today);
+sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
+const fourteenDaysAgo = new Date(today);
+fourteenDaysAgo.setDate(fourteenDaysAgo.getDate() - 14);
 
 const { count: recentCount } = await supabase
   .from('products')
   .select('id', { count: 'exact', head: true })
-  .gte('created_at', sevenDaysAgo.toISOString())
+  .gte('created_at', sevenDaysAgo.toISOString());
 
 const { count: previousCount } = await supabase
   .from('products')
   .select('id', { count: 'exact', head: true })
   .gte('created_at', fourteenDaysAgo.toISOString())
-  .lt('created_at', sevenDaysAgo.toISOString())
+  .lt('created_at', sevenDaysAgo.toISOString());
 
-let trend = 0
+let trend = 0;
 if (previousCount > 0) {
-  trend = ((recentCount - previousCount) / previousCount) * 100
+  trend = ((recentCount - previousCount) / previousCount) * 100;
 } else if (recentCount > 0) {
-  trend = 100  // 100% d'augmentation
+  trend = 100; // 100% d'augmentation
 }
 
-trend = Number.isFinite(trend) ? Math.round(trend * 10) / 10 : 0
+trend = Number.isFinite(trend) ? Math.round(trend * 10) / 10 : 0;
 ```
 
 **Exemple Calcul** :
+
 ```
 Input:
 - recent7d = 25 produits (7 derniers jours)
@@ -87,6 +91,7 @@ Output: +25.0%
 ```
 
 **Edge Cases** :
+
 - `previous7d = 0, recent7d = 0` → trend = 0%
 - `previous7d = 0, recent7d > 0` → trend = 100%
 - `previous7d > 0, recent7d = 0` → trend = -100%
@@ -96,6 +101,7 @@ Output: +25.0%
 ### 2. User Trend (hebdomadaire)
 
 **Formule** :
+
 ```
 trend = (newUsers7d / totalUsers) × 100
 
@@ -105,6 +111,7 @@ Variables:
 ```
 
 **Exemple** :
+
 ```
 Input: newUsers7d = 5, totalUsers = 50
 
@@ -118,6 +125,7 @@ Output: +10.0% (croissance hebdomadaire utilisateurs)
 ### 3. Activity Trend (quotidien)
 
 **Formule** :
+
 ```
 trend = ((today - yesterday) / yesterday) × 100
 
@@ -129,6 +137,7 @@ Actions = products created/updated + collections created/updated + users registe
 ```
 
 **Exemple** :
+
 ```
 Input: today = 45 actions, yesterday = 30 actions
 
@@ -142,6 +151,7 @@ Output: +50.0% activité vs hier
 ### 4. Revenue Trend (mensuel)
 
 **Formule** :
+
 ```
 trend = ((currentMonth - previousMonth) / previousMonth) × 100
 
@@ -151,6 +161,7 @@ Variables:
 ```
 
 **Exemple** :
+
 ```
 Input:
 - currentMonth = 15000€ (octobre 2025)
@@ -166,6 +177,7 @@ Output: +25.0% CA vs mois précédent
 ### 5. Order Trend (30 jours glissants)
 
 **Formule** :
+
 ```
 trend = ((current30d - previous30d) / previous30d) × 100
 
@@ -175,6 +187,7 @@ Variables:
 ```
 
 **Exemple** :
+
 ```
 Input: current30d = 120 commandes, previous30d = 100 commandes
 
@@ -190,6 +203,7 @@ Output: +20.0% commandes vs période précédente
 ### 6. Stock Value (Valeur Inventaire)
 
 **Formule** :
+
 ```
 stock_value = SUM(stock_real × cost_price)
 
@@ -200,19 +214,22 @@ Total = SUM(value pour tous produits non archivés)
 ```
 
 **Implémentation** :
+
 ```typescript
 const { data: products } = await supabase
   .from('products')
   .select('stock_real, stock_quantity, cost_price')
-  .is('archived_at', null)
+  .is('archived_at', null);
 
-const totalValue = products.reduce((sum, p) =>
-  sum + ((p.stock_real || p.stock_quantity || 0) * (p.cost_price || 0)),
+const totalValue = products.reduce(
+  (sum, p) =>
+    sum + (p.stock_real || p.stock_quantity || 0) * (p.cost_price || 0),
   0
-)
+);
 ```
 
 **Exemple** :
+
 ```
 Input (3 produits):
 - Produit A: stock_real = 10, cost_price = 50€ → value = 500€
@@ -227,6 +244,7 @@ Total stock_value = 500 + 600 + 0 = 1100€
 ### 7. Stock Available (Prévisionnel)
 
 **Formule** :
+
 ```
 total_available = SUM(MAX(stock_real - stock_forecasted_out, 0))
 
@@ -236,6 +254,7 @@ Pour chaque produit:
 ```
 
 **Exemple** :
+
 ```
 Input:
 - Produit A: stock_real = 20, stock_forecasted_out = 5 → available = MAX(20-5, 0) = 15
@@ -250,6 +269,7 @@ Total available = 15 + 0 + 50 = 65 unités disponibles
 ### 8. Classification Stock Status
 
 **Formule** :
+
 ```
 FOR EACH product:
   stock = stock_real || stock_quantity
@@ -270,6 +290,7 @@ FOR EACH product:
 ```
 
 **Exemple** :
+
 ```
 Input: stock_real = 3, min_stock = 10
 
@@ -284,6 +305,7 @@ Evaluation:
 ### 9. Shortage Quantity (Quantité à Réapprovisionner)
 
 **Formule** :
+
 ```
 shortage_quantity = CASE alert_type:
   WHEN 'no_stock_but_ordered':
@@ -295,6 +317,7 @@ shortage_quantity = CASE alert_type:
 ```
 
 **Exemples** :
+
 ```
 Cas 1 - Commandé sans stock:
 Input: stock_real = 0, stock_forecasted_out = 15, min_stock = 10
@@ -316,6 +339,7 @@ Output: shortage_quantity = 10 - 3 = 7
 ### 10. Average Order Value (AOV / Panier Moyen)
 
 **Formule** :
+
 ```
 AOV = monthRevenue / monthOrdersCount
 
@@ -325,16 +349,17 @@ Variables:
 ```
 
 **Implémentation** :
+
 ```typescript
-const averageOrderValue = monthOrders && monthOrders.length > 0
-  ? month / monthOrders.length
-  : 0
+const averageOrderValue =
+  monthOrders && monthOrders.length > 0 ? month / monthOrders.length : 0;
 
 // Arrondi 2 décimales
-const aov = Math.round(averageOrderValue * 100) / 100
+const aov = Math.round(averageOrderValue * 100) / 100;
 ```
 
 **Exemple** :
+
 ```
 Input:
 - monthRevenue = 45000€
@@ -346,6 +371,7 @@ Output: Panier moyen = 1500.00€
 ```
 
 **Edge Cases** :
+
 - `monthOrdersCount = 0` → AOV = 0€ (évite division par zéro)
 
 ---
@@ -353,6 +379,7 @@ Output: Panier moyen = 1500.00€
 ### 11. Revenue by Status
 
 **Formule** :
+
 ```
 validatedRevenue = SUM(sales_orders.total_ht WHERE status IN ('confirmed', 'partially_shipped', 'shipped', 'delivered'))
 
@@ -360,6 +387,7 @@ Statuts exclus: 'draft', 'cancelled'
 ```
 
 **Exemple** :
+
 ```
 Input (5 commandes):
 - SO-001: total_ht = 1000€, status = 'confirmed' ✅
@@ -376,6 +404,7 @@ validatedRevenue = 1000 + 1500 + 1200 = 3700€
 ### 12. Revenue Chart Aggregation (par jour)
 
 **Formule** :
+
 ```
 revenueByDay = sales_orders.reduce((acc, order) => {
   date = order.created_at.split('T')[0]  // "2025-10-12"
@@ -388,6 +417,7 @@ Transform pour Recharts:
 ```
 
 **Exemple** :
+
 ```
 Input (3 commandes):
 - SO-001: created_at = "2025-10-12T10:30", total_ttc = 1200€
@@ -414,6 +444,7 @@ Output Recharts:
 ### 13. Engagement Score (Utilisateur)
 
 **Formule** :
+
 ```
 engagement_score = (sessions_count × 10) + (actions_count × 2) + (modules_variety × 5)
 
@@ -426,12 +457,14 @@ Variables:
 ```
 
 **Implémentation SQL** :
+
 ```sql
 v_score := (v_sessions_count * 10) + (v_actions_count * 2) + (v_modules_variety * 5);
 RETURN LEAST(v_score, 100);
 ```
 
 **Exemple** :
+
 ```
 Input (période 30 jours):
 - sessions_count = 5 sessions
@@ -449,6 +482,7 @@ Output: Score engagement = 100/100 (utilisateur très actif)
 ```
 
 **Barème Interprétation** :
+
 - 0-20 : Utilisateur inactif
 - 21-50 : Utilisateur occasionnel
 - 51-80 : Utilisateur actif
@@ -459,6 +493,7 @@ Output: Score engagement = 100/100 (utilisateur très actif)
 ### 14. Session Duration Average
 
 **Formule** :
+
 ```
 avg_session_duration = AVG(session_end - session_start)
 
@@ -467,6 +502,7 @@ Pour sessions actives (session_end NULL):
 ```
 
 **Exemple** :
+
 ```
 Input (3 sessions):
 - Session 1: start = 10:00, end = 10:15 → duration = 15 min
@@ -483,6 +519,7 @@ avg_duration = (15 + 45 + 20) / 3 = 26.67 min
 ### 15. Alert Priority Score
 
 **Formule** :
+
 ```
 priority = CASE:
   WHEN alert_type = 'no_stock_but_ordered' AND stock_forecasted_out > 10:
@@ -498,6 +535,7 @@ priority = CASE:
 ```
 
 **Exemple** :
+
 ```
 Input: alert_type = 'no_stock_but_ordered', stock_forecasted_out = 15
 
@@ -513,6 +551,7 @@ Output: Alerte CRITIQUE URGENT (TOP priorité réapprovisionnement)
 ### 16. Stock Movement Severity
 
 **Formule** :
+
 ```
 severity = CASE:
   WHEN NEW.stock_real < 5:
@@ -524,6 +563,7 @@ severity = CASE:
 ```
 
 **Exemple** :
+
 ```
 Input: NEW.stock_real = 3 (après mouvement sortie)
 
@@ -538,6 +578,7 @@ Output: Log avec severity='critical' + notification owners
 ### 17. Notification Type Routing
 
 **Formule** :
+
 ```
 type = CASE event:
   WHEN stock < min_stock:
@@ -557,6 +598,7 @@ type = CASE event:
 ### 18. Products Chart (par semaine)
 
 **Formule** :
+
 ```
 productsByWeek = products.reduce((acc, product) => {
   date = new Date(product.created_at)
@@ -571,6 +613,7 @@ Label semaine: `S${Math.ceil(new Date(week).getDate() / 7)}`
 ```
 
 **Exemple** :
+
 ```
 Input (5 produits créés):
 - P1: created_at = "2025-10-08" (semaine du 06/10 - dimanche)
@@ -597,6 +640,7 @@ Output Recharts:
 ### 19. Stock Movements Aggregation
 
 **Formule** :
+
 ```
 movementsByDay[date] = { entrees: 0, sorties: 0 }
 
@@ -608,6 +652,7 @@ FOR EACH movement:
 ```
 
 **Exemple** :
+
 ```
 Input (3 mouvements le 2025-10-12):
 - M1: type='in', quantity_change=10
@@ -626,6 +671,7 @@ Output: { date: "12 Oct", entrees: 30, sorties: 5 }
 ### 20. Module Time Aggregation
 
 **Formule** :
+
 ```
 time_per_module = jsonb_set(
   user_sessions.time_per_module,
@@ -637,6 +683,7 @@ Incrémente temps passé par module (en secondes ou actions)
 ```
 
 **Exemple** :
+
 ```
 Input:
 - time_per_module (avant) = {"dashboard": 120, "catalogue": 300}
@@ -653,6 +700,7 @@ Output: {"dashboard": 121, "catalogue": 300}
 ### 21. Most Used Module
 
 **Formule** :
+
 ```
 most_used_module = (
   SELECT module FROM (
@@ -669,6 +717,7 @@ most_used_module = (
 ```
 
 **Exemple** :
+
 ```
 Input (time_per_module agrégé sur 3 sessions):
 - Session 1: {"dashboard": 60, "catalogue": 180}
@@ -694,12 +743,16 @@ Output: most_used_module = 'catalogue'
 **Stratégie** : Toujours vérifier dénominateur avant division
 
 ```typescript
-const trend = previousValue > 0
-  ? ((currentValue - previousValue) / previousValue) * 100
-  : currentValue > 0 ? 100 : 0
+const trend =
+  previousValue > 0
+    ? ((currentValue - previousValue) / previousValue) * 100
+    : currentValue > 0
+      ? 100
+      : 0;
 ```
 
 **Cas couverts** :
+
 - `previousValue = 0, currentValue = 0` → 0%
 - `previousValue = 0, currentValue > 0` → 100%
 - `previousValue > 0, currentValue = 0` → -100%
@@ -709,11 +762,13 @@ const trend = previousValue > 0
 ### Valeurs Infinies / NaN
 
 **Validation** :
+
 ```typescript
-trend = Number.isFinite(trend) ? Math.round(trend * 10) / 10 : 0
+trend = Number.isFinite(trend) ? Math.round(trend * 10) / 10 : 0;
 ```
 
 **Cas couverts** :
+
 - `Infinity` → 0
 - `-Infinity` → 0
 - `NaN` → 0
@@ -723,8 +778,9 @@ trend = Number.isFinite(trend) ? Math.round(trend * 10) / 10 : 0
 ### Stocks Négatifs
 
 **Protection** :
+
 ```typescript
-const available = Math.max(stock_real - stock_forecasted_out, 0)
+const available = Math.max(stock_real - stock_forecasted_out, 0);
 ```
 
 Garantit stock disponible ≥ 0 (jamais négatif affiché)
@@ -734,6 +790,7 @@ Garantit stock disponible ≥ 0 (jamais négatif affiché)
 ### Arrondis Cohérents
 
 **Règles** :
+
 - **Trends** : 1 décimale (`Math.round(value * 10) / 10`)
 - **Montants €** : 2 décimales (`Math.round(value * 100) / 100`)
 - **Compteurs** : Entiers (`Math.floor(value)`)

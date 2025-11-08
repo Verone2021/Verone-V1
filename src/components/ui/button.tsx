@@ -1,18 +1,28 @@
-'use client'
+'use client';
 
-import React from 'react'
-import { LucideIcon } from 'lucide-react'
-import { Loader2 } from 'lucide-react'
-import { colors, spacing, componentShadows } from '@/lib/design-system'
-import { cn } from '@/lib/utils'
+import React from 'react';
 
-export interface ButtonV2Props extends React.ButtonHTMLAttributes<HTMLButtonElement> {
-  variant?: 'primary' | 'secondary' | 'outline' | 'success' | 'danger' | 'warning' | 'ghost'
-  size?: 'xs' | 'sm' | 'md' | 'lg' | 'xl'
-  icon?: LucideIcon
-  iconPosition?: 'left' | 'right'
-  loading?: boolean
-  asChild?: boolean
+import type { LucideIcon } from 'lucide-react';
+import { Loader2 } from 'lucide-react';
+
+import { colors, spacing, componentShadows } from '@verone/ui/design-system';
+import { cn } from '@verone/utils';
+
+export interface ButtonV2Props
+  extends React.ButtonHTMLAttributes<HTMLButtonElement> {
+  variant?:
+    | 'primary'
+    | 'secondary'
+    | 'outline'
+    | 'success'
+    | 'destructive'
+    | 'warning'
+    | 'ghost';
+  size?: 'xs' | 'sm' | 'md' | 'lg' | 'xl';
+  icon?: LucideIcon;
+  iconPosition?: 'left' | 'right';
+  loading?: boolean;
+  asChild?: boolean;
 }
 
 /**
@@ -42,7 +52,6 @@ export function ButtonV2({
   asChild, // ✅ Destructuré pour ne pas le propager au DOM
   ...props
 }: ButtonV2Props) {
-
   // Variant styles
   const variantStyles = {
     primary: {
@@ -50,6 +59,7 @@ export function ButtonV2({
       color: colors.text.inverse, // Blanc
       border: 'none',
       hoverBg: colors.primary[600],
+      hoverColor: undefined,
       shadow: componentShadows.button,
     },
     secondary: {
@@ -73,13 +83,15 @@ export function ButtonV2({
       color: colors.text.inverse,
       border: 'none',
       hoverBg: colors.success[600],
+      hoverColor: undefined,
       shadow: componentShadows.button,
     },
-    danger: {
+    destructive: {
       backgroundColor: colors.danger[500],
       color: colors.text.inverse,
       border: 'none',
       hoverBg: colors.danger[600],
+      hoverColor: undefined,
       shadow: componentShadows.button,
     },
     warning: {
@@ -87,6 +99,7 @@ export function ButtonV2({
       color: colors.text.inverse,
       border: 'none',
       hoverBg: colors.warning[600],
+      hoverColor: undefined,
       shadow: componentShadows.button,
     },
     ghost: {
@@ -94,9 +107,10 @@ export function ButtonV2({
       color: colors.text.DEFAULT,
       border: 'none',
       hoverBg: colors.neutral[100],
+      hoverColor: undefined,
       shadow: 'none',
     },
-  }
+  };
 
   // Size styles - Optimisés selon standards 2025 (shadcn/ui, Linear, Vercel)
   const sizeStyles = {
@@ -130,11 +144,11 @@ export function ButtonV2({
       height: '44px', // Touch-friendly (≥44px mobile accessibility)
       iconSize: 20,
     },
-  }
+  };
 
-  const variantStyle = variantStyles[variant] || variantStyles.primary
-  const sizeStyle = sizeStyles[size] || sizeStyles.md
-  const isDisabled = disabled || loading
+  const variantStyle = variantStyles[variant] || variantStyles.primary;
+  const sizeStyle = sizeStyles[size] || sizeStyles.md;
+  const isDisabled = disabled || loading;
 
   return (
     <button
@@ -164,30 +178,27 @@ export function ButtonV2({
         // Custom style override
         ...customStyle,
       }}
-      onMouseEnter={(e) => {
+      onMouseEnter={e => {
         if (!isDisabled) {
-          e.currentTarget.style.backgroundColor = variantStyle.hoverBg
+          e.currentTarget.style.backgroundColor = variantStyle.hoverBg;
           if (variantStyle.hoverColor) {
-            e.currentTarget.style.color = variantStyle.hoverColor
+            e.currentTarget.style.color = variantStyle.hoverColor;
           }
           if (variant !== 'ghost' && variant !== 'secondary') {
-            e.currentTarget.style.boxShadow = componentShadows.buttonHover
+            e.currentTarget.style.boxShadow = componentShadows.buttonHover;
           }
         }
       }}
-      onMouseLeave={(e) => {
+      onMouseLeave={e => {
         if (!isDisabled) {
-          e.currentTarget.style.backgroundColor = variantStyle.backgroundColor
-          e.currentTarget.style.color = variantStyle.color
-          e.currentTarget.style.boxShadow = variantStyle.shadow || 'none'
+          e.currentTarget.style.backgroundColor = variantStyle.backgroundColor;
+          e.currentTarget.style.color = variantStyle.color;
+          e.currentTarget.style.boxShadow = variantStyle.shadow || 'none';
         }
       }}
     >
       {loading && (
-        <Loader2
-          size={sizeStyle.iconSize}
-          className="animate-spin"
-        />
+        <Loader2 size={sizeStyle.iconSize} className="animate-spin" />
       )}
 
       {!loading && Icon && iconPosition === 'left' && (
@@ -200,9 +211,9 @@ export function ButtonV2({
         <Icon size={sizeStyle.iconSize} strokeWidth={2} />
       )}
     </button>
-  )
+  );
 }
 
 // Alias pour compatibilité avec ancien code
-export const Button = ButtonV2
-export const buttonVariants = {}
+export const Button = ButtonV2;
+export const buttonVariants = {};

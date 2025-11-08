@@ -5,109 +5,125 @@
  * d'un utilisateur spécifique dans l'administration Vérone.
  */
 
-import React from 'react'
-import { redirect, notFound } from 'next/navigation'
-import { ArrowLeft, User, Calendar, Clock, Shield, Activity } from 'lucide-react'
-import Link from 'next/link'
-import { createServerClient, createAdminClient } from '@/lib/supabase/server'
-import { UserHeader } from './components/user-header'
-import { UserStatsCards } from './components/user-stats-cards'
-import { UserProfileTab } from './components/user-profile-tab'
-import { UserActivityTab } from './components/user-activity-tab'
-import { UserSecurityTab } from './components/user-security-tab'
+import React from 'react';
+
+import Link from 'next/link';
+import { redirect, notFound } from 'next/navigation';
+
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@verone/ui';
 import {
-  Tabs,
-  TabsContent,
-  TabsList,
-  TabsTrigger,
-} from '@/components/ui/tabs'
+  ArrowLeft,
+  User,
+  Calendar,
+  Clock,
+  Shield,
+  Activity,
+} from 'lucide-react';
+
+import {
+  createServerClient,
+  createAdminClient,
+} from '@verone/utils/supabase/server';
+
+import { UserActivityTab } from './components/user-activity-tab';
+import { UserHeader } from './components/user-header';
+import { UserProfileTab } from './components/user-profile-tab';
+import { UserSecurityTab } from './components/user-security-tab';
+import { UserStatsCards } from './components/user-stats-cards';
 
 // Extended user interface with analytics data
 export interface UserDetailData {
-  id: string
-  email: string
-  email_confirmed_at: string | null
-  created_at: string
-  last_sign_in_at: string | null
+  id: string;
+  email: string;
+  email_confirmed_at: string | null;
+  created_at: string;
+  last_sign_in_at: string | null;
   user_metadata?: {
-    name?: string
-    first_name?: string
-    last_name?: string
-    job_title?: string
-    phone?: string
-  }
+    name?: string;
+    first_name?: string;
+    last_name?: string;
+    job_title?: string;
+    phone?: string;
+  };
   profile: {
-    role: string
-    user_type: string
-    created_at: string
-    updated_at: string
-  } | null
+    role: string;
+    user_type: string;
+    created_at: string;
+    updated_at: string;
+  } | null;
   // Analytics data (calculated)
   analytics: {
-    total_sessions: number
-    avg_session_duration: number
-    last_activity: string | null
-    days_since_creation: number
-    login_frequency: 'high' | 'medium' | 'low'
-    engagement_score: number
-  }
+    total_sessions: number;
+    avg_session_duration: number;
+    last_activity: string | null;
+    days_since_creation: number;
+    login_frequency: 'high' | 'medium' | 'low';
+    engagement_score: number;
+  };
 }
 
 interface UserDetailPageProps {
-  params: Promise<{ id: string }>
+  params: Promise<{ id: string }>;
 }
 
 async function getCurrentUserRole() {
-  const supabase = await createServerClient()
+  const supabase = await createServerClient();
 
-  const { data: { user } } = await supabase.auth.getUser()
-  if (!user) return null
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) return null;
 
-  const { data: profile } = await supabase
+  const { data: profile } = (await supabase
     .from('user_profiles')
     .select('role')
     .eq('user_id', user.id)
-    .single() as { data: { role: string } | null }
+    .single()) as { data: { role: string } | null };
 
-  return profile?.role || null
+  return profile?.role || null;
 }
 
-async function getUserDetailData(userId: string): Promise<UserDetailData | null> {
-  const supabase = await createServerClient()
-  const adminClient = createAdminClient()
+async function getUserDetailData(
+  userId: string
+): Promise<UserDetailData | null> {
+  const supabase = await createServerClient();
+  const adminClient = createAdminClient();
 
   // Récupérer le profil depuis la DB
-  const { data: profile, error: profileError } = await supabase
+  const { data: profile, error: profileError } = (await supabase
     .from('user_profiles')
     .select('*')
     .eq('user_id', userId)
-    .single() as { data: any; error: any }
+    .single()) as { data: any; error: any };
 
   if (profileError || !profile) {
-    console.error('Erreur récupération profil:', profileError)
-    return null
+    console.error('Erreur récupération profil:', profileError);
+    return null;
   }
 
   // Récupérer les données utilisateur via Admin API
   try {
-    const { data: { users }, error: usersError } = await adminClient.auth.admin.listUsers({
+    const {
+      data: { users },
+      error: usersError,
+    } = await adminClient.auth.admin.listUsers({
       page: 1,
-      perPage: 1000
-    })
+      perPage: 1000,
+    });
 
     if (usersError) {
-      console.error('Erreur Admin API:', usersError)
-      return null
+      console.error('Erreur Admin API:', usersError);
+      return null;
     }
 
-    const user = users?.find(u => u.id === userId)
-    if (!user) return null
+    const user = users?.find(u => u.id === userId);
+    if (!user) return null;
 
     // Calculer days_since_creation
-    const createdDate = new Date(user.created_at)
+    const createdDate = new Date(user.created_at);
     const daysSinceCreation = Math.floor(
       (Date.now() - createdDate.getTime()) / (1000 * 60 * 60 * 24)
-    )
+    );
 
     // ✅ Récupérer VRAIES analytics directement depuis Supabase RPC
     let realAnalytics = {
@@ -116,15 +132,18 @@ async function getUserDetailData(userId: string): Promise<UserDetailData | null>
       avg_session_duration: 0,
       most_used_module: null,
       engagement_score: 0,
-      last_activity: null
-    }
+      last_activity: null,
+    };
 
     try {
       // Appel direct RPC Supabase (pas de fetch HTTP)
-      const { data: stats, error: statsError } = await (supabase as any).rpc('get_user_activity_stats', {
-        p_user_id: userId,
-        p_days: 30
-      })
+      const { data: stats, error: statsError } = await (supabase as any).rpc(
+        'get_user_activity_stats',
+        {
+          p_user_id: userId,
+          p_days: 30,
+        }
+      );
 
       if (!statsError && stats && stats.length > 0) {
         realAnalytics = {
@@ -133,21 +152,23 @@ async function getUserDetailData(userId: string): Promise<UserDetailData | null>
           avg_session_duration: stats[0].avg_session_duration || 0,
           most_used_module: stats[0].most_used_module || null,
           engagement_score: stats[0].engagement_score || 0,
-          last_activity: stats[0].last_activity || null
-        }
+          last_activity: stats[0].last_activity || null,
+        };
       } else if (statsError) {
-        console.warn('Erreur RPC get_user_activity_stats:', statsError)
+        console.warn('Erreur RPC get_user_activity_stats:', statsError);
       }
     } catch (activityError) {
-      console.warn('Erreur appel RPC activity:', activityError)
+      console.warn('Erreur appel RPC activity:', activityError);
       // Fallback sur données vides si erreur
     }
 
     // Déterminer login_frequency basé sur engagement_score réel
-    const loginFrequency: 'high' | 'medium' | 'low' = 
-      realAnalytics.engagement_score > 70 ? 'high' 
-      : realAnalytics.engagement_score > 40 ? 'medium' 
-      : 'low'
+    const loginFrequency: 'high' | 'medium' | 'low' =
+      realAnalytics.engagement_score > 70
+        ? 'high'
+        : realAnalytics.engagement_score > 40
+          ? 'medium'
+          : 'low';
 
     return {
       id: user.id,
@@ -160,58 +181,58 @@ async function getUserDetailData(userId: string): Promise<UserDetailData | null>
         role: profile.role,
         user_type: profile.user_type,
         created_at: profile.created_at,
-        updated_at: profile.updated_at
+        updated_at: profile.updated_at,
       },
       analytics: {
         total_sessions: realAnalytics.total_sessions,
         avg_session_duration: realAnalytics.avg_session_duration || 0,
-        last_activity: realAnalytics.last_activity || user.last_sign_in_at || null,
+        last_activity:
+          realAnalytics.last_activity || user.last_sign_in_at || null,
         days_since_creation: daysSinceCreation,
         login_frequency: loginFrequency,
-        engagement_score: realAnalytics.engagement_score
-      }
-    }
-
+        engagement_score: realAnalytics.engagement_score,
+      },
+    };
   } catch (error) {
-    console.error('Erreur récupération données utilisateur:', error)
-    return null
+    console.error('Erreur récupération données utilisateur:', error);
+    return null;
   }
 }
 
 // ✅ Cache Next.js : revalide toutes les 5 minutes
-export const revalidate = 300
+export const revalidate = 300;
 
 export default async function UserDetailPage({ params }: UserDetailPageProps) {
   // Await params pour Next.js 15
-  const { id } = await params
+  const { id } = await params;
 
   // Vérifier les permissions (owner uniquement)
-  const userRole = await getCurrentUserRole()
+  const userRole = await getCurrentUserRole();
   if (userRole !== 'owner') {
-    redirect('/admin/users')
+    redirect('/admin/users');
   }
 
   // Récupérer les données utilisateur
-  const userDetailData = await getUserDetailData(id)
+  const userDetailData = await getUserDetailData(id);
   if (!userDetailData) {
-    notFound()
+    notFound();
   }
 
   const formatUserName = (email: string, user_metadata: any = null) => {
     if (user_metadata?.name) {
-      return user_metadata.name
+      return user_metadata.name;
     }
 
     if (user_metadata?.first_name || user_metadata?.last_name) {
       return [user_metadata.first_name, user_metadata.last_name]
         .filter(Boolean)
         .join(' ')
-        .trim()
+        .trim();
     }
 
-    const tempName = email.split('@')[0].split('.') || ['']
-    return tempName.length > 1 ? tempName.join(' ') : tempName[0]
-  }
+    const tempName = email.split('@')[0].split('.') || [''];
+    return tempName.length > 1 ? tempName.join(' ') : tempName[0];
+  };
 
   return (
     <div className="space-y-4">
@@ -225,7 +246,8 @@ export default async function UserDetailPage({ params }: UserDetailPageProps) {
         </Link>
 
         <div className="text-sm text-neutral-500">
-          Administration › Utilisateurs › {formatUserName(userDetailData.email, userDetailData.user_metadata)}
+          Administration › Utilisateurs ›{' '}
+          {formatUserName(userDetailData.email, userDetailData.user_metadata)}
         </div>
       </div>
 
@@ -280,5 +302,5 @@ export default async function UserDetailPage({ params }: UserDetailPageProps) {
         </Tabs>
       </div>
     </div>
-  )
+  );
 }

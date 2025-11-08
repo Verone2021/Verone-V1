@@ -45,12 +45,15 @@ Cette section documente l'ensemble des APIs du système Vérone : endpoints REST
 ### Par Type API
 
 #### REST (Next.js)
+
 - [REST Endpoints](./rest-endpoints.md)
 
 #### RPC (Supabase)
+
 - [RPC Functions](./rpc-functions.md)
 
 #### Webhooks & Events
+
 - [Webhooks](./webhooks.md)
 
 ---

@@ -59,9 +59,9 @@ const CONFIG = {
   },
 
   // Thresholds
-  maxDriftTables: 5,        // Max tables sans documentation
-  maxDriftColumns: 10,      // Max colonnes modifiées
-  maxDriftTriggers: 3,      // Max triggers non documentés
+  maxDriftTables: 5, // Max tables sans documentation
+  maxDriftColumns: 10, // Max colonnes modifiées
+  maxDriftTriggers: 3, // Max triggers non documentés
 };
 
 // ==================== UTILITAIRES ====================
@@ -368,7 +368,9 @@ function generateHtmlReport(auditResults) {
       </div>
     </div>
 
-    ${auditResults.map((audit, i) => `
+    ${auditResults
+      .map(
+        (audit, i) => `
       <div class="audit-section ${audit.success ? 'pass' : 'fail'}">
         <h2>
           ${audit.success ? '✅' : '❌'} Audit ${i + 1}: ${audit.name || 'Unnamed'}
@@ -378,7 +380,9 @@ function generateHtmlReport(auditResults) {
         </h2>
         <pre>${JSON.stringify(audit, null, 2)}</pre>
       </div>
-    `).join('')}
+    `
+      )
+      .join('')}
 
     <hr style="margin: 40px 0; border: none; border-top: 1px solid #e0e0e0;">
     <p style="text-align: center; color: #666; font-size: 14px;">

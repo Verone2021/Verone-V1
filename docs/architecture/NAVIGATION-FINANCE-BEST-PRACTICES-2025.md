@@ -9,6 +9,7 @@
 ## 📊 ANALYSE BENCHMARKING
 
 ### **Odoo ERP (Leader Open Source)**
+
 ```
 Comptabilité
 ├── Tableau de bord
@@ -32,6 +33,7 @@ Comptabilité
 ```
 
 ### **Salesforce (CRM Reference)**
+
 ```
 Finance
 ├── Opportunities (Sales)
@@ -43,6 +45,7 @@ Finance
 ```
 
 ### **Oracle ERP / NetSuite**
+
 ```
 Financials
 ├── General Ledger
@@ -71,6 +74,7 @@ Financials
 ## 🎯 STRUCTURE RECOMMANDÉE VÉRONE
 
 ### **Option 1: Par Type de Document (Simple - Recommandée Phase 1)**
+
 ```typescript
 Finance
 ├── 📊 Tableau de bord       // KPIs temps réel (CA, trésorerie, impayés)
@@ -82,18 +86,21 @@ Finance
 ```
 
 **Avantages** :
+
 - ✅ Simple et intuitif
 - ✅ Workflow naturel : Facture → Paiement → Banque
 - ✅ Aligné avec Abby.fr (facturation externe)
 - ✅ Facile à étendre (Devis, BL, Avoirs plus tard)
 
 **Inconvénients** :
-- ⚠️  Pas de séparation Clients/Fournisseurs (OK Phase 1)
-- ⚠️  Limité aux recettes (pas de dépenses/AP Phase 1)
+
+- ⚠️ Pas de séparation Clients/Fournisseurs (OK Phase 1)
+- ⚠️ Limité aux recettes (pas de dépenses/AP Phase 1)
 
 ---
 
 ### **Option 2: Par Flux (Avancée - Recommandée Phase 2+)**
+
 ```typescript
 Finance
 ├── 📊 Tableau de bord
@@ -123,14 +130,16 @@ Finance
 ```
 
 **Avantages** :
+
 - ✅ Structure professionnelle complète
 - ✅ Scalable (fournisseurs, multi-banques)
 - ✅ Aligné avec comptabilité standard
 - ✅ Meilleure gestion multi-comptes
 
 **Inconvénients** :
-- ⚠️  Plus complexe (overkill Phase 1)
-- ⚠️  Nécessite AR/AP modules complets
+
+- ⚠️ Plus complexe (overkill Phase 1)
+- ⚠️ Nécessite AR/AP modules complets
 
 ---
 
@@ -150,40 +159,40 @@ const financeMenuItems = [
         label: 'Tableau de bord',
         href: '/finance',
         icon: LayoutDashboard,
-        description: 'KPIs & métriques financières'
+        description: 'KPIs & métriques financières',
       },
       {
         label: 'Factures',
         href: '/factures',
         icon: FileText,
-        description: 'Gestion factures clients'
+        description: 'Gestion factures clients',
       },
       {
         label: 'Paiements',
         href: '/finance/paiements',
         icon: CreditCard,
-        description: 'Historique paiements reçus'
+        description: 'Historique paiements reçus',
       },
       {
         label: 'Trésorerie',
         href: '/tresorerie',
         icon: Banknote,
-        description: 'Comptes bancaires Qonto'
+        description: 'Comptes bancaires Qonto',
       },
       {
         label: 'Rapprochement',
         href: '/finance/rapprochement',
         icon: RefreshCw,
-        description: 'Matching transactions bancaires'
+        description: 'Matching transactions bancaires',
       },
       {
         label: 'Reporting',
         href: '/finance/reporting',
         icon: BarChart3,
-        description: 'BFA, CA, prévisions'
-      }
-    ]
-  }
+        description: 'BFA, CA, prévisions',
+      },
+    ],
+  },
 ];
 ```
 
@@ -192,6 +201,7 @@ const financeMenuItems = [
 ## 📐 BEST PRACTICES INTERFACE 2025
 
 ### **1. Tableau de Bord Finance**
+
 ```typescript
 // KPIs obligatoires (top 4 cards)
 - CA encaissé ce mois (€)
@@ -206,6 +216,7 @@ const financeMenuItems = [
 ```
 
 ### **2. Trésorerie**
+
 ```typescript
 // Vue comptes bancaires
 - Liste comptes (Qonto + Revolut futur)
@@ -216,6 +227,7 @@ const financeMenuItems = [
 ```
 
 ### **3. Rapprochement Bancaire**
+
 ```typescript
 // Workflow auto-match
 1. Fetch transactions non rapprochées (unmatched)
@@ -226,6 +238,7 @@ const financeMenuItems = [
 ```
 
 ### **4. Features Avancées (Phase 2)**
+
 - 🔔 Alertes factures overdue (email/in-app)
 - 📧 Relances automatiques clients
 - 💳 Paiement en ligne (Stripe via Abby)
@@ -238,6 +251,7 @@ const financeMenuItems = [
 ## 🔗 INTÉGRATIONS EXTERNES
 
 ### **Abby.fr (Facturation)**
+
 ```
 Vérone → Abby (push)
 - Génération factures
@@ -251,6 +265,7 @@ Abby → Vérone (webhooks)
 ```
 
 ### **Qonto (Banque)**
+
 ```
 Qonto → Vérone (webhooks)
 - transaction.created
@@ -259,6 +274,7 @@ Qonto → Vérone (webhooks)
 ```
 
 ### **Revolut Business (Futur)**
+
 ```
 Revolut → Vérone (webhooks)
 - Même workflow que Qonto
@@ -270,16 +286,19 @@ Revolut → Vérone (webhooks)
 ## 📊 MÉTRIQUES SUCCÈS
 
 ### **Efficacité Rapprochement**
+
 - ✅ **95%+ auto-match** (intelligent matching)
 - ✅ **<5min traitement manuel** (5% restants)
 - ✅ **Temps réel** (webhooks < 1min delay)
 
 ### **User Experience**
+
 - ✅ **<2s load time** dashboard
 - ✅ **Mobile responsive** (iOS/Android)
 - ✅ **Accessibilité WCAG** (AA minimum)
 
 ### **Business Impact**
+
 - ✅ **-80% temps rapprochement** (vs manuel)
 - ✅ **0 erreur saisie** (automation)
 - ✅ **+50% visibilité trésorerie** (real-time)
@@ -289,31 +308,29 @@ Revolut → Vérone (webhooks)
 ## 🎨 DESIGN SYSTEM VÉRONE
 
 ### **Couleurs Finance**
+
 ```css
 /* KPIs Cards */
---finance-positive: #10b981   /* Vert - CA, Encaissé */
---finance-warning: #f59e0b    /* Orange - En attente */
---finance-negative: #ef4444   /* Rouge - Overdue */
---finance-neutral: #6b7280    /* Gris - Informations */
-
-/* Badges Status */
-.badge-paid { bg: #d1fae5; color: #065f46 }
-.badge-pending { bg: #fef3c7; color: #92400e }
-.badge-overdue { bg: #fee2e2; color: #991b1b }
+--finance-positive: #10b981 /* Vert - CA, Encaissé */ --finance-warning: #f59e0b
+  /* Orange - En attente */ --finance-negative: #ef4444 /* Rouge - Overdue */
+  --finance-neutral: #6b7280 /* Gris - Informations */ /* Badges Status */
+  .badge-paid {bg: #d1fae5; color: #065f46} .badge-pending {bg: #fef3c7;
+  color: #92400e} .badge-overdue {bg: #fee2e2; color: #991b1b};
 ```
 
 ### **Iconographie**
+
 ```typescript
 import {
-  Wallet,          // Section Finance
+  Wallet, // Section Finance
   LayoutDashboard, // Dashboard
-  FileText,        // Factures
-  CreditCard,      // Paiements
-  Banknote,        // Trésorerie
-  RefreshCw,       // Rapprochement
-  BarChart3,       // Reporting
-  TrendingUp,      // CA positif
-  AlertTriangle,   // Overdue
+  FileText, // Factures
+  CreditCard, // Paiements
+  Banknote, // Trésorerie
+  RefreshCw, // Rapprochement
+  BarChart3, // Reporting
+  TrendingUp, // CA positif
+  AlertTriangle, // Overdue
 } from 'lucide-react';
 ```
 
@@ -322,6 +339,7 @@ import {
 ## 🚀 ROADMAP IMPLÉMENTATION
 
 ### **Phase 1: MVP Finance (ACTUEL - Sprint 6)**
+
 - ✅ Factures (liste + détails)
 - ✅ Paiements (historique)
 - ✅ Connexion Qonto API
@@ -330,12 +348,14 @@ import {
 - ⏳ Rapprochement bancaire (manuel)
 
 ### **Phase 2: Automation (Sprint 7-8)**
+
 - Auto-match bancaire (95%)
 - Dashboard Finance temps réel
 - Alertes factures overdue
 - Export comptable basique
 
 ### **Phase 3: Advanced Features (Sprint 9-10)**
+
 - Relances automatiques emails
 - Paiement en ligne (Stripe)
 - Multi-banques (Revolut)
@@ -367,6 +387,7 @@ Finance
 ```
 
 Cette structure :
+
 - ✅ Suit les best practices 2025
 - ✅ Simple et évolutive
 - ✅ Alignée avec workflow business Vérone

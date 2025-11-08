@@ -13,10 +13,7 @@
     },
     "context7": {
       "command": "npx",
-      "args": [
-        "-y",
-        "@upstash/context7-mcp@latest"
-      ]
+      "args": ["-y", "@upstash/context7-mcp@latest"]
     },
     "serena": {
       "command": "uvx",
@@ -33,54 +30,33 @@
     },
     "github": {
       "command": "npx",
-      "args": [
-        "-y",
-        "@modelcontextprotocol/server-github@latest"
-      ],
+      "args": ["-y", "@modelcontextprotocol/server-github@latest"],
       "env": {
         "GITHUB_TOKEN": "${GITHUB_TOKEN}"
       }
     },
     "vercel": {
       "command": "npx",
-      "args": [
-        "-y",
-        "@modelcontextprotocol/server-vercel@latest"
-      ],
+      "args": ["-y", "@modelcontextprotocol/server-vercel@latest"],
       "env": {
         "VERCEL_API_TOKEN": "${VERCEL_API_TOKEN}"
       }
     },
     "sequential-thinking": {
       "command": "npx",
-      "args": [
-        "-y",
-        "@modelcontextprotocol/server-sequential-thinking@latest"
-      ]
+      "args": ["-y", "@modelcontextprotocol/server-sequential-thinking@latest"]
     },
     "playwright": {
       "command": "npx",
-      "args": [
-        "-y",
-        "@playwright/mcp@latest",
-        "--browser",
-        "chrome"
-      ]
+      "args": ["-y", "@playwright/mcp@latest", "--browser", "chrome"]
     },
     "filesystem": {
       "command": "npx",
-      "args": [
-        "-y",
-        "@modelcontextprotocol/server-filesystem@latest",
-        "."
-      ]
+      "args": ["-y", "@modelcontextprotocol/server-filesystem@latest", "."]
     },
     "memory": {
       "command": "npx",
-      "args": [
-        "-y",
-        "@modelcontextprotocol/server-memory"
-      ],
+      "args": ["-y", "@modelcontextprotocol/server-memory"],
       "env": {
         "MEMORY_FILE_PATH": ".aim/verone-knowledge-graph.json"
       }

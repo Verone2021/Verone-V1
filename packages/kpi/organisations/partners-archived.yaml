@@ -23,10 +23,10 @@ displayed_in:
     location: "Stats header - Badge 'Archivés'"
 
 thresholds:
-  excellent: "< 15%"
-  good: "15-30%"
-  warning: "30-50%"
-  critical: "> 50%"
+  excellent: '< 15%'
+  good: '15-30%'
+  warning: '30-50%'
+  critical: '> 50%'
 
 metadata:
   created_at: 2025-10-22

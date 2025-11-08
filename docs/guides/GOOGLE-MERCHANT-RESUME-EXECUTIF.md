@@ -13,6 +13,7 @@
 **Votre système Vérone est PARFAITEMENT aligné avec les contraintes Google Merchant Center.**
 
 #### Validation Complète
+
 - ✅ **11/11 champs requis** : Tous mappables depuis schéma DB existant
 - ✅ **31/31 colonnes Excel** : Transformers implémentés et validés
 - ✅ **Système variantes** : `item_group_id` auto-sync opérationnel
@@ -76,6 +77,7 @@ curl http://localhost:3000/api/google-merchant/test-connection | jq
 ```
 
 **Ou utiliser commande automatisée** :
+
 ```bash
 /test-google-merchant  # MCP Playwright browser visible
 ```
@@ -123,6 +125,7 @@ curl http://localhost:3000/api/google-merchant/test-connection | jq
 **Timing** : J+7 minimum après Big Bang deployment
 
 **Objectifs KPI** :
+
 - 241 produits dans catalogue Vérone
 - ≥95% produits approuvés par Google
 - <5% produits rejetés (résolution <48h)
@@ -149,18 +152,22 @@ curl http://localhost:3000/api/google-merchant/test-connection | jq
 ## 🔧 Troubleshooting Rapide
 
 ### Erreur : "Invalid private key format"
+
 **Cause** : Retours à la ligne non échappés
 **Solution** : Vérifier `\n` littéraux dans GOOGLE_MERCHANT_PRIVATE_KEY
 
 ### Erreur : "Service account not found"
+
 **Cause** : Email mal orthographié
 **Solution** : Copier-coller `client_email` exact depuis JSON
 
 ### Erreur : "API Content not enabled"
+
 **Cause** : API pas activée
 **Solution** : https://console.cloud.google.com/apis/library/content.googleapis.com → ENABLE
 
 ### Erreur : "Insufficient permissions"
+
 **Cause** : Role pas Admin
 **Solution** : Merchant Center → Users → Edit service account → Admin
 
@@ -170,19 +177,19 @@ curl http://localhost:3000/api/google-merchant/test-connection | jq
 
 ### Mapping Champs Google Merchant
 
-| Google Required | Vérone Source | Transformation |
-|-----------------|---------------|----------------|
-| **id** | sku | Direct |
-| **title** | name | Truncate 150 chars |
-| **description** | description (fallback: name) | Truncate 200 chars |
-| **link** | slug/sku | `${baseUrl}/products/${slug}` |
-| **image_link** | images.primary.public_url | Fallback placeholder |
-| **availability** | status | Enum mapping (in_stock→IN_STOCK) |
-| **price** | price_ht | Micros: × 1,000,000 |
-| **brand** | brand | Direct |
-| **gtin** | gtin | Direct |
-| **mpn** | supplier_reference | ✅ Clever mapping! |
-| **condition** | condition | Enum mapping (new→NEW) |
+| Google Required  | Vérone Source                | Transformation                   |
+| ---------------- | ---------------------------- | -------------------------------- |
+| **id**           | sku                          | Direct                           |
+| **title**        | name                         | Truncate 150 chars               |
+| **description**  | description (fallback: name) | Truncate 200 chars               |
+| **link**         | slug/sku                     | `${baseUrl}/products/${slug}`    |
+| **image_link**   | images.primary.public_url    | Fallback placeholder             |
+| **availability** | status                       | Enum mapping (in_stock→IN_STOCK) |
+| **price**        | price_ht                     | Micros: × 1,000,000              |
+| **brand**        | brand                        | Direct                           |
+| **gtin**         | gtin                         | Direct                           |
+| **mpn**          | supplier_reference           | ✅ Clever mapping!               |
+| **condition**    | condition                    | Enum mapping (new→NEW)           |
 
 ### Champs Optionnels Implémentés
 
@@ -196,11 +203,13 @@ curl http://localhost:3000/api/google-merchant/test-connection | jq
 ### Système Variantes Google-Ready
 
 **Migration 20250930_001** :
+
 - `variant_groups.item_group_id` VARCHAR(255)
 - `variant_groups.variant_type` (color/size/material/pattern)
 - Trigger auto-sync : `sync_item_group_id()`
 
 **Dual-Mode Architecture** :
+
 - Create mode : Auto-naming pattern
 - Import mode : Existing products linkage
 
@@ -209,6 +218,7 @@ curl http://localhost:3000/api/google-merchant/test-connection | jq
 ## ✅ Checklist Validation Rapide
 
 ### Configuration
+
 - [ ] Service Account créé
 - [ ] API Content activée
 - [ ] Service account ajouté Merchant Center (Admin)
@@ -216,6 +226,7 @@ curl http://localhost:3000/api/google-merchant/test-connection | jq
 - [ ] Serveur dev redémarré
 
 ### Tests
+
 - [ ] `GET /test-connection` → authentication: true
 - [ ] `GET /test-connection` → apiConnection: true
 - [ ] Interface web → 0 erreur console
@@ -223,6 +234,7 @@ curl http://localhost:3000/api/google-merchant/test-connection | jq
 - [ ] (Optionnel) Premier produit synchronisé
 
 ### Prêt pour Production
+
 - [ ] Configuration validée
 - [ ] Tests passés
 - [ ] Documentation consultée
@@ -233,18 +245,21 @@ curl http://localhost:3000/api/google-merchant/test-connection | jq
 ## 🚀 Prochaines Actions Recommandées
 
 ### Immédiat (Aujourd'hui)
+
 1. Suivre [Guide Configuration Complet](GOOGLE-MERCHANT-CONFIGURATION-COMPLETE.md)
 2. Configurer Service Account + Variables .env
 3. Lancer tests validation
 4. Vérifier 0 erreur console
 
 ### Court Terme (Cette Semaine)
+
 1. Tester export Excel complet
 2. Valider qualité données produits
 3. Identifier produits incomplets (GTIN/brand manquants)
 4. Préparer corrections données
 
 ### Moyen Terme (J+7 Post Big Bang)
+
 1. Synchronisation masse 241 produits
 2. Monitoring approvals quotidien
 3. Dashboard KPI opérationnel
@@ -255,6 +270,7 @@ curl http://localhost:3000/api/google-merchant/test-connection | jq
 ## 📞 Support
 
 ### Ressources Disponibles
+
 - ✅ Guide configuration 161 lignes
 - ✅ Checklist validation 50+ cases
 - ✅ Troubleshooting 5 erreurs communes
@@ -262,12 +278,14 @@ curl http://localhost:3000/api/google-merchant/test-connection | jq
 - ✅ API routes testées
 
 ### Documentation Technique
+
 - Transformer API : `src/lib/google-merchant/transformer.ts`
 - Transformer Excel : `src/lib/google-merchant/excel-transformer.ts`
 - Configuration : `src/lib/google-merchant/config.ts`
 - Route Test : `src/app/api/google-merchant/test-connection/route.ts`
 
 ### URLs Clés Google
+
 - Console Cloud : https://console.cloud.google.com
 - Merchant Center : https://merchants.google.com/mc/accounts/5495521926
 - API Content : https://console.cloud.google.com/apis/library/content.googleapis.com

@@ -25,6 +25,7 @@
 ### Rôle Admin
 
 Le **Admin** est un administrateur du tenant Vérone avec :
+
 - Accès complet opérations business (catalogue, commandes, stocks, facturation)
 - Autonomie totale gestion quotidienne
 - Création organisations, clients, fournisseurs
@@ -33,12 +34,14 @@ Le **Admin** est un administrateur du tenant Vérone avec :
 ### Différences Admin vs Owner
 
 **Admin a les mêmes droits que Owner sur 95% des opérations** :
+
 - CRUD complet : organisations, price_lists, products, sales_orders, purchase_orders, stock_movements
 - DELETE : price_lists (contrairement à croyance initiale)
 - Exports : CSV/PDF toutes données business
 - CRM : CRUD organisations, contacts, clients
 
 **Admin a 3 restrictions vs Owner** :
+
 1. Gestion utilisateurs : Admin modifie SON profil uniquement (pas créer/supprimer users)
 2. Visibilité équipe : Admin NE VOIT PAS métriques équipe ni user_activity_logs
 3. Pages interdites : /admin/users et /admin/activite-utilisateurs (redirect 403)
@@ -61,6 +64,7 @@ Le **Admin** est un administrateur du tenant Vérone avec :
 **Action** : Login → /dashboard
 
 **Écran Admin** :
+
 ```
 Dashboard Vérone
 ─────────────────────────────────────────
@@ -79,15 +83,18 @@ Dashboard Vérone
 ```
 
 **Différence avec Owner** :
+
 - Admin NE VOIT PAS section "Métriques Équipe" (Owner-only)
 - Admin voit uniquement KPIs Business Globaux + Alertes
 
 **Actions Admin** :
+
 1. Consulter KPIs business (chiffre affaires, commandes, stocks)
 2. Vérifier alertes critiques (stock bas, commandes attente)
 3. Planifier actions journée
 
 **Comparaison avec Owner** :
+
 ```
 Dashboard Owner (complet)       Dashboard Admin (business only)
 ─────────────────────────────  ─────────────────────────────
@@ -103,6 +110,7 @@ Dashboard Owner (complet)       Dashboard Admin (business only)
 **Action** : /settings/profile (Admin peut modifier SON profil uniquement)
 
 **Écran Admin** :
+
 ```
 Mon Profil Utilisateur
 ─────────────────────────────────────────
@@ -126,6 +134,7 @@ Sessions Actives : 2
 ```
 
 **Workflow Modification Mot de Passe** :
+
 ```
 Admin → [Modifier] Mot de passe
 
@@ -141,6 +150,7 @@ Confirmer mot de passe : [••••••••]
 ```
 
 **Backend** :
+
 ```sql
 -- UPDATE user_profiles (Admin son profil uniquement)
 UPDATE user_profiles
@@ -161,6 +171,7 @@ WHERE id = <bob_user_id>;
 ```
 
 **Différence avec Owner** :
+
 - Owner PEUT modifier TOUS les profils du tenant
 - Admin PEUT modifier SON profil uniquement
 - Admin NE PEUT PAS accéder /admin/users (redirect 403)
@@ -176,6 +187,7 @@ WHERE id = <bob_user_id>;
 **Droits Admin** : Identiques Owner (CRUD complet products)
 
 **Workflow Création Produit** :
+
 ```
 Admin → /catalogue/produits → [+ Nouveau Produit]
 
@@ -205,6 +217,7 @@ Images & Docs
 ```
 
 **Backend** :
+
 ```sql
 -- INSERT products (Owner + Admin RLS)
 INSERT INTO products (
@@ -245,6 +258,7 @@ INSERT INTO products (
 **Droits Admin** : Identiques Owner (y compris DELETE price_lists)
 
 **Écran Admin** :
+
 ```
 Listes de Prix
 ─────────────────────────────────────────
@@ -260,6 +274,7 @@ Tarif 2024 OLD      | B2C   | 890      | ✗     | 01 Jan 2025  | [Éditer] [Sup
 ```
 
 **Workflow Suppression Price List (Admin autorisé)** :
+
 ```
 Admin → Clic [Supprimer] ligne "Tarif 2024 OLD"
 
@@ -280,6 +295,7 @@ Vérifications :
 ```
 
 **Backend** :
+
 ```sql
 -- DELETE price_lists (Owner + Admin RLS)
 DELETE FROM price_lists
@@ -291,6 +307,7 @@ WHERE id = <price_list_id>
 ```
 
 **Note Importante** :
+
 - Ancienne croyance : "Admin ne peut pas supprimer price_lists"
 - Réalité RLS : Admin PEUT DELETE price_lists (policy Owner+Admin)
 - Admin et Owner ont droits identiques sur price_lists
@@ -306,6 +323,7 @@ WHERE id = <price_list_id>
 **Droits Admin** : Identiques Owner (CRUD complet sales_orders)
 
 **Workflow Commande Client** :
+
 ```
 Admin → /ventes/commandes → [+ Nouvelle Commande]
 
@@ -338,6 +356,7 @@ Total TTC     : 14 034 EUR
 ```
 
 **Backend** :
+
 ```sql
 -- INSERT sales_orders (Owner + Admin + Sales RLS)
 INSERT INTO sales_orders (
@@ -378,6 +397,7 @@ INSERT INTO sales_orders (
 **Droits Admin** : Identiques Owner (CRUD complet purchase_orders)
 
 **Workflow Commande Fournisseur** :
+
 ```
 Admin → /achats/commandes → [+ Nouvelle Commande]
 
@@ -407,6 +427,7 @@ Total TTC     : 21 480 EUR
 ```
 
 **Backend** :
+
 ```sql
 -- INSERT purchase_orders (Owner + Admin RLS)
 INSERT INTO purchase_orders (
@@ -445,6 +466,7 @@ INSERT INTO purchase_orders (
 **Droits Admin** : Identiques Owner (CRUD complet, y compris DELETE)
 
 **Workflow Entrée Stock** :
+
 ```
 Admin → /stock/mouvements → [+ Nouveau Mouvement]
 
@@ -467,6 +489,7 @@ Nouveau Stock   : 300 (calculé auto)
 ```
 
 **Backend** :
+
 ```sql
 -- INSERT stock_movements (Owner + Admin RLS)
 INSERT INTO stock_movements (
@@ -494,6 +517,7 @@ WHERE id = <product_id>;
 ```
 
 **Workflow Suppression Mouvement Stock (Admin autorisé)** :
+
 ```
 Admin → /stock/mouvements → Historique → Clic [Supprimer] ligne "MOV-001"
 
@@ -516,6 +540,7 @@ Nouveau Stock   : 100 (après suppression)
 ```
 
 **Backend** :
+
 ```sql
 -- DELETE stock_movements (Owner + Admin RLS - CORRIGÉ 2025-10-16)
 DELETE FROM stock_movements
@@ -532,6 +557,7 @@ WHERE id = <product_id>;
 ```
 
 **Note Migration 2025-10-16** :
+
 - Avant : DELETE stock_movements = Owner-only
 - Après : DELETE stock_movements = Owner + Admin (policy corrigée)
 
@@ -546,6 +572,7 @@ WHERE id = <product_id>;
 **Droits Admin** : Identiques Owner (CRUD complet customers)
 
 **Workflow Création Client** :
+
 ```
 Admin → /clients/particuliers → [+ Nouveau Client]
 
@@ -571,6 +598,7 @@ Newsletter      : [✓]
 ```
 
 **Backend** :
+
 ```sql
 -- INSERT customers (Owner + Admin RLS)
 INSERT INTO customers (
@@ -611,6 +639,7 @@ INSERT INTO customers (
 **Droits Admin** : Identiques Owner (CRUD complet consultations)
 
 **Workflow Consultation** :
+
 ```
 Admin → /consultations → [+ Nouvelle Consultation]
 
@@ -636,6 +665,7 @@ Lieu            : [Showroom Paris]
 ```
 
 **Backend** :
+
 ```sql
 -- INSERT consultations (Owner + Admin RLS)
 INSERT INTO consultations (
@@ -670,6 +700,7 @@ INSERT INTO consultations (
 **Droits Admin** : Identiques Owner (exports complets données business)
 
 **Workflow Export CSV** :
+
 ```
 Admin → /catalogue/produits → [Exporter CSV]
 
@@ -697,6 +728,7 @@ Stock < Seuil   : [ ] Uniquement produits alerte
 ```
 
 **Résultat CSV** :
+
 ```csv
 SKU,Nom,Catégorie,Fournisseur,Prix Achat,Prix B2C,Prix B2B,Stock Actuel,Stock Seuil
 VRN-CHAIR-001,Chaise Scandinave Blanche,Mobilier,Nordic Design AB,89.00,179.00,149.00,150,20
@@ -706,6 +738,7 @@ VRN-LAMP-001,Lampe Design Scandinave,Éclairage,Nordic Design AB,45.00,99.00,79.
 ```
 
 **Types Exports Admin Autorisés** :
+
 1. ✅ Catalogue Produits (CSV/PDF)
 2. ✅ Listes Prix (CSV/PDF)
 3. ✅ Commandes Ventes (CSV/PDF)
@@ -714,6 +747,7 @@ VRN-LAMP-001,Lampe Design Scandinave,Éclairage,Nordic Design AB,45.00,99.00,79.
 6. ❌ Rapport Activité Équipe (Owner-only)
 
 **Différence avec Owner** :
+
 - Admin PEUT exporter toutes données business (catalogues, commandes, stocks)
 - Admin NE PEUT PAS exporter rapport activité équipe (Owner-only)
 
@@ -726,6 +760,7 @@ VRN-LAMP-001,Lampe Design Scandinave,Éclairage,Nordic Design AB,45.00,99.00,79.
 **Action** : /dashboard → Consulter métriques fin journée
 
 **Écran Admin** :
+
 ```
 Dashboard Vérone - 18h30
 ─────────────────────────────────────────
@@ -749,11 +784,13 @@ Dashboard Vérone - 18h30
 ```
 
 **Actions Admin** :
+
 1. Vérifier objectifs journée atteints
 2. Préparer tâches prioritaires demain
 3. Identifier blocages éventuels (validation Owner nécessaire)
 
 **Différence avec Owner** :
+
 - Admin NE VOIT PAS métriques équipe (pas de section "Activité Équipe")
 - Admin voit uniquement ses propres KPIs business
 
@@ -764,6 +801,7 @@ Dashboard Vérone - 18h30
 **Action** : Déconnexion
 
 **Workflow** :
+
 ```
 Admin → Clic avatar → [Déconnexion]
 
@@ -779,6 +817,7 @@ Options :
 ```
 
 **Backend** :
+
 ```sql
 -- DELETE user_sessions (Admin ses sessions uniquement)
 DELETE FROM user_sessions
@@ -796,10 +835,12 @@ WHERE user_id = auth.uid();
 ### Pages Interdites (Owner-only)
 
 **Pages Admin NE PEUT PAS accéder** :
+
 1. `/admin/users` - Gestion utilisateurs (redirect 403)
 2. `/admin/activite-utilisateurs` - Logs activité équipe (redirect 403)
 
 **Workflow Tentative Accès Interdit** :
+
 ```
 Admin → Tape URL manuellement /admin/users
 
@@ -838,6 +879,7 @@ Résultat : Admin redirigé vers /dashboard avec message :
    - Admin : ❌ Aucune modification possible (RLS bloque)
 
 **Workflow Erreur RLS** :
+
 ```
 -- Admin essaie de créer utilisateur
 const { error } = await supabase
@@ -863,6 +905,7 @@ error: {
 ### Opérations Autorisées (95%)
 
 **Tables Admin a MÊMES droits que Owner** :
+
 - ✅ organisations (CRUD complet)
 - ✅ price_lists (CRUD complet, y compris DELETE)
 - ✅ products (CRUD complet)
@@ -905,31 +948,37 @@ error: {
 ### Journée Type Admin
 
 **Matin (9h-12h)** :
+
 - Dashboard business (KPIs globaux, alertes)
 - Modification profil personnel (son profil uniquement)
 - Sourcing produits et création catalogue
 
 **Après-midi (14h-18h)** :
+
 - Création commandes ventes/achats
 - Gestion stock et mouvements
 - CRM : clients, consultations
 - Exports données business
 
 **Différences Admin vs Owner** :
+
 1. **Gestion équipe** : Admin PEUT modifier SON profil uniquement, Owner PEUT créer/modifier/supprimer tous users
 2. **Visibilité équipe** : Admin NE VOIT PAS métriques équipe ni user_activity_logs, Owner OUI
 3. **Pages interdites** : Admin redirect 403 sur /admin/users et /admin/activite-utilisateurs
 4. **Tout le reste** : IDENTIQUE Owner (organisations, pricing, commandes, stocks, exports, DELETE price_lists)
 
 **Autonomie Admin** :
+
 - 95% opérations identiques Owner
 - 5% restrictions (gestion équipe uniquement)
 
 **Temps Répartition** :
+
 - 0% supervision équipe (interdit)
 - 100% opérations business (autonomie complète)
 
 **Collaboration Owner** :
+
 - Admin demande Owner pour créer nouveaux utilisateurs
 - Admin informe Owner pour validation workflows Phase 2 (à venir)
 - Admin autonome sur toutes autres opérations

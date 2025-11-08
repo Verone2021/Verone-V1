@@ -5,31 +5,30 @@
  * ✅ Pattern recommandé Next.js 15 pour client components utilisant browser APIs
  */
 
-'use client'
+'use client';
 
-import { useEffect, useState } from 'react'
-import { ActivityTrackerProvider } from './activity-tracker-provider'
+import { useEffect, useState } from 'react';
+
+import { ActivityTrackerProvider } from './activity-tracker-provider';
 
 interface ClientOnlyActivityTrackerProps {
-  children: React.ReactNode
+  children: React.ReactNode;
 }
 
-export function ClientOnlyActivityTracker({ children }: ClientOnlyActivityTrackerProps) {
-  const [hasMounted, setHasMounted] = useState(false)
+export function ClientOnlyActivityTracker({
+  children,
+}: ClientOnlyActivityTrackerProps) {
+  const [hasMounted, setHasMounted] = useState(false);
 
   useEffect(() => {
-    setHasMounted(true)
-  }, [])
+    setHasMounted(true);
+  }, []);
 
   // Pendant SSR ou avant hydration, render children sans tracker
   if (!hasMounted) {
-    return <>{children}</>
+    return <>{children}</>;
   }
 
   // Après hydration, activer ActivityTrackerProvider
-  return (
-    <ActivityTrackerProvider>
-      {children}
-    </ActivityTrackerProvider>
-  )
+  return <ActivityTrackerProvider>{children}</ActivityTrackerProvider>;
 }

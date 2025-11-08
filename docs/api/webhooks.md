@@ -19,6 +19,7 @@
 Documentation des webhooks entrants et sortants du système Vérone (Brevo, Supabase, intégrations externes).
 
 **À documenter** :
+
 - Webhooks Brevo (email events : delivered, opened, clicked)
 - Webhooks Supabase Database (triggers → webhooks externes)
 - Webhooks sortants (notifs externes sur événements Vérone)

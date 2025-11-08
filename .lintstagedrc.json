@@ -1,0 +1,6 @@
+{
+  "$schema": "https://json.schemastore.org/lintstagedrc",
+  "*.{ts,tsx}": ["prettier --write", "eslint --fix"],
+  "src/hooks/use-*.ts": ["node scripts/validation/check-duplicate-hooks.ts"],
+  "*.{json,md}": ["prettier --write"]
+}

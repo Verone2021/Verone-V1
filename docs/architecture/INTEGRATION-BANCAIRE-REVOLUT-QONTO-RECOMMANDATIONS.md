@@ -18,14 +18,14 @@
 
 ### **Pourquoi ne PAS passer uniquement par Abby ?**
 
-| Critère | Via Abby uniquement | API Bancaire directe (Revolut + Qonto) |
-|---------|---------------------|----------------------------------------|
-| **Source de vérité** | ❌ Abby (intermédiaire) | ✅ Banques (source réelle) |
-| **Délai sync** | ❌ Plusieurs heures | ✅ Temps réel (webhooks) |
-| **Frais** | ❌ Abby facture la feature | ✅ API gratuite (Revolut/Qonto) |
-| **Contrôle** | ❌ Dépend d'Abby | ✅ Direct, indépendant |
-| **Flexibilité** | ❌ Limité features Abby | ✅ Toutes features bancaires |
-| **Données** | ❌ Partiel (transactions liées factures) | ✅ Complet (tous mouvements) |
+| Critère              | Via Abby uniquement                      | API Bancaire directe (Revolut + Qonto) |
+| -------------------- | ---------------------------------------- | -------------------------------------- |
+| **Source de vérité** | ❌ Abby (intermédiaire)                  | ✅ Banques (source réelle)             |
+| **Délai sync**       | ❌ Plusieurs heures                      | ✅ Temps réel (webhooks)               |
+| **Frais**            | ❌ Abby facture la feature               | ✅ API gratuite (Revolut/Qonto)        |
+| **Contrôle**         | ❌ Dépend d'Abby                         | ✅ Direct, indépendant                 |
+| **Flexibilité**      | ❌ Limité features Abby                  | ✅ Toutes features bancaires           |
+| **Données**          | ❌ Partiel (transactions liées factures) | ✅ Complet (tous mouvements)           |
 
 ---
 
@@ -53,6 +53,7 @@
 ### **Rôle de chaque système**
 
 #### **1. Abby.fr**
+
 - ✅ **Création factures** (PDF professionnel)
 - ✅ **Envoi emails** (tracking ouvertures)
 - ✅ **Gestion relances** (automatiques)
@@ -60,12 +61,14 @@
 - ❌ **PAS utilisé pour**: Source transactions bancaires
 
 #### **2. Revolut API**
+
 - ✅ **Transactions temps réel** (webhooks instantanés)
 - ✅ **Comptes multi-devises** (EUR, USD, GBP)
 - ✅ **Virements automatiques** (batch payouts)
 - ✅ **Trésorerie** (soldes en temps réel)
 
 #### **3. Qonto API**
+
 - ✅ **Compte principal business**
 - ✅ **Transactions catégorisées** (comptabilité)
 - ✅ **Multi-utilisateurs** (équipe)
@@ -329,7 +332,13 @@ export async function POST(request: NextRequest) {
   const payload = await request.text();
 
   // Validate signature
-  if (!validateQontoSignature(payload, signature, process.env.QONTO_WEBHOOK_SECRET!)) {
+  if (
+    !validateQontoSignature(
+      payload,
+      signature,
+      process.env.QONTO_WEBHOOK_SECRET!
+    )
+  ) {
     return NextResponse.json({ error: 'Invalid signature' }, { status: 401 });
   }
 
@@ -371,12 +380,15 @@ export async function POST(request: NextRequest) {
 
   // Auto-match si transaction entrante
   if (event.data.amount > 0) {
-    const { data: matchResult } = await supabase.rpc('auto_match_bank_transaction', {
-      p_transaction_id: event.data.id,
-      p_amount: event.data.amount,
-      p_label: event.data.label,
-      p_counterparty_name: event.data.counterparty?.name,
-    });
+    const { data: matchResult } = await supabase.rpc(
+      'auto_match_bank_transaction',
+      {
+        p_transaction_id: event.data.id,
+        p_amount: event.data.amount,
+        p_label: event.data.label,
+        p_counterparty_name: event.data.counterparty?.name,
+      }
+    );
 
     return NextResponse.json({
       success: true,
@@ -417,7 +429,13 @@ export async function POST(request: NextRequest) {
   const payload = await request.text();
 
   // Validate signature
-  if (!validateRevolutSignature(payload, signature, process.env.REVOLUT_WEBHOOK_SECRET!)) {
+  if (
+    !validateRevolutSignature(
+      payload,
+      signature,
+      process.env.REVOLUT_WEBHOOK_SECRET!
+    )
+  ) {
     return NextResponse.json({ error: 'Invalid signature' }, { status: 401 });
   }
 
@@ -462,11 +480,14 @@ export async function POST(request: NextRequest) {
 
   // Auto-match income
   if (event.data.amount > 0) {
-    const { data: matchResult } = await supabase.rpc('auto_match_bank_transaction', {
-      p_transaction_id: event.data.id,
-      p_amount: event.data.amount,
-      p_label: event.data.description || '',
-    });
+    const { data: matchResult } = await supabase.rpc(
+      'auto_match_bank_transaction',
+      {
+        p_transaction_id: event.data.id,
+        p_amount: event.data.amount,
+        p_label: event.data.description || '',
+      }
+    );
 
     return NextResponse.json({
       success: true,
@@ -611,16 +632,19 @@ export default async function TresoreriePage() {
 ### **🚀 Roadmap Intégration Bancaire**
 
 **Phase 1 (MVP)** :
+
 - ✅ Webhooks Qonto → Vérone
 - ✅ Auto-match transactions → factures (RPC function)
 - ✅ Dashboard soldes temps réel
 
 **Phase 2** :
+
 - 📊 Machine Learning matching (amélioration auto-match)
 - 📊 Catégorisation automatique dépenses
 - 📊 Prévisions trésorerie (30/60/90 jours)
 
 **Phase 3** :
+
 - 💳 Multi-comptes (Qonto Pro + Qonto Salaires)
 - 💳 Revolut Business + Revolut Savings
 - 💳 Export comptable automatique (FEC)

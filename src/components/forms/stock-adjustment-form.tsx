@@ -6,58 +6,61 @@
  * Bucket Storage: stock-adjustments
  */
 
-'use client'
+'use client';
 
-import { useState, useEffect } from 'react'
-import { createClient } from '@/lib/supabase/client'
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
-import { ButtonV2 } from '@/components/ui/button'
-import { Input } from '@/components/ui/input'
-import { Label } from '@/components/ui/label'
-import { Textarea } from '@/components/ui/textarea'
+import { useState, useEffect } from 'react';
+
+import { useRouter } from 'next/navigation';
+
+import { ButtonV2 } from '@verone/ui';
+import { Card, CardContent, CardHeader, CardTitle } from '@verone/ui';
+import { ImageUploadZone } from '@verone/ui';
+import { Input } from '@verone/ui';
+import { Label } from '@verone/ui';
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
-  SelectValue
-} from '@/components/ui/select'
-import { ImageUploadZone } from '@/components/ui/image-upload-zone'
-import { Loader2, Save, AlertCircle } from 'lucide-react'
-import { useRouter } from 'next/navigation'
-import { format } from 'date-fns'
+  SelectValue,
+} from '@verone/ui';
+import { Textarea } from '@verone/ui';
+import { format } from 'date-fns';
+import { Loader2, Save, AlertCircle } from 'lucide-react';
+
+import { createClient } from '@verone/utils/supabase/client';
 
 // =====================================================================
 // TYPES
 // =====================================================================
 
 interface Product {
-  id: string
-  sku: string
-  name: string
-  stock_quantity: number
+  id: string;
+  sku: string;
+  name: string;
+  stock_quantity: number;
 }
 
 interface StockAdjustmentFormData {
-  product_id: string
-  adjustment_type: 'increase' | 'decrease' | 'correction'
-  quantity: number
+  product_id: string;
+  adjustment_type: 'increase' | 'decrease' | 'correction';
+  quantity: number;
   reason:
     | 'inventory_count'
     | 'damage'
     | 'loss'
     | 'found'
     | 'correction'
-    | 'other'
-  notes: string
-  adjustment_date: string
-  reference_document?: string
-  uploaded_file_url?: string
+    | 'other';
+  notes: string;
+  adjustment_date: string;
+  reference_document?: string;
+  uploaded_file_url?: string;
 }
 
 interface StockAdjustmentFormProps {
-  onSuccess?: () => void
-  onCancel?: () => void
+  onSuccess?: () => void;
+  onCancel?: () => void;
 }
 
 // =====================================================================
@@ -67,8 +70,8 @@ interface StockAdjustmentFormProps {
 const ADJUSTMENT_TYPES = [
   { value: 'increase', label: 'Augmentation stock' },
   { value: 'decrease', label: 'Diminution stock' },
-  { value: 'correction', label: 'Correction inventaire' }
-] as const
+  { value: 'correction', label: 'Correction inventaire' },
+] as const;
 
 const ADJUSTMENT_REASONS = [
   { value: 'inventory_count', label: 'Inventaire physique' },
@@ -76,8 +79,8 @@ const ADJUSTMENT_REASONS = [
   { value: 'loss', label: 'Perte / Vol' },
   { value: 'found', label: 'Produit retrouvé' },
   { value: 'correction', label: 'Correction erreur saisie' },
-  { value: 'other', label: 'Autre raison' }
-] as const
+  { value: 'other', label: 'Autre raison' },
+] as const;
 
 // =====================================================================
 // COMPOSANT PRINCIPAL
@@ -85,10 +88,10 @@ const ADJUSTMENT_REASONS = [
 
 export function StockAdjustmentForm({
   onSuccess,
-  onCancel
+  onCancel,
 }: StockAdjustmentFormProps) {
-  const router = useRouter()
-  const supabase = createClient()
+  const router = useRouter();
+  const supabase = createClient();
 
   // États formulaire
   const [formData, setFormData] = useState<StockAdjustmentFormData>({
@@ -99,15 +102,15 @@ export function StockAdjustmentForm({
     notes: '',
     adjustment_date: format(new Date(), 'yyyy-MM-dd'),
     reference_document: '',
-    uploaded_file_url: ''
-  })
+    uploaded_file_url: '',
+  });
 
   // États UI
-  const [products, setProducts] = useState<Product[]>([])
-  const [selectedProduct, setSelectedProduct] = useState<Product | null>(null)
-  const [loading, setLoading] = useState(false)
-  const [loadingProducts, setLoadingProducts] = useState(true)
-  const [error, setError] = useState<string | null>(null)
+  const [products, setProducts] = useState<Product[]>([]);
+  const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
+  const [loading, setLoading] = useState(false);
+  const [loadingProducts, setLoadingProducts] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
   // Charger liste produits
   useEffect(() => {
@@ -116,70 +119,67 @@ export function StockAdjustmentForm({
         const { data, error } = await supabase
           .from('products')
           .select('id, sku, name, stock_quantity')
-          .order('name')
+          .order('name');
 
-        if (error) throw error
+        if (error) throw error;
 
-        setProducts(data || [])
+        setProducts((data as any) || []);
       } catch (err) {
-        console.error('Erreur chargement produits:', err)
-        setError('Impossible de charger la liste des produits')
+        console.error('Erreur chargement produits:', err);
+        setError('Impossible de charger la liste des produits');
       } finally {
-        setLoadingProducts(false)
+        setLoadingProducts(false);
       }
     }
 
-    fetchProducts()
-  }, [])
+    fetchProducts();
+  }, []);
 
   // Mise à jour produit sélectionné
   const handleProductChange = (productId: string) => {
-    const product = products.find((p) => p.id === productId)
-    setSelectedProduct(product || null)
-    setFormData({ ...formData, product_id: productId })
-  }
+    const product = products.find(p => p.id === productId);
+    setSelectedProduct(product || null);
+    setFormData({ ...formData, product_id: productId });
+  };
 
   // Calculer quantity_change selon type ajustement
   const calculateQuantityChange = (): number => {
-    const qty = Math.abs(formData.quantity)
+    const qty = Math.abs(formData.quantity);
 
     switch (formData.adjustment_type) {
       case 'increase':
-        return qty // Positif
+        return qty; // Positif
       case 'decrease':
-        return -qty // Négatif
+        return -qty; // Négatif
       case 'correction':
         // Correction = différence entre stock actuel et quantité cible
-        if (!selectedProduct) return 0
-        return formData.quantity - selectedProduct.stock_quantity
+        if (!selectedProduct) return 0;
+        return formData.quantity - selectedProduct.stock_quantity;
       default:
-        return 0
+        return 0;
     }
-  }
+  };
 
   // Validation formulaire
   const validateForm = (): boolean => {
     if (!formData.product_id) {
-      setError('Veuillez sélectionner un produit')
-      return false
+      setError('Veuillez sélectionner un produit');
+      return false;
     }
 
     if (formData.quantity === 0) {
-      setError('La quantité doit être différente de 0')
-      return false
+      setError('La quantité doit être différente de 0');
+      return false;
     }
 
-    if (
-      formData.adjustment_type !== 'correction' &&
-      formData.quantity < 0
-    ) {
-      setError('La quantité doit être positive')
-      return false
+    if (formData.adjustment_type !== 'correction' && formData.quantity < 0) {
+      setError('La quantité doit être positive');
+      return false;
     }
 
     if (formData.reason === 'other' && formData.notes.trim().length < 10) {
-      setError('Veuillez détailler la raison (minimum 10 caractères)')
-      return false
+      setError('Veuillez détailler la raison (minimum 10 caractères)');
+      return false;
     }
 
     // Vérifier stock suffisant pour diminution
@@ -190,34 +190,35 @@ export function StockAdjustmentForm({
     ) {
       setError(
         `Stock insuffisant (stock actuel: ${selectedProduct.stock_quantity})`
-      )
-      return false
+      );
+      return false;
     }
 
-    return true
-  }
+    return true;
+  };
 
   // Soumission formulaire
   const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault()
-    setError(null)
+    e.preventDefault();
+    setError(null);
 
-    if (!validateForm()) return
+    if (!validateForm()) return;
 
-    setLoading(true)
+    setLoading(true);
 
     try {
-      const quantityChange = calculateQuantityChange()
-      const quantityBefore = selectedProduct?.stock_quantity || 0
-      const quantityAfter = quantityBefore + quantityChange
+      const quantityChange = calculateQuantityChange();
+      const quantityBefore = selectedProduct?.stock_quantity || 0;
+      const quantityAfter = quantityBefore + quantityChange;
 
       // Récupérer user ID
       const {
-        data: { user }
-      } = await supabase.auth.getUser()
-      if (!user) throw new Error('Non authentifié')
+        data: { user },
+      } = await supabase.auth.getUser();
+      if (!user) throw new Error('Non authentifié');
 
       // Insérer stock_movement
+      // ✅ FIX Phase 3.6: Définir explicitement affects_forecast et forecast_type
       const { error: insertError } = await supabase
         .from('stock_movements')
         .insert({
@@ -226,42 +227,44 @@ export function StockAdjustmentForm({
           quantity_change: quantityChange,
           quantity_before: quantityBefore,
           quantity_after: quantityAfter,
-          reference_type: 'adjustment',
-          reference_id: null, // Pas de référence externe pour ajustements
+          affects_forecast: false, // ✅ EXPLICITE: Ajustements manuels = mouvements réels
+          forecast_type: null, // ✅ EXPLICITE: Pas de direction prévisionnel pour ajustements
+          reference_type: 'manual_adjustment',
+          reference_id: crypto.randomUUID(), // UUID unique pour traçabilité
           notes: `${formData.reason}: ${formData.notes}`,
           performed_by: user.id,
-          performed_at: new Date(formData.adjustment_date).toISOString()
-        })
+          performed_at: new Date(formData.adjustment_date).toISOString(),
+        });
 
-      if (insertError) throw insertError
+      if (insertError) throw insertError;
 
       // Succès
       if (onSuccess) {
-        onSuccess()
+        onSuccess();
       } else {
-        router.push('/stocks/ajustements')
-        router.refresh()
+        router.push('/stocks/ajustements');
+        router.refresh();
       }
     } catch (err) {
-      console.error('Erreur création ajustement:', err)
+      console.error('Erreur création ajustement:', err);
       setError(
         err instanceof Error
           ? err.message
-          : 'Erreur lors de la création de l\'ajustement'
-      )
+          : "Erreur lors de la création de l'ajustement"
+      );
     } finally {
-      setLoading(false)
+      setLoading(false);
     }
-  }
+  };
 
   // Handler upload fichier
   const handleFileUpload = (url: string, fileName: string) => {
     setFormData({
       ...formData,
       uploaded_file_url: url,
-      reference_document: fileName
-    })
-  }
+      reference_document: fileName,
+    });
+  };
 
   return (
     <form onSubmit={handleSubmit} className="space-y-6">
@@ -292,7 +295,7 @@ export function StockAdjustmentForm({
                   <SelectValue placeholder="Sélectionner un produit" />
                 </SelectTrigger>
                 <SelectContent>
-                  {products.map((product) => (
+                  {products.map(product => (
                     <SelectItem key={product.id} value={product.id}>
                       {product.sku} - {product.name} (Stock:{' '}
                       {product.stock_quantity})
@@ -316,10 +319,10 @@ export function StockAdjustmentForm({
             </Label>
             <Select
               value={formData.adjustment_type}
-              onValueChange={(value) =>
+              onValueChange={value =>
                 setFormData({
                   ...formData,
-                  adjustment_type: value as any
+                  adjustment_type: value as any,
                 })
               }
               disabled={loading}
@@ -328,7 +331,7 @@ export function StockAdjustmentForm({
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
-                {ADJUSTMENT_TYPES.map((type) => (
+                {ADJUSTMENT_TYPES.map(type => (
                   <SelectItem key={type.value} value={type.value}>
                     {type.label}
                   </SelectItem>
@@ -350,8 +353,11 @@ export function StockAdjustmentForm({
               type="number"
               min={0}
               value={formData.quantity}
-              onChange={(e) =>
-                setFormData({ ...formData, quantity: parseInt(e.target.value) || 0 })
+              onChange={e =>
+                setFormData({
+                  ...formData,
+                  quantity: parseInt(e.target.value) || 0,
+                })
               }
               disabled={loading}
               required
@@ -375,7 +381,7 @@ export function StockAdjustmentForm({
             </Label>
             <Select
               value={formData.reason}
-              onValueChange={(value) =>
+              onValueChange={value =>
                 setFormData({ ...formData, reason: value as any })
               }
               disabled={loading}
@@ -384,7 +390,7 @@ export function StockAdjustmentForm({
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
-                {ADJUSTMENT_REASONS.map((reason) => (
+                {ADJUSTMENT_REASONS.map(reason => (
                   <SelectItem key={reason.value} value={reason.value}>
                     {reason.label}
                   </SelectItem>
@@ -402,7 +408,7 @@ export function StockAdjustmentForm({
               id="adjustment_date"
               type="date"
               value={formData.adjustment_date}
-              onChange={(e) =>
+              onChange={e =>
                 setFormData({ ...formData, adjustment_date: e.target.value })
               }
               disabled={loading}
@@ -421,7 +427,7 @@ export function StockAdjustmentForm({
             <Textarea
               id="notes"
               value={formData.notes}
-              onChange={(e) =>
+              onChange={e =>
                 setFormData({ ...formData, notes: e.target.value })
               }
               placeholder="Détails sur l'ajustement..."
@@ -444,9 +450,8 @@ export function StockAdjustmentForm({
               'image/*': ['.png', '.jpg', '.jpeg'],
               'application/pdf': ['.pdf'],
               'application/vnd.ms-excel': ['.xls'],
-              'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet': [
-                '.xlsx'
-              ]
+              'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet':
+                ['.xlsx'],
             }}
           />
         </CardContent>
@@ -483,5 +488,5 @@ export function StockAdjustmentForm({
         )}
       </div>
     </form>
-  )
+  );
 }

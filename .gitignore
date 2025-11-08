@@ -76,12 +76,16 @@ next-env.d.ts
 # Playwright MCP Browser screenshots (obsolete)
 .playwright-mcp/
 
+# Serena MCP cache
+.serena/
+
 # Project-specific temporary files
 /tests/reports/
 /backups/
 git-status-*.txt
 *-temp.js
 *-temp.ts
+*-temp.json
 *-old.ts
 *-old.tsx
 *-backup.ts
@@ -89,3 +93,5 @@ git-status-*.txt
 
 *storybook.log
 storybook-static
+.vercel-deploy-trigger-*
+.claude/DIAGNOSTIC-*.md

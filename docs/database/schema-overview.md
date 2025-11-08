@@ -21,6 +21,7 @@
 Documentation complète du schéma de base de données PostgreSQL/Supabase du système Vérone.
 
 **À documenter** :
+
 - ERD visuel complet
 - Liste toutes tables avec colonnes et types
 - Relations (foreign keys, jointures)
@@ -28,6 +29,7 @@ Documentation complète du schéma de base de données PostgreSQL/Supabase du sy
 - Contraintes (CHECK, NOT NULL, UNIQUE)
 
 **Tables principales** :
+
 - `tenants`, `user_profiles`
 - `products`, `product_families`, `product_images`, `product_variants`
 - `orders`, `order_items`

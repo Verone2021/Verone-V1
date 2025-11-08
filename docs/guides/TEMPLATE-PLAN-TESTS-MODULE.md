@@ -10,6 +10,7 @@
 ## 🎯 OBJECTIF
 
 Tester et valider la section **[MODULE]** de Vérone Back Office en utilisant **MCP Playwright Browser** pour garantir :
+
 1. ✅ Fonctionnalités conformes aux spécifications métier
 2. ✅ Console 100% clean (0 erreur - **règle sacrée**)
 3. ✅ Opérations CRUD complètes et sécurisées (si applicable)
@@ -63,6 +64,7 @@ Remplacer par vos fonctionnalités :
 **Objectif** : Vérifier que toutes les pages du module se chargent sans erreur console.
 
 **Actions MCP Browser** :
+
 ```typescript
 1. mcp__playwright__browser_navigate(url: "http://localhost:3000/[module]")
 2. mcp__playwright__browser_console_messages()
@@ -71,12 +73,14 @@ Remplacer par vos fonctionnalités :
 ```
 
 **Critères de Succès** :
+
 - ✅ Page charge correctement
 - ✅ Console : **0 erreur** (tolérance absolue)
 - ✅ Données affichées cohérentes
 - ✅ Navigation fluide entre pages
 
 **Livrables Phase 1** :
+
 - Screenshot : `.playwright-mcp/[module]-page-principale.png`
 - Log console : 0 erreur confirmé
 
@@ -89,12 +93,14 @@ Remplacer par vos fonctionnalités :
 #### Test CREATE (Création)
 
 **Script Setup** (si nécessaire) :
+
 ```typescript
 // Créer script: scripts/setup-test-[module].ts
 // Générer données test avec cleanup automatique
 ```
 
 **Actions MCP Browser** :
+
 ```typescript
 1. mcp__playwright__browser_navigate("http://localhost:3000/[module]")
 2. mcp__playwright__browser_click(element: "Bouton Nouveau [Element]", ref: "eXXX")
@@ -105,6 +111,7 @@ Remplacer par vos fonctionnalités :
 ```
 
 **Critères de Succès** :
+
 - ✅ Élément créé apparaît dans liste
 - ✅ Console : 0 erreur
 - ✅ BDD : Vérification psql (élément existe)
@@ -113,6 +120,7 @@ Remplacer par vos fonctionnalités :
 #### Test READ (Lecture)
 
 **Actions MCP Browser** :
+
 ```typescript
 1. mcp__playwright__browser_click(element: "Voir détails [Element]", ref: "eXXX")
 2. mcp__playwright__browser_navigate("http://localhost:3000/[module]/[id]")
@@ -121,6 +129,7 @@ Remplacer par vos fonctionnalités :
 ```
 
 **Critères de Succès** :
+
 - ✅ Toutes informations affichées
 - ✅ Données cohérentes avec BDD
 - ✅ Console : 0 erreur
@@ -129,6 +138,7 @@ Remplacer par vos fonctionnalités :
 #### Test UPDATE (Modification)
 
 **Actions MCP Browser** :
+
 ```typescript
 1. mcp__playwright__browser_click(element: "Éditer [Element]", ref: "eXXX")
 2. mcp__playwright__browser_fill_form(fields: [{name: "champ", value: "nouvelle valeur"}])
@@ -138,6 +148,7 @@ Remplacer par vos fonctionnalités :
 ```
 
 **Critères de Succès** :
+
 - ✅ Modification enregistrée en BDD
 - ✅ Affichage mis à jour
 - ✅ Console : Log succès + 0 erreur
@@ -146,6 +157,7 @@ Remplacer par vos fonctionnalités :
 #### Test DELETE (Suppression + Cleanup)
 
 **Actions MCP Browser** :
+
 ```typescript
 1. mcp__playwright__browser_click(element: "Supprimer [Element]", ref: "eXXX")
 2. mcp__playwright__browser_click(element: "Confirmer suppression", ref: "eXXX")
@@ -154,18 +166,21 @@ Remplacer par vos fonctionnalités :
 ```
 
 **Vérification BDD Cleanup** :
+
 ```bash
 PGPASSWORD="..." psql -h ... -c "SELECT * FROM [table] WHERE id = '[test-id]';"
 # Résultat attendu: (0 rows) ✅
 ```
 
 **Critères de Succès** :
+
 - ✅ Élément supprimé de la liste
 - ✅ BDD : 0 rows (cleanup confirmé)
 - ✅ Console : Log succès + 0 erreur
 - ✅ Stats/compteurs décrémentés
 
 **Livrables Phase 2** :
+
 - Screenshot : `.playwright-mcp/[module]-crud-delete-success.png`
 - Vérification psql : Cleanup confirmé
 - Log console : 0 erreur sur toutes opérations
@@ -179,6 +194,7 @@ PGPASSWORD="..." psql -h ... -c "SELECT * FROM [table] WHERE id = '[test-id]';"
 **À adapter selon votre module** :
 
 #### Exemple 1 : Validation Formulaire
+
 ```typescript
 // Tester champs obligatoires
 1. mcp__playwright__browser_click(element: "Enregistrer (sans remplir)")
@@ -187,6 +203,7 @@ PGPASSWORD="..." psql -h ... -c "SELECT * FROM [table] WHERE id = '[test-id]';"
 ```
 
 #### Exemple 2 : Calculs Automatiques
+
 ```typescript
 // Tester calculs (prix total, taxes, etc.)
 1. mcp__playwright__browser_fill_form(fields: [{name: "quantite", value: "10"}])
@@ -195,6 +212,7 @@ PGPASSWORD="..." psql -h ... -c "SELECT * FROM [table] WHERE id = '[test-id]';"
 ```
 
 #### Exemple 3 : Permissions & Rôles
+
 ```typescript
 // Tester restrictions selon rôle utilisateur
 1. Se connecter avec role "catalog_manager"
@@ -203,12 +221,14 @@ PGPASSWORD="..." psql -h ... -c "SELECT * FROM [table] WHERE id = '[test-id]';"
 ```
 
 **Critères de Succès** :
+
 - ✅ Règles métier respectées
 - ✅ Validations front + back cohérentes
 - ✅ Messages erreur appropriés
 - ✅ Console : 0 erreur
 
 **Livrables Phase 3** :
+
 - Documentation règles validées
 - Screenshots cas limites testés
 
@@ -221,12 +241,14 @@ PGPASSWORD="..." psql -h ... -c "SELECT * FROM [table] WHERE id = '[test-id]';"
 #### Test Performance
 
 **SLOs Vérone** :
+
 - Dashboard : <2s
 - Catalogue : <3s
 - Feeds : <10s
 - PDF : <5s
 
 **Actions** :
+
 ```typescript
 1. mcp__playwright__browser_navigate("[URL]")
 2. Mesurer temps chargement (via console network timing)
@@ -234,6 +256,7 @@ PGPASSWORD="..." psql -h ... -c "SELECT * FROM [table] WHERE id = '[test-id]';"
 ```
 
 **Diagnostic si dépassement** :
+
 ```sql
 -- EXPLAIN ANALYZE pour queries lentes
 EXPLAIN (ANALYZE, BUFFERS, VERBOSE)
@@ -241,6 +264,7 @@ SELECT * FROM [table] WHERE ...;
 ```
 
 **Optimisations possibles** :
+
 - Ajout cache Next.js : `export const revalidate = 300`
 - Index BDD manquants
 - Queries N+1 à optimiser
@@ -248,6 +272,7 @@ SELECT * FROM [table] WHERE ...;
 #### Test Edge Cases
 
 **Cas limites à tester** :
+
 - [ ] Liste vide (aucune donnée)
 - [ ] Pagination limites (première/dernière page)
 - [ ] Recherche sans résultat
@@ -256,12 +281,14 @@ SELECT * FROM [table] WHERE ...;
 - [ ] Timeout network (si API externe)
 
 **Critères de Succès** :
+
 - ✅ Performance < SLO
 - ✅ Edge cases gérés gracieusement
 - ✅ Messages utilisateur appropriés
 - ✅ Console : 0 erreur même en cas d'erreur métier
 
 **Livrables Phase 4** :
+
 - Métriques performance documentées
 - Edge cases testés avec résultats
 
@@ -271,33 +298,33 @@ SELECT * FROM [table] WHERE ...;
 
 ### Console Error Checking (Règle Sacrée)
 
-| Page Testée | Erreurs | Warnings | Status |
-|-------------|---------|----------|--------|
-| /[module] | 0 | 0 | ✅ |
-| /[module]/[id] | 0 | 0 | ✅ |
-| CREATE | 0 | 0 | ✅ |
-| UPDATE | 0 | 0 | ✅ |
-| DELETE | 0 | 0 | ✅ |
+| Page Testée    | Erreurs | Warnings | Status |
+| -------------- | ------- | -------- | ------ |
+| /[module]      | 0       | 0        | ✅     |
+| /[module]/[id] | 0       | 0        | ✅     |
+| CREATE         | 0       | 0        | ✅     |
+| UPDATE         | 0       | 0        | ✅     |
+| DELETE         | 0       | 0        | ✅     |
 
 **Résultat** : ✅ **100% CONSOLE CLEAN POLICY RESPECTÉE**
 
 ### CRUD Validation (si applicable)
 
 | Opération | Fonctionnel | BDD Persiste | Cleanup | Console | Status |
-|-----------|-------------|--------------|---------|---------|--------|
-| CREATE | ✅ | ✅ | N/A | 0 err | ✅ |
-| READ | ✅ | ✅ | N/A | 0 err | ✅ |
-| UPDATE | ✅ | ✅ | N/A | 0 err | ✅ |
-| DELETE | ✅ | ✅ | ✅ | 0 err | ✅ |
+| --------- | ----------- | ------------ | ------- | ------- | ------ |
+| CREATE    | ✅          | ✅           | N/A     | 0 err   | ✅     |
+| READ      | ✅          | ✅           | N/A     | 0 err   | ✅     |
+| UPDATE    | ✅          | ✅           | N/A     | 0 err   | ✅     |
+| DELETE    | ✅          | ✅           | ✅      | 0 err   | ✅     |
 
 **Résultat** : ✅ **100% CRUD OPERATIONS VALIDÉES**
 
 ### Performance
 
-| Métrique | Valeur Mesurée | SLO | Status |
-|----------|----------------|-----|--------|
-| Chargement page | [XXX]ms | <[SLO]ms | ✅/⚠️ |
-| Query principale | [XXX]ms | <2000ms | ✅/⚠️ |
+| Métrique         | Valeur Mesurée | SLO      | Status |
+| ---------------- | -------------- | -------- | ------ |
+| Chargement page  | [XXX]ms        | <[SLO]ms | ✅/⚠️  |
+| Query principale | [XXX]ms        | <2000ms  | ✅/⚠️  |
 
 **Résultat** : ✅ **PERFORMANCE CONFORME**
 
@@ -310,6 +337,7 @@ SELECT * FROM [table] WHERE ...;
 **Fichier** : `MEMORY-BANK/sessions/[DATE]-TESTS-[MODULE]-COMPLET.md`
 
 **Contenu** :
+
 - Synthèse tests effectués
 - Problèmes identifiés et résolus
 - Métriques finales (console, CRUD, performance)
@@ -321,6 +349,7 @@ SELECT * FROM [table] WHERE ...;
 **Dossier** : `.playwright-mcp/`
 
 **Fichiers** :
+
 - `[module]-page-principale.png`
 - `[module]-crud-create-success.png`
 - `[module]-crud-delete-success.png`
@@ -331,12 +360,14 @@ SELECT * FROM [table] WHERE ...;
 **Dossier** : `scripts/`
 
 **Fichiers** :
+
 - `setup-test-[module].ts` (création données test)
 - `cleanup-test-[module].ts` (nettoyage BDD)
 
 ### 4. Documentation Mise à Jour
 
 **Fichiers** :
+
 - `manifests/business-rules/[MODULE]-VALIDATION.md` (règles validées)
 - `docs/architecture/[MODULE]-PERFORMANCE.md` (optimisations appliquées)
 
@@ -417,6 +448,7 @@ Copiez l'intégralité de ce fichier dans une nouvelle conversation Claude.
 ### Étape 2 : Remplacer Placeholders
 
 Remplacez tous les placeholders :
+
 - `[MODULE]` → ex: "Catalogue Produits"
 - `[DATE]` → ex: "2025-10-11"
 - `[LISTE_PAGES]` → ex: "/catalogue, /catalogue/[id], /catalogue/categories"
@@ -431,6 +463,7 @@ Remplacez tous les placeholders :
 ### Étape 4 : Lancer Tests avec Claude
 
 Demander à Claude :
+
 ```
 Exécute le plan de tests complet pour le module [MODULE] en suivant
 exactement le template fourni. Utilise MCP Playwright Browser pour
@@ -441,6 +474,7 @@ tous les livrables documentés.
 ### Étape 5 : Révision Finale
 
 Après exécution tests :
+
 - Vérifier rapport session généré
 - Consulter screenshots preuves
 - Valider métriques conformes
@@ -473,4 +507,4 @@ Après exécution tests :
 **Version** : 1.0
 **Auteur** : Claude Code + Workflow 2025
 
-*Vérone Back Office - Professional AI-Assisted Testing Excellence*
+_Vérone Back Office - Professional AI-Assisted Testing Excellence_

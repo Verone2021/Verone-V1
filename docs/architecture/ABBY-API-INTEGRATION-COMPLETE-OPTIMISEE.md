@@ -9,6 +9,7 @@
 ## 📋 TYPES DE DOCUMENTS ABBY
 
 ### **Documents supportés par Abby.fr**
+
 1. **Devis (Quotes)** : Proposition commerciale avant vente
 2. **Factures (Invoices)** : Document comptable après vente
 3. **Bons de livraison (Delivery Notes)** : Preuve livraison marchandise
@@ -212,6 +213,7 @@ Admin Vérone → Créer devis
 ```
 
 **Webhook Abby : quote.accepted**
+
 ```
 Client clique "Accepter" dans email
   ↓
@@ -337,7 +339,10 @@ export async function sendDocumentViaAbby(documentId: string) {
     .eq('id', documentId)
     .single();
 
-  const customer = await getCustomer(document.customer_id, document.customer_type);
+  const customer = await getCustomer(
+    document.customer_id,
+    document.customer_type
+  );
 
   // 2. Push document to Abby
   let abbyResponse;
@@ -418,6 +423,7 @@ export async function sendDocumentViaAbby(documentId: string) {
 ### **Feature 2 : Paiement en Ligne (Abby + Stripe)**
 
 **Activation** :
+
 ```typescript
 // Lors de création facture
 const invoiceResponse = await abbyClient.invoices.create({
@@ -439,11 +445,15 @@ const invoiceResponse = await abbyClient.invoices.create({
 ```
 
 **Email envoyé contient** :
+
 ```html
 <p>Bonjour {{ customer_name }},</p>
 <p>Veuillez trouver ci-joint votre facture {{ invoice_number }}.</p>
 
-<a href="{{ payment_url }}" style="background: #000; color: #fff; padding: 10px 20px;">
+<a
+  href="{{ payment_url }}"
+  style="background: #000; color: #fff; padding: 10px 20px;"
+>
   Payer en ligne ({{ total_ttc }}€)
 </a>
 
@@ -451,6 +461,7 @@ const invoiceResponse = await abbyClient.invoices.create({
 ```
 
 **Webhook Stripe → Abby → Vérone** :
+
 ```
 Client paie en ligne
   ↓
@@ -551,7 +562,7 @@ export async function convertQuoteToInvoice(quoteId: string) {
     .single();
 
   // 3. Copier lignes
-  const lines = quote.document_lines.map((line) => ({
+  const lines = quote.document_lines.map(line => ({
     document_id: invoice.id,
     product_id: line.product_id,
     product_sku: line.product_sku,
@@ -729,6 +740,7 @@ export function SendDocumentButton({ documentId, documentNumber, recipientEmail 
 ## 🎯 ROADMAP OPTIMISATION
 
 ### **Phase 1 : MVP (ACTUELLE - Sprints 1-5)**
+
 - ✅ Factures uniquement
 - ✅ Création manuelle
 - ✅ Push vers Abby API
@@ -736,24 +748,28 @@ export function SendDocumentButton({ documentId, documentNumber, recipientEmail 
 - ✅ Enregistrement paiements manuels
 
 ### **Phase 2 : Documents multiples (Sprint 6)**
+
 - 🔄 Schema database étendu (`documents` table)
 - 🔄 Devis, Bons de livraison, Avoirs
 - 🔄 Conversion automatique (devis → facture)
 - 🔄 UI components dédiés
 
 ### **Phase 3 : Automatisation emails (Sprint 7)**
+
 - 📧 Envoi automatique via Abby API
 - 📧 Templates personnalisables
 - 📧 Tracking ouvertures emails
 - 📧 Relances automatiques (overdue)
 
 ### **Phase 4 : Paiement en ligne (Sprint 8)**
+
 - 💳 Intégration Stripe via Abby
 - 💳 Lien paiement dans emails
 - 💳 Webhooks paiements automatiques
 - 💳 Dashboard CA temps réel
 
 ### **Phase 5 : Reporting avancé (Sprint 9)**
+
 - 📊 Dashboard CA mensuel/annuel
 - 📊 Analyse clients (BFA automatique)
 - 📊 Prévisions trésorerie
@@ -837,16 +853,17 @@ LIMIT 50;
 
 ### **Automatisation Maximale Vérone ↔ Abby**
 
-| Feature | Status | Gain temps | Complexité |
-|---------|--------|-----------|-----------|
-| Push documents vers Abby | ✅ Phase 1 | 80% | Moyenne |
-| Envoi email automatique | 🔄 Phase 3 | 90% | Faible |
-| Paiement en ligne | 🔄 Phase 4 | 95% | Moyenne |
-| Relances automatiques | 🔄 Phase 3 | 85% | Faible |
-| Conversion devis → facture | 🔄 Phase 2 | 70% | Moyenne |
-| Webhooks temps réel | ✅ Phase 1 | 100% | Élevée |
+| Feature                    | Status     | Gain temps | Complexité |
+| -------------------------- | ---------- | ---------- | ---------- |
+| Push documents vers Abby   | ✅ Phase 1 | 80%        | Moyenne    |
+| Envoi email automatique    | 🔄 Phase 3 | 90%        | Faible     |
+| Paiement en ligne          | 🔄 Phase 4 | 95%        | Moyenne    |
+| Relances automatiques      | 🔄 Phase 3 | 85%        | Faible     |
+| Conversion devis → facture | 🔄 Phase 2 | 70%        | Moyenne    |
+| Webhooks temps réel        | ✅ Phase 1 | 100%       | Élevée     |
 
 ### **ROI Attendu**
+
 - **Temps gagné** : ~12h/semaine (facturation manuelle → automatique)
 - **Erreurs humaines** : -95% (saisies manuelles éliminées)
 - **Délai encaissement** : -30% (relances auto + paiement en ligne)

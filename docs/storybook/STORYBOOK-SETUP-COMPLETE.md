@@ -14,7 +14,9 @@
 **Durée** : 30 minutes
 
 **Réalisations** :
+
 1. ✅ Structure dossiers créée (`src/stories/`)
+
    ```
    src/stories/
    ├── 1-ui-base/
@@ -43,16 +45,17 @@
 
 **Composants Documentés** : 5 critiques
 
-| Composant | Stories | Fichier |
-|-----------|---------|---------|
-| **Button** | 14 | `1-ui-base/Buttons/Button.stories.tsx` |
-| **Card** | 9 | `1-ui-base/Cards/Card.stories.tsx` |
-| **VéroneCard** | 13 | `1-ui-base/Cards/VeroneCard.stories.tsx` |
-| **Badge** | 16 | `1-ui-base/Badges/Badge.stories.tsx` |
-| **Input** | 12 | `1-ui-base/Inputs/Input.stories.tsx` |
-| **Total** | **64** | 5 fichiers |
+| Composant      | Stories | Fichier                                  |
+| -------------- | ------- | ---------------------------------------- |
+| **Button**     | 14      | `1-ui-base/Buttons/Button.stories.tsx`   |
+| **Card**       | 9       | `1-ui-base/Cards/Card.stories.tsx`       |
+| **VéroneCard** | 13      | `1-ui-base/Cards/VeroneCard.stories.tsx` |
+| **Badge**      | 16      | `1-ui-base/Badges/Badge.stories.tsx`     |
+| **Input**      | 12      | `1-ui-base/Inputs/Input.stories.tsx`     |
+| **Total**      | **64**  | 5 fichiers                               |
 
 **Fonctionnalités documentées** :
+
 - ✅ Toutes les variantes (primary, secondary, success, danger, etc.)
 - ✅ Toutes les tailles (xs, sm, md, lg, xl)
 - ✅ États (loading, disabled, error, success)
@@ -69,6 +72,7 @@
 **Script** : `tools/scripts/generate-stories.js`
 
 **Fonctionnalités** :
+
 - ✅ Scan automatique de tous les `.tsx` dans `src/components/`
 - ✅ Classification intelligente (ui, business, forms, layout, admin)
 - ✅ Sélection template approprié
@@ -77,6 +81,7 @@
 - ✅ Exclusion des stories déjà créées manuellement
 
 **Commandes NPM** :
+
 ```bash
 npm run generate:stories           # Génère toutes les stories manquantes
 npm run generate:stories:dry        # Preview sans créer
@@ -84,6 +89,7 @@ npm run generate:stories:force      # Force régénération
 ```
 
 **Résultat** :
+
 - 📦 262 composants TSX détectés
 - ✅ 5 stories manuelles (exclus)
 - 🤖 257 stories à générer automatiquement
@@ -107,6 +113,7 @@ npm run generate:stories
 ```
 
 **Résultat attendu** :
+
 - ✅ ~257 fichiers `.stories.tsx` créés
 - ✅ Inventaire visuel complet dans Storybook
 
@@ -120,6 +127,7 @@ npm run storybook
 ```
 
 **Navigation** :
+
 - 📁 **1-UI-Base** : Tous les composants UI (49)
   - Buttons : Button, ActionButton, ModernActionButton, StandardModifyButton
   - Cards : Card, VéroneCard, CompactKpiCard, MediumKpiCard, ElegantKpiCard
@@ -145,6 +153,7 @@ npm run storybook
 **Objectif** : Décider quels composants conserver/supprimer
 
 **Process** :
+
 1. Ouvrir Storybook (`npm run storybook`)
 2. Parcourir chaque catégorie
 3. Identifier doublons V1/V2
@@ -152,23 +161,28 @@ npm run storybook
 5. Documenter décisions
 
 **Critères suppression** :
+
 - ❌ Doublon V1 si V2 existe (ex: `button.tsx` vs `modern-action-button.tsx`)
 - ❌ Composant jamais utilisé (vérifier avec `npm run audit:deadcode`)
 - ❌ Composant dupliqué fonctionnellement
 - ✅ Conserver composants critiques (même si peu utilisés)
 
 **Template décision** :
+
 ```markdown
 ## Composants à Supprimer
 
 ### UI Base
+
 - [ ] `button.tsx` → Remplacé par `ButtonV2` (moderne)
 - [ ] `old-card.tsx` → Remplacé par `verone-card.tsx`
 
 ### Business
+
 - [ ] `ProductCardV1.tsx` → Remplacé par `ProductCard.tsx` (V2)
 
 ### Forms
+
 - [ ] `old-product-form.tsx` → Jamais utilisé (vérifier knip)
 ```
 
@@ -179,6 +193,7 @@ npm run storybook
 Pour les composants les plus critiques, enrichir les stories auto-générées :
 
 **Ajouter** :
+
 - Mock data réelles (produits, commandes, stocks)
 - Variants spécifiques métier
 - Edge cases importants (vide, erreur, loading)
@@ -186,6 +201,7 @@ Pour les composants les plus critiques, enrichir les stories auto-générées :
 - Tests responsive (viewport mobile/desktop)
 
 **Exemple** :
+
 ```typescript
 // Story auto-générée basique
 export const Default: Story = {
@@ -217,30 +233,30 @@ export const WithRealData: Story = {
 
 ### Fichiers Principaux
 
-| Fichier | Description |
-|---------|-------------|
-| `src/stories/README.md` | Guide organisation, conventions, statistiques |
-| `src/stories/_templates/README.md` | Guide utilisation templates |
-| `tools/scripts/README.md` | Documentation scripts automatisation |
-| `tools/scripts/generate-stories.js` | Script auto-génération (458 lignes) |
+| Fichier                             | Description                                   |
+| ----------------------------------- | --------------------------------------------- |
+| `src/stories/README.md`             | Guide organisation, conventions, statistiques |
+| `src/stories/_templates/README.md`  | Guide utilisation templates                   |
+| `tools/scripts/README.md`           | Documentation scripts automatisation          |
+| `tools/scripts/generate-stories.js` | Script auto-génération (458 lignes)           |
 
 ### Templates Storybook
 
-| Template | Usage | Exemples |
-|----------|-------|----------|
-| `basic-story.template.tsx` | Composants simples | Badge, Avatar, Separator |
-| `variants-story.template.tsx` | Composants avec variantes | Button, Card, Input |
-| `business-story.template.tsx` | Composants métier | ProductCard, OrderTable |
+| Template                      | Usage                     | Exemples                 |
+| ----------------------------- | ------------------------- | ------------------------ |
+| `basic-story.template.tsx`    | Composants simples        | Badge, Avatar, Separator |
+| `variants-story.template.tsx` | Composants avec variantes | Button, Card, Input      |
+| `business-story.template.tsx` | Composants métier         | ProductCard, OrderTable  |
 
 ### Stories Manuelles Créées
 
-| Story | Lignes | Variants | Quality |
-|-------|--------|----------|---------|
-| `Button.stories.tsx` | 280 | 14 stories | ⭐⭐⭐⭐⭐ |
-| `Card.stories.tsx` | 190 | 9 stories | ⭐⭐⭐⭐⭐ |
-| `VeroneCard.stories.tsx` | 240 | 13 stories | ⭐⭐⭐⭐⭐ |
-| `Badge.stories.tsx` | 260 | 16 stories | ⭐⭐⭐⭐⭐ |
-| `Input.stories.tsx` | 270 | 12 stories | ⭐⭐⭐⭐⭐ |
+| Story                    | Lignes | Variants   | Quality    |
+| ------------------------ | ------ | ---------- | ---------- |
+| `Button.stories.tsx`     | 280    | 14 stories | ⭐⭐⭐⭐⭐ |
+| `Card.stories.tsx`       | 190    | 9 stories  | ⭐⭐⭐⭐⭐ |
+| `VeroneCard.stories.tsx` | 240    | 13 stories | ⭐⭐⭐⭐⭐ |
+| `Badge.stories.tsx`      | 260    | 16 stories | ⭐⭐⭐⭐⭐ |
+| `Input.stories.tsx`      | 270    | 12 stories | ⭐⭐⭐⭐⭐ |
 
 **Total** : ~1240 lignes de documentation Storybook professionnelle
 
@@ -249,6 +265,7 @@ export const WithRealData: Story = {
 ## 🎨 Design System V2 Documenté
 
 **Tous les composants V2** sont documentés avec :
+
 - 🎨 Palette Vérone 2025 (bleu #3b86d1, vert #38ce3c, violet #844fc1, etc.)
 - 🎯 Tendances 2025 (rounded corners, micro-interactions, gradients)
 - 📐 Tailles standardisées (xs, sm, md, lg, xl)
@@ -297,12 +314,12 @@ vercel storybook-static/ --prod
 
 ### Temps Total : ~3 heures
 
-| Phase | Durée | Status |
-|-------|-------|--------|
-| Phase 1 : Infrastructure | 30 min | ✅ |
-| Phase 2 : Stories UI manuelles | 1h30 | ✅ |
-| Phase 6 : Auto-générateur | 1h | ✅ |
-| **Total** | **3h** | **✅** |
+| Phase                          | Durée  | Status |
+| ------------------------------ | ------ | ------ |
+| Phase 1 : Infrastructure       | 30 min | ✅     |
+| Phase 2 : Stories UI manuelles | 1h30   | ✅     |
+| Phase 6 : Auto-générateur      | 1h     | ✅     |
+| **Total**                      | **3h** | **✅** |
 
 ### Accomplissements
 
@@ -325,12 +342,14 @@ vercel storybook-static/ --prod
 ## ✨ Bénéfices
 
 ### Avant Storybook
+
 - ❌ 262 composants sans documentation visuelle
 - ❌ Doublons V1/V2 non identifiés
 - ❌ Pas d'inventaire complet
 - ❌ Difficile de savoir quoi supprimer
 
 ### Après Storybook
+
 - ✅ Inventaire visuel complet et navigable
 - ✅ Chaque composant avec variants documentés
 - ✅ Identification facile des doublons

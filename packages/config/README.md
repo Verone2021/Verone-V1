@@ -71,6 +71,7 @@ module.exports = {
 **Vers** : `packages/config/`
 
 **Liste** :
+
 - [ ] .eslintrc.json
 - [ ] .prettierrc
 - [ ] tsconfig.json
@@ -79,5 +80,5 @@ module.exports = {
 
 ---
 
-*À migrer : Après Phase 1*
-*Référence actuelle : Configs racine projet*
+_À migrer : Après Phase 1_
+_Référence actuelle : Configs racine projet_

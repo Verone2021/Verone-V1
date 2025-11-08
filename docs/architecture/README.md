@@ -49,12 +49,15 @@ Cette section documente l'architecture technique complète du système Vérone :
 ### Par Thématique
 
 #### Technologies
+
 - [Tech Stack](./tech-stack.md)
 
 #### Design & UX
+
 - [Design System V2](./design-system.md)
 
 #### Sécurité
+
 - [Security Architecture](./security.md)
 
 ---

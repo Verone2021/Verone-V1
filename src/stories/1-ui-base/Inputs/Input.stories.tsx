@@ -1,7 +1,19 @@
-import type { Meta, StoryObj } from '@storybook/react';
-import { Input } from '@/components/ui/input';
-import { Search, Mail, Lock, Eye, EyeOff, User, Phone, Calendar, DollarSign } from 'lucide-react';
 import { useState } from 'react';
+
+import type { Meta, StoryObj } from '@storybook/nextjs';
+import {
+  Search,
+  Mail,
+  Lock,
+  Eye,
+  EyeOff,
+  User,
+  Phone,
+  Calendar,
+  DollarSign,
+} from 'lucide-react';
+
+import { Input } from '@/components/ui/input';
 
 const meta = {
   title: '1-UI-Base/Inputs/Input',
@@ -176,15 +188,14 @@ export const WithIconRight: Story = {
 /**
  * Password avec toggle visibility
  */
-export const PasswordToggle: Story = {
-  render: () => {
-    const [showPassword, setShowPassword] = useState(false);
+function PasswordToggleComponent() {
+  const [showPassword, setShowPassword] = useState(false);
 
-    return (
-      <div className="w-[350px]">
-        <label className="block text-sm font-medium text-slate-700 mb-1.5">
-          Password
-        </label>
+  return (
+    <div className="w-[350px]">
+      <label className="block text-sm font-medium text-slate-700 mb-1.5">
+        Password
+      </label>
         <Input
           type={showPassword ? 'text' : 'password'}
           placeholder="Enter password"
@@ -205,7 +216,10 @@ export const PasswordToggle: Story = {
         />
       </div>
     );
-  },
+}
+
+export const PasswordToggle: Story = {
+  render: () => <PasswordToggleComponent />,
 };
 
 /**
@@ -243,28 +257,56 @@ export const Types: Story = {
   render: () => (
     <div className="space-y-4 w-[350px]">
       <div>
-        <label className="block text-sm font-medium text-slate-700 mb-1.5">Text</label>
+        <label className="block text-sm font-medium text-slate-700 mb-1.5">
+          Text
+        </label>
         <Input type="text" placeholder="Enter text" />
       </div>
       <div>
-        <label className="block text-sm font-medium text-slate-700 mb-1.5">Email</label>
-        <Input type="email" placeholder="name@example.com" iconRight={<Mail className="w-4 h-4" />} />
+        <label className="block text-sm font-medium text-slate-700 mb-1.5">
+          Email
+        </label>
+        <Input
+          type="email"
+          placeholder="name@example.com"
+          iconRight={<Mail className="w-4 h-4" />}
+        />
       </div>
       <div>
-        <label className="block text-sm font-medium text-slate-700 mb-1.5">Password</label>
-        <Input type="password" placeholder="••••••••" iconLeft={<Lock className="w-4 h-4" />} />
+        <label className="block text-sm font-medium text-slate-700 mb-1.5">
+          Password
+        </label>
+        <Input
+          type="password"
+          placeholder="••••••••"
+          iconLeft={<Lock className="w-4 h-4" />}
+        />
       </div>
       <div>
-        <label className="block text-sm font-medium text-slate-700 mb-1.5">Number</label>
+        <label className="block text-sm font-medium text-slate-700 mb-1.5">
+          Number
+        </label>
         <Input type="number" placeholder="0" />
       </div>
       <div>
-        <label className="block text-sm font-medium text-slate-700 mb-1.5">Telephone</label>
-        <Input type="tel" placeholder="+33 6 12 34 56 78" iconLeft={<Phone className="w-4 h-4" />} />
+        <label className="block text-sm font-medium text-slate-700 mb-1.5">
+          Telephone
+        </label>
+        <Input
+          type="tel"
+          placeholder="+33 6 12 34 56 78"
+          iconLeft={<Phone className="w-4 h-4" />}
+        />
       </div>
       <div>
-        <label className="block text-sm font-medium text-slate-700 mb-1.5">Search</label>
-        <Input type="search" placeholder="Search..." iconLeft={<Search className="w-4 h-4" />} />
+        <label className="block text-sm font-medium text-slate-700 mb-1.5">
+          Search
+        </label>
+        <Input
+          type="search"
+          placeholder="Search..."
+          iconLeft={<Search className="w-4 h-4" />}
+        />
       </div>
     </div>
   ),
@@ -276,7 +318,9 @@ export const Types: Story = {
 export const FormExample: Story = {
   render: () => (
     <div className="w-[400px] border border-slate-200 rounded-xl p-6 bg-white">
-      <h3 className="text-lg font-semibold text-slate-900 mb-6">Create Product</h3>
+      <h3 className="text-lg font-semibold text-slate-900 mb-6">
+        Create Product
+      </h3>
 
       <div className="space-y-4">
         <div>
@@ -314,10 +358,7 @@ export const FormExample: Story = {
             <label className="block text-sm font-medium text-slate-700 mb-1.5">
               Stock
             </label>
-            <Input
-              type="number"
-              placeholder="25"
-            />
+            <Input type="number" placeholder="25" />
           </div>
         </div>
 
@@ -391,7 +432,9 @@ export const RealWorld: Story = {
     <div className="space-y-6 p-4 w-[500px]">
       {/* Search bar */}
       <div>
-        <h4 className="text-sm font-medium text-slate-700 mb-2">Search Products</h4>
+        <h4 className="text-sm font-medium text-slate-700 mb-2">
+          Search Products
+        </h4>
         <Input
           type="search"
           placeholder="Search by name, SKU, category..."
@@ -419,7 +462,9 @@ export const RealWorld: Story = {
 
       {/* Profile form */}
       <div className="border border-slate-200 rounded-lg p-4">
-        <h4 className="text-sm font-medium text-slate-700 mb-3">User Profile</h4>
+        <h4 className="text-sm font-medium text-slate-700 mb-3">
+          User Profile
+        </h4>
         <div className="space-y-3">
           <Input
             placeholder="Full Name"
@@ -446,7 +491,9 @@ export const RealWorld: Story = {
 
       {/* Product pricing */}
       <div className="border border-slate-200 rounded-lg p-4">
-        <h4 className="text-sm font-medium text-slate-700 mb-3">Product Pricing</h4>
+        <h4 className="text-sm font-medium text-slate-700 mb-3">
+          Product Pricing
+        </h4>
         <div className="grid grid-cols-2 gap-3">
           <Input
             type="number"

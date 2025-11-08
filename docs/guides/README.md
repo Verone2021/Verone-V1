@@ -52,13 +52,16 @@ Cette section regroupe les guides pratiques pour développer, tester, et déploy
 ### Par Phase Projet
 
 #### Onboarding
+
 - [Quickstart](./quickstart.md)
 - [Development Setup](./development-setup.md)
 
 #### Développement
+
 - [Testing Guide](./testing-guide.md)
 
 #### Production
+
 - [Deployment](./deployment.md)
 
 ---

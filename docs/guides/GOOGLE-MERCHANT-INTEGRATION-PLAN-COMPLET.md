@@ -10,9 +10,11 @@
 ## 📋 Vue d'Ensemble
 
 ### Objectif Principal
+
 Développer une **intégration professionnelle complète** avec Google Merchant Center pour synchroniser le catalogue Vérone avec Google Shopping et suivre les performances en temps réel.
 
 ### Scope Fonctionnel
+
 1. ✅ **Configuration API** - Service Account authentification (FAIT)
 2. 🔧 **Modal Configuration** - Interface utilisateur setup Google Merchant
 3. 🔄 **Synchronisation Bidirectionnelle** - Vérone ↔ Google Merchant
@@ -23,6 +25,7 @@ Développer une **intégration professionnelle complète** avec Google Merchant 
 ### Architecture Actuelle (Analyse Complète)
 
 #### ✅ Déjà Implémenté
+
 ```typescript
 // 1. Authentification (src/lib/google-merchant/auth.ts)
 ✅ Service Account authentication
@@ -60,6 +63,7 @@ Développer une **intégration professionnelle complète** avec Google Merchant 
 ```
 
 #### ❌ Interface Mockée (À Développer)
+
 ```typescript
 // src/app/canaux-vente/google-merchant/page.tsx
 ❌ Configuration modal (bouton non fonctionnel)
@@ -76,11 +80,13 @@ Développer une **intégration professionnelle complète** avec Google Merchant 
 ### Phase 1 : Modal Configuration Google Merchant (2-3h)
 
 #### Objectif
+
 Créer une interface professionnelle pour tester/configurer la connexion API Google Merchant.
 
 #### Composant : `ConfigurationModal.tsx`
 
 **Features**:
+
 - **Test Connexion** : Bouton avec feedback visuel
 - **Affichage Credentials** : Masqué par défaut, révélable
 - **Statut Account** : Vérifié, Data Source validé
@@ -92,35 +98,36 @@ Créer une interface professionnelle pour tester/configurer la connexion API Goo
   - ✅ Lister produits existants (proof of concept)
 
 **API Integration**:
+
 ```typescript
 // Hook personnalisé
 export function useGoogleMerchantConfig() {
-  const [config, setConfig] = useState<MerchantConfig | null>(null)
-  const [testing, setTesting] = useState(false)
+  const [config, setConfig] = useState<MerchantConfig | null>(null);
+  const [testing, setTesting] = useState(false);
   const [connectionStatus, setConnectionStatus] = useState<
     'idle' | 'testing' | 'success' | 'error'
-  >('idle')
+  >('idle');
 
   async function testConnection() {
-    setTesting(true)
-    setConnectionStatus('testing')
+    setTesting(true);
+    setConnectionStatus('testing');
 
     try {
       // 1. Test authentification
-      const authResponse = await fetch('/api/google-merchant/test-connection')
-      const authData = await authResponse.json()
+      const authResponse = await fetch('/api/google-merchant/test-connection');
+      const authData = await authResponse.json();
 
       if (!authData.success) {
-        throw new Error(authData.error || 'Authentication failed')
+        throw new Error(authData.error || 'Authentication failed');
       }
 
       // 2. Test API connection
       const apiResponse = await fetch('/api/google-merchant/test-connection', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ includeProductList: true })
-      })
-      const apiData = await apiResponse.json()
+        body: JSON.stringify({ includeProductList: true }),
+      });
+      const apiData = await apiResponse.json();
 
       if (apiData.success) {
         setConfig({
@@ -128,25 +135,27 @@ export function useGoogleMerchantConfig() {
           dataSourceId: authData.data.dataSourceId,
           authenticated: true,
           apiConnected: true,
-          productCount: apiData.data.details?.productListTest?.productCount || 0
-        })
-        setConnectionStatus('success')
+          productCount:
+            apiData.data.details?.productListTest?.productCount || 0,
+        });
+        setConnectionStatus('success');
       } else {
-        setConnectionStatus('error')
+        setConnectionStatus('error');
       }
     } catch (error) {
-      console.error('Connection test failed:', error)
-      setConnectionStatus('error')
+      console.error('Connection test failed:', error);
+      setConnectionStatus('error');
     } finally {
-      setTesting(false)
+      setTesting(false);
     }
   }
 
-  return { config, testing, connectionStatus, testConnection }
+  return { config, testing, connectionStatus, testConnection };
 }
 ```
 
 **UI/UX Design** (Vérone minimalist):
+
 ```typescript
 <Dialog>
   <DialogContent className="max-w-2xl border-black">
@@ -208,6 +217,7 @@ export function useGoogleMerchantConfig() {
 ```
 
 **Fichiers à créer**:
+
 - `src/components/business/google-merchant-config-modal.tsx`
 - `src/hooks/use-google-merchant-config.ts`
 
@@ -216,6 +226,7 @@ export function useGoogleMerchantConfig() {
 ### Phase 2 : Synchronisation Produits Complète (3-4h)
 
 #### Objectif
+
 Implémenter la synchronisation bidirectionnelle Vérone ↔ Google Merchant avec sélection produits depuis le catalogue.
 
 #### Features Principales
@@ -225,71 +236,74 @@ Implémenter la synchronisation bidirectionnelle Vérone ↔ Google Merchant ave
 ```typescript
 // Hook : useGoogleMerchantSync.ts
 export function useGoogleMerchantSync() {
-  const [selectedProducts, setSelectedProducts] = useState<string[]>([])
+  const [selectedProducts, setSelectedProducts] = useState<string[]>([]);
   const [syncProgress, setSyncProgress] = useState({
     total: 0,
     completed: 0,
     errors: 0,
-    status: 'idle' as 'idle' | 'syncing' | 'success' | 'error'
-  })
+    status: 'idle' as 'idle' | 'syncing' | 'success' | 'error',
+  });
 
   async function syncProducts(productIds: string[]) {
     setSyncProgress({
       total: productIds.length,
       completed: 0,
       errors: 0,
-      status: 'syncing'
-    })
+      status: 'syncing',
+    });
 
-    const results = []
+    const results = [];
 
     for (const productId of productIds) {
       try {
-        const response = await fetch(`/api/google-merchant/sync-product/${productId}`, {
-          method: 'POST'
-        })
-        const data = await response.json()
+        const response = await fetch(
+          `/api/google-merchant/sync-product/${productId}`,
+          {
+            method: 'POST',
+          }
+        );
+        const data = await response.json();
 
         if (data.success) {
           setSyncProgress(prev => ({
             ...prev,
-            completed: prev.completed + 1
-          }))
+            completed: prev.completed + 1,
+          }));
         } else {
           setSyncProgress(prev => ({
             ...prev,
             completed: prev.completed + 1,
-            errors: prev.errors + 1
-          }))
+            errors: prev.errors + 1,
+          }));
         }
 
-        results.push(data)
+        results.push(data);
       } catch (error) {
         setSyncProgress(prev => ({
           ...prev,
           completed: prev.completed + 1,
-          errors: prev.errors + 1
-        }))
+          errors: prev.errors + 1,
+        }));
       }
 
       // Respect rate limits (5 req/s selon config)
-      await new Promise(resolve => setTimeout(resolve, 200))
+      await new Promise(resolve => setTimeout(resolve, 200));
     }
 
     setSyncProgress(prev => ({
       ...prev,
-      status: prev.errors === 0 ? 'success' : 'error'
-    }))
+      status: prev.errors === 0 ? 'success' : 'error',
+    }));
 
-    return results
+    return results;
   }
 
   return {
     selectedProducts,
     setSelectedProducts,
     syncProgress,
-    syncProducts
-  }
+    syncProducts,
+  };
 }
 ```
 
@@ -409,68 +423,78 @@ export async function POST(
   request: NextRequest,
   { params }: { params: { id: string } }
 ) {
-  const timer = logger.startTimer()
-  const productId = params.id
+  const timer = logger.startTimer();
+  const productId = params.id;
 
   try {
     // 1. Récupérer produit depuis Supabase avec relations
     const { data: product, error } = await supabase
       .from('products')
-      .select(`
+      .select(
+        `
         *,
         supplier:suppliers(id, name),
         subcategory:subcategories(id, name, google_category),
         images:product_images(*)
-      `)
+      `
+      )
       .eq('id', productId)
-      .single()
+      .single();
 
     if (error || !product) {
-      return NextResponse.json({
-        success: false,
-        error: 'Produit non trouvé'
-      }, { status: 404 })
+      return NextResponse.json(
+        {
+          success: false,
+          error: 'Produit non trouvé',
+        },
+        { status: 404 }
+      );
     }
 
     // 2. Synchroniser avec Google Merchant
-    const client = getGoogleMerchantClient()
-    const result = await client.insertProduct(product)
+    const client = getGoogleMerchantClient();
+    const result = await client.insertProduct(product);
 
     // 3. Sauvegarder metadata synchronisation dans DB
     if (result.success) {
-      await supabase
-        .from('google_merchant_syncs')
-        .insert({
-          product_id: productId,
-          google_product_id: result.data?.name,
-          sync_status: 'success',
-          synced_at: new Date().toISOString()
-        })
+      await supabase.from('google_merchant_syncs').insert({
+        product_id: productId,
+        google_product_id: result.data?.name,
+        sync_status: 'success',
+        synced_at: new Date().toISOString(),
+      });
     }
 
-    const duration = timer()
-    logger.info('Product sync completed', {
-      operation: 'product_sync',
-      productId,
-      success: result.success
-    }, { duration_ms: duration })
+    const duration = timer();
+    logger.info(
+      'Product sync completed',
+      {
+        operation: 'product_sync',
+        productId,
+        success: result.success,
+      },
+      { duration_ms: duration }
+    );
 
-    return NextResponse.json(result)
-
+    return NextResponse.json(result);
   } catch (error: any) {
     logger.error('Product sync failed', error, {
       operation: 'product_sync_failed',
-      productId
-    })
-    return NextResponse.json({
-      success: false,
-      error: error.message
-    }, { status: 500 })
+      productId,
+    });
+    return NextResponse.json(
+      {
+        success: false,
+        error: error.message,
+      },
+      { status: 500 }
+    );
   }
 }
 ```
 
 **Fichiers à créer/modifier**:
+
 - `src/hooks/use-google-merchant-sync.ts` (nouveau)
 - `src/app/api/google-merchant/sync-product/[id]/route.ts` (améliorer)
 - `src/app/canaux-vente/google-merchant/page.tsx` (refactorer onglet "Ajouter des Produits")
@@ -480,6 +504,7 @@ export async function POST(
 ### Phase 3 : Dashboard Analytics & Métriques (4-5h)
 
 #### Objectif
+
 Récupérer et afficher les métriques Google Shopping en temps réel (impressions, clics, conversions).
 
 #### API Google Merchant - Reports
@@ -496,31 +521,31 @@ https://developers.google.com/shopping-content/guides/reports/query-language/ove
 
 ```typescript
 // src/lib/google-merchant/reports-client.ts
-import { getGoogleMerchantAuth } from './auth'
-import { GOOGLE_MERCHANT_CONFIG } from './config'
+import { getGoogleMerchantAuth } from './auth';
+import { GOOGLE_MERCHANT_CONFIG } from './config';
 
 export interface PerformanceMetrics {
-  productId: string
-  sku: string
-  impressions: number
-  clicks: number
-  clickThroughRate: number
-  conversions: number
-  conversionRate: number
-  averagePrice: number
-  totalRevenue: number
-  date: string
+  productId: string;
+  sku: string;
+  impressions: number;
+  clicks: number;
+  clickThroughRate: number;
+  conversions: number;
+  conversionRate: number;
+  averagePrice: number;
+  totalRevenue: number;
+  date: string;
 }
 
 export class GoogleMerchantReportsClient {
-  private auth: ReturnType<typeof getGoogleMerchantAuth>
-  private baseUrl: string
-  private accountId: string
+  private auth: ReturnType<typeof getGoogleMerchantAuth>;
+  private baseUrl: string;
+  private accountId: string;
 
   constructor() {
-    this.auth = getGoogleMerchantAuth()
-    this.baseUrl = GOOGLE_MERCHANT_CONFIG.baseUrl
-    this.accountId = GOOGLE_MERCHANT_CONFIG.accountId
+    this.auth = getGoogleMerchantAuth();
+    this.baseUrl = GOOGLE_MERCHANT_CONFIG.baseUrl;
+    this.accountId = GOOGLE_MERCHANT_CONFIG.accountId;
   }
 
   /**
@@ -530,9 +555,13 @@ export class GoogleMerchantReportsClient {
   async getPerformanceMetrics(
     startDate: string, // Format: YYYY-MM-DD
     endDate: string
-  ): Promise<{ success: boolean; data?: PerformanceMetrics[]; error?: string }> {
+  ): Promise<{
+    success: boolean;
+    data?: PerformanceMetrics[];
+    error?: string;
+  }> {
     try {
-      const headers = await this.auth.getAuthHeaders()
+      const headers = await this.auth.getAuthHeaders();
 
       // Query Merchant Center Query Language
       const query = `
@@ -548,52 +577,52 @@ export class GoogleMerchantReportsClient {
           metrics.revenue
         FROM MerchantPerformanceView
         WHERE segments.date BETWEEN '${startDate}' AND '${endDate}'
-      `
+      `;
 
-      const url = `${this.baseUrl}/accounts/${this.accountId}/reports:search`
+      const url = `${this.baseUrl}/accounts/${this.accountId}/reports:search`;
 
       const response = await fetch(url, {
         method: 'POST',
         headers,
-        body: JSON.stringify({ query })
-      })
+        body: JSON.stringify({ query }),
+      });
 
       if (!response.ok) {
-        const error = await response.json()
+        const error = await response.json();
         return {
           success: false,
-          error: error.error?.message || 'Failed to fetch metrics'
-        }
+          error: error.error?.message || 'Failed to fetch metrics',
+        };
       }
 
-      const data = await response.json()
+      const data = await response.json();
 
       // Transformer la réponse Google vers notre format
-      const metrics: PerformanceMetrics[] = data.results?.map((result: any) => ({
-        productId: result.segments?.offer_id || '',
-        sku: result.segments?.offer_id || '',
-        impressions: result.metrics?.impressions || 0,
-        clicks: result.metrics?.clicks || 0,
-        clickThroughRate: result.metrics?.ctr || 0,
-        conversions: result.metrics?.conversions || 0,
-        conversionRate: result.metrics?.conversion_rate || 0,
-        averagePrice: result.metrics?.average_price?.amountMicros
-          ? result.metrics.average_price.amountMicros / 1_000_000
-          : 0,
-        totalRevenue: result.metrics?.revenue?.amountMicros
-          ? result.metrics.revenue.amountMicros / 1_000_000
-          : 0,
-        date: endDate
-      })) || []
+      const metrics: PerformanceMetrics[] =
+        data.results?.map((result: any) => ({
+          productId: result.segments?.offer_id || '',
+          sku: result.segments?.offer_id || '',
+          impressions: result.metrics?.impressions || 0,
+          clicks: result.metrics?.clicks || 0,
+          clickThroughRate: result.metrics?.ctr || 0,
+          conversions: result.metrics?.conversions || 0,
+          conversionRate: result.metrics?.conversion_rate || 0,
+          averagePrice: result.metrics?.average_price?.amountMicros
+            ? result.metrics.average_price.amountMicros / 1_000_000
+            : 0,
+          totalRevenue: result.metrics?.revenue?.amountMicros
+            ? result.metrics.revenue.amountMicros / 1_000_000
+            : 0,
+          date: endDate,
+        })) || [];
 
-      return { success: true, data: metrics }
-
+      return { success: true, data: metrics };
     } catch (error: any) {
-      console.error('[Reports Client] Error fetching metrics:', error)
+      console.error('[Reports Client] Error fetching metrics:', error);
       return {
         success: false,
-        error: error.message
-      }
+        error: error.message,
+      };
     }
   }
 
@@ -601,32 +630,32 @@ export class GoogleMerchantReportsClient {
    * Récupère les métriques agrégées pour le dashboard
    */
   async getDashboardMetrics(dateRange: {
-    startDate: string
-    endDate: string
+    startDate: string;
+    endDate: string;
   }): Promise<{
-    success: boolean
+    success: boolean;
     data?: {
-      totalImpressions: number
-      totalClicks: number
-      averageCTR: number
-      totalConversions: number
-      averageConversionRate: number
-      totalRevenue: number
-      productCount: number
-    }
-    error?: string
+      totalImpressions: number;
+      totalClicks: number;
+      averageCTR: number;
+      totalConversions: number;
+      averageConversionRate: number;
+      totalRevenue: number;
+      productCount: number;
+    };
+    error?: string;
   }> {
     try {
       const metricsResult = await this.getPerformanceMetrics(
         dateRange.startDate,
         dateRange.endDate
-      )
+      );
 
       if (!metricsResult.success || !metricsResult.data) {
-        return metricsResult
+        return metricsResult;
       }
 
-      const metrics = metricsResult.data
+      const metrics = metricsResult.data;
 
       // Agréger les métriques
       const aggregated = {
@@ -636,41 +665,41 @@ export class GoogleMerchantReportsClient {
         totalRevenue: metrics.reduce((sum, m) => sum + m.totalRevenue, 0),
         productCount: metrics.length,
         averageCTR: 0,
-        averageConversionRate: 0
-      }
+        averageConversionRate: 0,
+      };
 
       // Calculer moyennes
       if (aggregated.totalImpressions > 0) {
         aggregated.averageCTR =
-          (aggregated.totalClicks / aggregated.totalImpressions) * 100
+          (aggregated.totalClicks / aggregated.totalImpressions) * 100;
       }
 
       if (aggregated.totalClicks > 0) {
         aggregated.averageConversionRate =
-          (aggregated.totalConversions / aggregated.totalClicks) * 100
+          (aggregated.totalConversions / aggregated.totalClicks) * 100;
       }
 
       return {
         success: true,
-        data: aggregated
-      }
+        data: aggregated,
+      };
     } catch (error: any) {
       return {
         success: false,
-        error: error.message
-      }
+        error: error.message,
+      };
     }
   }
 }
 
 // Singleton instance
-let reportsClientInstance: GoogleMerchantReportsClient | null = null
+let reportsClientInstance: GoogleMerchantReportsClient | null = null;
 
 export function getGoogleMerchantReportsClient(): GoogleMerchantReportsClient {
   if (!reportsClientInstance) {
-    reportsClientInstance = new GoogleMerchantReportsClient()
+    reportsClientInstance = new GoogleMerchantReportsClient();
   }
-  return reportsClientInstance
+  return reportsClientInstance;
 }
 ```
 
@@ -678,45 +707,52 @@ export function getGoogleMerchantReportsClient(): GoogleMerchantReportsClient {
 
 ```typescript
 // src/app/api/google-merchant/metrics/route.ts
-import { NextRequest, NextResponse } from 'next/server'
-import { getGoogleMerchantReportsClient } from '@/lib/google-merchant/reports-client'
-import logger from '@/lib/logger'
+import { NextRequest, NextResponse } from 'next/server';
+import { getGoogleMerchantReportsClient } from '@/lib/google-merchant/reports-client';
+import logger from '@/lib/logger';
 
 export async function GET(request: NextRequest) {
-  const timer = logger.startTimer()
-  const { searchParams } = new URL(request.url)
+  const timer = logger.startTimer();
+  const { searchParams } = new URL(request.url);
 
   // Paramètres date range (défaut: 30 derniers jours)
-  const endDate = new Date().toISOString().split('T')[0] // YYYY-MM-DD
-  const startDate = searchParams.get('startDate') ||
-    new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0]
+  const endDate = new Date().toISOString().split('T')[0]; // YYYY-MM-DD
+  const startDate =
+    searchParams.get('startDate') ||
+    new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0];
 
   try {
-    const reportsClient = getGoogleMerchantReportsClient()
+    const reportsClient = getGoogleMerchantReportsClient();
 
     const result = await reportsClient.getDashboardMetrics({
       startDate,
-      endDate: searchParams.get('endDate') || endDate
-    })
+      endDate: searchParams.get('endDate') || endDate,
+    });
 
-    const duration = timer()
-    logger.info('Metrics fetched successfully', {
-      operation: 'fetch_metrics',
-      startDate,
-      endDate,
-      success: result.success
-    }, { duration_ms: duration })
+    const duration = timer();
+    logger.info(
+      'Metrics fetched successfully',
+      {
+        operation: 'fetch_metrics',
+        startDate,
+        endDate,
+        success: result.success,
+      },
+      { duration_ms: duration }
+    );
 
-    return NextResponse.json(result)
-
+    return NextResponse.json(result);
   } catch (error: any) {
     logger.error('Failed to fetch metrics', error, {
-      operation: 'fetch_metrics_failed'
-    })
-    return NextResponse.json({
-      success: false,
-      error: error.message
-    }, { status: 500 })
+      operation: 'fetch_metrics_failed',
+    });
+    return NextResponse.json(
+      {
+        success: false,
+        error: error.message,
+      },
+      { status: 500 }
+    );
   }
 }
 ```
@@ -725,60 +761,60 @@ export async function GET(request: NextRequest) {
 
 ```typescript
 // src/hooks/use-merchant-metrics.ts
-import { useState, useEffect } from 'react'
+import { useState, useEffect } from 'react';
 
 interface DashboardMetrics {
-  totalImpressions: number
-  totalClicks: number
-  averageCTR: number
-  totalConversions: number
-  averageConversionRate: number
-  totalRevenue: number
-  productCount: number
+  totalImpressions: number;
+  totalClicks: number;
+  averageCTR: number;
+  totalConversions: number;
+  averageConversionRate: number;
+  totalRevenue: number;
+  productCount: number;
 }
 
 export function useMerchantMetrics(dateRange?: {
-  startDate?: string
-  endDate?: string
+  startDate?: string;
+  endDate?: string;
 }) {
-  const [metrics, setMetrics] = useState<DashboardMetrics | null>(null)
-  const [loading, setLoading] = useState(true)
-  const [error, setError] = useState<string | null>(null)
+  const [metrics, setMetrics] = useState<DashboardMetrics | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
   async function fetchMetrics() {
-    setLoading(true)
-    setError(null)
+    setLoading(true);
+    setError(null);
 
     try {
-      const params = new URLSearchParams()
-      if (dateRange?.startDate) params.set('startDate', dateRange.startDate)
-      if (dateRange?.endDate) params.set('endDate', dateRange.endDate)
+      const params = new URLSearchParams();
+      if (dateRange?.startDate) params.set('startDate', dateRange.startDate);
+      if (dateRange?.endDate) params.set('endDate', dateRange.endDate);
 
-      const response = await fetch(`/api/google-merchant/metrics?${params}`)
-      const data = await response.json()
+      const response = await fetch(`/api/google-merchant/metrics?${params}`);
+      const data = await response.json();
 
       if (data.success) {
-        setMetrics(data.data)
+        setMetrics(data.data);
       } else {
-        setError(data.error || 'Failed to fetch metrics')
+        setError(data.error || 'Failed to fetch metrics');
       }
     } catch (err: any) {
-      setError(err.message)
+      setError(err.message);
     } finally {
-      setLoading(false)
+      setLoading(false);
     }
   }
 
   useEffect(() => {
-    fetchMetrics()
-  }, [dateRange?.startDate, dateRange?.endDate])
+    fetchMetrics();
+  }, [dateRange?.startDate, dateRange?.endDate]);
 
   return {
     metrics,
     loading,
     error,
-    refetch: fetchMetrics
-  }
+    refetch: fetchMetrics,
+  };
 }
 ```
 
@@ -878,6 +914,7 @@ export default function GoogleMerchantPage() {
 ```
 
 **Fichiers à créer**:
+
 - `src/lib/google-merchant/reports-client.ts` (nouveau)
 - `src/app/api/google-merchant/metrics/route.ts` (nouveau)
 - `src/hooks/use-merchant-metrics.ts` (nouveau)
@@ -890,6 +927,7 @@ export default function GoogleMerchantPage() {
 #### 1. Gestion Produits Synchronisés
 
 **Features**:
+
 - Liste produits synchronisés avec métriques individuelles
 - Filtres : Statut Google (approved, pending, rejected)
 - Actions individuelles : Re-sync, Supprimer de Google, Voir détails
@@ -900,16 +938,17 @@ export default function GoogleMerchantPage() {
 ```typescript
 // Hook : useGoogleMerchantProducts
 export function useGoogleMerchantProducts() {
-  const [products, setProducts] = useState<GoogleMerchantProduct[]>([])
-  const [loading, setLoading] = useState(true)
+  const [products, setProducts] = useState<GoogleMerchantProduct[]>([]);
+  const [loading, setLoading] = useState(true);
 
   async function fetchSyncedProducts() {
-    setLoading(true)
+    setLoading(true);
     try {
       // 1. Récupérer produits depuis DB avec metadata sync
       const { data, error } = await supabase
         .from('products')
-        .select(`
+        .select(
+          `
           *,
           google_merchant_syncs!inner(
             google_product_id,
@@ -917,44 +956,46 @@ export function useGoogleMerchantProducts() {
             synced_at,
             error_message
           )
-        `)
-        .eq('google_merchant_syncs.sync_status', 'success')
+        `
+        )
+        .eq('google_merchant_syncs.sync_status', 'success');
 
-      if (error) throw error
+      if (error) throw error;
 
       // 2. Récupérer métriques Google pour chaque produit
-      const metricsResponse = await fetch('/api/google-merchant/metrics')
-      const metricsData = await metricsResponse.json()
+      const metricsResponse = await fetch('/api/google-merchant/metrics');
+      const metricsData = await metricsResponse.json();
 
       // 3. Merger produits + métriques
       const productsWithMetrics = data?.map(product => ({
         ...product,
-        metrics: metricsData.data?.find((m: any) => m.sku === product.sku)
-      }))
+        metrics: metricsData.data?.find((m: any) => m.sku === product.sku),
+      }));
 
-      setProducts(productsWithMetrics || [])
+      setProducts(productsWithMetrics || []);
     } catch (error) {
-      console.error('Failed to fetch synced products:', error)
+      console.error('Failed to fetch synced products:', error);
     } finally {
-      setLoading(false)
+      setLoading(false);
     }
   }
 
   useEffect(() => {
-    fetchSyncedProducts()
-  }, [])
+    fetchSyncedProducts();
+  }, []);
 
   return {
     products,
     loading,
-    refetch: fetchSyncedProducts
-  }
+    refetch: fetchSyncedProducts,
+  };
 }
 ```
 
 #### 2. Notifications & Alertes
 
 **Features**:
+
 - Toast notifications pour succès/erreur sync
 - Alertes produits rejetés par Google
 - Badge count produits en attente de validation
@@ -962,29 +1003,30 @@ export function useGoogleMerchantProducts() {
 **Implementation** (utiliser `sonner` toast):
 
 ```typescript
-import { toast } from 'sonner'
+import { toast } from 'sonner';
 
 // Après sync produit
 if (syncResult.success) {
   toast.success('Produit synchronisé avec succès', {
     description: `${product.name} (${product.sku})`,
-    duration: 3000
-  })
+    duration: 3000,
+  });
 } else {
   toast.error('Échec synchronisation produit', {
     description: syncResult.error,
     duration: 5000,
     action: {
       label: 'Réessayer',
-      onClick: () => retrySync(product.id)
-    }
-  })
+      onClick: () => retrySync(product.id),
+    },
+  });
 }
 ```
 
 #### 3. Export Batch & Webhooks
 
 **Features**:
+
 - Export CSV des métriques
 - Webhooks Google Merchant (notifications produits rejetés)
 - Synchronisation automatique scheduled (cron job)
@@ -994,22 +1036,26 @@ if (syncResult.success) {
 ## 🔧 Stack Technique
 
 ### APIs & Services
+
 - **Google Merchant API v1beta** : Produits insert/update/delete
 - **Google Merchant Reports API** : Métriques performances
 - **Merchant Center Query Language** : Queries analytics
 
 ### Frontend
+
 - **React 18** + **Next.js 15** App Router
 - **shadcn/ui** : Components Vérone design system
 - **Tailwind CSS** : Styling minimalist
 - **Tanstack Query** (optionnel) : Cache métriques
 
 ### Backend
+
 - **Next.js API Routes** : Endpoints proxy Google API
 - **Supabase** : DB produits + metadata sync
 - **google-auth-library** : Service Account auth
 
 ### Monitoring
+
 - **Logger custom** : Logs structurés
 - **Sentry** (optionnel) : Error tracking production
 
@@ -1053,6 +1099,7 @@ CREATE INDEX idx_google_merchant_syncs_google_status ON google_merchant_syncs(go
 ## ✅ Checklist Implémentation
 
 ### Phase 1 : Modal Configuration (2-3h)
+
 - [ ] Créer `ConfigurationModal.tsx` component
 - [ ] Créer `useGoogleMerchantConfig` hook
 - [ ] Intégrer modal dans page Google Merchant
@@ -1060,6 +1107,7 @@ CREATE INDEX idx_google_merchant_syncs_google_status ON google_merchant_syncs(go
 - [ ] Validation visuelle (screenshots)
 
 ### Phase 2 : Synchronisation Produits (3-4h)
+
 - [ ] Créer `useGoogleMerchantSync` hook
 - [ ] Intégrer sélection produits depuis catalogue (`useProducts`)
 - [ ] Progress bar synchronisation
@@ -1068,6 +1116,7 @@ CREATE INDEX idx_google_merchant_syncs_google_status ON google_merchant_syncs(go
 - [ ] Tests avec 1-5 produits réels
 
 ### Phase 3 : Dashboard Analytics (4-5h)
+
 - [ ] Créer `GoogleMerchantReportsClient` class
 - [ ] API route `/api/google-merchant/metrics`
 - [ ] Hook `useMerchantMetrics`
@@ -1076,6 +1125,7 @@ CREATE INDEX idx_google_merchant_syncs_google_status ON google_merchant_syncs(go
 - [ ] Tests métriques période 7j, 30j, 90j
 
 ### Phase 4 : Features Avancées (2-3h)
+
 - [ ] Hook `useGoogleMerchantProducts` (liste synchronisés)
 - [ ] Actions individuelles (re-sync, delete)
 - [ ] Notifications toast (sonner)
@@ -1083,6 +1133,7 @@ CREATE INDEX idx_google_merchant_syncs_google_status ON google_merchant_syncs(go
 - [ ] Lien externe Google Merchant Center
 
 ### Phase 5 : Tests & Validation (1-2h)
+
 - [ ] Console error checking MCP Playwright (MANDATORY)
 - [ ] Tests end-to-end workflow complet
 - [ ] Documentation utilisateur (guide)
@@ -1096,6 +1147,7 @@ CREATE INDEX idx_google_merchant_syncs_google_status ON google_merchant_syncs(go
 ## 🎯 Critères de Succès
 
 ### Fonctionnalités ✅
+
 1. ✅ Modal configuration avec test connexion fonctionnel
 2. ✅ Synchronisation produits depuis catalogue Vérone
 3. ✅ Dashboard analytics avec métriques temps réel Google
@@ -1104,6 +1156,7 @@ CREATE INDEX idx_google_merchant_syncs_google_status ON google_merchant_syncs(go
 6. ✅ Interface 100% fonctionnelle (zéro mock data)
 
 ### Qualité Code ✅
+
 1. ✅ TypeScript strict (aucun `any` non justifié)
 2. ✅ Logs structurés (logger custom)
 3. ✅ Error handling robuste
@@ -1111,11 +1164,13 @@ CREATE INDEX idx_google_merchant_syncs_google_status ON google_merchant_syncs(go
 5. ✅ Console 100% clean (MCP Playwright validation)
 
 ### Performance ✅
+
 1. ✅ Sync 100 produits < 30s (respect rate limits)
 2. ✅ Dashboard load < 2s (métriques 30 jours)
 3. ✅ UI responsive (aucun blocking)
 
 ### Documentation ✅
+
 1. ✅ Guide utilisateur complet
 2. ✅ Documentation API routes
 3. ✅ Commentaires code critiques
@@ -1125,6 +1180,7 @@ CREATE INDEX idx_google_merchant_syncs_google_status ON google_merchant_syncs(go
 ## 🔗 Ressources & Documentation
 
 ### Documentation Officielle Google
+
 - [Content API for Shopping](https://developers.google.com/shopping-content)
 - [Merchant API Overview](https://developers.google.com/merchant/api/overview)
 - [Performance Reports](https://developers.google.com/merchant/api/guides/reports/performance-reports)
@@ -1132,14 +1188,17 @@ CREATE INDEX idx_google_merchant_syncs_google_status ON google_merchant_syncs(go
 - [Best Practices](https://developers.google.com/shopping-content/guides/best-practices)
 
 ### Bibliothèques Node.js
+
 - [googleapis](https://www.npmjs.com/package/googleapis) - Client officiel Google
 - [google-auth-library](https://www.npmjs.com/package/google-auth-library) - Authentification
 
 ### GitHub Samples
+
 - [google-api-nodejs-client](https://github.com/googleapis/google-api-nodejs-client)
 - [merchant-api-samples](https://github.com/google/merchant-api-samples)
 
 ### Vérone Internal Docs
+
 - [GOOGLE-MERCHANT-CONFIGURATION-COMPLETE.md](./GOOGLE-MERCHANT-CONFIGURATION-COMPLETE.md)
 - [GOOGLE-MERCHANT-SERVICE-ACCOUNT-CREDENTIALS.md](./GOOGLE-MERCHANT-SERVICE-ACCOUNT-CREDENTIALS.md)
 - [GOOGLE-MERCHANT-DOMAIN-VERIFICATION.md](./GOOGLE-MERCHANT-DOMAIN-VERIFICATION.md)
@@ -1149,16 +1208,19 @@ CREATE INDEX idx_google_merchant_syncs_google_status ON google_merchant_syncs(go
 ## 🚀 Next Steps
 
 ### Immédiat (Après validation plan)
+
 1. **Phase 1** : Modal Configuration (commencer maintenant)
 2. **Tests** : Validation connexion API temps réel
 3. **Documentation** : Screenshots modal configuration
 
 ### Court terme (Cette semaine)
+
 1. **Phase 2** : Synchronisation produits
 2. **Migration DB** : Table `google_merchant_syncs`
 3. **Tests** : Sync 5-10 produits réels
 
 ### Moyen terme (Semaine prochaine)
+
 1. **Phase 3** : Dashboard analytics
 2. **Phase 4** : Features avancées
 3. **Phase 5** : Tests complets + validation

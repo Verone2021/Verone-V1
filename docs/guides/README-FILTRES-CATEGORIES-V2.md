@@ -12,6 +12,7 @@
 ### 1. Installer le composant
 
 Le composant est déjà créé dans :
+
 ```
 /src/components/business/category-hierarchy-filter-v2.tsx
 ```
@@ -19,7 +20,7 @@ Le composant est déjà créé dans :
 ### 2. Importer dans votre page
 
 ```typescript
-import { CategoryHierarchyFilterV2 } from "@/components/business/category-hierarchy-filter-v2"
+import { CategoryHierarchyFilterV2 } from '@/components/business/category-hierarchy-filter-v2';
 ```
 
 ### 3. Utiliser le composant
@@ -48,15 +49,15 @@ npm run dev
 
 ### Ce qui change par rapport à l'ancien filtre
 
-| Fonctionnalité | Ancien (V1) | Nouveau (V2) |
-|----------------|-------------|--------------|
-| **Badges amovibles** | ❌ Non | ✅ Oui (avec fil d'Ariane) |
-| **Affichage conditionnel** | Toutes les catégories | Uniquement si produits |
-| **Compteurs** | Basiques | Dynamiques à tous niveaux |
-| **Repliage auto** | ❌ Non | ✅ Oui (après sélection) |
-| **Auto-expansion** | ❌ Non | ✅ Oui (au chargement) |
-| **Bouton Réinitialiser** | Texte simple | Bouton styled |
-| **Performance** | Bonne | Optimisée (useMemo) |
+| Fonctionnalité             | Ancien (V1)           | Nouveau (V2)               |
+| -------------------------- | --------------------- | -------------------------- |
+| **Badges amovibles**       | ❌ Non                | ✅ Oui (avec fil d'Ariane) |
+| **Affichage conditionnel** | Toutes les catégories | Uniquement si produits     |
+| **Compteurs**              | Basiques              | Dynamiques à tous niveaux  |
+| **Repliage auto**          | ❌ Non                | ✅ Oui (après sélection)   |
+| **Auto-expansion**         | ❌ Non                | ✅ Oui (au chargement)     |
+| **Bouton Réinitialiser**   | Texte simple          | Bouton styled              |
+| **Performance**            | Bonne                 | Optimisée (useMemo)        |
 
 ### Capture d'écran conceptuelle
 
@@ -112,12 +113,14 @@ npm run dev
 ### 1. Badges amovibles
 
 Les sélections actives s'affichent en haut sous forme de badges avec :
+
 - ✅ Fil d'Ariane complet (Famille › Catégorie › Sous-catégorie)
 - ✅ Bouton X pour retirer individuellement
 - ✅ Bouton "Réinitialiser" pour tout effacer
 - ✅ Compteur "Filtres actifs (n)"
 
 **Exemple** :
+
 ```
 Maison et décoration › Mobilier › Fauteuil ✕
 ```
@@ -127,6 +130,7 @@ Maison et décoration › Mobilier › Fauteuil ✕
 Seules les familles/catégories/sous-catégories contenant au moins 1 produit sont affichées.
 
 **Avantages** :
+
 - Interface plus propre
 - Pas de confusion avec catégories vides
 - Performance améliorée
@@ -134,6 +138,7 @@ Seules les familles/catégories/sous-catégories contenant au moins 1 produit so
 ### 3. Compteurs dynamiques
 
 Affichage du nombre de produits et de sélections à chaque niveau :
+
 ```
 ▼ 📂 Maison et décoration (45) [2]
    ^                        ^   ^
@@ -145,6 +150,7 @@ Affichage du nombre de produits et de sélections à chaque niveau :
 ### 4. Repliage automatique
 
 Après avoir sélectionné une sous-catégorie, la catégorie parent se replie automatiquement pour :
+
 - ✅ Économiser l'espace vertical
 - ✅ Améliorer la navigation
 - ✅ Éviter l'effet "arbre trop ouvert"
@@ -364,9 +370,10 @@ activeFilters : ~1KB (10 filtres)
 **Cause** : Prop `products` manquante ou vide
 
 **Solution** :
+
 ```typescript
 // Vérifier que products est bien passé
-console.log('Products:', products.length)
+console.log('Products:', products.length);
 
 // Vérifier que products n'est pas filtré incorrectement
 // (doit inclure TOUS les produits actifs, pas seulement filtrés)
@@ -377,15 +384,16 @@ console.log('Products:', products.length)
 **Cause** : `selectedSubcategories` vide ou incorrect
 
 **Solution** :
+
 ```typescript
 // Debug l'état
-console.log('Selected:', selectedSubcategories)
+console.log('Selected:', selectedSubcategories);
 
 // Vérifier la fonction toggle
 const handleSubcategoryToggle = (subcategoryId: string) => {
-  console.log('Toggle:', subcategoryId)
+  console.log('Toggle:', subcategoryId);
   // ...
-}
+};
 ```
 
 ### Problème : Performance lente
@@ -393,14 +401,15 @@ const handleSubcategoryToggle = (subcategoryId: string) => {
 **Cause** : Trop de produits ou re-renders excessifs
 
 **Solution** :
+
 ```typescript
 // 1. Vérifier useMemo
 const enrichedHierarchy = useMemo(() => {
   // ...
-}, [families, categories, subcategories, products])
+}, [families, categories, subcategories, products]);
 
 // 2. Limiter le nombre de produits si nécessaire
-const limitedProducts = products.slice(0, 1000)
+const limitedProducts = products.slice(0, 1000);
 ```
 
 ---
@@ -427,6 +436,7 @@ const limitedProducts = products.slice(0, 1000)
 ### Version 2.0 (2025-10-07) - Initial Release
 
 **Ajouté** :
+
 - ✨ Badges amovibles avec fil d'Ariane
 - ✨ Affichage conditionnel (uniquement si produits)
 - ✨ Compteurs dynamiques à tous niveaux
@@ -437,6 +447,7 @@ const limitedProducts = products.slice(0, 1000)
 - ✨ Design strict noir/blanc Vérone
 
 **Documentation** :
+
 - 📚 Guide d'intégration complet
 - 📚 Guide de migration V1 → V2
 - 📚 Mockups design détaillés
@@ -447,6 +458,7 @@ const limitedProducts = products.slice(0, 1000)
 ## 🎉 PRÊT À L'EMPLOI
 
 Le composant est **production-ready** et respecte strictement :
+
 - ✅ Design System Vérone (noir/blanc uniquement)
 - ✅ Performance SLO (<2s dashboard)
 - ✅ Accessibilité WCAG AA

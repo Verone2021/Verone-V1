@@ -14,33 +14,43 @@
 'use client';
 
 import { useState, useMemo } from 'react';
-import { Bell, Search, CheckCheck, Trash2, Filter, X } from 'lucide-react';
-import { ButtonV2 } from '@/components/ui/button';
-import { useNotifications } from '@/hooks/use-notifications';
-import { cn } from '@/lib/utils';
-import { spacing, colors } from '@/lib/design-system';
-import { formatDistanceToNow, isToday, isYesterday, isThisWeek, startOfWeek } from 'date-fns';
+
+import { ButtonV2 } from '@verone/ui';
+import { cn } from '@verone/utils';
+import {
+  formatDistanceToNow,
+  isToday,
+  isYesterday,
+  isThisWeek,
+  startOfWeek,
+} from 'date-fns';
 import { fr } from 'date-fns/locale';
-import type { Notification } from '@/hooks/use-notifications';
+import { Bell, Search, CheckCheck, Trash2, Filter, X } from 'lucide-react';
+
+import {
+  useDatabaseNotifications,
+  type DatabaseNotification,
+} from '@verone/notifications';
+import { spacing, colors } from '@verone/ui/design-system';
 
 // Types pour les filtres
 type FilterTab = 'all' | 'unread' | 'urgent' | 'by-type';
-type NotificationType = Notification['type'];
-type NotificationSeverity = Notification['severity'];
+type NotificationType = DatabaseNotification['type'];
+type NotificationSeverity = DatabaseNotification['severity'];
 
 /**
  * Grouping des notifications par date
  */
-function groupNotificationsByDate(notifications: Notification[]) {
-  const groups: Record<string, Notification[]> = {
+function groupNotificationsByDate(notifications: DatabaseNotification[]) {
+  const groups: Record<string, DatabaseNotification[]> = {
     today: [],
     yesterday: [],
     thisWeek: [],
     older: [],
   };
 
-  notifications.forEach((notif) => {
-    const date = new Date(notif.created_at);
+  notifications.forEach(notif => {
+    const date = new Date(notif.created_at || new Date());
 
     if (isToday(date)) {
       groups.today.push(notif);
@@ -59,8 +69,8 @@ function groupNotificationsByDate(notifications: Notification[]) {
 /**
  * Grouping des notifications par type
  */
-function groupNotificationsByType(notifications: Notification[]) {
-  const groups: Record<string, Notification[]> = {
+function groupNotificationsByType(notifications: DatabaseNotification[]) {
+  const groups: Record<string, DatabaseNotification[]> = {
     system: [],
     business: [],
     catalog: [],
@@ -69,7 +79,7 @@ function groupNotificationsByType(notifications: Notification[]) {
     maintenance: [],
   };
 
-  notifications.forEach((notif) => {
+  notifications.forEach(notif => {
     if (groups[notif.type]) {
       groups[notif.type].push(notif);
     }
@@ -105,7 +115,7 @@ const GroupHeader = ({ label, count }: GroupHeaderProps) => (
         className="text-sm font-medium px-2 py-0.5 rounded-md"
         style={{
           backgroundColor: colors.neutral[100],
-          color: colors.text.secondary,
+          color: colors.text.subtle,
         }}
       >
         {count}
@@ -118,16 +128,23 @@ const GroupHeader = ({ label, count }: GroupHeaderProps) => (
  * Notification Card Component
  */
 interface NotificationCardProps {
-  notification: Notification;
+  notification: DatabaseNotification;
   onMarkAsRead: (id: string) => Promise<void>;
   onDelete: (id: string) => Promise<void>;
 }
 
-const NotificationCard = ({ notification, onMarkAsRead, onDelete }: NotificationCardProps) => {
-  const timeAgo = formatDistanceToNow(new Date(notification.created_at), {
-    addSuffix: true,
-    locale: fr,
-  });
+const NotificationCard = ({
+  notification,
+  onMarkAsRead,
+  onDelete,
+}: NotificationCardProps) => {
+  const timeAgo = formatDistanceToNow(
+    new Date(notification.created_at || new Date()),
+    {
+      addSuffix: true,
+      locale: fr,
+    }
+  );
 
   // Badge de sévérité
   const severityConfig = {
@@ -143,7 +160,10 @@ const NotificationCard = ({ notification, onMarkAsRead, onDelete }: Notification
       className: 'bg-blue-500/10 text-blue-700 border border-blue-200',
       label: 'Info',
     },
-  }[notification.severity];
+  }[notification.severity] || {
+    className: 'bg-blue-500/10 text-blue-700 border border-blue-200',
+    label: 'Info',
+  }; // Fallback vers 'info' si severity inconnue
 
   return (
     <div
@@ -178,24 +198,24 @@ const NotificationCard = ({ notification, onMarkAsRead, onDelete }: Notification
               {notification.title}
             </h4>
             <span
-              className={cn('text-xs font-medium px-2 py-0.5 rounded-md', severityConfig.className)}
+              className={cn(
+                'text-xs font-medium px-2 py-0.5 rounded-md',
+                severityConfig.className
+              )}
             >
               {severityConfig.label}
             </span>
           </div>
 
           {/* Timestamp */}
-          <p
-            className="text-xs mb-2"
-            style={{ color: colors.text.tertiary }}
-          >
+          <p className="text-xs mb-2" style={{ color: colors.text.muted }}>
             {timeAgo}
           </p>
 
           {/* Message */}
           <p
             className="text-sm leading-relaxed mb-3"
-            style={{ color: colors.text.secondary }}
+            style={{ color: colors.text.subtle }}
           >
             {notification.message}
           </p>
@@ -255,11 +275,13 @@ export default function NotificationsPage() {
     markAsRead,
     markAllAsRead,
     deleteNotification,
-  } = useNotifications();
+  } = useDatabaseNotifications();
 
   const [activeTab, setActiveTab] = useState<FilterTab>('all');
   const [searchQuery, setSearchQuery] = useState('');
-  const [selectedType, setSelectedType] = useState<NotificationType | 'all'>('all');
+  const [selectedType, setSelectedType] = useState<NotificationType | 'all'>(
+    'all'
+  );
 
   // Filtrage des notifications
   const filteredNotifications = useMemo(() => {
@@ -267,21 +289,21 @@ export default function NotificationsPage() {
 
     // Filtre par tab
     if (activeTab === 'unread') {
-      filtered = filtered.filter((n) => !n.read);
+      filtered = filtered.filter(n => !n.read);
     } else if (activeTab === 'urgent') {
-      filtered = filtered.filter((n) => n.severity === 'urgent');
+      filtered = filtered.filter(n => n.severity === 'urgent');
     }
 
     // Filtre par type (si by-type actif)
     if (activeTab === 'by-type' && selectedType !== 'all') {
-      filtered = filtered.filter((n) => n.type === selectedType);
+      filtered = filtered.filter(n => n.type === selectedType);
     }
 
     // Filtre par search
     if (searchQuery.trim()) {
       const query = searchQuery.toLowerCase();
       filtered = filtered.filter(
-        (n) =>
+        n =>
           n.title.toLowerCase().includes(query) ||
           n.message.toLowerCase().includes(query)
       );
@@ -329,7 +351,7 @@ export default function NotificationsPage() {
             className="animate-spin rounded-full h-12 w-12 border-b-2 mx-auto mb-4"
             style={{ borderColor: colors.primary[500] }}
           />
-          <p className="text-sm" style={{ color: colors.text.secondary }}>
+          <p className="text-sm" style={{ color: colors.text.subtle }}>
             Chargement des notifications...
           </p>
         </div>
@@ -357,7 +379,7 @@ export default function NotificationsPage() {
               >
                 Notifications
               </h1>
-              <p className="text-sm" style={{ color: colors.text.secondary }}>
+              <p className="text-sm" style={{ color: colors.text.subtle }}>
                 {unreadCount > 0
                   ? `${unreadCount} notification${unreadCount > 1 ? 's' : ''} non ${unreadCount > 1 ? 'lues' : 'lue'}`
                   : 'Toutes vos notifications sont lues'}
@@ -425,7 +447,7 @@ export default function NotificationsPage() {
             >
               Urgent
               <span className="ml-2 opacity-70">
-                ({notifications.filter((n) => n.severity === 'urgent').length})
+                ({notifications.filter(n => n.severity === 'urgent').length})
               </span>
             </button>
 
@@ -448,13 +470,13 @@ export default function NotificationsPage() {
             <div className="relative">
               <Search
                 className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4"
-                style={{ color: colors.text.tertiary }}
+                style={{ color: colors.text.muted }}
               />
               <input
                 type="text"
                 placeholder="Rechercher dans les notifications..."
                 value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
+                onChange={e => setSearchQuery(e.target.value)}
                 className="w-full pl-10 pr-10 py-2 rounded-lg border text-sm"
                 style={{
                   borderColor: colors.neutral[300],
@@ -466,7 +488,7 @@ export default function NotificationsPage() {
                   onClick={() => setSearchQuery('')}
                   className="absolute right-3 top-1/2 -translate-y-1/2"
                 >
-                  <X className="h-4 w-4" style={{ color: colors.text.tertiary }} />
+                  <X className="h-4 w-4" style={{ color: colors.text.muted }} />
                 </button>
               )}
             </div>
@@ -476,7 +498,17 @@ export default function NotificationsPage() {
         {/* Type filters (si by-type actif) */}
         {activeTab === 'by-type' && (
           <div className="flex items-center gap-2 mt-3 flex-wrap">
-            {(['all', 'system', 'business', 'catalog', 'operations', 'performance', 'maintenance'] as const).map((type) => (
+            {(
+              [
+                'all',
+                'system',
+                'business',
+                'catalog',
+                'operations',
+                'performance',
+                'maintenance',
+              ] as const
+            ).map(type => (
               <button
                 key={type}
                 onClick={() => setSelectedType(type)}
@@ -505,7 +537,7 @@ export default function NotificationsPage() {
               className="w-16 h-16 mx-auto mb-4 rounded-full flex items-center justify-center"
               style={{ backgroundColor: colors.neutral[100] }}
             >
-              <Bell className="h-8 w-8" style={{ color: colors.text.tertiary }} />
+              <Bell className="h-8 w-8" style={{ color: colors.text.muted }} />
             </div>
             <p
               className="text-sm font-medium mb-1"
@@ -513,7 +545,7 @@ export default function NotificationsPage() {
             >
               Aucune notification
             </p>
-            <p className="text-xs" style={{ color: colors.text.tertiary }}>
+            <p className="text-xs" style={{ color: colors.text.muted }}>
               {searchQuery
                 ? 'Aucun résultat pour votre recherche'
                 : 'Vous êtes à jour !'}
@@ -521,26 +553,28 @@ export default function NotificationsPage() {
           </div>
         ) : (
           <>
-            {Object.entries(groupedNotifications).map(([groupKey, groupNotifications]) => {
-              if (groupNotifications.length === 0) return null;
+            {Object.entries(groupedNotifications).map(
+              ([groupKey, groupNotifications]) => {
+                if (groupNotifications.length === 0) return null;
 
-              return (
-                <div key={groupKey}>
-                  <GroupHeader
-                    label={getGroupLabel(groupKey)}
-                    count={groupNotifications.length}
-                  />
-                  {groupNotifications.map((notification, index) => (
-                    <NotificationCard
-                      key={`${notification.id}-${index}`}
-                      notification={notification}
-                      onMarkAsRead={markAsRead}
-                      onDelete={deleteNotification}
+                return (
+                  <div key={groupKey}>
+                    <GroupHeader
+                      label={getGroupLabel(groupKey)}
+                      count={groupNotifications.length}
                     />
-                  ))}
-                </div>
-              );
-            })}
+                    {groupNotifications.map((notification, index) => (
+                      <NotificationCard
+                        key={`${notification.id}-${index}`}
+                        notification={notification}
+                        onMarkAsRead={markAsRead}
+                        onDelete={deleteNotification}
+                      />
+                    ))}
+                  </div>
+                );
+              }
+            )}
           </>
         )}
       </div>

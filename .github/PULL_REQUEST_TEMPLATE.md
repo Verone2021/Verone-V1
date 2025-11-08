@@ -31,12 +31,10 @@
 <!-- Description technique précise des modifications -->
 <!-- Lister fichiers principaux modifiés et raisons -->
 
-**Changements clés** :
--
--
--
+## **Changements clés** :
 
----
+-
+- ***
 
 ## ✅ Tests effectués
 
@@ -61,6 +59,7 @@
 - [ ] Screenshot console clean attaché ci-dessous
 
 **Screenshot Playwright Console** :
+
 <!-- Ajouter capture d'écran console propre ici -->
 
 ---
@@ -73,6 +72,7 @@
 <!-- Lister dépendances affectées -->
 
 **Impacts identifiés** :
+
 - [ ] Aucun impact (changement isolé)
 - [ ] Impact modules : ...
 - [ ] Impact database : ... (migration requise ?)
@@ -101,6 +101,7 @@
 - [ ] Backup requis avant déploiement
 
 **Procédure détaillée** :
+
 1.
 2.
 3.
@@ -113,9 +114,7 @@
 
 **Avant** :
 
-
 **Après** :
-
 
 ---
 
@@ -183,6 +182,7 @@
 <!-- Mentionner reviewers suggérés -->
 
 **Reviewers recommandés** :
+
 - @owner (si fichiers protégés modifiés)
 - @tech-lead (si database modifiée)
 
@@ -193,12 +193,12 @@
 <!-- Tout contexte additionnel utile -->
 
 **Liens utiles** :
+
 - Issue : #
 - Documentation :
 - Référence externe :
 
 **Notes** :
-
 
 ---
 

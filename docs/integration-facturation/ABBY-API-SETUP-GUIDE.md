@@ -12,6 +12,7 @@
 Vous devez avoir un compte Abby.fr avec un **abonnement professionnel** pour accéder à l'API.
 
 **Vérifier votre abonnement** :
+
 1. Connexion → https://app.abby.fr/
 2. Menu utilisateur (haut droite) → **Mon compte** → **Abonnement**
 3. Vérifier : Type = **Professionnel** ou **Entreprise**
@@ -40,6 +41,7 @@ Vous devez avoir un compte Abby.fr avec un **abonnement professionnel** pour acc
    - Cliquer sur **"Générer"**
 
 2. **Copier la clé API** :
+
    ```
    Format attendu : abby_sk_live_xxxxxxxxxxxxxxxxxxxxx
    ```
@@ -85,6 +87,7 @@ curl -X GET https://api.abby.fr/v1/me \
 ```
 
 **Réponse attendue** (200 OK) :
+
 ```json
 {
   "id": "user_xxxxx",
@@ -121,12 +124,13 @@ curl -X POST https://api.abby.fr/v1/invoices \
 ```
 
 **Réponse attendue** (201 Created) :
+
 ```json
 {
   "id": "inv_xxxxx",
   "number": "FA-2025-00001",
   "status": "draft",
-  "total_amount": 100.00
+  "total_amount": 100.0
 }
 ```
 
@@ -141,6 +145,7 @@ curl -X POST https://api.abby.fr/v1/invoices \
 ### Étape 1 : Obtenir URL de Réception
 
 Une fois l'application déployée sur Vercel :
+
 ```
 https://verone-back-office.vercel.app/api/webhooks/abby/invoice-status
 ```
@@ -157,6 +162,7 @@ https://verone-back-office.vercel.app/api/webhooks/abby/invoice-status
    - Secret : Copier le secret généré
 
 3. **Mettre à jour .env.local** :
+
 ```bash
 ABBY_WEBHOOK_SECRET=whsec_le_secret_fourni_par_abby
 ```
@@ -164,6 +170,7 @@ ABBY_WEBHOOK_SECRET=whsec_le_secret_fourni_par_abby
 ### Étape 3 : Tester Webhook
 
 Abby fournit un bouton **"Envoyer un événement test"** :
+
 1. Sélectionner événement `invoice.paid`
 2. Cliquer **"Envoyer test"**
 3. Vérifier logs dans application Vérone
@@ -177,6 +184,7 @@ Abby fournit un bouton **"Envoyer un événement test"** :
 **Symptôme** : Erreur 401 Unauthorized
 
 **Solutions** :
+
 1. Vérifier que la clé commence par `abby_sk_live_`
 2. Vérifier qu'il n'y a pas d'espace avant/après dans .env.local
 3. Redémarrer le serveur Next.js après modification .env.local
@@ -187,6 +195,7 @@ Abby fournit un bouton **"Envoyer un événement test"** :
 **Symptôme** : Erreur 404 Not Found
 
 **Solutions** :
+
 1. Vérifier la documentation officielle Abby : https://docs.abby.fr/api
 2. Contacter support Abby : support@abby.fr
 3. **Plan B** : Pivote vers Pennylane API (architecture identique)
@@ -196,6 +205,7 @@ Abby fournit un bouton **"Envoyer un événement test"** :
 **Symptôme** : Aucun événement reçu
 
 **Solutions** :
+
 1. Vérifier que URL webhook est accessible publiquement (pas localhost!)
 2. Vérifier logs webhook dans Abby Dashboard
 3. Tester avec ngrok en développement :
@@ -229,4 +239,4 @@ Avant de passer à l'étape suivante (Sprint 1 - Migrations) :
 
 ---
 
-*Guide créé le 2025-10-10 - Vérone Back Office - Intégration Abby.fr*
+_Guide créé le 2025-10-10 - Vérone Back Office - Intégration Abby.fr_
