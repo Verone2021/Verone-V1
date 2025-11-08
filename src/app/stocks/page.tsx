@@ -6,6 +6,16 @@ import Image from 'next/image';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 
+import { Badge } from '@verone/ui';
+import { ButtonV2 } from '@verone/ui';
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from '@verone/ui';
+import { formatPrice } from '@verone/utils';
 import {
   Package,
   BarChart3,
@@ -22,20 +32,10 @@ import {
   Eye,
 } from 'lucide-react';
 
-import { Badge } from '@/components/ui/badge';
-import { ButtonV2 } from '@/components/ui/button';
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from '@/components/ui/card';
-import { StockKPICard } from '@/components/ui-v2/stock/StockKPICard';
-import { formatPrice } from '@verone/utils';
-import { useStockDashboard } from '@/shared/modules/stock/hooks';
-import { useStockAlerts } from '@/shared/modules/stock/hooks';
-import { useMovementsHistory } from '@/shared/modules/stock/hooks';
+import { StockKPICard } from '@/components/ui-v2/stock/stock-kpi-card';
+import { useStockDashboard } from '@verone/stock';
+import { useStockAlerts } from '@verone/stock';
+import { useMovementsHistory } from '@verone/stock';
 
 export default function StocksDashboardPage() {
   const router = useRouter();

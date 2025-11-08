@@ -11,6 +11,16 @@ import { useEffect, useState } from 'react';
 
 import { useParams, useRouter } from 'next/navigation';
 
+import { Badge } from '@verone/ui';
+import { ButtonV2 } from '@verone/ui';
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from '@verone/ui';
+import { VéroneCard } from '@verone/ui';
 import {
   ArrowLeft,
   Plus,
@@ -20,23 +30,10 @@ import {
   Package,
 } from 'lucide-react';
 
-import { FamilyCrudForm } from '@/components/forms/FamilyCrudForm';
-import { Badge } from '@/components/ui/badge';
-import { ButtonV2 } from '@/components/ui/button';
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from '@/components/ui/card';
-import { VéroneCard } from '@/components/ui/verone-card';
+import { FamilyCrudForm } from '@/components/forms/family-crud-form';
+import { useFamilies } from '@verone/categories';
+import { useCategories, type CategoryWithCount } from '@verone/categories';
 import type { Database } from '@verone/utils/supabase/types';
-import { useFamilies } from '@/shared/modules/categories/hooks';
-import {
-  useCategories,
-  type CategoryWithCount,
-} from '@/shared/modules/categories/hooks';
 
 type Family = Database['public']['Tables']['families']['Row'];
 type Category = Database['public']['Tables']['categories']['Row'];

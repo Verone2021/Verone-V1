@@ -4,7 +4,7 @@ import React from 'react';
 
 import { TrendingUp, Activity, Clock, BarChart3 } from 'lucide-react';
 
-import { StockKPICard } from '@/components/ui-v2/stock/StockKPICard';
+import { StockKPICard } from '@/components/ui-v2/stock/stock-kpi-card';
 import type { MovementsStats } from '@/shared/modules/stock/hooks';
 
 interface MovementsStatsCardsProps {

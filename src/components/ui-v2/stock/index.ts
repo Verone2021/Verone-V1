@@ -21,14 +21,14 @@
 export { ChannelBadge } from './ChannelBadge';
 export type { ChannelBadgeProps } from './ChannelBadge';
 
-export { ChannelFilter } from './ChannelFilter';
-export type { ChannelFilterProps } from './ChannelFilter';
+export { ChannelFilter } from './channel-filter';
+export type { ChannelFilterProps } from './channel-filter';
 
-export { StockMovementCard } from './StockMovementCard';
-export type { StockMovementCardProps } from './StockMovementCard';
+export { StockMovementCard } from './stock-movement-card';
+export type { StockMovementCardProps } from './stock-movement-card';
 
-export { StockKPICard } from './StockKPICard';
-export type { StockKPICardProps } from './StockKPICard';
+export { StockKPICard } from './stock-kpi-card';
+export type { StockKPICardProps } from './stock-kpi-card';
 
 // Types & Constants
 export type {

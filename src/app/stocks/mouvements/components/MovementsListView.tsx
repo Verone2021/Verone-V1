@@ -11,8 +11,8 @@
 import { Clock } from 'lucide-react';
 
 import { StockMovementCard } from '@/components/ui-v2/stock';
-import type { StockMovementCardProps } from '@/components/ui-v2/stock/StockMovementCard';
-import type { MovementWithDetails } from '@/shared/modules/stock/hooks';
+import type { StockMovementCardProps } from '@/components/ui-v2/stock/stock-movement-card';
+import type { MovementWithDetails } from '@verone/stock';
 
 interface MovementsListViewProps {
   movements: MovementWithDetails[];

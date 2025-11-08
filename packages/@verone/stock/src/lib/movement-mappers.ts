@@ -7,7 +7,7 @@
  * @since Phase 3.3.1 - Migration Dashboard
  */
 
-import type { StockMovementCardProps } from '@/components/ui-v2/stock/StockMovementCard';
+import type { StockMovementCardProps } from '@/components/ui-v2/stock/stock-movement-card';
 
 /**
  * Interface RecentMovement depuis use-stock-dashboard

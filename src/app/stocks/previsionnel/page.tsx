@@ -13,6 +13,22 @@
 import { useRouter } from 'next/navigation';
 
 import {
+  Accordion,
+  AccordionContent,
+  AccordionItem,
+  AccordionTrigger,
+} from '@verone/ui';
+import { Badge } from '@verone/ui';
+import { ButtonV2 } from '@verone/ui';
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from '@verone/ui';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@verone/ui';
+import {
   ArrowLeft,
   Clock,
   TrendingUp,
@@ -23,25 +39,9 @@ import {
   Truck,
 } from 'lucide-react';
 
-import {
-  Accordion,
-  AccordionContent,
-  AccordionItem,
-  AccordionTrigger,
-} from '@/components/ui/accordion';
-import { Badge } from '@/components/ui/badge';
-import { ButtonV2 } from '@/components/ui/button';
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from '@/components/ui/card';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { StockKPICard } from '@/components/ui-v2/stock/StockKPICard';
-import { OrderItemsTable } from '@/shared/modules/orders/components/tables/OrderItemsTable';
-import { useStockDashboard } from '@/shared/modules/stock/hooks';
+import { StockKPICard } from '@/components/ui-v2/stock/stock-kpi-card';
+import { OrderItemsTable } from '@verone/orders';
+import { useStockDashboard } from '@verone/stock';
 
 export default function StockPrevisionnelPage() {
   const router = useRouter();

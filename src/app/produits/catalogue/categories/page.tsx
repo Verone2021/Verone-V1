@@ -4,6 +4,10 @@ import { useState, useMemo } from 'react';
 
 import { useRouter } from 'next/navigation';
 
+import { Badge } from '@verone/ui';
+import { ButtonV2 } from '@verone/ui';
+import { cn } from '@verone/utils';
+import { checkSLOCompliance } from '@verone/utils';
 import {
   Search,
   Plus,
@@ -19,23 +23,19 @@ import {
   Image as ImageIcon,
 } from 'lucide-react';
 
-import { CategoryForm } from '@/components/forms/CategoryForm';
-import { FamilyForm } from '@/components/forms/FamilyForm';
-import { SubcategoryForm } from '@/components/forms/SubcategoryForm';
-import { Badge } from '@/components/ui/badge';
-import { ButtonV2 } from '@/components/ui/button';
-import { cn } from '@verone/utils';
-import { checkSLOCompliance } from '@verone/utils';
+import { CategoryForm } from '@/components/forms/category-form';
+import { FamilyForm } from '@/components/forms/family-form';
+import { SubcategoryForm } from '@/components/forms/subcategory-form';
 
 // 🔗 HOOKS SUPABASE - Connexion aux vraies données
-import { useFamilies } from '@/shared/modules/categories/hooks';
-import { useCategories } from '@/shared/modules/categories/hooks';
-import { useSubcategories } from '@/shared/modules/categories/hooks';
+import { useFamilies } from '@verone/categories';
+import { useCategories } from '@verone/categories';
+import { useSubcategories } from '@verone/categories';
 
 // 📋 TYPES - Importés depuis les hooks
-import type { FamilyWithStats } from '@/shared/modules/categories/hooks';
-import type { CategoryWithChildren } from '@/shared/modules/categories/hooks';
-import type { SubcategoryWithDetails } from '@/shared/modules/categories/hooks';
+import type { FamilyWithStats } from '@verone/categories';
+import type { CategoryWithChildren } from '@verone/categories';
+import type { SubcategoryWithDetails } from '@verone/categories';
 
 // Interface filtres pour la hiérarchie complète
 interface HierarchyFilters {
